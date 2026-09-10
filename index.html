@@ -6377,6 +6377,11 @@ async function renderRefinePage() {
     PET_REFINE_TYPED_STATE = saved || {};
   }
 
+  // Converts a stored 0-1 fraction to a clean 1-decimal percentage.
+  // Plain `x * 100` on values like 0.581 gives 58.099999999999994 in JS
+  // floating point, which then rejected a typed "58.1" as "over the cap".
+  const pct1 = (raw) => Math.round(Number(raw) * 1000) / 10;
+
   const STAGE_COLORS = {
     Grey: "#9aa5b1",
     Green: "#5bc98a",
@@ -6393,7 +6398,7 @@ async function renderRefinePage() {
   function stageForValue(pet, maxKey, val) {
     const rows = PET_REFINE_CACHE[pet];
     for (const r of rows) {
-      if (Number(r[maxKey]) * 100 >= val - 0.0001) return { stage: r.stage, color: STAGE_COLORS[r.stage] || "var(--ice)" };
+      if (pct1(r[maxKey]) >= val - 0.0001) return { stage: r.stage, color: STAGE_COLORS[r.stage] || "var(--ice)" };
     }
     const last = rows[rows.length - 1];
     return { stage: last.stage, color: STAGE_COLORS[last.stage] || "var(--ice)" };
@@ -6440,7 +6445,7 @@ async function renderRefinePage() {
       const m = maxRow(pet);
       STAT_KEYS.forEach(({ key, maxKey }) => {
         grand[key] += Number(s[key]) || 0;
-        grandMax[key] += Number(m[maxKey]) * 100;
+        grandMax[key] += pct1(m[maxKey]);
       });
     });
     document.getElementById("refineTotals").innerHTML = `
@@ -6448,7 +6453,7 @@ async function renderRefinePage() {
         <h2>Total refine bonus</h2>
         <p class="desc">Summed across all 15 pets, based on what you've typed in.</p>
         <div class="stats-row-scroll">
-          ${STAT_KEYS.map(({ key, label }) => `<div class="metric"><div class="label">${esc(label)}</div><div class="val">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
+          ${STAT_KEYS.map(({ key, label }) => `<div class="metric"><div class="label">${esc(label)}</div><div class="val">+${grand[key].toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${grandMax[key].toFixed(1)}%</div></div>`).join("")}
         </div>
       </div>
     `;
@@ -6466,7 +6471,7 @@ async function renderRefinePage() {
     const s = petState(pet);
     const m = maxRow(pet);
     const curVal = Number(s[statKey]) || 0;
-    const maxVal = Number(m[statDef.maxKey]) * 100;
+    const maxVal = pct1(m[statDef.maxKey]);
     const pct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
     const remaining = Math.max(0, maxVal - curVal);
     const isMaxed = remaining <= 0.005;
@@ -6479,7 +6484,7 @@ async function renderRefinePage() {
     }
     const remainingEl = row.querySelector("[data-refineremaining]");
     if (remainingEl) {
-      remainingEl.textContent = isMaxed ? "" : `-${remaining.toFixed(2)}%`;
+      remainingEl.textContent = isMaxed ? "" : `-${remaining.toFixed(1)}%`;
       remainingEl.style.color = color;
       remainingEl.style.width = isMaxed ? "0" : "";
       remainingEl.style.overflow = isMaxed ? "hidden" : "";
@@ -6509,7 +6514,7 @@ async function renderRefinePage() {
           ${STAT_KEYS.map(
             ({ key, label, maxKey }) => {
               const curVal = Number(s[key]) || 0;
-              const maxVal = Number(m[maxKey]) * 100;
+              const maxVal = pct1(m[maxKey]);
               const pct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
               const remaining = Math.max(0, maxVal - curVal);
               const isMaxed = remaining <= 0.005;
@@ -6522,9 +6527,9 @@ async function renderRefinePage() {
               <div data-refinebar style="flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden; min-width:40px;">
                 <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.2s;"></div>
               </div>
-              <span data-refineremaining class="meta" style="font-size:10.5px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
+              <span data-refineremaining class="meta" style="font-size:10.5px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(1)}%`}</span>
             </div>
-            <span class="meta" style="font-size:10.5px; flex-shrink:0; white-space:nowrap;">of max ${maxVal.toFixed(2)}%</span>
+            <span class="meta" style="font-size:10.5px; flex-shrink:0; white-space:nowrap;">of max ${maxVal.toFixed(1)}%</span>
           </div>`;
             }
           ).join("")}
@@ -6548,7 +6553,7 @@ async function renderRefinePage() {
         const pet = input.dataset.refinepet;
         const statKey = input.dataset.refinestat;
         const statDef = STAT_KEYS.find((s) => s.key === statKey);
-        const cap = maxRow(pet)[statDef.maxKey] * 100;
+        const cap = pct1(maxRow(pet)[statDef.maxKey]);
         if (val > cap) val = cap;
         input.value = val;
         petState(pet)[statKey] = val;
@@ -6563,9 +6568,9 @@ async function renderRefinePage() {
         const pet = btn.dataset.refinemaxpet;
         const m = maxRow(pet);
         const s = petState(pet);
-        const allMaxed = STAT_KEYS.every(({ key, maxKey }) => (Number(s[key]) || 0) >= m[maxKey] * 100 - 0.001);
+        const allMaxed = STAT_KEYS.every(({ key, maxKey }) => (Number(s[key]) || 0) >= pct1(m[maxKey]) - 0.001);
         STAT_KEYS.forEach(({ key, maxKey }) => {
-          s[key] = allMaxed ? 0 : Number((m[maxKey] * 100).toFixed(4));
+          s[key] = allMaxed ? 0 : pct1(m[maxKey]);
           const input = listEl.querySelector(`input[data-refinepet="${CSS.escape(pet)}"][data-refinestat="${CSS.escape(key)}"]`);
           if (input) input.value = s[key];
           updateStatRow(pet, key);
