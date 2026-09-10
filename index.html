@@ -3155,13 +3155,13 @@ function updateCharmCurrentStats() {
   const maxByTroop = computeCharmStats(maxedCharmState());
   const rows = Object.entries(statByTroop).map(([troop, avg]) => ({ troop, avg, max: maxByTroop[troop] || 0 }));
   el.innerHTML =
-    `<div class="grid g3" style="gap:12px;">` +
+    `<div class="stats-row-scroll">` +
     rows
       .map(
         (r, idx) => `
     <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
-      <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">Total Lethality &amp; Health</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.avg.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.toFixed(1)}%</div></div>
+      <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">LETH &amp; HP</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.avg.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.toFixed(1)}%</div></div>
     </div>`
       )
       .join("") +
@@ -3558,13 +3558,13 @@ function updateChiefGearCurrentStats() {
   const results = Object.entries(statByTroop).map(([troop, stats]) => ({ troop, stats, max: maxByTroop[troop] }));
 
   const setBonusHtml = `
-    <div class="grid g2" style="margin-bottom:14px;">
+    <div class="stats-row-scroll" style="margin-bottom:14px;">
       <div class="metric">
-        <div class="label">3-piece bonus (Defense, all troops)</div>
+        <div class="label">3-piece (DEF, all troops)</div>
         <div class="val" style="color:${threeBonus ? "var(--good)" : "var(--muted)"};">${threeBonus ? `+${threeBonus}%` : "Not active"}</div>
       </div>
       <div class="metric">
-        <div class="label">6-piece bonus (Attack, all troops)</div>
+        <div class="label">6-piece (ATK, all troops)</div>
         <div class="val" style="color:${sixBonus ? "var(--good)" : "var(--muted)"};">${sixBonus ? `+${sixBonus}%` : "Not active"}</div>
       </div>
     </div>
@@ -3572,13 +3572,13 @@ function updateChiefGearCurrentStats() {
 
   el.innerHTML =
     setBonusHtml +
-    `<div class="grid g3" style="gap:12px;">` +
+    `<div class="stats-row-scroll">` +
     results
       .map(
         (r, idx) => `
     <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
-      <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">Total Attack &amp; Defense</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.stats.Attack.toFixed(2)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.Attack.toFixed(2)}%</div></div>
+      <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">ATK &amp; DEF</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.stats.Attack.toFixed(2)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.Attack.toFixed(2)}%</div></div>
     </div>`
       )
       .join("") +
@@ -4533,7 +4533,7 @@ async function renderVipTierTable(target) {
       <select id="vipTierSelect" style="width:160px;">
         ${rows.map((r, i) => `<option value="${i}">${esc(r.name)}</option>`).join("")}
       </select>
-      <div class="grid g4" id="vipTierStats" style="margin-top:14px;"></div>
+      <div class="stats-row-scroll" id="vipTierStats" style="margin-top:14px;"></div>
     </div>
   `;
 
@@ -4633,7 +4633,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
         </div>
         <span class="meta" style="font-size:12px;">${stars} / 5 stars</span>
       </div>
-      <div class="grid g2" id="heroStatCards-${esc(heroName)}"></div>
+      <div class="stats-row-scroll" id="heroStatCards-${esc(heroName)}"></div>
     </div>
   `;
 
@@ -4753,7 +4753,7 @@ async function renderCollectionGalleryPage() {
       </div>
     </div>
     <div class="panel">
-      <div class="grid g4">
+      <div class="stats-row-scroll">
         ${STATS.map(
           (s) => `
         <div>
@@ -4765,7 +4765,7 @@ async function renderCollectionGalleryPage() {
         ).join("")}
       </div>
     </div>
-    <div class="grid g4" id="collectionGalleryTotals" style="margin-top:16px;"></div>
+    <div class="stats-row-scroll" id="collectionGalleryTotals" style="margin-top:16px;"></div>
   `;
 
   function renderTotals() {
@@ -4858,6 +4858,8 @@ async function renderAllianceTechPage() {
     // The general "Troops X" research applies to all three troop types, so its
     // level is added into each troop's own total, not shown as a separate row.
     const TROOPS_ONLY = ["Infantry", "Lancers", "Marksman"];
+    const TROOP_ABBR = { Infantry: "INF", Lancers: "LAN", Marksman: "MAR" };
+    const STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
     const rowsHtml = TROOPS_ONLY.map((troop) => {
       const cards = STAT_ORDER.map((stat) => {
         const ownIt = items.find((x) => x.bonus_type === stat && x.name.startsWith(troop + " "));
@@ -4866,9 +4868,9 @@ async function renderAllianceTechPage() {
         const shared = troopsIt ? effective(troopsIt) : { cur: 0, max: 0 };
         const cur = own.cur + shared.cur;
         const max = own.max + shared.max;
-        return `<div class="metric"><div class="label">${esc(troop)} ${esc(stat)}</div><div class="val">+${cur}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${max}%</div></div>`;
+        return `<div class="metric"><div class="label">${TROOP_ABBR[troop]} ${STAT_ABBR[stat] || esc(stat)}</div><div class="val">+${cur}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${max}%</div></div>`;
       }).join("");
-      return `<div class="grid g4" style="margin-bottom:10px;">${cards}</div>`;
+      return `<div class="stats-row-scroll" style="margin-bottom:10px;">${cards}</div>`;
     }).join("");
 
     document.getElementById("allianceTechTotals").innerHTML = rowsHtml;
@@ -5266,11 +5268,11 @@ async function renderT11HeliosPage() {
       return `
       <div class="panel">
         <h2>${esc(troop)}</h2>
-        <div class="grid g4" style="margin-bottom:10px;">
-          <div class="metric"><div class="label">Attack</div><div class="val">+${stats.Attack.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Attack.toFixed(1)}%</div></div>
-          <div class="metric"><div class="label">Defense</div><div class="val">+${stats.Defense.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Defense.toFixed(1)}%</div></div>
-          <div class="metric"><div class="label">Lethality</div><div class="val">+${stats.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Lethality.toFixed(1)}%</div></div>
-          <div class="metric"><div class="label">Health</div><div class="val">+${stats.Health.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Health.toFixed(1)}%</div></div>
+        <div class="stats-row-scroll" style="margin-bottom:10px;">
+          <div class="metric"><div class="label">ATK</div><div class="val">+${stats.Attack.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Attack.toFixed(1)}%</div></div>
+          <div class="metric"><div class="label">DEF</div><div class="val">+${stats.Defense.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Defense.toFixed(1)}%</div></div>
+          <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Lethality.toFixed(1)}%</div></div>
+          <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Health.toFixed(1)}%</div></div>
         </div>
         <div class="grid g3" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
@@ -5548,12 +5550,12 @@ async function renderExpertsResearchPage() {
     <div class="panel" style="margin-bottom:16px;">
       <h2>Total Sigils Needed</h2>
       <p class="desc">Across all unlocked experts' paths, current to target.</p>
-      <div class="grid g4" id="expResearchSigils"></div>
+      <div class="stats-row-scroll" id="expResearchSigils"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Troops Stats</h2>
       <p class="desc">Attack/Defense/Lethality/Health from Expert Research, current to target. Excludes Gareth and Justus, whose main stat only applies to a specific troop type (see Infantry/Lancer/Marksman below).</p>
-      <div class="grid g4" id="expResearchTotals"></div>
+      <div class="stats-row-scroll" id="expResearchTotals"></div>
     </div>
     <div class="grid g3" style="gap:16px; margin-bottom:16px;">
       <div class="panel">
@@ -5599,10 +5601,10 @@ async function renderExpertsResearchPage() {
   }
   function statTotalsHtml(totals, maxTotals) {
     return `
-      <div class="metric"><div class="label">Total Attack</div><div class="val">+${totals.ATK.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.ATK.toFixed(2)}%</div></div>
-      <div class="metric"><div class="label">Total Defense</div><div class="val">+${totals.DEF.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.DEF.toFixed(2)}%</div></div>
-      <div class="metric"><div class="label">Total Lethality</div><div class="val">+${totals.DMG.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.DMG.toFixed(2)}%</div></div>
-      <div class="metric"><div class="label">Total Health</div><div class="val">+${totals.HP.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.HP.toFixed(2)}%</div></div>
+      <div class="metric"><div class="label">ATK</div><div class="val">+${totals.ATK.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.ATK.toFixed(2)}%</div></div>
+      <div class="metric"><div class="label">DEF</div><div class="val">+${totals.DEF.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.DEF.toFixed(2)}%</div></div>
+      <div class="metric"><div class="label">LETH</div><div class="val">+${totals.DMG.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.DMG.toFixed(2)}%</div></div>
+      <div class="metric"><div class="label">HP</div><div class="val">+${totals.HP.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.HP.toFixed(2)}%</div></div>
     `;
   }
   const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => e !== "Gareth" && e !== "Justus"));
@@ -5866,16 +5868,16 @@ async function renderExpertsPage() {
     <div class="panel" style="margin-bottom:16px;">
       <h2>Troop Stats</h2>
       <p class="desc">All 10 experts' level-based base stats, plus Romulus's Last Line &amp; Spirit of Aeetis and Gareth's Porcupine &amp; Undefeated Will skills.</p>
-      <div class="grid g4" id="expertsStatHeader"></div>
+      <div class="stats-row-scroll" id="expertsStatHeader"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Your Inventory</h2>
-      <div class="grid g4" id="expertsInventory"></div>
+      <div class="stats-row-scroll" id="expertsInventory"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Resources needed</h2>
       <p class="desc">Books of Knowledge + learning time from skill levels, plus Affinity + Sigils from hero level, current to desired. Offset against Your Inventory above \u2014 hero-specific sigils apply first, General Sigils cover any remaining shortfall; Speedups reduce learning time.</p>
-      <div class="grid g4" id="expertsTotals"></div>
+      <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
     <div class="grid g3" id="expertsGrid" style="gap:16px;"></div>
     <div class="grid g2" style="margin-bottom:16px; gap:16px; margin-top:16px;">
@@ -6863,11 +6865,11 @@ async function renderResearchCenterPage() {
           <h2 style="margin:0;">${esc(groupName)}</h2>
           <button class="btn ghost small" data-rcmaxgroup="${esc(groupName)}">Max this section</button>
         </div>
-        <div class="grid g4" style="margin:10px 0 14px;">
-          <div class="metric"><div class="label">Attack</div><div class="val">+${stats.Attack.toFixed(2)}%</div></div>
-          <div class="metric"><div class="label">Defense</div><div class="val">+${stats.Defense.toFixed(2)}%</div></div>
-          <div class="metric"><div class="label">Lethality</div><div class="val">+${stats.Lethality.toFixed(2)}%</div></div>
-          <div class="metric"><div class="label">Health</div><div class="val">+${stats.Health.toFixed(2)}%</div></div>
+        <div class="stats-row-scroll" style="margin:10px 0 14px;">
+          <div class="metric"><div class="label">ATK</div><div class="val">+${stats.Attack.toFixed(2)}%</div></div>
+          <div class="metric"><div class="label">DEF</div><div class="val">+${stats.Defense.toFixed(2)}%</div></div>
+          <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality.toFixed(2)}%</div></div>
+          <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health.toFixed(2)}%</div></div>
         </div>
         ${baseNames
           .map((base) => {
@@ -7061,13 +7063,13 @@ async function renderT12ResearchPage() {
     troopsEl.innerHTML = `
       <div class="panel">
         <h2>${esc(troop)}</h2>
-        <div class="grid g4" style="margin-bottom:10px;">
-          <div class="metric"><div class="label">Attack</div><div class="val">+${stats.Attack}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Attack}%</div></div>
-          <div class="metric"><div class="label">Defense</div><div class="val">+${stats.Defense}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Defense}%</div></div>
-          <div class="metric"><div class="label">Lethality</div><div class="val">+${stats.Lethality}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Lethality}%</div></div>
-          <div class="metric"><div class="label">Health</div><div class="val">+${stats.Health}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Health}%</div></div>
+        <div class="stats-row-scroll" style="margin-bottom:10px;">
+          <div class="metric"><div class="label">ATK</div><div class="val">+${stats.Attack}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Attack}%</div></div>
+          <div class="metric"><div class="label">DEF</div><div class="val">+${stats.Defense}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Defense}%</div></div>
+          <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Lethality}%</div></div>
+          <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Health}%</div></div>
         </div>
-        <div class="grid g4" style="margin-bottom:14px;">
+        <div class="stats-row-scroll" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, "Refined FC", Math.round(needed.refined_fc).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, "FC Shard", Math.round(needed.fc_shard).toLocaleString())}
@@ -7121,7 +7123,7 @@ async function renderFacilityPage() {
         <div class="sub" id="facilitySummaryLine"></div>
       </div>
     </div>
-    <div class="grid g4" id="facilityTotals" style="margin-bottom:16px;"></div>
+    <div class="stats-row-scroll" id="facilityTotals" style="margin-bottom:16px;"></div>
     <div class="panel">
       <h2>Facility</h2>
       <p class="desc">Click a building to mark it owned/not owned.</p>
