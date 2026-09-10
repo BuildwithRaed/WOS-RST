@@ -199,8 +199,8 @@
     table th, table td{ padding:4px 6px !important; }
 
     /* Skin/island card grids: 2 per row instead of forcing a wide minimum. */
-    .skin-grid{ grid-template-columns:repeat(2, 1fr) !important; gap:8px; }
-    #islandSections .skin-grid{ grid-template-columns:repeat(2, 1fr) !important; }
+    /* Skin Gallery / Islands intentionally stay at 3 columns (.gallery-grid)
+       even on phone, matching the in-game gallery layout. */
 
     button.btn{ padding:8px 12px; font-size:12.5px; }
 
@@ -325,6 +325,57 @@
   .skin-card .sbonus{ font-size:12px; color:var(--ice); }
   .skin-card .sowned{ font-size:11px; margin-top:4px; color:var(--muted); }
   .skin-card.owned .sowned{ color:var(--good); }
+
+  /* ---- Gallery redesign: fixed 3-per-row grid, tab+menu category
+     switcher, and a click-to-open detail modal (used by Skin Gallery and
+     Islands). ---- */
+  .gallery-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .gallery-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    overflow:hidden; cursor:pointer; transition:border-color .15s; text-align:left; position:relative;
+  }
+  .gallery-card:hover{ border-color:var(--ice-dim); }
+  .gallery-card.owned{ border-color:var(--good); }
+  .gallery-card .thumb{
+    width:100%; aspect-ratio:1; background:var(--panel-2); display:flex; align-items:center; justify-content:center;
+    overflow:hidden; padding:6%;
+  }
+  .gallery-card .thumb img{ width:100%; height:100%; object-fit:contain; border-radius:6px; }
+  .gallery-card .thumb .ph{ font-size:22px; color:var(--muted); font-weight:600; }
+  .gallery-card .badge{
+    padding:5px 6px; font-size:10.5px; font-weight:600; text-align:center;
+    background:var(--panel-2); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .gallery-card.owned .badge{ background:rgba(90,200,120,0.15); color:var(--good); }
+
+  .cat-switcher{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .cat-menu-btn{
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:8px; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--frost); font-size:15px; cursor:pointer; position:relative;
+  }
+  .cat-tabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; }
+  .cat-tabs::-webkit-scrollbar{ display:none; }
+  .cat-tabs button{
+    flex-shrink:0; background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
+    padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .cat-tabs button.active{ background:var(--ice-dim); color:var(--frost); border-color:var(--ice-dim); }
+  .cat-menu-panel{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; min-width:200px; max-height:60vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35); z-index:30;
+  }
+  .cat-menu-panel.open{ display:block; }
+  .cat-menu-panel button{
+    display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left;
+    background:transparent; border:none; color:var(--muted); padding:9px 10px; border-radius:8px;
+    font-size:13px; cursor:pointer;
+  }
+  .cat-menu-panel button:hover{ background:var(--panel-2); color:var(--frost); }
+  .cat-menu-panel button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
+  .stats-row-scroll{ display:flex; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
+  .stats-row-scroll .metric{ flex:1 1 130px; min-width:130px; }
   .filter-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
   .filter-bar input, .filter-bar select{ height:34px; }
   .seg{ display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
@@ -3498,6 +3549,139 @@ function updateChiefGearCurrentStats() {
 // cards, teleport skins, etc). Supports admin add/edit/upload via
 // a modal, backed by a Supabase Storage bucket for custom images.
 // ============================================================
+// ---- Shared gallery helpers (Skin Gallery + Islands) ----
+
+// Renders a "menu button + scrollable tab row" category switcher into
+// containerEl. Only one category is shown at a time (matching the game's
+// own menu pattern), selected via either the tabs or the "..." dropdown.
+function renderCategorySwitcher(containerEl, categories, current, onSelect) {
+  containerEl.innerHTML = `
+    <div class="cat-switcher">
+      <div style="position:relative;">
+        <button class="cat-menu-btn" type="button" id="${containerEl.id}MenuBtn" title="All categories">&#9776;</button>
+        <div class="cat-menu-panel" id="${containerEl.id}MenuPanel">
+          ${categories.map((c) => `<button data-cat="${esc(c)}" class="${c === current ? "active" : ""}">${esc(c)} ${c === current ? "&#10003;" : ""}</button>`).join("")}
+        </div>
+      </div>
+      <div class="cat-tabs" id="${containerEl.id}Tabs">
+        ${categories.map((c) => `<button data-cat="${esc(c)}" class="${c === current ? "active" : ""}">${esc(c)}</button>`).join("")}
+      </div>
+    </div>
+  `;
+  const menuBtn = document.getElementById(`${containerEl.id}MenuBtn`);
+  const menuPanel = document.getElementById(`${containerEl.id}MenuPanel`);
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menuPanel.classList.toggle("open");
+  });
+  document.addEventListener("click", () => menuPanel.classList.remove("open"), { once: true });
+  containerEl.querySelectorAll("button[data-cat]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onSelect(btn.dataset.cat);
+    });
+  });
+}
+
+// Opens the tap-to-edit detail modal for a skin or island card. For plain
+// skins this is just an Owned toggle (+ Count in max, when applicable);
+// for islands (isIsland=true) it's a level dropdown, and owned is derived
+// automatically from level > 0.
+// Opens the tap-to-edit detail modal for a skin or island, as position
+// `index` within `list` (the currently filtered/visible cards). Swiping the
+// card left/right moves to the next/previous item without closing the
+// modal - matching how the in-game gallery browses items.
+function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
+  const item = list[index];
+  let modal = document.getElementById("galleryDetailModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "galleryDetailModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+  }
+  const maxLvl = item.max_level ?? 10;
+  const lvl = item.current_level ?? 0;
+  const goTo = (newIndex) => {
+    if (newIndex < 0 || newIndex >= list.length) return;
+    openGalleryDetailModal(list, newIndex, { isIsland, onSave });
+  };
+  modal.innerHTML = `
+    <div class="modal-box" id="galleryModalBox" style="max-width:320px; text-align:center; touch-action:pan-y;">
+      <div class="meta" style="font-size:11px; margin-bottom:10px;">${index + 1} / ${list.length} &nbsp;\u2022&nbsp; swipe to browse</div>
+      <div class="thumb" style="width:140px; height:140px; margin:0 auto 14px; border-radius:12px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
+        ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:32px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
+      </div>
+      <h2 style="margin-bottom:4px;">${esc(item.name)}</h2>
+      <p class="desc" style="margin-bottom:16px;">${esc(item.category || "")}</p>
+      ${isIsland
+        ? `<div class="field" style="text-align:left;">
+             <label>Current level</label>
+             <select id="galleryModalLevel" style="width:100%;">
+               ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? "0 (not built)" : `Lv. ${i}`}</option>`).join("")}
+             </select>
+           </div>`
+        : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:${item.show_count_toggle ? "10px" : "0"};">${item.owned ? "\u2713 Owned \u2014 tap to unown" : "Mark as owned"}</button>
+           ${item.show_count_toggle ? `<label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer;">
+             <input type="checkbox" id="galleryModalCountInMax" ${item.count_in_max !== false ? "checked" : ""} />
+             <span class="meta" style="font-size:12px;">Count toward max totals</span>
+           </label>` : ""}`
+      }
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn ghost small" id="galleryModalPrev" style="flex:1;" ${index === 0 ? "disabled" : ""}>&#8592; Prev</button>
+        <button class="btn ghost small" id="galleryModalClose" style="flex:1;">Close</button>
+        <button class="btn ghost small" id="galleryModalNext" style="flex:1;" ${index === list.length - 1 ? "disabled" : ""}>Next &#8594;</button>
+      </div>
+    </div>`;
+  modal.style.display = "flex";
+  document.getElementById("galleryModalClose").addEventListener("click", () => { modal.style.display = "none"; });
+  document.getElementById("galleryModalPrev").addEventListener("click", () => goTo(index - 1));
+  document.getElementById("galleryModalNext").addEventListener("click", () => goTo(index + 1));
+
+  // Swipe left/right on the card itself to move between items (touch-only;
+  // vertical scrolling still works normally via touch-action:pan-y above).
+  const box = document.getElementById("galleryModalBox");
+  let touchStartX = null, touchStartY = null;
+  box.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    if (touchStartX == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    touchStartX = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) goTo(index + 1);
+      else goTo(index - 1);
+    }
+  }, { passive: true });
+
+  if (isIsland) {
+    document.getElementById("galleryModalLevel").addEventListener("change", async (e) => {
+      const newLvl = Number(e.target.value);
+      await onSave(item, { current_level: newLvl, owned: newLvl > 0 });
+      item.current_level = newLvl;
+      item.owned = newLvl > 0;
+      goTo(index);
+    });
+  } else {
+    document.getElementById("galleryModalOwnedBtn").addEventListener("click", async () => {
+      await onSave(item, { owned: !item.owned });
+      item.owned = !item.owned;
+      goTo(index);
+    });
+    const cim = document.getElementById("galleryModalCountInMax");
+    if (cim) {
+      cim.addEventListener("change", async () => {
+        await onSave(item, { count_in_max: cim.checked });
+        item.count_in_max = cim.checked;
+      });
+    }
+  }
+}
+
 let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
 
 // Renders totals-by-bonus-type, filter bar, and the category
@@ -3527,20 +3711,17 @@ async function renderSkinGallery() {
         <div class="sub" id="skinSummaryLine"></div>
       </div>
     </div>
-    <div class="grid g4" id="skinTotals" style="margin-bottom:16px;"></div>
-    <div class="filter-bar">
+    <div class="stats-row-scroll" id="skinTotals" style="margin-bottom:16px;"></div>
+    <div id="skinCatSwitcher"></div>
+    <div class="filter-bar" style="margin-bottom:12px;">
       <input id="skinSearch" placeholder="Search skins..." style="flex:1; min-width:160px;" />
-      <select id="skinCatFilter">
-        <option value="all">All categories</option>
-        ${categories.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("")}
-      </select>
       <div class="seg" id="ownedSeg">
         <button data-owned="all" class="active">All</button>
         <button data-owned="owned">Owned</button>
         <button data-owned="not">Not owned</button>
       </div>
     </div>
-    <div style="display:flex; align-items:center; gap:10px; margin:12px 0 16px;">
+    <div style="display:flex; align-items:center; gap:10px; margin:0 0 16px;">
       <span class="meta" style="font-size:11px;">GLOBE LEVEL</span>
       <select id="globeLevelSelect" style="width:130px;">
         <option value="0">No Globe</option>
@@ -3549,6 +3730,16 @@ async function renderSkinGallery() {
     </div>
     <div id="skinSections"></div>
   `;
+
+  if (SKIN_FILTER.category === "all" || !categories.includes(SKIN_FILTER.category)) {
+    SKIN_FILTER.category = categories[0] || "all";
+  }
+  function onSkinCatSelect(cat) {
+    SKIN_FILTER.category = cat;
+    renderCategorySwitcher(document.getElementById("skinCatSwitcher"), categories, SKIN_FILTER.category, onSkinCatSelect);
+    computeAndRender();
+  }
+  renderCategorySwitcher(document.getElementById("skinCatSwitcher"), categories, SKIN_FILTER.category, onSkinCatSelect);
 
   const globeLevelSaved = (await loadCalcState("skin_globe_level")) || { level: 0 };
   const globeLevelSelect = document.getElementById("globeLevelSelect");
@@ -3637,7 +3828,7 @@ async function renderSkinGallery() {
 
     const ownedCount = skins.filter((s) => s.owned).length;
     document.getElementById("skinSummaryLine").textContent =
-      `${ownedCount} / ${skins.length} skins owned \u00b7 click any skin to toggle owned status`;
+      `${ownedCount} / ${skins.length} skins owned \u00b7 tap any skin to view details`;
 
     // totals by bonus_type: current (owned only) vs max (everything, as if fully owned).
     // Skins sharing a display_group (e.g. Frost Sphere I-VI) are mutually
@@ -3701,103 +3892,58 @@ async function renderSkinGallery() {
           .join("")
       : `<div class="metric" style="grid-column:1/-1;"><div class="label">Total bonus</div><div class="val">+0%</div><div class="meta" style="font-size:11px; margin-top:2px;">Mark skins as owned to see totals</div></div>`;
 
-    const sections = document.getElementById("skinSections");
-    const byCat = {};
-    for (const s of filtered) {
-      (byCat[s.category] = byCat[s.category] || []).push(s);
-    }
-    // Items with the "count trigger" enabled (unverified items needing a
-    // manual count-in-max decision) always sort after normal items within
-    // their category, with a divider line rendered between the two groups.
-    Object.keys(byCat).forEach((cat) => {
-      byCat[cat] = [
-        ...byCat[cat].filter((s) => !s.show_count_toggle),
-        ...byCat[cat].filter((s) => s.show_count_toggle),
-      ];
-    });
 
-    const CATEGORY_ORDER = ["City Skin", "Frame", "Teleport Skin", "Name Card", "Private Chat", "Chief Profile", "Rally"];
-    const catNames = Object.keys(byCat).sort((a, b) => {
-      const ia = CATEGORY_ORDER.indexOf(a);
-      const ib = CATEGORY_ORDER.indexOf(b);
-      if (ia === -1 && ib === -1) return a.localeCompare(b);
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
-    if (!catNames.length) {
+    const sections = document.getElementById("skinSections");
+    // filtered is already scoped to the one selected category (plus search/
+    // owned filters), so this renders a single flat grid - no more
+    // per-category panels stacked on top of each other.
+    const ordered = [
+      ...filtered.filter((s) => !s.show_count_toggle),
+      ...filtered.filter((s) => s.show_count_toggle),
+    ];
+    if (!ordered.length) {
       sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">No skins match your filters.</div></div></div>`;
       return;
     }
-    sections.innerHTML = catNames
-      .map(
-        (cat) => `
-      <div class="panel" data-skincat="${esc(cat)}">
-        <h2>${esc(cat)}</h2>
-        <p class="desc">${byCat[cat].filter((s) => s.owned).length} / ${byCat[cat].length} owned</p>
-        <div class="skin-grid">
-          ${byCat[cat]
-            .map(
-              (s, idx) => {
-                const isLastGlobe = s.display_group === "Frost Sphere" && byCat[cat][idx + 1]?.display_group !== "Frost Sphere";
-                const isLastNonToggle = !s.show_count_toggle && byCat[cat][idx + 1]?.show_count_toggle;
-                return `
-            <div class="skin-card ${s.owned ? "owned" : ""}" data-skin="${s.id}" style="cursor:default;">
-              <div class="thumb" data-toggle="${s.id}" style="cursor:pointer;">
-                ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
-              </div>
-              <div class="info">
-                <div class="sname">${esc(s.name)}</div>
-                <div class="sbonus">${s.bonus_value != null ? `+${Number(s.bonus_value)}% ${esc(s.bonus_type || "")}` : "Bonus unknown"}</div>
-                <div class="sowned">${s.owned ? "\u2713 Owned" : "Not owned"}</div>
-                ${s.show_count_toggle ? `<label style="display:flex; align-items:center; gap:5px; margin-top:4px; cursor:pointer;" onclick="event.stopPropagation()">
-                  <input type="checkbox" data-countinmax="${s.id}" ${s.count_in_max !== false ? "checked" : ""} style="width:13px; height:13px; cursor:pointer;" />
-                  <span class="meta" style="font-size:9.5px;">Count in max</span>
-                </label>` : ""}
-              </div>
-            </div>${isLastGlobe || isLastNonToggle ? `<div style="grid-column:1/-1; height:1px; background:var(--line); margin:6px 0;"></div>` : ""}`;
-              }
-            )
-            .join("")}
-        </div>
-      </div>`
-      )
-      .join("");
+    sections.innerHTML = `
+      <div class="gallery-grid">
+        ${ordered
+          .map((s, idx) => {
+            const isLastGlobe = s.display_group === "Frost Sphere" && ordered[idx + 1]?.display_group !== "Frost Sphere";
+            const isLastNonToggle = !s.show_count_toggle && ordered[idx + 1]?.show_count_toggle;
+            return `
+          <div class="gallery-card ${s.owned ? "owned" : ""}" data-skin="${s.id}">
+            <div class="thumb">
+              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
+            </div>
+            <div class="badge">${esc(s.name)}</div>
+          </div>${isLastGlobe || isLastNonToggle ? `<div style="grid-column:1/-1; height:1px; background:var(--line); margin:2px 0;"></div>` : ""}`;
+          })
+          .join("")}
+      </div>
+    `;
 
-    sections.querySelectorAll("[data-toggle]").forEach((el) => {
-      el.addEventListener("click", async (e) => {
-        const skin = skins.find((s) => s.id === el.dataset.toggle);
-        const newOwned = !skin.owned;
-        try {
-          await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify({ owned: newOwned }) });
-          skin.owned = newOwned;
-          computeAndRender();
-        } catch (err) {
-          toast("Couldn't update skin", true);
-        }
-      });
-    });
-    sections.querySelectorAll("[data-countinmax]").forEach((cb) => {
-      cb.addEventListener("change", async () => {
-        const skin = skins.find((s) => s.id === cb.dataset.countinmax);
-        const newVal = cb.checked;
-        try {
-          await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify({ count_in_max: newVal }) });
-          skin.count_in_max = newVal;
-          computeAndRender();
-        } catch (err) {
-          toast("Couldn't update skin", true);
-        }
+    sections.querySelectorAll("[data-skin]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const idx = ordered.findIndex((s) => s.id === el.dataset.skin);
+        openGalleryDetailModal(ordered, idx, {
+          isIsland: false,
+          onSave: async (skin, patch) => {
+            try {
+              await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+              Object.assign(skin, patch);
+              computeAndRender();
+            } catch (err) {
+              toast("Couldn't update skin", true);
+            }
+          },
+        });
       });
     });
     }
 
   document.getElementById("skinSearch").addEventListener("input", (e) => {
     SKIN_FILTER.search = e.target.value;
-    computeAndRender();
-  });
-  document.getElementById("skinCatFilter").addEventListener("change", (e) => {
-    SKIN_FILTER.category = e.target.value;
     computeAndRender();
   });
   document.getElementById("ownedSeg").addEventListener("click", (e) => {
@@ -3852,13 +3998,10 @@ async function renderIslandGallery() {
         <div class="sub" id="islandSummaryLine"></div>
       </div>
     </div>
-    <div id="islandTroopTotals" style="margin-bottom:20px;"></div>
-    <div class="filter-bar">
+    <div class="stats-row-scroll" id="islandTroopTotals" style="margin-bottom:20px;"></div>
+    <div id="islandCatSwitcher"></div>
+    <div class="filter-bar" style="margin-bottom:12px;">
       <input id="islandSearch" placeholder="Search islands..." style="flex:1; min-width:160px;" />
-      <select id="islandTypeFilter">
-        <option value="all">All types</option>
-        ${bonusTypes.map((t) => `<option value="${esc(t)}">${esc(t)}</option>`).join("")}
-      </select>
       <div class="seg" id="islandOwnedSeg">
         <button data-owned="all" class="active">All</button>
         <button data-owned="owned">Owned</button>
@@ -3867,6 +4010,16 @@ async function renderIslandGallery() {
     </div>
     <div id="islandSections"></div>
   `;
+
+  if (ISLAND_FILTER.bonusType === "all" || !bonusTypes.includes(ISLAND_FILTER.bonusType)) {
+    ISLAND_FILTER.bonusType = bonusTypes[0] || "all";
+  }
+  function onIslandCatSelect(cat) {
+    ISLAND_FILTER.bonusType = cat;
+    renderCategorySwitcher(document.getElementById("islandCatSwitcher"), bonusTypes, ISLAND_FILTER.bonusType, onIslandCatSelect);
+    computeAndRender();
+  }
+  renderCategorySwitcher(document.getElementById("islandCatSwitcher"), bonusTypes, ISLAND_FILTER.bonusType, onIslandCatSelect);
 
   function computeAndRender() {
     const filtered = islands.filter((s) => {
@@ -3880,7 +4033,7 @@ async function renderIslandGallery() {
 
     const ownedCount = islands.filter((s) => s.owned).length;
     document.getElementById("islandSummaryLine").textContent =
-      `${ownedCount} / ${islands.length} islands owned \u00b7 set each island's current level \u2014 totals scale with level`;
+      `${ownedCount} / ${islands.length} islands owned \u00b7 tap any island to set its level`;
 
     // Total Attack/Defense/Lethality/Health per troop: raw-stat islands count
     // toward every troop (they buff all troops equally); display_group
@@ -3922,123 +4075,50 @@ async function renderIslandGallery() {
       const t = specificTotals[label] || { cur: 0, max: 0 };
       return `<div class="metric"><div class="label">${esc(label)}</div><div class="val">+${t.cur.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${t.max.toFixed(1)}%</div></div>`;
     }).join("");
-    document.getElementById("islandTroopTotals").innerHTML = `
-      <div class="grid g4" style="margin-bottom:10px;">${row1}</div>
-      <div class="grid g6">${row2}</div>
-    `;
+    document.getElementById("islandTroopTotals").innerHTML = row1 + row2;
 
     const sections = document.getElementById("islandSections");
-    const byType = {};
-    for (const s of filtered) {
-      groupsFor(s).forEach((g) => {
-        (byType[g] = byType[g] || []).push(s);
-      });
-    }
-    const typeNames = Object.keys(byType).sort((a, b) => {
-      const ia = BONUS_ORDER.indexOf(a);
-      const ib = BONUS_ORDER.indexOf(b);
-      if (ia === -1 && ib === -1) return a.localeCompare(b);
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
-    if (!typeNames.length) {
+    // filtered is already scoped to the one selected category, so render a
+    // single flat grid instead of stacked per-category panels.
+    if (!filtered.length) {
       sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">No islands match your filters.</div></div></div>`;
       return;
     }
-    sections.innerHTML = typeNames
-      .map(
-        (type) => `
-      <div class="panel">
-        <h2>${esc(type)}</h2>
-        <p class="desc">${byType[type].filter((s) => s.owned).length} / ${byType[type].length} owned</p>
-        <div class="skin-grid">
-          ${byType[type]
-            .map((s) => {
-              const lvl = s.current_level ?? 0;
-              const maxLvl = s.max_level ?? 10;
-              const STAT_SLOTS = [
-                ["bonus_type", "bonus_value", "bonus_level1"],
-                ["bonus_type2", "bonus_value2", "bonus_level2"],
-                ["bonus_type3", "bonus_value3", "bonus_level3"],
-                ["bonus_type4", "bonus_value4", "bonus_level4"],
-              ];
-              const stats = STAT_SLOTS
-                .map(([tk, vk, lk]) => (s[vk] != null ? { type: s[tk], value: Number(s[vk]), unlockLvl: s[lk] } : null))
-                .filter(Boolean);
-              const STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-              // Stats sharing the same value+unlock level (e.g. Lethality &
-              // Health always matching on Lighthouse islands) combine into
-              // one line instead of repeating "+X%" for each separately.
-              const statGroups = [];
-              stats.forEach((st) => {
-                const existing = statGroups.find((g) => g.value === st.value && g.unlockLvl === st.unlockLvl);
-                if (existing) existing.types.push(st.type);
-                else statGroups.push({ value: st.value, unlockLvl: st.unlockLvl, types: [st.type] });
-              });
-              const maxLine = statGroups
-                .map((g) => `+${g.value}% ${g.types.map((t) => esc(STAT_ABBR[t] || t || "")).join(" & ")}${g.unlockLvl != null ? ` (Lv${g.unlockLvl})` : ""}`)
-                .join(" &middot; ");
-              return `
-            <div class="skin-card ${s.owned ? "owned" : ""}" data-island="${s.id}" style="cursor:default;">
-              <div class="thumb island-thumb" data-toggle="${s.id}" style="cursor:pointer;">
-                ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
-              </div>
-              <div class="info">
-                <div class="sname">${esc(s.name)}</div>
-                <div class="sbonus">${stats.length ? `${maxLine} @ Lv${maxLvl}` : "Bonus unknown"}</div>
-                <div class="sowned" style="margin:4px 0;">${s.owned ? "\u2713 Owned" : "Not owned"}</div>
-                <div style="display:flex; align-items:center; gap:4px;" onclick="event.stopPropagation()">
-                  <span class="meta" style="font-size:10.5px;">Lv</span>
-                  <select data-levelinput="${s.id}" style="width:70px; padding:3px 4px; font-size:11px;">
-                    ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i}</option>`).join("")}
-                  </select>
-                  <span class="meta" style="font-size:10.5px;">/ ${maxLvl}</span>
-                </div>
-              </div>
-            </div>`;
-            })
-            .join("")}
-        </div>
-      </div>`
-      )
-      .join("");
+    sections.innerHTML = `
+      <div class="gallery-grid">
+        ${filtered
+          .map((s) => `
+          <div class="gallery-card ${s.owned ? "owned" : ""}" data-island="${s.id}">
+            <div class="thumb island-thumb">
+              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
+            </div>
+            <div class="badge">${esc(s.name)} &middot; Lv${s.current_level ?? 0}</div>
+          </div>`)
+          .join("")}
+      </div>
+    `;
 
-    sections.querySelectorAll("[data-toggle]").forEach((el) => {
-      el.addEventListener("click", async (e) => {
-        const island = islands.find((s) => s.id === el.dataset.toggle);
-        const newOwned = !island.owned;
-        try {
-          await sb(`skins?id=eq.${island.id}`, { method: "PATCH", body: JSON.stringify({ owned: newOwned }) });
-          island.owned = newOwned;
-          computeAndRender();
-        } catch (err) {
-          toast("Couldn't update island", true);
-        }
-      });
-    });
-
-    sections.querySelectorAll("[data-levelinput]").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        const island = islands.find((s) => s.id === sel.dataset.levelinput);
-        const val = Number(sel.value);
-        try {
-          await sb(`skins?id=eq.${island.id}`, { method: "PATCH", body: JSON.stringify({ current_level: val }) });
-          island.current_level = val;
-          computeAndRender();
-        } catch (err) {
-          toast("Couldn't update level", true);
-        }
+    sections.querySelectorAll("[data-island]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const idx = filtered.findIndex((s) => s.id === el.dataset.island);
+        openGalleryDetailModal(filtered, idx, {
+          isIsland: true,
+          onSave: async (island, patch) => {
+            try {
+              await sb(`skins?id=eq.${island.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+              Object.assign(island, patch);
+              computeAndRender();
+            } catch (err) {
+              toast("Couldn't update island", true);
+            }
+          },
+        });
       });
     });
   }
 
   document.getElementById("islandSearch").addEventListener("input", (e) => {
     ISLAND_FILTER.search = e.target.value;
-    computeAndRender();
-  });
-  document.getElementById("islandTypeFilter").addEventListener("change", (e) => {
-    ISLAND_FILTER.bonusType = e.target.value;
     computeAndRender();
   });
   document.getElementById("islandOwnedSeg").addEventListener("click", (e) => {
@@ -5139,9 +5219,9 @@ async function renderT11HeliosPage() {
             const cur = T11_STATE[troop][track] || 0;
             const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i === 0 ? "0 (none)" : i}${i === maxLvl ? " (Max)" : ""}</option>`).join("");
             return `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line);">
-            <div class="meta">${esc(track)}</div>
-            <select data-t11track="${esc(troop)}|${esc(track)}" style="width:140px;">${opts}</select>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); flex-wrap:wrap;">
+            <div class="meta" style="min-width:0; flex:1 1 120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(track)}</div>
+            <select data-t11track="${esc(troop)}|${esc(track)}" style="width:120px; flex-shrink:0;">${opts}</select>
           </div>`;
           })
           .join("")}
