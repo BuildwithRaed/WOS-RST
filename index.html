@@ -2992,6 +2992,13 @@ function wireTroopSwipe(el, troops, current, onSelect) {
     }
   };
 }
+// Position dots only (no tap targets, no text hint) - used where the whole
+// switch is meant to be swipe-only.
+function renderSwipeDots(containerEl, items, current, colors) {
+  containerEl.innerHTML = items
+    .map((t) => `<span style="width:7px; height:7px; border-radius:50%; background:${t === current ? ((colors && colors[t]) || "var(--ice)") : "var(--line)"}; display:inline-block;"></span>`)
+    .join("");
+}
 
 async function renderCharmsCalc() {
   await ensureCharmData();
@@ -3020,16 +3027,8 @@ async function renderCharmsCalc() {
   const troopLabel = { Lancer: "Lancer", Infantry: "Infantry", Marksman: "Marksmen" };
   let activeTroop = troopOrder[0];
 
-  // No tap-to-pick tabs here - just a swipe carousel between the 3 troops,
-  // with small dots showing position (not clickable, purely a status hint).
-  function renderTroopDots() {
-    tabsEl.innerHTML = troopOrder
-      .map((t) => `<span style="width:7px; height:7px; border-radius:50%; background:${t === activeTroop ? (TROOP_COLORS[t] || "var(--ice)") : "var(--line)"}; display:inline-block;"></span>`)
-      .join("") + `<span class="meta" style="font-size:11px; margin-left:8px;">&#8592; swipe &#8594;</span>`;
-  }
-
   function renderTroopSections() {
-    renderTroopDots();
+    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS);
     const troop = activeTroop;
     const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
     // flatten each piece's 3 slots into a single Charm 1-6 list
@@ -3242,7 +3241,7 @@ async function renderChiefGearCalc() {
       <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
       <div id="gearOwned"></div>
     </div>
-    <div id="gearTroopTabs"></div>
+    <div id="gearTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="gearRows"></div>
     <div class="panel">
       <h2>Current stats</h2>
@@ -3259,10 +3258,7 @@ async function renderChiefGearCalc() {
   const tabsEl = document.getElementById("gearTroopTabs");
   const rowsEl = document.getElementById("gearRows");
   function renderPieces() {
-    renderTroopTabs(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (troop) => {
-      activeTroop = troop;
-      renderPieces();
-    });
+    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS);
     const troop = activeTroop;
     const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
     rowsEl.innerHTML = `
@@ -3654,24 +3650,26 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
     openGalleryDetailModal(list, newIndex, { isIsland, onSave });
   };
   modal.innerHTML = `
-    <div class="modal-box" id="galleryModalBox" style="max-width:320px; text-align:center; touch-action:pan-y;">
-      ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:10px;">${index + 1} / ${list.length} &nbsp;\u2022&nbsp; swipe to browse</div>` : ""}
-      <div class="thumb" style="width:140px; height:140px; margin:0 auto 14px; border-radius:12px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
-        ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:32px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
+    <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y; padding:18px;">
+      ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length} &nbsp;\u2022&nbsp; swipe to browse</div>` : ""}
+      <div class="thumb" style="width:${isIsland ? "100px" : "140px"}; height:${isIsland ? "100px" : "140px"}; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
+        ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:28px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
       </div>
-      <h2 style="margin-bottom:4px;">${esc(item.name)}</h2>
-      <p class="desc" style="margin-bottom:16px;">${esc(item.category || "")}</p>
+      <h2 style="margin-bottom:${isIsland ? "10px" : "4px"}; font-size:${isIsland ? "15px" : "16px"};">${esc(item.name)}</h2>
+      ${isIsland ? "" : `<p class="desc" style="margin-bottom:16px;">${esc(item.category || "")}</p>`}
       ${isIsland
-        ? `<div class="field" style="text-align:left;">
-             <label>Current level</label>
-             <select id="galleryModalLevel" style="width:100%;">
-               ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? "0 (not built)" : `Lv. ${i}`}</option>`).join("")}
-             </select>
-           </div>
-           <label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer; margin-bottom:4px;">
-             <input type="checkbox" id="galleryModalIslandOwned" ${item.owned ? "checked" : ""} />
-             <span class="meta" style="font-size:12px;">Owned</span>
-           </label>`
+        ? `<div style="display:flex; align-items:center; gap:10px; text-align:left;">
+             <div style="flex:1;">
+               <label style="font-size:11px; display:block; margin-bottom:4px;">Level</label>
+               <select id="galleryModalLevel" style="width:100%;">
+                 ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? "0 (not built)" : `Lv. ${i}`}</option>`).join("")}
+               </select>
+             </div>
+             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding-top:18px;">
+               <input type="checkbox" id="galleryModalIslandOwned" ${item.owned ? "checked" : ""} />
+               <span class="meta" style="font-size:12px;">Owned</span>
+             </label>
+           </div>`
         : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:${item.show_count_toggle ? "10px" : "0"};">${item.owned ? "\u2713 Owned \u2014 tap to unown" : "Mark as owned"}</button>
            ${item.show_count_toggle ? `<label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer;">
              <input type="checkbox" id="galleryModalCountInMax" ${item.count_in_max !== false ? "checked" : ""} />
@@ -3679,7 +3677,7 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
            </label>` : ""}`
       }
       ${isIsland
-        ? `<button class="btn ghost small" id="galleryModalClose" style="width:100%; margin-top:16px;">Close</button>`
+        ? `<button class="btn ghost small" id="galleryModalClose" style="width:100%; margin-top:14px;">Close</button>`
         : `<div style="display:flex; gap:8px; margin-top:16px;">
              <button class="btn ghost small" id="galleryModalPrev" style="flex:1;" ${index === 0 ? "disabled" : ""}>&#8592; Prev</button>
              <button class="btn ghost small" id="galleryModalClose" style="flex:1;">Close</button>
@@ -5147,6 +5145,7 @@ async function renderT11HeliosPage() {
     </div>
     ${researchSpeedInputHtml()}
     <div id="t11GrandTotal" style="margin-bottom:16px;"></div>
+    <div id="t11TroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="t11Troops"></div>
   `;
 
@@ -5223,6 +5222,9 @@ async function renderT11HeliosPage() {
   }
 
   const troopsEl = document.getElementById("t11Troops");
+  const t11DotsEl = document.getElementById("t11TroopDots");
+  const T11_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  let t11ActiveTroop = T11_TROOPS[0];
   function renderGrandTotal() {
     const grand = { meat: 0, wood: 0, coal: 0, iron: 0, steel: 0, refined_fc: 0, fc_shard: 0, time_hours: 0 };
     T11_TROOPS.forEach((troop) => {
@@ -5249,14 +5251,18 @@ async function renderT11HeliosPage() {
   }
 
   function render() {
-    troopsEl.innerHTML = T11_TROOPS.map((troop) => {
-      const tracks = T11_NODES_CACHE[troop];
-      if (!tracks) {
-        return `<div class="panel"><h2>${esc(troop)}</h2><div class="empty">Data not yet available for this troop type.</div></div>`;
-      }
-      const needed = computeNeeded(troop);
-      const stats = computeStats(troop);
-      const maxStats = computeMaxStats(troop);
+    renderSwipeDots(t11DotsEl, T11_TROOPS, t11ActiveTroop, T11_TROOP_COLORS);
+    const troop = t11ActiveTroop;
+    const tracks = T11_NODES_CACHE[troop];
+    if (!tracks) {
+      troopsEl.innerHTML = `<div class="panel"><h2>${esc(troop)}</h2><div class="empty">Data not yet available for this troop type.</div></div>`;
+      wireTroopSwipe(troopsEl, T11_TROOPS, t11ActiveTroop, (t) => { t11ActiveTroop = t; render(); });
+      return;
+    }
+    const needed = computeNeeded(troop);
+    const stats = computeStats(troop);
+    const maxStats = computeMaxStats(troop);
+    troopsEl.innerHTML = (() => {
       return `
       <div class="panel">
         <h2>${esc(troop)}</h2>
@@ -5285,7 +5291,8 @@ async function renderT11HeliosPage() {
           })
           .join("")}
       </div>`;
-    }).join("");
+    })();
+    wireTroopSwipe(troopsEl, T11_TROOPS, t11ActiveTroop, (t) => { t11ActiveTroop = t; render(); });
 
     troopsEl.querySelectorAll("[data-t11track]").forEach((sel) => {
       sel.addEventListener("change", async () => {
@@ -6963,6 +6970,7 @@ async function renderT12ResearchPage() {
     </div>
     ${researchSpeedInputHtml()}
     <div id="t12Totals" style="margin-bottom:16px;"></div>
+    <div id="t12TroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="t12Troops"></div>
   `;
 
@@ -7036,17 +7044,21 @@ async function renderT12ResearchPage() {
     renderChiefGearResourcesBar("t12ResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderTroopPanels(); }, "t12_research");
   }
 
+  const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  let t12ActiveTroop = T12_TROOPS[0];
   function renderTroopPanels() {
     const troopsEl = document.getElementById("t12Troops");
+    const dotsEl = document.getElementById("t12TroopDots");
+    renderSwipeDots(dotsEl, T12_TROOPS, t12ActiveTroop, T12_TROOP_COLORS);
     const groups = [...new Set(T12_ITEM_DEFS.map((d) => d.group))];
     const statMax = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     T12_ITEM_DEFS.forEach((def) => {
       if (def.stat) statMax[def.stat] += def.max * (def.pct || 1);
     });
-    troopsEl.innerHTML = T12_TROOPS.map((troop) => {
-      const needed = computeNeeded(T12_STATE[troop]);
-      const stats = computeT12Stats(T12_STATE[troop]);
-      return `
+    const troop = t12ActiveTroop;
+    const needed = computeNeeded(T12_STATE[troop]);
+    const stats = computeT12Stats(T12_STATE[troop]);
+    troopsEl.innerHTML = `
       <div class="panel">
         <h2>${esc(troop)}</h2>
         <div class="grid g4" style="margin-bottom:10px;">
@@ -7083,11 +7095,9 @@ async function renderT12ResearchPage() {
           })
           .join("")}
       </div>`;
-    }).join("");
+    wireTroopSwipe(troopsEl, T12_TROOPS, t12ActiveTroop, (t) => { t12ActiveTroop = t; renderTroopPanels(); });
 
-    troopsEl.querySelectorAll("select[data-t12item]").forEach((sel, idx) => {
-      const parent = sel.closest(".panel");
-      const troop = T12_TROOPS[[...troopsEl.querySelectorAll(".panel")].indexOf(parent)];
+    troopsEl.querySelectorAll("select[data-t12item]").forEach((sel) => {
       sel.addEventListener("change", async () => {
         T12_STATE[troop][sel.dataset.t12item] = Number(sel.value);
         await saveCalcState("t12_research", T12_STATE);
