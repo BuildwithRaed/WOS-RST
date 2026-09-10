@@ -2962,6 +2962,37 @@ async function ensureCharmData() {
   }
 }
 
+// ---- Shared "one troop at a time, swipe to switch" helper ----
+// Renders a single-row tab header for Infantry/Lancer/Marksman (or any
+// small set of troops) and wires horizontal swipe gestures on the content
+// area below it to move to the next/previous troop, so every troop's full
+// content gets the whole screen width instead of being squeezed 3-across.
+function renderTroopTabs(containerEl, troops, current, colors, onSelect) {
+  containerEl.innerHTML = `
+    <div class="cat-tabs" style="margin-bottom:14px;">
+      ${troops.map((t) => `<button data-troop="${esc(t)}" class="${t === current ? "active" : ""}" style="${t === current && colors && colors[t] ? `border-color:${colors[t]}; color:${colors[t]};` : ""}">${esc(t)}</button>`).join("")}
+    </div>
+  `;
+  containerEl.querySelectorAll("button[data-troop]").forEach((btn) => {
+    btn.addEventListener("click", () => onSelect(btn.dataset.troop));
+  });
+}
+function wireTroopSwipe(el, troops, current, onSelect) {
+  const idx = troops.indexOf(current);
+  let startX = null, startY = null;
+  el.ontouchstart = (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; };
+  el.ontouchend = (e) => {
+    if (startX == null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startX = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const next = dx < 0 ? idx + 1 : idx - 1;
+      if (next >= 0 && next < troops.length) onSelect(troops[next]);
+    }
+  };
+}
+
 async function renderCharmsCalc() {
   await ensureCharmData();
 
@@ -2971,6 +3002,7 @@ async function renderCharmsCalc() {
       <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
       <div id="charmOwned"></div>
     </div>
+    <div id="charmTroopTabs"></div>
     <div id="charmRows"></div>
     <div class="panel">
       <h2>Current stats</h2>
@@ -2982,20 +3014,25 @@ async function renderCharmsCalc() {
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const totalCharms = CHARM_PIECES.length * 3; // 6 pieces x 3 slots = 18
 
+  const tabsEl = document.getElementById("charmTroopTabs");
   const rowsEl = document.getElementById("charmRows");
-  const troopOrder = ["Lancer", "Infantry", "Marksman"];
+  const troopOrder = ["Infantry", "Lancer", "Marksman"];
   const troopLabel = { Lancer: "Lancer", Infantry: "Infantry", Marksman: "Marksmen" };
+  let activeTroop = troopOrder[0];
 
   function renderTroopSections() {
-    rowsEl.innerHTML = `<div class="grid g3" style="gap:16px; align-items:start;">` + troopOrder
-      .map((troop) => {
-        const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
-        // flatten each piece's 3 slots into a single Charm 1-6 list
-        const flatCharms = [];
-        pieces.forEach((p) => {
-          [0, 1, 2].forEach((i) => flatCharms.push({ piece: p.key, slot: i }));
-        });
-        return `
+    renderTroopTabs(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (troop) => {
+      activeTroop = troop;
+      renderTroopSections();
+    });
+    const troop = activeTroop;
+    const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
+    // flatten each piece's 3 slots into a single Charm 1-6 list
+    const flatCharms = [];
+    pieces.forEach((p) => {
+      [0, 1, 2].forEach((i) => flatCharms.push({ piece: p.key, slot: i }));
+    });
+    rowsEl.innerHTML = `
         <div class="panel">
           <div style="margin-bottom:10px;">
             <div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]}; margin-bottom:8px;">${esc(troopLabel[troop])}</div>
@@ -3010,7 +3047,7 @@ async function renderCharmsCalc() {
               </div>
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+          <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
             ${flatCharms
               .map(
                 (c, i) => `
@@ -3031,8 +3068,7 @@ async function renderCharmsCalc() {
               .join("")}
           </div>
         </div>`;
-      })
-      .join("") + `</div>`;
+    wireTroopSwipe(rowsEl, troopOrder, activeTroop, (t) => { activeTroop = t; renderTroopSections(); });
 
     rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
       sel.addEventListener("change", () => {
@@ -3201,6 +3237,7 @@ async function renderChiefGearCalc() {
       <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
       <div id="gearOwned"></div>
     </div>
+    <div id="gearTroopTabs"></div>
     <div id="gearRows"></div>
     <div class="panel">
       <h2>Current stats</h2>
@@ -3211,14 +3248,19 @@ async function renderChiefGearCalc() {
 
   const opts = rows.map((r, i) => `<option value="${i}">${esc(chiefGearRowLabel(r))}</option>`).join("");
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
-  const troopOrder = ["Lancer", "Infantry", "Marksman"];
+  const troopOrder = ["Infantry", "Lancer", "Marksman"];
+  let activeTroop = troopOrder[0];
 
+  const tabsEl = document.getElementById("gearTroopTabs");
   const rowsEl = document.getElementById("gearRows");
   function renderPieces() {
-    rowsEl.innerHTML = `<div class="grid g3" style="gap:16px; align-items:start;">` + troopOrder
-      .map((troop) => {
-        const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
-        return `
+    renderTroopTabs(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (troop) => {
+      activeTroop = troop;
+      renderPieces();
+    });
+    const troop = activeTroop;
+    const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
+    rowsEl.innerHTML = `
         <div class="panel">
           <div style="margin-bottom:10px;">
             <div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]}; margin-bottom:8px;">${esc(troop)}</div>
@@ -3233,14 +3275,14 @@ async function renderChiefGearCalc() {
               </div>
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr; gap:14px;">
+          <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
             ${pieces
               .map(
                 (p) => `
               <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <div class="meta" style="font-size:12px;">${esc(p.name)}</div>
-                  <span class="meta" style="font-size:10.5px;">${esc(CHIEF_GEAR_POSITIONS[p.key] || "")}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
+                  <div class="meta" style="font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(p.name)}</div>
+                  <span class="meta" style="font-size:10.5px; flex-shrink:0;">${esc(CHIEF_GEAR_POSITIONS[p.key] || "")}</span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
                   <img src="${CHIEF_GEAR_ICONS[p.key]}" alt="${esc(p.name)}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" loading="lazy" />
@@ -3258,8 +3300,7 @@ async function renderChiefGearCalc() {
               .join("")}
           </div>
         </div>`;
-      })
-      .join("") + `</div>`;
+    wireTroopSwipe(rowsEl, troopOrder, activeTroop, (t) => { activeTroop = t; renderPieces(); });
 
     rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
       sel.addEventListener("change", () => {
@@ -6637,7 +6678,7 @@ async function renderPetsDataPage() {
                 <select data-petto="${esc(pet)}" style="width:160px;">${levelOpts(to)}</select>
               </div>
             </div>
-            <div class="grid" style="grid-template-columns:repeat(2, 1fr); gap:10px; flex:0 0 auto; width:340px; align-content:start;">
+            <div class="grid" style="grid-template-columns:repeat(2, 1fr); gap:10px; flex:0 0 auto; width:100%; max-width:340px; align-content:start;">
               ${smallResourceCard(PET_MATERIAL_ICONS.food, "Food", Math.round(needed.food).toLocaleString())}
               ${smallResourceCard(PET_MATERIAL_ICONS.manual, "Manual", Math.round(needed.manual).toLocaleString())}
               ${smallResourceCard(PET_MATERIAL_ICONS.potion, "Potion", Math.round(needed.potion).toLocaleString())}
