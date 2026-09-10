@@ -358,6 +358,11 @@
   const SUPABASE_URL = "https://hzourauekkiorojrhpko.supabase.co";
   const SUPABASE_KEY = "sb_publishable_jYL-ovML6Pq2GqJr-ouaGQ_2-uUMzb7";
   const OWNER_EMAIL = "BuildwithRaed@outlook.com";
+  // progression_tables/progression_rows (Chief Gear & Hero Gear material cost
+  // data) is pure shared reference data with a user_id column left over from
+  // the single-user era - every visitor reads the owner's copy, regardless
+  // of who's logged in, since the numbers are the same for everyone.
+  const PROGRESSION_OWNER_ID = "4a1b1beb-90a1-4282-b491-4156d2293093";
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let USER_ID = null;
@@ -1480,7 +1485,7 @@ async function ensureHeroGearData() {
   if (HERO_GEAR_TABLES_CACHE) return;
   const results = await Promise.all(
     ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Empowerment"].map(async (name) => {
-      const [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(name)}&user_id=eq.${USER_ID}&select=id`);
+      const [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(name)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
       if (!table) return { name, rows: [] };
       const rows = await sb(`progression_rows?table_id=eq.${table.id}&select=id,level,stage,materials,stat,stat2,power,display_label,mithril,mythic_gear,xp_component,essence_stones&order=sort_order.asc`);
       return { name, rows };
@@ -2487,11 +2492,11 @@ function parseStatPct(stat) {
 // "upgrade calculator" (materials/stat/power gained for the range)
 // plus the full reference table below it.
 async function renderProgressionInto(target, tableName) {
-  let [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(tableName)}&user_id=eq.${USER_ID}&select=id,name`);
+  let [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(tableName)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,name`);
   if (!table) {
     const [created] = await sb(`progression_tables`, {
       method: "POST",
-      body: JSON.stringify({ user_id: USER_ID, name: tableName, sort_order: 0 }),
+      body: JSON.stringify({ user_id: PROGRESSION_OWNER_ID, name: tableName, sort_order: 0 }),
     });
     table = created;
   }
@@ -2919,7 +2924,7 @@ let CHIEF_GEAR_ROWS = null;
 async function loadChiefGearRows() {
   await ensureChiefGearSetBonusData();
   if (CHIEF_GEAR_ROWS) return CHIEF_GEAR_ROWS;
-  let [table] = await sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${USER_ID}&select=id`);
+  let [table] = await sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
   if (!table) {
     CHIEF_GEAR_ROWS = [];
     return CHIEF_GEAR_ROWS;
