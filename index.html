@@ -2999,6 +2999,26 @@ function renderSwipeDots(containerEl, items, current, colors) {
     .map((t) => `<span style="width:7px; height:7px; border-radius:50%; background:${t === current ? ((colors && colors[t]) || "var(--ice)") : "var(--line)"}; display:inline-block;"></span>`)
     .join("");
 }
+// For longer lists (pets, experts) a "3 / 10" counter reads better than a
+// row of 10 dots. Renders the counter and wires the swipe on the content
+// container in one call.
+function renderSwipeCounter(containerEl, count, activeIndex) {
+  containerEl.innerHTML = `<span class="meta" style="font-size:12px;">${activeIndex + 1} / ${count} &nbsp;\u2022&nbsp; swipe to browse</span>`;
+}
+function wireIndexSwipe(el, count, activeIndex, onNavigate) {
+  let startX = null, startY = null;
+  el.ontouchstart = (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; };
+  el.ontouchend = (e) => {
+    if (startX == null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startX = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const next = dx < 0 ? activeIndex + 1 : activeIndex - 1;
+      if (next >= 0 && next < count) onNavigate(next);
+    }
+  };
+}
 
 async function renderCharmsCalc() {
   await ensureCharmData();
@@ -3652,10 +3672,10 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
   modal.innerHTML = `
     <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y; padding:18px;">
       ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length} &nbsp;\u2022&nbsp; swipe to browse</div>` : ""}
-      <div class="thumb" style="width:${isIsland ? "100px" : "140px"}; height:${isIsland ? "100px" : "140px"}; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
+      ${isIsland ? "" : `<div class="thumb" style="width:140px; height:140px; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
         ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:28px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
-      </div>
-      <h2 style="margin-bottom:${isIsland ? "10px" : "4px"}; font-size:${isIsland ? "15px" : "16px"};">${esc(item.name)}</h2>
+      </div>`}
+      <h2 style="margin-bottom:${isIsland ? "14px" : "4px"}; font-size:${isIsland ? "15px" : "16px"};">${esc(item.name)}</h2>
       ${isIsland ? "" : `<p class="desc" style="margin-bottom:16px;">${esc(item.category || "")}</p>`}
       ${isIsland
         ? `<div style="display:flex; align-items:center; gap:10px; text-align:left;">
@@ -5574,8 +5594,8 @@ async function renderExpertsResearchPage() {
         <div class="grid g2" id="expResearchMarksman"></div>
       </div>
     </div>
+    <div id="expResearchSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div class="grid g3" id="expResearchGrid" style="gap:16px;"></div>
-    <div class="grid g2" id="expResearchGrid6Path" style="gap:16px; margin-top:16px;"></div>
   `;
 
   const sigilsEl = document.getElementById("expResearchSigils");
@@ -5642,7 +5662,6 @@ async function renderExpertsResearchPage() {
   }
 
   const gridEl = document.getElementById("expResearchGrid");
-  const grid6El = document.getElementById("expResearchGrid6Path");
   function pathLevelOpts(expert, pathNum, selected) {
     const opts = [];
     for (let n = 0; n <= 200; n++) {
@@ -5722,14 +5741,16 @@ async function renderExpertsResearchPage() {
       </div>`;
   }
 
+  const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
+  let activeResearchIdx = 0;
   function renderGrid() {
-    const SIX_PATH_EXPERTS = new Set(["Gareth", "Justus"]);
-    const normalExperts = EXPERTS_IN_ORDER.filter((e) => !SIX_PATH_EXPERTS.has(e));
-    const sixPathExperts = EXPERTS_IN_ORDER.filter((e) => SIX_PATH_EXPERTS.has(e));
-    gridEl.innerHTML = normalExperts.map(expertCardHtml).join("");
-    grid6El.innerHTML = sixPathExperts.map(expertCardHtml).join("");
+    renderSwipeCounter(expResearchCounterEl, EXPERTS_IN_ORDER.length, activeResearchIdx);
+    const expert = EXPERTS_IN_ORDER[activeResearchIdx];
+    gridEl.innerHTML = expertCardHtml(expert);
+    wireIndexSwipe(gridEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => { activeResearchIdx = next; renderGrid(); });
 
-    [gridEl, grid6El].forEach((container) => {
+    const container = gridEl;
+    {
       container.querySelectorAll("input[data-expresearchunlock]").forEach((cb) => {
         cb.addEventListener("change", async () => {
           const expert = cb.dataset.expresearchunlock;
@@ -5793,7 +5814,7 @@ async function renderExpertsResearchPage() {
           renderGrid();
         });
       });
-    });
+    }
   }
 
   renderTotals();
@@ -5879,6 +5900,7 @@ async function renderExpertsPage() {
       <p class="desc">Books of Knowledge + learning time from skill levels, plus Affinity + Sigils from hero level, current to desired. Offset against Your Inventory above \u2014 hero-specific sigils apply first, General Sigils cover any remaining shortfall; Speedups reduce learning time.</p>
       <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
+    <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div class="grid g3" id="expertsGrid" style="gap:16px;"></div>
     <div class="grid g2" style="margin-bottom:16px; gap:16px; margin-top:16px;">
       <div class="panel">
@@ -6130,11 +6152,14 @@ async function renderExpertsPage() {
     return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">${parts.join(", ")}</div>`;
   }
 
+  const expertsCounterEl = document.getElementById("expertsSwipeCounter");
+  let activeExpertIdx = 0;
   function renderGrid() {
-    gridEl.innerHTML = EXPERTS_LIST.map((e) => {
-      const s = saved[e.key];
-      const unlocked = isExpertUnlocked(e.key);
-      return `
+    renderSwipeCounter(expertsCounterEl, EXPERTS_LIST.length, activeExpertIdx);
+    const e = EXPERTS_LIST[activeExpertIdx];
+    const s = saved[e.key];
+    const unlocked = isExpertUnlocked(e.key);
+    gridEl.innerHTML = `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
           <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
@@ -6204,7 +6229,7 @@ async function renderExpertsPage() {
             .join("")}
         </div>
       </div>`;
-    }).join("");
+    wireIndexSwipe(gridEl, EXPERTS_LIST.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
 
     gridEl.querySelectorAll("select[data-expcur]").forEach((sel) => {
       sel.addEventListener("change", async () => {
@@ -6389,6 +6414,7 @@ async function renderRefinePage() {
       </div>
     </div>
     <div id="refineTotals" style="margin-bottom:16px;"></div>
+    <div id="refineSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="refineList"></div>
   `;
 
@@ -6419,7 +6445,7 @@ async function renderRefinePage() {
       <div class="panel">
         <h2>Total refine bonus</h2>
         <p class="desc">Summed across all 15 pets, based on what you've typed in.</p>
-        <div class="grid g3">
+        <div class="stats-row-scroll">
           ${STAT_KEYS.map(({ key, label }) => `<div class="metric"><div class="label">${esc(label)}</div><div class="val">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
         </div>
       </div>
@@ -6457,68 +6483,51 @@ async function renderRefinePage() {
       remainingEl.style.overflow = isMaxed ? "hidden" : "";
     }
   }
+  const refineCounterEl = document.getElementById("refineSwipeCounter");
+  let activeRefineIdx = 0;
   function renderList() {
-    // group pets by their own rarity category (First/N/R/SR/SRR/UR)
-    const groups = {};
-    petNames.forEach((pet) => {
-      const tier = maxRow(pet).category || "Other";
-      if (!groups[tier]) groups[tier] = [];
-      groups[tier].push(pet);
-    });
-    const tiersInUse = [...TIER_ORDER.filter((t) => groups[t]), ...Object.keys(groups).filter((t) => !TIER_ORDER.includes(t))];
-
-    listEl.innerHTML = tiersInUse
-      .map((tier) => {
-        const pets = groups[tier];
-        return `
-        <div class="panel">
-          <h2 style="margin-bottom:12px;">${esc(tier)} tier</h2>
-          <div style="display:grid; grid-template-columns:repeat(${pets.length >= 2 ? 2 : 1}, 1fr); gap:16px;">
-            ${pets
-              .map((pet) => {
-                const idx = petNames.indexOf(pet);
-                const m = maxRow(pet);
-                const s = petState(pet);
-                const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
-                const unlocked = isPetUnlocked(pet);
-                return `
-            <div style="padding:12px; border:1px solid var(--line); border-radius:8px; ${unlocked ? "" : "opacity:0.5;"}">
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                  <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;" />
-                  <div class="name" style="font-size:15px; font-weight:700; color:${color};">${esc(pet)}</div>
-                </label>
-                <button class="btn ghost small" data-refinemaxpet="${esc(pet)}">Max</button>
-              </div>
-              ${STAT_KEYS.map(
-                ({ key, label, maxKey }) => {
-                  const curVal = Number(s[key]) || 0;
-                  const maxVal = Number(m[maxKey]) * 100;
-                  const pct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
-                  const remaining = Math.max(0, maxVal - curVal);
-                  const isMaxed = remaining <= 0.005;
-                  const { color } = stageForValue(pet, maxKey, curVal);
-                  return `
-              <div data-refinerowfor="${esc(pet)}|${key}" style="display:grid; grid-template-columns:150px 80px 1fr 70px; align-items:center; gap:8px; padding:6px 0;">
-                <span class="meta" style="font-size:12px;">${esc(label)}</span>
-                <input type="text" inputmode="decimal" data-refinepet="${esc(pet)}" data-refinestat="${key}" value="${s[key]}" style="width:70px; padding:4px 6px;" />
-                <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-                  <div data-refinebar style="flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden;">
-                    <div style="width:${pct}%; height:100%; background:${color}; border-radius:4px; transition:width 0.2s;"></div>
-                  </div>
-                  <span data-refineremaining class="meta" style="font-size:10.5px; color:${color}; flex-shrink:0; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
-                </div>
-                <span class="meta" style="font-size:10.5px;">of max ${maxVal.toFixed(2)}%</span>
-              </div>`;
-                }
-              ).join("")}
-            </div>`;
-              })
-              .join("")}
+    renderSwipeCounter(refineCounterEl, petNames.length, activeRefineIdx);
+    const idx = activeRefineIdx;
+    const pet = petNames[idx];
+    const m = maxRow(pet);
+    const s = petState(pet);
+    const tier = m.category || "Other";
+    const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
+    const unlocked = isPetUnlocked(pet);
+    listEl.innerHTML = `
+        <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
+          <div class="meta" style="font-size:11px; margin-bottom:10px;">${esc(tier)} tier</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;" />
+              <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
+            </label>
+            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}">Max</button>
           </div>
+          ${STAT_KEYS.map(
+            ({ key, label, maxKey }) => {
+              const curVal = Number(s[key]) || 0;
+              const maxVal = Number(m[maxKey]) * 100;
+              const pct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
+              const remaining = Math.max(0, maxVal - curVal);
+              const isMaxed = remaining <= 0.005;
+              const { color: barColor } = stageForValue(pet, maxKey, curVal);
+              return `
+          <div data-refinerowfor="${esc(pet)}|${key}" style="display:grid; grid-template-columns:150px 80px 1fr 70px; align-items:center; gap:8px; padding:6px 0;">
+            <span class="meta" style="font-size:12px;">${esc(label)}</span>
+            <input type="text" inputmode="decimal" data-refinepet="${esc(pet)}" data-refinestat="${key}" value="${s[key]}" style="width:70px; padding:4px 6px;" />
+            <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+              <div data-refinebar style="flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden;">
+                <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.2s;"></div>
+              </div>
+              <span data-refineremaining class="meta" style="font-size:10.5px; color:${barColor}; flex-shrink:0; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
+            </div>
+            <span class="meta" style="font-size:10.5px;">of max ${maxVal.toFixed(2)}%</span>
+          </div>`;
+            }
+          ).join("")}
         </div>`;
-      })
-      .join("");
+    wireIndexSwipe(listEl, petNames.length, activeRefineIdx, (next) => { activeRefineIdx = next; renderList(); });
 
     listEl.querySelectorAll("input[data-petunlockrefine]").forEach((cb) => {
       cb.addEventListener("change", async () => {
@@ -6582,6 +6591,7 @@ async function renderPetsDataPage() {
       <button class="btn" id="petsMaxAllBtn">Max everything</button>
     </div>
     <div id="petsTotals" style="margin-bottom:16px;"></div>
+    <div id="petsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="petsList"></div>
   `;
 
@@ -6667,21 +6677,24 @@ async function renderPetsDataPage() {
   }
 
   const listEl = document.getElementById("petsList");
+  const petsCounterEl = document.getElementById("petsSwipeCounter");
+  let activePetIdx = 0;
   function renderList() {
-    listEl.innerHTML = petNames
-      .map((pet, idx) => {
-        const levels = PETS_NODES_CACHE[pet];
-        const { from, to } = getState(pet);
-        const needed = computeNeeded(pet);
-        const cur = currentAtkDef(pet);
-        const max = maxAtkDef(pet);
-        const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
-        const unlocked = isPetUnlocked(pet);
-        const levelOpts = (selected) =>
-          levels.map((r, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>Lv. ${r.level_label}${i === levels.length - 1 ? " (Max)" : ""}</option>`).join("");
-        const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>Not started</option>` + levelOpts(from);
+    renderSwipeCounter(petsCounterEl, petNames.length, activePetIdx);
+    const idx = activePetIdx;
+    const pet = petNames[idx];
+    const levels = PETS_NODES_CACHE[pet];
+    const { from, to } = getState(pet);
+    const needed = computeNeeded(pet);
+    const cur = currentAtkDef(pet);
+    const max = maxAtkDef(pet);
+    const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
+    const unlocked = isPetUnlocked(pet);
+    const levelOpts = (selected) =>
+      levels.map((r, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>Lv. ${r.level_label}${i === levels.length - 1 ? " (Max)" : ""}</option>`).join("");
+    const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>Not started</option>` + levelOpts(from);
 
-        return `
+    listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
           <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; align-items:stretch;">
             <div style="flex:0 0 auto; min-width:170px;">
@@ -6713,8 +6726,7 @@ async function renderPetsDataPage() {
             </div>
           </div>
         </div>`;
-      })
-      .join("");
+    wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
 
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
       cb.addEventListener("change", async () => {
