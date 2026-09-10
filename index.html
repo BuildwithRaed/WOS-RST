@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="WOS Tracker" />
+<meta name="theme-color" content="#0b0f16" />
 <title>WOS Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -116,6 +120,62 @@
   .g2{ grid-template-columns:repeat(2,1fr); }
   .g6{ grid-template-columns:repeat(6,1fr); }
   @media (max-width:760px){ .g4{grid-template-columns:repeat(2,1fr);} .g3{grid-template-columns:1fr 1fr;} .g2{grid-template-columns:1fr;} .g6{grid-template-columns:repeat(3,1fr);} }
+
+  /* ============================================================
+     PHONE (narrow, <=480px): fixes overflow from the many fixed
+     pixel widths used throughout (inputs/selects set to 80-200px
+     for desktop table-style layouts), oversized headings/metrics,
+     and the top navbar not fitting all groups in one row.
+     ============================================================ */
+  @media (max-width:480px){
+    html{ overflow-x:hidden; }
+    body{ overflow-x:hidden; }
+    main{ padding:14px 12px 50px; }
+    h1{ font-size:16px; }
+    h2{ font-size:16px; }
+    .page-head h2{ font-size:17px; }
+    .page-head .sub{ font-size:11.5px; }
+    .metric .val{ font-size:20px; }
+    .metric{ padding:12px 14px; }
+    .stat-card{ padding:12px 14px; }
+    .panel{ padding:14px; }
+    /* Narrower single/double column defaults for every stat grid. */
+    .g4, .g3, .g6{ grid-template-columns:repeat(2,1fr) !important; gap:10px; }
+    .g2{ grid-template-columns:1fr !important; }
+
+    /* Any fixed-width input/select (the app uses many, e.g. width:80px-200px
+       for desktop table-style rows) shrinks to fit its own row instead of
+       forcing the row wider than the screen. */
+    input, select, textarea{ max-width:100%; box-sizing:border-box; }
+    input[style*="width:"], select[style*="width:"]{ width:auto !important; min-width:0; flex:1 1 70px; }
+
+    /* Rows of inputs (admin tables, calculators) wrap instead of overflowing. */
+    form.inline{ flex-wrap:wrap; }
+    .row-inline{ flex-wrap:wrap; }
+
+    /* Top navbar: let the group row scroll horizontally instead of wrapping
+       into a tall multi-line block that pushes content down awkwardly. */
+    nav.topnav{ padding:8px 10px; gap:2px; }
+    .topnav-groups{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .topnav-groups::-webkit-scrollbar{ display:none; }
+    .topnav-group-btn{ padding:7px 8px; font-size:11.5px; }
+    .topnav-dropdown{ min-width:170px; max-width:calc(100vw - 24px); }
+
+    /* Modals/dropdowns never exceed the viewport width. */
+    .modal-box{ max-width:calc(100vw - 24px) !important; width:calc(100vw - 24px); }
+    .topnav-settings-panel{ max-width:calc(100vw - 24px); right:-8px; }
+
+    /* Tables: keep horizontal scroll contained to the table itself, not
+       the whole page, and shrink cell padding/font a bit. */
+    table{ font-size:11.5px; }
+    table th, table td{ padding:4px 6px !important; }
+
+    /* Skin/island card grids: 2 per row instead of forcing a wide minimum. */
+    .skin-grid{ grid-template-columns:repeat(2, 1fr) !important; gap:8px; }
+    #islandSections .skin-grid{ grid-template-columns:repeat(2, 1fr) !important; }
+
+    button.btn{ padding:8px 12px; font-size:12.5px; }
+  }
   .metric{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
     padding:16px 18px;
