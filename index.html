@@ -3002,7 +3002,7 @@ async function renderCharmsCalc() {
       <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
       <div id="charmOwned"></div>
     </div>
-    <div id="charmTroopTabs"></div>
+    <div id="charmTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="charmRows"></div>
     <div class="panel">
       <h2>Current stats</h2>
@@ -3020,11 +3020,16 @@ async function renderCharmsCalc() {
   const troopLabel = { Lancer: "Lancer", Infantry: "Infantry", Marksman: "Marksmen" };
   let activeTroop = troopOrder[0];
 
+  // No tap-to-pick tabs here - just a swipe carousel between the 3 troops,
+  // with small dots showing position (not clickable, purely a status hint).
+  function renderTroopDots() {
+    tabsEl.innerHTML = troopOrder
+      .map((t) => `<span style="width:7px; height:7px; border-radius:50%; background:${t === activeTroop ? (TROOP_COLORS[t] || "var(--ice)") : "var(--line)"}; display:inline-block;"></span>`)
+      .join("") + `<span class="meta" style="font-size:11px; margin-left:8px;">&#8592; swipe &#8594;</span>`;
+  }
+
   function renderTroopSections() {
-    renderTroopTabs(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (troop) => {
-      activeTroop = troop;
-      renderTroopSections();
-    });
+    renderTroopDots();
     const troop = activeTroop;
     const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
     // flatten each piece's 3 slots into a single Charm 1-6 list
