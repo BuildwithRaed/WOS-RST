@@ -63,6 +63,35 @@
     color:var(--ice); font-weight:700; font-size:14px; flex-shrink:0;
   }
   .topnav .brand h1{ font-size:15px; margin:0; font-weight:600; white-space:nowrap; }
+  #mobileMenuBtn{
+    display:none; align-items:center; gap:6px; margin-left:10px;
+    background:transparent; border:1px solid var(--line); color:var(--frost);
+    border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer;
+  }
+  #mobileMenuOverlay{
+    display:none; position:fixed; inset:0; background:var(--bg); z-index:100;
+    overflow-y:auto; padding:16px;
+  }
+  #mobileMenuOverlay.open{ display:block; }
+  .mm-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .mm-header h2{ font-size:16px; margin:0; }
+  .mm-close{ background:transparent; border:1px solid var(--line); color:var(--frost); border-radius:8px; width:36px; height:36px; font-size:16px; cursor:pointer; }
+  .mm-category{ border-bottom:1px solid var(--line); }
+  .mm-category-btn{
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:transparent; border:none; color:var(--frost); text-align:left;
+    padding:14px 4px; font-size:14.5px; font-weight:600; cursor:pointer;
+  }
+  .mm-category-btn .caret{ font-size:11px; color:var(--muted); transition:transform .15s; }
+  .mm-category.open .mm-category-btn .caret{ transform:rotate(180deg); }
+  .mm-pages{ display:none; padding:0 4px 12px 14px; }
+  .mm-category.open .mm-pages{ display:block; }
+  .mm-pages button{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    background:transparent; border:none; color:var(--muted);
+    padding:10px 8px; border-radius:8px; font-size:13.5px; cursor:pointer; margin-bottom:2px;
+  }
+  .mm-pages button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -103,6 +132,8 @@
   @media (max-width:760px){
     .topnav .brand h1{ display:none; }
     .topnav-group-btn{ padding:7px 9px; font-size:12px; }
+    .topnav-groups{ display:none; }
+    #mobileMenuBtn{ display:flex; }
   }
   #addCategoryBtn{
     display:flex; align-items:center; gap:8px; width:calc(100% - 20px); margin:6px 10px 14px;
@@ -119,7 +150,8 @@
   .g3{ grid-template-columns:repeat(3,1fr); }
   .g2{ grid-template-columns:repeat(2,1fr); }
   .g6{ grid-template-columns:repeat(6,1fr); }
-  @media (max-width:760px){ .g4{grid-template-columns:repeat(2,1fr);} .g3{grid-template-columns:1fr 1fr;} .g2{grid-template-columns:1fr;} .g6{grid-template-columns:repeat(3,1fr);} }
+  /* Grid column counts for phone/tablet are handled in the comprehensive
+     @media (max-width:760px) block below. */
 
   /* ============================================================
      PHONE (narrow, <=480px): fixes overflow from the many fixed
@@ -127,7 +159,7 @@
      for desktop table-style layouts), oversized headings/metrics,
      and the top navbar not fitting all groups in one row.
      ============================================================ */
-  @media (max-width:480px){
+  @media (max-width:760px){
     html{ overflow-x:hidden; }
     body{ overflow-x:hidden; }
     main{ padding:14px 12px 50px; }
@@ -153,13 +185,9 @@
     form.inline{ flex-wrap:wrap; }
     .row-inline{ flex-wrap:wrap; }
 
-    /* Top navbar: let the group row scroll horizontally instead of wrapping
-       into a tall multi-line block that pushes content down awkwardly. */
+    /* Top navbar: the group row is replaced by the Menu button + full
+       overlay below, so just keep the bar itself compact. */
     nav.topnav{ padding:8px 10px; gap:2px; }
-    .topnav-groups{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-    .topnav-groups::-webkit-scrollbar{ display:none; }
-    .topnav-group-btn{ padding:7px 8px; font-size:11.5px; }
-    .topnav-dropdown{ min-width:170px; max-width:calc(100vw - 24px); }
 
     /* Modals/dropdowns never exceed the viewport width. */
     .modal-box{ max-width:calc(100vw - 24px) !important; width:calc(100vw - 24px); }
@@ -175,6 +203,30 @@
     #islandSections .skin-grid{ grid-template-columns:repeat(2, 1fr) !important; }
 
     button.btn{ padding:8px 12px; font-size:12.5px; }
+
+    /* The app has ~80 inline "display:flex" rows throughout (stat rows,
+       card headers, form rows, etc.) and most don't set flex-wrap, so on a
+       narrow phone their children get squeezed or pushed past the screen
+       edge instead of dropping to a second line. Forcing wrap everywhere
+       is safe - a row that already fits just won't wrap. */
+    [style*="display:flex"]{ flex-wrap:wrap !important; }
+    [style*="display: flex"]{ flex-wrap:wrap !important; }
+    /* Roster heroes: keep the portrait beside its name/stats instead of
+       stacking, even though the broad rule above wraps flex rows by default. */
+    .roster-row{ flex-wrap:nowrap !important; align-items:flex-start !important; }
+    #rosterHeroesGrid{ grid-template-columns:1fr !important; }
+
+    /* Pets Refine's stat rows (label / input / bar / remaining% / max%) use
+       a fixed "150px 80px 1fr 70px" column grid that doesn't fit on a
+       phone - collapse it to two lines instead. */
+    [style*="grid-template-columns:150px 80px"]{
+      grid-template-columns:1fr 1fr !important; row-gap:4px !important;
+    }
+
+    /* Any other element with an inline pixel-based grid-template-columns
+       (a handful of admin/table layouts) scrolls within itself rather
+       than forcing the whole page wider than the screen. */
+    [style*="grid-template-columns:"]{ max-width:100%; overflow-x:auto; }
   }
   .metric{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
@@ -326,6 +378,7 @@
     <div class="brand">
       <div class="mark">W</div>
       <h1>WOS Tracker</h1>
+      <button id="mobileMenuBtn" type="button" title="Menu">&#9776; Menu</button>
     </div>
     <div class="topnav-groups" id="topnavGroups">
       <div class="topnav-group" data-group="Overview">
@@ -403,6 +456,8 @@
       </div>
     </div>
   </nav>
+
+  <div id="mobileMenuOverlay"></div>
 
   <main id="content"></main>
 </div>
@@ -569,6 +624,62 @@ document.getElementById("topnavSettingsBtn").addEventListener("click", (e) => {
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".topnav-group") && !e.target.closest(".topnav-settings")) {
     closeAllTopnavDropdowns();
+  }
+});
+
+// Phone Menu button: a full-screen overlay listing categories, each
+// expanding accordion-style to show its pages. Built from the same
+// #topnavGroups markup so it never drifts out of sync with the real nav
+// (including which groups exist and whether Admin is currently shown).
+function renderMobileMenu() {
+  const overlay = document.getElementById("mobileMenuOverlay");
+  const groups = [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none");
+  overlay.innerHTML = `
+    <div class="mm-header">
+      <h2>Menu</h2>
+      <button class="mm-close" type="button" id="mmCloseBtn">&#10005;</button>
+    </div>
+    ${groups
+      .map((g) => {
+        const name = g.dataset.group;
+        const pagesHtml = g.querySelector(".topnav-dropdown").innerHTML;
+        return `
+      <div class="mm-category" data-group="${esc(name)}">
+        <button class="mm-category-btn" type="button">${esc(name)} <span class="caret">&#9660;</span></button>
+        <div class="mm-pages">${pagesHtml}</div>
+      </div>`;
+      })
+      .join("")}
+  `;
+  overlay.querySelector("#mmCloseBtn").addEventListener("click", closeMobileMenu);
+}
+
+function openMobileMenu() {
+  renderMobileMenu();
+  document.getElementById("mobileMenuOverlay").classList.add("open");
+}
+function closeMobileMenu() {
+  document.getElementById("mobileMenuOverlay").classList.remove("open");
+}
+
+document.getElementById("mobileMenuBtn").addEventListener("click", openMobileMenu);
+
+document.getElementById("mobileMenuOverlay").addEventListener("click", (e) => {
+  const pageBtn = e.target.closest("button[data-tab]");
+  if (pageBtn) {
+    document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.remove("active"));
+    pageBtn.classList.add("active");
+    TAB = pageBtn.dataset.tab;
+    closeMobileMenu();
+    render();
+    return;
+  }
+  const catBtn = e.target.closest(".mm-category-btn");
+  if (catBtn) {
+    const cat = catBtn.closest(".mm-category");
+    const wasOpen = cat.classList.contains("open");
+    document.querySelectorAll(".mm-category.open").forEach((c) => c.classList.remove("open"));
+    if (!wasOpen) cat.classList.add("open");
   }
 });
 
@@ -1197,12 +1308,12 @@ async function renderOverview() {
       <div class="panel" style="margin-bottom:16px;">
         <h2>Roster heroes</h2>
         <p class="desc">The three heroes affecting each troop type.</p>
-        <div class="grid g3" style="gap:16px;">
+        <div class="grid g3" id="rosterHeroesGrid" style="gap:16px;">
           ${TROOP_TYPES.map((t) => {
             const { heroId, widget } = entryFor(t.key);
             const hero = heroCatalog.find((h) => h.id === heroId);
             return `
-            <div style="display:flex; align-items:center; gap:12px;">
+            <div class="roster-row" style="display:flex; align-items:center; gap:12px;">
               <div data-rosterpick="${esc(t.key)}" class="roster-pick" title="Click to choose hero" style="width:64px; height:64px; border-radius:10px; background:var(--panel-2); overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                 ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">Pick<br>hero</span>`}
               </div>
@@ -1310,8 +1421,8 @@ async function renderOverview() {
         const pct = maxTotal > 0 ? Math.min(100, Math.round((total / maxTotal) * 100)) : 0;
         const diff = Math.max(0, maxTotal - total);
         return `<div class="stat-card" data-drilldown="${esc(t.key)}|${esc(s.key)}" style="cursor:pointer; position:relative;">
-          ${diff > 0 ? `<div style="position:absolute; top:10px; right:12px; font-size:12px; font-weight:600; color:#e0b030;">+${diff.toFixed(1)}%</div>` : ""}
-          <div class="label">${esc(s.key)} &middot; ${esc(s.label).toUpperCase()}</div>
+          ${diff > 0 ? `<div style="position:absolute; top:10px; right:12px; font-size:12px; font-weight:600; color:#e0b030; white-space:nowrap;">+${diff.toFixed(1)}%</div>` : ""}
+          <div class="label" style="padding-right:${diff > 0 ? "56px" : "0"};">${esc(s.key)} &middot; ${esc(s.label).toUpperCase()}</div>
           <div class="val">${total.toFixed(1)}%</div>
           <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
           <div class="metric" style="margin-top:8px; padding:8px 10px;">
@@ -1407,7 +1518,11 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
     <div class="modal-box" style="max-width:480px; max-height:80vh; overflow-y:auto;">
       <h2>${esc(title)}</h2>
       ${setTabsHtml}
-      <p class="desc">Current: <strong style="color:var(--frost);">${total.toFixed(1)}%</strong> &middot; Max possible: <strong style="color:var(--ice);">${maxTotal.toFixed(1)}%</strong> &middot; Difference: <strong style="color:var(--warn, #e0a030);">+${(maxTotal - total).toFixed(1)}%</strong></p>
+      <div class="desc" style="display:flex; flex-wrap:wrap; gap:6px 16px; margin:0 0 16px;">
+        <span>Current: <strong style="color:var(--frost); white-space:nowrap;">${total.toFixed(1)}%</strong></span>
+        <span>Max possible: <strong style="color:var(--ice); white-space:nowrap;">${maxTotal.toFixed(1)}%</strong></span>
+        <span>Difference: <strong style="color:var(--warn, #e0a030); white-space:nowrap;">+${(maxTotal - total).toFixed(1)}%</strong></span>
+      </div>
       <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:4px 12px; margin-top:12px; align-items:center;">
         <div class="meta" style="font-size:10.5px;"></div>
         <div class="meta" style="font-size:10.5px; text-align:right;">Current</div>
