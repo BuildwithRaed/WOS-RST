@@ -2079,10 +2079,10 @@ function updateHeroGearCurrentStats() {
     <div style="margin-bottom:14px;">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
       <div class="stats-row-scroll">
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Attack}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Attack.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Attack.toFixed(1)}%</div></div>
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Defense}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Defense.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Defense.toFixed(1)}%</div></div>
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Lethality}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Lethality.toFixed(1)}%</div></div>
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Health}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Health.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Health.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">${HG_STAT_ABBR.Attack}</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.statTotals.Attack.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${r.maxTotals.Attack.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">${HG_STAT_ABBR.Defense}</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.statTotals.Defense.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${r.maxTotals.Defense.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">${HG_STAT_ABBR.Lethality}</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.statTotals.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${r.maxTotals.Lethality.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">${HG_STAT_ABBR.Health}</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.statTotals.Health.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${r.maxTotals.Health.toFixed(1)}%</div></div>
       </div>
     </div>`
     )
@@ -3183,7 +3183,7 @@ function updateCharmCurrentStats() {
         (r, idx) => `
     <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
-      <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">LETH &amp; HP</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.avg.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.toFixed(1)}%</div></div>
+      <div class="metric" style="padding:8px;"><div class="label" style="font-size:9px;">LETH &amp; HP</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.avg.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.toFixed(1)}%</div></div>
     </div>`
       )
       .join("") +
@@ -3600,7 +3600,7 @@ function updateChiefGearCurrentStats() {
         (r, idx) => `
     <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
-      <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">ATK &amp; DEF</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.stats.Attack.toFixed(2)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.Attack.toFixed(2)}%</div></div>
+      <div class="metric" style="padding:8px;"><div class="label" style="font-size:9px;">ATK &amp; DEF</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.stats.Attack.toFixed(2)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.max.Attack.toFixed(2)}%</div></div>
     </div>`
       )
       .join("") +
@@ -4145,14 +4145,16 @@ async function renderIslandGallery() {
         }
       });
     }
+    const STAT_ABBR2 = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
     const row1 = RAW_STATS.map((stat) => {
       const t = generalTotals[stat] || { cur: 0, max: 0 };
-      return `<div class="metric"><div class="label">Troops ${esc(stat)}</div><div class="val">+${t.cur.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${t.max.toFixed(1)}%</div></div>`;
+      return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">Troops ${esc(STAT_ABBR2[stat] || stat)}</div><div class="val" style="font-size:13px;">+${t.cur.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${t.max.toFixed(1)}%</div></div>`;
     }).join("");
     const row2Order = ["Infantry Attack", "Infantry Defense", "Lancers Attack", "Lancers Defense", "Marksman Attack", "Marksman Defense"];
+    const row2Abbr = { "Infantry Attack": "Inf ATK", "Infantry Defense": "Inf DEF", "Lancers Attack": "Lan ATK", "Lancers Defense": "Lan DEF", "Marksman Attack": "Mark ATK", "Marksman Defense": "Mark DEF" };
     const row2 = row2Order.map((label) => {
       const t = specificTotals[label] || { cur: 0, max: 0 };
-      return `<div class="metric"><div class="label">${esc(label)}</div><div class="val">+${t.cur.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${t.max.toFixed(1)}%</div></div>`;
+      return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">${esc(row2Abbr[label] || label)}</div><div class="val" style="font-size:13px;">+${t.cur.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${t.max.toFixed(1)}%</div></div>`;
     }).join("");
     document.getElementById("islandTroopTotals").innerHTML = row1 + row2;
 
@@ -4566,7 +4568,7 @@ async function renderVipTierTable(target) {
     statsEl.innerHTML = columns
       .map((c) => {
         const v = valByCol[c.id];
-        return `<div class="metric"><div class="label">${esc(c.name.toUpperCase())}</div><div class="val">${v != null ? `+${Number(v)}%` : "\u2014"}</div></div>`;
+        return `<div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">${esc(c.name.toUpperCase())}</div><div class="val" style="font-size:13px;">${v != null ? `+${Number(v)}%` : "\u2014"}</div></div>`;
       })
       .join("");
   }
@@ -4890,7 +4892,7 @@ async function renderAllianceTechPage() {
         const shared = troopsIt ? effective(troopsIt) : { cur: 0, max: 0 };
         const cur = own.cur + shared.cur;
         const max = own.max + shared.max;
-        return `<div class="metric"><div class="label">${TROOP_ABBR[troop]} ${STAT_ABBR[stat] || esc(stat)}</div><div class="val">+${cur}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${max}%</div></div>`;
+        return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">${TROOP_ABBR[troop]} ${STAT_ABBR[stat] || esc(stat)}</div><div class="val" style="font-size:13px;">+${cur}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${max}%</div></div>`;
       }).join("");
       return `<div class="stats-row-scroll" style="margin-bottom:10px;">${cards}</div>`;
     }).join("");
@@ -5004,18 +5006,17 @@ function applyResearchSpeed(rawHours) {
 // since they're the same real buffs/items applied everywhere.
 function researchSpeedInputHtml() {
   return `
-    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:14px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span class="meta" style="font-size:11px;">RESEARCH SPEED</span>
-        <input type="text" inputmode="decimal" id="researchSpeedInput" value="${RESEARCH_SPEED_PCT}" style="width:80px; padding:4px 6px;" />
-        <span class="meta" style="font-size:11px;">%</span>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin-bottom:14px; overflow-x:auto;">
+      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <span class="meta" style="font-size:10px;">SPEED</span>
+        <input type="text" inputmode="decimal" id="researchSpeedInput" value="${RESEARCH_SPEED_PCT}" style="width:60px; padding:4px 6px;" />
+        <span class="meta" style="font-size:10px;">%</span>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span class="meta" style="font-size:11px;">SPEEDUPS</span>
-        <input type="text" inputmode="decimal" id="researchSpeedupInput" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:90px; padding:4px 6px;" />
-        <span class="meta" style="font-size:11px;">minutes banked</span>
+      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <span class="meta" style="font-size:10px;">SPEEDUPS</span>
+        <input type="text" inputmode="decimal" id="researchSpeedupInput" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:70px; padding:4px 6px;" />
+        <span class="meta" style="font-size:10px;">min</span>
       </div>
-      <span class="meta" style="font-size:11px;">(both reduce research time below)</span>
     </div>
   `;
 }
@@ -5130,21 +5131,21 @@ function computeT11Stats(troop, useMax) {
 // Shared resource-card markup (icon beside name), used by both the
 // T11 Helios and T12 Research pages.
 function t12ResourceCard(icon, name, value) {
-  return `<div class="metric">
-    <div style="display:flex; align-items:center; gap:10px;">
-      ${icon ? `<img src="${icon}" alt="" style="width:40px; height:40px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : ""}
-      <div class="label" style="text-align:left;">${esc(name)}</div>
+  return `<div class="metric" style="padding:8px; min-width:100px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      ${icon ? `<img src="${icon}" alt="" style="width:28px; height:28px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : ""}
+      <div class="label" style="text-align:left; font-size:9px;">${esc(name)}</div>
     </div>
-    <div class="val" style="margin-top:8px;">${value}</div>
+    <div class="val" style="margin-top:6px; font-size:13px;">${value}</div>
   </div>`;
 }
 function smallResourceCard(icon, name, value) {
-  return `<div class="metric" style="padding:8px 10px;">
+  return `<div class="metric" style="padding:6px 8px; min-width:80px;">
     <div style="display:flex; align-items:center; gap:6px;">
-      ${icon ? `<img src="${icon}" alt="" style="width:18px; height:18px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : ""}
-      <div class="label" style="text-align:left; font-size:10px;">${esc(name)}</div>
+      ${icon ? `<img src="${icon}" alt="" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : ""}
+      <div class="label" style="text-align:left; font-size:9px;">${esc(name)}</div>
     </div>
-    <div class="val" style="margin-top:4px; font-size:14px;">${value}</div>
+    <div class="val" style="margin-top:4px; font-size:13px;">${value}</div>
   </div>`;
 }
 
@@ -5291,10 +5292,10 @@ async function renderT11HeliosPage() {
       <div class="panel">
         <h2>${esc(troop)}</h2>
         <div class="stats-row-scroll" style="margin-bottom:10px;">
-          <div class="metric"><div class="label">ATK</div><div class="val">+${stats.Attack.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Attack.toFixed(1)}%</div></div>
-          <div class="metric"><div class="label">DEF</div><div class="val">+${stats.Defense.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Defense.toFixed(1)}%</div></div>
-          <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Lethality.toFixed(1)}%</div></div>
-          <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Health.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxStats.Attack.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxStats.Defense.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxStats.Lethality.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxStats.Health.toFixed(1)}%</div></div>
         </div>
         <div class="stats-row-scroll" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
@@ -5570,11 +5571,6 @@ async function renderExpertsResearchPage() {
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Total Sigils Needed</h2>
-      <p class="desc">Across all unlocked experts' paths, current to target.</p>
-      <div class="stats-row-scroll" id="expResearchSigils"></div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
       <h2>Troops Stats</h2>
       <p class="desc">Attack/Defense/Lethality/Health from Expert Research. Excludes Gareth and Justus (troop-specific, see below).</p>
       <div class="stats-row-scroll" id="expResearchTotals"></div>
@@ -5598,6 +5594,11 @@ async function renderExpertsResearchPage() {
     </div>
     <div id="expResearchSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="expResearchGrid"></div>
+    <div class="panel" style="margin-top:16px;">
+      <h2>Total Sigils Needed</h2>
+      <p class="desc">Across all unlocked experts' paths, current to target.</p>
+      <div class="stats-row-scroll" id="expResearchSigils"></div>
+    </div>
   `;
 
   const sigilsEl = document.getElementById("expResearchSigils");
@@ -5623,10 +5624,10 @@ async function renderExpertsResearchPage() {
   }
   function statTotalsHtml(totals, maxTotals) {
     return `
-      <div class="metric"><div class="label">ATK</div><div class="val">+${totals.ATK.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.ATK.toFixed(2)}%</div></div>
-      <div class="metric"><div class="label">DEF</div><div class="val">+${totals.DEF.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.DEF.toFixed(2)}%</div></div>
-      <div class="metric"><div class="label">LETH</div><div class="val">+${totals.DMG.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.DMG.toFixed(2)}%</div></div>
-      <div class="metric"><div class="label">HP</div><div class="val">+${totals.HP.toFixed(2)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxTotals.HP.toFixed(2)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${totals.ATK.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxTotals.ATK.toFixed(1)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${totals.DEF.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxTotals.DEF.toFixed(1)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${totals.DMG.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxTotals.DMG.toFixed(1)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${totals.HP.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxTotals.HP.toFixed(1)}%</div></div>
     `;
   }
   const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => e !== "Gareth" && e !== "Justus"));
@@ -5695,16 +5696,14 @@ async function renderExpertsResearchPage() {
     const mainStatLabel = EXPERT_RESEARCH_STAT_LABEL[EXPERT_MAIN_STAT[expert]];
     const mainStatTotal = mainStatCurrentTotal(expert);
     return `
-      <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
+      <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <label style="display:flex; align-items:center; gap:10px; cursor:pointer; flex:1; min-width:0;">
-            <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
-            ${img ? `<img src="${img}" alt="${esc(expert)}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; flex-shrink:0;" loading="lazy" />` : ""}
-            <div style="min-width:0;">
-              <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(expert)}</div>
-              <div class="meta" style="font-size:10px; color:var(--frost);">Main stat: ${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
-            </div>
-          </label>
+          <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+          <div style="min-width:0; text-align:center;">
+            ${img ? `<img src="${img}" alt="${esc(expert)}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; margin-bottom:4px;" loading="lazy" />` : ""}
+            <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(expert)}</div>
+            <div class="meta" style="font-size:10px; color:var(--frost);">Main stat: ${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
+          </div>
           <button class="btn ghost small" data-expresearchmax="${esc(expert)}" style="flex-shrink:0;">Max</button>
         </div>
         ${
@@ -5712,6 +5711,7 @@ async function renderExpertsResearchPage() {
             ? `<div class="meta" style="font-size:10px; margin-bottom:8px; color:var(--frost);">Main stat (${EXPERT_RESEARCH_STAT_LABEL[EXPERT_MAIN_STAT[expert]]}, ${EXPERT_MAIN_STAT_TROOP[expert]} only): max 6% page 1, max 10% page 2 (per path)</div>`
             : ""
         }
+        <div style="text-align:left;">
         ${pathNums
           .map((p, idx) => {
             const st = saved[expert][p];
@@ -5740,6 +5740,7 @@ async function renderExpertsResearchPage() {
           </div>`;
           })
           .join("")}
+        </div>
       </div>`;
   }
 
@@ -6129,10 +6130,10 @@ async function renderExpertsPage() {
     const stillTimeHours = Math.max(0, totalTimeHours - ownedSpeedupHours);
 
     totalsEl.innerHTML = `
-      <div class="metric"><div class="label">Total Time</div><div class="val">${formatTimeDHM(totalTimeHours)}</div><div class="meta" style="font-size:11px; margin-top:2px;">of max ${formatTimeDHM(maxExp / 3600)}</div><div class="meta" style="font-size:11px; margin-top:2px; color:${stillTimeHours > 0 ? "#e0a030" : "var(--good)"};">${stillTimeHours > 0 ? formatTimeDHM(stillTimeHours) + " still needed" : "\u2713 Have enough"}</div></div>
-      <div class="metric"><div class="label">Total Books of Knowledge</div><div class="val">${Math.round(totalBook).toLocaleString()}</div><div class="meta" style="font-size:11px; margin-top:2px;">of max ${Math.round(maxBook).toLocaleString()}</div><div class="meta" style="font-size:11px; margin-top:2px; color:${stillBook > 0 ? "#e0a030" : "var(--good)"};">${stillBook > 0 ? Math.round(stillBook).toLocaleString() + " still needed" : "\u2713 Have enough"}</div></div>
-      <div class="metric"><div class="label">Total Affinity</div><div class="val">${Math.round(totalAffinity).toLocaleString()}</div><div class="meta" style="font-size:11px; margin-top:2px;">of max ${Math.round(maxAffinity).toLocaleString()}</div><div class="meta" style="font-size:11px; margin-top:2px; color:${stillAffinity > 0 ? "#e0a030" : "var(--good)"};">${stillAffinity > 0 ? Math.round(stillAffinity).toLocaleString() + " still needed" : "\u2713 Have enough"}</div></div>
-      <div class="metric"><div class="label">Total Sigils</div><div class="val">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:11px; margin-top:2px;">of max ${Math.round(maxSigil).toLocaleString()}</div><div class="meta" style="font-size:11px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " still needed" : "\u2713 Have enough"}</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Time</div><div class="val" style="font-size:13px;">${formatTimeDHM(totalTimeHours)}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillTimeHours > 0 ? "#e0a030" : "var(--good)"};">${stillTimeHours > 0 ? formatTimeDHM(stillTimeHours) + " needed" : "\u2713 Have enough"}</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Books</div><div class="val" style="font-size:13px;">${Math.round(totalBook).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillBook > 0 ? "#e0a030" : "var(--good)"};">${stillBook > 0 ? Math.round(stillBook).toLocaleString() + " needed" : "\u2713 Have enough"}</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Affinity</div><div class="val" style="font-size:13px;">${Math.round(totalAffinity).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillAffinity > 0 ? "#e0a030" : "var(--good)"};">${stillAffinity > 0 ? Math.round(stillAffinity).toLocaleString() + " needed" : "\u2713 Have enough"}</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Sigils</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " needed" : "\u2713 Have enough"}</div></div>
     `;
   }
 
@@ -6162,7 +6163,7 @@ async function renderExpertsPage() {
     const s = saved[e.key];
     const unlocked = isExpertUnlocked(e.key);
     gridEl.innerHTML = `
-      <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
+      <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
           <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
           <div style="text-align:center;">
@@ -6171,7 +6172,7 @@ async function renderExpertsPage() {
           </div>
           <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px;">Max</button>
         </div>
-        <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:center; gap:10px; margin:0 auto 12px; max-width:320px; text-align:left;">
           <div style="flex:1;">
             <div class="meta" style="font-size:10px; margin-bottom:2px;">Current</div>
             <select data-expcur="${esc(e.key)}" style="width:100%;">${levelOpts(EXPERT_HERO_MAX_LEVEL, s.current)}</select>
@@ -6183,7 +6184,7 @@ async function renderExpertsPage() {
             ${levelStatLine(e.key, s.desired)}
           </div>
         </div>
-        <div style="border-top:1px solid var(--line); padding-top:10px;">
+        <div style="border-top:1px solid var(--line); padding-top:10px; text-align:left;">
           ${e.skills
             .map((sk) => {
               const max = skillMaxLevel(e.key, sk);
@@ -6448,12 +6449,13 @@ async function renderRefinePage() {
         grandMax[key] += pct1(m[maxKey]);
       });
     });
+    const STAT_ABBR_MAP = { "Infantry Lethality": "Inf LETH", "Infantry Health": "Inf HP", "Lancer Lethality": "Lan LETH", "Lancer Health": "Lan HP", "Marksman Lethality": "Mark LETH", "Marksman Health": "Mark HP" };
     document.getElementById("refineTotals").innerHTML = `
       <div class="panel">
         <h2>Total refine bonus</h2>
         <p class="desc">Summed across all 15 pets, based on what you've typed in.</p>
         <div class="stats-row-scroll">
-          ${STAT_KEYS.map(({ key, label }) => `<div class="metric"><div class="label">${esc(label)}</div><div class="val">+${grand[key].toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${grandMax[key].toFixed(1)}%</div></div>`).join("")}
+          ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[label] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${grandMax[key].toFixed(1)}%</div></div>`).join("")}
         </div>
       </div>
     `;
@@ -6504,12 +6506,12 @@ async function renderRefinePage() {
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
           <div class="meta" style="font-size:11px; margin-bottom:10px;">${esc(tier)} tier</div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-              <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;" />
-              <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; min-width:0; flex:1;">
+              <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+              <div class="name" style="font-size:15px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(pet)}</div>
             </label>
-            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}">Max</button>
+            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0;">Max</button>
           </div>
           ${STAT_KEYS.map(
             ({ key, label, maxKey }) => {
@@ -6708,13 +6710,13 @@ async function renderPetsDataPage() {
             <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
           </label>
           <div class="stats-row-scroll" style="margin-bottom:16px;">
-            <div class="metric"><div class="label">Troops Stats</div><div class="val">${cur.toFixed(2)}%</div><div class="meta" style="font-size:9.5px; margin-top:1px;">of max ${max.toFixed(2)}%</div></div>
-            <div style="min-width:130px; flex:1 1 130px;">
-              <div class="meta" style="font-size:9.5px; margin-bottom:4px;">Current</div>
+            <div class="metric" style="padding:8px; min-width:100px;"><div class="label" style="font-size:9px;">Troops Stats</div><div class="val" style="font-size:13px;">${cur.toFixed(1)}%</div><div class="meta" style="font-size:9px; margin-top:1px;">of max ${max.toFixed(1)}%</div></div>
+            <div style="min-width:110px; flex:1 1 110px;">
+              <div class="meta" style="font-size:9px; margin-bottom:4px;">Current</div>
               <select data-petfrom="${esc(pet)}" style="width:100%;">${fromOpts}</select>
             </div>
-            <div style="min-width:130px; flex:1 1 130px;">
-              <div class="meta" style="font-size:9.5px; margin-bottom:4px;">Target</div>
+            <div style="min-width:110px; flex:1 1 110px;">
+              <div class="meta" style="font-size:9px; margin-bottom:4px;">Target</div>
               <select data-petto="${esc(pet)}" style="width:100%;">${levelOpts(to)}</select>
             </div>
           </div>
@@ -6877,10 +6879,10 @@ async function renderResearchCenterPage() {
           <button class="btn ghost small" data-rcmaxgroup="${esc(groupName)}">Max this section</button>
         </div>
         <div class="stats-row-scroll" style="margin:10px 0 14px;">
-          <div class="metric"><div class="label">ATK</div><div class="val">+${stats.Attack.toFixed(2)}%</div></div>
-          <div class="metric"><div class="label">DEF</div><div class="val">+${stats.Defense.toFixed(2)}%</div></div>
-          <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality.toFixed(2)}%</div></div>
-          <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health.toFixed(2)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health.toFixed(1)}%</div></div>
         </div>
         ${baseNames
           .map((base) => {
@@ -7075,10 +7077,10 @@ async function renderT12ResearchPage() {
       <div class="panel">
         <h2>${esc(troop)}</h2>
         <div class="stats-row-scroll" style="margin-bottom:10px;">
-          <div class="metric"><div class="label">ATK</div><div class="val">+${stats.Attack}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Attack}%</div></div>
-          <div class="metric"><div class="label">DEF</div><div class="val">+${stats.Defense}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Defense}%</div></div>
-          <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Lethality}%</div></div>
-          <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${statMax.Health}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Attack}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Defense}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Lethality}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Health}%</div></div>
         </div>
         <div class="stats-row-scroll" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
@@ -7138,7 +7140,7 @@ async function renderFacilityPage() {
     <div class="panel">
       <h2>Facility</h2>
       <p class="desc">Click a building to mark it owned/not owned.</p>
-      <div class="skin-grid" id="facilityCards"></div>
+      <div class="stats-row-scroll" id="facilityCards" style="align-items:stretch;"></div>
     </div>
   `;
 
@@ -7158,10 +7160,10 @@ async function renderFacilityPage() {
       ? Object.entries(maxByType)
           .map(
             ([type, maxVal]) =>
-              `<div class="metric"><div class="label">Total ${esc(type)}</div><div class="val">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxVal.toFixed(1)}%</div></div>`
+              `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(type)}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxVal.toFixed(1)}%</div></div>`
           )
           .join("")
-      : `<div class="metric" style="grid-column:1/-1;"><div class="label">Total bonus</div><div class="val">+0%</div></div>`;
+      : `<div class="metric"><div class="label">Total bonus</div><div class="val">+0%</div></div>`;
 
 
 
@@ -7169,7 +7171,7 @@ async function renderFacilityPage() {
     cardsEl.innerHTML = buildings
       .map(
         (b) => `
-      <div class="skin-card ${b.owned ? "owned" : ""}" data-facility="${b.id}">
+      <div class="skin-card ${b.owned ? "owned" : ""}" data-facility="${b.id}" style="flex:0 0 140px; width:140px;">
         <div class="thumb island-thumb">
           ${b.image_url ? `<img src="${esc(b.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(b.name[0])}</div>`}
         </div>
