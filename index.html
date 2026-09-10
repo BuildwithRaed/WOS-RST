@@ -216,13 +216,6 @@
     .roster-row{ flex-wrap:nowrap !important; align-items:flex-start !important; }
     #rosterHeroesGrid{ grid-template-columns:1fr !important; }
 
-    /* Pets Refine's stat rows (label / input / bar / remaining% / max%) use
-       a fixed "150px 80px 1fr 70px" column grid that doesn't fit on a
-       phone - collapse it to two lines instead. */
-    [style*="grid-template-columns:150px 80px"]{
-      grid-template-columns:1fr 1fr !important; row-gap:4px !important;
-    }
-
     /* Any other element with an inline pixel-based grid-template-columns
        (a handful of admin/table layouts) scrolls within itself rather
        than forcing the whole page wider than the screen. */
@@ -2068,23 +2061,21 @@ function updateHeroGearCurrentStats() {
   const maxByTroop = computeHeroGearStats(maxedHeroGearState());
   const results = HERO_GEAR_TROOPS.map((troop) => ({ troop, statTotals: statsByTroop[troop], maxTotals: maxByTroop[troop] }));
 
-  el.innerHTML =
-    `<div class="grid g3" style="gap:12px;">` +
-    results
-      .map(
-        (r, idx) => `
-    <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
+  const HG_STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+  el.innerHTML = results
+    .map(
+      (r) => `
+    <div style="margin-bottom:14px;">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
-      <div class="grid g2" style="gap:8px;">
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">Total Attack</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Attack.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Attack.toFixed(1)}%</div></div>
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">Total Defense</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Defense.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Defense.toFixed(1)}%</div></div>
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">Total Lethality</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Lethality.toFixed(1)}%</div></div>
-        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">Total Health</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Health.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Health.toFixed(1)}%</div></div>
+      <div class="stats-row-scroll">
+        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Attack}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Attack.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Attack.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Defense}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Defense.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Defense.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Lethality}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Lethality.toFixed(1)}%</div></div>
+        <div class="metric" style="padding:8px;"><div class="label" style="font-size:10px;">${HG_STAT_ABBR.Health}</div><div class="val" style="font-size:16px; margin-top:3px;">+${r.statTotals.Health.toFixed(1)}%</div><div class="meta" style="font-size:9.5px; margin-top:2px;">of max +${r.maxTotals.Health.toFixed(1)}%</div></div>
       </div>
     </div>`
-      )
-      .join("") +
-    `</div>`;
+    )
+    .join("");
 }
 
 // Hero catalog (add heroes) + per-hero level/star progress tracker.
@@ -5294,7 +5285,7 @@ async function renderT11HeliosPage() {
           <div class="metric"><div class="label">LETH</div><div class="val">+${stats.Lethality.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Lethality.toFixed(1)}%</div></div>
           <div class="metric"><div class="label">HP</div><div class="val">+${stats.Health.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">of max +${maxStats.Health.toFixed(1)}%</div></div>
         </div>
-        <div class="grid g3" style="margin-bottom:14px;">
+        <div class="stats-row-scroll" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, "FC Shard", Math.round(needed.fc_shard).toLocaleString())}
           ${t12ResourceCard(null, "Time", t12FormatTime(applyResearchSpeed(needed.time_hours)))}
@@ -5581,21 +5572,21 @@ async function renderExpertsResearchPage() {
       <div class="panel">
         <h2>Infantry</h2>
         <p class="desc">Troops Stats plus Justus's Health (Infantry only).</p>
-        <div class="grid g2" id="expResearchInfantry"></div>
+        <div class="stats-row-scroll" id="expResearchInfantry"></div>
       </div>
       <div class="panel">
         <h2>Lancer</h2>
         <p class="desc">Troops Stats plus Gareth's Lethality (Lancers only).</p>
-        <div class="grid g2" id="expResearchLancer"></div>
+        <div class="stats-row-scroll" id="expResearchLancer"></div>
       </div>
       <div class="panel">
         <h2>Marksman</h2>
         <p class="desc">Set to 0 for now \u2014 no Marksman-specific Expert Research data confirmed yet.</p>
-        <div class="grid g2" id="expResearchMarksman"></div>
+        <div class="stats-row-scroll" id="expResearchMarksman"></div>
       </div>
     </div>
     <div id="expResearchSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
-    <div class="grid g3" id="expResearchGrid" style="gap:16px;"></div>
+    <div id="expResearchGrid"></div>
   `;
 
   const sigilsEl = document.getElementById("expResearchSigils");
@@ -5901,29 +5892,29 @@ async function renderExpertsPage() {
       <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
-    <div class="grid g3" id="expertsGrid" style="gap:16px;"></div>
+    <div id="expertsGrid"></div>
     <div class="grid g2" style="margin-bottom:16px; gap:16px; margin-top:16px;">
       <div class="panel">
         <h2>Foundry</h2>
         <p class="desc">Troop Stats plus Fabian's Heightened Firepower skill and Craftsman of War talent \u2014 what your troops get during Foundry Battle.</p>
-        <div class="grid g2" id="expertsFoundryHeader"></div>
+        <div class="stats-row-scroll" id="expertsFoundryHeader"></div>
       </div>
       <div class="panel">
         <h2>SvS</h2>
         <p class="desc">Troop Stats plus Valeria's Battle Concerto skill and Conqueror's Spirit talent \u2014 what your troops get during SvS Battle Phase.</p>
-        <div class="grid g2" id="expertsSvsHeader"></div>
+        <div class="stats-row-scroll" id="expertsSvsHeader"></div>
       </div>
     </div>
     <div class="grid g2" style="gap:16px;">
       <div class="panel">
         <h2>Frostfire Mine</h2>
         <p class="desc">Troop Stats plus Kathy's Child of Frost talent \u2014 what your troops get during Frostfire Mine. Her 4 active skills (Icefire Hunter, Valorous Cold, Winter Treasures, Efficient Mining) don't have confirmed per-level stat data, so none are added here.</p>
-        <div class="grid g2" id="expertsFrostfireHeader"></div>
+        <div class="stats-row-scroll" id="expertsFrostfireHeader"></div>
       </div>
       <div class="panel">
         <h2>Tundra Trade Routes</h2>
         <p class="desc">Troop Stats plus Ronne's Trade Dominion talent \u2014 what your troops get on the Tundra Trade Route when raided or attacking trucks. Her 4 active skills (Cartographic Memory, Treasure Scent, Giving Back, Gold Class) don't have confirmed per-level stat data, so none are added here.</p>
-        <div class="grid g2" id="expertsTundraHeader"></div>
+        <div class="stats-row-scroll" id="expertsTundraHeader"></div>
       </div>
     </div>
   `;
@@ -6513,16 +6504,16 @@ async function renderRefinePage() {
               const isMaxed = remaining <= 0.005;
               const { color: barColor } = stageForValue(pet, maxKey, curVal);
               return `
-          <div data-refinerowfor="${esc(pet)}|${key}" style="display:grid; grid-template-columns:150px 80px 1fr 70px; align-items:center; gap:8px; padding:6px 0;">
-            <span class="meta" style="font-size:12px;">${esc(label)}</span>
-            <input type="text" inputmode="decimal" data-refinepet="${esc(pet)}" data-refinestat="${key}" value="${s[key]}" style="width:70px; padding:4px 6px;" />
-            <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-              <div data-refinebar style="flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden;">
+          <div data-refinerowfor="${esc(pet)}|${key}" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:7px 0; border-top:1px solid var(--line);">
+            <span class="meta" style="font-size:12px; flex:0 0 120px; min-width:90px;">${esc(label)}</span>
+            <input type="text" inputmode="decimal" data-refinepet="${esc(pet)}" data-refinestat="${key}" value="${s[key]}" style="width:70px; flex-shrink:0;" />
+            <div style="flex:1; min-width:100px; display:flex; align-items:center; gap:8px;">
+              <div data-refinebar style="flex:1; height:8px; border-radius:4px; background:var(--panel-2); overflow:hidden; min-width:40px;">
                 <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.2s;"></div>
               </div>
-              <span data-refineremaining class="meta" style="font-size:10.5px; color:${barColor}; flex-shrink:0; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
+              <span data-refineremaining class="meta" style="font-size:10.5px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
             </div>
-            <span class="meta" style="font-size:10.5px;">of max ${maxVal.toFixed(2)}%</span>
+            <span class="meta" style="font-size:10.5px; flex-shrink:0; white-space:nowrap;">of max ${maxVal.toFixed(2)}%</span>
           </div>`;
             }
           ).join("")}
@@ -6696,34 +6687,26 @@ async function renderPetsDataPage() {
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"}">
-          <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; align-items:stretch;">
-            <div style="flex:0 0 auto; min-width:170px;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px;">
-                <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer;" />
-                <div class="name" style="font-size:15px; font-weight:700; color:${color};">${esc(pet)}</div>
-              </label>
-              <div class="metric" style="width:110px; padding:8px 10px;">
-                <div class="label" style="font-size:10px;">Troops Stats</div>
-                <div class="val" style="font-size:15px;">${cur.toFixed(2)}%</div>
-                <div class="meta" style="font-size:9.5px; margin-top:1px;">of max ${max.toFixed(2)}%</div>
-              </div>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px;">
+            <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+            <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
+          </label>
+          <div class="stats-row-scroll" style="margin-bottom:16px;">
+            <div class="metric"><div class="label">Troops Stats</div><div class="val">${cur.toFixed(2)}%</div><div class="meta" style="font-size:9.5px; margin-top:1px;">of max ${max.toFixed(2)}%</div></div>
+            <div style="min-width:130px; flex:1 1 130px;">
+              <div class="meta" style="font-size:9.5px; margin-bottom:4px;">Current</div>
+              <select data-petfrom="${esc(pet)}" style="width:100%;">${fromOpts}</select>
             </div>
-            <div style="flex:1; min-width:120px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:center;">
-              <div>
-                <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">Current</div>
-                <select data-petfrom="${esc(pet)}" style="width:160px;">${fromOpts}</select>
-              </div>
-              <div>
-                <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">Target</div>
-                <select data-petto="${esc(pet)}" style="width:160px;">${levelOpts(to)}</select>
-              </div>
+            <div style="min-width:130px; flex:1 1 130px;">
+              <div class="meta" style="font-size:9.5px; margin-bottom:4px;">Target</div>
+              <select data-petto="${esc(pet)}" style="width:100%;">${levelOpts(to)}</select>
             </div>
-            <div class="grid" style="grid-template-columns:repeat(2, 1fr); gap:10px; flex:0 0 auto; width:100%; max-width:340px; align-content:start;">
-              ${smallResourceCard(PET_MATERIAL_ICONS.food, "Food", Math.round(needed.food).toLocaleString())}
-              ${smallResourceCard(PET_MATERIAL_ICONS.manual, "Manual", Math.round(needed.manual).toLocaleString())}
-              ${smallResourceCard(PET_MATERIAL_ICONS.potion, "Potion", Math.round(needed.potion).toLocaleString())}
-              ${smallResourceCard(PET_MATERIAL_ICONS.serum, "Serum", Math.round(needed.serum).toLocaleString())}
-            </div>
+          </div>
+          <div class="stats-row-scroll">
+            ${smallResourceCard(PET_MATERIAL_ICONS.food, "Food", Math.round(needed.food).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.manual, "Manual", Math.round(needed.manual).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.potion, "Potion", Math.round(needed.potion).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.serum, "Serum", Math.round(needed.serum).toLocaleString())}
           </div>
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
