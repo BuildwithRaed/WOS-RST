@@ -205,12 +205,15 @@
     button.btn{ padding:8px 12px; font-size:12.5px; }
 
     /* The app has ~80 inline "display:flex" rows throughout (stat rows,
-       card headers, form rows, etc.) and most don't set flex-wrap, so on a
-       narrow phone their children get squeezed or pushed past the screen
-       edge instead of dropping to a second line. Forcing wrap everywhere
-       is safe - a row that already fits just won't wrap. */
-    [style*="display:flex"]{ flex-wrap:wrap !important; }
-    [style*="display: flex"]{ flex-wrap:wrap !important; }
+       card headers, form rows, etc.). The real fix for cramped/overflowing
+       rows is letting their children shrink below their natural content
+       width (selects in particular refuse to shrink by default, which was
+       forcing rows to wrap even when there was enough room) - wrap stays
+       on as a fallback for when shrinking alone still isn't enough. */
+    [style*="display:flex"] > *{ min-width:0; }
+    [style*="display:flex"]{ flex-wrap:wrap; }
+    [style*="display: flex"] > *{ min-width:0; }
+    [style*="display: flex"]{ flex-wrap:wrap; }
     /* Roster heroes: keep the portrait beside its name/stats instead of
        stacking, even though the broad rule above wraps flex rows by default. */
     .roster-row{ flex-wrap:nowrap !important; align-items:flex-start !important; }
@@ -1692,6 +1695,7 @@ const HERO_GEAR_SET_NAMES = ["Set 1", "Set 2", "Set 3"];
 const HERO_GEAR_SETS = { "Set 1": HERO_GEAR_STATE, "Set 2": HERO_GEAR_STATE_SET2, "Set 3": HERO_GEAR_STATE_SET3 };
 const HERO_GEAR_STORAGE_KEYS = { "Set 1": "hero_gear", "Set 2": "hero_gear_set2", "Set 3": "hero_gear_set3" };
 let heroGearActiveSet = "Set 1";
+let heroGearActiveTroop = "Infantry";
 // Which hero gear set the Dashboard breakdown modal is currently showing.
 let BREAKDOWN_HERO_GEAR_SET = "Set 1";
 let HERO_GEAR_TABLES_CACHE = null;
@@ -1753,21 +1757,22 @@ async function renderGearLevelingGroup(target) {
           (name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(name)}</button>`
         ).join("")}
       </div>
-      <p class="desc" style="margin-top:8px;">Three real gear loadouts for three heroes. Materials below are totalled across all three sets, sharing one inventory. The Dashboard breakdown lets you switch between them.</p>
+      <p class="desc" style="margin-top:8px;">Three loadouts sharing one material inventory. Switch sets on Dashboard.</p>
     </div>
     <div class="panel">
       <h2>Materials</h2>
-      <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
+      <p class="desc">Enter what you own — the rest shows what's still needed.</p>
       <div id="heroGearOwned"></div>
     </div>
     <div class="panel">
       <h2>Heroes Gears calculator</h2>
-      <p class="desc">Set current and target step per track, for each piece of each troop type's gear.</p>
+      <p class="desc">Current and target step for each piece, per troop.</p>
+      <div id="heroGearTroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
       <div id="heroGearTracks"></div>
     </div>
     <div class="panel">
       <h2>Current stats</h2>
-      <p class="desc">Mastery Forging boosts Lethality &amp; Health per piece, summed across both (up to +400% total at level 20). Enhance (0\u2013200) grows Lethality &amp; Health continuously per piece, also summed (up to +200% total at level 200). Attack &amp; Defense only jump at the 3 Mithril milestones (120/160/200), summed per piece, +200% total. Goggles &amp; Boots lean Attack/Lethality; Gloves &amp; Belt lean Defense/Health.</p>
+      <p class="desc">Mastery Forging &amp; Enhance boost Lethality/Health; Mithril milestones boost Attack/Defense.</p>
       <div id="heroGearCurrentStats"></div>
     </div>
   `;
@@ -1818,68 +1823,74 @@ async function renderGearLevelingGroup(target) {
       </div>
     </div>`;
 
-  tracksEl.innerHTML = HERO_GEAR_TROOPS.map(
-    (troop) => `
-    <div style="padding:14px 0; border-top:1px solid var(--line);">
-      <div class="name" style="font-size:14px; margin-bottom:10px;">${esc(troop)}</div>
-      <div class="grid g4" style="gap:16px;">
+  const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  const heroGearDotsEl = document.getElementById("heroGearTroopDots");
+  function renderTracks() {
+    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
+    const troop = heroGearActiveTroop;
+    tracksEl.innerHTML = `
+    <div>
+      <div class="name" style="font-size:14px; margin-bottom:10px; color:${HERO_GEAR_TROOP_COLORS[troop]};">${esc(troop)}</div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
       </div>
-    </div>`
-  ).join("");
+    </div>`;
+    wireTroopSwipe(tracksEl, HERO_GEAR_TROOPS, heroGearActiveTroop, (t) => { heroGearActiveTroop = t; renderTracks(); });
 
-  tracksEl.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const [troop, piece] = btn.dataset.heropiecemax.split("|");
-      const maxIdxByTrack = {};
-      GEAR_LEVELING_TABLES.forEach((t) => {
-        maxIdxByTrack[t] = Math.max(0, (HERO_GEAR_TABLES_CACHE[t] || []).length - 1);
+    tracksEl.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const [troop, piece] = btn.dataset.heropiecemax.split("|");
+        const maxIdxByTrack = {};
+        GEAR_LEVELING_TABLES.forEach((t) => {
+          maxIdxByTrack[t] = Math.max(0, (HERO_GEAR_TABLES_CACHE[t] || []).length - 1);
+        });
+        const bothMaxed = GEAR_LEVELING_TABLES.every((t) => {
+          const st = activeState[troop][piece][t];
+          return st.from >= maxIdxByTrack[t] && st.to >= maxIdxByTrack[t];
+        });
+        const currentZeroTargetMaxed = GEAR_LEVELING_TABLES.every((t) => {
+          const st = activeState[troop][piece][t];
+          return st.from <= 0 && st.to >= maxIdxByTrack[t];
+        });
+        const bothZero = GEAR_LEVELING_TABLES.every((t) => {
+          const st = activeState[troop][piece][t];
+          return st.from <= 0 && st.to <= 0;
+        });
+        // Cycle: (0,0) -> (max,max) -> (0,max) -> (0,0) -> ...
+        let mode;
+        if (bothZero) mode = "max";
+        else if (bothMaxed) mode = "half";
+        else if (currentZeroTargetMaxed) mode = "zero";
+        else mode = "max";
+        GEAR_LEVELING_TABLES.forEach((t) => {
+          const st = activeState[troop][piece][t];
+          if (mode === "max") {
+            st.from = maxIdxByTrack[t];
+            st.to = maxIdxByTrack[t];
+          } else if (mode === "half") {
+            st.from = 0;
+            st.to = maxIdxByTrack[t];
+          } else {
+            st.from = 0;
+            st.to = 0;
+          }
+        });
+        saveCalcState(activeStorageKey, activeState);
+        renderGearLevelingGroup(target);
       });
-      const bothMaxed = GEAR_LEVELING_TABLES.every((t) => {
-        const st = activeState[troop][piece][t];
-        return st.from >= maxIdxByTrack[t] && st.to >= maxIdxByTrack[t];
-      });
-      const currentZeroTargetMaxed = GEAR_LEVELING_TABLES.every((t) => {
-        const st = activeState[troop][piece][t];
-        return st.from <= 0 && st.to >= maxIdxByTrack[t];
-      });
-      const bothZero = GEAR_LEVELING_TABLES.every((t) => {
-        const st = activeState[troop][piece][t];
-        return st.from <= 0 && st.to <= 0;
-      });
-      // Cycle: (0,0) -> (max,max) -> (0,max) -> (0,0) -> ...
-      let mode;
-      if (bothZero) mode = "max";
-      else if (bothMaxed) mode = "half";
-      else if (currentZeroTargetMaxed) mode = "zero";
-      else mode = "max";
-      GEAR_LEVELING_TABLES.forEach((t) => {
-        const st = activeState[troop][piece][t];
-        if (mode === "max") {
-          st.from = maxIdxByTrack[t];
-          st.to = maxIdxByTrack[t];
-        } else if (mode === "half") {
-          st.from = 0;
-          st.to = maxIdxByTrack[t];
-        } else {
-          st.from = 0;
-          st.to = 0;
-        }
-      });
-      saveCalcState(activeStorageKey, activeState);
-      renderGearLevelingGroup(target);
     });
-  });
 
-  tracksEl.querySelectorAll("select[data-troop]").forEach((sel) => {
-    const { troop, piece, track, role } = sel.dataset;
-    sel.value = String(activeState[troop][piece][track][role]);
-    sel.addEventListener("change", () => {
-      activeState[troop][piece][track][role] = Number(sel.value);
-      saveCalcState(activeStorageKey, activeState);
-      updateHeroGearTotals();
+    tracksEl.querySelectorAll("select[data-troop]").forEach((sel) => {
+      const { troop, piece, track, role } = sel.dataset;
+      sel.value = String(activeState[troop][piece][track][role]);
+      sel.addEventListener("change", () => {
+        activeState[troop][piece][track][role] = Number(sel.value);
+        saveCalcState(activeStorageKey, activeState);
+        updateHeroGearTotals();
+      });
     });
-  });
+  }
+  renderTracks();
 
   updateHeroGearTotals();
 }
@@ -3017,7 +3028,7 @@ async function renderCharmsCalc() {
   content.innerHTML = `
     <div class="panel">
       <h2>Materials</h2>
-      <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
+      <p class="desc">Enter what you own — the rest shows what's still needed.</p>
       <div id="charmOwned"></div>
     </div>
     <div id="charmTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
@@ -3249,7 +3260,7 @@ async function renderChiefGearCalc() {
   content.innerHTML = `
     <div class="panel">
       <h2>Materials</h2>
-      <p class="desc">Needed, what you own, and what's still left \u2014 enter your owned quantity for each.</p>
+      <p class="desc">Enter what you own — the rest shows what's still needed.</p>
       <div id="gearOwned"></div>
     </div>
     <div id="gearTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
@@ -5565,7 +5576,7 @@ async function renderExpertsResearchPage() {
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Troops Stats</h2>
-      <p class="desc">Attack/Defense/Lethality/Health from Expert Research, current to target. Excludes Gareth and Justus, whose main stat only applies to a specific troop type (see Infantry/Lancer/Marksman below).</p>
+      <p class="desc">Attack/Defense/Lethality/Health from Expert Research. Excludes Gareth and Justus (troop-specific, see below).</p>
       <div class="stats-row-scroll" id="expResearchTotals"></div>
     </div>
     <div class="grid g3" style="gap:16px; margin-bottom:16px;">
@@ -5879,7 +5890,7 @@ async function renderExpertsPage() {
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Troop Stats</h2>
-      <p class="desc">All 10 experts' level-based base stats, plus Romulus's Last Line &amp; Spirit of Aeetis and Gareth's Porcupine &amp; Undefeated Will skills.</p>
+      <p class="desc">Base stats for all 10 experts, plus select main-stat skills.</p>
       <div class="stats-row-scroll" id="expertsStatHeader"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
@@ -5888,7 +5899,7 @@ async function renderExpertsPage() {
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Resources needed</h2>
-      <p class="desc">Books of Knowledge + learning time from skill levels, plus Affinity + Sigils from hero level, current to desired. Offset against Your Inventory above \u2014 hero-specific sigils apply first, General Sigils cover any remaining shortfall; Speedups reduce learning time.</p>
+      <p class="desc">Books/time from skills, Affinity/Sigils from level \u2014 offset against your inventory.</p>
       <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -5896,24 +5907,24 @@ async function renderExpertsPage() {
     <div class="grid g2" style="margin-bottom:16px; gap:16px; margin-top:16px;">
       <div class="panel">
         <h2>Foundry</h2>
-        <p class="desc">Troop Stats plus Fabian's Heightened Firepower skill and Craftsman of War talent \u2014 what your troops get during Foundry Battle.</p>
+        <p class="desc">Troop Stats + Fabian's Heightened Firepower, for Foundry Battle.</p>
         <div class="stats-row-scroll" id="expertsFoundryHeader"></div>
       </div>
       <div class="panel">
         <h2>SvS</h2>
-        <p class="desc">Troop Stats plus Valeria's Battle Concerto skill and Conqueror's Spirit talent \u2014 what your troops get during SvS Battle Phase.</p>
+        <p class="desc">Troop Stats + Valeria's Battle Concerto, for SvS Battle Phase.</p>
         <div class="stats-row-scroll" id="expertsSvsHeader"></div>
       </div>
     </div>
     <div class="grid g2" style="gap:16px;">
       <div class="panel">
         <h2>Frostfire Mine</h2>
-        <p class="desc">Troop Stats plus Kathy's Child of Frost talent \u2014 what your troops get during Frostfire Mine. Her 4 active skills (Icefire Hunter, Valorous Cold, Winter Treasures, Efficient Mining) don't have confirmed per-level stat data, so none are added here.</p>
+        <p class="desc">Troop Stats + Kathy's Child of Frost talent, for Frostfire Mine.</p>
         <div class="stats-row-scroll" id="expertsFrostfireHeader"></div>
       </div>
       <div class="panel">
         <h2>Tundra Trade Routes</h2>
-        <p class="desc">Troop Stats plus Ronne's Trade Dominion talent \u2014 what your troops get on the Tundra Trade Route when raided or attacking trucks. Her 4 active skills (Cartographic Memory, Treasure Scent, Giving Back, Gold Class) don't have confirmed per-level stat data, so none are added here.</p>
+        <p class="desc">Troop Stats + Ronne's Trade Dominion talent, for the Tundra Trade Route.</p>
         <div class="stats-row-scroll" id="expertsTundraHeader"></div>
       </div>
     </div>
@@ -6654,7 +6665,7 @@ async function renderPetsDataPage() {
       </div>
       <div class="panel">
         <h2>Materials</h2>
-        <p class="desc">Needed across all 15 pets, from current levels to max \u2014 enter your owned quantity for each.</p>
+        <p class="desc">Enter what you own \u2014 the rest shows what's still needed, across all 15 pets.</p>
         <div id="petsMaterialsBar"></div>
       </div>
     `;
