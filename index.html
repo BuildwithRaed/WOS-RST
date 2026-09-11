@@ -1510,10 +1510,10 @@ async function renderOverview() {
         <h2>Stats dashboard</h2>
       </div>
     </div>
+    ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
     <div id="dashboardRoster" style="margin-top:16px;"></div>
     <div id="troopSections"></div>
     <div class="grid g4" id="metricRow" style="margin-top:16px;"></div>
-    ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
   `;
 
   document.getElementById("metricRow").innerHTML = avgByStat
@@ -1522,13 +1522,15 @@ async function renderOverview() {
     )
     .join("");
 
-  // ---- Owner-only TOTAL breakdown table (CUR/MAX/DIFF per troop+stat line,
-  // plus SvS/Foundry diff columns) - hidden entirely from non-owners, and
-  // collapsed by default even for the owner since it's a dense reference
-  // table rather than something needed on every visit.
+  // ---- Owner-only TOTAL breakdown table (CUR/MAX/DIFF per troop+stat line)
+  // - hidden entirely from non-owners, and collapsed by default even for the
+  // owner since it's a dense reference table rather than something needed on
+  // every visit. CUR/MAX/DIFF are each tinted a different color so the eye
+  // can scan straight down a column instead of reading every cell.
   if (IS_OWNER) {
     const ownerWrap = document.getElementById("ownerTotalTableWrap");
     const fmtPct = (v) => `${v.toFixed(1)}%`;
+    const COL_TINT = { cur: "rgba(224,100,95,0.12)", max: "rgba(91,201,138,0.12)", diff: "rgba(232,162,60,0.14)" };
     const renderOwnerTotalTable = () => {
       const shown = localStorage.getItem("dashboard_owner_total_shown") === "1";
       const totalRows = allStats.map((x) => {
@@ -1553,7 +1555,7 @@ async function renderOverview() {
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
               <thead><tr>
-                ${["#", "CUR.", "MAX.", "DIFF.", "SVS DIFF.", "FOUNDRY DIFF."]
+                ${["#", "CUR.", "MAX.", "DIFF."]
                   .map((h) => `<th style="text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
                   .join("")}
               </tr></thead>
@@ -1562,26 +1564,21 @@ async function renderOverview() {
                   .map(
                     (r) => `<tr>
                       <td style="padding:5px 8px; font-weight:600;">${esc(r.troop)} ${esc(r.stat)}</td>
-                      <td style="padding:5px 8px;">${fmtPct(r.cur)}</td>
-                      <td style="padding:5px 8px;">${fmtPct(r.max)}</td>
-                      <td style="padding:5px 8px;">${fmtPct(r.diff)}</td>
-                      <td style="padding:5px 8px;">${fmtPct(r.diff)}</td>
-                      <td style="padding:5px 8px;">${fmtPct(r.diff)}</td>
+                      <td style="padding:5px 8px; background:${COL_TINT.cur};">${fmtPct(r.cur)}</td>
+                      <td style="padding:5px 8px; background:${COL_TINT.max};">${fmtPct(r.max)}</td>
+                      <td style="padding:5px 8px; background:${COL_TINT.diff};">${fmtPct(r.diff)}</td>
                     </tr>`
                   )
                   .join("")}
                 <tr style="border-top:1px solid var(--line);">
                   <td style="padding:5px 8px; font-weight:600;">AVERAGE</td>
-                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.cur)}</td>
-                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.max)}</td>
-                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.diff)}</td>
-                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.diff)}</td>
-                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.diff)}</td>
+                  <td style="padding:5px 8px; font-weight:600; background:${COL_TINT.cur};">${fmtPct(avgRow.cur)}</td>
+                  <td style="padding:5px 8px; font-weight:600; background:${COL_TINT.max};">${fmtPct(avgRow.max)}</td>
+                  <td style="padding:5px 8px; font-weight:600; background:${COL_TINT.diff};">${fmtPct(avgRow.diff)}</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p class="desc" style="margin-top:8px;">SVS DIFF and FOUNDRY DIFF currently mirror DIFF (no separate event-specific bonus tracked yet).</p>
           ` : ""}
         </div>`;
       document.getElementById("ownerTotalToggle").addEventListener("change", (e) => {
