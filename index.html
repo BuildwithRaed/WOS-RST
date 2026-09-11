@@ -4456,6 +4456,12 @@ let VIP_SELECTED_INDEX = null;
 let EXPERTS_STATE_GLOBAL = null;
 // Hero star ascension shard costs: each star has 6 sub-levels (T1..T6).
 // Per-star totals 10 / 40 / 115 / 300 / 600 = 1,065 to fully max a hero.
+// Star-step curve (fraction of the 5★ max) applied to every generation's 30-step
+// Expedition ATK/DEF% ladder. Fit directly against real stored data across many
+// generations — this is the more accurate of two curves tested; see the archived
+// "precise ratio" derivation (1.0931 / 1.6130 / 1.5319 / 1.4864 / 1.4580 / 1.3544×)
+// in the WOS Star Curve Archive spreadsheet for why that alternative was dropped.
+const STAR_CURVE = [0.13789, 0.14963, 0.16137, 0.17311, 0.18485, 0.20598, 0.22242, 0.23886, 0.25530, 0.27174, 0.28818, 0.31775, 0.34073, 0.36376, 0.38679, 0.40977, 0.43280, 0.47422, 0.50645, 0.53862, 0.57085, 0.60307, 0.63529, 0.69330, 0.73836, 0.78347, 0.82858, 0.87370, 0.91881, 1];
 const HERO_SHARD_CHART = {
   1: [1, 1, 2, 2, 2, 2],
   2: [5, 5, 5, 5, 5, 15],
@@ -9206,9 +9212,8 @@ async function renderAdminHeroes(body) {
         </div>
       </div>`;
 
-    // Standard per-shard curve (fraction of the 5★ max), identical for every
-    // generation; widget stats are exactly max/10 per level.
-    const STAR_CURVE = [0.13789, 0.14963, 0.16137, 0.17311, 0.18485, 0.20598, 0.22242, 0.23886, 0.25530, 0.27174, 0.28818, 0.31775, 0.34073, 0.36376, 0.38679, 0.40977, 0.43280, 0.47422, 0.50645, 0.53862, 0.57085, 0.60307, 0.63529, 0.69330, 0.73836, 0.78347, 0.82858, 0.87370, 0.91881, 1];
+    // Standard per-shard curve is defined globally (STAR_CURVE, near HERO_SHARD_CHART) so
+    // this editor and the standalone Stat Calculator share one source of truth.
     statsWrap.querySelector("#adminGenGenerate").addEventListener("click", () => {
       const maxAtk = Number(statsWrap.querySelector("#adminGenMaxAtk").value);
       const maxW = Number(statsWrap.querySelector("#adminGenMaxWidget").value);
@@ -9255,16 +9260,8 @@ async function renderAdminHeroes(body) {
 }
 
 // ---- Standalone Hero Stat Calculator (scratch tool, not tied to a saved generation) ----
-// Precise 30-step fraction-of-max curve, derived from the universal ratios found across
-// all 17 generations (base->1star 1.0931x, star-to-star 1.613/1.532/1.486/1.458x, and each
-// star icon's internal tier1->tier6 jump 1.494/1.429/1.392/1.369/1.354x). Matches every
-// checked generation's real data to within ~0.01% (source stats are only published to 2dp).
-const STAR_CURVE_PRECISE = [
-  0.137890, 0.149631, 0.161371, 0.173112, 0.184853, 0.205986, 0.222422, 0.238857, 0.255292, 0.271727,
-  0.288163, 0.317746, 0.340728, 0.363744, 0.386760, 0.409776, 0.432792, 0.474221, 0.506443, 0.538659,
-  0.570875, 0.603090, 0.635306, 0.693294, 0.738362, 0.783472, 0.828582, 0.873692, 0.918802, 1.000000,
-];
-
+// Uses the shared STAR_CURVE (defined near HERO_SHARD_CHART) — the same curve the
+// per-generation editor's "Generate from max" uses.
 async function renderAdminStatCalculator(body) {
   const th = (h) => `<th style="text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`;
   body.innerHTML = `
@@ -9344,7 +9341,7 @@ async function renderAdminStatCalculator(body) {
     const maxW = Number(body.querySelector("#calcMaxWidget").value);
     if (maxStar > 0) body.querySelectorAll("tr[data-calcstarstep]").forEach((tr) => {
       const step = Number(tr.dataset.calcstarstep);
-      tr.querySelector('[data-csf="atk_pct"]').value = (maxStar * STAR_CURVE_PRECISE[step - 1]).toFixed(2);
+      tr.querySelector('[data-csf="atk_pct"]').value = (maxStar * STAR_CURVE[step - 1]).toFixed(2);
     });
     if (maxW > 0) body.querySelectorAll("tr[data-calcwidgetlvl]").forEach((tr) => {
       tr.querySelector('[data-cwf="leth_pct"]').value = (maxW * Number(tr.dataset.calcwidgetlvl) / 10).toFixed(2);
