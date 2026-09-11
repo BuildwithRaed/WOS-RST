@@ -719,7 +719,18 @@ function esc(s) {
 // (HEROES_SUBTAB, EXTRA_BUFF_SUBTAB, GROUP_SUBTAB) tracks nested
 // navigation within Heroes / Extra Buff / grouped buff categories.
 // ============================================================
-let TAB = "overview";
+const KNOWN_TABS = new Set([
+  "overview", "heroes", "stats", "backpack", "packs", "charmscalc", "chiefgear",
+  "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
+  "t11helios", "researchcenter", "petsdata", "refinepage", "expertspage",
+  "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
+  "collectiongallerypage", "extrabonusheroes",
+]);
+function isValidTab(t) {
+  return KNOWN_TABS.has(t) || (typeof t === "string" && (t.startsWith("extrabonus:") || t.startsWith("buffcat:")));
+}
+const SAVED_TAB = localStorage.getItem("last_tab");
+let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 let HEROES_SUBTAB = "roster";
 const CATEGORY_GROUPS = { "War Acd.": ["T11", "T12"] };
 const EXTRA_BUFF_SUBCATS = ["Vip Tier", "Facility", "Alliance Buff", "Gallery", "Album Buff"];
@@ -748,6 +759,7 @@ topnavGroups.addEventListener("click", (e) => {
     document.querySelectorAll("#topnavGroups button[data-tab]").forEach((x) => x.classList.remove("active"));
     pageBtn.classList.add("active");
     TAB = pageBtn.dataset.tab;
+    localStorage.setItem("last_tab", TAB);
     closeAllTopnavDropdowns();
     render();
     return;
@@ -818,6 +830,7 @@ document.getElementById("mobileMenuOverlay").addEventListener("click", (e) => {
     document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.remove("active"));
     pageBtn.classList.add("active");
     TAB = pageBtn.dataset.tab;
+    localStorage.setItem("last_tab", TAB);
     closeMobileMenu();
     render();
     return;
@@ -1403,7 +1416,6 @@ async function renderOverview() {
     <div class="page-head">
       <div>
         <h2>Stats dashboard</h2>
-        <div class="sub">Combat stat bonuses across every buff source, by troop type</div>
       </div>
     </div>
     <div id="dashboardRoster" style="margin-top:16px;"></div>
@@ -1491,10 +1503,22 @@ async function renderOverview() {
     const ROSTER_TROOP_CLASS = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
     const entryFor = rosterEntryFor;
     const renderRoster = () => {
+      const collapsed = localStorage.getItem("dashboard_roster_collapsed") === "1";
+      const assignedTroops = TROOP_TYPES.filter((t) => entryFor(t.key).heroId);
+      const allUsed = assignedTroops.length > 0 && assignedTroops.every((t) => entryFor(t.key).used);
       rosterEl.innerHTML = `
       <div class="panel" style="margin-bottom:16px;">
-        <h2>Roster heroes</h2>
-        <p class="desc">The three heroes affecting each troop type. Uncheck "Count in Dashboard" to exclude a hero from the stat totals below without removing them.</p>
+        <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;">
+          <h2 style="margin:0;">Roster heroes</h2>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <label style="display:flex; align-items:center; gap:4px; cursor:pointer; flex-shrink:0; flex-wrap:nowrap;" title="Include roster heroes' stats in the Dashboard totals" onclick="event.stopPropagation()">
+              <input type="checkbox" id="rosterUsedAll" ${allUsed ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
+              <span class="meta" style="font-size:10px; white-space:nowrap;">Count in Dashboard</span>
+            </label>
+            <span class="meta" style="font-size:16px; transition:transform .15s; transform:rotate(${collapsed ? "-90deg" : "0deg"});">&#9660;</span>
+          </div>
+        </div>
+        <div id="rosterCollapseBody" style="${collapsed ? "display:none;" : ""}">
         <div class="grid g3" id="rosterHeroesGrid" style="gap:16px;">
           ${TROOP_TYPES.map((t) => {
             const { heroId, widget, used } = entryFor(t.key);
@@ -1507,11 +1531,6 @@ async function renderOverview() {
               <div style="flex:1; min-width:0;">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-bottom:2px;">
                   <span style="font-weight:600; font-size:14px;">${hero ? esc(hero.name) : "None"}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">Gen ${hero.generation}</span>` : ""}</span>
-                  ${hero ? `
-                  <label style="display:flex; align-items:center; gap:4px; cursor:pointer; flex-shrink:0; margin-left:auto; flex-wrap:nowrap;" title="Include this hero's stats in the Dashboard totals">
-                    <input type="checkbox" data-rosterused="${esc(t.key)}" ${used ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-                    <span class="meta" style="font-size:10px; white-space:nowrap;">Count in Dashboard</span>
-                  </label>` : ""}
                 </div>
                 <div data-starctl="${esc(hero ? hero.id : "")}" style="display:flex; align-items:center; gap:4px; margin-top:4px;">${starsHtml(hero)}</div>
                 ${hero ? `<div class="meta" style="font-size:11px; color:var(--frost); margin-top:4px;">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ") || "&nbsp;"}</div>` : ""}
@@ -1526,18 +1545,26 @@ async function renderOverview() {
             </div>`;
           }).join("")}
         </div>
+        </div>
       </div>`;
+      rosterEl.querySelector("#rosterCollapseToggle").addEventListener("click", () => {
+        const nowCollapsed = localStorage.getItem("dashboard_roster_collapsed") === "1";
+        localStorage.setItem("dashboard_roster_collapsed", nowCollapsed ? "0" : "1");
+        renderRoster();
+      });
       const save = async () => { await saveCalcState("dashboard_roster", roster); };
-      rosterEl.querySelectorAll("[data-rosterused]").forEach((box) => {
-        box.addEventListener("change", async () => {
-          const troopKey = box.dataset.rosterused;
-          const cur = entryFor(troopKey);
-          roster[troopKey] = { heroId: cur.heroId, widget: cur.widget, used: box.checked };
+      const rosterUsedAllBox = document.getElementById("rosterUsedAll");
+      if (rosterUsedAllBox) {
+        rosterUsedAllBox.addEventListener("change", async () => {
+          TROOP_TYPES.forEach((t) => {
+            const cur = entryFor(t.key);
+            if (cur.heroId) roster[t.key] = { heroId: cur.heroId, widget: cur.widget, used: rosterUsedAllBox.checked };
+          });
           await save();
           // Re-render the whole dashboard so the stat totals/breakdown reflect the change.
           renderOverview();
         });
-      });
+      }
       rosterEl.querySelectorAll("[data-starctl]").forEach((wrap) => {
         const heroId = wrap.dataset.starctl;
         wrap.querySelectorAll("[data-starseg]").forEach((seg) => {
@@ -7559,7 +7586,10 @@ async function renderAdminRoster(body) {
       <div class="err" id="adminAddExpertErr"></div>
     </div>
     <div class="panel">
-      <h2>Roster (${rows.length})</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 style="margin:0;">Roster (${rows.length})</h2>
+        <button class="btn small" id="adminRosterSaveAll">Save all</button>
+      </div>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
@@ -7630,19 +7660,21 @@ async function renderAdminRoster(body) {
     }
   });
 
+  const saveRosterRow = async (id) => {
+    const tr = body.querySelector(`tr[data-rosterrow="${id}"]`);
+    const body_ = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      let v = el.value;
+      if (el.dataset.f === "sort_order") v = Number(v) || 0;
+      if ((el.dataset.f === "img" || el.dataset.f.startsWith("skill") || el.dataset.f === "main_stat_troop") && v.trim() === "") v = null;
+      body_[el.dataset.f] = v;
+    });
+    await sb(`experts?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body_) });
+  };
   body.querySelectorAll("[data-rostersave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.rostersave;
-      const tr = body.querySelector(`tr[data-rosterrow="${id}"]`);
-      const body_ = {};
-      tr.querySelectorAll("[data-f]").forEach((el) => {
-        let v = el.value;
-        if (el.dataset.f === "sort_order") v = Number(v) || 0;
-        if ((el.dataset.f === "img" || el.dataset.f.startsWith("skill") || el.dataset.f === "main_stat_troop") && v.trim() === "") v = null;
-        body_[el.dataset.f] = v;
-      });
       try {
-        await sb(`experts?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body_) });
+        await saveRosterRow(btn.dataset.rostersave);
         EXPERTS_ROSTER_LOADED = false;
         toast("Saved");
       } catch (err) {
@@ -7650,6 +7682,22 @@ async function renderAdminRoster(body) {
       }
     });
   });
+  const rosterSaveAllBtn = document.getElementById("adminRosterSaveAll");
+  if (rosterSaveAllBtn) {
+    rosterSaveAllBtn.addEventListener("click", async () => {
+      rosterSaveAllBtn.disabled = true;
+      rosterSaveAllBtn.textContent = "Saving\u2026";
+      try {
+        await Promise.all(rows.map((r) => saveRosterRow(r.id)));
+        EXPERTS_ROSTER_LOADED = false;
+        toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
+      } catch (err) {
+        toast("Couldn't save all", true);
+      }
+      rosterSaveAllBtn.disabled = false;
+      rosterSaveAllBtn.textContent = "Save all";
+    });
+  }
 
   body.querySelectorAll("[data-rosterdel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -7728,19 +7776,53 @@ async function renderAdminExpertTable(body, tableKey) {
       <div class="err" id="adminAddRowErr"></div>
     </div>
     <div class="panel">
-      <h2 id="adminRowsHeading">Rows</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 id="adminRowsHeading" style="margin:0;">Rows</h2>
+        <button class="btn small" id="adminExpRowsSaveAll">Save all</button>
+      </div>
       <div id="adminRowsWrap" style="overflow-x:auto;"></div>
     </div>
   `;
+
+  document.getElementById("adminExpRowsSaveAll").addEventListener("click", () => saveAllRows());
 
   document.getElementById("adminExpertPicker").addEventListener("change", (e) => {
     ADMIN_ACTIVE_EXPERT = e.target.value;
     renderAdminExpertTable(body, tableKey);
   });
 
+  let currentRows = [];
+  const saveExpRow = async (id) => {
+    const wrap = document.getElementById("adminRowsWrap");
+    const tr = wrap.querySelector(`tr[data-exprow="${id}"]`);
+    const patch = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      const c = cfg.cols.find((c) => c.key === el.dataset.f);
+      let v = el.value;
+      if (c.type === "number") v = v === "" ? null : Number(v);
+      else if (v.trim() === "") v = null;
+      patch[el.dataset.f] = v;
+    });
+    await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  };
+  const saveAllRows = async () => {
+    const btn = document.getElementById("adminExpRowsSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(currentRows.map((r) => saveExpRow(r.id)));
+      toast(`Saved ${currentRows.length} row${currentRows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
+  };
+
   async function loadRows() {
     const cols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
     const rows = await sb(`${cfg.table}?select=${cols}&expert=eq.${encodeURIComponent(ADMIN_ACTIVE_EXPERT)}&order=${cfg.orderCol}`);
+    currentRows = rows;
     document.getElementById("adminRowsHeading").textContent = `Rows for ${ADMIN_ACTIVE_EXPERT} (${rows.length})`;
     const wrap = document.getElementById("adminRowsWrap");
     wrap.innerHTML = `
@@ -7773,18 +7855,8 @@ async function renderAdminExpertTable(body, tableKey) {
 
     wrap.querySelectorAll("[data-exprowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const id = btn.dataset.exprowsave;
-        const tr = wrap.querySelector(`tr[data-exprow="${id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = cfg.cols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          else if (v.trim() === "") v = null;
-          patch[el.dataset.f] = v;
-        });
         try {
-          await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+          await saveExpRow(btn.dataset.exprowsave);
           toast("Saved");
         } catch (err) {
           toast("Couldn't save", true);
@@ -7866,10 +7938,15 @@ async function renderAdminPets(body) {
       <div class="err" id="adminAddPetRowErr"></div>
     </div>
     <div class="panel">
-      <h2 id="adminPetRowsHeading">Rows</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 id="adminPetRowsHeading" style="margin:0;">Rows</h2>
+        <button class="btn small" id="adminPetRowsSaveAll">Save all</button>
+      </div>
       <div id="adminPetRowsWrap" style="overflow-x:auto;"></div>
     </div>
   `;
+
+  document.getElementById("adminPetRowsSaveAll").addEventListener("click", () => saveAllPetRows());
 
   document.getElementById("adminAddPetForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -7913,6 +7990,33 @@ async function renderAdminPets(body) {
     { key: "sort_order", label: "Sort order", type: "number" },
   ];
 
+  let currentPetRows = [];
+  const saveAllPetRows = async () => {
+    const btn = document.getElementById("adminPetRowsSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      const wrap = document.getElementById("adminPetRowsWrap");
+      await Promise.all(currentPetRows.map(async (r) => {
+        const tr = wrap.querySelector(`tr[data-petrow="${r.id}"]`);
+        const patch = {};
+        tr.querySelectorAll("[data-f]").forEach((el) => {
+          const c = petCols.find((c) => c.key === el.dataset.f);
+          let v = el.value;
+          if (c.type === "number") v = v === "" ? null : Number(v);
+          patch[el.dataset.f] = v;
+        });
+        await sb(`pets_nodes?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+      }));
+      PETS_NODES_CACHE = null;
+      toast(`Saved ${currentPetRows.length} row${currentPetRows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
+  };
+
   async function loadPetRows() {
     const cols = ["id", ...petCols.map((c) => c.key)].join(",");
     const rows = await sb(`pets_nodes?select=${cols}&pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}&order=sort_order`);
@@ -7946,20 +8050,23 @@ async function renderAdminPets(body) {
       </table>
     `;
 
+    const savePetRow = async (id) => {
+      const tr = wrap.querySelector(`tr[data-petrow="${id}"]`);
+      const patch = {};
+      tr.querySelectorAll("[data-f]").forEach((el) => {
+        const c = petCols.find((c) => c.key === el.dataset.f);
+        let v = el.value;
+        if (c.type === "number") v = v === "" ? null : Number(v);
+        patch[el.dataset.f] = v;
+      });
+      await sb(`pets_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+      PETS_NODES_CACHE = null;
+    };
+    currentPetRows = rows;
     wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const id = btn.dataset.petrowsave;
-        const tr = wrap.querySelector(`tr[data-petrow="${id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = petCols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          patch[el.dataset.f] = v;
-        });
         try {
-          await sb(`pets_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-          PETS_NODES_CACHE = null;
+          await savePetRow(btn.dataset.petrowsave);
           toast("Saved");
         } catch (err) {
           toast("Couldn't save", true);
@@ -8014,6 +8121,7 @@ async function renderAdminPets(body) {
 async function renderAdminFlatLevels(body, cfg) {
   const cols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
   const rows = await sb(`${cfg.table}?select=${cols}&order=${cfg.orderCol}.asc`);
+  const canReorder = cfg.orderCol === "sort_order";
 
   body.innerHTML = `
     <div class="panel" style="margin-bottom:16px;">
@@ -8025,18 +8133,27 @@ async function renderAdminFlatLevels(body, cfg) {
       <div class="err" id="adminFlatAddErr"></div>
     </div>
     <div class="panel">
-      <h2>${esc(cfg.title)} (${rows.length})</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 style="margin:0;">${esc(cfg.title)} (${rows.length})</h2>
+        <button class="btn small" id="adminFlatSaveAll">Save all</button>
+      </div>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
+            ${canReorder ? `<th></th>` : ""}
             ${cfg.cols.map((c) => `<th style="text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${esc(c.label)}</th>`).join("")}
             <th></th>
           </tr></thead>
           <tbody>
             ${rows
               .map(
-                (r) => `
+                (r, idx) => `
               <tr data-flatrow="${r.id}">
+                ${canReorder ? `
+                <td style="padding:4px; white-space:nowrap;">
+                  <button class="btn small ghost" data-flatup="${r.id}" ${idx === 0 ? "disabled" : ""} title="Move up">&#9650;</button>
+                  <button class="btn small ghost" data-flatdown="${r.id}" ${idx === rows.length - 1 ? "disabled" : ""} title="Move down">&#9660;</button>
+                </td>` : ""}
                 ${cfg.cols
                   .map(
                     (c) =>
@@ -8056,19 +8173,21 @@ async function renderAdminFlatLevels(body, cfg) {
     </div>
   `;
 
+  const saveRow = async (id) => {
+    const tr = body.querySelector(`tr[data-flatrow="${id}"]`);
+    const patch = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      const c = cfg.cols.find((c) => c.key === el.dataset.f);
+      let v = el.value;
+      if (c.type === "number") v = v === "" ? null : Number(v);
+      patch[el.dataset.f] = v;
+    });
+    await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  };
   body.querySelectorAll("[data-flatsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.flatsave;
-      const tr = body.querySelector(`tr[data-flatrow="${id}"]`);
-      const patch = {};
-      tr.querySelectorAll("[data-f]").forEach((el) => {
-        const c = cfg.cols.find((c) => c.key === el.dataset.f);
-        let v = el.value;
-        if (c.type === "number") v = v === "" ? null : Number(v);
-        patch[el.dataset.f] = v;
-      });
       try {
-        await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+        await saveRow(btn.dataset.flatsave);
         if (cfg.onSave) cfg.onSave();
         toast("Saved");
       } catch (err) {
@@ -8076,6 +8195,47 @@ async function renderAdminFlatLevels(body, cfg) {
       }
     });
   });
+  const saveAllBtn = document.getElementById("adminFlatSaveAll");
+  if (saveAllBtn) {
+    saveAllBtn.addEventListener("click", async () => {
+      saveAllBtn.disabled = true;
+      saveAllBtn.textContent = "Saving\u2026";
+      try {
+        await Promise.all(rows.map((r) => saveRow(r.id)));
+        if (cfg.onSave) cfg.onSave();
+        toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
+      } catch (err) {
+        toast("Couldn't save all", true);
+      }
+      saveAllBtn.disabled = false;
+      saveAllBtn.textContent = "Save all";
+    });
+  }
+  if (canReorder) {
+    const swapOrder = async (id, dir) => {
+      const idx = rows.findIndex((r) => r.id === id);
+      const otherIdx = idx + dir;
+      if (otherIdx < 0 || otherIdx >= rows.length) return;
+      const a = rows[idx], b = rows[otherIdx];
+      const aOrder = a.sort_order, bOrder = b.sort_order;
+      try {
+        await Promise.all([
+          sb(`${cfg.table}?id=eq.${a.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: bOrder }) }),
+          sb(`${cfg.table}?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: aOrder }) }),
+        ]);
+        if (cfg.onSave) cfg.onSave();
+        renderAdminFlatLevels(body, cfg);
+      } catch (err) {
+        toast("Couldn't reorder", true);
+      }
+    };
+    body.querySelectorAll("[data-flatup]").forEach((btn) => {
+      btn.addEventListener("click", () => swapOrder(btn.dataset.flatup, -1));
+    });
+    body.querySelectorAll("[data-flatdown]").forEach((btn) => {
+      btn.addEventListener("click", () => swapOrder(btn.dataset.flatdown, 1));
+    });
+  }
   body.querySelectorAll("[data-flatdel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this row?")) return;
@@ -8146,7 +8306,10 @@ async function renderAdminVip(body) {
       <div class="err" id="adminVipAddErr"></div>
     </div>
     <div class="panel">
-      <h2>VIP tiers (${rows.length})</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 style="margin:0;">VIP tiers (${rows.length})</h2>
+        <button class="btn small" id="adminVipSaveAll">Save all</button>
+      </div>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
@@ -8175,29 +8338,44 @@ async function renderAdminVip(body) {
     </div>
   `;
 
+  const saveVipRow = async (id) => {
+    const tr = body.querySelector(`tr[data-viprow="${id}"]`);
+    const name = tr.querySelector("[data-vipname]").value.trim();
+    await sb(`buff_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+    for (const s of STAT_NAMES) {
+      const v = tr.querySelector(`[data-vipstat="${s}"]`).value;
+      const colId = colByName[s];
+      const existing = await sb(`buff_cells?row_id=eq.${id}&column_id=eq.${colId}&select=id`);
+      if (existing.length) {
+        await sb(`buff_cells?id=eq.${existing[0].id}`, { method: "PATCH", body: JSON.stringify({ value: v === "" ? null : Number(v) }) });
+      } else if (v !== "") {
+        await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: id, column_id: colId, value: Number(v) }) });
+      }
+    }
+    VIP_ROWS_CACHE = null;
+  };
   body.querySelectorAll("[data-vipsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.vipsave;
-      const tr = body.querySelector(`tr[data-viprow="${id}"]`);
-      const name = tr.querySelector("[data-vipname]").value.trim();
       try {
-        await sb(`buff_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
-        for (const s of STAT_NAMES) {
-          const v = tr.querySelector(`[data-vipstat="${s}"]`).value;
-          const colId = colByName[s];
-          const existing = await sb(`buff_cells?row_id=eq.${id}&column_id=eq.${colId}&select=id`);
-          if (existing.length) {
-            await sb(`buff_cells?id=eq.${existing[0].id}`, { method: "PATCH", body: JSON.stringify({ value: v === "" ? null : Number(v) }) });
-          } else if (v !== "") {
-            await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: id, column_id: colId, value: Number(v) }) });
-          }
-        }
-        VIP_ROWS_CACHE = null;
+        await saveVipRow(btn.dataset.vipsave);
         toast("Saved");
       } catch (err) {
         toast("Couldn't save", true);
       }
     });
+  });
+  document.getElementById("adminVipSaveAll").addEventListener("click", async () => {
+    const btn = document.getElementById("adminVipSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(rows.map((r) => saveVipRow(r.id)));
+      toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
   });
   body.querySelectorAll("[data-vipdel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -8252,7 +8430,10 @@ async function renderAdminSkinsCategory(body, category) {
       <div class="err" id="adminSkinsAddErr"></div>
     </div>
     <div class="panel">
-      <h2>${esc(category)} (${rows.length})</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 style="margin:0;">${esc(category)} (${rows.length})</h2>
+        <button class="btn small" id="adminSkinsCatSaveAll">Save all</button>
+      </div>
       <p class="desc">"Has count trigger" shows a "Count in max" checkbox on that item's card and moves it below the divider line (used on Frame for unverified items).</p>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
@@ -8315,26 +8496,41 @@ async function renderAdminSkinsCategory(body, category) {
     });
   });
 
+  const saveSkinRow = async (id) => {
+    const tr = body.querySelector(`tr[data-skinrow="${id}"]`);
+    const patch = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      const f = el.dataset.f;
+      if (f === "owned" || f === "show_count_toggle") { patch[f] = el.checked; return; }
+      let v = el.value;
+      if (["bonus_value", "current_level", "max_level", "sort_order"].includes(f)) v = v === "" ? null : Number(v);
+      else if (v.trim() === "") v = null;
+      patch[f] = v;
+    });
+    await sb(`skins?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  };
   body.querySelectorAll("[data-skinsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.skinsave;
-      const tr = body.querySelector(`tr[data-skinrow="${id}"]`);
-      const patch = {};
-      tr.querySelectorAll("[data-f]").forEach((el) => {
-        const f = el.dataset.f;
-        if (f === "owned" || f === "show_count_toggle") { patch[f] = el.checked; return; }
-        let v = el.value;
-        if (["bonus_value", "current_level", "max_level", "sort_order"].includes(f)) v = v === "" ? null : Number(v);
-        else if (v.trim() === "") v = null;
-        patch[f] = v;
-      });
       try {
-        await sb(`skins?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+        await saveSkinRow(btn.dataset.skinsave);
         toast("Saved");
       } catch (err) {
         toast("Couldn't save", true);
       }
     });
+  });
+  document.getElementById("adminSkinsCatSaveAll").addEventListener("click", async () => {
+    const btn = document.getElementById("adminSkinsCatSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(rows.map((r) => saveSkinRow(r.id)));
+      toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
   });
   body.querySelectorAll("[data-skindel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -8435,10 +8631,15 @@ async function renderAdminProgression(body, nameFilter) {
       <div class="err" id="adminProgAddErr"></div>
     </div>
     <div class="panel">
-      <h2 id="adminProgHeading">Rows</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 id="adminProgHeading" style="margin:0;">Rows</h2>
+        <button class="btn small" id="adminProgSaveAll">Save all</button>
+      </div>
       <div id="adminProgWrap" style="overflow-x:auto;"></div>
     </div>
   `;
+
+  document.getElementById("adminProgSaveAll").addEventListener("click", () => saveAllProgRows());
 
   document.getElementById("adminProgPicker").addEventListener("change", (e) => {
     ADMIN_ACTIVE_PROGRESSION = e.target.value;
@@ -8450,9 +8651,39 @@ async function renderAdminProgression(body, nameFilter) {
     HERO_GEAR_TABLES_CACHE = null;
   }
 
+  let currentProgRows = [];
+  const saveProgRow = async (id) => {
+    const wrap = document.getElementById("adminProgWrap");
+    const tr = wrap.querySelector(`tr[data-progrow="${id}"]`);
+    const patch = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      const c = cols.find((c) => c.key === el.dataset.f);
+      let v = el.value;
+      if (c.type === "number") v = v === "" ? null : Number(v);
+      else if (v.trim() === "") v = null;
+      patch[el.dataset.f] = v;
+    });
+    await sb(`progression_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  };
+  const saveAllProgRows = async () => {
+    const btn = document.getElementById("adminProgSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(currentProgRows.map((r) => saveProgRow(r.id)));
+      invalidateCaches();
+      toast(`Saved ${currentProgRows.length} row${currentProgRows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
+  };
+
   async function loadRows() {
     const selectCols = ["id", ...cols.map((c) => c.key)].join(",");
     const rows = await sb(`progression_rows?table_id=eq.${ADMIN_ACTIVE_PROGRESSION}&select=${selectCols}&order=sort_order.asc`);
+    currentProgRows = rows;
     document.getElementById("adminProgHeading").textContent = `Rows (${rows.length})`;
     const wrap = document.getElementById("adminProgWrap");
     wrap.innerHTML = `
@@ -8485,18 +8716,8 @@ async function renderAdminProgression(body, nameFilter) {
 
     wrap.querySelectorAll("[data-progsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const id = btn.dataset.progsave;
-        const tr = wrap.querySelector(`tr[data-progrow="${id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = cols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          else if (v.trim() === "") v = null;
-          patch[el.dataset.f] = v;
-        });
         try {
-          await sb(`progression_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+          await saveProgRow(btn.dataset.progsave);
           invalidateCaches();
           toast("Saved");
         } catch (err) {
@@ -8634,10 +8855,15 @@ async function renderAdminResearch(body) {
       <div class="err" id="adminResearchAddErr"></div>
     </div>
     <div class="panel">
-      <h2 id="adminResearchHeading">Rows</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 id="adminResearchHeading" style="margin:0;">Rows</h2>
+        <button class="btn small" id="adminResearchSaveAll">Save all</button>
+      </div>
       <div id="adminResearchWrap" style="overflow-x:auto;"></div>
     </div>
   `;
+
+  document.getElementById("adminResearchSaveAll").addEventListener("click", () => saveAllResRows());
 
   body.querySelectorAll("[data-researchsub]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -8646,9 +8872,39 @@ async function renderAdminResearch(body) {
     });
   });
 
+  let currentResRows = [];
+  const saveResRow = async (id) => {
+    const wrap = document.getElementById("adminResearchWrap");
+    const tr = wrap.querySelector(`tr[data-resrow="${id}"]`);
+    const patch = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      const c = cfg.cols.find((c) => c.key === el.dataset.f);
+      let v = el.value;
+      if (c.type === "number") v = v === "" ? null : Number(v);
+      else if (v.trim() === "") v = null;
+      patch[el.dataset.f] = v;
+    });
+    await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  };
+  const saveAllResRows = async () => {
+    const btn = document.getElementById("adminResearchSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(currentResRows.map((r) => saveResRow(r.id)));
+      cfg.invalidate();
+      toast(`Saved ${currentResRows.length} row${currentResRows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
+  };
+
   async function loadRows() {
     const selectCols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
     const rows = await sb(`${cfg.table}?select=${selectCols}&order=sort_order.asc`);
+    currentResRows = rows;
     document.getElementById("adminResearchHeading").textContent = `${ADMIN_ACTIVE_RESEARCH} rows (${rows.length})`;
     const wrap = document.getElementById("adminResearchWrap");
     wrap.innerHTML = `
@@ -8681,18 +8937,8 @@ async function renderAdminResearch(body) {
 
     wrap.querySelectorAll("[data-ressave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const id = btn.dataset.ressave;
-        const tr = wrap.querySelector(`tr[data-resrow="${id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = cfg.cols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          else if (v.trim() === "") v = null;
-          patch[el.dataset.f] = v;
-        });
         try {
-          await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+          await saveResRow(btn.dataset.ressave);
           cfg.invalidate();
           toast("Saved");
         } catch (err) {
@@ -9022,7 +9268,10 @@ async function renderAdminItems(body) {
       <div class="err" id="adminAddItemErr"></div>
     </div>
     <div class="panel">
-      <h2>Items (${rows.length})</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 style="margin:0;">Items (${rows.length})</h2>
+        <button class="btn small" id="adminItemsSaveAll">Save all</button>
+      </div>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
@@ -9051,22 +9300,37 @@ async function renderAdminItems(body) {
     </div>
   `;
 
+  const saveItemRow = async (id) => {
+    const tr = body.querySelector(`tr[data-itemrow="${id}"]`);
+    const patch = {};
+    tr.querySelectorAll("[data-f]").forEach((el) => {
+      const v = el.value.trim();
+      patch[el.dataset.f] = v === "" ? null : v;
+    });
+    await sb(`items?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  };
   body.querySelectorAll("[data-itemsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.itemsave;
-      const tr = body.querySelector(`tr[data-itemrow="${id}"]`);
-      const patch = {};
-      tr.querySelectorAll("[data-f]").forEach((el) => {
-        const v = el.value.trim();
-        patch[el.dataset.f] = v === "" ? null : v;
-      });
       try {
-        await sb(`items?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+        await saveItemRow(btn.dataset.itemsave);
         toast("Saved");
       } catch (err) {
         toast("Couldn't save", true);
       }
     });
+  });
+  document.getElementById("adminItemsSaveAll").addEventListener("click", async () => {
+    const btn = document.getElementById("adminItemsSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(rows.map((r) => saveItemRow(r.id)));
+      toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
   });
   body.querySelectorAll("[data-itemdel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -9281,7 +9545,10 @@ async function renderAdminHeroStars(body) {
       </select>
     </div>
     <div class="panel">
-      <h2>${esc(activeCol ? activeCol.name : "")} star-level bonuses (${relevantRows.length})</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 style="margin:0;">${esc(activeCol ? activeCol.name : "")} star-level bonuses (${relevantRows.length})</h2>
+        <button class="btn small" id="adminHeroStarSaveAll">Save all</button>
+      </div>
       <p class="desc">Row names follow the pattern "N ATT/DEF/DMG/HP" (star level + stat code). Values are the max % at that star level.</p>
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
@@ -9341,25 +9608,40 @@ async function renderAdminHeroStars(body) {
     renderAdminHeroStars(body);
   });
 
+  const saveHeroStarRow = async (id) => {
+    const tr = body.querySelector(`tr[data-herostarrow="${id}"]`);
+    const name = tr.querySelector('[data-f="name"]').value.trim();
+    const value = tr.querySelector('[data-f="value"]').value;
+    const cellId = tr.dataset.cellid;
+    await sb(`buff_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+    if (cellId) {
+      await sb(`buff_cells?id=eq.${cellId}`, { method: "PATCH", body: JSON.stringify({ value: value === "" ? null : Number(value) }) });
+    } else if (value !== "") {
+      await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: id, column_id: ADMIN_ACTIVE_HERO_STAR_COL, value: Number(value) }) });
+    }
+  };
   body.querySelectorAll("[data-herostarsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.herostarsave;
-      const tr = body.querySelector(`tr[data-herostarrow="${id}"]`);
-      const name = tr.querySelector('[data-f="name"]').value.trim();
-      const value = tr.querySelector('[data-f="value"]').value;
-      const cellId = tr.dataset.cellid;
       try {
-        await sb(`buff_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
-        if (cellId) {
-          await sb(`buff_cells?id=eq.${cellId}`, { method: "PATCH", body: JSON.stringify({ value: value === "" ? null : Number(value) }) });
-        } else if (value !== "") {
-          await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: id, column_id: ADMIN_ACTIVE_HERO_STAR_COL, value: Number(value) }) });
-        }
+        await saveHeroStarRow(btn.dataset.herostarsave);
         toast("Saved");
       } catch (err) {
         toast("Couldn't save", true);
       }
     });
+  });
+  document.getElementById("adminHeroStarSaveAll").addEventListener("click", async () => {
+    const btn = document.getElementById("adminHeroStarSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      await Promise.all(relevantRows.map((r) => saveHeroStarRow(r.id)));
+      toast(`Saved ${relevantRows.length} row${relevantRows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
   });
 
   document.getElementById("adminHeroStarAddForm").addEventListener("submit", async (e) => {
@@ -9422,10 +9704,15 @@ async function renderAdminPetsRefine(body) {
       <div class="err" id="adminAddPetRefineRowErr"></div>
     </div>
     <div class="panel">
-      <h2 id="adminPetRefineRowsHeading">Rows</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h2 id="adminPetRefineRowsHeading" style="margin:0;">Rows</h2>
+        <button class="btn small" id="adminPetRefineSaveAll">Save all</button>
+      </div>
       <div id="adminPetRefineRowsWrap" style="overflow-x:auto;"></div>
     </div>
   `;
+
+  document.getElementById("adminPetRefineSaveAll").addEventListener("click", () => saveAllRefineRows());
 
   document.getElementById("adminAddPetRefineForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -9472,9 +9759,38 @@ async function renderAdminPetsRefine(body) {
     { key: "sort_order", label: "Order", type: "number" },
   ];
 
+  let currentRefineRows = [];
+  const saveAllRefineRows = async () => {
+    const btn = document.getElementById("adminPetRefineSaveAll");
+    btn.disabled = true;
+    btn.textContent = "Saving\u2026";
+    try {
+      const wrap = document.getElementById("adminPetRefineRowsWrap");
+      await Promise.all(currentRefineRows.map(async (r) => {
+        const tr = wrap.querySelector(`tr[data-petrefinerow="${r.id}"]`);
+        const patch = {};
+        tr.querySelectorAll("[data-f]").forEach((el) => {
+          const c = refineCols.find((c) => c.key === el.dataset.f);
+          let v = el.value;
+          if (c.type === "number") v = v === "" ? null : Number(v);
+          else if (v.trim() === "") v = null;
+          patch[el.dataset.f] = v;
+        });
+        await sb(`pet_refine_nodes?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+      }));
+      PET_REFINE_CACHE = null;
+      toast(`Saved ${currentRefineRows.length} row${currentRefineRows.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast("Couldn't save all", true);
+    }
+    btn.disabled = false;
+    btn.textContent = "Save all";
+  };
+
   async function loadRefineRows() {
     const cols = ["id", ...refineCols.map((c) => c.key)].join(",");
     const rows = await sb(`pet_refine_nodes?select=${cols}&pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET_REFINE)}&order=sort_order`);
+    currentRefineRows = rows;
     document.getElementById("adminPetRefineRowsHeading").textContent = `Rows for ${ADMIN_ACTIVE_PET_REFINE} (${rows.length})`;
     const wrap = document.getElementById("adminPetRefineRowsWrap");
     wrap.innerHTML = `
@@ -9892,7 +10208,12 @@ function renderOwnerLoginUI() {
   }
   renderOwnerLoginUI();
   loadCommander();
-  loadBuffCategories().then(render);
+  loadBuffCategories().then(() => {
+    document.querySelectorAll("button[data-tab]").forEach((x) => {
+      x.classList.toggle("active", x.dataset.tab === TAB);
+    });
+    render();
+  });
 })();
 </script>
 </body>
