@@ -1513,6 +1513,7 @@ async function renderOverview() {
     <div id="dashboardRoster" style="margin-top:16px;"></div>
     <div id="troopSections"></div>
     <div class="grid g4" id="metricRow" style="margin-top:16px;"></div>
+    ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
   `;
 
   document.getElementById("metricRow").innerHTML = avgByStat
@@ -1520,6 +1521,76 @@ async function renderOverview() {
       (s) => `<div class="metric"><div class="label">AVG ${esc(s.label)} bonus</div><div class="val">${s.avg.toFixed(0)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">AVG maxed: ${s.avgMax.toFixed(0)}%</div></div>`
     )
     .join("");
+
+  // ---- Owner-only TOTAL breakdown table (CUR/MAX/DIFF per troop+stat line,
+  // plus SvS/Foundry diff columns) - hidden entirely from non-owners, and
+  // collapsed by default even for the owner since it's a dense reference
+  // table rather than something needed on every visit.
+  if (IS_OWNER) {
+    const ownerWrap = document.getElementById("ownerTotalTableWrap");
+    const fmtPct = (v) => `${v.toFixed(1)}%`;
+    const renderOwnerTotalTable = () => {
+      const shown = localStorage.getItem("dashboard_owner_total_shown") === "1";
+      const totalRows = allStats.map((x) => {
+        const max = maxStatFor(x.troop, x.stat);
+        const diff = max - x.total;
+        return { troop: x.troop, stat: x.stat, cur: x.total, max, diff };
+      });
+      const avgRow = {
+        cur: totalRows.reduce((a, r) => a + r.cur, 0) / totalRows.length,
+        max: totalRows.reduce((a, r) => a + r.max, 0) / totalRows.length,
+        diff: totalRows.reduce((a, r) => a + r.diff, 0) / totalRows.length,
+      };
+      ownerWrap.innerHTML = `
+        <div class="panel">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:${shown ? "12px" : "0"};">
+            <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+              <input type="checkbox" id="ownerTotalToggle" ${shown ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
+              <span style="font-weight:600;">TOTAL (owner only)</span>
+            </label>
+          </div>
+          ${shown ? `
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+              <thead><tr>
+                ${["#", "CUR.", "MAX.", "DIFF.", "SVS DIFF.", "FOUNDRY DIFF."]
+                  .map((h) => `<th style="text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
+                  .join("")}
+              </tr></thead>
+              <tbody>
+                ${totalRows
+                  .map(
+                    (r) => `<tr>
+                      <td style="padding:5px 8px; font-weight:600;">${esc(r.troop)} ${esc(r.stat)}</td>
+                      <td style="padding:5px 8px;">${fmtPct(r.cur)}</td>
+                      <td style="padding:5px 8px;">${fmtPct(r.max)}</td>
+                      <td style="padding:5px 8px;">${fmtPct(r.diff)}</td>
+                      <td style="padding:5px 8px;">${fmtPct(r.diff)}</td>
+                      <td style="padding:5px 8px;">${fmtPct(r.diff)}</td>
+                    </tr>`
+                  )
+                  .join("")}
+                <tr style="border-top:1px solid var(--line);">
+                  <td style="padding:5px 8px; font-weight:600;">AVERAGE</td>
+                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.cur)}</td>
+                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.max)}</td>
+                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.diff)}</td>
+                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.diff)}</td>
+                  <td style="padding:5px 8px; font-weight:600;">${fmtPct(avgRow.diff)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="desc" style="margin-top:8px;">SVS DIFF and FOUNDRY DIFF currently mirror DIFF (no separate event-specific bonus tracked yet).</p>
+          ` : ""}
+        </div>`;
+      document.getElementById("ownerTotalToggle").addEventListener("change", (e) => {
+        localStorage.setItem("dashboard_owner_total_shown", e.target.checked ? "1" : "0");
+        renderOwnerTotalTable();
+      });
+    };
+    renderOwnerTotalTable();
+  }
 
   // ---- Roster heroes: the 3 heroes affecting Infantry / Lancers / Marksman ----
   const rosterEl = document.getElementById("dashboardRoster");
