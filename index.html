@@ -1757,21 +1757,18 @@ async function renderGearLevelingGroup(target) {
           (name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(name)}</button>`
         ).join("")}
       </div>
-      <p class="desc" style="margin-top:8px;">Three loadouts sharing one material inventory. Switch sets on Dashboard.</p>
     </div>
     <div class="panel">
-      <h2>Materials</h2>
-      <p class="desc">Enter what you own — the rest shows what's still needed.</p>
+      <h2>Backpack</h2>
       <div id="heroGearOwned"></div>
     </div>
     <div class="panel">
       <h2>Heroes Gears calculator</h2>
-      <p class="desc">Current and target step for each piece, per troop.</p>
       <div id="heroGearTroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
       <div id="heroGearTracks"></div>
     </div>
     <div class="panel">
-      <h2>Current stats</h2>
+      <h2>Troops Stats</h2>
       <p class="desc">Mastery Forging &amp; Enhance boost Lethality/Health; Mithril milestones boost Attack/Defense.</p>
       <div id="heroGearCurrentStats"></div>
     </div>
@@ -3026,15 +3023,13 @@ async function renderCharmsCalc() {
 
   content.innerHTML = `
     <div class="panel">
-      <h2>Materials</h2>
-      <p class="desc">Enter what you own — the rest shows what's still needed.</p>
+      <h2>Backpack</h2>
       <div id="charmOwned"></div>
     </div>
     <div id="charmTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="charmRows"></div>
     <div class="panel">
-      <h2>Current stats</h2>
-      <p class="desc">Lethality &amp; Health bonus from your charms right now, based on each charm's current level.</p>
+      <h2>Troops Stats</h2>
       <div id="charmCurrentStats"></div>
     </div>
   `;
@@ -3258,15 +3253,13 @@ async function renderChiefGearCalc() {
 
   content.innerHTML = `
     <div class="panel">
-      <h2>Materials</h2>
-      <p class="desc">Enter what you own — the rest shows what's still needed.</p>
+      <h2>Backpack</h2>
       <div id="gearOwned"></div>
     </div>
     <div id="gearTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="gearRows"></div>
     <div class="panel">
-      <h2>Current stats</h2>
-      <p class="desc">Attack &amp; Defense bonus from your Chief Gear right now, based on each piece's current tier.</p>
+      <h2>Troops Stats</h2>
       <div id="gearCurrentStats"></div>
     </div>
   `;
@@ -3360,6 +3353,13 @@ async function renderChiefGearCalc() {
 // { label, totals } groups (e.g. one per Hero Gear set) - in which case a
 // separate needed/still-needed row is rendered per group, all measured
 // against the same shared owned amounts.
+// Full material names are too long to fit "AVAILABLE BACKPACK" in one row
+// on most screens - shorten just for display here (data keys stay the same).
+const MATERIAL_NAME_SHORT = {
+  "Hardened Alloy": "Alloy",
+  "Polishing Solution": "Polish",
+  "Design Plan": "Design",
+};
 async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNames, refreshFn, calcKey) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -3375,51 +3375,49 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const owned = await ensureMaterialOwnedCache(calcKey || "chief_gear");
   const rowsId = `${containerId}_rows`;
 
-  const barHtml = matEntries
-    .map(([name]) => {
-      const lower = name.toLowerCase();
-      const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-      const icon = iconKey ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : "";
-      const haveQty = owned[name] || 0;
-      return `<div style="flex:1; min-width:0;">
-        <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-          ${icon}
-          <span class="meta" style="font-size:11px; font-weight:600; letter-spacing:0.3px;">${esc(name)}</span>
-        </div>
-        <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
-      </div>`;
-    })
-    .join("");
+  function statusFor(name, needed) {
+    const haveQty = owned[name] || 0;
+    const stillNeed = Math.max(0, needed - haveQty);
+    const surplus = Math.max(0, haveQty - needed);
+    const statusColor = needed === 0 ? "var(--muted)" : stillNeed > 0 ? "var(--danger)" : "var(--good)";
+    // Per-material status: just the number (still needed / extra), no
+    // wording - color alone conveys which case it is. Only the two "no
+    // number" states (nothing needed yet / exactly enough) keep a short word.
+    const statusText = needed === 0 ? "\u2014" : stillNeed > 0 ? `${stillNeed.toLocaleString()}` : surplus > 0 ? `\u2713 ${surplus.toLocaleString()}` : "\u2713";
+    return { statusColor, statusText };
+  }
 
-  function rowsHtml() {
-    return groups
+  function materialCellHtml([name]) {
+    const lower = name.toLowerCase();
+    const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
+    const icon = iconKey ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : "";
+    const haveQty = owned[name] || 0;
+    const shortName = MATERIAL_NAME_SHORT[name] || name;
+    const groupStatusHtml = groups
       .map((g) => {
-        const cells = names
-          .map((name) => {
-            const needed = Number((g.totals || {})[name]) || 0;
-            const haveQty = owned[name] || 0;
-            const stillNeed = Math.max(0, needed - haveQty);
-            const surplus = Math.max(0, haveQty - needed);
-            const statusColor = needed === 0 ? "var(--muted)" : stillNeed > 0 ? "var(--danger)" : "var(--good)";
-            const statusText = needed === 0 ? "Not needed yet" : stillNeed > 0 ? `${stillNeed.toLocaleString()} still needed` : surplus > 0 ? `\u2713 ${surplus.toLocaleString()} extra` : "\u2713 Have enough";
-            return `<div style="flex:1; min-width:0;">
-              <div class="meta" style="font-size:10.5px;">${esc(name)} needed: <strong style="color:var(--frost);">${needed.toLocaleString()}</strong></div>
-              <div style="font-size:12px; margin-top:2px; color:${statusColor};">${statusText}</div>
-            </div>`;
-          })
-          .join("");
-        const heading = g.label ? `<div style="flex-basis:100%; font-size:11px; font-weight:700; letter-spacing:0.4px; color:var(--frost); margin-bottom:2px;">${esc(g.label)}</div>` : "";
-        return `<div style="display:flex; gap:16px; flex-wrap:wrap; flex-basis:100%;">${heading}${cells}</div>`;
+        const needed = Number((g.totals || {})[name]) || 0;
+        const { statusColor, statusText } = statusFor(name, needed);
+        return `<div data-neededstatus="${esc(name)}|${esc(g.label || "")}" style="font-size:11px; margin-top:4px;">
+          ${g.label ? `<span class="meta" style="font-size:9px;">${esc(g.label)}: </span>` : ""}
+          <span style="color:${statusColor};">${statusText}</span>
+        </div>`;
       })
-      .join(`<div style="flex-basis:100%; height:0; border-top:1px dashed var(--line); margin:6px 0;"></div>`);
+      .join("");
+    return `<div style="flex:0 0 100px; min-width:0;">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+        ${icon}
+        <span class="meta" style="font-size:11px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(shortName)}</span>
+      </div>
+      <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
+      ${groupStatusHtml}
+    </div>`;
   }
 
   el.innerHTML = `
     <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-      <span style="font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--frost);">AVAILABLE RESOURCES</span>
+      <span style="font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--frost);">AVAILABLE BACKPACK</span>
     </div>
-    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px;">${barHtml}</div>
-    <div id="${rowsId}" style="display:flex; gap:16px; flex-wrap:wrap; padding-top:12px; border-top:1px solid var(--line);">${rowsHtml()}</div>
+    <div id="${rowsId}" style="display:flex; gap:10px; flex-wrap:nowrap; overflow-x:auto; margin-bottom:14px; padding-bottom:2px;">${matEntries.map(materialCellHtml).join("")}</div>
   `;
 
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
@@ -3427,14 +3425,22 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       let val = Number(input.value);
       if (Number.isNaN(val) || val < 0) val = 0;
       input.value = val;
-      owned[input.dataset.ownedmat] = val;
+      const name = input.dataset.ownedmat;
+      owned[name] = val;
       await saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
-      // Only the "still needed" status text depends on owned amounts, so
-      // update just that in place rather than tearing down the whole bar
-      // (which would steal focus if the user clicks straight into another
-      // field before this one's blur/change finishes).
-      const rowsEl = document.getElementById(rowsId);
-      if (rowsEl) rowsEl.innerHTML = rowsHtml();
+      // Only this material's status text depends on its owned amount, so
+      // update just those spans in place rather than touching the input
+      // elements (which would steal focus if the user tabs straight into
+      // another field before this one's change event finishes).
+      groups.forEach((g) => {
+        const needed = Number((g.totals || {})[name]) || 0;
+        const { statusColor, statusText } = statusFor(name, needed);
+        const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(name)}|${CSS.escape(g.label || "")}"] span:last-child`);
+        if (statusDiv) {
+          statusDiv.style.color = statusColor;
+          statusDiv.textContent = statusText;
+        }
+      });
     });
   });
 }
@@ -3995,6 +4001,10 @@ async function renderSkinGallery() {
               ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
             <div class="badge">${esc(s.name)}</div>
+            ${s.show_count_toggle ? `<label style="display:flex; align-items:center; justify-content:center; gap:4px; padding:4px 6px; background:var(--panel-2);" onclick="event.stopPropagation()">
+              <input type="checkbox" data-countinmax="${s.id}" ${s.count_in_max !== false ? "checked" : ""} style="width:12px; height:12px;" />
+              <span class="meta" style="font-size:8.5px;">Count in max</span>
+            </label>` : ""}
           </div>${isLastGlobe || isLastNonToggle ? `<div style="grid-column:1/-1; height:1px; background:var(--line); margin:2px 0;"></div>` : ""}`;
           })
           .join("")}
@@ -4002,20 +4012,29 @@ async function renderSkinGallery() {
     `;
 
     sections.querySelectorAll("[data-skin]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const idx = ordered.findIndex((s) => s.id === el.dataset.skin);
-        openGalleryDetailModal(ordered, idx, {
-          isIsland: false,
-          onSave: async (skin, patch) => {
-            try {
-              await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify(patch) });
-              Object.assign(skin, patch);
-              computeAndRender();
-            } catch (err) {
-              toast("Couldn't update skin", true);
-            }
-          },
-        });
+      el.addEventListener("click", async () => {
+        const skin = skins.find((s) => s.id === el.dataset.skin);
+        const newOwned = !skin.owned;
+        try {
+          await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify({ owned: newOwned }) });
+          skin.owned = newOwned;
+          computeAndRender();
+        } catch (err) {
+          toast("Couldn't update skin", true);
+        }
+      });
+    });
+    sections.querySelectorAll("[data-countinmax]").forEach((cb) => {
+      cb.addEventListener("change", async () => {
+        const skin = skins.find((s) => s.id === cb.dataset.countinmax);
+        const newVal = cb.checked;
+        try {
+          await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify({ count_in_max: newVal }) });
+          skin.count_in_max = newVal;
+          computeAndRender();
+        } catch (err) {
+          toast("Couldn't update count in max", true);
+        }
       });
     });
     }
@@ -5262,7 +5281,7 @@ async function renderT11HeliosPage() {
     };
     document.getElementById("t11GrandTotal").innerHTML = `
       <div class="panel">
-        <h2>Total resources needed</h2>
+        <h2>Backpack</h2>
         <p class="desc">Across all 3 troop types, from current levels to max.</p>
         <div id="t11ResourcesBar" style="margin-bottom:12px;"></div>
         <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
@@ -5952,16 +5971,16 @@ async function renderExpertsPage() {
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Troop Stats</h2>
+      <h2>Troops Stats</h2>
       <p class="desc">Base stats for all 10 experts, plus select main-stat skills.</p>
       <div class="stats-row-scroll" id="expertsStatHeader"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Your Inventory</h2>
+      <h2>Backpack</h2>
       <div class="stats-row-scroll" id="expertsInventory"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Resources needed</h2>
+      <h2>Backpack</h2>
       <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -6740,7 +6759,7 @@ async function renderPetsDataPage() {
         </div>
       </div>
       <div class="panel">
-        <h2>Materials</h2>
+        <h2>Backpack</h2>
         <p class="desc">Enter what you own \u2014 the rest shows what's still needed, across all 15 pets.</p>
         <div id="petsMaterialsBar"></div>
       </div>
@@ -6929,7 +6948,7 @@ async function renderResearchCenterPage() {
     };
     document.getElementById("rcTotals").innerHTML = `
       <div class="panel">
-        <h2>Total resources needed</h2>
+        <h2>Backpack</h2>
         <p class="desc">Across all 102 research tracks, from current levels to max.</p>
         <div id="rcResourcesBar" style="margin-bottom:12px;"></div>
         <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
@@ -7120,7 +7139,7 @@ async function renderT12ResearchPage() {
     };
     document.getElementById("t12Totals").innerHTML = `
       <div class="panel">
-        <h2>Total resources needed</h2>
+        <h2>Backpack</h2>
         <p class="desc">Across all 3 troop types, from current levels to max.</p>
         <div id="t12ResourcesBar" style="margin-bottom:12px;"></div>
         <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
