@@ -32,8 +32,10 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;}
+  html{ overflow-x:hidden; }
   body{
     margin:0;
+    overflow-x:hidden;
     background:
       radial-gradient(circle at 15% 0%, rgba(111,211,242,0.06), transparent 40%),
       var(--bg);
@@ -160,8 +162,6 @@
      and the top navbar not fitting all groups in one row.
      ============================================================ */
   @media (max-width:760px){
-    html{ overflow-x:hidden; }
-    body{ overflow-x:hidden; }
     main{ padding:14px 12px 50px; }
     h1{ font-size:16px; }
     h2{ font-size:16px; }
@@ -327,7 +327,10 @@
      Islands). ---- */
   .gallery-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
   @media (min-width:760px){
-    .gallery-grid{ grid-template-columns:repeat(6, 1fr); }
+    .gallery-grid{ grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); }
+    /* On tablet/desktop there's usually room to just show every card/stat
+       at once instead of forcing the horizontal scroll phone needs. */
+    .stats-row-scroll{ flex-wrap:wrap; overflow-x:visible; }
   }
   .gallery-card{
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
@@ -6045,11 +6048,14 @@ async function renderExpertsPage() {
     const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     ["Cyrille", "Agnes", "Holger", "Romulus", "Baldur", "Fabian", "Valeria", "Ronne", "Kathy", "Gareth"].forEach((hero) => {
       const rows = AFFINITY_CACHE[hero] || [];
-      const last = rows[rows.length - 1];
-      if (!last) return;
-      if (last.stat_type) {
-        last.stat_type.split(",").forEach((statName) => {
-          if (totals[statName] != null) totals[statName] += Number(last.stat_value) || 0;
+      if (!rows.length) return;
+      // Use the true peak value across all levels, not just the last row -
+      // some experts' curves dip at level 100 due to a relationship-tier
+      // reset, so the last row isn't always the highest one.
+      const peak = rows.reduce((best, r) => (Number(r.stat_value) > Number(best.stat_value) ? r : best), rows[0]);
+      if (peak.stat_type) {
+        peak.stat_type.split(",").forEach((statName) => {
+          if (totals[statName] != null) totals[statName] += Number(peak.stat_value) || 0;
         });
       }
     });
@@ -7230,7 +7236,7 @@ async function renderFacilityPage() {
     <div class="panel">
       <h2>Facility</h2>
       <p class="desc">Click a building to mark it owned/not owned.</p>
-      <div class="stats-row-scroll" id="facilityCards" style="align-items:stretch;"></div>
+      <div class="stats-row-scroll facility-cards" id="facilityCards" style="align-items:stretch;"></div>
     </div>
   `;
 
