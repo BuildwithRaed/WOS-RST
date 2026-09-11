@@ -622,6 +622,18 @@
   let CURRENT_SESSION = null;
   let IS_OWNER = false;
 
+  // Keeps CURRENT_SESSION in sync with supabase-js's own auto-refreshed token,
+  // so a long-open tab never ends up sending a stale/expired access_token.
+  // Without this, sb() below would keep reusing whatever token was captured
+  // at the last ensureAuthSession() call, which expires after ~1hr.
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      CURRENT_SESSION = session;
+      USER_ID = session.user.id;
+      IS_OWNER = (session.user.email || "").toLowerCase() === OWNER_EMAIL.toLowerCase();
+    }
+  });
+
   // Ensures a session exists (signing in anonymously if needed), and sets
   // USER_ID / IS_OWNER from it. Called once before the app renders, and
   // again after any login/logout so the whole app reflects the new session.
@@ -644,7 +656,7 @@
   // Thin wrapper around the Supabase REST (PostgREST) API. Uses the current
   // session's access token (not just the bare anon key) so that database
   // rules based on auth.uid()/auth.jwt() resolve correctly per visitor.
-  async function sb(path, opts = {}) {
+  async function sb(path, opts = {}, _retried = false) {
     const token = (CURRENT_SESSION && CURRENT_SESSION.access_token) || SUPABASE_KEY;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       ...opts,
@@ -658,6 +670,17 @@
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
+      // A long-backgrounded tab (iPad Safari suspends JS timers, so
+      // supabase-js's scheduled refresh never fired) can still hand us an
+      // expired token despite the listener above. One forced refresh + retry
+      // recovers silently instead of surfacing a dead page to the user.
+      if (res.status === 401 && /jwt expired/i.test(text) && !_retried) {
+        const { data, error } = await supabaseClient.auth.refreshSession();
+        if (!error && data.session) {
+          CURRENT_SESSION = data.session;
+          return sb(path, opts, true);
+        }
+      }
       throw new Error(`${res.status} ${text}`);
     }
     const text = await res.text();
@@ -667,7 +690,48 @@
 // Generic persistence for calculator selections (Charm, Chief Gear, Hero
 // Gear) so they survive navigation/reloads and can feed live "current"
 // totals into the Stats dashboard, not just the page you're on.
+// Speed: every saved calculator state for this user is fetched in ONE request
+// (the first time any page asks for one) and kept in memory, instead of one
+// round trip per state - the Dashboard alone used to make ~25 of them, mostly
+// one after another. Saves update the in-memory copy too, so it stays current.
+// Values are handed out as copies, so pages behave exactly as if each state
+// had just been fetched fresh.
+let CALC_STATE_CACHE = null; // { calc_name: state } for CALC_STATE_CACHE_USER
+let CALC_STATE_CACHE_USER = null;
+let CALC_STATE_PROMISE = null;
+function cloneState(v) {
+  if (v == null) return v;
+  try { return structuredClone(v); } catch (e) { return JSON.parse(JSON.stringify(v)); }
+}
+function preloadCalcStates() {
+  if (CALC_STATE_CACHE_USER !== USER_ID) {
+    // First load, or a different user logged in: start over.
+    CALC_STATE_CACHE = null;
+    CALC_STATE_PROMISE = null;
+    CALC_STATE_CACHE_USER = USER_ID;
+  }
+  if (!CALC_STATE_PROMISE) {
+    const uid = USER_ID;
+    CALC_STATE_PROMISE = sb(`calc_state?user_id=eq.${uid}&select=calc_name,state`)
+      .then((rows) => {
+        if (uid !== USER_ID) return;
+        const map = {};
+        (rows || []).forEach((r) => { map[r.calc_name] = r.state; });
+        CALC_STATE_CACHE = map;
+      })
+      .catch(() => {
+        // Fall back to per-state requests if the bulk fetch fails.
+        CALC_STATE_PROMISE = null;
+      });
+  }
+  return CALC_STATE_PROMISE || Promise.resolve();
+}
 async function loadCalcState(calcName) {
+  await preloadCalcStates();
+  if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) {
+    const v = CALC_STATE_CACHE[calcName];
+    return v === undefined ? null : cloneState(v);
+  }
   try {
     const [row] = await sb(`calc_state?user_id=eq.${USER_ID}&calc_name=eq.${encodeURIComponent(calcName)}&select=state`);
     return row ? row.state : null;
@@ -676,6 +740,7 @@ async function loadCalcState(calcName) {
   }
 }
 async function saveCalcState(calcName, state) {
+  if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_CACHE[calcName] = cloneState(state);
   try {
     await sb(`calc_state?on_conflict=user_id,calc_name`, {
       method: "POST",
@@ -935,15 +1000,18 @@ function displaySourceName(key) {
 }
 
 async function renderOverview() {
-  await ensureBuffTable();
-  const [columns, rows, heroes, playerHeroes, items, inventory, allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS] = await Promise.all([
-    sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
-    sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
-    sb(`heroes?select=id`),
-    sb(`player_heroes?select=id&user_id=eq.${USER_ID}`),
-    sb(`items?select=id`),
-    sb(`player_inventory?select=id&user_id=eq.${USER_ID}`),
-    sb(`skins?user_id=eq.${USER_ID}&select=name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`),
+  // Speed: everything the Dashboard needs is requested in one parallel batch
+  // (saved states come from the shared calc_state cache), instead of several
+  // waves of requests that each waited for the previous one to finish.
+  preloadCalcStates();
+  const skinsPromise = sb(`skins?user_id=eq.${USER_ID}&select=name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`);
+  const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
+    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED] = await Promise.all([
+    ensureBuffTable().then(() => Promise.all([
+      sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
+      sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
+    ])),
+    skinsPromise,
     // Which skins.category values actually represent an Island sub-category
     // (Attack/Defense/Lighthouse/MVP/Islands Guide, etc) - driven by the same
     // table the Islands page itself uses, cached across the session so this
@@ -956,6 +1024,12 @@ async function renderOverview() {
     sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`),
     sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`),
     sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`),
+    // live data from the calculators, for the Charm/Chief/Hero Gears/etc. sources below
+    Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), skinsPromise.then(ensureGlobeLevelData), ensureResearchPageCountedData()]),
+    loadCalcState("collection_gallery"),
+    loadCalcState("hero_stars_jero"),
+    loadCalcState("hero_stars_natalia"),
+    loadCalcState("album_tundra"),
   ]);
   // ---- Roster heroes: shared lookups, needed by statFor()/liveCalcValue() below ----
   const ROSTER_STATE = ROSTER_SAVED || {};
@@ -1005,14 +1079,13 @@ async function renderOverview() {
     }
     return 0;
   }
-  // live data from the 3 calculators, for the Charm/Chief/Hero Gears columns below
-  await Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), ensureGlobeLevelData(allSkins), ensureResearchPageCountedData()]);
-  const GALLERY_STATE = (await loadCalcState("collection_gallery")) || { Attack: 2, Defense: 2, Lethality: 2, Health: 2 };
+  const GALLERY_STATE = GALLERY_SAVED || { Attack: 2, Defense: 2, Lethality: 2, Health: 2 };
   const GALLERY_MAX = { Attack: 6, Defense: 6, Lethality: 6, Health: 4 };
-  const JERO_STARS = ((await loadCalcState("hero_stars_jero")) || {})["__shared__"] ?? 5;
-  const NATALIA_STARS = ((await loadCalcState("hero_stars_natalia")) || {})["__shared__"] ?? 5;
-  const ALBUM_STATE = (await loadCalcState("album_tundra")) || { Attack: 2, Defense: 2 };
-  const ALLIANCE_TECH_CACHE = await sb(`skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech&select=name,bonus_type,bonus_value,current_level,max_level`);
+  const JERO_STARS = (JERO_SAVED || {})["__shared__"] ?? 5;
+  const NATALIA_STARS = (NATALIA_SAVED || {})["__shared__"] ?? 5;
+  const ALBUM_STATE = ALBUM_SAVED || { Attack: 2, Defense: 2 };
+  // Alliance Tech rows are already in allSkins (same table, same user) - no extra request.
+  const ALLIANCE_TECH_CACHE = allSkins.filter((s) => s.category === "Alliance Tech");
   const colById = Object.fromEntries(columns.map((c) => [c.id, c.category || c.name]));
   // Categories that used to be shown as flat buff sources but now have a
   // dedicated page (T11/T12/Research Center replaced War Acd./Research;
@@ -1265,7 +1338,26 @@ async function renderOverview() {
     return null;
   }
 
+  // Speed: the first paint asks for each of the 12 stat lines twice (once for
+  // the averages row, once for its card). Reuse those results during that first
+  // paint only; after it, every call recomputes fresh (breakdown modal,
+  // Hero Gear set switcher, roster changes).
+  let statPassMemo = new Map();
   function statFor(troop, stat) {
+    const key = `cur|${troop}|${stat}`;
+    if (statPassMemo && statPassMemo.has(key)) return statPassMemo.get(key);
+    const result = statForFresh(troop, stat);
+    if (statPassMemo) statPassMemo.set(key, result);
+    return result;
+  }
+  function maxStatFor(troop, statKey) {
+    const key = `max|${troop}|${statKey}`;
+    if (statPassMemo && statPassMemo.has(key)) return statPassMemo.get(key);
+    const result = maxStatForFresh(troop, statKey);
+    if (statPassMemo) statPassMemo.set(key, result);
+    return result;
+  }
+  function statForFresh(troop, stat) {
     const row = rows.find((r) => r.name.toLowerCase() === `${troop} ${stat}`.toLowerCase());
     const bySource = {};
     if (row) {
@@ -1370,7 +1462,7 @@ async function renderOverview() {
     return { islandsMax, skinsMax };
   }
 
-  function maxStatFor(troop, statKey) {
+  function maxStatForFresh(troop, statKey) {
     const row = rows.find((r) => r.name.toLowerCase() === `${troop} ${statKey}`.toLowerCase());
     const bySource = {};
     if (row) {
@@ -1666,6 +1758,7 @@ async function renderOverview() {
     </div>
   `
   ).join("");
+  statPassMemo = null; // first paint done - recompute fresh from here on
 
   sections.querySelectorAll("[data-drilldown]").forEach((card) => {
     card.addEventListener("click", () => {
@@ -2622,7 +2715,17 @@ async function renderInventory() {
 // nested under Heroes/Extra Buff.
 // ============================================================
 // Fetches (or lazily creates) the one shared buff matrix table.
-async function ensureBuffTable() {
+let BUFF_TABLE_PROMISE = null;
+function ensureBuffTable() {
+  if (BUFF_TABLE_ID) return Promise.resolve(BUFF_TABLE_ID);
+  // Callers running at the same time share one lookup (and can never both
+  // create a table).
+  if (!BUFF_TABLE_PROMISE) {
+    BUFF_TABLE_PROMISE = ensureBuffTableOnce().catch((e) => { BUFF_TABLE_PROMISE = null; throw e; });
+  }
+  return BUFF_TABLE_PROMISE;
+}
+async function ensureBuffTableOnce() {
   if (BUFF_TABLE_ID) return BUFF_TABLE_ID;
   const existing = await sb(`buff_tables?select=id&user_id=eq.${USER_ID}&order=created_at.asc&limit=1`);
   if (existing && existing.length) {
@@ -3085,9 +3188,12 @@ let CHARM_STEP_COST = {};
 let CHARM_CUMULATIVE = {};
 let CHARM_CUMULATIVE_STAT = {};
 let CHARM_LEVELS_LOADED = false;
+let CHARM_LEVELS_PROMISE = null;
 async function ensureCharmLevelsData() {
-  if (CHARM_LEVELS_LOADED) return;
+  // Callers running at the same time share one in-flight download.
+  if (CHARM_LEVELS_LOADED) return CHARM_LEVELS_PROMISE;
   CHARM_LEVELS_LOADED = true;
+  CHARM_LEVELS_PROMISE = (async () => {
   const rows = await sb(`charm_levels?select=level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`);
   CHARM_LEVELS = rows.map((r) => r.level_label);
   CHARM_STEP_COST = {};
@@ -3102,6 +3208,8 @@ async function ensureCharmLevelsData() {
     CHARM_CUMULATIVE[r.level_label] = [g, d, s];
     CHARM_CUMULATIVE_STAT[r.level_label] = Number(r.cumulative_pct);
   });
+  })().catch((e) => { CHARM_LEVELS_LOADED = false; throw e; });
+  return CHARM_LEVELS_PROMISE;
 }
 // The 6 gear pieces, grouped by which troop type they buff.
 const CHARM_PIECES = [
@@ -3388,9 +3496,12 @@ let CHIEF_GEAR_ROWS = null;
 
 // Lazily fetches and caches the 150-row Chief Gear progression.
 async function loadChiefGearRows() {
-  await ensureChiefGearSetBonusData();
-  if (CHIEF_GEAR_ROWS) return CHIEF_GEAR_ROWS;
-  let [table] = await sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
+  const setBonusPromise = ensureChiefGearSetBonusData();
+  if (CHIEF_GEAR_ROWS) { await setBonusPromise; return CHIEF_GEAR_ROWS; }
+  let [[table]] = await Promise.all([
+    sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`),
+    setBonusPromise,
+  ]);
   if (!table) {
     CHIEF_GEAR_ROWS = [];
     return CHIEF_GEAR_ROWS;
@@ -3668,9 +3779,12 @@ async function updateChiefGearTotals() {
 let CHIEF_GEAR_SET_BONUS = {};
 let CHIEF_GEAR_TIER_ORDER = [];
 let CHIEF_GEAR_SET_BONUS_LOADED = false;
+let CHIEF_GEAR_SET_BONUS_PROMISE = null;
 async function ensureChiefGearSetBonusData() {
-  if (CHIEF_GEAR_SET_BONUS_LOADED) return;
+  // Callers running at the same time share one in-flight download.
+  if (CHIEF_GEAR_SET_BONUS_LOADED) return CHIEF_GEAR_SET_BONUS_PROMISE;
   CHIEF_GEAR_SET_BONUS_LOADED = true;
+  CHIEF_GEAR_SET_BONUS_PROMISE = (async () => {
   const rows = await sb(`chief_gear_set_bonus?select=tier,bonus_pct&order=sort_order.asc`);
   CHIEF_GEAR_SET_BONUS = {};
   CHIEF_GEAR_TIER_ORDER = [];
@@ -3678,6 +3792,8 @@ async function ensureChiefGearSetBonusData() {
     CHIEF_GEAR_SET_BONUS[r.tier] = Number(r.bonus_pct);
     CHIEF_GEAR_TIER_ORDER.push(r.tier);
   });
+  })().catch((e) => { CHIEF_GEAR_SET_BONUS_LOADED = false; throw e; });
+  return CHIEF_GEAR_SET_BONUS_PROMISE;
 }
 
 // Looks at all 6 pieces' current tier and returns which set bonuses
@@ -4545,9 +4661,14 @@ let EXPERTS_IN_ORDER_GLOBAL = []; // ALL expert keys in sort_order, including Ju
 let EXPERT_MAIN_STAT_GLOBAL_MAP = {}; // {key: "ATK"|"DEF"|"DMG"|"HP"}
 let EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP = {}; // {key: "Lancers"|"Infantry"} only for restricted experts
 let EXPERTS_ROSTER_LOADED = false;
-async function ensureExpertsRosterGlobal() {
-  if (EXPERTS_ROSTER_LOADED) return;
+let EXPERTS_ROSTER_PROMISE = null;
+function ensureExpertsRosterGlobal() {
+  if (EXPERTS_ROSTER_LOADED) return EXPERTS_ROSTER_PROMISE || Promise.resolve();
   EXPERTS_ROSTER_LOADED = true;
+  EXPERTS_ROSTER_PROMISE = loadExpertsRosterGlobal().catch((e) => { EXPERTS_ROSTER_LOADED = false; throw e; });
+  return EXPERTS_ROSTER_PROMISE;
+}
+async function loadExpertsRosterGlobal() {
   const rows = await sb(`experts?select=key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order&order=sort_order.asc`);
   EXPERTS_IN_ORDER_GLOBAL = rows.map((r) => r.key);
   EXPERT_MAIN_STAT_GLOBAL_MAP = {};
@@ -4565,18 +4686,20 @@ async function ensureExpertsRosterGlobal() {
 
 async function ensureExpertsTroopStatsData() {
   if (EXPERTS_STATE_GLOBAL) return;
-  await ensureExpertsRosterGlobal();
-  EXPERTS_STATE_GLOBAL = (await loadCalcState("experts")) || {};
-  EXPERTS_UNLOCKED_GLOBAL = (await loadCalcState("experts_unlocked")) || {};
-  const affinityRows = await sb(`expert_affinity_nodes?select=expert,level,stat_type,stat_value&order=sort_order`);
+  const [, savedExperts, savedUnlocked, affinityRows, skillRows] = await Promise.all([
+    ensureExpertsRosterGlobal(),
+    loadCalcState("experts"),
+    loadCalcState("experts_unlocked"),
+    sb(`expert_affinity_nodes?select=expert,level,stat_type,stat_value&order=sort_order`),
+    sb(`expert_skill_nodes?select=expert,skill,level,stat_type,stat_value&expert=in.(Romulus,Gareth)&stat_type=not.is.null&order=sort_order`),
+  ]);
+  EXPERTS_STATE_GLOBAL = savedExperts || {};
+  EXPERTS_UNLOCKED_GLOBAL = savedUnlocked || {};
   EXPERT_AFFINITY_CACHE_GLOBAL = {};
   affinityRows.forEach((r) => {
     if (!EXPERT_AFFINITY_CACHE_GLOBAL[r.expert]) EXPERT_AFFINITY_CACHE_GLOBAL[r.expert] = [];
     EXPERT_AFFINITY_CACHE_GLOBAL[r.expert].push(r);
   });
-  const skillRows = await sb(
-    `expert_skill_nodes?select=expert,skill,level,stat_type,stat_value&expert=in.(Romulus,Gareth)&stat_type=not.is.null&order=sort_order`
-  );
   EXPERT_TROOP_SKILL_CACHE_GLOBAL = {};
   skillRows.forEach((r) => {
     const key = `${r.expert}|${r.skill}`;
@@ -4647,16 +4770,20 @@ let EXPERTS_RESEARCH_STATE_GLOBAL = null; // saved current/desired per expert/pa
 let EXPERTS_RESEARCH_UNLOCKED_GLOBAL = null;
 async function ensureExpertsResearchDataGlobal() {
   if (EXPERTS_RESEARCH_NODES_GLOBAL) return;
-  await ensureExpertsRosterGlobal();
-  const rows = await sb(`expert_research_nodes?select=expert,path_number,level,stat_type,stat_value&order=sort_order`);
+  const [, rows, savedResearch, savedResearchUnlocked] = await Promise.all([
+    ensureExpertsRosterGlobal(),
+    sb(`expert_research_nodes?select=expert,path_number,level,stat_type,stat_value&order=sort_order`),
+    loadCalcState("experts_research"),
+    loadCalcState("experts_research_unlocked"),
+  ]);
   EXPERTS_RESEARCH_NODES_GLOBAL = {};
   rows.forEach((r) => {
     if (!EXPERTS_RESEARCH_NODES_GLOBAL[r.expert]) EXPERTS_RESEARCH_NODES_GLOBAL[r.expert] = {};
     if (!EXPERTS_RESEARCH_NODES_GLOBAL[r.expert][r.path_number]) EXPERTS_RESEARCH_NODES_GLOBAL[r.expert][r.path_number] = [];
     EXPERTS_RESEARCH_NODES_GLOBAL[r.expert][r.path_number].push(r);
   });
-  EXPERTS_RESEARCH_STATE_GLOBAL = (await loadCalcState("experts_research")) || {};
-  EXPERTS_RESEARCH_UNLOCKED_GLOBAL = (await loadCalcState("experts_research_unlocked")) || {};
+  EXPERTS_RESEARCH_STATE_GLOBAL = savedResearch || {};
+  EXPERTS_RESEARCH_UNLOCKED_GLOBAL = savedResearchUnlocked || {};
 }
 function expertsResearchPathNumbersGlobal(expert) {
   return Object.keys((EXPERTS_RESEARCH_NODES_GLOBAL && EXPERTS_RESEARCH_NODES_GLOBAL[expert]) || {})
@@ -5590,6 +5717,11 @@ const PET_MATERIAL_ICONS = {
 };
 
 async function ensurePetsData() {
+  // Start the refine table download now, so it runs alongside pets_nodes.
+  const refineRowsPromise = PET_REFINE_CACHE
+    ? null
+    : sb(`pet_refine_nodes?select=pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
+  if (refineRowsPromise) refineRowsPromise.catch(() => {});
   if (!PETS_NODES_CACHE) {
     const rows = await sb(`pets_nodes?select=pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
     PETS_NODES_CACHE = {};
@@ -5602,8 +5734,8 @@ async function ensurePetsData() {
     const saved = await loadCalcState("pets_data");
     PETS_STATE = saved || {};
   }
-  if (!PET_REFINE_CACHE) {
-    const rows = await sb(`pet_refine_nodes?select=pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
+  if (!PET_REFINE_CACHE && refineRowsPromise) {
+    const rows = await refineRowsPromise;
     PET_REFINE_CACHE = {};
     rows.forEach((r) => {
       if (!PET_REFINE_CACHE[r.pet]) PET_REFINE_CACHE[r.pet] = [];
@@ -7503,7 +7635,6 @@ const ADMIN_TABLES = {
   items: { label: "Backpack Items" },
   skins: { label: "Skins" },
   herostars: { label: "Heroes Special Skills" },
-  statcalc: { label: "Stat Calculator" },
 };
 let ADMIN_ACTIVE_TABLE = "experts";
 let ADMIN_ACTIVE_EXPERT = null;
@@ -7563,7 +7694,6 @@ async function renderAdminPage() {
   else if (ADMIN_ACTIVE_TABLE === "items") await renderAdminItems(body);
   else if (ADMIN_ACTIVE_TABLE === "skins") await renderAdminSkinsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "herostars") await renderAdminHeroStars(body);
-  else if (ADMIN_ACTIVE_TABLE === "statcalc") await renderAdminStatCalculator(body);
 }
 
 // ---- Roster editor ----
@@ -9212,8 +9342,7 @@ async function renderAdminHeroes(body) {
         </div>
       </div>`;
 
-    // Standard per-shard curve is defined globally (STAR_CURVE, near HERO_SHARD_CHART) so
-    // this editor and the standalone Stat Calculator share one source of truth.
+    // Standard per-shard curve is defined globally (STAR_CURVE, near HERO_SHARD_CHART).
     statsWrap.querySelector("#adminGenGenerate").addEventListener("click", () => {
       const maxAtk = Number(statsWrap.querySelector("#adminGenMaxAtk").value);
       const maxW = Number(statsWrap.querySelector("#adminGenMaxWidget").value);
@@ -9257,131 +9386,6 @@ async function renderAdminHeroes(body) {
     });
   }
   fillHeroPick();
-}
-
-// ---- Standalone Hero Stat Calculator (scratch tool, not tied to a saved generation) ----
-// Uses the shared STAR_CURVE (defined near HERO_SHARD_CHART) — the same curve the
-// per-generation editor's "Generate from max" uses.
-async function renderAdminStatCalculator(body) {
-  const th = (h) => `<th style="text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`;
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Hero Stat Calculator</h2>
-      <p class="desc">Scratch tool \u2014 not tied to any saved hero or generation. Fill the 30 star steps and 10 widget levels either automatically from a max value, or type every row in by hand. Nothing here saves until you copy it into the real editor yourself.</p>
-      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
-        <span style="display:inline-flex; gap:6px; align-items:center;">
-          <label style="display:inline-flex; gap:4px; align-items:center; cursor:pointer;"><input type="radio" name="calcMode" value="auto" checked /> Use calculator (fill from max)</label>
-          <label style="display:inline-flex; gap:4px; align-items:center; cursor:pointer; margin-left:10px;"><input type="radio" name="calcMode" value="manual" /> Fill manually</label>
-        </span>
-      </div>
-      <div id="calcAutoControls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
-        <span class="meta" style="font-size:11px;">Max star ATK/DEF %</span>
-        <input id="calcMaxStar" type="number" step="any" style="width:110px;" placeholder="e.g. 1621.29" />
-        <span class="meta" style="font-size:11px;">Max widget %</span>
-        <input id="calcMaxWidget" type="number" step="any" style="width:100px;" placeholder="e.g. 482" />
-        <button class="btn small" id="calcGenerate">Generate</button>
-        <button class="btn small ghost" id="calcClear">Clear table</button>
-      </div>
-      <div class="grid g2" style="gap:16px;">
-        <div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-            <h3 style="margin:0; font-size:13px;">Star steps (1\u201330)</h3>
-            <button class="btn small ghost" id="calcCopyStars">Copy</button>
-          </div>
-          <div style="overflow-x:auto; max-height:520px; overflow-y:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-              <thead><tr>${["Step", "Star", "ATK & DEF %", "Shards"].map(th).join("")}</tr></thead>
-              <tbody>
-                ${Array.from({ length: 30 }, (_, i) => i + 1).map((step) => {
-                  const star = Math.floor((step - 1) / 6) + 1, shard = ((step - 1) % 6) + 1;
-                  return `<tr data-calcstarstep="${step}">
-                    <td style="padding:3px 8px;">${step}</td>
-                    <td style="padding:3px 8px;" class="meta">${star}\u2605 ${shard}/6</td>
-                    <td style="padding:3px;"><input data-csf="atk_pct" type="number" step="any" style="width:100px;" /></td>
-                    <td style="padding:3px;"><input data-csf="shards" type="number" value="${HERO_SHARD_CHART[star][shard - 1]}" style="width:64px;" /></td>
-                  </tr>`;
-                }).join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
-            <h3 style="margin:0; font-size:13px;">Widget levels (1\u201310)</h3>
-            <button class="btn small ghost" id="calcCopyWidget">Copy</button>
-          </div>
-          <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-              <thead><tr>${["Widget Lv", "LETH & HP %"].map(th).join("")}</tr></thead>
-              <tbody>
-                ${Array.from({ length: 10 }, (_, i) => i + 1).map((lvl) => `
-                  <tr data-calcwidgetlvl="${lvl}">
-                    <td style="padding:3px 8px;">${lvl}</td>
-                    <td style="padding:3px;"><input data-cwf="leth_pct" type="number" step="any" style="width:100px;" /></td>
-                  </tr>`).join("")}
-              </tbody>
-            </table>
-          </div>
-          <p class="desc" style="margin-top:10px;">Widget levels scale linearly (max \u00d7 level/10) \u2014 confirm against a real source before trusting a generation's widget max, several generations have had errors there.</p>
-        </div>
-      </div>
-    </div>`;
-
-  const autoControls = body.querySelector("#calcAutoControls");
-  body.querySelectorAll('input[name="calcMode"]').forEach((r) => {
-    r.addEventListener("change", () => {
-      const manual = body.querySelector('input[name="calcMode"]:checked').value === "manual";
-      autoControls.style.opacity = manual ? "0.45" : "1";
-      autoControls.querySelectorAll("input,button#calcGenerate").forEach((el) => (el.disabled = manual));
-    });
-  });
-
-  body.querySelector("#calcGenerate").addEventListener("click", () => {
-    const maxStar = Number(body.querySelector("#calcMaxStar").value);
-    const maxW = Number(body.querySelector("#calcMaxWidget").value);
-    if (maxStar > 0) body.querySelectorAll("tr[data-calcstarstep]").forEach((tr) => {
-      const step = Number(tr.dataset.calcstarstep);
-      tr.querySelector('[data-csf="atk_pct"]').value = (maxStar * STAR_CURVE[step - 1]).toFixed(2);
-    });
-    if (maxW > 0) body.querySelectorAll("tr[data-calcwidgetlvl]").forEach((tr) => {
-      tr.querySelector('[data-cwf="leth_pct"]').value = (maxW * Number(tr.dataset.calcwidgetlvl) / 10).toFixed(2);
-    });
-    toast(maxStar > 0 || maxW > 0 ? "Filled \u2014 edit any row before copying" : "Enter a max value first", !(maxStar > 0 || maxW > 0));
-  });
-
-  body.querySelector("#calcClear").addEventListener("click", () => {
-    body.querySelectorAll('[data-csf="atk_pct"], [data-cwf="leth_pct"]').forEach((el) => (el.value = ""));
-    toast("Cleared");
-  });
-
-  async function copyToClipboard(text, label) {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast(`${label} copied`);
-    } catch (err) {
-      toast("Couldn't copy \u2014 select and copy manually", true);
-    }
-  }
-
-  body.querySelector("#calcCopyStars").addEventListener("click", () => {
-    const lines = ["Step\tStar\tATK & DEF %\tShards"];
-    body.querySelectorAll("tr[data-calcstarstep]").forEach((tr) => {
-      const step = tr.dataset.calcstarstep;
-      const star = Math.floor((step - 1) / 6) + 1, shard = ((step - 1) % 6) + 1;
-      const atk = tr.querySelector('[data-csf="atk_pct"]').value;
-      const sh = tr.querySelector('[data-csf="shards"]').value;
-      lines.push(`${step}\t${star}\u2605 ${shard}/6\t${atk}\t${sh}`);
-    });
-    copyToClipboard(lines.join("\n"), "Star table");
-  });
-
-  body.querySelector("#calcCopyWidget").addEventListener("click", () => {
-    const lines = ["Widget Lv\tLETH & HP %"];
-    body.querySelectorAll("tr[data-calcwidgetlvl]").forEach((tr) => {
-      lines.push(`${tr.dataset.calcwidgetlvl}\t${tr.querySelector('[data-cwf="leth_pct"]').value}`);
-    });
-    copyToClipboard(lines.join("\n"), "Widget table");
-  });
 }
 
 // ---- Backpack Items catalog editor ----
@@ -10339,13 +10343,22 @@ function renderOwnerLoginUI() {
     return;
   }
   renderOwnerLoginUI();
+  // Speed: start downloading every saved calculator state right away, in
+  // parallel with everything else below.
+  preloadCalcStates();
   loadCommander();
-  loadBuffCategories().then(() => {
-    document.querySelectorAll("button[data-tab]").forEach((x) => {
-      x.classList.toggle("active", x.dataset.tab === TAB);
-    });
-    render();
+  document.querySelectorAll("button[data-tab]").forEach((x) => {
+    x.classList.toggle("active", x.dataset.tab === TAB);
   });
+  const categoriesLoaded = loadBuffCategories();
+  if (TAB === "overview") {
+    // The Dashboard loads what it needs itself, so it doesn't have to wait
+    // for the category list first.
+    categoriesLoaded.catch(() => {});
+    render();
+  } else {
+    categoriesLoaded.then(render);
+  }
 })();
 </script>
 </body>
