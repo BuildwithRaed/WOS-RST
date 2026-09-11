@@ -6228,11 +6228,12 @@ async function renderExpertsPage() {
     if (!rows) return "";
     const row = rows.find((r) => r.level === level);
     if (!row) return "";
-    const parts = [];
-    if (row.stat_type) parts.push(`+${Number(row.stat_value).toFixed(2)}% ${row.stat_type.split(",").join("/")}`);
-    if (row.stat_type2) parts.push(`+${Number(row.stat_value2).toFixed(2)}% ${row.stat_type2.split(",").join("/")}`);
-    if (!parts.length) return "";
-    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">${parts.join(", ")}</div>`;
+    // Only Affinity (stat_type) - this is the always-on hero-level stat.
+    // stat_type2 is that expert's Talent, which only applies during their
+    // specific event (Foundry/SvS/Frostfire/Tundra), so it's shown only
+    // under those matching headers, not here.
+    if (!row.stat_type) return "";
+    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">+${Number(row.stat_value).toFixed(2)}% ${row.stat_type.split(",").join("/")}</div>`;
   }
 
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
