@@ -94,6 +94,7 @@
     padding:10px 8px; border-radius:8px; font-size:13.5px; cursor:pointer; margin-bottom:2px;
   }
   .mm-pages button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
+  .mm-pages button .ic{ width:18px; text-align:center; flex-shrink:0; font-size:13px; }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -179,7 +180,10 @@
        for desktop table-style rows) shrinks to fit its own row instead of
        forcing the row wider than the screen. */
     input, select, textarea{ max-width:100%; box-sizing:border-box; }
-    input[style*="width:"], select[style*="width:"]{ width:auto !important; min-width:0; flex:1 1 70px; }
+    input[style*="width:"]:not([type="checkbox"]):not([type="radio"]):not([style*="width:100%"]):not([style*="width: 100%"]):not([style*="flex-shrink:0"]):not([style*="flex-shrink: 0"]):not(.keep-w),
+    select[style*="width:"]:not([style*="width:100%"]):not([style*="width: 100%"]):not([style*="flex-shrink:0"]):not([style*="flex-shrink: 0"]):not(.keep-w){ width:auto !important; min-width:0; flex:1 1 70px; }
+    /* Checkboxes never stretch to fill a row (that was pushing their labels away). */
+    input[type="checkbox"], input[type="radio"]{ flex:0 0 auto !important; }
 
     /* Rows of inputs (admin tables, calculators) wrap instead of overflowing. */
     form.inline{ flex-wrap:wrap; }
@@ -422,6 +426,69 @@
     padding:10px; border-radius:8px; font-size:12px; font-family:"SFMono-Regular",Consolas,monospace; resize:vertical;
   }
   .table-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+
+  /* ============================================================
+     PHONE LAYOUT FIXES (<=760px)
+     Rows that used to scroll sideways (and hid fields past the right
+     edge) now wrap into grids that always fit the screen.
+     ============================================================ */
+  /* Islands: level shown on one line with the name on wide screens. */
+  .badge-lvl::before{ content:" \00b7  "; }
+  .badge-name, .badge-lvl{ display:inline; }
+  /* Shared backpack/materials row: a wrapping grid on every screen size. */
+  .mat-row{ display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:12px 10px; margin-bottom:14px; }
+  .mat-row .mat-name{ white-space:normal; line-height:1.25; }
+  @media (max-width:760px){
+    /* Summary/stat rows: uniform grid instead of a hidden horizontal scroll. */
+    .stats-row-scroll{
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(74px, 1fr));
+      gap:8px; overflow-x:visible;
+    }
+    .stats-row-scroll > *, .stats-row-scroll .metric{ min-width:0 !important; }
+    .stats-row-scroll.sr-2col{ grid-template-columns:1fr 1fr; }
+    .stats-row-scroll.sr-3col{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+
+    /* Backpack rows: 3 across on phone. */
+    .mat-row{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+
+    /* Experts backpack: flatten the stacked pairs into one 2-column grid. */
+    #expertsInventory{ grid-template-columns:1fr 1fr; gap:12px; }
+    #expertsInventory > div{ display:contents; }
+
+    /* Pets Level: stats card full width, Current/Target side by side. */
+    .pet-level-row{ grid-template-columns:1fr 1fr; }
+    .pet-level-row > :first-child{ grid-column:1 / -1; }
+
+    /* Facility buildings: 2 per row, cards fill their column. */
+    .stats-row-scroll.facility-cards{ grid-template-columns:1fr 1fr; gap:10px; }
+    .facility-cards > .skin-card{ width:auto !important; }
+
+    /* Heroes Special Skills: Jeronimo and Natalia stacked. */
+    .hero-special-grid{ grid-template-columns:1fr !important; overflow-x:visible !important; }
+
+    /* Research Center: six tiers become two rows of three. */
+    .rc-tier-grid{ grid-template-columns:repeat(3, minmax(0, 1fr)) !important; overflow-x:visible !important; }
+    /* T12: 4-item rows become 2x2, the 5-slot row becomes 3 + 2. */
+    .t12-grid{ overflow-x:visible !important; }
+    .t12-grid > *{ min-width:0; }
+    .t12-grid-4{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+    .t12-grid-5{ grid-template-columns:repeat(3, minmax(0, 1fr)) !important; }
+
+    /* Research speed + speedups: wraps instead of pushing Speedups off screen. */
+    .rs-row{ flex-wrap:wrap !important; row-gap:8px; }
+
+    /* Pets Refine rows: slimmer bar so "of max" stays on the same line. */
+    [data-refinerowfor] > div{ min-width:60px !important; }
+
+    /* Dashboard: drop the ATT/DEF/DMG/HP prefix so labels stay on one line. */
+    .stat-key{ display:none; }
+
+    /* Islands: name on the first line, level always visible underneath. */
+    .badge-name, .badge-lvl{ display:block; }
+    .badge-name{ overflow:hidden; text-overflow:ellipsis; }
+    .badge-lvl{ font-size:10px; opacity:0.85; margin-top:1px; }
+    .badge-lvl::before{ content:none; }
+  }
 </style>
 </head>
 <body>
@@ -601,6 +668,16 @@ async function saveCalcState(calcName, state) {
     // best-effort; a failed save shouldn't block using the calculator
   }
 }
+
+// Item icons come from an external image host; if one fails to load
+// (seen intermittently on iPhone), retry it once after a short delay.
+document.addEventListener("error", (e) => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || img.dataset.retried || !img.src) return;
+  img.dataset.retried = "1";
+  const src = img.src;
+  setTimeout(() => { img.src = src + (src.includes("?") ? "&" : "?") + "r=1"; }, 800);
+}, true);
 
 // Shows a small bottom-of-screen confirmation/error message.
 function toast(msg, isErr) {
@@ -1027,7 +1104,9 @@ async function renderOverview() {
           total += Number(petRows[petRows.length - 1][maxField]) * 100;
         } else {
           const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
-          total += Number(s[statField]) || 0;
+          const petRows = PET_REFINE_CACHE[pet];
+          const cap = Math.round(Number(petRows[petRows.length - 1][maxField]) * 10000) / 100;
+          total += Math.min(Number(s[statField]) || 0, cap);
         }
       });
       return total;
@@ -1475,7 +1554,7 @@ async function renderOverview() {
         const diff = Math.max(0, maxTotal - total);
         return `<div class="stat-card" data-drilldown="${esc(t.key)}|${esc(s.key)}" style="cursor:pointer; position:relative;">
           ${diff > 0 ? `<div style="position:absolute; top:10px; right:12px; font-size:12px; font-weight:600; color:#e0b030; white-space:nowrap;">+${diff.toFixed(1)}%</div>` : ""}
-          <div class="label" style="padding-right:${diff > 0 ? "56px" : "0"};">${esc(s.key)} &middot; ${esc(s.label).toUpperCase()}</div>
+          <div class="label" style="padding-right:${diff > 0 ? "56px" : "0"};"><span class="stat-key">${esc(s.key)} &middot; </span>${esc(s.label).toUpperCase()}</div>
           <div class="val">${total.toFixed(1)}%</div>
           <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
           <div class="metric" style="margin-top:8px; padding:8px 10px;">
@@ -3409,10 +3488,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         </div>`;
       })
       .join("");
-    return `<div style="flex:0 0 100px; min-width:0;">
+    return `<div style="min-width:0;">
       <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:nowrap;">
         ${icon}
-        <span class="meta" style="font-size:11px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; order:1;">${esc(shortName)}</span>
+        <span class="meta mat-name" style="font-size:11px; font-weight:600; letter-spacing:0.3px; order:1;">${esc(shortName)}</span>
       </div>
       <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
       ${groupStatusHtml}
@@ -3420,7 +3499,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
 
   el.innerHTML = `
-    <div id="${rowsId}" style="display:flex; gap:10px; flex-wrap:nowrap; overflow-x:auto; margin-bottom:14px; padding-bottom:2px;">${matEntries.map(materialCellHtml).join("")}</div>
+    <div id="${rowsId}" class="mat-row">${matEntries.map(materialCellHtml).join("")}</div>
   `;
 
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
@@ -4194,7 +4273,7 @@ async function renderIslandGallery() {
             <div class="thumb island-thumb">
               ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
-            <div class="badge">${esc(s.name)} &middot; Lv${s.current_level ?? 0}</div>
+            <div class="badge"><span class="badge-name">${esc(s.name)}</span><span class="badge-lvl">Lv${s.current_level ?? 0}</span></div>
           </div>`)
           .join("")}
       </div>
@@ -4829,7 +4908,7 @@ async function renderCollectionGalleryPage() {
 
 async function renderExtraBonusHeroes() {
   content.innerHTML = `
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="hero-special-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
       <div id="extraBonusHeroesJero"></div>
       <div id="extraBonusHeroesNatalia"></div>
     </div>
@@ -5025,15 +5104,15 @@ function applyResearchSpeed(rawHours) {
 // since they're the same real buffs/items applied everywhere.
 function researchSpeedInputHtml() {
   return `
-    <div style="display:flex; align-items:center; gap:12px; flex-wrap:nowrap; margin-bottom:14px; overflow-x:auto;">
+    <div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:14px;">
       <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
         <span class="meta" style="font-size:10px;">RESEARCH SPEED</span>
-        <input type="text" inputmode="decimal" id="researchSpeedInput" value="${RESEARCH_SPEED_PCT}" style="width:50px; padding:4px 6px;" />
+        <input type="text" inputmode="decimal" id="researchSpeedInput" class="keep-w" value="${RESEARCH_SPEED_PCT}" style="width:58px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">%</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
         <span class="meta" style="font-size:10px;">SPEEDUPS</span>
-        <input type="text" inputmode="decimal" id="researchSpeedupInput" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:55px; padding:4px 6px;" />
+        <input type="text" inputmode="decimal" id="researchSpeedupInput" class="keep-w" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">min</span>
       </div>
     </div>
@@ -5984,7 +6063,7 @@ async function renderExpertsPage() {
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Resources needed</h2>
-      <div class="stats-row-scroll" id="expertsTotals"></div>
+      <div class="stats-row-scroll sr-2col" id="expertsTotals"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="expertsGrid"></div>
@@ -6300,8 +6379,8 @@ async function renderExpertsPage() {
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
               <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(sk)}</span>
               <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
-                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:54px; flex-shrink:0;">${levelOpts(max, Math.min(st.current, max))}</select>
-                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:54px; flex-shrink:0;">${levelOpts(max, Math.min(st.desired, max))}</select>
+                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(max, Math.min(st.current, max))}</select>
+                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(max, Math.min(st.desired, max))}</select>
               </div>
             </div>
             ${
@@ -6541,8 +6620,9 @@ async function renderRefinePage() {
       const s = petState(pet);
       const m = maxRow(pet);
       STAT_KEYS.forEach(({ key, maxKey }) => {
-        grand[key] += Number(s[key]) || 0;
-        grandMax[key] += pct1(m[maxKey]);
+        const cap = pct1(m[maxKey]);
+        grand[key] += Math.min(Number(s[key]) || 0, cap);
+        grandMax[key] += cap;
       });
     });
     const STAT_ABBR_MAP = { "Infantry Lethality": "Inf LETH", "Infantry Health": "Inf HP", "Lancer Lethality": "Lan LETH", "Lancer Health": "Lan HP", "Marksman Lethality": "Mark LETH", "Marksman Health": "Mark HP" };
@@ -6550,7 +6630,7 @@ async function renderRefinePage() {
       <div class="panel">
         <h2>Total refine bonus</h2>
         <p class="desc">Summed across all 15 pets, based on what you've typed in.</p>
-        <div class="stats-row-scroll">
+        <div class="stats-row-scroll sr-3col">
           ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[label] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
         </div>
       </div>
@@ -6568,8 +6648,8 @@ async function renderRefinePage() {
     const statDef = STAT_KEYS.find((s) => s.key === statKey);
     const s = petState(pet);
     const m = maxRow(pet);
-    const curVal = Number(s[statKey]) || 0;
     const maxVal = pct1(m[statDef.maxKey]);
+    const curVal = Math.min(Number(s[statKey]) || 0, maxVal);
     const pct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
     const remaining = Math.max(0, maxVal - curVal);
     const isMaxed = remaining <= 0.005;
@@ -6611,8 +6691,8 @@ async function renderRefinePage() {
           </div>
           ${STAT_KEYS.map(
             ({ key, label, maxKey }) => {
-              const curVal = Number(s[key]) || 0;
               const maxVal = pct1(m[maxKey]);
+              const curVal = Math.min(Number(s[key]) || 0, maxVal);
               const pct = maxVal > 0 ? Math.min(100, (curVal / maxVal) * 100) : 0;
               const remaining = Math.max(0, maxVal - curVal);
               const isMaxed = remaining <= 0.005;
@@ -6620,7 +6700,7 @@ async function renderRefinePage() {
               return `
           <div data-refinerowfor="${esc(pet)}|${key}" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 0; border-top:1px solid var(--line);">
             <span class="meta" style="font-size:12px; flex:0 0 110px; min-width:85px;">${esc(label)}</span>
-            <input type="text" inputmode="decimal" data-refinepet="${esc(pet)}" data-refinestat="${key}" value="${s[key]}" style="width:60px; flex-shrink:0; padding:5px 6px;" />
+            <input type="text" inputmode="decimal" data-refinepet="${esc(pet)}" data-refinestat="${key}" value="${curVal}" style="width:60px; flex-shrink:0; padding:5px 6px;" />
             <div style="flex:1; min-width:90px; display:flex; align-items:center; gap:6px;">
               <div data-refinebar style="flex:1; height:7px; border-radius:4px; background:var(--panel-2); overflow:hidden; min-width:35px;">
                 <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.2s;"></div>
@@ -6804,7 +6884,7 @@ async function renderPetsDataPage() {
             <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
             <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
           </label>
-          <div class="stats-row-scroll" style="margin-bottom:16px;">
+          <div class="stats-row-scroll pet-level-row" style="margin-bottom:16px;">
             <div class="metric" style="padding:8px; min-width:110px; flex:1 1 110px;">
               <div class="label" style="font-size:9px;">Troops Stats</div>
               <div class="val" style="font-size:13px; white-space:nowrap;">${cur.toFixed(1)}% <span style="font-size:9px; color:var(--muted); font-weight:400;">/ ${max.toFixed(1)}%</span></div>
@@ -6986,7 +7066,7 @@ async function renderResearchCenterPage() {
             return `
           <div style="padding:10px 0; border-top:1px solid var(--line);">
             <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(base)}</div>
-            <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;">
+            <div class="rc-tier-grid" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;">
               ${RC_TIERS.map((tier) => {
                 const trackName = `${base} ${tier}`;
                 const levels = RC_NODES_CACHE[trackName];
@@ -7178,7 +7258,7 @@ async function renderT12ResearchPage() {
           <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Lethality}%</div></div>
           <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Health}%</div></div>
         </div>
-        <div class="stats-row-scroll" style="margin-bottom:14px;">
+        <div class="stats-row-scroll sr-2col" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, "Refined FC", Math.round(needed.refined_fc).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, "FC Shard", Math.round(needed.fc_shard).toLocaleString())}
@@ -7191,7 +7271,7 @@ async function renderT12ResearchPage() {
             return `
           <div style="padding:10px 0; border-top:1px solid var(--line);">
             <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost); ${isSingle ? "text-align:center;" : ""}">${esc(group)}</div>
-            <div style="display:${isSingle ? "flex" : "grid"}; ${isSingle ? "justify-content:center;" : `grid-template-columns:repeat(${defs.length}, 1fr);`} gap:12px;">
+            <div class="${isSingle ? "" : `t12-grid t12-grid-${defs.length}`}" style="display:${isSingle ? "flex" : "grid"}; ${isSingle ? "justify-content:center;" : `grid-template-columns:repeat(${defs.length}, 1fr);`} gap:12px;">
               ${defs
                 .map(
                   (def) => `
