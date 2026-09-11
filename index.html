@@ -2361,8 +2361,7 @@ async function renderPacksPage() {
     <div class="page-head">
       <div>
         <h2>Packs</h2>
-        <div class="sub">Track the packs you've bought or are considering.</div>
-      </div>
+              </div>
     </div>
     <div class="panel">
       <p class="desc">Nothing here yet. Tell me what you'd like this page to track and I'll build it out.</p>
@@ -4707,8 +4706,7 @@ async function renderAlbumTundraPage() {
     <div class="page-head">
       <div>
         <h2>Tundra Album</h2>
-        <div class="sub">Pick your current Attack and Defense bonus.</div>
-      </div>
+              </div>
     </div>
     <div class="panel">
       <div class="grid g2">
@@ -4773,8 +4771,7 @@ async function renderCollectionGalleryPage() {
     <div class="page-head">
       <div>
         <h2>Collection Gallery</h2>
-        <div class="sub">Pick your current bonus for each stat.</div>
-      </div>
+              </div>
     </div>
     <div class="panel">
       <div class="stats-row-scroll">
@@ -5158,8 +5155,7 @@ async function renderT11HeliosPage() {
     <div class="page-head">
       <div>
         <h2>T11 Helios Research</h2>
-        <div class="sub">Set your current level for each track \u2014 totals show what's left to reach max.</div>
-      </div>
+              </div>
       <div style="display:flex; align-items:center; gap:14px;">
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
           <input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
@@ -5476,6 +5472,9 @@ const EXPERT_RESEARCH_STAT_LABEL = { ATK: "Attack", DEF: "Defense", DMG: "Lethal
 async function renderExpertsResearchPage() {
   await ensureExpertsRosterGlobal();
   const saved = (await loadCalcState("experts_research")) || {};
+  // Shared with Experts Level's "Your Inventory" - same sigil pool covers
+  // both hero leveling and research paths.
+  const invSaved = (await loadCalcState("experts_inventory")) || {};
   const rows = await sb(`expert_research_nodes?select=expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,stat_type2,stat_value2&order=sort_order`);
   const RESEARCH_CACHE = {}; // { "Cyrille": { 1: [rows...], 2: [...], 3: [...] } }
   const PATH_NAMES = {}; // { "Cyrille": { 1: "Hunting Skill - Proficient", ... } }
@@ -5567,30 +5566,17 @@ async function renderExpertsResearchPage() {
     <div class="page-head">
       <div>
         <h2>Experts Research</h2>
-        <div class="sub">Once an expert's Relationship Level is maxed, Sigils convert into Expert Research \u2014 3 paths of 10 nodes each (levels 20\u2013200): a rotating stat that only changes at each 20-level milestone, plus a main stat (each expert's own primary stat) that accumulates continuously every single level.</div>
-      </div>
+              </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Troops Stats</h2>
       <p class="desc">Attack/Defense/Lethality/Health from Expert Research. Excludes Gareth and Justus (troop-specific, see below).</p>
       <div class="stats-row-scroll" id="expResearchTotals"></div>
     </div>
-    <div class="grid g3" style="gap:16px; margin-bottom:16px;">
-      <div class="panel">
-        <h2>Infantry</h2>
-        <p class="desc">Troops Stats plus Justus's Health (Infantry only).</p>
-        <div class="stats-row-scroll" id="expResearchInfantry"></div>
-      </div>
-      <div class="panel">
-        <h2>Lancer</h2>
-        <p class="desc">Troops Stats plus Gareth's Lethality (Lancers only).</p>
-        <div class="stats-row-scroll" id="expResearchLancer"></div>
-      </div>
-      <div class="panel">
-        <h2>Marksman</h2>
-        <p class="desc">Set to 0 for now \u2014 no Marksman-specific Expert Research data confirmed yet.</p>
-        <div class="stats-row-scroll" id="expResearchMarksman"></div>
-      </div>
+    <div class="panel" style="margin-bottom:16px;">
+      <div id="expResearchTroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;"></div>
+      <h2 style="display:flex; align-items:baseline; gap:6px;"><span id="expResearchTroopTitle"></span><span class="meta" id="expResearchTroopExpert" style="font-size:11px; font-weight:400;"></span></h2>
+      <div class="stats-row-scroll" id="expResearchTroopStats" style="margin-top:10px;"></div>
     </div>
     <div id="expResearchSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="expResearchGrid"></div>
@@ -5603,9 +5589,18 @@ async function renderExpertsResearchPage() {
 
   const sigilsEl = document.getElementById("expResearchSigils");
   const totalsEl = document.getElementById("expResearchTotals");
-  const infantryEl = document.getElementById("expResearchInfantry");
-  const lancerEl = document.getElementById("expResearchLancer");
-  const marksmanEl = document.getElementById("expResearchMarksman");
+  const TROOP_STAT_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  const TROOP_STAT_ORDER = ["Infantry", "Lancer", "Marksman"];
+  const TROOP_STAT_EXPERT = {
+    Infantry: "Justus",
+    Lancer: "Gareth",
+    Marksman: null,
+  };
+  let expResearchActiveTroop = TROOP_STAT_ORDER[0];
+  const troopDotsEl = document.getElementById("expResearchTroopDots");
+  const troopTitleEl = document.getElementById("expResearchTroopTitle");
+  const troopExpertEl = document.getElementById("expResearchTroopExpert");
+  const troopStatsEl = document.getElementById("expResearchTroopStats");
   function computeStatTotals(includeExperts) {
     const totals = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
     const maxTotals = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
@@ -5634,34 +5629,57 @@ async function renderExpertsResearchPage() {
   function renderTotals() {
     let totalSigil = 0;
     let maxSigil = 0;
+    const sigilNeededByExpert = {};
     EXPERTS_IN_ORDER.forEach((expert) => {
       if (!isResearchUnlocked(expert)) return;
+      let expertSigil = 0;
       pathNumbersFor(expert).forEach((p) => {
         const st = saved[expert][p];
         const { sigil } = pathCost(expert, p, st.current, st.desired);
         totalSigil += sigil;
+        expertSigil += sigil;
         const { sigil: mSigil } = pathCost(expert, p, 0, 200);
         maxSigil += mSigil;
       });
+      sigilNeededByExpert[expert] = expertSigil;
     });
+
+    // Offset against Your Inventory (Experts Level page, same shared pool):
+    // each expert's own sigils apply first, General Sigils cover the rest.
+    let sigilShortfall = 0;
+    EXPERTS_IN_ORDER.forEach((expert) => {
+      const owned = Number(invSaved[`${expert} Sigils`]) || 0;
+      sigilShortfall += Math.max(0, (sigilNeededByExpert[expert] || 0) - owned);
+    });
+    const stillSigil = Math.max(0, sigilShortfall - (Number(invSaved["General Sigils"]) || 0));
+
     sigilsEl.innerHTML = `
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total Sigils</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max ${Math.round(maxSigil).toLocaleString()}</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total Sigils</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:8.5px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " needed" : "\u2713 Have enough"}</div></div>
     `;
 
     // General stat totals: everyone except Gareth/Justus (troop-restricted)
     const general = computeStatTotals(GENERAL_EXPERTS);
     totalsEl.innerHTML = statTotalsHtml(general.totals, general.maxTotals);
 
-    // Infantry: general + Justus's Health
-    const infantry = computeStatTotals(new Set([...GENERAL_EXPERTS, "Justus"]));
-    infantryEl.innerHTML = statTotalsHtml(infantry.totals, infantry.maxTotals);
-
-    // Lancer: general + Gareth's Lethality
-    const lancer = computeStatTotals(new Set([...GENERAL_EXPERTS, "Gareth"]));
-    lancerEl.innerHTML = statTotalsHtml(lancer.totals, lancer.maxTotals);
-
-    // Marksman: general only (no Marksman-specific bonus found)
-    marksmanEl.innerHTML = statTotalsHtml({ ATK: 0, DEF: 0, DMG: 0, HP: 0 }, { ATK: 0, DEF: 0, DMG: 0, HP: 0 });
+    // Infantry: general + Justus's Health; Lancer: general + Gareth's Lethality; Marksman: general only
+    const troopData = {
+      Infantry: computeStatTotals(new Set([...GENERAL_EXPERTS, "Justus"])),
+      Lancer: computeStatTotals(new Set([...GENERAL_EXPERTS, "Gareth"])),
+      Marksman: { totals: { ATK: 0, DEF: 0, DMG: 0, HP: 0 }, maxTotals: { ATK: 0, DEF: 0, DMG: 0, HP: 0 } },
+    };
+    function renderActiveTroopStats() {
+      renderSwipeDots(troopDotsEl, TROOP_STAT_ORDER, expResearchActiveTroop, TROOP_STAT_COLORS);
+      troopTitleEl.textContent = expResearchActiveTroop;
+      troopTitleEl.style.color = TROOP_STAT_COLORS[expResearchActiveTroop];
+      troopExpertEl.textContent = TROOP_STAT_EXPERT[expResearchActiveTroop] ? `(${TROOP_STAT_EXPERT[expResearchActiveTroop]})` : "";
+      const d = troopData[expResearchActiveTroop];
+      troopStatsEl.innerHTML = statTotalsHtml(d.totals, d.maxTotals);
+      wireTroopSwipe(troopStatsEl.closest(".panel"), TROOP_STAT_ORDER, expResearchActiveTroop, (t) => {
+        expResearchActiveTroop = t;
+        renderActiveTroopStats();
+      });
+    }
+    renderActiveTroopStats();
   }
 
   const gridEl = document.getElementById("expResearchGrid");
@@ -5689,30 +5707,42 @@ async function renderExpertsResearchPage() {
     });
     return total;
   }
-  function expertCardHtml(expert) {
+  function expertCardHtml(expert, page) {
     const pathNums = pathNumbersFor(expert);
+    const pages = [];
+    for (let i = 0; i < pathNums.length; i += 3) pages.push(pathNums.slice(i, i + 3));
+    const safePage = Math.min(page || 0, pages.length - 1);
+    const pageEntries = pages[safePage] || [];
     const unlocked = isResearchUnlocked(expert);
     const img = EXPERT_RESEARCH_IMG[expert];
     const mainStatLabel = EXPERT_RESEARCH_STAT_LABEL[EXPERT_MAIN_STAT[expert]];
     const mainStatTotal = mainStatCurrentTotal(expert);
     return `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-          <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:4px;">
+          <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
           <div style="min-width:0; text-align:center;">
             ${img ? `<img src="${img}" alt="${esc(expert)}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; margin-bottom:4px;" loading="lazy" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(expert)}</div>
-            <div class="meta" style="font-size:10px; color:var(--frost);">Main stat: ${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
+            <div class="meta" style="font-size:10px; color:var(--frost);">${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
+            ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta" style="font-size:9px; color:var(--muted);">${esc(EXPERT_MAIN_STAT_TROOP[expert])} only</div>` : ""}
           </div>
-          <button class="btn ghost small" data-expresearchmax="${esc(expert)}" style="flex-shrink:0;">Max</button>
+          <button class="btn ghost small" data-expresearchmax="${esc(expert)}" style="justify-self:end;">Max</button>
         </div>
         ${
           EXPERT_MAIN_STAT_TROOP[expert]
-            ? `<div class="meta" style="font-size:10px; margin-bottom:8px; color:var(--frost);">Main stat (${EXPERT_RESEARCH_STAT_LABEL[EXPERT_MAIN_STAT[expert]]}, ${EXPERT_MAIN_STAT_TROOP[expert]} only): max 6% page 1, max 10% page 2 (per path)</div>`
+            ? `<div class="meta" style="font-size:10px; margin-bottom:8px; color:var(--frost);">Max 6% page 1, max 10% page 2 (per path)</div>`
             : ""
         }
-        <div style="text-align:left;">
-        ${pathNums
+        ${
+          pages.length > 1
+            ? `<div id="expResearchPageDots" style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px;">
+                ${pages.map((_, i) => `<span style="width:6px; height:6px; border-radius:50%; background:${i === safePage ? "var(--ice)" : "var(--line)"};"></span>`).join("")}
+               </div>`
+            : ""
+        }
+        <div style="text-align:left;" id="expResearchPathsList">
+        ${pageEntries
           .map((p, idx) => {
             const st = saved[expert][p];
             const pathName = (PATH_NAMES[expert] || {})[p] || `Path ${p}`;
@@ -5721,10 +5751,8 @@ async function renderExpertsResearchPage() {
               .filter(([, v]) => v > 0)
               .map(([k, v]) => `+${v.toFixed(1)}% ${EXPERT_RESEARCH_STAT_LABEL[k]}`)
               .join(", ");
-            const isPage2Start = p === 4;
             return `
-          ${isPage2Start ? '<div class="meta" style="font-size:10px; font-weight:700; margin:10px 0 4px; color:var(--frost);">Page 2</div>' : ""}
-          <div style="padding:8px 0; ${idx < pathNums.length - 1 ? "border-bottom:1px solid var(--line);" : ""}">
+          <div style="padding:8px 0; ${idx < pageEntries.length - 1 ? "border-bottom:1px solid var(--line);" : ""}">
             <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(pathName)}</div>
             <div style="display:flex; gap:6px; margin-bottom:4px;">
               <div style="flex:1;">
@@ -5746,11 +5774,46 @@ async function renderExpertsResearchPage() {
 
   const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
   let activeResearchIdx = 0;
+  let activeResearchPage = 0;
   function renderGrid() {
     renderSwipeCounter(expResearchCounterEl, EXPERTS_IN_ORDER.length, activeResearchIdx);
     const expert = EXPERTS_IN_ORDER[activeResearchIdx];
-    gridEl.innerHTML = expertCardHtml(expert);
-    wireIndexSwipe(gridEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => { activeResearchIdx = next; renderGrid(); });
+    gridEl.innerHTML = expertCardHtml(expert, activeResearchPage);
+    wireIndexSwipe(gridEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => {
+      activeResearchIdx = next;
+      activeResearchPage = 0;
+      renderGrid();
+    });
+
+    // Inner swipe for path pages (1, 2, ...) within the same expert - scoped
+    // to just the paths list so it doesn't also trigger the outer
+    // expert-to-expert swipe above. stopPropagation prevents both firing
+    // from the same gesture.
+    const pathsListEl = document.getElementById("expResearchPathsList");
+    if (pathsListEl) {
+      const pathNums = pathNumbersFor(expert);
+      const pageCount = Math.ceil(pathNums.length / 3);
+      let pageTouchX = null, pageTouchY = null;
+      pathsListEl.addEventListener("touchstart", (e) => {
+        e.stopPropagation();
+        pageTouchX = e.touches[0].clientX;
+        pageTouchY = e.touches[0].clientY;
+      }, { passive: true });
+      pathsListEl.addEventListener("touchend", (e) => {
+        e.stopPropagation();
+        if (pageTouchX == null) return;
+        const dx = e.changedTouches[0].clientX - pageTouchX;
+        const dy = e.changedTouches[0].clientY - pageTouchY;
+        pageTouchX = null;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          const next = dx < 0 ? activeResearchPage + 1 : activeResearchPage - 1;
+          if (next >= 0 && next < pageCount) {
+            activeResearchPage = next;
+            renderGrid();
+          }
+        }
+      }, { passive: true });
+    }
 
     const container = gridEl;
     {
@@ -5886,7 +5949,6 @@ async function renderExpertsPage() {
     <div class="page-head">
       <div>
         <h2>Experts Level</h2>
-        <div class="sub">Dawn Academy expert heroes \u2014 set current/desired skill levels. Real per-level EXP/Book of Knowledge costs sourced from the wiki for all 10 experts.</div>
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
@@ -5900,7 +5962,6 @@ async function renderExpertsPage() {
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Resources needed</h2>
-      <p class="desc">Books/time from skills, Affinity/Sigils from level \u2014 offset against your inventory.</p>
       <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -6164,13 +6225,13 @@ async function renderExpertsPage() {
     const unlocked = isExpertUnlocked(e.key);
     gridEl.innerHTML = `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-          <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:10px;">
+          <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
           <div style="text-align:center;">
             <img src="${e.img}" alt="${esc(e.key)}" style="width:72px; height:72px; object-fit:cover; margin-bottom:6px;" loading="lazy" />
             <div class="name" style="font-size:16px; font-weight:700;">${esc(e.key)}</div>
           </div>
-          <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px;">Max</button>
+          <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px; justify-self:end;">Max</button>
         </div>
         <div style="display:flex; justify-content:center; gap:10px; margin:0 auto 12px; max-width:320px; text-align:left;">
           <div style="flex:1;">
@@ -6210,11 +6271,11 @@ async function renderExpertsPage() {
               const desStat = showSkillStat ? fmtStat(desRow) : null;
               return `
           <div style="padding:6px 0;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-              <span class="meta" style="font-size:12px;">${esc(sk)}</span>
-              <div style="display:flex; gap:6px;">
-                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:60px;">${levelOpts(max, Math.min(st.current, max))}</select>
-                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:60px;">${levelOpts(max, Math.min(st.desired, max))}</select>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
+              <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(sk)}</span>
+              <div style="display:flex; gap:6px; flex-shrink:0;">
+                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:58px;">${levelOpts(max, Math.min(st.current, max))}</select>
+                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:58px;">${levelOpts(max, Math.min(st.desired, max))}</select>
               </div>
             </div>
             ${
@@ -6325,16 +6386,26 @@ async function renderExpertsPage() {
 
   const invEl = document.getElementById("expertsInventory");
   function renderInventory() {
-    invEl.innerHTML = EXPERT_INVENTORY_FIELDS.map(
-      (f) => `
-      <div style="display:flex; align-items:center; gap:8px;">
-        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" style="width:40px; height:40px; object-fit:contain; flex-shrink:0;" loading="lazy" />
-        <div style="flex:1;">
-          <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(f)}</div>
-          <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; padding:6px 8px;" />
+    const pairs = [];
+    for (let i = 0; i < EXPERT_INVENTORY_FIELDS.length; i += 2) {
+      pairs.push(EXPERT_INVENTORY_FIELDS.slice(i, i + 2));
+    }
+    const fieldRow = (f) => `
+      <div style="display:flex; align-items:center; gap:6px;">
+        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0;" loading="lazy" />
+        <div style="flex:1; min-width:0;">
+          <div class="meta" style="font-size:9px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(f)}</div>
+          <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; padding:4px 6px;" />
         </div>
+      </div>`;
+    invEl.innerHTML = pairs
+      .map(
+        (pair) => `
+      <div style="display:flex; flex-direction:column; gap:8px; min-width:110px;">
+        ${pair.map(fieldRow).join("")}
       </div>`
-    ).join("");
+      )
+      .join("");
 
     invEl.querySelectorAll("input[data-expinv]").forEach((input) => {
       input.addEventListener("change", async () => {
@@ -6418,8 +6489,7 @@ async function renderRefinePage() {
     <div class="page-head">
       <div>
         <h2>Pets Refine</h2>
-        <div class="sub">Type each pet's current refine % per stat \u2014 refine upgrades vary (0.01%\u20131% each), so there's no fixed level to pick from.</div>
-      </div>
+              </div>
     </div>
     <div id="refineTotals" style="margin-bottom:16px;"></div>
     <div id="refineSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -6595,8 +6665,7 @@ async function renderPetsDataPage() {
     <div class="page-head">
       <div>
         <h2>Pets Level</h2>
-        <div class="sub">Set each pet's current level \u2014 totals show what's left to reach max.</div>
-      </div>
+              </div>
       <button class="btn" id="petsMaxAllBtn">Max everything</button>
     </div>
     <div id="petsTotals" style="margin-bottom:16px;"></div>
@@ -6789,8 +6858,7 @@ async function renderResearchCenterPage() {
     <div class="page-head">
       <div>
         <h2>Research Center</h2>
-        <div class="sub">Set your current level for each research \u2014 totals show what's left to reach max.</div>
-      </div>
+              </div>
       <button class="btn" id="rcMaxAllBtn">Max everything</button>
     </div>
     ${researchSpeedInputHtml()}
@@ -6976,8 +7044,7 @@ async function renderT12ResearchPage() {
     <div class="page-head">
       <div>
         <h2>T12 Research</h2>
-        <div class="sub">Set your current level for each node, per troop type \u2014 totals show what's left to reach max.</div>
-      </div>
+              </div>
       <div style="display:flex; align-items:center; gap:14px;">
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
           <input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
@@ -7242,7 +7309,6 @@ async function renderAdminPage() {
     <div class="page-head">
       <div>
         <h2>Admin</h2>
-        <div class="sub">Direct editor for the database tables behind Experts and Pets. Add brand-new experts or pets, or fix any stat value, without needing SQL.</div>
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
