@@ -923,7 +923,7 @@ function displaySourceName(key) {
 
 async function renderOverview() {
   await ensureBuffTable();
-  const [columns, rows, heroes, playerHeroes, items, inventory, allSkins, ISLAND_CATEGORIES] = await Promise.all([
+  const [columns, rows, heroes, playerHeroes, items, inventory, allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS] = await Promise.all([
     sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
     sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
     sb(`heroes?select=id`),
@@ -936,7 +936,62 @@ async function renderOverview() {
     // table the Islands page itself uses, cached across the session so this
     // small, rarely-changing table isn't re-fetched on every page visit.
     ensureIslandCategories(),
+    // Roster heroes (Infantry/Lancers/Marksman) - fetched here, early, so
+    // the stat totals below can include them when a troop's "used" flag is on.
+    sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`),
+    loadCalcState("dashboard_roster"),
+    sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`),
+    sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`),
+    sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`),
   ]);
+  // ---- Roster heroes: shared lookups, needed by statFor()/liveCalcValue() below ----
+  const ROSTER_STATE = ROSTER_SAVED || {};
+  const ROSTER_PH_BY_HERO = {};
+  ROSTER_PLAYER_HEROES.forEach((p) => { ROSTER_PH_BY_HERO[p.hero_id] = p; });
+  const ROSTER_STAR_STATS_BY_GEN = {};
+  ROSTER_STAR_ROWS.forEach((r) => { (ROSTER_STAR_STATS_BY_GEN[r.generation] = ROSTER_STAR_STATS_BY_GEN[r.generation] || {})[r.step] = r; });
+  const ROSTER_WIDGET_STATS_BY_GEN = {};
+  ROSTER_WIDGET_ROWS.forEach((r) => { (ROSTER_WIDGET_STATS_BY_GEN[r.generation] = ROSTER_WIDGET_STATS_BY_GEN[r.generation] || {})[r.level] = r; });
+  // current_stars is stored as star.sub (e.g. 3.4 = 3★ + 4 of 6 shards).
+  const rosterStarsOf = (heroId) => {
+    const v = Number((ROSTER_PH_BY_HERO[heroId] || {}).current_stars) || 0;
+    const star = Math.min(5, Math.floor(v));
+    const sub = Math.min(6, Math.round((v - star) * 10));
+    return { star, sub };
+  };
+  // Backward compat: entries may be a bare heroId string or { heroId, widget, used }.
+  const rosterEntryFor = (troopKey) => {
+    const e = ROSTER_STATE[troopKey];
+    if (!e) return { heroId: "", widget: 0, used: true };
+    if (typeof e === "string") return { heroId: e, widget: 0, used: true };
+    return { heroId: e.heroId || "", widget: Number(e.widget) || 0, used: e.used !== false };
+  };
+  // Roster Heroes' contribution to a given troop+stat: ATT/DEF come from
+  // the hero's star level, DMG/HP from their widget (Exclusive Gear) level.
+  // Returns 0 if that troop's roster slot is empty or turned off.
+  function rosterCalcValue(troop, statKey, useMax) {
+    const { heroId, widget, used } = rosterEntryFor(troop);
+    if (!used || !heroId) return 0;
+    const hero = ROSTER_HERO_CATALOG.find((h) => h.id === heroId);
+    if (!hero) return 0;
+    if (statKey === "ATT" || statKey === "DEF") {
+      const table = ROSTER_STAR_STATS_BY_GEN[hero.generation];
+      if (!table) return 0;
+      const step = useMax ? 30 : (() => { const { star, sub } = rosterStarsOf(hero.id); return star * 6 + sub; })();
+      const row = table[step];
+      if (!row) return 0;
+      return Number(statKey === "ATT" ? row.atk_pct : row.def_pct) || 0;
+    }
+    if (statKey === "DMG" || statKey === "HP") {
+      const table = ROSTER_WIDGET_STATS_BY_GEN[hero.generation];
+      if (!table) return 0;
+      const level = useMax ? 10 : widget;
+      const row = table[level];
+      if (!row) return 0;
+      return Number(statKey === "DMG" ? row.leth_pct : row.hp_pct) || 0;
+    }
+    return 0;
+  }
   // live data from the 3 calculators, for the Charm/Chief/Hero Gears columns below
   await Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), ensureGlobeLevelData(allSkins), ensureResearchPageCountedData()]);
   const GALLERY_STATE = (await loadCalcState("collection_gallery")) || { Attack: 2, Defense: 2, Lethality: 2, Health: 2 };
@@ -960,6 +1015,7 @@ async function renderOverview() {
     "Vip Tier", "Jero", "Natalia", "Facility",
     "Alliance Buff", "Album Buff", "Gallery",
     "Research Center", "T11 Helios Research", "T12 Research", "Experts", "Experts Research",
+    "Roster Heroes",
   ]);
   // Every page that's live-wired into the dashboard: its current value is
   // computed fresh (not a stale static number) and overwrites/augments
@@ -968,12 +1024,13 @@ async function renderOverview() {
     "Charm", "Chief", "Chief Bonus", "Hero Gears", "T12 Research", "Research Center",
     "Facility", "Gallery", "T11 Helios Research", "Jero", "Natalia",
     "Pets Refine", "Pets Level", "VIP", "Album Buff", "Alliance Buff", "Experts", "Experts Research",
+    "Roster Heroes",
   ];
   // Fixed display order for the stat breakdown (top-3 preview and full
   // modal), matching the order sources appear in the sidebar. Anything
   // not in this list falls back to value-sorted order at the end.
   const SOURCE_DISPLAY_ORDER = [
-    "VIP", "Jero", "Natalia", "Skins", "Islands",
+    "VIP", "Jero", "Natalia", "Skins", "Islands", "Roster Heroes",
     "Chief", "Chief Bonus", "Charm", "Hero Gears",
     "Pets Level", "Pets Refine",
     "Facility", "Alliance Buff", "Album Buff", "Gallery",
@@ -1009,6 +1066,9 @@ async function renderOverview() {
   // or null if that calculator doesn't affect this stat at all.
   function liveCalcValue(calcKey, troop, statKey, useMax) {
     const calcTroop = DASH_TO_CALC_TROOP[troop] || troop;
+    if (calcKey === "Roster Heroes") {
+      return rosterCalcValue(troop, statKey, useMax);
+    }
     if (calcKey === "Experts") {
       const rawStat = STAT_KEY_TO_RAW[statKey];
       const stats = computeExpertsTroopStatsGlobal(useMax);
@@ -1346,9 +1406,9 @@ async function renderOverview() {
         <div class="sub">Combat stat bonuses across every buff source, by troop type</div>
       </div>
     </div>
-    <div class="grid g4" id="metricRow"></div>
     <div id="dashboardRoster" style="margin-top:16px;"></div>
     <div id="troopSections"></div>
+    <div class="grid g4" id="metricRow" style="margin-top:16px;"></div>
   `;
 
   document.getElementById("metricRow").innerHTML = avgByStat
@@ -1360,28 +1420,11 @@ async function renderOverview() {
   // ---- Roster heroes: the 3 heroes affecting Infantry / Lancers / Marksman ----
   const rosterEl = document.getElementById("dashboardRoster");
   if (rosterEl) {
-    const [heroCatalog, rosterSaved] = await Promise.all([
-      sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`),
-      loadCalcState("dashboard_roster"),
-    ]);
-    const [playerHeroRows, genStarRows, genWidgetRows] = await Promise.all([
-      sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`),
-      sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`),
-      sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`),
-    ]);
-    const phByHero = {};
-    playerHeroRows.forEach((p) => { phByHero[p.hero_id] = p; });
-    const starStatsByGen = {};
-    genStarRows.forEach((r) => { (starStatsByGen[r.generation] = starStatsByGen[r.generation] || {})[r.step] = r; });
-    const widgetStatsByGen = {};
-    genWidgetRows.forEach((r) => { (widgetStatsByGen[r.generation] = widgetStatsByGen[r.generation] || {})[r.level] = r; });
-    // current_stars is stored as star.sub (e.g. 3.4 = 3★ + 4 of 6 shards), shared with the Heroes page.
-    const starsOf = (heroId) => {
-      const v = Number((phByHero[heroId] || {}).current_stars) || 0;
-      const star = Math.min(5, Math.floor(v));
-      const sub = Math.min(6, Math.round((v - star) * 10));
-      return { star, sub };
-    };
+    const heroCatalog = ROSTER_HERO_CATALOG;
+    const phByHero = ROSTER_PH_BY_HERO;
+    const starStatsByGen = ROSTER_STAR_STATS_BY_GEN;
+    const widgetStatsByGen = ROSTER_WIDGET_STATS_BY_GEN;
+    const starsOf = rosterStarsOf;
     const saveStars = async (heroId, star, sub) => {
       const value = Number((star + sub / 10).toFixed(1));
       const existing = phByHero[heroId];
@@ -1443,32 +1486,33 @@ async function renderOverview() {
         .map((n) => segStarSvg(n, n <= star ? 6 : n === star + 1 ? sub : 0))
         .join("");
     };
-    const roster = rosterSaved || {};
+    const roster = ROSTER_STATE;
     // Each troop's dropdown only lists heroes of that class.
     const ROSTER_TROOP_CLASS = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
-    // Backward compat: entries may be a bare heroId string or { heroId, widget }.
-    const entryFor = (troopKey) => {
-      const e = roster[troopKey];
-      if (!e) return { heroId: "", widget: 0 };
-      if (typeof e === "string") return { heroId: e, widget: 0 };
-      return { heroId: e.heroId || "", widget: Number(e.widget) || 0 };
-    };
+    const entryFor = rosterEntryFor;
     const renderRoster = () => {
       rosterEl.innerHTML = `
       <div class="panel" style="margin-bottom:16px;">
         <h2>Roster heroes</h2>
-        <p class="desc">The three heroes affecting each troop type.</p>
+        <p class="desc">The three heroes affecting each troop type. Uncheck "Count in Dashboard" to exclude a hero from the stat totals below without removing them.</p>
         <div class="grid g3" id="rosterHeroesGrid" style="gap:16px;">
           ${TROOP_TYPES.map((t) => {
-            const { heroId, widget } = entryFor(t.key);
+            const { heroId, widget, used } = entryFor(t.key);
             const hero = heroCatalog.find((h) => h.id === heroId);
             return `
-            <div class="roster-row" style="display:flex; align-items:center; gap:12px;">
+            <div class="roster-row" style="display:flex; align-items:center; gap:12px; ${hero && !used ? "opacity:0.55;" : ""}">
               <div data-rosterpick="${esc(t.key)}" class="roster-pick" title="Click to choose hero" style="width:64px; height:64px; border-radius:10px; background:var(--panel-2); overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                 ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">Pick<br>hero</span>`}
               </div>
               <div style="flex:1; min-width:0;">
-                <div style="font-weight:600; font-size:14px; margin-bottom:2px;">${hero ? esc(hero.name) : "None"}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">Gen ${hero.generation}</span>` : ""}</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-bottom:2px;">
+                  <span style="font-weight:600; font-size:14px;">${hero ? esc(hero.name) : "None"}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">Gen ${hero.generation}</span>` : ""}</span>
+                  ${hero ? `
+                  <label style="display:flex; align-items:center; gap:4px; cursor:pointer; flex-shrink:0; margin-left:auto; flex-wrap:nowrap;" title="Include this hero's stats in the Dashboard totals">
+                    <input type="checkbox" data-rosterused="${esc(t.key)}" ${used ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
+                    <span class="meta" style="font-size:10px; white-space:nowrap;">Count in Dashboard</span>
+                  </label>` : ""}
+                </div>
                 <div data-starctl="${esc(hero ? hero.id : "")}" style="display:flex; align-items:center; gap:4px; margin-top:4px;">${starsHtml(hero)}</div>
                 ${hero ? `<div class="meta" style="font-size:11px; color:var(--frost); margin-top:4px;">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ") || "&nbsp;"}</div>` : ""}
                 <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
@@ -1484,6 +1528,16 @@ async function renderOverview() {
         </div>
       </div>`;
       const save = async () => { await saveCalcState("dashboard_roster", roster); };
+      rosterEl.querySelectorAll("[data-rosterused]").forEach((box) => {
+        box.addEventListener("change", async () => {
+          const troopKey = box.dataset.rosterused;
+          const cur = entryFor(troopKey);
+          roster[troopKey] = { heroId: cur.heroId, widget: cur.widget, used: box.checked };
+          await save();
+          // Re-render the whole dashboard so the stat totals/breakdown reflect the change.
+          renderOverview();
+        });
+      });
       rosterEl.querySelectorAll("[data-starctl]").forEach((wrap) => {
         const heroId = wrap.dataset.starctl;
         wrap.querySelectorAll("[data-starseg]").forEach((seg) => {
@@ -1535,7 +1589,7 @@ async function renderOverview() {
           modal.querySelector("#rosterPickClose").addEventListener("click", () => { modal.style.display = "none"; });
           modal.querySelectorAll("[data-pickhero]").forEach((card) => {
             card.addEventListener("click", async () => {
-              roster[troopKey] = { heroId: card.dataset.pickhero || "", widget: cur.widget };
+              roster[troopKey] = { heroId: card.dataset.pickhero || "", widget: cur.widget, used: cur.used };
               await save();
               modal.style.display = "none";
               renderRoster();
@@ -1547,7 +1601,7 @@ async function renderOverview() {
       rosterEl.querySelectorAll("select[data-rosterwidget]").forEach((sel) => {
         sel.addEventListener("change", async () => {
           const cur = entryFor(sel.dataset.rosterwidget);
-          roster[sel.dataset.rosterwidget] = { heroId: cur.heroId, widget: Number(sel.value) || 0 };
+          roster[sel.dataset.rosterwidget] = { heroId: cur.heroId, widget: Number(sel.value) || 0, used: cur.used };
           await save();
           renderRoster();
         });
