@@ -6228,8 +6228,11 @@ async function renderExpertsPage() {
     if (!rows) return "";
     const row = rows.find((r) => r.level === level);
     if (!row) return "";
-    if (!row.stat_type) return "";
-    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">+${Number(row.stat_value).toFixed(2)}% ${row.stat_type.split(",").join("/")}</div>`;
+    const parts = [];
+    if (row.stat_type) parts.push(`+${Number(row.stat_value).toFixed(2)}% ${row.stat_type.split(",").join("/")}`);
+    if (row.stat_type2) parts.push(`+${Number(row.stat_value2).toFixed(2)}% ${row.stat_type2.split(",").join("/")}`);
+    if (!parts.length) return "";
+    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">${parts.join(", ")}</div>`;
   }
 
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
