@@ -326,6 +326,9 @@
      switcher, and a click-to-open detail modal (used by Skin Gallery and
      Islands). ---- */
   .gallery-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  @media (min-width:760px){
+    .gallery-grid{ grid-template-columns:repeat(6, 1fr); }
+  }
   .gallery-card{
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
     overflow:hidden; cursor:pointer; transition:border-color .15s; text-align:left; position:relative;
@@ -3175,7 +3178,7 @@ function updateCharmCurrentStats() {
     rows
       .map(
         (r, idx) => `
-    <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
+    <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""} display:flex; flex-direction:column; align-items:center; text-align:center;">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
       <div class="metric" style="padding:8px;"><div class="label" style="font-size:9px;">LETH &amp; HP</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.avg.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${r.max.toFixed(1)}%</div></div>
     </div>`
@@ -3390,7 +3393,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   function materialCellHtml([name]) {
     const lower = name.toLowerCase();
     const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-    const icon = iconKey ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : "";
+    const icon = iconKey ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
     const haveQty = owned[name] || 0;
     const shortName = MATERIAL_NAME_SHORT[name] || name;
     const groupStatusHtml = groups
@@ -3404,9 +3407,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       })
       .join("");
     return `<div style="flex:0 0 100px; min-width:0;">
-      <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+      <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:nowrap;">
         ${icon}
-        <span class="meta" style="font-size:11px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(shortName)}</span>
+        <span class="meta" style="font-size:11px; font-weight:600; letter-spacing:0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; order:1;">${esc(shortName)}</span>
       </div>
       <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
       ${groupStatusHtml}
@@ -3414,9 +3417,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
 
   el.innerHTML = `
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-      <span style="font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--frost);">AVAILABLE BACKPACK</span>
-    </div>
     <div id="${rowsId}" style="display:flex; gap:10px; flex-wrap:nowrap; overflow-x:auto; margin-bottom:14px; padding-bottom:2px;">${matEntries.map(materialCellHtml).join("")}</div>
   `;
 
@@ -3603,7 +3603,7 @@ function updateChiefGearCurrentStats() {
     results
       .map(
         (r, idx) => `
-    <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""}">
+    <div style="${idx > 0 ? "border-left:1px solid var(--line); padding-left:12px;" : ""} display:flex; flex-direction:column; align-items:center; text-align:center;">
       <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(r.troop)}</div>
       <div class="metric" style="padding:8px;"><div class="label" style="font-size:9px;">ATK &amp; DEF</div><div class="val" style="font-size:13px; margin-top:3px;">+${r.stats.Attack.toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${r.max.Attack.toFixed(2)}%</div></div>
     </div>`
@@ -3692,13 +3692,13 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
                  ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? "0 (not built)" : `Lv. ${i}`}</option>`).join("")}
                </select>
              </div>
-             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding-top:18px;">
+             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding-top:18px; flex-wrap:nowrap;">
                <input type="checkbox" id="galleryModalIslandOwned" ${item.owned ? "checked" : ""} />
                <span class="meta" style="font-size:12px;">Owned</span>
              </label>
            </div>`
         : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:${item.show_count_toggle ? "10px" : "0"};">${item.owned ? "\u2713 Owned \u2014 tap to unown" : "Mark as owned"}</button>
-           ${item.show_count_toggle ? `<label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer;">
+           ${item.show_count_toggle ? `<label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer; flex-wrap:nowrap;">
              <input type="checkbox" id="galleryModalCountInMax" ${item.count_in_max !== false ? "checked" : ""} />
              <span class="meta" style="font-size:12px;">Count toward max totals</span>
            </label>` : ""}`
@@ -4001,7 +4001,7 @@ async function renderSkinGallery() {
               ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
             <div class="badge">${esc(s.name)}</div>
-            ${s.show_count_toggle ? `<label style="display:flex; align-items:center; justify-content:center; gap:4px; padding:4px 6px; background:var(--panel-2);" onclick="event.stopPropagation()">
+            ${s.show_count_toggle ? `<label style="display:flex; align-items:center; justify-content:center; gap:4px; padding:4px 6px; background:var(--panel-2); flex-wrap:nowrap;" onclick="event.stopPropagation()">
               <input type="checkbox" data-countinmax="${s.id}" ${s.count_in_max !== false ? "checked" : ""} style="width:12px; height:12px;" />
               <span class="meta" style="font-size:8.5px;">Count in max</span>
             </label>` : ""}
@@ -5176,7 +5176,7 @@ async function renderT11HeliosPage() {
         <h2>T11 Helios Research</h2>
               </div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
           <input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
           <span class="meta" style="font-size:11px;">Count toward Dashboard</span>
         </label>
@@ -5980,7 +5980,7 @@ async function renderExpertsPage() {
       <div class="stats-row-scroll" id="expertsInventory"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Backpack</h2>
+      <h2>Resources needed</h2>
       <div class="stats-row-scroll" id="expertsTotals"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -6228,11 +6228,8 @@ async function renderExpertsPage() {
     if (!rows) return "";
     const row = rows.find((r) => r.level === level);
     if (!row) return "";
-    const parts = [];
-    if (row.stat_type) parts.push(`+${Number(row.stat_value).toFixed(2)}% ${row.stat_type.split(",").join("/")}`);
-    if (row.stat_type2) parts.push(`+${Number(row.stat_value2).toFixed(2)}% ${row.stat_type2.split(",").join("/")}`);
-    if (!parts.length) return "";
-    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">${parts.join(", ")}</div>`;
+    if (!row.stat_type) return "";
+    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">+${Number(row.stat_value).toFixed(2)}% ${row.stat_type.split(",").join("/")}</div>`;
   }
 
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
@@ -6252,7 +6249,7 @@ async function renderExpertsPage() {
           </div>
           <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px; justify-self:end;">Max</button>
         </div>
-        <div style="display:flex; justify-content:center; gap:10px; margin:0 auto 12px; max-width:320px; text-align:left;">
+        <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 12px; text-align:left;">
           <div style="flex:1;">
             <div class="meta" style="font-size:10px; margin-bottom:2px;">Current</div>
             <select data-expcur="${esc(e.key)}" style="width:100%;">${levelOpts(EXPERT_HERO_MAX_LEVEL, s.current)}</select>
@@ -6292,9 +6289,9 @@ async function renderExpertsPage() {
           <div style="padding:6px 0;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
               <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(sk)}</span>
-              <div style="display:flex; gap:6px; flex-shrink:0;">
-                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:58px;">${levelOpts(max, Math.min(st.current, max))}</select>
-                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:58px;">${levelOpts(max, Math.min(st.desired, max))}</select>
+              <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
+                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:54px; flex-shrink:0;">${levelOpts(max, Math.min(st.current, max))}</select>
+                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:54px; flex-shrink:0;">${levelOpts(max, Math.min(st.desired, max))}</select>
               </div>
             </div>
             ${
@@ -6410,17 +6407,17 @@ async function renderExpertsPage() {
       pairs.push(EXPERT_INVENTORY_FIELDS.slice(i, i + 2));
     }
     const fieldRow = (f) => `
-      <div style="display:flex; align-items:center; gap:6px;">
-        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0;" loading="lazy" />
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
+        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
         <div style="flex:1; min-width:0;">
           <div class="meta" style="font-size:9px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(f)}</div>
-          <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; padding:4px 6px;" />
+          <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; min-width:0; padding:4px 6px; box-sizing:border-box;" />
         </div>
       </div>`;
     invEl.innerHTML = pairs
       .map(
         (pair) => `
-      <div style="display:flex; flex-direction:column; gap:8px; min-width:110px;">
+      <div style="display:flex; flex-direction:column; gap:10px; flex:0 0 150px; min-width:150px;">
         ${pair.map(fieldRow).join("")}
       </div>`
       )
@@ -6471,7 +6468,7 @@ async function renderRefinePage() {
   // Converts a stored 0-1 fraction to a clean 1-decimal percentage.
   // Plain `x * 100` on values like 0.581 gives 58.099999999999994 in JS
   // floating point, which then rejected a typed "58.1" as "over the cap".
-  const pct1 = (raw) => Math.round(Number(raw) * 1000) / 10;
+  const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
 
   const STAGE_COLORS = {
     Grey: "#9aa5b1",
@@ -6544,7 +6541,7 @@ async function renderRefinePage() {
         <h2>Total refine bonus</h2>
         <p class="desc">Summed across all 15 pets, based on what you've typed in.</p>
         <div class="stats-row-scroll">
-          ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[label] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${grandMax[key].toFixed(1)}%</div></div>`).join("")}
+          ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[label] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
         </div>
       </div>
     `;
@@ -6575,7 +6572,7 @@ async function renderRefinePage() {
     }
     const remainingEl = row.querySelector("[data-refineremaining]");
     if (remainingEl) {
-      remainingEl.textContent = isMaxed ? "" : `-${remaining.toFixed(1)}%`;
+      remainingEl.textContent = isMaxed ? "" : `-${remaining.toFixed(2)}%`;
       remainingEl.style.color = color;
       remainingEl.style.width = isMaxed ? "0" : "";
       remainingEl.style.overflow = isMaxed ? "hidden" : "";
@@ -6596,7 +6593,7 @@ async function renderRefinePage() {
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:left;">
           <div class="meta" style="font-size:10.5px; margin-bottom:8px;">${esc(tier)} tier</div>
           <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
               <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
               <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(pet)}</div>
             </label>
@@ -6618,9 +6615,9 @@ async function renderRefinePage() {
               <div data-refinebar style="flex:1; height:7px; border-radius:4px; background:var(--panel-2); overflow:hidden; min-width:35px;">
                 <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.2s;"></div>
               </div>
-              <span data-refineremaining class="meta" style="font-size:10px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(1)}%`}</span>
+              <span data-refineremaining class="meta" style="font-size:10px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
             </div>
-            <span class="meta" style="font-size:10px; flex-shrink:0; white-space:nowrap;">of max ${maxVal.toFixed(1)}%</span>
+            <span class="meta" style="font-size:10px; flex-shrink:0; white-space:nowrap;">of max ${maxVal.toFixed(2)}%</span>
           </div>`;
             }
           ).join("")}
@@ -6793,7 +6790,7 @@ async function renderPetsDataPage() {
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:left;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px; justify-content:flex-start;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px; justify-content:flex-start; flex-wrap:nowrap;">
             <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
             <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
           </label>
@@ -7065,7 +7062,7 @@ async function renderT12ResearchPage() {
         <h2>T12 Research</h2>
               </div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
           <input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
           <span class="meta" style="font-size:11px;">Count toward Dashboard</span>
         </label>
