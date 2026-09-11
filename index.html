@@ -332,9 +332,6 @@
   .gallery-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
   @media (min-width:760px){
     .gallery-grid{ grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); }
-    /* On tablet/desktop there's usually room to just show every card/stat
-       at once instead of forcing the horizontal scroll phone needs. */
-    .stats-row-scroll{ flex-wrap:wrap; overflow-x:visible; }
   }
   .gallery-card{
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
@@ -381,7 +378,7 @@
   .cat-menu-panel button:hover{ background:var(--panel-2); color:var(--frost); }
   .cat-menu-panel button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
   .stats-row-scroll{ display:flex; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
-  .stats-row-scroll .metric{ flex:1 1 130px; min-width:130px; }
+  .stats-row-scroll > .metric{ flex:1 1 130px; min-width:130px; }
   .filter-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
   .filter-bar input, .filter-bar select{ height:34px; }
   .seg{ display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
@@ -438,6 +435,30 @@
   /* Shared backpack/materials row: a wrapping grid on every screen size. */
   .mat-row{ display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:12px 10px; margin-bottom:14px; }
   .mat-row .mat-name{ white-space:normal; line-height:1.25; }
+  /* Keep every input on the same line even when one name wraps to two lines. */
+  .mat-row > div{ display:flex; flex-direction:column; }
+  .mat-row > div > :first-child{ flex:1; align-items:flex-start !important; }
+  /* Tablet/desktop: summary rows show every card at once as an even grid,
+     so a card left alone on the last row doesn't stretch full width. */
+  @media (min-width:761px){
+    .stats-row-scroll{ display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); overflow-x:visible; }
+    /* These two hold fixed-width items, so they keep wrapping as a flex row. */
+    .stats-row-scroll.facility-cards, #expertsInventory{ display:flex; flex-wrap:wrap; }
+    /* Experts event panels are half width: keep ATK/DEF/LETH/HP on one row. */
+    .stats-row-scroll.sr-4{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+    .stats-row-scroll.sr-4 > .metric{ min-width:0; }
+    /* Backpack cells a little wider, so names like "Charm Guides" fit on one line. */
+    .mat-row{ grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); }
+  }
+  /* Tablet portrait (and narrow desktop windows): the full nav doesn't fit
+     on one line below ~1000px, so use the Menu button like phone does. */
+  @media (max-width:999px){
+    .topnav-groups{ display:none; }
+    #mobileMenuBtn{ display:flex; }
+    .stat-key{ display:none; }
+    #rosterHeroesGrid{ grid-template-columns:1fr !important; }
+    .stats-row-scroll.sr-3col{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  }
   @media (max-width:760px){
     /* Summary/stat rows: uniform grid instead of a hidden horizontal scroll. */
     .stats-row-scroll{
@@ -447,9 +468,6 @@
     .stats-row-scroll > *, .stats-row-scroll .metric{ min-width:0 !important; }
     .stats-row-scroll.sr-2col{ grid-template-columns:1fr 1fr; }
     .stats-row-scroll.sr-3col{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
-
-    /* Backpack rows: 3 across on phone. */
-    .mat-row{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
 
     /* Experts backpack: flatten the stacked pairs into one 2-column grid. */
     #expertsInventory{ grid-template-columns:1fr 1fr; gap:12px; }
@@ -1455,7 +1473,7 @@ async function renderOverview() {
                 ${hero ? `<div class="meta" style="font-size:11px; color:var(--frost); margin-top:4px;">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ") || "&nbsp;"}</div>` : ""}
                 <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
                   <span class="meta" style="font-size:11px;">Widget level</span>
-                  <select data-rosterwidget="${esc(t.key)}" style="width:76px;">
+                  <select data-rosterwidget="${esc(t.key)}" style="width:88px;">
                     <option value="0" ${!widget ? "selected" : ""}>None</option>
                     ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${i}</option>`).join("")}
                   </select>
@@ -6071,24 +6089,24 @@ async function renderExpertsPage() {
       <div class="panel">
         <h2>Foundry</h2>
         <p class="desc">Troop Stats + Fabian's Heightened Firepower, for Foundry Battle.</p>
-        <div class="stats-row-scroll" id="expertsFoundryHeader"></div>
+        <div class="stats-row-scroll sr-4" id="expertsFoundryHeader"></div>
       </div>
       <div class="panel">
         <h2>SvS</h2>
         <p class="desc">Troop Stats + Valeria's Battle Concerto, for SvS Battle Phase.</p>
-        <div class="stats-row-scroll" id="expertsSvsHeader"></div>
+        <div class="stats-row-scroll sr-4" id="expertsSvsHeader"></div>
       </div>
     </div>
     <div class="grid g2" style="gap:16px;">
       <div class="panel">
         <h2>Frostfire Mine</h2>
         <p class="desc">Troop Stats + Kathy's Child of Frost talent, for Frostfire Mine.</p>
-        <div class="stats-row-scroll" id="expertsFrostfireHeader"></div>
+        <div class="stats-row-scroll sr-4" id="expertsFrostfireHeader"></div>
       </div>
       <div class="panel">
         <h2>Tundra Trade Routes</h2>
         <p class="desc">Troop Stats + Ronne's Trade Dominion talent, for the Tundra Trade Route.</p>
-        <div class="stats-row-scroll" id="expertsTundraHeader"></div>
+        <div class="stats-row-scroll sr-4" id="expertsTundraHeader"></div>
       </div>
     </div>
   `;
