@@ -3351,20 +3351,39 @@ function renderTroopTabs(containerEl, troops, current, colors, onSelect) {
     btn.addEventListener("click", () => onSelect(btn.dataset.troop));
   });
 }
+// Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
+// which unifies touch, mouse, and pen into one event model. Calls onSwipe(-1)
+// for a leftward drag and onSwipe(1) for rightward, once the drag clears a
+// distance threshold and is clearly more horizontal than vertical (so normal
+// vertical scrolling/clicking is left alone). Replaces the old touch-only
+// (ontouchstart/ontouchend) wiring, which meant a plain mouse drag on a
+// non-touch PC could never trigger a swipe at all.
+function wireSwipeGesture(el, onSwipe, opts = {}) {
+  let startX = null, startY = null, dragging = false;
+  el.addEventListener("pointerdown", (e) => {
+    if (opts.stopPropagation) e.stopPropagation();
+    startX = e.clientX;
+    startY = e.clientY;
+    dragging = true;
+  });
+  const finish = (e) => {
+    if (opts.stopPropagation) e.stopPropagation();
+    if (!dragging || startX == null) return;
+    dragging = false;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    startX = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
+  };
+  el.addEventListener("pointerup", finish);
+  el.addEventListener("pointercancel", () => { dragging = false; startX = null; });
+}
 function wireTroopSwipe(el, troops, current, onSelect) {
   const idx = troops.indexOf(current);
-  let startX = null, startY = null;
-  el.ontouchstart = (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; };
-  el.ontouchend = (e) => {
-    if (startX == null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    startX = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      const next = dx < 0 ? idx + 1 : idx - 1;
-      if (next >= 0 && next < troops.length) onSelect(troops[next]);
-    }
-  };
+  wireSwipeGesture(el, (dir) => {
+    const next = idx + dir;
+    if (next >= 0 && next < troops.length) onSelect(troops[next]);
+  });
 }
 // Position dots only (no tap targets, no text hint) - used where the whole
 // switch is meant to be swipe-only.
@@ -3380,18 +3399,10 @@ function renderSwipeCounter(containerEl, count, activeIndex) {
   containerEl.innerHTML = `<span class="meta" style="font-size:12px;">${activeIndex + 1} / ${count} &nbsp;\u2022&nbsp; swipe to browse</span>`;
 }
 function wireIndexSwipe(el, count, activeIndex, onNavigate) {
-  let startX = null, startY = null;
-  el.ontouchstart = (e) => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; };
-  el.ontouchend = (e) => {
-    if (startX == null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    startX = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      const next = dx < 0 ? activeIndex + 1 : activeIndex - 1;
-      if (next >= 0 && next < count) onNavigate(next);
-    }
-  };
+  wireSwipeGesture(el, (dir) => {
+    const next = activeIndex + dir;
+    if (next >= 0 && next < count) onNavigate(next);
+  });
 }
 
 async function renderCharmsCalc() {
@@ -4100,25 +4111,12 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
     document.getElementById("galleryModalPrev").addEventListener("click", () => goTo(index - 1));
     document.getElementById("galleryModalNext").addEventListener("click", () => goTo(index + 1));
 
-    // Swipe left/right on the card to move between items (skins only -
-    // islands are edited one at a time with no browsing). Touch-only;
-    // vertical scrolling still works normally via touch-action:pan-y above.
+    // Swipe/drag left/right on the card to move between items (skins only -
+    // islands are edited one at a time with no browsing). Works with touch,
+    // mouse, or pen via wireSwipeGesture; vertical scrolling still works
+    // normally via touch-action:pan-y above.
     const box = document.getElementById("galleryModalBox");
-    let touchStartX = null, touchStartY = null;
-    box.addEventListener("touchstart", (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-    box.addEventListener("touchend", (e) => {
-      if (touchStartX == null) return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      touchStartX = null;
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        if (dx < 0) goTo(index + 1);
-        else goTo(index - 1);
-      }
-    }, { passive: true });
+    wireSwipeGesture(box, (dir) => goTo(index + dir));
   }
 
   if (isIsland) {
@@ -6215,26 +6213,13 @@ async function renderExpertsResearchPage() {
     if (pathsListEl) {
       const pathNums = pathNumbersFor(expert);
       const pageCount = Math.ceil(pathNums.length / 3);
-      let pageTouchX = null, pageTouchY = null;
-      pathsListEl.addEventListener("touchstart", (e) => {
-        e.stopPropagation();
-        pageTouchX = e.touches[0].clientX;
-        pageTouchY = e.touches[0].clientY;
-      }, { passive: true });
-      pathsListEl.addEventListener("touchend", (e) => {
-        e.stopPropagation();
-        if (pageTouchX == null) return;
-        const dx = e.changedTouches[0].clientX - pageTouchX;
-        const dy = e.changedTouches[0].clientY - pageTouchY;
-        pageTouchX = null;
-        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-          const next = dx < 0 ? activeResearchPage + 1 : activeResearchPage - 1;
-          if (next >= 0 && next < pageCount) {
-            activeResearchPage = next;
-            renderGrid();
-          }
+      wireSwipeGesture(pathsListEl, (dir) => {
+        const next = activeResearchPage + dir;
+        if (next >= 0 && next < pageCount) {
+          activeResearchPage = next;
+          renderGrid();
         }
-      }, { passive: true });
+      }, { stopPropagation: true });
     }
 
     const container = gridEl;
