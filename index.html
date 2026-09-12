@@ -2801,15 +2801,22 @@ async function renderPacksPage() {
         );
         return `
       <div class="panel" style="margin-top:16px; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""}" data-packtable="${ti}">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
-          <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; flex:1; min-width:160px;" />
-          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:10.5px; color:var(--muted);" title="When on, Row 1 sets a scale that auto-fills the other rows as you type an Amount. Turn off for tables whose rows don't follow a fixed ratio.">
-            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer;" /> Scale
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
+          <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; flex:1 1 90px; min-width:90px;" />
+          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:10.5px; color:var(--muted); flex-shrink:0; white-space:nowrap;" title="When on, Row 1 sets a scale that auto-fills the other rows as you type an Amount. Turn off for tables whose rows don't follow a fixed ratio.">
+            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer; flex-shrink:0;" /> Scale
           </label>
-          <button class="btn small" data-pt-save>Save</button>
-          <button class="btn small ghost" data-pt-addcol>+ Column</button>
-          <button class="btn small ghost" data-pt-addrow>+ Row</button>
-          <button class="btn small ghost" data-pt-delete style="color:var(--danger);">Delete table</button>
+          <span style="display:inline-flex; align-items:center; gap:4px; flex-shrink:0; white-space:nowrap;">
+            <span class="meta" style="font-size:10.5px;">Column</span>
+            <button class="btn small ghost" data-pt-addcol title="Add column" style="width:26px; padding:4px 0;">+</button>
+            <button class="btn small ghost" data-pt-delcollast title="Remove last column" style="width:26px; padding:4px 0;">&minus;</button>
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:4px; flex-shrink:0; white-space:nowrap;">
+            <span class="meta" style="font-size:10.5px;">Row</span>
+            <button class="btn small ghost" data-pt-addrow title="Add row" style="width:26px; padding:4px 0;">+</button>
+            <button class="btn small ghost" data-pt-delrowlast title="Remove last row" style="width:26px; padding:4px 0;">&minus;</button>
+          </span>
+          <button class="btn small ghost" data-pt-delete style="color:var(--danger); flex-shrink:0; white-space:nowrap;">Delete table</button>
         </div>
         <div style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
@@ -2818,10 +2825,7 @@ async function renderPacksPage() {
                 ${t.columns
                   .map(
                     (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
-                      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
-                        <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:66px; font-weight:600; text-align:center; padding:4px 6px; flex-shrink:0;" />
-                        ${ci === 0 || ci === t.columns.length - 1 ? "" : `<button data-pt-delcol data-col="${ci}" title="Remove column" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px; flex-shrink:0;">&times;</button>`}
-                      </div>
+                      <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:66px; font-weight:600; text-align:center; padding:4px 6px;" />
                     </th>`
                   )
                   .join("")}
@@ -2841,7 +2845,6 @@ async function renderPacksPage() {
                       .join("")}
                     <td style="text-align:center; white-space:nowrap;">
                       ${ri === 0 ? `<span class="meta" style="font-size:9px;" title="Sets the scale ratio for every other row">base</span>` : ""}
-                      <button data-pt-delrow data-row="${ri}" title="Remove row" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px;">&times;</button>
                     </td>
                   </tr>`
                 )
@@ -2880,6 +2883,24 @@ async function renderPacksPage() {
         });
       }
 
+      // Persists the whole table to Supabase - creates it (POST) the first
+      // time anything changes on a brand-new table, then PATCHes it from
+      // then on. There's no Save button; every edit (typing, adding/removing
+      // rows or columns, toggling scale) calls this so nothing is ever lost.
+      async function persistTable() {
+        const payload = { title: t.title.trim() || "Untitled table", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
+        try {
+          if (String(t.id).startsWith("new-")) {
+            const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
+            t.id = saved.id;
+          } else {
+            await sb(`pack_tables?id=eq.${t.id}`, { method: "PATCH", body: JSON.stringify(payload) });
+          }
+        } catch (err) {
+          toast("Couldn't save that change", true);
+        }
+      }
+
       // Live auto-scale: typing an Amount (col 0) on any row other than the
       // first triggers a fill of that row's other columns, using the ratio
       // established by Row 1. Listens on the whole panel (event delegation)
@@ -2891,29 +2912,35 @@ async function renderPacksPage() {
         if (cell && cell.dataset.col === "0" && t.scale_enabled !== false) applyScale(panel, t);
       });
 
-      panel.querySelector("[data-pt-scaletoggle]").addEventListener("change", async (e) => {
-        t.scale_enabled = e.target.checked;
-        if (!String(t.id).startsWith("new-")) {
-          try {
-            await sb(`pack_tables?id=eq.${t.id}`, { method: "PATCH", body: JSON.stringify({ scale_enabled: t.scale_enabled }) });
-          } catch (err) {
-            toast("Couldn't save that change", true);
-          }
+      // Persist on blur (change), not every keystroke - covers title,
+      // column names, and cell edits (including whatever applyScale just
+      // filled in programmatically, since syncFromDom re-reads the DOM).
+      panel.addEventListener("change", (e) => {
+        if (e.target.closest("[data-pt-title], [data-pt-colname], [data-pt-cell]")) {
+          syncFromDom();
+          persistTable();
         }
       });
 
-      panel.querySelector("[data-pt-addcol]").addEventListener("click", () => {
+      panel.querySelector("[data-pt-scaletoggle]").addEventListener("change", async (e) => {
+        t.scale_enabled = e.target.checked;
+        await persistTable();
+      });
+
+      panel.querySelector("[data-pt-addcol]").addEventListener("click", async () => {
         syncFromDom();
         // Insert before the last column (Gems), not after it, so Gems stays last.
         const insertAt = t.columns.length - 1;
         t.columns.splice(insertAt, 0, `Column ${t.columns.length}`);
         t.rows.forEach((r) => r.cells.splice(insertAt, 0, ""));
         renderAll();
+        await persistTable();
       });
-      panel.querySelector("[data-pt-addrow]").addEventListener("click", () => {
+      panel.querySelector("[data-pt-addrow]").addEventListener("click", async () => {
         syncFromDom();
         t.rows.push(blankRow(t.columns.length));
         renderAll();
+        await persistTable();
       });
       panel.querySelector("[data-pt-delete]").addEventListener("click", async () => {
         if (!confirm(`Delete "${t.title}"? This can't be undone.`)) return;
@@ -2928,42 +2955,23 @@ async function renderPacksPage() {
         tables.splice(ti, 1);
         renderAll();
       });
-      panel.querySelectorAll("[data-pt-delcol]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          syncFromDom();
-          const ci = Number(btn.dataset.col);
-          if (ci === 0) { toast("The first column (Amount) can't be removed", true); return; }
-          if (ci === t.columns.length - 1) { toast("The last column (Gems) can't be removed", true); return; }
-          if (t.columns.length <= 1) { toast("Keep at least one column", true); return; }
-          t.columns.splice(ci, 1);
-          t.rows.forEach((r) => r.cells.splice(ci, 1));
-          renderAll();
-        });
-      });
-      panel.querySelectorAll("[data-pt-delrow]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          syncFromDom();
-          t.rows.splice(Number(btn.dataset.row), 1);
-          renderAll();
-        });
-      });
-
-      panel.querySelector("[data-pt-save]").addEventListener("click", async () => {
+      panel.querySelector("[data-pt-delcollast]").addEventListener("click", async () => {
         syncFromDom();
-        t.title = t.title.trim() || "Untitled table";
-        const payload = { title: t.title, columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
-        try {
-          if (String(t.id).startsWith("new-")) {
-            const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
-            t.id = saved.id;
-          } else {
-            await sb(`pack_tables?id=eq.${t.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-          }
-          toast("Saved");
-          renderAll();
-        } catch (err) {
-          toast("Couldn't save table", true);
-        }
+        // Remove the last removable column - i.e. the one just before Gems
+        // (Amount at 0 and Gems at the end are always locked in place).
+        const ci = t.columns.length - 2;
+        if (ci <= 0) { toast("Nothing left to remove between Amount and Gems", true); return; }
+        t.columns.splice(ci, 1);
+        t.rows.forEach((r) => r.cells.splice(ci, 1));
+        renderAll();
+        await persistTable();
+      });
+      panel.querySelector("[data-pt-delrowlast]").addEventListener("click", async () => {
+        syncFromDom();
+        if (t.rows.length <= 1) { toast("Keep at least one row (Row 1 sets the scale)", true); return; }
+        t.rows.pop();
+        renderAll();
+        await persistTable();
       });
     });
   }
@@ -2972,7 +2980,7 @@ async function renderPacksPage() {
     tables.unshift({
       id: `new-${Date.now()}`,
       title: "New table",
-      columns: ["Amount", "Column 2", "Column 3", "Gems"],
+      columns: ["$", "Column 2", "Column 3", "Gems"],
       rows: [blankRow(4)],
       sort_order: 0,
       scale_enabled: true,
