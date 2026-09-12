@@ -656,6 +656,21 @@
   // Thin wrapper around the Supabase REST (PostgREST) API. Uses the current
   // session's access token (not just the bare anon key) so that database
   // rules based on auth.uid()/auth.jwt() resolve correctly per visitor.
+  // Shared in-flight refresh promise: if several sb() calls hit a bad token
+  // at once (e.g. the Dashboard's parallel Promise.all batch), they should
+  // all wait on ONE refresh instead of each firing their own refreshSession()
+  // — concurrent refreshes can race and hand back inconsistent tokens, which
+  // is one way a "JWT issued at future" error can show up in the first place.
+  let SESSION_REFRESH_INFLIGHT = null;
+  function refreshSessionOnce() {
+    if (!SESSION_REFRESH_INFLIGHT) {
+      SESSION_REFRESH_INFLIGHT = supabaseClient.auth.refreshSession().finally(() => {
+        SESSION_REFRESH_INFLIGHT = null;
+      });
+    }
+    return SESSION_REFRESH_INFLIGHT;
+  }
+
   async function sb(path, opts = {}, _retried = false) {
     const token = (CURRENT_SESSION && CURRENT_SESSION.access_token) || SUPABASE_KEY;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -670,12 +685,13 @@
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      // A long-backgrounded tab (iPad Safari suspends JS timers, so
-      // supabase-js's scheduled refresh never fired) can still hand us an
-      // expired token despite the listener above. One forced refresh + retry
-      // recovers silently instead of surfacing a dead page to the user.
-      if (res.status === 401 && /jwt expired/i.test(text) && !_retried) {
-        const { data, error } = await supabaseClient.auth.refreshSession();
+      // Covers every JWT-claim rejection PostgREST can return (PGRST303) -
+      // expired, issued-at-future (usually device clock drift, or several
+      // concurrent refreshes racing each other), not-yet-valid, etc. - not
+      // just the "expired" case. One shared refresh + retry recovers
+      // silently instead of surfacing a dead page to the user.
+      if (res.status === 401 && /jwt/i.test(text) && !_retried) {
+        const { data, error } = await refreshSessionOnce();
         if (!error && data.session) {
           CURRENT_SESSION = data.session;
           return sb(path, opts, true);
