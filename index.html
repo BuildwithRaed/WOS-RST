@@ -952,6 +952,29 @@ const T = {
   prev_label: { en: "Prev", ar: "السابق", ko: "이전" },
   next_label: { en: "Next", ar: "التالي", ko: "다음" },
   all_categories: { en: "All categories", ar: "كل الفئات", ko: "모든 카테고리" },
+  tundra_album_title: { en: "Tundra Album", ar: "ألبوم التندرا", ko: "툰드라 앨범" },
+  total_attack: { en: "Total Attack", ar: "إجمالي الهجوم", ko: "총 공격력" },
+  total_defense: { en: "Total Defense", ar: "إجمالي الدفاع", ko: "총 방어력" },
+  of_max_prefix: { en: "of max", ar: "من الحد الأقصى", ko: "최대치 중" },
+  collection_gallery_title: { en: "Collection Gallery", ar: "معرض المجموعات", ko: "컬렉션 갤러리" },
+  total_prefix: { en: "Total", ar: "إجمالي", ko: "총" },
+  vip_tier_not_found: { en: "VIP Tier table not found.", ar: "لم يتم العثور على جدول مستوى VIP.", ko: "VIP 등급 테이블을 찾을 수 없습니다." },
+  vip_tier_desc: { en: "Pick your VIP level to see its troop stat bonuses.", ar: "اختر مستوى VIP الخاص بك لعرض مكافآت إحصائيات جنودك.", ko: "VIP 레벨을 선택하면 부대 스탯 보너스를 확인할 수 있습니다." },
+  facility_title: { en: "Facility", ar: "المنشأة", ko: "시설" },
+  facility_click_desc: { en: "Click a building to mark it owned/not owned.", ar: "انقر على مبنى لوضع علامة عليه كمملوك/غير مملوك.", ko: "건물을 클릭하여 보유/미보유로 표시하세요." },
+  buildings_owned_summary: { en: "buildings owned", ar: "مبنى مملوك", ko: "개 건물 보유" },
+  bonus_unknown: { en: "Bonus unknown", ar: "المكافأة غير معروفة", ko: "보너스 알 수 없음" },
+  checkmark_owned: { en: "\u2713 Owned", ar: "\u2713 مملوك", ko: "\u2713 보유함" },
+  alliance_tech_title: { en: "Alliance Tech", ar: "تقنية التحالف", ko: "연맹 기술" },
+  research_title: { en: "Research", ar: "الأبحاث", ko: "연구" },
+  level_ellipsis: { en: "Level\u2026", ar: "المستوى\u2026", ko: "레벨\u2026" },
+  lv_none: { en: "Lv. 0 (none)", ar: "المستوى 0 (لا يوجد)", ko: "레벨 0 (없음)" },
+  alliance_tech_desc: { en: "Set your current level (0\u20135) for each research \u2014 1% per level.", ar: "حدد مستواك الحالي (0\u20135) لكل بحث \u2014 1% لكل مستوى.", ko: "각 연구의 현재 레벨(0\u20135)을 설정하세요 \u2014 레벨당 1%." },
+  all_researches_updated: { en: "All researches updated", ar: "تم تحديث جميع الأبحاث", ko: "모든 연구가 업데이트되었습니다" },
+  couldnt_update_levels: { en: "Couldn't update levels", ar: "تعذّر تحديث المستويات", ko: "레벨을 업데이트할 수 없습니다" },
+  researches_tracked: { en: "researches tracked", ar: "بحث تم تتبعه", ko: "개 연구 추적 중" },
+  troops_group_label: { en: "Troops", ar: "الجنود", ko: "부대" },
+  none_suffix: { en: " (none)", ar: " (لا يوجد)", ko: " (없음)" },
   manage_item_catalog_desc: { en: "Manage the item catalog in Admin \u2014 use this page to update quantities.", ar: "أدر كتالوج العناصر من لوحة الإدارة \u2014 استخدم هذه الصفحة لتحديث الكميات.", ko: "관리자에서 아이템 카탈로그를 관리하세요 \u2014 이 페이지에서는 수량만 업데이트합니다." },
   no_items_yet: { en: "No items yet.", ar: "لا توجد عناصر بعد.", ko: "아직 아이템이 없습니다." },
   add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
@@ -5524,7 +5547,7 @@ async function ensureVipData() {
 async function renderVipTierTable(target) {
   let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${USER_ID}&select=id`);
   if (!table) {
-    target.innerHTML = `<div class="empty">VIP Tier table not found.</div>`;
+    target.innerHTML = `<div class="empty">${esc(t("vip_tier_not_found"))}</div>`;
     return;
   }
   const [columns, rows] = await Promise.all([
@@ -5535,7 +5558,7 @@ async function renderVipTierTable(target) {
   target.innerHTML = `
     <div class="panel">
       <h2>${esc(t("vip_tier_title"))}</h2>
-      <p class="desc">Pick your VIP level to see its troop stat bonuses.</p>
+      <p class="desc">${esc(t("vip_tier_desc"))}</p>
       <select id="vipTierSelect" style="width:160px;">
         ${rows.map((r, i) => `<option value="${i}">${esc(r.name)}</option>`).join("")}
       </select>
@@ -5688,19 +5711,19 @@ async function renderAlbumTundraPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Tundra Album</h2>
+        <h2>${esc(t("tundra_album_title"))}</h2>
               </div>
     </div>
     <div class="panel">
       <div class="grid g2">
         <div>
-          <div class="meta" style="margin-bottom:6px;">Attack</div>
+          <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel("Attack"))}</div>
           <select id="albumTundraAttack" style="width:140px;">
             ${OPTIONS_BY_STAT.Attack.map((v) => `<option value="${v}" ${v === saved.Attack ? "selected" : ""}>+${v}%</option>`).join("")}
           </select>
         </div>
         <div>
-          <div class="meta" style="margin-bottom:6px;">Defense</div>
+          <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel("Defense"))}</div>
           <select id="albumTundraDefense" style="width:140px;">
             ${OPTIONS_BY_STAT.Defense.map((v) => `<option value="${v}" ${v === saved.Defense ? "selected" : ""}>+${v}%</option>`).join("")}
           </select>
@@ -5714,8 +5737,8 @@ async function renderAlbumTundraPage() {
     const maxAttack = OPTIONS_BY_STAT.Attack[OPTIONS_BY_STAT.Attack.length - 1] || 0;
     const maxDefense = OPTIONS_BY_STAT.Defense[OPTIONS_BY_STAT.Defense.length - 1] || 0;
     document.getElementById("albumTundraTotals").innerHTML = `
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total Attack</div><div class="val" style="font-size:13px;">+${saved.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxAttack}%</div></div>
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total Defense</div><div class="val" style="font-size:13px;">+${saved.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxDefense}%</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_attack"))}</div><div class="val" style="font-size:13px;">+${saved.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxAttack}%</div></div>
+      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_defense"))}</div><div class="val" style="font-size:13px;">+${saved.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxDefense}%</div></div>
     `;
   }
   renderTotals();
@@ -5753,7 +5776,7 @@ async function renderCollectionGalleryPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Collection Gallery</h2>
+        <h2>${esc(t("collection_gallery_title"))}</h2>
               </div>
     </div>
     <div class="panel">
@@ -5761,7 +5784,7 @@ async function renderCollectionGalleryPage() {
         ${STATS.map(
           (s) => `
         <div>
-          <div class="meta" style="margin-bottom:6px;">${esc(s.key)}</div>
+          <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel(s.key))}</div>
           <select data-collectiongallery="${esc(s.key)}" style="width:120px;">
             ${s.options.map((v) => `<option value="${v}" ${v === saved[s.key] ? "selected" : ""}>+${v}%</option>`).join("")}
           </select>
@@ -5774,7 +5797,7 @@ async function renderCollectionGalleryPage() {
 
   function renderTotals() {
     document.getElementById("collectionGalleryTotals").innerHTML = STATS.map(
-      (s) => `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(s.key)}</div><div class="val" style="font-size:13px;">+${saved[s.key]}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${s.options[s.options.length - 1]}%</div></div>`
+      (s) => `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_prefix"))} ${esc(tStatLabel(s.key))}</div><div class="val" style="font-size:13px;">+${saved[s.key]}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${s.options[s.options.length - 1]}%</div></div>`
     ).join("");
   }
   renderTotals();
@@ -5805,19 +5828,19 @@ async function renderAllianceTechPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Alliance Tech</h2>
+        <h2>${esc(t("alliance_tech_title"))}</h2>
         <div class="sub" id="allianceTechSummary"></div>
       </div>
     </div>
     <div id="allianceTechTotals" style="margin-bottom:16px;"></div>
     <div class="panel">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-        <h2 style="margin:0;">Research</h2>
+        <h2 style="margin:0;">${esc(t("research_title"))}</h2>
         <div style="display:flex; align-items:center; gap:6px;">
           <span class="meta" style="font-size:11px;">${esc(t("set_all_to"))}</span>
           <select id="allianceTechQuickSelect" style="width:140px;">
-            <option value="">Level\u2026</option>
-            <option value="0">Lv. 0 (none)</option>
+            <option value="">${esc(t("level_ellipsis"))}</option>
+            <option value="0">${esc(t("lv_none"))}</option>
             <option value="1">Lv. 1</option>
             <option value="2">Lv. 2</option>
             <option value="3">Lv. 3</option>
@@ -5826,7 +5849,7 @@ async function renderAllianceTechPage() {
           </select>
         </div>
       </div>
-      <p class="desc">Set your current level (0\u20135) for each research \u2014 1% per level.</p>
+      <p class="desc">${esc(t("alliance_tech_desc"))}</p>
       <div id="allianceTechRows"></div>
     </div>
   `;
@@ -5840,16 +5863,16 @@ async function renderAllianceTechPage() {
         body: JSON.stringify({ current_level: val }),
       });
       items.forEach((it) => (it.current_level = val));
-      toast("All researches updated");
+      toast(t("all_researches_updated"));
       render();
     } catch (err) {
-      toast("Couldn't update levels", true);
+      toast(t("couldnt_update_levels"), true);
     }
     e.target.value = "";
   });
 
   function render() {
-    document.getElementById("allianceTechSummary").textContent = `${items.length} researches tracked`;
+    document.getElementById("allianceTechSummary").textContent = `${items.length} ${t("researches_tracked")}`;
 
     const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
     const effective = (it) => {
@@ -5872,7 +5895,7 @@ async function renderAllianceTechPage() {
         const shared = troopsIt ? effective(troopsIt) : { cur: 0, max: 0 };
         const cur = own.cur + shared.cur;
         const max = own.max + shared.max;
-        return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">${TROOP_ABBR[troop]} ${STAT_ABBR[stat] || esc(stat)}</div><div class="val" style="font-size:13px;">+${cur}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${max}%</div></div>`;
+        return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">${TROOP_ABBR[troop]} ${STAT_ABBR[stat] || esc(stat)}</div><div class="val" style="font-size:13px;">+${cur}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${max}%</div></div>`;
       }).join("");
       return `<div class="stats-row-scroll" style="margin-bottom:10px;">${cards}</div>`;
     }).join("");
@@ -5883,18 +5906,19 @@ async function renderAllianceTechPage() {
     const TROOP_GROUPS = ["Troops", "Infantry", "Lancers", "Marksman"];
     rowsEl.innerHTML = TROOP_GROUPS.map((troop) => {
       const group = items.filter((it) => it.name.startsWith(troop + " "));
+      const troopLabel = troop === "Troops" ? t("troops_group_label") : troopDisplayName(troop);
       return `
       <div style="padding:14px 0; border-top:1px solid var(--line);">
-        <div class="name" style="font-size:14px; margin-bottom:10px;">${esc(troop)}</div>
+        <div class="name" style="font-size:14px; margin-bottom:10px;">${esc(troopLabel)}</div>
         <div style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px;">
           ${group
             .map((it) => {
               const lvl = it.current_level ?? 0;
               const maxLvl = it.max_level ?? 5;
-              const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>Lv. ${i}${i === 0 ? " (none)" : ""}</option>`).join("");
+              const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>Lv. ${i}${i === 0 ? esc(t("none_suffix")) : ""}</option>`).join("");
               return `
             <div style="min-width:0;">
-              <div class="meta" style="margin-bottom:6px;">${esc(it.bonus_type)}</div>
+              <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel(it.bonus_type))}</div>
               <div style="display:flex; align-items:center; gap:6px; min-width:0;">
                 <select data-techlevel="${it.id}" style="width:100%; min-width:0;">${opts}</select>
                 <span class="meta" style="font-size:11px; flex-shrink:0;">+${lvl}%</span>
@@ -8182,21 +8206,21 @@ async function renderFacilityPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Facility</h2>
+        <h2>${esc(t("facility_title"))}</h2>
         <div class="sub" id="facilitySummaryLine"></div>
       </div>
     </div>
     <div class="stats-row-scroll" id="facilityTotals" style="margin-bottom:16px;"></div>
     <div class="panel">
-      <h2>Facility</h2>
-      <p class="desc">Click a building to mark it owned/not owned.</p>
+      <h2>${esc(t("facility_title"))}</h2>
+      <p class="desc">${esc(t("facility_click_desc"))}</p>
       <div class="stats-row-scroll facility-cards" id="facilityCards" style="align-items:stretch;"></div>
     </div>
   `;
 
   function render() {
     const ownedCount = buildings.filter((b) => b.owned).length;
-    document.getElementById("facilitySummaryLine").textContent = `${ownedCount} / ${buildings.length} buildings owned`;
+    document.getElementById("facilitySummaryLine").textContent = `${ownedCount} / ${buildings.length} ${t("buildings_owned_summary")}`;
 
     const totalsByType = {};
     const maxByType = {};
@@ -8210,7 +8234,7 @@ async function renderFacilityPage() {
       ? Object.entries(maxByType)
           .map(
             ([type, maxVal]) =>
-              `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(type)}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxVal.toFixed(1)}%</div></div>`
+              `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_prefix"))} ${esc(tStatLabel(type))}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxVal.toFixed(1)}%</div></div>`
           )
           .join("")
       : `<div class="metric"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div></div>`;
@@ -8227,8 +8251,8 @@ async function renderFacilityPage() {
         </div>
         <div class="info">
           <div class="sname">${esc(b.name)}</div>
-          <div class="sbonus">${b.bonus_value != null ? `+${Number(b.bonus_value)}% ${esc(b.bonus_type || "")}` : "Bonus unknown"}</div>
-          <div class="sowned">${b.owned ? "\u2713 Owned" : "Not owned"}</div>
+          <div class="sbonus">${b.bonus_value != null ? `+${Number(b.bonus_value)}% ${esc(tStatLabel(b.bonus_type || ""))}` : esc(t("bonus_unknown"))}</div>
+          <div class="sowned">${b.owned ? esc(t("checkmark_owned")) : esc(t("not_owned_label"))}</div>
         </div>
       </div>`
       )
