@@ -2801,8 +2801,8 @@ async function renderPacksPage() {
         );
         return `
       <div class="panel" style="margin-top:16px; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""}" data-packtable="${ti}">
-        <input data-pt-title value="${esc(t.title)}" style="display:block; width:100%; font-size:15px; font-weight:700; background:none; border:none; padding:0; margin-bottom:10px;" />
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
+          <input data-pt-title value="${esc(t.title)}" style="font-size:15px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
           <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:10.5px; color:var(--muted); flex-shrink:0; white-space:nowrap;" title="When on, Row 1 sets a scale that auto-fills the other rows as you type an Amount. Turn off for tables whose rows don't follow a fixed ratio.">
             <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer; flex-shrink:0;" /> Scale
           </label>
@@ -2829,7 +2829,7 @@ async function renderPacksPage() {
                 ${t.columns
                   .map(
                     (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
-                      <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:66px; font-weight:600; text-align:center; padding:4px 6px;" />
+                      <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:66px; font-weight:600; text-align:center; padding:4px 6px; background:none; border:none;" />
                     </th>`
                   )
                   .join("")}
