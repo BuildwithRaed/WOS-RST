@@ -808,6 +808,10 @@ function tStatLabel(label) {
 function troopDisplayName(key) {
   return { Infantry: t("troop_infantry"), Lancers: t("troop_lancers"), Marksman: t("troop_marksman") }[key] || key;
 }
+function tPosition(pos) {
+  const map = { "Top left": "pos_top_left", "Top right": "pos_top_right", "Middle left": "pos_middle_left", "Middle right": "pos_middle_right", "Bottom left": "pos_bottom_left", "Bottom right": "pos_bottom_right" };
+  return map[pos] ? t(map[pos]) : pos;
+}
 // Covers the nav (sidebar/topnav, both desktop dropdowns and the
 // mobile accordion menu, which is built by cloning the desktop
 // nav's HTML - so translating the desktop nav once covers both),
@@ -916,6 +920,38 @@ const T = {
   expertspage_title: { en: "Experts Level", ar: "مستوى الخبراء", ko: "전문가 레벨" },
   skin_gallery_title: { en: "Skin gallery", ar: "معرض المظاهر", ko: "스킨 갤러리" },
   vip_tier_title: { en: "VIP Tier", ar: "مستوى VIP", ko: "VIP 등급" },
+  no_chief_gear_data: { en: "No Chief Gear data loaded yet.", ar: "لم يتم تحميل بيانات معدات القائد بعد.", ko: "아직 족장 장비 데이터가 로드되지 않았습니다." },
+  pos_top_left: { en: "Top left", ar: "أعلى اليسار", ko: "왼쪽 상단" },
+  pos_top_right: { en: "Top right", ar: "أعلى اليمين", ko: "오른쪽 상단" },
+  pos_middle_left: { en: "Middle left", ar: "وسط اليسار", ko: "왼쪽 중앙" },
+  pos_middle_right: { en: "Middle right", ar: "وسط اليمين", ko: "오른쪽 중앙" },
+  pos_bottom_left: { en: "Bottom left", ar: "أسفل اليسار", ko: "왼쪽 하단" },
+  pos_bottom_right: { en: "Bottom right", ar: "أسفل اليمين", ko: "오른쪽 하단" },
+  three_piece_def: { en: "3-piece (DEF, all troops)", ar: "مجموعة 3 قطع (دفاع، لكل الجنود)", ko: "3피스 (방어력, 전 부대)" },
+  six_piece_atk: { en: "6-piece (ATK, all troops)", ar: "مجموعة 6 قطع (هجوم، لكل الجنود)", ko: "6피스 (공격력, 전 부대)" },
+  not_active: { en: "Not active", ar: "غير مفعّل", ko: "비활성" },
+  all_label: { en: "All", ar: "الكل", ko: "전체" },
+  owned_label: { en: "Owned", ar: "مملوك", ko: "보유" },
+  not_owned_label: { en: "Not owned", ar: "غير مملوك", ko: "미보유" },
+  count_in_max: { en: "Count in max", ar: "احتسابه في الحد الأقصى", ko: "최대치에 반영" },
+  globe_level: { en: "GLOBE LEVEL", ar: "مستوى الكرة الأرضية", ko: "글로브 레벨" },
+  no_globe: { en: "No Globe", ar: "لا يوجد كرة أرضية", ko: "글로브 없음" },
+  total_bonus: { en: "Total bonus", ar: "إجمالي المكافأة", ko: "총 보너스" },
+  no_skins_match_filters: { en: "No skins match your filters.", ar: "لا توجد مظاهر تطابق عوامل التصفية.", ko: "필터에 일치하는 스킨이 없습니다." },
+  mark_skins_owned_hint: { en: "Mark skins as owned to see totals", ar: "حدد المظاهر كمملوكة لعرض الإجماليات", ko: "총계를 보려면 스킨을 보유로 표시하세요" },
+  search_skins_placeholder: { en: "Search skins...", ar: "ابحث عن المظاهر...", ko: "스킨 검색..." },
+  skins_owned_summary: { en: "skins owned \u00b7 tap any skin to view details", ar: "مظهر مملوك \u00b7 انقر على أي مظهر لعرض التفاصيل", ko: "개 스킨 보유 \u00b7 스킨을 눌러 세부정보 보기" },
+  islands_owned_summary: { en: "islands owned \u00b7 tap any island to set its level", ar: "جزيرة مملوكة \u00b7 انقر على أي جزيرة لتعيين مستواها", ko: "개 아일랜드 보유 \u00b7 아일랜드를 눌러 레벨 설정" },
+  search_islands_placeholder: { en: "Search islands...", ar: "ابحث عن الجزر...", ko: "아일랜드 검색..." },
+  level_label: { en: "Level", ar: "المستوى", ko: "레벨" },
+  not_built: { en: "0 (not built)", ar: "0 (غير مُشيَّد)", ko: "0 (미건설)" },
+  owned_checkbox: { en: "Owned", ar: "مملوك", ko: "보유함" },
+  owned_tap_unown: { en: "\u2713 Owned \u2014 tap to unown", ar: "\u2713 مملوك \u2014 انقر لإلغاء الملكية", ko: "\u2713 보유함 \u2014 눌러서 해제" },
+  mark_as_owned: { en: "Mark as owned", ar: "وضع علامة كمملوك", ko: "보유로 표시" },
+  count_toward_max: { en: "Count toward max totals", ar: "احتسابه ضمن إجمالي الحد الأقصى", ko: "최대 합계에 반영" },
+  prev_label: { en: "Prev", ar: "السابق", ko: "이전" },
+  next_label: { en: "Next", ar: "التالي", ko: "다음" },
+  all_categories: { en: "All categories", ar: "كل الفئات", ko: "모든 카테고리" },
   manage_item_catalog_desc: { en: "Manage the item catalog in Admin \u2014 use this page to update quantities.", ar: "أدر كتالوج العناصر من لوحة الإدارة \u2014 استخدم هذه الصفحة لتحديث الكميات.", ko: "관리자에서 아이템 카탈로그를 관리하세요 \u2014 이 페이지에서는 수량만 업데이트합니다." },
   no_items_yet: { en: "No items yet.", ar: "لا توجد عناصر بعد.", ko: "아직 아이템이 없습니다." },
   add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
@@ -4169,7 +4205,7 @@ const CHIEF_GEAR_ICONS = {
 async function renderChiefGearCalc() {
   const rows = await loadChiefGearRows();
   if (!rows.length) {
-    content.innerHTML = `<div class="panel"><div class="empty"><div class="big">No Chief Gear data loaded yet.</div></div></div>`;
+    content.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_chief_gear_data"))}</div></div></div>`;
     return;
   }
 
@@ -4219,7 +4255,7 @@ async function renderChiefGearCalc() {
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
                   <div class="meta" style="font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(p.name)}</div>
-                  <span class="meta" style="font-size:10.5px; flex-shrink:0;">${esc(CHIEF_GEAR_POSITIONS[p.key] || "")}</span>
+                  <span class="meta" style="font-size:10.5px; flex-shrink:0;">${esc(tPosition(CHIEF_GEAR_POSITIONS[p.key] || ""))}</span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
                   <img src="${CHIEF_GEAR_ICONS[p.key]}" alt="${esc(p.name)}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" loading="lazy" />
@@ -4511,12 +4547,12 @@ function updateChiefGearCurrentStats() {
   const setBonusHtml = `
     <div class="stats-row-scroll" style="margin-bottom:14px;">
       <div class="metric">
-        <div class="label">3-piece (DEF, all troops)</div>
-        <div class="val" style="color:${threeBonus ? "var(--good)" : "var(--muted)"};">${threeBonus ? `+${threeBonus}%` : "Not active"}</div>
+        <div class="label">${esc(t("three_piece_def"))}</div>
+        <div class="val" style="color:${threeBonus ? "var(--good)" : "var(--muted)"};">${threeBonus ? `+${threeBonus}%` : esc(t("not_active"))}</div>
       </div>
       <div class="metric">
-        <div class="label">6-piece (ATK, all troops)</div>
-        <div class="val" style="color:${sixBonus ? "var(--good)" : "var(--muted)"};">${sixBonus ? `+${sixBonus}%` : "Not active"}</div>
+        <div class="label">${esc(t("six_piece_atk"))}</div>
+        <div class="val" style="color:${sixBonus ? "var(--good)" : "var(--muted)"};">${sixBonus ? `+${sixBonus}%` : esc(t("not_active"))}</div>
       </div>
     </div>
   `;
@@ -4551,7 +4587,7 @@ function renderCategorySwitcher(containerEl, categories, current, onSelect) {
   containerEl.innerHTML = `
     <div class="cat-switcher">
       <div style="position:relative;">
-        <button class="cat-menu-btn" type="button" id="${containerEl.id}MenuBtn" title="All categories">&#9776;</button>
+        <button class="cat-menu-btn" type="button" id="${containerEl.id}MenuBtn" title="${esc(t("all_categories"))}">&#9776;</button>
         <div class="cat-menu-panel" id="${containerEl.id}MenuPanel">
           ${categories.map((c) => `<button data-cat="${esc(c)}" class="${c === current ? "active" : ""}">${esc(c)} ${c === current ? "&#10003;" : ""}</button>`).join("")}
         </div>
@@ -4611,28 +4647,28 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
       ${isIsland
         ? `<div style="display:flex; align-items:center; gap:10px; text-align:left;">
              <div style="flex:1;">
-               <label style="font-size:11px; display:block; margin-bottom:4px;">Level</label>
+               <label style="font-size:11px; display:block; margin-bottom:4px;">${esc(t("level_label"))}</label>
                <select id="galleryModalLevel" style="width:100%;">
-                 ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? "0 (not built)" : `Lv. ${i}`}</option>`).join("")}
+                 ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? esc(t("not_built")) : `Lv. ${i}`}</option>`).join("")}
                </select>
              </div>
              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding-top:18px; flex-wrap:nowrap;">
                <input type="checkbox" id="galleryModalIslandOwned" ${item.owned ? "checked" : ""} />
-               <span class="meta" style="font-size:12px;">Owned</span>
+               <span class="meta" style="font-size:12px;">${esc(t("owned_checkbox"))}</span>
              </label>
            </div>`
-        : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:${item.show_count_toggle ? "10px" : "0"};">${item.owned ? "\u2713 Owned \u2014 tap to unown" : "Mark as owned"}</button>
+        : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:${item.show_count_toggle ? "10px" : "0"};">${item.owned ? esc(t("owned_tap_unown")) : esc(t("mark_as_owned"))}</button>
            ${item.show_count_toggle ? `<label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer; flex-wrap:nowrap;">
              <input type="checkbox" id="galleryModalCountInMax" ${item.count_in_max !== false ? "checked" : ""} />
-             <span class="meta" style="font-size:12px;">Count toward max totals</span>
+             <span class="meta" style="font-size:12px;">${esc(t("count_toward_max"))}</span>
            </label>` : ""}`
       }
       ${isIsland
-        ? `<button class="btn ghost small" id="galleryModalClose" style="width:100%; margin-top:14px;">Close</button>`
+        ? `<button class="btn ghost small" id="galleryModalClose" style="width:100%; margin-top:14px;">${esc(t("close_button"))}</button>`
         : `<div style="display:flex; gap:8px; margin-top:16px;">
-             <button class="btn ghost small" id="galleryModalPrev" style="flex:1;" ${index === 0 ? "disabled" : ""}>&#8592; Prev</button>
-             <button class="btn ghost small" id="galleryModalClose" style="flex:1;">Close</button>
-             <button class="btn ghost small" id="galleryModalNext" style="flex:1;" ${index === list.length - 1 ? "disabled" : ""}>Next &#8594;</button>
+             <button class="btn ghost small" id="galleryModalPrev" style="flex:1;" ${index === 0 ? "disabled" : ""}>&#8592; ${esc(t("prev_label"))}</button>
+             <button class="btn ghost small" id="galleryModalClose" style="flex:1;">${esc(t("close_button"))}</button>
+             <button class="btn ghost small" id="galleryModalNext" style="flex:1;" ${index === list.length - 1 ? "disabled" : ""}>${esc(t("next_label"))} &#8594;</button>
            </div>`
       }
     </div>`;
@@ -4709,17 +4745,17 @@ async function renderSkinGallery() {
     <div class="stats-row-scroll" id="skinTotals" style="margin-bottom:16px;"></div>
     <div id="skinCatSwitcher"></div>
     <div class="filter-bar" style="margin-bottom:12px;">
-      <input id="skinSearch" placeholder="Search skins..." style="flex:1; min-width:160px;" />
+      <input id="skinSearch" placeholder="${esc(t("search_skins_placeholder"))}" style="flex:1; min-width:160px;" />
       <div class="seg" id="ownedSeg">
-        <button data-owned="all" class="active">All</button>
-        <button data-owned="owned">Owned</button>
-        <button data-owned="not">Not owned</button>
+        <button data-owned="all" class="active">${esc(t("all_label"))}</button>
+        <button data-owned="owned">${esc(t("owned_label"))}</button>
+        <button data-owned="not">${esc(t("not_owned_label"))}</button>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:10px; margin:0 0 16px;">
-      <span class="meta" style="font-size:11px;">GLOBE LEVEL</span>
+      <span class="meta" style="font-size:11px;">${esc(t("globe_level"))}</span>
       <select id="globeLevelSelect" style="width:130px;">
-        <option value="0">No Globe</option>
+        <option value="0">${esc(t("no_globe"))}</option>
         ${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}</option>`).join("")}
       </select>
     </div>
@@ -4823,7 +4859,7 @@ async function renderSkinGallery() {
 
     const ownedCount = skins.filter((s) => s.owned).length;
     document.getElementById("skinSummaryLine").textContent =
-      `${ownedCount} / ${skins.length} skins owned \u00b7 tap any skin to view details`;
+      `${ownedCount} / ${skins.length} ${t("skins_owned_summary")}`;
 
     // totals by bonus_type: current (owned only) vs max (everything, as if fully owned).
     // Skins sharing a display_group (e.g. Frost Sphere I-VI) are mutually
@@ -4885,7 +4921,7 @@ async function renderSkinGallery() {
             return `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(label)}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxVal.toFixed(1)}%</div></div>`;
           })
           .join("")
-      : `<div class="metric" style="grid-column:1/-1;"><div class="label">Total bonus</div><div class="val">+0%</div><div class="meta" style="font-size:11px; margin-top:2px;">Mark skins as owned to see totals</div></div>`;
+      : `<div class="metric" style="grid-column:1/-1;"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div><div class="meta" style="font-size:11px; margin-top:2px;">${esc(t("mark_skins_owned_hint"))}</div></div>`;
 
 
     const sections = document.getElementById("skinSections");
@@ -4897,7 +4933,7 @@ async function renderSkinGallery() {
       ...filtered.filter((s) => s.show_count_toggle),
     ];
     if (!ordered.length) {
-      sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">No skins match your filters.</div></div></div>`;
+      sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_skins_match_filters"))}</div></div></div>`;
       return;
     }
     sections.innerHTML = `
@@ -4914,7 +4950,7 @@ async function renderSkinGallery() {
             <div class="badge">${esc(s.name)}</div>
             ${s.show_count_toggle ? `<label style="display:flex; align-items:center; justify-content:center; gap:4px; padding:4px 6px; background:var(--panel-2); flex-wrap:nowrap;" onclick="event.stopPropagation()">
               <input type="checkbox" data-countinmax="${s.id}" ${s.count_in_max !== false ? "checked" : ""} style="width:12px; height:12px;" />
-              <span class="meta" style="font-size:8.5px;">Count in max</span>
+              <span class="meta" style="font-size:8.5px;">${esc(t("count_in_max"))}</span>
             </label>` : ""}
           </div>${isLastGlobe || isLastNonToggle ? `<div style="grid-column:1/-1; height:1px; background:var(--line); margin:2px 0;"></div>` : ""}`;
           })
@@ -5009,11 +5045,11 @@ async function renderIslandGallery() {
     <div class="stats-row-scroll" id="islandTroopTotals" style="margin-bottom:20px;"></div>
     <div id="islandCatSwitcher"></div>
     <div class="filter-bar" style="margin-bottom:12px;">
-      <input id="islandSearch" placeholder="Search islands..." style="flex:1; min-width:160px;" />
+      <input id="islandSearch" placeholder="${esc(t("search_islands_placeholder"))}" style="flex:1; min-width:160px;" />
       <div class="seg" id="islandOwnedSeg">
-        <button data-owned="all" class="active">All</button>
-        <button data-owned="owned">Owned</button>
-        <button data-owned="not">Not owned</button>
+        <button data-owned="all" class="active">${esc(t("all_label"))}</button>
+        <button data-owned="owned">${esc(t("owned_label"))}</button>
+        <button data-owned="not">${esc(t("not_owned_label"))}</button>
       </div>
     </div>
     <div id="islandSections"></div>
@@ -5041,7 +5077,7 @@ async function renderIslandGallery() {
 
     const ownedCount = islands.filter((s) => s.owned).length;
     document.getElementById("islandSummaryLine").textContent =
-      `${ownedCount} / ${islands.length} islands owned \u00b7 tap any island to set its level`;
+      `${ownedCount} / ${islands.length} ${t("islands_owned_summary")}`;
 
     // Total Attack/Defense/Lethality/Health per troop: raw-stat islands count
     // toward every troop (they buff all troops equally); display_group
@@ -8177,7 +8213,7 @@ async function renderFacilityPage() {
               `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(type)}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${maxVal.toFixed(1)}%</div></div>`
           )
           .join("")
-      : `<div class="metric"><div class="label">Total bonus</div><div class="val">+0%</div></div>`;
+      : `<div class="metric"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div></div>`;
 
 
 
