@@ -4080,6 +4080,16 @@ function wireSwipeGesture(el, onSwipe, opts = {}) {
   // yet more listeners - an exponential cascade that freezes the tab
   // within a handful of swipes. Property assignment always replaces the
   // previous handler, exactly like the old ontouchstart/ontouchend did.
+  //
+  // touch-action:pan-y is critical on real touchscreens (impossible to
+  // catch with mouse-based testing): without it, the browser's default
+  // touch handling treats any drag with the slightest vertical component
+  // as an attempt to scroll the page, and cancels the pointer sequence
+  // (firing pointercancel) before it ever reaches pointerup - so the
+  // gesture silently never registers as a swipe at all. This explicitly
+  // tells the browser vertical scrolling is expected and shouldn't hijack
+  // the gesture, leaving horizontal swipe detection to this code.
+  el.style.touchAction = "pan-y";
   let startX = null, startY = null, dragging = false;
   el.onpointerdown = (e) => {
     if (opts.stopPropagation) e.stopPropagation();
