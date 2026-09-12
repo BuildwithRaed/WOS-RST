@@ -2752,38 +2752,50 @@ async function renderPacksPage() {
   function fmtNum(n) {
     return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
-  function applyScale(panel, t) {
+  // Gems always fills on any typed Amount, in every table, regardless of
+  // the Scale toggle - it's a fixed, universal game price point, not a
+  // per-table custom ratio like FC/Speedups.
+  function applyGemsLookup(panel, t) {
     const lastCi = t.columns.length - 1;
-    const row0Amount = parseNum(panel.querySelector('[data-pt-cell][data-row="0"][data-col="0"]')?.value);
-    if (row0Amount) {
-      const ratios = t.columns.map((_, ci) => {
-        if (ci === 0 || ci === lastCi) return null; // Amount and Gems are handled separately
-        const v = parseNum(panel.querySelector(`[data-pt-cell][data-row="0"][data-col="${ci}"]`)?.value);
-        return v == null ? null : v / row0Amount;
-      });
-      panel.querySelectorAll("tbody tr").forEach((tr) => {
-        const ri = Number(tr.dataset.row);
-        if (ri === 0) return; // row 1 is the source, never auto-filled itself
-        const amount = parseNum(tr.querySelector('[data-pt-cell][data-col="0"]')?.value);
-        if (amount == null) return;
-        t.columns.forEach((_, ci) => {
-          if (ratios[ci] == null) return;
-          const cell = tr.querySelector(`[data-pt-cell][data-col="${ci}"]`);
-          if (cell) cell.value = fmtNum(amount * ratios[ci]);
-        });
-      });
-    }
-    // Gems: fixed lookup, applied to every row (including Row 1) whenever
-    // the amount matches a known price point - no manual fill needed.
-    const lastColEl = t.columns.length - 1;
     panel.querySelectorAll("tbody tr").forEach((tr) => {
       const amount = parseNum(tr.querySelector('[data-pt-cell][data-col="0"]')?.value);
       if (amount == null) return;
       const key = Math.round(amount * 100) / 100;
       if (AMOUNT_TO_GEMS[key] == null) return;
-      const gemsCell = tr.querySelector(`[data-pt-cell][data-col="${lastColEl}"]`);
+      const gemsCell = tr.querySelector(`[data-pt-cell][data-col="${lastCi}"]`);
       if (gemsCell) gemsCell.value = fmtNum(AMOUNT_TO_GEMS[key]);
     });
+  }
+  // Fills every OTHER column (not Gems, not Amount) using the ratio each
+  // one holds to the Amount in Row 1 - only runs when Scale is on for
+  // this table, since it assumes a fixed proportional relationship that
+  // not every table's data actually follows.
+  function applyRatioScale(panel, t) {
+    const lastCi = t.columns.length - 1;
+    const row0Amount = parseNum(panel.querySelector('[data-pt-cell][data-row="0"][data-col="0"]')?.value);
+    if (!row0Amount) return;
+    const ratios = t.columns.map((_, ci) => {
+      if (ci === 0 || ci === lastCi) return null; // Amount and Gems are handled separately
+      const v = parseNum(panel.querySelector(`[data-pt-cell][data-row="0"][data-col="${ci}"]`)?.value);
+      return v == null ? null : v / row0Amount;
+    });
+    panel.querySelectorAll("tbody tr").forEach((tr) => {
+      const ri = Number(tr.dataset.row);
+      if (ri === 0) return; // row 1 is the source, never auto-filled itself
+      const amount = parseNum(tr.querySelector('[data-pt-cell][data-col="0"]')?.value);
+      if (amount == null) return;
+      t.columns.forEach((_, ci) => {
+        if (ratios[ci] == null) return;
+        const cell = tr.querySelector(`[data-pt-cell][data-col="${ci}"]`);
+        if (cell) cell.value = fmtNum(amount * ratios[ci]);
+      });
+    });
+  }
+  // Runs both - used when the Scale toggle is switched on, to fill
+  // everything (ratio columns + Gems) in one go.
+  function applyScale(panel, t) {
+    applyRatioScale(panel, t);
+    applyGemsLookup(panel, t);
   }
 
   function renderAll() {
@@ -2905,15 +2917,15 @@ async function renderPacksPage() {
         }
       }
 
-      // Live auto-scale: typing an Amount (col 0) on any row other than the
-      // first triggers a fill of that row's other columns, using the ratio
-      // established by Row 1. Listens on the whole panel (event delegation)
-      // so newly added rows are covered without re-wiring. Gated on
-      // scale_enabled - tables with irregular, non-proportional rows can
-      // turn this off and type every cell freely.
+      // Live auto-fill on typing an Amount (col 0), any row other than the
+      // first. Gems always fills (fixed universal price point); the ratio
+      // fill for every other column only runs when Scale is on for tables
+      // that actually follow a fixed proportional relationship.
       panel.addEventListener("input", (e) => {
         const cell = e.target.closest("[data-pt-cell]");
-        if (cell && cell.dataset.col === "0" && t.scale_enabled !== false) applyScale(panel, t);
+        if (!cell || cell.dataset.col !== "0") return;
+        applyGemsLookup(panel, t);
+        if (t.scale_enabled !== false) applyRatioScale(panel, t);
       });
 
       // Persist on blur (change), not every keystroke - covers title,
