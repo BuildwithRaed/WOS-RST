@@ -2812,7 +2812,7 @@ async function renderPacksPage() {
           t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
         );
         return `
-      <div class="panel" style="margin-top:16px; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""}" data-packtable="${ti}">
+      <div class="panel" style="margin-top:16px; min-width:0; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""}" data-packtable="${ti}">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:15px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
           <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.">
@@ -2835,13 +2835,13 @@ async function renderPacksPage() {
           <button class="btn small ghost" data-pt-delete title="Delete table" style="color:var(--danger); flex-shrink:0; width:28px; padding:4px 0;">&times;</button>
         </div>
         <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+          <table style="width:100%; border-collapse:collapse; font-size:11.5px; table-layout:fixed;">
             <thead>
               <tr>
                 ${t.columns
                   .map(
                     (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
-                      <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:66px; font-weight:600; text-align:center; padding:4px 6px; background:none; border:none;" />
+                      <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:100%; max-width:54px; font-weight:600; text-align:center; padding:4px 4px; background:none; border:none;" />
                     </th>`
                   )
                   .join("")}
@@ -2855,7 +2855,7 @@ async function renderPacksPage() {
                     ${t.columns
                       .map(
                         (_, ci) => `<td style="padding:3px; text-align:center;">
-                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:66px; text-align:center; padding:4px 6px; flex-shrink:0;" />
+                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; max-width:54px; text-align:center; padding:4px 4px;" />
                         </td>`
                       )
                       .join("")}
