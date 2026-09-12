@@ -903,6 +903,24 @@ const T = {
   pick_hero_title: { en: "Pick", ar: "اختر", ko: "선택" },
   hero_suffix: { en: "hero", ar: "بطل", ko: "영웅" },
   close_button: { en: "Close", ar: "إغلاق", ko: "닫기" },
+  your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
+  backpack_title: { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
+  troops_stats_title: { en: "Troops Stats", ar: "إحصائيات الجنود", ko: "부대 스탯" },
+  current_upper: { en: "CURRENT", ar: "الحالي", ko: "현재" },
+  target_upper: { en: "TARGET", ar: "الهدف", ko: "목표" },
+  target_label: { en: "Target", ar: "الهدف", ko: "목표" },
+  set_all_ellipsis: { en: "Set all\u2026", ar: "تعيين الكل\u2026", ko: "전체 설정\u2026" },
+  set_all_to: { en: "Set all to:", ar: "تعيين الكل إلى:", ko: "전체 설정 대상:" },
+  max_everything: { en: "Max everything", ar: "الحد الأقصى للكل", ko: "전체 최대치로" },
+  islandgallery_title: { en: "Islands", ar: "الجزر", ko: "아일랜드" },
+  expertspage_title: { en: "Experts Level", ar: "مستوى الخبراء", ko: "전문가 레벨" },
+  skin_gallery_title: { en: "Skin gallery", ar: "معرض المظاهر", ko: "스킨 갤러리" },
+  vip_tier_title: { en: "VIP Tier", ar: "مستوى VIP", ko: "VIP 등급" },
+  manage_item_catalog_desc: { en: "Manage the item catalog in Admin \u2014 use this page to update quantities.", ar: "أدر كتالوج العناصر من لوحة الإدارة \u2014 استخدم هذه الصفحة لتحديث الكميات.", ko: "관리자에서 아이템 카탈로그를 관리하세요 \u2014 이 페이지에서는 수량만 업데이트합니다." },
+  no_items_yet: { en: "No items yet.", ar: "لا توجد عناصر بعد.", ko: "아직 아이템이 없습니다." },
+  add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
+  update_button: { en: "Update", ar: "تحديث", ko: "업데이트" },
+  quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
 function t(key) {
   const entry = T[key];
@@ -2284,7 +2302,7 @@ async function renderGearLevelingGroup(target) {
       </div>
     </div>
     <div class="panel">
-      <h2>Backpack</h2>
+      <h2>${esc(t("backpack_title"))}</h2>
       <div id="heroGearOwned"></div>
     </div>
     <div class="panel">
@@ -2293,7 +2311,7 @@ async function renderGearLevelingGroup(target) {
       <div id="heroGearTracks"></div>
     </div>
     <div class="panel">
-      <h2>Troops Stats</h2>
+      <h2>${esc(t("troops_stats_title"))}</h2>
       <p class="desc">Mastery Forging &amp; Enhance boost Lethality/Health; Mithril milestones boost Attack/Defense.</p>
       <div id="heroGearCurrentStats"></div>
     </div>
@@ -3246,15 +3264,15 @@ async function renderInventory() {
 
   content.innerHTML = `
     <div class="panel">
-      <h2>Your backpack</h2>
-      <p class="desc">Manage the item catalog in Admin \u2014 use this page to update quantities.</p>
+      <h2>${esc(t("your_backpack"))}</h2>
+      <p class="desc">${esc(t("manage_item_catalog_desc"))}</p>
       <div id="invList"></div>
     </div>
   `;
 
   const listEl = document.getElementById("invList");
   if (!items.length) {
-    listEl.innerHTML = `<div class="empty"><div class="big">No items yet.</div>Add one above to start tracking your stockpile.</div>`;
+    listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_items_yet"))}</div>${esc(t("add_item_above"))}</div>`;
     return;
   }
   listEl.innerHTML = items
@@ -3267,7 +3285,7 @@ async function renderInventory() {
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
           <div class="meta mono">${qty.toLocaleString()}</div>
-          <button class="btn small ghost" data-item="${it.id}" data-inv="${inv ? inv.id : ""}" data-qty="${qty}">Update</button>
+          <button class="btn small ghost" data-item="${it.id}" data-inv="${inv ? inv.id : ""}" data-qty="${qty}">${esc(t("update_button"))}</button>
         </div>
       </div>`;
     })
@@ -3275,7 +3293,7 @@ async function renderInventory() {
 
   listEl.querySelectorAll("button[data-item]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const qty = prompt("Quantity:", btn.dataset.qty);
+      const qty = prompt(t("quantity_prompt"), btn.dataset.qty);
       if (qty === null) return;
       const itemId = btn.dataset.item;
       const invId = btn.dataset.inv;
@@ -3924,13 +3942,13 @@ async function renderCharmsCalc() {
 
   content.innerHTML = `
     <div class="panel">
-      <h2>Backpack</h2>
+      <h2>${esc(t("backpack_title"))}</h2>
       <div id="charmOwned"></div>
     </div>
     <div id="charmTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="charmRows"></div>
     <div class="panel">
-      <h2>Troops Stats</h2>
+      <h2>${esc(t("troops_stats_title"))}</h2>
       <div id="charmCurrentStats"></div>
     </div>
   `;
@@ -3959,12 +3977,12 @@ async function renderCharmsCalc() {
             <div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]}; margin-bottom:8px;">${esc(troopLabel[troop])}</div>
             <div style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">CURRENT</span>
-                <select data-troopsetall="${esc(troop)}" data-role="current" style="width:100%;"><option value="">Set all\u2026</option>${levelOptions()}</select>
+                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("current_upper"))}</span>
+                <select data-troopsetall="${esc(troop)}" data-role="current" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${levelOptions()}</select>
               </div>
               <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">TARGET</span>
-                <select data-troopsetall="${esc(troop)}" data-role="target" style="width:100%;"><option value="">Set all\u2026</option>${levelOptions()}</select>
+                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("target_upper"))}</span>
+                <select data-troopsetall="${esc(troop)}" data-role="target" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${levelOptions()}</select>
               </div>
             </div>
           </div>
@@ -3976,11 +3994,11 @@ async function renderCharmsCalc() {
                 <div class="meta" style="font-size:11px; margin-bottom:4px;">Charm ${i + 1}</div>
                 <div style="display:flex; gap:8px;">
                   <div style="flex:1; min-width:0;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">Current</div>
+                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("current_label"))}</div>
                     <select data-piece="${c.piece}" data-slot="${c.slot}" data-role="current" style="width:100%;">${levelOptions(CHARM_CALC_STATE[c.piece][c.slot].current)}</select>
                   </div>
                   <div style="flex:1; min-width:0;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">Target</div>
+                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("target_label"))}</div>
                     <select data-piece="${c.piece}" data-slot="${c.slot}" data-role="target" style="width:100%;">${levelOptions(CHARM_CALC_STATE[c.piece][c.slot].target)}</select>
                   </div>
                 </div>
@@ -4157,13 +4175,13 @@ async function renderChiefGearCalc() {
 
   content.innerHTML = `
     <div class="panel">
-      <h2>Backpack</h2>
+      <h2>${esc(t("backpack_title"))}</h2>
       <div id="gearOwned"></div>
     </div>
     <div id="gearTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
     <div id="gearRows"></div>
     <div class="panel">
-      <h2>Troops Stats</h2>
+      <h2>${esc(t("troops_stats_title"))}</h2>
       <div id="gearCurrentStats"></div>
     </div>
   `;
@@ -4185,12 +4203,12 @@ async function renderChiefGearCalc() {
             <div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]}; margin-bottom:8px;">${esc(troop)}</div>
             <div style="display:flex; flex-direction:column; gap:6px;">
               <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">CURRENT</span>
-                <select data-troopsetall="${esc(troop)}" data-role="from" style="width:100%;"><option value="">Set all\u2026</option>${opts}</select>
+                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("current_upper"))}</span>
+                <select data-troopsetall="${esc(troop)}" data-role="from" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${opts}</select>
               </div>
               <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">TARGET</span>
-                <select data-troopsetall="${esc(troop)}" data-role="to" style="width:100%;"><option value="">Set all\u2026</option>${opts}</select>
+                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("target_upper"))}</span>
+                <select data-troopsetall="${esc(troop)}" data-role="to" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${opts}</select>
               </div>
             </div>
           </div>
@@ -4206,11 +4224,11 @@ async function renderChiefGearCalc() {
                 <div style="display:flex; gap:8px; align-items:center;">
                   <img src="${CHIEF_GEAR_ICONS[p.key]}" alt="${esc(p.name)}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" loading="lazy" />
                   <div style="flex:1;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">Current</div>
+                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("current_label"))}</div>
                     <select data-piece="${p.key}" data-role="from" style="width:100%;">${opts}</select>
                   </div>
                   <div style="flex:1;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">Target</div>
+                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("target_label"))}</div>
                     <select data-piece="${p.key}" data-role="to" style="width:100%;">${opts}</select>
                   </div>
                 </div>
@@ -4684,7 +4702,7 @@ async function renderSkinGallery() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Skin gallery</h2>
+        <h2>${esc(t("skin_gallery_title"))}</h2>
         <div class="sub" id="skinSummaryLine"></div>
       </div>
     </div>
@@ -4984,7 +5002,7 @@ async function renderIslandGallery() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Islands</h2>
+        <h2>${esc(t("islandgallery_title"))}</h2>
         <div class="sub" id="islandSummaryLine"></div>
       </div>
     </div>
@@ -5480,7 +5498,7 @@ async function renderVipTierTable(target) {
 
   target.innerHTML = `
     <div class="panel">
-      <h2>VIP Tier</h2>
+      <h2>${esc(t("vip_tier_title"))}</h2>
       <p class="desc">Pick your VIP level to see its troop stat bonuses.</p>
       <select id="vipTierSelect" style="width:160px;">
         ${rows.map((r, i) => `<option value="${i}">${esc(r.name)}</option>`).join("")}
@@ -5760,7 +5778,7 @@ async function renderAllianceTechPage() {
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
         <h2 style="margin:0;">Research</h2>
         <div style="display:flex; align-items:center; gap:6px;">
-          <span class="meta" style="font-size:11px;">Set all to:</span>
+          <span class="meta" style="font-size:11px;">${esc(t("set_all_to"))}</span>
           <select id="allianceTechQuickSelect" style="width:140px;">
             <option value="">Level\u2026</option>
             <option value="0">Lv. 0 (none)</option>
@@ -6090,7 +6108,7 @@ async function renderT11HeliosPage() {
           <input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
           <span class="meta" style="font-size:11px;">Count toward Dashboard</span>
         </label>
-        <button class="btn" id="t11MaxAllBtn">Max everything</button>
+        <button class="btn" id="t11MaxAllBtn">${esc(t("max_everything"))}</button>
       </div>
     </div>
     ${researchSpeedInputHtml()}
@@ -6191,7 +6209,7 @@ async function renderT11HeliosPage() {
     };
     document.getElementById("t11GrandTotal").innerHTML = `
       <div class="panel">
-        <h2>Backpack</h2>
+        <h2>${esc(t("backpack_title"))}</h2>
         <p class="desc">Across all 3 troop types, from current levels to max.</p>
         <div id="t11ResourcesBar" style="margin-bottom:12px;"></div>
         <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
@@ -6503,7 +6521,7 @@ async function renderExpertsResearchPage() {
               </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Troops Stats</h2>
+      <h2>${esc(t("troops_stats_title"))}</h2>
       <p class="desc">Attack/Defense/Lethality/Health from Expert Research. Excludes Gareth and Justus (troop-specific, see below).</p>
       <div class="stats-row-scroll" id="expResearchTotals"></div>
     </div>
@@ -6690,11 +6708,11 @@ async function renderExpertsResearchPage() {
             <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(pathName)}</div>
             <div style="display:flex; gap:6px; margin-bottom:4px;">
               <div style="flex:1;">
-                <div class="meta" style="font-size:10px;">Current</div>
+                <div class="meta" style="font-size:10px;">${esc(t("current_label"))}</div>
                 <select data-expresearchcur="${esc(expert)}|${p}" style="width:100%;">${pathLevelOpts(expert, p, st.current)}</select>
               </div>
               <div style="flex:1;">
-                <div class="meta" style="font-size:10px;">Target</div>
+                <div class="meta" style="font-size:10px;">${esc(t("target_label"))}</div>
                 <select data-expresearchdes="${esc(expert)}|${p}" style="width:100%;">${pathLevelOpts(expert, p, st.desired)}</select>
               </div>
             </div>
@@ -6869,16 +6887,16 @@ async function renderExpertsPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Experts Level</h2>
+        <h2>${esc(t("expertspage_title"))}</h2>
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Troops Stats</h2>
+      <h2>${esc(t("troops_stats_title"))}</h2>
       <p class="desc">Base stats for all 10 experts, plus select main-stat skills.</p>
       <div class="stats-row-scroll" id="expertsStatHeader"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>Backpack</h2>
+      <h2>${esc(t("backpack_title"))}</h2>
       <div class="stats-row-scroll" id="expertsInventory"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;">
@@ -7160,12 +7178,12 @@ async function renderExpertsPage() {
         </div>
         <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 12px; text-align:left;">
           <div style="flex:1;">
-            <div class="meta" style="font-size:10px; margin-bottom:2px;">Current</div>
+            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("current_label"))}</div>
             <select data-expcur="${esc(e.key)}" style="width:100%;">${levelOpts(EXPERT_HERO_MAX_LEVEL, s.current)}</select>
             ${levelStatLine(e.key, s.current)}
           </div>
           <div style="flex:1;">
-            <div class="meta" style="font-size:10px; margin-bottom:2px;">Target</div>
+            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("target_label"))}</div>
             <select data-expdes="${esc(e.key)}" style="width:100%;">${levelOpts(EXPERT_HERO_MAX_LEVEL, s.desired)}</select>
             ${levelStatLine(e.key, s.desired)}
           </div>
@@ -7592,7 +7610,7 @@ async function renderPetsDataPage() {
       <div>
         <h2>Pets Level</h2>
               </div>
-      <button class="btn" id="petsMaxAllBtn">Max everything</button>
+      <button class="btn" id="petsMaxAllBtn">${esc(t("max_everything"))}</button>
     </div>
     <div id="petsTotals" style="margin-bottom:16px;"></div>
     <div id="petsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -7650,7 +7668,7 @@ async function renderPetsDataPage() {
     });
     document.getElementById("petsTotals").innerHTML = `
       <div class="panel">
-        <h2>Troops Stats</h2>
+        <h2>${esc(t("troops_stats_title"))}</h2>
         <p class="desc">Summed across all 15 pets, based on current levels.</p>
         <div class="stats-row-scroll">
           <div class="metric" style="padding:6px; min-width:80px;">
@@ -7666,7 +7684,7 @@ async function renderPetsDataPage() {
         </div>
       </div>
       <div class="panel">
-        <h2>Backpack</h2>
+        <h2>${esc(t("backpack_title"))}</h2>
         <p class="desc">Enter what you own \u2014 the rest shows what's still needed, across all 15 pets.</p>
         <div id="petsMaterialsBar"></div>
       </div>
@@ -7710,11 +7728,11 @@ async function renderPetsDataPage() {
               <div class="val" style="font-size:13px; white-space:nowrap;">${cur.toFixed(1)}% <span style="font-size:9px; color:var(--muted); font-weight:400;">/ ${max.toFixed(1)}%</span></div>
             </div>
             <div style="min-width:110px; flex:1 1 110px;">
-              <div class="meta" style="font-size:9px; margin-bottom:4px;">Current</div>
+              <div class="meta" style="font-size:9px; margin-bottom:4px;">${esc(t("current_label"))}</div>
               <select data-petfrom="${esc(pet)}" style="width:100%;">${fromOpts}</select>
             </div>
             <div style="min-width:110px; flex:1 1 110px;">
-              <div class="meta" style="font-size:9px; margin-bottom:4px;">Target</div>
+              <div class="meta" style="font-size:9px; margin-bottom:4px;">${esc(t("target_label"))}</div>
               <select data-petto="${esc(pet)}" style="width:100%;">${levelOpts(to)}</select>
             </div>
           </div>
@@ -7785,7 +7803,7 @@ async function renderResearchCenterPage() {
       <div>
         <h2>Research Center</h2>
               </div>
-      <button class="btn" id="rcMaxAllBtn">Max everything</button>
+      <button class="btn" id="rcMaxAllBtn">${esc(t("max_everything"))}</button>
     </div>
     ${researchSpeedInputHtml()}
     <div id="rcTotals" style="margin-bottom:16px;"></div>
@@ -7855,7 +7873,7 @@ async function renderResearchCenterPage() {
     };
     document.getElementById("rcTotals").innerHTML = `
       <div class="panel">
-        <h2>Backpack</h2>
+        <h2>${esc(t("backpack_title"))}</h2>
         <p class="desc">Across all 102 research tracks, from current levels to max.</p>
         <div id="rcResourcesBar" style="margin-bottom:12px;"></div>
         <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
@@ -7976,7 +7994,7 @@ async function renderT12ResearchPage() {
           <input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
           <span class="meta" style="font-size:11px;">Count toward Dashboard</span>
         </label>
-        <button class="btn" id="t12MaxAllBtn">Max everything</button>
+        <button class="btn" id="t12MaxAllBtn">${esc(t("max_everything"))}</button>
       </div>
     </div>
     ${researchSpeedInputHtml()}
@@ -8046,7 +8064,7 @@ async function renderT12ResearchPage() {
     };
     document.getElementById("t12Totals").innerHTML = `
       <div class="panel">
-        <h2>Backpack</h2>
+        <h2>${esc(t("backpack_title"))}</h2>
         <p class="desc">Across all 3 troop types, from current levels to max.</p>
         <div id="t12ResourcesBar" style="margin-bottom:12px;"></div>
         <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
