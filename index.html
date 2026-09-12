@@ -2738,6 +2738,26 @@ async function renderPacksPage() {
   // scaled from Row 1 - it fills on every row, including Row 1 itself.
   const AMOUNT_TO_GEMS = { 0.99: 500, 2.99: 1500, 4.99: 2500, 9.99: 5000, 19.99: 10000, 49.99: 25000, 99.99: 50000 };
 
+  // The Amount column itself follows this same fixed sequence in every
+  // table. Typing Row 1's Amount as one of these values auto-fills every
+  // row below it with the next value in the sequence - e.g. Row 1 = 0.99
+  // fills Row 2 with 2.99, Row 3 with 4.99, and so on for however many
+  // rows exist (or however far the sequence goes, whichever is shorter).
+  const AMOUNT_SEQUENCE = [0.99, 2.99, 4.99, 9.99, 19.99, 49.99, 99.99];
+  function applyAmountSequence(panel, t) {
+    const row0Amount = parseNum(panel.querySelector('[data-pt-cell][data-row="0"][data-col="0"]')?.value);
+    const startIdx = AMOUNT_SEQUENCE.findIndex((v) => Math.abs(v - row0Amount) < 0.001);
+    if (startIdx === -1) return;
+    const rowEls = panel.querySelectorAll("tbody tr");
+    rowEls.forEach((tr, ri) => {
+      if (ri === 0) return; // Row 1 is what was just typed - never overwritten
+      const seqVal = AMOUNT_SEQUENCE[startIdx + ri];
+      if (seqVal == null) return; // sequence ran out before the rows did
+      const amountCell = tr.querySelector('[data-pt-cell][data-col="0"]');
+      if (amountCell) amountCell.value = fmtNum(seqVal);
+    });
+  }
+
   // Row 1 (the first row) sets the scale for every OTHER column (not Gems -
   // see AMOUNT_TO_GEMS above): its ratio to the Amount (column 0) is measured
   // from Row 1's own values. Typing an Amount into any other row then
@@ -2917,13 +2937,15 @@ async function renderPacksPage() {
         }
       }
 
-      // Live auto-fill on typing an Amount (col 0), any row other than the
-      // first. Gems always fills (fixed universal price point); the ratio
-      // fill for every other column only runs when Scale is on for tables
-      // that actually follow a fixed proportional relationship.
+      // Live auto-fill on typing an Amount (col 0). Row 1 specifically also
+      // cascades the fixed Amount sequence down into every row below it.
+      // Gems always fills (fixed universal price point); the ratio fill for
+      // every other column only runs when Scale is on for tables that
+      // actually follow a fixed proportional relationship.
       panel.addEventListener("input", (e) => {
         const cell = e.target.closest("[data-pt-cell]");
         if (!cell || cell.dataset.col !== "0") return;
+        if (cell.dataset.row === "0") applyAmountSequence(panel, t);
         applyGemsLookup(panel, t);
         if (t.scale_enabled !== false) applyRatioScale(panel, t);
       });
@@ -2942,7 +2964,9 @@ async function renderPacksPage() {
         t.scale_enabled = e.target.checked;
         if (t.scale_enabled) {
           // The whole point of turning this on: immediately fill every row
-          // from Row 1's ratios, not just wait for the next keystroke.
+          // from Row 1's ratios (and the Amount sequence itself), not just
+          // wait for the next keystroke.
+          applyAmountSequence(panel, t);
           applyScale(panel, t);
           syncFromDom();
         }
@@ -2953,7 +2977,7 @@ async function renderPacksPage() {
         syncFromDom();
         // Insert before the last column (Gems), not after it, so Gems stays last.
         const insertAt = t.columns.length - 1;
-        t.columns.splice(insertAt, 0, `Column ${t.columns.length}`);
+        t.columns.splice(insertAt, 0, `#${t.columns.length - 1}`);
         t.rows.forEach((r) => r.cells.splice(insertAt, 0, ""));
         renderAll();
         await persistTable();
@@ -3002,7 +3026,7 @@ async function renderPacksPage() {
     tables.unshift({
       id: `new-${Date.now()}`,
       title: "New table",
-      columns: ["$", "Column 2", "Column 3", "Gems"],
+      columns: ["$", "#1", "#2", "Gems"],
       rows: [blankRow(4)],
       sort_order: 0,
       scale_enabled: true,
