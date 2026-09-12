@@ -2514,17 +2514,27 @@ async function renderGearLevelingGroup(target) {
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
   const heroGearDotsEl = document.getElementById("heroGearTroopDots");
-  function renderTracks() {
-    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
-    const troop = heroGearActiveTroop;
-    tracksEl.innerHTML = `
-    <div>
-      <div class="name" style="font-size:14px; margin-bottom:10px; color:${HERO_GEAR_TROOP_COLORS[troop]};">${esc(troop)}</div>
+  // Performance: these dropdowns pull from tables with 150-200+ levels each
+  // (Mastery Forging, and Enhancement+Empowerment combined), 2 dropdowns x
+  // 2 tracks x 4 pieces = 16 huge <select> elements per troop. Rebuilding
+  // all of that from scratch on every single swipe (the old approach) was
+  // heavy enough to visibly jank and occasionally drop a gesture mid-swipe
+  // if the previous rebuild hadn't finished. Instead, build all 3 troops'
+  // panels ONCE and have swiping just toggle which one is visible - no
+  // DOM/option rebuilding on switch, however many times you swipe.
+  let tracksBuilt = false;
+  function buildTracksOnce() {
+    if (tracksBuilt) return;
+    tracksBuilt = true;
+    tracksEl.innerHTML = HERO_GEAR_TROOPS.map(
+      (troop) => `
+    <div data-troopanel="${esc(troop)}" style="display:${troop === heroGearActiveTroop ? "block" : "none"};">
+      <div class="name" style="font-size:14px; margin-bottom:10px; color:${HERO_GEAR_TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
       </div>
-    </div>`;
-    wireTroopSwipe(tracksEl, HERO_GEAR_TROOPS, heroGearActiveTroop, (t) => { heroGearActiveTroop = t; renderTracks(); });
+    </div>`
+    ).join("");
 
     tracksEl.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -2578,6 +2588,22 @@ async function renderGearLevelingGroup(target) {
         updateHeroGearTotals();
       });
     });
+
+    // Wired once, since tracksEl itself is never rebuilt after this - only
+    // which panel is visible changes.
+    wireTroopSwipe(tracksEl, HERO_GEAR_TROOPS, heroGearActiveTroop, (t) => {
+      const prev = heroGearActiveTroop;
+      heroGearActiveTroop = t;
+      const prevPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(prev)}"]`);
+      const nextPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(t)}"]`);
+      if (prevPanel) prevPanel.style.display = "none";
+      if (nextPanel) nextPanel.style.display = "block";
+      renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
+    });
+  }
+  function renderTracks() {
+    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
+    buildTracksOnce();
   }
   renderTracks();
 
