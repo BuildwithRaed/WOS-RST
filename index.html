@@ -2589,13 +2589,21 @@ async function renderGearLevelingGroup(target) {
       });
     });
 
-    // Wired once, since tracksEl itself is never rebuilt after this - only
-    // which panel is visible changes.
-    wireTroopSwipe(tracksEl, HERO_GEAR_TROOPS, heroGearActiveTroop, (t) => {
+    // Wired once (tracksEl itself is never rebuilt after this - only which
+    // panel is visible changes), using wireSwipeGesture directly rather
+    // than wireTroopSwipe: that helper captures the current troop's index
+    // ONCE at wire-time, which would go stale the moment you swipe past the
+    // first card since this only wires a single time (that's the whole
+    // point of the performance fix). Reading heroGearActiveTroop fresh on
+    // every swipe instead keeps it correct no matter how many times you swipe.
+    wireSwipeGesture(tracksEl, (dir) => {
+      const idx = HERO_GEAR_TROOPS.indexOf(heroGearActiveTroop);
+      const next = idx + dir;
+      if (next < 0 || next >= HERO_GEAR_TROOPS.length) return;
       const prev = heroGearActiveTroop;
-      heroGearActiveTroop = t;
+      heroGearActiveTroop = HERO_GEAR_TROOPS[next];
       const prevPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(prev)}"]`);
-      const nextPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(t)}"]`);
+      const nextPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(heroGearActiveTroop)}"]`);
       if (prevPanel) prevPanel.style.display = "none";
       if (nextPanel) nextPanel.style.display = "block";
       renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
