@@ -2803,8 +2803,8 @@ async function renderPacksPage() {
       <div class="panel" style="margin-top:16px; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""}" data-packtable="${ti}">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:15px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
-          <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:10.5px; color:var(--muted); flex-shrink:0; white-space:nowrap;" title="When on, Row 1 sets a scale that auto-fills the other rows as you type an Amount. Turn off for tables whose rows don't follow a fixed ratio.">
-            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer; flex-shrink:0;" /> Scale
+          <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.">
+            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer; flex-shrink:0;" />
           </label>
           <span style="display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; white-space:nowrap;">
             <span class="meta" style="font-size:9px;">Column</span>
@@ -2928,6 +2928,12 @@ async function renderPacksPage() {
 
       panel.querySelector("[data-pt-scaletoggle]").addEventListener("change", async (e) => {
         t.scale_enabled = e.target.checked;
+        if (t.scale_enabled) {
+          // The whole point of turning this on: immediately fill every row
+          // from Row 1's ratios, not just wait for the next keystroke.
+          applyScale(panel, t);
+          syncFromDom();
+        }
         await persistTable();
       });
 
