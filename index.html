@@ -806,11 +806,20 @@ function tStatLabel(label) {
   return key ? t(key) : label;
 }
 function troopDisplayName(key) {
-  return { Infantry: t("troop_infantry"), Lancers: t("troop_lancers"), Marksman: t("troop_marksman") }[key] || key;
+  return { Infantry: t("troop_infantry"), Lancers: t("troop_lancers"), Marksman: t("troop_marksman"), Lancer: t("troop_lancer_singular") }[key] || key;
 }
 function tPosition(pos) {
   const map = { "Top left": "pos_top_left", "Top right": "pos_top_right", "Middle left": "pos_middle_left", "Middle right": "pos_middle_right", "Bottom left": "pos_bottom_left", "Bottom right": "pos_bottom_right" };
   return map[pos] ? t(map[pos]) : pos;
+}
+const T12_GROUP_KEYS = { "Troop Unlock": "t12_group_troop_unlock", "Skills I": "t12_group_skills1", "Skills II": "t12_group_skills2", "Skills III": "t12_group_skills3", "Troop Skill": "t12_group_troop_skill", "Exalted Support": "t12_group_exalted_support", "Solar Supremacy": "t12_group_solar_supremacy" };
+const T12_LABEL_KEYS = { "Head Slot": "t12_label_head_slot", "Shoulder Slot": "t12_label_shoulder_slot", "Body Slot": "t12_label_body_slot", "Leg Slot": "t12_label_leg_slot", "Weapon Slot": "t12_label_weapon_slot", "Troop Skill": "t12_label_troop_skill", "Exalted Healing": "t12_label_exalted_healing", "Exalted First Aid": "t12_label_exalted_first_aid", "Exalted Training": "t12_label_exalted_training", "Solar Supremacy": "t12_label_solar_supremacy" };
+function tT12Group(g) {
+  return T12_GROUP_KEYS[g] ? t(T12_GROUP_KEYS[g]) : g;
+}
+function tT12Label(l) {
+  if (T12_LABEL_KEYS[l]) return t(T12_LABEL_KEYS[l]);
+  return tStatLabel(l);
 }
 // Covers the nav (sidebar/topnav, both desktop dropdowns and the
 // mobile accordion menu, which is built by cloning the desktop
@@ -998,6 +1007,38 @@ const T = {
   refine_summed_desc: { en: "Summed across all 15 pets, based on what you've typed in.", ar: "مجموع عبر جميع الحيوانات الأليفة الـ15، بناءً على ما أدخلته.", ko: "입력한 값을 기준으로 15마리 전체 펫의 합계입니다." },
   tier_suffix: { en: "tier", ar: "الفئة", ko: "등급" },
   max_button: { en: "Max", ar: "الحد الأقصى", ko: "최대" },
+  research_center_title: { en: "Research Center", ar: "مركز الأبحاث", ko: "연구 센터" },
+  rc_desc: { en: "Across all 102 research tracks, from current levels to max.", ar: "عبر جميع مسارات الأبحاث الـ102، من المستويات الحالية إلى الحد الأقصى.", ko: "102개 연구 트랙 전체, 현재 레벨부터 최대치까지." },
+  research_time_label: { en: "Research Time", ar: "وقت البحث", ko: "연구 시간" },
+  max_this_section: { en: "Max this section", ar: "الحد الأقصى لهذا القسم", ko: "이 섹션 최대치로" },
+  shared_label: { en: "Shared", ar: "مشترك", ko: "공통" },
+  count_toward_dashboard: { en: "Count toward Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
+  t12_research_title: { en: "T12 Research", ar: "أبحاث T12", ko: "T12 연구" },
+  t12_group_troop_unlock: { en: "Troop Unlock", ar: "فتح الجنود", ko: "부대 해금" },
+  t12_group_skills1: { en: "Skills I", ar: "المهارات الأولى", ko: "스킬 I" },
+  t12_group_skills2: { en: "Skills II", ar: "المهارات الثانية", ko: "스킬 II" },
+  t12_group_skills3: { en: "Skills III", ar: "المهارات الثالثة", ko: "스킬 III" },
+  t12_group_troop_skill: { en: "Troop Skill", ar: "مهارة الجنود", ko: "부대 스킬" },
+  t12_group_exalted_support: { en: "Exalted Support", ar: "الدعم السامي", ko: "엑절티드 서포트" },
+  t12_group_solar_supremacy: { en: "Solar Supremacy", ar: "السيادة الشمسية", ko: "솔라 슈프리머시" },
+  t12_label_head_slot: { en: "Head Slot", ar: "فتحة الرأس", ko: "머리 슬롯" },
+  t12_label_shoulder_slot: { en: "Shoulder Slot", ar: "فتحة الكتف", ko: "어깨 슬롯" },
+  t12_label_body_slot: { en: "Body Slot", ar: "فتحة الجسم", ko: "몸통 슬롯" },
+  t12_label_leg_slot: { en: "Leg Slot", ar: "فتحة الساق", ko: "다리 슬롯" },
+  t12_label_weapon_slot: { en: "Weapon Slot", ar: "فتحة السلاح", ko: "무기 슬롯" },
+  t12_label_troop_skill: { en: "Troop Skill", ar: "مهارة الجنود", ko: "부대 스킬" },
+  t12_label_exalted_healing: { en: "Exalted Healing", ar: "الشفاء السامي", ko: "엑절티드 힐링" },
+  t12_label_exalted_first_aid: { en: "Exalted First Aid", ar: "الإسعافات الأولية السامية", ko: "엑절티드 응급처치" },
+  t12_label_exalted_training: { en: "Exalted Training", ar: "التدريب السامي", ko: "엑절티드 트레이닝" },
+  t12_label_solar_supremacy: { en: "Solar Supremacy", ar: "السيادة الشمسية", ko: "솔라 슈프리머시" },
+  t12_3troops_desc: { en: "Across all 3 troop types, from current levels to max.", ar: "عبر جميع أنواع الجنود الثلاثة، من المستويات الحالية إلى الحد الأقصى.", ko: "3개 부대 유형 전체, 현재 레벨부터 최대치까지." },
+  resource_steel: { en: "Steel", ar: "الفولاذ", ko: "강철" },
+  resource_refined_fc: { en: "Refined FC", ar: "بلورة نار مكرَّرة", ko: "정제된 화염 결정" },
+  resource_fc_shard: { en: "FC Shard", ar: "شظية بلورة النار", ko: "화염 결정 조각" },
+  resource_meat_wood: { en: "Meat/Wood", ar: "لحم/خشب", ko: "고기/목재" },
+  resource_coal: { en: "Coal", ar: "الفحم", ko: "석탄" },
+  resource_iron: { en: "Iron", ar: "الحديد", ko: "철" },
+  time_label: { en: "Time", ar: "الوقت", ko: "시간" },
   manage_item_catalog_desc: { en: "Manage the item catalog in Admin \u2014 use this page to update quantities.", ar: "أدر كتالوج العناصر من لوحة الإدارة \u2014 استخدم هذه الصفحة لتحديث الكميات.", ko: "관리자에서 아이템 카탈로그를 관리하세요 \u2014 이 페이지에서는 수량만 업데이트합니다." },
   no_items_yet: { en: "No items yet.", ar: "لا توجد عناصر بعد.", ko: "아직 아이템이 없습니다." },
   add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
@@ -6189,7 +6230,7 @@ async function renderT11HeliosPage() {
       <div style="display:flex; align-items:center; gap:14px;">
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
           <input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
-          <span class="meta" style="font-size:11px;">Count toward Dashboard</span>
+          <span class="meta" style="font-size:11px;">${esc(t("count_toward_dashboard"))}</span>
         </label>
         <button class="btn" id="t11MaxAllBtn">${esc(t("max_everything"))}</button>
       </div>
@@ -7884,7 +7925,7 @@ async function renderResearchCenterPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Research Center</h2>
+        <h2>${esc(t("research_center_title"))}</h2>
               </div>
       <button class="btn" id="rcMaxAllBtn">${esc(t("max_everything"))}</button>
     </div>
@@ -7957,9 +7998,9 @@ async function renderResearchCenterPage() {
     document.getElementById("rcTotals").innerHTML = `
       <div class="panel">
         <h2>${esc(t("backpack_title"))}</h2>
-        <p class="desc">Across all 102 research tracks, from current levels to max.</p>
+        <p class="desc">${esc(t("rc_desc"))}</p>
         <div id="rcResourcesBar" style="margin-bottom:12px;"></div>
-        <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
+        <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
     renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center");
@@ -7970,11 +8011,12 @@ async function renderResearchCenterPage() {
     groupsEl.innerHTML = Object.entries(RC_BASE_CATEGORIES)
       .map(([groupName, baseNames]) => {
         const stats = computeStats(baseNames);
+        const groupLabel = groupName === "Shared" ? t("shared_label") : troopDisplayName(groupName);
         return `
       <div class="panel">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-          <h2 style="margin:0;">${esc(groupName)}</h2>
-          <button class="btn ghost small" data-rcmaxgroup="${esc(groupName)}">Max this section</button>
+          <h2 style="margin:0;">${esc(groupLabel)}</h2>
+          <button class="btn ghost small" data-rcmaxgroup="${esc(groupName)}">${esc(t("max_this_section"))}</button>
         </div>
         <div class="stats-row-scroll" style="margin:10px 0 14px;">
           <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack.toFixed(1)}%</div></div>
@@ -7994,7 +8036,7 @@ async function renderResearchCenterPage() {
                 if (!levels) return `<div><div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(tier)}</div><span class="meta" style="font-size:10.5px;">\u2014</span></div>`;
                 const maxLvl = levels.length;
                 const cur = RC_STATE[trackName] || 0;
-                const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i === 0 ? "0" : i}${i === maxLvl ? " (Max)" : ""}</option>`).join("");
+                const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i === 0 ? "0" : i}${i === maxLvl ? esc(t("max_suffix")) : ""}</option>`).join("");
                 return `
                 <div>
                   <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(tier)}</div>
@@ -8070,12 +8112,12 @@ async function renderT12ResearchPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>T12 Research</h2>
+        <h2>${esc(t("t12_research_title"))}</h2>
               </div>
       <div style="display:flex; align-items:center; gap:14px;">
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
           <input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
-          <span class="meta" style="font-size:11px;">Count toward Dashboard</span>
+          <span class="meta" style="font-size:11px;">${esc(t("count_toward_dashboard"))}</span>
         </label>
         <button class="btn" id="t12MaxAllBtn">${esc(t("max_everything"))}</button>
       </div>
@@ -8108,7 +8150,7 @@ async function renderT12ResearchPage() {
   });
 
   function levelSelectHtml(def, current) {
-    return `<select data-t12item="${def.key}" style="width:100%; padding:5px 8px;">${Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === current ? "selected" : ""}>${i === 0 ? "0 (none)" : i}${i === def.max ? " (Max)" : ""}</option>`).join("")}</select>`;
+    return `<select data-t12item="${def.key}" style="width:100%; padding:5px 8px;">${Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === current ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === def.max ? t("max_suffix") : ""}</option>`).join("")}</select>`;
   }
 
   function computeNeeded(troopState) {
@@ -8148,9 +8190,9 @@ async function renderT12ResearchPage() {
     document.getElementById("t12Totals").innerHTML = `
       <div class="panel">
         <h2>${esc(t("backpack_title"))}</h2>
-        <p class="desc">Across all 3 troop types, from current levels to max.</p>
+        <p class="desc">${esc(t("t12_3troops_desc"))}</p>
         <div id="t12ResourcesBar" style="margin-bottom:12px;"></div>
-        <div class="metric"><div class="label">Research Time</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
+        <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
     renderChiefGearResourcesBar("t12ResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderTroopPanels(); }, "t12_research");
@@ -8172,18 +8214,18 @@ async function renderT12ResearchPage() {
     const stats = computeT12Stats(T12_STATE[troop]);
     troopsEl.innerHTML = `
       <div class="panel">
-        <h2>${esc(troop)}</h2>
+        <h2>${esc(troopDisplayName(troop))}</h2>
         <div class="stats-row-scroll" style="margin-bottom:10px;">
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Attack}%</div></div>
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Defense}%</div></div>
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Lethality}%</div></div>
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${statMax.Health}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Attack}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Defense}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Lethality}%</div></div>
+          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Health}%</div></div>
         </div>
         <div class="stats-row-scroll sr-2col" style="margin-bottom:14px;">
-          ${t12ResourceCard(T12_RESOURCE_ICONS.steel, "Steel", Math.round(needed.steel).toLocaleString())}
-          ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, "Refined FC", Math.round(needed.refined_fc).toLocaleString())}
-          ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, "FC Shard", Math.round(needed.fc_shard).toLocaleString())}
-          ${t12ResourceCard(null, "Time", t12FormatTime(applyResearchSpeed(needed.time_hours)))}
+          ${t12ResourceCard(T12_RESOURCE_ICONS.steel, t("resource_steel"), Math.round(needed.steel).toLocaleString())}
+          ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, t("resource_refined_fc"), Math.round(needed.refined_fc).toLocaleString())}
+          ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, t("resource_fc_shard"), Math.round(needed.fc_shard).toLocaleString())}
+          ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchSpeed(needed.time_hours)))}
         </div>
         ${groups
           .map((group) => {
@@ -8191,13 +8233,13 @@ async function renderT12ResearchPage() {
             const isSingle = defs.length === 1;
             return `
           <div style="padding:10px 0; border-top:1px solid var(--line);">
-            <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost); ${isSingle ? "text-align:center;" : ""}">${esc(group)}</div>
+            <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost); ${isSingle ? "text-align:center;" : ""}">${esc(tT12Group(group))}</div>
             <div class="${isSingle ? "" : `t12-grid t12-grid-${defs.length}`}" style="display:${isSingle ? "flex" : "grid"}; ${isSingle ? "justify-content:center;" : `grid-template-columns:repeat(${defs.length}, 1fr);`} gap:12px;">
               ${defs
                 .map(
                   (def) => `
                 <div style="${isSingle ? "width:200px; text-align:center;" : ""}">
-                  <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(def.label)}</div>
+                  <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(tT12Label(def.label))}</div>
                   ${levelSelectHtml(def, T12_STATE[troop][def.key] || 0)}
                 </div>`
                 )
