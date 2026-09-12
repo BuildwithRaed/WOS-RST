@@ -2516,27 +2516,30 @@ async function renderGearLevelingGroup(target) {
   const heroGearDotsEl = document.getElementById("heroGearTroopDots");
   // Performance: these dropdowns pull from tables with 150-200+ levels each
   // (Mastery Forging, and Enhancement+Empowerment combined), 2 dropdowns x
-  // 2 tracks x 4 pieces = 16 huge <select> elements per troop. Rebuilding
-  // all of that from scratch on every single swipe (the old approach) was
-  // heavy enough to visibly jank and occasionally drop a gesture mid-swipe
-  // if the previous rebuild hadn't finished. Instead, build all 3 troops'
-  // panels ONCE and have swiping just toggle which one is visible - no
-  // DOM/option rebuilding on switch, however many times you swipe.
-  let tracksBuilt = false;
-  function buildTracksOnce() {
-    if (tracksBuilt) return;
-    tracksBuilt = true;
-    tracksEl.innerHTML = HERO_GEAR_TROOPS.map(
-      (troop) => `
-    <div data-troopanel="${esc(troop)}" style="display:${troop === heroGearActiveTroop ? "block" : "none"};">
+  // 2 tracks x 4 pieces = 16 huge <select> elements per troop (~3,200
+  // <option> tags). Rebuilding all of that from scratch on every swipe (the
+  // original approach) was heavy enough to jank and drop gestures. Building
+  // all 3 troops fully up front was better for repeat swiping, but meant
+  // paying the full ~9,600-option DOM cost immediately, all at once, before
+  // you'd even looked at 2 of the 3 troops - on a slower phone that's a
+  // real chunk of layout/memory work bunched together right at load, which
+  // can itself present as a hitch or hang. Building each troop's panel
+  // lazily - only the first time you actually swipe to it, then caching it
+  // - spreads that cost out (one troop's worth at a time) while still
+  // giving instant, rebuild-free swiping on every visit after the first.
+  const builtPanels = {}; // troop -> its built (and cached) panel element
+  function buildPanel(troop) {
+    if (builtPanels[troop]) return builtPanels[troop];
+    const wrap = document.createElement("div");
+    wrap.dataset.troopanel = troop;
+    wrap.style.display = "none";
+    wrap.innerHTML = `
       <div class="name" style="font-size:14px; margin-bottom:10px; color:${HERO_GEAR_TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
-      </div>
-    </div>`
-    ).join("");
+      </div>`;
 
-    tracksEl.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
+    wrap.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const [troop, piece] = btn.dataset.heropiecemax.split("|");
         const maxIdxByTrack = {};
@@ -2579,7 +2582,7 @@ async function renderGearLevelingGroup(target) {
       });
     });
 
-    tracksEl.querySelectorAll("select[data-troop]").forEach((sel) => {
+    wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
       const { troop, piece, track, role } = sel.dataset;
       sel.value = String(activeState[troop][piece][track][role]);
       sel.addEventListener("change", () => {
@@ -2589,29 +2592,37 @@ async function renderGearLevelingGroup(target) {
       });
     });
 
-    // Wired once (tracksEl itself is never rebuilt after this - only which
-    // panel is visible changes), using wireSwipeGesture directly rather
-    // than wireTroopSwipe: that helper captures the current troop's index
-    // ONCE at wire-time, which would go stale the moment you swipe past the
-    // first card since this only wires a single time (that's the whole
-    // point of the performance fix). Reading heroGearActiveTroop fresh on
-    // every swipe instead keeps it correct no matter how many times you swipe.
+    tracksEl.appendChild(wrap);
+    builtPanels[troop] = wrap;
+    return wrap;
+  }
+  function showPanel(troop) {
+    buildPanel(troop);
+    Object.keys(builtPanels).forEach((tr) => {
+      builtPanels[tr].style.display = tr === troop ? "block" : "none";
+    });
+  }
+  // Wired once - tracksEl itself is never rebuilt after this, only which
+  // panel is visible changes. Reads heroGearActiveTroop fresh on every
+  // swipe (rather than capturing an index once, like wireTroopSwipe does)
+  // so it stays correct no matter how many times you swipe.
+  let swipeWired = false;
+  function wireSwipeOnce() {
+    if (swipeWired) return;
+    swipeWired = true;
     wireSwipeGesture(tracksEl, (dir) => {
       const idx = HERO_GEAR_TROOPS.indexOf(heroGearActiveTroop);
       const next = idx + dir;
       if (next < 0 || next >= HERO_GEAR_TROOPS.length) return;
-      const prev = heroGearActiveTroop;
       heroGearActiveTroop = HERO_GEAR_TROOPS[next];
-      const prevPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(prev)}"]`);
-      const nextPanel = tracksEl.querySelector(`[data-troopanel="${CSS.escape(heroGearActiveTroop)}"]`);
-      if (prevPanel) prevPanel.style.display = "none";
-      if (nextPanel) nextPanel.style.display = "block";
+      showPanel(heroGearActiveTroop);
       renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
     });
   }
   function renderTracks() {
     renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
-    buildTracksOnce();
+    showPanel(heroGearActiveTroop);
+    wireSwipeOnce();
   }
   renderTracks();
 
