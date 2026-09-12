@@ -2804,7 +2804,7 @@ async function renderPacksPage() {
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; flex:1; min-width:160px;" />
           <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:10.5px; color:var(--muted);" title="When on, Row 1 sets a scale that auto-fills the other rows as you type an Amount. Turn off for tables whose rows don't follow a fixed ratio.">
-            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer;" /> Auto-scale from Row 1
+            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer;" /> Scale
           </label>
           <button class="btn small" data-pt-save>Save</button>
           <button class="btn small ghost" data-pt-addcol>+ Column</button>
@@ -2817,8 +2817,8 @@ async function renderPacksPage() {
               <tr>
                 ${t.columns
                   .map(
-                    (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line);">
-                      <div style="display:flex; align-items:center; gap:4px;">
+                    (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
+                      <div style="display:flex; align-items:center; justify-content:center; gap:4px;">
                         <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:66px; font-weight:600; text-align:center; padding:4px 6px; flex-shrink:0;" />
                         ${ci === 0 || ci === t.columns.length - 1 ? "" : `<button data-pt-delcol data-col="${ci}" title="Remove column" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px; flex-shrink:0;">&times;</button>`}
                       </div>
@@ -2834,7 +2834,7 @@ async function renderPacksPage() {
                   (r, ri) => `<tr data-row="${ri}" style="${ri === 0 ? "background:rgba(111,211,242,0.06);" : ""}">
                     ${t.columns
                       .map(
-                        (_, ci) => `<td style="padding:3px;">
+                        (_, ci) => `<td style="padding:3px; text-align:center;">
                           <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:66px; text-align:center; padding:4px 6px; flex-shrink:0;" />
                         </td>`
                       )
