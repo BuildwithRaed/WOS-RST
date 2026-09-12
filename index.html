@@ -2514,32 +2514,26 @@ async function renderGearLevelingGroup(target) {
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
   const heroGearDotsEl = document.getElementById("heroGearTroopDots");
-  // Performance: these dropdowns pull from tables with 150-200+ levels each
-  // (Mastery Forging, and Enhancement+Empowerment combined), 2 dropdowns x
-  // 2 tracks x 4 pieces = 16 huge <select> elements per troop (~3,200
-  // <option> tags). Rebuilding all of that from scratch on every swipe (the
-  // original approach) was heavy enough to jank and drop gestures. Building
-  // all 3 troops fully up front was better for repeat swiping, but meant
-  // paying the full ~9,600-option DOM cost immediately, all at once, before
-  // you'd even looked at 2 of the 3 troops - on a slower phone that's a
-  // real chunk of layout/memory work bunched together right at load, which
-  // can itself present as a hitch or hang. Building each troop's panel
-  // lazily - only the first time you actually swipe to it, then caching it
-  // - spreads that cost out (one troop's worth at a time) while still
-  // giving instant, rebuild-free swiping on every visit after the first.
-  const builtPanels = {}; // troop -> its built (and cached) panel element
-  function buildPanel(troop) {
-    if (builtPanels[troop]) return builtPanels[troop];
-    const wrap = document.createElement("div");
-    wrap.dataset.troopanel = troop;
-    wrap.style.display = "none";
-    wrap.innerHTML = `
+  // Reverted to the same simple rebuild-on-swipe pattern used by every other
+  // swipeable page (Chief Gear, T11, T12, Experts, Pets) via wireTroopSwipe.
+  // A custom "build once, toggle visibility" optimization was tried here to
+  // reduce per-swipe rebuild cost, but it couldn't be verified safe against
+  // real-device behavior and a hard freeze was reported after it shipped.
+  // Rather than keep debugging unproven custom logic, this reverts to the
+  // exact pattern already working reliably everywhere else in the app.
+  function renderTracks() {
+    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
+    const troop = heroGearActiveTroop;
+    tracksEl.innerHTML = `
+    <div>
       <div class="name" style="font-size:14px; margin-bottom:10px; color:${HERO_GEAR_TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
-      </div>`;
+      </div>
+    </div>`;
+    wireTroopSwipe(tracksEl, HERO_GEAR_TROOPS, heroGearActiveTroop, (t) => { heroGearActiveTroop = t; renderTracks(); });
 
-    wrap.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
+    tracksEl.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const [troop, piece] = btn.dataset.heropiecemax.split("|");
         const maxIdxByTrack = {};
@@ -2582,7 +2576,7 @@ async function renderGearLevelingGroup(target) {
       });
     });
 
-    wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
+    tracksEl.querySelectorAll("select[data-troop]").forEach((sel) => {
       const { troop, piece, track, role } = sel.dataset;
       sel.value = String(activeState[troop][piece][track][role]);
       sel.addEventListener("change", () => {
@@ -2591,38 +2585,6 @@ async function renderGearLevelingGroup(target) {
         updateHeroGearTotals();
       });
     });
-
-    tracksEl.appendChild(wrap);
-    builtPanels[troop] = wrap;
-    return wrap;
-  }
-  function showPanel(troop) {
-    buildPanel(troop);
-    Object.keys(builtPanels).forEach((tr) => {
-      builtPanels[tr].style.display = tr === troop ? "block" : "none";
-    });
-  }
-  // Wired once - tracksEl itself is never rebuilt after this, only which
-  // panel is visible changes. Reads heroGearActiveTroop fresh on every
-  // swipe (rather than capturing an index once, like wireTroopSwipe does)
-  // so it stays correct no matter how many times you swipe.
-  let swipeWired = false;
-  function wireSwipeOnce() {
-    if (swipeWired) return;
-    swipeWired = true;
-    wireSwipeGesture(tracksEl, (dir) => {
-      const idx = HERO_GEAR_TROOPS.indexOf(heroGearActiveTroop);
-      const next = idx + dir;
-      if (next < 0 || next >= HERO_GEAR_TROOPS.length) return;
-      heroGearActiveTroop = HERO_GEAR_TROOPS[next];
-      showPanel(heroGearActiveTroop);
-      renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
-    });
-  }
-  function renderTracks() {
-    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
-    showPanel(heroGearActiveTroop);
-    wireSwipeOnce();
   }
   renderTracks();
 
