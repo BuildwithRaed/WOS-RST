@@ -975,6 +975,29 @@ const T = {
   researches_tracked: { en: "researches tracked", ar: "بحث تم تتبعه", ko: "개 연구 추적 중" },
   troops_group_label: { en: "Troops", ar: "الجنود", ko: "부대" },
   none_suffix: { en: " (none)", ar: " (لا يوجد)", ko: " (없음)" },
+  category_not_found: { en: "category not found.", ar: "لم يتم العثور على الفئة.", ko: "카테고리를 찾을 수 없습니다." },
+  click_star_desc: { en: "Click a star to set your current level (0\u20135).", ar: "انقر على نجمة لتعيين مستواك الحالي (0\u20135).", ko: "별을 클릭하여 현재 레벨(0\u20135)을 설정하세요." },
+  stars_of_5: { en: "/ 5 stars", ar: "/ 5 نجوم", ko: "/ 5 별" },
+  troops_prefix: { en: "Troops", ar: "الجنود", ko: "부대" },
+  needed_for_max: { en: "needed for max", ar: "مطلوب للحد الأقصى", ko: "최대치까지 필요" },
+  maxed_label: { en: "Maxed", ar: "مكتمل", ko: "최대치" },
+  pets_level_title: { en: "Pets Level", ar: "مستوى الحيوانات الأليفة", ko: "펫 레벨" },
+  pets_summed_desc: { en: "Summed across all 15 pets, based on current levels.", ar: "مجموع عبر جميع الحيوانات الأليفة الـ15، بناءً على المستويات الحالية.", ko: "현재 레벨 기준, 15마리 전체 펫의 합계입니다." },
+  troops_attack: { en: "Troops Attack", ar: "هجوم الجنود", ko: "부대 공격력" },
+  troops_defense: { en: "Troops Defense", ar: "دفاع الجنود", ko: "부대 방어력" },
+  backpack_desc_pets: { en: "Enter what you own \u2014 the rest shows what's still needed, across all 15 pets.", ar: "أدخل ما تملكه \u2014 والباقي يوضح ما هو مطلوب بعد، عبر جميع الحيوانات الأليفة الـ15.", ko: "보유량을 입력하세요 \u2014 나머지는 15마리 펫 전체에서 필요한 양을 보여줍니다." },
+  not_started: { en: "Not started", ar: "لم يبدأ", ko: "시작 안 함" },
+  max_suffix: { en: " (Max)", ar: " (الحد الأقصى)", ko: " (최대)" },
+  material_food: { en: "Food", ar: "الطعام", ko: "사료" },
+  material_manual: { en: "Manual", ar: "الدليل", ko: "매뉴얼" },
+  material_potion: { en: "Potion", ar: "الجرعة", ko: "포션" },
+  material_serum: { en: "Serum", ar: "المصل", ko: "혈청" },
+  troop_lancer_singular: { en: "Lancer", ar: "الرمّاح", ko: "창기병" },
+  pets_refine_title: { en: "Pets Refine", ar: "تنقية الحيوانات الأليفة", ko: "펫 정제" },
+  total_refine_bonus: { en: "Total refine bonus", ar: "إجمالي مكافأة التنقية", ko: "총 정제 보너스" },
+  refine_summed_desc: { en: "Summed across all 15 pets, based on what you've typed in.", ar: "مجموع عبر جميع الحيوانات الأليفة الـ15، بناءً على ما أدخلته.", ko: "입력한 값을 기준으로 15마리 전체 펫의 합계입니다." },
+  tier_suffix: { en: "tier", ar: "الفئة", ko: "등급" },
+  max_button: { en: "Max", ar: "الحد الأقصى", ko: "최대" },
   manage_item_catalog_desc: { en: "Manage the item catalog in Admin \u2014 use this page to update quantities.", ar: "أدر كتالوج العناصر من لوحة الإدارة \u2014 استخدم هذه الصفحة لتحديث الكميات.", ko: "관리자에서 아이템 카탈로그를 관리하세요 \u2014 이 페이지에서는 수량만 업데이트합니다." },
   no_items_yet: { en: "No items yet.", ar: "لا توجد عناصر بعد.", ko: "아직 아이템이 없습니다." },
   add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
@@ -5619,7 +5642,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
   const cat = BUFF_CATEGORIES.find((c) => c.name === heroName);
   const el = document.getElementById(containerId);
   if (!cat) {
-    el.innerHTML = `<div class="panel"><div class="empty">${esc(displayName)} category not found.</div></div>`;
+    el.innerHTML = `<div class="panel"><div class="empty">${esc(displayName)} ${esc(t("category_not_found"))}</div></div>`;
     return;
   }
   const rows = await sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`);
@@ -5638,7 +5661,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
       seenStats.add(r.statKey);
       return true;
     })
-    .map((r) => ({ id: r.id, name: `Troops ${STAT_LABELS[r.statKey] || r.statKey}`, max: r.max }));
+    .map((r) => ({ id: r.id, name: `${t("troops_prefix")} ${tStatLabel(STAT_LABELS[r.statKey] || r.statKey)}`, max: r.max }));
 
   const saved = (await loadCalcState(`hero_stars_${heroName.toLowerCase()}`)) || {};
   const sharedKey = "__shared__";
@@ -5650,7 +5673,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
         ${imageUrl ? `<img src="${esc(imageUrl)}" alt="" style="width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid var(--line);" loading="lazy" />` : ""}
         <h2 style="margin:0;">${esc(displayName)}</h2>
       </div>
-      <p class="desc">Click a star to set your current level (0\u20135).</p>
+      <p class="desc">${esc(t("click_star_desc"))}</p>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
         <div id="heroStarRow-${esc(heroName)}" style="display:flex; gap:3px;">
           ${[1, 2, 3, 4, 5]
@@ -5660,7 +5683,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
             )
             .join("")}
         </div>
-        <span class="meta" style="font-size:12px;">${stars} / 5 stars</span>
+        <span class="meta" style="font-size:12px;">${stars} ${esc(t("stars_of_5"))}</span>
       </div>
       <div class="stats-row-scroll" id="heroStatCards-${esc(heroName)}"></div>
     </div>
@@ -5674,7 +5697,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
       .map((r) => {
         const cur = (r.max / 5) * curStars;
         const needed = r.max - cur;
-        return `<div class="metric"><div class="label">${esc(r.name)}</div><div class="val">+${cur.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">${needed > 0 ? `+${needed.toFixed(1)}% needed for max` : "Maxed"}</div></div>`;
+        return `<div class="metric"><div class="label">${esc(r.name)}</div><div class="val">+${cur.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">${needed > 0 ? `+${needed.toFixed(1)}% ${esc(t("needed_for_max"))}` : esc(t("maxed_label"))}</div></div>`;
       })
       .join("");
   }
@@ -7480,18 +7503,18 @@ async function renderRefinePage() {
   }
 
   const STAT_KEYS = [
-    { key: "il", label: "Infantry Lethality", maxKey: "infantry_lethality_pct" },
-    { key: "ih", label: "Infantry Health", maxKey: "infantry_health_pct" },
-    { key: "ll", label: "Lancer Lethality", maxKey: "lancer_lethality_pct" },
-    { key: "lh", label: "Lancer Health", maxKey: "lancer_health_pct" },
-    { key: "ml", label: "Marksman Lethality", maxKey: "marksman_lethality_pct" },
-    { key: "mh", label: "Marksman Health", maxKey: "marksman_health_pct" },
+    { key: "il", label: `${t("troop_infantry")} ${tStatLabel("Lethality")}`, maxKey: "infantry_lethality_pct" },
+    { key: "ih", label: `${t("troop_infantry")} ${tStatLabel("Health")}`, maxKey: "infantry_health_pct" },
+    { key: "ll", label: `${t("troop_lancer_singular")} ${tStatLabel("Lethality")}`, maxKey: "lancer_lethality_pct" },
+    { key: "lh", label: `${t("troop_lancer_singular")} ${tStatLabel("Health")}`, maxKey: "lancer_health_pct" },
+    { key: "ml", label: `${t("troop_marksman")} ${tStatLabel("Lethality")}`, maxKey: "marksman_lethality_pct" },
+    { key: "mh", label: `${t("troop_marksman")} ${tStatLabel("Health")}`, maxKey: "marksman_health_pct" },
   ];
 
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Pets Refine</h2>
+        <h2>${esc(t("pets_refine_title"))}</h2>
               </div>
     </div>
     <div id="refineTotals" style="margin-bottom:16px;"></div>
@@ -7523,13 +7546,13 @@ async function renderRefinePage() {
         grandMax[key] += cap;
       });
     });
-    const STAT_ABBR_MAP = { "Infantry Lethality": "Inf LETH", "Infantry Health": "Inf HP", "Lancer Lethality": "Lan LETH", "Lancer Health": "Lan HP", "Marksman Lethality": "Mark LETH", "Marksman Health": "Mark HP" };
+    const STAT_ABBR_MAP = { il: "Inf LETH", ih: "Inf HP", ll: "Lan LETH", lh: "Lan HP", ml: "Mark LETH", mh: "Mark HP" };
     document.getElementById("refineTotals").innerHTML = `
       <div class="panel">
-        <h2>Total refine bonus</h2>
-        <p class="desc">Summed across all 15 pets, based on what you've typed in.</p>
+        <h2>${esc(t("total_refine_bonus"))}</h2>
+        <p class="desc">${esc(t("refine_summed_desc"))}</p>
         <div class="stats-row-scroll sr-3col">
-          ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[label] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">of max +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
+          ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[key] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
         </div>
       </div>
     `;
@@ -7579,13 +7602,13 @@ async function renderRefinePage() {
     const unlocked = isPetUnlocked(pet);
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:left;">
-          <div class="meta" style="font-size:10.5px; margin-bottom:8px;">${esc(tier)} tier</div>
+          <div class="meta" style="font-size:10.5px; margin-bottom:8px;">${esc(tier)} ${esc(t("tier_suffix"))}</div>
           <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
               <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
               <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(pet)}</div>
             </label>
-            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">Max</button>
+            <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">${esc(t("max_button"))}</button>
           </div>
           ${STAT_KEYS.map(
             ({ key, label, maxKey }) => {
@@ -7605,7 +7628,7 @@ async function renderRefinePage() {
               </div>
               <span data-refineremaining class="meta" style="font-size:10px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
             </div>
-            <span class="meta" style="font-size:10px; flex-shrink:0; white-space:nowrap;">of max ${maxVal.toFixed(2)}%</span>
+            <span class="meta" style="font-size:10px; flex-shrink:0; white-space:nowrap;">${esc(t("of_max_prefix"))} ${maxVal.toFixed(2)}%</span>
           </div>`;
             }
           ).join("")}
@@ -7668,7 +7691,7 @@ async function renderPetsDataPage() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Pets Level</h2>
+        <h2>${esc(t("pets_level_title"))}</h2>
               </div>
       <button class="btn" id="petsMaxAllBtn">${esc(t("max_everything"))}</button>
     </div>
@@ -7729,23 +7752,23 @@ async function renderPetsDataPage() {
     document.getElementById("petsTotals").innerHTML = `
       <div class="panel">
         <h2>${esc(t("troops_stats_title"))}</h2>
-        <p class="desc">Summed across all 15 pets, based on current levels.</p>
+        <p class="desc">${esc(t("pets_summed_desc"))}</p>
         <div class="stats-row-scroll">
           <div class="metric" style="padding:6px; min-width:80px;">
-            <div class="label" style="font-size:9px;">Troops Attack</div>
+            <div class="label" style="font-size:9px;">${esc(t("troops_attack"))}</div>
             <div class="val" style="font-size:13px;">${grandAtk.toFixed(1)}%</div>
-            <div class="meta" style="font-size:8.5px; margin-top:2px;">of max ${grandAtkMax.toFixed(1)}%</div>
+            <div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} ${grandAtkMax.toFixed(1)}%</div>
           </div>
           <div class="metric" style="padding:6px; min-width:80px;">
-            <div class="label" style="font-size:9px;">Troops Defense</div>
+            <div class="label" style="font-size:9px;">${esc(t("troops_defense"))}</div>
             <div class="val" style="font-size:13px;">${grandAtk.toFixed(1)}%</div>
-            <div class="meta" style="font-size:8.5px; margin-top:2px;">of max ${grandAtkMax.toFixed(1)}%</div>
+            <div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} ${grandAtkMax.toFixed(1)}%</div>
           </div>
         </div>
       </div>
       <div class="panel">
         <h2>${esc(t("backpack_title"))}</h2>
-        <p class="desc">Enter what you own \u2014 the rest shows what's still needed, across all 15 pets.</p>
+        <p class="desc">${esc(t("backpack_desc_pets"))}</p>
         <div id="petsMaterialsBar"></div>
       </div>
     `;
@@ -7773,8 +7796,8 @@ async function renderPetsDataPage() {
     const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
     const unlocked = isPetUnlocked(pet);
     const levelOpts = (selected) =>
-      levels.map((r, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>Lv. ${r.level_label}${i === levels.length - 1 ? " (Max)" : ""}</option>`).join("");
-    const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>Not started</option>` + levelOpts(from);
+      levels.map((r, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>Lv. ${r.level_label}${i === levels.length - 1 ? esc(t("max_suffix")) : ""}</option>`).join("");
+    const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>${esc(t("not_started"))}</option>` + levelOpts(from);
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:left;">
@@ -7784,7 +7807,7 @@ async function renderPetsDataPage() {
           </label>
           <div class="stats-row-scroll pet-level-row" style="margin-bottom:16px;">
             <div class="metric" style="padding:8px; min-width:110px; flex:1 1 110px;">
-              <div class="label" style="font-size:9px;">Troops Stats</div>
+              <div class="label" style="font-size:9px;">${esc(t("troops_stats_title"))}</div>
               <div class="val" style="font-size:13px; white-space:nowrap;">${cur.toFixed(1)}% <span style="font-size:9px; color:var(--muted); font-weight:400;">/ ${max.toFixed(1)}%</span></div>
             </div>
             <div style="min-width:110px; flex:1 1 110px;">
@@ -7797,10 +7820,10 @@ async function renderPetsDataPage() {
             </div>
           </div>
           <div class="stats-row-scroll">
-            ${smallResourceCard(PET_MATERIAL_ICONS.food, "Food", Math.round(needed.food).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.manual, "Manual", Math.round(needed.manual).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.potion, "Potion", Math.round(needed.potion).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.serum, "Serum", Math.round(needed.serum).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.food, t("material_food"), Math.round(needed.food).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.manual, t("material_manual"), Math.round(needed.manual).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.potion, t("material_potion"), Math.round(needed.potion).toLocaleString())}
+            ${smallResourceCard(PET_MATERIAL_ICONS.serum, t("material_serum"), Math.round(needed.serum).toLocaleString())}
           </div>
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
