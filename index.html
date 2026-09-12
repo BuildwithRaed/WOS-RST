@@ -585,7 +585,8 @@
     <div class="topnav-settings" id="topnavSettings">
       <button class="topnav-settings-btn" type="button" id="topnavSettingsBtn" title="Settings">&#9881;</button>
       <div class="topnav-settings-panel">
-        <label class="meta" style="font-size:11px; display:block; margin-bottom:6px;">Commander</label>
+        <div id="langSwitcherWrap"></div>
+        <label class="meta" id="commanderLabel" style="font-size:11px; display:block; margin-bottom:6px;">Commander</label>
         <div style="display:flex; gap:6px; margin-bottom:14px;">
           <input id="commanderName" type="text" placeholder="Name" style="flex:1;" />
           <button class="btn small" id="saveCommander">Save</button>
@@ -797,9 +798,164 @@ function esc(s) {
 // ============================================================
 // APP STATE & NAVIGATION
 // TAB drives which page render*() function runs. Sub-tab state
-// (HEROES_SUBTAB, EXTRA_BUFF_SUBTAB, GROUP_SUBTAB) tracks nested
-// navigation within Heroes / Extra Buff / grouped buff categories.
+function statLabelKey(label) {
+  return { Attack: "stat_attack", Defense: "stat_defense", Lethality: "stat_lethality", Health: "stat_health" }[label] || null;
+}
+function tStatLabel(label) {
+  const key = statLabelKey(label);
+  return key ? t(key) : label;
+}
+function troopDisplayName(key) {
+  return { Infantry: t("troop_infantry"), Lancers: t("troop_lancers"), Marksman: t("troop_marksman") }[key] || key;
+}
+// Covers the nav (sidebar/topnav, both desktop dropdowns and the
+// mobile accordion menu, which is built by cloning the desktop
+// nav's HTML - so translating the desktop nav once covers both),
+// the settings panel, and the Dashboard page. Everything else in
+// the app still renders in English; translating the rest of the
+// ~10,000-line app is a much larger follow-up effort.
+// Arabic gets `dir="rtl"` on <html> for correct text flow/reading
+// order, but full layout mirroring (flipped flex/grid directions
+// throughout the whole app) hasn't been done - text and alignment
+// are correct, but some rows may not visually mirror perfectly.
 // ============================================================
+let LANG = localStorage.getItem("lang") || "en";
+const NAV_GROUP_LABELS = {
+  "Overview": { en: "Overview", ar: "نظرة عامة", ko: "개요" },
+  "Gears": { en: "Gears", ar: "التجهيزات", ko: "기어" },
+  "Experts": { en: "Experts", ar: "الخبراء", ko: "전문가" },
+  "Pets": { en: "Pets", ar: "الحيوانات الأليفة", ko: "펫" },
+  "Research": { en: "Research", ar: "الأبحاث", ko: "연구" },
+  "Cosmetics": { en: "Cosmetics", ar: "التجميل", ko: "코스메틱" },
+  "Extra Bonus": { en: "Extra Bonus", ar: "مكافآت إضافية", ko: "추가 보너스" },
+  "Admin": { en: "Admin", ar: "الإدارة", ko: "관리자" },
+};
+const NAV_PAGE_LABELS = {
+  "overview": { en: "Dashboard", ar: "لوحة التحكم", ko: "대시보드" },
+  "backpack": { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
+  "packs": { en: "Packs", ar: "الحزم", ko: "패키지" },
+  "charmscalc": { en: "Chief Charm", ar: "تعويذة القائد", ko: "족장 참" },
+  "chiefgear": { en: "Chief Gear", ar: "معدات القائد", ko: "족장 장비" },
+  "herogearcalc": { en: "Heroes Gears", ar: "معدات الأبطال", ko: "영웅 장비" },
+  "expertspage": { en: "Experts Level", ar: "مستوى الخبراء", ko: "전문가 레벨" },
+  "expertsresearchpage": { en: "Experts Research", ar: "أبحاث الخبراء", ko: "전문가 연구" },
+  "petsdata": { en: "Pets Level", ar: "مستوى الحيوانات الأليفة", ko: "펫 레벨" },
+  "refinepage": { en: "Pets Refine", ar: "تنقية الحيوانات الأليفة", ko: "펫 정제" },
+  "researchcenter": { en: "Research Center", ar: "مركز الأبحاث", ko: "연구 센터" },
+  "t11helios": { en: "T11 Helios Research", ar: "أبحاث T11 هيليوس", ko: "T11 헬리오스 연구" },
+  "t12research": { en: "T12 Research", ar: "أبحاث T12", ko: "T12 연구" },
+  "skingallery": { en: "Skin Gallery", ar: "معرض المظاهر", ko: "스킨 갤러리" },
+  "islandgallery": { en: "Islands", ar: "الجزر", ko: "아일랜드" },
+  "extrabonus:Vip Tier": { en: "VIP", ar: "VIP", ko: "VIP" },
+  "extrabonusheroes": { en: "Heroes Special Skills", ar: "مهارات الأبطال الخاصة", ko: "영웅 특수 스킬" },
+  "facilitypage": { en: "Facility", ar: "المنشأة", ko: "시설" },
+  "alliancetechpage": { en: "Alliance Tech", ar: "تقنية التحالف", ko: "연맹 기술" },
+  "albumtundrapage": { en: "Tundra Album", ar: "ألبوم التندرا", ko: "툰드라 앨범" },
+  "collectiongallerypage": { en: "Collection Gallery", ar: "معرض المجموعات", ko: "컬렉션 갤러리" },
+  "adminpage": { en: "Admin", ar: "الإدارة", ko: "관리자" },
+};
+// General UI strings (settings panel, owner login, Dashboard chrome).
+const T = {
+  settings_title: { en: "Settings", ar: "الإعدادات", ko: "설정" },
+  language: { en: "Language", ar: "اللغة", ko: "언어" },
+  commander: { en: "Commander", ar: "القائد", ko: "커맨더" },
+  name_placeholder: { en: "Name", ar: "الاسم", ko: "이름" },
+  save: { en: "Save", ar: "حفظ", ko: "저장" },
+  owner_login: { en: "Owner login", ar: "تسجيل دخول المالك", ko: "소유자 로그인" },
+  logged_in_owner: { en: "Logged in as owner", ar: "تم تسجيل الدخول كمالك", ko: "소유자로 로그인됨" },
+  log_out: { en: "Log out", ar: "تسجيل الخروج", ko: "로그아웃" },
+  owner_login_desc: { en: "Log in to unlock Admin. First time here? Logging in with the owner email creates the account automatically.", ar: "سجّل الدخول لفتح لوحة الإدارة. أول مرة هنا؟ تسجيل الدخول ببريد المالك الإلكتروني ينشئ الحساب تلقائيًا.", ko: "관리자 기능을 사용하려면 로그인하세요. 처음이신가요? 소유자 이메일로 로그인하면 계정이 자동으로 생성됩니다." },
+  email_placeholder: { en: "Email", ar: "البريد الإلكتروني", ko: "이메일" },
+  password_placeholder: { en: "Password", ar: "كلمة المرور", ko: "비밀번호" },
+  enter_both: { en: "Enter both email and password.", ar: "أدخل البريد الإلكتروني وكلمة المرور.", ko: "이메일과 비밀번호를 모두 입력하세요." },
+  log_in: { en: "Log in", ar: "تسجيل الدخول", ko: "로그인" },
+  cancel: { en: "Cancel", ar: "إلغاء", ko: "취소" },
+  invalid_login: { en: "Invalid login.", ar: "بيانات دخول غير صحيحة.", ko: "잘못된 로그인입니다." },
+  login_failed: { en: "Login failed", ar: "فشل تسجيل الدخول", ko: "로그인 실패" },
+  menu_title: { en: "Menu", ar: "القائمة", ko: "메뉴" },
+  stats_dashboard: { en: "Stats dashboard", ar: "لوحة الإحصائيات", ko: "통계 대시보드" },
+  total_owner_only: { en: "TOTAL (owner only)", ar: "الإجمالي (للمالك فقط)", ko: "합계 (소유자 전용)" },
+  troop_infantry: { en: "Infantry", ar: "المشاة", ko: "보병" },
+  troop_lancers: { en: "Lancers", ar: "الرماحون", ko: "창기병" },
+  troop_marksman: { en: "Marksman", ar: "القناصة", ko: "저격수" },
+  stat_attack: { en: "Attack", ar: "الهجوم", ko: "공격력" },
+  stat_defense: { en: "Defense", ar: "الدفاع", ko: "방어력" },
+  stat_lethality: { en: "Lethality", ar: "الفتك", ko: "살상력" },
+  stat_health: { en: "Health", ar: "الصحة", ko: "체력" },
+  avg_bonus_suffix: { en: "bonus", ar: "المكافأة", ko: "보너스" },
+  avg_prefix: { en: "AVG", ar: "المتوسط", ko: "평균" },
+  avg_maxed: { en: "AVG maxed", ar: "الحد الأقصى للمتوسط", ko: "평균 최대치" },
+  stats_tracked: { en: "stats tracked", ar: "إحصائيات مُتتبَّعة", ko: "개 통계 추적 중" },
+  max_possible: { en: "Max possible", ar: "الحد الأقصى الممكن", ko: "최대 가능치" },
+  click_full_breakdown: { en: "Click for full breakdown", ar: "انقر لعرض التفاصيل الكاملة", ko: "전체 내역을 보려면 클릭하세요" },
+  current_label: { en: "Current", ar: "الحالي", ko: "현재" },
+  difference_label: { en: "Difference", ar: "الفرق", ko: "차이" },
+  max_label: { en: "Max", ar: "الحد الأقصى", ko: "최대" },
+  diff_label: { en: "Diff", ar: "الفرق", ko: "차이" },
+  no_sources_yet: { en: "No sources yet", ar: "لا توجد مصادر بعد", ko: "아직 소스가 없습니다" },
+  hero_gear_switch_note: { en: "Switches which Hero Gears loadout is counted \u2014 everything else stays the same.", ar: "يبدّل مجموعة معدات الأبطال المحتسبة \u2014 كل شيء آخر يبقى كما هو.", ko: "계산에 반영되는 영웅 장비 세트를 전환합니다 \u2014 나머지는 그대로 유지됩니다." },
+  roster_heroes_title: { en: "Roster heroes", ar: "أبطال التشكيلة", ko: "로스터 영웅" },
+  count_in_dashboard: { en: "Count in Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
+  pick_hero_placeholder: { en: "Pick<br>hero", ar: "اختر<br>البطل", ko: "영웅<br>선택" },
+  none_label: { en: "None", ar: "لا شيء", ko: "없음" },
+  gen_prefix: { en: "Gen", ar: "الجيل", ko: "세대" },
+  widget_level_label: { en: "Widget level", ar: "مستوى الأداة", ko: "위젯 레벨" },
+  pick_hero_title: { en: "Pick", ar: "اختر", ko: "선택" },
+  hero_suffix: { en: "hero", ar: "بطل", ko: "영웅" },
+  close_button: { en: "Close", ar: "إغلاق", ko: "닫기" },
+};
+function t(key) {
+  const entry = T[key];
+  if (!entry) return key;
+  return entry[LANG] || entry.en;
+}
+function applyNavLanguage() {
+  document.querySelectorAll(".topnav-group[data-group]").forEach((g) => {
+    const groupKey = g.dataset.group;
+    const btn = g.querySelector(".topnav-group-btn");
+    const label = (NAV_GROUP_LABELS[groupKey] && (NAV_GROUP_LABELS[groupKey][LANG] || NAV_GROUP_LABELS[groupKey].en)) || groupKey;
+    btn.childNodes[0].textContent = label + " ";
+    g.querySelectorAll("[data-tab]").forEach((pageBtn) => {
+      const pageKey = pageBtn.dataset.tab;
+      const entry = NAV_PAGE_LABELS[pageKey];
+      if (!entry) return;
+      const icon = pageBtn.querySelector(".ic");
+      pageBtn.textContent = entry[LANG] || entry.en;
+      if (icon) pageBtn.prepend(icon);
+    });
+  });
+  const settingsBtn = document.getElementById("topnavSettingsBtn");
+  if (settingsBtn) settingsBtn.title = t("settings_title");
+  const commanderLabel = document.getElementById("commanderLabel");
+  if (commanderLabel) commanderLabel.textContent = t("commander");
+  const commanderInput = document.getElementById("commanderName");
+  if (commanderInput) commanderInput.placeholder = t("name_placeholder");
+  const saveBtn = document.getElementById("saveCommander");
+  if (saveBtn) saveBtn.textContent = t("save");
+}
+function renderLanguageSwitcher() {
+  const wrap = document.getElementById("langSwitcherWrap");
+  if (!wrap) return;
+  const opts = [["en", "English"], ["ar", "العربية"], ["ko", "한국어"]];
+  wrap.innerHTML = `
+    <label class="meta" style="font-size:11px; display:block; margin-bottom:6px;">${esc(t("language"))}</label>
+    <select id="langSwitcher" style="width:100%; margin-bottom:14px;">
+      ${opts.map(([code, label]) => `<option value="${code}" ${code === LANG ? "selected" : ""}>${esc(label)}</option>`).join("")}
+    </select>
+  `;
+  document.getElementById("langSwitcher").addEventListener("change", (e) => setLanguage(e.target.value));
+}
+function setLanguage(lang) {
+  LANG = lang;
+  localStorage.setItem("lang", lang);
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+  applyNavLanguage();
+  renderLanguageSwitcher();
+  renderOwnerLoginUI();
+  render();
+}
+
 const KNOWN_TABS = new Set([
   "overview", "heroes", "stats", "backpack", "packs", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
@@ -877,16 +1033,17 @@ function renderMobileMenu() {
   const groups = [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none");
   overlay.innerHTML = `
     <div class="mm-header">
-      <h2>Menu</h2>
+      <h2>${esc(t("menu_title"))}</h2>
       <button class="mm-close" type="button" id="mmCloseBtn">&#10005;</button>
     </div>
     ${groups
       .map((g) => {
         const name = g.dataset.group;
+        const label = (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || name;
         const pagesHtml = g.querySelector(".topnav-dropdown").innerHTML;
         return `
       <div class="mm-category" data-group="${esc(name)}">
-        <button class="mm-category-btn" type="button">${esc(name)} <span class="caret">&#9660;</span></button>
+        <button class="mm-category-btn" type="button">${esc(label)} <span class="caret">&#9660;</span></button>
         <div class="mm-pages">${pagesHtml}</div>
       </div>`;
       })
@@ -1523,7 +1680,7 @@ async function renderOverview() {
   content.innerHTML = `
     <div class="page-head">
       <div>
-        <h2>Stats dashboard</h2>
+        <h2>${esc(t("stats_dashboard"))}</h2>
       </div>
     </div>
     ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
@@ -1534,7 +1691,7 @@ async function renderOverview() {
 
   document.getElementById("metricRow").innerHTML = avgByStat
     .map(
-      (s) => `<div class="metric"><div class="label">AVG ${esc(s.label)} bonus</div><div class="val">${s.avg.toFixed(0)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">AVG maxed: ${s.avgMax.toFixed(0)}%</div></div>`
+      (s) => `<div class="metric"><div class="label">${esc(t("avg_prefix"))} ${esc(tStatLabel(s.label))} ${esc(t("avg_bonus_suffix"))}</div><div class="val">${s.avg.toFixed(0)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">${esc(t("avg_maxed"))}: ${s.avgMax.toFixed(0)}%</div></div>`
     )
     .join("");
 
@@ -1564,7 +1721,7 @@ async function renderOverview() {
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:${shown ? "12px" : "0"};">
             <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
               <input type="checkbox" id="ownerTotalToggle" ${shown ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              <span style="font-weight:600;">TOTAL (owner only)</span>
+              <span style="font-weight:600;">${esc(t("total_owner_only"))}</span>
             </label>
           </div>
           ${shown ? `
@@ -1682,14 +1839,18 @@ async function renderOverview() {
       const collapsed = localStorage.getItem("dashboard_roster_collapsed") === "1";
       const assignedTroops = TROOP_TYPES.filter((t) => entryFor(t.key).heroId);
       const allUsed = assignedTroops.length > 0 && assignedTroops.every((t) => entryFor(t.key).used);
+      const pickHeroPlaceholder = t("pick_hero_placeholder");
+      const noneLabel = t("none_label");
+      const genPrefix = t("gen_prefix");
+      const widgetLevelLabel = t("widget_level_label");
       rosterEl.innerHTML = `
       <div class="panel" style="margin-bottom:16px;">
         <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;">
-          <h2 style="margin:0;">Roster heroes</h2>
+          <h2 style="margin:0;">${esc(t("roster_heroes_title"))}</h2>
           <div style="display:flex; align-items:center; gap:12px;">
             <label style="display:flex; align-items:center; gap:4px; cursor:pointer; flex-shrink:0; flex-wrap:nowrap;" title="Include roster heroes' stats in the Dashboard totals" onclick="event.stopPropagation()">
               <input type="checkbox" id="rosterUsedAll" ${allUsed ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              <span class="meta" style="font-size:10px; white-space:nowrap;">Count in Dashboard</span>
+              <span class="meta" style="font-size:10px; white-space:nowrap;">${esc(t("count_in_dashboard"))}</span>
             </label>
             <span class="meta" style="font-size:16px; transition:transform .15s; transform:rotate(${collapsed ? "-90deg" : "0deg"});">&#9660;</span>
           </div>
@@ -1702,18 +1863,18 @@ async function renderOverview() {
             return `
             <div class="roster-row" style="display:flex; align-items:center; gap:12px; ${hero && !used ? "opacity:0.55;" : ""}">
               <div data-rosterpick="${esc(t.key)}" class="roster-pick" title="Click to choose hero" style="width:64px; height:64px; border-radius:10px; background:var(--panel-2); overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">Pick<br>hero</span>`}
+                ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">${pickHeroPlaceholder}</span>`}
               </div>
               <div style="flex:1; min-width:0;">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-bottom:2px;">
-                  <span style="font-weight:600; font-size:14px;">${hero ? esc(hero.name) : "None"}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">Gen ${hero.generation}</span>` : ""}</span>
+                  <span style="font-weight:600; font-size:14px;">${hero ? esc(hero.name) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</span>
                 </div>
                 <div data-starctl="${esc(hero ? hero.id : "")}" style="display:flex; align-items:center; gap:4px; margin-top:4px;">${starsHtml(hero)}</div>
                 ${hero ? `<div class="meta" style="font-size:11px; color:var(--frost); margin-top:4px;">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ") || "&nbsp;"}</div>` : ""}
                 <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
-                  <span class="meta" style="font-size:11px;">Widget level</span>
+                  <span class="meta" style="font-size:11px;">${esc(widgetLevelLabel)}</span>
                   <select data-rosterwidget="${esc(t.key)}" style="width:88px;">
-                    <option value="0" ${!widget ? "selected" : ""}>None</option>
+                    <option value="0" ${!widget ? "selected" : ""}>${esc(noneLabel)}</option>
                     ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${i}</option>`).join("")}
                   </select>
                 </div>
@@ -1772,11 +1933,11 @@ async function renderOverview() {
           }
           modal.innerHTML = `
             <div class="modal-box" style="max-width:640px; max-height:80vh; overflow-y:auto;">
-              <h2>Pick ${esc(troopKey)} hero</h2>
+              <h2>${esc(t("pick_hero_title"))} ${esc(troopDisplayName(troopKey))} ${esc(t("hero_suffix"))}</h2>
               <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:10px; margin-top:12px;">
                 <div data-pickhero="" style="cursor:pointer; text-align:center; border:1px solid ${cur.heroId ? "var(--line)" : "var(--ice)"}; border-radius:10px; padding:6px;">
-                  <div style="width:100%; aspect-ratio:1; border-radius:8px; background:var(--panel-2); display:flex; align-items:center; justify-content:center;"><span class="meta">None</span></div>
-                  <div class="meta" style="font-size:11px; margin-top:4px;">None</div>
+                  <div style="width:100%; aspect-ratio:1; border-radius:8px; background:var(--panel-2); display:flex; align-items:center; justify-content:center;"><span class="meta">${esc(t("none_label"))}</span></div>
+                  <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("none_label"))}</div>
                 </div>
                 ${choices.map((h) => `
                 <div data-pickhero="${esc(h.id)}" style="cursor:pointer; text-align:center; border:1px solid ${h.id === cur.heroId ? "var(--ice)" : "var(--line)"}; border-radius:10px; padding:6px;">
@@ -1784,10 +1945,10 @@ async function renderOverview() {
                     ${h.image_url ? `<img src="${esc(h.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : ""}
                   </div>
                   <div style="font-size:12px; font-weight:600; margin-top:4px;">${esc(h.name)}</div>
-                  ${h.generation ? `<div class="meta" style="font-size:10px;">Gen ${h.generation}</div>` : ""}
+                  ${h.generation ? `<div class="meta" style="font-size:10px;">${esc(t("gen_prefix"))} ${h.generation}</div>` : ""}
                 </div>`).join("")}
               </div>
-              <div style="text-align:right; margin-top:12px;"><button class="btn ghost small" id="rosterPickClose">Close</button></div>
+              <div style="text-align:right; margin-top:12px;"><button class="btn ghost small" id="rosterPickClose">${esc(t("close_button"))}</button></div>
             </div>`;
           modal.querySelector("#rosterPickClose").addEventListener("click", () => { modal.style.display = "none"; });
           modal.querySelectorAll("[data-pickhero]").forEach((card) => {
@@ -1814,12 +1975,15 @@ async function renderOverview() {
   }
 
   const sections = document.getElementById("troopSections");
+  const statsTrackedLabel = t("stats_tracked");
+  const maxPossibleLabel = t("max_possible");
+  const clickBreakdownLabel = t("click_full_breakdown");
   sections.innerHTML = TROOP_TYPES.map(
     (t) => `
     <div class="troop-head">
       <div class="dot">${t.icon}</div>
-      <h3>${esc(t.key)}</h3>
-      <div class="count">4 stats tracked</div>
+      <h3>${esc(troopDisplayName(t.key))}</h3>
+      <div class="count">4 ${esc(statsTrackedLabel)}</div>
     </div>
     <div class="grid g4">
       ${STATS.map((s) => {
@@ -1829,14 +1993,14 @@ async function renderOverview() {
         const diff = Math.max(0, maxTotal - total);
         return `<div class="stat-card" data-drilldown="${esc(t.key)}|${esc(s.key)}" style="cursor:pointer; position:relative;">
           ${diff > 0 ? `<div style="position:absolute; top:10px; right:12px; font-size:12px; font-weight:600; color:#e0b030; white-space:nowrap;">+${diff.toFixed(1)}%</div>` : ""}
-          <div class="label" style="padding-right:${diff > 0 ? "56px" : "0"};"><span class="stat-key">${esc(s.key)} &middot; </span>${esc(s.label).toUpperCase()}</div>
+          <div class="label" style="padding-right:${diff > 0 ? "56px" : "0"};"><span class="stat-key">${esc(s.key)} &middot; </span>${esc(tStatLabel(s.label)).toUpperCase()}</div>
           <div class="val">${total.toFixed(1)}%</div>
           <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
           <div class="metric" style="margin-top:8px; padding:8px 10px;">
-            <div class="label" style="font-size:10.5px;">Max possible</div>
+            <div class="label" style="font-size:10.5px;">${esc(maxPossibleLabel)}</div>
             <div class="val" style="font-size:16px;">${maxTotal.toFixed(1)}%</div>
           </div>
-          ${sources.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">Click for full breakdown</div>` : ""}
+          ${sources.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(clickBreakdownLabel)}</div>` : ""}
         </div>`;
       }).join("")}
     </div>
@@ -1920,22 +2084,22 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
     ? `<div class="seg" id="drilldownSetTabs" style="margin-top:10px;">
         ${HERO_GEAR_SET_NAMES.map((n) => `<button data-bdset="${esc(n)}" class="${n === BREAKDOWN_HERO_GEAR_SET ? "active" : ""}">${esc(n)}</button>`).join("")}
       </div>
-      <p class="meta" style="font-size:10.5px; margin-top:4px;">Switches which Hero Gears loadout is counted \u2014 everything else stays the same.</p>`
+      <p class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("hero_gear_switch_note"))}</p>`
     : "";
   modal.innerHTML = `
     <div class="modal-box" style="max-width:480px; max-height:80vh; overflow-y:auto;">
       <h2>${esc(title)}</h2>
       ${setTabsHtml}
       <div class="desc" style="display:flex; flex-wrap:wrap; gap:6px 16px; margin:0 0 16px;">
-        <span>Current: <strong style="color:var(--frost); white-space:nowrap;">${total.toFixed(1)}%</strong></span>
-        <span>Max possible: <strong style="color:var(--ice); white-space:nowrap;">${maxTotal.toFixed(1)}%</strong></span>
-        <span>Difference: <strong style="color:var(--warn, #e0a030); white-space:nowrap;">+${(maxTotal - total).toFixed(1)}%</strong></span>
+        <span>${esc(t("current_label"))}: <strong style="color:var(--frost); white-space:nowrap;">${total.toFixed(1)}%</strong></span>
+        <span>${esc(t("max_possible"))}: <strong style="color:var(--ice); white-space:nowrap;">${maxTotal.toFixed(1)}%</strong></span>
+        <span>${esc(t("difference_label"))}: <strong style="color:var(--warn, #e0a030); white-space:nowrap;">+${(maxTotal - total).toFixed(1)}%</strong></span>
       </div>
       <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:4px 12px; margin-top:12px; align-items:center;">
         <div class="meta" style="font-size:10.5px;"></div>
-        <div class="meta" style="font-size:10.5px; text-align:right;">Current</div>
-        <div class="meta" style="font-size:10.5px; text-align:right;">Max</div>
-        <div class="meta" style="font-size:10.5px; text-align:right;">Diff</div>
+        <div class="meta" style="font-size:10.5px; text-align:right;">${esc(t("current_label"))}</div>
+        <div class="meta" style="font-size:10.5px; text-align:right;">${esc(t("max_label"))}</div>
+        <div class="meta" style="font-size:10.5px; text-align:right;">${esc(t("diff_label"))}</div>
         ${
           sources.length
             ? sources
@@ -1944,7 +2108,7 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
                   return `<div class="src-name" style="padding:6px 0; border-bottom:1px solid var(--line); white-space:nowrap; font-size:12.5px;">${esc(displaySourceName(s.name))}</div><div class="src-val" style="padding:6px 0; border-bottom:1px solid var(--line); text-align:right;">+${s.cur.toFixed(1)}%</div><div class="src-val" style="padding:6px 0; border-bottom:1px solid var(--line); text-align:right; color:var(--ice);">+${s.max.toFixed(1)}%</div><div class="src-val" style="padding:6px 0; border-bottom:1px solid var(--line); text-align:right; color:${diff > 0 ? "#e0a030" : "var(--muted)"};">${diff > 0 ? "+" + diff.toFixed(1) + "%" : "\u2014"}</div>`;
                 })
                 .join("")
-            : `<div class="src-name" style="grid-column:1/-1;">No sources yet</div>`
+            : `<div class="src-name" style="grid-column:1/-1;">${esc(t("no_sources_yet"))}</div>`
         }
       </div>
       <div class="modal-actions">
@@ -10683,8 +10847,8 @@ function renderOwnerLoginUI() {
 
   if (IS_OWNER) {
     el.innerHTML = `
-      <div class="meta" style="font-size:11px; color:var(--good); margin-bottom:6px;">&#10003; Logged in as owner</div>
-      <button class="btn ghost small" id="ownerLogoutBtn" style="width:100%;">Log out</button>
+      <div class="meta" style="font-size:11px; color:var(--good); margin-bottom:6px;">&#10003; ${esc(t("logged_in_owner"))}</div>
+      <button class="btn ghost small" id="ownerLogoutBtn" style="width:100%;">${esc(t("log_out"))}</button>
     `;
     document.getElementById("ownerLogoutBtn").addEventListener("click", async () => {
       await supabaseClient.auth.signOut();
@@ -10695,7 +10859,7 @@ function renderOwnerLoginUI() {
     return;
   }
 
-  el.innerHTML = `<button class="btn ghost small" id="ownerLoginOpenBtn" style="width:100%;">Owner login</button>`;
+  el.innerHTML = `<button class="btn ghost small" id="ownerLoginOpenBtn" style="width:100%;">${esc(t("owner_login"))}</button>`;
   document.getElementById("ownerLoginOpenBtn").addEventListener("click", () => {
     let modal = document.getElementById("ownerLoginModal");
     if (!modal) {
@@ -10707,14 +10871,14 @@ function renderOwnerLoginUI() {
     }
     modal.innerHTML = `
       <div class="modal-box" style="max-width:340px;">
-        <h2>Owner login</h2>
-        <p class="desc">Log in to unlock Admin. First time here? Logging in with the owner email creates the account automatically.</p>
+        <h2>${esc(t("owner_login"))}</h2>
+        <p class="desc">${esc(t("owner_login_desc"))}</p>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
-          <input type="email" id="ownerLoginEmail" placeholder="Email" style="width:100%;" />
-          <input type="password" id="ownerLoginPassword" placeholder="Password" style="width:100%;" />
+          <input type="email" id="ownerLoginEmail" placeholder="${esc(t("email_placeholder"))}" style="width:100%;" />
+          <input type="password" id="ownerLoginPassword" placeholder="${esc(t("password_placeholder"))}" style="width:100%;" />
           <div class="err" id="ownerLoginErr" style="min-height:16px;"></div>
-          <button class="btn" id="ownerLoginSubmit">Log in</button>
-          <button class="btn ghost small" id="ownerLoginClose">Cancel</button>
+          <button class="btn" id="ownerLoginSubmit">${esc(t("log_in"))}</button>
+          <button class="btn ghost small" id="ownerLoginClose">${esc(t("cancel"))}</button>
         </div>
       </div>`;
     modal.style.display = "flex";
@@ -10724,13 +10888,13 @@ function renderOwnerLoginUI() {
       const password = document.getElementById("ownerLoginPassword").value;
       const errEl = document.getElementById("ownerLoginErr");
       errEl.textContent = "";
-      if (!email || !password) { errEl.textContent = "Enter both email and password."; return; }
+      if (!email || !password) { errEl.textContent = t("enter_both"); return; }
       try {
         const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (signInErr) {
           // First-time setup: only the designated owner email is allowed to self-register.
           if (email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-            errEl.textContent = "Invalid login.";
+            errEl.textContent = t("invalid_login");
             return;
           }
           const { error: signUpErr } = await supabaseClient.auth.signUp({ email, password });
@@ -10739,9 +10903,9 @@ function renderOwnerLoginUI() {
         await ensureAuthSession();
         modal.style.display = "none";
         renderOwnerLoginUI();
-        toast(IS_OWNER ? "Logged in as owner" : "Logged in");
+        toast(IS_OWNER ? t("logged_in_owner") : "Logged in");
       } catch (err) {
-        errEl.textContent = err.message || "Login failed";
+        errEl.textContent = err.message || t("login_failed");
       }
     });
   });
@@ -10762,6 +10926,10 @@ function renderOwnerLoginUI() {
     return;
   }
   renderOwnerLoginUI();
+  document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
+  document.documentElement.lang = LANG;
+  applyNavLanguage();
+  renderLanguageSwitcher();
   // Speed: start downloading every saved calculator state right away, in
   // parallel with everything else below.
   preloadCalcStates();
