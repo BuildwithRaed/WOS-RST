@@ -2928,7 +2928,7 @@ async function renderPacksPage() {
       // then on. There's no Save button; every edit (typing, adding/removing
       // rows or columns, toggling scale) calls this so nothing is ever lost.
       async function persistTable() {
-        const payload = { title: t.title.trim() || "Untitled table", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
+        const payload = { title: t.title.trim() || "Table name here", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
         try {
           if (String(t.id).startsWith("new-")) {
             const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
@@ -3049,7 +3049,7 @@ async function renderPacksPage() {
   document.getElementById("packsAddTable").addEventListener("click", async () => {
     tables.unshift({
       id: `new-${Date.now()}`,
-      title: "New table",
+      title: "Table name here",
       columns: ["$", "#1", "#2", "Gems"],
       rows: [blankRow(4)],
       sort_order: 0,
@@ -3701,14 +3701,23 @@ function renderTroopTabs(containerEl, troops, current, colors, onSelect) {
 // (ontouchstart/ontouchend) wiring, which meant a plain mouse drag on a
 // non-touch PC could never trigger a swipe at all.
 function wireSwipeGesture(el, onSwipe, opts = {}) {
+  // Uses the on* property style (not addEventListener) deliberately: this
+  // gets called again on every card switch, on the SAME persistent
+  // container element (only its innerHTML changes, not the element
+  // itself). addEventListener would keep ADDING listeners on top of the
+  // old ones every time, so after a few swipes dozens of stale listeners
+  // would all fire at once, each triggering another re-render that adds
+  // yet more listeners - an exponential cascade that freezes the tab
+  // within a handful of swipes. Property assignment always replaces the
+  // previous handler, exactly like the old ontouchstart/ontouchend did.
   let startX = null, startY = null, dragging = false;
-  el.addEventListener("pointerdown", (e) => {
+  el.onpointerdown = (e) => {
     if (opts.stopPropagation) e.stopPropagation();
     startX = e.clientX;
     startY = e.clientY;
     dragging = true;
-  });
-  const finish = (e) => {
+  };
+  el.onpointerup = (e) => {
     if (opts.stopPropagation) e.stopPropagation();
     if (!dragging || startX == null) return;
     dragging = false;
@@ -3717,8 +3726,7 @@ function wireSwipeGesture(el, onSwipe, opts = {}) {
     startX = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
   };
-  el.addEventListener("pointerup", finish);
-  el.addEventListener("pointercancel", () => { dragging = false; startX = null; });
+  el.onpointercancel = () => { dragging = false; startX = null; };
 }
 function wireTroopSwipe(el, troops, current, onSelect) {
   const idx = troops.indexOf(current);
