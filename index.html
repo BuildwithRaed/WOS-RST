@@ -2791,9 +2791,15 @@ async function renderPacksPage() {
       listEl.innerHTML = `<div class="empty"><div class="big">No tables yet.</div>Click "+ Add table" to start one.</div>`;
       return;
     }
-    listEl.innerHTML = tables
-      .map(
-        (t, ti) => `
+    listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + tables
+      .map((t, ti) => {
+        // Auto-computed total row: sums every column's numeric cells across
+        // all data rows (non-numeric cells like "Free" or "2d 20h" just
+        // don't contribute). Display-only - not stored, not editable.
+        const totals = t.columns.map((_, ci) =>
+          t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
+        );
+        return `
       <div class="panel" style="margin-top:16px;" data-packtable="${ti}">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:16px; font-weight:700; flex:1; min-width:160px;" />
@@ -2825,30 +2831,31 @@ async function renderPacksPage() {
             <tbody>
               ${t.rows
                 .map(
-                  (r, ri) => `<tr data-row="${ri}" style="${r.is_total ? "border-top:2px solid var(--line); font-weight:700;" : ri === 0 ? "background:rgba(111,211,242,0.06);" : ""}">
+                  (r, ri) => `<tr data-row="${ri}" style="${ri === 0 ? "background:rgba(111,211,242,0.06);" : ""}">
                     ${t.columns
                       .map(
                         (_, ci) => `<td style="padding:3px;">
-                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; text-align:center; ${r.is_total ? "font-weight:700;" : ""}" />
+                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; text-align:center;" />
                         </td>`
                       )
                       .join("")}
                     <td style="text-align:center; white-space:nowrap;">
-                      ${ri === 0 ? `<span class="meta" style="font-size:10px;" title="Sets the scale ratio for every other row">base</span>` : `
-                      <label style="cursor:pointer;" title="Style as a bold total row">
-                        <input type="checkbox" data-pt-istotal data-row="${ri}" ${r.is_total ? "checked" : ""} style="cursor:pointer; margin-right:4px;" />&sum;
-                      </label>`}
+                      ${ri === 0 ? `<span class="meta" style="font-size:10px;" title="Sets the scale ratio for every other row">base</span>` : ""}
                       <button data-pt-delrow data-row="${ri}" title="Remove row" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px;">&times;</button>
                     </td>
                   </tr>`
                 )
                 .join("")}
+              <tr style="border-top:2px solid var(--line); font-weight:700;">
+                ${totals.map((sum) => `<td style="padding:5px 3px; text-align:center;">${sum ? fmtNum(sum) : ""}</td>`).join("")}
+                <td></td>
+              </tr>
             </tbody>
           </table>
         </div>
-      </div>`
-      )
-      .join("");
+      </div>`;
+      })
+      .join("") + `</div>`;
     wireTable();
   }
 
@@ -2938,23 +2945,6 @@ async function renderPacksPage() {
           syncFromDom();
           t.rows.splice(Number(btn.dataset.row), 1);
           renderAll();
-        });
-      });
-      panel.querySelectorAll("[data-pt-istotal]").forEach((cb) => {
-        cb.addEventListener("change", async () => {
-          syncFromDom();
-          t.rows[Number(cb.dataset.row)].is_total = cb.checked;
-          renderAll();
-          // Persist immediately rather than waiting for Save - otherwise an
-          // unchecked box silently reverts to its last-saved (checked)
-          // state on refresh/navigation, which looks like "it won't uncheck".
-          if (!String(t.id).startsWith("new-")) {
-            try {
-              await sb(`pack_tables?id=eq.${t.id}`, { method: "PATCH", body: JSON.stringify({ rows: t.rows, updated_at: new Date().toISOString() }) });
-            } catch (err) {
-              toast("Couldn't save that change", true);
-            }
-          }
         });
       });
 
