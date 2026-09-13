@@ -3554,10 +3554,11 @@ async function renderPacksPage() {
     const ci = packLinkFor(tb.id).priceCol;
     return typeof ci === "number" ? ci : 0;
   }
-  // Quantities are whole items, so anything typed or auto-filled rounds up:
-  // it's better to buy one too many than to come up short.
+  // Quantities are whole items: auto-filled values just drop any decimals
+  // (no rounding up or down to a different number). Only the price
+  // column keeps decimals.
   function fmtQty(n) {
-    return Math.ceil(Number(n) || 0).toLocaleString();
+    return Math.trunc(Number(n) || 0).toLocaleString();
   }
   function fmtCell(tb, ci, n) {
     return ci === priceColOf(tb) ? fmtNum(n) : fmtQty(n);
@@ -3609,6 +3610,17 @@ async function renderPacksPage() {
   function applyScale(panel, t) {
     applyRatioScale(panel, t);
     applyGemsLookup(panel, t);
+    refreshTotalsIn(panel, t);
+  }
+  // Re-sums every column straight from the cells on screen, so the totals
+  // row is right after typing, auto-fill, adding a row, or toggling Scale.
+  function refreshTotalsIn(panel, t) {
+    t.columns.forEach((_, ci) => {
+      let sum = 0;
+      panel.querySelectorAll(`[data-pt-cell][data-col="${ci}"]`).forEach((inp) => { sum += parseNum(inp.value) || 0; });
+      const cell = panel.querySelector(`[data-pt-total="${ci}"]`);
+      if (cell) cell.textContent = sum ? fmtNum(sum) : "";
+    });
   }
 
   function renderAll() {
@@ -3921,14 +3933,7 @@ async function renderPacksPage() {
       // a fixed proportional relationship.
       // The totals row follows every keystroke (and every auto-fill), so
       // it never waits for a re-render to catch up.
-      function refreshTotals() {
-        t.columns.forEach((_, ci) => {
-          let sum = 0;
-          panel.querySelectorAll(`[data-pt-cell][data-col="${ci}"]`).forEach((inp) => { sum += parseNum(inp.value) || 0; });
-          const cell = panel.querySelector(`[data-pt-total="${ci}"]`);
-          if (cell) cell.textContent = sum ? fmtNum(sum) : "";
-        });
-      }
+      const refreshTotals = () => refreshTotalsIn(panel, t);
       panel.addEventListener("input", (e) => {
         const cell = e.target.closest("[data-pt-cell]");
         if (!cell) return;
@@ -3944,13 +3949,14 @@ async function renderPacksPage() {
       // filled in programmatically, since syncFromDom re-reads the DOM).
       // A typed quantity is rounded up as soon as you leave the field, so
       // what's stored matches what's shown. The price column is left alone.
+      // Typed values are kept exactly as typed (no reformatting on blur);
+      // only the quantity columns' decimals are dropped, since items are whole.
       panel.addEventListener("change", (e) => {
         const cell = e.target.closest("[data-pt-cell]");
         if (!cell) return;
         const ci = Number(cell.dataset.col);
         if (ci === priceColOf(t)) return;
-        const n = parseNum(cell.value);
-        if (n != null) cell.value = fmtQty(n);
+        if (/[.,]\d/.test(cell.value)) { const n = parseNum(cell.value); if (n != null) cell.value = String(Math.trunc(n)); }
       }, true);
 
       panel.addEventListener("change", (e) => {
@@ -4054,6 +4060,7 @@ async function renderPacksPage() {
           freshPanel.querySelectorAll("[data-pt-cell]").forEach((inp) => {
             t.rows[Number(inp.dataset.row)].cells[Number(inp.dataset.col)] = inp.value;
           });
+          refreshTotalsIn(freshPanel, t);
         }
         await persistTable();
       });
