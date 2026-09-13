@@ -1451,6 +1451,7 @@ const T = {
   trade_trades: { en: "trades", ar: "مبادلة", ko: "회" },
   trade_capped: { en: "weekly limit reached", ar: "تم بلوغ الحد الأسبوعي", ko: "주간 한도 도달" },
   trade_this_week: { en: "within this week's limits; pack cost and Budgets count the weeks until the target date", ar: "ضمن حدود هذا الأسبوع؛ تكلفة الحزم والميزانيات تحتسب الأسابيع حتى تاريخ الهدف", ko: "이번 주 한도 기준; 패키지 비용과 예산은 목표일까지의 주 수를 반영" },
+  trade_via_packs: { en: "Bought as packs then traded", ar: "تُشترى كحزم ثم تُبادل", ko: "패키지로 구매 후 교환" },
   trade_calc: { en: "Trade calculator", ar: "حاسبة المبادلة", ko: "교환 계산기" },
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_group_placeholder: { en: "Group…", ar: "المجموعة…", ko: "그룹…" },
@@ -5232,8 +5233,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const packGroups = packGroupsFor(tables);
   const supplied = new Set();
   tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
-  const need = {};
-  Object.keys(base).forEach((name) => { if (supplied.has(name) && base[name] > 0) need[name] = base[name]; });
+  const viaTrades = packNeedViaTrades(calcKey, base, supplied, targetDays);
+  const need = viaTrades.need;
 
   const fmtDate = (days) => {
     const d = new Date(today.getTime() + days * 86400000);
@@ -5308,6 +5309,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       };
       sections = `
         <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
+        ${viaTrades.conversions.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}${c.capped ? ` (${esc(t("trade_capped"))})` : ""}`).join(" &middot; ")}</div>` : ""}
+        ${Object.keys(viaTrades.uncovered).length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--danger);">${esc(t("pack_cant_cover"))}: ${Object.keys(viaTrades.uncovered).map((n) => `${esc(materialDisplayName(n))} ${qty(viaTrades.uncovered[n])}`).join(" &middot; ")}</div>` : ""}
         <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:6px;">${plans.map(cardHtml).join("")}</div>`;
     }
   }
@@ -5470,6 +5473,36 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
   return { still, trades: res.trades, weeks: res.weeks };
+}
+// When a needed item isn't sold by any assigned pack but can be traded
+// for from something that is, the need is converted into the source item
+// (e.g. 10 Jewel Secrets -> 400 Charm Guides at 40:1), within the weekly
+// trade limits for the weeks left. Returns the adjusted need, the
+// conversions made, and anything that still can't be covered.
+function packNeedViaTrades(calcKey, base, supplied, targetDays) {
+  const need = {};
+  Object.keys(base).forEach((n) => { if (supplied.has(n) && base[n] > 0) need[n] = base[n]; });
+  const conversions = [], uncovered = {};
+  const rates = TRADE_RATES_CACHE ? tradeRatesFor(calcKey) : [];
+  if (!rates.length) return { need, conversions, uncovered };
+  const weeks = tradeWeeksFor(targetDays);
+  Object.keys(base).forEach((n) => {
+    if (supplied.has(n) || base[n] <= 0) return;
+    let left = base[n];
+    // Best rate first (fewest items given per item received).
+    const routes = rates.filter((r) => r.to === n && supplied.has(r.from)).sort((a, b) => a.give / a.get - b.give / b.get);
+    routes.forEach((r) => {
+      if (left <= 0) return;
+      const capLots = r.max > 0 ? r.max * weeks : Infinity;
+      const lots = Math.min(Math.ceil(left / r.get), capLots);
+      if (lots <= 0) return;
+      need[r.from] = (need[r.from] || 0) + lots * r.give;
+      conversions.push({ item: n, qty: Math.min(left, lots * r.get), from: r.from, fromQty: lots * r.give, capped: lots >= capLots });
+      left -= lots * r.get;
+    });
+    if (left > 0) uncovered[n] = left;
+  });
+  return { need, conversions, uncovered };
 }
 // The "Trade items" block under a page's Backpack row.
 async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
@@ -5739,9 +5772,9 @@ async function budgetForPage(calcKey, targetDays) {
   const packGroups = packGroupsFor(tables);
   const supplied = new Set();
   tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
-  const need = {};
-  Object.keys(needStill).forEach((n) => { if (supplied.has(n) && needStill[n] > 0) need[n] = needStill[n]; });
-  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, trades: traded ? traded.trades : [], earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
+  const need = viaTrades.need;
+  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (packGroups.length && Object.keys(need).length) {
     res.earliest = packEarliestDays(packGroups, need);
     if (res.earliest != null) {
@@ -5853,7 +5886,8 @@ async function renderBudgetsPage() {
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
-        ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("trade_after_short"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}</div>
+        ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("trade_after_short"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
+        ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
       ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}
     </div>`;
