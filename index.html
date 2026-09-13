@@ -1469,6 +1469,9 @@ const T = {
   pack_limited_tables: { en: "Limited tables", ar: "الجداول المحدودة", ko: "제한된 표" },
   pack_option: { en: "Option of the pack named in Group (one pack, pick one option per tier)", ar: "خيار من الحزمة المسمّاة في المجموعة (حزمة واحدة، خيار واحد لكل مستوى)", ko: "그룹에 적힌 패키지의 옵션 (한 패키지, 단계마다 옵션 하나 선택)" },
   pack_option_desc: { en: "Use this when one pack offers several reward choices at each tier: make one table per choice, give them the same Group name, and tick this on each. They're then priced as a single ladder that buys once per reset and picks the best option at every tier.", ar: "استخدم هذا عندما تقدّم حزمة واحدة عدة خيارات مكافأة في كل مستوى: أنشئ جدولًا لكل خيار، وامنحها اسم المجموعة نفسه، وفعّل هذا في كل منها. تُسعّر حينها كسلّم واحد يُشترى مرة لكل تكرار ويختار أفضل خيار في كل مستوى.", ko: "한 패키지가 단계마다 여러 보상 선택지를 줄 때 사용하세요: 선택지마다 표를 만들고 같은 그룹 이름을 주고 각각 체크하세요. 그러면 주기당 한 번 구매하며 단계마다 최선의 옵션을 고르는 하나의 사다리로 계산됩니다." },
+  pack_same_as: { en: "Same plan as", ar: "نفس خطة", ko: "다음과 동일한 계획:" },
+  pack_all_option: { en: "all", ar: "الكل", ko: "전부" },
+  pack_by: { en: "by", ar: "بحلول", ko: "까지" },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -3953,6 +3956,7 @@ async function renderPacksPage() {
       // then on. There's no Save button; every edit (typing, adding/removing
       // rows or columns, toggling scale) calls this so nothing is ever lost.
       async function persistTable() {
+        PACK_PLAN_CACHE.clear();
         const payload = { title: t.title.trim() || "Table name here", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
         try {
           if (String(t.id).startsWith("new-")) {
@@ -4960,6 +4964,7 @@ async function ensurePackLinks() {
   return PACK_LINKS;
 }
 async function savePackLinks() {
+  PACK_PLAN_CACHE.clear();
   await saveCalcState("packs_links", PACK_LINKS || {});
 }
 function packLinkFor(tableId) {
@@ -5143,7 +5148,12 @@ function packOptionLadderGroups(optionTables) {
       if (seen.has(key)) return; seen.add(key);
       let price = 0; const gives = {};
       seq.forEach((j, k) => { const o = tierOpts[k][j]; price += o.price; Object.keys(o.gives).forEach((r) => { gives[r] = (gives[r] || 0) + o.gives[r]; }); });
-      let label = `${seq.length === 1 ? "" : t("pack_up_to") + " "}${packFmtMoney(perTable[0][seq.length - 1].price, lead.currency)} · ${seq.map((j) => tierOpts[0][j].tag).join("/")}`;
+      const seqText = (() => {
+        if (seq.every((j) => j === seq[0])) return `${t("pack_all_option")} ${tierOpts[0][seq[0]].tag}`;
+        const counts = []; seq.forEach((j) => { const c = counts.find((x) => x.j === j); if (c) c.n++; else counts.push({ j, n: 1 }); });
+        return counts.map((c) => c.n > 1 ? `${tierOpts[0][c.j].tag} ×${c.n}` : tierOpts[0][c.j].tag).join(" + ");
+      })();
+      let label = `${seq.length === 1 ? "" : t("pack_up_to") + " "}${packFmtMoney(perTable[0][seq.length - 1].price, lead.currency)} · ${seqText}`;
       if (extraLast) {
         const o = tierOpts[tiers - 1][extraLast.j];
         price += extraLast.k * o.price;
@@ -5151,7 +5161,7 @@ function packOptionLadderGroups(optionTables) {
         label += ` + ${extraLast.k}× ${o.tag}`;
       }
       if (!Object.keys(gives).length) return;
-      offers.push({ price, gives, label, tableTitle: title, currency: lead.currency, tiers: seq.length, row: seq.length - 1 });
+      offers.push({ price, gives, label, tableTitle: title, currency: lead.currency, tiers: seq.length, row: seq.length - 1, lead: seq.length === tiers && !extraLast && seq.every((j) => j === seq[0]) });
     };
     seqs.forEach((seq) => build(seq, null));
     // Last tier repeatable (row Max on the last row of any option table):
@@ -5278,19 +5288,25 @@ function packEarliestDays(groups, need, calcKey) {
   // The supply check is an upper bound (a "choose one option" pack can't
   // give every option at once), so a day only counts when a real plan
   // exists for it.
-  const feasible = (d) => packCoveredBy(packMaxSupply(groups, d), need, ctx(d)) && !!packCheapestPlan(groups, need, d, calcKey);
+  const feasible = (d) => packCoveredBy(packMaxSupply(groups, d), need, ctx(d)) && !!packCheapestPlan(groups, need, d, calcKey, true);
   if (feasible(0)) return 0;
   if (!feasible(Infinity)) return null;
   const steps = new Set();
   groups.forEach((g) => { if (typeof g.reset === "number") packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS).forEach((d) => steps.add(d)); });
   if (ctx(0)) for (let w = 1; w * 7 <= PACK_HORIZON_DAYS; w++) steps.add(w * 7); // weekly trade limits open up week by week
   const sorted = [...steps].sort((a, b) => a - b).filter((d) => d > 0);
-  let lo = 0, hi = sorted.length - 1, ans = null;
+  let lo = 0, hi = sorted.length - 1, ans = -1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    if (feasible(sorted[mid])) { ans = sorted[mid]; hi = mid - 1; } else lo = mid + 1;
+    if (feasible(sorted[mid])) { ans = mid; hi = mid - 1; } else lo = mid + 1;
   }
-  return ans;
+  if (ans === -1) return null;
+  // The quick check is a little conservative: let the full planner try
+  // the few steps just before it.
+  for (let i = Math.max(0, ans - 3); i < ans; i++) {
+    if (packCoveredBy(packMaxSupply(groups, sorted[i]), need, ctx(sorted[i])) && packCheapestPlan(groups, need, sorted[i], calcKey)) return sorted[i];
+  }
+  return sorted[ans];
 }
 // Cheapest set of purchases that covers `need`, with each group limited to
 // what's available within `days`. Greedy on "shortfall value removed per
@@ -5298,7 +5314,24 @@ function packEarliestDays(groups, need, calcKey) {
 // missing) with several starting points, then a prune pass that drops
 // anything the rest of the plan already covers. Returns null when it
 // can't be covered.
-function packCheapestPlan(groups, need, days, calcKey) {
+// Results are memoised per (packs, need, days): the page re-runs the
+// planner on every Backpack edit and the Budgets page runs it per page, so
+// repeats are common. Cleared whenever pack tables or links change.
+const PACK_PLAN_CACHE = new Map();
+function packPlanCacheKey(groups, need, days, calcKey, quick) {
+  const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.perCycle}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",")).join(";")).join("#");
+  let h = 0; for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+  return `${h}|${sig.length}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(TRADE_RATES_CACHE.rates[calcKey] || null) : ""}`;
+}
+function packCheapestPlan(groups, need, days, calcKey, quick) {
+  const key = packPlanCacheKey(groups, need, days, calcKey, quick);
+  if (PACK_PLAN_CACHE.has(key)) return PACK_PLAN_CACHE.get(key);
+  const result = packCheapestPlanCompute(groups, need, days, calcKey, quick);
+  if (PACK_PLAN_CACHE.size > 300) PACK_PLAN_CACHE.clear();
+  PACK_PLAN_CACHE.set(key, result);
+  return result;
+}
+function packCheapestPlanCompute(groups, need, days, calcKey, quick) {
   const ctx = packTradeCtx(calcKey, days);
   const wanted = Object.keys(need).filter((n) => need[n] > 0);
   const caps = groups.map((g) => packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle);
@@ -5422,15 +5455,26 @@ function packCheapestPlan(groups, need, days, calcKey) {
   consider(run(null));
   // Also try leading with each offer (bought as much as it's worth) - it
   // catches cases where the greedy first step is a poor start.
-  groups.forEach((g, gi) => g.offers.forEach((o, oi) => {
-    // Option packs can have hundreds of sequences - only lead with the
-    // full-length ones there (the greedy loop still considers every offer).
-    if (g.offers.length > 40 && o.tiers !== Math.max(...g.offers.map((x) => x.tiers || 0))) return;
+  if (!quick) {
     const rem0 = remainingOf([]);
-    const k = bestCount(rem0, o.gives, caps[gi]);
-    if (!k) return;
-    consider(run({ gi, oi, count: k }));
-  }));
+    const sv0 = shortValue(rem0);
+    groups.forEach((g, gi) => {
+      let leads = g.offers.map((o, oi) => ({ o, oi }));
+      if (g.offers.length > 40) {
+        // Option packs can have hundreds of sequences: lead with the
+        // same-option full runs plus the 40 best-value sequences (the
+        // greedy loop itself still considers every offer).
+        const scored = leads.map((x) => { const r1 = { ...rem0 }; Object.keys(x.o.gives).forEach((n) => { r1[n] = (r1[n] || 0) - x.o.gives[n]; }); return { ...x, v: (sv0 - shortValue(r1)) / x.o.price }; })
+          .sort((a, b) => b.v - a.v);
+        leads = [...scored.filter((x) => x.o.lead), ...scored.filter((x) => !x.o.lead).slice(0, 40)];
+      }
+      leads.forEach(({ o, oi }) => {
+        const k = bestCount(rem0, o.gives, caps[gi]);
+        if (!k) return;
+        consider(run({ gi, oi, count: k }));
+      });
+    });
+  }
   // Safety net: buy the most of everything the limits allow, then prune.
   {
     const all = groups.map((g, gi) => {
@@ -5448,6 +5492,31 @@ function packCheapestPlan(groups, need, days, calcKey) {
     return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
+}
+// Plan rows grouped per pack: one line per pack (runs, cost, cadence) and
+// the tier/option breakdown underneath - far easier to read than one line
+// per option sequence.
+function packPlanRowsHtml(plan, resetText) {
+  const qty = (v) => Math.round(v).toLocaleString();
+  const byPack = [];
+  plan.rows.forEach((r) => {
+    let g = byPack.find((x) => x.title === r.title);
+    if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, cycles: r.cycles, perCycle: r.perCycle, lines: [] }; byPack.push(g); }
+    g.count += r.count; g.subtotal += r.subtotal; g.cycles = Math.max(g.cycles, r.cycles);
+    g.lines.push(r);
+  });
+  return byPack.map((g) => `
+    <div style="padding:6px 0; border-top:1px solid var(--line);">
+      <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:11.5px; font-weight:700;">${esc(g.title)}</span>
+        <span style="font-size:11px; color:var(--ice);">&times; ${qty(g.count)}</span>
+        ${typeof g.reset === "number" ? `<span class="meta" style="font-size:10px;">${esc(resetText(g.reset, g.resetDay))} · ${g.cycles} ${esc(t("pack_resets"))}</span>` : ""}
+        <span style="margin-inline-start:auto; font-size:12px; font-weight:700;">${packFmtMoney(g.subtotal, g.currency)}</span>
+      </div>
+      <div style="margin-top:3px; padding-inline-start:10px; font-size:10.5px; line-height:1.55;">
+        ${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div style="display:flex; gap:6px; align-items:baseline;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta" style="margin-inline-start:auto;">${packFmtMoney(r.subtotal, r.currency)}</span></div>`).join("")}
+      </div>
+    </div>`).join("");
 }
 // Among several plans, the cheapest - but a plan that finishes sooner wins
 // when it costs no more than 2% extra (saving pennies over many extra
@@ -5571,11 +5640,22 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     } else {
       plans.push({ key: "fastest", title: t("pack_plan_fastest"), plan: packCheapestPlan(packGroups, need, earliest, calcKey), days: earliest });
       if (targetDays != null) {
-        const byTarget = targetDays >= earliest ? packCheapestPlan(packGroups, need, targetDays, calcKey) : null;
+        const byTarget = targetDays >= earliest ? packPickCheapest([packCheapestPlan(packGroups, need, targetDays, calcKey), plans[0].plan]) : null;
         plans.push({ key: "target", title: t("pack_plan_by_target"), plan: byTarget, unreachable: targetDays < earliest });
       }
-      plans.push({ key: "cheapest", title: t("pack_plan_cheapest"), plan: packPickCheapest([packCheapestPlan(packGroups, need, Infinity, calcKey), ...plans.map((c) => c.plan)]) });
+      // "Cheapest" is bounded to a year after the fastest date - a plan
+      // that drags on for years to save a little isn't a useful answer.
+      const cheapHorizon = earliest + 365;
+      plans.push({ key: "cheapest", title: `${t("pack_plan_cheapest")} (${t("pack_by")} ${fmtDate(cheapHorizon)})`, plan: packPickCheapest([packCheapestPlan(packGroups, need, cheapHorizon, calcKey), ...plans.map((c) => c.plan)]) });
       const cardHtml = (c) => {
+        // Same plan as an earlier card: just say so.
+        const twin = plans.find((x) => x !== c && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days && plans.indexOf(x) < plans.indexOf(c));
+        if (twin) {
+          return `<div class="panel" style="padding:10px; min-width:0; opacity:0.8;">
+            <div style="font-size:12px; font-weight:700;">${esc(c.title)}</div>
+            <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("pack_same_as"))} <b>${esc(twin.title)}</b> — ${packFmtMoney(Math.ceil(c.plan.total), currency, true)} · ${esc(c.plan.days === 0 ? t("pack_ready_now") : fmtDate(c.plan.days))}</div>
+          </div>`;
+        }
         if (!c.plan) {
           return `<div class="panel" style="padding:10px; min-width:0;">
             <div style="font-size:12px; font-weight:700; margin-bottom:6px;">${esc(c.title)}</div>
@@ -5583,16 +5663,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           </div>`;
         }
         const p = c.plan;
-        const rows = p.rows.map((r) => `
-          <div style="padding:5px 0; border-top:1px solid var(--line);">
-            <div style="display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;">
-              <span style="font-size:11px; font-weight:600;">${esc(r.title)}</span>
-              <span class="meta" style="font-size:10px;">${esc(r.label)}</span>
-              <span style="font-size:11px; color:var(--ice);">&times; ${r.count}</span>
-              <span style="margin-inline-start:auto; font-size:11.5px; font-weight:600;">${packFmtMoney(r.subtotal, r.currency)}</span>
-            </div>
-            ${typeof r.reset === "number" ? `<div class="meta" style="font-size:9.5px; margin-top:2px;">${esc(resetText(r.reset, r.resetDay))} · ${Math.min(r.perCycle, r.count)} ${esc(t("pack_per_reset"))} · ${r.cycles} ${esc(t("pack_resets"))}</div>` : ""}
-          </div>`).join("");
+        const rows = packPlanRowsHtml(p, resetText);
         const tradesHtml = (p.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : "";
         const when = p.days === 0 ? t("pack_ready_now") : `${fmtDate(p.days)} · ${p.days} ${t("pack_days_short_long")}`;
         const late = targetDays != null && p.days > targetDays;
@@ -6066,8 +6137,8 @@ async function budgetForPage(calcKey, targetDays) {
     res.earliest = packEarliestDays(packGroups, need, calcKey);
     if (res.earliest != null) {
       res.fastest = packCheapestPlan(packGroups, need, res.earliest, calcKey);
-      if (targetDays != null && targetDays >= res.earliest) res.byTarget = packCheapestPlan(packGroups, need, targetDays, calcKey);
-      res.cheapest = packPickCheapest([packCheapestPlan(packGroups, need, Infinity, calcKey), res.fastest, res.byTarget]);
+      if (targetDays != null && targetDays >= res.earliest) res.byTarget = packPickCheapest([packCheapestPlan(packGroups, need, targetDays, calcKey), res.fastest]);
+      res.cheapest = packPickCheapest([packCheapestPlan(packGroups, need, res.earliest + 365, calcKey), res.fastest, res.byTarget]);
       res.chosen = res.byTarget || res.cheapest;
     }
   }
@@ -6120,11 +6191,13 @@ async function renderBudgetsPage() {
         return `<td style="padding:4px 6px; text-align:center; white-space:nowrap;">${cur == null ? "" : `<span class="meta">${pct(cur)}</span> → <b>${pct(cur + d)}</b> `}<span style="color:var(--good);">+${pct(d)}</span></td>`;
       }).join("")}</tr>`).join("")}</tbody></table></div>`;
   };
-  const packRowsHtml = (plan) => plan.rows.map((r) => `
-    <div style="display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; padding:3px 0; border-top:1px solid var(--line); font-size:11px;">
-      <span style="font-weight:600;">${esc(r.title)}</span><span class="meta">${esc(r.label)}</span><span style="color:var(--ice);">&times; ${r.count}</span>
-      <span style="margin-inline-start:auto; font-weight:600;">${packFmtMoney(r.subtotal, r.currency)}</span>
-    </div>`).join("");
+  const budgetResetText = (r, day) => {
+    if (r === "unlimited") return t("pack_reset_unlimited");
+    if (r === "once") return t("pack_reset_once");
+    const preset = PACK_RESET_PRESETS.find((p) => p.days === r);
+    return preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
+  };
+  const packRowsHtml = (plan) => packPlanRowsHtml(plan, budgetResetText);
   const matsHtml = (needFull, needStill, owned) => Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
     const still = needStill[n] || 0;
     return `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${qty(still)}</b><span class="meta"> / ${qty(needFull[n])}</span></span>`;
