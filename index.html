@@ -1438,6 +1438,17 @@ const T = {
   budgets_plan_detail: { en: "What's being upgraded", ar: "ما الذي تتم ترقيته", ko: "업그레이드 항목" },
   budgets_snapshot_note: { en: "Numbers from the last time that page was opened.", ar: "الأرقام من آخر مرة فُتحت فيها تلك الصفحة.", ko: "해당 페이지를 마지막으로 열었을 때의 수치입니다." },
   budgets_stats_unavailable: { en: "Current dashboard stats couldn't be loaded — showing increases only.", ar: "تعذّر تحميل إحصائيات لوحة التحكم الحالية — تُعرض الزيادات فقط.", ko: "현재 대시보드 스탯을 불러오지 못했습니다 — 증가량만 표시합니다." },
+  trade_title: { en: "Trade items", ar: "مبادلة العناصر", ko: "아이템 교환" },
+  trade_apply: { en: "Use my spare items (trades) in pack cost", ar: "استخدم عناصري الفائضة (المبادلات) في تكلفة الحزم", ko: "여분 아이템(교환)을 패키지 비용에 반영" },
+  trade_rates: { en: "Trade rates", ar: "أسعار المبادلة", ko: "교환 비율" },
+  trade_give: { en: "Give", ar: "أعطِ", ko: "지불" },
+  trade_get: { en: "Get", ar: "احصل على", ko: "획득" },
+  trade_suggest: { en: "Suggested trades from your spare items", ar: "مبادلات مقترحة من عناصرك الفائضة", ko: "여분 아이템으로 제안되는 교환" },
+  trade_none: { en: "No spare items to trade, or nothing missing.", ar: "لا توجد عناصر فائضة للمبادلة، أو لا ينقصك شيء.", ko: "교환할 여분 아이템이 없거나 부족한 항목이 없습니다." },
+  trade_after: { en: "Still short after trades:", ar: "المتبقي بعد المبادلات:", ko: "교환 후 부족분:" },
+  trade_after_short: { en: "after trades", ar: "بعد المبادلات", ko: "교환 후" },
+  trade_calc: { en: "Trade calculator", ar: "حاسبة المبادلة", ko: "교환 계산기" },
+  trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
   pack_per_reset: { en: "per reset", ar: "\u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9" },
   pack_resets: { en: "resets", ar: "\u062a\u0643\u0631\u0627\u0631\u0627\u062a", ko: "\ud68c \uc8fc\uae30" },
@@ -5093,7 +5104,10 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   });
   // "Full amount" is an admin-only view; everyone else always prices what's still needed.
   if (!IS_OWNER) PACK_COST_MODE = "still";
-  const base = PACK_COST_MODE === "full" ? needFull : needStill;
+  // Spare items traded into missing ones first, when trades are switched on.
+  await ensureTradeRates();
+  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned) : null;
+  const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
   const packGroups = packGroupsFor(tables);
   const supplied = new Set();
   tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
@@ -5179,7 +5193,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         </div>`;
       };
       sections = `
-        <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}</div>
+        <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
         <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:6px;">${plans.map(cardHtml).join("")}</div>`;
     }
   }
@@ -5211,6 +5225,193 @@ function packFmtMoney(n, currency, whole) {
   }
 }
 
+
+
+// ============================================================
+// ITEM TRADES
+// Some materials can be traded for each other in game. The trade table
+// (give X of A -> get Y of B) lets the calculator turn spare items into
+// the ones a plan is short of, before pricing packs. Rates are editable
+// by the owner and saved in calc_state so they follow the account.
+// ============================================================
+const TRADE_DEFAULT_RATES = {
+  chief_gear: [
+    { from: "Design Plan", to: "Amber", give: 10, get: 1 },
+    { from: "Design Plan", to: "Polishing Solution", give: 1, get: 3 },
+    { from: "Design Plan", to: "Hardened Alloy", give: 1, get: 300 },
+    { from: "Polishing Solution", to: "Design Plan", give: 10, get: 1 },
+    { from: "Polishing Solution", to: "Hardened Alloy", give: 1, get: 50 },
+    { from: "Hardened Alloy", to: "Design Plan", give: 1000, get: 1 },
+    { from: "Hardened Alloy", to: "Polishing Solution", give: 200, get: 1 },
+  ],
+};
+let TRADE_RATES_CACHE = null;      // { [calcKey]: rates[] } (saved overrides)
+const TRADE_APPLY = {};            // { [calcKey]: true } - use trades in pack cost / budgets
+const TRADE_OPEN = {};             // block collapsed on every load
+async function ensureTradeRates() {
+  if (!TRADE_RATES_CACHE) {
+    const saved = (await loadCalcState("trade_rates")) || {};
+    TRADE_RATES_CACHE = { rates: saved.rates || {}, apply: saved.apply || {} };
+    Object.keys(TRADE_RATES_CACHE.apply).forEach((k) => { TRADE_APPLY[k] = TRADE_RATES_CACHE.apply[k] === true; });
+  }
+  return TRADE_RATES_CACHE;
+}
+function tradeRatesFor(calcKey) {
+  const saved = TRADE_RATES_CACHE && TRADE_RATES_CACHE.rates[calcKey];
+  const rates = Array.isArray(saved) && saved.length ? saved : (TRADE_DEFAULT_RATES[calcKey] || []);
+  return rates.filter((r) => r.from && r.to && r.give > 0 && r.get > 0);
+}
+async function saveTradeSettings() {
+  await ensureTradeRates();
+  TRADE_RATES_CACHE.apply = { ...TRADE_APPLY };
+  await saveCalcState("trade_rates", TRADE_RATES_CACHE);
+}
+// A rough worth for each material (in the cheapest base unit) so that,
+// when several spare items could cover a shortfall, the one that wastes
+// the least value is traded first. Derived from the rates themselves:
+// worth(A) = max over A->B trades of worth(B) * get / give.
+function tradeWorth(rates) {
+  const names = new Set(); rates.forEach((r) => { names.add(r.from); names.add(r.to); });
+  const worth = {}; names.forEach((n) => { worth[n] = 1; });
+  for (let i = 0; i < 6; i++) rates.forEach((r) => { worth[r.from] = Math.max(worth[r.from], worth[r.to] * r.get / r.give); });
+  return worth;
+}
+// Turns spare items into missing ones. `need` and `owned` are per
+// material; returns what's still short after trading, plus the trades.
+// Trades happen in whole lots (give×k -> get×k), never over-trading a
+// spare below what the plan itself needs.
+function applyTrades(rates, need, owned) {
+  const after = {};        // still short
+  const spare = {};        // spare above the plan's own need
+  const names = new Set([...Object.keys(need), ...rates.flatMap((r) => [r.from, r.to])]);
+  names.forEach((n) => {
+    const have = Number(owned[n]) || 0, req = Number(need[n]) || 0;
+    after[n] = Math.max(0, req - have);
+    spare[n] = Math.max(0, have - req);
+  });
+  const worth = tradeWorth(rates);
+  const trades = [];
+  const shortNames = Object.keys(after).filter((n) => after[n] > 0);
+  shortNames.forEach((to) => {
+    // Cheapest (least value lost) sources first.
+    const options = rates.filter((r) => r.to === to && spare[r.from] > 0)
+      .sort((a, b) => (worth[a.from] * a.give / a.get) - (worth[b.from] * b.give / b.get));
+    for (const r of options) {
+      if (after[to] <= 0) break;
+      const lots = Math.min(Math.ceil(after[to] / r.get), Math.floor(spare[r.from] / r.give));
+      if (lots <= 0) continue;
+      spare[r.from] -= lots * r.give;
+      after[to] = Math.max(0, after[to] - lots * r.get);
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots });
+    }
+  });
+  Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
+  return { after, trades, spare };
+}
+// Convenience for the pack-cost block and the Budgets page: "still
+// needed" after trades, when trades are switched on for that page.
+function tradeAdjustedStill(calcKey, needFull, owned) {
+  if (!TRADE_APPLY[calcKey]) return null;
+  const rates = tradeRatesFor(calcKey);
+  if (!rates.length) return null;
+  const res = applyTrades(rates, needFull, owned);
+  const still = {};
+  Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
+  return { still, trades: res.trades };
+}
+// The "Trade items" block under a page's Backpack row.
+async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
+  if (!containerEl) return;
+  await ensureTradeRates();
+  const rates = tradeRatesFor(calcKey);
+  if (!rates.length) { containerEl.innerHTML = ""; return; }
+  const open = TRADE_OPEN[calcKey] === true;
+  const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
+  const head = `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <button type="button" data-tradetoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("trade_title"))}</button>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] ? "checked" : ""} /><span>${esc(t("trade_apply"))}</span></label>
+    </div>`;
+  const wire = () => {
+    containerEl.querySelector("[data-tradetoggle]").addEventListener("click", () => { TRADE_OPEN[calcKey] = !open; rerender(); });
+    containerEl.querySelector("[data-tradeapply]").addEventListener("change", async (e) => {
+      TRADE_APPLY[calcKey] = e.target.checked;
+      await saveTradeSettings();
+      if (onChange) onChange();
+    });
+  };
+  if (!open) {
+    containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}</div>`;
+    wire();
+    return;
+  }
+  const need = {};
+  groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { need[n] = (need[n] || 0) + (Number(q) || 0); }));
+  const res = applyTrades(rates, need, owned);
+  const qty = (v) => Math.round(v).toLocaleString();
+  const names = [...new Set(rates.flatMap((r) => [r.from, r.to]))];
+  const suggestHtml = res.trades.length
+    ? res.trades.map((tr) => `<div style="font-size:11.5px; padding:3px 0; border-top:1px solid var(--line);">${esc(t("trade_give"))} <b>${qty(tr.giveQty)}</b> ${esc(materialDisplayName(tr.from))} → ${esc(t("trade_get"))} <b style="color:var(--good);">${qty(tr.getQty)}</b> ${esc(materialDisplayName(tr.to))}</div>`).join("")
+      + `<div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("trade_after"))} ${Object.keys(need).filter((n) => need[n] > 0).map((n) => `${esc(materialDisplayName(n))} <span style="color:${(res.after[n] || 0) > 0 ? "var(--danger)" : "var(--good)"};">${(res.after[n] || 0) > 0 ? qty(res.after[n]) : "✓"}</span>`).join(" &middot; ")}</div>`
+    : `<div class="meta" style="font-size:11px;">${esc(t("trade_none"))}</div>`;
+  const ratesHtml = `
+    <table style="border-collapse:collapse; font-size:11px; width:100%;">
+      <thead><tr><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_give"))}</th><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_get"))}</th></tr></thead>
+      <tbody>${rates.map((r, i) => `<tr>
+        <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="1" data-traterate="${i}" data-field="give" value="${r.give}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${qty(r.give)}</b>`} ${esc(materialDisplayName(r.from))}</td>
+        <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="1" data-traterate="${i}" data-field="get" value="${r.get}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${qty(r.get)}</b>`} ${esc(materialDisplayName(r.to))}</td>
+      </tr>`).join("")}</tbody>
+    </table>`;
+  const calcHtml = `
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px;">
+      <input type="number" min="0" data-tradeqty value="" placeholder="0" style="width:80px; font-size:12px; padding:4px 6px;" />
+      <select data-tradefrom style="font-size:12px;">${names.filter((n) => rates.some((r) => r.from === n)).map((n) => `<option value="${esc(n)}">${esc(materialDisplayName(n))}</option>`).join("")}</select>
+      <span>→</span>
+      <select data-tradeto style="font-size:12px;"></select>
+      <span data-traderesult style="font-weight:700; color:var(--good);"></span>
+    </div>`;
+  containerEl.innerHTML = `
+    <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
+      ${head}
+      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-top:8px;">
+        <div><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_rates"))}</div>${ratesHtml}</div>
+        <div>
+          <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_suggest"))}</div>${suggestHtml}
+          <div class="meta" style="font-size:10.5px; font-weight:600; margin:12px 0 4px;">${esc(t("trade_calc"))}</div>${calcHtml}
+        </div>
+      </div>
+    </div>`;
+  wire();
+  // Rate edits (owner only).
+  containerEl.querySelectorAll("[data-traterate]").forEach((inp) => inp.addEventListener("change", async () => {
+    const i = Number(inp.dataset.traterate);
+    const edited = rates.map((r) => ({ ...r }));
+    edited[i][inp.dataset.field] = Math.max(1, Math.round(Number(inp.value) || 1));
+    TRADE_RATES_CACHE.rates[calcKey] = edited;
+    await saveTradeSettings();
+    rerender();
+    if (onChange) onChange();
+  }));
+  // Manual converter.
+  const qtyEl = containerEl.querySelector("[data-tradeqty]");
+  const fromEl = containerEl.querySelector("[data-tradefrom]");
+  const toEl = containerEl.querySelector("[data-tradeto]");
+  const outEl = containerEl.querySelector("[data-traderesult]");
+  const fillTo = () => {
+    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(materialDisplayName(r.to))}</option>`).join("");
+  };
+  const compute = () => {
+    const r = rates.find((x) => x.from === fromEl.value && x.to === toEl.value);
+    const q = Number(qtyEl.value) || 0;
+    if (!r || q <= 0) { outEl.textContent = ""; return; }
+    const lots = Math.floor(q / r.give);
+    outEl.textContent = `${(lots * r.get).toLocaleString()} ${materialDisplayName(r.to)}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${materialDisplayName(r.from)} ${t("trade_left_over")})` : "");
+  };
+  fillTo();
+  fromEl.addEventListener("change", () => { fillTo(); compute(); });
+  toEl.addEventListener("change", compute);
+  qtyEl.addEventListener("input", compute);
+}
 
 // ============================================================
 // BUDGETS PAGE
@@ -5367,12 +5568,15 @@ async function budgetForPage(calcKey, targetDays) {
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { needFull[n] = (needFull[n] || 0) + (Number(q) || 0); }));
   const needStill = {};
   Object.keys(needFull).forEach((n) => { needStill[n] = Math.max(0, needFull[n] - (Number(owned[n]) || 0)); });
+  await ensureTradeRates();
+  const traded = tradeAdjustedStill(calcKey, needFull, owned);
+  if (traded) Object.keys(needStill).forEach((n) => { needStill[n] = traded.still[n] || 0; });
   const packGroups = packGroupsFor(tables);
   const supplied = new Set();
   tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
   const need = {};
   Object.keys(needStill).forEach((n) => { if (supplied.has(n) && needStill[n] > 0) need[n] = needStill[n]; });
-  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, trades: traded ? traded.trades : [], earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (packGroups.length && Object.keys(need).length) {
     res.earliest = packEarliestDays(packGroups, need);
     if (res.earliest != null) {
@@ -5482,7 +5686,8 @@ async function renderBudgetsPage() {
       ${head}
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
-      <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}</div>
+      <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
+        ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("trade_after_short"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
       ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}
     </div>`;
@@ -6070,9 +6275,13 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
 
   el.innerHTML = `
     <div id="${rowsId}" class="mat-row">${matEntries.map(materialCellHtml).join("")}</div>
+    <div id="${rowsId}_trades"></div>
     <div id="${rowsId}_packs"></div>
   `;
   const packBox = document.getElementById(`${rowsId}_packs`);
+  const tradeBox = document.getElementById(`${rowsId}_trades`);
+  const refreshPacks = () => renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
+  renderTradeBlock(tradeBox, calcKey || "chief_gear", groups, owned, refreshPacks);
   renderPackCostBlock(packBox, calcKey || "chief_gear", groups, owned);
   recordBudgetNeeds(calcKey || "chief_gear", groups);
 
@@ -6097,6 +6306,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
           statusDiv.textContent = statusText;
         }
       });
+      renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, owned, refreshPacks);
       renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
     });
   });
