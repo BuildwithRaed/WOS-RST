@@ -1385,6 +1385,7 @@ const T = {
   pack_ladder_short: { en: "Still short:", ar: "\u0645\u0627 \u0632\u0627\u0644 \u0646\u0627\u0642\u0635\u0627\u064b:", ko: "\uc544\uc9c1 \ubd80\uc871:" },
   pack_custom_name: { en: "Custom name\u2026", ar: "\u0627\u0633\u0645 \u0645\u062e\u0635\u0651\u0635\u2026", ko: "\uc9c1\uc811 \uc785\ub825\u2026" },
   pack_custom_name_prompt: { en: "Column name:", ar: "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u0648\u062f:", ko: "\uc5f4 \uc774\ub984:" },
+  pack_currency: { en: "Currency", ar: "\u0627\u0644\u0639\u0645\u0644\u0629", ko: "\ud1b5\ud654" },
   quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
 function t(key) {
@@ -3562,7 +3563,7 @@ async function renderPacksPage() {
                   .map(
                     (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
                       <select data-pt-colpick data-col="${ci}" title="${esc(c)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
-                        ${packColumnOptionsHtml(c)}
+                        ${packColumnOptionsHtml(c, packLinkFor(t.id).currency)}
                       </select>
                       <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
@@ -3607,11 +3608,14 @@ async function renderPacksPage() {
   // column holds the price, and what each other column grants.
   // Price, Gems, every trackable resource, then whatever custom name this
   // column already had, so nothing a user typed before is lost.
-  function packColumnOptionsHtml(current) {
+  function packColumnOptionsHtml(current, currencyCode) {
     const cur = String(current || "").trim();
-    const fixed = ["$", "Gems"];
+    const priceSymbol = packCurrencySymbol(currencyCode);
+    const fixed = [priceSymbol, "Gems"];
     const known = [...fixed, ...PACK_RESOURCE_NAMES];
     const label = (n) => (fixed.includes(n) ? n : materialDisplayName(n));
+    // A price column keeps its place in the list whatever symbol it holds.
+    if (cur && packIsNonResourceColumn(cur) && !known.some((n) => n.toLowerCase() === cur.toLowerCase())) known.unshift(cur);
     const isKnown = known.some((n) => n.toLowerCase() === cur.toLowerCase());
     return (
       known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(label(n))}</option>`).join("") +
@@ -3641,6 +3645,10 @@ async function renderPacksPage() {
         <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
           <span class="meta" style="font-size:11px;">${esc(t("pack_price_column"))}</span>
           <select data-packprice style="width:auto; min-width:90px;">${colOpts(link.priceCol)}</select>
+          <span class="meta" style="font-size:11px;">${esc(t("pack_currency"))}</span>
+          <select data-packcurrency style="width:auto; min-width:110px;">
+            ${PACK_CURRENCIES.map((c) => `<option value="${esc(c.code)}" ${c.code === link.currency ? "selected" : ""}>${esc(c.symbol)} ${esc(c.code)}</option>`).join("")}
+          </select>
         </div>
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
           <input type="checkbox" data-packsequential ${link.sequential ? "checked" : ""} style="flex-shrink:0;" />
@@ -3679,6 +3687,30 @@ async function renderPacksPage() {
           const sum = box.querySelector("summary");
           if (sum) sum.textContent = t("pack_used_for") + (l.pages.length ? ` (${l.pages.length})` : "");
         });
+      });
+      const curSel = box.querySelector("[data-packcurrency]");
+      if (curSel) curSel.addEventListener("change", async () => {
+        const l = current();
+        l.currency = curSel.value;
+        await savePackLinks();
+        // Retitle the price column with the new symbol, so the table itself
+        // shows the currency you're buying in.
+        const tbIdx = tables.findIndex((x) => String(x.id) === String(id));
+        if (tbIdx !== -1) {
+          const tb = tables[tbIdx];
+          const ci = typeof l.priceCol === "number" ? l.priceCol : 0;
+          if (tb.columns && tb.columns[ci] != null && packIsNonResourceColumn(tb.columns[ci])) {
+            tb.columns[ci] = packCurrencySymbol(curSel.value);
+            const payload = { title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tbIdx, scale_enabled: tb.scale_enabled !== false, updated_at: new Date().toISOString() };
+            try {
+              if (!String(tb.id).startsWith("new-")) await sb(`pack_tables?id=eq.${tb.id}`, { method: "PATCH", body: JSON.stringify(payload) });
+            } catch (err) {}
+            PACK_TABLES_CACHE = null;
+          }
+        }
+        renderAll();
+        const reopened = listEl.querySelector(`[data-packlink="${CSS.escape(id)}"]`);
+        if (reopened) reopened.open = true;
       });
       const seqCb = box.querySelector("[data-packsequential]");
       if (seqCb) seqCb.addEventListener("change", async () => {
@@ -3788,7 +3820,7 @@ async function renderPacksPage() {
           await ensurePackLinks();
           const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
           l.cols = l.cols || {};
-          if (value === "$") l.priceCol = ci;
+          if (packIsNonResourceColumn(value) && value.toLowerCase() !== "gems") l.priceCol = ci;
           // Any earlier manual choice for this column is replaced by the name.
           delete l.cols[ci];
           await savePackLinks();
@@ -4539,9 +4571,27 @@ const PACK_RESOURCE_NAMES = [
 ];
 // Columns named "Gems" (or the price column) never grant a trackable
 // resource, so they're skipped everywhere a resource is chosen.
-const PACK_NON_RESOURCE_COLS = new Set(["gems", "gem", "$", "price", "amount", "usd"]);
+// Each pack table prices in whatever currency the user buys in.
+const PACK_CURRENCIES = [
+  { code: "USD", symbol: "$" }, { code: "EUR", symbol: "\u20AC" }, { code: "GBP", symbol: "\u00A3" },
+  { code: "SAR", symbol: "\uFDFC" }, { code: "AED", symbol: "\u062F.\u0625" }, { code: "QAR", symbol: "\u0631.\u0642" },
+  { code: "KWD", symbol: "\u062F.\u0643" }, { code: "BHD", symbol: "\u062F.\u0628" }, { code: "OMR", symbol: "\u0631.\u0639" },
+  { code: "EGP", symbol: "\u00A3" }, { code: "TRY", symbol: "\u20BA" }, { code: "INR", symbol: "\u20B9" },
+  { code: "JPY", symbol: "\u00A5" }, { code: "CNY", symbol: "\u00A5" }, { code: "KRW", symbol: "\u20A9" },
+  { code: "CAD", symbol: "C$" }, { code: "AUD", symbol: "A$" }, { code: "BRL", symbol: "R$" },
+  { code: "RUB", symbol: "\u20BD" }, { code: "PHP", symbol: "\u20B1" }, { code: "IDR", symbol: "Rp" },
+  { code: "MYR", symbol: "RM" },
+];
+function packCurrencySymbol(code) {
+  const c = PACK_CURRENCIES.find((x) => x.code === code);
+  return c ? c.symbol : "$";
+}
+const PACK_NON_RESOURCE_COLS = new Set(["gems", "gem", "$", "price", "amount"]);
 function packIsNonResourceColumn(name) {
-  return PACK_NON_RESOURCE_COLS.has(String(name || "").trim().toLowerCase());
+  const v = String(name || "").trim().toLowerCase();
+  if (PACK_NON_RESOURCE_COLS.has(v)) return true;
+  // Any currency code or symbol also means "this is the price column".
+  return PACK_CURRENCIES.some((c) => c.code.toLowerCase() === v || c.symbol.toLowerCase() === v);
 }
 // Matches a column's name to a resource, in English or in the current
 // language, so naming a column "FC Shard" assigns it in one step.
@@ -4587,6 +4637,7 @@ function packLinkFor(tableId) {
     // Most packs are a ladder: you can't buy the $49.99 tier until you've
     // bought the cheaper ones. Off means any tier can be bought on its own.
     sequential: l.sequential === true,
+    currency: typeof l.currency === "string" && l.currency ? l.currency : "USD",
   };
 }
 async function ensurePackTables() {
@@ -4617,7 +4668,7 @@ function packOffersFor(table) {
         const qty = packParseNum(cells[i]);
         if (qty > 0) gives[cols[i]] = (gives[cols[i]] || 0) + qty;
       });
-      const label = price > 0 ? packFmtMoney(price) : `#${ri + 1}`;
+      const label = price > 0 ? packFmtMoney(price, link.currency) : `#${ri + 1}`;
       return { price, gives, label };
     })
     .filter((o) => o.price > 0 && Object.keys(o.gives).length);
@@ -4729,7 +4780,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       const shortText = Object.keys(ladder.short)
         .map((n) => `${esc(materialDisplayName(n))} ${Math.round(ladder.short[n]).toLocaleString()}`)
         .join(" &middot; ");
-      const body = `<div class="val" style="font-size:16px;">${packFmtMoney(ladder.total)}</div>
+      const body = `<div class="val" style="font-size:16px;">${packFmtMoney(ladder.total, link.currency)}</div>
         <div class="meta" style="font-size:10px;">${ladder.bought.map((l) => esc(l)).join(" \u2192 ")}</div>
         ${ladder.complete ? "" : `<div class="meta" style="font-size:10px; color:var(--danger); margin-top:3px;">${esc(t("pack_ladder_short"))} ${shortText}</div>`}`;
       return `<div style="margin-top:10px;">
@@ -4743,11 +4794,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const repeat = packRepeatPlan(offers, need);
     const mix = packMixPlan(offers, need);
     const repeatBody = repeat
-      ? `<div class="val" style="font-size:16px;">${packFmtMoney(repeat.total)}</div>
+      ? `<div class="val" style="font-size:16px;">${packFmtMoney(repeat.total, link.currency)}</div>
          <div class="meta" style="font-size:10px;">${repeat.count} &times; ${esc(repeat.label)}</div>`
       : `<div class="meta" style="font-size:11px;">${esc(t("pack_no_single_pack"))}</div>`;
     const mixBody = mix
-      ? `<div class="val" style="font-size:16px;">${packFmtMoney(mix.total)}</div>
+      ? `<div class="val" style="font-size:16px;">${packFmtMoney(mix.total, link.currency)}</div>
          <div class="meta" style="font-size:10px;">${mix.items.map((i) => `${i.count} &times; ${esc(i.label)}`).join(", ")}</div>`
       : `<div class="meta" style="font-size:11px;">${esc(t("pack_cant_cover"))}</div>`;
     return `<div style="margin-top:10px;">
@@ -4778,8 +4829,13 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     });
   });
 }
-function packFmtMoney(n) {
-  return "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function packFmtMoney(n, currency) {
+  const code = currency || "USD";
+  try {
+    return new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, maximumFractionDigits: 2 }).format(n);
+  } catch (e) {
+    return packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 }
 
 // ---- Shared "one troop at a time, swipe to switch" helper ----
