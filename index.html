@@ -1451,6 +1451,8 @@ const T = {
   trade_trades: { en: "trades", ar: "مبادلة", ko: "회" },
   trade_capped: { en: "weekly limit reached", ar: "تم بلوغ الحد الأسبوعي", ko: "주간 한도 도달" },
   trade_this_week: { en: "within this week's limits; pack cost and Budgets count the weeks until the target date", ar: "ضمن حدود هذا الأسبوع؛ تكلفة الحزم والميزانيات تحتسب الأسابيع حتى تاريخ الهدف", ko: "이번 주 한도 기준; 패키지 비용과 예산은 목표일까지의 주 수를 반영" },
+  trade_free: { en: "Free from your spare items (trade, no purchase)", ar: "مجانًا من عناصرك الفائضة (مبادلة بدون شراء)", ko: "여분 아이템으로 무료 (교환, 구매 없음)" },
+  trade_then: { en: "Then trade", ar: "ثم بادل", ko: "그다음 교환" },
   trade_via_packs: { en: "Bought as packs then traded", ar: "تُشترى كحزم ثم تُبادل", ko: "패키지로 구매 후 교환" },
   trade_calc: { en: "Trade calculator", ar: "حاسبة المبادلة", ko: "교환 계산기" },
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
@@ -5044,28 +5046,89 @@ function packMaxSupply(groups, days) {
   });
   return supply;
 }
-function packCoveredBy(supply, need) {
-  return Object.keys(need).every((n) => (supply[n] || 0) >= need[n]);
+// ---- Trades inside the planner ----
+// A plan can buy items that trade into what's needed (e.g. Charm Guides
+// at 40:1 into Jewel Secrets). `ctx` carries the page's trade rates, the
+// weeks available for weekly limits, and its priority list. It's null
+// when the page has no trades.
+function packTradeCtx(calcKey, days) {
+  const rates = TRADE_RATES_CACHE ? tradeRatesFor(calcKey) : [];
+  if (!rates.length) return null;
+  const weeks = tradeWeeksFor(Number.isFinite(days) ? days : PACK_HORIZON_DAYS);
+  const worth = tradeWorth(rates);
+  return { rates, weeks, worth, priority: TRADE_TARGET_PRIORITY[calcKey] || [] };
+}
+// Given `remaining` = need minus what's bought (negative = spare), trades
+// spares into shortfalls within the weekly limits. Returns what's still
+// short, plus the trades made and the weeks the limits needed.
+function packShortAfterTrades(remaining, ctx) {
+  const short = {}, spare = {};
+  Object.keys(remaining).forEach((n) => { if (remaining[n] > 1e-9) short[n] = remaining[n]; else if (remaining[n] < -1e-9) spare[n] = -remaining[n]; });
+  const trades = [];
+  if (!ctx || !Object.keys(short).length) return { short, trades, weeksNeeded: 0 };
+  const used = new Map();
+  const pr = ctx.priority;
+  const sourcesOf = (n) => ctx.rates.filter((r) => r.to === n).length;
+  const order = Object.keys(short).sort((a, b) => {
+    const pa = pr.indexOf(a), pb = pr.indexOf(b);
+    if (pa !== -1 || pb !== -1) return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
+    return sourcesOf(a) - sourcesOf(b);
+  });
+  let weeksNeeded = 0;
+  order.forEach((to) => {
+    const routes = ctx.rates.filter((r) => r.to === to && spare[r.from] > 0)
+      .sort((a, b) => (ctx.worth[a.from] * a.give / a.get) - (ctx.worth[b.from] * b.give / b.get));
+    for (const r of routes) {
+      if (!(short[to] > 1e-9)) break;
+      const capLeft = r.max > 0 ? r.max * ctx.weeks - (used.get(r) || 0) : Infinity;
+      const lots = Math.min(Math.ceil(short[to] / r.get), Math.floor(spare[r.from] / r.give), capLeft);
+      if (lots <= 0) continue;
+      used.set(r, (used.get(r) || 0) + lots);
+      if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
+      spare[r.from] -= lots * r.give;
+      short[to] = Math.max(0, short[to] - lots * r.get);
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots });
+    }
+    if (short[to] <= 1e-9) delete short[to];
+  });
+  return { short, trades, weeksNeeded };
+}
+function packCoveredBy(supply, need, ctx) {
+  const remaining = {};
+  new Set([...Object.keys(need), ...Object.keys(supply)]).forEach((n) => { remaining[n] = (need[n] || 0) - (supply[n] || 0); });
+  return !Object.keys(packShortAfterTrades(remaining, ctx).short).length;
 }
 // Earliest day everything can be covered, or null if it never can be.
-function packEarliestDays(groups, need) {
-  if (packCoveredBy(packMaxSupply(groups, 0), need)) return 0;
-  if (!packCoveredBy(packMaxSupply(groups, Infinity), need)) return null;
+function packEarliestDays(groups, need, calcKey) {
+  const ctx = (d) => packTradeCtx(calcKey, d);
+  if (packCoveredBy(packMaxSupply(groups, 0), need, ctx(0))) return 0;
+  if (!packCoveredBy(packMaxSupply(groups, Infinity), need, ctx(Infinity))) return null;
   const steps = new Set();
   groups.forEach((g) => { if (typeof g.reset === "number") packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS).forEach((d) => steps.add(d)); });
-  for (const d of [...steps].sort((a, b) => a - b)) if (packCoveredBy(packMaxSupply(groups, d), need)) return d;
+  if (ctx(0)) for (let w = 1; w * 7 <= PACK_HORIZON_DAYS; w++) steps.add(w * 7); // weekly trade limits open up week by week
+  for (const d of [...steps].sort((a, b) => a - b)) if (packCoveredBy(packMaxSupply(groups, d), need, ctx(d))) return d;
   return null;
 }
 // Cheapest set of purchases that covers `need`, with each group limited to
-// what's available within `days`. Greedy on "useful units per price" with
-// several starting points, then a prune pass that drops anything the rest
-// of the plan already covers. Returns null when it can't be covered.
-function packCheapestPlan(groups, need, days) {
+// what's available within `days`. Greedy on "shortfall value removed per
+// price" (so buying a tradeable item counts when it trades into what's
+// missing) with several starting points, then a prune pass that drops
+// anything the rest of the plan already covers. Returns null when it
+// can't be covered.
+function packCheapestPlan(groups, need, days, calcKey) {
+  const ctx = packTradeCtx(calcKey, days);
   const wanted = Object.keys(need).filter((n) => need[n] > 0);
   const caps = groups.map((g) => packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle);
-  if (!packCoveredBy(packMaxSupply(groups, days), need)) return null;
+  if (!packCoveredBy(packMaxSupply(groups, days), need, ctx)) return null;
+  const worthOf = (n) => (ctx && ctx.worth[n]) || 1;
 
-  const covered = (ps) => wanted.every((n) => ps.reduce((s, p) => s + p.count * (groups[p.gi].offers[p.oi].gives[n] || 0), 0) >= need[n]);
+  const remainingOf = (ps) => {
+    const rem = {}; wanted.forEach((n) => { rem[n] = need[n]; });
+    ps.forEach((p) => { if (p.count > 0) Object.entries(groups[p.gi].offers[p.oi].gives).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - p.count * v; }); });
+    return rem;
+  };
+  const shortValue = (rem) => { const s = packShortAfterTrades(rem, ctx).short; return Object.keys(s).reduce((a, n) => a + s[n] * worthOf(n), 0); };
+  const covered = (ps) => !Object.keys(packShortAfterTrades(remainingOf(ps), ctx).short).length;
   const totalOf = (ps) => ps.reduce((s, p) => s + p.count * groups[p.gi].offers[p.oi].price, 0);
   // Prune: drop purchases (dearest first) the rest already covers, then
   // shorten ladder prefixes as far as coverage allows.
@@ -5079,7 +5142,6 @@ function packCheapestPlan(groups, need, days) {
         if (covered(test)) { p.oi = oj; break; }
       }
     });
-    // Merge picks that ended up on the same offer.
     const merged = [];
     picks.filter((p) => p.count > 0).forEach((p) => {
       const m = merged.find((x) => x.gi === p.gi && x.oi === p.oi);
@@ -5087,27 +5149,39 @@ function packCheapestPlan(groups, need, days) {
     });
     return { picks: merged, total: totalOf(merged) };
   };
+  // Smallest k (<= cap) at which adding k units of `gives` stops reducing the shortfall.
+  const bestCount = (rem, gives, cap) => {
+    const sv = (k) => { const r = { ...rem }; Object.keys(gives).forEach((n) => { r[n] = (r[n] || 0) - k * gives[n]; }); return shortValue(r); };
+    const base = sv(0);
+    let hi = 1;
+    while (hi < cap && sv(hi) > 1e-9 && sv(hi) < sv(Math.floor(hi / 2)) - 1e-9 && hi < 1e6) hi *= 2;
+    hi = Math.min(hi, cap);
+    // Binary search for the first k where sv(k) == sv(hi) (no further gain).
+    const target = sv(hi);
+    let lo = 1;
+    while (lo < hi) { const mid = Math.floor((lo + hi) / 2); if (sv(mid) <= target + 1e-9) hi = mid; else lo = mid + 1; }
+    return base - sv(lo) > 1e-9 ? lo : 0;
+  };
   const run = (firstPick) => {
-    const remaining = {}; wanted.forEach((n) => { remaining[n] = need[n]; });
-    const used = groups.map(() => 0);                      // buys per group
-    const picks = [];                                      // { gi, oi, count }
-    const applyGives = (gives, count) => Object.keys(gives).forEach((n) => { if (remaining[n] != null) remaining[n] -= count * gives[n]; });
+    const used = groups.map(() => 0);
+    const picks = [];
     const add = (gi, oi, count) => {
       used[gi] += count;
       const p = picks.find((x) => x.gi === gi && x.oi === oi);
       if (p) p.count += count; else picks.push({ gi, oi, count });
-      applyGives(groups[gi].offers[oi].gives, count);
     };
-    const usefulOf = (gives) => wanted.reduce((s, n) => s + Math.min(Math.max(0, remaining[n]), gives[n] || 0), 0);
     if (firstPick) add(firstPick.gi, firstPick.oi, firstPick.count);
     let guard = 0;
-    while (wanted.some((n) => remaining[n] > 0) && guard++ < 5000) {
+    while (!covered(picks) && guard++ < 5000) {
+      const rem = remainingOf(picks);
+      const svNow = shortValue(rem);
       let best = null;
       groups.forEach((g, gi) => {
         if (used[gi] < caps[gi]) {
           g.offers.forEach((o, oi) => {
-            const useful = usefulOf(o.gives);
-            if (useful <= 0) return;
+            const r1 = { ...rem }; Object.keys(o.gives).forEach((n) => { r1[n] = (r1[n] || 0) - o.gives[n]; });
+            const useful = svNow - shortValue(r1);
+            if (useful <= 1e-9) return;
             const value = useful / o.price;
             if (!best || value > best.value) best = { kind: "buy", gi, oi, value };
           });
@@ -5119,9 +5193,10 @@ function packCheapestPlan(groups, need, days) {
           if (p.gi !== gi || p.count <= 0) return;
           for (let oj = p.oi + 1; oj < g.offers.length; oj++) {
             const extra = {}; Object.keys(g.offers[oj].gives).forEach((n) => { extra[n] = g.offers[oj].gives[n] - (g.offers[p.oi].gives[n] || 0); });
-            const useful = usefulOf(extra);
+            const r1 = { ...rem }; Object.keys(extra).forEach((n) => { r1[n] = (r1[n] || 0) - extra[n]; });
+            const useful = svNow - shortValue(r1);
             const dp = g.offers[oj].price - g.offers[p.oi].price;
-            if (useful <= 0 || dp <= 0) continue;
+            if (useful <= 1e-9 || dp <= 0) continue;
             const value = useful / dp;
             if (!best || value > best.value) best = { kind: "upgrade", gi, pick: p, oj, extra, value };
           }
@@ -5130,19 +5205,16 @@ function packCheapestPlan(groups, need, days) {
       if (!best) return null;
       if (best.kind === "buy") {
         const o = groups[best.gi].offers[best.oi];
-        const want = Math.max(...wanted.filter((n) => remaining[n] > 0 && o.gives[n] > 0).map((n) => Math.ceil(remaining[n] / o.gives[n])));
-        add(best.gi, best.oi, Math.max(1, Math.min(want, caps[best.gi] - used[best.gi])));
+        const k = bestCount(rem, o.gives, caps[best.gi] - used[best.gi]);
+        add(best.gi, best.oi, Math.max(1, k));
       } else {
-        // Move one run of the ladder from the shorter prefix to the longer one.
-        const want = Math.max(...wanted.filter((n) => remaining[n] > 0 && best.extra[n] > 0).map((n) => Math.ceil(remaining[n] / best.extra[n])));
-        const moved = Math.max(1, Math.min(want, best.pick.count));
+        const moved = Math.max(1, Math.min(bestCount(rem, best.extra, best.pick.count), best.pick.count));
         best.pick.count -= moved;
         const p = picks.find((x) => x.gi === best.gi && x.oi === best.oj);
         if (p) p.count += moved; else picks.push({ gi: best.gi, oi: best.oj, count: moved });
-        applyGives(best.extra, moved);
       }
     }
-    if (wanted.some((n) => remaining[n] > 0)) return null;
+    if (!covered(picks)) return null;
     return prune(picks.filter((p) => p.count > 0));
   };
 
@@ -5150,26 +5222,29 @@ function packCheapestPlan(groups, need, days) {
   // Also try leading with each offer (bought as much as it's worth) - it
   // catches cases where the greedy first step is a poor start.
   groups.forEach((g, gi) => g.offers.forEach((o, oi) => {
-    const want = Math.max(0, ...wanted.filter((n) => o.gives[n] > 0).map((n) => Math.ceil(need[n] / o.gives[n])));
-    if (!want) return;
-    const r = run({ gi, oi, count: Math.min(want, caps[gi]) });
+    const rem0 = remainingOf([]);
+    const k = bestCount(rem0, o.gives, caps[gi]);
+    if (!k) return;
+    const r = run({ gi, oi, count: k });
     if (r && (!best || r.total < best.total)) best = r;
   }));
   // Safety net: buy the most of everything the limits allow, then prune.
-  // Always covers when the supply check passed, so a plan is never missed.
   {
     const all = groups.map((g, gi) => {
       const top = g.offers[g.offers.length - 1];
-      const enough = Math.max(0, ...wanted.filter((n) => top.gives[n] > 0).map((n) => Math.ceil(need[n] / top.gives[n])));
-      return { gi, oi: g.offers.length - 1, count: Math.min(caps[gi], enough) };
+      const k = bestCount(remainingOf([]), top.gives, caps[gi]);
+      return { gi, oi: g.offers.length - 1, count: Math.min(caps[gi], Math.max(k, 0)) };
     });
     if (covered(all)) { const r = prune(all); if (r && (!best || r.total < best.total)) best = r; }
   }
   if (!best) return null;
-  // How long the plan takes: the slowest group decides.
+  // How long the plan takes: the slowest group decides; weekly trade
+  // limits can add weeks too.
   const perGroup = groups.map(() => 0);
   best.picks.forEach((p) => { perGroup[p.gi] += p.count; });
-  best.days = Math.max(0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(perGroup[gi] / g.perCycle)) : 0));
+  const tr = packShortAfterTrades(remainingOf(best.picks), ctx);
+  best.trades = tr.trades;
+  best.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(perGroup[gi] / g.perCycle)) : 0));
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
@@ -5269,9 +5344,10 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!packGroups.length) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
   } else if (!Object.keys(need).length) {
-    sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>`;
+    sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
+      ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:4px 0; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${Math.round(x.giveQty).toLocaleString()} ${esc(materialDisplayName(x.from))} → ${Math.round(x.getQty).toLocaleString()} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}`;
   } else {
-    const earliest = packEarliestDays(packGroups, need);
+    const earliest = packEarliestDays(packGroups, need, calcKey);
     const plans = [];
     if (earliest == null) {
       const short = {};
@@ -5279,12 +5355,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       Object.keys(need).forEach((n) => { if ((sup[n] || 0) < need[n]) short[n] = need[n] - (sup[n] || 0); });
       sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))} — ${esc(t("pack_ladder_short"))} ${Object.keys(short).map((n) => `${esc(materialDisplayName(n))} ${qty(short[n])}`).join(" &middot; ")}</div>`;
     } else {
-      plans.push({ key: "fastest", title: t("pack_plan_fastest"), plan: packCheapestPlan(packGroups, need, earliest), days: earliest });
+      plans.push({ key: "fastest", title: t("pack_plan_fastest"), plan: packCheapestPlan(packGroups, need, earliest, calcKey), days: earliest });
       if (targetDays != null) {
-        const byTarget = targetDays >= earliest ? packCheapestPlan(packGroups, need, targetDays) : null;
+        const byTarget = targetDays >= earliest ? packCheapestPlan(packGroups, need, targetDays, calcKey) : null;
         plans.push({ key: "target", title: t("pack_plan_by_target"), plan: byTarget, unreachable: targetDays < earliest });
       }
-      plans.push({ key: "cheapest", title: t("pack_plan_cheapest"), plan: packCheapestPlan(packGroups, need, Infinity) });
+      plans.push({ key: "cheapest", title: t("pack_plan_cheapest"), plan: packCheapestPlan(packGroups, need, Infinity, calcKey) });
       const cardHtml = (c) => {
         if (!c.plan) {
           return `<div class="panel" style="padding:10px; min-width:0;">
@@ -5303,6 +5379,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
             </div>
             ${typeof r.reset === "number" ? `<div class="meta" style="font-size:9.5px; margin-top:2px;">${esc(resetText(r.reset, r.resetDay))} · ${Math.min(r.perCycle, r.count)} ${esc(t("pack_per_reset"))} · ${r.cycles} ${esc(t("pack_resets"))}</div>` : ""}
           </div>`).join("");
+        const tradesHtml = (p.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : "";
         const when = p.days === 0 ? t("pack_ready_now") : `${fmtDate(p.days)} · ${p.days} ${t("pack_days_short_long")}`;
         const late = targetDays != null && p.days > targetDays;
         return `<div class="panel" style="padding:10px; min-width:0; ${c.key === "target" ? "border-color:var(--ice);" : ""}">
@@ -5312,11 +5389,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
             <span class="meta" style="font-size:10.5px; color:${late ? "var(--danger)" : "var(--good)"};">${esc(when)}</span>
           </div>
           ${rows}
+          ${tradesHtml}
         </div>`;
       };
       sections = `
         <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
-        ${viaTrades.conversions.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}${c.capped ? ` (${esc(t("trade_capped"))})` : ""}`).join(" &middot; ")}</div>` : ""}
+        ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}
         ${Object.keys(viaTrades.uncovered).length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--danger);">${esc(t("pack_cant_cover"))}: ${Object.keys(viaTrades.uncovered).map((n) => `${esc(materialDisplayName(n))} ${qty(viaTrades.uncovered[n])}`).join(" &middot; ")}</div>` : ""}
         <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:6px;">${plans.map(cardHtml).join("")}</div>`;
     }
@@ -5391,7 +5469,7 @@ async function ensureTradeRates() {
   if (!TRADE_RATES_CACHE) {
     const saved = (await loadCalcState("trade_rates")) || {};
     TRADE_RATES_CACHE = { rates: saved.rates || {}, apply: saved.apply || {} };
-    Object.keys(TRADE_RATES_CACHE.apply).forEach((k) => { TRADE_APPLY[k] = TRADE_RATES_CACHE.apply[k] === true; });
+    Object.keys(TRADE_RATES_CACHE.apply).forEach((k) => { TRADE_APPLY[k] = TRADE_RATES_CACHE.apply[k] !== false; });
   }
   return TRADE_RATES_CACHE;
 }
@@ -5473,7 +5551,7 @@ function tradeWeeksFor(targetDays) {
   return targetDays != null && targetDays > 0 ? Math.floor(targetDays / 7) + 1 : 1;
 }
 function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
-  if (!TRADE_APPLY[calcKey]) return null;
+  if (TRADE_APPLY[calcKey] === false) return null; // on by default
   const rates = tradeRatesFor(calcKey);
   if (!rates.length) return null;
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
@@ -5487,29 +5565,17 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
 // trade limits for the weeks left. Returns the adjusted need, the
 // conversions made, and anything that still can't be covered.
 function packNeedViaTrades(calcKey, base, supplied, targetDays) {
-  const need = {};
-  Object.keys(base).forEach((n) => { if (supplied.has(n) && base[n] > 0) need[n] = base[n]; });
-  const conversions = [], uncovered = {};
+  // Items the packs sell directly, plus items that can be traded for from
+  // something the packs sell. The planner itself decides whether buying
+  // the item or buying-then-trading is cheaper.
   const rates = TRADE_RATES_CACHE ? tradeRatesFor(calcKey) : [];
-  if (!rates.length) return { need, conversions, uncovered };
-  const weeks = tradeWeeksFor(targetDays);
+  const reachable = (n) => supplied.has(n) || rates.some((r) => r.to === n && supplied.has(r.from));
+  const need = {}, uncovered = {};
   Object.keys(base).forEach((n) => {
-    if (supplied.has(n) || base[n] <= 0) return;
-    let left = base[n];
-    // Best rate first (fewest items given per item received).
-    const routes = rates.filter((r) => r.to === n && supplied.has(r.from)).sort((a, b) => a.give / a.get - b.give / b.get);
-    routes.forEach((r) => {
-      if (left <= 0) return;
-      const capLots = r.max > 0 ? r.max * weeks : Infinity;
-      const lots = Math.min(Math.ceil(left / r.get), capLots);
-      if (lots <= 0) return;
-      need[r.from] = (need[r.from] || 0) + lots * r.give;
-      conversions.push({ item: n, qty: Math.min(left, lots * r.get), from: r.from, fromQty: lots * r.give, capped: lots >= capLots });
-      left -= lots * r.get;
-    });
-    if (left > 0) uncovered[n] = left;
+    if (base[n] <= 0) return;
+    if (reachable(n)) need[n] = base[n]; else uncovered[n] = base[n];
   });
-  return { need, conversions, uncovered };
+  return { need, conversions: [], uncovered };
 }
 // The "Trade items" block under a page's Backpack row.
 async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
@@ -5522,7 +5588,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const head = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-tradetoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("trade_title"))}</button>
-      ${IS_OWNER ? `<label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] ? "checked" : ""} /><span>${esc(t("trade_apply"))}</span></label>` : ""}
+      ${IS_OWNER ? `<label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><span>${esc(t("trade_apply"))}</span></label>` : ""}
     </div>`;
   const wire = () => {
     containerEl.querySelector("[data-tradetoggle]").addEventListener("click", () => { TRADE_OPEN[calcKey] = !open; rerender(); });
@@ -5783,11 +5849,11 @@ async function budgetForPage(calcKey, targetDays) {
   const need = viaTrades.need;
   const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (packGroups.length && Object.keys(need).length) {
-    res.earliest = packEarliestDays(packGroups, need);
+    res.earliest = packEarliestDays(packGroups, need, calcKey);
     if (res.earliest != null) {
-      res.fastest = packCheapestPlan(packGroups, need, res.earliest);
-      res.cheapest = packCheapestPlan(packGroups, need, Infinity);
-      if (targetDays != null && targetDays >= res.earliest) res.byTarget = packCheapestPlan(packGroups, need, targetDays);
+      res.fastest = packCheapestPlan(packGroups, need, res.earliest, calcKey);
+      res.cheapest = packCheapestPlan(packGroups, need, Infinity, calcKey);
+      if (targetDays != null && targetDays >= res.earliest) res.byTarget = packCheapestPlan(packGroups, need, targetDays, calcKey);
       res.chosen = res.byTarget || res.cheapest;
     }
   }
@@ -5886,6 +5952,7 @@ async function renderBudgetsPage() {
         </div>
         ${targetDays != null && !pg.byTarget ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(pg.earliest))}</div>` : ""}
         <details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${c.rows.length})</summary>${packRowsHtml(c)}
+          ${(c.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${c.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}
           <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
     }
     return `<div class="panel" style="${inc ? "" : "opacity:0.55;"}">
@@ -5893,7 +5960,7 @@ async function renderBudgetsPage() {
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
-        ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("trade_after_short"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
+        ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
       ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}
