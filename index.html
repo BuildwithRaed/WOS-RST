@@ -388,6 +388,14 @@
   }
   .swipe-nav .swipe-dot i{ width:7px; height:7px; border-radius:50%; background:var(--line); display:block; transition:background 0.15s, transform 0.15s; }
   .swipe-nav .swipe-dot:hover i{ transform:scale(1.3); }
+  /* Selects inside the packs table are see-through so they sit flat in the
+     header row - their popup list still needs a solid background, or the
+     options render as near-invisible text. */
+  select option{ background:var(--panel); color:var(--frost); }
+  select optgroup{ background:var(--panel); color:var(--muted); }
+  .pack-col-pick{ color:var(--frost); cursor:pointer; }
+  .pack-col-pick:hover{ color:var(--ice); }
+  .pack-col-fixed{ font-size:11px; font-weight:600; color:var(--muted); display:block; padding:4px 0; }
   .swipe-nav .swipe-count{ font-size:12px; color:var(--muted); white-space:nowrap; }
   .cat-tabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; }
   .cat-tabs::-webkit-scrollbar{ display:none; }
@@ -1386,6 +1394,8 @@ const T = {
   pack_custom_name: { en: "Custom name\u2026", ar: "\u0627\u0633\u0645 \u0645\u062e\u0635\u0651\u0635\u2026", ko: "\uc9c1\uc811 \uc785\ub825\u2026" },
   pack_custom_name_prompt: { en: "Column name:", ar: "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u0648\u062f:", ko: "\uc5f4 \uc774\ub984:" },
   pack_currency: { en: "Currency", ar: "\u0627\u0644\u0639\u0645\u0644\u0629", ko: "\ud1b5\ud654" },
+  pack_single_pack: { en: "Cheapest single pack", ar: "\u0623\u0631\u062e\u0635 \u062d\u0632\u0645\u0629 \u0645\u0641\u0631\u062f\u0629", ko: "\ub2e8\uc77c \ud328\ud0a4\uc9c0 \ucd5c\uc800\uac00" },
+  pack_up_to: { en: "up to", ar: "\u062d\u062a\u0649", ko: "\ucd5c\ub300" },
   quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
 function t(key) {
@@ -3470,6 +3480,19 @@ async function renderPacksPage() {
   function fmtNum(n) {
     return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
+  // Which column holds the price - the only one that may have decimals.
+  function priceColOf(tb) {
+    const ci = packLinkFor(tb.id).priceCol;
+    return typeof ci === "number" ? ci : 0;
+  }
+  // Quantities are whole items, so anything typed or auto-filled rounds up:
+  // it's better to buy one too many than to come up short.
+  function fmtQty(n) {
+    return Math.ceil(Number(n) || 0).toLocaleString();
+  }
+  function fmtCell(tb, ci, n) {
+    return ci === priceColOf(tb) ? fmtNum(n) : fmtQty(n);
+  }
   // Gems always fills on any typed Amount, in every table, regardless of
   // the Scale toggle - it's a fixed, universal game price point, not a
   // per-table custom ratio like FC/Speedups.
@@ -3483,7 +3506,7 @@ async function renderPacksPage() {
       const key = Math.round(amount * 100) / 100;
       if (AMOUNT_TO_GEMS[key] == null) return;
       const gemsCell = tr.querySelector(`[data-pt-cell][data-col="${lastCi}"]`);
-      if (gemsCell) gemsCell.value = fmtNum(AMOUNT_TO_GEMS[key]);
+      if (gemsCell) gemsCell.value = fmtQty(AMOUNT_TO_GEMS[key]);
     });
   }
   // Fills every OTHER column (not Gems, not Amount) using the ratio each
@@ -3508,7 +3531,7 @@ async function renderPacksPage() {
       t.columns.forEach((_, ci) => {
         if (ratios[ci] == null) return;
         const cell = tr.querySelector(`[data-pt-cell][data-col="${ci}"]`);
-        if (cell) cell.value = fmtNum(amount * ratios[ci]);
+        if (cell) cell.value = fmtCell(t, ci, amount * ratios[ci]);
       });
     });
   }
@@ -3562,9 +3585,7 @@ async function renderPacksPage() {
                 ${t.columns
                   .map(
                     (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
-                      <select data-pt-colpick data-col="${ci}" title="${esc(c)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
-                        ${packColumnOptionsHtml(c, packLinkFor(t.id).currency)}
-                      </select>
+                      ${packColumnControlHtml(t, ci)}
                       <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
                   )
@@ -3608,20 +3629,28 @@ async function renderPacksPage() {
   // column holds the price, and what each other column grants.
   // Price, Gems, every trackable resource, then whatever custom name this
   // column already had, so nothing a user typed before is lost.
-  function packColumnOptionsHtml(current, currencyCode) {
-    const cur = String(current || "").trim();
-    const priceSymbol = packCurrencySymbol(currencyCode);
-    const fixed = [priceSymbol, "Gems"];
-    const known = [...fixed, ...PACK_RESOURCE_NAMES];
-    const label = (n) => (fixed.includes(n) ? n : materialDisplayName(n));
-    // A price column keeps its place in the list whatever symbol it holds.
-    if (cur && packIsNonResourceColumn(cur) && !known.some((n) => n.toLowerCase() === cur.toLowerCase())) known.unshift(cur);
+  // The header control for one column:
+  //  - price column  -> currency list only
+  //  - Gems column   -> fixed label, nothing to choose
+  //  - anything else -> the resource list (plus a custom name)
+  function packColumnControlHtml(tb, ci) {
+    const link = packLinkFor(tb.id);
+    const cur = String(tb.columns[ci] || "").trim();
+    if (ci === link.priceCol || (packIsNonResourceColumn(cur) && cur.toLowerCase() !== "gems")) {
+      return `<select data-pt-currencypick data-col="${ci}" class="pack-col-pick" title="${esc(t("pack_currency"))}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
+        ${PACK_CURRENCIES.map((c) => `<option value="${esc(c.code)}" ${c.code === link.currency ? "selected" : ""}>${esc(c.symbol)}</option>`).join("")}
+      </select>`;
+    }
+    if (cur.toLowerCase() === "gems") {
+      return `<span class="pack-col-fixed" title="${esc(cur)}">${esc(cur)}</span>`;
+    }
+    const known = PACK_RESOURCE_NAMES;
     const isKnown = known.some((n) => n.toLowerCase() === cur.toLowerCase());
-    return (
-      known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(label(n))}</option>`).join("") +
-      (isKnown || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`) +
-      `<option value="__custom__">${esc(t("pack_custom_name"))}</option>`
-    );
+    return `<select data-pt-colpick data-col="${ci}" class="pack-col-pick" title="${esc(cur)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
+      ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
+      ${isKnown || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
+      <option value="__custom__">${esc(t("pack_custom_name"))}</option>
+    </select>`;
   }
   function packLinkEditorHtml(tb) {
     const link = packLinkFor(tb.id);
@@ -3796,6 +3825,17 @@ async function renderPacksPage() {
       // Persist on blur (change), not every keystroke - covers title,
       // column names, and cell edits (including whatever applyScale just
       // filled in programmatically, since syncFromDom re-reads the DOM).
+      // A typed quantity is rounded up as soon as you leave the field, so
+      // what's stored matches what's shown. The price column is left alone.
+      panel.addEventListener("change", (e) => {
+        const cell = e.target.closest("[data-pt-cell]");
+        if (!cell) return;
+        const ci = Number(cell.dataset.col);
+        if (ci === priceColOf(t)) return;
+        const n = parseNum(cell.value);
+        if (n != null) cell.value = fmtQty(n);
+      }, true);
+
       panel.addEventListener("change", (e) => {
         if (e.target.closest("[data-pt-title], [data-pt-colname], [data-pt-cell]")) {
           syncFromDom();
@@ -3805,6 +3845,22 @@ async function renderPacksPage() {
 
       // Picking a column's name also files it: "$" makes it the price column,
       // a resource assigns that resource, and Gems/custom names assign nothing.
+      panel.querySelectorAll("[data-pt-currencypick]").forEach((sel) => {
+        sel.addEventListener("change", async () => {
+          const ci = Number(sel.dataset.col);
+          syncFromDom();
+          t.columns[ci] = packCurrencySymbol(sel.value);
+          await persistTable();
+          await ensurePackLinks();
+          const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
+          l.currency = sel.value;
+          l.priceCol = ci;
+          delete (l.cols || {})[ci];
+          await savePackLinks();
+          PACK_TABLES_CACHE = null;
+          renderAll();
+        });
+      });
       panel.querySelectorAll("[data-pt-colpick]").forEach((sel) => {
         sel.addEventListener("change", async () => {
           const ci = Number(sel.dataset.col);
@@ -4691,49 +4747,60 @@ function packLadderPlan(offers, need) {
   Object.keys(remaining).forEach((n) => { if (remaining[n] > 0) short[n] = remaining[n]; });
   return { total, bought, short, complete: !Object.keys(short).length };
 }
-// Cheapest single pack bought over and over until nothing is short.
-function packRepeatPlan(offers, need) {
+// The cheapest single tier that covers everything by itself. Each tier can
+// only be bought once, so this is one pack, not the same one many times.
+function packSinglePlan(offers, need) {
   let best = null;
   offers.forEach((o) => {
-    let count = 0;
-    Object.keys(need).forEach((name) => {
-      const per = o.gives[name] || 0;
-      if (need[name] > 0 && per > 0) count = Math.max(count, Math.ceil(need[name] / per));
-    });
-    if (!count) return;
-    // Only usable on its own if this one pack covers every shortfall.
-    const covers = Object.keys(need).every((name) => need[name] <= 0 || (o.gives[name] || 0) > 0);
+    const covers = Object.keys(need).every((name) => need[name] <= 0 || (o.gives[name] || 0) >= need[name]);
     if (!covers) return;
-    const total = count * o.price;
-    if (!best || total < best.total) best = { total, count, label: o.label, price: o.price };
+    if (!best || o.price < best.total) best = { total: o.price, label: o.label };
   });
   return best;
 }
-// Cheapest mix: repeatedly buy whichever pack closes the most of what's left
-// per dollar, until nothing is short.
+// Cheapest mix: the cheapest COMBINATION of different tiers that covers
+// everything, buying each tier at most once (buying the same pack over and
+// over isn't possible in game). Small tables are checked exhaustively; very
+// long ones fall back to adding the best-value tier until it's covered.
 function packMixPlan(offers, need) {
-  const remaining = { ...need };
-  const bought = new Map();
-  let total = 0;
-  for (let guard = 0; guard < 500; guard++) {
-    const short = Object.keys(remaining).filter((n) => remaining[n] > 0);
-    if (!short.length) break;
-    let pick = null;
-    offers.forEach((o) => {
-      const useful = short.reduce((sum, n) => sum + Math.min(remaining[n], o.gives[n] || 0), 0);
-      if (useful <= 0) return;
-      const value = useful / o.price;
-      if (!pick || value > pick.value) pick = { o, value };
-    });
-    if (!pick) return null; // nothing on offer supplies what's left
-    total += pick.o.price;
-    bought.set(pick.o.label, (bought.get(pick.o.label) || 0) + 1);
-    Object.keys(pick.o.gives).forEach((n) => {
-      if (remaining[n] != null) remaining[n] -= pick.o.gives[n];
-    });
+  const wanted = Object.keys(need).filter((n) => need[n] > 0);
+  if (!wanted.length) return { total: 0, picks: [] };
+  const covers = (set) =>
+    wanted.every((n) => set.reduce((sum, o) => sum + (o.gives[n] || 0), 0) >= need[n]);
+
+  if (offers.length <= 18) {
+    let best = null;
+    for (let mask = 1; mask < (1 << offers.length); mask++) {
+      let total = 0;
+      const set = [];
+      for (let i = 0; i < offers.length; i++) {
+        if (mask & (1 << i)) { set.push(offers[i]); total += offers[i].price; }
+      }
+      if (best && total >= best.total) continue; // already pricier than the best
+      if (covers(set)) best = { total, picks: set.slice() };
+    }
+    if (!best) return null;
+    best.picks.sort((a, b) => a.price - b.price);
+    return best;
   }
-  if (Object.keys(remaining).some((n) => remaining[n] > 0)) return null;
-  return { total, items: [...bought.entries()].map(([label, count]) => ({ label, count })) };
+
+  const left = offers.slice();
+  const picks = [];
+  const remaining = { ...need };
+  while (Object.keys(remaining).some((n) => remaining[n] > 0)) {
+    let bestIdx = -1, bestValue = 0;
+    left.forEach((o, i) => {
+      const useful = Object.keys(remaining).reduce((sum, n) => sum + Math.min(Math.max(0, remaining[n]), o.gives[n] || 0), 0);
+      const value = useful / o.price;
+      if (useful > 0 && value > bestValue) { bestValue = value; bestIdx = i; }
+    });
+    if (bestIdx === -1) return null;
+    const [o] = left.splice(bestIdx, 1);
+    picks.push(o);
+    Object.keys(o.gives).forEach((n) => { if (remaining[n] != null) remaining[n] -= o.gives[n]; });
+  }
+  picks.sort((a, b) => a.price - b.price);
+  return { total: picks.reduce((sum, o) => sum + o.price, 0), picks };
 }
 // Draws the "what packs would this cost" block under a page's Backpack row.
 // `groups` and `owned` are the same ones the Backpack row itself uses, so the
@@ -4791,21 +4858,23 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         </div>
       </div>`;
     }
-    const repeat = packRepeatPlan(offers, need);
+    const single = packSinglePlan(offers, need);
     const mix = packMixPlan(offers, need);
-    const repeatBody = repeat
-      ? `<div class="val" style="font-size:16px;">${packFmtMoney(repeat.total, link.currency)}</div>
-         <div class="meta" style="font-size:10px;">${repeat.count} &times; ${esc(repeat.label)}</div>`
+    const singleBody = single
+      ? `<div class="val" style="font-size:16px;">${packFmtMoney(single.total, link.currency)}</div>
+         <div class="meta" style="font-size:10px;">${esc(single.label)}</div>`
       : `<div class="meta" style="font-size:11px;">${esc(t("pack_no_single_pack"))}</div>`;
+    // Listed cheapest first, so the last one shown is the highest tier needed.
     const mixBody = mix
       ? `<div class="val" style="font-size:16px;">${packFmtMoney(mix.total, link.currency)}</div>
-         <div class="meta" style="font-size:10px;">${mix.items.map((i) => `${i.count} &times; ${esc(i.label)}`).join(", ")}</div>`
+         <div class="meta" style="font-size:10px;">${mix.picks.map((o) => esc(o.label)).join(" + ")}</div>
+         ${mix.picks.length > 1 ? `<div class="meta" style="font-size:10px; opacity:0.8;">${esc(t("pack_up_to"))} ${esc(mix.picks[mix.picks.length - 1].label)}</div>` : ""}`
       : `<div class="meta" style="font-size:11px;">${esc(t("pack_cant_cover"))}</div>`;
     return `<div style="margin-top:10px;">
       <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:2px;">${title}</div>
       <div class="meta" style="font-size:10px; margin-bottom:6px;">${covered}</div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
-        ${planHtml(t("pack_repeat_one"), repeatBody)}
+        ${planHtml(t("pack_single_pack"), singleBody)}
         ${planHtml(t("pack_cheapest_mix"), mixBody)}
       </div>
     </div>`;
