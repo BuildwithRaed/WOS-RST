@@ -165,6 +165,14 @@
   .g3{ grid-template-columns:repeat(3,1fr); }
   .g2{ grid-template-columns:repeat(2,1fr); }
   .g6{ grid-template-columns:repeat(6,1fr); }
+  /* Budgets: cards flow into columns (masonry) so a tall card never leaves
+     a hole beside it; 1 column on phones, 2 on tablets/laptops, 3 on wide
+     monitors. */
+  .budget-cols{ columns:1; column-gap:16px; }
+  .budget-cols > .panel{ break-inside:avoid; -webkit-column-break-inside:avoid; margin:0 0 16px; display:block; }
+  @media (min-width:900px){ .budget-cols{ columns:2; } }
+  @media (min-width:1500px){ .budget-cols{ columns:3; } }
+  .budget-wrap{ max-width:1400px; margin:0 auto; }
   /* Grid column counts for phone/tablet are handled in the comprehensive
      @media (max-width:760px) block below. */
 
@@ -3957,6 +3965,7 @@ async function renderPacksPage() {
       // rows or columns, toggling scale) calls this so nothing is ever lost.
       async function persistTable() {
         PACK_PLAN_CACHE.clear();
+        if (typeof budgetInvalidate === "function") budgetInvalidate();
         const payload = { title: t.title.trim() || "Table name here", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
         try {
           if (String(t.id).startsWith("new-")) {
@@ -4965,6 +4974,7 @@ async function ensurePackLinks() {
 }
 async function savePackLinks() {
   PACK_PLAN_CACHE.clear();
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
   await saveCalcState("packs_links", PACK_LINKS || {});
 }
 function packLinkFor(tableId) {
@@ -6000,6 +6010,7 @@ async function recordBudgetNeeds(calcKey, groups) {
     const prev = snap[calcKey];
     if (prev && JSON.stringify(prev.groups) === JSON.stringify(clean)) return;
     snap[calcKey] = { groups: clean, at: Date.now() };
+    budgetInvalidate();
     await saveCalcState("budget_needs", snap);
   } catch (e) { /* purely a convenience cache */ }
 }
@@ -6148,19 +6159,28 @@ async function budgetForPage(calcKey, targetDays) {
 }
 let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
 let BUDGET_TARGET = undefined; // yyyy-mm-dd or ""
-async function renderBudgetsPage() {
-  content.innerHTML = `
-    <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
-    <div class="panel" style="margin-top:12px;"><div class="empty"><div class="big">${esc(t("budgets_loading"))}</div></div></div>`;
+// What the Budgets page last computed, so ticking a box or coming back to
+// the page redraws instantly instead of re-adding everything up. Cleared
+// when a calculator's Backpack row records new needs or packs change.
+let BUDGET_DATA = null; // { dashStats, pages, targetDays }
+function budgetInvalidate() { BUDGET_DATA = null; }
+async function renderBudgetsPage(opts = {}) {
+  const dataReady = BUDGET_DATA && !opts.reload;
+  if (!dataReady) {
+    content.innerHTML = `
+      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
+      <div class="panel" style="margin-top:12px;"><div class="empty"><div class="big">${esc(t("budgets_loading"))}</div></div></div>`;
+  }
   // Load every calculator's saved plan plus the dashboard's current totals
   // (computed exactly the way the Dashboard page does, without drawing it).
-  const [, , , , savedSel, savedTarget, dashStats] = await Promise.all([
+  const [, , , , savedSel, savedTarget, dashStatsFresh] = await Promise.all([
     ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensurePackLinks(),
     BUDGET_SELECTED ? Promise.resolve(BUDGET_SELECTED) : loadCalcState("budget_selected"),
     BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
-    renderOverview({ computeOnly: true }).catch((e) => { console.error("dashboard stats failed", e); return null; }),
+    dataReady ? Promise.resolve(BUDGET_DATA.dashStats) : renderOverview({ computeOnly: true }).catch((e) => { console.error("dashboard stats failed", e); return null; }),
   ]);
   if (TAB !== "budgets") return;
+  const dashStats = dashStatsFresh;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
   BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
   const included = (k) => BUDGET_SELECTED[k] !== false;
@@ -6172,8 +6192,11 @@ async function renderBudgetsPage() {
   const qty = (v) => Math.round(v).toLocaleString();
   const pct = (v) => `${(Math.round(v * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
 
-  const pages = await Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays)));
+  // Page plans are reused unless the target date changed (it affects the
+  // plans) or the data was invalidated.
+  const pages = (dataReady && BUDGET_DATA.targetDays === targetDays) ? BUDGET_DATA.pages : await Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays)));
   if (TAB !== "budgets") return;
+  BUDGET_DATA = { dashStats, pages, targetDays };
   const curStat = (troop, stat) => { const x = (dashStats || []).find((s) => s.troop === troop && s.stat === stat); return x ? x.total : null; };
   const STAT_KEYS = ["ATT", "DEF", "DMG", "HP"];
   const STAT_RAW = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
@@ -6271,16 +6294,18 @@ async function renderBudgetsPage() {
     </div>`;
 
   content.innerHTML = `
-    <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
-    <div style="margin-top:12px;">${summary}</div>
-    <div class="grid g2" style="align-items:start; margin-top:16px; gap:16px;">${cards.join("")}</div>`;
+    <div class="budget-wrap">
+      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
+      <div style="margin-top:12px;">${summary}</div>
+      <div class="budget-cols" style="margin-top:16px;">${cards.join("")}</div>
+    </div>`;
 
   content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
     // One tick covers the whole group (Pets / Experts / Research).
     const grp = packGroupOf(cb.dataset.budgetinc);
     (grp ? grp.pages : [cb.dataset.budgetinc]).forEach((k) => { BUDGET_SELECTED[k] = cb.checked; });
-    await saveCalcState("budget_selected", BUDGET_SELECTED);
-    renderBudgetsPage();
+    renderBudgetsPage(); // instant redraw from the cached data
+    saveCalcState("budget_selected", BUDGET_SELECTED);
   }));
   const dateEl = content.querySelector("[data-budgettarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
@@ -6855,6 +6880,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       input.value = val;
       const name = input.dataset.ownedmat;
       owned[name] = val;
+      budgetInvalidate();
       await saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
       // Only this material's status text depends on its owned amount, so
       // update just those spans in place rather than touching the input
@@ -9894,6 +9920,7 @@ async function renderExpertsPage() {
         if (Number.isNaN(val) || val < 0) val = 0;
         input.value = val;
         invSaved[input.dataset.expinv] = val;
+        budgetInvalidate();
         await saveCalcState("experts_inventory", invSaved);
         renderTotals();
       });
