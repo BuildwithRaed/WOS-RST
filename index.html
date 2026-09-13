@@ -3727,6 +3727,7 @@ async function renderPacksPage() {
       <details class="pack-link" data-packlink="${esc(tb.id)}" style="margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
         <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${packGroupsChecked(link.pages) ? ` (${packGroupsChecked(link.pages)})` : ""}</summary>
         <p class="desc" style="font-size:11px; margin:8px 0;">${esc(t("pack_used_for_desc"))}</p>
+        ${Object.values(packEffectiveCols(tb)).filter((r) => PACK_BUNDLE_NOTES[r]).map((r) => `<p class="desc" style="font-size:10.5px; margin:0 0 8px; color:var(--ice);">${esc(materialDisplayName(r))}: ${esc(PACK_BUNDLE_NOTES[r])}</p>`).join("")}
         <div style="display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:10px;">
           ${PACK_PAGE_GROUPS.map((g) => `
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
@@ -4747,6 +4748,7 @@ const PACK_RESOURCE_NAMES = [
   "Books of Knowledge", "Affinity", "General Sigils", "Speedups (minutes)",
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
+  "Lucky Gear Chest", "Random Charm Chest",
 ];
 // Bundle resources: a pack column can grant a chest that opens into several
 // materials. One Chief Gear Chest = 1 Design Plan, 4 Polishing Solution and
@@ -4763,6 +4765,19 @@ const PACK_BUNDLES = {
   // XP Component items worth 10 or 100 XP each.
   "XP 10": { "XP Component": 10 },
   "XP 100": { "XP Component": 100 },
+  // Chance chests count as their AVERAGE (expected) drop per chest:
+  //  Lucky Gear Chest: 1.6% chance of a Mythic Gear -> 0.016 per chest
+  //  Random Charm Chest: Guides x15 0.5% / x8 3% / x4 15% / x2 31.5%
+  //                      and the same table for Designs
+  //                      -> 1.545 Guides and 1.545 Designs per chest
+  "Lucky Gear Chest": { "Mythic Gear": 0.016 },
+  "Random Charm Chest": { "Charm Guides": 15 * 0.005 + 8 * 0.03 + 4 * 0.15 + 2 * 0.315, "Charm Designs": 15 * 0.005 + 8 * 0.03 + 4 * 0.15 + 2 * 0.315 },
+};
+// Shown on the Packs page for chance-based chests, so the numbers are
+// understood as averages over many chests, not guaranteed drops.
+const PACK_BUNDLE_NOTES = {
+  "Lucky Gear Chest": "1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.",
+  "Random Charm Chest": "Guides: x15 0.5%, x8 3%, x4 15%, x2 31.5%; Designs: same odds → counted as ≈1.55 Guides and ≈1.55 Designs per chest (average).",
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
