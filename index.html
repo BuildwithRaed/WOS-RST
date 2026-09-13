@@ -1294,8 +1294,8 @@ const T = {
   t12_label_solar_supremacy: { en: "Solar Supremacy", ar: "السيادة الشمسية", ko: "솔라 슈프리머시" },
   t12_3troops_desc: { en: "Across all 3 troop types, from current levels to max.", ar: "عبر جميع أنواع الجنود الثلاثة، من المستويات الحالية إلى الحد الأقصى.", ko: "3개 부대 유형 전체, 현재 레벨부터 최대치까지." },
   resource_steel: { en: "Steel", ar: "الفولاذ", ko: "강철" },
-  resource_refined_fc: { en: "Refined FC", ar: "بلورة نار مكرَّرة", ko: "정제된 화염 결정" },
-  resource_fc_shard: { en: "FC Shard", ar: "شظية بلورة النار", ko: "화염 결정 조각" },
+  resource_refined_fc: { en: "Refined Fire Crystal", ar: "بلورة نار مكرَّرة", ko: "정제된 화염 결정" },
+  resource_fc_shard: { en: "Fire Crystal Shard", ar: "شظية بلورة النار", ko: "화염 결정 조각" },
   resource_meat_wood: { en: "Meat/Wood", ar: "لحم/خشب", ko: "고기/목재" },
   resource_coal: { en: "Coal", ar: "الفحم", ko: "석탄" },
   resource_iron: { en: "Iron", ar: "الحديد", ko: "철" },
@@ -1364,7 +1364,7 @@ const T = {
   material_mithril: { en: "Mithril", ar: "\u0645\u064a\u062b\u0631\u064a\u0644", ko: "\ubbf8\uc2a4\ub9b4" },
   material_mythic_gear: { en: "Mythic Gear", ar: "\u0639\u062a\u0627\u062f \u0623\u0633\u0637\u0648\u0631\u064a", ko: "\uc2e0\ud654 \uc7a5\ube44" },
   material_affinity: { en: "Affinity", ar: "\u0627\u0644\u0623\u0644\u0641\u0629", ko: "\uce5c\ubc00\ub3c4" },
-  material_books_of_knowledge: { en: "Books of Knowledge", ar: "\u0643\u062a\u0628 \u0627\u0644\u0645\u0639\u0631\u0641\u0629", ko: "\uc9c0\uc2dd\uc758 \ucc45" },
+  material_books_of_knowledge: { en: "Books", ar: "\u0643\u062a\u0628 \u0627\u0644\u0645\u0639\u0631\u0641\u0629", ko: "\uc9c0\uc2dd\uc758 \ucc45" },
   material_speedups_minutes: { en: "Speedups (minutes)", ar: "\u0627\u0644\u0645\u0633\u0631\u0651\u0639\u0627\u062a (\u062f\u0642\u0627\u0626\u0642)", ko: "\uac00\uc18d (\ubd84)" },
   material_general_sigils: { en: "General Sigils", ar: "\u0623\u062e\u062a\u0627\u0645 \u0639\u0627\u0645\u0629", ko: "\uc77c\ubc18 \uc778\uc7a5" },
   sigils_suffix: { en: "{name} Sigils", ar: "\u0623\u062e\u062a\u0627\u0645 {name}", ko: "{name} \uc778\uc7a5" },
@@ -4733,12 +4733,24 @@ const PACK_RESOURCE_NAMES = [
   "Meat", "Wood", "Coal", "Iron", "Steel", "Refined FC", "FC Shard", "Meat/Wood",
   "Food", "Manual", "Potion", "Serum",
   "Books of Knowledge", "Affinity", "General Sigils", "Speedups (minutes)",
+  "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
+  "XP 10", "XP 100",
 ];
 // Bundle resources: a pack column can grant a chest that opens into several
 // materials. One Chief Gear Chest = 1 Design Plan, 4 Polishing Solution and
 // 400 Hardened Alloy, so a column of "3 chests" counts as 3x that.
 const PACK_BUNDLES = {
   "Chief Gear Chest": { "Design Plan": 1, "Polishing Solution": 4, "Hardened Alloy": 400 },
+  // Speedup items of a fixed length: a column of "20" 1h speedups = 1,200 minutes.
+  "Speedup 1m": { "Speedups (minutes)": 1 },
+  "Speedup 3m": { "Speedups (minutes)": 3 },
+  "Speedup 5m": { "Speedups (minutes)": 5 },
+  "Speedup 1h": { "Speedups (minutes)": 60 },
+  "Speedup 3h": { "Speedups (minutes)": 180 },
+  "Speedup 8h": { "Speedups (minutes)": 480 },
+  // XP Component items worth 10 or 100 XP each.
+  "XP 10": { "XP Component": 10 },
+  "XP 100": { "XP Component": 100 },
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
