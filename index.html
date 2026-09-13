@@ -839,6 +839,165 @@ function tStatLabel(label) {
   const key = statLabelKey(label);
   return key ? t(key) : label;
 }
+// Names that come from the database or from fixed game data (experts and
+// their skills, pets, roster heroes, research tracks, and the breakdown
+// window's source names). Anything not listed here is shown unchanged.
+const DATA_NAME_I18N = {
+  "Cyrille": { ar: "سيريل", ko: "시릴" },
+  "Holger": { ar: "هولغر", ko: "홀거" },
+  "Fabian": { ar: "فابيان", ko: "파비안" },
+  "Baldur": { ar: "بالدور", ko: "발두르" },
+  "Valeria": { ar: "فاليريا", ko: "발레리아" },
+  "Ronne": { ar: "روني", ko: "로네" },
+  "Kathy": { ar: "كاثي", ko: "케이시" },
+  "Gareth": { ar: "غاريث", ko: "가레스" },
+  "Agnes": { ar: "أغنيس", ko: "아그네스" },
+  "Romulus": { ar: "رومولوس", ko: "로물루스" },
+  "Justus": { ar: "جوستوس", ko: "유스투스" },
+  "Entrapment": { ar: "الإيقاع بالفخ", ko: "함정" },
+  "Scavenging": { ar: "البحث عن الموارد", ko: "수색" },
+  "Weapon Master": { ar: "سيد الأسلحة", ko: "무기 숙련" },
+  "Ursa's Bane": { ar: "لعنة الدب", ko: "우르사의 재앙" },
+  "Heightened Firepower": { ar: "قوة نيران معززة", ko: "화력 강화" },
+  "Battle Concerto": { ar: "سيمفونية المعركة", ko: "전투 협주곡" },
+  "Child of Frost": { ar: "ابن الصقيع", ko: "서리의 아이" },
+  "Trade Dominion": { ar: "سيطرة التجارة", ko: "교역 지배" },
+  "Last Line": { ar: "خط الدفاع الأخير", ko: "최후의 방어선" },
+  "Spirit of Aeetis": { ar: "روح إيتيس", ko: "아이에티스의 혼" },
+  "Porcupine": { ar: "النيص", ko: "호저" },
+  "Undefeated Will": { ar: "إرادة لا تُقهر", ko: "불굴의 의지" },
+  "Hunting Skill - Proficient": { ar: "مهارة الصيد - متقن", ko: "사냥 기술 - 숙련" },
+  "Hunting Skill - Expert": { ar: "مهارة الصيد - خبير", ko: "사냥 기술 - 전문가" },
+  "Hunting Skill Ultimate": { ar: "مهارة الصيد - نهائية", ko: "사냥 기술 - 궁극" },
+  "Weapons Prep": { ar: "تجهيز الأسلحة", ko: "무기 준비" },
+  "Special Defensive Training": { ar: "تدريب دفاعي خاص", ko: "특수 방어 훈련" },
+  "Survival Techniques": { ar: "تقنيات البقاء", ko: "생존 기술" },
+  "Assault Techniques": { ar: "تقنيات الهجوم", ko: "공격 기술" },
+  "Regimental Expansion": { ar: "توسيع الكتيبة", ko: "부대 확장" },
+  "Reprisal Tactics": { ar: "تكتيكات الرد", ko: "보복 전술" },
+  "Defensive Formations": { ar: "تشكيلات دفاعية", ko: "방어 대형" },
+  "Close Combat": { ar: "قتال قريب", ko: "근접 전투" },
+  "Shield Upgrade": { ar: "ترقية الدرع", ko: "방패 강화" },
+  "Skirmishing": { ar: "مناوشات", ko: "교전" },
+  "Bulwark Formations": { ar: "تشكيلات الحصن", ko: "보루 대형" },
+  "Lance Upgrade": { ar: "ترقية الرمح", ko: "창 강화" },
+  "Lancer Armor": { ar: "درع الرماح", ko: "창병 갑옷" },
+  "Precision Targeting": { ar: "تصويب دقيق", ko: "정밀 조준" },
+  "Picket Lines": { ar: "خطوط الحراسة", ko: "경계선" },
+  "Targeted Sniping": { ar: "قنص موجه", ko: "표적 저격" },
+  "Marksman Armor": { ar: "درع الرماة", ko: "궁수 갑옷" },
+  "Flame Squad": { ar: "فرقة اللهب", ko: "화염 부대" },
+  "Flame Shield": { ar: "درع اللهب", ko: "화염 방패" },
+  "Flame Strike": { ar: "ضربة اللهب", ko: "화염 강타" },
+  "Flame Tomahawk": { ar: "فأس اللهب", ko: "화염 도끼" },
+  "Flame Protection": { ar: "حماية اللهب", ko: "화염 보호" },
+  "Flame Legion": { ar: "فيلق اللهب", ko: "화염 군단" },
+  "Helios Infantry Unlock": { ar: "فتح مشاة هيليوس", ko: "헬리오스 보병 해금" },
+  "Helios Lancer Unlock": { ar: "فتح رماح هيليوس", ko: "헬리오스 창병 해금" },
+  "Helios Marksman Unlock": { ar: "فتح رماة هيليوس", ko: "헬리오스 궁수 해금" },
+  "Helios Infantry Training": { ar: "تدريب مشاة هيليوس", ko: "헬리오스 보병 훈련" },
+  "Helios Lancer Training": { ar: "تدريب رماح هيليوس", ko: "헬리오스 창병 훈련" },
+  "Helios Marksman Training": { ar: "تدريب رماة هيليوس", ko: "헬리오스 궁수 훈련" },
+  "Helios Infantry Healing": { ar: "شفاء مشاة هيليوس", ko: "헬리오스 보병 치료" },
+  "Helios Lancer Healing": { ar: "شفاء رماح هيليوس", ko: "헬리오스 창병 치료" },
+  "Helios Marksman Healing": { ar: "شفاء رماة هيليوس", ko: "헬리오스 궁수 치료" },
+  "Helios Infantry First Aid": { ar: "إسعاف مشاة هيليوس", ko: "헬리오스 보병 응급처치" },
+  "Helios Lancer First Aid": { ar: "إسعاف رماح هيليوس", ko: "헬리오스 창병 응급처치" },
+  "Helios Marksman First Aid": { ar: "إسعاف رماة هيليوس", ko: "헬리오스 궁수 응급처치" },
+  "Troop Unlock": { ar: "فتح الجنود", ko: "부대 해금" },
+  "Head Slot": { ar: "خانة الرأس", ko: "머리 슬롯" },
+  "Shoulder Slot": { ar: "خانة الكتف", ko: "어깨 슬롯" },
+  "Body Slot": { ar: "خانة الجسد", ko: "몸통 슬롯" },
+  "Leg Slot": { ar: "خانة الساق", ko: "다리 슬롯" },
+  "Weapon Slot": { ar: "خانة السلاح", ko: "무기 슬롯" },
+  "Skills I": { ar: "المهارات I", ko: "스킬 I" },
+  "Skills II": { ar: "المهارات II", ko: "스킬 II" },
+  "Skills III": { ar: "المهارات III", ko: "스킬 III" },
+  "Troop Skill": { ar: "مهارة الجنود", ko: "부대 스킬" },
+  "Exalted Support": { ar: "الدعم السامي", ko: "고결한 지원" },
+  "Exalted Healing": { ar: "الشفاء السامي", ko: "고결한 치료" },
+  "Exalted First Aid": { ar: "الإسعاف السامي", ko: "고결한 응급처치" },
+  "Exalted Training": { ar: "التدريب السامي", ko: "고결한 훈련" },
+  "Solar Supremacy": { ar: "السيادة الشمسية", ko: "태양의 지배" },
+  "Attack": { ar: "الهجوم", ko: "공격" },
+  "Defense": { ar: "الدفاع", ko: "방어" },
+  "Lethality": { ar: "الفتك", ko: "치명타" },
+  "Health": { ar: "الصحة", ko: "체력" },
+  "Cave Hyena": { ar: "ضبع الكهف", ko: "동굴 하이에나" },
+  "Snow Leopard": { ar: "النمر الثلجي", ko: "눈표범" },
+  "Iron Rhino": { ar: "وحيد القرن الحديدي", ko: "강철 코뿔소" },
+  "Titan Roc": { ar: "الرخ العملاق", ko: "타이탄 로크" },
+  "Saber Tooth Tiger": { ar: "النمر ذو الأنياب", ko: "검치호" },
+  "Mammoth": { ar: "الماموث", ko: "매머드" },
+  "Musk Ox": { ar: "ثور المسك", ko: "사향소" },
+  "Arctic Wolf": { ar: "ذئب القطب", ko: "북극 늑대" },
+  "Giant Tapir": { ar: "التابير العملاق", ko: "거대 맥" },
+  "Cave Lion": { ar: "أسد الكهف", ko: "동굴 사자" },
+  "Polar Bear": { ar: "الدب القطبي", ko: "북극곰" },
+  "Snow Ape": { ar: "قرد الثلج", ko: "설원 유인원" },
+  "Frost Gorilla": { ar: "غوريلا الصقيع", ko: "서리 고릴라" },
+  "Ice Whale": { ar: "الحوت الجليدي", ko: "얼음 고래" },
+  "Thunder Dragon": { ar: "تنين الرعد", ko: "천둥 용" },
+  "Jeronimo": { ar: "جيرونيمو", ko: "제로니모" },
+  "Natalia": { ar: "ناتاليا", ko: "나탈리아" },
+  "Gisela": { ar: "جيزيلا", ko: "기젤라" },
+  "Flora": { ar: "فلورا", ko: "플로라" },
+  "Vulcanus": { ar: "فولكانوس", ko: "불카누스" },
+  "Molly": { ar: "مولي", ko: "몰리" },
+  "Zinman": { ar: "زينمان", ko: "진맨" },
+  "Bahiti": { ar: "باهيتي", ko: "바히티" },
+  "Sergey": { ar: "سيرجي", ko: "세르게이" },
+  "Charlie": { ar: "تشارلي", ko: "찰리" },
+  "Cloris": { ar: "كلوريس", ko: "클로리스" },
+  "Eugene": { ar: "يوجين", ko: "유진" },
+  "Alonso": { ar: "ألونسو", ko: "알론소" },
+  "Philly": { ar: "فيلي", ko: "필리" },
+  "Logan": { ar: "لوغان", ko: "로건" },
+  "Mia": { ar: "ميا", ko: "미아" },
+  "Greg": { ar: "غريغ", ko: "그렉" },
+  "Ahmose": { ar: "أحمس", ko: "아흐모세" },
+  "Reina": { ar: "رينا", ko: "레이나" },
+  "Lynn": { ar: "لين", ko: "린" },
+  "Hector": { ar: "هيكتور", ko: "헥토르" },
+  "Norah": { ar: "نورا", ko: "노라" },
+  "Gwen": { ar: "غوين", ko: "그웬" },
+  "Wu Ming": { ar: "وو مينغ", ko: "우밍" },
+  "Renee": { ar: "رينيه", ko: "르네" },
+  "Wayne": { ar: "واين", ko: "웨인" },
+  "Edith": { ar: "إيديث", ko: "이디스" },
+  "Gatot": { ar: "غاتوت", ko: "가토트" },
+  "Hendrik": { ar: "هندريك", ko: "헨드릭" },
+  "Magnus": { ar: "ماغنوس", ko: "마그누스" },
+  "Freya": { ar: "فريا", ko: "프레이야" },
+  "Blanchette": { ar: "بلانشيت", ko: "블랑셰트" },
+  "Xura": { ar: "زورا", ko: "주라" },
+  "Chief Gears": { ar: "معدات الزعيم", ko: "군주 장비" },
+  "Chief Gears Bonus": { ar: "مكافأة معدات الزعيم", ko: "군주 장비 보너스" },
+  "Chief Charm": { ar: "تعويذة الزعيم", ko: "군주 참" },
+  "Heroes Gears": { ar: "معدات الأبطال", ko: "영웅 장비" },
+  "Skin Gallery": { ar: "معرض الأشكال", ko: "스킨 갤러리" },
+  "Alliance Tech": { ar: "تقنية التحالف", ko: "연맹 기술" },
+  "Tundra Album": { ar: "ألبوم التندرا", ko: "툰드라 앨범" },
+  "Collection Gallery": { ar: "معرض المجموعات", ko: "컬렉션 갤러리" },
+  "T11 Research": { ar: "أبحاث T11", ko: "T11 연구" },
+  "T12 Research": { ar: "أبحاث T12", ko: "T12 연구" },
+  "VIP": { ar: "VIP", ko: "VIP" },
+  "Islands": { ar: "الجزر", ko: "섬" },
+  "Facility": { ar: "المنشأة", ko: "시설" },
+  "Pets Level": { ar: "مستوى الحيوانات", ko: "펫 레벨" },
+  "Pets Refine": { ar: "تنقية الحيوانات", ko: "펫 정제" },
+  "Research Center": { ar: "مركز الأبحاث", ko: "연구소" },
+  "Experts": { ar: "الخبراء", ko: "전문가" },
+  "Experts Research": { ar: "أبحاث الخبراء", ko: "전문가 연구" },
+  "Roster Heroes": { ar: "أبطال التشكيلة", ko: "부대 영웅" },
+};
+function dataName(name) {
+  if (name == null) return name;
+  if (LANG === "en") return name;
+  const entry = DATA_NAME_I18N[String(name).trim()];
+  return (entry && entry[LANG]) || name;
+}
+
 function troopDisplayName(key) {
   return { Infantry: t("troop_infantry"), Lancers: t("troop_lancers"), Marksman: t("troop_marksman"), Lancer: t("troop_lancer_singular") }[key] || key;
 }
@@ -1220,6 +1379,12 @@ const T = {
   pack_cant_cover: { en: "These packs can't cover it", ar: "\u0647\u0630\u0647 \u0627\u0644\u062d\u0632\u0645 \u0644\u0627 \u062a\u0643\u0641\u064a", ko: "\uc774 \ud328\ud0a4\uc9c0\ub85c\ub294 \ucda9\ub2f9\ud560 \uc218 \uc5c6\uc74c" },
   pack_nothing_needed: { en: "Nothing needed from this table", ar: "\u0644\u0627 \u062d\u0627\u062c\u0629 \u0644\u0634\u064a\u0621 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644", ko: "\uc774 \ud45c\uc5d0\uc11c \ud544\uc694\ud55c \uac83 \uc5c6\uc74c" },
   pack_no_columns: { en: "Label this table's columns on the Packs page first.", ar: "\u0641\u0636\u0644\u064b\u0627 \u0633\u0645\u0651\u0650 \u0623\u0639\u0645\u062f\u0629 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u062d\u0632\u0645 \u0623\u0648\u0644\u0627\u064b.", ko: "\uba3c\uc800 \ud328\ud0a4\uc9c0 \ud398\uc774\uc9c0\uc5d0\uc11c \uc774 \ud45c\uc758 \uc5f4\uc744 \uc9c0\uc815\ud558\uc138\uc694." },
+  pack_sequential: { en: "Must be bought in order", ar: "\u064a\u062c\u0628 \u0634\u0631\u0627\u0624\u0647\u0627 \u0628\u0627\u0644\u062a\u0631\u062a\u064a\u0628", ko: "\uc21c\uc11c\ub300\ub85c\ub9cc \uad6c\ub9e4 \uac00\ub2a5" },
+  pack_sequential_desc: { en: "Tick this when you have to start from the first price and work up. Leave it off when any tier can be bought on its own.", ar: "\u0641\u0639\u0651\u0644 \u0647\u0630\u0627 \u0625\u0630\u0627 \u0643\u0627\u0646 \u0639\u0644\u064a\u0643 \u0627\u0644\u0628\u062f\u0621 \u0645\u0646 \u0623\u0648\u0644 \u0633\u0639\u0631 \u062b\u0645 \u0627\u0644\u0635\u0639\u0648\u062f. \u0627\u062a\u0631\u0643\u0647 \u0645\u0639\u0637\u0651\u0644\u0627\u064b \u0625\u0630\u0627 \u0623\u0645\u0643\u0646 \u0634\u0631\u0627\u0621 \u0623\u064a \u0645\u0633\u062a\u0648\u0649 \u0628\u0645\u0641\u0631\u062f\u0647.", ko: "\uccab \uac00\uaca9\ubd80\ud130 \uc21c\uc11c\ub300\ub85c \uc0ac\uc57c \ud558\ub294 \uacbd\uc6b0 \uccb4\ud06c\ud558\uc138\uc694. \uac01 \ub2e8\uacc4\ub97c \ub530\ub85c \uc0b4 \uc218 \uc788\uc73c\uba74 \ub044\uc138\uc694." },
+  pack_buy_in_order: { en: "Buy in order", ar: "\u0627\u0644\u0634\u0631\u0627\u0621 \u0628\u0627\u0644\u062a\u0631\u062a\u064a\u0628", ko: "\uc21c\uc11c\ub300\ub85c \uad6c\ub9e4" },
+  pack_ladder_short: { en: "Still short:", ar: "\u0645\u0627 \u0632\u0627\u0644 \u0646\u0627\u0642\u0635\u0627\u064b:", ko: "\uc544\uc9c1 \ubd80\uc871:" },
+  pack_custom_name: { en: "Custom name\u2026", ar: "\u0627\u0633\u0645 \u0645\u062e\u0635\u0651\u0635\u2026", ko: "\uc9c1\uc811 \uc785\ub825\u2026" },
+  pack_custom_name_prompt: { en: "Column name:", ar: "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u0648\u062f:", ko: "\uc5f4 \uc774\ub984:" },
   quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
 function t(key) {
@@ -1487,7 +1652,7 @@ const SOURCE_DISPLAY_NAME = {
   Jero: "Jeronimo",
 };
 function displaySourceName(key) {
-  return SOURCE_DISPLAY_NAME[key] || key;
+  return dataName(SOURCE_DISPLAY_NAME[key] || key);
 }
 
 async function renderOverview() {
@@ -2185,7 +2350,7 @@ async function renderOverview() {
               </div>
               <div style="flex:1; min-width:0;">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-bottom:2px;">
-                  <span style="font-weight:600; font-size:14px;">${hero ? esc(hero.name) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</span>
+                  <span style="font-weight:600; font-size:14px;">${hero ? esc(dataName(hero.name)) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</span>
                 </div>
                 <div data-starctl="${esc(hero ? hero.id : "")}" style="display:flex; align-items:center; gap:4px; margin-top:4px;">${starsHtml(hero)}</div>
                 ${hero ? `<div class="meta" style="font-size:11px; color:var(--frost); margin-top:4px;">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ") || "&nbsp;"}</div>` : ""}
@@ -2262,7 +2427,7 @@ async function renderOverview() {
                   <div style="width:100%; aspect-ratio:1; border-radius:8px; background:var(--panel-2); overflow:hidden;">
                     ${h.image_url ? `<img src="${esc(h.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : ""}
                   </div>
-                  <div style="font-size:12px; font-weight:600; margin-top:4px;">${esc(h.name)}</div>
+                  <div style="font-size:12px; font-weight:600; margin-top:4px;">${esc(dataName(h.name))}</div>
                   ${h.generation ? `<div class="meta" style="font-size:10px;">${esc(t("gen_prefix"))} ${h.generation}</div>` : ""}
                 </div>`).join("")}
               </div>
@@ -2375,7 +2540,7 @@ async function renderOverview() {
         };
         BREAKDOWN_HERO_GEAR_SET = "Set 1";
         const first = computeBreakdown();
-        openDrilldownModal(`${troop} ${statMeta.label}`, first.total, first.maxTotal, first.combined, computeBreakdown);
+        openDrilldownModal(`${troopDisplayName(troop)} ${tStatLabel(statMeta.label)}`, first.total, first.maxTotal, first.combined, computeBreakdown);
       } catch (err) {
         console.error("Drilldown modal failed to open", err);
       }
@@ -3004,7 +3169,7 @@ async function renderHeroRoster(target) {
         <div style="display:flex; align-items:center; gap:10px;">
           ${h.image_url ? `<img src="${esc(h.image_url)}" alt="" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid var(--line);" loading="lazy" />` : `<div style="width:36px; height:36px; border-radius:50%; background:var(--panel-2); border:1px solid var(--line);"></div>`}
           <div>
-            <div class="name">${esc(h.name)}</div>
+            <div class="name">${esc(dataName(h.name))}</div>
             <div class="meta">Level ${level} / ${h.max_level} &middot; ${stars} / ${h.max_stars} stars</div>
           </div>
         </div>
@@ -3369,7 +3534,7 @@ async function renderPacksPage() {
         return `
       <div class="panel" style="margin-top:16px; min-width:0; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""}" data-packtable="${ti}">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
-          <input data-pt-title value="${esc(t.title)}" style="font-size:15px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
+          <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
           <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.">
             <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer; flex-shrink:0;" />
           </label>
@@ -3390,13 +3555,16 @@ async function renderPacksPage() {
           <button class="btn small ghost" data-pt-delete title="Delete table" style="color:var(--danger); flex-shrink:0; width:28px; padding:4px 0;">&times;</button>
         </div>
         <div style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:collapse; font-size:11.5px; table-layout:fixed;">
+          <table style="width:100%; border-collapse:collapse; font-size:11px; table-layout:fixed;">
             <thead>
               <tr>
                 ${t.columns
                   .map(
                     (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
-                      <input data-pt-colname data-col="${ci}" value="${esc(c)}" style="width:100%; max-width:54px; font-weight:600; text-align:center; padding:4px 4px; background:none; border:none;" />
+                      <select data-pt-colpick data-col="${ci}" title="${esc(c)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
+                        ${packColumnOptionsHtml(c)}
+                      </select>
+                      <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
                   )
                   .join("")}
@@ -3410,7 +3578,7 @@ async function renderPacksPage() {
                     ${t.columns
                       .map(
                         (_, ci) => `<td style="padding:3px; text-align:center;">
-                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; max-width:54px; text-align:center; padding:4px 4px;" />
+                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; max-width:54px; font-size:14px; text-align:center; padding:4px 4px;" />
                         </td>`
                       )
                       .join("")}
@@ -3421,7 +3589,7 @@ async function renderPacksPage() {
                 )
                 .join("")}
               <tr style="border-top:2px solid var(--line); font-weight:700;">
-                ${totals.map((sum) => `<td style="padding:5px 3px; text-align:center;">${sum ? fmtNum(sum) : ""}</td>`).join("")}
+                ${totals.map((sum) => `<td style="padding:5px 3px; font-size:11px; text-align:center;">${sum ? fmtNum(sum) : ""}</td>`).join("")}
                 <td></td>
               </tr>
             </tbody>
@@ -3437,6 +3605,20 @@ async function renderPacksPage() {
 
   // The "Used for" block under each table: which pages it prices, which
   // column holds the price, and what each other column grants.
+  // Price, Gems, every trackable resource, then whatever custom name this
+  // column already had, so nothing a user typed before is lost.
+  function packColumnOptionsHtml(current) {
+    const cur = String(current || "").trim();
+    const fixed = ["$", "Gems"];
+    const known = [...fixed, ...PACK_RESOURCE_NAMES];
+    const label = (n) => (fixed.includes(n) ? n : materialDisplayName(n));
+    const isKnown = known.some((n) => n.toLowerCase() === cur.toLowerCase());
+    return (
+      known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(label(n))}</option>`).join("") +
+      (isKnown || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`) +
+      `<option value="__custom__">${esc(t("pack_custom_name"))}</option>`
+    );
+  }
   function packLinkEditorHtml(tb) {
     const link = packLinkFor(tb.id);
     const colOpts = (selected) => tb.columns
@@ -3460,12 +3642,22 @@ async function renderPacksPage() {
           <span class="meta" style="font-size:11px;">${esc(t("pack_price_column"))}</span>
           <select data-packprice style="width:auto; min-width:90px;">${colOpts(link.priceCol)}</select>
         </div>
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
+          <input type="checkbox" data-packsequential ${link.sequential ? "checked" : ""} style="flex-shrink:0;" />
+          <span>${esc(t("pack_sequential"))}</span>
+        </label>
+        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_sequential_desc"))}</p>
         <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px;">
-          ${tb.columns.map((c, ci) => ci === link.priceCol ? "" : `
+          ${tb.columns.map((c, ci) => {
+            // Price column, Gems, and any column already named after a
+            // resource are sorted out by the header dropdown itself.
+            if (ci === link.priceCol || packIsNonResourceColumn(c) || packResourceByName(c)) return "";
+            return `
             <div>
               <div class="meta" style="font-size:10px; margin-bottom:3px;">${esc(c || "#" + (ci + 1))}</div>
               <select data-packcol="${ci}" style="width:100%;">${resOpts((link.cols || {})[ci])}</select>
-            </div>`).join("")}
+            </div>`;
+          }).join("")}
         </div>
       </details>`;
   }
@@ -3487,6 +3679,11 @@ async function renderPacksPage() {
           const sum = box.querySelector("summary");
           if (sum) sum.textContent = t("pack_used_for") + (l.pages.length ? ` (${l.pages.length})` : "");
         });
+      });
+      const seqCb = box.querySelector("[data-packsequential]");
+      if (seqCb) seqCb.addEventListener("change", async () => {
+        current().sequential = seqCb.checked;
+        await savePackLinks();
       });
       const priceSel = box.querySelector("[data-packprice]");
       if (priceSel) priceSel.addEventListener("change", async () => {
@@ -3572,6 +3769,32 @@ async function renderPacksPage() {
           syncFromDom();
           persistTable();
         }
+      });
+
+      // Picking a column's name also files it: "$" makes it the price column,
+      // a resource assigns that resource, and Gems/custom names assign nothing.
+      panel.querySelectorAll("[data-pt-colpick]").forEach((sel) => {
+        sel.addEventListener("change", async () => {
+          const ci = Number(sel.dataset.col);
+          let value = sel.value;
+          if (value === "__custom__") {
+            const typed = prompt(t("pack_custom_name_prompt"), t.columns[ci] || "");
+            if (typed == null || !typed.trim()) { renderAll(); return; }
+            value = typed.trim();
+          }
+          syncFromDom();
+          t.columns[ci] = value;
+          await persistTable();
+          await ensurePackLinks();
+          const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
+          l.cols = l.cols || {};
+          if (value === "$") l.priceCol = ci;
+          // Any earlier manual choice for this column is replaced by the name.
+          delete l.cols[ci];
+          await savePackLinks();
+          PACK_TABLES_CACHE = null;
+          renderAll();
+        });
       });
 
       panel.querySelector("[data-pt-scaletoggle]").addEventListener("change", async (e) => {
@@ -4314,6 +4537,36 @@ const PACK_RESOURCE_NAMES = [
   "XP Component", "Essence Stones", "Mithril", "Mythic Gear",
   "Meat", "Wood", "Coal", "Iron", "Steel", "Refined FC", "FC Shard", "Meat/Wood",
 ];
+// Columns named "Gems" (or the price column) never grant a trackable
+// resource, so they're skipped everywhere a resource is chosen.
+const PACK_NON_RESOURCE_COLS = new Set(["gems", "gem", "$", "price", "amount", "usd"]);
+function packIsNonResourceColumn(name) {
+  return PACK_NON_RESOURCE_COLS.has(String(name || "").trim().toLowerCase());
+}
+// Matches a column's name to a resource, in English or in the current
+// language, so naming a column "FC Shard" assigns it in one step.
+function packResourceByName(name) {
+  const raw = String(name || "").trim();
+  if (!raw || packIsNonResourceColumn(raw)) return "";
+  const lower = raw.toLowerCase();
+  return PACK_RESOURCE_NAMES.find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower) || "";
+}
+// What each column actually grants: worked out from the column names, with
+// any manual choice from the "Used for" box taking precedence.
+function packEffectiveCols(table) {
+  const link = packLinkFor(table.id);
+  const out = {};
+  (table.columns || []).forEach((c, ci) => {
+    if (ci === link.priceCol) return;
+    const byName = packResourceByName(c);
+    if (byName) out[ci] = byName;
+  });
+  Object.entries(link.cols || {}).forEach(([ci, v]) => {
+    if (Number(ci) === link.priceCol) return;
+    if (v) out[ci] = v; else delete out[ci];
+  });
+  return out;
+}
 let PACK_LINKS = null;          // { [tableId]: { pages:[], priceCol:0, cols:{ idx:name } } }
 let PACK_TABLES_CACHE = null;   // pack_tables rows, for the calculator pages
 async function ensurePackLinks() {
@@ -4327,7 +4580,14 @@ async function savePackLinks() {
 function packLinkFor(tableId) {
   const links = PACK_LINKS || {};
   const l = links[String(tableId)] || {};
-  return { pages: Array.isArray(l.pages) ? l.pages : [], priceCol: typeof l.priceCol === "number" ? l.priceCol : 0, cols: l.cols || {} };
+  return {
+    pages: Array.isArray(l.pages) ? l.pages : [],
+    priceCol: typeof l.priceCol === "number" ? l.priceCol : 0,
+    cols: l.cols || {},
+    // Most packs are a ladder: you can't buy the $49.99 tier until you've
+    // bought the cheaper ones. Off means any tier can be bought on its own.
+    sequential: l.sequential === true,
+  };
 }
 async function ensurePackTables() {
   if (PACK_TABLES_CACHE) return PACK_TABLES_CACHE;
@@ -4345,7 +4605,7 @@ function packParseNum(v) {
 // One buyable pack: its price and how much of each mapped resource it gives.
 function packOffersFor(table) {
   const link = packLinkFor(table.id);
-  const cols = link.cols || {};
+  const cols = packEffectiveCols(table);
   const mapped = Object.keys(cols).filter((i) => cols[i]);
   if (!mapped.length) return [];
   return (table.rows || [])
@@ -4361,6 +4621,24 @@ function packOffersFor(table) {
       return { price, gives, label };
     })
     .filter((o) => o.price > 0 && Object.keys(o.gives).length);
+}
+// Tiers bought in order from the first one, stopping as soon as nothing is
+// short. Each tier is bought once - that's how a pack ladder works.
+function packLadderPlan(offers, need) {
+  const remaining = { ...need };
+  const bought = [];
+  let total = 0;
+  for (const o of offers) {
+    if (!Object.keys(remaining).some((n) => remaining[n] > 0)) break;
+    total += o.price;
+    bought.push(o.label);
+    Object.keys(o.gives).forEach((n) => {
+      if (remaining[n] != null) remaining[n] -= o.gives[n];
+    });
+  }
+  const short = {};
+  Object.keys(remaining).forEach((n) => { if (remaining[n] > 0) short[n] = remaining[n]; });
+  return { total, bought, short, complete: !Object.keys(short).length };
 }
 // Cheapest single pack bought over and over until nothing is short.
 function packRepeatPlan(offers, need) {
@@ -4429,7 +4707,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const sections = tables.map((tb) => {
     const offers = packOffersFor(tb);
     const link = packLinkFor(tb.id);
-    const supplied = new Set(Object.values(link.cols || {}));
+    const supplied = new Set(Object.values(packEffectiveCols(tb)));
     const base = PACK_COST_MODE === "full" ? needFull : needStill;
     // Only price the resources this table actually sells.
     const need = {};
@@ -4443,11 +4721,27 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       return `<div style="margin-top:10px;"><div class="meta" style="font-size:11px; font-weight:600;">${title}</div>
         <div class="meta" style="font-size:11px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div></div>`;
     }
-    const repeat = packRepeatPlan(offers, need);
-    const mix = packMixPlan(offers, need);
     const covered = Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${Math.round(need[n]).toLocaleString()}`).join(" &middot; ");
     const planHtml = (label, body) => `<div class="metric" style="padding:8px 10px; min-width:0;">
       <div class="label" style="font-size:10px;">${esc(label)}</div>${body}</div>`;
+    if (link.sequential) {
+      const ladder = packLadderPlan(offers, need);
+      const shortText = Object.keys(ladder.short)
+        .map((n) => `${esc(materialDisplayName(n))} ${Math.round(ladder.short[n]).toLocaleString()}`)
+        .join(" &middot; ");
+      const body = `<div class="val" style="font-size:16px;">${packFmtMoney(ladder.total)}</div>
+        <div class="meta" style="font-size:10px;">${ladder.bought.map((l) => esc(l)).join(" \u2192 ")}</div>
+        ${ladder.complete ? "" : `<div class="meta" style="font-size:10px; color:var(--danger); margin-top:3px;">${esc(t("pack_ladder_short"))} ${shortText}</div>`}`;
+      return `<div style="margin-top:10px;">
+        <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:2px;">${title}</div>
+        <div class="meta" style="font-size:10px; margin-bottom:6px;">${covered}</div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
+          ${planHtml(t("pack_buy_in_order"), body)}
+        </div>
+      </div>`;
+    }
+    const repeat = packRepeatPlan(offers, need);
+    const mix = packMixPlan(offers, need);
     const repeatBody = repeat
       ? `<div class="val" style="font-size:16px;">${packFmtMoney(repeat.total)}</div>
          <div class="meta" style="font-size:10px;">${repeat.count} &times; ${esc(repeat.label)}</div>`
@@ -6259,7 +6553,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
   const cat = BUFF_CATEGORIES.find((c) => c.name === heroName);
   const el = document.getElementById(containerId);
   if (!cat) {
-    el.innerHTML = `<div class="panel"><div class="empty">${esc(displayName)} ${esc(t("category_not_found"))}</div></div>`;
+    el.innerHTML = `<div class="panel"><div class="empty">${esc(dataName(displayName))} ${esc(t("category_not_found"))}</div></div>`;
     return;
   }
   const rows = await sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`);
@@ -6288,7 +6582,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
     <div class="panel">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
         ${imageUrl ? `<img src="${esc(imageUrl)}" alt="" style="width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid var(--line);" loading="lazy" />` : ""}
-        <h2 style="margin:0;">${esc(displayName)}</h2>
+        <h2 style="margin:0;">${esc(dataName(displayName))}</h2>
       </div>
       <p class="desc">${esc(t("click_star_desc"))}</p>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
@@ -6953,7 +7247,7 @@ async function renderT11HeliosPage() {
             const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === maxLvl ? t("max_suffix") : ""}</option>`).join("");
             return `
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); flex-wrap:wrap;">
-            <div class="meta" style="min-width:0; flex:1 1 120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(track)}</div>
+            <div class="meta" style="min-width:0; flex:1 1 120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(track))}</div>
             <select data-t11track="${esc(troop)}|${esc(track)}" style="width:110px; flex-shrink:0; padding:5px 8px;">${opts}</select>
           </div>`;
           })
@@ -7377,8 +7671,8 @@ async function renderExpertsResearchPage() {
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:4px;">
           <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
           <div style="min-width:0; text-align:center;">
-            ${img ? `<img src="${img}" alt="${esc(expert)}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; margin-bottom:4px;" loading="lazy" />` : ""}
-            <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(expert)}</div>
+            ${img ? `<img src="${img}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; margin-bottom:4px;" loading="lazy" />` : ""}
+            <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(dataName(expert))}</div>
             <div class="meta" style="font-size:10px; color:var(--frost);">${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
             ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta" style="font-size:9px; color:var(--muted);">${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}</div>` : ""}
           </div>
@@ -7406,7 +7700,7 @@ async function renderExpertsResearchPage() {
               .join(", ");
             return `
           <div style="padding:8px 0; ${idx < pageEntries.length - 1 ? "border-bottom:1px solid var(--line);" : ""}">
-            <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(pathName)}</div>
+            <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(dataName(pathName))}</div>
             <div style="display:flex; gap:6px; margin-bottom:4px;">
               <div style="flex:1;">
                 <div class="meta" style="font-size:10px;">${esc(t("current_label"))}</div>
@@ -7885,8 +8179,8 @@ async function renderExpertsPage() {
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:10px;">
           <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
           <div style="text-align:center;">
-            <img src="${e.img}" alt="${esc(e.key)}" style="width:72px; height:72px; object-fit:cover; margin-bottom:6px;" loading="lazy" />
-            <div class="name" style="font-size:16px; font-weight:700;">${esc(e.key)}</div>
+            <img src="${e.img}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; object-fit:cover; margin-bottom:6px;" loading="lazy" />
+            <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
           </div>
           <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px; justify-self:end;">${esc(t("max_button"))}</button>
         </div>
@@ -7929,7 +8223,7 @@ async function renderExpertsPage() {
               return `
           <div style="padding:6px 0;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
-              <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(sk)}</span>
+              <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(sk))}</span>
               <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
                 <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(max, Math.min(st.current, max))}</select>
                 <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(max, Math.min(st.desired, max))}</select>
@@ -8237,7 +8531,7 @@ async function renderRefinePage() {
           <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
               <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(pet)}</div>
+              <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>
             </label>
             <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">${esc(t("max_button"))}</button>
           </div>
@@ -8434,7 +8728,7 @@ async function renderPetsDataPage() {
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px; justify-content:flex-start; flex-wrap:nowrap;">
             <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
-            <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(pet)}</div>
+            <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(dataName(pet))}</div>
           </label>
           <div class="stats-row-scroll pet-level-row" style="margin-bottom:16px;">
             <div class="metric" style="padding:8px; min-width:110px; flex:1 1 110px;">
@@ -8618,7 +8912,7 @@ async function renderResearchCenterPage() {
           .map((base) => {
             return `
           <div style="padding:10px 0; border-top:1px solid var(--line);">
-            <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(base)}</div>
+            <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(dataName(base))}</div>
             <div class="rc-tier-grid" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;">
               ${RC_TIERS.map((tier) => {
                 const trackName = `${base} ${tier}`;
