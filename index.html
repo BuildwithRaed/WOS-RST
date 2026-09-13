@@ -563,7 +563,8 @@
         <button class="topnav-group-btn" type="button">Overview <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="overview" class="active"><span class="ic">&#9673;</span>Dashboard</button>
-          <button data-tab="backpack"><span class="ic">&#9733;</span>Backpack</button>
+          <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
+          <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
           <button data-tab="packs"><span class="ic">&#128230;</span>Packs</button>
         </div>
       </div>
@@ -1103,6 +1104,7 @@ const NAV_GROUP_LABELS = {
 };
 const NAV_PAGE_LABELS = {
   "overview": { en: "Dashboard", ar: "لوحة التحكم", ko: "대시보드" },
+  "budgets": { en: "Budgets", ar: "الميزانيات", ko: "예산" },
   "backpack": { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
   "packs": { en: "Packs", ar: "الحزم", ko: "패키지" },
   "charmscalc": { en: "Chief Charm", ar: "تعويذة القائد", ko: "족장 참" },
@@ -1420,6 +1422,22 @@ const T = {
   pack_ready_now: { en: "Available now", ar: "\u0645\u062a\u0627\u062d \u0627\u0644\u0622\u0646", ko: "\uc9c0\uae08 \uac00\ub2a5" },
   pack_not_reachable: { en: "Can't reach the target by that date.", ar: "\u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0627\u0644\u0647\u062f\u0641 \u0628\u062d\u0644\u0648\u0644 \u0647\u0630\u0627 \u0627\u0644\u062a\u0627\u0631\u064a\u062e.", ko: "\ud574\ub2f9 \ub0a0\uc9dc\uae4c\uc9c0 \ubaa9\ud45c\uc5d0 \ub3c4\ub2ec\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4." },
   pack_earliest: { en: "Earliest:", ar: "\u0623\u0642\u0631\u0628 \u0645\u0648\u0639\u062f:", ko: "\uac00\uc7a5 \ube60\ub978 \ub0a0\uc9dc:" },
+  budgets_title: { en: "Budgets", ar: "الميزانيات", ko: "예산" },
+  budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get.", ar: "كل خطط الترقية في مكان واحد: المواد المتبقية، وتكلفة الحزم المخصصة، وزيادة الإحصائيات التي ستحصل عليها.", ko: "모든 업그레이드 계획을 한곳에서: 남은 재료, 배정된 패키지 비용, 그리고 얻게 될 스탯 증가." },
+  budgets_loading: { en: "Adding everything up…", ar: "جارٍ الحساب…", ko: "계산 중…" },
+  budgets_total_title: { en: "Total for selected pages", ar: "الإجمالي للصفحات المحددة", ko: "선택한 페이지 합계" },
+  budgets_materials: { en: "Materials", ar: "المواد", ko: "재료" },
+  budgets_materials_total: { en: "Materials still needed (all selected)", ar: "المواد المتبقية (كل المحدد)", ko: "남은 재료 (선택 항목 전체)" },
+  budgets_stat_increase: { en: "Stat increase from this plan", ar: "زيادة الإحصائيات من هذه الخطة", ko: "이 계획의 스탯 증가" },
+  budgets_stat_increase_total: { en: "Stat increase (all selected)", ar: "زيادة الإحصائيات (كل المحدد)", ko: "스탯 증가 (선택 항목 전체)" },
+  budgets_open_page: { en: "Open", ar: "فتح", ko: "열기" },
+  budgets_open_once: { en: "Open this page once so its plan can be totalled here.", ar: "افتح هذه الصفحة مرة واحدة ليتم احتساب خطتها هنا.", ko: "이 페이지를 한 번 열면 계획이 여기에 합산됩니다." },
+  budgets_nothing_planned: { en: "Nothing planned on this page.", ar: "لا توجد خطة في هذه الصفحة.", ko: "이 페이지에 계획된 항목이 없습니다." },
+  budgets_no_packs: { en: "No pack table assigned to this page.", ar: "لا يوجد جدول حزم مخصص لهذه الصفحة.", ko: "이 페이지에 배정된 패키지 표가 없습니다." },
+  budgets_packs_detail: { en: "Packs to buy", ar: "الحزم المطلوب شراؤها", ko: "구매할 패키지" },
+  budgets_plan_detail: { en: "What's being upgraded", ar: "ما الذي تتم ترقيته", ko: "업그레이드 항목" },
+  budgets_snapshot_note: { en: "Numbers from the last time that page was opened.", ar: "الأرقام من آخر مرة فُتحت فيها تلك الصفحة.", ko: "해당 페이지를 마지막으로 열었을 때의 수치입니다." },
+  budgets_stats_unavailable: { en: "Current dashboard stats couldn't be loaded — showing increases only.", ar: "تعذّر تحميل إحصائيات لوحة التحكم الحالية — تُعرض الزيادات فقط.", ko: "현재 대시보드 스탯을 불러오지 못했습니다 — 증가량만 표시합니다." },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
   pack_per_reset: { en: "per reset", ar: "\u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9" },
   pack_resets: { en: "resets", ar: "\u062a\u0643\u0631\u0627\u0631\u0627\u062a", ko: "\ud68c \uc8fc\uae30" },
@@ -1478,7 +1496,7 @@ function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "heroes", "stats", "backpack", "packs", "charmscalc", "chiefgear",
+  "overview", "budgets", "heroes", "stats", "backpack", "packs", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -1627,7 +1645,9 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 async function render() {
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
+    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); }
     if (TAB === "overview") await renderOverview();
+    else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "heroes") await renderHeroes();
     else if (TAB === "stats") await renderStats();
     else if (TAB === "backpack") await renderInventory();
@@ -1693,7 +1713,8 @@ function displaySourceName(key) {
   return dataName(SOURCE_DISPLAY_NAME[key] || key);
 }
 
-async function renderOverview() {
+let DASHBOARD_STATS_LIVE = null; // [{troop, stat, total, sources}] from the last dashboard computation
+async function renderOverview(opts = {}) {
   // Speed: everything the Dashboard needs is requested in one parallel batch
   // (saved states come from the shared calc_state cache), instead of several
   // waves of requests that each waited for the previous one to finish.
@@ -2185,6 +2206,9 @@ async function renderOverview() {
   // averages across all 12 stat lines, for the top metric row
   const allStats = [];
   for (const t of TROOP_TYPES) for (const s of STATS) allStats.push({ troop: t.key, stat: s.key, ...statFor(t.key, s.key) });
+  DASHBOARD_STATS_LIVE = allStats;
+  // The Budgets page only needs the numbers, not the page.
+  if (opts.computeOnly) return allStats;
   const avgByStat = STATS.map((s) => {
     const vals = allStats.filter((x) => x.stat === s.key).map((x) => x.total);
     const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
@@ -5187,6 +5211,321 @@ function packFmtMoney(n, currency, whole) {
   }
 }
 
+
+// ============================================================
+// BUDGETS PAGE
+// One place that adds up every calculator: what each upgrade plan still
+// needs, what the assigned packs would cost, and which dashboard stats
+// go up (and by how much) if the plan is completed.
+// ============================================================
+// Pages the Budgets page can total. The gear pages compute their needs
+// live; the research pages keep a snapshot from the last time they were
+// opened (their totals live inside those pages).
+const BUDGET_PAGES = [
+  { key: "chief_gear", tab: "chiefgear" },
+  { key: "charm", tab: "charmscalc" },
+  { key: "hero_gear", tab: "herogearcalc" },
+  { key: "research_center", tab: "researchcenter" },
+  { key: "t11_helios", tab: "t11helios" },
+  { key: "t12_research", tab: "t12research" },
+];
+let BUDGET_NEEDS_SNAPSHOT = null;   // { [calcKey]: { groups:[{label,totals}], at } }
+async function ensureBudgetNeedsSnapshot() {
+  if (!BUDGET_NEEDS_SNAPSHOT) BUDGET_NEEDS_SNAPSHOT = (await loadCalcState("budget_needs")) || {};
+  return BUDGET_NEEDS_SNAPSHOT;
+}
+// Called by every page's Backpack row so the Budgets page can total pages
+// it can't compute on its own. Only writes when the numbers changed.
+async function recordBudgetNeeds(calcKey, groups) {
+  try {
+    const snap = await ensureBudgetNeedsSnapshot();
+    const clean = groups.map((g) => ({ label: g.label || null, totals: { ...(g.totals || {}) } }));
+    const prev = snap[calcKey];
+    if (prev && JSON.stringify(prev.groups) === JSON.stringify(clean)) return;
+    snap[calcKey] = { groups: clean, at: Date.now() };
+    await saveCalcState("budget_needs", snap);
+  } catch (e) { /* purely a convenience cache */ }
+}
+// Live material needs for the pages whose data is global.
+function computeChiefGearNeeds() {
+  const rows = CHIEF_GEAR_ROWS || [];
+  const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+  const totals = {};
+  CHIEF_GEAR_PIECES.forEach((p) => {
+    const st = CHIEF_GEAR_STATE[p.key];
+    const fromIdx = Math.min(st.from, st.to), toIdx = Math.max(st.from, st.to);
+    for (let i = fromIdx + 1; i <= toIdx; i++) cols.forEach(([col, label]) => {
+      const v = Number((rows[i] || {})[col]) || 0;
+      if (v) totals[label] = (totals[label] || 0) + v;
+    });
+  });
+  return [{ label: null, totals }];
+}
+function computeCharmNeeds() {
+  let g = 0, d = 0, s = 0;
+  CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((slot) => {
+    const from = CHARM_CUMULATIVE[slot.current] || [0, 0, 0];
+    const to = CHARM_CUMULATIVE[slot.target] || [0, 0, 0];
+    g += Math.max(0, to[0] - from[0]); d += Math.max(0, to[1] - from[1]); s += Math.max(0, to[2] - from[2]);
+  }));
+  return [{ label: null, totals: { "Charm Guides": g, "Charm Designs": d, "Jewel Secrets": s } }];
+}
+function computeHeroGearNeeds() {
+  if (!HERO_GEAR_TABLES_CACHE) return [{ label: null, totals: {} }];
+  const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
+  const totals = {};
+  const setState = HERO_GEAR_SETS[heroGearActiveSet];
+  HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => GEAR_LEVELING_TABLES.forEach((tname) => {
+    const rows = HERO_GEAR_TABLES_CACHE[tname] || [];
+    if (!rows.length) return;
+    const st = setState[troop][piece][tname];
+    const fromIdx = Math.min(st.from, st.to), toIdx = Math.max(st.from, st.to);
+    for (let i = fromIdx + 1; i <= toIdx; i++) cols.forEach(([col, label]) => {
+      const v = Number(rows[i][col]) || 0;
+      if (v) totals[label] = (totals[label] || 0) + v;
+    });
+  })));
+  return [{ label: null, totals }];
+}
+// What a page's plan would add to each dashboard stat line, as
+// [{ troop: "Infantry"|"Lancers"|"Marksman", stat: ATT|DEF|DMG|HP, delta }].
+// "Current" is the calculator's from-level, "after" is its to-level.
+function budgetStatDeltas(calcKey) {
+  const out = [];
+  const push = (calcTroop, stat, delta) => {
+    if (!delta || Math.abs(delta) < 1e-9) return;
+    const troop = calcTroop === "Lancer" ? "Lancers" : calcTroop;
+    out.push({ troop, stat, delta });
+  };
+  if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS) {
+    const target = {};
+    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; target[p.key] = { from: Math.max(st.from, st.to), to: st.to }; });
+    const cur = computeChiefGearRawStat(CHIEF_GEAR_STATE), tgt = computeChiefGearRawStat(target);
+    const bCur = computeChiefGearSetBonus(CHIEF_GEAR_STATE), bTgt = computeChiefGearSetBonus(target);
+    ["Infantry", "Lancer", "Marksman"].forEach((tr) => {
+      push(tr, "ATT", (tgt[tr]?.Attack || 0) - (cur[tr]?.Attack || 0) + (bTgt.sixBonus - bCur.sixBonus));
+      push(tr, "DEF", (tgt[tr]?.Defense || 0) - (cur[tr]?.Defense || 0) + (bTgt.threeBonus - bCur.threeBonus));
+    });
+  } else if (calcKey === "charm") {
+    const target = {};
+    CHARM_PIECES.forEach((p) => { target[p.key] = CHARM_CALC_STATE[p.key].map((s) => ({ current: s.target })); });
+    const cur = computeCharmStats(CHARM_CALC_STATE), tgt = computeCharmStats(target);
+    ["Infantry", "Lancer", "Marksman"].forEach((tr) => {
+      push(tr, "DMG", (tgt[tr] || 0) - (cur[tr] || 0));
+      push(tr, "HP", (tgt[tr] || 0) - (cur[tr] || 0));
+    });
+  } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
+    const setState = HERO_GEAR_SETS[heroGearActiveSet];
+    const target = {};
+    HERO_GEAR_TROOPS.forEach((tr) => {
+      target[tr] = {};
+      HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+        target[tr][piece] = {};
+        GEAR_LEVELING_TABLES.forEach((tname) => { const st = setState[tr][piece][tname]; target[tr][piece][tname] = { from: Math.max(st.from, st.to), to: st.to }; });
+      });
+    });
+    const cur = computeHeroGearStats(setState), tgt = computeHeroGearStats(target);
+    const map = { Attack: "ATT", Defense: "DEF", Lethality: "DMG", Health: "HP" };
+    HERO_GEAR_TROOPS.forEach((tr) => Object.keys(map).forEach((raw) => push(tr, map[raw], (tgt[tr]?.[raw] || 0) - (cur[tr]?.[raw] || 0))));
+  }
+  return out;
+}
+// Short "what changes" lines for a page's plan (e.g. "Helmet: T5 ★0.4 → T6").
+function budgetPlanLines(calcKey) {
+  const lines = [];
+  if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS) {
+    CHIEF_GEAR_PIECES.forEach((p) => {
+      const st = CHIEF_GEAR_STATE[p.key];
+      if (st.to > st.from) lines.push(`${pieceDisplayName(p.name)} (${troopDisplayName(p.troop)}): ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.from])} → ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.to])}`);
+    });
+  } else if (calcKey === "charm") {
+    CHARM_PIECES.forEach((p) => {
+      const ups = CHARM_CALC_STATE[p.key].map((s, i) => Number(s.target) > Number(s.current) ? `${s.current}→${s.target}` : null).filter(Boolean);
+      if (ups.length) lines.push(`${pieceDisplayName(p.name || p.key)} (${troopDisplayName(p.troop)}): ${ups.join(", ")}`);
+    });
+  } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
+    const setState = HERO_GEAR_SETS[heroGearActiveSet];
+    HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+      const ups = GEAR_LEVELING_TABLES.map((tname) => { const st = setState[tr][piece][tname]; return st.to > st.from ? `${st.from}→${st.to}` : null; }).filter(Boolean);
+      if (ups.length) lines.push(`${troopDisplayName(tr)} ${piece}: ${ups.join(" / ")}`);
+    }));
+  }
+  return lines;
+}
+// Everything the Budgets page needs for one calculator page.
+async function budgetForPage(calcKey, targetDays) {
+  await ensurePackLinks();
+  const tables = (await ensurePackTables()).filter((tb) => packLinkFor(tb.id).pages.includes(calcKey));
+  let groups, live = true;
+  if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
+  else if (calcKey === "charm") groups = computeCharmNeeds();
+  else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
+  else { const snap = (await ensureBudgetNeedsSnapshot())[calcKey]; groups = snap ? snap.groups : null; live = false; }
+  if (!groups) return { calcKey, tables, missing: true };
+  const owned = await ensureMaterialOwnedCache(calcKey);
+  const needFull = {};
+  groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { needFull[n] = (needFull[n] || 0) + (Number(q) || 0); }));
+  const needStill = {};
+  Object.keys(needFull).forEach((n) => { needStill[n] = Math.max(0, needFull[n] - (Number(owned[n]) || 0)); });
+  const packGroups = packGroupsFor(tables);
+  const supplied = new Set();
+  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
+  const need = {};
+  Object.keys(needStill).forEach((n) => { if (supplied.has(n) && needStill[n] > 0) need[n] = needStill[n]; });
+  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  if (packGroups.length && Object.keys(need).length) {
+    res.earliest = packEarliestDays(packGroups, need);
+    if (res.earliest != null) {
+      res.fastest = packCheapestPlan(packGroups, need, res.earliest);
+      res.cheapest = packCheapestPlan(packGroups, need, Infinity);
+      if (targetDays != null && targetDays >= res.earliest) res.byTarget = packCheapestPlan(packGroups, need, targetDays);
+      res.chosen = res.byTarget || res.cheapest;
+    }
+  }
+  res.deltas = budgetStatDeltas(calcKey);
+  res.lines = budgetPlanLines(calcKey);
+  return res;
+}
+let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
+let BUDGET_TARGET = undefined; // yyyy-mm-dd or ""
+async function renderBudgetsPage() {
+  content.innerHTML = `
+    <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
+    <div class="panel" style="margin-top:12px;"><div class="empty"><div class="big">${esc(t("budgets_loading"))}</div></div></div>`;
+  // Load every calculator's saved plan plus the dashboard's current totals
+  // (computed exactly the way the Dashboard page does, without drawing it).
+  const [, , , , savedSel, savedTarget, dashStats] = await Promise.all([
+    ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensurePackLinks(),
+    BUDGET_SELECTED ? Promise.resolve(BUDGET_SELECTED) : loadCalcState("budget_selected"),
+    BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
+    renderOverview({ computeOnly: true }).catch((e) => { console.error("dashboard stats failed", e); return null; }),
+  ]);
+  if (TAB !== "budgets") return;
+  BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
+  BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
+  const included = (k) => BUDGET_SELECTED[k] !== false;
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let targetDays = null;
+  if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
+  const fmtDate = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d.toDateString(); } };
+  const qty = (v) => Math.round(v).toLocaleString();
+  const pct = (v) => `${(Math.round(v * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+
+  const pages = await Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays)));
+  if (TAB !== "budgets") return;
+  const curStat = (troop, stat) => { const x = (dashStats || []).find((s) => s.troop === troop && s.stat === stat); return x ? x.total : null; };
+  const STAT_KEYS = ["ATT", "DEF", "DMG", "HP"];
+  const STAT_RAW = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
+  const TROOPS = ["Infantry", "Lancers", "Marksman"];
+
+  const statTableHtml = (deltas, compact) => {
+    if (!deltas.length) return "";
+    const by = {}; deltas.forEach((d) => { by[`${d.troop}|${d.stat}`] = (by[`${d.troop}|${d.stat}`] || 0) + d.delta; });
+    const stats = STAT_KEYS.filter((s) => TROOPS.some((tr) => by[`${tr}|${s}`]));
+    return `<div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
+      <thead><tr><th style="text-align:start; padding:4px 6px; border-bottom:1px solid var(--line);"></th>${stats.map((s) => `<th style="padding:4px 6px; border-bottom:1px solid var(--line); text-align:center;">${esc(tStatLabel(STAT_RAW[s]))}</th>`).join("")}</tr></thead>
+      <tbody>${TROOPS.map((tr) => `<tr><td style="padding:4px 6px; font-weight:600; white-space:nowrap;">${esc(troopDisplayName(tr))}</td>${stats.map((s) => {
+        const d = by[`${tr}|${s}`] || 0; const cur = curStat(tr, s);
+        if (!d) return `<td style="padding:4px 6px; text-align:center;" class="meta">—</td>`;
+        return `<td style="padding:4px 6px; text-align:center; white-space:nowrap;">${cur == null ? "" : `<span class="meta">${pct(cur)}</span> → <b>${pct(cur + d)}</b> `}<span style="color:var(--good);">+${pct(d)}</span></td>`;
+      }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  };
+  const packRowsHtml = (plan) => plan.rows.map((r) => `
+    <div style="display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; padding:3px 0; border-top:1px solid var(--line); font-size:11px;">
+      <span style="font-weight:600;">${esc(r.title)}</span><span class="meta">${esc(r.label)}</span><span style="color:var(--ice);">&times; ${r.count}</span>
+      <span style="margin-inline-start:auto; font-weight:600;">${packFmtMoney(r.subtotal, r.currency)}</span>
+    </div>`).join("");
+  const matsHtml = (needFull, needStill, owned) => Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
+    const still = needStill[n] || 0;
+    return `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${qty(still)}</b><span class="meta"> / ${qty(needFull[n])}</span></span>`;
+  }).join(" &nbsp;&middot;&nbsp; ");
+
+  // Per-page cards.
+  let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
+  const grandMats = {}, grandDeltas = [];
+  const cards = pages.map((pg, i) => {
+    const label = packPageLabel(pg.calcKey);
+    const inc = included(pg.calcKey);
+    const head = `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} /><span style="font-size:14px; font-weight:700;">${esc(label)}</span></label>
+        <button class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}" style="margin-inline-start:auto;">${esc(t("budgets_open_page"))}</button>
+      </div>`;
+    if (pg.missing) return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_open_once"))}</div></div>`;
+    const hasNeed = Object.keys(pg.needFull).some((n) => pg.needFull[n] > 0);
+    if (!hasNeed) return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("budgets_nothing_planned"))}</div></div>`;
+    if (inc) {
+      Object.keys(pg.needStill).forEach((n) => { if (pg.needStill[n] > 0) grandMats[n] = (grandMats[n] || 0) + pg.needStill[n]; });
+      pg.deltas.forEach((d) => grandDeltas.push(d));
+      if (pg.chosen) { anyPlan = true; grandTotal += pg.chosen.total; grandCurrency = grandCurrency || (pg.packGroups[0] && pg.packGroups[0].offers[0].currency); grandDays = Math.max(grandDays, pg.chosen.days); }
+    }
+    let costHtml;
+    if (!pg.tables.length) costHtml = `<div class="meta" style="font-size:11px;">${esc(t("budgets_no_packs"))}</div>`;
+    else if (!Object.keys(pg.need).length) costHtml = `<div class="meta" style="font-size:11px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>`;
+    else if (pg.earliest == null) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
+    else {
+      const c = pg.chosen;
+      const late = targetDays != null && c.days > targetDays;
+      const alt = [pg.fastest && `${t("pack_plan_fastest")}: ${packFmtMoney(Math.ceil(pg.fastest.total), c.rows[0]?.currency, true)} · ${fmtDate(pg.fastest.days)}`,
+                   pg.cheapest && `${t("pack_plan_cheapest")}: ${packFmtMoney(Math.ceil(pg.cheapest.total), c.rows[0]?.currency, true)} · ${fmtDate(pg.cheapest.days)}`].filter(Boolean);
+      costHtml = `
+        <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:20px; font-weight:700;">${packFmtMoney(Math.ceil(c.total), c.rows[0]?.currency, true)}</span>
+          <span class="meta" style="font-size:11px;">${esc(pg.byTarget ? t("pack_plan_by_target") : t("pack_plan_cheapest"))}</span>
+          <span class="meta" style="font-size:11px; color:${late ? "var(--danger)" : "var(--good)"};">${c.days === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(c.days))} · ${c.days} ${esc(t("pack_days_short_long"))}`}</span>
+        </div>
+        ${targetDays != null && !pg.byTarget ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(pg.earliest))}</div>` : ""}
+        <details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${c.rows.length})</summary>${packRowsHtml(c)}
+          <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
+    }
+    return `<div class="panel" style="${inc ? "" : "opacity:0.55;"}">
+      ${head}
+      ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
+      ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
+      <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}</div>
+      <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
+      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}
+    </div>`;
+  });
+
+  const summary = `
+    <div class="panel" style="border-color:var(--ice);">
+      <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
+        <div style="font-size:14px; font-weight:700;">${esc(t("budgets_total_title"))}</div>
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; margin-inline-start:auto;"><span class="meta">${esc(t("pack_target_by"))}</span><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" style="font-size:12px; padding:4px 6px;" />
+          ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label>
+      </div>
+      <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
+        <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtMoney(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
+        ${anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
+      </div>
+      ${Object.keys(grandMats).length ? `<div style="margin-top:8px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials_total"))}</div>${Object.keys(grandMats).map((n) => `<span style="white-space:nowrap; font-size:11px; margin-inline-end:10px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b>${qty(grandMats[n])}</b></span>`).join("")}</div>` : ""}
+      ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
+      ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
+    </div>`;
+
+  content.innerHTML = `
+    <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
+    <div style="margin-top:12px;">${summary}</div>
+    <div class="grid g2" style="align-items:start; margin-top:16px; gap:16px;">${cards.join("")}</div>`;
+
+  content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
+    BUDGET_SELECTED[cb.dataset.budgetinc] = cb.checked;
+    await saveCalcState("budget_selected", BUDGET_SELECTED);
+    renderBudgetsPage();
+  }));
+  const dateEl = content.querySelector("[data-budgettarget]");
+  if (dateEl) dateEl.addEventListener("change", async () => {
+    BUDGET_TARGET = dateEl.value || "";
+    await saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
+    renderBudgetsPage();
+  });
+  content.querySelectorAll("[data-gototab]").forEach((b) => b.addEventListener("click", () => {
+    const btn = document.querySelector(`.topnav-groups [data-tab="${b.dataset.gototab}"]`);
+    if (btn) btn.click();
+  }));
+}
+
 // ---- Shared "one troop at a time, swipe to switch" helper ----
 // Renders a single-row tab header for Infantry/Lancer/Marksman (or any
 // small set of troops) and wires horizontal swipe gestures on the content
@@ -5735,6 +6074,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   `;
   const packBox = document.getElementById(`${rowsId}_packs`);
   renderPackCostBlock(packBox, calcKey || "chief_gear", groups, owned);
+  recordBudgetNeeds(calcKey || "chief_gear", groups);
 
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
     input.addEventListener("change", async () => {
@@ -12276,6 +12616,8 @@ document.addEventListener("click", (e) => {
 function renderOwnerLoginUI() {
   const el = document.getElementById("ownerLoginArea");
   document.getElementById("adminNavGroup").style.display = IS_OWNER ? "block" : "none";
+  // Backpack and Budgets are owner-only pages.
+  document.querySelectorAll("[data-ownertab]").forEach((b) => { b.style.display = IS_OWNER ? "" : "none"; });
 
   if (IS_OWNER) {
     el.innerHTML = `
