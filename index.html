@@ -3677,7 +3677,7 @@ async function renderPacksPage() {
                 )
                 .join("")}
               <tr style="border-top:2px solid var(--line); font-weight:700;">
-                ${totals.map((sum) => `<td style="padding:5px 3px; font-size:11px; text-align:center;">${sum ? fmtNum(sum) : ""}</td>`).join("")}
+                ${totals.map((sum, ci) => `<td data-pt-total="${ci}" style="padding:5px 3px; font-size:11px; text-align:center;">${sum ? fmtNum(sum) : ""}</td>`).join("")}
                 <td></td>
               </tr>
             </tbody>
@@ -3710,7 +3710,7 @@ async function renderPacksPage() {
     if (cur.toLowerCase() === "gems") {
       return `<span class="pack-col-fixed" title="${esc(cur)}">${esc(cur)}</span>`;
     }
-    const known = PACK_RESOURCE_NAMES;
+    const known = packResourceChoices(cur);
     const isKnown = known.some((n) => n.toLowerCase() === cur.toLowerCase());
     return `<select data-pt-colpick data-col="${ci}" class="pack-col-pick" title="${esc(cur)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
       ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
@@ -3722,7 +3722,7 @@ async function renderPacksPage() {
     const link = packLinkFor(tb.id);
     const resOpts = (selected) =>
       `<option value="">${esc(t("pack_col_unused"))}</option>` +
-      PACK_RESOURCE_NAMES.map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
+      packResourceChoices(selected).map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
     return `
       <details class="pack-link" data-packlink="${esc(tb.id)}" style="margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
         <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${packGroupsChecked(link.pages) ? ` (${packGroupsChecked(link.pages)})` : ""}</summary>
@@ -3897,13 +3897,25 @@ async function renderPacksPage() {
       // (fixed universal price point); the ratio fill for every other
       // column only runs when Scale is on for tables that actually follow
       // a fixed proportional relationship.
+      // The totals row follows every keystroke (and every auto-fill), so
+      // it never waits for a re-render to catch up.
+      function refreshTotals() {
+        t.columns.forEach((_, ci) => {
+          let sum = 0;
+          panel.querySelectorAll(`[data-pt-cell][data-col="${ci}"]`).forEach((inp) => { sum += parseNum(inp.value) || 0; });
+          const cell = panel.querySelector(`[data-pt-total="${ci}"]`);
+          if (cell) cell.textContent = sum ? fmtNum(sum) : "";
+        });
+      }
       panel.addEventListener("input", (e) => {
         const cell = e.target.closest("[data-pt-cell]");
         if (!cell) return;
         if (cell.dataset.row === "0" && cell.dataset.col === "0") applyAmountSequence(panel, t);
         if (cell.dataset.col === "0") applyGemsLookup(panel, t);
         if (t.scale_enabled !== false && (cell.dataset.col === "0" || cell.dataset.row === "0")) applyRatioScale(panel, t);
+        refreshTotals();
       });
+      panel.addEventListener("change", (e) => { if (e.target.closest("[data-pt-cell]")) refreshTotals(); });
 
       // Persist on blur (change), not every keystroke - covers title,
       // column names, and cell edits (including whatever applyScale just
@@ -4755,6 +4767,13 @@ const PACK_BUNDLES = {
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
   return PACK_BUNDLES[name] || { [name]: 1 };
+}
+// Resources a pack column can't be named directly - they're only reached
+// through item bundles (speedup items, XP items) - so they stay out of
+// the dropdowns. A column that already has one of these keeps it.
+const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component"]);
+function packResourceChoices(current) {
+  return PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) || (current && n.toLowerCase() === String(current).toLowerCase()));
 }
 // Columns named "Gems" (or the price column) never grant a trackable
 // resource, so they're skipped everywhere a resource is chosen.
