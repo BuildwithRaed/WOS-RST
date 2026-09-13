@@ -1375,7 +1375,7 @@ const T = {
   hero_gear_stats_desc: { en: "Mastery Forging & Enhance boost Lethality/Health; Mithril milestones boost Attack/Defense.", ar: "\u0635\u0642\u0644 \u0627\u0644\u0625\u062a\u0642\u0627\u0646 \u0648\u0627\u0644\u062a\u0639\u0632\u064a\u0632 \u064a\u0632\u064a\u062f\u0627\u0646 \u0627\u0644\u0641\u062a\u0643/\u0627\u0644\u0635\u062d\u0629\u061b \u0648\u0645\u0631\u0627\u062d\u0644 \u0627\u0644\u0645\u064a\u062b\u0631\u064a\u0644 \u062a\u0632\u064a\u062f \u0627\u0644\u0647\u062c\u0648\u0645/\u0627\u0644\u062f\u0641\u0627\u0639.", ko: "\uc219\ub828 \uc81c\uc791\uacfc \uac15\ud654\ub294 \uce58\uba85\ud0c0/\uccb4\ub825\uc744, \ubbf8\uc2a4\ub9b4 \ub2ec\uc131 \uad6c\uac04\uc740 \uacf5\uaca9/\ubc29\uc5b4\ub97c \uc62c\ub838\uc2b5\ub2c8\ub2e4." },
   level_prefix: { en: "Lv.", ar: "\u0627\u0644\u0645\u0633\u062a\u0648\u0649", ko: "\ub808\ubca8" },
   pack_used_for: { en: "Used for", ar: "\u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0644\u0640", ko: "\uc0ac\uc6a9 \ub300\uc0c1" },
-  pack_used_for_desc: { en: "Pick the pages this table should price, then say which column is the price and what each other column gives.", ar: "\u0627\u062e\u062a\u0631 \u0627\u0644\u0635\u0641\u062d\u0627\u062a \u0627\u0644\u062a\u064a \u064a\u0633\u0639\u0651\u0631\u0647\u0627 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644\u060c \u062b\u0645 \u062d\u062f\u0651\u062f \u0639\u0645\u0648\u062f \u0627\u0644\u0633\u0639\u0631 \u0648\u0645\u0627 \u064a\u0645\u0646\u062d\u0647 \u0643\u0644 \u0639\u0645\u0648\u062f \u0622\u062e\u0631.", ko: "\uc774 \ud45c\ub85c \uac00\uaca9\uc744 \uacc4\uc0b0\ud560 \ud398\uc774\uc9c0\ub97c \uace0\ub974\uace0, \uac00\uaca9 \uc5f4\uacfc \ub2e4\ub978 \uc5f4\uc774 \uc8fc\ub294 \uc790\uc6d0\uc744 \uc9c0\uc815\ud558\uc138\uc694." },
+  pack_used_for_desc: { en: "Pick the pages this table should price. Column names are set in the table header above.", ar: "اختر الصفحات التي يسعّرها هذا الجدول. تُضبط أسماء الأعمدة من رأس الجدول أعلاه.", ko: "이 표로 가격을 계산할 페이지를 고르세요. 열 이름은 위의 표 머리글에서 설정합니다." },
   pack_price_column: { en: "Price column", ar: "\u0639\u0645\u0648\u062f \u0627\u0644\u0633\u0639\u0631", ko: "\uac00\uaca9 \uc5f4" },
   pack_col_unused: { en: "Not used", ar: "\u063a\u064a\u0631 \u0645\u0633\u062a\u062e\u062f\u0645", ko: "\uc0ac\uc6a9 \uc548 \ud568" },
   pack_cost_title: { en: "Pack cost", ar: "\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062d\u0632\u0645", ko: "\ud328\ud0a4\uc9c0 \ube44\uc6a9" },
@@ -1396,6 +1396,7 @@ const T = {
   pack_currency: { en: "Currency", ar: "\u0627\u0644\u0639\u0645\u0644\u0629", ko: "\ud1b5\ud654" },
   pack_single_pack: { en: "Cheapest single pack", ar: "\u0623\u0631\u062e\u0635 \u062d\u0632\u0645\u0629 \u0645\u0641\u0631\u062f\u0629", ko: "\ub2e8\uc77c \ud328\ud0a4\uc9c0 \ucd5c\uc800\uac00" },
   pack_up_to: { en: "up to", ar: "\u062d\u062a\u0649", ko: "\ucd5c\ub300" },
+  pack_grand_total: { en: "Total", ar: "\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a", ko: "\ucd1d\uc561" },
   quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
 function t(key) {
@@ -3654,9 +3655,6 @@ async function renderPacksPage() {
   }
   function packLinkEditorHtml(tb) {
     const link = packLinkFor(tb.id);
-    const colOpts = (selected) => tb.columns
-      .map((c, ci) => `<option value="${ci}" ${ci === selected ? "selected" : ""}>${esc(c || "#" + (ci + 1))}</option>`)
-      .join("");
     const resOpts = (selected) =>
       `<option value="">${esc(t("pack_col_unused"))}</option>` +
       PACK_RESOURCE_NAMES.map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
@@ -3670,14 +3668,6 @@ async function renderPacksPage() {
               <input type="checkbox" data-packpage="${esc(pg.key)}" ${link.pages.includes(pg.key) ? "checked" : ""} style="flex-shrink:0;" />
               <span>${esc(packPageLabel(pg.key))}</span>
             </label>`).join("")}
-        </div>
-        <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-          <span class="meta" style="font-size:11px;">${esc(t("pack_price_column"))}</span>
-          <select data-packprice style="width:auto; min-width:90px;">${colOpts(link.priceCol)}</select>
-          <span class="meta" style="font-size:11px;">${esc(t("pack_currency"))}</span>
-          <select data-packcurrency style="width:auto; min-width:110px;">
-            ${PACK_CURRENCIES.map((c) => `<option value="${esc(c.code)}" ${c.code === link.currency ? "selected" : ""}>${esc(c.symbol)} ${esc(c.code)}</option>`).join("")}
-          </select>
         </div>
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
           <input type="checkbox" data-packsequential ${link.sequential ? "checked" : ""} style="flex-shrink:0;" />
@@ -3717,42 +3707,10 @@ async function renderPacksPage() {
           if (sum) sum.textContent = t("pack_used_for") + (l.pages.length ? ` (${l.pages.length})` : "");
         });
       });
-      const curSel = box.querySelector("[data-packcurrency]");
-      if (curSel) curSel.addEventListener("change", async () => {
-        const l = current();
-        l.currency = curSel.value;
-        await savePackLinks();
-        // Retitle the price column with the new symbol, so the table itself
-        // shows the currency you're buying in.
-        const tbIdx = tables.findIndex((x) => String(x.id) === String(id));
-        if (tbIdx !== -1) {
-          const tb = tables[tbIdx];
-          const ci = typeof l.priceCol === "number" ? l.priceCol : 0;
-          if (tb.columns && tb.columns[ci] != null && packIsNonResourceColumn(tb.columns[ci])) {
-            tb.columns[ci] = packCurrencySymbol(curSel.value);
-            const payload = { title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tbIdx, scale_enabled: tb.scale_enabled !== false, updated_at: new Date().toISOString() };
-            try {
-              if (!String(tb.id).startsWith("new-")) await sb(`pack_tables?id=eq.${tb.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-            } catch (err) {}
-            PACK_TABLES_CACHE = null;
-          }
-        }
-        renderAll();
-        const reopened = listEl.querySelector(`[data-packlink="${CSS.escape(id)}"]`);
-        if (reopened) reopened.open = true;
-      });
       const seqCb = box.querySelector("[data-packsequential]");
       if (seqCb) seqCb.addEventListener("change", async () => {
         current().sequential = seqCb.checked;
         await savePackLinks();
-      });
-      const priceSel = box.querySelector("[data-packprice]");
-      if (priceSel) priceSel.addEventListener("change", async () => {
-        current().priceCol = Number(priceSel.value);
-        await savePackLinks();
-        renderAll();
-        const reopened = listEl.querySelector(`[data-packlink="${CSS.escape(id)}"]`);
-        if (reopened) reopened.open = true;
       });
       box.querySelectorAll("[data-packcol]").forEach((sel) => {
         sel.addEventListener("change", async () => {
@@ -4822,63 +4780,57 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     needStill[name] = Math.max(0, needFull[name] - (Number((owned || {})[name]) || 0));
   });
 
-  const sections = tables.map((tb) => {
-    const offers = packOffersFor(tb);
+  // Every pack this page can use, in table order then cheapest tier first,
+  // each tagged with the table it came from.
+  const base = PACK_COST_MODE === "full" ? needFull : needStill;
+  const offers = [];
+  tables.forEach((tb) => {
     const link = packLinkFor(tb.id);
-    const supplied = new Set(Object.values(packEffectiveCols(tb)));
-    const base = PACK_COST_MODE === "full" ? needFull : needStill;
-    // Only price the resources this table actually sells.
-    const need = {};
-    Object.keys(base).forEach((name) => { if (supplied.has(name) && base[name] > 0) need[name] = base[name]; });
-    const title = esc(tb.title || t("packs_title"));
-    if (!offers.length) {
-      return `<div style="margin-top:10px;"><div class="meta" style="font-size:11px; font-weight:600;">${title}</div>
-        <div class="meta" style="font-size:11px;">${esc(t("pack_no_columns"))}</div></div>`;
-    }
-    if (!Object.keys(need).length) {
-      return `<div style="margin-top:10px;"><div class="meta" style="font-size:11px; font-weight:600;">${title}</div>
-        <div class="meta" style="font-size:11px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div></div>`;
-    }
-    const covered = Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${Math.round(need[n]).toLocaleString()}`).join(" &middot; ");
-    const planHtml = (label, body) => `<div class="metric" style="padding:8px 10px; min-width:0;">
-      <div class="label" style="font-size:10px;">${esc(label)}</div>${body}</div>`;
-    if (link.sequential) {
-      const ladder = packLadderPlan(offers, need);
-      const shortText = Object.keys(ladder.short)
-        .map((n) => `${esc(materialDisplayName(n))} ${Math.round(ladder.short[n]).toLocaleString()}`)
-        .join(" &middot; ");
-      const body = `<div class="val" style="font-size:16px;">${packFmtMoney(ladder.total, link.currency)}</div>
-        <div class="meta" style="font-size:10px;">${ladder.bought.map((l) => esc(l)).join(" \u2192 ")}</div>
-        ${ladder.complete ? "" : `<div class="meta" style="font-size:10px; color:var(--danger); margin-top:3px;">${esc(t("pack_ladder_short"))} ${shortText}</div>`}`;
-      return `<div style="margin-top:10px;">
-        <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:2px;">${title}</div>
-        <div class="meta" style="font-size:10px; margin-bottom:6px;">${covered}</div>
-        <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
-          ${planHtml(t("pack_buy_in_order"), body)}
+    packOffersFor(tb).forEach((o) => {
+      offers.push({ ...o, tableTitle: tb.title || t("packs_title"), currency: link.currency, once: link.sequential });
+    });
+  });
+  const supplied = new Set();
+  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => supplied.add(r)));
+  const need = {};
+  Object.keys(base).forEach((name) => { if (supplied.has(name) && base[name] > 0) need[name] = base[name]; });
+
+  let sections;
+  if (!offers.length) {
+    sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
+  } else if (!Object.keys(need).length) {
+    sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>`;
+  } else {
+    const plan = packLedgerPlan(offers, need);
+    const qty = (v) => Math.round(v).toLocaleString();
+    // Left of a pack's row: what it leaves behind. Positive is still short,
+    // negative means that pack overshoots and you end up with spare.
+    const leftoverHtml = (after) => Object.keys(after).map((n) => {
+      const v = after[n];
+      const colour = v > 0 ? "var(--danger)" : "var(--good)";
+      const text = v > 0 ? qty(v) : v < 0 ? `+${qty(-v)}` : "\u2713";
+      return `<span style="white-space:nowrap;"><span class="meta" style="font-size:9.5px;">${esc(materialDisplayName(n))}</span> <span style="color:${colour};">${text}</span></span>`;
+    }).join(" &nbsp; ");
+    const rowsHtml = plan.rows.map((r) => `
+      <div style="padding:6px 0; border-top:1px solid var(--line); ${r.count ? "" : "opacity:0.45;"}">
+        <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:11.5px; font-weight:600;">${esc(r.title)}</span>
+          <span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>
+          <span style="font-size:11px; color:var(--ice);">&times; ${r.count}</span>
+          <span style="margin-inline-start:auto; font-size:12px; font-weight:600;">${r.count ? packFmtMoney(r.subtotal, r.currency) : "\u2014"}</span>
         </div>
-      </div>`;
-    }
-    const single = packSinglePlan(offers, need);
-    const mix = packMixPlan(offers, need);
-    const singleBody = single
-      ? `<div class="val" style="font-size:16px;">${packFmtMoney(single.total, link.currency)}</div>
-         <div class="meta" style="font-size:10px;">${esc(single.label)}</div>`
-      : `<div class="meta" style="font-size:11px;">${esc(t("pack_no_single_pack"))}</div>`;
-    // Listed cheapest first, so the last one shown is the highest tier needed.
-    const mixBody = mix
-      ? `<div class="val" style="font-size:16px;">${packFmtMoney(mix.total, link.currency)}</div>
-         <div class="meta" style="font-size:10px;">${mix.picks.map((o) => esc(o.label)).join(" + ")}</div>
-         ${mix.picks.length > 1 ? `<div class="meta" style="font-size:10px; opacity:0.8;">${esc(t("pack_up_to"))} ${esc(mix.picks[mix.picks.length - 1].label)}</div>` : ""}`
-      : `<div class="meta" style="font-size:11px;">${esc(t("pack_cant_cover"))}</div>`;
-    return `<div style="margin-top:10px;">
-      <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:2px;">${title}</div>
-      <div class="meta" style="font-size:10px; margin-bottom:6px;">${covered}</div>
-      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px;">
-        ${planHtml(t("pack_single_pack"), singleBody)}
-        ${planHtml(t("pack_cheapest_mix"), mixBody)}
+        ${r.count ? `<div style="margin-top:3px; font-size:10px;">${leftoverHtml(r.after)}</div>` : ""}
+      </div>`).join("");
+    const shortText = Object.keys(plan.short).map((n) => `${esc(materialDisplayName(n))} ${qty(plan.short[n])}`).join(" &middot; ");
+    sections = `
+      <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}</div>
+      ${rowsHtml}
+      <div style="display:flex; align-items:baseline; gap:8px; border-top:2px solid var(--line); padding-top:8px; margin-top:4px;">
+        <span style="font-size:12px; font-weight:700;">${esc(t("pack_grand_total"))}</span>
+        <span style="margin-inline-start:auto; font-size:18px; font-weight:700;">${packFmtMoney(Math.ceil(plan.total), (offers[0] || {}).currency, true)}</span>
       </div>
-    </div>`;
-  }).join("");
+      ${plan.complete ? "" : `<div class="meta" style="font-size:10.5px; color:var(--danger); margin-top:4px;">${esc(t("pack_ladder_short"))} ${shortText}</div>`}`;
+  }
 
   containerEl.innerHTML = `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:12px;">
@@ -4898,12 +4850,45 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     });
   });
 }
-function packFmtMoney(n, currency) {
+// Walks the packs in order, buying only what's still missing at each step.
+// Returns a row per pack (count 0 when it isn't needed) plus the leftovers.
+function packLedgerPlan(offers, need) {
+  const remaining = {};
+  Object.keys(need).forEach((n) => { remaining[n] = need[n]; });
+  const rows = [];
+  let total = 0;
+  offers.forEach((o) => {
+    const short = Object.keys(remaining).filter((n) => remaining[n] > 0 && (o.gives[n] || 0) > 0);
+    let count = 0;
+    if (short.length) {
+      // Enough of this pack to clear what it can, then no more than the
+      // table allows - a ladder tier can only be bought once.
+      count = Math.max(...short.map((n) => Math.ceil(remaining[n] / o.gives[n])));
+      if (o.once) count = Math.min(count, 1);
+    }
+    const before = { ...remaining };
+    if (count > 0) {
+      total += count * o.price;
+      Object.keys(o.gives).forEach((n) => {
+        if (remaining[n] != null) remaining[n] -= count * o.gives[n];
+      });
+    }
+    rows.push({
+      title: o.tableTitle, label: o.label, price: o.price, currency: o.currency,
+      count, subtotal: count * o.price, before, after: { ...remaining },
+    });
+  });
+  const short = {};
+  Object.keys(remaining).forEach((n) => { if (remaining[n] > 0) short[n] = remaining[n]; });
+  return { rows, total, short, complete: !Object.keys(short).length };
+}
+function packFmtMoney(n, currency, whole) {
   const code = currency || "USD";
+  const digits = whole ? 0 : 2;
   try {
-    return new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, maximumFractionDigits: 2 }).format(n);
+    return new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n);
   } catch (e) {
-    return packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
 }
 
