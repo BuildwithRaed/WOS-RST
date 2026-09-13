@@ -1458,6 +1458,15 @@ const T = {
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_group_placeholder: { en: "Group…", ar: "المجموعة…", ko: "그룹…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together.", ar: "الاسم الرئيسي الذي يندرج تحته هذا الجدول. تُعرض الجداول ذات اسم المجموعة نفسه معًا.", ko: "이 표가 속한 상위 이름입니다. 같은 그룹 이름의 표는 함께 표시됩니다." },
+  pack_choice: { en: "Choose one option per purchase", ar: "اختر خيارًا واحدًا لكل عملية شراء", ko: "구매당 옵션 하나 선택" },
+  pack_choice_desc: { en: "Tick this when the rows are alternatives (e.g. 3 or 10 reward options at one price) and each purchase takes just one of them.", ar: "فعّل هذا عندما تكون الصفوف بدائل (مثلاً 3 أو 10 خيارات بسعر واحد) وكل عملية شراء تأخذ خيارًا واحدًا فقط.", ko: "행이 대안 옵션(예: 한 가격에 3개 또는 10개 보상 옵션)이고 구매마다 하나만 고를 때 체크하세요." },
+  pack_buys_per_reset_choice: { en: "Purchases per reset (shared by all options)", ar: "عدد المشتريات لكل تكرار (مشترك بين كل الخيارات)", ko: "주기당 구매 횟수 (모든 옵션 공유)" },
+  pack_rowmax_head: { en: "Max", ar: "الحد", ko: "최대" },
+  pack_rowmax_title: { en: "How many times this row can be bought (per reset). Empty = the table's default. On a ladder, set it on the last tier to allow buying it again after the ladder is complete.", ar: "عدد مرات شراء هذا الصف (لكل تكرار). فارغ = الافتراضي للجدول. في السلّم، ضعه على آخر مستوى للسماح بشرائه مجددًا بعد إكمال السلّم.", ko: "이 행을 (주기당) 살 수 있는 횟수입니다. 비우면 표 기본값. 사다리형이면 마지막 단계에 설정해 사다리 완료 후 반복 구매를 허용합니다." },
+  pack_max_supply: { en: "packs can give at most", ar: "أقصى ما تعطيه الحزم", ko: "패키지 최대 제공량" },
+  pack_cant_cover_combo: { en: "the options can't all be bought enough times together.", ar: "لا يمكن شراء كل الخيارات معًا بالعدد الكافي.", ko: "옵션들을 함께 충분히 구매할 수 없습니다." },
+  pack_cant_cover_hint: { en: "Check each table's availability on the Packs page (\"Once only\" allows a single purchase / one ladder run; set it to Weekly, Monthly… if the pack comes back) and the per-row Max.", ar: "راجع توفر كل جدول في صفحة الحزم (\"مرة واحدة فقط\" تسمح بشراء واحد / دورة سلّم واحدة؛ اجعله أسبوعيًا أو شهريًا… إذا كانت الحزمة تعود) والحد الأقصى لكل صف.", ko: "패키지 페이지에서 각 표의 재등장 설정(\"1회 한정\"은 한 번만 / 사다리 1회; 다시 나오는 패키지면 매주·매월로 설정)과 행별 최대값을 확인하세요." },
+  pack_limited_tables: { en: "Limited tables", ar: "الجداول المحدودة", ko: "제한된 표" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
   pack_per_reset: { en: "per reset", ar: "\u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9" },
   pack_resets: { en: "resets", ar: "\u062a\u0643\u0631\u0627\u0631\u0627\u062a", ko: "\ud68c \uc8fc\uae30" },
@@ -3642,6 +3651,7 @@ async function renderPacksPage() {
     });
     let lastGroup = null;
     const groupPh = t("pack_group_placeholder"), groupTitle = t("pack_group_title"); // `t` is the table inside the map below
+    const rowMaxTitle = t("pack_rowmax_title"), rowMaxHead = t("pack_rowmax_head");
     listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
@@ -3690,7 +3700,7 @@ async function renderPacksPage() {
                     </th>`
                   )
                   .join("")}
-                <th style="width:32px;"></th>
+                <th style="width:48px;" class="meta" title="${esc(rowMaxTitle)}">${esc(rowMaxHead)}</th>
               </tr>
             </thead>
             <tbody>
@@ -3705,7 +3715,7 @@ async function renderPacksPage() {
                       )
                       .join("")}
                     <td style="text-align:center; white-space:nowrap;">
-                      ${ri === 0 ? `<span class="meta" style="font-size:9px;" title="Sets the scale ratio for every other row">base</span>` : ""}
+                      <input type="number" min="1" data-pt-rowmax data-row="${ri}" value="${esc((packLinkFor(t.id).rowMax || {})[ri] || "")}" placeholder="×" title="${esc(rowMaxTitle)}" style="width:44px; font-size:10px; padding:2px 3px; text-align:center;" />
                     </td>
                   </tr>`
                 )
@@ -3775,6 +3785,11 @@ async function renderPacksPage() {
           <span>${esc(t("pack_sequential"))}</span>
         </label>
         <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_sequential_desc"))}</p>
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
+          <input type="checkbox" data-packchoice ${link.choice ? "checked" : ""} style="flex-shrink:0;" />
+          <span>${esc(t("pack_choice"))}</span>
+        </label>
+        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_choice_desc"))}</p>
         ${(() => {
           const r = link.reset;
           const preset = typeof r === "number" ? (PACK_RESET_PRESETS.find((p) => p.days === r) || { key: "custom" }).key : r;
@@ -3851,6 +3866,7 @@ async function renderPacksPage() {
         anchorLabel.style.display = isNumberReset ? "" : "none";
         const isNumber = custom || PACK_RESET_PRESETS.some((p) => p.key === resetSel.value);
         buysWrap.style.display = isNumber && !seqCb.checked ? "" : "none";
+        if (buysWrap.style.display === "" && buysWrap.querySelector("span")) buysWrap.querySelector("span").textContent = (choiceCb && choiceCb.checked) ? t("pack_buys_per_reset_choice") : t("pack_buys_per_reset");
       };
       const saveReset = async () => {
         const l = current();
@@ -3864,8 +3880,16 @@ async function renderPacksPage() {
         syncResetUi();
         await savePackLinks();
       };
+      const choiceCb = box.querySelector("[data-packchoice]");
       if (seqCb) seqCb.addEventListener("change", async () => {
         current().sequential = seqCb.checked;
+        if (seqCb.checked && choiceCb) { choiceCb.checked = false; current().choice = false; }
+        syncResetUi();
+        await savePackLinks();
+      });
+      if (choiceCb) choiceCb.addEventListener("change", async () => {
+        current().choice = choiceCb.checked;
+        if (choiceCb.checked && seqCb) { seqCb.checked = false; current().sequential = false; }
         syncResetUi();
         await savePackLinks();
       });
@@ -3967,6 +3991,16 @@ async function renderPacksPage() {
           persistTable();
         }
       });
+      panel.querySelectorAll("[data-pt-rowmax]").forEach((inp) => inp.addEventListener("change", async () => {
+        if (String(t.id).startsWith("new-")) { syncFromDom(); await persistTable(); }
+        await ensurePackLinks();
+        const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
+        l.rowMax = (l.rowMax && typeof l.rowMax === "object") ? l.rowMax : {};
+        const v = Math.round(Number(inp.value) || 0);
+        if (v > 0) l.rowMax[inp.dataset.row] = v; else delete l.rowMax[inp.dataset.row];
+        await savePackLinks();
+        PACK_TABLES_CACHE = null;
+      }));
       const groupInput = panel.querySelector("[data-pt-group]");
       if (groupInput) groupInput.addEventListener("change", async () => {
         syncFromDom();
@@ -4905,6 +4939,12 @@ function packLinkFor(tableId) {
     // anything else can be bought as often as wanted.
     reset: typeof l.reset === "number" && l.reset > 0 ? l.reset : (l.reset === "once" || l.reset === "unlimited") ? l.reset : (l.sequential === true ? "once" : "unlimited"),
     buys: Number.isInteger(l.buys) && l.buys > 0 ? l.buys : 1,
+    // "Choose one option per purchase": the rows are alternatives, and each
+    // purchase picks one of them (the table's buys-per-reset is shared).
+    choice: l.choice === true,
+    // Per-row purchase limit ({ rowIndex: n }); a ladder's last tier can be
+    // bought that many times once the ladder is complete.
+    rowMax: (l.rowMax && typeof l.rowMax === "object") ? l.rowMax : {},
     // Optional group ("main name") several tables sit under on the Packs page.
     group: typeof l.group === "string" ? l.group.trim() : "",
     // Anchor date (yyyy-mm-dd) the pack next comes on; null = not pinned.
@@ -4944,7 +4984,7 @@ function packOffersFor(table, keepEmpty) {
         Object.keys(contents).forEach((n) => { gives[n] = (gives[n] || 0) + qty * contents[n]; });
       });
       const label = price > 0 ? packFmtMoney(price, link.currency) : `#${ri + 1}`;
-      return { price, gives, label };
+      return { price, gives, label, row: ri };
     })
     .filter((o) => o.price > 0 && (keepEmpty || Object.keys(o.gives).length));
 }
@@ -5019,6 +5059,7 @@ function packGroupsFor(tables) {
     const link = packLinkFor(tb.id);
     const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: (link.group ? link.group + " · " : "") + (tb.title || t("packs_title")), currency: link.currency }));
     if (!offers.length || !offers.some((o) => Object.keys(o.gives).length)) return;
+    const rowMaxOf = (o) => { const m = Number((link.rowMax || {})[o.row]); return Number.isInteger(m) && m > 0 ? m : null; };
     if (link.sequential) {
       const prefixes = [];
       let price = 0; const gives = {};
@@ -5027,9 +5068,24 @@ function packGroupsFor(tables) {
         Object.keys(o.gives).forEach((n) => { gives[n] = (gives[n] || 0) + o.gives[n]; });
         prefixes.push({ ...o, price, gives: { ...gives }, tiers: i + 1, label: i === 0 ? o.label : `${t("pack_up_to")} ${o.label}` });
       });
+      // Last tier repeatable N times once the ladder is complete: extra
+      // "full ladder + k more of the last tier" options.
+      const last = offers[offers.length - 1], full = prefixes[prefixes.length - 1], lastMax = rowMaxOf(last);
+      if (lastMax && lastMax > 1) for (let k = 1; k < lastMax; k++) {
+        const g2 = { ...full.gives }; Object.keys(last.gives).forEach((n) => { g2[n] = (g2[n] || 0) + k * last.gives[n]; });
+        prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${full.label} + ${k}× ${last.label}` });
+      }
       groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: 1, offers: prefixes, ladder: true });
+    } else if (link.choice) {
+      // One purchase = one of the options; the buys-per-reset limit is shared.
+      groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: link.buys, offers, ladder: false, choice: true });
     } else {
-      offers.forEach((o) => groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: link.buys, offers: [o], ladder: false }));
+      offers.forEach((o) => {
+        const m = rowMaxOf(o);
+        // A per-row limit on an "any time" pack is a total limit.
+        const reset = m && link.reset === "unlimited" ? "once" : link.reset;
+        groups.push({ reset, resetDay: link.resetDay, perCycle: m || link.buys, offers: [o], ladder: false });
+      });
     }
   });
   return groups;
@@ -5041,6 +5097,12 @@ function packMaxSupply(groups, days) {
   const supply = {};
   groups.forEach((g) => {
     const cap = packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle;
+    if (g.choice) {
+      const bestPer = {};
+      g.offers.forEach((o) => Object.keys(o.gives).forEach((n) => { bestPer[n] = Math.max(bestPer[n] || 0, o.gives[n]); }));
+      Object.keys(bestPer).forEach((n) => { supply[n] = (supply[n] || 0) + cap * bestPer[n]; });
+      return;
+    }
     const top = g.ladder ? g.offers[g.offers.length - 1] : g.offers[0];
     Object.keys(top.gives).forEach((n) => { supply[n] = (supply[n] || 0) + cap * top.gives[n]; });
   });
@@ -5101,12 +5163,16 @@ function packCoveredBy(supply, need, ctx) {
 // Earliest day everything can be covered, or null if it never can be.
 function packEarliestDays(groups, need, calcKey) {
   const ctx = (d) => packTradeCtx(calcKey, d);
-  if (packCoveredBy(packMaxSupply(groups, 0), need, ctx(0))) return 0;
-  if (!packCoveredBy(packMaxSupply(groups, Infinity), need, ctx(Infinity))) return null;
+  // The supply check is an upper bound (a "choose one option" pack can't
+  // give every option at once), so a day only counts when a real plan
+  // exists for it.
+  const feasible = (d) => packCoveredBy(packMaxSupply(groups, d), need, ctx(d)) && !!packCheapestPlan(groups, need, d, calcKey);
+  if (feasible(0)) return 0;
+  if (!feasible(Infinity)) return null;
   const steps = new Set();
   groups.forEach((g) => { if (typeof g.reset === "number") packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS).forEach((d) => steps.add(d)); });
   if (ctx(0)) for (let w = 1; w * 7 <= PACK_HORIZON_DAYS; w++) steps.add(w * 7); // weekly trade limits open up week by week
-  for (const d of [...steps].sort((a, b) => a - b)) if (packCoveredBy(packMaxSupply(groups, d), need, ctx(d))) return d;
+  for (const d of [...steps].sort((a, b) => a - b)) if (feasible(d)) return d;
   return null;
 }
 // Cheapest set of purchases that covers `need`, with each group limited to
@@ -5350,10 +5416,17 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const earliest = packEarliestDays(packGroups, need, calcKey);
     const plans = [];
     if (earliest == null) {
-      const short = {};
+      // Explain what's short and how much the packs could give at most,
+      // plus which tables limit it (once-only / per-row max).
       const sup = packMaxSupply(packGroups, Infinity);
+      const short = {};
       Object.keys(need).forEach((n) => { if ((sup[n] || 0) < need[n]) short[n] = need[n] - (sup[n] || 0); });
-      sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))} — ${esc(t("pack_ladder_short"))} ${Object.keys(short).map((n) => `${esc(materialDisplayName(n))} ${qty(short[n])}`).join(" &middot; ")}</div>`;
+      const limited = tables.filter((tb) => { const l = packLinkFor(tb.id); return l.reset === "once" || Object.keys(l.rowMax || {}).length; }).map((tb) => tb.title || t("packs_title"));
+      const shortHtml = Object.keys(short).length
+        ? Object.keys(short).map((n) => `${esc(materialDisplayName(n))} ${qty(short[n])} <span class="meta">(${esc(t("pack_max_supply"))} ${qty(sup[n] || 0)} / ${qty(need[n])})</span>`).join(" &middot; ")
+        : esc(t("pack_cant_cover_combo"));
+      sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))} — ${esc(t("pack_ladder_short"))} ${shortHtml}</div>
+        <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pack_cant_cover_hint"))}${limited.length ? ` ${esc(t("pack_limited_tables"))}: ${limited.map(esc).join(", ")}` : ""}</div>`;
     } else {
       plans.push({ key: "fastest", title: t("pack_plan_fastest"), plan: packCheapestPlan(packGroups, need, earliest, calcKey), days: earliest });
       if (targetDays != null) {
