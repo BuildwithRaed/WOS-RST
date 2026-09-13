@@ -4831,6 +4831,14 @@ function packResetOffsets(reset, day, horizon) {
     for (let d = first; d <= horizon; d += reset) out.push(d);
     return out;
   }
+  // No date pinned: a weekly (or 2-weekly) pack resets on Mondays. This
+  // week's copy is available now, the next one comes on the next Monday.
+  if (reset === 7 || reset === 14) {
+    const nextMonday = ((1 - new Date().getDay()) + 7) % 7 || 7;
+    out.push(0);
+    for (let d = nextMonday; d <= horizon; d += reset) out.push(d);
+    return out;
+  }
   for (let d = 0; d <= horizon; d += reset) out.push(d);
   return out;
 }
