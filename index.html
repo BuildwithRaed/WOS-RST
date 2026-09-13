@@ -1447,6 +1447,10 @@ const T = {
   trade_none: { en: "No spare items to trade, or nothing missing.", ar: "لا توجد عناصر فائضة للمبادلة، أو لا ينقصك شيء.", ko: "교환할 여분 아이템이 없거나 부족한 항목이 없습니다." },
   trade_after: { en: "Still short after trades:", ar: "المتبقي بعد المبادلات:", ko: "교환 후 부족분:" },
   trade_after_short: { en: "after trades", ar: "بعد المبادلات", ko: "교환 후" },
+  trade_max_week: { en: "Max / week", ar: "الحد الأقصى / أسبوع", ko: "주당 최대" },
+  trade_trades: { en: "trades", ar: "مبادلة", ko: "회" },
+  trade_capped: { en: "weekly limit reached", ar: "تم بلوغ الحد الأسبوعي", ko: "주간 한도 도달" },
+  trade_this_week: { en: "within this week's limits; pack cost and Budgets count the weeks until the target date", ar: "ضمن حدود هذا الأسبوع؛ تكلفة الحزم والميزانيات تحتسب الأسابيع حتى تاريخ الهدف", ko: "이번 주 한도 기준; 패키지 비용과 예산은 목표일까지의 주 수를 반영" },
   trade_calc: { en: "Trade calculator", ar: "حاسبة المبادلة", ko: "교환 계산기" },
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -5104,16 +5108,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   });
   // "Full amount" is an admin-only view; everyone else always prices what's still needed.
   if (!IS_OWNER) PACK_COST_MODE = "still";
-  // Spare items traded into missing ones first, when trades are switched on.
-  await ensureTradeRates();
-  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned) : null;
-  const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
-  const packGroups = packGroupsFor(tables);
-  const supplied = new Set();
-  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
-  const need = {};
-  Object.keys(base).forEach((name) => { if (supplied.has(name) && base[name] > 0) need[name] = base[name]; });
-
   // Days until the target date (today counts as day 0).
   const today = new Date(); today.setHours(0, 0, 0, 0);
   let targetDays = null;
@@ -5121,6 +5115,17 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const d = new Date(targetDate + "T00:00:00");
     if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000);
   }
+  // Spare items traded into missing ones first, when trades are switched on
+  // (weekly trade limits scale with the weeks left until the target).
+  await ensureTradeRates();
+  const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays) : null;
+  const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
+  const packGroups = packGroupsFor(tables);
+  const supplied = new Set();
+  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
+  const need = {};
+  Object.keys(base).forEach((name) => { if (supplied.has(name) && base[name] > 0) need[name] = base[name]; });
+
   const fmtDate = (days) => {
     const d = new Date(today.getTime() + days * 86400000);
     try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d.toDateString(); }
@@ -5236,15 +5241,21 @@ function packFmtMoney(n, currency, whole) {
 // ============================================================
 const TRADE_DEFAULT_RATES = {
   chief_gear: [
-    { from: "Design Plan", to: "Amber", give: 10, get: 1 },
-    { from: "Design Plan", to: "Polishing Solution", give: 1, get: 3 },
-    { from: "Design Plan", to: "Hardened Alloy", give: 1, get: 300 },
-    { from: "Polishing Solution", to: "Design Plan", give: 10, get: 1 },
-    { from: "Polishing Solution", to: "Hardened Alloy", give: 1, get: 50 },
-    { from: "Hardened Alloy", to: "Design Plan", give: 1000, get: 1 },
-    { from: "Hardened Alloy", to: "Polishing Solution", give: 200, get: 1 },
+    // max = how many times that trade can be made per week (0 = no limit)
+    { from: "Design Plan", to: "Amber", give: 10, get: 1, max: 500 },
+    { from: "Design Plan", to: "Polishing Solution", give: 1, get: 3, max: 500 },
+    { from: "Design Plan", to: "Hardened Alloy", give: 1, get: 300, max: 500 },
+    { from: "Polishing Solution", to: "Design Plan", give: 10, get: 1, max: 50 },
+    { from: "Polishing Solution", to: "Hardened Alloy", give: 1, get: 50, max: 1000 },
+    { from: "Hardened Alloy", to: "Design Plan", give: 1000, get: 1, max: 50 },
+    { from: "Hardened Alloy", to: "Polishing Solution", give: 200, get: 1, max: 500 },
   ],
 };
+// Which missing items get first claim on spare items, per page.
+const TRADE_TARGET_PRIORITY = { chief_gear: ["Amber", "Design Plan", "Polishing Solution", "Hardened Alloy"] };
+function calcKeyOfRates(rates) {
+  return (rates && rates.__calcKey) || Object.keys(TRADE_DEFAULT_RATES).find((k) => rates === TRADE_DEFAULT_RATES[k]) || "";
+}
 let TRADE_RATES_CACHE = null;      // { [calcKey]: rates[] } (saved overrides)
 const TRADE_APPLY = {};            // { [calcKey]: true } - use trades in pack cost / budgets
 const TRADE_OPEN = {};             // block collapsed on every load
@@ -5259,7 +5270,14 @@ async function ensureTradeRates() {
 function tradeRatesFor(calcKey) {
   const saved = TRADE_RATES_CACHE && TRADE_RATES_CACHE.rates[calcKey];
   const rates = Array.isArray(saved) && saved.length ? saved : (TRADE_DEFAULT_RATES[calcKey] || []);
-  return rates.filter((r) => r.from && r.to && r.give > 0 && r.get > 0);
+  const defaults = TRADE_DEFAULT_RATES[calcKey] || [];
+  const out = rates.filter((r) => r.from && r.to && r.give > 0 && r.get > 0).map((r) => {
+    if (r.max != null) return r;
+    const d = defaults.find((x) => x.from === r.from && x.to === r.to);
+    return { ...r, max: d ? d.max : 0 };
+  });
+  out.__calcKey = calcKey; // lets applyTrades find this page's priorities
+  return out;
 }
 async function saveTradeSettings() {
   await ensureTradeRates();
@@ -5280,7 +5298,9 @@ function tradeWorth(rates) {
 // material; returns what's still short after trading, plus the trades.
 // Trades happen in whole lots (give×k -> get×k), never over-trading a
 // spare below what the plan itself needs.
-function applyTrades(rates, need, owned) {
+function applyTrades(rates, need, owned, weeks) {
+  const wk = Math.max(1, Math.floor(Number(weeks) || 1));
+  const usedLots = new Map(); // rate -> lots already used
   const after = {};        // still short
   const spare = {};        // spare above the plan's own need
   const names = new Set([...Object.keys(need), ...rates.flatMap((r) => [r.from, r.to])]);
@@ -5291,33 +5311,47 @@ function applyTrades(rates, need, owned) {
   });
   const worth = tradeWorth(rates);
   const trades = [];
-  const shortNames = Object.keys(after).filter((n) => after[n] > 0);
+  // Shortfalls with a set priority go first (Amber can only come from
+  // Design Plans, so plans are reserved for it before anything else);
+  // after that, items with the fewest ways to get them.
+  const priority = TRADE_TARGET_PRIORITY[calcKeyOfRates(rates)] || [];
+  const sourcesOf = (n) => rates.filter((r) => r.to === n).length;
+  const shortNames = Object.keys(after).filter((n) => after[n] > 0).sort((a, b) => {
+    const pa = priority.indexOf(a), pb = priority.indexOf(b);
+    if (pa !== -1 || pb !== -1) return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
+    return sourcesOf(a) - sourcesOf(b);
+  });
   shortNames.forEach((to) => {
     // Cheapest (least value lost) sources first.
     const options = rates.filter((r) => r.to === to && spare[r.from] > 0)
       .sort((a, b) => (worth[a.from] * a.give / a.get) - (worth[b.from] * b.give / b.get));
     for (const r of options) {
       if (after[to] <= 0) break;
-      const lots = Math.min(Math.ceil(after[to] / r.get), Math.floor(spare[r.from] / r.give));
+      const capLeft = r.max > 0 ? r.max * wk - (usedLots.get(r) || 0) : Infinity;
+      const lots = Math.min(Math.ceil(after[to] / r.get), Math.floor(spare[r.from] / r.give), capLeft);
       if (lots <= 0) continue;
+      usedLots.set(r, (usedLots.get(r) || 0) + lots);
       spare[r.from] -= lots * r.give;
       after[to] = Math.max(0, after[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft });
     }
   });
   Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
-  return { after, trades, spare };
+  return { after, trades, spare, weeks: wk };
 }
 // Convenience for the pack-cost block and the Budgets page: "still
 // needed" after trades, when trades are switched on for that page.
-function tradeAdjustedStill(calcKey, needFull, owned) {
+function tradeWeeksFor(targetDays) {
+  return targetDays != null && targetDays > 0 ? Math.floor(targetDays / 7) + 1 : 1;
+}
+function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
   if (!TRADE_APPLY[calcKey]) return null;
   const rates = tradeRatesFor(calcKey);
   if (!rates.length) return null;
-  const res = applyTrades(rates, needFull, owned);
+  const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
-  return { still, trades: res.trades };
+  return { still, trades: res.trades, weeks: res.weeks };
 }
 // The "Trade items" block under a page's Backpack row.
 async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
@@ -5347,19 +5381,20 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   }
   const need = {};
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { need[n] = (need[n] || 0) + (Number(q) || 0); }));
-  const res = applyTrades(rates, need, owned);
+  const res = applyTrades(rates, need, owned, 1);
   const qty = (v) => Math.round(v).toLocaleString();
   const names = [...new Set(rates.flatMap((r) => [r.from, r.to]))];
   const suggestHtml = res.trades.length
-    ? res.trades.map((tr) => `<div style="font-size:11.5px; padding:3px 0; border-top:1px solid var(--line);">${esc(t("trade_give"))} <b>${qty(tr.giveQty)}</b> ${esc(materialDisplayName(tr.from))} → ${esc(t("trade_get"))} <b style="color:var(--good);">${qty(tr.getQty)}</b> ${esc(materialDisplayName(tr.to))}</div>`).join("")
+    ? res.trades.map((tr) => `<div style="font-size:11.5px; padding:3px 0; border-top:1px solid var(--line);">${esc(t("trade_give"))} <b>${qty(tr.giveQty)}</b> ${esc(materialDisplayName(tr.from))} → ${esc(t("trade_get"))} <b style="color:var(--good);">${qty(tr.getQty)}</b> ${esc(materialDisplayName(tr.to))} <span class="meta" style="font-size:10px;">(${qty(tr.lots)} ${esc(t("trade_trades"))}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""})</span></div>`).join("")
       + `<div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("trade_after"))} ${Object.keys(need).filter((n) => need[n] > 0).map((n) => `${esc(materialDisplayName(n))} <span style="color:${(res.after[n] || 0) > 0 ? "var(--danger)" : "var(--good)"};">${(res.after[n] || 0) > 0 ? qty(res.after[n]) : "✓"}</span>`).join(" &middot; ")}</div>`
     : `<div class="meta" style="font-size:11px;">${esc(t("trade_none"))}</div>`;
   const ratesHtml = `
     <table style="border-collapse:collapse; font-size:11px; width:100%;">
-      <thead><tr><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_give"))}</th><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_get"))}</th></tr></thead>
+      <thead><tr><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_give"))}</th><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_get"))}</th><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_max_week"))}</th></tr></thead>
       <tbody>${rates.map((r, i) => `<tr>
         <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="1" data-traterate="${i}" data-field="give" value="${r.give}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${qty(r.give)}</b>`} ${esc(materialDisplayName(r.from))}</td>
         <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="1" data-traterate="${i}" data-field="get" value="${r.get}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${qty(r.get)}</b>`} ${esc(materialDisplayName(r.to))}</td>
+        <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="0" data-traterate="${i}" data-field="max" value="${r.max || 0}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${r.max ? qty(r.max) : "∞"}</b>`}</td>
       </tr>`).join("")}</tbody>
     </table>`;
   const calcHtml = `
@@ -5376,7 +5411,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-top:8px;">
         <div><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_rates"))}</div>${ratesHtml}</div>
         <div>
-          <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_suggest"))}</div>${suggestHtml}
+          <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_suggest"))} <span style="font-weight:400;">(${esc(t("trade_this_week"))})</span></div>${suggestHtml}
           <div class="meta" style="font-size:10.5px; font-weight:600; margin:12px 0 4px;">${esc(t("trade_calc"))}</div>${calcHtml}
         </div>
       </div>
@@ -5386,7 +5421,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   containerEl.querySelectorAll("[data-traterate]").forEach((inp) => inp.addEventListener("change", async () => {
     const i = Number(inp.dataset.traterate);
     const edited = rates.map((r) => ({ ...r }));
-    edited[i][inp.dataset.field] = Math.max(1, Math.round(Number(inp.value) || 1));
+    edited[i][inp.dataset.field] = inp.dataset.field === "max" ? Math.max(0, Math.round(Number(inp.value) || 0)) : Math.max(1, Math.round(Number(inp.value) || 1));
     TRADE_RATES_CACHE.rates[calcKey] = edited;
     await saveTradeSettings();
     rerender();
@@ -5569,7 +5604,7 @@ async function budgetForPage(calcKey, targetDays) {
   const needStill = {};
   Object.keys(needFull).forEach((n) => { needStill[n] = Math.max(0, needFull[n] - (Number(owned[n]) || 0)); });
   await ensureTradeRates();
-  const traded = tradeAdjustedStill(calcKey, needFull, owned);
+  const traded = tradeAdjustedStill(calcKey, needFull, owned, targetDays);
   if (traded) Object.keys(needStill).forEach((n) => { needStill[n] = traded.still[n] || 0; });
   const packGroups = packGroupsFor(tables);
   const supplied = new Set();
