@@ -565,7 +565,7 @@
           <button data-tab="overview" class="active"><span class="ic">&#9673;</span>Dashboard</button>
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
           <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
-          <button data-tab="packs"><span class="ic">&#128230;</span>Packs</button>
+          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
         </div>
       </div>
       <div class="topnav-group" data-group="Gears">
@@ -1660,7 +1660,7 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 async function render() {
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); }
+    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack" || TAB === "packs")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "heroes") await renderHeroes();
@@ -3725,13 +3725,13 @@ async function renderPacksPage() {
       PACK_RESOURCE_NAMES.map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
     return `
       <details class="pack-link" data-packlink="${esc(tb.id)}" style="margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
-        <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${link.pages.length ? ` (${link.pages.length})` : ""}</summary>
+        <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${packGroupsChecked(link.pages) ? ` (${packGroupsChecked(link.pages)})` : ""}</summary>
         <p class="desc" style="font-size:11px; margin:8px 0;">${esc(t("pack_used_for_desc"))}</p>
         <div style="display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:10px;">
-          ${PACK_PAGE_KEYS.map((pg) => `
+          ${PACK_PAGE_GROUPS.map((g) => `
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
-              <input type="checkbox" data-packpage="${esc(pg.key)}" ${link.pages.includes(pg.key) ? "checked" : ""} style="flex-shrink:0;" />
-              <span>${esc(packPageLabel(pg.key))}</span>
+              <input type="checkbox" data-packgroup="${esc(g.key)}" ${g.pages.some((k) => link.pages.includes(k)) ? "checked" : ""} style="flex-shrink:0;" />
+              <span>${esc(packGroupLabel(g))}</span>
             </label>`).join("")}
         </div>
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
@@ -3785,16 +3785,17 @@ async function renderPacksPage() {
         PACK_LINKS[id] = PACK_LINKS[id] || { pages: [], priceCol: 0, cols: {} };
         return PACK_LINKS[id];
       };
-      box.querySelectorAll("[data-packpage]").forEach((cb) => {
+      box.querySelectorAll("[data-packgroup]").forEach((cb) => {
         cb.addEventListener("change", async () => {
           const l = current();
-          const key = cb.dataset.packpage;
+          const g = PACK_PAGE_GROUPS.find((x) => x.key === cb.dataset.packgroup);
           l.pages = Array.isArray(l.pages) ? l.pages : [];
-          if (cb.checked) { if (!l.pages.includes(key)) l.pages.push(key); }
-          else l.pages = l.pages.filter((k) => k !== key);
+          if (cb.checked) g.pages.forEach((k) => { if (!l.pages.includes(k)) l.pages.push(k); });
+          else l.pages = l.pages.filter((k) => !g.pages.includes(k));
           await savePackLinks();
           const sum = box.querySelector("summary");
-          if (sum) sum.textContent = t("pack_used_for") + (l.pages.length ? ` (${l.pages.length})` : "");
+          const n = packGroupsChecked(l.pages);
+          if (sum) sum.textContent = t("pack_used_for") + (n ? ` (${n})` : "");
         });
       });
       const seqCb = box.querySelector("[data-packsequential]");
@@ -4686,6 +4687,27 @@ async function ensureCharmData() {
 // they still need. The links live in calc_state, so no database change is
 // needed and they follow the user across devices.
 // ============================================================
+// "Used for" checkboxes: one tick can cover several pages (Pets, Experts,
+// Research), each stored as its own page key so the pages keep working
+// independently.
+const PACK_PAGE_GROUPS = [
+  { key: "chief_gear", pages: ["chief_gear"] },
+  { key: "charm", pages: ["charm"] },
+  { key: "hero_gear", pages: ["hero_gear"] },
+  { key: "pets_group", group: "Pets", pages: ["pets"] },
+  { key: "experts_group", group: "Experts", pages: ["experts", "experts_research"] },
+  { key: "research_group", group: "Research", pages: ["research_center", "t11_helios", "t12_research"] },
+];
+function packGroupLabel(g) {
+  if (g.group) { const e = NAV_GROUP_LABELS[g.group]; return e ? (e[LANG] || e.en) : g.group; }
+  return packPageLabel(g.pages[0]);
+}
+function packGroupsChecked(pages) {
+  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => (pages || []).includes(k))).length;
+}
+function packGroupOf(pageKey) {
+  return PACK_PAGE_GROUPS.find((g) => g.pages.includes(pageKey));
+}
 // Pages that have a Backpack box the pack costs can appear under.
 const PACK_PAGE_KEYS = [
   { key: "chief_gear", labelKey: "nav_chiefgear" },
@@ -4694,9 +4716,12 @@ const PACK_PAGE_KEYS = [
   { key: "research_center", labelKey: "nav_researchcenter" },
   { key: "t11_helios", labelKey: "nav_t11helios" },
   { key: "t12_research", labelKey: "nav_t12research" },
+  { key: "pets", labelKey: "nav_petsdata" },
+  { key: "experts", labelKey: "nav_expertspage" },
+  { key: "experts_research", labelKey: "nav_expertsresearchpage" },
 ];
 function packPageLabel(key) {
-  const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research" }[key]];
+  const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research", pets: "petsdata", experts: "expertspage", experts_research: "expertsresearchpage" }[key]];
   return entry ? (entry[LANG] || entry.en) : key;
 }
 // Every resource a pack column can be mapped to, grouped by the page that
@@ -4706,6 +4731,8 @@ const PACK_RESOURCE_NAMES = [
   "Charm Guides", "Charm Designs", "Jewel Secrets",
   "XP Component", "Essence Stones", "Mithril", "Mythic Gear",
   "Meat", "Wood", "Coal", "Iron", "Steel", "Refined FC", "FC Shard", "Meat/Wood",
+  "Food", "Manual", "Potion", "Serum",
+  "Books of Knowledge", "Affinity", "General Sigils", "Speedups (minutes)",
 ];
 // Bundle resources: a pack column can grant a chest that opens into several
 // materials. One Chief Gear Chest = 1 Design Plan, 4 Polishing Solution and
@@ -5367,11 +5394,12 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const head = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-tradetoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("trade_title"))}</button>
-      <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] ? "checked" : ""} /><span>${esc(t("trade_apply"))}</span></label>
+      ${IS_OWNER ? `<label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] ? "checked" : ""} /><span>${esc(t("trade_apply"))}</span></label>` : ""}
     </div>`;
   const wire = () => {
     containerEl.querySelector("[data-tradetoggle]").addEventListener("click", () => { TRADE_OPEN[calcKey] = !open; rerender(); });
-    containerEl.querySelector("[data-tradeapply]").addEventListener("change", async (e) => {
+    const applyCb = containerEl.querySelector("[data-tradeapply]");
+    if (applyCb) applyCb.addEventListener("change", async (e) => {
       TRADE_APPLY[calcKey] = e.target.checked;
       await saveTradeSettings();
       if (onChange) onChange();
@@ -5467,7 +5495,18 @@ const BUDGET_PAGES = [
   { key: "research_center", tab: "researchcenter" },
   { key: "t11_helios", tab: "t11helios" },
   { key: "t12_research", tab: "t12research" },
+  { key: "pets", tab: "petsdata" },
+  { key: "experts", tab: "expertspage" },
+  { key: "experts_research", tab: "expertsresearchpage" },
 ];
+// Pages whose owned amounts live somewhere other than material_owned_<key>.
+async function budgetOwnedFor(calcKey) {
+  if (calcKey === "experts" || calcKey === "experts_research") {
+    const inv = (await loadCalcState("experts_inventory")) || {};
+    return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": Number(inv["Affinity"]) || 0, "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": Number(inv["Speedups (minutes)"]) || 0 };
+  }
+  return ensureMaterialOwnedCache(calcKey);
+}
 let BUDGET_NEEDS_SNAPSHOT = null;   // { [calcKey]: { groups:[{label,totals}], at } }
 async function ensureBudgetNeedsSnapshot() {
   if (!BUDGET_NEEDS_SNAPSHOT) BUDGET_NEEDS_SNAPSHOT = (await loadCalcState("budget_needs")) || {};
@@ -5601,7 +5640,7 @@ async function budgetForPage(calcKey, targetDays) {
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
   else { const snap = (await ensureBudgetNeedsSnapshot())[calcKey]; groups = snap ? snap.groups : null; live = false; }
   if (!groups) return { calcKey, tables, missing: true };
-  const owned = await ensureMaterialOwnedCache(calcKey);
+  const owned = await budgetOwnedFor(calcKey);
   const needFull = {};
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { needFull[n] = (needFull[n] || 0) + (Number(q) || 0); }));
   const needStill = {};
@@ -5688,9 +5727,10 @@ async function renderBudgetsPage() {
   const grandMats = {}, grandDeltas = [];
   const cards = pages.map((pg, i) => {
     const label = packPageLabel(pg.calcKey);
+    const grp = packGroupOf(pg.calcKey);
     const inc = included(pg.calcKey);
     const head = `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} /><span style="font-size:14px; font-weight:700;">${esc(label)}</span></label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} title="${grp && grp.group ? esc(packGroupLabel(grp)) : ""}" /><span style="font-size:14px; font-weight:700;">${grp && grp.group ? `<span class="meta" style="font-size:11px; font-weight:600;">${esc(packGroupLabel(grp))} · </span>` : ""}${esc(label)}</span></label>
         <button class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}" style="margin-inline-start:auto;">${esc(t("budgets_open_page"))}</button>
       </div>`;
     if (pg.missing) return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_open_once"))}</div></div>`;
@@ -5753,7 +5793,9 @@ async function renderBudgetsPage() {
     <div class="grid g2" style="align-items:start; margin-top:16px; gap:16px;">${cards.join("")}</div>`;
 
   content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
-    BUDGET_SELECTED[cb.dataset.budgetinc] = cb.checked;
+    // One tick covers the whole group (Pets / Experts / Research).
+    const grp = packGroupOf(cb.dataset.budgetinc);
+    (grp ? grp.pages : [cb.dataset.budgetinc]).forEach((k) => { BUDGET_SELECTED[k] = cb.checked; });
     await saveCalcState("budget_selected", BUDGET_SELECTED);
     renderBudgetsPage();
   }));
@@ -8523,6 +8565,7 @@ async function renderExpertsResearchPage() {
       <h2>${esc(t("total_sigils_needed"))}</h2>
       <p class="desc">${esc(t("across_unlocked_experts_desc"))}</p>
       <div class="stats-row-scroll" id="expResearchSigils"></div>
+      <div id="expResearchPacks"></div>
     </div>
   `;
 
@@ -8595,6 +8638,10 @@ async function renderExpertsResearchPage() {
     sigilsEl.innerHTML = `
       <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_sigils"))}</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:8.5px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
     `;
+    const packGroups = [{ label: null, totals: { "General Sigils": sigilShortfall } }];
+    const packOwned = { "General Sigils": Number(invSaved["General Sigils"]) || 0 };
+    renderPackCostBlock(document.getElementById("expResearchPacks"), "experts_research", packGroups, packOwned);
+    recordBudgetNeeds("experts_research", packGroups);
 
     // General stat totals: everyone except Gareth/Justus (troop-restricted)
     const general = computeStatTotals(GENERAL_EXPERTS);
@@ -8903,6 +8950,7 @@ async function renderExpertsPage() {
     <div class="panel" style="margin-bottom:16px;">
       <h2>${esc(t("resources_needed_title"))}</h2>
       <div class="stats-row-scroll sr-2col" id="expertsTotals"></div>
+      <div id="expertsPacks"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="expertsGrid"></div>
@@ -9139,6 +9187,12 @@ async function renderExpertsPage() {
       <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("resource_affinity"))}</div><div class="val" style="font-size:13px;">${Math.round(totalAffinity).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillAffinity > 0 ? "#e0a030" : "var(--good)"};">${stillAffinity > 0 ? Math.round(stillAffinity).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
       <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("resource_sigils"))}</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
     `;
+    // Packs: sigils are what's left after each expert's own sigils, so
+    // General Sigils (and packs) only need to cover that shortfall.
+    const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, "General Sigils": sigilShortfall, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
+    const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": Number(invSaved["Affinity"]) || 0, "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": Number(invSaved["Speedups (minutes)"]) || 0 };
+    renderPackCostBlock(document.getElementById("expertsPacks"), "experts", packGroups, packOwned);
+    recordBudgetNeeds("experts", packGroups);
   }
 
   const gridEl = document.getElementById("expertsGrid");
