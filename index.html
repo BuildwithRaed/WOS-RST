@@ -357,6 +357,26 @@
     width:38px; height:38px; border-radius:8px; background:var(--panel-2); border:1px solid var(--line);
     color:var(--frost); font-size:15px; cursor:pointer; position:relative;
   }
+  /* Swipe-card navigation (arrows + dots/counter). Swiping still works on
+     touchscreens; these give mouse and keyboard users the same control. */
+  .swipe-nav{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:nowrap; }
+  .swipe-nav .swipe-arrow{
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    width:32px; height:32px; border-radius:8px; background:var(--panel-2);
+    border:1px solid var(--line); color:var(--frost); font-size:14px; line-height:1;
+    cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent;
+  }
+  .swipe-nav .swipe-arrow:hover:not(:disabled){ border-color:var(--ice); color:var(--ice); }
+  .swipe-nav .swipe-arrow:disabled{ opacity:0.3; cursor:default; }
+  .swipe-nav .swipe-dots{ display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; min-width:0; }
+  /* Dot hit area is 22px so it's easy to tap, while the dot itself stays small. */
+  .swipe-nav .swipe-dot{
+    width:22px; height:22px; padding:0; border:none; background:transparent; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; -webkit-tap-highlight-color:transparent;
+  }
+  .swipe-nav .swipe-dot i{ width:7px; height:7px; border-radius:50%; background:var(--line); display:block; transition:background 0.15s, transform 0.15s; }
+  .swipe-nav .swipe-dot:hover i{ transform:scale(1.3); }
+  .swipe-nav .swipe-count{ font-size:12px; color:var(--muted); white-space:nowrap; }
   .cat-tabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; }
   .cat-tabs::-webkit-scrollbar{ display:none; }
   .cat-tabs button{
@@ -960,6 +980,7 @@ const T = {
   count_toward_max: { en: "Count toward max totals", ar: "احتسابه ضمن إجمالي الحد الأقصى", ko: "최대 합계에 반영" },
   prev_label: { en: "Prev", ar: "السابق", ko: "이전" },
   next_label: { en: "Next", ar: "التالي", ko: "다음" },
+  swipe_to_browse: { en: "swipe to browse", ar: "\u0627\u0633\u062d\u0628 \u0644\u0644\u062a\u0635\u0641\u062d", ko: "\uc2a4\uc640\uc774\ud504\ud558\uc5ec \ud0d0\uc0c9" },
   all_categories: { en: "All categories", ar: "كل الفئات", ko: "모든 카테고리" },
   tundra_album_title: { en: "Tundra Album", ar: "ألبوم التندرا", ko: "툰드라 앨범" },
   total_attack: { en: "Total Attack", ar: "إجمالي الهجوم", ko: "총 공격력" },
@@ -2600,6 +2621,11 @@ async function renderGearLevelingGroup(target) {
   // swipe (rather than via wireTroopSwipe, which captures the current
   // troop's index ONCE at wire-time - that would go stale the moment you
   // swipe past the first card, since this only wires a single time).
+  function goToHeroGearTroop(troop) {
+    heroGearActiveTroop = troop;
+    showPanel(heroGearActiveTroop);
+    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS, goToHeroGearTroop);
+  }
   let swipeWired = false;
   function wireSwipeOnce() {
     if (swipeWired) return;
@@ -2610,11 +2636,11 @@ async function renderGearLevelingGroup(target) {
       if (next < 0 || next >= HERO_GEAR_TROOPS.length) return;
       heroGearActiveTroop = HERO_GEAR_TROOPS[next];
       showPanel(heroGearActiveTroop);
-      renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
+      renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS, goToHeroGearTroop);
     });
   }
   function renderTracks() {
-    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS);
+    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS, goToHeroGearTroop);
     showPanel(heroGearActiveTroop);
     wireSwipeOnce();
   }
@@ -4090,11 +4116,19 @@ function wireSwipeGesture(el, onSwipe, opts = {}) {
   // tells the browser vertical scrolling is expected and shouldn't hijack
   // the gesture, leaving horizontal swipe detection to this code.
   el.style.touchAction = "pan-y";
-  let startX = null, startY = null, dragging = false;
+  // Dragging that starts on a control belongs to the control, not the card:
+  // without this, dragging a dropdown open, moving a slider, or selecting
+  // text in a field would also flip to the next card.
+  const INTERACTIVE = "select, input, textarea, button, a, option, [contenteditable='true']";
+  let startX = null, startY = null, dragging = false, pointerType = "";
   el.onpointerdown = (e) => {
     if (opts.stopPropagation) e.stopPropagation();
+    if (e.target.closest && e.target.closest(INTERACTIVE)) { dragging = false; startX = null; return; }
+    // Mouse: left button only, so a right-click menu isn't read as a swipe.
+    if (e.pointerType === "mouse" && e.button !== 0) return;
     startX = e.clientX;
     startY = e.clientY;
+    pointerType = e.pointerType;
     dragging = true;
   };
   el.onpointerup = (e) => {
@@ -4104,9 +4138,14 @@ function wireSwipeGesture(el, onSwipe, opts = {}) {
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
     startX = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
+    // A mouse drag is deliberate and precise, so it needs less distance than
+    // a finger swipe, which is shorter and sloppier on a small screen.
+    const minX = pointerType === "mouse" ? 40 : 60;
+    if (Math.abs(dx) > minX && Math.abs(dx) > Math.abs(dy) * 1.5) onSwipe(dx < 0 ? 1 : -1);
   };
   el.onpointercancel = () => { dragging = false; startX = null; };
+  // Stops a mouse drag across the card from highlighting all its text.
+  el.ondragstart = (e) => { if (dragging && !(e.target.closest && e.target.closest(INTERACTIVE))) e.preventDefault(); };
 }
 function wireTroopSwipe(el, troops, current, onSelect) {
   const idx = troops.indexOf(current);
@@ -4115,18 +4154,60 @@ function wireTroopSwipe(el, troops, current, onSelect) {
     if (next >= 0 && next < troops.length) onSelect(troops[next]);
   });
 }
-// Position dots only (no tap targets, no text hint) - used where the whole
-// switch is meant to be swipe-only.
-function renderSwipeDots(containerEl, items, current, colors) {
-  containerEl.innerHTML = items
-    .map((t) => `<span style="width:7px; height:7px; border-radius:50%; background:${t === current ? ((colors && colors[t]) || "var(--ice)") : "var(--line)"}; display:inline-block;"></span>`)
-    .join("");
+// Shared prev/next arrows used by both the dots and the counter, so every
+// swipeable card can also be changed by clicking - swiping with a mouse is
+// awkward on a PC, and a trackpad drag often scrolls the page instead.
+function swipeArrowsHtml(atStart, atEnd) {
+  return {
+    prev: `<button type="button" class="swipe-arrow" data-swipenav="prev" aria-label="${esc(t("prev_label"))}" ${atStart ? "disabled" : ""}>&#8249;</button>`,
+    next: `<button type="button" class="swipe-arrow" data-swipenav="next" aria-label="${esc(t("next_label"))}" ${atEnd ? "disabled" : ""}>&#8250;</button>`,
+  };
+}
+function wireSwipeNav(containerEl, index, count, onNavigate) {
+  if (!onNavigate) return;
+  containerEl.querySelectorAll("[data-swipenav]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const to = btn.dataset.swipenav === "prev" ? index - 1
+        : btn.dataset.swipenav === "next" ? index + 1
+        : Number(btn.dataset.swipenav);
+      if (to >= 0 && to < count && to !== index) onNavigate(to);
+    });
+  });
+}
+// A dot per item, with arrows either side. Dots are real buttons, so any
+// card can be reached in one tap/click instead of several swipes.
+// onSelect is optional (older callers pass nothing and stay swipe-only).
+function renderSwipeDots(containerEl, items, current, colors, onSelect) {
+  const index = items.indexOf(current);
+  const arrows = swipeArrowsHtml(index <= 0, index >= items.length - 1);
+  containerEl.innerHTML = `
+    <div class="swipe-nav">
+      ${onSelect ? arrows.prev : ""}
+      <div class="swipe-dots">
+        ${items.map((it, i) => {
+          const on = it === current;
+          const color = on ? ((colors && colors[it]) || "var(--ice)") : "var(--line)";
+          return onSelect
+            ? `<button type="button" class="swipe-dot" data-swipenav="${i}" title="${esc(String(it))}" aria-label="${esc(String(it))}" aria-current="${on}"><i style="background:${color};"></i></button>`
+            : `<span style="width:7px; height:7px; border-radius:50%; background:${color}; display:inline-block;"></span>`;
+        }).join("")}
+      </div>
+      ${onSelect ? arrows.next : ""}
+    </div>`;
+  if (onSelect) wireSwipeNav(containerEl, index, items.length, (i) => onSelect(items[i]));
 }
 // For longer lists (pets, experts) a "3 / 10" counter reads better than a
-// row of 10 dots. Renders the counter and wires the swipe on the content
-// container in one call.
-function renderSwipeCounter(containerEl, count, activeIndex) {
-  containerEl.innerHTML = `<span class="meta" style="font-size:12px;">${activeIndex + 1} / ${count} &nbsp;\u2022&nbsp; swipe to browse</span>`;
+// row of 10 dots. Arrows either side step through them one at a time.
+function renderSwipeCounter(containerEl, count, activeIndex, onNavigate) {
+  const arrows = swipeArrowsHtml(activeIndex <= 0, activeIndex >= count - 1);
+  containerEl.innerHTML = `
+    <div class="swipe-nav">
+      ${onNavigate ? arrows.prev : ""}
+      <span class="swipe-count">${activeIndex + 1} / ${count}${onNavigate ? "" : ` &nbsp;\u2022&nbsp; ${esc(t("swipe_to_browse"))}`}</span>
+      ${onNavigate ? arrows.next : ""}
+    </div>`;
+  if (onNavigate) wireSwipeNav(containerEl, activeIndex, count, onNavigate);
 }
 function wireIndexSwipe(el, count, activeIndex, onNavigate) {
   wireSwipeGesture(el, (dir) => {
@@ -4161,7 +4242,7 @@ async function renderCharmsCalc() {
   let activeTroop = troopOrder[0];
 
   function renderTroopSections() {
-    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS);
+    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (tr) => { activeTroop = tr; renderTroopSections(); });
     const troop = activeTroop;
     const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
     // flatten each piece's 3 slots into a single Charm 1-6 list
@@ -4392,7 +4473,7 @@ async function renderChiefGearCalc() {
   const tabsEl = document.getElementById("gearTroopTabs");
   const rowsEl = document.getElementById("gearRows");
   function renderPieces() {
-    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS);
+    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (tr) => { activeTroop = tr; renderPieces(); });
     const troop = activeTroop;
     const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
     rowsEl.innerHTML = `
@@ -4800,7 +4881,7 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
   };
   modal.innerHTML = `
     <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y; padding:18px;">
-      ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length} &nbsp;\u2022&nbsp; swipe to browse</div>` : ""}
+      ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length}</div>` : ""}
       ${isIsland ? "" : `<div class="thumb" style="width:140px; height:140px; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
         ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:28px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
       </div>`}
@@ -6418,7 +6499,7 @@ async function renderT11HeliosPage() {
   }
 
   function render() {
-    renderSwipeDots(t11DotsEl, T11_TROOPS, t11ActiveTroop, T11_TROOP_COLORS);
+    renderSwipeDots(t11DotsEl, T11_TROOPS, t11ActiveTroop, T11_TROOP_COLORS, (tr) => { t11ActiveTroop = tr; render(); });
     const troop = t11ActiveTroop;
     const tracks = T11_NODES_CACHE[troop];
     if (!tracks) {
@@ -6819,7 +6900,10 @@ async function renderExpertsResearchPage() {
       Marksman: { totals: { ATK: 0, DEF: 0, DMG: 0, HP: 0 }, maxTotals: { ATK: 0, DEF: 0, DMG: 0, HP: 0 } },
     };
     function renderActiveTroopStats() {
-      renderSwipeDots(troopDotsEl, TROOP_STAT_ORDER, expResearchActiveTroop, TROOP_STAT_COLORS);
+      renderSwipeDots(troopDotsEl, TROOP_STAT_ORDER, expResearchActiveTroop, TROOP_STAT_COLORS, (tr) => {
+        expResearchActiveTroop = tr;
+        renderActiveTroopStats();
+      });
       troopTitleEl.textContent = troopDisplayName(expResearchActiveTroop);
       troopTitleEl.style.color = TROOP_STAT_COLORS[expResearchActiveTroop];
       troopExpertEl.textContent = TROOP_STAT_EXPERT[expResearchActiveTroop] ? `(${TROOP_STAT_EXPERT[expResearchActiveTroop]})` : "";
@@ -6887,9 +6971,7 @@ async function renderExpertsResearchPage() {
         }
         ${
           pages.length > 1
-            ? `<div id="expResearchPageDots" style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px;">
-                ${pages.map((_, i) => `<span style="width:6px; height:6px; border-radius:50%; background:${i === safePage ? "var(--ice)" : "var(--line)"};"></span>`).join("")}
-               </div>`
+            ? `<div id="expResearchPageDots" style="margin-bottom:8px;"></div>`
             : ""
         }
         <div style="text-align:left;" id="expResearchPathsList">
@@ -6927,7 +7009,11 @@ async function renderExpertsResearchPage() {
   let activeResearchIdx = 0;
   let activeResearchPage = 0;
   function renderGrid() {
-    renderSwipeCounter(expResearchCounterEl, EXPERTS_IN_ORDER.length, activeResearchIdx);
+    renderSwipeCounter(expResearchCounterEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => {
+      activeResearchIdx = next;
+      activeResearchPage = 0;
+      renderGrid();
+    });
     const expert = EXPERTS_IN_ORDER[activeResearchIdx];
     gridEl.innerHTML = expertCardHtml(expert, activeResearchPage);
     wireIndexSwipe(gridEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => {
@@ -6944,6 +7030,15 @@ async function renderExpertsResearchPage() {
     if (pathsListEl) {
       const pathNums = pathNumbersFor(expert);
       const pageCount = Math.ceil(pathNums.length / 3);
+      // Page dots for this expert's paths, tappable/clickable like the rest.
+      const pageDotsEl = document.getElementById("expResearchPageDots");
+      if (pageDotsEl && pageCount > 1) {
+        const pageList = Array.from({ length: pageCount }, (_, i) => i);
+        renderSwipeDots(pageDotsEl, pageList, Math.min(activeResearchPage, pageCount - 1), null, (pg) => {
+          activeResearchPage = pg;
+          renderGrid();
+        });
+      }
       wireSwipeGesture(pathsListEl, (dir) => {
         const next = activeResearchPage + dir;
         if (next >= 0 && next < pageCount) {
@@ -7361,7 +7456,7 @@ async function renderExpertsPage() {
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
   let activeExpertIdx = 0;
   function renderGrid() {
-    renderSwipeCounter(expertsCounterEl, EXPERTS_LIST.length, activeExpertIdx);
+    renderSwipeCounter(expertsCounterEl, EXPERTS_LIST.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
     const e = EXPERTS_LIST[activeExpertIdx];
     const s = saved[e.key];
     const unlocked = isExpertUnlocked(e.key);
@@ -7708,7 +7803,7 @@ async function renderRefinePage() {
   const refineCounterEl = document.getElementById("refineSwipeCounter");
   let activeRefineIdx = 0;
   function renderList() {
-    renderSwipeCounter(refineCounterEl, petNames.length, activeRefineIdx);
+    renderSwipeCounter(refineCounterEl, petNames.length, activeRefineIdx, (next) => { activeRefineIdx = next; renderList(); });
     const idx = activeRefineIdx;
     const pet = petNames[idx];
     const m = maxRow(pet);
@@ -7901,7 +7996,7 @@ async function renderPetsDataPage() {
   const petsCounterEl = document.getElementById("petsSwipeCounter");
   let activePetIdx = 0;
   function renderList() {
-    renderSwipeCounter(petsCounterEl, petNames.length, activePetIdx);
+    renderSwipeCounter(petsCounterEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
     const idx = activePetIdx;
     const pet = petNames[idx];
     const levels = PETS_NODES_CACHE[pet];
@@ -8278,7 +8373,7 @@ async function renderT12ResearchPage() {
   function renderTroopPanels() {
     const troopsEl = document.getElementById("t12Troops");
     const dotsEl = document.getElementById("t12TroopDots");
-    renderSwipeDots(dotsEl, T12_TROOPS, t12ActiveTroop, T12_TROOP_COLORS);
+    renderSwipeDots(dotsEl, T12_TROOPS, t12ActiveTroop, T12_TROOP_COLORS, (tr) => { t12ActiveTroop = tr; renderTroopPanels(); });
     const groups = [...new Set(T12_ITEM_DEFS.map((d) => d.group))];
     const statMax = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     T12_ITEM_DEFS.forEach((def) => {
