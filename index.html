@@ -3050,10 +3050,10 @@ async function renderGearLevelingGroup(target) {
 
   const tracksEl = document.getElementById("heroGearTracks");
   const HERO_GEAR_ICONS = {
-    Goggles: "https://wostools.net/images/hero-gear/goggles.webp",
-    Gloves: "https://wostools.net/images/hero-gear/gloves.webp",
-    Belt: "https://wostools.net/images/hero-gear/belt.webp",
-    Boots: "https://wostools.net/images/hero-gear/boots.webp",
+    Goggles: "icons/hero-gear-goggles.webp",
+    Gloves: "icons/hero-gear-gloves.webp",
+    Belt: "icons/hero-gear-belt.webp",
+    Boots: "icons/hero-gear-boots.webp",
   };
   const pieceCard = (troop, piece) => `
     <div class="panel">
@@ -4683,29 +4683,30 @@ async function renderGroupPage(parentName) {
 // its own rows with level/stage/materials/stat/power columns.
 // ============================================================
 // Maps a material name substring to its official game icon URL.
+
 const MATERIAL_ICONS = {
-  "xp component": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/XP-Component.png",
-  "hardened alloy": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/Hardened-Alloy.png",
-  "polishing solution": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/Polishing-Solution.png",
-  "design plan": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/Design-Plan.png",
-  amber: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/03/item_icon_600051.png",
-  "essence stone": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/14084129/item_icon_500240.png",
-  mithril: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/03/item_icon_500235.png",
-  "mythic gear": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/15120636/item_icon_501001.png",
-  "charm guides": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/charm-guide.png",
-  "charm designs": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/charm-design.png",
-  "jewel secrets": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/03/item_icon_600026.png",
-  food: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/09/pet-food.png",
-  manual: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/11/item_icon_600043.png",
-  potion: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/11/item_icon_600044.png",
-  serum: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/11/item_icon_600045.png",
-  meat: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/10114534/item_icon_100011.png",
-  wood: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/10114534/item_icon_100011.png",
-  coal: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/10114623/item_icon_100031.png",
-  iron: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/item_icon_105.png",
-  steel: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/09/20250617-144040.png",
-  "refined fc": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/05/21122055/item_icon_100082.png",
-  "fc shard": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/07/item_icon_100083.png",
+  "xp component": "icons/XP-Component.png",
+  "hardened alloy": "icons/Hardened-Alloy.png",
+  "polishing solution": "icons/Polishing-Solution.png",
+  "design plan": "icons/Design-Plan.png",
+  amber: "icons/item_icon_600051.png",
+  "essence stone": "icons/item_icon_500240.png",
+  mithril: "icons/item_icon_500235.png",
+  "mythic gear": "icons/item_icon_501001.png",
+  "charm guides": "icons/charm-guide.png",
+  "charm designs": "icons/charm-design.png",
+  "jewel secrets": "icons/item_icon_600026.png",
+  food: "icons/pet-food.png",
+  manual: "icons/item_icon_600043.png",
+  potion: "icons/item_icon_600044.png",
+  serum: "icons/item_icon_600045.png",
+  meat: "icons/item_icon_100011.png",
+  wood: "icons/item_icon_100011.png",
+  coal: "icons/item_icon_100031.png",
+  iron: "icons/item_icon_105.png",
+  steel: "icons/20250617-144040.png",
+  "refined fc": "icons/item_icon_100082.png",
+  "fc shard": "icons/item_icon_100083.png",
 };
 // Renders a comma-separated materials string with inline icons.
 function renderMaterialsWithIcons(materials) {
@@ -4948,9 +4949,9 @@ async function renderProgressionInto(target, tableName) {
 // wiki (wostools.net); CHARM_LEVELS defines the exact step order.
 // ============================================================
 const CHARM_MATERIAL_ICONS = {
-  guides: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/charm-guide.png",
-  designs: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/charm-design.png",
-  secrets: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/03/item_icon_600026.png",
+  guides: "icons/charm-guide.png",
+  designs: "icons/charm-design.png",
+  secrets: "icons/item_icon_600026.png",
 };
 // Charm level data (levels, per-step material costs, cumulative Lethality/
 // Health %) now lives in the `charm_levels` table (Admin-editable), not
@@ -7304,12 +7305,12 @@ const CHIEF_GEAR_POSITIONS = {
   cane: "Bottom right",
 };
 const CHIEF_GEAR_ICONS = {
-  helmet: "https://wostools.net/images/chief-gear/helmet-gold.webp",
-  watch: "https://wostools.net/images/chief-gear/watch-gold.webp",
-  jacket: "https://wostools.net/images/chief-gear/coat-gold.webp",
-  pants: "https://wostools.net/images/chief-gear/pants-gold.webp",
-  ring: "https://wostools.net/images/chief-gear/ring-gold.webp",
-  cane: "https://wostools.net/images/chief-gear/cane-gold.webp",
+  helmet: "icons/chief-gear-helmet-gold.webp",
+  watch: "icons/chief-gear-watch-gold.webp",
+  jacket: "icons/chief-gear-coat-gold.webp",
+  pants: "icons/chief-gear-pants-gold.webp",
+  ring: "icons/chief-gear-ring-gold.webp",
+  cane: "icons/chief-gear-cane-gold.webp",
 };
 
 async function renderChiefGearCalc() {
@@ -8916,8 +8917,8 @@ async function renderExtraBonusHeroes() {
       <div id="extraBonusHeroesNatalia"></div>
     </div>
   `;
-  await renderHeroStarSection("Jero", "Jeronimo", "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/jeronimo.png", "extraBonusHeroesJero");
-  await renderHeroStarSection("Natalia", "Natalia", "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/natalia.png", "extraBonusHeroesNatalia");
+  await renderHeroStarSection("Jero", "Jeronimo", "icons/jeronimo.png", "extraBonusHeroesJero");
+  await renderHeroStarSection("Natalia", "Natalia", "icons/natalia.png", "extraBonusHeroesNatalia");
 }
 
 async function renderAllianceTechPage() {
@@ -9087,12 +9088,12 @@ function t12TargetOf(troop, def) {
 }
 
 const T12_RESOURCE_ICONS = {
-  steel: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/09/20250617-144040.png",
-  refined_fc: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/05/21122055/item_icon_100082.png",
-  fc_shard: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/07/item_icon_100083.png",
-  meat_wood: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/10114534/item_icon_100011.png",
-  coal: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/10114623/item_icon_100031.png",
-  iron: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/05/item_icon_105.png",
+  steel: "icons/20250617-144040.png",
+  refined_fc: "icons/item_icon_100082.png",
+  fc_shard: "icons/item_icon_100083.png",
+  meat_wood: "icons/item_icon_100011.png",
+  coal: "icons/item_icon_100031.png",
+  iron: "icons/item_icon_105.png",
 };
 
 let RESEARCH_SPEED_PCT = 0;
@@ -9522,10 +9523,10 @@ let PET_REFINE_CACHE = null; // { "Cave Hyena": [ {stage, infantry_lethality_pct
 let PET_REFINE_STATE = null; // { "Cave Hyena": stageIndex }
 
 const PET_MATERIAL_ICONS = {
-  food: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/09/pet-food.png",
-  manual: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/11/item_icon_600043.png",
-  potion: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/11/item_icon_600044.png",
-  serum: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2023/11/item_icon_600045.png",
+  food: "icons/pet-food.png",
+  manual: "icons/item_icon_600043.png",
+  potion: "icons/item_icon_600044.png",
+  serum: "icons/item_icon_600045.png",
 };
 
 async function ensurePetsData() {
@@ -9600,22 +9601,22 @@ const EXPERT_INVENTORY_FIELDS = [
   "Kathy Sigils", "Gareth Sigils",
 ];
 const EXPERT_INVENTORY_ICONS = {
-  Affinity: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/10/item_icon_570201.png", // Compass (affinity gift)
-  EXP: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/09/hero-xp.png",
-  "Books of Knowledge": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/08/item_icon_570300.png",
-  "Speedups (minutes)": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/06/18075047/item_icon_302000.png",
-  Gifts: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/10/item_icon_570202.png", // Fiery Heart
-  "General Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/08/item_icon_570000.png",
-  "Cyrille Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/10/item_icon_570001.png",
-  "Agnes Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/10/item_icon_570002.png",
-  "Holger Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/10/item_icon_570003.png",
-  "Romulus Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/10/item_icon_570004.png",
-  "Fabian Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/11/item_icon_570005.png",
-  "Baldur Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/11/item_icon_570006.png",
-  "Valeria Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/12/item_icon_570007.png",
-  "Ronne Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2026/04/item_icon_570008.png",
-  "Kathy Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2026/04/item_icon_570010.png",
-  "Gareth Sigils": "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/08/item_icon_570000.png", // not yet on wiki, using Common Sigil as placeholder
+  Affinity: "icons/item_icon_570201.png", // Compass (affinity gift)
+  EXP: "icons/hero-xp.png",
+  "Books of Knowledge": "icons/item_icon_570300.png",
+  "Speedups (minutes)": "icons/item_icon_302000.png",
+  Gifts: "icons/item_icon_570202.png", // Fiery Heart
+  "General Sigils": "icons/item_icon_570000.png",
+  "Cyrille Sigils": "icons/item_icon_570001.png",
+  "Agnes Sigils": "icons/item_icon_570002.png",
+  "Holger Sigils": "icons/item_icon_570003.png",
+  "Romulus Sigils": "icons/item_icon_570004.png",
+  "Fabian Sigils": "icons/item_icon_570005.png",
+  "Baldur Sigils": "icons/item_icon_570006.png",
+  "Valeria Sigils": "icons/item_icon_570007.png",
+  "Ronne Sigils": "icons/item_icon_570008.png",
+  "Kathy Sigils": "icons/item_icon_570010.png",
+  "Gareth Sigils": "icons/item_icon_570000.png", // not yet on wiki, using Common Sigil as placeholder
 };
 
 const EXPERT_RESEARCH_STAT_LABEL = { ATK: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
