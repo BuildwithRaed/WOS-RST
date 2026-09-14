@@ -1166,6 +1166,23 @@ const T = {
   name_placeholder: { en: "Name", ar: "الاسم", ko: "이름" },
   save: { en: "Save", ar: "حفظ", ko: "저장" },
   owner_login: { en: "Owner login", ar: "تسجيل دخول المالك", ko: "소유자 로그인" },
+  account_pitch: { en: "Create a free account to keep your progress on every device.", ar: "أنشئ حسابًا مجانيًا للاحتفاظ بتقدمك على كل الأجهزة.", ko: "무료 계정을 만들면 모든 기기에서 진행 상황이 유지됩니다." },
+  sign_in_or_create: { en: "Sign in / Create account", ar: "تسجيل الدخول / إنشاء حساب", ko: "로그인 / 계정 만들기" },
+  signed_in_as: { en: "Signed in as", ar: "تم تسجيل الدخول باسم", ko: "로그인됨:" },
+  create_account: { en: "Create account", ar: "إنشاء حساب", ko: "계정 만들기" },
+  create_account_desc: { en: "Everything you've entered in this browser is kept and linked to your new account.", ar: "كل ما أدخلته في هذا المتصفح سيُحفظ ويُربط بحسابك الجديد.", ko: "이 브라우저에 입력한 모든 내용이 새 계정에 연결되어 유지됩니다." },
+  sign_in_desc: { en: "Sign in to load the progress saved on your account.", ar: "سجّل الدخول لتحميل التقدم المحفوظ في حسابك.", ko: "계정에 저장된 진행 상황을 불러오려면 로그인하세요." },
+  forgot_password: { en: "Forgot password?", ar: "نسيت كلمة المرور؟", ko: "비밀번호를 잊으셨나요?" },
+  enter_email_first: { en: "Enter your email first.", ar: "أدخل بريدك الإلكتروني أولاً.", ko: "먼저 이메일을 입력하세요." },
+  reset_sent: { en: "Password reset email sent. Check your inbox.", ar: "تم إرسال بريد إعادة تعيين كلمة المرور. تحقق من صندوق الوارد.", ko: "비밀번호 재설정 이메일을 보냈습니다. 받은 편지함을 확인하세요." },
+  password_short: { en: "Password must be at least 6 characters.", ar: "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.", ko: "비밀번호는 6자 이상이어야 합니다." },
+  confirm_email_sent: { en: "Check your email and click the confirmation link to finish.", ar: "تحقق من بريدك الإلكتروني وانقر رابط التأكيد للإكمال.", ko: "이메일을 확인하고 확인 링크를 클릭하여 완료하세요." },
+  confirm_email_hint: { en: "Email not confirmed yet — check your inbox.", ar: "لم يتم تأكيد البريد الإلكتروني بعد — تحقق من صندوق الوارد.", ko: "이메일이 아직 확인되지 않았습니다 — 받은 편지함을 확인하세요." },
+  email_taken: { en: "That email already has an account. Try signing in.", ar: "هذا البريد الإلكتروني مسجل بالفعل. جرّب تسجيل الدخول.", ko: "이미 계정이 있는 이메일입니다. 로그인해 보세요." },
+  email_not_confirmed: { en: "Confirm your email first (check your inbox).", ar: "أكّد بريدك الإلكتروني أولاً (تحقق من صندوق الوارد).", ko: "먼저 이메일을 확인하세요 (받은 편지함 확인)." },
+  rate_limited: { en: "Too many attempts. Please wait a minute and try again.", ar: "محاولات كثيرة جدًا. انتظر دقيقة ثم حاول مجددًا.", ko: "시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요." },
+  new_password_prompt: { en: "Enter your new password:", ar: "أدخل كلمة المرور الجديدة:", ko: "새 비밀번호를 입력하세요:" },
+  password_updated: { en: "Password updated.", ar: "تم تحديث كلمة المرور.", ko: "비밀번호가 변경되었습니다." },
   logged_in_owner: { en: "Logged in as owner", ar: "تم تسجيل الدخول كمالك", ko: "소유자로 로그인됨" },
   log_out: { en: "Log out", ar: "تسجيل الخروج", ko: "로그아웃" },
   owner_login_desc: { en: "Log in to unlock Admin. First time here? Logging in with the owner email creates the account automatically.", ar: "سجّل الدخول لفتح لوحة الإدارة. أول مرة هنا؟ تسجيل الدخول ببريد المالك الإلكتروني ينشئ الحساب تلقائيًا.", ko: "관리자 기능을 사용하려면 로그인하세요. 처음이신가요? 소유자 이메일로 로그인하면 계정이 자동으로 생성됩니다." },
@@ -14307,80 +14324,122 @@ function renderOwnerLoginUI() {
   // Backpack and Budgets are owner-only pages.
   document.querySelectorAll("[data-ownertab]").forEach((b) => { b.style.display = IS_OWNER ? "" : "none"; });
 
-  if (IS_OWNER) {
+  const user = CURRENT_SESSION && CURRENT_SESSION.user;
+  const signedIn = !!(user && user.email && !user.is_anonymous);
+  if (signedIn) {
     el.innerHTML = `
-      <div class="meta" style="font-size:11px; color:var(--good); margin-bottom:6px;">&#10003; ${esc(t("logged_in_owner"))}</div>
+      <div class="meta" style="font-size:11px; color:var(--good); margin-bottom:6px; word-break:break-all;">&#10003; ${IS_OWNER ? esc(t("logged_in_owner")) : `${esc(t("signed_in_as"))} ${esc(user.email)}`}</div>
+      ${user.email_confirmed_at || user.confirmed_at ? "" : `<div class="meta" style="font-size:10.5px; color:var(--amber); margin-bottom:6px;">${esc(t("confirm_email_hint"))}</div>`}
       <button class="btn ghost small" id="ownerLogoutBtn" style="width:100%;">${esc(t("log_out"))}</button>
     `;
     document.getElementById("ownerLogoutBtn").addEventListener("click", async () => {
       await supabaseClient.auth.signOut();
-      await ensureAuthSession();
-      PET_MARKS_STATE = null; // per-account state: reload for the new session
-      renderOwnerLoginUI();
-      if (TAB === "adminpage") { TAB = "overview"; document.querySelector('#tabs button[data-tab="overview"]').click(); }
+      // Every cached calculator state belongs to the account that just left:
+      // reload so the fresh (anonymous) session starts clean.
+      location.hash = "";
+      location.reload();
     });
     return;
   }
 
-  // The login button is not shown to visitors. It appears only when the
-  // page is opened with #admin at the end of the address (e.g.
-  // .../index.html#admin); that choice is remembered in this browser.
-  if (location.hash === "#admin") { try { localStorage.setItem("show_owner_login", "1"); } catch (e) {} }
-  let showLogin = false;
-  try { showLogin = localStorage.getItem("show_owner_login") === "1"; } catch (e) {}
-  if (!showLogin) { el.innerHTML = ""; return; }
-  el.innerHTML = `<button class="btn ghost small" id="ownerLoginOpenBtn" style="width:100%;">${esc(t("owner_login"))}</button>`;
-  document.getElementById("ownerLoginOpenBtn").addEventListener("click", () => {
-    let modal = document.getElementById("ownerLoginModal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "ownerLoginModal";
-      modal.className = "modal-overlay";
-      document.body.appendChild(modal);
-      modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
-    }
-    modal.innerHTML = `
-      <div class="modal-box" style="max-width:340px;">
-        <h2>${esc(t("owner_login"))}</h2>
-        <p class="desc">${esc(t("owner_login_desc"))}</p>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
-          <input type="email" id="ownerLoginEmail" placeholder="${esc(t("email_placeholder"))}" style="width:100%;" />
-          <input type="password" id="ownerLoginPassword" placeholder="${esc(t("password_placeholder"))}" style="width:100%;" />
-          <div class="err" id="ownerLoginErr" style="min-height:16px;"></div>
-          <button class="btn" id="ownerLoginSubmit">${esc(t("log_in"))}</button>
-          <button class="btn ghost small" id="ownerLoginClose">${esc(t("cancel"))}</button>
-        </div>
-      </div>`;
-    modal.style.display = "flex";
-    document.getElementById("ownerLoginClose").addEventListener("click", () => { modal.style.display = "none"; });
-    document.getElementById("ownerLoginSubmit").addEventListener("click", async () => {
-      const email = document.getElementById("ownerLoginEmail").value.trim();
-      const password = document.getElementById("ownerLoginPassword").value;
-      const errEl = document.getElementById("ownerLoginErr");
-      errEl.textContent = "";
-      if (!email || !password) { errEl.textContent = t("enter_both"); return; }
-      try {
-        const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (signInErr) {
-          // First-time setup: only the designated owner email is allowed to self-register.
-          if (email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-            errEl.textContent = t("invalid_login");
-            return;
-          }
-          const { error: signUpErr } = await supabaseClient.auth.signUp({ email, password });
-          if (signUpErr) { errEl.textContent = signUpErr.message; return; }
+  el.innerHTML = `
+    <div class="meta" style="font-size:10.5px; margin-bottom:6px;">${esc(t("account_pitch"))}</div>
+    <button class="btn small" id="ownerLoginOpenBtn" style="width:100%;">${esc(t("sign_in_or_create"))}</button>`;
+  document.getElementById("ownerLoginOpenBtn").addEventListener("click", () => openAccountModal("signin"));
+}
+
+// Sign in / create account for everyone. Creating an account upgrades the
+// visitor's anonymous session in place (same user id), so everything they
+// saved in this browser carries over. The owner email unlocks Admin.
+function openAccountModal(mode) {
+  let modal = document.getElementById("ownerLoginModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "ownerLoginModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+  }
+  const isCreate = mode === "create";
+  const tabBtn = (m, label) => `<button type="button" class="btn small ${m === mode ? "" : "ghost"}" data-accmode="${m}" style="flex:1;">${esc(label)}</button>`;
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:360px;">
+      <div style="display:flex; gap:6px; margin-bottom:10px;">${tabBtn("signin", t("log_in"))}${tabBtn("create", t("create_account"))}</div>
+      <p class="desc" style="margin:0 0 10px;">${esc(t(isCreate ? "create_account_desc" : "sign_in_desc"))}</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input type="email" id="ownerLoginEmail" placeholder="${esc(t("email_placeholder"))}" autocomplete="email" style="width:100%;" />
+        <input type="password" id="ownerLoginPassword" placeholder="${esc(t("password_placeholder"))}" autocomplete="${isCreate ? "new-password" : "current-password"}" style="width:100%;" />
+        <div class="err" id="ownerLoginErr" style="min-height:16px;"></div>
+        <button class="btn" id="ownerLoginSubmit">${esc(t(isCreate ? "create_account" : "log_in"))}</button>
+        ${isCreate ? "" : `<button type="button" class="btn ghost small" id="ownerForgotBtn">${esc(t("forgot_password"))}</button>`}
+        <button class="btn ghost small" id="ownerLoginClose">${esc(t("cancel"))}</button>
+      </div>
+    </div>`;
+  modal.style.display = "flex";
+  modal.querySelectorAll("[data-accmode]").forEach((b) => b.addEventListener("click", () => openAccountModal(b.dataset.accmode)));
+  document.getElementById("ownerLoginClose").addEventListener("click", () => { modal.style.display = "none"; });
+  const errEl = document.getElementById("ownerLoginErr");
+  const emailEl = document.getElementById("ownerLoginEmail");
+  const forgot = document.getElementById("ownerForgotBtn");
+  if (forgot) forgot.addEventListener("click", async () => {
+    const email = emailEl.value.trim();
+    if (!email) { errEl.textContent = t("enter_email_first"); return; }
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0] });
+    errEl.style.color = error ? "" : "var(--good)";
+    errEl.textContent = error ? error.message : t("reset_sent");
+  });
+  document.getElementById("ownerLoginSubmit").addEventListener("click", async () => {
+    const email = emailEl.value.trim();
+    const password = document.getElementById("ownerLoginPassword").value;
+    errEl.style.color = "";
+    errEl.textContent = "";
+    if (!email || !password) { errEl.textContent = t("enter_both"); return; }
+    if (isCreate && password.length < 6) { errEl.textContent = t("password_short"); return; }
+    try {
+      if (isCreate) {
+        const anon = CURRENT_SESSION && CURRENT_SESSION.user && CURRENT_SESSION.user.is_anonymous;
+        if (anon) {
+          // Upgrade the anonymous account: same user id, all saved progress kept.
+          const { data, error } = await supabaseClient.auth.updateUser({ email, password });
+          if (error) { errEl.textContent = friendlyAuthError(error); return; }
+          const pending = data && data.user && (data.user.new_email || !data.user.email_confirmed_at);
+          if (pending) { errEl.style.color = "var(--good)"; errEl.textContent = t("confirm_email_sent"); return; }
+        } else {
+          const { data, error } = await supabaseClient.auth.signUp({ email, password });
+          if (error) { errEl.textContent = friendlyAuthError(error); return; }
+          if (!data.session) { errEl.style.color = "var(--good)"; errEl.textContent = t("confirm_email_sent"); return; }
         }
-        await ensureAuthSession();
-        PET_MARKS_STATE = null; // per-account state: reload for the new session
-        modal.style.display = "none";
-        renderOwnerLoginUI();
-        toast(IS_OWNER ? t("logged_in_owner") : "Logged in");
-      } catch (err) {
-        errEl.textContent = err.message || t("login_failed");
+      } else {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) { errEl.textContent = friendlyAuthError(error); return; }
       }
-    });
+      // Reload so every page reads the account's own saved progress.
+      location.hash = "";
+      location.reload();
+    } catch (err) {
+      errEl.textContent = err.message || t("login_failed");
+    }
   });
 }
+function friendlyAuthError(error) {
+  const m = String(error && error.message || "");
+  if (/invalid login|invalid credentials/i.test(m)) return t("invalid_login");
+  if (/already registered|already exists|already been registered/i.test(m)) return t("email_taken");
+  if (/email not confirmed/i.test(m)) return t("email_not_confirmed");
+  if (/rate limit/i.test(m)) return t("rate_limited");
+  return m || t("login_failed");
+}
+// Password reset links land back on the site with a recovery session:
+// ask for the new password once, then reload into the account.
+supabaseClient.auth.onAuthStateChange((event) => {
+  if (event !== "PASSWORD_RECOVERY") return;
+  const pw = prompt(t("new_password_prompt"));
+  if (!pw) return;
+  supabaseClient.auth.updateUser({ password: pw }).then(({ error }) => {
+    toast(error ? friendlyAuthError(error) : t("password_updated"), !!error);
+    if (!error) { location.hash = ""; location.reload(); }
+  });
+});
 
 // App entry point: establish (or restore) a session before anything else
 // runs, since every data call needs USER_ID / the session's access token.
