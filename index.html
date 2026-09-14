@@ -1622,6 +1622,8 @@ const T = {
   pack_kind_option_tables_desc: { en: "Same as above, but each option lives in its own table. Give all of them the same Group name and pick this on each.", ar: "مثل السابق لكن كل خيار في جدول مستقل. امنحها جميعًا اسم المجموعة نفسه واختر هذا في كل منها.", ko: "위와 같지만 옵션마다 표가 따로 있습니다. 모두 같은 그룹 이름을 주고 각 표에서 이걸 선택하세요." },
   pack_kind_choice: { en: "Choose one row per purchase", ar: "اختر صفًا واحدًا لكل عملية شراء", ko: "구매당 행 하나 선택" },
   pack_kind_choice_desc: { en: "The rows are alternatives at one price (no tiers); each purchase takes one of them and the buys-per-reset limit is shared.", ar: "الصفوف بدائل بسعر واحد (بدون مستويات)؛ كل عملية شراء تأخذ واحدًا ويُشترك حد الشراء لكل تكرار.", ko: "행들은 한 가격의 대안(단계 없음); 구매마다 하나를 고르고 주기당 구매 한도를 공유합니다." },
+  pack_restore: { en: "Restore this game pack's original numbers", ar: "استعادة الأرقام الأصلية لحزمة اللعبة", ko: "게임 패키지 원래 수치로 복원" },
+  pack_restore_confirm: { en: "Replace this table's columns and numbers with the original game pack values?", ar: "استبدال أعمدة هذا الجدول وأرقامه بقيم حزمة اللعبة الأصلية؟", ko: "이 표의 열과 수치를 원래 게임 패키지 값으로 되돌릴까요?" },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -3861,7 +3863,7 @@ async function renderPacksPage() {
     });
     let lastGroup = null;
     const groupPh = t("pack_group_placeholder"), groupTitle = t("pack_group_title"); // `t` is the table inside the map below
-    const rowMaxTitle = t("pack_rowmax_title"), rowMaxHead = t("pack_rowmax_head"), dupTitle = t("pack_duplicate");
+    const rowMaxTitle = t("pack_rowmax_title"), rowMaxHead = t("pack_rowmax_head"), dupTitle = t("pack_duplicate"), restoreTitle = t("pack_restore");
     listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
@@ -3896,6 +3898,7 @@ async function renderPacksPage() {
               <button class="btn small ghost" data-pt-delrowlast title="Remove last row" style="width:24px; padding:3px 0;">&minus;</button>
             </span>
           </span>
+          ${PACK_PRESET_TABLES.some((pp) => pp.title === t.title) ? `<button class="btn small ghost" data-pt-restore title="${esc(restoreTitle)}" style="flex-shrink:0; width:28px; padding:4px 0;">&#8634;</button>` : ""}
           <button class="btn small ghost" data-pt-duplicate title="${esc(dupTitle)}" style="flex-shrink:0; width:28px; padding:4px 0;">&#10697;</button>
           <button class="btn small ghost" data-pt-delete title="Delete table" style="color:var(--danger); flex-shrink:0; width:28px; padding:4px 0;">&times;</button>
         </div>
@@ -4325,6 +4328,18 @@ async function renderPacksPage() {
       // Duplicate: a full copy of the table (cells, columns, title) and of
       // its settings (pages, availability, ladder/choice, row limits,
       // group), placed right after the original.
+      // Restore a game-pack table's original columns and numbers.
+      const restoreBtn = panel.querySelector("[data-pt-restore]");
+      if (restoreBtn) restoreBtn.addEventListener("click", async () => {
+        const preset = PACK_PRESET_TABLES.find((pp) => pp.title === t.title);
+        if (!preset || !confirm(t("pack_restore_confirm"))) return;
+        t.columns = preset.columns.slice();
+        t.rows = preset.rows.map((r) => ({ ...r, cells: r.cells.slice() }));
+        t.scale_enabled = false;
+        await persistTable();
+        PACK_TABLES_CACHE = null;
+        renderAll();
+      });
       panel.querySelector("[data-pt-duplicate]").addEventListener("click", async () => {
         syncFromDom();
         if (String(t.id).startsWith("new-")) await persistTable();
