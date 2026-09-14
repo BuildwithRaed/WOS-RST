@@ -6834,10 +6834,10 @@ async function renderBudgetsPage(opts = {}) {
     return preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
   };
   const packRowsHtml = (plan) => packPlanRowsHtml(plan, budgetResetText);
-  const matsHtml = (needFull, needStill, owned) => Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
+  const matsHtml = (needFull, needStill, owned) => `<div style="display:flex; flex-wrap:wrap; gap:4px 14px;">` + Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
     const still = needStill[n] || 0;
     return `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${qty(still)}</b><span class="meta"> / ${qty(needFull[n])}</span></span>`;
-  }).join(" &nbsp;&middot;&nbsp; ");
+  }).join("") + `</div>`;
 
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
@@ -6902,7 +6902,7 @@ async function renderBudgetsPage(opts = {}) {
         <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtMoney(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
       </div>
-      ${Object.keys(grandMats).length ? `<div style="margin-top:8px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials_total"))}</div>${Object.keys(grandMats).map((n) => `<span style="white-space:nowrap; font-size:11px; margin-inline-end:10px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b>${qty(grandMats[n])}</b></span>`).join("")}</div>` : ""}
+      ${Object.keys(grandMats).length ? `<div style="margin-top:8px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials_total"))}</div><div style="display:flex; flex-wrap:wrap; gap:4px 14px;">${Object.keys(grandMats).map((n) => `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b>${qty(grandMats[n])}</b></span>`).join("")}</div></div>` : ""}
       ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
     </div>`;
@@ -11012,10 +11012,12 @@ async function renderPetsDataPage() {
         <div id="petsMaterialsBar"></div>
       </div>
     `;
+    // Pet Chests you own open into Manual / Potion / Serum (your choice),
+    // so they sit in the Backpack and reduce whichever of those is short.
     renderChiefGearResourcesBar(
       "petsMaterialsBar",
       { Food: grand.food, Manual: grand.manual, Potion: grand.potion, Serum: grand.serum },
-      ["Food", "Manual", "Potion", "Serum"],
+      ["Food", "Manual", "Potion", "Serum", "Pet Chest"],
       renderTotals,
       "pets"
     );
