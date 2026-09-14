@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="WOS Tracker" />
+<meta name="apple-mobile-web-app-title" content="WOS RST" />
 <meta name="theme-color" content="#0b0f16" />
-<title>WOS Tracker</title>
+<title>WOS RST</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   /* ============================================================
@@ -582,7 +582,7 @@
   <nav class="topnav">
     <div class="brand">
       <div class="mark">W</div>
-      <h1>WOS Tracker</h1>
+      <h1>WOS RST</h1>
       <button id="mobileMenuBtn" type="button" title="Menu">&#9776; Menu</button>
     </div>
     <div class="topnav-groups" id="topnavGroups">
@@ -1300,9 +1300,9 @@ const T = {
   tier_suffix: { en: "tier", ar: "الفئة", ko: "등급" },
   max_button: { en: "Max", ar: "الحد الأقصى", ko: "최대" },
   footer_disclaimer: {
-    en: "WOS Tracker is an unofficial fan-made tool and is not affiliated with, endorsed by, or connected to Century Games. Whiteout Survival and all related names, artwork, icons and game data are trademarks and copyrights of Century Games and are used here for informational purposes only. Values are community estimates and may differ from the game.",
-    ar: "WOS Tracker أداة غير رسمية من صنع المعجبين وليست تابعة لشركة Century Games أو معتمدة منها أو مرتبطة بها. Whiteout Survival وجميع الأسماء والرسومات والأيقونات وبيانات اللعبة المتعلقة بها هي علامات تجارية وحقوق نشر لشركة Century Games وتُستخدم هنا لأغراض المعلومات فقط. القيم تقديرات من المجتمع وقد تختلف عن اللعبة.",
-    ko: "WOS Tracker는 팬이 만든 비공식 도구이며 Century Games와 제휴, 승인 또는 연관되어 있지 않습니다. Whiteout Survival 및 관련 명칭, 아트워크, 아이콘, 게임 데이터는 Century Games의 상표 및 저작물이며 정보 제공 목적으로만 사용됩니다. 수치는 커뮤니티 추정치이며 실제 게임과 다를 수 있습니다.",
+    en: "WOS RST is an unofficial fan-made tool and is not affiliated with, endorsed by, or connected to Century Games. Whiteout Survival and all related names, artwork, icons and game data are trademarks and copyrights of Century Games and are used here for informational purposes only. Values are community estimates and may differ from the game.",
+    ar: "WOS RST أداة غير رسمية من صنع المعجبين وليست تابعة لشركة Century Games أو معتمدة منها أو مرتبطة بها. Whiteout Survival وجميع الأسماء والرسومات والأيقونات وبيانات اللعبة المتعلقة بها هي علامات تجارية وحقوق نشر لشركة Century Games وتُستخدم هنا لأغراض المعلومات فقط. القيم تقديرات من المجتمع وقد تختلف عن اللعبة.",
+    ko: "WOS RST는 팬이 만든 비공식 도구이며 Century Games와 제휴, 승인 또는 연관되어 있지 않습니다. Whiteout Survival 및 관련 명칭, 아트워크, 아이콘, 게임 데이터는 Century Games의 상표 및 저작물이며 정보 제공 목적으로만 사용됩니다. 수치는 커뮤니티 추정치이며 실제 게임과 다를 수 있습니다.",
   },
   research_center_title: { en: "Research Center", ar: "مركز الأبحاث", ko: "연구 센터" },
   rc_desc: { en: "Across all 102 research tracks, from current levels to max.", ar: "عبر جميع مسارات الأبحاث الـ102، من المستويات الحالية إلى الحد الأقصى.", ko: "102개 연구 트랙 전체, 현재 레벨부터 최대치까지." },
@@ -1675,7 +1675,7 @@ function applyNavLanguage() {
 function renderFooter() {
   const el = document.getElementById("siteFooter");
   if (!el) return;
-  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS Tracker</p>`;
+  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker</p>`;
 }
 function renderLanguageSwitcher() {
   const wrap = document.getElementById("langSwitcherWrap");
