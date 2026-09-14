@@ -7457,8 +7457,26 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const owned = await ensureMaterialOwnedCache(calcKey || "chief_gear");
   const rowsId = `${containerId}_rows`;
 
+  // Items that open into other items (Pet Chest -> Manual/Potion/Serum,
+  // Advanced Marks / Gems -> Common Marks) are the page's hidden trade
+  // rules. Turn what you own of them into whichever target is short, so
+  // the red "still needed" numbers count them - for every visitor, not
+  // just in the owner-only Pack cost block.
+  await ensureTradeRates();
+  const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden);
+  hiddenRates.__calcKey = calcKey || "chief_gear";
+  let effOwned = { ...owned };
+  function recomputeEffOwned() {
+    effOwned = { ...owned };
+    if (!hiddenRates.length) return;
+    const totalNeed = {};
+    groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { totalNeed[n] = (totalNeed[n] || 0) + (Number(q) || 0); }));
+    applyTrades(hiddenRates, totalNeed, owned, 1).trades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
+  }
+  recomputeEffOwned();
+
   function statusFor(name, needed) {
-    const haveQty = owned[name] || 0;
+    const haveQty = effOwned[name] || 0;
     const stillNeed = Math.max(0, needed - haveQty);
     const surplus = Math.max(0, haveQty - needed);
     const statusColor = needed === 0 ? "var(--muted)" : stillNeed > 0 ? "var(--danger)" : "var(--good)";
@@ -7520,15 +7538,18 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       // update just those spans in place rather than touching the input
       // elements (which would steal focus if the user tabs straight into
       // another field before this one's change event finishes).
-      groups.forEach((g) => {
-        const needed = Number((g.totals || {})[name]) || 0;
-        const { statusColor, statusText } = statusFor(name, needed);
-        const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(name)}|${CSS.escape(g.label || "")}"] span:last-child`);
+      // A chest / convertible item changes other materials' status too, so
+      // refresh every status span (never the inputs, which would steal focus).
+      recomputeEffOwned();
+      names.forEach((n) => groups.forEach((g) => {
+        const needed = Number((g.totals || {})[n]) || 0;
+        const { statusColor, statusText } = statusFor(n, needed);
+        const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(n)}|${CSS.escape(g.label || "")}"] span:last-child`);
         if (statusDiv) {
           statusDiv.style.color = statusColor;
           statusDiv.textContent = statusText;
         }
-      });
+      }));
       renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, owned, refreshPacks);
       renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
     });
@@ -8390,9 +8411,11 @@ function heroShardsNeeded(star, sub) {
 let RESEARCH_PAGE_COUNTED = { t11: true, t12: true };
 async function ensureResearchPageCountedData() {
   const saved = await loadCalcState("research_page_counted");
+  // Visitors can't switch this off (the toggle is owner-only), so their
+  // research pages always count toward the Dashboard.
   RESEARCH_PAGE_COUNTED = {
-    t11: saved && saved.t11 === false ? false : true,
-    t12: saved && saved.t12 === false ? false : true,
+    t11: IS_OWNER && saved && saved.t11 === false ? false : true,
+    t12: IS_OWNER && saved && saved.t12 === false ? false : true,
   };
 }
 let ISLAND_CATEGORIES_CACHE = null;
@@ -8624,7 +8647,7 @@ function computeExpertsResearchTroopStatsGlobal(calcTroop, useMax) {
 
 async function ensureVipData() {
   if (!VIP_ROWS_CACHE) {
-    let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${USER_ID}&select=id`);
+    let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
     if (!table) {
       VIP_ROWS_CACHE = [];
     } else {
@@ -8657,7 +8680,7 @@ async function ensureVipData() {
 }
 
 async function renderVipTierTable(target) {
-  let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${USER_ID}&select=id`);
+  let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
   if (!table) {
     target.innerHTML = `<div class="empty">${esc(t("vip_tier_not_found"))}</div>`;
     return;
@@ -9288,10 +9311,10 @@ async function renderT11HeliosPage() {
         <h2>${esc(t("t11_helios_title"))}</h2>
               </div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
+        ${IS_OWNER ? `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
           <input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
           <span class="meta" style="font-size:11px;">${esc(t("count_toward_dashboard"))}</span>
-        </label>
+        </label>` : ""}
         <button class="btn" id="t11MaxAllBtn">${esc(t("max_everything"))}</button>
       </div>
     </div>
@@ -9301,7 +9324,8 @@ async function renderT11HeliosPage() {
     <div id="t11Troops"></div>
   `;
 
-  document.getElementById("t11CountedToggle").addEventListener("change", async (e) => {
+  const t11Toggle = document.getElementById("t11CountedToggle");
+  if (t11Toggle) t11Toggle.addEventListener("change", async (e) => {
     RESEARCH_PAGE_COUNTED.t11 = e.target.checked;
     await saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
@@ -9528,7 +9552,10 @@ let PET_MARKS_STATE = null;
 async function ensurePetMarksState() {
   if (!PET_MARKS_STATE) {
     const saved = (await loadCalcState("pet_refine_marks")) || {};
-    PET_MARKS_STATE = { rates: { ...PET_MARKS_DEFAULT_RATES, ...(saved.rates || {}) }, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
+    // Visitors start from 0 marks per 1% on every stage and fill in their own
+    // rates; only the owner gets the pre-filled defaults.
+    const base = IS_OWNER ? PET_MARKS_DEFAULT_RATES : Object.fromEntries(Object.keys(PET_MARKS_DEFAULT_RATES).map((k) => [k, 0]));
+    PET_MARKS_STATE = { rates: { ...base, ...(saved.rates || {}) }, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
   }
   return PET_MARKS_STATE;
 }
@@ -11332,10 +11359,10 @@ async function renderT12ResearchPage() {
         <h2>${esc(t("t12_research_title"))}</h2>
               </div>
       <div style="display:flex; align-items:center; gap:14px;">
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
+        ${IS_OWNER ? `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
           <input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
           <span class="meta" style="font-size:11px;">${esc(t("count_toward_dashboard"))}</span>
-        </label>
+        </label>` : ""}
         <button class="btn" id="t12MaxAllBtn">${esc(t("max_everything"))}</button>
       </div>
     </div>
@@ -11345,7 +11372,8 @@ async function renderT12ResearchPage() {
     <div id="t12Troops"></div>
   `;
 
-  document.getElementById("t12CountedToggle").addEventListener("change", async (e) => {
+  const t12Toggle = document.getElementById("t12CountedToggle");
+  if (t12Toggle) t12Toggle.addEventListener("change", async (e) => {
     RESEARCH_PAGE_COUNTED.t12 = e.target.checked;
     await saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
@@ -12376,7 +12404,7 @@ async function renderAdminFlatLevels(body, cfg) {
 
 // ---- VIP editor (buff matrix: rows = tiers, columns = Attack/Defense/Lethality/Health) ----
 async function renderAdminVip(body) {
-  let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${USER_ID}&select=id`);
+  let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
   if (!table) {
     const [created] = await sb(`buff_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, name: "VIP Tier", sort_order: 0 }) });
     table = created;
@@ -14231,6 +14259,7 @@ function renderOwnerLoginUI() {
     document.getElementById("ownerLogoutBtn").addEventListener("click", async () => {
       await supabaseClient.auth.signOut();
       await ensureAuthSession();
+      PET_MARKS_STATE = null; // per-account state: reload for the new session
       renderOwnerLoginUI();
       if (TAB === "adminpage") { TAB = "overview"; document.querySelector('#tabs button[data-tab="overview"]').click(); }
     });
@@ -14279,6 +14308,7 @@ function renderOwnerLoginUI() {
           if (signUpErr) { errEl.textContent = signUpErr.message; return; }
         }
         await ensureAuthSession();
+        PET_MARKS_STATE = null; // per-account state: reload for the new session
         modal.style.display = "none";
         renderOwnerLoginUI();
         toast(IS_OWNER ? t("logged_in_owner") : "Logged in");
