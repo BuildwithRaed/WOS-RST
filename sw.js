@@ -1,8 +1,8 @@
 // WOS RST service worker: makes the site installable and keeps the app
 // shell (page + icons) available offline. Game data still comes live from
 // Supabase, so anything needing the database simply waits for a connection.
-const VERSION = "wosrst-v1";
-const SHELL = ["./", "./index.html", "./pwa/manifest.json"];
+const VERSION = "wosrst-v2";
+const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
