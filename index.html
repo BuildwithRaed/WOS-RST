@@ -1608,6 +1608,7 @@ const T = {
   marks_needed: { en: "Common Marks needed", ar: "العلامات العادية المطلوبة", ko: "필요한 일반 문장" },
   marks_before_adjust: { en: "before adjustment", ar: "قبل التعديل", ko: "보정 전" },
   marks_as_advanced: { en: "or Advanced Marks", ar: "أو علامات متقدمة", ko: "또는 고급 문장" },
+  marks_pack_gems: { en: "Count gems from packs toward marks (500 gems = 1 Common Mark)", ar: "احتسب جواهر الحزم ضمن العلامات (500 جوهرة = علامة عادية)", ko: "패키지 보석을 문장으로 계산 (500 보석 = 일반 문장 1)" },
   marks_per_pet: { en: "Per pet", ar: "لكل حيوان أليف", ko: "펫별" },
   marks_none: { en: "Every unlocked pet is already maxed.", ar: "كل الحيوانات الأليفة المفتوحة وصلت الحد الأقصى.", ko: "해금된 모든 펫이 이미 최대입니다." },
   pack_kind_title: { en: "Purchase type", ar: "نوع الشراء", ko: "구매 방식" },
@@ -5076,7 +5077,7 @@ const PACK_RESOURCE_NAMES = [
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Charm Chest",
-  "Fire Crystal", "FC Chest", "Pet Chest", "Common Marks", "Advanced Marks",
+  "Fire Crystal", "FC Chest", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
   "Troop Speedup 1m", "Troop Speedup 5m", "Troop Speedup 1h", "Troop Speedup 3h", "Troop Speedup 8h",
@@ -5127,7 +5128,7 @@ function packBundleContents(name) {
 // Resources a pack column can't be named directly - they're only reached
 // through item bundles (speedup items, XP items) - so they stay out of
 // the dropdowns. A column that already has one of these keeps it.
-const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)"]);
+const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Gems"]);
 function packResourceChoices(current) {
   return PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) || (current && n.toLowerCase() === String(current).toLowerCase()))
     .sort((a, b) => materialDisplayName(a).localeCompare(materialDisplayName(b), undefined, { numeric: true, sensitivity: "base" }));
@@ -5177,6 +5178,9 @@ function packEffectiveCols(table) {
   const out = {};
   (table.columns || []).forEach((c, ci) => {
     if (ci === link.priceCol) return;
+    // Gems ride along as a hidden resource; only pages that opt in (Pets
+    // Refine, when "count gems from packs" is on) actually use them.
+    if (/gem/i.test(String(c || ""))) { out[ci] = "Gems"; return; }
     const byName = packResourceByName(c);
     if (byName) out[ci] = byName;
   });
@@ -5435,7 +5439,18 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
     return offers.length ? { reset: lead.reset, resetDay: lead.resetDay, perCycle: 1, offers, ladder: true, optionPack: true } : null;
   }
 }
-function packGroupsFor(tables) {
+// Pages that may spend packs' gems, and whether they currently want to.
+function packGemsCountFor(calcKey) {
+  return calcKey === "pets_refine" && !!(PET_MARKS_STATE && PET_MARKS_STATE.packGems);
+}
+function packGroupsFor(tables, calcKey) {
+  const groups = [];
+  const stripGems = !packGemsCountFor(calcKey);
+  const out = packGroupsForRaw(tables);
+  if (stripGems) out.forEach((g) => g.offers.forEach((o) => { if (o.gives && o.gives.Gems != null) { const gv = { ...o.gives }; delete gv.Gems; o.gives = gv; } }));
+  return out.filter((g) => g.offers.some((o) => Object.keys(o.gives).length)).map((g) => ({ ...g, offers: g.offers.filter((o) => Object.keys(o.gives).length || g.ladder) }));
+}
+function packGroupsForRaw(tables) {
   const groups = [];
   const optionTables = tables.filter((tb) => packLinkFor(tb.id).option);
   packOptionLadderGroups(optionTables).forEach((g) => groups.push(g));
@@ -5852,9 +5867,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   await ensureTradeRates();
   const traded = PACK_COST_MODE === "still" ? tradeAdjustedStill(calcKey, needFull, owned, targetDays) : null;
   const base = PACK_COST_MODE === "full" ? needFull : (traded ? traded.still : needStill);
-  const packGroups = packGroupsFor(tables);
+  const packGroups = packGroupsFor(tables, calcKey);
   const supplied = new Set();
-  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
+  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => { if (r === "Gems" && !packGemsCountFor(calcKey)) return; Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n)); }));
   const viaTrades = packNeedViaTrades(calcKey, base, supplied, targetDays);
   const need = viaTrades.need;
 
@@ -6720,9 +6735,10 @@ async function budgetForPage(calcKey, targetDays) {
   await ensureTradeRates();
   const traded = tradeAdjustedStill(calcKey, needFull, owned, targetDays);
   if (traded) Object.keys(needStill).forEach((n) => { needStill[n] = traded.still[n] || 0; });
-  const packGroups = packGroupsFor(tables);
+  await ensurePetMarksState();
+  const packGroups = packGroupsFor(tables, calcKey);
   const supplied = new Set();
-  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n))));
+  tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => { if (r === "Gems" && !packGemsCountFor(calcKey)) return; Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n)); }));
   const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
   const need = viaTrades.need;
   const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
@@ -9480,6 +9496,13 @@ let PETS_STATE = null; // { "Cave Hyena": currentIndex, ... }
 const PET_MARKS_DEFAULT_RATES = { Grey: 8, Green: 25, Blue: 83, Purple: 58.82, Orange: 100, Red: 100 };
 const ADVANCED_MARK_VALUE = 8; // 1 Advanced Mark = 8 Common Marks
 let PET_MARKS_STATE = null;
+async function ensurePetMarksState() {
+  if (!PET_MARKS_STATE) {
+    const saved = (await loadCalcState("pet_refine_marks")) || {};
+    PET_MARKS_STATE = { rates: { ...PET_MARKS_DEFAULT_RATES, ...(saved.rates || {}) }, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
+  }
+  return PET_MARKS_STATE;
+}
 let PET_REFINE_CACHE = null; // { "Cave Hyena": [ {stage, infantry_lethality_pct, ...}, ... ] }
 let PET_REFINE_STATE = null; // { "Cave Hyena": stageIndex }
 
@@ -10581,10 +10604,7 @@ async function renderRefinePage() {
   // Marks formula: Common Marks per 1% of a stat, by the stage the value is
   // in. Refining is random, so this is the closest average we have - the
   // rates are editable and an overall +/- adjustment is applied on top.
-  if (!PET_MARKS_STATE) {
-    const saved = (await loadCalcState("pet_refine_marks")) || {};
-    PET_MARKS_STATE = { rates: { ...PET_MARKS_DEFAULT_RATES, ...(saved.rates || {}) }, adjust: Number(saved.adjust) || 0 };
-  }
+  await ensurePetMarksState();
 
   // Converts a stored 0-1 fraction to a clean 1-decimal percentage.
   // Plain `x * 100` on values like 0.581 gives 58.099999999999994 in JS
@@ -10727,7 +10747,10 @@ async function renderRefinePage() {
           </div>
         </div>
         <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
-          <h2 style="font-size:13px;">${esc(t("backpack_title"))}</h2>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <h2 style="font-size:13px; margin:0;">${esc(t("backpack_title"))}</h2>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /><span>${esc(t("marks_pack_gems"))}</span></label>
+          </div>
           <div id="refineMarksBar"></div>
         </div>
       </div>
@@ -10746,6 +10769,13 @@ async function renderRefinePage() {
       await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
       renderTotals();
     }));
+    const pg = totalsEl.querySelector("[data-markspackgems]");
+    if (pg) pg.addEventListener("change", async () => {
+      PET_MARKS_STATE.packGems = pg.checked;
+      PACK_PLAN_CACHE.clear();
+      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      renderTotals();
+    });
     totalsEl.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
       PET_MARKS_STATE.adjust = Math.max(-90, Math.min(300, (PET_MARKS_STATE.adjust || 0) + Number(b.dataset.marksadjust)));
       await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
