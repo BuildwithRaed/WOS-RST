@@ -604,6 +604,7 @@
           <button data-tab="researchcenter"><span class="ic">&#9670;</span>Research Center</button>
           <button data-tab="t11helios"><span class="ic">&#9670;</span>T11 Helios Research</button>
           <button data-tab="t12research"><span class="ic">&#9670;</span>T12 Research</button>
+          <button data-tab="rfclab"><span class="ic">&#9670;</span>Refined FC Lab</button>
         </div>
       </div>
       <div class="topnav-group" data-group="Cosmetics">
@@ -1125,6 +1126,7 @@ const NAV_PAGE_LABELS = {
   "researchcenter": { en: "Research Center", ar: "مركز الأبحاث", ko: "연구 센터" },
   "t11helios": { en: "T11 Helios Research", ar: "أبحاث T11 هيليوس", ko: "T11 헬리오스 연구" },
   "t12research": { en: "T12 Research", ar: "أبحاث T12", ko: "T12 연구" },
+  "rfclab": { en: "Refined FC Lab", ar: "مختبر بلورة النار المكرّرة", ko: "정제 화염 결정 연구소" },
   "skingallery": { en: "Skin Gallery", ar: "معرض المظاهر", ko: "스킨 갤러리" },
   "islandgallery": { en: "Islands", ar: "الجزر", ko: "아일랜드" },
   "extrabonus:Vip Tier": { en: "VIP", ar: "VIP", ko: "VIP" },
@@ -1486,6 +1488,43 @@ const T = {
   pack_presets_title: { en: "Adds the weekly benefit cards, weekly/monthly cards and calendar packs (Troops Training, Tech Storm, Fire Crystal Building, Hall of Chiefs, Mix & Match, Custom Pet Chest) as ready-made tables. Existing ones are skipped.", ar: "يضيف بطاقات المزايا الأسبوعية وبطاقات الأسبوع/الشهر وحزم التقويم كجداول جاهزة. يتم تخطي الموجود منها.", ko: "주간 혜택 카드, 주간/월간 카드, 캘린더 패키지를 미리 만들어진 표로 추가합니다. 이미 있는 것은 건너뜁니다." },
   pack_presets_added: { en: "tables added", ar: "جداول أُضيفت", ko: "개 표 추가됨" },
   pack_presets_none: { en: "All game pack tables are already here.", ar: "كل جداول حزم اللعبة موجودة بالفعل.", ko: "게임 패키지 표가 이미 모두 있습니다." },
+  rfc_title: { en: "Refined FC Lab", ar: "مختبر بلورة النار المكرّرة", ko: "정제 화염 결정 연구소" },
+  rfc_desc: { en: "Turn Fire Crystal into Refined Fire Crystal. Enter your weekly FC budget and how much Refined FC you need; the calculator finds the best weekly schedule.", ar: "حوّل بلورة النار إلى بلورة نار مكرّرة. أدخل ميزانيتك الأسبوعية وكمية البلورة المكرّرة المطلوبة؛ تحسب الحاسبة أفضل جدول أسبوعي.", ko: "화염 결정을 정제 화염 결정으로 바꿉니다. 주간 FC 예산과 필요한 정제 결정 수를 입력하면 최적의 주간 일정을 찾습니다." },
+  rfc_inputs: { en: "Your numbers", ar: "أرقامك", ko: "내 수치" },
+  rfc_budget: { en: "Fire Crystal you can spend per week", ar: "بلورة النار التي يمكنك إنفاقها أسبوعيًا", ko: "주당 사용 가능한 화염 결정" },
+  rfc_need: { en: "Refined FC needed", ar: "البلورة المكرّرة المطلوبة", ko: "필요한 정제 결정" },
+  rfc_from_pages: { en: "from T12/T11:", ar: "من T12/T11:", ko: "T12/T11 기준:" },
+  rfc_owned: { en: "Refined FC you own", ar: "البلورة المكرّرة التي تملكها", ko: "보유 정제 결정" },
+  rfc_still_needed: { en: "Still needed", ar: "المتبقي", ko: "부족분" },
+  rfc_best_title: { en: "Best plan", ar: "أفضل خطة", ko: "최적 계획" },
+  rfc_best_in_budget: { en: "Most Refined FC per week within", ar: "أكبر كمية مكرّرة أسبوعيًا ضمن", ko: "다음 예산 내 주당 최대 정제 결정:" },
+  rfc_rfc_per_week: { en: "Refined FC / week (average)", ar: "بلورة مكرّرة / أسبوع (متوسط)", ko: "정제 결정 / 주 (평균)" },
+  rfc_week: { en: "week", ar: "أسبوع", ko: "주" },
+  rfc_weeks: { en: "weeks", ar: "أسبوع", ko: "주" },
+  rfc_weeks_to_target: { en: "weeks to reach what you need", ar: "أسبوعًا للوصول إلى ما تحتاجه", ko: "주 후 목표 도달" },
+  rfc_enter_budget: { en: "Enter a weekly Fire Crystal budget to get the best schedule for it.", ar: "أدخل ميزانية بلورة النار الأسبوعية للحصول على أفضل جدول.", ko: "주간 화염 결정 예산을 입력하면 최적 일정을 보여줍니다." },
+  rfc_best_value: { en: "Best value overall (most Refined FC per Fire Crystal)", ar: "أفضل قيمة إجمالًا (أكبر كمية مكرّرة لكل بلورة نار)", ko: "전체 최고 효율 (화염 결정당 정제 결정 최대)" },
+  rfc_rules: { en: "Rules used: each tier allows 20 attempts a week; the next tier unlocks after 20 attempts of the previous one; the first attempt of each day is half price (one per day). Returns are averages over many attempts.", ar: "القواعد: كل مستوى يسمح بـ20 محاولة أسبوعيًا؛ يُفتح المستوى التالي بعد 20 محاولة من السابق؛ أول محاولة كل يوم بنصف السعر (واحدة يوميًا). العوائد متوسطات على محاولات كثيرة.", ko: "적용 규칙: 각 단계 주 20회; 이전 단계 20회 후 다음 단계 해금; 매일 첫 시도는 반값(하루 1회). 보상은 다수 시도의 평균입니다." },
+  rfc_tiers_title: { en: "Lab tiers", ar: "مستويات المختبر", ko: "연구소 단계" },
+  rfc_tier: { en: "Tier", ar: "المستوى", ko: "단계" },
+  rfc_cost: { en: "Cost", ar: "التكلفة", ko: "비용" },
+  rfc_returns: { en: "Refined FC returned (chance)", ar: "المكرّرة المستلمة (الاحتمال)", ko: "획득 정제 결정 (확률)" },
+  rfc_expected: { en: "Average", ar: "المتوسط", ko: "평균" },
+  rfc_per_fc: { en: "RFC per FC", ar: "مكرّرة لكل بلورة", ko: "FC당 RFC" },
+  rfc_max_weekly: { en: "Max / week (20×)", ar: "الأقصى / أسبوع (20×)", ko: "주 최대 (20회)" },
+  rfc_strategies_title: { en: "Weekly schedules by top tier", ar: "الجداول الأسبوعية حسب أعلى مستوى", ko: "최고 단계별 주간 일정" },
+  rfc_strategies_desc: { en: "Minimal = unlock on day 1, then one discounted attempt of the top tier per day. Maximum = 20 attempts of every tier.", ar: "الأدنى = الفتح في اليوم الأول ثم محاولة مخفّضة واحدة يوميًا من أعلى مستوى. الأقصى = 20 محاولة من كل مستوى.", ko: "최소 = 1일차 해금 후 최고 단계를 매일 할인 1회. 최대 = 모든 단계 20회." },
+  rfc_minimal: { en: "Minimal", ar: "الأدنى", ko: "최소" },
+  rfc_maximum: { en: "Maximum", ar: "الأقصى", ko: "최대" },
+  rfc_schedule: { en: "Schedule", ar: "الجدول", ko: "일정" },
+  rfc_weekly_cost: { en: "FC / week", ar: "بلورة / أسبوع", ko: "FC / 주" },
+  rfc_weekly_rfc: { en: "Refined FC / week", ar: "مكرّرة / أسبوع", ko: "정제 결정 / 주" },
+  rfc_to_target: { en: "To reach need", ar: "للوصول للمطلوب", ko: "목표까지" },
+  rfc_day1: { en: "day 1", ar: "اليوم 1", ko: "1일차" },
+  rfc_one_per_day: { en: "1× per day, half price", ar: "1× يوميًا بنصف السعر", ko: "매일 1회 반값" },
+  rfc_extra_day1: { en: "more on day 1", ar: "إضافية في اليوم 1", ko: "1일차 추가" },
+  pack_coloptions: { en: "Each column is an option (pick one per tier)", ar: "كل عمود خيار (اختر واحدًا لكل مستوى)", ko: "각 열이 옵션 (단계마다 하나 선택)" },
+  pack_coloptions_desc: { en: "For Mix & Match style packs: the rows are the price tiers and each column is one of the rewards you can pick at that tier. Buying a tier gives one column's amount, not all of them.", ar: "لحزم من نوع Mix & Match: الصفوف هي مستويات السعر وكل عمود هو إحدى المكافآت التي يمكنك اختيارها في ذلك المستوى. شراء المستوى يمنح كمية عمود واحد فقط.", ko: "믹스 앤 매치형 패키지용: 행은 가격 단계, 각 열은 그 단계에서 고를 수 있는 보상 하나입니다. 단계를 사면 한 열의 수량만 받습니다." },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -1548,7 +1587,7 @@ function setLanguage(lang) {
 const KNOWN_TABS = new Set([
   "overview", "budgets", "heroes", "stats", "backpack", "packs", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
-  "t11helios", "researchcenter", "petsdata", "refinepage", "expertspage",
+  "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
   "collectiongallerypage", "extrabonusheroes",
 ]);
@@ -1709,6 +1748,7 @@ async function render() {
     else if (TAB === "islandgallery") await renderIslandGallery();
     else if (TAB === "facilitypage") await renderFacilityPage();
     else if (TAB === "t12research") await renderT12ResearchPage();
+    else if (TAB === "rfclab") await renderRfcLabPage();
     else if (TAB === "t11helios") await renderT11HeliosPage();
     else if (TAB === "researchcenter") await renderResearchCenterPage();
     else if (TAB === "petsdata") await renderPetsDataPage();
@@ -3524,10 +3564,7 @@ async function renderPacksPage() {
         <h2>${esc(t("packs_title"))}</h2>
         <p class="desc">${esc(t("packs_desc"))}</p>
       </div>
-      <span style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn ghost" id="packsAddPresets" title="${esc(t("pack_presets_title"))}">${esc(t("pack_presets_button"))}</button>
-        <button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>
-      </span>
+      <button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>
     </div>
     <div id="packsList"></div>
   `;
@@ -3539,6 +3576,13 @@ async function renderPacksPage() {
   ]);
   let tables = tablesLoaded;
   PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
+  // First visit: the in-game pack tables are created automatically (once
+  // per account, so deleting one later doesn't bring it back).
+  if (IS_OWNER && !(await loadCalcState("pack_presets_seeded"))) {
+    await saveCalcState("pack_presets_seeded", { at: Date.now() });
+    const added = await packAddPresets(tables);
+    if (added) { toast(`${added} ${t("pack_presets_added")}`); renderPacksPage(); return; }
+  }
 
   function blankRow(colCount) {
     return { cells: Array(colCount).fill(""), is_total: false };
@@ -3816,6 +3860,11 @@ async function renderPacksPage() {
         </label>
         <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_choice_desc"))}</p>
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
+          <input type="checkbox" data-packcoloptions ${link.colOptions ? "checked" : ""} style="flex-shrink:0;" />
+          <span>${esc(t("pack_coloptions"))}</span>
+        </label>
+        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_coloptions_desc"))}</p>
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
           <input type="checkbox" data-packoption ${link.option ? "checked" : ""} style="flex-shrink:0;" />
           <span>${esc(t("pack_option"))}</span>
         </label>
@@ -3914,6 +3963,14 @@ async function renderPacksPage() {
       if (seqCb) seqCb.addEventListener("change", async () => {
         current().sequential = seqCb.checked;
         if (seqCb.checked && choiceCb) { choiceCb.checked = false; current().choice = false; }
+        syncResetUi();
+        await savePackLinks();
+      });
+      const colOptCb = box.querySelector("[data-packcoloptions]");
+      if (colOptCb) colOptCb.addEventListener("change", async () => {
+        const l = current();
+        l.colOptions = colOptCb.checked;
+        if (colOptCb.checked) { l.sequential = true; if (seqCb) seqCb.checked = true; l.choice = false; if (choiceCb) choiceCb.checked = false; }
         syncResetUi();
         await savePackLinks();
       });
@@ -4195,14 +4252,6 @@ async function renderPacksPage() {
     });
   }
 
-  document.getElementById("packsAddPresets").addEventListener("click", async () => {
-    const btn = document.getElementById("packsAddPresets");
-    btn.disabled = true;
-    const added = await packAddPresets(tables);
-    btn.disabled = false;
-    toast(added ? `${added} ${t("pack_presets_added")}` : t("pack_presets_none"));
-    if (added) renderPacksPage();
-  });
   document.getElementById("packsAddTable").addEventListener("click", async () => {
     tables.unshift({
       id: `new-${Date.now()}`,
@@ -5025,6 +5074,9 @@ function packLinkFor(tableId) {
     // This table is one OPTION of the pack named in `group`: all option
     // tables in that group are one pack, and each tier picks one of them.
     option: l.option === true,
+    // Each COLUMN of this table is an option: a purchase of a tier takes
+    // one column's amount (Mix & Match style).
+    colOptions: l.colOptions === true,
     // Optional group ("main name") several tables sit under on the Packs page.
     group: typeof l.group === "string" ? l.group.trim() : "",
     // Anchor date (yyyy-mm-dd) the pack next comes on; null = not pinned.
@@ -5155,11 +5207,42 @@ function packOptionLadderGroups(optionTables) {
     const perTable = tbs.map((tb) => packOffersFor(tb, true));
     const tiers = Math.min(...perTable.map((o) => o.length));
     if (!tiers) return;
-    const tags = tbs.map(packOptionTag);
+    const lastMax = Math.max(0, ...links.map((l) => Number((l.rowMax || {})[tiers - 1]) || 0));
+    const g = packBuildOptionLadder(title, lead, perTable, tbs.map(packOptionTag), lastMax);
+    if (g) groups.push(g);
+  });
+  return groups;
+}
+// One table whose COLUMNS are the options: each row is a tier, and a
+// purchase of that tier takes the amount from one column only.
+function packColumnOptionGroup(tb) {
+  const link = packLinkFor(tb.id);
+  const cols = packEffectiveCols(tb);
+  const optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== link.priceCol && !packIsNonResourceColumn(tb.columns[ci]));
+  const rows = (tb.rows || []).map((r) => r.cells || []).filter((cells) => packParseNum(cells[link.priceCol]) > 0);
+  if (!optCols.length || !rows.length) return null;
+  const perTable = optCols.map((ci) => rows.map((cells, ri) => {
+    const price = packParseNum(cells[link.priceCol]);
+    const gives = {};
+    const qty = packParseNum(cells[ci]);
+    if (cols[ci] && qty > 0) { const contents = packBundleContents(cols[ci]); Object.keys(contents).forEach((n) => { gives[n] = (gives[n] || 0) + qty * contents[n]; }); }
+    return { price, gives, label: packFmtMoney(price, link.currency), row: ri };
+  }));
+  const tags = optCols.map((ci) => (cols[ci] ? materialDisplayName(cols[ci]) : String(tb.columns[ci] || "")).split(" ")[0].slice(0, 6));
+  const title = link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (link.group || tb.title || t("packs_title"));
+  const lastMax = Number((link.rowMax || {})[rows.length - 1]) || 0;
+  return packBuildOptionLadder(title, link, perTable, tags, lastMax);
+}
+// Shared builder: perTable[option][tier] = { price, gives }, one group of
+// option sequences (see packOptionLadderGroups).
+function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
+  {
+    const tiers = Math.min(...perTable.map((o) => o.length));
+    if (!tiers) return null;
     // Options per tier: { price, gives, tag }.
     const tierOpts = [];
     for (let k = 0; k < tiers; k++) tierOpts.push(perTable.map((offs, ti) => ({ price: perTable[0][k].price, gives: offs[k].gives, tag: tags[ti], ti })));
-    const n = tbs.length;
+    const n = perTable.length;
     const full = Math.pow(n, tiers);
     const seqs = [];
     if (full * 1.5 <= 3000) {
@@ -5199,11 +5282,9 @@ function packOptionLadderGroups(optionTables) {
     seqs.forEach((seq) => build(seq, null));
     // Last tier repeatable (row Max on the last row of any option table):
     // full sequences + k more of one option.
-    const lastMax = Math.max(0, ...links.map((l) => Number((l.rowMax || {})[tiers - 1]) || 0));
     if (lastMax > 1) seqs.filter((sq) => sq.length === tiers).forEach((sq) => { for (let j = 0; j < n; j++) for (let k = 1; k < lastMax; k++) build(sq, { k, j }); });
-    if (offers.length) groups.push({ reset: lead.reset, resetDay: lead.resetDay, perCycle: 1, offers, ladder: true, optionPack: true });
-  });
-  return groups;
+    return offers.length ? { reset: lead.reset, resetDay: lead.resetDay, perCycle: 1, offers, ladder: true, optionPack: true } : null;
+  }
 }
 function packGroupsFor(tables) {
   const groups = [];
@@ -5212,6 +5293,7 @@ function packGroupsFor(tables) {
   tables.forEach((tb) => {
     const link = packLinkFor(tb.id);
     if (link.option) return; // handled above as part of its option pack
+    if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) groups.push(g); return; }
     const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")), currency: link.currency }));
     if (!offers.length || !offers.some((o) => Object.keys(o.gives).length)) return;
     const rowMaxOf = (o) => { const m = Number((link.rowMax || {})[o.row]); return Number.isInteger(m) && m > 0 ? m : null; };
@@ -5775,12 +5857,14 @@ const PACK_PRESET_TABLES = (() => {
     { title: "Tech Storm", group: cal, columns: ["$", "Speedup 1h", "Speedup 5m", "Gems"], rows: ladder5([[20, 180, 2500], [40, 360, 5000], [80, 720, 10000], [200, 1800, 25000], [400, 3600, 50000]]), link: { ...W, sequential: true, pages: ["experts", "experts_research"] } },
     { title: "Fire Crystal Building", group: cal, columns: ["$", "Fire Crystal", "Speedups", "Gems"], rows: ladder5([[60, 35, 2500], [120, 70, 5000], [240, 140, 10000], [600, 350, 25000], [1200, 700, 50000]]), link: { ...W, sequential: true, pages: [] } },
     { title: "Hall of Chiefs", group: cal, columns: ["$", "Speedup 1h", "Speedup 5m", "Gems"], rows: ladder5([[40, 135, 2500], [80, 270, 5000], [160, 540, 10000], [400, 1350, 25000], [800, 2700, 50000]]), link: { ...W, sequential: true, pages: ["experts", "experts_research"] } },
-    // ---- Mix & Match: one ladder, pick one option per tier ----
-    ...[["Fire Crystal", [30, 60, 120, 300, 600]], ["1Hr Construction Speeds", [22, 44, 88, 220, 440]], ["1Hr Research Speeds", [22, 44, 88, 220, 440]], ["1Hr Troops Speeds", [22, 44, 88, 220, 440]], ["Design Plan", [24, 48, 96, 240, 480]], ["Chief Gear Chest", [12, 24, 48, 120, 240]], ["Steel", [25000, 50000, 100000, 250000, 500000]]]
-      .map(([col, vals]) => ({ title: "Mix & Match", group: "Mix & Match", columns: ["$", col], rows: ladder5(vals.map((v) => [v])), link: { ...W, sequential: true, option: true, pages: col === "Design Plan" || col === "Chief Gear Chest" ? ["chief_gear"] : col === "Steel" ? ["research_center", "t11_helios", "t12_research"] : [] } })),
-    // ---- Custom Pet Chest: one ladder, pick one option per tier ----
-    ...[["Food", [5000, 10000, 20000, 50000, 100000]], ["Pet Chest", [6, 12, 24, 60, 120]], ["Common Marks", [16, 32, 64, 160, 320]], ["Advanced Marks", [2, 4, 8, 20, 40]]]
-      .map(([col, vals]) => ({ title: "Custom Pet Chest", group: "Custom Pet Chest", columns: ["$", col], rows: ladder5(vals.map((v) => [v])), link: { ...W, sequential: true, option: true, pages: ["pets"] } })),
+    // ---- Mix & Match: one ladder, each column is an option (pick one per tier) ----
+    { title: "Mix & Match", group: cal, columns: ["$", "Fire Crystal", "1Hr Construction Speeds", "1Hr Research Speeds", "1Hr Troops Speeds", "Design Plan", "Chief Gear Chest", "Steel"],
+      rows: ladder5([[30, 22, 22, 22, 24, 12, 25000], [60, 44, 44, 44, 48, 24, 50000], [120, 88, 88, 88, 96, 48, 100000], [300, 220, 220, 220, 240, 120, 250000], [600, 440, 440, 440, 480, 240, 500000]]),
+      link: { ...W, sequential: true, colOptions: true, pages: ["chief_gear", "research_center", "t11_helios", "t12_research"] } },
+    // ---- Custom Pet Chest: one ladder, each column is an option ----
+    { title: "Custom Pet Chest", group: cal, columns: ["$", "Food", "Pet Chest", "Common Marks", "Advanced Marks"],
+      rows: ladder5([[5000, 6, 16, 2], [10000, 12, 32, 4], [20000, 24, 64, 8], [50000, 60, 160, 20], [100000, 120, 320, 40]]),
+      link: { ...W, sequential: true, colOptions: true, pages: ["pets"] } },
   ];
 })();
 // Creates the preset tables that don't exist yet. Returns how many were added.
@@ -5795,12 +5879,167 @@ async function packAddPresets(existingTables) {
     let saved;
     try { [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) }); }
     catch (err) { toast("Couldn't add preset tables", true); break; }
-    PACK_LINKS[String(saved.id)] = { pages: p.link.pages || [], priceCol: 0, cols: {}, sequential: !!p.link.sequential, option: !!p.link.option, choice: false, reset: p.link.reset, group: p.group, currency: "USD", buys: 1 };
+    PACK_LINKS[String(saved.id)] = { pages: p.link.pages || [], priceCol: 0, cols: {}, sequential: !!p.link.sequential, option: !!p.link.option, colOptions: !!p.link.colOptions, choice: false, reset: p.link.reset, group: p.group, currency: "USD", buys: 1 };
     have.add(key); added++;
   }
   await savePackLinks();
   PACK_TABLES_CACHE = null;
   return added;
+}
+
+
+// ============================================================
+// REFINED FC LAB
+// Trades Fire Crystal for Refined Fire Crystal in five tiers. Rules (from
+// the in-game lab):
+//  - each attempt costs FC and returns a random number of Refined FC
+//  - at most 20 attempts per tier per week
+//  - tier k+1 unlocks after 20 attempts of tier k that week
+//  - the first attempt of each day is half price (one per day, any tier)
+// ============================================================
+const RFC_LAB_TIERS = [
+  { tier: 1, cost: 20, returns: [[1, 0.65], [2, 0.25], [3, 0.10]] },
+  { tier: 2, cost: 50, returns: [[2, 0.85], [3, 0.15]] },
+  { tier: 3, cost: 100, returns: [[3, 0.85], [4, 0.125], [5, 0.02], [6, 0.005]] },
+  { tier: 4, cost: 130, returns: [[3, 0.75], [4, 0.15], [5, 0.05], [6, 0.03], [7, 0.01], [8, 0.005], [9, 0.005]] },
+  { tier: 5, cost: 160, returns: [[3, 0.70], [4, 0.12], [5, 0.09], [6, 0.04], [7, 0.015], [8, 0.01], [9, 0.01], [10, 0.005], [11, 0.005], [12, 0.005]] },
+];
+const RFC_LAB_MAX_PER_TIER = 20;
+const RFC_LAB_DAYS = 7;
+function rfcExpected(t) { return t.returns.reduce((s, [n, p]) => s + n * p, 0); }
+// Cost of `n` attempts of tier `k` in one week when the lower tiers were
+// completed (20 each) on day 1. The daily half-price attempt: tier 1 gets
+// it every day it's used; a higher tier only from day 2 on (day 1's
+// discount went to tier 1).
+function rfcTierCost(k, n) {
+  const t = RFC_LAB_TIERS[k - 1];
+  if (n <= 0) return 0;
+  const discounted = k === 1 ? Math.min(n, RFC_LAB_DAYS) : Math.min(n, RFC_LAB_DAYS - 1);
+  return discounted * (t.cost / 2) + (n - discounted) * t.cost;
+}
+// A weekly plan: full 20 attempts on tiers 1..top-1 (unlocking), then `n`
+// attempts of the top tier. Returns cost, expected Refined FC and a
+// description like the sheet's ("20 T1/T2 day 1 + 6 T3").
+function rfcPlan(top, n) {
+  let cost = 0, rfc = 0;
+  // Lower tiers are all done on day 1 to unlock the next: tier 1 gets that
+  // day's one discount, the others pay full price.
+  for (let k = 1; k < top; k++) {
+    const c = RFC_LAB_TIERS[k - 1].cost;
+    cost += k === 1 ? c / 2 + (RFC_LAB_MAX_PER_TIER - 1) * c : RFC_LAB_MAX_PER_TIER * c;
+    rfc += RFC_LAB_MAX_PER_TIER * rfcExpected(RFC_LAB_TIERS[k - 1]);
+  }
+  cost += rfcTierCost(top, n); rfc += n * rfcExpected(RFC_LAB_TIERS[top - 1]);
+  const lower = top > 1 ? `20 ${Array.from({ length: top - 1 }, (_, i) => "T" + (i + 1)).join("/")} ${t("rfc_day1")} + ` : "";
+  const perDay = top === 1 ? Math.min(n, RFC_LAB_DAYS) : Math.min(n, RFC_LAB_DAYS - 1);
+  const extra = n - perDay;
+  const topText = extra > 0 ? `${n} T${top} (${perDay} ${t("rfc_one_per_day")} + ${extra} ${t("rfc_extra_day1")})` : `${n} T${top} (${t("rfc_one_per_day")})`;
+  return { top, n, cost, rfc, perFc: cost ? rfc / cost : 0, text: lower + topText };
+}
+// Every sensible weekly plan: each top tier with 1..20 attempts.
+function rfcAllPlans() {
+  const out = [];
+  for (let top = 1; top <= RFC_LAB_TIERS.length; top++) for (let n = 1; n <= RFC_LAB_MAX_PER_TIER; n++) out.push(rfcPlan(top, n));
+  return out;
+}
+let RFC_LAB_STATE = null; // { budget, need, owned }
+async function renderRfcLabPage() {
+  if (!RFC_LAB_STATE) {
+    const saved = (await loadCalcState("rfc_lab")) || {};
+    RFC_LAB_STATE = { budget: Number(saved.budget) || 0, need: Number(saved.need) || 0, owned: Number(saved.owned) || 0 };
+  }
+  // Default the need from the T12/T11 pages' last totals when nothing typed.
+  const snap = await ensureBudgetNeedsSnapshot();
+  let pageNeed = 0;
+  ["t12_research", "t11_helios"].forEach((k) => { (snap[k]?.groups || []).forEach((g) => { pageNeed += Number((g.totals || {})["Refined FC"]) || 0; }); });
+  const st = RFC_LAB_STATE;
+  const fmt = (v, d = 0) => Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
+  const plans = rfcAllPlans();
+  const bestByTier = RFC_LAB_TIERS.map((_, i) => ({ min: rfcPlan(i + 1, i === 0 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1), max: rfcPlan(i + 1, RFC_LAB_MAX_PER_TIER) }));
+  const need = Math.max(0, (st.need || pageNeed) - (st.owned || 0));
+  const inBudget = st.budget > 0 ? plans.filter((p) => p.cost <= st.budget).sort((a, b) => b.rfc - a.rfc || a.cost - b.cost)[0] : null;
+  const bestValue = plans.slice().sort((a, b) => b.perFc - a.perFc)[0];
+  const weeksFor = (p) => need > 0 && p.rfc > 0 ? Math.ceil(need / p.rfc) : null;
+  const tierTable = `
+    <div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
+      <thead><tr>
+        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_tier"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_cost"))}</th>
+        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_returns"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_expected"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_per_fc"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_max_weekly"))}</th>
+      </tr></thead>
+      <tbody>${RFC_LAB_TIERS.map((tr) => { const e = rfcExpected(tr); return `<tr>
+        <td style="padding:5px 6px; font-weight:700;">T${tr.tier}</td>
+        <td style="padding:5px 6px; text-align:center;">${tr.cost} FC</td>
+        <td style="padding:5px 6px;">${tr.returns.map(([n, p]) => `<span style="white-space:nowrap;">${n} <span class="meta">(${(p * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%)</span></span>`).join(" &middot; ")}</td>
+        <td style="padding:5px 6px; text-align:center; font-weight:600;">${fmt(e, 3)}</td>
+        <td style="padding:5px 6px; text-align:center;">${fmt(e / tr.cost, 4)}</td>
+        <td style="padding:5px 6px; text-align:center;">${fmt(e * RFC_LAB_MAX_PER_TIER, 1)}</td>
+      </tr>`; }).join("")}</tbody></table></div>`;
+  const planRow = (label, p) => `<tr>
+      <td style="padding:5px 6px; white-space:nowrap; font-weight:600;">${esc(label)}</td>
+      <td style="padding:5px 6px; font-size:10.5px;" class="meta">${esc(p.text)}</td>
+      <td style="padding:5px 6px; text-align:center;">${fmt(p.cost)}</td>
+      <td style="padding:5px 6px; text-align:center; font-weight:600; color:var(--good);">${fmt(p.rfc, 1)}</td>
+      <td style="padding:5px 6px; text-align:center;">${fmt(p.perFc, 4)}</td>
+      <td style="padding:5px 6px; text-align:center;">${weeksFor(p) != null ? `${weeksFor(p)} ${t("rfc_weeks")}` : "—"}</td>
+    </tr>`;
+  const stratTable = `
+    <div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
+      <thead><tr>
+        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);"></th>
+        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_schedule"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_weekly_cost"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_weekly_rfc"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_per_fc"))}</th>
+        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_to_target"))}</th>
+      </tr></thead>
+      <tbody>${bestByTier.map((b, i) => planRow(`${t("rfc_minimal")} T${i + 1}`, b.min) + planRow(`${t("rfc_maximum")} T${i + 1}`, b.max)).join("")}</tbody></table></div>`;
+  content.innerHTML = `
+    <div class="page-head"><div><h2>${esc(t("rfc_title"))}</h2><p class="desc">${esc(t("rfc_desc"))}</p></div></div>
+    <div class="panel" style="margin-bottom:16px;">
+      <h2>${esc(t("rfc_inputs"))}</h2>
+      <div style="display:flex; gap:14px 24px; flex-wrap:wrap; align-items:flex-end;">
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_budget"))}</span><input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_need"))}${!st.need && pageNeed ? ` <span style="color:var(--ice);">(${esc(t("rfc_from_pages"))} ${fmt(pageNeed)})</span>` : ""}</span><input type="text" inputmode="numeric" data-rfc="need" value="${st.need || ""}" placeholder="${fmt(pageNeed)}" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_owned"))}</span><input type="text" inputmode="numeric" data-rfc="owned" value="${st.owned || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
+        <div class="metric" style="padding:8px 12px; min-width:120px;"><div class="label" style="font-size:9px;">${esc(t("rfc_still_needed"))}</div><div class="val" style="font-size:16px; color:${need > 0 ? "var(--danger)" : "var(--good)"};">${fmt(need)}</div></div>
+      </div>
+    </div>
+    <div class="grid g2" style="align-items:start; gap:16px;">
+      <div class="panel">
+        <h2>${esc(t("rfc_best_title"))}</h2>
+        ${inBudget ? `
+          <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("rfc_best_in_budget"))} ${fmt(st.budget)} FC</div>
+          <div style="font-size:22px; font-weight:700; color:var(--good);">${fmt(inBudget.rfc, 1)} <span class="meta" style="font-size:12px; font-weight:400;">${esc(t("rfc_rfc_per_week"))}</span></div>
+          <div style="font-size:12px; margin:4px 0;">${esc(inBudget.text)}</div>
+          <div class="meta" style="font-size:11px;">${fmt(inBudget.cost)} FC / ${esc(t("rfc_week"))} · ${fmt(inBudget.perFc, 4)} ${esc(t("rfc_per_fc"))}${weeksFor(inBudget) != null ? ` · ${weeksFor(inBudget)} ${esc(t("rfc_weeks_to_target"))}` : ""}</div>
+        ` : `<div class="meta" style="font-size:11px;">${esc(t("rfc_enter_budget"))}</div>`}
+        <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
+          <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("rfc_best_value"))}</div>
+          <div style="font-size:12px;">${esc(bestValue.text)}</div>
+          <div class="meta" style="font-size:11px;">${fmt(bestValue.cost)} FC → ${fmt(bestValue.rfc, 1)} RFC · ${fmt(bestValue.perFc, 4)} ${esc(t("rfc_per_fc"))}</div>
+        </div>
+        <p class="desc" style="font-size:10.5px; margin-top:10px;">${esc(t("rfc_rules"))}</p>
+      </div>
+      <div class="panel">
+        <h2>${esc(t("rfc_tiers_title"))}</h2>
+        ${tierTable}
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <h2>${esc(t("rfc_strategies_title"))}</h2>
+      <p class="desc">${esc(t("rfc_strategies_desc"))}</p>
+      ${stratTable}
+    </div>`;
+  content.querySelectorAll("[data-rfc]").forEach((inp) => inp.addEventListener("change", async () => {
+    const v = Math.max(0, Number(String(inp.value).replace(/[^0-9.]/g, "")) || 0);
+    st[inp.dataset.rfc] = v;
+    await saveCalcState("rfc_lab", st);
+    renderRfcLabPage();
+  }));
 }
 
 // ============================================================
