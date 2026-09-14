@@ -3049,18 +3049,15 @@ async function renderGearLevelingGroup(target) {
   });
 
   const tracksEl = document.getElementById("heroGearTracks");
-  const HERO_GEAR_ICONS = {
-    Goggles: "icons/hero-gear-goggles.webp",
-    Gloves: "icons/hero-gear-gloves.webp",
-    Belt: "icons/hero-gear-belt.webp",
-    Boots: "icons/hero-gear-boots.webp",
-  };
+  // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
+  const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
+  const heroGearIcon = (troop, piece) => `icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
   const pieceCard = (troop, piece) => `
     <div class="panel">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
         <div style="width:60px;"></div>
         <div style="text-align:center;">
-          <img src="${HERO_GEAR_ICONS[piece]}" alt="${esc(pieceDisplayName(piece))}" style="width:56px; height:56px; object-fit:contain; margin-bottom:6px;" loading="lazy" />
+          <img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" style="width:56px; height:56px; object-fit:contain; margin-bottom:6px;" loading="lazy" />
           <div class="name" style="font-size:15px; font-weight:700;">${esc(pieceDisplayName(piece))}</div>
         </div>
         <button class="btn ghost small" data-heropiecemax="${esc(troop)}|${esc(piece)}" style="width:60px;">${esc(t("max_button"))}</button>
