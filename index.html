@@ -1522,10 +1522,19 @@ const T = {
   rfc_day: { en: "day", ar: "اليوم", ko: "일차" },
   rfc_days: { en: "days", ar: "الأيام", ko: "일차" },
   rfc_current: { en: "your current plan", ar: "خطتك الحالية", ko: "현재 계획" },
-  rfc_step_need: { en: "How much Refined FC do you need?", ar: "كم تحتاج من البلورة المكرّرة؟", ko: "정제 결정이 얼마나 필요한가요?" },
-  rfc_step_need_desc: { en: "Leave the first box empty to use the T12 Research page's total.", ar: "اترك الخانة الأولى فارغة لاستخدام إجمالي صفحة أبحاث T12.", ko: "첫 칸을 비우면 T12 연구 페이지의 합계를 사용합니다." },
+  rfc_step_need: { en: "Refined FC still needed", ar: "البلورة المكرّرة المتبقية", ko: "부족한 정제 결정" },
+  rfc_step_need_desc: { en: "Taken from the T12 Research page: its Refined FC total minus what's in its Backpack. The plan below works toward this.", ar: "هذا هو الهدف الذي تعمل الخطة أدناه للوصول إليه: ما تحتاجه أبحاث T12 ناقص ما تملكه. تُملأ الخانتان من صفحة أبحاث T12؛ اكتب رقمًا فقط لتجاوزها.", ko: "아래 계획이 목표로 하는 값입니다: T12 연구에 필요한 양에서 보유량을 뺀 값. 두 칸은 T12 연구 페이지에서 채워지며, 다른 값을 쓰려면 직접 입력하세요." },
+  rfc_needed_word: { en: "needed", ar: "مطلوب", ko: "필요" },
+  rfc_owned_word: { en: "owned", ar: "مملوك", ko: "보유" },
+  rfc_open_t12: { en: "Open the T12 Research page once so its totals are available here.", ar: "افتح صفحة أبحاث T12 مرة واحدة لتتوفر إجمالياتها هنا.", ko: "T12 연구 페이지를 한 번 열면 합계가 여기에 표시됩니다." },
+  rfc_from_t12_note: { en: "Empty boxes use the T12 Research page", ar: "الخانات الفارغة تستخدم صفحة أبحاث T12", ko: "빈 칸은 T12 연구 페이지 값을 사용" },
   rfc_step_plan: { en: "How will you convert each week?", ar: "كيف ستحوّل كل أسبوع؟", ko: "매주 어떻게 변환할까요?" },
-  rfc_step_plan_desc: { en: "Pick the highest tier you'll reach and how many times you'll use it per week; the lower tiers are done in full (20×) to unlock it.", ar: "اختر أعلى مستوى ستصله وعدد مرات استخدامه أسبوعيًا؛ تُنجز المستويات الأدنى كاملة (20×) لفتحه.", ko: "도달할 최고 단계와 주당 사용 횟수를 고르세요. 아래 단계는 해금을 위해 전부(20회) 진행합니다." },
+  rfc_step_plan_desc: { en: "Either tell it how much FC you can spend per week and it picks the best schedule, or choose one of the weekly schedules yourself.", ar: "اختر أعلى مستوى ستصله وعدد مرات استخدامه أسبوعيًا؛ تُنجز المستويات الأدنى كاملة (20×) لفتحه.", ko: "도달할 최고 단계와 주당 사용 횟수를 고르세요. 아래 단계는 해금을 위해 전부(20회) 진행합니다." },
+  rfc_mode_budget: { en: "FC I can spend per week", ar: "FC التي يمكنني إنفاقها أسبوعيًا", ko: "주당 사용 가능한 FC" },
+  rfc_mode_schedule: { en: "Choose a weekly schedule", ar: "اختر جدولًا أسبوعيًا", ko: "주간 일정 선택" },
+  rfc_budget_unit: { en: "Fire Crystal per week", ar: "بلورة نار أسبوعيًا", ko: "주당 화염 결정" },
+  rfc_budget_result: { en: "Best schedule for this budget", ar: "أفضل جدول لهذه الميزانية", ko: "이 예산의 최적 일정" },
+  rfc_schedule_hint: { en: "The Use buttons in the table below also select a schedule.", ar: "أزرار \"استخدم\" في الجدول أدناه تختار جدولًا أيضًا.", ko: "아래 표의 사용 버튼으로도 일정을 선택할 수 있습니다." },
   rfc_per_attempt: { en: "per attempt", ar: "لكل محاولة", ko: "회당" },
   rfc_attempts_of: { en: "Attempts of", ar: "محاولات", ko: "시도 횟수:" },
   rfc_per_week: { en: "per week", ar: "أسبوعيًا", ko: "/주" },
@@ -6038,7 +6047,7 @@ let RFC_LAB_STATE = null; // { budget, need, owned }
 async function renderRfcLabPage() {
   if (!RFC_LAB_STATE) {
     const saved = (await loadCalcState("rfc_lab")) || {};
-    RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0 };
+    RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
   }
   // Default the need from the T12 page's last totals when nothing typed
   // (T11 Helios doesn't use Refined FC).
@@ -6049,14 +6058,18 @@ async function renderRfcLabPage() {
   let pageFcs = 0;
   ["t11_helios", "t12_research"].forEach((k) => { (snap[k]?.groups || []).forEach((g) => { pageFcs += Number((g.totals || {})["FC Shard"]) || 0; }); });
   const st = RFC_LAB_STATE;
+  const t12Owned = Number(((await ensureMaterialOwnedCache("t12_research")) || {})["Refined FC"]) || 0;
   const fmt = (v, d = 0) => Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
   const plans = rfcAllPlans();
   const bestByTier = RFC_LAB_TIERS.map((_, i) => ({ min: rfcPlan(i + 1, i === 0 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1), max: rfcPlan(i + 1, RFC_LAB_MAX_PER_TIER) }));
-  const need = Math.max(0, (st.need || pageNeed) - (st.owned || 0));
-  const chosen = rfcPlan(st.top, st.attempts);
+  // Target: what the T12 Research page still needs (its total minus the
+  // Refined FC in its Backpack row).
+  const need = Math.max(0, pageNeed - t12Owned);
   const bestValue = plans.slice().sort((a, b) => b.perFc - a.perFc)[0];
-  // Optional: the plan that yields the most Refined FC within a weekly FC budget.
+  // Budget mode: the plan that yields the most Refined FC within the weekly FC budget.
   const inBudget = st.budget > 0 ? plans.filter((p) => p.cost <= st.budget).sort((a, b) => b.rfc - a.rfc || a.cost - b.cost)[0] : null;
+  const chosen = st.mode === "budget" ? (inBudget || rfcPlan(1, 1)) : rfcPlan(st.top, st.attempts);
+  const noBudgetPlan = st.mode === "budget" && !inBudget;
   const weeksFor = (p) => need > 0 && p.rfc > 0 ? Math.ceil(need / p.rfc) : null;
   const tierTable = `
     <div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
@@ -6111,31 +6124,36 @@ async function renderRfcLabPage() {
       <div class="panel">
         <h2 style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; align-items:center; justify-content:center;">1</span>${esc(t("rfc_step_need"))}</h2>
         <p class="desc" style="font-size:11px;">${esc(t("rfc_step_need_desc"))}</p>
-        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:flex-end;">
-          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_need"))}</span><input type="text" inputmode="numeric" data-rfc="need" value="${st.need || ""}" placeholder="${fmt(pageNeed)}" style="width:130px; padding:8px 10px; font-size:14px;" />${!st.need && pageNeed ? `<span class="meta" style="font-size:10px; color:var(--ice);">${esc(t("rfc_from_pages"))} ${fmt(pageNeed)}</span>` : ""}</label>
-          <span style="font-size:16px; color:var(--muted); padding-bottom:10px;">&minus;</span>
-          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_owned"))}</span><input type="text" inputmode="numeric" data-rfc="owned" value="${st.owned || ""}" placeholder="0" style="width:130px; padding:8px 10px; font-size:14px;" /></label>
-          <span style="font-size:16px; color:var(--muted); padding-bottom:10px;">=</span>
-          <div class="metric" style="padding:8px 12px; min-width:110px;"><div class="label" style="font-size:9px;">${esc(t("rfc_still_needed"))}</div><div class="val" style="font-size:18px; color:${need > 0 ? "var(--danger)" : "var(--good)"};">${fmt(need)}</div></div>
+        <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+          <span style="font-size:28px; font-weight:700; color:${need > 0 ? "var(--danger)" : "var(--good)"};">${fmt(need)}</span>
+          <span class="meta" style="font-size:11px;">${esc(t("rfc_still_needed"))} · ${fmt(pageNeed)} ${esc(t("rfc_needed_word"))} − ${fmt(t12Owned)} ${esc(t("rfc_owned_word"))}</span>
         </div>
+        ${!pageNeed ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("rfc_open_t12"))}</div>` : ""}
       </div>
       <div class="panel">
         <h2 style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; align-items:center; justify-content:center;">2</span>${esc(t("rfc_step_plan"))}</h2>
         <p class="desc" style="font-size:11px;">${esc(t("rfc_step_plan_desc"))}</p>
-        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:flex-end;">
-          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_top_tier"))}</span><select data-rfcsel="top" style="width:200px; padding:8px 10px; font-size:14px;">${RFC_LAB_TIERS.map((tr) => `<option value="${tr.tier}" ${tr.tier === st.top ? "selected" : ""}>T${tr.tier} — ${tr.cost} FC ${esc(t("rfc_per_attempt"))}</option>`).join("")}</select></label>
-          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_attempts_of"))} T${st.top} ${esc(t("rfc_per_week"))}</span><select data-rfcsel="attempts" style="width:110px; padding:8px 10px; font-size:14px;">${Array.from({ length: RFC_LAB_MAX_PER_TIER }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === st.attempts ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <div class="seg" style="display:inline-flex; margin-bottom:10px;">
+          <button type="button" data-rfcmode="budget" class="${st.mode === "budget" ? "active" : ""}">${esc(t("rfc_mode_budget"))}</button>
+          <button type="button" data-rfcmode="schedule" class="${st.mode === "schedule" ? "active" : ""}">${esc(t("rfc_mode_schedule"))}</button>
         </div>
-        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:flex-end; margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
-          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_or_budget"))}</span><input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" /></label>
-          <span class="meta" style="font-size:10.5px; max-width:260px; padding-bottom:8px;">${esc(t("rfc_or_budget_hint"))}</span>
+        ${st.mode === "budget" ? `
+        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:center;">
+          <input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" />
+          <span class="meta" style="font-size:11px;">${esc(t("rfc_budget_unit"))}</span>
         </div>
+        <div class="meta" style="font-size:10.5px; margin-top:6px;">${inBudget ? `${esc(t("rfc_budget_result"))}: <b>${esc(inBudget.text)}</b>` : esc(t("rfc_enter_budget"))}</div>` : `
+        <select data-rfcschedule style="width:100%; max-width:520px; padding:8px 10px; font-size:13px;">
+          ${bestByTier.map((bt, i) => [["min", bt.min, t("rfc_minimal")], ["max", bt.max, t("rfc_maximum")]].map(([kind, pl, label]) => `<option value="${pl.top}|${pl.n}" ${pl.top === st.top && pl.n === st.attempts ? "selected" : ""}>${esc(label)} T${i + 1} — ${esc(pl.text)} — ${fmt(pl.cost)} FC → ${fmt(pl.rfc, 1)} RFC</option>`).join("")).join("")}
+          ${bestByTier.some((bt) => (bt.min.top === st.top && bt.min.n === st.attempts) || (bt.max.top === st.top && bt.max.n === st.attempts)) ? "" : `<option value="${st.top}|${st.attempts}" selected>${esc(rfcPlan(st.top, st.attempts).text)}</option>`}
+        </select>
+        <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("rfc_schedule_hint"))}</div>`}
       </div>
     </div>
     <div class="grid g2" style="align-items:start; gap:16px;">
       <div class="panel">
         <h2>${esc(t("rfc_your_plan"))}</h2>
-        ${(() => {
+        ${noBudgetPlan ? `<div class="meta" style="font-size:11px;">${esc(t("rfc_enter_budget"))}</div>` : (() => {
           const weeksExact = need > 0 && chosen.rfc > 0 ? need / chosen.rfc : null;
           const totalFc = weeksExact != null ? Math.ceil(weeksExact * chosen.cost) : null;
           const durText = weeksExact == null ? "—" : (() => { const w = Math.max(1, Math.round(weeksExact)); const m = Math.floor(w / 4), r = w % 4; return [m ? `${m} ${t(m === 1 ? "rfc_month" : "rfc_months")}` : "", r ? `${r} ${t(r === 1 ? "rfc_week" : "rfc_weeks")}` : ""].filter(Boolean).join(" ") || `0 ${t("rfc_weeks")}`; })();
@@ -6149,13 +6167,6 @@ async function renderRfcLabPage() {
           </table></div>
           <div class="meta" style="font-size:10.5px; margin-top:6px;">${fmt(chosen.perFc, 4)} ${esc(t("rfc_per_fc"))} · ${esc(t("rfc_month_note"))}</div>`;
         })()}
-        <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
-          <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("rfc_best_in_budget"))} ${st.budget > 0 ? `${fmt(st.budget)} FC` : ""}</div>
-          ${inBudget ? `
-            <div style="font-size:12px;">${esc(inBudget.text)}${inBudget.top === st.top && inBudget.n === st.attempts ? ` <span class="meta">(${esc(t("rfc_current"))})</span>` : ` <button class="btn small ghost" data-rfcuse="${inBudget.top}|${inBudget.n}" style="padding:2px 8px; margin-inline-start:6px;">${esc(t("rfc_use"))}</button>`}</div>
-            <div class="meta" style="font-size:11px;">${fmt(inBudget.cost)} FC / ${esc(t("rfc_week"))} → <span style="color:var(--good);">${fmt(inBudget.rfc, 1)}</span> RFC / ${esc(t("rfc_week"))} · ${fmt(inBudget.perFc, 4)} ${esc(t("rfc_per_fc"))}${weeksFor(inBudget) != null ? ` · ${weeksFor(inBudget)} ${esc(t("rfc_weeks_to_target"))}` : ""}</div>`
-          : `<div class="meta" style="font-size:11px;">${esc(t("rfc_enter_budget"))}</div>`}
-        </div>
         <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
           <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("rfc_best_value"))}</div>
           <div style="font-size:12px;">${esc(bestValue.text)}</div>
@@ -6180,14 +6191,21 @@ async function renderRfcLabPage() {
   fcIn.addEventListener("input", () => { const v = numOf(fcIn); fcsIn.value = v ? fmt(Math.floor(v * FCS_PER_FC)) : ""; st.fcHave = v; });
   fcsIn.addEventListener("input", () => { const v = numOf(fcsIn); const fc = v ? Math.ceil(v / FCS_PER_FC) : 0; fcIn.value = fc ? fmt(fc) : ""; st.fcHave = fc; });
   [fcIn, fcsIn].forEach((el) => el.addEventListener("change", () => saveCalcState("rfc_lab", st)));
-  content.querySelectorAll("[data-rfcsel]").forEach((sel) => sel.addEventListener("change", async () => {
-    st[sel.dataset.rfcsel] = Number(sel.value);
+  content.querySelectorAll("[data-rfcmode]").forEach((b) => b.addEventListener("click", async () => {
+    st.mode = b.dataset.rfcmode;
     await saveCalcState("rfc_lab", st);
     renderRfcLabPage();
   }));
+  const schedSel = content.querySelector("[data-rfcschedule]");
+  if (schedSel) schedSel.addEventListener("change", async () => {
+    const [top, n] = schedSel.value.split("|").map(Number);
+    st.top = top; st.attempts = n;
+    await saveCalcState("rfc_lab", st);
+    renderRfcLabPage();
+  });
   content.querySelectorAll("[data-rfcuse]").forEach((btn) => btn.addEventListener("click", async () => {
     const [top, n] = btn.dataset.rfcuse.split("|").map(Number);
-    st.top = top; st.attempts = n;
+    st.top = top; st.attempts = n; st.mode = "schedule";
     await saveCalcState("rfc_lab", st);
     renderRfcLabPage();
   }));
