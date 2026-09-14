@@ -173,6 +173,21 @@
   @media (min-width:900px){ .budget-cols{ columns:2; } }
   @media (min-width:1500px){ .budget-cols{ columns:3; } }
   .budget-wrap{ max-width:1400px; margin:0 auto; }
+  /* Current -> target level pairs (T11 / T12): side by side on wide
+     screens, stacked with small captions on phones so nothing is cut off. */
+  .lvl-pair{ display:flex; gap:4px; align-items:center; min-width:0; }
+  .lvl-cell{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .lvl-cap{ display:none; font-size:9px; }
+  .lvl-pair select{ font-size:12.5px; }
+  @media (max-width:1100px){
+    .t12-grid-4, .t12-grid-3{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+  }
+  @media (max-width:760px){
+    .lvl-pair{ flex-direction:column; align-items:stretch; gap:4px; }
+    .lvl-arrow{ display:none; }
+    .lvl-cap{ display:block; }
+    .lvl-pair select{ width:100% !important; }
+  }
   /* Grid column counts for phone/tablet are handled in the comprehensive
      @media (max-width:760px) block below. */
 
@@ -1028,7 +1043,7 @@ const MATERIAL_LABEL_KEYS = {
   "design plan": "material_design_plan", design: "material_design_plan",
   amber: "material_amber",
   "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest",
-  "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
+  "pet chest": "material_pet_chest", "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
   "charm guides": "material_charm_guides", "charm designs": "material_charm_designs",
   "jewel secrets": "material_jewel_secrets",
   "xp component": "material_xp_component", "essence stones": "material_essence_stones",
@@ -1366,6 +1381,7 @@ const T = {
   material_polishing_solution: { en: "Polish", ar: "\u0645\u062d\u0644\u0648\u0644 \u062a\u0644\u0645\u064a\u0639", ko: "\uc5f0\ub9c8\uc81c" },
   material_design_plan: { en: "Design", ar: "\u0645\u062e\u0637\u0637 \u062a\u0635\u0645\u064a\u0645", ko: "\uc124\uacc4\ub3c4" },
   material_amber: { en: "Amber", ar: "\u0643\u0647\u0631\u0645\u0627\u0646", ko: "\ud638\ubc15" },
+  material_pet_chest: { en: "Pet Chest", ar: "صندوق الحيوانات الأليفة", ko: "펫 상자" },
   material_research_speedups: { en: "Research Speedups (min)", ar: "تسريع الأبحاث (دقيقة)", ko: "연구 가속 (분)" },
   material_troop_speedups: { en: "Troop Speedups (min)", ar: "تسريع القوات (دقيقة)", ko: "병력 가속 (분)" },
   material_construction_speedups: { en: "Construction Speedups (min)", ar: "تسريع البناء (دقيقة)", ko: "건설 가속 (분)" },
@@ -1577,6 +1593,9 @@ const T = {
   pack_coloptions_desc: { en: "For Mix & Match style packs: the rows are the price tiers and each column is one of the rewards you can pick at that tier. Buying a tier gives one column's amount, not all of them.", ar: "لحزم من نوع Mix & Match: الصفوف هي مستويات السعر وكل عمود هو إحدى المكافآت التي يمكنك اختيارها في ذلك المستوى. شراء المستوى يمنح كمية عمود واحد فقط.", ko: "믹스 앤 매치형 패키지용: 행은 가격 단계, 각 열은 그 단계에서 고를 수 있는 보상 하나입니다. 단계를 사면 한 열의 수량만 받습니다." },
   packs_filter_all: { en: "All", ar: "الكل", ko: "전체" },
   packs_filter_none: { en: "Not assigned", ar: "غير مخصص", ko: "미배정" },
+  pack_no_date: { en: "No target date", ar: "بدون تاريخ هدف", ko: "목표일 없음" },
+  research_current: { en: "Current level", ar: "المستوى الحالي", ko: "현재 레벨" },
+  research_target: { en: "Target level", ar: "المستوى المستهدف", ko: "목표 레벨" },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -5022,7 +5041,7 @@ const PACK_RESOURCE_NAMES = [
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Charm Chest",
-  "Fire Crystal", "FC Chest",
+  "Fire Crystal", "FC Chest", "Pet Chest",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
   "Troop Speedup 1m", "Troop Speedup 5m", "Troop Speedup 1h", "Troop Speedup 3h", "Troop Speedup 8h",
@@ -5064,6 +5083,7 @@ const PACK_BUNDLE_NOTES = {
   "Lucky Gear Chest": "1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.",
   "Random Charm Chest": "Guides: x15 0.5%, x8 3%, x4 15%, x2 31.5%; Designs: same odds → counted as ≈1.55 Guides and ≈1.55 Designs per chest (average).",
   "FC Chest": "x100 0.4%, x60 0.8%, x40 1.6%, x20 2.5%, x10 8.5%, x5 86.2% → counted as 7.18 Fire Crystal per chest (average).",
+  "Pet Chest": "Each chest opens into one of: 7 Manual, 2 Potion or 1 Serum (your choice). The pack cost turns chests into whichever the plan is short of.",
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
@@ -5104,6 +5124,7 @@ function packIsNonResourceColumn(name) {
 // Matches a column's name to a resource, in English or in the current
 // language, so naming a column "FC Shard" assigns it in one step.
 const PACK_RESOURCE_ALIASES = {
+  "pet custom chest": "Pet Chest", "custom pet chest": "Pet Chest",
   "1hr research speeds": "Research Speedup 1h", "1hr troops speeds": "Troop Speedup 1h", "1hr troop speeds": "Troop Speedup 1h", "1hr construction speeds": "Construction Speedup 1h", "1hr constructions speeds": "Construction Speedup 1h",
   "1hr": "Speedup 1h", "5min": "Speedup 5m", "1min": "Speedup 1m", "3hr": "Speedup 3h", "8hr": "Speedup 8h", "3min": "Speedup 3m",
 };
@@ -5821,6 +5842,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0;">
       <span class="meta" style="font-size:11px; font-weight:600;">${esc(t("pack_target_by"))}</span>
       <input type="date" data-packtarget value="${esc(targetDate)}" style="font-size:12px; padding:4px 6px;" />
+      ${targetDate ? `<button type="button" class="btn small ghost" data-packtargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
       ${targetDays != null ? `<span class="meta" style="font-size:11px; color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}
     </div>`;
 
@@ -5907,6 +5929,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (dateEl) dateEl.addEventListener("change", async () => {
     PACK_TARGET_CACHE[calcKey] = dateEl.value || "";
     await saveCalcState(`pack_target_${calcKey}`, { date: PACK_TARGET_CACHE[calcKey] });
+    rerender();
+  });
+  const clearEl = containerEl.querySelector("[data-packtargetclear]");
+  if (clearEl) clearEl.addEventListener("click", async () => {
+    PACK_TARGET_CACHE[calcKey] = "";
+    await saveCalcState(`pack_target_${calcKey}`, { date: "" });
     rerender();
   });
 }
@@ -6245,6 +6273,13 @@ const TRADE_DEFAULT_RATES = {
   t12_research: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true },
     { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 },
+  ],
+  // A Pet Chest opens into ONE of these (your choice): the planner turns
+  // chests into whichever the plan is short of. Hidden - a rule, not a trade.
+  pets: [
+    { from: "Pet Chest", to: "Manual", give: 1, get: 7, max: 0, hidden: true },
+    { from: "Pet Chest", to: "Potion", give: 1, get: 2, max: 0, hidden: true },
+    { from: "Pet Chest", to: "Serum", give: 1, get: 1, max: 0, hidden: true },
   ],
   charm: [
     { from: "Charm Guides", to: "Charm Designs", give: 2, get: 1, max: 500 },
@@ -6786,6 +6821,7 @@ async function renderBudgetsPage(opts = {}) {
       <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
         <div style="font-size:14px; font-weight:700;">${esc(t("budgets_total_title"))}</div>
         <label style="display:flex; align-items:center; gap:8px; font-size:12px; margin-inline-start:auto;"><span class="meta">${esc(t("pack_target_by"))}</span><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" style="font-size:12px; padding:4px 6px;" />
+          ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
           ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label>
       </div>
       <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
@@ -6815,6 +6851,12 @@ async function renderBudgetsPage(opts = {}) {
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
     await saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
+    renderBudgetsPage();
+  });
+  const clearEl = content.querySelector("[data-budgettargetclear]");
+  if (clearEl) clearEl.addEventListener("click", async () => {
+    BUDGET_TARGET = "";
+    await saveCalcState("pack_target_budgets", { date: "" });
     renderBudgetsPage();
   });
   content.querySelectorAll("[data-gototab]").forEach((b) => b.addEventListener("click", () => {
@@ -8964,6 +9006,11 @@ const T12_ITEM_DEFS = [
 const T12_TROOPS = ["Infantry", "Lancer", "Marksman"];
 let T12_NODES_CACHE = null;
 let T12_STATE = null;
+let T12_TARGET = null; // { troop: { itemKey: targetLevel } } - missing = max
+function t12TargetOf(troop, def) {
+  const v = T12_TARGET && T12_TARGET[troop] && T12_TARGET[troop][def.key];
+  return typeof v === "number" ? Math.min(def.max, Math.max(0, v)) : def.max;
+}
 
 const T12_RESOURCE_ICONS = {
   steel: "https://gom-s3-user-avatar.s3.us-west-2.amazonaws.com/wp-content/uploads/2025/09/20250617-144040.png",
@@ -9081,6 +9128,11 @@ function computeT12Stats(troopState) {
 const T11_TROOPS = ["Infantry", "Lancer", "Marksman"];
 let T11_NODES_CACHE = null;
 let T11_STATE = null;
+let T11_TARGET = null; // { troop: { track: targetLevel } } - missing = max
+function t11TargetOf(troop, track, maxLvl) {
+  const v = T11_TARGET && T11_TARGET[troop] && T11_TARGET[troop][track];
+  return typeof v === "number" ? Math.min(maxLvl, Math.max(0, v)) : maxLvl;
+}
 
 async function ensureT11StateData() {
   if (!T11_NODES_CACHE) {
@@ -9093,10 +9145,12 @@ async function ensureT11StateData() {
     });
   }
   if (T11_STATE) return;
-  const saved = await loadCalcState("t11_helios");
+  const [saved, savedTarget] = await Promise.all([loadCalcState("t11_helios"), loadCalcState("t11_helios_target")]);
   T11_STATE = saved || {};
+  T11_TARGET = savedTarget || {};
   T11_TROOPS.forEach((troop) => {
     if (!T11_STATE[troop]) T11_STATE[troop] = {};
+    if (!T11_TARGET[troop]) T11_TARGET[troop] = {};
   });
 }
 
@@ -9191,8 +9245,9 @@ async function renderT11HeliosPage() {
     const totals = { meat: 0, wood: 0, coal: 0, iron: 0, steel: 0, refined_fc: 0, fc_shard: 0, time_hours: 0 };
     Object.entries(tracks).forEach(([track, levels]) => {
       const cur = (T11_STATE[troop][track] || 0);
+      const target = t11TargetOf(troop, track, levels.length);
       levels.forEach((r) => {
-        if (r.level <= cur) return;
+        if (r.level <= cur || r.level > target) return;
         totals.meat += Number(r.meat) || 0;
         totals.wood += Number(r.wood) || 0;
         totals.coal += Number(r.coal) || 0;
@@ -9293,11 +9348,16 @@ async function renderT11HeliosPage() {
             const levels = tracks[track];
             const maxLvl = levels.length;
             const cur = T11_STATE[troop][track] || 0;
-            const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === maxLvl ? t("max_suffix") : ""}</option>`).join("");
+            const target = t11TargetOf(troop, track, maxLvl);
+            const optsFor = (sel) => Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === sel ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === maxLvl ? t("max_suffix") : ""}</option>`).join("");
             return `
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); flex-wrap:wrap;">
             <div class="meta" style="min-width:0; flex:1 1 120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(track))}</div>
-            <select data-t11track="${esc(troop)}|${esc(track)}" style="width:110px; flex-shrink:0; padding:5px 8px;">${opts}</select>
+            <div class="lvl-pair" style="flex:0 1 220px;">
+              <label class="lvl-cell"><span class="lvl-cap meta">${esc(t("research_current"))}</span><select data-t11track="${esc(troop)}|${esc(track)}" title="${esc(t("research_current"))}" style="width:100%; min-width:0; padding:5px 8px;">${optsFor(cur)}</select></label>
+              <span class="lvl-arrow meta" style="font-size:11px;">→</span>
+              <label class="lvl-cell"><span class="lvl-cap meta">${esc(t("research_target"))}</span><select data-t11target="${esc(troop)}|${esc(track)}" title="${esc(t("research_target"))}" style="width:100%; min-width:0; padding:5px 8px; ${target < cur ? "border-color:var(--danger);" : ""}">${optsFor(target)}</select></label>
+            </div>
           </div>`;
           })
           .join("")}
@@ -9310,6 +9370,16 @@ async function renderT11HeliosPage() {
         const [troop, track] = sel.dataset.t11track.split("|");
         T11_STATE[troop][track] = Number(sel.value);
         await saveCalcState("t11_helios", T11_STATE);
+        renderGrandTotal();
+        render();
+      });
+    });
+    troopsEl.querySelectorAll("[data-t11target]").forEach((sel) => {
+      sel.addEventListener("change", async () => {
+        const [troop, track] = sel.dataset.t11target.split("|");
+        T11_TARGET[troop] = T11_TARGET[troop] || {};
+        T11_TARGET[troop][track] = Number(sel.value);
+        await saveCalcState("t11_helios_target", T11_TARGET);
         renderGrandTotal();
         render();
       });
@@ -11052,6 +11122,7 @@ async function renderT12ResearchPage() {
       });
     });
   }
+  if (!T12_TARGET) T12_TARGET = (await loadCalcState("t12_research_target")) || {};
 
   await ensureResearchSpeedData();
   await ensureResearchPageCountedData();
@@ -11096,16 +11167,22 @@ async function renderT12ResearchPage() {
     renderTroopPanels();
   });
 
-  function levelSelectHtml(def, current) {
-    return `<select data-t12item="${def.key}" style="width:100%; padding:5px 8px;">${Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === current ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === def.max ? t("max_suffix") : ""}</option>`).join("")}</select>`;
+  function levelSelectHtml(def, current, target) {
+    const opts = (sel) => Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === sel ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === def.max ? t("max_suffix") : ""}</option>`).join("");
+    return `<div class="lvl-pair">
+      <label class="lvl-cell"><span class="lvl-cap meta">${esc(t("research_current"))}</span><select data-t12item="${def.key}" title="${esc(t("research_current"))}" style="width:100%; min-width:0; padding:5px 6px;">${opts(current)}</select></label>
+      <span class="lvl-arrow meta" style="font-size:11px;">→</span>
+      <label class="lvl-cell"><span class="lvl-cap meta">${esc(t("research_target"))}</span><select data-t12target="${def.key}" title="${esc(t("research_target"))}" style="width:100%; min-width:0; padding:5px 6px; ${target < current ? "border-color:var(--danger);" : ""}">${opts(target)}</select></label>
+    </div>`;
   }
 
-  function computeNeeded(troopState) {
+  function computeNeeded(troopState, troop) {
     const totals = { steel: 0, refined_fc: 0, fc_shard: 0, meat_wood: 0, coal: 0, iron: 0, time_hours: 0 };
     T12_ITEM_DEFS.forEach((def) => {
       const cur = troopState[def.key] || 0;
+      const target = troop ? t12TargetOf(troop, def) : def.max;
       const tierRows = T12_NODES_CACHE[def.tier] || {};
-      for (let lv = cur + 1; lv <= def.max; lv++) {
+      for (let lv = cur + 1; lv <= target; lv++) {
         const r = tierRows[lv];
         if (!r) continue;
         totals.steel += Number(r.steel) || 0;
@@ -11123,7 +11200,7 @@ async function renderT12ResearchPage() {
   function renderTotals() {
     const grand = { steel: 0, refined_fc: 0, fc_shard: 0, meat_wood: 0, coal: 0, iron: 0, time_hours: 0 };
     T12_TROOPS.forEach((troop) => {
-      const t = computeNeeded(T12_STATE[troop]);
+      const t = computeNeeded(T12_STATE[troop], troop);
       Object.keys(grand).forEach((k) => (grand[k] += t[k]));
     });
     const matTotals = {
@@ -11158,7 +11235,7 @@ async function renderT12ResearchPage() {
       if (def.stat) statMax[def.stat] += def.max * (def.pct || 1);
     });
     const troop = t12ActiveTroop;
-    const needed = computeNeeded(T12_STATE[troop]);
+    const needed = computeNeeded(T12_STATE[troop], troop);
     const stats = computeT12Stats(T12_STATE[troop]);
     troopsEl.innerHTML = `
       <div class="panel">
@@ -11186,9 +11263,9 @@ async function renderT12ResearchPage() {
               ${defs
                 .map(
                   (def) => `
-                <div style="${isSingle ? "width:200px; text-align:center;" : ""}">
+                <div style="${isSingle ? "width:260px; text-align:center;" : ""}">
                   <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(tT12Label(def.label))}</div>
-                  ${levelSelectHtml(def, T12_STATE[troop][def.key] || 0)}
+                  ${levelSelectHtml(def, T12_STATE[troop][def.key] || 0, t12TargetOf(troop, def))}
                 </div>`
                 )
                 .join("")}
@@ -11203,6 +11280,15 @@ async function renderT12ResearchPage() {
       sel.addEventListener("change", async () => {
         T12_STATE[troop][sel.dataset.t12item] = Number(sel.value);
         await saveCalcState("t12_research", T12_STATE);
+        renderTotals();
+        renderTroopPanels();
+      });
+    });
+    troopsEl.querySelectorAll("select[data-t12target]").forEach((sel) => {
+      sel.addEventListener("change", async () => {
+        T12_TARGET[troop] = T12_TARGET[troop] || {};
+        T12_TARGET[troop][sel.dataset.t12target] = Number(sel.value);
+        await saveCalcState("t12_research_target", T12_TARGET);
         renderTotals();
         renderTroopPanels();
       });
