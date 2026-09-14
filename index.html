@@ -3051,7 +3051,7 @@ async function renderGearLevelingGroup(target) {
   const tracksEl = document.getElementById("heroGearTracks");
   // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
-  const heroGearIcon = (troop, piece) => `icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
+  const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
   const pieceCard = (troop, piece) => `
     <div class="panel">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
