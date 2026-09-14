@@ -1043,7 +1043,7 @@ const MATERIAL_LABEL_KEYS = {
   "design plan": "material_design_plan", design: "material_design_plan",
   amber: "material_amber",
   "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest",
-  "pet chest": "material_pet_chest", "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
+  "pet chest": "material_pet_chest", "common marks": "material_common_marks", "advanced marks": "material_advanced_marks", "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
   "charm guides": "material_charm_guides", "charm designs": "material_charm_designs",
   "jewel secrets": "material_jewel_secrets",
   "xp component": "material_xp_component", "essence stones": "material_essence_stones",
@@ -1381,6 +1381,8 @@ const T = {
   material_polishing_solution: { en: "Polish", ar: "\u0645\u062d\u0644\u0648\u0644 \u062a\u0644\u0645\u064a\u0639", ko: "\uc5f0\ub9c8\uc81c" },
   material_design_plan: { en: "Design", ar: "\u0645\u062e\u0637\u0637 \u062a\u0635\u0645\u064a\u0645", ko: "\uc124\uacc4\ub3c4" },
   material_amber: { en: "Amber", ar: "\u0643\u0647\u0631\u0645\u0627\u0646", ko: "\ud638\ubc15" },
+  material_common_marks: { en: "Common Marks", ar: "علامات عادية", ko: "일반 문장" },
+  material_advanced_marks: { en: "Advanced Marks", ar: "علامات متقدمة", ko: "고급 문장" },
   material_pet_chest: { en: "Pet Chest", ar: "صندوق الحيوانات الأليفة", ko: "펫 상자" },
   material_research_speedups: { en: "Research Speedups (min)", ar: "تسريع الأبحاث (دقيقة)", ko: "연구 가속 (분)" },
   material_troop_speedups: { en: "Troop Speedups (min)", ar: "تسريع القوات (دقيقة)", ko: "병력 가속 (분)" },
@@ -1596,6 +1598,17 @@ const T = {
   pack_no_date: { en: "No target date", ar: "بدون تاريخ هدف", ko: "목표일 없음" },
   research_current: { en: "Current level", ar: "المستوى الحالي", ko: "현재 레벨" },
   research_target: { en: "Target level", ar: "المستوى المستهدف", ko: "목표 레벨" },
+  marks_title: { en: "Marks to refine to max", ar: "العلامات اللازمة للتنقية حتى الحد الأقصى", ko: "최대 정련까지 필요한 문장" },
+  marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in.", ar: "التنقية عشوائية، لذا هذه أقرب صيغة متوسطة: كل 1% ناقص من إحصائية يكلّف معدل العلامات العادية للمرحلة التي هو فيها. عدّل المعدلات أو التعديل الإجمالي وفق نتائجك.", ko: "정련은 무작위이므로 가장 근접한 평균 공식입니다: 부족한 스탯 1%마다 해당 단계의 일반 문장 비율만큼 듭니다. 실제 결과에 따라 비율이나 전체 보정을 조정하세요." },
+  marks_rates: { en: "Common Marks per 1% (by stage)", ar: "علامات عادية لكل 1% (حسب المرحلة)", ko: "1%당 일반 문장 (단계별)" },
+  marks_rates_note: { en: "Grey/Green/Blue: average over all stats. Purple/Orange: per 1% of one stat. Red uses Orange's rate until you set it.", ar: "الرمادي/الأخضر/الأزرق: متوسط لكل الإحصائيات. البنفسجي/البرتقالي: لكل 1% من إحصائية واحدة. الأحمر يستخدم معدل البرتقالي حتى تضبطه.", ko: "회색/녹색/파랑: 전체 스탯 평균. 보라/주황: 스탯 하나의 1%당. 빨강은 설정 전까지 주황 비율 사용." },
+  marks_adjust: { en: "Adjustment", ar: "التعديل", ko: "보정" },
+  marks_adjust_note: { en: "add or subtract a % on top of the formula", ar: "أضف أو اطرح نسبة فوق الصيغة", ko: "공식 위에 % 가감" },
+  marks_needed: { en: "Common Marks needed", ar: "العلامات العادية المطلوبة", ko: "필요한 일반 문장" },
+  marks_before_adjust: { en: "before adjustment", ar: "قبل التعديل", ko: "보정 전" },
+  marks_as_advanced: { en: "or Advanced Marks", ar: "أو علامات متقدمة", ko: "또는 고급 문장" },
+  marks_per_pet: { en: "Per pet", ar: "لكل حيوان أليف", ko: "펫별" },
+  marks_none: { en: "Every unlocked pet is already maxed.", ar: "كل الحيوانات الأليفة المفتوحة وصلت الحد الأقصى.", ko: "해금된 모든 펫이 이미 최대입니다." },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -4999,7 +5012,7 @@ const PACK_PAGE_GROUPS = [
   { key: "chief_gear", pages: ["chief_gear"] },
   { key: "charm", pages: ["charm"] },
   { key: "hero_gear", pages: ["hero_gear"] },
-  { key: "pets_group", group: "Pets", pages: ["pets"] },
+  { key: "pets_group", group: "Pets", pages: ["pets", "pets_refine"] },
   { key: "experts_group", group: "Experts", pages: ["experts", "experts_research"] },
   { key: "research_group", group: "Research", pages: ["research_center", "t11_helios", "t12_research"] },
 ];
@@ -5022,11 +5035,12 @@ const PACK_PAGE_KEYS = [
   { key: "t11_helios", labelKey: "nav_t11helios" },
   { key: "t12_research", labelKey: "nav_t12research" },
   { key: "pets", labelKey: "nav_petsdata" },
+  { key: "pets_refine", labelKey: "nav_refinepage" },
   { key: "experts", labelKey: "nav_expertspage" },
   { key: "experts_research", labelKey: "nav_expertsresearchpage" },
 ];
 function packPageLabel(key) {
-  const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research", pets: "petsdata", experts: "expertspage", experts_research: "expertsresearchpage" }[key]];
+  const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research", pets: "petsdata", pets_refine: "refinepage", experts: "expertspage", experts_research: "expertsresearchpage" }[key]];
   return entry ? (entry[LANG] || entry.en) : key;
 }
 // Every resource a pack column can be mapped to, grouped by the page that
@@ -5041,7 +5055,7 @@ const PACK_RESOURCE_NAMES = [
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Charm Chest",
-  "Fire Crystal", "FC Chest", "Pet Chest",
+  "Fire Crystal", "FC Chest", "Pet Chest", "Common Marks", "Advanced Marks",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
   "Troop Speedup 1m", "Troop Speedup 5m", "Troop Speedup 1h", "Troop Speedup 3h", "Troop Speedup 8h",
@@ -6276,6 +6290,8 @@ const TRADE_DEFAULT_RATES = {
   ],
   // A Pet Chest opens into ONE of these (your choice): the planner turns
   // chests into whichever the plan is short of. Hidden - a rule, not a trade.
+  // Advanced Marks are worth 8 Common Marks each (refine only).
+  pets_refine: [{ from: "Advanced Marks", to: "Common Marks", give: 1, get: 8, max: 0, hidden: true }],
   pets: [
     { from: "Pet Chest", to: "Manual", give: 1, get: 7, max: 0, hidden: true },
     { from: "Pet Chest", to: "Potion", give: 1, get: 2, max: 0, hidden: true },
@@ -6524,6 +6540,7 @@ const BUDGET_PAGES = [
   { key: "t11_helios", tab: "t11helios" },
   { key: "t12_research", tab: "t12research" },
   { key: "pets", tab: "petsdata" },
+  { key: "pets_refine", tab: "refinepage" },
   { key: "experts", tab: "expertspage" },
   { key: "experts_research", tab: "expertsresearchpage" },
 ];
@@ -9433,6 +9450,10 @@ const PET_TROOP_COLORS_CYCLE = ["var(--ice)", "#7ee6a8", "#f0a3c4", "#e0c068"];
 let PETS_NODES_CACHE = null; // { "Cave Hyena": [ {level_label, food, manual, potion, serum, atk_def_pct}, ... ] }
 let PETS_STATE = null; // { "Cave Hyena": currentIndex, ... }
 
+// Pets Refine: Common Marks per 1% of a stat, by stage (see renderRefinePage).
+const PET_MARKS_DEFAULT_RATES = { Grey: 8, Green: 25, Blue: 83, Purple: 58.82, Orange: 100, Red: 100 };
+const ADVANCED_MARK_VALUE = 8; // 1 Advanced Mark = 8 Common Marks
+let PET_MARKS_STATE = null;
 let PET_REFINE_CACHE = null; // { "Cave Hyena": [ {stage, infantry_lethality_pct, ...}, ... ] }
 let PET_REFINE_STATE = null; // { "Cave Hyena": stageIndex }
 
@@ -10531,6 +10552,13 @@ async function renderRefinePage() {
     const saved = await loadCalcState("pet_refine_typed");
     PET_REFINE_TYPED_STATE = saved || {};
   }
+  // Marks formula: Common Marks per 1% of a stat, by the stage the value is
+  // in. Refining is random, so this is the closest average we have - the
+  // rates are editable and an overall +/- adjustment is applied on top.
+  if (!PET_MARKS_STATE) {
+    const saved = (await loadCalcState("pet_refine_marks")) || {};
+    PET_MARKS_STATE = { rates: { ...PET_MARKS_DEFAULT_RATES, ...(saved.rates || {}) }, adjust: Number(saved.adjust) || 0 };
+  }
 
   // Converts a stored 0-1 fraction to a clean 1-decimal percentage.
   // Plain `x * 100` on values like 0.581 gives 58.099999999999994 in JS
@@ -10604,6 +10632,40 @@ async function renderRefinePage() {
       });
     });
     const STAT_ABBR_MAP = { il: "Inf LETH", ih: "Inf HP", ll: "Lan LETH", lh: "Lan HP", ml: "Mark LETH", mh: "Mark HP" };
+    // ---- Common Marks needed to refine every unlocked pet to max ----
+    // Each 1% still missing costs the rate of the stage bracket it falls in.
+    const rates = PET_MARKS_STATE.rates;
+    const marksForStat = (pet, maxKey, curVal) => {
+      const rows = PET_REFINE_CACHE[pet];
+      let marks = 0, prevMax = 0;
+      rows.forEach((r) => {
+        const stageMax = pct1(r[maxKey]);
+        const lo = Math.max(prevMax, curVal), hi = stageMax;
+        if (hi > lo) marks += (hi - lo) * (Number(rates[r.stage]) || 0);
+        prevMax = Math.max(prevMax, stageMax);
+      });
+      return marks;
+    };
+    let marksRaw = 0;
+    const perPet = {};
+    petNames.forEach((pet) => {
+      if (!isPetUnlocked(pet)) return;
+      const s = petState(pet);
+      const m = maxRow(pet);
+      let petMarks = 0;
+      STAT_KEYS.forEach(({ key, maxKey }) => {
+        const cap = pct1(m[maxKey]);
+        petMarks += marksForStat(pet, maxKey, Math.min(Number(s[key]) || 0, cap));
+      });
+      perPet[pet] = petMarks; marksRaw += petMarks;
+    });
+    const marksNeeded = Math.ceil(marksRaw * (1 + (PET_MARKS_STATE.adjust || 0) / 100));
+    const stageBtn = (stage) => `<div style="display:flex; align-items:center; gap:4px;">
+        <span style="font-size:11px; font-weight:600; color:${STAGE_COLORS[stage] || "var(--ice)"}; min-width:52px;">${esc(stage)}</span>
+        <button class="btn small ghost" data-marksrate="${stage}" data-delta="-1" style="width:24px; padding:2px 0;">&minus;</button>
+        <input type="text" inputmode="decimal" data-marksrateinput="${stage}" value="${rates[stage]}" style="width:58px; text-align:center; padding:3px 4px; font-size:12px;" />
+        <button class="btn small ghost" data-marksrate="${stage}" data-delta="1" style="width:24px; padding:2px 0;">+</button>
+      </div>`;
     document.getElementById("refineTotals").innerHTML = `
       <div class="panel">
         <h2>${esc(t("total_refine_bonus"))}</h2>
@@ -10612,7 +10674,57 @@ async function renderRefinePage() {
           ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[key] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
         </div>
       </div>
+      <div class="panel" style="margin-top:16px;">
+        <h2>${esc(t("marks_title"))}</h2>
+        <p class="desc">${esc(t("marks_desc"))}</p>
+        <div class="grid g2" style="align-items:start; gap:16px;">
+          <div>
+            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))}</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
+            <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("marks_rates_note"))}</div>
+          </div>
+          <div>
+            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_adjust"))}</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button class="btn small ghost" data-marksadjust="-5" style="width:28px; padding:2px 0;">&minus;</button>
+              <span style="font-size:14px; font-weight:700; min-width:52px; text-align:center;">${PET_MARKS_STATE.adjust > 0 ? "+" : ""}${PET_MARKS_STATE.adjust}%</span>
+              <button class="btn small ghost" data-marksadjust="5" style="width:28px; padding:2px 0;">+</button>
+              <span class="meta" style="font-size:10.5px;">${esc(t("marks_adjust_note"))}</span>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
+              <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_needed"))}</div><div class="val" style="font-size:18px;">${marksNeeded.toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</div></div>
+              <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_as_advanced"))}</div><div class="val" style="font-size:18px;">${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">1 ${esc(materialDisplayName("Advanced Marks"))} = ${ADVANCED_MARK_VALUE} ${esc(materialDisplayName("Common Marks"))}</div></div>
+            </div>
+            <details style="margin-top:10px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("marks_per_pet"))}</summary>
+              <div style="font-size:11px; margin-top:4px; line-height:1.6;">${Object.keys(perPet).filter((pt) => perPet[pt] > 0).sort((a, b) => perPet[b] - perPet[a]).map((pt) => `${esc(dataName(pt))}: <b>${Math.ceil(perPet[pt] * (1 + (PET_MARKS_STATE.adjust || 0) / 100)).toLocaleString()}</b>`).join("<br>") || `<span class="meta">${esc(t("marks_none"))}</span>`}</div>
+            </details>
+          </div>
+        </div>
+        <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
+          <h2 style="font-size:13px;">${esc(t("backpack_title"))}</h2>
+          <div id="refineMarksBar"></div>
+        </div>
+      </div>
     `;
+    renderChiefGearResourcesBar("refineMarksBar", { "Common Marks": marksNeeded }, ["Common Marks", "Advanced Marks"], renderTotals, "pets_refine");
+    const totalsEl = document.getElementById("refineTotals");
+    totalsEl.querySelectorAll("[data-marksrate]").forEach((b) => b.addEventListener("click", async () => {
+      const st = b.dataset.marksrate;
+      rates[st] = Math.max(0, Math.round(((Number(rates[st]) || 0) + Number(b.dataset.delta)) * 100) / 100);
+      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      renderTotals();
+    }));
+    totalsEl.querySelectorAll("[data-marksrateinput]").forEach((inp) => inp.addEventListener("change", async () => {
+      const v = Number(String(inp.value).replace(/[^0-9.]/g, ""));
+      if (Number.isFinite(v)) rates[inp.dataset.marksrateinput] = Math.max(0, v);
+      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      renderTotals();
+    }));
+    totalsEl.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
+      PET_MARKS_STATE.adjust = Math.max(-90, Math.min(300, (PET_MARKS_STATE.adjust || 0) + Number(b.dataset.marksadjust)));
+      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      renderTotals();
+    }));
   }
 
   const TIER_ORDER = ["First", "N", "R", "SR", "SRR", "UR"];
