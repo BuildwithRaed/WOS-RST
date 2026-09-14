@@ -1026,7 +1026,7 @@ const MATERIAL_LABEL_KEYS = {
   "polishing solution": "material_polishing_solution", polish: "material_polishing_solution",
   "design plan": "material_design_plan", design: "material_design_plan",
   amber: "material_amber",
-  "chief gear chest": "material_chief_gear_chest",
+  "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest",
   "charm guides": "material_charm_guides", "charm designs": "material_charm_designs",
   "jewel secrets": "material_jewel_secrets",
   "xp component": "material_xp_component", "essence stones": "material_essence_stones",
@@ -1363,6 +1363,8 @@ const T = {
   material_polishing_solution: { en: "Polish", ar: "\u0645\u062d\u0644\u0648\u0644 \u062a\u0644\u0645\u064a\u0639", ko: "\uc5f0\ub9c8\uc81c" },
   material_design_plan: { en: "Design", ar: "\u0645\u062e\u0637\u0637 \u062a\u0635\u0645\u064a\u0645", ko: "\uc124\uacc4\ub3c4" },
   material_amber: { en: "Amber", ar: "\u0643\u0647\u0631\u0645\u0627\u0646", ko: "\ud638\ubc15" },
+  material_fire_crystal: { en: "Fire Crystal", ar: "بلورة النار", ko: "화염 결정" },
+  material_fc_chest: { en: "FC Chest", ar: "صندوق بلورة النار", ko: "화염 결정 상자" },
   material_chief_gear_chest: { en: "Chief Gear Chest", ar: "صندوق معدات القائد", ko: "족장 장비 상자" },
   material_charm_guides: { en: "Charm Guides", ar: "\u0623\u062f\u0644\u0629 \u0627\u0644\u062a\u0639\u0627\u0648\u064a\u0630", ko: "\ucc38 \uac00\uc774\ub4dc" },
   material_charm_designs: { en: "Charm Designs", ar: "\u062a\u0635\u0627\u0645\u064a\u0645 \u0627\u0644\u062a\u0639\u0627\u0648\u064a\u0630", ko: "\ucc38 \ub514\uc790\uc778" },
@@ -1480,6 +1482,10 @@ const T = {
   pack_same_as: { en: "Same plan as", ar: "نفس خطة", ko: "다음과 동일한 계획:" },
   pack_all_option: { en: "all", ar: "الكل", ko: "전부" },
   pack_by: { en: "by", ar: "بحلول", ko: "까지" },
+  pack_presets_button: { en: "Add game packs", ar: "إضافة حزم اللعبة", ko: "게임 패키지 추가" },
+  pack_presets_title: { en: "Adds the weekly benefit cards, weekly/monthly cards and calendar packs (Troops Training, Tech Storm, Fire Crystal Building, Hall of Chiefs, Mix & Match, Custom Pet Chest) as ready-made tables. Existing ones are skipped.", ar: "يضيف بطاقات المزايا الأسبوعية وبطاقات الأسبوع/الشهر وحزم التقويم كجداول جاهزة. يتم تخطي الموجود منها.", ko: "주간 혜택 카드, 주간/월간 카드, 캘린더 패키지를 미리 만들어진 표로 추가합니다. 이미 있는 것은 건너뜁니다." },
+  pack_presets_added: { en: "tables added", ar: "جداول أُضيفت", ko: "개 표 추가됨" },
+  pack_presets_none: { en: "All game pack tables are already here.", ar: "كل جداول حزم اللعبة موجودة بالفعل.", ko: "게임 패키지 표가 이미 모두 있습니다." },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -3518,7 +3524,10 @@ async function renderPacksPage() {
         <h2>${esc(t("packs_title"))}</h2>
         <p class="desc">${esc(t("packs_desc"))}</p>
       </div>
-      <button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>
+      <span style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn ghost" id="packsAddPresets" title="${esc(t("pack_presets_title"))}">${esc(t("pack_presets_button"))}</button>
+        <button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>
+      </span>
     </div>
     <div id="packsList"></div>
   `;
@@ -4186,6 +4195,14 @@ async function renderPacksPage() {
     });
   }
 
+  document.getElementById("packsAddPresets").addEventListener("click", async () => {
+    const btn = document.getElementById("packsAddPresets");
+    btn.disabled = true;
+    const added = await packAddPresets(tables);
+    btn.disabled = false;
+    toast(added ? `${added} ${t("pack_presets_added")}` : t("pack_presets_none"));
+    if (added) renderPacksPage();
+  });
   document.getElementById("packsAddTable").addEventListener("click", async () => {
     tables.unshift({
       id: `new-${Date.now()}`,
@@ -4876,6 +4893,7 @@ const PACK_RESOURCE_NAMES = [
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Charm Chest",
+  "Fire Crystal", "FC Chest",
 ];
 // Bundle resources: a pack column can grant a chest that opens into several
 // materials. One Chief Gear Chest = 1 Design Plan, 4 Polishing Solution and
@@ -4899,12 +4917,16 @@ const PACK_BUNDLES = {
   //                      -> 1.545 Guides and 1.545 Designs per chest
   "Lucky Gear Chest": { "Mythic Gear": 0.016 },
   "Random Charm Chest": { "Charm Guides": 15 * 0.005 + 8 * 0.03 + 4 * 0.15 + 2 * 0.315, "Charm Designs": 15 * 0.005 + 8 * 0.03 + 4 * 0.15 + 2 * 0.315 },
+  //  FC Chest: x100 0.4% / x60 0.8% / x40 1.6% / x20 2.5% / x10 8.5% / x5 86.2%
+  //            -> 7.18 Fire Crystal per chest on average
+  "FC Chest": { "Fire Crystal": 100 * 0.004 + 60 * 0.008 + 40 * 0.016 + 20 * 0.025 + 10 * 0.085 + 5 * 0.862 },
 };
 // Shown on the Packs page for chance-based chests, so the numbers are
 // understood as averages over many chests, not guaranteed drops.
 const PACK_BUNDLE_NOTES = {
   "Lucky Gear Chest": "1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.",
   "Random Charm Chest": "Guides: x15 0.5%, x8 3%, x4 15%, x2 31.5%; Designs: same odds → counted as ≈1.55 Guides and ≈1.55 Designs per chest (average).",
+  "FC Chest": "x100 0.4%, x60 0.8%, x40 1.6%, x20 2.5%, x10 8.5%, x5 86.2% → counted as 7.18 Fire Crystal per chest (average).",
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
@@ -4915,7 +4937,8 @@ function packBundleContents(name) {
 // the dropdowns. A column that already has one of these keeps it.
 const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component"]);
 function packResourceChoices(current) {
-  return PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) || (current && n.toLowerCase() === String(current).toLowerCase()));
+  return PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) || (current && n.toLowerCase() === String(current).toLowerCase()))
+    .sort((a, b) => materialDisplayName(a).localeCompare(materialDisplayName(b), undefined, { numeric: true, sensitivity: "base" }));
 }
 // Columns named "Gems" (or the price column) never grant a trackable
 // resource, so they're skipped everywhere a resource is chosen.
@@ -5723,6 +5746,62 @@ function packFmtMoney(n, currency, whole) {
 }
 
 
+
+
+// ============================================================
+// PACK PRESETS
+// Ready-made pack tables (the in-game weekly cards and calendar packs),
+// added from the Packs page with one click. Only tables whose title+group
+// isn't there yet are created, so it's safe to press again.
+// ============================================================
+const PACK_PRESET_TABLES = (() => {
+  const ladder5 = (cols) => cols.map((c, i) => ({ cells: [["4.99", "9.99", "19.99", "49.99", "99.99"][i], ...c.map(String)] }));
+  const W = { reset: 7 };
+  const benefit = "Weekly Benefit Card", cards = "Weekly/Monthly Cards", cal = "Weekly/Monthly Calendar Packs";
+  return [
+    // ---- Weekly benefit cards (two independent tiers, weekly) ----
+    { title: "Building Benefit Card", group: benefit, columns: ["$", "Speedup 1h", "Steel", "Gems"], rows: [{ cells: ["4.99", "47", "40000", "2500"] }, { cells: ["9.99", "107", "100000", "5000"] }], link: { ...W, pages: ["research_center", "t11_helios", "t12_research"] } },
+    { title: "Pets Benefit Card", group: benefit, columns: ["$", "Food", "Pet Custom Chest", "Gems"], rows: [{ cells: ["4.99", "14000", "16", "2500"] }, { cells: ["9.99", "27500", "40", "5000"] }], link: { ...W, pages: ["pets"] } },
+    { title: "Hero Gear Benefit Card", group: benefit, columns: ["$", "Essence Stones", "Lucky Gear Chest", "Gems"], rows: [{ cells: ["4.99", "25", "36", "2500"] }, { cells: ["9.99", "58", "84", "5000"] }], link: { ...W, pages: ["hero_gear"] } },
+    { title: "Chief Gear Benefit Card", group: benefit, columns: ["$", "Design Plan", "Chief Gear Chest", "Random Chest", "Gems"], rows: [{ cells: ["4.99", "50", "39", "2", "2500"] }, { cells: ["9.99", "110", "97", "5", "5000"] }], link: { ...W, pages: ["chief_gear"] } },
+    { title: "Chief Charm Benefit Card", group: benefit, columns: ["$", "Charm Designs", "Charm Guides", "Random Charm Chest", "Gems"], rows: [{ cells: ["4.99", "60", "60", "6", "2500"] }, { cells: ["9.99", "150", "150", "8", "5000"] }], link: { ...W, pages: ["charm"] } },
+    // ---- Weekly/monthly cards (single tier, weekly) ----
+    { title: "Fire Crystal Weekly Card", group: cards, columns: ["$", "FC Chest", "Fire Crystal", "Gems", "Fire Crystal"], rows: [{ cells: ["4.99", "1", "8", "100", "25"] }], link: { ...W, pages: [] } },
+    { title: "Fire Crystal Shard Weekly Card", group: cards, columns: ["$", "Steel", "FC Shard", "Gems", "FCS"], rows: [{ cells: ["4.99", "20000", "36", "100", "26"] }], link: { ...W, pages: ["t11_helios", "t12_research"] } },
+    { title: "Speedup Weekly Card", group: cards, columns: ["$", "Speedup 1h", "Speedup 5m", "Speedup 1m"], rows: [{ cells: ["4.99", "8", "48", "60"] }], link: { ...W, pages: ["experts", "experts_research"] } },
+    { title: "Gear Weekly Card", group: cards, columns: ["$", "Lucky Gear Chest", "Essence Stones", "XP 100", "Lucky Gear Chest"], rows: [{ cells: ["4.99", "5", "1", "12", "7"] }], link: { ...W, pages: ["hero_gear"] } },
+    // ---- Calendar packs (5-tier ladders, weekly) ----
+    { title: "Troops Training", group: cal, columns: ["$", "Speedup 1h", "Speedup 5m", "Gems"], rows: ladder5([[44, 120, 2500], [88, 240, 5000], [176, 480, 10000], [440, 1200, 25000], [880, 2400, 50000]]), link: { ...W, sequential: true, pages: ["experts", "experts_research"] } },
+    { title: "Tech Storm", group: cal, columns: ["$", "Speedup 1h", "Speedup 5m", "Gems"], rows: ladder5([[20, 180, 2500], [40, 360, 5000], [80, 720, 10000], [200, 1800, 25000], [400, 3600, 50000]]), link: { ...W, sequential: true, pages: ["experts", "experts_research"] } },
+    { title: "Fire Crystal Building", group: cal, columns: ["$", "Fire Crystal", "Speedups", "Gems"], rows: ladder5([[60, 35, 2500], [120, 70, 5000], [240, 140, 10000], [600, 350, 25000], [1200, 700, 50000]]), link: { ...W, sequential: true, pages: [] } },
+    { title: "Hall of Chiefs", group: cal, columns: ["$", "Speedup 1h", "Speedup 5m", "Gems"], rows: ladder5([[40, 135, 2500], [80, 270, 5000], [160, 540, 10000], [400, 1350, 25000], [800, 2700, 50000]]), link: { ...W, sequential: true, pages: ["experts", "experts_research"] } },
+    // ---- Mix & Match: one ladder, pick one option per tier ----
+    ...[["Fire Crystal", [30, 60, 120, 300, 600]], ["1Hr Construction Speeds", [22, 44, 88, 220, 440]], ["1Hr Research Speeds", [22, 44, 88, 220, 440]], ["1Hr Troops Speeds", [22, 44, 88, 220, 440]], ["Design Plan", [24, 48, 96, 240, 480]], ["Chief Gear Chest", [12, 24, 48, 120, 240]], ["Steel", [25000, 50000, 100000, 250000, 500000]]]
+      .map(([col, vals]) => ({ title: "Mix & Match", group: "Mix & Match", columns: ["$", col], rows: ladder5(vals.map((v) => [v])), link: { ...W, sequential: true, option: true, pages: col === "Design Plan" || col === "Chief Gear Chest" ? ["chief_gear"] : col === "Steel" ? ["research_center", "t11_helios", "t12_research"] : [] } })),
+    // ---- Custom Pet Chest: one ladder, pick one option per tier ----
+    ...[["Food", [5000, 10000, 20000, 50000, 100000]], ["Pet Chest", [6, 12, 24, 60, 120]], ["Common Marks", [16, 32, 64, 160, 320]], ["Advanced Marks", [2, 4, 8, 20, 40]]]
+      .map(([col, vals]) => ({ title: "Custom Pet Chest", group: "Custom Pet Chest", columns: ["$", col], rows: ladder5(vals.map((v) => [v])), link: { ...W, sequential: true, option: true, pages: ["pets"] } })),
+  ];
+})();
+// Creates the preset tables that don't exist yet. Returns how many were added.
+async function packAddPresets(existingTables) {
+  await ensurePackLinks();
+  const have = new Set(existingTables.map((tb) => `${(packLinkFor(tb.id).group || "").toLowerCase()}|${String(tb.title || "").toLowerCase()}|${(tb.columns || []).join(",").toLowerCase()}`));
+  let added = 0, order = existingTables.length;
+  for (const p of PACK_PRESET_TABLES) {
+    const key = `${p.group.toLowerCase()}|${p.title.toLowerCase()}|${p.columns.join(",").toLowerCase()}`;
+    if (have.has(key)) continue;
+    const payload = { title: p.title, columns: p.columns.slice(), rows: p.rows.map((r) => ({ ...r, cells: r.cells.slice() })), sort_order: order++, scale_enabled: false, updated_at: new Date().toISOString() };
+    let saved;
+    try { [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) }); }
+    catch (err) { toast("Couldn't add preset tables", true); break; }
+    PACK_LINKS[String(saved.id)] = { pages: p.link.pages || [], priceCol: 0, cols: {}, sequential: !!p.link.sequential, option: !!p.link.option, choice: false, reset: p.link.reset, group: p.group, currency: "USD", buys: 1 };
+    have.add(key); added++;
+  }
+  await savePackLinks();
+  PACK_TABLES_CACHE = null;
+  return added;
+}
 
 // ============================================================
 // ITEM TRADES
