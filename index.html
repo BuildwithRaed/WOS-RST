@@ -5843,11 +5843,10 @@ function packPickCheapest(plans) {
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};     // per page; hidden on every load until opened
 const PACK_TARGET_CACHE = {};  // per page target date (ISO yyyy-mm-dd), from calc_state
-// Pages whose Pack cost block only the owner can see.
-const PACK_COST_OWNER_ONLY = new Set(["chief_gear"]);
+// The Pack cost block is owner-only on every page.
 async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!containerEl) return;
-  if (!IS_OWNER && PACK_COST_OWNER_ONLY.has(calcKey)) { containerEl.innerHTML = ""; return; }
+  if (!IS_OWNER) { containerEl.innerHTML = ""; return; }
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
   if (!tables.length) { containerEl.innerHTML = ""; return; }
