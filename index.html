@@ -14322,6 +14322,13 @@ function renderOwnerLoginUI() {
     return;
   }
 
+  // The login button is not shown to visitors. It appears only when the
+  // page is opened with #admin at the end of the address (e.g.
+  // .../index.html#admin); that choice is remembered in this browser.
+  if (location.hash === "#admin") { try { localStorage.setItem("show_owner_login", "1"); } catch (e) {} }
+  let showLogin = false;
+  try { showLogin = localStorage.getItem("show_owner_login") === "1"; } catch (e) {}
+  if (!showLogin) { el.innerHTML = ""; return; }
   el.innerHTML = `<button class="btn ghost small" id="ownerLoginOpenBtn" style="width:100%;">${esc(t("owner_login"))}</button>`;
   document.getElementById("ownerLoginOpenBtn").addEventListener("click", () => {
     let modal = document.getElementById("ownerLoginModal");
