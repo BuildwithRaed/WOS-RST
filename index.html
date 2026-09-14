@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<!-- Content Security Policy: only this site, the Supabase library CDN and the
+     Supabase API may be loaded/contacted; no plugins; no base-URL hijacking. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self'" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,6 +20,10 @@
 <link rel="icon" type="image/png" sizes="192x192" href="pwa/icons/icon-192.png" />
 <link rel="apple-touch-icon" href="pwa/icons/apple-touch-icon.png" />
 <title>WOS RST</title>
+<script>
+  // Clickjacking protection: refuse to run inside another site's frame.
+  if (window.top !== window.self) { try { window.top.location = window.location; } catch (e) { document.documentElement.style.display = "none"; } }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   /* ============================================================
