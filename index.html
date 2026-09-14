@@ -1043,7 +1043,7 @@ const MATERIAL_LABEL_KEYS = {
   "design plan": "material_design_plan", design: "material_design_plan",
   amber: "material_amber",
   "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest",
-  "pet chest": "material_pet_chest", "common marks": "material_common_marks", "advanced marks": "material_advanced_marks", "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
+  "pet chest": "material_pet_chest", gems: "material_gems", "common marks": "material_common_marks", "advanced marks": "material_advanced_marks", "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
   "charm guides": "material_charm_guides", "charm designs": "material_charm_designs",
   "jewel secrets": "material_jewel_secrets",
   "xp component": "material_xp_component", "essence stones": "material_essence_stones",
@@ -1381,6 +1381,7 @@ const T = {
   material_polishing_solution: { en: "Polish", ar: "\u0645\u062d\u0644\u0648\u0644 \u062a\u0644\u0645\u064a\u0639", ko: "\uc5f0\ub9c8\uc81c" },
   material_design_plan: { en: "Design", ar: "\u0645\u062e\u0637\u0637 \u062a\u0635\u0645\u064a\u0645", ko: "\uc124\uacc4\ub3c4" },
   material_amber: { en: "Amber", ar: "\u0643\u0647\u0631\u0645\u0627\u0646", ko: "\ud638\ubc15" },
+  material_gems: { en: "Gems", ar: "الجواهر", ko: "보석" },
   material_common_marks: { en: "Common Marks", ar: "علامات عادية", ko: "일반 문장" },
   material_advanced_marks: { en: "Advanced Marks", ar: "علامات متقدمة", ko: "고급 문장" },
   material_pet_chest: { en: "Pet Chest", ar: "صندوق الحيوانات الأليفة", ko: "펫 상자" },
@@ -3744,7 +3745,14 @@ async function renderPacksPage() {
   // per-table custom ratio like FC/Speedups.
   // The Gems column is found by name (not assumed to be the last one).
   function gemsColOf(tb) {
-    return tb.columns.findIndex((c) => String(c || "").trim().toLowerCase() === "gems");
+    return tb.columns.findIndex((c) => /gem/i.test(String(c || "")));
+  }
+  // Gems for a price: the fixed game table, or the same 500-per-dollar
+  // rule for any other price (4.99 -> 2,500, 9.99 -> 5,000, 49.99 -> 25,000).
+  function gemsForPrice(amount) {
+    const key = Math.round(amount * 100) / 100;
+    if (AMOUNT_TO_GEMS[key] != null) return AMOUNT_TO_GEMS[key];
+    return Math.round((amount + 0.01) * 500);
   }
   function applyGemsLookup(panel, t, onlyRowIndex) {
     const lastCi = gemsColOf(t);
@@ -3752,27 +3760,30 @@ async function renderPacksPage() {
     panel.querySelectorAll("tbody tr").forEach((tr) => {
       const ri = Number(tr.dataset.row);
       if (onlyRowIndex != null && ri !== onlyRowIndex) return; // scoped to one row - leaves other rows' manual edits alone
-      const amount = parseNum(tr.querySelector('[data-pt-cell][data-col="0"]')?.value);
-      if (amount == null) return;
-      const key = Math.round(amount * 100) / 100;
-      if (AMOUNT_TO_GEMS[key] == null) return;
+      const amount = parseNum(tr.querySelector(`[data-pt-cell][data-col="${priceColOf(t)}"]`)?.value);
+      if (amount == null || amount <= 0) return;
       const gemsCell = tr.querySelector(`[data-pt-cell][data-col="${lastCi}"]`);
-      if (gemsCell) gemsCell.value = fmtQty(AMOUNT_TO_GEMS[key]);
+      if (gemsCell) gemsCell.value = fmtQty(gemsForPrice(amount));
     });
   }
   // Fills every OTHER column (not Gems, not Amount) using the ratio each
   // one holds to the Amount in Row 1 - only runs when Scale is on for
   // this table, since it assumes a fixed proportional relationship that
   // not every table's data actually follows.
+  // Every other column follows the game's tier multipliers, not the raw
+  // price ratio: the tiers 4.99 / 9.99 / 19.99 / 49.99 / 99.99 are x1, x2,
+  // x4, x10, x20 of the first (exactly like Gems 2,500 -> 5,000 -> 10,000
+  // -> 25,000 -> 50,000), so 12 in row 1 fills 24 / 48 / 120 / 240. The
+  // price column itself is never touched.
   function applyRatioScale(panel, t, onlyRowIndex) {
     const gemsCi = gemsColOf(t);
     const priceCi = priceColOf(t);
     const row0Amount = parseNum(panel.querySelector(`[data-pt-cell][data-row="0"][data-col="${priceCi}"]`)?.value);
     if (!row0Amount) return;
-    const ratios = t.columns.map((_, ci) => {
+    const base = t.columns.map((_, ci) => {
       if (ci === priceCi || ci === gemsCi) return null; // Amount and Gems are handled separately
       const v = parseNum(panel.querySelector(`[data-pt-cell][data-row="0"][data-col="${ci}"]`)?.value);
-      return v == null ? null : v / row0Amount;
+      return v == null ? null : v;
     });
     panel.querySelectorAll("tbody tr").forEach((tr) => {
       const ri = Number(tr.dataset.row);
@@ -3780,10 +3791,11 @@ async function renderPacksPage() {
       if (onlyRowIndex != null && ri !== onlyRowIndex) return; // scoped to one row - leaves other rows' manual edits alone
       const amount = parseNum(tr.querySelector(`[data-pt-cell][data-col="${priceCi}"]`)?.value);
       if (amount == null) return;
+      const mult = gemsForPrice(amount) / gemsForPrice(row0Amount);
       t.columns.forEach((_, ci) => {
-        if (ratios[ci] == null) return;
+        if (base[ci] == null) return;
         const cell = tr.querySelector(`[data-pt-cell][data-col="${ci}"]`);
-        if (cell) cell.value = fmtCell(t, ci, amount * ratios[ci]);
+        if (cell) cell.value = fmtCell(t, ci, base[ci] * mult);
       });
     });
   }
@@ -5012,7 +5024,8 @@ const PACK_PAGE_GROUPS = [
   { key: "chief_gear", pages: ["chief_gear"] },
   { key: "charm", pages: ["charm"] },
   { key: "hero_gear", pages: ["hero_gear"] },
-  { key: "pets_group", group: "Pets", pages: ["pets", "pets_refine"] },
+  { key: "pets", pages: ["pets"] },
+  { key: "pets_refine", pages: ["pets_refine"] },
   { key: "experts_group", group: "Experts", pages: ["experts", "experts_research"] },
   { key: "research_group", group: "Research", pages: ["research_center", "t11_helios", "t12_research"] },
 ];
@@ -5522,7 +5535,7 @@ function packShortAfterTrades(remaining, ctx) {
       if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
       spare[r.from] -= lots * r.give;
       short[to] = Math.max(0, short[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent });
     }
     if (short[to] <= 1e-9) delete short[to];
   });
@@ -5693,7 +5706,7 @@ function packCheapestPlanCompute(groups, need, days, calcKey, quick) {
     const perGroup = groups.map(() => 0);
     r.picks.forEach((p) => { perGroup[p.gi] += p.count; });
     const tr = packShortAfterTrades(remainingOf(r.picks), ctx);
-    r.trades = tr.trades;
+    r.trades = tr.trades.filter((x) => !x.silent);
     r.perGroup = perGroup;
     r.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(perGroup[gi] / g.perCycle)) : 0));
     return r;
@@ -6007,7 +6020,7 @@ const PACK_PRESET_TABLES = (() => {
     // ---- Custom Pet Chest: one ladder, each column is an option ----
     { title: "Custom Pet Chest", group: cal, columns: ["$", "Food", "Pet Chest", "Common Marks", "Advanced Marks"],
       rows: ladder5([[5000, 6, 16, 2], [10000, 12, 32, 4], [20000, 24, 64, 8], [50000, 60, 160, 20], [100000, 120, 320, 40]]),
-      link: { ...W, sequential: true, colOptions: true, pages: ["pets"] } },
+      link: { ...W, sequential: true, colOptions: true, pages: ["pets", "pets_refine"] } },
   ];
 })();
 // Creates the preset tables that don't exist yet. Returns how many were added.
@@ -6287,19 +6300,24 @@ const TRADE_DEFAULT_RATES = {
   ],
   // General speedups can be spent on research too (1:1, no limit). These
   // rates are hidden from the Trade block - they're a rule, not a trade.
-  research_center: [{ from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true }],
+  research_center: [{ from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true }],
   t11_helios: [
-    { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true },
+    { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 }, // Research Lab: 1 FC = 1.3 shards
   ],
   t12_research: [
-    { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true },
+    { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 },
   ],
   // A Pet Chest opens into ONE of these (your choice): the planner turns
   // chests into whichever the plan is short of. Hidden - a rule, not a trade.
-  // Advanced Marks are worth 8 Common Marks each (refine only).
-  pets_refine: [{ from: "Advanced Marks", to: "Common Marks", give: 1, get: 8, max: 0, hidden: true }],
+  // Refine: Advanced Marks are simply spent at 8 Common each (not a trade),
+  // and 500 of the Gems YOU OWN buy 1 Common Mark (packs' gems don't
+  // count). Both hidden - rules, not trades.
+  pets_refine: [
+    { from: "Advanced Marks", to: "Common Marks", give: 1, get: 8, max: 0, hidden: true, silent: true },
+    { from: "Gems", to: "Common Marks", give: 500, get: 1, max: 0, hidden: true, silent: true },
+  ],
   pets: [
     { from: "Pet Chest", to: "Manual", give: 1, get: 7, max: 0, hidden: true },
     { from: "Pet Chest", to: "Potion", give: 1, get: 2, max: 0, hidden: true },
@@ -6397,7 +6415,7 @@ function applyTrades(rates, need, owned, weeks) {
       usedLots.set(r, (usedLots.get(r) || 0) + lots);
       spare[r.from] -= lots * r.give;
       after[to] = Math.max(0, after[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent });
     }
   });
   Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
@@ -6415,7 +6433,7 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
-  return { still, trades: res.trades, weeks: res.weeks };
+  return { still, trades: res.trades.filter((x) => !x.silent), weeks: res.weeks };
 }
 // When a needed item isn't sold by any assigned pack but can be traded
 // for from something that is, the need is converted into the source item
@@ -10701,7 +10719,7 @@ async function renderRefinePage() {
             </div>
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
               <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_needed"))}</div><div class="val" style="font-size:18px;">${marksNeeded.toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</div></div>
-              <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_as_advanced"))}</div><div class="val" style="font-size:18px;">${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">1 ${esc(materialDisplayName("Advanced Marks"))} = ${ADVANCED_MARK_VALUE} ${esc(materialDisplayName("Common Marks"))}</div></div>
+              <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_as_advanced"))}</div><div class="val" style="font-size:18px;">${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">1 ${esc(materialDisplayName("Advanced Marks"))} = ${ADVANCED_MARK_VALUE} ${esc(materialDisplayName("Common Marks"))} · 500 ${esc(materialDisplayName("Gems"))} = 1</div></div>
             </div>
             <details style="margin-top:10px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("marks_per_pet"))}</summary>
               <div style="font-size:11px; margin-top:4px; line-height:1.6;">${Object.keys(perPet).filter((pt) => perPet[pt] > 0).sort((a, b) => perPet[b] - perPet[a]).map((pt) => `${esc(dataName(pt))}: <b>${Math.ceil(perPet[pt] * (1 + (PET_MARKS_STATE.adjust || 0) / 100)).toLocaleString()}</b>`).join("<br>") || `<span class="meta">${esc(t("marks_none"))}</span>`}</div>
@@ -10714,7 +10732,7 @@ async function renderRefinePage() {
         </div>
       </div>
     `;
-    renderChiefGearResourcesBar("refineMarksBar", { "Common Marks": marksNeeded }, ["Common Marks", "Advanced Marks"], renderTotals, "pets_refine");
+    renderChiefGearResourcesBar("refineMarksBar", { "Common Marks": marksNeeded }, ["Common Marks", "Advanced Marks", "Gems"], renderTotals, "pets_refine");
     const totalsEl = document.getElementById("refineTotals");
     totalsEl.querySelectorAll("[data-marksrate]").forEach((b) => b.addEventListener("click", async () => {
       const st = b.dataset.marksrate;
