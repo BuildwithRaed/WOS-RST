@@ -1501,6 +1501,7 @@ const T = {
   rfc_use: { en: "Use", ar: "استخدم", ko: "사용" },
   fcs_title: { en: "Fire Crystal → Fire Crystal Shards", ar: "بلورة النار ← شظايا بلورة النار", ko: "화염 결정 → 화염 결정 조각" },
   fcs_desc: { en: "1 Fire Crystal converts to 1.3 shards. Shards are used by T11 Helios and T12 research; the pack cost on those pages also counts Fire Crystal packs at this rate.", ar: "1 بلورة نار = 1.3 شظية. تُستخدم الشظايا في أبحاث T11 Helios وT12؛ وتحسب تكلفة الحزم في تلك الصفحات حزم بلورة النار بهذا المعدل أيضًا.", ko: "화염 결정 1개 = 조각 1.3개. 조각은 T11 헬리오스와 T12 연구에 쓰이며, 해당 페이지의 패키지 비용도 이 비율로 화염 결정 패키지를 반영합니다." },
+  fcs_simple_desc: { en: "Type Fire Crystal to see the shards you get, or type the shards you need to see the Fire Crystal to convert (1 FC = 1.3 FCS). Shards are used by T11 Helios and T12; their pack cost counts Fire Crystal packs at this rate.", ar: "اكتب بلورة النار لترى الشظايا التي ستحصل عليها، أو اكتب الشظايا المطلوبة لترى بلورة النار اللازمة (1 FC = 1.3 FCS). تُستخدم الشظايا في T11 Helios وT12؛ وتحتسب تكلفة الحزم هناك حزم بلورة النار بهذا المعدل.", ko: "화염 결정을 입력하면 얻는 조각을, 필요한 조각을 입력하면 변환할 화염 결정을 보여줍니다 (1 FC = 1.3 FCS). 조각은 T11 헬리오스와 T12에 쓰이며 패키지 비용도 이 비율로 반영됩니다." },
   fcs_need: { en: "Shards needed", ar: "الشظايا المطلوبة", ko: "필요한 조각" },
   fcs_from_pages: { en: "from T11/T12:", ar: "من T11/T12:", ko: "T11/T12 기준:" },
   fcs_owned: { en: "Shards you own", ar: "الشظايا التي تملكها", ko: "보유 조각" },
@@ -1521,6 +1522,15 @@ const T = {
   rfc_day: { en: "day", ar: "اليوم", ko: "일차" },
   rfc_days: { en: "days", ar: "الأيام", ko: "일차" },
   rfc_current: { en: "your current plan", ar: "خطتك الحالية", ko: "현재 계획" },
+  rfc_step_need: { en: "How much Refined FC do you need?", ar: "كم تحتاج من البلورة المكرّرة؟", ko: "정제 결정이 얼마나 필요한가요?" },
+  rfc_step_need_desc: { en: "Leave the first box empty to use the T12 Research page's total.", ar: "اترك الخانة الأولى فارغة لاستخدام إجمالي صفحة أبحاث T12.", ko: "첫 칸을 비우면 T12 연구 페이지의 합계를 사용합니다." },
+  rfc_step_plan: { en: "How will you convert each week?", ar: "كيف ستحوّل كل أسبوع؟", ko: "매주 어떻게 변환할까요?" },
+  rfc_step_plan_desc: { en: "Pick the highest tier you'll reach and how many times you'll use it per week; the lower tiers are done in full (20×) to unlock it.", ar: "اختر أعلى مستوى ستصله وعدد مرات استخدامه أسبوعيًا؛ تُنجز المستويات الأدنى كاملة (20×) لفتحه.", ko: "도달할 최고 단계와 주당 사용 횟수를 고르세요. 아래 단계는 해금을 위해 전부(20회) 진행합니다." },
+  rfc_per_attempt: { en: "per attempt", ar: "لكل محاولة", ko: "회당" },
+  rfc_attempts_of: { en: "Attempts of", ar: "محاولات", ko: "시도 횟수:" },
+  rfc_per_week: { en: "per week", ar: "أسبوعيًا", ko: "/주" },
+  rfc_or_budget: { en: "Or: FC you can spend per week", ar: "أو: FC التي يمكنك إنفاقها أسبوعيًا", ko: "또는: 주당 사용 가능한 FC" },
+  rfc_or_budget_hint: { en: "Optional — shows the plan that gives the most Refined FC for that budget, with a button to use it.", ar: "اختياري — يعرض الخطة التي تمنح أكبر كمية مكرّرة لهذه الميزانية مع زر لاستخدامها.", ko: "선택 — 해당 예산으로 정제 결정을 가장 많이 얻는 계획과 적용 버튼을 보여줍니다." },
   rfc_inputs: { en: "Your numbers", ar: "أرقامك", ko: "내 수치" },
   rfc_budget: { en: "FC you can spend per week (optional)", ar: "FC التي يمكنك إنفاقها أسبوعيًا (اختياري)", ko: "주당 사용 가능한 FC (선택)" },
   rfc_need: { en: "Refined FC needed", ar: "البلورة المكرّرة المطلوبة", ko: "필요한 정제 결정" },
@@ -6088,14 +6098,38 @@ async function renderRfcLabPage() {
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("rfc_title"))}</h2><p class="desc">${esc(t("rfc_desc"))}</p></div></div>
     <div class="panel" style="margin-bottom:16px;">
-      <h2>${esc(t("rfc_inputs"))}</h2>
-      <div style="display:flex; gap:14px 24px; flex-wrap:wrap; align-items:flex-end;">
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_top_tier"))}</span><select data-rfcsel="top" style="width:140px; padding:8px 10px; font-size:14px;">${RFC_LAB_TIERS.map((tr) => `<option value="${tr.tier}" ${tr.tier === st.top ? "selected" : ""}>T${tr.tier} (${tr.cost} FC)</option>`).join("")}</select></label>
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_budget"))}</span><input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_attempts"))} T${st.top}</span><select data-rfcsel="attempts" style="width:140px; padding:8px 10px; font-size:14px;">${Array.from({ length: RFC_LAB_MAX_PER_TIER }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === st.attempts ? "selected" : ""}>${n}</option>`).join("")}</select></label>
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_need"))}${!st.need && pageNeed ? ` <span style="color:var(--ice);">(${esc(t("rfc_from_pages"))} ${fmt(pageNeed)})</span>` : ""}</span><input type="text" inputmode="numeric" data-rfc="need" value="${st.need || ""}" placeholder="${fmt(pageNeed)}" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_owned"))}</span><input type="text" inputmode="numeric" data-rfc="owned" value="${st.owned || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
-        <div class="metric" style="padding:8px 12px; min-width:120px;"><div class="label" style="font-size:9px;">${esc(t("rfc_still_needed"))}</div><div class="val" style="font-size:16px; color:${need > 0 ? "var(--danger)" : "var(--good)"};">${fmt(need)}</div></div>
+      <h2>${esc(t("fcs_title"))}</h2>
+      <p class="desc">${esc(t("fcs_simple_desc"))}</p>
+      <div style="display:flex; gap:10px 14px; flex-wrap:wrap; align-items:center;">
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(materialDisplayName("Fire Crystal"))}</span><input type="text" inputmode="numeric" data-fcconv="fc" value="${st.fcHave || ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" /></label>
+        <span style="font-size:18px; color:var(--muted);">⇄</span>
+        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(materialDisplayName("FC Shard"))}</span><input type="text" inputmode="numeric" data-fcconv="fcs" value="${st.fcHave ? fmt(Math.floor(st.fcHave * FCS_PER_FC)) : ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" /></label>
+        <span class="meta" style="font-size:11px;">1 FC = ${FCS_PER_FC} FCS</span>
+      </div>
+    </div>
+    <div class="grid g2" style="align-items:stretch; gap:16px; margin-bottom:16px;">
+      <div class="panel">
+        <h2 style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; align-items:center; justify-content:center;">1</span>${esc(t("rfc_step_need"))}</h2>
+        <p class="desc" style="font-size:11px;">${esc(t("rfc_step_need_desc"))}</p>
+        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:flex-end;">
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_need"))}</span><input type="text" inputmode="numeric" data-rfc="need" value="${st.need || ""}" placeholder="${fmt(pageNeed)}" style="width:130px; padding:8px 10px; font-size:14px;" />${!st.need && pageNeed ? `<span class="meta" style="font-size:10px; color:var(--ice);">${esc(t("rfc_from_pages"))} ${fmt(pageNeed)}</span>` : ""}</label>
+          <span style="font-size:16px; color:var(--muted); padding-bottom:10px;">&minus;</span>
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_owned"))}</span><input type="text" inputmode="numeric" data-rfc="owned" value="${st.owned || ""}" placeholder="0" style="width:130px; padding:8px 10px; font-size:14px;" /></label>
+          <span style="font-size:16px; color:var(--muted); padding-bottom:10px;">=</span>
+          <div class="metric" style="padding:8px 12px; min-width:110px;"><div class="label" style="font-size:9px;">${esc(t("rfc_still_needed"))}</div><div class="val" style="font-size:18px; color:${need > 0 ? "var(--danger)" : "var(--good)"};">${fmt(need)}</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2 style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; align-items:center; justify-content:center;">2</span>${esc(t("rfc_step_plan"))}</h2>
+        <p class="desc" style="font-size:11px;">${esc(t("rfc_step_plan_desc"))}</p>
+        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:flex-end;">
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_top_tier"))}</span><select data-rfcsel="top" style="width:200px; padding:8px 10px; font-size:14px;">${RFC_LAB_TIERS.map((tr) => `<option value="${tr.tier}" ${tr.tier === st.top ? "selected" : ""}>T${tr.tier} — ${tr.cost} FC ${esc(t("rfc_per_attempt"))}</option>`).join("")}</select></label>
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_attempts_of"))} T${st.top} ${esc(t("rfc_per_week"))}</span><select data-rfcsel="attempts" style="width:110px; padding:8px 10px; font-size:14px;">${Array.from({ length: RFC_LAB_MAX_PER_TIER }, (_, i) => i + 1).map((n) => `<option value="${n}" ${n === st.attempts ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        </div>
+        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:flex-end; margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
+          <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("rfc_or_budget"))}</span><input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" /></label>
+          <span class="meta" style="font-size:10.5px; max-width:260px; padding-bottom:8px;">${esc(t("rfc_or_budget_hint"))}</span>
+        </div>
       </div>
     </div>
     <div class="grid g2" style="align-items:start; gap:16px;">
@@ -6135,30 +6169,17 @@ async function renderRfcLabPage() {
       </div>
     </div>
     <div class="panel" style="margin-top:16px;">
-      <h2>${esc(t("fcs_title"))}</h2>
-      <p class="desc">${esc(t("fcs_desc"))}</p>
-      ${(() => {
-        const fcsNeed = Math.max(0, (st.fcsNeed || pageFcs) - (st.fcsOwned || 0));
-        const fcFor = Math.ceil(fcsNeed / FCS_PER_FC);
-        const fcsFrom = Math.floor((st.fcHave || 0) * FCS_PER_FC);
-        return `
-      <div style="display:flex; gap:14px 24px; flex-wrap:wrap; align-items:flex-end;">
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("fcs_need"))}${!st.fcsNeed && pageFcs ? ` <span style="color:var(--ice);">(${esc(t("fcs_from_pages"))} ${fmt(pageFcs)})</span>` : ""}</span><input type="text" inputmode="numeric" data-rfc="fcsNeed" value="${st.fcsNeed || ""}" placeholder="${fmt(pageFcs)}" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("fcs_owned"))}</span><input type="text" inputmode="numeric" data-rfc="fcsOwned" value="${st.fcsOwned || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
-        <div class="metric" style="padding:8px 12px; min-width:120px;"><div class="label" style="font-size:9px;">${esc(t("fcs_still"))}</div><div class="val" style="font-size:16px; color:${fcsNeed > 0 ? "var(--danger)" : "var(--good)"};">${fmt(fcsNeed)}</div></div>
-        <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("fcs_fc_required"))}</div><div class="val" style="font-size:16px;">${fmt(fcFor)} FC</div><div class="meta" style="font-size:9px; margin-top:2px;">1 FC = ${FCS_PER_FC} FCS</div></div>
-      </div>
-      <div style="display:flex; gap:14px 24px; flex-wrap:wrap; align-items:flex-end; margin-top:12px; border-top:1px solid var(--line); padding-top:12px;">
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(t("fcs_fc_have"))}</span><input type="text" inputmode="numeric" data-rfc="fcHave" value="${st.fcHave || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" /></label>
-        <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("fcs_you_get"))}</div><div class="val" style="font-size:16px; color:var(--good);">${fmt(fcsFrom)} FCS</div></div>
-      </div>`;
-      })()}
-    </div>
-    <div class="panel" style="margin-top:16px;">
       <h2>${esc(t("rfc_strategies_title"))}</h2>
       <p class="desc">${esc(t("rfc_strategies_desc"))}</p>
       ${stratTable}
     </div>`;
+  // FC <-> shards: type in either box, the other follows (FC -> shards
+  // rounds down; shards -> FC rounds up, since you can't convert a fraction).
+  const fcIn = content.querySelector('[data-fcconv="fc"]'), fcsIn = content.querySelector('[data-fcconv="fcs"]');
+  const numOf = (el) => Math.max(0, Number(String(el.value).replace(/[^0-9.]/g, "")) || 0);
+  fcIn.addEventListener("input", () => { const v = numOf(fcIn); fcsIn.value = v ? fmt(Math.floor(v * FCS_PER_FC)) : ""; st.fcHave = v; });
+  fcsIn.addEventListener("input", () => { const v = numOf(fcsIn); const fc = v ? Math.ceil(v / FCS_PER_FC) : 0; fcIn.value = fc ? fmt(fc) : ""; st.fcHave = fc; });
+  [fcIn, fcsIn].forEach((el) => el.addEventListener("change", () => saveCalcState("rfc_lab", st)));
   content.querySelectorAll("[data-rfcsel]").forEach((sel) => sel.addEventListener("change", async () => {
     st[sel.dataset.rfcsel] = Number(sel.value);
     await saveCalcState("rfc_lab", st);
