@@ -7,6 +7,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="WOS RST" />
 <meta name="theme-color" content="#0b0f16" />
+<meta name="description" content="WOS RST — unofficial Whiteout Survival planner: chief gear, charms, hero gear, research, pets, experts and skins with cost and stat tracking." />
+<meta property="og:title" content="WOS RST — Whiteout Survival Raw Stats Tracker" />
+<meta property="og:description" content="Plan your Whiteout Survival upgrades: gear, charms, research, pets, experts and skins in one place." />
+<meta property="og:image" content="pwa/icons/icon-512.png" />
+<link rel="manifest" href="pwa/manifest.json" />
+<link rel="icon" type="image/png" sizes="192x192" href="pwa/icons/icon-192.png" />
+<link rel="apple-touch-icon" href="pwa/icons/apple-touch-icon.png" />
 <title>WOS RST</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
@@ -14443,6 +14450,11 @@ supabaseClient.auth.onAuthStateChange((event) => {
 
 // App entry point: establish (or restore) a session before anything else
 // runs, since every data call needs USER_ID / the session's access token.
+// Installable app: the service worker (pwa/sw.js) caches the page and icons
+// so the site opens from the home screen and survives a dropped connection.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+}
 (async function boot() {
   try {
     await ensureAuthSession();
