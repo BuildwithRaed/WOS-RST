@@ -1172,7 +1172,6 @@ const T = {
   commander: { en: "Commander", ar: "القائد", ko: "커맨더" },
   name_placeholder: { en: "Name", ar: "الاسم", ko: "이름" },
   save: { en: "Save", ar: "حفظ", ko: "저장" },
-  owner_login: { en: "Owner login", ar: "تسجيل دخول المالك", ko: "소유자 로그인" },
   account_pitch: { en: "Create a free account to keep your progress on every device.", ar: "أنشئ حسابًا مجانيًا للاحتفاظ بتقدمك على كل الأجهزة.", ko: "무료 계정을 만들면 모든 기기에서 진행 상황이 유지됩니다." },
   sign_in_or_create: { en: "Sign in / Create account", ar: "تسجيل الدخول / إنشاء حساب", ko: "로그인 / 계정 만들기" },
   signed_in_as: { en: "Signed in as", ar: "تم تسجيل الدخول باسم", ko: "로그인됨:" },
@@ -1192,7 +1191,6 @@ const T = {
   password_updated: { en: "Password updated.", ar: "تم تحديث كلمة المرور.", ko: "비밀번호가 변경되었습니다." },
   logged_in_owner: { en: "Logged in as owner", ar: "تم تسجيل الدخول كمالك", ko: "소유자로 로그인됨" },
   log_out: { en: "Log out", ar: "تسجيل الخروج", ko: "로그아웃" },
-  owner_login_desc: { en: "Log in to unlock Admin. First time here? Logging in with the owner email creates the account automatically.", ar: "سجّل الدخول لفتح لوحة الإدارة. أول مرة هنا؟ تسجيل الدخول ببريد المالك الإلكتروني ينشئ الحساب تلقائيًا.", ko: "관리자 기능을 사용하려면 로그인하세요. 처음이신가요? 소유자 이메일로 로그인하면 계정이 자동으로 생성됩니다." },
   email_placeholder: { en: "Email", ar: "البريد الإلكتروني", ko: "이메일" },
   password_placeholder: { en: "Password", ar: "كلمة المرور", ko: "비밀번호" },
   enter_both: { en: "Enter both email and password.", ar: "أدخل البريد الإلكتروني وكلمة المرور.", ko: "이메일과 비밀번호를 모두 입력하세요." },
@@ -1455,35 +1453,22 @@ const T = {
   level_prefix: { en: "Lv.", ar: "\u0627\u0644\u0645\u0633\u062a\u0648\u0649", ko: "\ub808\ubca8" },
   pack_used_for: { en: "Used for", ar: "\u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0644\u0640", ko: "\uc0ac\uc6a9 \ub300\uc0c1" },
   pack_used_for_desc: { en: "Pick the pages this table should price. Column names are set in the table header above.", ar: "اختر الصفحات التي يسعّرها هذا الجدول. تُضبط أسماء الأعمدة من رأس الجدول أعلاه.", ko: "이 표로 가격을 계산할 페이지를 고르세요. 열 이름은 위의 표 머리글에서 설정합니다." },
-  pack_price_column: { en: "Price column", ar: "\u0639\u0645\u0648\u062f \u0627\u0644\u0633\u0639\u0631", ko: "\uac00\uaca9 \uc5f4" },
   pack_col_unused: { en: "Not used", ar: "\u063a\u064a\u0631 \u0645\u0633\u062a\u062e\u062f\u0645", ko: "\uc0ac\uc6a9 \uc548 \ud568" },
   pack_cost_title: { en: "Pack cost", ar: "\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062d\u0632\u0645", ko: "\ud328\ud0a4\uc9c0 \ube44\uc6a9" },
   pack_mode_still: { en: "Still needed", ar: "\u0627\u0644\u0645\u062a\u0628\u0642\u0651\u064a", ko: "\ubd80\uc871\ud55c \ub7c9" },
   pack_mode_full: { en: "Full amount", ar: "\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0643\u0627\u0645\u0644\u0629", ko: "\uc804\uccb4 \ub7c9" },
-  pack_repeat_one: { en: "Same pack, repeated", ar: "\u0646\u0641\u0633 \u0627\u0644\u062d\u0632\u0645\u0629 \u0645\u0643\u0631\u0631\u0629", ko: "\uac19\uc740 \ud328\ud0a4\uc9c0 \ubc18\ubcf5" },
-  pack_cheapest_mix: { en: "Cheapest mix", ar: "\u0623\u0631\u062e\u0635 \u0645\u0632\u064a\u062c", ko: "\ucd5c\uc800\uac00 \uc870\ud569" },
-  pack_no_single_pack: { en: "No single pack covers everything", ar: "\u0644\u0627 \u062a\u0648\u062c\u062f \u062d\u0632\u0645\u0629 \u0648\u0627\u062d\u062f\u0629 \u062a\u063a\u0637\u064a \u0643\u0644 \u0634\u064a\u0621", ko: "\ud558\ub098\uc758 \ud328\ud0a4\uc9c0\ub85c\ub294 \ubaa8\ub450 \ucda9\ub2f9\ud560 \uc218 \uc5c6\uc74c" },
   pack_cant_cover: { en: "These packs can't cover it", ar: "\u0647\u0630\u0647 \u0627\u0644\u062d\u0632\u0645 \u0644\u0627 \u062a\u0643\u0641\u064a", ko: "\uc774 \ud328\ud0a4\uc9c0\ub85c\ub294 \ucda9\ub2f9\ud560 \uc218 \uc5c6\uc74c" },
   pack_nothing_needed: { en: "Nothing needed from this table", ar: "\u0644\u0627 \u062d\u0627\u062c\u0629 \u0644\u0634\u064a\u0621 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644", ko: "\uc774 \ud45c\uc5d0\uc11c \ud544\uc694\ud55c \uac83 \uc5c6\uc74c" },
   pack_no_columns: { en: "Label this table's columns on the Packs page first.", ar: "\u0641\u0636\u0644\u064b\u0627 \u0633\u0645\u0651\u0650 \u0623\u0639\u0645\u062f\u0629 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u062d\u0632\u0645 \u0623\u0648\u0644\u0627\u064b.", ko: "\uba3c\uc800 \ud328\ud0a4\uc9c0 \ud398\uc774\uc9c0\uc5d0\uc11c \uc774 \ud45c\uc758 \uc5f4\uc744 \uc9c0\uc815\ud558\uc138\uc694." },
-  pack_sequential: { en: "Must be bought in order", ar: "\u064a\u062c\u0628 \u0634\u0631\u0627\u0624\u0647\u0627 \u0628\u0627\u0644\u062a\u0631\u062a\u064a\u0628", ko: "\uc21c\uc11c\ub300\ub85c\ub9cc \uad6c\ub9e4 \uac00\ub2a5" },
-  pack_sequential_desc: { en: "Tick this when you have to start from the first price and work up. Leave it off when any tier can be bought on its own.", ar: "\u0641\u0639\u0651\u0644 \u0647\u0630\u0627 \u0625\u0630\u0627 \u0643\u0627\u0646 \u0639\u0644\u064a\u0643 \u0627\u0644\u0628\u062f\u0621 \u0645\u0646 \u0623\u0648\u0644 \u0633\u0639\u0631 \u062b\u0645 \u0627\u0644\u0635\u0639\u0648\u062f. \u0627\u062a\u0631\u0643\u0647 \u0645\u0639\u0637\u0651\u0644\u0627\u064b \u0625\u0630\u0627 \u0623\u0645\u0643\u0646 \u0634\u0631\u0627\u0621 \u0623\u064a \u0645\u0633\u062a\u0648\u0649 \u0628\u0645\u0641\u0631\u062f\u0647.", ko: "\uccab \uac00\uaca9\ubd80\ud130 \uc21c\uc11c\ub300\ub85c \uc0ac\uc57c \ud558\ub294 \uacbd\uc6b0 \uccb4\ud06c\ud558\uc138\uc694. \uac01 \ub2e8\uacc4\ub97c \ub530\ub85c \uc0b4 \uc218 \uc788\uc73c\uba74 \ub044\uc138\uc694." },
-  pack_buy_in_order: { en: "Buy in order", ar: "\u0627\u0644\u0634\u0631\u0627\u0621 \u0628\u0627\u0644\u062a\u0631\u062a\u064a\u0628", ko: "\uc21c\uc11c\ub300\ub85c \uad6c\ub9e4" },
   pack_ladder_short: { en: "Still short:", ar: "\u0645\u0627 \u0632\u0627\u0644 \u0646\u0627\u0642\u0635\u0627\u064b:", ko: "\uc544\uc9c1 \ubd80\uc871:" },
   pack_custom_name: { en: "Custom name\u2026", ar: "\u0627\u0633\u0645 \u0645\u062e\u0635\u0651\u0635\u2026", ko: "\uc9c1\uc811 \uc785\ub825\u2026" },
   pack_custom_name_prompt: { en: "Column name:", ar: "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u0648\u062f:", ko: "\uc5f4 \uc774\ub984:" },
   pack_currency: { en: "Currency", ar: "\u0627\u0644\u0639\u0645\u0644\u0629", ko: "\ud1b5\ud654" },
-  pack_single_pack: { en: "Cheapest single pack", ar: "\u0623\u0631\u062e\u0635 \u062d\u0632\u0645\u0629 \u0645\u0641\u0631\u062f\u0629", ko: "\ub2e8\uc77c \ud328\ud0a4\uc9c0 \ucd5c\uc800\uac00" },
   pack_up_to: { en: "up to", ar: "\u062d\u062a\u0649", ko: "\ucd5c\ub300" },
-  pack_grand_total: { en: "Total", ar: "\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a", ko: "\ucd1d\uc561" },
   pack_reset_every: { en: "Comes back", ar: "\u064a\u062a\u0643\u0631\u0631", ko: "\uc7ac\ub4f1\uc7a5" },
   pack_reset_desc: { en: "How often this pack can be bought again, and the next date it appears. Used to work out how long it takes to reach a target.", ar: "\u0643\u0645 \u0645\u0631\u0629 \u064a\u0645\u0643\u0646 \u0634\u0631\u0627\u0621 \u0647\u0630\u0647 \u0627\u0644\u062d\u0632\u0645\u0629 \u0645\u062c\u062f\u062f\u064b\u0627. \u064a\u064f\u0633\u062a\u062e\u062f\u0645 \u0644\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u062f\u0629 \u0627\u0644\u0644\u0627\u0632\u0645\u0629 \u0644\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0627\u0644\u0647\u062f\u0641.", ko: "\uc774 \ud328\ud0a4\uc9c0\ub97c \ub2e4\uc2dc \uc0b4 \uc218 \uc788\ub294 \uc8fc\uae30\uc785\ub2c8\ub2e4. \ubaa9\ud45c \ub3c4\ub2ec \uae30\uac04\uc744 \uacc4\uc0b0\ud558\ub294 \ub370 \uc0ac\uc6a9\ub429\ub2c8\ub2e4." },
   pack_reset_unlimited: { en: "Any time (no limit)", ar: "\u0641\u064a \u0623\u064a \u0648\u0642\u062a (\u0628\u0644\u0627 \u062d\u062f)", ko: "\uc5b8\uc81c\ub4e0\uc9c0 (\uc81c\ud55c \uc5c6\uc74c)" },
   pack_reset_once: { en: "Once only", ar: "\u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u0641\u0642\u0637", ko: "1\ud68c \ud55c\uc815" },
-  pack_reset_daily: { en: "Daily", ar: "\u064a\u0648\u0645\u064a\u064b\u0627", ko: "\ub9e4\uc77c" },
-  pack_reset_weekly: { en: "Weekly", ar: "\u0623\u0633\u0628\u0648\u0639\u064a\u064b\u0627", ko: "\ub9e4\uc8fc" },
-  pack_reset_biweekly: { en: "Every 2 weeks", ar: "\u0643\u0644 \u0623\u0633\u0628\u0648\u0639\u064a\u0646", ko: "2\uc8fc\ub9c8\ub2e4" },
-  pack_reset_monthly: { en: "Monthly", ar: "\u0634\u0647\u0631\u064a\u064b\u0627", ko: "\ub9e4\uc6d4" },
   pack_reset_custom: { en: "Every N days\u2026", ar: "\u0643\u0644 N \u064a\u0648\u0645\u2026", ko: "N\uc77c\ub9c8\ub2e4\u2026" },
   pack_buys_per_reset: { en: "Buys per reset", ar: "\u0645\u0631\u0627\u062a \u0627\u0644\u0634\u0631\u0627\u0621 \u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9 \uad6c\ub9e4 \ud69f\uc218" },
   pack_days_short: { en: "d", ar: " \u064a\u0648\u0645", ko: "\uc77c" },
@@ -1533,8 +1518,6 @@ const T = {
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_group_placeholder: { en: "Group…", ar: "المجموعة…", ko: "그룹…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together.", ar: "الاسم الرئيسي الذي يندرج تحته هذا الجدول. تُعرض الجداول ذات اسم المجموعة نفسه معًا.", ko: "이 표가 속한 상위 이름입니다. 같은 그룹 이름의 표는 함께 표시됩니다." },
-  pack_choice: { en: "Choose one option per purchase", ar: "اختر خيارًا واحدًا لكل عملية شراء", ko: "구매당 옵션 하나 선택" },
-  pack_choice_desc: { en: "Tick this when the rows are alternatives (e.g. 3 or 10 reward options at one price) and each purchase takes just one of them.", ar: "فعّل هذا عندما تكون الصفوف بدائل (مثلاً 3 أو 10 خيارات بسعر واحد) وكل عملية شراء تأخذ خيارًا واحدًا فقط.", ko: "행이 대안 옵션(예: 한 가격에 3개 또는 10개 보상 옵션)이고 구매마다 하나만 고를 때 체크하세요." },
   pack_buys_per_reset_choice: { en: "Purchases per reset (shared by all options)", ar: "عدد المشتريات لكل تكرار (مشترك بين كل الخيارات)", ko: "주기당 구매 횟수 (모든 옵션 공유)" },
   pack_rowmax_head: { en: "Max", ar: "الحد", ko: "최대" },
   pack_rowmax_title: { en: "How many times this row can be bought (per reset). Empty = the table's default. On a ladder, set it on the last tier to allow buying it again after the ladder is complete.", ar: "عدد مرات شراء هذا الصف (لكل تكرار). فارغ = الافتراضي للجدول. في السلّم، ضعه على آخر مستوى للسماح بشرائه مجددًا بعد إكمال السلّم.", ko: "이 행을 (주기당) 살 수 있는 횟수입니다. 비우면 표 기본값. 사다리형이면 마지막 단계에 설정해 사다리 완료 후 반복 구매를 허용합니다." },
@@ -1542,32 +1525,16 @@ const T = {
   pack_cant_cover_combo: { en: "the options can't all be bought enough times together.", ar: "لا يمكن شراء كل الخيارات معًا بالعدد الكافي.", ko: "옵션들을 함께 충분히 구매할 수 없습니다." },
   pack_cant_cover_hint: { en: "Check each table's availability on the Packs page (\"Once only\" allows a single purchase / one ladder run; set it to Weekly, Monthly… if the pack comes back) and the per-row Max.", ar: "راجع توفر كل جدول في صفحة الحزم (\"مرة واحدة فقط\" تسمح بشراء واحد / دورة سلّم واحدة؛ اجعله أسبوعيًا أو شهريًا… إذا كانت الحزمة تعود) والحد الأقصى لكل صف.", ko: "패키지 페이지에서 각 표의 재등장 설정(\"1회 한정\"은 한 번만 / 사다리 1회; 다시 나오는 패키지면 매주·매월로 설정)과 행별 최대값을 확인하세요." },
   pack_limited_tables: { en: "Limited tables", ar: "الجداول المحدودة", ko: "제한된 표" },
-  pack_option: { en: "Option of the pack named in Group (one pack, pick one option per tier)", ar: "خيار من الحزمة المسمّاة في المجموعة (حزمة واحدة، خيار واحد لكل مستوى)", ko: "그룹에 적힌 패키지의 옵션 (한 패키지, 단계마다 옵션 하나 선택)" },
-  pack_option_desc: { en: "Use this when one pack offers several reward choices at each tier: make one table per choice, give them the same Group name, and tick this on each. They're then priced as a single ladder that buys once per reset and picks the best option at every tier.", ar: "استخدم هذا عندما تقدّم حزمة واحدة عدة خيارات مكافأة في كل مستوى: أنشئ جدولًا لكل خيار، وامنحها اسم المجموعة نفسه، وفعّل هذا في كل منها. تُسعّر حينها كسلّم واحد يُشترى مرة لكل تكرار ويختار أفضل خيار في كل مستوى.", ko: "한 패키지가 단계마다 여러 보상 선택지를 줄 때 사용하세요: 선택지마다 표를 만들고 같은 그룹 이름을 주고 각각 체크하세요. 그러면 주기당 한 번 구매하며 단계마다 최선의 옵션을 고르는 하나의 사다리로 계산됩니다." },
   pack_same_as: { en: "Same plan as", ar: "نفس خطة", ko: "다음과 동일한 계획:" },
   pack_all_option: { en: "all", ar: "الكل", ko: "전부" },
   pack_by: { en: "by", ar: "بحلول", ko: "까지" },
-  pack_presets_button: { en: "Add game packs", ar: "إضافة حزم اللعبة", ko: "게임 패키지 추가" },
-  pack_presets_title: { en: "Adds the weekly benefit cards, weekly/monthly cards and calendar packs (Troops Training, Tech Storm, Fire Crystal Building, Hall of Chiefs, Mix & Match, Custom Pet Chest) as ready-made tables. Existing ones are skipped.", ar: "يضيف بطاقات المزايا الأسبوعية وبطاقات الأسبوع/الشهر وحزم التقويم كجداول جاهزة. يتم تخطي الموجود منها.", ko: "주간 혜택 카드, 주간/월간 카드, 캘린더 패키지를 미리 만들어진 표로 추가합니다. 이미 있는 것은 건너뜁니다." },
   pack_presets_added: { en: "tables added", ar: "جداول أُضيفت", ko: "개 표 추가됨" },
-  pack_presets_none: { en: "All game pack tables are already here.", ar: "كل جداول حزم اللعبة موجودة بالفعل.", ko: "게임 패키지 표가 이미 모두 있습니다." },
   rfc_title: { en: "Research Lab", ar: "مختبر الأبحاث", ko: "연구소" },
   rfc_desc: { en: "Turn Fire Crystal into Refined Fire Crystal. Pick the tier you go up to and how many attempts of it per week; the page shows the weekly cost, the Refined FC you get and how long until you have what you need.", ar: "حوّل بلورة النار إلى بلورة نار مكرّرة. أدخل ميزانيتك الأسبوعية وكمية البلورة المكرّرة المطلوبة؛ تحسب الحاسبة أفضل جدول أسبوعي.", ko: "화염 결정을 정제 화염 결정으로 바꿉니다. 주간 FC 예산과 필요한 정제 결정 수를 입력하면 최적의 주간 일정을 찾습니다." },
-  rfc_top_tier: { en: "Highest tier you use", ar: "أعلى مستوى تستخدمه", ko: "사용할 최고 단계" },
-  rfc_attempts: { en: "Attempts per week of", ar: "المحاولات أسبوعيًا من", ko: "주당 시도 횟수:" },
   rfc_your_plan: { en: "Your plan", ar: "خطتك", ko: "내 계획" },
-  rfc_total: { en: "in total", ar: "إجمالًا", ko: "총" },
   rfc_use: { en: "Use", ar: "استخدم", ko: "사용" },
   fcs_title: { en: "Fire Crystal → Fire Crystal Shards", ar: "بلورة النار ← شظايا بلورة النار", ko: "화염 결정 → 화염 결정 조각" },
-  fcs_desc: { en: "1 Fire Crystal converts to 1.3 shards. Shards are used by T11 Helios and T12 research; the pack cost on those pages also counts Fire Crystal packs at this rate.", ar: "1 بلورة نار = 1.3 شظية. تُستخدم الشظايا في أبحاث T11 Helios وT12؛ وتحسب تكلفة الحزم في تلك الصفحات حزم بلورة النار بهذا المعدل أيضًا.", ko: "화염 결정 1개 = 조각 1.3개. 조각은 T11 헬리오스와 T12 연구에 쓰이며, 해당 페이지의 패키지 비용도 이 비율로 화염 결정 패키지를 반영합니다." },
   fcs_simple_desc: { en: "Type Fire Crystal to see the shards you get, or type the shards you need to see the Fire Crystal to convert (1 FC = 1.3 FCS). Shards are used by T11 Helios and T12; their pack cost counts Fire Crystal packs at this rate.", ar: "اكتب بلورة النار لترى الشظايا التي ستحصل عليها، أو اكتب الشظايا المطلوبة لترى بلورة النار اللازمة (1 FC = 1.3 FCS). تُستخدم الشظايا في T11 Helios وT12؛ وتحتسب تكلفة الحزم هناك حزم بلورة النار بهذا المعدل.", ko: "화염 결정을 입력하면 얻는 조각을, 필요한 조각을 입력하면 변환할 화염 결정을 보여줍니다 (1 FC = 1.3 FCS). 조각은 T11 헬리오스와 T12에 쓰이며 패키지 비용도 이 비율로 반영됩니다." },
-  fcs_need: { en: "Shards needed", ar: "الشظايا المطلوبة", ko: "필요한 조각" },
-  fcs_from_pages: { en: "from T11/T12:", ar: "من T11/T12:", ko: "T11/T12 기준:" },
-  fcs_owned: { en: "Shards you own", ar: "الشظايا التي تملكها", ko: "보유 조각" },
-  fcs_still: { en: "Still needed", ar: "المتبقي", ko: "부족분" },
-  fcs_fc_required: { en: "Fire Crystal to convert", ar: "بلورة النار المطلوب تحويلها", ko: "변환할 화염 결정" },
-  fcs_fc_have: { en: "Fire Crystal to convert (what you have)", ar: "بلورة النار للتحويل (ما تملكه)", ko: "변환할 화염 결정 (보유량)" },
-  fcs_you_get: { en: "Shards you'd get", ar: "الشظايا التي ستحصل عليها", ko: "획득 조각" },
   rfc_trade_for: { en: "Trade FC for RFC", ar: "مبادلة FC بـ RFC", ko: "FC → RFC 교환" },
   rfc_total_to_convert: { en: "FC total needed to convert", ar: "إجمالي FC المطلوب تحويله", ko: "변환에 필요한 총 FC" },
   rfc_duration: { en: "Convert duration", ar: "مدة التحويل", ko: "변환 기간" },
@@ -1580,13 +1547,11 @@ const T = {
   rfc_month_note: { en: "a month counts as 4 weeks", ar: "الشهر يُحسب 4 أسابيع", ko: "1개월 = 4주로 계산" },
   rfc_day: { en: "day", ar: "اليوم", ko: "일차" },
   rfc_days: { en: "days", ar: "الأيام", ko: "일차" },
-  rfc_current: { en: "your current plan", ar: "خطتك الحالية", ko: "현재 계획" },
   rfc_step_need: { en: "Refined FC still needed", ar: "البلورة المكرّرة المتبقية", ko: "부족한 정제 결정" },
   rfc_step_need_desc: { en: "Taken from the T12 Research page: its Refined FC total minus what's in its Backpack. The plan below works toward this.", ar: "هذا هو الهدف الذي تعمل الخطة أدناه للوصول إليه: ما تحتاجه أبحاث T12 ناقص ما تملكه. تُملأ الخانتان من صفحة أبحاث T12؛ اكتب رقمًا فقط لتجاوزها.", ko: "아래 계획이 목표로 하는 값입니다: T12 연구에 필요한 양에서 보유량을 뺀 값. 두 칸은 T12 연구 페이지에서 채워지며, 다른 값을 쓰려면 직접 입력하세요." },
   rfc_needed_word: { en: "needed", ar: "مطلوب", ko: "필요" },
   rfc_owned_word: { en: "owned", ar: "مملوك", ko: "보유" },
   rfc_open_t12: { en: "Open the T12 Research page once so its totals are available here.", ar: "افتح صفحة أبحاث T12 مرة واحدة لتتوفر إجمالياتها هنا.", ko: "T12 연구 페이지를 한 번 열면 합계가 여기에 표시됩니다." },
-  rfc_from_t12_note: { en: "Empty boxes use the T12 Research page", ar: "الخانات الفارغة تستخدم صفحة أبحاث T12", ko: "빈 칸은 T12 연구 페이지 값을 사용" },
   rfc_step_plan: { en: "How will you convert each week?", ar: "كيف ستحوّل كل أسبوع؟", ko: "매주 어떻게 변환할까요?" },
   rfc_step_plan_desc: { en: "Either tell it how much FC you can spend per week and it picks the best schedule, or choose one of the weekly schedules yourself.", ar: "اختر أعلى مستوى ستصله وعدد مرات استخدامه أسبوعيًا؛ تُنجز المستويات الأدنى كاملة (20×) لفتحه.", ko: "도달할 최고 단계와 주당 사용 횟수를 고르세요. 아래 단계는 해금을 위해 전부(20회) 진행합니다." },
   rfc_mode_budget: { en: "FC I can spend per week", ar: "FC التي يمكنني إنفاقها أسبوعيًا", ko: "주당 사용 가능한 FC" },
@@ -1594,23 +1559,9 @@ const T = {
   rfc_budget_unit: { en: "Fire Crystal per week", ar: "بلورة نار أسبوعيًا", ko: "주당 화염 결정" },
   rfc_budget_result: { en: "Best schedule for this budget", ar: "أفضل جدول لهذه الميزانية", ko: "이 예산의 최적 일정" },
   rfc_schedule_hint: { en: "The Use buttons in the table below also select a schedule.", ar: "أزرار \"استخدم\" في الجدول أدناه تختار جدولًا أيضًا.", ko: "아래 표의 사용 버튼으로도 일정을 선택할 수 있습니다." },
-  rfc_per_attempt: { en: "per attempt", ar: "لكل محاولة", ko: "회당" },
-  rfc_attempts_of: { en: "Attempts of", ar: "محاولات", ko: "시도 횟수:" },
-  rfc_per_week: { en: "per week", ar: "أسبوعيًا", ko: "/주" },
-  rfc_or_budget: { en: "Or: FC you can spend per week", ar: "أو: FC التي يمكنك إنفاقها أسبوعيًا", ko: "또는: 주당 사용 가능한 FC" },
-  rfc_or_budget_hint: { en: "Optional — shows the plan that gives the most Refined FC for that budget, with a button to use it.", ar: "اختياري — يعرض الخطة التي تمنح أكبر كمية مكرّرة لهذه الميزانية مع زر لاستخدامها.", ko: "선택 — 해당 예산으로 정제 결정을 가장 많이 얻는 계획과 적용 버튼을 보여줍니다." },
-  rfc_inputs: { en: "Your numbers", ar: "أرقامك", ko: "내 수치" },
-  rfc_budget: { en: "FC you can spend per week (optional)", ar: "FC التي يمكنك إنفاقها أسبوعيًا (اختياري)", ko: "주당 사용 가능한 FC (선택)" },
-  rfc_need: { en: "Refined FC needed", ar: "البلورة المكرّرة المطلوبة", ko: "필요한 정제 결정" },
-  rfc_from_pages: { en: "from T12:", ar: "من T12:", ko: "T12 기준:" },
-  rfc_owned: { en: "Refined FC you own", ar: "البلورة المكرّرة التي تملكها", ko: "보유 정제 결정" },
   rfc_still_needed: { en: "Still needed", ar: "المتبقي", ko: "부족분" },
-  rfc_best_title: { en: "Best plan", ar: "أفضل خطة", ko: "최적 계획" },
-  rfc_best_in_budget: { en: "Best plan for your weekly FC budget", ar: "أفضل خطة لميزانية FC الأسبوعية", ko: "주간 FC 예산에 맞는 최적 계획" },
-  rfc_rfc_per_week: { en: "Refined FC / week (average)", ar: "بلورة مكرّرة / أسبوع (متوسط)", ko: "정제 결정 / 주 (평균)" },
   rfc_week: { en: "week", ar: "أسبوع", ko: "주" },
   rfc_weeks: { en: "weeks", ar: "أسبوع", ko: "주" },
-  rfc_weeks_to_target: { en: "weeks to reach what you need", ar: "أسبوعًا للوصول إلى ما تحتاجه", ko: "주 후 목표 도달" },
   rfc_enter_budget: { en: "Enter a weekly Fire Crystal budget to get the best schedule for it.", ar: "أدخل ميزانية بلورة النار الأسبوعية للحصول على أفضل جدول.", ko: "주간 화염 결정 예산을 입력하면 최적 일정을 보여줍니다." },
   rfc_best_value: { en: "Best value overall (most Refined FC per Fire Crystal)", ar: "أفضل قيمة إجمالًا (أكبر كمية مكرّرة لكل بلورة نار)", ko: "전체 최고 효율 (화염 결정당 정제 결정 최대)" },
   rfc_rules: { en: "Rules used: each tier allows 20 attempts a week; the next tier unlocks after 20 attempts of the previous one; the first attempt of each day is half price (one per day). Returns are averages over many attempts.", ar: "القواعد: كل مستوى يسمح بـ20 محاولة أسبوعيًا؛ يُفتح المستوى التالي بعد 20 محاولة من السابق؛ أول محاولة كل يوم بنصف السعر (واحدة يوميًا). العوائد متوسطات على محاولات كثيرة.", ko: "적용 규칙: 각 단계 주 20회; 이전 단계 20회 후 다음 단계 해금; 매일 첫 시도는 반값(하루 1회). 보상은 다수 시도의 평균입니다." },
@@ -1629,11 +1580,6 @@ const T = {
   rfc_weekly_cost: { en: "FC / week", ar: "بلورة / أسبوع", ko: "FC / 주" },
   rfc_weekly_rfc: { en: "Refined FC / week", ar: "مكرّرة / أسبوع", ko: "정제 결정 / 주" },
   rfc_to_target: { en: "To reach need", ar: "للوصول للمطلوب", ko: "목표까지" },
-  rfc_day1: { en: "day 1", ar: "اليوم 1", ko: "1일차" },
-  rfc_one_per_day: { en: "1× per day, half price", ar: "1× يوميًا بنصف السعر", ko: "매일 1회 반값" },
-  rfc_extra_day1: { en: "more on day 1", ar: "إضافية في اليوم 1", ko: "1일차 추가" },
-  pack_coloptions: { en: "Each column is an option (pick one per tier)", ar: "كل عمود خيار (اختر واحدًا لكل مستوى)", ko: "각 열이 옵션 (단계마다 하나 선택)" },
-  pack_coloptions_desc: { en: "For Mix & Match style packs: the rows are the price tiers and each column is one of the rewards you can pick at that tier. Buying a tier gives one column's amount, not all of them.", ar: "لحزم من نوع Mix & Match: الصفوف هي مستويات السعر وكل عمود هو إحدى المكافآت التي يمكنك اختيارها في ذلك المستوى. شراء المستوى يمنح كمية عمود واحد فقط.", ko: "믹스 앤 매치형 패키지용: 행은 가격 단계, 각 열은 그 단계에서 고를 수 있는 보상 하나입니다. 단계를 사면 한 열의 수량만 받습니다." },
   packs_filter_all: { en: "All", ar: "الكل", ko: "전체" },
   packs_filter_none: { en: "Not assigned", ar: "غير مخصص", ko: "미배정" },
   pack_no_date: { en: "No target date", ar: "بدون تاريخ هدف", ko: "목표일 없음" },
@@ -1667,7 +1613,6 @@ const T = {
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
-  pack_per_reset: { en: "per reset", ar: "\u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9" },
   pack_resets: { en: "resets", ar: "\u062a\u0643\u0631\u0627\u0631\u0627\u062a", ko: "\ud68c \uc8fc\uae30" },
   quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
@@ -1731,7 +1676,7 @@ function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "budgets", "heroes", "stats", "backpack", "packs", "charmscalc", "chiefgear",
+  "overview", "budgets", "backpack", "packs", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -1883,8 +1828,6 @@ async function render() {
     if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack" || TAB === "packs")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
-    else if (TAB === "heroes") await renderHeroes();
-    else if (TAB === "stats") await renderStats();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "packs") await renderPacksPage();
     else if (TAB === "charmscalc") await renderCharmsCalc();
@@ -2913,40 +2856,6 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
   modal.style.display = "flex";
 }
 
-// ============================================================
-// HEROES PAGE
-// Sub-nav: Roster (hero catalog + level/star tracking), plus
-// Jero/Natalia/Hero Gears (buff categories nested under Heroes).
-// ============================================================
-async function renderHeroes() {
-  const HERO_SUBCATS = ["Roster", "Jero", "Natalia", "Hero Gears"];
-  content.innerHTML = `
-    <div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;">
-      ${HERO_SUBCATS.map(
-        (s) =>
-          `<button class="btn small ${HEROES_SUBTAB === s ? "" : "ghost"}" data-herosub="${esc(s)}" style="${HEROES_SUBTAB === s ? "background:var(--ice-dim); border-color:var(--ice-dim);" : ""}">${esc(s)}</button>`
-      ).join("")}
-    </div>
-    <div id="heroSubContent"></div>
-  `;
-  content.querySelectorAll("[data-herosub]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      HEROES_SUBTAB = btn.dataset.herosub;
-      renderHeroes();
-    });
-  });
-
-  const sub = document.getElementById("heroSubContent");
-  if (HEROES_SUBTAB === "Roster") {
-    await renderHeroRoster(sub);
-  } else {
-    await ensureBuffTable();
-    if (!BUFF_CATEGORIES.some((c) => c.name === HEROES_SUBTAB)) {
-      await loadBuffCategories();
-    }
-    await renderCategoryInto(sub, HEROES_SUBTAB);
-  }
-}
 
 // ============================================================
 // HERO GEAR CALCULATOR (under Calculators nav)
@@ -3253,64 +3162,6 @@ async function ensureMaterialOwnedCache(calcKey) {
   }
   return MATERIAL_OWNED_CACHE[calcKey];
 }
-async function renderMaterialsOwnedBar(containerId, matTotals, calcKey, allMaterialNames, refreshFn) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const names = allMaterialNames && allMaterialNames.length ? allMaterialNames : Object.keys(matTotals);
-  if (!names.length) {
-    el.innerHTML = "";
-    return;
-  }
-  const matEntries = names.map((name) => [name, matTotals[name] || 0]);
-  const owned = await ensureMaterialOwnedCache(calcKey);
-
-  const cardHtml = matEntries
-    .map(([name, needed]) => {
-      const lower = name.toLowerCase();
-      const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-      const icon = iconKey
-        ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:40px; height:40px; object-fit:contain; flex-shrink:0;" loading="lazy" />`
-        : "";
-      const haveQty = owned[name] || 0;
-      const stillNeed = Math.max(0, needed - haveQty);
-      const surplus = Math.max(0, haveQty - needed);
-      const statusColor = needed === 0 ? "var(--muted)" : stillNeed > 0 ? "var(--danger)" : "var(--good)";
-      const statusText =
-        needed === 0
-          ? t("not_needed_yet")
-          : stillNeed > 0
-          ? `${stillNeed.toLocaleString()} still needed`
-          : surplus > 0
-          ? `\u2713 ${surplus.toLocaleString()} extra`
-          : t("have_enough");
-      return `<div class="metric">
-        <div style="display:flex; align-items:center; gap:10px;">
-          ${icon}
-          <div class="label" style="text-align:start;">${esc(name)}</div>
-        </div>
-        <div class="meta" style="font-size:10.5px; margin-top:8px;">Needed: ${needed.toLocaleString()}</div>
-        <div style="display:flex; align-items:center; gap:4px; justify-content:center; margin-top:4px;">
-          <span class="meta" style="font-size:10.5px;">Own:</span>
-          <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:110px; padding:6px 8px; font-size:14px;" />
-        </div>
-        <div class="val" style="font-size:13px; margin-top:4px; color:${statusColor};">${statusText}</div>
-      </div>`;
-    })
-    .join("");
-
-  el.innerHTML = `<div class="grid" style="grid-template-columns:repeat(${Math.min(matEntries.length, 6)}, 1fr);">${cardHtml}</div>`;
-
-  el.querySelectorAll("[data-ownedmat]").forEach((input) => {
-    input.addEventListener("change", async () => {
-      let val = Number(input.value);
-      if (Number.isNaN(val) || val < 0) val = 0;
-      input.value = val;
-      owned[input.dataset.ownedmat] = val;
-      await saveCalcState(`material_owned_${calcKey}`, owned);
-      if (refreshFn) refreshFn();
-    });
-  });
-}
 
 async function updateHeroGearTotals() {
   if (!HERO_GEAR_TABLES_CACHE) return;
@@ -3433,269 +3284,8 @@ function updateHeroGearCurrentStats() {
     .join("");
 }
 
-// Hero catalog (add heroes) + per-hero level/star progress tracker.
-async function renderHeroRoster(target) {
-  const [heroes, playerHeroes] = await Promise.all([
-    sb(`heroes?select=id,name,image_url,max_level,max_stars&order=name.asc`),
-    sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`),
-  ]);
-  const phByHero = Object.fromEntries(playerHeroes.map((p) => [p.hero_id, p]));
 
-  target.innerHTML = `
-    <div class="panel">
-      <h2>Your roster</h2>
-      <p class="desc">Track level and star progress for each hero. Manage the hero catalog itself in Admin.</p>
-      <div id="heroList"></div>
-    </div>
-  `;
 
-  const listEl = document.getElementById("heroList");
-  if (!heroes.length) {
-    listEl.innerHTML = `<div class="empty"><div class="big">No heroes in your catalog yet.</div>Add one above to start tracking roster progress.</div>`;
-    return;
-  }
-  listEl.innerHTML = heroes
-    .map((h) => {
-      const p = phByHero[h.id];
-      const level = p ? p.current_level : 0;
-      const stars = p ? p.current_stars : 0;
-      const pct = Math.min(100, Math.round((level / (h.max_level || 80)) * 100));
-      return `<div class="row">
-        <div style="display:flex; align-items:center; gap:10px;">
-          ${h.image_url ? `<img src="${esc(h.image_url)}" alt="" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid var(--line);" loading="lazy" />` : `<div style="width:36px; height:36px; border-radius:50%; background:var(--panel-2); border:1px solid var(--line);"></div>`}
-          <div>
-            <div class="name">${esc(dataName(h.name))}</div>
-            <div class="meta">Level ${level} / ${h.max_level} &middot; ${stars} / ${h.max_stars} stars</div>
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-          <button class="btn small ghost" data-hero="${h.id}" data-ph="${p ? p.id : ""}" data-level="${level}" data-stars="${stars}">Update</button>
-        </div>
-      </div>`;
-    })
-    .join("");
-
-  listEl.querySelectorAll("button[data-hero]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const level = prompt("Current level:", btn.dataset.level);
-      if (level === null) return;
-      const stars = prompt("Current stars:", btn.dataset.stars);
-      if (stars === null) return;
-      const heroId = btn.dataset.hero;
-      const phId = btn.dataset.ph;
-      try {
-        if (phId) {
-          await sb(`player_heroes?id=eq.${phId}`, {
-            method: "PATCH",
-            body: JSON.stringify({ current_level: Number(level), current_stars: Number(stars), updated_at: new Date().toISOString() }),
-          });
-        } else {
-          await sb(`player_heroes`, {
-            method: "POST",
-            body: JSON.stringify({ user_id: USER_ID, hero_id: heroId, current_level: Number(level), current_stars: Number(stars) }),
-          });
-        }
-        toast("Hero updated");
-        renderHeroes();
-      } catch (err) {
-        toast("Couldn't update hero", true);
-      }
-    });
-  });
-}
-
-// ============================================================
-// STATS PAGE
-// Simple stat-type catalog + current/target value tracker.
-// ============================================================
-async function renderStats() {
-  const [categories, statTypes, playerStats] = await Promise.all([
-    sb(`stat_categories?select=id,name&order=sort_order.asc`),
-    sb(`stat_types?select=id,name,unit,category_id&order=name.asc`),
-    sb(`player_stats?select=id,stat_type_id,current_value,target_value&user_id=eq.${USER_ID}`),
-  ]);
-  const catById = Object.fromEntries(categories.map((c) => [c.id, c.name]));
-  const psByType = Object.fromEntries(playerStats.map((p) => [p.stat_type_id, p]));
-
-  content.innerHTML = `
-    <div class="panel">
-      <h2>Add a stat type</h2>
-      <p class="desc">Define a stat to track, under one of your categories.</p>
-      <form class="inline" id="statTypeForm">
-        <input class="flex1" name="name" placeholder="Stat name, e.g. Troop attack" required />
-        <select name="category_id">
-          ${categories.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join("")}
-        </select>
-        <input class="field-num" name="unit" placeholder="Unit" style="width:80px" />
-        <button class="btn" type="submit">Add stat</button>
-      </form>
-      <div class="err" id="statTypeErr"></div>
-    </div>
-    <div class="panel">
-      <h2>Your stats</h2>
-      <p class="desc">Current value vs. target, grouped by category.</p>
-      <div id="statList"></div>
-    </div>
-  `;
-
-  document.getElementById("statTypeForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("statTypeErr");
-    errEl.textContent = "";
-    const name = f.name.value.trim();
-    if (!name) { errEl.textContent = "Enter a stat name first"; return; }
-    try {
-      await sb(`stat_types`, {
-        method: "POST",
-        body: JSON.stringify({ name, category_id: f.category_id.value, unit: f.unit.value.trim() || null }),
-      });
-      toast("Stat type added");
-      renderStats();
-    } catch (err) {
-      errEl.textContent = "Couldn't add stat type";
-    }
-  });
-
-  const listEl = document.getElementById("statList");
-  if (!statTypes.length) {
-    listEl.innerHTML = `<div class="empty"><div class="big">No stat types defined yet.</div>Add one above &mdash; e.g. Power, Kill points, Furnace level.</div>`;
-    return;
-  }
-  listEl.innerHTML = statTypes
-    .map((s) => {
-      const p = psByType[s.id];
-      const current = p ? Number(p.current_value) : 0;
-      const target = p && p.target_value != null ? Number(p.target_value) : null;
-      return `<div class="row">
-        <div>
-          <div class="name">${esc(s.name)} <span class="pill">${esc(catById[s.category_id] || "Other")}</span></div>
-          <div class="meta">${current.toLocaleString()}${s.unit ? " " + esc(s.unit) : ""}${target != null ? ` &middot; target ${target.toLocaleString()}` : ""}</div>
-        </div>
-        <button class="btn small ghost" data-stat="${s.id}" data-ps="${p ? p.id : ""}" data-current="${current}" data-target="${target ?? ""}">Update</button>
-      </div>`;
-    })
-    .join("");
-
-  listEl.querySelectorAll("button[data-stat]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const current = prompt("Current value:", btn.dataset.current);
-      if (current === null) return;
-      const target = prompt("Target value (optional):", btn.dataset.target);
-      if (target === null) return;
-      const statId = btn.dataset.stat;
-      const psId = btn.dataset.ps;
-      const body = {
-        current_value: Number(current) || 0,
-        target_value: target.trim() === "" ? null : Number(target),
-        updated_at: new Date().toISOString(),
-      };
-      try {
-        if (psId) {
-          await sb(`player_stats?id=eq.${psId}`, { method: "PATCH", body: JSON.stringify(body) });
-        } else {
-          await sb(`player_stats`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, stat_type_id: statId, ...body }) });
-        }
-        toast("Stat updated");
-        renderStats();
-      } catch (err) {
-        toast("Couldn't update stat", true);
-      }
-    });
-  });
-}
-
-// ============================================================
-// UPGRADES PAGE (buildings/systems level tracker)
-// ============================================================
-async function renderUpgrades() {
-  const [systems, playerUpgrades] = await Promise.all([
-    sb(`upgrade_systems?select=id,name,max_level&order=name.asc`),
-    sb(`player_upgrades?select=id,upgrade_system_id,current_level,target_level&user_id=eq.${USER_ID}`),
-  ]);
-  const puBySystem = Object.fromEntries(playerUpgrades.map((p) => [p.upgrade_system_id, p]));
-
-  content.innerHTML = `
-    <div class="panel">
-      <h2>Add an upgrade system</h2>
-      <p class="desc">e.g. Furnace, Command Center, Infirmary.</p>
-      <form class="inline" id="upgradeSystemForm">
-        <input class="flex1" name="name" placeholder="System name" required />
-        <input class="field-num" name="max_level" type="number" placeholder="Max level" value="30" />
-        <button class="btn" type="submit">Add system</button>
-      </form>
-      <div class="err" id="upgradeSystemErr"></div>
-    </div>
-    <div class="panel">
-      <h2>Your upgrades</h2>
-      <div id="upgradeList"></div>
-    </div>
-  `;
-
-  document.getElementById("upgradeSystemForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("upgradeSystemErr");
-    errEl.textContent = "";
-    const name = f.name.value.trim();
-    if (!name) { errEl.textContent = "Enter a system name first"; return; }
-    try {
-      await sb(`upgrade_systems`, { method: "POST", body: JSON.stringify({ name, max_level: Number(f.max_level.value) || 30 }) });
-      toast("Upgrade system added");
-      renderUpgrades();
-    } catch (err) {
-      errEl.textContent = "Couldn't add system";
-    }
-  });
-
-  const listEl = document.getElementById("upgradeList");
-  if (!systems.length) {
-    listEl.innerHTML = `<div class="empty"><div class="big">No upgrade systems yet.</div>Add one above to start tracking building or research levels.</div>`;
-    return;
-  }
-  listEl.innerHTML = systems
-    .map((s) => {
-      const p = puBySystem[s.id];
-      const level = p ? p.current_level : 0;
-      const target = p && p.target_level != null ? p.target_level : s.max_level;
-      const pct = Math.min(100, Math.round((level / (s.max_level || 1)) * 100));
-      return `<div class="row">
-        <div>
-          <div class="name">${esc(s.name)}</div>
-          <div class="meta">Level ${level} / ${s.max_level} &middot; target ${target}</div>
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-          <button class="btn small ghost" data-sys="${s.id}" data-pu="${p ? p.id : ""}" data-level="${level}" data-target="${target}">Update</button>
-        </div>
-      </div>`;
-    })
-    .join("");
-
-  listEl.querySelectorAll("button[data-sys]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const level = prompt("Current level:", btn.dataset.level);
-      if (level === null) return;
-      const target = prompt("Target level:", btn.dataset.target);
-      if (target === null) return;
-      const sysId = btn.dataset.sys;
-      const puId = btn.dataset.pu;
-      const body = { current_level: Number(level) || 0, target_level: target.trim() === "" ? null : Number(target), updated_at: new Date().toISOString() };
-      try {
-        if (puId) {
-          await sb(`player_upgrades?id=eq.${puId}`, { method: "PATCH", body: JSON.stringify(body) });
-        } else {
-          await sb(`player_upgrades`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, upgrade_system_id: sysId, ...body }) });
-        }
-        toast("Upgrade updated");
-        renderUpgrades();
-      } catch (err) {
-        toast("Couldn't update upgrade", true);
-      }
-    });
-  });
-}
 
 // ============================================================
 // PACKS PAGE
@@ -6983,21 +6573,6 @@ async function renderBudgetsPage(opts = {}) {
   }));
 }
 
-// ---- Shared "one troop at a time, swipe to switch" helper ----
-// Renders a single-row tab header for Infantry/Lancer/Marksman (or any
-// small set of troops) and wires horizontal swipe gestures on the content
-// area below it to move to the next/previous troop, so every troop's full
-// content gets the whole screen width instead of being squeezed 3-across.
-function renderTroopTabs(containerEl, troops, current, colors, onSelect) {
-  containerEl.innerHTML = `
-    <div class="cat-tabs" style="margin-bottom:14px;">
-      ${troops.map((t) => `<button data-troop="${esc(t)}" class="${t === current ? "active" : ""}" style="${t === current && colors && colors[t] ? `border-color:${colors[t]}; color:${colors[t]};` : ""}">${esc(t)}</button>`).join("")}
-    </div>
-  `;
-  containerEl.querySelectorAll("button[data-troop]").forEach((btn) => {
-    btn.addEventListener("click", () => onSelect(btn.dataset.troop));
-  });
-}
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
 // which unifies touch, mouse, and pen into one event model. Calls onSwipe(-1)
 // for a leftward drag and onSwipe(1) for rightward, once the drag clears a
@@ -8421,20 +7996,6 @@ const HERO_SHARD_CHART = {
   4: [40, 40, 40, 40, 40, 100],
   5: [100, 100, 100, 100, 100, 100],
 };
-// current = { star: 0-5, sub: 0-6 } -> shards to finish the next star, and to 5★ max.
-function heroShardsNeeded(star, sub) {
-  let toNext = 0, toMax = 0;
-  for (let st = 1; st <= 5; st++) {
-    const steps = HERO_SHARD_CHART[st];
-    for (let i = 0; i < steps.length; i++) {
-      const done = st < star + 1 ? true : st === star + 1 ? i < sub : false;
-      if (done) continue;
-      toMax += steps[i];
-      if (st === star + 1) toNext += steps[i];
-    }
-  }
-  return { toNext, toMax };
-}
 // Whether T11/T12 Research pages count toward the Dashboard at all - a
 // simple page-level on/off, set from a toggle beside "Max everything" on
 // each page (rather than per-track/per-item exclusion).
