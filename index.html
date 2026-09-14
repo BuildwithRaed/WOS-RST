@@ -157,6 +157,10 @@
   }
   #addCategoryBtn:hover{ border-color:var(--ice-dim); background:var(--panel-2); }
   main{ flex:1; padding:24px 28px 60px; max-width:1100px; width:100%; margin:0 auto; }
+  .site-footer{ max-width:1100px; width:100%; margin:0 auto; padding:16px 28px 28px; border-top:1px solid var(--line); color:var(--muted); font-size:11.5px; line-height:1.55; text-align:center; }
+  .site-footer p{ margin:0 0 6px; }
+  .site-footer a{ color:var(--muted); text-decoration:underline; }
+  @media (max-width:640px){ .site-footer{ padding:12px 12px 22px; font-size:11px; } }
   .page-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
   .page-head h2{ font-size:20px; margin:0; font-weight:600; }
   .page-head .sub{ font-size:12.5px; color:var(--muted); margin-top:2px; }
@@ -666,6 +670,7 @@
   <div id="mobileMenuOverlay"></div>
 
   <main id="content"></main>
+  <footer class="site-footer" id="siteFooter"></footer>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -1294,6 +1299,11 @@ const T = {
   refine_summed_desc: { en: "Summed across all 15 pets, based on what you've typed in.", ar: "مجموع عبر جميع الحيوانات الأليفة الـ15، بناءً على ما أدخلته.", ko: "입력한 값을 기준으로 15마리 전체 펫의 합계입니다." },
   tier_suffix: { en: "tier", ar: "الفئة", ko: "등급" },
   max_button: { en: "Max", ar: "الحد الأقصى", ko: "최대" },
+  footer_disclaimer: {
+    en: "WOS Tracker is an unofficial fan-made tool and is not affiliated with, endorsed by, or connected to Century Games. Whiteout Survival and all related names, artwork, icons and game data are trademarks and copyrights of Century Games and are used here for informational purposes only. Values are community estimates and may differ from the game.",
+    ar: "WOS Tracker أداة غير رسمية من صنع المعجبين وليست تابعة لشركة Century Games أو معتمدة منها أو مرتبطة بها. Whiteout Survival وجميع الأسماء والرسومات والأيقونات وبيانات اللعبة المتعلقة بها هي علامات تجارية وحقوق نشر لشركة Century Games وتُستخدم هنا لأغراض المعلومات فقط. القيم تقديرات من المجتمع وقد تختلف عن اللعبة.",
+    ko: "WOS Tracker는 팬이 만든 비공식 도구이며 Century Games와 제휴, 승인 또는 연관되어 있지 않습니다. Whiteout Survival 및 관련 명칭, 아트워크, 아이콘, 게임 데이터는 Century Games의 상표 및 저작물이며 정보 제공 목적으로만 사용됩니다. 수치는 커뮤니티 추정치이며 실제 게임과 다를 수 있습니다.",
+  },
   research_center_title: { en: "Research Center", ar: "مركز الأبحاث", ko: "연구 센터" },
   rc_desc: { en: "Across all 102 research tracks, from current levels to max.", ar: "عبر جميع مسارات الأبحاث الـ102، من المستويات الحالية إلى الحد الأقصى.", ko: "102개 연구 트랙 전체, 현재 레벨부터 최대치까지." },
   research_time_label: { en: "Research Time", ar: "وقت البحث", ko: "연구 시간" },
@@ -1659,6 +1669,13 @@ function applyNavLanguage() {
   if (commanderInput) commanderInput.placeholder = t("name_placeholder");
   const saveBtn = document.getElementById("saveCommander");
   if (saveBtn) saveBtn.textContent = t("save");
+  renderFooter();
+}
+// Legal footer: unofficial fan tool, game assets belong to Century Games.
+function renderFooter() {
+  const el = document.getElementById("siteFooter");
+  if (!el) return;
+  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS Tracker</p>`;
 }
 function renderLanguageSwitcher() {
   const wrap = document.getElementById("langSwitcherWrap");
