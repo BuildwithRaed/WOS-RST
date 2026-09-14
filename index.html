@@ -1687,6 +1687,21 @@ function isValidTab(t) {
 }
 const SAVED_TAB = localStorage.getItem("last_tab");
 let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
+// Browser history: every page change is a history entry, so the Back
+// button (and the Android back gesture in the installed app) returns to the
+// previous page inside the site instead of leaving it.
+function goToTab(tab, opts = {}) {
+  if (!isValidTab(tab)) tab = "overview";
+  TAB = tab;
+  localStorage.setItem("last_tab", TAB);
+  document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
+  if (!opts.fromHistory) history.pushState({ tab: TAB }, "", location.pathname + location.search);
+  render();
+}
+window.addEventListener("popstate", (e) => {
+  const tab = e.state && e.state.tab;
+  if (tab) goToTab(tab, { fromHistory: true });
+});
 let HEROES_SUBTAB = "roster";
 const CATEGORY_GROUPS = { "War Acd.": ["T11", "T12"] };
 const EXTRA_BUFF_SUBCATS = ["Vip Tier", "Facility", "Alliance Buff", "Gallery", "Album Buff"];
@@ -1712,12 +1727,8 @@ function closeAllTopnavDropdowns() {
 topnavGroups.addEventListener("click", (e) => {
   const pageBtn = e.target.closest("button[data-tab]");
   if (pageBtn) {
-    document.querySelectorAll("#topnavGroups button[data-tab]").forEach((x) => x.classList.remove("active"));
-    pageBtn.classList.add("active");
-    TAB = pageBtn.dataset.tab;
-    localStorage.setItem("last_tab", TAB);
     closeAllTopnavDropdowns();
-    render();
+    goToTab(pageBtn.dataset.tab);
     return;
   }
   const groupBtn = e.target.closest(".topnav-group-btn");
@@ -1784,12 +1795,8 @@ document.getElementById("mobileMenuBtn").addEventListener("click", openMobileMen
 document.getElementById("mobileMenuOverlay").addEventListener("click", (e) => {
   const pageBtn = e.target.closest("button[data-tab]");
   if (pageBtn) {
-    document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.remove("active"));
-    pageBtn.classList.add("active");
-    TAB = pageBtn.dataset.tab;
-    localStorage.setItem("last_tab", TAB);
     closeMobileMenu();
-    render();
+    goToTab(pageBtn.dataset.tab);
     return;
   }
   const catBtn = e.target.closest(".mm-category-btn");
@@ -1825,7 +1832,7 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 async function render() {
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack" || TAB === "packs")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); }
+    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack" || TAB === "packs")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -14041,6 +14048,7 @@ if ("serviceWorker" in navigator) {
   document.querySelectorAll("button[data-tab]").forEach((x) => {
     x.classList.toggle("active", x.dataset.tab === TAB);
   });
+  history.replaceState({ tab: TAB }, "", location.pathname + location.search);
   const categoriesLoaded = loadBuffCategories();
   if (TAB === "overview") {
     // The Dashboard loads what it needs itself, so it doesn't have to wait
