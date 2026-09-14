@@ -1609,6 +1609,17 @@ const T = {
   marks_as_advanced: { en: "or Advanced Marks", ar: "أو علامات متقدمة", ko: "또는 고급 문장" },
   marks_per_pet: { en: "Per pet", ar: "لكل حيوان أليف", ko: "펫별" },
   marks_none: { en: "Every unlocked pet is already maxed.", ar: "كل الحيوانات الأليفة المفتوحة وصلت الحد الأقصى.", ko: "해금된 모든 펫이 이미 최대입니다." },
+  pack_kind_title: { en: "Purchase type", ar: "نوع الشراء", ko: "구매 방식" },
+  pack_kind_normal: { en: "Any row, any time", ar: "أي صف في أي وقت", ko: "아무 행이나 언제든" },
+  pack_kind_normal_desc: { en: "Each row can be bought on its own.", ar: "يمكن شراء كل صف بمفرده.", ko: "각 행을 따로 살 수 있습니다." },
+  pack_kind_ladder: { en: "Ladder — must be bought in order", ar: "سلّم — يجب الشراء بالترتيب", ko: "사다리 — 순서대로 구매" },
+  pack_kind_ladder_desc: { en: "Start from the first price and work up; each tier once per reset.", ar: "ابدأ من أول سعر وتدرّج؛ كل مستوى مرة لكل تكرار.", ko: "첫 가격부터 위로; 단계마다 주기당 1회." },
+  pack_kind_option_cols: { en: "Ladder with options — each column is one choice per tier", ar: "سلّم مع خيارات — كل عمود خيار واحد لكل مستوى", ko: "옵션 사다리 — 각 열이 단계별 선택지" },
+  pack_kind_option_cols_desc: { en: "Rows are the price tiers; buying a tier gives one column's amount (Mix & Match style).", ar: "الصفوف هي مستويات السعر؛ شراء المستوى يمنح كمية عمود واحد.", ko: "행은 가격 단계; 단계를 사면 한 열의 수량만 받습니다." },
+  pack_kind_option_tables: { en: "Ladder with options — this table is one choice; the others share its Group name", ar: "سلّم مع خيارات — هذا الجدول خيار واحد؛ الجداول الأخرى تشارك اسم المجموعة", ko: "옵션 사다리 — 이 표가 선택지 하나; 같은 그룹 이름의 표들과 묶임" },
+  pack_kind_option_tables_desc: { en: "Same as above, but each option lives in its own table. Give all of them the same Group name and pick this on each.", ar: "مثل السابق لكن كل خيار في جدول مستقل. امنحها جميعًا اسم المجموعة نفسه واختر هذا في كل منها.", ko: "위와 같지만 옵션마다 표가 따로 있습니다. 모두 같은 그룹 이름을 주고 각 표에서 이걸 선택하세요." },
+  pack_kind_choice: { en: "Choose one row per purchase", ar: "اختر صفًا واحدًا لكل عملية شراء", ko: "구매당 행 하나 선택" },
+  pack_kind_choice_desc: { en: "The rows are alternatives at one price (no tiers); each purchase takes one of them and the buys-per-reset limit is shared.", ar: "الصفوف بدائل بسعر واحد (بدون مستويات)؛ كل عملية شراء تأخذ واحدًا ويُشترك حد الشراء لكل تكرار.", ko: "행들은 한 가격의 대안(단계 없음); 구매마다 하나를 고르고 주기당 구매 한도를 공유합니다." },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
   pack_copy_suffix: { en: "copy", ar: "نسخة", ko: "복사본" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
@@ -3669,6 +3680,7 @@ async function renderPacksPage() {
     if (added) { toast(`${added} ${t("pack_presets_added")}`); renderPacksPage(); return; }
   }
 
+
   function blankRow(colCount) {
     return { cells: Array(colCount).fill(""), is_total: false };
   }
@@ -3718,11 +3730,11 @@ async function renderPacksPage() {
     const ci = packLinkFor(tb.id).priceCol;
     return typeof ci === "number" ? ci : 0;
   }
-  // Quantities are whole items: auto-filled values just drop any decimals
-  // (no rounding up or down to a different number). Only the price
-  // column keeps decimals.
+  // Quantities are whole items: auto-filled values round to the nearest
+  // whole number (48 at $0.99 scaled to $2.99 is 144.97 -> 145, and to
+  // $1.99 is 96.48 -> 96). Only the price column keeps decimals.
   function fmtQty(n) {
-    return Math.trunc(Number(n) || 0).toLocaleString();
+    return Math.round(Number(n) || 0).toLocaleString();
   }
   function fmtCell(tb, ci, n) {
     return ci === priceColOf(tb) ? fmtNum(n) : fmtQty(n);
@@ -3730,8 +3742,13 @@ async function renderPacksPage() {
   // Gems always fills on any typed Amount, in every table, regardless of
   // the Scale toggle - it's a fixed, universal game price point, not a
   // per-table custom ratio like FC/Speedups.
+  // The Gems column is found by name (not assumed to be the last one).
+  function gemsColOf(tb) {
+    return tb.columns.findIndex((c) => String(c || "").trim().toLowerCase() === "gems");
+  }
   function applyGemsLookup(panel, t, onlyRowIndex) {
-    const lastCi = t.columns.length - 1;
+    const lastCi = gemsColOf(t);
+    if (lastCi === -1) return;
     panel.querySelectorAll("tbody tr").forEach((tr) => {
       const ri = Number(tr.dataset.row);
       if (onlyRowIndex != null && ri !== onlyRowIndex) return; // scoped to one row - leaves other rows' manual edits alone
@@ -3748,11 +3765,12 @@ async function renderPacksPage() {
   // this table, since it assumes a fixed proportional relationship that
   // not every table's data actually follows.
   function applyRatioScale(panel, t, onlyRowIndex) {
-    const lastCi = t.columns.length - 1;
-    const row0Amount = parseNum(panel.querySelector('[data-pt-cell][data-row="0"][data-col="0"]')?.value);
+    const gemsCi = gemsColOf(t);
+    const priceCi = priceColOf(t);
+    const row0Amount = parseNum(panel.querySelector(`[data-pt-cell][data-row="0"][data-col="${priceCi}"]`)?.value);
     if (!row0Amount) return;
     const ratios = t.columns.map((_, ci) => {
-      if (ci === 0 || ci === lastCi) return null; // Amount and Gems are handled separately
+      if (ci === priceCi || ci === gemsCi) return null; // Amount and Gems are handled separately
       const v = parseNum(panel.querySelector(`[data-pt-cell][data-row="0"][data-col="${ci}"]`)?.value);
       return v == null ? null : v / row0Amount;
     });
@@ -3760,7 +3778,7 @@ async function renderPacksPage() {
       const ri = Number(tr.dataset.row);
       if (ri === 0) return; // row 1 is the source, never auto-filled itself
       if (onlyRowIndex != null && ri !== onlyRowIndex) return; // scoped to one row - leaves other rows' manual edits alone
-      const amount = parseNum(tr.querySelector('[data-pt-cell][data-col="0"]')?.value);
+      const amount = parseNum(tr.querySelector(`[data-pt-cell][data-col="${priceCi}"]`)?.value);
       if (amount == null) return;
       t.columns.forEach((_, ci) => {
         if (ratios[ci] == null) return;
@@ -3960,26 +3978,24 @@ async function renderPacksPage() {
               <span>${esc(packGroupLabel(g))}</span>
             </label>`).join("")}
         </div>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
-          <input type="checkbox" data-packsequential ${link.sequential ? "checked" : ""} style="flex-shrink:0;" />
-          <span>${esc(t("pack_sequential"))}</span>
-        </label>
-        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_sequential_desc"))}</p>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
-          <input type="checkbox" data-packchoice ${link.choice ? "checked" : ""} style="flex-shrink:0;" />
-          <span>${esc(t("pack_choice"))}</span>
-        </label>
-        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_choice_desc"))}</p>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
-          <input type="checkbox" data-packcoloptions ${link.colOptions ? "checked" : ""} style="flex-shrink:0;" />
-          <span>${esc(t("pack_coloptions"))}</span>
-        </label>
-        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_coloptions_desc"))}</p>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:10px;">
-          <input type="checkbox" data-packoption ${link.option ? "checked" : ""} style="flex-shrink:0;" />
-          <span>${esc(t("pack_option"))}</span>
-        </label>
-        <p class="desc" style="font-size:10.5px; margin:-6px 0 10px;">${esc(t("pack_option_desc"))}</p>
+        ${(() => {
+          const kind = link.option ? "option_tables" : link.colOptions ? "option_cols" : link.choice ? "choice" : link.sequential ? "ladder" : "normal";
+          const kinds = [
+            ["normal", t("pack_kind_normal"), t("pack_kind_normal_desc")],
+            ["ladder", t("pack_kind_ladder"), t("pack_kind_ladder_desc")],
+            ["option_cols", t("pack_kind_option_cols"), t("pack_kind_option_cols_desc")],
+            ["option_tables", t("pack_kind_option_tables"), t("pack_kind_option_tables_desc")],
+            ["choice", t("pack_kind_choice"), t("pack_kind_choice_desc")],
+          ];
+          return `<div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pack_kind_title"))}</div>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+            ${kinds.map(([k, label, desc]) => `
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px;">
+              <input type="radio" name="packkind-${esc(tb.id)}" data-packkind="${k}" ${kind === k ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
+              <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(label)}</span><br><span class="meta" style="font-size:10.5px;">${esc(desc)}</span></span>
+            </label>`).join("")}
+          </div>`;
+        })()}
         ${(() => {
           const r = link.reset;
           const preset = typeof r === "number" ? (PACK_RESET_PRESETS.find((p) => p.days === r) || { key: "custom" }).key : r;
@@ -4040,7 +4056,20 @@ async function renderPacksPage() {
           renderPageTabs();
         });
       });
-      const seqCb = box.querySelector("[data-packsequential]");
+      // Purchase type radio -> the four underlying flags.
+      const kindRadios = [...box.querySelectorAll("[data-packkind]")];
+      const kindOf = () => (kindRadios.find((r) => r.checked) || {}).dataset?.packkind || "normal";
+      const isLadderKind = () => ["ladder", "option_cols", "option_tables"].includes(kindOf());
+      kindRadios.forEach((r) => r.addEventListener("change", async () => {
+        const l = current();
+        const k = kindOf();
+        l.sequential = isLadderKind();
+        l.colOptions = k === "option_cols";
+        l.option = k === "option_tables";
+        l.choice = k === "choice";
+        syncResetUi();
+        await savePackLinks();
+      }));
       const resetSel = box.querySelector("[data-packreset]");
       const resetDays = box.querySelector("[data-packresetdays]");
       const resetDaysLabel = box.querySelector("[data-packresetdayslabel]");
@@ -4056,8 +4085,8 @@ async function renderPacksPage() {
         anchorIn.style.display = isNumberReset ? "" : "none";
         anchorLabel.style.display = isNumberReset ? "" : "none";
         const isNumber = custom || PACK_RESET_PRESETS.some((p) => p.key === resetSel.value);
-        buysWrap.style.display = isNumber && !seqCb.checked ? "" : "none";
-        if (buysWrap.style.display === "" && buysWrap.querySelector("span")) buysWrap.querySelector("span").textContent = (choiceCb && choiceCb.checked) ? t("pack_buys_per_reset_choice") : t("pack_buys_per_reset");
+        buysWrap.style.display = isNumber && !isLadderKind() ? "" : "none";
+        if (buysWrap.style.display === "" && buysWrap.querySelector("span")) buysWrap.querySelector("span").textContent = kindOf() === "choice" ? t("pack_buys_per_reset_choice") : t("pack_buys_per_reset");
       };
       const saveReset = async () => {
         const l = current();
@@ -4071,35 +4100,6 @@ async function renderPacksPage() {
         syncResetUi();
         await savePackLinks();
       };
-      const choiceCb = box.querySelector("[data-packchoice]");
-      if (seqCb) seqCb.addEventListener("change", async () => {
-        current().sequential = seqCb.checked;
-        if (seqCb.checked && choiceCb) { choiceCb.checked = false; current().choice = false; }
-        syncResetUi();
-        await savePackLinks();
-      });
-      const colOptCb = box.querySelector("[data-packcoloptions]");
-      if (colOptCb) colOptCb.addEventListener("change", async () => {
-        const l = current();
-        l.colOptions = colOptCb.checked;
-        if (colOptCb.checked) { l.sequential = true; if (seqCb) seqCb.checked = true; l.choice = false; if (choiceCb) choiceCb.checked = false; }
-        syncResetUi();
-        await savePackLinks();
-      });
-      const optionCb = box.querySelector("[data-packoption]");
-      if (optionCb) optionCb.addEventListener("change", async () => {
-        const l = current();
-        l.option = optionCb.checked;
-        if (optionCb.checked) { l.sequential = true; if (seqCb) seqCb.checked = true; l.choice = false; if (choiceCb) choiceCb.checked = false; }
-        syncResetUi();
-        await savePackLinks();
-      });
-      if (choiceCb) choiceCb.addEventListener("change", async () => {
-        current().choice = choiceCb.checked;
-        if (choiceCb.checked && seqCb) { seqCb.checked = false; current().sequential = false; }
-        syncResetUi();
-        await savePackLinks();
-      });
       if (resetSel) resetSel.addEventListener("change", saveReset);
       if (resetDays) resetDays.addEventListener("change", saveReset);
       if (buysIn) buysIn.addEventListener("change", saveReset);
@@ -5020,6 +5020,14 @@ function packGroupLabel(g) {
   if (g.group) { const e = NAV_GROUP_LABELS[g.group]; return e ? (e[LANG] || e.en) : g.group; }
   return packPageLabel(g.pages[0]);
 }
+// A table ticked for a group (e.g. "Pets") counts for every page in that
+// group, even if it was ticked before a page joined the group.
+function packTableServesPage(tb, calcKey) {
+  const pages = packLinkFor(tb.id).pages;
+  if (pages.includes(calcKey)) return true;
+  const g = packGroupOf(calcKey);
+  return !!g && g.pages.some((k) => pages.includes(k));
+}
 function packGroupsChecked(pages) {
   return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => (pages || []).includes(k))).length;
 }
@@ -5783,7 +5791,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!containerEl) return;
   if (!IS_OWNER && PACK_COST_OWNER_ONLY.has(calcKey)) { containerEl.innerHTML = ""; return; }
   await ensurePackLinks();
-  const tables = (await ensurePackTables()).filter((tb) => packLinkFor(tb.id).pages.includes(calcKey));
+  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
   if (!tables.length) { containerEl.innerHTML = ""; return; }
   if (PACK_TARGET_CACHE[calcKey] === undefined) {
     const saved = await loadCalcState(`pack_target_${calcKey}`);
@@ -6679,7 +6687,7 @@ function budgetPlanLines(calcKey) {
 // Everything the Budgets page needs for one calculator page.
 async function budgetForPage(calcKey, targetDays) {
   await ensurePackLinks();
-  const tables = (await ensurePackTables()).filter((tb) => packLinkFor(tb.id).pages.includes(calcKey));
+  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
   let groups, live = true;
   if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
