@@ -4812,6 +4812,8 @@ const PACK_RESOURCE_NAMES = [
 // 400 Hardened Alloy, so a column of "3 chests" counts as 3x that.
 const PACK_BUNDLES = {
   "Chief Gear Chest": { "Design Plan": 1, "Polishing Solution": 4, "Hardened Alloy": 400 },
+  // Old combined column: counts as that much Meat AND that much Wood.
+  "Meat/Wood": { "Meat": 1, "Wood": 1 },
   // Speedup items of a fixed length: a column of "20" 1h speedups = 1,200 minutes.
   "Speedup 1m": { "Speedups (minutes)": 1 },
   "Speedup 3m": { "Speedups (minutes)": 3 },
@@ -9162,7 +9164,8 @@ async function renderT11HeliosPage() {
     const matTotals = {
       Steel: Math.round(grand.steel),
       "FC Shard": Math.round(grand.fc_shard),
-      "Meat/Wood": Math.round(grand.meat),
+      Meat: Math.round(grand.meat),
+      Wood: Math.round(grand.wood),
       Coal: Math.round(grand.coal),
       Iron: Math.round(grand.iron),
       "Research Speedups (minutes)": Math.round(applyResearchSpeed(grand.time_hours) * 60),
@@ -11319,7 +11322,8 @@ async function renderT12ResearchPage() {
       Steel: Math.round(grand.steel),
       "Refined FC": Math.round(grand.refined_fc),
       "FC Shard": Math.round(grand.fc_shard),
-      "Meat/Wood": Math.round(grand.meat_wood),
+      Meat: Math.round(grand.meat_wood),
+      Wood: Math.round(grand.meat_wood),
       Coal: Math.round(grand.coal),
       Iron: Math.round(grand.iron),
       "Research Speedups (minutes)": Math.round(applyResearchSpeed(grand.time_hours) * 60),
@@ -12998,7 +13002,7 @@ const ADMIN_RESEARCH_CONFIG = {
       { key: "steel", label: "Steel", type: "number" },
       { key: "refined_fc", label: "Refined FC", type: "number" },
       { key: "fc_shard", label: "FC Shard", type: "number" },
-      { key: "meat_wood", label: "Meat+Wood", type: "number" },
+      { key: "meat_wood", label: "Meat / Wood (each)", type: "number" },
       { key: "coal", label: "Coal", type: "number" },
       { key: "iron", label: "Iron", type: "number" },
       { key: "time_hours", label: "Time (hrs)", type: "number" },
