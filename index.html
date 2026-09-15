@@ -3645,7 +3645,7 @@ async function renderPacksPage() {
     listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px;">${esc(g)}${IS_OWNER ? `<span style="display:inline-flex; gap:3px; margin-inline-start:auto;"><button type="button" class="btn ghost small" data-pt-catmove="-1" data-cat="${esc(g)}" ${groupOrder.indexOf(g) === 0 ? "disabled" : ""} title="Move category up" style="padding:1px 7px; font-size:10px;">&#9650;</button><button type="button" class="btn ghost small" data-pt-catmove="1" data-cat="${esc(g)}" ${groupOrder.indexOf(g) === groupOrder.length - 1 ? "disabled" : ""} title="Move category down" style="padding:1px 7px; font-size:10px;">&#9660;</button></span>` : ""}</div>` : "";
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px;">${esc(g)}</div>` : "";
         lastGroup = g;
         return heading + (() => {
         // Auto-computed total row: sums every column's numeric cells across
@@ -3728,7 +3728,6 @@ async function renderPacksPage() {
       .join("") + `</div><datalist id="packGroupNames">${groupOrder.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>`;
     wireTable();
     wirePackLinkEditors();
-    listEl.querySelectorAll("[data-pt-catmove]").forEach((b) => b.addEventListener("click", () => moveCategory(b.dataset.cat, Number(b.getAttribute("data-pt-catmove")))));
     if (!IS_OWNER) applyPacksReadOnly(listEl);
   }
   // Visitors: the tables are shown exactly as the owner set them, with every
@@ -6053,15 +6052,23 @@ function setDisplayCurrency(code) {
 // currency (Admin -> Currencies, site_config "currency_prices"). Stores add
 // tax or round differently, so a $4.99 pack is rarely exactly 4.99 x rate.
 // A slot that is filled wins over the rate; an empty slot falls back to it.
-const CURRENCY_PRICE_SLOTS = ["0.99", "1.99", "2.99", "4.99", "9.99", "14.99", "19.99", "29.99", "49.99", "99.99"];
+const CURRENCY_PRICE_SLOTS = ["0.99", "1.99", "2.99", "4.99", "9.99", "19.99", "49.99", "99.99"];
 function currencyPrices() {
   const saved = siteConfig("currency_prices", null);
   return saved && typeof saved === "object" ? saved : {};
 }
+// Built-in price points plus the ones added in Admin (site_config
+// "currency_slots"), sorted by value.
+function currencyPriceSlots() {
+  const extra = siteConfig("currency_slots", null);
+  const all = new Set(CURRENCY_PRICE_SLOTS);
+  if (Array.isArray(extra)) extra.forEach((x) => { const n = Number(x); if (n > 0) all.add(n.toFixed(2)); });
+  return [...all].sort((a, b) => Number(a) - Number(b));
+}
 function currencySlotPrice(usd, code) {
   const slots = currencyPrices()[code];
   if (!slots) return null;
-  const key = CURRENCY_PRICE_SLOTS.find((s) => Math.abs(Number(s) - usd) < 0.005);
+  const key = Object.keys(slots).find((s) => Math.abs(Number(s) - usd) < 0.005);
   if (!key) return null;
   const v = Number(slots[key]);
   return v > 0 ? v : null;
@@ -12169,7 +12176,14 @@ async function renderAdminCurrencies(body) {
           <tbody id="adminPriceSlots"></tbody>
         </table>
       </div>
-      <div style="margin-top:12px; display:flex; gap:8px;"><button class="btn small" id="adminPricesSave" type="button">Save store prices</button><button class="btn small ghost" id="adminPricesClear" type="button">Clear this currency</button></div>
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"><button class="btn small" id="adminPricesSave" type="button">Save store prices</button><button class="btn small ghost" id="adminPricesClear" type="button">Clear this currency</button></div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+        <div class="meta" style="margin-bottom:6px;">Add a USD price point (applies to every currency)</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input id="adminSlotAdd" type="number" step="0.01" min="0" placeholder="e.g. 14.99" style="width:130px;" />
+          <button class="btn small" id="adminSlotAddBtn" type="button">Add</button>
+        </div>
+      </div>
     </div>`;
   const curSel = document.getElementById("adminPriceCur");
   const slotsBody = document.getElementById("adminPriceSlots");
@@ -12179,16 +12193,35 @@ async function renderAdminCurrencies(body) {
     slotsBody.querySelectorAll("[data-slot]").forEach((inp) => { const v = Number(inp.value); if (v > 0) cur[inp.dataset.slot] = v; });
     if (Object.keys(cur).length) priceDraft[code] = cur; else delete priceDraft[code];
   };
-  const renderSlots = () => {
+  let renderSlots = () => {
     const code = curSel.value, cur = priceDraft[code] || {}, rate = Number(body.querySelector(`[data-rate="${code}"]`)?.value) || currencyRates()[code] || 0;
-    slotsBody.innerHTML = CURRENCY_PRICE_SLOTS.map((s) => `<tr>
-      <td style="padding:4px 8px;">$${s}</td>
+    slotsBody.innerHTML = currencyPriceSlots().map((s) => `<tr>
+      <td style="padding:4px 8px;">$${s}${CURRENCY_PRICE_SLOTS.includes(s) ? "" : ` <button class="btn small ghost" type="button" data-slotdel="${s}" title="Remove this price point" style="padding:1px 7px; margin-inline-start:6px;">\u00d7</button>`}</td>
       <td style="padding:4px 8px;" class="meta">${rate > 0 ? (Number(s) * rate).toFixed(2) : "—"}</td>
       <td style="padding:4px 8px;"><input type="number" step="any" min="0" data-slot="${s}" value="${cur[s] ?? ""}" placeholder="${rate > 0 ? (Number(s) * rate).toFixed(2) : ""}" style="width:130px;" /></td></tr>`).join("");
   };
   let lastCode = curSel.value;
   curSel.addEventListener("change", () => { readSlots(lastCode); lastCode = curSel.value; renderSlots(); });
+  const wireSlotDel = () => slotsBody.querySelectorAll("[data-slotdel]").forEach((b) => b.addEventListener("click", async () => {
+    const key = b.dataset.slotdel;
+    if (!confirm(`Remove the $${key} price point from every currency?`)) return;
+    readSlots(curSel.value);
+    const extra = (siteConfig("currency_slots", []) || []).filter((x) => Number(x).toFixed(2) !== key);
+    Object.keys(priceDraft).forEach((c) => { delete priceDraft[c][key]; if (!Object.keys(priceDraft[c]).length) delete priceDraft[c]; });
+    try { await saveSiteConfig("currency_slots", extra); await saveSiteConfig("currency_prices", priceDraft); toast(`$${key} removed`); renderSlots(); } catch (err) { toast(err.message || "Couldn't save", true); }
+  }));
+  const renderSlotsWired = renderSlots;
+  renderSlots = () => { renderSlotsWired(); wireSlotDel(); };
   renderSlots();
+  document.getElementById("adminSlotAddBtn").addEventListener("click", async () => {
+    const n = Number(document.getElementById("adminSlotAdd").value);
+    if (!(n > 0)) { toast("Enter a USD price like 14.99", true); return; }
+    const key = n.toFixed(2);
+    if (currencyPriceSlots().includes(key)) { toast(`$${key} is already there`, true); return; }
+    readSlots(curSel.value);
+    const extra = [...(siteConfig("currency_slots", []) || []), key];
+    try { await saveSiteConfig("currency_slots", extra); toast(`$${key} added`); document.getElementById("adminSlotAdd").value = ""; renderSlots(); } catch (err) { toast(err.message || "Couldn't save", true); }
+  });
   document.getElementById("adminPricesSave").addEventListener("click", async () => {
     readSlots(curSel.value);
     try { await saveSiteConfig("currency_prices", priceDraft); toast("Store prices saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
@@ -12212,14 +12245,16 @@ async function renderAdminCurrencies(body) {
     const custom = (siteConfig("currency_custom", []) || []).filter((c) => c && c.code !== code);
     custom.push({ code, symbol });
     const ratesOut = { ...currencyRates(), [code]: rate, USD: 1 };
-    try { await saveSiteConfig("currency_custom", custom); await saveSiteConfig("currency_rates", ratesOut); toast(`${code} added`); renderAdminCurrencies(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+    readSlots(curSel.value);
+    try { await saveSiteConfig("currency_custom", custom); await saveSiteConfig("currency_rates", ratesOut); await saveSiteConfig("currency_prices", priceDraft); toast(`${code} added`); renderAdminCurrencies(body); } catch (err) { toast(err.message || "Couldn't save", true); }
   });
   body.querySelectorAll("[data-curdel]").forEach((b) => b.addEventListener("click", async () => {
     const code = b.dataset.curdel;
     if (!confirm(`Remove ${code}? Its rate and store prices will be dropped.`)) return;
     const custom = (siteConfig("currency_custom", []) || []).filter((c) => c && c.code !== code);
     const ratesOut = { ...currencyRates() }; delete ratesOut[code];
-    const prices = { ...currencyPrices() }; delete prices[code];
+    readSlots(curSel.value);
+    const prices = { ...priceDraft }; delete prices[code];
     const i = PACK_CURRENCIES.findIndex((c) => c.code === code); if (i >= 0) PACK_CURRENCIES.splice(i, 1);
     if (DISPLAY_CURRENCY === code) setDisplayCurrency("");
     try { await saveSiteConfig("currency_custom", custom); await saveSiteConfig("currency_rates", ratesOut); await saveSiteConfig("currency_prices", prices); toast(`${code} removed`); renderAdminCurrencies(body); } catch (err) { toast(err.message || "Couldn't save", true); }
