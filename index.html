@@ -449,6 +449,9 @@ input,select,textarea{
   .swipe-nav .swipe-count{ font-size:12px; color:var(--muted); white-space:nowrap; }
   .cat-tabs{ display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; }
   .cat-tabs::-webkit-scrollbar{ display:none; }
+  /* Packs page: every category must stay visible, so wrap onto more lines
+     instead of hiding the overflow behind a scrollbar-less strip. */
+  .cat-tabs.cat-tabs-wrap{ flex-wrap:wrap; overflow:visible; row-gap:6px; }
   .cat-tabs button{
     flex-shrink:0; background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
     padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;
@@ -3611,7 +3614,7 @@ async function renderPacksPage() {
     const tabs = categoryTabs();
     if (!tabs.some((pt) => pt.key === packsFilter)) packsFilter = "all";
     const countFor = (key) => { const keep = packsFilter; packsFilter = key; const n = tables.filter(tableMatchesFilter).length; packsFilter = keep; return n; };
-    el.innerHTML = `<div class="cat-tabs">${tabs.map((pt) => {
+    el.innerHTML = `<div class="cat-tabs cat-tabs-wrap">${tabs.map((pt) => {
       const label = pt.key === "all" ? t("packs_filter_all") : pt.key === "none" ? t("packs_filter_none") : pt.name;
       return `<button data-packsfilter="${esc(pt.key)}" class="${pt.key === packsFilter ? "active" : ""}">${esc(label)} <span class="meta" style="font-size:10px;">${countFor(pt.key)}</span></button>`;
     }).join("")}</div>`;
@@ -6046,8 +6049,29 @@ function setDisplayCurrency(code) {
   DISPLAY_CURRENCY = code || "";
   try { localStorage.setItem("display_currency", DISPLAY_CURRENCY); } catch (e) {}
 }
+// Store price slots: the real in-store price of each USD price point per
+// currency (Admin -> Currencies, site_config "currency_prices"). Stores add
+// tax or round differently, so a $4.99 pack is rarely exactly 4.99 x rate.
+// A slot that is filled wins over the rate; an empty slot falls back to it.
+const CURRENCY_PRICE_SLOTS = ["0.99", "1.99", "2.99", "4.99", "9.99", "14.99", "19.99", "29.99", "49.99", "99.99"];
+function currencyPrices() {
+  const saved = siteConfig("currency_prices", null);
+  return saved && typeof saved === "object" ? saved : {};
+}
+function currencySlotPrice(usd, code) {
+  const slots = currencyPrices()[code];
+  if (!slots) return null;
+  const key = CURRENCY_PRICE_SLOTS.find((s) => Math.abs(Number(s) - usd) < 0.005);
+  if (!key) return null;
+  const v = Number(slots[key]);
+  return v > 0 ? v : null;
+}
 function packConvert(n, from) {
   if (!DISPLAY_CURRENCY || DISPLAY_CURRENCY === (from || "USD")) return { n, code: from || "USD" };
+  if ((from || "USD") === "USD") {
+    const slot = currencySlotPrice(n, DISPLAY_CURRENCY);
+    if (slot !== null) return { n: slot, code: DISPLAY_CURRENCY };
+  }
   const r = currencyRates();
   if (!(r[from || "USD"] > 0) || !(r[DISPLAY_CURRENCY] > 0)) return { n, code: from || "USD" };
   return { n: (n / r[from || "USD"]) * r[DISPLAY_CURRENCY], code: DISPLAY_CURRENCY };
@@ -9742,7 +9766,20 @@ async function ensureSiteConfig() {
     SITE_CONFIG = {};
     rows.forEach((r) => { SITE_CONFIG[r.key] = r.value; });
   } catch (err) { SITE_CONFIG = {}; }
+  applyCustomCurrencies();
   return SITE_CONFIG;
+}
+// Extra currencies added in Admin -> Currencies (site_config "currency_custom":
+// [{ code, symbol }]) are merged into the built-in list.
+function applyCustomCurrencies() {
+  const extra = siteConfig("currency_custom", null);
+  if (!Array.isArray(extra)) return;
+  extra.forEach((c) => {
+    if (!c || !c.code) return;
+    const code = String(c.code).toUpperCase().slice(0, 5);
+    const found = PACK_CURRENCIES.find((x) => x.code === code);
+    if (found) found.symbol = c.symbol || found.symbol; else PACK_CURRENCIES.push({ code, symbol: c.symbol || code, custom: true });
+  });
 }
 function siteConfig(key, fallback) { return (SITE_CONFIG && SITE_CONFIG[key] != null) ? SITE_CONFIG[key] : fallback; }
 // What visitors may open read-only (Admin -> Visibility -> Visitor access).
@@ -9763,6 +9800,7 @@ async function saveSiteConfig(key, value) {
   await sb(`site_config`, { method: "POST", prefer: "resolution=merge-duplicates,return=representation", body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }) });
   if (!SITE_CONFIG) SITE_CONFIG = {};
   SITE_CONFIG[key] = value;
+  if (key === "currency_custom") applyCustomCurrencies();
 }
 // Packs page resource list as configured in Admin -> Pack Resources:
 // { custom: [{ name, icon, contents: { "Design Plan": 1, ... } }], hidden: [name], order: [name] }
@@ -12102,24 +12140,95 @@ async function renderAdminCurrencies(body) {
   body.innerHTML = `
     <div class="panel" style="max-width:620px;">
       <h2>Currencies</h2>
-      <p class="desc">How many units of each currency equal 1 US dollar. Used when someone picks "Show prices in" on the Packs page or in a Pack cost block; a pack's own currency is what you set in its table. Update these whenever you like; there is no automatic feed.</p>
+      <p class="desc">How many units of each currency equal 1 US dollar. Used when someone picks "Show prices in" on the Budgets page, unless a store price below covers that exact price point. Update these whenever you like; there is no automatic feed.</p>
       <div class="adm-scroll" style="max-height:60vh;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>${ADMIN_TH}Currency</th>${ADMIN_TH}Per 1 USD</th></tr></thead>
-          <tbody>${PACK_CURRENCIES.map((c) => `<tr><td style="padding:4px 8px;">${c.code} <span class="meta">${esc(c.symbol)}</span></td><td style="padding:4px 8px;"><input type="number" step="any" min="0" data-rate="${c.code}" value="${rates[c.code] ?? ""}" ${c.code === "USD" ? "disabled" : ""} style="width:130px;" /></td></tr>`).join("")}</tbody>
+          <tbody>${PACK_CURRENCIES.map((c) => `<tr><td style="padding:4px 8px;">${c.code} <span class="meta">${esc(c.symbol)}</span>${c.custom ? ` <button class="btn small ghost" type="button" data-curdel="${c.code}" title="Remove this currency" style="padding:1px 7px; margin-inline-start:6px;">×</button>` : ""}</td><td style="padding:4px 8px;"><input type="number" step="any" min="0" data-rate="${c.code}" value="${rates[c.code] ?? ""}" ${c.code === "USD" ? "disabled" : ""} style="width:130px;" /></td></tr>`).join("")}</tbody>
         </table>
       </div>
-      <div style="margin-top:12px; display:flex; gap:8px;"><button class="btn small" id="adminRatesSave" type="button">Save</button><button class="btn small ghost" id="adminRatesReset" type="button">Reset to defaults</button></div>
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"><button class="btn small" id="adminRatesSave" type="button">Save</button><button class="btn small ghost" id="adminRatesReset" type="button">Reset to defaults</button></div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+        <div class="meta" style="margin-bottom:6px;">Add a currency</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input id="adminCurCode" placeholder="Code (e.g. PKR)" maxlength="5" style="width:130px;" />
+          <input id="adminCurSymbol" placeholder="Symbol (e.g. Rs)" maxlength="6" style="width:120px;" />
+          <input id="adminCurRate" type="number" step="any" min="0" placeholder="Per 1 USD" style="width:120px;" />
+          <button class="btn small" id="adminCurAdd" type="button">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="max-width:620px; margin-top:14px;">
+      <h2>Store prices</h2>
+      <p class="desc">What each USD price point really costs in a store, per currency (tax, rounding, regional pricing). When someone shows prices in that currency, a pack priced at one of these USD points uses the value you type here; an empty slot keeps using the rate above. Totals that are not an exact price point always use the rate.</p>
+      <label style="display:inline-flex; align-items:center; gap:8px; font-size:12px; margin-bottom:10px;"><span class="meta">Currency</span>
+        <select id="adminPriceCur" style="font-size:12px; padding:4px 8px;">${PACK_CURRENCIES.filter((c) => c.code !== "USD").map((c) => `<option value="${c.code}">${c.code} ${esc(c.symbol)}</option>`).join("")}</select></label>
+      <div class="adm-scroll" style="max-height:60vh;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+          <thead><tr>${ADMIN_TH}USD price</th>${ADMIN_TH}By rate</th>${ADMIN_TH}Store price</th></tr></thead>
+          <tbody id="adminPriceSlots"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px;"><button class="btn small" id="adminPricesSave" type="button">Save store prices</button><button class="btn small ghost" id="adminPricesClear" type="button">Clear this currency</button></div>
     </div>`;
+  const curSel = document.getElementById("adminPriceCur");
+  const slotsBody = document.getElementById("adminPriceSlots");
+  let priceDraft = JSON.parse(JSON.stringify(currencyPrices()));
+  const readSlots = (code) => {
+    const cur = {};
+    slotsBody.querySelectorAll("[data-slot]").forEach((inp) => { const v = Number(inp.value); if (v > 0) cur[inp.dataset.slot] = v; });
+    if (Object.keys(cur).length) priceDraft[code] = cur; else delete priceDraft[code];
+  };
+  const renderSlots = () => {
+    const code = curSel.value, cur = priceDraft[code] || {}, rate = Number(body.querySelector(`[data-rate="${code}"]`)?.value) || currencyRates()[code] || 0;
+    slotsBody.innerHTML = CURRENCY_PRICE_SLOTS.map((s) => `<tr>
+      <td style="padding:4px 8px;">$${s}</td>
+      <td style="padding:4px 8px;" class="meta">${rate > 0 ? (Number(s) * rate).toFixed(2) : "—"}</td>
+      <td style="padding:4px 8px;"><input type="number" step="any" min="0" data-slot="${s}" value="${cur[s] ?? ""}" placeholder="${rate > 0 ? (Number(s) * rate).toFixed(2) : ""}" style="width:130px;" /></td></tr>`).join("");
+  };
+  let lastCode = curSel.value;
+  curSel.addEventListener("change", () => { readSlots(lastCode); lastCode = curSel.value; renderSlots(); });
+  renderSlots();
+  document.getElementById("adminPricesSave").addEventListener("click", async () => {
+    readSlots(curSel.value);
+    try { await saveSiteConfig("currency_prices", priceDraft); toast("Store prices saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+  document.getElementById("adminPricesClear").addEventListener("click", () => {
+    delete priceDraft[curSel.value]; renderSlots();
+  });
   document.getElementById("adminRatesSave").addEventListener("click", async () => {
     const out = {};
     body.querySelectorAll("[data-rate]").forEach((inp) => { const v = Number(inp.value); if (v > 0) out[inp.dataset.rate] = v; });
     out.USD = 1;
     try { await saveSiteConfig("currency_rates", out); toast("Rates saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
   });
+  document.getElementById("adminCurAdd").addEventListener("click", async () => {
+    const code = document.getElementById("adminCurCode").value.trim().toUpperCase();
+    const symbol = document.getElementById("adminCurSymbol").value.trim() || code;
+    const rate = Number(document.getElementById("adminCurRate").value);
+    if (!/^[A-Z]{3,5}$/.test(code)) { toast("Code must be 3-5 letters (e.g. PKR)", true); return; }
+    if (PACK_CURRENCIES.some((c) => c.code === code)) { toast(`${code} is already in the list`, true); return; }
+    if (!(rate > 0)) { toast("Enter how many units equal 1 USD", true); return; }
+    const custom = (siteConfig("currency_custom", []) || []).filter((c) => c && c.code !== code);
+    custom.push({ code, symbol });
+    const ratesOut = { ...currencyRates(), [code]: rate, USD: 1 };
+    try { await saveSiteConfig("currency_custom", custom); await saveSiteConfig("currency_rates", ratesOut); toast(`${code} added`); renderAdminCurrencies(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+  body.querySelectorAll("[data-curdel]").forEach((b) => b.addEventListener("click", async () => {
+    const code = b.dataset.curdel;
+    if (!confirm(`Remove ${code}? Its rate and store prices will be dropped.`)) return;
+    const custom = (siteConfig("currency_custom", []) || []).filter((c) => c && c.code !== code);
+    const ratesOut = { ...currencyRates() }; delete ratesOut[code];
+    const prices = { ...currencyPrices() }; delete prices[code];
+    const i = PACK_CURRENCIES.findIndex((c) => c.code === code); if (i >= 0) PACK_CURRENCIES.splice(i, 1);
+    if (DISPLAY_CURRENCY === code) setDisplayCurrency("");
+    try { await saveSiteConfig("currency_custom", custom); await saveSiteConfig("currency_rates", ratesOut); await saveSiteConfig("currency_prices", prices); toast(`${code} removed`); renderAdminCurrencies(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+  }));
   document.getElementById("adminRatesReset").addEventListener("click", async () => {
     if (!confirm("Put every rate back to the built-in defaults?")) return;
-    try { await saveSiteConfig("currency_rates", { ...CURRENCY_DEFAULT_RATES }); toast("Rates reset"); renderAdminCurrencies(body); } catch (err) { toast("Couldn't save", true); }
+    const cur = currencyRates(), keep = { ...CURRENCY_DEFAULT_RATES };
+    PACK_CURRENCIES.filter((c) => c.custom && cur[c.code] > 0).forEach((c) => { keep[c.code] = cur[c.code]; });
+    try { await saveSiteConfig("currency_rates", keep); toast("Rates reset"); renderAdminCurrencies(body); } catch (err) { toast("Couldn't save", true); }
   });
 }
 
