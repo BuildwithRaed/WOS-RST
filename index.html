@@ -1434,6 +1434,9 @@ const T = {
   contact_open_mail: { en: "Open mail app", ar: "\u0641\u062a\u062d \u0627\u0644\u0628\u0631\u064a\u062f", ko: "\uba54\uc77c \uc571 \uc5f4\uae30" },
   contact_tip: { en: "Include the page name and a screenshot if you are reporting a number that looks off.", ar: "\u0623\u0636\u0641 \u0627\u0633\u0645 \u0627\u0644\u0635\u0641\u062d\u0629 \u0648\u0644\u0642\u0637\u0629 \u0634\u0627\u0634\u0629 \u0625\u0630\u0627 \u0643\u0646\u062a \u062a\u0628\u0644\u0651\u063a \u0639\u0646 \u0631\u0642\u0645 \u062e\u0627\u0637\u0626.", ko: "\uc218\uce58 \uc624\ub958\ub97c \uc2e0\uace0\ud560 \ub54c\ub294 \ud398\uc774\uc9c0 \uc774\ub984\uacfc \uc2a4\ud06c\ub9b0\uc0f7\uc744 \ud568\uaed8 \ubcf4\ub0b4 \uc8fc\uc138\uc694." },
   contact_soon: { en: "Contact details will be added soon.", ar: "\u0633\u062a\u064f\u0636\u0627\u0641 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0642\u0631\u064a\u0628\u0627\u064b.", ko: "\uc5f0\ub77d\ucc98\ub294 \uace7 \ucd94\uac00\ub429\ub2c8\ub2e4." },
+  expert_upcoming: { en: "Upcoming", ar: "\u0642\u0631\u064a\u0628\u0627\u064b", ko: "\ucd9c\uc2dc \uc608\uc815" },
+  skill_maxed: { en: "Maxed", ar: "\u0645\u0643\u062a\u0645\u0644", ko: "\ucd5c\ub300" },
+  skill_maxed_tip: { en: "Set this skill to its max level", ar: "\u0627\u062c\u0639\u0644 \u0647\u0630\u0647 \u0627\u0644\u0645\u0647\u0627\u0631\u0629 \u0641\u064a \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649", ko: "\uc774 \uc2a4\ud0ac\uc744 \ucd5c\ub300 \ub808\ubca8\ub85c \uc124\uc815" },
   skill_exp_have: { en: "EXP you have", ar: "\u0627\u0644\u062e\u0628\u0631\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 EXP" },
   minutes_short: { en: "min", ar: "\u062f\u0642\u064a\u0642\u0629", ko: "\ubd84" },
   piece_helmet: { en: "Helmet", ar: "\u062e\u0648\u0630\u0629", ko: "\ud22c\uad6c" },
@@ -8329,6 +8332,10 @@ let EXPERTS_LIST = []; // [{key,img,skills:[4]}] excludes unreleased/no-skill ex
 let EXPERTS_IN_ORDER_GLOBAL = []; // ALL expert keys in sort_order, including Justus
 let EXPERT_MAIN_STAT_GLOBAL_MAP = {}; // {key: "ATK"|"DEF"|"DMG"|"HP"}
 let EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP = {}; // {key: "Lancers"|"Infantry"} only for restricted experts
+let EXPERT_UPCOMING_GLOBAL = {}; // {key: true} experts flagged "Upcoming" in Admin (shown as a badge)
+function expertBadgeHtml(key) {
+  return EXPERT_UPCOMING_GLOBAL[key] ? `<span style="display:inline-block; margin-top:3px; padding:1px 7px; border:1px solid var(--ice); color:var(--ice); border-radius:999px; font-size:9.5px; font-weight:600; letter-spacing:0.3px;">${esc(t("expert_upcoming"))}</span>` : "";
+}
 let EXPERTS_ROSTER_LOADED = false;
 let EXPERTS_ROSTER_PROMISE = null;
 function ensureExpertsRosterGlobal() {
@@ -8338,13 +8345,15 @@ function ensureExpertsRosterGlobal() {
   return EXPERTS_ROSTER_PROMISE;
 }
 async function loadExpertsRosterGlobal() {
-  const rows = await sb(`experts?select=key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order&order=sort_order.asc`);
+  const rows = await sb(`experts?select=key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
   EXPERTS_IN_ORDER_GLOBAL = rows.map((r) => r.key);
   EXPERT_MAIN_STAT_GLOBAL_MAP = {};
   EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP = {};
   EXPERTS_LIST = [];
+  EXPERT_UPCOMING_GLOBAL = {};
   rows.forEach((r) => {
     EXPERT_MAIN_STAT_GLOBAL_MAP[r.key] = r.main_stat;
+    if (r.upcoming) EXPERT_UPCOMING_GLOBAL[r.key] = true;
     if (r.main_stat_troop) EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP[r.key] = r.main_stat_troop;
     const skills = [r.skill1, r.skill2, r.skill3, r.skill4].filter(Boolean);
     if (r.img && skills.length === 4) {
@@ -9597,13 +9606,17 @@ function unlockedFor(kind, name, savedFlag) {
 // ============================================================
 const EXPERT_HERO_MAX_LEVEL = 100;
 const EXPERT_SKILL_MAX_LEVEL = 10; // placeholder until real per-skill caps are provided
-const EXPERT_INVENTORY_FIELDS = [
+const EXPERT_INVENTORY_BASE_FIELDS = [
   "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge",
   "Expert Speedups (minutes)", "General Sigils",
-  "Cyrille Sigils", "Agnes Sigils", "Holger Sigils", "Romulus Sigils",
-  "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils",
-  "Kathy Sigils", "Gareth Sigils",
 ];
+// Backpack fields = the base items + one "<Expert> Sigils" box per expert
+// in the roster (so a newly added expert gets its own sigils automatically).
+function expertInventoryFields() {
+  const out = EXPERT_INVENTORY_BASE_FIELDS.slice();
+  (EXPERTS_LIST || []).forEach((e) => { const f = `${e.key} Sigils`; if (!out.includes(f)) out.push(f); });
+  return out;
+}
 // Affinity you own = the gift items you hold (plus any Affinity number
 // saved before the items existed, kept so nothing is lost).
 const AFFINITY_ITEM_VALUE = { "Sail of Conquest": 1000, "Fiery Heart": 100, "Compass": 10 };
@@ -9901,6 +9914,7 @@ async function renderExpertsResearchPage() {
           <div style="min-width:0; text-align:center;">
             ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; margin-bottom:4px;" loading="lazy" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(dataName(expert))}</div>
+            ${expertBadgeHtml(expert)}
             <div class="meta" style="font-size:10px; color:var(--frost);">${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
             ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta" style="font-size:9px; color:var(--muted);">${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}</div>` : ""}
             ${IS_OWNER ? `<div style="margin-top:4px;">${visibilityBtnHtml("experts", expert)}</div>` : ""}
@@ -10435,6 +10449,7 @@ async function renderExpertsPage() {
           <div style="text-align:center;">
             <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; object-fit:cover; margin-bottom:6px;" loading="lazy" />
             <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
+            ${expertBadgeHtml(e.key)}
             ${IS_OWNER ? `<div style="margin-top:4px;">${visibilityBtnHtml("experts", e.key)}</div>` : ""}
           </div>
           <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px; justify-self:end;">${esc(t("max_button"))}</button>
@@ -10500,6 +10515,7 @@ async function renderExpertsPage() {
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:3px;">
               <span class="meta" style="font-size:10px;">${esc(t("skill_exp_have"))}</span>
               <input type="number" min="0" step="1" inputmode="numeric" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" style="width:110px; flex-shrink:0; padding:4px 8px; font-size:12px; text-align:end;" />
+              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${st.current >= max ? "disabled" : ""} title="${esc(t("skill_maxed_tip"))}" style="padding:3px 8px; font-size:11px; flex-shrink:0;">${st.current >= max ? "\u2713 " : ""}${esc(t("skill_maxed"))}</button>
             </div>
           </div>`;
             })
@@ -10596,6 +10612,23 @@ async function renderExpertsPage() {
         renderGrid();
       });
     });
+    gridEl.querySelectorAll("[data-expskillmax]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const [hero, skill] = btn.dataset.expskillmax.split("|");
+        const max = skillMaxLevel(hero, skill);
+        saved[hero].skills[skill].current = max;
+        saved[hero].skills[skill].desired = max;
+        delete saved[hero].skills[skill].expHave;
+        await saveCalcState("experts", saved);
+        renderStatHeader();
+        renderFoundryHeader();
+        renderSvsHeader();
+        renderFrostfireHeader();
+        renderTundraHeader();
+        renderTotals();
+        renderGrid();
+      });
+    });
     gridEl.querySelectorAll("input[data-expskillexp]").forEach((inp) => {
       inp.addEventListener("change", async () => {
         const [hero, skill] = inp.dataset.expskillexp.split("|");
@@ -10615,13 +10648,13 @@ async function renderExpertsPage() {
     // (e.g. Valeria · Ronne · Kathy · Gareth) instead of stacking in pairs.
     const fieldRow = (f) => `
       <div style="display:flex; align-items:center; gap:6px; flex:0 0 150px; min-width:150px; flex-wrap:nowrap;">
-        <img src="${EXPERT_INVENTORY_ICONS[f]}" data-iconfallback="icons/item_icon_570201.png" alt="" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
+        <img src="${EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png")}" data-iconfallback="${f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png"}" alt="" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
         <div style="flex:1; min-width:0;">
           <div class="meta" style="font-size:9px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(materialDisplayName(f))}</div>
           <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; min-width:0; padding:4px 6px; box-sizing:border-box;" />
         </div>
       </div>`;
-    invEl.innerHTML = EXPERT_INVENTORY_FIELDS.map(fieldRow).join("");
+    invEl.innerHTML = expertInventoryFields().map(fieldRow).join("");
     invEl.style.gap = "10px 12px";
     invEl.querySelectorAll("img[data-iconfallback]").forEach((img) => img.addEventListener("error", () => { img.src = img.dataset.iconfallback; img.removeAttribute("data-iconfallback"); }, { once: true }));
 
@@ -11906,7 +11939,7 @@ function applyPageVisibility() {
 
 // ---- Roster editor ----
 async function renderAdminRoster(body) {
-  const rows = await sb(`experts?select=id,key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order&order=sort_order.asc`);
+  const rows = await sb(`experts?select=id,key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
   const STAT_OPTS = [
     ["ATK", "Attack"],
     ["DEF", "Defense"],
@@ -11927,6 +11960,7 @@ async function renderAdminRoster(body) {
           <option value="Infantry">Infantry only</option>
           <option value="Marksman">Marksman only</option>
         </select>
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px;"><input type="checkbox" name="upcoming" /> Upcoming</label>
         <button class="btn" type="submit">Add expert</button>
       </form>
       <div class="err" id="adminAddExpertErr"></div>
@@ -11939,7 +11973,7 @@ async function renderAdminRoster(body) {
       <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
-            ${["", "Name", "Image URL", "Skill 1", "Skill 2", "Skill 3", "Skill 4", "Main stat", "Troop restriction", ""]
+            ${["", "Name", "Image URL", "Skill 1", "Skill 2", "Skill 3", "Skill 4", "Main stat", "Troop restriction", "Upcoming", ""]
               .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
               .join("")}
           </tr></thead>
@@ -11966,6 +12000,7 @@ async function renderAdminRoster(body) {
                     <option value="Marksman" ${r.main_stat_troop === "Marksman" ? "selected" : ""}>Marksman only</option>
                   </select>
                 </td>
+                <td style="padding:4px; text-align:center;"><input type="checkbox" data-f="upcoming" ${r.upcoming ? "checked" : ""} title="Show an Upcoming badge on this expert's cards" /></td>
                 <td style="padding:4px; white-space:nowrap;">
                   <button class="btn small ghost" data-rostersave="${r.id}">Save</button>
                   <button class="btn small ghost" data-rosterdel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -11995,6 +12030,7 @@ async function renderAdminRoster(body) {
           img: f.img.value.trim() || null,
           main_stat: f.main_stat.value,
           main_stat_troop: f.main_stat_troop.value || null,
+          upcoming: !!f.upcoming.checked,
           sort_order: maxOrder + 1,
         }),
       });
@@ -12010,6 +12046,7 @@ async function renderAdminRoster(body) {
     const tr = body.querySelector(`tr[data-rosterrow="${id}"]`);
     const body_ = {};
     tr.querySelectorAll("[data-f]").forEach((el) => {
+      if (el.dataset.f === "upcoming") { body_.upcoming = !!el.checked; return; }
       let v = el.value;
       if (el.dataset.f === "sort_order") v = Number(v) || 0;
       if ((el.dataset.f === "img" || el.dataset.f.startsWith("skill") || el.dataset.f === "main_stat_troop") && v.trim() === "") v = null;
