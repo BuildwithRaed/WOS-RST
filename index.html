@@ -1527,6 +1527,8 @@ const T = {
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_group_placeholder: { en: "Group…", ar: "المجموعة…", ko: "그룹…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together.", ar: "الاسم الرئيسي الذي يندرج تحته هذا الجدول. تُعرض الجداول ذات اسم المجموعة نفسه معًا.", ko: "이 표가 속한 상위 이름입니다. 같은 그룹 이름의 표는 함께 표시됩니다." },
+  pack_lock_option: { en: "One option for the whole ladder", ar: "خيار واحد للسلّم بأكمله", ko: "사다리 전체에 하나의 옵션" },
+  pack_lock_option_desc: { en: "You pick the option once and every tier gives that option (no mixing per tier). Leave off if each tier can pick a different option.", ar: "تختار الخيار مرة واحدة ويمنح كل مستوى ذلك الخيار (بدون خلط لكل مستوى). اتركه بدون تحديد إذا كان كل مستوى يمكنه اختيار خيار مختلف.", ko: "옵션을 한 번 선택하면 모든 티어가 그 옵션을 제공합니다(티어별 혼합 불가). 티어마다 다른 옵션을 고를 수 있으면 끄세요." },
   pack_buys_per_reset_choice: { en: "Purchases per reset (shared by all options)", ar: "عدد المشتريات لكل تكرار (مشترك بين كل الخيارات)", ko: "주기당 구매 횟수 (모든 옵션 공유)" },
   pack_rowmax_head: { en: "Max", ar: "الحد", ko: "최대" },
   pack_rowmax_title: { en: "How many times this row can be bought (per reset). Empty = the table's default. On a ladder, set it on the last tier to allow buying it again after the ladder is complete.", ar: "عدد مرات شراء هذا الصف (لكل تكرار). فارغ = الافتراضي للجدول. في السلّم، ضعه على آخر مستوى للسماح بشرائه مجددًا بعد إكمال السلّم.", ko: "이 행을 (주기당) 살 수 있는 횟수입니다. 비우면 표 기본값. 사다리형이면 마지막 단계에 설정해 사다리 완료 후 반복 구매를 허용합니다." },
@@ -3660,6 +3662,10 @@ async function renderPacksPage() {
               <input type="radio" name="packkind-${esc(tb.id)}" data-packkind="${k}" ${kind === k ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
               <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(label)}</span><br><span class="meta" style="font-size:10.5px;">${esc(desc)}</span></span>
             </label>`).join("")}
+            <label data-packlockwrap style="display:${kind === "option_cols" || kind === "option_tables" ? "flex" : "none"}; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px; margin-inline-start:24px;">
+              <input type="checkbox" data-packlock ${link.lockOption ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
+              <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(t("pack_lock_option"))}</span><br><span class="meta" style="font-size:10.5px;">${esc(t("pack_lock_option_desc"))}</span></span>
+            </label>
           </div>`;
         })()}
         ${(() => {
@@ -3733,9 +3739,13 @@ async function renderPacksPage() {
         l.colOptions = k === "option_cols";
         l.option = k === "option_tables";
         l.choice = k === "choice";
+        const lockWrap = box.querySelector("[data-packlockwrap]");
+        if (lockWrap) lockWrap.style.display = (k === "option_cols" || k === "option_tables") ? "flex" : "none";
         syncResetUi();
         await savePackLinks();
       }));
+      const lockCb = box.querySelector("[data-packlock]");
+      if (lockCb) lockCb.addEventListener("change", async () => { current().lockOption = lockCb.checked; await savePackLinks(); });
       const resetSel = box.querySelector("[data-packreset]");
       const resetDays = box.querySelector("[data-packresetdays]");
       const resetDaysLabel = box.querySelector("[data-packresetdayslabel]");
@@ -4896,6 +4906,9 @@ function packLinkFor(tableId) {
     // Each COLUMN of this table is an option: a purchase of a tier takes
     // one column's amount (Mix & Match style).
     colOptions: l.colOptions === true,
+    // For option ladders: the option is chosen ONCE for the whole ladder
+    // (every tier gives the same option) instead of per tier.
+    lockOption: l.lockOption === true,
     // Optional group ("main name") several tables sit under on the Packs page.
     group: typeof l.group === "string" ? l.group.trim() : "",
     // Anchor date (yyyy-mm-dd) the pack next comes on; null = not pinned.
@@ -5064,7 +5077,10 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
     const n = perTable.length;
     const full = Math.pow(n, tiers);
     const seqs = [];
-    if (full * 1.5 <= 3000) {
+    if (lead.lockOption) {
+      // One option for the whole ladder: every prefix length, same option throughout.
+      for (let k = 1; k <= tiers; k++) for (let j = 0; j < n; j++) seqs.push(Array(k).fill(j));
+    } else if (full * 1.5 <= 3000) {
       // every sequence of options for every prefix length
       const rec = (k, acc) => { if (k > 0) seqs.push(acc.slice()); if (k === tiers) return; for (let j = 0; j < n; j++) { acc.push(j); rec(k + 1, acc); acc.pop(); } };
       rec(0, []);
@@ -5101,7 +5117,7 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
     seqs.forEach((seq) => build(seq, null));
     // Last tier repeatable (row Max on the last row of any option table):
     // full sequences + k more of one option.
-    if (lastMax > 1) seqs.filter((sq) => sq.length === tiers).forEach((sq) => { for (let j = 0; j < n; j++) for (let k = 1; k < lastMax; k++) build(sq, { k, j }); });
+    if (lastMax > 1) seqs.filter((sq) => sq.length === tiers).forEach((sq) => { for (let j = 0; j < n; j++) { if (lead.lockOption && j !== sq[0]) continue; for (let k = 1; k < lastMax; k++) build(sq, { k, j }); } });
     return offers.length ? { reset: lead.reset, resetDay: lead.resetDay, perCycle: 1, offers, ladder: true, optionPack: true } : null;
   }
 }
