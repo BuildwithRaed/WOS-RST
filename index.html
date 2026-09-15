@@ -3416,10 +3416,7 @@ async function renderPacksPage() {
         <h2>${esc(t("packs_title"))}</h2>
         <p class="desc">${esc(IS_OWNER ? t("packs_desc") : t("packs_desc_visitor"))}</p>
       </div>
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        ${currencyPickerHtml("id=\"packsCurrency\"")}
-        ${IS_OWNER ? `<button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>` : ""}
-      </div>
+      ${IS_OWNER ? `<button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>` : ""}
     </div>
     <div id="packsPageTabs" style="margin-bottom:6px;"></div>
     <div id="packsList"></div>
@@ -3582,10 +3579,26 @@ async function renderPacksPage() {
   // category sit under "Not assigned".
   let packsFilter = localStorage.getItem("packs_filter") || "all";
   const categoryOf = (tb) => packLinkFor(tb.id).group;
-  function categoryTabs() {
+  // Category order: saved by the owner (PACK_LINKS.__order.categories);
+  // categories not in that list follow in order of first appearance.
+  function categoryOrder() {
     const seen = [];
     tables.forEach((tb) => { const g = categoryOf(tb); if (g && !seen.includes(g)) seen.push(g); });
-    return [{ key: "all" }, ...seen.map((g) => ({ key: "cat:" + g, name: g })), { key: "none" }];
+    const saved = (PACK_LINKS && PACK_LINKS.__order && Array.isArray(PACK_LINKS.__order.categories)) ? PACK_LINKS.__order.categories : [];
+    return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g))];
+  }
+  async function moveCategory(name, dir) {
+    const order = categoryOrder();
+    const i = order.indexOf(name), j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    order.splice(i, 1); order.splice(j, 0, name);
+    await ensurePackLinks();
+    PACK_LINKS.__order = { ...(PACK_LINKS.__order || {}), categories: order };
+    await savePackLinks();
+    renderAll();
+  }
+  function categoryTabs() {
+    return [{ key: "all" }, ...categoryOrder().map((g) => ({ key: "cat:" + g, name: g })), { key: "none" }];
   }
   function tableMatchesFilter(tb) {
     if (packsFilter === "all") return true;
@@ -3617,8 +3630,7 @@ async function renderPacksPage() {
     // Tables that share a group name sit together under one heading;
     // ungrouped tables come first, in their own order.
     const groupOf = (tb) => packLinkFor(tb.id).group;
-    const groupOrder = [];
-    tables.forEach((tb) => { const g = groupOf(tb); if (g && !groupOrder.includes(g)) groupOrder.push(g); });
+    const groupOrder = categoryOrder();
     const ordered = tables.map((tb, ti) => ({ tb, ti })).filter(({ tb }) => tableMatchesFilter(tb)).sort((a, b) => {
       const ga = groupOf(a.tb), gb = groupOf(b.tb);
       const ra = ga ? groupOrder.indexOf(ga) + 1 : 0, rb = gb ? groupOrder.indexOf(gb) + 1 : 0;
@@ -3630,7 +3642,7 @@ async function renderPacksPage() {
     listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice);">${esc(g)}</div>` : "";
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px;">${esc(g)}${IS_OWNER ? `<span style="display:inline-flex; gap:3px; margin-inline-start:auto;"><button type="button" class="btn ghost small" data-pt-catmove="-1" data-cat="${esc(g)}" ${groupOrder.indexOf(g) === 0 ? "disabled" : ""} title="Move category up" style="padding:1px 7px; font-size:10px;">&#9650;</button><button type="button" class="btn ghost small" data-pt-catmove="1" data-cat="${esc(g)}" ${groupOrder.indexOf(g) === groupOrder.length - 1 ? "disabled" : ""} title="Move category down" style="padding:1px 7px; font-size:10px;">&#9660;</button></span>` : ""}</div>` : "";
         lastGroup = g;
         return heading + (() => {
         // Auto-computed total row: sums every column's numeric cells across
@@ -3675,7 +3687,6 @@ async function renderPacksPage() {
                       ${packColumnControlHtml(t, ci)}
                       ${IS_OWNER ? `<div style="display:flex; justify-content:center; gap:2px; margin-top:2px;"><button type="button" class="btn ghost small" data-pt-colmove="-1" data-col="${ci}" ${ci === 0 ? "disabled" : ""} title="Move left" style="padding:0 5px; font-size:9px; line-height:14px;">&#9664;</button><button type="button" class="btn ghost small" data-pt-colmove="1" data-col="${ci}" ${ci === t.columns.length - 1 ? "disabled" : ""} title="Move right" style="padding:0 5px; font-size:9px; line-height:14px;">&#9654;</button></div>` : ""}
                       ${packColMultiplier(packLinkFor(t.id), ci) > 1 ? `<div class="meta" style="font-size:9px; color:var(--ice);">/${esc(dailyDayLbl)} \u00d7${packLinkFor(t.id).daily.days}</div>` : ""}
-                      ${IS_OWNER && ci === packLinkFor(t.id).priceCol && DISPLAY_CURRENCY && DISPLAY_CURRENCY !== packLinkFor(t.id).currency ? `<div class="meta" style="font-size:9px; color:var(--ice);">\u2248 ${esc(DISPLAY_CURRENCY)}: ${packFmtMoney(parseNum((t.rows[0] || { cells: [] }).cells[ci]), packLinkFor(t.id).currency)} \u2026</div>` : ""}
                       <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
                   )
@@ -3714,6 +3725,7 @@ async function renderPacksPage() {
       .join("") + `</div><datalist id="packGroupNames">${groupOrder.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>`;
     wireTable();
     wirePackLinkEditors();
+    listEl.querySelectorAll("[data-pt-catmove]").forEach((b) => b.addEventListener("click", () => moveCategory(b.dataset.cat, Number(b.getAttribute("data-pt-catmove")))));
     if (!IS_OWNER) applyPacksReadOnly(listEl);
   }
   // Visitors: the tables are shown exactly as the owner set them, with every
@@ -3722,17 +3734,11 @@ async function renderPacksPage() {
     root.querySelectorAll("[data-packlink], [data-pt-delete], [data-pt-duplicate], [data-pt-restore], [data-pt-group], [data-pt-scaletoggle]").forEach((el) => { const lbl = el.closest("label"); (lbl && el.matches("[data-pt-scaletoggle]") ? lbl : el).remove(); });
     root.querySelectorAll("[data-pt-addcol], [data-pt-addrow]").forEach((el) => { const box = el.parentElement && el.parentElement.parentElement; (box || el).remove(); });
     root.querySelectorAll("[data-pt-title], [data-pt-cell]").forEach((inp) => { inp.readOnly = true; inp.tabIndex = -1; inp.style.pointerEvents = "none"; });
-    // Prices in the viewer's chosen currency (the owner's table stays in its own).
-    if (DISPLAY_CURRENCY) root.querySelectorAll("[data-packtable]").forEach((panel) => {
-      const tb = tables[Number(panel.dataset.packtable)]; if (!tb) return;
-      const link = packLinkFor(tb.id); if (link.currency === DISPLAY_CURRENCY) return;
-      panel.querySelectorAll(`[data-pt-cell][data-col="${link.priceCol}"]`).forEach((inp) => { const v = parseNum(inp.value); if (v > 0) inp.value = packFmtMoney(v, link.currency); });
-      const tot = panel.querySelector(`[data-pt-total="${link.priceCol}"]`); if (tot && tot.textContent) tot.textContent = packFmtMoney(parseNum(tot.textContent), link.currency);
-    });
     // Per-row purchase limits stay visible as plain text ("×3" = that row
     // can be bought 3 times), so visitors know a tier repeats.
     root.querySelectorAll("[data-pt-rowmax]").forEach((inp) => { const td = inp.closest("td"); td.textContent = inp.value ? "\u00d7" + inp.value : ""; td.className = "meta"; td.style.fontSize = "11px"; td.style.textAlign = "center"; });
-    root.querySelectorAll("[data-pt-colpick], [data-pt-currencypick]").forEach((sel) => {
+    root.querySelectorAll("[data-pt-currencypick]").forEach((sel) => sel.remove());
+    root.querySelectorAll("[data-pt-colpick]").forEach((sel) => {
       const span = document.createElement("span");
       span.className = "meta"; span.style.cssText = "font-size:11px; font-weight:600; display:block; text-align:center;";
       span.textContent = (sel.options[sel.selectedIndex] || {}).text || "";
@@ -3752,7 +3758,9 @@ async function renderPacksPage() {
     const link = packLinkFor(tb.id);
     const cur = String(tb.columns[ci] || "").trim();
     if (ci === link.priceCol || (packIsNonResourceColumn(cur) && cur.toLowerCase() !== "gems")) {
-      return `<select data-pt-currencypick data-col="${ci}" class="pack-col-pick" title="${esc(t("pack_currency"))}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
+      // Prices are entered in the pack's own currency (US dollars for the
+      // in-game shop); viewers convert on the Budgets page.
+      return `<span class="pack-col-fixed" title="${esc(link.currency)}">${esc(packCurrencySymbol(link.currency))}</span><select data-pt-currencypick data-col="${ci}" class="pack-col-pick" hidden title="${esc(t("pack_currency"))}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
         ${PACK_CURRENCIES.map((c) => `<option value="${esc(c.code)}" ${c.code === link.currency ? "selected" : ""}>${esc(c.symbol)}</option>`).join("")}
       </select>`;
     }
@@ -4316,7 +4324,6 @@ async function renderPacksPage() {
     });
   }
 
-  document.getElementById("packsCurrency").addEventListener("change", (e) => { setDisplayCurrency(e.target.value); renderAll(); });
   if (document.getElementById("packsAddTable")) document.getElementById("packsAddTable").addEventListener("click", async () => {
     tables.unshift({
       id: `new-${Date.now()}`,
@@ -5867,10 +5874,10 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const head = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-packtoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("pack_cost_title"))}</button>
-      ${open ? `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">${currencyPickerHtml("data-packcurrency")}${IS_OWNER ? `<div class="seg" data-packmode>
+      ${open && IS_OWNER ? `<div class="seg" data-packmode>
         <button type="button" data-packmodebtn="still" class="${PACK_COST_MODE === "still" ? "active" : ""}">${esc(t("pack_mode_still"))}</button>
         <button type="button" data-packmodebtn="full" class="${PACK_COST_MODE === "full" ? "active" : ""}">${esc(t("pack_mode_full"))}</button>
-      </div>` : ""}</div>` : ""}
+      </div>` : ""}
     </div>`;
 
   if (!open) {
@@ -6007,8 +6014,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       <div style="max-height:min(60vh, 520px); overflow-y:auto; overscroll-behavior:contain; padding-inline-end:6px;">${sections}</div>
     </div>`;
   containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = false; rerender(); });
-  const curSel = containerEl.querySelector("[data-packcurrency]");
-  if (curSel) curSel.addEventListener("change", () => { setDisplayCurrency(curSel.value); rerender(); });
   containerEl.querySelectorAll("[data-packmodebtn]").forEach((btn) => {
     btn.addEventListener("click", () => { PACK_COST_MODE = btn.dataset.packmodebtn; rerender(); });
   });
@@ -6971,7 +6976,7 @@ async function renderBudgetsPage(opts = {}) {
 
   content.innerHTML = `
     <div class="budget-wrap">
-      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
+      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div>${currencyPickerHtml('id="budgetsCurrency"')}</div>
       <div style="margin-top:12px;">${summary}</div>
       <div class="budget-cols" style="margin-top:16px;">${cards.join("")}</div>
     </div>`;
@@ -6983,6 +6988,8 @@ async function renderBudgetsPage(opts = {}) {
     renderBudgetsPage(); // instant redraw from the cached data
     saveCalcState("budget_selected", BUDGET_SELECTED);
   }));
+  const curEl = content.querySelector("#budgetsCurrency");
+  if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); renderBudgetsPage(); });
   const dateEl = content.querySelector("[data-budgettarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
