@@ -1464,7 +1464,7 @@ const T = {
   material_compass: { en: "Compass", ar: "البوصلة", ko: "나침반" },
   material_affinity: { en: "Affinity", ar: "\u0627\u0644\u0623\u0644\u0641\u0629", ko: "\uce5c\ubc00\ub3c4" },
   material_books_of_knowledge: { en: "Books", ar: "\u0643\u062a\u0628 \u0627\u0644\u0645\u0639\u0631\u0641\u0629", ko: "\uc9c0\uc2dd\uc758 \ucc45" },
-  material_speedups_minutes: { en: "Speedups (minutes)", ar: "\u0627\u0644\u0645\u0633\u0631\u0651\u0639\u0627\u062a (\u062f\u0642\u0627\u0626\u0642)", ko: "\uac00\uc18d (\ubd84)" },
+  material_speedups_minutes: { en: "General Speedups (min)", ar: "\u0627\u0644\u0645\u0633\u0631\u0651\u0639\u0627\u062a (\u062f\u0642\u0627\u0626\u0642)", ko: "\uac00\uc18d (\ubd84)" },
   material_general_sigils: { en: "General Sigils", ar: "\u0623\u062e\u062a\u0627\u0645 \u0639\u0627\u0645\u0629", ko: "\uc77c\ubc18 \uc778\uc7a5" },
   sigils_suffix: { en: "{name} Sigils", ar: "\u0623\u062e\u062a\u0627\u0645 {name}", ko: "{name} \uc778\uc7a5" },
   resource_wood: { en: "Wood", ar: "\u062e\u0634\u0628", ko: "\ubaa9\uc7ac" },
@@ -2013,8 +2013,8 @@ async function renderOverview(opts = {}) {
   }
   const GALLERY_STATE = GALLERY_SAVED || { Attack: 2, Defense: 2, Lethality: 2, Health: 2 };
   const GALLERY_MAX = { Attack: 6, Defense: 6, Lethality: 6, Health: 4 };
-  const JERO_STARS = (JERO_SAVED || {})["__shared__"] ?? 5;
-  const NATALIA_STARS = (NATALIA_SAVED || {})["__shared__"] ?? 5;
+  const JERO_STARS = (JERO_SAVED || {})["__shared__"] ?? 0;
+  const NATALIA_STARS = (NATALIA_SAVED || {})["__shared__"] ?? 0;
   const ALBUM_STATE = ALBUM_SAVED || { Attack: 2, Defense: 2 };
   // Alliance Tech rows are already in allSkins (same table, same user) - no extra request.
   const ALLIANCE_TECH_CACHE = allSkins.filter((s) => s.category === "Alliance Tech");
@@ -2236,7 +2236,7 @@ async function renderOverview(opts = {}) {
     if (calcKey === "VIP") {
       const rawStat = STAT_KEY_TO_RAW[statKey];
       if (!VIP_ROWS_CACHE || !VIP_ROWS_CACHE.length) return 0;
-      const row = useMax ? VIP_ROWS_CACHE[VIP_ROWS_CACHE.length - 1] : VIP_ROWS_CACHE[VIP_SELECTED_INDEX ?? VIP_ROWS_CACHE.length - 1];
+      const row = useMax ? VIP_ROWS_CACHE[VIP_ROWS_CACHE.length - 1] : VIP_ROWS_CACHE[VIP_SELECTED_INDEX ?? 0];
       return row && row[rawStat] != null ? row[rawStat] : 0;
     }
     if (calcKey === "Album Buff") {
@@ -4198,15 +4198,19 @@ function ensureBuffTable() {
 }
 async function ensureBuffTableOnce() {
   if (BUFF_TABLE_ID) return BUFF_TABLE_ID;
-  const existing = await sb(`buff_tables?select=id&user_id=eq.${USER_ID}&order=created_at.asc&limit=1`);
+  // The buff matrix is site reference data: everyone (visitors included)
+  // reads the owner's master table. Only the owner can ever create one.
+  const existing = await sb(`buff_tables?select=id&user_id=eq.${PROGRESSION_OWNER_ID}&name=neq.VIP%20Tier&order=created_at.asc&limit=1`);
   if (existing && existing.length) {
     BUFF_TABLE_ID = existing[0].id;
-  } else {
+  } else if (IS_OWNER) {
     const [created] = await sb(`buff_tables`, {
       method: "POST",
       body: JSON.stringify({ user_id: USER_ID, name: "Buffs", sort_order: 0 }),
     });
     BUFF_TABLE_ID = created.id;
+  } else {
+    BUFF_TABLE_ID = null;
   }
   return BUFF_TABLE_ID;
 }
@@ -4216,7 +4220,7 @@ async function ensureBuffTableOnce() {
 // grouped sub-nav so they don't appear twice.
 async function loadBuffCategories() {
   await ensureBuffTable();
-  const columns = await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category&order=sort_order.asc`);
+  const columns = !BUFF_TABLE_ID ? [] : await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category&order=sort_order.asc`);
   const grouped = [];
   const seen = new Map();
   for (const c of columns) {
@@ -8387,7 +8391,7 @@ async function ensureVipData() {
   // its own page is reflected the next time the dashboard renders.
   if (VIP_ROWS_CACHE.length) {
     const saved = await loadCalcState("vip_tier");
-    VIP_SELECTED_INDEX = VIP_ROWS_CACHE.length - 1;
+    VIP_SELECTED_INDEX = 0; // nothing picked yet = lowest tier
     if (saved) {
       const byName = VIP_ROWS_CACHE.findIndex((r) => r.name === saved.name);
       if (byName !== -1) VIP_SELECTED_INDEX = byName;
@@ -8436,7 +8440,7 @@ async function renderVipTierTable(target) {
   });
 
   const saved = await loadCalcState("vip_tier");
-  let startIdx = rows.length - 1;
+  let startIdx = 0; // nothing picked yet = lowest tier
   if (saved) {
     const byName = rows.findIndex((r) => r.name === saved.name);
     if (byName !== -1) startIdx = byName;
@@ -8494,7 +8498,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
 
   const saved = (await loadCalcState(`hero_stars_${heroName.toLowerCase()}`)) || {};
   const sharedKey = "__shared__";
-  const stars = saved[sharedKey] ?? 5;
+  const stars = saved[sharedKey] ?? 0;
 
   el.innerHTML = `
     <div class="panel">
@@ -8535,7 +8539,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
   starRow.querySelectorAll("[data-starbtn]").forEach((star) => {
     star.addEventListener("click", async () => {
       const n = Number(star.dataset.starbtn);
-      const current = saved[sharedKey] ?? 5;
+      const current = saved[sharedKey] ?? 0;
       const newStars = current === n ? n - 1 : n;
       starRow.querySelectorAll("[data-starbtn]").forEach((s) => {
         s.style.color = Number(s.dataset.starbtn) <= newStars ? "var(--ice)" : "var(--line)";
@@ -8851,11 +8855,31 @@ const T12_RESOURCE_ICONS = {
 
 let RESEARCH_SPEED_PCT = 0;
 let RESEARCH_SPEEDUP_MINUTES = 0;
+// General speedups (the plain 1m/5m/1h/3h/8h items) are ONE pool shared by
+// every page that can spend them: the three research pages and Experts
+// Level. It lives in the Experts inventory under "Speedups (minutes)"; the
+// research pages' "General Speedups" box reads and writes that same value.
+const GENERAL_SPEEDUP_KEY = "Speedups (minutes)";
+async function loadGeneralSpeedupMinutes() {
+  const inv = (await loadCalcState("experts_inventory")) || {};
+  if (typeof inv[GENERAL_SPEEDUP_KEY] === "number") return inv[GENERAL_SPEEDUP_KEY];
+  // One-time carry-over from the old research-only box.
+  const legacy = await loadCalcState("research_speedup_minutes");
+  const minutes = (legacy && typeof legacy.minutes === "number") ? legacy.minutes : 0;
+  if (minutes > 0) { inv[GENERAL_SPEEDUP_KEY] = minutes; await saveCalcState("experts_inventory", inv); }
+  return minutes;
+}
+async function saveGeneralSpeedupMinutes(minutes) {
+  const inv = (await loadCalcState("experts_inventory")) || {};
+  inv[GENERAL_SPEEDUP_KEY] = minutes;
+  RESEARCH_SPEEDUP_MINUTES = minutes;
+  budgetInvalidate();
+  await saveCalcState("experts_inventory", inv);
+}
 async function ensureResearchSpeedData() {
   const saved = await loadCalcState("research_speed");
   RESEARCH_SPEED_PCT = (saved && typeof saved.pct === "number") ? saved.pct : 0;
-  const savedSpeedup = await loadCalcState("research_speedup_minutes");
-  RESEARCH_SPEEDUP_MINUTES = (savedSpeedup && typeof savedSpeedup.minutes === "number") ? savedSpeedup.minutes : 0;
+  RESEARCH_SPEEDUP_MINUTES = await loadGeneralSpeedupMinutes();
 }
 // Applies both the % speed buff and the general speedups you hold. The
 // speedups are taken off the PAGE total once (see applyResearchPct for the
@@ -8904,9 +8928,8 @@ function wireResearchSpeedInput(onChange) {
     speedupEl.addEventListener("change", async () => {
       let val = parseFloat(speedupEl.value);
       if (Number.isNaN(val) || val < 0) val = 0;
-      RESEARCH_SPEEDUP_MINUTES = val;
       speedupEl.value = val;
-      await saveCalcState("research_speedup_minutes", { minutes: val });
+      await saveGeneralSpeedupMinutes(val);
       onChange();
     });
   }
@@ -10455,6 +10478,7 @@ async function renderExpertsPage() {
         if (Number.isNaN(val) || val < 0) val = 0;
         input.value = val;
         invSaved[input.dataset.expinv] = val;
+        if (input.dataset.expinv === GENERAL_SPEEDUP_KEY) RESEARCH_SPEEDUP_MINUTES = val;
         budgetInvalidate();
         await saveCalcState("experts_inventory", invSaved);
         renderTotals();
