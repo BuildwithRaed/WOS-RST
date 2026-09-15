@@ -6011,8 +6011,11 @@ function packEarliestDaysCompute(groups, need, calcKey) {
   if (ans === -1) return null;
   // The quick check is a little conservative: let the full planner try
   // the few steps just before it.
+  // (Big plans use the quick search here too - three full searches of every
+  // pack at once took several seconds each.)
+  const bigPlan = groups.reduce((a, g) => a + g.offers.length, 0) > 500 || String(calcKey).startsWith("__budget:");
   for (let i = Math.max(0, ans - 3); i < ans; i++) {
-    if (packCoveredBy(packMaxSupply(groups, sorted[i]), need, ctx(sorted[i])) && packCheapestPlan(groups, need, sorted[i], calcKey)) return sorted[i];
+    if (packCoveredBy(packMaxSupply(groups, sorted[i]), need, ctx(sorted[i])) && packCheapestPlan(groups, need, sorted[i], calcKey, bigPlan)) return sorted[i];
   }
   return sorted[ans];
 }
@@ -7479,10 +7482,53 @@ function budgetCombinedPlan(pages, selected, targetDays) {
     });
     if (dropped.length) res = build();
   }
+  // The combined search is a quick heuristic over many packs; when the pages
+  // don't actually compete for the same purchases, simply putting each
+  // page's own plan together can be cheaper. Try that too and keep the best.
+  if (res.chosen) {
+    const merged = budgetMergedPlan(res, inc, targetDays);
+    if (merged) { const best = packPickCheapest([res.chosen, merged]); if (best === merged) { res.chosen = merged; res.merged = true; } }
+  }
   res.inc = inc.map((pg) => pg.calcKey);
   res.dropped = dropped;
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
   return res;
+}
+// Each page's own plan, added together as one plan over the combined packs.
+// Valid only if the packs' limits allow those purchases together and they
+// still cover everything; where two pages bought the same thing, one set
+// of those purchases is tried first (it may already cover both).
+function budgetMergedPlan(res, inc, targetDays) {
+  const own = inc.map((pg) => budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, targetDays).chosen);
+  if (!own.length || own.some((x) => !x)) return null;
+  const where = new Map();
+  res.groups.forEach((g, gi) => g.offers.forEach((o, oi) => { const k = `${o.tableTitle}|${o.label}`; if (!where.has(k)) where.set(k, { gi, oi }); }));
+  const counts = new Map();
+  for (const plan of own) for (const r of plan.rows) {
+    const k = `${r.title}|${r.label}`;
+    if (!where.has(k)) return null;
+    const e = counts.get(k) || { sum: 0, max: 0 };
+    e.sum += r.count; e.max = Math.max(e.max, r.count);
+    counts.set(k, e);
+  }
+  const days = Math.max(0, ...own.map((x) => x.days || 0));
+  const ctx = packTradeCtx(res.calcKey, days);
+  const tryWith = (pickCount) => {
+    const perGroup = res.groups.map(() => 0);
+    const picks = [];
+    counts.forEach((e, k) => { const { gi, oi } = where.get(k); const c = pickCount(e); perGroup[gi] += c; picks.push({ gi, oi, count: c }); });
+    if (res.groups.some((g, gi) => perGroup[gi] > packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle)) return null;
+    const rem = {}; Object.entries(res.need).forEach(([n, q]) => { rem[n] = q; });
+    picks.forEach((pk) => Object.entries(res.groups[pk.gi].offers[pk.oi].gives).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v * pk.count; }));
+    const tr = packShortAfterTrades(rem, ctx);
+    if (Object.keys(tr.short).length) return null;
+    const rows = picks.map((pk) => {
+      const g = res.groups[pk.gi], o = g.offers[pk.oi];
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps };
+    }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
+    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
+  };
+  return packPickCheapest([tryWith((e) => e.max), tryWith((e) => e.sum)]);
 }
 // Splits each purchase between the pages it helps: by how much of each
 // page's need its items cover (a ladder step that only gives chief gear
