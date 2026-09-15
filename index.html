@@ -6305,8 +6305,11 @@ const PACK_COST_OPEN = {};
 const PACK_COST_VIEW = {};     // per page: "shared" | "page" (this session)     // per page; hidden on every load until opened
 const PACK_TARGET_CACHE = {};  // per page target date (ISO yyyy-mm-dd), from calc_state
 // The Pack cost block is owner-only on every page.
+const PACK_COST_GEN = {};      // per page: bumps on every re-render request
 async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!containerEl) return;
+  const gen = (PACK_COST_GEN[calcKey] = (PACK_COST_GEN[calcKey] || 0) + 1);
+  const stale = () => PACK_COST_GEN[calcKey] !== gen || !containerEl.isConnected;
   if (!visitorCan("packcost")) { containerEl.innerHTML = ""; return; }
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
@@ -6334,6 +6337,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     return;
   }
 
+  // Changing several levels in a row: wait until the changes stop, so the
+  // plan is worked out once for the final numbers instead of after every click.
+  containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_loading"))}</div></div>`;
+  await new Promise((r) => setTimeout(r, 450));
+  if (stale()) return;
   // What this page needs in total, across every group (e.g. all 3 Hero Gear sets).
   const needFull = {};
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([name, qty]) => {
@@ -6393,9 +6401,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (PACK_COST_MODE === "still") {
     // The combined plan can take a couple of seconds: say so and let the
     // page paint before the work starts, instead of looking frozen.
-    containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_loading"))}</div></div>`;
-    await new Promise((r) => setTimeout(r, 30));
     try { shared = await budgetCombinedFor(calcKey, groups); } catch (e) { console.error("combined plan failed", e); shared = null; }
+    if (stale()) return;
   }
   const sharedNote = (msg) => `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--line); border-radius:8px;">${esc(msg)}</div>`;
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
@@ -6501,6 +6508,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!canShare) PACK_COST_VIEW[calcKey] = "page";
   else if (!PACK_COST_VIEW[calcKey]) PACK_COST_VIEW[calcKey] = "shared";
   const usingShared = canShare && PACK_COST_VIEW[calcKey] === "shared";
+  if (stale()) return;
   if (usingShared) sections = sharedSections;
   const viewSwitch = canShare ? `
     <div class="seg" data-packview style="margin:8px 0 2px; flex-wrap:wrap;">
@@ -7462,7 +7470,7 @@ function budgetPlanSet(groups, need, calcKey, targetDays) {
 function budgetCombinedPlan(pages, selected, targetDays) {
   let inc = pages.filter((pg) => !pg.missing && selected[pg.calcKey] !== false && Object.keys(pg.need || {}).length);
   const dropped = [];
-  const build = () => {
+  const setup = () => {
     const keys = inc.map((pg) => pg.calcKey);
     const calcKey = "__budget:" + keys.join(",");
     const need = {};
@@ -7470,24 +7478,44 @@ function budgetCombinedPlan(pages, selected, targetDays) {
     const seen = new Set(), tables = [];
     inc.forEach((pg) => pg.tables.forEach((tb) => { if (!seen.has(String(tb.id))) { seen.add(String(tb.id)); tables.push(tb); } }));
     const groups = packGroupsFor(tables, calcKey);
-    return { keys, calcKey, need, tables, groups, ...budgetPlanSet(groups, need, calcKey, targetDays) };
+    return { keys, calcKey, need, tables, groups, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   };
-  let res = build();
-  // A page the packs can't cover at all would sink the whole plan: plan it
-  // on its own instead and keep the rest together.
-  if (res.earliest == null && inc.length > 1) {
-    inc.slice().forEach((pg) => {
-      const alone = packEarliestDays(pg.packGroups, pg.need, pg.calcKey);
-      if (alone == null) { dropped.push(pg.calcKey); inc = inc.filter((x) => x !== pg); }
-    });
-    if (dropped.length) res = build();
-  }
-  // The combined search is a quick heuristic over many packs; when the pages
-  // don't actually compete for the same purchases, simply putting each
-  // page's own plan together can be cheaper. Try that too and keep the best.
-  if (res.chosen) {
-    const merged = budgetMergedPlan(res, inc, targetDays);
-    if (merged) { const best = packPickCheapest([res.chosen, merged]); if (best === merged) { res.chosen = merged; res.merged = true; } }
+  let res = setup();
+  // Fast path: every page's own plan put together. When the packs' limits
+  // allow that, it's the starting answer and only a quick combined search
+  // is run to see if buying shared packs once does better. (The full
+  // combined search took seconds and ran on every level change.)
+  const merged = res.groups.length && Object.keys(res.need).length ? budgetMergedPlan(res, inc, targetDays) : null;
+  if (merged) {
+    const ownSets = inc.map((pg) => budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, targetDays));
+    res.earliest = Math.max(0, ...ownSets.map((x) => x.earliest || 0));
+    const reachable = targetDays != null && targetDays >= res.earliest;
+    const quick = packCheapestPlan(res.groups, res.need, reachable ? targetDays : res.earliest + 365, res.calcKey, true);
+    const best = packPickCheapest([merged, quick]);
+    res.chosen = best;
+    res.merged = best === merged;
+    if (reachable && best.days <= targetDays) res.byTarget = best; else res.cheapest = best;
+  } else {
+    Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays));
+    // A page the packs can't cover at all would sink the whole plan: plan it
+    // on its own instead and keep the rest together.
+    if (res.earliest == null && inc.length > 1) {
+      inc.slice().forEach((pg) => {
+        const alone = packEarliestDays(pg.packGroups, pg.need, pg.calcKey);
+        if (alone == null) { dropped.push(pg.calcKey); inc = inc.filter((x) => x !== pg); }
+      });
+      if (dropped.length) {
+        res = setup();
+        const m2 = res.groups.length && Object.keys(res.need).length ? budgetMergedPlan(res, inc, targetDays) : null;
+        Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays));
+        if (m2 && res.chosen) { const best = packPickCheapest([res.chosen, m2]); if (best === m2) { res.chosen = m2; res.merged = true; } }
+        else if (m2) { res.chosen = m2; res.merged = true; }
+      }
+    } else if (res.chosen) {
+      // Limits clash somewhere, but a mix may still beat the full search.
+      const m3 = budgetMergedPlan(res, inc, targetDays);
+      if (m3) { const best = packPickCheapest([res.chosen, m3]); if (best === m3) { res.chosen = m3; res.merged = true; } }
+    }
   }
   res.inc = inc.map((pg) => pg.calcKey);
   res.dropped = dropped;
