@@ -9852,12 +9852,13 @@ async function renderExpertsResearchPage() {
     });
     return { totals, maxTotals };
   }
+  // Two decimals: the main stat moves 0.01% per level, which one decimal hides.
   function statTotalsHtml(totals, maxTotals) {
     return `
-      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${totals.ATK.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.ATK.toFixed(1)}%</div></div>
-      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${totals.DEF.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.DEF.toFixed(1)}%</div></div>
-      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${totals.DMG.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.DMG.toFixed(1)}%</div></div>
-      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${totals.HP.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.HP.toFixed(1)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${totals.ATK.toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.ATK.toFixed(2)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${totals.DEF.toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.DEF.toFixed(2)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${totals.DMG.toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.DMG.toFixed(2)}%</div></div>
+      <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${totals.HP.toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.HP.toFixed(2)}%</div></div>
     `;
   }
   const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => e !== "Gareth" && e !== "Justus"));
