@@ -12214,20 +12214,16 @@ async function renderAdminPets(body) {
     wrap.innerHTML = `
       <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
         <thead><tr>
-          ${petCols.map((c) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${esc(c.label)}</th>`).join("")}
+          ${adminColHeadHtml(petCols, true)}
           <th></th>
         </tr></thead>
         <tbody>
           ${rows
             .map(
-              (r) => `
+              (r, idx) => `
             <tr data-petrow="${r.id}">
-              ${petCols
-                .map(
-                  (c) =>
-                    `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:90px;" /></td>`
-                )
-                .join("")}
+              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${petCols.map((c) => adminColCellHtml(c, r, "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-petrowsave="${r.id}">Save</button>
                 <button class="btn small ghost" data-petrowdel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -12252,6 +12248,10 @@ async function renderAdminPets(body) {
       PETS_NODES_CACHE = null;
     };
     currentPetRows = rows;
+    wireAdminReorder(wrap, "data-petrow", async (orderedIds) => {
+      try { await saveAdminRowOrder("pets_nodes", rows, orderedIds); PETS_NODES_CACHE = null; loadPetRows(); }
+      catch (err) { toast("Couldn't reorder", true); }
+    });
     wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -12582,16 +12582,18 @@ async function renderAdminVip(body) {
       <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
+            <th></th>
             <th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">Tier</th>
             ${STAT_NAMES.map((s) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${s} %</th>`).join("")}
             <th></th>
           </tr></thead>
           <tbody>
             ${rows
-              .map((r) => {
+              .map((r, idx) => {
                 const cellByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
                 return `
               <tr data-viprow="${r.id}">
+                ${adminReorderCellHtml(r.id, idx, rows.length)}
                 <td style="padding:4px;"><input data-vipname value="${esc(r.name)}" style="width:100px;" /></td>
                 ${STAT_NAMES.map((s) => `<td style="padding:4px;"><input data-vipstat="${esc(s)}" type="number" step="any" value="${cellByCol[colByName[s]] ?? ""}" style="width:90px;" /></td>`).join("")}
                 <td style="padding:4px; white-space:nowrap;">
@@ -12623,6 +12625,10 @@ async function renderAdminVip(body) {
     }
     VIP_ROWS_CACHE = null;
   };
+  wireAdminReorder(body, "data-viprow", async (orderedIds) => {
+    try { await saveAdminRowOrder("buff_rows", rows, orderedIds); VIP_ROWS_CACHE = null; renderAdminVip(body); }
+    catch (err) { toast("Couldn't reorder", true); }
+  });
   body.querySelectorAll("[data-vipsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       try {
@@ -12872,7 +12878,7 @@ async function renderAdminProgression(body, nameFilter) {
     <div class="panel" style="margin-bottom:16px;">
       <h2>Add a row</h2>
       <form class="inline" id="adminProgAddForm">
-        ${cols.map((c) => `<input class="field-num" name="${c.key}" placeholder="${esc(c.label)}" ${c.type === "number" ? 'type="number" step="any"' : ""} style="width:100px;" />`).join("")}
+        ${cols.map((c) => `<input class="field-num" name="${c.key}" placeholder="${esc(c.label)}" ${c.key === "sort_order" ? 'type="hidden"' : c.type === "number" ? 'type="number" step="any"' : ""} style="width:100px;" />`).join("")}
         <button class="btn" type="submit">Add row</button>
       </form>
       <div class="err" id="adminProgAddErr"></div>
@@ -13096,7 +13102,7 @@ async function renderAdminResearch(body) {
     <div class="panel" style="margin-bottom:16px;">
       <h2>Add a row</h2>
       <form class="inline" id="adminResearchAddForm">
-        ${cfg.cols.map((c) => `<input class="field-num" name="${c.key}" placeholder="${esc(c.label)}" ${c.type === "number" ? 'type="number" step="any"' : ""} style="width:100px;" />`).join("")}
+        ${cfg.cols.map((c) => `<input class="field-num" name="${c.key}" placeholder="${esc(c.label)}" ${c.key === "sort_order" ? 'type="hidden"' : c.type === "number" ? 'type="number" step="any"' : ""} style="width:100px;" />`).join("")}
         <button class="btn" type="submit">Add row</button>
       </form>
       <div class="err" id="adminResearchAddErr"></div>
