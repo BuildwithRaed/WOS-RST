@@ -1481,6 +1481,8 @@ const T = {
   pack_nothing_needed: { en: "Nothing needed from this table", ar: "\u0644\u0627 \u062d\u0627\u062c\u0629 \u0644\u0634\u064a\u0621 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644", ko: "\uc774 \ud45c\uc5d0\uc11c \ud544\uc694\ud55c \uac83 \uc5c6\uc74c" },
   pack_no_columns: { en: "Label this table's columns on the Packs page first.", ar: "\u0641\u0636\u0644\u064b\u0627 \u0633\u0645\u0651\u0650 \u0623\u0639\u0645\u062f\u0629 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u062d\u0632\u0645 \u0623\u0648\u0644\u0627\u064b.", ko: "\uba3c\uc800 \ud328\ud0a4\uc9c0 \ud398\uc774\uc9c0\uc5d0\uc11c \uc774 \ud45c\uc758 \uc5f4\uc744 \uc9c0\uc815\ud558\uc138\uc694." },
   pack_ladder_short: { en: "Still short:", ar: "\u0645\u0627 \u0632\u0627\u0644 \u0646\u0627\u0642\u0635\u0627\u064b:", ko: "\uc544\uc9c1 \ubd80\uc871:" },
+  pack_remove_column: { en: "\u2715 Remove this column", ar: "\u2715 إزالة هذا العمود", ko: "\u2715 이 열 제거" },
+  pack_remove_column_confirm: { en: "Remove the \"{name}\" column from this table?", ar: "إزالة عمود \"{name}\" من هذا الجدول؟", ko: "이 표에서 \"{name}\" 열을 제거할까요?" },
   pack_custom_name: { en: "Custom name\u2026", ar: "\u0627\u0633\u0645 \u0645\u062e\u0635\u0651\u0635\u2026", ko: "\uc9c1\uc811 \uc785\ub825\u2026" },
   pack_custom_name_prompt: { en: "Column name:", ar: "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u0648\u062f:", ko: "\uc5f4 \uc774\ub984:" },
   pack_currency: { en: "Currency", ar: "\u0627\u0644\u0639\u0645\u0644\u0629", ko: "\ud1b5\ud654" },
@@ -3639,6 +3641,7 @@ async function renderPacksPage() {
       ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
       ${isKnown || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
       <option value="__custom__">${esc(t("pack_custom_name"))}</option>
+      <option value="__remove__">${esc(t("pack_remove_column"))}</option>
     </select>`;
   }
   function packLinkEditorHtml(tb) {
@@ -3933,6 +3936,23 @@ async function renderPacksPage() {
         sel.addEventListener("change", async () => {
           const ci = Number(sel.dataset.col);
           let value = sel.value;
+          if (value === "__remove__") {
+            // Delete this column (and its cell in every row); the price and Gems columns stay.
+            if (!confirm(t("pack_remove_column_confirm").replace("{name}", materialDisplayName(t.columns[ci] || "")))) { renderAll(); return; }
+            syncFromDom();
+            t.columns.splice(ci, 1);
+            t.rows.forEach((r) => r.cells.splice(ci, 1));
+            await ensurePackLinks();
+            const l0 = PACK_LINKS[String(t.id)];
+            if (l0) {
+              if (l0.priceCol > ci) l0.priceCol--;
+              const cols = {}; Object.entries(l0.cols || {}).forEach(([k, v]) => { const n = Number(k); if (n < ci) cols[n] = v; else if (n > ci) cols[n - 1] = v; }); l0.cols = cols;
+              await savePackLinks();
+            }
+            renderAll();
+            await persistTable();
+            return;
+          }
           if (value === "__custom__") {
             const typed = prompt(t("pack_custom_name_prompt"), t.columns[ci] || "");
             if (typed == null || !typed.trim()) { renderAll(); return; }
@@ -4812,15 +4832,33 @@ const PACK_BUNDLE_NOTES = {
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
-  return PACK_BUNDLES[name] || { [name]: 1 };
+  if (PACK_BUNDLES[name]) return PACK_BUNDLES[name];
+  const c = packCustomResource(name);
+  if (c && c.contents && Object.keys(c.contents).length) return c.contents;
+  return { [name]: 1 };
 }
 // Resources a pack column can't be named directly - they're only reached
 // through item bundles (speedup items, XP items) - so they stay out of
 // the dropdowns. A column that already has one of these keeps it.
 const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Gems"]);
+function packAllResourceNames() {
+  const cfg = packResourceConfig();
+  const out = PACK_RESOURCE_NAMES.slice();
+  cfg.custom.forEach((x) => { if (!out.some((n) => n.toLowerCase() === String(x.name).toLowerCase())) out.push(x.name); });
+  return out;
+}
 function packResourceChoices(current) {
-  return PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) || (current && n.toLowerCase() === String(current).toLowerCase()))
-    .sort((a, b) => materialDisplayName(a).localeCompare(materialDisplayName(b), undefined, { numeric: true, sensitivity: "base" }));
+  const cfg = packResourceConfig();
+  const hiddenLower = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
+  const cur = current ? String(current).toLowerCase() : "";
+  const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
+  return packAllResourceNames()
+    .filter((n) => (!PACK_RESOURCE_HIDDEN.has(n) && !hiddenLower.has(n.toLowerCase())) || n.toLowerCase() === cur)
+    .sort((a, b) => {
+      const oa = orderIdx(a), ob = orderIdx(b);
+      if (oa !== ob) return oa - ob;
+      return materialDisplayName(a).localeCompare(materialDisplayName(b), undefined, { numeric: true, sensitivity: "base" });
+    });
 }
 // Columns named "Gems" (or the price column) never grant a trackable
 // resource, so they're skipped everywhere a resource is chosen.
@@ -4862,7 +4900,7 @@ function packResourceByName(name) {
   if (!raw || packIsNonResourceColumn(raw)) return "";
   const lower = raw.toLowerCase();
   if (PACK_RESOURCE_ALIASES[lower]) return PACK_RESOURCE_ALIASES[lower];
-  return PACK_RESOURCE_NAMES.find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower) || "";
+  return packAllResourceNames().find((r) => r.toLowerCase() === lower || materialDisplayName(r).toLowerCase() === lower) || "";
 }
 // What each column actually grants: worked out from the column names, with
 // any manual choice from the "Used for" box taking precedence.
@@ -7143,8 +7181,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
 
   function materialCellHtml([name]) {
     const lower = name.toLowerCase();
+    const custom = packCustomResource(name);
     const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-    const icon = iconKey ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
+    const iconSrc = custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "";
+    const icon = iconSrc ? `<img src="${esc(iconSrc)}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
     const haveQty = owned[name] || 0;
     const shortName = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
     const groupStatusHtml = groups
@@ -9277,6 +9317,34 @@ async function ensureUiVisibility() {
   } catch (err) { UI_HIDDEN = {}; }
   return UI_HIDDEN;
 }
+// Site-wide settings edited from Admin (site_config table: public read,
+// owner write). Loaded once at start; missing keys fall back to defaults.
+let SITE_CONFIG = null;
+async function ensureSiteConfig() {
+  if (SITE_CONFIG) return SITE_CONFIG;
+  try {
+    const rows = await sb(`site_config?select=key,value`);
+    SITE_CONFIG = {};
+    rows.forEach((r) => { SITE_CONFIG[r.key] = r.value; });
+  } catch (err) { SITE_CONFIG = {}; }
+  return SITE_CONFIG;
+}
+function siteConfig(key, fallback) { return (SITE_CONFIG && SITE_CONFIG[key] != null) ? SITE_CONFIG[key] : fallback; }
+async function saveSiteConfig(key, value) {
+  await sb(`site_config`, { method: "POST", prefer: "resolution=merge-duplicates,return=representation", body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }) });
+  if (!SITE_CONFIG) SITE_CONFIG = {};
+  SITE_CONFIG[key] = value;
+}
+// Packs page resource list as configured in Admin -> Pack Resources:
+// { custom: [{ name, icon, contents: { "Design Plan": 1, ... } }], hidden: [name], order: [name] }
+function packResourceConfig() {
+  const c = siteConfig("pack_resources", {}) || {};
+  return { custom: Array.isArray(c.custom) ? c.custom.filter((x) => x && x.name) : [], hidden: Array.isArray(c.hidden) ? c.hidden : [], order: Array.isArray(c.order) ? c.order : [] };
+}
+function packCustomResource(name) {
+  const lower = String(name || "").toLowerCase();
+  return packResourceConfig().custom.find((x) => String(x.name).toLowerCase() === lower) || null;
+}
 function isHiddenFromVisitors(kind, name) { return !!(UI_HIDDEN && UI_HIDDEN[`${kind}:${name}`]); }
 function hiddenForVisitor(kind, name) { return !IS_OWNER && isHiddenFromVisitors(kind, name); }
 async function setHiddenFromVisitors(kind, name, hidden) {
@@ -11310,7 +11378,7 @@ const ADMIN_TABLES = {
   alliance: { label: "Alliance" },
   centerresearch: { label: "Research" },
   heroes: { label: "Heroes" },
-  items: { label: "Backpack Items" },
+  packres: { label: "Pack Resources" },
   skins: { label: "Skins" },
   herostars: { label: "Heroes Special Skills" },
   // These are full pages of their own; the Admin tab just opens them.
@@ -11376,9 +11444,76 @@ async function renderAdminPage() {
   else if (ADMIN_ACTIVE_TABLE === "alliance") await renderAdminAllianceGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "centerresearch") await renderAdminResearch(body);
   else if (ADMIN_ACTIVE_TABLE === "heroes") await renderAdminHeroes(body);
-  else if (ADMIN_ACTIVE_TABLE === "items") await renderAdminItems(body);
+  else if (ADMIN_ACTIVE_TABLE === "packres") await renderAdminPackResources(body);
   else if (ADMIN_ACTIVE_TABLE === "skins") await renderAdminSkinsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "herostars") await renderAdminHeroStars(body);
+}
+
+// ---- Pack Resources: the Packs page column dropdown ----
+// Built-in names can be hidden and ordered; custom names can be added with
+// an icon and, optionally, what one of them opens into (so a custom chest
+// counts toward the real materials in Pack cost).
+async function renderAdminPackResources(body) {
+  await ensureSiteConfig();
+  const cfg = packResourceConfig();
+  const custom = cfg.custom.map((x) => ({ name: x.name, icon: x.icon || "", contents: x.contents || {} }));
+  const hidden = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
+  const builtin = PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n));
+  const all = [...builtin.map((n) => ({ name: n, builtin: true })), ...custom.map((c) => ({ ...c, builtin: false }))];
+  const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
+  all.sort((a, b) => { const oa = orderIdx(a.name), ob = orderIdx(b.name); if (oa !== ob) return oa - ob; return materialDisplayName(a.name).localeCompare(materialDisplayName(b.name), undefined, { numeric: true, sensitivity: "base" }); });
+  const contentsText = (c) => Object.entries(c || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
+  const rowHtml = (r, i) => `
+    <tr data-resrow ${r.builtin ? "" : `data-custom="1"`}>
+      <td style="padding:4px;"><input type="number" data-f="order" value="${i + 1}" min="1" style="width:64px;" /></td>
+      <td style="padding:4px;">${r.builtin ? `<span style="font-weight:600;">${esc(materialDisplayName(r.name))}</span><input type="hidden" data-f="name" value="${esc(r.name)}" />` : `<input data-f="name" value="${esc(r.name)}" style="width:170px;" />`}</td>
+      <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">built-in</span>` : `<span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="icon" value="${esc(r.icon || "")}" placeholder="icons/…png" style="width:150px;" />${uploadBtnHtml()}</span>`}</td>
+      <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">${esc(contentsText(PACK_BUNDLES[r.name]) || "—")}</span>` : `<input data-f="contents" value="${esc(contentsText(r.contents))}" placeholder="e.g. Design Plan: 1, Polishing Solution: 4" style="width:260px;" />`}</td>
+      <td style="padding:4px; text-align:center;"><input type="checkbox" data-f="hidden" ${hidden.has(r.name.toLowerCase()) ? "checked" : ""} /></td>
+      <td style="padding:4px;">${r.builtin ? "" : `<button class="btn ghost small" data-resdel type="button">&#10005;</button>`}</td>
+    </tr>`;
+  body.innerHTML = `
+    <div class="panel" style="margin-bottom:16px;">
+      <h2>Pack Resources</h2>
+      <p class="desc">These are the names offered in the column dropdown on the Packs page. Change the order numbers to sort the dropdown, tick Hide to keep a name out of it, and add your own items below. For a custom item, "Gives" says what one of them opens into (in real materials), so Pack cost can count it — leave it empty for a plain item.</p>
+      <div style="overflow-x:auto;">
+        <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
+          <thead><tr>${["Order", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
+          <tbody id="resRows">${all.map(rowHtml).join("")}</tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn ghost small" id="resAdd" type="button">+ Add resource</button>
+        <button class="btn small" id="resSave" type="button">Save all</button>
+      </div>
+    </div>`;
+  const rowsEl = body.querySelector("#resRows");
+  body.querySelector("#resAdd").addEventListener("click", () => {
+    rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: "", icon: "", contents: {}, builtin: false }, rowsEl.children.length));
+    rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
+  });
+  rowsEl.addEventListener("click", (e) => { const b = e.target.closest("[data-resdel]"); if (b) b.closest("tr").remove(); });
+  body.querySelector("#resSave").addEventListener("click", async () => {
+    const rows = [...rowsEl.querySelectorAll("[data-resrow]")];
+    const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
+    const items = rows.map((tr) => ({
+      builtin: !tr.dataset.custom,
+      order: Number(tr.querySelector('[data-f="order"]').value) || 9999,
+      name: tr.querySelector('[data-f="name"]').value.trim(),
+      icon: (tr.querySelector('[data-f="icon"]') || {}).value || "",
+      contents: parseContents((tr.querySelector('[data-f="contents"]') || {}).value),
+      hidden: tr.querySelector('[data-f="hidden"]').checked,
+    })).filter((x) => x.name);
+    const dup = items.map((x) => x.name.toLowerCase()).find((n, i, a) => a.indexOf(n) !== i);
+    if (dup) { toast(`Duplicate name: ${dup}`, true); return; }
+    const value = {
+      custom: items.filter((x) => !x.builtin).map((x) => ({ name: x.name, icon: x.icon.trim(), contents: x.contents })),
+      hidden: items.filter((x) => x.hidden).map((x) => x.name),
+      order: items.slice().sort((a, b) => a.order - b.order).map((x) => x.name),
+    };
+    try { await saveSiteConfig("pack_resources", value); PACK_TABLES_CACHE = null; toast("Pack resources saved"); renderAdminPackResources(body); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+  });
 }
 
 // ---- Visibility: what visitors can see (pages, experts, pets) ----
@@ -13140,117 +13275,6 @@ async function renderAdminHeroes(body) {
   fillHeroPick();
 }
 
-// ---- Backpack Items catalog editor ----
-async function renderAdminItems(body) {
-  const rows = await sb(`items?select=id,name,category,tier&order=name.asc`);
-
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Add an item</h2>
-      <form class="inline" id="adminAddItemForm">
-        <input class="flex1" name="name" placeholder="Item name" required />
-        <input class="field-num" name="category" placeholder="Category" required style="width:130px;" />
-        <input class="field-num" name="tier" placeholder="Tier" style="width:100px;" />
-        <button class="btn" type="submit">Add item</button>
-      </form>
-      <div class="err" id="adminAddItemErr"></div>
-    </div>
-    <div class="panel">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
-        <h2 style="margin:0;">Items (${rows.length})</h2>
-        <button class="btn small" id="adminItemsSaveAll">Save all</button>
-      </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-          <thead><tr>
-            ${["Name", "Category", "Tier", ""]
-              .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
-              .join("")}
-          </tr></thead>
-          <tbody>
-            ${rows
-              .map(
-                (r) => `
-              <tr data-itemrow="${r.id}">
-                <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:160px;" /></td>
-                <td style="padding:4px;"><input data-f="category" value="${esc(r.category || "")}" style="width:120px;" /></td>
-                <td style="padding:4px;"><input data-f="tier" value="${esc(r.tier || "")}" style="width:80px;" /></td>
-                <td style="padding:4px; white-space:nowrap;">
-                  <button class="btn small ghost" data-itemsave="${r.id}">Save</button>
-                  <button class="btn small ghost" data-itemdel="${r.id}" style="color:var(--danger);">Delete</button>
-                </td>
-              </tr>`
-              )
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
-  const saveItemRow = async (id) => {
-    const tr = body.querySelector(`tr[data-itemrow="${id}"]`);
-    const patch = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
-      const v = el.value.trim();
-      patch[el.dataset.f] = v === "" ? null : v;
-    });
-    await sb(`items?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-  };
-  body.querySelectorAll("[data-itemsave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await saveItemRow(btn.dataset.itemsave);
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
-    });
-  });
-  document.getElementById("adminItemsSaveAll").addEventListener("click", async () => {
-    const btn = document.getElementById("adminItemsSaveAll");
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await Promise.all(rows.map((r) => saveItemRow(r.id)));
-      toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
-    } catch (err) {
-      toast("Couldn't save all", true);
-    }
-    btn.disabled = false;
-    btn.textContent = "Save all";
-  });
-  body.querySelectorAll("[data-itemdel]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Delete this item?")) return;
-      try {
-        await sb(`items?id=eq.${btn.dataset.itemdel}`, { method: "DELETE" });
-        toast("Deleted");
-        renderAdminItems(body);
-      } catch (err) {
-        toast("Couldn't delete", true);
-      }
-    });
-  });
-
-  document.getElementById("adminAddItemForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("adminAddItemErr");
-    errEl.textContent = "";
-    const name = f.name.value.trim();
-    const category = f.category.value.trim();
-    if (!name) { errEl.textContent = "Enter an item name"; return; }
-    if (!category) { errEl.textContent = "Enter a category"; return; }
-    try {
-      await sb(`items`, { method: "POST", body: JSON.stringify({ name, category, tier: f.tier.value.trim() || null }) });
-      toast("Item added");
-      renderAdminItems(body);
-    } catch (err) {
-      errEl.textContent = "Couldn't add item";
-    }
-  });
-}
 
 // ---- Skin Gallery editor (multi-category, uses renderAdminSkinsCategory per category) ----
 let ADMIN_ACTIVE_SKIN_CAT = null;
@@ -14153,7 +14177,7 @@ if ("serviceWorker" in navigator) {
       </div>`;
     return;
   }
-  await ensureUiVisibility();
+  await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
   renderOwnerLoginUI();
   document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
   document.documentElement.lang = LANG;
