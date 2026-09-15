@@ -331,7 +331,7 @@
      long lists don't turn into a whole-page scroll. */
   .adm-scroll{ max-height:70vh; overflow:auto; border:1px solid var(--line); border-radius:8px; }
   .adm-scroll thead th{ position:sticky; top:0; background:var(--panel); z-index:2; }
-input,select{
+input,select,textarea{
     background:var(--panel-2); border:1px solid var(--line); color:var(--frost);
     padding:8px 10px; border-radius:8px; font-size:16px;
   }
@@ -340,7 +340,8 @@ input,select{
      don't trigger zoom on tap, so they keep their own smaller size below. */
   textarea{ font-size:16px; }
   input[type="checkbox"]{ min-width:18px; min-height:18px; }
-  input:focus,select:focus{ outline:1px solid var(--ice); border-color:var(--ice); }
+  input:focus,select:focus,textarea:focus{ outline:1px solid var(--ice); border-color:var(--ice); }
+  textarea{ padding:8px 10px; border-radius:8px; box-sizing:border-box; }
   button.btn{
     background:var(--ice-dim); border:1px solid var(--ice-dim); color:var(--frost);
     padding:8px 14px; border-radius:8px; font-size:13px; cursor:pointer;
