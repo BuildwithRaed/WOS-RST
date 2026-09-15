@@ -4163,7 +4163,7 @@ async function renderPacksPage() {
         syncFromDom();
         if (String(t.id).startsWith("new-")) await persistTable();
         await ensurePackLinks();
-        const payload = { title: `${t.title} (${t("pack_copy_suffix")})`, columns: t.columns.slice(), rows: t.rows.map((r) => ({ ...r, cells: r.cells.slice() })), sort_order: ti + 1, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
+        const payload = { title: `${t.title} (${window.t("pack_copy_suffix")})`, columns: t.columns.slice(), rows: t.rows.map((r) => ({ ...r, cells: r.cells.slice() })), sort_order: ti + 1, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
         let saved;
         try {
           [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
@@ -4899,9 +4899,14 @@ function packLinkSetMembers(setId) {
 function packLinkSetTags(tbs) {
   const titles = tbs.map((x) => String(x.title || "").trim());
   const words = titles.map((x) => x.split(/[\s:·\-()"']+/).filter(Boolean));
-  let common = 0;
-  while (words.every((w) => w.length > common + 1 && w[common].toLowerCase() === words[0][common].toLowerCase())) common++;
-  return words.map((w, i) => (w.slice(common).join(" ") || titles[i] || `#${i + 1}`).slice(0, 10));
+  const norm = (w) => w.toLowerCase().replace(/s$/, "");
+  // A word every title shares (Chief, Gear/Gears, Artisan's, Trove...) says
+  // nothing about which option this is, so it goes; what's left is the tag.
+  const shared = new Set((words[0] || []).map(norm).filter((n) => words.every((w) => w.some((x) => norm(x) === n))));
+  return words.map((w, i) => {
+    const own = w.filter((x) => !shared.has(norm(x)));
+    return (own.length ? own.join(" ") : titles[i] || `#${i + 1}`).slice(0, 12);
+  });
 }
 function packGroupsChecked(pages) {
   return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => (pages || []).includes(k))).length;
@@ -5261,11 +5266,12 @@ function packOptionLadderGroups(optionTables) {
     const tags = isSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag);
     const titleOf = () => {
       if (!isSet) return lead.group && lead.group !== (tbs[0].title || "") ? lead.group + " · " + (tbs[0].title || t("packs_title")) : (lead.group || tbs[0].title || t("packs_title"));
-      const base = lead.group || String(tbs[leadIdx].title || t("packs_title"));
-      const w = String(tbs[leadIdx].title || "").split(/[\s:·\-()"']+/).filter(Boolean);
-      const tag = tags[leadIdx];
-      const stem = w.length && tag && String(tbs[leadIdx].title || "").endsWith(tag) ? String(tbs[leadIdx].title || "").slice(0, -tag.length).replace(/[\s:·\-]+$/, "") : "";
-      return (lead.group || stem || base) + " · " + tags.join(" / ");
+      // "Group · Shared part of the titles · Classic / Sublime / Exquisite"
+      const leadTitle = String(tbs[leadIdx].title || "");
+      let stem = leadTitle;
+      String(tags[leadIdx] || "").split(" ").filter(Boolean).forEach((word) => { stem = stem.replace(word, ""); });
+      stem = stem.replace(/^[\s:·\-]+|[\s:·\-]+$/g, "").replace(/\(\s*\)/g, "").trim();
+      return [lead.group, stem || String(tbs[leadIdx].title || t("packs_title"))].filter(Boolean).join(" · ") + " · " + tags.join(" / ");
     };
     const title = titleOf();
     const perTable = tbs.map((tb) => packOffersFor(tb, true));
