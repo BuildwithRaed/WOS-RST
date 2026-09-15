@@ -4863,7 +4863,7 @@ function packAllResourceNames() {
 }
 function packResourceChoices(current) {
   const cfg = packResourceConfig();
-  const hiddenLower = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
+  const hiddenLower = new Set([...cfg.hidden, ...cfg.removed].map((n) => String(n).toLowerCase()));
   const cur = current ? String(current).toLowerCase() : "";
   const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
   return packAllResourceNames()
@@ -9371,7 +9371,7 @@ async function saveSiteConfig(key, value) {
 // { custom: [{ name, icon, contents: { "Design Plan": 1, ... } }], hidden: [name], order: [name] }
 function packResourceConfig() {
   const c = siteConfig("pack_resources", {}) || {};
-  return { custom: Array.isArray(c.custom) ? c.custom.filter((x) => x && x.name) : [], hidden: Array.isArray(c.hidden) ? c.hidden : [], order: Array.isArray(c.order) ? c.order : [], gives: (c.gives && typeof c.gives === "object") ? c.gives : {} };
+  return { custom: Array.isArray(c.custom) ? c.custom.filter((x) => x && x.name) : [], hidden: Array.isArray(c.hidden) ? c.hidden : [], order: Array.isArray(c.order) ? c.order : [], gives: (c.gives && typeof c.gives === "object") ? c.gives : {}, removed: Array.isArray(c.removed) ? c.removed : [] };
 }
 function packCustomResource(name) {
   const lower = String(name || "").toLowerCase();
@@ -11500,7 +11500,8 @@ async function renderAdminPackResources(body) {
   const cfg = packResourceConfig();
   const custom = cfg.custom.map((x) => ({ name: x.name, icon: x.icon || "", contents: x.contents || {} }));
   const hidden = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
-  const builtin = PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n));
+  const removedLower = new Set(cfg.removed.map((n) => String(n).toLowerCase()));
+  const builtin = PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) && !removedLower.has(n.toLowerCase()));
   const all = [...builtin.map((n) => ({ name: n, builtin: true })), ...custom.map((c) => ({ ...c, builtin: false }))];
   const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
   all.sort((a, b) => { const oa = orderIdx(a.name), ob = orderIdx(b.name); if (oa !== ob) return oa - ob; return materialDisplayName(a.name).localeCompare(materialDisplayName(b.name), undefined, { numeric: true, sensitivity: "base" }); });
@@ -11512,12 +11513,12 @@ async function renderAdminPackResources(body) {
       <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">built-in</span>` : `<span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="icon" value="${esc(r.icon || "")}" placeholder="icons/…png" style="width:150px;" />${uploadBtnHtml()}</span>`}</td>
       <td style="padding:4px;"><input data-f="contents" value="${esc(contentsText(r.builtin ? (cfg.gives[r.name] || PACK_BUNDLES[r.name]) : r.contents))}" placeholder="${r.builtin ? "nothing (plain item)" : "e.g. Design Plan: 1, Polishing Solution: 4"}" style="width:260px;" /></td>
       <td style="padding:4px; text-align:center;"><input type="checkbox" data-f="hidden" ${hidden.has(r.name.toLowerCase()) ? "checked" : ""} /></td>
-      <td style="padding:4px;">${r.builtin ? "" : `<button class="btn ghost small" data-resdel type="button">&#10005;</button>`}</td>
+      <td style="padding:4px;"><button class="btn ghost small" data-resdel type="button" title="Remove from the dropdown">&#10005;</button></td>
     </tr>`;
   body.innerHTML = `
     <div class="panel" style="margin-bottom:16px;">
       <h2>Pack Resources</h2>
-      <p class="desc">These are the names offered in the column dropdown on the Packs page. Change the Order numbers to sort the dropdown (lower first; the rest stay A–Z), tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed.</p>
+      <p class="desc">These are the names offered in the column dropdown on the Packs page. Change the Order numbers to sort the dropdown (lower first; the rest stay A–Z), tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).</p>
       <div style="overflow-x:auto;">
         <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
           <thead><tr>${["Order", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
@@ -11528,13 +11529,28 @@ async function renderAdminPackResources(body) {
         <button class="btn ghost small" id="resAdd" type="button">+ Add resource</button>
         <button class="btn small" id="resSave" type="button">Save all</button>
       </div>
+      ${cfg.removed.length ? `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
+        <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">Removed (not in the dropdown)</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">${cfg.removed.map((n) => `<button class="btn ghost small" data-resrestore="${esc(n)}" type="button" title="Restore">${esc(materialDisplayName(n))} &#8634;</button>`).join("")}</div>
+      </div>` : ""}
     </div>`;
+  let removedNow = cfg.removed.slice();
+  body.querySelectorAll("[data-resrestore]").forEach((b) => b.addEventListener("click", async () => {
+    removedNow = removedNow.filter((n) => n.toLowerCase() !== b.dataset.resrestore.toLowerCase());
+    await saveSiteConfig("pack_resources", { ...siteConfig("pack_resources", {}), removed: removedNow });
+    toast("Restored"); renderAdminPackResources(body);
+  }));
   const rowsEl = body.querySelector("#resRows");
   body.querySelector("#resAdd").addEventListener("click", () => {
     rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: "", icon: "", contents: {}, builtin: false }, rowsEl.children.length));
     rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
   });
-  rowsEl.addEventListener("click", (e) => { const b = e.target.closest("[data-resdel]"); if (b) b.closest("tr").remove(); });
+  rowsEl.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-resdel]"); if (!b) return;
+    const tr = b.closest("tr");
+    if (!tr.dataset.custom) { const n = tr.querySelector('[data-f="name"]').value; if (n && !removedNow.some((x) => x.toLowerCase() === n.toLowerCase())) removedNow.push(n); }
+    tr.remove();
+  });
   body.querySelector("#resSave").addEventListener("click", async () => {
     const rows = [...rowsEl.querySelectorAll("[data-resrow]")];
     const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
@@ -11552,6 +11568,7 @@ async function renderAdminPackResources(body) {
     const gives = {};
     items.filter((x) => x.builtin).forEach((x) => { if (!same(x.contents, PACK_BUNDLES[x.name] || {})) gives[x.name] = x.contents; });
     const value = {
+      removed: removedNow,
       gives,
       custom: items.filter((x) => !x.builtin).map((x) => ({ name: x.name, icon: x.icon.trim(), contents: x.contents })),
       hidden: items.filter((x) => x.hidden).map((x) => x.name),
