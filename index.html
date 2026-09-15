@@ -6083,12 +6083,33 @@ function packPruneOffersFor(groups, need, ctx) {
   });
 }
 function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
-  const ctx = packTradeCtx(calcKey, days);
+  let ctx = packTradeCtx(calcKey, days);
+  // Free, unlimited 1-for-N conversions (Sail of Conquest -> 1,000 Affinity,
+  // Expert Speedups -> Speedups) are folded straight into what the packs
+  // give, so the planner doesn't simulate them thousands of times. Same
+  // result: a trade with no weekly limit and a give of 1 is just a bigger gift.
+  if (ctx) {
+    const fold = ctx.rates.filter((r) => !(r.max > 0) && r.give === 1 && !(need[r.from] > 0) && ctx.rates.filter((x) => x.from === r.from).length === 1);
+    if (fold.length) {
+      const conv = new Map(fold.map((r) => [r.from, r]));
+      groupsIn = groupsIn.map((g) => ({ ...g, offers: g.offers.map((o) => {
+        if (!Object.keys(o.gives).some((n) => conv.has(n))) return o;
+        const gv = {};
+        Object.entries(o.gives).forEach(([n, v]) => { const r = conv.get(n); if (r) gv[r.to] = (gv[r.to] || 0) + v * r.get; else gv[n] = (gv[n] || 0) + v; });
+        return { ...o, gives: gv };
+      }) }));
+      const rest = ctx.rates.filter((r) => !conv.has(r.from));
+      ctx = rest.length ? { ...ctx, rates: rest, worth: tradeWorth(rest), _routes: undefined, _src: undefined } : null;
+    }
+  }
   const groups = packPruneOffersFor(groupsIn, need, ctx);
   const wanted = Object.keys(need).filter((n) => need[n] > 0);
   const caps = groups.map((g) => packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle);
   if (!packCoveredBy(packMaxSupply(groups, days), need, ctx)) return null;
   const worthOf = (n) => (ctx && ctx.worth[n]) || 1;
+  // Items that appear in any trade (as what's given or what's got).
+  const tradeTouched = new Set();
+  if (ctx) ctx.rates.forEach((r) => { tradeTouched.add(r.from); tradeTouched.add(r.to); });
 
   const remainingOf = (ps) => {
     const rem = {}; wanted.forEach((n) => { rem[n] = need[n]; });
@@ -6152,11 +6173,19 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
       groups.forEach((g, gi) => {
         if (used[gi] < caps[gi]) {
           g.offers.forEach((o, oi) => {
-            let touches = false;
-            for (const n in o.gives) { if (helpful.has(n)) { touches = true; break; } }
+            let touches = false, viaTrade = false;
+            for (const n in o.gives) { if (helpful.has(n)) touches = true; if (tradeTouched.has(n)) viaTrade = true; }
             if (!touches) return;
-            const r1 = { ...rem }; Object.keys(o.gives).forEach((n) => { r1[n] = (r1[n] || 0) - o.gives[n]; });
-            const useful = svNow - shortValue(r1);
+            let useful;
+            if (!viaTrade) {
+              // None of its items take part in a trade, so the shortfall it
+              // removes is simply what it covers of each item still short.
+              useful = 0;
+              for (const n in o.gives) { const sh = rem[n] || 0; if (sh > 1e-9) useful += Math.min(o.gives[n], sh) * worthOf(n); }
+            } else {
+              const r1 = { ...rem }; Object.keys(o.gives).forEach((n) => { r1[n] = (r1[n] || 0) - o.gives[n]; });
+              useful = svNow - shortValue(r1);
+            }
             if (useful <= 1e-9) return;
             const value = useful / o.price;
             const better = !best || value > best.value * (1 + 1e-9) || (Math.abs(value - best.value) <= best.value * 1e-9 && useful > best.useful);
@@ -6169,11 +6198,25 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
         if (g.ladder) picks.forEach((p) => {
           if (p.gi !== gi || p.count <= 0) return;
           for (let oj = p.oi + 1; oj < g.offers.length; oj++) {
-            const extra = {}; Object.keys(g.offers[oj].gives).forEach((n) => { extra[n] = g.offers[oj].gives[n] - (g.offers[p.oi].gives[n] || 0); });
-            const r1 = { ...rem }; Object.keys(extra).forEach((n) => { r1[n] = (r1[n] || 0) - extra[n]; });
-            const useful = svNow - shortValue(r1);
             const dp = g.offers[oj].price - g.offers[p.oi].price;
-            if (useful <= 1e-9 || dp <= 0) continue;
+            if (dp <= 0) continue;
+            const extra = {}; let viaTrade = false, touches = false;
+            for (const n in g.offers[oj].gives) {
+              extra[n] = g.offers[oj].gives[n] - (g.offers[p.oi].gives[n] || 0);
+              if (tradeTouched.has(n)) viaTrade = true;
+              if (helpful.has(n)) touches = true;
+            }
+            if (!touches) continue;
+            let useful;
+            if (!viaTrade) {
+              // No trades involved: count the shortfall the extra items remove directly.
+              useful = 0;
+              for (const n in extra) { const sh = rem[n] || 0; useful += (Math.max(0, sh) - Math.max(0, sh - extra[n])) * worthOf(n); }
+            } else {
+              const r1 = { ...rem }; Object.keys(extra).forEach((n) => { r1[n] = (r1[n] || 0) - extra[n]; });
+              useful = svNow - shortValue(r1);
+            }
+            if (useful <= 1e-9) continue;
             const value = useful / dp;
             const better = !best || value > best.value * (1 + 1e-9) || (Math.abs(value - best.value) <= best.value * 1e-9 && useful > best.useful);
             if (better) best = { kind: "upgrade", gi, pick: p, oj, extra, value, useful };
@@ -6302,7 +6345,8 @@ function packPickCheapest(plans) {
 // numbers always agree with the red "still needed" figures above it.
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};
-const PACK_COST_VIEW = {};     // per page: "shared" | "page" (this session)     // per page; hidden on every load until opened
+const PACK_COST_VIEW = {};
+const PACK_VIEW_TOTALS = {};   // per page: last known totals of both views, for the switch labels     // per page: "shared" | "page" (this session)     // per page; hidden on every load until opened
 const PACK_TARGET_CACHE = {};  // per page target date (ISO yyyy-mm-dd), from calc_state
 // The Pack cost block is owner-only on every page.
 const PACK_COST_GEN = {};      // per page: bumps on every re-render request
@@ -6401,7 +6445,14 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (PACK_COST_MODE === "still") {
     // The combined plan can take a couple of seconds: say so and let the
     // page paint before the work starts, instead of looking frozen.
-    try { shared = await budgetCombinedFor(calcKey, groups); } catch (e) { console.error("combined plan failed", e); shared = null; }
+    // Only the view that's showing is worked out; the other one's total is
+    // shown on its button when it's already known for these same numbers.
+    let info = null;
+    try { info = await budgetCombinedFor(calcKey, groups, { infoOnly: true }); } catch (e) { info = null; }
+    if (info && info.notIncluded) shared = info;
+    else if (info && (PACK_COST_VIEW[calcKey] || "shared") === "shared") {
+      try { shared = await budgetCombinedFor(calcKey, groups); } catch (e) { console.error("combined plan failed", e); shared = null; }
+    } else if (info) shared = { lazyShare: true, sharedWith: info.sharedWith };
     if (stale()) return;
   }
   const sharedNote = (msg) => `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--line); border-radius:8px;">${esc(msg)}</div>`;
@@ -6430,11 +6481,15 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <button type="button" class="btn small ghost" data-gotobudgets style="margin-top:8px;">${esc(t("budgets_title"))} &rarr;</button>
       </div>`;
   }
+  const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
+  const skipPagePlan = !!sharedSections;
   if (!packGroups.length) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
   } else if (!Object.keys(need).length) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
       ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:4px 0; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${Math.round(x.giveQty).toLocaleString()} ${esc(materialDisplayName(x.from))} → ${Math.round(x.getQty).toLocaleString()} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}`;
+  } else if (skipPagePlan) {
+    sections = "";
   } else {
     const earliest = packEarliestDays(packGroups, need, calcKey);
     const plans = [];
@@ -6504,10 +6559,13 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
 
   // View switch: "Shared with Budgets" (this page's share of the combined
   // plan) or "This page only" (plan as if nothing else were being worked on).
-  const canShare = !!sharedSections;
-  if (!canShare) PACK_COST_VIEW[calcKey] = "page";
-  else if (!PACK_COST_VIEW[calcKey]) PACK_COST_VIEW[calcKey] = "shared";
-  const usingShared = canShare && PACK_COST_VIEW[calcKey] === "shared";
+  const canShare = !!sharedSections || !!(shared && shared.lazyShare);
+  if (canShare && !PACK_COST_VIEW[calcKey]) PACK_COST_VIEW[calcKey] = "shared";
+  const usingShared = !!sharedSections && PACK_COST_VIEW[calcKey] === "shared";
+  const known = (PACK_VIEW_TOTALS[calcKey] && PACK_VIEW_TOTALS[calcKey].sig === viewSig) ? PACK_VIEW_TOTALS[calcKey] : { sig: viewSig };
+  if (sharedTotalText) known.shared = sharedTotalText; else sharedTotalText = known.shared || "";
+  if (pageTotalText) known.page = pageTotalText; else pageTotalText = known.page || "";
+  PACK_VIEW_TOTALS[calcKey] = known;
   if (stale()) return;
   if (usingShared) sections = sharedSections;
   const viewSwitch = canShare ? `
@@ -6517,7 +6575,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>
     <div class="meta" style="font-size:10px; margin-bottom:4px;">${esc(t(usingShared ? "pack_view_shared_desc" : "pack_view_page_desc"))}</div>` : "";
   let fallbackNote = "";
-  if (shared && !canShare && PACK_COST_MODE === "still") {
+  if (shared && !canShare && !shared.lazyShare && PACK_COST_MODE === "still") {
     if (shared.notIncluded) fallbackNote = sharedNote(t("combined_not_included"));
     else if (shared.combined && Object.keys(need).length && (!shared.combined.chosen || !shared.included)) fallbackNote = sharedNote(t("combined_cant"));
   }
@@ -7606,7 +7664,7 @@ function budgetShares(plan, inc) {
 // For a page's own Pack cost box: the combined plan, when this page has a
 // pack that also serves another ticked page. Returns null when the page
 // should plan on its own exactly as before.
-async function budgetCombinedFor(calcKey, groups) {
+async function budgetCombinedFor(calcKey, groups, opts = {}) {
   if (!BUDGET_PAGES.some((p) => p.key === calcKey)) return null;
   await ensurePackLinks();
   const allTables = await ensurePackTables();
@@ -7617,6 +7675,7 @@ async function budgetCombinedFor(calcKey, groups) {
   const sharedWith = others.filter((k) => mine.some((tb) => packTableServesPage(tb, k)));
   if (!sharedWith.length) return null;
   if (selected[calcKey] === false) return { notIncluded: true, sharedWith };
+  if (opts.infoOnly) return { infoOnly: true, sharedWith };
   if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); BUDGET_TARGET = (sv && sv.date) || ""; }
   const today = new Date(); today.setHours(0, 0, 0, 0);
   let targetDays = null;
