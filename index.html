@@ -12221,6 +12221,27 @@ async function renderAdminExpertTable(body, tableKey) {
     </div>
     ${tableKey === "research" ? `
     <div class="panel" style="margin-bottom:16px;">
+      <h2>Quick fill a path</h2>
+      <p class="desc">Builds a whole path in one go: a milestone every N levels, the stat cycling through your pattern, one value % (or a list), and sigils per level. Preview first, then create. Creating replaces that path's existing rows for this expert.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px 12px; align-items:end;">
+        <label style="font-size:12px;">Path #<select id="qfPath" style="width:100%; margin-top:4px;">${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">Path ${n}</option>`).join("")}<option value="page1">Paths 1–3</option><option value="page2">Paths 4–6</option><option value="all">All 6 paths</option></select></label>
+        <label style="font-size:12px;">Path name (optional)<input id="qfName" placeholder="e.g. Hunting Skill" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px;">Milestone every<input id="qfStep" type="number" min="1" value="20" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px;">Max level<input id="qfMax" type="number" min="1" value="200" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px; grid-column:span 2;">Stat pattern (repeats)<input id="qfStats" value="DMG, ATK, DEF" placeholder="DMG, ATK, DEF, HP …" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px; grid-column:span 2;">Value % (one number, or a list per milestone)<input id="qfValues" value="1.8" placeholder="1.8  or  1.8, 1.8, 2, 2 …" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px;">Sigils per level<input id="qfSigils" type="number" step="any" value="10" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px;">2nd stat (optional)<input id="qfStat2" placeholder="e.g. HP" style="width:100%; margin-top:4px;" /></label>
+        <label style="font-size:12px;">2nd value %<input id="qfValue2" type="number" step="any" placeholder="" style="width:100%; margin-top:4px;" /></label>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center;">
+        <button class="btn small ghost" id="qfPreview" type="button">Preview</button>
+        <button class="btn small" id="qfCreate" type="button">Create rows</button>
+        <span class="meta" id="qfStatus" style="font-size:11px;"></span>
+      </div>
+      <div id="qfPreviewWrap" style="margin-top:10px;"></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px;">
       <h2>Sigils by level</h2>
       <p class="desc">Paste the sigil cost of every level, one per line (or separated by commas/spaces), starting at level 1. Level 1's cost first, level 2's second, and so on up to 200. Rows are created or updated for each level; the milestone rows (20, 40 …) keep their stats.</p>
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;">
@@ -12256,6 +12277,55 @@ async function renderAdminExpertTable(body, tableKey) {
 
   document.getElementById("adminExpRowsSaveAll").addEventListener("click", () => saveAllRows());
   if (tableKey === "research") {
+    // ---- Quick fill ----
+    const qfRows = () => {
+      const step = Math.max(1, Math.round(Number(document.getElementById("qfStep").value) || 20));
+      const max = Math.max(step, Math.round(Number(document.getElementById("qfMax").value) || 200));
+      const stats = document.getElementById("qfStats").value.split(/[\s,;]+/).map((x) => x.trim().toUpperCase()).filter(Boolean);
+      const values = document.getElementById("qfValues").value.split(/[\s,;]+/).map((x) => x.trim()).filter((x) => x !== "").map(Number).filter((n) => Number.isFinite(n));
+      const sigils = Number(document.getElementById("qfSigils").value);
+      const stat2 = document.getElementById("qfStat2").value.trim().toUpperCase() || null;
+      const value2raw = document.getElementById("qfValue2").value;
+      const value2 = value2raw === "" ? null : Number(value2raw);
+      const name = document.getElementById("qfName").value.trim() || null;
+      if (!stats.length) throw new Error("Enter at least one stat in the pattern");
+      if (!values.length) throw new Error("Enter a value %");
+      const out = [];
+      for (let lvl = step, i = 0; lvl <= max; lvl += step, i++) {
+        out.push({ level: lvl, stat_type: stats[i % stats.length], stat_value: values[Math.min(i, values.length - 1)], sigil_per_level: Number.isFinite(sigils) ? sigils : null, sigil_cost: null, stat_type2: stat2, stat_value2: stat2 ? value2 : null, path_name: name });
+      }
+      return out;
+    };
+    const qfPaths = () => { const v = document.getElementById("qfPath").value; return v === "page1" ? [1, 2, 3] : v === "page2" ? [4, 5, 6] : v === "all" ? [1, 2, 3, 4, 5, 6] : [Number(v)]; };
+    document.getElementById("qfPreview").addEventListener("click", () => {
+      const status = document.getElementById("qfStatus");
+      try {
+        const rows = qfRows();
+        document.getElementById("qfPreviewWrap").innerHTML = `<div class="adm-scroll" style="max-height:260px;"><table style="width:100%; border-collapse:collapse; font-size:12px;"><thead><tr>${["Level", "Stat", "Value %", "2nd stat", "Sigils / level"].map((h) => `${ADMIN_TH}${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr><td style="padding:3px 8px;">${r.level}</td><td style="padding:3px 8px;">${esc(r.stat_type)}</td><td style="padding:3px 8px;">${r.stat_value}</td><td style="padding:3px 8px;">${r.stat_type2 ? esc(r.stat_type2) + " " + (r.stat_value2 ?? "") : "—"}</td><td style="padding:3px 8px;">${r.sigil_per_level ?? "—"}</td></tr>`).join("")}</tbody></table></div>`;
+        status.textContent = `${rows.length} milestones per path × ${qfPaths().length} path(s) for ${ADMIN_ACTIVE_EXPERT}.`;
+      } catch (err) { status.textContent = err.message; }
+    });
+    document.getElementById("qfCreate").addEventListener("click", async () => {
+      const status = document.getElementById("qfStatus");
+      let rows;
+      try { rows = qfRows(); } catch (err) { status.textContent = err.message; return; }
+      const paths = qfPaths();
+      if (!confirm(`Replace ${ADMIN_ACTIVE_EXPERT}'s rows on path(s) ${paths.join(", ")} with ${rows.length} new milestone rows each?`)) return;
+      const btn = document.getElementById("qfCreate");
+      btn.disabled = true;
+      try {
+        for (const pathNum of paths) {
+          await sb(`expert_research_nodes?expert=eq.${encodeURIComponent(ADMIN_ACTIVE_EXPERT)}&path_number=eq.${pathNum}`, { method: "DELETE", prefer: "return=minimal" });
+          const payload = rows.map((r) => ({ ...r, expert: ADMIN_ACTIVE_EXPERT, path_number: pathNum, sort_order: pathNum * 1000 + r.level }));
+          await sb(`expert_research_nodes`, { method: "POST", prefer: "return=minimal", body: JSON.stringify(payload) });
+        }
+        EXPERTS_RESEARCH_NODES_GLOBAL = null;
+        toast("Path rows created");
+        status.textContent = `Created ${rows.length} rows on ${paths.length} path(s).`;
+        loadRows();
+      } catch (err) { toast("Couldn't create rows", true); status.textContent = String(err && err.message || err); }
+      btn.disabled = false;
+    });
     const scopeSel = document.getElementById("adminSigilScope");
     const pathWrap = document.getElementById("adminSigilPathWrap");
     scopeSel.addEventListener("change", () => { pathWrap.style.display = scopeSel.value === "path" ? "" : "none"; });
