@@ -10125,7 +10125,9 @@ async function renderExpertsPage() {
   }
 
   EXPERTS_LIST.forEach((e) => {
-    if (!saved[e.key]) saved[e.key] = { current: 0, desired: 1, skills: {} };
+    // New expert: target defaults to the top of its affinity data, so a
+    // table that only holds the max (one row at 100) still shows its cost.
+    if (!saved[e.key]) saved[e.key] = { current: 0, desired: Math.max(1, ...(AFFINITY_CACHE[e.key] || []).map((r) => Number(r.level) || 0)), skills: {} };
     e.skills.forEach((s) => {
       const max = skillMaxLevel(e.key, s);
       if (!saved[e.key].skills[s]) saved[e.key].skills[s] = { current: 0, desired: max };
