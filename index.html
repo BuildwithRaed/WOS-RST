@@ -1422,6 +1422,14 @@ const T = {
   research_speed_label: { en: "RESEARCH SPEED", ar: "\u0633\u0631\u0639\u0629 \u0627\u0644\u0628\u062d\u062b", ko: "\uc5f0\uad6c \uc18d\ub3c4" },
   speedups_label: { en: "GENERAL SPEEDUPS", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a", ko: "\uac00\uc18d" },
   chest_not_needed: { en: "nothing to cover", ar: "\u0644\u0627 \u0634\u064a\u0621 \u0644\u062a\u063a\u0637\u064a\u062a\u0647", ko: "\ubd80\uc871 \uc5c6\uc74c" },
+  contact_link: { en: "Contact us", ar: "\u0627\u062a\u0635\u0644 \u0628\u0646\u0627", ko: "\ubb38\uc758\ud558\uae30" },
+  contact_title: { en: "Contact us", ar: "\u0627\u062a\u0635\u0644 \u0628\u0646\u0627", ko: "\ubb38\uc758\ud558\uae30" },
+  contact_default_msg: { en: "Questions, wrong numbers, or an idea for the tracker? Send us an email.", ar: "\u0623\u0633\u0626\u0644\u0629 \u0623\u0648 \u0623\u0631\u0642\u0627\u0645 \u062e\u0627\u0637\u0626\u0629 \u0623\u0648 \u0641\u0643\u0631\u0629\u061f \u0631\u0627\u0633\u0644\u0646\u0627 \u0639\u0628\u0631 \u0627\u0644\u0628\u0631\u064a\u062f.", ko: "\uc9c8\ubb38, \uc798\ubabb\ub41c \uc218\uce58, \uc544\uc774\ub514\uc5b4\uac00 \uc788\ub2e4\uba74 \uc774\uba54\uc77c\uc744 \ubcf4\ub0b4 \uc8fc\uc138\uc694." },
+  contact_copy: { en: "Copy", ar: "\u0646\u0633\u062e", ko: "\ubcf5\uc0ac" },
+  contact_copied: { en: "Email copied", ar: "\u062a\u0645 \u0646\u0633\u062e \u0627\u0644\u0628\u0631\u064a\u062f", ko: "\uc774\uba54\uc77c \ubcf5\uc0ac\ub428" },
+  contact_open_mail: { en: "Open mail app", ar: "\u0641\u062a\u062d \u0627\u0644\u0628\u0631\u064a\u062f", ko: "\uba54\uc77c \uc571 \uc5f4\uae30" },
+  contact_tip: { en: "Include the page name and a screenshot if you are reporting a number that looks off.", ar: "\u0623\u0636\u0641 \u0627\u0633\u0645 \u0627\u0644\u0635\u0641\u062d\u0629 \u0648\u0644\u0642\u0637\u0629 \u0634\u0627\u0634\u0629 \u0625\u0630\u0627 \u0643\u0646\u062a \u062a\u0628\u0644\u0651\u063a \u0639\u0646 \u0631\u0642\u0645 \u062e\u0627\u0637\u0626.", ko: "\uc218\uce58 \uc624\ub958\ub97c \uc2e0\uace0\ud560 \ub54c\ub294 \ud398\uc774\uc9c0 \uc774\ub984\uacfc \uc2a4\ud06c\ub9b0\uc0f7\uc744 \ud568\uaed8 \ubcf4\ub0b4 \uc8fc\uc138\uc694." },
+  contact_soon: { en: "Contact details will be added soon.", ar: "\u0633\u062a\u064f\u0636\u0627\u0641 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0642\u0631\u064a\u0628\u0627\u064b.", ko: "\uc5f0\ub77d\ucc98\ub294 \uace7 \ucd94\uac00\ub429\ub2c8\ub2e4." },
   skill_exp_have: { en: "EXP you have", ar: "\u0627\u0644\u062e\u0628\u0631\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 EXP" },
   minutes_short: { en: "min", ar: "\u062f\u0642\u064a\u0642\u0629", ko: "\ubd84" },
   piece_helmet: { en: "Helmet", ar: "\u062e\u0648\u0630\u0629", ko: "\ud22c\uad6c" },
@@ -1686,7 +1694,37 @@ function applyNavLanguage() {
 function renderFooter() {
   const el = document.getElementById("siteFooter");
   if (!el) return;
-  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker</p>`;
+  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker &nbsp;&middot;&nbsp; <a href="#" data-tab="contactpage" id="footerContactLink">${esc(t("contact_link"))}</a></p>`;
+  el.querySelector("#footerContactLink").addEventListener("click", (e) => { e.preventDefault(); goToTab("contactpage"); window.scrollTo(0, 0); });
+}
+
+// ---- Contact us (email + message set in Admin → Contact us; nothing is
+// shown until the owner fills it in) ----
+async function renderContactPage() {
+  await ensureSiteConfig();
+  const cfg = siteConfig("contact", {}) || {};
+  const email = String(cfg.email || "").trim();
+  const msg = String(cfg.message || "").trim() || t("contact_default_msg");
+  content.innerHTML = `
+    <div class="page-head"><div><h2>${esc(t("contact_title"))}</h2></div></div>
+    <div class="panel" style="max-width:520px;">
+      ${email ? `
+        <p class="desc" style="margin-top:0;">${esc(msg)}</p>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px;">
+          <div id="contactEmailBox" style="flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:15px; word-break:break-all;">${esc(email)}</div>
+          <button class="btn small ghost" id="contactCopy" type="button">${esc(t("contact_copy"))}</button>
+          <button class="btn small" id="contactMail" type="button">${esc(t("contact_open_mail"))}</button>
+        </div>
+        <p class="meta" style="font-size:11px; margin-top:12px;">${esc(t("contact_tip"))}</p>`
+      : `<div class="empty">${esc(t("contact_soon"))}</div>`}
+    </div>`;
+  const mailBtn = document.getElementById("contactMail");
+  if (mailBtn) mailBtn.addEventListener("click", () => { window.location.href = `mailto:${email}`; });
+  const copyBtn = document.getElementById("contactCopy");
+  if (copyBtn) copyBtn.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(email); toast(t("contact_copied")); }
+    catch (err) { toast(email); }
+  });
 }
 function renderLanguageSwitcher() {
   const wrap = document.getElementById("langSwitcherWrap");
@@ -1716,7 +1754,7 @@ const KNOWN_TABS = new Set([
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
-  "collectiongallerypage", "extrabonusheroes",
+  "collectiongallerypage", "extrabonusheroes", "contactpage",
 ]);
 function isValidTab(t) {
   return KNOWN_TABS.has(t) || (typeof t === "string" && (t.startsWith("extrabonus:") || t.startsWith("buffcat:")));
@@ -1888,6 +1926,7 @@ async function render() {
     else if (TAB === "expertspage") await renderExpertsPage();
     else if (TAB === "expertsresearchpage") await renderExpertsResearchPage();
     else if (TAB === "adminpage") await renderAdminPage();
+    else if (TAB === "contactpage") await renderContactPage();
     else if (TAB === "alliancetechpage") await renderAllianceTechPage();
     else if (TAB === "albumtundrapage") await renderAlbumTundraPage();
     else if (TAB === "collectiongallerypage") await renderCollectionGalleryPage();
@@ -11514,6 +11553,7 @@ const ADMIN_TABLES = {
   centerresearch: { label: "Research" },
   heroes: { label: "Heroes" },
   packres: { label: "Pack Resources" },
+  contact: { label: "Contact us" },
   skins: { label: "Skins" },
   herostars: { label: "Heroes Special Skills" },
   // These are full pages of their own; the Admin tab just opens them.
@@ -11580,6 +11620,7 @@ async function renderAdminPage() {
   else if (ADMIN_ACTIVE_TABLE === "centerresearch") await renderAdminResearch(body);
   else if (ADMIN_ACTIVE_TABLE === "heroes") await renderAdminHeroes(body);
   else if (ADMIN_ACTIVE_TABLE === "packres") await renderAdminPackResources(body);
+  else if (ADMIN_ACTIVE_TABLE === "contact") await renderAdminContact(body);
   else if (ADMIN_ACTIVE_TABLE === "skins") await renderAdminSkinsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "herostars") await renderAdminHeroStars(body);
 }
@@ -11674,6 +11715,33 @@ async function renderAdminPackResources(body) {
     try { await saveSiteConfig("pack_resources", value); PACK_TABLES_CACHE = null; toast("Pack resources saved"); renderAdminPackResources(body); }
     catch (err) { toast(err.message || "Couldn't save", true); }
   });
+}
+
+// ---- Contact us settings (site-wide, stored in site_config "contact") ----
+async function renderAdminContact(body) {
+  await ensureSiteConfig();
+  const cfg = siteConfig("contact", {}) || {};
+  body.innerHTML = `
+    <div class="panel" style="max-width:620px;">
+      <h2>Contact us</h2>
+      <p class="desc">Shown on the Contact us page (linked from the footer on every page). Leave the email empty to show "Contact details will be added soon." instead.</p>
+      <div style="display:grid; grid-template-columns:140px 1fr; gap:10px 12px; align-items:center; margin-top:12px;">
+        <span class="meta" style="font-size:12px;">Email</span><input id="adminContactEmail" type="email" value="${esc(cfg.email || "")}" placeholder="e.g. hello@wosrst.com" style="width:100%;" />
+        <span class="meta" style="font-size:12px;">Message (optional)</span><input id="adminContactMsg" value="${esc(cfg.message || "")}" placeholder="${esc(t("contact_default_msg"))}" style="width:100%;" />
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn small" id="adminContactSave" type="button">Save</button>
+        <button class="btn small ghost" id="adminContactPreview" type="button">Open Contact page</button>
+      </div>
+    </div>`;
+  document.getElementById("adminContactSave").addEventListener("click", async () => {
+    const email = document.getElementById("adminContactEmail").value.trim();
+    const message = document.getElementById("adminContactMsg").value.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast("That doesn't look like an email address", true); return; }
+    try { await saveSiteConfig("contact", { email, message }); toast("Contact details saved"); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+  document.getElementById("adminContactPreview").addEventListener("click", () => { goToTab("contactpage"); window.scrollTo(0, 0); });
 }
 
 // ---- Visibility: what visitors can see (pages, experts, pets) ----
