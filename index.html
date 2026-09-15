@@ -1422,6 +1422,10 @@ const T = {
   research_speed_label: { en: "RESEARCH SPEED", ar: "\u0633\u0631\u0639\u0629 \u0627\u0644\u0628\u062d\u062b", ko: "\uc5f0\uad6c \uc18d\ub3c4" },
   speedups_label: { en: "GENERAL SPEEDUPS", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a", ko: "\uac00\uc18d" },
   chest_not_needed: { en: "nothing to cover", ar: "\u0644\u0627 \u0634\u064a\u0621 \u0644\u062a\u063a\u0637\u064a\u062a\u0647", ko: "\ubd80\uc871 \uc5c6\uc74c" },
+  pk_same_title: { en: "Same pack, several tables", ar: "\u0646\u0641\u0633 \u0627\u0644\u062d\u0632\u0645\u0629\u060c \u0639\u062f\u0629 \u062c\u062f\u0627\u0648\u0644", ko: "\uac19\uc740 \ud328\ud0a4\uc9c0, \uc5ec\ub7ec \ud45c" },
+  pk_same_desc: { en: "Tick the other tables that are this same pack (e.g. Classic / Sublime / Exquisite). Each step of the pack can then be bought as any one of them, and the plan picks the best.", ar: "\u062d\u062f\u062f \u0627\u0644\u062c\u062f\u0627\u0648\u0644 \u0627\u0644\u0623\u062e\u0631\u0649 \u0627\u0644\u062a\u064a \u0647\u064a \u0646\u0641\u0633 \u0647\u0630\u0647 \u0627\u0644\u062d\u0632\u0645\u0629. \u0643\u0644 \u0645\u0631\u062d\u0644\u0629 \u062a\u064f\u0634\u062a\u0631\u0649 \u0643\u0623\u064a \u0648\u0627\u062d\u062f \u0645\u0646\u0647\u0627\u060c \u0648\u0627\u0644\u062e\u0637\u0629 \u062a\u062e\u062a\u0627\u0631 \u0627\u0644\u0623\u0641\u0636\u0644.", ko: "\uc774 \ud328\ud0a4\uc9c0\uc640 \uac19\uc740 \ub2e4\ub978 \ud45c\ub97c \uc120\ud0dd\ud558\uc138\uc694. \uac01 \ub2e8\uacc4\ub97c \uadf8\uc911 \ud558\ub098\ub85c \uad6c\ub9e4\ud560 \uc218 \uc788\uace0, \uacc4\ud68d\uc774 \ucd5c\uc120\uc744 \uace0\ub985\ub2c8\ub2e4." },
+  pk_same_each: { en: "Choose a different table at each step", ar: "\u0627\u062e\u062a\u0631 \u062c\u062f\u0648\u0644\u0627\u064b \u0645\u062e\u062a\u0644\u0641\u0627\u064b \u0641\u064a \u0643\u0644 \u0645\u0631\u062d\u0644\u0629", ko: "\ub2e8\uacc4\ub9c8\ub2e4 \ub2e4\ub978 \ud45c \uc120\ud0dd" },
+  pk_same_locked: { en: "Choose once — the same table for the whole pack", ar: "\u0627\u062e\u062a\u0631 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u2014 \u0646\u0641\u0633 \u0627\u0644\u062c\u062f\u0648\u0644 \u0644\u0644\u062d\u0632\u0645\u0629 \u0643\u0644\u0647\u0627", ko: "\ud55c \ubc88 \uc120\ud0dd \u2014 \ud328\ud0a4\uc9c0 \uc804\uccb4\uc5d0 \uac19\uc740 \ud45c" },
   contact_link: { en: "Contact us", ar: "\u0627\u062a\u0635\u0644 \u0628\u0646\u0627", ko: "\ubb38\uc758\ud558\uae30" },
   contact_title: { en: "Contact us", ar: "\u0627\u062a\u0635\u0644 \u0628\u0646\u0627", ko: "\ubb38\uc758\ud558\uae30" },
   contact_default_msg: { en: "Questions, wrong numbers, or an idea for the tracker? Send us an email.", ar: "\u0623\u0633\u0626\u0644\u0629 \u0623\u0648 \u0623\u0631\u0642\u0627\u0645 \u062e\u0627\u0637\u0626\u0629 \u0623\u0648 \u0641\u0643\u0631\u0629\u061f \u0631\u0627\u0633\u0644\u0646\u0627 \u0639\u0628\u0631 \u0627\u0644\u0628\u0631\u064a\u062f.", ko: "\uc9c8\ubb38, \uc798\ubabb\ub41c \uc218\uce58, \uc544\uc774\ub514\uc5b4\uac00 \uc788\ub2e4\uba74 \uc774\uba54\uc77c\uc744 \ubcf4\ub0b4 \uc8fc\uc138\uc694." },
@@ -3391,6 +3395,7 @@ async function renderPacksPage() {
     ensurePackLinks(),
   ]);
   let tables = tablesLoaded;
+  PACK_TABLES_ALL = tables;
   PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
   // First visit: the in-game pack tables are created automatically (once
   // per account, so deleting one later doesn't bring it back).
@@ -3720,7 +3725,7 @@ async function renderPacksPage() {
               <input type="radio" name="${name}-${esc(tb.id)}" ${attr}="${val}" ${cur === val ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
               <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(label)}</span>${desc ? `<br><span class="meta" style="font-size:10.5px;">${esc(desc)}</span>` : ""}</span>
             </label>`;
-          return `<div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q1"))}</div>
+          return `<div data-pkhowwrap style="display:${link.linkSet ? "none" : "block"};"><div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q1"))}</div>
           <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
             ${radio("pkhow", "any", how, t("pk_any"), t("pk_any_desc"), "data-pkhow")}
             ${radio("pkhow", "tiers", how, t("pk_tiers"), t("pk_tiers_desc"), "data-pkhow")}
@@ -3733,7 +3738,27 @@ async function renderPacksPage() {
               ${radio("pkgives", "one_each", gives, t("pk_one_each"), t("pk_one_each_desc"), "data-pkgives")}
               ${radio("pkgives", "one_locked", gives, t("pk_one_locked"), t("pk_one_locked_desc"), "data-pkgives")}
             </div>
-          </div>`;
+          </div></div>`;
+        })()}
+        ${(() => {
+          // Same pack, several tables (Classic / Sublime / Exquisite...):
+          // tick the partner tables; each step then picks one of them.
+          const others = tables.filter((x) => x.id !== tb.id);
+          if (!others.length) return "";
+          const setId = link.linkSet;
+          const members = setId ? packLinkSetMembers(setId).map((x) => String(x.id)) : [];
+          const mode = link.lockOption ? "locked" : "each";
+          return `<details data-pksamewrap ${setId ? "open" : ""} style="margin:0 0 12px; font-size:12px;">
+            <summary style="cursor:pointer; color:var(--ice);">${esc(t("pk_same_title"))}${members.length > 1 ? ` (${members.length})` : ""}</summary>
+            <p class="desc" style="font-size:10.5px; margin:6px 0 8px;">${esc(t("pk_same_desc"))}</p>
+            <div style="display:flex; flex-direction:column; gap:5px; max-height:180px; overflow:auto; padding-inline-start:4px;">
+              ${others.map((x) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" data-pksame="${esc(x.id)}" ${members.includes(String(x.id)) ? "checked" : ""} style="flex-shrink:0;" /><span>${esc(x.title || "")}</span></label>`).join("")}
+            </div>
+            <div data-pksamemode style="display:${members.length > 1 ? "flex" : "none"}; flex-direction:column; gap:6px; margin-top:10px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="each" ${mode === "each" ? "checked" : ""} /><span>${esc(t("pk_same_each"))}</span></label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="locked" ${mode === "locked" ? "checked" : ""} /><span>${esc(t("pk_same_locked"))}</span></label>
+            </div>
+          </details>`;
         })()}
         ${(() => {
           const r = link.reset;
@@ -3805,13 +3830,45 @@ async function renderPacksPage() {
         l.choice = how === "choice";
         const opt = how === "tiers" && gives !== "all";
         l.colOptions = opt;
-        l.option = false; // separate-tables layout retired from the UI
-        l.lockOption = opt && gives === "one_locked";
+        if (l.linkSet) { l.sequential = true; l.choice = false; l.colOptions = false; l.option = true; }
+        else { l.option = false; l.lockOption = opt && gives === "one_locked"; }
         box.querySelector("[data-pkgiveswrap]").style.display = how === "tiers" ? "block" : "none";
         syncResetUi();
         await savePackLinks();
       };
       box.querySelectorAll("[data-pkhow],[data-pkgives]").forEach((r) => r.addEventListener("change", applyKind));
+      // Same pack, several tables: keep every member's flags in step.
+      const sameBoxes = [...box.querySelectorAll("[data-pksame]")];
+      const applySame = async () => {
+        const l = current();
+        const picked = sameBoxes.filter((cb) => cb.checked).map((cb) => cb.dataset.pksame);
+        const setId = l.linkSet || String(id);
+        const oldMembers = packLinkSetMembers(setId).map((x) => String(x.id)).filter((x) => x !== String(id));
+        oldMembers.filter((x) => !picked.includes(x)).forEach((x) => { if (PACK_LINKS[x]) { delete PACK_LINKS[x].linkSet; PACK_LINKS[x].option = false; } });
+        const lockedMode = (box.querySelector("[data-pksamemode]:checked") || {}).dataset?.pksamemode === "locked";
+        if (picked.length) {
+          [String(id), ...picked].forEach((x) => {
+            PACK_LINKS[x] = PACK_LINKS[x] || { pages: [], priceCol: 0, cols: {} };
+            const m = PACK_LINKS[x];
+            m.linkSet = setId; m.sequential = true; m.choice = false; m.colOptions = false; m.option = true; m.lockOption = lockedMode;
+          });
+        } else {
+          delete l.linkSet; l.option = false;
+        }
+        const modeWrap = box.querySelector("[data-pksamemode]");
+        if (modeWrap) modeWrap.style.display = picked.length ? "flex" : "none";
+        // Linked = bought in steps; the purchase-type questions step aside.
+        const howWrap = box.querySelector("[data-pkhowwrap]");
+        if (howWrap) howWrap.style.display = picked.length ? "none" : "block";
+        const tiersRadio = box.querySelector('[data-pkhow="tiers"]');
+        if (picked.length && tiersRadio) tiersRadio.checked = true;
+        syncResetUi();
+        const sum = box.querySelector("[data-pksamewrap] summary");
+        if (sum) sum.textContent = t("pk_same_title") + (picked.length ? ` (${picked.length + 1})` : "");
+        await savePackLinks();
+      };
+      sameBoxes.forEach((cb) => cb.addEventListener("change", applySame));
+      box.querySelectorAll("[data-pksamemode]").forEach((r) => r.addEventListener("change", applySame));
       const resetSel = box.querySelector("[data-packreset]");
       const resetDays = box.querySelector("[data-packresetdays]");
       const resetDaysLabel = box.querySelector("[data-packresetdayslabel]");
@@ -4803,10 +4860,29 @@ function packGroupLabel(g) {
 // A table ticked for a group (e.g. "Pets") counts for every page in that
 // group, even if it was ticked before a page joined the group.
 function packTableServesPage(tb, calcKey) {
-  const pages = packLinkFor(tb.id).pages;
-  if (pages.includes(calcKey)) return true;
-  const g = packGroupOf(calcKey);
-  return !!g && g.pages.some((k) => pages.includes(k));
+  const servedBy = (pages) => {
+    if (pages.includes(calcKey)) return true;
+    const g = packGroupOf(calcKey);
+    return !!g && g.pages.some((k) => pages.includes(k));
+  };
+  const link = packLinkFor(tb.id);
+  if (servedBy(link.pages)) return true;
+  // A table linked as "same pack" follows its partners onto their pages.
+  if (link.linkSet) return packLinkSetMembers(link.linkSet).some((x) => x.id !== tb.id && servedBy(packLinkFor(x.id).pages));
+  return false;
+}
+let PACK_TABLES_ALL = null; // every table, for "same pack" lookups (Packs page keeps it fresh)
+function packLinkSetMembers(setId) {
+  return (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).filter((x) => packLinkFor(x.id).linkSet === setId);
+}
+// Short tag telling linked tables apart ("Classic" / "Sublime"): the part
+// of the title that isn't shared with the others.
+function packLinkSetTags(tbs) {
+  const titles = tbs.map((x) => String(x.title || "").trim());
+  const words = titles.map((x) => x.split(/[\s:·\-()"']+/).filter(Boolean));
+  let common = 0;
+  while (words.every((w) => w.length > common + 1 && w[common].toLowerCase() === words[0][common].toLowerCase())) common++;
+  return words.map((w, i) => (w.slice(common).join(" ") || titles[i] || `#${i + 1}`).slice(0, 10));
 }
 function packGroupsChecked(pages) {
   return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => (pages || []).includes(k))).length;
@@ -5022,9 +5098,11 @@ function packLinkFor(tableId) {
     // Per-row purchase limit ({ rowIndex: n }); a ladder's last tier can be
     // bought that many times once the ladder is complete.
     rowMax: (l.rowMax && typeof l.rowMax === "object") ? l.rowMax : {},
-    // This table is one OPTION of the pack named in `group`: all option
-    // tables in that group are one pack, and each tier picks one of them.
-    option: l.option === true,
+    // Several tables that are really ONE pack (e.g. Classic / Sublime /
+    // Exquisite): all tables sharing a linkSet are one ladder, and each
+    // tier picks one of them. `option` is the older name for the same idea.
+    linkSet: typeof l.linkSet === "string" && l.linkSet ? l.linkSet : "",
+    option: l.option === true || (typeof l.linkSet === "string" && !!l.linkSet),
     // Each COLUMN of this table is an option: a purchase of a tier takes
     // one column's amount (Mix & Match style).
     colOptions: l.colOptions === true,
@@ -5152,17 +5230,30 @@ function packOptionTag(tb) {
 function packOptionLadderGroups(optionTables) {
   const groups = [];
   const byGroup = {};
-  optionTables.forEach((tb) => { const g = packLinkFor(tb.id).group || "__nogroup__"; (byGroup[g] = byGroup[g] || []).push(tb); });
+  optionTables.forEach((tb) => { const l = packLinkFor(tb.id); const g = l.linkSet ? "set:" + l.linkSet : (l.group || "__nogroup__"); (byGroup[g] = byGroup[g] || []).push(tb); });
   Object.keys(byGroup).forEach((gname) => {
     const tbs = byGroup[gname];
     const links = tbs.map((tb) => packLinkFor(tb.id));
-    const lead = links[0];
-    const title = lead.group && lead.group !== (tbs[0].title || "") ? lead.group + " · " + (tbs[0].title || t("packs_title")) : (lead.group || tbs[0].title || t("packs_title"));
+    const isSet = gname.startsWith("set:");
+    // For a linked set the lead table (the one the set is named after) sets
+    // how it's bought; its partners just contribute their options.
+    const leadIdx = isSet ? Math.max(0, tbs.findIndex((tb) => String(tb.id) === gname.slice(4))) : 0;
+    const lead = links[leadIdx];
+    const tags = isSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag);
+    const titleOf = () => {
+      if (!isSet) return lead.group && lead.group !== (tbs[0].title || "") ? lead.group + " · " + (tbs[0].title || t("packs_title")) : (lead.group || tbs[0].title || t("packs_title"));
+      const base = lead.group || String(tbs[leadIdx].title || t("packs_title"));
+      const w = String(tbs[leadIdx].title || "").split(/[\s:·\-()"']+/).filter(Boolean);
+      const tag = tags[leadIdx];
+      const stem = w.length && tag && String(tbs[leadIdx].title || "").endsWith(tag) ? String(tbs[leadIdx].title || "").slice(0, -tag.length).replace(/[\s:·\-]+$/, "") : "";
+      return (lead.group || stem || base) + " · " + tags.join(" / ");
+    };
+    const title = titleOf();
     const perTable = tbs.map((tb) => packOffersFor(tb, true));
     const tiers = Math.min(...perTable.map((o) => o.length));
     if (!tiers) return;
     const lastMax = Math.max(0, ...links.map((l) => Number((l.rowMax || {})[tiers - 1]) || 0));
-    const g = packBuildOptionLadder(title, lead, perTable, tbs.map(packOptionTag), lastMax);
+    const g = packBuildOptionLadder(title, lead, perTable, tags, lastMax);
     if (g) groups.push(g);
   });
   return groups;
@@ -14281,10 +14372,16 @@ async function uploadImageToStorage(file) {
   const path = `${crypto.randomUUID()}.${ext}`;
   const res = await fetch(`${SUPABASE_URL}/storage/v1/object/skin-images/${path}`, {
     method: "POST",
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type || "application/octet-stream", "x-upsert": "true" },
+    // The bucket only lets the owner write, so this must carry the owner's
+    // session token (the bare anon key is rejected with 403).
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${(CURRENT_SESSION && CURRENT_SESSION.access_token) || SUPABASE_KEY}`, "Content-Type": file.type || "application/octet-stream", "x-upsert": "true" },
     body: file,
   });
-  if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.json()).message || ""; } catch (_) {}
+    throw new Error(`Upload failed (${res.status}${detail ? ": " + detail : ""})`);
+  }
   return `${SUPABASE_URL}/storage/v1/object/public/skin-images/${path}`;
 }
 function uploadBtnHtml() {
@@ -14318,7 +14415,7 @@ document.addEventListener("click", (e) => {
       input.dispatchEvent(new Event("change", { bubbles: true }));
       toast("Image uploaded \u2014 remember to Save");
     } catch (err) {
-      toast("Upload failed", true);
+      toast(err && err.message ? err.message : "Upload failed", true);
     } finally {
       btn.innerHTML = orig;
       btn.disabled = false;
