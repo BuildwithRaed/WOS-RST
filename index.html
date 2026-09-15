@@ -11595,9 +11595,10 @@ async function renderAdminPackResources(body) {
   const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
   all.sort((a, b) => { const oa = orderIdx(a.name), ob = orderIdx(b.name); if (oa !== ob) return oa - ob; return materialDisplayName(a.name).localeCompare(materialDisplayName(b.name), undefined, { numeric: true, sensitivity: "base" }); });
   const contentsText = (c) => Object.entries(c || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
-  const rowHtml = (r, i) => `
-    <tr data-resrow ${r.builtin ? "" : `data-custom="1"`}>
-      <td style="padding:4px;"><input type="number" data-f="order" value="${i + 1}" min="1" style="width:64px;" /></td>
+  let resRowSeq = 0;
+  const rowHtml = (r, i, n) => `
+    <tr data-resrow="r${++resRowSeq}" ${r.builtin ? "" : `data-custom="1"`}>
+      ${adminReorderCellHtml(`r${resRowSeq}`, i, n == null ? all.length : n)}
       <td style="padding:4px;">${r.builtin ? `<span style="font-weight:600;">${esc(materialDisplayName(r.name))}</span><input type="hidden" data-f="name" value="${esc(r.name)}" />` : `<input data-f="name" value="${esc(r.name)}" style="width:170px;" />`}</td>
       <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">built-in</span>` : `<span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="icon" value="${esc(r.icon || "")}" placeholder="icons/…png" style="width:150px;" />${uploadBtnHtml()}</span>`}</td>
       <td style="padding:4px;"><input data-f="contents" value="${esc(contentsText(r.builtin ? (cfg.gives[r.name] || PACK_BUNDLES[r.name]) : r.contents))}" placeholder="${r.builtin ? "nothing (plain item)" : "e.g. Design Plan: 1, Polishing Solution: 4"}" style="width:260px;" /></td>
@@ -11607,11 +11608,11 @@ async function renderAdminPackResources(body) {
   body.innerHTML = `
     <div class="panel" style="margin-bottom:16px;">
       <h2>Pack Resources</h2>
-      <p class="desc">These are the names offered in the column dropdown on the Packs page. Change the Order numbers to sort the dropdown (lower first; the rest stay A–Z), tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).</p>
+      <p class="desc">These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).</p>
       <div style="overflow-x:auto;">
         <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
-          <thead><tr>${["Order", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
-          <tbody id="resRows">${all.map(rowHtml).join("")}</tbody>
+          <thead><tr>${["", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
+          <tbody id="resRows">${all.map((r, i) => rowHtml(r, i, all.length)).join("")}</tbody>
         </table>
       </div>
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
@@ -11630,9 +11631,12 @@ async function renderAdminPackResources(body) {
     toast("Restored"); renderAdminPackResources(body);
   }));
   const rowsEl = body.querySelector("#resRows");
+  wireAdminReorder(rowsEl, "data-resrow", null);
   body.querySelector("#resAdd").addEventListener("click", () => {
-    rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: "", icon: "", contents: {}, builtin: false }, rowsEl.children.length));
+    rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: "", icon: "", contents: {}, builtin: false }, rowsEl.children.length, rowsEl.children.length + 1));
     rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
+    // New row: its own move buttons / grip need wiring too.
+    wireAdminReorder(rowsEl, "data-resrow", null);
   });
   rowsEl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-resdel]"); if (!b) return;
@@ -11643,9 +11647,9 @@ async function renderAdminPackResources(body) {
   body.querySelector("#resSave").addEventListener("click", async () => {
     const rows = [...rowsEl.querySelectorAll("[data-resrow]")];
     const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
-    const items = rows.map((tr) => ({
+    const items = rows.map((tr, i) => ({
       builtin: !tr.dataset.custom,
-      order: Number(tr.querySelector('[data-f="order"]').value) || 9999,
+      order: i,
       name: tr.querySelector('[data-f="name"]').value.trim(),
       icon: (tr.querySelector('[data-f="icon"]') || {}).value || "",
       contents: parseContents((tr.querySelector('[data-f="contents"]') || {}).value),
@@ -11770,15 +11774,16 @@ async function renderAdminRoster(body) {
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
-            ${["Name", "Image URL", "Skill 1", "Skill 2", "Skill 3", "Skill 4", "Main stat", "Troop restriction", "Order", ""]
+            ${["", "Name", "Image URL", "Skill 1", "Skill 2", "Skill 3", "Skill 4", "Main stat", "Troop restriction", ""]
               .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
               .join("")}
           </tr></thead>
           <tbody>
             ${rows
               .map(
-                (r) => `
+                (r, idx) => `
               <tr data-rosterrow="${r.id}">
+                ${adminReorderCellHtml(r.id, idx, rows.length)}
                 <td style="padding:4px;"><input data-f="key" value="${esc(r.key)}" style="width:100px;" /></td>
                 <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="img" value="${esc(r.img || "")}" style="width:160px;" />${uploadBtnHtml()}</span></td>
                 <td style="padding:4px;"><input data-f="skill1" value="${esc(r.skill1 || "")}" style="width:110px;" /></td>
@@ -11796,7 +11801,6 @@ async function renderAdminRoster(body) {
                     <option value="Marksman" ${r.main_stat_troop === "Marksman" ? "selected" : ""}>Marksman only</option>
                   </select>
                 </td>
-                <td style="padding:4px;"><input data-f="sort_order" type="number" value="${r.sort_order}" style="width:56px;" /></td>
                 <td style="padding:4px; white-space:nowrap;">
                   <button class="btn small ghost" data-rostersave="${r.id}">Save</button>
                   <button class="btn small ghost" data-rosterdel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -11848,6 +11852,10 @@ async function renderAdminRoster(body) {
     });
     await sb(`experts?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body_) });
   };
+  wireAdminReorder(body, "data-rosterrow", async (orderedIds) => {
+    try { await saveAdminRowOrder("experts", rows, orderedIds); EXPERTS_ROSTER_LOADED = false; renderAdminRoster(body); }
+    catch (err) { toast("Couldn't reorder", true); }
+  });
   body.querySelectorAll("[data-rostersave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       try {
@@ -12295,6 +12303,102 @@ async function renderAdminPets(body) {
 
 // ---- Generic flat-table editor (small tables, no expert/pet grouping) ----
 // Used for Chief Charm levels, Tundra Album tiers, Collection Gallery tiers.
+// ---- Reorder rows by moving them (drag the grip, or ▲/▼ on touch) ----
+// Every admin table with an order uses this instead of a typed number:
+// the row is moved in place, then the caller gets the new id order and
+// writes sort_order = position.
+const ADMIN_TH = `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">`;
+function adminReorderCellHtml(id, idx, n) {
+  const sid = esc(String(id));
+  return `<td style="padding:4px; white-space:nowrap;">
+    <span draggable="true" data-grip="${sid}" title="Drag to move" style="cursor:grab; user-select:none; color:var(--muted); padding:0 4px; font-size:15px; display:inline-block; vertical-align:middle;">&#8942;&#8942;</span>
+    <button type="button" class="btn small ghost" data-rowup="${sid}" ${idx === 0 ? "disabled" : ""} title="Move up" style="padding:2px 6px;">&#9650;</button>
+    <button type="button" class="btn small ghost" data-rowdown="${sid}" ${idx === n - 1 ? "disabled" : ""} title="Move down" style="padding:2px 6px;">&#9660;</button>
+  </td>`;
+}
+function wireAdminReorder(container, rowAttr, onReorder) {
+  const rowsOf = () => [...container.querySelectorAll(`tr[${rowAttr}]`)];
+  const idOf = (tr) => tr.getAttribute(rowAttr);
+  const refreshButtons = () => {
+    const list = rowsOf();
+    list.forEach((tr, i) => {
+      const up = tr.querySelector("[data-rowup]"), down = tr.querySelector("[data-rowdown]");
+      if (up) up.disabled = i === 0;
+      if (down) down.disabled = i === list.length - 1;
+    });
+  };
+  const place = (id, toIdx) => {
+    const list = rowsOf();
+    const tr = list.find((x) => idOf(x) === id);
+    if (!tr) return;
+    const others = list.filter((x) => x !== tr);
+    const ref = others[toIdx] || null;
+    tr.parentNode.insertBefore(tr, ref);
+    refreshButtons();
+    if (onReorder) onReorder(rowsOf().map(idOf));
+  };
+  // Safe to call again after rows are added: already-wired elements are skipped.
+  const fresh = (sel) => [...container.querySelectorAll(sel)].filter((el) => !el.dataset.rw && (el.dataset.rw = "1"));
+  fresh("[data-rowup]").forEach((b) => b.addEventListener("click", () => {
+    const i = rowsOf().findIndex((tr) => idOf(tr) === b.dataset.rowup);
+    if (i > 0) place(b.dataset.rowup, i - 1);
+  }));
+  fresh("[data-rowdown]").forEach((b) => b.addEventListener("click", () => {
+    const list = rowsOf(); const i = list.findIndex((tr) => idOf(tr) === b.dataset.rowdown);
+    if (i !== -1 && i < list.length - 1) place(b.dataset.rowdown, i + 1);
+  }));
+  const dragId = container.__dragState || (container.__dragState = { id: null });
+  fresh("[data-grip]").forEach((g) => {
+    g.addEventListener("dragstart", (e) => {
+      dragId.id = g.dataset.grip;
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", dragId.id); } catch (_) {}
+      g.closest("tr").style.opacity = "0.45";
+    });
+    g.addEventListener("dragend", () => { dragId.id = null; rowsOf().forEach((tr) => { tr.style.opacity = ""; tr.style.boxShadow = ""; }); });
+  });
+  fresh(`tr[${rowAttr}]`).forEach((tr) => {
+    tr.addEventListener("dragover", (e) => {
+      if (!dragId.id) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = "move";
+      const r = tr.getBoundingClientRect();
+      tr.style.boxShadow = e.clientY > r.top + r.height / 2 ? "inset 0 -2px 0 var(--ice)" : "inset 0 2px 0 var(--ice)";
+    });
+    tr.addEventListener("dragleave", () => { tr.style.boxShadow = ""; });
+    tr.addEventListener("drop", (e) => {
+      if (!dragId.id) return;
+      e.preventDefault();
+      const id = dragId.id; dragId.id = null;
+      rowsOf().forEach((x) => { x.style.opacity = ""; x.style.boxShadow = ""; });
+      const list = rowsOf().filter((x) => idOf(x) !== id);
+      let to = list.indexOf(tr);
+      if (to === -1) return;
+      const r = tr.getBoundingClientRect();
+      if (e.clientY > r.top + r.height / 2) to += 1;
+      place(id, to);
+    });
+  });
+}
+// sort_order = position, written only for rows whose position changed.
+async function saveAdminRowOrder(table, rows, orderedIds) {
+  const byId = new Map(rows.map((r) => [String(r.id), r]));
+  const patches = [];
+  orderedIds.forEach((id, idx) => {
+    const r = byId.get(String(id));
+    if (r && Number(r.sort_order) !== idx) patches.push(sb(`${table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ sort_order: idx }) }));
+  });
+  await Promise.all(patches);
+}
+// Generic cell for a column: the order column becomes a hidden field
+// (kept so Save still sends it), everything else a normal input.
+function adminColCellHtml(c, r, width) {
+  if (c.key === "sort_order") return `<input type="hidden" data-f="sort_order" value="${esc(r.sort_order ?? "")}" />`;
+  return `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:${width};" /></td>`;
+}
+function adminColHeadHtml(cols, withReorder) {
+  return (withReorder ? `<th></th>` : "") + cols.filter((c) => c.key !== "sort_order").map((c) => `${ADMIN_TH}${esc(c.label)}</th>`).join("");
+}
+
 async function renderAdminFlatLevels(body, cfg) {
   const cols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
   const rows = await sb(`${cfg.table}?select=${cols}&order=${cfg.orderCol}.asc`);
@@ -12304,7 +12408,7 @@ async function renderAdminFlatLevels(body, cfg) {
     <div class="panel" style="margin-bottom:16px;">
       <h2>Add a row</h2>
       <form class="inline" id="adminFlatAddForm">
-        ${cfg.cols.map((c) => `<input class="field-num" name="${c.key}" placeholder="${esc(c.label)}" ${c.type === "number" ? 'type="number" step="any"' : ""} style="width:130px;" />`).join("")}
+        ${cfg.cols.map((c) => `<input class="field-num" name="${c.key}" placeholder="${esc(c.label)}" ${canReorder && c.key === "sort_order" ? 'type="hidden"' : c.type === "number" ? 'type="number" step="any"' : ""} style="width:130px;" />`).join("")}
         <button class="btn" type="submit">Add row</button>
       </form>
       <div class="err" id="adminFlatAddErr"></div>
@@ -12317,8 +12421,7 @@ async function renderAdminFlatLevels(body, cfg) {
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
-            ${canReorder ? `<th></th>` : ""}
-            ${cfg.cols.map((c) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${esc(c.label)}</th>`).join("")}
+            ${canReorder ? adminColHeadHtml(cfg.cols, true) : cfg.cols.map((c) => `${ADMIN_TH}${esc(c.label)}</th>`).join("")}
             <th></th>
           </tr></thead>
           <tbody>
@@ -12326,16 +12429,9 @@ async function renderAdminFlatLevels(body, cfg) {
               .map(
                 (r, idx) => `
               <tr data-flatrow="${r.id}">
-                ${canReorder ? `
-                <td style="padding:4px; white-space:nowrap;">
-                  <button class="btn small ghost" data-flatup="${r.id}" ${idx === 0 ? "disabled" : ""} title="Move up">&#9650;</button>
-                  <button class="btn small ghost" data-flatdown="${r.id}" ${idx === rows.length - 1 ? "disabled" : ""} title="Move down">&#9660;</button>
-                </td>` : ""}
+                ${canReorder ? adminReorderCellHtml(r.id, idx, rows.length) : ""}
                 ${cfg.cols
-                  .map(
-                    (c) =>
-                      `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:110px;" /></td>`
-                  )
+                  .map((c) => (canReorder ? adminColCellHtml(c, r, "110px") : `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:110px;" /></td>`))
                   .join("")}
                 <td style="padding:4px; white-space:nowrap;">
                   <button class="btn small ghost" data-flatsave="${r.id}">Save</button>
@@ -12389,28 +12485,14 @@ async function renderAdminFlatLevels(body, cfg) {
     });
   }
   if (canReorder) {
-    const swapOrder = async (id, dir) => {
-      const idx = rows.findIndex((r) => r.id === id);
-      const otherIdx = idx + dir;
-      if (otherIdx < 0 || otherIdx >= rows.length) return;
-      const a = rows[idx], b = rows[otherIdx];
-      const aOrder = a.sort_order, bOrder = b.sort_order;
+    wireAdminReorder(body, "data-flatrow", async (orderedIds) => {
       try {
-        await Promise.all([
-          sb(`${cfg.table}?id=eq.${a.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: bOrder }) }),
-          sb(`${cfg.table}?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: aOrder }) }),
-        ]);
+        await saveAdminRowOrder(cfg.table, rows, orderedIds);
         if (cfg.onSave) cfg.onSave();
         renderAdminFlatLevels(body, cfg);
       } catch (err) {
         toast("Couldn't reorder", true);
       }
-    };
-    body.querySelectorAll("[data-flatup]").forEach((btn) => {
-      btn.addEventListener("click", () => swapOrder(btn.dataset.flatup, -1));
-    });
-    body.querySelectorAll("[data-flatdown]").forEach((btn) => {
-      btn.addEventListener("click", () => swapOrder(btn.dataset.flatdown, 1));
     });
   }
   body.querySelectorAll("[data-flatdel]").forEach((btn) => {
@@ -12615,15 +12697,16 @@ async function renderAdminSkinsCategory(body, category) {
       <div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
-            ${["Name", "Image URL", "Bonus stat", "Bonus %", "Current lvl", "Max lvl", "Owned", "Has count trigger", "Order", ""]
+            ${["", "Name", "Image URL", "Bonus stat", "Bonus %", "Current lvl", "Max lvl", "Owned", "Has count trigger", ""]
               .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
               .join("")}
           </tr></thead>
           <tbody>
             ${rows
               .map(
-                (r) => `
+                (r, idx) => `
               <tr data-skinrow="${r.id}">
+                ${adminReorderCellHtml(r.id, idx, rows.length)}
                 <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:110px;" /></td>
                 <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="image_url" value="${esc(r.image_url || "")}" style="width:150px;" />${uploadBtnHtml()}</span></td>
                 <td style="padding:4px;"><input data-f="bonus_type" value="${esc(r.bonus_type || "")}" style="width:100px;" /></td>
@@ -12632,10 +12715,7 @@ async function renderAdminSkinsCategory(body, category) {
                 <td style="padding:4px;"><input data-f="max_level" type="number" value="${r.max_level ?? ""}" style="width:70px;" /></td>
                 <td style="padding:4px;"><input data-f="owned" type="checkbox" ${r.owned ? "checked" : ""} /></td>
                 <td style="padding:4px;"><input data-f="show_count_toggle" type="checkbox" ${r.show_count_toggle ? "checked" : ""} /></td>
-                <td style="padding:4px;"><input data-f="sort_order" type="number" value="${r.sort_order ?? 0}" style="width:56px;" /></td>
                 <td style="padding:4px; white-space:nowrap;">
-                  <button class="btn small ghost" data-skinmoveup="${r.id}" title="Move up" style="padding:4px 8px;">&#8593;</button>
-                  <button class="btn small ghost" data-skinmovedown="${r.id}" title="Move down" style="padding:4px 8px;">&#8595;</button>
                   <button class="btn small ghost" data-skinsave="${r.id}">Save</button>
                   <button class="btn small ghost" data-skindel="${r.id}" style="color:var(--danger);">Delete</button>
                 </td>
@@ -12648,29 +12728,9 @@ async function renderAdminSkinsCategory(body, category) {
     </div>
   `;
 
-  body.querySelectorAll("[data-skinmoveup]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const idx = rows.findIndex((r) => r.id === btn.dataset.skinmoveup);
-      if (idx <= 0) return;
-      const a = rows[idx], b = rows[idx - 1];
-      await Promise.all([
-        sb(`skins?id=eq.${a.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: b.sort_order }) }),
-        sb(`skins?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: a.sort_order }) }),
-      ]);
-      renderAdminSkinsCategory(body, category);
-    });
-  });
-  body.querySelectorAll("[data-skinmovedown]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const idx = rows.findIndex((r) => r.id === btn.dataset.skinmovedown);
-      if (idx === -1 || idx >= rows.length - 1) return;
-      const a = rows[idx], b = rows[idx + 1];
-      await Promise.all([
-        sb(`skins?id=eq.${a.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: b.sort_order }) }),
-        sb(`skins?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: a.sort_order }) }),
-      ]);
-      renderAdminSkinsCategory(body, category);
-    });
+  wireAdminReorder(body, "data-skinrow", async (orderedIds) => {
+    try { await saveAdminRowOrder("skins", rows, orderedIds); renderAdminSkinsCategory(body, category); }
+    catch (err) { toast("Couldn't reorder", true); }
   });
 
   const saveSkinRow = async (id) => {
@@ -12866,20 +12926,16 @@ async function renderAdminProgression(body, nameFilter) {
     wrap.innerHTML = `
       <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
         <thead><tr>
-          ${cols.map((c) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${esc(c.label)}</th>`).join("")}
+          ${adminColHeadHtml(cols, true)}
           <th></th>
         </tr></thead>
         <tbody>
           ${rows
             .map(
-              (r) => `
+              (r, idx) => `
             <tr data-progrow="${r.id}">
-              ${cols
-                .map(
-                  (c) =>
-                    `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:${c.key === "materials" ? "220px" : "90px"};" /></td>`
-                )
-                .join("")}
+              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${cols.map((c) => adminColCellHtml(c, r, c.key === "materials" ? "220px" : "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-progsave="${r.id}">Save</button>
                 <button class="btn small ghost" data-progdel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -12891,6 +12947,10 @@ async function renderAdminProgression(body, nameFilter) {
       </table>
     `;
 
+    wireAdminReorder(wrap, "data-progrow", async (orderedIds) => {
+      try { await saveAdminRowOrder("progression_rows", rows, orderedIds); invalidateCaches(); loadRows(); }
+      catch (err) { toast("Couldn't reorder", true); }
+    });
     wrap.querySelectorAll("[data-progsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -13087,20 +13147,16 @@ async function renderAdminResearch(body) {
     wrap.innerHTML = `
       <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
         <thead><tr>
-          ${cfg.cols.map((c) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${esc(c.label)}</th>`).join("")}
+          ${adminColHeadHtml(cfg.cols, true)}
           <th></th>
         </tr></thead>
         <tbody>
           ${rows
             .map(
-              (r) => `
+              (r, idx) => `
             <tr data-resrow="${r.id}">
-              ${cfg.cols
-                .map(
-                  (c) =>
-                    `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:${c.key === "buff_text" ? "180px" : "90px"};" /></td>`
-                )
-                .join("")}
+              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${cfg.cols.map((c) => adminColCellHtml(c, r, c.key === "buff_text" ? "180px" : "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-ressave="${r.id}">Save</button>
                 <button class="btn small ghost" data-resdel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -13112,6 +13168,10 @@ async function renderAdminResearch(body) {
       </table>
     `;
 
+    wireAdminReorder(wrap, "data-resrow", async (orderedIds) => {
+      try { await saveAdminRowOrder(cfg.table, rows, orderedIds); cfg.invalidate(); loadRows(); }
+      catch (err) { toast("Couldn't reorder", true); }
+    });
     wrap.querySelectorAll("[data-ressave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -13860,20 +13920,16 @@ async function renderAdminPetsRefine(body) {
     wrap.innerHTML = `
       <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
         <thead><tr>
-          ${refineCols.map((c) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${esc(c.label)}</th>`).join("")}
+          ${adminColHeadHtml(refineCols, true)}
           <th></th>
         </tr></thead>
         <tbody>
           ${rows
             .map(
-              (r) => `
+              (r, idx) => `
             <tr data-petrefinerow="${r.id}">
-              ${refineCols
-                .map(
-                  (c) =>
-                    `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:90px;" /></td>`
-                )
-                .join("")}
+              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${refineCols.map((c) => adminColCellHtml(c, r, "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-petrefinesave="${r.id}">Save</button>
                 <button class="btn small ghost" data-petrefinedel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -13885,6 +13941,10 @@ async function renderAdminPetsRefine(body) {
       </table>
     `;
 
+    wireAdminReorder(wrap, "data-petrefinerow", async (orderedIds) => {
+      try { await saveAdminRowOrder("pet_refine_nodes", rows, orderedIds); PET_REFINE_CACHE = null; loadRefineRows(); }
+      catch (err) { toast("Couldn't reorder", true); }
+    });
     wrap.querySelectorAll("[data-petrefinesave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.petrefinesave;
