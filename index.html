@@ -1064,7 +1064,7 @@ const MATERIAL_LABEL_KEYS = {
   "design plan": "material_design_plan", design: "material_design_plan",
   amber: "material_amber",
   "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest",
-  "pet chest": "material_pet_chest", gems: "material_gems", "common marks": "material_common_marks", "advanced marks": "material_advanced_marks", "research speedups (minutes)": "material_research_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
+  "pet chest": "material_pet_chest", gems: "material_gems", "common marks": "material_common_marks", "advanced marks": "material_advanced_marks", "research speedups (minutes)": "material_research_speedups", "expert speedups (minutes)": "material_expert_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
   "charm guides": "material_charm_guides", "charm designs": "material_charm_designs",
   "jewel secrets": "material_jewel_secrets",
   "xp component": "material_xp_component", "essence stones": "material_essence_stones",
@@ -1464,6 +1464,7 @@ const T = {
   material_compass: { en: "Compass", ar: "البوصلة", ko: "나침반" },
   material_affinity: { en: "Affinity", ar: "\u0627\u0644\u0623\u0644\u0641\u0629", ko: "\uce5c\ubc00\ub3c4" },
   material_books_of_knowledge: { en: "Books", ar: "\u0643\u062a\u0628 \u0627\u0644\u0645\u0639\u0631\u0641\u0629", ko: "\uc9c0\uc2dd\uc758 \ucc45" },
+  material_expert_speedups: { en: "Expert Speedups (min)", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a \u0627\u0644\u062e\u0628\u0631\u0627\u0621 (\u062f\u0642\u064a\u0642\u0629)", ko: "\uc804\ubb38\uac00 \uac00\uc18d (\ubd84)" },
   material_speedups_minutes: { en: "General Speedups (min)", ar: "\u0627\u0644\u0645\u0633\u0631\u0651\u0639\u0627\u062a (\u062f\u0642\u0627\u0626\u0642)", ko: "\uac00\uc18d (\ubd84)" },
   material_general_sigils: { en: "General Sigils", ar: "\u0623\u062e\u062a\u0627\u0645 \u0639\u0627\u0645\u0629", ko: "\uc77c\ubc18 \uc778\uc7a5" },
   sigils_suffix: { en: "{name} Sigils", ar: "\u0623\u062e\u062a\u0627\u0645 {name}", ko: "{name} \uc778\uc7a5" },
@@ -4800,7 +4801,8 @@ const PACK_RESOURCE_NAMES = [
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
-  "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)",
+  "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
+  "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
   "Troop Speedup 1m", "Troop Speedup 5m", "Troop Speedup 1h", "Troop Speedup 3h", "Troop Speedup 8h",
   "Construction Speedup 1m", "Construction Speedup 5m", "Construction Speedup 1h", "Construction Speedup 3h", "Construction Speedup 8h",
@@ -4820,7 +4822,7 @@ const PACK_BUNDLES = {
   // Typed speedups only count for their own kind of upgrade (research
   // pages need research minutes; general speedups can be used there too,
   // via a 1:1 trade set on those pages).
-  ...Object.fromEntries(["Research", "Troop", "Construction"].flatMap((kind) => [["1m", 1], ["5m", 5], ["1h", 60], ["3h", 180], ["8h", 480]].map(([sz, min]) => [`${kind} Speedup ${sz}`, { [`${kind} Speedups (minutes)`]: min }]))),
+  ...Object.fromEntries(["Research", "Troop", "Construction", "Expert"].flatMap((kind) => [["1m", 1], ["5m", 5], ["1h", 60], ["3h", 180], ["8h", 480]].map(([sz, min]) => [`${kind} Speedup ${sz}`, { [`${kind} Speedups (minutes)`]: min }]))),
   // Affinity gift items (Experts): each is worth a fixed amount of Affinity.
   "Sail of Conquest": { "Affinity": 1000 },
   "Fiery Heart": { "Affinity": 100 },
@@ -4860,7 +4862,7 @@ function packBundleContents(name) {
 // Resources a pack column can't be named directly - they're only reached
 // through item bundles (speedup items, XP items) - so they stay out of
 // the dropdowns. A column that already has one of these keeps it.
-const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Gems"]);
+const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)", "Gems"]);
 function packAllResourceNames() {
   const cfg = packResourceConfig();
   const out = PACK_RESOURCE_NAMES.slice();
@@ -6087,6 +6089,8 @@ const TRADE_DEFAULT_RATES = {
   // count). Both hidden - rules, not trades.
   // Affinity gift items are simply worth a fixed amount of Affinity.
   experts: [
+    // Expert-only speedups are spent on expert skills like general ones (1:1).
+    { from: "Expert Speedups (minutes)", to: "Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     { from: "Sail of Conquest", to: "Affinity", give: 1, get: 1000, max: 0, hidden: true, silent: true },
     { from: "Fiery Heart", to: "Affinity", give: 1, get: 100, max: 0, hidden: true, silent: true },
     { from: "Compass", to: "Affinity", give: 1, get: 10, max: 0, hidden: true, silent: true },
@@ -6351,7 +6355,7 @@ const BUDGET_PAGES = [
 async function budgetOwnedFor(calcKey) {
   if (calcKey === "experts" || calcKey === "experts_research") {
     const inv = (await loadCalcState("experts_inventory")) || {};
-    return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(inv), "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": Number(inv["Speedups (minutes)"]) || 0 };
+    return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(inv), "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": expertSpeedupOwnedFrom(inv) };
   }
   return ensureMaterialOwnedCache(calcKey);
 }
@@ -9458,7 +9462,7 @@ const EXPERT_HERO_MAX_LEVEL = 100;
 const EXPERT_SKILL_MAX_LEVEL = 10; // placeholder until real per-skill caps are provided
 const EXPERT_INVENTORY_FIELDS = [
   "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge",
-  "Speedups (minutes)", "General Sigils",
+  "Expert Speedups (minutes)", "General Sigils",
   "Cyrille Sigils", "Agnes Sigils", "Holger Sigils", "Romulus Sigils",
   "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils",
   "Kathy Sigils", "Gareth Sigils",
@@ -9466,6 +9470,10 @@ const EXPERT_INVENTORY_FIELDS = [
 // Affinity you own = the gift items you hold (plus any Affinity number
 // saved before the items existed, kept so nothing is lost).
 const AFFINITY_ITEM_VALUE = { "Sail of Conquest": 1000, "Fiery Heart": 100, "Compass": 10 };
+// Minutes usable on expert skills = the shared general pool + expert-only speedups.
+function expertSpeedupOwnedFrom(inv) {
+  return (Number(inv["Speedups (minutes)"]) || 0) + (Number(inv["Expert Speedups (minutes)"]) || 0);
+}
 function affinityOwnedFrom(inv) {
   return Object.entries(AFFINITY_ITEM_VALUE).reduce((sum, [k, v]) => sum + (Number(inv[k]) || 0) * v, 0) + (Number(inv["Affinity"]) || 0);
 }
@@ -9477,6 +9485,7 @@ const EXPERT_INVENTORY_ICONS = {
   EXP: "icons/hero-xp.png",
   "Books of Knowledge": "icons/item_icon_570300.png",
   "Speedups (minutes)": "icons/item_icon_302000.png",
+  "Expert Speedups (minutes)": "icons/item_icon_302000.png",
   Gifts: "icons/item_icon_570202.png", // Fiery Heart
   "General Sigils": "icons/item_icon_570000.png",
   "Cyrille Sigils": "icons/item_icon_570001.png",
@@ -9992,6 +10001,11 @@ async function renderExpertsPage() {
         <h2>${esc(t("expertspage_title"))}</h2>
       </div>
     </div>
+    <div class="rs-row" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
+      <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
+      <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
+      <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
+    </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>${esc(t("troops_stats_title"))}</h2>
       <p class="desc">${esc(t("experts_base_stats_desc"))}</p>
@@ -10232,7 +10246,7 @@ async function renderExpertsPage() {
     });
     const stillSigil = Math.max(0, sigilShortfall - (Number(invSaved["General Sigils"]) || 0));
     const totalTimeHours = totalExp / 3600;
-    const ownedSpeedupHours = (Number(invSaved["Speedups (minutes)"]) || 0) / 60;
+    const ownedSpeedupHours = expertSpeedupOwnedFrom(invSaved) / 60;
     const stillTimeHours = Math.max(0, totalTimeHours - ownedSpeedupHours);
 
     totalsEl.innerHTML = `
@@ -10244,7 +10258,7 @@ async function renderExpertsPage() {
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
     const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, "General Sigils": sigilShortfall, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
-    const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(invSaved), "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": Number(invSaved["Speedups (minutes)"]) || 0 };
+    const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(invSaved), "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": expertSpeedupOwnedFrom(invSaved) };
     renderPackCostBlock(document.getElementById("expertsPacks"), "experts", packGroups, packOwned);
     recordBudgetNeeds("experts", packGroups);
   }
@@ -10478,13 +10492,22 @@ async function renderExpertsPage() {
         if (Number.isNaN(val) || val < 0) val = 0;
         input.value = val;
         invSaved[input.dataset.expinv] = val;
-        if (input.dataset.expinv === GENERAL_SPEEDUP_KEY) RESEARCH_SPEEDUP_MINUTES = val;
         budgetInvalidate();
         await saveCalcState("experts_inventory", invSaved);
         renderTotals();
       });
     });
   }
+
+  const genSpeedEl = document.getElementById("expertsGeneralSpeedupInput");
+  if (genSpeedEl) genSpeedEl.addEventListener("change", async () => {
+    let val = parseFloat(genSpeedEl.value);
+    if (Number.isNaN(val) || val < 0) val = 0;
+    genSpeedEl.value = val;
+    invSaved[GENERAL_SPEEDUP_KEY] = val;
+    await saveGeneralSpeedupMinutes(val);
+    renderTotals();
+  });
 
   renderStatHeader();
   renderFoundryHeader();
