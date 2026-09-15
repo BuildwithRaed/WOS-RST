@@ -4533,6 +4533,7 @@ const MATERIAL_ICONS = {
   steel: "icons/20250617-144040.png",
   "refined fc": "icons/item_icon_100082.png",
   "fc shard": "icons/item_icon_100083.png",
+  "fire crystal": "icons/item_icon_100083.png",
   "sail of conquest": "icons/item_icon_570203.png",
   "fiery heart": "icons/item_icon_570202.png",
   compass: "icons/item_icon_570201.png",
@@ -7349,7 +7350,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // the red "still needed" numbers count them - for every visitor, not
   // just in the owner-only Pack cost block.
   await ensureTradeRates();
-  const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden);
+  // Hidden rules always apply; unlimited visible trades (Fire Crystal → FC
+  // Shard) apply too unless "use spare items" is switched off for the page.
+  // Weekly-capped trades (Charm, Chief Gear) stay in the Trade block only.
+  const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden || (!(r.max > 0) && TRADE_APPLY[calcKey || "chief_gear"] !== false));
   hiddenRates.__calcKey = calcKey || "chief_gear";
   let effOwned = { ...owned };
   let hiddenTrades = []; // what owned chests/convertibles were turned into
@@ -9346,7 +9350,8 @@ async function renderT11HeliosPage() {
         <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
-    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, Object.keys(matTotals), () => { renderGrandTotal(); render(); }, "t11_helios");
+    // Fire Crystal you hold trades into FC Shards (10 → 13), so it gets its own box.
+    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderGrandTotal(); render(); }, "t11_helios");
   }
 
   function render() {
@@ -11583,7 +11588,7 @@ async function renderT12ResearchPage() {
         <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
-    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderTroopPanels(); }, "t12_research");
+    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
