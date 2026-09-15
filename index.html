@@ -793,7 +793,23 @@ input,select{
       throw new Error(`${res.status} ${text}`);
     }
     const text = await res.text();
-    return text ? JSON.parse(text) : null;
+    const data = text ? JSON.parse(text) : null;
+    // The API hands back at most 1,000 rows per request. A read that hits
+    // that limit (the expert affinity table passed it once Justus was
+    // added) keeps fetching the next pages until the table is complete.
+    const isGet = !opts.method || opts.method.toUpperCase() === "GET";
+    if (isGet && Array.isArray(data) && data.length >= 1000 && !(opts.headers && opts.headers.Range)) {
+      let all = data, from = data.length;
+      for (let guard = 0; guard < 50; guard++) {
+        const page = await sb(path, { ...opts, headers: { ...(opts.headers || {}), "Range-Unit": "items", Range: `${from}-${from + 999}` } }, _retried);
+        if (!Array.isArray(page) || !page.length) break;
+        all = all.concat(page);
+        from += page.length;
+        if (page.length < 1000) break;
+      }
+      return all;
+    }
+    return data;
   }
 
 // Generic persistence for calculator selections (Charm, Chief Gear, Hero
