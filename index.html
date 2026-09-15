@@ -1417,6 +1417,8 @@ const T = {
   update_button: { en: "Update", ar: "تحديث", ko: "업데이트" },
   research_speed_label: { en: "RESEARCH SPEED", ar: "\u0633\u0631\u0639\u0629 \u0627\u0644\u0628\u062d\u062b", ko: "\uc5f0\uad6c \uc18d\ub3c4" },
   speedups_label: { en: "GENERAL SPEEDUPS", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a", ko: "\uac00\uc18d" },
+  chest_not_needed: { en: "nothing to cover", ar: "\u0644\u0627 \u0634\u064a\u0621 \u0644\u062a\u063a\u0637\u064a\u062a\u0647", ko: "\ubd80\uc871 \uc5c6\uc74c" },
+  skill_exp_have: { en: "EXP you have", ar: "\u0627\u0644\u062e\u0628\u0631\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 EXP" },
   minutes_short: { en: "min", ar: "\u062f\u0642\u064a\u0642\u0629", ko: "\ubd84" },
   piece_helmet: { en: "Helmet", ar: "\u062e\u0648\u0630\u0629", ko: "\ud22c\uad6c" },
   piece_watch: { en: "Watch", ar: "\u0633\u0627\u0639\u0629", ko: "\uc2dc\uacc4" },
@@ -7178,12 +7180,15 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const hiddenRates = tradeRatesFor(calcKey || "chief_gear").filter((r) => r.hidden);
   hiddenRates.__calcKey = calcKey || "chief_gear";
   let effOwned = { ...owned };
+  let hiddenTrades = []; // what owned chests/convertibles were turned into
   function recomputeEffOwned() {
     effOwned = { ...owned };
+    hiddenTrades = [];
     if (!hiddenRates.length) return;
     const totalNeed = {};
     groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { totalNeed[n] = (totalNeed[n] || 0) + (Number(q) || 0); }));
-    applyTrades(hiddenRates, totalNeed, owned, 1).trades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
+    hiddenTrades = applyTrades(hiddenRates, totalNeed, owned, 1).trades;
+    hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
   recomputeEffOwned();
 
@@ -7191,6 +7196,18 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const haveQty = effOwned[name] || 0;
     const stillNeed = Math.max(0, needed - haveQty);
     const surplus = Math.max(0, haveQty - needed);
+    // A chest / convertible item (Pet Chest, Advanced Marks...) isn't needed
+    // itself: show what the ones you own are covering instead of a dash.
+    if (needed === 0) {
+      const used = hiddenTrades.filter((tr) => tr.from === name);
+      if (used.length) {
+        return {
+          statusColor: "var(--good)",
+          statusText: used.map((tr) => `\u2192 ${Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(MATERIAL_NAME_SHORT[tr.to] || tr.to)}`).join(" \u00b7 "),
+        };
+      }
+      if (hiddenRates.some((r) => r.from === name) && (Number(owned[name]) || 0) > 0) return { statusColor: "var(--muted)", statusText: t("chest_not_needed") };
+    }
     const statusColor = needed === 0 ? "var(--muted)" : stillNeed > 0 ? "var(--danger)" : "var(--good)";
     // Per-material status: just the number (still needed / extra), no
     // wording - color alone conveys which case it is. Only the two "no
@@ -9915,6 +9932,16 @@ async function renderExpertsPage() {
     });
     return { exp, book };
   }
+  // EXP already banked on that skill (the in-game progress bar) counts
+  // toward the next level, so it comes straight off what's still needed.
+  function skillExpHave(st) {
+    return Math.max(0, Number(st && st.expHave) || 0);
+  }
+  function skillNeed(hero, skill, st) {
+    const { exp, book } = skillCost(hero, skill, st.current, st.desired);
+    const have = st.current < st.desired ? Math.min(skillExpHave(st), exp) : 0;
+    return { exp, book, have, expNeed: Math.max(0, exp - have) };
+  }
   function heroCost(hero, fromLevel, toLevel) {
     const rows = AFFINITY_CACHE[hero];
     if (!rows) return { affinity: 0, sigil: 0 };
@@ -10151,8 +10178,8 @@ async function renderExpertsPage() {
       if (!isExpertUnlocked(e.key)) return;
       e.skills.forEach((sk) => {
         const st = saved[e.key].skills[sk];
-        const { exp, book } = skillCost(e.key, sk, st.current, st.desired);
-        totalExp += exp;
+        const { expNeed, book } = skillNeed(e.key, sk, st);
+        totalExp += expNeed;
         totalBook += book;
         const skillMax = skillMaxLevel(e.key, sk);
         const { exp: mExp, book: mBook } = skillCost(e.key, sk, 0, skillMax);
@@ -10253,7 +10280,8 @@ async function renderExpertsPage() {
             .map((sk) => {
               const max = skillMaxLevel(e.key, sk);
               const st = s.skills[sk];
-              const { exp, book } = skillCost(e.key, sk, st.current, st.desired);
+              const { exp, book, have: expHaveUsed, expNeed } = skillNeed(e.key, sk, st);
+              const expHaveVal = skillExpHave(st);
               const skillRows = SKILL_CACHE[`${e.key}|${sk}`];
               let curRow = null, desRow = null;
               if (skillRows) {
@@ -10288,9 +10316,15 @@ async function renderExpertsPage() {
             }
             ${
               exp || book
-                ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px;">${Math.round(exp).toLocaleString()} EXP \u00b7 ${Math.round(book).toLocaleString()} Books</div>`
+                ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px;">${Math.round(expNeed).toLocaleString()} EXP \u00b7 ${Math.round(book).toLocaleString()} Books${
+                    expHaveUsed > 0 ? ` <span style="color:var(--good);">(${Math.round(exp).toLocaleString()} \u2212 ${Math.round(expHaveUsed).toLocaleString()})</span>` : ""
+                  }</div>`
                 : ""
             }
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:3px;">
+              <span class="meta" style="font-size:10px;">${esc(t("skill_exp_have"))}</span>
+              <input type="number" min="0" step="1" inputmode="numeric" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" style="width:110px; flex-shrink:0; padding:4px 8px; font-size:12px; text-align:end;" />
+            </div>
           </div>`;
             })
             .join("")}
@@ -10381,6 +10415,17 @@ async function renderExpertsPage() {
       sel.addEventListener("change", async () => {
         const [hero, skill] = sel.dataset.expskilldes.split("|");
         saved[hero].skills[skill].desired = Number(sel.value);
+        await saveCalcState("experts", saved);
+        renderTotals();
+        renderGrid();
+      });
+    });
+    gridEl.querySelectorAll("input[data-expskillexp]").forEach((inp) => {
+      inp.addEventListener("change", async () => {
+        const [hero, skill] = inp.dataset.expskillexp.split("|");
+        const v = Math.max(0, Math.floor(Number(inp.value) || 0));
+        if (v) saved[hero].skills[skill].expHave = v;
+        else delete saved[hero].skills[skill].expHave;
         await saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
