@@ -412,6 +412,24 @@ input,select,textarea{
     background:var(--panel-2); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .gallery-card.owned .badge{ background:rgba(90,200,120,0.15); color:var(--good); }
+  /* Counted / not-counted split: cards below the thick line are ignored by
+     the page totals and the Dashboard. */
+  .gallery-move{
+    position:absolute; top:4px; inset-inline-end:4px; z-index:2; width:24px; height:24px; border-radius:6px;
+    display:flex; align-items:center; justify-content:center; padding:0; font-size:13px; line-height:1;
+    background:rgba(13,17,23,0.82); border:1px solid var(--line); color:var(--frost); cursor:pointer;
+  }
+  .gallery-move:hover{ border-color:var(--ice-dim); }
+  .gallery-card[draggable="true"]{ cursor:grab; }
+  .gallery-card.dragging{ opacity:.4; }
+  .gallery-zone{ min-height:70px; border-radius:10px; transition:background .15s, outline-color .15s; outline:2px dashed transparent; outline-offset:4px; }
+  .gallery-zone.drop-over{ background:rgba(120,180,255,0.06); outline-color:var(--ice-dim); }
+  .gallery-zone .zone-empty{ grid-column:1/-1; padding:18px 10px; text-align:center; font-size:12px; color:var(--muted); }
+  .gallery-divider{ display:flex; align-items:center; gap:10px; margin:22px 0 14px; }
+  .gallery-divider::before, .gallery-divider::after{ content:""; flex:1; height:4px; border-radius:2px; background:var(--line); }
+  .gallery-divider span{ font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .gallery-zone.uncounted .gallery-card{ opacity:.55; }
+  .gallery-zone.uncounted .gallery-card:hover{ opacity:.85; }
 
   .cat-switcher{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
   .cat-menu-btn{
@@ -1306,6 +1324,10 @@ const T = {
   owned_checkbox: { en: "Owned", ar: "مملوك", ko: "보유함" },
   owned_tap_unown: { en: "\u2713 Owned \u2014 tap to unown", ar: "\u2713 مملوك \u2014 انقر لإلغاء الملكية", ko: "\u2713 보유함 \u2014 눌러서 해제" },
   mark_as_owned: { en: "Mark as owned", ar: "وضع علامة كمملوك", ko: "보유로 표시" },
+  not_counted_divider: { en: "Not counted in Dashboard", ar: "غير محتسب في لوحة التحكم", ko: "대시보드에 미반영" },
+  drag_here_to_exclude: { en: "Drag skins here (or tap \u2193 on a card) to leave them out of the Dashboard", ar: "اسحب العناصر هنا (أو انقر \u2193 على البطاقة) لاستبعادها من لوحة التحكم", ko: "여기로 끌어오거나 카드의 \u2193를 눌러 대시보드에서 제외" },
+  move_to_uncounted: { en: "Don't count in Dashboard", ar: "عدم احتسابه في لوحة التحكم", ko: "대시보드에서 제외" },
+  move_to_counted: { en: "Count in Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
   count_toward_max: { en: "Count toward max totals", ar: "احتسابه ضمن إجمالي الحد الأقصى", ko: "최대 합계에 반영" },
   prev_label: { en: "Prev", ar: "السابق", ko: "이전" },
   next_label: { en: "Next", ar: "التالي", ko: "다음" },
@@ -2020,7 +2042,7 @@ async function renderOverview(opts = {}) {
   // (saved states come from the shared calc_state cache), instead of several
   // waves of requests that each waited for the previous one to finish.
   preloadCalcStates();
-  const skinsPromise = sb(`skins?user_id=eq.${USER_ID}&select=name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`);
+  const skinsPromise = Promise.all([ensureGalleryUncounted(), sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`)]).then(([, rows]) => rows);
   const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
     , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED] = await Promise.all([
     ensureBuffTable().then(() => Promise.all([
@@ -2425,6 +2447,7 @@ async function renderOverview(opts = {}) {
       // single currently-selected/derived level's items count, even if
       // other tiers were also accidentally left marked owned.
       if (ALL_GLOBE_WIRED_NAMES_GLOBAL.has(s.name) && !currentGlobeNames.has(s.name)) continue;
+      if (GALLERY_UNCOUNTED.has(String(s.id))) continue;
       const lvl = s.current_level ?? 0;
       const maxLvl = s.max_level ?? 10;
       const isIsland = ISLAND_CATEGORIES.has(s.category);
@@ -2459,7 +2482,7 @@ async function renderOverview(opts = {}) {
       // toward max at all until a globe level is picked, and only the
       // currently selected level's items count afterward - not every tier.
       if (ALL_GLOBE_WIRED_NAMES_GLOBAL.has(s.name) && !currentGlobeNames.has(s.name)) continue;
-      if (s.count_in_max === false) continue;
+      if (GALLERY_UNCOUNTED.has(String(s.id))) continue;
       SKIN_STAT_SLOTS.forEach(([tk, vk]) => {
         if (s[vk] == null) return;
         const t = s[tk];
@@ -7904,11 +7927,8 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
                <span class="meta" style="font-size:12px;">${esc(t("owned_checkbox"))}</span>
              </label>
            </div>`
-        : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:${item.show_count_toggle ? "10px" : "0"};">${item.owned ? esc(t("owned_tap_unown")) : esc(t("mark_as_owned"))}</button>
-           ${item.show_count_toggle ? `<label style="display:flex; align-items:center; gap:6px; justify-content:center; cursor:pointer; flex-wrap:nowrap;">
-             <input type="checkbox" id="galleryModalCountInMax" ${item.count_in_max !== false ? "checked" : ""} />
-             <span class="meta" style="font-size:12px;">${esc(t("count_toward_max"))}</span>
-           </label>` : ""}`
+        : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:0;">${item.owned ? esc(t("owned_tap_unown")) : esc(t("mark_as_owned"))}</button>
+`
       }
       ${isIsland
         ? `<button class="btn ghost small" id="galleryModalClose" style="width:100%; margin-top:14px;">${esc(t("close_button"))}</button>`
@@ -7950,14 +7970,73 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
       item.owned = !item.owned;
       goTo(index);
     });
-    const cim = document.getElementById("galleryModalCountInMax");
-    if (cim) {
-      cim.addEventListener("change", async () => {
-        await onSave(item, { count_in_max: cim.checked });
-        item.count_in_max = cim.checked;
-      });
-    }
   }
+}
+
+// ---- Counted / not-counted split (Skin Gallery + Islands) ----
+// Ids of skins/islands the user moved below the thick line. Stored per user
+// in calc_state (no schema change). Anything in here is skipped by the page
+// totals AND by the Dashboard's live Skins/Islands current + max.
+let GALLERY_UNCOUNTED = new Set();
+async function ensureGalleryUncounted() {
+  const saved = await loadCalcState("gallery_uncounted");
+  GALLERY_UNCOUNTED = new Set(saved && Array.isArray(saved.ids) ? saved.ids.map(String) : []);
+  return GALLERY_UNCOUNTED;
+}
+async function setGalleryUncounted(id, uncounted) {
+  id = String(id);
+  if (uncounted) GALLERY_UNCOUNTED.add(id); else GALLERY_UNCOUNTED.delete(id);
+  await saveCalcState("gallery_uncounted", { ids: [...GALLERY_UNCOUNTED] });
+}
+
+// Renders "counted grid / thick divider / not-counted grid" into el.
+// cardHtml(item) must return one .gallery-card with a data-gid attribute.
+function renderGallerySplit(el, counted, uncounted, cardHtml) {
+  const withMove = (item, down) => cardHtml(item).replace(
+    /(<div class="gallery-card[^>]*>)/,
+    `$1<button type="button" class="gallery-move" data-move="${esc(item.id)}" data-down="${down ? 1 : 0}" title="${esc(t(down ? "move_to_uncounted" : "move_to_counted"))}">${down ? "&#8595;" : "&#8593;"}</button>`
+  );
+  el.innerHTML = `
+    <div class="gallery-grid gallery-zone counted" data-zone="counted">
+      ${counted.map((i) => withMove(i, true)).join("")}
+    </div>
+    <div class="gallery-divider"><span>${esc(t("not_counted_divider"))} (${uncounted.length})</span></div>
+    <div class="gallery-grid gallery-zone uncounted" data-zone="uncounted">
+      ${uncounted.length ? uncounted.map((i) => withMove(i, false)).join("") : `<div class="zone-empty">${esc(t("drag_here_to_exclude"))}</div>`}
+    </div>`;
+}
+
+// Wires the move buttons + desktop drag-and-drop between the two zones.
+// onMove(id, toUncounted) persists and re-renders.
+function wireGallerySplit(el, onMove) {
+  el.querySelectorAll("[data-move]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onMove(btn.dataset.move, btn.dataset.down === "1");
+    });
+  });
+  el.querySelectorAll(".gallery-card[data-gid]").forEach((card) => {
+    card.setAttribute("draggable", "true");
+    card.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", card.dataset.gid);
+      e.dataTransfer.effectAllowed = "move";
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+  });
+  el.querySelectorAll("[data-zone]").forEach((zone) => {
+    zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("drop-over"); });
+    zone.addEventListener("dragleave", (e) => { if (!zone.contains(e.relatedTarget)) zone.classList.remove("drop-over"); });
+    zone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      zone.classList.remove("drop-over");
+      const id = e.dataTransfer.getData("text/plain");
+      if (!id) return;
+      const toUncounted = zone.dataset.zone === "uncounted";
+      if (GALLERY_UNCOUNTED.has(String(id)) === toUncounted) return;
+      onMove(id, toUncounted);
+    });
+  });
 }
 
 let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
@@ -7965,8 +8044,9 @@ let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
 // Renders totals-by-bonus-type, filter bar, and the category
 // sections of skin cards (click a card to toggle owned status).
 async function renderSkinGallery() {
-  const [ISLAND_CATEGORIES, allSkinsRaw] = await Promise.all([
+  const [ISLAND_CATEGORIES, , allSkinsRaw] = await Promise.all([
     ensureIslandCategories(),
+    ensureGalleryUncounted(),
     sb(`skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
   ]);
   const skins = allSkinsRaw.filter(
@@ -8127,7 +8207,8 @@ async function renderSkinGallery() {
       // toward totals at all until a globe level is picked, and only the
       // currently selected level's items count afterward - not every tier.
       if (ALL_GLOBE_WIRED_NAMES.has(s.name) && !currentGlobeNames.has(s.name)) continue;
-      const includeInMax = s.count_in_max !== false;
+      if (GALLERY_UNCOUNTED.has(String(s.id))) continue;
+      const includeInMax = true;
       STAT_SLOTS.forEach(([tk, vk]) => {
         if (s[vk] == null) return;
         const key = s[tk] || "Other";
@@ -8175,35 +8256,24 @@ async function renderSkinGallery() {
     // filtered is already scoped to the one selected category (plus search/
     // owned filters), so this renders a single flat grid - no more
     // per-category panels stacked on top of each other.
-    const ordered = [
-      ...filtered.filter((s) => !s.show_count_toggle),
-      ...filtered.filter((s) => s.show_count_toggle),
-    ];
-    if (!ordered.length) {
+    const orderSkins = (list) => list;
+    if (!filtered.length) {
       sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_skins_match_filters"))}</div></div></div>`;
       return;
     }
-    sections.innerHTML = `
-      <div class="gallery-grid">
-        ${ordered
-          .map((s, idx) => {
-            const isLastGlobe = s.display_group === "Frost Sphere" && ordered[idx + 1]?.display_group !== "Frost Sphere";
-            const isLastNonToggle = !s.show_count_toggle && ordered[idx + 1]?.show_count_toggle;
-            return `
-          <div class="gallery-card ${s.owned ? "owned" : ""}" data-skin="${s.id}">
+    const countedSkins = orderSkins(filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))));
+    const uncountedSkins = orderSkins(filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))));
+    renderGallerySplit(sections, countedSkins, uncountedSkins, (s) => `
+          <div class="gallery-card ${s.owned ? "owned" : ""}" data-skin="${s.id}" data-gid="${s.id}">
             <div class="thumb">
-              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
+              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" draggable="false" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
             <div class="badge">${esc(s.name)}</div>
-            ${s.show_count_toggle ? `<label style="display:flex; align-items:center; justify-content:center; gap:4px; padding:4px 6px; background:var(--panel-2); flex-wrap:nowrap;" onclick="event.stopPropagation()">
-              <input type="checkbox" data-countinmax="${s.id}" ${s.count_in_max !== false ? "checked" : ""} style="width:12px; height:12px;" />
-              <span class="meta" style="font-size:8.5px;">${esc(t("count_in_max"))}</span>
-            </label>` : ""}
-          </div>${isLastGlobe || isLastNonToggle ? `<div style="grid-column:1/-1; height:1px; background:var(--line); margin:2px 0;"></div>` : ""}`;
-          })
-          .join("")}
-      </div>
-    `;
+          </div>`);
+    wireGallerySplit(sections, async (id, toUncounted) => {
+      await setGalleryUncounted(id, toUncounted);
+      computeAndRender();
+    });
 
     sections.querySelectorAll("[data-skin]").forEach((el) => {
       el.addEventListener("click", async () => {
@@ -8215,19 +8285,6 @@ async function renderSkinGallery() {
           computeAndRender();
         } catch (err) {
           toast("Couldn't update skin", true);
-        }
-      });
-    });
-    sections.querySelectorAll("[data-countinmax]").forEach((cb) => {
-      cb.addEventListener("change", async () => {
-        const skin = skins.find((s) => s.id === cb.dataset.countinmax);
-        const newVal = cb.checked;
-        try {
-          await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify({ count_in_max: newVal }) });
-          skin.count_in_max = newVal;
-          computeAndRender();
-        } catch (err) {
-          toast("Couldn't update count in max", true);
         }
       });
     });
@@ -8251,7 +8308,10 @@ async function renderSkinGallery() {
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 
 async function renderIslandGallery() {
-  const islandCats = await sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`);
+  const [islandCats] = await Promise.all([
+    sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`),
+    ensureGalleryUncounted(),
+  ]);
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
   const islands = await sb(
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
@@ -8337,6 +8397,7 @@ async function renderIslandGallery() {
     const generalTotals = {}; // stat -> {cur, max}
     const specificTotals = {}; // "Troop Stat" -> {cur, max}
     for (const s of islands) {
+      if (GALLERY_UNCOUNTED.has(String(s.id))) continue;
       const lvl = s.current_level ?? 0;
       const maxLvl = s.max_level ?? 10;
       STAT_SLOTS.forEach(([typeKey, valKey, levelKey]) => {
@@ -8377,19 +8438,19 @@ async function renderIslandGallery() {
       sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">No islands match your filters.</div></div></div>`;
       return;
     }
-    sections.innerHTML = `
-      <div class="gallery-grid">
-        ${filtered
-          .map((s) => `
-          <div class="gallery-card ${s.owned ? "owned" : ""}" data-island="${s.id}">
+    const countedIslands = filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id)));
+    const uncountedIslands = filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id)));
+    renderGallerySplit(sections, countedIslands, uncountedIslands, (s) => `
+          <div class="gallery-card ${s.owned ? "owned" : ""}" data-island="${s.id}" data-gid="${s.id}">
             <div class="thumb island-thumb">
-              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(s.name[0])}</div>`}
+              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" draggable="false" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
             <div class="badge"><span class="badge-name">${esc(s.name)}</span><span class="badge-lvl">Lv${s.current_level ?? 0}</span></div>
-          </div>`)
-          .join("")}
-      </div>
-    `;
+          </div>`);
+    wireGallerySplit(sections, async (id, toUncounted) => {
+      await setGalleryUncounted(id, toUncounted);
+      computeAndRender();
+    });
 
     sections.querySelectorAll("[data-island]").forEach((el) => {
       el.addEventListener("click", () => {
@@ -13433,7 +13494,7 @@ async function renderAdminSkinsCategory(body, category) {
       <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
-            ${["", "Name", "Image URL", "Bonus stat", "Bonus %", "Current lvl", "Max lvl", "Owned", "Has count trigger", ""]
+            ${["", "Name", "Image URL", "Bonus stat", "Bonus %", "Current lvl", "Max lvl", "Owned", ""]
               .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
               .join("")}
           </tr></thead>
@@ -13450,7 +13511,6 @@ async function renderAdminSkinsCategory(body, category) {
                 <td style="padding:4px;"><input data-f="current_level" type="number" value="${r.current_level ?? ""}" style="width:70px;" /></td>
                 <td style="padding:4px;"><input data-f="max_level" type="number" value="${r.max_level ?? ""}" style="width:70px;" /></td>
                 <td style="padding:4px;"><input data-f="owned" type="checkbox" ${r.owned ? "checked" : ""} /></td>
-                <td style="padding:4px;"><input data-f="show_count_toggle" type="checkbox" ${r.show_count_toggle ? "checked" : ""} /></td>
                 <td style="padding:4px; white-space:nowrap;">
                   <button class="btn small ghost" data-skinsave="${r.id}">Save</button>
                   <button class="btn small ghost" data-skindel="${r.id}" style="color:var(--danger);">Delete</button>
@@ -13474,7 +13534,7 @@ async function renderAdminSkinsCategory(body, category) {
     const patch = {};
     tr.querySelectorAll("[data-f]").forEach((el) => {
       const f = el.dataset.f;
-      if (f === "owned" || f === "show_count_toggle") { patch[f] = el.checked; return; }
+      if (f === "owned") { patch[f] = el.checked; return; }
       let v = el.value;
       if (["bonus_value", "current_level", "max_level", "sort_order"].includes(f)) v = v === "" ? null : Number(v);
       else if (v.trim() === "") v = null;
