@@ -2965,7 +2965,7 @@ let HERO_GEAR_TABLES_CACHE = null;
 async function ensureHeroGearData() {
   if (HERO_GEAR_TABLES_CACHE) return;
   const results = await Promise.all(
-    ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Empowerment"].map(async (name) => {
+    ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(async (name) => {
       const [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(name)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
       if (!table) return { name, rows: [] };
       const rows = await sb(`progression_rows?table_id=eq.${table.id}&select=id,level,stage,materials,stat,stat2,power,display_label,mithril,mythic_gear,xp_component,essence_stones&order=sort_order.asc`);
@@ -2974,7 +2974,7 @@ async function ensureHeroGearData() {
   );
   const rawCache = Object.fromEntries(results.map((r) => [r.name, r.rows]));
   const enhanceRows = (rawCache["Hero Gear Enhancement"] || []).map((r) => ({ ...r, level: r.level }));
-  const empowerRows = (rawCache["Hero Gear Empowerment"] || []).map((r) => ({ ...r, level: r.level + 100 }));
+  const empowerRows = (rawCache["Hero Gear Mithril"] || []).map((r) => ({ ...r, level: r.level + 100 }));
   rawCache["Enhance Combined"] = [...enhanceRows, ...empowerRows];
   HERO_GEAR_TABLES_CACHE = rawCache;
 
@@ -11574,7 +11574,7 @@ async function renderAdminPage() {
     { key: "cumulative_pct", label: "Cumulative %", type: "number" },
     { key: "sort_order", label: "Order", type: "number" },
   ], orderCol: "sort_order", onSave: () => { CHARM_LEVELS_LOADED = false; } });
-  else if (ADMIN_ACTIVE_TABLE === "herogearprog") await renderAdminProgression(body, ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Empowerment"]);
+  else if (ADMIN_ACTIVE_TABLE === "herogearprog") await renderAdminProgression(body, ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"]);
   else if (ADMIN_ACTIVE_TABLE === "vip") await renderAdminVip(body);
   else if (ADMIN_ACTIVE_TABLE === "alliance") await renderAdminAllianceGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "centerresearch") await renderAdminResearch(body);
@@ -12857,8 +12857,8 @@ async function renderAdminProgression(body, nameFilter) {
     : [{ key: "materials", label: "Materials", type: "text" }];
   const cols = [
     { key: "sort_order", label: "Order", type: "number" },
-    { key: "tier", label: "Tier", type: "text" },
-    { key: "stars", label: "Stars", type: "number" },
+    // Tier / Stars are Chief Gear's (Gold ★2.3); Hero Gear rows go by Level.Stage.
+    ...(isHeroGear ? [] : [{ key: "tier", label: "Tier", type: "text" }, { key: "stars", label: "Stars", type: "number" }]),
     { key: "level", label: "Level", type: "number" },
     { key: "stage", label: "Stage", type: "text" },
     { key: "stat", label: "Stat", type: "text" },
