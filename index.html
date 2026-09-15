@@ -7507,7 +7507,15 @@ function budgetShares(plan, inc) {
         });
         w[pg.calcKey] = x; sum += x;
       });
-      // Items that only help through a trade: the pages whose packs sell them.
+      // Items that only help through a trade (Charm Guides -> Jewel Secrets):
+      // the pages whose own trades turn them into something they still need.
+      if (sum <= 0) inc.forEach((pg) => {
+        const rates = TRADE_RATES_CACHE ? tradeRatesFor(pg.calcKey) : [];
+        let x = 0;
+        Object.keys(u.gives).forEach((n) => rates.forEach((r) => { if (r.from === n && pg.need[r.to] > 0 && total[r.to] > 0) x += pg.need[r.to] / total[r.to]; }));
+        w[pg.calcKey] = x; sum += x;
+      });
+      // Last resort: the pages whose packs sell those items.
       if (sum <= 0) inc.forEach((pg) => { const x = Object.keys(u.gives).some((n) => pg.supplied && pg.supplied.has(n)) ? 1 : 0; w[pg.calcKey] = x; sum += x; });
       if (sum <= 0) { inc.forEach((pg) => { w[pg.calcKey] = 1; }); sum = inc.length; }
       inc.forEach((pg) => { costBy[pg.calcKey] = (costBy[pg.calcKey] || 0) + u.cost * (w[pg.calcKey] / sum); });
