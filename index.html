@@ -1075,6 +1075,7 @@ const MATERIAL_LABEL_KEYS = {
   steel: "resource_steel", "refined fc": "resource_refined_fc", "fc shard": "resource_fc_shard",
   "meat/wood": "resource_meat_wood",
   affinity: "material_affinity", "books of knowledge": "material_books_of_knowledge",
+  "sail of conquest": "material_sail_of_conquest", "fiery heart": "material_fiery_heart", compass: "material_compass",
   "speedups (minutes)": "material_speedups_minutes", "general sigils": "material_general_sigils",
 };
 // Gear piece names (Helmet/Jacket/Goggles...) and the two Hero Gear tracks.
@@ -1415,7 +1416,7 @@ const T = {
   add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
   update_button: { en: "Update", ar: "تحديث", ko: "업데이트" },
   research_speed_label: { en: "RESEARCH SPEED", ar: "\u0633\u0631\u0639\u0629 \u0627\u0644\u0628\u062d\u062b", ko: "\uc5f0\uad6c \uc18d\ub3c4" },
-  speedups_label: { en: "SPEEDUPS", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a", ko: "\uac00\uc18d" },
+  speedups_label: { en: "GENERAL SPEEDUPS", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a", ko: "\uac00\uc18d" },
   minutes_short: { en: "min", ar: "\u062f\u0642\u064a\u0642\u0629", ko: "\ubd84" },
   piece_helmet: { en: "Helmet", ar: "\u062e\u0648\u0630\u0629", ko: "\ud22c\uad6c" },
   piece_watch: { en: "Watch", ar: "\u0633\u0627\u0639\u0629", ko: "\uc2dc\uacc4" },
@@ -1456,6 +1457,9 @@ const T = {
   material_essence_stones: { en: "Essence Stones", ar: "\u0623\u062d\u062c\u0627\u0631 \u0627\u0644\u062c\u0648\u0647\u0631", ko: "\uc815\uc218\uc11d" },
   material_mithril: { en: "Mithril", ar: "\u0645\u064a\u062b\u0631\u064a\u0644", ko: "\ubbf8\uc2a4\ub9b4" },
   material_mythic_gear: { en: "Mythic Gear", ar: "\u0639\u062a\u0627\u062f \u0623\u0633\u0637\u0648\u0631\u064a", ko: "\uc2e0\ud654 \uc7a5\ube44" },
+  material_sail_of_conquest: { en: "Sail of Conquest", ar: "شراع الفتح", ko: "정복의 돛" },
+  material_fiery_heart: { en: "Fiery Heart", ar: "القلب الناري", ko: "불타는 심장" },
+  material_compass: { en: "Compass", ar: "البوصلة", ko: "나침반" },
   material_affinity: { en: "Affinity", ar: "\u0627\u0644\u0623\u0644\u0641\u0629", ko: "\uce5c\ubc00\ub3c4" },
   material_books_of_knowledge: { en: "Books", ar: "\u0643\u062a\u0628 \u0627\u0644\u0645\u0639\u0631\u0641\u0629", ko: "\uc9c0\uc2dd\uc758 \ucc45" },
   material_speedups_minutes: { en: "Speedups (minutes)", ar: "\u0627\u0644\u0645\u0633\u0631\u0651\u0639\u0627\u062a (\u062f\u0642\u0627\u0626\u0642)", ko: "\uac00\uc18d (\ubd84)" },
@@ -4400,6 +4404,9 @@ const MATERIAL_ICONS = {
   steel: "icons/20250617-144040.png",
   "refined fc": "icons/item_icon_100082.png",
   "fc shard": "icons/item_icon_100083.png",
+  "sail of conquest": "icons/sail-of-conquest.png",
+  "fiery heart": "icons/item_icon_570202.png",
+  compass: "icons/item_icon_570201.png",
 };
 // Renders a comma-separated materials string with inline icons.
 function renderMaterialsWithIcons(materials) {
@@ -4782,7 +4789,7 @@ const PACK_RESOURCE_NAMES = [
   "XP Component", "Essence Stones", "Mithril", "Mythic Gear",
   "Meat", "Wood", "Coal", "Iron", "Steel", "Refined FC", "FC Shard", "Meat/Wood",
   "Food", "Manual", "Potion", "Serum",
-  "Books of Knowledge", "Affinity", "General Sigils", "Speedups (minutes)",
+  "Books of Knowledge", "Affinity", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", "Speedups (minutes)",
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Charm Chest",
@@ -4808,6 +4815,10 @@ const PACK_BUNDLES = {
   // pages need research minutes; general speedups can be used there too,
   // via a 1:1 trade set on those pages).
   ...Object.fromEntries(["Research", "Troop", "Construction"].flatMap((kind) => [["1m", 1], ["5m", 5], ["1h", 60], ["3h", 180], ["8h", 480]].map(([sz, min]) => [`${kind} Speedup ${sz}`, { [`${kind} Speedups (minutes)`]: min }]))),
+  // Affinity gift items (Experts): each is worth a fixed amount of Affinity.
+  "Sail of Conquest": { "Affinity": 1000 },
+  "Fiery Heart": { "Affinity": 100 },
+  "Compass": { "Affinity": 10 },
   // XP Component items worth 10 or 100 XP each.
   "XP 10": { "XP Component": 10 },
   "XP 100": { "XP Component": 100 },
@@ -4832,6 +4843,9 @@ const PACK_BUNDLE_NOTES = {
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
 function packBundleContents(name) {
+  // Admin -> Pack Resources can override what a built-in item gives.
+  const ov = packResourceConfig().gives[name];
+  if (ov && typeof ov === "object") return Object.keys(ov).length ? ov : { [name]: 1 };
   if (PACK_BUNDLES[name]) return PACK_BUNDLES[name];
   const c = packCustomResource(name);
   if (c && c.contents && Object.keys(c.contents).length) return c.contents;
@@ -6065,6 +6079,12 @@ const TRADE_DEFAULT_RATES = {
   // Refine: Advanced Marks are simply spent at 8 Common each (not a trade),
   // and 500 of the Gems YOU OWN buy 1 Common Mark (packs' gems don't
   // count). Both hidden - rules, not trades.
+  // Affinity gift items are simply worth a fixed amount of Affinity.
+  experts: [
+    { from: "Sail of Conquest", to: "Affinity", give: 1, get: 1000, max: 0, hidden: true, silent: true },
+    { from: "Fiery Heart", to: "Affinity", give: 1, get: 100, max: 0, hidden: true, silent: true },
+    { from: "Compass", to: "Affinity", give: 1, get: 10, max: 0, hidden: true, silent: true },
+  ],
   pets_refine: [
     { from: "Advanced Marks", to: "Common Marks", give: 1, get: 8, max: 0, hidden: true, silent: true },
     { from: "Gems", to: "Common Marks", give: 500, get: 1, max: 0, hidden: true, silent: true },
@@ -6325,7 +6345,7 @@ const BUDGET_PAGES = [
 async function budgetOwnedFor(calcKey) {
   if (calcKey === "experts" || calcKey === "experts_research") {
     const inv = (await loadCalcState("experts_inventory")) || {};
-    return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": Number(inv["Affinity"]) || 0, "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": Number(inv["Speedups (minutes)"]) || 0 };
+    return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(inv), "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": Number(inv["Speedups (minutes)"]) || 0 };
   }
   return ensureMaterialOwnedCache(calcKey);
 }
@@ -8820,10 +8840,16 @@ async function ensureResearchSpeedData() {
   const savedSpeedup = await loadCalcState("research_speedup_minutes");
   RESEARCH_SPEEDUP_MINUTES = (savedSpeedup && typeof savedSpeedup.minutes === "number") ? savedSpeedup.minutes : 0;
 }
-// Applies both the % speed buff and a banked speedup-item time deduction.
+// Applies both the % speed buff and the general speedups you hold. The
+// speedups are taken off the PAGE total once (see applyResearchPct for the
+// per-troop cards, which only get the % buff so the minutes aren't
+// subtracted three times over).
 function applyResearchSpeed(rawHours) {
   const afterPct = rawHours / (1 + RESEARCH_SPEED_PCT / 100);
   return Math.max(0, afterPct - RESEARCH_SPEEDUP_MINUTES / 60);
+}
+function applyResearchPct(rawHours) {
+  return rawHours / (1 + RESEARCH_SPEED_PCT / 100);
 }
 // Renders "Research Speed %" and "Speedups" inputs together; reused
 // identically on the T11 Helios, T12 Research, and Research Center pages
@@ -9133,7 +9159,7 @@ async function renderT11HeliosPage() {
         <div class="stats-row-scroll" style="margin-bottom:14px;">
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, t("resource_steel"), Math.round(needed.steel).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, t("resource_fc_shard"), Math.round(needed.fc_shard).toLocaleString())}
-          ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchSpeed(needed.time_hours)))}
+          ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchPct(needed.time_hours)))}
         </div>
         ${Object.keys(tracks)
           .map((track) => {
@@ -9232,12 +9258,18 @@ let PET_MARKS_STATE = null;
 async function ensurePetMarksState() {
   if (!PET_MARKS_STATE) {
     const saved = (await loadCalcState("pet_refine_marks")) || {};
-    // Visitors start from 0 marks per 1% on every stage and fill in their own
-    // rates; only the owner gets the pre-filled defaults.
-    const base = IS_OWNER ? PET_MARKS_DEFAULT_RATES : Object.fromEntries(Object.keys(PET_MARKS_DEFAULT_RATES).map((k) => [k, 0]));
-    PET_MARKS_STATE = { rates: { ...base, ...(saved.rates || {}) }, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
+    await ensureSiteConfig();
+    // The marks-per-1% rates are set by the owner for the whole site
+    // (site_config "pet_marks_rates"); visitors use them and never see the
+    // controls. Adjustment and the gems option stay per user.
+    const siteRates = siteConfig("pet_marks_rates", null);
+    const rates = { ...PET_MARKS_DEFAULT_RATES, ...(siteRates && typeof siteRates === "object" ? siteRates : {}) };
+    PET_MARKS_STATE = { rates, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
   }
   return PET_MARKS_STATE;
+}
+async function savePetMarksRates() {
+  await saveSiteConfig("pet_marks_rates", PET_MARKS_STATE.rates);
 }
 let PET_REFINE_CACHE = null; // { "Cave Hyena": [ {stage, infantry_lethality_pct, ...}, ... ] }
 let PET_REFINE_STATE = null; // { "Cave Hyena": stageIndex }
@@ -9339,7 +9371,7 @@ async function saveSiteConfig(key, value) {
 // { custom: [{ name, icon, contents: { "Design Plan": 1, ... } }], hidden: [name], order: [name] }
 function packResourceConfig() {
   const c = siteConfig("pack_resources", {}) || {};
-  return { custom: Array.isArray(c.custom) ? c.custom.filter((x) => x && x.name) : [], hidden: Array.isArray(c.hidden) ? c.hidden : [], order: Array.isArray(c.order) ? c.order : [] };
+  return { custom: Array.isArray(c.custom) ? c.custom.filter((x) => x && x.name) : [], hidden: Array.isArray(c.hidden) ? c.hidden : [], order: Array.isArray(c.order) ? c.order : [], gives: (c.gives && typeof c.gives === "object") ? c.gives : {} };
 }
 function packCustomResource(name) {
   const lower = String(name || "").toLowerCase();
@@ -9385,13 +9417,23 @@ function unlockedFor(kind, name, savedFlag) {
 const EXPERT_HERO_MAX_LEVEL = 100;
 const EXPERT_SKILL_MAX_LEVEL = 10; // placeholder until real per-skill caps are provided
 const EXPERT_INVENTORY_FIELDS = [
-  "Affinity", "Books of Knowledge", "Speedups (minutes)", "General Sigils",
+  "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge",
+  "Speedups (minutes)", "General Sigils",
   "Cyrille Sigils", "Agnes Sigils", "Holger Sigils", "Romulus Sigils",
   "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils",
   "Kathy Sigils", "Gareth Sigils",
 ];
+// Affinity you own = the gift items you hold (plus any Affinity number
+// saved before the items existed, kept so nothing is lost).
+const AFFINITY_ITEM_VALUE = { "Sail of Conquest": 1000, "Fiery Heart": 100, "Compass": 10 };
+function affinityOwnedFrom(inv) {
+  return Object.entries(AFFINITY_ITEM_VALUE).reduce((sum, [k, v]) => sum + (Number(inv[k]) || 0) * v, 0) + (Number(inv["Affinity"]) || 0);
+}
 const EXPERT_INVENTORY_ICONS = {
-  Affinity: "icons/item_icon_570201.png", // Compass (affinity gift)
+  Affinity: "icons/item_icon_570201.png",
+  "Sail of Conquest": "icons/sail-of-conquest.png",
+  "Fiery Heart": "icons/item_icon_570202.png",
+  Compass: "icons/item_icon_570201.png",
   EXP: "icons/hero-xp.png",
   "Books of Knowledge": "icons/item_icon_570300.png",
   "Speedups (minutes)": "icons/item_icon_302000.png",
@@ -10132,7 +10174,7 @@ async function renderExpertsPage() {
     // Sigils use each expert's own sigils first, General Sigils cover the rest;
     // Time subtracts owned Speedup minutes.
     const stillBook = Math.max(0, totalBook - (Number(invSaved["Books of Knowledge"]) || 0));
-    const stillAffinity = Math.max(0, totalAffinity - (Number(invSaved["Affinity"]) || 0));
+    const stillAffinity = Math.max(0, totalAffinity - affinityOwnedFrom(invSaved));
     let sigilShortfall = 0;
     EXPERTS_LIST.forEach((e) => {
       const owned = Number(invSaved[`${e.key} Sigils`]) || 0;
@@ -10152,7 +10194,7 @@ async function renderExpertsPage() {
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
     const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, "General Sigils": sigilShortfall, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
-    const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": Number(invSaved["Affinity"]) || 0, "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": Number(invSaved["Speedups (minutes)"]) || 0 };
+    const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(invSaved), "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": Number(invSaved["Speedups (minutes)"]) || 0 };
     renderPackCostBlock(document.getElementById("expertsPacks"), "experts", packGroups, packOwned);
     recordBudgetNeeds("experts", packGroups);
   }
@@ -10354,7 +10396,7 @@ async function renderExpertsPage() {
     }
     const fieldRow = (f) => `
       <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
-        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
+        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" onerror="this.onerror=null; this.src='icons/item_icon_570201.png'" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
         <div style="flex:1; min-width:0;">
           <div class="meta" style="font-size:9px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(materialDisplayName(f))}</div>
           <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; min-width:0; padding:4px 6px; box-sizing:border-box;" />
@@ -10534,11 +10576,11 @@ async function renderRefinePage() {
         <h2>${esc(t("marks_title"))}</h2>
         <p class="desc">${esc(t("marks_desc"))}</p>
         <div class="grid g2" style="align-items:start; gap:16px;">
-          <div>
-            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))}</div>
+          ${IS_OWNER ? `<div>
+            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))} <span style="font-weight:400;">(${esc(t("vis_hidden"))})</span></div>
             <div style="display:flex; flex-direction:column; gap:6px;">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
             <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("marks_rates_note"))}</div>
-          </div>
+          </div>` : ""}
           <div>
             <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_adjust"))}</div>
             <div style="display:flex; align-items:center; gap:6px;">
@@ -10570,13 +10612,13 @@ async function renderRefinePage() {
     totalsEl.querySelectorAll("[data-marksrate]").forEach((b) => b.addEventListener("click", async () => {
       const st = b.dataset.marksrate;
       rates[st] = Math.max(0, Math.round(((Number(rates[st]) || 0) + Number(b.dataset.delta)) * 100) / 100);
-      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      await savePetMarksRates();
       renderTotals();
     }));
     totalsEl.querySelectorAll("[data-marksrateinput]").forEach((inp) => inp.addEventListener("change", async () => {
       const v = Number(String(inp.value).replace(/[^0-9.]/g, ""));
       if (Number.isFinite(v)) rates[inp.dataset.marksrateinput] = Math.max(0, v);
-      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      await savePetMarksRates();
       renderTotals();
     }));
     const pg = totalsEl.querySelector("[data-markspackgems]");
@@ -11235,7 +11277,7 @@ async function renderT12ResearchPage() {
           ${t12ResourceCard(T12_RESOURCE_ICONS.steel, t("resource_steel"), Math.round(needed.steel).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, t("resource_refined_fc"), Math.round(needed.refined_fc).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, t("resource_fc_shard"), Math.round(needed.fc_shard).toLocaleString())}
-          ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchSpeed(needed.time_hours)))}
+          ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchPct(needed.time_hours)))}
         </div>
         ${groups
           .map((group) => {
@@ -11468,14 +11510,14 @@ async function renderAdminPackResources(body) {
       <td style="padding:4px;"><input type="number" data-f="order" value="${i + 1}" min="1" style="width:64px;" /></td>
       <td style="padding:4px;">${r.builtin ? `<span style="font-weight:600;">${esc(materialDisplayName(r.name))}</span><input type="hidden" data-f="name" value="${esc(r.name)}" />` : `<input data-f="name" value="${esc(r.name)}" style="width:170px;" />`}</td>
       <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">built-in</span>` : `<span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="icon" value="${esc(r.icon || "")}" placeholder="icons/…png" style="width:150px;" />${uploadBtnHtml()}</span>`}</td>
-      <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">${esc(contentsText(PACK_BUNDLES[r.name]) || "—")}</span>` : `<input data-f="contents" value="${esc(contentsText(r.contents))}" placeholder="e.g. Design Plan: 1, Polishing Solution: 4" style="width:260px;" />`}</td>
+      <td style="padding:4px;"><input data-f="contents" value="${esc(contentsText(r.builtin ? (cfg.gives[r.name] || PACK_BUNDLES[r.name]) : r.contents))}" placeholder="${r.builtin ? "nothing (plain item)" : "e.g. Design Plan: 1, Polishing Solution: 4"}" style="width:260px;" /></td>
       <td style="padding:4px; text-align:center;"><input type="checkbox" data-f="hidden" ${hidden.has(r.name.toLowerCase()) ? "checked" : ""} /></td>
       <td style="padding:4px;">${r.builtin ? "" : `<button class="btn ghost small" data-resdel type="button">&#10005;</button>`}</td>
     </tr>`;
   body.innerHTML = `
     <div class="panel" style="margin-bottom:16px;">
       <h2>Pack Resources</h2>
-      <p class="desc">These are the names offered in the column dropdown on the Packs page. Change the order numbers to sort the dropdown, tick Hide to keep a name out of it, and add your own items below. For a custom item, "Gives" says what one of them opens into (in real materials), so Pack cost can count it — leave it empty for a plain item.</p>
+      <p class="desc">These are the names offered in the column dropdown on the Packs page. Change the Order numbers to sort the dropdown (lower first; the rest stay A–Z), tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed.</p>
       <div style="overflow-x:auto;">
         <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
           <thead><tr>${["Order", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
@@ -11506,7 +11548,11 @@ async function renderAdminPackResources(body) {
     })).filter((x) => x.name);
     const dup = items.map((x) => x.name.toLowerCase()).find((n, i, a) => a.indexOf(n) !== i);
     if (dup) { toast(`Duplicate name: ${dup}`, true); return; }
+    const same = (a, b) => JSON.stringify(a || {}) === JSON.stringify(b || {});
+    const gives = {};
+    items.filter((x) => x.builtin).forEach((x) => { if (!same(x.contents, PACK_BUNDLES[x.name] || {})) gives[x.name] = x.contents; });
     const value = {
+      gives,
       custom: items.filter((x) => !x.builtin).map((x) => ({ name: x.name, icon: x.icon.trim(), contents: x.contents })),
       hidden: items.filter((x) => x.hidden).map((x) => x.name),
       order: items.slice().sort((a, b) => a.order - b.order).map((x) => x.name),
