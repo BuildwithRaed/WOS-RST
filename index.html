@@ -1451,6 +1451,7 @@ const T = {
   contact_open_mail: { en: "Open mail app", ar: "\u0641\u062a\u062d \u0627\u0644\u0628\u0631\u064a\u062f", ko: "\uba54\uc77c \uc571 \uc5f4\uae30" },
   contact_tip: { en: "Include the page name and a screenshot if you are reporting a number that looks off.", ar: "\u0623\u0636\u0641 \u0627\u0633\u0645 \u0627\u0644\u0635\u0641\u062d\u0629 \u0648\u0644\u0642\u0637\u0629 \u0634\u0627\u0634\u0629 \u0625\u0630\u0627 \u0643\u0646\u062a \u062a\u0628\u0644\u0651\u063a \u0639\u0646 \u0631\u0642\u0645 \u062e\u0627\u0637\u0626.", ko: "\uc218\uce58 \uc624\ub958\ub97c \uc2e0\uace0\ud560 \ub54c\ub294 \ud398\uc774\uc9c0 \uc774\ub984\uacfc \uc2a4\ud06c\ub9b0\uc0f7\uc744 \ud568\uaed8 \ubcf4\ub0b4 \uc8fc\uc138\uc694." },
   contact_soon: { en: "Contact details will be added soon.", ar: "\u0633\u062a\u064f\u0636\u0627\u0641 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0642\u0631\u064a\u0628\u0627\u064b.", ko: "\uc5f0\ub77d\ucc98\ub294 \uace7 \ucd94\uac00\ub429\ub2c8\ub2e4." },
+  marks_no_estimate: { en: "No estimate yet for these stages (not counted in the total until a formula close to the real result is confirmed):", ar: "\u0644\u0627 \u064a\u0648\u062c\u062f \u062a\u0642\u062f\u064a\u0631 \u0628\u0639\u062f \u0644\u0647\u0630\u0647 \u0627\u0644\u0645\u0631\u0627\u062d\u0644 (\u0644\u0627 \u062a\u064f\u062d\u062a\u0633\u0628 \u0641\u064a \u0627\u0644\u0645\u062c\u0645\u0648\u0639 \u062d\u062a\u0649 \u062a\u0623\u0643\u064a\u062f \u0645\u0639\u0627\u062f\u0644\u0629 \u0642\u0631\u064a\u0628\u0629 \u0645\u0646 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0627\u0644\u062d\u0642\u064a\u0642\u064a\u0629):", ko: "\uc544\uc9c1 \ucd94\uc815\uce58\uac00 \uc5c6\ub294 \ub2e8\uacc4 (\uc2e4\uc81c \uacb0\uacfc\uc5d0 \uac00\uae4c\uc6b4 \uacf5\uc2dd\uc774 \ud655\uc778\ub420 \ub54c\uae4c\uc9c0 \ud569\uacc4\uc5d0 \ud3ec\ud568\ub418\uc9c0 \uc54a\uc74c):" },
   research_next_level: { en: "Next level:", ar: "\u0627\u0644\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0627\u0644\u064a:", ko: "\ub2e4\uc74c \ub808\ubca8:" },
   expert_upcoming: { en: "Upcoming", ar: "\u0642\u0631\u064a\u0628\u0627\u064b", ko: "\ucd9c\uc2dc \uc608\uc815" },
   skill_maxed: { en: "Maxed", ar: "\u0645\u0643\u062a\u0645\u0644", ko: "\ucd5c\ub300" },
@@ -1652,7 +1653,7 @@ const T = {
   research_current: { en: "Current level", ar: "المستوى الحالي", ko: "현재 레벨" },
   research_target: { en: "Target level", ar: "المستوى المستهدف", ko: "목표 레벨" },
   marks_title: { en: "Marks to refine to max", ar: "العلامات اللازمة للتنقية حتى الحد الأقصى", ko: "최대 정련까지 필요한 문장" },
-  marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in.", ar: "التنقية عشوائية، لذا هذه أقرب صيغة متوسطة: كل 1% ناقص من إحصائية يكلّف معدل العلامات العادية للمرحلة التي هو فيها. عدّل المعدلات أو التعديل الإجمالي وفق نتائجك.", ko: "정련은 무작위이므로 가장 근접한 평균 공식입니다: 부족한 스탯 1%마다 해당 단계의 일반 문장 비율만큼 듭니다. 실제 결과에 따라 비율이나 전체 보정을 조정하세요." },
+  marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in. These are the fewest marks that reach the target on average; your real count may differ.", ar: "التنقية عشوائية، لذا هذه أقرب صيغة متوسطة: كل 1% ناقص من إحصائية يكلّف معدل العلامات العادية للمرحلة التي هو فيها. عدّل المعدلات أو التعديل الإجمالي وفق نتائجك. هذه أقل عدد من العلامات يصل إلى الهدف في المتوسط؛ قد يختلف عددك الفعلي.", ko: "정련은 무작위이므로 가장 근접한 평균 공식입니다: 부족한 스탯 1%마다 해당 단계의 일반 문장 비율만큼 듭니다. 실제 결과에 따라 비율이나 전체 보정을 조정하세요. 평균적으로 목표에 도달하는 최소 문장 수이며 실제는 다를 수 있습니다." },
   marks_rates: { en: "Common Marks per 1% (by stage)", ar: "علامات عادية لكل 1% (حسب المرحلة)", ko: "1%당 일반 문장 (단계별)" },
   marks_rates_note: { en: "Grey/Green/Blue: average over all stats. Purple/Orange: per 1% of one stat. Red uses Orange's rate until you set it.", ar: "الرمادي/الأخضر/الأزرق: متوسط لكل الإحصائيات. البنفسجي/البرتقالي: لكل 1% من إحصائية واحدة. الأحمر يستخدم معدل البرتقالي حتى تضبطه.", ko: "회색/녹색/파랑: 전체 스탯 평균. 보라/주황: 스탯 하나의 1%당. 빨강은 설정 전까지 주황 비율 사용." },
   marks_adjust: { en: "Adjustment", ar: "التعديل", ko: "보정" },
@@ -9477,13 +9478,23 @@ async function ensurePetMarksState() {
     // (site_config "pet_marks_rates"); visitors use them and never see the
     // controls. Adjustment and the gems option stay per user.
     const siteRates = siteConfig("pet_marks_rates", null);
-    const rates = { ...PET_MARKS_DEFAULT_RATES, ...(siteRates && typeof siteRates === "object" ? siteRates : {}) };
-    PET_MARKS_STATE = { rates, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
+    const published = { ...PET_MARKS_DEFAULT_RATES, ...(siteRates && typeof siteRates === "object" ? siteRates : {}) };
+    // Owner test mode: try new rates privately; visitors keep the published set.
+    const testMode = IS_OWNER && saved.testMode === true;
+    const testRates = { ...published, ...(saved.testRates && typeof saved.testRates === "object" ? saved.testRates : {}) };
+    PET_MARKS_STATE = { rates: testMode ? testRates : published, published, testMode, testRates, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
   }
   return PET_MARKS_STATE;
 }
+// Owner edits go to the site (everyone) or, in test mode, only to the owner's own copy.
 async function savePetMarksRates() {
-  await saveSiteConfig("pet_marks_rates", PET_MARKS_STATE.rates);
+  if (PET_MARKS_STATE.testMode) {
+    PET_MARKS_STATE.testRates = { ...PET_MARKS_STATE.rates };
+    await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+  } else {
+    await saveSiteConfig("pet_marks_rates", PET_MARKS_STATE.rates);
+    PET_MARKS_STATE.published = { ...PET_MARKS_STATE.rates };
+  }
 }
 let PET_REFINE_CACHE = null; // { "Cave Hyena": [ {stage, infantry_lethality_pct, ...}, ... ] }
 let PET_REFINE_STATE = null; // { "Cave Hyena": stageIndex }
@@ -9638,7 +9649,7 @@ const EXPERT_INVENTORY_BASE_FIELDS = [
 // in the roster (so a newly added expert gets its own sigils automatically).
 function expertInventoryFields() {
   const out = EXPERT_INVENTORY_BASE_FIELDS.slice();
-  (EXPERTS_LIST || []).forEach((e) => { const f = `${e.key} Sigils`; if (!out.includes(f)) out.push(f); });
+  (EXPERTS_LIST || []).forEach((e) => { if (hiddenForVisitor("experts", e.key)) return; const f = `${e.key} Sigils`; if (!out.includes(f)) out.push(f); });
   return out;
 }
 // Affinity you own = the gift items you hold (plus any Affinity number
@@ -10135,7 +10146,11 @@ async function renderExpertsResearchPage() {
 }
 
 async function renderExpertsPage() {
+  // Experts hidden from visitors (Admin → Visibility / the eye on a card)
+  // stay out of everything on this page for them: cards, totals, backpack.
   await ensureExpertsRosterGlobal();
+  await ensureUiVisibility();
+  const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
   const saved = (await loadCalcState("experts")) || {};
   const unlockedState = (await loadCalcState("experts_unlocked")) || {};
   function isExpertUnlocked(expert) {
@@ -10194,7 +10209,7 @@ async function renderExpertsPage() {
     return { affinity, sigil };
   }
 
-  EXPERTS_LIST.forEach((e) => {
+  EXPERTS_SHOWN.forEach((e) => {
     // New expert: target defaults to the top of its affinity data, so a
     // table that only holds the max (one row at 100) still shows its cost.
     if (!saved[e.key]) saved[e.key] = { current: 0, desired: Math.max(1, ...(AFFINITY_CACHE[e.key] || []).map((r) => Number(r.level) || 0)), skills: {} };
@@ -10278,7 +10293,7 @@ async function renderExpertsPage() {
   function computeBaseTroopStats() {
     const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     // All 10 experts' level-based base stats, confirmed exact from uploaded Experts_Data.xlsx
-    const ALL_EXPERTS_LEVEL_BASE = EXPERTS_LIST.map((e) => e.key);
+    const ALL_EXPERTS_LEVEL_BASE = EXPERTS_SHOWN.map((e) => e.key);
     ALL_EXPERTS_LEVEL_BASE.forEach((hero) => addLevelBaseToTotals(totals, hero));
     // Romulus's Last Line + Spirit of Aeetis, Gareth's Porcupine + Undefeated Will
     addSkillStatsToTotals(totals, "Romulus", "Last Line");
@@ -10420,7 +10435,7 @@ async function renderExpertsPage() {
     let totalExp = 0, totalBook = 0, totalAffinity = 0, totalSigil = 0;
     let maxExp = 0, maxBook = 0, maxAffinity = 0, maxSigil = 0;
     const sigilNeededByExpert = {};
-    EXPERTS_LIST.forEach((e) => {
+    EXPERTS_SHOWN.forEach((e) => {
       if (!isExpertUnlocked(e.key)) return;
       e.skills.forEach((sk) => {
         const st = saved[e.key].skills[sk];
@@ -10449,7 +10464,7 @@ async function renderExpertsPage() {
     const stillBook = Math.max(0, totalBook - (Number(invSaved["Books of Knowledge"]) || 0));
     const stillAffinity = Math.max(0, totalAffinity - affinityOwnedFrom(invSaved));
     let sigilShortfall = 0;
-    EXPERTS_LIST.forEach((e) => {
+    EXPERTS_SHOWN.forEach((e) => {
       const owned = Number(invSaved[`${e.key} Sigils`]) || 0;
       sigilShortfall += Math.max(0, (sigilNeededByExpert[e.key] || 0) - owned);
     });
@@ -10494,8 +10509,8 @@ async function renderExpertsPage() {
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
   let activeExpertIdx = 0;
   function renderGrid() {
-    renderSwipeCounter(expertsCounterEl, EXPERTS_LIST.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
-    const e = EXPERTS_LIST[activeExpertIdx];
+    renderSwipeCounter(expertsCounterEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
+    const e = EXPERTS_SHOWN[activeExpertIdx];
     const s = saved[e.key];
     const unlocked = isExpertUnlocked(e.key);
     gridEl.innerHTML = `
@@ -10578,7 +10593,7 @@ async function renderExpertsPage() {
             .join("")}
         </div>
       </div>`;
-    wireIndexSwipe(gridEl, EXPERTS_LIST.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
+    wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
 
     gridEl.querySelectorAll("select[data-expcur]").forEach((sel) => {
       sel.addEventListener("change", async () => {
@@ -10616,7 +10631,7 @@ async function renderExpertsPage() {
         const hero = btn.dataset.expmax;
         const s = saved[hero];
         const heroMaxLvl = (AFFINITY_CACHE[hero] || []).length || EXPERT_HERO_MAX_LEVEL;
-        const heroExpert = EXPERTS_LIST.find((e) => e.key === hero);
+        const heroExpert = EXPERTS_SHOWN.find((e) => e.key === hero);
         const heroAlreadyMaxed = s.current >= heroMaxLvl;
         const skillsAlreadyMaxed = heroExpert.skills.every((sk) => {
           const max = skillMaxLevel(hero, sk);
@@ -10871,6 +10886,11 @@ async function renderRefinePage() {
       perPet[pet] = petMarks; marksRaw += petMarks;
     });
     const marksNeeded = Math.ceil(marksRaw * (1 + (PET_MARKS_STATE.adjust || 0) / 100));
+    // Stages whose rate is 0 are not estimated at all (no tested formula
+    // yet) - say so, so the total isn't taken as complete.
+    const usedStages = new Set(); petNames.forEach((pet) => (PET_REFINE_CACHE[pet] || []).forEach((r) => usedStages.add(r.stage)));
+    const noEstimate = ["Grey", "Green", "Blue", "Purple", "Orange", "Red"].filter((sg) => usedStages.has(sg) && !(Number(rates[sg]) > 0));
+    const noEstimateHtml = noEstimate.length ? `<div style="margin-top:8px; padding:6px 10px; border:1px solid #e0a030; border-radius:8px; font-size:11px; color:#e0a030;">${esc(t("marks_no_estimate"))} ${noEstimate.map((sg) => `<b style="color:${STAGE_COLORS[sg] || "inherit"};">${esc(sg)}</b>`).join(", ")}</div>` : "";
     const stageBtn = (stage) => `<div style="display:flex; align-items:center; gap:4px;">
         <span style="font-size:11px; font-weight:600; color:${STAGE_COLORS[stage] || "var(--ice)"}; min-width:52px;">${esc(stage)}</span>
         <button class="btn small ghost" data-marksrate="${stage}" data-delta="-1" style="width:24px; padding:2px 0;">&minus;</button>
@@ -10893,6 +10913,7 @@ async function renderRefinePage() {
             <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))} <span style="font-weight:400;">(${esc(t("vis_hidden"))})</span></div>
             <div style="display:flex; flex-direction:column; gap:6px;">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
             <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("marks_rates_note"))}</div>
+            <div class="meta" style="font-size:10.5px; margin-top:8px; color:${PET_MARKS_STATE.testMode ? "#e0a030" : "var(--muted)"};">${PET_MARKS_STATE.testMode ? "Editing your test rates (visitors unaffected) \u2014 Admin \u2192 Pets \u2192 Marks Calculation" : "Editing the rates visitors use \u2014 Admin \u2192 Pets \u2192 Marks Calculation to test privately"}</div>
           </div>` : ""}
           <div>
             <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_adjust"))}</div>
@@ -10902,6 +10923,7 @@ async function renderRefinePage() {
               <button class="btn small ghost" data-marksadjust="5" style="width:28px; padding:2px 0;">+</button>
               <span class="meta" style="font-size:10.5px;">${esc(t("marks_adjust_note"))}</span>
             </div>
+            ${noEstimateHtml}
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
               <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_needed"))}</div><div class="val" style="font-size:18px;">${marksNeeded.toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</div></div>
               <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_as_advanced"))}</div><div class="val" style="font-size:18px;">${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">1 ${esc(materialDisplayName("Advanced Marks"))} = ${ADVANCED_MARK_VALUE} ${esc(materialDisplayName("Common Marks"))} · 500 ${esc(materialDisplayName("Gems"))} = 1</div></div>
@@ -12241,31 +12263,7 @@ async function renderAdminExpertTable(body, tableKey) {
       </div>
       <div id="qfPreviewWrap" style="margin-top:10px;"></div>
     </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Sigils by level</h2>
-      <p class="desc">Paste the sigil cost of every level, one per line (or separated by commas/spaces), starting at level 1. Level 1's cost first, level 2's second, and so on up to 200. Rows are created or updated for each level; the milestone rows (20, 40 …) keep their stats.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;">
-        <textarea id="adminSigilBulk" rows="8" placeholder="10\n10\n12\n12\n…" style="flex:1 1 260px; min-width:220px; font-family:monospace; font-size:12px;"></textarea>
-        <div style="display:flex; flex-direction:column; gap:8px; min-width:240px;">
-          <label style="font-size:12px;">Apply to
-            <select id="adminSigilScope" style="width:100%; margin-top:4px;">
-              <option value="path">this expert — one path</option>
-              <option value="page1">this expert — paths 1–3 (page 1)</option>
-              <option value="page2">this expert — paths 4–6 (page 2)</option>
-              <option value="all">this expert — all paths</option>
-              <option value="everyone_page1">every expert — paths 1–3</option>
-              <option value="everyone_page2">every expert — paths 4–6</option>
-              <option value="everyone_all">every expert — all paths</option>
-            </select>
-          </label>
-          <label style="font-size:12px;" id="adminSigilPathWrap">Path
-            <select id="adminSigilPath" style="width:100%; margin-top:4px;">${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">Path ${n}</option>`).join("")}</select>
-          </label>
-          <button class="btn small" id="adminSigilApply" type="button">Apply</button>
-          <div class="meta" id="adminSigilStatus" style="font-size:11px;"></div>
-        </div>
-      </div>
-    </div>` : ""}
+    ` : ""}
     <div class="panel">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
         <h2 id="adminRowsHeading" style="margin:0;">Rows</h2>
@@ -12324,48 +12322,6 @@ async function renderAdminExpertTable(body, tableKey) {
         status.textContent = `Created ${rows.length} rows on ${paths.length} path(s).`;
         loadRows();
       } catch (err) { toast("Couldn't create rows", true); status.textContent = String(err && err.message || err); }
-      btn.disabled = false;
-    });
-    const scopeSel = document.getElementById("adminSigilScope");
-    const pathWrap = document.getElementById("adminSigilPathWrap");
-    scopeSel.addEventListener("change", () => { pathWrap.style.display = scopeSel.value === "path" ? "" : "none"; });
-    document.getElementById("adminSigilApply").addEventListener("click", async () => {
-      const status = document.getElementById("adminSigilStatus");
-      const values = document.getElementById("adminSigilBulk").value.split(/[\s,;]+/).map((x) => x.replace(/[^0-9.]/g, "")).filter((x) => x !== "").map(Number).filter((n) => Number.isFinite(n));
-      if (!values.length) { status.textContent = "Paste the costs first."; return; }
-      if (values.length > 200) values.length = 200;
-      const scope = scopeSel.value;
-      const targets = scope.startsWith("everyone") ? experts : [ADMIN_ACTIVE_EXPERT];
-      const paths = scope === "path" ? [Number(document.getElementById("adminSigilPath").value)] : /page1/.test(scope) ? [1, 2, 3] : /page2/.test(scope) ? [4, 5, 6] : [1, 2, 3, 4, 5, 6];
-      if (!confirm(`Write ${values.length} level costs to ${targets.length} expert(s) × ${paths.length} path(s)?`)) return;
-      const btn = document.getElementById("adminSigilApply");
-      btn.disabled = true;
-      try {
-        let written = 0;
-        for (const expert of targets) {
-          const existing = await sb(`expert_research_nodes?select=id,path_number,level,path_name&expert=eq.${encodeURIComponent(expert)}`);
-          for (const pathNum of paths) {
-            const byLevel = new Map(existing.filter((r) => Number(r.path_number) === pathNum).map((r) => [Number(r.level), r]));
-            const pathName = (existing.find((r) => Number(r.path_number) === pathNum && r.path_name) || {}).path_name || null;
-            const inserts = [];
-            for (let lvl = 1; lvl <= values.length; lvl++) {
-              const row = byLevel.get(lvl);
-              if (row) await sb(`expert_research_nodes?id=eq.${row.id}`, { method: "PATCH", body: JSON.stringify({ sigil_cost: values[lvl - 1], sigil_per_level: null }) });
-              else inserts.push({ expert, path_number: pathNum, path_name: pathName, level: lvl, sigil_cost: values[lvl - 1], sort_order: pathNum * 1000 + lvl });
-            }
-            for (let i = 0; i < inserts.length; i += 200) await sb(`expert_research_nodes`, { method: "POST", prefer: "return=minimal", body: JSON.stringify(inserts.slice(i, i + 200)) });
-            written += values.length;
-            status.textContent = `${expert}: path ${pathNum} done (${written} levels so far)`;
-          }
-        }
-        EXPERTS_RESEARCH_NODES_GLOBAL = null;
-        toast(`Sigils by level saved (${written} levels)`);
-        status.textContent = `Done: ${written} levels written.`;
-        loadRows();
-      } catch (err) {
-        toast("Couldn't write the levels", true);
-        status.textContent = String(err && err.message || err);
-      }
       btn.disabled = false;
     });
   }
@@ -14459,7 +14415,7 @@ async function renderAdminExpertsGroup(body) {
 
 // ---- Pets group page (sub-tabs: Pets / Pets Refine) ----
 async function renderAdminPetsGroup(body) {
-  const SUBTABS = { pets: { label: "Pets" }, petsrefine: { label: "Pets Refine" } };
+  const SUBTABS = { pets: { label: "Pets" }, petsrefine: { label: "Pets Refine" }, marks: { label: "Marks Calculation" } };
   body.innerHTML = `
     <div class="panel" style="margin-bottom:16px;">
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -14478,7 +14434,70 @@ async function renderAdminPetsGroup(body) {
   });
   const sub = document.getElementById("adminPetsGroupBody");
   if (ADMIN_ACTIVE_PETS_SUBTAB === "pets") await renderAdminPets(sub);
+  else if (ADMIN_ACTIVE_PETS_SUBTAB === "marks") await renderAdminMarksCalc(sub);
   else await renderAdminPetsRefine(sub);
+}
+
+// ---- Marks calculation: visitors' rates vs the owner's test rates ----
+async function renderAdminMarksCalc(body) {
+  PET_MARKS_STATE = null;
+  const st = await ensurePetMarksState();
+  const STAGES = ["Grey", "Green", "Blue", "Purple", "Orange", "Red"];
+  const colors = { Grey: "#9aa4b2", Green: "#7ee6a8", Blue: "var(--ice)", Purple: "#c9a0ff", Orange: "#f0a35a", Red: "#ff7b7b" };
+  const col = (title, key, editable) => `
+    <div class="panel" style="flex:1 1 260px; min-width:240px;">
+      <h2 style="font-size:14px;">${title}</h2>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+        ${STAGES.map((sg) => `<label style="display:flex; align-items:center; gap:8px; font-size:12px;">
+          <span style="min-width:60px; font-weight:600; color:${colors[sg]};">${sg}</span>
+          <input type="text" inputmode="decimal" data-mrate="${key}|${sg}" value="${st[key][sg]}" style="width:90px; text-align:center;" />
+          <span class="meta" style="font-size:10.5px;">Common Marks per 1%</span>
+        </label>`).join("")}
+      </div>
+      <div style="margin-top:10px;"><button class="btn small" data-msave="${key}" type="button">Save ${key === "published" ? "for visitors" : "my test rates"}</button></div>
+    </div>`;
+  body.innerHTML = `
+    <div class="panel" style="margin-bottom:16px;">
+      <h2>Marks calculation</h2>
+      <p class="desc">Two sets of "Common Marks per 1%" rates. Visitors always use the left set. Tick the switch below to try the right set yourself on the Pets Refine page (and in your Dashboard, packs and budgets) without changing what visitors see; when you're happy, copy it over to visitors.</p>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; padding:10px 12px; border:1px solid ${st.testMode ? "#e0a030" : "var(--line)"}; border-radius:8px; max-width:520px;">
+        <input type="checkbox" id="mTestMode" ${st.testMode ? "checked" : ""} />
+        <span><b>Use my test rates on the site (only me)</b><br><span class="meta" style="font-size:11px;">${st.testMode ? "On: you see the test rates everywhere; visitors keep the published ones." : "Off: you see the same rates as visitors."}</span></span>
+      </label>
+    </div>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:stretch;">
+      ${col("Visitors (published)", "published")}
+      ${col("My test rates", "testRates")}
+    </div>
+    <div class="panel" style="margin-top:16px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn small" id="mPublish" type="button">Copy my test rates \u2192 visitors</button>
+        <button class="btn small ghost" id="mCopyDown" type="button">Copy visitors \u2192 my test rates</button>
+        <button class="btn small ghost" id="mDefaults" type="button">Reset my test rates to the built-in defaults</button>
+      </div>
+      <p class="desc" style="margin-top:8px;">Grey/Green/Blue rates are an average over all stats; Purple/Orange/Red are per 1% of one stat. The Adjustment % on the Refine page is separate and per person.</p>
+    </div>`;
+  const read = (key) => { const out = {}; STAGES.forEach((sg) => { const v = Number(String(body.querySelector(`[data-mrate="${key}|${sg}"]`).value).replace(/[^0-9.]/g, "")); out[sg] = Number.isFinite(v) ? Math.max(0, v) : st[key][sg]; }); return out; };
+  const persist = async () => {
+    await saveCalcState("pet_refine_marks", { adjust: st.adjust, packGems: st.packGems, testMode: st.testMode, testRates: st.testRates });
+    PET_MARKS_STATE = null; PACK_PLAN_CACHE.clear(); budgetInvalidate();
+  };
+  body.querySelectorAll("[data-msave]").forEach((b) => b.addEventListener("click", async () => {
+    const key = b.dataset.msave;
+    try {
+      if (key === "published") { await saveSiteConfig("pet_marks_rates", read("published")); toast("Visitors' rates saved"); }
+      else { st.testRates = read("testRates"); await persist(); toast("Test rates saved"); }
+      renderAdminMarksCalc(body);
+    } catch (err) { toast("Couldn't save", true); }
+  }));
+  document.getElementById("mTestMode").addEventListener("change", async (e) => { st.testMode = e.target.checked; await persist(); renderAdminMarksCalc(body); });
+  document.getElementById("mPublish").addEventListener("click", async () => {
+    if (!confirm("Give visitors your test rates?")) return;
+    st.testRates = read("testRates");
+    await saveSiteConfig("pet_marks_rates", st.testRates); await persist(); toast("Published to visitors"); renderAdminMarksCalc(body);
+  });
+  document.getElementById("mCopyDown").addEventListener("click", async () => { st.testRates = read("published"); await persist(); renderAdminMarksCalc(body); });
+  document.getElementById("mDefaults").addEventListener("click", async () => { st.testRates = { ...PET_MARKS_DEFAULT_RATES }; await persist(); renderAdminMarksCalc(body); });
 }
 
 // ---- Chief Gears group page (sub-tabs: Chief Gear / Chief Bonus) ----
