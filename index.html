@@ -552,9 +552,9 @@
     .stats-row-scroll.sr-2col{ grid-template-columns:1fr 1fr; }
     .stats-row-scroll.sr-3col{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
 
-    /* Experts backpack: flatten the stacked pairs into one 2-column grid. */
+    /* Experts backpack: two items per row on phones. */
     #expertsInventory{ grid-template-columns:1fr 1fr; gap:12px; }
-    #expertsInventory > div{ display:contents; }
+    #expertsInventory > div{ flex:0 0 auto !important; min-width:0 !important; }
 
     /* Pets Level: stats card full width, Current/Target side by side. */
     .pet-level-row{ grid-template-columns:1fr 1fr; }
@@ -10390,26 +10390,19 @@ async function renderExpertsPage() {
 
   const invEl = document.getElementById("expertsInventory");
   function renderInventory() {
-    const pairs = [];
-    for (let i = 0; i < EXPERT_INVENTORY_FIELDS.length; i += 2) {
-      pairs.push(EXPERT_INVENTORY_FIELDS.slice(i, i + 2));
-    }
+    // One flat, wrapping row of items so a partial last row stays on one line
+    // (e.g. Valeria · Ronne · Kathy · Gareth) instead of stacking in pairs.
     const fieldRow = (f) => `
-      <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
-        <img src="${EXPERT_INVENTORY_ICONS[f]}" alt="" onerror="this.onerror=null; this.src='icons/item_icon_570201.png'" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
+      <div style="display:flex; align-items:center; gap:6px; flex:0 0 150px; min-width:150px; flex-wrap:nowrap;">
+        <img src="${EXPERT_INVENTORY_ICONS[f]}" data-iconfallback="icons/item_icon_570201.png" alt="" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" loading="lazy" />
         <div style="flex:1; min-width:0;">
           <div class="meta" style="font-size:9px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(materialDisplayName(f))}</div>
           <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; min-width:0; padding:4px 6px; box-sizing:border-box;" />
         </div>
       </div>`;
-    invEl.innerHTML = pairs
-      .map(
-        (pair) => `
-      <div style="display:flex; flex-direction:column; gap:10px; flex:0 0 150px; min-width:150px;">
-        ${pair.map(fieldRow).join("")}
-      </div>`
-      )
-      .join("");
+    invEl.innerHTML = EXPERT_INVENTORY_FIELDS.map(fieldRow).join("");
+    invEl.style.gap = "10px 12px";
+    invEl.querySelectorAll("img[data-iconfallback]").forEach((img) => img.addEventListener("error", () => { img.src = img.dataset.iconfallback; img.removeAttribute("data-iconfallback"); }, { once: true }));
 
     invEl.querySelectorAll("input[data-expinv]").forEach((input) => {
       input.addEventListener("change", async () => {
