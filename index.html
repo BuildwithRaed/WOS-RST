@@ -10945,6 +10945,8 @@ async function renderExpertsResearchPage() {
         cb.addEventListener("change", async () => {
           const expert = cb.dataset.expresearchunlock;
           unlockedState[expert] = cb.checked;
+          if (EXPERTS_RESEARCH_UNLOCKED_GLOBAL) EXPERTS_RESEARCH_UNLOCKED_GLOBAL[expert] = cb.checked;
+          budgetInvalidate();
           await saveCalcState("experts_research_unlocked", unlockedState);
           renderTotals();
           renderGrid();
@@ -11141,6 +11143,7 @@ async function renderExpertsPage() {
   const statHeaderEl = document.getElementById("expertsStatHeader");
   const TROOP_STAT_HEROES = new Set(["Romulus", "Gareth"]);
   function addLevelBaseToTotals(totals, hero, includeTalent) {
+    if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
     const rows = AFFINITY_CACHE[hero] || [];
     const lvl = saved[hero] ? saved[hero].current : 0;
     const row = rows.find((r) => r.level === lvl);
@@ -11171,6 +11174,7 @@ async function renderExpertsPage() {
   function computeBaseTroopStatsMax() {
     const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     ["Cyrille", "Agnes", "Holger", "Romulus", "Baldur", "Fabian", "Valeria", "Ronne", "Kathy", "Gareth"].forEach((hero) => {
+      if (!isExpertUnlocked(hero)) return;
       const rows = AFFINITY_CACHE[hero] || [];
       if (!rows.length) return;
       // Use the true peak value across all levels, not just the last row -
@@ -11207,6 +11211,7 @@ async function renderExpertsPage() {
       .join("");
   }
   function addSkillStatsToTotals(totals, hero, skill) {
+    if (!isExpertUnlocked(hero)) return;
     const rows = SKILL_CACHE[`${hero}|${skill}`];
     const st = saved[hero] && saved[hero].skills[skill];
     if (!rows || !st) return;
@@ -11221,6 +11226,7 @@ async function renderExpertsPage() {
     });
   }
   function addSkillMaxToTotals(totals, hero, skill) {
+    if (!isExpertUnlocked(hero)) return;
     const rows = SKILL_CACHE[`${hero}|${skill}`];
     if (!rows || !rows.length) return;
     const last = rows[rows.length - 1];
@@ -11235,6 +11241,7 @@ async function renderExpertsPage() {
 
   const foundryEl = document.getElementById("expertsFoundryHeader");
   function addTalentToTotals(totals, hero) {
+    if (!isExpertUnlocked(hero)) return;
     const rows = AFFINITY_CACHE[hero] || [];
     const lvl = saved[hero] ? saved[hero].current : 0;
     const row = rows.find((r) => r.level === lvl);
@@ -11245,6 +11252,7 @@ async function renderExpertsPage() {
     }
   }
   function addTalentMaxToTotals(totals, hero) {
+    if (!isExpertUnlocked(hero)) return;
     const rows = AFFINITY_CACHE[hero] || [];
     const last = rows[rows.length - 1];
     if (last && last.stat_type2) {
@@ -11487,8 +11495,17 @@ async function renderExpertsPage() {
       cb.addEventListener("change", async () => {
         const expert = cb.dataset.expunlock;
         unlockedState[expert] = cb.checked;
+        // Keep the Dashboard's copy in step, so it drops/adds this expert
+        // without a page reload.
+        if (EXPERTS_UNLOCKED_GLOBAL) EXPERTS_UNLOCKED_GLOBAL[expert] = cb.checked;
+        budgetInvalidate();
         await saveCalcState("experts_unlocked", unlockedState);
         renderTotals();
+        renderStatHeader();
+        renderFoundryHeader();
+        renderSvsHeader();
+        renderFrostfireHeader();
+        renderTundraHeader();
         renderGrid();
       });
     });
