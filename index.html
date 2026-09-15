@@ -327,7 +327,11 @@
   }
   .empty .big{ font-size:14px; color:var(--frost); margin-bottom:4px; }
   form.inline{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  input,select{
+    /* Admin row tables scroll inside their own box (header stays put) so
+     long lists don't turn into a whole-page scroll. */
+  .adm-scroll{ max-height:70vh; overflow:auto; border:1px solid var(--line); border-radius:8px; }
+  .adm-scroll thead th{ position:sticky; top:0; background:var(--panel); z-index:2; }
+input,select{
     background:var(--panel-2); border:1px solid var(--line); color:var(--frost);
     padding:8px 10px; border-radius:8px; font-size:16px;
   }
@@ -11609,7 +11613,7 @@ async function renderAdminPackResources(body) {
     <div class="panel" style="margin-bottom:16px;">
       <h2>Pack Resources</h2>
       <p class="desc">These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).</p>
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
           <thead><tr>${["", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
           <tbody id="resRows">${all.map((r, i) => rowHtml(r, i, all.length)).join("")}</tbody>
@@ -11771,7 +11775,7 @@ async function renderAdminRoster(body) {
         <h2 style="margin:0;">Roster (${rows.length})</h2>
         <button class="btn small" id="adminRosterSaveAll">Save all</button>
       </div>
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
             ${["", "Name", "Image URL", "Skill 1", "Skill 2", "Skill 3", "Skill 4", "Main stat", "Troop restriction", ""]
@@ -11965,7 +11969,7 @@ async function renderAdminExpertTable(body, tableKey) {
         <h2 id="adminRowsHeading" style="margin:0;">Rows</h2>
         <button class="btn small" id="adminExpRowsSaveAll">Save all</button>
       </div>
-      <div id="adminRowsWrap" style="overflow-x:auto;"></div>
+      <div id="adminRowsWrap" class="adm-scroll"></div>
     </div>
   `;
 
@@ -12127,7 +12131,7 @@ async function renderAdminPets(body) {
         <h2 id="adminPetRowsHeading" style="margin:0;">Rows</h2>
         <button class="btn small" id="adminPetRowsSaveAll">Save all</button>
       </div>
-      <div id="adminPetRowsWrap" style="overflow-x:auto;"></div>
+      <div id="adminPetRowsWrap" class="adm-scroll"></div>
     </div>
   `;
 
@@ -12382,10 +12386,16 @@ function wireAdminReorder(container, rowAttr, onReorder) {
 // sort_order = position, written only for rows whose position changed.
 async function saveAdminRowOrder(table, rows, orderedIds) {
   const byId = new Map(rows.map((r) => [String(r.id), r]));
+  // Keep the table's existing numbers and just hand them out in the new
+  // order (so only the rows that actually moved get written); fall back to
+  // plain positions when the numbers aren't unique.
+  const existing = rows.map((r) => Number(r.sort_order)).filter((v) => Number.isFinite(v)).sort((x, y) => x - y);
+  const unique = existing.length === rows.length && existing.every((v, i) => i === 0 || v !== existing[i - 1]);
   const patches = [];
   orderedIds.forEach((id, idx) => {
     const r = byId.get(String(id));
-    if (r && Number(r.sort_order) !== idx) patches.push(sb(`${table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ sort_order: idx }) }));
+    const val = unique ? existing[idx] : idx;
+    if (r && Number(r.sort_order) !== val) patches.push(sb(`${table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ sort_order: val }) }));
   });
   await Promise.all(patches);
 }
@@ -12418,7 +12428,7 @@ async function renderAdminFlatLevels(body, cfg) {
         <h2 style="margin:0;">${esc(cfg.title)} (${rows.length})</h2>
         <button class="btn small" id="adminFlatSaveAll">Save all</button>
       </div>
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
             ${canReorder ? adminColHeadHtml(cfg.cols, true) : cfg.cols.map((c) => `${ADMIN_TH}${esc(c.label)}</th>`).join("")}
@@ -12569,7 +12579,7 @@ async function renderAdminVip(body) {
         <h2 style="margin:0;">VIP tiers (${rows.length})</h2>
         <button class="btn small" id="adminVipSaveAll">Save all</button>
       </div>
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
             <th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">Tier</th>
@@ -12694,7 +12704,7 @@ async function renderAdminSkinsCategory(body, category) {
         <button class="btn small" id="adminSkinsCatSaveAll">Save all</button>
       </div>
       <p class="desc">"Has count trigger" shows a "Count in max" checkbox on that item's card and moves it below the divider line (used on Frame for unverified items).</p>
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
             ${["", "Name", "Image URL", "Bonus stat", "Bonus %", "Current lvl", "Max lvl", "Owned", "Has count trigger", ""]
@@ -12872,7 +12882,7 @@ async function renderAdminProgression(body, nameFilter) {
         <h2 id="adminProgHeading" style="margin:0;">Rows</h2>
         <button class="btn small" id="adminProgSaveAll">Save all</button>
       </div>
-      <div id="adminProgWrap" style="overflow-x:auto;"></div>
+      <div id="adminProgWrap" class="adm-scroll"></div>
     </div>
   `;
 
@@ -13096,7 +13106,7 @@ async function renderAdminResearch(body) {
         <h2 id="adminResearchHeading" style="margin:0;">Rows</h2>
         <button class="btn small" id="adminResearchSaveAll">Save all</button>
       </div>
-      <div id="adminResearchWrap" style="overflow-x:auto;"></div>
+      <div id="adminResearchWrap" class="adm-scroll"></div>
     </div>
   `;
 
@@ -13270,7 +13280,7 @@ async function renderAdminHeroes(body) {
   const heroSel = body.querySelector("#adminHeroPick");
   const editorEl = body.querySelector("#adminHeroEditor");
   const heroRowHtml = (r) => `
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
             ${["Name", "Gen", "Class", "Rarity", "Image URL", "Max ATK & DEF %", "Max widget LETH & HP %", "Max level", "Max stars", ""]
@@ -13407,7 +13417,7 @@ async function renderAdminHeroes(body) {
         </div>
         <p class="desc">Applies to every hero of this generation: ${esc(genHeroes) || "\u2014"}. Star steps 1\u201330 = 5 stars \u00d7 6 shards (step 6 = 1\u2605, 12 = 2\u2605, \u2026 30 = 5\u2605).</p>
         <div class="grid g2" style="gap:16px;">
-          <div style="overflow-x:auto;">
+          <div class="adm-scroll">
             <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
               <thead><tr>${["Step", "Star", "ATK & DEF %", "Shards"].map(th).join("")}</tr></thead>
               <tbody>
@@ -13424,7 +13434,7 @@ async function renderAdminHeroes(body) {
               </tbody>
             </table>
           </div>
-          <div style="overflow-x:auto;">
+          <div class="adm-scroll">
             <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
               <thead><tr>${["Widget Lv", "LETH & HP %"].map(th).join("")}</tr></thead>
               <tbody>
@@ -13674,7 +13684,7 @@ async function renderAdminHeroStars(body) {
         <button class="btn small" id="adminHeroStarSaveAll">Save all</button>
       </div>
       <p class="desc">Row names follow the pattern "N ATT/DEF/DMG/HP" (star level + stat code). Values are the max % at that star level.</p>
-      <div style="overflow-x:auto;">
+      <div class="adm-scroll">
         <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
           <thead><tr>
             <th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">Row name</th>
@@ -13832,7 +13842,7 @@ async function renderAdminPetsRefine(body) {
         <h2 id="adminPetRefineRowsHeading" style="margin:0;">Rows</h2>
         <button class="btn small" id="adminPetRefineSaveAll">Save all</button>
       </div>
-      <div id="adminPetRefineRowsWrap" style="overflow-x:auto;"></div>
+      <div id="adminPetRefineRowsWrap" class="adm-scroll"></div>
     </div>
   `;
 
