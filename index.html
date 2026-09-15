@@ -7528,6 +7528,13 @@ function budgetPlanSet(groups, need, calcKey, targetDays) {
 function budgetCombinedPlan(pages, selected, targetDays) {
   let inc = pages.filter((pg) => !pg.missing && selected[pg.calcKey] !== false && Object.keys(pg.need || {}).length);
   const dropped = [];
+  // Pages the packs can't cover even on their own (e.g. a fresh visitor whose
+  // targets are everything maxed) are set aside first - trying them in the
+  // combined plan only to fail took seconds.
+  if (inc.length > 1) {
+    const cant = inc.filter((pg) => !pg.packGroups.length || packEarliestDays(pg.packGroups, pg.need, pg.calcKey) == null);
+    if (cant.length && cant.length < inc.length) { cant.forEach((pg) => dropped.push(pg.calcKey)); inc = inc.filter((pg) => !cant.includes(pg)); }
+  }
   const setup = () => {
     const keys = inc.map((pg) => pg.calcKey);
     const calcKey = "__budget:" + keys.join(",");
