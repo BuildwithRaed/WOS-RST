@@ -1450,6 +1450,7 @@ const T = {
   contact_open_mail: { en: "Open mail app", ar: "\u0641\u062a\u062d \u0627\u0644\u0628\u0631\u064a\u062f", ko: "\uba54\uc77c \uc571 \uc5f4\uae30" },
   contact_tip: { en: "Include the page name and a screenshot if you are reporting a number that looks off.", ar: "\u0623\u0636\u0641 \u0627\u0633\u0645 \u0627\u0644\u0635\u0641\u062d\u0629 \u0648\u0644\u0642\u0637\u0629 \u0634\u0627\u0634\u0629 \u0625\u0630\u0627 \u0643\u0646\u062a \u062a\u0628\u0644\u0651\u063a \u0639\u0646 \u0631\u0642\u0645 \u062e\u0627\u0637\u0626.", ko: "\uc218\uce58 \uc624\ub958\ub97c \uc2e0\uace0\ud560 \ub54c\ub294 \ud398\uc774\uc9c0 \uc774\ub984\uacfc \uc2a4\ud06c\ub9b0\uc0f7\uc744 \ud568\uaed8 \ubcf4\ub0b4 \uc8fc\uc138\uc694." },
   contact_soon: { en: "Contact details will be added soon.", ar: "\u0633\u062a\u064f\u0636\u0627\u0641 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0642\u0631\u064a\u0628\u0627\u064b.", ko: "\uc5f0\ub77d\ucc98\ub294 \uace7 \ucd94\uac00\ub429\ub2c8\ub2e4." },
+  research_next_level: { en: "Next level:", ar: "\u0627\u0644\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0627\u0644\u064a:", ko: "\ub2e4\uc74c \ub808\ubca8:" },
   expert_upcoming: { en: "Upcoming", ar: "\u0642\u0631\u064a\u0628\u0627\u064b", ko: "\ucd9c\uc2dc \uc608\uc815" },
   skill_maxed: { en: "Maxed", ar: "\u0645\u0643\u062a\u0645\u0644", ko: "\ucd5c\ub300" },
   skill_maxed_tip: { en: "Set this skill to its max level", ar: "\u0627\u062c\u0639\u0644 \u0647\u0630\u0647 \u0627\u0644\u0645\u0647\u0627\u0631\u0629 \u0641\u064a \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649", ko: "\uc774 \uc2a4\ud0ac\uc744 \ucd5c\ub300 \ub808\ubca8\ub85c \uc124\uc815" },
@@ -9679,7 +9680,7 @@ async function renderExpertsResearchPage() {
   // Shared with Experts Level's "Your Inventory" - same sigil pool covers
   // both hero leveling and research paths.
   const invSaved = (await loadCalcState("experts_inventory")) || {};
-  const rows = await sb(`expert_research_nodes?select=expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,stat_type2,stat_value2&order=sort_order`);
+  const rows = await sb(`expert_research_nodes?select=expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,sigil_per_level,stat_type2,stat_value2&order=sort_order`);
   const RESEARCH_CACHE = {}; // { "Cyrille": { 1: [rows...], 2: [...], 3: [...] } }
   const PATH_NAMES = {}; // { "Cyrille": { 1: "Hunting Skill - Proficient", ... } }
   rows.forEach((r) => {
@@ -9723,13 +9724,43 @@ async function renderExpertsResearchPage() {
   // rate until their target max is confirmed too.
   const MAIN_STAT_RATE_DEFAULT = 0.01; // % per level
 
+  // Sigils between two levels. A row with "sigils per level" set charges that
+  // for EVERY level in its block (after the previous row's level, up to its
+  // own); rows without it keep the old behaviour: one lump at that level.
+  function pathSigils(pathRows, fromLevel, toLevel) {
+    const rows = pathRows.slice().sort((a, b) => Number(a.level) - Number(b.level));
+    let sigil = 0, prev = 0;
+    rows.forEach((r) => {
+      const lvl = Number(r.level) || 0;
+      const per = r.sigil_per_level == null || r.sigil_per_level === "" ? null : Number(r.sigil_per_level);
+      if (per != null && !Number.isNaN(per)) {
+        const lo = Math.max(prev, fromLevel), hi = Math.min(lvl, toLevel);
+        if (hi > lo) sigil += (hi - lo) * per;
+      } else if (lvl > fromLevel && lvl <= toLevel) {
+        sigil += Number(r.sigil_cost) || 0;
+      }
+      prev = lvl;
+    });
+    return sigil;
+  }
+  // What the NEXT level after `level` costs on this path (for the card line).
+  function pathNextLevelSigils(pathRows, level) {
+    if (level >= 200) return null;
+    const rows = pathRows.slice().sort((a, b) => Number(a.level) - Number(b.level));
+    const r = rows.find((x) => Number(x.level) > level);
+    if (!r) return null;
+    const per = r.sigil_per_level == null || r.sigil_per_level === "" ? null : Number(r.sigil_per_level);
+    if (per != null && !Number.isNaN(per)) return per;
+    // Per-level rows (1, 2, 3 …): the very next row is the next level's cost.
+    if (Number(r.level) === level + 1) return Number(r.sigil_cost) || 0;
+    return null;
+  }
   function pathCost(expert, pathNum, fromLevel, toLevel) {
     const pathRows = (RESEARCH_CACHE[expert] || {})[pathNum] || [];
-    let sigil = 0;
+    let sigil = pathSigils(pathRows, fromLevel, toLevel);
     const stats = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
     pathRows.forEach((r) => {
       if (r.level > fromLevel && r.level <= toLevel) {
-        sigil += Number(r.sigil_cost) || 0;
         if (stats[r.stat_type] != null) stats[r.stat_type] += Number(r.stat_value) || 0;
       }
     });
@@ -9755,11 +9786,10 @@ async function renderExpertsResearchPage() {
   // Rotation stat only (excludes the main stat), for the per-path breakdown display
   function pathRotationOnly(expert, pathNum, fromLevel, toLevel) {
     const pathRows = (RESEARCH_CACHE[expert] || {})[pathNum] || [];
-    let sigil = 0;
+    const sigil = pathSigils(pathRows, fromLevel, toLevel);
     const stats = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
     pathRows.forEach((r) => {
       if (r.level > fromLevel && r.level <= toLevel) {
-        sigil += Number(r.sigil_cost) || 0;
         if (stats[r.stat_type] != null) stats[r.stat_type] += Number(r.stat_value) || 0;
       }
     });
@@ -9959,6 +9989,7 @@ async function renderExpertsResearchPage() {
             const st = saved[expert][p];
             const pathName = (PATH_NAMES[expert] || {})[p] || `${t("path_label")} ${p}`;
             const { sigil, stats } = pathRotationOnly(expert, p, st.current, st.desired);
+            const perLevel = pathNextLevelSigils((RESEARCH_CACHE[expert] || {})[p] || [], st.current);
             const statParts = Object.entries(stats)
               .filter(([, v]) => v > 0)
               .map(([k, v]) => `+${v.toFixed(1)}% ${tStatLabel(EXPERT_RESEARCH_STAT_LABEL[k])}`)
@@ -9977,6 +10008,7 @@ async function renderExpertsResearchPage() {
               </div>
             </div>
             <div class="meta" style="font-size:10px; text-align:end; color:var(--ice);">${Math.round(sigil).toLocaleString()} ${esc(t("resource_sigils"))}${statParts ? " \u00b7 " + statParts : ""}</div>
+            ${perLevel != null ? `<div class="meta" style="font-size:10px; text-align:end;">${esc(t("research_next_level"))} ${Math.round(perLevel).toLocaleString()} ${esc(t("resource_sigils"))}</div>` : ""}
           </div>`;
           })
           .join("")}
@@ -12158,7 +12190,8 @@ const ADMIN_EXPERT_TABLE_CONFIG = {
       { key: "level", label: "Level", type: "number" },
       { key: "stat_type", label: "Stat", type: "text" },
       { key: "stat_value", label: "Value %", type: "number" },
-      { key: "sigil_cost", label: "Sigil cost", type: "number" },
+      { key: "sigil_cost", label: "Sigils at this level (lump)", type: "number" },
+      { key: "sigil_per_level", label: "Sigils per level (whole block)", type: "number" },
     ],
     orderCol: "path_number,level",
   },
@@ -12184,6 +12217,32 @@ async function renderAdminExpertTable(body, tableKey) {
       </form>
       <div class="err" id="adminAddRowErr"></div>
     </div>
+    ${tableKey === "research" ? `
+    <div class="panel" style="margin-bottom:16px;">
+      <h2>Sigils by level</h2>
+      <p class="desc">Paste the sigil cost of every level, one per line (or separated by commas/spaces), starting at level 1. Level 1's cost first, level 2's second, and so on up to 200. Rows are created or updated for each level; the milestone rows (20, 40 …) keep their stats.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;">
+        <textarea id="adminSigilBulk" rows="8" placeholder="10\n10\n12\n12\n…" style="flex:1 1 260px; min-width:220px; font-family:monospace; font-size:12px;"></textarea>
+        <div style="display:flex; flex-direction:column; gap:8px; min-width:240px;">
+          <label style="font-size:12px;">Apply to
+            <select id="adminSigilScope" style="width:100%; margin-top:4px;">
+              <option value="path">this expert — one path</option>
+              <option value="page1">this expert — paths 1–3 (page 1)</option>
+              <option value="page2">this expert — paths 4–6 (page 2)</option>
+              <option value="all">this expert — all paths</option>
+              <option value="everyone_page1">every expert — paths 1–3</option>
+              <option value="everyone_page2">every expert — paths 4–6</option>
+              <option value="everyone_all">every expert — all paths</option>
+            </select>
+          </label>
+          <label style="font-size:12px;" id="adminSigilPathWrap">Path
+            <select id="adminSigilPath" style="width:100%; margin-top:4px;">${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">Path ${n}</option>`).join("")}</select>
+          </label>
+          <button class="btn small" id="adminSigilApply" type="button">Apply</button>
+          <div class="meta" id="adminSigilStatus" style="font-size:11px;"></div>
+        </div>
+      </div>
+    </div>` : ""}
     <div class="panel">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
         <h2 id="adminRowsHeading" style="margin:0;">Rows</h2>
@@ -12194,6 +12253,50 @@ async function renderAdminExpertTable(body, tableKey) {
   `;
 
   document.getElementById("adminExpRowsSaveAll").addEventListener("click", () => saveAllRows());
+  if (tableKey === "research") {
+    const scopeSel = document.getElementById("adminSigilScope");
+    const pathWrap = document.getElementById("adminSigilPathWrap");
+    scopeSel.addEventListener("change", () => { pathWrap.style.display = scopeSel.value === "path" ? "" : "none"; });
+    document.getElementById("adminSigilApply").addEventListener("click", async () => {
+      const status = document.getElementById("adminSigilStatus");
+      const values = document.getElementById("adminSigilBulk").value.split(/[\s,;]+/).map((x) => x.replace(/[^0-9.]/g, "")).filter((x) => x !== "").map(Number).filter((n) => Number.isFinite(n));
+      if (!values.length) { status.textContent = "Paste the costs first."; return; }
+      if (values.length > 200) values.length = 200;
+      const scope = scopeSel.value;
+      const targets = scope.startsWith("everyone") ? experts : [ADMIN_ACTIVE_EXPERT];
+      const paths = scope === "path" ? [Number(document.getElementById("adminSigilPath").value)] : /page1/.test(scope) ? [1, 2, 3] : /page2/.test(scope) ? [4, 5, 6] : [1, 2, 3, 4, 5, 6];
+      if (!confirm(`Write ${values.length} level costs to ${targets.length} expert(s) × ${paths.length} path(s)?`)) return;
+      const btn = document.getElementById("adminSigilApply");
+      btn.disabled = true;
+      try {
+        let written = 0;
+        for (const expert of targets) {
+          const existing = await sb(`expert_research_nodes?select=id,path_number,level,path_name&expert=eq.${encodeURIComponent(expert)}`);
+          for (const pathNum of paths) {
+            const byLevel = new Map(existing.filter((r) => Number(r.path_number) === pathNum).map((r) => [Number(r.level), r]));
+            const pathName = (existing.find((r) => Number(r.path_number) === pathNum && r.path_name) || {}).path_name || null;
+            const inserts = [];
+            for (let lvl = 1; lvl <= values.length; lvl++) {
+              const row = byLevel.get(lvl);
+              if (row) await sb(`expert_research_nodes?id=eq.${row.id}`, { method: "PATCH", body: JSON.stringify({ sigil_cost: values[lvl - 1], sigil_per_level: null }) });
+              else inserts.push({ expert, path_number: pathNum, path_name: pathName, level: lvl, sigil_cost: values[lvl - 1], sort_order: pathNum * 1000 + lvl });
+            }
+            for (let i = 0; i < inserts.length; i += 200) await sb(`expert_research_nodes`, { method: "POST", prefer: "return=minimal", body: JSON.stringify(inserts.slice(i, i + 200)) });
+            written += values.length;
+            status.textContent = `${expert}: path ${pathNum} done (${written} levels so far)`;
+          }
+        }
+        EXPERTS_RESEARCH_NODES_GLOBAL = null;
+        toast(`Sigils by level saved (${written} levels)`);
+        status.textContent = `Done: ${written} levels written.`;
+        loadRows();
+      } catch (err) {
+        toast("Couldn't write the levels", true);
+        status.textContent = String(err && err.message || err);
+      }
+      btn.disabled = false;
+    });
+  }
 
   document.getElementById("adminExpertPicker").addEventListener("change", (e) => {
     ADMIN_ACTIVE_EXPERT = e.target.value;
