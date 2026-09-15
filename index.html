@@ -1340,12 +1340,23 @@ const T = {
   research_time_label: { en: "Research Time", ar: "وقت البحث", ko: "연구 시간" },
   max_this_section: { en: "Max this section", ar: "الحد الأقصى لهذا القسم", ko: "이 섹션 최대치로" },
   shared_label: { en: "Shared", ar: "مشترك", ko: "공통" },
+  vis_admin_intro: { en: "Untick anything visitors should not see. You always see everything while logged in. Changes apply to everyone immediately.", ar: "أزل التحديد عن أي شيء لا يجب أن يراه الزوار. أنت ترى كل شيء دائمًا أثناء تسجيل الدخول. تُطبَّق التغييرات على الجميع فورًا.", ko: "방문자에게 보이지 않아야 할 항목의 체크를 해제하세요. 로그인 중에는 항상 모든 것이 보입니다. 변경 사항은 즉시 모두에게 적용됩니다." },
+  vis_pages: { en: "Pages", ar: "الصفحات", ko: "페이지" },
+  vis_pages_desc: { en: "Hidden pages disappear from the menu for visitors (the Dashboard always stays).", ar: "الصفحات المخفية تختفي من القائمة للزوار (لوحة التحكم تبقى دائمًا).", ko: "숨긴 페이지는 방문자의 메뉴에서 사라집니다(대시보드는 항상 유지)." },
+  vis_experts: { en: "Experts", ar: "الخبراء", ko: "전문가" },
+  vis_experts_desc: { en: "Hidden experts are left out of visitors' pages, totals and Dashboard.", ar: "الخبراء المخفيون يُستبعدون من صفحات الزوار والإجماليات ولوحة التحكم.", ko: "숨긴 전문가는 방문자의 페이지, 합계, 대시보드에서 제외됩니다." },
+  vis_pets: { en: "Pets", ar: "الحيوانات الأليفة", ko: "펫" },
+  vis_pets_desc: { en: "Hidden pets are left out of visitors' pages, totals and Dashboard.", ar: "الحيوانات المخفية تُستبعد من صفحات الزوار والإجماليات ولوحة التحكم.", ko: "숨긴 펫은 방문자의 페이지, 합계, 대시보드에서 제외됩니다." },
   vis_visible: { en: "Visible to visitors", ar: "ظاهر للزوار", ko: "방문자에게 표시" },
   vis_hidden: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   vis_visible_hint: { en: "Visitors can see this card. Click to hide it from them.", ar: "يمكن للزوار رؤية هذه البطاقة. انقر لإخفائها عنهم.", ko: "방문자가 이 카드를 볼 수 있습니다. 클릭하면 숨깁니다." },
   vis_hidden_hint: { en: "Only you can see this card. Click to show it to visitors.", ar: "أنت فقط من يرى هذه البطاقة. انقر لإظهارها للزوار.", ko: "이 카드는 나만 볼 수 있습니다. 클릭하면 방문자에게 표시합니다." },
   vis_now_hidden: { en: "Hidden from visitors", ar: "تم إخفاؤه عن الزوار", ko: "방문자에게 숨겨짐" },
   vis_now_visible: { en: "Now visible to visitors", ar: "أصبح ظاهرًا للزوار", ko: "이제 방문자에게 표시됨" },
+  pack_reset_daily: { en: "Daily", ar: "\u064a\u0648\u0645\u064a\u064b\u0627", ko: "\ub9e4\uc77c" },
+  pack_reset_weekly: { en: "Weekly", ar: "\u0623\u0633\u0628\u0648\u0639\u064a\u064b\u0627", ko: "\ub9e4\uc8fc" },
+  pack_reset_biweekly: { en: "Every 2 weeks", ar: "\u0643\u0644 \u0623\u0633\u0628\u0648\u0639\u064a\u0646", ko: "2\uc8fc\ub9c8\ub2e4" },
+  pack_reset_monthly: { en: "Monthly", ar: "\u0634\u0647\u0631\u064a\u064b\u0627", ko: "\ub9e4\uc6d4" },
   count_toward_dashboard: { en: "Count toward Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
   t12_research_title: { en: "T12 Research", ar: "أبحاث T12", ko: "T12 연구" },
   t12_group_troop_unlock: { en: "Troop Unlock", ar: "فتح الجنود", ko: "부대 해금" },
@@ -1527,8 +1538,6 @@ const T = {
   trade_left_over: { en: "left over", ar: "متبقٍ", ko: "남음" },
   pack_group_placeholder: { en: "Group…", ar: "المجموعة…", ko: "그룹…" },
   pack_group_title: { en: "Main name this table sits under. Tables with the same group name are shown together.", ar: "الاسم الرئيسي الذي يندرج تحته هذا الجدول. تُعرض الجداول ذات اسم المجموعة نفسه معًا.", ko: "이 표가 속한 상위 이름입니다. 같은 그룹 이름의 표는 함께 표시됩니다." },
-  pack_lock_option: { en: "One option for the whole ladder", ar: "خيار واحد للسلّم بأكمله", ko: "사다리 전체에 하나의 옵션" },
-  pack_lock_option_desc: { en: "You pick the option once and every tier gives that option (no mixing per tier). Leave off if each tier can pick a different option.", ar: "تختار الخيار مرة واحدة ويمنح كل مستوى ذلك الخيار (بدون خلط لكل مستوى). اتركه بدون تحديد إذا كان كل مستوى يمكنه اختيار خيار مختلف.", ko: "옵션을 한 번 선택하면 모든 티어가 그 옵션을 제공합니다(티어별 혼합 불가). 티어마다 다른 옵션을 고를 수 있으면 끄세요." },
   pack_buys_per_reset_choice: { en: "Purchases per reset (shared by all options)", ar: "عدد المشتريات لكل تكرار (مشترك بين كل الخيارات)", ko: "주기당 구매 횟수 (모든 옵션 공유)" },
   pack_rowmax_head: { en: "Max", ar: "الحد", ko: "최대" },
   pack_rowmax_title: { en: "How many times this row can be bought (per reset). Empty = the table's default. On a ladder, set it on the last tier to allow buying it again after the ladder is complete.", ar: "عدد مرات شراء هذا الصف (لكل تكرار). فارغ = الافتراضي للجدول. في السلّم، ضعه على آخر مستوى للسماح بشرائه مجددًا بعد إكمال السلّم.", ko: "이 행을 (주기당) 살 수 있는 횟수입니다. 비우면 표 기본값. 사다리형이면 마지막 단계에 설정해 사다리 완료 후 반복 구매를 허용합니다." },
@@ -1608,17 +1617,20 @@ const T = {
   marks_pack_gems: { en: "Count gems from packs toward marks (500 gems = 1 Common Mark)", ar: "احتسب جواهر الحزم ضمن العلامات (500 جوهرة = علامة عادية)", ko: "패키지 보석을 문장으로 계산 (500 보석 = 일반 문장 1)" },
   marks_per_pet: { en: "Per pet", ar: "لكل حيوان أليف", ko: "펫별" },
   marks_none: { en: "Every unlocked pet is already maxed.", ar: "كل الحيوانات الأليفة المفتوحة وصلت الحد الأقصى.", ko: "해금된 모든 펫이 이미 최대입니다." },
-  pack_kind_title: { en: "Purchase type", ar: "نوع الشراء", ko: "구매 방식" },
-  pack_kind_normal: { en: "Any row, any time", ar: "أي صف في أي وقت", ko: "아무 행이나 언제든" },
-  pack_kind_normal_desc: { en: "Each row can be bought on its own.", ar: "يمكن شراء كل صف بمفرده.", ko: "각 행을 따로 살 수 있습니다." },
-  pack_kind_ladder: { en: "Ladder — must be bought in order", ar: "سلّم — يجب الشراء بالترتيب", ko: "사다리 — 순서대로 구매" },
-  pack_kind_ladder_desc: { en: "Start from the first price and work up; each tier once per reset.", ar: "ابدأ من أول سعر وتدرّج؛ كل مستوى مرة لكل تكرار.", ko: "첫 가격부터 위로; 단계마다 주기당 1회." },
-  pack_kind_option_cols: { en: "Ladder with options — each column is one choice per tier", ar: "سلّم مع خيارات — كل عمود خيار واحد لكل مستوى", ko: "옵션 사다리 — 각 열이 단계별 선택지" },
-  pack_kind_option_cols_desc: { en: "Rows are the price tiers; buying a tier gives one column's amount (Mix & Match style).", ar: "الصفوف هي مستويات السعر؛ شراء المستوى يمنح كمية عمود واحد.", ko: "행은 가격 단계; 단계를 사면 한 열의 수량만 받습니다." },
-  pack_kind_option_tables: { en: "Ladder with options — this table is one choice; the others share its Group name", ar: "سلّم مع خيارات — هذا الجدول خيار واحد؛ الجداول الأخرى تشارك اسم المجموعة", ko: "옵션 사다리 — 이 표가 선택지 하나; 같은 그룹 이름의 표들과 묶임" },
-  pack_kind_option_tables_desc: { en: "Same as above, but each option lives in its own table. Give all of them the same Group name and pick this on each.", ar: "مثل السابق لكن كل خيار في جدول مستقل. امنحها جميعًا اسم المجموعة نفسه واختر هذا في كل منها.", ko: "위와 같지만 옵션마다 표가 따로 있습니다. 모두 같은 그룹 이름을 주고 각 표에서 이걸 선택하세요." },
-  pack_kind_choice: { en: "Choose one row per purchase", ar: "اختر صفًا واحدًا لكل عملية شراء", ko: "구매당 행 하나 선택" },
-  pack_kind_choice_desc: { en: "The rows are alternatives at one price (no tiers); each purchase takes one of them and the buys-per-reset limit is shared.", ar: "الصفوف بدائل بسعر واحد (بدون مستويات)؛ كل عملية شراء تأخذ واحدًا ويُشترك حد الشراء لكل تكرار.", ko: "행들은 한 가격의 대안(단계 없음); 구매마다 하나를 고르고 주기당 구매 한도를 공유합니다." },
+  pk_q1: { en: "How is this pack bought?", ar: "كيف تُشترى هذه الحزمة؟", ko: "이 패키지는 어떻게 구매하나요?" },
+  pk_any: { en: "Any row, whenever you like", ar: "أي صف، متى شئت", ko: "아무 행이나, 언제든지" },
+  pk_any_desc: { en: "Normal shop packs. Each row is a separate pack.", ar: "حزم المتجر العادية. كل صف حزمة مستقلة.", ko: "일반 상점 패키지. 각 행이 별도의 패키지입니다." },
+  pk_tiers: { en: "In steps, cheapest first", ar: "على مراحل، الأرخص أولاً", ko: "단계별로, 가장 저렴한 것부터" },
+  pk_tiers_desc: { en: "Buy $4.99, then $9.99, then $19.99… Each step once per reset (calendar packs, Mix & Match).", ar: "اشترِ 4.99$ ثم 9.99$ ثم 19.99$… كل مرحلة مرة واحدة لكل تكرار (حزم التقويم، Mix & Match).", ko: "$4.99, 그다음 $9.99, 그다음 $19.99… 각 단계는 주기당 한 번(캘린더 패키지, Mix & Match)." },
+  pk_choice: { en: "Pick one row per purchase", ar: "اختر صفًا واحدًا لكل عملية شراء", ko: "구매마다 한 행 선택" },
+  pk_choice_desc: { en: "All rows cost the same; each purchase gives one of them.", ar: "كل الصفوف بنفس السعر؛ كل عملية شراء تمنح واحدًا منها.", ko: "모든 행의 가격이 같고, 구매할 때마다 그중 하나를 받습니다." },
+  pk_q2: { en: "What does one step give you?", ar: "ماذا تمنحك المرحلة الواحدة؟", ko: "한 단계에서 무엇을 받나요?" },
+  pk_all: { en: "Everything on the row", ar: "كل ما في الصف", ko: "행에 있는 모든 것" },
+  pk_all_desc: { en: "All columns together.", ar: "كل الأعمدة معًا.", ko: "모든 열을 함께 받습니다." },
+  pk_one_each: { en: "One column — and you can choose a different one at each step", ar: "عمود واحد — ويمكنك اختيار عمود مختلف في كل مرحلة", ko: "한 열 — 단계마다 다른 열을 고를 수 있음" },
+  pk_one_each_desc: { en: "e.g. FC at $4.99, then Steel at $9.99.", ar: "مثلاً FC عند 4.99$ ثم Steel عند 9.99$.", ko: "예: $4.99에 FC, 그다음 $9.99에 Steel." },
+  pk_one_locked: { en: "One column — the same one for the whole pack", ar: "عمود واحد — نفسه للحزمة بأكملها", ko: "한 열 — 패키지 전체에 같은 열" },
+  pk_one_locked_desc: { en: "You choose once; every step gives that column.", ar: "تختار مرة واحدة؛ كل مرحلة تمنح ذلك العمود.", ko: "한 번 선택하면 모든 단계가 그 열을 줍니다." },
   pack_restore: { en: "Restore this game pack's original numbers", ar: "استعادة الأرقام الأصلية لحزمة اللعبة", ko: "게임 패키지 원래 수치로 복원" },
   pack_restore_confirm: { en: "Replace this table's columns and numbers with the original game pack values?", ar: "استبدال أعمدة هذا الجدول وأرقامه بقيم حزمة اللعبة الأصلية؟", ko: "이 표의 열과 수치를 원래 게임 패키지 값으로 되돌릴까요?" },
   pack_duplicate: { en: "Duplicate table", ar: "نسخ الجدول", ko: "표 복제" },
@@ -1843,7 +1855,7 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 async function render() {
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack" || TAB === "packs")) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -3647,25 +3659,27 @@ async function renderPacksPage() {
             </label>`).join("")}
         </div>
         ${(() => {
-          const kind = link.option ? "option_tables" : link.colOptions ? "option_cols" : link.choice ? "choice" : link.sequential ? "ladder" : "normal";
-          const kinds = [
-            ["normal", t("pack_kind_normal"), t("pack_kind_normal_desc")],
-            ["ladder", t("pack_kind_ladder"), t("pack_kind_ladder_desc")],
-            ["option_cols", t("pack_kind_option_cols"), t("pack_kind_option_cols_desc")],
-            ["option_tables", t("pack_kind_option_tables"), t("pack_kind_option_tables_desc")],
-            ["choice", t("pack_kind_choice"), t("pack_kind_choice_desc")],
-          ];
-          return `<div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pack_kind_title"))}</div>
-          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
-            ${kinds.map(([k, label, desc]) => `
+          // Q1: how is it bought?  Q2 (tiers only): what does one tier give?
+          const how = link.choice ? "choice" : link.sequential ? "tiers" : "any";
+          const gives = !link.sequential ? "all" : (link.colOptions || link.option) ? (link.lockOption ? "one_locked" : "one_each") : "all";
+          const radio = (name, val, cur, label, desc, attr) => `
             <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px;">
-              <input type="radio" name="packkind-${esc(tb.id)}" data-packkind="${k}" ${kind === k ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
-              <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(label)}</span><br><span class="meta" style="font-size:10.5px;">${esc(desc)}</span></span>
-            </label>`).join("")}
-            <label data-packlockwrap style="display:${kind === "option_cols" || kind === "option_tables" ? "flex" : "none"}; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px; margin-inline-start:24px;">
-              <input type="checkbox" data-packlock ${link.lockOption ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
-              <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(t("pack_lock_option"))}</span><br><span class="meta" style="font-size:10.5px;">${esc(t("pack_lock_option_desc"))}</span></span>
-            </label>
+              <input type="radio" name="${name}-${esc(tb.id)}" ${attr}="${val}" ${cur === val ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
+              <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(label)}</span>${desc ? `<br><span class="meta" style="font-size:10.5px;">${esc(desc)}</span>` : ""}</span>
+            </label>`;
+          return `<div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q1"))}</div>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+            ${radio("pkhow", "any", how, t("pk_any"), t("pk_any_desc"), "data-pkhow")}
+            ${radio("pkhow", "tiers", how, t("pk_tiers"), t("pk_tiers_desc"), "data-pkhow")}
+            ${radio("pkhow", "choice", how, t("pk_choice"), t("pk_choice_desc"), "data-pkhow")}
+          </div>
+          <div data-pkgiveswrap style="display:${how === "tiers" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line);">
+            <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q2"))}</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              ${radio("pkgives", "all", gives, t("pk_all"), t("pk_all_desc"), "data-pkgives")}
+              ${radio("pkgives", "one_each", gives, t("pk_one_each"), t("pk_one_each_desc"), "data-pkgives")}
+              ${radio("pkgives", "one_locked", gives, t("pk_one_locked"), t("pk_one_locked_desc"), "data-pkgives")}
+            </div>
           </div>`;
         })()}
         ${(() => {
@@ -3728,24 +3742,23 @@ async function renderPacksPage() {
           renderPageTabs();
         });
       });
-      // Purchase type radio -> the four underlying flags.
-      const kindRadios = [...box.querySelectorAll("[data-packkind]")];
-      const kindOf = () => (kindRadios.find((r) => r.checked) || {}).dataset?.packkind || "normal";
-      const isLadderKind = () => ["ladder", "option_cols", "option_tables"].includes(kindOf());
-      kindRadios.forEach((r) => r.addEventListener("change", async () => {
+      // Purchase type questions -> the underlying flags.
+      const pick = (attr) => (box.querySelector(`[${attr}]:checked`) || {}).dataset?.[attr.replace("data-", "").replace(/-([a-z])/g, (m, c) => c.toUpperCase())];
+      const isLadderKind = () => pick("data-pkhow") === "tiers";
+      const applyKind = async () => {
         const l = current();
-        const k = kindOf();
-        l.sequential = isLadderKind();
-        l.colOptions = k === "option_cols";
-        l.option = k === "option_tables";
-        l.choice = k === "choice";
-        const lockWrap = box.querySelector("[data-packlockwrap]");
-        if (lockWrap) lockWrap.style.display = (k === "option_cols" || k === "option_tables") ? "flex" : "none";
+        const how = pick("data-pkhow"), gives = pick("data-pkgives") || "all";
+        l.sequential = how === "tiers";
+        l.choice = how === "choice";
+        const opt = how === "tiers" && gives !== "all";
+        l.colOptions = opt;
+        l.option = false; // separate-tables layout retired from the UI
+        l.lockOption = opt && gives === "one_locked";
+        box.querySelector("[data-pkgiveswrap]").style.display = how === "tiers" ? "block" : "none";
         syncResetUi();
         await savePackLinks();
-      }));
-      const lockCb = box.querySelector("[data-packlock]");
-      if (lockCb) lockCb.addEventListener("change", async () => { current().lockOption = lockCb.checked; await savePackLinks(); });
+      };
+      box.querySelectorAll("[data-pkhow],[data-pkgives]").forEach((r) => r.addEventListener("change", applyKind));
       const resetSel = box.querySelector("[data-packreset]");
       const resetDays = box.querySelector("[data-packresetdays]");
       const resetDaysLabel = box.querySelector("[data-packresetdayslabel]");
@@ -3762,7 +3775,7 @@ async function renderPacksPage() {
         anchorLabel.style.display = isNumberReset ? "" : "none";
         const isNumber = custom || PACK_RESET_PRESETS.some((p) => p.key === resetSel.value);
         buysWrap.style.display = isNumber && !isLadderKind() ? "" : "none";
-        if (buysWrap.style.display === "" && buysWrap.querySelector("span")) buysWrap.querySelector("span").textContent = kindOf() === "choice" ? t("pack_buys_per_reset_choice") : t("pack_buys_per_reset");
+        if (buysWrap.style.display === "" && buysWrap.querySelector("span")) buysWrap.querySelector("span").textContent = pick("data-pkhow") === "choice" ? t("pack_buys_per_reset_choice") : t("pack_buys_per_reset");
       };
       const saveReset = async () => {
         const l = current();
@@ -4839,6 +4852,10 @@ const PACK_RESOURCE_ALIASES = {
   "pet custom chest": "Pet Chest", "custom pet chest": "Pet Chest",
   "1hr research speeds": "Research Speedup 1h", "1hr troops speeds": "Troop Speedup 1h", "1hr troop speeds": "Troop Speedup 1h", "1hr construction speeds": "Construction Speedup 1h", "1hr constructions speeds": "Construction Speedup 1h",
   "1hr": "Speedup 1h", "5min": "Speedup 5m", "1min": "Speedup 1m", "3hr": "Speedup 3h", "8hr": "Speedup 8h", "3min": "Speedup 3m",
+  "fc": "Fire Crystal", "fire crystals": "Fire Crystal", "fcs": "FC Shard", "fc shards": "FC Shard", "fire crystal shard": "FC Shard", "fire crystal shards": "FC Shard",
+  "rfc": "Refined FC", "refined fire crystal": "Refined FC", "sigil": "General Sigils", "sigils": "General Sigils", "general sigil": "General Sigils",
+  "book": "Books of Knowledge", "books": "Books of Knowledge", "essence stone": "Essence Stones", "design plans": "Design Plan", "charm guide": "Charm Guides", "charm design": "Charm Designs",
+  "common mark": "Common Marks", "advanced mark": "Advanced Marks", "adv marks": "Advanced Marks", "adv. marks": "Advanced Marks", "com. marks": "Common Marks", "com marks": "Common Marks",
 };
 function packResourceByName(name) {
   const raw = String(name || "").trim();
@@ -11283,6 +11300,7 @@ async function renderFacilityPage() {
 // needing to ask Claude to run SQL.
 // ============================================================
 const ADMIN_TABLES = {
+  visibility: { label: "Visibility" },
   experts: { label: "Experts" },
   pets: { label: "Pets" },
   chiefgears: { label: "Chief Gears" },
@@ -11295,6 +11313,10 @@ const ADMIN_TABLES = {
   items: { label: "Backpack Items" },
   skins: { label: "Skins" },
   herostars: { label: "Heroes Special Skills" },
+  // These are full pages of their own; the Admin tab just opens them.
+  packs: { label: "Packs", tab: "packs" },
+  budgets: { label: "Budgets", tab: "budgets" },
+  backpack: { label: "Backpack", tab: "backpack" },
 };
 let ADMIN_ACTIVE_TABLE = "experts";
 let ADMIN_ACTIVE_EXPERT = null;
@@ -11329,13 +11351,16 @@ async function renderAdminPage() {
 
   content.querySelectorAll("[data-admintable]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      const entry = ADMIN_TABLES[btn.dataset.admintable];
+      if (entry && entry.tab) { goToTab(entry.tab); return; }
       ADMIN_ACTIVE_TABLE = btn.dataset.admintable;
       renderAdminPage();
     });
   });
 
   const body = document.getElementById("adminBody");
-  if (ADMIN_ACTIVE_TABLE === "experts") await renderAdminExpertsGroup(body);
+  if (ADMIN_ACTIVE_TABLE === "visibility") await renderAdminVisibility(body);
+  else if (ADMIN_ACTIVE_TABLE === "experts") await renderAdminExpertsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "pets") await renderAdminPetsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "chiefgears") await renderAdminChiefGearsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "charm") await renderAdminFlatLevels(body, { table: "charm_levels", title: "Chief Charm levels", cols: [
@@ -11354,6 +11379,73 @@ async function renderAdminPage() {
   else if (ADMIN_ACTIVE_TABLE === "items") await renderAdminItems(body);
   else if (ADMIN_ACTIVE_TABLE === "skins") await renderAdminSkinsGroup(body);
   else if (ADMIN_ACTIVE_TABLE === "herostars") await renderAdminHeroStars(body);
+}
+
+// ---- Visibility: what visitors can see (pages, experts, pets) ----
+// Same ui_visibility store as the per-card buttons; keys are "<kind>:<name>".
+function visitorPageList() {
+  const out = [];
+  document.querySelectorAll("#topnavGroups .topnav-group").forEach((g) => {
+    const group = g.dataset.group;
+    g.querySelectorAll("button[data-tab]").forEach((b) => {
+      const tab = b.dataset.tab;
+      if (b.hasAttribute("data-ownertab") || tab === "adminpage" || tab === "overview") return; // owner-only / always on
+      const lbl = NAV_PAGE_LABELS[tab];
+      out.push({ tab, group, label: lbl ? (lbl[LANG] || lbl.en) : tab });
+    });
+  });
+  return out;
+}
+async function renderAdminVisibility(body) {
+  await ensureUiVisibility();
+  await Promise.all([ensureExpertsRosterGlobal(), ensurePetsData()]);
+  const pages = visitorPageList();
+  const experts = EXPERTS_IN_ORDER_GLOBAL.slice();
+  const pets = [...new Set([...Object.keys(PETS_NODES_CACHE || {}), ...Object.keys(PET_REFINE_CACHE || {})])];
+  const row = (kind, name, label, sub) => `
+    <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
+      <input type="checkbox" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} style="width:16px; height:16px; flex-shrink:0;" />
+      <span style="flex:1 1 0; min-width:0;">${esc(label)}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>
+      <span class="meta" data-visstate style="font-size:11px; color:${isHiddenFromVisitors(kind, name) ? "var(--amber)" : "var(--good)"};">${esc(isHiddenFromVisitors(kind, name) ? t("vis_hidden") : t("vis_visible"))}</span>
+    </label>`;
+  const section = (title, desc, rowsHtml) => `
+    <div class="panel" style="margin-bottom:16px;">
+      <h2 style="margin-bottom:4px;">${esc(title)}</h2>
+      <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
+      ${rowsHtml || `<div class="meta">—</div>`}
+    </div>`;
+  body.innerHTML = `
+    <p class="desc" style="margin:0 0 12px;">${esc(t("vis_admin_intro"))}</p>
+    ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""))}
+    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""))}
+    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p))).join(""))}`;
+  body.querySelectorAll("[data-visitem]").forEach((cb) => cb.addEventListener("change", async () => {
+    const [kind, name] = cb.dataset.visitem.split("|");
+    cb.disabled = true;
+    try {
+      await setHiddenFromVisitors(kind, name, !cb.checked);
+      const st = cb.closest("label").querySelector("[data-visstate]");
+      const hidden = !cb.checked;
+      st.textContent = hidden ? t("vis_hidden") : t("vis_visible");
+      st.style.color = hidden ? "var(--amber)" : "var(--good)";
+      toast(hidden ? t("vis_now_hidden") : t("vis_now_visible"));
+      applyPageVisibility();
+    } catch (err) { toast(err.message || "Couldn't save", true); cb.checked = !cb.checked; }
+    cb.disabled = false;
+  }));
+}
+// Hides visitor-hidden pages from the menus (owner always sees everything).
+function applyPageVisibility() {
+  document.querySelectorAll("#topnavGroups .topnav-group").forEach((g) => {
+    let visible = 0;
+    g.querySelectorAll("button[data-tab]").forEach((b) => {
+      if (b.hasAttribute("data-ownertab")) { if (b.style.display !== "none") visible++; return; }
+      const hide = !IS_OWNER && isHiddenFromVisitors("page", b.dataset.tab);
+      b.style.display = hide ? "none" : "";
+      if (!hide) visible++;
+    });
+    if (g.id !== "adminNavGroup") g.style.display = visible ? "" : "none";
+  });
 }
 
 // ---- Roster editor ----
@@ -13923,6 +14015,7 @@ function renderOwnerLoginUI() {
   document.getElementById("adminNavGroup").style.display = IS_OWNER ? "block" : "none";
   // Backpack and Budgets are owner-only pages.
   document.querySelectorAll("[data-ownertab]").forEach((b) => { b.style.display = IS_OWNER ? "" : "none"; });
+  applyPageVisibility();
 
   const user = CURRENT_SESSION && CURRENT_SESSION.user;
   const signedIn = !!(user && user.email && !user.is_anonymous);
