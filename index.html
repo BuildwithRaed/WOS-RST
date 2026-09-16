@@ -3528,6 +3528,8 @@ const T = {
   budgets_split_late: { en: "Can't make {date}", ar: "لا يمكن بحلول {date}", ko: "{date}까지 불가" },
   budgets_split_after: { en: "after your target", ar: "بعد هدفك", ko: "목표일 이후" },
   budgets_split_after_note: { en: "planned after the packs above are bought", ar: "مخطط بعد شراء الحزم أعلاه", ko: "위 팩을 구매한 뒤로 계획됨" },
+  marks_use_site: { en: "Use site rates", ar: "استخدم معدلات الموقع", ko: "사이트 기준 사용" },
+  marks_site_rates_on: { en: "Using the site's rates", ar: "يتم استخدام معدلات الموقع", ko: "사이트 기준 사용 중" },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -13506,12 +13508,13 @@ async function ensurePetMarksState() {
     // Owner test mode: try new rates privately; visitors keep the published set.
     const testMode = IS_OWNER && saved.testMode === true;
     const testRates = { ...published, ...(saved.testRates && typeof saved.testRates === "object" ? saved.testRates : {}) };
-    // Visitors get the rate controls too, on their own copy that starts
-    // cleared to 0 (the owner's published rates are never touched).
-    const zeroRates = Object.fromEntries(Object.keys(PET_MARKS_DEFAULT_RATES).map((k) => [k, 0]));
-    const visitorRates = { ...zeroRates, ...(saved.visitorRates && typeof saved.visitorRates === "object" ? saved.visitorRates : {}) };
+    // Visitors get the rate controls too, on their own copy. It starts from
+    // (and follows) the owner's published rates until they change a rate
+    // themselves; "Use site rates" goes back to following them.
+    const visitorCustom = saved.visitorCustom === true && saved.visitorRates && typeof saved.visitorRates === "object";
+    const visitorRates = visitorCustom ? { ...published, ...saved.visitorRates } : { ...published };
     const rates = !IS_OWNER ? visitorRates : testMode ? testRates : published;
-    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
+    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
   }
   return PET_MARKS_STATE;
 }
@@ -13519,7 +13522,9 @@ async function ensurePetMarksState() {
 async function savePetMarksRates() {
   if (!IS_OWNER) {
     PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.rates };
+    PET_MARKS_STATE.visitorCustom = true;
     await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+    PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
     return;
   }
   if (PET_MARKS_STATE.testMode) {
@@ -14993,7 +14998,10 @@ async function renderRefinePage() {
             <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))}</div>
             <div style="display:flex; flex-direction:column; gap:6px;">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
             <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("marks_rates_note"))}</div>
-            ${IS_OWNER ? "" : `<button type="button" class="btn small ghost" data-marksclear style="margin-top:8px; padding:2px 10px;">${esc(t("marks_clear"))}</button>`}
+            ${IS_OWNER ? "" : `<div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px;">
+              ${PET_MARKS_STATE.visitorCustom ? `<button type="button" class="btn small" data-markssite style="padding:2px 10px;">${esc(t("marks_use_site"))}</button>` : `<span class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</span>`}
+              <button type="button" class="btn small ghost" data-marksclear style="padding:2px 10px;">${esc(t("marks_clear"))}</button>
+            </div>`}
             <div class="meta" style="font-size:10.5px; margin-top:8px; ${IS_OWNER ? "" : "display:none;"} color:${PET_MARKS_STATE.testMode ? "#e0a030" : "var(--muted)"};">${PET_MARKS_STATE.testMode ? "Editing your test rates (visitors unaffected) \u2014 Admin \u2192 Pets \u2192 Marks Calculation" : "Editing the rates visitors use \u2014 Admin \u2192 Pets \u2192 Marks Calculation to test privately"}</div>
           </div>` : ""}
           <div>
@@ -15037,6 +15045,15 @@ async function renderRefinePage() {
       await savePetMarksRates();
       renderTotals();
     }));
+    const siteBtn = totalsEl.querySelector("[data-markssite]");
+    if (siteBtn) siteBtn.addEventListener("click", async () => {
+      Object.keys(rates).forEach((k) => { rates[k] = Number(PET_MARKS_STATE.published[k]) || 0; });
+      PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.published };
+      PET_MARKS_STATE.visitorCustom = false;
+      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+      renderTotals();
+    });
     const clr = totalsEl.querySelector("[data-marksclear]");
     if (clr) clr.addEventListener("click", async () => {
       Object.keys(rates).forEach((k) => { rates[k] = 0; });
