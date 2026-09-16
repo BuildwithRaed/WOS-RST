@@ -3413,6 +3413,13 @@ const T = {
   marks_pack_gems: { en: "Count gems from packs toward marks (500 gems = 1 Common Mark)", ar: "احتسب جواهر الحزم ضمن العلامات (500 جوهرة = علامة عادية)", ko: "패키지 보석을 문장으로 계산 (500 보석 = 일반 문장 1)" },
   marks_per_pet: { en: "Per pet", ar: "لكل حيوان أليف", ko: "펫별" },
   marks_none: { en: "Every unlocked pet is already maxed.", ar: "كل الحيوانات الأليفة المفتوحة وصلت الحد الأقصى.", ko: "해금된 모든 펫이 이미 최대입니다." },
+  pk_picks: { en: "Pick options from the columns", ar: "اختر خيارات من الأعمدة", ko: "열에서 옵션 선택" },
+  pk_picks_desc: { en: "Each column is one option (its number = what one pick gives). Every purchase lets you pick several — different columns or the same one again.", ar: "كل عمود خيار واحد (رقمه = ما يعطيه الاختيار الواحد). كل شراء يتيح لك عدة اختيارات — أعمدة مختلفة أو نفس العمود مجددًا.", ko: "각 열이 옵션 하나입니다 (숫자 = 한 번 선택 시 받는 양). 구매마다 여러 개를 고를 수 있으며, 다른 열이든 같은 열이든 됩니다." },
+  pk_picks_count: { en: "Picks per purchase", ar: "عدد الاختيارات لكل شراء", ko: "구매당 선택 수" },
+  pk_picks_order: { en: "Prices in order", ar: "الأسعار بالترتيب", ko: "가격 순서대로" },
+  pk_picks_order_desc: { en: "(4.99 first, then 9.99 …)", ar: "(4.99 أولًا ثم 9.99 …)", ko: "(4.99 먼저, 그다음 9.99 …)" },
+  pk_picks_order_off: { en: "Off = any price on its own (e.g. only 99.99). Each price once per reset.", ar: "مُعطّل = أي سعر بمفرده (مثل 99.99 فقط). كل سعر مرة واحدة لكل تكرار.", ko: "끄면 = 어떤 가격이든 단독 구매 (예: 99.99만). 가격마다 주기당 한 번." },
+  pk_each_step: { en: "each step", ar: "كل مرحلة", ko: "단계마다" },
   pk_q1: { en: "How is this pack bought?", ar: "كيف تُشترى هذه الحزمة؟", ko: "이 패키지는 어떻게 구매하나요?" },
   pk_any: { en: "Any row, whenever you like", ar: "أي صف، متى شئت", ko: "아무 행이나, 언제든지" },
   pk_any_desc: { en: "Normal shop packs. Each row is a separate pack.", ar: "حزم المتجر العادية. كل صف حزمة مستقلة.", ko: "일반 상점 패키지. 각 행이 별도의 패키지입니다." },
@@ -5770,7 +5777,7 @@ async function renderPacksPage() {
         </div>
         ${(() => {
           // Q1: how is it bought?  Q2 (tiers only): what does one tier give?
-          const how = link.choice ? "choice" : link.sequential ? "tiers" : "any";
+          const how = link.pickCols > 0 ? "picks" : link.choice ? "choice" : link.sequential ? "tiers" : "any";
           const gives = !link.sequential ? "all" : (link.colOptions || link.option) ? (link.lockOption ? "one_locked" : "one_each") : "all";
           const radio = (name, val, cur, label, desc, attr) => `
             <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px;">
@@ -5782,6 +5789,12 @@ async function renderPacksPage() {
             ${radio("pkhow", "any", how, t("pk_any"), t("pk_any_desc"), "data-pkhow")}
             ${radio("pkhow", "tiers", how, t("pk_tiers"), t("pk_tiers_desc"), "data-pkhow")}
             ${radio("pkhow", "choice", how, t("pk_choice"), t("pk_choice_desc"), "data-pkhow")}
+            ${radio("pkhow", "picks", how, t("pk_picks"), t("pk_picks_desc"), "data-pkhow")}
+          </div>
+          <div data-pkpickswrap style="display:${how === "picks" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line); font-size:12px;">
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span>${esc(t("pk_picks_count"))}</span><input type="number" min="1" max="6" step="1" class="keep-w" data-pkpicks value="${link.pickCols || 3}" style="width:56px; font-size:12px; padding:3px 6px;" /></label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-pkpickorder ${link.pickOrder ? "checked" : ""} /><span><b>${esc(t("pk_picks_order"))}</b> <span class="meta" style="font-size:10.5px;">${esc(t("pk_picks_order_desc"))}</span></span></label>
+            <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pk_picks_order_off"))}</div>
           </div>
           <div data-pkgiveswrap style="display:${how === "tiers" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line);">
             <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q2"))}</div>
@@ -5912,6 +5925,12 @@ async function renderPacksPage() {
         const how = pick("data-pkhow"), gives = pick("data-pkgives") || "all";
         l.sequential = how === "tiers";
         l.choice = how === "choice";
+        const pw = box.querySelector("[data-pkpickswrap]");
+        if (pw) pw.style.display = how === "picks" ? "block" : "none";
+        if (how === "picks") {
+          l.pickCols = Math.max(1, Math.min(6, Math.round(Number((box.querySelector("[data-pkpicks]") || {}).value) || 3)));
+          if ((box.querySelector("[data-pkpickorder]") || {}).checked) l.pickOrder = true; else delete l.pickOrder;
+        } else { delete l.pickCols; delete l.pickOrder; }
         const opt = how === "tiers" && gives !== "all";
         l.colOptions = opt;
         if (l.linkSet) { l.sequential = true; l.choice = false; l.colOptions = false; l.option = true; }
@@ -5920,7 +5939,7 @@ async function renderPacksPage() {
         syncResetUi();
         await savePackLinks();
       };
-      box.querySelectorAll("[data-pkhow],[data-pkgives]").forEach((r) => r.addEventListener("change", applyKind));
+      box.querySelectorAll("[data-pkhow],[data-pkgives],[data-pkpicks],[data-pkpickorder]").forEach((r) => r.addEventListener("change", applyKind));
       // Daily-reward cards.
       const dailyBoxes = [...box.querySelectorAll("[data-pkdailycol]")];
       const applyDaily = async () => {
@@ -7511,6 +7530,10 @@ function packLinkForBase(tableId) {
     // For linked sets: every step is its own purchase per reset (any order,
     // skipping allowed), taken from any one of the linked tables.
     freeSteps: l.freeSteps === true,
+    // "Pick options from the columns": each purchase = this many picks, each
+    // pick one column (repeats allowed); pickOrder = prices bought in order.
+    pickCols: Number(l.pickCols) > 0 ? Math.min(6, Math.round(Number(l.pickCols))) : 0,
+    pickOrder: l.pickOrder === true,
     // Optional group ("main name") several tables sit under on the Packs page.
     group: typeof l.group === "string" ? l.group.trim() : "",
     // Daily-reward cards: the ticked columns are PER-DAY amounts, paid for
@@ -7751,6 +7774,50 @@ function packOptionLadderGroups(optionTables) {
   });
   return groups;
 }
+// "Pick options from the columns" (Mix & Match, Wishful, Custom chests): every
+// purchase is `pickCols` picks, each pick one column's amount at that price
+// (the same column may be picked again). Without order each price is its own
+// weekly choice; with order it's a ladder where every step uses the same picks.
+function packPickGroups(tb, link) {
+  const cols = packEffectiveCols(tb);
+  const optCols = Object.keys(cols).map(Number).filter((ci) => ci !== link.priceCol && cols[ci] && cols[ci] !== "Gems").sort((a, b) => a - b);
+  const rows = (tb.rows || []).map((r) => r.cells || []).filter((cells) => packParseNum(cells[link.priceCol]) > 0);
+  if (!optCols.length || !rows.length) return [];
+  const n = link.pickCols;
+  const combos = [];
+  const rec = (start, acc) => { if (acc.length === n) { combos.push(acc.slice()); return; } for (let j = start; j < optCols.length; j++) { acc.push(j); rec(j, acc); acc.pop(); } };
+  rec(0, []);
+  const colGives = rows.map((cells) => optCols.map((ci) => {
+    const qty = packParseNum(cells[ci]) * packColMultiplier(link, ci), out = {};
+    if (qty > 0) { const c = packBundleContents(cols[ci]); Object.keys(c).forEach((nm) => { out[nm] = (out[nm] || 0) + qty * c[nm]; }); }
+    return out;
+  }));
+  const comboGives = (ri, combo) => { const g = {}; combo.forEach((j) => Object.entries(colGives[ri][j]).forEach(([nm, v]) => { g[nm] = (g[nm] || 0) + v; })); return g; };
+  const comboLabel = (combo) => { const cnt = {}; combo.forEach((j) => { cnt[j] = (cnt[j] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([j, k]) => `${k}× ${materialDisplayName(cols[optCols[j]])}`).join(" + "); };
+  const title = link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title"));
+  const prices = rows.map((cells) => packParseNum(cells[link.priceCol]));
+  const id = String(tb.id);
+  if (!link.pickOrder) {
+    return rows.map((cells, ri) => {
+      const offers = combos.map((combo) => ({ price: prices[ri], gives: comboGives(ri, combo), label: `${packFmtMoney(prices[ri], link.currency)} · ${comboLabel(combo)}`, tableTitle: title, currency: link.currency, row: ri }))
+        .filter((o) => Object.keys(o.gives).length);
+      return offers.length ? { reset: link.reset, resetDay: link.resetDay, perCycle: link.buys, offers, ladder: false, choice: true, tables: [id] } : null;
+    }).filter(Boolean);
+  }
+  const offers = [];
+  for (let k = 1; k <= rows.length; k++) {
+    let price = 0; for (let i = 0; i < k; i++) price += prices[i];
+    combos.forEach((combo) => {
+      const steps = [], gives = {};
+      for (let i = 0; i < k; i++) { const g = comboGives(i, combo); steps.push({ price: prices[i], gives: g }); Object.entries(g).forEach(([nm, v]) => { gives[nm] = (gives[nm] || 0) + v; }); }
+      if (!Object.keys(gives).length) return;
+      const lbl = `${k === 1 ? "" : t("pack_up_to") + " "}${packFmtMoney(prices[k - 1], link.currency)}${rows.length > 1 ? ` (${t("pack_steps_of").replace("{k}", k).replace("{n}", rows.length)})` : ""} · ${t("pk_each_step")}: ${comboLabel(combo)}`;
+      offers.push({ price, gives, steps, label: lbl, tableTitle: title, currency: link.currency, tiers: k, row: k - 1 });
+    });
+  }
+  offers.sort((a, b) => a.price - b.price);
+  return offers.length ? [{ reset: link.reset, resetDay: link.resetDay, perCycle: 1, offers, ladder: true, optionPack: true, tables: [id] }] : [];
+}
 // One table whose COLUMNS are the options: each row is a tier, and a
 // purchase of that tier takes the amount from one column only.
 function packColumnOptionGroup(tb) {
@@ -7852,6 +7919,7 @@ function packGroupsForRaw(tables) {
   tables.forEach((tb) => {
     const link = packLinkFor(tb.id);
     if (link.option) return; // handled above as part of its option pack
+    if (link.pickCols > 0) { packPickGroups(tb, link).forEach((g) => groups.push(g)); return; }
     if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) { g.tables = [String(tb.id)]; groups.push(g); } return; }
     const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")), currency: link.currency }));
     if (!offers.length || !offers.some((o) => Object.keys(o.gives).length)) return;
