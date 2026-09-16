@@ -12,15 +12,26 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="WOS RST" />
 <meta name="theme-color" content="#0b0f16" />
-<meta name="description" content="WOS RST — unofficial Whiteout Survival planner: chief gear, charms, hero gear, research, pets, experts and skins with cost and stat tracking." />
+<meta name="description" content="WOS RST — free, unofficial Whiteout Survival planner: track chief gear, charms, hero gear, research, pets and experts, and plan the cheapest packs to reach your target date." />
+<link rel="canonical" href="https://wosrst.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="WOS RST" />
+<meta property="og:url" content="https://wosrst.com/" />
 <meta property="og:title" content="WOS RST — Whiteout Survival Raw Stats Tracker" />
-<meta property="og:description" content="Plan your Whiteout Survival upgrades: gear, charms, research, pets, experts and skins in one place." />
-<meta property="og:image" content="pwa/icons/icon-512.png" />
+<meta property="og:description" content="Track your gear, charms, research, pets and experts, see what you still need, and find the cheapest packs to get there by your target date." />
+<meta property="og:image" content="https://wosrst.com/pwa/icons/icon-512.png" />
+<meta property="og:image:width" content="512" />
+<meta property="og:image:height" content="512" />
+<meta property="og:image:alt" content="WOS RST logo" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="WOS RST — Whiteout Survival Raw Stats Tracker" />
+<meta name="twitter:description" content="Track your upgrades and plan the cheapest packs to reach your target date." />
+<meta name="twitter:image" content="https://wosrst.com/pwa/icons/icon-512.png" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" type="image/png" sizes="192x192" href="pwa/icons/icon-192.png?v=2" />
 <link rel="icon" type="image/svg+xml" href="icons/logo.svg" />
 <link rel="apple-touch-icon" href="pwa/icons/apple-touch-icon.png?v=2" />
-<title>WOS RST</title>
+<title>WOS RST — Whiteout Survival Planner</title>
 <script>
   // Clickjacking protection: refuse to run inside another site's frame.
   if (window.top !== window.self) { try { window.top.location = window.location; } catch (e) { document.documentElement.style.display = "none"; } }
@@ -3508,6 +3519,11 @@ const T = {
   about_f_hint: { en: "Pick a language to write its text. Empty = English (or the default text) is shown.", ar: "اختر لغة لكتابة نصها. الفارغ = يُعرض النص الإنجليزي (أو النص الافتراضي).", ko: "언어를 골라 해당 문구를 작성하세요. 비우면 영어(또는 기본 문구)가 표시됩니다." },
   about_saved: { en: "About us saved", ar: "تم حفظ من نحن", ko: "소개가 저장되었습니다" },
   about_save_failed: { en: "Couldn't save About us", ar: "تعذر حفظ من نحن", ko: "소개를 저장하지 못했습니다" },
+  about_privacy_title: { en: "Your data", ar: "بياناتك", ko: "내 데이터" },
+  about_privacy_1: { en: "What you enter (backpack, target dates, pack dates, My packs) is saved to your account so it's there next time.", ar: "ما تدخله (حقيبة الظهر، التواريخ المستهدفة، تواريخ الحزم، حزمي) يُحفظ في حسابك ليبقى في المرة القادمة.", ko: "입력한 내용(가방, 목표 날짜, 팩 날짜, 내 팩)은 다음에도 볼 수 있도록 계정에 저장됩니다." },
+  about_privacy_2: { en: "Only you can see your own data; other visitors can't.", ar: "أنت فقط من يرى بياناتك؛ لا يستطيع الزوار الآخرون رؤيتها.", ko: "내 데이터는 나만 볼 수 있으며 다른 방문자는 볼 수 없습니다." },
+  about_privacy_3: { en: "No ads, and we never sell or share your data.", ar: "لا إعلانات، ولا نبيع بياناتك أو نشاركها أبدًا.", ko: "광고가 없으며 데이터를 판매하거나 공유하지 않습니다." },
+  about_privacy_4: { en: "Want your data removed? Email us and we'll delete it.", ar: "تريد حذف بياناتك؟ راسلنا وسنحذفها.", ko: "데이터 삭제를 원하시면 이메일을 보내 주세요. 삭제해 드립니다." },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -3611,6 +3627,15 @@ async function renderAboutPage() {
           ${cards.map(([h, d]) => `<div style="background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px 12px;"><div style="font-weight:700; color:var(--ice);">${esc(t(h))}</div><div class="meta" style="font-size:12px; margin-top:2px;">${esc(t(d))}</div></div>`).join("")}
         </div>
       </div>` : ""}
+      <div class="panel" style="margin-bottom:12px;">
+        <div style="font-weight:700; margin-bottom:6px;">${esc(t("about_privacy_title"))}</div>
+        <ul style="margin:0; padding-inline-start:18px; line-height:1.6;">
+          <li>${esc(t("about_privacy_1"))}</li>
+          <li>${esc(t("about_privacy_2"))}</li>
+          <li>${esc(t("about_privacy_3"))}</li>
+          <li>${esc(t("about_privacy_4"))}</li>
+        </ul>
+      </div>
       <button class="btn" type="button" id="aboutContact">${esc(t("contact_title"))}</button>
       <p class="meta" style="font-size:12px; margin:12px 0 0;">${esc(t("about_estimates"))}</p>
       <p class="meta" style="font-size:12px; margin:4px 0 0;">${esc(t("about_unofficial"))}</p>
