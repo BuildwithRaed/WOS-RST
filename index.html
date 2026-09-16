@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <!-- Content Security Policy: only this site, the Supabase library CDN and the
      Supabase API may be loaded/contacted; no plugins; no base-URL hijacking. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:" />
 <meta http-equiv="X-Content-Type-Options" content="nosniff" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -3126,6 +3126,9 @@ async function ensureHeroGearData() {
     });
 
     const saved = await loadCalcState(HERO_GEAR_STORAGE_KEYS[setName]);
+    // A new visitor starts with nothing planned (target = current) instead
+    // of "everything maxed", which made huge, slow pack plans on first visit.
+    if (!saved && !IS_OWNER) HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => GEAR_LEVELING_TABLES.forEach((t) => { const st = state[troop][piece][t]; st.to = st.from; })));
     if (saved) {
       HERO_GEAR_TROOPS.forEach((troop) => {
         HERO_GEAR_PIECE_NAMES.forEach((piece) => {
@@ -5261,6 +5264,7 @@ async function ensureCharmData() {
   CHARM_STATE_LOADED = true;
   await Promise.all([ensureCharmLevelsData(), ensureGearCaps()]);
   const saved = await loadCalcState("charm");
+  if (!saved && !IS_OWNER) CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((slot) => { slot.target = slot.current; }));
   if (saved) {
     CHARM_PIECES.forEach((p) => {
       if (Array.isArray(saved[p.key])) {
@@ -5759,7 +5763,7 @@ function packOptionLadderGroups(optionTables) {
     if (!tiers) return;
     const lastMax = Math.max(0, ...links.map((l) => Number((l.rowMax || {})[tiers - 1]) || 0));
     const g = packBuildOptionLadder(title, lead, perTable, tags, lastMax);
-    if (g) groups.push(g);
+    if (g) { g.tables = tbs.map((x) => String(x.id)); groups.push(g); }
   });
   return groups;
 }
@@ -5864,7 +5868,7 @@ function packGroupsForRaw(tables) {
   tables.forEach((tb) => {
     const link = packLinkFor(tb.id);
     if (link.option) return; // handled above as part of its option pack
-    if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) groups.push(g); return; }
+    if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) { g.tables = [String(tb.id)]; groups.push(g); } return; }
     const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")), currency: link.currency }));
     if (!offers.length || !offers.some((o) => Object.keys(o.gives).length)) return;
     const rowMaxOf = (o) => { const m = Number((link.rowMax || {})[o.row]); return Number.isInteger(m) && m > 0 ? m : null; };
@@ -5883,16 +5887,16 @@ function packGroupsForRaw(tables) {
         const g2 = { ...full.gives }; Object.keys(last.gives).forEach((n) => { g2[n] = (g2[n] || 0) + k * last.gives[n]; });
         prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${full.label} + ${k}× ${last.label}` });
       }
-      groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: 1, offers: prefixes, ladder: true });
+      groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: 1, offers: prefixes, ladder: true, tables: [String(tb.id)] });
     } else if (link.choice) {
       // One purchase = one of the options; the buys-per-reset limit is shared.
-      groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: link.buys, offers, ladder: false, choice: true });
+      groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: link.buys, offers, ladder: false, choice: true, tables: [String(tb.id)] });
     } else {
       offers.forEach((o) => {
         const m = rowMaxOf(o);
         // A per-row limit on an "any time" pack is a total limit.
         const reset = m && link.reset === "unlimited" ? "once" : link.reset;
-        groups.push({ reset, resetDay: link.resetDay, perCycle: m || link.buys, offers: [o], ladder: false });
+        groups.push({ reset, resetDay: link.resetDay, perCycle: m || link.buys, offers: [o], ladder: false, tables: [String(tb.id)] });
       });
     }
   });
@@ -6491,7 +6495,10 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   } else if (skipPagePlan) {
     sections = "";
   } else {
-    const earliest = packEarliestDays(packGroups, need, calcKey);
+    // Worked out in the background planner (the page stays responsive).
+    const pp = await plannerRun("page", { groups: packGroups, need, calcKey, targetDays });
+    if (stale()) return;
+    const earliest = pp.earliest;
     const plans = [];
     if (earliest == null) {
       // Explain what's short and how much the packs could give at most,
@@ -6506,15 +6513,14 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))} — ${esc(t("pack_ladder_short"))} ${shortHtml}</div>
         <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pack_cant_cover_hint"))}${limited.length ? ` ${esc(t("pack_limited_tables"))}: ${limited.map(esc).join(", ")}` : ""}</div>`;
     } else {
-      plans.push({ key: "fastest", title: t("pack_plan_fastest"), plan: packCheapestPlan(packGroups, need, earliest, calcKey), days: earliest });
+      plans.push({ key: "fastest", title: t("pack_plan_fastest"), plan: pp.fastest, days: earliest });
       if (targetDays != null) {
-        const byTarget = targetDays >= earliest ? packPickCheapest([packCheapestPlan(packGroups, need, targetDays, calcKey), plans[0].plan]) : null;
-        plans.push({ key: "target", title: t("pack_plan_by_target"), plan: byTarget, unreachable: targetDays < earliest });
+        plans.push({ key: "target", title: t("pack_plan_by_target"), plan: pp.byTarget, unreachable: targetDays < earliest });
       }
       // "Cheapest" is bounded to a year after the fastest date - a plan
       // that drags on for years to save a little isn't a useful answer.
       const cheapHorizon = earliest + 365;
-      plans.push({ key: "cheapest", title: `${t("pack_plan_cheapest")} (${t("pack_by")} ${fmtDate(cheapHorizon)})`, plan: packPickCheapest([packCheapestPlan(packGroups, need, cheapHorizon, calcKey), ...plans.map((c) => c.plan)]) });
+      plans.push({ key: "cheapest", title: `${t("pack_plan_cheapest")} (${t("pack_by")} ${fmtDate(cheapHorizon)})`, plan: pp.cheapest });
       // The number shown on the "This page only" switch: by the page's target
       // date when set and reachable, otherwise the cheapest plan.
       const pageBest = (plans.find((c) => c.key === "target" && c.plan) || plans.find((c) => c.key === "cheapest")).plan;
@@ -7525,7 +7531,10 @@ function budgetPlanSet(groups, need, calcKey, targetDays) {
   out.chosen = out.byTarget || out.cheapest;
   return out;
 }
-function budgetCombinedPlan(pages, selected, targetDays) {
+// The planning part of the combined plan. It only needs plain data (each
+// page's need, its packs as offer groups, the tables it uses), so it can
+// run in the background worker as well as here.
+function budgetCombinedCore(pages, selected, targetDays, allGroups) {
   let inc = pages.filter((pg) => !pg.missing && selected[pg.calcKey] !== false && Object.keys(pg.need || {}).length);
   const dropped = [];
   // Pages the packs can't cover even on their own (e.g. a fresh visitor whose
@@ -7540,10 +7549,10 @@ function budgetCombinedPlan(pages, selected, targetDays) {
     const calcKey = "__budget:" + keys.join(",");
     const need = {};
     inc.forEach((pg) => Object.entries(pg.need).forEach(([n, q]) => { need[n] = (need[n] || 0) + q; }));
-    const seen = new Set(), tables = [];
-    inc.forEach((pg) => pg.tables.forEach((tb) => { if (!seen.has(String(tb.id))) { seen.add(String(tb.id)); tables.push(tb); } }));
-    const groups = packGroupsFor(tables, calcKey);
-    return { keys, calcKey, need, tables, groups, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+    const ids = new Set();
+    inc.forEach((pg) => (pg.tableIds || []).forEach((id) => ids.add(String(id))));
+    const groups = allGroups.filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
+    return { keys, calcKey, need, groups, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   };
   let res = setup();
   // Fast path: every page's own plan put together. When the packs' limits
@@ -7586,6 +7595,86 @@ function budgetCombinedPlan(pages, selected, targetDays) {
   res.dropped = dropped;
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
   return res;
+}
+// Same inputs as before: builds every candidate pack group once (here, where
+// the pack tables live) and hands the plain data to the planner.
+function budgetCombinedInput(pages, selected) {
+  const cands = pages.filter((pg) => !pg.missing && selected[pg.calcKey] !== false && Object.keys(pg.need || {}).length);
+  const seen = new Set(), tables = [];
+  cands.forEach((pg) => (pg.tables || []).forEach((tb) => { if (!seen.has(String(tb.id))) { seen.add(String(tb.id)); tables.push(tb); } }));
+  const allGroups = cands.length ? packGroupsFor(tables, "__budget:" + cands.map((pg) => pg.calcKey).join(",")) : [];
+  const lite = pages.map((pg) => ({ calcKey: pg.calcKey, missing: !!pg.missing, need: pg.need || {}, packGroups: pg.packGroups || [], supplied: pg.supplied ? [...pg.supplied] : [], tableIds: (pg.tables || []).map((tb) => String(tb.id)) }));
+  return { pages: lite, selected: selected || {}, allGroups };
+}
+function budgetCombinedPlan(pages, selected, targetDays) {
+  const inp = budgetCombinedInput(pages, selected);
+  return plannerCombinedLocal({ ...inp, targetDays });
+}
+// Runs the combined plan (and the own plans of pages it had to leave out).
+function plannerCombinedLocal(payload) {
+  const pages = payload.pages.map((pg) => ({ ...pg, supplied: new Set(pg.supplied || []) }));
+  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups);
+  res.droppedPlans = {};
+  (res.dropped || []).forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg) res.droppedPlans[k] = budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, payload.targetDays); });
+  delete res.groups;
+  return res;
+}
+// A page's own Fastest / By target / Cheapest plans (the Pack cost cards).
+function plannerPagePlans(payload) {
+  const { groups, need, calcKey, targetDays } = payload;
+  const earliest = packEarliestDays(groups, need, calcKey);
+  if (earliest == null) return { earliest: null };
+  const fastest = packCheapestPlan(groups, need, earliest, calcKey);
+  const byTarget = targetDays != null && targetDays >= earliest ? packPickCheapest([packCheapestPlan(groups, need, targetDays, calcKey), fastest]) : null;
+  const cheapHorizon = earliest + 365;
+  const cheapest = packPickCheapest([packCheapestPlan(groups, need, cheapHorizon, calcKey), fastest, byTarget]);
+  return { earliest, fastest, byTarget, cheapest };
+}
+// ---- Background planner (Web Worker) ----
+// The planner's math runs in a background thread, so the page never freezes
+// while packs are worked out; results come back when ready. If the browser
+// can't start the worker, the same functions simply run here instead.
+const PLANNER_FN_NAMES = ["packStackInfo", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
+let PLANNER_WORKER = null, PLANNER_SEQ = 0;
+const PLANNER_WAIT = new Map();
+function plannerWorker() {
+  if (PLANNER_WORKER === false) return null;
+  if (PLANNER_WORKER) return PLANNER_WORKER;
+  try {
+    const fns = PLANNER_FN_NAMES.map((n) => { const f = window[n]; if (typeof f !== "function") throw new Error("missing " + n); return f.toString(); });
+    const src = [
+      `const PACK_HORIZON_DAYS = ${JSON.stringify(PACK_HORIZON_DAYS)};`,
+      `const TRADE_DEFAULT_RATES = ${JSON.stringify(TRADE_DEFAULT_RATES)};`,
+      `const TRADE_TARGET_PRIORITY = ${JSON.stringify(TRADE_TARGET_PRIORITY)};`,
+      "let TRADE_RATES_CACHE = null; let LAST_TRADE = '';",
+      "const PACK_PLAN_CACHE = new Map(); const PACK_EARLIEST_CACHE = new Map();",
+      ...fns,
+      "self.onmessage = (e) => { const { id, kind, payload, trade } = e.data; const sig = JSON.stringify(trade || null); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null;",
+      "  try { const result = kind === 'page' ? plannerPagePlans(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
+    ].join("\n");
+    const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    w.onmessage = (e) => { const cb = PLANNER_WAIT.get(e.data.id); if (!cb) return; PLANNER_WAIT.delete(e.data.id); if (e.data.ok) cb.resolve(e.data.result); else cb.reject(new Error(e.data.error)); };
+    w.onerror = () => { PLANNER_WORKER = false; PLANNER_WAIT.forEach((cb) => cb.reject(new Error("planner worker failed"))); PLANNER_WAIT.clear(); };
+    PLANNER_WORKER = w;
+  } catch (e) {
+    console.warn("Background planner unavailable, planning on the page instead", e);
+    PLANNER_WORKER = false;
+  }
+  return PLANNER_WORKER || null;
+}
+function plannerRun(kind, payload) {
+  const local = () => (kind === "page" ? plannerPagePlans(payload) : plannerCombinedLocal(payload));
+  const w = plannerWorker();
+  if (!w) return Promise.resolve().then(local);
+  const id = ++PLANNER_SEQ;
+  return new Promise((resolve, reject) => {
+    PLANNER_WAIT.set(id, { resolve, reject });
+    w.postMessage({ id, kind, payload, trade: TRADE_RATES_CACHE });
+  }).catch((err) => { console.warn("Background planner failed, planning on the page instead", err); return local(); });
+}
+async function budgetCombinedPlanAsync(pages, selected, targetDays) {
+  const inp = budgetCombinedInput(pages, selected);
+  return plannerRun("combined", { ...inp, targetDays });
 }
 // Each page's own plan, added together as one plan over the combined packs.
 // Valid only if the packs' limits allow those purchases together and they
@@ -7689,7 +7778,7 @@ async function budgetCombinedFor(calcKey, groups, opts = {}) {
   if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
   await Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData()]);
   const pages = await Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true, groups: p.key === calcKey ? groups : undefined })));
-  const combined = budgetCombinedPlan(pages, selected, targetDays);
+  const combined = await budgetCombinedPlanAsync(pages, selected, targetDays);
   return { combined, targetDays, sharedWith: sharedWith.filter((k) => combined.inc.includes(k)), included: combined.inc.includes(calcKey) };
 }
 let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
@@ -7738,9 +7827,10 @@ async function renderBudgetsPage(opts = {}) {
     await new Promise((r) => setTimeout(r, 30));
     if (TAB !== "budgets") return;
   }
-  const combined = (dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig) ? BUDGET_DATA.combined : budgetCombinedPlan(pages, BUDGET_SELECTED, targetDays);
+  const combined = (dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig) ? BUDGET_DATA.combined : await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
+  if (TAB !== "budgets") return;
   // Pages the combined plan had to leave out get their own plan.
-  combined.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null) Object.assign(pg, budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, targetDays)); });
+  combined.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combined.droppedPlans && combined.droppedPlans[k]) Object.assign(pg, combined.droppedPlans[k]); });
   BUDGET_DATA = { dashStats, pages, targetDays, combined, selSig };
   const curStat = (troop, stat) => { const x = (dashStats || []).find((s) => s.troop === troop && s.stat === stat); return x ? x.total : null; };
   const STAT_KEYS = ["ATT", "DEF", "DMG", "HP"];
@@ -8241,6 +8331,7 @@ async function loadChiefGearRows() {
     if (CHIEF_GEAR_STATE[p.key].to === null) CHIEF_GEAR_STATE[p.key].to = CHIEF_GEAR_ROWS.length - 1;
   });
   const saved = await loadCalcState("chief_gear");
+  if (!saved && !IS_OWNER) CHIEF_GEAR_PIECES.forEach((p) => { CHIEF_GEAR_STATE[p.key].to = CHIEF_GEAR_STATE[p.key].from; });
   if (saved) {
     CHIEF_GEAR_PIECES.forEach((p) => {
       if (typeof saved[p.key]?.from === "number") CHIEF_GEAR_STATE[p.key].from = saved[p.key].from;
@@ -10124,7 +10215,8 @@ let T12_STATE = null;
 let T12_TARGET = null; // { troop: { itemKey: targetLevel } } - missing = max
 function t12TargetOf(troop, def) {
   const v = T12_TARGET && T12_TARGET[troop] && T12_TARGET[troop][def.key];
-  return typeof v === "number" ? Math.min(def.max, Math.max(0, v)) : def.max;
+  if (typeof v === "number") return Math.min(def.max, Math.max(0, v));
+  return IS_OWNER ? def.max : Math.min(def.max, Number(T12_STATE && T12_STATE[troop] && T12_STATE[troop][def.key]) || 0);
 }
 
 const T12_RESOURCE_ICONS = {
@@ -10271,7 +10363,8 @@ let T11_STATE = null;
 let T11_TARGET = null; // { troop: { track: targetLevel } } - missing = max
 function t11TargetOf(troop, track, maxLvl) {
   const v = T11_TARGET && T11_TARGET[troop] && T11_TARGET[troop][track];
-  return typeof v === "number" ? Math.min(maxLvl, Math.max(0, v)) : maxLvl;
+  if (typeof v === "number") return Math.min(maxLvl, Math.max(0, v));
+  return IS_OWNER ? maxLvl : Math.min(maxLvl, Number(T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0);
 }
 
 async function ensureT11StateData() {
@@ -11363,10 +11456,10 @@ async function renderExpertsPage() {
   EXPERTS_SHOWN.forEach((e) => {
     // New expert: target defaults to the top of its affinity data, so a
     // table that only holds the max (one row at 100) still shows its cost.
-    if (!saved[e.key]) saved[e.key] = { current: 0, desired: Math.max(1, ...(AFFINITY_CACHE[e.key] || []).map((r) => Number(r.level) || 0)), skills: {} };
+    if (!saved[e.key]) saved[e.key] = { current: 0, desired: IS_OWNER ? Math.max(1, ...(AFFINITY_CACHE[e.key] || []).map((r) => Number(r.level) || 0)) : 0, skills: {} };
     e.skills.forEach((s) => {
       const max = skillMaxLevel(e.key, s);
-      if (!saved[e.key].skills[s]) saved[e.key].skills[s] = { current: 0, desired: max };
+      if (!saved[e.key].skills[s]) saved[e.key].skills[s] = { current: 0, desired: IS_OWNER ? max : 0 };
     });
   });
 
@@ -12292,7 +12385,7 @@ async function renderPetsDataPage() {
     if (s && typeof s === "object") return s;
     // migrate old single-index state (or default) to {from, to}
     const maxIdx = PETS_NODES_CACHE[pet].length - 1;
-    return { from: -1, to: maxIdx };
+    return { from: -1, to: IS_OWNER ? maxIdx : -1 };
   }
 
   function computeNeeded(pet) {
