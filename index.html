@@ -6352,6 +6352,9 @@ function packPickCheapest(plans) {
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};
 const PACK_COST_VIEW = {};
+// Which view the Pack cost box opens on (the switch still changes it):
+// the owner opens on "This page only" and can switch; visitors only have that view.
+function packCostDefaultView() { return "page"; }
 const PACK_VIEW_TOTALS = {};   // per page: last known totals of both views, for the switch labels     // per page: "shared" | "page" (this session)     // per page; hidden on every load until opened
 const PACK_TARGET_CACHE = {};  // per page target date (ISO yyyy-mm-dd), from calc_state
 // The Pack cost block is owner-only on every page.
@@ -6454,9 +6457,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     // Only the view that's showing is worked out; the other one's total is
     // shown on its button when it's already known for these same numbers.
     let info = null;
-    try { info = await budgetCombinedFor(calcKey, groups, { infoOnly: true }); } catch (e) { info = null; }
+    // Visitors only get "This page only" in this box (no shared plan, no
+    // switch); the owner gets both views. Budgets stays shared for everyone.
+    if (IS_OWNER) { try { info = await budgetCombinedFor(calcKey, groups, { infoOnly: true }); } catch (e) { info = null; } }
     if (info && info.notIncluded) shared = info;
-    else if (info && (PACK_COST_VIEW[calcKey] || "shared") === "shared") {
+    else if (info && (PACK_COST_VIEW[calcKey] || packCostDefaultView()) === "shared") {
       try { shared = await budgetCombinedFor(calcKey, groups); } catch (e) { console.error("combined plan failed", e); shared = null; }
     } else if (info) shared = { lazyShare: true, sharedWith: info.sharedWith };
     if (stale()) return;
@@ -6568,7 +6573,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // View switch: "Shared with Budgets" (this page's share of the combined
   // plan) or "This page only" (plan as if nothing else were being worked on).
   const canShare = !!sharedSections || !!(shared && shared.lazyShare);
-  if (canShare && !PACK_COST_VIEW[calcKey]) PACK_COST_VIEW[calcKey] = "shared";
+  if (canShare && !PACK_COST_VIEW[calcKey]) PACK_COST_VIEW[calcKey] = packCostDefaultView();
   const usingShared = !!sharedSections && PACK_COST_VIEW[calcKey] === "shared";
   const known = (PACK_VIEW_TOTALS[calcKey] && PACK_VIEW_TOTALS[calcKey].sig === viewSig) ? PACK_VIEW_TOTALS[calcKey] : { sig: viewSig };
   if (sharedTotalText) known.shared = sharedTotalText; else sharedTotalText = known.shared || "";
