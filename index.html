@@ -3524,6 +3524,10 @@ const T = {
   about_privacy_2: { en: "Only you can see your own data; other visitors can't.", ar: "أنت فقط من يرى بياناتك؛ لا يستطيع الزوار الآخرون رؤيتها.", ko: "내 데이터는 나만 볼 수 있으며 다른 방문자는 볼 수 없습니다." },
   about_privacy_3: { en: "No ads, and we never sell or share your data.", ar: "لا إعلانات، ولا نبيع بياناتك أو نشاركها أبدًا.", ko: "광고가 없으며 데이터를 판매하거나 공유하지 않습니다." },
   about_privacy_4: { en: "Want your data removed? Email us and we'll delete it.", ar: "تريد حذف بياناتك؟ راسلنا وسنحذفها.", ko: "데이터 삭제를 원하시면 이메일을 보내 주세요. 삭제해 드립니다." },
+  budgets_split_parts: { en: "2 parts: by your target + after it", ar: "جزءان: بحلول هدفك + بعده", ko: "2개 부분: 목표일까지 + 그 이후" },
+  budgets_split_late: { en: "Can't make {date}", ar: "لا يمكن بحلول {date}", ko: "{date}까지 불가" },
+  budgets_split_after: { en: "after your target", ar: "بعد هدفك", ko: "목표일 이후" },
+  budgets_split_after_note: { en: "planned after the packs above are bought", ar: "مخطط بعد شراء الحزم أعلاه", ko: "위 팩을 구매한 뒤로 계획됨" },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -10154,7 +10158,8 @@ function budgetPlanSet(groups, need, calcKey, targetDays) {
 // The planning part of the combined plan. It only needs plain data (each
 // page's need, its packs as offer groups, the tables it uses), so it can
 // run in the background worker as well as here.
-function budgetCombinedCore(pages, selected, targetDays, allGroups) {
+function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
+  opts = opts || {};
   let inc = pages.filter((pg) => !pg.missing && selected[pg.calcKey] !== false && Object.keys(pg.need || {}).length);
   const dropped = [];
   // Pages the packs can't cover even on their own (e.g. a fresh visitor whose
@@ -10251,7 +10256,41 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups) {
       }
     });
   }
+  // Target not reachable with every page ticked: keep a by-target plan for the
+  // pages that can make it, and plan the rest after them (their own Fastest /
+  // Cheapest), so one slow page doesn't hide the others' target plan.
+  if (!opts.noSplit && targetDays != null && !res.byTarget && res.chosen && inc.length > 1) {
+    try {
+      const reach = inc.filter((pg) => { const e = pg.packGroups.length ? packEarliestDays(pg.packGroups, pg.need, pg.calcKey) : null; return e != null && e <= targetDays; });
+      const late = inc.filter((pg) => !reach.includes(pg));
+      if (reach.length && late.length) {
+        const sub = budgetCombinedCore(reach, {}, targetDays, allGroups, { noSplit: true, noViews: true });
+        if (sub.byTarget && sub.chosen && Array.isArray(sub.chosen.picks) && !(sub.dropped || []).length) {
+          const used = allGroups.map(() => 0);
+          sub.chosen.picks.forEach((pk) => { const gi = allGroups.indexOf(sub.groups[pk.gi]); if (gi >= 0) used[gi] += pk.count; });
+          const ids = new Set(); late.forEach((pg) => (pg.tableIds || []).forEach((id) => ids.add(String(id))));
+          const lateGroups = allGroups.map((g, gi) => ({ ...g, used: used[gi] })).filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
+          const lateNeed = {}; late.forEach((pg) => Object.entries(pg.need).forEach(([n, q]) => { lateNeed[n] = (lateNeed[n] || 0) + q; }));
+          const lateKey = "__budget:" + late.map((pg) => pg.calcKey).join(",");
+          const e2 = lateGroups.length ? packEarliestDays(lateGroups, lateNeed, lateKey) : null;
+          if (e2 != null) {
+            const fast = packCheapestPlan(lateGroups, lateNeed, e2, lateKey);
+            const big = lateGroups.reduce((n, g) => n + g.offers.length, 0) > 500;
+            const far = [packCheapestPlan(lateGroups, lateNeed, e2 + 365, lateKey, true), big ? null : packCheapestPlan(lateGroups, lateNeed, e2 + 365, lateKey)];
+            const cheap = packPickCheapest(far.concat([fast]).filter(Boolean));
+            if (fast && cheap) {
+              res.split = {
+                target: { keys: reach.map((pg) => pg.calcKey), plan: sub.chosen, shares: budgetShares(sub.chosen, reach) },
+                late: { keys: late.map((pg) => pg.calcKey), earliest: e2, fastest: { plan: fast, shares: budgetShares(fast, late) }, cheapest: { plan: cheap, shares: budgetShares(cheap, late) } },
+              };
+            }
+          }
+        }
+      }
+    } catch (e) { res.split = null; }
+  }
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
+  if (opts.noViews) return res;
   // The other two cards on Budgets: the fastest plan, and the cheapest one
   // within a year of that (each with its own page shares).
   if (res.chosen && res.groups && res.groups.length && Object.keys(res.need || {}).length) {
@@ -10477,6 +10516,7 @@ async function budgetCombinedFor(calcKey, groups, opts = {}) {
 }
 let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
 let BUDGET_TARGET = undefined; // yyyy-mm-dd or ""
+let BUDGET_SPLIT_LATE = "cheapest"; // split plan: which plan the late pages use ("cheapest" | "fastest")
 let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (not saved)
 // What the Budgets page last computed, so ticking a box or coming back to
 // the page redraws instantly instead of re-adding everything up. Cleared
@@ -10531,13 +10571,19 @@ async function renderBudgetsPage(opts = {}) {
   // Fastest / By your target / Cheapest cards: "main" is the plan Budgets
   // picks (by the target when reachable, otherwise the cheapest). Tapping a
   // card only changes what's shown below; nothing is saved.
-  const reachable = targetDays != null && !!combinedRaw.byTarget;
+  const split = combinedRaw.split && combinedRaw.split.target && combinedRaw.split.late ? combinedRaw.split : null;
+  const splitLate = split ? (split.late[BUDGET_SPLIT_LATE] || split.late.cheapest) : null;
+  const splitMain = split ? {
+    plan: { rows: split.target.plan.rows.concat(splitLate.plan.rows), total: split.target.plan.total + splitLate.plan.total, days: Math.max(split.target.plan.days || 0, splitLate.plan.days || 0), trades: (split.target.plan.trades || []).concat(splitLate.plan.trades || []), split: true },
+    shares: { ...split.target.shares, ...splitLate.shares },
+  } : null;
+  const reachable = targetDays != null && (!!combinedRaw.byTarget || !!split);
   const views = combinedRaw.views || {};
   const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan));
   if (!viewKeys.includes(BUDGET_VIEW)) BUDGET_VIEW = "main";
   const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
   const viewData = (k) => {
-    const v = k === "main" ? { plan: combinedRaw.chosen, shares: combinedRaw.shares } : views[k];
+    const v = k === "main" ? (splitMain || { plan: combinedRaw.chosen, shares: combinedRaw.shares }) : views[k];
     const dropPlans = combinedRaw.dropped.map((dk) => pagesRaw.find((x) => x.calcKey === dk)).filter((pg) => pg && included(pg.calcKey)).map((pg) => pickDropped(pg, k)).filter(Boolean);
     const plans = (v && v.plan ? [v.plan] : []).concat(dropPlans);
     return { plan: v && v.plan, shares: (v && v.shares) || {}, total: plans.reduce((a, pl) => a + packPlanLocal(pl), 0), days: Math.max(0, ...plans.map((pl) => pl.days || 0)), sample: plans[0] && plans[0].rows[0] };
@@ -10644,7 +10690,36 @@ async function renderBudgetsPage(opts = {}) {
     grandCurrency = grandCurrency || combined.chosen.rows[0]?.currency;
     grandDays = Math.max(grandDays, combined.chosen.days);
   }
-  const combinedHtml = combined.inc.length ? `
+  const splitHtml = () => {
+    const tp = split.target.plan, lp = splitLate.plan;
+    const cur = (pl) => pl.rows[0]?.currency, price0 = (pl) => pl.rows[0]?.price;
+    const money = (pl) => packFmtLocal(Math.ceil(packPlanLocal(pl)), cur(pl), true, price0(pl));
+    const when = (d) => d === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(d))} · ${d} ${esc(t("pack_days_short_long"))}`;
+    const names = (keys) => keys.map((k) => esc(packPageLabel(k))).join(" · ");
+    const tradesHtml = (pl) => (pl.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${pl.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : "";
+    const lateCard = (k) => {
+      const v = split.late[k]; if (!v) return "";
+      const sel = v === splitLate;
+      return `<button type="button" data-splitlate="${k}" style="flex:1 1 140px; min-width:0; text-align:start; cursor:pointer; background:none; color:inherit; font:inherit; border:1px solid ${sel ? "var(--ice)" : "var(--line)"}; box-shadow:${sel ? "0 0 0 1px var(--ice) inset" : "none"}; border-radius:10px; padding:6px 10px;">
+        <div class="meta" style="font-size:10px; font-weight:700; text-transform:uppercase;">${esc(k === "fastest" ? t("budgets_view_fastest") : t("budgets_view_cheapest"))}${sel ? ` <span style="font-size:9px; padding:1px 6px; border-radius:6px; background:var(--ice); color:#0f141b;">${esc(t("budgets_view_shown"))}</span>` : ""}</div>
+        <div style="font-size:15px; font-weight:700;">${money(v.plan)}</div><div class="meta" style="font-size:10.5px; color:var(--danger);">${when(v.plan.days)}</div></button>`;
+    };
+    return `<div style="margin-top:10px;">
+      <div style="border:1px solid var(--good); border-radius:10px; padding:10px 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><b>${esc(t("budgets_view_target"))}</b><span style="font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--good); color:#0f141b; font-weight:700;">${when(tp.days)}</span></div>
+        <div class="meta" style="font-size:11px; margin-top:2px;">${names(split.target.keys)}</div>
+        <details style="margin-top:6px;"><summary style="cursor:pointer;"><span style="font-size:18px; font-weight:700;">${money(tp)}</span> <span class="meta" style="font-size:11px;">${esc(t("budgets_packs_detail"))} (${tp.rows.length})</span></summary>${packRowsHtml(tp)}${tradesHtml(tp)}</details>
+      </div>
+      <div style="border:1px solid var(--danger); border-radius:10px; padding:10px 12px; margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><b>${esc(t("budgets_split_late").replace("{date}", fmtDate(targetDays)))}</b><span style="font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--danger); color:#fff; font-weight:700;">${esc(t("budgets_split_after"))}</span></div>
+        <div class="meta" style="font-size:11px; margin-top:2px;">${names(split.late.keys)} — ${esc(t("budgets_split_after_note"))}</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">${lateCard("fastest")}${lateCard("cheapest")}</div>
+        <details style="margin-top:6px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${lp.rows.length}) · ${money(lp)}</summary>${packRowsHtml(lp)}${tradesHtml(lp)}</details>
+      </div>
+      ${combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : ""}
+    </div>`;
+  };
+  const combinedHtml = split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
       <div style="margin-top:10px;">
         <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(t("combined_budget_note"))}</div>
         ${combined.chosen ? `<details><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtLocal(Math.ceil(packPlanLocal(combined.chosen)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</summary>${packRowsHtml(combined.chosen)}
@@ -10685,7 +10760,7 @@ async function renderBudgetsPage(opts = {}) {
       </div>
       <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
         <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
-        ${anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
+        ${anyPlan && split && BUDGET_VIEW === "main" ? `<span class="meta" style="font-size:11px;">${esc(t("budgets_split_parts"))}</span>` : anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
       </div>
       ${viewCardsHtml}
       ${combinedHtml}
@@ -10701,6 +10776,11 @@ async function renderBudgetsPage(opts = {}) {
       <div class="budget-cols" style="margin-top:16px;">${cards.join("")}</div>
     </div>`;
 
+  content.querySelectorAll("[data-splitlate]").forEach((b) => b.addEventListener("click", () => {
+    BUDGET_SPLIT_LATE = b.dataset.splitlate;
+    const y = window.scrollY;
+    renderBudgetsPage().then(() => window.scrollTo(0, y));
+  }));
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
     const y = window.scrollY;
