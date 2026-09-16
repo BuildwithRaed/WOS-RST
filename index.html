@@ -3442,6 +3442,39 @@ const T = {
   pk_visitor_date_desc: { en: "For packs whose date differs by state (e.g. New Gen Heroes). Visitors only change the date; everything else stays yours.", ar: "للحزم التي يختلف موعدها حسب الولاية (مثل أبطال الجيل الجديد). الزوار يغيرون التاريخ فقط.", ko: "주마다 날짜가 다른 팩용 (예: 신세대 영웅). 방문자는 날짜만 변경합니다." },
   pk_visitor_start: { en: "Visitors can set when they start buying", ar: "يمكن للزوار تحديد متى يبدأون الشراء", ko: "방문자가 구매 시작일을 설정 가능" },
   pk_visitor_start_desc: { en: "For cards that begin whenever the player first buys them, not on a fixed week.", ar: "للبطاقات التي تبدأ عند أول شراء للاعب، وليس في أسبوع ثابت.", ko: "고정된 주가 아니라 플레이어가 처음 구매할 때 시작하는 카드용." },
+  mp_title: { en: "My packs", ar: "حزمي", ko: "내 팩" },
+  mp_of: { en: "of", ar: "من", ko: "/" },
+  mp_desc: { en: "Copy a template to make your own pack table. It's saved to your account and used in Budgets and Pack cost for the pages you tick.", ar: "انسخ قالبًا لإنشاء جدول حزمة خاص بك. يُحفظ في حسابك ويُستخدم في الميزانيات وتكلفة الحزم للصفحات التي تحددها.", ko: "템플릿을 복사해 나만의 팩 표를 만드세요. 계정에 저장되며, 체크한 페이지의 예산과 팩 비용에 사용됩니다." },
+  mp_templates_title: { en: "Pack templates", ar: "قوالب الحزم", ko: "팩 템플릿" },
+  mp_duplicate: { en: "Duplicate", ar: "نسخ", ko: "복제" },
+  mp_no_templates: { en: "No templates yet.", ar: "لا توجد قوالب بعد.", ko: "아직 템플릿이 없습니다." },
+  mp_full: { en: "You have {n} tables, the most allowed. Delete one to add another.", ar: "لديك {n} جداول، وهو الحد الأقصى. احذف واحدًا لإضافة آخر.", ko: "최대 {n}개의 표가 있습니다. 새로 추가하려면 하나를 삭제하세요." },
+  mp_speed_note: { en: "Every table you add makes Pack cost and Budgets slower to work out. Untick pages a table isn't for, and delete tables you don't use.", ar: "كل جدول تضيفه يجعل حساب تكلفة الحزم والميزانيات أبطأ. ألغِ تحديد الصفحات غير المعنية واحذف الجداول التي لا تستخدمها.", ko: "표를 추가할수록 팩 비용과 예산 계산이 느려집니다. 해당 없는 페이지는 체크 해제하고 사용하지 않는 표는 삭제하세요." },
+  mp_kind_wishful: { en: "3 picks · prices in order", ar: "3 اختيارات · الأسعار بالترتيب", ko: "3개 선택 · 가격 순서대로" },
+  mp_kind_mixmatch: { en: "3 picks · any price", ar: "3 اختيارات · أي سعر", ko: "3개 선택 · 아무 가격" },
+  mp_kind_regular: { en: "ladder + Max", ar: "سلم الأسعار + الحد الأقصى", ko: "단계 + 최대" },
+  mp_tag: { en: "My pack", ar: "حزمتي", ko: "내 팩" },
+  mp_used_for: { en: "Used for", ar: "يُستخدم لـ", ko: "사용처" },
+  mp_none: { en: "none yet", ar: "لا شيء بعد", ko: "아직 없음" },
+  mp_delete: { en: "Delete", ar: "حذف", ko: "삭제" },
+  mp_delete_confirm: { en: "Delete \"{t}\"?", ar: "حذف \"{t}\"؟", ko: "\"{t}\"을(를) 삭제할까요?" },
+  mp_column: { en: "Column", ar: "عمود", ko: "열" },
+  mp_row: { en: "Row", ar: "صف", ko: "행" },
+  mp_max: { en: "Max", ar: "الحد", ko: "최대" },
+  mp_row_top: { en: "Row + is off: this table already reaches 99.99 (the highest price).", ar: "إضافة صف متوقفة: هذا الجدول يصل بالفعل إلى 99.99 (أعلى سعر).", ko: "행 추가 불가: 이미 99.99(최고 가격)에 도달했습니다." },
+  mp_row_hint: { en: "Prices and Gems fill in by themselves: 0.99 → 2.99 → 4.99 → 9.99 → 19.99 → 49.99 → 99.99. Max = how many times that row can be bought.", ar: "الأسعار والجواهر تُملأ تلقائيًا: 0.99 ← 2.99 ← 4.99 ← 9.99 ← 19.99 ← 49.99 ← 99.99. الحد = عدد مرات شراء هذا الصف.", ko: "가격과 보석은 자동으로 채워집니다: 0.99 → 2.99 → 4.99 → 9.99 → 19.99 → 49.99 → 99.99. 최대 = 해당 행 구매 가능 횟수." },
+  mp_next_date: { en: "Next date", ar: "التاريخ القادم", ko: "다음 날짜" },
+  mp_every_days: { en: "comes back every {n} days", ar: "يعود كل {n} يومًا", ko: "{n}일마다 돌아옴" },
+  mp_locked: { en: "$ and Gems, how it's bought and how often it comes back come from the template.", ar: "السعر والجواهر وطريقة الشراء وتكرار العودة مأخوذة من القالب.", ko: "가격·보석, 구매 방식, 재등장 주기는 템플릿을 따릅니다." },
+  mp_mine_suffix: { en: "my copy", ar: "نسختي", ko: "내 사본" },
+  mp_admin_settings: { en: "admin settings", ar: "إعدادات المشرف", ko: "관리자 설정" },
+  mp_limit_label: { en: "Tables each visitor can have", ar: "عدد الجداول لكل زائر", ko: "방문자당 표 개수" },
+  mp_limit_saved: { en: "My packs limit saved", ar: "تم حفظ حد حزمي", ko: "내 팩 한도 저장됨" },
+  mp_admin_desc: { en: "Visitors copy the tables in the \"Pack templates\" category into their own My packs. Templates aren't used in Budgets or Pack cost. Your own copies (⧉ on a template) go to \"My packs\", hidden from visitors, with no limit.", ar: "ينسخ الزوار جداول فئة \"قوالب الحزم\" إلى حزمهم. القوالب لا تُستخدم في الميزانيات أو تكلفة الحزم. نسخك (⧉ على القالب) تذهب إلى \"My packs\" مخفية عن الزوار وبلا حد.", ko: "방문자는 \"Pack templates\" 분류의 표를 내 팩으로 복사합니다. 템플릿은 예산·팩 비용에 쓰이지 않습니다. 내 사본(템플릿의 ⧉)은 방문자에게 숨겨진 \"My packs\"로 가며 한도가 없습니다." },
+  mp_templates_count: { en: "Templates", ar: "القوالب", ko: "템플릿" },
+  mp_templates_added: { en: "pack templates added", ar: "قوالب حزم أُضيفت", ko: "개 팩 템플릿 추가됨" },
+  mp_template_note: { en: "Not used in Budgets or Pack cost · visitors copy these", ar: "لا تُستخدم في الميزانيات أو تكلفة الحزم · يستنسخها الزوار", ko: "예산·팩 비용에 사용 안 함 · 방문자가 복사" },
+  mp_admin_mine_note: { en: "Your own copies · hidden from visitors", ar: "نسخك الخاصة · مخفية عن الزوار", ko: "내 사본 · 방문자에게 숨김" },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -5210,6 +5243,219 @@ function updateHeroGearCurrentStats() {
 // Visitors: the dates of the packs the admin lets them change (their state's
 // calendar, or when they start a card). Saved to their account.
 let MY_DATES_PREVIEW_OPEN = (() => { try { return localStorage.getItem("my_pack_dates_open") === "1"; } catch (e) { return false; } })();
+// ---- My packs -------------------------------------------------------------
+const MP_PRICE_STEPS = [0.99, 2.99, 4.99, 9.99, 19.99, 49.99, 99.99];
+const MP_GEMS = { 0.99: 500, 2.99: 1500, 4.99: 2500, 9.99: 5000, 19.99: 10000, 49.99: 25000, 99.99: 50000 };
+function mpNum(v) { const n = parseFloat(String(v == null ? "" : v).replace(/[^0-9.-]/g, "")); return Number.isFinite(n) ? n : 0; }
+function mpGems(price) { const k = Math.round(price * 100) / 100; return MP_GEMS[k] != null ? MP_GEMS[k] : Math.round((price + 0.01) * 500); }
+let MY_PACKS_OPEN = new Set();
+let MY_PACKS_SAVE_T = null;
+function mpSaveSoon() { clearTimeout(MY_PACKS_SAVE_T); MY_PACKS_SAVE_T = setTimeout(() => { saveMyPacks(); }, 400); }
+// Admin, once: copies Wishfull, Mix & Match and Lunar Amber Pack into the
+// "Pack templates" category (a snapshot; your real tables stay separate).
+async function packSeedTemplates(tables) {
+  let made = 0, order = tables.length;
+  for (const src of PACK_TEMPLATE_SOURCES) {
+    const from = tables.find((tb) => src.from.some((n) => String(tb.title || "").trim().toLowerCase() === n.toLowerCase()));
+    if (!from) continue;
+    const payload = { title: src.title, columns: from.columns.slice(), rows: from.rows.map((r) => ({ ...r, cells: (r.cells || []).slice() })), sort_order: order++, scale_enabled: false, updated_at: new Date().toISOString() };
+    try {
+      const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
+      const l = JSON.parse(JSON.stringify(PACK_LINKS[String(from.id)] || { priceCol: 0, cols: {} }));
+      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors;
+      PACK_LINKS[String(saved.id)] = { ...l, group: PACK_TEMPLATE_GROUP, pages: [] };
+      made++;
+    } catch (e) { /* skip this one */ }
+  }
+  if (made) await savePackLinks();
+  return made;
+}
+function renderMyPacks(el, templates, rerenderPage) {
+  if (!el) return;
+  const limit = packMyPacksLimit();
+  const kindLabel = (link) => t("mp_kind_" + packTemplateKind(link));
+  if (IS_OWNER) {
+    el.innerHTML = `<details class="panel" style="margin:0 0 12px; border:1px dashed var(--warn, #e0b25a);">
+      <summary style="cursor:pointer; font-size:14px; font-weight:700;">${esc(t("mp_title"))} <span class="meta" style="font-size:11px; font-weight:500;">· ${esc(t("mp_admin_settings"))}</span></summary>
+      <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;">${esc(t("mp_limit_label"))} <input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" style="width:64px; font-size:12px; padding:3px 6px;" /></label>
+      <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_desc"))}</div>
+      <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("mp_templates_count"))}: ${templates.length ? templates.map((x) => esc(x.title)).join(" · ") : esc(t("mp_no_templates"))}</div>
+    </details>`;
+    const inp = el.querySelector("[data-mplimit]");
+    inp.addEventListener("change", async () => {
+      const n = Math.max(0, Math.min(50, Math.floor(Number(inp.value) || 0)));
+      inp.value = n;
+      PACK_LINKS.__settings = { ...(PACK_LINKS.__settings || {}), myPacksLimit: n };
+      await savePackLinks();
+      toast(t("mp_limit_saved"));
+    });
+    return;
+  }
+  const used = MY_PACKS.length, full = used >= limit;
+  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 100;
+  const tplHtml = templates.map((tb) => {
+    const link = packLinkForBase(tb.id);
+    return `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;">
+      <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(link))}</span></span>
+      <button type="button" class="btn small ghost" data-mpdup="${esc(tb.id)}" ${full ? "disabled" : ""} style="flex-shrink:0;">${esc(t("mp_duplicate"))}</button>
+    </div>`;
+  }).join("");
+  const cardHtml = (mp) => {
+    const link = mp.link || {};
+    const priceCol = typeof link.priceCol === "number" ? link.priceCol : 0;
+    const gemsCi = mp.columns.findIndex((c) => /gem/i.test(String(c || "")));
+    const top = Math.max(0, ...mp.rows.map((r) => mpNum(r.cells[priceCol])));
+    const canRow = MP_PRICE_STEPS.some((v) => v > top + 0.001);
+    const resCols = mp.columns.map((c, ci) => ci).filter((ci) => ci !== priceCol && ci !== gemsCi);
+    const pages = Array.isArray(link.pages) ? link.pages : [];
+    const numericReset = typeof link.reset === "number";
+    const open = MY_PACKS_OPEN.has(mp.id);
+    const head = (ci) => {
+      if (ci === priceCol) return `<span class="meta">$ 🔒</span>`;
+      if (ci === gemsCi) return `<span class="meta">${esc(mp.columns[ci])} 🔒</span>`;
+      const cur = packResourceByName(mp.columns[ci]) || String(mp.columns[ci] || "");
+      const known = packResourceChoices(cur);
+      return `<select data-mpcol="${ci}" class="pack-col-pick keep-w" title="${esc(materialDisplayName(cur))}" style="width:72px; max-width:90px; font-size:11px; font-weight:600; padding:3px 2px;">
+        ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
+        ${known.some((n) => n.toLowerCase() === cur.toLowerCase()) || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
+      </select>`;
+    };
+    return `<details class="panel" data-mpcard="${esc(mp.id)}" ${open ? "open" : ""} style="margin-top:8px; padding:10px 12px; border-color:var(--line);">
+      <summary style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; list-style:none;">
+        <span style="min-width:0;"><b>${open ? "▾" : "▸"} ${esc(mp.title)}</b> <span style="font-size:10px; padding:1px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:700;">${esc(t("mp_tag"))}</span>
+          <br><span class="meta" style="font-size:11px;">${esc(kindLabel(link))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_none"))}</span></span>
+        <button type="button" class="btn small ghost" data-mpdel="${esc(mp.id)}" style="color:var(--danger); flex-shrink:0;">${esc(t("mp_delete"))}</button>
+      </summary>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+        <input data-mptitle value="${esc(mp.title)}" maxlength="60" style="flex:1 1 160px; min-width:120px; font-size:13px; font-weight:700;" />
+        <span class="meta" style="font-size:11px;">${esc(t("mp_column"))}</span>
+        <button type="button" class="btn small ghost" data-mpaddcol style="width:26px; padding:3px 0;">+</button>
+        <button type="button" class="btn small ghost" data-mpdelcol ${resCols.length <= 1 ? "disabled" : ""} style="width:26px; padding:3px 0;">&minus;</button>
+        <span class="meta" style="font-size:11px;">${esc(t("mp_row"))}</span>
+        <button type="button" class="btn small ghost" data-mpaddrow ${canRow ? "" : "disabled"} style="width:26px; padding:3px 0;">+</button>
+        <button type="button" class="btn small ghost" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} style="width:26px; padding:3px 0;">&minus;</button>
+      </div>
+      <div style="overflow-x:auto; margin-top:8px;">
+        <table style="border-collapse:collapse; font-size:12px; min-width:100%;">
+          <thead><tr>${mp.columns.map((_, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center; min-width:${ci === priceCol ? 52 : 74}px;">${head(ci)}</th>`).join("")}<th class="meta" style="padding:4px; border-bottom:1px solid var(--line); width:58px;">${esc(t("mp_max"))}</th></tr></thead>
+          <tbody>${mp.rows.map((r, ri) => `<tr>${mp.columns.map((_, ci) => ci === priceCol || ci === gemsCi
+            ? `<td class="meta" style="text-align:center; padding:3px;">${esc(ci === priceCol ? packFmtMoney(mpNum(r.cells[ci]), link.currency || "USD") : Number(mpNum(r.cells[ci])).toLocaleString())}</td>`
+            : `<td style="text-align:center; padding:3px;"><input inputmode="numeric" class="keep-w" data-mpcell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:62px; text-align:center; font-size:13px; padding:3px;" /></td>`).join("")}
+            <td style="text-align:center; padding:3px;"><input type="number" min="1" step="1" data-mprowmax="${ri}" class="keep-w" value="${esc((link.rowMax || {})[ri] || "")}" placeholder="1" style="width:48px; text-align:center; font-size:12px; padding:3px;" /></td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+      ${canRow ? "" : `<div class="meta" style="font-size:11px; margin-top:6px; color:var(--danger);">${esc(t("mp_row_top"))}</div>`}
+      <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("mp_row_hint"))}</div>
+      <div style="margin-top:10px; font-size:12px;"><b>${esc(t("mp_used_for"))}</b></div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:6px;">
+        ${PACK_PAGE_GROUPS.map((g) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;"><input type="checkbox" data-mppage="${esc(g.key)}" ${g.pages.some((k) => pages.includes(k)) ? "checked" : ""} /><span>${esc(packGroupLabel(g))}</span></label>`).join("")}
+      </div>
+      ${numericReset ? `<label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;"><span>${esc(t("mp_next_date"))}</span><input type="date" class="keep-w" data-mpdate value="${esc(packValidDay(link.resetDay) || "")}" style="font-size:12px; padding:3px 6px;" /><span class="meta" style="font-size:10.5px;">${esc(t("mp_every_days").replace("{n}", link.reset))}</span></label>` : ""}
+      <div class="meta" style="font-size:10.5px; margin-top:8px;">🔒 ${esc(t("mp_locked"))}</div>
+    </details>`;
+  };
+  el.innerHTML = `<details class="panel" data-mpbox ${localStorage.getItem("my_packs_open") === "0" ? "" : "open"} style="margin:0 0 12px; border:1px solid #e0b25a;">
+    <summary style="cursor:pointer; font-size:14px; font-weight:700;">${esc(t("mp_title"))} <span class="meta" style="font-size:11px;">(${used} ${esc(t("mp_of"))} ${limit})</span></summary>
+    <div style="height:6px; border-radius:4px; background:var(--line); margin-top:8px; overflow:hidden;"><i style="display:block; height:100%; width:${pct}%; background:${full ? "var(--danger)" : "var(--good)"};"></i></div>
+    <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_desc"))}</div>
+    <div style="margin-top:10px; font-size:12px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</div>
+    ${tplHtml || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_no_templates"))}</div>`}
+    ${full ? `<div style="font-size:11.5px; margin-top:6px; color:var(--danger);">${esc(t("mp_full").replace("{n}", limit))}</div>` : ""}
+    ${MY_PACKS.map(cardHtml).join("")}
+    ${used ? `<div style="margin-top:10px; padding:8px 10px; border:1px dashed #e0b25a; border-radius:8px; color:#e0b25a; font-size:11.5px;">⏱ ${esc(t("mp_speed_note"))}</div>` : ""}
+  </details>`;
+  const redraw = () => renderMyPacks(el, templates, rerenderPage);
+  const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
+  el.querySelector("[data-mpbox]").addEventListener("toggle", (e) => { if (e.target.matches("[data-mpbox]")) { try { localStorage.setItem("my_packs_open", e.target.open ? "1" : "0"); } catch (err) {} } });
+  el.querySelectorAll("[data-mpdup]").forEach((b) => b.addEventListener("click", () => {
+    if (MY_PACKS.length >= packMyPacksLimit()) return;
+    const tb = templates.find((x) => String(x.id) === b.dataset.mpdup);
+    if (!tb) return;
+    const src = JSON.parse(JSON.stringify((PACK_LINKS || {})[String(tb.id)] || {}));
+    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors;
+    const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title: `${String(tb.title).replace(/\s*type$/i, "")} (${t("mp_mine_suffix")})`, columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ cells: (r.cells || []).slice() })), link: { ...src, pages: [], cols: {} } };
+    MY_PACKS.push(mp);
+    MY_PACKS_OPEN.add(mp.id);
+    changed(true);
+  }));
+  el.querySelectorAll("[data-mpcard]").forEach((card) => {
+    const mp = packMineFind(card.dataset.mpcard);
+    if (!mp) return;
+    const link = (mp.link = mp.link || {});
+    const priceCol = typeof link.priceCol === "number" ? link.priceCol : 0;
+    const gemsCi = () => mp.columns.findIndex((c) => /gem/i.test(String(c || "")));
+    card.addEventListener("toggle", (e) => { if (e.target !== card) return; if (card.open) MY_PACKS_OPEN.add(mp.id); else MY_PACKS_OPEN.delete(mp.id); const b = card.querySelector("summary b"); if (b) b.firstChild.textContent = `${card.open ? "▾" : "▸"} ${mp.title}`; });
+    card.querySelector("[data-mpdel]").addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (!confirm(t("mp_delete_confirm").replace("{t}", mp.title))) return;
+      MY_PACKS = MY_PACKS.filter((x) => x !== mp);
+      changed(true);
+    });
+    const title = card.querySelector("[data-mptitle]");
+    title.addEventListener("change", () => { mp.title = title.value.trim().slice(0, 60) || mp.from || "My pack"; changed(true); });
+    card.querySelectorAll("[data-mpcell]").forEach((inp) => inp.addEventListener("change", () => {
+      const n = Math.max(0, Math.round(mpNum(inp.value)));
+      inp.value = n ? n.toLocaleString() : "";
+      mp.rows[Number(inp.dataset.row)].cells[Number(inp.dataset.col)] = n ? String(n) : "";
+      changed(false);
+    }));
+    card.querySelectorAll("[data-mpcol]").forEach((sel) => sel.addEventListener("change", () => { mp.columns[Number(sel.dataset.mpcol)] = sel.value; changed(true); }));
+    card.querySelectorAll("[data-mprowmax]").forEach((inp) => inp.addEventListener("change", () => {
+      const ri = Number(inp.dataset.mprowmax), n = Math.floor(Number(inp.value) || 0);
+      link.rowMax = { ...(link.rowMax || {}) };
+      if (n > 1) link.rowMax[ri] = n; else { delete link.rowMax[ri]; inp.value = ""; }
+      changed(false);
+    }));
+    card.querySelectorAll("[data-mppage]").forEach((cb) => cb.addEventListener("change", () => {
+      const g = PACK_PAGE_GROUPS.find((x) => x.key === cb.dataset.mppage);
+      let pages = Array.isArray(link.pages) ? link.pages.slice() : [];
+      if (cb.checked) g.pages.forEach((k) => { if (!pages.includes(k)) pages.push(k); }); else pages = pages.filter((k) => !g.pages.includes(k));
+      link.pages = pages;
+      changed(true);
+    }));
+    const date = card.querySelector("[data-mpdate]");
+    if (date) date.addEventListener("change", () => { if (packValidDay(date.value)) link.resetDay = date.value; else delete link.resetDay; changed(false); });
+    card.querySelector("[data-mpaddcol]").addEventListener("click", () => {
+      const have = new Set(mp.columns.map((c) => (packResourceByName(c) || String(c)).toLowerCase()));
+      const name = packResourceChoices("").find((n) => !have.has(n.toLowerCase())) || packResourceChoices("")[0] || "Item";
+      const at = gemsCi() >= 0 ? gemsCi() : mp.columns.length;
+      mp.columns.splice(at, 0, name);
+      mp.rows.forEach((r) => r.cells.splice(at, 0, ""));
+      changed(true);
+    });
+    card.querySelector("[data-mpdelcol]").addEventListener("click", () => {
+      const g = gemsCi();
+      const res = mp.columns.map((c, ci) => ci).filter((ci) => ci !== priceCol && ci !== g);
+      if (res.length <= 1) return;
+      const ci = res[res.length - 1];
+      mp.columns.splice(ci, 1);
+      mp.rows.forEach((r) => r.cells.splice(ci, 1));
+      changed(true);
+    });
+    card.querySelector("[data-mpaddrow]").addEventListener("click", () => {
+      const last = mp.rows[mp.rows.length - 1];
+      const top = Math.max(0, ...mp.rows.map((r) => mpNum(r.cells[priceCol])));
+      const next = MP_PRICE_STEPS.find((v) => v > top + 0.001);
+      if (next == null) return;
+      const ratio = top > 0 ? mpGems(next) / mpGems(top) : 1;
+      const g = gemsCi();
+      const cells = mp.columns.map((_, ci) => {
+        if (ci === priceCol) return String(next);
+        if (ci === g) return mpGems(next).toLocaleString();
+        const v = last ? mpNum(last.cells[ci]) : 0;
+        return v ? String(Math.round(v * ratio)) : "";
+      });
+      mp.rows.push({ cells });
+      changed(true);
+    });
+    card.querySelector("[data-mpdelrow]").addEventListener("click", () => {
+      if (mp.rows.length <= 1) return;
+      mp.rows.pop();
+      if (link.rowMax) delete link.rowMax[mp.rows.length];
+      changed(true);
+    });
+  });
+}
 function renderMyPackDates(el, tables) {
   if (!el) return;
   const preview = IS_OWNER; // admin: locked, collapsible copy of what visitors see
@@ -5342,6 +5588,7 @@ async function renderPacksPage() {
     </div>
     <div id="packsPriceStrip"></div>
     <div id="packsMyDates"></div>
+    <div id="packsMine"></div>
     <div id="packsPageTabs" style="margin-bottom:6px;"></div>
     <div id="packsList"></div>
   `;
@@ -5353,7 +5600,17 @@ async function renderPacksPage() {
     ensureSiteConfig(),
   ]);
   let tables = packApplyMyEdits(tablesLoaded).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
+  // Visitors copy the templates in "My packs"; they aren't listed as packs.
+  const templateTables = tables.filter((tb) => packLinkFor(tb.id).template);
+  if (!IS_OWNER) tables = tables.filter((tb) => !packLinkFor(tb.id).template);
   renderMyPackDates(document.getElementById("packsMyDates"), tables);
+  // Admin: the three Pack templates are made once, copied from your own tables.
+  if (IS_OWNER && !templateTables.length && !(await loadCalcState("pack_templates_seeded"))) {
+    const made = await packSeedTemplates(tables);
+    await saveCalcState("pack_templates_seeded", { at: Date.now(), made });
+    if (made) { toast(`${made} ${t("mp_templates_added")}`); renderPacksPage(); return; }
+  }
+  renderMyPacks(document.getElementById("packsMine"), templateTables, renderPacksPage);
   PACK_TABLES_ALL = tables;
   PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
   // First visit: the in-game pack tables are created automatically (once
@@ -5574,7 +5831,7 @@ async function renderPacksPage() {
     listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px;">${esc(g)}</div>` : "";
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_TEMPLATE_GROUP ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_template_note"))}</span>` : g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
         lastGroup = g;
         return heading + (() => {
         // Auto-computed total row: sums every column's numeric cells across
@@ -6344,13 +6601,15 @@ async function renderPacksPage() {
         syncFromDom();
         if (String(t.id).startsWith("new-")) await persistTable();
         await ensurePackLinks();
-        const payload = { title: `${t.title} (${window.t("pack_copy_suffix")})`, columns: t.columns.slice(), rows: t.rows.map((r) => ({ ...r, cells: r.cells.slice() })), sort_order: ti + 1, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
+        const fromTemplate = packLinkFor(t.id).template;
+        const payload = { title: fromTemplate ? `${String(t.title).replace(/\s*type$/i, "")} (${window.t("mp_mine_suffix")})` : `${t.title} (${window.t("pack_copy_suffix")})`, columns: t.columns.slice(), rows: t.rows.map((r) => ({ ...r, cells: r.cells.slice() })), sort_order: ti + 1, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
         let saved;
         try {
           [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
         } catch (err) { toast("Couldn't duplicate table", true); return; }
         const src = PACK_LINKS[String(t.id)];
         if (src) PACK_LINKS[String(saved.id)] = JSON.parse(JSON.stringify(src));
+        if (fromTemplate) PACK_LINKS[String(saved.id)] = { ...(PACK_LINKS[String(saved.id)] || { priceCol: 0, cols: {} }), group: PACK_MINE_GROUP, hideVisitors: true, pages: [] };
         await savePackLinks();
         tables.splice(ti + 1, 0, { ...payload, id: saved.id });
         tables.forEach((tb, i) => { tb.sort_order = i; });
@@ -7442,11 +7701,13 @@ let PACK_LINKS = null;          // { [tableId]: { pages:[], priceCol:0, cols:{ i
 let PACK_TABLES_CACHE = null;   // pack_tables rows, for the calculator pages
 async function ensurePackLinks() {
   if (PACK_LINKS) return PACK_LINKS;
-  const [links, mine, active] = await Promise.all([
+  const [links, mine, active, myPacks] = await Promise.all([
     IS_OWNER ? loadCalcState("packs_links") : loadOwnerState("packs_links"),
     loadCalcState("my_pack_dates").catch(() => null),
     loadCalcState("my_cards_active").catch(() => null),
+    IS_OWNER ? null : loadCalcState("my_packs").catch(() => null),
   ]);
+  MY_PACKS = myPacks && Array.isArray(myPacks.tables) ? myPacks.tables.filter((x) => x && typeof x.id === "string" && x.id.startsWith("my-")) : [];
   MY_PACK_DATES = mine && typeof mine === "object" ? mine : {};
   MY_CARDS_ACTIVE = active && typeof active === "object" ? active : {};
   PACK_LINKS = links || {};
@@ -7460,6 +7721,29 @@ async function savePackLinks() {
 function packValidDay(v) { return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null; }
 // Each visitor's own pack dates ({ tableId: "yyyy-mm-dd" }), saved to their account.
 let MY_PACK_DATES = {};
+// "My packs": a visitor's own tables copied from the Pack templates, saved to
+// their account (calc_state my_packs). Each keeps its settings in `link`.
+// The admin's own copies are normal tables in the "My packs" category.
+let MY_PACKS = [];
+const PACK_TEMPLATE_GROUP = "Pack templates";
+const PACK_MINE_GROUP = "My packs";
+const PACK_TEMPLATE_SOURCES = [
+  { title: "Wishful type", from: ["Wishfull", "Wishful"] },
+  { title: "Mix & Match type", from: ["Mix & Match"] },
+  { title: "Regular pack type", from: ["Lunar Amber Pack"] },
+];
+function packMyPacksLimit() {
+  const n = PACK_LINKS && PACK_LINKS.__settings ? Number(PACK_LINKS.__settings.myPacksLimit) : NaN;
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 5;
+}
+function packMineFind(id) { return MY_PACKS.find((x) => x.id === String(id)) || null; }
+function packTemplateKind(link) { return link.pickCols > 0 ? (link.pickOrder ? "wishful" : "mixmatch") : "regular"; }
+async function saveMyPacks() {
+  PACK_PLAN_CACHE.clear();
+  PACK_TABLES_CACHE = null;
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+  await saveCalcState("my_packs", { tables: MY_PACKS });
+}
 // Weekly cards a visitor already bought whose 7-day rewards are still coming ({ tableId: n }).
 let MY_CARDS_ACTIVE = {};
 // Days of rewards still coming from cards already bought ({ d: days }; an old
@@ -7495,9 +7779,14 @@ function packLinkFor(tableId) {
 }
 function packLinkForBase(tableId) {
   const links = PACK_LINKS || {};
-  const l = links[String(tableId)] || {};
+  const mine = String(tableId).startsWith("my-") ? packMineFind(tableId) : null;
+  const l = (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : links[String(tableId)]) || {};
+  // Templates are only there to be copied: never used by Budgets or Pack cost.
+  const template = !mine && typeof l.group === "string" && l.group.trim() === PACK_TEMPLATE_GROUP;
   return {
-    pages: Array.isArray(l.pages) ? l.pages : [],
+    template,
+    mine: !!mine,
+    pages: !template && Array.isArray(l.pages) ? l.pages : [],
     priceCol: typeof l.priceCol === "number" ? l.priceCol : 0,
     cols: l.cols || {},
     // Most packs are a ladder: you can't buy the $49.99 tier until you've
@@ -7590,7 +7879,8 @@ async function ensurePackTables() {
   try {
     await ensurePackLinks();
     PACK_TABLES_CACHE = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
-      .filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
+      .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
+      .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
   } catch (e) {
     PACK_TABLES_CACHE = [];
   }
