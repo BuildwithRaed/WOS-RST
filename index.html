@@ -7966,7 +7966,7 @@ function packGroupsForRaw(tables) {
 function packMaxSupply(groups, days) {
   const supply = {};
   groups.forEach((g) => {
-    const cap = packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle;
+    const cap = Math.max(0, packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle - (g.used || 0));
     if (g.choice || g.optionPack) {
       const bestPer = {};
       g.offers.forEach((o) => Object.keys(o.gives).forEach((n) => { bestPer[n] = Math.max(bestPer[n] || 0, o.gives[n]); }));
@@ -8092,7 +8092,7 @@ function packEarliestDaysCompute(groups, need, calcKey) {
 // repeats are common. Cleared whenever pack tables or links change.
 const PACK_PLAN_CACHE = new Map();
 function packPlanCacheKey(groups, need, days, calcKey, quick) {
-  const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.perCycle}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",")).join(";")).join("#");
+  const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.perCycle}|${g.used || 0}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",")).join(";")).join("#");
   let h = 0; for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
   return `${h}|${sig.length}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
 }
@@ -8166,7 +8166,8 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   }
   const groups = packPruneOffersFor(groupsIn, need, ctx);
   const wanted = Object.keys(need).filter((n) => need[n] > 0);
-  const caps = groups.map((g) => packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle);
+  // `used` = buys another page already took from this pack in a shared plan.
+  const caps = groups.map((g) => Math.max(0, packCyclesWithin(g.reset, g.resetDay, days) * g.perCycle - (g.used || 0)));
   if (!packCoveredBy(packMaxSupply(groups, days), need, ctx)) return null;
   const worthOf = (n) => (ctx && ctx.worth[n]) || 1;
   // Items that appear in any trade (as what's given or what's got).
@@ -8310,7 +8311,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
     const tr = packShortAfterTrades(remainingOf(r.picks), ctx);
     r.trades = tr.trades.filter((x) => !x.silent);
     r.perGroup = perGroup;
-    r.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(perGroup[gi] / g.perCycle)) : 0));
+    r.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle)) : 0));
     return r;
   };
   // Cheaper wins; when two plans are within 2% of each other the one that
@@ -9746,6 +9747,44 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups) {
   }
   res.inc = inc.map((pg) => pg.calcKey);
   res.dropped = dropped;
+  // One more try: plan the pages one after another, each using only what the
+  // pages before it left of every pack's limits (in both orders). Two good
+  // page plans that clash on a shared pack (e.g. the weekly Benefit Card)
+  // often beat one big search.
+  if (res.chosen && res.groups && res.groups.length && inc.length > 1 && inc.length <= 6) {
+    const horizon = res.byTarget ? targetDays : res.chosen.days;
+    const orders = inc.length <= 3 ? (inc.length === 2 ? [[0, 1], [1, 0]] : [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]]) : [inc.map((_, i) => i), inc.map((_, i) => inc.length - 1 - i)];
+    const quick = inc.length > 3 && res.groups.reduce((a, g) => a + g.offers.length, 0) > 3000;
+    orders.forEach((order) => {
+      const used = res.groups.map(() => 0), picks = [], trades = [];
+      let days = 0;
+      for (const idx of order) {
+        const pg = inc[idx];
+        if (!Object.keys(pg.need || {}).length) continue;
+        const groupsAdj = res.groups.map((g, gi) => ({ ...g, used: used[gi] }));
+        const pl = packCheapestPlan(groupsAdj, pg.need, horizon, pg.calcKey, quick);
+        if (!pl) return;
+        pl.picks.forEach((pk) => { used[pk.gi] += pk.count; const e = picks.find((x) => x.gi === pk.gi && x.oi === pk.oi); if (e) e.count += pk.count; else picks.push({ ...pk }); });
+        days = Math.max(days, pl.days || 0);
+        (pl.trades || []).forEach((x) => trades.push(x));
+      }
+      if (!picks.length) return;
+      const rows = picks.map((pk) => {
+        const g = res.groups[pk.gi], o = g.offers[pk.oi];
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps };
+      }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
+      const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
+      if (res.byTarget && cand.days > targetDays) return;
+      // Must still cover everything together (trades share their weekly limits).
+      const rem = {}; Object.entries(res.need).forEach(([n, q]) => { rem[n] = q; });
+      rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v * r.count; }));
+      if (Object.keys(packShortAfterTrades(rem, packTradeCtx(res.calcKey, horizon)).short).length) return;
+      if (cand.total < res.chosen.total - 0.005) {
+        res.chosen = cand;
+        if (res.byTarget) res.byTarget = cand; else res.cheapest = cand;
+      }
+    });
+  }
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
   // The other two cards on Budgets: the fastest plan, and the cheapest one
   // within a year of that (each with its own page shares).
