@@ -391,6 +391,9 @@ input,select,textarea{
   /* ---- Gallery redesign: fixed 3-per-row grid, tab+menu category
      switcher, and a click-to-open detail modal (used by Skin Gallery and
      Islands). ---- */
+  /* Pack prices strip: every price box (USD row, add box, your-currency row)
+     is the same size on phones, tablets and PCs. */
+  .pp-input{ width:64px !important; min-width:64px; max-width:64px; height:30px; flex:none !important; padding:3px 4px; font-size:12px; text-align:center; box-sizing:border-box; }
   .gallery-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
   @media (min-width:760px){
     .gallery-grid{ grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); }
@@ -4525,9 +4528,9 @@ async function renderPacksPage() {
               <tr>
                 <th style="${head}">USD $</th>
                 ${slots.map((sl) => `<td style="${cell}">${IS_OWNER
-                  ? `<div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><input type="number" step="0.01" min="0" data-pp-usd="${sl}" value="${sl}" style="width:62px; font-size:12px; padding:3px 4px; text-align:center;" /><button type="button" class="btn ghost small" data-pp-del="${sl}" title="Remove" style="padding:0 6px; font-size:10px; line-height:14px; color:var(--danger);">&times;</button></div>`
+                  ? `<div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><input type="number" step="0.01" min="0" data-pp-usd="${sl}" value="${sl}" class="keep-w pp-input" style="" /><button type="button" class="btn ghost small" data-pp-del="${sl}" title="Remove" style="padding:0 6px; font-size:10px; line-height:14px; color:var(--danger);">&times;</button></div>`
                   : `<b>$${sl}</b>`}</td>`).join("")}
-                ${IS_OWNER ? `<td style="${cell}"><div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><input type="number" step="0.01" min="0" data-pp-add placeholder="+" style="width:62px; font-size:12px; padding:3px 4px; text-align:center;" /><span class="meta" style="font-size:9px;">${esc(t("price_points_add"))}</span></div></td>` : ""}
+                ${IS_OWNER ? `<td style="${cell}"><div style="display:flex; flex-direction:column; align-items:center; gap:2px;"><input type="number" step="0.01" min="0" data-pp-add placeholder="+" class="keep-w pp-input" style="" /><span class="meta" style="font-size:9px;">${esc(t("price_points_add"))}</span></div></td>` : ""}
               </tr>
               <tr style="border-top:1px solid var(--line);">
                 <th style="${head}"><select data-pp-currency style="font-size:11px; padding:3px 4px; max-width:96px;">
@@ -4537,7 +4540,7 @@ async function renderPacksPage() {
                 ${code
                   ? slots.map((sl) => {
                       const fallback = currencySlotPrice(Number(sl), code) ?? (rate > 0 ? Number(sl) * rate : null);
-                      return `<td style="${cell}"><input type="number" step="any" min="0" data-pp-own="${sl}" value="${own[sl] ?? ""}" placeholder="${fallback != null ? fallback.toFixed(2) : ""}" style="width:62px; font-size:12px; padding:3px 4px; text-align:center; ${own[sl] ? "border-color:var(--ice-dim);" : ""}" /></td>`;
+                      return `<td style="${cell}"><input type="number" step="any" min="0" data-pp-own="${sl}" value="${own[sl] ?? ""}" placeholder="${fallback != null ? fallback.toFixed(2) : ""}" class="keep-w pp-input" style=" ${own[sl] ? "border-color:var(--ice-dim);" : ""}" /></td>`;
                     }).join("") + (IS_OWNER ? `<td></td>` : "")
                   : `<td colspan="${slots.length + (IS_OWNER ? 1 : 0)}" class="meta" style="padding:6px 8px; font-size:11px;">${esc(t("price_points_pick"))}</td>`}
               </tr>
