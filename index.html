@@ -5778,7 +5778,7 @@ async function renderPacksPage() {
         ${(() => {
           // Q1: how is it bought?  Q2 (tiers only): what does one tier give?
           const how = link.pickCols > 0 ? "picks" : link.choice ? "choice" : link.sequential ? "tiers" : "any";
-          const gives = !link.sequential ? "all" : (link.colOptions || link.option) ? (link.lockOption ? "one_locked" : "one_each") : "all";
+          const gives = !link.sequential ? "all" : (link.colOptions && !link.linkSet) ? (link.lockOption ? "one_locked" : "one_each") : "all";
           const radio = (name, val, cur, label, desc, attr) => `
             <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px;">
               <input type="radio" name="${name}-${esc(tb.id)}" ${attr}="${val}" ${cur === val ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
@@ -5788,7 +5788,7 @@ async function renderPacksPage() {
           <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
             ${radio("pkhow", "any", how, t("pk_any"), t("pk_any_desc"), "data-pkhow")}
             ${radio("pkhow", "tiers", how, t("pk_tiers"), t("pk_tiers_desc"), "data-pkhow")}
-            ${radio("pkhow", "choice", how, t("pk_choice"), t("pk_choice_desc"), "data-pkhow")}
+            ${how === "choice" ? radio("pkhow", "choice", how, t("pk_choice"), t("pk_choice_desc"), "data-pkhow") : ""}
             ${radio("pkhow", "picks", how, t("pk_picks"), t("pk_picks_desc"), "data-pkhow")}
           </div>
           <div data-pkpickswrap style="display:${how === "picks" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line); font-size:12px;">
@@ -5796,12 +5796,12 @@ async function renderPacksPage() {
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-pkpickorder ${link.pickOrder ? "checked" : ""} /><span><b>${esc(t("pk_picks_order"))}</b> <span class="meta" style="font-size:10.5px;">${esc(t("pk_picks_order_desc"))}</span></span></label>
             <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pk_picks_order_off"))}</div>
           </div>
-          <div data-pkgiveswrap style="display:${how === "tiers" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line);">
+          <div data-pkgiveswrap style="display:${how === "tiers" && gives !== "all" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line);">
             <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q2"))}</div>
             <div style="display:flex; flex-direction:column; gap:6px;">
               ${radio("pkgives", "all", gives, t("pk_all"), t("pk_all_desc"), "data-pkgives")}
-              ${radio("pkgives", "one_each", gives, t("pk_one_each"), t("pk_one_each_desc"), "data-pkgives")}
-              ${radio("pkgives", "one_locked", gives, t("pk_one_locked"), t("pk_one_locked_desc"), "data-pkgives")}
+              ${gives === "one_each" ? radio("pkgives", "one_each", gives, t("pk_one_each"), t("pk_one_each_desc"), "data-pkgives") : ""}
+              ${gives === "one_locked" ? radio("pkgives", "one_locked", gives, t("pk_one_locked"), t("pk_one_locked_desc"), "data-pkgives") : ""}
             </div>
           </div></div>`;
         })()}
@@ -5935,7 +5935,9 @@ async function renderPacksPage() {
         l.colOptions = opt;
         if (l.linkSet) { l.sequential = true; l.choice = false; l.colOptions = false; l.option = true; }
         else { l.option = false; l.lockOption = opt && gives === "one_locked"; }
-        box.querySelector("[data-pkgiveswrap]").style.display = how === "tiers" ? "block" : "none";
+        // The "one column" choices were retired ("Pick options from the columns"
+        // covers them); they only still show on an old table that uses them.
+        box.querySelector("[data-pkgiveswrap]").style.display = how === "tiers" && box.querySelector('[data-pkgives="one_each"],[data-pkgives="one_locked"]') ? "block" : "none";
         syncResetUi();
         await savePackLinks();
       };
