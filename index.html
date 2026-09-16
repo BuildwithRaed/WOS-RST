@@ -5852,7 +5852,7 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
       // Each step on its own (price + what that option gives), so a combined
       // plan can hand each step to the page it's for.
       const steps = seq.map((j, k) => ({ price: tierOpts[k][j].price, gives: tierOpts[k][j].gives }));
-      if (extraLast) { const o = tierOpts[tiers - 1][extraLast.j]; steps.push({ price: extraLast.k * o.price, gives: Object.fromEntries(Object.entries(o.gives).map(([r, v]) => [r, v * extraLast.k])) }); }
+      if (extraLast) { const o = tierOpts[tiers - 1][extraLast.j]; steps.push({ price: extraLast.k * o.price, unitPrice: o.price, k: extraLast.k, gives: Object.fromEntries(Object.entries(o.gives).map(([r, v]) => [r, v * extraLast.k])) }); }
       offers.push({ price, gives, steps, label, tableTitle: title, currency: lead.currency, tiers: seq.length, row: seq.length - 1, lead: seq.length === tiers && !extraLast && seq.every((j) => j === seq[0]) });
     };
     seqs.forEach((seq) => build(seq, null));
@@ -6330,7 +6330,7 @@ function packPlanRowsHtml(plan, resetText) {
   plan.rows.forEach((r) => {
     let g = byPack.find((x) => x.title === r.title);
     if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, cycles: r.cycles, perCycle: r.perCycle, lines: [] }; byPack.push(g); }
-    g.count += r.count; g.subtotal += r.subtotal; g.cycles = Math.max(g.cycles, r.cycles);
+    g.count += r.count; g.subtotal += packRowLocal(r); g.sample = g.sample || r.price; g.cycles = Math.max(g.cycles, r.cycles);
     g.lines.push(r);
   });
   return byPack.map((g) => `
@@ -6339,10 +6339,10 @@ function packPlanRowsHtml(plan, resetText) {
         <span style="font-size:11.5px; font-weight:700;">${esc(g.title)}</span>
         <span style="font-size:11px; color:var(--ice);">&times; ${qty(g.count)}</span>
         ${packStackInfo(g.reset) ? `<span class="meta" style="font-size:10px;">${esc(packStackText(g.reset))}${g.count > packStackInfo(g.reset).atOnce * g.perCycle ? ` · ${esc(t("pack_stack_later").replace("{n}", packStackInfo(g.reset).atOnce * g.perCycle))}` : ""}</span>` : typeof g.reset === "number" ? `<span class="meta" style="font-size:10px;">${esc(resetText(g.reset, g.resetDay))} · ${g.cycles} ${esc(t("pack_resets"))}</span>` : ""}
-        <span style="margin-inline-start:auto; font-size:12px; font-weight:700;">${packFmtMoney(g.subtotal, g.currency)}</span>
+        <span style="margin-inline-start:auto; font-size:12px; font-weight:700;">${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</span>
       </div>
       <div style="margin-top:3px; padding-inline-start:10px; font-size:10.5px; line-height:1.55;">
-        ${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div style="display:flex; gap:6px; align-items:baseline;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta" style="margin-inline-start:auto;">${packFmtMoney(r.subtotal, r.currency)}</span></div>`).join("")}
+        ${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div style="display:flex; gap:6px; align-items:baseline;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta" style="margin-inline-start:auto;">${packFmtLocal(packRowLocal(r), r.currency, false, r.price)}</span></div>`).join("")}
       </div>
     </div>`).join("");
 }
@@ -6488,8 +6488,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const shareRows = mineShare.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;">
         <span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span>
         <span style="min-width:0;"><b style="font-size:11px;">${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span>
-        <span style="margin-inline-start:auto; font-weight:600; white-space:nowrap;">${packFmtMoney(r.shareCost, r.currency)}</span></div>`).join("");
-    sharedTotalText = packFmtMoney(Math.ceil(mineShare.total), p.rows[0]?.currency || currency, true);
+        <span style="margin-inline-start:auto; font-weight:600; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("");
+    sharedTotalText = packFmtLocal(Math.ceil(packSharesLocal(mineShare)), p.rows[0]?.currency || currency, true, p.rows[0]?.price);
     sharedSections = `
       <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}</div>
       <div class="panel" style="padding:10px; border-color:var(--ice);">
@@ -6497,11 +6497,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <p class="desc" style="font-size:10.5px; margin:4px 0 6px;">${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}</p>
         <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin:4px 0 6px;">
           <span class="meta" style="font-size:11px;">${esc(t("combined_share"))}</span>
-          <span style="font-size:18px; font-weight:700;">${packFmtMoney(Math.ceil(mineShare.total), p.rows[0]?.currency || currency, true)}</span>
+          <span style="font-size:18px; font-weight:700;">${packFmtLocal(Math.ceil(packSharesLocal(mineShare)), p.rows[0]?.currency || currency, true, p.rows[0]?.price)}</span>
           <span class="meta" style="font-size:10.5px; color:${late ? "var(--danger)" : "var(--good)"};">${esc(when)}</span>
         </div>
         ${mineShare.rows.length ? shareRows : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}
-        <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("combined_whole"))}: <b>${packFmtMoney(Math.ceil(p.total), p.rows[0]?.currency || currency, true)}</b> · ${esc(t("combined_date_note"))}${BUDGET_TARGET ? ` (${esc(fmtDate(shared.targetDays))})` : ` (${esc(t("pack_no_date"))})`}</div>
+        <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("combined_whole"))}: <b>${packFmtLocal(Math.ceil(packPlanLocal(p)), p.rows[0]?.currency || currency, true, p.rows[0]?.price)}</b> · ${esc(t("combined_date_note"))}${BUDGET_TARGET ? ` (${esc(fmtDate(shared.targetDays))})` : ` (${esc(t("pack_no_date"))})`}</div>
         <button type="button" class="btn small ghost" data-gotobudgets style="margin-top:8px;">${esc(t("budgets_title"))} &rarr;</button>
       </div>`;
   }
@@ -6544,14 +6544,14 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       // The number shown on the "This page only" switch: by the page's target
       // date when set and reachable, otherwise the cheapest plan.
       const pageBest = (plans.find((c) => c.key === "target" && c.plan) || plans.find((c) => c.key === "cheapest")).plan;
-      if (pageBest) pageTotalText = packFmtMoney(Math.ceil(pageBest.total), currency, true);
+      if (pageBest) pageTotalText = packFmtLocal(Math.ceil(packPlanLocal(pageBest)), currency, true, pageBest.rows[0]?.price);
       const cardHtml = (c) => {
         // Same plan as an earlier card: just say so.
         const twin = plans.find((x) => x !== c && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days && plans.indexOf(x) < plans.indexOf(c));
         if (twin) {
           return `<div class="panel" style="padding:10px; min-width:0; opacity:0.8;">
             <div style="font-size:12px; font-weight:700;">${esc(c.title)}</div>
-            <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("pack_same_as"))} <b>${esc(twin.title)}</b> — ${packFmtMoney(Math.ceil(c.plan.total), currency, true)} · ${esc(c.plan.days === 0 ? t("pack_ready_now") : fmtDate(c.plan.days))}</div>
+            <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("pack_same_as"))} <b>${esc(twin.title)}</b> — ${packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)} · ${esc(c.plan.days === 0 ? t("pack_ready_now") : fmtDate(c.plan.days))}</div>
           </div>`;
         }
         if (!c.plan) {
@@ -6568,7 +6568,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         return `<div class="panel" style="padding:10px; min-width:0; ${c.key === "target" ? "border-color:var(--ice);" : ""}">
           <div style="font-size:12px; font-weight:700;">${esc(c.title)}</div>
           <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin:4px 0 6px;">
-            <span style="font-size:18px; font-weight:700;">${packFmtMoney(Math.ceil(p.total), currency, true)}</span>
+            <span style="font-size:18px; font-weight:700;">${packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price)}</span>
             <span class="meta" style="font-size:10.5px; color:${late ? "var(--danger)" : "var(--good)"};">${esc(when)}</span>
           </div>
           ${rows}
@@ -6749,9 +6749,25 @@ function currencyPickerHtml(attr) {
       ${c ? `<option value="${c.code}" ${showingMine ? "selected" : ""}>${c.code} ${esc(c.symbol)}</option>` : ""}
     </select></label>`;
 }
+// Money shown in the viewer's currency, worked out purchase by purchase with
+// the same store prices the pack labels use (never a sum converted at the
+// exchange rate, which wouldn't match the prices next to it).
+function packStepLocal(st, cur) { return st.k ? st.k * packConvert(st.unitPrice, cur).n : packConvert(st.price, cur).n; }
+function packRowLocalUnits(r) { return Array.isArray(r.steps) && r.steps.length ? r.steps.map((st) => packStepLocal(st, r.currency)) : [packConvert(r.price, r.currency).n]; }
+function packRowLocal(r) { return r.count * packRowLocalUnits(r).reduce((a, b) => a + b, 0); }
+function packShareLocal(r) {
+  const u = packRowLocalUnits(r);
+  if (!Array.isArray(r.unitFrac) || r.unitFrac.length !== u.length) return (r.share || 0) * packRowLocal(r);
+  return r.count * u.reduce((sum, v, i) => sum + v * (r.unitFrac[i] || 0), 0);
+}
+function packPlanLocal(p) { return ((p && p.rows) || []).reduce((sum, r) => sum + packRowLocal(r), 0); }
+function packSharesLocal(sh) { return ((sh && sh.rows) || []).reduce((sum, r) => sum + packShareLocal(r), 0); }
+function packLocalCode(cur, sample) { return packConvert(sample > 0 ? sample : 4.99, cur || "USD").code; }
+// Formats an amount that is already in the viewer's currency.
+function packFmtLocal(n, cur, whole, sample) { return packFmtMoney(n, packLocalCode(cur, sample), whole, true); }
 const PACK_MONEY_FMT = new Map();
-function packFmtMoney(n, currency, whole) {
-  const conv = packConvert(Number(n) || 0, currency || "USD");
+function packFmtMoney(n, currency, whole, raw) {
+  const conv = raw ? { n: Number(n) || 0, code: currency || "USD" } : packConvert(Number(n) || 0, currency || "USD");
   n = conv.n;
   const code = conv.code;
   const digits = whole ? 0 : 2;
@@ -7720,6 +7736,7 @@ function plannerPagePlans(payload) {
 // The planner's math runs in a background thread, so the page never freezes
 // while packs are worked out; results come back when ready. If the browser
 // can't start the worker, the same functions simply run here instead.
+const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLANNER_FN_NAMES = ["packStackInfo", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 const PLANNER_WAIT = new Map();
@@ -7730,6 +7747,7 @@ function plannerWorker() {
     const fns = PLANNER_FN_NAMES.map((n) => { const f = window[n]; if (typeof f !== "function") throw new Error("missing " + n); return f.toString(); });
     const src = [
       `const PACK_HORIZON_DAYS = ${JSON.stringify(PACK_HORIZON_DAYS)};`,
+      PLANNER_CONST_SRC(),
       `const TRADE_DEFAULT_RATES = ${JSON.stringify(TRADE_DEFAULT_RATES)};`,
       `const TRADE_TARGET_PRIORITY = ${JSON.stringify(TRADE_TARGET_PRIORITY)};`,
       "let TRADE_RATES_CACHE = null; let TRADE_EXTRA_RATES = {}; let LAST_TRADE = '';",
@@ -7798,6 +7816,8 @@ function budgetMergedPlan(res, inc, targetDays) {
   };
   return packPickCheapest([tryWith((e) => e.max), tryWith((e) => e.sum)]);
 }
+const BUDGET_RESEARCH_KEYS = ["research_center", "t11_helios", "t12_research"];
+const BUDGET_EXPERT_KEYS = ["experts", "experts_research"];
 // Splits each purchase between the pages it helps: by how much of each
 // page's need its items cover (a ladder step that only gives chief gear
 // items goes to Chief Gear only).
@@ -7810,8 +7830,8 @@ function budgetShares(plan, inc) {
     // Option ladders are split step by step (each step's price goes to the
     // page its option is for); anything else as one purchase.
     const units = Array.isArray(r.steps) && r.steps.length ? r.steps.map((st) => ({ cost: st.price * r.count, gives: st.gives || {} })) : [{ cost: r.subtotal, gives: r.gives || {} }];
-    const costBy = {};
-    units.forEach((u) => {
+    const costBy = {}, fracBy = {};
+    units.forEach((u, ui) => {
       const w = {}; let sum = 0;
       inc.forEach((pg) => {
         let x = 0;
@@ -7828,6 +7848,12 @@ function budgetShares(plan, inc) {
         });
         w[pg.calcKey] = x; sum += x;
       });
+      // Packs that give Fire Crystal (usually with speedups): research pages
+      // come first. If a research page uses this purchase, Experts pay no
+      // part of it; Experts only share it when no research page needs it.
+      if ((u.gives["Fire Crystal"] || 0) > 0 && inc.some((pg) => BUDGET_RESEARCH_KEYS.includes(pg.calcKey) && w[pg.calcKey] > 0)) {
+        inc.forEach((pg) => { if (BUDGET_EXPERT_KEYS.includes(pg.calcKey) && w[pg.calcKey] > 0) { sum -= w[pg.calcKey]; w[pg.calcKey] = 0; } });
+      }
       // Items that only help through a trade (Charm Guides -> Jewel Secrets):
       // the pages whose own trades turn them into something they still need.
       if (sum <= 0) inc.forEach((pg) => {
@@ -7839,12 +7865,12 @@ function budgetShares(plan, inc) {
       // Last resort: the pages whose packs sell those items.
       if (sum <= 0) inc.forEach((pg) => { const x = Object.keys(u.gives).some((n) => pg.supplied && pg.supplied.has(n)) ? 1 : 0; w[pg.calcKey] = x; sum += x; });
       if (sum <= 0) { inc.forEach((pg) => { w[pg.calcKey] = 1; }); sum = inc.length; }
-      inc.forEach((pg) => { costBy[pg.calcKey] = (costBy[pg.calcKey] || 0) + u.cost * (w[pg.calcKey] / sum); });
+      inc.forEach((pg) => { costBy[pg.calcKey] = (costBy[pg.calcKey] || 0) + u.cost * (w[pg.calcKey] / sum); (fracBy[pg.calcKey] = fracBy[pg.calcKey] || [])[ui] = w[pg.calcKey] / sum; });
     });
     inc.forEach((pg) => {
       const c = costBy[pg.calcKey] || 0;
       if (c <= r.subtotal * 1e-6) return;
-      shares[pg.calcKey].rows.push({ ...r, share: r.subtotal > 0 ? c / r.subtotal : 1, shareCost: c });
+      shares[pg.calcKey].rows.push({ ...r, share: r.subtotal > 0 ? c / r.subtotal : 1, shareCost: c, unitFrac: fracBy[pg.calcKey] || [] });
       shares[pg.calcKey].total += c;
     });
   });
@@ -7972,7 +7998,7 @@ async function renderBudgetsPage(opts = {}) {
     if (inc) {
       Object.keys(pg.needStill).forEach((n) => { if (pg.needStill[n] > 0) grandMats[n] = (grandMats[n] || 0) + pg.needStill[n]; });
       pg.deltas.forEach((d) => grandDeltas.push(d));
-      if (combined.dropped.includes(pg.calcKey) && pg.chosen) { anyPlan = true; grandTotal += pg.chosen.total; grandCurrency = grandCurrency || (pg.packGroups[0] && pg.packGroups[0].offers[0].currency); grandDays = Math.max(grandDays, pg.chosen.days); }
+      if (combined.dropped.includes(pg.calcKey) && pg.chosen) { anyPlan = true; grandTotal += packPlanLocal(pg.chosen); grandCurrency = grandCurrency || (pg.packGroups[0] && pg.packGroups[0].offers[0].currency); grandDays = Math.max(grandDays, pg.chosen.days); }
     }
     let costHtml;
     if (!pg.tables.length) costHtml = `<div class="meta" style="font-size:11px;">${esc(t("budgets_no_packs"))}</div>`;
@@ -7982,22 +8008,22 @@ async function renderBudgetsPage(opts = {}) {
       const cur = combined.chosen.rows[0]?.currency;
       costHtml = `
         <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-          <span style="font-size:20px; font-weight:700;">${packFmtMoney(Math.ceil(sh.total), cur, true)}</span>
+          <span style="font-size:20px; font-weight:700;">${packFmtLocal(Math.ceil(packSharesLocal(sh)), cur, true, combined.chosen.rows[0]?.price)}</span>
           <span class="meta" style="font-size:11px;">${esc(t("combined_share"))}</span>
         </div>
         ${sh.rows.length ? `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${sh.rows.length})</summary>
-          ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtMoney(r.shareCost, r.currency)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
+          ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
     }
     else if (inc && combined.inc.includes(pg.calcKey)) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
     else if (!pg.chosen) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${inc ? esc(t("pack_cant_cover")) : "—"}</div>`;
     else {
       const c = pg.chosen;
       const late = targetDays != null && c.days > targetDays;
-      const alt = [pg.fastest && `${t("pack_plan_fastest")}: ${packFmtMoney(Math.ceil(pg.fastest.total), c.rows[0]?.currency, true)} · ${fmtDate(pg.fastest.days)}`,
-                   pg.cheapest && `${t("pack_plan_cheapest")}: ${packFmtMoney(Math.ceil(pg.cheapest.total), c.rows[0]?.currency, true)} · ${fmtDate(pg.cheapest.days)}`].filter(Boolean);
+      const alt = [pg.fastest && `${t("pack_plan_fastest")}: ${packFmtLocal(Math.ceil(packPlanLocal(pg.fastest)), c.rows[0]?.currency, true, c.rows[0]?.price)} · ${fmtDate(pg.fastest.days)}`,
+                   pg.cheapest && `${t("pack_plan_cheapest")}: ${packFmtLocal(Math.ceil(packPlanLocal(pg.cheapest)), c.rows[0]?.currency, true, c.rows[0]?.price)} · ${fmtDate(pg.cheapest.days)}`].filter(Boolean);
       costHtml = `
         <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-          <span style="font-size:20px; font-weight:700;">${packFmtMoney(Math.ceil(c.total), c.rows[0]?.currency, true)}</span>
+          <span style="font-size:20px; font-weight:700;">${packFmtLocal(Math.ceil(packPlanLocal(c)), c.rows[0]?.currency, true, c.rows[0]?.price)}</span>
           <span class="meta" style="font-size:11px;">${esc(pg.byTarget ? t("pack_plan_by_target") : t("pack_plan_cheapest"))}</span>
           <span class="meta" style="font-size:11px; color:${late ? "var(--danger)" : "var(--good)"};">${c.days === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(c.days))} · ${c.days} ${esc(t("pack_days_short_long"))}`}</span>
         </div>
@@ -8020,14 +8046,14 @@ async function renderBudgetsPage(opts = {}) {
 
   if (combined.chosen) {
     anyPlan = true;
-    grandTotal += combined.chosen.total;
+    grandTotal += packPlanLocal(combined.chosen);
     grandCurrency = grandCurrency || combined.chosen.rows[0]?.currency;
     grandDays = Math.max(grandDays, combined.chosen.days);
   }
   const combinedHtml = combined.inc.length ? `
       <div style="margin-top:10px;">
         <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(t("combined_budget_note"))}</div>
-        ${combined.chosen ? `<details><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtMoney(Math.ceil(combined.chosen.total), combined.chosen.rows[0]?.currency, true)}</summary>${packRowsHtml(combined.chosen)}
+        ${combined.chosen ? `<details><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtLocal(Math.ceil(packPlanLocal(combined.chosen)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</summary>${packRowsHtml(combined.chosen)}
           ${(combined.chosen.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${combined.chosen.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
           ${targetDays != null && !combined.byTarget && combined.earliest != null ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(combined.earliest))}</div>` : ""}</details>`
           : `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
@@ -8042,7 +8068,7 @@ async function renderBudgetsPage(opts = {}) {
           ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label>
       </div>
       <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
-        <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtMoney(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
+        <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
       </div>
       ${combinedHtml}
