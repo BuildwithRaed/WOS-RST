@@ -1091,7 +1091,1667 @@ const DATA_NAME_I18N = {
   "Experts": { ar: "الخبراء", ko: "전문가" },
   "Experts Research": { ar: "أبحاث الخبراء", ko: "전문가 연구" },
   "Roster Heroes": { ar: "أبطال التشكيلة", ko: "부대 영웅" },
+  "Abyssal Shelldragon": { ar: "تنين الصدفة السحيقة", ko: "심연 껍질용" },
+  "Frostscale Chameleon": { ar: "حرباء الحراشف الجليدية", ko: "서리비늘 카멜레온" },
+  "Giant Elk": { ar: "الأيل العملاق", ko: "거대 엘크" },
+  "Sabertooth Tiger": { ar: "النمر سيفي الأنياب", ko: "검치호" },
 };
+// Hard-coded English UI text (labels, buttons, messages, admin pages) with
+// Arabic and Korean versions. localizeDom() swaps exact matches on screen.
+const UI_TEXT_I18N = {
+"These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below. \"Gives\" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).": {"ar": "هذه هي الأسماء المعروضة في قائمة الأعمدة في صفحة الحزم. اسحب صفًا (أو استخدم ▲▼) لترتيب القائمة ثم احفظ الكل؛ فعّل «إخفاء» لإبعاد اسم عنها، وأضف عناصرك بالأسفل. «يعطي» توضح ما يُفتح إليه العنصر الواحد من مواد حقيقية (مثل صندوق معدات القائد ← مخطط: 1، محلول تلميع: 4، سبائك مقواة: 400) لتتمكن تكلفة الحزم من حسابه؛ اتركها فارغة للعنصر العادي. لا يمكن إعادة تسمية الأسماء المدمجة؛ ✕ يزيل الاسم من القائمة (ويمكن استعادة المدمجة من قائمة المحذوفات بالأسفل).", "ko": "패키지 페이지 열 드롭다운에 표시되는 이름입니다. 행을 드래그(또는 ▲▼)해 순서를 정한 뒤 모두 저장하세요. 숨기기를 체크하면 목록에서 빠지며, 아래에서 직접 아이템을 추가할 수 있습니다. \"제공\"은 아이템 1개가 실제 재료로 무엇을 주는지입니다 (예: 족장 장비 상자 → 설계도 1, 광택제 4, 강화 합금 400). 그래야 패키지 비용에 계산됩니다. 일반 아이템은 비워 두세요. 기본 이름은 바꿀 수 없으며, ✕는 드롭다운에서 제거합니다 (기본 이름은 아래 제거 목록에서 복원 가능)."},
+"\"Has count trigger\" shows a \"Count in max\" checkbox on that item's card and moves it below the divider line (used on Frame for unverified items).": {"ar": "«له مُحفّز عدّ» يُظهر خانة «احسبه ضمن الأقصى» على بطاقة العنصر وينقله أسفل الخط الفاصل (يُستخدم في الإطار للعناصر غير المؤكدة).", "ko": "\"카운트 트리거 있음\"은 아이템 카드에 \"최대치에 포함\" 체크박스를 표시하고 구분선 아래로 옮깁니다 (프레임의 미확인 아이템용)."},
+"Path": {"ar": "المسار", "ko": "경로"},
+"e.g. Hunting Skill": {"ar": "مثل مهارة الصيد", "ko": "예: 사냥 기술"},
+"Chief Charm levels": {"ar": "مستويات تعويذة القائد", "ko": "족장 부적 레벨"},
+"Chief Gear set bonus (3-piece Defense / 6-piece Attack)": {"ar": "مكافأة طقم معدات القائد (3 قطع دفاع / 6 قطع هجوم)", "ko": "족장 장비 세트 보너스 (3세트 방어 / 6세트 공격)"},
+"Collection Gallery tiers": {"ar": "فئات معرض المجموعات", "ko": "컬렉션 갤러리 티어"},
+"Tundra Album tiers": {"ar": "فئات ألبوم التندرا", "ko": "툰드라 앨범 티어"},
+"VIP tiers": {"ar": "فئات VIP", "ko": "VIP 티어"},
+"star-level bonuses": {"ar": "مكافآت مستويات النجوم", "ko": "별 레벨 보너스"},
+
+"Menu": {
+"ar": "القائمة",
+"ko": "메뉴"
+},
+"☰ Menu": {
+"ar": "☰ القائمة",
+"ko": "☰ 메뉴"
+},
+"Close": {
+"ar": "إغلاق",
+"ko": "닫기"
+},
+"Add": {
+"ar": "إضافة",
+"ko": "추가"
+},
+"Save": {
+"ar": "حفظ",
+"ko": "저장"
+},
+"Save all": {
+"ar": "حفظ الكل",
+"ko": "모두 저장"
+},
+"Saved": {
+"ar": "تم الحفظ",
+"ko": "저장됨"
+},
+"Delete": {
+"ar": "حذف",
+"ko": "삭제"
+},
+"Deleted": {
+"ar": "تم الحذف",
+"ko": "삭제됨"
+},
+"Remove": {
+"ar": "إزالة",
+"ko": "제거"
+},
+"Restore": {
+"ar": "استعادة",
+"ko": "복원"
+},
+"Restored": {
+"ar": "تمت الاستعادة",
+"ko": "복원됨"
+},
+"Hide": {
+"ar": "إخفاء",
+"ko": "숨기기"
+},
+"Preview": {
+"ar": "معاينة",
+"ko": "미리보기"
+},
+"Update": {
+"ar": "تحديث",
+"ko": "업데이트"
+},
+"Updated": {
+"ar": "تم التحديث",
+"ko": "업데이트됨"
+},
+"Updated:": {
+"ar": "تم التحديث:",
+"ko": "업데이트됨:"
+},
+"Roster": {"ar": "القائمة", "ko": "명단"},
+"Name": {
+"ar": "الاسم",
+"ko": "이름"
+},
+"Email": {
+"ar": "البريد الإلكتروني",
+"ko": "이메일"
+},
+"Icon": {
+"ar": "الأيقونة",
+"ko": "아이콘"
+},
+"Image URL": {
+"ar": "رابط الصورة",
+"ko": "이미지 URL"
+},
+"Order": {
+"ar": "الترتيب",
+"ko": "순서"
+},
+"Value": {
+"ar": "القيمة",
+"ko": "값"
+},
+"Level": {
+"ar": "المستوى",
+"ko": "레벨"
+},
+"Tier": {
+"ar": "الفئة",
+"ko": "티어"
+},
+"Stars": {
+"ar": "النجوم",
+"ko": "별"
+},
+"Star": {
+"ar": "نجمة",
+"ko": "별"
+},
+"Stage": {
+"ar": "المرحلة",
+"ko": "단계"
+},
+"Step": {
+"ar": "الخطوة",
+"ko": "단계"
+},
+"Stat": {
+"ar": "الإحصائية",
+"ko": "스탯"
+},
+"Stat %": {
+"ar": "الإحصائية %",
+"ko": "스탯 %"
+},
+"Stat 2": {
+"ar": "الإحصائية 2",
+"ko": "스탯 2"
+},
+"Power": {
+"ar": "القوة",
+"ko": "전투력"
+},
+"Materials": {
+"ar": "المواد",
+"ko": "재료"
+},
+"From": {
+"ar": "من",
+"ko": "시작"
+},
+"Rows": {
+"ar": "الصفوف",
+"ko": "행"
+},
+"Row": {
+"ar": "صف",
+"ko": "행"
+},
+"Column": {
+"ar": "عمود",
+"ko": "열"
+},
+"Category": {
+"ar": "الفئة",
+"ko": "카테고리"
+},
+"Currency": {
+"ar": "العملة",
+"ko": "통화"
+},
+"Currencies": {
+"ar": "العملات",
+"ko": "통화"
+},
+"Hero": {
+"ar": "البطل",
+"ko": "영웅"
+},
+"Heroes": {
+"ar": "الأبطال",
+"ko": "영웅"
+},
+"Pets": {
+"ar": "الحيوانات الأليفة",
+"ko": "펫"
+},
+"Research": {
+"ar": "الأبحاث",
+"ko": "연구"
+},
+"Alliance": {
+"ar": "التحالف",
+"ko": "연맹"
+},
+"Skins": {
+"ar": "المظاهر",
+"ko": "스킨"
+},
+"Packs": {
+"ar": "الحزم",
+"ko": "패키지"
+},
+"Budgets": {
+"ar": "الميزانيات",
+"ko": "예산"
+},
+"Backpack": {
+"ar": "الحقيبة",
+"ko": "배낭"
+},
+"Admin": {
+"ar": "الإدارة",
+"ko": "관리자"
+},
+"Visibility": {
+"ar": "الظهور",
+"ko": "공개 설정"
+},
+"Contact us": {
+"ar": "اتصل بنا",
+"ko": "문의하기"
+},
+"Heroes Special Skills": {
+"ar": "مهارات الأبطال الخاصة",
+"ko": "영웅 특수 스킬"
+},
+"Chief Gear": {
+"ar": "معدات القائد",
+"ko": "족장 장비"
+},
+"Chief Gears": {
+"ar": "معدات القائد",
+"ko": "족장 장비"
+},
+"Chief Charm": {
+"ar": "تعويذة القائد",
+"ko": "족장 부적"
+},
+"Heroes Gears": {
+"ar": "معدات الأبطال",
+"ko": "영웅 장비"
+},
+"Experts": {
+"ar": "الخبراء",
+"ko": "전문가"
+},
+"Pack Resources": {
+"ar": "موارد الحزم",
+"ko": "패키지 자원"
+},
+"Upcoming": {
+"ar": "قادم",
+"ko": "출시 예정"
+},
+"Free": {
+"ar": "مجاني",
+"ko": "무료"
+},
+"Owned": {
+"ar": "المملوك",
+"ko": "보유"
+},
+"built-in": {
+"ar": "مدمج",
+"ko": "기본 제공"
+},
+"English": {
+"ar": "English",
+"ko": "English"
+},
+"SvS": {
+"ar": "SvS",
+"ko": "SvS"
+},
+"T11 Helios": {
+"ar": "T11 هيليوس",
+"ko": "T11 헬리오스"
+},
+"AVERAGE": {
+"ar": "المتوسط",
+"ko": "평균"
+},
+"Something went wrong loading this tab.": {
+"ar": "حدث خطأ أثناء تحميل هذا التبويب.",
+"ko": "이 탭을 불러오는 중 문제가 발생했습니다."
+},
+"Move up": {
+"ar": "تحريك لأعلى",
+"ko": "위로 이동"
+},
+"Move down": {
+"ar": "تحريك لأسفل",
+"ko": "아래로 이동"
+},
+"Move left": {
+"ar": "تحريك لليسار",
+"ko": "왼쪽으로 이동"
+},
+"Move right": {
+"ar": "تحريك لليمين",
+"ko": "오른쪽으로 이동"
+},
+"Drag to move": {
+"ar": "اسحب للتحريك",
+"ko": "드래그하여 이동"
+},
+"Use the arrows to reorder.": {
+"ar": "استخدم الأسهم لإعادة الترتيب.",
+"ko": "화살표로 순서를 바꾸세요."
+},
+"Upload image": {
+"ar": "رفع صورة",
+"ko": "이미지 업로드"
+},
+"⇧ Upload": {
+"ar": "⇧ رفع",
+"ko": "⇧ 업로드"
+},
+"Image uploaded — remember to Save": {
+"ar": "تم رفع الصورة — لا تنسَ الحفظ",
+"ko": "이미지 업로드됨 — 저장을 잊지 마세요"
+},
+"Green": {
+"ar": "أخضر",
+"ko": "초록"
+},
+"Blue": {
+"ar": "أزرق",
+"ko": "파랑"
+},
+"Purple": {
+"ar": "بنفسجي",
+"ko": "보라"
+},
+"Gold": {
+"ar": "ذهبي",
+"ko": "금색"
+},
+"Red": {
+"ar": "أحمر",
+"ko": "빨강"
+},
+"Grey": {
+"ar": "رمادي",
+"ko": "회색"
+},
+"Orange": {
+"ar": "برتقالي",
+"ko": "주황"
+},
+"Infantry": {
+"ar": "المشاة",
+"ko": "보병"
+},
+"Lancer": {
+"ar": "الرماح",
+"ko": "창병"
+},
+"Marksman": {
+"ar": "القناصة",
+"ko": "궁병"
+},
+"All troops": {
+"ar": "كل الجنود",
+"ko": "모든 병종"
+},
+"Infantry only": {
+"ar": "المشاة فقط",
+"ko": "보병만"
+},
+"Lancers only": {
+"ar": "الرماح فقط",
+"ko": "창병만"
+},
+"Marksman only": {
+"ar": "القناصة فقط",
+"ko": "궁병만"
+},
+"Attack %": {
+"ar": "الهجوم %",
+"ko": "공격 %"
+},
+"Defense %": {
+"ar": "الدفاع %",
+"ko": "방어 %"
+},
+"Health %": {
+"ar": "الصحة %",
+"ko": "체력 %"
+},
+"Lethality %": {
+"ar": "الفتك %",
+"ko": "치명 %"
+},
+"Inf. Health %": {
+"ar": "صحة المشاة %",
+"ko": "보병 체력 %"
+},
+"Inf. Lethality %": {
+"ar": "فتك المشاة %",
+"ko": "보병 치명 %"
+},
+"Lancer Health %": {
+"ar": "صحة الرماح %",
+"ko": "창병 체력 %"
+},
+"Lancer Lethality %": {
+"ar": "فتك الرماح %",
+"ko": "창병 치명 %"
+},
+"Marksman Health %": {
+"ar": "صحة القناصة %",
+"ko": "궁병 체력 %"
+},
+"Marksman Lethality %": {
+"ar": "فتك القناصة %",
+"ko": "궁병 치명 %"
+},
+"ATK/DEF %": {
+"ar": "هجوم/دفاع %",
+"ko": "공격/방어 %"
+},
+"LETH & HP": {
+"ar": "فتك وصحة",
+"ko": "치명 & 체력"
+},
+"LETH & HP %": {
+"ar": "فتك وصحة %",
+"ko": "치명 & 체력 %"
+},
+"ATK & DEF": {
+"ar": "هجوم ودفاع",
+"ko": "공격 & 방어"
+},
+"ATK & DEF %": {
+"ar": "هجوم ودفاع %",
+"ko": "공격 & 방어 %"
+},
+"Max ATK&DEF %": {
+"ar": "أقصى هجوم ودفاع %",
+"ko": "최대 공격&방어 %"
+},
+"DMG, ATK, DEF, HP …": {
+"ar": "ضرر، هجوم، دفاع، صحة …",
+"ko": "피해, 공격, 방어, 체력 …"
+},
+"Troop": {
+"ar": "الجنود",
+"ko": "병종"
+},
+"Troop restriction": {
+"ar": "قيود الجنود",
+"ko": "병종 제한"
+},
+"Main stat": {
+"ar": "الإحصائية الرئيسية",
+"ko": "주 스탯"
+},
+"Bonus %": {
+"ar": "المكافأة %",
+"ko": "보너스 %"
+},
+"Bonus stat": {
+"ar": "إحصائية المكافأة",
+"ko": "보너스 스탯"
+},
+"Bonus stat (e.g. Attack)": {
+"ar": "إحصائية المكافأة (مثل الهجوم)",
+"ko": "보너스 스탯 (예: 공격)"
+},
+"Chief Bonus": {
+"ar": "مكافأة القائد",
+"ko": "족장 보너스"
+},
+"Upgrade calculator": {
+"ar": "حاسبة الترقية",
+"ko": "업그레이드 계산기"
+},
+"Pick your current and target step to see materials, stat gain, and power gain between them.": {
+"ar": "اختر خطوتك الحالية والمستهدفة لترى المواد وزيادة الإحصائيات والقوة بينهما.",
+"ko": "현재 단계와 목표 단계를 선택하면 그 사이의 재료, 스탯 증가, 전투력 증가를 볼 수 있습니다."
+},
+"Stat gain": {
+"ar": "زيادة الإحصائيات",
+"ko": "스탯 증가"
+},
+"Power gain": {
+"ar": "زيادة القوة",
+"ko": "전투력 증가"
+},
+"No materials needed for this range.": {
+"ar": "لا حاجة لمواد في هذا النطاق.",
+"ko": "이 구간에는 재료가 필요 없습니다."
+},
+"No rows yet.": {
+"ar": "لا توجد صفوف بعد.",
+"ko": "아직 행이 없습니다."
+},
+"Materials, e.g. 100 XP Component": {
+"ar": "المواد، مثل 100 مكون خبرة",
+"ko": "재료, 예: 경험치 부품 100"
+},
+"Lv. 1": {
+"ar": "مستوى 1",
+"ko": "Lv. 1"
+},
+"Lv. 2": {
+"ar": "مستوى 2",
+"ko": "Lv. 2"
+},
+"Lv. 3": {
+"ar": "مستوى 3",
+"ko": "Lv. 3"
+},
+"Lv. 4": {
+"ar": "مستوى 4",
+"ko": "Lv. 4"
+},
+"Lv. 5": {
+"ar": "مستوى 5",
+"ko": "Lv. 5"
+},
+"Current lvl": {
+"ar": "المستوى الحالي",
+"ko": "현재 레벨"
+},
+"Max lvl": {
+"ar": "أقصى مستوى",
+"ko": "최대 레벨"
+},
+"Max level": {
+"ar": "أقصى مستوى",
+"ko": "최대 레벨"
+},
+"Max stars": {
+"ar": "أقصى نجوم",
+"ko": "최대 별"
+},
+"Max widget %": {
+"ar": "أقصى نسبة للأداة %",
+"ko": "최대 위젯 %"
+},
+"Widget Lv": {
+"ar": "مستوى الأداة",
+"ko": "위젯 레벨"
+},
+"Shards": {
+"ar": "الشظايا",
+"ko": "조각"
+},
+"Category not found.": {
+"ar": "الفئة غير موجودة.",
+"ko": "카테고리를 찾을 수 없습니다."
+},
+"Values tracked for this category.": {
+"ar": "القيم المتتبعة لهذه الفئة.",
+"ko": "이 카테고리에서 추적하는 값입니다."
+},
+"Add a stat line, e.g. Infantry ATT": {
+"ar": "أضف سطر إحصائية، مثل هجوم المشاة",
+"ko": "스탯 줄 추가, 예: 보병 공격"
+},
+"No stat lines yet.": {
+"ar": "لا توجد أسطر إحصائيات بعد.",
+"ko": "아직 스탯 줄이 없습니다."
+},
+"Add one below.": {
+"ar": "أضف واحدًا بالأسفل.",
+"ko": "아래에서 추가하세요."
+},
+"Stat line added": {
+"ar": "تمت إضافة سطر الإحصائية",
+"ko": "스탯 줄 추가됨"
+},
+"Enter a valid number": {
+"ar": "أدخل رقمًا صحيحًا",
+"ko": "올바른 숫자를 입력하세요"
+},
+"Inventory updated": {
+"ar": "تم تحديث المخزون",
+"ko": "인벤토리 업데이트됨"
+},
+"Couldn't update inventory": {
+"ar": "تعذّر تحديث المخزون",
+"ko": "인벤토리를 업데이트할 수 없습니다"
+},
+"Couldn't update value": {
+"ar": "تعذّر تحديث القيمة",
+"ko": "값을 업데이트할 수 없습니다"
+},
+"Couldn't save": {
+"ar": "تعذّر الحفظ",
+"ko": "저장할 수 없습니다"
+},
+"Couldn't save all": {
+"ar": "تعذّر حفظ الكل",
+"ko": "모두 저장할 수 없습니다"
+},
+"Couldn't delete": {
+"ar": "تعذّر الحذف",
+"ko": "삭제할 수 없습니다"
+},
+"Couldn't reorder": {
+"ar": "تعذّرت إعادة الترتيب",
+"ko": "순서를 바꿀 수 없습니다"
+},
+"Couldn't update": {
+"ar": "تعذّر التحديث",
+"ko": "업데이트할 수 없습니다"
+},
+"Couldn't save commander name": {
+"ar": "تعذّر حفظ اسم القائد",
+"ko": "지휘관 이름을 저장할 수 없습니다"
+},
+"Couldn't save that change": {
+"ar": "تعذّر حفظ هذا التغيير",
+"ko": "변경 사항을 저장할 수 없습니다"
+},
+"Couldn't duplicate table": {
+"ar": "تعذّر نسخ الجدول",
+"ko": "표를 복제할 수 없습니다"
+},
+"Couldn't delete table": {
+"ar": "تعذّر حذف الجدول",
+"ko": "표를 삭제할 수 없습니다"
+},
+"Couldn't delete row": {
+"ar": "تعذّر حذف الصف",
+"ko": "행을 삭제할 수 없습니다"
+},
+"Couldn't add preset tables": {
+"ar": "تعذّرت إضافة الجداول الجاهزة",
+"ko": "기본 표를 추가할 수 없습니다"
+},
+"Couldn't create rows": {
+"ar": "تعذّر إنشاء الصفوف",
+"ko": "행을 만들 수 없습니다"
+},
+"Couldn't save stats": {
+"ar": "تعذّر حفظ الإحصائيات",
+"ko": "스탯을 저장할 수 없습니다"
+},
+"Couldn't start a session": {
+"ar": "تعذّر بدء الجلسة",
+"ko": "세션을 시작할 수 없습니다"
+},
+"Couldn't update building": {
+"ar": "تعذّر تحديث المبنى",
+"ko": "건물을 업데이트할 수 없습니다"
+},
+"Couldn't update island": {
+"ar": "تعذّر تحديث الجزيرة",
+"ko": "섬을 업데이트할 수 없습니다"
+},
+"Couldn't update level": {
+"ar": "تعذّر تحديث المستوى",
+"ko": "레벨을 업데이트할 수 없습니다"
+},
+"Couldn't update skin": {
+"ar": "تعذّر تحديث المظهر",
+"ko": "스킨을 업데이트할 수 없습니다"
+},
+"Enter a price like 4.99": {
+"ar": "أدخل سعرًا مثل 4.99",
+"ko": "4.99 같은 가격을 입력하세요"
+},
+"Enter a USD price like 14.99": {
+"ar": "أدخل سعرًا بالدولار مثل 14.99",
+"ko": "14.99 같은 USD 가격을 입력하세요"
+},
+"Enter how many units equal 1 USD": {
+"ar": "أدخل عدد الوحدات التي تساوي 1 دولار",
+"ko": "1 USD에 해당하는 단위 수를 입력하세요"
+},
+"Keep at least one row (Row 1 sets the scale)": {
+"ar": "أبقِ صفًا واحدًا على الأقل (الصف 1 يحدد المقياس)",
+"ko": "최소 한 행은 남겨야 합니다 (1행이 비율 기준)"
+},
+"Nothing left to remove between Amount and Gems": {
+"ar": "لا يوجد ما يمكن إزالته بين المبلغ والجواهر",
+"ko": "금액과 보석 사이에 제거할 열이 없습니다"
+},
+"Row added": {
+"ar": "تمت إضافة الصف",
+"ko": "행 추가됨"
+},
+"Row deleted": {
+"ar": "تم حذف الصف",
+"ko": "행 삭제됨"
+},
+"Category added": {
+"ar": "تمت إضافة الفئة",
+"ko": "카테고리 추가됨"
+},
+"Expert added": {
+"ar": "تمت إضافة الخبير",
+"ko": "전문가 추가됨"
+},
+"Hero added": {
+"ar": "تمت إضافة البطل",
+"ko": "영웅 추가됨"
+},
+"Item added": {
+"ar": "تمت إضافة العنصر",
+"ko": "아이템 추가됨"
+},
+"Pet added": {
+"ar": "تمت إضافة الحيوان",
+"ko": "펫 추가됨"
+},
+"Tier added": {
+"ar": "تمت إضافة الفئة",
+"ko": "티어 추가됨"
+},
+"Contact details saved": {
+"ar": "تم حفظ بيانات التواصل",
+"ko": "연락처 정보 저장됨"
+},
+"Pack resources saved": {
+"ar": "تم حفظ موارد الحزم",
+"ko": "패키지 자원 저장됨"
+},
+"Path rows created": {
+"ar": "تم إنشاء صفوف المسار",
+"ko": "경로 행 생성됨"
+},
+"Published to visitors": {
+"ar": "تم النشر للزوار",
+"ko": "방문자에게 게시됨"
+},
+"Rates reset": {
+"ar": "تمت إعادة تعيين المعدلات",
+"ko": "비율 초기화됨"
+},
+"Rates saved": {
+"ar": "تم حفظ المعدلات",
+"ko": "비율 저장됨"
+},
+"Store prices saved": {
+"ar": "تم حفظ أسعار المتجر",
+"ko": "스토어 가격 저장됨"
+},
+"Test rates saved": {
+"ar": "تم حفظ معدلات التجربة",
+"ko": "테스트 비율 저장됨"
+},
+"Visitors' rates saved": {
+"ar": "تم حفظ معدلات الزوار",
+"ko": "방문자 비율 저장됨"
+},
+"That doesn't look like an email address": {
+"ar": "هذا لا يبدو عنوان بريد إلكتروني",
+"ko": "이메일 주소가 아닌 것 같습니다"
+},
+"Code must be 3-5 letters (e.g. PKR)": {
+"ar": "يجب أن يتكون الرمز من 3-5 أحرف (مثل PKR)",
+"ko": "코드는 3-5글자여야 합니다 (예: PKR)"
+},
+"Duplicate name:": {
+"ar": "اسم مكرر:",
+"ko": "중복된 이름:"
+},
+"Filled — review, then Save all": {
+"ar": "تمت التعبئة — راجع ثم احفظ الكل",
+"ko": "채움 완료 — 확인 후 모두 저장"
+},
+"Delete this row?": {
+"ar": "حذف هذا الصف؟",
+"ko": "이 행을 삭제할까요?"
+},
+"Delete this item?": {
+"ar": "حذف هذا العنصر؟",
+"ko": "이 아이템을 삭제할까요?"
+},
+"Delete this VIP tier?": {
+"ar": "حذف فئة VIP هذه؟",
+"ko": "이 VIP 티어를 삭제할까요?"
+},
+"Delete this hero from the catalog?": {
+"ar": "حذف هذا البطل من القائمة؟",
+"ko": "이 영웅을 목록에서 삭제할까요?"
+},
+"Delete this expert from the roster? Their affinity/skill/research data rows will remain but become orphaned.": {
+"ar": "حذف هذا الخبير من القائمة؟ ستبقى صفوف بيانات الألفة/المهارات/الأبحاث لكنها ستصبح غير مرتبطة.",
+"ko": "이 전문가를 명단에서 삭제할까요? 친밀도/스킬/연구 데이터 행은 남지만 연결이 끊깁니다."
+},
+"Give visitors your test rates?": {
+"ar": "إعطاء الزوار معدلات التجربة الخاصة بك؟",
+"ko": "방문자에게 내 테스트 비율을 적용할까요?"
+},
+"Put every rate back to the built-in defaults?": {
+"ar": "إعادة كل المعدلات إلى القيم الافتراضية المدمجة؟",
+"ko": "모든 비율을 기본값으로 되돌릴까요?"
+},
+"Add column": {
+"ar": "إضافة عمود",
+"ko": "열 추가"
+},
+"Remove last column": {
+"ar": "إزالة آخر عمود",
+"ko": "마지막 열 제거"
+},
+"Add row": {
+"ar": "إضافة صف",
+"ko": "행 추가"
+},
+"Remove last row": {
+"ar": "إزالة آخر صف",
+"ko": "마지막 행 제거"
+},
+"Delete row": {
+"ar": "حذف الصف",
+"ko": "행 삭제"
+},
+"Delete table": {
+"ar": "حذف الجدول",
+"ko": "표 삭제"
+},
+"Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.": {
+"ar": "يملأ باقي الجدول من نسب الصف 1. أوقفه للجداول التي لا تتبع صفوفها مقياسًا ثابتًا.",
+"ko": "1행의 비율로 표의 나머지를 채웁니다. 행이 일정한 비율을 따르지 않는 표는 끄세요."
+},
+"Include roster heroes' stats in the Dashboard totals": {
+"ar": "تضمين إحصائيات أبطال التشكيلة في مجاميع لوحة التحكم",
+"ko": "대시보드 합계에 부대 영웅 스탯 포함"
+},
+"Click to choose hero": {
+"ar": "انقر لاختيار البطل",
+"ko": "클릭하여 영웅 선택"
+},
+"No islands match your filters.": {
+"ar": "لا توجد جزر تطابق الفلاتر.",
+"ko": "필터에 맞는 섬이 없습니다."
+},
+"No heroes in this generation.": {
+"ar": "لا يوجد أبطال في هذا الجيل.",
+"ko": "이 세대에는 영웅이 없습니다."
+},
+"Speedups": {
+"ar": "التسريعات",
+"ko": "가속"
+},
+"Random Chief Gear Chest": {
+"ar": "صندوق معدات القائد العشوائي",
+"ko": "무작위 족장 장비 상자"
+},
+"Random Charm Chest": {
+"ar": "صندوق التعويذة العشوائي",
+"ko": "무작위 부적 상자"
+},
+"Lucky Gear Chest": {
+"ar": "صندوق المعدات المحظوظ",
+"ko": "행운의 장비 상자"
+},
+"Pet Custom Chest": {
+"ar": "صندوق الحيوان المخصص",
+"ko": "펫 맞춤 상자"
+},
+"Sigil": {
+"ar": "ختم",
+"ko": "인장"
+},
+"Books": {
+"ar": "الكتب",
+"ko": "책"
+},
+"FCS": {
+"ar": "شظايا FC",
+"ko": "FCS"
+},
+"Meat": {
+"ar": "اللحم",
+"ko": "고기"
+},
+"Wood": {
+"ar": "الخشب",
+"ko": "나무"
+},
+"Coal": {
+"ar": "الفحم",
+"ko": "석탄"
+},
+"Iron": {
+"ar": "الحديد",
+"ko": "철"
+},
+"Food": {
+"ar": "الطعام",
+"ko": "먹이"
+},
+"Manual": {
+"ar": "الدليل",
+"ko": "교본"
+},
+"Potion": {
+"ar": "الجرعة",
+"ko": "물약"
+},
+"Serum": {
+"ar": "المصل",
+"ko": "혈청"
+},
+"XP Component": {
+"ar": "مكون الخبرة",
+"ko": "경험치 부품"
+},
+"Mythic Gear": {
+"ar": "معدات أسطورية",
+"ko": "신화 장비"
+},
+"1Hr Construction Speeds": {
+"ar": "تسريع بناء 1 ساعة",
+"ko": "건설 가속 1시간"
+},
+"1Hr Research Speeds": {
+"ar": "تسريع أبحاث 1 ساعة",
+"ko": "연구 가속 1시간"
+},
+"1Hr Troops Speeds": {
+"ar": "تسريع جنود 1 ساعة",
+"ko": "병력 가속 1시간"
+},
+"Lucky Gear Chest: 1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.": {
+"ar": "صندوق المعدات المحظوظ: فرصة 1.6% للحصول على معدات أسطورية واحدة لكل صندوق ← يُحسب 0.016 معدات أسطورية لكل صندوق (متوسط). 63 صندوقًا ≈ معدات أسطورية واحدة.",
+"ko": "행운의 장비 상자: 상자당 신화 장비 1개 확률 1.6% → 상자당 0.016개로 계산 (평균). 63상자 ≈ 신화 장비 1개."
+},
+"Experts Roster": {
+"ar": "قائمة الخبراء",
+"ko": "전문가 명단"
+},
+"Experts Affinity": {
+"ar": "ألفة الخبراء",
+"ko": "전문가 친밀도"
+},
+"Experts Skills": {
+"ar": "مهارات الخبراء",
+"ko": "전문가 스킬"
+},
+"Add a new expert": {
+"ar": "إضافة خبير جديد",
+"ko": "새 전문가 추가"
+},
+"Add expert": {
+"ar": "إضافة خبير",
+"ko": "전문가 추가"
+},
+"After adding, go to Expert Affinity / Skills / Research below to add their stat data.": {
+"ar": "بعد الإضافة، انتقل إلى ألفة الخبير / المهارات / الأبحاث بالأسفل لإضافة بياناته.",
+"ko": "추가한 뒤 아래의 전문가 친밀도 / 스킬 / 연구에서 스탯 데이터를 추가하세요."
+},
+"Expert name": {
+"ar": "اسم الخبير",
+"ko": "전문가 이름"
+},
+"Portrait image URL (optional)": {
+"ar": "رابط صورة الوجه (اختياري)",
+"ko": "초상 이미지 URL (선택)"
+},
+"Show an Upcoming badge on this expert's cards": {
+"ar": "إظهار شارة «قادم» على بطاقات هذا الخبير",
+"ko": "이 전문가 카드에 출시 예정 배지 표시"
+},
+"Skill": {
+"ar": "المهارة",
+"ko": "스킬"
+},
+"Pick an expert": {
+"ar": "اختر خبيرًا",
+"ko": "전문가 선택"
+},
+"Pick a hero": {
+"ar": "اختر بطلًا",
+"ko": "영웅 선택"
+},
+"Pick a pet": {
+"ar": "اختر حيوانًا",
+"ko": "펫 선택"
+},
+"Pick a table": {
+"ar": "اختر جدولًا",
+"ko": "표 선택"
+},
+"Affinity cost": {
+"ar": "تكلفة الألفة",
+"ko": "친밀도 비용"
+},
+"Book cost": {
+"ar": "تكلفة الكتب",
+"ko": "책 비용"
+},
+"Sigil cost": {
+"ar": "تكلفة الأختام",
+"ko": "인장 비용"
+},
+"EXP cost": {
+"ar": "تكلفة الخبرة",
+"ko": "경험치 비용"
+},
+"Buff text": {
+"ar": "نص التعزيز",
+"ko": "버프 문구"
+},
+"Level label": {
+"ar": "تسمية المستوى",
+"ko": "레벨 라벨"
+},
+"Stage label": {
+"ar": "تسمية المرحلة",
+"ko": "단계 라벨"
+},
+"Row name": {
+"ar": "اسم الصف",
+"ko": "행 이름"
+},
+"Row name (e.g. 1 ATT)": {
+"ar": "اسم الصف (مثل 1 ATT)",
+"ko": "행 이름 (예: 1 ATT)"
+},
+"Value %": {
+"ar": "القيمة %",
+"ko": "값 %"
+},
+"Value 2 %": {
+"ar": "القيمة 2 %",
+"ko": "값 2 %"
+},
+"2nd stat (optional)": {
+"ar": "الإحصائية الثانية (اختياري)",
+"ko": "두 번째 스탯 (선택)"
+},
+"2nd value %": {
+"ar": "القيمة الثانية %",
+"ko": "두 번째 값 %"
+},
+"Value % (one number, or a list per milestone)": {
+"ar": "القيمة % (رقم واحد، أو قائمة لكل مرحلة)",
+"ko": "값 % (숫자 하나 또는 마일스톤별 목록)"
+},
+"Quick fill a path": {
+"ar": "تعبئة سريعة لمسار",
+"ko": "경로 빠르게 채우기"
+},
+"Builds a whole path in one go: a milestone every N levels, the stat cycling through your pattern, one value % (or a list), and sigils per level. Preview first, then create. Creating replaces that path's existing rows for this expert.": {
+"ar": "يبني مسارًا كاملًا دفعة واحدة: مرحلة كل N مستويات، والإحصائية تتناوب حسب نمطك، وقيمة % واحدة (أو قائمة)، والأختام لكل مستوى. عاين أولًا ثم أنشئ. الإنشاء يستبدل صفوف هذا المسار الحالية لهذا الخبير.",
+"ko": "경로 전체를 한 번에 만듭니다: N레벨마다 마일스톤, 패턴대로 순환하는 스탯, 값 % 하나(또는 목록), 레벨당 인장. 먼저 미리보기 후 생성하세요. 생성하면 이 전문가의 해당 경로 기존 행이 대체됩니다."
+},
+"Milestone every": {
+"ar": "مرحلة كل",
+"ko": "마일스톤 간격"
+},
+"Stat pattern (repeats)": {
+"ar": "نمط الإحصائيات (يتكرر)",
+"ko": "스탯 패턴 (반복)"
+},
+"Sigils per level": {
+"ar": "الأختام لكل مستوى",
+"ko": "레벨당 인장"
+},
+"Sigils per level (whole block)": {
+"ar": "الأختام لكل مستوى (للكتلة كاملة)",
+"ko": "레벨당 인장 (블록 전체)"
+},
+"Sigils at this level (lump)": {
+"ar": "الأختام عند هذا المستوى (دفعة)",
+"ko": "이 레벨의 인장 (일괄)"
+},
+"Path #": {
+"ar": "رقم المسار",
+"ko": "경로 #"
+},
+"Path name": {
+"ar": "اسم المسار",
+"ko": "경로 이름"
+},
+"Path name (optional)": {
+"ar": "اسم المسار (اختياري)",
+"ko": "경로 이름 (선택)"
+},
+"All 6 paths": {
+"ar": "كل المسارات الستة",
+"ko": "6개 경로 전부"
+},
+"Paths 1–3": {
+"ar": "المسارات 1–3",
+"ko": "경로 1–3"
+},
+"Paths 4–6": {
+"ar": "المسارات 4–6",
+"ko": "경로 4–6"
+},
+"Create rows": {
+"ar": "إنشاء الصفوف",
+"ko": "행 생성"
+},
+"Time (hrs)": {
+"ar": "الوقت (ساعات)",
+"ko": "시간 (시간)"
+},
+"Track": {
+"ar": "المسار",
+"ko": "트랙"
+},
+"Add a new pet": {
+"ar": "إضافة حيوان جديد",
+"ko": "새 펫 추가"
+},
+"Add a new pet's refine data": {
+"ar": "إضافة بيانات تنقية لحيوان جديد",
+"ko": "새 펫 정제 데이터 추가"
+},
+"Add pet": {
+"ar": "إضافة حيوان",
+"ko": "펫 추가"
+},
+"Pet name": {
+"ar": "اسم الحيوان",
+"ko": "펫 이름"
+},
+"Creates the pet with a single Level 1 row — add more level rows below afterward.": {
+"ar": "ينشئ الحيوان بصف واحد للمستوى 1 — أضف صفوف مستويات أخرى بالأسفل لاحقًا.",
+"ko": "레벨 1 행 하나로 펫을 만듭니다 — 이후 아래에서 레벨 행을 더 추가하세요."
+},
+"Creates the pet with a single Grey-stage row — add more stage rows below afterward. Only needed if the pet doesn't already exist on the Pets tab.": {
+"ar": "ينشئ الحيوان بصف واحد للمرحلة الرمادية — أضف صفوف مراحل أخرى بالأسفل لاحقًا. مطلوب فقط إذا لم يكن الحيوان موجودًا في تبويب الحيوانات.",
+"ko": "회색 단계 행 하나로 펫을 만듭니다 — 이후 아래에서 단계 행을 더 추가하세요. 펫 탭에 해당 펫이 없을 때만 필요합니다."
+},
+"Add a level row": {
+"ar": "إضافة صف مستوى",
+"ko": "레벨 행 추가"
+},
+"Add a stage row": {
+"ar": "إضافة صف مرحلة",
+"ko": "단계 행 추가"
+},
+"Add a row": {
+"ar": "إضافة صف",
+"ko": "행 추가"
+},
+"Marks calculation": {
+"ar": "حساب العلامات",
+"ko": "마크 계산"
+},
+"Marks Calculation": {
+"ar": "حساب العلامات",
+"ko": "마크 계산"
+},
+"Common Marks per 1%": {
+"ar": "العلامات العادية لكل 1%",
+"ko": "1%당 일반 마크"
+},
+"My test rates": {
+"ar": "معدلات التجربة الخاصة بي",
+"ko": "내 테스트 비율"
+},
+"Visitors (published)": {
+"ar": "الزوار (منشورة)",
+"ko": "방문자 (게시됨)"
+},
+"Save my test rates": {
+"ar": "حفظ معدلات التجربة",
+"ko": "내 테스트 비율 저장"
+},
+"Save for visitors": {
+"ar": "حفظ للزوار",
+"ko": "방문자용으로 저장"
+},
+"Copy my test rates → visitors": {
+"ar": "نسخ معدلات التجربة ← للزوار",
+"ko": "내 테스트 비율 → 방문자"
+},
+"Copy visitors → my test rates": {
+"ar": "نسخ معدلات الزوار ← لمعدلات التجربة",
+"ko": "방문자 → 내 테스트 비율"
+},
+"Use my test rates on the site (only me)": {
+"ar": "استخدام معدلات التجربة في الموقع (لي فقط)",
+"ko": "사이트에서 내 테스트 비율 사용 (나만)"
+},
+"Reset my test rates to the built-in defaults": {
+"ar": "إعادة معدلات التجربة إلى الافتراضية",
+"ko": "내 테스트 비율을 기본값으로 초기화"
+},
+"Reset to defaults": {
+"ar": "إعادة إلى الافتراضي",
+"ko": "기본값으로 초기화"
+},
+"On: you see the test rates everywhere; visitors keep the published ones.": {
+"ar": "مفعّل: ترى معدلات التجربة في كل مكان؛ ويبقى الزوار على المنشورة.",
+"ko": "켜짐: 모든 곳에서 테스트 비율을 보고, 방문자는 게시된 비율을 유지합니다."
+},
+"Grey/Green/Blue rates are an average over all stats; Purple/Orange/Red are per 1% of one stat. The Adjustment % on the Refine page is separate and per person.": {
+"ar": "معدلات الرمادي/الأخضر/الأزرق متوسط لكل الإحصائيات؛ والبنفسجي/البرتقالي/الأحمر لكل 1% من إحصائية واحدة. نسبة التعديل في صفحة التنقية منفصلة ولكل شخص.",
+"ko": "회색/초록/파랑 비율은 모든 스탯의 평균이고, 보라/주황/빨강은 스탯 하나의 1%당입니다. 정제 페이지의 조정 %는 별도이며 사람마다 다릅니다."
+},
+"Two sets of \"Common Marks per 1%\" rates. Visitors always use the left set. Tick the switch below to try the right set yourself on the Pets Refine page (and in your Dashboard, packs and budgets) without changing what visitors see; when you're happy, copy it over to visitors.": {
+"ar": "مجموعتان من معدلات «العلامات العادية لكل 1%». يستخدم الزوار دائمًا المجموعة اليسرى. فعّل المفتاح بالأسفل لتجربة المجموعة اليمنى بنفسك في صفحة تنقية الحيوانات (وفي لوحة التحكم والحزم والميزانيات) دون تغيير ما يراه الزوار؛ وعندما تكون راضيًا انسخها للزوار.",
+"ko": "\"1%당 일반 마크\" 비율 두 세트입니다. 방문자는 항상 왼쪽 세트를 사용합니다. 아래 스위치를 켜면 방문자 화면은 그대로 두고 펫 정제 페이지(및 대시보드, 패키지, 예산)에서 오른쪽 세트를 직접 시험할 수 있습니다. 만족하면 방문자에게 복사하세요."
+},
+"One % value is applied to all 6 troop/stat fields (Infantry/Lancer/Marksman × Lethality/Health).": {
+"ar": "تُطبق قيمة % واحدة على كل حقول الجنود/الإحصائيات الستة (المشاة/الرماح/القناصة × الفتك/الصحة).",
+"ko": "% 값 하나가 병종/스탯 6개 칸 모두에 적용됩니다 (보병/창병/궁병 × 치명/체력)."
+},
+"Editing your test rates (visitors unaffected) — Admin → Pets → Marks Calculation": {
+"ar": "تعديل معدلات التجربة (دون التأثير على الزوار) — الإدارة ← الحيوانات ← حساب العلامات",
+"ko": "테스트 비율 편집 중 (방문자 영향 없음) — 관리자 → 펫 → 마크 계산"
+},
+"Editing the rates visitors use — Admin → Pets → Marks Calculation to test privately": {
+"ar": "تعديل المعدلات التي يستخدمها الزوار — الإدارة ← الحيوانات ← حساب العلامات للتجربة بشكل خاص",
+"ko": "방문자가 쓰는 비율 편집 중 — 관리자 → 펫 → 마크 계산에서 비공개로 테스트"
+},
+"Add a new hero": {
+"ar": "إضافة بطل جديد",
+"ko": "새 영웅 추가"
+},
+"Add a hero": {
+"ar": "إضافة بطل",
+"ko": "영웅 추가"
+},
+"Add hero": {
+"ar": "إضافة بطل",
+"ko": "영웅 추가"
+},
+"Edit a hero": {
+"ar": "تعديل بطل",
+"ko": "영웅 편집"
+},
+"Hero name": {
+"ar": "اسم البطل",
+"ko": "영웅 이름"
+},
+"Creates a new hero column so you can fill in its star-level bonuses below.": {
+"ar": "ينشئ عمود بطل جديد لتتمكن من تعبئة مكافآت مستويات النجوم بالأسفل.",
+"ko": "새 영웅 열을 만들어 아래에서 별 레벨 보너스를 채울 수 있습니다."
+},
+"Generation": {
+"ar": "الجيل",
+"ko": "세대"
+},
+"Gen": {
+"ar": "الجيل",
+"ko": "세대"
+},
+"Generate from max": {
+"ar": "توليد من القيم القصوى",
+"ko": "최대값으로 생성"
+},
+"Fills all 30 shard steps and 10 widget levels from the max values using the standard curve": {
+"ar": "يملأ كل خطوات الشظايا الثلاثين ومستويات الأداة العشرة من القيم القصوى باستخدام المنحنى القياسي",
+"ko": "표준 곡선으로 최대값에서 조각 30단계와 위젯 10레벨을 모두 채웁니다"
+},
+"Star shard & widget stats": {
+"ar": "إحصائيات شظايا النجوم والأداة",
+"ko": "별 조각 & 위젯 스탯"
+},
+"Row names follow the pattern \"N ATT/DEF/DMG/HP\" (star level + stat code). Values are the max % at that star level.": {
+"ar": "أسماء الصفوف تتبع النمط «N ATT/DEF/DMG/HP» (مستوى النجوم + رمز الإحصائية). القيم هي أقصى % عند مستوى النجوم ذاك.",
+"ko": "행 이름은 \"N ATT/DEF/DMG/HP\" 형식입니다 (별 레벨 + 스탯 코드). 값은 해당 별 레벨의 최대 %입니다."
+},
+"Category name": {
+"ar": "اسم الفئة",
+"ko": "카테고리 이름"
+},
+"Add category": {
+"ar": "إضافة فئة",
+"ko": "카테고리 추가"
+},
+"Add a category": {
+"ar": "إضافة فئة",
+"ko": "카테고리 추가"
+},
+"Category (First/N/R/SR/SRR/UR)": {
+"ar": "الفئة (First/N/R/SR/SRR/UR)",
+"ko": "카테고리 (First/N/R/SR/SRR/UR)"
+},
+"Most trackers only need \"Island\", but you can add more groupings if needed.": {
+"ar": "معظم المتتبعات تحتاج «جزيرة» فقط، لكن يمكنك إضافة مجموعات أخرى عند الحاجة.",
+"ko": "대부분은 \"섬\" 하나면 충분하지만 필요하면 그룹을 더 추가할 수 있습니다."
+},
+"Add a VIP tier": {
+"ar": "إضافة فئة VIP",
+"ko": "VIP 티어 추가"
+},
+"Add tier": {
+"ar": "إضافة فئة",
+"ko": "티어 추가"
+},
+"Tier name (e.g. VIP 12)": {
+"ar": "اسم الفئة (مثل VIP 12)",
+"ko": "티어 이름 (예: VIP 12)"
+},
+"Add item": {
+"ar": "إضافة عنصر",
+"ko": "아이템 추가"
+},
+"Add a Facility item": {
+"ar": "إضافة عنصر منشأة",
+"ko": "시설 아이템 추가"
+},
+"Add a Alliance Tech item": {
+"ar": "إضافة عنصر تقنية تحالف",
+"ko": "연맹 기술 아이템 추가"
+},
+"Add a currency": {
+"ar": "إضافة عملة",
+"ko": "통화 추가"
+},
+"Code (e.g. PKR)": {
+"ar": "الرمز (مثل PKR)",
+"ko": "코드 (예: PKR)"
+},
+"Symbol (e.g. Rs)": {
+"ar": "الرمز (مثل Rs)",
+"ko": "기호 (예: Rs)"
+},
+"Per 1 USD": {
+"ar": "لكل 1 دولار",
+"ko": "1 USD당"
+},
+"By rate": {
+"ar": "حسب السعر",
+"ko": "환율 기준"
+},
+"Store price": {
+"ar": "سعر المتجر",
+"ko": "스토어 가격"
+},
+"Store prices": {
+"ar": "أسعار المتجر",
+"ko": "스토어 가격"
+},
+"Save store prices": {
+"ar": "حفظ أسعار المتجر",
+"ko": "스토어 가격 저장"
+},
+"Clear this currency": {
+"ar": "مسح هذه العملة",
+"ko": "이 통화 비우기"
+},
+"Remove this currency": {
+"ar": "إزالة هذه العملة",
+"ko": "이 통화 제거"
+},
+"Remove this price point": {
+"ar": "إزالة نقطة السعر هذه",
+"ko": "이 가격대 제거"
+},
+"Add a USD price point (applies to every currency)": {
+"ar": "إضافة نقطة سعر بالدولار (تنطبق على كل العملات)",
+"ko": "USD 가격대 추가 (모든 통화에 적용)"
+},
+"How many units of each currency equal 1 US dollar. Used when someone picks \"Show prices in\" on the Budgets page, unless a store price below covers that exact price point. Update these whenever you like; there is no automatic feed.": {
+"ar": "كم وحدة من كل عملة تساوي دولارًا أمريكيًا واحدًا. تُستخدم عند اختيار «عرض الأسعار بـ» في صفحة الميزانيات، ما لم يغطِّ سعر متجر بالأسفل نقطة السعر نفسها. حدّثها متى شئت؛ لا يوجد تحديث تلقائي.",
+"ko": "각 통화 몇 단위가 1 USD인지입니다. 예산 페이지에서 \"가격 표시 통화\"를 고를 때 사용되며, 아래 스토어 가격이 해당 가격대를 정확히 지정하면 그 값이 우선합니다. 원할 때 업데이트하세요. 자동 갱신은 없습니다."
+},
+"What each USD price point really costs in a store, per currency (tax, rounding, regional pricing). When someone shows prices in that currency, a pack priced at one of these USD points uses the value you type here; an empty slot keeps using the rate above. Totals that are not an exact price point always use the rate.": {
+"ar": "ما تكلفه كل نقطة سعر بالدولار فعليًا في المتجر لكل عملة (الضرائب، التقريب، التسعير الإقليمي). عند عرض الأسعار بتلك العملة، تستخدم الحزمة المسعّرة بإحدى هذه النقاط القيمة التي تكتبها هنا؛ والخانة الفارغة تستخدم السعر أعلاه. المجاميع التي ليست نقطة سعر دقيقة تستخدم السعر دائمًا.",
+"ko": "각 USD 가격대가 통화별 스토어에서 실제로 얼마인지입니다 (세금, 반올림, 지역 가격). 그 통화로 가격을 표시하면 이 가격대의 패키지는 여기 입력한 값을 쓰고, 빈 칸은 위 환율을 사용합니다. 정확한 가격대가 아닌 합계는 항상 환율을 사용합니다."
+},
+"USD price": {
+"ar": "السعر بالدولار",
+"ko": "USD 가격"
+},
+"e.g. 14.99": {
+"ar": "مثل 14.99",
+"ko": "예: 14.99"
+},
+"e.g. 482": {
+"ar": "مثل 482",
+"ko": "예: 482"
+},
+"e.g. 1621.3": {
+"ar": "مثل 1621.3",
+"ko": "예: 1621.3"
+},
+"e.g. HP": {
+"ar": "مثل HP",
+"ko": "예: HP"
+},
+"Message (optional)": {
+"ar": "الرسالة (اختياري)",
+"ko": "메시지 (선택)"
+},
+"Open Contact page": {
+"ar": "فتح صفحة التواصل",
+"ko": "문의 페이지 열기"
+},
+"e.g. hello@wosrst.com": {
+"ar": "مثل hello@wosrst.com",
+"ko": "예: hello@wosrst.com"
+},
+"Shown on the Contact us page (linked from the footer on every page). Leave the email empty to show \"Contact details will be added soon.\" instead.": {
+"ar": "تظهر في صفحة اتصل بنا (مرتبطة من تذييل كل صفحة). اترك البريد فارغًا لعرض «ستُضاف بيانات التواصل قريبًا.» بدلًا من ذلك.",
+"ko": "문의하기 페이지에 표시됩니다 (모든 페이지 하단에서 연결). 이메일을 비워 두면 \"연락처 정보가 곧 추가됩니다.\"가 표시됩니다."
+},
+"These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below.": {
+"ar": "هذه هي الأسماء المعروضة في قائمة الأعمدة في صفحة الحزم. اسحب صفًا (أو استخدم ▲▼) لترتيب القائمة ثم احفظ الكل؛ فعّل «إخفاء» لإبعاد اسم عنها، وأضف عناصرك بالأسفل.",
+"ko": "패키지 페이지 열 드롭다운에 표시되는 이름입니다. 행을 드래그(또는 ▲▼)해 순서를 정한 뒤 모두 저장하세요. 숨기기를 체크하면 목록에서 빠지며, 아래에서 직접 아이템을 추가할 수 있습니다."
+},
+"+ Add resource": {
+"ar": "+ إضافة مورد",
+"ko": "+ 자원 추가"
+},
+"Gives (per 1)": {
+"ar": "يعطي (لكل 1)",
+"ko": "제공 (1개당)"
+},
+"nothing (plain item)": {
+"ar": "لا شيء (عنصر عادي)",
+"ko": "없음 (일반 아이템)"
+},
+"Dropdown text (override)": {
+"ar": "نص القائمة (بديل)",
+"ko": "드롭다운 문구 (재정의)"
+},
+"Removed (not in the dropdown)": {
+"ar": "محذوفة (ليست في القائمة)",
+"ko": "제거됨 (드롭다운에 없음)"
+},
+"Remove from the dropdown": {
+"ar": "إزالة من القائمة",
+"ko": "드롭다운에서 제거"
+},
+"Visitor access (read-only)": {
+"ar": "وصول الزوار (للقراءة فقط)",
+"ko": "방문자 접근 (읽기 전용)"
+},
+"Owner-only areas visitors may open. They see your pack tables and prices exactly as you set them, with no way to edit, add or delete anything, and no \"Used for\" settings. Their own Backpack amounts and target dates stay private to them.": {
+"ar": "مناطق المالك التي يمكن للزوار فتحها. يرون جداول الحزم والأسعار كما حددتها تمامًا، دون أي إمكانية للتعديل أو الإضافة أو الحذف، ودون إعدادات «يُستخدم لـ». تبقى كميات حقيبتهم وتواريخهم المستهدفة خاصة بهم.",
+"ko": "방문자가 열 수 있는 관리자 전용 영역입니다. 패키지 표와 가격을 설정한 그대로 보며, 편집·추가·삭제나 \"사용 대상\" 설정은 할 수 없습니다. 본인의 배낭 수량과 목표 날짜는 본인만 봅니다."
+},
+"Packs page": {
+"ar": "صفحة الحزم",
+"ko": "패키지 페이지"
+},
+"Budgets page": {
+"ar": "صفحة الميزانيات",
+"ko": "예산 페이지"
+},
+"Backpack page": {
+"ar": "صفحة الحقيبة",
+"ko": "배낭 페이지"
+},
+"Pack cost block": {
+"ar": "قسم تكلفة الحزم",
+"ko": "패키지 비용 블록"
+},
+"· the pack tables, read-only": {
+"ar": "· جداول الحزم، للقراءة فقط",
+"ko": "· 패키지 표, 읽기 전용"
+},
+"· their own monthly plan against your packs": {
+"ar": "· خطتهم الشهرية الخاصة مقابل حزمك",
+"ko": "· 내 패키지 기준 본인의 월간 계획"
+},
+"· their own inventory overview": {
+"ar": "· نظرة عامة على مخزونهم",
+"ko": "· 본인 인벤토리 개요"
+},
+"· the collapsible Pack cost under each page's Backpack": {
+"ar": "· تكلفة الحزم القابلة للطي أسفل حقيبة كل صفحة",
+"ko": "· 각 페이지 배낭 아래 접을 수 있는 패키지 비용"
+},
+"· Cosmetics": {
+"ar": "· التجميل",
+"ko": "· 꾸미기"
+},
+"· Experts": {
+"ar": "· الخبراء",
+"ko": "· 전문가"
+},
+"· Extra Bonus": {
+"ar": "· مكافآت إضافية",
+"ko": "· 추가 보너스"
+},
+"· Gears": {
+"ar": "· المعدات",
+"ko": "· 장비"
+},
+"· Pets": {
+"ar": "· الحيوانات",
+"ko": "· 펫"
+},
+"· Research": {
+"ar": "· الأبحاث",
+"ko": "· 연구"
+},
+"Guides (step)": {
+"ar": "الأدلة (للخطوة)",
+"ko": "가이드 (단계)"
+},
+"Designs (step)": {
+"ar": "التصاميم (للخطوة)",
+"ko": "도안 (단계)"
+},
+"Secrets (step)": {
+"ar": "الأسرار (للخطوة)",
+"ko": "비밀 (단계)"
+},
+"Cumulative %": {
+"ar": "التراكمي %",
+"ko": "누적 %"
+},
+"Hero Gear Mastery Forging": {
+"ar": "صقل إتقان معدات الأبطال",
+"ko": "영웅 장비 숙련 단조"
+},
+"Hero Gear Enhancement": {
+"ar": "تعزيز معدات الأبطال",
+"ko": "영웅 장비 강화"
+},
+"Hero Gear Mithril": {
+"ar": "ميثريل معدات الأبطال",
+"ko": "영웅 장비 미스릴"
+},
+"— class —": {
+"ar": "— الفئة —",
+"ko": "— 분류 —"
+},
+"Applies to every hero of this generation:": {
+"ar": "ينطبق على كل أبطال هذا الجيل:",
+"ko": "이 세대의 모든 영웅에 적용:"
+},
+"icons/…png": {
+"ar": "icons/…png",
+"ko": "icons/…png"
+},
+"tags for a charm/gear level": {
+"ar": "وسوم لمستوى تعويذة/معدات",
+"ko": "부적/장비 레벨 태그"
+},
+"1 FC = 1.3 FCS": {
+"ar": "1 FC = 1.3 FCS",
+"ko": "1 FC = 1.3 FCS"
+},
+"1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.": {
+"ar": "فرصة 1.6% للحصول على معدات أسطورية واحدة لكل صندوق ← يُحسب 0.016 معدات أسطورية لكل صندوق (متوسط). 63 صندوقًا ≈ معدات أسطورية واحدة.",
+"ko": "상자당 신화 장비 1개 확률 1.6% → 상자당 0.016개로 계산 (평균). 63상자 ≈ 신화 장비 1개."
+},
+"One random Chief Gear material. Alloy: x5000 0.5%, x2500 3%, x1200 15%, x600 31.5%; Polish: x50 0.25%, x25 1.5%, x12 7.5%, x6 15.75%; Design: x50 0.25%, x20 1.5%, x10 7.5%, x5 15.75% → counted as ≈469 Alloy, ≈2.35 Polish and ≈1.96 Design per chest (average).": {
+"ar": "مادة عشوائية واحدة لمعدات القائد. السبائك: x5000 0.5%، x2500 3%، x1200 15%، x600 31.5%؛ محلول التلميع: x50 0.25%، x25 1.5%، x12 7.5%، x6 15.75%؛ المخططات: x50 0.25%، x20 1.5%، x10 7.5%، x5 15.75% ← يُحسب ≈469 سبائك و≈2.35 تلميع و≈1.96 مخطط لكل صندوق (متوسط).",
+"ko": "무작위 족장 장비 재료 1개. 합금: x5000 0.5%, x2500 3%, x1200 15%, x600 31.5%; 광택제: x50 0.25%, x25 1.5%, x12 7.5%, x6 15.75%; 설계도: x50 0.25%, x20 1.5%, x10 7.5%, x5 15.75% → 상자당 합금 ≈469, 광택제 ≈2.35, 설계도 ≈1.96으로 계산 (평균)."
+},
+"Guides: x15 0.5%, x8 3%, x4 15%, x2 31.5%; Designs: same odds → counted as ≈1.55 Guides and ≈1.55 Designs per chest (average).": {
+"ar": "الأدلة: x15 0.5%، x8 3%، x4 15%، x2 31.5%؛ التصاميم: نفس الاحتمالات ← يُحسب ≈1.55 دليل و≈1.55 تصميم لكل صندوق (متوسط).",
+"ko": "가이드: x15 0.5%, x8 3%, x4 15%, x2 31.5%; 도안: 같은 확률 → 상자당 가이드 ≈1.55, 도안 ≈1.55로 계산 (평균)."
+},
+"x100 0.4%, x60 0.8%, x40 1.6%, x20 2.5%, x10 8.5%, x5 86.2% → counted as 7.18 Fire Crystal per chest (average).": {
+"ar": "x100 0.4%، x60 0.8%، x40 1.6%، x20 2.5%، x10 8.5%، x5 86.2% ← يُحسب 7.18 بلورة نار لكل صندوق (متوسط).",
+"ko": "x100 0.4%, x60 0.8%, x40 1.6%, x20 2.5%, x10 8.5%, x5 86.2% → 상자당 불꽃 수정 7.18개로 계산 (평균)."
+},
+"Each chest opens into one of: 7 Manual, 2 Potion or 1 Serum (your choice). The pack cost turns chests into whichever the plan is short of.": {
+"ar": "كل صندوق يُفتح إلى واحد من: 7 أدلة أو 2 جرعة أو 1 مصل (حسب اختيارك). تحوّل تكلفة الحزم الصناديق إلى ما تحتاجه الخطة.",
+"ko": "상자마다 교본 7개, 물약 2개, 혈청 1개 중 하나 (선택). 패키지 비용은 계획에 부족한 것으로 상자를 바꿉니다."
+}
+};
+
+// Translates one piece of on-screen English text (exact phrases, then a few
+// patterns: gear tiers, stat codes, speedup items, "(12)" counts, prefixes).
+const UI_TEXT_CACHE = new Map();
+const UI_STAT_CODES = { ATK: ["هجوم", "공격"], ATT: ["هجوم", "공격"], DEF: ["دفاع", "방어"], LETH: ["فتك", "치명"], HP: ["صحة", "체력"], DMG: ["ضرر", "피해"] };
+const UI_TROOP_CODES = { Troops: ["الجنود", "병력"], Inf: ["المشاة", "보병"], INF: ["المشاة", "보병"], Lan: ["الرماح", "창병"], LAN: ["الرماح", "창병"], Mark: ["القناصة", "궁병"], MAR: ["القناصة", "궁병"] };
+const UI_COLORS = { Green: ["أخضر", "초록"], Blue: ["أزرق", "파랑"], Purple: ["بنفسجي", "보라"], Gold: ["ذهبي", "금색"], Red: ["أحمر", "빨강"], Grey: ["رمادي", "회색"], Orange: ["برتقالي", "주황"] };
+// Only message-style phrases may start a longer text ("Couldn't update skin",
+// "Updated: Frame"); names like "Chief Gear" never translate part of a title.
+const UI_PREFIX_KEYS = Object.keys(UI_TEXT_I18N).filter((k) => /^(Couldn't|Updated|Duplicate name|Applies to every hero)/.test(k)).sort((a, b) => b.length - a.length);
+function uiText(raw) {
+  if (LANG === "en" || raw == null) return raw;
+  const str = String(raw);
+  const m0 = str.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  const core = m0[2];
+  if (!core || !/[A-Za-z]{2}/.test(core)) return str;
+  const key = LANG + "|" + core;
+  let out = UI_TEXT_CACHE.get(key);
+  if (out === undefined) { out = uiTextCore(core); if (UI_TEXT_CACHE.size > 5000) UI_TEXT_CACHE.clear(); UI_TEXT_CACHE.set(key, out); }
+  return out === core ? str : m0[1] + out + m0[3];
+}
+function uiTextCore(s) {
+  const L = LANG === "ar" ? 0 : 1;
+  const ex = UI_TEXT_I18N[s] || DATA_NAME_I18N[s];
+  if (ex && ex[LANG]) return ex[LANG];
+  const mk = MATERIAL_LABEL_KEYS[s.toLowerCase()];
+  if (mk) return t(mk);
+  let m;
+  if ((m = s.match(/^(Research |Troop |Construction |Expert )?Speedups? (\d+)([mh])( ↺)?$/))) {
+    const kind = { "Research ": ["أبحاث", "연구"], "Troop ": ["جنود", "병력"], "Construction ": ["بناء", "건설"], "Expert ": ["خبراء", "전문가"] }[m[1] || ""];
+    const unit = m[3] === "h" ? ["ساعة", "시간"] : ["دقيقة", "분"];
+    return (LANG === "ar" ? `تسريع ${kind ? kind[0] + " " : ""}${m[2]} ${unit[0]}` : `${kind ? kind[1] + " " : ""}가속 ${m[2]}${unit[1]}`) + (m[4] || "");
+  }
+  if ((m = s.match(/^(Green|Blue|Purple|Gold|Red|Grey|Orange)((?: T\d+)? ★[\d.]+)$/))) return UI_COLORS[m[1]][L] + m[2];
+  if ((m = s.match(/^(?:(Troops|Inf|Lan|Mark|INF|LAN|MAR) )?(ATK|ATT|DEF|LETH|HP|DMG)( ·)?$/))) {
+    const st = UI_STAT_CODES[m[2]][L], tr = m[1] ? UI_TROOP_CODES[m[1]][L] : "";
+    return (tr ? (LANG === "ar" ? `${st} ${tr}` : `${tr} ${st}`) : st) + (m[3] || "");
+  }
+  if ((m = s.match(/^([+\-]?[\d.,]+%) (Attack|Defense|Lethality|Health)$/))) return `${m[1]} ${tStatLabel(m[2])}`;
+  if ((m = s.match(/^(.*?) \((\d[\d,]*)( total)?\)$/))) { const h = uiTextCore(m[1]); return `${h} (${m[2]}${m[3] ? (LANG === "ar" ? " إجمالًا" : " 전체") : ""})`; }
+  if ((m = s.match(/^Rows for (.+)$/))) return LANG === "ar" ? `صفوف ${dataName(m[1])}` : `${dataName(m[1])} 행`;
+  if ((m = s.match(/^(.+) rows$/))) return LANG === "ar" ? `صفوف ${uiTextCore(m[1])}` : `${uiTextCore(m[1])} 행`;
+  if ((m = s.match(/^Add a (.*) item$/))) return LANG === "ar" ? `إضافة عنصر ${uiTextCore(m[1].trim())}`.replace(/\s+$/, "") : `${uiTextCore(m[1].trim())} 아이템 추가`.trim();
+  if ((m = s.match(/^\((.+)\)$/)) && DATA_NAME_I18N[m[1]]) return `(${dataName(m[1])})`;
+  if ((m = s.match(/^(Skill|Path|Gen|Level|Tier|Stage|Star) (\d+)$/))) { const w = UI_TEXT_I18N[m[1]] || { ar: m[1], ko: m[1] }; return LANG === "ar" ? `${w.ar} ${m[2]}` : `${w.ko} ${m[2]}`; }
+  if ((m = s.match(/^(.+?)(:)$/)) && (UI_TEXT_I18N[m[1]] || DATA_NAME_I18N[m[1]])) return uiTextCore(m[1]) + ":";
+  // "Name: note" (chest notes)
+  if ((m = s.match(/^([^:]{2,40}): (.+)$/))) {
+    const b = m[2].length > 30 && UI_TEXT_I18N[m[2]] ? UI_TEXT_I18N[m[2]][LANG] : null;
+    if (b) return `${uiTextCore(m[1])}: ${b}`;
+  }
+  // A known phrase followed by more text ("Couldn't update skin", "Updated: Frame").
+  for (const k of UI_PREFIX_KEYS) {
+    if (s.length > k.length && s.startsWith(k) && /[\s:]/.test(s[k.length] || (k.endsWith(":") ? " " : ""))) return UI_TEXT_I18N[k][LANG] + s.slice(k.length);
+    if (k.endsWith(":") && s.startsWith(k) && s.length > k.length) return UI_TEXT_I18N[k][LANG] + s.slice(k.length);
+  }
+  // Gear tiers inside longer text ("Jacket: Red T5 ★0.4 → Red T6 ★0").
+  if (/\b(Green|Blue|Purple|Gold|Red)(?= (?:T\d+ )?★)/.test(s)) return s.replace(/\b(Green|Blue|Purple|Gold|Red)(?= (?:T\d+ )?★)/g, (c) => UI_COLORS[c][L]);
+  return s;
+}
+// Swaps hard-coded English on screen for the chosen language. Runs on every
+// new or changed part of the page (see the observer below). Inputs' typed
+// values are never touched; anything inside [data-noloc] is left as-is.
+function uiSetText(tn, v) {
+  // An <option> without a value would change its value along with its text.
+  const pe = tn.parentElement;
+  if (pe && pe.tagName === "OPTION" && !pe.hasAttribute("value")) pe.setAttribute("value", pe.textContent);
+  tn.nodeValue = v;
+}
+function localizeDom(root) {
+  if (LANG === "en" || !root) return;
+  if (root.nodeType === 3) { const v = uiText(root.nodeValue); if (v !== root.nodeValue && !(root.parentElement && root.parentElement.closest("[data-noloc],script,style,textarea"))) uiSetText(root, v); return; }
+  if (root.nodeType !== 1 || root.closest("[data-noloc]")) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement && n.parentElement.closest("[data-noloc],script,style,textarea") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+  const nodes = []; let n; while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach((tn) => { const v = uiText(tn.nodeValue); if (v !== tn.nodeValue) uiSetText(tn, v); });
+  const els = root.querySelectorAll ? [root, ...root.querySelectorAll("[title],[placeholder],[aria-label]")] : [];
+  els.forEach((el) => ["title", "placeholder", "aria-label"].forEach((a) => { const v0 = el.getAttribute && el.getAttribute(a); if (v0) { const v = uiText(v0); if (v !== v0) el.setAttribute(a, v); } }));
+}
+const UI_LOC_OBSERVER = (typeof MutationObserver !== "undefined") ? new MutationObserver((muts) => {
+  if (LANG === "en") return;
+  muts.forEach((mu) => {
+    if (mu.type === "childList") mu.addedNodes.forEach((nd) => localizeDom(nd));
+    else if (mu.type === "characterData") { const nd = mu.target; if (nd.parentElement && nd.parentElement.closest("[data-noloc],script,style,textarea")) return; const v = uiText(nd.nodeValue); if (v !== nd.nodeValue) uiSetText(nd, v); }
+    else if (mu.type === "attributes") { const v0 = mu.target.getAttribute(mu.attributeName); if (v0) { const v = uiText(v0); if (v !== v0) mu.target.setAttribute(mu.attributeName, v); } }
+  });
+}) : null;
+function startUiLocalizer() {
+  if (!UI_LOC_OBSERVER || !document.body) return;
+  UI_LOC_OBSERVER.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["title", "placeholder", "aria-label"] });
+  localizeDom(document.body);
+}
+(() => {
+  const nativeConfirm = window.confirm.bind(window);
+  window.confirm = (msg) => nativeConfirm(uiText(msg));
+})();
 function dataName(name) {
   if (name == null) return name;
   if (LANG === "en") return name;
@@ -1158,8 +2818,8 @@ function materialDisplayName(name) {
   if (key) return t(key);
   // "<Expert> Sigils" - the expert's name stays as-is, the word is translated.
   const m = String(name).match(/^(.*) Sigils$/i);
-  if (m) return t("sigils_suffix").replace("{name}", m[1]);
-  return name;
+  if (m) return t("sigils_suffix").replace("{name}", dataName(m[1]));
+  return uiText(name);
 }
 function tPosition(pos) {
   const map = { "Top left": "pos_top_left", "Top right": "pos_top_right", "Middle left": "pos_middle_left", "Middle right": "pos_middle_right", "Bottom left": "pos_bottom_left", "Bottom right": "pos_bottom_right" };
@@ -1764,7 +3424,7 @@ const T = {
   pk_all: { en: "Everything on the row", ar: "كل ما في الصف", ko: "행에 있는 모든 것" },
   pk_all_desc: { en: "All columns together.", ar: "كل الأعمدة معًا.", ko: "모든 열을 함께 받습니다." },
   pk_one_each: { en: "One column — and you can choose a different one at each step", ar: "عمود واحد — ويمكنك اختيار عمود مختلف في كل مرحلة", ko: "한 열 — 단계마다 다른 열을 고를 수 있음" },
-  pk_one_each_desc: { en: "e.g. FC at $4.99, then Steel at $9.99.", ar: "مثلاً FC عند 4.99$ ثم Steel عند 9.99$.", ko: "예: $4.99에 FC, 그다음 $9.99에 Steel." },
+  pk_one_each_desc: { en: "e.g. FC at $4.99, then Steel at $9.99.", ar: "مثلاً بلورة النار عند 4.99$ ثم الفولاذ عند 9.99$.", ko: "예: $4.99에 불꽃 수정, 그다음 $9.99에 강철." },
   pk_one_locked: { en: "One column — the same one for the whole pack", ar: "عمود واحد — نفسه للحزمة بأكملها", ko: "한 열 — 패키지 전체에 같은 열" },
   pk_one_locked_desc: { en: "You choose once; every step gives that column.", ar: "تختار مرة واحدة؛ كل مرحلة تمنح ذلك العمود.", ko: "한 번 선택하면 모든 단계가 그 열을 줍니다." },
   pack_restore: { en: "Restore this game pack's original numbers", ar: "استعادة الأرقام الأصلية لحزمة اللعبة", ko: "게임 패키지 원래 수치로 복원" },
@@ -1894,6 +3554,7 @@ function setLanguage(lang) {
   renderLanguageSwitcher();
   renderOwnerLoginUI();
   render();
+  localizeDom(document.body);
 }
 
 const KNOWN_TABS = new Set([
@@ -16748,6 +18409,7 @@ if ("serviceWorker" in navigator) {
   document.documentElement.lang = LANG;
   applyNavLanguage();
   renderLanguageSwitcher();
+  startUiLocalizer();
   // Speed: start downloading every saved calculator state right away, in
   // parallel with everything else below.
   preloadCalcStates();
