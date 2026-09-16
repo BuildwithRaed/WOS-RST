@@ -5341,7 +5341,7 @@ function packLinkSetTags(tbs) {
   const shared = new Set((words[0] || []).map(norm).filter((n) => words.every((w) => w.some((x) => norm(x) === n))));
   return words.map((w, i) => {
     const own = w.filter((x) => !shared.has(norm(x)));
-    return (own.length ? own.join(" ") : titles[i] || `#${i + 1}`).slice(0, 12);
+    return (own.length ? own.join(" ") : titles[i] || `#${i + 1}`).slice(0, 20);
   });
 }
 function packGroupsChecked(pages) {
@@ -5759,9 +5759,14 @@ function packOptionLadderGroups(optionTables) {
       if (!isSet) return lead.group && lead.group !== (tbs[0].title || "") ? lead.group + " · " + (tbs[0].title || t("packs_title")) : (lead.group || tbs[0].title || t("packs_title"));
       // "Group · Shared part of the titles · Classic / Sublime / Exquisite"
       const leadTitle = String(tbs[leadIdx].title || "");
-      let stem = leadTitle;
-      String(tags[leadIdx] || "").split(" ").filter(Boolean).forEach((word) => { stem = stem.replace(word, ""); });
-      stem = stem.replace(/^[\s:·\-]+|[\s:·\-]+$/g, "").replace(/\(\s*\)/g, "").trim();
+      // Keep only the words every linked title shares ("Myriad Bazzar"),
+      // whole words only - removing tag text by substring turned
+      // "Chief Gears & Charms" into "Gears ms".
+      const norm = (w) => w.toLowerCase().replace(/s$/, "");
+      const wordsOf = (x) => String(x.title || "").split(/[\s:·\-()"']+/).filter(Boolean);
+      const allWords = tbs.map(wordsOf);
+      let stem = wordsOf(tbs[leadIdx]).filter((w) => allWords.every((ws) => ws.some((x) => norm(x) === norm(w)))).join(" ");
+      if (!stem) stem = leadTitle;
       return [lead.group, stem || String(tbs[leadIdx].title || t("packs_title"))].filter(Boolean).join(" · ") + " · " + tags.join(" / ");
     };
     const title = titleOf();
