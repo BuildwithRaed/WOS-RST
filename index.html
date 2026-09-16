@@ -1782,6 +1782,12 @@ const T = {
   pk_active_note: { en: "{n} × {d} = {days} days of rewards still coming (until {date}) — counted free. New purchases start after that. Up to {more} more can be stacked.", ar: "{n} × {d} = {days} يوم من المكافآت قادمة (حتى {date}) — تُحسب مجانًا. المشتريات الجديدة تبدأ بعدها. يمكن تكديس {more} أخرى.", ko: "{n} × {d} = {days}일 보상이 남음 ({date}까지) — 무료로 계산. 새 구매는 그 이후 시작. {more}개 더 누적 가능." },
   pk_active_free: { en: "Free from cards you already bought", ar: "مجانًا من البطاقات التي اشتريتها", ko: "이미 구매한 카드에서 무료" },
   pk_active_until: { en: "until", ar: "حتى", ko: "까지" },
+  pk_preview_badge: { en: "Visitor preview", ar: "معاينة الزائر", ko: "방문자 미리보기" },
+  pk_preview_packs: { en: "packs", ar: "حزم", ko: "팩" },
+  pk_preview_desc: { en: "This is what visitors see. Fields are locked here — you change your own dates in each pack's settings. Only packs with \"Visitors can set their own date\" ticked are listed.", ar: "هذا ما يراه الزوار. الحقول مقفلة هنا — تغيّر تواريخك من إعدادات كل حزمة. تظهر فقط الحزم المحدد لها \"يمكن للزوار تحديد تاريخهم\".", ko: "방문자에게 보이는 화면입니다. 여기서는 잠겨 있으며, 내 날짜는 각 팩 설정에서 변경합니다. \"방문자가 날짜를 직접 설정 가능\"이 체크된 팩만 표시됩니다." },
+  pk_preview_empty: { en: "Visitors don't see this box yet. Tick \"Visitors can set their own date\" in a pack's settings to add it here.", ar: "لا يرى الزوار هذا المربع بعد. حدّد \"يمكن للزوار تحديد تاريخهم\" في إعدادات حزمة لإضافتها.", ko: "아직 방문자에게 이 상자가 보이지 않습니다. 팩 설정에서 \"방문자가 날짜를 직접 설정 가능\"을 체크하세요." },
+  pk_preview_open: { en: "Open settings", ar: "فتح الإعدادات", ko: "설정 열기" },
+  pk_preview_notshown: { en: "That pack isn't shown with the current filter.", ar: "هذه الحزمة غير ظاهرة مع الفلتر الحالي.", ko: "현재 필터에서는 해당 팩이 표시되지 않습니다." },
   pk_my_dates_title: { en: "My pack dates", ar: "تواريخ حزمي", ko: "내 팩 날짜" },
   pk_my_dates_desc: { en: "Set the dates that match your state. Only you see these; they're saved to your account.", ar: "حدد التواريخ التي تناسب ولايتك. أنت فقط ترى هذه، وتُحفظ في حسابك.", ko: "내 주에 맞는 날짜를 설정하세요. 나만 보며 계정에 저장됩니다." },
   pk_arrives_on: { en: "Arrives on", ar: "يصل في", ko: "도착일" },
@@ -3530,18 +3536,29 @@ function updateHeroGearCurrentStats() {
 // ============================================================
 // Visitors: the dates of the packs the admin lets them change (their state's
 // calendar, or when they start a card). Saved to their account.
+let MY_DATES_PREVIEW_OPEN = false;
 function renderMyPackDates(el, tables) {
   if (!el) return;
+  const preview = IS_OWNER; // admin: locked, collapsible copy of what visitors see
   const list = tables.filter((tb) => { const l = packLinkForBase(tb.id); return l.visitorDate && (typeof l.reset === "number" || packStackInfo(l.reset)); });
-  if (!list.length) { el.innerHTML = ""; return; }
+  if (!list.length && !preview) { el.innerHTML = ""; return; }
+  if (preview) {
+    const head = `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;">${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"} ${esc(t("pk_my_dates_title"))} <span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span></span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>`;
+    if (!list.length) {
+      el.innerHTML = `<details class="panel" data-mydatespreview ${MY_DATES_PREVIEW_OPEN ? "open" : ""} style="margin:0 0 12px; border:1px dashed var(--ice);">${head}<div class="meta" style="font-size:11.5px; margin-top:6px;">${esc(t("pk_preview_empty"))}</div></details>`;
+      el.querySelector("details").addEventListener("toggle", (e) => { MY_DATES_PREVIEW_OPEN = e.target.open; const s0 = e.target.querySelector("summary span"); if (s0) s0.firstChild.textContent = `${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"} ${t("pk_my_dates_title")} `; });
+      return;
+    }
+  }
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const fmt = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d.toDateString(); } };
   const byGroup = [];
   list.forEach((tb) => { const g = packLinkFor(tb.id).group || ""; let e = byGroup.find((x) => x.g === g); if (!e) { e = { g, items: [] }; byGroup.push(e); } e.items.push(tb); });
-  el.innerHTML = `<div class="panel" style="margin:0 0 12px; border-color:var(--ice);">
-    <div style="font-size:14px; font-weight:700;">${esc(t("pk_my_dates_title"))}</div>
-    <div class="meta" style="font-size:11.5px; margin-top:2px;">${esc(t("pk_my_dates_desc"))}</div>
+  const previewHead = preview ? `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"}</span> ${esc(t("pk_my_dates_title"))} <span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span></span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>` : "";
+  el.innerHTML = `<${preview ? "details" : "div"} class="panel" ${preview ? `data-mydatespreview ${MY_DATES_PREVIEW_OPEN ? "open" : ""}` : ""} style="margin:0 0 12px; border:1px ${preview ? "dashed" : "solid"} var(--ice);">
+    ${preview ? previewHead : `<div style="font-size:14px; font-weight:700;">${esc(t("pk_my_dates_title"))}</div>`}
+    <div class="meta" style="font-size:11.5px; margin-top:${preview ? 6 : 2}px;">${esc(preview ? t("pk_preview_desc") : t("pk_my_dates_desc"))}</div>
     ${byGroup.map(({ g, items }) => `
       <div style="margin-top:10px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;" class="meta">${esc(g || t("packs_title"))}${items.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveCount(tb.id)) ? ` <span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:4px;">${esc(t("pk_your_date"))}</span>` : ""}</div>
       ${items.map((tb) => {
@@ -3557,12 +3574,25 @@ function renderMyPackDates(el, tables) {
           <div style="flex:1 1 180px; min-width:0;"><b style="font-size:12.5px;">${esc(tb.title || "")}</b><div class="meta" style="font-size:10.5px;">${esc(sub)}</div></div>
           <label style="display:flex; align-items:center; gap:6px; font-size:11.5px;"><span class="meta">${esc(st ? t("pk_start_on") : t("pk_arrives_on"))}</span><input type="date" class="keep-w" data-mydate="${esc(tb.id)}" value="${esc(value)}" style="font-size:12px; padding:3px 6px;" /></label>
           ${st ? `<label style="display:flex; align-items:center; gap:6px; font-size:11.5px;" title="${esc(t("pk_active_hint"))}"><span class="meta">${esc(t("pk_active_label"))} <span style="font-size:10px;">(${esc(t("pk_active_hint"))})</span></span><input type="number" min="0" step="1" class="keep-w" data-myactive="${esc(tb.id)}" value="${packActiveCount(tb.id) || 0}" style="width:56px; font-size:12px; padding:3px 6px;" /> &times;</label>` : ""}
-          ${mine || (st && packActiveCount(tb.id)) ? `<button type="button" class="btn small ghost" data-mydatereset="${esc(tb.id)}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}
+          ${preview ? `<button type="button" class="btn small ghost" data-mydatesopen="${esc(tb.id)}" style="padding:2px 8px;">${esc(t("pk_preview_open"))}</button>` : ""}
+          ${!preview && (mine || (st && packActiveCount(tb.id))) ? `<button type="button" class="btn small ghost" data-mydatereset="${esc(tb.id)}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}
           ${st && packActiveCount(tb.id) ? (() => { const n = packActiveCount(tb.id), full = packLinkForBase(tb.id), st0 = packStackInfo(full.reset) || st; const more = Math.max(0, Math.floor((st0.cap - n * st0.days) / st0.days)); return `<div style="flex-basis:100%; font-size:10.5px; color:var(--good);">${esc(t("pk_active_note").replace("{n}", n).replace("{d}", st0.days).replace("{days}", n * st0.days).replace("{date}", l.activeUntil ? l.activeUntil.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) : "").replace("{more}", more))}</div>`; })() : ""}
         </div>`;
       }).join("")}`).join("")}
-    ${Object.keys(MY_PACK_DATES).length || Object.keys(MY_CARDS_ACTIVE).length ? `<div style="margin-top:8px;"><button type="button" class="btn small ghost" data-mydateresetall style="padding:2px 8px;">${esc(t("pk_reset_all_dates"))}</button></div>` : ""}
-  </div>`;
+    ${!preview && (Object.keys(MY_PACK_DATES).length || Object.keys(MY_CARDS_ACTIVE).length) ? `<div style="margin-top:8px;"><button type="button" class="btn small ghost" data-mydateresetall style="padding:2px 8px;">${esc(t("pk_reset_all_dates"))}</button></div>` : ""}
+  </${preview ? "details" : "div"}>`;
+  if (preview) {
+    el.querySelectorAll("input").forEach((inp) => { inp.disabled = true; inp.style.opacity = "0.7"; });
+    const det = el.querySelector("details");
+    det.addEventListener("toggle", () => { MY_DATES_PREVIEW_OPEN = det.open; const a = det.querySelector("[data-mydatesarrow]"); if (a) a.textContent = det.open ? "▾" : "▸"; });
+    el.querySelectorAll("[data-mydatesopen]").forEach((b) => b.addEventListener("click", () => {
+      const box = document.querySelector(`details[data-packlink="${CSS.escape(b.dataset.mydatesopen)}"]`);
+      if (!box) { toast(t("pk_preview_notshown")); return; }
+      box.open = true;
+      box.scrollIntoView({ behavior: "smooth", block: "center" });
+    }));
+    return;
+  }
   const save = async () => {
     Object.keys(MY_PACK_DATES).forEach((k) => { if (!packValidDay(MY_PACK_DATES[k])) delete MY_PACK_DATES[k]; });
     PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
@@ -3633,7 +3663,7 @@ async function renderPacksPage() {
     ensureSiteConfig(),
   ]);
   let tables = packApplyMyEdits(tablesLoaded).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
-  if (!IS_OWNER) renderMyPackDates(document.getElementById("packsMyDates"), tables);
+  renderMyPackDates(document.getElementById("packsMyDates"), tables);
   PACK_TABLES_ALL = tables;
   PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
   // First visit: the in-game pack tables are created automatically (once
@@ -4298,6 +4328,7 @@ async function renderPacksPage() {
       if (visDateCb) visDateCb.addEventListener("change", async () => {
         const l = current();
         if (visDateCb.checked) l.visitorDate = true; else delete l.visitorDate;
+        renderMyPackDates(document.getElementById("packsMyDates"), tables);
         await savePackLinks();
       });
       const hideCb = box.querySelector("[data-pkhidevisitors]");
