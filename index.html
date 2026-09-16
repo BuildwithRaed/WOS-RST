@@ -640,6 +640,7 @@ input,select,textarea{
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
           <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
           <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
+          <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
         </div>
       </div>
       <div class="topnav-group" data-group="Gears">
@@ -2861,6 +2862,7 @@ const NAV_PAGE_LABELS = {
   "budgets": { en: "Budgets", ar: "الميزانيات", ko: "예산" },
   "backpack": { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
   "packs": { en: "Packs", ar: "الحزم", ko: "패키지" },
+  "My packs": { en: "My packs", ar: "حزمي", ko: "내 팩" },
   "charmscalc": { en: "Chief Charm", ar: "تعويذة القائد", ko: "족장 참" },
   "chiefgear": { en: "Chief Gear", ar: "معدات القائد", ko: "족장 장비" },
   "herogearcalc": { en: "Heroes Gears", ar: "معدات الأبطال", ko: "영웅 장비" },
@@ -3475,6 +3477,15 @@ const T = {
   mp_templates_added: { en: "pack templates added", ar: "قوالب حزم أُضيفت", ko: "개 팩 템플릿 추가됨" },
   mp_template_note: { en: "Not used in Budgets or Pack cost · visitors copy these", ar: "لا تُستخدم في الميزانيات أو تكلفة الحزم · يستنسخها الزوار", ko: "예산·팩 비용에 사용 안 함 · 방문자가 복사" },
   mp_admin_mine_note: { en: "Your own copies · hidden from visitors", ar: "نسخك الخاصة · مخفية عن الزوار", ko: "내 사본 · 방문자에게 숨김" },
+  mp_page_desc_admin: { en: "Set how many tables each visitor can have, copy a template for yourself, and see your own copies.", ar: "حدد عدد الجداول لكل زائر، وانسخ قالبًا لنفسك، واطّلع على نسخك.", ko: "방문자당 표 개수를 정하고, 템플릿을 복사하고, 내 사본을 확인하세요." },
+  mp_tables_used: { en: "tables used", ar: "جداول مستخدمة", ko: "개 사용" },
+  mp_where: { en: "A copy appears below under \"Your tables\", where you can edit it.", ar: "تظهر النسخة أدناه تحت \"جداولك\" حيث يمكنك تعديلها.", ko: "사본은 아래 \"내 표\"에 나타나며 거기서 편집할 수 있습니다." },
+  mp_your_tables: { en: "Your tables", ar: "جداولك", ko: "내 표" },
+  mp_empty: { en: "No tables yet. Press Duplicate on a template above.", ar: "لا توجد جداول بعد. اضغط نسخ على أحد القوالب أعلاه.", ko: "아직 표가 없습니다. 위 템플릿에서 복제를 누르세요." },
+  mp_template_edit_hint: { en: "Edit the templates themselves on the Packs page, in the \"Pack templates\" category.", ar: "عدّل القوالب نفسها في صفحة الحزم ضمن فئة \"Pack templates\".", ko: "템플릿 자체는 팩 페이지의 \"Pack templates\" 분류에서 편집하세요." },
+  mp_edit_in_packs: { en: "Edit in Packs", ar: "تعديل في الحزم", ko: "팩에서 편집" },
+  mp_admin_none: { en: "No copies yet. Press Duplicate on a template.", ar: "لا نسخ بعد. اضغط نسخ على قالب.", ko: "아직 사본이 없습니다. 템플릿에서 복제를 누르세요." },
+  mp_admin_copied: { en: "Copied to My packs — opening it on the Packs page", ar: "نُسخ إلى My packs — يُفتح في صفحة الحزم", ko: "My packs로 복사됨 — 팩 페이지에서 엽니다" },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -3599,7 +3610,7 @@ function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "budgets", "backpack", "packs", "charmscalc", "chiefgear",
+  "overview", "budgets", "backpack", "packs", "mypacks", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -3755,11 +3766,12 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 async function render() {
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    if (!IS_OWNER && ((TAB === "budgets" || TAB === "backpack" || TAB === "packs") ? !visitorCan(TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && ((TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "packs") await renderPacksPage();
+    else if (TAB === "mypacks") await renderMyPacksPage();
     else if (TAB === "charmscalc") await renderCharmsCalc();
     else if (TAB === "chiefgear") await renderChiefGearCalc();
     else if (TAB === "herogearcalc") await renderGearLevelingGroup(content);
@@ -5270,17 +5282,49 @@ async function packSeedTemplates(tables) {
   if (made) await savePackLinks();
   return made;
 }
-function renderMyPacks(el, templates, rerenderPage) {
+async function renderMyPacksPage() {
+  content.innerHTML = `
+    <div class="page-head"><div><h2>${esc(t("mp_title"))}</h2><p class="desc">${esc(IS_OWNER ? t("mp_page_desc_admin") : t("mp_desc"))}</p></div></div>
+    <div id="myPacksBody"><div class="empty">Loading&hellip;</div></div>`;
+  const [loaded] = await Promise.all([
+    sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`),
+    ensurePackLinks(),
+  ]);
+  if (TAB !== "mypacks") return;
+  let all = (loaded || []).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
+  let templates = all.filter((tb) => packLinkFor(tb.id).template);
+  if (IS_OWNER && !templates.length && !(await loadCalcState("pack_templates_seeded"))) {
+    const made = await packSeedTemplates(all);
+    await saveCalcState("pack_templates_seeded", { at: Date.now(), made });
+    if (made) { toast(`${made} ${t("mp_templates_added")}`); return renderMyPacksPage(); }
+  }
+  PACK_TABLES_ALL = PACK_TABLES_ALL || all;
+  renderMyPacks(document.getElementById("myPacksBody"), templates, renderMyPacksPage, all);
+}
+function renderMyPacks(el, templates, rerenderPage, allTables) {
   if (!el) return;
   const limit = packMyPacksLimit();
   const kindLabel = (link) => t("mp_kind_" + packTemplateKind(link));
   if (IS_OWNER) {
-    el.innerHTML = `<details class="panel" style="margin:0 0 12px; border:1px dashed var(--warn, #e0b25a);">
-      <summary style="cursor:pointer; font-size:14px; font-weight:700;">${esc(t("mp_title"))} <span class="meta" style="font-size:11px; font-weight:500;">· ${esc(t("mp_admin_settings"))}</span></summary>
+    const mine = (allTables || []).filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP);
+    const tplRow = (tb) => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;">
+        <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))}</span></span>
+        <button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}" style="flex-shrink:0;">${esc(t("mp_duplicate"))}</button></div>`;
+    el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
+      <div style="font-size:14px; font-weight:700;">${esc(t("mp_admin_settings"))}</div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;">${esc(t("mp_limit_label"))} <input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" style="width:64px; font-size:12px; padding:3px 6px;" /></label>
       <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_desc"))}</div>
-      <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("mp_templates_count"))}: ${templates.length ? templates.map((x) => esc(x.title)).join(" · ") : esc(t("mp_no_templates"))}</div>
-    </details>`;
+    </div>
+    <div class="panel" style="margin:0 0 12px;">
+      <div style="font-size:14px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</div>
+      ${templates.map(tplRow).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_no_templates"))}</div>`}
+      <div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("mp_template_edit_hint"))}</div>
+    </div>
+    <div class="panel" style="margin:0 0 12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><span style="font-size:14px; font-weight:700;">${esc(t("mp_your_tables"))} <span class="meta" style="font-size:11px;">(${mine.length})</span></span>
+      <button type="button" class="btn small" data-mpopenpacks>${esc(t("mp_edit_in_packs"))}</button></div>
+      ${mine.map((tb) => `<div style="padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packLinkForBase(tb.id).pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_none"))}</span></div>`).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_none"))}</div>`}
+    </div>`;
     const inp = el.querySelector("[data-mplimit]");
     inp.addEventListener("change", async () => {
       const n = Math.max(0, Math.min(50, Math.floor(Number(inp.value) || 0)));
@@ -5289,6 +5333,23 @@ function renderMyPacks(el, templates, rerenderPage) {
       await savePackLinks();
       toast(t("mp_limit_saved"));
     });
+    const openPacks = () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_MINE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); };
+    el.querySelector("[data-mpopenpacks]").addEventListener("click", openPacks);
+    el.querySelectorAll("[data-mpadup]").forEach((b) => b.addEventListener("click", async () => {
+      const tb = templates.find((x) => String(x.id) === b.dataset.mpadup);
+      if (!tb) return;
+      b.disabled = true;
+      const payload = { title: `${String(tb.title).replace(/\s*type$/i, "")} (${t("mp_mine_suffix")})`, columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ ...r, cells: (r.cells || []).slice() })), sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
+      try {
+        const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
+        const src = JSON.parse(JSON.stringify(PACK_LINKS[String(tb.id)] || { priceCol: 0, cols: {} }));
+        PACK_LINKS[String(saved.id)] = { ...src, group: PACK_MINE_GROUP, hideVisitors: true, pages: [] };
+        await savePackLinks();
+        PACK_TABLES_CACHE = null;
+        toast(t("mp_admin_copied"));
+        openPacks();
+      } catch (err) { b.disabled = false; toast("Couldn't duplicate table", true); }
+    }));
     return;
   }
   const used = MY_PACKS.length, full = used >= limit;
@@ -5320,12 +5381,12 @@ function renderMyPacks(el, templates, rerenderPage) {
         ${known.some((n) => n.toLowerCase() === cur.toLowerCase()) || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
       </select>`;
     };
-    return `<details class="panel" data-mpcard="${esc(mp.id)}" ${open ? "open" : ""} style="margin-top:8px; padding:10px 12px; border-color:var(--line);">
-      <summary style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; list-style:none;">
-        <span style="min-width:0;"><b>${open ? "▾" : "▸"} ${esc(mp.title)}</b> <span style="font-size:10px; padding:1px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:700;">${esc(t("mp_tag"))}</span>
+    return `<div class="panel" data-mpcard="${esc(mp.id)}" style="margin-top:12px; min-width:0; ${mp.columns.length > 5 ? "grid-column:1 / -1;" : ""}">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <span style="min-width:0;"><b>${esc(mp.title)}</b> <span style="font-size:10px; padding:1px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:700;">${esc(t("mp_tag"))}</span>
           <br><span class="meta" style="font-size:11px;">${esc(kindLabel(link))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_none"))}</span></span>
         <button type="button" class="btn small ghost" data-mpdel="${esc(mp.id)}" style="color:var(--danger); flex-shrink:0;">${esc(t("mp_delete"))}</button>
-      </summary>
+      </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
         <input data-mptitle value="${esc(mp.title)}" maxlength="60" style="flex:1 1 160px; min-width:120px; font-size:13px; font-weight:700;" />
         <span class="meta" style="font-size:11px;">${esc(t("mp_column"))}</span>
@@ -5352,21 +5413,21 @@ function renderMyPacks(el, templates, rerenderPage) {
       </div>
       ${numericReset ? `<label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;"><span>${esc(t("mp_next_date"))}</span><input type="date" class="keep-w" data-mpdate value="${esc(packValidDay(link.resetDay) || "")}" style="font-size:12px; padding:3px 6px;" /><span class="meta" style="font-size:10.5px;">${esc(t("mp_every_days").replace("{n}", link.reset))}</span></label>` : ""}
       <div class="meta" style="font-size:10.5px; margin-top:8px;">🔒 ${esc(t("mp_locked"))}</div>
-    </details>`;
+    </div>`;
   };
-  el.innerHTML = `<details class="panel" data-mpbox ${localStorage.getItem("my_packs_open") === "0" ? "" : "open"} style="margin:0 0 12px; border:1px solid #e0b25a;">
-    <summary style="cursor:pointer; font-size:14px; font-weight:700;">${esc(t("mp_title"))} <span class="meta" style="font-size:11px;">(${used} ${esc(t("mp_of"))} ${limit})</span></summary>
+  el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="font-size:14px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</span><span class="meta" style="font-size:12px;">${used} ${esc(t("mp_of"))} ${limit} ${esc(t("mp_tables_used"))}</span></div>
     <div style="height:6px; border-radius:4px; background:var(--line); margin-top:8px; overflow:hidden;"><i style="display:block; height:100%; width:${pct}%; background:${full ? "var(--danger)" : "var(--good)"};"></i></div>
-    <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_desc"))}</div>
-    <div style="margin-top:10px; font-size:12px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</div>
     ${tplHtml || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_no_templates"))}</div>`}
     ${full ? `<div style="font-size:11.5px; margin-top:6px; color:var(--danger);">${esc(t("mp_full").replace("{n}", limit))}</div>` : ""}
-    ${MY_PACKS.map(cardHtml).join("")}
-    ${used ? `<div style="margin-top:10px; padding:8px 10px; border:1px dashed #e0b25a; border-radius:8px; color:#e0b25a; font-size:11.5px;">⏱ ${esc(t("mp_speed_note"))}</div>` : ""}
-  </details>`;
+    <div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("mp_where"))}</div>
+  </div>
+  <div style="font-size:15px; font-weight:800; color:var(--ice); margin:18px 0 4px; padding-bottom:4px; border-bottom:2px solid var(--line);">${esc(t("mp_your_tables"))} <span class="meta" style="font-size:11px; font-weight:500;">(${used})</span></div>
+  ${used ? "" : `<div class="empty" style="margin-top:10px;">${esc(t("mp_empty"))}</div>`}
+  <div class="grid g2" style="align-items:start;">${MY_PACKS.map(cardHtml).join("")}</div>
+  ${used ? `<div style="margin-top:12px; padding:8px 10px; border:1px dashed #e0b25a; border-radius:8px; color:#e0b25a; font-size:11.5px;">⏱ ${esc(t("mp_speed_note"))}</div>` : ""}`;
   const redraw = () => renderMyPacks(el, templates, rerenderPage);
   const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
-  el.querySelector("[data-mpbox]").addEventListener("toggle", (e) => { if (e.target.matches("[data-mpbox]")) { try { localStorage.setItem("my_packs_open", e.target.open ? "1" : "0"); } catch (err) {} } });
   el.querySelectorAll("[data-mpdup]").forEach((b) => b.addEventListener("click", () => {
     if (MY_PACKS.length >= packMyPacksLimit()) return;
     const tb = templates.find((x) => String(x.id) === b.dataset.mpdup);
@@ -5384,7 +5445,6 @@ function renderMyPacks(el, templates, rerenderPage) {
     const link = (mp.link = mp.link || {});
     const priceCol = typeof link.priceCol === "number" ? link.priceCol : 0;
     const gemsCi = () => mp.columns.findIndex((c) => /gem/i.test(String(c || "")));
-    card.addEventListener("toggle", (e) => { if (e.target !== card) return; if (card.open) MY_PACKS_OPEN.add(mp.id); else MY_PACKS_OPEN.delete(mp.id); const b = card.querySelector("summary b"); if (b) b.firstChild.textContent = `${card.open ? "▾" : "▸"} ${mp.title}`; });
     card.querySelector("[data-mpdel]").addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
       if (!confirm(t("mp_delete_confirm").replace("{t}", mp.title))) return;
@@ -5588,7 +5648,6 @@ async function renderPacksPage() {
     </div>
     <div id="packsPriceStrip"></div>
     <div id="packsMyDates"></div>
-    <div id="packsMine"></div>
     <div id="packsPageTabs" style="margin-bottom:6px;"></div>
     <div id="packsList"></div>
   `;
@@ -5610,7 +5669,7 @@ async function renderPacksPage() {
     await saveCalcState("pack_templates_seeded", { at: Date.now(), made });
     if (made) { toast(`${made} ${t("mp_templates_added")}`); renderPacksPage(); return; }
   }
-  renderMyPacks(document.getElementById("packsMine"), templateTables, renderPacksPage);
+
   PACK_TABLES_ALL = tables;
   PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
   // First visit: the in-game pack tables are created automatically (once
@@ -18666,7 +18725,7 @@ function renderOwnerLoginUI() {
   const el = document.getElementById("ownerLoginArea");
   document.getElementById("adminNavGroup").style.display = IS_OWNER ? "block" : "none";
   // Backpack and Budgets are owner-only pages.
-  document.querySelectorAll("[data-ownertab]").forEach((b) => { b.style.display = visitorCan(b.dataset.tab) ? "" : "none"; });
+  document.querySelectorAll("[data-ownertab]").forEach((b) => { b.style.display = visitorCan(b.dataset.access || b.dataset.tab) ? "" : "none"; });
   applyPageVisibility();
 
   const user = CURRENT_SESSION && CURRENT_SESSION.user;
