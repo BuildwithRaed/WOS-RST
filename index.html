@@ -7180,8 +7180,12 @@ async function ensureTradeRates() {
 }
 function tradeRatesFor(calcKey) {
   const saved = TRADE_RATES_CACHE && TRADE_RATES_CACHE.rates[calcKey];
-  const rates = Array.isArray(saved) && saved.length ? saved : (TRADE_DEFAULT_RATES[calcKey] || []);
   const defaults = TRADE_DEFAULT_RATES[calcKey] || [];
+  let rates = Array.isArray(saved) && saved.length ? saved.slice() : defaults.slice();
+  // Built-in hidden rules (e.g. general Speedups count as Research Speedups)
+  // are never shown in the Trade box, so editing a visible rate used to save
+  // a list without them and silently drop them. Always keep them.
+  if (Array.isArray(saved) && saved.length) defaults.forEach((d) => { if (d.hidden && !rates.some((r) => r.from === d.from && r.to === d.to)) rates.push(d); });
   const out = rates.filter((r) => r.from && r.to && r.give > 0 && r.get > 0).map((r) => {
     if (r.max != null) return r;
     const d = defaults.find((x) => x.from === r.from && x.to === r.to);
@@ -7811,9 +7815,16 @@ function budgetShares(plan, inc) {
       const w = {}; let sum = 0;
       inc.forEach((pg) => {
         let x = 0;
+        const rates = TRADE_RATES_CACHE ? tradeRatesFor(pg.calcKey) : [];
         Object.keys(u.gives).forEach((n) => {
-          if (!(total[n] > 0) || !(pg.need[n] > 0)) return;
-          x += Math.min(1, (u.gives[n] * r.count) / total[n]) * (pg.need[n] / total[n]);
+          if (total[n] > 0 && pg.need[n] > 0) { x += Math.min(1, (u.gives[n] * r.count) / total[n]) * (pg.need[n] / total[n]); return; }
+          // Also counts when this page only uses the item through one of its
+          // own trades (general Speedups -> Research Speedups, Fire Crystal ->
+          // FC Shard), so a page that trades for it gets its fair part too.
+          rates.forEach((rt) => {
+            if (rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0)) return;
+            x += Math.min(1, (u.gives[n] * (rt.get / rt.give) * r.count) / total[rt.to]) * (pg.need[rt.to] / total[rt.to]);
+          });
         });
         w[pg.calcKey] = x; sum += x;
       });
