@@ -5691,18 +5691,27 @@ function packResetOffsets(reset, day, horizon) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const anchor = typeof day === "string" && day ? new Date(day + "T00:00:00") : null;
   if (anchor && !Number.isNaN(anchor.getTime())) {
+    // A date that has already passed means the current copy came out then
+    // and can still be bought today (e.g. a weekly pack that reset on
+    // Monday starts again from its smallest price this week).
     if (reset === 30) {
+      let past = false;
       for (let m = -1; m < 60; m++) {
         const dt = new Date(anchor.getFullYear(), anchor.getMonth() + m, anchor.getDate());
         const off = Math.round((dt - today) / 86400000);
-        if (off < 0) continue;
+        if (off < 0) { past = true; continue; }
         if (off > horizon) break;
+        if (past && off > 0 && !out.length) out.push(0);
         out.push(off);
       }
+      if (past && !out.length) out.push(0);
       return out;
     }
     let first = Math.round((anchor - today) / 86400000);
-    if (first < 0) first = ((first % reset) + reset) % reset;
+    if (first < 0) {
+      first = ((first % reset) + reset) % reset;
+      if (first > 0) out.push(0);
+    }
     for (let d = first; d <= horizon; d += reset) out.push(d);
     return out;
   }
@@ -6157,6 +6166,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   };
   // Smallest k (<= cap) at which adding k units of `gives` stops reducing the shortfall.
   const bestCount = (rem, gives, cap) => {
+    if (!(cap >= 1)) return 0; // none left before the date: never buy one anyway
     const sv = (k) => { const r = { ...rem }; Object.keys(gives).forEach((n) => { r[n] = (r[n] || 0) - k * gives[n]; }); return shortValue(r); };
     const base = sv(0);
     let hi = 1;
