@@ -3530,6 +3530,9 @@ const T = {
   budgets_split_after_note: { en: "planned after the packs above are bought", ar: "مخطط بعد شراء الحزم أعلاه", ko: "위 팩을 구매한 뒤로 계획됨" },
   marks_use_site: { en: "Use site rates", ar: "استخدم معدلات الموقع", ko: "사이트 기준 사용" },
   marks_site_rates_on: { en: "Using the site's rates", ar: "يتم استخدام معدلات الموقع", ko: "사이트 기준 사용 중" },
+  marks_advanced_open: { en: "Advanced refine calculator", ar: "حاسبة التحسين المتقدمة", ko: "고급 강화 계산기" },
+  marks_advanced_desc: { en: "Set your own marks per 1% and adjustment. Off = the site's rates.", ar: "اضبط معدلات العلامات لكل 1% والتعديل بنفسك. الإيقاف = معدلات الموقع.", ko: "1%당 문장 수와 보정을 직접 설정합니다. 끄면 사이트 기준을 사용합니다." },
+  marks_advanced_close: { en: "Close advanced (use site rates)", ar: "إغلاق المتقدم (استخدام معدلات الموقع)", ko: "고급 닫기 (사이트 기준 사용)" },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -13513,14 +13516,18 @@ async function ensurePetMarksState() {
     // themselves; "Use site rates" goes back to following them.
     const visitorCustom = saved.visitorCustom === true && saved.visitorRates && typeof saved.visitorRates === "object";
     const visitorRates = visitorCustom ? { ...published, ...saved.visitorRates } : { ...published };
-    const rates = !IS_OWNER ? visitorRates : testMode ? testRates : published;
-    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, adjust: Number(saved.adjust) || 0, packGems: saved.packGems === true };
+    // Visitors use the site's rates (and no adjustment) unless they open the
+    // Advanced refine calculator, where their own rates and adjustment apply.
+    const advanced = !IS_OWNER && saved.advanced === true;
+    const rates = !IS_OWNER ? (advanced ? visitorRates : { ...published }) : testMode ? testRates : published;
+    PET_MARKS_STATE = { rates, published, testMode, testRates, visitorRates, visitorCustom: !IS_OWNER && visitorCustom, advanced, adjust: (IS_OWNER || advanced) ? (Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0) : 0, savedAdjust: Number(saved.savedAdjust != null ? saved.savedAdjust : saved.adjust) || 0, packGems: saved.packGems === true };
   }
   return PET_MARKS_STATE;
 }
 // Owner edits go to the site (everyone) or, in test mode, only to the owner's own copy.
 async function savePetMarksRates() {
   if (!IS_OWNER) {
+    if (!PET_MARKS_STATE.advanced) return;
     PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.rates };
     PET_MARKS_STATE.visitorCustom = true;
     await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
@@ -14994,19 +15001,24 @@ async function renderRefinePage() {
         <h2>${esc(t("marks_title"))}</h2>
         <p class="desc">${esc(t("marks_desc"))}</p>
         <div class="grid g2" style="align-items:start; gap:16px;">
-          ${true ? `<div>
+          ${!IS_OWNER && !PET_MARKS_STATE.advanced ? `<div>
+            <div class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</div>
+            <button type="button" class="btn small" data-marksadvanced="1" style="margin-top:8px;">${esc(t("marks_advanced_open"))}</button>
+            <div class="meta" style="font-size:10px; margin-top:4px;">${esc(t("marks_advanced_desc"))}</div>
+          </div>` : true ? `<div>
             <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))}</div>
             <div style="display:flex; flex-direction:column; gap:6px;">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
             <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("marks_rates_note"))}</div>
             ${IS_OWNER ? "" : `<div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px;">
               ${PET_MARKS_STATE.visitorCustom ? `<button type="button" class="btn small" data-markssite style="padding:2px 10px;">${esc(t("marks_use_site"))}</button>` : `<span class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</span>`}
               <button type="button" class="btn small ghost" data-marksclear style="padding:2px 10px;">${esc(t("marks_clear"))}</button>
+              <button type="button" class="btn small ghost" data-marksadvanced="0" style="padding:2px 10px;">${esc(t("marks_advanced_close"))}</button>
             </div>`}
             <div class="meta" style="font-size:10.5px; margin-top:8px; ${IS_OWNER ? "" : "display:none;"} color:${PET_MARKS_STATE.testMode ? "#e0a030" : "var(--muted)"};">${PET_MARKS_STATE.testMode ? "Editing your test rates (visitors unaffected) \u2014 Admin \u2192 Pets \u2192 Marks Calculation" : "Editing the rates visitors use \u2014 Admin \u2192 Pets \u2192 Marks Calculation to test privately"}</div>
           </div>` : ""}
           <div>
-            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_adjust"))}</div>
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px; ${!IS_OWNER && !PET_MARKS_STATE.advanced ? "display:none;" : ""}">${esc(t("marks_adjust"))}</div>
+            <div style="display:${!IS_OWNER && !PET_MARKS_STATE.advanced ? "none" : "flex"}; align-items:center; gap:6px;">
               <button class="btn small ghost" data-marksadjust="-5" style="width:28px; padding:2px 0;">&minus;</button>
               <span style="font-size:14px; font-weight:700; min-width:52px; text-align:center;">${PET_MARKS_STATE.adjust > 0 ? "+" : ""}${PET_MARKS_STATE.adjust}%</span>
               <button class="btn small ghost" data-marksadjust="5" style="width:28px; padding:2px 0;">+</button>
@@ -15045,6 +15057,15 @@ async function renderRefinePage() {
       await savePetMarksRates();
       renderTotals();
     }));
+    totalsEl.querySelectorAll("[data-marksadvanced]").forEach((b) => b.addEventListener("click", async () => {
+      const on = b.dataset.marksadvanced === "1";
+      const st = PET_MARKS_STATE;
+      await saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
+      PET_MARKS_STATE = null;
+      await ensurePetMarksState();
+      PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+      renderTotals();
+    }));
     const siteBtn = totalsEl.querySelector("[data-markssite]");
     if (siteBtn) siteBtn.addEventListener("click", async () => {
       Object.keys(rates).forEach((k) => { rates[k] = Number(PET_MARKS_STATE.published[k]) || 0; });
@@ -15069,6 +15090,7 @@ async function renderRefinePage() {
     });
     totalsEl.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
       PET_MARKS_STATE.adjust = Math.max(-90, Math.min(300, (PET_MARKS_STATE.adjust || 0) + Number(b.dataset.marksadjust)));
+      PET_MARKS_STATE.savedAdjust = PET_MARKS_STATE.adjust;
       await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
       renderTotals();
     }));
