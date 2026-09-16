@@ -1631,6 +1631,15 @@ const T = {
   budgets_title: { en: "Budgets", ar: "الميزانيات", ko: "예산" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get.", ar: "كل خطط الترقية في مكان واحد: المواد المتبقية، وتكلفة الحزم المخصصة، وزيادة الإحصائيات التي ستحصل عليها.", ko: "모든 업그레이드 계획을 한곳에서: 남은 재료, 배정된 패키지 비용, 그리고 얻게 될 스탯 증가." },
   budgets_loading: { en: "Adding everything up…", ar: "جارٍ الحساب…", ko: "계산 중…" },
+  budgets_view_target: { en: "By your target", ar: "حسب هدفك", ko: "목표일 기준" },
+  budgets_view_fastest: { en: "Fastest", ar: "الأسرع", ko: "가장 빠름" },
+  budgets_view_cheapest: { en: "Cheapest", ar: "الأرخص", ko: "가장 저렴" },
+  budgets_view_shown: { en: "shown", ar: "معروض", ko: "표시 중" },
+  budgets_view_hint: { en: "Tap a card to show its packs and each page's share below.", ar: "اضغط على بطاقة لعرض حزمها وحصة كل صفحة بالأسفل.", ko: "카드를 누르면 아래에 해당 팩과 페이지별 몫이 표시됩니다." },
+  budgets_view_sooner: { en: "{n} days sooner", ar: "أبكر بـ {n} يوم", ko: "{n}일 빠름" },
+  budgets_view_later: { en: "{n} days later", ar: "أبطأ بـ {n} يوم", ko: "{n}일 늦음" },
+  budgets_view_same: { en: "same plan", ar: "نفس الخطة", ko: "같은 계획" },
+  budgets_cant_target: { en: "Can't be done by your target ({date}). Showing the cheapest plan instead.", ar: "لا يمكن الإنجاز بحلول هدفك ({date}). تُعرض الخطة الأرخص بدلاً من ذلك.", ko: "목표일({date})까지 불가능합니다. 대신 가장 저렴한 계획을 표시합니다." },
   budgets_total_title: { en: "Total for selected pages", ar: "الإجمالي للصفحات المحددة", ko: "선택한 페이지 합계" },
   budgets_materials: { en: "Materials", ar: "المواد", ko: "재료" },
   budgets_materials_total: { en: "Materials still needed (all selected)", ar: "المواد المتبقية (كل المحدد)", ko: "남은 재료 (선택 항목 전체)" },
@@ -7735,6 +7744,25 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups) {
   res.inc = inc.map((pg) => pg.calcKey);
   res.dropped = dropped;
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
+  // The other two cards on Budgets: the fastest plan, and the cheapest one
+  // within a year of that (each with its own page shares).
+  if (res.chosen && res.groups && res.groups.length && Object.keys(res.need || {}).length) {
+    let earliest = null;
+    try { earliest = packEarliestDays(res.groups, res.need, res.calcKey); } catch (e) { earliest = null; }
+    if (earliest == null) earliest = res.earliest;
+    if (earliest != null) {
+      // Full search when the plan is small; the quick one for big ones.
+      const big = res.groups.reduce((n, g) => n + g.offers.length, 0) > 500;
+      const cheapestBy = (d) => { const q = packCheapestPlan(res.groups, res.need, d, res.calcKey, true); const f = big ? null : packCheapestPlan(res.groups, res.need, d, res.calcKey); return [q, f].filter(Boolean).sort((x, y) => x.total - y.total)[0] || null; };
+      const fastest = [cheapestBy(earliest), res.chosen.days <= earliest ? res.chosen : null].filter(Boolean).sort((x, y) => x.total - y.total)[0] || null;
+      const cheapest = packPickCheapest([cheapestBy(earliest + 365), fastest, res.chosen]);
+      res.earliestAll = earliest;
+      res.views = {
+        fastest: fastest ? { plan: fastest, shares: budgetShares(fastest, inc) } : null,
+        cheapest: cheapest ? { plan: cheapest, shares: cheapest === res.chosen ? res.shares : budgetShares(cheapest, inc) } : null,
+      };
+    }
+  }
   return res;
 }
 // Same inputs as before: builds every candidate pack group once (here, where
@@ -7941,6 +7969,7 @@ async function budgetCombinedFor(calcKey, groups, opts = {}) {
 }
 let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
 let BUDGET_TARGET = undefined; // yyyy-mm-dd or ""
+let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (not saved)
 // What the Budgets page last computed, so ticking a box or coming back to
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
@@ -7985,11 +8014,29 @@ async function renderBudgetsPage(opts = {}) {
     await new Promise((r) => setTimeout(r, 30));
     if (TAB !== "budgets") return;
   }
-  const combined = (dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig) ? BUDGET_DATA.combined : await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
+  const combinedRaw = (dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig) ? BUDGET_DATA.combined : await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
   if (TAB !== "budgets") return;
+  const pagesRaw = pages;
   // Pages the combined plan had to leave out get their own plan.
-  combined.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combined.droppedPlans && combined.droppedPlans[k]) Object.assign(pg, combined.droppedPlans[k]); });
-  BUDGET_DATA = { dashStats, pages, targetDays, combined, selSig };
+  combinedRaw.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combined.droppedPlans && combined.droppedPlans[k]) Object.assign(pg, combined.droppedPlans[k]); });
+  BUDGET_DATA = { dashStats, pages: pagesRaw, targetDays, combined: combinedRaw, selSig };
+  // Fastest / By your target / Cheapest cards: "main" is the plan Budgets
+  // picks (by the target when reachable, otherwise the cheapest). Tapping a
+  // card only changes what's shown below; nothing is saved.
+  const reachable = targetDays != null && !!combinedRaw.byTarget;
+  const views = combinedRaw.views || {};
+  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan));
+  if (!viewKeys.includes(BUDGET_VIEW)) BUDGET_VIEW = "main";
+  const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
+  const viewData = (k) => {
+    const v = k === "main" ? { plan: combinedRaw.chosen, shares: combinedRaw.shares } : views[k];
+    const dropPlans = combinedRaw.dropped.map((dk) => pagesRaw.find((x) => x.calcKey === dk)).filter((pg) => pg && included(pg.calcKey)).map((pg) => pickDropped(pg, k)).filter(Boolean);
+    const plans = (v && v.plan ? [v.plan] : []).concat(dropPlans);
+    return { plan: v && v.plan, shares: (v && v.shares) || {}, total: plans.reduce((a, pl) => a + packPlanLocal(pl), 0), days: Math.max(0, ...plans.map((pl) => pl.days || 0)), sample: plans[0] && plans[0].rows[0] };
+  };
+  const shownView = viewData(BUDGET_VIEW);
+  const combined = { ...combinedRaw, chosen: shownView.plan || combinedRaw.chosen, shares: shownView.shares };
+  const pages_ = pagesRaw.map((pg) => combinedRaw.dropped.includes(pg.calcKey) && BUDGET_VIEW !== "main" ? { ...pg, chosen: pickDropped(pg, BUDGET_VIEW) } : pg);
   const curStat = (troop, stat) => { const x = (dashStats || []).find((s) => s.troop === troop && s.stat === stat); return x ? x.total : null; };
   const STAT_KEYS = ["ATT", "DEF", "DMG", "HP"];
   const STAT_RAW = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
@@ -8023,7 +8070,7 @@ async function renderBudgetsPage(opts = {}) {
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
   const grandMats = {}, grandDeltas = [];
-  const cards = pages.map((pg, i) => {
+  const cards = pages_.map((pg, i) => {
     const label = packPageLabel(pg.calcKey);
     const grp = packGroupOf(pg.calcKey);
     const inc = included(pg.calcKey);
@@ -8098,6 +8145,28 @@ async function renderBudgetsPage(opts = {}) {
           : `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
         ${combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : ""}
       </div>` : "";
+  // The plan cards under the big total.
+  const viewCardsHtml = (() => {
+    if (!combinedRaw.chosen || viewKeys.length < 2) return "";
+    const main = viewData("main");
+    const title = (k) => k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
+    const card = (k) => {
+      const v = viewData(k), sel = k === BUDGET_VIEW;
+      const late = targetDays != null && v.days > targetDays;
+      const dCost = Math.ceil(v.total) - Math.ceil(main.total), dDays = v.days - main.days;
+      const diff = k === "main" ? "" : (dCost === 0 && dDays === 0) ? t("budgets_view_same")
+        : [dCost ? `${dCost > 0 ? "+" : "−"}${packFmtLocal(Math.abs(dCost), v.sample?.currency, true, v.sample?.price)}` : "", dDays ? t(dDays < 0 ? "budgets_view_sooner" : "budgets_view_later").replace("{n}", Math.abs(dDays)) : ""].filter(Boolean).join(" · ");
+      return `<button type="button" data-budgetview="${k}" style="flex:1 1 180px; min-width:0; text-align:start; cursor:pointer; background:none; color:inherit; font:inherit; border:1px solid ${sel ? "var(--ice)" : "var(--line)"}; box-shadow:${sel ? "0 0 0 1px var(--ice) inset" : "none"}; border-radius:10px; padding:8px 12px;">
+        <div style="font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;" class="meta">${esc(title(k))}${sel ? ` <span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("budgets_view_shown"))}</span>` : ""}</div>
+        <div style="font-size:17px; font-weight:700; margin-top:2px;">${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</div>
+        <div style="font-size:11px; color:${late ? "var(--danger)" : "var(--good)"};">${v.days === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(v.days))} · ${v.days} ${esc(t("pack_days_short_long"))}`}</div>
+        ${diff ? `<div class="meta" style="font-size:10.5px; margin-top:2px;">${esc(diff)}</div>` : ""}
+      </button>`;
+    };
+    return `${targetDays != null && !reachable ? `<div class="meta" style="font-size:11px; margin-top:8px; padding:6px 10px; border:1px dashed var(--danger); border-radius:8px; color:var(--danger);">${esc(t("budgets_cant_target").replace("{date}", fmtDate(targetDays)))}</div>` : ""}
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">${viewKeys.map(card).join("")}</div>
+      <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("budgets_view_hint"))}</div>`;
+  })();
   const summary = `
     <div class="panel" style="border-color:var(--ice);">
       <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
@@ -8110,6 +8179,7 @@ async function renderBudgetsPage(opts = {}) {
         <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
       </div>
+      ${viewCardsHtml}
       ${combinedHtml}
       ${Object.keys(grandMats).length ? `<div style="margin-top:8px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials_total"))}</div><div style="display:flex; flex-wrap:wrap; gap:4px 14px;">${Object.keys(grandMats).map((n) => `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b>${qty(grandMats[n])}</b></span>`).join("")}</div></div>` : ""}
       ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
@@ -8123,6 +8193,11 @@ async function renderBudgetsPage(opts = {}) {
       <div class="budget-cols" style="margin-top:16px;">${cards.join("")}</div>
     </div>`;
 
+  content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
+    BUDGET_VIEW = b.dataset.budgetview;
+    const y = window.scrollY;
+    renderBudgetsPage().then(() => window.scrollTo(0, y));
+  }));
   content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
     // One tick covers the whole group (Pets / Experts / Research).
     const grp = packGroupOf(cb.dataset.budgetinc);
