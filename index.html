@@ -1574,6 +1574,7 @@ const T = {
   pack_custom_name: { en: "Custom name\u2026", ar: "\u0627\u0633\u0645 \u0645\u062e\u0635\u0651\u0635\u2026", ko: "\uc9c1\uc811 \uc785\ub825\u2026" },
   pack_custom_name_prompt: { en: "Column name:", ar: "\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u0648\u062f:", ko: "\uc5f4 \uc774\ub984:" },
   pack_currency: { en: "Currency", ar: "\u0627\u0644\u0639\u0645\u0644\u0629", ko: "\ud1b5\ud654" },
+  pack_all_steps: { en: "all {n} steps", ar: "كل المراحل الـ {n}", ko: "{n}단계 전부" },
   pack_steps_of: { en: "{k} of {n} steps", ar: "{k} من {n} مراحل", ko: "{n}단계 중 {k}단계" },
   pack_up_to: { en: "up to", ar: "\u062d\u062a\u0649", ko: "\ucd5c\ub300" },
   pack_reset_every: { en: "Comes back", ar: "\u064a\u062a\u0643\u0631\u0631", ko: "\uc7ac\ub4f1\uc7a5" },
@@ -5937,14 +5938,15 @@ function packGroupsForRaw(tables) {
       offers.forEach((o, i) => {
         price += o.price;
         Object.keys(o.gives).forEach((n) => { gives[n] = (gives[n] || 0) + o.gives[n]; });
-        prefixes.push({ ...o, price, gives: { ...gives }, tiers: i + 1, label: i === 0 ? o.label : `${t("pack_up_to")} ${o.label}` });
+        const stepsOf = offers.length > 1 ? ` (${t("pack_steps_of").replace("{k}", i + 1).replace("{n}", offers.length)})` : "";
+        prefixes.push({ ...o, price, gives: { ...gives }, tiers: i + 1, label: (i === 0 ? o.label : `${t("pack_up_to")} ${o.label}`) + stepsOf });
       });
       // Last tier repeatable N times once the ladder is complete: extra
       // "full ladder + k more of the last tier" options.
       const last = offers[offers.length - 1], full = prefixes[prefixes.length - 1], lastMax = rowMaxOf(last);
       if (lastMax && lastMax > 1) for (let k = 1; k < lastMax; k++) {
         const g2 = { ...full.gives }; Object.keys(last.gives).forEach((n) => { g2[n] = (g2[n] || 0) + k * last.gives[n]; });
-        prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${full.label} + ${k}× ${last.label}` });
+        prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${offers.length > 1 ? t("pack_all_steps").replace("{n}", offers.length) : last.label} + ${k}× ${last.label}` });
       }
       groups.push({ reset: link.reset, resetDay: link.resetDay, perCycle: 1, offers: prefixes, ladder: true, tables: [String(tb.id)] });
     } else if (link.choice) {
