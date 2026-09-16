@@ -5835,7 +5835,7 @@ async function renderPacksPage() {
             </div>
             <div data-pksamemode style="display:${members.length > 1 ? "flex" : "none"}; flex-direction:column; gap:6px; margin-top:10px;">
               <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="each" ${mode === "each" ? "checked" : ""} /><span>${esc(t("pk_same_each"))}</span></label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="locked" ${mode === "locked" ? "checked" : ""} /><span>${esc(t("pk_same_locked"))}</span></label>
+              ${mode === "locked" ? `<label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="locked" checked /><span>${esc(t("pk_same_locked"))}</span></label>` : ""}
               <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-top:4px;"><input type="checkbox" data-pksamefree ${link.freeSteps ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" /><span><span>${esc(t("pk_same_free"))}</span><br><span class="meta" style="font-size:10.5px;">${esc(t("pk_same_free_desc"))}</span></span></label>
             </div>
           </details>`;
@@ -5848,8 +5848,8 @@ async function renderPacksPage() {
           <label style="display:flex; align-items:center; gap:6px;">
             <span>${esc(t("pack_reset_every"))}</span>
             <select data-packreset style="font-size:12px;">
-              <option value="unlimited" ${preset === "unlimited" ? "selected" : ""}>${esc(t("pack_reset_unlimited"))}</option>
-              <option value="once" ${preset === "once" ? "selected" : ""}>${esc(t("pack_reset_once"))}</option>
+              ${preset === "unlimited" ? `<option value="unlimited" selected>${esc(t("pack_reset_unlimited"))}</option>` : ""}
+              ${preset === "once" ? `<option value="once" selected>${esc(t("pack_reset_once"))}</option>` : ""}
               ${PACK_RESET_PRESETS.map((p) => `<option value="${p.key}" ${preset === p.key ? "selected" : ""}>${esc(t("pack_reset_" + p.key))}</option>`).join("")}
               <option value="custom" ${preset === "custom" ? "selected" : ""}>${esc(t("pack_reset_custom"))}</option>
               <option value="stack" ${preset === "stack" ? "selected" : ""}>${esc(t("pack_reset_stack"))}</option>
@@ -5861,7 +5861,7 @@ async function renderPacksPage() {
             <span class="meta" data-packanchorlabel style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span>
             <input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="font-size:12px; padding:3px 6px; ${typeof r === "number" ? "" : "display:none;"}" />
           </label>
-          <label style="display:flex; align-items:center; gap:6px; ${typeof r === "number" && !link.sequential ? "" : "display:none;"}" data-packbuyswrap>
+          <label style="display:flex; align-items:center; gap:6px; ${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
             <span>${esc(t("pack_buys_per_reset"))}</span>
             <input type="number" min="1" step="1" data-packbuys value="${link.buys}" style="width:56px; font-size:12px; padding:3px 6px;" />
           </label>
@@ -6016,7 +6016,9 @@ async function renderPacksPage() {
         anchorIn.style.display = isNumberReset ? "" : "none";
         anchorLabel.style.display = isNumberReset ? "" : "none";
         const isNumber = custom || PACK_RESET_PRESETS.some((p) => p.key === resetSel.value);
-        buysWrap.style.display = isNumber && !isLadderKind() ? "" : "none";
+        // "Buys per reset" was retired (always 1; the Max column covers repeats).
+        // It only still shows on a table that already has more than 1.
+        buysWrap.style.display = isNumber && !isLadderKind() && Number(buysIn.value) > 1 ? "" : "none";
         if (buysWrap.style.display === "" && buysWrap.querySelector("span")) buysWrap.querySelector("span").textContent = pick("data-pkhow") === "choice" ? t("pack_buys_per_reset_choice") : t("pack_buys_per_reset");
       };
       const saveReset = async () => {
