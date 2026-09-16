@@ -3444,9 +3444,10 @@ const T = {
   pk_visitor_start_desc: { en: "For cards that begin whenever the player first buys them, not on a fixed week.", ar: "للبطاقات التي تبدأ عند أول شراء للاعب، وليس في أسبوع ثابت.", ko: "고정된 주가 아니라 플레이어가 처음 구매할 때 시작하는 카드용." },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
-  pk_active_label: { en: "Still active", ar: "لا تزال فعالة", ko: "진행 중" },
-  pk_active_hint: { en: "bought, rewards not finished", ar: "مشتراة ولم تنتهِ مكافآتها", ko: "구매함, 보상 미완료" },
-  pk_active_note: { en: "{n} × {d} days of rewards, until {date}: {left} days still coming are counted free. New purchases start {next}. Up to {more} more can be stacked.", ar: "{n} × {d} أيام من المكافآت حتى {date}: {left} يوم متبقٍ تُحسب مجانًا. المشتريات الجديدة تبدأ {next}. يمكن تكديس {more} أخرى.", ko: "{n} × {d}일 보상, {date}까지: 남은 {left}일은 무료로 계산. 새 구매는 {next}에 시작. {more}개 더 누적 가능." },
+  pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
+  pk_active_hint: { en: "on cards you already bought", ar: "من البطاقات التي اشتريتها", ko: "이미 구매한 카드" },
+  pk_days_unit: { en: "days", ar: "يوم", ko: "일" },
+  pk_active_note: { en: "{left} days of rewards still coming (until {date}) are counted free. New purchases start {next}. Up to {more} more can be stacked.", ar: "{left} يوم من المكافآت القادمة (حتى {date}) تُحسب مجانًا. المشتريات الجديدة تبدأ {next}. يمكن تكديس {more} أخرى.", ko: "남은 보상 {left}일({date}까지)은 무료로 계산됩니다. 새 구매는 {next}에 시작. {more}개 더 누적 가능." },
   pk_active_done: { en: "These cards have already finished paying out (from that start date) — nothing extra is counted.", ar: "انتهت مكافآت هذه البطاقات بالفعل (من تاريخ البدء) — لا يُحسب شيء إضافي.", ko: "시작일 기준으로 이 카드들의 보상은 이미 끝났습니다 — 추가로 계산되지 않습니다." },
   pk_active_left: { en: "{n} days left", ar: "متبقٍ {n} يوم", ko: "{n}일 남음" },
   pk_own_card_title: { en: "My own card (only for your plans)", ar: "بطاقتي (لخططك فقط)", ko: "내 카드 (내 계획에만 적용)" },
@@ -5227,12 +5228,12 @@ function renderMyPackDates(el, tables) {
   const fmt = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d.toDateString(); } };
   const byGroup = [];
   list.forEach((tb) => { const g = packLinkFor(tb.id).group || ""; let e = byGroup.find((x) => x.g === g); if (!e) { e = { g, items: [] }; byGroup.push(e); } e.items.push(tb); });
-  const previewHead = true ? `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"}</span> ${esc(t("pk_my_dates_title"))} ${preview ? `<span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span>` : ""}${!preview && list.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveCount(tb.id)) ? `<span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:6px;">${esc(t("pk_your_date"))}</span>` : ""}</span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>` : "";
+  const previewHead = true ? `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"}</span> ${esc(t("pk_my_dates_title"))} ${preview ? `<span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span>` : ""}${!preview && list.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveDays(tb.id)) ? `<span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:6px;">${esc(t("pk_your_date"))}</span>` : ""}</span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>` : "";
   el.innerHTML = `<details class="panel" ${preview ? "data-mydatespreview" : "data-mydatesbox"} ${MY_DATES_PREVIEW_OPEN ? "open" : ""} style="margin:0 0 12px; border:1px ${preview ? "dashed" : "solid"} var(--ice);">
     ${previewHead}
     <div class="meta" style="font-size:11.5px; margin-top:6px;">${esc(preview ? t("pk_preview_desc") : t("pk_my_dates_desc"))}</div>
     ${byGroup.map(({ g, items }) => `
-      <div style="margin-top:10px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;" class="meta">${esc(g || t("packs_title"))}${items.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveCount(tb.id)) ? ` <span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:4px;">${esc(t("pk_your_date"))}</span>` : ""}</div>
+      <div style="margin-top:10px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;" class="meta">${esc(g || t("packs_title"))}${items.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveDays(tb.id)) ? ` <span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:4px;">${esc(t("pk_your_date"))}</span>` : ""}</div>
       ${items.map((tb) => {
         const l = packLinkFor(tb.id), st = packStackInfo(packLinkForBase(tb.id).reset), mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
         let sub, value;
@@ -5245,10 +5246,10 @@ function renderMyPackDates(el, tables) {
         return `<div style="display:flex; align-items:center; gap:6px 10px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line);">
           <div style="flex:1 1 180px; min-width:0;"><b style="font-size:12.5px;">${esc(tb.title || "")}</b><div class="meta" style="font-size:10.5px;">${esc(sub)}</div></div>
           <label style="display:flex; align-items:center; gap:6px; font-size:11.5px;"><span class="meta">${esc(st ? t("pk_start_on") : t("pk_arrives_on"))}</span><input type="date" class="keep-w" data-mydate="${esc(tb.id)}" value="${esc(value)}" style="font-size:12px; padding:3px 6px;" /></label>
-          ${st ? `<label style="display:flex; align-items:center; gap:6px; font-size:11.5px;" title="${esc(t("pk_active_hint"))}"><span class="meta">${esc(t("pk_active_label"))} <span style="font-size:10px;">(${esc(t("pk_active_hint"))})</span></span><input type="number" min="0" step="1" class="keep-w" data-myactive="${esc(tb.id)}" value="${packActiveCount(tb.id) || 0}" style="width:56px; font-size:12px; padding:3px 6px;" /> &times;</label>` : ""}
+          ${st ? `<label style="display:flex; align-items:center; gap:6px; font-size:11.5px;" title="${esc(t("pk_active_hint"))}"><span class="meta">${esc(t("pk_active_label"))} <span style="font-size:10px;">(${esc(t("pk_active_hint"))})</span></span><input type="number" min="0" step="1" class="keep-w" data-myactive="${esc(tb.id)}" value="${packActiveDays(tb.id) || 0}" style="width:64px; font-size:12px; padding:3px 6px;" /> ${esc(t("pk_days_unit"))}</label>` : ""}
           ${preview ? `<button type="button" class="btn small ghost" data-mydatesopen="${esc(tb.id)}" style="padding:2px 8px;">${esc(t("pk_preview_open"))}</button>` : ""}
-          ${!preview && (mine || (st && packActiveCount(tb.id))) ? `<button type="button" class="btn small ghost" data-mydatereset="${esc(tb.id)}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}
-          ${st && packActiveCount(tb.id) ? `<div style="flex-basis:100%; font-size:10.5px; color:var(--good);">${esc(packActiveNoteText(tb.id))}</div>` : ""}
+          ${!preview && (mine || (st && packActiveDays(tb.id))) ? `<button type="button" class="btn small ghost" data-mydatereset="${esc(tb.id)}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}
+          ${st && packActiveDays(tb.id) ? `<div style="flex-basis:100%; font-size:10.5px; color:var(--good);">${esc(packActiveNoteText(tb.id))}</div>` : ""}
         </div>`;
       }).join("")}`).join("")}
     ${!preview && (Object.keys(MY_PACK_DATES).length || Object.keys(MY_CARDS_ACTIVE).length) ? `<div style="margin-top:8px;"><button type="button" class="btn small ghost" data-mydateresetall style="padding:2px 8px;">${esc(t("pk_reset_all_dates"))}</button></div>` : ""}
@@ -5276,7 +5277,7 @@ function renderMyPackDates(el, tables) {
     PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
     PACK_TABLES_CACHE = null;
-    Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveCount(k)) delete MY_CARDS_ACTIVE[k]; });
+    Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveDays(k)) delete MY_CARDS_ACTIVE[k]; });
     setTimeout(() => renderMyPackDates(el, tables), 0); // not while the input is still handling its change/blur
     await Promise.all([saveCalcState("my_pack_dates", MY_PACK_DATES), saveCalcState("my_cards_active", MY_CARDS_ACTIVE)]);
   };
@@ -5294,7 +5295,7 @@ function renderMyPackDates(el, tables) {
   el.querySelectorAll("[data-mydatereset]").forEach((b) => b.addEventListener("click", () => { partners(b.dataset.mydatereset).forEach((id) => { delete MY_PACK_DATES[id]; delete MY_CARDS_ACTIVE[id]; }); save(); }));
   el.querySelectorAll("[data-myactive]").forEach((inp) => inp.addEventListener("change", () => {
     const n = Math.max(0, Math.floor(Number(inp.value) || 0));
-    if (n) MY_CARDS_ACTIVE[inp.dataset.myactive] = n; else delete MY_CARDS_ACTIVE[inp.dataset.myactive];
+    if (n) MY_CARDS_ACTIVE[inp.dataset.myactive] = { d: n }; else delete MY_CARDS_ACTIVE[inp.dataset.myactive];
     save();
   }));
   const all = el.querySelector("[data-mydateresetall]");
@@ -5302,7 +5303,7 @@ function renderMyPackDates(el, tables) {
 }
 // The green line under a card's "Still active" box.
 function packActiveNoteText(tableId) {
-  const n = packActiveCount(tableId);
+  const n = packActiveDays(tableId);
   if (!n) return "";
   const l = packLinkFor(tableId), st0 = packStackInfo(packLinkForBase(tableId).reset);
   if (!st0) return "";
@@ -5310,7 +5311,7 @@ function packActiveNoteText(tableId) {
   if (!l.activeDaysLeft) return t("pk_active_done");
   const next = new Date(l.activeUntil.getTime() + 86400000);
   const more = Math.max(0, Math.floor((st0.cap - l.activeDaysLeft) / st0.days));
-  return t("pk_active_note").replace("{n}", n).replace("{d}", st0.days).replace("{date}", fmtD(l.activeUntil)).replace("{left}", l.activeDaysLeft).replace("{next}", fmtD(next)).replace("{more}", more);
+  return t("pk_active_note").replace("{date}", fmtD(l.activeUntil)).replace("{left}", l.activeDaysLeft).replace("{next}", fmtD(next)).replace("{more}", more);
 }
 // What a visitor's still-active weekly cards will still give (counted like owned items).
 function packActiveCardSupply(calcKey, tables) {
@@ -5321,7 +5322,7 @@ function packActiveCardSupply(calcKey, tables) {
     const o = packOffersFor(tb)[0];
     if (!o) return;
     Object.entries(o.gives).forEach(([n, v]) => { out[n] = (out[n] || 0) + v * l.activeBuys; });
-    used.push({ title: tb.title || "", n: l.activeCount, left: l.activeDaysLeft, until: l.activeUntil });
+    used.push({ title: tb.title || "", left: l.activeDaysLeft, until: l.activeUntil });
   });
   return { supply: out, used };
 }
@@ -5872,7 +5873,7 @@ async function renderPacksPage() {
           <div style="font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ice);">${esc(t("pk_own_card_title"))}</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-top:8px;">
             <label style="display:flex; align-items:center; gap:6px;"><span class="meta">${esc(t("pk_start_on"))}</span><input type="date" class="keep-w" data-ownstart value="${esc(packValidDay(MY_PACK_DATES[String(tb.id)]) || "")}" style="font-size:12px; padding:3px 6px;" /></label>
-            <label style="display:flex; align-items:center; gap:6px;"><span class="meta">${esc(t("pk_active_label"))} <span style="font-size:10px;">(${esc(t("pk_active_hint"))})</span></span><input type="number" min="0" step="1" class="keep-w" data-ownactive value="${packActiveCount(tb.id) || 0}" style="width:56px; font-size:12px; padding:3px 6px;" /> &times;</label>
+            <label style="display:flex; align-items:center; gap:6px;"><span class="meta">${esc(t("pk_active_label"))} <span style="font-size:10px;">(${esc(t("pk_active_hint"))})</span></span><input type="number" min="0" step="1" class="keep-w" data-ownactive value="${packActiveDays(tb.id) || 0}" style="width:64px; font-size:12px; padding:3px 6px;" /> ${esc(t("pk_days_unit"))}</label>
           </div>
           <div data-ownnote style="font-size:10.5px; color:var(--good); margin-top:6px;">${esc(packActiveNoteText(tb.id))}</div>
           <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pk_own_card_desc"))}</div>
@@ -6044,7 +6045,7 @@ async function renderPacksPage() {
         const key = String(id);
         if (ownStart && packValidDay(ownStart.value)) MY_PACK_DATES[key] = ownStart.value; else delete MY_PACK_DATES[key];
         const n = Math.max(0, Math.floor(Number(ownActive && ownActive.value) || 0));
-        if (n) MY_CARDS_ACTIVE[key] = n; else delete MY_CARDS_ACTIVE[key];
+        if (n) MY_CARDS_ACTIVE[key] = { d: n }; else delete MY_CARDS_ACTIVE[key];
         PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
         if (typeof budgetInvalidate === "function") budgetInvalidate();
         const note = box.querySelector("[data-ownnote]"); if (note) note.textContent = packActiveNoteText(id);
@@ -7461,7 +7462,13 @@ function packValidDay(v) { return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/
 let MY_PACK_DATES = {};
 // Weekly cards a visitor already bought whose 7-day rewards are still coming ({ tableId: n }).
 let MY_CARDS_ACTIVE = {};
-function packActiveCount(id) { const n = Math.floor(Number(MY_CARDS_ACTIVE[String(id)]) || 0); return n > 0 ? n : 0; }
+// Days of rewards still coming from cards already bought ({ d: days }; an old
+// plain number was a count of 7-day purchases).
+function packActiveDays(id) {
+  const v = MY_CARDS_ACTIVE[String(id)];
+  const d = v && typeof v === "object" ? Math.floor(Number(v.d) || 0) : Math.floor(Number(v) || 0) * 7;
+  return d > 0 ? d : 0;
+}
 function packLinkFor(tableId) {
   const out = packLinkForBase(tableId);
   // Cards still paying out (a visitor's, or the admin's own): the rewards
@@ -7469,25 +7476,19 @@ function packLinkFor(tableId) {
   // stack limit counts the days left. A start date in the past counts from
   // that date (days already passed are already in the backpack).
   if (IS_OWNER || out.visitorDate) {
-    const n = packActiveCount(tableId), st = packStackInfo(out.reset);
-    if (n > 0 && st) {
+    const days = packActiveDays(tableId), st = packStackInfo(out.reset);
+    if (days > 0 && st) {
+      // Counted from today: the game shows how many reward days are left.
       const t0 = new Date(); t0.setHours(0, 0, 0, 0);
-      let base = t0;
-      if (out.resetDay) { const a = new Date(out.resetDay + "T00:00:00"); if (!Number.isNaN(a.getTime())) base = a; }
-      const end = new Date(base.getTime() + n * st.days * 86400000); // first day after the last reward
-      const left = Math.max(0, Math.min(n * st.days, Math.round((end - t0) / 86400000)));
-      if (left > 0) {
-        const start = end > t0 ? end : t0;
-        out.activeBuys = left / st.days;
-        out.activeCount = n;
-        out.activeDaysLeft = left;
-        out.activeUntil = new Date(end.getTime() - 86400000);
-        out.resetDay = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
-        out.reset = `stack:${st.days}:${Math.max(st.days, st.cap - left)}`;
-      } else {
-        // All of them have finished paying out.
-        out.resetDay = null;
-      }
+      const left = Math.min(days, st.cap);
+      const end = new Date(t0.getTime() + left * 86400000); // first day with no reward left
+      let start = end;
+      if (out.resetDay) { const a = new Date(out.resetDay + "T00:00:00"); if (!Number.isNaN(a.getTime()) && a > end) start = a; }
+      out.activeBuys = left / st.days;
+      out.activeDaysLeft = left;
+      out.activeUntil = new Date(end.getTime() - 86400000);
+      out.resetDay = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+      out.reset = `stack:${st.days}:${Math.max(st.days, st.cap - left)}`;
     }
   }
   return out;
@@ -8661,7 +8662,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       ${usingShared ? "" : targetHtml}
       ${fallbackNote}
       ${uncoveredHtml}
-      ${activeCards.used.length ? `<div class="meta" style="font-size:10.5px; margin:4px 0; color:var(--good);">${esc(t("pk_active_free"))}: ${activeCards.used.map((u) => `${esc(u.title)} × ${u.n}${u.until ? ` (${esc(t("pk_active_left").replace("{n}", u.left))}, ${esc(t("pk_active_until"))} ${esc(u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }))})` : ""}`).join(" &middot; ")}</div>` : ""}
+      ${activeCards.used.length ? `<div class="meta" style="font-size:10.5px; margin:4px 0; color:var(--good);">${esc(t("pk_active_free"))}: ${activeCards.used.map((u) => `${esc(u.title)}${u.until ? ` (${esc(t("pk_active_left").replace("{n}", u.left))}, ${esc(t("pk_active_until"))} ${esc(u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }))})` : ""}`).join(" &middot; ")}</div>` : ""}
       <div style="max-height:min(60vh, 520px); overflow-y:auto; overscroll-behavior:contain; padding-inline-end:6px;">${sections}</div>
     </div>`;
   containerEl.querySelectorAll("[data-packviewbtn]").forEach((b) => b.addEventListener("click", () => { PACK_COST_VIEW[calcKey] = b.dataset.packviewbtn; rerender(); }));
