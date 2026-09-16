@@ -1561,6 +1561,8 @@ const T = {
   pack_cost_title: { en: "Pack cost", ar: "\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062d\u0632\u0645", ko: "\ud328\ud0a4\uc9c0 \ube44\uc6a9" },
   pack_mode_still: { en: "Still needed", ar: "\u0627\u0644\u0645\u062a\u0628\u0642\u0651\u064a", ko: "\ubd80\uc871\ud55c \ub7c9" },
   pack_mode_full: { en: "Full amount", ar: "\u0627\u0644\u0643\u0645\u064a\u0629 \u0627\u0644\u0643\u0627\u0645\u0644\u0629", ko: "\uc804\uccb4 \ub7c9" },
+  pack_max_3y: { en: "packs give at most", ar: "\u0623\u0642\u0635\u0649 \u0645\u0627 \u062a\u0639\u0637\u064a\u0647 \u0627\u0644\u062d\u0632\u0645", ko: "\ud329 \ucd5c\ub300 \uc81c\uacf5\ub7c9" },
+  pack_uncovered_hint: { en: "Even buying every pack for 3 years isn't enough, so this is left out and the plan below covers everything else. Add a pack that gives it on the Packs page to include it (for Refined FC, pick a weekly plan on the Research Lab page).", ar: "\u062d\u062a\u0649 \u0634\u0631\u0627\u0621 \u0643\u0644 \u0627\u0644\u062d\u0632\u0645 \u0644\u0645\u062f\u0629 3 \u0633\u0646\u0648\u0627\u062a \u0644\u0627 \u064a\u0643\u0641\u064a\u060c \u0644\u0630\u0627 \u0627\u0633\u062a\u064f\u0628\u0639\u062f \u0648\u0627\u0644\u062e\u0637\u0629 \u0623\u062f\u0646\u0627\u0647 \u062a\u063a\u0637\u064a \u0627\u0644\u0628\u0627\u0642\u064a. \u0623\u0636\u0641 \u062d\u0632\u0645\u0629 \u062a\u0639\u0637\u064a\u0647 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u062d\u0632\u0645 \u0644\u062a\u0636\u0645\u064a\u0646\u0647.", ko: "3\ub144 \ub3d9\uc548 \ubaa8\ub4e0 \ud329\uc744 \uc0ac\ub3c4 \ubd80\uc871\ud558\uc5ec \uc81c\uc678\ud558\uace0, \uc544\ub798 \uacc4\ud68d\uc740 \ub098\uba38\uc9c0\ub97c \ucda9\uc871\ud569\ub2c8\ub2e4. \ud329 \ud398\uc774\uc9c0\uc5d0\uc11c \uc774\ub97c \uc8fc\ub294 \ud329\uc744 \ucd94\uac00\ud558\uba74 \ud3ec\ud568\ub429\ub2c8\ub2e4." },
   pack_cant_cover: { en: "These packs can't cover it", ar: "\u0647\u0630\u0647 \u0627\u0644\u062d\u0632\u0645 \u0644\u0627 \u062a\u0643\u0641\u064a", ko: "\uc774 \ud328\ud0a4\uc9c0\ub85c\ub294 \ucda9\ub2f9\ud560 \uc218 \uc5c6\uc74c" },
   pack_nothing_needed: { en: "Nothing needed from this table", ar: "\u0644\u0627 \u062d\u0627\u062c\u0629 \u0644\u0634\u064a\u0621 \u0645\u0646 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644", ko: "\uc774 \ud45c\uc5d0\uc11c \ud544\uc694\ud55c \uac83 \uc5c6\uc74c" },
   pack_no_columns: { en: "Label this table's columns on the Packs page first.", ar: "\u0641\u0636\u0644\u064b\u0627 \u0633\u0645\u0651\u0650 \u0623\u0639\u0645\u062f\u0629 \u0647\u0630\u0627 \u0627\u0644\u062c\u062f\u0648\u0644 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u062d\u0632\u0645 \u0623\u0648\u0644\u0627\u064b.", ko: "\uba3c\uc800 \ud328\ud0a4\uc9c0 \ud398\uc774\uc9c0\uc5d0\uc11c \uc774 \ud45c\uc758 \uc5f4\uc744 \uc9c0\uc815\ud558\uc138\uc694." },
@@ -5979,7 +5981,7 @@ function packShortAfterTrades(remaining, ctx) {
       if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
       spare[r.from] -= lots * r.give;
       short[to] = Math.max(0, short[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab });
     }
     if (short[to] <= 1e-9) delete short[to];
   });
@@ -6041,7 +6043,7 @@ const PACK_PLAN_CACHE = new Map();
 function packPlanCacheKey(groups, need, days, calcKey, quick) {
   const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.perCycle}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",")).join(";")).join("#");
   let h = 0; for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
-  return `${h}|${sig.length}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}`;
+  return `${h}|${sig.length}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
 }
 function packCheapestPlan(groups, need, days, calcKey, quick) {
   const key = packPlanCacheKey(groups, need, days, calcKey, quick);
@@ -6425,6 +6427,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const supplied = new Set();
   tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => { if (r === "Gems" && !packGemsCountFor(calcKey)) return; Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n)); }));
   const viaTrades = packNeedViaTrades(calcKey, base, supplied, targetDays);
+  packSplitUncoverable(packGroups, viaTrades, calcKey);
   const need = viaTrades.need;
 
   const fmtDate = (days) => {
@@ -6452,6 +6455,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   let sections;
+  // Items no pack setup can cover (listed, not planned).
+  const uncoveredHtml = Object.keys(viaTrades.uncovered).length ? `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--danger); border-radius:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}: ${Object.keys(viaTrades.uncovered).map((n) => `<b>${esc(materialDisplayName(n))} ${qty(viaTrades.uncovered[n])}</b>${viaTrades.maxWithin && viaTrades.maxWithin[n] != null ? ` <span class="meta">(${esc(t("pack_max_3y"))} ${qty(viaTrades.maxWithin[n])})</span>` : ""}`).join(" &middot; ")}<br><span class="meta" style="color:var(--muted);">${esc(t("pack_uncovered_hint"))}</span></div>` : "";
   // Shared packs: show this page's share of the combined Budgets plan.
   let shared = null;
   if (PACK_COST_MODE === "still") {
@@ -6500,7 +6505,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (!packGroups.length) {
     sections = `<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_no_columns"))}</div>`;
   } else if (!Object.keys(need).length) {
-    sections = `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
+    sections = Object.keys(viaTrades.uncovered).length ? "" : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("pack_nothing_needed"))}</div>
       ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:4px 0; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${Math.round(x.giveQty).toLocaleString()} ${esc(materialDisplayName(x.from))} → ${Math.round(x.getQty).toLocaleString()} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}`;
   } else if (skipPagePlan) {
     sections = "";
@@ -6513,7 +6518,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     if (earliest == null) {
       // Explain what's short and how much the packs could give at most,
       // plus which tables limit it (once-only / per-row max).
-      const sup = packMaxSupply(packGroups, Infinity);
+      const sup = packMaxSupply(packGroups, PACK_HORIZON_DAYS);
       const short = {};
       Object.keys(need).forEach((n) => { if ((sup[n] || 0) < need[n]) short[n] = need[n] - (sup[n] || 0); });
       const limited = tables.filter((tb) => { const l = packLinkFor(tb.id); return l.reset === "once" || Object.keys(l.rowMax || {}).length; }).map((tb) => tb.title || t("packs_title"));
@@ -6552,7 +6557,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         }
         const p = c.plan;
         const rows = packPlanRowsHtml(p, resetText);
-        const tradesHtml = (p.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : "";
+        const tradesHtml = (p.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
         const when = p.days === 0 ? t("pack_ready_now") : `${fmtDate(p.days)} · ${p.days} ${t("pack_days_short_long")}`;
         const late = targetDays != null && p.days > targetDays;
         return `<div class="panel" style="padding:10px; min-width:0; ${c.key === "target" ? "border-color:var(--ice);" : ""}">
@@ -6567,8 +6572,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       };
       sections = `
         <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
-        ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}
-        ${Object.keys(viaTrades.uncovered).length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--danger);">${esc(t("pack_cant_cover"))}: ${Object.keys(viaTrades.uncovered).map((n) => `${esc(materialDisplayName(n))} ${qty(viaTrades.uncovered[n])}`).join(" &middot; ")}</div>` : ""}
+        ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
         <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:6px;">${plans.map(cardHtml).join("")}</div>`;
     }
   }
@@ -6602,6 +6606,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       ${viewSwitch}
       ${usingShared ? "" : targetHtml}
       ${fallbackNote}
+      ${uncoveredHtml}
       <div style="max-height:min(60vh, 520px); overflow-y:auto; overscroll-behavior:contain; padding-inline-end:6px;">${sections}</div>
     </div>`;
   containerEl.querySelectorAll("[data-packviewbtn]").forEach((b) => b.addEventListener("click", () => { PACK_COST_VIEW[calcKey] = b.dataset.packviewbtn; rerender(); }));
@@ -6885,6 +6890,7 @@ async function renderRfcLabPage() {
     const saved = (await loadCalcState("rfc_lab")) || {};
     RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
   }
+  rfcLabApplyRate(RFC_LAB_STATE);
   // Default the need from the T12 page's last totals when nothing typed
   // (T11 Helios doesn't use Refined FC).
   const snap = await ensureBudgetNeedsSnapshot();
@@ -7122,7 +7128,43 @@ function calcKeyOfRates(rates) {
 let TRADE_RATES_CACHE = null;      // { [calcKey]: rates[] } (saved overrides)
 const TRADE_APPLY = {};            // { [calcKey]: true } - use trades in pack cost / budgets
 const TRADE_OPEN = {};             // block collapsed on every load
+// ---- Research Lab -> T12 Pack cost ----
+// The weekly refining plan chosen on the Research Lab page becomes a trade
+// on T12: give that week's Fire Crystal, get that week's expected Refined FC,
+// at most once per week. Packs then only need to supply the Fire Crystal.
+let TRADE_EXTRA_RATES = {};
+let TRADE_EXTRA_SIG = "";
+let RFC_LAB_RATE_LOADED = false;
+function rfcLabChosenPlan(st) {
+  if (!st) return null;
+  if (st.mode === "budget") {
+    if (!(st.budget > 0)) return null;
+    return rfcAllPlans().filter((p) => p.cost <= st.budget).sort((a, b) => b.rfc - a.rfc || a.cost - b.cost)[0] || null;
+  }
+  return rfcPlan(Math.min(5, Math.max(1, Number(st.top) || 3)), Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(st.attempts) || 6)));
+}
+function rfcLabApplyRate(st) {
+  const p = rfcLabChosenPlan(st);
+  const next = p && p.cost > 0 && p.rfc > 0
+    ? { t12_research: [{ from: "Fire Crystal", to: "Refined FC", give: p.cost, get: Math.round(p.rfc * 100) / 100, max: 1, hidden: true, rfcLab: true }] }
+    : {};
+  const sig = JSON.stringify(next);
+  if (sig === TRADE_EXTRA_SIG) return;
+  TRADE_EXTRA_RATES = next;
+  TRADE_EXTRA_SIG = sig;
+  PACK_PLAN_CACHE.clear();
+  PACK_EARLIEST_CACHE.clear();
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+}
+async function ensureRfcLabRate() {
+  if (RFC_LAB_STATE) { rfcLabApplyRate(RFC_LAB_STATE); return; }
+  if (RFC_LAB_RATE_LOADED) return;
+  RFC_LAB_RATE_LOADED = true;
+  const saved = (await loadCalcState("rfc_lab")) || {};
+  rfcLabApplyRate({ top: saved.top, attempts: saved.attempts, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" });
+}
 async function ensureTradeRates() {
+  await ensureRfcLabRate();
   if (!TRADE_RATES_CACHE) {
     // Visitors use the owner's trade rates and "use spare items" choices.
     const saved = (IS_OWNER ? await loadCalcState("trade_rates") : await loadOwnerState("trade_rates")) || {};
@@ -7140,6 +7182,10 @@ function tradeRatesFor(calcKey) {
     const d = defaults.find((x) => x.from === r.from && x.to === r.to);
     return { ...r, max: d ? d.max : 0 };
   });
+  // Extra routes worked out elsewhere (Research Lab: Fire Crystal -> Refined FC
+  // at the weekly plan chosen there, one lot per week).
+  const extra = (typeof TRADE_EXTRA_RATES !== "undefined" && TRADE_EXTRA_RATES && TRADE_EXTRA_RATES[calcKey]) || [];
+  extra.forEach((r) => out.push(r));
   out.__calcKey = calcKey; // lets applyTrades find this page's priorities
   return out;
 }
@@ -7197,7 +7243,7 @@ function applyTrades(rates, need, owned, weeks) {
       usedLots.set(r, (usedLots.get(r) || 0) + lots);
       spare[r.from] -= lots * r.give;
       after[to] = Math.max(0, after[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab });
     }
   });
   Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
@@ -7222,6 +7268,25 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
 // (e.g. 10 Jewel Secrets -> 400 Charm Guides at 40:1), within the weekly
 // trade limits for the weeks left. Returns the adjusted need, the
 // conversions made, and anything that still can't be covered.
+// Items the packs can't supply enough of even over the planning horizon
+// (3 years of every pack, trades included) are taken out of the plan and
+// listed as "can't cover" with the most the packs could give. Otherwise one
+// such item (e.g. Refined FC) made the whole Pack cost say it can't be done.
+function packSplitUncoverable(groups, via, calcKey) {
+  via.maxWithin = via.maxWithin || {};
+  const names = Object.keys(via.need);
+  if (!names.length) return via;
+  if (!groups.length) { names.forEach((n) => { via.uncovered[n] = via.need[n]; via.maxWithin[n] = 0; delete via.need[n]; }); return via; }
+  const sup = packMaxSupply(groups, PACK_HORIZON_DAYS);
+  const ctx = packTradeCtx(calcKey, PACK_HORIZON_DAYS);
+  names.forEach((n) => {
+    if (packCoveredBy(sup, { [n]: via.need[n] }, ctx)) return;
+    via.uncovered[n] = via.need[n];
+    via.maxWithin[n] = Math.floor(sup[n] || 0);
+    delete via.need[n];
+  });
+  return via;
+}
 function packNeedViaTrades(calcKey, base, supplied, targetDays) {
   // Items the packs sell directly, plus items that can be traded for from
   // something the packs sell. The planner itself decides whether buying
@@ -7508,6 +7573,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const supplied = new Set();
   tables.forEach((tb) => Object.values(packEffectiveCols(tb)).forEach((r) => { if (r === "Gems" && !packGemsCountFor(calcKey)) return; Object.keys(packBundleContents(r)).forEach((n) => supplied.add(n)); }));
   const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
+  packSplitUncoverable(packGroups, viaTrades, calcKey);
   const need = viaTrades.need;
   const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!opts.noPlan && packGroups.length && Object.keys(need).length) {
@@ -7657,10 +7723,10 @@ function plannerWorker() {
       `const PACK_HORIZON_DAYS = ${JSON.stringify(PACK_HORIZON_DAYS)};`,
       `const TRADE_DEFAULT_RATES = ${JSON.stringify(TRADE_DEFAULT_RATES)};`,
       `const TRADE_TARGET_PRIORITY = ${JSON.stringify(TRADE_TARGET_PRIORITY)};`,
-      "let TRADE_RATES_CACHE = null; let LAST_TRADE = '';",
+      "let TRADE_RATES_CACHE = null; let TRADE_EXTRA_RATES = {}; let LAST_TRADE = '';",
       "const PACK_PLAN_CACHE = new Map(); const PACK_EARLIEST_CACHE = new Map();",
       ...fns,
-      "self.onmessage = (e) => { const { id, kind, payload, trade } = e.data; const sig = JSON.stringify(trade || null); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null;",
+      "self.onmessage = (e) => { const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
       "  try { const result = kind === 'page' ? plannerPagePlans(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
@@ -7680,7 +7746,7 @@ function plannerRun(kind, payload) {
   const id = ++PLANNER_SEQ;
   return new Promise((resolve, reject) => {
     PLANNER_WAIT.set(id, { resolve, reject });
-    w.postMessage({ id, kind, payload, trade: TRADE_RATES_CACHE });
+    w.postMessage({ id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES });
   }).catch((err) => { console.warn("Background planner failed, planning on the page instead", err); return local(); });
 }
 async function budgetCombinedPlanAsync(pages, selected, targetDays) {
@@ -7921,7 +7987,7 @@ async function renderBudgetsPage(opts = {}) {
         </div>
         ${targetDays != null && !pg.byTarget ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(pg.earliest))}</div>` : ""}
         <details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${c.rows.length})</summary>${packRowsHtml(c)}
-          ${(c.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${c.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}
+          ${(c.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${c.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
           <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
     }
     return `<div class="panel" style="${inc ? "" : "opacity:0.55;"}">
@@ -7946,7 +8012,7 @@ async function renderBudgetsPage(opts = {}) {
       <div style="margin-top:10px;">
         <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(t("combined_budget_note"))}</div>
         ${combined.chosen ? `<details><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtMoney(Math.ceil(combined.chosen.total), combined.chosen.rows[0]?.currency, true)}</summary>${packRowsHtml(combined.chosen)}
-          ${(combined.chosen.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${combined.chosen.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : ""}
+          ${(combined.chosen.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${combined.chosen.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
           ${targetDays != null && !combined.byTarget && combined.earliest != null ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(combined.earliest))}</div>` : ""}</details>`
           : `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
         ${combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : ""}
