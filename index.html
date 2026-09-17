@@ -3533,6 +3533,18 @@ const T = {
   marks_advanced_open: { en: "Advanced refine calculator", ar: "حاسبة التحسين المتقدمة", ko: "고급 강화 계산기" },
   marks_advanced_desc: { en: "Set your own marks per 1% and adjustment. Off = the site's rates.", ar: "اضبط معدلات العلامات لكل 1% والتعديل بنفسك. الإيقاف = معدلات الموقع.", ko: "1%당 문장 수와 보정을 직접 설정합니다. 끄면 사이트 기준을 사용합니다." },
   marks_advanced_close: { en: "Close advanced (use site rates)", ar: "إغلاق المتقدم (استخدام معدلات الموقع)", ko: "고급 닫기 (사이트 기준 사용)" },
+  pk_trigger_option: { en: "Once — triggered at an expert level", ar: "مرة واحدة — تُفعَّل عند مستوى خبير", ko: "1회 — 전문가 레벨 도달 시" },
+  pk_trigger_expert: { en: "Expert", ar: "الخبير", ko: "전문가" },
+  pk_trigger_lasts: { en: "lasts", ar: "تستمر", ko: "유지" },
+  pk_trigger_at_level: { en: "appears when the expert reaches level", ar: "تظهر عندما يصل الخبير إلى المستوى", ko: "전문가가 다음 레벨에 도달하면 등장" },
+  pk_trigger_desc: { en: "Each row is bought once. It counts while the expert is at or below that level and the target reaches it; once the expert goes higher it shows as done. Leave a level empty to not count that row.", ar: "يُشترى كل صف مرة واحدة. يُحتسب ما دام الخبير عند هذا المستوى أو أقل ويصل هدفه إليه؛ وعندما يتجاوزه يظهر كمنتهٍ. اترك المستوى فارغًا لعدم احتساب الصف.", ko: "각 행은 1회 구매. 전문가가 그 레벨 이하이고 목표가 도달하면 계산되며, 넘어서면 완료로 표시됩니다. 레벨을 비우면 계산하지 않습니다." },
+  pk_trig_coming: { en: "Coming · counted", ar: "قادمة · محتسبة", ko: "예정 · 계산됨" },
+  pk_trig_now: { en: "Triggered now · counted", ar: "مفعّلة الآن · محتسبة", ko: "지금 등장 · 계산됨" },
+  pk_trig_done: { en: "Done — already triggered", ar: "منتهية — تم تفعيلها", ko: "완료 — 이미 등장" },
+  pk_trig_notreached: { en: "Not reached by your target", ar: "لا يصلها هدفك", ko: "목표 레벨 미도달" },
+  pk_trig_nolevel: { en: "No level set", ar: "لا يوجد مستوى", ko: "레벨 미설정" },
+  pk_trig_expert_now: { en: "{e} Lv {c} → target {t}", ar: "{e} مستوى {c} ← الهدف {t}", ko: "{e} Lv {c} → 목표 {t}" },
+  pk_trig_one_day: { en: "1 day", ar: "يوم واحد", ko: "1일" },
   pk_hide_visitors: { en: "Hide this table from visitors", ar: "إخفاء هذا الجدول عن الزوار", ko: "방문자에게 이 표 숨기기" },
   pk_hidden_tag: { en: "Hidden from visitors", ar: "مخفي عن الزوار", ko: "방문자에게 숨김" },
   pk_active_label: { en: "Reward days left", ar: "أيام المكافآت المتبقية", ko: "남은 보상 일수" },
@@ -6093,6 +6105,7 @@ async function renderPacksPage() {
             </tbody>
           </table>
         </div>
+        ${packTriggerStatusHtml(t)}
         ${packLinkEditorHtml(t)}
       </div>`;
         })();
@@ -6285,7 +6298,7 @@ async function renderPacksPage() {
         })()}
         ${(() => {
           const r = link.reset;
-          const preset = packStackInfo(r) ? "stack" : typeof r === "number" ? (PACK_RESET_PRESETS.find((p) => p.days === r) || { key: "custom" }).key : r;
+          const preset = link.trigger ? "trigger" : packStackInfo(r) ? "stack" : typeof r === "number" ? (PACK_RESET_PRESETS.find((p) => p.days === r) || { key: "custom" }).key : r;
           return `
         <div style="display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap; margin-bottom:6px; font-size:12px;">
           <label style="display:flex; align-items:center; gap:6px;">
@@ -6296,6 +6309,7 @@ async function renderPacksPage() {
               ${PACK_RESET_PRESETS.map((p) => `<option value="${p.key}" ${preset === p.key ? "selected" : ""}>${esc(t("pack_reset_" + p.key))}</option>`).join("")}
               <option value="custom" ${preset === "custom" ? "selected" : ""}>${esc(t("pack_reset_custom"))}</option>
               <option value="stack" ${preset === "stack" ? "selected" : ""}>${esc(t("pack_reset_stack"))}</option>
+              <option value="trigger" ${preset === "trigger" ? "selected" : ""}>${esc(t("pk_trigger_option"))}</option>
             </select>
             <input type="number" min="1" step="1" data-packstackcap value="${link.stackCap}" style="width:64px; font-size:12px; padding:3px 6px; ${preset === "stack" ? "" : "display:none;"}" />
             <span class="meta" data-packstackcaplabel style="font-size:11px; ${preset === "stack" ? "" : "display:none;"}">${esc(t("pack_stack_max"))}</span>
@@ -6309,6 +6323,24 @@ async function renderPacksPage() {
             <input type="number" min="1" step="1" data-packbuys value="${link.buys}" style="width:56px; font-size:12px; padding:3px 6px;" />
           </label>
         </div>
+        ${(() => {
+          const tr = link.trigger || { expert: "", levels: {}, days: 1 };
+          const experts = expertKeysAll();
+          const priceOf = (ri) => { const n = packParseNum(((tb.rows || [])[ri] || {}).cells?.[link.priceCol]); return n ? packFmtMoney(n, link.currency) : `#${ri + 1}`; };
+          return `<div data-pktrigwrap style="display:${preset === "trigger" ? "block" : "none"}; margin:0 0 10px; padding:10px; border:1px dashed var(--good); border-radius:10px; font-size:12px;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+              <span class="meta">${esc(t("pk_trigger_expert"))}</span>
+              <select data-pktrigexpert class="keep-w" style="font-size:12px;">${experts.map((k) => `<option value="${esc(k)}" ${k === tr.expert ? "selected" : ""}>${esc(dataName(k))}</option>`).join("")}</select>
+              <span class="meta">${esc(t("pk_trigger_lasts"))}</span>
+              <input type="number" min="1" step="1" class="keep-w" data-pktrigdays value="${tr.days || 1}" style="width:52px; font-size:12px; padding:3px 6px;" />
+              <span class="meta">${esc(t("pk_daily_days"))}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:8px;">
+              ${(tb.rows || []).map((_, ri) => `<label style="display:flex; align-items:center; gap:8px;"><span style="min-width:70px; font-weight:600;">${esc(priceOf(ri))}</span><span class="meta">${esc(t("pk_trigger_at_level"))}</span><input type="number" min="1" step="1" class="keep-w" data-pktriglevel="${ri}" value="${esc((tr.levels || {})[ri] || "")}" style="width:60px; font-size:12px; padding:3px 6px;" /></label>`).join("")}
+            </div>
+            <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("pk_trigger_desc"))}</div>
+          </div>`;
+        })()}
         <p class="desc" data-packstackhint style="font-size:10.5px; margin:0 0 6px; color:var(--ice); ${preset === "stack" ? "" : "display:none;"}">${esc(t("pack_stack_hint"))}</p>
         <p class="desc" style="font-size:10.5px; margin:0 0 10px;">${esc(t("pack_reset_desc"))}</p>
         ${IS_OWNER ? `<div data-pkownwrap style="display:${preset === "stack" ? "block" : "none"}; margin:0 0 10px; padding:10px; border:1px solid var(--ice); border-radius:10px; font-size:12px;">
@@ -6467,6 +6499,23 @@ async function renderPacksPage() {
       const saveReset = async () => {
         const l = current();
         const v = resetSel.value;
+        const trigWrap = box.querySelector("[data-pktrigwrap]");
+        if (v === "trigger") {
+          l.reset = "once";
+          const levels = {};
+          box.querySelectorAll("[data-pktriglevel]").forEach((inp) => { const n = Math.round(Number(inp.value)); if (n > 0) levels[inp.dataset.pktriglevel] = n; });
+          l.trigger = { expert: box.querySelector("[data-pktrigexpert]").value, levels, days: Math.max(1, Math.round(Number(box.querySelector("[data-pktrigdays]").value) || 1)) };
+          l.group = PACK_TRIGGER_GROUP;
+          l.sequential = false; l.pickCols = 0; l.choice = false;
+          const rm = { ...(l.rowMax || {}) }; box.closest("[data-packtable]").querySelectorAll("tbody tr[data-row]").forEach((tr) => { if (!rm[tr.dataset.row]) rm[tr.dataset.row] = 1; }); l.rowMax = rm;
+          if (trigWrap) trigWrap.style.display = "block";
+          delete l.resetDay;
+          syncResetUi();
+          await savePackLinks();
+          return;
+        }
+        if (l.trigger) delete l.trigger;
+        if (trigWrap) trigWrap.style.display = "none";
         if (v === "unlimited" || v === "once") l.reset = v;
         else if (v === "stack") { l.reset = "stack"; l.stackCap = Math.max(1, Math.round(Number(stackCapIn.value) || 370)); }
         else if (v === "custom") l.reset = Math.max(1, Math.round(Number(resetDays.value) || 7));
@@ -6478,6 +6527,7 @@ async function renderPacksPage() {
         await savePackLinks();
       };
       if (resetSel) resetSel.addEventListener("change", saveReset);
+      box.querySelectorAll("[data-pktrigexpert], [data-pktrigdays], [data-pktriglevel]").forEach((el) => el.addEventListener("change", saveReset));
       if (resetDays) resetDays.addEventListener("change", saveReset);
       if (buysIn) buysIn.addEventListener("change", saveReset);
       if (anchorIn) anchorIn.addEventListener("change", saveReset);
@@ -7800,9 +7850,18 @@ function packBundleContents(name) {
 // through item bundles (speedup items, XP items) - so they stay out of
 // the dropdowns. A column that already has one of these keeps it.
 const PACK_RESOURCE_HIDDEN = new Set(["Speedups (minutes)", "XP Component", "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)", "Gems"]);
+// Each expert's own sigils ("Romulus Sigils"): the known experts plus any
+// expert added later in Admin -> Experts.
+const EXPERT_KEYS_STATIC = ["Cyrille", "Agnes", "Holger", "Romulus", "Fabian", "Baldur", "Valeria", "Ronne", "Kathy", "Gareth", "Justus"];
+function expertKeysAll() {
+  const out = EXPERT_KEYS_STATIC.slice();
+  (typeof EXPERTS_IN_ORDER_GLOBAL !== "undefined" ? EXPERTS_IN_ORDER_GLOBAL : []).forEach((k) => { if (k && !out.includes(k)) out.push(k); });
+  return out;
+}
 function packAllResourceNames() {
   const cfg = packResourceConfig();
   const out = PACK_RESOURCE_NAMES.slice();
+  expertKeysAll().forEach((k) => { const n = `${k} Sigils`; if (!out.includes(n)) out.push(n); });
   cfg.custom.forEach((x) => { if (!out.some((n) => n.toLowerCase() === String(x.name).toLowerCase())) out.push(x.name); });
   return out;
 }
@@ -7962,21 +8021,72 @@ function packLinkFor(tableId) {
   }
   return out;
 }
+const PACK_TRIGGER_GROUP = "Triggered packs";
+// { expert, levels: { rowIndex: level }, days } or null.
+// Triggered pack status per row, shown under the table for everyone.
+function packTriggerStatusHtml(tb) {
+  const link = packLinkFor(tb.id);
+  const trig = link.trigger;
+  if (!trig) return "";
+  const lv = packExpertLevel(trig.expert);
+  const color = { coming: "var(--good)", now: "var(--ice)", done: "var(--muted)", notreached: "#e0b25a", nolevel: "var(--muted)" };
+  const rows = (tb.rows || []).map((r, ri) => {
+    const price = packParseNum((r.cells || [])[link.priceCol]);
+    const st = packTriggerRowStatus(trig, ri);
+    return `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:3px 0; border-top:1px solid var(--line);">
+      <span>${price ? esc(packFmtMoney(price, link.currency)) : "#" + (ri + 1)}${st.level ? ` <span class="meta">· Lv ${st.level}</span>` : ""}</span>
+      <span style="font-size:10.5px; font-weight:700; color:${color[st.state]};">${esc(t("pk_trig_" + st.state))}</span></div>`;
+  }).join("");
+  return `<div data-pktrigstatus style="margin-top:8px; font-size:11.5px;">
+    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:4px;">
+      <span style="font-size:10.5px; padding:1px 8px; border-radius:6px; background:var(--ice); color:#0f141b; font-weight:700;">${esc(dataName(trig.expert))} · ${trig.days === 1 ? esc(t("pk_trig_one_day")) : `${trig.days} ${esc(t("pk_daily_days"))}`} · ${esc(t("pack_reset_once"))}</span>
+      <span class="meta" style="font-size:10.5px;">${esc(t("pk_trig_expert_now").replace("{e}", dataName(trig.expert)).replace("{c}", lv.current).replace("{t}", Math.max(lv.current, lv.desired)))}</span>
+    </div>${rows}</div>`;
+}
+function packTriggerOf(l) {
+  const tr = l && l.trigger;
+  if (!tr || typeof tr !== "object" || !tr.expert) return null;
+  const levels = {};
+  Object.entries(tr.levels || {}).forEach(([ri, v]) => { const n = Math.round(Number(v)); if (n > 0) levels[ri] = n; });
+  return { expert: String(tr.expert), levels, days: Math.max(1, Math.round(Number(tr.days) || 1)) };
+}
+// The viewer's own expert levels (Experts page): { current, desired }.
+function packExpertLevel(expert) {
+  const st = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.experts : null;
+  const e = st && st[expert];
+  return { current: Math.max(0, Number(e && e.current) || 0), desired: Math.max(0, Number(e && e.desired) || 0) };
+}
+// A triggered pack row counts while the expert's level is at or below the
+// trigger level and their target reaches it; above it, it's done.
+//   state: "coming" | "now" | "done" | "notreached" | "nolevel"
+function packTriggerRowStatus(trig, ri) {
+  const level = trig && trig.levels[ri];
+  if (!level) return { state: "nolevel", counted: false };
+  const { current, desired } = packExpertLevel(trig.expert);
+  const target = Math.max(current, desired);
+  if (current > level) return { state: "done", counted: false, level, current, target };
+  if (target < level) return { state: "notreached", counted: false, level, current, target };
+  return { state: current === level ? "now" : "coming", counted: true, level, current, target };
+}
 function packLinkForBase(tableId) {
   const links = PACK_LINKS || {};
   const mine = String(tableId).startsWith("my-") ? packMineFind(tableId) : null;
   const l = (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : links[String(tableId)]) || {};
   // Templates are only there to be copied: never used by Budgets or Pack cost.
   const template = !mine && typeof l.group === "string" && l.group.trim() === PACK_TEMPLATE_GROUP;
+  const trig = packTriggerOf(l);
   return {
     template,
+    // Triggered pack: one purchase per row, only while the expert hasn't gone
+    // past that row's level (see packTriggerRowStatus).
+    trigger: trig,
     mine: !!mine,
     pages: !template && Array.isArray(l.pages) ? l.pages : [],
     priceCol: typeof l.priceCol === "number" ? l.priceCol : 0,
     cols: l.cols || {},
     // Most packs are a ladder: you can't buy the $49.99 tier until you've
     // bought the cheaper ones. Off means any tier can be bought on its own.
-    sequential: l.sequential === true,
+    sequential: l.sequential === true && !trig,
     currency: typeof l.currency === "string" && l.currency ? l.currency : "USD",
     // How often the pack comes back: "unlimited", "once", or every N days.
     // Untouched tables keep the old behaviour: a ladder is a one-time run,
@@ -7984,25 +8094,25 @@ function packLinkForBase(tableId) {
     // "stack": no start day, buy any time; each purchase adds the daily-card
     // days (7 by default) and at most `stackCap` days can be held ahead.
     // Carried as "stack:<daysPerBuy>:<cap>" so the planner has both numbers.
-    reset: l.reset === "stack"
+    reset: trig ? "once" : l.reset === "stack"
       ? `stack:${l.daily && Number(l.daily.days) > 0 ? Math.round(Number(l.daily.days)) : 7}:${Number(l.stackCap) > 0 ? Math.round(Number(l.stackCap)) : 370}`
       : typeof l.reset === "number" && l.reset > 0 ? l.reset : (l.reset === "once" || l.reset === "unlimited") ? l.reset : (l.sequential === true ? "once" : "unlimited"),
     stackCap: Number(l.stackCap) > 0 ? Math.round(Number(l.stackCap)) : 370,
     buys: Number.isInteger(l.buys) && l.buys > 0 ? l.buys : 1,
     // "Choose one option per purchase": the rows are alternatives, and each
     // purchase picks one of them (the table's buys-per-reset is shared).
-    choice: l.choice === true,
+    choice: l.choice === true && !trig,
     // Per-row purchase limit ({ rowIndex: n }); a ladder's last tier can be
     // bought that many times once the ladder is complete.
     rowMax: (l.rowMax && typeof l.rowMax === "object") ? l.rowMax : {},
     // Several tables that are really ONE pack (e.g. Classic / Sublime /
     // Exquisite): all tables sharing a linkSet are one ladder, and each
     // tier picks one of them. `option` is the older name for the same idea.
-    linkSet: typeof l.linkSet === "string" && l.linkSet ? l.linkSet : "",
-    option: l.option === true || (typeof l.linkSet === "string" && !!l.linkSet),
+    linkSet: !trig && typeof l.linkSet === "string" && l.linkSet ? l.linkSet : "",
+    option: !trig && (l.option === true || (typeof l.linkSet === "string" && !!l.linkSet)),
     // Each COLUMN of this table is an option: a purchase of a tier takes
     // one column's amount (Mix & Match style).
-    colOptions: l.colOptions === true,
+    colOptions: l.colOptions === true && !trig,
     // For option ladders: the option is chosen ONCE for the whole ladder
     // (every tier gives the same option) instead of per tier.
     lockOption: l.lockOption === true,
@@ -8011,10 +8121,10 @@ function packLinkForBase(tableId) {
     freeSteps: l.freeSteps === true,
     // "Pick options from the columns": each purchase = this many picks, each
     // pick one column (repeats allowed); pickOrder = prices bought in order.
-    pickCols: Number(l.pickCols) > 0 ? Math.min(6, Math.round(Number(l.pickCols))) : 0,
+    pickCols: !trig && Number(l.pickCols) > 0 ? Math.min(6, Math.round(Number(l.pickCols))) : 0,
     pickOrder: l.pickOrder === true,
     // Optional group ("main name") several tables sit under on the Packs page.
-    group: typeof l.group === "string" ? l.group.trim() : "",
+    group: trig ? PACK_TRIGGER_GROUP : typeof l.group === "string" ? l.group.trim() : "",
     // Daily-reward cards: the ticked columns are PER-DAY amounts, paid for
     // `days` days after one purchase (so they count `days` times).
     daily: l.daily && typeof l.daily === "object" && Array.isArray(l.daily.cols) && l.daily.cols.length
@@ -8098,10 +8208,15 @@ function packOffersFor(table, keepEmpty) {
         const contents = packBundleContents(cols[i]);
         Object.keys(contents).forEach((n) => { gives[n] = (gives[n] || 0) + qty * contents[n]; });
       });
-      const label = price > 0 ? packFmtMoney(price, link.currency) : `#${ri + 1}`;
+      let label = price > 0 ? packFmtMoney(price, link.currency) : `#${ri + 1}`;
+      if (link.trigger) {
+        const st = packTriggerRowStatus(link.trigger, ri);
+        if (!st.counted) return null;
+        label += ` · ${link.trigger.expert} Lv ${st.level}`;
+      }
       return { price, gives, label, row: ri };
     })
-    .filter((o) => o.price > 0 && (keepEmpty || Object.keys(o.gives).length));
+    .filter((o) => o && o.price > 0 && (keepEmpty || Object.keys(o.gives).length));
 }
 // ------------------------------------------------------------
 // Availability: how often a pack table comes back.
@@ -9682,6 +9797,18 @@ const TRADE_OPEN = {};             // block collapsed on every load
 // at most once per week. Packs then only need to supply the Fire Crystal.
 let TRADE_EXTRA_RATES = {};
 let TRADE_EXTRA_SIG = "";
+let TRADE_EXTRA_RFC = {};
+// General Sigils can be spent on any expert (1:1): a rule, not a trade.
+function tradeComposeExtra() {
+  const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
+  const next = { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules };
+  const sig = JSON.stringify(next);
+  if (sig === TRADE_EXTRA_SIG) return;
+  TRADE_EXTRA_RATES = next;
+  TRADE_EXTRA_SIG = sig;
+  if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+}
 let RFC_LAB_RATE_LOADED = false;
 function rfcLabChosenPlan(st) {
   if (!st) return null;
@@ -9696,13 +9823,8 @@ function rfcLabApplyRate(st) {
   const next = p && p.cost > 0 && p.rfc > 0
     ? { t12_research: [{ from: "Fire Crystal", to: "Refined FC", give: p.cost, get: Math.round(p.rfc * 100) / 100, max: 1, hidden: true, rfcLab: true }] }
     : {};
-  const sig = JSON.stringify(next);
-  if (sig === TRADE_EXTRA_SIG) return;
-  TRADE_EXTRA_RATES = next;
-  TRADE_EXTRA_SIG = sig;
-  PACK_PLAN_CACHE.clear();
-  PACK_EARLIEST_CACHE.clear();
-  if (typeof budgetInvalidate === "function") budgetInvalidate();
+  TRADE_EXTRA_RFC = next;
+  tradeComposeExtra();
 }
 async function ensureRfcLabRate() {
   if (RFC_LAB_STATE) { rfcLabApplyRate(RFC_LAB_STATE); return; }
@@ -9713,6 +9835,7 @@ async function ensureRfcLabRate() {
 }
 async function ensureTradeRates() {
   await ensureRfcLabRate();
+  tradeComposeExtra();
   if (!TRADE_RATES_CACHE) {
     // Visitors use the owner's trade rates and "use spare items" choices.
     const saved = (IS_OWNER ? await loadCalcState("trade_rates") : await loadOwnerState("trade_rates")) || {};
@@ -12411,6 +12534,7 @@ async function loadExpertsRosterGlobal() {
       EXPERTS_LIST.push({ key: r.key, img: r.img, skills });
     }
   });
+  tradeComposeExtra();
 }
 
 async function ensureExpertsTroopStatsData() {
@@ -13979,7 +14103,9 @@ async function renderExpertsResearchPage() {
     sigilsEl.innerHTML = `
       <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_sigils"))}</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:8.5px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
     `;
-    const packGroups = [{ label: null, totals: { "General Sigils": sigilShortfall } }];
+    const sigilTotals = {};
+    EXPERTS_IN_ORDER.forEach((expert) => { const short = Math.max(0, (sigilNeededByExpert[expert] || 0) - (Number(invSaved[`${expert} Sigils`]) || 0)); if (short > 0) sigilTotals[`${expert} Sigils`] = short; });
+    const packGroups = [{ label: null, totals: sigilTotals }];
     const packOwned = { "General Sigils": Number(invSaved["General Sigils"]) || 0 };
     renderPackCostBlock(document.getElementById("expResearchPacks"), "experts_research", packGroups, packOwned);
     recordBudgetNeeds("experts_research", packGroups);
@@ -14564,7 +14690,11 @@ async function renderExpertsPage() {
     `;
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
-    const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, "General Sigils": sigilShortfall, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
+    // Sigils per expert (after their own sigils): an expert's sigil pack only
+    // helps that expert; General Sigils (owned or from packs) cover any.
+    const sigilTotals = {};
+    EXPERTS_SHOWN.forEach((e) => { const short = Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)); if (short > 0) sigilTotals[`${e.key} Sigils`] = short; });
+    const packGroups = [{ label: null, totals: { "Books of Knowledge": totalBook, "Affinity": totalAffinity, ...sigilTotals, "Speedups (minutes)": Math.round(totalTimeHours * 60) } }];
     const packOwned = { "Books of Knowledge": Number(invSaved["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(invSaved), "General Sigils": Number(invSaved["General Sigils"]) || 0, "Speedups (minutes)": expertSpeedupOwnedFrom(invSaved) };
     renderPackCostBlock(document.getElementById("expertsPacks"), "experts", packGroups, packOwned);
     recordBudgetNeeds("experts", packGroups);
