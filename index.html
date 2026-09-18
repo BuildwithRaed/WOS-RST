@@ -3169,6 +3169,12 @@ const T = {
   research_next_level: { en: "Next level:", ar: "\u0627\u0644\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0627\u0644\u064a:", ko: "\ub2e4\uc74c \ub808\ubca8:" },
   expert_upcoming: { en: "Upcoming", ar: "\u0642\u0631\u064a\u0628\u0627\u064b", ko: "\ucd9c\uc2dc \uc608\uc815" },
   skill_maxed: { en: "Maxed", ar: "\u0645\u0643\u062a\u0645\u0644", ko: "\ucd5c\ub300" },
+  skill_max_exp: { en: "Max EXP", ar: "\u0623\u0642\u0635\u0649 \u062e\u0628\u0631\u0629", ko: "\ucd5c\ub300 EXP" },
+  skill_max_exp_tip: { en: "Fill the EXP box with everything this step needs", ar: "\u0627\u0645\u0644\u0623 \u062e\u0627\u0646\u0629 \u0627\u0644\u062e\u0628\u0631\u0629 \u0628\u0643\u0644 \u0645\u0627 \u062a\u062d\u062a\u0627\u062c\u0647 \u0647\u0630\u0647 \u0627\u0644\u062e\u0637\u0648\u0629", ko: "\uc774 \ub2e8\uacc4\uc5d0 \ud544\uc694\ud55c EXP\ub97c \ubaa8\ub450 \ucc44\uc6c0" },
+  experts_sigils_have: { en: "Sigils you have", ar: "\u0627\u0644\u0623\u062e\u062a\u0627\u0645 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 \uc778\uc7a5" },
+  experts_sigils_summary: { en: "Expert sigils", ar: "\u0623\u062e\u062a\u0627\u0645 \u0627\u0644\u062e\u0628\u0631\u0627\u0621", ko: "\uc804\ubb38\uac00 \uc778\uc7a5" },
+  experts_sigils_summary_note: { en: "Change these on each expert's card", ar: "\u063a\u064a\u0651\u0631\u0647\u0627 \u0645\u0646 \u0628\u0637\u0627\u0642\u0629 \u0643\u0644 \u062e\u0628\u064a\u0631", ko: "\uac01 \uc804\ubb38\uac00 \uce74\ub4dc\uc5d0\uc11c \ubcc0\uacbd" },
+  experts_affinity_have: { en: "Affinity you have", ar: "\u0627\u0644\u0623\u0644\u0641\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 \uce5c\ubc00\ub3c4" },
   skill_maxed_tip: { en: "Set this skill to its max level", ar: "\u0627\u062c\u0639\u0644 \u0647\u0630\u0647 \u0627\u0644\u0645\u0647\u0627\u0631\u0629 \u0641\u064a \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649", ko: "\uc774 \uc2a4\ud0ac\uc744 \ucd5c\ub300 \ub808\ubca8\ub85c \uc124\uc815" },
   skill_exp_have: { en: "EXP you have", ar: "\u0627\u0644\u062e\u0628\u0631\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 EXP" },
   minutes_short: { en: "min", ar: "\u062f\u0642\u064a\u0642\u0629", ko: "\ubd84" },
@@ -13854,9 +13860,9 @@ const EXPERT_INVENTORY_BASE_FIELDS = [
 // Backpack fields = the base items + one "<Expert> Sigils" box per expert
 // in the roster (so a newly added expert gets its own sigils automatically).
 function expertInventoryFields() {
-  const out = EXPERT_INVENTORY_BASE_FIELDS.slice();
-  (EXPERTS_LIST || []).forEach((e) => { if (hiddenForVisitor("experts", e.key)) return; const f = `${e.key} Sigils`; if (!out.includes(f)) out.push(f); });
-  return out;
+  // Per-expert sigils moved onto each expert's card; Backpack keeps only what
+  // is shared across experts, plus a read-only summary of the per-expert ones.
+  return EXPERT_INVENTORY_BASE_FIELDS.slice();
 }
 // Affinity you own = the gift items you hold (plus any Affinity number
 // saved before the items existed, kept so nothing is lost).
@@ -14401,6 +14407,11 @@ async function renderExpertsPage() {
   function skillExpHave(st) {
     return Math.max(0, Number(st && st.expHave) || 0);
   }
+  // Affinity already banked on this expert's bar, straight off what's still
+  // needed - the same way banked skill EXP works.
+  function heroAffinityHave(hero) {
+    return Math.max(0, Number(saved[hero] && saved[hero].affHave) || 0);
+  }
   function skillNeed(hero, skill, st) {
     const { exp, book } = skillCost(hero, skill, st.current, st.desired);
     const have = st.current < st.desired ? Math.min(skillExpHave(st), exp) : 0;
@@ -14726,7 +14737,8 @@ async function renderExpertsPage() {
       });
       const hs = saved[e.key];
       const { affinity, sigil } = heroCost(e.key, hs.current, hs.desired);
-      totalAffinity += affinity;
+      const affHave = Math.min(heroAffinityHave(e.key), affinity);
+      totalAffinity += Math.max(0, affinity - affHave);
       totalSigil += sigil;
       sigilNeededByExpert[e.key] = sigil;
       const { affinity: mAff, sigil: mSig } = heroCost(e.key, 0, heroMaxLevelValue(e.key));
@@ -14805,6 +14817,16 @@ async function renderExpertsPage() {
           </div>
           <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px; justify-self:end;">${esc(t("max_button"))}</button>
         </div>
+        <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 10px; text-align:start;">
+          <div style="flex:1;">
+            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("experts_affinity_have"))}</div>
+            <input type="number" min="0" step="1" inputmode="numeric" class="keep-w" data-expaff="${esc(e.key)}" value="${heroAffinityHave(e.key) || ""}" placeholder="0" style="width:100%; padding:6px 8px; font-size:13px; text-align:center;" />
+          </div>
+          <div style="flex:1;">
+            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("experts_sigils_have"))}</div>
+            <input type="number" min="0" step="1" inputmode="numeric" class="keep-w" data-expsig="${esc(e.key)}" value="${Number(invSaved[`${e.key} Sigils`]) || ""}" placeholder="0" style="width:100%; padding:6px 8px; font-size:13px; text-align:center;" />
+          </div>
+        </div>
         <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 12px; text-align:start;">
           <div style="flex:1;">
             <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("current_label"))}</div>
@@ -14866,7 +14888,7 @@ async function renderExpertsPage() {
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:3px;">
               <span class="meta" style="font-size:10px;">${esc(t("skill_exp_have"))}</span>
               <input type="number" min="0" step="1" inputmode="numeric" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" style="width:110px; flex-shrink:0; padding:4px 8px; font-size:12px; text-align:end;" />
-              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${st.current >= max ? "disabled" : ""} title="${esc(t("skill_maxed_tip"))}" style="padding:3px 8px; font-size:11px; flex-shrink:0;">${st.current >= max ? "\u2713 " : ""}${esc(t("skill_maxed"))}</button>
+              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}" style="padding:3px 8px; font-size:11px; flex-shrink:0;">${esc(t("skill_max_exp"))}</button>
             </div>
           </div>`;
             })
@@ -14975,16 +14997,33 @@ async function renderExpertsPage() {
     gridEl.querySelectorAll("[data-expskillmax]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const [hero, skill] = btn.dataset.expskillmax.split("|");
-        const max = skillMaxLevel(hero, skill);
-        saved[hero].skills[skill].current = max;
-        saved[hero].skills[skill].desired = max;
-        delete saved[hero].skills[skill].expHave;
+        const st = saved[hero].skills[skill];
+        // Fills the EXP box with what this step still costs - levels are left alone.
+        const { exp } = skillCost(hero, skill, st.current, st.desired);
+        if (exp > 0) st.expHave = Math.round(exp);
         await saveCalcState("experts", saved);
-        renderStatHeader();
-        renderFoundryHeader();
-        renderSvsHeader();
-        renderFrostfireHeader();
-        renderTundraHeader();
+        renderTotals();
+        renderGrid();
+      });
+    });
+    gridEl.querySelectorAll("input[data-expsig]").forEach((inp) => {
+      inp.addEventListener("change", async () => {
+        const v = Math.max(0, Math.floor(Number(inp.value) || 0));
+        invSaved[`${inp.dataset.expsig} Sigils`] = v;
+        budgetInvalidate();
+        await saveCalcState("experts_inventory", invSaved);
+        renderTotals();
+        renderInventory();
+        renderGrid();
+      });
+    });
+    gridEl.querySelectorAll("input[data-expaff]").forEach((inp) => {
+      inp.addEventListener("change", async () => {
+        const hero = inp.dataset.expaff;
+        const v = Math.max(0, Math.floor(Number(inp.value) || 0));
+        if (v) saved[hero].affHave = v;
+        else delete saved[hero].affHave;
+        await saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
       });
@@ -15014,7 +15053,15 @@ async function renderExpertsPage() {
           <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; min-width:0; padding:4px 6px; box-sizing:border-box;" />
         </div>
       </div>`;
-    invEl.innerHTML = expertInventoryFields().map(fieldRow).join("");
+    const sigilSummary = EXPERTS_SHOWN.map(
+      (e) => `<span style="white-space:nowrap;"><span style="color:var(--text); font-weight:600;">${esc(dataName(e.key))} ${(Number(invSaved[`${e.key} Sigils`]) || 0).toLocaleString()}</span></span>`
+    ).join(' <span style="opacity:.5;">\u00b7</span> ');
+    invEl.innerHTML =
+      expertInventoryFields().map(fieldRow).join("") +
+      `<div style="flex:1 0 100%; border-top:1px solid var(--line); padding-top:9px; margin-top:2px; font-size:10.5px; line-height:1.9; color:var(--muted);">
+         <span style="text-transform:uppercase; letter-spacing:.04em;">${esc(t("experts_sigils_summary"))}</span> <span style="opacity:.5;">\u00b7</span> ${sigilSummary}
+         <div style="font-size:9.5px; opacity:.75; margin-top:2px;">${esc(t("experts_sigils_summary_note"))}</div>
+       </div>`;
     invEl.style.gap = "10px 12px";
     invEl.querySelectorAll("img[data-iconfallback]").forEach((img) => img.addEventListener("error", () => { img.src = img.dataset.iconfallback; img.removeAttribute("data-iconfallback"); }, { once: true }));
 
