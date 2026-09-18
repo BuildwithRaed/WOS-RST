@@ -14141,10 +14141,11 @@ async function renderExpertsResearchPage() {
     const general = computeStatTotals(GENERAL_EXPERTS);
     totalsEl.innerHTML = statTotalsHtml(general.totals, general.maxTotals);
 
-    // Per troop: the general experts plus whoever the roster ties to that troop
+    // Per troop: only the experts the roster ties to that troop, so it's clear
+    // what each one adds on top of the general totals above.
     const troopData = {};
     TROOP_STAT_ORDER.forEach((tr) => {
-      troopData[tr] = computeStatTotals(new Set([...GENERAL_EXPERTS, ...expertsForTroop(tr, EXPERTS_IN_ORDER)]));
+      troopData[tr] = computeStatTotals(new Set(expertsForTroop(tr, EXPERTS_IN_ORDER)));
     });
     function renderActiveTroopStats() {
       renderSwipeDots(troopDotsEl, TROOP_STAT_ORDER, expResearchActiveTroop, TROOP_STAT_COLORS, (tr) => {
