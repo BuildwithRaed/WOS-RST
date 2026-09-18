@@ -3311,6 +3311,7 @@ const T = {
   pack_cal_empty: { en: "No packs land in these weeks.", ar: "\u0644\u0627 \u062a\u0648\u062c\u062f \u062d\u0632\u0645 \u0641\u064a \u0647\u0630\u0647 \u0627\u0644\u0623\u0633\u0627\u0628\u064a\u0639.", ko: "\uc774 \uae30\uac04\uc5d0\ub294 \ud328\ud0a4\uc9c0\uac00 \uc5c6\uc2b5\ub2c8\ub2e4." },
   pack_cal_month_view: { en: "Month view", ar: "عرض الشهر", ko: "월 보기" },
   pack_cal_list_view: { en: "List view", ar: "عرض القائمة", ko: "목록 보기" },
+  pack_cal_all_week: { en: "All week", ar: "طوال الأسبوع", ko: "주 내내" },
   pack_cal_more: { en: "more", ar: "\u0627\u0644\u0645\u0632\u064a\u062f", ko: "\ub354\ubcf4\uae30" },
   pack_cal_today: { en: "today", ar: "\u0627\u0644\u064a\u0648\u0645", ko: "\uc624\ub298" },
   pack_buys_per_reset: { en: "Buys per reset", ar: "\u0645\u0631\u0627\u062a \u0627\u0644\u0634\u0631\u0627\u0621 \u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9 \uad6c\ub9e4 \ud69f\uc218" },
@@ -5896,28 +5897,54 @@ async function renderPackCalendarPage() {
 
     const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const weeksHtml = Array.from({ length: PACK_CAL_WEEKS }, (_, w) => {
+      const all = segs.filter((x) => x.week === w);
+      // A pack that is up the whole week says nothing by filling seven cells,
+      // so it moves to one line of chips above the grid.
+      const allWeek = all.filter((x) => x.col === 0 && x.end === 6);
+      const dayed = all.filter((x) => !(x.col === 0 && x.end === 6));
       const rows = []; // greedy stacking so two packs never sit on top of each other
-      segs.filter((x) => x.week === w).sort((a, b) => a.col - b.col || b.end - a.end).forEach((sg) => {
+      dayed.sort((a, b) => a.col - b.col || b.end - a.end).forEach((sg) => {
         let r = rows.find((row) => row.every((x) => sg.col > x.end || sg.end < x.col));
         if (!r) { r = []; rows.push(r); }
         r.push(sg);
       });
+      const open = PACK_CAL_OPEN_WEEKS.has(w);
+      const todayCol = Math.round((t0 - first) / 86400000) - w * 7;
       const nums = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(first.getTime() + (w * 7 + i) * 86400000);
         const isToday = d.getTime() === t0.getTime();
         const label = d.getUTCDate() === 1 || (w === 0 && i === 0) ? `${d.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" })} ${d.getUTCDate()}` : String(d.getUTCDate());
-        return `<div style="font-size:10px; padding:4px 5px; border-inline-end:1px solid var(--line); ${isToday ? "color:var(--ice); font-weight:700;" : "color:var(--muted);"}">${esc(label)}${isToday ? " · " + esc(t("pack_cal_today")) : ""}</div>`;
+        return `<div style="font-size:10px; padding:4px 5px; border-inline-end:1px solid rgba(38,48,60,.6); ${isToday ? "color:var(--ice); font-weight:700; background:rgba(108,199,230,.07);" : "color:var(--muted);"}">${esc(label)}${isToday ? " · " + esc(t("pack_cal_today")) : ""}</div>`;
       }).join("");
-      const shown = PACK_CAL_OPEN_WEEKS.has(w) ? rows : rows.slice(0, PACK_CAL_ROWS);
-      const bars = shown.map((row) => row.map((sg) => {
+      const chipsShown = open ? allWeek : allWeek.slice(0, 6);
+      const chipsHidden = allWeek.length - chipsShown.length;
+      const stripe = (sg) => {
         const c = PACK_CAL_COLORS[sg.kind] || PACK_CAL_COLORS.other;
+        return c[1];
+      };
+      const allWeekHtml = allWeek.length
+        ? `<div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center; padding:5px 7px; border-bottom:1px dashed rgba(38,48,60,.9);">
+             <span class="meta" style="font-size:9.5px; letter-spacing:.05em; text-transform:uppercase;">${esc(t("pack_cal_all_week"))}</span>
+             ${chipsShown.map((sg) => {
+               const tip = sg.count > 1 ? `${sg.title}\n${sg.members}` : sg.title;
+               return `<span title="${esc(tip)}" data-caltip="${esc(tip)}" style="font-size:10px; border:1px solid var(--line); border-inline-start:3px solid ${stripe(sg)}; border-radius:999px; padding:1px 9px; color:#dfe8f0; background:rgba(255,255,255,.035); cursor:${sg.count > 1 ? "pointer" : "default"};">${esc(sg.title)}${sg.count > 1 ? ` <span style="opacity:.6; font-size:9px;">×${sg.count}</span>` : ""}</span>`;
+             }).join("")}
+             ${chipsHidden > 0 ? `<button class="btn ghost small" data-calmore="${w}" style="padding:1px 8px; font-size:10px; border-radius:999px;">+${chipsHidden}</button>` : ""}
+           </div>`
+        : "";
+      const shown = open ? rows : rows.slice(0, PACK_CAL_ROWS);
+      const bars = shown.map((row) => row.map((sg) => {
         const tip = sg.count > 1 ? `${sg.title}\n${sg.members}` : sg.title;
-        return `<div title="${esc(tip)}" data-caltip="${esc(tip)}" style="grid-column:${sg.col + 1} / span ${sg.end - sg.col + 1}; background:${c[0]}; border:1px solid ${c[1]}; color:${c[2]}; font-size:10px; padding:2px 6px; border-radius:6px; margin:0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:${sg.count > 1 ? "pointer" : "default"}; ${sg.cont ? "border-inline-start-style:dashed; border-start-start-radius:0; border-end-start-radius:0;" : ""}">${sg.cont ? "← " : ""}${esc(sg.title)}${sg.count > 1 ? ` <span style="opacity:.6; font-size:9px;">×${sg.count}</span>` : ""}</div>`;
+        return `<div title="${esc(tip)}" data-caltip="${esc(tip)}" style="grid-column:${sg.col + 1} / span ${sg.end - sg.col + 1}; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07); border-inline-start:3px solid ${stripe(sg)}; color:#dfe8f0; font-size:10px; padding:1px 7px; line-height:1.6; border-radius:4px; margin:0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:${sg.count > 1 ? "pointer" : "default"}; ${sg.cont ? "border-inline-start-style:dashed;" : ""}">${sg.cont ? "← " : ""}${esc(sg.title)}${sg.count > 1 ? ` <span style="opacity:.6; font-size:9px;">×${sg.count}</span>` : ""}</div>`;
       }).join("")).join("");
-      const hidden = PACK_CAL_OPEN_WEEKS.has(w) ? 0 : Math.max(0, rows.length - PACK_CAL_ROWS);
-      return `<div style="border-bottom:1px solid var(--line);">
+      const hidden = open ? 0 : Math.max(0, rows.length - PACK_CAL_ROWS);
+      // Today's column keeps a faint tint the whole way down the week.
+      const todayTint = todayCol >= 0 && todayCol < 7
+        ? `<div style="grid-column:${todayCol + 1} / span 1; grid-row:1 / -1; background:rgba(108,199,230,.05); pointer-events:none;"></div>` : "";
+      return `<div style="border-bottom:1px solid var(--line); ${w % 2 ? "background:rgba(255,255,255,.015);" : ""}">
         <div style="display:grid; grid-template-columns:repeat(7,1fr);">${nums}</div>
-        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:3px 0; padding-bottom:${hidden ? "2px" : "6px"}; min-height:10px;">${bars}</div>
+        ${allWeekHtml}
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px 0; padding:4px 0 ${hidden ? "2px" : "6px"}; min-height:8px; position:relative;">${todayTint}${bars}</div>
         ${hidden ? `<button class="btn ghost small" data-calmore="${w}" style="margin:0 0 6px 4px; padding:2px 9px; font-size:10.5px;">+${hidden} ${esc(t("pack_cal_more"))}</button>` : ""}
       </div>`;
     }).join("");
