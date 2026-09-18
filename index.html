@@ -3308,6 +3308,8 @@ const T = {
   pack_cal_daily: { en: "Daily", ar: "\u064a\u0648\u0645\u064a", ko: "\uc77c\uc77c" },
   pack_cal_other: { en: "Other", ar: "\u0623\u062e\u0631\u0649", ko: "\uae30\ud0c0" },
   pack_cal_empty: { en: "No packs land in these weeks.", ar: "\u0644\u0627 \u062a\u0648\u062c\u062f \u062d\u0632\u0645 \u0641\u064a \u0647\u0630\u0647 \u0627\u0644\u0623\u0633\u0627\u0628\u064a\u0639.", ko: "\uc774 \uae30\uac04\uc5d0\ub294 \ud328\ud0a4\uc9c0\uac00 \uc5c6\uc2b5\ub2c8\ub2e4." },
+  pack_cal_month_view: { en: "Month view", ar: "عرض الشهر", ko: "월 보기" },
+  pack_cal_list_view: { en: "List view", ar: "عرض القائمة", ko: "목록 보기" },
   pack_cal_more: { en: "more", ar: "\u0627\u0644\u0645\u0632\u064a\u062f", ko: "\ub354\ubcf4\uae30" },
   pack_cal_today: { en: "today", ar: "\u0627\u0644\u064a\u0648\u0645", ko: "\uc624\ub298" },
   pack_buys_per_reset: { en: "Buys per reset", ar: "\u0645\u0631\u0627\u062a \u0627\u0644\u0634\u0631\u0627\u0621 \u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9 \uad6c\ub9e4 \ud69f\uc218" },
@@ -5804,6 +5806,7 @@ function packMergeOwned(owned, supply) {
 // comes back, its next date, and how many days one appearance lasts.
 // ============================================================
 const PACK_CAL_WEEKS = 8;
+let PACK_CAL_RESIZE = null;
 function packCalKind(reset) {
   if (reset === 1) return "daily";
   if (reset === 7 || reset === 14) return "weekly";
@@ -5820,6 +5823,7 @@ let PACK_CAL_OFF = new Set(["daily"]); // daily packs would fill every square
 let PACK_CAL_PAGE = 0; // which block of weeks is shown
 const PACK_CAL_ROWS = 6; // rows shown per week before "+N more"
 let PACK_CAL_OPEN_WEEKS = new Set();
+let PACK_CAL_VIEW = ""; // "" = pick by width, "month" or "list" = your choice
 
 async function renderPackCalendarPage() {
   const [tablesLoaded] = await Promise.all([
@@ -5889,7 +5893,10 @@ async function renderPackCalendarPage() {
       });
     });
 
-    const narrow = window.innerWidth < 640;
+    // The month grid needs room for 7 columns; below that the day list reads
+    // better. Rotating the phone re-draws, and the toggle overrides both.
+    const wide = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0) >= 640;
+    const narrow = PACK_CAL_VIEW ? PACK_CAL_VIEW === "list" : !wide;
     const listHtml = () => {
       const byDay = new Map();
       segs.forEach((sg) => {
@@ -5966,6 +5973,7 @@ async function renderPackCalendarPage() {
             ${chip("weekly", t("pack_cal_weekly"))}${chip("monthly", t("pack_cal_monthly"))}${chip("daily", t("pack_cal_daily"))}${chip("other", t("pack_cal_other"))}
           </div>
           <div style="display:flex; gap:6px; align-items:center;">
+            <button class="btn ghost small" data-calview="${narrow ? "month" : "list"}" style="padding:3px 10px; font-size:11px;">${esc(narrow ? t("pack_cal_month_view") : t("pack_cal_list_view"))}</button>
             <button class="btn ghost small" data-calpage="-1" style="padding:3px 10px;">&#8249;</button>
             <span class="meta" style="font-size:11px;">${esc(range)} <span style="opacity:.7;">UTC</span></span>
             <button class="btn ghost small" data-calpage="1" style="padding:3px 10px;">&#8250;</button>
@@ -5986,6 +5994,10 @@ async function renderPackCalendarPage() {
       if (PACK_CAL_OFF.has(k)) PACK_CAL_OFF.delete(k); else PACK_CAL_OFF.add(k);
       draw();
     }));
+    content.querySelectorAll("[data-calview]").forEach((b) => b.addEventListener("click", () => {
+      PACK_CAL_VIEW = b.dataset.calview;
+      draw();
+    }));
     content.querySelectorAll("[data-caltip]").forEach((b) => b.addEventListener("click", () => {
       const lines = b.dataset.caltip.split("\n");
       if (lines.length > 1) toast(lines.join(" · "));
@@ -6000,6 +6012,12 @@ async function renderPackCalendarPage() {
     }));
   }
   draw();
+  // Rotating the device changes which layout fits, so draw again - but only
+  // while this page is still the one on screen.
+  const onResize = () => { if (TAB === "packcalendar") draw(); else window.removeEventListener("resize", onResize); };
+  window.removeEventListener("resize", PACK_CAL_RESIZE);
+  PACK_CAL_RESIZE = onResize;
+  window.addEventListener("resize", onResize);
 }
 
 async function renderPacksPage() {
