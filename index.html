@@ -2782,7 +2782,7 @@ const MATERIAL_LABEL_KEYS = {
   "polishing solution": "material_polishing_solution", polish: "material_polishing_solution",
   "design plan": "material_design_plan", design: "material_design_plan",
   amber: "material_amber",
-  "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest",
+  "chief gear chest": "material_chief_gear_chest", "fire crystal": "material_fire_crystal", "fc chest": "material_fc_chest", "fc crate": "material_fc_crate",
   "pet chest": "material_pet_chest", gems: "material_gems", "common marks": "material_common_marks", "advanced marks": "material_advanced_marks", "research speedups (minutes)": "material_research_speedups", "expert speedups (minutes)": "material_expert_speedups", "troop speedups (minutes)": "material_troop_speedups", "construction speedups (minutes)": "material_construction_speedups",
   "charm guides": "material_charm_guides", "charm designs": "material_charm_designs",
   "jewel secrets": "material_jewel_secrets",
@@ -3202,6 +3202,7 @@ const T = {
   material_troop_speedups: { en: "Troop Speedups (min)", ar: "تسريع القوات (دقيقة)", ko: "병력 가속 (분)" },
   material_construction_speedups: { en: "Construction Speedups (min)", ar: "تسريع البناء (دقيقة)", ko: "건설 가속 (분)" },
   material_fire_crystal: { en: "Fire Crystal", ar: "بلورة النار", ko: "화염 결정" },
+  material_fc_crate: { en: "FC Crate", ar: "علبة بلورة النار", ko: "화염 결정 상자(카드)" },
   material_fc_chest: { en: "FC Chest", ar: "صندوق بلورة النار", ko: "화염 결정 상자" },
   material_chief_gear_chest: { en: "Chief Gear Chest", ar: "صندوق معدات القائد", ko: "족장 장비 상자" },
   material_charm_guides: { en: "Charm Guides", ar: "\u0623\u062f\u0644\u0629 \u0627\u0644\u062a\u0639\u0627\u0648\u064a\u0630", ko: "\ucc38 \uac00\uc774\ub4dc" },
@@ -7779,7 +7780,7 @@ const PACK_RESOURCE_NAMES = [
   "Speedup 1m", "Speedup 3m", "Speedup 5m", "Speedup 1h", "Speedup 3h", "Speedup 8h",
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
-  "Fire Crystal", "FC Chest", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
+  "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
@@ -7825,7 +7826,10 @@ const PACK_BUNDLES = {
   "Random Charm Chest": { "Charm Guides": 15 * 0.005 + 8 * 0.03 + 4 * 0.15 + 2 * 0.315, "Charm Designs": 15 * 0.005 + 8 * 0.03 + 4 * 0.15 + 2 * 0.315 },
   //  FC Chest: x100 0.4% / x60 0.8% / x40 1.6% / x20 2.5% / x10 8.5% / x5 86.2%
   //            -> 7.18 Fire Crystal per chest on average
-  "FC Chest": { "Fire Crystal": 100 * 0.004 + 60 * 0.008 + 40 * 0.016 + 20 * 0.025 + 10 * 0.085 + 5 * 0.862 },
+  // Pack chest (Fire Crystal Sale mails): x200 0.5% ... x5 55% -> 12.8 average.
+  "FC Chest": { "Fire Crystal": 200 * 0.005 + 100 * 0.015 + 50 * 0.055 + 20 * 0.105 + 10 * 0.27 + 5 * 0.55 },
+  // Weekly-card crate: smaller odds -> 7.18 average.
+  "FC Crate": { "Fire Crystal": 100 * 0.004 + 60 * 0.008 + 40 * 0.016 + 20 * 0.025 + 10 * 0.085 + 5 * 0.862 },
 };
 // Shown on the Packs page for chance-based chests, so the numbers are
 // understood as averages over many chests, not guaranteed drops.
@@ -7833,7 +7837,8 @@ const PACK_BUNDLE_NOTES = {
   "Lucky Gear Chest": "1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.",
   "Random Chief Gear Chest": "One random Chief Gear material. Alloy: x5000 0.5%, x2500 3%, x1200 15%, x600 31.5%; Polish: x50 0.25%, x25 1.5%, x12 7.5%, x6 15.75%; Design: x50 0.25%, x20 1.5%, x10 7.5%, x5 15.75% → counted as ≈469 Alloy, ≈2.35 Polish and ≈1.96 Design per chest (average).",
   "Random Charm Chest": "Guides: x15 0.5%, x8 3%, x4 15%, x2 31.5%; Designs: same odds → counted as ≈1.55 Guides and ≈1.55 Designs per chest (average).",
-  "FC Chest": "x100 0.4%, x60 0.8%, x40 1.6%, x20 2.5%, x10 8.5%, x5 86.2% → counted as 7.18 Fire Crystal per chest (average).",
+  "FC Chest": "x200 0.5%, x100 1.5%, x50 5.5%, x20 10.5%, x10 27%, x5 55% \u2192 counted as 12.8 Fire Crystal per chest (average).",
+  "FC Crate": "Weekly card crate — x100 0.4%, x60 0.8%, x40 1.6%, x20 2.5%, x10 8.5%, x5 86.2% \u2192 counted as 7.18 Fire Crystal per crate (average).",
   "Pet Chest": "Each chest opens into one of: 7 Manual, 2 Potion or 1 Serum (your choice). The pack cost turns chests into whichever the plan is short of.",
 };
 // The plain materials a resource name ends up giving (itself, or its contents).
@@ -7910,6 +7915,8 @@ const PACK_RESOURCE_ALIASES = {
   "random chief charm chest": "Random Charm Chest", "chief charm random chest": "Random Charm Chest", "random chest chief charm": "Random Charm Chest", "random charm material chest": "Random Charm Chest", "custom pet chest": "Pet Chest",
   "1hr research speeds": "Research Speedup 1h", "1hr troops speeds": "Troop Speedup 1h", "1hr troop speeds": "Troop Speedup 1h", "1hr construction speeds": "Construction Speedup 1h", "1hr constructions speeds": "Construction Speedup 1h",
   "1hr": "Speedup 1h", "5min": "Speedup 5m", "1min": "Speedup 1m", "3hr": "Speedup 3h", "8hr": "Speedup 8h", "3min": "Speedup 3m",
+  "fc crate": "FC Crate", "fire crystal crate": "FC Crate", "fire crystal weekly card crate": "FC Crate",
+  "fire crystal chest": "FC Chest", "fc chest": "FC Chest",
   "fc": "Fire Crystal", "fire crystals": "Fire Crystal", "fcs": "FC Shard", "fc shards": "FC Shard", "fire crystal shard": "FC Shard", "fire crystal shards": "FC Shard",
   "rfc": "Refined FC", "refined fire crystal": "Refined FC", "sigil": "General Sigils", "sigils": "General Sigils", "general sigil": "General Sigils",
   "book": "Books of Knowledge", "books": "Books of Knowledge", "essence stone": "Essence Stones", "design plans": "Design Plan", "charm guide": "Charm Guides", "charm design": "Charm Designs",
