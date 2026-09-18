@@ -3129,7 +3129,7 @@ const T = {
   needed_suffix: { en: "needed", ar: "مطلوب", ko: "필요" },
   have_enough: { en: "\u2713 Have enough", ar: "\u2713 لديك ما يكفي", ko: "\u2713 충분히 보유함" },
   experts_research_title: { en: "Experts Research", ar: "أبحاث الخبراء", ko: "전문가 연구" },
-  experts_research_desc: { en: "Attack/Defense/Lethality/Health from Expert Research. Excludes Gareth and Justus (troop-specific, see below).", ar: "الهجوم/الدفاع/الفتك/الصحة من أبحاث الخبراء. باستثناء غاريث وجستوس (خاصة بنوع جنود معين، انظر أدناه).", ko: "전문가 연구를 통한 공격력/방어력/살상력/체력. 가레스와 유스투스는 제외 (부대별 전용, 아래 참고)." },
+  experts_research_desc: { en: "Attack/Defense/Lethality/Health from Expert Research. Troop-specific experts are counted per troop below.", ar: "\u0627\u0644\u0647\u062c\u0648\u0645/\u0627\u0644\u062f\u0641\u0627\u0639/\u0627\u0644\u0641\u062a\u0643/\u0627\u0644\u0635\u062d\u0629 \u0645\u0646 \u0623\u0628\u062d\u0627\u062b \u0627\u0644\u062e\u0628\u0631\u0627\u0621. \u0627\u0644\u062e\u0628\u0631\u0627\u0621 \u0627\u0644\u0645\u062e\u0635\u0635\u0648\u0646 \u0644\u0646\u0648\u0639 \u062c\u0646\u062f \u064a\u064f\u062d\u0633\u0628\u0648\u0646 \u0636\u0645\u0646 \u0646\u0648\u0639\u0647\u0645 \u0623\u062f\u0646\u0627\u0647.", ko: "\uc804\ubb38\uac00 \uc5f0\uad6c\uc758 \uacf5\uaca9/\ubc29\uc5b4/\uce58\uba85\ub960/\uccb4\ub825. \ubcd1\uacfc \uc804\uc6a9 \uc804\ubb38\uac00\ub294 \uc544\ub798 \ubcd1\uacfc\ubcc4\ub85c \uacc4\uc0b0\ub429\ub2c8\ub2e4." },
   total_sigils_needed: { en: "Total Sigils Needed", ar: "إجمالي الأختام المطلوبة", ko: "필요한 총 인장" },
   across_unlocked_experts_desc: { en: "Across all unlocked experts' paths, current to target.", ar: "عبر جميع مسارات الخبراء المفتوحين، من الحالي إلى الهدف.", ko: "잠금 해제된 모든 전문가 경로, 현재부터 목표까지." },
   only_suffix: { en: "only", ar: "فقط", ko: "전용" },
@@ -12518,7 +12518,16 @@ let EXPERT_TROOP_SKILL_CACHE_GLOBAL = null; // Romulus/Gareth's 4 confirmed skil
 let EXPERTS_LIST = []; // [{key,img,skills:[4]}] excludes unreleased/no-skill experts (e.g. Justus)
 let EXPERTS_IN_ORDER_GLOBAL = []; // ALL expert keys in sort_order, including Justus
 let EXPERT_MAIN_STAT_GLOBAL_MAP = {}; // {key: "ATK"|"DEF"|"DMG"|"HP"}
-let EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP = {}; // {key: "Lancers"|"Infantry"} only for restricted experts
+let EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP = {}; // {key: "Lancers"|"Infantry"|"Marksman"} only for restricted experts
+// Roster wording ("Lancers only") -> the troop key the stat panels use.
+const EXPERT_TROOP_KEYS = { Lancers: "Lancer", Lancer: "Lancer", Infantry: "Infantry", Marksman: "Marksman" };
+function expertTroopKey(expert) {
+  const raw = EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP[expert];
+  return raw ? EXPERT_TROOP_KEYS[raw] || raw : null;
+}
+function expertsForTroop(troop, list) {
+  return (list || []).filter((e) => expertTroopKey(e) === troop);
+}
 let EXPERT_UPCOMING_GLOBAL = {}; // {key: true} experts flagged "Upcoming" in Admin (shown as a badge)
 function expertBadgeHtml(key) {
   return EXPERT_UPCOMING_GLOBAL[key] ? `<span style="display:inline-block; margin-top:3px; padding:1px 7px; border:1px solid var(--ice); color:var(--ice); border-radius:999px; font-size:9.5px; font-weight:600; letter-spacing:0.3px;">${esc(t("expert_upcoming"))}</span>` : "";
@@ -12670,7 +12679,8 @@ function expertsResearchPathCostGlobal(expert, pathNum, fromLevel, toLevel) {
     const clampedTo = Math.max(0, Math.min(200, toLevel));
     const levelsCrossed = Math.max(0, clampedTo - clampedFrom);
     let rate = 0.01;
-    if (expert === "Gareth" || expert === "Justus") {
+    // Troop-specific experts use the split path rate
+    if (expertTroopKey(expert)) {
       rate = pathNum <= 3 ? 0.03 : 0.05;
     }
     stats[mainStat] += levelsCrossed * rate;
@@ -12684,9 +12694,10 @@ function expertsResearchIsUnlockedGlobal(expert) {
 function computeExpertsResearchTroopStatsGlobal(calcTroop, useMax) {
   const totals = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
   if (!EXPERTS_RESEARCH_NODES_GLOBAL) return totals;
-  const includeExperts = new Set(EXPERTS_IN_ORDER_GLOBAL.filter((e) => e !== "Gareth" && e !== "Justus"));
-  if (calcTroop === "Infantry") includeExperts.add("Justus");
-  if (calcTroop === "Lancer") includeExperts.add("Gareth");
+  // Experts with no troop set on the roster count for every troop; the rest
+  // only count for the troop they're set to.
+  const includeExperts = new Set(EXPERTS_IN_ORDER_GLOBAL.filter((e) => !expertTroopKey(e)));
+  expertsForTroop(calcTroop, EXPERTS_IN_ORDER_GLOBAL).forEach((e) => includeExperts.add(e));
   includeExperts.forEach((expert) => {
     if (!expertsResearchIsUnlockedGlobal(expert)) return;
     expertsResearchPathNumbersGlobal(expert).forEach((p) => {
@@ -14050,11 +14061,14 @@ async function renderExpertsResearchPage() {
   const totalsEl = document.getElementById("expResearchTotals");
   const TROOP_STAT_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
   const TROOP_STAT_ORDER = ["Infantry", "Lancer", "Marksman"];
-  const TROOP_STAT_EXPERT = {
-    Infantry: "Justus",
-    Lancer: "Gareth",
-    Marksman: null,
-  };
+  // Which experts are tied to a troop comes from the roster (Admin -> Experts
+  // Roster -> "Lancers only" / "Infantry only" / "Marksman only"), so a new
+  // troop-specific expert needs no code change.
+  const TROOP_STAT_EXPERT = {};
+  TROOP_STAT_ORDER.forEach((tr) => {
+    const names = expertsForTroop(tr, EXPERTS_IN_ORDER).map((e) => dataName(e));
+    TROOP_STAT_EXPERT[tr] = names.length ? names.join(", ") : null;
+  });
   let expResearchActiveTroop = TROOP_STAT_ORDER[0];
   const troopDotsEl = document.getElementById("expResearchTroopDots");
   const troopTitleEl = document.getElementById("expResearchTroopTitle");
@@ -14085,7 +14099,7 @@ async function renderExpertsResearchPage() {
       <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${totals.HP.toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxTotals.HP.toFixed(2)}%</div></div>
     `;
   }
-  const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => e !== "Gareth" && e !== "Justus"));
+  const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => !expertTroopKey(e)));
   function renderTotals() {
     let totalSigil = 0;
     let maxSigil = 0;
@@ -14123,16 +14137,15 @@ async function renderExpertsResearchPage() {
     renderPackCostBlock(document.getElementById("expResearchPacks"), "experts_research", packGroups, packOwned);
     recordBudgetNeeds("experts_research", packGroups);
 
-    // General stat totals: everyone except Gareth/Justus (troop-restricted)
+    // General stat totals: every expert with no troop set on the roster
     const general = computeStatTotals(GENERAL_EXPERTS);
     totalsEl.innerHTML = statTotalsHtml(general.totals, general.maxTotals);
 
-    // Infantry: general + Justus's Health; Lancer: general + Gareth's Lethality; Marksman: general only
-    const troopData = {
-      Infantry: computeStatTotals(new Set([...GENERAL_EXPERTS, "Justus"])),
-      Lancer: computeStatTotals(new Set([...GENERAL_EXPERTS, "Gareth"])),
-      Marksman: { totals: { ATK: 0, DEF: 0, DMG: 0, HP: 0 }, maxTotals: { ATK: 0, DEF: 0, DMG: 0, HP: 0 } },
-    };
+    // Per troop: the general experts plus whoever the roster ties to that troop
+    const troopData = {};
+    TROOP_STAT_ORDER.forEach((tr) => {
+      troopData[tr] = computeStatTotals(new Set([...GENERAL_EXPERTS, ...expertsForTroop(tr, EXPERTS_IN_ORDER)]));
+    });
     function renderActiveTroopStats() {
       renderSwipeDots(troopDotsEl, TROOP_STAT_ORDER, expResearchActiveTroop, TROOP_STAT_COLORS, (tr) => {
         expResearchActiveTroop = tr;
@@ -14169,7 +14182,8 @@ async function renderExpertsResearchPage() {
       const st = saved[expert][p];
       const levels = Math.max(0, Math.min(200, st.current));
       let rate = MAIN_STAT_RATE_DEFAULT;
-      if (expert === "Gareth" || expert === "Justus") {
+      // Troop-specific experts use the split path rate
+      if (expertTroopKey(expert)) {
         rate = p <= 3 ? 0.03 : 0.05;
       }
       total += levels * rate;
