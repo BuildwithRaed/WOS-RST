@@ -10838,7 +10838,7 @@ function plannerPagePlans(payload) {
 // while packs are worked out; results come back when ready. If the browser
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
-const PLANNER_FN_NAMES = ["packStackInfo", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 const PLANNER_WAIT = new Map();
 function plannerWorker() {
