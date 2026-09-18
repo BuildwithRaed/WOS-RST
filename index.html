@@ -8061,7 +8061,7 @@ function packTriggerOf(l) {
 function packExpertLevel(expert) {
   const st = CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE.experts : null;
   const e = st && st[expert];
-  return { current: Math.max(0, Number(e && e.current) || 0), desired: Math.max(0, Number(e && e.desired) || 0) };
+  return { current: Math.floor(Math.max(0, Number(e && e.current) || 0)), desired: Math.floor(Math.max(0, Number(e && e.desired) || 0)) };
 }
 // A triggered pack row counts while the expert's level is at or below the
 // trigger level and their target reaches it; above it, it's done.
@@ -12582,7 +12582,7 @@ function computeExpertsTroopStatsGlobal(useMax) {
     if (useMax) {
       row = rows[rows.length - 1];
     } else {
-      const lvl = EXPERTS_STATE_GLOBAL[hero] ? EXPERTS_STATE_GLOBAL[hero].current : 0;
+      const lvl = EXPERTS_STATE_GLOBAL[hero] ? Math.floor(Number(EXPERTS_STATE_GLOBAL[hero].current) || 0) : 0;
       row = rows.find((r) => r.level === lvl);
     }
     if (row && row.stat_type) {
@@ -14406,28 +14406,89 @@ async function renderExpertsPage() {
     const have = st.current < st.desired ? Math.min(skillExpHave(st), exp) : 0;
     return { exp, book, have, expNeed: Math.max(0, exp - have) };
   }
+  // Levels can carry a ".1" tail: plain 80 means the affinity of level 80 is
+  // filled but that level's Advance (its sigils) isn't paid yet; 80.1 means the
+  // Advance is paid too. Only levels that actually cost sigils get a ".1".
+  function heroLevelBase(level) {
+    return Math.floor(Number(level) || 0);
+  }
+  function heroLevelAdv(level) {
+    const n = Number(level) || 0;
+    return n - Math.floor(n) >= 0.05;
+  }
+  // Highest level whose Advance is already paid at this state.
+  function heroSigilPaid(level) {
+    const base = heroLevelBase(level);
+    return heroLevelAdv(level) ? base : base - 1;
+  }
+  function heroSigilLevel(hero, level) {
+    const rows = AFFINITY_CACHE[hero] || [];
+    const row = rows.find((r) => Number(r.level) === level);
+    return row ? (Number(row.sigil_cost) || 0) > 0 : false;
+  }
+  // The real top of a hero's data, with the final Advance included when the
+  // last level costs sigils.
+  function heroTopLevel(hero) {
+    const rows = AFFINITY_CACHE[hero] || [];
+    const top = rows.reduce((m, r) => Math.max(m, Number(r.level) || 0), 0);
+    return top || EXPERT_HERO_MAX_LEVEL;
+  }
+  function heroMaxLevelValue(hero) {
+    const top = heroTopLevel(hero);
+    return heroSigilLevel(hero, top) ? top + 0.1 : top;
+  }
   function heroCost(hero, fromLevel, toLevel) {
     const rows = AFFINITY_CACHE[hero];
     if (!rows) return { affinity: 0, sigil: 0 };
+    const fromBase = heroLevelBase(fromLevel), toBase = heroLevelBase(toLevel);
+    const fromAdv = heroSigilPaid(fromLevel), toAdv = heroSigilPaid(toLevel);
     let affinity = 0, sigil = 0;
     rows.forEach((r) => {
-      if (r.level > fromLevel && r.level <= toLevel) {
-        affinity += Number(r.affinity_cost) || 0;
-        sigil += Number(r.sigil_cost) || 0;
-      }
+      if (r.level > fromBase && r.level <= toBase) affinity += Number(r.affinity_cost) || 0;
+      if (r.level > fromAdv && r.level <= toAdv) sigil += Number(r.sigil_cost) || 0;
     });
     return { affinity, sigil };
+  }
+  // Level dropdown for one hero: every level, plus a ".1" entry right after
+  // each level that costs sigils (that entry means its Advance is paid).
+  function heroLevelOpts(hero, selected) {
+    const top = heroTopLevel(hero);
+    const sel = Number(selected) || 0;
+    const out = [];
+    for (let n = 0; n <= top; n++) {
+      out.push(`<option value="${n}" ${n === sel ? "selected" : ""}>${n}</option>`);
+      if (n > 0 && heroSigilLevel(hero, n)) {
+        const v = n + 0.1;
+        out.push(`<option value="${v.toFixed(1)}" ${Math.abs(sel - v) < 0.05 ? "selected" : ""}>${v.toFixed(1)}</option>`);
+      }
+    }
+    return out.join("");
   }
 
   EXPERTS_SHOWN.forEach((e) => {
     // New expert: target defaults to the top of its affinity data, so a
     // table that only holds the max (one row at 100) still shows its cost.
-    if (!saved[e.key]) saved[e.key] = { current: 0, desired: IS_OWNER ? Math.max(1, ...(AFFINITY_CACHE[e.key] || []).map((r) => Number(r.level) || 0)) : 0, skills: {} };
+    if (!saved[e.key]) saved[e.key] = { current: 0, desired: IS_OWNER ? heroMaxLevelValue(e.key) : 0, skills: {} };
     e.skills.forEach((s) => {
       const max = skillMaxLevel(e.key, s);
       if (!saved[e.key].skills[s]) saved[e.key].skills[s] = { current: 0, desired: IS_OWNER ? max : 0 };
     });
   });
+
+  // One-off move to the new ".1" levels: a level saved before this existed
+  // already had its Advance paid, so it becomes that level's ".1".
+  if (!saved.__advLevels) {
+    saved.__advLevels = 1;
+    EXPERTS_SHOWN.forEach((e) => {
+      const st = saved[e.key];
+      if (!st) return;
+      ["current", "desired"].forEach((k) => {
+        const v = Number(st[k]) || 0;
+        if (v > 0 && v === Math.floor(v) && heroSigilLevel(e.key, v)) st[k] = v + 0.1;
+      });
+    });
+    saveCalcState("experts", saved);
+  }
 
   content.innerHTML = `
     <div class="page-head">
@@ -14487,7 +14548,7 @@ async function renderExpertsPage() {
   function addLevelBaseToTotals(totals, hero, includeTalent) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
     const rows = AFFINITY_CACHE[hero] || [];
-    const lvl = saved[hero] ? saved[hero].current : 0;
+    const lvl = saved[hero] ? Math.floor(Number(saved[hero].current) || 0) : 0;
     const row = rows.find((r) => r.level === lvl);
     if (!row) return;
     if (row.stat_type) {
@@ -14585,7 +14646,7 @@ async function renderExpertsPage() {
   function addTalentToTotals(totals, hero) {
     if (!isExpertUnlocked(hero)) return;
     const rows = AFFINITY_CACHE[hero] || [];
-    const lvl = saved[hero] ? saved[hero].current : 0;
+    const lvl = saved[hero] ? Math.floor(Number(saved[hero].current) || 0) : 0;
     const row = rows.find((r) => r.level === lvl);
     if (row && row.stat_type2) {
       row.stat_type2.split(",").forEach((statName) => {
@@ -14668,8 +14729,7 @@ async function renderExpertsPage() {
       totalAffinity += affinity;
       totalSigil += sigil;
       sigilNeededByExpert[e.key] = sigil;
-      const heroMaxLvl = (AFFINITY_CACHE[e.key] || []).length || EXPERT_HERO_MAX_LEVEL;
-      const { affinity: mAff, sigil: mSig } = heroCost(e.key, 0, heroMaxLvl);
+      const { affinity: mAff, sigil: mSig } = heroCost(e.key, 0, heroMaxLevelValue(e.key));
       maxAffinity += mAff;
       maxSigil += mSig;
     });
@@ -14716,7 +14776,7 @@ async function renderExpertsPage() {
   function levelStatLine(hero, level) {
     const rows = AFFINITY_CACHE[hero];
     if (!rows) return "";
-    const row = rows.find((r) => r.level === level);
+    const row = rows.find((r) => r.level === heroLevelBase(level));
     if (!row) return "";
     // Only Affinity (stat_type) - this is the always-on hero-level stat.
     // stat_type2 is that expert's Talent, which only applies during their
@@ -14748,12 +14808,12 @@ async function renderExpertsPage() {
         <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 12px; text-align:start;">
           <div style="flex:1;">
             <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("current_label"))}</div>
-            <select data-expcur="${esc(e.key)}" style="width:100%;">${levelOpts(EXPERT_HERO_MAX_LEVEL, s.current)}</select>
+            <select data-expcur="${esc(e.key)}" style="width:100%;">${heroLevelOpts(e.key, s.current)}</select>
             ${levelStatLine(e.key, s.current)}
           </div>
           <div style="flex:1;">
             <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("target_label"))}</div>
-            <select data-expdes="${esc(e.key)}" style="width:100%;">${levelOpts(EXPERT_HERO_MAX_LEVEL, s.desired)}</select>
+            <select data-expdes="${esc(e.key)}" style="width:100%;">${heroLevelOpts(e.key, s.desired)}</select>
             ${levelStatLine(e.key, s.desired)}
           </div>
         </div>
@@ -14859,7 +14919,7 @@ async function renderExpertsPage() {
       btn.addEventListener("click", async () => {
         const hero = btn.dataset.expmax;
         const s = saved[hero];
-        const heroMaxLvl = (AFFINITY_CACHE[hero] || []).length || EXPERT_HERO_MAX_LEVEL;
+        const heroMaxLvl = heroMaxLevelValue(hero);
         const heroExpert = EXPERTS_SHOWN.find((e) => e.key === hero);
         const heroAlreadyMaxed = s.current >= heroMaxLvl;
         const skillsAlreadyMaxed = heroExpert.skills.every((sk) => {
