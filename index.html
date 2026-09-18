@@ -3298,7 +3298,8 @@ const T = {
   cap_desc: { en: "Current and target can't go above this, and anything above it doesn't count in the Dashboard (including its max).", ar: "\u0644\u0627 \u064a\u0645\u0643\u0646 \u0623\u0646 \u064a\u062a\u062c\u0627\u0648\u0632 \u0627\u0644\u062d\u0627\u0644\u064a \u0648\u0627\u0644\u0647\u062f\u0641 \u0647\u0630\u0627 \u0627\u0644\u062d\u062f\u060c \u0648\u0645\u0627 \u0641\u0648\u0642\u0647 \u0644\u0627 \u064a\u064f\u062d\u062a\u0633\u0628 \u0641\u064a \u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645 (\u0628\u0645\u0627 \u0641\u064a \u0630\u0644\u0643 \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649).", ko: "\ud604\uc7ac\uc640 \ubaa9\ud45c\ub294 \uc774 \uac12\uc744 \ub118\uc744 \uc218 \uc5c6\uc73c\uba70, \uadf8 \uc774\uc0c1\uc740 \ub300\uc2dc\ubcf4\ub4dc(\ucd5c\ub300\uce58 \ud3ec\ud568)\uc5d0 \ubc18\uc601\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4." },
   pack_reset_custom: { en: "Every N days\u2026", ar: "\u0643\u0644 N \u064a\u0648\u0645\u2026", ko: "N\uc77c\ub9c8\ub2e4\u2026" },
   pack_lasts_label: { en: "lasts", ar: "\u062a\u0633\u062a\u0645\u0631", ko: "\uc9c0\uc18d" },
-  pack_lasts_days: { en: "days (blank = all cycle)", ar: "\u0623\u064a\u0627\u0645 (\u0641\u0627\u0631\u063a = \u0637\u0648\u0627\u0644 \u0627\u0644\u062f\u0648\u0631\u0629)", ko: "\uc77c (\ube44\uc6cc\ub450\uba74 \uc8fc\uae30 \uc804\uccb4)" },
+  pack_lasts_days: { en: "days", ar: "\u0623\u064a\u0627\u0645", ko: "\uc77c" },
+  pack_lasts_hint: { en: "How many days one appearance stays up. Blank = the whole cycle.", ar: "\u0643\u0645 \u064a\u0648\u0645\u0627\u064b \u062a\u0628\u0642\u0649 \u0627\u0644\u062d\u0632\u0645\u0629 \u0641\u064a \u0643\u0644 \u0638\u0647\u0648\u0631. \u0641\u0627\u0631\u063a = \u0637\u0648\u0627\u0644 \u0627\u0644\u062f\u0648\u0631\u0629.", ko: "\ud55c \ubc88 \ub4f1\uc7a5 \uc2dc \uba87 \uc77c \uc720\uc9c0\ub418\ub294\uc9c0. \ube44\uc6cc\ub450\uba74 \uc8fc\uae30 \uc804\uccb4." },
   pack_cal_title: { en: "Pack calendar", ar: "\u062a\u0642\u0648\u064a\u0645 \u0627\u0644\u062d\u0632\u0645", ko: "\ud328\ud0a4\uc9c0 \ub2ec\ub825" },
   pack_cal_button: { en: "Calendar", ar: "\u0627\u0644\u062a\u0642\u0648\u064a\u0645", ko: "\ub2ec\ub825" },
   pack_cal_back: { en: "Back to packs", ar: "\u0627\u0644\u0639\u0648\u062f\u0629 \u0644\u0644\u062d\u0632\u0645", ko: "\ud328\ud0a4\uc9c0\ub85c" },
@@ -6532,7 +6533,7 @@ async function renderPacksPage() {
             <span class="meta" data-packanchorlabel style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span>
             <input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="font-size:12px; padding:3px 6px; ${typeof r === "number" ? "" : "display:none;"}" />
             <span class="meta" data-packwindowlabel style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_label"))}</span>
-            <input type="number" min="0" step="1" data-packwindow value="${link.window || ""}" placeholder="0" style="width:52px; font-size:12px; padding:3px 6px; ${typeof r === "number" ? "" : "display:none;"}" />
+            <input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:56px; flex:0 0 auto; font-size:12px; padding:3px 6px; ${typeof r === "number" ? "" : "display:none;"}" />
             <span class="meta" data-packwindowlabel2 style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span>
           </label>
           <label style="display:flex; align-items:center; gap:6px; ${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
