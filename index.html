@@ -3111,7 +3111,7 @@ const T = {
   time_label: { en: "Time", ar: "الوقت", ko: "시간" },
   t11_helios_title: { en: "T11 Helios Research", ar: "أبحاث T11 هيليوس", ko: "T11 헬리오스 연구" },
   data_not_available_troop: { en: "Data not yet available for this troop type.", ar: "البيانات غير متوفرة بعد لهذا النوع من الجنود.", ko: "이 부대 유형에 대한 데이터가 아직 없습니다." },
-  experts_base_stats_desc: { en: "Base stats for all 10 experts, plus select main-stat skills.", ar: "الإحصائيات الأساسية لجميع الخبراء الـ10، بالإضافة إلى مهارات مختارة للإحصائية الرئيسية.", ko: "10명 전문가의 기본 스탯과 선택된 주요 스킬입니다." },
+  experts_base_stats_desc: { en: "Base stats for every expert, plus select main-stat skills.", ar: "الإحصائيات الأساسية لجميع الخبراء، بالإضافة إلى مهارات مختارة للإحصائية الرئيسية.", ko: "10명 전문가의 기본 스탯과 선택된 주요 스킬입니다." },
   resources_needed_title: { en: "Resources needed", ar: "الموارد المطلوبة", ko: "필요한 자원" },
   foundry_title: { en: "Foundry", ar: "المسبك", ko: "파운드리" },
   foundry_desc: { en: "Troop Stats + Fabian's Heightened Firepower, for Foundry Battle.", ar: "إحصائيات الجنود + قدرة فابيان \"القوة النارية المتصاعدة\"، لمعركة المسبك.", ko: "부대 스탯 + 파비안의 고조된 화력, 파운드리 전투용." },
@@ -14556,10 +14556,10 @@ async function renderExpertsPage() {
 
   const statHeaderEl = document.getElementById("expertsStatHeader");
   const TROOP_STAT_HEROES = new Set(["Romulus", "Gareth"]);
-  function addLevelBaseToTotals(totals, hero, includeTalent) {
+  function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
     const rows = AFFINITY_CACHE[hero] || [];
-    const lvl = saved[hero] ? Math.floor(Number(saved[hero].current) || 0) : 0;
+    const lvl = saved[hero] ? Math.floor(Number(useTarget ? saved[hero].desired : saved[hero].current) || 0) : 0;
     const row = rows.find((r) => r.level === lvl);
     if (!row) return;
     if (row.stat_type) {
@@ -14573,11 +14573,12 @@ async function renderExpertsPage() {
       });
     }
   }
+  // Two sides of the same sum: the top figure uses every expert's Current
+  // level, the second line the same experts at their Target. Both walk the
+  // roster, so an expert added later counts on both sides with no code change.
   function computeBaseTroopStats() {
     const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
-    // All 10 experts' level-based base stats, confirmed exact from uploaded Experts_Data.xlsx
-    const ALL_EXPERTS_LEVEL_BASE = EXPERTS_SHOWN.map((e) => e.key);
-    ALL_EXPERTS_LEVEL_BASE.forEach((hero) => addLevelBaseToTotals(totals, hero));
+    EXPERTS_SHOWN.forEach((e) => addLevelBaseToTotals(totals, e.key));
     // Romulus's Last Line + Spirit of Aeetis, Gareth's Porcupine + Undefeated Will
     addSkillStatsToTotals(totals, "Romulus", "Last Line");
     addSkillStatsToTotals(totals, "Romulus", "Spirit of Aeetis");
@@ -14585,15 +14586,16 @@ async function renderExpertsPage() {
     addSkillStatsToTotals(totals, "Gareth", "Undefeated Will");
     return totals;
   }
+  // The ceiling: every expert at its best level and those same skills maxed.
+  // Walks the roster, so an expert added later counts here too.
   function computeBaseTroopStatsMax() {
     const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
-    ["Cyrille", "Agnes", "Holger", "Romulus", "Baldur", "Fabian", "Valeria", "Ronne", "Kathy", "Gareth"].forEach((hero) => {
-      if (!isExpertUnlocked(hero)) return;
-      const rows = AFFINITY_CACHE[hero] || [];
+    EXPERTS_SHOWN.forEach((e) => {
+      if (!isExpertUnlocked(e.key)) return;
+      const rows = AFFINITY_CACHE[e.key] || [];
       if (!rows.length) return;
-      // Use the true peak value across all levels, not just the last row -
-      // some experts' curves dip at level 100 due to a relationship-tier
-      // reset, so the last row isn't always the highest one.
+      // True peak across all levels, not just the last row - some curves dip at
+      // level 100 because of a relationship-tier reset.
       const peak = rows.reduce((best, r) => (Number(r.stat_value) > Number(best.stat_value) ? r : best), rows[0]);
       if (peak.stat_type) {
         peak.stat_type.split(",").forEach((statName) => {
@@ -14601,7 +14603,6 @@ async function renderExpertsPage() {
         });
       }
     });
-    // Romulus's + Gareth's confirmed skills, at their own max levels
     addSkillMaxToTotals(totals, "Romulus", "Last Line");
     addSkillMaxToTotals(totals, "Romulus", "Spirit of Aeetis");
     addSkillMaxToTotals(totals, "Gareth", "Porcupine");
@@ -14624,21 +14625,6 @@ async function renderExpertsPage() {
       )
       .join("");
   }
-  function addSkillStatsToTotals(totals, hero, skill) {
-    if (!isExpertUnlocked(hero)) return;
-    const rows = SKILL_CACHE[`${hero}|${skill}`];
-    const st = saved[hero] && saved[hero].skills[skill];
-    if (!rows || !st) return;
-    // rows are cumulative per level; find the row at (or below) the current level
-    let match = null;
-    rows.forEach((r) => {
-      if (r.level <= st.current) match = r;
-    });
-    if (!match || !match.stat_type) return;
-    match.stat_type.split(",").forEach((statName) => {
-      if (totals[statName] != null) totals[statName] += Number(match.stat_value) || 0;
-    });
-  }
   function addSkillMaxToTotals(totals, hero, skill) {
     if (!isExpertUnlocked(hero)) return;
     const rows = SKILL_CACHE[`${hero}|${skill}`];
@@ -14649,15 +14635,26 @@ async function renderExpertsPage() {
       if (totals[statName] != null) totals[statName] += Number(last.stat_value) || 0;
     });
   }
-  function renderStatHeader() {
-    statHeaderEl.innerHTML = statHeaderHtml(computeBaseTroopStats(), computeBaseTroopStatsMax());
+  function addSkillStatsToTotals(totals, hero, skill, useTarget) {
+    if (!isExpertUnlocked(hero)) return;
+    const rows = SKILL_CACHE[`${hero}|${skill}`];
+    const st = saved[hero] && saved[hero].skills[skill];
+    if (!rows || !st) return;
+    // rows are cumulative per level; find the row at (or below) that level
+    const lvl = useTarget ? st.desired : st.current;
+    let match = null;
+    rows.forEach((r) => {
+      if (r.level <= lvl) match = r;
+    });
+    if (!match || !match.stat_type) return;
+    match.stat_type.split(",").forEach((statName) => {
+      if (totals[statName] != null) totals[statName] += Number(match.stat_value) || 0;
+    });
   }
-
-  const foundryEl = document.getElementById("expertsFoundryHeader");
-  function addTalentToTotals(totals, hero) {
+  function addTalentToTotals(totals, hero, useTarget) {
     if (!isExpertUnlocked(hero)) return;
     const rows = AFFINITY_CACHE[hero] || [];
-    const lvl = saved[hero] ? Math.floor(Number(saved[hero].current) || 0) : 0;
+    const lvl = saved[hero] ? Math.floor(Number(useTarget ? saved[hero].desired : saved[hero].current) || 0) : 0;
     const row = rows.find((r) => r.level === lvl);
     if (row && row.stat_type2) {
       row.stat_type2.split(",").forEach((statName) => {
@@ -14675,6 +14672,11 @@ async function renderExpertsPage() {
       });
     }
   }
+  function renderStatHeader() {
+    statHeaderEl.innerHTML = statHeaderHtml(computeBaseTroopStats(), computeBaseTroopStatsMax());
+  }
+
+  const foundryEl = document.getElementById("expertsFoundryHeader");
   function renderFoundryHeader() {
     const totals = computeBaseTroopStats();
     addSkillStatsToTotals(totals, "Fabian", "Heightened Firepower");
@@ -14699,7 +14701,7 @@ async function renderExpertsPage() {
   const frostfireEl = document.getElementById("expertsFrostfireHeader");
   function renderFrostfireHeader() {
     // Troop Stats already includes Kathy's level-based Lethality/Health;
-    // Child of Frost talent (+2% to +30% Lethality/Health, confirmed) added on top.
+    // Child of Frost talent added on top.
     const totals = computeBaseTroopStats();
     addTalentToTotals(totals, "Kathy");
     const maxTotals = computeBaseTroopStatsMax();
@@ -14710,7 +14712,7 @@ async function renderExpertsPage() {
   const tundraEl = document.getElementById("expertsTundraHeader");
   function renderTundraHeader() {
     // Troop Stats already includes Ronne's level-based Attack/Defense;
-    // Trade Dominion talent (+2% to +30% Attack/Defense, confirmed) added on top.
+    // Trade Dominion talent added on top.
     const totals = computeBaseTroopStats();
     addTalentToTotals(totals, "Ronne");
     const maxTotals = computeBaseTroopStatsMax();
