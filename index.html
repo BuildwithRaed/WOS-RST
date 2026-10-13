@@ -199,7 +199,6 @@
   .g4{ grid-template-columns:repeat(4,1fr); }
   .g3{ grid-template-columns:repeat(3,1fr); }
   .g2{ grid-template-columns:repeat(2,1fr); }
-  .g6{ grid-template-columns:repeat(6,1fr); }
   /* Budgets: cards flow into columns (masonry) so a tall card never leaves
      a hole beside it; 1 column on phones, 2 on tablets/laptops, 3 on wide
      monitors. */
@@ -243,7 +242,7 @@
     .stat-card{ padding:12px 14px; }
     .panel{ padding:14px; }
     /* Narrower single/double column defaults for every stat grid. */
-    .g4, .g3, .g6{ grid-template-columns:repeat(2,1fr) !important; gap:10px; }
+    .g4, .g3{ grid-template-columns:repeat(2,1fr) !important; gap:10px; }
     .g2{ grid-template-columns:1fr !important; }
 
     /* Any fixed-width input/select (the app uses many, e.g. width:80px-200px
@@ -257,7 +256,6 @@
 
     /* Rows of inputs (admin tables, calculators) wrap instead of overflowing. */
     form.inline{ flex-wrap:wrap; }
-    .row-inline{ flex-wrap:wrap; }
 
     /* Top navbar: the group row is replaced by the Menu button + full
        overlay below, so just keep the bar itself compact. */
@@ -312,15 +310,10 @@
   .stat-card .val{ font-size:24px; font-weight:600; margin:6px 0 10px; }
   .stat-bar-track{ height:5px; background:var(--panel-2); border-radius:4px; overflow:hidden; margin-bottom:12px; }
   .stat-bar-fill{ height:100%; background:var(--ice); }
-  .src-row{ display:flex; align-items:center; justify-content:space-between; font-size:12px; padding:3px 0; color:var(--muted); }
-  .src-row .src-name{ display:flex; align-items:center; gap:6px; }
-  .src-row .src-val{ color:var(--frost); font-weight:500; }
   .troop-head{ display:flex; align-items:center; gap:8px; margin:26px 0 12px; }
   .troop-head .dot{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; background:var(--panel-2); border:1px solid var(--line); }
   .troop-head h3{ font-size:15px; margin:0; font-weight:600; flex:1; }
   .troop-head .count{ font-size:12px; color:var(--muted); }
-  .health-bar-track{ height:6px; background:var(--panel-2); border-radius:4px; overflow:hidden; }
-  .health-bar-fill{ height:100%; background:var(--good); }
   .panel{
     background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
     padding:18px 20px; margin-bottom:16px;
@@ -335,8 +328,6 @@
     font-size:11px; padding:2px 8px; border-radius:999px; background:var(--panel-2);
     color:var(--muted); border:1px solid var(--line);
   }
-  .bar-track{ height:6px; background:var(--panel-2); border-radius:4px; overflow:hidden; width:120px; }
-  .bar-fill{ height:100%; background:var(--ice); }
   .empty{
     text-align:center; padding:36px 10px; color:var(--muted); font-size:13.5px;
   }
@@ -376,7 +367,6 @@ input,select,textarea{
   .err{ color:var(--danger); font-size:12px; margin-top:6px; }
   .del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:2px 6px; }
   .del:hover{ color:var(--danger); }
-  .skin-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; }
   .skin-card{
     background:var(--panel); border:1px solid var(--line); border-radius:10px;
     overflow:hidden; cursor:pointer; transition:border-color .15s; text-align:start;
@@ -529,11 +519,6 @@ input,select,textarea{
     padding:8px 10px; border-radius:8px; font-size:13px;
   }
   .field input[list]{ width:100%; }
-  .thumb-preview{
-    width:72px; height:72px; border-radius:8px; background:var(--panel-2); border:1px solid var(--line);
-    display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:8px;
-  }
-  .thumb-preview img{ width:100%; height:100%; object-fit:cover; }
   .modal-actions{ display:flex; gap:8px; margin-top:16px; }
   .modal-actions button{ flex:1; }
   .matrix-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; }
@@ -545,11 +530,6 @@ input,select,textarea{
   }
   table.matrix th:first-child{ background:var(--panel-2); z-index:2; }
   table.matrix td.total{ color:var(--ice); font-weight:600; }
-  textarea.paste{
-    width:100%; min-height:120px; background:var(--panel-2); border:1px solid var(--line); color:var(--frost);
-    padding:10px; border-radius:8px; font-size:12px; font-family:"SFMono-Regular",Consolas,monospace; resize:vertical;
-  }
-  .table-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
 
   /* ============================================================
      PHONE LAYOUT FIXES (<=760px)
@@ -2987,7 +2967,6 @@ const T = {
   all_label: { en: "All", ar: "الكل", ko: "전체" },
   owned_label: { en: "Owned", ar: "مملوك", ko: "보유" },
   not_owned_label: { en: "Not owned", ar: "غير مملوك", ko: "미보유" },
-  count_in_max: { en: "Count in max", ar: "احتسابه في الحد الأقصى", ko: "최대치에 반영" },
   globe_level: { en: "GLOBE LEVEL", ar: "مستوى الكرة الأرضية", ko: "글로브 레벨" },
   no_globe: { en: "No Globe", ar: "لا يوجد كرة أرضية", ko: "글로브 없음" },
   total_bonus: { en: "Total bonus", ar: "إجمالي المكافأة", ko: "총 보너스" },
@@ -3006,7 +2985,6 @@ const T = {
   drag_here_to_exclude: { en: "Drag skins here (or tap \u2193 on a card) to leave them out of the Dashboard", ar: "اسحب العناصر هنا (أو انقر \u2193 على البطاقة) لاستبعادها من لوحة التحكم", ko: "여기로 끌어오거나 카드의 \u2193를 눌러 대시보드에서 제외" },
   move_to_uncounted: { en: "Don't count in Dashboard", ar: "عدم احتسابه في لوحة التحكم", ko: "대시보드에서 제외" },
   move_to_counted: { en: "Count in Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
-  count_toward_max: { en: "Count toward max totals", ar: "احتسابه ضمن إجمالي الحد الأقصى", ko: "최대 합계에 반영" },
   prev_label: { en: "Prev", ar: "السابق", ko: "이전" },
   next_label: { en: "Next", ar: "التالي", ko: "다음" },
   swipe_to_browse: { en: "swipe to browse", ar: "\u0627\u0633\u062d\u0628 \u0644\u0644\u062a\u0635\u0641\u062d", ko: "\uc2a4\uc640\uc774\ud504\ud558\uc5ec \ud0d0\uc0c9" },
@@ -3157,7 +3135,6 @@ const T = {
   pk_daily_day: { en: "day", ar: "\u064a\u0648\u0645", ko: "\uc77c" },
   pk_daily_per_day: { en: "(amount per day)", ar: "(\u0627\u0644\u0643\u0645\u064a\u0629 \u0644\u0644\u064a\u0648\u0645)", ko: "(\ud558\ub8e8 \uc218\ub7c9)" },
   show_prices_in: { en: "Show prices in", ar: "\u0639\u0631\u0636 \u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u0628\u0640", ko: "\uac00\uaca9 \ud45c\uc2dc \ud1b5\ud654" },
-  currency_as_entered: { en: "As entered", ar: "\u0643\u0645\u0627 \u0623\u064f\u062f\u062e\u0644\u062a", ko: "\uc785\ub825\ub41c \ub300\ub85c" },
   packs_desc_visitor: { en: "The in-game packs and what each one gives, as tracked by this site. These prices feed the Pack cost and Budgets calculations.", ar: "\u062d\u0632\u0645 \u0627\u0644\u0644\u0639\u0628\u0629 \u0648\u0645\u0627 \u062a\u0645\u0646\u062d\u0647 \u0643\u0644 \u0648\u0627\u062d\u062f\u0629\u060c \u0643\u0645\u0627 \u064a\u062a\u0627\u0628\u0639\u0647\u0627 \u0647\u0630\u0627 \u0627\u0644\u0645\u0648\u0642\u0639. \u0647\u0630\u0647 \u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u062a\u064f\u063a\u0630\u0651\u064a \u062d\u0633\u0627\u0628\u0627\u062a \u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062d\u0632\u0645 \u0648\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0627\u062a.", ko: "\uc774 \uc0ac\uc774\ud2b8\uac00 \ucd94\uc801\ud558\ub294 \uac8c\uc784 \ub0b4 \ud328\ud0a4\uc9c0\uc640 \uac01 \uad6c\uc131\ud488\uc785\ub2c8\ub2e4. \uc774 \uac00\uaca9\uc774 \ud328\ud0a4\uc9c0 \ube44\uc6a9\uacfc \uc608\uc0b0 \uacc4\uc0b0\uc5d0 \uc0ac\uc6a9\ub429\ub2c8\ub2e4." },
   contact_link: { en: "Contact us", ar: "\u0627\u062a\u0635\u0644 \u0628\u0646\u0627", ko: "\ubb38\uc758\ud558\uae30" },
   contact_title: { en: "Contact us", ar: "\u0627\u062a\u0635\u0644 \u0628\u0646\u0627", ko: "\ubb38\uc758\ud558\uae30" },
@@ -3170,14 +3147,12 @@ const T = {
   marks_no_estimate: { en: "No estimate yet for these stages (not counted in the total until a formula close to the real result is confirmed):", ar: "\u0644\u0627 \u064a\u0648\u062c\u062f \u062a\u0642\u062f\u064a\u0631 \u0628\u0639\u062f \u0644\u0647\u0630\u0647 \u0627\u0644\u0645\u0631\u0627\u062d\u0644 (\u0644\u0627 \u062a\u064f\u062d\u062a\u0633\u0628 \u0641\u064a \u0627\u0644\u0645\u062c\u0645\u0648\u0639 \u062d\u062a\u0649 \u062a\u0623\u0643\u064a\u062f \u0645\u0639\u0627\u062f\u0644\u0629 \u0642\u0631\u064a\u0628\u0629 \u0645\u0646 \u0627\u0644\u0646\u062a\u064a\u062c\u0629 \u0627\u0644\u062d\u0642\u064a\u0642\u064a\u0629):", ko: "\uc544\uc9c1 \ucd94\uc815\uce58\uac00 \uc5c6\ub294 \ub2e8\uacc4 (\uc2e4\uc81c \uacb0\uacfc\uc5d0 \uac00\uae4c\uc6b4 \uacf5\uc2dd\uc774 \ud655\uc778\ub420 \ub54c\uae4c\uc9c0 \ud569\uacc4\uc5d0 \ud3ec\ud568\ub418\uc9c0 \uc54a\uc74c):" },
   research_next_level: { en: "Next level:", ar: "\u0627\u0644\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0627\u0644\u064a:", ko: "\ub2e4\uc74c \ub808\ubca8:" },
   expert_upcoming: { en: "Upcoming", ar: "\u0642\u0631\u064a\u0628\u0627\u064b", ko: "\ucd9c\uc2dc \uc608\uc815" },
-  skill_maxed: { en: "Maxed", ar: "\u0645\u0643\u062a\u0645\u0644", ko: "\ucd5c\ub300" },
   skill_max_exp: { en: "Max EXP", ar: "\u0623\u0642\u0635\u0649 \u062e\u0628\u0631\u0629", ko: "\ucd5c\ub300 EXP" },
   skill_max_exp_tip: { en: "Fill the EXP box with everything this step needs", ar: "\u0627\u0645\u0644\u0623 \u062e\u0627\u0646\u0629 \u0627\u0644\u062e\u0628\u0631\u0629 \u0628\u0643\u0644 \u0645\u0627 \u062a\u062d\u062a\u0627\u062c\u0647 \u0647\u0630\u0647 \u0627\u0644\u062e\u0637\u0648\u0629", ko: "\uc774 \ub2e8\uacc4\uc5d0 \ud544\uc694\ud55c EXP\ub97c \ubaa8\ub450 \ucc44\uc6c0" },
   experts_sigils_have: { en: "Sigils you have", ar: "\u0627\u0644\u0623\u062e\u062a\u0627\u0645 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 \uc778\uc7a5" },
   experts_sigils_summary: { en: "Expert sigils", ar: "\u0623\u062e\u062a\u0627\u0645 \u0627\u0644\u062e\u0628\u0631\u0627\u0621", ko: "\uc804\ubb38\uac00 \uc778\uc7a5" },
   experts_sigils_summary_note: { en: "Change these on each expert's card", ar: "\u063a\u064a\u0651\u0631\u0647\u0627 \u0645\u0646 \u0628\u0637\u0627\u0642\u0629 \u0643\u0644 \u062e\u0628\u064a\u0631", ko: "\uac01 \uc804\ubb38\uac00 \uce74\ub4dc\uc5d0\uc11c \ubcc0\uacbd" },
   experts_affinity_have: { en: "Affinity you have", ar: "\u0627\u0644\u0623\u0644\u0641\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 \uce5c\ubc00\ub3c4" },
-  skill_maxed_tip: { en: "Set this skill to its max level", ar: "\u0627\u062c\u0639\u0644 \u0647\u0630\u0647 \u0627\u0644\u0645\u0647\u0627\u0631\u0629 \u0641\u064a \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649", ko: "\uc774 \uc2a4\ud0ac\uc744 \ucd5c\ub300 \ub808\ubca8\ub85c \uc124\uc815" },
   skill_exp_have: { en: "EXP you have", ar: "\u0627\u0644\u062e\u0628\u0631\u0629 \u0627\u0644\u062a\u064a \u0644\u062f\u064a\u0643", ko: "\ubcf4\uc720 EXP" },
   minutes_short: { en: "min", ar: "\u062f\u0642\u064a\u0642\u0629", ko: "\ubd84" },
   piece_helmet: { en: "Helmet", ar: "\u062e\u0648\u0630\u0629", ko: "\ud22c\uad6c" },
@@ -3234,7 +3209,6 @@ const T = {
   tier_first: { en: "First", ar: "\u0627\u0644\u0623\u0648\u0644", ko: "1\ub2e8\uacc4" },
   tier_second: { en: "Second", ar: "\u0627\u0644\u062b\u0627\u0646\u064a", ko: "2\ub2e8\uacc4" },
   tier_third: { en: "Third", ar: "\u0627\u0644\u062b\u0627\u0644\u062b", ko: "3\ub2e8\uacc4" },
-  not_needed_yet: { en: "Not needed yet", ar: "\u063a\u064a\u0631 \u0645\u0637\u0644\u0648\u0628 \u0628\u0639\u062f", ko: "\uc544\uc9c1 \ud544\uc694 \uc5c6\uc74c" },
   packs_desc: { en: "Build your own price/reward tables \u2014 add tables, columns, and rows, rename anything, and save.", ar: "\u0623\u0646\u0634\u0626 \u062c\u062f\u0627\u0648\u0644 \u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u0648\u0627\u0644\u0645\u0643\u0627\u0641\u0622\u062a \u0627\u0644\u062e\u0627\u0635\u0629 \u0628\u0643 \u2014 \u0623\u0636\u0641 \u062c\u062f\u0627\u0648\u0644 \u0648\u0623\u0639\u0645\u062f\u0629 \u0648\u0635\u0641\u0648\u0641\u060c \u0648\u0623\u0639\u062f \u0627\u0644\u062a\u0633\u0645\u064a\u0629\u060c \u062b\u0645 \u0627\u062d\u0641\u0638.", ko: "\uc9c1\uc811 \uac00\uaca9/\ubcf4\uc0c1 \ud45c\ub97c \ub9cc\ub4dc\uc138\uc694 \u2014 \ud45c, \uc5f4, \ud589\uc744 \ucd94\uac00\ud558\uace0 \uc774\ub984\uc744 \ubc14\uafb8\uace0 \uc800\uc7a5\ud558\uc138\uc694." },
   no_tables_hint: { en: "Click \"+ Add table\" to start one.", ar: "\u0627\u0646\u0642\u0631 \u0639\u0644\u0649 \u00ab+ \u0625\u0636\u0627\u0641\u0629 \u062c\u062f\u0648\u0644\u00bb \u0644\u0644\u0628\u062f\u0621.", ko: "\"+ \ud45c \ucd94\uac00\"\ub97c \ub20c\ub7ec \uc2dc\uc791\ud558\uc138\uc694." },
   hero_gear_stats_desc: { en: "Each piece: Enhance Lethality/Health \u00d7 (1 + Mastery Forging %); Mithril milestones boost Attack/Defense.", ar: "\u0635\u0642\u0644 \u0627\u0644\u0625\u062a\u0642\u0627\u0646 \u0648\u0627\u0644\u062a\u0639\u0632\u064a\u0632 \u064a\u0632\u064a\u062f\u0627\u0646 \u0627\u0644\u0641\u062a\u0643/\u0627\u0644\u0635\u062d\u0629\u061b \u0648\u0645\u0631\u0627\u062d\u0644 \u0627\u0644\u0645\u064a\u062b\u0631\u064a\u0644 \u062a\u0632\u064a\u062f \u0627\u0644\u0647\u062c\u0648\u0645/\u0627\u0644\u062f\u0641\u0627\u0639.", ko: "\uc219\ub828 \uc81c\uc791\uacfc \uac15\ud654\ub294 \uce58\uba85\ud0c0/\uccb4\ub825\uc744, \ubbf8\uc2a4\ub9b4 \ub2ec\uc131 \uad6c\uac04\uc740 \uacf5\uaca9/\ubc29\uc5b4\ub97c \uc62c\ub838\uc2b5\ub2c8\ub2e4." },
@@ -3311,8 +3285,6 @@ const T = {
   pack_cal_daily: { en: "Daily", ar: "\u064a\u0648\u0645\u064a", ko: "\uc77c\uc77c" },
   pack_cal_other: { en: "Other", ar: "\u0623\u062e\u0631\u0649", ko: "\uae30\ud0c0" },
   pack_cal_empty: { en: "No packs land in these weeks.", ar: "\u0644\u0627 \u062a\u0648\u062c\u062f \u062d\u0632\u0645 \u0641\u064a \u0647\u0630\u0647 \u0627\u0644\u0623\u0633\u0627\u0628\u064a\u0639.", ko: "\uc774 \uae30\uac04\uc5d0\ub294 \ud328\ud0a4\uc9c0\uac00 \uc5c6\uc2b5\ub2c8\ub2e4." },
-  pack_cal_month_view: { en: "Month view", ar: "عرض الشهر", ko: "월 보기" },
-  pack_cal_list_view: { en: "List view", ar: "عرض القائمة", ko: "목록 보기" },
   pack_cal_all_week: { en: "All week", ar: "طوال الأسبوع", ko: "주 내내" },
   pack_cal_all_week_hidden: { en: "{n} packs are up all week and are hidden", ar: "{n} حزم متاحة طوال الأسبوع ومخفية", ko: "주 내내 열려 있는 패키지 {n}개가 숨겨져 있습니다" },
   pack_cal_show_them: { en: "show them", ar: "أظهرها", ko: "보기" },
@@ -3512,7 +3484,6 @@ const T = {
   mp_limit_label: { en: "Tables each visitor can have", ar: "عدد الجداول لكل زائر", ko: "방문자당 표 개수" },
   mp_limit_saved: { en: "My packs limit saved", ar: "تم حفظ حد حزمي", ko: "내 팩 한도 저장됨" },
   mp_admin_desc: { en: "Visitors copy the tables in the \"Pack templates\" category into their own My packs. Templates aren't used in Budgets or Pack cost. Your own copies (⧉ on a template) go to \"My packs\", hidden from visitors, with no limit.", ar: "ينسخ الزوار جداول فئة \"قوالب الحزم\" إلى حزمهم. القوالب لا تُستخدم في الميزانيات أو تكلفة الحزم. نسخك (⧉ على القالب) تذهب إلى \"My packs\" مخفية عن الزوار وبلا حد.", ko: "방문자는 \"Pack templates\" 분류의 표를 내 팩으로 복사합니다. 템플릿은 예산·팩 비용에 쓰이지 않습니다. 내 사본(템플릿의 ⧉)은 방문자에게 숨겨진 \"My packs\"로 가며 한도가 없습니다." },
-  mp_templates_count: { en: "Templates", ar: "القوالب", ko: "템플릿" },
   mp_templates_added: { en: "pack templates added", ar: "قوالب حزم أُضيفت", ko: "개 팩 템플릿 추가됨" },
   mp_template_note: { en: "Not used in Budgets or Pack cost · visitors copy these", ar: "لا تُستخدم في الميزانيات أو تكلفة الحزم · يستنسخها الزوار", ko: "예산·팩 비용에 사용 안 함 · 방문자가 복사" },
   mp_admin_mine_note: { en: "Your own copies · hidden from visitors", ar: "نسخك الخاصة · مخفية عن الزوار", ko: "내 사본 · 방문자에게 숨김" },
@@ -3801,13 +3772,10 @@ window.addEventListener("popstate", (e) => {
   const tab = e.state && e.state.tab;
   if (tab) goToTab(tab, { fromHistory: true });
 });
-let HEROES_SUBTAB = "roster";
 const CATEGORY_GROUPS = { "War Acd.": ["T11", "T12"] };
 const EXTRA_BUFF_SUBCATS = ["Vip Tier", "Facility", "Alliance Buff", "Gallery", "Album Buff"];
 const EXTRA_BUFF_LABELS = { "Vip Tier": "VIP", "Facility": "Facility", "Alliance Buff": "Alliance Tech", "Gallery": "Collection Gallery", "Album Buff": "Tundra Album" };
-let EXTRA_BUFF_SUBTAB = EXTRA_BUFF_SUBCATS[0];
 const GROUP_SUBTAB = {};
-let buffOpenCategory = null;
 const content = document.getElementById("content");
 let BUFF_TABLE_ID = null;
 let BUFF_CATEGORIES = []; // [{name, columns:[{id,name}]}]
@@ -4002,7 +3970,6 @@ function displaySourceName(key) {
   return dataName(SOURCE_DISPLAY_NAME[key] || key);
 }
 
-let DASHBOARD_STATS_LIVE = null; // [{troop, stat, total, sources}] from the last dashboard computation
 async function renderOverview(opts = {}) {
   // Speed: everything the Dashboard needs is requested in one parallel batch
   // (saved states come from the shared calc_state cache), instead of several
@@ -4496,7 +4463,6 @@ async function renderOverview(opts = {}) {
   // averages across all 12 stat lines, for the top metric row
   const allStats = [];
   for (const t of TROOP_TYPES) for (const s of STATS) allStats.push({ troop: t.key, stat: s.key, ...statFor(t.key, s.key) });
-  DASHBOARD_STATS_LIVE = allStats;
   // The Budgets page only needs the numbers, not the page.
   if (opts.computeOnly) return allStats;
   const avgByStat = STATS.map((s) => {
@@ -4506,12 +4472,6 @@ async function renderOverview(opts = {}) {
     const avgMax = maxVals.length ? maxVals.reduce((a, b) => a + b, 0) / maxVals.length : 0;
     return { ...s, avg, avgMax };
   });
-  // sum of all 4 stats per troop type, for the Total Infantry/Lancers/Marksman row
-  const totalByTroop = TROOP_TYPES.map((t) => {
-    const sum = allStats.filter((x) => x.troop === t.key).reduce((a, x) => a + x.total, 0);
-    return { ...t, sum };
-  });
-
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -4981,17 +4941,7 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
 // each independently tracked in HERO_GEAR_STATE.
 // ============================================================
 const GEAR_LEVELING_TABLES = ["Hero Gear Mastery Forging", "Enhance Combined"];
-const HERO_GEAR_TRACK_LABELS = {
-  "Hero Gear Mastery Forging": "Mastery Forging",
-  "Enhance Combined": "Enhance (0\u2013200)",
-};
 const HERO_GEAR_PIECE_NAMES = ["Goggles", "Gloves", "Belt", "Boots"];
-const HERO_GEAR_MASTERY_STATS = {
-  Goggles: ["Lethality"],
-  Boots: ["Lethality"],
-  Gloves: ["Health"],
-  Belt: ["Health"],
-};
 const HERO_GEAR_ENHANCE_CONTINUOUS_STATS = {
   Goggles: ["Lethality"],
   Boots: ["Lethality"],
@@ -5540,7 +5490,6 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const resCols = mp.columns.map((c, ci) => ci).filter((ci) => ci !== priceCol && ci !== gemsCi);
     const pages = Array.isArray(link.pages) ? link.pages : [];
     const numericReset = typeof link.reset === "number";
-    const open = MY_PACKS_OPEN.has(mp.id);
     const head = (ci) => {
       if (ci === priceCol) return `<span class="meta">$ 🔒</span>`;
       if (ci === gemsCi) return `<span class="meta">${esc(mp.columns[ci])} 🔒</span>`;
@@ -5904,7 +5853,6 @@ async function renderPackCalendarPage() {
     // One segment per appearance, clipped to the weeks on screen.
     const segs = [];
     groups.forEach((gp) => {
-      const tb = { id: gp.key, title: gp.label };
       const l = gp.link;
       const kind = packCalKind(l.reset);
       if (PACK_CAL_OFF.has(kind)) return;
@@ -6252,16 +6200,6 @@ async function renderPacksPage() {
     tables.forEach((tb) => { const g = categoryOf(tb); if (g && !seen.includes(g)) seen.push(g); });
     const saved = (PACK_LINKS && PACK_LINKS.__order && Array.isArray(PACK_LINKS.__order.categories)) ? PACK_LINKS.__order.categories : [];
     return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g))];
-  }
-  async function moveCategory(name, dir) {
-    const order = categoryOrder();
-    const i = order.indexOf(name), j = i + dir;
-    if (i < 0 || j < 0 || j >= order.length) return;
-    order.splice(i, 1); order.splice(j, 0, name);
-    await ensurePackLinks();
-    PACK_LINKS.__order = { ...(PACK_LINKS.__order || {}), categories: order };
-    await savePackLinks();
-    renderAll();
   }
   function categoryTabs() {
     return [{ key: "all" }, ...categoryOrder().map((g) => ({ key: "cat:" + g, name: g })), { key: "none" }];
@@ -7583,22 +7521,6 @@ const MATERIAL_ICONS = {
   "fiery heart": "icons/item_icon_570202.png",
   compass: "icons/item_icon_570201.png",
 };
-// Renders a comma-separated materials string with inline icons.
-function renderMaterialsWithIcons(materials) {
-  if (!materials) return "\u2014";
-  return materials
-    .split(",")
-    .map((part) => {
-      const trimmed = part.trim();
-      const lower = trimmed.toLowerCase();
-      const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-      const icon = iconKey
-        ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:15px; height:15px; object-fit:contain; vertical-align:-3px; margin-right:3px;" loading="lazy" />`
-        : "";
-      return `<span style="display:inline-flex; align-items:center; margin-right:8px;">${icon}${esc(trimmed)}</span>`;
-    })
-    .join("");
-}
 
 // Builds a human-readable label for a progression row, e.g.
 // "Legendary T5 \u26053.2" or "Lv.42" (drops a lone ".0" stage suffix).
@@ -7628,191 +7550,11 @@ function chiefGearRowLabel(r) {
   if (r.tier) return `${CHIEF_GEAR_TIER_SHORT[r.tier] || r.tier}${r.stars != null ? " \u2605" + r.stars : ""}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}`;
   return rowLabel(r);
 }
-// Parses "1500 Hardened Alloy, 15 Polishing Solution" into
-// [{qty, name}, ...] for totals aggregation.
-function parseMaterials(materials) {
-  if (!materials) return [];
-  return materials
-    .split(",")
-    .map((part) => {
-      const m = part.trim().match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
-      return m ? { qty: Number(m[1]), name: m[2].trim() } : null;
-    })
-    .filter(Boolean);
-}
 // Extracts the numeric percentage from a stat string like "+9.35%".
 function parseStatPct(stat) {
   if (!stat) return null;
   const m = String(stat).match(/-?\d+(\.\d+)?/);
   return m ? Number(m[0]) : null;
-}
-
-// Renders a progression table with an optional current\u2192target
-// "upgrade calculator" (materials/stat/power gained for the range)
-// plus the full reference table below it.
-async function renderProgressionInto(target, tableName) {
-  let [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(tableName)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,name`);
-  if (!table) {
-    const [created] = await sb(`progression_tables`, {
-      method: "POST",
-      body: JSON.stringify({ user_id: PROGRESSION_OWNER_ID, name: tableName, sort_order: 0 }),
-    });
-    table = created;
-  }
-  const rows = await sb(`progression_rows?table_id=eq.${table.id}&select=id,level,tier,stars,stage,materials,stat,power&order=sort_order.asc`);
-  const hasTier = rows.some((r) => r.tier);
-  const canCalc = rows.length > 1;
-
-  target.innerHTML = `
-    ${
-      canCalc
-        ? `<div class="panel">
-      <h2>Upgrade calculator</h2>
-      <p class="desc">Pick your current and target step to see materials, stat gain, and power gain between them.</p>
-      <div class="row" style="align-items:center;">
-        <div class="meta">From</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <select id="calcFrom" style="width:160px;"></select>
-          <span class="meta">to</span>
-          <select id="calcTo" style="width:160px;"></select>
-        </div>
-      </div>
-      <div id="calcResult" style="margin-top:12px;"></div>
-    </div>`
-        : ""
-    }
-    <div class="panel">
-      <h2>${esc(tableName)}</h2>
-      <p class="desc">${hasTier ? "Tier, stars, materials, stat bonus, and power total." : "Level, materials needed, and power gained per level."}</p>
-      <div class="matrix-wrap">
-        <table class="matrix">
-          <thead><tr>${hasTier ? "<th>Tier</th><th>Stars</th><th>Stage</th>" : "<th>Level</th>"}<th>Materials</th>${hasTier ? "<th>Stat</th>" : ""}<th>Power</th><th></th></tr></thead>
-          <tbody id="progRows"></tbody>
-        </table>
-      </div>
-      ${
-        !hasTier
-          ? `<form class="inline" id="progAddForm" style="margin-top:14px; border-top:1px solid var(--line); padding-top:14px;">
-        <input class="field-num" name="level" type="number" placeholder="Level" required style="width:80px;" />
-        <input class="flex1" name="materials" placeholder="Materials, e.g. 100 XP Component" />
-        <input class="field-num" name="power" type="number" step="any" placeholder="Power" style="width:120px;" />
-        <button class="btn small" type="submit">Add row</button>
-      </form>
-      <div class="err" id="progErr"></div>`
-          : ""
-      }
-    </div>
-  `;
-
-  if (canCalc) {
-    const fromSel = target.querySelector("#calcFrom");
-    const toSel = target.querySelector("#calcTo");
-    const opts = rows.map((r, i) => `<option value="${i}">${esc(rowLabel(r))}</option>`).join("");
-    fromSel.innerHTML = opts;
-    toSel.innerHTML = opts;
-    toSel.value = String(rows.length - 1);
-
-    function updateCalc() {
-      let fromIdx = Number(fromSel.value);
-      let toIdx = Number(toSel.value);
-      if (toIdx < fromIdx) { toIdx = fromIdx; toSel.value = String(fromIdx); }
-      const resultEl = target.querySelector("#calcResult");
-      const matTotals = {};
-      for (let i = fromIdx + 1; i <= toIdx; i++) {
-        for (const m of parseMaterials(rows[i].materials)) {
-          matTotals[m.name] = (matTotals[m.name] || 0) + m.qty;
-        }
-      }
-      const statFrom = parseStatPct(rows[fromIdx].stat);
-      const statTo = parseStatPct(rows[toIdx].stat);
-      const powerFrom = rows[fromIdx].power != null ? Number(rows[fromIdx].power) : null;
-      const powerTo = rows[toIdx].power != null ? Number(rows[toIdx].power) : null;
-
-      const matHtml = Object.entries(matTotals)
-        .map(([name, qty]) => {
-          const lower = name.toLowerCase();
-          const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-          const icon = iconKey ? `<img src="${MATERIAL_ICONS[iconKey]}" alt="" style="width:16px; height:16px; object-fit:contain; vertical-align:-3px; margin-right:4px;" loading="lazy" />` : "";
-          return `<div class="row"><div class="name">${icon}${esc(name)}</div><div class="meta mono">${qty.toLocaleString()}</div></div>`;
-        })
-        .join("");
-
-      resultEl.innerHTML = `
-        <div class="grid g2" style="margin-bottom:10px;">
-          ${statTo != null ? `<div class="metric"><div class="label">Stat gain</div><div class="val">+${(statTo - (statFrom || 0)).toFixed(2)}%</div></div>` : ""}
-          ${powerTo != null ? `<div class="metric"><div class="label">Power gain</div><div class="val">${(powerTo - (powerFrom || 0)).toLocaleString()}</div></div>` : ""}
-        </div>
-        ${matHtml || `<div class="empty" style="padding:10px 0;">No materials needed for this range.</div>`}
-      `;
-    }
-    fromSel.addEventListener("change", updateCalc);
-    toSel.addEventListener("change", updateCalc);
-    updateCalc();
-  }
-
-  const tbody = target.querySelector("#progRows");
-  tbody.innerHTML = rows.length
-    ? rows
-        .map((r) =>
-          hasTier
-            ? `<tr>
-                <td style="text-align:start;">${esc(r.tier || "")}</td>
-                <td>${r.stars ?? "\u2014"}</td>
-                <td>${r.stage ?? "\u2014"}</td>
-                <td style="text-align:start;">${renderMaterialsWithIcons(r.materials)}</td>
-                <td>${esc(r.stat || "\u2014")}</td>
-                <td>${r.power != null ? Number(r.power).toLocaleString() : "\u2014"}</td>
-                <td><button class="del" data-delrow="${r.id}" title="Delete row">&times;</button></td>
-              </tr>`
-            : `<tr>
-                <td>${r.level}${r.stage && r.stage !== "0" ? "." + esc(r.stage) : ""}</td>
-                <td style="text-align:start;">${renderMaterialsWithIcons(r.materials)}</td>
-                <td>${r.power != null ? Number(r.power).toLocaleString() : "\u2014"}</td>
-                <td><button class="del" data-delrow="${r.id}" title="Delete row">&times;</button></td>
-              </tr>`
-        )
-        .join("")
-    : `<tr><td colspan="${hasTier ? 7 : 4}"><div class="empty">No rows yet.</div></td></tr>`;
-
-  tbody.querySelectorAll("[data-delrow]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await sb(`progression_rows?id=eq.${btn.dataset.delrow}`, { method: "DELETE" });
-        toast("Row deleted");
-        renderProgressionInto(target, tableName);
-      } catch (err) {
-        toast("Couldn't delete row", true);
-      }
-    });
-  });
-
-  const addForm = target.querySelector("#progAddForm");
-  if (addForm) {
-    addForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const f = e.target;
-      const errEl = target.querySelector("#progErr");
-      errEl.textContent = "";
-      const level = Number(f.level.value);
-      if (!level) { errEl.textContent = "Enter a level first"; return; }
-      try {
-        await sb(`progression_rows`, {
-          method: "POST",
-          body: JSON.stringify({
-            table_id: table.id,
-            level,
-            materials: f.materials.value.trim() || null,
-            power: f.power.value.trim() === "" ? null : Number(f.power.value),
-            sort_order: rows.length,
-          }),
-        });
-        toast("Row added");
-        renderProgressionInto(target, tableName);
-      } catch (err) {
-        errEl.textContent = "Couldn't add row";
-      }
-    });
-  }
 }
 
 // ============================================================
@@ -7823,11 +7565,6 @@ async function renderProgressionInto(target, tableName) {
 // Cost table and per-level stat curve sourced from the community
 // wiki (wostools.net); CHARM_LEVELS defines the exact step order.
 // ============================================================
-const CHARM_MATERIAL_ICONS = {
-  guides: "icons/charm-guide.png",
-  designs: "icons/charm-design.png",
-  secrets: "icons/item_icon_600026.png",
-};
 // Charm level data (levels, per-step material costs, cumulative Lethality/
 // Health %) now lives in the `charm_levels` table (Admin-editable), not
 // hardcoded. Loaded once via ensureCharmLevelsData().
@@ -8039,19 +7776,6 @@ function packGroupsChecked(pages) {
 function packGroupOf(pageKey) {
   return PACK_PAGE_GROUPS.find((g) => g.pages.includes(pageKey));
 }
-// Pages that have a Backpack box the pack costs can appear under.
-const PACK_PAGE_KEYS = [
-  { key: "chief_gear", labelKey: "nav_chiefgear" },
-  { key: "charm", labelKey: "nav_charmscalc" },
-  { key: "hero_gear", labelKey: "nav_herogearcalc" },
-  { key: "research_center", labelKey: "nav_researchcenter" },
-  { key: "t11_helios", labelKey: "nav_t11helios" },
-  { key: "t12_research", labelKey: "nav_t12research" },
-  { key: "pets", labelKey: "nav_petsdata" },
-  { key: "pets_refine", labelKey: "nav_refinepage" },
-  { key: "experts", labelKey: "nav_expertspage" },
-  { key: "experts_research", labelKey: "nav_expertsresearchpage" },
-];
 function packPageLabel(key) {
   const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research", pets: "petsdata", pets_refine: "refinepage", experts: "expertspage", experts_research: "expertsresearchpage" }[key]];
   return entry ? (entry[LANG] || entry.en) : key;
@@ -8865,7 +8589,6 @@ function packGemsCountFor(calcKey) {
   return budgetKeysOf(calcKey).includes("pets_refine") && !!(PET_MARKS_STATE && PET_MARKS_STATE.packGems);
 }
 function packGroupsFor(tables, calcKey) {
-  const groups = [];
   const stripGems = !packGemsCountFor(calcKey);
   const out = packGroupsForRaw(tables);
   if (stripGems) out.forEach((g) => g.offers.forEach((o) => { if (o.gives && o.gives.Gems != null) { const gv = { ...o.gives }; delete gv.Gems; o.gives = gv; } }));
@@ -9923,9 +9646,6 @@ async function renderRfcLabPage() {
   const snap = await ensureBudgetNeedsSnapshot();
   let pageNeed = 0;
   ["t12_research"].forEach((k) => { (snap[k]?.groups || []).forEach((g) => { pageNeed += Number((g.totals || {})["Refined FC"]) || 0; }); });
-  // Shards are needed by both T11 and T12.
-  let pageFcs = 0;
-  ["t11_helios", "t12_research"].forEach((k) => { (snap[k]?.groups || []).forEach((g) => { pageFcs += Number((g.totals || {})["FC Shard"]) || 0; }); });
   const st = RFC_LAB_STATE;
   const t12Owned = Number(((await ensureMaterialOwnedCache("t12_research")) || {})["Refined FC"]) || 0;
   const fmt = (v, d = 0) => Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
@@ -10814,10 +10534,6 @@ function budgetCombinedInput(pages, selected) {
   const lite = pages.map((pg) => ({ calcKey: pg.calcKey, missing: !!pg.missing, need: pg.need || {}, packGroups: pg.packGroups || [], supplied: pg.supplied ? [...pg.supplied] : [], tableIds: (pg.tables || []).map((tb) => String(tb.id)) }));
   return { pages: lite, selected: selected || {}, allGroups };
 }
-function budgetCombinedPlan(pages, selected, targetDays) {
-  const inp = budgetCombinedInput(pages, selected);
-  return plannerCombinedLocal({ ...inp, targetDays });
-}
 // Runs the combined plan (and the own plans of pages it had to leave out).
 function plannerCombinedLocal(payload) {
   const pages = payload.pages.map((pg) => ({ ...pg, supplied: new Set(pg.supplied || []) }));
@@ -11453,7 +11169,6 @@ async function renderCharmsCalc() {
   `;
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
-  const totalCharms = CHARM_PIECES.length * 3; // 6 pieces x 3 slots = 18
 
   const tabsEl = document.getElementById("charmTroopTabs");
   const rowsEl = document.getElementById("charmRows");
@@ -11946,7 +11661,6 @@ async function updateChiefGearTotals() {
   ];
 
   const matTotals = {};
-  let totalPower = 0;
   CHIEF_GEAR_PIECES.forEach((p) => {
     const st = CHIEF_GEAR_STATE[p.key];
     const fromIdx = Math.min(st.from, st.to);
@@ -11957,9 +11671,6 @@ async function updateChiefGearTotals() {
         if (v) matTotals[label] = (matTotals[label] || 0) + v;
       });
     }
-    const powerFrom = rows[fromIdx].power != null ? Number(rows[fromIdx].power) : 0;
-    const powerTo = rows[toIdx].power != null ? Number(rows[toIdx].power) : 0;
-    totalPower += powerTo - powerFrom;
   });
 
   renderChiefGearResourcesBar("gearOwned", matTotals, ["Hardened Alloy", "Polishing Solution", "Design Plan", "Amber"], updateChiefGearTotals, "chief_gear");
@@ -12046,23 +11757,6 @@ function computeChiefGearRawStat(stateObj) {
   });
   return out;
 }
-function computeChiefGearStats(stateObj) {
-  if (!CHIEF_GEAR_ROWS) return {};
-  const rows = CHIEF_GEAR_ROWS;
-  const troopTypes = ["Lancer", "Infantry", "Marksman"];
-  const { threeBonus, sixBonus } = computeChiefGearSetBonus(stateObj);
-  const out = {};
-  troopTypes.forEach((troop) => {
-    const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
-    let sumStat = 0;
-    for (const p of pieces) {
-      const idx = Math.min(stateObj[p.key].from, chiefGearCapIdx());
-      sumStat += parseStatPct(rows[idx]?.stat) || 0;
-    }
-    out[troop] = { Attack: sumStat + sixBonus, Defense: sumStat + threeBonus };
-  });
-  return out;
-}
 function maxedChiefGearState() {
   const out = {};
   CHIEF_GEAR_PIECES.forEach((p) => {
@@ -12076,7 +11770,7 @@ function updateChiefGearCurrentStats() {
   if (!el || !CHIEF_GEAR_ROWS) return;
   const statByTroop = computeChiefGearRawStat(CHIEF_GEAR_STATE);
   const maxByTroop = computeChiefGearRawStat(maxedChiefGearState());
-  const { threeTier, threeBonus, sixTier, sixBonus } = computeChiefGearSetBonus(CHIEF_GEAR_STATE);
+  const { threeBonus, sixBonus } = computeChiefGearSetBonus(CHIEF_GEAR_STATE);
   const results = Object.entries(statByTroop).map(([troop, stats]) => ({ troop, stats, max: maxByTroop[troop] }));
 
   const setBonusHtml = `
@@ -12749,42 +12443,6 @@ async function renderIslandGallery() {
   });
 
   computeAndRender();
-}
-
-
-// ============================================================
-// EXTRA BUFF (VIP Tier, Facility, Alliance Buff, Gallery, Album Buff)
-// Sub-nav grouping several buff categories that would otherwise
-// clutter the main sidebar list. VIP Tier gets special handling
-// (its own matrix table) instead of the generic single-value view.
-// ============================================================
-async function renderExtraBuff() {
-  content.innerHTML = `
-    <div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;">
-      ${EXTRA_BUFF_SUBCATS.map(
-        (s) =>
-          `<button class="btn small ${EXTRA_BUFF_SUBTAB === s ? "" : "ghost"}" data-extrasub="${esc(s)}" style="${EXTRA_BUFF_SUBTAB === s ? "background:var(--ice-dim); border-color:var(--ice-dim);" : ""}">${esc(EXTRA_BUFF_LABELS[s] || s)}</button>`
-      ).join("")}
-    </div>
-    <div id="extraBuffContent"></div>
-  `;
-  content.querySelectorAll("[data-extrasub]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      EXTRA_BUFF_SUBTAB = btn.dataset.extrasub;
-      renderExtraBuff();
-    });
-  });
-
-  await ensureBuffTable();
-  const sub = document.getElementById("extraBuffContent");
-  if (EXTRA_BUFF_SUBTAB === "Vip Tier") {
-    await renderVipTierTable(sub);
-    return;
-  }
-  if (!BUFF_CATEGORIES.some((c) => c.name === EXTRA_BUFF_SUBTAB)) {
-    await loadBuffCategories();
-  }
-  await renderCategoryInto(sub, EXTRA_BUFF_SUBTAB, () => renderExtraBuff());
 }
 
 // VIP 9-12 tier selector + full ATTACK/DEFENSE/LETHALITY/HEALTH
@@ -14453,7 +14111,6 @@ async function renderExpertsResearchPage() {
   const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => !expertTroopKey(e)));
   function renderTotals() {
     let totalSigil = 0;
-    let maxSigil = 0;
     const sigilNeededByExpert = {};
     EXPERTS_IN_ORDER.forEach((expert) => {
       if (!isResearchUnlocked(expert)) return;
@@ -14463,8 +14120,6 @@ async function renderExpertsResearchPage() {
         const { sigil } = pathCost(expert, p, st.current, st.desired);
         totalSigil += sigil;
         expertSigil += sigil;
-        const { sigil: mSigil } = pathCost(expert, p, 0, 200);
-        maxSigil += mSigil;
       });
       sigilNeededByExpert[expert] = expertSigil;
     });
@@ -14931,7 +14586,6 @@ async function renderExpertsPage() {
   `;
 
   const statHeaderEl = document.getElementById("expertsStatHeader");
-  const TROOP_STAT_HEROES = new Set(["Romulus", "Gareth"]);
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
     const rows = AFFINITY_CACHE[hero] || [];
@@ -15099,7 +14753,6 @@ async function renderExpertsPage() {
   const totalsEl = document.getElementById("expertsTotals");
   function renderTotals() {
     let totalExp = 0, totalBook = 0, totalAffinity = 0, totalSigil = 0;
-    let maxExp = 0, maxBook = 0, maxAffinity = 0, maxSigil = 0;
     const sigilNeededByExpert = {};
     EXPERTS_SHOWN.forEach((e) => {
       if (!isExpertUnlocked(e.key)) return;
@@ -15108,10 +14761,6 @@ async function renderExpertsPage() {
         const { expNeed, book } = skillNeed(e.key, sk, st);
         totalExp += expNeed;
         totalBook += book;
-        const skillMax = skillMaxLevel(e.key, sk);
-        const { exp: mExp, book: mBook } = skillCost(e.key, sk, 0, skillMax);
-        maxExp += mExp;
-        maxBook += mBook;
       });
       const hs = saved[e.key];
       const { affinity, sigil } = heroCost(e.key, hs.current, hs.desired);
@@ -15119,9 +14768,6 @@ async function renderExpertsPage() {
       totalAffinity += Math.max(0, affinity - affHave);
       totalSigil += sigil;
       sigilNeededByExpert[e.key] = sigil;
-      const { affinity: mAff, sigil: mSig } = heroCost(e.key, 0, heroMaxLevelValue(e.key));
-      maxAffinity += mAff;
-      maxSigil += mSig;
     });
 
     // Offset against Your Inventory: Books/Affinity subtract directly;
@@ -15718,7 +15364,6 @@ async function renderRefinePage() {
     }));
   }
 
-  const TIER_ORDER = ["First", "N", "R", "SR", "SRR", "UR"];
   const listEl = document.getElementById("refineList");
   // Updates one pet+stat row's bar width/color and remaining-text in place,
   // without touching any input elements (avoids stealing focus from a field
@@ -18642,7 +18287,6 @@ async function renderAdminHeroes(body) {
   // ---- Per-generation star-shard stats & widget-level stats editors ----
   // Stats are identical for every hero in a generation, so these are edited
   // once per generation and apply to all heroes of that generation.
-  const gens = [...new Set(rows.map((r) => r.generation).filter((g) => g != null))].sort((a, b) => b - a);
   const statsWrap = document.createElement("div");
   body.appendChild(statsWrap);
 
