@@ -6893,11 +6893,15 @@ async function renderPacksPage() {
         }
         PACK_PLAN_CACHE.clear();
         if (typeof budgetInvalidate === "function") budgetInvalidate();
-        const payload = { title: t.title.trim() || "Table name here", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
         try {
+          // A new table is created once: changes made while that first save
+          // is still running wait for it, then update the created table
+          // (two creates would leave a duplicate table behind).
+          if (t._creating) await t._creating;
+          const payload = { title: t.title.trim() || "Table name here", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
           if (String(t.id).startsWith("new-")) {
-            const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
-            t.id = saved.id;
+            t._creating = sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) }).then(([saved]) => { t.id = saved.id; });
+            try { await t._creating; } finally { t._creating = null; }
           } else {
             await sb(`pack_tables?id=eq.${t.id}`, { method: "PATCH", body: JSON.stringify(payload) });
           }
@@ -7073,6 +7077,17 @@ async function renderPacksPage() {
         const insertAt = t.columns.length - 1;
         t.columns.splice(insertAt, 0, `#${t.columns.length - 1}`);
         t.rows.forEach((r) => r.cells.splice(insertAt, 0, ""));
+        // Column settings (price column, "Used for", daily flags) move with
+        // their columns, like removeColumn/moveColumn do.
+        await ensurePackLinks();
+        const l0 = PACK_LINKS[String(t.id)];
+        if (l0) {
+          const shift = (n) => (n >= insertAt ? n + 1 : n);
+          if (typeof l0.priceCol === "number") l0.priceCol = shift(l0.priceCol);
+          const cols = {}; Object.entries(l0.cols || {}).forEach(([k, v]) => { cols[shift(Number(k))] = v; }); l0.cols = cols;
+          if (l0.daily && Array.isArray(l0.daily.cols)) l0.daily.cols = l0.daily.cols.map(shift);
+          await savePackLinks();
+        }
         renderAll();
         await persistTable();
       });
@@ -7153,8 +7168,18 @@ async function renderPacksPage() {
         // (Amount at 0 and Gems at the end are always locked in place).
         const ci = t.columns.length - 2;
         if (ci <= 0) { toast("Nothing left to remove between Amount and Gems", true); return; }
+        await ensurePackLinks();
+        const l0 = PACK_LINKS[String(t.id)];
+        if (l0 && l0.priceCol === ci) { toast("That column is the price column - move it first", true); return; }
         t.columns.splice(ci, 1);
         t.rows.forEach((r) => r.cells.splice(ci, 1));
+        // Column settings move with their columns, like removeColumn does.
+        if (l0) {
+          if (l0.priceCol > ci) l0.priceCol--;
+          const cols = {}; Object.entries(l0.cols || {}).forEach(([k, v]) => { const n = Number(k); if (n < ci) cols[n] = v; else if (n > ci) cols[n - 1] = v; }); l0.cols = cols;
+          if (l0.daily && Array.isArray(l0.daily.cols)) l0.daily.cols = l0.daily.cols.filter((n) => n !== ci).map((n) => (n > ci ? n - 1 : n));
+          await savePackLinks();
+        }
         renderAll();
         await persistTable();
       });
@@ -7472,7 +7497,9 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
       const num = Number(val);
       if (Number.isNaN(num)) { toast("Enter a valid number", true); return; }
       try {
-        await sb(`buff_cells`, {
+        // Upsert on the (row_id, column_id) unique key, so an existing value
+        // is updated instead of the insert being rejected as a duplicate.
+        await sb(`buff_cells?on_conflict=row_id,column_id`, {
           method: "POST",
           headers: { Prefer: "resolution=merge-duplicates,return=representation" },
           body: JSON.stringify({ row_id: btn.dataset.row, column_id: cat.columns[0].id, value: num }),
@@ -16420,24 +16447,45 @@ async function renderAdminPackResources(body) {
       </div>` : ""}
     </div>`;
   let removedNow = cfg.removed.slice();
-  body.querySelectorAll("[data-resrestore]").forEach((b) => b.addEventListener("click", async () => {
-    removedNow = removedNow.filter((n) => n.toLowerCase() !== b.dataset.resrestore.toLowerCase());
-    await saveSiteConfig("pack_resources", { ...siteConfig("pack_resources", {}), removed: removedNow });
-    toast("Restored"); renderAdminPackResources(body);
-  }));
   const rowsEl = body.querySelector("#resRows");
+  // ▲/▼ on the first/last rows are disabled; recheck after rows change.
+  const refreshResButtons = () => {
+    const list = [...rowsEl.querySelectorAll("tr[data-resrow]")];
+    list.forEach((tr, i) => {
+      const up = tr.querySelector("[data-rowup]"), down = tr.querySelector("[data-rowdown]");
+      if (up) up.disabled = i === 0;
+      if (down) down.disabled = i === list.length - 1;
+    });
+  };
+  // Restore puts the item back in the table; like ✕, it's kept by Save all
+  // (saving here would also save unsaved ✕ removals, and the reload would
+  // drop any other unsaved edits).
+  body.querySelectorAll("[data-resrestore]").forEach((b) => b.addEventListener("click", () => {
+    const name = b.dataset.resrestore;
+    removedNow = removedNow.filter((n) => n.toLowerCase() !== name.toLowerCase());
+    const builtinName = PACK_RESOURCE_NAMES.find((n) => n.toLowerCase() === name.toLowerCase());
+    if (builtinName && !PACK_RESOURCE_HIDDEN.has(builtinName)) {
+      rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: builtinName, builtin: true }, rowsEl.children.length, rowsEl.children.length + 1));
+      wireAdminReorder(rowsEl, "data-resrow", null);
+      refreshResButtons();
+    }
+    b.remove();
+    toast("Restored - Save all to keep it");
+  }));
   wireAdminReorder(rowsEl, "data-resrow", null);
   body.querySelector("#resAdd").addEventListener("click", () => {
     rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: "", icon: "", contents: {}, builtin: false }, rowsEl.children.length, rowsEl.children.length + 1));
     rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
     // New row: its own move buttons / grip need wiring too.
     wireAdminReorder(rowsEl, "data-resrow", null);
+    refreshResButtons();
   });
   rowsEl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-resdel]"); if (!b) return;
     const tr = b.closest("tr");
     if (!tr.dataset.custom) { const n = tr.querySelector('[data-f="name"]').value; if (n && !removedNow.some((x) => x.toLowerCase() === n.toLowerCase())) removedNow.push(n); }
     tr.remove();
+    refreshResButtons();
   });
   body.querySelector("#resSave").addEventListener("click", async () => {
     const rows = [...rowsEl.querySelectorAll("[data-resrow]")];
@@ -16755,7 +16803,7 @@ async function renderAdminRoster(body) {
                 (r, idx) => `
               <tr data-rosterrow="${r.id}">
                 ${adminReorderCellHtml(r.id, idx, rows.length)}
-                <td style="padding:4px;"><input data-f="key" value="${esc(r.key)}" style="width:100px;" /></td>
+                <td style="padding:4px;"><input data-f="key" value="${esc(r.key)}" readonly title="The name links this expert to its affinity, skill and research data and to everyone's saved levels, so it can't be changed here." style="width:100px; opacity:0.75; cursor:not-allowed;" /></td>
                 <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="img" value="${esc(r.img || "")}" style="width:160px;" />${uploadBtnHtml()}</span></td>
                 <td style="padding:4px;"><input data-f="skill1" value="${esc(r.skill1 || "")}" style="width:110px;" /></td>
                 <td style="padding:4px;"><input data-f="skill2" value="${esc(r.skill2 || "")}" style="width:110px;" /></td>
@@ -16827,8 +16875,8 @@ async function renderAdminRoster(body) {
     await sb(`experts?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body_) });
   };
   wireAdminReorder(body, "data-rosterrow", async (orderedIds) => {
-    try { await saveAdminRowOrder("experts", rows, orderedIds); EXPERTS_ROSTER_LOADED = false; renderAdminRoster(body); }
-    catch (err) { toast("Couldn't reorder", true); }
+    try { await saveAdminRowOrderInPlace(body, "data-rosterrow", "experts", rows, orderedIds); EXPERTS_ROSTER_LOADED = false; }
+    catch (err) { toast("Couldn't reorder", true); renderAdminRoster(body); }
   });
   body.querySelectorAll("[data-rostersave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -17294,8 +17342,8 @@ async function renderAdminPets(body) {
     };
     currentPetRows = rows;
     wireAdminReorder(wrap, "data-petrow", async (orderedIds) => {
-      try { await saveAdminRowOrder("pets_nodes", rows, orderedIds); PETS_NODES_CACHE = null; loadPetRows(); }
-      catch (err) { toast("Couldn't reorder", true); }
+      try { await saveAdminRowOrderInPlace(wrap, "data-petrow", "pets_nodes", rows, orderedIds); PETS_NODES_CACHE = null; }
+      catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
     wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -17366,6 +17414,7 @@ function adminReorderCellHtml(id, idx, n) {
   </td>`;
 }
 function wireAdminReorder(container, rowAttr, onReorder) {
+  let reorderQueue = Promise.resolve();
   const rowsOf = () => [...container.querySelectorAll(`tr[${rowAttr}]`)];
   const idOf = (tr) => tr.getAttribute(rowAttr);
   const refreshButtons = () => {
@@ -17384,7 +17433,8 @@ function wireAdminReorder(container, rowAttr, onReorder) {
     const ref = others[toIdx] || null;
     tr.parentNode.insertBefore(tr, ref);
     refreshButtons();
-    if (onReorder) onReorder(rowsOf().map(idOf));
+    // One save at a time, in click order, so quick moves can't overlap.
+    if (onReorder) { const ids = rowsOf().map(idOf); reorderQueue = reorderQueue.then(() => onReorder(ids)).catch(() => {}); }
   };
   // Safe to call again after rows are added: already-wired elements are skipped.
   const fresh = (sel) => [...container.querySelectorAll(sel)].filter((el) => !el.dataset.rw && (el.dataset.rw = "1"));
@@ -17437,12 +17487,29 @@ async function saveAdminRowOrder(table, rows, orderedIds) {
   const existing = rows.map((r) => Number(r.sort_order)).filter((v) => Number.isFinite(v)).sort((x, y) => x - y);
   const unique = existing.length === rows.length && existing.every((v, i) => i === 0 || v !== existing[i - 1]);
   const patches = [];
+  const changed = [];
   orderedIds.forEach((id, idx) => {
     const r = byId.get(String(id));
     const val = unique ? existing[idx] : idx;
-    if (r && Number(r.sort_order) !== val) patches.push(sb(`${table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ sort_order: val }) }));
+    if (r && Number(r.sort_order) !== val) {
+      changed.push([r, val]);
+      patches.push(sb(`${table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ sort_order: val }) }));
+    }
   });
   await Promise.all(patches);
+  // Keep the in-memory rows current, so the next move starts from here.
+  changed.forEach(([r, val]) => { r.sort_order = val; });
+}
+// Saves a new row order without reloading the table: the rows were
+// already moved on screen, so only their hidden order fields need the new
+// numbers. Reloading would throw away edits not saved yet in other rows.
+async function saveAdminRowOrderInPlace(container, rowAttr, table, rows, orderedIds) {
+  await saveAdminRowOrder(table, rows, orderedIds);
+  rows.forEach((r) => {
+    const tr = [...container.querySelectorAll(`tr[${rowAttr}]`)].find((x) => x.getAttribute(rowAttr) === String(r.id));
+    const input = tr && tr.querySelector('input[data-f="sort_order"]');
+    if (input) input.value = r.sort_order ?? "";
+  });
 }
 // Generic cell for a column: the order column becomes a hidden field
 // (kept so Save still sends it), everything else a normal input.
@@ -17542,11 +17609,11 @@ async function renderAdminFlatLevels(body, cfg) {
   if (canReorder) {
     wireAdminReorder(body, "data-flatrow", async (orderedIds) => {
       try {
-        await saveAdminRowOrder(cfg.table, rows, orderedIds);
+        await saveAdminRowOrderInPlace(body, "data-flatrow", cfg.table, rows, orderedIds);
         if (cfg.onSave) cfg.onSave();
-        renderAdminFlatLevels(body, cfg);
       } catch (err) {
         toast("Couldn't reorder", true);
+        renderAdminFlatLevels(body, cfg);
       }
     });
   }
@@ -17671,8 +17738,8 @@ async function renderAdminVip(body) {
     VIP_ROWS_CACHE = null;
   };
   wireAdminReorder(body, "data-viprow", async (orderedIds) => {
-    try { await saveAdminRowOrder("buff_rows", rows, orderedIds); VIP_ROWS_CACHE = null; renderAdminVip(body); }
-    catch (err) { toast("Couldn't reorder", true); }
+    try { await saveAdminRowOrderInPlace(body, "data-viprow", "buff_rows", rows, orderedIds); VIP_ROWS_CACHE = null; }
+    catch (err) { toast("Couldn't reorder", true); renderAdminVip(body); }
   });
   body.querySelectorAll("[data-vipsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -17789,8 +17856,8 @@ async function renderAdminSkinsCategory(body, category) {
   `;
 
   wireAdminReorder(body, "data-skinrow", async (orderedIds) => {
-    try { await saveAdminRowOrder("skins", rows, orderedIds); renderAdminSkinsCategory(body, category); }
-    catch (err) { toast("Couldn't reorder", true); }
+    try { await saveAdminRowOrderInPlace(body, "data-skinrow", "skins", rows, orderedIds); }
+    catch (err) { toast("Couldn't reorder", true); renderAdminSkinsCategory(body, category); }
   });
 
   const saveSkinRow = async (id) => {
@@ -18008,8 +18075,8 @@ async function renderAdminProgression(body, nameFilter) {
     `;
 
     wireAdminReorder(wrap, "data-progrow", async (orderedIds) => {
-      try { await saveAdminRowOrder("progression_rows", rows, orderedIds); invalidateCaches(); loadRows(); }
-      catch (err) { toast("Couldn't reorder", true); }
+      try { await saveAdminRowOrderInPlace(wrap, "data-progrow", "progression_rows", rows, orderedIds); invalidateCaches(); }
+      catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
     wrap.querySelectorAll("[data-progsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -18229,8 +18296,8 @@ async function renderAdminResearch(body) {
     `;
 
     wireAdminReorder(wrap, "data-resrow", async (orderedIds) => {
-      try { await saveAdminRowOrder(cfg.table, rows, orderedIds); cfg.invalidate(); loadRows(); }
-      catch (err) { toast("Couldn't reorder", true); }
+      try { await saveAdminRowOrderInPlace(wrap, "data-resrow", cfg.table, rows, orderedIds); cfg.invalidate(); }
+      catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
     wrap.querySelectorAll("[data-ressave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -18388,6 +18455,10 @@ async function renderAdminHeroes(body) {
       if ("widget_lethality" in patch) patch.widget_health = patch.widget_lethality;
       try {
         await sb(`heroes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+        // Keep the local copy current, or picking this hero again shows the
+        // old values (and saving then would put them back).
+        const saved = rows.find((x) => x.id === id);
+        if (saved) Object.assign(saved, patch);
         toast("Saved");
       } catch (err) {
         toast("Couldn't save", true);
@@ -18442,19 +18513,24 @@ async function renderAdminHeroes(body) {
   body.appendChild(statsWrap);
 
   async function renderGenStats() {
+    // The generation this table is for: if another one is picked while
+    // loading, this (older) load stops instead of showing or saving its
+    // stats under the new generation.
+    const gen = selectedGen;
     const [starRows, widgetRows] = await Promise.all([
-      sb(`hero_gen_star_stats?generation=eq.${selectedGen}&select=step,atk_pct,def_pct,shards&order=step`),
-      sb(`hero_gen_widget_stats?generation=eq.${selectedGen}&select=level,leth_pct,hp_pct&order=level`),
+      sb(`hero_gen_star_stats?generation=eq.${gen}&select=step,atk_pct,def_pct,shards&order=step`),
+      sb(`hero_gen_widget_stats?generation=eq.${gen}&select=level,leth_pct,hp_pct&order=level`),
     ]);
+    if (gen !== selectedGen) return;
     const starBy = {}; starRows.forEach((r) => (starBy[r.step] = r));
     const widgetBy = {}; widgetRows.forEach((r) => (widgetBy[r.level] = r));
     const th = (h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`;
-    const genHeroes = rows.filter((r) => r.generation === selectedGen).map((r) => r.name).join(", ");
+    const genHeroes = rows.filter((r) => r.generation === gen).map((r) => r.name).join(", ");
     statsWrap.innerHTML = `
       <div class="panel" style="margin-top:16px;">
         <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:6px;">
           <h2 style="margin:0;">Star shard & widget stats</h2>
-          <span class="meta" style="font-size:12px; font-weight:600; color:var(--frost);">Gen ${selectedGen}</span>
+          <span class="meta" style="font-size:12px; font-weight:600; color:var(--frost);">Gen ${gen}</span>
           <button class="btn small" id="adminGenStatsSave">Save all</button>
           <span style="display:inline-flex; align-items:center; gap:6px; margin-left:auto;">
             <span class="meta" style="font-size:11px;">Max ATK&amp;DEF %</span>
@@ -18521,12 +18597,12 @@ async function renderAdminHeroes(body) {
       statsWrap.querySelectorAll("tr[data-starstep]").forEach((tr) => {
         const g = (f) => num(tr.querySelector(`[data-sf="${f}"]`).value);
         const atk = g("atk_pct"), sh = g("shards");
-        if (atk != null || sh != null) starPayload.push({ generation: selectedGen, step: Number(tr.dataset.starstep), atk_pct: atk, def_pct: atk, shards: sh });
+        if (atk != null || sh != null) starPayload.push({ generation: gen, step: Number(tr.dataset.starstep), atk_pct: atk, def_pct: atk, shards: sh });
       });
       statsWrap.querySelectorAll("tr[data-widgetlvl]").forEach((tr) => {
         const g = (f) => num(tr.querySelector(`[data-wf="${f}"]`).value);
         const le = g("leth_pct");
-        if (le != null) widgetPayload.push({ generation: selectedGen, level: Number(tr.dataset.widgetlvl), leth_pct: le, hp_pct: le });
+        if (le != null) widgetPayload.push({ generation: gen, level: Number(tr.dataset.widgetlvl), leth_pct: le, hp_pct: le });
       });
       try {
         if (starPayload.length) await sb(`hero_gen_star_stats`, { method: "POST", body: JSON.stringify(starPayload), prefer: "resolution=merge-duplicates,return=minimal" });
@@ -18536,8 +18612,9 @@ async function renderAdminHeroes(body) {
         const heroPatch = {};
         if (maxStar) { heroPatch.exp_attack = maxStar.atk_pct; heroPatch.exp_defense = maxStar.def_pct; }
         if (maxW) { heroPatch.widget_lethality = maxW.leth_pct; heroPatch.widget_health = maxW.hp_pct; }
-        if (Object.keys(heroPatch).length) await sb(`heroes?generation=eq.${selectedGen}`, { method: "PATCH", body: JSON.stringify(heroPatch), prefer: "return=minimal" });
-        toast(`Gen ${selectedGen} stats saved`);
+        if (Object.keys(heroPatch).length) await sb(`heroes?generation=eq.${gen}`, { method: "PATCH", body: JSON.stringify(heroPatch), prefer: "return=minimal" });
+        rows.forEach((r) => { if (r.generation === gen) Object.assign(r, heroPatch); });
+        toast(`Gen ${gen} stats saved`);
       } catch (err) {
         toast("Couldn't save stats", true);
       }
@@ -18701,7 +18778,7 @@ const ADMIN_RESERVED_BUFF_CATEGORIES = new Set([
 ]);
 async function renderAdminHeroStars(body) {
   await ensureBuffTable();
-  const columns = await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name&order=sort_order.asc`);
+  const columns = await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order&order=sort_order.asc`);
   const heroCols = columns.filter((c) => !ADMIN_RESERVED_BUFF_CATEGORIES.has(c.name));
   if (!ADMIN_ACTIVE_HERO_STAR_COL || !heroCols.find((c) => c.id === ADMIN_ACTIVE_HERO_STAR_COL)) {
     ADMIN_ACTIVE_HERO_STAR_COL = (heroCols.find((c) => c.name === "Jero") || heroCols[0])?.id;
@@ -19001,8 +19078,8 @@ async function renderAdminPetsRefine(body) {
     `;
 
     wireAdminReorder(wrap, "data-petrefinerow", async (orderedIds) => {
-      try { await saveAdminRowOrder("pet_refine_nodes", rows, orderedIds); PET_REFINE_CACHE = null; loadRefineRows(); }
-      catch (err) { toast("Couldn't reorder", true); }
+      try { await saveAdminRowOrderInPlace(wrap, "data-petrefinerow", "pet_refine_nodes", rows, orderedIds); PET_REFINE_CACHE = null; }
+      catch (err) { toast("Couldn't reorder", true); loadRefineRows(); }
     });
     wrap.querySelectorAll("[data-petrefinesave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
