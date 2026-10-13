@@ -37,7 +37,13 @@
   // Clickjacking protection: refuse to run inside another site's frame.
   if (window.top !== window.self) { try { window.top.location = window.location; } catch (e) { document.documentElement.style.display = "none"; } }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- Open the connections to the library CDN and the database early, so the
+     first requests don't also wait for DNS + TLS set-up. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://hzourauekkiorojrhpko.supabase.co" crossorigin />
+<!-- Exact version: an exact-version URL never changes, so browsers (and the
+     service worker) can keep it cached instead of re-checking "@2". -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
 <style>
   /* ============================================================
      GLOBAL THEME & LAYOUT
@@ -2730,7 +2736,11 @@ function localizeDom(root) {
   if (LANG === "en" || !root) return;
   if (root.nodeType === 3) { const v = uiText(root.nodeValue); if (v !== root.nodeValue && !(root.parentElement && root.parentElement.closest("[data-noloc],script,style,textarea"))) uiSetText(root, v); return; }
   if (root.nodeType !== 1 || root.closest("[data-noloc]")) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement && n.parentElement.closest("[data-noloc],script,style,textarea") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+  // Speed: checking every text node's ancestors is costly on big pages (Hero
+  // Gear has thousands of options). When nothing inside or around this root
+  // is excluded, every text node is accepted anyway, so skip the per-node check.
+  const excludedAround = root.closest("script,style,textarea") || root.querySelector("[data-noloc],script,style,textarea");
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, excludedAround ? { acceptNode: (n) => (n.parentElement && n.parentElement.closest("[data-noloc],script,style,textarea") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) } : null);
   const nodes = []; let n; while ((n = walker.nextNode())) nodes.push(n);
   nodes.forEach((tn) => { const v = uiText(tn.nodeValue); if (v !== tn.nodeValue) uiSetText(tn, v); });
   const els = root.querySelectorAll ? [root, ...root.querySelectorAll("[title],[placeholder],[aria-label]")] : [];
@@ -6043,7 +6053,15 @@ async function renderPackCalendarPage() {
   draw();
   // Rotating the device changes which layout fits, so draw again - but only
   // while this page is still the one on screen.
-  const onResize = () => { if (TAB === "packcalendar") draw(); else window.removeEventListener("resize", onResize); };
+  // Phones fire "resize" whenever the address bar shows/hides while
+  // scrolling; only a real width change (e.g. rotating) needs a redraw.
+  let calWidth = window.innerWidth;
+  const onResize = () => {
+    if (TAB !== "packcalendar") { window.removeEventListener("resize", onResize); return; }
+    if (window.innerWidth === calWidth) return;
+    calWidth = window.innerWidth;
+    draw();
+  };
   window.removeEventListener("resize", PACK_CAL_RESIZE);
   PACK_CAL_RESIZE = onResize;
   window.addEventListener("resize", onResize);
@@ -6488,6 +6506,20 @@ async function renderPacksPage() {
     </select>`;
   }
   function packLinkEditorHtml(tb) {
+    // Visitors never see this editor (applyPacksReadOnly removes every
+    // [data-packlink]), so don't build it for them: with every table listing
+    // every other one under "Same pack", it was thousands of hidden elements.
+    if (!IS_OWNER) return "";
+    // It starts closed, so only its title line is built here; the full
+    // editor is built (and wired) the first time it's opened - see
+    // wirePackLinkEditors. Building all of them made every redraw slow.
+    const link = packLinkFor(tb.id);
+    return `
+      <details class="pack-link" data-packlink="${esc(tb.id)}" data-packlinklazy style="margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
+        <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${packGroupsChecked(link.pages) ? ` (${packGroupsChecked(link.pages)})` : ""}</summary>
+      </details>`;
+  }
+  function packLinkEditorFullHtml(tb) {
     const link = packLinkFor(tb.id);
     const resOpts = (selected) =>
       `<option value="">${esc(t("pack_col_unused"))}</option>` +
@@ -6647,8 +6679,22 @@ async function renderPacksPage() {
         </div>
       </details>`;
   }
-  function wirePackLinkEditors() {
-    listEl.querySelectorAll("[data-packlink]").forEach((box) => {
+  function wirePackLinkEditors(boxes) {
+    if (!boxes) {
+      // Closed editors are built on first open, then wired like the rest.
+      listEl.querySelectorAll("[data-packlinklazy]").forEach((shell) => shell.addEventListener("toggle", () => {
+        if (!shell.open || !shell.isConnected) return;
+        const tb = tables.find((x) => String(x.id) === shell.dataset.packlink);
+        if (!tb) return;
+        const tmp = document.createElement("div");
+        tmp.innerHTML = packLinkEditorFullHtml(tb);
+        const full = tmp.querySelector("[data-packlink]");
+        full.open = true;
+        shell.replaceWith(full);
+        wirePackLinkEditors([full]);
+      }));
+    }
+    (boxes || listEl.querySelectorAll("[data-packlink]:not([data-packlinklazy])")).forEach((box) => {
       const id = box.dataset.packlink;
       const current = () => {
         PACK_LINKS[id] = PACK_LINKS[id] || { pages: [], priceCol: 0, cols: {} };
@@ -7978,18 +8024,29 @@ function packAllResourceNames() {
   cfg.custom.forEach((x) => { if (!out.some((n) => n.toLowerCase() === String(x.name).toLowerCase())) out.push(x.name); });
   return out;
 }
+// Speed: this list is built for every resource dropdown on the Packs page
+// (hundreds per redraw). The names are sorted once per language/order and
+// reused, with one shared collator (calling localeCompare with options
+// builds a new one on every comparison, which made each redraw take ~1 s
+// on a phone). Same order as before: Intl.Collator#compare matches
+// localeCompare with the same locale/options.
+const PACK_RESOURCE_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+let PACK_RESOURCE_SORTED = { key: null, list: [] };
 function packResourceChoices(current) {
   const cfg = packResourceConfig();
   const hiddenLower = new Set([...cfg.hidden, ...cfg.removed].map((n) => String(n).toLowerCase()));
   const cur = current ? String(current).toLowerCase() : "";
-  const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
-  return packAllResourceNames()
-    .filter((n) => (!PACK_RESOURCE_HIDDEN.has(n) && !hiddenLower.has(n.toLowerCase())) || n.toLowerCase() === cur)
-    .sort((a, b) => {
-      const oa = orderIdx(a), ob = orderIdx(b);
-      if (oa !== ob) return oa - ob;
-      return materialDisplayName(a).localeCompare(materialDisplayName(b), undefined, { numeric: true, sensitivity: "base" });
-    });
+  const names = packAllResourceNames();
+  const key = `${LANG}\u0001${cfg.order.join("\u0002")}\u0001${names.join("\u0002")}`;
+  if (PACK_RESOURCE_SORTED.key !== key) {
+    const orderOf = new Map();
+    cfg.order.forEach((o, i) => { const k = String(o).toLowerCase(); if (!orderOf.has(k)) orderOf.set(k, i); });
+    const items = names.map((n) => ({ n, o: orderOf.has(n.toLowerCase()) ? orderOf.get(n.toLowerCase()) : Infinity, d: materialDisplayName(n) }));
+    items.sort((a, b) => (a.o !== b.o ? a.o - b.o : PACK_RESOURCE_COLLATOR.compare(a.d, b.d)));
+    PACK_RESOURCE_SORTED = { key, list: items.map((x) => x.n) };
+  }
+  // Filtering the sorted list keeps the same order as filtering first.
+  return PACK_RESOURCE_SORTED.list.filter((n) => (!PACK_RESOURCE_HIDDEN.has(n) && !hiddenLower.has(n.toLowerCase())) || n.toLowerCase() === cur);
 }
 // Columns named "Gems" (or the price column) never grant a trackable
 // resource, so they're skipped everywhere a resource is chosen.
@@ -19594,6 +19651,12 @@ if ("serviceWorker" in navigator) {
       </div>`;
     return;
   }
+  // Speed: start downloading every saved calculator state, the commander
+  // name and the category list right away - none of them needs the
+  // visibility/site settings below, so they don't wait for them.
+  preloadCalcStates();
+  loadCommander();
+  const categoriesLoaded = loadBuffCategories();
   await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
   renderOwnerLoginUI();
   document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
@@ -19601,15 +19664,10 @@ if ("serviceWorker" in navigator) {
   applyNavLanguage();
   renderLanguageSwitcher();
   startUiLocalizer();
-  // Speed: start downloading every saved calculator state right away, in
-  // parallel with everything else below.
-  preloadCalcStates();
-  loadCommander();
   document.querySelectorAll("button[data-tab]").forEach((x) => {
     x.classList.toggle("active", x.dataset.tab === TAB);
   });
   history.replaceState({ tab: TAB }, "", location.pathname + location.search);
-  const categoriesLoaded = loadBuffCategories();
   if (TAB === "overview") {
     // The Dashboard loads what it needs itself, so it doesn't have to wait
     // for the category list first.
