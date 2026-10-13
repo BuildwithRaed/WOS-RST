@@ -3627,10 +3627,12 @@ function aboutText(cfg, field) {
   return t("about_default_" + field);
 }
 async function renderAboutPage() {
+  const seq = RENDER_SEQ;
   await ensureSiteConfig();
   const cfg = siteConfig("about", {}) || {};
   const showCards = cfg.cards !== false;
   const cards = [["about_card_stats", "about_card_stats_d"], ["about_card_backpack", "about_card_backpack_d"], ["about_card_budgets", "about_card_budgets_d"], ["about_card_mypacks", "about_card_mypacks_d"]];
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("about_title"))}</h2><p class="desc">${esc(t("about_desc"))}</p></div></div>
     <div style="max-width:900px;">
@@ -3697,10 +3699,12 @@ async function renderAboutPage() {
   });
 }
 async function renderContactPage() {
+  const seq = RENDER_SEQ;
   await ensureSiteConfig();
   const cfg = siteConfig("contact", {}) || {};
   const email = String(cfg.email || "").trim();
   const msg = String(cfg.message || "").trim() || t("contact_default_msg");
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("contact_title"))}</h2></div></div>
     <div class="panel" style="max-width:520px;">
@@ -3896,8 +3900,13 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
   }
 });
 
+// Bumped on every page render. Pages wait for data before drawing, so each
+// one checks this after loading: if a newer render started meanwhile (the
+// user switched page), the older one stops instead of drawing over it.
+let RENDER_SEQ = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
+  const seq = ++RENDER_SEQ;
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
@@ -3940,6 +3949,7 @@ async function render() {
       else await renderCategoryPage(catName);
     }
   } catch (e) {
+    if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">Something went wrong loading this tab.</div>${esc(e.message)}</div></div>`;
   }
 }
@@ -3972,6 +3982,7 @@ function displaySourceName(key) {
 }
 
 async function renderOverview(opts = {}) {
+  const seq = RENDER_SEQ;
   // Speed: everything the Dashboard needs is requested in one parallel batch
   // (saved states come from the shared calc_state cache), instead of several
   // waves of requests that each waited for the previous one to finish.
@@ -4473,6 +4484,7 @@ async function renderOverview(opts = {}) {
     const avgMax = maxVals.length ? maxVals.reduce((a, b) => a + b, 0) / maxVals.length : 0;
     return { ...s, avg, avgMax };
   });
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -4983,9 +4995,20 @@ let HERO_GEAR_TABLES_CACHE = null;
 // Renders the Quick Select + per-piece calculator + totals + stats.
 // Loads + caches Hero Gear progression tables and any saved selections.
 // Safe to call from anywhere (Hero Gear Calc page or the Dashboard) since
-// it's a no-op once HERO_GEAR_TABLES_CACHE is populated.
+// it's a no-op once HERO_GEAR_TABLES_CACHE is populated. Callers arriving
+// while it's still loading wait for the same load, so nobody sees (or
+// saves over) the sets before the saved levels are applied; a failed load
+// is retried on the next call.
+let HERO_GEAR_LOADING = null;
 async function ensureHeroGearData() {
+  if (HERO_GEAR_LOADING) return HERO_GEAR_LOADING;
   if (HERO_GEAR_TABLES_CACHE) return;
+  HERO_GEAR_LOADING = loadHeroGearData()
+    .catch((e) => { HERO_GEAR_TABLES_CACHE = null; throw e; })
+    .finally(() => { HERO_GEAR_LOADING = null; });
+  return HERO_GEAR_LOADING;
+}
+async function loadHeroGearData() {
   const capsPromise = ensureGearCaps();
   const results = await Promise.all(
     ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(async (name) => {
@@ -5034,9 +5057,11 @@ async function ensureHeroGearData() {
 
 // Renders the Quick Select + per-piece calculator + totals + stats.
 async function renderGearLevelingGroup(target) {
+  const seq = RENDER_SEQ;
   await ensureHeroGearData();
 
   const enhanceCapNow = Number((GEAR_CAPS || {}).hero_enhance) === 100 ? 100 : 200;
+  if (seq !== RENDER_SEQ) return;
   target.innerHTML = `
     ${capPanelHtml("heroEnhanceCapSelect", t("cap_hero_enhance_label"), [100, 200].map((n) => `<option value="${n}" ${n === enhanceCapNow ? "selected" : ""}>${n}</option>`).join(""))}
     <div class="panel">
@@ -5802,10 +5827,12 @@ const PACK_CAL_ROWS = 6; // rows shown per week before "+N more"
 let PACK_CAL_OPEN_WEEKS = new Set();
 
 async function renderPackCalendarPage() {
+  const seq = RENDER_SEQ;
   const [tablesLoaded] = await Promise.all([
     sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,sort_order&order=sort_order.asc`),
     ensurePackLinks(),
   ]);
+  if (seq !== RENDER_SEQ) return;
   const tables = tablesLoaded.filter((tb) => {
     const l = packLinkFor(tb.id);
     return typeof l.reset === "number" && l.reset > 0 && !l.template && (IS_OWNER || !l.hideVisitors);
@@ -6004,6 +6031,7 @@ async function renderPackCalendarPage() {
 }
 
 async function renderPacksPage() {
+  const seq = RENDER_SEQ;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -6031,6 +6059,7 @@ async function renderPacksPage() {
     ensurePackLinks(),
     ensureSiteConfig(),
   ]);
+  if (seq !== RENDER_SEQ) return;
   let tables = packApplyMyEdits(tablesLoaded).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
   // Visitors copy the templates in "My packs"; they aren't listed as packs.
   const templateTables = tables.filter((tb) => packLinkFor(tb.id).template);
@@ -7232,12 +7261,14 @@ async function renderPacksPage() {
 // Item catalog + quantity-on-hand tracker.
 // ============================================================
 async function renderInventory() {
+  const seq = RENDER_SEQ;
   const [items, inventory] = await Promise.all([
     sb(`items?select=id,name,category,tier&order=name.asc`),
     sb(`player_inventory?select=id,item_id,quantity&user_id=eq.${USER_ID}`),
   ]);
   const invByItem = Object.fromEntries(inventory.map((i) => [i.item_id, i]));
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="panel">
       <h2>${esc(t("your_backpack"))}</h2>
@@ -7372,8 +7403,10 @@ async function renderCategoryPage(categoryName) {
 // element, with inline add/update controls. Reused by top-level
 // category pages, Heroes sub-nav, and grouped sub-nav pages.
 async function renderCategoryInto(target, categoryName, rerenderFn) {
+  const seq = RENDER_SEQ;
   await ensureBuffTable();
   const cat = BUFF_CATEGORIES.find((c) => c.name === categoryName);
+  if (seq !== RENDER_SEQ) return;
   if (!cat) {
     target.innerHTML = `<div class="empty">Category not found.</div>`;
     return;
@@ -7381,6 +7414,7 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
   const refresh = rerenderFn || ((name) => renderCategoryInto(target, name, rerenderFn));
   const rows = await sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`);
 
+  if (seq !== RENDER_SEQ) return;
   target.innerHTML = `
     <div class="panel">
       <h2>${esc(categoryName)}</h2>
@@ -7462,6 +7496,7 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
 // Generic "parent category with sub-tab children" page, e.g.
 // War Acd. -> T11/T12. Driven by CATEGORY_GROUPS.
 async function renderGroupPage(parentName) {
+  const seq = RENDER_SEQ;
   const children = CATEGORY_GROUPS[parentName];
   const subtabs = [parentName, ...children];
   const current = GROUP_SUBTAB[parentName] || parentName;
@@ -7488,6 +7523,7 @@ async function renderGroupPage(parentName) {
   if (!BUFF_CATEGORIES.some((c) => c.name === current)) {
     await loadBuffCategories();
   }
+  if (seq !== RENDER_SEQ) return;
   const sub = document.getElementById("groupSubContent");
   await renderCategoryInto(sub, current, () => renderGroupPage(parentName));
 }
@@ -7697,11 +7733,18 @@ function capPanelHtml(id, label, optionsHtml) {
 // Renders the 3-troop-type x 2-piece x 3-charm-slot calculator,
 // each slot with its own current\u2192target level pair.
 let CHARM_STATE_LOADED = false;
+let CHARM_STATE_PROMISE = null;
 // Loads any saved Charm selections into CHARM_CALC_STATE. Safe to call
-// from anywhere; only fetches once per session.
+// from anywhere; only fetches once per session. Callers running at the
+// same time share one load (so nobody sees the state before the saved
+// selections are applied), and a failed load is retried on the next call.
 async function ensureCharmData() {
-  if (CHARM_STATE_LOADED) return;
+  if (CHARM_STATE_LOADED) return CHARM_STATE_PROMISE;
   CHARM_STATE_LOADED = true;
+  CHARM_STATE_PROMISE = loadCharmData().catch((e) => { CHARM_STATE_LOADED = false; throw e; });
+  return CHARM_STATE_PROMISE;
+}
+async function loadCharmData() {
   await Promise.all([ensureCharmLevelsData(), ensureGearCaps()]);
   const saved = await loadCalcState("charm");
   if (!saved && !IS_OWNER) CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((slot) => { slot.target = slot.current; }));
@@ -9643,6 +9686,7 @@ function rfcAllPlans() {
 }
 let RFC_LAB_STATE = null; // { budget, need, owned }
 async function renderRfcLabPage() {
+  const seq = RENDER_SEQ;
   if (!RFC_LAB_STATE) {
     const saved = (await loadCalcState("rfc_lab")) || {};
     RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
@@ -9704,6 +9748,7 @@ async function renderRfcLabPage() {
         <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_to_target"))}</th>
       </tr></thead>
       <tbody>${bestByTier.map((b, i) => planRow(`${t("rfc_minimal")} T${i + 1}`, b.min) + planRow(`${t("rfc_maximum")} T${i + 1}`, b.max)).join("")}</tbody></table></div>`;
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("rfc_title"))}</h2><p class="desc">${esc(t("rfc_desc"))}</p></div></div>
     <div class="panel" style="margin-bottom:16px;">
@@ -10781,7 +10826,7 @@ async function renderBudgetsPage(opts = {}) {
   if (TAB !== "budgets") return;
   const pagesRaw = pages;
   // Pages the combined plan had to leave out get their own plan.
-  combinedRaw.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combined.droppedPlans && combined.droppedPlans[k]) Object.assign(pg, combined.droppedPlans[k]); });
+  combinedRaw.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combinedRaw.droppedPlans && combinedRaw.droppedPlans[k]) Object.assign(pg, combinedRaw.droppedPlans[k]); });
   BUDGET_DATA = { dashStats, pages: pagesRaw, targetDays, combined: combinedRaw, selSig };
   // Fastest / By your target / Cheapest cards: "main" is the plan Budgets
   // picks (by the target when reachable, otherwise the cheapest). Tapping a
@@ -11159,8 +11204,10 @@ function wireIndexSwipe(el, count, activeIndex, onNavigate) {
 }
 
 async function renderCharmsCalc() {
+  const seq = RENDER_SEQ;
   await ensureCharmData();
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     ${capPanelHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.filter((l) => l !== "0").map((l) => `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}>${esc(l)}</option>`).join(""))}
     <div class="panel">
@@ -11397,7 +11444,9 @@ const CHIEF_GEAR_ICONS = {
 };
 
 async function renderChiefGearCalc() {
+  const seq = RENDER_SEQ;
   const rows = await loadChiefGearRows();
+  if (seq !== RENDER_SEQ) return;
   if (!rows.length) {
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_chief_gear_data"))}</div></div></div>`;
     return;
@@ -12010,6 +12059,7 @@ let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
 // Renders totals-by-bonus-type, filter bar, and the category
 // sections of skin cards (click a card to toggle owned status).
 async function renderSkinGallery() {
+  const seq = RENDER_SEQ;
   const [ISLAND_CATEGORIES, , allSkinsRaw] = await Promise.all([
     ensureIslandCategories(),
     ensureGalleryUncounted(),
@@ -12028,6 +12078,7 @@ async function renderSkinGallery() {
     return ia - ib;
   });
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -12066,6 +12117,7 @@ async function renderSkinGallery() {
   renderCategorySwitcher(document.getElementById("skinCatSwitcher"), categories, SKIN_FILTER.category, onSkinCatSelect);
 
   const globeLevelSaved = (await loadCalcState("skin_globe_level")) || { level: 0 };
+  if (seq !== RENDER_SEQ) return;
   const globeLevelSelect = document.getElementById("globeLevelSelect");
   globeLevelSelect.value = globeLevelSaved.level;
   const GLOBE_LEVEL_ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI" };
@@ -12274,6 +12326,7 @@ async function renderSkinGallery() {
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 
 async function renderIslandGallery() {
+  const seq = RENDER_SEQ;
   const [islandCats] = await Promise.all([
     sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`),
     ensureGalleryUncounted(),
@@ -12308,6 +12361,7 @@ async function renderIslandGallery() {
     return ia - ib;
   });
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -12765,7 +12819,9 @@ async function ensureVipData() {
 }
 
 async function renderVipTierTable(target) {
+  const seq = RENDER_SEQ;
   let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
+  if (seq !== RENDER_SEQ) return;
   if (!table) {
     target.innerHTML = `<div class="empty">${esc(t("vip_tier_not_found"))}</div>`;
     return;
@@ -12775,6 +12831,7 @@ async function renderVipTierTable(target) {
     sb(`buff_rows?table_id=eq.${table.id}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`),
   ]);
 
+  if (seq !== RENDER_SEQ) return;
   target.innerHTML = `
     <div class="panel">
       <h2>${esc(t("vip_tier_title"))}</h2>
@@ -12921,6 +12978,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
 // Two dropdowns, Attack and Defense, 2%-14% in 2% steps.
 // ============================================================
 async function renderAlbumTundraPage() {
+  const seq = RENDER_SEQ;
   const rows = await sb(`tundra_album_levels?select=stat_type,value_pct&order=sort_order.asc`);
   const OPTIONS_BY_STAT = { Attack: [], Defense: [] };
   rows.forEach((r) => {
@@ -12928,6 +12986,7 @@ async function renderAlbumTundraPage() {
   });
   const saved = (await loadCalcState("album_tundra")) || { Attack: OPTIONS_BY_STAT.Attack[0] || 0, Defense: OPTIONS_BY_STAT.Defense[0] || 0 };
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -12981,6 +13040,7 @@ async function renderAlbumTundraPage() {
 // Health caps lower, at 2%-4%.
 // ============================================================
 async function renderCollectionGalleryPage() {
+  const seq = RENDER_SEQ;
   const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
   const rows = await sb(`collection_gallery_levels?select=stat_type,value_pct&order=sort_order.asc`);
   const optionsByStat = {};
@@ -12993,6 +13053,7 @@ async function renderCollectionGalleryPage() {
   STATS.forEach((s) => (defaults[s.key] = s.options[0] || 0));
   const saved = (await loadCalcState("collection_gallery")) || defaults;
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -13043,8 +13104,10 @@ async function renderExtraBonusHeroes() {
 }
 
 async function renderAllianceTechPage() {
+  const seq = RENDER_SEQ;
   const items = await sb(`skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech&select=id,name,bonus_type,bonus_value,current_level,max_level&order=sort_order.asc`);
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -13413,10 +13476,12 @@ function smallResourceCard(icon, name, value) {
 }
 
 async function renderT11HeliosPage() {
+  const seq = RENDER_SEQ;
   await ensureT11StateData();
   await ensureResearchSpeedData();
   await ensureResearchPageCountedData();
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -13926,6 +13991,7 @@ const EXPERT_INVENTORY_ICONS = {
 
 const EXPERT_RESEARCH_STAT_LABEL = { ATK: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
 async function renderExpertsResearchPage() {
+  const seq = RENDER_SEQ;
   await ensureExpertsRosterGlobal();
   const saved = (await loadCalcState("experts_research")) || {};
   // Shared with Experts Level's "Your Inventory" - same sigil pool covers
@@ -14047,6 +14113,7 @@ async function renderExpertsResearchPage() {
     return { sigil, stats };
   }
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -14400,12 +14467,14 @@ async function renderExpertsResearchPage() {
 }
 
 async function renderExpertsPage() {
+  const seq = RENDER_SEQ;
   // Experts hidden from visitors (Admin → Visibility / the eye on a card)
   // stay out of everything on this page for them: cards, totals, backpack.
   await ensureExpertsRosterGlobal();
   await ensureUiVisibility();
   const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
-  const saved = (await loadCalcState("experts")) || {};
+  const loadedExperts = await loadCalcState("experts");
+  const saved = loadedExperts || {};
   const unlockedState = (await loadCalcState("experts_unlocked")) || {};
   function isExpertUnlocked(expert) {
     return unlockedFor("experts", expert, unlockedState[expert]);
@@ -14536,9 +14605,12 @@ async function renderExpertsPage() {
         if (v > 0 && v === Math.floor(v) && heroSigilLevel(e.key, v)) st[k] = v + 0.1;
       });
     });
-    saveCalcState("experts", saved);
+    // Only write back levels that were really loaded: if loading failed,
+    // saving here would replace the user's real levels with the defaults.
+    if (loadedExperts) saveCalcState("experts", saved);
   }
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -15130,6 +15202,7 @@ async function renderExpertsPage() {
 }
 
 async function renderRefinePage() {
+  const seq = RENDER_SEQ;
   await ensurePetsData(); // loads PET_REFINE_CACHE too
   const PET_TABLE_ORDER = [
     "Cave Hyena", "Arctic Wolf", "Musk Ox", "Giant Tapir", "Titan Roc",
@@ -15189,6 +15262,7 @@ async function renderRefinePage() {
     { key: "mh", label: `${t("troop_marksman")} ${tStatLabel("Health")}`, maxKey: "marksman_health_pct" },
   ];
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -15499,9 +15573,11 @@ async function renderRefinePage() {
 }
 
 async function renderPetsDataPage() {
+  const seq = RENDER_SEQ;
   await ensurePetsData();
   const petNames = Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p));
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -15696,9 +15772,11 @@ async function renderPetsDataPage() {
 }
 
 async function renderResearchCenterPage() {
+  const seq = RENDER_SEQ;
   await ensureRCData();
   await ensureResearchSpeedData();
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -15865,6 +15943,7 @@ async function renderResearchCenterPage() {
 }
 
 async function renderT12ResearchPage() {
+  const seq = RENDER_SEQ;
   if (!T12_NODES_CACHE) {
     const rows = await sb(`t12_nodes?select=tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
     T12_NODES_CACHE = {};
@@ -15888,6 +15967,7 @@ async function renderT12ResearchPage() {
   await ensureResearchSpeedData();
   await ensureResearchPageCountedData();
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
@@ -16063,8 +16143,10 @@ async function renderT12ResearchPage() {
 }
 
 async function renderFacilityPage() {
+  const seq = RENDER_SEQ;
   const buildings = await sb(`skins?user_id=eq.${USER_ID}&category=eq.Facility&select=id,name,bonus_type,bonus_value,owned,image_url&order=sort_order.asc`);
 
+  if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
     <div class="page-head">
       <div>
