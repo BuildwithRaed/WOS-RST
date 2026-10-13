@@ -5310,7 +5310,13 @@ async function renderGearLevelingGroup(target) {
           }
         });
         saveCalcState(activeStorageKey, activeState);
-        renderGearLevelingGroup(target);
+        // Only this piece's 4 dropdowns change: set them and refresh the
+        // totals, instead of redrawing the whole page (~2,300 options).
+        wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
+          if (sel.dataset.troop !== troop || sel.dataset.piece !== piece) return;
+          sel.value = String(activeState[troop][piece][sel.dataset.track][sel.dataset.role]);
+        });
+        updateHeroGearTotals();
       });
     });
 
@@ -6177,6 +6183,18 @@ async function renderPacksPage() {
   if (calBtn) calBtn.addEventListener("click", () => goToTab("packcalendar"));
   wireVisibilityBtns(content, () => renderPacksPage());
   const listEl = document.getElementById("packsList");
+  // Column dropdowns are built with only their shown option; fill in the
+  // full list on the first touch / click / focus / key, before it opens.
+  const fillPackColPick = (e) => {
+    const sel = e.target && e.target.closest ? e.target.closest("select[data-pt-lazy]") : null;
+    if (!sel) return;
+    const panel = sel.closest("[data-packtable]");
+    const tb = panel && tables[Number(panel.dataset.packtable)];
+    if (!tb) return;
+    sel.removeAttribute("data-pt-lazy");
+    sel.innerHTML = packColumnOptionsHtml(tb, Number(sel.dataset.col));
+  };
+  ["pointerdown", "mousedown", "touchstart", "focusin", "keydown"].forEach((ev) => listEl.addEventListener(ev, fillPackColPick, true));
   const [tablesLoaded] = await Promise.all([
     sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`),
     ensurePackLinks(),
@@ -6582,14 +6600,30 @@ async function renderPacksPage() {
     if (cur.toLowerCase() === "gems") {
       return `<span class="pack-col-fixed" title="${esc(cur)}" style="display:inline-flex; align-items:center; gap:4px;">${esc(cur)}${IS_OWNER ? `<button type="button" class="btn ghost small" data-pt-gemsdel data-col="${ci}" title="${esc(t("pack_remove_column"))}" style="padding:0 5px; font-size:10px; line-height:16px;">&times;</button>` : ""}</span>`;
     }
+    // Speed: a page has hundreds of these, each listing every resource
+    // (~16,000 options in all, rebuilt on every redraw). Only the option on
+    // show is built here; the full list is filled in the moment the
+    // dropdown is touched or focused (fillPackColPick), before it opens.
+    const known = packResourceChoices(cur);
+    const matches = known.filter((n) => n.toLowerCase() === cur.toLowerCase());
+    const shown = !cur
+      // No name yet: the browser showed the list's first entry.
+      ? (known.length ? `<option value="${esc(known[0])}">${esc(materialDisplayName(known[0]))}</option>` : `<option value="__custom__">${esc(t("pack_custom_name"))}</option>`)
+      : matches.length
+        ? `<option value="${esc(matches[matches.length - 1])}" selected>${esc(materialDisplayName(matches[matches.length - 1]))}</option>`
+        : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
+    return `<select data-pt-colpick data-pt-lazy data-col="${ci}" class="pack-col-pick" title="${esc(cur)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">${shown}</select>`;
+  }
+  // The full option list of a column dropdown (see packColumnControlHtml).
+  function packColumnOptionsHtml(tb, ci) {
+    const cur = String(tb.columns[ci] || "").trim();
     const known = packResourceChoices(cur);
     const isKnown = known.some((n) => n.toLowerCase() === cur.toLowerCase());
-    return `<select data-pt-colpick data-col="${ci}" class="pack-col-pick" title="${esc(cur)}" style="width:100%; max-width:60px; font-size:11px; font-weight:600; text-align:center; padding:3px 2px; background:none; border:none;">
+    return `
       ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
       ${isKnown || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
       <option value="__custom__">${esc(t("pack_custom_name"))}</option>
-      <option value="__remove__">${esc(t("pack_remove_column"))}</option>
-    </select>`;
+      <option value="__remove__">${esc(t("pack_remove_column"))}</option>`;
   }
   function packLinkEditorHtml(tb) {
     // Visitors never see this editor (applyPacksReadOnly removes every
@@ -16150,6 +16184,13 @@ async function renderResearchCenterPage() {
   }
 
   const groupsEl = document.getElementById("rcGroups");
+  // A section's 4 stats; on a level change only these are redrawn (see the
+  // select handler below), not every dropdown on the page.
+  const statsRowInner = (stats) => `
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality.toFixed(1)}%</div></div>
+          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health.toFixed(1)}%</div></div>`;
   function renderGroups() {
     groupsEl.innerHTML = Object.entries(RC_BASE_CATEGORIES)
       .map(([groupName, baseNames]) => {
@@ -16161,11 +16202,8 @@ async function renderResearchCenterPage() {
           <h2 style="margin:0;">${esc(groupLabel)}</h2>
           <button class="btn ghost small" data-rcmaxgroup="${esc(groupName)}">${esc(t("max_this_section"))}</button>
         </div>
-        <div class="stats-row-scroll" style="margin:10px 0 14px;">
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack.toFixed(1)}%</div></div>
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense.toFixed(1)}%</div></div>
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality.toFixed(1)}%</div></div>
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health.toFixed(1)}%</div></div>
+        <div class="stats-row-scroll" data-rcstats="${esc(groupName)}" style="margin:10px 0 14px;">
+${statsRowInner(stats)}
         </div>
         ${baseNames
           .map((base) => {
@@ -16220,7 +16258,11 @@ async function renderResearchCenterPage() {
         RC_STATE[sel.dataset.rctrack] = Number(sel.value);
         saveCalcState("research_center", RC_STATE);
         renderTotals();
-        renderGroups();
+        // The dropdown already shows the new level; only its section's stats change.
+        const groupName = Object.keys(RC_BASE_CATEGORIES).find((g) => RC_BASE_CATEGORIES[g].some((base) => RC_TIERS.some((tier) => `${base} ${tier}` === sel.dataset.rctrack)));
+        const row = groupName && [...groupsEl.querySelectorAll("[data-rcstats]")].find((el) => el.dataset.rcstats === groupName);
+        if (row) row.innerHTML = statsRowInner(computeStats(RC_BASE_CATEGORIES[groupName]));
+        else renderGroups();
       });
     });
   }
@@ -16365,11 +16407,12 @@ async function renderT12ResearchPage() {
       if (def.stat) statMax[def.stat] += def.max * (def.pct || 1);
     });
     const troop = t12ActiveTroop;
-    const needed = computeNeeded(T12_STATE[troop], troop);
-    const stats = computeT12Stats(T12_STATE[troop]);
-    troopsEl.innerHTML = `
-      <div class="panel">
-        <h2>${esc(troopDisplayName(troop))}</h2>
+    // Stats and resources at the top of the panel; redrawn on their own
+    // after a level change (refreshPanel below) so the dropdowns stay.
+    const headHtml = () => {
+      const needed = computeNeeded(T12_STATE[troop], troop);
+      const stats = computeT12Stats(T12_STATE[troop]);
+      return `
         <div class="stats-row-scroll" style="margin-bottom:10px;">
           <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Attack}%</div></div>
           <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Defense}%</div></div>
@@ -16381,7 +16424,12 @@ async function renderT12ResearchPage() {
           ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, t("resource_refined_fc"), Math.round(needed.refined_fc).toLocaleString())}
           ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, t("resource_fc_shard"), Math.round(needed.fc_shard).toLocaleString())}
           ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchPct(needed.time_hours)))}
-        </div>
+        </div>`;
+    };
+    troopsEl.innerHTML = `
+      <div class="panel">
+        <h2>${esc(troopDisplayName(troop))}</h2>
+        <div data-t12head>${headHtml()}</div>
         ${groups
           .map((group) => {
             const defs = T12_ITEM_DEFS.filter((d) => d.group === group);
@@ -16406,12 +16454,26 @@ async function renderT12ResearchPage() {
       </div>`;
     wireTroopSwipe(troopsEl, T12_TROOPS, t12ActiveTroop, (t) => { t12ActiveTroop = t; renderTroopPanels(); });
 
+    // After a level change only the numbers and the dropdowns' values/red
+    // borders change, so update those instead of rebuilding every dropdown.
+    const refreshPanel = () => {
+      const headEl = troopsEl.querySelector("[data-t12head]");
+      if (headEl) headEl.innerHTML = headHtml();
+      T12_ITEM_DEFS.forEach((def) => {
+        const cur = T12_STATE[troop][def.key] || 0;
+        const target = t12TargetOf(troop, def);
+        const curSel = troopsEl.querySelector(`select[data-t12item="${def.key}"]`);
+        const tgtSel = troopsEl.querySelector(`select[data-t12target="${def.key}"]`);
+        if (curSel) curSel.value = String(cur);
+        if (tgtSel) { tgtSel.value = String(target); tgtSel.style.borderColor = target < cur ? "var(--danger)" : ""; }
+      });
+    };
     troopsEl.querySelectorAll("select[data-t12item]").forEach((sel) => {
       sel.addEventListener("change", async () => {
         T12_STATE[troop][sel.dataset.t12item] = Number(sel.value);
         saveCalcState("t12_research", T12_STATE);
         renderTotals();
-        renderTroopPanels();
+        refreshPanel();
       });
     });
     troopsEl.querySelectorAll("select[data-t12target]").forEach((sel) => {
@@ -16420,7 +16482,7 @@ async function renderT12ResearchPage() {
         T12_TARGET[troop][sel.dataset.t12target] = Number(sel.value);
         saveCalcState("t12_research_target", T12_TARGET);
         renderTotals();
-        renderTroopPanels();
+        refreshPanel();
       });
     });
   }
