@@ -907,12 +907,14 @@ async function loadCalcState(calcName) {
 // away instead of waiting for the database, and a slow older save can never
 // land after (and overwrite) a newer one. The in-memory copy is updated at
 // once, so every page reads the new values immediately.
-// Gallery/facility cards: the same idea for a skin row - one PATCH per
-// skin on its way at a time, later changes merged and sent after it, so a
-// quick second tap can't be overtaken by the first. Rejects if a save fails.
-const SKIN_PATCH_QUEUE = {}; // skin id -> { running: Promise|null, next: patch|null }
-function patchSkinQueued(id, patch) {
-  const q = SKIN_PATCH_QUEUE[id] || (SKIN_PATCH_QUEUE[id] = { running: null, next: null });
+// Rows changed by a tap (gallery/facility cards, roster stars): the same
+// idea as saveCalcState for one table row - one PATCH per row on its way at
+// a time, later changes merged and sent after it, so a quick second tap
+// can't be overtaken by the first. Rejects if a save fails.
+const ROW_PATCH_QUEUE = {}; // "table|id" -> { running: Promise|null, next: patch|null }
+function patchRowQueued(table, id, patch, afterEachSave) {
+  const key = `${table}|${id}`;
+  const q = ROW_PATCH_QUEUE[key] || (ROW_PATCH_QUEUE[key] = { running: null, next: null });
   q.next = { ...(q.next || {}), ...patch };
   if (!q.running) {
     q.running = (async () => {
@@ -920,7 +922,8 @@ function patchSkinQueued(id, patch) {
         while (q.next) {
           const send = q.next;
           q.next = null;
-          await sb(`skins?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(send) });
+          await sb(`${table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(send) });
+          if (afterEachSave) afterEachSave();
         }
       } finally {
         q.running = null;
@@ -929,6 +932,12 @@ function patchSkinQueued(id, patch) {
     })();
   }
   return q.running;
+}
+function patchSkinQueued(id, patch) {
+  // The Dashboard's kept skins are out of date from now on (cleared again
+  // after each save, in case it re-read them in the meantime).
+  if (typeof dashDataChanged === "function") dashDataChanged("skins");
+  return patchRowQueued("skins", id, patch, () => dashDataChanged("skins"));
 }
 const CALC_SAVE_QUEUE = {}; // calc_name -> { running: Promise|null, next: body|null }
 function saveCalcState(calcName, state) {
@@ -4046,19 +4055,41 @@ function displaySourceName(key) {
   return dataName(SOURCE_DISPLAY_NAME[key] || key);
 }
 
+// Dashboard data kept in memory between visits, so coming back to the
+// Dashboard (or redrawing it after a roster change) needs no requests.
+// Pages that change this data clear their part: skins (galleries, Alliance
+// Tech) via dashDataChanged("skins"); everything when Admin is opened,
+// since Admin edits the reference tables. Roster star changes update the
+// kept player_heroes rows in place.
+let DASH_DATA_CACHE = {};
+function dashCached(key, load) {
+  if (!DASH_DATA_CACHE[key]) DASH_DATA_CACHE[key] = load().catch((e) => { delete DASH_DATA_CACHE[key]; throw e; });
+  return DASH_DATA_CACHE[key];
+}
+function dashDataChanged(key) {
+  if (key) delete DASH_DATA_CACHE[key];
+  else DASH_DATA_CACHE = {};
+}
+// Drops every game-data copy kept for the visit (Dashboard data, expert
+// tables): called when Admin is opened and after the category pages edit
+// buff values, so the next page shows the edited data.
+function dropKeptGameData() {
+  dashDataChanged();
+  if (typeof EXPERT_NODE_ROWS !== "undefined") EXPERT_NODE_ROWS = {};
+}
 async function renderOverview(opts = {}) {
   const seq = RENDER_SEQ;
   // Speed: everything the Dashboard needs is requested in one parallel batch
   // (saved states come from the shared calc_state cache), instead of several
   // waves of requests that each waited for the previous one to finish.
   preloadCalcStates();
-  const skinsPromise = Promise.all([ensureGalleryUncounted(), sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`)]).then(([, rows]) => rows);
+  const skinsPromise = Promise.all([ensureGalleryUncounted(), dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`))]).then(([, rows]) => rows);
   const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
     , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED] = await Promise.all([
-    ensureBuffTable().then(() => Promise.all([
+    dashCached("buff", () => ensureBuffTable().then(() => Promise.all([
       sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
       sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
-    ])),
+    ]))),
     skinsPromise,
     // Which skins.category values actually represent an Island sub-category
     // (Attack/Defense/Lighthouse/MVP/Islands Guide, etc) - driven by the same
@@ -4067,11 +4098,11 @@ async function renderOverview(opts = {}) {
     ensureIslandCategories(),
     // Roster heroes (Infantry/Lancers/Marksman) - fetched here, early, so
     // the stat totals below can include them when a troop's "used" flag is on.
-    sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`),
+    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)),
     loadCalcState("dashboard_roster"),
-    sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`),
-    sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`),
-    sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`),
+    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
+    dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)),
+    dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)),
     // live data from the calculators, for the Charm/Chief/Hero Gears/etc. sources below
     Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), skinsPromise.then(ensureGlobeLevelData), ensureResearchPageCountedData()]),
     loadCalcState("collection_gallery"),
@@ -4651,11 +4682,18 @@ async function renderOverview(opts = {}) {
       const value = Number((star + sub / 10).toFixed(1));
       const existing = phByHero[heroId];
       if (existing) {
-        await sb(`player_heroes?id=eq.${existing.id}`, { method: "PATCH", body: JSON.stringify({ current_stars: value, updated_at: new Date().toISOString() }) });
+        // Shown at once, saved in the background in order; put back if
+        // the save fails.
+        const prev = existing.current_stars;
         existing.current_stars = value;
+        patchRowQueued("player_heroes", existing.id, { current_stars: value, updated_at: new Date().toISOString() }).catch(() => {
+          if (existing.current_stars === value) { existing.current_stars = prev; renderOverview(); }
+          toast("Couldn't save", true);
+        });
       } else {
         const [row] = await sb(`player_heroes`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, hero_id: heroId, current_level: 0, current_stars: value }) });
         phByHero[heroId] = row || { hero_id: heroId, current_stars: value };
+        if (row) ROSTER_PLAYER_HEROES.push(row); // the kept list (see dashCached)
       }
     };
     // Six-pointed "snowflake" star split into 6 shard segments, each clickable.
@@ -5087,10 +5125,10 @@ async function loadHeroGearData() {
   const capsPromise = ensureGearCaps();
   const results = await Promise.all(
     ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(async (name) => {
-      const [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(name)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
+      // The table and its rows in one request (they used to be two).
+      const [table] = await sb(`progression_tables?name=eq.${encodeURIComponent(name)}&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,progression_rows(id,level,stage,materials,stat,stat2,power,display_label,mithril,mythic_gear,xp_component,essence_stones)&progression_rows.order=sort_order.asc`);
       if (!table) return { name, rows: [] };
-      const rows = await sb(`progression_rows?table_id=eq.${table.id}&select=id,level,stage,materials,stat,stat2,power,display_label,mithril,mythic_gear,xp_component,essence_stones&order=sort_order.asc`);
-      return { name, rows };
+      return { name, rows: table.progression_rows || [] };
     })
   );
   const rawCache = Object.fromEntries(results.map((r) => [r.name, r.rows]));
@@ -7598,6 +7636,7 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
           headers: { Prefer: "resolution=merge-duplicates,return=representation" },
           body: JSON.stringify({ row_id: btn.dataset.row, column_id: cat.columns[0].id, value: num }),
         });
+        dropKeptGameData();
         toast("Updated");
         refresh(categoryName);
       } catch (err) {
@@ -7625,6 +7664,7 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
           body: JSON.stringify({ row_id: rowRow.id, column_id: cat.columns[0].id, value: Number(valueRaw) }),
         });
       }
+      dropKeptGameData();
       toast("Stat line added");
       refresh(categoryName);
     } catch (err) {
@@ -11560,8 +11600,10 @@ let CHIEF_GEAR_ROWS = null;
 async function loadChiefGearRows() {
   const setBonusPromise = ensureChiefGearSetBonusData();
   if (CHIEF_GEAR_ROWS) { await setBonusPromise; return CHIEF_GEAR_ROWS; }
+  // The table and its rows in one request (they used to be two, one after
+  // the other).
   let [[table]] = await Promise.all([
-    sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`),
+    sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,progression_rows(id,tier,stars,stage,materials,stat,power,display_label,hardened_alloy,polishing_solution,design_plan,amber)&progression_rows.order=sort_order.asc`),
     setBonusPromise,
     ensureGearCaps(),
   ]);
@@ -11569,7 +11611,7 @@ async function loadChiefGearRows() {
     CHIEF_GEAR_ROWS = [];
     return CHIEF_GEAR_ROWS;
   }
-  CHIEF_GEAR_ROWS = await sb(`progression_rows?table_id=eq.${table.id}&select=id,tier,stars,stage,materials,stat,power,display_label,hardened_alloy,polishing_solution,design_plan,amber&order=sort_order.asc`);
+  CHIEF_GEAR_ROWS = table.progression_rows || [];
   CHIEF_GEAR_PIECES.forEach((p) => {
     if (CHIEF_GEAR_STATE[p.key].to === null) CHIEF_GEAR_STATE[p.key].to = CHIEF_GEAR_ROWS.length - 1;
   });
@@ -12492,8 +12534,10 @@ let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 
 async function renderIslandGallery() {
   const seq = RENDER_SEQ;
+  // The ordered category list is kept for the visit (dashCached), so a
+  // repeat visit only has to load the islands themselves.
   const [islandCats] = await Promise.all([
-    sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`),
+    dashCached("island_cats", () => sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`)),
     ensureGalleryUncounted(),
   ]);
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
@@ -12795,14 +12839,41 @@ async function loadExpertsRosterGlobal() {
   tradeComposeExtra();
 }
 
+// Expert tables, loaded once per visit to the site and shared by Experts
+// Level, Experts Research and the Dashboard (Level and Research used to
+// re-load them on every visit). Admin edits clear them (dropKeptGameData).
+const EXPERT_NODE_PATHS = {
+  affinity: "expert_affinity_nodes?select=expert,level,affinity_cost,sigil_cost,stat_type,stat_value,stat_type2,stat_value2&order=sort_order",
+  skill: "expert_skill_nodes?select=expert,skill,level,exp_cost,book_cost,stat_type,stat_value&order=sort_order",
+  research: "expert_research_nodes?select=expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,sigil_per_level,stat_type2,stat_value2&order=sort_order",
+};
+let EXPERT_NODE_ROWS = {};
+function loadExpertNodes(kind) {
+  if (!EXPERT_NODE_ROWS[kind]) EXPERT_NODE_ROWS[kind] = sbAllPagesAtOnce(EXPERT_NODE_PATHS[kind]).catch((e) => { delete EXPERT_NODE_ROWS[kind]; throw e; });
+  return EXPERT_NODE_ROWS[kind];
+}
+// Reads a table that can pass the API's 1,000-row page size (the affinity
+// table has ~1,100 rows): the first two pages are requested together
+// instead of one after the other; further pages only if those are full.
+async function sbAllPagesAtOnce(path) {
+  const page = (i) => sb(path, { headers: { "Range-Unit": "items", Range: `${i * 1000}-${i * 1000 + 999}` } });
+  const [p0, p1] = await Promise.all([page(0), page(1)]);
+  let all = p0.concat(p1);
+  for (let i = 2, last = p1; last.length === 1000; i++) {
+    last = await page(i);
+    all = all.concat(last);
+  }
+  return all;
+}
 async function ensureExpertsTroopStatsData() {
   if (EXPERTS_STATE_GLOBAL) return;
   const [, savedExperts, savedUnlocked, affinityRows, skillRows] = await Promise.all([
     ensureExpertsRosterGlobal(),
     loadCalcState("experts"),
     loadCalcState("experts_unlocked"),
-    sb(`expert_affinity_nodes?select=expert,level,stat_type,stat_value&order=sort_order`),
-    sb(`expert_skill_nodes?select=expert,skill,level,stat_type,stat_value&expert=in.(Romulus,Gareth)&stat_type=not.is.null&order=sort_order`),
+    loadExpertNodes("affinity"),
+    // Only Romulus's and Gareth's skills with a stat matter here.
+    loadExpertNodes("skill").then((rows) => rows.filter((r) => (r.expert === "Romulus" || r.expert === "Gareth") && r.stat_type != null)),
   ]);
   EXPERTS_STATE_GLOBAL = savedExperts || {};
   EXPERTS_UNLOCKED_GLOBAL = savedUnlocked || {};
@@ -12883,7 +12954,7 @@ async function ensureExpertsResearchDataGlobal() {
   if (EXPERTS_RESEARCH_NODES_GLOBAL) return;
   const [, rows, savedResearch, savedResearchUnlocked] = await Promise.all([
     ensureExpertsRosterGlobal(),
-    sb(`expert_research_nodes?select=expert,path_number,level,stat_type,stat_value&order=sort_order`),
+    loadExpertNodes("research"),
     loadCalcState("experts_research"),
     loadCalcState("experts_research_unlocked"),
   ]);
@@ -12950,16 +13021,26 @@ function computeExpertsResearchTroopStatsGlobal(calcTroop, useMax) {
   return totals;
 }
 
+// The VIP Tier table's columns and rows, loaded once and shared by the
+// Dashboard (ensureVipData) and the VIP page; kept for the visit (dashCached).
+function loadVipTable() {
+  return dashCached("vip_table", async () => {
+    const [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
+    if (!table) return null;
+    const [columns, rows] = await Promise.all([
+      sb(`buff_columns?table_id=eq.${table.id}&select=id,name&order=sort_order.asc`),
+      sb(`buff_rows?table_id=eq.${table.id}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`),
+    ]);
+    return { table, columns, rows };
+  });
+}
 async function ensureVipData() {
   if (!VIP_ROWS_CACHE) {
-    let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
-    if (!table) {
+    const vip = await loadVipTable();
+    if (!vip) {
       VIP_ROWS_CACHE = [];
     } else {
-      const [columns, rows] = await Promise.all([
-        sb(`buff_columns?table_id=eq.${table.id}&select=id,name&order=sort_order.asc`),
-        sb(`buff_rows?table_id=eq.${table.id}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`),
-      ]);
+      const { columns, rows } = vip;
       const colNameById = Object.fromEntries(columns.map((c) => [c.id, c.name]));
       VIP_ROWS_CACHE = rows.map((r) => {
         const entry = { name: r.name };
@@ -12986,16 +13067,13 @@ async function ensureVipData() {
 
 async function renderVipTierTable(target) {
   const seq = RENDER_SEQ;
-  let [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
+  const vip = await loadVipTable();
   if (seq !== RENDER_SEQ) return;
-  if (!table) {
+  if (!vip) {
     target.innerHTML = `<div class="empty">${esc(t("vip_tier_not_found"))}</div>`;
     return;
   }
-  const [columns, rows] = await Promise.all([
-    sb(`buff_columns?table_id=eq.${table.id}&select=id,name&order=sort_order.asc`),
-    sb(`buff_rows?table_id=eq.${table.id}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`),
-  ]);
+  const { columns, rows } = vip;
 
   if (seq !== RENDER_SEQ) return;
   target.innerHTML = `
@@ -13065,7 +13143,8 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
     el.innerHTML = `<div class="panel"><div class="empty">${esc(dataName(displayName))} ${esc(t("category_not_found"))}</div></div>`;
     return;
   }
-  const rows = await sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`);
+  // Shared by both hero sections and kept for the visit (see dashCached).
+  const rows = await dashCached("buff_rows_sorted", () => sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`));
   const STAT_LABELS = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
   const seenStats = new Set();
   const statRows = rows
@@ -13265,8 +13344,11 @@ async function renderExtraBonusHeroes() {
       <div id="extraBonusHeroesNatalia"></div>
     </div>
   `;
-  await renderHeroStarSection("Jero", "Jeronimo", "icons/jeronimo.png", "extraBonusHeroesJero");
-  await renderHeroStarSection("Natalia", "Natalia", "icons/natalia.png", "extraBonusHeroesNatalia");
+  // Both sections load at the same time (they used to load one after the other).
+  await Promise.all([
+    renderHeroStarSection("Jero", "Jeronimo", "icons/jeronimo.png", "extraBonusHeroesJero"),
+    renderHeroStarSection("Natalia", "Natalia", "icons/natalia.png", "extraBonusHeroesNatalia"),
+  ]);
 }
 
 async function renderAllianceTechPage() {
@@ -13311,6 +13393,7 @@ async function renderAllianceTechPage() {
         method: "PATCH",
         body: JSON.stringify({ current_level: val }),
       });
+      dashDataChanged("skins");
       items.forEach((it) => (it.current_level = val));
       toast(t("all_researches_updated"));
       render();
@@ -13385,6 +13468,7 @@ async function renderAllianceTechPage() {
         const val = Number(sel.value);
         try {
           await sb(`skins?id=eq.${it.id}`, { method: "PATCH", body: JSON.stringify({ current_level: val }) });
+          dashDataChanged("skins");
           it.current_level = val;
           render();
         } catch (err) {
@@ -14158,16 +14242,23 @@ const EXPERT_INVENTORY_ICONS = {
 const EXPERT_RESEARCH_STAT_LABEL = { ATK: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
 async function renderExpertsResearchPage() {
   const seq = RENDER_SEQ;
-  await ensureExpertsRosterGlobal();
-  const saved = (await loadCalcState("experts_research")) || {};
-  // Shared with Experts Level's "Your Inventory" - same sigil pool covers
-  // both hero leveling and research paths.
-  const invSaved = (await loadCalcState("experts_inventory")) || {};
-  // Sigils Experts Level still needs per expert (saved by that page). The
-  // same owned sigils can't pay for both, so Level uses them first and
-  // research only gets what's left.
-  const levelSigilNeed = (await loadCalcState("experts_level_sigil_need")) || {};
-  const rows = await sb(`expert_research_nodes?select=expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,sigil_per_level,stat_type2,stat_value2&order=sort_order`);
+  // Everything this page needs is loaded together (it used to be one
+  // request after another), and the research table is kept for the visit.
+  // - experts_inventory is shared with Experts Level's "Your Inventory":
+  //   the same sigil pool covers both hero leveling and research paths.
+  // - experts_level_sigil_need: sigils Experts Level still needs per expert
+  //   (saved by that page). The same owned sigils can't pay for both, so
+  //   Level uses them first and research only gets what's left.
+  const [, savedLoaded, invLoaded, levelNeedLoaded, rows] = await Promise.all([
+    ensureExpertsRosterGlobal(),
+    loadCalcState("experts_research"),
+    loadCalcState("experts_inventory"),
+    loadCalcState("experts_level_sigil_need"),
+    loadExpertNodes("research"),
+  ]);
+  const saved = savedLoaded || {};
+  const invSaved = invLoaded || {};
+  const levelSigilNeed = levelNeedLoaded || {};
   const RESEARCH_CACHE = {}; // { "Cyrille": { 1: [rows...], 2: [...], 3: [...] } }
   const PATH_NAMES = {}; // { "Cyrille": { 1: "Hunting Skill - Proficient", ... } }
   rows.forEach((r) => {
@@ -14654,18 +14745,24 @@ async function renderExpertsPage() {
   const seq = RENDER_SEQ;
   // Experts hidden from visitors (Admin → Visibility / the eye on a card)
   // stay out of everything on this page for them: cards, totals, backpack.
-  await ensureExpertsRosterGlobal();
-  await ensureUiVisibility();
+  // Everything this page needs is loaded together (it used to be one
+  // request after another), and the expert tables are kept for the visit.
+  const [, , loadedExperts, unlockedLoaded, invLoaded, skillRows, affinityRows] = await Promise.all([
+    ensureExpertsRosterGlobal(),
+    ensureUiVisibility(),
+    loadCalcState("experts"),
+    loadCalcState("experts_unlocked"),
+    loadCalcState("experts_inventory"),
+    loadExpertNodes("skill"),
+    loadExpertNodes("affinity"),
+  ]);
   const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
-  const loadedExperts = await loadCalcState("experts");
   const saved = loadedExperts || {};
-  const unlockedState = (await loadCalcState("experts_unlocked")) || {};
+  const unlockedState = unlockedLoaded || {};
   function isExpertUnlocked(expert) {
     return unlockedFor("experts", expert, unlockedState[expert]);
   }
-  const invSaved = (await loadCalcState("experts_inventory")) || {};
-  const skillRows = await sb(`expert_skill_nodes?select=expert,skill,level,exp_cost,book_cost,stat_type,stat_value&order=sort_order`);
-  const affinityRows = await sb(`expert_affinity_nodes?select=expert,level,affinity_cost,sigil_cost,stat_type,stat_value,stat_type2,stat_value2&order=sort_order`);
+  const invSaved = invLoaded || {};
   const SKILL_CACHE = {}; // { "Cyrille|Entrapment": [ {level,exp_cost,book_cost}, ... ] }
   skillRows.forEach((r) => {
     const key = `${r.expert}|${r.skill}`;
@@ -16450,6 +16547,8 @@ let ADMIN_ACTIVE_SKINS_SUBTAB = "skingallery";
 let ADMIN_ACTIVE_ALLIANCE_SUBTAB = "facility";
 
 async function renderAdminPage() {
+  // Admin edits the data other pages keep in memory for the visit.
+  dropKeptGameData();
   content.innerHTML = `
     <div class="page-head">
       <div>
