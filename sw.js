@@ -14,7 +14,14 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin) return; // Supabase, CDNs: straight to network
+  // The Supabase library at its exact (never-changing) version: cache-first,
+  // so repeat visits skip the download and the app still opens offline.
+  // A <script> fetch is "no-cors", so its response is opaque (status 0).
+  if (url.hostname === "cdn.jsdelivr.net" && url.pathname.startsWith("/npm/@supabase/supabase-js@2.117.3/")) {
+    e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok || res.type === "opaque") { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })));
+    return;
+  }
+  if (url.origin !== location.origin) return; // Supabase, other CDNs: straight to network
   // The page itself: network first so updates show up right away, cache if offline.
   if (req.mode === "navigate" || url.pathname.endsWith("/index.html")) {
     e.respondWith(fetch(req).then((res) => { caches.open(VERSION).then((c) => c.put(req, res.clone())); return res; })
