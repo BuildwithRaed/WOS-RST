@@ -14643,10 +14643,20 @@ async function renderExpertsResearchPage() {
           renderGrid();
         });
       }
+      // Past the first/last page (or with only one page), the swipe moves on
+      // to the previous/next expert instead - stopPropagation means the
+      // outer swipe never sees it, so it has to be handled here.
       wireSwipeGesture(pathsListEl, (dir) => {
         const next = activeResearchPage + dir;
         if (next >= 0 && next < pageCount) {
           activeResearchPage = next;
+          renderGrid();
+          return;
+        }
+        const nextExpert = activeResearchIdx + dir;
+        if (nextExpert >= 0 && nextExpert < EXPERTS_IN_ORDER.length) {
+          activeResearchIdx = nextExpert;
+          activeResearchPage = 0;
           renderGrid();
         }
       }, { stopPropagation: true });
