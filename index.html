@@ -891,24 +891,72 @@ async function loadCalcState(calcName) {
     return v === undefined ? null : cloneState(v);
   }
   try {
+    // Reading from the database directly: let a save of this state that's
+    // still on its way land first, so this doesn't read the older version.
+    const q = CALC_SAVE_QUEUE[calcName];
+    if (q && q.running) await q.running;
     const [row] = await sb(`calc_state?user_id=eq.${USER_ID}&calc_name=eq.${encodeURIComponent(calcName)}&select=state`);
     return row ? row.state : null;
   } catch (err) {
     return null;
   }
 }
-async function saveCalcState(calcName, state) {
+// Saves run in the background, one at a time per state, newest wins: a
+// change made while that state's previous save is still on its way waits
+// for it, then only the latest version is sent. So pages can redraw right
+// away instead of waiting for the database, and a slow older save can never
+// land after (and overwrite) a newer one. The in-memory copy is updated at
+// once, so every page reads the new values immediately.
+// Gallery/facility cards: the same idea for a skin row - one PATCH per
+// skin on its way at a time, later changes merged and sent after it, so a
+// quick second tap can't be overtaken by the first. Rejects if a save fails.
+const SKIN_PATCH_QUEUE = {}; // skin id -> { running: Promise|null, next: patch|null }
+function patchSkinQueued(id, patch) {
+  const q = SKIN_PATCH_QUEUE[id] || (SKIN_PATCH_QUEUE[id] = { running: null, next: null });
+  q.next = { ...(q.next || {}), ...patch };
+  if (!q.running) {
+    q.running = (async () => {
+      try {
+        while (q.next) {
+          const send = q.next;
+          q.next = null;
+          await sb(`skins?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(send) });
+        }
+      } finally {
+        q.running = null;
+        q.next = null;
+      }
+    })();
+  }
+  return q.running;
+}
+const CALC_SAVE_QUEUE = {}; // calc_name -> { running: Promise|null, next: body|null }
+function saveCalcState(calcName, state) {
   if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_CACHE[calcName] = cloneState(state);
   else if (CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_PENDING[calcName] = cloneState(state);
-  try {
-    await sb(`calc_state?on_conflict=user_id,calc_name`, {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify({ user_id: USER_ID, calc_name: calcName, state, updated_at: new Date().toISOString() }),
-    });
-  } catch (err) {
-    // best-effort; a failed save shouldn't block using the calculator
+  // Serialised now: callers keep changing the same object afterwards.
+  const body = JSON.stringify({ user_id: USER_ID, calc_name: calcName, state, updated_at: new Date().toISOString() });
+  const q = CALC_SAVE_QUEUE[calcName] || (CALC_SAVE_QUEUE[calcName] = { running: null, next: null });
+  q.next = body;
+  if (!q.running) {
+    q.running = (async () => {
+      while (q.next) {
+        const send = q.next;
+        q.next = null;
+        try {
+          await sb(`calc_state?on_conflict=user_id,calc_name`, {
+            method: "POST",
+            headers: { Prefer: "resolution=merge-duplicates" },
+            body: send,
+          });
+        } catch (err) {
+          // best-effort; a failed save shouldn't block using the calculator
+        }
+      }
+      q.running = null;
+    })();
   }
+  return q.running;
 }
 
 // Item icons come from an external image host; if one fails to load
@@ -4718,7 +4766,7 @@ async function renderOverview(opts = {}) {
         localStorage.setItem("dashboard_roster_collapsed", nowCollapsed ? "0" : "1");
         renderRoster();
       });
-      const save = async () => { await saveCalcState("dashboard_roster", roster); };
+      const save = async () => { saveCalcState("dashboard_roster", roster); };
       // Heroes counted in the Dashboard change the stat cards, so redraw the
       // whole dashboard when one was or is now counted; otherwise only the
       // roster panel changes.
@@ -5474,7 +5522,7 @@ async function renderMyPacksPage() {
   let templates = all.filter((tb) => packLinkFor(tb.id).template);
   if (IS_OWNER && !templates.length && !(await loadCalcState("pack_templates_seeded"))) {
     const made = await packSeedTemplates(all);
-    await saveCalcState("pack_templates_seeded", { at: Date.now(), made });
+    saveCalcState("pack_templates_seeded", { at: Date.now(), made });
     if (made) { toast(`${made} ${t("mp_templates_added")}`); return renderMyPacksPage(); }
   }
   PACK_TABLES_ALL = PACK_TABLES_ALL || all;
@@ -6105,7 +6153,7 @@ async function renderPacksPage() {
   // Admin: the three Pack templates are made once, copied from your own tables.
   if (IS_OWNER && !templateTables.length && !(await loadCalcState("pack_templates_seeded"))) {
     const made = await packSeedTemplates(tables);
-    await saveCalcState("pack_templates_seeded", { at: Date.now(), made });
+    saveCalcState("pack_templates_seeded", { at: Date.now(), made });
     if (made) { toast(`${made} ${t("mp_templates_added")}`); renderPacksPage(); return; }
   }
 
@@ -6114,7 +6162,7 @@ async function renderPacksPage() {
   // First visit: the in-game pack tables are created automatically (once
   // per account, so deleting one later doesn't bring it back).
   if (IS_OWNER && !(await loadCalcState("pack_presets_seeded"))) {
-    await saveCalcState("pack_presets_seeded", { at: Date.now() });
+    saveCalcState("pack_presets_seeded", { at: Date.now() });
     const added = await packAddPresets(tables);
     if (added) { toast(`${added} ${t("pack_presets_added")}`); renderPacksPage(); return; }
   }
@@ -8132,7 +8180,7 @@ async function ensurePackLinks() {
 async function savePackLinks() {
   PACK_PLAN_CACHE.clear();
   if (typeof budgetInvalidate === "function") budgetInvalidate();
-  await saveCalcState("packs_links", PACK_LINKS || {});
+  saveCalcState("packs_links", PACK_LINKS || {});
 }
 function packValidDay(v) { return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null; }
 // Each visitor's own pack dates ({ tableId: "yyyy-mm-dd" }), saved to their account.
@@ -8158,7 +8206,7 @@ async function saveMyPacks() {
   PACK_PLAN_CACHE.clear();
   PACK_TABLES_CACHE = null;
   if (typeof budgetInvalidate === "function") budgetInvalidate();
-  await saveCalcState("my_packs", { tables: MY_PACKS });
+  saveCalcState("my_packs", { tables: MY_PACKS });
 }
 // Weekly cards a visitor already bought whose 7-day rewards are still coming ({ tableId: n }).
 let MY_CARDS_ACTIVE = {};
@@ -9516,13 +9564,13 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const dateEl = containerEl.querySelector("[data-packtarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
     PACK_TARGET_CACHE[calcKey] = dateEl.value || "";
-    await saveCalcState(`pack_target_${calcKey}`, { date: PACK_TARGET_CACHE[calcKey] });
+    saveCalcState(`pack_target_${calcKey}`, { date: PACK_TARGET_CACHE[calcKey] });
     rerender();
   });
   const clearEl = containerEl.querySelector("[data-packtargetclear]");
   if (clearEl) clearEl.addEventListener("click", async () => {
     PACK_TARGET_CACHE[calcKey] = "";
-    await saveCalcState(`pack_target_${calcKey}`, { date: "" });
+    saveCalcState(`pack_target_${calcKey}`, { date: "" });
     rerender();
   });
 }
@@ -9947,26 +9995,26 @@ async function renderRfcLabPage() {
   [fcIn, fcsIn].forEach((el) => el.addEventListener("change", () => saveCalcState("rfc_lab", st)));
   content.querySelectorAll("[data-rfcmode]").forEach((b) => b.addEventListener("click", async () => {
     st.mode = b.dataset.rfcmode;
-    await saveCalcState("rfc_lab", st);
+    saveCalcState("rfc_lab", st);
     renderRfcLabPage();
   }));
   const schedSel = content.querySelector("[data-rfcschedule]");
   if (schedSel) schedSel.addEventListener("change", async () => {
     const [top, n] = schedSel.value.split("|").map(Number);
     st.top = top; st.attempts = n;
-    await saveCalcState("rfc_lab", st);
+    saveCalcState("rfc_lab", st);
     renderRfcLabPage();
   });
   content.querySelectorAll("[data-rfcuse]").forEach((btn) => btn.addEventListener("click", async () => {
     const [top, n] = btn.dataset.rfcuse.split("|").map(Number);
     st.top = top; st.attempts = n; st.mode = "schedule";
-    await saveCalcState("rfc_lab", st);
+    saveCalcState("rfc_lab", st);
     renderRfcLabPage();
   }));
   content.querySelectorAll("[data-rfc]").forEach((inp) => inp.addEventListener("change", async () => {
     const v = Math.max(0, Number(String(inp.value).replace(/[^0-9.]/g, "")) || 0);
     st[inp.dataset.rfc] = v;
-    await saveCalcState("rfc_lab", st);
+    saveCalcState("rfc_lab", st);
     renderRfcLabPage();
   }));
 }
@@ -10116,7 +10164,7 @@ function tradeRatesFor(calcKey) {
 async function saveTradeSettings() {
   await ensureTradeRates();
   TRADE_RATES_CACHE.apply = { ...TRADE_APPLY };
-  await saveCalcState("trade_rates", TRADE_RATES_CACHE);
+  saveCalcState("trade_rates", TRADE_RATES_CACHE);
 }
 // A rough worth for each material (in the cheapest base unit) so that,
 // when several spare items could cover a shortfall, the one that wastes
@@ -10364,7 +10412,7 @@ async function recordBudgetNeeds(calcKey, groups) {
     if (prev && JSON.stringify(prev.groups) === JSON.stringify(clean)) return;
     snap[calcKey] = { groups: clean, at: Date.now() };
     budgetInvalidate();
-    await saveCalcState("budget_needs", snap);
+    saveCalcState("budget_needs", snap);
   } catch (e) { /* purely a convenience cache */ }
 }
 // Live material needs for the pages whose data is global.
@@ -11171,13 +11219,13 @@ async function renderBudgetsPage(opts = {}) {
   const dateEl = content.querySelector("[data-budgettarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
-    await saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
+    saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
     renderBudgetsPage();
   });
   const clearEl = content.querySelector("[data-budgettargetclear]");
   if (clearEl) clearEl.addEventListener("click", async () => {
     BUDGET_TARGET = "";
-    await saveCalcState("pack_target_budgets", { date: "" });
+    saveCalcState("pack_target_budgets", { date: "" });
     renderBudgetsPage();
   });
   content.querySelectorAll("[data-gototab]").forEach((b) => b.addEventListener("click", () => {
@@ -11418,7 +11466,7 @@ async function renderCharmsCalc() {
   document.getElementById("charmCapSelect").addEventListener("change", async (e) => {
     GEAR_CAPS.charm = e.target.value;
     await saveGearCaps();
-    if (clampCharmState()) await saveCalcState("charm", CHARM_CALC_STATE);
+    if (clampCharmState()) saveCalcState("charm", CHARM_CALC_STATE);
     renderTroopSections();
     updateCharmTotals();
   });
@@ -11664,7 +11712,7 @@ async function renderChiefGearCalc() {
   document.getElementById("chiefGearCapSelect").addEventListener("change", async (e) => {
     GEAR_CAPS.chief_gear = Number(e.target.value);
     await saveGearCaps();
-    if (clampChiefGearState()) await saveCalcState("chief_gear", CHIEF_GEAR_STATE);
+    if (clampChiefGearState()) saveCalcState("chief_gear", CHIEF_GEAR_STATE);
     buildOpts();
     renderPieces();
     updateChiefGearTotals();
@@ -11796,7 +11844,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       const name = input.dataset.ownedmat;
       owned[name] = val;
       budgetInvalidate();
-      await saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
+      saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
       // Only this material's status text depends on its owned amount, so
       // update just those spans in place rather than touching the input
       // elements (which would steal focus if the user tabs straight into
@@ -12123,7 +12171,7 @@ async function ensureGalleryUncounted() {
 async function setGalleryUncounted(id, uncounted) {
   id = String(id);
   if (uncounted) GALLERY_UNCOUNTED.add(id); else GALLERY_UNCOUNTED.delete(id);
-  await saveCalcState("gallery_uncounted", { ids: [...GALLERY_UNCOUNTED] });
+  saveCalcState("gallery_uncounted", { ids: [...GALLERY_UNCOUNTED] });
 }
 
 // Renders "counted grid / thick divider / not-counted grid" into el.
@@ -12277,37 +12325,32 @@ async function renderSkinGallery() {
   globeLevelSelect.addEventListener("change", async (e) => {
     const level = Number(e.target.value);
     const prevLevel = globeLevelSaved.level;
-    await saveCalcState("skin_globe_level", { level });
+    saveCalcState("skin_globe_level", { level });
     globeLevelSaved.level = level;
 
     const changed = [];
+    // Shown at once and saved in the background, all at the same time
+    // (they used to be saved one after another before anything updated);
+    // a skin whose save fails is put back.
+    const setOwned = (matchingSkin, name, owned, label) => {
+      matchingSkin.owned = owned;
+      changed.push(label);
+      patchSkinQueued(matchingSkin.id, { owned }).catch(() => {
+        if (matchingSkin.owned === owned) { matchingSkin.owned = !owned; computeAndRender(); }
+        toast(`Couldn't update ${name}`, true);
+      });
+    };
     // Un-own whatever the previous level auto-owned.
     if (prevLevel !== level) {
       for (const name of namesForGlobeLevel(prevLevel)) {
         const matchingSkin = skins.find((s) => s.name === name);
-        if (matchingSkin && matchingSkin.owned) {
-          try {
-            await sb(`skins?id=eq.${matchingSkin.id}`, { method: "PATCH", body: JSON.stringify({ owned: false }) });
-            matchingSkin.owned = false;
-            changed.push(`-${name}`);
-          } catch (err) {
-            toast(`Couldn't update ${name}`, true);
-          }
-        }
+        if (matchingSkin && matchingSkin.owned) setOwned(matchingSkin, name, false, `-${name}`);
       }
     }
     // Own whatever the new level auto-owns.
     for (const name of namesForGlobeLevel(level)) {
       const matchingSkin = skins.find((s) => s.name === name);
-      if (matchingSkin && !matchingSkin.owned) {
-        try {
-          await sb(`skins?id=eq.${matchingSkin.id}`, { method: "PATCH", body: JSON.stringify({ owned: true }) });
-          matchingSkin.owned = true;
-          changed.push(name);
-        } catch (err) {
-          toast(`Couldn't update ${name}`, true);
-        }
-      }
+      if (matchingSkin && !matchingSkin.owned) setOwned(matchingSkin, name, true, name);
     }
     if (changed.length) {
       toast(`Updated: ${changed.join(", ")}`);
@@ -12419,13 +12462,13 @@ async function renderSkinGallery() {
       el.addEventListener("click", async () => {
         const skin = skins.find((s) => s.id === el.dataset.skin);
         const newOwned = !skin.owned;
-        try {
-          await sb(`skins?id=eq.${skin.id}`, { method: "PATCH", body: JSON.stringify({ owned: newOwned }) });
-          skin.owned = newOwned;
-          computeAndRender();
-        } catch (err) {
+        // Show it at once; undo it if the save fails.
+        skin.owned = newOwned;
+        computeAndRender();
+        patchSkinQueued(skin.id, { owned: newOwned }).catch(() => {
+          if (skin.owned === newOwned) { skin.owned = !newOwned; computeAndRender(); }
           toast("Couldn't update skin", true);
-        }
+        });
       });
     });
     }
@@ -12600,13 +12643,14 @@ async function renderIslandGallery() {
         openGalleryDetailModal(filtered, idx, {
           isIsland: true,
           onSave: async (island, patch) => {
-            try {
-              await sb(`skins?id=eq.${island.id}`, { method: "PATCH", body: JSON.stringify(patch) });
-              Object.assign(island, patch);
-              computeAndRender();
-            } catch (err) {
+            // Show it at once; undo it if the save fails.
+            const before = Object.fromEntries(Object.keys(patch).map((k) => [k, island[k]]));
+            Object.assign(island, patch);
+            computeAndRender();
+            patchSkinQueued(island.id, patch).catch(() => {
+              if (Object.keys(patch).every((k) => island[k] === patch[k])) { Object.assign(island, before); computeAndRender(); }
               toast("Couldn't update island", true);
-            }
+            });
           },
         });
       });
@@ -12979,7 +13023,7 @@ async function renderVipTierTable(target) {
   document.getElementById("vipTierSelect").addEventListener("change", async (e) => {
     const idx = Number(e.target.value);
     showTier(idx);
-    await saveCalcState("vip_tier", { index: idx, name: rows[idx].name });
+    saveCalcState("vip_tier", { index: idx, name: rows[idx].name });
   });
 
   const saved = await loadCalcState("vip_tier");
@@ -13090,7 +13134,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
       starRow.nextElementSibling.textContent = `${newStars} ${t("stars_of_5")}`;
       renderCards(newStars);
       saved[sharedKey] = newStars;
-      await saveCalcState(`hero_stars_${heroName.toLowerCase()}`, saved);
+      saveCalcState(`hero_stars_${heroName.toLowerCase()}`, saved);
     });
   });
 }
@@ -13147,12 +13191,12 @@ async function renderAlbumTundraPage() {
   document.getElementById("albumTundraAttack").addEventListener("change", async (e) => {
     saved.Attack = Number(e.target.value);
     renderTotals();
-    await saveCalcState("album_tundra", saved);
+    saveCalcState("album_tundra", saved);
   });
   document.getElementById("albumTundraDefense").addEventListener("change", async (e) => {
     saved.Defense = Number(e.target.value);
     renderTotals();
-    await saveCalcState("album_tundra", saved);
+    saveCalcState("album_tundra", saved);
   });
 }
 
@@ -13209,7 +13253,7 @@ async function renderCollectionGalleryPage() {
     sel.addEventListener("change", async (e) => {
       saved[sel.dataset.collectiongallery] = Number(e.target.value);
       renderTotals();
-      await saveCalcState("collection_gallery", saved);
+      saveCalcState("collection_gallery", saved);
     });
   });
 }
@@ -13416,7 +13460,7 @@ async function loadGeneralSpeedupMinutes() {
   // One-time carry-over from the old research-only box.
   const legacy = await loadCalcState("research_speedup_minutes");
   const minutes = (legacy && typeof legacy.minutes === "number") ? legacy.minutes : 0;
-  if (minutes > 0) { inv[GENERAL_SPEEDUP_KEY] = minutes; await saveCalcState("experts_inventory", inv); }
+  if (minutes > 0) { inv[GENERAL_SPEEDUP_KEY] = minutes; saveCalcState("experts_inventory", inv); }
   return minutes;
 }
 async function saveGeneralSpeedupMinutes(minutes) {
@@ -13424,7 +13468,7 @@ async function saveGeneralSpeedupMinutes(minutes) {
   inv[GENERAL_SPEEDUP_KEY] = minutes;
   RESEARCH_SPEEDUP_MINUTES = minutes;
   budgetInvalidate();
-  await saveCalcState("experts_inventory", inv);
+  saveCalcState("experts_inventory", inv);
 }
 async function ensureResearchSpeedData() {
   const saved = await loadCalcState("research_speed");
@@ -13469,7 +13513,7 @@ function wireResearchSpeedInput(onChange) {
       if (Number.isNaN(val) || val < 0) val = 0;
       RESEARCH_SPEED_PCT = val;
       el.value = val;
-      await saveCalcState("research_speed", { pct: val });
+      saveCalcState("research_speed", { pct: val });
       onChange();
     });
   }
@@ -13626,7 +13670,7 @@ async function renderT11HeliosPage() {
   const t11Toggle = document.getElementById("t11CountedToggle");
   if (t11Toggle) t11Toggle.addEventListener("change", async (e) => {
     RESEARCH_PAGE_COUNTED.t11 = e.target.checked;
-    await saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
+    saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
 
   document.getElementById("t11MaxAllBtn").addEventListener("click", async () => {
@@ -13642,7 +13686,7 @@ async function renderT11HeliosPage() {
         T11_STATE[troop][track] = allMaxed ? 0 : tracks[track].length;
       });
     });
-    await saveCalcState("t11_helios", T11_STATE);
+    saveCalcState("t11_helios", T11_STATE);
     renderGrandTotal();
     render();
   });
@@ -13782,7 +13826,7 @@ async function renderT11HeliosPage() {
       sel.addEventListener("change", async () => {
         const [troop, track] = sel.dataset.t11track.split("|");
         T11_STATE[troop][track] = Number(sel.value);
-        await saveCalcState("t11_helios", T11_STATE);
+        saveCalcState("t11_helios", T11_STATE);
         renderGrandTotal();
         render();
       });
@@ -13792,7 +13836,7 @@ async function renderT11HeliosPage() {
         const [troop, track] = sel.dataset.t11target.split("|");
         T11_TARGET[troop] = T11_TARGET[troop] || {};
         T11_TARGET[troop][track] = Number(sel.value);
-        await saveCalcState("t11_helios_target", T11_TARGET);
+        saveCalcState("t11_helios_target", T11_TARGET);
         renderGrandTotal();
         render();
       });
@@ -13881,13 +13925,13 @@ async function savePetMarksRates() {
     if (!PET_MARKS_STATE.advanced) return;
     PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.rates };
     PET_MARKS_STATE.visitorCustom = true;
-    await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+    saveCalcState("pet_refine_marks", PET_MARKS_STATE);
     PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
     return;
   }
   if (PET_MARKS_STATE.testMode) {
     PET_MARKS_STATE.testRates = { ...PET_MARKS_STATE.rates };
-    await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+    saveCalcState("pet_refine_marks", PET_MARKS_STATE);
   } else {
     await saveSiteConfig("pet_marks_rates", PET_MARKS_STATE.rates);
     PET_MARKS_STATE.published = { ...PET_MARKS_STATE.rates };
@@ -14537,7 +14581,7 @@ async function renderExpertsResearchPage() {
           unlockedState[expert] = cb.checked;
           if (EXPERTS_RESEARCH_UNLOCKED_GLOBAL) EXPERTS_RESEARCH_UNLOCKED_GLOBAL[expert] = cb.checked;
           budgetInvalidate();
-          await saveCalcState("experts_research_unlocked", unlockedState);
+          saveCalcState("experts_research_unlocked", unlockedState);
           renderTotals();
           renderGrid();
         });
@@ -14569,7 +14613,7 @@ async function renderExpertsResearchPage() {
             saved[expert][p].current = nextCurrent;
             saved[expert][p].desired = nextTarget;
           });
-          await saveCalcState("experts_research", saved);
+          saveCalcState("experts_research", saved);
           renderTotals();
           renderGrid();
         });
@@ -14582,7 +14626,7 @@ async function renderExpertsResearchPage() {
           if (newCurrent > 0 && saved[expert][p].desired <= 0) {
             saved[expert][p].desired = newCurrent;
           }
-          await saveCalcState("experts_research", saved);
+          saveCalcState("experts_research", saved);
           renderTotals();
           renderGrid();
         });
@@ -14591,7 +14635,7 @@ async function renderExpertsResearchPage() {
         sel.addEventListener("change", async () => {
           const [expert, p] = sel.dataset.expresearchdes.split("|");
           saved[expert][p].desired = Number(sel.value);
-          await saveCalcState("experts_research", saved);
+          saveCalcState("experts_research", saved);
           renderTotals();
           renderGrid();
         });
@@ -15149,7 +15193,7 @@ async function renderExpertsPage() {
     gridEl.querySelectorAll("select[data-expcur]").forEach((sel) => {
       sel.addEventListener("change", async () => {
         saved[sel.dataset.expcur].current = Number(sel.value);
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderStatHeader();
         renderFoundryHeader();
         renderSvsHeader();
@@ -15162,7 +15206,7 @@ async function renderExpertsPage() {
     gridEl.querySelectorAll("select[data-expdes]").forEach((sel) => {
       sel.addEventListener("change", async () => {
         saved[sel.dataset.expdes].desired = Number(sel.value);
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
       });
@@ -15176,7 +15220,7 @@ async function renderExpertsPage() {
         // without a page reload.
         if (EXPERTS_UNLOCKED_GLOBAL) EXPERTS_UNLOCKED_GLOBAL[expert] = cb.checked;
         budgetInvalidate();
-        await saveCalcState("experts_unlocked", unlockedState);
+        saveCalcState("experts_unlocked", unlockedState);
         renderTotals();
         renderStatHeader();
         renderFoundryHeader();
@@ -15210,7 +15254,7 @@ async function renderExpertsPage() {
             s.skills[sk].current = max;
           });
         }
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderStatHeader();
         renderFoundryHeader();
         renderSvsHeader();
@@ -15224,7 +15268,7 @@ async function renderExpertsPage() {
       sel.addEventListener("change", async () => {
         const [hero, skill] = sel.dataset.expskillcur.split("|");
         saved[hero].skills[skill].current = Number(sel.value);
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderStatHeader();
         renderFoundryHeader();
         renderSvsHeader();
@@ -15238,7 +15282,7 @@ async function renderExpertsPage() {
       sel.addEventListener("change", async () => {
         const [hero, skill] = sel.dataset.expskilldes.split("|");
         saved[hero].skills[skill].desired = Number(sel.value);
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
       });
@@ -15250,7 +15294,7 @@ async function renderExpertsPage() {
         // Fills the EXP box with what this step still costs - levels are left alone.
         const { exp } = skillCost(hero, skill, st.current, st.desired);
         if (exp > 0) st.expHave = Math.round(exp);
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
       });
@@ -15260,7 +15304,7 @@ async function renderExpertsPage() {
         const v = Math.max(0, Math.floor(Number(inp.value) || 0));
         invSaved[`${inp.dataset.expsig} Sigils`] = v;
         budgetInvalidate();
-        await saveCalcState("experts_inventory", invSaved);
+        saveCalcState("experts_inventory", invSaved);
         renderTotals();
         renderInventory();
         renderGrid();
@@ -15272,7 +15316,7 @@ async function renderExpertsPage() {
         const v = Math.max(0, Math.floor(Number(inp.value) || 0));
         if (v) saved[hero].affHave = v;
         else delete saved[hero].affHave;
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
       });
@@ -15283,7 +15327,7 @@ async function renderExpertsPage() {
         const v = Math.max(0, Math.floor(Number(inp.value) || 0));
         if (v) saved[hero].skills[skill].expHave = v;
         else delete saved[hero].skills[skill].expHave;
-        await saveCalcState("experts", saved);
+        saveCalcState("experts", saved);
         renderTotals();
         renderGrid();
       });
@@ -15321,7 +15365,7 @@ async function renderExpertsPage() {
         input.value = val;
         invSaved[input.dataset.expinv] = val;
         budgetInvalidate();
-        await saveCalcState("experts_inventory", invSaved);
+        saveCalcState("experts_inventory", invSaved);
         renderTotals();
       });
     });
@@ -15555,7 +15599,7 @@ async function renderRefinePage() {
     totalsEl.querySelectorAll("[data-marksadvanced]").forEach((b) => b.addEventListener("click", async () => {
       const on = b.dataset.marksadvanced === "1";
       const st = PET_MARKS_STATE;
-      await saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
+      saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
       PET_MARKS_STATE = null;
       await ensurePetMarksState();
       PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
@@ -15566,7 +15610,7 @@ async function renderRefinePage() {
       Object.keys(rates).forEach((k) => { rates[k] = Number(PET_MARKS_STATE.published[k]) || 0; });
       PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.published };
       PET_MARKS_STATE.visitorCustom = false;
-      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      saveCalcState("pet_refine_marks", PET_MARKS_STATE);
       PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
       renderTotals();
     });
@@ -15580,13 +15624,13 @@ async function renderRefinePage() {
     if (pg) pg.addEventListener("change", async () => {
       PET_MARKS_STATE.packGems = pg.checked;
       PACK_PLAN_CACHE.clear();
-      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      saveCalcState("pet_refine_marks", PET_MARKS_STATE);
       renderTotals();
     });
     totalsEl.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
       PET_MARKS_STATE.adjust = Math.max(-90, Math.min(300, (PET_MARKS_STATE.adjust || 0) + Number(b.dataset.marksadjust)));
       PET_MARKS_STATE.savedAdjust = PET_MARKS_STATE.adjust;
-      await saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+      saveCalcState("pet_refine_marks", PET_MARKS_STATE);
       renderTotals();
     }));
   }
@@ -15673,7 +15717,7 @@ async function renderRefinePage() {
       cb.addEventListener("change", async () => {
         const pet = cb.dataset.petunlockrefine;
         PETS_UNLOCKED[pet] = cb.checked;
-        await saveCalcState("pets_unlocked", PETS_UNLOCKED);
+        saveCalcState("pets_unlocked", PETS_UNLOCKED);
         renderTotals();
         renderList();
       });
@@ -15690,7 +15734,7 @@ async function renderRefinePage() {
         if (val > cap) val = cap;
         input.value = val;
         petState(pet)[statKey] = val;
-        await saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE);
+        saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE);
         renderTotals();
         updateStatRow(pet, statKey);
       });
@@ -15708,7 +15752,7 @@ async function renderRefinePage() {
           if (input) input.value = s[key];
           updateStatRow(pet, key);
         });
-        await saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE);
+        saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE);
         renderTotals();
       });
     });
@@ -15872,7 +15916,7 @@ async function renderPetsDataPage() {
       cb.addEventListener("change", async () => {
         const pet = cb.dataset.petunlock;
         PETS_UNLOCKED[pet] = cb.checked;
-        await saveCalcState("pets_unlocked", PETS_UNLOCKED);
+        saveCalcState("pets_unlocked", PETS_UNLOCKED);
         renderTotals();
         renderList();
       });
@@ -15884,7 +15928,7 @@ async function renderPetsDataPage() {
         const s = getState(pet);
         s.from = Number(sel.value);
         PETS_STATE[pet] = s;
-        await saveCalcState("pets_data", PETS_STATE);
+        saveCalcState("pets_data", PETS_STATE);
         renderTotals();
         renderList();
       });
@@ -15895,7 +15939,7 @@ async function renderPetsDataPage() {
         const s = getState(pet);
         s.to = Number(sel.value);
         PETS_STATE[pet] = s;
-        await saveCalcState("pets_data", PETS_STATE);
+        saveCalcState("pets_data", PETS_STATE);
         renderTotals();
         renderList();
       });
@@ -15908,7 +15952,7 @@ async function renderPetsDataPage() {
       const maxIdx = PETS_NODES_CACHE[pet].length - 1;
       PETS_STATE[pet] = allMaxed ? { from: -1, to: maxIdx } : { from: maxIdx, to: maxIdx };
     });
-    await saveCalcState("pets_data", PETS_STATE);
+    saveCalcState("pets_data", PETS_STATE);
     renderTotals();
     renderList();
   });
@@ -15945,7 +15989,7 @@ async function renderResearchCenterPage() {
     tracks.forEach((track) => {
       RC_STATE[track] = allMaxed ? 0 : RC_NODES_CACHE[track].length;
     });
-    await saveCalcState("research_center", RC_STATE);
+    saveCalcState("research_center", RC_STATE);
     renderTotals();
     renderGroups();
   });
@@ -16068,7 +16112,7 @@ async function renderResearchCenterPage() {
         groupTracks.forEach((t) => {
           RC_STATE[t] = allMaxed ? 0 : RC_NODES_CACHE[t].length;
         });
-        await saveCalcState("research_center", RC_STATE);
+        saveCalcState("research_center", RC_STATE);
         renderTotals();
         renderGroups();
       });
@@ -16077,7 +16121,7 @@ async function renderResearchCenterPage() {
     groupsEl.querySelectorAll("select[data-rctrack]").forEach((sel) => {
       sel.addEventListener("change", async () => {
         RC_STATE[sel.dataset.rctrack] = Number(sel.value);
-        await saveCalcState("research_center", RC_STATE);
+        saveCalcState("research_center", RC_STATE);
         renderTotals();
         renderGroups();
       });
@@ -16136,7 +16180,7 @@ async function renderT12ResearchPage() {
   const t12Toggle = document.getElementById("t12CountedToggle");
   if (t12Toggle) t12Toggle.addEventListener("change", async (e) => {
     RESEARCH_PAGE_COUNTED.t12 = e.target.checked;
-    await saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
+    saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
 
   document.getElementById("t12MaxAllBtn").addEventListener("click", async () => {
@@ -16146,7 +16190,7 @@ async function renderT12ResearchPage() {
         T12_STATE[troop][def.key] = allMaxed ? 0 : def.max;
       });
     });
-    await saveCalcState("t12_research", T12_STATE);
+    saveCalcState("t12_research", T12_STATE);
     renderTotals();
     renderTroopPanels();
   });
@@ -16268,7 +16312,7 @@ async function renderT12ResearchPage() {
     troopsEl.querySelectorAll("select[data-t12item]").forEach((sel) => {
       sel.addEventListener("change", async () => {
         T12_STATE[troop][sel.dataset.t12item] = Number(sel.value);
-        await saveCalcState("t12_research", T12_STATE);
+        saveCalcState("t12_research", T12_STATE);
         renderTotals();
         renderTroopPanels();
       });
@@ -16277,7 +16321,7 @@ async function renderT12ResearchPage() {
       sel.addEventListener("change", async () => {
         T12_TARGET[troop] = T12_TARGET[troop] || {};
         T12_TARGET[troop][sel.dataset.t12target] = Number(sel.value);
-        await saveCalcState("t12_research_target", T12_TARGET);
+        saveCalcState("t12_research_target", T12_TARGET);
         renderTotals();
         renderTroopPanels();
       });
@@ -16352,13 +16396,13 @@ async function renderFacilityPage() {
       card.addEventListener("click", async (e) => {
         const b = buildings.find((x) => x.id === card.dataset.facility);
         const newOwned = !b.owned;
-        try {
-          await sb(`skins?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ owned: newOwned }) });
-          b.owned = newOwned;
-          render();
-        } catch (err) {
+        // Show it at once; undo it if the save fails.
+        b.owned = newOwned;
+        render();
+        patchSkinQueued(b.id, { owned: newOwned }).catch(() => {
+          if (b.owned === newOwned) { b.owned = !newOwned; render(); }
           toast("Couldn't update building", true);
-        }
+        });
       });
     });
   }
@@ -19305,7 +19349,7 @@ async function renderAdminMarksCalc(body) {
     </div>`;
   const read = (key) => { const out = {}; STAGES.forEach((sg) => { const v = Number(String(body.querySelector(`[data-mrate="${key}|${sg}"]`).value).replace(/[^0-9.]/g, "")); out[sg] = Number.isFinite(v) ? Math.max(0, v) : st[key][sg]; }); return out; };
   const persist = async () => {
-    await saveCalcState("pet_refine_marks", { adjust: st.adjust, packGems: st.packGems, testMode: st.testMode, testRates: st.testRates });
+    saveCalcState("pet_refine_marks", { adjust: st.adjust, packGems: st.packGems, testMode: st.testMode, testRates: st.testRates });
     PET_MARKS_STATE = null; PACK_PLAN_CACHE.clear(); budgetInvalidate();
   };
   body.querySelectorAll("[data-msave]").forEach((b) => b.addEventListener("click", async () => {
