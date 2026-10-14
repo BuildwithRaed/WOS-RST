@@ -87,3 +87,4 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - PR #20: bigger pictures for City Skin, Teleport, Private Chat, Rally
 - PR #21: pictures for Pet Chest, Common/Advanced Marks, Gems (game icons, same as whiteoutsurvival.wiki)
 - PR #22: new Backpack page (all items as tiles, tabs, tap to edit) + Admin → Backpack Items
+- PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
