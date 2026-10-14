@@ -429,9 +429,16 @@ input,select,textarea{
   .t12x-need{ margin-bottom:16px; }
   .t12x-need .bs-box{ margin:0; }
   .t12x-need .bs-row{ margin:0; }
-  .t12x-need #t12ResourcesBar_rows_sum{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px 8px; }
-  .t12x-need .bs-foot{ grid-column:1 / -1; }
-  @media (max-width: 600px){ .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:minmax(0,1fr); } }
+  /* Small square tiles, like the Backpack page */
+  .t12x-need #t12ResourcesBar_rows_sum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:7px; }
+  @media (min-width: 901px){ .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:repeat(7, minmax(0,1fr)); } }
+  .t12x-need .bs-foot{ grid-column:1 / -1; margin-bottom:2px; }
+  .t12x-need .bs-row{ aspect-ratio:1; flex-direction:column; justify-content:center; text-align:center; gap:2px; padding:6px 4px; }
+  .t12x-need .bs-row img{ width:30px; height:30px; }
+  .t12x-need .bs-row .n{ flex:none; width:100%; font-size:11px; font-weight:600; line-height:1.2; }
+  .t12x-need .bs-row .n small{ font-size:9.5px; line-height:1.25; margin-top:1px; }
+  .t12x-need .bs-row b{ order:-1; font-size:15px; }
+  .t12x-need .bs-row img{ order:-2; }
   .t12x-good{ font-size:11px; color:var(--good); margin-top:3px; }
   .t12x-prog{ height:8px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; margin:10px 0 5px; }
   .t12x-prog i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg, var(--ice), var(--good)); }
@@ -13106,7 +13113,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
-    const label = (n) => materialDisplayName(MATERIAL_NAME_SHORT[n] || n).replace(/\s*\((minutes|min)\)$/, "");
+    const label = (n) => (calcKey === "t12_research" && { "Refined FC": "RFC", "FC Shard": t("t12x_shard") }[n]) || materialDisplayName(MATERIAL_NAME_SHORT[n] || n).replace(/\s*\((minutes|min)\)$/, "");
     const items = names.filter((n) => needOf(n) > 0);
     const short = items.filter((n) => (effOwned[n] || 0) < needOf(n));
     const ready = items.filter((n) => !short.includes(n));
