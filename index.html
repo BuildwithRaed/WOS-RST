@@ -620,6 +620,9 @@ input,select,textarea{
     .badge-lvl{ font-size:10px; opacity:0.85; margin-top:1px; }
     .badge-lvl::before{ content:none; }
   }
+  /* Packs: tables far off screen skip layout until scrolled near (the owner's
+     editable view is thousands of inputs); the reserved height keeps scrolling smooth. */
+  [data-packtable]{ content-visibility:auto; contain-intrinsic-size:auto 600px; }
 </style>
 </head>
 <body>

@@ -44,6 +44,8 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
   - Owner "Used for" boxes are built on first open (`data-packlinklazy`).
   - `packResourceChoices` caches its sorted list.
   - Hero Gear / T12 / Research Center update only the changed values instead of redrawing.
+  - Budgets: built pack groups are kept for the visit (`PACK_GROUPS_CACHE`, cleared by `budgetInvalidate()` and when the pack tables reload); only the ticked pages' packs are sent to the planner worker; `ensurePackTables` shares one load.
+  - Packs tables (`[data-packtable]`) use `content-visibility:auto` so off-screen tables skip layout.
 - **Escape** database/user text with `esc()` before putting it in HTML.
 
 ## Testing approach used so far
@@ -76,3 +78,5 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
   - keeping data for the visit
   - smaller redraws
   - image optimization (repo icons and the gallery images)
+- PR #15: Budgets speed (open 7.2 s → 2.7 s, date change 6.2 s → 0.7 s)
+- PR #16: owner Packs page speed (2.4 s → 1.4 s)
