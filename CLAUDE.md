@@ -91,4 +91,5 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - PR #25: Backpack All tab in game order, speedups at the bottom, resource chests, XP Component removed
 - PR #26: own picture for each speedup type (`icons/speedup-general|construction|troop|research|expert.png`: drawn double arrows plus the type mark cut from the owner's Speedup screenshot), on Backpack and the Experts page; replaces the wiki "Gathering Speed Boost" icon `item_icon_302000.png`
 - PR #27: Backpack Scan screenshot (Summary Resources tab + Speedup tab, check screen before saving)
+- PR #28: Scan fix for phone screenshots (reads only the light Summary panel; squares found but no speedups → also tried as the Summary)
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
