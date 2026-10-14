@@ -433,7 +433,7 @@ input,select,textarea{
   .t12x-need #t12ResourcesBar_rows_sum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:7px; }
   @media (min-width: 901px){ .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:repeat(7, minmax(0,1fr)); } }
   .t12x-need .bs-foot{ grid-column:1 / -1; margin-bottom:2px; }
-  .t12x-need .bs-row{ aspect-ratio:1; flex-direction:column; justify-content:center; text-align:center; gap:2px; padding:6px 4px; }
+  .t12x-need .bs-row{ min-height:118px; height:100%; flex-direction:column; justify-content:center; text-align:center; gap:2px; padding:6px 4px; }
   .t12x-need .bs-row img{ width:30px; height:30px; }
   .t12x-need .bs-row .n{ flex:none; width:100%; font-size:11px; font-weight:600; line-height:1.2; }
   .t12x-need .bs-row .n small{ font-size:9.5px; line-height:1.25; margin-top:1px; }
@@ -12996,7 +12996,7 @@ async function renderChiefGearCalc() {
 // Pages whose Backpack shows the short summary (what's still missing, ready
 // items as chips) with the boxes behind "Show all / edit".
 const BAR_SUMMARY_KEYS = new Set(["t12_research"]);
-const BAR_SHOW_ALL = {}; // { calcKey: true } - boxes open, for the visit
+const BAR_SHOW_ALL = { t12_research: true }; // { calcKey: true } - boxes open (T12 starts open), for the visit
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need" };
 // Picture for an item name (chests, custom pack items, materials).
