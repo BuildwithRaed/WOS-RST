@@ -426,6 +426,12 @@ input,select,textarea{
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
+  .t12x-need{ margin-bottom:16px; }
+  .t12x-need .bs-box{ margin:0; }
+  .t12x-need .bs-row{ margin:0; }
+  .t12x-need #t12ResourcesBar_rows_sum{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px 8px; }
+  .t12x-need .bs-foot{ grid-column:1 / -1; }
+  @media (max-width: 600px){ .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:minmax(0,1fr); } }
   .t12x-good{ font-size:11px; color:var(--good); margin-top:3px; }
   .t12x-prog{ height:8px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; margin:10px 0 5px; }
   .t12x-prog i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg, var(--ice), var(--good)); }
@@ -3213,6 +3219,7 @@ const T = {
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
+  t12x_backpack_packs: { en: "Backpack · trades · pack cost", ar: "الحقيبة · المقايضات · تكلفة الحزم", ko: "배낭 · 교환 · 팩 비용" },
   t12x_settings: { en: "Settings", ar: "الإعدادات", ko: "설정" },
   t12x_time_left: { en: "Time left · all 3 troops", ar: "الوقت المتبقي · القوات الثلاث", ko: "남은 시간 · 3개 병종" },
   t12x_covered: { en: "covered by your speedups", ar: "مغطى بتسريعاتك", ko: "가속으로 충당됨" },
@@ -12982,6 +12989,8 @@ async function renderChiefGearCalc() {
 // items as chips) with the boxes behind "Show all / edit".
 const BAR_SUMMARY_KEYS = new Set(["t12_research"]);
 const BAR_SHOW_ALL = {}; // { calcKey: true } - boxes open, for the visit
+// Where a page wants its summary drawn instead of above its boxes (element id).
+const BAR_SUMMARY_HOST = { t12_research: "t12Need" };
 // Picture for an item name (chests, custom pack items, materials).
 function materialIconSrc(name) {
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
@@ -13205,8 +13214,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     </div>`;
   }
 
+  const sumHost = summaryOn && BAR_SUMMARY_HOST[calcKey] && document.getElementById(BAR_SUMMARY_HOST[calcKey]);
+  if (sumHost) sumHost.innerHTML = `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>`;
   el.innerHTML = `
-    ${summaryOn ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
+    ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && !BAR_SHOW_ALL[calcKey] ? ` style="display:none;"` : ""}>${summaryOn
       ? `<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
@@ -13263,15 +13274,18 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       ownedChanged(name);
     });
   });
+  const toggleBoxes = () => {
+    BAR_SHOW_ALL[calcKey] = !BAR_SHOW_ALL[calcKey];
+    document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
+    document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
+    if (BAR_SHOW_ALL[calcKey] && sumHost) document.getElementById(rowsId).scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+  // Summary drawn elsewhere: its "Show all / edit" link (onclick, so redraws don't stack).
+  if (sumHost) sumHost.onclick = (e) => { if (e.target.closest("[data-bstoggle]")) toggleBoxes(); };
   el.addEventListener("click", (e) => {
     const tileEl = e.target.closest("[data-bsedit]");
     if (tileEl) { editTileModal(tileEl.dataset.bsedit); return; }
-    if (e.target.closest("[data-bstoggle]")) {
-      BAR_SHOW_ALL[calcKey] = !BAR_SHOW_ALL[calcKey];
-      document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
-      document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
-      return;
-    }
+    if (e.target.closest("[data-bstoggle]")) { toggleBoxes(); return; }
     const b = e.target.closest("[data-bpuse]");
     if (!b) return;
     const name = b.dataset.bpuse;
@@ -17727,7 +17741,7 @@ async function renderT12ResearchPage() {
       <aside class="t12x-side">
         <div class="t12x-card t12x-hero" id="t12Hero"></div>
         <div class="t12x-card">
-          <div class="t12x-title">${esc(t("bs_title_t12"))}</div>
+          <div class="t12x-k">${esc(t("t12x_backpack_packs"))}</div>
           <div id="t12Totals"></div>
         </div>
         <div class="t12x-card">
@@ -17737,6 +17751,10 @@ async function renderT12ResearchPage() {
         </div>
       </aside>
       <div class="t12x-main">
+        <div class="t12x-card t12x-need">
+          <div class="t12x-title">${esc(t("bs_title_t12"))}</div>
+          <div id="t12Need"></div>
+        </div>
         <div class="t12x-top">
           <h2>${esc(t("t12_research_title"))}</h2>
           <div class="t12x-tabs" id="t12TroopDots"></div>
