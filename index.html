@@ -477,6 +477,10 @@ input,select,textarea{
   .t12x-maxall{ font:inherit; font-size:11px; padding:5px 10px; border-radius:9px; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; }
   .t12x-fold{ color:var(--muted); width:12px; }
   .t12x-nodes{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:8px; padding:0 14px 14px; }
+  /* Small nodes (no target): two or more per row, even on phones */
+  .t12x-nodes.compact{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
+  .t12x-nodes.compact .t12x-lbl{ display:none; }
+  .t12x-nodes.compact .t12x-nm .meta{ display:none; }
   .t12x-node{ border:1px solid var(--line); border-radius:12px; padding:9px 10px; background:rgba(255,255,255,.02); min-width:0; }
   .t12x-nm{ display:flex; justify-content:space-between; gap:8px; font-weight:600; font-size:13px; }
   .t12x-nm .meta, .t12x-done{ font-weight:400; font-size:10.5px; text-align:end; }
@@ -17577,23 +17581,23 @@ async function renderResearchCenterPage() {
   await ensureResearchSpeedData();
 
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("research_center_title"))}</h2>
-              </div>
-      <button class="btn" id="rcMaxAllBtn">${esc(t("max_everything"))}</button>
-    </div>
-    ${researchSpeedInputHtml()}
-    <div id="rcTotals" style="margin-bottom:16px;"></div>
-    <div id="rcGroups"></div>
-  `;
+  const RC_GROUPS = Object.keys(RC_BASE_CATEGORIES);
+  let rcActive = RC_GROUPS.includes("Infantry") ? "Infantry" : RC_GROUPS[0];
+  const rcOpen = {};
+  content.innerHTML = plxShellHtml({
+    title: t("research_center_title"),
+    settings: researchSpeedInputHtml(),
+    amountsId: "rcTotals", needId: "rcNeed", timeId: "rcHero", tabsId: "rcTabs",
+    needTitle: t("bs_title_needed"),
+    mainHtml: `<div id="rcGroups"></div>`,
+  });
   wireResearchSpeedInput(() => {
     renderTotals();
     renderGroups();
   });
 
-  document.getElementById("rcMaxAllBtn").addEventListener("click", async () => {
+  // Same as before: max every track, or reset all if already maxed.
+  const maxEverything = () => {
     const tracks = Object.keys(RC_NODES_CACHE);
     const allMaxed = tracks.every((track) => (RC_STATE[track] || 0) >= RC_NODES_CACHE[track].length);
     tracks.forEach((track) => {
@@ -17602,7 +17606,7 @@ async function renderResearchCenterPage() {
     saveCalcState("research_center", RC_STATE);
     renderTotals();
     renderGroups();
-  });
+  };
 
   function computeNeeded(trackName) {
     const levels = RC_NODES_CACHE[trackName] || [];
@@ -17635,6 +17639,14 @@ async function renderResearchCenterPage() {
     });
     return stats;
   }
+  const tracksOf = (bases) => bases.flatMap((base) => RC_TIERS.map((tier) => `${base} ${tier}`)).filter((tr) => RC_NODES_CACHE[tr]);
+  const pctOf = (tracks) => {
+    let cur = 0, max = 0;
+    tracks.forEach((tr) => { cur += Math.min(RC_NODES_CACHE[tr].length, RC_STATE[tr] || 0); max += RC_NODES_CACHE[tr].length; });
+    return max ? Math.floor((cur / max) * 100) : 0;
+  };
+  const sumNeed = (tracks) => tracks.reduce((a, tr) => { const n = computeNeeded(tr); Object.keys(n).forEach((k) => { a[k] = (a[k] || 0) + n[k]; }); return a; }, {});
+  const costLine = (n) => [["steel", t("resource_steel")], ["meat", materialDisplayName("Meat")]].filter(([k]) => n[k] > 0).map(([k, l]) => `${l} ${shortAmount(n[k])}`).join(" · ");
 
   function renderTotals() {
     const allTracks = Object.keys(RC_NODES_CACHE);
@@ -17651,99 +17663,67 @@ async function renderResearchCenterPage() {
       Steel: Math.round(grand.steel),
       "Research Speedups (minutes)": Math.round(applyResearchSpeed(grand.time_hours) * 60),
     };
-    document.getElementById("rcTotals").innerHTML = `
-      <div class="panel">
-        <h2>${esc(t("backpack_title"))}</h2>
-        <p class="desc">${esc(t("rc_desc"))}</p>
-        <div id="rcResourcesBar" style="margin-bottom:12px;"></div>
-        <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
-      </div>
-    `;
-    renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center");
+    const drawTime = () => {
+      const el = document.getElementById("rcHero");
+      if (!el) return;
+      el.innerHTML = plxTimeHtml(grand.time_hours, "research_center", "rcMaxAllBtn");
+      document.getElementById("rcMaxAllBtn").onclick = maxEverything;
+    };
+    drawTime();
+    document.getElementById("rcTotals").innerHTML = `<div id="rcResourcesBar"></div>`;
+    renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center").then(drawTime);
+    BAR_AFTER_CHANGE.research_center = drawTime;
   }
 
   const groupsEl = document.getElementById("rcGroups");
-  // A section's 4 stats; on a level change only these are redrawn (see the
-  // select handler below), not every dropdown on the page.
-  const statsRowInner = (stats) => `
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack.toFixed(1)}%</div></div>
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense.toFixed(1)}%</div></div>
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality.toFixed(1)}%</div></div>
-          <div class="metric" style="padding:6px; min-width:65px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health.toFixed(1)}%</div></div>`;
+  const tabsEl = document.getElementById("rcTabs");
+  const groupLabel = (g) => (g === "Shared" ? t("shared_label") : troopDisplayName(g));
   function renderGroups() {
-    groupsEl.innerHTML = Object.entries(RC_BASE_CATEGORIES)
-      .map(([groupName, baseNames]) => {
-        const stats = computeStats(baseNames);
-        const groupLabel = groupName === "Shared" ? t("shared_label") : troopDisplayName(groupName);
-        return `
-      <div class="panel">
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-          <h2 style="margin:0;">${esc(groupLabel)}</h2>
-          <button class="btn ghost small" data-rcmaxgroup="${esc(groupName)}">${esc(t("max_this_section"))}</button>
-        </div>
-        <div class="stats-row-scroll" data-rcstats="${esc(groupName)}" style="margin:10px 0 14px;">
-${statsRowInner(stats)}
-        </div>
-        ${baseNames
-          .map((base) => {
-            return `
-          <div style="padding:10px 0; border-top:1px solid var(--line);">
-            <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost);">${esc(dataName(base))}</div>
-            <div class="rc-tier-grid" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;">
-              ${RC_TIERS.map((tier) => {
-                const trackName = `${base} ${tier}`;
-                const levels = RC_NODES_CACHE[trackName];
-                if (!levels) return `<div><div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(tier)}</div><span class="meta" style="font-size:10.5px;">\u2014</span></div>`;
-                const maxLvl = levels.length;
-                const cur = RC_STATE[trackName] || 0;
-                const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i === 0 ? "0" : i}${i === maxLvl ? esc(t("max_suffix")) : ""}</option>`).join("");
-                return `
-                <div>
-                  <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(tier)}</div>
-                  <select data-rctrack="${esc(trackName)}" style="width:100%; padding:5px 8px;">${opts}</select>
-                </div>`;
-              }).join("")}
-            </div>
-          </div>`;
-          })
-          .join("")}
-      </div>`;
-      })
-      .join("");
-
-    groupsEl.querySelectorAll("[data-rcmaxgroup]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const groupName = btn.dataset.rcmaxgroup;
-        const baseNames = RC_BASE_CATEGORIES[groupName] || [];
-        const groupTracks = [];
-        baseNames.forEach((base) => {
-          RC_TIERS.forEach((tier) => {
-            const trackName = `${base} ${tier}`;
-            if (RC_NODES_CACHE[trackName]) groupTracks.push(trackName);
-          });
-        });
-        const allMaxed = groupTracks.every((t) => (RC_STATE[t] || 0) >= RC_NODES_CACHE[t].length);
-        groupTracks.forEach((t) => {
-          RC_STATE[t] = allMaxed ? 0 : RC_NODES_CACHE[t].length;
-        });
+    tabsEl.innerHTML = RC_GROUPS.map((g) => `<button type="button" class="${g === rcActive ? "on" : ""}" data-rctab="${esc(g)}" style="--tc:${{ Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" }[g] || "var(--frost)"};">${esc(groupLabel(g))}<small>${pctOf(tracksOf(RC_BASE_CATEGORIES[g]))}%</small></button>`).join("");
+    tabsEl.onclick = (e) => { const b = e.target.closest("[data-rctab]"); if (b && b.dataset.rctab !== rcActive) { rcActive = b.dataset.rctab; renderGroups(); } };
+    const bases = RC_BASE_CATEGORIES[rcActive] || [];
+    const stats = computeStats(bases);
+    const box = (k, v) => `<div><div><span>${esc(k)}</span><b>${v}</b></div></div>`;
+    groupsEl.innerHTML = `
+      <div class="t12x-boxes">
+        ${box("ATK", `+${stats.Attack.toFixed(1)}%`)}${box("DEF", `+${stats.Defense.toFixed(1)}%`)}${box("LETH", `+${stats.Lethality.toFixed(1)}%`)}${box("HP", `+${stats.Health.toFixed(1)}%`)}
+      </div>
+      ${bases.map((base) => {
+        const tracks = tracksOf([base]);
+        const pct = pctOf(tracks);
+        const open = rcOpen[base] !== undefined ? rcOpen[base] : pct < 100;
+        const left = costLine(sumNeed(tracks));
+        return plxSectionHtml({ compact: true, key: base, title: dataName(base), sub: `${t("t12x_nodes").replace("{n}", tracks.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left}`, pct, open, maxKey: base,
+          body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, target: null, cost: costLine(computeNeeded(tr)) })).join("") });
+      }).join("")}`;
+    wireTroopSwipe(groupsEl, RC_GROUPS, rcActive, (g) => { rcActive = g; renderGroups(); });
+    const setLevel = (tr, v) => {
+      RC_STATE[tr] = Math.min(RC_NODES_CACHE[tr].length, Math.max(0, v));
+      saveCalcState("research_center", RC_STATE);
+      renderTotals();
+      renderGroups();
+    };
+    groupsEl.onclick = (e) => {
+      const dec = e.target.closest("[data-pxdec]"), inc = e.target.closest("[data-pxinc]");
+      if (dec || inc) { const k = (dec || inc).dataset[dec ? "pxdec" : "pxinc"]; setLevel(k, (RC_STATE[k] || 0) + (dec ? -1 : 1)); return; }
+      const mx = e.target.closest("[data-pxmax]");
+      if (mx) {
+        const tracks = tracksOf([mx.dataset.pxmax]);
+        const maxed = tracks.every((tr) => (RC_STATE[tr] || 0) >= RC_NODES_CACHE[tr].length);
+        tracks.forEach((tr) => { RC_STATE[tr] = maxed ? 0 : RC_NODES_CACHE[tr].length; });
         saveCalcState("research_center", RC_STATE);
         renderTotals();
         renderGroups();
-      });
-    });
-
-    groupsEl.querySelectorAll("select[data-rctrack]").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        RC_STATE[sel.dataset.rctrack] = Number(sel.value);
-        saveCalcState("research_center", RC_STATE);
-        renderTotals();
-        // The dropdown already shows the new level; only its section's stats change.
-        const groupName = Object.keys(RC_BASE_CATEGORIES).find((g) => RC_BASE_CATEGORIES[g].some((base) => RC_TIERS.some((tier) => `${base} ${tier}` === sel.dataset.rctrack)));
-        const row = groupName && [...groupsEl.querySelectorAll("[data-rcstats]")].find((el) => el.dataset.rcstats === groupName);
-        if (row) row.innerHTML = statsRowInner(computeStats(RC_BASE_CATEGORIES[groupName]));
-        else renderGroups();
-      });
-    });
+        return;
+      }
+      const fold = e.target.closest("[data-pxfold]");
+      if (fold) {
+        const key = fold.dataset.pxfold, nodes = fold.nextElementSibling;
+        rcOpen[key] = nodes.style.display === "none";
+        nodes.style.display = rcOpen[key] ? "" : "none";
+        fold.querySelector(".t12x-fold").innerHTML = rcOpen[key] ? "&#9662;" : "&#9656;";
+      }
+    };
   }
 
   renderTotals();
@@ -17820,7 +17800,7 @@ function plxSectionHtml(o) {
       ${o.maxKey ? `<button type="button" class="t12x-maxall" data-pxmax="${esc(o.maxKey)}">${esc(t(o.pct >= 100 ? "t12x_reset" : "t12x_max_all"))}</button>` : ""}
       <span class="t12x-fold">${o.open ? "&#9662;" : "&#9656;"}</span>
     </div>
-    <div class="t12x-nodes"${o.open ? "" : ` style="display:none;"`}>${o.body}</div>
+    <div class="t12x-nodes${o.compact ? " compact" : ""}"${o.open ? "" : ` style="display:none;"`}>${o.body}</div>
   </div>`;
 }
 // Troop tabs (same look as T12).
