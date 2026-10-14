@@ -422,7 +422,13 @@ input,select,textarea{
   .t12x{ display:grid; grid-template-columns:340px minmax(0,1fr); gap:18px; align-items:start; }
   .t12x-side{ position:sticky; top:70px; display:flex; flex-direction:column; gap:12px; }
   .t12x-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; }
-  .t12x-hero{ background:linear-gradient(135deg, rgba(90,160,230,.16), rgba(22,35,58,.6)), var(--panel); }
+  .t12x-time{ border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin-bottom:10px; background:linear-gradient(135deg, rgba(90,160,230,.12), transparent); }
+  .t12x-time-top{ display:flex; align-items:center; gap:10px; }
+  .t12x-time-top img{ width:30px; height:30px; object-fit:contain; }
+  .t12x-time-top > div{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .t12x-time-top .t12x-k{ margin:0; }
+  .t12x-time-top b{ font-size:22px; font-weight:800; }
+  .t12x-time .t12x-prog{ margin:8px 0 4px; height:6px; }
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
@@ -458,7 +464,6 @@ input,select,textarea{
   .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }
   .t12x-tabs button.on{ background:rgba(255,255,255,.08); color:var(--frost); box-shadow:inset 0 -2px 0 var(--tc); }
   .t12x-boxes{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin-bottom:8px; }
-  .t12x-boxes.t12x-res{ margin-bottom:12px; }
   .t12x-boxes > div{ display:flex; align-items:center; gap:9px; border:1px solid var(--line); border-radius:12px; padding:8px 10px; background:var(--panel); min-width:0; }
   .t12x-boxes > div > div{ min-width:0; }
   .t12x-boxes img{ width:30px; height:30px; object-fit:contain; flex-shrink:0; }
@@ -482,19 +487,20 @@ input,select,textarea{
   .t12x-step button:disabled{ opacity:.35; cursor:default; }
   .t12x-step b{ min-width:22px; text-align:center; font-size:15px; }
   .t12x-step select{ width:auto; padding:4px 6px; }
+  .t12x-tgt{ margin-inline-start:auto; }
+  .t12x-lbl{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
   .t12x-bar{ height:4px; border-radius:9px; background:rgba(255,255,255,.07); overflow:hidden; margin-top:8px; }
   .t12x-bar i{ display:block; height:100%; border-radius:9px; background:var(--ice); }
   @media (max-width: 900px){
     .t12x{ grid-template-columns:minmax(0,1fr); }
     /* Phones: time left first, then the troop, then Backpack and settings. */
     .t12x-side{ display:contents; }
-    .t12x-hero{ order:-2; }
+    .t12x-settings{ order:-2; }
     .t12x-main{ order:-1; }
     .t12x-boxes{ gap:6px; }
     .t12x-boxes > div{ padding:7px 8px; gap:6px; }
     .t12x-boxes img{ width:22px; height:22px; }
     .t12x-boxes b{ font-size:13px; white-space:nowrap; }
-    .t12x-res > div{ flex-direction:column; gap:2px; text-align:center; }
   }
   /* Trades / Pack cost as cards (summary pages) */
   .pc-card{ border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:12px; background:rgba(255,255,255,.02); }
@@ -3238,6 +3244,8 @@ const T = {
   t12x_planned: { en: "planned", ar: "مخطط", ko: "계획됨" },
   t12x_all_maxed: { en: "all maxed", ar: "الكل بالحد الأقصى", ko: "모두 최대" },
   t12x_nodes: { en: "{n} nodes", ar: "{n} عقد", ko: "{n}개 항목" },
+  t12x_now: { en: "Now", ar: "الحالي", ko: "현재" },
+  t12x_target: { en: "Target", ar: "الهدف", ko: "목표" },
   t12x_node1: { en: "1 node", ar: "عقدة واحدة", ko: "1개 항목" },
   t12x_max_pct: { en: "max {n}%", ar: "الحد {n}%", ko: "최대 {n}%" },
   t12x_max_all: { en: "Max all", ar: "الحد الأقصى للكل", ko: "모두 최대" },
@@ -11515,6 +11523,8 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const open = TRADE_OPEN[calcKey] === true;
   const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
   const cards = BAR_SUMMARY_KEYS.has(calcKey);
+  // Card layout: short Fire Crystal names (FC, FCS, RFC).
+  const shortNm = (n) => (cards && { "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || materialDisplayName(n);
   const head = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-tradetoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("trade_title"))}</button>
@@ -11543,13 +11553,16 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const cardHead = `<div class="pc-head"><b>&#8644; ${esc(t("trade_title"))}</b>${IS_OWNER ? `<label class="pc-switch" title="${esc(t("trade_apply"))}"><span>${esc(t("trade_apply_short"))}</span><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></label>` : ""}</div>`;
   const cardBody = () => {
     const img = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
-    const shortNames = Object.keys(need).filter((n) => need[n] > 0);
-    const nm = (n) => ({ "Refined FC": "RFC", "FC Shard": t("t12x_shard") }[n] || materialDisplayName(MATERIAL_NAME_SHORT[n] || n)).replace(/\s*\((minutes|min)\)$/, "");
+    // Only what the traded items can become (Fire Crystal → RFC / Shard).
+    const froms = new Set(rates.map((r) => r.from));
+    const targets = new Set(tradeRatesFor(calcKey).filter((r) => froms.has(r.from)).map((r) => r.to));
+    const shortNames = Object.keys(need).filter((n) => need[n] > 0 && targets.has(n));
+    const nm = (n) => shortNm(n).replace(/\s*\((minutes|min)\)$/, "");
     const bad = shortNames.filter((n) => (res.after[n] || 0) > 0), ok = shortNames.filter((n) => !((res.after[n] || 0) > 0));
-    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${shortAmount(res.after[n])}</span>`).concat(ok.length > 2 ? [`<span class="ok">${esc(nm(ok[0]))} &#10003;</span>`, `<span class="ok">+${ok.length - 1} &#10003;</span>`] : ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
+    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${shortAmount(res.after[n])}</span>`).concat(ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
     return `${res.trades.length ? res.trades.map((tr) => {
       const r = rates.find((x) => x.from === tr.from && x.to === tr.to) || {};
-      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(materialDisplayName(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${qty(tr.getQty)}</b><small>${esc(materialDisplayName(tr.to))}</small></div></div>
+      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(shortNm(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${qty(tr.getQty)}</b><small>${esc(shortNm(tr.to))}</small></div></div>
         <div class="meta pc-sub">${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}</div>`;
     }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
       ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
@@ -11577,7 +11590,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const calcHtml = `
     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px;">
       <input type="number" min="0" data-tradeqty value="" placeholder="0" style="width:80px; font-size:12px; padding:4px 6px;" />
-      <select data-tradefrom style="font-size:12px;">${names.filter((n) => rates.some((r) => r.from === n)).map((n) => `<option value="${esc(n)}">${esc(materialDisplayName(n))}</option>`).join("")}</select>
+      <select data-tradefrom style="font-size:12px;">${names.filter((n) => rates.some((r) => r.from === n)).map((n) => `<option value="${esc(n)}">${esc(shortNm(n))}</option>`).join("")}</select>
       <span>→</span>
       <select data-tradeto style="font-size:12px;"></select>
       <span data-traderesult style="font-weight:700; color:var(--good);"></span>
@@ -11613,14 +11626,14 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   const toEl = containerEl.querySelector("[data-tradeto]");
   const outEl = containerEl.querySelector("[data-traderesult]");
   const fillTo = () => {
-    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(materialDisplayName(r.to))}</option>`).join("");
+    toEl.innerHTML = rates.filter((r) => r.from === fromEl.value).map((r) => `<option value="${esc(r.to)}">${esc(shortNm(r.to))}</option>`).join("");
   };
   const compute = () => {
     const r = rates.find((x) => x.from === fromEl.value && x.to === toEl.value);
     const q = Number(qtyEl.value) || 0;
     if (!r || q <= 0) { outEl.textContent = ""; return; }
     const lots = Math.floor(q / r.give);
-    outEl.textContent = `${(lots * r.get).toLocaleString()} ${materialDisplayName(r.to)}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${materialDisplayName(r.from)} ${t("trade_left_over")})` : "");
+    outEl.textContent = `${(lots * r.get).toLocaleString()} ${shortNm(r.to)}` + (q - lots * r.give > 0 ? ` (${(q - lots * r.give).toLocaleString()} ${shortNm(r.from)} ${t("trade_left_over")})` : "");
   };
   fillTo();
   fromEl.addEventListener("change", () => { fillTo(); compute(); });
@@ -17752,19 +17765,19 @@ async function renderT12ResearchPage() {
   content.innerHTML = `
     <div class="t12x">
       <aside class="t12x-side">
-        <div class="t12x-card t12x-hero" id="t12Hero"></div>
-        <div class="t12x-card">
-          <div id="t12Totals"></div>
-        </div>
-        <div class="t12x-card">
+        <div class="t12x-card t12x-settings">
           <div class="t12x-k">${esc(t("t12x_settings"))}</div>
           ${researchSpeedInputHtml()}
           <label class="t12x-check"><span>${esc(t("count_toward_dashboard"))}</span><input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} /></label>
+        </div>
+        <div class="t12x-card">
+          <div id="t12Totals"></div>
         </div>
       </aside>
       <div class="t12x-main">
         <div class="t12x-card t12x-need">
           <div class="t12x-title">${esc(t("bs_title_t12"))}</div>
+          <div id="t12Hero" class="t12x-time"></div>
           <div id="t12Need"></div>
         </div>
         <div class="t12x-top">
@@ -17845,10 +17858,9 @@ async function renderT12ResearchPage() {
       "Research Speedups (minutes)": Math.round(applyResearchSpeed(grand.time_hours) * 60),
     };
     const left = applyResearchSpeed(grand.time_hours), pct = donePct(T12_TROOPS);
+    // Time left, inside the total resources card.
     document.getElementById("t12Hero").innerHTML = `
-      <div class="t12x-k">${esc(t("t12x_time_left"))}</div>
-      <div class="t12x-big">${t12FormatTime(left)}</div>
-      ${grand.time_hours > 0 && left === 0 ? `<div class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</div>` : ""}
+      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("t12x_time_left"))}</span><b>${t12FormatTime(left)}</b>${grand.time_hours > 0 && left === 0 ? `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>` : ""}</div></div>
       <div class="t12x-prog"><i style="width:${pct}%;"></i></div>
       <div class="t12x-row"><span>${esc(t("t12x_done_pct").replace("{n}", pct))}</span><button type="button" class="linklike" id="t12MaxAllBtn">${esc(t("max_everything"))}</button></div>`;
     document.getElementById("t12MaxAllBtn").onclick = maxEverything;
@@ -17872,7 +17884,6 @@ async function renderT12ResearchPage() {
       if (def.stat) statMax[def.stat] += def.max * (def.pct || 1);
     });
     const headHtml = () => {
-      const needed = computeNeeded(T12_STATE[troop], troop);
       const stats = computeT12Stats(T12_STATE[troop]);
       const box = (k, v, sub, icon) => `<div>${icon ? `<img src="${esc(icon)}" alt="" />` : ""}<div><span>${esc(k)}</span><b>${v}</b><small>${esc(sub)}</small></div></div>`;
       return `<div class="t12x-boxes">
@@ -17880,12 +17891,6 @@ async function renderT12ResearchPage() {
         ${box("DEF", `+${stats.Defense}%`, t("t12x_max_pct").replace("{n}", statMax.Defense))}
         ${box("LETH", `+${stats.Lethality}%`, t("t12x_max_pct").replace("{n}", statMax.Lethality))}
         ${box("HP", `+${stats.Health}%`, t("t12x_max_pct").replace("{n}", statMax.Health))}
-      </div>
-      <div class="t12x-boxes t12x-res">
-        ${box(t("resource_steel"), shortAmount(needed.steel), t("t12x_to_target"), T12_RESOURCE_ICONS.steel)}
-        ${box("RFC", shortAmount(needed.refined_fc), t("t12x_to_target"), T12_RESOURCE_ICONS.refined_fc)}
-        ${box(t("t12x_shard"), shortAmount(needed.fc_shard), t("t12x_to_target"), T12_RESOURCE_ICONS.fc_shard)}
-        ${box(t("time_label"), t12FormatTime(applyResearchPct(needed.time_hours)), t("t12x_to_target"), "icons/speedup-research.png")}
       </div>`;
     };
     const nodeHtml = (def) => {
@@ -17896,10 +17901,11 @@ async function renderT12ResearchPage() {
       return `<div class="t12x-node" data-t12node="${def.key}">
         <div class="t12x-nm"><span>${esc(tT12Label(def.label))}</span>${note}</div>
         <div class="t12x-step">
+          <span class="t12x-lbl">${esc(t("t12x_now"))}</span>
           <button type="button" data-t12dec="${def.key}" aria-label="−" ${cur <= 0 ? "disabled" : ""}>&minus;</button>
           <b title="${esc(t("research_current"))}">${cur}</b>
           <button type="button" data-t12inc="${def.key}" aria-label="+" ${cur >= def.max ? "disabled" : ""}>+</button>
-          <span class="meta">&rarr;</span>
+          <span class="t12x-lbl t12x-tgt">${esc(t("t12x_target"))}</span>
           <select data-t12target="${def.key}" title="${esc(t("research_target"))}"${target < cur ? ` style="border-color:var(--danger);"` : ""}>${opts}</select>
           <span class="meta">/ ${def.max}</span>
         </div>
