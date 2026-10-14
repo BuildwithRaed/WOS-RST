@@ -480,6 +480,51 @@ input,select,textarea{
     .t12x-boxes > div{ padding:7px 8px; gap:6px; }
     .t12x-boxes img{ width:22px; height:22px; }
   }
+  /* Trades / Pack cost as cards (summary pages) */
+  .pc-card{ border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:12px; background:rgba(255,255,255,.02); }
+  .pc-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .pc-head > b, .pc-title{ font-size:14px; font-weight:700; }
+  .pc-title{ background:none; border:0; padding:0; color:var(--frost); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+  .pc-switch{ display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); cursor:pointer; }
+  .pc-switch input{ position:absolute; opacity:0; width:0; height:0; }
+  .pc-switch i{ width:34px; height:20px; border-radius:999px; background:rgba(255,255,255,.12); position:relative; transition:background .15s; }
+  .pc-switch i::after{ content:""; position:absolute; top:2px; inset-inline-start:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .15s; }
+  .pc-switch input:checked + i{ background:var(--ice-dim); }
+  .pc-switch input:checked + i::after{ transform:translateX(14px); }
+  .pc-trade{ display:flex; align-items:center; gap:8px; padding:10px; border-radius:12px; background:rgba(76,209,138,.07); border:1px solid rgba(76,209,138,.22); }
+  .pc-trade > div{ flex:1; display:flex; flex-direction:column; align-items:center; min-width:0; }
+  .pc-trade img{ width:30px; height:30px; object-fit:contain; }
+  .pc-trade b{ font-size:15px; }
+  .pc-trade small{ font-size:10px; color:var(--muted); text-align:center; }
+  .pc-trade > span{ font-size:18px; color:var(--good); }
+  .pc-sub{ font-size:11px; margin:6px 0 2px; }
+  .pc-k{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:10px; }
+  .pc-chips{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  .pc-chips span{ font-size:11px; padding:3px 9px; border-radius:999px; }
+  .pc-chips .bad{ color:var(--danger); background:rgba(255,107,107,.08); border:1px solid rgba(255,107,107,.25); }
+  .pc-chips .ok{ color:var(--good); background:rgba(76,209,138,.07); border:1px solid rgba(76,209,138,.22); }
+  .pc-card .linklike{ background:none; border:0; padding:0; font:inherit; font-size:12px; color:var(--ice); text-decoration:underline; cursor:pointer; }
+  .pc-target input{ padding:5px 8px; }
+  .pc-target{ flex-wrap:nowrap !important; }
+  .pc-target .meta{ white-space:nowrap; }
+  .pc-plans{ display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin:8px 0 10px; }
+  .pc-plan{ text-align:start; border:1px solid var(--line); border-radius:12px; padding:9px 10px; background:none; color:var(--frost); font:inherit; cursor:pointer; min-width:0; }
+  .pc-plan.on{ border-color:var(--ice); background:rgba(90,160,230,.08); }
+  .pc-plan.off{ cursor:default; opacity:.75; }
+  .pc-plan .pc-k{ margin:0; font-size:10px; }
+  .pc-plan b{ display:block; font-size:20px; }
+  .pc-plan small{ font-size:10.5px; color:var(--muted); }
+  .pc-free{ font-size:11px; color:var(--good); padding:7px 10px; border-radius:10px; background:rgba(76,209,138,.07); margin:8px 0; }
+  .pc-pack{ border-top:1px solid var(--line); }
+  .pc-pack summary{ display:flex; align-items:center; gap:8px; padding:8px 0; cursor:pointer; list-style:none; }
+  .pc-pack summary::-webkit-details-marker{ display:none; }
+  .pc-pack .n{ flex:1; min-width:0; font-weight:600; font-size:13px; }
+  .pc-pack .n small{ display:block; font-weight:400; font-size:10.5px; color:var(--muted); }
+  .pc-pack summary b{ white-space:nowrap; }
+  .pc-lines{ padding:0 0 8px 10px; font-size:10.5px; line-height:1.6; }
+  .pc-lines > div{ display:flex; gap:6px; }
+  .pc-lines > div > span:first-child{ color:var(--ice); min-width:30px; text-align:end; }
+  .pc-lines .meta{ margin-inline-start:auto; }
   /* Backpack summary (Design C): what's still missing, ready items as chips */
   .bs-edit{ margin-top:10px; }
   .bs-tiles{ display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:7px; }
@@ -3173,6 +3218,11 @@ const T = {
   t12x_max_all: { en: "Max all", ar: "الحد الأقصى للكل", ko: "모두 최대" },
   t12x_reset: { en: "Reset", ar: "إعادة تعيين", ko: "초기화" },
   t12x_shard: { en: "Shard", ar: "شظية", ko: "조각" },
+  trade_apply_short: { en: "Use in pack cost", ar: "استخدم في تكلفة الحزم", ko: "팩 비용에 사용" },
+  trade_card_line: { en: "{n} trades this week · rate {give} → {get}", ar: "{n} مقايضة هذا الأسبوع · المعدل {give} ← {get}", ko: "이번 주 {n}회 교환 · 비율 {give} → {get}" },
+  trade_no_limit: { en: "no limit", ar: "بلا حد", ko: "제한 없음" },
+  trade_rates_calc: { en: "Rates & calculator", ar: "المعدلات والحاسبة", ko: "비율 및 계산기" },
+  pc_free: { en: "Free", ar: "مجاني", ko: "무료" },
   bs_edit_hint: { en: "You can type 5m or 10.8b", ar: "يمكنك كتابة 5m أو 10.8b", ko: "5m 또는 10.8b처럼 입력할 수 있습니다" },
   bs_short_word: { en: "short", ar: "ناقص", ko: "부족" },
   bs_spare_word: { en: "spare", ar: "فائض", ko: "여유" },
@@ -10394,6 +10444,7 @@ function packPickCheapest(plans) {
 // numbers always agree with the red "still needed" figures above it.
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};
+const PACK_PLAN_PICK = {}; // card layout: which plan's packs are listed, per page
 const PACK_COST_VIEW = {};
 // Which view the Pack cost box opens on (the switch still changes it):
 // the owner opens on "This page only" and can switch; visitors only have that view.
@@ -10421,7 +10472,18 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const open = PACK_COST_OPEN[calcKey] === true;
 
   const rerender = () => renderPackCostBlock(containerEl, calcKey, groups, ownedOrig);
-  const head = `
+  // Card layout (summary pages): plans as cards to pick from, then the
+  // picked plan's packs as a short list.
+  const cards = BAR_SUMMARY_KEYS.has(calcKey);
+  const wrapOpen = cards ? `<div class="pc-card">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
+  const head = cards ? `
+    <div class="pc-head">
+      <button type="button" data-packtoggle class="pc-title">$ ${esc(t("pack_cost_title"))} ${open ? "&#9662;" : "&#9656;"}</button>
+      ${open && IS_OWNER ? `<div class="seg" data-packmode>
+        <button type="button" data-packmodebtn="still" class="${PACK_COST_MODE === "still" ? "active" : ""}">${esc(t("pack_mode_still"))}</button>
+        <button type="button" data-packmodebtn="full" class="${PACK_COST_MODE === "full" ? "active" : ""}">${esc(t("pack_mode_full"))}</button>
+      </div>` : ""}
+    </div>` : `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-packtoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("pack_cost_title"))}</button>
       ${open && IS_OWNER ? `<div class="seg" data-packmode>
@@ -10431,14 +10493,14 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   if (!open) {
-    containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}</div>`;
+    containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
     return;
   }
 
   // Changing several levels in a row: wait until the changes stop, so the
   // plan is worked out once for the final numbers instead of after every click.
-  containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}<div class="meta" style="font-size:11px; margin-top:8px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`;
+  containerEl.innerHTML = `${wrapOpen}${head}<div class="meta" style="font-size:11px; margin-top:8px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`;
   await new Promise((r) => setTimeout(r, 450));
   if (stale()) return;
   // What this page needs in total, across every group (e.g. all 3 Hero Gear sets).
@@ -10488,7 +10550,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   };
 
   const targetHtml = `
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0;">
+    <div class="${cards ? "pc-target" : ""}" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0;">
       <span class="meta" style="font-size:11px; font-weight:600;">${esc(t("pack_target_by"))}</span>
       <input type="date" data-packtarget value="${esc(targetDate)}" style="font-size:12px; padding:4px 6px;" />
       ${targetDate ? `<button type="button" class="btn small ghost" data-packtargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
@@ -10611,7 +10673,28 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           ${tradesHtml}
         </div>`;
       };
-      sections = `
+      if (cards) {
+        // Pick a plan (same plan twice is shown once), then its packs.
+        const shown = plans.filter((c) => !plans.some((x) => plans.indexOf(x) < plans.indexOf(c) && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days));
+        let pick = shown.find((c) => c.key === PACK_PLAN_PICK[calcKey] && c.plan) || shown.find((c) => c.key === "target" && c.plan) || shown.find((c) => c.plan);
+        const label = (c) => t(c.key === "fastest" ? "pack_plan_fastest" : c.key === "target" ? "pack_plan_by_target" : "pack_plan_cheapest");
+        const planCard = (c) => {
+          if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
+          const late = targetDays != null && c.plan.days > targetDays;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${fmtDate(c.plan.days)} · ${c.plan.days} ${t("pack_days_short_long")}`)}</small></button>`;
+        };
+        const p = pick && pick.plan;
+        const byPack = [];
+        if (p) p.rows.forEach((r) => {
+          let g = byPack.find((x) => x.title === r.title);
+          if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, cycles: r.cycles, lines: [] }; byPack.push(g); }
+          g.count += r.count; g.subtotal += packRowLocal(r); g.sample = g.sample || r.price; g.cycles = Math.max(g.cycles, r.cycles); g.lines.push(r);
+        });
+        const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(packStackText(g.reset))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
+          <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta">${packFmtLocal(packRowLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
+        const planTrades = p && (p.trades || []).length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
+        sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${listHtml}${planTrades}`;
+      } else sections = `
         <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
         ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
         <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:6px;">${plans.map(cardHtml).join("")}</div>`;
@@ -10640,7 +10723,20 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     if (shared.notIncluded) fallbackNote = sharedNote(t("combined_not_included"));
     else if (shared.combined && Object.keys(need).length && (!shared.combined.chosen || !shared.included)) fallbackNote = sharedNote(t("combined_cant"));
   }
-  containerEl.innerHTML = `
+  const freeBits = [
+    ...activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`),
+    ...(traded && traded.trades.length ? traded.trades.map((x) => `${qty(x.giveQty)} ${materialDisplayName(x.from)} → ${qty(x.getQty)} ${materialDisplayName(x.to)}`) : []),
+  ];
+  containerEl.innerHTML = cards ? `
+    <div class="pc-card">
+      ${head}
+      ${usingShared ? "" : targetHtml}
+      ${fallbackNote}
+      ${uncoveredHtml}
+      ${freeBits.length ? `<div class="pc-free">&#10003; ${esc(t("pc_free"))}: ${esc(freeBits.join(" · "))}</div>` : ""}
+      <div>${sections}</div>
+      ${viewSwitch}
+    </div>` : `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
       ${head}
       <div class="meta" style="font-size:10px; margin-top:4px; opacity:0.85;">&#9202; ${esc(t("pack_calc_note"))}</div>
@@ -10652,6 +10748,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       <div style="max-height:min(60vh, 520px); overflow-y:auto; overscroll-behavior:contain; padding-inline-end:6px;">${sections}</div>
     </div>`;
   containerEl.querySelectorAll("[data-packviewbtn]").forEach((b) => b.addEventListener("click", () => { PACK_COST_VIEW[calcKey] = b.dataset.packviewbtn; rerender(); }));
+  containerEl.querySelectorAll("[data-packpick]").forEach((b) => b.addEventListener("click", () => { PACK_PLAN_PICK[calcKey] = b.dataset.packpick; rerender(); }));
   const toBudgets = containerEl.querySelector("[data-gotobudgets]");
   if (toBudgets) toBudgets.addEventListener("click", () => { const b = document.querySelector('.topnav-groups [data-tab="budgets"]'); if (b) b.click(); });
   containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = false; rerender(); });
@@ -11385,6 +11482,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!rates.length) { containerEl.innerHTML = ""; return; }
   const open = TRADE_OPEN[calcKey] === true;
   const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
+  const cards = BAR_SUMMARY_KEYS.has(calcKey);
   const head = `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-tradetoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("trade_title"))}</button>
@@ -11399,7 +11497,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       if (onChange) onChange();
     });
   };
-  if (!open) {
+  if (!open && !cards) {
     containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}</div>`;
     wire();
     return;
@@ -11408,6 +11506,28 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { need[n] = (need[n] || 0) + (Number(q) || 0); }));
   const res = applyTrades(rates, need, owned, 1);
   const qty = (v) => Math.round(v).toLocaleString();
+  // Card layout: this week's suggested trades up front (with pictures),
+  // what's still short as chips, rates and the calculator behind a link.
+  const cardHead = `<div class="pc-head"><b>&#8644; ${esc(t("trade_title"))}</b>${IS_OWNER ? `<label class="pc-switch" title="${esc(t("trade_apply"))}"><span>${esc(t("trade_apply_short"))}</span><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><i></i></label>` : ""}</div>`;
+  const cardBody = () => {
+    const img = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
+    const shortNames = Object.keys(need).filter((n) => need[n] > 0);
+    const nm = (n) => ({ "Refined FC": "RFC", "FC Shard": t("t12x_shard") }[n] || materialDisplayName(MATERIAL_NAME_SHORT[n] || n)).replace(/\s*\((minutes|min)\)$/, "");
+    const bad = shortNames.filter((n) => (res.after[n] || 0) > 0), ok = shortNames.filter((n) => !((res.after[n] || 0) > 0));
+    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${shortAmount(res.after[n])}</span>`).concat(ok.length > 2 ? [`<span class="ok">${esc(nm(ok[0]))} &#10003;</span>`, `<span class="ok">+${ok.length - 1} &#10003;</span>`] : ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
+    return `${res.trades.length ? res.trades.map((tr) => {
+      const r = rates.find((x) => x.from === tr.from && x.to === tr.to) || {};
+      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(materialDisplayName(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${qty(tr.getQty)}</b><small>${esc(materialDisplayName(tr.to))}</small></div></div>
+        <div class="meta pc-sub">${esc(t("trade_card_line").replace("{n}", qty(tr.lots)).replace("{give}", r.give || "").replace("{get}", r.get || ""))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ` · ${esc(t("trade_no_limit"))}`}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}</div>`;
+    }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
+      ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
+      <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_rates_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
+  };
+  if (cards && !open) {
+    containerEl.innerHTML = `<div class="pc-card">${cardHead}${cardBody()}</div>`;
+    wire();
+    return;
+  }
   const names = [...new Set(rates.flatMap((r) => [r.from, r.to]))];
   const suggestHtml = res.trades.length
     ? res.trades.map((tr) => `<div style="font-size:11.5px; padding:3px 0; border-top:1px solid var(--line);">${esc(t("trade_give"))} <b>${qty(tr.giveQty)}</b> ${esc(materialDisplayName(tr.from))} → ${esc(t("trade_get"))} <b style="color:var(--good);">${qty(tr.getQty)}</b> ${esc(materialDisplayName(tr.to))} <span class="meta" style="font-size:10px;">(${qty(tr.lots)} ${esc(t("trade_trades"))}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""})</span></div>`).join("")
@@ -11430,7 +11550,11 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <select data-tradeto style="font-size:12px;"></select>
       <span data-traderesult style="font-weight:700; color:var(--good);"></span>
     </div>`;
-  containerEl.innerHTML = `
+  containerEl.innerHTML = cards ? `
+    <div class="pc-card">${cardHead}${cardBody()}
+      <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_rates"))}</div>${ratesHtml}
+        <div class="meta" style="font-size:10.5px; font-weight:600; margin:12px 0 4px;">${esc(t("trade_calc"))}</div>${calcHtml}</div>
+    </div>` : `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
       ${head}
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-top:8px;">
@@ -12842,6 +12966,13 @@ async function renderChiefGearCalc() {
 // items as chips) with the boxes behind "Show all / edit".
 const BAR_SUMMARY_KEYS = new Set(["t12_research"]);
 const BAR_SHOW_ALL = {}; // { calcKey: true } - boxes open, for the visit
+// Picture for an item name (chests, custom pack items, materials).
+function materialIconSrc(name) {
+  if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
+  const custom = packCustomResource(name), lower = String(name).toLowerCase();
+  const key = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
+  return BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : key ? MATERIAL_ICONS[key] : "");
+}
 // Typed amounts: "1,234", "10.8B", "4.5m", "92k".
 function parseAmount(str) {
   const m = /^\s*([\d.,]+)\s*([kmb])?\s*$/i.exec(String(str));
