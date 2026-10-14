@@ -394,6 +394,19 @@ input,select,textarea{
      uploads are cropped automatically), so the space around them is set here. */
   .gallery-card .thumb.gallery-thumb{ padding:17%; }
   .gallery-card .thumb.gallery-thumb.gallery-thumb-big{ padding:6%; }
+  /* Backpack page: square item tiles */
+  .bp-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin:16px 2px 8px; }
+  .bp-head h3{ margin:0; font-size:13px; letter-spacing:.04em; text-transform:uppercase; color:var(--frost); }
+  .bp-head .meta{ font-size:11px; }
+  .bp-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:8px; }
+  .bp-tile{ position:relative; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:6px 4px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); color:inherit; font:inherit; cursor:pointer; min-width:0; }
+  .bp-tile:hover{ border-color:var(--ice-dim); }
+  .bp-tile img{ width:38px; height:38px; object-fit:contain; }
+  .bp-tile .bp-ph{ font-size:19px; color:var(--muted); font-weight:600; }
+  .bp-tile .bp-size{ position:absolute; top:4px; inset-inline-start:6px; font-size:9.5px; font-weight:700; color:var(--frost); }
+  .bp-tile .bp-qty{ font-size:13px; font-weight:700; }
+  .bp-tile .bp-qty.zero{ color:var(--muted); }
+  .bp-tile .bp-name{ font-size:9.5px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
   .skin-card .info{ padding:8px 10px 10px; }
@@ -3025,6 +3038,13 @@ const T = {
   hero_suffix: { en: "hero", ar: "بطل", ko: "영웅" },
   close_button: { en: "Close", ar: "إغلاق", ko: "닫기" },
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
+  backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
+  backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
+  backpack_scan_soon: { en: "Coming later", ar: "قريبًا", ko: "추후 지원" },
+  backpack_search: { en: "Search items...", ar: "ابحث عن العناصر...", ko: "아이템 검색..." },
+  backpack_items_count: { en: "{n} items", ar: "{n} عناصر", ko: "{n}개" },
+  backpack_speedups: { en: "Speedups", ar: "التسريعات", ko: "가속" },
+  backpack_no_match: { en: "No items match your search.", ar: "لا توجد عناصر تطابق البحث.", ko: "검색과 일치하는 아이템이 없습니다." },
   backpack_title: { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
   troops_stats_title: { en: "Troops Stats", ar: "إحصائيات الجنود", ko: "부대 스탯" },
   current_upper: { en: "CURRENT", ar: "الحالي", ko: "현재" },
@@ -3199,10 +3219,6 @@ const T = {
   only_suffix: { en: "only", ar: "فقط", ko: "전용" },
   max_page_note: { en: "Max 6% page 1, max 10% page 2 (per path)", ar: "الحد الأقصى 6% للصفحة 1، والحد الأقصى 10% للصفحة 2 (لكل مسار)", ko: "1페이지 최대 6%, 2페이지 최대 10% (경로당)" },
   path_label: { en: "Path", ar: "المسار", ko: "경로" },
-  manage_item_catalog_desc: { en: "Manage the item catalog in Admin \u2014 use this page to update quantities.", ar: "أدر كتالوج العناصر من لوحة الإدارة \u2014 استخدم هذه الصفحة لتحديث الكميات.", ko: "관리자에서 아이템 카탈로그를 관리하세요 \u2014 이 페이지에서는 수량만 업데이트합니다." },
-  no_items_yet: { en: "No items yet.", ar: "لا توجد عناصر بعد.", ko: "아직 아이템이 없습니다." },
-  add_item_above: { en: "Add one above to start tracking your stockpile.", ar: "أضف عنصرًا أعلاه لبدء تتبع مخزونك.", ko: "위에서 아이템을 추가하여 재고 추적을 시작하세요." },
-  update_button: { en: "Update", ar: "تحديث", ko: "업데이트" },
   research_speed_label: { en: "RESEARCH SPEED", ar: "\u0633\u0631\u0639\u0629 \u0627\u0644\u0628\u062d\u062b", ko: "\uc5f0\uad6c \uc18d\ub3c4" },
   speedups_label: { en: "GENERAL SPEEDUPS", ar: "\u0645\u0633\u0631\u0651\u0639\u0627\u062a", ko: "\uac00\uc18d" },
   chest_not_needed: { en: "nothing to cover", ar: "\u0644\u0627 \u0634\u064a\u0621 \u0644\u062a\u063a\u0637\u064a\u062a\u0647", ko: "\ubd80\uc871 \uc5c6\uc74c" },
@@ -3659,7 +3675,6 @@ const T = {
   pk_stack_rewards: { en: "7-day rewards · stacks up to {cap} days", ar: "مكافآت 7 أيام · تتراكم حتى {cap} يوم", ko: "7일 보상 · 최대 {cap}일 누적" },
   pack_next_on: { en: "Next on", ar: "الموعد التالي", ko: "다음 날짜" },
   pack_resets: { en: "resets", ar: "\u062a\u0643\u0631\u0627\u0631\u0627\u062a", ko: "\ud68c \uc8fc\uae30" },
-  quantity_prompt: { en: "Quantity:", ar: "الكمية:", ko: "수량:" },
 };
 function t(key) {
   const entry = T[key];
@@ -7513,63 +7528,128 @@ async function renderPacksPage() {
 // BACKPACK / INVENTORY PAGE
 // Item catalog + quantity-on-hand tracker.
 // ============================================================
+// ---- Backpack page: every item the site uses, as square tiles ----
+// The item list is set in Admin -> Backpack Items (site_config
+// "backpack_items"; the list below is the default). Amounts are each
+// person's own, saved in calc_state "backpack" ({ item name: amount }).
+// Not linked to the planner pages' Backpack boxes.
+const BACKPACK_DEFAULT_GROUPS = [
+  ["Chief Gear", ["Hardened Alloy", "Polishing Solution", "Design Plan", "Amber", "Chief Gear Chest", "Random Chief Gear Chest"]],
+  ["Chief Charms", ["Charm Guides", "Charm Designs", "Jewel Secrets", "Random Charm Chest"]],
+  ["Hero Gear", ["XP Component", "XP 10", "XP 100", "Essence Stones", "Mithril", "Mythic Gear", "Lucky Gear Chest"]],
+  ["Fire Crystal", ["Fire Crystal", "FC Shard", "Refined FC", "FC Chest", "FC Crate"]],
+  ["Resources", ["Meat", "Wood", "Coal", "Iron", "Steel", "Gems"]],
+  ["Pet", ["Food", "Manual", "Potion", "Serum", "Pet Chest", "Common Marks", "Advanced Marks"]],
+  ["Experts", ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", ...["Cyrille", "Agnes", "Holger", "Romulus", "Fabian", "Baldur", "Valeria", "Ronne", "Kathy", "Gareth", "Justus"].map((n) => `${n} Sigils`)]],
+  ["General Speedups", ["1m", "3m", "5m", "1h", "3h", "8h"].map((z) => `Speedup ${z}`)],
+  ...["Research", "Troop", "Construction", "Expert"].map((k) => [`${k} Speedups`, ["1m", "5m", "1h", "3h", "8h"].map((z) => `${k} Speedup ${z}`)]),
+];
+const BACKPACK_DEFAULT_ITEMS = BACKPACK_DEFAULT_GROUPS.flatMap(([group, names]) => names.map((name) => ({ group, name, icon: "" })));
+const BP_MINUTES = { "1m": 1, "3m": 3, "5m": 5, "1h": 60, "3h": 180, "8h": 480 };
+const BP_CHEST_ICONS = { "Chief Gear Chest": "510000", "Random Chief Gear Chest": "510002", "Random Charm Chest": "510003", "Lucky Gear Chest": "510001", "FC Chest": "720002", "FC Crate": "720002" };
+// Speedup items ("Research Speedup 1h") show their size and add up to a total.
+const bpSpeedupSize = (name) => { const m = /speedup (\d+[mh])$/i.exec(name); return m && BP_MINUTES[m[1]] ? m[1] : null; };
+function backpackItems() {
+  const saved = siteConfig("backpack_items", null);
+  const list = saved && Array.isArray(saved.items) ? saved.items.filter((x) => x && x.name) : BACKPACK_DEFAULT_ITEMS;
+  const groups = [];
+  list.forEach((it) => {
+    const title = String(it.group || "").trim() || "Other";
+    let g = groups.find((x) => x.title === title);
+    if (!g) { g = { title, items: [] }; groups.push(g); }
+    g.items.push({ name: String(it.name).trim(), icon: String(it.icon || "").trim() });
+  });
+  groups.forEach((g) => { g.speedups = g.items.length > 0 && g.items.every((x) => bpSpeedupSize(x.name)); });
+  return groups;
+}
+function bpIcon(item) {
+  if (item.icon) return item.icon;
+  const name = item.name;
+  if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
+  if (BP_CHEST_ICONS[name]) return `icons/item_icon_${BP_CHEST_ICONS[name]}.png`;
+  if (/^XP 10/.test(name)) return "icons/XP-Component.png";
+  if (/speedup/i.test(name)) return "icons/item_icon_302000.png";
+  const custom = packCustomResource(name);
+  if (custom && custom.icon) return custom.icon;
+  const lower = name.toLowerCase();
+  const k = Object.keys(MATERIAL_ICONS).find((x) => lower.includes(x));
+  return k ? MATERIAL_ICONS[k] : "";
+}
+let BP_TAB = "All";
+let BP_SEARCH = "";
 async function renderInventory() {
   const seq = RENDER_SEQ;
-  const [items, inventory] = await Promise.all([
-    sb(`items?select=id,name,category,tier&order=name.asc`),
-    sb(`player_inventory?select=id,item_id,quantity&user_id=eq.${USER_ID}`),
-  ]);
-  const invByItem = Object.fromEntries(inventory.map((i) => [i.item_id, i]));
-
+  const [, saved] = await Promise.all([ensureSiteConfig(), loadCalcState("backpack")]);
   if (seq !== RENDER_SEQ) return;
+  const bp = saved || {};
+  const groups = backpackItems();
+  const speedupsTab = t("backpack_speedups");
+  const tabs = [t("all_label")].concat(groups.filter((g) => !g.speedups).map((g) => g.title), groups.some((g) => g.speedups) ? [speedupsTab] : []);
+  if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
+  const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
+  const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
+  const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : "—";
+  const tile = (it, sp) => {
+    const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = materialDisplayName(it.name);
+    return `<button type="button" class="bp-tile" data-bpitem="${esc(it.name)}" data-bpname="${esc((it.name + " " + label).toLowerCase())}" title="${esc(label)}">
+      ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
+      ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : ""}
+      <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
+      ${sp ? "" : `<span class="bp-name">${esc(label)}</span>`}
+    </button>`;
+  };
+  const drawGroups = () => {
+    const shown = BP_TAB === tabs[0] ? groups : BP_TAB === speedupsTab ? groups.filter((g) => g.speedups) : groups.filter((g) => g.title === BP_TAB);
+    const q = BP_SEARCH.trim().toLowerCase();
+    const html = shown.map((g) => {
+      const items = q ? g.items.filter((it) => (it.name + " " + materialDisplayName(it.name) + " " + g.title).toLowerCase().includes(q)) : g.items;
+      if (!items.length) return "";
+      return `<div class="bp-head"><h3>${esc(g.title)}</h3><span class="meta">${g.speedups ? fmtMin(minutesOf(g)) : esc(t("backpack_items_count").replace("{n}", g.items.length))}</span></div>
+        <div class="bp-grid">${items.map((it) => tile(it, g.speedups)).join("")}</div>`;
+    }).join("");
+    document.getElementById("bpGroups").innerHTML = html || `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
+  };
   content.innerHTML = `
-    <div class="panel">
-      <h2>${esc(t("your_backpack"))}</h2>
-      <p class="desc">${esc(t("manage_item_catalog_desc"))}</p>
-      <div id="invList"></div>
-    </div>
-  `;
-
-  const listEl = document.getElementById("invList");
-  if (!items.length) {
-    listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_items_yet"))}</div>${esc(t("add_item_above"))}</div>`;
-    return;
-  }
-  listEl.innerHTML = items
-    .map((it) => {
-      const inv = invByItem[it.id];
-      const qty = inv ? Number(inv.quantity) : 0;
-      return `<div class="row">
-        <div>
-          <div class="name">${esc(it.name)} <span class="pill">${esc(it.category)}${it.tier ? " &middot; " + esc(it.tier) : ""}</span></div>
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="meta mono">${qty.toLocaleString()}</div>
-          <button class="btn small ghost" data-item="${it.id}" data-inv="${inv ? inv.id : ""}" data-qty="${qty}">${esc(t("update_button"))}</button>
-        </div>
-      </div>`;
-    })
-    .join("");
-
-  listEl.querySelectorAll("button[data-item]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const qty = prompt(t("quantity_prompt"), btn.dataset.qty);
-      if (qty === null) return;
-      const itemId = btn.dataset.item;
-      const invId = btn.dataset.inv;
-      const body = { quantity: Number(qty) || 0, updated_at: new Date().toISOString() };
-      try {
-        if (invId) {
-          await sb(`player_inventory?id=eq.${invId}`, { method: "PATCH", body: JSON.stringify(body) });
-        } else {
-          await sb(`player_inventory`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, item_id: itemId, ...body }) });
-        }
-        toast("Inventory updated");
-        renderInventory();
-      } catch (err) {
-        toast("Couldn't update inventory", true);
-      }
-    });
+    <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
+      <button class="btn ghost small" type="button" disabled title="${esc(t("backpack_scan_soon"))}" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
+    <div id="bpTabs" style="margin-top:12px;"></div>
+    <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
+    <div id="bpGroups"></div>`;
+  renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); });
+  drawGroups();
+  document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
+  // Tap a tile: a small box to type the amount. Saved at once, in the background.
+  document.getElementById("bpGroups").addEventListener("click", (e) => {
+    const tileEl = e.target.closest("[data-bpitem]");
+    if (!tileEl) return;
+    const name = tileEl.dataset.bpitem;
+    const it = groups.flatMap((g) => g.items).find((x) => x.name === name) || { name, icon: "" };
+    const ic = bpIcon(it);
+    let modal = document.getElementById("bpModal");
+    if (!modal) { modal = document.createElement("div"); modal.id = "bpModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+    modal.innerHTML = `<div class="modal-box" style="max-width:300px; text-align:center;">
+        ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:contain;" />` : ""}
+        <h2 style="margin:6px 0 10px; font-size:16px;">${esc(materialDisplayName(name))}</h2>
+        <input id="bpQty" type="number" min="0" inputmode="numeric" value="${Number(bp[name]) || ""}" placeholder="0" style="width:100%; text-align:center; font-size:18px;" />
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          <button class="btn ghost" type="button" id="bpCancel">${esc(t("cancel"))}</button>
+          <button class="btn" type="button" id="bpSave">${esc(t("save"))}</button>
+        </div></div>`;
+    modal.style.display = "flex";
+    const input = modal.querySelector("#bpQty");
+    input.focus(); input.select();
+    const close = () => { modal.style.display = "none"; };
+    const save = () => {
+      const v = Math.max(0, Math.round(Number(input.value) || 0));
+      if (v) bp[name] = v; else delete bp[name];
+      saveCalcState("backpack", bp);
+      close();
+      drawGroups();
+    };
+    modal.onclick = (ev) => { if (ev.target === modal) close(); };
+    modal.querySelector("#bpCancel").onclick = close;
+    modal.querySelector("#bpSave").onclick = save;
+    input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
   });
 }
 
@@ -16657,6 +16737,7 @@ const ADMIN_TABLES = {
   centerresearch: { label: "Research" },
   heroes: { label: "Heroes" },
   packres: { label: "Pack Resources" },
+  backpackitems: { label: "Backpack Items" },
   contact: { label: "Contact us" },
   currencies: { label: "Currencies" },
   skins: { label: "Skins" },
@@ -16727,6 +16808,7 @@ async function renderAdminPage() {
   else if (ADMIN_ACTIVE_TABLE === "centerresearch") await renderAdminResearch(body);
   else if (ADMIN_ACTIVE_TABLE === "heroes") await renderAdminHeroes(body);
   else if (ADMIN_ACTIVE_TABLE === "packres") await renderAdminPackResources(body);
+  else if (ADMIN_ACTIVE_TABLE === "backpackitems") await renderAdminBackpackItems(body);
   else if (ADMIN_ACTIVE_TABLE === "contact") await renderAdminContact(body);
   else if (ADMIN_ACTIVE_TABLE === "currencies") await renderAdminCurrencies(body);
   else if (ADMIN_ACTIVE_TABLE === "skins") await renderAdminSkinsGroup(body);
@@ -16842,6 +16924,66 @@ async function renderAdminPackResources(body) {
       order: items.slice().sort((a, b) => a.order - b.order).map((x) => x.name),
     };
     try { await saveSiteConfig("pack_resources", value); PACK_TABLES_CACHE = null; toast("Pack resources saved"); renderAdminPackResources(body); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+}
+
+// ---- Backpack Items: the item list on the Backpack page ----
+// Saved in site_config "backpack_items" as { items: [{ group, name, icon }] };
+// row order = order on the page, groups in order of first appearance.
+async function renderAdminBackpackItems(body) {
+  await ensureSiteConfig();
+  const items = backpackItems().flatMap((g) => g.items.map((it) => ({ group: g.title, name: it.name, icon: it.icon })));
+  const groupNames = [...new Set(items.map((x) => x.group))];
+  let seqId = 0;
+  const rowHtml = (r, i, n) => `<tr data-bprow="b${++seqId}">
+      ${adminReorderCellHtml(`b${seqId}`, i, n)}
+      <td style="padding:4px;"><input data-f="group" list="bpGroupNames" value="${esc(r.group)}" style="width:140px;" /></td>
+      <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:180px;" /></td>
+      <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><img src="${esc(bpIcon(r))}" alt="" style="width:24px; height:24px; object-fit:contain;" onerror="this.style.visibility='hidden'" /><input data-f="icon" value="${esc(r.icon || "")}" placeholder="automatic" style="width:150px;" />${uploadBtnHtml()}</span></td>
+      <td style="padding:4px;"><button class="btn ghost small" data-bpdel type="button" title="Remove">&#10005;</button></td>
+    </tr>`;
+  body.innerHTML = `
+    <div class="panel" style="margin-bottom:16px;">
+      <h2>Backpack Items</h2>
+      <p class="desc">The items on the Backpack page. Each row is one item: its group (a tab on the page), its name, and a picture (leave empty to use the site's own picture for that name). Drag a row or use ▲▼ to change the order, then Save all. Renaming an item starts its amount from 0 for everyone, since amounts are saved by name. Speedup items named like "Research Speedup 1h" show their size and add up to a total.</p>
+      <datalist id="bpGroupNames">${groupNames.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>
+      <div class="adm-scroll">
+        <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
+          <thead><tr>${["", "Group", "Name", "Picture", ""].map((h) => `${ADMIN_TH}${h}</th>`).join("")}</tr></thead>
+          <tbody id="bpRows">${items.map((r, i) => rowHtml(r, i, items.length)).join("")}</tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn ghost small" id="bpAdd" type="button">+ Add item</button>
+        <button class="btn small" id="bpSaveAll" type="button">Save all</button>
+        <button class="btn ghost small" id="bpReset" type="button" style="margin-inline-start:auto;">Reset to the default list</button>
+      </div>
+    </div>`;
+  const rowsEl = body.querySelector("#bpRows");
+  wireAdminReorder(rowsEl, "data-bprow", null);
+  body.querySelector("#bpAdd").addEventListener("click", () => {
+    const last = rowsEl.lastElementChild;
+    const group = last ? last.querySelector('[data-f="group"]').value : "";
+    rowsEl.insertAdjacentHTML("beforeend", rowHtml({ group, name: "", icon: "" }, rowsEl.children.length, rowsEl.children.length + 1));
+    wireAdminReorder(rowsEl, "data-bprow", null);
+    rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
+  });
+  rowsEl.addEventListener("click", (e) => { const b = e.target.closest("[data-bpdel]"); if (b) b.closest("tr").remove(); });
+  body.querySelector("#bpSaveAll").addEventListener("click", async () => {
+    const list = [...rowsEl.querySelectorAll("tr[data-bprow]")].map((tr) => ({
+      group: tr.querySelector('[data-f="group"]').value.trim(),
+      name: tr.querySelector('[data-f="name"]').value.trim(),
+      icon: tr.querySelector('[data-f="icon"]').value.trim(),
+    })).filter((x) => x.name);
+    const dup = list.map((x) => x.name.toLowerCase()).find((n, i, a) => a.indexOf(n) !== i);
+    if (dup) { toast(`Duplicate name: ${dup}`, true); return; }
+    try { await saveSiteConfig("backpack_items", { items: list }); toast("Backpack items saved"); renderAdminBackpackItems(body); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+  body.querySelector("#bpReset").addEventListener("click", async () => {
+    if (!confirm("Replace the list with the default items? Amounts people saved are kept.")) return;
+    try { await saveSiteConfig("backpack_items", {}); toast("Default list restored"); renderAdminBackpackItems(body); }
     catch (err) { toast(err.message || "Couldn't save", true); }
   });
 }
