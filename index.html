@@ -404,6 +404,7 @@ input,select,textarea{
   .bp-tile img{ width:38px; height:38px; object-fit:contain; }
   .bp-tile .bp-ph{ font-size:19px; color:var(--muted); font-weight:600; }
   .bp-tile .bp-size{ position:absolute; top:4px; inset-inline-start:6px; font-size:9.5px; font-weight:700; color:var(--frost); }
+  .bp-tile .bp-shield{ position:absolute; top:3px; inset-inline-end:5px; font-size:11px; }
   .bp-tile .bp-qty{ font-size:13px; font-weight:700; }
   .bp-tile .bp-qty.zero{ color:var(--muted); }
   .bp-tile.bp-add{ border-style:dashed; }
@@ -7550,9 +7551,9 @@ async function renderPacksPage() {
 const BACKPACK_DEFAULT_GROUPS = [
   ["Chief Gear", ["Hardened Alloy", "Polishing Solution", "Design Plan", "Amber", "Chief Gear Chest", "Random Chief Gear Chest"]],
   ["Chief Charms", ["Charm Guides", "Charm Designs", "Jewel Secrets", "Random Charm Chest"]],
-  ["Hero Gear", ["XP Component", "XP 10", "XP 100", "Essence Stones", "Mithril", "Mythic Gear", "Lucky Gear Chest"]],
+  ["Hero Gear", ["XP 10", "XP 100", "Essence Stones", "Mithril", "Mythic Gear", "Lucky Gear Chest"]],
   ["Fire Crystal", ["Fire Crystal", "FC Shard", "Refined FC", "FC Chest", "FC Crate"]],
-  ["Resources", ["Meat", "Wood", "Coal", "Iron", "Steel", "Gems"]],
+  ["Resources", ["Meat", "Wood", "Coal", "Iron", "Steel", "Gems", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)"]],
   ["Pet", ["Food", "Manual", "Potion", "Serum", "Pet Chest", "Common Marks", "Advanced Marks"]],
   ["Hero Shards", ["Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard"]],
   ["Experts", ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", ...["Cyrille", "Agnes", "Holger", "Romulus", "Fabian", "Baldur", "Valeria", "Ronne", "Kathy", "Gareth", "Justus"].map((n) => `${n} Sigils`)]],
@@ -7560,9 +7561,28 @@ const BACKPACK_DEFAULT_GROUPS = [
   ...["Research", "Troop", "Construction", "Expert"].map((k) => [`${k} Speedups`, ["1m", "5m", "1h", "3h", "8h"].map((z) => `${k} Speedup ${z}`)]),
 ];
 const BACKPACK_DEFAULT_ITEMS = BACKPACK_DEFAULT_GROUPS.flatMap(([group, names]) => names.map((name) => ({ group, name, icon: "" })));
+// The All tab lists everything in one grid, in the game's own Backpack
+// order (Resources tab, then Other), with no headings; hero shards and
+// then all speedups come last.
+const BP_GAME_ORDER = [
+  "Gems", "Fire Crystal", "Refined FC", "FC Shard", "FC Chest", "FC Crate",
+  "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)",
+  "Meat", "Wood", "Coal", "Iron", "Steel",
+  "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest",
+  "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils",
+  ...["Cyrille", "Agnes", "Holger", "Romulus", "Fabian", "Baldur", "Valeria", "Ronne", "Gareth", "Kathy", "Justus"].map((n) => `${n} Sigils`),
+  "Food", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks",
+  "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Amber",
+  "Mithril", "Mythic Gear", "Essence Stones", "XP Component", "XP 10", "XP 100",
+  "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard",
+];
+const BP_SPEEDUP_ORDER = ["", "Construction ", "Troop ", "Research ", "Expert "].flatMap((k) => ["1m", "3m", "5m", "1h", "3h", "8h"].map((z) => `${k}Speedup ${z}`));
 const BP_MINUTES = { "1m": 1, "3m": 3, "5m": 5, "1h": 60, "3h": 180, "8h": 480 };
 const BP_SHARD_ICONS = { "Mythic General Hero Shard": "icons/item_icon_500220.png", "Epic General Hero Shard": "icons/item_icon_500221.png", "Rare General Hero Shard": "icons/item_icon_500222.png" };
-const BP_CHEST_ICONS = { "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
+const BP_CHEST_ICONS = {
+  "Resource Chest": "icons/item_icon_100091.png",
+  "Custom Resource Chest Lv.1": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3": "icons/item_icon_100103.png",
+  "Custom Resource Chest Lv.1 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2 (protected)": "icons/item_icon_100101.png", "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
 // Speedup items ("Research Speedup 1h") show their size and add up to a total.
 const bpSpeedupSize = (name) => { const m = /speedup (\d+[mh])$/i.exec(name); return m && BP_MINUTES[m[1]] ? m[1] : null; };
 function backpackItems() {
@@ -7621,24 +7641,43 @@ async function renderInventory() {
   const speedupsTab = t("backpack_speedups");
   const tabs = [t("all_label")].concat(groups.filter((g) => !g.speedups && !g.heroShards).map((g) => g.title), groups.some((g) => g.heroShards) ? [shardTab] : [], groups.some((g) => g.speedups) ? [speedupsTab] : []);
   if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
-  const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
+  const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e9 ? `${Math.round(n / 1e8) / 10}B` : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
   const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
   const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : "—";
-  const tile = (it, sp) => {
+  const tile = (it, sp, kind) => {
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
     return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t("backpack_hero_shards")}` : label)}">
       ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
-      ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : ""}
+      ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : /Lv\.\d/.test(it.name) ? `<span class="bp-size">${esc(/Lv\.\d/.exec(it.name)[0])}</span>` : ""}
+      ${/\(protected\)$/.test(it.name) ? `<span class="bp-shield" title="Protected">&#128737;</span>` : ""}
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
-      ${sp ? "" : `<span class="bp-name">${esc(label)}</span>`}
+      ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(label)}</span>`}
     </button>`;
   };
   const drawGroups = () => {
     const shown = BP_TAB === tabs[0] ? groups : BP_TAB === speedupsTab ? groups.filter((g) => g.speedups) : BP_TAB === shardTab ? groups.filter((g) => g.heroShards) : groups.filter((g) => g.title === BP_TAB);
     const q = BP_SEARCH.trim().toLowerCase();
+    const addTileFor = (g) => `<button type="button" class="bp-tile bp-add" data-bpaddhero="${esc(g.rarity)}"><span class="bp-ph">+</span><span class="bp-name">${esc(BP_TAB === tabs[0] ? g.title : t("backpack_add_hero"))}</span></button>`;
+    if (BP_TAB === tabs[0]) {
+      // One grid in game order; speedup tiles say their kind, hero groups
+      // keep their "+" tile right after their heroes.
+      const rank = (n, list) => { const i = list.indexOf(n); return i === -1 ? list.length : i; };
+      const flat = groups.filter((g) => !g.speedups && !g.rarity).flatMap((g) => g.items.map((it) => ({ it, g }))).sort((a, b) => rank(a.it.name, BP_GAME_ORDER) - rank(b.it.name, BP_GAME_ORDER));
+      const speeds = groups.filter((g) => g.speedups).flatMap((g) => g.items.map((it) => ({ it, g }))).sort((a, b) => rank(a.it.name, BP_SPEEDUP_ORDER) - rank(b.it.name, BP_SPEEDUP_ORDER));
+      const heroPart = groups.filter((g) => g.rarity).map((g) => ({ g, items: g.items }));
+      const match = (it, g) => !q || (it.name + " " + (it.hero || materialDisplayName(it.name)) + " " + g.title).toLowerCase().includes(q);
+      const cells = flat.filter(({ it, g }) => match(it, g)).map(({ it, g }) => tile(it, false))
+        .concat(heroPart.flatMap(({ g, items }) => items.filter((it) => match(it, g)).map((it) => tile(it, false)).concat(q ? [] : [addTileFor(g)])));
+      const speedCells = speeds.filter(({ it, g }) => match(it, g)).map(({ it, g }) => tile(it, true, g.title.replace(/ Speedups$/, "")));
+      document.getElementById("bpGroups").innerHTML = cells.length || speedCells.length
+        ? (cells.length ? `<div class="bp-grid" style="margin-top:12px;">${cells.join("")}</div>` : "")
+          + (speedCells.length ? `<div class="bp-head"><h3>${esc(speedupsTab)}</h3></div><div class="bp-grid">${speedCells.join("")}</div>` : "")
+        : `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
+      return;
+    }
     const html = shown.map((g) => {
       const items = q ? g.items.filter((it) => (it.name + " " + (it.hero || materialDisplayName(it.name)) + " " + g.title).toLowerCase().includes(q)) : g.items;
-      const addTile = g.rarity && !q ? `<button type="button" class="bp-tile bp-add" data-bpaddhero="${esc(g.rarity)}"><span class="bp-ph">+</span><span class="bp-name">${esc(t("backpack_add_hero"))}</span></button>` : "";
+      const addTile = g.rarity && !q ? addTileFor(g) : "";
       if (!items.length && !addTile) return "";
       return `<div class="bp-head"><h3>${esc(g.title)}</h3><span class="meta">${g.speedups ? fmtMin(minutesOf(g)) : esc(t("backpack_items_count").replace("{n}", g.items.length))}</span></div>
         <div class="bp-grid">${items.map((it) => tile(it, g.speedups)).join("")}${addTile}</div>`;
