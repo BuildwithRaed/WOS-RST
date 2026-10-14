@@ -506,15 +506,15 @@ input,select,textarea{
     .t12x-boxes img{ width:22px; height:22px; }
     .t12x-boxes b{ font-size:13px; white-space:nowrap; }
     /* Settings on one line: speed · speedups · dashboard */
-    .t12x-settings{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto; gap:4px 10px; align-items:start; padding:10px 12px; }
-    .t12x-settings > .t12x-k{ grid-column:1 / -1; margin:0; }
+    .t12x-settings.has-rs{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto; gap:4px 10px; align-items:start; padding:10px 12px; }
+    .t12x-settings.has-rs > .t12x-k{ grid-column:1 / -1; margin:0; }
     .t12x-side .t12x-settings .rs-row{ display:contents !important; }
     .t12x-side .t12x-settings .rs-row > div{ grid-template-columns:minmax(0,1fr) auto !important; gap:2px 4px !important; }
     .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ grid-column:1 / -1; font-size:10px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .t12x-side .t12x-settings .rs-row input{ padding:5px 6px !important; font-size:13px; }
     .t12x-side .t12x-settings .rs-row > div{ max-width:220px; }
     .t12x-side .t12x-settings #researchSpeedupNote{ grid-column:1 / -1; justify-self:start; font-size:9.5px; }
-    .t12x-settings .t12x-check{ flex-direction:column; align-items:center; gap:4px; font-size:10px; text-align:center; max-width:70px; line-height:1.15; }
+    .t12x-settings.has-rs .t12x-check{ flex-direction:column; align-items:center; gap:4px; font-size:10px; text-align:center; max-width:70px; line-height:1.15; }
     /* Smaller resource squares */
     .t12x-need .bs-sq{ grid-template-columns:repeat(auto-fill, minmax(66px, 1fr)); gap:5px; }
     .t12x-need .bs-row{ min-height:0; padding:7px 3px; }
@@ -9057,6 +9057,16 @@ function clampHeroGearSets() {
   });
   return changedSets;
 }
+// Page name from the menu, in the chosen language.
+function navLabel(tab) {
+  const e = NAV_PAGE_LABELS[tab] || {};
+  return e[LANG] || e.en || tab;
+}
+// The level cap as a line in the Settings card (new planner layout).
+function capSettingsHtml(id, label, optionsHtml) {
+  return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px;">${optionsHtml}</select></label>
+    <p class="desc" style="font-size:10.5px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>`;
+}
 function capPanelHtml(id, label, optionsHtml) {
   return `<div class="panel" style="padding:12px 14px;">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -12632,6 +12642,12 @@ function wireSwipeNav(containerEl, index, count, onNavigate) {
 // card can be reached in one tap/click instead of several swipes.
 // onSelect is optional (older callers pass nothing and stay swipe-only).
 function renderSwipeDots(containerEl, items, current, colors, onSelect) {
+  // New planner layout: the same list as tabs (T12 look).
+  if (onSelect && containerEl.classList.contains("t12x-tabs")) {
+    containerEl.innerHTML = plxTabsHtml(items, current, colors || {}, null, "plxtab");
+    containerEl.onclick = (e) => { const b = e.target.closest("[data-plxtab]"); if (b && b.dataset.plxtab !== String(current)) onSelect(items.find((it) => String(it) === b.dataset.plxtab)); };
+    return;
+  }
   const index = items.indexOf(current);
   const arrows = swipeArrowsHtml(index <= 0, index >= items.length - 1);
   containerEl.innerHTML = `
@@ -12677,19 +12693,16 @@ async function renderCharmsCalc() {
   await ensureCharmData();
 
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    ${capPanelHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.filter((l) => l !== "0").map((l) => `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}>${esc(l)}</option>`).join(""))}
-    <div class="panel">
-      <h2>${esc(t("backpack_title"))}</h2>
-      <div id="charmOwned"></div>
-    </div>
-    <div id="charmTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
-    <div id="charmRows"></div>
-    <div class="panel">
-      <h2>${esc(t("troops_stats_title"))}</h2>
+  content.innerHTML = plxShellHtml({
+    title: navLabel("charmscalc"),
+    settings: capSettingsHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.filter((l) => l !== "0").map((l) => `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}>${esc(l)}</option>`).join("")),
+    amountsId: "charmOwned", needId: "charmNeed", tabsId: "charmTroopTabs",
+    mainHtml: `<div id="charmRows"></div>
+    <div class="t12x-card" style="margin-top:12px;">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div id="charmCurrentStats"></div>
-    </div>
-  `;
+    </div>`,
+  });
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
 
@@ -12923,19 +12936,16 @@ async function renderChiefGearCalc() {
     return;
   }
 
-  content.innerHTML = `
-    ${capPanelHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}>${esc(chiefGearRowLabel(r))}</option>`).join(""))}
-    <div class="panel">
-      <h2>${esc(t("backpack_title"))}</h2>
-      <div id="gearOwned"></div>
-    </div>
-    <div id="gearTroopTabs" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
-    <div id="gearRows"></div>
-    <div class="panel">
-      <h2>${esc(t("troops_stats_title"))}</h2>
+  content.innerHTML = plxShellHtml({
+    title: navLabel("chiefgear"),
+    settings: capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}>${esc(chiefGearRowLabel(r))}</option>`).join("")),
+    amountsId: "gearOwned", needId: "gearNeed", tabsId: "gearTroopTabs",
+    mainHtml: `<div id="gearRows"></div>
+    <div class="t12x-card" style="margin-top:12px;">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div id="gearCurrentStats"></div>
-    </div>
-  `;
+    </div>`,
+  });
 
   let opts = "";
   const buildOpts = () => { opts = rows.map((r, i) => (i <= chiefGearCapIdx() ? `<option value="${i}">${esc(chiefGearRowLabel(r))}</option>` : "")).join(""); };
@@ -17739,7 +17749,7 @@ function plxShellHtml(o) {
   return `
     <div class="t12x">
       <aside class="t12x-side">
-        ${o.settings ? `<div class="t12x-card t12x-settings"><div class="t12x-k">${esc(t("t12x_settings"))}</div>${o.settings}</div>` : ""}
+        ${o.settings ? `<div class="t12x-card t12x-settings${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">${esc(t("t12x_settings"))}</div>${o.settings}</div>` : ""}
         <div class="t12x-card"><div id="${o.amountsId}"></div></div>
         ${o.sideExtra || ""}
       </aside>
