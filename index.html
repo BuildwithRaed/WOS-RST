@@ -393,6 +393,7 @@ input,select,textarea{
   /* Gallery pictures are stored with their empty borders cropped off (new
      uploads are cropped automatically), so the space around them is set here. */
   .gallery-card .thumb.gallery-thumb{ padding:17%; }
+  .gallery-card .thumb.gallery-thumb.gallery-thumb-big{ padding:6%; }
   .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
   .skin-card .info{ padding:8px 10px 10px; }
@@ -12366,6 +12367,8 @@ let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
 
 // Renders totals-by-bonus-type, filter bar, and the category
 // sections of skin cards (click a card to toggle owned status).
+// Cosmetics categories whose pictures are shown bigger (less space around them).
+const GALLERY_BIG_THUMB = new Set(["City Skin", "Teleport Skin", "Private Chat", "Rally"]);
 async function renderSkinGallery() {
   const seq = RENDER_SEQ;
   const [ISLAND_CATEGORIES, , allSkinsRaw] = await Promise.all([
@@ -12586,7 +12589,7 @@ async function renderSkinGallery() {
     const uncountedSkins = orderSkins(filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))));
     renderGallerySplit(sections, countedSkins, uncountedSkins, (s) => `
           <div class="gallery-card ${s.owned ? "owned" : ""}" data-skin="${s.id}" data-gid="${s.id}">
-            <div class="thumb gallery-thumb">
+            <div class="thumb gallery-thumb${GALLERY_BIG_THUMB.has(s.category) ? " gallery-thumb-big" : ""}">
               ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" draggable="false" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
             <div class="badge">${esc(s.name)}</div>

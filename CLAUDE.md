@@ -63,7 +63,7 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
   where image_url like 'icons/skins/opt/%';
   ```
 - New images uploaded through Admin still go to Storage. `cropUploadImage` crops them first (see-through borders off, keeping 99% of the picture, max 384 px; JPEGs untouched), so they match the others.
-- Gallery/Islands/Experts/Facility pictures in the repo are cropped the same way (Oct 2026). The space around them is set in CSS: `.gallery-card .thumb.gallery-thumb` (Cosmetics, 17%), `.island-thumb` (Islands, 5%), `.island-thumb.facility-thumb` (Facility, 10%), and the inline padding on the Experts portraits.
+- Gallery/Islands/Experts/Facility pictures in the repo are cropped the same way (Oct 2026). The space around them is set in CSS: `.gallery-card .thumb.gallery-thumb` (Cosmetics, 17%; `gallery-thumb-big` 6% for the categories in `GALLERY_BIG_THUMB`: City Skin, Teleport Skin, Private Chat, Rally), `.island-thumb` (Islands, 5%), `.island-thumb.facility-thumb` (Facility, 10%), and the inline padding on the Experts portraits.
 
 ## Open to-dos
 - Issue #13: delete 133 unused files from Storage `skin-images` (the owner does it in the dashboard). Re-check the lists first if images changed.
@@ -82,3 +82,5 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - PR #15: Budgets speed (open 7.2 s → 2.7 s, date change 6.2 s → 0.7 s)
 - PR #16: owner Packs page speed (2.4 s → 1.4 s)
 - PR #17: even, smaller gallery pictures + auto-crop on upload
+- PR #18: new hero star design; PR #19: Dashboard "highest Gen for Max" toggle
+- PR #20: bigger pictures for City Skin, Teleport, Private Chat, Rally
