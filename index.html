@@ -413,6 +413,10 @@ input,select,textarea{
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
   .bp-tile.bp-epic img{ border-color:#a46ae0; }
   .bp-tile.bp-rare img{ border-color:#4a9be8; }
+  /* Planner boxes filled from the Backpack */
+  .bp-link{ display:block; font-size:10px; color:var(--muted); margin-top:3px; }
+  .bp-link.typed{ color:var(--frost); }
+  .bp-link .linklike{ background:none; border:0; padding:0; font:inherit; color:var(--ice); text-decoration:underline; cursor:pointer; }
   /* Backpack: screenshot scan */
   .scan-step{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); }
   .scan-step > b{ flex:0 0 22px; height:22px; border-radius:50%; background:var(--ice-dim); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; }
@@ -3063,6 +3067,9 @@ const T = {
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
+  bp_link_from: { en: "From Backpack", ar: "من الحقيبة", ko: "배낭에서" },
+  bp_link_typed: { en: "Typed", ar: "مكتوب يدويًا", ko: "직접 입력" },
+  bp_link_use: { en: "Use Backpack", ar: "استخدم الحقيبة", ko: "배낭 사용" },
   scan_title: { en: "Scan screenshots", ar: "مسح لقطات الشاشة", ko: "스크린샷 스캔" },
   scan_intro: { en: "Add any of these screenshots from the game, as many as you like. They are read on your phone and never uploaded.", ar: "أضف أيًا من لقطات الشاشة هذه من اللعبة، بالعدد الذي تريده. تتم قراءتها على هاتفك ولا يتم رفعها أبدًا.", ko: "게임의 아래 스크린샷을 원하는 만큼 추가하세요. 휴대폰에서만 읽고 업로드하지 않습니다." },
   scan_summary: { en: "Resource & Speedup Summary → Resources tab", ar: "ملخص الموارد والتسريعات ← تبويب الموارد", ko: "자원 및 가속 요약 → 자원 탭" },
@@ -5498,7 +5505,70 @@ async function ensureMaterialOwnedCache(calcKey) {
   if (!MATERIAL_OWNED_CACHE[calcKey]) {
     MATERIAL_OWNED_CACHE[calcKey] = (await loadCalcState(`material_owned_${calcKey}`)) || {};
   }
+  applyBackpackLink(calcKey, MATERIAL_OWNED_CACHE[calcKey], await backpackLinkState());
   return MATERIAL_OWNED_CACHE[calcKey];
+}
+
+// ---- Planner boxes filled from the Backpack page ----
+// Once someone uses the Backpack page, every planner page's owned boxes show
+// the Backpack amounts. Typing your own number into a box keeps it (saved in
+// calc_state "backpack_manual": { calcKey: { item: true } }) until you tap
+// "Use Backpack" again.
+const BACKPACK_RES_CHESTS = ["Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3"];
+// A Custom Resource Chest (or its Secured/protected twin) gives your choice of:
+const BACKPACK_RES_CHEST_GIVES = {
+  "Custom Resource Chest Lv.1": { Meat: 10000, Wood: 10000, Coal: 2000, Iron: 500 },
+  "Custom Resource Chest Lv.2": { Meat: 100000, Wood: 100000, Coal: 20000, Iron: 5000 },
+  "Custom Resource Chest Lv.3": { Meat: 1000000, Wood: 1000000, Coal: 200000, Iron: 50000 },
+};
+const BACKPACK_PAGE_LINKS = {
+  chief_gear: ["Hardened Alloy", "Polishing Solution", "Design Plan", "Amber"],
+  charm: ["Charm Guides", "Charm Designs", "Jewel Secrets"],
+  hero_gear: ["XP Component", "Essence Stones", "Mithril", "Mythic Gear"],
+  t11_helios: ["Steel", "Fire Crystal", "FC Shard", "Meat", "Wood", "Coal", "Iron", "Research Speedups (minutes)", ...BACKPACK_RES_CHESTS],
+  t12_research: ["Steel", "Fire Crystal", "Refined FC", "FC Shard", "Meat", "Wood", "Coal", "Iron", "Research Speedups (minutes)", ...BACKPACK_RES_CHESTS],
+  research_center: ["Meat", "Wood", "Coal", "Iron", "Steel", "Research Speedups (minutes)", ...BACKPACK_RES_CHESTS],
+  pets: ["Food", "Manual", "Potion", "Serum", "Pet Chest"],
+  pets_refine: ["Common Marks", "Advanced Marks", "Gems"],
+  experts: ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", "Expert Speedups (minutes)", "Speedups (minutes)"],
+};
+// What the Backpack holds of a planner item (null = not a Backpack item).
+function backpackAmountFor(name, bp) {
+  const n = (k) => Number(bp[k]) || 0;
+  if (name === "XP Component") return n("XP 10") * 10 + n("XP 100") * 100;
+  const sp = /^(Research |Troop |Construction |Expert )?Speedups \(minutes\)$/.exec(name);
+  if (sp) return Object.entries(BP_MINUTES).reduce((sum, [z, m]) => sum + n(`${sp[1] || ""}Speedup ${z}`) * m, 0);
+  if (BACKPACK_RES_CHESTS.includes(name)) return n(name) + n(`${name} (protected)`);
+  return n(name);
+}
+function backpackLinks(calcKey, name) {
+  return (BACKPACK_PAGE_LINKS[calcKey] || []).includes(name) || (calcKey === "experts" && / Sigils$/.test(name));
+}
+async function backpackLinkState() {
+  const [bp, manual] = await Promise.all([loadCalcState("backpack"), loadCalcState("backpack_manual")]);
+  return { bp: bp || {}, manual: manual || {} };
+}
+// Is this box showing the Backpack amount right now?
+function backpackLinked(calcKey, name, link) {
+  return Object.keys(link.bp).length > 0 && backpackLinks(calcKey, name) && !(link.manual[calcKey] || {})[name];
+}
+function applyBackpackLink(calcKey, owned, link, names) {
+  (names || BACKPACK_PAGE_LINKS[calcKey] || []).forEach((name) => {
+    if (backpackLinked(calcKey, name, link)) owned[name] = backpackAmountFor(name, link.bp);
+  });
+}
+function setBackpackManual(calcKey, name, typed, link) {
+  const page = { ...(link.manual[calcKey] || {}) };
+  if (typed) page[name] = true; else delete page[name];
+  link.manual = { ...link.manual, [calcKey]: page };
+  saveCalcState("backpack_manual", link.manual);
+}
+// The small line under a linked box: where its number comes from.
+function backpackLinkNoteHtml(calcKey, name, link) {
+  if (!Object.keys(link.bp).length || !backpackLinks(calcKey, name)) return "";
+  return backpackLinked(calcKey, name, link)
+    ? `<span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>`
+    : `<span class="bp-link typed">&#9998; ${esc(t("bp_link_typed"))} · <button type="button" class="linklike" data-bpuse="${esc(name)}">${esc(t("bp_link_use"))}</button></span>`;
 }
 
 async function updateHeroGearTotals() {
@@ -7593,7 +7663,7 @@ const BACKPACK_DEFAULT_GROUPS = [
   ["Chief Charms", ["Charm Guides", "Charm Designs", "Jewel Secrets", "Random Charm Chest"]],
   ["Hero Gear", ["XP 10", "XP 100", "Essence Stones", "Mithril", "Mythic Gear", "Lucky Gear Chest"]],
   ["Fire Crystal", ["Fire Crystal", "FC Shard", "Refined FC", "FC Chest", "FC Crate"]],
-  ["Resources", ["Meat", "Wood", "Coal", "Iron", "Steel", "Gems", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)"]],
+  ["Resources", ["Meat", "Wood", "Coal", "Iron", "Steel", "Gems", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Custom Resource Chest Lv.3 (protected)"]],
   ["Pet", ["Food", "Manual", "Potion", "Serum", "Pet Chest", "Common Marks", "Advanced Marks"]],
   ["Hero Shards", ["Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard"]],
   ["Experts", ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", ...["Cyrille", "Agnes", "Holger", "Romulus", "Fabian", "Baldur", "Valeria", "Ronne", "Kathy", "Gareth", "Justus"].map((n) => `${n} Sigils`)]],
@@ -7606,7 +7676,7 @@ const BACKPACK_DEFAULT_ITEMS = BACKPACK_DEFAULT_GROUPS.flatMap(([group, names]) 
 // then all speedups come last.
 const BP_GAME_ORDER = [
   "Gems", "Fire Crystal", "Refined FC", "FC Shard", "FC Chest", "FC Crate",
-  "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)",
+  "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Custom Resource Chest Lv.3 (protected)",
   "Meat", "Wood", "Coal", "Iron", "Steel",
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest",
   "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils",
@@ -7622,7 +7692,7 @@ const BP_SHARD_ICONS = { "Mythic General Hero Shard": "icons/item_icon_500220.pn
 const BP_CHEST_ICONS = {
   "Resource Chest": "icons/item_icon_100091.png",
   "Custom Resource Chest Lv.1": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3": "icons/item_icon_100103.png",
-  "Custom Resource Chest Lv.1 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2 (protected)": "icons/item_icon_100101.png", "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
+  "Custom Resource Chest Lv.1 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3 (protected)": "icons/item_icon_100103.png", "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
 // Speedup items ("Research Speedup 1h") show their size and add up to a total.
 const bpSpeedupSize = (name) => { const m = /speedup (\d+[mh])$/i.exec(name); return m && BP_MINUTES[m[1]] ? m[1] : null; };
 function backpackItems() {
@@ -7795,6 +7865,7 @@ async function renderInventory() {
       const v = Math.max(0, Math.round(Number(input.value) || 0));
       if (v) bp[name] = v; else delete bp[name];
       saveCalcState("backpack", bp);
+      budgetInvalidate(); // planner pages read these amounts
       close();
       drawGroups();
     };
@@ -8293,6 +8364,7 @@ function openBackpackScan(groups, bp, done) {
         if (Number(v)) bp[n] = Number(v); else delete bp[n];
       });
       saveCalcState("backpack", bp);
+      budgetInvalidate(); // planner pages read these amounts
       close();
       done();
     };
@@ -8521,6 +8593,8 @@ async function renderGroupPage(parentName) {
 // Maps a material name substring to its official game icon URL.
 
 const MATERIAL_ICONS = {
+  "custom resource chest lv.3": "icons/item_icon_100103.png",
+  "custom resource chest": "icons/item_icon_100101.png",
   "pet chest": "icons/item_icon_510019.png",
   "common marks": "icons/item_icon_600046.png",
   "advanced marks": "icons/item_icon_600047.png",
@@ -10892,6 +10966,9 @@ async function renderRfcLabPage() {
 // the ones a plan is short of, before pricing packs. Rates are editable
 // by the owner and saved in calc_state so they follow the account.
 // ============================================================
+// Custom Resource Chests open into your choice of Meat, Wood, Coal or Iron:
+// the planner turns them into whichever the plan is short of (a rule, not a trade).
+const BACKPACK_RES_CHEST_RULES = Object.entries(BACKPACK_RES_CHEST_GIVES).flatMap(([from, gives]) => Object.entries(gives).map(([to, get]) => ({ from, to, give: 1, get, max: 0, hidden: true })));
 const TRADE_DEFAULT_RATES = {
   chief_gear: [
     // max = how many times that trade can be made per week (0 = no limit)
@@ -10905,13 +10982,18 @@ const TRADE_DEFAULT_RATES = {
   ],
   // General speedups can be spent on research too (1:1, no limit). These
   // rates are hidden from the Trade block - they're a rule, not a trade.
-  research_center: [{ from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true }],
+  research_center: [
+    { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
+    ...BACKPACK_RES_CHEST_RULES,
+  ],
   t11_helios: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
+    ...BACKPACK_RES_CHEST_RULES,
     { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 }, // Research Lab: 1 FC = 1.3 shards
   ],
   t12_research: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
+    ...BACKPACK_RES_CHEST_RULES,
     { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 },
   ],
   // A Pet Chest opens into ONE of these (your choice): the planner turns
@@ -11258,7 +11340,8 @@ const BUDGET_PAGES = [
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
   if (calcKey === "experts" || calcKey === "experts_research") {
-    const inv = (await loadCalcState("experts_inventory")) || {};
+    const inv = { ...((await loadCalcState("experts_inventory")) || {}) };
+    await expertsInventoryWithBackpack(inv);
     return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(inv), "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": expertSpeedupOwnedFrom(inv) };
   }
   return ensureMaterialOwnedCache(calcKey);
@@ -12602,6 +12685,9 @@ const MATERIAL_NAME_SHORT = {
   "Hardened Alloy": "Alloy",
   "Polishing Solution": "Polish",
   "Design Plan": "Design",
+  "Custom Resource Chest Lv.1": "Res. Chest Lv.1",
+  "Custom Resource Chest Lv.2": "Res. Chest Lv.2",
+  "Custom Resource Chest Lv.3": "Res. Chest Lv.3",
 };
 async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNames, refreshFn, calcKey) {
   const el = document.getElementById(containerId);
@@ -12616,6 +12702,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
   const matEntries = names.map((name) => [name, 0]);
   const owned = await ensureMaterialOwnedCache(calcKey || "chief_gear");
+  const link = await backpackLinkState();
   const rowsId = `${containerId}_rows`;
 
   // Items that open into other items (Pet Chest -> Manual/Potion/Serum,
@@ -12690,6 +12777,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         <span class="meta mat-name" style="font-size:11px; font-weight:600; letter-spacing:0.3px; order:1;">${esc(shortName)}</span>
       </div>
       <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
+      <span data-bplinknote="${esc(name)}">${backpackLinkNoteHtml(calcKey || "chief_gear", name, link)}</span>
       ${groupStatusHtml}
     </div>`;
   }
@@ -12706,34 +12794,48 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   renderPackCostBlock(packBox, calcKey || "chief_gear", groups, owned);
   recordBudgetNeeds(calcKey || "chief_gear", groups);
 
+  // A box changed (typed, or put back to the Backpack amount): update the
+  // status lines in place - never the inputs, which would steal focus.
+  const ownedChanged = (name) => {
+    budgetInvalidate();
+    saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
+    const note = el.querySelector(`[data-bplinknote="${CSS.escape(name)}"]`);
+    if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
+    // A chest / convertible item changes other materials' status too.
+    recomputeEffOwned();
+    names.forEach((n) => groups.forEach((g) => {
+      const needed = Number((g.totals || {})[n]) || 0;
+      const { statusColor, statusText } = statusFor(n, needed);
+      const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(n)}|${CSS.escape(g.label || "")}"] span:last-child`);
+      if (statusDiv) {
+        statusDiv.style.color = statusColor;
+        statusDiv.textContent = statusText;
+      }
+    }));
+    renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, owned, refreshPacks);
+    renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
+  };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
-    input.addEventListener("change", async () => {
+    input.addEventListener("change", () => {
       let val = Number(input.value);
       if (Number.isNaN(val) || val < 0) val = 0;
       input.value = val;
       const name = input.dataset.ownedmat;
       owned[name] = val;
-      budgetInvalidate();
-      saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
-      // Only this material's status text depends on its owned amount, so
-      // update just those spans in place rather than touching the input
-      // elements (which would steal focus if the user tabs straight into
-      // another field before this one's change event finishes).
-      // A chest / convertible item changes other materials' status too, so
-      // refresh every status span (never the inputs, which would steal focus).
-      recomputeEffOwned();
-      names.forEach((n) => groups.forEach((g) => {
-        const needed = Number((g.totals || {})[n]) || 0;
-        const { statusColor, statusText } = statusFor(n, needed);
-        const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(n)}|${CSS.escape(g.label || "")}"] span:last-child`);
-        if (statusDiv) {
-          statusDiv.style.color = statusColor;
-          statusDiv.textContent = statusText;
-        }
-      }));
-      renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, owned, refreshPacks);
-      renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
+      // Typed by hand: this box keeps its own number from now on.
+      if (Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name)) setBackpackManual(calcKey || "chief_gear", name, true, link);
+      ownedChanged(name);
     });
+  });
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-bpuse]");
+    if (!b) return;
+    const name = b.dataset.bpuse;
+    setBackpackManual(calcKey || "chief_gear", name, false, link);
+    owned[name] = backpackAmountFor(name, link.bp);
+    const input = el.querySelector(`[data-ownedmat="${CSS.escape(name)}"]`);
+    if (input) input.value = owned[name];
+    ownedChanged(name);
   });
 }
 
@@ -14370,6 +14472,8 @@ let RESEARCH_SPEEDUP_MINUTES = 0;
 const GENERAL_SPEEDUP_KEY = "Speedups (minutes)";
 async function loadGeneralSpeedupMinutes() {
   const inv = (await loadCalcState("experts_inventory")) || {};
+  const link = await backpackLinkState();
+  if (backpackLinked("experts", GENERAL_SPEEDUP_KEY, link)) return backpackAmountFor(GENERAL_SPEEDUP_KEY, link.bp);
   if (typeof inv[GENERAL_SPEEDUP_KEY] === "number") return inv[GENERAL_SPEEDUP_KEY];
   // One-time carry-over from the old research-only box.
   const legacy = await loadCalcState("research_speedup_minutes");
@@ -14379,6 +14483,9 @@ async function loadGeneralSpeedupMinutes() {
 }
 async function saveGeneralSpeedupMinutes(minutes) {
   const inv = (await loadCalcState("experts_inventory")) || {};
+  // Typed by hand: the general speedups box keeps this number, not the Backpack's.
+  const link = await backpackLinkState();
+  if (Object.keys(link.bp).length) setBackpackManual("experts", GENERAL_SPEEDUP_KEY, true, link);
   inv[GENERAL_SPEEDUP_KEY] = minutes;
   RESEARCH_SPEEDUP_MINUTES = minutes;
   budgetInvalidate();
@@ -14684,7 +14791,7 @@ async function renderT11HeliosPage() {
       </div>
     `;
     // Fire Crystal you hold trades into FC Shards (10 → 13), so it gets its own box.
-    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderGrandTotal(); render(); }, "t11_helios");
+    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel"), ...BACKPACK_RES_CHESTS], () => { renderGrandTotal(); render(); }, "t11_helios");
   }
 
   function render() {
@@ -15043,6 +15150,16 @@ const AFFINITY_ITEM_VALUE = { "Sail of Conquest": 1000, "Fiery Heart": 100, "Com
 function expertSpeedupOwnedFrom(inv) {
   return (Number(inv["Speedups (minutes)"]) || 0) + (Number(inv["Expert Speedups (minutes)"]) || 0);
 }
+// Experts inventory boxes linked to the Backpack: the shared items, the
+// general and expert speedup minutes, and every expert's own sigils.
+function expertsBackpackNames() {
+  return [...EXPERT_INVENTORY_BASE_FIELDS, GENERAL_SPEEDUP_KEY, ...expertKeysAll().map((k) => `${k} Sigils`)];
+}
+async function expertsInventoryWithBackpack(inv) {
+  const link = await backpackLinkState();
+  applyBackpackLink("experts", inv, link, expertsBackpackNames());
+  return link;
+}
 function affinityOwnedFrom(inv) {
   return Object.entries(AFFINITY_ITEM_VALUE).reduce((sum, [k, v]) => sum + (Number(inv[k]) || 0) * v, 0) + (Number(inv["Affinity"]) || 0);
 }
@@ -15087,7 +15204,9 @@ async function renderExpertsResearchPage() {
     loadExpertNodes("research"),
   ]);
   const saved = savedLoaded || {};
-  const invSaved = invLoaded || {};
+  const invSaved = { ...(invLoaded || {}) };
+  await expertsInventoryWithBackpack(invSaved);
+  if (seq !== RENDER_SEQ) return;
   const levelSigilNeed = levelNeedLoaded || {};
   const RESEARCH_CACHE = {}; // { "Cyrille": { 1: [rows...], 2: [...], 3: [...] } }
   const PATH_NAMES = {}; // { "Cyrille": { 1: "Hunting Skill - Proficient", ... } }
@@ -15593,6 +15712,8 @@ async function renderExpertsPage() {
     return unlockedFor("experts", expert, unlockedState[expert]);
   }
   const invSaved = invLoaded || {};
+  const bpLink = await expertsInventoryWithBackpack(invSaved);
+  if (seq !== RENDER_SEQ) return;
   const SKILL_CACHE = {}; // { "Cyrille|Entrapment": [ {level,exp_cost,book_cost}, ... ] }
   skillRows.forEach((r) => {
     const key = `${r.expert}|${r.skill}`;
@@ -15732,6 +15853,7 @@ async function renderExpertsPage() {
       <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
       <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
       <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
+      <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>${esc(t("troops_stats_title"))}</h2>
@@ -16045,6 +16167,7 @@ async function renderExpertsPage() {
           <div style="flex:1;">
             <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("experts_sigils_have"))}</div>
             <input type="number" min="0" step="1" inputmode="numeric" class="keep-w" data-expsig="${esc(e.key)}" value="${Number(invSaved[`${e.key} Sigils`]) || ""}" placeholder="0" style="width:100%; padding:6px 8px; font-size:13px; text-align:center;" />
+            ${backpackLinkNoteHtml("experts", `${e.key} Sigils`, bpLink)}
           </div>
         </div>
         <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 12px; text-align:start;">
@@ -16230,6 +16353,7 @@ async function renderExpertsPage() {
       inp.addEventListener("change", async () => {
         const v = Math.max(0, Math.floor(Number(inp.value) || 0));
         invSaved[`${inp.dataset.expsig} Sigils`] = v;
+        if (Object.keys(bpLink.bp).length) setBackpackManual("experts", `${inp.dataset.expsig} Sigils`, true, bpLink);
         budgetInvalidate();
         saveCalcState("experts_inventory", invSaved);
         renderTotals();
@@ -16271,6 +16395,7 @@ async function renderExpertsPage() {
         <div style="flex:1; min-width:0;">
           <div class="meta" style="font-size:9px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(materialDisplayName(f))}</div>
           <input type="text" inputmode="numeric" data-expinv="${esc(f)}" value="${invSaved[f] || 0}" style="width:100%; min-width:0; padding:4px 6px; box-sizing:border-box;" />
+          ${backpackLinkNoteHtml("experts", f, bpLink)}
         </div>
       </div>`;
     const sigilSummary = EXPERTS_SHOWN.map(
@@ -16291,12 +16416,34 @@ async function renderExpertsPage() {
         if (Number.isNaN(val) || val < 0) val = 0;
         input.value = val;
         invSaved[input.dataset.expinv] = val;
+        if (Object.keys(bpLink.bp).length) setBackpackManual("experts", input.dataset.expinv, true, bpLink);
         budgetInvalidate();
         saveCalcState("experts_inventory", invSaved);
         renderTotals();
+        renderInventory();
       });
     });
   }
+  // "Use Backpack" on any Experts box: back to the Backpack amount.
+  const useBackpack = (ev) => {
+    const b = ev.target.closest("[data-bpuse]");
+    if (!b) return;
+    const name = b.dataset.bpuse;
+    setBackpackManual("experts", name, false, bpLink);
+    invSaved[name] = backpackAmountFor(name, bpLink.bp);
+    if (name === GENERAL_SPEEDUP_KEY) RESEARCH_SPEEDUP_MINUTES = invSaved[name];
+    budgetInvalidate();
+    saveCalcState("experts_inventory", invSaved);
+    const gs = document.getElementById("expertsGeneralSpeedupInput");
+    if (gs) gs.value = Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0;
+    const gn = document.getElementById("expertsGeneralSpeedupNote");
+    if (gn) gn.innerHTML = backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink);
+    renderTotals();
+    renderInventory();
+    renderGrid();
+  };
+  // On the page's own boxes (never on #content, which outlives this page).
+  [invEl, gridEl, document.getElementById("expertsGeneralSpeedupNote")].forEach((box) => box && box.addEventListener("click", useBackpack));
 
   const genSpeedEl = document.getElementById("expertsGeneralSpeedupInput");
   if (genSpeedEl) genSpeedEl.addEventListener("change", async () => {
@@ -16305,6 +16452,9 @@ async function renderExpertsPage() {
     genSpeedEl.value = val;
     invSaved[GENERAL_SPEEDUP_KEY] = val;
     await saveGeneralSpeedupMinutes(val);
+    if (Object.keys(bpLink.bp).length) setBackpackManual("experts", GENERAL_SPEEDUP_KEY, true, bpLink);
+    const gn = document.getElementById("expertsGeneralSpeedupNote");
+    if (gn) gn.innerHTML = backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink);
     renderTotals();
   });
 
@@ -16976,7 +17126,7 @@ async function renderResearchCenterPage() {
         <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
-    renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center");
+    renderChiefGearResourcesBar("rcResourcesBar", matTotals, [...Object.keys(matTotals), ...BACKPACK_RES_CHESTS], () => { renderTotals(); renderGroups(); }, "research_center");
   }
 
   const groupsEl = document.getElementById("rcGroups");
@@ -17188,7 +17338,7 @@ async function renderT12ResearchPage() {
         <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
-    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
+    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel"), ...BACKPACK_RES_CHESTS], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
