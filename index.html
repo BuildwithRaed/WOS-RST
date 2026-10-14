@@ -4084,6 +4084,29 @@ function dropKeptGameData() {
   dashDataChanged();
   if (typeof EXPERT_NODE_ROWS !== "undefined") EXPERT_NODE_ROWS = {};
 }
+// The hero star: six rounded teal petals (the game's look), thin lines
+// between them. filledSegs = how many petals are lit (6 = whole star).
+// With starIndex, each petal is tappable (data-starseg "star|petal").
+function heroStarSvg(filledSegs, opts = {}) {
+  const c = 16, rOut = 13.5, rIn = 6.2, size = opts.size || 32;
+  // Fill order goes counter-clockwise from the top:
+  // 1 top, 2 upper-left, 3 lower-left, 4 bottom, 5 lower-right, 6 upper-right.
+  const TIP_ANGLES = [-90, -150, 150, 90, 30, -30];
+  const pt = (p) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  const petals = TIP_ANGLES.map((deg, i) => {
+    const a = deg * Math.PI / 180, aL = (deg - 30) * Math.PI / 180, aR = (deg + 30) * Math.PI / 180;
+    const tip = [c + rOut * Math.cos(a), c + rOut * Math.sin(a)];
+    const l = [c + rIn * Math.cos(aL), c + rIn * Math.sin(aL)];
+    const r = [c + rIn * Math.cos(aR), c + rIn * Math.sin(aR)];
+    // Curve each side outwards a little so the petal is rounded.
+    const q1 = [l[0] + (tip[0] - l[0]) * 0.55 + Math.cos(aL) * 1.6, l[1] + (tip[1] - l[1]) * 0.55 + Math.sin(aL) * 1.6];
+    const q2 = [r[0] + (tip[0] - r[0]) * 0.55 + Math.cos(aR) * 1.6, r[1] + (tip[1] - r[1]) * 0.55 + Math.sin(aR) * 1.6];
+    const tap = opts.starIndex != null ? ` data-starseg="${opts.starIndex}|${i + 1}" style="cursor:pointer; stroke:var(--panel);"` : ` style="stroke:var(--panel);"`;
+    const title = opts.starIndex != null ? `<title>${opts.starIndex}\u2605 \u2014 shard ${i + 1}/6</title>` : "";
+    return `<path${tap} d="M${c},${c} L${pt(l)} Q${pt(q1)} ${pt(tip)} Q${pt(q2)} ${pt(r)} Z" fill="${i < filledSegs ? "#25c2ca" : "#2b3348"}" stroke-width="0.7" stroke-linejoin="round">${title}</path>`;
+  });
+  return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" style="display:block;">${petals.join("")}<circle cx="${c}" cy="${c}" r="1.3" style="fill:var(--panel);" pointer-events="none" /></svg>`;
+}
 async function renderOverview(opts = {}) {
   const seq = RENDER_SEQ;
   // Speed: everything the Dashboard needs is requested in one parallel batch
@@ -4703,26 +4726,8 @@ async function renderOverview(opts = {}) {
         if (row) ROSTER_PLAYER_HEROES.push(row); // the kept list (see dashCached)
       }
     };
-    // Six-pointed "snowflake" star split into 6 shard segments, each clickable.
-    const segStarSvg = (starIndex, filledSegs) => {
-      const c = 16, rOut = 15, rIn = 6;
-      const segs = [];
-      // Fill order goes counter-clockwise from the top:
-      // 1 top, 2 upper-left, 3 lower-left, 4 bottom, 5 lower-right, 6 upper-right.
-      const TIP_ANGLES = [-90, -150, 150, 90, 30, -30];
-      for (let i = 0; i < 6; i++) {
-        const a = TIP_ANGLES[i] * Math.PI / 180;
-        const aL = (TIP_ANGLES[i] - 30) * Math.PI / 180;
-        const aR = (TIP_ANGLES[i] + 30) * Math.PI / 180;
-        const tip = [c + rOut * Math.cos(a), c + rOut * Math.sin(a)];
-        const l = [c + rIn * Math.cos(aL), c + rIn * Math.sin(aL)];
-        const r = [c + rIn * Math.cos(aR), c + rIn * Math.sin(aR)];
-        const filled = i < filledSegs;
-        segs.push(`<polygon data-starseg="${starIndex}|${i + 1}" points="${c},${c} ${l[0].toFixed(2)},${l[1].toFixed(2)} ${tip[0].toFixed(2)},${tip[1].toFixed(2)} ${r[0].toFixed(2)},${r[1].toFixed(2)}" fill="${filled ? "#5fd3f2" : "#2a3442"}" stroke="#0b0f16" stroke-width="1.6" stroke-linejoin="round" style="cursor:pointer;"><title>${starIndex}\u2605 \u2014 shard ${i + 1}/6</title></polygon>`);
-      }
-      segs.push(`<circle cx="${c}" cy="${c}" r="1.6" fill="#0b0f16" pointer-events="none" />`);
-      return `<svg viewBox="0 0 32 32" width="32" height="32" style="display:block;">${segs.join("")}</svg>`;
-    };
+    // Six-pointed hero star split into 6 shard segments, each clickable.
+    const segStarSvg = (starIndex, filledSegs) => heroStarSvg(filledSegs, { starIndex });
     // Widget (Exclusive Gear) stats scale linearly: max value / 10 per level.
     const widgetStatsText = (hero, level) => {
       if (!hero || !level) return "";
@@ -13239,7 +13244,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
           ${[1, 2, 3, 4, 5]
             .map(
               (n) =>
-                `<span data-starbtn="${n}" style="cursor:pointer; font-size:24px; color:${n <= stars ? "var(--ice)" : "var(--line)"};">&#9733;</span>`
+                `<span data-starbtn="${n}" style="cursor:pointer;">${heroStarSvg(n <= stars ? 6 : 0, { size: 28 })}</span>`
             )
             .join("")}
         </div>
@@ -13269,7 +13274,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
       const current = saved[sharedKey] ?? 0;
       const newStars = current === n ? n - 1 : n;
       starRow.querySelectorAll("[data-starbtn]").forEach((s) => {
-        s.style.color = Number(s.dataset.starbtn) <= newStars ? "var(--ice)" : "var(--line)";
+        s.innerHTML = heroStarSvg(Number(s.dataset.starbtn) <= newStars ? 6 : 0, { size: 28 });
       });
       starRow.nextElementSibling.textContent = `${newStars} ${t("stars_of_5")}`;
       renderCards(newStars);
