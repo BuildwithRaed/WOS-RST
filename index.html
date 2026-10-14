@@ -477,12 +477,13 @@ input,select,textarea{
   .t12x-ring span{ width:28px; height:28px; border-radius:50%; background:var(--panel); display:grid; place-items:center; font-size:9.5px; font-weight:700; }
   .t12x-maxall{ font:inherit; font-size:11px; padding:5px 10px; border-radius:9px; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; }
   .t12x-fold{ color:var(--muted); width:12px; }
-  .t12x-nodes{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:8px; padding:0 14px 14px; }
+  .t12x-nodes{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:8px; padding:0 14px 14px; }
   .t12x-node{ border:1px solid var(--line); border-radius:12px; padding:9px 10px; background:rgba(255,255,255,.02); min-width:0; }
   .t12x-nm{ display:flex; justify-content:space-between; gap:8px; font-weight:600; font-size:13px; }
   .t12x-nm .meta, .t12x-done{ font-weight:400; font-size:10.5px; text-align:end; }
   .t12x-done{ color:var(--good); font-weight:700; }
-  .t12x-step{ display:flex; align-items:center; gap:6px; margin-top:7px; }
+  .t12x-step{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-top:7px; }
+  .t12x-grp{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
   .t12x-step button{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--frost); font-size:15px; cursor:pointer; }
   .t12x-step button:disabled{ opacity:.35; cursor:default; }
   .t12x-step b{ min-width:22px; text-align:center; font-size:15px; }
@@ -3274,6 +3275,7 @@ const T = {
   bs_ready: { en: "ready", ar: "جاهز", ko: "준비됨" },
   bs_nothing: { en: "Nothing needed yet.", ar: "لا شيء مطلوب بعد.", ko: "아직 필요한 것이 없습니다." },
   bs_have_of: { en: "have {have} of {need}", ar: "لديك {have} من {need}", ko: "{need} 중 {have} 보유" },
+  bs_your_amounts: { en: "Your amounts", ar: "الكميات لديك", ko: "보유 수량" },
   bs_from_backpack: { en: "Amounts from your Backpack", ar: "الكميات من حقيبتك", ko: "배낭의 수량" },
   bs_show_all: { en: "Show all / edit", ar: "عرض الكل / تعديل", ko: "모두 보기 / 편집" },
   bs_hide: { en: "Hide boxes", ar: "إخفاء المربعات", ko: "칸 숨기기" },
@@ -13140,7 +13142,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   };
   // Short summary: items still missing (with how much), ready ones as chips.
   // "Amounts from your Backpack · Show all / edit" line.
-  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>`;
+  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>`;
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
@@ -17932,13 +17934,13 @@ async function renderT12ResearchPage() {
       return `<div class="t12x-node" data-t12node="${def.key}">
         <div class="t12x-nm"><span>${esc(tT12Label(def.label))}</span>${note}</div>
         <div class="t12x-step">
-          <span class="t12x-lbl">${esc(t("t12x_now"))}</span>
+          <span class="t12x-grp"><span class="t12x-lbl">${esc(t("t12x_now"))}</span>
           <button type="button" data-t12dec="${def.key}" aria-label="−" ${cur <= 0 ? "disabled" : ""}>&minus;</button>
           <b title="${esc(t("research_current"))}">${cur}</b>
-          <button type="button" data-t12inc="${def.key}" aria-label="+" ${cur >= def.max ? "disabled" : ""}>+</button>
-          <span class="t12x-lbl t12x-tgt">${esc(t("t12x_target"))}</span>
+          <button type="button" data-t12inc="${def.key}" aria-label="+" ${cur >= def.max ? "disabled" : ""}>+</button></span>
+          <span class="t12x-grp t12x-tgt"><span class="t12x-lbl">${esc(t("t12x_target"))}</span>
           <select data-t12target="${def.key}" title="${esc(t("research_target"))}"${target < cur ? ` style="border-color:var(--danger);"` : ""}>${opts}</select>
-          <span class="meta">/ ${def.max}</span>
+          <span class="meta" style="white-space:nowrap;">/ ${def.max}</span></span>
         </div>
         <div class="t12x-bar"><i style="width:${(Math.min(cur, def.max) / def.max) * 100}%;${cur >= def.max ? " background:var(--good);" : ""}"></i></div>
       </div>`;
