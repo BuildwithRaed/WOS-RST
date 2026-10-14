@@ -97,4 +97,5 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - PR #32: Scan fixes from the owner's phone screenshots (Fiery Heart recognised, lone digits like "8" and "11" read, phone pictures learned)
 - PR #33: planner pages fill from the Backpack (manual override per box), chests shown read-only
 - PR #34: "From Backpack" note and "Use Backpack" link on the research pages' General Speedups box
+- PR #35: Backpack speedup totals (each type in d/h/m) at the top of the Speedups tab and the All tab's speedups
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)

@@ -408,6 +408,11 @@ input,select,textarea{
   .bp-tile .bp-qty{ font-size:13px; font-weight:700; }
   .bp-tile .bp-qty.zero{ color:var(--muted); }
   .bp-tile.bp-add{ border-style:dashed; }
+  .bp-speedsum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin:0 0 10px; }
+  .bp-speedsum-cell{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); }
+  .bp-speedsum-cell img{ width:30px; height:30px; object-fit:contain; flex-shrink:0; }
+  .bp-speedsum-cell .meta{ font-size:10.5px; }
+  .bp-speedsum-cell b{ font-size:13px; white-space:nowrap; }
   .bp-tile.bp-add .bp-ph{ font-size:26px; color:var(--ice); }
   .bp-tile.bp-hero img{ width:40px; height:40px; object-fit:cover; border-radius:8px; border:2px solid var(--line); }
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
@@ -7788,7 +7793,16 @@ async function renderInventory() {
   if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
   const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e9 ? `${Math.round(n / 1e8) / 10}B` : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
   const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
-  const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : "—";
+  const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h ${Math.round(m % 60)}m` : "—";
+  // Total time of each speedup type, in the game's order, as a summary strip.
+  const speedSummary = () => {
+    const kinds = ["General", "Construction", "Troop", "Research", "Expert"];
+    const cells = kinds.map((k) => groups.find((g) => g.speedups && g.title === `${k} Speedups`)).filter(Boolean).map((g) => {
+      const kind = g.title.replace(/ Speedups$/, "");
+      return `<div class="bp-speedsum-cell"><img src="icons/speedup-${kind.toLowerCase()}.png" alt="" /><div><div class="meta">${esc(kind)}</div><b>${fmtMin(minutesOf(g))}</b></div></div>`;
+    });
+    return cells.length ? `<div class="bp-speedsum">${cells.join("")}</div>` : "";
+  };
   const tile = (it, sp, kind) => {
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
     return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t("backpack_hero_shards")}` : label)}">
@@ -7816,7 +7830,7 @@ async function renderInventory() {
       const speedCells = speeds.filter(({ it, g }) => match(it, g)).map(({ it, g }) => tile(it, true, g.title.replace(/ Speedups$/, "")));
       document.getElementById("bpGroups").innerHTML = cells.length || speedCells.length
         ? (cells.length ? `<div class="bp-grid" style="margin-top:12px;">${cells.join("")}</div>` : "")
-          + (speedCells.length ? `<div class="bp-head"><h3>${esc(speedupsTab)}</h3></div><div class="bp-grid">${speedCells.join("")}</div>` : "")
+          + (speedCells.length ? `<div class="bp-head"><h3>${esc(speedupsTab)}</h3></div>${q ? "" : speedSummary()}<div class="bp-grid">${speedCells.join("")}</div>` : "")
         : `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
       return;
     }
@@ -7827,7 +7841,7 @@ async function renderInventory() {
       return `<div class="bp-head"><h3>${esc(g.title)}</h3><span class="meta">${g.speedups ? fmtMin(minutesOf(g)) : esc(t("backpack_items_count").replace("{n}", g.items.length))}</span></div>
         <div class="bp-grid">${items.map((it) => tile(it, g.speedups)).join("")}${addTile}</div>`;
     }).join("");
-    document.getElementById("bpGroups").innerHTML = html || `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
+    document.getElementById("bpGroups").innerHTML = html ? (BP_TAB === speedupsTab && !q ? `<div style="margin-top:12px;">${speedSummary()}</div>` : "") + html : `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
   };
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
