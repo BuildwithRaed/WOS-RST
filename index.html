@@ -507,14 +507,20 @@ input,select,textarea{
   .pc-target input{ padding:5px 8px; }
   .pc-target{ flex-wrap:nowrap !important; }
   .pc-target .meta{ white-space:nowrap; }
-  .pc-plans{ display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin:8px 0 10px; }
-  .pc-plan{ text-align:start; border:1px solid var(--line); border-radius:12px; padding:9px 10px; background:none; color:var(--frost); font:inherit; cursor:pointer; min-width:0; }
+  .pc-plans{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; margin:8px 0 10px; }
+  .pc-plan{ text-align:start; border:1px solid var(--line); border-radius:12px; padding:8px; background:none; color:var(--frost); font:inherit; cursor:pointer; min-width:0; }
   .pc-plan.on{ border-color:var(--ice); background:rgba(90,160,230,.08); }
   .pc-plan.off{ cursor:default; opacity:.75; }
   .pc-plan .pc-k{ margin:0; font-size:10px; }
-  .pc-plan b{ display:block; font-size:20px; }
-  .pc-plan small{ font-size:10.5px; color:var(--muted); }
+  .pc-plan b{ display:block; font-size:17px; white-space:nowrap; }
+  .pc-plan small{ display:block; font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pc-free{ font-size:11px; color:var(--good); padding:7px 10px; border-radius:10px; background:rgba(76,209,138,.07); margin:8px 0; }
+  .pc-free summary{ cursor:pointer; list-style:none; }
+  .pc-free summary::-webkit-details-marker{ display:none; }
+  .pc-free > div{ margin-top:5px; color:var(--muted); line-height:1.5; }
+  .pc-view{ margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
+  .pc-view .seg{ display:flex; }
+  .pc-view .seg button{ flex:1; font-size:11.5px; }
   .pc-pack{ border-top:1px solid var(--line); }
   .pc-pack summary{ display:flex; align-items:center; gap:8px; padding:8px 0; cursor:pointer; list-style:none; }
   .pc-pack summary::-webkit-details-marker{ display:none; }
@@ -3219,10 +3225,12 @@ const T = {
   t12x_reset: { en: "Reset", ar: "إعادة تعيين", ko: "초기화" },
   t12x_shard: { en: "Shard", ar: "شظية", ko: "조각" },
   trade_apply_short: { en: "Use in pack cost", ar: "استخدم في تكلفة الحزم", ko: "팩 비용에 사용" },
-  trade_card_line: { en: "{n} trades this week · rate {give} → {get}", ar: "{n} مقايضة هذا الأسبوع · المعدل {give} ← {get}", ko: "이번 주 {n}회 교환 · 비율 {give} → {get}" },
-  trade_no_limit: { en: "no limit", ar: "بلا حد", ko: "제한 없음" },
-  trade_rates_calc: { en: "Rates & calculator", ar: "المعدلات والحاسبة", ko: "비율 및 계산기" },
-  pc_free: { en: "Free", ar: "مجاني", ko: "무료" },
+  trade_card_line2: { en: "{n} trades this week", ar: "{n} مقايضة هذا الأسبوع", ko: "이번 주 {n}회 교환" },
+  pc_free_count: { en: "Already counted: {c} active cards · {t} free trades", ar: "محسوب مسبقًا: {c} بطاقات نشطة · {t} مقايضات مجانية", ko: "이미 반영: 활성 카드 {c}개 · 무료 교환 {t}개" },
+  pc_card_days: { en: "{n} days each", ar: "{n} أيام لكل واحدة", ko: "각 {n}일" },
+  pc_fastest: { en: "Fastest", ar: "الأسرع", ko: "가장 빠름" },
+  pc_by_target: { en: "By target", ar: "حسب الهدف", ko: "목표일까지" },
+  pc_cheapest: { en: "Cheapest", ar: "الأرخص", ko: "가장 저렴" },
   bs_edit_hint: { en: "You can type 5m or 10.8b", ar: "يمكنك كتابة 5m أو 10.8b", ko: "5m 또는 10.8b처럼 입력할 수 있습니다" },
   bs_short_word: { en: "short", ar: "ناقص", ko: "부족" },
   bs_spare_word: { en: "spare", ar: "فائض", ko: "여유" },
@@ -10677,11 +10685,13 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         // Pick a plan (same plan twice is shown once), then its packs.
         const shown = plans.filter((c) => !plans.some((x) => plans.indexOf(x) < plans.indexOf(c) && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days));
         let pick = shown.find((c) => c.key === PACK_PLAN_PICK[calcKey] && c.plan) || shown.find((c) => c.key === "target" && c.plan) || shown.find((c) => c.plan);
-        const label = (c) => t(c.key === "fastest" ? "pack_plan_fastest" : c.key === "target" ? "pack_plan_by_target" : "pack_plan_cheapest");
+        const label = (c) => t(c.key === "fastest" ? "pc_fastest" : c.key === "target" ? "pc_by_target" : "pc_cheapest");
         const planCard = (c) => {
           if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
           const late = targetDays != null && c.plan.days > targetDays;
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${fmtDate(c.plan.days)} · ${c.plan.days} ${t("pack_days_short_long")}`)}</small></button>`;
+          const d = new Date(today.getTime() + c.plan.days * 86400000);
+          let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }); } catch (e) { short = fmtDate(c.plan.days); }
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
         };
         const p = pick && pick.plan;
         const byPack = [];
@@ -10690,7 +10700,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, cycles: r.cycles, lines: [] }; byPack.push(g); }
           g.count += r.count; g.subtotal += packRowLocal(r); g.sample = g.sample || r.price; g.cycles = Math.max(g.cycles, r.cycles); g.lines.push(r);
         });
-        const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(packStackText(g.reset))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
+        const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
           <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta">${packFmtLocal(packRowLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
         const planTrades = p && (p.trades || []).length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
         sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${listHtml}${planTrades}`;
@@ -10733,9 +10743,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       ${usingShared ? "" : targetHtml}
       ${fallbackNote}
       ${uncoveredHtml}
-      ${freeBits.length ? `<div class="pc-free">&#10003; ${esc(t("pc_free"))}: ${esc(freeBits.join(" · "))}</div>` : ""}
+      ${freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_free_count").replace("{c}", activeCards.used.length).replace("{t}", traded && traded.trades.length ? traded.trades.length : 0))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : ""}
       <div>${sections}</div>
-      ${viewSwitch}
+      ${canShare ? `<div class="pc-view">${viewSwitch.replace(/<div class="meta" style="font-size:10px; margin-bottom:4px;">[\s\S]*?<\/div>\s*$/, "")}</div>` : ""}
     </div>` : `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
       ${head}
@@ -11518,10 +11528,10 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
     return `${res.trades.length ? res.trades.map((tr) => {
       const r = rates.find((x) => x.from === tr.from && x.to === tr.to) || {};
       return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(materialDisplayName(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${qty(tr.getQty)}</b><small>${esc(materialDisplayName(tr.to))}</small></div></div>
-        <div class="meta pc-sub">${esc(t("trade_card_line").replace("{n}", qty(tr.lots)).replace("{give}", r.give || "").replace("{get}", r.get || ""))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ` · ${esc(t("trade_no_limit"))}`}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}</div>`;
+        <div class="meta pc-sub">${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}</div>`;
     }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
       ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
-      <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_rates_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
+      <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
   };
   if (cards && !open) {
     containerEl.innerHTML = `<div class="pc-card">${cardHead}${cardBody()}</div>`;
@@ -11552,8 +11562,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
     </div>`;
   containerEl.innerHTML = cards ? `
     <div class="pc-card">${cardHead}${cardBody()}
-      <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_rates"))}</div>${ratesHtml}
-        <div class="meta" style="font-size:10.5px; font-weight:600; margin:12px 0 4px;">${esc(t("trade_calc"))}</div>${calcHtml}</div>
+      <div style="margin-top:8px;">${calcHtml}</div>
     </div>` : `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
       ${head}
