@@ -425,6 +425,7 @@ input,select,textarea{
   .t12x-hero{ background:linear-gradient(135deg, rgba(90,160,230,.16), rgba(22,35,58,.6)), var(--panel); }
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
+  .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-good{ font-size:11px; color:var(--good); margin-top:3px; }
   .t12x-prog{ height:8px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; margin:10px 0 5px; }
   .t12x-prog i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg, var(--ice), var(--good)); }
@@ -13102,7 +13103,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const ready = items.filter((n) => !short.includes(n));
     const img = (n, cls) => { const src = iconFor(n); return src ? `<img src="${esc(src)}" alt=""${cls ? ` class="${cls}"` : ""} />` : ""; };
     return `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>
-      ${items.length ? `<div class="bs-title">${esc(t(calcKey === "t12_research" ? "bs_title_t12" : "bs_title_needed"))}</div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+      ${items.length ? (calcKey === "t12_research" ? "" : `<div class="bs-title">${esc(t("bs_title_needed"))}</div>`) : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&minus;${esc(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
       ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(amount(n, (effOwned[n] || 0) - needOf(n)))}</b></div>`).join("")}
 `;
@@ -17726,7 +17727,7 @@ async function renderT12ResearchPage() {
       <aside class="t12x-side">
         <div class="t12x-card t12x-hero" id="t12Hero"></div>
         <div class="t12x-card">
-          <div class="t12x-k">${esc(t("backpack_title"))}</div>
+          <div class="t12x-title">${esc(t("bs_title_t12"))}</div>
           <div id="t12Totals"></div>
         </div>
         <div class="t12x-card">
