@@ -3260,6 +3260,7 @@ const T = {
   pc_fastest: { en: "Fastest", ar: "الأسرع", ko: "가장 빠름" },
   pc_by_target: { en: "By target", ar: "حسب الهدف", ko: "목표일까지" },
   pc_cheapest: { en: "Cheapest", ar: "الأرخص", ko: "가장 저렴" },
+  bs_edit_hint_min: { en: "In minutes, or type 5d 18h", ar: "بالدقائق، أو اكتب 5d 18h", ko: "분 단위, 또는 5d 18h처럼 입력" },
   bs_edit_hint: { en: "You can type 5m or 10.8b", ar: "يمكنك كتابة 5m أو 10.8b", ko: "5m 또는 10.8b처럼 입력할 수 있습니다" },
   bs_title_t12: { en: "Total research resources needed · all 3 troops", ar: "إجمالي موارد البحث المطلوبة · القوات الثلاث", ko: "필요한 총 연구 자원 · 3개 병종" },
   bs_title_needed: { en: "Total resources needed", ar: "إجمالي الموارد المطلوبة", ko: "필요한 총 자원" },
@@ -13024,6 +13025,14 @@ function parseAmount(str) {
   if (!m) return Number(str);
   return Math.round(Number(m[1].replace(/,/g, "")) * ({ k: 1e3, m: 1e6, b: 1e9 }[(m[2] || "").toLowerCase()] || 1));
 }
+// Typed time in minutes: "8270", "5d 18h", "3h 30m".
+function parseMinutes(str) {
+  const v = String(str).trim().toLowerCase();
+  if (/^[\d.,]+$/.test(v)) return Math.round(Number(v.replace(/,/g, "")));
+  const m = /^(?:([\d.]+)\s*d)?\s*(?:([\d.]+)\s*h)?\s*(?:([\d.]+)\s*m(?:in)?)?$/.exec(v);
+  if (!m || !(m[1] || m[2] || m[3])) return NaN;
+  return Math.round((Number(m[1]) || 0) * 1440 + (Number(m[2]) || 0) * 60 + (Number(m[3]) || 0));
+}
 // Big amounts in short form: 10.83B, 4.57M, 92.2K, 7,486.
 function shortAmount(v) {
   const n = Number(v) || 0, a = Math.abs(n);
@@ -13176,7 +13185,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(label)}</h2>
       ${canLink ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       <input id="bsEditQty" type="text" inputmode="decimal" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
-      <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("bs_edit_hint"))}</div>
+      <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(/\(minutes\)$/.test(name) ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${canLink && !linked ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
         <button class="btn ghost" type="button" id="bsEditCancel">${esc(t("cancel"))}</button>
@@ -13188,8 +13197,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const input = modal.querySelector("#bsEditQty");
     input.focus(); input.select();
     const save = () => {
-      let val = parseAmount(input.value);
-      if (Number.isNaN(val) || val < 0) val = 0;
+      let val = /\(minutes\)$/.test(name) ? parseMinutes(input.value) : parseAmount(input.value);
+      if (Number.isNaN(val)) { input.style.borderColor = "var(--danger)"; return; } // not a number: keep the box open
+      if (val < 0) val = 0;
       owned[name] = val;
       if (canLink) setBackpackManual(calcKey || "chief_gear", name, true, link);
       close();
