@@ -502,6 +502,22 @@ input,select,textarea{
     .t12x-boxes > div{ padding:7px 8px; gap:6px; }
     .t12x-boxes img{ width:22px; height:22px; }
     .t12x-boxes b{ font-size:13px; white-space:nowrap; }
+    /* Settings on one line: speed · speedups · dashboard */
+    .t12x-settings{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto; gap:4px 10px; align-items:start; padding:10px 12px; }
+    .t12x-settings > .t12x-k{ grid-column:1 / -1; margin:0; }
+    .t12x-side .t12x-settings .rs-row{ display:contents !important; }
+    .t12x-side .t12x-settings .rs-row > div{ grid-template-columns:minmax(0,1fr) auto !important; gap:2px 4px !important; }
+    .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ grid-column:1 / -1; font-size:10px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .t12x-side .t12x-settings .rs-row input{ padding:5px 6px !important; font-size:13px; }
+    .t12x-side .t12x-settings #researchSpeedupNote{ grid-column:1 / -1; justify-self:start; font-size:9.5px; }
+    .t12x-settings .t12x-check{ flex-direction:column; align-items:center; gap:4px; font-size:10px; text-align:center; max-width:70px; line-height:1.15; }
+    /* Smaller resource squares */
+    .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:repeat(auto-fill, minmax(66px, 1fr)); gap:5px; }
+    .t12x-need .bs-row{ min-height:0; padding:7px 3px; }
+    .t12x-need .bs-row img{ width:22px; height:22px; }
+    .t12x-need .bs-row b{ font-size:12.5px; }
+    .t12x-need .bs-row .n{ font-size:10px; }
+    .t12x-need .bs-row .n small{ display:none; } /* "have … of …" stays on the Backpack tiles */
   }
   /* Trades / Pack cost as cards (summary pages) */
   .pc-card{ border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:12px; background:rgba(255,255,255,.02); }
