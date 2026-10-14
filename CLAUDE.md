@@ -68,6 +68,21 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - New images uploaded through Admin still go to Storage. `cropUploadImage` crops them first (see-through borders off, keeping 99% of the picture, max 384 px; JPEGs untouched), so they match the others.
 - Gallery/Islands/Experts/Facility pictures in the repo are cropped the same way (Oct 2026). The space around them is set in CSS: `.gallery-card .thumb.gallery-thumb` (Cosmetics, 17%; `gallery-thumb-big` 6% for the categories in `GALLERY_BIG_THUMB`: City Skin, Teleport Skin, Private Chat, Rally), `.island-thumb` (Islands, 5%), `.island-thumb.facility-thumb` (Facility, 10%), and the inline padding on the Experts portraits.
 
+## Work in progress: site-wide redesign (branch `claude/youthful-einstein-n9eoau`, NOT merged)
+The owner said "looks good, still needs changes next time — don't push it yet". **No PR until the owner says so.** Preview: `https://raw.githack.com/BuildwithRaed/WOS-RST/47a423d/index.html`. Next session: continue on this branch (don't restart it from `main`; merge `main` in if it moved), ask the owner what to change.
+Done so far (all on the preview only):
+- T12 redesign: two columns (Settings, "Amounts from your Backpack" tiles, Trade items and Pack Cost cards on the side; "Total research resources needed" squares with the research-time bar, troop tabs and folding node sections in the main column); phones stack, settings on one line. FC→FC Shard trade 10→13, up to 500 a week, counted in totals; trade card shows only RFC/FCS still short (exact amounts); Pack Cost cards without "Full amount" or $.
+- Same layout on T11 Helios, Research Center, Chief Gear, Charms, Heroes Gears, Pets Level, Pet Refine, Experts Level, Experts Research.
+- Page title on top; "Max everything" at the top right (T12, T11, Research Center, Pets).
+- Stats as boxes with an of-max bar; groups behind tabs (troops on Heroes Gears, Chief Gear, Charms, Pet Refine, Alliance Tech, Dashboard; Troops/Foundry/SvS/Frostfire/Tundra on Experts Level; All troops + troops on Experts Research).
+- Pets/Experts: ‹ 1/15 › arrows replaced by a picker strip (expert pictures; pets have no pictures, so a coloured letter).
+- Experts Level owned amounts as tap-to-edit tiles; expert sigils as picture tiles (Experts Level and Research).
+- "Set all" shows the chosen level when all pieces match (Chief Gear, Charms; new Set all row on Heroes Gears).
+- Extra Bonus pages: titles on VIP and Heroes Special Skills; VIP, Tundra Album, Collection Gallery use the new stat boxes; Alliance Tech stats as troop tabs.
+- Every other page: `.panel` has the same card look, bigger page titles.
+- Owner data change (live, already in effect): owner calc_state `trade_rates` t12_research FC→FC Shard `max` 0 → 500 (undo: set it back to 0).
+- Tested: no sideways scroll or errors at 1280/393/624/430/412/884 px; click test of tabs, picker, Set all, tile pop-up, Max everything (saves blocked).
+
 ## Open to-dos
 - None. (Issue #13 done 14 Oct 2026: 132 unused Storage files deleted; `skin-images` now holds 90 files: Justus's expert picture, the 88 gallery backup originals, and one unlinked city-skin picture `d248d1b3-….png` kept for the owner to decide.)
 
