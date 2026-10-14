@@ -14512,9 +14512,12 @@ let RESEARCH_SPEEDUP_MINUTES = 0;
 // Level. It lives in the Experts inventory under "Speedups (minutes)"; the
 // research pages' "General Speedups" box reads and writes that same value.
 const GENERAL_SPEEDUP_KEY = "Speedups (minutes)";
+// Backpack link state as of the last load, for the research pages' box note.
+let GENERAL_SPEEDUP_LINK = { bp: {}, manual: {} };
 async function loadGeneralSpeedupMinutes() {
   const inv = (await loadCalcState("experts_inventory")) || {};
   const link = await backpackLinkState();
+  GENERAL_SPEEDUP_LINK = link;
   if (backpackLinked("experts", GENERAL_SPEEDUP_KEY, link)) return backpackAmountFor(GENERAL_SPEEDUP_KEY, link.bp);
   if (typeof inv[GENERAL_SPEEDUP_KEY] === "number") return inv[GENERAL_SPEEDUP_KEY];
   // One-time carry-over from the old research-only box.
@@ -14564,6 +14567,7 @@ function researchSpeedInputHtml() {
         <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
         <input type="text" inputmode="decimal" id="researchSpeedupInput" class="keep-w" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
+        <span id="researchSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, GENERAL_SPEEDUP_LINK)}</span>
       </div>
     </div>
   `;
@@ -14587,9 +14591,28 @@ function wireResearchSpeedInput(onChange) {
       if (Number.isNaN(val) || val < 0) val = 0;
       speedupEl.value = val;
       await saveGeneralSpeedupMinutes(val);
+      GENERAL_SPEEDUP_LINK = await backpackLinkState();
+      const note = document.getElementById("researchSpeedupNote");
+      if (note) note.innerHTML = backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, GENERAL_SPEEDUP_LINK);
       onChange();
     });
   }
+  // "Use Backpack": back to the Backpack's general speedup minutes.
+  const noteEl = document.getElementById("researchSpeedupNote");
+  if (noteEl) noteEl.addEventListener("click", async (ev) => {
+    if (!ev.target.closest("[data-bpuse]")) return;
+    const link = await backpackLinkState();
+    setBackpackManual("experts", GENERAL_SPEEDUP_KEY, false, link);
+    GENERAL_SPEEDUP_LINK = link;
+    RESEARCH_SPEEDUP_MINUTES = backpackAmountFor(GENERAL_SPEEDUP_KEY, link.bp);
+    const inv = (await loadCalcState("experts_inventory")) || {};
+    inv[GENERAL_SPEEDUP_KEY] = RESEARCH_SPEEDUP_MINUTES;
+    saveCalcState("experts_inventory", inv);
+    budgetInvalidate();
+    if (speedupEl) speedupEl.value = RESEARCH_SPEEDUP_MINUTES;
+    noteEl.innerHTML = backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, link);
+    onChange();
+  });
 }
 
 function t12FormatTime(hours) {
