@@ -433,6 +433,10 @@ input,select,textarea{
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
+  /* Experts: owned boxes two to a row in the side card */
+  .t12x-side #expertsInventory{ display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px 12px; }
+  .t12x-side #expertsInventory > div{ min-width:0 !important; flex:none !important; }
+  .t12x-side #expertsInventory > div:last-child{ grid-column:1 / -1; }
   .t12x-need .bs-box{ margin:0; }
   .t12x-need .bs-row{ margin:0; }
   /* Small square tiles, like the Backpack page */
@@ -9054,16 +9058,6 @@ function capSettingsHtml(id, label, optionsHtml) {
   return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px;">${optionsHtml}</select></label>
     <p class="desc" style="font-size:10.5px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>`;
 }
-function capPanelHtml(id, label, optionsHtml) {
-  return `<div class="panel" style="padding:12px 14px;">
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <h2 style="margin:0; font-size:14px;">${esc(t("cap_title"))}</h2>
-        <label style="display:flex; align-items:center; gap:8px; font-size:12px; flex-wrap:wrap;"><span class="meta">${esc(label)}</span>
-          <select id="${id}" style="min-width:110px;">${optionsHtml}</select></label>
-      </div>
-      <p class="desc" style="font-size:11px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>
-    </div>`;
-}
 
 // Renders the 3-troop-type x 2-piece x 3-charm-slot calculator,
 // each slot with its own current\u2192target level pair.
@@ -15849,31 +15843,25 @@ async function renderExpertsResearchPage() {
   }
 
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("experts_research_title"))}</h2>
-              </div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>${esc(t("troops_stats_title"))}</h2>
-      <p class="desc">${esc(t("experts_research_desc"))}</p>
+  content.innerHTML = plxShellHtml({
+    title: t("experts_research_title"),
+    amountsId: "expResearchAmounts", needId: "expResearchSigils",
+    mainHtml: `<div id="expResearchSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
+    <div id="expResearchGrid"></div>
+    <div class="t12x-card" style="margin-top:12px;">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
+      <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("experts_research_desc"))}</p>
       <div class="stats-row-scroll" id="expResearchTotals"></div>
     </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <div id="expResearchTroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;"></div>
-      <h2 style="display:flex; align-items:baseline; gap:6px;"><span id="expResearchTroopTitle"></span><span class="meta" id="expResearchTroopExpert" style="font-size:11px; font-weight:400;"></span></h2>
+    <div class="t12x-card" style="margin-top:12px;">
+      <div id="expResearchTroopDots" class="t12x-tabs" style="margin-bottom:10px;"></div>
+      <div class="t12x-title" style="display:flex; align-items:baseline; gap:6px;"><span id="expResearchTroopTitle"></span><span class="meta" id="expResearchTroopExpert" style="font-size:11px; font-weight:400;"></span></div>
       <div class="stats-row-scroll" id="expResearchTroopStats" style="margin-top:10px;"></div>
-    </div>
-    <div id="expResearchSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
-    <div id="expResearchGrid"></div>
-    <div class="panel" style="margin-top:16px;">
-      <h2>${esc(t("total_sigils_needed"))}</h2>
-      <p class="desc">${esc(t("across_unlocked_experts_desc"))}</p>
-      <div class="stats-row-scroll" id="expResearchSigils"></div>
-      <div id="expResearchPacks"></div>
-    </div>
-  `;
+    </div>`,
+  });
+  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span></div>
+    <div id="expResearchOwned" style="font-size:12px; line-height:1.9; color:var(--muted);"></div>
+    <div id="expResearchPacks"></div>`;
 
   const sigilsEl = document.getElementById("expResearchSigils");
   const totalsEl = document.getElementById("expResearchTotals");
@@ -15953,9 +15941,15 @@ async function renderExpertsResearchPage() {
     });
     const stillSigil = Math.max(0, sigilShortfall - generalLeft);
 
-    sigilsEl.innerHTML = `
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_sigils"))}</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:8.5px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
-    `;
+    // Same square as the other planner pages: sigils still short (after
+    // Experts Level's share), or a tick when covered.
+    const sigilHave = Math.max(0, totalSigil - stillSigil);
+    sigilsEl.innerHTML = totalSigil > 0 ? `<div class="bs-box"><div class="bs-sq" style="--n:1;">
+      <div class="bs-row${stillSigil > 0 ? "" : " ok"}"><img src="icons/item_icon_570000.png" alt="" /><div class="n">${esc(t("resource_sigils"))}<small>${esc(t("bs_have_of").replace("{have}", shortAmount(sigilHave)).replace("{need}", shortAmount(totalSigil)))}</small></div><b>${stillSigil > 0 ? `&minus;${esc(shortAmount(stillSigil))}` : `&#10003;`}</b></div>
+      </div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`;
+    document.getElementById("expResearchOwned").innerHTML = `<div><img src="icons/item_icon_570000.png" alt="" style="width:18px; height:18px; vertical-align:middle;" /> <b style="color:var(--text);">${esc(materialDisplayName("General Sigils"))} ${(Number(invSaved["General Sigils"]) || 0).toLocaleString()}</b></div>
+      ${EXPERTS_IN_ORDER.map((e) => `<span style="white-space:nowrap; color:var(--text); font-weight:600;">${esc(dataName(e))} ${(Number(invSaved[`${e} Sigils`]) || 0).toLocaleString()}</span>`).join(' <span style="opacity:.5;">\u00b7</span> ')}
+      <div style="font-size:9.5px; opacity:.75; margin-top:2px;">${esc(t("experts_sigils_summary_note"))}</div>`;
     const sigilTotals = {};
     EXPERTS_IN_ORDER.forEach((expert) => { const short = Math.max(0, (sigilNeededByExpert[expert] || 0) - ownedLeft[expert]); if (short > 0) sigilTotals[`${expert} Sigils`] = short; });
     const packGroups = [{ label: null, totals: sigilTotals }];
@@ -15983,7 +15977,7 @@ async function renderExpertsResearchPage() {
       troopExpertEl.textContent = TROOP_STAT_EXPERT[expResearchActiveTroop] ? `(${TROOP_STAT_EXPERT[expResearchActiveTroop]})` : "";
       const d = troopData[expResearchActiveTroop];
       troopStatsEl.innerHTML = statTotalsHtml(d.totals, d.maxTotals);
-      wireTroopSwipe(troopStatsEl.closest(".panel"), TROOP_STAT_ORDER, expResearchActiveTroop, (t) => {
+      wireTroopSwipe(troopStatsEl.closest(".t12x-card"), TROOP_STAT_ORDER, expResearchActiveTroop, (t) => {
         expResearchActiveTroop = t;
         renderActiveTroopStats();
       });
@@ -16368,56 +16362,51 @@ async function renderExpertsPage() {
   }
 
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("expertspage_title"))}</h2>
-      </div>
-    </div>
-    <div class="rs-row" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
-      <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
-      <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
+  content.innerHTML = plxShellHtml({
+    title: t("expertspage_title"),
+    settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap;">
+      <span>${esc(t("speedups_label"))}</span>
+      <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:72px; flex-shrink:0; padding:4px 6px;" />
       <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
       <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>${esc(t("troops_stats_title"))}</h2>
-      <p class="desc">${esc(t("experts_base_stats_desc"))}</p>
-      <div class="stats-row-scroll" id="expertsStatHeader"></div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>${esc(t("backpack_title"))}</h2>
-      <div id="expertsSummary" class="bs-box"></div>
-      <div class="stats-row-scroll" id="expertsInventory"${BAR_SHOW_ALL.experts ? "" : ` style="display:none;"`}></div>
-      <div id="expertsPacks"></div>
-    </div>
+    </div>`,
+    amountsId: "expertsAmounts", needId: "expertsSummary",
+    mainHtml: `
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="expertsGrid"></div>
-    <div class="grid g2" style="margin-bottom:16px; gap:16px; margin-top:16px;">
-      <div class="panel">
-        <h2>${esc(t("foundry_title"))}</h2>
-        <p class="desc">${esc(t("foundry_desc"))}</p>
+    <div class="grid g2" style="gap:12px; margin-top:12px;">
+      <div class="t12x-card">
+        <div class="t12x-title">${esc(t("foundry_title"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("foundry_desc"))}</p>
         <div class="stats-row-scroll sr-4" id="expertsFoundryHeader"></div>
       </div>
-      <div class="panel">
-        <h2>${esc(t("svs_title"))}</h2>
-        <p class="desc">${esc(t("svs_desc"))}</p>
+      <div class="t12x-card">
+        <div class="t12x-title">${esc(t("svs_title"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("svs_desc"))}</p>
         <div class="stats-row-scroll sr-4" id="expertsSvsHeader"></div>
       </div>
     </div>
-    <div class="grid g2" style="gap:16px;">
-      <div class="panel">
-        <h2>${esc(t("frostfire_mine_title"))}</h2>
-        <p class="desc">${esc(t("frostfire_mine_desc"))}</p>
+    <div class="grid g2" style="gap:12px; margin-top:12px;">
+      <div class="t12x-card">
+        <div class="t12x-title">${esc(t("frostfire_mine_title"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("frostfire_mine_desc"))}</p>
         <div class="stats-row-scroll sr-4" id="expertsFrostfireHeader"></div>
       </div>
-      <div class="panel">
-        <h2>${esc(t("tundra_trade_routes_title"))}</h2>
-        <p class="desc">${esc(t("tundra_trade_routes_desc"))}</p>
+      <div class="t12x-card">
+        <div class="t12x-title">${esc(t("tundra_trade_routes_title"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("tundra_trade_routes_desc"))}</p>
         <div class="stats-row-scroll sr-4" id="expertsTundraHeader"></div>
       </div>
     </div>
-  `;
+    <div class="t12x-card" style="margin-top:12px;">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
+      <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("experts_base_stats_desc"))}</p>
+      <div class="stats-row-scroll" id="expertsStatHeader"></div>
+    </div>`,
+  });
+  document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
+    <div class="stats-row-scroll" id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
+    <div id="expertsPacks"></div>`;
 
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
@@ -16585,10 +16574,11 @@ async function renderExpertsPage() {
   }
 
   const totalsEl = document.getElementById("expertsSummary");
-  totalsEl.addEventListener("click", (ev) => {
+  const footEl = document.getElementById("expertsFoot");
+  footEl.addEventListener("click", (ev) => {
     if (!ev.target.closest("[data-bstoggle]")) return;
-    BAR_SHOW_ALL.experts = !BAR_SHOW_ALL.experts;
-    document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts ? "" : "none";
+    BAR_SHOW_ALL.experts = BAR_SHOW_ALL.experts === false;
+    document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts !== false ? "" : "none";
     renderTotals();
   });
   function renderTotals() {
@@ -16638,11 +16628,12 @@ async function renderExpertsPage() {
     ].filter((r) => r.need > 0);
     const amt = (r, v) => (r.fmt ? r.fmt(v) : shortAmount(v));
     const short = rows.filter((r) => r.have < r.need), ready = rows.filter((r) => r.have >= r.need);
-    totalsEl.innerHTML = `<div class="bs-foot"><span>${Object.keys(bpLink.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts ? "bs_hide" : "bs_show_all"))}</button></div>
-      ${rows.length ? `<div class="bs-title">${esc(t("bs_title_needed"))}</div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
+    totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+      <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
       ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&minus;${esc(amt(r, r.need - r.have))}</b></div>`).join("")}
       ${ready.map((r) => `<div class="bs-row ok"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&#10003; ${esc(amt(r, r.have - r.need))}</b></div>`).join("")}
-`;
+      </div></div>`;
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
     // Sigils per expert (after their own sigils): an expert's sigil pack only
