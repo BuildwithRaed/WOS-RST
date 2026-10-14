@@ -8024,20 +8024,49 @@ function scanSummaryText(text) {
   return rows.filter((r) => r.at !== -1).map((r) => ({ name: SCAN_SUMMARY_ROWS[r.at][1], value: r.value, sure: r.sure }));
 }
 
+// The light blue Summary panel (phone screenshots show the dark, blurred
+// Backpack around it); the whole picture if there is none.
+function scanLightPanel(src) {
+  const k = Math.min(1, 240 / src.width), w = Math.round(src.width * k), h = Math.round(src.height * k);
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data;
+  const light = (x, y) => { const i = (y * w + x) * 4; return (d[i] + d[i + 1] + d[i + 2]) / 3 > 165 && d[i + 2] >= d[i]; };
+  const rows = [];
+  for (let y = 0; y < h; y++) { let n = 0; for (let x = 0; x < w; x++) if (light(x, y)) n++; rows.push(n > w * 0.4); }
+  let best = [0, 0], start = -1;
+  rows.concat(false).forEach((on, y) => {
+    if (on && start < 0) start = y;
+    if (!on && start >= 0) { if (y - start > best[1] - best[0]) best = [start, y]; start = -1; }
+  });
+  if (best[1] - best[0] < h * 0.2) return { x: 0, y: 0, w: src.width, h: src.height };
+  let x0 = w, x1 = 0;
+  for (let x = 0; x < w; x++) {
+    let n = 0;
+    for (let y = best[0]; y < best[1]; y++) if (light(x, y)) n++;
+    if (n > (best[1] - best[0]) * 0.4) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+  }
+  if (x1 <= x0) return { x: 0, y: 0, w: src.width, h: src.height };
+  // A little extra on top for the title.
+  const y0 = Math.max(0, best[0] - (best[1] - best[0]) * 0.15);
+  return { x: x0 / k, y: y0 / k, w: (x1 - x0 + 1) / k, h: (best[1] - y0) / k };
+}
+
 async function scanShot(worker, file, marks) {
   const src = await createImageBitmap(file);
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const items = await scanSpeedTiles(worker, src, tiles, marks);
-    return { kind: items.length ? "speedup" : "other", items };
+    if (items.length) return { kind: "speedup", items };
   }
-  // Text reads best at about 720 px wide, as one block.
-  const s = 720 / src.width, c = scanCanvas(720, Math.round(src.height * s));
-  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+  // Text reads best on the light Summary panel alone, about 720 px wide.
+  const p = scanLightPanel(src), s = 720 / p.w, c = scanCanvas(720, Math.round(p.h * s));
+  c.getContext("2d").drawImage(src, p.x, p.y, p.w, p.h, 0, 0, c.width, c.height);
   const text = (await scanRead(worker, c, { tessedit_pageseg_mode: "6" })).text;
   const items = scanSummaryText(text);
   if (items.length) return { kind: "summary", items };
-  return { kind: /speedup/i.test(text) && /\bmin\b/i.test(text) ? "speedsummary" : "unknown", items: [] };
+  // Squares but no speedups and no Summary rows: another Backpack tab.
+  return { kind: /speedup/i.test(text) && /\bmin\b/i.test(text) ? "speedsummary" : tiles.length ? "other" : "unknown", items: [] };
 }
 
 function openBackpackScan(groups, bp, done) {
