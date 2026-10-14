@@ -10,6 +10,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - **One focused PR per change**, never pushed straight to `main`. Each PR description includes a preview link for testing on a phone before merging:
   `https://raw.githack.com/BuildwithRaed/WOS-RST/<branch>/index.html`
 - **The site deploys from `main`** (GitHub Pages, root folder, no build step; live 1–2 minutes after a merge).
+- **If the site doesn't update after a merge**, check the "pages build and deployment" run in GitHub Actions. On 14 Oct 2026 GitHub's deploy step timed out ("Timeout reached") for PR #29 with no code problem; a new merge to `main` publishes again.
 - **After the owner says "merged", check it really is** (`git fetch origin main` and look for the merge commit). The final "Confirm merge" click has been missed before. Then restart the working branch from the new `main`.
 - Explanations should be short and non-technical. Show before/after numbers or pictures when useful.
 
