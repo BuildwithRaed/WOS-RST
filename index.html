@@ -414,6 +414,7 @@ input,select,textarea{
   .bp-tile.bp-epic img{ border-color:#a46ae0; }
   .bp-tile.bp-rare img{ border-color:#4a9be8; }
   /* Planner boxes filled from the Backpack */
+  .bp-ro{ padding:8px 10px; font-size:14px; border:1px dashed var(--line); border-radius:8px; color:var(--frost); }
   .bp-link{ display:block; font-size:10px; color:var(--muted); margin-top:3px; }
   .bp-link.typed{ color:var(--frost); }
   .bp-link .linklike{ background:none; border:0; padding:0; font:inherit; color:var(--ice); text-decoration:underline; cursor:pointer; }
@@ -3069,6 +3070,8 @@ const T = {
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
   bp_link_from: { en: "From Backpack", ar: "من الحقيبة", ko: "배낭에서" },
   bp_link_typed: { en: "Typed", ar: "مكتوب يدويًا", ko: "직접 입력" },
+  bp_chest_chance: { en: "Chance chest: not counted", ar: "صندوق حظ: لا يُحسب", ko: "확률 상자: 계산 안 함" },
+  bp_chest_open_first: { en: "Not counted: open it in the game", ar: "لا يُحسب: افتحه في اللعبة", ko: "계산 안 함: 게임에서 여세요" },
   bp_link_use: { en: "Use Backpack", ar: "استخدم الحقيبة", ko: "배낭 사용" },
   scan_title: { en: "Scan screenshots", ar: "مسح لقطات الشاشة", ko: "스크린샷 스캔" },
   scan_intro: { en: "Add any of these screenshots from the game, as many as you like. They are read on your phone and never uploaded.", ar: "أضف أيًا من لقطات الشاشة هذه من اللعبة، بالعدد الذي تريده. تتم قراءتها على هاتفك ولا يتم رفعها أبدًا.", ko: "게임의 아래 스크린샷을 원하는 만큼 추가하세요. 휴대폰에서만 읽고 업로드하지 않습니다." },
@@ -5540,6 +5543,21 @@ function backpackAmountFor(name, bp) {
   if (sp) return Object.entries(BP_MINUTES).reduce((sum, [z, m]) => sum + n(`${sp[1] || ""}Speedup ${z}`) * m, 0);
   if (BACKPACK_RES_CHESTS.includes(name)) return n(name) + n(`${name} (protected)`);
   return n(name);
+}
+// Chests shown on a page straight from the Backpack, read-only. Custom
+// Resource Chests count (your choice of resource, see BACKPACK_RES_CHEST_RULES);
+// the others are shown but not counted: chance chests could come out short,
+// and a Chief Gear Chest is counted once you open it in the game.
+const BACKPACK_PAGE_CHESTS = {
+  chief_gear: ["Chief Gear Chest", "Random Chief Gear Chest"],
+  charm: ["Random Charm Chest"],
+  hero_gear: ["Lucky Gear Chest"],
+  t11_helios: [...BACKPACK_RES_CHESTS, "FC Chest", "FC Crate"],
+  t12_research: [...BACKPACK_RES_CHESTS, "FC Chest", "FC Crate"],
+  research_center: BACKPACK_RES_CHESTS,
+};
+function backpackShownChests(calcKey, link) {
+  return Object.keys(link.bp).length ? (BACKPACK_PAGE_CHESTS[calcKey] || []).filter((n) => backpackAmountFor(n, link.bp) > 0) : [];
 }
 function backpackLinks(calcKey, name) {
   return (BACKPACK_PAGE_LINKS[calcKey] || []).includes(name) || (calcKey === "experts" && / Sigils$/.test(name));
@@ -12695,7 +12713,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const groups = Array.isArray(matTotals) ? matTotals : [{ label: null, totals: matTotals }];
   const mergedNames = new Set();
   groups.forEach((g) => Object.keys(g.totals || {}).forEach((n) => mergedNames.add(n)));
-  const names = allMaterialNames && allMaterialNames.length ? allMaterialNames : [...mergedNames];
+  const names = (allMaterialNames && allMaterialNames.length ? allMaterialNames : [...mergedNames]).slice();
   if (!names.length) {
     el.innerHTML = "";
     return;
@@ -12703,6 +12721,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const matEntries = names.map((name) => [name, 0]);
   const owned = await ensureMaterialOwnedCache(calcKey || "chief_gear");
   const link = await backpackLinkState();
+  // Chests you hold (from the Backpack): shown read-only after the boxes.
+  const chests = backpackShownChests(calcKey || "chief_gear", link).filter((n) => !names.includes(n));
+  chests.forEach((n) => { owned[n] = backpackAmountFor(n, link.bp); names.push(n); matEntries.push([n, 0]); });
   const rowsId = `${containerId}_rows`;
 
   // Items that open into other items (Pet Chest -> Manual/Potion/Serum,
@@ -12757,7 +12778,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const lower = name.toLowerCase();
     const custom = packCustomResource(name);
     const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-    const iconSrc = custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "";
+    const iconSrc = BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "");
     const icon = iconSrc ? `<img src="${esc(iconSrc)}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
     const haveQty = owned[name] || 0;
     const shortName = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
@@ -12776,9 +12797,11 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         ${icon}
         <span class="meta mat-name" style="font-size:11px; font-weight:600; letter-spacing:0.3px; order:1;">${esc(shortName)}</span>
       </div>
-      <input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
+      ${chests.includes(name)
+        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : `<div style="font-size:11px; margin-top:4px; color:var(--muted);">${esc(t(name === "Chief Gear Chest" ? "bp_chest_open_first" : "bp_chest_chance"))}</div>`}`
+        : `<input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
       <span data-bplinknote="${esc(name)}">${backpackLinkNoteHtml(calcKey || "chief_gear", name, link)}</span>
-      ${groupStatusHtml}
+      ${groupStatusHtml}`}
     </div>`;
   }
 
@@ -14791,7 +14814,7 @@ async function renderT11HeliosPage() {
       </div>
     `;
     // Fire Crystal you hold trades into FC Shards (10 → 13), so it gets its own box.
-    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel"), ...BACKPACK_RES_CHESTS], () => { renderGrandTotal(); render(); }, "t11_helios");
+    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderGrandTotal(); render(); }, "t11_helios");
   }
 
   function render() {
@@ -17126,7 +17149,7 @@ async function renderResearchCenterPage() {
         <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
-    renderChiefGearResourcesBar("rcResourcesBar", matTotals, [...Object.keys(matTotals), ...BACKPACK_RES_CHESTS], () => { renderTotals(); renderGroups(); }, "research_center");
+    renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center");
   }
 
   const groupsEl = document.getElementById("rcGroups");
@@ -17338,7 +17361,7 @@ async function renderT12ResearchPage() {
         <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
       </div>
     `;
-    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel"), ...BACKPACK_RES_CHESTS], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
+    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
