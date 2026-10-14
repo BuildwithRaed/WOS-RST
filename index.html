@@ -11564,7 +11564,7 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
     const res = applyTrades(allRates, need, owned, 1);
     const nm = (n) => shortNm(n).replace(/\s*\((minutes|min)\)$/, "");
     const bad = shortNames.filter((n) => (res.after[n] || 0) > 0), ok = shortNames.filter((n) => !((res.after[n] || 0) > 0));
-    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${shortAmount(res.after[n])}</span>`).concat(ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
+    const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${Math.ceil(res.after[n]).toLocaleString()}</span>`).concat(ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
     return `${res.trades.length ? res.trades.map((tr) => {
       const r = allRates.find((x) => x.from === tr.from && x.to === tr.to) || {};
       const getTxt = tr.lab ? (Math.round(tr.getQty * 10) / 10).toLocaleString() : qty(tr.getQty);
