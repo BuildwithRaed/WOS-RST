@@ -389,7 +389,11 @@ input,select,textarea{
   .roster-pick{ border:2px solid var(--ice); box-shadow:0 0 0 1px rgba(0,0,0,.35) inset; transition:border-color .15s, transform .15s; }
   .roster-pick:hover{ border-color:var(--frost); transform:scale(1.04); }
   /* Islands: same card/box size as elsewhere, but the image fills almost the whole thumbnail */
-  .island-thumb{ padding:2% !important; border-radius:10px 10px 0 0 !important; }
+  .island-thumb{ padding:5% !important; border-radius:10px 10px 0 0 !important; }
+  /* Gallery pictures are stored with their empty borders cropped off (new
+     uploads are cropped automatically), so the space around them is set here. */
+  .gallery-card .thumb.gallery-thumb{ padding:17%; }
+  .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
   .skin-card .info{ padding:8px 10px 10px; }
   .skin-card .sname{ font-size:12.5px; font-weight:500; margin-bottom:4px; color:#fff; }
@@ -12185,7 +12189,7 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
   modal.innerHTML = `
     <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y; padding:18px;">
       ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length}</div>` : ""}
-      ${isIsland ? "" : `<div class="thumb" style="width:140px; height:140px; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6%;">
+      ${isIsland ? "" : `<div class="thumb" style="width:140px; height:140px; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:16%;">
         ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:28px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
       </div>`}
       <h2 style="margin-bottom:${isIsland ? "14px" : "4px"}; font-size:${isIsland ? "15px" : "16px"};">${esc(item.name)}</h2>
@@ -12547,7 +12551,7 @@ async function renderSkinGallery() {
     const uncountedSkins = orderSkins(filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))));
     renderGallerySplit(sections, countedSkins, uncountedSkins, (s) => `
           <div class="gallery-card ${s.owned ? "owned" : ""}" data-skin="${s.id}" data-gid="${s.id}">
-            <div class="thumb">
+            <div class="thumb gallery-thumb">
               ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" draggable="false" />` : `<div class="ph">${esc(s.name[0])}</div>`}
             </div>
             <div class="badge">${esc(s.name)}</div>
@@ -14615,7 +14619,7 @@ async function renderExpertsResearchPage() {
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:4px;">
           <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
           <div style="min-width:0; text-align:center;">
-            ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; margin-bottom:4px;" loading="lazy" />` : ""}
+            ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; padding:2px; box-sizing:border-box; border-radius:8px; object-fit:contain; margin-bottom:4px;" loading="lazy" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(dataName(expert))}</div>
             ${expertBadgeHtml(expert)}
             <div class="meta" style="font-size:10px; color:var(--frost);">${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
@@ -15257,7 +15261,7 @@ async function renderExpertsPage() {
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:10px;">
           <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
           <div style="text-align:center;">
-            <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; object-fit:cover; margin-bottom:6px;" loading="lazy" />
+            <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; padding:3px; box-sizing:border-box; object-fit:contain; margin-bottom:6px;" loading="lazy" />
             <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
             ${expertBadgeHtml(e.key)}
             ${IS_OWNER ? `<div style="margin-top:4px;">${visibilityBtnHtml("experts", e.key)}</div>` : ""}
@@ -16562,7 +16566,7 @@ async function renderFacilityPage() {
       .map(
         (b) => `
       <div class="skin-card ${b.owned ? "owned" : ""}" data-facility="${b.id}" style="flex:0 0 140px; width:140px;">
-        <div class="thumb island-thumb">
+        <div class="thumb island-thumb facility-thumb">
           ${b.image_url ? `<img src="${esc(b.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(b.name[0])}</div>`}
         </div>
         <div class="info">
@@ -19676,7 +19680,51 @@ document.addEventListener(
 // Any admin image input can get a "⬆ Upload" button beside it (rendered by
 // uploadBtnHtml). Clicking opens a file picker; the file is uploaded and the
 // public URL is written into the adjacent input.
+// Pictures are cropped to their main part before upload (empty see-through
+// borders off, at least 99% of the picture kept) and made at most 384 px,
+// so every card shows them at the same size. Anything that can't be read
+// (or has no see-through border) is uploaded as it is.
+async function cropUploadImage(file) {
+  if (!/^image\/(png|webp)$/.test(file.type || "")) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const W = bmp.width, H = bmp.height;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const cx = cv.getContext("2d"); cx.drawImage(bmp, 0, 0);
+    const px = cx.getImageData(0, 0, W, H).data;
+    const rows = new Array(H).fill(0), cols = new Array(W).fill(0);
+    let fx0 = W, fy0 = H, fx1 = -1, fy1 = -1, total = 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const a = px[(y * W + x) * 4 + 3];
+      if (a > 40) { rows[y]++; cols[x]++; }
+      if (a > 12) { total += a; if (x < fx0) fx0 = x; if (x > fx1) fx1 = x; if (y < fy0) fy0 = y; if (y > fy1) fy1 = y; }
+    }
+    if (fx1 < 0) return file;
+    // The main part: rows/columns at least half as full as the fullest one.
+    const span = (arr) => { const max = Math.max(...arr); let a = 0, b = arr.length - 1; while (arr[a] < max / 2) a++; while (arr[b] < max / 2) b--; return [a, b + 1]; };
+    const [x0, x1] = span(cols), [y0, y1] = span(rows);
+    const kept = (b) => { let sum = 0; for (let y = b[1]; y < b[3]; y++) for (let x = b[0]; x < b[2]; x++) { const a = px[(y * W + x) * 4 + 3]; if (a > 12) sum += a; } return sum; };
+    let box = [fx0, fy0, fx1 + 1, fy1 + 1];
+    for (let k = 0; k < 40; k++) {
+      const m = Math.round((0.04 + 0.02 * k) * Math.max(x1 - x0, y1 - y0));
+      const b = [Math.max(fx0, x0 - m), Math.max(fy0, y0 - m), Math.min(fx1 + 1, x1 + m), Math.min(fy1 + 1, y1 + m)];
+      if (kept(b) >= 0.99 * total) { box = b; break; }
+    }
+    const bw = box[2] - box[0], bh = box[3] - box[1];
+    const scale = Math.min(1, 384 / Math.max(bw, bh));
+    if (bw === W && bh === H && scale === 1) return file;
+    const out = document.createElement("canvas");
+    out.width = Math.max(1, Math.round(bw * scale)); out.height = Math.max(1, Math.round(bh * scale));
+    const ox = out.getContext("2d"); ox.imageSmoothingQuality = "high";
+    ox.drawImage(cv, box[0], box[1], bw, bh, 0, 0, out.width, out.height);
+    const blob = await new Promise((res) => out.toBlob(res, "image/png"));
+    return blob ? new File([blob], file.name.replace(/\.[^.]*$/, "") + ".png", { type: "image/png" }) : file;
+  } catch (e) {
+    return file;
+  }
+}
 async function uploadImageToStorage(file) {
+  file = await cropUploadImage(file);
   const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
   const path = `${crypto.randomUUID()}.${ext}`;
   const res = await fetch(`${SUPABASE_URL}/storage/v1/object/skin-images/${path}`, {
