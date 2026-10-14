@@ -47,6 +47,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
   - Budgets: built pack groups are kept for the visit (`PACK_GROUPS_CACHE`, cleared by `budgetInvalidate()` and when the pack tables reload); only the ticked pages' packs are sent to the planner worker; `ensurePackTables` shares one load.
   - Packs tables (`[data-packtable]`) use `content-visibility:auto` so off-screen tables skip layout.
 - **Escape** database/user text with `esc()` before putting it in HTML.
+- **Backpack page** (`renderInventory`): square tiles of every item the site uses, with tabs (All + each group; speedup groups share one Speedups tab). The item list is site_config `backpack_items` (Admin → Backpack Items; default `BACKPACK_DEFAULT_GROUPS`). Amounts are per user in calc_state `backpack` and are **not** linked to the planner pages' Backpack boxes. The old `items` / `player_inventory` tables are no longer used. A "Scan screenshot" button is in place (disabled) for the planned screenshot-recognition feature.
 
 ## Testing approach used so far
 The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.com`. It can't reach `cdn.jsdelivr.net`, so tests serve a local copy of `@supabase/supabase-js@2.117.3`.
@@ -85,3 +86,4 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - PR #18: new hero star design; PR #19: Dashboard "highest Gen for Max" toggle
 - PR #20: bigger pictures for City Skin, Teleport, Private Chat, Rally
 - PR #21: pictures for Pet Chest, Common/Advanced Marks, Gems (game icons, same as whiteoutsurvival.wiki)
+- PR #22: new Backpack page (all items as tiles, tabs, tap to edit) + Admin → Backpack Items
