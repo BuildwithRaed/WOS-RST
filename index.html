@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <!-- Content Security Policy: only this site, the Supabase library CDN and the
      Supabase API may be loaded/contacted; no plugins; no base-URL hijacking. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co https://cloudflareinsights.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co https://cdn.jsdelivr.net https://cloudflareinsights.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:" />
 <meta http-equiv="X-Content-Type-Options" content="nosniff" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -413,6 +413,22 @@ input,select,textarea{
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
   .bp-tile.bp-epic img{ border-color:#a46ae0; }
   .bp-tile.bp-rare img{ border-color:#4a9be8; }
+  /* Backpack: screenshot scan */
+  .scan-step{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); }
+  .scan-step > b{ flex:0 0 22px; height:22px; border-radius:50%; background:var(--ice-dim); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .scan-step > div > div:first-child{ font-size:14px; font-weight:600; }
+  .scan-step .meta{ font-size:12px; }
+  .scan-row{ display:flex; align-items:center; gap:10px; padding:7px 6px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .scan-row.unsure{ background:rgba(245,166,35,.13); border-radius:8px; }
+  .scan-row > input[type=checkbox]{ width:18px; height:18px; flex:0 0 auto; }
+  .scan-row img, .scan-row .scan-img{ width:30px; height:30px; object-fit:contain; flex:0 0 auto; }
+  .scan-row .scan-name{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:13px; }
+  .scan-row .scan-name .meta{ font-size:11px; }
+  .scan-row .scan-name em{ color:#f5a623; font-style:normal; font-weight:700; }
+  .scan-row > input[type=text]{ width:128px; text-align:end; flex:0 0 auto; font-size:14px; }
+  .scan-row.unsure > input[type=text]{ border-color:#f5a623; }
+  .scan-spin{ width:28px; height:28px; margin:6px auto 12px; border:3px solid var(--line); border-top-color:var(--ice); border-radius:50%; animation:scanspin .8s linear infinite; }
+  @keyframes scanspin{ to{ transform:rotate(360deg); } }
   .bp-tile .bp-name{ font-size:9.5px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
@@ -3047,7 +3063,28 @@ const T = {
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
-  backpack_scan_soon: { en: "Coming later", ar: "قريبًا", ko: "추후 지원" },
+  scan_title: { en: "Scan screenshots", ar: "مسح لقطات الشاشة", ko: "스크린샷 스캔" },
+  scan_intro: { en: "Add one or both screenshots from the game. They are read on your phone and never uploaded.", ar: "أضف لقطة واحدة أو الاثنتين من اللعبة. تتم قراءتها على هاتفك ولا يتم رفعها أبدًا.", ko: "게임 스크린샷을 하나 또는 둘 다 추가하세요. 휴대폰에서만 읽고 업로드하지 않습니다." },
+  scan_summary: { en: "Resource & Speedup Summary → Resources tab", ar: "ملخص الموارد والتسريعات ← تبويب الموارد", ko: "자원 및 가속 요약 → 자원 탭" },
+  scan_summary_hint: { en: "Fills Meat, Wood, Coal, Iron, Steel, Gems and Pet Food (Total Resources). Resource chests are not counted there.", ar: "يملأ اللحم والخشب والفحم والحديد والفولاذ والجواهر وطعام الحيوانات (إجمالي الموارد). صناديق الموارد غير محسوبة هناك.", ko: "고기, 나무, 석탄, 철, 강철, 보석, 펫 먹이(총 자원)를 채웁니다. 자원 상자는 포함되지 않습니다." },
+  scan_speedup: { en: "Backpack → Speedup tab", ar: "الحقيبة ← تبويب التسريعات", ko: "배낭 → 가속 탭" },
+  scan_speedup_hint: { en: "Whole tiles showing. If you scroll, add a screenshot of each part.", ar: "يجب أن تظهر المربعات كاملة. إذا مررت للأسفل، أضف لقطة لكل جزء.", ko: "칸이 전부 보이게 찍으세요. 스크롤했다면 부분마다 스크린샷을 추가하세요." },
+  scan_choose: { en: "Choose screenshots", ar: "اختر لقطات الشاشة", ko: "스크린샷 선택" },
+  scan_loading: { en: "Getting the reader ready (about 3 MB, first time only)…", ar: "تجهيز القارئ (حوالي 3 ميغابايت، أول مرة فقط)…", ko: "판독기를 준비하는 중 (약 3MB, 처음 한 번만)…" },
+  scan_reading: { en: "Reading screenshot {n} of {m}…", ar: "قراءة اللقطة {n} من {m}…", ko: "스크린샷 {m}개 중 {n}번째 읽는 중…" },
+  scan_failed: { en: "The reader couldn't load. Check your connection and try again.", ar: "تعذر تحميل القارئ. تحقق من الاتصال وحاول مرة أخرى.", ko: "판독기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요." },
+  scan_check_title: { en: "Check what was read", ar: "راجع ما تمت قراءته", ko: "읽은 내용 확인" },
+  scan_check_desc: { en: "Fix any wrong number, untick what you don't want, then Save.", ar: "صحح أي رقم خاطئ، وألغِ تحديد ما لا تريده، ثم احفظ.", ko: "틀린 숫자를 고치고, 원하지 않는 항목은 체크를 해제한 뒤 저장하세요." },
+  scan_nothing: { en: "Nothing could be read. Use full screenshots of the screens above.", ar: "تعذرت قراءة أي شيء. استخدم لقطات كاملة للشاشات المذكورة.", ko: "읽은 내용이 없습니다. 위 화면의 전체 스크린샷을 사용하세요." },
+  scan_now: { en: "Now {n}", ar: "الحالي {n}", ko: "현재 {n}" },
+  scan_please_check: { en: "please check", ar: "يرجى التحقق", ko: "확인 필요" },
+  scan_flagged: { en: "{n} number(s) may be wrong (marked).", ar: "قد يكون {n} من الأرقام خاطئًا (مميز).", ko: "{n}개 숫자가 틀렸을 수 있습니다 (표시됨)." },
+  scan_skipped: { en: "Not on your list, skipped: {list}", ar: "ليست في قائمتك، تم تخطيها: {list}", ko: "목록에 없어 건너뜀: {list}" },
+  scan_rounded: { en: "Summary numbers are rounded by the game.", ar: "أرقام الملخص مقربة من اللعبة.", ko: "요약 숫자는 게임에서 반올림됩니다." },
+  scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead.", ar: "لا تُستخدم مجاميع التسريعات من الملخص. أضف تبويب التسريعات في الحقيبة بدلًا منه.", ko: "요약의 가속 합계는 쓰지 않습니다. 대신 배낭의 가속 탭을 추가하세요." },
+  scan_other_items: { en: "Other Backpack tabs come in a later update.", ar: "تبويبات الحقيبة الأخرى ستأتي في تحديث لاحق.", ko: "배낭의 다른 탭은 나중에 지원됩니다." },
+  scan_unknown: { en: "A screenshot wasn't recognised.", ar: "لم يتم التعرف على إحدى اللقطات.", ko: "인식하지 못한 스크린샷이 있습니다." },
+  scan_add_more: { en: "Add more", ar: "إضافة المزيد", ko: "더 추가" },
   backpack_search: { en: "Search items...", ar: "ابحث عن العناصر...", ko: "아이템 검색..." },
   backpack_items_count: { en: "{n} items", ar: "{n} عناصر", ko: "{n}개" },
   backpack_speedups: { en: "Speedups", ar: "التسريعات", ko: "가속" },
@@ -7689,12 +7726,13 @@ async function renderInventory() {
   };
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
-      <button class="btn ghost small" type="button" disabled title="${esc(t("backpack_scan_soon"))}" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
+      <button class="btn small" type="button" id="bpScan" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
     <div id="bpTabs" style="margin-top:12px;"></div>
     <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
     <div id="bpGroups"></div>`;
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); });
   drawGroups();
+  document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); });
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
   const openModal = (html) => {
@@ -7770,6 +7808,347 @@ async function renderInventory() {
     modal.querySelector("#bpSave").onclick = save;
     input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
   });
+}
+
+// ---- Backpack: read game screenshots ----
+// Everything runs on the phone; screenshots are never uploaded. Text is read
+// with Tesseract, downloaded from jsdelivr the first time Scan is used (the
+// browser keeps it after that). Reads the "Resource & Speedup Summary"
+// Resources tab and the Backpack Speedup tab.
+const SCAN_CDN = "https://cdn.jsdelivr.net/npm/";
+let SCAN_WORKER = null;
+function scanWorker() {
+  if (!SCAN_WORKER) {
+    SCAN_WORKER = new Promise((resolve, reject) => {
+      const start = () => window.Tesseract.createWorker("eng", 1, {
+        workerPath: `${SCAN_CDN}tesseract.js@5.1.1/dist/worker.min.js`,
+        corePath: `${SCAN_CDN}tesseract.js-core@5.1.1`,
+        langPath: `${SCAN_CDN}@tesseract.js-data/eng@1.0.0/4.0.0_best_int`,
+      }).then(resolve, reject);
+      if (window.Tesseract) { start(); return; }
+      const s = document.createElement("script");
+      s.src = `${SCAN_CDN}tesseract.js@5.1.1/dist/tesseract.min.js`;
+      s.onload = start;
+      s.onerror = () => reject(new Error("load"));
+      document.head.appendChild(s);
+    });
+    SCAN_WORKER.catch(() => { SCAN_WORKER = null; });
+  }
+  return SCAN_WORKER;
+}
+async function scanRead(worker, canvas, params) {
+  await worker.setParameters(Object.assign({ tessedit_pageseg_mode: "3", tessedit_char_whitelist: "" }, params || {}));
+  const r = await worker.recognize(canvas);
+  return { text: r.data.text || "", conf: r.data.confidence || 0 };
+}
+const scanCanvas = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+
+// Labelled blobs of a yes/no pixel mask: [{x, y, w, h, n, px}] (px = pixel indexes).
+function scanBlobs(mask, w, h, keepPixels) {
+  const seen = new Uint8Array(w * h), out = [], stack = [];
+  for (let i = 0; i < w * h; i++) {
+    if (!mask[i] || seen[i]) continue;
+    let x0 = w, y0 = h, x1 = 0, y1 = 0, n = 0;
+    const px = keepPixels ? [] : null;
+    seen[i] = 1; stack.push(i);
+    while (stack.length) {
+      const p = stack.pop(), x = p % w, y = (p - x) / w;
+      n++; if (px) px.push(p);
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const q = ny * w + nx;
+        if (mask[q] && !seen[q]) { seen[q] = 1; stack.push(q); }
+      }
+    }
+    out.push({ x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, n, px });
+  }
+  return out;
+}
+
+// Backpack item tiles: square, same-sized blocks on the dark blue panel.
+// Returns boxes in the screenshot's own pixels, row by row.
+function scanFindTiles(src) {
+  const s = Math.min(1, 480 / src.width), w = Math.round(src.width * s), h = Math.round(src.height * s);
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const r = d[i * 4], gr = d[i * 4 + 1], b = d[i * 4 + 2], lum = (r + gr + b) / 3;
+    mask[i] = (b - r > 50 && lum < 110) || lum < 45 ? 0 : 1;
+  }
+  const boxes = scanBlobs(mask, w, h).filter((b) => b.w >= w * 0.08 && b.h >= w * 0.08 && b.w / b.h > 0.8 && b.w / b.h < 1.25 && b.n > b.w * b.h * 0.6);
+  if (boxes.length < 2) return [];
+  const sizes = boxes.map((b) => b.w).sort((a, b) => a - b), mid = sizes[Math.floor(sizes.length / 2)];
+  const tiles = boxes.filter((b) => Math.abs(b.w - mid) < mid * 0.12 && Math.abs(b.h - mid) < mid * 0.15)
+    .map((b) => ({ x: b.x / s, y: b.y / s, w: b.w / s, h: b.h / s }));
+  tiles.sort((a, b) => (Math.abs(a.y - b.y) < a.h / 2 ? a.x - b.x : a.y - b.y));
+  return tiles.length >= 2 ? tiles : [];
+}
+
+// Size label colours of speedup tiles (grey 1m, green 5m, blue 1h, purple 3h, orange 8h).
+const SCAN_SIZE_COLORS = [["1m", [155, 161, 164]], ["5m", [75, 173, 70]], ["1h", [102, 160, 211]], ["3h", [170, 117, 227]], ["8h", [214, 151, 101]]];
+const SCAN_SIZES = { 1: "1m", 3: "3m", 5: "5m", 60: "1h", 180: "3h", 480: "8h" }; // as read from the label
+// Type marks, in the order of icons/scan-marks.png (32px each).
+const SCAN_MARKS = ["Construction", "Troop", "Research", "Healing", "Expert"];
+let SCAN_MARK_DATA = null;
+function scanMarkData() {
+  if (!SCAN_MARK_DATA) {
+    SCAN_MARK_DATA = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = scanCanvas(img.width, img.height), g = c.getContext("2d", { willReadFrequently: true });
+        g.drawImage(img, 0, 0);
+        resolve(g.getImageData(0, 0, img.width, img.height));
+      };
+      img.onerror = () => reject(new Error("marks"));
+      img.src = "icons/scan-marks.png";
+    });
+    SCAN_MARK_DATA.catch(() => { SCAN_MARK_DATA = null; });
+  }
+  return SCAN_MARK_DATA;
+}
+
+// White game text with a dark outline, as black on white for the reader.
+// `digits` keeps only the characters sitting on the number's baseline.
+function scanTextMask(td, x0, y0, x1, y1, digits) {
+  const w = x1 - x0, h = y1 - y0, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = ((y0 + y) * 140 + x0 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2];
+    mask[y * w + x] = (r + g + b) / 3 > 175 && r >= b - 8 && g >= b - 15 ? 1 : 0;
+  }
+  let blobs = scanBlobs(mask, w, h, true).filter((b) => b.n > 2);
+  if (digits) {
+    const big = blobs.filter((b) => b.h >= 12 && b.h <= 34 && b.w < 28);
+    if (!big.length) return null;
+    const bottoms = big.map((b) => b.y + b.h).sort((a, b) => a - b), base = bottoms[Math.floor(bottoms.length / 2)];
+    const onLine = big.filter((b) => Math.abs(b.y + b.h - base) < 7);
+    const left = Math.min(...onLine.map((b) => b.x));
+    blobs = blobs.filter((b) => Math.abs(b.y + b.h - base) < 9 && b.x >= left - 2 && b.h <= 34);
+  }
+  if (!blobs.length) return null;
+  const k = 2, pad = 16, c = scanCanvas(w * k + pad * 2, h * k + pad * 2), g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+  blobs.forEach((b) => b.px.forEach((p) => { const x = p % w; g.fillRect(pad + x * k, pad + ((p - x) / w) * k, k, k); }));
+  return c;
+}
+
+async function scanSpeedTiles(worker, src, tiles, marks) {
+  const found = [];
+  const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
+  const m = scanCanvas(32, 32), mg = m.getContext("2d", { willReadFrequently: true });
+  for (const box of tiles) {
+    tg.clearRect(0, 0, 140, 140);
+    tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
+    const td = tg.getImageData(0, 0, 140, 140).data;
+    // Size: the label on top, with the tile colour as a check.
+    const label = scanTextMask(td, 14, 0, 126, 36, false);
+    if (!label) continue;
+    const lt = (await scanRead(worker, label, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789minhrs()" })).text.replace(/\s/g, "");
+    // The game's "1" and "5" often read as nothing, so the size comes from
+    // the tile colour; the label must say "min" or "hr" and agree with it.
+    const unit = /hr|h\(|hrs/.test(lt) ? "h" : /min|mi|in/.test(lt) ? "m" : null;
+    if (!unit) continue; // not a speedup
+    let r = 0, g = 0, b = 0;
+    for (let y = 60; y < 80; y++) for (let x = 3; x < 9; x++) { const i = (y * 140 + x) * 4; r += td[i]; g += td[i + 1]; b += td[i + 2]; }
+    r /= 120; g /= 120; b /= 120;
+    const [size, off] = SCAN_SIZE_COLORS.map(([z, c]) => [z, Math.abs(c[0] - r) + Math.abs(c[1] - g) + Math.abs(c[2] - b)]).sort((a, z) => a[1] - z[1])[0];
+    const lm = /(\d+)(min|hr)/.exec(lt), said = lm && SCAN_SIZES[Number(lm[1]) * (lm[2] === "hr" ? 60 : 1)];
+    let sure = off < 90 && size.endsWith(unit) && (!said || said === size || said === "3m");
+    // Kind: compare the bottom-left corner with each type mark.
+    mg.clearRect(0, 0, 32, 32);
+    mg.drawImage(t, 0, 70, 70, 70, 0, 0, 32, 32);
+    const md = mg.getImageData(0, 0, 32, 32).data;
+    let kind = "", best = Infinity;
+    SCAN_MARKS.forEach((name, k) => {
+      let sum = 0, n = 0;
+      for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+        const j = (y * marks.width + k * 32 + x) * 4;
+        if (marks.data[j + 3] < 128) continue;
+        const i = (y * 32 + x) * 4;
+        sum += Math.abs(md[i] - marks.data[j]) + Math.abs(md[i + 1] - marks.data[j + 1]) + Math.abs(md[i + 2] - marks.data[j + 2]);
+        n++;
+      }
+      const score = n ? sum / n : Infinity;
+      if (score < best) { best = score; kind = name; }
+    });
+    if (best > 150) kind = "";
+    // Amount: the number at the bottom right.
+    const num = scanTextMask(td, 21, 87, 136, 136, true);
+    let value = null;
+    if (num) {
+      const res = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,." });
+      const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
+      const digits = raw.replace(/\D/g, "");
+      if (digits) {
+        value = Number(digits);
+        if (!/^\d{1,3}(,\d{3})*$/.test(raw) || res.conf < 70) sure = false;
+      }
+    }
+    if (value === null) sure = false;
+    found.push({ name: `${kind ? kind + " " : ""}Speedup ${size}`, kind, value, sure, score: Math.round(best) });
+  }
+  return found;
+}
+
+// "Resource & Speedup Summary", Resources tab: the last number on each row
+// is Total Resources (city + backpack).
+const SCAN_SUMMARY_ROWS = [[/\bgems?\b/i, "Gems"], [/\bmeat\b/i, "Meat"], [/\bwood\b/i, "Wood"], [/\bcoal\b/i, "Coal"], [/\biron\b/i, "Iron"], [/\bsteel\b/i, "Steel"], [/chief\s*stamina/i, "Chief Stamina"], [/hero\s*xp/i, "Hero XP"], [/pet\s*food/i, "Food"]];
+function scanSummaryText(text) {
+  // Rows in screen order; a row whose name wasn't read takes its place from
+  // the named rows around it (and is marked to check).
+  const rows = [];
+  text.split("\n").forEach((line) => {
+    const nums = [...line.matchAll(/(\d[\d,]*\.\d+|\d[\d,]*)(?:\s*[A-Za-z]?([KMB]))?/g)].filter((m) => m[2] || /\.\d{2}8$/.test(m[1]));
+    if (!nums.length) return;
+    const last = nums[nums.length - 1];
+    let n = last[1].replace(/,/g, ""), unit = last[2] || "";
+    // The reader sometimes sees "B" as "8" ("2.008" for 2.00B).
+    if (!unit) { n = n.slice(0, -1); unit = "B"; }
+    // Amounts always show two decimals; put back a dot the reader lost.
+    let sure = !!last[2];
+    if (!n.includes(".") && n.length >= 3) { n = `${n.slice(0, -2)}.${n.slice(-2)}`; sure = false; }
+    const value = Math.round(Number(n) * { K: 1e3, M: 1e6, B: 1e9 }[unit]);
+    if (!Number.isFinite(value)) return;
+    const at = SCAN_SUMMARY_ROWS.findIndex(([re]) => re.test(line));
+    rows.push({ at, value, sure: at !== -1 && sure });
+  });
+  rows.forEach((row, i) => {
+    if (row.at !== -1) return;
+    const before = rows.slice(0, i).map((x, j) => [x, i - j]).reverse().find(([x]) => x.at !== -1 && x.guess === undefined);
+    const after = rows.slice(i + 1).map((x, j) => [x, j + 1]).find(([x]) => x.at !== -1 && x.guess === undefined);
+    const guess = before ? before[0].at + before[1] : after ? after[0].at - after[1] : -1;
+    if (guess >= 0 && guess < SCAN_SUMMARY_ROWS.length && (!after || guess < after[0].at) && (!before || guess > before[0].at)) { row.at = guess; row.guess = true; row.sure = false; }
+  });
+  return rows.filter((r) => r.at !== -1).map((r) => ({ name: SCAN_SUMMARY_ROWS[r.at][1], value: r.value, sure: r.sure }));
+}
+
+async function scanShot(worker, file, marks) {
+  const src = await createImageBitmap(file);
+  const tiles = scanFindTiles(src);
+  if (tiles.length) {
+    const items = await scanSpeedTiles(worker, src, tiles, marks);
+    return { kind: items.length ? "speedup" : "other", items };
+  }
+  // Text reads best at about 720 px wide, as one block.
+  const s = 720 / src.width, c = scanCanvas(720, Math.round(src.height * s));
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+  const text = (await scanRead(worker, c, { tessedit_pageseg_mode: "6" })).text;
+  const items = scanSummaryText(text);
+  if (items.length) return { kind: "summary", items };
+  return { kind: /speedup/i.test(text) && /\bmin\b/i.test(text) ? "speedsummary" : "unknown", items: [] };
+}
+
+function openBackpackScan(groups, bp, done) {
+  const known = new Map(groups.flatMap((g) => g.items).map((it) => [it.name, it]));
+  let modal = document.getElementById("bpScanModal");
+  if (!modal) { modal = document.createElement("div"); modal.id = "bpScanModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+  modal.style.display = "flex";
+  const close = () => { modal.style.display = "none"; };
+  modal.onclick = (ev) => { if (ev.target === modal) close(); };
+  // A newer Scan (or closing this one) stops an older reading from drawing here.
+  const run = {};
+  modal._scanRun = run;
+  const live = () => modal._scanRun === run && modal.style.display !== "none";
+  const results = new Map(); // name -> { value, sure }
+  const notes = new Set();
+  const skipped = new Set();
+  const picker = () => {
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/*"; input.multiple = true;
+    input.onchange = () => { if (input.files.length) readAll([...input.files]); };
+    input.click();
+  };
+  const showStart = () => {
+    modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
+      <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
+      <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
+      <div class="scan-step"><b>1</b><div><div>${esc(t("scan_summary"))}</div><div class="meta">${esc(t("scan_summary_hint"))}</div></div></div>
+      <div class="scan-step"><b>2</b><div><div>${esc(t("scan_speedup"))}</div><div class="meta">${esc(t("scan_speedup_hint"))}</div></div></div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
+        <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
+        <button class="btn" type="button" data-scanpick>${esc(t("scan_choose"))}</button>
+      </div></div>`;
+    modal.querySelector("[data-scanclose]").onclick = close;
+    modal.querySelector("[data-scanpick]").onclick = picker;
+  };
+  const progress = (msg) => {
+    modal.innerHTML = `<div class="modal-box" style="max-width:360px; text-align:center;"><div class="scan-spin"></div><div>${esc(msg)}</div></div>`;
+  };
+  const readAll = async (files) => {
+    progress(t("scan_loading"));
+    let worker, marks;
+    try { [worker, marks] = await Promise.all([scanWorker(), scanMarkData()]); }
+    catch (e) {
+      if (!live()) return; modal.innerHTML = `<div class="modal-box" style="max-width:360px;"><p>${esc(t("scan_failed"))}</p><div style="text-align:end;"><button class="btn" type="button" data-scanclose>${esc(t("close_button"))}</button></div></div>`; modal.querySelector("[data-scanclose]").onclick = close; return; }
+    for (let i = 0; i < files.length; i++) {
+      if (!live()) return;
+      progress(t("scan_reading").replace("{n}", i + 1).replace("{m}", files.length));
+      let shot;
+      try { shot = await scanShot(worker, files[i], marks); } catch (e) { shot = { kind: "unknown", items: [] }; }
+      if (!live()) return;
+      if (shot.kind === "speedsummary") notes.add(t("scan_speed_summary"));
+      else if (shot.kind === "other") notes.add(t("scan_other_items"));
+      else if (shot.kind === "unknown") notes.add(t("scan_unknown"));
+      else if (shot.kind === "summary") notes.add(t("scan_rounded"));
+      shot.items.forEach((it) => {
+        if (!known.has(it.name)) { skipped.add(it.name.replace(/ Speedup /, " ")); return; }
+        const had = results.get(it.name);
+        if (had && had.value !== it.value) it.sure = false;
+        if (!had || it.value !== null) results.set(it.name, { value: it.value, sure: it.sure });
+      });
+    }
+    if (live()) showReview();
+  };
+  const showReview = () => {
+    const names = [...results.keys()].sort((a, b) => {
+      const rank = (n) => { const i = BP_GAME_ORDER.indexOf(n); return i !== -1 ? i : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
+      return rank(a) - rank(b);
+    });
+    const unsure = names.filter((n) => !results.get(n).sure).length;
+    const label = (n) => { const it = known.get(n); return /speedup/i.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(it.name); };
+    const rows = names.map((n) => {
+      const r = results.get(n), old = Number(bp[n]) || 0, ic = bpIcon(known.get(n));
+      return `<label class="scan-row${r.sure ? "" : " unsure"}">
+        <input type="checkbox" data-scantick="${esc(n)}" checked />
+        ${ic ? `<img src="${esc(ic)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(label(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", old.toLocaleString()))}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
+        <input type="text" inputmode="numeric" data-scanval="${esc(n)}" value="${r.value === null ? "" : r.value.toLocaleString("en-US")}" />
+      </label>`;
+    }).join("");
+    const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
+    modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
+      <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
+      <p class="desc" style="margin:0 0 8px;">${esc(names.length ? t("scan_check_desc") : t("scan_nothing"))}</p>
+      ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
+      <div style="margin-top:6px;">${rows}</div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
+        <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
+        <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
+        ${names.length ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+      </div></div>`;
+    modal.querySelector("[data-scanclose]").onclick = close;
+    modal.querySelector("[data-scanpick]").onclick = picker;
+    // Keep typed fixes if more screenshots are added.
+    modal.querySelectorAll("[data-scanval]").forEach((el) => el.addEventListener("change", () => {
+      const r = results.get(el.dataset.scanval), v = el.value.replace(/\D/g, "");
+      r.value = v ? Number(v) : null; r.sure = true;
+    }));
+    const save = modal.querySelector("[data-scansave]");
+    if (save) save.onclick = () => {
+      modal.querySelectorAll("[data-scantick]").forEach((tick) => {
+        if (!tick.checked) return;
+        const n = tick.dataset.scantick, v = modal.querySelector(`[data-scanval="${CSS.escape(n)}"]`).value.replace(/\D/g, "");
+        if (v === "") return;
+        if (Number(v)) bp[n] = Number(v); else delete bp[n];
+      });
+      saveCalcState("backpack", bp);
+      close();
+      done();
+    };
+  };
+  showStart();
 }
 
 // ============================================================
