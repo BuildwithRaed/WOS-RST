@@ -66,7 +66,7 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - Gallery/Islands/Experts/Facility pictures in the repo are cropped the same way (Oct 2026). The space around them is set in CSS: `.gallery-card .thumb.gallery-thumb` (Cosmetics, 17%; `gallery-thumb-big` 6% for the categories in `GALLERY_BIG_THUMB`: City Skin, Teleport Skin, Private Chat, Rally), `.island-thumb` (Islands, 5%), `.island-thumb.facility-thumb` (Facility, 10%), and the inline padding on the Experts portraits.
 
 ## Open to-dos
-- Issue #13: delete 133 unused files from Storage `skin-images` (the owner does it in the dashboard). Re-check the lists first if images changed.
+- None. (Issue #13 done 14 Oct 2026: 132 unused Storage files deleted; `skin-images` now holds 90 files: Justus's expert picture, the 88 gallery backup originals, and one unlinked city-skin picture `d248d1b3-….png` kept for the owner to decide.)
 
 ## History (Oct 2026)
 - PR #1: Experts Research swipe fix
@@ -84,3 +84,4 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - PR #17: even, smaller gallery pictures + auto-crop on upload
 - PR #18: new hero star design; PR #19: Dashboard "highest Gen for Max" toggle
 - PR #20: bigger pictures for City Skin, Teleport, Private Chat, Rally
+- PR #21: pictures for Pet Chest, Common/Advanced Marks, Gems (game icons, same as whiteoutsurvival.wiki)
