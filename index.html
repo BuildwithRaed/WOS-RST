@@ -7605,7 +7605,10 @@ function bpIcon(item) {
   if (BP_CHEST_ICONS[name]) return BP_CHEST_ICONS[name];
   if (BP_SHARD_ICONS[name]) return BP_SHARD_ICONS[name];
   if (/^XP 10/.test(name)) return "icons/XP-Component.png";
-  if (/speedup/i.test(name)) return "icons/item_icon_302000.png";
+  if (/speedup/i.test(name)) {
+    const type = (name.match(/^(Construction|Troop|Research|Expert) Speedup/) || [])[1];
+    return "icons/speedup-" + (type ? type.toLowerCase() : "general") + ".png";
+  }
   const custom = packCustomResource(name);
   if (custom && custom.icon) return custom.icon;
   const lower = name.toLowerCase();
@@ -14522,8 +14525,8 @@ const EXPERT_INVENTORY_ICONS = {
   Compass: "icons/item_icon_570201.png",
   EXP: "icons/hero-xp.png",
   "Books of Knowledge": "icons/item_icon_570300.png",
-  "Speedups (minutes)": "icons/item_icon_302000.png",
-  "Expert Speedups (minutes)": "icons/item_icon_302000.png",
+  "Speedups (minutes)": "icons/speedup-general.png",
+  "Expert Speedups (minutes)": "icons/speedup-expert.png",
   Gifts: "icons/item_icon_570202.png", // Fiery Heart
   "General Sigils": "icons/item_icon_570000.png",
   "Cyrille Sigils": "icons/item_icon_570001.png",
