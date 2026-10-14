@@ -534,7 +534,7 @@ input,select,textarea{
   .pc-plan.on{ border-color:var(--ice); background:rgba(90,160,230,.08); }
   .pc-plan.off{ cursor:default; opacity:.75; }
   .pc-plan .pc-k{ margin:0; font-size:10px; }
-  .pc-plan b{ display:block; font-size:17px; white-space:nowrap; }
+  .pc-plan b{ display:block; font-size:15px; line-height:1.15; overflow-wrap:anywhere; }
   .pc-plan small{ display:block; font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pc-free{ font-size:11px; color:var(--good); padding:7px 10px; border-radius:10px; background:rgba(76,209,138,.07); margin:8px 0; }
   .pc-free summary{ cursor:pointer; list-style:none; }
@@ -3244,6 +3244,7 @@ const T = {
   t12x_planned: { en: "planned", ar: "مخطط", ko: "계획됨" },
   t12x_all_maxed: { en: "all maxed", ar: "الكل بالحد الأقصى", ko: "모두 최대" },
   t12x_nodes: { en: "{n} nodes", ar: "{n} عقد", ko: "{n}개 항목" },
+  t12x_sp_cover: { en: "Speedups you own: general {g} · research {r}", ar: "التسريعات لديك: عامة {g} · بحث {r}", ko: "보유 가속: 일반 {g} · 연구 {r}" },
   t12x_now: { en: "Now", ar: "الحالي", ko: "현재" },
   t12x_target: { en: "Target", ar: "الهدف", ko: "목표" },
   t12x_node1: { en: "1 node", ar: "عقدة واحدة", ko: "1개 항목" },
@@ -3255,6 +3256,7 @@ const T = {
   trade_card_line2: { en: "{n} trades this week", ar: "{n} مقايضة هذا الأسبوع", ko: "이번 주 {n}회 교환" },
   pc_free_count: { en: "Already counted: {c} active cards · {t} free trades", ar: "محسوب مسبقًا: {c} بطاقات نشطة · {t} مقايضات مجانية", ko: "이미 반영: 활성 카드 {c}개 · 무료 교환 {t}개" },
   pc_card_days: { en: "{n} days each", ar: "{n} أيام لكل واحدة", ko: "각 {n}일" },
+  pc_title: { en: "Pack Cost", ar: "تكلفة الحزم", ko: "팩 비용" },
   pc_fastest: { en: "Fastest", ar: "الأسرع", ko: "가장 빠름" },
   pc_by_target: { en: "By target", ar: "حسب الهدف", ko: "목표일까지" },
   pc_cheapest: { en: "Cheapest", ar: "الأرخص", ko: "가장 저렴" },
@@ -10516,11 +10518,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const wrapOpen = cards ? `<div class="pc-card">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
   const head = cards ? `
     <div class="pc-head">
-      <button type="button" data-packtoggle class="pc-title">$ ${esc(t("pack_cost_title"))} ${open ? "&#9662;" : "&#9656;"}</button>
-      ${open && IS_OWNER ? `<div class="seg" data-packmode>
-        <button type="button" data-packmodebtn="still" class="${PACK_COST_MODE === "still" ? "active" : ""}">${esc(t("pack_mode_still"))}</button>
-        <button type="button" data-packmodebtn="full" class="${PACK_COST_MODE === "full" ? "active" : ""}">${esc(t("pack_mode_full"))}</button>
-      </div>` : ""}
+      <button type="button" data-packtoggle class="pc-title">${esc(t("pc_title"))} ${open ? "&#9662;" : "&#9656;"}</button>
     </div>` : `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-packtoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("pack_cost_title"))}</button>
@@ -10551,7 +10549,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     needStill[name] = Math.max(0, needFull[name] - (Number((owned || {})[name]) || 0));
   });
   // "Full amount" is an admin-only view; everyone else always prices what's still needed.
-  if (!IS_OWNER) PACK_COST_MODE = "still";
+  if (!IS_OWNER || cards) PACK_COST_MODE = "still";
   // Days until the target date (today counts as day 0).
   const today = new Date(); today.setHours(0, 0, 0, 0);
   let targetDays = null;
@@ -13012,6 +13010,7 @@ const BAR_SUMMARY_KEYS = new Set(["t12_research"]);
 const BAR_SHOW_ALL = { t12_research: true }; // { calcKey: true } - boxes open (T12 starts open), for the visit
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need" };
+const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
 // Picture for an item name (chests, custom pack items, materials).
 function materialIconSrc(name) {
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
@@ -13130,7 +13129,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
     const label = (n) => (calcKey === "t12_research" && { "Refined FC": "RFC", "FC Shard": t("t12x_shard") }[n]) || materialDisplayName(MATERIAL_NAME_SHORT[n] || n).replace(/\s*\((minutes|min)\)$/, "");
-    const items = names.filter((n) => needOf(n) > 0);
+    // T12 shows research speedups in its time box instead of a square.
+    const items = names.filter((n) => needOf(n) > 0 && !(calcKey === "t12_research" && /^Research Speedups/.test(n)));
     const short = items.filter((n) => (effOwned[n] || 0) < needOf(n));
     const ready = items.filter((n) => !short.includes(n));
     const img = (n, cls) => { const src = iconFor(n); return src ? `<img src="${esc(src)}" alt=""${cls ? ` class="${cls}"` : ""} />` : ""; };
@@ -13280,6 +13280,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
     const sum = document.getElementById(`${rowsId}_sum`);
     if (sum) sum.innerHTML = summaryHtml();
+    if (BAR_AFTER_CHANGE[calcKey]) BAR_AFTER_CHANGE[calcKey]();
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
     // Short boxes show 10.83B; the full number while typing.
@@ -17857,15 +17858,28 @@ async function renderT12ResearchPage() {
       Iron: Math.round(grand.iron),
       "Research Speedups (minutes)": Math.round(applyResearchSpeed(grand.time_hours) * 60),
     };
-    const left = applyResearchSpeed(grand.time_hours), pct = donePct(T12_TROOPS);
-    // Time left, inside the total resources card.
-    document.getElementById("t12Hero").innerHTML = `
-      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("t12x_time_left"))}</span><b>${t12FormatTime(left)}</b>${grand.time_hours > 0 && left === 0 ? `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>` : ""}</div></div>
-      <div class="t12x-prog"><i style="width:${pct}%;"></i></div>
-      <div class="t12x-row"><span>${esc(t("t12x_done_pct").replace("{n}", pct))}</span><button type="button" class="linklike" id="t12MaxAllBtn">${esc(t("max_everything"))}</button></div>`;
-    document.getElementById("t12MaxAllBtn").onclick = maxEverything;
+    // Time left, inside the total resources card, with the research
+    // speedups you hold against it (one place for the time, not two).
+    const drawTime = () => {
+      const el = document.getElementById("t12Hero");
+      if (!el) return;
+      // Research time (after research speed) and how much of it the
+      // speedups you own cover: general + research speedups.
+      const totalH = applyResearchPct(grand.time_hours);
+      const genH = (Number(RESEARCH_SPEEDUP_MINUTES) || 0) / 60;
+      const resH = Number(((MATERIAL_OWNED_CACHE.t12_research || {})["Research Speedups (minutes)"]) || 0) / 60;
+      const coverH = Math.min(totalH, genH + resH), shortH = Math.max(0, totalH - genH - resH);
+      const covPct = totalH > 0 ? Math.min(100, (coverH / totalH) * 100) : 100;
+      el.innerHTML = `
+      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${t12FormatTime(totalH)}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">&minus;${t12FormatTime(shortH)} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
+      <div class="t12x-prog"><i style="width:${covPct}%;${shortH > 0 ? "" : " background:var(--good);"}"></i></div>
+      <div class="t12x-row"><span>${esc(t("t12x_sp_cover").replace("{g}", t12FormatTime(genH)).replace("{r}", t12FormatTime(resH)))}</span><button type="button" class="linklike" id="t12MaxAllBtn">${esc(t("max_everything"))}</button></div>`;
+      document.getElementById("t12MaxAllBtn").onclick = maxEverything;
+    };
+    drawTime();
     document.getElementById("t12Totals").innerHTML = `<div id="t12ResourcesBar"></div>`;
-    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
+    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research").then(drawTime);
+    BAR_AFTER_CHANGE.t12_research = drawTime;
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
