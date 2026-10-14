@@ -7935,9 +7935,19 @@ function scanTextMask(td, x0, y0, x1, y1, digits) {
   if (!blobs.length) return null;
   // The reader can't see a lone "1" or "11" in the game font: thin blocks only.
   const ones = digits && blobs.every((b) => b.h >= 12 && b.w < b.h * 0.45) ? "1".repeat(blobs.length) : "";
-  const k = 2, pad = 16, c = scanCanvas(w * k + pad * 2, h * k + pad * 2), g = c.getContext("2d");
-  g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
-  blobs.forEach((b) => b.px.forEach((p) => { const x = p % w; g.fillRect(pad + x * k, pad + ((p - x) / w) * k, k, k); }));
+  const draw = (ox, oy, cw, ch, k, pad) => {
+    const c = scanCanvas(cw * k + pad * 2, ch * k + pad * 2), g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+    blobs.forEach((b) => b.px.forEach((p) => { const x = p % w; g.fillRect(pad + (x - ox) * k, pad + ((p - x) / w - oy) * k, k, k); }));
+    return c;
+  };
+  const c = draw(0, 0, w, h, 2, 16);
+  // Also cut tight and drawn bigger: the reader can miss a lone digit ("8")
+  // in a wide empty strip.
+  if (digits) {
+    const ox = Math.min(...blobs.map((b) => b.x)), oy = Math.min(...blobs.map((b) => b.y));
+    c.tight = draw(ox, oy, Math.max(...blobs.map((b) => b.x + b.w)) - ox, Math.max(...blobs.map((b) => b.y + b.h)) - oy, 4, 20);
+  }
   c.ones = ones;
   return c;
 }
@@ -7962,7 +7972,7 @@ function scanTileFeature(td) {
 // Item pictures learned from the owner's game screenshots: one row of
 // icons/scan-items.png (a scanTileFeature grid) per name, PC and phone
 // copies of some items.
-const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Fire Crystal", "Refined FC", "FC Shard", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Lucky Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "Mythic General Hero Shard", "Epic General Hero Shard", "XP 10", "XP 100"];
+const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Fire Crystal", "Refined FC", "FC Shard", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Lucky Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "Mythic General Hero Shard", "Epic General Hero Shard", "XP 10", "XP 100", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "XP 10", "Mythic General Hero Shard", "Epic General Hero Shard"];
 let SCAN_ITEM_DATA = null;
 function scanItemData() {
   if (!SCAN_ITEM_DATA) {
@@ -8005,12 +8015,22 @@ async function scanItemTiles(worker, src, tiles, refs) {
     const m = scanMatchItem(scanTileFeature(td), refs);
     if (m.dist > 20) { unknown++; continue; }
     let sure = m.dist <= 12 && m.next > m.dist * 1.4;
+    // Custom Resource Chest Lv.1 and Lv.2 share a picture: green tile = Lv.1, blue = Lv.2.
+    const lv = /^Custom Resource Chest Lv\.[12]( \(protected\))?$/.exec(m.name);
+    if (lv) {
+      let r = 0, g = 0, b = 0;
+      for (let y = 60; y < 80; y++) for (let x = 3; x < 9; x++) { const i = (y * 140 + x) * 4; r += td[i]; g += td[i + 1]; b += td[i + 2]; }
+      const level = g > r + 40 && g > b + 40 ? 1 : b > r + 40 && b >= g ? 2 : 0;
+      if (level) { m.name = `Custom Resource Chest Lv.${level}${lv[1] || ""}`; sure = m.dist <= 12; }
+    }
     const num = scanTextMask(td, 21, 87, 136, 136, true);
     let value = null;
     if (num) {
       let res = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,." });
       // Very short numbers ("5", "11") sometimes read as nothing as a line.
-      if (!/\d/.test(res.text) && num.ones) res = { text: num.ones, conf: 0 };
+      if (!/\d/.test(res.text)) res = await scanRead(worker, num.tight, { tessedit_pageseg_mode: "8", tessedit_char_whitelist: "0123456789,." });
+      // Only thin "1" shapes: trust the count of shapes over the reader ("11" read as "1").
+      if (num.ones && res.text.replace(/\D/g, "") !== num.ones) res = { text: num.ones, conf: 0 };
       const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
       const digits = raw.replace(/\D/g, "");
       if (digits) {
@@ -8070,7 +8090,9 @@ async function scanSpeedTiles(worker, src, tiles, marks) {
     if (num) {
       let res = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,." });
       // Very short numbers ("5", "11") sometimes read as nothing as a line.
-      if (!/\d/.test(res.text) && num.ones) res = { text: num.ones, conf: 0 };
+      if (!/\d/.test(res.text)) res = await scanRead(worker, num.tight, { tessedit_pageseg_mode: "8", tessedit_char_whitelist: "0123456789,." });
+      // Only thin "1" shapes: trust the count of shapes over the reader ("11" read as "1").
+      if (num.ones && res.text.replace(/\D/g, "") !== num.ones) res = { text: num.ones, conf: 0 };
       const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
       const digits = raw.replace(/\D/g, "");
       if (digits) {
