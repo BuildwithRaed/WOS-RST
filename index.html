@@ -3071,7 +3071,7 @@ const T = {
   bp_link_from: { en: "From Backpack", ar: "من الحقيبة", ko: "배낭에서" },
   bp_link_typed: { en: "Typed", ar: "مكتوب يدويًا", ko: "직접 입력" },
   bp_chest_chance: { en: "Chance chest: not counted", ar: "صندوق حظ: لا يُحسب", ko: "확률 상자: 계산 안 함" },
-  bp_chest_open_first: { en: "Not counted: open it in the game", ar: "لا يُحسب: افتحه في اللعبة", ko: "계산 안 함: 게임에서 여세요" },
+  bp_chest_fixed_note: { en: "Counted, assuming 1 chest = 400 Alloy, 4 Polish, 1 Design", ar: "محسوب، بافتراض أن الصندوق = 400 سبيكة و4 ملمّع و1 تصميم", ko: "상자 1개 = 합금 400, 광택제 4, 설계도 1로 가정해 계산" },
   bp_link_use: { en: "Use Backpack", ar: "استخدم الحقيبة", ko: "배낭 사용" },
   scan_title: { en: "Scan screenshots", ar: "مسح لقطات الشاشة", ko: "스크린샷 스캔" },
   scan_intro: { en: "Add any of these screenshots from the game, as many as you like. They are read on your phone and never uploaded.", ar: "أضف أيًا من لقطات الشاشة هذه من اللعبة، بالعدد الذي تريده. تتم قراءتها على هاتفك ولا يتم رفعها أبدًا.", ko: "게임의 아래 스크린샷을 원하는 만큼 추가하세요. 휴대폰에서만 읽고 업로드하지 않습니다." },
@@ -5556,6 +5556,20 @@ const BACKPACK_PAGE_CHESTS = {
   t12_research: [...BACKPACK_RES_CHESTS, "FC Chest", "FC Crate"],
   research_center: BACKPACK_RES_CHESTS,
 };
+// Chests with fixed contents are counted as what they open into
+// (one Chief Gear Chest = 400 Alloy + 4 Polish + 1 Design Plan).
+const BACKPACK_FIXED_CHESTS = { chief_gear: ["Chief Gear Chest"] };
+// The owned amounts a page calculates with: its boxes plus fixed chests.
+function ownedWithChests(calcKey, owned, link) {
+  const chests = BACKPACK_FIXED_CHESTS[calcKey];
+  if (!chests || !Object.keys(link.bp).length) return owned;
+  const out = { ...owned };
+  chests.forEach((ch) => {
+    const qty = backpackAmountFor(ch, link.bp);
+    if (qty > 0) Object.entries(PACK_BUNDLES[ch]).forEach(([n, v]) => { out[n] = (Number(out[n]) || 0) + qty * v; });
+  });
+  return out;
+}
 function backpackShownChests(calcKey, link) {
   return Object.keys(link.bp).length ? (BACKPACK_PAGE_CHESTS[calcKey] || []).filter((n) => backpackAmountFor(n, link.bp) > 0) : [];
 }
@@ -11362,7 +11376,7 @@ async function budgetOwnedFor(calcKey) {
     await expertsInventoryWithBackpack(inv);
     return { "Books of Knowledge": Number(inv["Books of Knowledge"]) || 0, "Affinity": affinityOwnedFrom(inv), "General Sigils": Number(inv["General Sigils"]) || 0, "Speedups (minutes)": expertSpeedupOwnedFrom(inv) };
   }
-  return ensureMaterialOwnedCache(calcKey);
+  return ownedWithChests(calcKey, await ensureMaterialOwnedCache(calcKey), await backpackLinkState());
 }
 let BUDGET_NEEDS_SNAPSHOT = null;   // { [calcKey]: { groups:[{label,totals}], at } }
 async function ensureBudgetNeedsSnapshot() {
@@ -12739,13 +12753,16 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   hiddenRates.__calcKey = calcKey || "chief_gear";
   let effOwned = { ...owned };
   let hiddenTrades = []; // what owned chests/convertibles were turned into
+  // What the page calculates with: the boxes plus chests with fixed contents.
+  let calcOwned = owned;
   function recomputeEffOwned() {
-    effOwned = { ...owned };
+    calcOwned = ownedWithChests(calcKey || "chief_gear", owned, link);
+    effOwned = { ...calcOwned };
     hiddenTrades = [];
     if (!hiddenRates.length) return;
     const totalNeed = {};
     groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { totalNeed[n] = (totalNeed[n] || 0) + (Number(q) || 0); }));
-    hiddenTrades = applyTrades(hiddenRates, totalNeed, owned, 1).trades;
+    hiddenTrades = applyTrades(hiddenRates, totalNeed, calcOwned, 1).trades;
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
   recomputeEffOwned();
@@ -12798,7 +12815,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         <span class="meta mat-name" style="font-size:11px; font-weight:600; letter-spacing:0.3px; order:1;">${esc(shortName)}</span>
       </div>
       ${chests.includes(name)
-        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : `<div style="font-size:11px; margin-top:4px; color:var(--muted);">${esc(t(name === "Chief Gear Chest" ? "bp_chest_open_first" : "bp_chest_chance"))}</div>`}`
+        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : (BACKPACK_FIXED_CHESTS[calcKey || "chief_gear"] || []).includes(name)
+          ? `<div style="font-size:11px; margin-top:4px; color:var(--good); line-height:1.35;">${["Hardened Alloy", "Polishing Solution", "Design Plan"].map((n) => `+${(PACK_BUNDLES[name][n] * haveQty).toLocaleString()} ${esc(materialDisplayName(MATERIAL_NAME_SHORT[n] || n))}`).join("<br>")}</div><div class="meta" style="font-size:9.5px; line-height:1.3;">${esc(t("bp_chest_fixed_note"))}</div>`
+          : `<div style="font-size:11px; margin-top:4px; color:var(--muted);">${esc(t("bp_chest_chance"))}</div>`}`
         : `<input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
       <span data-bplinknote="${esc(name)}">${backpackLinkNoteHtml(calcKey || "chief_gear", name, link)}</span>
       ${groupStatusHtml}`}
@@ -12812,9 +12831,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   `;
   const packBox = document.getElementById(`${rowsId}_packs`);
   const tradeBox = document.getElementById(`${rowsId}_trades`);
-  const refreshPacks = () => renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
-  renderTradeBlock(tradeBox, calcKey || "chief_gear", groups, owned, refreshPacks);
-  renderPackCostBlock(packBox, calcKey || "chief_gear", groups, owned);
+  const refreshPacks = () => renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
+  renderTradeBlock(tradeBox, calcKey || "chief_gear", groups, calcOwned, refreshPacks);
+  renderPackCostBlock(packBox, calcKey || "chief_gear", groups, calcOwned);
   recordBudgetNeeds(calcKey || "chief_gear", groups);
 
   // A box changed (typed, or put back to the Backpack amount): update the
@@ -12835,8 +12854,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         statusDiv.textContent = statusText;
       }
     }));
-    renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, owned, refreshPacks);
-    renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, owned);
+    renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, calcOwned, refreshPacks);
+    renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
     input.addEventListener("change", () => {
