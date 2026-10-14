@@ -549,6 +549,7 @@ input,select,textarea{
   .bs-row .n{ flex:1; min-width:0; font-size:13px; font-weight:600; }
   .bs-row .n small{ display:block; font-weight:400; font-size:11px; color:var(--muted); }
   .bs-row b{ font-size:13px; color:var(--danger); white-space:nowrap; }
+  .bs-title{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:4px 0 8px; }
   .bs-row.ok{ background:rgba(76,209,138,.06); border-color:rgba(76,209,138,.22); }
   .bs-row.ok b{ color:var(--good); }
   .bs-ok{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
@@ -3234,6 +3235,9 @@ const T = {
   pc_by_target: { en: "By target", ar: "حسب الهدف", ko: "목표일까지" },
   pc_cheapest: { en: "Cheapest", ar: "الأرخص", ko: "가장 저렴" },
   bs_edit_hint: { en: "You can type 5m or 10.8b", ar: "يمكنك كتابة 5m أو 10.8b", ko: "5m 또는 10.8b처럼 입력할 수 있습니다" },
+  bs_title_t12: { en: "Total research resources needed · all 3 troops", ar: "إجمالي موارد البحث المطلوبة · القوات الثلاث", ko: "필요한 총 연구 자원 · 3개 병종" },
+  bs_title_needed: { en: "Total resources needed", ar: "إجمالي الموارد المطلوبة", ko: "필요한 총 자원" },
+  bs_used_trades: { en: "used in trades", ar: "يُستخدم في المقايضات", ko: "교환에 사용" },
   bs_short_word: { en: "short", ar: "ناقص", ko: "부족" },
   bs_spare_word: { en: "spare", ar: "فائض", ko: "여유" },
   bs_not_needed: { en: "not needed", ar: "غير مطلوب", ko: "필요 없음" },
@@ -13098,7 +13102,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const ready = items.filter((n) => !short.includes(n));
     const img = (n, cls) => { const src = iconFor(n); return src ? `<img src="${esc(src)}" alt=""${cls ? ` class="${cls}"` : ""} />` : ""; };
     return `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>
-      ${items.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+      ${items.length ? `<div class="bs-title">${esc(t(calcKey === "t12_research" ? "bs_title_t12" : "bs_title_needed"))}</div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&minus;${esc(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
       ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(amount(n, (effOwned[n] || 0) - needOf(n)))}</b></div>`).join("")}
 `;
@@ -13112,7 +13116,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const label = materialDisplayName(MATERIAL_NAME_SHORT[name] || name).replace(/\s*\((minutes|min)\)$/, "");
     const isMin = /\(minutes\)$/.test(name), ro = chests.includes(name);
     const status = groups.map((g) => {
-      const { statusColor, statusText } = statusFor(name, Number((g.totals || {})[name]) || 0);
+      const needed = Number((g.totals || {})[name]) || 0;
+      let { statusColor, statusText } = statusFor(name, needed);
+      // Items only used for trades (Fire Crystal): a short word, not the conversion list.
+      if (needed === 0 && hiddenTrades.some((tr) => tr.from === name)) { statusColor = "var(--muted)"; statusText = t("bs_used_trades"); }
       return `<span data-neededstatus="${esc(name)}|${esc(g.label || "")}"><span style="color:${statusColor};">${statusText}</span></span>`;
     }).join("");
     const typed = !ro && Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name) && !backpackLinked(calcKey || "chief_gear", name, link);
@@ -13225,7 +13232,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     recomputeEffOwned();
     names.forEach((n) => groups.forEach((g) => {
       const needed = Number((g.totals || {})[n]) || 0;
-      const { statusColor, statusText } = statusFor(n, needed);
+      let { statusColor, statusText } = statusFor(n, needed);
+      if (summaryOn && needed === 0 && hiddenTrades.some((tr) => tr.from === n)) { statusColor = "var(--muted)"; statusText = t("bs_used_trades"); }
       const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(n)}|${CSS.escape(g.label || "")}"] span:last-child`);
       if (statusDiv) {
         statusDiv.style.color = statusColor;
@@ -16572,7 +16580,7 @@ async function renderExpertsPage() {
     const amt = (r, v) => (r.fmt ? r.fmt(v) : shortAmount(v));
     const short = rows.filter((r) => r.have < r.need), ready = rows.filter((r) => r.have >= r.need);
     totalsEl.innerHTML = `<div class="bs-foot"><span>${Object.keys(bpLink.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts ? "bs_hide" : "bs_show_all"))}</button></div>
-      ${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+      ${rows.length ? `<div class="bs-title">${esc(t("bs_title_needed"))}</div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&minus;${esc(amt(r, r.need - r.have))}</b></div>`).join("")}
       ${ready.map((r) => `<div class="bs-row ok"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&#10003; ${esc(amt(r, r.have - r.need))}</b></div>`).join("")}
 `;
