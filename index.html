@@ -3253,6 +3253,7 @@ const T = {
   t12x_reset: { en: "Reset", ar: "إعادة تعيين", ko: "초기화" },
   t12x_shard: { en: "Shard", ar: "شظية", ko: "조각" },
   trade_apply_short: { en: "Use in pack cost", ar: "استخدم في تكلفة الحزم", ko: "팩 비용에 사용" },
+  trade_lab_line: { en: "Research Lab · once a week (plan set on the Research Lab page)", ar: "مختبر البحث · مرة أسبوعيًا (الخطة من صفحة مختبر البحث)", ko: "연구소 · 주 1회 (연구소 페이지에서 설정)" },
   trade_card_line2: { en: "{n} trades this week", ar: "{n} مقايضة هذا الأسبوع", ko: "이번 주 {n}회 교환" },
   pc_free_count: { en: "Already counted: {c} active cards · {t} free trades", ar: "محسوب مسبقًا: {c} بطاقات نشطة · {t} مقايضات مجانية", ko: "이미 반영: 활성 카드 {c}개 · 무료 교환 {t}개" },
   pc_card_days: { en: "{n} days each", ar: "{n} أيام لكل واحدة", ko: "각 {n}일" },
@@ -11554,15 +11555,20 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
     const img = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" />` : ""; };
     // Only what the traded items can become (Fire Crystal → RFC / Shard).
     const froms = new Set(rates.map((r) => r.from));
-    const targets = new Set(tradeRatesFor(calcKey).filter((r) => froms.has(r.from)).map((r) => r.to));
+    const allRates = tradeRatesFor(calcKey).filter((r) => froms.has(r.from));
+    const targets = new Set(allRates.map((r) => r.to));
     const shortNames = Object.keys(need).filter((n) => need[n] > 0 && targets.has(n));
+    // This week's split, the same way Pack cost plans it: the Research Lab
+    // (FC → RFC, once a week) gets its share first, the rest goes to shards.
+    const res = applyTrades(allRates, need, owned, 1);
     const nm = (n) => shortNm(n).replace(/\s*\((minutes|min)\)$/, "");
     const bad = shortNames.filter((n) => (res.after[n] || 0) > 0), ok = shortNames.filter((n) => !((res.after[n] || 0) > 0));
     const chips = bad.map((n) => `<span class="bad">${esc(nm(n))} ${shortAmount(res.after[n])}</span>`).concat(ok.map((n) => `<span class="ok">${esc(nm(n))} &#10003;</span>`));
     return `${res.trades.length ? res.trades.map((tr) => {
-      const r = rates.find((x) => x.from === tr.from && x.to === tr.to) || {};
-      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(shortNm(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${qty(tr.getQty)}</b><small>${esc(shortNm(tr.to))}</small></div></div>
-        <div class="meta pc-sub">${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}</div>`;
+      const r = allRates.find((x) => x.from === tr.from && x.to === tr.to) || {};
+      const getTxt = tr.lab ? (Math.round(tr.getQty * 10) / 10).toLocaleString() : qty(tr.getQty);
+      return `<div class="pc-trade"><div>${img(tr.from)}<b>${qty(tr.giveQty)}</b><small>${esc(shortNm(tr.from))}</small></div><span>&rarr;</span><div>${img(tr.to)}<b style="color:var(--good);">${getTxt}</b><small>${esc(shortNm(tr.to))}</small></div></div>
+        <div class="meta pc-sub">${tr.lab ? esc(t("trade_lab_line")) : `${esc(t("trade_card_line2").replace("{n}", qty(tr.lots)))}${r.max ? ` · ${esc(t("trade_max_week"))} ${qty(r.max)}` : ""}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""}`}</div>`;
     }).join("") : `<div class="meta" style="font-size:11.5px;">${esc(t("trade_none"))}</div>`}
       ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
       <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
