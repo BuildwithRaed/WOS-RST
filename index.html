@@ -426,12 +426,12 @@ input,select,textarea{
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
-  .t12x-need{ margin:0; }
+  .t12x-need{ margin-bottom:16px; }
   .t12x-need .bs-box{ margin:0; }
   .t12x-need .bs-row{ margin:0; }
   /* Small square tiles, like the Backpack page */
   .t12x-need #t12ResourcesBar_rows_sum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:7px; }
-  @media (min-width: 901px){ .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:repeat(3, minmax(0,1fr)); } }
+  @media (min-width: 901px){ .t12x-need #t12ResourcesBar_rows_sum{ grid-template-columns:repeat(7, minmax(0,1fr)); } }
   .t12x-need .bs-foot{ grid-column:1 / -1; margin-bottom:2px; }
   .t12x-need .bs-row{ aspect-ratio:1; flex-direction:column; justify-content:center; text-align:center; gap:2px; padding:6px 4px; }
   .t12x-need .bs-row img{ width:30px; height:30px; }
@@ -488,8 +488,7 @@ input,select,textarea{
     .t12x{ grid-template-columns:minmax(0,1fr); }
     /* Phones: time left first, then the troop, then Backpack and settings. */
     .t12x-side{ display:contents; }
-    .t12x-hero{ order:-3; }
-    .t12x-need{ order:-2; }
+    .t12x-hero{ order:-2; }
     .t12x-main{ order:-1; }
     .t12x-boxes{ gap:6px; }
     .t12x-boxes > div{ padding:7px 8px; gap:6px; }
@@ -3229,7 +3228,6 @@ const T = {
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
-  t12x_backpack_packs: { en: "Backpack · trades · pack cost", ar: "الحقيبة · المقايضات · تكلفة الحزم", ko: "배낭 · 교환 · 팩 비용" },
   t12x_settings: { en: "Settings", ar: "الإعدادات", ko: "설정" },
   t12x_time_left: { en: "Time left · all 3 troops", ar: "الوقت المتبقي · القوات الثلاث", ko: "남은 시간 · 3개 병종" },
   t12x_covered: { en: "covered by your speedups", ar: "مغطى بتسريعاتك", ko: "가속으로 충당됨" },
@@ -13113,6 +13111,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     return BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "");
   };
   // Short summary: items still missing (with how much), ready ones as chips.
+  // "Amounts from your Backpack · Show all / edit" line.
+  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>`;
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
@@ -13121,7 +13121,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const short = items.filter((n) => (effOwned[n] || 0) < needOf(n));
     const ready = items.filter((n) => !short.includes(n));
     const img = (n, cls) => { const src = iconFor(n); return src ? `<img src="${esc(src)}" alt=""${cls ? ` class="${cls}"` : ""} />` : ""; };
-    return `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>
+    return `${BAR_SUMMARY_HOST[calcKey] ? "" : footHtml()}
       ${items.length ? (calcKey === "t12_research" ? "" : `<div class="bs-title">${esc(t("bs_title_needed"))}</div>`) : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&minus;${esc(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
       ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(amount(n, (effOwned[n] || 0) - needOf(n)))}</b></div>`).join("")}
@@ -13227,6 +13227,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const sumHost = summaryOn && BAR_SUMMARY_HOST[calcKey] && document.getElementById(BAR_SUMMARY_HOST[calcKey]);
   if (sumHost) sumHost.innerHTML = `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>`;
   el.innerHTML = `
+    ${sumHost ? `<div id="${rowsId}_foot">${footHtml()}</div>` : ""}
     ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && !BAR_SHOW_ALL[calcKey] ? ` style="display:none;"` : ""}>${summaryOn
       ? `<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}</div>`
@@ -13288,6 +13289,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     BAR_SHOW_ALL[calcKey] = !BAR_SHOW_ALL[calcKey];
     document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
     document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
+    const foot = document.getElementById(`${rowsId}_foot`);
+    if (foot) foot.innerHTML = footHtml();
     if (BAR_SHOW_ALL[calcKey] && sumHost) document.getElementById(rowsId).scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
   // Summary drawn elsewhere: its "Show all / edit" link (onclick, so redraws don't stack).
@@ -17750,12 +17753,7 @@ async function renderT12ResearchPage() {
     <div class="t12x">
       <aside class="t12x-side">
         <div class="t12x-card t12x-hero" id="t12Hero"></div>
-        <div class="t12x-card t12x-need">
-          <div class="t12x-title">${esc(t("bs_title_t12"))}</div>
-          <div id="t12Need"></div>
-        </div>
         <div class="t12x-card">
-          <div class="t12x-k">${esc(t("t12x_backpack_packs"))}</div>
           <div id="t12Totals"></div>
         </div>
         <div class="t12x-card">
@@ -17765,6 +17763,10 @@ async function renderT12ResearchPage() {
         </div>
       </aside>
       <div class="t12x-main">
+        <div class="t12x-card t12x-need">
+          <div class="t12x-title">${esc(t("bs_title_t12"))}</div>
+          <div id="t12Need"></div>
+        </div>
         <div class="t12x-top">
           <h2>${esc(t("t12_research_title"))}</h2>
           <div class="t12x-tabs" id="t12TroopDots"></div>
