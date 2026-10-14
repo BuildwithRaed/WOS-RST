@@ -8029,7 +8029,7 @@ async function scanShot(worker, file, marks) {
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const items = await scanSpeedTiles(worker, src, tiles, marks);
-    return { kind: items.length ? "speedup" : "other", items };
+    if (items.length) return { kind: "speedup", items };
   }
   // Text reads best at about 720 px wide, as one block.
   const s = 720 / src.width, c = scanCanvas(720, Math.round(src.height * s));
@@ -8037,7 +8037,8 @@ async function scanShot(worker, file, marks) {
   const text = (await scanRead(worker, c, { tessedit_pageseg_mode: "6" })).text;
   const items = scanSummaryText(text);
   if (items.length) return { kind: "summary", items };
-  return { kind: /speedup/i.test(text) && /\bmin\b/i.test(text) ? "speedsummary" : "unknown", items: [] };
+  // Squares but no speedups and no Summary rows: another Backpack tab.
+  return { kind: /speedup/i.test(text) && /\bmin\b/i.test(text) ? "speedsummary" : tiles.length ? "other" : "unknown", items: [] };
 }
 
 function openBackpackScan(groups, bp, done) {
