@@ -418,6 +418,60 @@ input,select,textarea{
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
   .bp-tile.bp-epic img{ border-color:#a46ae0; }
   .bp-tile.bp-rare img{ border-color:#4a9be8; }
+  /* T12 Research layout: overview column + troop column */
+  .t12x{ display:grid; grid-template-columns:340px minmax(0,1fr); gap:18px; align-items:start; }
+  .t12x-side{ position:sticky; top:70px; display:flex; flex-direction:column; gap:12px; }
+  .t12x-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; }
+  .t12x-hero{ background:linear-gradient(135deg, rgba(90,160,230,.16), rgba(22,35,58,.6)), var(--panel); }
+  .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
+  .t12x-good{ font-size:11px; color:var(--good); margin-top:3px; }
+  .t12x-prog{ height:8px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; margin:10px 0 5px; }
+  .t12x-prog i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg, var(--ice), var(--good)); }
+  .t12x-row{ display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--muted); }
+  .t12x .linklike{ background:none; border:0; padding:0; font:inherit; font-size:12px; color:var(--ice); text-decoration:underline; cursor:pointer; }
+  .t12x-side .rs-row{ flex-direction:column; align-items:stretch !important; gap:8px !important; margin-bottom:8px !important; }
+  .t12x-side .rs-row > div{ justify-content:space-between; flex-wrap:wrap; }
+  .t12x-check{ display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); cursor:pointer; }
+  .t12x-check input{ width:16px; height:16px; }
+  .t12x-top{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .t12x-top h2{ margin:0; flex:0 0 auto; white-space:nowrap; }
+  .t12x-tabs{ display:flex; flex:1 1 320px; max-width:560px; margin-inline-start:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; }
+  .t12x-tabs button{ flex:1; border:0; background:none; color:var(--muted); font:inherit; font-weight:600; font-size:13px; padding:7px 4px; border-radius:10px; cursor:pointer; }
+  .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }
+  .t12x-tabs button.on{ background:rgba(255,255,255,.08); color:var(--frost); box-shadow:inset 0 -2px 0 var(--tc); }
+  .t12x-boxes{ display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+  .t12x-boxes > div{ border:1px solid var(--line); border-radius:12px; padding:8px 10px; background:var(--panel); min-width:0; }
+  .t12x-boxes span, .t12x-boxes small{ display:block; font-size:10.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .t12x-boxes b{ display:block; font-size:15px; }
+  .t12x-sec{ border:1px solid var(--line); border-radius:14px; margin-bottom:10px; background:var(--panel); }
+  .t12x-gh{ display:flex; align-items:center; gap:12px; padding:11px 14px; cursor:pointer; }
+  .t12x-gt{ flex:1; min-width:0; font-weight:700; font-size:14px; }
+  .t12x-gt small{ display:block; font-weight:400; font-size:11px; color:var(--muted); }
+  .t12x-ring{ width:36px; height:36px; border-radius:50%; flex-shrink:0; display:grid; place-items:center; background:conic-gradient(var(--c) var(--p), rgba(255,255,255,.08) 0); }
+  .t12x-ring span{ width:28px; height:28px; border-radius:50%; background:var(--panel); display:grid; place-items:center; font-size:9.5px; font-weight:700; }
+  .t12x-maxall{ font:inherit; font-size:11px; padding:5px 10px; border-radius:9px; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; }
+  .t12x-fold{ color:var(--muted); width:12px; }
+  .t12x-nodes{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:8px; padding:0 14px 14px; }
+  .t12x-node{ border:1px solid var(--line); border-radius:12px; padding:9px 10px; background:rgba(255,255,255,.02); min-width:0; }
+  .t12x-nm{ display:flex; justify-content:space-between; gap:8px; font-weight:600; font-size:13px; }
+  .t12x-nm .meta, .t12x-done{ font-weight:400; font-size:10.5px; text-align:end; }
+  .t12x-done{ color:var(--good); font-weight:700; }
+  .t12x-step{ display:flex; align-items:center; gap:6px; margin-top:7px; }
+  .t12x-step button{ width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--frost); font-size:15px; cursor:pointer; }
+  .t12x-step button:disabled{ opacity:.35; cursor:default; }
+  .t12x-step b{ min-width:22px; text-align:center; font-size:15px; }
+  .t12x-step select{ width:auto; padding:4px 6px; }
+  .t12x-bar{ height:4px; border-radius:9px; background:rgba(255,255,255,.07); overflow:hidden; margin-top:8px; }
+  .t12x-bar i{ display:block; height:100%; border-radius:9px; background:var(--ice); }
+  @media (max-width: 900px){
+    .t12x{ grid-template-columns:minmax(0,1fr); }
+    /* Phones: time left first, then the troop, then Backpack and settings. */
+    .t12x-side{ display:contents; }
+    .t12x-hero{ order:-2; }
+    .t12x-main{ order:-1; }
+    .t12x-boxes{ grid-template-columns:repeat(4, minmax(0,1fr)); }
+  }
   /* Backpack summary (Design C): what's still missing, ready items as chips */
   .bs-box{ margin-bottom:12px; }
   .bs-sum{ display:flex; gap:8px; margin-bottom:10px; }
@@ -3088,6 +3142,21 @@ const T = {
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
+  t12x_settings: { en: "Settings", ar: "الإعدادات", ko: "설정" },
+  t12x_time_left: { en: "Time left · all 3 troops", ar: "الوقت المتبقي · القوات الثلاث", ko: "남은 시간 · 3개 병종" },
+  t12x_covered: { en: "covered by your speedups", ar: "مغطى بتسريعاتك", ko: "가속으로 충당됨" },
+  t12x_done_pct: { en: "{n}% of all levels done", ar: "تم إنجاز {n}% من كل المستويات", ko: "전체 레벨의 {n}% 완료" },
+  t12x_to_target: { en: "to target", ar: "حتى الهدف", ko: "목표까지" },
+  t12x_done: { en: "done", ar: "مكتمل", ko: "완료" },
+  t12x_not_planned: { en: "not planned", ar: "غير مخطط", ko: "계획 없음" },
+  t12x_planned: { en: "planned", ar: "مخطط", ko: "계획됨" },
+  t12x_all_maxed: { en: "all maxed", ar: "الكل بالحد الأقصى", ko: "모두 최대" },
+  t12x_nodes: { en: "{n} nodes", ar: "{n} عقد", ko: "{n}개 항목" },
+  t12x_node1: { en: "1 node", ar: "عقدة واحدة", ko: "1개 항목" },
+  t12x_max_pct: { en: "max {n}%", ar: "الحد {n}%", ko: "최대 {n}%" },
+  t12x_max_all: { en: "Max all", ar: "الحد الأقصى للكل", ko: "모두 최대" },
+  t12x_reset: { en: "Reset", ar: "إعادة تعيين", ko: "초기화" },
+  t12x_shard: { en: "Shard", ar: "شظية", ko: "조각" },
   bs_short: { en: "still short", ar: "ما زال ناقصًا", ko: "부족" },
   bs_ready: { en: "ready", ar: "جاهز", ko: "준비됨" },
   bs_nothing: { en: "Nothing needed yet.", ar: "لا شيء مطلوب بعد.", ko: "아직 필요한 것이 없습니다." },
@@ -17391,23 +17460,31 @@ async function renderT12ResearchPage() {
   await ensureResearchPageCountedData();
 
   if (seq !== RENDER_SEQ) return;
+  // Layout: an overview column (time left, Backpack, settings) and the troop
+  // column (tabs, stats, folding sections of level steppers). On phones the
+  // two columns stack.
   content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("t12_research_title"))}</h2>
-              </div>
-      <div style="display:flex; align-items:center; gap:14px;">
-        ${true ? `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; flex-wrap:nowrap;">
-          <input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} style="width:15px; height:15px; cursor:pointer;" />
-          <span class="meta" style="font-size:11px;">${esc(t("count_toward_dashboard"))}</span>
-        </label>` : ""}
-        <button class="btn" id="t12MaxAllBtn">${esc(t("max_everything"))}</button>
+    <div class="t12x">
+      <aside class="t12x-side">
+        <div class="t12x-card t12x-hero" id="t12Hero"></div>
+        <div class="t12x-card">
+          <div class="t12x-k">${esc(t("backpack_title"))}</div>
+          <div id="t12Totals"></div>
+        </div>
+        <div class="t12x-card">
+          <div class="t12x-k">${esc(t("t12x_settings"))}</div>
+          ${researchSpeedInputHtml()}
+          <label class="t12x-check"><span>${esc(t("count_toward_dashboard"))}</span><input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} /></label>
+        </div>
+      </aside>
+      <div class="t12x-main">
+        <div class="t12x-top">
+          <h2>${esc(t("t12_research_title"))}</h2>
+          <div class="t12x-tabs" id="t12TroopDots"></div>
+        </div>
+        <div id="t12Troops"></div>
       </div>
     </div>
-    ${researchSpeedInputHtml()}
-    <div id="t12Totals" style="margin-bottom:16px;"></div>
-    <div id="t12TroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
-    <div id="t12Troops"></div>
   `;
 
   const t12Toggle = document.getElementById("t12CountedToggle");
@@ -17416,7 +17493,9 @@ async function renderT12ResearchPage() {
     saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
 
-  document.getElementById("t12MaxAllBtn").addEventListener("click", async () => {
+  // Same as before: max every troop's current levels, or reset them all if
+  // everything is already maxed.
+  const maxEverything = () => {
     const allMaxed = T12_TROOPS.every((troop) => T12_ITEM_DEFS.every((def) => (T12_STATE[troop][def.key] || 0) >= def.max));
     T12_TROOPS.forEach((troop) => {
       T12_ITEM_DEFS.forEach((def) => {
@@ -17426,24 +17505,15 @@ async function renderT12ResearchPage() {
     saveCalcState("t12_research", T12_STATE);
     renderTotals();
     renderTroopPanels();
-  });
+  };
   wireResearchSpeedInput(() => {
     renderTotals();
     renderTroopPanels();
   });
 
-  function levelSelectHtml(def, current, target) {
-    const opts = (sel) => Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === sel ? "selected" : ""}>${i === 0 ? "0" + t("none_suffix") : i}${i === def.max ? t("max_suffix") : ""}</option>`).join("");
-    return `<div class="lvl-pair">
-      <label class="lvl-cell"><span class="lvl-cap meta">${esc(t("research_current"))}</span><select data-t12item="${def.key}" title="${esc(t("research_current"))}" style="width:100%; min-width:0; padding:5px 6px;">${opts(current)}</select></label>
-      <span class="lvl-arrow meta" style="font-size:11px;">→</span>
-      <label class="lvl-cell"><span class="lvl-cap meta">${esc(t("research_target"))}</span><select data-t12target="${def.key}" title="${esc(t("research_target"))}" style="width:100%; min-width:0; padding:5px 6px; ${target < current ? "border-color:var(--danger);" : ""}">${opts(target)}</select></label>
-    </div>`;
-  }
-
-  function computeNeeded(troopState, troop) {
+  function computeNeeded(troopState, troop, defs) {
     const totals = { steel: 0, refined_fc: 0, fc_shard: 0, meat_wood: 0, coal: 0, iron: 0, time_hours: 0 };
-    T12_ITEM_DEFS.forEach((def) => {
+    (defs || T12_ITEM_DEFS).forEach((def) => {
       const cur = troopState[def.key] || 0;
       const target = troop ? t12TargetOf(troop, def) : def.max;
       const tierRows = T12_NODES_CACHE[def.tier] || {};
@@ -17461,6 +17531,13 @@ async function renderT12ResearchPage() {
     });
     return totals;
   }
+  // Share of levels done (current level out of max), for some troops/nodes.
+  const donePct = (troops, defs) => {
+    let cur = 0, max = 0;
+    troops.forEach((troop) => (defs || T12_ITEM_DEFS).forEach((def) => { cur += Math.min(def.max, T12_STATE[troop][def.key] || 0); max += def.max; }));
+    return max ? Math.floor((cur / max) * 100) : 0;
+  };
+  const costLine = (n) => [["steel", t("resource_steel")], ["refined_fc", "RFC"], ["fc_shard", t("t12x_shard")]].filter(([k]) => n[k] > 0).map(([k, l]) => `${l} ${shortAmount(n[k])}`).join(" · ");
 
   function renderTotals() {
     const grand = { steel: 0, refined_fc: 0, fc_shard: 0, meat_wood: 0, coal: 0, iron: 0, time_hours: 0 };
@@ -17478,107 +17555,146 @@ async function renderT12ResearchPage() {
       Iron: Math.round(grand.iron),
       "Research Speedups (minutes)": Math.round(applyResearchSpeed(grand.time_hours) * 60),
     };
-    document.getElementById("t12Totals").innerHTML = `
-      <div class="panel">
-        <h2>${esc(t("backpack_title"))}</h2>
-        <p class="desc">${esc(t("t12_3troops_desc"))}</p>
-        <div id="t12ResourcesBar" style="margin-bottom:12px;"></div>
-        <div class="metric"><div class="label">${esc(t("research_time_label"))}</div><div class="val">${t12FormatTime(applyResearchSpeed(grand.time_hours))}</div></div>
-      </div>
-    `;
+    const left = applyResearchSpeed(grand.time_hours), pct = donePct(T12_TROOPS);
+    document.getElementById("t12Hero").innerHTML = `
+      <div class="t12x-k">${esc(t("t12x_time_left"))}</div>
+      <div class="t12x-big">${t12FormatTime(left)}</div>
+      ${grand.time_hours > 0 && left === 0 ? `<div class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</div>` : ""}
+      <div class="t12x-prog"><i style="width:${pct}%;"></i></div>
+      <div class="t12x-row"><span>${esc(t("t12x_done_pct").replace("{n}", pct))}</span><button type="button" class="linklike" id="t12MaxAllBtn">${esc(t("max_everything"))}</button></div>`;
+    document.getElementById("t12MaxAllBtn").onclick = maxEverything;
+    document.getElementById("t12Totals").innerHTML = `<div id="t12ResourcesBar"></div>`;
     renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research");
   }
 
   const T12_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
   let t12ActiveTroop = T12_TROOPS[0];
+  const t12Open = {}; // { group: true/false } chosen this visit
   function renderTroopPanels() {
     const troopsEl = document.getElementById("t12Troops");
-    const dotsEl = document.getElementById("t12TroopDots");
-    renderSwipeDots(dotsEl, T12_TROOPS, t12ActiveTroop, T12_TROOP_COLORS, (tr) => { t12ActiveTroop = tr; renderTroopPanels(); });
+    const tabsEl = document.getElementById("t12TroopDots");
+    const troop = t12ActiveTroop;
+    const tabsHtml = () => T12_TROOPS.map((tr) => `<button type="button" class="${tr === troop ? "on" : ""}" data-t12tab="${esc(tr)}" style="--tc:${T12_TROOP_COLORS[tr]};">${esc(troopDisplayName(tr))}<small>${donePct([tr])}% · ${t12FormatTime(applyResearchPct(computeNeeded(T12_STATE[tr], tr).time_hours))}</small></button>`).join("");
+    tabsEl.innerHTML = tabsHtml();
+    tabsEl.onclick = (e) => { const b = e.target.closest("[data-t12tab]"); if (b && b.dataset.t12tab !== t12ActiveTroop) { t12ActiveTroop = b.dataset.t12tab; renderTroopPanels(); } };
     const groups = [...new Set(T12_ITEM_DEFS.map((d) => d.group))];
     const statMax = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     T12_ITEM_DEFS.forEach((def) => {
       if (def.stat) statMax[def.stat] += def.max * (def.pct || 1);
     });
-    const troop = t12ActiveTroop;
-    // Stats and resources at the top of the panel; redrawn on their own
-    // after a level change (refreshPanel below) so the dropdowns stay.
     const headHtml = () => {
       const needed = computeNeeded(T12_STATE[troop], troop);
       const stats = computeT12Stats(T12_STATE[troop]);
-      return `
-        <div class="stats-row-scroll" style="margin-bottom:10px;">
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">ATK</div><div class="val" style="font-size:13px;">+${stats.Attack}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Attack}%</div></div>
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">DEF</div><div class="val" style="font-size:13px;">+${stats.Defense}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Defense}%</div></div>
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">LETH</div><div class="val" style="font-size:13px;">+${stats.Lethality}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Lethality}%</div></div>
-          <div class="metric" style="padding:6px; min-width:70px;"><div class="label" style="font-size:9px;">HP</div><div class="val" style="font-size:13px;">+${stats.Health}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${statMax.Health}%</div></div>
+      const box = (k, v, sub) => `<div><span>${esc(k)}</span><b>${v}</b><small>${esc(sub)}</small></div>`;
+      return `<div class="t12x-boxes">
+        ${box("ATK", `+${stats.Attack}%`, t("t12x_max_pct").replace("{n}", statMax.Attack))}
+        ${box("DEF", `+${stats.Defense}%`, t("t12x_max_pct").replace("{n}", statMax.Defense))}
+        ${box("LETH", `+${stats.Lethality}%`, t("t12x_max_pct").replace("{n}", statMax.Lethality))}
+        ${box("HP", `+${stats.Health}%`, t("t12x_max_pct").replace("{n}", statMax.Health))}
+        ${box(t("resource_steel"), shortAmount(needed.steel), t("t12x_to_target"))}
+        ${box("RFC", shortAmount(needed.refined_fc), t("t12x_to_target"))}
+        ${box(t("t12x_shard"), shortAmount(needed.fc_shard), t("t12x_to_target"))}
+        ${box(t("time_label"), t12FormatTime(applyResearchPct(needed.time_hours)), t("t12x_to_target"))}
+      </div>`;
+    };
+    const nodeHtml = (def) => {
+      const cur = T12_STATE[troop][def.key] || 0, target = t12TargetOf(troop, def);
+      const n = computeNeeded(T12_STATE[troop], troop, [def]);
+      const opts = Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === target ? "selected" : ""}>${i}</option>`).join("");
+      const note = cur >= def.max ? `<span class="t12x-done">&#10003; ${esc(t("t12x_done"))}</span>` : target <= cur ? `<span class="meta">${esc(t("t12x_not_planned"))}</span>` : `<span class="meta">${esc(costLine(n))}</span>`;
+      return `<div class="t12x-node" data-t12node="${def.key}">
+        <div class="t12x-nm"><span>${esc(tT12Label(def.label))}</span>${note}</div>
+        <div class="t12x-step">
+          <button type="button" data-t12dec="${def.key}" aria-label="−" ${cur <= 0 ? "disabled" : ""}>&minus;</button>
+          <b title="${esc(t("research_current"))}">${cur}</b>
+          <button type="button" data-t12inc="${def.key}" aria-label="+" ${cur >= def.max ? "disabled" : ""}>+</button>
+          <span class="meta">&rarr;</span>
+          <select data-t12target="${def.key}" title="${esc(t("research_target"))}"${target < cur ? ` style="border-color:var(--danger);"` : ""}>${opts}</select>
+          <span class="meta">/ ${def.max}</span>
         </div>
-        <div class="stats-row-scroll sr-2col" style="margin-bottom:14px;">
-          ${t12ResourceCard(T12_RESOURCE_ICONS.steel, t("resource_steel"), Math.round(needed.steel).toLocaleString())}
-          ${t12ResourceCard(T12_RESOURCE_ICONS.refined_fc, t("resource_refined_fc"), Math.round(needed.refined_fc).toLocaleString())}
-          ${t12ResourceCard(T12_RESOURCE_ICONS.fc_shard, t("resource_fc_shard"), Math.round(needed.fc_shard).toLocaleString())}
-          ${t12ResourceCard(null, t("time_label"), t12FormatTime(applyResearchPct(needed.time_hours)))}
-        </div>`;
+        <div class="t12x-bar"><i style="width:${(Math.min(cur, def.max) / def.max) * 100}%;${cur >= def.max ? " background:var(--good);" : ""}"></i></div>
+      </div>`;
+    };
+    const groupInfo = (group) => {
+      const defs = T12_ITEM_DEFS.filter((d) => d.group === group);
+      const pct = donePct([troop], defs);
+      const maxed = defs.every((d) => (T12_STATE[troop][d.key] || 0) >= d.max);
+      const planned = defs.some((d) => t12TargetOf(troop, d) > (T12_STATE[troop][d.key] || 0));
+      const sub = maxed ? t("t12x_all_maxed") : planned ? costLine(computeNeeded(T12_STATE[troop], troop, defs)) || t("t12x_planned") : t("t12x_not_planned");
+      return { defs, pct, maxed, planned, sub };
+    };
+    const groupHeadHtml = (group) => {
+      const g = groupInfo(group);
+      const open = t12Open[group] !== undefined ? t12Open[group] : g.planned;
+      return `<div class="t12x-ring" style="--p:${g.pct * 3.6}deg; --c:${g.pct >= 100 ? "var(--good)" : "var(--ice)"};"><span>${g.pct}%</span></div>
+        <div class="t12x-gt">${esc(tT12Group(group))}<small>${esc(g.defs.length === 1 ? t("t12x_node1") : t("t12x_nodes").replace("{n}", g.defs.length))} · ${esc(g.sub)}</small></div>
+        <button type="button" class="t12x-maxall" data-t12maxgroup="${esc(group)}">${esc(t(g.maxed ? "t12x_reset" : "t12x_max_all"))}</button>
+        <span class="t12x-fold">${open ? "&#9662;" : "&#9656;"}</span>`;
     };
     troopsEl.innerHTML = `
-      <div class="panel">
-        <h2>${esc(troopDisplayName(troop))}</h2>
-        <div data-t12head>${headHtml()}</div>
-        ${groups
-          .map((group) => {
-            const defs = T12_ITEM_DEFS.filter((d) => d.group === group);
-            const isSingle = defs.length === 1;
-            return `
-          <div style="padding:10px 0; border-top:1px solid var(--line);">
-            <div class="meta" style="margin-bottom:8px; font-weight:600; color:var(--frost); ${isSingle ? "text-align:center;" : ""}">${esc(tT12Group(group))}</div>
-            <div class="${isSingle ? "" : `t12-grid t12-grid-${defs.length}`}" style="display:${isSingle ? "flex" : "grid"}; ${isSingle ? "justify-content:center;" : `grid-template-columns:repeat(${defs.length}, 1fr);`} gap:12px;">
-              ${defs
-                .map(
-                  (def) => `
-                <div style="${isSingle ? "width:260px; text-align:center;" : ""}">
-                  <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(tT12Label(def.label))}</div>
-                  ${levelSelectHtml(def, T12_STATE[troop][def.key] || 0, t12TargetOf(troop, def))}
-                </div>`
-                )
-                .join("")}
-            </div>
-          </div>`;
-          })
-          .join("")}
-      </div>`;
-    wireTroopSwipe(troopsEl, T12_TROOPS, t12ActiveTroop, (t) => { t12ActiveTroop = t; renderTroopPanels(); });
+      <div data-t12head>${headHtml()}</div>
+      ${groups.map((group) => {
+        const g = groupInfo(group);
+        const open = t12Open[group] !== undefined ? t12Open[group] : g.planned;
+        return `<div class="t12x-sec" data-t12group="${esc(group)}">
+          <div class="t12x-gh" data-t12fold="${esc(group)}">${groupHeadHtml(group)}</div>
+          <div class="t12x-nodes"${open ? "" : ` style="display:none;"`}>${g.defs.map(nodeHtml).join("")}</div>
+        </div>`;
+      }).join("")}`;
+    wireTroopSwipe(troopsEl, T12_TROOPS, t12ActiveTroop, (tr) => { t12ActiveTroop = tr; renderTroopPanels(); });
 
-    // After a level change only the numbers and the dropdowns' values/red
-    // borders change, so update those instead of rebuilding every dropdown.
-    const refreshPanel = () => {
+    // A level change redraws only that node, its section header, the troop
+    // boxes and the tabs - not every section.
+    const refresh = (def) => {
       const headEl = troopsEl.querySelector("[data-t12head]");
       if (headEl) headEl.innerHTML = headHtml();
-      T12_ITEM_DEFS.forEach((def) => {
-        const cur = T12_STATE[troop][def.key] || 0;
-        const target = t12TargetOf(troop, def);
-        const curSel = troopsEl.querySelector(`select[data-t12item="${def.key}"]`);
-        const tgtSel = troopsEl.querySelector(`select[data-t12target="${def.key}"]`);
-        if (curSel) curSel.value = String(cur);
-        if (tgtSel) { tgtSel.value = String(target); tgtSel.style.borderColor = target < cur ? "var(--danger)" : ""; }
-      });
+      tabsEl.innerHTML = tabsHtml();
+      const nodeEl = troopsEl.querySelector(`[data-t12node="${def.key}"]`);
+      if (nodeEl) nodeEl.outerHTML = nodeHtml(def);
+      const gh = troopsEl.querySelector(`[data-t12fold="${CSS.escape(def.group)}"]`);
+      if (gh) gh.innerHTML = groupHeadHtml(def.group);
     };
-    troopsEl.querySelectorAll("select[data-t12item]").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        T12_STATE[troop][sel.dataset.t12item] = Number(sel.value);
+    const setLevel = (def, v) => {
+      T12_STATE[troop][def.key] = Math.min(def.max, Math.max(0, v));
+      saveCalcState("t12_research", T12_STATE);
+      renderTotals();
+      refresh(def);
+    };
+    troopsEl.onclick = (e) => {
+      const dec = e.target.closest("[data-t12dec]"), inc = e.target.closest("[data-t12inc]");
+      if (dec || inc) {
+        const def = T12_ITEM_DEFS.find((d) => d.key === (dec || inc).dataset[dec ? "t12dec" : "t12inc"]);
+        setLevel(def, (T12_STATE[troop][def.key] || 0) + (dec ? -1 : 1));
+        return;
+      }
+      const mg = e.target.closest("[data-t12maxgroup]");
+      if (mg) {
+        const defs = T12_ITEM_DEFS.filter((d) => d.group === mg.dataset.t12maxgroup);
+        const maxed = defs.every((d) => (T12_STATE[troop][d.key] || 0) >= d.max);
+        defs.forEach((d) => { T12_STATE[troop][d.key] = maxed ? 0 : d.max; });
         saveCalcState("t12_research", T12_STATE);
         renderTotals();
-        refreshPanel();
-      });
-    });
-    troopsEl.querySelectorAll("select[data-t12target]").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        T12_TARGET[troop] = T12_TARGET[troop] || {};
-        T12_TARGET[troop][sel.dataset.t12target] = Number(sel.value);
-        saveCalcState("t12_research_target", T12_TARGET);
-        renderTotals();
-        refreshPanel();
-      });
-    });
+        renderTroopPanels();
+        return;
+      }
+      const fold = e.target.closest("[data-t12fold]");
+      if (fold && !e.target.closest("select")) {
+        const group = fold.dataset.t12fold;
+        const nodes = fold.nextElementSibling;
+        t12Open[group] = nodes.style.display === "none";
+        nodes.style.display = t12Open[group] ? "" : "none";
+        fold.innerHTML = groupHeadHtml(group);
+      }
+    };
+    troopsEl.onchange = (e) => {
+      const sel = e.target.closest("select[data-t12target]");
+      if (!sel) return;
+      T12_TARGET[troop] = T12_TARGET[troop] || {};
+      T12_TARGET[troop][sel.dataset.t12target] = Number(sel.value);
+      saveCalcState("t12_research_target", T12_TARGET);
+      renderTotals();
+      refresh(T12_ITEM_DEFS.find((d) => d.key === sel.dataset.t12target));
+    };
   }
 
   renderTotals();
