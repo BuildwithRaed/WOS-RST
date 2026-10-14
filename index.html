@@ -11283,12 +11283,12 @@ const TRADE_DEFAULT_RATES = {
   t11_helios: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     ...BACKPACK_RES_CHEST_RULES,
-    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 }, // Research Lab: 1 FC = 1.3 shards
+    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 500 }, // Research Lab: 10 FC = 13 shards, up to 500 trades a week
   ],
   t12_research: [
     { from: "Speedups (minutes)", to: "Research Speedups (minutes)", give: 1, get: 1, max: 0, hidden: true, silent: true },
     ...BACKPACK_RES_CHEST_RULES,
-    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 0 },
+    { from: "Fire Crystal", to: "FC Shard", give: 10, get: 13, max: 500 },
   ],
   // A Pet Chest opens into ONE of these (your choice): the planner turns
   // chests into whichever the plan is short of. Hidden - a rule, not a trade.
