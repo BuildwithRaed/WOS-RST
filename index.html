@@ -418,6 +418,21 @@ input,select,textarea{
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
   .bp-tile.bp-epic img{ border-color:#a46ae0; }
   .bp-tile.bp-rare img{ border-color:#4a9be8; }
+  /* Backpack summary (Design C): what's still missing, ready items as chips */
+  .bs-box{ margin-bottom:12px; }
+  .bs-sum{ display:flex; gap:8px; margin-bottom:10px; }
+  .bs-sum > div{ flex:1; border-radius:12px; padding:8px 10px; font-size:11px; color:var(--muted); background:rgba(255,255,255,.04); }
+  .bs-sum b{ display:block; font-size:18px; }
+  .bs-row{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; margin-bottom:6px; background:rgba(255,107,107,.08); border:1px solid rgba(255,107,107,.22); }
+  .bs-row img{ width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+  .bs-row .n{ flex:1; min-width:0; font-size:13px; font-weight:600; }
+  .bs-row .n small{ display:block; font-weight:400; font-size:11px; color:var(--muted); }
+  .bs-row b{ font-size:13px; color:var(--danger); white-space:nowrap; }
+  .bs-ok{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .bs-ok span{ display:flex; align-items:center; gap:5px; font-size:11px; padding:4px 9px; border-radius:999px; background:rgba(76,209,138,.08); border:1px solid rgba(76,209,138,.25); }
+  .bs-ok img{ width:16px; height:16px; object-fit:contain; }
+  .bs-foot{ display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--muted); margin-top:10px; }
+  .bs-foot .linklike{ background:none; border:0; padding:0; font:inherit; font-size:12px; color:var(--ice); text-decoration:underline; cursor:pointer; }
   /* Planner boxes filled from the Backpack */
   .bp-ro{ padding:8px 10px; font-size:14px; border:1px dashed var(--line); border-radius:8px; color:var(--frost); }
   .bp-link{ display:block; font-size:10px; color:var(--muted); margin-top:3px; }
@@ -3073,6 +3088,13 @@ const T = {
   your_backpack: { en: "Your backpack", ar: "حقيبتك", ko: "내 배낭" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have.", ar: "كل العناصر التي يستخدمها الموقع. اضغط على عنصر لكتابة الكمية التي لديك.", ko: "사이트에서 쓰는 모든 아이템입니다. 아이템을 눌러 보유 수량을 입력하세요." },
   backpack_scan: { en: "Scan screenshot", ar: "مسح لقطة شاشة", ko: "스크린샷 스캔" },
+  bs_short: { en: "still short", ar: "ما زال ناقصًا", ko: "부족" },
+  bs_ready: { en: "ready", ar: "جاهز", ko: "준비됨" },
+  bs_nothing: { en: "Nothing needed yet.", ar: "لا شيء مطلوب بعد.", ko: "아직 필요한 것이 없습니다." },
+  bs_have_of: { en: "have {have} of {need}", ar: "لديك {have} من {need}", ko: "{need} 중 {have} 보유" },
+  bs_from_backpack: { en: "Amounts from your Backpack", ar: "الكميات من حقيبتك", ko: "배낭의 수량" },
+  bs_show_all: { en: "Show all / edit", ar: "عرض الكل / تعديل", ko: "모두 보기 / 편집" },
+  bs_hide: { en: "Hide boxes", ar: "إخفاء المربعات", ko: "칸 숨기기" },
   bp_link_from: { en: "From Backpack", ar: "من الحقيبة", ko: "배낭에서" },
   bp_link_typed: { en: "Typed", ar: "مكتوب يدويًا", ko: "직접 입력" },
   bp_chest_chance: { en: "Chance chest: not counted", ar: "صندوق حظ: لا يُحسب", ko: "확률 상자: 계산 안 함" },
@@ -12727,6 +12749,16 @@ async function renderChiefGearCalc() {
 // against the same shared owned amounts.
 // Full material names are too long to fit "AVAILABLE BACKPACK" in one row
 // on most screens - shorten just for display here (data keys stay the same).
+// Pages whose Backpack shows the short summary (what's still missing, ready
+// items as chips) with the boxes behind "Show all / edit".
+const BAR_SUMMARY_KEYS = new Set(["t12_research"]);
+const BAR_SHOW_ALL = {}; // { calcKey: true } - boxes open, for the visit
+// Big amounts in short form: 10.83B, 4.57M, 92.2K, 7,486.
+function shortAmount(v) {
+  const n = Number(v) || 0, a = Math.abs(n);
+  const cut = (x, d) => x.toFixed(d).replace(/\.?0+$/, "");
+  return a >= 1e9 ? `${cut(n / 1e9, 2)}B` : a >= 1e6 ? `${cut(n / 1e6, 2)}M` : a >= 1e4 ? `${cut(n / 1e3, 1)}K` : Math.round(n).toLocaleString();
+}
 const MATERIAL_NAME_SHORT = {
   "Hardened Alloy": "Alloy",
   "Polishing Solution": "Polish",
@@ -12805,11 +12837,31 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     return { statusColor, statusText };
   }
 
-  function materialCellHtml([name]) {
+  const iconFor = (name) => {
     const lower = name.toLowerCase();
     const custom = packCustomResource(name);
     const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
-    const iconSrc = BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "");
+    if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
+    return BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "");
+  };
+  // Short summary: items still missing (with how much), ready ones as chips.
+  const summaryOn = BAR_SUMMARY_KEYS.has(calcKey || "chief_gear");
+  const summaryHtml = () => {
+    const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
+    const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
+    const label = (n) => materialDisplayName(MATERIAL_NAME_SHORT[n] || n).replace(/\s*\((minutes|min)\)$/, "");
+    const items = names.filter((n) => needOf(n) > 0);
+    const short = items.filter((n) => (effOwned[n] || 0) < needOf(n));
+    const ready = items.filter((n) => !short.includes(n));
+    const img = (n, cls) => { const src = iconFor(n); return src ? `<img src="${esc(src)}" alt=""${cls ? ` class="${cls}"` : ""} />` : ""; };
+    return `${items.length ? `<div class="bs-sum"><div><b style="color:var(--danger);">${short.length}</b>${esc(t("bs_short"))}</div><div><b style="color:var(--good);">${ready.length}</b>${esc(t("bs_ready"))}</div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+      ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&minus;${esc(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
+      ${ready.length ? `<div class="bs-ok">${ready.map((n) => `<span>${img(n)}${esc(label(n))} &#10003;</span>`).join("")}</div>` : ""}
+      <div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>`;
+  };
+
+  function materialCellHtml([name]) {
+    const iconSrc = iconFor(name);
     const icon = iconSrc ? `<img src="${esc(iconSrc)}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
     const haveQty = owned[name] || 0;
     const shortName = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
@@ -12839,7 +12891,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
 
   el.innerHTML = `
-    <div id="${rowsId}" class="mat-row">${matEntries.map(materialCellHtml).join("")}</div>
+    ${summaryOn ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
+    <div id="${rowsId}" class="mat-row"${summaryOn && !BAR_SHOW_ALL[calcKey] ? ` style="display:none;"` : ""}>${matEntries.map(materialCellHtml).join("")}</div>
     <div id="${rowsId}_trades"></div>
     <div id="${rowsId}_packs"></div>
   `;
@@ -12870,6 +12923,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     }));
     renderTradeBlock(document.getElementById(`${rowsId}_trades`), calcKey || "chief_gear", groups, calcOwned, refreshPacks);
     renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
+    const sum = document.getElementById(`${rowsId}_sum`);
+    if (sum) sum.innerHTML = summaryHtml();
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
     input.addEventListener("change", () => {
@@ -12884,6 +12939,12 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     });
   });
   el.addEventListener("click", (e) => {
+    if (e.target.closest("[data-bstoggle]")) {
+      BAR_SHOW_ALL[calcKey] = !BAR_SHOW_ALL[calcKey];
+      document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
+      document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
+      return;
+    }
     const b = e.target.closest("[data-bpuse]");
     if (!b) return;
     const name = b.dataset.bpuse;
@@ -15941,11 +16002,8 @@ async function renderExpertsPage() {
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>${esc(t("backpack_title"))}</h2>
-      <div class="stats-row-scroll" id="expertsInventory"></div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>${esc(t("resources_needed_title"))}</h2>
-      <div class="stats-row-scroll sr-2col" id="expertsTotals"></div>
+      <div id="expertsSummary" class="bs-box"></div>
+      <div class="stats-row-scroll" id="expertsInventory"${BAR_SHOW_ALL.experts ? "" : ` style="display:none;"`}></div>
       <div id="expertsPacks"></div>
     </div>
     <div id="expertsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
@@ -16141,7 +16199,13 @@ async function renderExpertsPage() {
     tundraEl.innerHTML = statHeaderHtml(totals, maxTotals);
   }
 
-  const totalsEl = document.getElementById("expertsTotals");
+  const totalsEl = document.getElementById("expertsSummary");
+  totalsEl.addEventListener("click", (ev) => {
+    if (!ev.target.closest("[data-bstoggle]")) return;
+    BAR_SHOW_ALL.experts = !BAR_SHOW_ALL.experts;
+    document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts ? "" : "none";
+    renderTotals();
+  });
   function renderTotals() {
     let totalExp = 0, totalBook = 0, totalAffinity = 0, totalSigil = 0;
     const sigilNeededByExpert = {};
@@ -16170,8 +16234,6 @@ async function renderExpertsPage() {
     // Offset against Your Inventory: Books/Affinity subtract directly;
     // Sigils use each expert's own sigils first, General Sigils cover the rest;
     // Time subtracts owned Speedup minutes.
-    const stillBook = Math.max(0, totalBook - (Number(invSaved["Books of Knowledge"]) || 0));
-    const stillAffinity = Math.max(0, totalAffinity - affinityOwnedFrom(invSaved));
     let sigilShortfall = 0;
     EXPERTS_SHOWN.forEach((e) => {
       const owned = Number(invSaved[`${e.key} Sigils`]) || 0;
@@ -16180,14 +16242,21 @@ async function renderExpertsPage() {
     const stillSigil = Math.max(0, sigilShortfall - (Number(invSaved["General Sigils"]) || 0));
     const totalTimeHours = totalExp / 3600;
     const ownedSpeedupHours = expertSpeedupOwnedFrom(invSaved) / 60;
-    const stillTimeHours = Math.max(0, totalTimeHours - ownedSpeedupHours);
 
-    totalsEl.innerHTML = `
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("resource_time"))}</div><div class="val" style="font-size:13px;">${formatTimeDHM(totalTimeHours)}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillTimeHours > 0 ? "#e0a030" : "var(--good)"};">${stillTimeHours > 0 ? formatTimeDHM(stillTimeHours) + " " + t("needed_suffix") : t("have_enough")}</div></div>
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("resource_books"))}</div><div class="val" style="font-size:13px;">${Math.round(totalBook).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillBook > 0 ? "#e0a030" : "var(--good)"};">${stillBook > 0 ? Math.round(stillBook).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("resource_affinity"))}</div><div class="val" style="font-size:13px;">${Math.round(totalAffinity).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillAffinity > 0 ? "#e0a030" : "var(--good)"};">${stillAffinity > 0 ? Math.round(stillAffinity).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
-      <div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("resource_sigils"))}</div><div class="val" style="font-size:13px;">${Math.round(totalSigil).toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px; color:${stillSigil > 0 ? "#e0a030" : "var(--good)"};">${stillSigil > 0 ? Math.round(stillSigil).toLocaleString() + " " + t("needed_suffix") : t("have_enough")}</div></div>
-    `;
+    // Short summary (same look as T12): what's still missing, ready items
+    // as chips; the boxes open with "Show all / edit".
+    const rows = [
+      { icon: "icons/speedup-expert.png", label: t("resource_time"), have: ownedSpeedupHours, need: totalTimeHours, fmt: (h) => formatTimeDHM(h) },
+      { icon: EXPERT_INVENTORY_ICONS["Books of Knowledge"], label: t("resource_books"), have: Number(invSaved["Books of Knowledge"]) || 0, need: totalBook },
+      { icon: EXPERT_INVENTORY_ICONS.Affinity, label: t("resource_affinity"), have: affinityOwnedFrom(invSaved), need: totalAffinity },
+      { icon: "icons/item_icon_570000.png", label: t("resource_sigils"), have: totalSigil - stillSigil, need: totalSigil },
+    ].filter((r) => r.need > 0);
+    const amt = (r, v) => (r.fmt ? r.fmt(v) : shortAmount(v));
+    const short = rows.filter((r) => r.have < r.need), ready = rows.filter((r) => r.have >= r.need);
+    totalsEl.innerHTML = `${rows.length ? `<div class="bs-sum"><div><b style="color:var(--danger);">${short.length}</b>${esc(t("bs_short"))}</div><div><b style="color:var(--good);">${ready.length}</b>${esc(t("bs_ready"))}</div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
+      ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&minus;${esc(amt(r, r.need - r.have))}</b></div>`).join("")}
+      ${ready.length ? `<div class="bs-ok">${ready.map((r) => `<span><img src="${esc(r.icon)}" alt="" />${esc(r.label)} &#10003;</span>`).join("")}</div>` : ""}
+      <div class="bs-foot"><span>${Object.keys(bpLink.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts ? "bs_hide" : "bs_show_all"))}</button></div>`;
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
     // Sigils per expert (after their own sigils): an expert's sigil pack only
