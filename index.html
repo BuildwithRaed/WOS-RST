@@ -8466,17 +8466,23 @@ function packApplyMyEdits(tables) {
     return { ...tb, rows, _orig: orig };
   });
 }
+// Callers at the same time (Budgets asks for every page at once) share one load.
+let PACK_TABLES_LOADING = null;
 async function ensurePackTables() {
   if (PACK_TABLES_CACHE) return PACK_TABLES_CACHE;
-  try {
-    await ensurePackLinks();
-    PACK_TABLES_CACHE = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
-      .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
-      .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
-  } catch (e) {
-    PACK_TABLES_CACHE = [];
-  }
-  return PACK_TABLES_CACHE;
+  if (PACK_TABLES_LOADING) return PACK_TABLES_LOADING;
+  PACK_TABLES_LOADING = (async () => {
+    try {
+      await ensurePackLinks();
+      PACK_TABLES_CACHE = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
+        .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
+        .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
+    } catch (e) {
+      PACK_TABLES_CACHE = [];
+    }
+    return PACK_TABLES_CACHE;
+  })().finally(() => { PACK_TABLES_LOADING = null; });
+  return PACK_TABLES_LOADING;
 }
 function packParseNum(v) {
   const n = parseFloat(String(v == null ? "" : v).replace(/[^0-9.-]/g, ""));
@@ -8870,8 +8876,20 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
 function packGemsCountFor(calcKey) {
   return budgetKeysOf(calcKey).includes("pets_refine") && !!(PET_MARKS_STATE && PET_MARKS_STATE.packGems);
 }
+// Built pack groups, kept for the visit: Budgets asks for the same tables
+// for every page (and again on each date change). Cleared by
+// budgetInvalidate() and whenever the pack tables are reloaded; the key also
+// covers what the labels and gems depend on. Callers must not change them.
+let PACK_GROUPS_CACHE = { tables: null, map: new Map() };
 function packGroupsFor(tables, calcKey) {
   const stripGems = !packGemsCountFor(calcKey);
+  if (PACK_GROUPS_CACHE.tables !== PACK_TABLES_CACHE) PACK_GROUPS_CACHE = { tables: PACK_TABLES_CACHE, map: new Map() };
+  const key = [stripGems ? 1 : 0, LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
+  let out = PACK_GROUPS_CACHE.map.get(key);
+  if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
+  return out;
+}
+function packGroupsForBuild(tables, stripGems) {
   const out = packGroupsForRaw(tables);
   if (stripGems) out.forEach((g) => g.offers.forEach((o) => { if (o.gives && o.gives.Gems != null) { const gv = { ...o.gives }; delete gv.Gems; o.gives = gv; } }));
   return out.filter((g) => g.offers.some((o) => Object.keys(o.gives).length)).map((g) => ({ ...g, offers: g.offers.filter((o) => Object.keys(o.gives).length || g.ladder) }));
@@ -10818,7 +10836,9 @@ function budgetCombinedInput(pages, selected) {
   const seen = new Set(), tables = [];
   cands.forEach((pg) => (pg.tables || []).forEach((tb) => { if (!seen.has(String(tb.id))) { seen.add(String(tb.id)); tables.push(tb); } }));
   const allGroups = cands.length ? packGroupsFor(tables, "__budget:" + cands.map((pg) => pg.calcKey).join(",")) : [];
-  const lite = pages.map((pg) => ({ calcKey: pg.calcKey, missing: !!pg.missing, need: pg.need || {}, packGroups: pg.packGroups || [], supplied: pg.supplied ? [...pg.supplied] : [], tableIds: (pg.tables || []).map((tb) => String(tb.id)) }));
+  // Only the ticked pages' packs are sent: copying every page's packs to the
+  // background planner took longer than the planning itself.
+  const lite = pages.map((pg) => ({ calcKey: pg.calcKey, missing: !!pg.missing, need: pg.need || {}, packGroups: cands.includes(pg) ? (pg.packGroups || []) : [], supplied: pg.supplied ? [...pg.supplied] : [], tableIds: (pg.tables || []).map((tb) => String(tb.id)) }));
   return { pages: lite, selected: selected || {}, allGroups };
 }
 // Runs the combined plan (and the own plans of pages it had to leave out).
@@ -11017,7 +11037,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; }
+function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map() }; }
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
   if (!dataReady) {
