@@ -3014,6 +3014,7 @@ const T = {
   no_sources_yet: { en: "No sources yet", ar: "لا توجد مصادر بعد", ko: "아직 소스가 없습니다" },
   hero_gear_switch_note: { en: "Switches which Hero Gears loadout is counted \u2014 everything else stays the same.", ar: "يبدّل مجموعة معدات الأبطال المحتسبة \u2014 كل شيء آخر يبقى كما هو.", ko: "계산에 반영되는 영웅 장비 세트를 전환합니다 \u2014 나머지는 그대로 유지됩니다." },
   roster_heroes_title: { en: "Roster heroes", ar: "أبطال التشكيلة", ko: "로스터 영웅" },
+  roster_max_top_gen: { en: "Max uses your highest Gen for all heroes", ar: "الحد الأقصى يستخدم أعلى جيل لديك لكل الأبطال", ko: "최대치에 가장 높은 세대를 모든 영웅에 적용" },
   count_in_dashboard: { en: "Count in Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
   pick_hero_placeholder: { en: "Pick<br>hero", ar: "اختر<br>البطل", ko: "영웅<br>선택" },
   none_label: { en: "None", ar: "لا شيء", ko: "없음" },
@@ -4165,13 +4166,28 @@ async function renderOverview(opts = {}) {
   // Roster Heroes' contribution to a given troop+stat: ATT/DEF come from
   // the hero's star level, DMG/HP from their widget (Exclusive Gear) level.
   // Returns 0 if that troop's roster slot is empty or turned off.
+  // "Max uses your highest Gen": the max of every troop's slot is worked out
+  // with the highest generation among the picked heroes (current values
+  // still use each picked hero).
+  const rosterTopGen = () => {
+    if (!ROSTER_STATE.maxTopGen) return null;
+    let top = null;
+    ["Infantry", "Lancers", "Marksman"].forEach((k) => {
+      const { heroId } = rosterEntryFor(k);
+      const h = heroId && ROSTER_HERO_CATALOG.find((x) => x.id === heroId);
+      if (h && h.generation != null && (top == null || Number(h.generation) > top)) top = Number(h.generation);
+    });
+    return top;
+  };
   function rosterCalcValue(troop, statKey, useMax) {
     const { heroId, widget, used } = rosterEntryFor(troop);
-    if (!used || !heroId) return 0;
-    const hero = ROSTER_HERO_CATALOG.find((h) => h.id === heroId);
-    if (!hero) return 0;
+    const topGen = useMax ? rosterTopGen() : null;
+    if (!used || (!heroId && topGen == null)) return 0;
+    const hero = heroId ? ROSTER_HERO_CATALOG.find((h) => h.id === heroId) : null;
+    if (!hero && topGen == null) return 0;
+    const gen = topGen != null ? topGen : hero.generation;
     if (statKey === "ATT" || statKey === "DEF") {
-      const table = ROSTER_STAR_STATS_BY_GEN[hero.generation];
+      const table = ROSTER_STAR_STATS_BY_GEN[gen];
       if (!table) return 0;
       const step = useMax ? 30 : (() => { const { star, sub } = rosterStarsOf(hero.id); return star * 6 + sub; })();
       const row = table[step];
@@ -4179,7 +4195,7 @@ async function renderOverview(opts = {}) {
       return Number(statKey === "ATT" ? row.atk_pct : row.def_pct) || 0;
     }
     if (statKey === "DMG" || statKey === "HP") {
-      const table = ROSTER_WIDGET_STATS_BY_GEN[hero.generation];
+      const table = ROSTER_WIDGET_STATS_BY_GEN[gen];
       if (!table) return 0;
       const level = useMax ? 10 : widget;
       const row = table[level];
@@ -4783,6 +4799,14 @@ async function renderOverview(opts = {}) {
           </div>
         </div>
         <div id="rosterCollapseBody" style="${collapsed ? "display:none;" : ""}">
+        ${(() => {
+          const gens = TROOP_TYPES.map((t) => heroCatalog.find((h) => h.id === entryFor(t.key).heroId)).filter((h) => h && h.generation != null).map((h) => Number(h.generation));
+          if (!gens.length) return "";
+          return `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; margin:10px 0 12px;">
+            <input type="checkbox" id="rosterMaxTopGen" ${roster.maxTopGen ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
+            <span class="meta" style="font-size:11px;">${esc(t("roster_max_top_gen"))} <b style="color:var(--frost);">(${esc(genPrefix)} ${Math.max(...gens)})</b></span>
+          </label>`;
+        })()}
         <div class="grid g3" id="rosterHeroesGrid" style="gap:16px;">
           ${TROOP_TYPES.map((t) => {
             const { heroId, widget, used } = entryFor(t.key);
@@ -4826,6 +4850,12 @@ async function renderOverview(opts = {}) {
         if (countedBefore || anyCounted()) renderOverview();
         else renderRoster();
       };
+      const maxTopGenBox = document.getElementById("rosterMaxTopGen");
+      if (maxTopGenBox) maxTopGenBox.addEventListener("change", () => {
+        roster.maxTopGen = maxTopGenBox.checked;
+        save();
+        renderOverview(); // the max values change
+      });
       const rosterUsedAllBox = document.getElementById("rosterUsedAll");
       if (rosterUsedAllBox) {
         rosterUsedAllBox.addEventListener("change", async () => {
