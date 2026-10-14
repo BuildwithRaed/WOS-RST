@@ -406,6 +406,12 @@ input,select,textarea{
   .bp-tile .bp-size{ position:absolute; top:4px; inset-inline-start:6px; font-size:9.5px; font-weight:700; color:var(--frost); }
   .bp-tile .bp-qty{ font-size:13px; font-weight:700; }
   .bp-tile .bp-qty.zero{ color:var(--muted); }
+  .bp-tile.bp-add{ border-style:dashed; }
+  .bp-tile.bp-add .bp-ph{ font-size:26px; color:var(--ice); }
+  .bp-tile.bp-hero img{ width:40px; height:40px; object-fit:cover; border-radius:8px; border:2px solid var(--line); }
+  .bp-tile.bp-legendary img{ border-color:#e8913a; }
+  .bp-tile.bp-epic img{ border-color:#a46ae0; }
+  .bp-tile.bp-rare img{ border-color:#4a9be8; }
   .bp-tile .bp-name{ font-size:9.5px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
@@ -3044,6 +3050,14 @@ const T = {
   backpack_search: { en: "Search items...", ar: "ابحث عن العناصر...", ko: "아이템 검색..." },
   backpack_items_count: { en: "{n} items", ar: "{n} عناصر", ko: "{n}개" },
   backpack_speedups: { en: "Speedups", ar: "التسريعات", ko: "가속" },
+  backpack_hero_shards: { en: "Hero Shards", ar: "شظايا الأبطال", ko: "영웅 조각" },
+  backpack_mythic_heroes: { en: "Mythic heroes", ar: "الأبطال الأسطوريون", ko: "신화 영웅" },
+  backpack_epic_heroes: { en: "Epic heroes", ar: "الأبطال الملحميون", ko: "에픽 영웅" },
+  backpack_rare_heroes: { en: "Rare heroes", ar: "الأبطال النادرون", ko: "레어 영웅" },
+  backpack_add_hero: { en: "Add hero", ar: "إضافة بطل", ko: "영웅 추가" },
+  backpack_pick_hero: { en: "Pick heroes to track their shards", ar: "اختر الأبطال لتتبع شظاياهم", ko: "조각을 기록할 영웅을 선택하세요" },
+  backpack_remove_hero: { en: "Remove", ar: "إزالة", ko: "삭제" },
+  backpack_all_added: { en: "All heroes of this kind are added.", ar: "تمت إضافة كل الأبطال من هذا النوع.", ko: "이 등급의 영웅은 모두 추가되었습니다." },
   backpack_no_match: { en: "No items match your search.", ar: "لا توجد عناصر تطابق البحث.", ko: "검색과 일치하는 아이템이 없습니다." },
   backpack_title: { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
   troops_stats_title: { en: "Troops Stats", ar: "إحصائيات الجنود", ko: "부대 스탯" },
@@ -7540,12 +7554,14 @@ const BACKPACK_DEFAULT_GROUPS = [
   ["Fire Crystal", ["Fire Crystal", "FC Shard", "Refined FC", "FC Chest", "FC Crate"]],
   ["Resources", ["Meat", "Wood", "Coal", "Iron", "Steel", "Gems"]],
   ["Pet", ["Food", "Manual", "Potion", "Serum", "Pet Chest", "Common Marks", "Advanced Marks"]],
+  ["Hero Shards", ["Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard"]],
   ["Experts", ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", ...["Cyrille", "Agnes", "Holger", "Romulus", "Fabian", "Baldur", "Valeria", "Ronne", "Kathy", "Gareth", "Justus"].map((n) => `${n} Sigils`)]],
   ["General Speedups", ["1m", "3m", "5m", "1h", "3h", "8h"].map((z) => `Speedup ${z}`)],
   ...["Research", "Troop", "Construction", "Expert"].map((k) => [`${k} Speedups`, ["1m", "5m", "1h", "3h", "8h"].map((z) => `${k} Speedup ${z}`)]),
 ];
 const BACKPACK_DEFAULT_ITEMS = BACKPACK_DEFAULT_GROUPS.flatMap(([group, names]) => names.map((name) => ({ group, name, icon: "" })));
 const BP_MINUTES = { "1m": 1, "3m": 3, "5m": 5, "1h": 60, "3h": 180, "8h": 480 };
+const BP_SHARD_ICONS = { "Mythic General Hero Shard": "icons/item_icon_500220.png", "Epic General Hero Shard": "icons/item_icon_500221.png", "Rare General Hero Shard": "icons/item_icon_500222.png" };
 const BP_CHEST_ICONS = { "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
 // Speedup items ("Research Speedup 1h") show their size and add up to a total.
 const bpSpeedupSize = (name) => { const m = /speedup (\d+[mh])$/i.exec(name); return m && BP_MINUTES[m[1]] ? m[1] : null; };
@@ -7567,6 +7583,7 @@ function bpIcon(item) {
   const name = item.name;
   if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
   if (BP_CHEST_ICONS[name]) return BP_CHEST_ICONS[name];
+  if (BP_SHARD_ICONS[name]) return BP_SHARD_ICONS[name];
   if (/^XP 10/.test(name)) return "icons/XP-Component.png";
   if (/speedup/i.test(name)) return "icons/item_icon_302000.png";
   const custom = packCustomResource(name);
@@ -7579,19 +7596,37 @@ let BP_TAB = "All";
 let BP_SEARCH = "";
 async function renderInventory() {
   const seq = RENDER_SEQ;
-  const [, saved] = await Promise.all([ensureSiteConfig(), loadCalcState("backpack")]);
+  const [, saved, heroes, savedHeroes] = await Promise.all([
+    ensureSiteConfig(), loadCalcState("backpack"),
+    // Same request (and kept copy) as the Dashboard's hero list.
+    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
+    loadCalcState("backpack_heroes"),
+  ]);
   if (seq !== RENDER_SEQ) return;
   const bp = saved || {};
+  // Heroes whose shards this person tracks (they add them one by one).
+  const myHeroes = Array.isArray(savedHeroes) ? savedHeroes.slice() : [];
   const groups = backpackItems();
+  // Each added hero's own shards (saved as "<hero name> Shards"), with an
+  // "Add hero" tile per rarity.
+  const shardTab = t("backpack_hero_shards");
+  const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
+    title: t(key), heroShards: true, rarity,
+    all: (heroes || []).filter((h) => h.rarity === rarity),
+    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).map((h) => ({ name: `${h.name} Shards`, icon: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity })),
+  })).filter((g) => g.all.length);
+  const generalIdx = groups.findIndex((g) => g.title === "Hero Shards");
+  if (generalIdx !== -1) groups[generalIdx].heroShards = true;
+  if (heroGroups.length) groups.splice(generalIdx !== -1 ? generalIdx + 1 : groups.length, 0, ...heroGroups);
   const speedupsTab = t("backpack_speedups");
-  const tabs = [t("all_label")].concat(groups.filter((g) => !g.speedups).map((g) => g.title), groups.some((g) => g.speedups) ? [speedupsTab] : []);
+  const tabs = [t("all_label")].concat(groups.filter((g) => !g.speedups && !g.heroShards).map((g) => g.title), groups.some((g) => g.heroShards) ? [shardTab] : [], groups.some((g) => g.speedups) ? [speedupsTab] : []);
   if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
   const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
   const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
   const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : "—";
   const tile = (it, sp) => {
-    const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = materialDisplayName(it.name);
-    return `<button type="button" class="bp-tile" data-bpitem="${esc(it.name)}" data-bpname="${esc((it.name + " " + label).toLowerCase())}" title="${esc(label)}">
+    const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
+    return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t("backpack_hero_shards")}` : label)}">
       ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
       ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : ""}
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
@@ -7599,13 +7634,14 @@ async function renderInventory() {
     </button>`;
   };
   const drawGroups = () => {
-    const shown = BP_TAB === tabs[0] ? groups : BP_TAB === speedupsTab ? groups.filter((g) => g.speedups) : groups.filter((g) => g.title === BP_TAB);
+    const shown = BP_TAB === tabs[0] ? groups : BP_TAB === speedupsTab ? groups.filter((g) => g.speedups) : BP_TAB === shardTab ? groups.filter((g) => g.heroShards) : groups.filter((g) => g.title === BP_TAB);
     const q = BP_SEARCH.trim().toLowerCase();
     const html = shown.map((g) => {
-      const items = q ? g.items.filter((it) => (it.name + " " + materialDisplayName(it.name) + " " + g.title).toLowerCase().includes(q)) : g.items;
-      if (!items.length) return "";
+      const items = q ? g.items.filter((it) => (it.name + " " + (it.hero || materialDisplayName(it.name)) + " " + g.title).toLowerCase().includes(q)) : g.items;
+      const addTile = g.rarity && !q ? `<button type="button" class="bp-tile bp-add" data-bpaddhero="${esc(g.rarity)}"><span class="bp-ph">+</span><span class="bp-name">${esc(t("backpack_add_hero"))}</span></button>` : "";
+      if (!items.length && !addTile) return "";
       return `<div class="bp-head"><h3>${esc(g.title)}</h3><span class="meta">${g.speedups ? fmtMin(minutesOf(g)) : esc(t("backpack_items_count").replace("{n}", g.items.length))}</span></div>
-        <div class="bp-grid">${items.map((it) => tile(it, g.speedups)).join("")}</div>`;
+        <div class="bp-grid">${items.map((it) => tile(it, g.speedups)).join("")}${addTile}</div>`;
     }).join("");
     document.getElementById("bpGroups").innerHTML = html || `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
   };
@@ -7619,23 +7655,56 @@ async function renderInventory() {
   drawGroups();
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
+  const openModal = (html) => {
+    let modal = document.getElementById("bpModal");
+    if (!modal) { modal = document.createElement("div"); modal.id = "bpModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+    modal.innerHTML = html;
+    modal.style.display = "flex";
+    modal.onclick = (ev) => { if (ev.target === modal) modal.style.display = "none"; };
+    return modal;
+  };
+  const saveHeroes = () => { saveCalcState("backpack_heroes", myHeroes); renderInventory(); };
   document.getElementById("bpGroups").addEventListener("click", (e) => {
+    const addEl = e.target.closest("[data-bpaddhero]");
+    if (addEl) {
+      const g = heroGroups.find((x) => x.rarity === addEl.dataset.bpaddhero);
+      const left = g.all.filter((h) => !myHeroes.includes(h.name));
+      const modal = openModal(`<div class="modal-box" style="max-width:520px; max-height:80vh; overflow-y:auto;">
+          <h2 style="margin:0 0 4px; font-size:16px;">${esc(g.title)}</h2>
+          <p class="desc" style="margin:0 0 10px;">${esc(t("backpack_pick_hero"))}</p>
+          ${left.length ? `<div class="bp-grid">${left.map((h) => `<button type="button" class="bp-tile bp-hero bp-${esc(h.rarity.toLowerCase())}" data-bppick="${esc(h.name)}">${h.image_url ? `<img src="${esc(h.image_url)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(h.name[0])}</span>`}<span class="bp-name">${esc(dataName(h.name))}</span></button>`).join("")}</div>` : `<div class="meta">${esc(t("backpack_all_added"))}</div>`}
+          <div style="text-align:end; margin-top:12px;"><button class="btn" type="button" data-bpdone>${esc(t("save"))}</button></div>
+        </div>`);
+      // Tap to tick heroes, then Save adds them all.
+      const picked = new Set();
+      modal.querySelectorAll("[data-bppick]").forEach((b) => b.addEventListener("click", () => {
+        const n = b.dataset.bppick;
+        if (picked.has(n)) { picked.delete(n); b.style.borderColor = ""; b.style.boxShadow = ""; }
+        else { picked.add(n); b.style.borderColor = "var(--ice)"; b.style.boxShadow = "0 0 0 2px var(--ice) inset"; }
+      }));
+      modal.querySelector("[data-bpdone]").onclick = () => {
+        modal.style.display = "none";
+        if (!picked.size) return;
+        heroes.forEach((h) => { if (picked.has(h.name) && !myHeroes.includes(h.name)) myHeroes.push(h.name); });
+        saveHeroes();
+      };
+      return;
+    }
     const tileEl = e.target.closest("[data-bpitem]");
     if (!tileEl) return;
     const name = tileEl.dataset.bpitem;
     const it = groups.flatMap((g) => g.items).find((x) => x.name === name) || { name, icon: "" };
     const ic = bpIcon(it);
-    let modal = document.getElementById("bpModal");
-    if (!modal) { modal = document.createElement("div"); modal.id = "bpModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-    modal.innerHTML = `<div class="modal-box" style="max-width:300px; text-align:center;">
-        ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:contain;" />` : ""}
-        <h2 style="margin:6px 0 10px; font-size:16px;">${esc(materialDisplayName(name))}</h2>
+    const title = it.hero ? `${it.hero} — ${t("backpack_hero_shards")}` : materialDisplayName(name);
+    const modal = openModal(`<div class="modal-box" style="max-width:300px; text-align:center;">
+        ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:${it.hero ? "cover; border-radius:10px" : "contain"};" />` : ""}
+        <h2 style="margin:6px 0 10px; font-size:16px;">${esc(title)}</h2>
         <input id="bpQty" type="number" min="0" inputmode="numeric" value="${Number(bp[name]) || ""}" placeholder="0" style="width:100%; text-align:center; font-size:18px;" />
         <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          ${it.heroKey ? `<button class="btn ghost" type="button" id="bpRemove" style="margin-inline-end:auto; color:var(--danger);">${esc(t("backpack_remove_hero"))}</button>` : ""}
           <button class="btn ghost" type="button" id="bpCancel">${esc(t("cancel"))}</button>
           <button class="btn" type="button" id="bpSave">${esc(t("save"))}</button>
-        </div></div>`;
-    modal.style.display = "flex";
+        </div></div>`);
     const input = modal.querySelector("#bpQty");
     input.focus(); input.select();
     const close = () => { modal.style.display = "none"; };
@@ -7646,8 +7715,16 @@ async function renderInventory() {
       close();
       drawGroups();
     };
-    modal.onclick = (ev) => { if (ev.target === modal) close(); };
     modal.querySelector("#bpCancel").onclick = close;
+    const rm = modal.querySelector("#bpRemove");
+    if (rm) rm.onclick = () => {
+      close();
+      const i = myHeroes.indexOf(it.heroKey);
+      if (i !== -1) myHeroes.splice(i, 1);
+      delete bp[name];
+      saveCalcState("backpack", bp);
+      saveHeroes();
+    };
     modal.querySelector("#bpSave").onclick = save;
     input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
   });
