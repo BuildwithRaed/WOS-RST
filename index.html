@@ -481,11 +481,17 @@ input,select,textarea{
     .t12x-boxes img{ width:22px; height:22px; }
   }
   /* Backpack summary (Design C): what's still missing, ready items as chips */
-  .mat-row.bs-edit{ display:flex; flex-direction:column; gap:0; margin-top:10px; }
-  .mat-row.bs-edit > div{ display:grid !important; grid-template-columns:minmax(0,1fr) 128px; column-gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--line); }
-  .mat-row.bs-edit > div > :first-child{ grid-column:1; margin:0 !important; flex:none; }
-  .mat-row.bs-edit > div > input, .mat-row.bs-edit > div > .bp-ro{ grid-column:2; grid-row:1 / span 4; text-align:end; }
-  .mat-row.bs-edit > div > :not(:first-child):not(input):not(.bp-ro){ grid-column:1; margin-top:1px !important; }
+  .bs-edit{ margin-top:6px; }
+  .bs-ghead{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:12px 0 4px; }
+  .bs-item{ display:grid; grid-template-columns:26px minmax(0,1fr) 112px; grid-template-rows:auto auto; column-gap:10px; row-gap:3px; align-items:center; padding:7px 0; border-top:1px solid var(--line); }
+  .bs-ghead + .bs-item{ border-top:0; }
+  .bs-item > img, .bs-item > span:first-child{ width:26px; height:26px; object-fit:contain; grid-row:1 / span 2; }
+  .bs-name{ font-size:13px; font-weight:600; min-width:0; }
+  .bs-name .bp-link{ display:inline; margin:0; font-weight:400; }
+  .bs-name .bp-link.mini{ font-size:11px; opacity:.8; }
+  .bs-item > input, .bs-item > .bp-ro{ grid-column:3; grid-row:1 / span 2; width:100%; text-align:end; padding:7px 9px; font-size:14px; }
+  .bs-status{ grid-column:2; display:flex; flex-wrap:wrap; gap:4px; }
+  .bs-pill{ display:inline-block; font-size:10.5px; padding:1px 8px; border-radius:999px; background:color-mix(in srgb, currentColor 14%, transparent); }
   .bs-box{ margin-bottom:12px; }
   .bs-sum{ display:flex; gap:8px; margin-bottom:10px; }
   .bs-sum > div{ flex:1; border-radius:12px; padding:8px 10px; font-size:11px; color:var(--muted); background:rgba(255,255,255,.04); }
@@ -3170,6 +3176,13 @@ const T = {
   t12x_max_all: { en: "Max all", ar: "الحد الأقصى للكل", ko: "모두 최대" },
   t12x_reset: { en: "Reset", ar: "إعادة تعيين", ko: "초기화" },
   t12x_shard: { en: "Shard", ar: "شظية", ko: "조각" },
+  bs_short_word: { en: "short", ar: "ناقص", ko: "부족" },
+  bs_spare_word: { en: "spare", ar: "فائض", ko: "여유" },
+  bs_not_needed: { en: "not needed", ar: "غير مطلوب", ko: "필요 없음" },
+  bs_g_fc: { en: "Fire Crystal & Steel", ar: "كريستال النار والفولاذ", ko: "화염 결정 및 강철" },
+  bs_g_resources: { en: "Resources", ar: "الموارد", ko: "자원" },
+  bs_g_speedups: { en: "Speedups", ar: "التسريعات", ko: "가속" },
+  bs_g_chests: { en: "Chests", ar: "الصناديق", ko: "상자" },
   bs_short: { en: "still short", ar: "ما زال ناقصًا", ko: "부족" },
   bs_ready: { en: "ready", ar: "جاهز", ko: "준비됨" },
   bs_nothing: { en: "Nothing needed yet.", ar: "لا شيء مطلوب بعد.", ko: "아직 필요한 것이 없습니다." },
@@ -5705,10 +5718,10 @@ function setBackpackManual(calcKey, name, typed, link) {
   saveCalcState("backpack_manual", link.manual);
 }
 // The small line under a linked box: where its number comes from.
-function backpackLinkNoteHtml(calcKey, name, link) {
+function backpackLinkNoteHtml(calcKey, name, link, compact) {
   if (!Object.keys(link.bp).length || !backpackLinks(calcKey, name)) return "";
   return backpackLinked(calcKey, name, link)
-    ? `<span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>`
+    ? compact ? `<span class="bp-link mini" title="${esc(t("bp_link_from"))}">&#127890;</span>` : `<span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>`
     : `<span class="bp-link typed">&#9998; ${esc(t("bp_link_typed"))} · <button type="button" class="linklike" data-bpuse="${esc(name)}">${esc(t("bp_link_use"))}</button></span>`;
 }
 
@@ -12835,6 +12848,12 @@ async function renderChiefGearCalc() {
 // items as chips) with the boxes behind "Show all / edit".
 const BAR_SUMMARY_KEYS = new Set(["t12_research"]);
 const BAR_SHOW_ALL = {}; // { calcKey: true } - boxes open, for the visit
+// Typed amounts: "1,234", "10.8B", "4.5m", "92k".
+function parseAmount(str) {
+  const m = /^\s*([\d.,]+)\s*([kmb])?\s*$/i.exec(String(str));
+  if (!m) return Number(str);
+  return Math.round(Number(m[1].replace(/,/g, "")) * ({ k: 1e3, m: 1e6, b: 1e9 }[(m[2] || "").toLowerCase()] || 1));
+}
 // Big amounts in short form: 10.83B, 4.57M, 92.2K, 7,486.
 function shortAmount(v) {
   const n = Number(v) || 0, a = Math.abs(n);
@@ -12863,6 +12882,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const matEntries = names.map((name) => [name, 0]);
   const owned = await ensureMaterialOwnedCache(calcKey || "chief_gear");
   const link = await backpackLinkState();
+  const summaryOn = BAR_SUMMARY_KEYS.has(calcKey || "chief_gear");
   // Chests you hold (from the Backpack): shown read-only after the boxes.
   const chests = backpackShownChests(calcKey || "chief_gear", link).filter((n) => !names.includes(n));
   chests.forEach((n) => { owned[n] = backpackAmountFor(n, link.bp); names.push(n); matEntries.push([n, 0]); });
@@ -12906,7 +12926,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       if (used.length) {
         return {
           statusColor: "var(--good)",
-          statusText: used.map((tr) => `\u2192 ${Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(MATERIAL_NAME_SHORT[tr.to] || tr.to)}`).join(" \u00b7 "),
+          statusText: used.map((tr) => `\u2192 ${summaryOn ? shortAmount(tr.getQty) : Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(MATERIAL_NAME_SHORT[tr.to] || tr.to)}`).join(" \u00b7 "),
         };
       }
       if (hiddenRates.some((r) => r.from === name) && (Number(owned[name]) || 0) > 0) return { statusColor: "var(--muted)", statusText: t("chest_not_needed") };
@@ -12915,6 +12935,12 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     // Per-material status: just the number (still needed / extra), no
     // wording - color alone conveys which case it is. Only the two "no
     // number" states (nothing needed yet / exactly enough) keep a short word.
+    if (summaryOn) {
+      // Edit list: short amounts with a word, shown as a pill.
+      const amt = (v) => (/\(minutes\)$/.test(name) ? t12FormatTime(v / 60) : shortAmount(v));
+      const text = needed === 0 ? t("bs_not_needed") : stillNeed > 0 ? `\u2212${amt(stillNeed)} ${t("bs_short_word")}` : surplus > 0 ? `\u2713 ${amt(surplus)} ${t("bs_spare_word")}` : "\u2713";
+      return { statusColor, statusText: text };
+    }
     const statusText = needed === 0 ? "\u2014" : stillNeed > 0 ? `${stillNeed.toLocaleString()}` : surplus > 0 ? `\u2713 ${surplus.toLocaleString()}` : "\u2713";
     return { statusColor, statusText };
   }
@@ -12927,7 +12953,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     return BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : iconKey ? MATERIAL_ICONS[iconKey] : "");
   };
   // Short summary: items still missing (with how much), ready ones as chips.
-  const summaryOn = BAR_SUMMARY_KEYS.has(calcKey || "chief_gear");
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
@@ -12941,6 +12966,24 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       ${ready.length ? `<div class="bs-ok">${ready.map((n) => `<span>${img(n)}${esc(label(n))} &#10003;</span>`).join("")}</div>` : ""}
       <div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : ""}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] ? "bs_hide" : "bs_show_all"))}</button></div>`;
   };
+
+  // Edit list rows (summary pages): grouped, one line per item, short amounts.
+  const editGroupOf = (n) => (/Speedups/.test(n) ? "bs_g_speedups" : /Chest/.test(n) ? "bs_g_chests" : ["Meat", "Wood", "Coal", "Iron"].includes(n) ? "bs_g_resources" : "bs_g_fc");
+  function editRowHtml(name) {
+    const iconSrc = iconFor(name), haveQty = owned[name] || 0;
+    const label = materialDisplayName(MATERIAL_NAME_SHORT[name] || name).replace(/\s*\((minutes|min)\)$/, "");
+    const isMin = /\(minutes\)$/.test(name), ro = chests.includes(name);
+    const status = groups.map((g) => {
+      const { statusColor, statusText } = statusFor(name, Number((g.totals || {})[name]) || 0);
+      return `<span data-neededstatus="${esc(name)}|${esc(g.label || "")}"><span class="bs-pill" style="color:${statusColor};">${statusText}</span></span>`;
+    }).join("");
+    return `<div class="bs-item">
+      ${iconSrc ? `<img src="${esc(iconSrc)}" alt="" loading="lazy" />` : "<span></span>"}
+      <div class="bs-name">${esc(label)}${isMin ? ` <span class="meta">(${esc(t("minutes_short"))})</span>` : ""} <span data-bplinknote="${esc(name)}">${ro ? `<span class="bp-link mini" title="${esc(t("bp_link_from"))}">&#127890;</span>` : backpackLinkNoteHtml(calcKey || "chief_gear", name, link, true)}</span></div>
+      ${ro ? `<div class="bp-ro">${shortAmount(haveQty)}</div>` : `<input type="text" inputmode="decimal" data-ownedmat="${esc(name)}" data-short="1" value="${isMin ? haveQty : shortAmount(haveQty)}" />`}
+      <div class="bs-status">${status}</div>
+    </div>`;
+  }
 
   function materialCellHtml([name]) {
     const iconSrc = iconFor(name);
@@ -12974,7 +13017,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
 
   el.innerHTML = `
     ${summaryOn ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
-    <div id="${rowsId}" class="mat-row${summaryOn ? " bs-edit" : ""}"${summaryOn && !BAR_SHOW_ALL[calcKey] ? ` style="display:none;"` : ""}>${matEntries.map(materialCellHtml).join("")}</div>
+    <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && !BAR_SHOW_ALL[calcKey] ? ` style="display:none;"` : ""}>${summaryOn
+      ? matEntries.map(([n], i) => `${i === 0 || editGroupOf(n) !== editGroupOf(matEntries[i - 1][0]) ? `<div class="bs-ghead">${esc(t(editGroupOf(n)))}</div>` : ""}${editRowHtml(n)}`).join("")
+      : matEntries.map(materialCellHtml).join("")}</div>
     <div id="${rowsId}_trades"></div>
     <div id="${rowsId}_packs"></div>
   `;
@@ -12991,7 +13036,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     budgetInvalidate();
     saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
     const note = el.querySelector(`[data-bplinknote="${CSS.escape(name)}"]`);
-    if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
+    if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link, summaryOn);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
     names.forEach((n) => groups.forEach((g) => {
@@ -13009,8 +13054,13 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (sum) sum.innerHTML = summaryHtml();
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
+    // Short boxes show 10.83B; the full number while typing.
+    if (input.dataset.short && !/\(minutes\)$/.test(input.dataset.ownedmat)) {
+      input.addEventListener("focus", () => { input.value = owned[input.dataset.ownedmat] || 0; input.select(); });
+      input.addEventListener("blur", () => { input.value = shortAmount(owned[input.dataset.ownedmat] || 0); });
+    }
     input.addEventListener("change", () => {
-      let val = Number(input.value);
+      let val = parseAmount(input.value);
       if (Number.isNaN(val) || val < 0) val = 0;
       input.value = val;
       const name = input.dataset.ownedmat;
@@ -13033,7 +13083,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     setBackpackManual(calcKey || "chief_gear", name, false, link);
     owned[name] = backpackAmountFor(name, link.bp);
     const input = el.querySelector(`[data-ownedmat="${CSS.escape(name)}"]`);
-    if (input) input.value = owned[name];
+    if (input) input.value = input.dataset.short && !/\(minutes\)$/.test(name) ? shortAmount(owned[name]) : owned[name];
     ownedChanged(name);
   });
 }
