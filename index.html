@@ -5533,30 +5533,20 @@ async function renderGearLevelingGroup(target) {
 
   const enhanceCapNow = Number((GEAR_CAPS || {}).hero_enhance) === 100 ? 100 : 200;
   if (seq !== RENDER_SEQ) return;
-  target.innerHTML = `
-    ${capPanelHtml("heroEnhanceCapSelect", t("cap_hero_enhance_label"), [100, 200].map((n) => `<option value="${n}" ${n === enhanceCapNow ? "selected" : ""}>${n}</option>`).join(""))}
-    <div class="panel">
-      <div style="display:flex; gap:8px; margin-bottom:4px;">
-        ${HERO_GEAR_SET_NAMES.map(
-          (name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`
-        ).join("")}
+  target.innerHTML = plxShellHtml({
+    title: navLabel("herogearcalc"),
+    settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+        ${HERO_GEAR_SET_NAMES.map((name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`).join("")}
       </div>
-    </div>
-    <div class="panel">
-      <h2>${esc(t("backpack_title"))}</h2>
-      <div id="heroGearOwned"></div>
-    </div>
-    <div class="panel">
-      <h2>${esc(t("hero_gears_calculator"))}</h2>
-      <div id="heroGearTroopDots" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;"></div>
-      <div id="heroGearTracks" style="touch-action:pan-y;"></div>
-    </div>
-    <div class="panel">
-      <h2>${esc(t("troops_stats_title"))}</h2>
-      <p class="desc">${esc(t("hero_gear_stats_desc"))}</p>
+      ${capSettingsHtml("heroEnhanceCapSelect", t("cap_hero_enhance_label"), [100, 200].map((n) => `<option value="${n}" ${n === enhanceCapNow ? "selected" : ""}>${n}</option>`).join(""))}`,
+    amountsId: "heroGearOwned", needId: "heroGearNeed", tabsId: "heroGearTroopDots",
+    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y;"></div>
+    <div class="t12x-card" style="margin-top:12px;">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
+      <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("hero_gear_stats_desc"))}</p>
       <div id="heroGearCurrentStats"></div>
-    </div>
-  `;
+    </div>`,
+  });
 
   target.querySelectorAll("[data-herogearset]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -5585,28 +5575,26 @@ async function renderGearLevelingGroup(target) {
   // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
   const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
+  const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button");
   const pieceCard = (troop, piece) => `
-    <div class="panel">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-        <div style="width:60px;"></div>
-        <div style="text-align:center;">
-          <img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" style="width:88px; height:88px; object-fit:contain; margin-bottom:4px;" loading="lazy" />
-          <div class="name" style="font-size:15px; font-weight:700;">${esc(pieceDisplayName(piece))}</div>
+    <div class="t12x-card" style="padding:12px 14px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" style="width:48px; height:48px; object-fit:contain; flex-shrink:0;" loading="lazy" />
+        <div class="name" style="flex:1; min-width:0; font-size:15px; font-weight:700;">${esc(pieceDisplayName(piece))}</div>
+        <button type="button" class="t12x-maxall" data-heropiecemax="${esc(troop)}|${esc(piece)}">${esc(maxLbl)}</button>
+      </div>
+      ${GEAR_LEVELING_TABLES.map(
+        (t) => `
+      <div style="padding:6px 0; border-top:1px solid var(--line);">
+        <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(trackDisplayName(t))}</div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span class="t12x-lbl">${esc(nowLbl)}</span>
+          <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="from" style="flex:1; min-width:0;">${optsByTrack[t]}</select>
+          <span class="t12x-lbl">${esc(tgtLbl)}</span>
+          <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="to" style="flex:1; min-width:0;">${optsByTrack[t]}</select>
         </div>
-        <button class="btn ghost small" data-heropiecemax="${esc(troop)}|${esc(piece)}" style="width:60px;">${esc(t("max_button"))}</button>
-      </div>
-      <div style="border-top:1px solid var(--line); padding-top:10px;">
-        ${GEAR_LEVELING_TABLES.map(
-          (t) => `
-        <div style="padding:6px 0;">
-          <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(trackDisplayName(t))}</div>
-          <div style="display:flex; gap:6px;">
-            <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="from" style="flex:1;">${optsByTrack[t]}</select>
-            <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="to" style="flex:1;">${optsByTrack[t]}</select>
-          </div>
-        </div>`
-        ).join("")}
-      </div>
+      </div>`
+      ).join("")}
     </div>`;
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
@@ -5624,8 +5612,7 @@ async function renderGearLevelingGroup(target) {
     wrap.dataset.troopanel = troop;
     wrap.style.display = "none";
     wrap.innerHTML = `
-      <div class="name" style="font-size:14px; margin-bottom:10px; color:${HERO_GEAR_TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>
-      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:12px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
       </div>`;
 
@@ -17077,16 +17064,21 @@ async function renderRefinePage() {
   ];
 
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("pets_refine_title"))}</h2>
-              </div>
-    </div>
-    <div id="refineTotals" style="margin-bottom:16px;"></div>
-    <div id="refineSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
+  content.innerHTML = plxShellHtml({
+    title: t("pets_refine_title"),
+    settings: `<label class="t12x-check" style="justify-content:flex-start; gap:8px; cursor:pointer;"><input type="checkbox" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /><span>${esc(t("marks_pack_gems"))}</span></label>`,
+    amountsId: "refineMarksBar", needId: "refineNeed",
+    mainHtml: `<div id="refineSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="refineList"></div>
-  `;
+    <div id="refineTotals" style="margin-top:12px;"></div>`,
+  });
+  const pg = content.querySelector("[data-markspackgems]");
+  if (pg) pg.addEventListener("change", () => {
+    PET_MARKS_STATE.packGems = pg.checked;
+    PACK_PLAN_CACHE.clear();
+    saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+    renderTotals();
+  });
 
   function maxRow(pet) {
     const rows = PET_REFINE_CACHE[pet];
@@ -17153,16 +17145,16 @@ async function renderRefinePage() {
         <button class="btn small ghost" data-marksrate="${esc(stage)}" data-delta="1" style="width:24px; padding:2px 0;">+</button>
       </div>`;
     document.getElementById("refineTotals").innerHTML = `
-      <div class="panel">
-        <h2>${esc(t("total_refine_bonus"))}</h2>
-        <p class="desc">${esc(t("refine_summed_desc"))}</p>
+      <div class="t12x-card">
+        <div class="t12x-title">${esc(t("total_refine_bonus"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("refine_summed_desc"))}</p>
         <div class="stats-row-scroll sr-3col">
           ${STAT_KEYS.map(({ key, label }) => `<div class="metric" style="padding:8px; min-width:90px;"><div class="label" style="font-size:9px;">${esc(STAT_ABBR_MAP[key] || label)}</div><div class="val" style="font-size:13px;">+${grand[key].toFixed(2)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${grandMax[key].toFixed(2)}%</div></div>`).join("")}
         </div>
       </div>
-      <div class="panel" style="margin-top:16px;">
-        <h2>${esc(t("marks_title"))}</h2>
-        <p class="desc">${esc(t("marks_desc"))}</p>
+      <div class="t12x-card" style="margin-top:12px;">
+        <div class="t12x-title">${esc(t("marks_title"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("marks_desc"))}</p>
         <div class="grid g2" style="align-items:start; gap:16px;">
           ${!IS_OWNER && !PET_MARKS_STATE.advanced ? `<div>
             <div class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</div>
@@ -17196,13 +17188,6 @@ async function renderRefinePage() {
               <div style="font-size:11px; margin-top:4px; line-height:1.6;">${Object.keys(perPet).filter((pt) => perPet[pt] > 0).sort((a, b) => perPet[b] - perPet[a]).map((pt) => `${esc(dataName(pt))}: <b>${Math.ceil(perPet[pt] * (1 + (PET_MARKS_STATE.adjust || 0) / 100)).toLocaleString()}</b>`).join("<br>") || `<span class="meta">${esc(t("marks_none"))}</span>`}</div>
             </details>
           </div>
-        </div>
-        <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-            <h2 style="font-size:13px; margin:0;">${esc(t("backpack_title"))}</h2>
-            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /><span>${esc(t("marks_pack_gems"))}</span></label>
-          </div>
-          <div id="refineMarksBar"></div>
         </div>
       </div>
     `;
@@ -17242,13 +17227,6 @@ async function renderRefinePage() {
     if (clr) clr.addEventListener("click", async () => {
       Object.keys(rates).forEach((k) => { rates[k] = 0; });
       await savePetMarksRates();
-      renderTotals();
-    });
-    const pg = totalsEl.querySelector("[data-markspackgems]");
-    if (pg) pg.addEventListener("change", async () => {
-      PET_MARKS_STATE.packGems = pg.checked;
-      PACK_PLAN_CACHE.clear();
-      saveCalcState("pet_refine_marks", PET_MARKS_STATE);
       renderTotals();
     });
     totalsEl.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
@@ -17392,17 +17370,14 @@ async function renderPetsDataPage() {
   const petNames = Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p));
 
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("pets_level_title"))}</h2>
-              </div>
-      <button class="btn" id="petsMaxAllBtn">${esc(t("max_everything"))}</button>
-    </div>
-    <div id="petsTotals" style="margin-bottom:16px;"></div>
-    <div id="petsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
+  content.innerHTML = plxShellHtml({
+    title: t("pets_level_title"),
+    amountsId: "petsMaterialsBar", needId: "petsNeed",
+    topExtra: `<button type="button" class="t12x-maxall" id="petsMaxAllBtn" style="margin-inline-start:auto;">${esc(t("max_everything"))}</button>`,
+    mainHtml: `<div id="petsSwipeCounter" style="text-align:center; margin-bottom:10px;"></div>
     <div id="petsList"></div>
-  `;
+    <div class="t12x-card" style="margin-top:12px;" id="petsTotals"></div>`,
+  });
 
   function getState(pet) {
     const s = PETS_STATE[pet];
@@ -17454,9 +17429,8 @@ async function renderPetsDataPage() {
       grandAtkMax += maxAtkDef(pet);
     });
     document.getElementById("petsTotals").innerHTML = `
-      <div class="panel">
-        <h2>${esc(t("troops_stats_title"))}</h2>
-        <p class="desc">${esc(t("pets_summed_desc"))}</p>
+        <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("pets_summed_desc"))}</p>
         <div class="stats-row-scroll">
           <div class="metric" style="padding:6px; min-width:80px;">
             <div class="label" style="font-size:9px;">${esc(t("troops_attack"))}</div>
@@ -17469,12 +17443,6 @@ async function renderPetsDataPage() {
             <div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} ${grandAtkMax.toFixed(1)}%</div>
           </div>
         </div>
-      </div>
-      <div class="panel">
-        <h2>${esc(t("backpack_title"))}</h2>
-        <p class="desc">${esc(t("backpack_desc_pets"))}</p>
-        <div id="petsMaterialsBar"></div>
-      </div>
     `;
     // Pet Chests you own open into Manual / Potion / Serum (your choice),
     // so they sit in the Backpack and reduce whichever of those is short.
