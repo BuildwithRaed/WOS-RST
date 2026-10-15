@@ -121,7 +121,8 @@ Done so far (all on the preview only):
 - Tested: no sideways scroll or errors at 1280/393/624/430/412/884 px; click test of tabs, picker, Set all, tile pop-up, Max everything (saves blocked).
 
 ## Open to-dos
-- None. (Issue #13 done 14 Oct 2026: 132 unused Storage files deleted; `skin-images` now holds 90 files: Justus's expert picture, the 88 gallery backup originals, and one unlinked city-skin picture `d248d1b3-….png` kept for the owner to decide.)
+- Scan screenshot: teach it the new items once the owner sends Backpack screenshots: Gen widget boxes (the Gen number is shown above the box; save as "Gen N Widgets"), a hero's own widgets, Marks of Valor, Mystery Points, Mythic General Hero Lucky Box, widget chests.
+- Earlier: (Issue #13 done 14 Oct 2026: 132 unused Storage files deleted; `skin-images` now holds 90 files: Justus's expert picture, the 88 gallery backup originals, and one unlinked city-skin picture `d248d1b3-….png` kept for the owner to decide.)
 
 ## History (Oct 2026)
 - PR #1: Experts Research swipe fix
