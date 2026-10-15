@@ -712,6 +712,13 @@ input,select,textarea{
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
   .pk-sum-used{ flex:1; min-width:0; gap:8px; margin-inline-end:8px; }
+  details.pk-sum-used summary{ cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border:1px solid var(--line); border-radius:999px; list-style:none; }
+  details.pk-sum-used summary::-webkit-details-marker{ display:none; }
+  details.pk-sum-used summary::after{ content:"\25B8"; font-size:10px; }
+  details.pk-sum-used[open] summary::after{ content:"\25BE"; }
+  details.pk-sum-used[open] summary{ border-color:var(--ice); }
+  .pk-used-list{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .pk-used-list span{ font-size:11px; padding:2px 8px; border-radius:8px; background:var(--panel-2); color:var(--frost); }
   .pk-open .pk-sum{ padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--line); }
   @media (max-width: 560px){
     .pk-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
@@ -8059,7 +8066,7 @@ async function renderPacksPage() {
         <div class="pk-sum">
           <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
           <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
-          <div class="pk-sum-f"><span class="pk-sum-used">${esc(window.t("pack_used_for"))}: ${usedFor.length ? esc(usedFor.join(" · ")) : "—"}</span><button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
+          <div class="pk-sum-f">${usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
