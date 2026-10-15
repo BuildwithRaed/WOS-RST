@@ -6977,7 +6977,18 @@ async function renderPurchasesPage() {
   const today = packDayKey(packStartOfToday());
   const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
   const byId = new Map(tables.map((tb) => [String(tb.id), tb]));
-  const buyable = tables.filter((tb) => packOffersFor(tb, true).length);
+  // Tables joined as one pack ("Same pack, several tables": Dawn Market,
+  // Dawn of Wisdom, Myriad Bazaar, Benefit Cards…) are one entry in the pack
+  // list; which table each tier comes from is picked in the pack table.
+  const setLead = (tb) => { const l = packLinkFor(tb.id); if (!l.option || !l.linkSet) return null; const lead = tables.find((x) => String(x.id) === String(l.linkSet)) || tables.find((x) => packLinkFor(x.id).linkSet === l.linkSet); return lead || null; };
+  const setName = (tb) => {
+    const g = packGroupsFor(tables, "__purchases").find((x) => (x.tables || []).includes(String(tb.id)));
+    let n = g && g.offers && g.offers[0] ? purPackName(g.offers[0].tableTitle, tables) : (tb.title || "");
+    if (n.includes(" · ")) n = n.slice(0, n.lastIndexOf(" · "));
+    return n;
+  };
+  const buyable = tables.filter((tb) => packOffersFor(tb, true).length && (!setLead(tb) || setLead(tb) === tb));
+  if (byId.has(String(PUR_FORM.table)) && setLead(byId.get(String(PUR_FORM.table)))) PUR_FORM.table = String(setLead(byId.get(String(PUR_FORM.table))).id);
   if (!byId.has(String(PUR_FORM.table))) PUR_FORM.table = buyable[0] ? String(buyable[0].id) : "";
   if (!PUR_FORM.date) PUR_FORM.date = today;
   const formTb = byId.get(String(PUR_FORM.table));
@@ -6997,7 +7008,7 @@ async function renderPurchasesPage() {
   // Pack picker grouped like the Packs page.
   const groups = [];
   buyable.forEach((tb) => { const g = packLinkFor(tb.id).group || t("packs_title"); let e = groups.find((x) => x.g === g); if (!e) { e = { g, items: [] }; groups.push(e); } e.items.push(tb); });
-  const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(tb.title || "")}</option>`).join("")}</optgroup>`).join("");
+  const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(setLead(tb) ? setName(tb) : (tb.title || ""))}</option>`).join("")}</optgroup>`).join("");
   const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
   const addCard = `<div class="t12x-card"><div class="t12x-title">${esc(t("pur_add_title"))}</div>
