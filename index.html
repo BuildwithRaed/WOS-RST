@@ -7026,6 +7026,8 @@ function packMergeOwned(owned, supply) {
 }
 // Page names a pack table is used for ("Chief Gear · Charms").
 function packUsedForNames(tb) {
+  // The New Gen hero pack patterns feed every new hero's copy.
+  if ((tb.columns || []).some((c) => /^hero (shards?|widgets?)$/i.test(String(c || "")))) return [t("hs_page")];
   return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel);
 }
 // New Gen Heroes: which Gen an appearance belongs to, from the person's
@@ -9362,7 +9364,7 @@ async function renderInventory() {
   const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
     title: t(key), heroShards: true, rarity,
     all: (heroes || []).filter((h) => h.rarity === rarity),
-    items: (heroes || []).filter((h) => h.rarity === rarity && shownHero(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }])
+    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }])
       // Mythic heroes' widgets: one box for all of them (see widgetHeroes).
       .concat(rarity === "Legendary" && mythics.length ? [{ name: t("bp_widgets"), icon: HERO_ITEM_ICON.widget, widgetsAll: true, rarity }] : []),
   })).filter((g) => g.all.length);
@@ -9436,7 +9438,7 @@ async function renderInventory() {
     if (!plan.rows.length) return `<div class="bpsh"><div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b></div><div class="meta" style="font-size:12px;">${esc(t("bp_sh_none"))}</div>${notOutLine}</div>`;
     const n = (v) => Math.round(v).toLocaleString();
     const rowsHtml = plan.rows.map((r) => {
-      const tracked = shownHero(r.hero.name);
+      const tracked = myHeroes.includes(r.hero.name);
       const pctHave = r.need ? Math.min(100, ((r.own + r.fromGeneral) / r.need) * 100) : 100;
       return `<div class="bpsh-row">
         <div class="bpsh-av">${r.hero.image_url ? `<img src="${esc(r.hero.image_url)}" alt="" loading="lazy" />` : ""}</div>
@@ -9544,7 +9546,7 @@ async function renderInventory() {
     const addEl = e.target.closest("[data-bpaddhero]");
     if (addEl) {
       const g = heroGroups.find((x) => x.rarity === addEl.dataset.bpaddhero);
-      const left = g.all.filter((h) => !shownHero(h.name));
+      const left = g.all.filter((h) => !myHeroes.includes(h.name));
       const modal = openModal(`<div class="modal-box" style="max-width:520px; max-height:80vh; overflow-y:auto;">
           <h2 style="margin:0 0 4px; font-size:16px;">${esc(g.title)}</h2>
           <p class="desc" style="margin:0 0 10px;">${esc(t("backpack_pick_hero"))}</p>
@@ -9577,7 +9579,7 @@ async function renderInventory() {
         <h2 style="margin:6px 0 10px; font-size:16px;">${esc(title)}</h2>
         <input id="bpQty" type="number" min="0" inputmode="numeric" value="${Number(bp[name]) || ""}" placeholder="0" style="width:100%; text-align:center; font-size:18px;" />
         <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
-          ${it.heroKey && !rosterNames.includes(it.heroKey) ? `<button class="btn ghost" type="button" id="bpRemove" style="margin-inline-end:auto; color:var(--danger);">${esc(t("backpack_remove_hero"))}</button>` : ""}
+          ${it.heroKey ? `<button class="btn ghost" type="button" id="bpRemove" style="margin-inline-end:auto; color:var(--danger);">${esc(t("backpack_remove_hero"))}</button>` : ""}
           <button class="btn ghost" type="button" id="bpCancel">${esc(t("cancel"))}</button>
           <button class="btn" type="button" id="bpSave">${esc(t("save"))}</button>
         </div></div>`);
@@ -11195,23 +11197,37 @@ const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [1
 const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
 const ngGems = (price) => Math.round((price + 0.01) * 500);
 function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday())].join("|"); }
-async function ngHeroTables() {
+// The two New Gen tables on the Packs page with a "Hero Shards" / "Hero Widgets"
+// column are the patterns (owner edits prices and amounts there); each new
+// hero gets its own copy. Without them the built-in numbers above are used.
+function ngHeroPattern(tables, colRe) {
+  const tb = (tables || []).find((x) => (x.columns || []).some((c) => colRe.test(String(c || ""))));
+  if (!tb) return null;
+  const pc = packLinkForBase(tb.id).priceCol || 0, ci = tb.columns.findIndex((c) => colRe.test(String(c || "")));
+  const gi = tb.columns.findIndex((c) => /gem/i.test(String(c || "")));
+  const rows = (tb.rows || []).filter((r) => !r.is_total).map((r) => [packParseNum((r.cells || [])[pc]), packParseNum((r.cells || [])[ci]), gi >= 0 ? packParseNum((r.cells || [])[gi]) : 0])
+    .filter((r) => r[0] > 0 && r[1] > 0).map((r) => [r[0], r[1], r[2] || ngGems(r[0])]);
+  return rows.length ? { id: tb.id, rows, sequential: packLinkForBase(tb.id).sequential, window: packLinkForBase(tb.id).window } : null;
+}
+async function ngHeroTables(baseTables) {
   const base = newGenBaseDay(), gen0 = newGenGen();
   if (!base || !gen0) return [];
   const heroes = await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []);
   noteHeroImages(heroes);
+  const shardPat = ngHeroPattern(baseTables, /^hero shards?$/i), widgetPat = ngHeroPattern(baseTables, /^hero widgets?$/i);
   const t0 = packStartOfToday(), day = 86400000, out = [];
   newGenStarts(base, 5).forEach((start, k) => {
     const gen = gen0 + k;
     (heroes || []).filter((h) => Number(h.generation) === gen).forEach((h) => {
-      const add = (kind, from, title, col, rows, sequential) => {
-        if (from.getTime() + (NG_HERO_DAYS - 1) * day < t0.getTime()) return; // already over
+      const add = (kind, from, title, col, rows, sequential, win, tpl) => {
+        const w = win > 0 ? win : NG_HERO_DAYS;
+        if (from.getTime() + (w - 1) * day < t0.getTime()) return; // already over
         const id = `ng-${kind}-${gen}-${h.id}`;
-        NG_HERO_LINKS[id] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: { 1: col, 2: "Gems" }, reset: 3000, resetDay: packDayKey(from), window: NG_HERO_DAYS, buys: 1, sequential, ngGen: gen };
+        NG_HERO_LINKS[id] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: { 1: col, 2: "Gems" }, reset: 3000, resetDay: packDayKey(from), window: w, buys: 1, sequential, ngGen: gen, tpl: tpl || null };
         out.push({ id, title, columns: ["$", col, "Gems"], rows: rows.map((r) => ({ cells: r.map(String) })), sort_order: 200000 + out.length });
       };
-      add("s", start, `Value Hero Pack · ${h.name}`, `${h.name} Shards`, [[NG_HERO_SHARD_PACK.price, NG_HERO_SHARD_PACK.shards, ngGems(NG_HERO_SHARD_PACK.price)]], false);
-      add("w", new Date(start.getTime() + NG_HERO_DAYS * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), true);
+      add("s", start, `Value Hero Pack · ${h.name}`, `${h.name} Shards`, shardPat ? shardPat.rows : [[NG_HERO_SHARD_PACK.price, NG_HERO_SHARD_PACK.shards, ngGems(NG_HERO_SHARD_PACK.price)]], shardPat ? shardPat.sequential : false, shardPat && shardPat.window, shardPat && shardPat.id);
+      add("w", new Date(start.getTime() + NG_HERO_DAYS * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, widgetPat ? widgetPat.rows : NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), widgetPat ? widgetPat.sequential : true, widgetPat && widgetPat.window, widgetPat && widgetPat.id);
     });
   });
   return out;
@@ -11239,7 +11255,11 @@ let MY_CARDS_ACTIVE = {};
 // "pack_budget_off" = { tableId: true }. Budgets, the pages' shared plan and
 // the My Purchases suggestions don't use them.
 let PACK_BUDGET_OFF = {};
-function packInBudgets(id) { return !PACK_BUDGET_OFF[String(id)]; }
+function packInBudgets(id) {
+  // A new hero's copy follows its pattern table's tick.
+  const ng = String(id).startsWith("ng-") ? NG_HERO_LINKS[String(id)] : null;
+  return !PACK_BUDGET_OFF[String(ng && ng.tpl ? ng.tpl : id)];
+}
 // Days of rewards still coming from cards already bought ({ d: days }; an old
 // plain number was a count of 7-day purchases).
 function packActiveDays(id) {
@@ -11456,10 +11476,10 @@ async function ensurePackTables() {
   PACK_TABLES_LOADING = (async () => {
     try {
       await ensurePackLinks();
-      PACK_TABLES_CACHE = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
+      const baseTables = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
-        .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })))
-        .concat(await ngHeroTables());
+        .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
+      PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables));
       PACK_TABLES_CACHE._ngSig = ngHeroSig();
     } catch (e) {
       PACK_TABLES_CACHE = [];
