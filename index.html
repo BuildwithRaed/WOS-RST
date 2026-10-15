@@ -242,6 +242,52 @@
   .rc-pm{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:16px; line-height:1; display:grid; place-items:center; flex-shrink:0; cursor:pointer; padding:0; }
   .rc-pm.plus{ background:var(--ice); color:#0f141b; border-color:var(--ice); font-weight:800; }
   .rc-pm:disabled{ opacity:.35; cursor:default; }
+  .rc-pct span{ display:block; }
+  .dash-sec{ margin-top:16px; } .dash-sec2{ margin-top:12px; }
+  /* Phones: the Dashboard fits one screen */
+  @media (max-width:700px){
+    .dash-fit .page-head{ display:none; }
+    .dash-fit .dash-sec{ margin-top:6px; } .dash-fit .dash-sec2{ margin-top:6px; }
+    .dash-fit .sa-card{ padding:6px 10px; gap:8px; border-radius:12px; }
+    .dash-fit .sa-ic{ display:none; }
+    .dash-fit .sa-k{ display:none; }
+    .dash-fit .sa-v{ font-size:15px; line-height:1.2; }
+    .dash-fit .sa-v .sa-s{ font-size:11px; }
+    .dash-fit .sa-chips{ flex-wrap:nowrap; overflow-x:auto; margin-top:3px; scrollbar-width:none; }
+    .dash-fit .sa-chip{ white-space:nowrap; font-size:10px; padding:1px 7px; }
+    .dash-fit .sa-edit{ padding:3px 8px; }
+    .dash-fit #rosterCollapseToggle h2{ font-size:14px; }
+    .dash-fit #rosterCollapseBody > label{ margin:3px 0 5px !important; }
+    .dash-fit #rosterCollapseBody > label .meta{ font-size:10px !important; }
+    .dash-fit .rc-wrap{ margin-bottom:0 !important; }
+    .dash-fit .rc-grid{ gap:6px; }
+    .dash-fit .rc-card{ padding:5px 4px; border-radius:12px; }
+    .dash-fit .rc-troop{ font-size:9px; }
+    .dash-fit .rc-pick{ width:36px; height:36px; margin:2px auto; border-radius:8px; }
+    .dash-fit .rc-name{ font-size:11.5px; }
+    .dash-fit .rc-stars{ margin:1px 0; }
+    .dash-fit .rc-stars > *{ width:17px !important; height:17px !important; }
+    .dash-fit .rc-step{ margin:1px auto 2px; max-width:110px; font-size:11px; }
+    .dash-fit .rc-pm{ width:22px; height:22px; font-size:14px; }
+    .dash-fit .rc-sh{ font-size:9.5px; margin:0; line-height:1.3; }
+    .dash-fit .rc-pct{ font-size:9.5px; line-height:1.25; }
+    .dash-fit .rc-pct span{ display:inline; } .dash-fit .rc-pct span + span::before{ content:" · "; }
+    .dash-fit .rc-card select{ font-size:11px; padding:1px 4px; margin-top:2px; height:24px; }
+    .dash-fit .dash-troops.cols .dash-troop{ padding:5px 6px 3px; }
+    .dash-fit .dash-troops.cols .dash-troop-h{ font-size:10px; margin-bottom:0; }
+    .dash-fit .dash-troops.cols .dash-stat{ padding:2px 1px; gap:0; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:9px; }
+    .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:13px; }
+    .dash-fit .dash-troops.cols .dash-stat-bar{ height:3px; margin-top:1px; }
+    .dash-fit .dash-troops.cols .dash-stat{ grid-template-columns:1fr auto; align-items:baseline; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ grid-column:1 / -1; }
+    .dash-fit .dash-troops.cols .dash-stat-v{ grid-column:1; grid-row:2; }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:2; grid-row:2; font-size:8.5px; line-height:1.2; text-align:end; }
+    .dash-fit .dash-troops.cols .dash-stat-bar{ grid-column:1 / -1; grid-row:3; }
+    .dash-fit #troopSections > .meta{ display:none; }
+    .dash-fit{ margin-top:-10px; }
+    .dash-fit .rc-card select{ height:22px; }
+  }
   .rc-pct{ font-size:10.5px; line-height:1.4; color:var(--frost); }
   .rc-card select{ font-size:11px; padding:3px 6px; margin-top:6px; max-width:100%; }
   @media (min-width:1000px){ .rc-pick{ width:72px; height:72px; } .rc-stars > *{ width:24px !important; height:24px !important; } .rc-name{ font-size:14px; } .rc-pct{ font-size:12px; } }
@@ -5487,16 +5533,17 @@ async function renderOverview(opts = {}) {
   // The Budgets page only needs the numbers, not the page.
   if (opts.computeOnly) return allStats;
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
+  // `dash-fit`: on phones the whole Dashboard fits one screen (owner, 16 Oct 2026).
+  content.innerHTML = `<div class="dash-fit">
     <div class="page-head">
       <div>
         <h2>${esc(t("stats_dashboard"))}</h2>
       </div>
     </div>
-    <div id="stateAgeCard" style="margin-top:16px;">${stateAgeCardHtml()}</div>
-    <div id="dashboardRoster" style="margin-top:16px;"></div>
-    <div id="troopSections" style="margin-top:12px;"></div>
-  `;
+    <div id="stateAgeCard" class="dash-sec">${stateAgeCardHtml()}</div>
+    <div id="dashboardRoster" class="dash-sec"></div>
+    <div id="troopSections" class="dash-sec2"></div>
+  </div>`;
 
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
   content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => renderOverview()); });
@@ -5620,7 +5667,7 @@ async function renderOverview(opts = {}) {
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>${sh.short && sh.reach > sh.step ? `<div class="rc-sh rc-reach">${esc(shReach.replace("{s}", heroStepText(sh.reach)))}</div>` : ""}` : ""}
               ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
-              <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).join("<br>") || "&nbsp;"}</div>` : ""}
+              <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).map((x) => `<span>${x}</span>`).join("") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
                 ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${esc(widgetShort)} ${i}</option>`).join("")}
