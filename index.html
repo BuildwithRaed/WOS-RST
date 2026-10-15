@@ -3856,7 +3856,7 @@ const T = {
   pack_reset_daily: { en: "Daily", ar: "\u064a\u0648\u0645\u064a\u064b\u0627", ko: "\ub9e4\uc77c" },
   pack_reset_weekly: { en: "Weekly", ar: "\u0623\u0633\u0628\u0648\u0639\u064a\u064b\u0627", ko: "\ub9e4\uc8fc" },
   pack_reset_biweekly: { en: "Every 2 weeks", ar: "\u0643\u0644 \u0623\u0633\u0628\u0648\u0639\u064a\u0646", ko: "2\uc8fc\ub9c8\ub2e4" },
-  pack_reset_monthly: { en: "Monthly", ar: "\u0634\u0647\u0631\u064a\u064b\u0627", ko: "\ub9e4\uc6d4" },
+  pack_reset_monthly: { en: "Every 4 weeks", ar: "كل 4 أسابيع", ko: "4주마다" },
   count_toward_dashboard: { en: "Count toward Dashboard", ar: "احتسابه في لوحة التحكم", ko: "대시보드에 반영" },
   t12_research_title: { en: "T12 Research", ar: "أبحاث T12", ko: "T12 연구" },
   t12_group_troop_unlock: { en: "Troop Unlock", ar: "فتح الجنود", ko: "부대 해금" },
@@ -7523,7 +7523,7 @@ let PACK_CAL_RESIZE = null;
 function packCalKind(reset) {
   if (reset === 1) return "daily";
   if (reset === 7 || reset === 14) return "weekly";
-  if (reset === 30) return "monthly";
+  if (reset === 28 || reset === 30) return "monthly";
   return "other";
 }
 const PACK_CAL_COLORS = {
@@ -9321,7 +9321,7 @@ function backpackItems() {
   return groups;
 }
 const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
-const BP_EXTRA_ICONS = { "Marks of Valor": "icons/marks-valor.png", "Mystery Points": "icons/mystery-badge.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/item_icon_500220.png" };
+const BP_EXTRA_ICONS = { "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/item_icon_500220.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -11173,7 +11173,7 @@ function newGenAppearances(tableId, win) {
   const base = newGenBaseDay();
   if (!base) return [];
   const off = packNewGenOffset(tableId) * 86400000;
-  return newGenStarts(base, 12).map((g, i) => ({ start: new Date(g.getTime() + off), days: win > 0 ? win : 30, gen: i }));
+  return newGenStarts(base, 12).map((g, i) => ({ start: new Date(g.getTime() + off), days: win > 0 ? win : 28, gen: i }));
 }
 function packNewGenAnchor(tableId) {
   if (!packValidDay((PACK_PURCHASES.newGen || {}).last) && !newGenBaseDay()) return null;
@@ -11562,7 +11562,8 @@ function packOffersFor(table, keepEmpty) {
 //                        (a ladder can be run once per reset)
 // ------------------------------------------------------------
 const PACK_RESET_PRESETS = [
-  { key: "daily", days: 1 }, { key: "weekly", days: 7 }, { key: "biweekly", days: 14 }, { key: "monthly", days: 30 },
+  // "Monthly" packs come back every 4 weeks (28 days) in game (owner, 16 Oct 2026).
+  { key: "daily", days: 1 }, { key: "weekly", days: 7 }, { key: "biweekly", days: 14 }, { key: "monthly", days: 28 },
 ];
 // Offsets (in days from today) of every time a pack comes back, up to a
 // horizon. `day` pins it to a weekday (weekly, 0=Sun..6=Sat) or a day of the
