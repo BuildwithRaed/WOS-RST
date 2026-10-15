@@ -10748,7 +10748,7 @@ const PACK_COST_OPEN = {};
 const PACK_PLAN_PICK = {}; // card layout: which plan's packs are listed, per page
 const PACK_COST_VIEW = {};
 // Which view the Pack cost box opens on (the switch still changes it):
-// the owner opens on "This page only" and can switch; visitors only have that view.
+// it opens on "This page only" for everyone; the switch shows the shared plan.
 function packCostDefaultView() { return "page"; }
 const PACK_VIEW_TOTALS = {};   // per page: last known totals of both views, for the switch labels     // per page: "shared" | "page" (this session)     // per page; hidden on every load until opened
 const PACK_TARGET_CACHE = {};  // per page target date (ISO yyyy-mm-dd), from calc_state
@@ -10865,9 +10865,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     // Only the view that's showing is worked out; the other one's total is
     // shown on its button when it's already known for these same numbers.
     let info = null;
-    // Visitors only get "This page only" in this box (no shared plan, no
-    // switch); the owner gets both views. Budgets stays shared for everyone.
-    if (IS_OWNER) { try { info = await budgetCombinedFor(calcKey, groups, { infoOnly: true }); } catch (e) { info = null; } }
+    // Everyone gets both views (the switch). The box opens on "This page
+    // only"; the shared plan is only worked out when "Shared" is tapped.
+    try { info = await budgetCombinedFor(calcKey, groups, { infoOnly: true }); } catch (e) { info = null; }
     if (info && info.notIncluded) shared = info;
     else if (info && (PACK_COST_VIEW[calcKey] || packCostDefaultView()) === "shared") {
       try { shared = await budgetCombinedFor(calcKey, groups); } catch (e) { console.error("combined plan failed", e); shared = null; }
