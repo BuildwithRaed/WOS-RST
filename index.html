@@ -212,6 +212,15 @@
   .budget-cols > .panel{ break-inside:avoid; -webkit-column-break-inside:avoid; margin:0 0 16px; display:block; }
   @media (min-width:900px){ .budget-cols{ columns:2; } }
   @media (min-width:1500px){ .budget-cols{ columns:3; } }
+  .t12x-main .budget-cols{ columns:1; }
+  @media (min-width:1500px){ .t12x-main .budget-cols{ columns:2; } }
+  .bud-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); font-size:13px; }
+  .bud-row:first-of-type{ border-top:0; }
+  .bud-row.off{ opacity:.55; }
+  .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
+  .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bud-row-v{ white-space:nowrap; font-size:12.5px; }
+  .bud-row .linklike{ text-decoration:none; font-size:14px; }
   .budget-wrap{ max-width:1400px; margin:0 auto; }
   /* Current -> target level pairs (T11 / T12): side by side on wide
      screens, stacked with small captions on phones so nothing is cut off. */
@@ -487,14 +496,54 @@ input,select,textarea{
   .rfc-plan-k{ font-size:11px; color:var(--muted); }
   .rfc-plan-k b{ color:var(--good); font-size:14px; }
   .rfc-plan-w{ font-size:11.5px; font-weight:600; color:var(--frost); }
-  /* Level chips (Tundra Album, Collection Gallery) */
-  .plx-chiprow{ display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
-  .plx-chiprow:first-of-type{ border-top:0; }
-  .plx-chiprow-k{ flex:0 0 78px; font-size:13px; font-weight:600; }
-  .plx-chips{ flex:1; display:flex; flex-wrap:wrap; gap:6px; }
-  .plx-chips button{ font:inherit; font-size:12px; font-weight:600; padding:6px 10px; border-radius:9px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted); cursor:pointer; }
-  .plx-chips button.on{ border-color:var(--ice); background:rgba(111,211,242,.14); color:var(--frost); }
-  @media (max-width: 560px){ .plx-chiprow{ flex-direction:column; align-items:flex-start; gap:6px; } .plx-chiprow-k{ flex:none; } }
+  /* Level dropdowns side by side (Tundra Album, Collection Gallery) */
+  .plx-selrow{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:8px; }
+  .plx-sel{ display:flex; flex-direction:column; gap:4px; min-width:0; font-size:12px; color:var(--muted); }
+  .plx-sel select{ width:100%; min-width:0; }
+  @media (max-width: 560px){ .plx-sel span{ font-size:11px; } .plx-sel select{ padding-inline:6px; font-size:13px; } }
+  /* Dashboard: three troop cards */
+  .dash-troops{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+  .dash-troop{ border-top:3px solid var(--tc); }
+  .dash-troop-h{ font-size:16px; font-weight:800; color:var(--tc); margin-bottom:4px; }
+  .dash-stat{ display:grid; grid-template-columns:1fr auto; gap:3px 8px; width:100%; text-align:start; background:none; border:0; border-radius:10px; padding:8px 6px; color:var(--text); font:inherit; cursor:pointer; }
+  .dash-stat:hover{ background:rgba(255,255,255,.04); }
+  .dash-stat-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; align-self:center; }
+  .dash-stat-v b{ font-size:18px; font-weight:800; } .dash-stat-v small{ font-size:11px; color:var(--muted); }
+  .dash-stat-bar{ grid-column:1 / -1; display:block; height:6px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .dash-stat-bar i{ display:block; height:100%; border-radius:9px; background:var(--tc, var(--ice)); }
+  .dash-stat-gap{ grid-column:1 / -1; font-size:10.5px; color:#e0a030; }
+  .dash-gains{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 20px; }
+  .dash-gain{ display:grid; grid-template-columns:minmax(0, 130px) 1fr auto; gap:10px; align-items:center; font-size:13px; }
+  .dash-gain b{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dash-gain-bar{ display:block; height:6px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .dash-gain-bar i{ display:block; height:100%; border-radius:9px; background:var(--ice); }
+  .dash-gain-v{ color:#e0a030; font-weight:700; text-align:end; white-space:nowrap; }
+  .dash-gain-v small{ display:block; font-size:10px; font-weight:400; color:var(--muted); }
+  @media (max-width: 900px){ .dash-troops{ grid-template-columns:1fr; } .dash-gains{ grid-template-columns:1fr; } }
+  /* Packs B: compact cards, tap Edit to open the full table */
+  .pk-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap:12px; align-items:start; }
+  .pk-card{ margin:0; border-radius:16px; }
+  .pk-card.pk-open{ grid-column:1 / -1; border-color:var(--ice); }
+  .pk-sum-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .pk-sum-h b{ font-size:14px; cursor:pointer; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
+  .pk-sum-price{ font-size:19px; font-weight:800; margin:6px 0 2px; }
+  .pk-sum-gives{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
+  .pk-open .pk-sum{ padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--line); }
+  @media (max-width: 560px){
+    .pk-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+    .pk-card{ padding:10px 11px; }
+    .pk-sum-price{ font-size:15px; }
+    .pk-sum-f{ flex-wrap:wrap; gap:4px; font-size:10.5px; }
+    .pk-sum-f .btn{ padding:3px 10px; }
+  }
+  /* Breakdown pop-up on phones: keep all four columns in view */
+  @media (max-width: 560px){
+    #drilldownModal .modal-box{ padding:16px 14px; }
+    #drilldownModal .src-name{ white-space:normal !important; font-size:12px !important; min-width:0; }
+    #drilldownModal .src-val{ font-size:12.5px !important; }
+  }
   /* Stat boxes and stat tabs */
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
@@ -3339,6 +3388,12 @@ const T = {
   t12x_sp_cover: { en: "Speedups you own: general {g} · research {r}", ar: "التسريعات لديك: عامة {g} · بحث {r}", ko: "보유 가속: 일반 {g} · 연구 {r}" },
   t12x_now: { en: "Now", ar: "الحالي", ko: "현재" },
   plx_your_levels: { en: "Your levels", ar: "مستوياتك", ko: "내 레벨" },
+  dash_to_go: { en: "to go", ar: "متبقٍ", ko: "남음" },
+  dash_gains_title: { en: "Biggest gains left", ar: "أكبر مكاسب متبقية", ko: "남은 최대 상승폭" },
+  budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
+  budgets_details_title: { en: "Details per page", ar: "التفاصيل لكل صفحة", ko: "페이지별 상세" },
+  pk_edit: { en: "Edit", ar: "تعديل", ko: "편집" },
+  pk_close: { en: "Close", ar: "إغلاق", ko: "닫기" },
   plx_all_troops: { en: "All troops", ar: "كل القوات", ko: "전체 병종" },
   t12x_target: { en: "Target", ar: "الهدف", ko: "목표" },
   t12x_node1: { en: "1 node", ar: "عقدة واحدة", ko: "1개 항목" },
@@ -4378,8 +4433,8 @@ let RENDER_SEQ = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
   const seq = ++RENDER_SEQ;
-  const advModal = document.getElementById("refineAdvModal"); // page pop-up: close it when the page changes
-  if (advModal) advModal.style.display = "none";
+  // Page pop-ups: close them when the page changes.
+  ["refineAdvModal", "drilldownModal"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
@@ -5026,8 +5081,9 @@ async function renderOverview(opts = {}) {
       </div>
     </div>
     ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
-    <div id="dashboardRoster" style="margin-top:16px;"></div>
-    <div id="troopSections"></div>
+    <div id="troopSections" style="margin-top:16px;"></div>
+    <div id="dashGains" style="margin-top:12px;"></div>
+    <div id="dashboardRoster" style="margin-top:12px;"></div>
     ${IS_OWNER ? `<div class="grid g4" id="metricRow" style="margin-top:16px;"></div>` : ""}
   `;
 
@@ -5332,46 +5388,31 @@ async function renderOverview(opts = {}) {
   }
 
   const sections = document.getElementById("troopSections");
-  const maxPossibleLabel = t("max_possible");
-  const clickBreakdownLabel = t("click_full_breakdown");
-  // One troop at a time, picked with tabs (same as the planner pages).
-  sections.innerHTML = plxStatTabsHtml("dashboard", TROOP_TYPES.map((t) => ({
-    key: t.key, label: troopDisplayName(t.key), color: PLX_TROOP_COLORS[t.key] || PLX_TROOP_COLORS[String(t.key).replace(/s$/, "")],
-    html: `
-    <div class="grid g4">
-      ${STATS.map((s) => {
-        const { total, sources } = statFor(t.key, s.key);
-        const maxTotal = maxStatFor(t.key, s.key);
-        const pct = maxTotal > 0 ? Math.min(100, Math.round((total / maxTotal) * 100)) : 0;
+  // All three troops side by side; each stat is a bar toward its max.
+  // Tap a stat for the full breakdown (same pop-up as before).
+  const DASH_TROOP_COLORS = { Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" };
+  sections.innerHTML = `<div class="dash-troops">${TROOP_TYPES.map((tt) => `
+    <div class="t12x-card dash-troop" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
+      <div class="dash-troop-h">${esc(troopDisplayName(tt.key))}</div>
+      ${STATS.map((st) => {
+        const { total } = statFor(tt.key, st.key);
+        const maxTotal = maxStatFor(tt.key, st.key);
+        const pct = maxTotal > 0 ? Math.min(100, (total / maxTotal) * 100) : 0;
         const diff = Math.max(0, maxTotal - total);
-        return `<div class="stat-card" data-drilldown="${esc(t.key)}|${esc(s.key)}" style="cursor:pointer; position:relative;">
-          ${diff > 0 ? `<div style="position:absolute; top:10px; right:12px; font-size:12px; font-weight:600; color:#e0b030; white-space:nowrap;">+${diff.toFixed(1)}%</div>` : ""}
-          <div class="label" style="padding-right:${diff > 0 ? "56px" : "0"};"><span class="stat-key">${esc(s.key)} &middot; </span>${esc(tStatLabel(s.label)).toUpperCase()}</div>
-          <div class="val">${total.toFixed(1)}%</div>
-          <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
-          <div class="metric" style="margin-top:8px; padding:8px 10px;">
-            <div class="label" style="font-size:10.5px;">${esc(maxPossibleLabel)}</div>
-            <div class="val" style="font-size:16px;">${maxTotal.toFixed(1)}%</div>
-          </div>
-          ${sources.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(clickBreakdownLabel)}</div>` : ""}
-        </div>`;
+        return `<button type="button" class="dash-stat" data-drilldown="${esc(tt.key)}|${esc(st.key)}">
+          <span class="dash-stat-k">${esc(tStatLabel(st.label))}</span>
+          <span class="dash-stat-v"><b>${total.toFixed(1)}%</b> <small>/ ${maxTotal.toFixed(0)}%</small></span>
+          <span class="dash-stat-bar"><i style="width:${pct}%;"></i></span>
+          <span class="dash-stat-gap">${diff > 0 ? `+${diff.toFixed(1)}% ${esc(t("dash_to_go"))}` : `&#10003; ${esc(t("t12x_done"))}`}</span>
+        </button>`;
       }).join("")}
-    </div>
-  `,
-  })));
+    </div>`).join("")}</div>
+    <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("click_full_breakdown"))}</div>`;
   statPassMemo = null; // first paint done - recompute fresh from here on
 
-  sections.querySelectorAll("[data-drilldown]").forEach((card) => {
-    card.addEventListener("click", () => {
-      try {
-        const [troop, statKey] = card.dataset.drilldown.split("|");
-        const statMeta = STATS.find((s) => s.key === statKey);
-        // recompute the full (non-truncated) source lists for this troop+stat,
-        // including every live-wired page (Charm/Chief/Hero Gears/Islands/
-        // Skins/Facility/Gallery/T11/T12/Research Center/Jero/Natalia/
-        // Pets Level/Pets Refine/VIP). Re-runnable so the modal can switch
-        // between the 3 Hero Gear sets.
-        const computeBreakdown = () => {
+  // Current and max per source for one troop + stat (the breakdown pop-up
+  // and "Biggest gains left" both use it).
+  const breakdownFor = (troop, statKey) => {
           const { total } = statFor(troop, statKey);
           const maxTotal = maxStatFor(troop, statKey);
           const row = rows.find((r) => r.name.toLowerCase() === `${troop} ${statKey}`.toLowerCase());
@@ -5408,6 +5449,17 @@ async function renderOverview(opts = {}) {
           );
           return { total, maxTotal, combined };
         };
+  sections.querySelectorAll("[data-drilldown]").forEach((card) => {
+    card.addEventListener("click", () => {
+      try {
+        const [troop, statKey] = card.dataset.drilldown.split("|");
+        const statMeta = STATS.find((s) => s.key === statKey);
+        // recompute the full (non-truncated) source lists for this troop+stat,
+        // including every live-wired page (Charm/Chief/Hero Gears/Islands/
+        // Skins/Facility/Gallery/T11/T12/Research Center/Jero/Natalia/
+        // Pets Level/Pets Refine/VIP). Re-runnable so the modal can switch
+        // between the 3 Hero Gear sets.
+        const computeBreakdown = () => breakdownFor(troop, statKey);
         BREAKDOWN_HERO_GEAR_SET = "Set 1";
         const first = computeBreakdown();
         openDrilldownModal(`${troopDisplayName(troop)} ${tStatLabel(statMeta.label)}`, first.total, first.maxTotal, first.combined, computeBreakdown);
@@ -5416,6 +5468,29 @@ async function renderOverview(opts = {}) {
       }
     });
   });
+
+  // "Biggest gains left": for each page/source, the most it can still add to
+  // one troop stat. Worked out after the page is drawn so it never slows it.
+  setTimeout(() => {
+    if (seq !== RENDER_SEQ) return;
+    const gainsEl = document.getElementById("dashGains");
+    if (!gainsEl) return;
+    try {
+      const bySrc = {};
+      TROOP_TYPES.forEach((tt) => STATS.forEach((st) => {
+        breakdownFor(tt.key, st.key).combined.forEach((x) => {
+          const g = bySrc[x.name] || (bySrc[x.name] = { cur: 0, max: 0, best: 0, where: "" });
+          g.cur += x.cur; g.max += x.max;
+          if (x.max - x.cur > g.best) { g.best = x.max - x.cur; g.where = `${troopDisplayName(tt.key)} ${tStatLabel(st.label)}`; }
+        });
+      }));
+      const top = Object.entries(bySrc).filter(([, g]) => g.best > 0.05).sort((x, y) => y[1].best - x[1].best).slice(0, 8);
+      gainsEl.innerHTML = top.length ? `<div class="t12x-card"><div class="t12x-title">${esc(t("dash_gains_title"))}</div>
+        <div class="dash-gains">${top.map(([name, g]) => `<div class="dash-gain"><b>${esc(displaySourceName(name))}</b><span class="dash-gain-bar"><i style="width:${g.max > 0 ? Math.min(100, (g.cur / g.max) * 100) : 0}%;"></i></span><span class="dash-gain-v">+${g.best.toFixed(1)}%<small>${esc(g.where)}</small></span></div>`).join("")}</div></div>` : "";
+    } catch (e) {
+      console.error("gains failed", e);
+    }
+  }, 0);
 }
 
 function openDrilldownModal(title, total, maxTotal, sources, recompute) {
@@ -5448,7 +5523,7 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
         <span>${esc(t("max_possible"))}: <strong style="color:var(--ice); white-space:nowrap;">${maxTotal.toFixed(1)}%</strong></span>
         <span>${esc(t("difference_label"))}: <strong style="color:var(--warn, #e0a030); white-space:nowrap;">+${(maxTotal - total).toFixed(1)}%</strong></span>
       </div>
-      <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:4px 12px; margin-top:12px; align-items:center;">
+      <div style="display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:4px 10px; margin-top:12px; align-items:center;">
         <div class="meta" style="font-size:10.5px;"></div>
         <div class="meta" style="font-size:10.5px; text-align:end;">${esc(t("current_label"))}</div>
         <div class="meta" style="font-size:10.5px; text-align:end;">${esc(t("max_label"))}</div>
@@ -6721,6 +6796,9 @@ async function renderPackCalendarPage() {
   window.addEventListener("resize", onResize);
 }
 
+// Packs B: tables open for editing (kept for the visit). Closed tables show a
+// small summary card only.
+const PACKS_OPEN = new Set();
 async function renderPacksPage() {
   const seq = RENDER_SEQ;
   content.innerHTML = `
@@ -6745,6 +6823,18 @@ async function renderPacksPage() {
   if (calBtn) calBtn.addEventListener("click", () => goToTab("packcalendar"));
   wireVisibilityBtns(content, () => renderPacksPage());
   const listEl = document.getElementById("packsList");
+  // Tap a summary card's Edit (or its title) to open / close that table.
+  listEl.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-pk-toggle]");
+    if (!b) return;
+    const panel = b.closest("[data-packtable]");
+    const id = panel.dataset.pkid;
+    const open = !PACKS_OPEN.has(id);
+    if (open) PACKS_OPEN.add(id); else PACKS_OPEN.delete(id);
+    panel.classList.toggle("pk-open", open);
+    panel.querySelector(".pk-body").hidden = !open;
+    panel.querySelector("[data-pk-toggle].btn").textContent = open ? t("pk_close") : t("pk_edit");
+  });
   // Column dropdowns are built with only their shown option; fill in the
   // full list on the first touch / click / focus / key, before it opens.
   const fillPackColPick = (e) => {
@@ -6982,10 +7072,10 @@ async function renderPacksPage() {
     let lastGroup = null;
     const groupPh = t("pack_group_placeholder"), groupTitle = t("pack_group_title"); // `t` is the table inside the map below
     const rowMaxTitle = t("pack_rowmax_title"), rowMaxHead = t("pack_rowmax_head"), dupTitle = t("pack_duplicate"), restoreTitle = t("pack_restore"), dailyDayLbl = t("pk_daily_day"), hiddenTag = t("pk_hidden_tag");
-    listEl.innerHTML = `<div class="grid g2" style="align-items:start;">` + ordered
+    listEl.innerHTML = `<div class="pk-grid">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:20px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_TEMPLATE_GROUP ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_template_note"))}</span>` : g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_TEMPLATE_GROUP ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_template_note"))}</span>` : g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
         lastGroup = g;
         return heading + (() => {
         // Auto-computed total row: sums every column's numeric cells across
@@ -6994,9 +7084,22 @@ async function renderPacksPage() {
         const totals = t.columns.map((_, ci) =>
           t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
         );
+        const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
+        const prices = t.rows.map((r) => parseNum(r.cells[lk.priceCol || 0])).filter((v) => Number.isFinite(v) && v > 0);
+        const hasFree = t.rows.some((r) => /free/i.test(String(r.cells[lk.priceCol || 0] || "")));
+        const priceText = prices.length ? `${hasFree ? "Free–" : ""}$${Math.min(...prices)}${prices.length > 1 && Math.max(...prices) !== Math.min(...prices) ? `–$${Math.max(...prices)}` : ""}` : hasFree ? "Free" : "—";
+        const gives = t.columns.filter((_, ci) => ci !== (lk.priceCol || 0)).map((c) => materialDisplayName(c)).filter(Boolean);
+        const usedFor = packGroupsChecked(lk.pages) || 0;
         return `
-      <div class="panel" style="margin-top:16px; min-width:0; ${t.columns.length > 5 ? "grid-column:1 / -1;" : ""} ${IS_OWNER && packLinkFor(t.id).hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}">
-        ${IS_OWNER && packLinkFor(t.id).hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
+      <div class="panel pk-card${pkOpen ? " pk-open" : ""}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
+        <div class="pk-sum">
+          <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
+          <div class="pk-sum-price">${esc(priceText)}</div>
+          <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
+          <div class="pk-sum-f"><span>${esc(window.t("pack_used_for"))} (${usedFor})</span><button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
+        </div>
+        <div class="pk-body"${pkOpen ? "" : " hidden"}>
+        ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
           <input data-pt-group list="packGroupNames" value="${esc(packLinkFor(t.id).group)}" placeholder="${esc(groupPh)}" title="${esc(groupTitle)}" style="font-size:11px; padding:3px 6px; flex:0 1 110px; min-width:70px;" />
@@ -7064,6 +7167,7 @@ async function renderPacksPage() {
         </div>
         ${packTriggerStatusHtml(t)}
         ${packLinkEditorHtml(t)}
+        </div>
       </div>`;
         })();
       })
@@ -12443,6 +12547,7 @@ async function renderBudgetsPage(opts = {}) {
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
   const grandMats = {}, grandDeltas = [];
+  const sideRows = []; // Budgets B: one short row per page in the side column
   const cards = pages_.map((pg, i) => {
     const label = packPageLabel(pg.calcKey);
     const grp = packGroupOf(pg.calcKey);
@@ -12451,9 +12556,10 @@ async function renderBudgetsPage(opts = {}) {
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} title="${grp && grp.group ? esc(packGroupLabel(grp)) : ""}" /><span style="font-size:14px; font-weight:700;">${grp && grp.group ? `<span class="meta" style="font-size:11px; font-weight:600;">${esc(packGroupLabel(grp))} · </span>` : ""}${esc(label)}</span></label>
         <button class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}" style="margin-inline-start:auto;">${esc(t("budgets_open_page"))}</button>
       </div>`;
-    if (pg.missing) return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_open_once"))}</div></div>`;
+    const sideRow = (right) => sideRows.push(`<div class="bud-row${inc ? "" : " off"}"><label><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} /><span>${esc(label)}</span></label><span class="bud-row-v">${right}</span><button type="button" class="linklike" data-gototab="${esc(BUDGET_PAGES[i].tab)}" title="${esc(t("budgets_open_page"))}">&#8599;</button></div>`);
+    if (pg.missing) { sideRow(`<span class="meta">${esc(t("budgets_open_page"))}</span>`); return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_open_once"))}</div></div>`; }
     const hasNeed = Object.keys(pg.needFull).some((n) => pg.needFull[n] > 0);
-    if (!hasNeed) return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("budgets_nothing_planned"))}</div></div>`;
+    if (!hasNeed) { sideRow(`<span style="color:var(--good);">&#10003;</span>`); return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("budgets_nothing_planned"))}</div></div>`; }
     if (inc) {
       Object.keys(pg.needStill).forEach((n) => { if (pg.needStill[n] > 0) grandMats[n] = (grandMats[n] || 0) + pg.needStill[n]; });
       pg.deltas.forEach((d) => grandDeltas.push(d));
@@ -12491,6 +12597,10 @@ async function renderBudgetsPage(opts = {}) {
           ${(c.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${c.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
           <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
     }
+    {
+      const sh = inc && combined.inc.includes(pg.calcKey) && combined.chosen ? (combined.shares[pg.calcKey] || { total: 0, rows: [] }) : null;
+      sideRow(!inc ? "—" : sh ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(sh)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`);
+    }
     return `<div class="panel" style="${inc ? "" : "opacity:0.55;"}">
       ${head}
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
@@ -12527,7 +12637,7 @@ async function renderBudgetsPage(opts = {}) {
       <div style="border:1px solid var(--good); border-radius:10px; padding:10px 12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><b>${esc(t("budgets_view_target"))}</b><span style="font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--good); color:#0f141b; font-weight:700;">${when(tp.days)}</span></div>
         <div class="meta" style="font-size:11px; margin-top:2px;">${names(split.target.keys)}</div>
-        <details style="margin-top:6px;"><summary style="cursor:pointer;"><span style="font-size:18px; font-weight:700;">${money(tp)}</span> <span class="meta" style="font-size:11px;">${esc(t("budgets_packs_detail"))} (${tp.rows.length})</span></summary>${packRowsHtml(tp)}${tradesHtml(tp)}</details>
+        <details open style="margin-top:6px;"><summary style="cursor:pointer;"><span style="font-size:18px; font-weight:700;">${money(tp)}</span> <span class="meta" style="font-size:11px;">${esc(t("budgets_packs_detail"))} (${tp.rows.length})</span></summary>${packRowsHtml(tp)}${tradesHtml(tp)}</details>
       </div>
       <div style="border:1px solid var(--danger); border-radius:10px; padding:10px 12px; margin-top:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><b>${esc(t("budgets_split_late").replace("{date}", fmtDate(targetDays)))}</b><span style="font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--danger); color:#fff; font-weight:700;">${esc(t("budgets_split_after"))}</span></div>
@@ -12541,7 +12651,7 @@ async function renderBudgetsPage(opts = {}) {
   const combinedHtml = split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
       <div style="margin-top:10px;">
         <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(t("combined_budget_note"))}</div>
-        ${combined.chosen ? `<details><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtLocal(Math.ceil(packPlanLocal(combined.chosen)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</summary>${packRowsHtml(combined.chosen)}
+        ${combined.chosen ? `<details open><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtLocal(Math.ceil(packPlanLocal(combined.chosen)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</summary>${packRowsHtml(combined.chosen)}
           ${(combined.chosen.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${combined.chosen.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
           ${targetDays != null && !combined.byTarget && combined.earliest != null ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(combined.earliest))}</div>` : ""}</details>`
           : `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
@@ -12573,9 +12683,7 @@ async function renderBudgetsPage(opts = {}) {
     <div class="panel" style="border-color:var(--ice);">
       <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
         <div style="font-size:14px; font-weight:700;">${esc(t("budgets_total_title"))}</div>
-        <label style="display:flex; align-items:center; gap:8px; font-size:12px; margin-inline-start:auto;"><span class="meta">${esc(t("pack_target_by"))}</span><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" style="font-size:12px; padding:4px 6px;" />
-          ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
-          ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label>
+
       </div>
       <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
         <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
@@ -12588,11 +12696,28 @@ async function renderBudgetsPage(opts = {}) {
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
     </div>`;
 
+  // Budgets B: settings + pages on the side, the total and the shopping
+  // list (packs to buy) in the main column, each page's details below it.
   content.innerHTML = `
     <div class="budget-wrap">
-      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div>${currencyPickerHtml('id="budgetsCurrency"')}</div>
-      <div style="margin-top:12px;">${summary}</div>
-      <div class="budget-cols" style="margin-top:16px;">${cards.join("")}</div>
+      <div class="plx-head"><h2>${esc(t("budgets_title"))}</h2></div>
+      <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("budgets_desc"))}</p>
+      <div class="t12x">
+        <aside class="t12x-side">
+          <div class="t12x-card t12x-settings"><div class="t12x-k">${esc(t("t12x_settings"))}</div>
+            <div class="bud-set">        <label style="display:flex; align-items:center; gap:8px; font-size:12px; flex-wrap:wrap;"><span class="meta">${esc(t("pack_target_by"))}</span><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" style="font-size:12px; padding:4px 6px;" />
+          ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
+          ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label></div>
+            <div class="bud-set" style="margin-top:8px;">${currencyPickerHtml('id="budgetsCurrency"')}</div>
+          </div>
+          <div class="t12x-card"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${sideRows.join("")}</div>
+        </aside>
+        <div class="t12x-main">
+          ${summary}
+          <div class="t12x-title" style="margin:16px 0 8px;">${esc(t("budgets_details_title"))}</div>
+          <div class="budget-cols">${cards.join("")}</div>
+        </div>
+      </div>
     </div>`;
 
   content.querySelectorAll("[data-splitlate]").forEach((b) => b.addEventListener("click", () => {
@@ -14789,7 +14914,7 @@ async function renderAlbumTundraPage() {
     <div class="plx-head"><h2>${esc(t("tundra_album_title"))}</h2></div>
     <div class="t12x-card" style="margin-bottom:12px;">
       <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
-      ${["Attack", "Defense"].map((k) => plxChipRowHtml(tStatLabel(k), `album:${k}`, [0, ...OPTIONS_BY_STAT[k]], saved[k])).join("")}
+      <div class="plx-selrow">${["Attack", "Defense"].map((k) => plxSelectHtml(tStatLabel(k), `album:${k}`, [0, ...OPTIONS_BY_STAT[k]], saved[k])).join("")}</div>
     </div>
     <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="albumTundraTotals"></div></div>
   `;
@@ -14804,7 +14929,7 @@ async function renderAlbumTundraPage() {
   }
   renderTotals();
 
-  wirePlxChips(content, (key, v) => {
+  wirePlxSelects(content, (key, v) => {
     saved[key.split(":")[1]] = v;
     renderTotals();
     saveCalcState("album_tundra", saved);
@@ -14835,7 +14960,7 @@ async function renderCollectionGalleryPage() {
     <div class="plx-head"><h2>${esc(t("collection_gallery_title"))}</h2></div>
     <div class="t12x-card" style="margin-bottom:12px;">
       <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
-      ${STATS.map((st) => plxChipRowHtml(tStatLabel(st.key), `gallery:${st.key}`, [0, ...st.options], saved[st.key])).join("")}
+      <div class="plx-selrow">${STATS.map((st) => plxSelectHtml(tStatLabel(st.key), `gallery:${st.key}`, [0, ...st.options], saved[st.key])).join("")}</div>
     </div>
     <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="collectionGalleryTotals"></div></div>
   `;
@@ -14845,7 +14970,7 @@ async function renderCollectionGalleryPage() {
   }
   renderTotals();
 
-  wirePlxChips(content, (key, v) => {
+  wirePlxSelects(content, (key, v) => {
     saved[key.split(":")[1]] = v;
     renderTotals();
     saveCalcState("collection_gallery", saved);
@@ -17774,19 +17899,12 @@ function plxPieceStatHtml(list) {
   const f = (v) => `+${(Math.round(v * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
   return list.map((x) => `<span><em>${esc(x.label)}</em> <b>${f(x.now)}</b>${x.target > x.now + 1e-9 ? ` <i>&rarr; ${f(x.target)}</i>` : ""}</span>`).join("");
 }
-// A row of tappable level chips (+0% … max) instead of a dropdown.
-function plxChipRowHtml(label, key, values, selected) {
-  return `<div class="plx-chiprow"><span class="plx-chiprow-k">${esc(label)}</span><div class="plx-chips" data-chips="${esc(key)}">${values.map((v) => `<button type="button" class="${Number(v) === Number(selected) ? "on" : ""}" data-chip="${v}">+${v}%</button>`).join("")}</div></div>`;
+// One labelled level dropdown (+0% … max); several sit side by side in .plx-selrow.
+function plxSelectHtml(label, key, values, selected) {
+  return `<label class="plx-sel"><span>${esc(label)}</span><select data-plxsel="${esc(key)}">${values.map((v) => `<option value="${v}" ${Number(v) === Number(selected) ? "selected" : ""}>+${v}%</option>`).join("")}</select></label>`;
 }
-function wirePlxChips(root, onPick) {
-  root.querySelectorAll("[data-chips]").forEach((row) => {
-    row.onclick = (e) => {
-      const b = e.target.closest("[data-chip]");
-      if (!b) return;
-      row.querySelectorAll("[data-chip]").forEach((x) => x.classList.toggle("on", x === b));
-      onPick(row.dataset.chips, Number(b.dataset.chip));
-    };
-  });
+function wirePlxSelects(root, onPick) {
+  root.querySelectorAll("select[data-plxsel]").forEach((sel) => sel.addEventListener("change", () => onPick(sel.dataset.plxsel, Number(sel.value))));
 }
 // Stat boxes (label, +value, of max, bar) - one look for every stats card.
 // oneRow: all boxes side by side on one line, even on phones.
