@@ -4330,6 +4330,8 @@ const T = {
   pur_newgen_start: { en: "Pack starts", ar: "تبدأ الحزمة", ko: "팩 시작" },
   pur_newgen_with: { en: "Comes with the new heroes (from your date above).", ar: "تأتي مع الأبطال الجدد (من تاريخك أعلاه).", ko: "새 영웅과 함께 옵니다 (위 날짜 기준)." },
   pur_newgen_after: { en: "Comes {n} weeks after the new heroes (from your date above).", ar: "تأتي بعد {n} أسابيع من الأبطال الجدد (من تاريخك أعلاه).", ko: "새 영웅 {n}주 후에 옵니다 (위 날짜 기준)." },
+  pur_newgen_ev_last: { en: "Last {e} started", ar: "آخر {e} بدأ", ko: "마지막 {e} 시작일" },
+  pur_newgen_rule: { en: "New heroes come on a Monday once at least 80 days, 5 Lucky Wheels (SvS + KOI) and 3 SvS have passed. SvS and KOI dates differ by state: set yours (empty = the site's dates).", ar: "يأتي الأبطال الجدد يوم اثنين بعد مرور 80 يوماً على الأقل و5 عجلات حظ (SvS + KOI) و3 SvS. تختلف مواعيد SvS وKOI حسب الولاية: أدخل مواعيدك (فارغ = مواعيد الموقع).", ko: "최소 80일, 행운의 룰렛 5회(SvS + KOI), SvS 3회가 지나면 월요일에 새 영웅이 옵니다. SvS·KOI 날짜는 주마다 다르니 내 날짜를 입력하세요(비우면 사이트 날짜)." },
   pur_gen: { en: "Gen {n}", ar: "الجيل {n}", ko: "{n}세대" },
   pur_now: { en: "now", ar: "الآن", ko: "진행 중" },
   pur_budget_line: { en: "My Purchases: {n} coming packs counted", ar: "مشترياتي: {n} حزم قادمة محسوبة", ko: "내 구매: 예정 팩 {n}개 반영" },
@@ -7100,6 +7102,8 @@ async function renderPurchasesPage() {
     <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
     <div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
       <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>
+    <div class="pur-ng-row" style="margin-top:6px;">${GAME_EVENTS.map((ev) => `<label class="pur-f"><span class="meta">${esc(t("pur_newgen_ev_last").replace("{e}", ev.name))}</span><input type="date" data-purng="${ev.key}" value="${esc(packValidDay(ng[ev.key]) || "")}" placeholder="${esc(ev.anchor)}" /></label>`).join("")}</div>
+    <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pur_newgen_rule"))}</div>
     ${ngTables.map((tb) => {
       const l = packLinkFor(tb.id);
       const t0 = packStartOfToday();
@@ -7284,10 +7288,10 @@ async function renderPurchasesPage() {
   });
   content.querySelectorAll("[data-purng]").forEach((inp) => inp.addEventListener("change", () => {
     const ng0 = { ...(PACK_PURCHASES.newGen || {}) };
-    if (inp.dataset.purng === "last") { if (packValidDay(inp.value)) ng0.last = inp.value; else delete ng0.last; }
+    if (inp.dataset.purng === "last" || inp.dataset.purng === "svs" || inp.dataset.purng === "koi") { const k = inp.dataset.purng; if (packValidDay(inp.value)) ng0[k] = inp.value; else delete ng0[k]; }
     else { const n = Math.floor(Number(inp.value) || 0); if (n > 0) ng0.gen = n; else delete ng0.gen; }
     PACK_PURCHASES.newGen = ng0;
-    if (inp.dataset.purng === "last") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); } // the New Gen packs' dates follow it
+    if (inp.dataset.purng !== "gen") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); } // the New Gen packs' dates follow these
     else saveCalcState("pack_purchases", PACK_PURCHASES); // Gen number: labels only
     redraw();
   }));
@@ -10511,14 +10515,19 @@ async function savePackLinks() {
 // ---- Game events: SvS and King of Icefield (KOI) ----
 // Each comes every 4 weeks for 6 days (Monday to Saturday); the Lucky Wheel
 // (heroes) opens on day 2 and stays 3 days. SvS 5-10 Oct 2026 and KOI
-// 21-26 Sep 2026 were seen in game.
+// 21-26 Sep 2026 were seen in game. Every state is different, so each person
+// can set their own last SvS / KOI start (My Purchases, newGen.svs / .koi).
 const GAME_EVENTS = [
   { key: "svs", name: "SvS", anchor: "2026-10-05", every: 28, days: 6, wheelDay: 2, wheelDays: 3 },
   { key: "koi", name: "KOI", anchor: "2026-09-21", every: 28, days: 6, wheelDay: 2, wheelDays: 3 },
 ];
 // Start days of an event from `from` to `to` (Dates).
+function gameEventAnchor(ev) {
+  const mine = packValidDay(((typeof PACK_PURCHASES !== "undefined" && PACK_PURCHASES.newGen) || {})[ev.key]);
+  return mine || ev.anchor;
+}
 function gameEventStarts(ev, from, to) {
-  const a = packParseDay(ev.anchor), step = ev.every * 86400000, out = [];
+  const a = packParseDay(gameEventAnchor(ev)), step = ev.every * 86400000, out = [];
   let k = Math.floor((from - a) / step) - 1;
   for (;; k++) { const d = new Date(a.getTime() + k * step); if (d > to) break; if (d.getTime() + (ev.days - 1) * 86400000 >= from.getTime()) out.push(d); }
   return out;
@@ -10532,24 +10541,44 @@ function heroWheels(from, to) {
   }));
   return out.sort((a, b) => a.day - b.day);
 }
-// New Gen Heroes: a generation lasts 5 Lucky Wheels (SvS or KOI, one every
-// 2 weeks, so 70 days); the next one starts the Monday after the 5th wheel's
-// week. Returns the start days from `lastKey` on.
+// New Gen Heroes: a generation lasts at least 80 days AND until 5 Lucky
+// Wheels (SvS or KOI) including 3 SvS ones have opened; the new heroes come
+// the first Monday when all three are true. Returns the start days from
+// `lastKey` on.
+const NEW_GEN_MEMO = new Map(); // packLinkFor asks often; same inputs, same answer
 function newGenStarts(lastKey, count) {
+  const mk = [lastKey, count, ...GAME_EVENTS.map(gameEventAnchor)].join("|");
+  if (NEW_GEN_MEMO.has(mk)) return NEW_GEN_MEMO.get(mk).slice();
+  const res = newGenStartsCompute(lastKey, count);
+  if (NEW_GEN_MEMO.size > 50) NEW_GEN_MEMO.clear();
+  NEW_GEN_MEMO.set(mk, res);
+  return res.slice();
+}
+function newGenStartsCompute(lastKey, count) {
   let cur = packParseDay(lastKey);
   if (!cur) return [];
   const out = [cur];
   while (out.length < count) {
-    const ws = heroWheels(new Date(cur.getTime() + 86400000), new Date(cur.getTime() + 200 * 86400000));
-    const hit = ws[4] || null; // the 5th wheel
+    const ws = heroWheels(new Date(cur.getTime() + 86400000), new Date(cur.getTime() + 300 * 86400000));
+    let n = 0, svs = 0, hit = null;
+    for (const w of ws) { n++; if (w.ev.key === "svs") svs++; if (n >= NEW_GEN_WHEELS && svs >= NEW_GEN_SVS) { hit = w; break; } }
     if (!hit) break;
-    const monday = new Date(hit.start.getTime() + 7 * 86400000); // the week after that event week
-    cur = new Date(monday.getTime() - ((monday.getUTCDay() + 6) % 7) * 86400000);
+    // The Monday after that wheel's event week, and not before 80 days.
+    let next = new Date(hit.start.getTime() + 7 * 86400000);
+    next = new Date(next.getTime() - ((next.getUTCDay() + 6) % 7) * 86400000);
+    const min = new Date(cur.getTime() + NEW_GEN_MIN_DAYS * 86400000);
+    if (next < min) next = new Date(min.getTime() + ((8 - min.getUTCDay()) % 7) * 86400000);
+    cur = next;
     out.push(cur);
   }
   return out;
 }
-const NEW_GEN_DAYS = 70; // 5 Lucky Wheels, one every 2 weeks
+const NEW_GEN_MIN_DAYS = 80, NEW_GEN_WHEELS = 5, NEW_GEN_SVS = 3;
+// The planner repeats a pack at a fixed gap: the gap between the next two generations.
+function newGenGapDays() {
+  const g = newGenStarts(newGenBaseDay(), 3);
+  return g.length >= 3 ? Math.round((g[2] - g[1]) / 86400000) : 84;
+}
 function packIsNewGen(l) { return !!l && typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP; }
 // New Gen Heroes packs follow the person's "last new heroes" date (My
 // Purchases): Hero Ascension Training starts the day new heroes come,
@@ -10732,8 +10761,8 @@ function packLinkForBase(tableId) {
     // Carried as "stack:<daysPerBuy>:<cap>" so the planner has both numbers.
     reset: trig ? "once" : l.reset === "stack"
       ? `stack:${l.daily && Number(l.daily.days) > 0 ? Math.round(Number(l.daily.days)) : 7}:${Number(l.stackCap) > 0 ? Math.round(Number(l.stackCap)) : 370}`
-      // New Gen Heroes come every 5 Lucky Wheels = 70 days (see newGenStarts).
-      : packIsNewGen(l) && typeof l.reset === "number" && newGenBaseDay() ? NEW_GEN_DAYS
+      // New Gen Heroes: the gap between generations (see newGenStarts).
+      : packIsNewGen(l) && typeof l.reset === "number" && newGenBaseDay() ? newGenGapDays()
       : typeof l.reset === "number" && l.reset > 0 ? l.reset : (l.reset === "once" || l.reset === "unlimited") ? l.reset : (l.sequential === true ? "once" : "unlimited"),
     stackCap: Number(l.stackCap) > 0 ? Math.round(Number(l.stackCap)) : 370,
     buys: Number.isInteger(l.buys) && l.buys > 0 ? l.buys : 1,
