@@ -466,6 +466,35 @@ input,select,textarea{
   .plx-maxbtn{ font:inherit; font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:10px; border:1px solid var(--ice); background:rgba(111,211,242,.10); color:var(--frost); cursor:pointer; white-space:nowrap; }
   .plx-maxbtn:hover{ background:rgba(111,211,242,.2); }
   .t12x-top .t12x-tabs{ margin-inline-start:0; max-width:none; }
+  /* A piece's own stat on its card: label, now, -> target */
+  .plx-piecestat{ display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:8px; padding-top:7px; border-top:1px dashed var(--line); font-size:12px; }
+  .plx-piecestat:empty{ display:none; }
+  .plx-piecestat em{ font-style:normal; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .plx-piecestat b{ color:var(--good); }
+  .plx-piecestat i{ font-style:normal; color:var(--ice); font-weight:600; }
+  /* Research Lab: summary squares and schedule cards */
+  .rfc-sum{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  .rfc-sum .plx-stat b{ font-size:20px; }
+  @media (max-width: 600px){ .rfc-sum{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  .rfc-tier-row{ display:flex; gap:8px; align-items:stretch; margin-bottom:8px; }
+  .rfc-tier-k{ flex:0 0 34px; display:grid; place-items:center; border-radius:10px; background:rgba(255,255,255,.05); font-weight:800; font-size:13px; }
+  .rfc-plans{ flex:1; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+  .rfc-plan{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:start; padding:8px 10px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.02); color:var(--text); font:inherit; cursor:pointer; min-width:0; }
+  .rfc-plan.on{ border-color:var(--ice); background:rgba(111,211,242,.10); box-shadow:inset 0 0 0 1px var(--ice); }
+  .rfc-plan-h{ font-weight:700; font-size:12.5px; }
+  .rfc-plan-h em{ font-style:normal; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:8px; background:rgba(126,230,168,.15); color:var(--good); white-space:nowrap; }
+  .rfc-plan-h em.fast{ background:rgba(111,211,242,.15); color:var(--ice); }
+  .rfc-plan-k{ font-size:11px; color:var(--muted); }
+  .rfc-plan-k b{ color:var(--good); font-size:14px; }
+  .rfc-plan-w{ font-size:11.5px; font-weight:600; color:var(--frost); }
+  /* Level chips (Tundra Album, Collection Gallery) */
+  .plx-chiprow{ display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
+  .plx-chiprow:first-of-type{ border-top:0; }
+  .plx-chiprow-k{ flex:0 0 78px; font-size:13px; font-weight:600; }
+  .plx-chips{ flex:1; display:flex; flex-wrap:wrap; gap:6px; }
+  .plx-chips button{ font:inherit; font-size:12px; font-weight:600; padding:6px 10px; border-radius:9px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted); cursor:pointer; }
+  .plx-chips button.on{ border-color:var(--ice); background:rgba(111,211,242,.14); color:var(--frost); }
+  @media (max-width: 560px){ .plx-chiprow{ flex-direction:column; align-items:flex-start; gap:6px; } .plx-chiprow-k{ flex:none; } }
   /* Stat boxes and stat tabs */
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
@@ -473,13 +502,20 @@ input,select,textarea{
   .plx-stat b{ display:block; font-size:18px; font-weight:800; margin-top:2px; }
   .plx-stat small{ display:block; font-size:10px; color:var(--muted); }
   .plx-stat .t12x-bar{ margin-top:6px; }
+  .plx-stats.one{ grid-template-columns:repeat(var(--n, 4), minmax(0, 1fr)); }
+  @media (max-width: 560px){
+    .plx-stats.one{ gap:5px; }
+    .plx-stats.one .plx-stat{ padding:7px 6px; }
+    .plx-stats.one .plx-stat b{ font-size:14px; }
+    .plx-stats.one .plx-stat small{ font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  }
   .t12x-tabs.plx-stat-tabs{ margin:0 0 10px; max-width:none; }
   .plx-stat-tabs{ overflow-x:auto; scrollbar-width:none; }
   .plx-stat-tabs button{ font-size:12.5px; flex:1 0 auto; white-space:nowrap; padding:7px 10px; }
   /* Pet / expert picker strip */
   .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-bottom:6px; scrollbar-width:thin; }
   .plx-pick button{ flex:0 0 auto; width:76px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
-  .plx-pick button img{ width:40px; height:40px; object-fit:contain; border-radius:8px; }
+  .plx-pick button img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
   .plx-pick button > span:last-child{ width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
   .plx-pick-ph{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
   .plx-pick button.on{ border-color:var(--tc); color:var(--frost); background:rgba(255,255,255,.07); box-shadow:inset 0 -2px 0 var(--tc); }
@@ -3302,6 +3338,7 @@ const T = {
   t12x_nodes: { en: "{n} nodes", ar: "{n} عقد", ko: "{n}개 항목" },
   t12x_sp_cover: { en: "Speedups you own: general {g} · research {r}", ar: "التسريعات لديك: عامة {g} · بحث {r}", ko: "보유 가속: 일반 {g} · 연구 {r}" },
   t12x_now: { en: "Now", ar: "الحالي", ko: "현재" },
+  plx_your_levels: { en: "Your levels", ar: "مستوياتك", ko: "내 레벨" },
   plx_all_troops: { en: "All troops", ar: "كل القوات", ko: "전체 병종" },
   t12x_target: { en: "Target", ar: "الهدف", ko: "목표" },
   t12x_node1: { en: "1 node", ar: "عقدة واحدة", ko: "1개 항목" },
@@ -3834,6 +3871,10 @@ const T = {
   rfc_max_weekly: { en: "Max / week (20×)", ar: "الأقصى / أسبوع (20×)", ko: "주 최대 (20회)" },
   rfc_strategies_title: { en: "Weekly schedules by top tier", ar: "الجداول الأسبوعية حسب أعلى مستوى", ko: "최고 단계별 주간 일정" },
   rfc_strategies_desc: { en: "Minimal = unlock on day 1, then one discounted attempt of the top tier per day. Maximum = 20 attempts of every tier.", ar: "الأدنى = الفتح في اليوم الأول ثم محاولة مخفّضة واحدة يوميًا من أعلى مستوى. الأقصى = 20 محاولة من كل مستوى.", ko: "최소 = 1일차 해금 후 최고 단계를 매일 할인 1회. 최대 = 모든 단계 20회." },
+  rfc_badge_value: { en: "Best value", ar: "أفضل قيمة", ko: "최고 효율" },
+  rfc_badge_fast: { en: "Fastest", ar: "الأسرع", ko: "가장 빠름" },
+  rfc_in_total: { en: "in total", ar: "إجمالًا", ko: "총" },
+  rfc_tap_schedule: { en: "Tap a weekly schedule to use it. Each card shows the Refined FC you get, the Fire Crystal it costs, and how long until you have what you need.", ar: "اضغط على جدول أسبوعي لاستخدامه. كل بطاقة تعرض المكرّرة التي تحصل عليها وتكلفة البلورة والمدة حتى تصل لما تحتاجه.", ko: "주간 일정을 눌러 사용하세요. 카드마다 얻는 정제 결정, 드는 화염 결정, 필요한 양까지 걸리는 기간이 나옵니다." },
   rfc_minimal: { en: "Minimal", ar: "الأدنى", ko: "최소" },
   rfc_maximum: { en: "Maximum", ar: "الأقصى", ko: "최대" },
   rfc_schedule: { en: "Schedule", ar: "الجدول", ko: "일정" },
@@ -3960,6 +4001,7 @@ const T = {
   budgets_split_after_note: { en: "planned after the packs above are bought", ar: "مخطط بعد شراء الحزم أعلاه", ko: "위 팩을 구매한 뒤로 계획됨" },
   marks_use_site: { en: "Use site rates", ar: "استخدم معدلات الموقع", ko: "사이트 기준 사용" },
   marks_site_rates_on: { en: "Using the site's rates", ar: "يتم استخدام معدلات الموقع", ko: "사이트 기준 사용 중" },
+  marks_use_own: { en: "Use my own rates", ar: "استخدم معدلاتي الخاصة", ko: "내 비율 사용" },
   marks_advanced_open: { en: "Advanced refine calculator", ar: "حاسبة التحسين المتقدمة", ko: "고급 강화 계산기" },
   marks_advanced_desc: { en: "Set your own marks per 1% and adjustment. Off = the site's rates.", ar: "اضبط معدلات العلامات لكل 1% والتعديل بنفسك. الإيقاف = معدلات الموقع.", ko: "1%당 문장 수와 보정을 직접 설정합니다. 끄면 사이트 기준을 사용합니다." },
   marks_advanced_close: { en: "Close advanced (use site rates)", ar: "إغلاق المتقدم (استخدام معدلات الموقع)", ko: "고급 닫기 (사이트 기준 사용)" },
@@ -4336,6 +4378,8 @@ let RENDER_SEQ = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
   const seq = ++RENDER_SEQ;
+  const advModal = document.getElementById("refineAdvModal"); // page pop-up: close it when the page changes
+  if (advModal) advModal.style.display = "none";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
@@ -5622,6 +5666,7 @@ async function renderGearLevelingGroup(target) {
         </div>
       </div>`
       ).join("")}
+      <div class="plx-piecestat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
     </div>`;
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
@@ -5738,6 +5783,7 @@ async function renderGearLevelingGroup(target) {
 
     tracksEl.appendChild(wrap);
     builtPanels[troop] = wrap;
+    fillHeroGearPieceStats();
     return wrap;
   }
   function showPanel(troop) {
@@ -5985,7 +6031,36 @@ function maxedHeroGearState() {
   return out;
 }
 
+// One hero gear piece's own stats at its current (role "from") or target ("to") levels.
+function heroGearPieceStats(stateObj, troop, piece, role) {
+  const out = { Attack: 0, Defense: 0, Health: 0, Lethality: 0 };
+  const mfRows = HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE["Hero Gear Mastery Forging"];
+  const enhRows = HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE["Enhance Combined"];
+  if (!mfRows || !mfRows.length || !enhRows || !enhRows.length) return out;
+  const st = stateObj[troop][piece];
+  const mfIdx = Math.min(st["Hero Gear Mastery Forging"][role], heroTrackCapIdx("Hero Gear Mastery Forging"));
+  const enhIdx = Math.min(st["Enhance Combined"][role], heroTrackCapIdx("Enhance Combined"));
+  const cont = (parseStatPct(enhRows[enhIdx]?.stat) || 0) * (1 + (parseStatPct(mfRows[mfIdx]?.stat) || 0) / 100);
+  let mile = 0;
+  for (let i = 0; i <= enhIdx; i++) { const v = parseStatPct(enhRows[i].stat2); if (v != null) mile += v; }
+  HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece].forEach((k) => { out[k] += cont; });
+  HERO_GEAR_ENHANCE_MILESTONE_STATS[piece].forEach((k) => { out[k] += mile; });
+  return out;
+}
+function fillHeroGearPieceStats() {
+  const state = HERO_GEAR_SETS[heroGearActiveSet];
+  if (!state || !HERO_GEAR_TABLES_CACHE) return;
+  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+  document.querySelectorAll("[data-hgstat]").forEach((box) => {
+    const [troop, piece] = box.dataset.hgstat.split("|");
+    if (!state[troop] || !state[troop][piece]) return;
+    const now = heroGearPieceStats(state, troop, piece, "from"), tgt = heroGearPieceStats(state, troop, piece, "to");
+    const keys = [...HERO_GEAR_ENHANCE_MILESTONE_STATS[piece], ...HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece]];
+    box.innerHTML = plxPieceStatHtml(keys.map((k) => ({ label: ABBR[k], now: now[k], target: Math.max(now[k], tgt[k]) })));
+  });
+}
 function updateHeroGearCurrentStats() {
+  fillHeroGearPieceStats();
   const el = document.getElementById("heroGearCurrentStats");
   if (!el || !HERO_GEAR_TABLES_CACHE) return;
   const statsByTroop = computeHeroGearStats(HERO_GEAR_SETS[heroGearActiveSet]);
@@ -6000,7 +6075,7 @@ function updateHeroGearCurrentStats() {
 
   el.innerHTML = plxStatTabsHtml("hero_gear", results.map((r) => ({
     key: r.troop, label: troopDisplayName(r.troop), color: PLX_TROOP_COLORS[r.troop],
-    html: plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: r.statTotals[k], max: r.maxTotals[k] }))),
+    html: plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: r.statTotals[k], max: r.maxTotals[k] })), true),
   })));
 }
 
@@ -11188,101 +11263,79 @@ async function renderRfcLabPage() {
         <td style="padding:5px 6px; text-align:center;">${fmt(e / tr.cost, 4)}</td>
         <td style="padding:5px 6px; text-align:center;">${fmt(e * RFC_LAB_MAX_PER_TIER, 1)}</td>
       </tr>`; }).join("")}</tbody></table></div>`;
-  const planRow = (label, p) => `<tr style="${p.top === st.top && p.n === st.attempts ? "background:rgba(111,211,242,0.08);" : ""}">
-      <td style="padding:5px 6px; white-space:nowrap; font-weight:600;"><button class="btn small ghost" data-rfcuse="${p.top}|${p.n}" style="padding:2px 8px; margin-inline-end:6px;">${esc(t("rfc_use"))}</button>${esc(label)}</td>
-      <td style="padding:5px 6px; font-size:10.5px;" class="meta">${esc(p.text)}</td>
-      <td style="padding:5px 6px; text-align:center;">${fmt(p.cost)}</td>
-      <td style="padding:5px 6px; text-align:center; font-weight:600; color:var(--good);">${fmt(p.rfc, 1)}</td>
-      <td style="padding:5px 6px; text-align:center;">${fmt(p.perFc, 4)}</td>
-      <td style="padding:5px 6px; text-align:center;">${weeksFor(p) != null ? `${weeksFor(p)} ${t("rfc_weeks")}` : "—"}</td>
-    </tr>`;
-  const stratTable = `
-    <div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
-      <thead><tr>
-        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);"></th>
-        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_schedule"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_weekly_cost"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_weekly_rfc"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_per_fc"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_to_target"))}</th>
-      </tr></thead>
-      <tbody>${bestByTier.map((b, i) => planRow(`${t("rfc_minimal")} T${i + 1}`, b.min) + planRow(`${t("rfc_maximum")} T${i + 1}`, b.max)).join("")}</tbody></table></div>`;
   if (seq !== RENDER_SEQ) return;
+  // How long the chosen plan takes, and the FC it uses in total.
+  const weeksExact = !noBudgetPlan && need > 0 && chosen.rfc > 0 ? need / chosen.rfc : null;
+  const totalFc = weeksExact != null ? Math.ceil(weeksExact * chosen.cost) : null;
+  const durText = weeksExact == null ? "—" : (() => { const w = Math.max(1, Math.round(weeksExact)); const m = Math.floor(w / 4), r = w % 4; return [m ? `${m} ${t(m === 1 ? "rfc_month" : "rfc_months")}` : "", r ? `${r} ${t(r === 1 ? "rfc_week" : "rfc_weeks")}` : ""].filter(Boolean).join(" ") || `0 ${t("rfc_weeks")}`; })();
+  const sq = (label, val, sub, color) => `<div class="plx-stat"><span>${esc(label)}</span><b${color ? ` style="color:${color};"` : ""}>${val}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+  const isOn = (p) => !noBudgetPlan && p.top === chosen.top && p.n === chosen.n;
+  const fastest = bestByTier[bestByTier.length - 1].max;
+  // One tappable card per weekly schedule (replaces the long table).
+  const planCard = (label, p) => `<button type="button" class="rfc-plan${isOn(p) ? " on" : ""}" data-rfcuse="${p.top}|${p.n}">
+      <span class="rfc-plan-h">${esc(label)}${p === bestValue || (p.top === bestValue.top && p.n === bestValue.n) ? ` <em>${esc(t("rfc_badge_value"))}</em>` : ""}${p.top === fastest.top && p.n === fastest.n ? ` <em class="fast">${esc(t("rfc_badge_fast"))}</em>` : ""}</span>
+      <span class="rfc-plan-k"><b>${fmt(p.rfc, 1)}</b> RFC / ${esc(t("rfc_week"))}</span>
+      <span class="rfc-plan-k">${fmt(p.cost)} FC / ${esc(t("rfc_week"))}</span>
+      <span class="rfc-plan-w">${weeksFor(p) != null ? `${weeksFor(p)} ${esc(t("rfc_weeks"))}` : "—"}</span>
+    </button>`;
   content.innerHTML = `
-    <div class="page-head"><div><h2>${esc(t("rfc_title"))}</h2><p class="desc">${esc(t("rfc_desc"))}</p></div></div>
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>${esc(t("fcs_title"))}</h2>
-      <p class="desc">${esc(t("fcs_simple_desc"))}</p>
-      <div style="display:flex; gap:10px 14px; flex-wrap:wrap; align-items:center;">
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(materialDisplayName("Fire Crystal"))}</span><input type="text" inputmode="numeric" data-fcconv="fc" value="${st.fcHave || ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" /></label>
-        <span style="font-size:18px; color:var(--muted);">⇄</span>
-        <label style="display:flex; flex-direction:column; gap:4px; font-size:12px;"><span class="meta">${esc(materialDisplayName("FC Shard"))}</span><input type="text" inputmode="numeric" data-fcconv="fcs" value="${st.fcHave ? fmt(Math.floor(st.fcHave * FCS_PER_FC)) : ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" /></label>
-        <span class="meta" style="font-size:11px;">1 FC = ${FCS_PER_FC} FCS</span>
+    <div class="plx-head"><h2>${esc(t("rfc_title"))}</h2></div>
+    <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("rfc_desc"))}</p>
+    <div class="t12x-card" style="margin-bottom:12px;">
+      <div class="t12x-title">${esc(t("rfc_your_plan"))}: ${noBudgetPlan ? "—" : esc(chosen.text)}</div>
+      <div class="plx-stats rfc-sum">
+        ${sq(t("rfc_step_need"), fmt(need), `${fmt(pageNeed)} ${esc(t("rfc_needed_word"))} − ${fmt(t12Owned)} ${esc(t("rfc_owned_word"))}`, need > 0 ? "var(--danger)" : "var(--good)")}
+        ${sq(t("rfc_rfc_weekly"), noBudgetPlan ? "—" : fmt(chosen.rfc, 1), noBudgetPlan ? "" : `${fmt(chosen.rfc * 4)} / ${esc(t("rfc_month"))}`, "var(--good)")}
+        ${sq(t("rfc_fc_weekly"), noBudgetPlan ? "—" : fmt(chosen.cost), noBudgetPlan ? "" : `${fmt(chosen.cost * 4)} / ${esc(t("rfc_month"))}`)}
+        ${sq(t("rfc_duration"), esc(durText), totalFc != null ? `${fmt(totalFc)} FC ${esc(t("rfc_in_total"))}` : "")}
       </div>
+      ${!pageNeed ? `<div class="meta" style="font-size:10.5px; margin-top:8px; color:var(--ice);">${esc(t("rfc_open_t12"))}</div>` : ""}
     </div>
-    <div class="grid g2" style="align-items:stretch; gap:16px; margin-bottom:16px;">
-      <div class="panel">
-        <h2 style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; align-items:center; justify-content:center;">1</span>${esc(t("rfc_step_need"))}</h2>
-        <p class="desc" style="font-size:11px;">${esc(t("rfc_step_need_desc"))}</p>
-        <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
-          <span style="font-size:28px; font-weight:700; color:${need > 0 ? "var(--danger)" : "var(--good)"};">${fmt(need)}</span>
-          <span class="meta" style="font-size:11px;">${esc(t("rfc_still_needed"))} · ${fmt(pageNeed)} ${esc(t("rfc_needed_word"))} − ${fmt(t12Owned)} ${esc(t("rfc_owned_word"))}</span>
+    <div class="t12x">
+      <aside class="t12x-side">
+        <div class="t12x-card">
+          <div class="t12x-title">${esc(t("rfc_step_plan"))}</div>
+          <div class="seg" style="display:flex; margin-bottom:10px;">
+            <button type="button" data-rfcmode="schedule" class="${st.mode === "schedule" ? "active" : ""}" style="flex:1;">${esc(t("rfc_mode_schedule"))}</button>
+            <button type="button" data-rfcmode="budget" class="${st.mode === "budget" ? "active" : ""}" style="flex:1;">${esc(t("rfc_mode_budget"))}</button>
+          </div>
+          ${st.mode === "budget" ? `
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" />
+            <span class="meta" style="font-size:11px;">${esc(t("rfc_budget_unit"))}</span>
+          </div>
+          <div class="meta" style="font-size:10.5px; margin-top:6px;">${inBudget ? `${esc(t("rfc_budget_result"))}: <b>${esc(inBudget.text)}</b>` : esc(t("rfc_enter_budget"))}</div>` : `
+          <div class="meta" style="font-size:11px;">${esc(t("rfc_tap_schedule"))}</div>`}
+          <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:8px;">
+            <div class="meta" style="font-size:10.5px;">${esc(t("rfc_best_value"))}</div>
+            <div style="font-size:12px; margin-top:2px;">${esc(bestValue.text)}</div>
+            <div class="meta" style="font-size:10.5px;">${fmt(bestValue.cost)} FC → ${fmt(bestValue.rfc, 1)} RFC · ${fmt(bestValue.perFc, 4)} ${esc(t("rfc_per_fc"))}</div>
+          </div>
         </div>
-        ${!pageNeed ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("rfc_open_t12"))}</div>` : ""}
-      </div>
-      <div class="panel">
-        <h2 style="display:flex; align-items:center; gap:8px;"><span style="display:inline-flex; width:22px; height:22px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:12px; align-items:center; justify-content:center;">2</span>${esc(t("rfc_step_plan"))}</h2>
-        <p class="desc" style="font-size:11px;">${esc(t("rfc_step_plan_desc"))}</p>
-        <div class="seg" style="display:inline-flex; margin-bottom:10px;">
-          <button type="button" data-rfcmode="budget" class="${st.mode === "budget" ? "active" : ""}">${esc(t("rfc_mode_budget"))}</button>
-          <button type="button" data-rfcmode="schedule" class="${st.mode === "schedule" ? "active" : ""}">${esc(t("rfc_mode_schedule"))}</button>
+        <div class="t12x-card">
+          <div class="t12x-title">${esc(t("fcs_title"))}</div>
+          <p class="desc" style="font-size:11px; margin:0 0 8px;">${esc(t("fcs_simple_desc"))}</p>
+          <div style="display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:6px; align-items:end;">
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; min-width:0;"><span class="meta">${esc(materialDisplayName("Fire Crystal"))}</span><input type="text" inputmode="numeric" data-fcconv="fc" value="${st.fcHave || ""}" placeholder="0" style="width:100%; padding:7px 9px; font-size:14px;" /></label>
+            <span style="font-size:16px; color:var(--muted); padding-bottom:8px;">⇄</span>
+            <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; min-width:0;"><span class="meta">${esc(materialDisplayName("FC Shard"))}</span><input type="text" inputmode="numeric" data-fcconv="fcs" value="${st.fcHave ? fmt(Math.floor(st.fcHave * FCS_PER_FC)) : ""}" placeholder="0" style="width:100%; padding:7px 9px; font-size:14px;" /></label>
+          </div>
+          <div class="meta" style="font-size:10.5px; margin-top:6px;">1 FC = ${FCS_PER_FC} FCS</div>
         </div>
-        ${st.mode === "budget" ? `
-        <div style="display:flex; gap:12px 18px; flex-wrap:wrap; align-items:center;">
-          <input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:150px; padding:8px 10px; font-size:14px;" />
-          <span class="meta" style="font-size:11px;">${esc(t("rfc_budget_unit"))}</span>
+      </aside>
+      <div class="t12x-main">
+        <div class="t12x-card">
+          <div class="t12x-title">${esc(t("rfc_strategies_title"))}</div>
+          <p class="desc" style="font-size:11.5px; margin:0 0 10px;">${esc(t("rfc_strategies_desc"))}</p>
+          ${bestByTier.map((bt, i) => `<div class="rfc-tier-row"><div class="rfc-tier-k">T${i + 1}</div><div class="rfc-plans">${planCard(t("rfc_minimal"), bt.min)}${planCard(t("rfc_maximum"), bt.max)}</div></div>`).join("")}
+          <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("rfc_month_note"))}</div>
         </div>
-        <div class="meta" style="font-size:10.5px; margin-top:6px;">${inBudget ? `${esc(t("rfc_budget_result"))}: <b>${esc(inBudget.text)}</b>` : esc(t("rfc_enter_budget"))}</div>` : `
-        <select data-rfcschedule style="width:100%; max-width:520px; padding:8px 10px; font-size:13px;">
-          ${bestByTier.map((bt, i) => [["min", bt.min, t("rfc_minimal")], ["max", bt.max, t("rfc_maximum")]].map(([kind, pl, label]) => `<option value="${pl.top}|${pl.n}" ${pl.top === st.top && pl.n === st.attempts ? "selected" : ""}>${esc(label)} T${i + 1} — ${esc(pl.text)} — ${fmt(pl.cost)} FC → ${fmt(pl.rfc, 1)} RFC</option>`).join("")).join("")}
-          ${bestByTier.some((bt) => (bt.min.top === st.top && bt.min.n === st.attempts) || (bt.max.top === st.top && bt.max.n === st.attempts)) ? "" : `<option value="${st.top}|${st.attempts}" selected>${esc(rfcPlan(st.top, st.attempts).text)}</option>`}
-        </select>
-        <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("rfc_schedule_hint"))}</div>`}
+        <details class="t12x-card" style="margin-top:12px;">
+          <summary style="cursor:pointer; font-weight:700; font-size:14px;">${esc(t("rfc_tiers_title"))}</summary>
+          <div style="margin-top:10px;">${tierTable}</div>
+          <p class="desc" style="font-size:10.5px; margin-top:10px;">${esc(t("rfc_rules"))}</p>
+        </details>
       </div>
-    </div>
-    <div class="grid g2" style="align-items:start; gap:16px;">
-      <div class="panel">
-        <h2>${esc(t("rfc_your_plan"))}</h2>
-        ${noBudgetPlan ? `<div class="meta" style="font-size:11px;">${esc(t("rfc_enter_budget"))}</div>` : (() => {
-          const weeksExact = need > 0 && chosen.rfc > 0 ? need / chosen.rfc : null;
-          const totalFc = weeksExact != null ? Math.ceil(weeksExact * chosen.cost) : null;
-          const durText = weeksExact == null ? "—" : (() => { const w = Math.max(1, Math.round(weeksExact)); const m = Math.floor(w / 4), r = w % 4; return [m ? `${m} ${t(m === 1 ? "rfc_month" : "rfc_months")}` : "", r ? `${r} ${t(r === 1 ? "rfc_week" : "rfc_weeks")}` : ""].filter(Boolean).join(" ") || `0 ${t("rfc_weeks")}`; })();
-          const cell = (label, val, strong) => `<td style="padding:6px 8px; border:1px solid var(--line); ${strong ? "font-weight:700;" : ""}">${label}</td>`;
-          return `<div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:12px; width:100%;">
-            <tr><td style="padding:6px 8px; border:1px solid var(--line); font-weight:700; background:var(--ice-dim); white-space:nowrap;">${esc(t("rfc_trade_for"))}</td><td colspan="3" style="padding:6px 8px; border:1px solid var(--line); text-align:center; font-weight:600;">${esc(chosen.text)}</td></tr>
-            <tr><td style="padding:6px 8px; border:1px solid var(--line); font-weight:700; background:var(--ice-dim); white-space:nowrap;">${esc(t("rfc_total_to_convert"))}</td><td colspan="3" style="padding:6px 8px; border:1px solid var(--line); text-align:center; font-weight:700; font-size:14px;">${totalFc != null ? fmt(totalFc) : "—"}</td></tr>
-            <tr><td style="padding:6px 8px; border:1px solid var(--line); font-weight:700; background:var(--ice-dim); white-space:nowrap;">${esc(t("rfc_duration"))}</td><td colspan="3" style="padding:6px 8px; border:1px solid var(--line); text-align:center;">${esc(durText)}</td></tr>
-            <tr>${cell(esc(t("rfc_fc_weekly")), 0, 1)}<td style="padding:6px 8px; border:1px solid var(--line); text-align:center;">${fmt(chosen.cost)}</td>${cell(esc(t("rfc_fc_monthly")), 0, 1)}<td style="padding:6px 8px; border:1px solid var(--line); text-align:center;">${fmt(chosen.cost * 4)}</td></tr>
-            <tr>${cell(esc(t("rfc_rfc_weekly")), 0, 1)}<td style="padding:6px 8px; border:1px solid var(--line); text-align:center; color:var(--good); font-weight:700;">${fmt(chosen.rfc)}</td>${cell(esc(t("rfc_rfc_monthly")), 0, 1)}<td style="padding:6px 8px; border:1px solid var(--line); text-align:center; color:var(--good); font-weight:700;">${fmt(chosen.rfc * 4)}</td></tr>
-          </table></div>
-          <div class="meta" style="font-size:10.5px; margin-top:6px;">${fmt(chosen.perFc, 4)} ${esc(t("rfc_per_fc"))} · ${esc(t("rfc_month_note"))}</div>`;
-        })()}
-        <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:10px;">
-          <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("rfc_best_value"))}</div>
-          <div style="font-size:12px;">${esc(bestValue.text)}</div>
-          <div class="meta" style="font-size:11px;">${fmt(bestValue.cost)} FC → ${fmt(bestValue.rfc, 1)} RFC · ${fmt(bestValue.perFc, 4)} ${esc(t("rfc_per_fc"))}</div>
-        </div>
-        <p class="desc" style="font-size:10.5px; margin-top:10px;">${esc(t("rfc_rules"))}</p>
-      </div>
-      <div class="panel">
-        <h2>${esc(t("rfc_tiers_title"))}</h2>
-        ${tierTable}
-      </div>
-    </div>
-    <div class="panel" style="margin-top:16px;">
-      <h2>${esc(t("rfc_strategies_title"))}</h2>
-      <p class="desc">${esc(t("rfc_strategies_desc"))}</p>
-      ${stratTable}
     </div>`;
   // FC <-> shards: type in either box, the other follows (FC -> shards
   // rounds down; shards -> FC rounds up, since you can't convert a fraction).
@@ -12768,6 +12821,7 @@ async function renderCharmsCalc() {
                     <select data-piece="${c.piece}" data-slot="${c.slot}" data-role="target" style="width:100%;">${levelOptions(CHARM_CALC_STATE[c.piece][c.slot].target)}</select>
                   </div>
                 </div>
+                <div class="plx-piecestat" data-charmstat="${c.piece}|${c.slot}"></div>
               </div>`
               )
               .join("")}
@@ -12867,6 +12921,14 @@ function maxedCharmState() {
 function updateCharmCurrentStats() {
   const el = document.getElementById("charmCurrentStats");
   if (!el) return;
+  // Each charm's own Lethality & Health on its card (now -> target).
+  document.querySelectorAll("[data-charmstat]").forEach((box) => {
+    const [piece, slot] = box.dataset.charmstat.split("|");
+    const st = (CHARM_CALC_STATE[piece] || [])[Number(slot)];
+    if (!st) return;
+    const at = (lv) => CHARM_CUMULATIVE_STAT[clampCharmLabel(lv)] || 0;
+    box.innerHTML = plxPieceStatHtml([{ label: "LETH & HP", now: at(st.current), target: at(st.target) }]);
+  });
   const statByTroop = computeCharmStats(CHARM_CALC_STATE);
   const maxByTroop = computeCharmStats(maxedCharmState());
   const rows = Object.entries(statByTroop).map(([troop, avg]) => ({ troop, avg, max: maxByTroop[troop] || 0 }));
@@ -13012,6 +13074,7 @@ async function renderChiefGearCalc() {
                     <select data-piece="${p.key}" data-role="to" style="width:100%;">${opts}</select>
                   </div>
                 </div>
+                <div class="plx-piecestat" data-cgstat="${p.key}"></div>
               </div>`
               )
               .join("")}
@@ -13527,6 +13590,13 @@ function maxedChiefGearState() {
 function updateChiefGearCurrentStats() {
   const el = document.getElementById("gearCurrentStats");
   if (!el || !CHIEF_GEAR_ROWS) return;
+  // Each piece's own ATK & DEF on its card (now -> target).
+  document.querySelectorAll("[data-cgstat]").forEach((box) => {
+    const st = CHIEF_GEAR_STATE[box.dataset.cgstat];
+    if (!st) return;
+    const cap = chiefGearCapIdx(), at = (i) => parseStatPct(CHIEF_GEAR_ROWS[Math.min(Number(i) || 0, cap)]?.stat) || 0;
+    box.innerHTML = plxPieceStatHtml([{ label: "ATK & DEF", now: at(st.from), target: st.to == null ? at(st.from) : at(st.to) }]);
+  });
   const statByTroop = computeChiefGearRawStat(CHIEF_GEAR_STATE);
   const maxByTroop = computeChiefGearRawStat(maxedChiefGearState());
   const { threeBonus, sixBonus } = computeChiefGearSetBonus(CHIEF_GEAR_STATE);
@@ -14579,7 +14649,7 @@ async function renderVipTierTable(target) {
     const valByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
     // Of max = the highest tier's value for that stat.
     const maxOf = (c) => Math.max(0, ...rows.map((row) => Number((row.buff_cells.find((x) => x.column_id === c.id) || {}).value) || 0));
-    statsEl.innerHTML = plxStatBoxesHtml(columns.map((c) => ({ label: c.name, val: Number(valByCol[c.id]) || 0, max: maxOf(c), dp: 0 })));
+    statsEl.innerHTML = plxStatBoxesHtml(columns.map((c) => ({ label: c.name, val: Number(valByCol[c.id]) || 0, max: maxOf(c), dp: 0 })), true);
   }
   document.getElementById("vipTierSelect").addEventListener("change", async (e) => {
     const idx = Number(e.target.value);
@@ -14716,29 +14786,12 @@ async function renderAlbumTundraPage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("tundra_album_title"))}</h2>
-              </div>
+    <div class="plx-head"><h2>${esc(t("tundra_album_title"))}</h2></div>
+    <div class="t12x-card" style="margin-bottom:12px;">
+      <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
+      ${["Attack", "Defense"].map((k) => plxChipRowHtml(tStatLabel(k), `album:${k}`, [0, ...OPTIONS_BY_STAT[k]], saved[k])).join("")}
     </div>
-    <div class="panel">
-      <div class="t12x-k">${esc(t("t12x_settings"))}</div>
-      <div class="grid g2">
-        <div>
-          <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel("Attack"))}</div>
-          <select id="albumTundraAttack" style="width:140px;">
-            ${OPTIONS_BY_STAT.Attack.map((v) => `<option value="${v}" ${v === saved.Attack ? "selected" : ""}>+${v}%</option>`).join("")}
-          </select>
-        </div>
-        <div>
-          <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel("Defense"))}</div>
-          <select id="albumTundraDefense" style="width:140px;">
-            ${OPTIONS_BY_STAT.Defense.map((v) => `<option value="${v}" ${v === saved.Defense ? "selected" : ""}>+${v}%</option>`).join("")}
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="panel"><h2>${esc(t("troops_stats_title"))}</h2><div id="albumTundraTotals" style="margin-top:8px;"></div></div>
+    <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="albumTundraTotals"></div></div>
   `;
 
   function renderTotals() {
@@ -14747,17 +14800,12 @@ async function renderAlbumTundraPage() {
     document.getElementById("albumTundraTotals").innerHTML = plxStatBoxesHtml([
       { label: t("total_attack"), val: saved.Attack, max: maxAttack, dp: 0 },
       { label: t("total_defense"), val: saved.Defense, max: maxDefense, dp: 0 },
-    ]);
+    ], true);
   }
   renderTotals();
 
-  document.getElementById("albumTundraAttack").addEventListener("change", async (e) => {
-    saved.Attack = Number(e.target.value);
-    renderTotals();
-    saveCalcState("album_tundra", saved);
-  });
-  document.getElementById("albumTundraDefense").addEventListener("change", async (e) => {
-    saved.Defense = Number(e.target.value);
+  wirePlxChips(content, (key, v) => {
+    saved[key.split(":")[1]] = v;
     renderTotals();
     saveCalcState("album_tundra", saved);
   });
@@ -14784,39 +14832,23 @@ async function renderCollectionGalleryPage() {
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("collection_gallery_title"))}</h2>
-              </div>
+    <div class="plx-head"><h2>${esc(t("collection_gallery_title"))}</h2></div>
+    <div class="t12x-card" style="margin-bottom:12px;">
+      <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
+      ${STATS.map((st) => plxChipRowHtml(tStatLabel(st.key), `gallery:${st.key}`, [0, ...st.options], saved[st.key])).join("")}
     </div>
-    <div class="panel">
-      <div class="t12x-k">${esc(t("t12x_settings"))}</div>
-      <div class="stats-row-scroll">
-        ${STATS.map(
-          (s) => `
-        <div>
-          <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel(s.key))}</div>
-          <select data-collectiongallery="${esc(s.key)}" style="width:120px;">
-            ${s.options.map((v) => `<option value="${v}" ${v === saved[s.key] ? "selected" : ""}>+${v}%</option>`).join("")}
-          </select>
-        </div>`
-        ).join("")}
-      </div>
-    </div>
-    <div class="panel"><h2>${esc(t("troops_stats_title"))}</h2><div id="collectionGalleryTotals" style="margin-top:8px;"></div></div>
+    <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="collectionGalleryTotals"></div></div>
   `;
 
   function renderTotals() {
-    document.getElementById("collectionGalleryTotals").innerHTML = plxStatBoxesHtml(STATS.map((st) => ({ label: tStatLabel(st.key), val: saved[st.key], max: st.options[st.options.length - 1], dp: 0 })));
+    document.getElementById("collectionGalleryTotals").innerHTML = plxStatBoxesHtml(STATS.map((st) => ({ label: tStatLabel(st.key), val: saved[st.key], max: st.options[st.options.length - 1], dp: 0 })), true);
   }
   renderTotals();
 
-  content.querySelectorAll("[data-collectiongallery]").forEach((sel) => {
-    sel.addEventListener("change", async (e) => {
-      saved[sel.dataset.collectiongallery] = Number(e.target.value);
-      renderTotals();
-      saveCalcState("collection_gallery", saved);
-    });
+  wirePlxChips(content, (key, v) => {
+    saved[key.split(":")[1]] = v;
+    renderTotals();
+    saveCalcState("collection_gallery", saved);
   });
 }
 
@@ -14848,9 +14880,9 @@ async function renderAllianceTechPage() {
       </div>
     </div>
     <div id="allianceTechTotals" style="margin-bottom:12px;"></div>
-    <div class="panel">
+    <div class="t12x-card">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-        <h2 style="margin:0;">${esc(t("research_title"))}</h2>
+        <div class="t12x-title" style="margin:0;">${esc(t("research_title"))}</div>
         <div style="display:flex; align-items:center; gap:6px;">
           <span class="meta" style="font-size:11px;">${esc(t("set_all_to"))}</span>
           <select id="allianceTechQuickSelect" style="width:140px;">
@@ -14864,7 +14896,7 @@ async function renderAllianceTechPage() {
           </select>
         </div>
       </div>
-      <p class="desc">${esc(t("alliance_tech_desc"))}</p>
+      <p class="desc" style="font-size:12px; margin:6px 0 10px;">${esc(t("alliance_tech_desc"))}</p>
       <div id="allianceTechRows"></div>
     </div>
   `;
@@ -14887,6 +14919,7 @@ async function renderAllianceTechPage() {
     e.target.value = "";
   });
 
+  const atOpen = {}; // section folded/open
   function render() {
     document.getElementById("allianceTechSummary").textContent = `${items.length} ${t("researches_tracked")}`;
 
@@ -14911,51 +14944,58 @@ async function renderAllianceTechPage() {
         const own = ownIt ? effective(ownIt) : { cur: 0, max: 0 };
         const shared = troopsIt ? effective(troopsIt) : { cur: 0, max: 0 };
         return { label: STAT_ABBR[stat] || stat, val: own.cur + shared.cur, max: own.max + shared.max, dp: 0 };
-      })),
+      }), true),
     })))}</div>`;
 
     const rowsEl = document.getElementById("allianceTechRows");
     const TROOP_GROUPS = ["Troops", "Infantry", "Lancers", "Marksman"];
+    // Same look as the planner pages: a folding section per group, one level
+    // node per research (NOW − n + / max). Taps show at once and save in the
+    // background; a failed save puts the old level back.
     rowsEl.innerHTML = TROOP_GROUPS.map((troop) => {
       const group = items.filter((it) => it.name.startsWith(troop + " "));
+      if (!group.length) return "";
       const troopLabel = troop === "Troops" ? t("troops_group_label") : troopDisplayName(troop);
-      return `
-      <div style="padding:14px 0; border-top:1px solid var(--line);">
-        <div class="name" style="font-size:14px; margin-bottom:10px;">${esc(troopLabel)}</div>
-        <div style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px;">
-          ${group
-            .map((it) => {
-              const lvl = it.current_level ?? 0;
-              const maxLvl = it.max_level ?? 5;
-              const opts = Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${esc(t("level_prefix"))} ${i}${i === 0 ? esc(t("none_suffix")) : ""}</option>`).join("");
-              return `
-            <div style="min-width:0;">
-              <div class="meta" style="margin-bottom:6px;">${esc(tStatLabel(it.bonus_type))}</div>
-              <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-                <select data-techlevel="${it.id}" style="width:100%; min-width:0;">${opts}</select>
-                <span class="meta" style="font-size:11px; flex-shrink:0;">+${lvl}%</span>
-              </div>
-            </div>`;
-            })
-            .join("")}
-        </div>
-      </div>`;
+      let cur = 0, max = 0;
+      group.forEach((it) => { cur += it.current_level ?? 0; max += it.max_level ?? 5; });
+      const pct = max ? Math.floor((cur / max) * 100) : 0;
+      return plxSectionHtml({ compact: true, key: troop, title: troopLabel, sub: `+${group.reduce((a2, it) => a2 + (it.current_level ?? 0), 0)}% · ${group.length} ${t("researches_tracked")}`, pct, open: atOpen[troop] !== false, maxKey: troop,
+        body: group.map((it) => plxNodeHtml({ key: it.id, label: tStatLabel(it.bonus_type), cur: it.current_level ?? 0, max: it.max_level ?? 5, target: null, cost: `+${it.current_level ?? 0}%` })).join("") });
     }).join("");
 
-    rowsEl.querySelectorAll("[data-techlevel]").forEach((sel) => {
-      sel.addEventListener("change", async () => {
-        const it = items.find((x) => x.id === sel.dataset.techlevel);
-        const val = Number(sel.value);
-        try {
-          await sb(`skins?id=eq.${it.id}`, { method: "PATCH", body: JSON.stringify({ current_level: val }) });
-          dashDataChanged("skins");
-          it.current_level = val;
+    const setLevels = (list) => {
+      list.forEach(([it, val]) => {
+        const old = it.current_level ?? 0;
+        if (old === val) return;
+        it.current_level = val;
+        patchSkinQueued(it.id, { current_level: val }).catch(() => {
+          it.current_level = old;
+          toast(t("couldnt_update_levels"), true);
           render();
-        } catch (err) {
-          toast("Couldn't update level", true);
-        }
+        });
       });
-    });
+      render();
+    };
+    rowsEl.onclick = (e) => {
+      const dec = e.target.closest("[data-pxdec]"), inc = e.target.closest("[data-pxinc]");
+      if (dec || inc) {
+        const it = items.find((x) => x.id === (dec || inc).dataset[dec ? "pxdec" : "pxinc"]);
+        if (it) setLevels([[it, Math.max(0, Math.min(it.max_level ?? 5, (it.current_level ?? 0) + (dec ? -1 : 1)))]]);
+        return;
+      }
+      const mx = e.target.closest("[data-pxmax]");
+      if (mx) {
+        const group = items.filter((it) => it.name.startsWith(mx.dataset.pxmax + " "));
+        const maxed = group.every((it) => (it.current_level ?? 0) >= (it.max_level ?? 5));
+        setLevels(group.map((it) => [it, maxed ? 0 : it.max_level ?? 5]));
+        return;
+      }
+      const fold = e.target.closest("[data-pxfold]");
+      if (fold) {
+        atOpen[fold.dataset.pxfold] = fold.nextElementSibling.style.display === "none";
+        render();
+      }
+    };
   }
 
   render();
@@ -15423,6 +15463,12 @@ const RC_BASE_CATEGORIES = {
 const RC_TIERS = ["I", "II", "III", "IV", "V", "VI"];
 let RC_NODES_CACHE = null; // { "Weapons Prep I": [levelRows...], ... }
 let RC_STATE = null; // { "Weapons Prep I": currentLevel, ... }
+let RC_TARGET = null; // { "Weapons Prep I": targetLevel } - missing = max (calc_state "research_center_target")
+function rcTargetOf(track) {
+  const max = (RC_NODES_CACHE && RC_NODES_CACHE[track] || []).length;
+  const v = RC_TARGET && RC_TARGET[track];
+  return typeof v === "number" ? Math.max(0, Math.min(max, v)) : max;
+}
 
 async function ensureRCStateData() {
   if (RC_STATE) return;
@@ -15449,6 +15495,13 @@ async function ensureRCData() {
 // per-level costs. Data: public.pets_nodes.
 // ============================================================
 const PET_TROOP_COLORS_CYCLE = ["var(--ice)", "#7ee6a8", "#f0a3c4", "#e0c068"];
+// Pet pictures (from whiteoutsurvival.wiki, resized to 128 px). A pet with no
+// picture yet shows its first letter instead.
+function petImage(pet) {
+  const slug = String(pet).toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
+  return PET_IMAGE_SLUGS.has(slug) ? `icons/pets/${slug}.webp` : "";
+}
+const PET_IMAGE_SLUGS = new Set(["cave-hyena", "arctic-wolf", "musk-ox", "giant-tapir", "titan-roc", "giant-elk", "snow-leopard", "cave-lion", "snow-ape", "iron-rhino", "sabertooth-tiger", "mammoth", "frost-gorilla", "frostscale-chameleon"]);
 let PETS_NODES_CACHE = null; // { "Cave Hyena": [ {level_label, food, manual, potion, serum, atk_def_pct}, ... ] }
 let PETS_STATE = null; // { "Cave Hyena": currentIndex, ... }
 
@@ -17035,6 +17088,7 @@ async function renderRefinePage() {
     const rows = PET_REFINE_CACHE[pet];
     return rows[rows.length - 1];
   }
+  let refineAdvOpen = false; // the Advanced refine calculator window is open
   function petState(pet) {
     if (!PET_REFINE_TYPED_STATE[pet] || typeof PET_REFINE_TYPED_STATE[pet] !== "object") {
       PET_REFINE_TYPED_STATE[pet] = { il: 0, ih: 0, ll: 0, lh: 0, ml: 0, mh: 0 };
@@ -17094,22 +17148,11 @@ async function renderRefinePage() {
         <input type="text" inputmode="decimal" data-marksrateinput="${esc(stage)}" value="${esc(rates[stage])}" style="width:58px; text-align:center; padding:3px 4px; font-size:12px;" />
         <button class="btn small ghost" data-marksrate="${esc(stage)}" data-delta="1" style="width:24px; padding:2px 0;">+</button>
       </div>`;
-    document.getElementById("refineTotals").innerHTML = `
-      <div class="t12x-card">
-        <div class="t12x-title">${esc(t("total_refine_bonus"))}</div>
-        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("refine_summed_desc"))}</p>
-        ${plxStatTabsHtml("pets_refine", [["Infantry", "il", "ih"], ["Lancer", "ll", "lh"], ["Marksman", "ml", "mh"]].map(([tr, l, h]) => ({
-          key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr],
-          html: plxStatBoxesHtml([{ label: "LETH", val: grand[l], max: grandMax[l], dp: 2 }, { label: "HP", val: grand[h], max: grandMax[h], dp: 2 }]),
-        })))}
-      </div>
-      <div class="t12x-card" style="margin-top:12px;">
-        <div class="t12x-title">${esc(t("marks_title"))}</div>
-        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("marks_desc"))}</p>
-        <div class="grid g2" style="align-items:start; gap:16px;">
+    // Advanced refine calculator: rates and adjustment, in a pop-up window.
+    const advHtml = `<div class="grid g2" style="align-items:start; gap:16px;">
           ${!IS_OWNER && !PET_MARKS_STATE.advanced ? `<div>
             <div class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</div>
-            <button type="button" class="btn small" data-marksadvanced="1" style="margin-top:8px;">${esc(t("marks_advanced_open"))}</button>
+            <button type="button" class="btn small" data-marksadvanced="1" style="margin-top:8px;">${esc(t("marks_use_own"))}</button>
             <div class="meta" style="font-size:10px; margin-top:4px;">${esc(t("marks_advanced_desc"))}</div>
           </div>` : true ? `<div>
             <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))}</div>
@@ -17130,6 +17173,26 @@ async function renderRefinePage() {
               <button class="btn small ghost" data-marksadjust="5" style="width:28px; padding:2px 0;">+</button>
               <span class="meta" style="font-size:10.5px;">${esc(t("marks_adjust_note"))}</span>
             </div>
+          </div>
+        </div>
+        <div class="plx-stats" style="margin-top:12px;"><div class="plx-stat"><span>${esc(t("marks_needed"))}</span><b>${marksNeeded.toLocaleString()}</b><small>${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</small></div><div class="plx-stat"><span>${esc(t("marks_as_advanced"))}</span><b>${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</b></div></div>`;
+    document.getElementById("refineTotals").innerHTML = `
+      <div class="t12x-card">
+        <div class="t12x-title">${esc(t("total_refine_bonus"))}</div>
+        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("refine_summed_desc"))}</p>
+        ${plxStatTabsHtml("pets_refine", [["Infantry", "il", "ih"], ["Lancer", "ll", "lh"], ["Marksman", "ml", "mh"]].map(([tr, l, h]) => ({
+          key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr],
+          html: plxStatBoxesHtml([{ label: "LETH", val: grand[l], max: grandMax[l], dp: 2 }, { label: "HP", val: grand[h], max: grandMax[h], dp: 2 }]),
+        })))}
+      </div>
+      <div class="t12x-card" style="margin-top:12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+          <div class="t12x-title" style="margin:0;">${esc(t("marks_title"))}</div>
+          <button type="button" class="plx-maxbtn" data-marksopen>&#9881; ${esc(t("marks_advanced_open"))}</button>
+        </div>
+        <p class="desc" style="font-size:12px; margin:6px 0 4px;">${esc(t("marks_desc"))}</p>
+        <div class="meta" style="font-size:10.5px; color:var(--good);">${IS_OWNER || PET_MARKS_STATE.advanced ? esc(t("marks_rates")) + (PET_MARKS_STATE.adjust ? ` · ${PET_MARKS_STATE.adjust > 0 ? "+" : ""}${PET_MARKS_STATE.adjust}%` : "") : esc(t("marks_site_rates_on"))}</div>
+        <div>
             ${noEstimateHtml}
             <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
               <div class="metric" style="padding:8px 12px; min-width:140px;"><div class="label" style="font-size:9px;">${esc(t("marks_needed"))}</div><div class="val" style="font-size:18px;">${marksNeeded.toLocaleString()}</div><div class="meta" style="font-size:9px; margin-top:2px;">${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</div></div>
@@ -17138,54 +17201,68 @@ async function renderRefinePage() {
             <details style="margin-top:10px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("marks_per_pet"))}</summary>
               <div style="font-size:11px; margin-top:4px; line-height:1.6;">${Object.keys(perPet).filter((pt) => perPet[pt] > 0).sort((a, b) => perPet[b] - perPet[a]).map((pt) => `${esc(dataName(pt))}: <b>${Math.ceil(perPet[pt] * (1 + (PET_MARKS_STATE.adjust || 0) / 100)).toLocaleString()}</b>`).join("<br>") || `<span class="meta">${esc(t("marks_none"))}</span>`}</div>
             </details>
-          </div>
         </div>
       </div>
     `;
     renderChiefGearResourcesBar("refineMarksBar", { "Common Marks": marksNeeded }, ["Common Marks", "Advanced Marks", "Gems"], renderTotals, "pets_refine");
     const totalsEl = document.getElementById("refineTotals");
-    totalsEl.querySelectorAll("[data-marksrate]").forEach((b) => b.addEventListener("click", async () => {
-      const st = b.dataset.marksrate;
-      rates[st] = Math.max(0, Math.round(((Number(rates[st]) || 0) + Number(b.dataset.delta)) * 100) / 100);
-      await savePetMarksRates();
-      renderTotals();
-    }));
-    totalsEl.querySelectorAll("[data-marksrateinput]").forEach((inp) => inp.addEventListener("change", async () => {
-      const v = Number(String(inp.value).replace(/[^0-9.]/g, ""));
-      if (Number.isFinite(v)) rates[inp.dataset.marksrateinput] = Math.max(0, v);
-      await savePetMarksRates();
-      renderTotals();
-    }));
-    totalsEl.querySelectorAll("[data-marksadvanced]").forEach((b) => b.addEventListener("click", async () => {
-      const on = b.dataset.marksadvanced === "1";
-      const st = PET_MARKS_STATE;
-      saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
-      PET_MARKS_STATE = null;
-      await ensurePetMarksState();
-      PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
-      renderTotals();
-    }));
-    const siteBtn = totalsEl.querySelector("[data-markssite]");
-    if (siteBtn) siteBtn.addEventListener("click", async () => {
-      Object.keys(rates).forEach((k) => { rates[k] = Number(PET_MARKS_STATE.published[k]) || 0; });
-      PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.published };
-      PET_MARKS_STATE.visitorCustom = false;
-      saveCalcState("pet_refine_marks", PET_MARKS_STATE);
-      PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
-      renderTotals();
-    });
-    const clr = totalsEl.querySelector("[data-marksclear]");
-    if (clr) clr.addEventListener("click", async () => {
-      Object.keys(rates).forEach((k) => { rates[k] = 0; });
-      await savePetMarksRates();
-      renderTotals();
-    });
-    totalsEl.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
-      PET_MARKS_STATE.adjust = Math.max(-90, Math.min(300, (PET_MARKS_STATE.adjust || 0) + Number(b.dataset.marksadjust)));
-      PET_MARKS_STATE.savedAdjust = PET_MARKS_STATE.adjust;
-      saveCalcState("pet_refine_marks", PET_MARKS_STATE);
-      renderTotals();
-    }));
+    totalsEl.querySelector("[data-marksopen]").addEventListener("click", () => { refineAdvOpen = true; drawAdv(); });
+    function wireMarks(root) {
+      root.querySelectorAll("[data-marksrate]").forEach((b) => b.addEventListener("click", async () => {
+        const st = b.dataset.marksrate;
+        rates[st] = Math.max(0, Math.round(((Number(rates[st]) || 0) + Number(b.dataset.delta)) * 100) / 100);
+        await savePetMarksRates();
+        renderTotals();
+      }));
+      root.querySelectorAll("[data-marksrateinput]").forEach((inp) => inp.addEventListener("change", async () => {
+        const v = Number(String(inp.value).replace(/[^0-9.]/g, ""));
+        if (Number.isFinite(v)) rates[inp.dataset.marksrateinput] = Math.max(0, v);
+        await savePetMarksRates();
+        renderTotals();
+      }));
+      root.querySelectorAll("[data-marksadvanced]").forEach((b) => b.addEventListener("click", async () => {
+        const on = b.dataset.marksadvanced === "1";
+        const st = PET_MARKS_STATE;
+        saveCalcState("pet_refine_marks", { adjust: st.savedAdjust, savedAdjust: st.savedAdjust, packGems: st.packGems, visitorRates: st.visitorRates, visitorCustom: st.visitorCustom, advanced: on });
+        PET_MARKS_STATE = null;
+        await ensurePetMarksState();
+        PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+        renderTotals();
+      }));
+      const siteBtn = root.querySelector("[data-markssite]");
+      if (siteBtn) siteBtn.addEventListener("click", async () => {
+        Object.keys(rates).forEach((k) => { rates[k] = Number(PET_MARKS_STATE.published[k]) || 0; });
+        PET_MARKS_STATE.visitorRates = { ...PET_MARKS_STATE.published };
+        PET_MARKS_STATE.visitorCustom = false;
+        saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+        PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+        renderTotals();
+      });
+      const clr = root.querySelector("[data-marksclear]");
+      if (clr) clr.addEventListener("click", async () => {
+        Object.keys(rates).forEach((k) => { rates[k] = 0; });
+        await savePetMarksRates();
+        renderTotals();
+      });
+      root.querySelectorAll("[data-marksadjust]").forEach((b) => b.addEventListener("click", async () => {
+        PET_MARKS_STATE.adjust = Math.max(-90, Math.min(300, (PET_MARKS_STATE.adjust || 0) + Number(b.dataset.marksadjust)));
+        PET_MARKS_STATE.savedAdjust = PET_MARKS_STATE.adjust;
+        saveCalcState("pet_refine_marks", PET_MARKS_STATE);
+        renderTotals();
+      }));
+    }
+    function drawAdv() {
+      let modal = document.getElementById("refineAdvModal");
+      if (!modal) { modal = document.createElement("div"); modal.id = "refineAdvModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+      modal.innerHTML = `<div class="modal-box" style="max-width:560px; max-height:88vh; overflow-y:auto;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;"><h2 style="margin:0;">${esc(t("marks_advanced_open"))}</h2><button type="button" class="btn ghost small" data-marksclose>&#10005;</button></div>
+        <p class="desc" style="font-size:12px; margin:0 0 10px;">${esc(t("marks_advanced_desc"))}</p>
+        ${advHtml}</div>`;
+      modal.style.display = "flex";
+      modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-marksclose]")) { refineAdvOpen = false; modal.style.display = "none"; } };
+      wireMarks(modal);
+    }
+    if (refineAdvOpen) drawAdv();
   }
 
   const listEl = document.getElementById("refineList");
@@ -17221,7 +17298,7 @@ async function renderRefinePage() {
   const refineCounterEl = document.getElementById("refineSwipeCounter");
   let activeRefineIdx = 0;
   function renderList() {
-    renderPickStrip(refineCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activeRefineIdx, (next) => { activeRefineIdx = next; renderList(); });
+    renderPickStrip(refineCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activeRefineIdx, (next) => { activeRefineIdx = next; renderList(); });
     const idx = activeRefineIdx;
     const pet = petNames[idx];
     const m = maxRow(pet);
@@ -17235,6 +17312,7 @@ async function renderRefinePage() {
           <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
               <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
+              ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
               <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>
             </label>
             ${visibilityBtnHtml("pets", pet)}
@@ -17399,7 +17477,7 @@ async function renderPetsDataPage() {
   const petsCounterEl = document.getElementById("petsSwipeCounter");
   let activePetIdx = 0;
   function renderList() {
-    renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; renderList(); });
+    renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; renderList(); });
     const idx = activePetIdx;
     const pet = petNames[idx];
     const levels = PETS_NODES_CACHE[pet];
@@ -17417,6 +17495,7 @@ async function renderPetsDataPage() {
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px; justify-content:flex-start; flex-wrap:nowrap;">
             <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
+            ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0;" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(dataName(pet))}</div>
           </label>
           ${IS_OWNER ? `<div style="margin:-8px 0 12px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
@@ -17498,6 +17577,7 @@ async function renderResearchCenterPage() {
   await ensureRCData();
   await ensureResearchSpeedData();
 
+  if (!RC_TARGET) RC_TARGET = (await loadCalcState("research_center_target")) || {};
   if (seq !== RENDER_SEQ) return;
   const RC_GROUPS = Object.keys(RC_BASE_CATEGORIES);
   let rcActive = RC_GROUPS.includes("Infantry") ? "Infantry" : RC_GROUPS[0];
@@ -17528,10 +17608,10 @@ async function renderResearchCenterPage() {
 
   function computeNeeded(trackName) {
     const levels = RC_NODES_CACHE[trackName] || [];
-    const cur = RC_STATE[trackName] || 0;
+    const cur = RC_STATE[trackName] || 0, target = rcTargetOf(trackName);
     const totals = { meat: 0, wood: 0, coal: 0, iron: 0, steel: 0, time_hours: 0 };
     levels.forEach((r) => {
-      if (r.level <= cur) return;
+      if (r.level <= cur || r.level > target) return;
       totals.meat += Number(r.meat) || 0;
       totals.wood += Number(r.wood) || 0;
       totals.coal += Number(r.coal) || 0;
@@ -17611,13 +17691,22 @@ async function renderResearchCenterPage() {
         const pct = pctOf(tracks);
         const open = rcOpen[base] !== undefined ? rcOpen[base] : pct < 100;
         const left = costLine(sumNeed(tracks));
-        return plxSectionHtml({ compact: true, key: base, title: dataName(base), sub: `${t("t12x_nodes").replace("{n}", tracks.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left}`, pct, open, maxKey: base,
-          body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, target: null, cost: costLine(computeNeeded(tr)) })).join("") });
+        return plxSectionHtml({ key: base, title: dataName(base), sub: `${t("t12x_nodes").replace("{n}", tracks.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left}`, pct, open, maxKey: base,
+          body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, target: rcTargetOf(tr), cost: costLine(computeNeeded(tr)) })).join("") });
       }).join("")}`;
     wireTroopSwipe(groupsEl, RC_GROUPS, rcActive, (g) => { rcActive = g; renderGroups(); });
     const setLevel = (tr, v) => {
       RC_STATE[tr] = Math.min(RC_NODES_CACHE[tr].length, Math.max(0, v));
       saveCalcState("research_center", RC_STATE);
+      renderTotals();
+      renderGroups();
+    };
+    // Target per level (missing = max), like T12.
+    groupsEl.onchange = (e) => {
+      const sel = e.target.closest("select[data-pxtarget]");
+      if (!sel) return;
+      RC_TARGET[sel.dataset.pxtarget] = Number(sel.value);
+      saveCalcState("research_center_target", RC_TARGET);
       renderTotals();
       renderGroups();
     };
@@ -17679,11 +17768,32 @@ function plxShellHtml(o) {
       </div>
     </div>`;
 }
+// The stat a gear piece / charm gives now, and at its target, on its own card.
+// list: [{ label, now, target }]
+function plxPieceStatHtml(list) {
+  const f = (v) => `+${(Math.round(v * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
+  return list.map((x) => `<span><em>${esc(x.label)}</em> <b>${f(x.now)}</b>${x.target > x.now + 1e-9 ? ` <i>&rarr; ${f(x.target)}</i>` : ""}</span>`).join("");
+}
+// A row of tappable level chips (+0% … max) instead of a dropdown.
+function plxChipRowHtml(label, key, values, selected) {
+  return `<div class="plx-chiprow"><span class="plx-chiprow-k">${esc(label)}</span><div class="plx-chips" data-chips="${esc(key)}">${values.map((v) => `<button type="button" class="${Number(v) === Number(selected) ? "on" : ""}" data-chip="${v}">+${v}%</button>`).join("")}</div></div>`;
+}
+function wirePlxChips(root, onPick) {
+  root.querySelectorAll("[data-chips]").forEach((row) => {
+    row.onclick = (e) => {
+      const b = e.target.closest("[data-chip]");
+      if (!b) return;
+      row.querySelectorAll("[data-chip]").forEach((x) => x.classList.toggle("on", x === b));
+      onPick(row.dataset.chips, Number(b.dataset.chip));
+    };
+  });
+}
 // Stat boxes (label, +value, of max, bar) - one look for every stats card.
-function plxStatBoxesHtml(list) {
-  return `<div class="plx-stats">${list.map((s) => {
+// oneRow: all boxes side by side on one line, even on phones.
+function plxStatBoxesHtml(list, oneRow) {
+  return `<div class="plx-stats${oneRow ? " one" : ""}"${oneRow ? ` style="--n:${list.length};"` : ""}>${list.map((s) => {
     const dp = s.dp == null ? 1 : s.dp, pct = s.max > 0 ? Math.min(100, (s.val / s.max) * 100) : 0;
-    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>+${Number(s.val || 0).toFixed(dp)}%</b>${s.max != null ? `<small>${esc(t("of_max_prefix"))} +${Number(s.max).toFixed(dp)}%</small><div class="t12x-bar"><i style="width:${pct}%;${pct >= 100 ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
+    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>+${Number(s.val || 0).toFixed(dp)}%</b>${s.max != null ? `<small>${oneRow ? "/ " : `${esc(t("of_max_prefix"))} `}+${oneRow ? Number(Number(s.max).toFixed(dp)) : Number(s.max).toFixed(dp)}%</small><div class="t12x-bar"><i style="width:${pct}%;${pct >= 100 ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
   }).join("")}</div>`;
 }
 // Several stat groups in one card, picked with tabs (like the troop tabs).
