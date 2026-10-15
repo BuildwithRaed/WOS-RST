@@ -603,6 +603,18 @@ input,select,textarea{
   .bp-tile.bp-add .bp-ph{ font-size:26px; color:var(--ice); }
   .bp-tile.bp-hero img{ width:40px; height:40px; object-fit:cover; border-radius:8px; border:2px solid var(--line); }
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
+  .bpw-box{ max-width:420px; max-height:85vh; overflow-y:auto; }
+  .bpw-head{ display:flex; gap:10px; align-items:center; margin-bottom:8px; }
+  .bpw-head img{ width:48px; height:48px; object-fit:contain; flex-shrink:0; }
+  .bpw-head h2{ margin:0; font-size:16px; } .bpw-head .desc{ margin:2px 0 0; font-size:11.5px; }
+  .bpw-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); }
+  .bpw-face{ width:34px; height:34px; border-radius:50%; overflow:hidden; background:var(--panel-2); flex-shrink:0; border:2px solid #e8913a; }
+  .bpw-face img{ width:100%; height:100%; object-fit:cover; }
+  .bpw-name{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:13px; } .bpw-name .meta{ font-size:10.5px; }
+  .bpw-row input{ width:80px; text-align:center; font-size:15px; padding:5px; }
+  .bpw-x{ background:none; border:0; color:var(--danger); font-size:20px; line-height:1; cursor:pointer; padding:0 4px; }
+  .bpw-add{ margin-top:8px; } .bpw-add select{ width:100%; }
+  .bpw-foot{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
   .bp-heroic{ position:relative; width:42px; height:42px; display:block; }
   .bp-tile.bp-hero .bp-heroic img.bp-item{ width:42px; height:42px; object-fit:contain; border:0; border-radius:0; }
   .bp-tile.bp-hero .bp-heroic img.bp-face{ position:absolute; inset-inline-end:-8px; bottom:-4px; width:22px; height:22px; border-radius:50%; object-fit:cover; border-width:2px; }
@@ -3615,6 +3627,10 @@ const T = {
   bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
   bd_of_max: { en: "of max", ar: "من الأقصى", ko: "최대 대비" },
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
+  bpw_desc: { en: "Every hero's widgets in one place. Type how many you have, remove a hero, or add one.", ar: "أدوات كل الأبطال في مكان واحد. اكتب ما لديك، أو أزل بطلاً، أو أضف واحداً.", ko: "모든 영웅의 위젯을 한곳에서. 보유 수를 입력하거나 영웅을 빼거나 추가하세요." },
+  bpw_add: { en: "Add a hero's widgets", ar: "أضف أدوات بطل", ko: "영웅 위젯 추가" },
+  bpw_empty: { en: "No heroes here yet.", ar: "لا يوجد أبطال هنا بعد.", ko: "아직 영웅이 없습니다." },
+  bpw_roster: { en: "roster", ar: "التشكيلة", ko: "로스터" },
   hs_page: { en: "Hero shards & widgets", ar: "شظايا الأبطال والأدوات", ko: "영웅 조각 · 위젯" },
   pk_zone_note: { en: "These pack contents are taken from states in the 600s. Older and newer states can get different amounts, because packs change with state age. Open any pack with Edit to change its amounts to match your state.", ar: "محتويات هذه الحزم مأخوذة من ولايات الـ600. قد تحصل الولايات الأقدم أو الأحدث على كميات مختلفة لأن الحزم تتغير حسب عمر الولاية. افتح أي حزمة بزر تعديل لتغيير كمياتها بما يناسب ولايتك.", ko: "이 팩 구성은 600번대 주 기준입니다. 팩은 주 나이에 따라 바뀌므로 더 오래되거나 새로운 주는 수량이 다를 수 있습니다. 편집으로 팩을 열어 내 주에 맞게 수량을 바꾸세요." },
   pk_tables_n: { en: "{n} tables", ar: "{n} جداول", ko: "표 {n}개" },
@@ -9310,7 +9326,7 @@ let BP_TAB = "All";
 let BP_SEARCH = "";
 async function renderInventory() {
   const seq = RENDER_SEQ;
-  const [, saved, heroes, savedHeroes, rosterSaved, playerHeroes, starRows] = await Promise.all([
+  const [, saved, heroes, savedHeroes, rosterSaved, playerHeroes, starRows, , , widgetsSaved] = await Promise.all([
     ensureSiteConfig(), loadCalcState("backpack"),
     // Same request (and kept copy) as the Dashboard's hero list.
     dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
@@ -9321,6 +9337,7 @@ async function renderInventory() {
     dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)).catch(() => []),
     // State age and "last new heroes": heroes not out yet are left out of the shards card.
     ensureStateAge(), ensurePackLinks().catch(() => null),
+    loadCalcState("backpack_widgets").catch(() => null),
   ]);
   if (seq !== RENDER_SEQ) return;
   const bp = saved || {};
@@ -9330,6 +9347,14 @@ async function renderInventory() {
   // are what the Backpack card and Budgets plan for).
   const rosterNames = ["Infantry", "Lancers", "Marksman"].map((k) => { const e = (rosterSaved || {})[k]; const id = !e ? "" : typeof e === "string" ? e : e.heroId || ""; const h = id && (heroes || []).find((x) => x.id === id); return h ? h.name : ""; }).filter(Boolean);
   const shownHero = (name) => myHeroes.includes(name) || rosterNames.includes(name);
+  // All mythic heroes' widgets sit in ONE "Widgets" box (tap it to edit each
+  // hero's amount, remove a hero or add one). calc_state "backpack_widgets" =
+  // { hide: [hero names], add: [hero names] }; amounts stay "<hero> Widgets".
+  const wState = { hide: Array.isArray((widgetsSaved || {}).hide) ? widgetsSaved.hide.slice() : [], add: Array.isArray((widgetsSaved || {}).add) ? widgetsSaved.add.slice() : [] };
+  const mythics = (heroes || []).filter((h) => h.rarity === "Legendary");
+  const widgetHeroes = () => mythics.filter((h) => (wState.add.includes(h.name) || shownHero(h.name)) && !wState.hide.includes(h.name))
+    .sort((a, b) => (rosterNames.includes(b.name) - rosterNames.includes(a.name)) || (Number(b.generation) || 0) - (Number(a.generation) || 0));
+  const widgetTotal = () => widgetHeroes().reduce((a, h) => a + (Number(bp[`${h.name} Widgets`]) || 0), 0);
   const groups = backpackItems();
   // Each added hero's own shards (saved as "<hero name> Shards"), with an
   // "Add hero" tile per rarity.
@@ -9337,9 +9362,9 @@ async function renderInventory() {
   const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
     title: t(key), heroShards: true, rarity,
     all: (heroes || []).filter((h) => h.rarity === rarity),
-    items: (heroes || []).filter((h) => h.rarity === rarity && shownHero(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }]
-      // Mythic heroes also have widgets (their Exclusive Gear), saved as "<hero> Widgets".
-      .concat(rarity === "Legendary" ? [{ name: `${h.name} Widgets`, icon: HERO_ITEM_ICON.widget, face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity, widget: true }] : [])),
+    items: (heroes || []).filter((h) => h.rarity === rarity && shownHero(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }])
+      // Mythic heroes' widgets: one box for all of them (see widgetHeroes).
+      .concat(rarity === "Legendary" && mythics.length ? [{ name: t("bp_widgets"), icon: HERO_ITEM_ICON.widget, widgetsAll: true, rarity }] : []),
   })).filter((g) => g.all.length);
   const generalIdx = groups.findIndex((g) => g.title === "Hero Shards");
   if (generalIdx !== -1) groups[generalIdx].heroShards = true;
@@ -9360,6 +9385,10 @@ async function renderInventory() {
     return cells.length ? `<div class="bp-speedsum">${cells.join("")}</div>` : "";
   };
   const tile = (it, sp, kind) => {
+    if (it.widgetsAll) {
+      const n = widgetHeroes().length, v = widgetTotal();
+      return `<button type="button" class="bp-tile" data-bpwidgets title="${esc(t("bp_widgets"))}"><img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" /><span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span><span class="bp-name">${esc(t("bp_widgets"))} (${n})</span></button>`;
+    }
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
     return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : label)}">
       ${it.hero && it.face ? `<span class="bp-heroic"><img class="bp-item" src="${esc(ic)}" alt="" loading="lazy" /><img class="bp-face" src="${esc(it.face)}" alt="" loading="lazy" /></span>` : ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
@@ -9471,7 +9500,47 @@ async function renderInventory() {
     return modal;
   };
   const saveHeroes = () => { saveCalcState("backpack_heroes", myHeroes); renderInventory(); };
+  // The "Widgets" box: every hero's widgets in one list.
+  const openWidgetsBox = () => {
+    const list = widgetHeroes().map((h) => h.name);
+    const draft = {};
+    list.forEach((n) => { draft[n] = Number(bp[`${n} Widgets`]) || 0; });
+    const byName = (n) => mythics.find((h) => h.name === n) || { name: n };
+    const modal = openModal(`<div class="modal-box bpw-box">
+        <div class="bpw-head"><img src="${esc(HERO_ITEM_ICON.widget)}" alt="" /><div><h2>${esc(t("bp_widgets"))}</h2><p class="desc">${esc(t("bpw_desc"))}</p></div></div>
+        <div class="bpw-list" data-bpwlist></div>
+        <div class="bpw-add"><select data-bpwadd><option value="">+ ${esc(t("bpw_add"))}</option></select></div>
+        <div class="bpw-foot"><button class="btn ghost" type="button" data-bpwcancel>${esc(t("cancel"))}</button><button class="btn" type="button" data-bpwsave>${esc(t("save"))}</button></div>
+      </div>`);
+    const draw = () => {
+      modal.querySelector("[data-bpwlist]").innerHTML = list.length ? list.map((n) => { const h = byName(n); return `<div class="bpw-row">
+          <span class="bpw-face">${h.image_url ? `<img src="${esc(h.image_url)}" alt="" loading="lazy" />` : ""}</span>
+          <span class="bpw-name"><b>${esc(dataName(n))}</b>${h.generation ? `<span class="meta">${esc(t("gen_prefix"))} ${h.generation}${rosterNames.includes(n) ? ` · ${esc(t("bpw_roster"))}` : ""}</span>` : ""}</span>
+          <input type="number" min="0" inputmode="numeric" data-bpwqty="${esc(n)}" value="${draft[n] || ""}" placeholder="0" />
+          <button type="button" class="bpw-x" data-bpwrm="${esc(n)}" aria-label="${esc(t("backpack_remove_hero"))}">&times;</button>
+        </div>`; }).join("") : `<div class="meta" style="padding:8px 0;">${esc(t("bpw_empty"))}</div>`;
+      const sel = modal.querySelector("[data-bpwadd]");
+      sel.innerHTML = `<option value="">+ ${esc(t("bpw_add"))}</option>` + mythics.filter((h) => !list.includes(h.name)).map((h) => `<option value="${esc(h.name)}">${esc(dataName(h.name))}${h.generation ? ` · ${esc(t("gen_prefix"))} ${h.generation}` : ""}</option>`).join("");
+    };
+    draw();
+    modal.querySelector("[data-bpwlist]").addEventListener("input", (ev) => { const i = ev.target.closest("[data-bpwqty]"); if (i) draft[i.dataset.bpwqty] = Math.max(0, Math.round(Number(i.value) || 0)); });
+    modal.querySelector("[data-bpwlist]").addEventListener("click", (ev) => { const b = ev.target.closest("[data-bpwrm]"); if (!b) return; list.splice(list.indexOf(b.dataset.bpwrm), 1); draw(); });
+    modal.querySelector("[data-bpwadd]").addEventListener("change", (ev) => { const n = ev.target.value; if (n && !list.includes(n)) { list.push(n); draft[n] = Number(bp[`${n} Widgets`]) || 0; } draw(); });
+    modal.querySelector("[data-bpwcancel]").onclick = () => { modal.style.display = "none"; };
+    modal.querySelector("[data-bpwsave]").onclick = () => {
+      modal.style.display = "none";
+      const before = widgetHeroes().map((h) => h.name);
+      // Removed heroes are hidden (and their amount cleared); added ones are kept in "add".
+      before.filter((n) => !list.includes(n)).forEach((n) => { if (!wState.hide.includes(n)) wState.hide.push(n); wState.add = wState.add.filter((x) => x !== n); delete bp[`${n} Widgets`]; });
+      list.forEach((n) => { wState.hide = wState.hide.filter((x) => x !== n); if (!shownHero(n) && !wState.add.includes(n)) wState.add.push(n); const v = draft[n] || 0; if (v) bp[`${n} Widgets`] = v; else delete bp[`${n} Widgets`]; });
+      saveCalcState("backpack", bp);
+      saveCalcState("backpack_widgets", wState);
+      budgetInvalidate();
+      renderInventory();
+    };
+  };
   document.getElementById("bpGroups").addEventListener("click", (e) => {
+    if (e.target.closest("[data-bpwidgets]")) { openWidgetsBox(); return; }
     const addEl = e.target.closest("[data-bpaddhero]");
     if (addEl) {
       const g = heroGroups.find((x) => x.rarity === addEl.dataset.bpaddhero);
