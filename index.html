@@ -5493,7 +5493,6 @@ async function renderOverview(opts = {}) {
         <h2>${esc(t("stats_dashboard"))}</h2>
       </div>
     </div>
-    ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
     <div id="stateAgeCard" style="margin-top:16px;">${stateAgeCardHtml()}</div>
     <div id="dashboardRoster" style="margin-top:16px;"></div>
     <div id="troopSections" style="margin-top:12px;"></div>
@@ -5502,72 +5501,6 @@ async function renderOverview(opts = {}) {
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
   content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => renderOverview()); });
 
-  // ---- Owner-only TOTAL breakdown table (CUR/MAX/DIFF per troop+stat line)
-  // - hidden entirely from non-owners, and collapsed by default even for the
-  // owner since it's a dense reference table rather than something needed on
-  // every visit. CUR/MAX/DIFF are each tinted a different color so the eye
-  // can scan straight down a column instead of reading every cell.
-  if (IS_OWNER) {
-    const ownerWrap = document.getElementById("ownerTotalTableWrap");
-    const fmtPct = (v) => `${v.toFixed(1)}%`;
-    const COL_TINT = { cur: "rgba(224,100,95,0.12)", max: "rgba(91,201,138,0.12)", diff: "rgba(232,162,60,0.14)" };
-    const renderOwnerTotalTable = () => {
-      const shown = localStorage.getItem("dashboard_owner_total_shown") === "1";
-      const totalRows = allStats.map((x) => {
-        const max = maxStatFor(x.troop, x.stat);
-        const diff = max - x.total;
-        return { troop: x.troop, stat: x.stat, cur: x.total, max, diff };
-      });
-      const avgRow = {
-        cur: totalRows.reduce((a, r) => a + r.cur, 0) / totalRows.length,
-        max: totalRows.reduce((a, r) => a + r.max, 0) / totalRows.length,
-        diff: totalRows.reduce((a, r) => a + r.diff, 0) / totalRows.length,
-      };
-      ownerWrap.innerHTML = `
-        <div class="panel">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:${shown ? "12px" : "0"};">
-            <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
-              <input type="checkbox" id="ownerTotalToggle" ${shown ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              <span style="font-weight:600;">${esc(t("total_owner_only"))}</span>
-            </label>
-          </div>
-          ${shown ? `
-          <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-              <thead><tr>
-                ${["#", "CUR.", "MAX.", "DIFF."]
-                  .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
-                  .join("")}
-              </tr></thead>
-              <tbody>
-                ${totalRows
-                  .map(
-                    (r) => `<tr>
-                      <td style="padding:5px 8px; font-weight:600;">${esc(troopDisplayName(r.troop))} ${esc(r.stat)}</td>
-                      <td style="padding:5px 8px; background:${COL_TINT.cur};">${fmtPct(r.cur)}</td>
-                      <td style="padding:5px 8px; background:${COL_TINT.max};">${fmtPct(r.max)}</td>
-                      <td style="padding:5px 8px; background:${COL_TINT.diff};">${fmtPct(r.diff)}</td>
-                    </tr>`
-                  )
-                  .join("")}
-                <tr style="border-top:1px solid var(--line);">
-                  <td style="padding:5px 8px; font-weight:600;">AVERAGE</td>
-                  <td style="padding:5px 8px; font-weight:600; background:${COL_TINT.cur};">${fmtPct(avgRow.cur)}</td>
-                  <td style="padding:5px 8px; font-weight:600; background:${COL_TINT.max};">${fmtPct(avgRow.max)}</td>
-                  <td style="padding:5px 8px; font-weight:600; background:${COL_TINT.diff};">${fmtPct(avgRow.diff)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          ` : ""}
-        </div>`;
-      document.getElementById("ownerTotalToggle").addEventListener("change", (e) => {
-        localStorage.setItem("dashboard_owner_total_shown", e.target.checked ? "1" : "0");
-        renderOwnerTotalTable();
-      });
-    };
-    renderOwnerTotalTable();
-  }
 
   // ---- Roster heroes: the 3 heroes affecting Infantry / Lancers / Marksman ----
   const rosterEl = document.getElementById("dashboardRoster");
