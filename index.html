@@ -307,6 +307,9 @@
   .pur-t-step i{ font-style:normal; min-width:16px; text-align:center; font-weight:700; }
   .pur-t-tick{ width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background:none; color:#0f141b; cursor:pointer; padding:0; font-weight:800; }
   .pur-t-tick.on{ background:var(--ice); border-color:var(--ice); }
+  .pur-t-sel.unset{ color:var(--muted); border-style:dashed; }
+  .pur-t-miss{ font-size:11.5px; color:#e0b25a; margin-top:8px; }
+  .pur-t-box [data-tadd]:disabled, .pur-modal [data-pmadd]:disabled{ opacity:.45; cursor:default; }
   .pur-t td.pur-t-pk{ white-space:normal; width:100%; }
   .pur-t-picks3{ display:flex; flex-wrap:wrap; gap:4px; }
   .pur-t-sel{ font-size:11.5px; padding:4px 6px; flex:1 1 150px; min-width:0; }
@@ -4160,8 +4163,8 @@ const T = {
   mp_kind_mixmatch: { en: "3 picks · any price", ar: "3 اختيارات · أي سعر", ko: "3개 선택 · 아무 가격" },
   mp_kind_regular: { en: "ladder + Max", ar: "سلم الأسعار + الحد الأقصى", ko: "단계 + 최대" },
   mp_tag: { en: "My pack", ar: "حزمتي", ko: "내 팩" },
+  mp_all_pages: { en: "All pages (automatic)", ar: "كل الصفحات (تلقائي)", ko: "모든 페이지 (자동)" },
   mp_used_for: { en: "Used for", ar: "يُستخدم لـ", ko: "사용처" },
-  mp_none: { en: "none yet", ar: "لا شيء بعد", ko: "아직 없음" },
   mp_delete: { en: "Delete", ar: "حذف", ko: "삭제" },
   mp_delete_confirm: { en: "Delete \"{t}\"?", ar: "حذف \"{t}\"؟", ko: "\"{t}\"을(를) 삭제할까요?" },
   mp_column: { en: "Column", ar: "عمود", ko: "열" },
@@ -4268,6 +4271,8 @@ const T = {
   pur_sug_scroll: { en: "Scroll for all {n} packs", ar: "مرّر لرؤية كل الحزم ({n})", ko: "스크롤하여 {n}개 팩 모두 보기" },
   pur_choice: { en: "Choice", ar: "الخيار", ko: "선택" },
   pur_tbl_choose: { en: "Choose in the pack table", ar: "اختر من جدول الحزمة", ko: "팩 표에서 선택" },
+  pur_tbl_pick: { en: "— choose —", ar: "— اختر —", ko: "— 선택 —" },
+  pur_tbl_missing: { en: "Choose an option in {n} ticked row(s) first.", ar: "اختر خياراً في {n} من الصفوف المحددة أولاً.", ko: "체크한 행 {n}개에서 먼저 옵션을 고르세요." },
   pur_tbl_btn: { en: "Pick from table", ar: "اختر من الجدول", ko: "표에서 선택" },
   pur_tbl_empty: { en: "This pack has no prices yet.", ar: "لا توجد أسعار لهذه الحزمة بعد.", ko: "이 팩에는 아직 가격이 없습니다." },
   pur_tbl_price: { en: "Price", ar: "السعر", ko: "가격" },
@@ -6458,7 +6463,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     <div class="panel" style="margin:0 0 12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><span style="font-size:14px; font-weight:700;">${esc(t("mp_your_tables"))} <span class="meta" style="font-size:11px;">(${mine.length})</span></span>
       <button type="button" class="btn small" data-mpopenpacks>${esc(t("mp_edit_in_packs"))}</button></div>
-      ${mine.map((tb) => `<div style="padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packLinkForBase(tb.id).pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_none"))}</span></div>`).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_none"))}</div>`}
+      ${mine.map((tb) => `<div style="padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packLinkForBase(tb.id).pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_all_pages"))}</span></div>`).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_none"))}</div>`}
     </div>`;
     const inp = el.querySelector("[data-mplimit]");
     inp.addEventListener("change", async () => {
@@ -6518,7 +6523,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     return `<div class="panel" data-mpcard="${esc(mp.id)}" style="margin-top:12px; min-width:0; ${mp.columns.length > 5 ? "grid-column:1 / -1;" : ""}">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
         <span style="min-width:0;"><b>${esc(mp.title)}</b> <span style="font-size:10px; padding:1px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:700;">${esc(t("mp_tag"))}</span>
-          <br><span class="meta" style="font-size:11px;">${esc(kindLabel(link))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_none"))}</span></span>
+          <br><span class="meta" style="font-size:11px;">${esc(kindLabel(link))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_all_pages"))}</span></span>
         <button type="button" class="btn small ghost" data-mpdel="${esc(mp.id)}" style="color:var(--danger); flex-shrink:0;">${esc(t("mp_delete"))}</button>
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
@@ -6910,9 +6915,13 @@ function purTablePopup(tb, opts) {
   // Option sets end with their option list ("… · Chief & Charms / Heroes"); the choice shows that already.
   if (mode === "set" && name.includes(" · ")) name = name.slice(0, name.lastIndexOf(" · "));
   // state: S.sel[i] = chosen option per dropdown of row i
-  const S = { counts: {}, upTo: -1, sel: R.map((r) => Array.from({ length: r.n }, () => (mode === "set" ? defSel : 0))) };
-  const rowGives = (i) => (R[i].n ? S.sel[i].reduce((g, oi) => add(g, R[i].opts[oi].gives), {}) : { ...R[i].gives });
-  const rowText = (i) => { const cnt = {}; S.sel[i].forEach((oi) => { const nm = R[i].opts[oi].name; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, k]) => (R[i].n > 1 ? `${k}× ${nm}` : nm)).join(" + "); };
+  // Every dropdown starts empty (-1) until you choose.
+  const S = { counts: {}, upTo: -1, sel: R.map((r) => Array.from({ length: r.n }, () => -1)) };
+  const rowDone = (i) => S.sel[i].every((oi) => oi >= 0);
+  const rowGives = (i) => (R[i].n ? S.sel[i].reduce((g, oi) => (oi >= 0 ? add(g, R[i].opts[oi].gives) : g), {}) : { ...R[i].gives });
+  const rowText = (i) => { const cnt = {}; S.sel[i].forEach((oi) => { const nm = oi >= 0 ? R[i].opts[oi].name : "?"; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, k]) => (R[i].n > 1 ? `${k}× ${nm}` : nm)).join(" + "); };
+  // Ticked / counted rows still waiting for a choice.
+  const missing = () => R.map((r, i) => i).filter((i) => (ladder ? i <= S.upTo : S.counts[i] > 0) && !rowDone(i)).length;
   // What will be added: [{ row, count, label, price, gives }]
   const lines = () => {
     if (ladder) {
@@ -6931,7 +6940,7 @@ function purTablePopup(tb, opts) {
   const close = () => { modal.style.display = "none"; };
   const showCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && !packIsNonResourceColumn(tb.columns[ci]));
   const draw = () => {
-    const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0);
+    const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0), miss = missing();
     // The tick / − + column comes first so it stays in view on phones.
     const head = choiceType
       ? `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th><th>${esc(mode === "pick" ? t("pur_tbl_items_n").replace("{n}", link.pickCols) : t("pur_choice"))}</th></tr>`
@@ -6941,7 +6950,7 @@ function purTablePopup(tb, opts) {
       const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
         : `<span class="pur-t-step"><button type="button" data-tct="${i}|-1">&minus;</button><i>${S.counts[i] || 0}</i><button type="button" data-tct="${i}|1" ${r.max && (S.counts[i] || 0) >= r.max ? "disabled" : ""}>+</button></span>`;
       const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">×${r.max}</span>` : ""}</td>`;
-      if (choiceType) return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}<td class="pur-t-pk"><div class="pur-t-picks3">${S.sel[i].map((sel, k) => `<select class="pur-t-sel" data-tsel="${i}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}">${r.opts.map((o, oi) => `<option value="${oi}" ${oi === sel ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
+      if (choiceType) return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}<td class="pur-t-pk"><div class="pur-t-picks3">${S.sel[i].map((sel, k) => `<select class="pur-t-sel${sel < 0 ? " unset" : ""}" data-tsel="${i}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}"><option value="-1" ${sel < 0 ? "selected" : ""} disabled>${esc(t("pur_tbl_pick"))}</option>${r.opts.map((o, oi) => `<option value="${oi}" ${oi === sel ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
       const cells = (tb.rows[r.ri] || {}).cells || [];
       return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
     }).join("");
@@ -6950,7 +6959,8 @@ function purTablePopup(tb, opts) {
       <h2>${esc(name)}</h2>
       <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
       <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
-      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
+      ${miss ? `<div class="pur-t-miss">${esc(t("pur_tbl_missing").replace("{n}", miss))}</div>` : ""}
+      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
@@ -6960,7 +6970,7 @@ function purTablePopup(tb, opts) {
     const addBtn = modal.querySelector("[data-tadd]");
     if (addBtn) addBtn.addEventListener("click", () => {
       const ls2 = lines();
-      if (!ls2.length) return;
+      if (!ls2.length || missing()) return;
       opts.onAdd(ls2.map((l) => ({ row: l.row, count: l.count, ...(choiceType ? { choice: { name, label: l.label, price: l.price, gives: l.gives } } : {}) })));
       close();
     });
@@ -10202,6 +10212,10 @@ function packGroupLabel(g) {
 // A table ticked for a group (e.g. "Pets") counts for every page in that
 // group, even if it was ticked before a page joined the group.
 function packTableServesPage(tb, calcKey) {
+  // "My packs" with no "Used for" ticked count for every page (the planner
+  // only buys them where their items are needed).
+  const own = packLinkFor(tb.id);
+  if ((own.mine || (typeof own.group === "string" && own.group.trim() === PACK_MINE_GROUP)) && !(own.pages || []).length) return true;
   const servedBy = (pages) => {
     if (pages.includes(calcKey)) return true;
     const g = packGroupOf(calcKey);
