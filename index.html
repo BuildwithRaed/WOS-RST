@@ -220,6 +220,10 @@
   .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-row-v{ white-space:nowrap; font-size:13px; }
+  .bud-mats{ display:flex; flex-wrap:wrap; gap:6px; }
+  .bud-mat{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 5px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.03); font-size:13px; }
+  .bud-mat img{ width:24px; height:24px; object-fit:contain; }
+  .bud-mat i{ width:24px; height:24px; display:grid; place-items:center; font-style:normal; font-weight:800; color:var(--muted); }
   .bud-pending{ font-size:15px; font-weight:600; color:var(--ice); animation:budPulse 1.2s ease-in-out infinite; }
   .bud-pending.small{ font-size:12px; }
   @keyframes budPulse{ 50%{ opacity:.45; } }
@@ -12720,7 +12724,13 @@ async function renderBudgetsPage(opts = {}) {
       </div>
       ${viewCardsHtml}
       ${combinedHtml}
-      ${Object.keys(grandMats).length ? `<div style="margin-top:8px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials_total"))}</div><div style="display:flex; flex-wrap:wrap; gap:4px 14px;">${Object.keys(grandMats).map((n) => `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b>${qty(grandMats[n])}</b></span>`).join("")}</div></div>` : ""}
+      ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("budgets_materials_total"))}</div><div class="bud-mats">${Object.keys(grandMats).map((n) => {
+        // Picture + short amount; the name and exact number show on hover / long press.
+        const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
+        const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
+        const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
+        return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
+      }).join("")}</div></div>` : ""}
       ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
     </div>`;
