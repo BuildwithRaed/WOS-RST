@@ -220,6 +220,9 @@
   .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-row-v{ white-space:nowrap; font-size:13px; }
+  .bud-pending{ font-size:15px; font-weight:600; color:var(--ice); animation:budPulse 1.2s ease-in-out infinite; }
+  .bud-pending.small{ font-size:12px; }
+  @keyframes budPulse{ 50%{ opacity:.45; } }
   @media (max-width: 560px){ .bud-row{ flex-wrap:wrap; } .bud-row label{ flex:1 1 100%; } .bud-row-v{ margin-inline-start:24px; margin-inline-end:auto; } .bud-body{ padding-left:8px; } }
   .bud-row .linklike{ text-decoration:none; font-size:14px; }
   .budget-wrap{ max-width:1400px; margin:0 auto; }
@@ -3836,6 +3839,7 @@ const T = {
   pack_earliest: { en: "Earliest:", ar: "\u0623\u0642\u0631\u0628 \u0645\u0648\u0639\u062f:", ko: "\uac00\uc7a5 \ube60\ub978 \ub0a0\uc9dc:" },
   budgets_title: { en: "Budgets", ar: "الميزانيات", ko: "예산" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get.", ar: "كل خطط الترقية في مكان واحد: المواد المتبقية، وتكلفة الحزم المخصصة، وزيادة الإحصائيات التي ستحصل عليها.", ko: "모든 업그레이드 계획을 한곳에서: 남은 재료, 배정된 패키지 비용, 그리고 얻게 될 스탯 증가." },
+  budgets_working: { en: "Working out the cheapest packs…", ar: "جارٍ حساب أرخص الحزم…", ko: "가장 저렴한 팩 계산 중…" },
   budgets_loading: { en: "Adding everything up…", ar: "جارٍ الحساب…", ko: "계산 중…" },
   budgets_view_target: { en: "By your target", ar: "حسب هدفك", ko: "목표일 기준" },
   budgets_view_fastest: { en: "Fastest", ar: "الأسرع", ko: "가장 빠름" },
@@ -12452,6 +12456,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
 function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
+let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
   if (!dataReady) {
@@ -12492,14 +12497,22 @@ async function renderBudgetsPage(opts = {}) {
   ]);
   if (TAB !== "budgets") return;
   const selSig = JSON.stringify(BUDGET_PAGES.map((p) => included(p.key)));
-  if (!(dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig)) {
-    const wrap = content.querySelector(".budget-wrap");
-    if (wrap && !wrap.querySelector("[data-budgetbusy]")) wrap.insertAdjacentHTML("afterbegin", `<div data-budgetbusy class="panel" style="margin:8px 0; border-color:var(--ice);"><div class="meta" style="font-size:12px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`);
-    await new Promise((r) => setTimeout(r, 30));
-    if (TAB !== "budgets") return;
+  // The page (settings, pages, materials) is drawn at once; the packs plan is
+  // worked out in the background and the prices fill in when it's ready.
+  const planKey = `${targetDays}|${selSig}`;
+  const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig;
+  const combinedRaw = haveCombined ? BUDGET_DATA.combined : { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
+  if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey) {
+    BUDGET_PLAN_RUNNING = planKey;
+    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays).then((real) => {
+      if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
+      // Only if nothing changed meanwhile (date, ticks, data).
+      if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
+      BUDGET_DATA.combined = real;
+      if (TAB === "budgets") { const y = window.scrollY; renderBudgetsPage().then(() => window.scrollTo(0, y)); }
+    }).catch((e) => { console.error("budget plan failed", e); if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null; });
   }
-  const combinedRaw = (dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig) ? BUDGET_DATA.combined : await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
-  if (TAB !== "budgets") return;
+  const planPending = !!combinedRaw.pending;
   const pagesRaw = pages;
   // Pages the combined plan had to leave out get their own plan.
   combinedRaw.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combinedRaw.droppedPlans && combinedRaw.droppedPlans[k]) Object.assign(pg, combinedRaw.droppedPlans[k]); });
@@ -12598,6 +12611,7 @@ async function renderBudgetsPage(opts = {}) {
         ${sh.rows.length ? `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${sh.rows.length})</summary>
           ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
     }
+    else if (inc && planPending) costHtml = `<div class="bud-pending small">${esc(t("budgets_working"))}</div>`;
     else if (inc && combined.inc.includes(pg.calcKey)) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
     else if (!pg.chosen) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${inc ? esc(t("pack_cant_cover")) : "—"}</div>`;
     else {
@@ -12617,7 +12631,7 @@ async function renderBudgetsPage(opts = {}) {
           <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
     }
     const shareOf = inc && combined.inc.includes(pg.calcKey) && combined.chosen ? (combined.shares[pg.calcKey] || { total: 0, rows: [] }) : null;
-    const rowCost = !inc ? "—" : shareOf ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(shareOf)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`;
+    const rowCost = !inc ? "—" : planPending && Object.keys(pg.need).length ? `<span class="bud-pending small">…</span>` : shareOf ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(shareOf)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`;
     return pageRow(rowCost, `
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
@@ -12701,7 +12715,7 @@ async function renderBudgetsPage(opts = {}) {
 
       </div>
       <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
-        <span style="font-size:26px; font-weight:700;">${anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
+        <span style="font-size:26px; font-weight:700;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan && split && BUDGET_VIEW === "main" ? `<span class="meta" style="font-size:11px;">${esc(t("budgets_split_parts"))}</span>` : anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
       </div>
       ${viewCardsHtml}
