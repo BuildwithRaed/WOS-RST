@@ -10024,7 +10024,15 @@ function packOptionLadderGroups(optionTables) {
   const byGroup = {};
   optionTables.forEach((tb) => { const l = packLinkFor(tb.id); const g = l.linkSet ? "set:" + l.linkSet : (l.group || "__nogroup__"); (byGroup[g] = byGroup[g] || []).push(tb); });
   Object.keys(byGroup).forEach((gname) => {
-    const tbs = byGroup[gname];
+    // Each option pack is built once and reused by every page that has the
+    // same tables in it (Budgets builds ~10 pages; kept in PACK_GROUPS_CACHE).
+    const tbsAll = byGroup[gname];
+    const per = PACK_GROUPS_CACHE && PACK_GROUPS_CACHE.perTable;
+    const bkey = ["optg", gname, tbsAll.map((x) => x.id).join(","), LANG, DISPLAY_CURRENCY, new Date().toDateString()].join("|");
+    const hit = per && per.get(bkey);
+    if (hit) { hit.forEach((g) => groups.push(g)); return; }
+    const start = groups.length;
+    ((tbs) => {
     const links = tbs.map((tb) => packLinkFor(tb.id));
     const isSet = gname.startsWith("set:");
     // For a linked set the lead table (the one the set is named after) sets
@@ -10064,6 +10072,8 @@ function packOptionLadderGroups(optionTables) {
     const lastMax = Math.max(0, ...links.map((l) => Number((l.rowMax || {})[tiers - 1]) || 0));
     const g = packBuildOptionLadder(title, lead, perTable, tags, lastMax);
     if (g) { g.tables = tbs.map((x) => String(x.id)); groups.push(g); }
+    })(tbsAll);
+    if (per) per.set(bkey, groups.slice(start));
   });
   return groups;
 }
@@ -10202,60 +10212,73 @@ function packGemsCountFor(calcKey) {
 // for every page (and again on each date change). Cleared by
 // budgetInvalidate() and whenever the pack tables are reloaded; the key also
 // covers what the labels and gems depend on. Callers must not change them.
-let PACK_GROUPS_CACHE = { tables: null, map: new Map() };
+let PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
 function packGroupsFor(tables, calcKey) {
   const stripGems = !packGemsCountFor(calcKey);
-  if (PACK_GROUPS_CACHE.tables !== PACK_TABLES_CACHE) PACK_GROUPS_CACHE = { tables: PACK_TABLES_CACHE, map: new Map() };
+  if (PACK_GROUPS_CACHE.tables !== PACK_TABLES_CACHE) PACK_GROUPS_CACHE = { tables: PACK_TABLES_CACHE, map: new Map(), perTable: new Map() };
   const key = [stripGems ? 1 : 0, LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
   let out = PACK_GROUPS_CACHE.map.get(key);
   if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
   return out;
 }
 function packGroupsForBuild(tables, stripGems) {
-  const out = packGroupsForRaw(tables);
-  if (stripGems) out.forEach((g) => g.offers.forEach((o) => { if (o.gives && o.gives.Gems != null) { const gv = { ...o.gives }; delete gv.Gems; o.gives = gv; } }));
+  // Copies (not in-place edits): a table's groups are shared by every page.
+  let out = packGroupsForRaw(tables);
+  if (stripGems) out = out.map((g) => ({ ...g, offers: g.offers.map((o) => { if (!o.gives || o.gives.Gems == null) return o; const gv = { ...o.gives }; delete gv.Gems; return { ...o, gives: gv }; }) }));
   return out.filter((g) => g.offers.some((o) => Object.keys(o.gives).length)).map((g) => ({ ...g, offers: g.offers.filter((o) => Object.keys(o.gives).length || g.ladder) }));
+}
+// One table's offer groups. Budgets builds groups for ~10 pages that share
+// most tables, so each table is built once and reused (kept with the other
+// built groups in PACK_GROUPS_CACHE; the key covers labels, currency and day).
+function packTableGroups(tb) {
+  const cacheKey = [tb.id, LANG, DISPLAY_CURRENCY, new Date().toDateString()].join("|");
+  const per = PACK_GROUPS_CACHE.perTable;
+  if (per && per.has(cacheKey)) return per.get(cacheKey);
+  const groups = [];
+  const done = () => { if (per) per.set(cacheKey, groups); return groups; };
+  const link = packLinkFor(tb.id);
+  if (link.pickCols > 0) { packPickGroups(tb, link).forEach((g) => groups.push(g)); return done(); }
+  if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) { g.tables = [String(tb.id)]; groups.push(g); } return done(); }
+  const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")), currency: link.currency }));
+  if (!offers.length || !offers.some((o) => Object.keys(o.gives).length)) return done();
+  const rowMaxOf = (o) => { const m = Number((link.rowMax || {})[o.row]); return Number.isInteger(m) && m > 0 ? m : null; };
+  if (link.sequential) {
+    const prefixes = [];
+    let price = 0; const gives = {};
+    offers.forEach((o, i) => {
+      price += o.price;
+      Object.keys(o.gives).forEach((n) => { gives[n] = (gives[n] || 0) + o.gives[n]; });
+      const stepsOf = offers.length > 1 ? ` (${t("pack_steps_of").replace("{k}", i + 1).replace("{n}", offers.length)})` : "";
+      prefixes.push({ ...o, price, gives: { ...gives }, tiers: i + 1, label: (i === 0 ? o.label : `${t("pack_up_to")} ${o.label}`) + stepsOf });
+    });
+    // Last tier repeatable N times once the ladder is complete: extra
+    // "full ladder + k more of the last tier" options.
+    const last = offers[offers.length - 1], full = prefixes[prefixes.length - 1], lastMax = rowMaxOf(last);
+    if (lastMax && lastMax > 1) for (let k = 1; k < lastMax; k++) {
+      const g2 = { ...full.gives }; Object.keys(last.gives).forEach((n) => { g2[n] = (g2[n] || 0) + k * last.gives[n]; });
+      prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${offers.length > 1 ? t("pack_all_steps").replace("{n}", offers.length) : last.label} + ${k}× ${last.label}` });
+    }
+    groups.push({ reset: link.reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: 1, offers: prefixes, ladder: true, tables: [String(tb.id)] });
+  } else if (link.choice) {
+    // One purchase = one of the options; the buys-per-reset limit is shared.
+    groups.push({ reset: link.reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: link.buys, offers, ladder: false, choice: true, tables: [String(tb.id)] });
+  } else {
+    offers.forEach((o) => {
+      const m = rowMaxOf(o);
+      // A per-row limit on an "any time" pack is a total limit.
+      const reset = m && link.reset === "unlimited" ? "once" : link.reset;
+      groups.push({ reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: m || link.buys, offers: [o], ladder: false, tables: [String(tb.id)] });
+    });
+  }
+  return done();
 }
 function packGroupsForRaw(tables) {
   const groups = [];
   const optionTables = tables.filter((tb) => packLinkFor(tb.id).option);
   packOptionLadderGroups(optionTables).forEach((g) => groups.push(g));
   tables.forEach((tb) => {
-    const link = packLinkFor(tb.id);
-    if (link.option) return; // handled above as part of its option pack
-    if (link.pickCols > 0) { packPickGroups(tb, link).forEach((g) => groups.push(g)); return; }
-    if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) { g.tables = [String(tb.id)]; groups.push(g); } return; }
-    const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")), currency: link.currency }));
-    if (!offers.length || !offers.some((o) => Object.keys(o.gives).length)) return;
-    const rowMaxOf = (o) => { const m = Number((link.rowMax || {})[o.row]); return Number.isInteger(m) && m > 0 ? m : null; };
-    if (link.sequential) {
-      const prefixes = [];
-      let price = 0; const gives = {};
-      offers.forEach((o, i) => {
-        price += o.price;
-        Object.keys(o.gives).forEach((n) => { gives[n] = (gives[n] || 0) + o.gives[n]; });
-        const stepsOf = offers.length > 1 ? ` (${t("pack_steps_of").replace("{k}", i + 1).replace("{n}", offers.length)})` : "";
-        prefixes.push({ ...o, price, gives: { ...gives }, tiers: i + 1, label: (i === 0 ? o.label : `${t("pack_up_to")} ${o.label}`) + stepsOf });
-      });
-      // Last tier repeatable N times once the ladder is complete: extra
-      // "full ladder + k more of the last tier" options.
-      const last = offers[offers.length - 1], full = prefixes[prefixes.length - 1], lastMax = rowMaxOf(last);
-      if (lastMax && lastMax > 1) for (let k = 1; k < lastMax; k++) {
-        const g2 = { ...full.gives }; Object.keys(last.gives).forEach((n) => { g2[n] = (g2[n] || 0) + k * last.gives[n]; });
-        prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${offers.length > 1 ? t("pack_all_steps").replace("{n}", offers.length) : last.label} + ${k}× ${last.label}` });
-      }
-      groups.push({ reset: link.reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: 1, offers: prefixes, ladder: true, tables: [String(tb.id)] });
-    } else if (link.choice) {
-      // One purchase = one of the options; the buys-per-reset limit is shared.
-      groups.push({ reset: link.reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: link.buys, offers, ladder: false, choice: true, tables: [String(tb.id)] });
-    } else {
-      offers.forEach((o) => {
-        const m = rowMaxOf(o);
-        // A per-row limit on an "any time" pack is a total limit.
-        const reset = m && link.reset === "unlimited" ? "once" : link.reset;
-        groups.push({ reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: m || link.buys, offers: [o], ladder: false, tables: [String(tb.id)] });
-      });
-    }
+    if (packLinkFor(tb.id).option) return; // handled above as part of its option pack
+    packTableGroups(tb).forEach((g) => groups.push(g));
   });
   return groups;
 }
@@ -12427,7 +12450,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map() }; }
+function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
@@ -12438,14 +12461,18 @@ async function renderBudgetsPage(opts = {}) {
   }
   // Load every calculator's saved plan plus the dashboard's current totals
   // (computed exactly the way the Dashboard page does, without drawing it).
-  const [, , , , savedSel, savedTarget, dashStatsFresh] = await Promise.all([
+  // The Dashboard stats are only needed for the "stat increase" lines, so
+  // they're worked out alongside the page plans, not before them. Pack
+  // tables, trade rates, marks rates and the pages' saved needs all start
+  // loading now too (each page used to wait for them one after another).
+  const dashStatsPromise = dataReady ? Promise.resolve(BUDGET_DATA.dashStats) : renderOverview({ computeOnly: true }).catch((e) => { console.error("dashboard stats failed", e); return null; });
+  const [, , , , savedSel, savedTarget] = await Promise.all([
     ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensurePackLinks(),
     BUDGET_SELECTED ? Promise.resolve(BUDGET_SELECTED) : loadCalcState("budget_selected"),
     BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
-    dataReady ? Promise.resolve(BUDGET_DATA.dashStats) : renderOverview({ computeOnly: true }).catch((e) => { console.error("dashboard stats failed", e); return null; }),
+    dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
   ]);
   if (TAB !== "budgets") return;
-  const dashStats = dashStatsFresh;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
   BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
   const included = (k) => BUDGET_SELECTED[k] !== false;
@@ -12459,7 +12486,10 @@ async function renderBudgetsPage(opts = {}) {
 
   // Page plans are reused unless the target date changed (it affects the
   // plans) or the data was invalidated.
-  const pages = (dataReady && BUDGET_DATA.targetDays === targetDays) ? BUDGET_DATA.pages : await Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true })));
+  const [pages, dashStats] = await Promise.all([
+    (dataReady && BUDGET_DATA.targetDays === targetDays) ? BUDGET_DATA.pages : Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true }))),
+    dashStatsPromise,
+  ]);
   if (TAB !== "budgets") return;
   const selSig = JSON.stringify(BUDGET_PAGES.map((p) => included(p.key)));
   if (!(dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && BUDGET_DATA.selSig === selSig)) {
