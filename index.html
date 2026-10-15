@@ -3611,6 +3611,7 @@ const T = {
   bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
   bd_of_max: { en: "of max", ar: "من الأقصى", ko: "최대 대비" },
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
+  hs_page: { en: "Hero shards & widgets", ar: "شظايا الأبطال والأدوات", ko: "영웅 조각 · 위젯" },
   pk_zone_note: { en: "These pack contents are taken from states in the 600s. Older and newer states can get different amounts, because packs change with state age. Open any pack with Edit to change its amounts to match your state.", ar: "محتويات هذه الحزم مأخوذة من ولايات الـ600. قد تحصل الولايات الأقدم أو الأحدث على كميات مختلفة لأن الحزم تتغير حسب عمر الولاية. افتح أي حزمة بزر تعديل لتغيير كمياتها بما يناسب ولايتك.", ko: "이 팩 구성은 600번대 주 기준입니다. 팩은 주 나이에 따라 바뀌므로 더 오래되거나 새로운 주는 수량이 다를 수 있습니다. 편집으로 팩을 열어 내 주에 맞게 수량을 바꾸세요." },
   pk_tables_n: { en: "{n} tables", ar: "{n} جداول", ko: "표 {n}개" },
   pk_in_budgets: { en: "Count in Budgets", ar: "احتسابها في الميزانيات", ko: "예산에 포함" },
@@ -9285,6 +9286,8 @@ function backpackItems() {
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
+  const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
+  if (hm && HERO_IMG_BY_NAME[hm[1]]) return HERO_IMG_BY_NAME[hm[1]];
   if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
   if (BP_CHEST_ICONS[name]) return BP_CHEST_ICONS[name];
   if (BP_SHARD_ICONS[name]) return BP_SHARD_ICONS[name];
@@ -10554,6 +10557,7 @@ function packGroupOf(pageKey) {
   return PACK_PAGE_GROUPS.find((g) => g.pages.includes(pageKey));
 }
 function packPageLabel(key) {
+  if (key === "hero_shards") return t("hs_page");
   const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research", pets: "petsdata", pets_refine: "refinepage", experts: "expertspage", experts_research: "expertsresearchpage" }[key]];
   return entry ? (entry[LANG] || entry.en) : key;
 }
@@ -11100,6 +11104,41 @@ function savePackPurchases() {
 let MY_PACKS = [];
 const PACK_TEMPLATE_GROUP = "Pack templates";
 const PACK_MINE_GROUP = "My packs";
+// ---- New Gen hero packs (built here, not in the pack tables) ----
+// Each new generation sells, for each of its heroes: a Value Hero Pack with
+// Hero Ascension Training (weeks 1-4: $4.99 = 10 of that hero's shards, once)
+// and an Exclusive Gear Pack with the Exclusive Gear Forge (weeks 5-8: a
+// $0.99 / 2.99 / 4.99 / 9.99 / 19.99 ladder of 5 / 10 / 15 / 25 / 40 widgets,
+// once). Gems follow the usual 500-per-dollar scale. Owner's info, 16 Oct 2026;
+// other items in these packs aren't counted. They're only for the Budgets
+// "Hero shards & widgets" page, built from the person's state's Gen dates.
+const NG_HERO_GROUP = "New Gen hero packs";
+const NG_HERO_DAYS = 28; // each part runs 4 weeks
+const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
+const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
+const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
+const ngGems = (price) => Math.round((price + 0.01) * 500);
+function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday())].join("|"); }
+async function ngHeroTables() {
+  const base = newGenBaseDay(), gen0 = newGenGen();
+  if (!base || !gen0) return [];
+  const heroes = await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []);
+  const t0 = packStartOfToday(), day = 86400000, out = [];
+  newGenStarts(base, 5).forEach((start, k) => {
+    const gen = gen0 + k;
+    (heroes || []).filter((h) => Number(h.generation) === gen).forEach((h) => {
+      const add = (kind, from, title, col, rows, sequential) => {
+        if (from.getTime() + (NG_HERO_DAYS - 1) * day < t0.getTime()) return; // already over
+        const id = `ng-${kind}-${gen}-${h.id}`;
+        NG_HERO_LINKS[id] = { group: NG_HERO_GROUP, pages: ["hero_shards"], priceCol: 0, cols: { 1: col, 2: "Gems" }, reset: 3000, resetDay: packDayKey(from), window: NG_HERO_DAYS, buys: 1, sequential, ngGen: gen };
+        out.push({ id, title, columns: ["$", col, "Gems"], rows: rows.map((r) => ({ cells: r.map(String) })), sort_order: 200000 + out.length });
+      };
+      add("s", start, `Value Hero Pack · ${h.name}`, `${h.name} Shards`, [[NG_HERO_SHARD_PACK.price, NG_HERO_SHARD_PACK.shards, ngGems(NG_HERO_SHARD_PACK.price)]], false);
+      add("w", new Date(start.getTime() + NG_HERO_DAYS * day), `Exclusive Gear Pack · ${h.name}`, `${h.name} Widgets`, NG_HERO_WIDGET_LADDER.map(([p, n]) => [p, n, ngGems(p)]), true);
+    });
+  });
+  return out;
+}
 const PACK_TEMPLATE_SOURCES = [
   { title: "Wishful type", from: ["Wishfull", "Wishful"] },
   { title: "Mix & Match type", from: ["Mix & Match"] },
@@ -11206,7 +11245,8 @@ function packTriggerRowStatus(trig, ri) {
 function packLinkForBase(tableId) {
   const links = PACK_LINKS || {};
   const mine = String(tableId).startsWith("my-") ? packMineFind(tableId) : null;
-  const l = (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : links[String(tableId)]) || {};
+  const ng = String(tableId).startsWith("ng-") ? NG_HERO_LINKS[String(tableId)] : null;
+  const l = ng || (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : links[String(tableId)]) || {};
   // Templates are only there to be copied: never used by Budgets or Pack cost.
   const template = !mine && typeof l.group === "string" && l.group.trim() === PACK_TEMPLATE_GROUP;
   const trig = packTriggerOf(l);
@@ -11332,6 +11372,8 @@ function packApplyMyEdits(tables) {
 // Callers at the same time (Budgets asks for every page at once) share one load.
 let PACK_TABLES_LOADING = null;
 async function ensurePackTables() {
+  // The New Gen hero packs follow the state's Gen dates: rebuild when they move.
+  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== ngHeroSig()) PACK_TABLES_CACHE = null;
   if (PACK_TABLES_CACHE) return PACK_TABLES_CACHE;
   if (PACK_TABLES_LOADING) return PACK_TABLES_LOADING;
   PACK_TABLES_LOADING = (async () => {
@@ -11339,7 +11381,9 @@ async function ensurePackTables() {
       await ensurePackLinks();
       PACK_TABLES_CACHE = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
-        .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
+        .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })))
+        .concat(await ngHeroTables());
+      PACK_TABLES_CACHE._ngSig = ngHeroSig();
     } catch (e) {
       PACK_TABLES_CACHE = [];
     }
@@ -13324,8 +13368,11 @@ function packSplitUncoverable(groups, via, calcKey) {
   const ctx = packTradeCtx(calcKey, PACK_HORIZON_DAYS);
   names.forEach((n) => {
     if (packCoveredBy(sup, { [n]: via.need[n] }, ctx)) return;
-    via.uncovered[n] = via.need[n];
     via.maxWithin[n] = Math.floor(sup[n] || 0);
+    // Hero shards & widgets only come from these packs: plan to buy every one
+    // on offer and leave the rest as still short.
+    if (calcKey === "hero_shards" && via.maxWithin[n] > 0) { via.uncovered[n] = via.need[n] - via.maxWithin[n]; via.need[n] = via.maxWithin[n]; return; }
+    via.uncovered[n] = via.need[n];
     delete via.need[n];
   });
   return via;
@@ -13495,9 +13542,32 @@ const BUDGET_PAGES = [
   { key: "pets_refine", tab: "refinepage" },
   { key: "experts", tab: "expertspage" },
   { key: "experts_research", tab: "expertsresearchpage" },
+  { key: "hero_shards", tab: "backpack" },
 ];
+// Budgets "Hero shards & widgets": the Dashboard roster heroes' shards to 5★
+// and widgets to level 10 (same numbers as the Backpack card). Their own
+// shards and the shared General Hero Shards count as owned.
+async function heroShardBudget() {
+  const [heroes, roster, playerHeroes, starRows, bp] = await Promise.all([
+    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
+    loadCalcState("dashboard_roster").catch(() => null),
+    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => []),
+    dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)).catch(() => []),
+    loadCalcState("backpack").catch(() => null),
+    ensureStateAge(),
+  ]);
+  noteHeroImages(heroes);
+  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {} });
+  const totals = {}, owned = {};
+  plan.rows.forEach((r) => {
+    if (r.need > 0) { totals[`${r.hero.name} Shards`] = r.need; owned[`${r.hero.name} Shards`] = r.own + r.fromGeneral; }
+    if (r.wNeed > 0) { totals[`${r.hero.name} Widgets`] = r.wNeed; owned[`${r.hero.name} Widgets`] = r.wOwn; }
+  });
+  return { groups: [{ label: null, totals }], owned };
+}
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
+  if (calcKey === "hero_shards") return (await heroShardBudget()).owned;
   if (calcKey === "experts" || calcKey === "experts_research") {
     const inv = { ...((await loadCalcState("experts_inventory")) || {}) };
     await expertsInventoryWithBackpack(inv);
@@ -13656,6 +13726,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
+  else if (calcKey === "hero_shards") groups = (await heroShardBudget()).groups;
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
     if (calcKey === "t11_helios" || calcKey === "t12_research") {
@@ -14226,7 +14297,7 @@ async function renderBudgetsPage(opts = {}) {
     const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
     const nm = materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "");
     const label = `${nm}: ${qty(still)} / ${qty(needFull[n])}`;
-    return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}<b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${still > 0 ? esc(fmt(still)) : "&#10003;"}</b><span class="meta" style="font-size:11px;">/ ${esc(fmt(needFull[n]))}</span></span>`;
+    return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}${heroItemMark(n)}<b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${still > 0 ? esc(fmt(still)) : "&#10003;"}</b><span class="meta" style="font-size:11px;">/ ${esc(fmt(needFull[n]))}</span></span>`;
   }).join("") + `</div>`;
 
   // Per-page cards.
@@ -14385,7 +14456,7 @@ async function renderBudgetsPage(opts = {}) {
         const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
         const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
         const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
-        return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
+        return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
       }).join("")}</div></div>` : ""}
       ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
@@ -14989,7 +15060,17 @@ const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden for the visit
 const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", research_center: "rcNeed", chief_gear: "gearNeed", charm: "charmNeed", hero_gear: "heroGearNeed", pets: "petsNeed", pets_refine: "refineNeed" };
 const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
 // Picture for an item name (chests, custom pack items, materials).
+// Hero pictures by name, for "<hero> Shards" / "<hero> Widgets" items (filled when the hero list loads).
+const HERO_IMG_BY_NAME = {};
+function noteHeroImages(heroes) { (heroes || []).forEach((h) => { if (h && h.name && h.image_url) HERO_IMG_BY_NAME[h.name] = h.image_url; }); return heroes; }
+// 🧩 / ⚙ next to a hero's picture, so shards and widgets of one hero differ.
+function heroItemMark(name) {
+  const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
+  return hm && HERO_IMG_BY_NAME[hm[1]] ? `<small style="font-size:11px;">${hm[2] === "Widgets" ? "&#9881;" : "&#129513;"}</small>` : "";
+}
 function materialIconSrc(name) {
+  const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
+  if (hm && HERO_IMG_BY_NAME[hm[1]]) return HERO_IMG_BY_NAME[hm[1]];
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
   const custom = packCustomResource(name), lower = String(name).toLowerCase();
   const key = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
