@@ -466,6 +466,28 @@ input,select,textarea{
   .bp-tile .bp-qty{ font-size:13px; font-weight:700; }
   .bp-tile .bp-qty.zero{ color:var(--muted); }
   .bp-tile.bp-add{ border-style:dashed; }
+  .bpsh{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin-top:10px; }
+  .bpsh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:15px; margin-bottom:6px; }
+  .bpsh-rows{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:4px 16px; }
+  .bpsh-row{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); min-width:0; }
+  .bpsh-av{ width:46px; height:46px; border-radius:10px; overflow:hidden; background:var(--panel-2); flex-shrink:0; }
+  .bpsh-av img{ width:100%; height:100%; object-fit:cover; }
+  .bpsh-mid{ flex:1; min-width:0; }
+  .bpsh-name{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bpsh-name .meta{ font-size:11px; }
+  .bpsh-bar{ height:6px; border-radius:4px; background:var(--panel-2); margin:6px 0 4px; overflow:hidden; }
+  .bpsh-bar i{ display:block; height:100%; background:var(--ice); border-radius:4px; }
+  .bpsh-nums{ display:flex; flex-wrap:wrap; gap:2px 12px; font-size:11.5px; color:var(--muted); }
+  .bpsh-nums b{ color:var(--frost); }
+  .bpsh-nums .linklike{ background:none; border:0; padding:0; color:var(--ice); font-size:11px; text-decoration:underline; cursor:pointer; }
+  .bpsh-sub{ display:flex; flex-wrap:wrap; gap:2px 10px; font-size:11.5px; margin-top:3px; }
+  .bpsh-short{ color:#e0b25a; font-weight:700; font-size:12px; }
+  .bpsh-ok, .bpsh-done{ color:var(--good); font-weight:700; font-size:12px; }
+  .bpsh-done{ margin-top:6px; }
+  .bpsh-foot{ display:flex; flex-wrap:wrap; gap:6px 14px; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:12px; }
+  .bpsh-gen{ display:inline-flex; align-items:center; gap:6px; }
+  .bpsh-gen img{ width:22px; height:22px; object-fit:contain; }
+  .rc-sh{ font-size:10px; margin:-2px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bp-speedsum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin:0 0 10px; }
   .bp-speedsum-cell{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); }
   .bp-speedsum-cell img{ width:30px; height:30px; object-fit:contain; flex-shrink:0; }
@@ -3524,6 +3546,22 @@ const T = {
   backpack_search: { en: "Search items...", ar: "ابحث عن العناصر...", ko: "아이템 검색..." },
   backpack_items_count: { en: "{n} items", ar: "{n} عناصر", ko: "{n}개" },
   backpack_speedups: { en: "Speedups", ar: "التسريعات", ko: "가속" },
+  bp_sh_title: { en: "Roster heroes: shards needed", ar: "أبطال التشكيلة: الشظايا المطلوبة", ko: "로스터 영웅: 필요한 조각" },
+  bp_sh_none: { en: "Pick your heroes in the Dashboard roster to see the shards they need.", ar: "اختر أبطالك في تشكيلة لوحة التحكم لرؤية الشظايا المطلوبة.", ko: "대시보드 로스터에서 영웅을 선택하면 필요한 조각이 표시됩니다." },
+  bp_sh_need: { en: "Need", ar: "المطلوب", ko: "필요" },
+  bp_sh_own: { en: "Own shards", ar: "شظاياه", ko: "전용 조각" },
+  bp_sh_general: { en: "General", ar: "عامة", ko: "범용" },
+  bp_sh_track: { en: "Add to Backpack", ar: "أضف للحقيبة", ko: "가방에 추가" },
+  bp_sh_short: { en: "{n} short", ar: "ينقص {n}", ko: "{n}개 부족" },
+  bp_sh_total_short: { en: "{n} shards short", ar: "ينقص {n} شظية", ko: "조각 {n}개 부족" },
+  bp_sh_enough: { en: "Enough for 5★", ar: "يكفي لـ 5★", ko: "5★까지 충분" },
+  bp_sh_maxed: { en: "Maxed (5★)", ar: "مكتمل (5★)", ko: "최대 (5★)" },
+  bp_sh_next: { en: "Next star: {n}", ar: "النجمة التالية: {n}", ko: "다음 별: {n}" },
+  bp_sh_reach: { en: "You can reach {s} now", ar: "يمكنك الوصول إلى {s} الآن", ko: "지금 {s}까지 가능" },
+  bp_sh_left: { en: "{n} left over", ar: "يتبقى {n}", ko: "{n}개 남음" },
+  bp_sh_note: { en: "Shards to reach 5★ from the stars in your Dashboard roster. Each hero's own shards are used first, then general shards (Infantry, Lancers, Marksman in that order).", ar: "الشظايا اللازمة للوصول إلى 5★ من نجوم تشكيلتك في لوحة التحكم. تُستخدم شظايا البطل أولاً ثم الشظايا العامة (المشاة ثم الرماح ثم الرماة).", ko: "대시보드 로스터의 별에서 5★까지 필요한 조각입니다. 영웅 전용 조각을 먼저, 그다음 범용 조각을 사용합니다(보병, 창병, 궁병 순)." },
+  rc_sh_short: { en: "🧩 {n} short", ar: "🧩 ينقص {n}", ko: "🧩 {n} 부족" },
+  rc_sh_enough: { en: "🧩 enough for 5★", ar: "🧩 يكفي لـ 5★", ko: "🧩 5★까지 충분" },
   backpack_hero_shards: { en: "Hero Shards", ar: "شظايا الأبطال", ko: "영웅 조각" },
   backpack_mythic_heroes: { en: "Mythic heroes", ar: "الأبطال الأسطوريون", ko: "신화 영웅" },
   backpack_epic_heroes: { en: "Epic heroes", ar: "الأبطال الملحميون", ko: "에픽 영웅" },
@@ -4665,7 +4703,7 @@ async function renderOverview(opts = {}) {
   preloadCalcStates();
   const skinsPromise = Promise.all([ensureGalleryUncounted(), dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`))]).then(([, rows]) => rows);
   const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
-    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED] = await Promise.all([
+    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED, ROSTER_BACKPACK] = await Promise.all([
     dashCached("buff", () => ensureBuffTable().then(() => Promise.all([
       sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
       sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
@@ -4689,6 +4727,7 @@ async function renderOverview(opts = {}) {
     loadCalcState("hero_stars_jero"),
     loadCalcState("hero_stars_natalia"),
     loadCalcState("album_tundra"),
+    loadCalcState("backpack").catch(() => null), // roster cards: shards still short
   ]);
   // ---- Roster heroes: shared lookups, needed by statFor()/liveCalcValue() below ----
   const ROSTER_STATE = ROSTER_SAVED || {};
@@ -5335,6 +5374,10 @@ async function renderOverview(opts = {}) {
       const noneLabel = t("none_label");
       const genPrefix = t("gen_prefix");
       const widgetLevelLabel = t("widget_level_label"), widgetShort = t("widget_short");
+      // Shards still short for 5★, from the Backpack (own shards, then general).
+      const shardPlan = heroShardPlan({ heroes: heroCatalog, roster, playerHeroes: Object.values(phByHero), starRows: ROSTER_STAR_ROWS, bp: ROSTER_BACKPACK || {} });
+      const shShort = t("rc_sh_short"), shEnough = t("rc_sh_enough");
+      const shTitle = (r) => `${t("bp_sh_need")} ${Math.round(r.need).toLocaleString()} · ${t("bp_sh_own")} ${Math.round(r.own).toLocaleString()} · ${t("bp_sh_general")} ${Math.round(r.fromGeneral).toLocaleString()}`;
       rosterEl.innerHTML = `
       <div class="rc-wrap" style="margin-bottom:16px;">
         <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;">
@@ -5365,6 +5408,7 @@ async function renderOverview(opts = {}) {
             const pct = (txt) => txt.replace(/[A-Z]+(?: & [A-Z]+)? /g, "");
             const step = hero ? starsOf(hero.id).star * 6 + starsOf(hero.id).sub : 0;
             const stepTxt = `${Math.floor(step / 6)}★${step < 30 ? ` ${step % 6}/6` : ""}`;
+            const sh = hero ? shardPlan.rows.find((r) => r.troop === t.key) : null;
             return `
             <div class="rc-card roster-row" style="--rc:${{ Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" }[t.key] || "var(--ice)"}; ${hero && !used ? "opacity:0.55;" : ""}">
               <div class="rc-troop">${esc(troopDisplayName(t.key))}</div>
@@ -5374,6 +5418,7 @@ async function renderOverview(opts = {}) {
               <div class="rc-name">${hero ? esc(dataName(hero.name)) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</div>
               ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
+              ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>` : ""}
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).join("<br>") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
@@ -8498,6 +8543,56 @@ const BP_GAME_ORDER = [
 const BP_SPEEDUP_ORDER = ["", "Construction ", "Troop ", "Research ", "Expert "].flatMap((k) => ["1m", "3m", "5m", "1h", "3h", "8h"].map((z) => `${k}Speedup ${z}`));
 const BP_MINUTES = { "1m": 1, "3m": 3, "5m": 5, "1h": 60, "3h": 180, "8h": 480 };
 const BP_SHARD_ICONS = { "Mythic General Hero Shard": "icons/item_icon_500220.png", "Epic General Hero Shard": "icons/item_icon_500221.png", "Rare General Hero Shard": "icons/item_icon_500222.png" };
+// ---- Roster heroes' star shards (Backpack card + Dashboard roster) ----
+// General shards fit any hero of their rarity (Legendary heroes = Mythic).
+const HERO_GENERAL_SHARD = { Legendary: "Mythic General Hero Shard", Epic: "Epic General Hero Shard", Rare: "Rare General Hero Shard" };
+// Shards to reach each star step (1..30), per generation from
+// hero_gen_star_stats.shards, else the standard chart.
+function heroShardStepCost(costByGen, gen, step) {
+  const g = costByGen && costByGen[gen];
+  if (g && g[step] != null) return Number(g[step]) || 0;
+  return HERO_SHARD_CHART[Math.floor((step - 1) / 6) + 1][(step - 1) % 6];
+}
+function heroShardCostByGen(starRows) {
+  const out = {};
+  (starRows || []).forEach((r) => { if (r.shards != null) (out[r.generation] = out[r.generation] || {})[r.step] = r.shards; });
+  return out;
+}
+// For each roster troop: how many shards to 5★ and to the next star, the
+// hero's own shards, and how many general shards it gets (shared in troop
+// order: Infantry, Lancers, Marksman).
+function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
+  const costByGen = heroShardCostByGen(starRows);
+  const phBy = {};
+  (playerHeroes || []).forEach((p) => { phBy[p.hero_id] = p; });
+  const entry = (k) => { const e = (roster || {})[k]; return !e ? "" : typeof e === "string" ? e : e.heroId || ""; };
+  const general = {};
+  Object.entries(HERO_GENERAL_SHARD).forEach(([r, n]) => { general[r] = Number((bp || {})[n]) || 0; });
+  const pool = { ...general };
+  const rows = ["Infantry", "Lancers", "Marksman"].map((troop) => {
+    const hero = (heroes || []).find((h) => h.id === entry(troop));
+    if (!hero) return null;
+    const v = Number((phBy[hero.id] || {}).current_stars) || 0;
+    const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
+    const step = Math.min(30, star * 6 + sub);
+    let need = 0;
+    for (let k = step + 1; k <= 30; k++) need += heroShardStepCost(costByGen, hero.generation, k);
+    let next = 0;
+    const nextStep = step >= 30 ? 30 : (Math.floor(step / 6) + 1) * 6;
+    for (let k = step + 1; k <= nextStep; k++) next += heroShardStepCost(costByGen, hero.generation, k);
+    const own = Number((bp || {})[`${hero.name} Shards`]) || 0;
+    const rarity = HERO_GENERAL_SHARD[hero.rarity] ? hero.rarity : "Legendary";
+    const fromGeneral = Math.min(pool[rarity] || 0, Math.max(0, need - own));
+    pool[rarity] = (pool[rarity] || 0) - fromGeneral;
+    const have = own + fromGeneral;
+    // How far the shards you have would take this hero.
+    let reach = step, left = have;
+    while (reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
+    return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity };
+  }).filter(Boolean);
+  return { rows, general, generalLeft: pool };
+}
+function heroStepText(step) { return `${Math.floor(step / 6)}★${step < 30 && step % 6 ? ` ${step % 6}/6` : ""}`; }
 const BP_CHEST_ICONS = {
   "Resource Chest": "icons/item_icon_100091.png",
   "Custom Resource Chest Lv.1": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3": "icons/item_icon_100103.png",
@@ -8538,11 +8633,15 @@ let BP_TAB = "All";
 let BP_SEARCH = "";
 async function renderInventory() {
   const seq = RENDER_SEQ;
-  const [, saved, heroes, savedHeroes] = await Promise.all([
+  const [, saved, heroes, savedHeroes, rosterSaved, playerHeroes, starRows] = await Promise.all([
     ensureSiteConfig(), loadCalcState("backpack"),
     // Same request (and kept copy) as the Dashboard's hero list.
     dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
     loadCalcState("backpack_heroes"),
+    // Roster heroes' stars, for the "shards needed" card (same kept copies as the Dashboard).
+    loadCalcState("dashboard_roster").catch(() => null),
+    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => []),
+    dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)).catch(() => []),
   ]);
   if (seq !== RENDER_SEQ) return;
   const bp = saved || {};
@@ -8615,14 +8714,53 @@ async function renderInventory() {
     }).join("");
     document.getElementById("bpGroups").innerHTML = html ? (BP_TAB === speedupsTab && !q ? `<div style="margin-top:12px;">${speedSummary()}</div>` : "") + html : `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
   };
+  // "Roster heroes: shards needed" - their stars from the Dashboard roster,
+  // shards from this Backpack (own shards first, then general shards).
+  const shardCardHtml = () => {
+    const plan = heroShardPlan({ heroes, roster: rosterSaved, playerHeroes, starRows, bp });
+    if (!plan.rows.length) return `<div class="bpsh"><div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b></div><div class="meta" style="font-size:12px;">${esc(t("bp_sh_none"))}</div></div>`;
+    const n = (v) => Math.round(v).toLocaleString();
+    const rowsHtml = plan.rows.map((r) => {
+      const tracked = myHeroes.includes(r.hero.name);
+      const pctHave = r.need ? Math.min(100, ((r.own + r.fromGeneral) / r.need) * 100) : 100;
+      return `<div class="bpsh-row">
+        <div class="bpsh-av">${r.hero.image_url ? `<img src="${esc(r.hero.image_url)}" alt="" loading="lazy" />` : ""}</div>
+        <div class="bpsh-mid">
+          <div class="bpsh-name"><b>${esc(dataName(r.hero.name))}</b> <span class="meta">${esc(troopDisplayName(r.troop))} · ${esc(heroStepText(r.step))}${r.step < 30 ? " → 5★" : ""}</span></div>
+          ${r.step >= 30 ? `<div class="bpsh-done">${esc(t("bp_sh_maxed"))}</div>` : `
+          <div class="bpsh-bar"><i style="width:${pctHave.toFixed(1)}%"></i></div>
+          <div class="bpsh-nums"><span>${esc(t("bp_sh_need"))} <b>${n(r.need)}</b></span><span>${esc(t("bp_sh_own"))} <b>${n(r.own)}</b>${tracked ? "" : ` <button type="button" class="linklike" data-bpshtrack="${esc(r.hero.name)}">${esc(t("bp_sh_track"))}</button>`}</span>${r.fromGeneral ? `<span>${esc(t("bp_sh_general"))} <b>${n(r.fromGeneral)}</b></span>` : ""}</div>
+          <div class="bpsh-sub">${r.short ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.short)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}<span class="meta">${r.reach > r.step ? esc(t("bp_sh_reach").replace("{s}", heroStepText(r.reach))) : esc(t("bp_sh_next").replace("{n}", n(r.next)))}</span></div>`}
+        </div>
+      </div>`;
+    }).join("");
+    const rar = [...new Set(plan.rows.map((r) => r.rarity))];
+    const genLine = rar.map((r) => `<span class="bpsh-gen"><img src="${esc(BP_SHARD_ICONS[HERO_GENERAL_SHARD[r]])}" alt="" />${esc(materialDisplayName(HERO_GENERAL_SHARD[r]))}: <b>${n(plan.general[r] || 0)}</b>${plan.generalLeft[r] ? ` <span class="meta">(${esc(t("bp_sh_left").replace("{n}", n(plan.generalLeft[r])))})</span>` : ""}</span>`).join("");
+    const totalShort = plan.rows.reduce((a, r) => a + r.short, 0);
+    return `<div class="bpsh">
+      <div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b>${totalShort ? `<span class="bpsh-short">${esc(t("bp_sh_total_short").replace("{n}", n(totalShort)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}</div>
+      <div class="bpsh-rows">${rowsHtml}</div>
+      <div class="bpsh-foot">${genLine}</div>
+      <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("bp_sh_note"))}</div>
+    </div>`;
+  };
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
       <button class="btn small" type="button" id="bpScan" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
+    <div id="bpShards">${shardCardHtml()}</div>
     <div id="bpTabs" style="margin-top:12px;"></div>
     <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
     <div id="bpGroups"></div>`;
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); });
   drawGroups();
+  // "Track shards": adds that hero's own shards tile to the Backpack.
+  document.getElementById("bpShards").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-bpshtrack]");
+    if (!b || myHeroes.includes(b.dataset.bpshtrack)) return;
+    myHeroes.push(b.dataset.bpshtrack);
+    saveCalcState("backpack_heroes", myHeroes);
+    renderInventory();
+  });
   document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); });
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
