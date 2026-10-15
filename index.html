@@ -711,6 +711,9 @@ input,select,textarea{
   .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
+  .pk-bud{ display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .pk-bud input{ width:14px; height:14px; margin:0; }
+  .pk-budoff .pk-sum-h b, .pk-budoff .pk-sum-gives{ opacity:.5; }
   .pk-sum-used{ flex:1; min-width:0; gap:8px; margin-inline-end:8px; }
   details.pk-sum-used summary{ cursor:pointer; display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border:1px solid var(--line); border-radius:999px; list-style:none; }
   details.pk-sum-used summary::-webkit-details-marker{ display:none; }
@@ -3607,6 +3610,8 @@ const T = {
   bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
   bd_of_max: { en: "of max", ar: "من الأقصى", ko: "최대 대비" },
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
+  pk_in_budgets: { en: "Count in Budgets", ar: "احتسابها في الميزانيات", ko: "예산에 포함" },
+  pk_in_budgets_hint: { en: "Ticked: Budgets can use this pack. Unticked: left out of Budgets and the suggested packs.", ar: "مفعّل: يمكن للميزانيات استخدام هذه الحزمة. غير مفعّل: مستبعدة من الميزانيات والحزم المقترحة.", ko: "체크: 예산에서 이 팩을 사용합니다. 해제: 예산과 추천 팩에서 제외됩니다." },
   pk_edit: { en: "Edit", ar: "تعديل", ko: "편집" },
   pk_close: { en: "Close", ar: "إغلاق", ko: "닫기" },
   plx_all_troops: { en: "All troops", ar: "كل القوات", ko: "전체 병종" },
@@ -7801,6 +7806,17 @@ async function renderPacksPage() {
   wireVisibilityBtns(content, () => renderPacksPage());
   const listEl = document.getElementById("packsList");
   // Tap a summary card's Edit (or its title) to open / close that table.
+  // "Budgets" tick on each card: count this pack in Budgets or not.
+  listEl.addEventListener("change", (e) => {
+    const cb = e.target.closest("[data-pkbud]");
+    if (!cb) return;
+    const id = String(cb.closest("[data-packtable]").dataset.pkid);
+    if (cb.checked) delete PACK_BUDGET_OFF[id]; else PACK_BUDGET_OFF[id] = true;
+    cb.closest("[data-packtable]").classList.toggle("pk-budoff", !cb.checked);
+    saveCalcState("pack_budget_off", PACK_BUDGET_OFF);
+    PACK_PLAN_CACHE.clear();
+    budgetInvalidate();
+  });
   listEl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-pk-toggle]");
     if (!b) return;
@@ -8062,10 +8078,11 @@ async function renderPacksPage() {
         const gives = t.columns.filter((_, ci) => ci !== (lk.priceCol || 0)).map((c) => materialDisplayName(c)).filter(Boolean);
         const usedFor = packUsedForNames(t);
         return `
-      <div class="panel pk-card${pkOpen ? " pk-open" : ""}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
+      <div class="panel pk-card${pkOpen ? " pk-open" : ""}${packInBudgets(t.id) ? "" : " pk-budoff"}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
         <div class="pk-sum">
           <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
           <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
+          <label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>
           <div class="pk-sum-f">${usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
@@ -10702,14 +10719,16 @@ let PACK_LINKS = null;          // { [tableId]: { pages:[], priceCol:0, cols:{ i
 let PACK_TABLES_CACHE = null;   // pack_tables rows, for the calculator pages
 async function ensurePackLinks() {
   if (PACK_LINKS) return PACK_LINKS;
-  const [links, mine, active, myPacks, purchases] = await Promise.all([
+  const [links, mine, active, myPacks, purchases, , budgetOff] = await Promise.all([
     IS_OWNER ? loadCalcState("packs_links") : loadOwnerState("packs_links"),
     loadCalcState("my_pack_dates").catch(() => null),
     loadCalcState("my_cards_active").catch(() => null),
     IS_OWNER ? null : loadCalcState("my_packs").catch(() => null),
     loadCalcState("pack_purchases").catch(() => null),
     ensureStateAge(),
+    loadCalcState("pack_budget_off").catch(() => null),
   ]);
+  PACK_BUDGET_OFF = budgetOff && typeof budgetOff === "object" ? budgetOff : {};
   PACK_PURCHASES = purchases && typeof purchases === "object" ? { list: Array.isArray(purchases.list) ? purchases.list.filter((x) => x && x.table != null) : [], newGen: purchases.newGen && typeof purchases.newGen === "object" ? purchases.newGen : {} } : { list: [], newGen: {} };
   MY_PACKS = myPacks && Array.isArray(myPacks.tables) ? myPacks.tables.filter((x) => x && typeof x.id === "string" && x.id.startsWith("my-")) : [];
   MY_PACK_DATES = mine && typeof mine === "object" ? mine : {};
@@ -11067,6 +11086,11 @@ async function saveMyPacks() {
 }
 // Weekly cards a visitor already bought whose 7-day rewards are still coming ({ tableId: n }).
 let MY_CARDS_ACTIVE = {};
+// Packs each person left out of Budgets (Packs card tick): calc_state
+// "pack_budget_off" = { tableId: true }. Budgets, the pages' shared plan and
+// the My Purchases suggestions don't use them.
+let PACK_BUDGET_OFF = {};
+function packInBudgets(id) { return !PACK_BUDGET_OFF[String(id)]; }
 // Days of rewards still coming from cards already bought ({ d: days }; an old
 // plain number was a count of 7-day purchases).
 function packActiveDays(id) {
@@ -13573,7 +13597,7 @@ function budgetPlanLines(calcKey) {
 // Everything the Budgets page needs for one calculator page.
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
-  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey));
+  const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
   let groups, live = true;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
