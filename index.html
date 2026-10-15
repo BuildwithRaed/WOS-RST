@@ -487,6 +487,10 @@ input,select,textarea{
   .bpsh-foot{ display:flex; flex-wrap:wrap; gap:6px 14px; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:12px; }
   .bpsh-gen{ display:inline-flex; align-items:center; gap:6px; }
   .bpsh-gen img{ width:22px; height:22px; object-fit:contain; }
+  .bpsh-wid{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; font-size:11.5px; color:var(--muted); margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); }
+  .bpsh-wid b{ color:var(--frost); }
+  .bpsh-wid-k{ color:var(--frost); font-weight:600; }
+  .bp-size.bp-wid{ font-size:9px; }
   .rc-sh{ font-size:10px; margin:-2px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bp-speedsum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin:0 0 10px; }
   .bp-speedsum-cell{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); }
@@ -3546,7 +3550,16 @@ const T = {
   backpack_search: { en: "Search items...", ar: "ابحث عن العناصر...", ko: "아이템 검색..." },
   backpack_items_count: { en: "{n} items", ar: "{n} عناصر", ko: "{n}개" },
   backpack_speedups: { en: "Speedups", ar: "التسريعات", ko: "가속" },
-  bp_sh_title: { en: "Roster heroes: shards needed", ar: "أبطال التشكيلة: الشظايا المطلوبة", ko: "로스터 영웅: 필요한 조각" },
+  bp_widgets: { en: "Widgets", ar: "الأدوات", ko: "위젯" },
+  bp_wd_own: { en: "Own", ar: "لديك", ko: "보유" },
+  bp_wd_maxed: { en: "Maxed (10)", ar: "مكتمل (10)", ko: "최대 (10)" },
+  bp_wd_enough: { en: "Enough for 10", ar: "يكفي للمستوى 10", ko: "10까지 충분" },
+  bp_wd_reach: { en: "You can reach level {n} now", ar: "يمكنك الوصول للمستوى {n} الآن", ko: "지금 {n}레벨까지 가능" },
+  bp_wd_total: { en: "Widgets short: {n} ≈ {cost}", ar: "الأدوات الناقصة: {n} ≈ {cost}", ko: "부족한 위젯: {n} ≈ {cost}" },
+  bp_wd_note: { en: "Widgets: 5, 10 … 50 per level (275 to reach 10), $4.99 for 5; widget level from the roster.", ar: "الأدوات: 5، 10 … 50 لكل مستوى (275 للوصول إلى 10)، 4.99$ لكل 5؛ مستوى الأداة من التشكيلة.", ko: "위젯: 레벨당 5, 10 … 50개(10까지 275개), 5개에 $4.99; 위젯 레벨은 로스터 기준." },
+  rc_wd_short: { en: "⚙ {n} short · {cost}", ar: "⚙ ينقص {n} · {cost}", ko: "⚙ {n} 부족 · {cost}" },
+  rc_wd_enough: { en: "⚙ enough for 10", ar: "⚙ يكفي للمستوى 10", ko: "⚙ 10까지 충분" },
+  bp_sh_title: { en: "Roster heroes: shards & widgets needed", ar: "أبطال التشكيلة: الشظايا والأدوات المطلوبة", ko: "로스터 영웅: 필요한 조각 및 위젯" },
   bp_sh_none: { en: "Pick your heroes in the Dashboard roster to see the shards they need.", ar: "اختر أبطالك في تشكيلة لوحة التحكم لرؤية الشظايا المطلوبة.", ko: "대시보드 로스터에서 영웅을 선택하면 필요한 조각이 표시됩니다." },
   bp_sh_need: { en: "Need", ar: "المطلوب", ko: "필요" },
   bp_sh_own: { en: "Own shards", ar: "شظاياه", ko: "전용 조각" },
@@ -5377,6 +5390,7 @@ async function renderOverview(opts = {}) {
       // Shards still short for 5★, from the Backpack (own shards, then general).
       const shardPlan = heroShardPlan({ heroes: heroCatalog, roster, playerHeroes: Object.values(phByHero), starRows: ROSTER_STAR_ROWS, bp: ROSTER_BACKPACK || {} });
       const shShort = t("rc_sh_short"), shEnough = t("rc_sh_enough");
+      const wdTxt = { need: t("bp_sh_need"), own: t("bp_wd_own"), short: t("rc_wd_short"), enough: t("rc_wd_enough") }; // `t` is the troop inside the cards' map
       const shTitle = (r) => `${t("bp_sh_need")} ${Math.round(r.need).toLocaleString()} · ${t("bp_sh_own")} ${Math.round(r.own).toLocaleString()} · ${t("bp_sh_general")} ${Math.round(r.fromGeneral).toLocaleString()}`;
       rosterEl.innerHTML = `
       <div class="rc-wrap" style="margin-bottom:16px;">
@@ -5419,6 +5433,7 @@ async function renderOverview(opts = {}) {
               ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>` : ""}
+              ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}${sh.wShort ? ` · ≈ ${packFmtMoney(sh.wCost, "USD", false)}` : ""}`)}">${esc(sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).replace("{cost}", packFmtMoney(sh.wCost, "USD", true)) : wdTxt.enough)}</div>` : ""}
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).join("<br>") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
@@ -8588,10 +8603,25 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     // How far the shards you have would take this hero.
     let reach = step, left = have;
     while (reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
-    return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity };
+    // Widgets (mythic heroes): from the roster's widget level to 10.
+    const e = (roster || {})[troop];
+    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(10, Number(e.widget) || 0)) : 0;
+    const hasWidget = hero.rarity === "Legendary";
+    const wNeed = hasWidget ? widgetNeedFrom(wLevel) : 0;
+    const wOwn = hasWidget ? Number((bp || {})[`${hero.name} Widgets`]) || 0 : 0;
+    const wShort = Math.max(0, wNeed - wOwn);
+    let wReach = wLevel, wLeft = wOwn;
+    while (hasWidget && wReach < 10 && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
+    return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool };
 }
+// Widgets for each Exclusive Gear (widget) level 1..10: 5, 10 ... 50 (275 in all).
+// Assumed from community tables; widgets cost $4.99 for 5.
+const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const WIDGET_PACK = { count: 5, price: 4.99 };
+function widgetNeedFrom(level) { let n = 0; for (let k = Math.max(0, level) + 1; k <= 10; k++) n += WIDGET_LEVEL_COST[k]; return n; }
+function widgetCostFor(count) { return count > 0 ? Math.ceil(count / WIDGET_PACK.count) * WIDGET_PACK.price : 0; }
 function heroStepText(step) { return `${Math.floor(step / 6)}★${step < 30 && step % 6 ? ` ${step % 6}/6` : ""}`; }
 const BP_CHEST_ICONS = {
   "Resource Chest": "icons/item_icon_100091.png",
@@ -8654,7 +8684,9 @@ async function renderInventory() {
   const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
     title: t(key), heroShards: true, rarity,
     all: (heroes || []).filter((h) => h.rarity === rarity),
-    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).map((h) => ({ name: `${h.name} Shards`, icon: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity })),
+    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }]
+      // Mythic heroes also have widgets (their Exclusive Gear), saved as "<hero> Widgets".
+      .concat(rarity === "Legendary" ? [{ name: `${h.name} Widgets`, icon: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity, widget: true }] : [])),
   })).filter((g) => g.all.length);
   const generalIdx = groups.findIndex((g) => g.title === "Hero Shards");
   if (generalIdx !== -1) groups[generalIdx].heroShards = true;
@@ -8676,7 +8708,8 @@ async function renderInventory() {
   };
   const tile = (it, sp, kind) => {
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
-    return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t("backpack_hero_shards")}` : label)}">
+    return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : label)}">
+      ${it.widget ? `<span class="bp-size bp-wid">&#9881; ${esc(t("widget_short"))}</span>` : ""}
       ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
       ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : /Lv\.\d/.test(it.name) ? `<span class="bp-size">${esc(/Lv\.\d/.exec(it.name)[0])}</span>` : ""}
       ${/\(protected\)$/.test(it.name) ? `<span class="bp-shield" title="Protected">&#128737;</span>` : ""}
@@ -8731,17 +8764,22 @@ async function renderInventory() {
           <div class="bpsh-bar"><i style="width:${pctHave.toFixed(1)}%"></i></div>
           <div class="bpsh-nums"><span>${esc(t("bp_sh_need"))} <b>${n(r.need)}</b></span><span>${esc(t("bp_sh_own"))} <b>${n(r.own)}</b>${tracked ? "" : ` <button type="button" class="linklike" data-bpshtrack="${esc(r.hero.name)}">${esc(t("bp_sh_track"))}</button>`}</span>${r.fromGeneral ? `<span>${esc(t("bp_sh_general"))} <b>${n(r.fromGeneral)}</b></span>` : ""}</div>
           <div class="bpsh-sub">${r.short ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.short)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}<span class="meta">${r.reach > r.step ? esc(t("bp_sh_reach").replace("{s}", heroStepText(r.reach))) : esc(t("bp_sh_next").replace("{n}", n(r.next)))}</span></div>`}
+          ${r.hasWidget ? `<div class="bpsh-wid"><span class="bpsh-wid-k">&#9881; ${esc(t("widget_short"))} ${r.wLevel}${r.wLevel < 10 ? " → 10" : ""}</span>${r.wLevel >= 10 ? `<span class="bpsh-ok">${esc(t("bp_wd_maxed"))}</span>` : `
+            <span>${esc(t("bp_sh_need"))} <b>${n(r.wNeed)}</b></span><span>${esc(t("bp_wd_own"))} <b>${n(r.wOwn)}</b></span>
+            ${r.wShort ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.wShort)))} ≈ ${esc(packFmtMoney(r.wCost, "USD", false))}</span>` : `<span class="bpsh-ok">${esc(t("bp_wd_enough"))}</span>`}
+            ${r.wReach > r.wLevel ? `<span class="meta">${esc(t("bp_wd_reach").replace("{n}", r.wReach))}</span>` : ""}`}</div>` : ""}
         </div>
       </div>`;
     }).join("");
     const rar = [...new Set(plan.rows.map((r) => r.rarity))];
     const genLine = rar.map((r) => `<span class="bpsh-gen"><img src="${esc(BP_SHARD_ICONS[HERO_GENERAL_SHARD[r]])}" alt="" />${esc(materialDisplayName(HERO_GENERAL_SHARD[r]))}: <b>${n(plan.general[r] || 0)}</b>${plan.generalLeft[r] ? ` <span class="meta">(${esc(t("bp_sh_left").replace("{n}", n(plan.generalLeft[r])))})</span>` : ""}</span>`).join("");
     const totalShort = plan.rows.reduce((a, r) => a + r.short, 0);
+    const wShortAll = plan.rows.reduce((a, r) => a + r.wShort, 0);
     return `<div class="bpsh">
       <div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b>${totalShort ? `<span class="bpsh-short">${esc(t("bp_sh_total_short").replace("{n}", n(totalShort)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}</div>
       <div class="bpsh-rows">${rowsHtml}</div>
-      <div class="bpsh-foot">${genLine}</div>
-      <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("bp_sh_note"))}</div>
+      <div class="bpsh-foot">${genLine}${wShortAll ? `<span class="bpsh-gen">&#9881; ${esc(t("bp_wd_total").replace("{n}", n(wShortAll)).replace("{cost}", packFmtMoney(widgetCostFor(wShortAll), "USD", false)))}</span>` : ""}</div>
+      <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("bp_sh_note"))} ${esc(t("bp_wd_note"))}</div>
     </div>`;
   };
   content.innerHTML = `
@@ -8804,7 +8842,7 @@ async function renderInventory() {
     const name = tileEl.dataset.bpitem;
     const it = groups.flatMap((g) => g.items).find((x) => x.name === name) || { name, icon: "" };
     const ic = bpIcon(it);
-    const title = it.hero ? `${it.hero} — ${t("backpack_hero_shards")}` : materialDisplayName(name);
+    const title = it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : materialDisplayName(name);
     const modal = openModal(`<div class="modal-box" style="max-width:300px; text-align:center;">
         ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:${it.hero ? "cover; border-radius:10px" : "contain"};" />` : ""}
         <h2 style="margin:6px 0 10px; font-size:16px;">${esc(title)}</h2>
