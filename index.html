@@ -245,6 +245,26 @@
   .rc-pct{ font-size:10.5px; line-height:1.4; color:var(--frost); }
   .rc-card select{ font-size:11px; padding:3px 6px; margin-top:6px; max-width:100%; }
   @media (min-width:1000px){ .rc-pick{ width:72px; height:72px; } .rc-stars > *{ width:24px !important; height:24px !important; } .rc-name{ font-size:14px; } .rc-pct{ font-size:12px; } }
+  .pur-ng-sa{ border:1px solid var(--line); border-radius:12px; padding:8px 10px; font-size:12px; margin:4px 0; }
+  .pur-ng-link{ background:none; border:0; padding:0; color:var(--ice); text-decoration:underline; cursor:pointer; font-size:12px; }
+  .pur-ng-own{ font-size:11.5px; margin:4px 0; }
+  .pur-ng-own summary{ cursor:pointer; }
+  .sa-card{ display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
+  .sa-ic{ width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, rgba(108,199,230,.25), rgba(108,199,230,.05)); display:grid; place-items:center; font-size:22px; flex-shrink:0; }
+  .sa-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .sa-v{ font-size:20px; font-weight:800; }
+  .sa-s{ font-size:12px; color:var(--muted); font-weight:500; }
+  .sa-edit{ margin-inline-start:auto; flex-shrink:0; }
+  .sa-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .sa-chip{ font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); }
+  .sa-chip.i{ border-color:var(--ice); color:var(--ice); }
+  .sa-box{ max-width:380px; }
+  .sa-preview{ font-size:11.5px; margin-top:6px; min-height:16px; }
+  .sa-tip{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); font-size:12px; }
+  .sa-tip b{ display:block; font-size:12.5px; }
+  .sa-num{ width:22px; height:22px; border-radius:50%; background:var(--panel-2); display:grid; place-items:center; font-size:11px; font-weight:800; flex-shrink:0; }
+  .sa-foot{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
+  .sa-lock{ display:flex; gap:10px; align-items:flex-start; border:1px dashed #e0b25a; color:#e0b25a; border-radius:12px; padding:10px 12px; font-size:12.5px; margin:0 0 12px; }
   .pur-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
   .pur-f{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; flex:1 1 130px; min-width:0; }
   .pur-f-wide{ flex:2 1 220px; }
@@ -4295,6 +4315,29 @@ const T = {
   pur_sug_none: { en: "Nothing else to buy: your plans are covered.", ar: "لا شيء آخر للشراء: خططك مغطاة.", ko: "더 살 것이 없습니다: 계획이 충족됩니다." },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again.", ar: "تعذر حساب الاقتراحات. افتح الميزانيات مرة ثم أعد المحاولة.", ko: "추천을 계산하지 못했습니다. 예산을 한 번 연 뒤 다시 시도하세요." },
   pur_sug_total: { en: "Suggested total", ar: "إجمالي المقترح", ko: "추천 합계" },
+  sa_title: { en: "Your state's age", ar: "عمر ولايتك", ko: "내 주(州)의 나이" },
+  sa_desc: { en: "Used for your hero generations, New Gen packs, the calendar and what unlocks next. Saved to your account.", ar: "يُستخدم لأجيال الأبطال وحزم الجيل الجديد والتقويم وما سيُفتح لاحقاً. يُحفظ في حسابك.", ko: "영웅 세대, 신세대 팩, 캘린더, 다음 해금에 사용됩니다. 계정에 저장됩니다." },
+  sa_by_day: { en: "Day number", ar: "رقم اليوم", ko: "일차" },
+  sa_by_date: { en: "Date it opened", ar: "تاريخ الافتتاح", ko: "개설일" },
+  sa_day_ph: { en: "e.g. 1295", ar: "مثال 1295", ko: "예: 1295" },
+  sa_preview: { en: "= opened about {date} · day {day} · Gen {gen} heroes now", ar: "= افتُتحت تقريباً {date} · اليوم {day} · أبطال الجيل {gen} الآن", ko: "= 약 {date} 개설 · {day}일차 · 현재 {gen}세대 영웅" },
+  sa_tips_title: { en: "Don't know it? 3 ways to find it in game:", ar: "لا تعرفه؟ 3 طرق لمعرفته في اللعبة:", ko: "모르시나요? 게임에서 찾는 3가지 방법:" },
+  sa_tip1_t: { en: "VIP login days", ar: "أيام دخول VIP", ko: "VIP 로그인 일수" },
+  sa_tip1: { en: "If you joined at the start and claimed VIP every day, that number ≈ your state's age.", ar: "إذا انضممت من البداية واستلمت VIP كل يوم فهذا الرقم ≈ عمر ولايتك.", ko: "처음부터 매일 VIP를 받았다면 그 숫자 ≈ 주의 나이입니다." },
+  sa_tip2_t: { en: "Monument → Beast Hunt", ar: "النصب → صيد الوحوش", ko: "기념비 → 야수 사냥" },
+  sa_tip2: { en: "The date on the task minus 6 days = the day your state opened.", ar: "تاريخ المهمة ناقص 6 أيام = يوم افتتاح ولايتك.", ko: "임무 날짜에서 6일을 빼면 주 개설일입니다." },
+  sa_tip3_t: { en: "Sunfire Castle → Hall of Fame", ar: "قلعة الشمس → قاعة المشاهير", ko: "선파이어 성 → 명예의 전당" },
+  sa_tip3: { en: "The first President's date minus 54 days = the day your state opened.", ar: "تاريخ أول رئيس ناقص 54 يوماً = يوم افتتاح ولايتك.", ko: "첫 대통령 날짜에서 54일을 빼면 주 개설일입니다." },
+  sa_clear: { en: "Remove", ar: "إزالة", ko: "삭제" },
+  sa_later: { en: "Later", ar: "لاحقاً", ko: "나중에" },
+  sa_save: { en: "Save", ar: "حفظ", ko: "저장" },
+  sa_set: { en: "Set", ar: "تعيين", ko: "설정" },
+  sa_card_k: { en: "Your state · Day", ar: "ولايتك · اليوم", ko: "내 주 · 일차" },
+  sa_card_unset: { en: "Set your state's age to see your hero Gen, new heroes and what unlocks next.", ar: "حدد عمر ولايتك لرؤية جيل الأبطال والأبطال الجدد وما سيُفتح.", ko: "주의 나이를 설정하면 영웅 세대, 새 영웅, 다음 해금을 볼 수 있습니다." },
+  sa_gen_heroes: { en: "Gen {n} heroes", ar: "أبطال الجيل {n}", ko: "{n}세대 영웅" },
+  sa_next_gen: { en: "Gen {n} in {d} days · {date}", ar: "الجيل {n} بعد {d} يوماً · {date}", ko: "{n}세대 {d}일 후 · {date}" },
+  sa_wheel_next: { en: "Next Lucky Wheel {date} ({e})", ar: "عجلة الحظ القادمة {date} ({e})", ko: "다음 행운의 룰렛 {date} ({e})" },
+  sa_wheel_now: { en: "Lucky Wheel open now ({e})", ar: "عجلة الحظ مفتوحة الآن ({e})", ko: "행운의 룰렛 진행 중 ({e})" },
   pur_title: { en: "My Purchases", ar: "مشترياتي", ko: "내 구매" },
   pur_loading: { en: "Loading…", ar: "جارٍ التحميل…", ko: "불러오는 중…" },
   pur_desc: { en: "Add the packs you bought or plan to buy. Budgets and the planner pages count them.", ar: "أضف الحزم التي اشتريتها أو تنوي شراءها. تحسبها الميزانيات وصفحات التخطيط.", ko: "구매했거나 구매할 팩을 추가하세요. 예산과 계산 페이지에 반영됩니다." },
@@ -4324,12 +4367,17 @@ const T = {
   pur_planned_short: { en: "planned", ar: "مخطط", ko: "예정" },
   pur_no_tables: { en: "No packs to choose from yet.", ar: "لا توجد حزم للاختيار بعد.", ko: "선택할 팩이 아직 없습니다." },
   pur_newgen_title: { en: "New Gen Heroes", ar: "أبطال الجيل الجديد", ko: "신세대 영웅" },
-  pur_newgen_desc: { en: "These packs come with each new generation of heroes: Hero Ascension Training on the day new heroes come, Exclusive Gear Forge 4 weeks later. Set when your state last got new heroes; the calendar and Budgets follow it.", ar: "تأتي هذه الحزم مع كل جيل جديد من الأبطال. حدّد متى حصلت ولايتك على أبطال جدد وتاريخ بدء الحزمة؛ يتبعه التقويم والميزانيات.", ko: "이 팩은 새 영웅 세대마다 나옵니다. 내 주에 마지막으로 새 영웅이 나온 날과 팩 시작일을 설정하면 캘린더와 예산이 따라갑니다." },
+  pur_newgen_desc: { en: "These packs come with each new generation of heroes: Hero Ascension Training on the day new heroes come, Exclusive Gear Forge 4 weeks later. Worked out from your state age; the calendar and Budgets follow it.", ar: "تأتي هذه الحزم مع كل جيل جديد من الأبطال: تدريب ارتقاء الأبطال يوم وصولهم، وصياغة العتاد الحصري بعد 4 أسابيع. تُحسب من عمر ولايتك ويتبعها التقويم والميزانيات.", ko: "이 팩은 새 영웅 세대마다 나옵니다: 영웅 승급 훈련은 새 영웅이 오는 날, 전용 장비 단조는 4주 후. 주 나이로 계산되며 캘린더와 예산이 따릅니다." },
   pur_newgen_last: { en: "Last new heroes", ar: "آخر أبطال جدد", ko: "마지막 새 영웅" },
   pur_newgen_gen: { en: "Their Gen", ar: "جيلهم", ko: "세대" },
   pur_newgen_start: { en: "Pack starts", ar: "تبدأ الحزمة", ko: "팩 시작" },
-  pur_newgen_with: { en: "Comes with the new heroes (from your date above).", ar: "تأتي مع الأبطال الجدد (من تاريخك أعلاه).", ko: "새 영웅과 함께 옵니다 (위 날짜 기준)." },
-  pur_newgen_after: { en: "Comes {n} weeks after the new heroes (from your date above).", ar: "تأتي بعد {n} أسابيع من الأبطال الجدد (من تاريخك أعلاه).", ko: "새 영웅 {n}주 후에 옵니다 (위 날짜 기준)." },
+  pur_newgen_with: { en: "Comes with the new heroes.", ar: "تأتي مع الأبطال الجدد.", ko: "새 영웅과 함께 옵니다." },
+  pur_newgen_after: { en: "Comes {n} weeks after the new heroes.", ar: "تأتي بعد {n} أسابيع من الأبطال الجدد.", ko: "새 영웅 {n}주 후에 옵니다." },
+  pur_ng_from_state: { en: "From your state age (day {day}): Gen {gen} heroes came on {date}.", ar: "من عمر ولايتك (اليوم {day}): أبطال الجيل {gen} وصلوا في {date}.", ko: "주 나이 기준({day}일차): {gen}세대 영웅이 {date}에 나왔습니다." },
+  pur_ng_change: { en: "change", ar: "تغيير", ko: "변경" },
+  pur_ng_own: { en: "Know the exact date? Set it yourself", ar: "تعرف التاريخ بالضبط؟ حدده بنفسك", ko: "정확한 날짜를 알면 직접 입력" },
+  pur_ng_set_state: { en: "Set your state's age", ar: "حدد عمر ولايتك", ko: "주의 나이 설정" },
+  pur_ng_use_state: { en: "Use my state age instead", ar: "استخدم عمر ولايتي بدلاً من ذلك", ko: "대신 주 나이 사용" },
   pur_gen: { en: "Gen {n}", ar: "الجيل {n}", ko: "{n}세대" },
   pur_now: { en: "now", ar: "الآن", ko: "진행 중" },
   pur_budget_line: { en: "My Purchases: {n} coming packs counted", ar: "مشترياتي: {n} حزم قادمة محسوبة", ko: "내 구매: 예정 팩 {n}개 반영" },
@@ -4825,7 +4873,7 @@ async function renderOverview(opts = {}) {
     dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)),
     dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)),
     // live data from the calculators, for the Charm/Chief/Hero Gears/etc. sources below
-    Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), skinsPromise.then(ensureGlobeLevelData), ensureResearchPageCountedData()]),
+    Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), skinsPromise.then(ensureGlobeLevelData), ensureResearchPageCountedData(), ensureStateAge(), ensurePackLinks().catch(() => null)]),
     loadCalcState("collection_gallery"),
     loadCalcState("hero_stars_jero"),
     loadCalcState("hero_stars_natalia"),
@@ -5326,11 +5374,14 @@ async function renderOverview(opts = {}) {
       </div>
     </div>
     ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
+    <div id="stateAgeCard" style="margin-top:16px;">${stateAgeCardHtml()}</div>
     <div id="dashboardRoster" style="margin-top:16px;"></div>
     <div id="troopSections" style="margin-top:12px;"></div>
     ${IS_OWNER ? `<div class="grid g4" id="metricRow" style="margin-top:16px;"></div>` : ""}
   `;
 
+  // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
+  content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => renderOverview()); });
   // The average-bonus row is owner-only: it's a summary of the whole account,
   // not something a visitor's own numbers make sense of.
   const metricRowEl = document.getElementById("metricRow");
@@ -6846,15 +6897,14 @@ function packUsedForNames(tb) {
 // New Gen Heroes: which Gen an appearance belongs to, from the person's
 // "last new heroes" date and that Gen's number.
 function packNewGenLabel(start, reset, tableId) {
-  const ng = PACK_PURCHASES.newGen || {};
-  const gen = Math.floor(Number(ng.gen) || 0);
-  if (!gen || !packValidDay(ng.last)) return "";
+  const gen = newGenGen();
+  if (!gen) return "";
   if (tableId != null) {
     const a = newGenAppearances(tableId, 30).find((x) => Math.abs(x.start - start) < 10 * 86400000);
     if (a) return t("pur_gen").replace("{n}", gen + a.gen);
   }
-  const last = packParseDay(ng.last);
-  return reset > 0 ? t("pur_gen").replace("{n}", gen + Math.max(0, Math.round((start - last) / 86400000 / reset))) : "";
+  const last = packParseDay(newGenBaseDay());
+  return reset > 0 && last ? t("pur_gen").replace("{n}", gen + Math.max(0, Math.round((start - last) / 86400000 / reset))) : "";
 }
 
 // ============================================================
@@ -7098,8 +7148,16 @@ async function renderPurchasesPage() {
   const ngTables = tables.filter((tb) => packIsNewGen(packLinkForBase(tb.id)) && typeof packLinkFor(tb.id).reset === "number");
   const ngCard = ngTables.length ? `<div class="t12x-card"><div class="t12x-k">${esc(t("pur_newgen_title"))}</div>
     <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
-    <div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
-      <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>
+    ${(() => {
+      // From the state age (Dashboard) unless the person typed their own date.
+      const sg = stateGenInfo(), own = !!packValidDay(ng.last);
+      const inputs = `<div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
+        <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>`;
+      if (own) return `${inputs}${sg ? `<button type="button" class="linklike pur-ng-link" data-purngstate>${esc(t("pur_ng_use_state"))}</button>` : ""}`;
+      if (sg) return `<div class="pur-ng-sa">🏰 ${t("pur_ng_from_state").replace("{day}", `<b>${stateAgeDay().toLocaleString()}</b>`).replace("{gen}", `<b>${sg.gen}</b>`).replace("{date}", `<b>${esc(fmtDay(sg.start))}</b>`)} <button type="button" class="linklike pur-ng-link" data-purngsa>${esc(t("pur_ng_change"))}</button></div>
+        <details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
+      return `<button type="button" class="btn small" data-purngsa style="margin-bottom:8px;">🏰 ${esc(t("pur_ng_set_state"))}</button><details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
+    })()}
     ${ngTables.map((tb) => {
       const l = packLinkFor(tb.id);
       const t0 = packStartOfToday();
@@ -7282,6 +7340,12 @@ async function renderPurchasesPage() {
       row0.querySelector("[data-purdel]").addEventListener("click", () => { PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => p.id !== id); savePackPurchases(); redraw(); });
     });
   });
+  content.querySelectorAll("[data-purngsa]").forEach((b) => b.addEventListener("click", () => openStateAgeModal(() => redraw())));
+  content.querySelectorAll("[data-purngstate]").forEach((b) => b.addEventListener("click", () => {
+    PACK_PURCHASES.newGen = { ...(PACK_PURCHASES.newGen || {}) };
+    delete PACK_PURCHASES.newGen.last; delete PACK_PURCHASES.newGen.gen;
+    PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); redraw();
+  }));
   content.querySelectorAll("[data-purng]").forEach((inp) => inp.addEventListener("change", () => {
     const ng0 = { ...(PACK_PURCHASES.newGen || {}) };
     if (inp.dataset.purng === "last") { if (packValidDay(inp.value)) ng0.last = inp.value; else delete ng0.last; }
@@ -7443,8 +7507,8 @@ async function renderPackCalendarPage() {
       };
       GAME_EVENTS.forEach((ev) => gameEventStarts(ev, firstDay, lastDay).forEach((st) => put(st, ev.days, ev.name)));
       heroWheels(new Date(firstDay.getTime() - 3 * 86400000), lastDay).forEach((w) => put(w.day, w.ev.wheelDays || 1, `🎡 ${t("pack_cal_wheel")} (${w.ev.name})`));
-      const ng = PACK_PURCHASES.newGen || {}, gen0 = Math.floor(Number(ng.gen) || 0), base = newGenBaseDay();
-      if (base) newGenStarts(base, 12).forEach((d, i) => { if (d >= firstDay && d <= lastDay) put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 && packValidDay(ng.last) ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}`); });
+      const gen0 = newGenGen(), base = newGenBaseDay();
+      if (base) newGenStarts(base, 12).forEach((d, i) => { if (d >= firstDay && d <= lastDay) put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}`); });
     }
 
 
@@ -10495,6 +10559,7 @@ async function ensurePackLinks() {
     loadCalcState("my_cards_active").catch(() => null),
     IS_OWNER ? null : loadCalcState("my_packs").catch(() => null),
     loadCalcState("pack_purchases").catch(() => null),
+    ensureStateAge(),
   ]);
   PACK_PURCHASES = purchases && typeof purchases === "object" ? { list: Array.isArray(purchases.list) ? purchases.list.filter((x) => x && x.table != null) : [], newGen: purchases.newGen && typeof purchases.newGen === "object" ? purchases.newGen : {} } : { list: [], newGen: {} };
   MY_PACKS = myPacks && Array.isArray(myPacks.tables) ? myPacks.tables.filter((x) => x && typeof x.id === "string" && x.id.startsWith("my-")) : [];
@@ -10507,6 +10572,123 @@ async function savePackLinks() {
   PACK_PLAN_CACHE.clear();
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   saveCalcState("packs_links", PACK_LINKS || {});
+}
+// ---- State age (server age) ----
+// How many days the person's state has been open, saved per person
+// (calc_state state_age = { day, on: "yyyy-mm-dd" }: the day number typed on
+// that date). Hero generations by state age are from the community Server
+// Timeline (Discord "Server Timeline & Server Age", Sep 2026); unlocks from
+// the same timeline and whiteoutsurvival.wiki. States differ by about ±7-21 days.
+const STATE_GEN_DAYS = [0, 40, 120, 195, 270, 360, 440, 520, 600, 700, 800, 870, 950, 1030, 1120, 1200, 1290, 1380]; // Gen 1..18
+let STATE_AGE = null;
+let STATE_AGE_LOADING = null;
+async function ensureStateAge() {
+  if (STATE_AGE) return STATE_AGE;
+  if (!STATE_AGE_LOADING) STATE_AGE_LOADING = loadCalcState("state_age").catch(() => null).then((v) => { STATE_AGE = v && Number(v.day) >= 0 && packValidDay(v.on) ? { day: Math.floor(Number(v.day)), on: v.on } : { day: null, on: null }; return STATE_AGE; });
+  return STATE_AGE_LOADING;
+}
+// Today's state day, or null when not set.
+function stateAgeDay() {
+  if (!STATE_AGE || STATE_AGE.day == null) return null;
+  const on = packParseDay(STATE_AGE.on);
+  return STATE_AGE.day + Math.max(0, Math.round((packStartOfToday() - on) / 86400000));
+}
+// The state's day number on a given date.
+function stateDayOn(date) {
+  const d0 = stateAgeDay();
+  return d0 == null ? null : d0 + Math.round((date - packStartOfToday()) / 86400000);
+}
+// The date a state day falls on.
+function stateDateOfDay(day) {
+  const d0 = stateAgeDay();
+  return d0 == null ? null : new Date(packStartOfToday().getTime() + (day - d0) * 86400000);
+}
+// Current generation from the state age: { gen, start: "yyyy-mm-dd" } or null.
+function stateGenInfo() {
+  const d = stateAgeDay();
+  if (d == null) return null;
+  let gi = 0;
+  STATE_GEN_DAYS.forEach((gd, i) => { if (gd <= d) gi = i; });
+  // New heroes come on a Monday: the Monday of that timeline day's week.
+  const st = stateDateOfDay(STATE_GEN_DAYS[gi]);
+  return { gen: gi + 1, start: packDayKey(new Date(st.getTime() - ((st.getUTCDay() + 6) % 7) * 86400000)) };
+}
+function saveStateAge(day) {
+  STATE_AGE = day == null ? { day: null, on: null } : { day: Math.max(0, Math.floor(day)), on: packDayKey(packStartOfToday()) };
+  STATE_AGE_LOADING = Promise.resolve(STATE_AGE);
+  // New Gen dates, unlock ticks, Budgets and suggestions all follow it.
+  if (typeof PACK_PLAN_CACHE !== "undefined") PACK_PLAN_CACHE.clear();
+  if (typeof PACK_EARLIEST_CACHE !== "undefined") PACK_EARLIEST_CACHE.clear();
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+  saveCalcState("state_age", STATE_AGE);
+}
+// The pop-up to set it (Dashboard ✎, My Purchases "change").
+function openStateAgeModal(onSaved) {
+  let modal = document.getElementById("stateAgeModal");
+  if (!modal) { modal = document.createElement("div"); modal.id = "stateAgeModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+  let mode = "day";
+  const t0 = packStartOfToday();
+  const cur = stateAgeDay();
+  const draw = () => {
+    modal.innerHTML = `<div class="modal-box sa-box">
+      <h2>🏰 ${esc(t("sa_title"))}</h2>
+      <p class="desc">${esc(t("sa_desc"))}</p>
+      <div class="pur-seg" style="margin-bottom:8px;"><button type="button" data-samode="day" class="${mode === "day" ? "on" : ""}">${esc(t("sa_by_day"))}</button><button type="button" data-samode="date" class="${mode === "date" ? "on" : ""}">${esc(t("sa_by_date"))}</button></div>
+      ${mode === "day" ? `<input type="number" min="0" max="5000" step="1" data-sainput value="${cur != null ? cur : ""}" placeholder="${esc(t("sa_day_ph"))}" style="width:100%; font-size:16px;" />`
+        : `<input type="date" data-sainput value="${cur != null ? packDayKey(new Date(t0.getTime() - cur * 86400000)) : ""}" style="width:100%; font-size:16px;" />`}
+      <div class="meta sa-preview" data-sapreview></div>
+      <div class="meta" style="font-size:11px; font-weight:700; margin:10px 0 2px;">${esc(t("sa_tips_title"))}</div>
+      ${[1, 2, 3].map((n) => `<div class="sa-tip"><span class="sa-num">${n}</span><span><b>${esc(t("sa_tip" + n + "_t"))}</b>${esc(t("sa_tip" + n))}</span></div>`).join("")}
+      <div class="sa-foot">${cur != null ? `<button type="button" class="btn ghost small" data-saclear>${esc(t("sa_clear"))}</button>` : "<span></span>"}<span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-saclose>${esc(t("sa_later"))}</button><button type="button" class="btn small" data-sasave>${esc(t("sa_save"))}</button></span></div>
+    </div>`;
+    modal.style.display = "flex";
+    const inp = modal.querySelector("[data-sainput]");
+    const dayFrom = () => {
+      if (mode === "day") { const n = Math.floor(Number(inp.value)); return inp.value !== "" && n >= 0 ? n : null; }
+      const d = packParseDay(packValidDay(inp.value));
+      return d ? Math.max(0, Math.round((t0 - d) / 86400000)) : null;
+    };
+    const preview = () => {
+      const d = dayFrom(), el = modal.querySelector("[data-sapreview]");
+      if (d == null) { el.textContent = ""; return; }
+      let gi = 0; STATE_GEN_DAYS.forEach((gd, i) => { if (gd <= d) gi = i; });
+      const opened = new Date(t0.getTime() - d * 86400000);
+      const fmt = (x) => { try { return x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return packDayKey(x); } };
+      el.textContent = t("sa_preview").replace("{date}", fmt(opened)).replace("{day}", d.toLocaleString()).replace("{gen}", gi + 1);
+    };
+    inp.addEventListener("input", preview);
+    preview();
+    modal.querySelectorAll("[data-samode]").forEach((b) => b.addEventListener("click", () => { mode = b.dataset.samode; draw(); }));
+    modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-saclose]")) modal.style.display = "none"; };
+    modal.querySelector("[data-sasave]").addEventListener("click", () => {
+      const d = dayFrom();
+      if (d == null) { inp.focus(); return; }
+      saveStateAge(d);
+      modal.style.display = "none";
+      if (onSaved) onSaved();
+    });
+    const clr = modal.querySelector("[data-saclear]");
+    if (clr) clr.addEventListener("click", () => { saveStateAge(null); modal.style.display = "none"; if (onSaved) onSaved(); });
+  };
+  draw();
+}
+// Dashboard card: state day, current Gen, next new heroes and Lucky Wheel.
+function stateAgeCardHtml() {
+  const d = stateAgeDay();
+  const fmt = (x) => { try { return x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return packDayKey(x); } };
+  if (d == null) return `<div class="sa-card"><div class="sa-ic">🏰</div><div style="min-width:0;"><div class="sa-k">${esc(t("sa_card_k"))}</div><div class="sa-s">${esc(t("sa_card_unset"))}</div></div><button type="button" class="btn small sa-edit" data-saopen>${esc(t("sa_set"))}</button></div>`;
+  const g = stateGenInfo();
+  const t0 = packStartOfToday();
+  const starts = newGenStarts(newGenBaseDay(), 3);
+  const next = starts.find((x) => x > t0);
+  const wheel = heroWheels(new Date(t0.getTime() - 2 * 86400000), new Date(t0.getTime() + 60 * 86400000)).find((w) => w.day.getTime() + 2 * 86400000 >= t0.getTime());
+  const wheelTxt = wheel ? (wheel.day <= t0 ? t("sa_wheel_now").replace("{e}", wheel.ev.name) : t("sa_wheel_next").replace("{date}", fmt(wheel.day)).replace("{e}", wheel.ev.name)) : "";
+  const gen = newGenGen();
+  return `<div class="sa-card"><div class="sa-ic">🏰</div><div style="min-width:0;">
+    <div class="sa-k">${esc(t("sa_card_k"))}</div>
+    <div class="sa-v">${d.toLocaleString()} <span class="sa-s">· ${esc(t("sa_gen_heroes").replace("{n}", gen || g.gen))}</span></div>
+    <div class="sa-chips">${next ? `<span class="sa-chip i">⭐ ${esc(t("sa_next_gen").replace("{n}", (gen || g.gen) + 1).replace("{d}", Math.round((next - t0) / 86400000)).replace("{date}", fmt(next)))}</span>` : ""}${wheelTxt ? `<span class="sa-chip">🎡 ${esc(wheelTxt)}</span>` : ""}</div>
+  </div><button type="button" class="btn small ghost sa-edit" data-saopen aria-label="${esc(t("sa_title"))}">&#9998;</button></div>`;
 }
 // ---- Game events: SvS and King of Icefield (KOI) ----
 // Each comes every 4 weeks for 6 days (Monday to Saturday); the Lucky Wheel
@@ -10589,8 +10771,17 @@ function packNewGenOffset(tableId) {
 function newGenBaseDay() {
   const mine = packValidDay((PACK_PURCHASES.newGen || {}).last);
   if (mine) return mine;
+  const sg = stateGenInfo();
+  if (sg) return sg.start;
   const days = Object.values(PACK_LINKS || {}).filter((l) => l && packIsNewGen(l)).map((l) => packValidDay(l.resetDay)).filter(Boolean).sort();
   return days[0] || null;
+}
+// The Gen of the base day: typed by the person with their own date, else from the state age.
+function newGenGen() {
+  const ng = PACK_PURCHASES.newGen || {};
+  if (packValidDay(ng.last)) return Math.floor(Number(ng.gen) || 0) || null;
+  const sg = stateGenInfo();
+  return sg ? sg.gen : null;
 }
 // This pack's appearances from the generation starts: [{ start, days, gen (0 = the base one) }].
 function newGenAppearances(tableId, win) {
