@@ -6840,7 +6840,9 @@ function renderMyPackDates(el, tables, opts = {}) {
   // Packs page (admin): a locked, collapsible copy of what visitors see.
   // My Purchases: editable for everyone; New Gen Heroes has its own card there.
   const preview = IS_OWNER && !opts.editable;
-  const list = tables.filter((tb) => { const l = packLinkForBase(tb.id); return l.visitorDate && (typeof l.reset === "number" || packStackInfo(l.reset)) && !(opts.skipNewGen && packIsNewGen(l)); });
+  const inGroups = (l, gs) => (gs || []).includes(String(l.group || ""));
+  const list = tables.filter((tb) => { const l = packLinkForBase(tb.id); return l.visitorDate && (typeof l.reset === "number" || packStackInfo(l.reset)) && !(opts.skipNewGen && packIsNewGen(l))
+    && !(opts.skipGroups && inGroups(l, opts.skipGroups)) && !(opts.onlyGroups && !inGroups(l, opts.onlyGroups)); });
   if (!list.length && !preview) { el.innerHTML = ""; return; }
   if (preview) {
     const head = `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;">${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"} ${esc(t("pk_my_dates_title"))} <span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span></span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>`;
@@ -6891,7 +6893,7 @@ function renderMyPackDates(el, tables, opts = {}) {
           ${st && packActiveDays(tb.id) ? `<div style="flex-basis:100%; font-size:10.5px; color:var(--good);">${esc(packActiveNoteText(tb.id))}</div>` : ""}
         </div>`;
       }).join("")}`).join("")}
-    ${!preview && (Object.keys(MY_PACK_DATES).length || Object.keys(MY_CARDS_ACTIVE).length) ? `<div style="margin-top:8px;"><button type="button" class="btn small ghost" data-mydateresetall style="padding:2px 8px;">${esc(t("pk_reset_all_dates"))}</button></div>` : ""}
+    ${!preview && list.some((tb) => MY_PACK_DATES[String(tb.id)] || MY_CARDS_ACTIVE[String(tb.id)]) ? `<div style="margin-top:8px;"><button type="button" class="btn small ghost" data-mydateresetall style="padding:2px 8px;">${esc(t("pk_reset_all_dates"))}</button></div>` : ""}
   </details>`;
   {
     const det = el.querySelector("details");
@@ -6938,7 +6940,8 @@ function renderMyPackDates(el, tables, opts = {}) {
     save();
   }));
   const all = el.querySelector("[data-mydateresetall]");
-  if (all) all.addEventListener("click", () => { MY_PACK_DATES = {}; MY_CARDS_ACTIVE = {}; save(); });
+  // Only the packs in this box (the Packs page and My Purchases each have their own).
+  if (all) all.addEventListener("click", () => { list.forEach((tb) => { delete MY_PACK_DATES[String(tb.id)]; delete MY_CARDS_ACTIVE[String(tb.id)]; }); save(); });
 }
 // The green line under a card's "Still active" box.
 function packActiveNoteText(tableId) {
@@ -7325,7 +7328,7 @@ async function renderPurchasesPage() {
         ${listsHtml}
       </div>
     </div>`;
-  renderMyPackDates(document.getElementById("purMyDates"), tables, { editable: !IS_OWNER, skipNewGen: true });
+  renderMyPackDates(document.getElementById("purMyDates"), tables, { editable: !IS_OWNER, skipNewGen: true, skipGroups: PACK_DATES_ON_PACKS_PAGE });
   // Suggested packs: the Budgets plan (it already counts the packs listed
   // here), each with "Add" to put it under Coming.
   budgetSuggestedPlan().then((plan) => {
@@ -7834,6 +7837,7 @@ async function renderPacksPage() {
       </div>
     </div>
     <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
+    <div id="packsMyDates"></div>
     <div id="packsPriceStrip"></div>
     <div id="packsPageTabs" style="margin-bottom:6px;"></div>
     <div id="packsList"></div>
@@ -8709,7 +8713,7 @@ async function renderPacksPage() {
       if (visDateCb) visDateCb.addEventListener("change", async () => {
         const l = current();
         if (visDateCb.checked) l.visitorDate = true; else delete l.visitorDate;
-        renderMyPackDates(document.getElementById("packsMyDates"), tables);
+        renderMyPackDates(document.getElementById("packsMyDates"), tables, { editable: !IS_OWNER, onlyGroups: PACK_DATES_ON_PACKS_PAGE });
         await savePackLinks();
       });
       const hideCb = box.querySelector("[data-pkhidevisitors]");
@@ -9176,6 +9180,8 @@ async function renderPacksPage() {
   }
 
   renderPriceStrip();
+  // The Bazaar's own date sits here (above Pack prices) for everyone.
+  renderMyPackDates(document.getElementById("packsMyDates"), tables, { editable: !IS_OWNER, onlyGroups: PACK_DATES_ON_PACKS_PAGE });
   renderAll();
 }
 
@@ -9315,7 +9321,7 @@ function backpackItems() {
   return groups;
 }
 const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
-const BP_EXTRA_ICONS = { "Marks of Valor": "icons/marks-of-valor.png", "Mystery Points": "icons/mystery-points.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/item_icon_500220.png" };
+const BP_EXTRA_ICONS = { "Marks of Valor": "icons/marks-valor.png", "Mystery Points": "icons/mystery-badge.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/item_icon_500220.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -11189,6 +11195,8 @@ let PACK_PURCHASES = { list: [], newGen: {} };
 const PACK_NEWGEN_GROUP = "New Gen Heroes";
 // Shown as "Heroes packs" (owner, 16 Oct 2026), together with the other hero shard / widget packs.
 const PACK_HEROES_GROUP = "Heroes packs";
+// Packs whose own date is set on the Packs page (owner, 16 Oct 2026), not in My Purchases.
+const PACK_DATES_ON_PACKS_PAGE = ["Bazzar"];
 function savePackPurchases() {
   PACK_PLAN_CACHE.clear();
   if (typeof budgetInvalidate === "function") budgetInvalidate();
@@ -11210,6 +11218,7 @@ const PACK_MINE_GROUP = "My packs";
 // "Hero shards & widgets" page, built from the person's state's Gen dates.
 const NG_HERO_GROUP = "Heroes packs";
 const NG_HERO_DAYS = 28; // each part runs 4 weeks
+const PACK_ONE_TIME_DAYS = 1000; // a "reset" this long is one time only (these packs use 3000)
 const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
 const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
 const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
@@ -11417,6 +11426,8 @@ function packLinkForBase(tableId) {
     pickOrder: l.pickOrder === true,
     // Optional group ("main name") several tables sit under on the Packs page.
     group: trig ? PACK_TRIGGER_GROUP : typeof l.group === "string" ? (l.group.trim() === PACK_NEWGEN_GROUP ? PACK_HEROES_GROUP : l.group.trim()) : "",
+    // Kept on the returned link so packIsNewGen works on it after the group is renamed.
+    newGen: packIsNewGen(l),
     // Daily-reward cards: the ticked columns are PER-DAY amounts, paid for
     // `days` days after one purchase (so they count `days` times).
     daily: l.daily && typeof l.daily === "object" && Array.isArray(l.daily.cols) && l.daily.cols.length
@@ -12455,7 +12466,7 @@ function packPlanRowsHtml(plan, resetText) {
       <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
         <span style="font-size:11.5px; font-weight:700;">${esc(g.title)}</span>
         <span style="font-size:11px; color:var(--ice);">&times; ${qty(g.count)}</span>
-        ${packStackInfo(g.reset) ? `<span class="meta" style="font-size:10px;">${esc(packStackText(g.reset))}${g.count > packStackInfo(g.reset).atOnce * g.perCycle ? ` · ${esc(t("pack_stack_later").replace("{n}", packStackInfo(g.reset).atOnce * g.perCycle))}` : ""}</span>` : typeof g.reset === "number" ? `<span class="meta" style="font-size:10px;">${esc(resetText(g.reset, g.resetDay))} · ${g.cycles} ${esc(t("pack_resets"))}</span>` : ""}
+        ${packStackInfo(g.reset) ? `<span class="meta" style="font-size:10px;">${esc(packStackText(g.reset))}${g.count > packStackInfo(g.reset).atOnce * g.perCycle ? ` · ${esc(t("pack_stack_later").replace("{n}", packStackInfo(g.reset).atOnce * g.perCycle))}` : ""}</span>` : typeof g.reset === "number" ? `<span class="meta" style="font-size:10px;">${esc(resetText(g.reset, g.resetDay))}${g.reset >= PACK_ONE_TIME_DAYS ? "" : ` · ${g.cycles} ${esc(t("pack_resets"))}`}</span>` : ""}
         <span style="margin-inline-start:auto; font-size:12px; font-weight:700;">${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</span>
       </div>
       <div style="margin-top:3px; padding-inline-start:10px; font-size:10.5px; line-height:1.55;">
@@ -12571,7 +12582,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const currency = (packGroups[0] && packGroups[0].offers[0].currency) || "USD";
   const resetText = (r, day) => {
     if (r === "unlimited") return t("pack_reset_unlimited");
-    if (r === "once") return t("pack_reset_once");
+    if (r === "once" || r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
     if (packStackInfo(r)) return packStackText(r);
     const preset = PACK_RESET_PRESETS.find((p) => p.days === r);
     const base = preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
@@ -13697,9 +13708,9 @@ async function heroShardBudget() {
       if (r.rarity === "Legendary") {
         rule("Mythic General Hero Shard", sh, 1, 1, 0);
         rule("Marks of Valor", sh, 12, 1, Math.max(1, Math.floor(100 / mythicShards.length)));
-        // Only each Gen's Hall of Heroes hero (gold ticket on the timeline) sells
-        // its own shards there, once that Gen is out in the person's state.
-        if (HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name && (!newestGen || Number(r.hero.generation) <= newestGen)) rule("Marks of Valor", sh, 10, 1, 370);
+        // Only the newest Gen's Hall of Heroes hero (gold ticket on the timeline)
+        // sells its own shards there (owner).
+        if (newestGen && Number(r.hero.generation) === newestGen && HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name) rule("Marks of Valor", sh, 10, 1, 370);
       }
     }
     if (r.wNeed > 0) {
@@ -14439,7 +14450,7 @@ async function renderBudgetsPage(opts = {}) {
   };
   const budgetResetText = (r, day) => {
     if (r === "unlimited") return t("pack_reset_unlimited");
-    if (r === "once") return t("pack_reset_once");
+    if (r === "once" || r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
     if (packStackInfo(r)) return packStackText(r);
     const preset = PACK_RESET_PRESETS.find((p) => p.days === r);
     return preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
