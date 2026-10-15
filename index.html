@@ -4267,6 +4267,7 @@ const T = {
   pur_pick_dates: { en: "Pick the dates you'll buy it", ar: "اختر تواريخ الشراء", ko: "구매할 날짜를 선택하세요" },
   pur_sug_scroll: { en: "Scroll for all {n} packs", ar: "مرّر لرؤية كل الحزم ({n})", ko: "스크롤하여 {n}개 팩 모두 보기" },
   pur_choice: { en: "Choice", ar: "الخيار", ko: "선택" },
+  pur_tbl_choose: { en: "Choose in the pack table", ar: "اختر من جدول الحزمة", ko: "팩 표에서 선택" },
   pur_tbl_btn: { en: "Pick from table", ar: "اختر من الجدول", ko: "표에서 선택" },
   pur_tbl_empty: { en: "This pack has no prices yet.", ar: "لا توجد أسعار لهذه الحزمة بعد.", ko: "이 팩에는 아직 가격이 없습니다." },
   pur_tbl_price: { en: "Price", ar: "السعر", ko: "가격" },
@@ -6983,13 +6984,10 @@ async function renderPurchasesPage() {
   const formOffers = formTb ? packOffersFor(formTb, true) : [];
   if (!formOffers.some((o) => o.row === PUR_FORM.row)) PUR_FORM.row = formOffers[0] ? formOffers[0].row : 0;
   // Packs where you choose what you get (Benefit Card, Mix & Match, Myriad
-  // Bazaar...): the "Choice" list holds every option the planner knows, and
-  // the chosen one is saved with the purchase.
+  // Bazaar...): chosen in the pack's table (purTablePopup), which saves the
+  // choice with the purchase. (The old one-long-list dropdown is gone.)
   const isChoicePack = (tb) => { const l = packLinkFor(tb.id); return !!(l.option || l.pickCols > 0 || l.colOptions); };
-  const formChoices = formTb && isChoicePack(formTb)
-    ? packGroupsFor(tables, "__purchases").filter((g) => (g.tables || []).includes(String(formTb.id))).flatMap((g) => g.offers).filter((o) => o && o.price > 0 && Object.keys(o.gives || {}).length)
-    : [];
-  if (formChoices.length && !(PUR_FORM.choice >= 0 && PUR_FORM.choice < formChoices.length)) PUR_FORM.choice = 0;
+  const formChoice = !!(formTb && isChoicePack(formTb));
   const tierLabel = (tb, row) => {
     const link = packLinkFor(tb.id), o = packOffersFor(tb, true).find((x) => x.row === row);
     if (!o) return `#${row + 1}`;
@@ -7000,20 +6998,20 @@ async function renderPurchasesPage() {
   const groups = [];
   buyable.forEach((tb) => { const g = packLinkFor(tb.id).group || t("packs_title"); let e = groups.find((x) => x.g === g); if (!e) { e = { g, items: [] }; groups.push(e); } e.items.push(tb); });
   const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(tb.title || "")}</option>`).join("")}</optgroup>`).join("");
-  const tierOpts = formChoices.length
-    ? formChoices.map((o, ci) => `<option value="${ci}" ${ci === PUR_FORM.choice ? "selected" : ""}>${esc(o.label)}</option>`).join("")
-    : formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
+  const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
   const addCard = `<div class="t12x-card"><div class="t12x-title">${esc(t("pur_add_title"))}</div>
     ${buyable.length ? `<div class="pur-form">
       <label class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table">${packOpts}</select></label>
-      <label class="pur-f${formChoices.length ? " pur-f-wide" : ""}"><span class="meta">${esc(t(formChoices.length ? "pur_choice" : "pur_tier"))}</span><select data-purf="${formChoices.length ? "choice" : "row"}">${tierOpts}</select></label>
+      ${formChoice
+        ? `<div class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_choice"))}</span><button type="button" class="btn" data-purtable>&#128203; ${esc(t("pur_tbl_choose"))}</button></div>`
+        : `<label class="pur-f"><span class="meta">${esc(t("pur_tier"))}</span><select data-purf="row">${tierOpts}</select></label>`}
       <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_count"))}</span><input type="number" min="1" step="1" data-purf="count" value="${PUR_FORM.count}" /></label>
       <label class="pur-f"><span class="meta">${esc(t("pur_date"))}</span><input type="date" data-purf="date" value="${esc(PUR_FORM.date)}" /></label>
       <div class="pur-f" style="flex:0 1 auto;"><span class="meta">${esc(t("pur_status"))}</span><div class="pur-seg">${["planned", "bought"].map((s) => `<button type="button" data-purstatus="${s}" class="${PUR_FORM.status === s ? "on" : ""}">${esc(t(s === "planned" ? "pur_will_buy" : "pur_bought"))}</button>`).join("")}</div></div>
-      <button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>
+      ${formChoice ? "" : `<button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>`}
     </div>
-    <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span><button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button></div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
+    <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span>${formChoice ? "" : `<button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button>`}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
   </div>`;
 
   // Purchase lists
@@ -7185,9 +7183,8 @@ async function renderPurchasesPage() {
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
     const k = inp.dataset.purf;
-    if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; PUR_FORM.choice = 0; redraw(); return; }
+    if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
     if (k === "row") PUR_FORM.row = Number(inp.value);
-    else if (k === "choice") PUR_FORM.choice = Number(inp.value);
     else if (k === "count") PUR_FORM.count = Math.max(1, Math.floor(Number(inp.value) || 1));
     else if (k === "date") PUR_FORM.date = inp.value || today;
   }));
@@ -7202,8 +7199,7 @@ async function renderPurchasesPage() {
     let date = packValidDay(dateEl && dateEl.value) || today;
     if (PUR_FORM.status === "bought" && date > today) date = today; // can't have bought it yet
     const count = Math.max(1, Math.floor(Number(countEl && countEl.value) || 1));
-    const ch = formChoices.length ? formChoices[PUR_FORM.choice] || formChoices[0] : null;
-    PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(formTb.id), row: ch ? (ch.row != null ? ch.row : 0) : PUR_FORM.row, count, date, status: PUR_FORM.status, ...(ch ? { choice: { name: purPackName(ch.tableTitle, tables) || formTb.title || "", label: ch.label, price: ch.price, gives: ch.gives } } : {}) }]);
+    PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(formTb.id), row: PUR_FORM.row, count, date, status: PUR_FORM.status }]);
     PUR_FORM.count = 1;
     savePackPurchases();
     toast(t("pur_added"));
