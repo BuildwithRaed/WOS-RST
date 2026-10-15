@@ -69,7 +69,7 @@ The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.
 - Gallery/Islands/Experts/Facility pictures in the repo are cropped the same way (Oct 2026). The space around them is set in CSS: `.gallery-card .thumb.gallery-thumb` (Cosmetics, 17%; `gallery-thumb-big` 6% for the categories in `GALLERY_BIG_THUMB`: City Skin, Teleport Skin, Private Chat, Rally), `.island-thumb` (Islands, 5%), `.island-thumb.facility-thumb` (Facility, 10%), and the inline padding on the Experts portraits.
 
 ## Work in progress: site-wide redesign (branch `claude/youthful-einstein-n9eoau`, NOT merged)
-The owner said "looks good, still needs changes next time — don't push it yet". **No PR until the owner says so.** Preview: `https://raw.githack.com/BuildwithRaed/WOS-RST/47a423d/index.html`. Next session: continue on this branch (don't restart it from `main`; merge `main` in if it moved), ask the owner what to change.
+The owner said "looks good, still needs changes next time — don't push it yet". **No PR until the owner says so.** Preview: `https://raw.githack.com/BuildwithRaed/WOS-RST/<latest commit of the branch>/index.html`. Next session: continue on this branch (don't restart it from `main`; merge `main` in if it moved), ask the owner what to change.
 Done so far (all on the preview only):
 - T12 redesign: two columns (Settings, "Amounts from your Backpack" tiles, Trade items and Pack Cost cards on the side; "Total research resources needed" squares with the research-time bar, troop tabs and folding node sections in the main column); phones stack, settings on one line. FC→FC Shard trade 10→13, up to 500 a week, counted in totals; trade card shows only RFC/FCS still short (exact amounts); Pack Cost cards without "Full amount" or $.
 - Same layout on T11 Helios, Research Center, Chief Gear, Charms, Heroes Gears, Pets Level, Pet Refine, Experts Level, Experts Research.
@@ -80,6 +80,9 @@ Done so far (all on the preview only):
 - "Set all" shows the chosen level when all pieces match (Chief Gear, Charms; new Set all row on Heroes Gears).
 - Extra Bonus pages: titles on VIP and Heroes Special Skills; VIP, Tundra Album, Collection Gallery use the new stat boxes; Alliance Tech stats as troop tabs.
 - Every other page: `.panel` has the same card look, bigger page titles.
+- Round 2 (15 Oct 2026): each gear piece / charm shows its own stat now → target (`plxPieceStatHtml`, filled in the update*CurrentStats functions); stats in one row (`plxStatBoxesHtml(list, true)`) on Heroes Gears, VIP, Collection Gallery, Tundra Album, Alliance Tech; pet pictures from whiteoutsurvival.wiki in `icons/pets/<slug>.webp` (`petImage`, Abyssal Shelldragon has none yet → letter); Pet Refine advanced calculator in a pop-up (`refineAdvOpen`, closed by `render()`); Research Center targets (calc_state `research_center_target`, missing = max); Research Lab redesigned (summary squares, tappable schedule cards with Best value / Fastest, side card for mode + FC⇄FCS, Lab tiers folded); Alliance Tech sections with − / + level nodes saved through `patchSkinQueued`; Tundra Album / Collection Gallery level chips (`plxChipRowHtml`) with a +0% choice.
+- Waiting for the owner to pick: Dashboard mock-ups A/B/C, Budgets A/B, Packs A/B (pictures only, nothing built yet).
+- Testing note: the `skins` view filters by the signed-in user, so read-only tests serve `skins_catalog` rows with made-up levels.
 - Owner data change (live, already in effect): owner calc_state `trade_rates` t12_research FC→FC Shard `max` 0 → 500 (undo: set it back to 0).
 - Tested: no sideways scroll or errors at 1280/393/624/430/412/884 px; click test of tabs, picker, Set all, tile pop-up, Max everything (saves blocked).
 
