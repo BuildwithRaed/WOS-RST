@@ -10532,17 +10532,16 @@ function heroWheels(from, to) {
   }));
   return out.sort((a, b) => a.day - b.day);
 }
-// New Gen Heroes: a generation lasts until 5 hero wheels including 3 SvS
-// ones have passed (about 80 days); the next one starts the Monday after
-// that wheel's week. Returns the start days from `lastKey` on.
+// New Gen Heroes: a generation lasts 5 Lucky Wheels (SvS or KOI, one every
+// 2 weeks, so 70 days); the next one starts the Monday after the 5th wheel's
+// week. Returns the start days from `lastKey` on.
 function newGenStarts(lastKey, count) {
   let cur = packParseDay(lastKey);
   if (!cur) return [];
   const out = [cur];
   while (out.length < count) {
     const ws = heroWheels(new Date(cur.getTime() + 86400000), new Date(cur.getTime() + 200 * 86400000));
-    let n = 0, svs = 0, hit = null;
-    for (const w of ws) { n++; if (w.ev.key === "svs") svs++; if (n >= 5 && svs >= 3) { hit = w; break; } }
+    const hit = ws[4] || null; // the 5th wheel
     if (!hit) break;
     const monday = new Date(hit.start.getTime() + 7 * 86400000); // the week after that event week
     cur = new Date(monday.getTime() - ((monday.getUTCDay() + 6) % 7) * 86400000);
@@ -10550,6 +10549,7 @@ function newGenStarts(lastKey, count) {
   }
   return out;
 }
+const NEW_GEN_DAYS = 70; // 5 Lucky Wheels, one every 2 weeks
 function packIsNewGen(l) { return !!l && typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP; }
 // New Gen Heroes packs follow the person's "last new heroes" date (My
 // Purchases): Hero Ascension Training starts the day new heroes come,
@@ -10732,6 +10732,8 @@ function packLinkForBase(tableId) {
     // Carried as "stack:<daysPerBuy>:<cap>" so the planner has both numbers.
     reset: trig ? "once" : l.reset === "stack"
       ? `stack:${l.daily && Number(l.daily.days) > 0 ? Math.round(Number(l.daily.days)) : 7}:${Number(l.stackCap) > 0 ? Math.round(Number(l.stackCap)) : 370}`
+      // New Gen Heroes come every 5 Lucky Wheels = 70 days (see newGenStarts).
+      : packIsNewGen(l) && typeof l.reset === "number" && newGenBaseDay() ? NEW_GEN_DAYS
       : typeof l.reset === "number" && l.reset > 0 ? l.reset : (l.reset === "once" || l.reset === "unlimited") ? l.reset : (l.sequential === true ? "once" : "unlimited"),
     stackCap: Number(l.stackCap) > 0 ? Math.round(Number(l.stackCap)) : 370,
     buys: Number.isInteger(l.buys) && l.buys > 0 ? l.buys : 1,
