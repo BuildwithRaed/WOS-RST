@@ -7028,7 +7028,8 @@ function packMergeOwned(owned, supply) {
 function packUsedForNames(tb) {
   // The New Gen hero pack patterns feed every new hero's copy.
   if ((tb.columns || []).some((c) => /^hero (shards?|widgets?)$/i.test(String(c || "")))) return [t("hs_page")];
-  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel);
+  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel)
+    .concat((packLinkFor(tb.id).pages || []).includes("hero_shards") ? [t("hs_page")] : []);
 }
 // New Gen Heroes: which Gen an appearance belongs to, from the person's
 // "last new heroes" date and that Gen's number.
@@ -9302,9 +9303,19 @@ function backpackItems() {
     if (!g) { g = { title, items: [] }; groups.push(g); }
     g.items.push({ name: String(it.name).trim(), icon: String(it.icon || "").trim() });
   });
+  // Heroes packs currencies (owner, 16 Oct 2026): always in the Backpack.
+  const all = new Set(groups.flatMap((g) => g.items.map((x) => x.name)));
+  const extra = BP_HERO_CURRENCIES.filter((n) => !all.has(n));
+  if (extra.length) {
+    let g = groups.find((x) => x.title === "Hero Shards");
+    if (!g) { g = { title: "Hero Shards", items: [] }; groups.push(g); }
+    extra.forEach((n) => g.items.push({ name: n, icon: BP_EXTRA_ICONS[n] }));
+  }
   groups.forEach((g) => { g.speedups = g.items.length > 0 && g.items.every((x) => bpSpeedupSize(x.name)); });
   return groups;
 }
+const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
+const BP_EXTRA_ICONS = { "Marks of Valor": "icons/marks-of-valor.png", "Mystery Points": "icons/mystery-points.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/item_icon_500220.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -9313,6 +9324,7 @@ function bpIcon(item) {
   if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
   if (BP_CHEST_ICONS[name]) return BP_CHEST_ICONS[name];
   if (BP_SHARD_ICONS[name]) return BP_SHARD_ICONS[name];
+  if (BP_EXTRA_ICONS[name]) return BP_EXTRA_ICONS[name];
   if (/^XP 10/.test(name)) return "icons/XP-Component.png";
   if (/speedup/i.test(name)) {
     const type = (name.match(/^(Construction|Troop|Research|Expert) Speedup/) || [])[1];
@@ -10662,6 +10674,9 @@ const PACK_RESOURCE_NAMES = [
 // materials. One Chief Gear Chest = 1 Design Plan, 4 Polishing Solution and
 // 400 Hardened Alloy, so a column of "3 chests" counts as 3x that.
 const PACK_BUNDLES = {
+  // Daily Deals: the Lucky Box gives 1-10 Mythic General Hero Shards (78% x1,
+  // 10% x2, 5% x3, 3% x4, 1.6% x5, 1% x6, 0.6% x7, 0.5% x8, 0.2% x9, 0.1% x10) = 1.5 on average.
+  "Mythic General Hero Lucky Box": { "Mythic General Hero Shard": 1.5 },
   "Chief Gear Chest": { "Design Plan": 1, "Polishing Solution": 4, "Hardened Alloy": 400 },
   // Old combined column: counts as that much Meat AND that much Wood.
   "Meat/Wood": { "Meat": 1, "Wood": 1 },
@@ -11101,7 +11116,8 @@ function newGenGapDays() {
   const g = newGenStarts(newGenBaseDay(), 3);
   return g.length >= 3 ? Math.round((g[2] - g[1]) / 86400000) : 84;
 }
-function packIsNewGen(l) { return !!l && typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP; }
+// New Gen tables: flagged `newGen` (they now sit in "Heroes packs"), or the old group name.
+function packIsNewGen(l) { return !!l && (l.newGen === true || (typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP)); }
 // New Gen Heroes packs follow the person's "last new heroes" date (My
 // Purchases): Hero Ascension Training starts the day new heroes come,
 // Exclusive Gear Forge 4 weeks (28 days) later.
@@ -11171,6 +11187,8 @@ let MY_PACK_DATES = {};
 //   newGen: { last: "yyyy-mm-dd" (when their state last got new heroes), gen: number }
 let PACK_PURCHASES = { list: [], newGen: {} };
 const PACK_NEWGEN_GROUP = "New Gen Heroes";
+// Shown as "Heroes packs" (owner, 16 Oct 2026), together with the other hero shard / widget packs.
+const PACK_HEROES_GROUP = "Heroes packs";
 function savePackPurchases() {
   PACK_PLAN_CACHE.clear();
   if (typeof budgetInvalidate === "function") budgetInvalidate();
@@ -11190,7 +11208,7 @@ const PACK_MINE_GROUP = "My packs";
 // once). Gems follow the usual 500-per-dollar scale. Owner's info, 16 Oct 2026;
 // other items in these packs aren't counted. They're only for the Budgets
 // "Hero shards & widgets" page, built from the person's state's Gen dates.
-const NG_HERO_GROUP = "New Gen hero packs";
+const NG_HERO_GROUP = "Heroes packs";
 const NG_HERO_DAYS = 28; // each part runs 4 weeks
 const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
 const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
@@ -11398,7 +11416,7 @@ function packLinkForBase(tableId) {
     pickCols: !trig && Number(l.pickCols) > 0 ? Math.min(6, Math.round(Number(l.pickCols))) : 0,
     pickOrder: l.pickOrder === true,
     // Optional group ("main name") several tables sit under on the Packs page.
-    group: trig ? PACK_TRIGGER_GROUP : typeof l.group === "string" ? l.group.trim() : "",
+    group: trig ? PACK_TRIGGER_GROUP : typeof l.group === "string" ? (l.group.trim() === PACK_NEWGEN_GROUP ? PACK_HEROES_GROUP : l.group.trim()) : "",
     // Daily-reward cards: the ticked columns are PER-DAY amounts, paid for
     // `days` days after one purchase (so they count `days` times).
     daily: l.daily && typeof l.daily === "object" && Array.isArray(l.daily.cols) && l.daily.cols.length
@@ -13300,10 +13318,19 @@ const TRADE_OPEN = {};             // block collapsed on every load
 let TRADE_EXTRA_RATES = {};
 let TRADE_EXTRA_SIG = "";
 let TRADE_EXTRA_RFC = {};
+// Hero shards & widgets: what the Heroes packs give turns into each roster
+// hero's own items (set by heroShardBudget):
+//  - Mythic General Hero Shard -> any mythic hero's shards (1:1)
+//  - Marks of Valor (Hall of Heroes, Fri-Sun) -> 12 for a Mythic General Hero
+//    Shard, up to 100 a week (shared out over the heroes); the newest Gen's
+//    heroes: 10 marks a shard, up to 370 a week each
+//  - Widget Chest (any hero's widget) -> 1 widget
+//  - Mystery Points (Mystery shop) -> 800 for 2, 2,250 for 5, 2,500 for 5 widgets
+let HERO_SHARD_TRADES = [];
 // General Sigils can be spent on any expert (1:1): a rule, not a trade.
 function tradeComposeExtra() {
   const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
-  const next = { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules };
+  const next = { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules, hero_shards: HERO_SHARD_TRADES };
   const sig = JSON.stringify(next);
   if (sig === TRADE_EXTRA_SIG) return;
   TRADE_EXTRA_RATES = next;
@@ -13655,11 +13682,37 @@ async function heroShardBudget() {
   ]);
   noteHeroImages(heroes);
   const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {} });
-  const totals = {}, owned = {};
+  const totals = {}, owned = {}, rules = [];
+  const rule = (from, to, give, get, max) => rules.push({ from, to, give, get, max, hidden: true, silent: true });
+  const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary");
+  const newestGen = newGenGen();
   plan.rows.forEach((r) => {
-    if (r.need > 0) { totals[`${r.hero.name} Shards`] = r.need; owned[`${r.hero.name} Shards`] = r.own + r.fromGeneral; }
-    if (r.wNeed > 0) { totals[`${r.hero.name} Widgets`] = r.wNeed; owned[`${r.hero.name} Widgets`] = r.wOwn; }
+    const sh = `${r.hero.name} Shards`, wd = `${r.hero.name} Widgets`;
+    if (r.need > 0) {
+      totals[sh] = r.need; owned[sh] = r.own + r.fromGeneral;
+      if (r.rarity === "Legendary") {
+        rule("Mythic General Hero Shard", sh, 1, 1, 0);
+        rule("Marks of Valor", sh, 12, 1, Math.max(1, Math.floor(100 / mythicShards.length)));
+        if (newestGen && Number(r.hero.generation) === newestGen) rule("Marks of Valor", sh, 10, 1, 370);
+      }
+    }
+    if (r.wNeed > 0) {
+      totals[wd] = r.wNeed; owned[wd] = r.wOwn;
+      rule("Widget Chest", wd, 1, 1, 0);
+      [[800, 2], [2250, 5], [2500, 5]].forEach(([g, n]) => rule("Mystery Points", wd, g, n, 0));
+    }
   });
+  HERO_SHARD_TRADES = rules;
+  if (typeof tradeComposeExtra === "function") tradeComposeExtra();
+  // Leftover marks / points / chests in the Backpack; Mystery Points also
+  // come free from the dailies, 200 a day, counted up to the Budgets date
+  // (30 days when none is set).
+  const bpv = (n) => Number((bp || {})[n]) || 0;
+  let days = 30;
+  if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.max(0, Math.round((d - packStartOfToday()) / 86400000)); }
+  owned["Marks of Valor"] = bpv("Marks of Valor");
+  owned["Widget Chest"] = bpv("Widget Chest");
+  owned["Mystery Points"] = bpv("Mystery Points") + 200 * days;
   return { groups: [{ label: null, totals }], owned };
 }
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
@@ -15175,6 +15228,7 @@ function materialIconSrc(name) {
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
   if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
+  if (BP_EXTRA_ICONS[name] || BP_SHARD_ICONS[name]) return BP_EXTRA_ICONS[name] || BP_SHARD_ICONS[name];
   const custom = packCustomResource(name), lower = String(name).toLowerCase();
   const key = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
   return BP_CHEST_ICONS[name] || (custom && custom.icon ? custom.icon : key ? MATERIAL_ICONS[key] : "");
