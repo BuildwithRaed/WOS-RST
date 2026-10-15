@@ -265,6 +265,12 @@
   .pur-ng-row{ display:flex; gap:10px; }
   .pur-ng-pack{ border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
   .pur-ng-next{ display:flex; flex-direction:column; gap:3px; margin-top:6px; font-size:11.5px; }
+  .pur-sug-split{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .pur-sug-split > div{ display:flex; flex-direction:column; gap:2px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; font-size:11px; }
+  .pur-sug-split b{ font-size:17px; }
+  .pur-when{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin-top:8px; font-size:11px; }
+  .pur-when-c{ padding:2px 8px; border-radius:999px; border:1px solid var(--line); white-space:nowrap; }
+  .pur-when-c.now{ border-color:var(--good); color:var(--good); font-weight:700; }
   .pur-sug-total{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:13px; }
   .pur-sug-total b{ font-size:17px; }
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
@@ -4209,8 +4215,15 @@ const T = {
   pk_preview_empty: { en: "Visitors don't see this box yet. Tick \"Visitors can set their own date\" in a pack's settings to add it here.", ar: "لا يرى الزوار هذا المربع بعد. حدّد \"يمكن للزوار تحديد تاريخهم\" في إعدادات حزمة لإضافتها.", ko: "아직 방문자에게 이 상자가 보이지 않습니다. 팩 설정에서 \"방문자가 날짜를 직접 설정 가능\"을 체크하세요." },
   pk_preview_open: { en: "Open settings", ar: "فتح الإعدادات", ko: "설정 열기" },
   pk_preview_notshown: { en: "That pack isn't shown with the current filter.", ar: "هذه الحزمة غير ظاهرة مع الفلتر الحالي.", ko: "현재 필터에서는 해당 팩이 표시되지 않습니다." },
+  pur_sug_now: { en: "Now", ar: "الآن", ko: "지금" },
+  pur_sug_when: { en: "When:", ar: "متى:", ko: "시기:" },
+  pur_sug_dates: { en: "dates", ar: "تواريخ", ko: "회" },
+  pur_sug_more_dates: { en: "more, last", ar: "أخرى، آخرها", ko: "회 더, 마지막" },
+  pur_sug_buy_now: { en: "Buy now", ar: "اشترِ الآن", ko: "지금 구매" },
+  pur_sug_later: { en: "Later (until {date})", ar: "لاحقاً (حتى {date})", ko: "나중에 ({date}까지)" },
+  pur_added_dates: { en: "Added on {n} dates", ar: "أضيفت في {n} تواريخ", ko: "{n}개 날짜에 추가됨" },
   pur_sug_title: { en: "Suggested packs (from Budgets)", ar: "حزم مقترحة (من الميزانيات)", ko: "추천 팩 (예산 기준)" },
-  pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page. Tap Will buy to add one.", ar: "أرخص الحزم التي تغطي خططك بعد الحزم في هذه الصفحة. اضغط سأشتري لإضافتها.", ko: "이 페이지의 팩을 반영한 뒤 계획을 채우는 가장 저렴한 팩입니다. 구매 예정을 눌러 추가하세요." },
+  pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy adds one line per date.", ar: "أرخص الحزم التي تغطي خططك بعد الحزم في هذه الصفحة. اضغط سأشتري لإضافتها.", ko: "이 페이지의 팩을 반영한 뒤 계획을 채우는 가장 저렴한 팩입니다. 구매 예정을 눌러 추가하세요." },
   pur_sug_none: { en: "Nothing else to buy: your plans are covered.", ar: "لا شيء آخر للشراء: خططك مغطاة.", ko: "더 살 것이 없습니다: 계획이 충족됩니다." },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again.", ar: "تعذر حساب الاقتراحات. افتح الميزانيات مرة ثم أعد المحاولة.", ko: "추천을 계산하지 못했습니다. 예산을 한 번 연 뒤 다시 시도하세요." },
   pur_sug_total: { en: "Suggested total", ar: "إجمالي المقترح", ko: "추천 합계" },
@@ -6894,7 +6907,15 @@ async function renderPurchasesPage() {
     const head = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta" style="font-size:11px; margin:-4px 0 8px;">${esc(t("pur_sug_desc"))}</div>`;
     if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; return; }
     const total = rows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
-    box.innerHTML = head + rows.map((r, i) => {
+    // Packs come on the calendar, so each suggestion is spread over the days it
+    // can actually be bought (Now, then each time the pack comes back).
+    const sched = packPlanSchedule(rows);
+    const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
+    const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
+    let nowCost = 0, laterCost = 0, lastOff = 0;
+    rows.forEach((r, i) => sched[i].forEach((x) => { const c = packConvert(r.price * x.count, r.currency || "USD").n; if (x.off <= 0) nowCost += c; else { laterCost += c; lastOff = Math.max(lastOff, x.off); } }));
+    const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_sug_buy_now"))}</span><b>${esc(packFmtLocal(nowCost, rows[0].currency, true, rows[0].price))}</b></div><div><span class="meta">${esc(t("pur_sug_later").replace("{date}", fmtDay(dayOf(lastOff))))}</span><b>${laterCost ? esc(packFmtLocal(laterCost, rows[0].currency, true, rows[0].price)) : "—"}</b></div></div>`;
+    box.innerHTML = head + splitHtml + rows.map((r, i) => {
       const tb = byTitle.get(r.title);
       const names = tb ? packUsedForNames(tb) : [];
       const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * r.count) > 0).slice(0, 6).map((k) => {
@@ -6905,15 +6926,18 @@ async function renderPurchasesPage() {
       return `<div class="pur-item">
         <div class="pur-item-h"><div style="min-width:0;"><b>${esc(r.title)}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats" style="margin-top:6px;">${chips}</div>` : ""}
-        <div class="pur-item-f"><span class="meta">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : "—"}</span>${tb && r.row != null && plainPack(tb) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
+        <div class="pur-when"><span class="meta">${esc(t("pur_sug_when"))}</span>${sched[i].slice(0, 8).map((x) => `<span class="pur-when-c${x.off <= 0 ? " now" : ""}">${esc(whenTxt(x.off))} ×${x.count}</span>`).join("")}${sched[i].length > 8 ? `<span class="meta">+${sched[i].length - 8} ${esc(t("pur_sug_more_dates"))} · ${esc(fmtDay(dayOf(sched[i][sched[i].length - 1].off)))}</span>` : ""}</div>
+        <div class="pur-item-f"><span class="meta">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : "—"}</span>${tb && r.row != null && plainPack(tb) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}${sched[i].length > 1 ? ` (${sched[i].length} ${esc(t("pur_sug_dates"))})` : ""}</button>` : ""}</div>
       </div>`;
     }).join("") + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
       const r = rows[Number(b.dataset.pursug)], tb = byTitle.get(r.title);
       if (!tb) return;
-      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row, count: r.count, date: today, status: "planned" }]);
+      // One "Will buy" line per date the pack can be bought.
+      const s0 = sched[Number(b.dataset.pursug)];
+      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(s0.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned" })));
       savePackPurchases();
-      toast(t("pur_added"));
+      toast(s0.length > 1 ? t("pur_added_dates").replace("{n}", s0.length) : t("pur_added"));
       redraw();
     }));
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
@@ -10793,6 +10817,50 @@ function packGemsCountFor(calcKey) {
 // budgetInvalidate() and whenever the pack tables are reloaded; the key also
 // covers what the labels and gems depend on. Callers must not change them.
 let PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
+// When each suggested purchase can actually be bought: a plan row's count
+// spread over the pack's appearances (perCycle per appearance), from today.
+// Rows of one pack that share its limit (same title, limit and resets) share
+// each appearance. Returns, per row, [{ off (days from today), count }].
+function packPlanSchedule(rows) {
+  const slotsFor = (r) => {
+    const st = packStackInfo(r.reset);
+    if (st) {
+      // Stacked cards: up to `atOnce` can be held at a time, then one more each card length.
+      const a = packParseDay(r.resetDay), start = a ? Math.max(0, Math.round((a - packStartOfToday()) / 86400000)) : 0;
+      const out = [{ off: start, cap: st.atOnce * (r.perCycle || 1) }];
+      for (let k = 1; start + k * st.days <= PACK_HORIZON_DAYS; k++) out.push({ off: start + k * st.days, cap: r.perCycle || 1 });
+      return out;
+    }
+    if (typeof r.reset !== "number" || !(r.reset > 0)) return [{ off: 0, cap: Infinity }];
+    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).map((off) => ({ off, cap: r.perCycle || 1 }));
+  };
+  const out = rows.map(() => []);
+  const pools = new Map();
+  rows.forEach((r, i) => {
+    const k = `${r.title}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`;
+    if (!pools.has(k)) pools.set(k, { slots: slotsFor(r).map((x) => ({ ...x })), idx: [] });
+    pools.get(k).idx.push(i);
+  });
+  pools.forEach((pool) => {
+    // Shared only when the rows fit together in the resets the plan used.
+    const sum = pool.idx.reduce((a, i) => a + rows[i].count, 0), r0 = rows[pool.idx[0]];
+    const shared = pool.idx.length > 1 && Number.isFinite(r0.cycles) && sum <= r0.cycles * (r0.perCycle || 1);
+    pool.idx.forEach((i) => {
+      const slots = shared ? pool.slots : slotsFor(rows[i]);
+      let left = rows[i].count;
+      for (const sl of slots) {
+        if (left <= 0) break;
+        const n = Math.min(left, sl.cap);
+        if (n <= 0) continue;
+        sl.cap -= n; left -= n;
+        const prev = out[i].find((x) => x.off === sl.off);
+        if (prev) prev.count += n; else out[i].push({ off: sl.off, count: n });
+      }
+      if (left > 0) out[i].push({ off: out[i].length ? out[i][out[i].length - 1].off : 0, count: left, over: true });
+    });
+  });
+  return out;
+}
 function packGroupsFor(tables, calcKey) {
   const stripGems = !packGemsCountFor(calcKey);
   if (PACK_GROUPS_CACHE.tables !== PACK_TABLES_CACHE) PACK_GROUPS_CACHE = { tables: PACK_TABLES_CACHE, map: new Map(), perTable: new Map() };
@@ -11270,7 +11338,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -12752,7 +12820,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -12932,7 +13000,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
