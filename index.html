@@ -208,18 +208,19 @@
   /* Budgets: cards flow into columns (masonry) so a tall card never leaves
      a hole beside it; 1 column on phones, 2 on tablets/laptops, 3 on wide
      monitors. */
-  .budget-cols{ columns:1; column-gap:16px; }
-  .budget-cols > .panel{ break-inside:avoid; -webkit-column-break-inside:avoid; margin:0 0 16px; display:block; }
-  @media (min-width:900px){ .budget-cols{ columns:2; } }
-  @media (min-width:1500px){ .budget-cols{ columns:3; } }
-  .t12x-main .budget-cols{ columns:1; }
-  @media (min-width:1500px){ .t12x-main .budget-cols{ columns:2; } }
-  .bud-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); font-size:13px; }
-  .bud-row:first-of-type{ border-top:0; }
-  .bud-row.off{ opacity:.55; }
+  .bud-page{ border-top:1px solid var(--line); }
+  .bud-page:first-of-type{ border-top:0; }
+  .bud-page.off .bud-row, .bud-page.dim .bud-row{ opacity:.6; }
+  .bud-page.open{ background:rgba(255,255,255,.02); border-radius:10px; }
+  .bud-row{ display:flex; align-items:center; gap:8px; padding:8px 4px; font-size:13.5px; }
+  .bud-row .btn{ flex-shrink:0; }
+  .bud-fold{ width:28px; height:28px; flex-shrink:0; border-radius:8px; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; }
+  span.bud-fold{ border:0; }
+  .bud-body{ padding:2px 8px 12px 30px; }
   .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .bud-row-v{ white-space:nowrap; font-size:12.5px; }
+  .bud-row-v{ white-space:nowrap; font-size:13px; }
+  @media (max-width: 560px){ .bud-row{ flex-wrap:wrap; } .bud-row label{ flex:1 1 100%; } .bud-row-v{ margin-inline-start:24px; margin-inline-end:auto; } .bud-body{ padding-left:8px; } }
   .bud-row .linklike{ text-decoration:none; font-size:14px; }
   .budget-wrap{ max-width:1400px; margin:0 auto; }
   /* Current -> target level pairs (T11 / T12): side by side on wide
@@ -518,16 +519,14 @@ input,select,textarea{
   .pk-card{ margin:0; border-radius:16px; }
   .pk-card.pk-open{ grid-column:1 / -1; border-color:var(--ice); }
   .pk-sum-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .pk-sum-h b{ font-size:14px; cursor:pointer; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pk-sum-h b{ font-size:14px; line-height:1.3; cursor:pointer; min-width:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
-  .pk-sum-price{ font-size:19px; font-weight:800; margin:6px 0 2px; }
-  .pk-sum-gives{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
   .pk-open .pk-sum{ padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--line); }
   @media (max-width: 560px){
     .pk-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
     .pk-card{ padding:10px 11px; }
-    .pk-sum-price{ font-size:15px; }
     .pk-sum-f{ flex-wrap:wrap; gap:4px; font-size:10.5px; }
     .pk-sum-f .btn{ padding:3px 10px; }
   }
@@ -3402,7 +3401,6 @@ const T = {
   bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
   bd_of_max: { en: "of max", ar: "من الأقصى", ko: "최대 대비" },
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
-  budgets_details_title: { en: "Details per page", ar: "التفاصيل لكل صفحة", ko: "페이지별 상세" },
   pk_edit: { en: "Edit", ar: "تعديل", ko: "편집" },
   pk_close: { en: "Close", ar: "إغلاق", ko: "닫기" },
   plx_all_troops: { en: "All troops", ar: "كل القوات", ko: "전체 병종" },
@@ -5092,8 +5090,8 @@ async function renderOverview(opts = {}) {
       </div>
     </div>
     ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
-    <div id="troopSections" style="margin-top:16px;"></div>
-    <div id="dashboardRoster" style="margin-top:12px;"></div>
+    <div id="dashboardRoster" style="margin-top:16px;"></div>
+    <div id="troopSections" style="margin-top:12px;"></div>
     ${IS_OWNER ? `<div class="grid g4" id="metricRow" style="margin-top:16px;"></div>` : ""}
   `;
 
@@ -7073,16 +7071,12 @@ async function renderPacksPage() {
           t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
         );
         const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
-        const prices = t.rows.map((r) => parseNum(r.cells[lk.priceCol || 0])).filter((v) => Number.isFinite(v) && v > 0);
-        const hasFree = t.rows.some((r) => /free/i.test(String(r.cells[lk.priceCol || 0] || "")));
-        const priceText = prices.length ? `${hasFree ? "Free–" : ""}$${Math.min(...prices)}${prices.length > 1 && Math.max(...prices) !== Math.min(...prices) ? `–$${Math.max(...prices)}` : ""}` : hasFree ? "Free" : "—";
         const gives = t.columns.filter((_, ci) => ci !== (lk.priceCol || 0)).map((c) => materialDisplayName(c)).filter(Boolean);
         const usedFor = packGroupsChecked(lk.pages) || 0;
         return `
       <div class="panel pk-card${pkOpen ? " pk-open" : ""}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
         <div class="pk-sum">
           <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
-          <div class="pk-sum-price">${esc(priceText)}</div>
           <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
           <div class="pk-sum-f"><span>${esc(window.t("pack_used_for"))} (${usedFor})</span><button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
         </div>
@@ -12434,6 +12428,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
 function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map() }; }
+const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
   if (!dataReady) {
@@ -12535,19 +12530,25 @@ async function renderBudgetsPage(opts = {}) {
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
   const grandMats = {}, grandDeltas = [];
-  const sideRows = []; // Budgets B: one short row per page in the side column
   const cards = pages_.map((pg, i) => {
     const label = packPageLabel(pg.calcKey);
     const grp = packGroupOf(pg.calcKey);
     const inc = included(pg.calcKey);
-    const head = `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} title="${grp && grp.group ? esc(packGroupLabel(grp)) : ""}" /><span style="font-size:14px; font-weight:700;">${grp && grp.group ? `<span class="meta" style="font-size:11px; font-weight:600;">${esc(packGroupLabel(grp))} · </span>` : ""}${esc(label)}</span></label>
-        <button class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}" style="margin-inline-start:auto;">${esc(t("budgets_open_page"))}</button>
+    // One row per page: tick, name, its cost, Open, and ▸ to unfold the
+    // details (materials, pack cost, stat increase) under it.
+    const isOpen = BUDGET_OPEN_PAGES.has(pg.calcKey);
+    const pageRow = (right, body, dim) => `<div class="bud-page${inc ? "" : " off"}${dim ? " dim" : ""}${isOpen ? " open" : ""}" data-budpage="${esc(pg.calcKey)}">
+        <div class="bud-row">
+          <label><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} /><span>${grp && grp.group ? `<span class="meta" style="font-size:11px; font-weight:600;">${esc(packGroupLabel(grp))} · </span>` : ""}${esc(label)}</span></label>
+          <span class="bud-row-v">${right}</span>
+          <button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}">${esc(t("budgets_open_page"))}</button>
+          ${body ? `<button type="button" class="bud-fold" data-budfold="${esc(pg.calcKey)}" aria-label="details">${isOpen ? "&#9662;" : "&#9656;"}</button>` : `<span class="bud-fold"></span>`}
+        </div>
+        ${body ? `<div class="bud-body"${isOpen ? "" : " hidden"}>${body}</div>` : ""}
       </div>`;
-    const sideRow = (right) => sideRows.push(`<div class="bud-row${inc ? "" : " off"}"><label><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} /><span>${esc(label)}</span></label><span class="bud-row-v">${right}</span><button type="button" class="linklike" data-gototab="${esc(BUDGET_PAGES[i].tab)}" title="${esc(t("budgets_open_page"))}">&#8599;</button></div>`);
-    if (pg.missing) { sideRow(`<span class="meta">${esc(t("budgets_open_page"))}</span>`); return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("budgets_open_once"))}</div></div>`; }
+    if (pg.missing) return pageRow(`<span class="meta" style="font-size:11px;">${esc(t("budgets_open_once"))}</span>`, "", true);
     const hasNeed = Object.keys(pg.needFull).some((n) => pg.needFull[n] > 0);
-    if (!hasNeed) { sideRow(`<span style="color:var(--good);">&#10003;</span>`); return `<div class="panel" style="opacity:0.7;">${head}<div class="meta" style="font-size:11px; margin-top:8px; color:var(--good);">${esc(t("budgets_nothing_planned"))}</div></div>`; }
+    if (!hasNeed) return pageRow(`<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>`, "", true);
     if (inc) {
       Object.keys(pg.needStill).forEach((n) => { if (pg.needStill[n] > 0) grandMats[n] = (grandMats[n] || 0) + pg.needStill[n]; });
       pg.deltas.forEach((d) => grandDeltas.push(d));
@@ -12585,20 +12586,16 @@ async function renderBudgetsPage(opts = {}) {
           ${(c.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${c.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
           <div class="meta" style="font-size:10px; margin-top:4px;">${alt.map(esc).join(" &nbsp;&middot;&nbsp; ")}</div></details>`;
     }
-    {
-      const sh = inc && combined.inc.includes(pg.calcKey) && combined.chosen ? (combined.shares[pg.calcKey] || { total: 0, rows: [] }) : null;
-      sideRow(!inc ? "—" : sh ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(sh)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`);
-    }
-    return `<div class="panel" style="${inc ? "" : "opacity:0.55;"}">
-      ${head}
+    const shareOf = inc && combined.inc.includes(pg.calcKey) && combined.chosen ? (combined.shares[pg.calcKey] || { total: 0, rows: [] }) : null;
+    const rowCost = !inc ? "—" : shareOf ? `<b>${packFmtLocal(Math.ceil(packSharesLocal(shareOf)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</b>` : pg.chosen ? `<b>${packFmtLocal(Math.ceil(packPlanLocal(pg.chosen)), pg.chosen.rows[0]?.currency, true, pg.chosen.rows[0]?.price)}</b>` : `<span style="color:var(--danger);">!</span>`;
+    return pageRow(rowCost, `
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
-      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}
-    </div>`;
+      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}`);
   });
 
   if (combined.chosen) {
@@ -12698,12 +12695,10 @@ async function renderBudgetsPage(opts = {}) {
           ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label></div>
             <div class="bud-set" style="margin-top:8px;">${currencyPickerHtml('id="budgetsCurrency"')}</div>
           </div>
-          <div class="t12x-card"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${sideRows.join("")}</div>
         </aside>
         <div class="t12x-main">
           ${summary}
-          <div class="t12x-title" style="margin:16px 0 8px;">${esc(t("budgets_details_title"))}</div>
-          <div class="budget-cols">${cards.join("")}</div>
+          <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${cards.join("")}</div>
         </div>
       </div>
     </div>`;
@@ -12739,6 +12734,14 @@ async function renderBudgetsPage(opts = {}) {
     saveCalcState("pack_target_budgets", { date: "" });
     renderBudgetsPage();
   });
+  content.querySelectorAll("[data-budfold]").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.budfold, box = b.closest("[data-budpage]");
+    const open = !BUDGET_OPEN_PAGES.has(k);
+    if (open) BUDGET_OPEN_PAGES.add(k); else BUDGET_OPEN_PAGES.delete(k);
+    box.classList.toggle("open", open);
+    box.querySelector(".bud-body").hidden = !open;
+    b.innerHTML = open ? "&#9662;" : "&#9656;";
+  }));
   content.querySelectorAll("[data-gototab]").forEach((b) => b.addEventListener("click", () => {
     const btn = document.querySelector(`.topnav-groups [data-tab="${b.dataset.gototab}"]`);
     if (btn) btn.click();
