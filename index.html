@@ -711,6 +711,7 @@ input,select,textarea{
   .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
+  .pk-zone-note{ font-size:12px; line-height:1.45; padding:9px 12px; margin:0 0 12px; border-radius:12px; border:1px solid var(--ice); background:rgba(111,211,242,.07); color:var(--frost); }
   .pk-bud{ display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; }
   .pk-bud input{ width:14px; height:14px; margin:0; }
   .pk-budoff .pk-sum-h b, .pk-budoff .pk-sum-gives{ opacity:.5; }
@@ -3610,6 +3611,7 @@ const T = {
   bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
   bd_of_max: { en: "of max", ar: "من الأقصى", ko: "최대 대비" },
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
+  pk_zone_note: { en: "These pack contents are taken from states in the 600s. Older and newer states can get different amounts, because packs change with state age. Open any pack with Edit to change its amounts to match your state.", ar: "محتويات هذه الحزم مأخوذة من ولايات الـ600. قد تحصل الولايات الأقدم أو الأحدث على كميات مختلفة لأن الحزم تتغير حسب عمر الولاية. افتح أي حزمة بزر تعديل لتغيير كمياتها بما يناسب ولايتك.", ko: "이 팩 구성은 600번대 주 기준입니다. 팩은 주 나이에 따라 바뀌므로 더 오래되거나 새로운 주는 수량이 다를 수 있습니다. 편집으로 팩을 열어 내 주에 맞게 수량을 바꾸세요." },
   pk_tables_n: { en: "{n} tables", ar: "{n} جداول", ko: "표 {n}개" },
   pk_in_budgets: { en: "Count in Budgets", ar: "احتسابها في الميزانيات", ko: "예산에 포함" },
   pk_in_budgets_hint: { en: "Ticked: Budgets can use this pack. Unticked: left out of Budgets and the suggested packs.", ar: "مفعّل: يمكن للميزانيات استخدام هذه الحزمة. غير مفعّل: مستبعدة من الميزانيات والحزم المقترحة.", ko: "체크: 예산에서 이 팩을 사용합니다. 해제: 예산과 추천 팩에서 제외됩니다." },
@@ -7807,6 +7809,7 @@ async function renderPacksPage() {
         ${IS_OWNER ? `<button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>` : ""}
       </div>
     </div>
+    <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
     <div id="packsPriceStrip"></div>
     <div id="packsPageTabs" style="margin-bottom:6px;"></div>
     <div id="packsList"></div>
