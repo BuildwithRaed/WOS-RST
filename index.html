@@ -3980,6 +3980,9 @@ const T = {
   pack_cal_all_week_hidden: { en: "{n} packs are up all week and are hidden", ar: "{n} حزم متاحة طوال الأسبوع ومخفية", ko: "주 내내 열려 있는 패키지 {n}개가 숨겨져 있습니다" },
   pack_cal_show_them: { en: "show them", ar: "أظهرها", ko: "보기" },
   pack_cal_more: { en: "more", ar: "\u0627\u0644\u0645\u0632\u064a\u062f", ko: "\ub354\ubcf4\uae30" },
+  pack_cal_events: { en: "Events", ar: "الفعاليات", ko: "이벤트" },
+  pack_cal_wheel: { en: "Hero wheel", ar: "عجلة الأبطال", ko: "영웅 룰렛" },
+  pack_cal_new_heroes: { en: "New heroes", ar: "أبطال جدد", ko: "새 영웅" },
   pack_cal_today: { en: "today", ar: "\u0627\u0644\u064a\u0648\u0645", ko: "\uc624\ub298" },
   pack_buys_per_reset: { en: "Buys per reset", ar: "\u0645\u0631\u0627\u062a \u0627\u0644\u0634\u0631\u0627\u0621 \u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9 \uad6c\ub9e4 \ud69f\uc218" },
   pack_days_short: { en: "d", ar: " \u064a\u0648\u0645", ko: "\uc77c" },
@@ -6842,11 +6845,16 @@ function packUsedForNames(tb) {
 }
 // New Gen Heroes: which Gen an appearance belongs to, from the person's
 // "last new heroes" date and that Gen's number.
-function packNewGenLabel(start, reset) {
+function packNewGenLabel(start, reset, tableId) {
   const ng = PACK_PURCHASES.newGen || {};
-  const last = packParseDay(ng.last), gen = Math.floor(Number(ng.gen) || 0);
-  if (!last || !gen || !(reset > 0)) return "";
-  return t("pur_gen").replace("{n}", gen + Math.max(0, Math.round((start - last) / 86400000 / reset)));
+  const gen = Math.floor(Number(ng.gen) || 0);
+  if (!gen || !packValidDay(ng.last)) return "";
+  if (tableId != null) {
+    const a = newGenAppearances(tableId, 30).find((x) => Math.abs(x.start - start) < 10 * 86400000);
+    if (a) return t("pur_gen").replace("{n}", gen + a.gen);
+  }
+  const last = packParseDay(ng.last);
+  return reset > 0 ? t("pur_gen").replace("{n}", gen + Math.max(0, Math.round((start - last) / 86400000 / reset))) : "";
 }
 
 // ============================================================
@@ -7094,13 +7102,15 @@ async function renderPurchasesPage() {
       <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>
     ${ngTables.map((tb) => {
       const l = packLinkFor(tb.id);
-      const apps = packAppearances(l.reset, l.resetDay, Number(l.window) || 0, 400).slice(0, 3);
+      const t0 = packStartOfToday();
+      const ngApps = newGenAppearances(tb.id, Number(l.window) || 0).filter((x) => x.start.getTime() + (x.days - 1) * 86400000 >= t0.getTime()).map((x) => ({ ...x, offset: Math.round((x.start - t0) / 86400000) }));
+      const apps = (ngApps.length ? ngApps : packAppearances(l.reset, l.resetDay, Number(l.window) || 0, 400)).slice(0, 3);
       const mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
       // With a "last new heroes" date the pack follows it; otherwise its own date can be set.
       const fromLast = !!packNewGenAnchor(tb.id), off = packNewGenOffset(tb.id);
       return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(tb.title || "")}</b>${!fromLast && mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
         ${fromLast ? `<div class="meta" style="font-size:11px; margin-top:4px;">${esc(off ? t("pur_newgen_after").replace("{n}", Math.round(off / 7)) : t("pur_newgen_with"))}</div>` : `<label class="pur-f" style="margin-top:6px;"><span class="meta">${esc(t("pur_newgen_start"))}</span><span style="display:flex; gap:6px; align-items:center;"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(apps[0] ? packDayKey(apps[0].start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>`}
-        <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
+        <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
       </div>`;
     }).join("")}
   </div>` : "";
@@ -7317,6 +7327,7 @@ const PACK_CAL_COLORS = {
   monthly: ["rgba(224,162,48,.16)", "rgba(224,162,48,.6)", "#f3dcae"],
   daily: ["rgba(95,191,127,.16)", "rgba(95,191,127,.55)", "#c8ecd5"],
   other: ["rgba(167,139,250,.16)", "rgba(167,139,250,.55)", "#ded4fd"],
+  event: ["rgba(240,107,107,.16)", "rgba(240,107,107,.7)", "#f8c9c9"],
 };
 // Chip choices are remembered in this browser. Daily packs would fill every
 // square, and packs that are up the whole week every week say nothing on a
@@ -7401,30 +7412,53 @@ async function renderPackCalendarPage() {
       const kind = packCalKind(l.reset);
       if (PACK_CAL_OFF.has(kind)) return;
       const newGen = packIsNewGen(packLinkForBase(gp.tables[0].id));
-      packAppearances(l.reset, packPlanAnchor(l), l.window, startOff + span).forEach((app) => {
-        // New Gen Heroes packs carry their Gen (from My Purchases).
-        const gen = newGen ? packNewGenLabel(app.start, l.reset) : "";
+      // New Gen Heroes packs follow the generation starts (SvS / KOI hero wheels) and carry their Gen.
+      const t0c = packStartOfToday();
+      const appsList = newGen && newGenBaseDay()
+        ? newGenAppearances(gp.tables[0].id, Number(l.window) || 0).map((x) => ({ start: x.start, offset: Math.round((x.start - t0c) / 86400000), days: x.days })).filter((x) => x.offset <= startOff + span && x.offset + x.days - 1 >= startOff)
+        : packAppearances(l.reset, packPlanAnchor(l), l.window, startOff + span);
+      appsList.forEach((app) => {
+        const gen = newGen ? packNewGenLabel(app.start, l.reset, gp.tables[0].id) : "";
         const width = l.window > 0 ? l.window : 1; // no window set = show the day it arrives
         const a = app.offset - startOff, b = a + width - 1;
         if (b < 0 || a >= span) return;
         for (let w = 0; w < weeks; w++) {
           const ws = w * 7, we = ws + 6;
           if (b < ws || a > we) continue;
-          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind, title: gen ? `${gp.label} · ${gen}` : gp.label, days: width, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
+          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind, keep: newGen, title: gen ? `${gp.label} · ${gen}` : gp.label, days: width, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
         }
       });
     });
+    // Game events (SvS, KOI), their hero wheels and the day new heroes come.
+    if (!PACK_CAL_OFF.has("event")) {
+      const firstDay = new Date(t0.getTime() + startOff * 86400000), lastDay = new Date(firstDay.getTime() + (span - 1) * 86400000);
+      const put = (start, days, title) => {
+        const a = Math.round((start - t0) / 86400000) - startOff, b = a + days - 1;
+        if (b < 0 || a >= span) return;
+        for (let w = 0; w < weeks; w++) {
+          const ws = w * 7, we = ws + 6;
+          if (b < ws || a > we) continue;
+          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind: "event", title, days, count: 1, members: title });
+        }
+      };
+      GAME_EVENTS.forEach((ev) => gameEventStarts(ev, firstDay, lastDay).forEach((st) => put(st, ev.days, ev.name)));
+      heroWheels(firstDay, lastDay).forEach((w) => put(w.day, 1, `🎡 ${t("pack_cal_wheel")} (${w.ev.name})`));
+      const ng = PACK_PURCHASES.newGen || {}, gen0 = Math.floor(Number(ng.gen) || 0), base = newGenBaseDay();
+      if (base) newGenStarts(base, 12).forEach((d, i) => { if (d >= firstDay && d <= lastDay) put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 && packValidDay(ng.last) ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}`); });
+    }
 
 
     const hideAllWeek = PACK_CAL_OFF.has("allweek");
-    const allWeekNames = new Set(segs.filter((x) => x.col === 0 && x.end === 6).map((x) => x.title));
+    // New Gen Heroes bars always stay on the grid, even when up all week.
+    const isAllWeek = (x) => x.col === 0 && x.end === 6 && !x.keep;
+    const allWeekNames = new Set(segs.filter(isAllWeek).map((x) => x.title));
     const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const weeksHtml = Array.from({ length: weeks }, (_, w) => {
       const all = segs.filter((x) => x.week === w);
       // Only a pack covering the whole week moves to the strip; a pack that is
       // up for part of the week keeps its bar on the days it's actually up.
-      const allWeek = hideAllWeek ? [] : all.filter((x) => x.col === 0 && x.end === 6);
-      const dayed = all.filter((x) => !(x.col === 0 && x.end === 6));
+      const allWeek = hideAllWeek ? [] : all.filter(isAllWeek);
+      const dayed = all.filter((x) => !isAllWeek(x));
       const rows = []; // greedy stacking so two packs never sit on top of each other
       dayed.sort((a, b) => a.col - b.col || b.end - a.end).forEach((sg) => {
         let r = rows.find((row) => row.every((x) => sg.col > x.end || sg.end < x.col));
@@ -7495,7 +7529,7 @@ async function renderPackCalendarPage() {
       <div class="panel">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            ${chip("weekly", t("pack_cal_weekly"))}${chip("monthly", t("pack_cal_monthly"))}${chip("daily", t("pack_cal_daily"))}${chip("other", t("pack_cal_other"))}${allWeekNames.size ? chip("allweek", `${t("pack_cal_all_week")} (${allWeekNames.size})`) : ""}
+            ${chip("weekly", t("pack_cal_weekly"))}${chip("monthly", t("pack_cal_monthly"))}${chip("daily", t("pack_cal_daily"))}${chip("other", t("pack_cal_other"))}${chip("event", t("pack_cal_events"))}${allWeekNames.size ? chip("allweek", `${t("pack_cal_all_week")} (${allWeekNames.size})`) : ""}
           </div>
           <div style="display:flex; gap:6px; align-items:center;">
             <button class="btn ghost small" data-calpage="-1" style="padding:3px 10px;">&#8249;</button>
@@ -10474,6 +10508,47 @@ async function savePackLinks() {
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   saveCalcState("packs_links", PACK_LINKS || {});
 }
+// ---- Game events: SvS and King of Icefield (KOI) ----
+// Each comes every 4 weeks for 6 days (Monday to Saturday); day 2 of each
+// has a hero wheel. SvS 5-10 Oct 2026 and KOI 21-26 Sep 2026 were seen in game.
+const GAME_EVENTS = [
+  { key: "svs", name: "SvS", anchor: "2026-10-05", every: 28, days: 6, wheelDay: 2 },
+  { key: "koi", name: "KOI", anchor: "2026-09-21", every: 28, days: 6, wheelDay: 2 },
+];
+// Start days of an event from `from` to `to` (Dates).
+function gameEventStarts(ev, from, to) {
+  const a = packParseDay(ev.anchor), step = ev.every * 86400000, out = [];
+  let k = Math.floor((from - a) / step) - 1;
+  for (;; k++) { const d = new Date(a.getTime() + k * step); if (d > to) break; if (d.getTime() + (ev.days - 1) * 86400000 >= from.getTime()) out.push(d); }
+  return out;
+}
+// Hero wheels between two days: [{ day, ev, start }], in order.
+function heroWheels(from, to) {
+  const out = [];
+  GAME_EVENTS.forEach((ev) => gameEventStarts(ev, new Date(from.getTime() - 7 * 86400000), to).forEach((st) => {
+    const day = new Date(st.getTime() + (ev.wheelDay - 1) * 86400000);
+    if (day >= from && day <= to) out.push({ day, ev, start: st });
+  }));
+  return out.sort((a, b) => a.day - b.day);
+}
+// New Gen Heroes: a generation lasts until 5 hero wheels including 3 SvS
+// ones have passed (about 80 days); the next one starts the Monday after
+// that wheel's week. Returns the start days from `lastKey` on.
+function newGenStarts(lastKey, count) {
+  let cur = packParseDay(lastKey);
+  if (!cur) return [];
+  const out = [cur];
+  while (out.length < count) {
+    const ws = heroWheels(new Date(cur.getTime() + 86400000), new Date(cur.getTime() + 200 * 86400000));
+    let n = 0, svs = 0, hit = null;
+    for (const w of ws) { n++; if (w.ev.key === "svs") svs++; if (n >= 5 && svs >= 3) { hit = w; break; } }
+    if (!hit) break;
+    const monday = new Date(hit.start.getTime() + 7 * 86400000); // the week after that event week
+    cur = new Date(monday.getTime() - ((monday.getUTCDay() + 6) % 7) * 86400000);
+    out.push(cur);
+  }
+  return out;
+}
 function packIsNewGen(l) { return !!l && typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP; }
 // New Gen Heroes packs follow the person's "last new heroes" date (My
 // Purchases): Hero Ascension Training starts the day new heroes come,
@@ -10487,9 +10562,28 @@ function packNewGenOffset(tableId) {
   if (!own || !days.length) return 0;
   return Math.max(0, Math.round((own - Math.min(...days)) / 86400000));
 }
+// The person's "last new heroes" day, else the admin's own New Gen start.
+function newGenBaseDay() {
+  const mine = packValidDay((PACK_PURCHASES.newGen || {}).last);
+  if (mine) return mine;
+  const days = Object.values(PACK_LINKS || {}).filter((l) => l && packIsNewGen(l)).map((l) => packValidDay(l.resetDay)).filter(Boolean).sort();
+  return days[0] || null;
+}
+// This pack's appearances from the generation starts: [{ start, days, gen (0 = the base one) }].
+function newGenAppearances(tableId, win) {
+  const base = newGenBaseDay();
+  if (!base) return [];
+  const off = packNewGenOffset(tableId) * 86400000;
+  return newGenStarts(base, 12).map((g, i) => ({ start: new Date(g.getTime() + off), days: win > 0 ? win : 30, gen: i }));
+}
 function packNewGenAnchor(tableId) {
-  const last = packParseDay(packValidDay((PACK_PURCHASES.newGen || {}).last));
-  return last ? packDayKey(new Date(last.getTime() + packNewGenOffset(tableId) * 86400000)) : null;
+  if (!packValidDay((PACK_PURCHASES.newGen || {}).last) && !newGenBaseDay()) return null;
+  const l = (PACK_LINKS || {})[String(tableId)] || {};
+  const t0 = packStartOfToday();
+  const apps = newGenAppearances(tableId, Number(l.window) || 0);
+  // The one running now, else the next one.
+  const a = apps.find((x) => x.start.getTime() + (x.days - 1) * 86400000 >= t0.getTime());
+  return a ? packDayKey(a.start) : null;
 }
 function packValidDay(v) { return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null; }
 // Each visitor's own pack dates ({ tableId: "yyyy-mm-dd" }), saved to their account.
