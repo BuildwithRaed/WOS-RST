@@ -9326,6 +9326,10 @@ async function renderInventory() {
   const bp = saved || {};
   // Heroes whose shards this person tracks (they add them one by one).
   const myHeroes = Array.isArray(savedHeroes) ? savedHeroes.slice() : [];
+  // The Dashboard roster heroes are always shown too (their shards and widgets
+  // are what the Backpack card and Budgets plan for).
+  const rosterNames = ["Infantry", "Lancers", "Marksman"].map((k) => { const e = (rosterSaved || {})[k]; const id = !e ? "" : typeof e === "string" ? e : e.heroId || ""; const h = id && (heroes || []).find((x) => x.id === id); return h ? h.name : ""; }).filter(Boolean);
+  const shownHero = (name) => myHeroes.includes(name) || rosterNames.includes(name);
   const groups = backpackItems();
   // Each added hero's own shards (saved as "<hero name> Shards"), with an
   // "Add hero" tile per rarity.
@@ -9333,7 +9337,7 @@ async function renderInventory() {
   const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
     title: t(key), heroShards: true, rarity,
     all: (heroes || []).filter((h) => h.rarity === rarity),
-    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }]
+    items: (heroes || []).filter((h) => h.rarity === rarity && shownHero(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }]
       // Mythic heroes also have widgets (their Exclusive Gear), saved as "<hero> Widgets".
       .concat(rarity === "Legendary" ? [{ name: `${h.name} Widgets`, icon: HERO_ITEM_ICON.widget, face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity, widget: true }] : [])),
   })).filter((g) => g.all.length);
@@ -9403,7 +9407,7 @@ async function renderInventory() {
     if (!plan.rows.length) return `<div class="bpsh"><div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b></div><div class="meta" style="font-size:12px;">${esc(t("bp_sh_none"))}</div>${notOutLine}</div>`;
     const n = (v) => Math.round(v).toLocaleString();
     const rowsHtml = plan.rows.map((r) => {
-      const tracked = myHeroes.includes(r.hero.name);
+      const tracked = shownHero(r.hero.name);
       const pctHave = r.need ? Math.min(100, ((r.own + r.fromGeneral) / r.need) * 100) : 100;
       return `<div class="bpsh-row">
         <div class="bpsh-av">${r.hero.image_url ? `<img src="${esc(r.hero.image_url)}" alt="" loading="lazy" />` : ""}</div>
@@ -9471,7 +9475,7 @@ async function renderInventory() {
     const addEl = e.target.closest("[data-bpaddhero]");
     if (addEl) {
       const g = heroGroups.find((x) => x.rarity === addEl.dataset.bpaddhero);
-      const left = g.all.filter((h) => !myHeroes.includes(h.name));
+      const left = g.all.filter((h) => !shownHero(h.name));
       const modal = openModal(`<div class="modal-box" style="max-width:520px; max-height:80vh; overflow-y:auto;">
           <h2 style="margin:0 0 4px; font-size:16px;">${esc(g.title)}</h2>
           <p class="desc" style="margin:0 0 10px;">${esc(t("backpack_pick_hero"))}</p>
@@ -9500,11 +9504,11 @@ async function renderInventory() {
     const ic = bpIcon(it);
     const title = it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : materialDisplayName(name);
     const modal = openModal(`<div class="modal-box" style="max-width:300px; text-align:center;">
-        ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:${it.hero ? "cover; border-radius:10px" : "contain"};" />` : ""}
+        ${ic ? `<img src="${esc(ic)}" alt="" style="width:64px; height:64px; object-fit:contain;" />` : ""}
         <h2 style="margin:6px 0 10px; font-size:16px;">${esc(title)}</h2>
         <input id="bpQty" type="number" min="0" inputmode="numeric" value="${Number(bp[name]) || ""}" placeholder="0" style="width:100%; text-align:center; font-size:18px;" />
         <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
-          ${it.heroKey ? `<button class="btn ghost" type="button" id="bpRemove" style="margin-inline-end:auto; color:var(--danger);">${esc(t("backpack_remove_hero"))}</button>` : ""}
+          ${it.heroKey && !rosterNames.includes(it.heroKey) ? `<button class="btn ghost" type="button" id="bpRemove" style="margin-inline-end:auto; color:var(--danger);">${esc(t("backpack_remove_hero"))}</button>` : ""}
           <button class="btn ghost" type="button" id="bpCancel">${esc(t("cancel"))}</button>
           <button class="btn" type="button" id="bpSave">${esc(t("save"))}</button>
         </div></div>`);
@@ -15070,7 +15074,7 @@ function noteHeroImages(heroes) { (heroes || []).forEach((h) => { if (h && h.nam
 // A hero's own shards / widgets show the item (the rarity's shard, the widget
 // box), with the hero's face in the corner.
 const HERO_ITEM_ICON = {
-  widget: "icons/widget-box.png",
+  widget: "icons/hero-widgets.png",
   shard: (rarity) => BP_SHARD_ICONS[HERO_GENERAL_SHARD[rarity] || "Mythic General Hero Shard"],
 };
 // 🧩 / ⚙ next to a hero's picture, so shards and widgets of one hero differ.
