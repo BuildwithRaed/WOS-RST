@@ -3632,6 +3632,8 @@ const T = {
   bpw_desc: { en: "Every hero's widgets in one place. Type how many you have, remove a hero, or add one.", ar: "أدوات كل الأبطال في مكان واحد. اكتب ما لديك، أو أزل بطلاً، أو أضف واحداً.", ko: "모든 영웅의 위젯을 한곳에서. 보유 수를 입력하거나 영웅을 빼거나 추가하세요." },
   bpw_add: { en: "Add a hero's widgets", ar: "أضف أدوات بطل", ko: "영웅 위젯 추가" },
   bpw_gen_in: { en: "✓ Already in the box", ar: "✓ موجود في الصندوق", ko: "✓ 이미 상자에 있음" },
+  wcost_none: { en: "no pack", ar: "لا توجد حزمة", ko: "팩 없음" },
+  wcost_unsold: { en: "(+{n} not sold)", ar: "(+{n} غير متاح)", ko: "(+{n} 판매 안 함)" },
   bpw_gen_row: { en: "{g} widgets", ar: "أدوات {g}", ko: "{g} 위젯" },
   bpw_any_hero: { en: "any hero of this Gen", ar: "لأي بطل من هذا الجيل", ko: "이 세대 아무 영웅" },
   bpw_one_hero: { en: "this hero only", ar: "لهذا البطل فقط", ko: "이 영웅 전용" },
@@ -3715,7 +3717,7 @@ const T = {
   bp_wd_enough: { en: "Enough for 10", ar: "يكفي للمستوى 10", ko: "10까지 충분" },
   bp_wd_reach: { en: "You can reach level {n} now", ar: "يمكنك الوصول للمستوى {n} الآن", ko: "지금 {n}레벨까지 가능" },
   bp_wd_total: { en: "Widgets short: {n} ≈ {cost}", ar: "الأدوات الناقصة: {n} ≈ {cost}", ko: "부족한 위젯: {n} ≈ {cost}" },
-  bp_wd_note: { en: "Widgets: 5, 10 … 50 per level (275 to reach 10), $4.99 for 5; widget level from the roster.", ar: "الأدوات: 5، 10 … 50 لكل مستوى (275 للوصول إلى 10)، 4.99$ لكل 5؛ مستوى الأداة من التشكيلة.", ko: "위젯: 레벨당 5, 10 … 50개(10까지 275개), 5개에 $4.99; 위젯 레벨은 로스터 기준." },
+  bp_wd_note: { en: "Widgets: 5, 10 … 50 per level (275 to reach 10); widget level from the roster. Prices are the cheapest packs, same as Budgets → Hero shards & widgets.", ar: "الأدوات: 5، 10 … 50 لكل مستوى (275 للوصول إلى 10)؛ مستوى الأداة من التشكيلة. الأسعار هي أرخص الحزم، كما في الميزانيات ← شظايا الأبطال والأدوات.", ko: "위젯: 레벨당 5, 10 … 50개(10까지 275개); 위젯 레벨은 로스터 기준. 가격은 예산 → 영웅 조각 · 위젯과 같은 가장 싼 팩 기준." },
   rc_wd_short: { en: "⚙ {n} short · {cost}", ar: "⚙ ينقص {n} · {cost}", ko: "⚙ {n} 부족 · {cost}" },
   rc_wd_enough: { en: "⚙ enough for 10", ar: "⚙ يكفي للمستوى 10", ko: "⚙ 10까지 충분" },
   bp_sh_title: { en: "Roster heroes: shards & widgets needed", ar: "أبطال التشكيلة: الشظايا والأدوات المطلوبة", ko: "로스터 영웅: 필요한 조각 및 위젯" },
@@ -5698,7 +5700,7 @@ async function renderOverview(opts = {}) {
               ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>` : ""}
-              ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}${sh.wShort ? ` · ≈ ${packFmtMoney(sh.wCost, "USD", false)}` : ""}`)}">${esc(sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).replace("{cost}", packFmtMoney(sh.wCost, "USD", true)) : wdTxt.enough)}</div>` : ""}
+              ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).join("<br>") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
@@ -5765,6 +5767,7 @@ async function renderOverview(opts = {}) {
           });
         });
       });
+      fillWidgetCosts(rosterEl);
       // Clicking the portrait opens a picker grid of that class's heroes.
       rosterEl.querySelectorAll("[data-rosterpick]").forEach((box) => {
         box.addEventListener("click", () => {
@@ -9307,6 +9310,39 @@ const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const WIDGET_PACK = { count: 5, price: 4.99 };
 function widgetNeedFrom(level) { let n = 0; for (let k = Math.max(0, level) + 1; k <= 10; k++) n += WIDGET_LEVEL_COST[k]; return n; }
 function widgetCostFor(count) { return count > 0 ? Math.ceil(count / WIDGET_PACK.count) * WIDGET_PACK.price : 0; }
+// Widget prices on the Backpack card and the roster cards come from the same
+// planner as Budgets' "Hero shards & widgets" (its packs, trades, free points
+// and the Backpack), worked out after the page is drawn. `need` is the hero's
+// full need (owned widgets are taken off inside); "*" = every hero together.
+const HERO_WCOST = new Map();
+function widgetCostSpan(hero, need) { return `<span data-wcost="${esc(hero)}|${esc(String(need))}">…</span>`; }
+function heroWidgetCost(hero, need) {
+  const key = `${hero}|${need}`;
+  if (!HERO_WCOST.has(key)) HERO_WCOST.set(key, (async () => {
+    const totals = {};
+    if (hero === "*") String(need).split(",").forEach((x) => { const i = x.lastIndexOf(":"); if (i > 0) totals[`${x.slice(0, i)} Widgets`] = Number(x.slice(i + 1)) || 0; });
+    else totals[`${hero} Widgets`] = Number(need) || 0;
+    let days = null;
+    if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.round((d - packStartOfToday()) / 86400000); }
+    await Promise.all([ensurePackTables(), ensureTradeRates(), ensurePetMarksState()]);
+    const pg = await budgetForPage("hero_shards", days, { groups: [{ label: null, totals }] });
+    const unsold = Object.values((pg.viaTrades && pg.viaTrades.uncovered) || {}).reduce((a, v) => a + (Number(v) || 0), 0);
+    const left = Object.values(pg.needStill || {}).reduce((a, v) => a + (Number(v) || 0), 0);
+    return { cost: pg.chosen ? packPlanLocal(pg.chosen) : 0, cur: pg.chosen && pg.chosen.rows[0] ? pg.chosen.rows[0].currency : "USD", unsold: Math.round(unsold), none: left > 0 && !pg.chosen };
+  })().catch(() => null));
+  return HERO_WCOST.get(key);
+}
+function fillWidgetCosts(root) {
+  if (!root) return;
+  root.querySelectorAll("[data-wcost]").forEach((el) => {
+    const [hero, need] = el.dataset.wcost.split("|");
+    heroWidgetCost(hero, need).then((r) => {
+      if (!el.isConnected) return;
+      if (!r || r.none) { el.textContent = t("wcost_none"); return; }
+      el.textContent = packFmtLocal(Math.ceil(r.cost), r.cur, true, 4.99) + (r.unsold ? ` ${t("wcost_unsold").replace("{n}", r.unsold.toLocaleString())}` : "");
+    });
+  });
+}
 function heroStepText(step) { return `${Math.floor(step / 6)}★${step < 30 && step % 6 ? ` ${step % 6}/6` : ""}`; }
 const BP_CHEST_ICONS = {
   "Resource Chest": "icons/item_icon_100091.png",
@@ -9490,7 +9526,7 @@ async function renderInventory() {
           <div class="bpsh-sub">${r.short ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.short)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}<span class="meta">${r.reach > r.step ? esc(t("bp_sh_reach").replace("{s}", heroStepText(r.reach))) : esc(t("bp_sh_next").replace("{n}", n(r.next)))}</span></div>`}
           ${r.hasWidget ? `<div class="bpsh-wid"><span class="bpsh-wid-k">&#9881; ${esc(t("widget_short"))} ${r.wLevel}${r.wLevel < 10 ? " → 10" : ""}</span>${r.wLevel >= 10 ? `<span class="bpsh-ok">${esc(t("bp_wd_maxed"))}</span>` : `
             <span>${esc(t("bp_sh_need"))} <b>${n(r.wNeed)}</b></span><span>${esc(t("bp_wd_own"))} <b>${n(r.wOwn)}</b></span>
-            ${r.wShort ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.wShort)))} ≈ ${esc(packFmtMoney(r.wCost, "USD", false))}</span>` : `<span class="bpsh-ok">${esc(t("bp_wd_enough"))}</span>`}
+            ${r.wShort ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.wShort)))} ≈ ${widgetCostSpan(r.hero.name, r.wNeed)}</span>` : `<span class="bpsh-ok">${esc(t("bp_wd_enough"))}</span>`}
             ${r.wReach > r.wLevel ? `<span class="meta">${esc(t("bp_wd_reach").replace("{n}", r.wReach))}</span>` : ""}`}</div>` : ""}
         </div>
       </div>`;
@@ -9502,7 +9538,7 @@ async function renderInventory() {
     return `<div class="bpsh">
       <div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b>${totalShort ? `<span class="bpsh-short">${esc(t("bp_sh_total_short").replace("{n}", n(totalShort)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}</div>
       <div class="bpsh-rows">${rowsHtml}</div>
-      <div class="bpsh-foot">${genLine}${wShortAll ? `<span class="bpsh-gen">&#9881; ${esc(t("bp_wd_total").replace("{n}", n(wShortAll)).replace("{cost}", packFmtMoney(widgetCostFor(wShortAll), "USD", false)))}</span>` : ""}</div>
+      <div class="bpsh-foot">${genLine}${wShortAll ? `<span class="bpsh-gen">&#9881; ${t("bp_wd_total").replace("{n}", n(wShortAll)).split("{cost}").map(esc).join(widgetCostSpan("*", plan.rows.filter((r) => r.wShort > 0).map((r) => `${r.hero.name}:${r.wNeed}`).join(",")))}</span>` : ""}</div>
       ${notOutLine}
       <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("bp_sh_note"))} ${esc(t("bp_wd_note"))}</div>
     </div>`;
@@ -9523,6 +9559,7 @@ async function renderInventory() {
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); }, tabCounts);
   drawGroups();
   // "Track shards": adds that hero's own shards tile to the Backpack.
+  fillWidgetCosts(document.getElementById("bpShards"));
   document.getElementById("bpShards").addEventListener("click", (e) => {
     const b = e.target.closest("[data-bpshtrack]");
     if (!b || myHeroes.includes(b.dataset.bpshtrack)) return;
@@ -14373,7 +14410,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; PUR_SUGGEST = null; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { BUDGET_DATA = null; PUR_SUGGEST = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 // My Purchases: the Budgets packs plan (what else to buy), worked out the
 // same way the Budgets page does; reused from Budgets when it's ready.
 let PUR_SUGGEST = null; // { key, promise | plan }
