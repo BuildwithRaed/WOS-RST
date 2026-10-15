@@ -603,6 +603,10 @@ input,select,textarea{
   .bp-tile.bp-add .bp-ph{ font-size:26px; color:var(--ice); }
   .bp-tile.bp-hero img{ width:40px; height:40px; object-fit:cover; border-radius:8px; border:2px solid var(--line); }
   .bp-tile.bp-legendary img{ border-color:#e8913a; }
+  .bp-heroic{ position:relative; width:42px; height:42px; display:block; }
+  .bp-tile.bp-hero .bp-heroic img.bp-item{ width:42px; height:42px; object-fit:contain; border:0; border-radius:0; }
+  .bp-tile.bp-hero .bp-heroic img.bp-face{ position:absolute; inset-inline-end:-8px; bottom:-4px; width:22px; height:22px; border-radius:50%; object-fit:cover; border-width:2px; }
+  .bud-mat img.bud-face{ width:18px; height:18px; border-radius:50%; object-fit:cover; margin-inline-start:-12px; margin-top:12px; border:1.5px solid var(--panel); }
   .bp-tile.bp-epic img{ border-color:#a46ae0; }
   .bp-tile.bp-rare img{ border-color:#4a9be8; }
   /* T12 Research layout: overview column + troop column */
@@ -9287,7 +9291,7 @@ function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
-  if (hm && HERO_IMG_BY_NAME[hm[1]]) return HERO_IMG_BY_NAME[hm[1]];
+  if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
   if (BP_CHEST_ICONS[name]) return BP_CHEST_ICONS[name];
   if (BP_SHARD_ICONS[name]) return BP_SHARD_ICONS[name];
@@ -9329,9 +9333,9 @@ async function renderInventory() {
   const heroGroups = [["Legendary", "backpack_mythic_heroes"], ["Epic", "backpack_epic_heroes"], ["Rare", "backpack_rare_heroes"]].map(([rarity, key]) => ({
     title: t(key), heroShards: true, rarity,
     all: (heroes || []).filter((h) => h.rarity === rarity),
-    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }]
+    items: (heroes || []).filter((h) => h.rarity === rarity && myHeroes.includes(h.name)).flatMap((h) => [{ name: `${h.name} Shards`, icon: HERO_ITEM_ICON.shard(rarity), face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity }]
       // Mythic heroes also have widgets (their Exclusive Gear), saved as "<hero> Widgets".
-      .concat(rarity === "Legendary" ? [{ name: `${h.name} Widgets`, icon: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity, widget: true }] : [])),
+      .concat(rarity === "Legendary" ? [{ name: `${h.name} Widgets`, icon: HERO_ITEM_ICON.widget, face: h.image_url || "", hero: dataName(h.name), heroKey: h.name, rarity, widget: true }] : [])),
   })).filter((g) => g.all.length);
   const generalIdx = groups.findIndex((g) => g.title === "Hero Shards");
   if (generalIdx !== -1) groups[generalIdx].heroShards = true;
@@ -9354,8 +9358,7 @@ async function renderInventory() {
   const tile = (it, sp, kind) => {
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
     return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : label)}">
-      ${it.widget ? `<span class="bp-size bp-wid">&#9881; ${esc(t("widget_short"))}</span>` : ""}
-      ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
+      ${it.hero && it.face ? `<span class="bp-heroic"><img class="bp-item" src="${esc(ic)}" alt="" loading="lazy" /><img class="bp-face" src="${esc(it.face)}" alt="" loading="lazy" /></span>` : ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
       ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : /Lv\.\d/.test(it.name) ? `<span class="bp-size">${esc(/Lv\.\d/.exec(it.name)[0])}</span>` : ""}
       ${/\(protected\)$/.test(it.name) ? `<span class="bp-shield" title="Protected">&#128737;</span>` : ""}
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
@@ -11123,6 +11126,7 @@ async function ngHeroTables() {
   const base = newGenBaseDay(), gen0 = newGenGen();
   if (!base || !gen0) return [];
   const heroes = await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []);
+  noteHeroImages(heroes);
   const t0 = packStartOfToday(), day = 86400000, out = [];
   newGenStarts(base, 5).forEach((start, k) => {
     const gen = gen0 + k;
@@ -15061,16 +15065,22 @@ const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", resea
 const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
 // Picture for an item name (chests, custom pack items, materials).
 // Hero pictures by name, for "<hero> Shards" / "<hero> Widgets" items (filled when the hero list loads).
-const HERO_IMG_BY_NAME = {};
-function noteHeroImages(heroes) { (heroes || []).forEach((h) => { if (h && h.name && h.image_url) HERO_IMG_BY_NAME[h.name] = h.image_url; }); return heroes; }
+const HERO_IMG_BY_NAME = {}, HERO_RARITY_BY_NAME = {};
+function noteHeroImages(heroes) { (heroes || []).forEach((h) => { if (h && h.name && h.image_url) { HERO_IMG_BY_NAME[h.name] = h.image_url; HERO_RARITY_BY_NAME[h.name] = h.rarity; } }); return heroes; }
+// A hero's own shards / widgets show the item (the rarity's shard, the widget
+// box), with the hero's face in the corner.
+const HERO_ITEM_ICON = {
+  widget: "icons/widget-box.png",
+  shard: (rarity) => BP_SHARD_ICONS[HERO_GENERAL_SHARD[rarity] || "Mythic General Hero Shard"],
+};
 // 🧩 / ⚙ next to a hero's picture, so shards and widgets of one hero differ.
 function heroItemMark(name) {
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
-  return hm && HERO_IMG_BY_NAME[hm[1]] ? `<small style="font-size:11px;">${hm[2] === "Widgets" ? "&#9881;" : "&#129513;"}</small>` : "";
+  return hm && HERO_IMG_BY_NAME[hm[1]] ? `<img class="bud-face" src="${esc(HERO_IMG_BY_NAME[hm[1]])}" alt="" loading="lazy" />` : "";
 }
 function materialIconSrc(name) {
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
-  if (hm && HERO_IMG_BY_NAME[hm[1]]) return HERO_IMG_BY_NAME[hm[1]];
+  if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
   const custom = packCustomResource(name), lower = String(name).toLowerCase();
   const key = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
