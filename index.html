@@ -307,8 +307,6 @@
   .pur-t-step i{ font-style:normal; min-width:16px; text-align:center; font-weight:700; }
   .pur-t-tick{ width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background:none; color:#0f141b; cursor:pointer; padding:0; font-weight:800; }
   .pur-t-tick.on{ background:var(--ice); border-color:var(--ice); }
-  .pur-t-cell{ background:none; border:1px dashed var(--line); color:var(--frost); border-radius:6px; padding:2px 8px; cursor:pointer; font:inherit; }
-  .pur-t-cell.on{ border:1px solid var(--ice); background:rgba(108,199,230,.15); font-weight:700; }
   .pur-t td.pur-t-pk{ white-space:normal; width:100%; }
   .pur-t-picks3{ display:flex; flex-wrap:wrap; gap:4px; }
   .pur-t-sel{ font-size:11.5px; padding:4px 6px; flex:1 1 150px; min-width:0; }
@@ -4274,7 +4272,7 @@ const T = {
   pur_tbl_price: { en: "Price", ar: "السعر", ko: "가격" },
   pur_tbl_hint_rows: { en: "Use − / + on each row you'll buy, then Add.", ar: "استخدم − / + على كل صف ستشتريه ثم أضف.", ko: "구매할 행마다 − / +를 누른 뒤 추가하세요." },
   pur_tbl_hint_ladder: { en: "Bought in order: tick the last tier you'll buy (all tiers before it are included).", ar: "يُشترى بالترتيب: حدد آخر مستوى ستشتريه (تُحسب كل المستويات قبله).", ko: "순서대로 구매: 마지막으로 살 단계를 체크하세요(이전 단계 포함)." },
-  pur_tbl_hint_cols: { en: "Tap the item you'll take in each tier.", ar: "اضغط العنصر الذي ستأخذه في كل مستوى.", ko: "각 단계에서 받을 아이템을 누르세요." },
+  pur_tbl_hint_opt: { en: "Choose what you take in each row.", ar: "اختر ما تأخذه في كل صف.", ko: "각 행에서 받을 것을 고르세요." },
   pur_tbl_items_n: { en: "Your {n} items", ar: "عناصرك الـ {n}", ko: "내 아이템 {n}개" },
   pur_tbl_item_n: { en: "Item {n}", ar: "العنصر {n}", ko: "아이템 {n}" },
   pur_tbl_hint_pick: { en: "Choose your {n} items in each row.", ar: "اختر عناصرك الـ {n} في كل صف.", ko: "각 행에서 아이템 {n}개를 고르세요." },
@@ -6850,13 +6848,12 @@ function packNewGenLabel(start, reset) {
 // (New Gen Heroes, weekly cards).
 // ============================================================
 // ---- My Purchases: pick packs straight from a pack's table ----
-// Shows the pack's table in a pop-up. Depending on the pack:
-//   rows    - tap - / + on a row (or, for a buy-in-order pack, tap the last
-//             tier you'll buy: everything up to it is picked)
-//   pick    - "pick N items" packs (Mix & Match): each price row has N
-//             dropdowns, one per item you pick in that row
-//   cols    - one item per tier (the columns are the options): tap the cell
-//             you'll take in each tier
+// Shows the pack in a pop-up, one line per price:
+//   - plain packs: − / + per price, or (bought in order) tick the last tier
+//   - packs with options: a dropdown in each price row for what you take
+//     there: N dropdowns for "pick N items" packs (Mix & Match), one for
+//     packs whose tables are the options (Myriad Bazaar, Benefit Cards…) and
+//     for packs whose columns are the options
 // "Add" saves the picks with the form's date and status.
 // A plan title without its category ("Weekly/Monthly Calendar Packs · Mix & Match" -> "Mix & Match").
 function purPackName(title, tables) {
@@ -6868,87 +6865,102 @@ function purTablePopup(tb, opts) {
   const link = packLinkFor(tb.id);
   const cols = packEffectiveCols(tb);
   const pc = link.priceCol || 0;
-  const rows = (tb.rows || []).map((r, ri) => ({ ri, cells: r.cells || [] })).filter((r) => packParseNum(r.cells[pc]) > 0);
-  if (!rows.length) { toast(t("pur_tbl_empty")); return; }
-  const mode = link.pickCols > 0 ? "pick" : link.colOptions ? "cols" : "rows";
-  const choiceType = !!(link.option || link.pickCols > 0 || link.colOptions);
+  const all = PACK_TABLES_CACHE || [];
+  const mode = link.pickCols > 0 ? "pick" : link.colOptions ? "cols" : link.option ? "set" : "rows";
+  const choiceType = mode !== "rows";
   const freeSteps = link.linkSet ? !!packLinkFor(link.linkSet).freeSteps : false;
-  const ladder = mode === "pick" ? !!link.pickOrder : mode === "cols" ? true : (link.option ? !freeSteps : !!link.sequential);
-  const optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && cols[ci] && cols[ci] !== "Gems");
-  const showCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci === pc || !packIsNonResourceColumn(tb.columns[ci]));
-  const price = (r) => packParseNum(r.cells[pc]);
-  const colGive = (r, ci) => { const out = {}; const q = packParseNum(r.cells[ci]) * packColMultiplier(link, ci); if (q > 0 && cols[ci]) { const c = packBundleContents(cols[ci]); Object.keys(c).forEach((n) => { out[n] = (out[n] || 0) + q * c[n]; }); } return out; };
-  const add = (a, b, k) => { Object.entries(b).forEach(([n, v]) => { a[n] = (a[n] || 0) + v * (k == null ? 1 : k); }); return a; };
-  const offerOf = new Map(packOffersFor(tb, true).map((o) => [o.row, o]));
+  const ladder = mode === "pick" ? !!link.pickOrder : mode === "cols" ? true : mode === "set" ? !freeSteps : !!link.sequential;
   const money = (v) => packFmtMoney(v, link.currency);
+  const add = (a, b, k) => { Object.entries(b || {}).forEach(([n, v]) => { a[n] = (a[n] || 0) + v * (k == null ? 1 : k); }); return a; };
   const colName = (ci) => (cols[ci] ? materialDisplayName(cols[ci]) : String(tb.columns[ci] || ""));
-  // state
-  const S = { counts: {}, upTo: -1, rowPicks: {}, cellPick: {} };
-  rows.forEach((r) => {
-    if (mode === "cols") S.cellPick[r.ri] = optCols[0];
-    if (mode === "pick") S.rowPicks[r.ri] = Array.from({ length: link.pickCols }, () => optCols[0]);
-  });
-  // "2× Fire Crystal + 1× Construction Speedup 1h" for one row's picks.
-  const picksText = (ri) => { const cnt = {}; (S.rowPicks[ri] || []).forEach((ci) => { cnt[ci] = (cnt[ci] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([ci, k]) => `${k}× ${colName(Number(ci))}`).join(" + "); };
-  const rowGives = (r) => {
-    if (mode === "pick") { const g = {}; (S.rowPicks[r.ri] || []).forEach((ci) => add(g, colGive(r, ci))); return g; }
-    if (mode === "cols") return colGive(r, S.cellPick[r.ri]);
-    const o = offerOf.get(r.ri); return o ? { ...o.gives } : {};
-  };
+  const colGive = (cells, ci) => { const out = {}; const q = packParseNum(cells[ci]) * packColMultiplier(link, ci); if (q > 0 && cols[ci]) { const c = packBundleContents(cols[ci]); Object.keys(c).forEach((n) => { out[n] = (out[n] || 0) + q * c[n]; }); } return out; };
+  const short = (g) => Object.entries(g || {}).filter(([n]) => n !== "Gems").slice(0, 2).map(([n, v]) => `${/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v)} ${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}`).join(", ");
+  // Rows: { ri, price, max, opts: [{ name, label, gives }], n (dropdowns), gives (plain) }
+  let R = [];
+  const optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && cols[ci] && cols[ci] !== "Gems");
+  let defSel = 0;
+  if (mode === "set") {
+    // The option tables: a linked set, or the option packs of the same category.
+    let members = link.linkSet ? packLinkSetMembers(link.linkSet) : all.filter((x) => { const l = packLinkFor(x.id); return l.option && !l.linkSet && (l.group || "") === (link.group || ""); });
+    if (!members.some((x) => String(x.id) === String(tb.id))) members = [tb].concat(members);
+    const tags = link.linkSet ? packLinkSetTags(members) : members.map(packOptionTag);
+    const offs = members.map((m) => packOffersFor(m, true));
+    const tiers = Math.min(...offs.map((o) => o.length));
+    defSel = Math.max(0, members.findIndex((x) => String(x.id) === String(tb.id)));
+    for (let k = 0; k < tiers; k++) {
+      const o0 = offs[defSel][k];
+      R.push({ ri: o0.row, price: o0.price, max: Number((link.rowMax || {})[o0.row]) || 0, n: 1, opts: members.map((m, mi) => ({ name: tags[mi], label: `${tags[mi]}${short(offs[mi][k].gives) ? " · " + short(offs[mi][k].gives) : ""}`, gives: offs[mi][k].gives })) });
+    }
+  } else {
+    const offerOf = new Map(packOffersFor(tb, true).map((o) => [o.row, o]));
+    (tb.rows || []).forEach((r, ri) => {
+      const cells = r.cells || [], price = packParseNum(cells[pc]);
+      if (!(price > 0)) return;
+      const base = { ri, price, max: Number((link.rowMax || {})[ri]) || 0 };
+      if (mode === "rows") { const o = offerOf.get(ri); R.push({ ...base, n: 0, opts: [], gives: o ? o.gives : {} }); return; }
+      const ops = optCols.map((ci) => ({ name: colName(ci), label: `${colName(ci)} · ${String(cells[ci] == null ? "" : cells[ci])}`, gives: colGive(cells, ci) })).filter((o) => Object.keys(o.gives).length);
+      if (ops.length) R.push({ ...base, n: mode === "pick" ? link.pickCols : 1, opts: ops });
+    });
+  }
+  if (!R.length) { toast(t("pur_tbl_empty")); return; }
+  // The pack's name, the same one the suggestions use.
+  const g0 = choiceType ? packGroupsFor(all, "__purchases").find((g) => (g.tables || []).includes(String(tb.id))) : null;
+  let name = (g0 && g0.offers && g0.offers[0] && purPackName(g0.offers[0].tableTitle, all)) || opts.name || tb.title || "";
+  // Option sets end with their option list ("… · Chief & Charms / Heroes"); the choice shows that already.
+  if (mode === "set" && name.includes(" · ")) name = name.slice(0, name.lastIndexOf(" · "));
+  // state: S.sel[i] = chosen option per dropdown of row i
+  const S = { counts: {}, upTo: -1, sel: R.map((r) => Array.from({ length: r.n }, () => (mode === "set" ? defSel : 0))) };
+  const rowGives = (i) => (R[i].n ? S.sel[i].reduce((g, oi) => add(g, R[i].opts[oi].gives), {}) : { ...R[i].gives });
+  const rowText = (i) => { const cnt = {}; S.sel[i].forEach((oi) => { const nm = R[i].opts[oi].name; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, k]) => (R[i].n > 1 ? `${k}× ${nm}` : nm)).join(" + "); };
   // What will be added: [{ row, count, label, price, gives }]
   const lines = () => {
     if (ladder) {
       if (S.upTo < 0) return [];
-      const upto = rows.filter((r) => r.ri <= S.upTo);
-      const pr = upto.reduce((a, r) => a + price(r), 0), g = {};
-      upto.forEach((r) => add(g, rowGives(r)));
-      const k = upto.length;
-      const pt = mode === "pick" ? upto.map((r) => picksText(r.ri)) : [];
-      const what = mode === "pick" ? (pt.every((x) => x === pt[0]) ? ` · ${t("pk_each_step")}: ${pt[0]}` : ` · ${upto.map((r, i) => `${money(price(r))}: ${pt[i]}`).join("; ")}`) : mode === "cols" ? ` · ${upto.map((r) => colName(S.cellPick[r.ri]).split(" ")[0]).join(", ")}` : "";
-      return [{ row: S.upTo, count: Math.max(1, opts.count || 1), price: pr, gives: g, label: `${k > 1 ? t("pack_up_to") + " " : ""}${money(price(upto[k - 1]))}${rows.length > 1 ? ` (${t("pack_steps_of").replace("{k}", k).replace("{n}", rows.length)})` : ""}${what}` }];
+      const idx = R.map((r, i) => i).filter((i) => i <= S.upTo);
+      const pr = idx.reduce((a, i) => a + R[i].price, 0), g = {};
+      idx.forEach((i) => add(g, rowGives(i)));
+      const k = idx.length, pt = idx.map(rowText);
+      const what = !choiceType ? "" : pt.every((x) => x === pt[0]) ? ` · ${k > 1 ? t("pk_each_step") + ": " : ""}${pt[0]}` : ` · ${idx.map((i, j) => `${money(R[i].price)}: ${pt[j]}`).join("; ")}`;
+      return [{ row: R[S.upTo].ri, count: Math.max(1, opts.count || 1), price: pr, gives: g, label: `${k > 1 ? t("pack_up_to") + " " : ""}${money(R[S.upTo].price)}${R.length > 1 ? ` (${t("pack_steps_of").replace("{k}", k).replace("{n}", R.length)})` : ""}${what}` }];
     }
-    return rows.filter((r) => S.counts[r.ri] > 0).map((r) => ({ row: r.ri, count: S.counts[r.ri], price: price(r), gives: rowGives(r), label: `${money(price(r))}${mode === "pick" ? ` · ${picksText(r.ri)}` : ""}` }));
+    return R.map((r, i) => i).filter((i) => S.counts[i] > 0).map((i) => ({ row: R[i].ri, count: S.counts[i], price: R[i].price, gives: rowGives(i), label: `${money(R[i].price)}${choiceType ? ` · ${rowText(i)}` : ""}` }));
   };
   let modal = document.getElementById("purTblModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "purTblModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
   const close = () => { modal.style.display = "none"; };
+  const showCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && !packIsNonResourceColumn(tb.columns[ci]));
   const draw = () => {
     const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0);
     // The tick / − + column comes first so it stays in view on phones.
-    // "Pick N items" packs: price, then one dropdown per pick (item + amount).
-    const head = mode === "pick"
-      ? `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th><th>${esc(t("pur_tbl_items_n").replace("{n}", link.pickCols))}</th></tr>`
-      : `<tr><th></th>${showCols.map((ci) => `<th>${esc(ci === pc ? t("pur_tbl_price") : colName(ci))}</th>`).join("")}</tr>`;
-    const body = rows.map((r) => {
-      const on = ladder ? r.ri <= S.upTo : S.counts[r.ri] > 0;
-      const max = Number((link.rowMax || {})[r.ri]) || 0;
-      const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${r.ri}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
-        : `<span class="pur-t-step"><button type="button" data-tct="${r.ri}|-1">&minus;</button><i>${S.counts[r.ri] || 0}</i><button type="button" data-tct="${r.ri}|1" ${max && (S.counts[r.ri] || 0) >= max ? "disabled" : ""}>+</button></span>`;
-      if (mode === "pick") return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td><td class="pur-t-pr">${esc(money(price(r)))}${max ? ` <span class="meta">×${max}</span>` : ""}</td><td class="pur-t-pk"><div class="pur-t-picks3">${(S.rowPicks[r.ri] || []).map((sel, k) => `<select class="pur-t-sel" data-tsel="${r.ri}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}">${optCols.map((ci) => `<option value="${ci}" ${ci === sel ? "selected" : ""}>${esc(colName(ci))} · ${esc(String(r.cells[ci] == null ? "" : r.cells[ci]))}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
-      return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${showCols.map((ci) => {
-        const v = String(r.cells[ci] == null ? "" : r.cells[ci]);
-        if (ci === pc) return `<td class="pur-t-pr">${esc(money(price(r)))}${max ? ` <span class="meta">×${max}</span>` : ""}</td>`;
-        const picked = mode === "cols" && S.cellPick[r.ri] === ci;
-        return mode === "cols" && optCols.includes(ci) ? `<td><button type="button" class="pur-t-cell${picked ? " on" : ""}" data-tcell="${r.ri}|${ci}">${esc(v)}</button></td>` : `<td>${esc(v)}</td>`;
-      }).join("")}</tr>`;
+    const head = choiceType
+      ? `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th><th>${esc(mode === "pick" ? t("pur_tbl_items_n").replace("{n}", link.pickCols) : t("pur_choice"))}</th></tr>`
+      : `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th>${showCols.map((ci) => `<th>${esc(colName(ci))}</th>`).join("")}</tr>`;
+    const body = R.map((r, i) => {
+      const on = ladder ? i <= S.upTo : S.counts[i] > 0;
+      const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
+        : `<span class="pur-t-step"><button type="button" data-tct="${i}|-1">&minus;</button><i>${S.counts[i] || 0}</i><button type="button" data-tct="${i}|1" ${r.max && (S.counts[i] || 0) >= r.max ? "disabled" : ""}>+</button></span>`;
+      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">×${r.max}</span>` : ""}</td>`;
+      if (choiceType) return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}<td class="pur-t-pk"><div class="pur-t-picks3">${S.sel[i].map((sel, k) => `<select class="pur-t-sel" data-tsel="${i}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}">${r.opts.map((o, oi) => `<option value="${oi}" ${oi === sel ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
+      const cells = (tb.rows[r.ri] || {}).cells || [];
+      return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
     }).join("");
+    const hint = t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows") + (mode === "pick" ? " " + t("pur_tbl_hint_pick").replace("{n}", link.pickCols) : choiceType ? " " + t("pur_tbl_hint_opt") : "");
     modal.innerHTML = `<div class="modal-box pur-t-box">
-      <h2>${esc(opts.name || tb.title || "")}</h2>
-      <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows"))}${mode === "cols" ? " " + esc(t("pur_tbl_hint_cols")) : mode === "pick" ? " " + esc(t("pur_tbl_hint_pick").replace("{n}", link.pickCols)) : ""}</div>
+      <h2>${esc(name)}</h2>
+      <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
       <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
       <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
-    modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.tct.split("|").map(Number); S.counts[ri] = Math.max(0, (S.counts[ri] || 0) + d); draw(); }));
-    modal.querySelectorAll("[data-tup]").forEach((b) => b.addEventListener("click", () => { const ri = Number(b.dataset.tup); S.upTo = S.upTo === ri ? -1 : ri; draw(); }));
-    modal.querySelectorAll("[data-tsel]").forEach((sl) => sl.addEventListener("change", () => { const [ri, k] = sl.dataset.tsel.split("|").map(Number); S.rowPicks[ri][k] = Number(sl.value); draw(); }));
-    modal.querySelectorAll("[data-tcell]").forEach((b) => b.addEventListener("click", () => { const [ri, ci] = b.dataset.tcell.split("|").map(Number); S.cellPick[ri] = ci; draw(); }));
+    modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.tct.split("|").map(Number); S.counts[i] = Math.max(0, (S.counts[i] || 0) + d); draw(); }));
+    modal.querySelectorAll("[data-tup]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.tup); S.upTo = S.upTo === i ? -1 : i; draw(); }));
+    modal.querySelectorAll("[data-tsel]").forEach((sl) => sl.addEventListener("change", () => { const [i, k] = sl.dataset.tsel.split("|").map(Number); S.sel[i][k] = Number(sl.value); draw(); }));
     const addBtn = modal.querySelector("[data-tadd]");
     if (addBtn) addBtn.addEventListener("click", () => {
       const ls2 = lines();
       if (!ls2.length) return;
-      opts.onAdd(ls2.map((l) => ({ row: l.row, count: l.count, ...(choiceType ? { choice: { name: opts.name || tb.title || "", label: l.label, price: l.price, gives: l.gives } } : {}) })));
+      opts.onAdd(ls2.map((l) => ({ row: l.row, count: l.count, ...(choiceType ? { choice: { name, label: l.label, price: l.price, gives: l.gives } } : {}) })));
       close();
     });
   };
