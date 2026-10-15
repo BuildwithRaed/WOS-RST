@@ -3629,6 +3629,7 @@ const T = {
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
   bpw_desc: { en: "Every hero's widgets in one place. Type how many you have, remove a hero, or add one.", ar: "أدوات كل الأبطال في مكان واحد. اكتب ما لديك، أو أزل بطلاً، أو أضف واحداً.", ko: "모든 영웅의 위젯을 한곳에서. 보유 수를 입력하거나 영웅을 빼거나 추가하세요." },
   bpw_add: { en: "Add a hero's widgets", ar: "أضف أدوات بطل", ko: "영웅 위젯 추가" },
+  bpw_add_gen: { en: "All {g} heroes", ar: "كل أبطال {g}", ko: "{g} 영웅 전체" },
   bpw_empty: { en: "No heroes here yet.", ar: "لا يوجد أبطال هنا بعد.", ko: "아직 영웅이 없습니다." },
   bpw_roster: { en: "roster", ar: "التشكيلة", ko: "로스터" },
   hs_page: { en: "Hero shards & widgets", ar: "شظايا الأبطال والأدوات", ko: "영웅 조각 · 위젯" },
@@ -9540,12 +9541,24 @@ async function renderInventory() {
           <button type="button" class="bpw-x" data-bpwrm="${esc(n)}" aria-label="${esc(t("backpack_remove_hero"))}">&times;</button>
         </div>`; }).join("") : `<div class="meta" style="padding:8px 0;">${esc(t("bpw_empty"))}</div>`;
       const sel = modal.querySelector("[data-bpwadd]");
-      sel.innerHTML = `<option value="">+ ${esc(t("bpw_add"))}</option>` + mythics.filter((h) => !list.includes(h.name)).map((h) => `<option value="${esc(h.name)}">${esc(dataName(h.name))}${h.generation ? ` · ${esc(t("gen_prefix"))} ${h.generation}` : ""}</option>`).join("");
+      // Grouped by Gen, newest first; "All Gen N heroes" adds the whole Gen at once.
+      const left = mythics.filter((h) => !list.includes(h.name));
+      const gens = [...new Set(left.map((h) => Number(h.generation) || 0))].sort((a, b) => b - a);
+      sel.innerHTML = `<option value="">+ ${esc(t("bpw_add"))}</option>` + gens.map((g) => {
+        const hs = left.filter((h) => (Number(h.generation) || 0) === g);
+        const label = g ? `${t("gen_prefix")} ${g}` : "—";
+        return `<optgroup label="${esc(label)}">${hs.length > 1 ? `<option value="gen:${g}">${esc(t("bpw_add_gen").replace("{g}", label))}</option>` : ""}${hs.map((h) => `<option value="${esc(h.name)}">${esc(dataName(h.name))}</option>`).join("")}</optgroup>`;
+      }).join("");
     };
     draw();
     modal.querySelector("[data-bpwlist]").addEventListener("input", (ev) => { const i = ev.target.closest("[data-bpwqty]"); if (i) draft[i.dataset.bpwqty] = Math.max(0, Math.round(Number(i.value) || 0)); });
     modal.querySelector("[data-bpwlist]").addEventListener("click", (ev) => { const b = ev.target.closest("[data-bpwrm]"); if (!b) return; list.splice(list.indexOf(b.dataset.bpwrm), 1); draw(); });
-    modal.querySelector("[data-bpwadd]").addEventListener("change", (ev) => { const n = ev.target.value; if (n && !list.includes(n)) { list.push(n); draft[n] = Number(bp[`${n} Widgets`]) || 0; } draw(); });
+    modal.querySelector("[data-bpwadd]").addEventListener("change", (ev) => {
+      const v = ev.target.value;
+      const names = v.startsWith("gen:") ? mythics.filter((h) => String(Number(h.generation) || 0) === v.slice(4)).map((h) => h.name) : v ? [v] : [];
+      names.forEach((n) => { if (!list.includes(n)) { list.push(n); draft[n] = Number(bp[`${n} Widgets`]) || 0; } });
+      draw();
+    });
     modal.querySelector("[data-bpwcancel]").onclick = () => { modal.style.display = "none"; };
     modal.querySelector("[data-bpwsave]").onclick = () => {
       modal.style.display = "none";
