@@ -91,6 +91,8 @@ Done so far (all on the preview only):
 - Testing note: the `skins` view filters by the signed-in user, so read-only tests serve `skins_catalog` rows with made-up levels.
 - Owner data change (live, already in effect): owner calc_state `trade_rates` t12_research FC→FC Shard `max` 0 → 500 (undo: set it back to 0).
 - Owner data change (live, 16 Oct 2026, owner's request): "Taming Manual Pack" (`ce078dde-…`) no longer has `visitorDate` in owner calc_state `packs_links`, so it's gone from "My pack dates" (undo: tick "Visitors can set their own date" in that pack's settings, or set `visitorDate: true` again).
+- Owner data change (live, 16 Oct 2026, owner's request): "Dawn of Wisdom: Sigils" (`7546f595-…`) got `window: 2` in owner calc_state `packs_links` (it had none, so it counted as on sale all 14 days; Affinity / Books already 2). Undo: remove `window` from that entry.
+- New Gen Heroes follow the person's "last new heroes" date (My Purchases, `PACK_PURCHASES.newGen.last`): `packNewGenAnchor` sets Hero Ascension Training to that day and Exclusive Gear Forge 28 days later (`packNewGenOffset`: title with "forge", else the gap between the admin's own dates), before any own date or the admin's date. With the date set, the per-pack start inputs are replaced by "Comes with / 4 weeks after the new heroes".
 - Tested: no sideways scroll or errors at 1280/393/624/430/412/884 px; click test of tabs, picker, Set all, tile pop-up, Max everything (saves blocked).
 
 ## Open to-dos
