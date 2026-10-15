@@ -6957,6 +6957,9 @@ async function renderPurchasesPage() {
     if (seq !== RENDER_SEQ || !box) return;
     const titleOf = (tb) => { const l = packLinkFor(tb.id); return l.group && l.group !== (tb.title || "") ? l.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")); };
     const byTitle = new Map(tables.map((tb) => [titleOf(tb), tb]));
+    // Just the pack name: the category in front ("Weekly/Monthly Calendar Packs · ") is dropped.
+    const catNames = [...new Set(tables.map((tb) => String(packLinkFor(tb.id).group || "").trim()).filter(Boolean))];
+    const sugName = (r) => { const c = catNames.find((g) => String(r.title).startsWith(g + " · ")); return c ? r.title.slice(c.length + 3) : r.title; };
     const sugTable = (r) => (r.tables && r.tables.length ? byId.get(String(r.tables[0])) : null) || byTitle.get(r.title) || null;
     // "Will buy" only for plain tables (option / pick-your-items packs give
     // what you choose, which a purchase line can't record).
@@ -6983,7 +6986,7 @@ async function renderPurchasesPage() {
         return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
       }).join("");
       return `<div class="pur-item">
-        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(r.title)}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
+        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
         <div class="pur-item-f"><span class="meta pur-for">${esc(sched[i].length > 1 ? `${t("pur_n_dates").replace("{n}", sched[i].length)} · ${whenTxt(sched[i][0].off)} → ${whenTxt(sched[i][sched[i].length - 1].off)}` : whenTxt(sched[i][0].off))}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
@@ -6996,7 +6999,7 @@ async function renderPurchasesPage() {
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
       const close = () => { modal.style.display = "none"; };
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <h2>${esc(r.title)}</h2><div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== packFmtMoney(r.price, r.currency) ? `${esc(r.label)} · ` : ""}${esc(packFmtMoney(r.price, r.currency))} ${esc(t("pur_each"))}</div>
+        <h2>${esc(sugName(r))}</h2><div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== packFmtMoney(r.price, r.currency) ? `${esc(r.label)} · ` : ""}${esc(packFmtMoney(r.price, r.currency))} ${esc(t("pur_each"))}</div>
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
         <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(packFmtMoney(r.price * x.count, r.currency))}</b></label>`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
