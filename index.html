@@ -4315,6 +4315,9 @@ const T = {
   pur_sug_none: { en: "Nothing else to buy: your plans are covered.", ar: "لا شيء آخر للشراء: خططك مغطاة.", ko: "더 살 것이 없습니다: 계획이 충족됩니다." },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again.", ar: "تعذر حساب الاقتراحات. افتح الميزانيات مرة ثم أعد المحاولة.", ko: "추천을 계산하지 못했습니다. 예산을 한 번 연 뒤 다시 시도하세요." },
   pur_sug_total: { en: "Suggested total", ar: "إجمالي المقترح", ko: "추천 합계" },
+  sa_lock_line: { en: "{what} opens around day {day} — in about {n} days (≈ {date}).", ar: "{what} يُفتح تقريباً في اليوم {day} — بعد نحو {n} يوماً (≈ {date}).", ko: "{what}: 약 {day}일차에 열림 — 약 {n}일 후 (≈ {date})." },
+  sa_lock_hint: { en: "Not counted in your Dashboard and Budgets yet (from your state age). You can still plan it and tick it yourself.", ar: "لا يُحتسب بعد في لوحة التحكم والميزانيات (حسب عمر ولايتك). يمكنك التخطيط له وتفعيله بنفسك.", ko: "아직 대시보드·예산에 반영되지 않습니다(주 나이 기준). 직접 계획하고 체크할 수 있습니다." },
+  sa_lock_hint_plan: { en: "From your state age. You can still plan it now.", ar: "حسب عمر ولايتك. يمكنك التخطيط له الآن.", ko: "주 나이 기준입니다. 지금 계획할 수 있습니다." },
   sa_title: { en: "Your state's age", ar: "عمر ولايتك", ko: "내 주(州)의 나이" },
   sa_desc: { en: "Used for your hero generations, New Gen packs, the calendar and what unlocks next. Saved to your account.", ar: "يُستخدم لأجيال الأبطال وحزم الجيل الجديد والتقويم وما سيُفتح لاحقاً. يُحفظ في حسابك.", ko: "영웅 세대, 신세대 팩, 캘린더, 다음 해금에 사용됩니다. 계정에 저장됩니다." },
   sa_by_day: { en: "Day number", ar: "رقم اليوم", ko: "일차" },
@@ -4767,6 +4770,13 @@ async function render() {
       if (catName === "Vip Tier") await renderVipTierTable(content);
       else if (CATEGORY_GROUPS[catName]) await renderGroupPage(catName);
       else await renderCategoryPage(catName);
+    }
+    // "Opens around day N" notes from the state age, under the page title.
+    if (seq === RENDER_SEQ && STATE_UNLOCKS.some((u) => u.tabs.includes(TAB))) {
+      await ensureStateAge();
+      const html = seq === RENDER_SEQ ? stateLockNotesHtml(TAB) : "";
+      const head = html && !content.querySelector("[data-salock]") ? content.querySelector(".plx-head, .page-head") : null;
+      if (head) head.insertAdjacentHTML("afterend", html);
     }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
@@ -10672,6 +10682,44 @@ function openStateAgeModal(onSaved) {
   };
   draw();
 }
+// What opens on which state day (community Server Timeline, Sep 2026, and
+// whiteoutsurvival.wiki). With a state age set, anything not open yet starts
+// unticked (not counted in the Dashboard / Budgets) and its page shows when it
+// opens; the person can still tick it. Items not listed are never touched.
+const STATE_UNLOCKS = [
+  { kind: "page", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
+  { kind: "page", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
+  { kind: "note", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
+  ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
+    ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
+    .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
+  ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 195], ["Baldur", 195], ["Fabian", 195], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
+    .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
+];
+const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
+// The state day something opens on, or null if it isn't in the list.
+function stateUnlockDay(kind, name) {
+  const k = stateKeyNorm(name);
+  const u = STATE_UNLOCKS.find((x) => x.kind === kind && stateKeyNorm(x.name) === k);
+  return u ? u.day : null;
+}
+// True when the state age is set and this isn't open yet in the person's state.
+function stateNotYet(kind, name) {
+  const d = stateAgeDay(), u = stateUnlockDay(kind, name);
+  return d != null && u != null && d < u;
+}
+// "🔒 … opens around day N — in about D days (≈ date)" notes for a page.
+function stateLockNotesHtml(tab) {
+  const d = stateAgeDay();
+  if (d == null) return "";
+  const list = STATE_UNLOCKS.filter((u) => u.tabs.includes(tab) && d < u.day);
+  if (!list.length) return "";
+  const fmt = (x) => { try { return x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return packDayKey(x); } };
+  const byDay = new Map();
+  list.forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
+  const lines = [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, names]) => t("sa_lock_line").replace("{what}", names.join(", ")).replace("{day}", day).replace("{n}", day - d).replace("{date}", fmt(stateDateOfDay(day))));
+  return `<div class="sa-lock" data-salock>🔒 <span>${lines.map(esc).join("<br>")}<br><span style="opacity:.85; font-size:11.5px;">${esc(t(list.some((u) => u.kind !== "note") ? "sa_lock_hint" : "sa_lock_hint_plan"))}</span></span></div>`;
+}
 // Dashboard card: state day, current Gen, next new heroes and Lucky Wheel.
 function stateAgeCardHtml() {
   const d = stateAgeDay();
@@ -15789,12 +15837,12 @@ const HERO_SHARD_CHART = {
 // each page (rather than per-track/per-item exclusion).
 let RESEARCH_PAGE_COUNTED = { t11: true, t12: true };
 async function ensureResearchPageCountedData() {
-  const saved = await loadCalcState("research_page_counted");
-  // Everyone has the toggle; it's saved on their own copy.
-  RESEARCH_PAGE_COUNTED = {
-    t11: saved && saved.t11 === false ? false : true,
-    t12: saved && saved.t12 === false ? false : true,
-  };
+  const [saved] = await Promise.all([loadCalcState("research_page_counted"), ensureStateAge()]);
+  // Everyone has the toggle; it's saved on their own copy. A box the person
+  // never touched follows the state age (not open yet → not counted).
+  const manual = (saved && saved.manual) || {};
+  const pick = (k) => (manual[k] || (saved && saved[k] === false) ? !(saved && saved[k] === false) : !stateNotYet("page", k));
+  RESEARCH_PAGE_COUNTED = { t11: pick("t11"), t12: pick("t12"), manual: { ...manual } };
 }
 let ISLAND_CATEGORIES_CACHE = null;
 // Fetched once per session and reused by both the Dashboard and Skin
@@ -16767,6 +16815,7 @@ async function renderT11HeliosPage() {
   const t11Toggle = document.getElementById("t11CountedToggle");
   if (t11Toggle) t11Toggle.addEventListener("change", async (e) => {
     RESEARCH_PAGE_COUNTED.t11 = e.target.checked;
+    RESEARCH_PAGE_COUNTED.manual = { ...(RESEARCH_PAGE_COUNTED.manual || {}), t11: true };
     saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
 
@@ -17208,7 +17257,9 @@ function unlockedFor(kind, name, savedFlag) {
   if (hiddenForVisitor(kind, name)) return false;
   // Everyone (owner and visitors) can untick a card on their own copy; an
   // unticked card doesn't count in their Dashboard or its breakdown.
-  return savedFlag === false ? false : true;
+  if (savedFlag === true || savedFlag === false) return savedFlag;
+  // Never set: open in the person's state (state age) → ticked, not yet → unticked.
+  return !stateNotYet(kind, name);
 }
 
 // ============================================================
@@ -19447,6 +19498,7 @@ async function renderT12ResearchPage() {
   const t12Toggle = document.getElementById("t12CountedToggle");
   if (t12Toggle) t12Toggle.addEventListener("change", async (e) => {
     RESEARCH_PAGE_COUNTED.t12 = e.target.checked;
+    RESEARCH_PAGE_COUNTED.manual = { ...(RESEARCH_PAGE_COUNTED.manual || {}), t12: true };
     saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
   });
 
