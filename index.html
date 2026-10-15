@@ -594,6 +594,7 @@ input,select,textarea{
   .bpsh-wid b{ color:var(--frost); }
   .bpsh-wid-k{ color:var(--frost); font-weight:600; }
   .bp-size.bp-wid{ font-size:9px; }
+  .rc-sh.rc-reach{ color:var(--good); margin-top:-4px; }
   .rc-sh{ font-size:10px; margin:-2px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bp-speedsum{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin:0 0 10px; }
   .bp-speedsum-cell{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); }
@@ -3734,6 +3735,7 @@ const T = {
   bp_sh_reach: { en: "You can reach {s} now", ar: "يمكنك الوصول إلى {s} الآن", ko: "지금 {s}까지 가능" },
   bp_sh_left: { en: "{n} left over", ar: "يتبقى {n}", ko: "{n}개 남음" },
   bp_sh_note: { en: "Shards to reach 5★ from the stars in your Dashboard roster. Each hero's own shards are used first, then general shards (Infantry, Lancers, Marksman in that order).", ar: "الشظايا اللازمة للوصول إلى 5★ من نجوم تشكيلتك في لوحة التحكم. تُستخدم شظايا البطل أولاً ثم الشظايا العامة (المشاة ثم الرماح ثم الرماة).", ko: "대시보드 로스터의 별에서 5★까지 필요한 조각입니다. 영웅 전용 조각을 먼저, 그다음 범용 조각을 사용합니다(보병, 창병, 궁병 순)." },
+  rc_sh_reach: { en: "can reach {s} now", ar: "يمكن الوصول إلى {s} الآن", ko: "지금 {s}까지 가능" },
   rc_sh_short: { en: "🧩 {n} short", ar: "🧩 ينقص {n}", ko: "🧩 {n} 부족" },
   rc_sh_enough: { en: "🧩 enough for 5★", ar: "🧩 يكفي لـ 5★", ko: "🧩 5★까지 충분" },
   backpack_hero_shards: { en: "Hero Shards", ar: "شظايا الأبطال", ko: "영웅 조각" },
@@ -5656,7 +5658,7 @@ async function renderOverview(opts = {}) {
       const widgetLevelLabel = t("widget_level_label"), widgetShort = t("widget_short");
       // Shards still short for 5★, from the Backpack (own shards, then general).
       const shardPlan = heroShardPlan({ heroes: heroCatalog, roster, playerHeroes: Object.values(phByHero), starRows: ROSTER_STAR_ROWS, bp: ROSTER_BACKPACK || {} });
-      const shShort = t("rc_sh_short"), shEnough = t("rc_sh_enough");
+      const shShort = t("rc_sh_short"), shEnough = t("rc_sh_enough"), shReach = t("rc_sh_reach");
       const wdTxt = { need: t("bp_sh_need"), own: t("bp_wd_own"), short: t("rc_wd_short"), enough: t("rc_wd_enough") }; // `t` is the troop inside the cards' map
       const shTitle = (r) => `${t("bp_sh_need")} ${Math.round(r.need).toLocaleString()} · ${t("bp_sh_own")} ${Math.round(r.own).toLocaleString()} · ${t("bp_sh_general")} ${Math.round(r.fromGeneral).toLocaleString()}`;
       rosterEl.innerHTML = `
@@ -5699,7 +5701,7 @@ async function renderOverview(opts = {}) {
               <div class="rc-name">${hero ? esc(dataName(hero.name)) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</div>
               ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
-              ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>` : ""}
+              ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>${sh.short && sh.reach > sh.step ? `<div class="rc-sh rc-reach">${esc(shReach.replace("{s}", heroStepText(sh.reach)))}</div>` : ""}` : ""}
               ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).join("<br>") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
@@ -9397,17 +9399,13 @@ let BP_TAB = "All";
 let BP_SEARCH = "";
 async function renderInventory() {
   const seq = RENDER_SEQ;
-  const [, saved, heroes, savedHeroes, rosterSaved, playerHeroes, starRows, , , widgetsSaved] = await Promise.all([
+  const [, saved, heroes, savedHeroes, rosterSaved, widgetsSaved] = await Promise.all([
     ensureSiteConfig(), loadCalcState("backpack"),
     // Same request (and kept copy) as the Dashboard's hero list.
     dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
     loadCalcState("backpack_heroes"),
-    // Roster heroes' stars, for the "shards needed" card (same kept copies as the Dashboard).
+    // The roster heroes' Gens are in the Widgets box by default.
     loadCalcState("dashboard_roster").catch(() => null),
-    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => []),
-    dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)).catch(() => []),
-    // State age and "last new heroes": heroes not out yet are left out of the shards card.
-    ensureStateAge(), ensurePackLinks().catch(() => null),
     loadCalcState("backpack_widgets").catch(() => null),
   ]);
   if (seq !== RENDER_SEQ) return;
@@ -9506,47 +9504,9 @@ async function renderInventory() {
     }).join("");
     document.getElementById("bpGroups").innerHTML = html ? (BP_TAB === speedupsTab && !q ? `<div style="margin-top:12px;">${speedSummary()}</div>` : "") + html : `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
   };
-  // "Roster heroes: shards needed" - their stars from the Dashboard roster,
-  // shards from this Backpack (own shards first, then general shards).
-  const shardCardHtml = () => {
-    const plan = heroShardPlan({ heroes, roster: rosterSaved, playerHeroes, starRows, bp });
-    const notOutLine = plan.notOut.length ? `<div class="meta" style="font-size:11px; margin-top:6px; color:var(--amber);">${esc(t("bp_sh_notout").replace("{names}", plan.notOut.map((x) => `${dataName(x.hero.name)} (${heroGenNotOutText(heroGenNotOut(x.hero.generation))})`).join(", ")))}</div>` : "";
-    if (!plan.rows.length) return `<div class="bpsh"><div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b></div><div class="meta" style="font-size:12px;">${esc(t("bp_sh_none"))}</div>${notOutLine}</div>`;
-    const n = (v) => Math.round(v).toLocaleString();
-    const rowsHtml = plan.rows.map((r) => {
-      const tracked = myHeroes.includes(r.hero.name);
-      const pctHave = r.need ? Math.min(100, ((r.own + r.fromGeneral) / r.need) * 100) : 100;
-      return `<div class="bpsh-row">
-        <div class="bpsh-av">${r.hero.image_url ? `<img src="${esc(r.hero.image_url)}" alt="" loading="lazy" />` : ""}</div>
-        <div class="bpsh-mid">
-          <div class="bpsh-name"><b>${esc(dataName(r.hero.name))}</b> <span class="meta">${esc(troopDisplayName(r.troop))} · ${esc(heroStepText(r.step))}${r.step < 30 ? " → 5★" : ""}</span></div>
-          ${r.step >= 30 ? `<div class="bpsh-done">${esc(t("bp_sh_maxed"))}</div>` : `
-          <div class="bpsh-bar"><i style="width:${pctHave.toFixed(1)}%"></i></div>
-          <div class="bpsh-nums"><span>${esc(t("bp_sh_need"))} <b>${n(r.need)}</b></span><span>${esc(t("bp_sh_own"))} <b>${n(r.own)}</b>${tracked ? "" : ` <button type="button" class="linklike" data-bpshtrack="${esc(r.hero.name)}">${esc(t("bp_sh_track"))}</button>`}</span>${r.fromGeneral ? `<span>${esc(t("bp_sh_general"))} <b>${n(r.fromGeneral)}</b></span>` : ""}</div>
-          <div class="bpsh-sub">${r.short ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.short)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}<span class="meta">${r.reach > r.step ? esc(t("bp_sh_reach").replace("{s}", heroStepText(r.reach))) : esc(t("bp_sh_next").replace("{n}", n(r.next)))}</span></div>`}
-          ${r.hasWidget ? `<div class="bpsh-wid"><span class="bpsh-wid-k">&#9881; ${esc(t("widget_short"))} ${r.wLevel}${r.wLevel < 10 ? " → 10" : ""}</span>${r.wLevel >= 10 ? `<span class="bpsh-ok">${esc(t("bp_wd_maxed"))}</span>` : `
-            <span>${esc(t("bp_sh_need"))} <b>${n(r.wNeed)}</b></span><span>${esc(t("bp_wd_own"))} <b>${n(r.wOwn)}</b></span>
-            ${r.wShort ? `<span class="bpsh-short">${esc(t("bp_sh_short").replace("{n}", n(r.wShort)))} ≈ ${widgetCostSpan(r.hero.name, r.wNeed)}</span>` : `<span class="bpsh-ok">${esc(t("bp_wd_enough"))}</span>`}
-            ${r.wReach > r.wLevel ? `<span class="meta">${esc(t("bp_wd_reach").replace("{n}", r.wReach))}</span>` : ""}`}</div>` : ""}
-        </div>
-      </div>`;
-    }).join("");
-    const rar = [...new Set(plan.rows.map((r) => r.rarity))];
-    const genLine = rar.map((r) => `<span class="bpsh-gen"><img src="${esc(BP_SHARD_ICONS[HERO_GENERAL_SHARD[r]])}" alt="" />${esc(materialDisplayName(HERO_GENERAL_SHARD[r]))}: <b>${n(plan.general[r] || 0)}</b>${plan.generalLeft[r] ? ` <span class="meta">(${esc(t("bp_sh_left").replace("{n}", n(plan.generalLeft[r])))})</span>` : ""}</span>`).join("");
-    const totalShort = plan.rows.reduce((a, r) => a + r.short, 0);
-    const wShortAll = plan.rows.reduce((a, r) => a + r.wShort, 0);
-    return `<div class="bpsh">
-      <div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b>${totalShort ? `<span class="bpsh-short">${esc(t("bp_sh_total_short").replace("{n}", n(totalShort)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}</div>
-      <div class="bpsh-rows">${rowsHtml}</div>
-      <div class="bpsh-foot">${genLine}${wShortAll ? `<span class="bpsh-gen">&#9881; ${t("bp_wd_total").replace("{n}", n(wShortAll)).split("{cost}").map(esc).join(widgetCostSpan("*", plan.rows.filter((r) => r.wShort > 0).map((r) => `${r.hero.name}:${r.wNeed}`).join(",")))}</span>` : ""}</div>
-      ${notOutLine}
-      <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("bp_sh_note"))} ${esc(t("bp_wd_note"))}</div>
-    </div>`;
-  };
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
       <button class="btn small" type="button" id="bpScan" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
-    <div id="bpShards">${shardCardHtml()}</div>
     <div id="bpTabs" style="margin-top:12px;"></div>
     <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
     <div id="bpGroups"></div>`;
@@ -9559,14 +9519,6 @@ async function renderInventory() {
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); }, tabCounts);
   drawGroups();
   // "Track shards": adds that hero's own shards tile to the Backpack.
-  fillWidgetCosts(document.getElementById("bpShards"));
-  document.getElementById("bpShards").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-bpshtrack]");
-    if (!b || myHeroes.includes(b.dataset.bpshtrack)) return;
-    myHeroes.push(b.dataset.bpshtrack);
-    saveCalcState("backpack_heroes", myHeroes);
-    renderInventory();
-  });
   document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); });
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
