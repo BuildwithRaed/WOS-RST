@@ -265,6 +265,37 @@
   .sa-num{ width:22px; height:22px; border-radius:50%; background:var(--panel-2); display:grid; place-items:center; font-size:11px; font-weight:800; flex-shrink:0; }
   .sa-foot{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
   .sa-lock{ display:flex; gap:10px; align-items:flex-start; border:1px dashed #e0b25a; color:#e0b25a; border-radius:12px; padding:10px 12px; font-size:12.5px; margin:0 0 12px; }
+  .pc-panel{ padding:14px; }
+  .pc-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .pc-nav{ display:flex; align-items:center; gap:8px; }
+  .pc-nav b{ font-size:17px; min-width:130px; text-align:center; }
+  .pc-nav .btn{ padding:3px 10px; }
+  .pc-view button{ padding:6px 12px; }
+  .pc-chips{ display:flex; flex-wrap:nowrap !important; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; margin-bottom:10px; }
+  .pc-chips::-webkit-scrollbar{ display:none; }
+  .pc-chip{ display:inline-flex; align-items:center; gap:6px; flex-shrink:0; white-space:nowrap; font-size:11.5px; padding:4px 11px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--muted); cursor:pointer; }
+  .pc-chip i{ width:8px; height:8px; border-radius:50%; opacity:.4; }
+  .pc-chip.on{ color:var(--frost); border-color:rgba(108,199,230,.45); background:rgba(108,199,230,.08); }
+  .pc-chip.on i{ opacity:1; }
+  .pc-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .pc-grid{ min-width:560px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  @media (min-width:700px){ .pc-grid{ min-width:0; } }
+  .pc-list{ display:flex; flex-direction:column; gap:10px; }
+  .pc-week{ border:1px solid var(--line); border-radius:12px; padding:8px 10px; }
+  .pc-week.now{ border-color:rgba(108,199,230,.5); box-shadow:0 0 0 1px rgba(108,199,230,.2) inset; }
+  .pc-week-h{ font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+  .pc-item{ display:flex; align-items:center; gap:10px; padding:7px 0; border-top:1px solid rgba(38,48,60,.7); }
+  .pc-week-h + .pc-item{ border-top:0; }
+  .pc-item > i{ width:4px; align-self:stretch; border-radius:3px; flex-shrink:0; }
+  .pc-item-m{ display:flex; flex-direction:column; min-width:0; flex:1; }
+  .pc-item-m b{ font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; }
+  .pc-item-m .meta{ font-size:11px; }
+  .pc-item.ms b{ color:#f3dcae; }
+  .pc-marks{ display:flex; flex-wrap:wrap; gap:4px 8px; padding:4px 7px; }
+  .pc-mark{ font-size:10.5px; padding:1px 9px; border-radius:999px; border:1px solid rgba(240,192,96,.5); background:rgba(240,192,96,.1); color:#f3dcae; }
+  .pc-mark b{ font-weight:700; margin-inline-end:3px; }
+  .pc-badge{ font-size:10px; padding:1px 7px; border-radius:999px; background:rgba(108,199,230,.15); color:var(--ice); text-transform:none; letter-spacing:0; font-weight:700; flex-shrink:0; }
+  .pc-badge.g{ background:rgba(95,191,127,.15); color:var(--good); }
   .pur-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
   .pur-f{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; flex:1 1 130px; min-width:0; }
   .pur-f-wide{ flex:2 1 220px; }
@@ -4003,6 +4034,13 @@ const T = {
   pack_cal_events: { en: "Events", ar: "الفعاليات", ko: "이벤트" },
   pack_cal_wheel: { en: "Lucky Wheel", ar: "عجلة الحظ", ko: "행운의 룰렛" },
   pack_cal_new_heroes: { en: "New heroes", ar: "أبطال جدد", ko: "새 영웅" },
+  pack_cal_list: { en: "List", ar: "قائمة", ko: "목록" },
+  pack_cal_month: { en: "Month", ar: "شهر", ko: "월" },
+  pack_cal_today_btn: { en: "Today", ar: "اليوم", ko: "오늘" },
+  pack_cal_this_week: { en: "this week", ar: "هذا الأسبوع", ko: "이번 주" },
+  pack_cal_n_days: { en: "{n} days", ar: "{n} أيام", ko: "{n}일" },
+  pack_cal_state_day: { en: "state day {n}", ar: "اليوم {n} للولاية", ko: "주 {n}일차" },
+  pack_cal_utc: { en: "Game days (UTC). Tap an item to see every pack in it.", ar: "أيام اللعبة (UTC). اضغط عنصراً لرؤية كل الحزم فيه.", ko: "게임 기준일(UTC). 항목을 누르면 포함된 팩이 보입니다." },
   pack_cal_today: { en: "today", ar: "\u0627\u0644\u064a\u0648\u0645", ko: "\uc624\ub298" },
   pack_buys_per_reset: { en: "Buys per reset", ar: "\u0645\u0631\u0627\u062a \u0627\u0644\u0634\u0631\u0627\u0621 \u0644\u0643\u0644 \u062a\u0643\u0631\u0627\u0631", ko: "\uc8fc\uae30\ub2f9 \uad6c\ub9e4 \ud69f\uc218" },
   pack_days_short: { en: "d", ar: " \u064a\u0648\u0645", ko: "\uc77c" },
@@ -7418,6 +7456,12 @@ function packCalSaveChips() {
   try { localStorage.setItem(PACK_CAL_OFF_KEY, JSON.stringify([...PACK_CAL_OFF])); } catch (e) {}
 }
 let PACK_CAL_PAGE = 0; // which block of weeks is shown
+// List (phones) or month grid (PC) unless the person picked one (kept in this browser).
+function packCalView() {
+  let v = null;
+  try { v = localStorage.getItem("packcal_view"); } catch (e) {}
+  return v === "list" || v === "month" ? v : (window.innerWidth < 700 ? "list" : "month");
+}
 const PACK_CAL_ROWS = 6; // rows shown per week before "+N more"
 let PACK_CAL_OPEN_WEEKS = new Set();
 
@@ -7479,48 +7523,53 @@ async function renderPackCalendarPage() {
     const startOff = Math.round((first - t0) / 86400000);
     const span = weeks * 7;
 
-    // One segment per appearance, clipped to the weeks on screen.
-    const segs = [];
+    // Everything on the calendar first as items ({ a, b } = first / last day
+    // index from `first`), then cut into week bars (month view) or listed (list view).
+    const items = [];
+    const addItem = (a, days, it) => { const b = a + days - 1; if (b < 0 || a >= span) return; items.push({ a, b, days, count: 1, members: it.title, ...it }); };
     groups.forEach((gp) => {
       const l = gp.link;
       const kind = packCalKind(l.reset);
       if (PACK_CAL_OFF.has(kind)) return;
       const newGen = packIsNewGen(packLinkForBase(gp.tables[0].id));
       // New Gen Heroes packs follow the generation starts (SvS / KOI hero wheels) and carry their Gen.
-      const t0c = packStartOfToday();
       const appsList = newGen && newGenBaseDay()
-        ? newGenAppearances(gp.tables[0].id, Number(l.window) || 0).map((x) => ({ start: x.start, offset: Math.round((x.start - t0c) / 86400000), days: x.days })).filter((x) => x.offset <= startOff + span && x.offset + x.days - 1 >= startOff)
+        ? newGenAppearances(gp.tables[0].id, Number(l.window) || 0).map((x) => ({ start: x.start, offset: Math.round((x.start - t0) / 86400000), days: x.days })).filter((x) => x.offset <= startOff + span && x.offset + x.days - 1 >= startOff)
         : packAppearances(l.reset, packPlanAnchor(l), l.window, startOff + span);
       appsList.forEach((app) => {
         const gen = newGen ? packNewGenLabel(app.start, l.reset, gp.tables[0].id) : "";
         const width = l.window > 0 ? l.window : 1; // no window set = show the day it arrives
-        const a = app.offset - startOff, b = a + width - 1;
-        if (b < 0 || a >= span) return;
-        for (let w = 0; w < weeks; w++) {
-          const ws = w * 7, we = ws + 6;
-          if (b < ws || a > we) continue;
-          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind, keep: newGen, title: gen ? `${gp.label} · ${gen}` : gp.label, days: width, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
-        }
+        addItem(app.offset - startOff, width, { kind, keep: newGen, title: gen ? `${gp.label} · ${gen}` : gp.label, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
       });
     });
-    // Game events (SvS, KOI), their hero wheels and the day new heroes come.
+    // Game events (SvS, KOI), their Lucky Wheels, new heroes and what opens in the person's state.
     if (!PACK_CAL_OFF.has("event")) {
       const firstDay = new Date(t0.getTime() + startOff * 86400000), lastDay = new Date(firstDay.getTime() + (span - 1) * 86400000);
-      const put = (start, days, title) => {
-        const a = Math.round((start - t0) / 86400000) - startOff, b = a + days - 1;
-        if (b < 0 || a >= span) return;
-        for (let w = 0; w < weeks; w++) {
-          const ws = w * 7, we = ws + 6;
-          if (b < ws || a > we) continue;
-          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind: "event", title, days, count: 1, members: title });
-        }
-      };
+      const put = (start, days, title, extra) => addItem(Math.round((start - t0) / 86400000) - startOff, days, { kind: "event", title, ...(extra || {}) });
       GAME_EVENTS.forEach((ev) => gameEventStarts(ev, firstDay, lastDay).forEach((st) => put(st, ev.days, ev.name)));
       heroWheels(new Date(firstDay.getTime() - 3 * 86400000), lastDay).forEach((w) => put(w.day, w.ev.wheelDays || 1, `🎡 ${t("pack_cal_wheel")} (${w.ev.name})`));
       const gen0 = newGenGen(), base = newGenBaseDay();
-      if (base) newGenStarts(base, 12).forEach((d, i) => { if (d >= firstDay && d <= lastDay) put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}`); });
+      if (base) newGenStarts(base, 12).forEach((d, i) => {
+        if (d < firstDay || d > lastDay) return;
+        const sd = stateDayOn(d);
+        put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}${sd != null ? " · " + t("pack_cal_state_day").replace("{n}", sd.toLocaleString()) : ""}`, { milestone: true });
+      });
+      // State-age unlocks (T11, T12, pets, experts…) falling in this range.
+      const sd0 = stateAgeDay();
+      if (sd0 != null) {
+        const byDay = new Map();
+        STATE_UNLOCKS.filter((u) => u.day > sd0).forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
+        byDay.forEach((names, day) => { const d = stateDateOfDay(day); if (d >= firstDay && d <= lastDay) put(d, 1, `🔓 ${names.join(", ")} · ${t("pack_cal_state_day").replace("{n}", day.toLocaleString())}`, { milestone: true }); });
+      }
     }
-
+    const segs = [];
+    items.forEach((it) => {
+      for (let w = 0; w < weeks; w++) {
+        const ws = w * 7, we = ws + 6;
+        if (it.b < ws || it.a > we) continue;
+        segs.push({ week: w, col: Math.max(0, it.a - ws), end: Math.min(it.b, we) - ws, cont: it.a < ws, kind: it.kind, keep: it.keep || it.milestone, title: it.title, days: it.days, count: it.count, members: it.members, milestone: it.milestone });
+      }
+    });
 
     const hideAllWeek = PACK_CAL_OFF.has("allweek");
     // New Gen Heroes bars always stay on the grid, even when up all week.
@@ -7532,7 +7581,9 @@ async function renderPackCalendarPage() {
       // Only a pack covering the whole week moves to the strip; a pack that is
       // up for part of the week keeps its bar on the days it's actually up.
       const allWeek = hideAllWeek ? [] : all.filter(isAllWeek);
-      const dayed = all.filter((x) => !isAllWeek(x));
+      // Milestones (⭐ new heroes, 🔓 unlocks) get their own strip with the full text.
+      const marks = all.filter((x) => x.milestone);
+      const dayed = all.filter((x) => !isAllWeek(x) && !x.milestone);
       const rows = []; // greedy stacking so two packs never sit on top of each other
       dayed.sort((a, b) => a.col - b.col || b.end - a.end).forEach((sg) => {
         let r = rows.find((row) => row.every((x) => sg.col > x.end || sg.end < x.col));
@@ -7550,10 +7601,7 @@ async function renderPackCalendarPage() {
       }).join("");
       const chipsShown = open ? allWeek : allWeek.slice(0, 6);
       const chipsHidden = allWeek.length - chipsShown.length;
-      const stripe = (sg) => {
-        const c = PACK_CAL_COLORS[sg.kind] || PACK_CAL_COLORS.other;
-        return c[1];
-      };
+      const stripe = (sg) => (sg.milestone ? "#f0c060" : (PACK_CAL_COLORS[sg.kind] || PACK_CAL_COLORS.other)[1]);
       const allWeekHtml = allWeek.length
         ? `<div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center; padding:5px 7px; border-bottom:1px dashed rgba(38,48,60,.9);">
              <span class="meta" style="font-size:9.5px; letter-spacing:.05em; text-transform:uppercase;">${esc(t("pack_cal_all_week"))}</span>
@@ -7581,44 +7629,61 @@ async function renderPackCalendarPage() {
       // Today's column keeps a faint tint the whole way down the week.
       const todayTint = todayCol >= 0 && todayCol < 7
         ? `<div style="grid-column:${todayCol + 1} / span 1; grid-row:1 / -1; background:rgba(108,199,230,.05); pointer-events:none;"></div>` : "";
+      const dowName = (c) => new Date(first.getTime() + (w * 7 + c) * 86400000).toLocaleDateString(LANG === "en" ? undefined : LANG, { weekday: "short", day: "numeric", timeZone: "UTC" });
+      const marksHtml = marks.length ? `<div class="pc-marks">${marks.map((m) => `<span class="pc-mark" data-caltip="${esc(m.title)}"><b>${esc(dowName(m.col))}</b> ${esc(m.title)}</span>`).join("")}</div>` : "";
       return `<div style="border-bottom:1px solid var(--line); ${w % 2 ? "background:rgba(255,255,255,.015);" : ""}">
         <div style="display:grid; grid-template-columns:repeat(7,1fr);">${nums}</div>
+        ${marksHtml}
         ${allWeekHtml}
         <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px 0; padding:4px 0 ${hidden ? "2px" : "6px"}; min-height:8px; position:relative;">${todayTint}${bars}</div>
         ${hidden ? `<button class="btn ghost small" data-calmore="${w}" style="margin:0 0 6px 4px; padding:2px 9px; font-size:10.5px;">+${hidden} ${esc(t("pack_cal_more"))}</button>` : ""}
       </div>`;
     }).join("");
 
-    const chip = (kind, label) => `<button class="btn ${PACK_CAL_OFF.has(kind) ? "ghost" : ""} small" data-calchip="${kind}" style="border-radius:999px; padding:3px 11px; font-size:11px;">${esc(label)}</button>`;
-    const range = monthStart.toLocaleDateString(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
+    const chip = (kind, label) => `<button type="button" class="pc-chip${PACK_CAL_OFF.has(kind) ? "" : " on"}" data-calchip="${kind}"><i style="background:${kind === "allweek" ? "var(--muted)" : (PACK_CAL_COLORS[kind] || PACK_CAL_COLORS.other)[1]}"></i>${esc(label)}</button>`;
+    const range = monthStart.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", year: "numeric", timeZone: "UTC" });
+    const view = packCalView();
+    // List view: the month's items by week (each listed in the week it starts).
+    const fmtD = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" });
+    const dayOf = (i) => new Date(first.getTime() + i * 86400000);
+    const mA = Math.round((monthStart - first) / 86400000), mB = Math.round((monthEnd - first) / 86400000);
+    const todayI = Math.round((t0 - first) / 86400000);
+    const listHtml = () => {
+      const shown = items.filter((it) => it.b >= mA && it.a <= mB && !(hideAllWeek && it.days >= 7 && !it.keep && !it.milestone));
+      const weeksL = [];
+      for (let w = 0; w < weeks; w++) {
+        const ws = w * 7, we = ws + 6;
+        if (we < mA || ws > mB) continue;
+        const its = shown.filter((it) => Math.max(it.a, mA) >= ws && Math.max(it.a, mA) <= we).sort((x, y) => (y.milestone ? 1 : 0) - (x.milestone ? 1 : 0) || x.a - y.a || x.title.localeCompare(y.title));
+        if (!its.length) continue;
+        const thisWeek = todayI >= ws && todayI <= we;
+        weeksL.push(`<div class="pc-week${thisWeek ? " now" : ""}"><div class="pc-week-h">${esc(fmtD(dayOf(Math.max(ws, mA))))} – ${esc(fmtD(dayOf(Math.min(we, mB))))}${thisWeek ? ` <span class="pc-badge">${esc(t("pack_cal_this_week"))}</span>` : ""}</div>
+          ${its.map((it) => {
+            const live = todayI >= it.a && todayI <= it.b;
+            const when = it.days > 1 ? `${fmtD(dayOf(it.a))} – ${fmtD(dayOf(it.b))} · ${t("pack_cal_n_days").replace("{n}", it.days)}` : fmtD(dayOf(it.a));
+            const tip = it.count > 1 ? `${it.title}\n${it.members}` : it.title;
+            return `<div class="pc-item${it.milestone ? " ms" : ""}" data-caltip="${esc(tip)}"><i style="background:${it.milestone ? "#f0c060" : (PACK_CAL_COLORS[it.kind] || PACK_CAL_COLORS.other)[1]}"></i><div class="pc-item-m"><b>${esc(it.title)}${it.count > 1 ? ` <span class="meta">×${it.count}</span>` : ""}</b><span class="meta">${esc(when)}</span></div>${live ? `<span class="pc-badge g">${esc(t("pur_now"))}</span>` : ""}</div>`;
+          }).join("")}</div>`);
+      }
+      return weeksL.join("") || `<div class="meta" style="font-size:12px;">${esc(t("pack_cal_empty"))}</div>`;
+    };
 
     content.innerHTML = `
-      <div class="page-head">
-        <div>
-          <h2>${esc(t("pack_cal_title"))}</h2>
-          <p class="desc">${esc(t("pack_cal_desc"))}</p>
+      <div class="plx-head"><h2>${esc(t("pack_cal_title"))}</h2><button class="btn ghost small" id="packCalBack">${esc(t("pack_cal_back"))}</button></div>
+      <div class="panel pc-panel">
+        <div class="pc-top">
+          <div class="pc-nav"><button class="btn ghost small" data-calpage="-1" aria-label="previous">&#8249;</button><b>${esc(range)}</b><button class="btn ghost small" data-calpage="1" aria-label="next">&#8250;</button>${PACK_CAL_PAGE ? `<button class="btn ghost small" data-caltoday>${esc(t("pack_cal_today_btn"))}</button>` : ""}</div>
+          <div class="pur-seg pc-view"><button type="button" data-calview="list" class="${view === "list" ? "on" : ""}">☰ ${esc(t("pack_cal_list"))}</button><button type="button" data-calview="month" class="${view === "month" ? "on" : ""}">▦ ${esc(t("pack_cal_month"))}</button></div>
         </div>
-        <button class="btn ghost" id="packCalBack">${esc(t("pack_cal_back"))}</button>
-      </div>
-      <div class="panel">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            ${chip("weekly", t("pack_cal_weekly"))}${chip("monthly", t("pack_cal_monthly"))}${chip("daily", t("pack_cal_daily"))}${chip("other", t("pack_cal_other"))}${chip("event", t("pack_cal_events"))}${allWeekNames.size ? chip("allweek", `${t("pack_cal_all_week")} (${allWeekNames.size})`) : ""}
-          </div>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <button class="btn ghost small" data-calpage="-1" style="padding:3px 10px;">&#8249;</button>
-            <span class="meta" style="font-size:11px;">${esc(range)} <span style="opacity:.7;">UTC</span></span>
-            <button class="btn ghost small" data-calpage="1" style="padding:3px 10px;">&#8250;</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto; -webkit-overflow-scrolling:touch;"><div style="min-width:560px; border:1px solid var(--line); border-radius:10px; overflow:hidden;">
+        <div class="pc-chips">${chip("weekly", t("pack_cal_weekly"))}${chip("monthly", t("pack_cal_monthly"))}${chip("daily", t("pack_cal_daily"))}${chip("other", t("pack_cal_other"))}${chip("event", t("pack_cal_events"))}${allWeekNames.size ? chip("allweek", `${t("pack_cal_all_week")} (${allWeekNames.size})`) : ""}</div>
+        ${view === "list" ? `<div class="pc-list">${listHtml()}</div>` : `<div class="pc-scroll"><div class="pc-grid">
           <div style="display:grid; grid-template-columns:repeat(7,1fr); background:rgba(255,255,255,.03); border-bottom:1px solid var(--line);">
-            ${dows.map((d) => `<div style="font-size:9.5px; color:var(--muted); text-align:center; padding:5px 0;">${esc(d)}</div>`).join("")}
+            ${dows.map((d) => `<div style="font-size:10px; color:var(--muted); text-align:center; padding:6px 0; font-weight:600;">${esc(d)}</div>`).join("")}
           </div>
           ${weeksHtml}
-        </div></div>
+        </div></div>`}
         ${hideAllWeek && allWeekNames.size ? `<div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_all_week_hidden").replace("{n}", allWeekNames.size))} · <button class="btn ghost small" data-calchip="allweek" style="padding:1px 8px; font-size:10px; border-radius:999px;">${esc(t("pack_cal_show_them"))}</button></div>` : ""}
-        ${segs.length ? "" : `<div class="meta" style="font-size:11.5px; margin-top:10px;">${esc(t("pack_cal_empty"))}</div>`}
+        <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_utc"))}</div>
       </div>`;
 
     document.getElementById("packCalBack").addEventListener("click", () => goToTab("packs"));
@@ -7636,6 +7701,9 @@ async function renderPackCalendarPage() {
       PACK_CAL_OPEN_WEEKS.add(Number(b.dataset.calmore));
       draw();
     }));
+    content.querySelectorAll("[data-calview]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("packcal_view", b.dataset.calview); } catch (e) {} draw(); }));
+    const todayBtn = content.querySelector("[data-caltoday]");
+    if (todayBtn) todayBtn.addEventListener("click", () => { PACK_CAL_PAGE = 0; PACK_CAL_OPEN_WEEKS = new Set(); draw(); });
     content.querySelectorAll("[data-calpage]").forEach((b) => b.addEventListener("click", () => {
       PACK_CAL_PAGE = Math.max(-12, Math.min(24, PACK_CAL_PAGE + Number(b.dataset.calpage)));
       PACK_CAL_OPEN_WEEKS = new Set();
