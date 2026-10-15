@@ -944,6 +944,8 @@ input,select,textarea{
   .cat-tabs::-webkit-scrollbar{ display:none; }
   /* Packs page: every category must stay visible, so wrap onto more lines
      instead of hiding the overflow behind a scrollbar-less strip. */
+  .pk-cat-row{ flex-wrap:nowrap; padding-bottom:2px; }
+  .pk-cat-row button{ flex-shrink:0; white-space:nowrap; }
   .cat-tabs.cat-tabs-wrap{ flex-wrap:wrap; overflow:visible; row-gap:6px; }
   .cat-tabs button{
     flex-shrink:0; background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
@@ -7586,7 +7588,8 @@ async function renderPacksPage() {
     const tabs = categoryTabs();
     if (!tabs.some((pt) => pt.key === packsFilter)) packsFilter = "all";
     const countFor = (key) => { const keep = packsFilter; packsFilter = key; const n = tables.filter(tableMatchesFilter).length; packsFilter = keep; return n; };
-    el.innerHTML = `<div class="cat-tabs cat-tabs-wrap">${tabs.map((pt) => {
+    // One row that scrolls sideways (it used to wrap onto 3 lines on phones).
+    el.innerHTML = `<div class="cat-tabs pk-cat-row">${tabs.map((pt) => {
       const label = pt.key === "all" ? t("packs_filter_all") : pt.key === "none" ? t("packs_filter_none") : pt.name;
       return `<button data-packsfilter="${esc(pt.key)}" class="${pt.key === packsFilter ? "active" : ""}">${esc(label)} <span class="meta" style="font-size:10px;">${countFor(pt.key)}</span></button>`;
     }).join("")}</div>`;
@@ -7764,12 +7767,15 @@ async function renderPacksPage() {
         headRow.appendChild(b);
       }
     });
-    if (!root.querySelector("[data-pack-visitor-hint]") && root.firstElementChild) {
+    // The "you can change the amounts" note sits inside each table's editor
+    // (seen after tapping Edit), not above the whole list.
+    root.querySelectorAll(".pk-body").forEach((body) => {
+      if (body.querySelector("[data-pack-visitor-hint]")) return;
       const hint = document.createElement("p");
-      hint.className = "desc"; hint.dataset.packVisitorHint = "1"; hint.style.cssText = "font-size:11px; margin:0 0 4px;";
+      hint.className = "desc"; hint.dataset.packVisitorHint = "1"; hint.style.cssText = "font-size:11px; margin:0 0 8px;";
       hint.textContent = t("pack_visitor_edit_hint");
-      root.prepend(hint);
-    }
+      body.prepend(hint);
+    });
     // Per-row purchase limits stay visible as plain text ("×3" = that row
     // can be bought 3 times), so visitors know a tier repeats.
     root.querySelectorAll("[data-pt-rowmax]").forEach((inp) => { const td = inp.closest("td"); td.textContent = inp.value ? "\u00d7" + inp.value : ""; td.className = "meta"; td.style.fontSize = "11px"; td.style.textAlign = "center"; });
