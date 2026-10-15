@@ -289,6 +289,8 @@
   .pur-m-row:first-child{ border-top:0; }
   .pur-m-row input{ width:18px; height:18px; }
   .pur-m-foot{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; font-size:13px; }
+  .pur-sug-list{ overflow-y:auto; overscroll-behavior:contain; position:relative; scrollbar-width:thin; }
+  .pur-sug-more{ text-align:center; font-size:10.5px; padding:4px 0 2px; border-top:1px dashed var(--line); }
   .pur-sug-total{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:13px; }
   .pur-sug-total b{ font-size:17px; }
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
@@ -4242,6 +4244,7 @@ const T = {
   pur_remove_all_q: { en: "Remove all {n} dates of this pack?", ar: "إزالة كل التواريخ ({n}) لهذه الحزمة؟", ko: "이 팩의 날짜 {n}개를 모두 삭제할까요?" },
   pur_each: { en: "each", ar: "للواحدة", ko: "개당" },
   pur_pick_dates: { en: "Pick the dates you'll buy it", ar: "اختر تواريخ الشراء", ko: "구매할 날짜를 선택하세요" },
+  pur_sug_scroll: { en: "Scroll for all {n} packs", ar: "مرّر لرؤية كل الحزم ({n})", ko: "스크롤하여 {n}개 팩 모두 보기" },
   pur_sug_now: { en: "Now", ar: "الآن", ko: "지금" },
   pur_sug_buy_now: { en: "Buy now", ar: "اشترِ الآن", ko: "지금 구매" },
   pur_sug_later: { en: "Later (until {date})", ar: "لاحقاً (حتى {date})", ko: "나중에 ({date}까지)" },
@@ -6951,7 +6954,7 @@ async function renderPurchasesPage() {
     rows.forEach((r, i) => sched[i].forEach((x) => { const c = packConvert(r.price * x.count, r.currency || "USD").n; if (x.off <= 0) nowCost += c; else { laterCost += c; lastOff = Math.max(lastOff, x.off); } }));
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_sug_buy_now"))}</span><b>${esc(packFmtLocal(nowCost, rows[0].currency, true, rows[0].price))}</b></div><div><span class="meta">${esc(t("pur_sug_later").replace("{date}", fmtDay(dayOf(lastOff))))}</span><b>${laterCost ? esc(packFmtLocal(laterCost, rows[0].currency, true, rows[0].price)) : "—"}</b></div></div>`;
     const drawSug = () => {
-    box.innerHTML = head + splitHtml + rows.map((r, i) => {
+    box.innerHTML = head + splitHtml + `<div class="pur-sug-list">` + rows.map((r, i) => {
       const tb = byTitle.get(r.title);
       const names = tb ? packUsedForNames(tb) : [];
       const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * r.count) > 0).slice(0, 5).map((k) => {
@@ -6964,7 +6967,7 @@ async function renderPurchasesPage() {
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
         <div class="pur-item-f"><span class="meta pur-for">${esc(sched[i].length > 1 ? `${t("pur_n_dates").replace("{n}", sched[i].length)} · ${whenTxt(sched[i][0].off)} → ${whenTxt(sched[i][sched[i].length - 1].off)}` : whenTxt(sched[i][0].off))}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && r.row != null && plainPack(tb) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
-    }).join("") + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
+    }).join("") + `</div>${rows.length > 3 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", rows.length))}</div>` : ""}<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
     // "+ Will buy" opens a small window: tick the dates to buy on (all ticked).
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
       const i = Number(b.dataset.pursug), r = rows[i], tb = byTitle.get(r.title), s0 = sched[i];
@@ -7002,6 +7005,9 @@ async function renderPurchasesPage() {
         redraw();
       });
     }));
+      // Show the top 3 packs; the rest scroll inside the box.
+      const listEl = box.querySelector(".pur-sug-list"), items = listEl ? [...listEl.children] : [];
+      if (items.length > 3) listEl.style.maxHeight = `${items[3].offsetTop + 1}px`; // the list is the cards' offset parent
     };
     drawSug();
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
