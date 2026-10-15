@@ -271,6 +271,10 @@
   .pur-when{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; margin-top:8px; font-size:11px; }
   .pur-when-c{ padding:2px 8px; border-radius:999px; border:1px solid var(--line); white-space:nowrap; }
   .pur-when-c.now{ border-color:var(--good); color:var(--good); font-weight:700; }
+  button.pur-when-c{ background:rgba(108,199,230,.12); border-color:var(--ice); color:var(--frost); font:inherit; font-size:11px; cursor:pointer; }
+  button.pur-when-c.now{ border-color:var(--good); color:var(--good); background:rgba(95,191,127,.12); }
+  button.pur-when-c.off{ background:none; border-style:dashed; border-color:var(--line); color:var(--muted); font-weight:400; text-decoration:line-through; }
+  .pur-when-all{ background:none; border:0; padding:0 4px; color:var(--ice); font-size:11px; text-decoration:underline; cursor:pointer; }
   .pur-sug-total{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:13px; }
   .pur-sug-total b{ font-size:17px; }
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
@@ -4215,15 +4219,17 @@ const T = {
   pk_preview_empty: { en: "Visitors don't see this box yet. Tick \"Visitors can set their own date\" in a pack's settings to add it here.", ar: "لا يرى الزوار هذا المربع بعد. حدّد \"يمكن للزوار تحديد تاريخهم\" في إعدادات حزمة لإضافتها.", ko: "아직 방문자에게 이 상자가 보이지 않습니다. 팩 설정에서 \"방문자가 날짜를 직접 설정 가능\"을 체크하세요." },
   pk_preview_open: { en: "Open settings", ar: "فتح الإعدادات", ko: "설정 열기" },
   pk_preview_notshown: { en: "That pack isn't shown with the current filter.", ar: "هذه الحزمة غير ظاهرة مع الفلتر الحالي.", ko: "현재 필터에서는 해당 팩이 표시되지 않습니다." },
+  pur_sug_pick_all: { en: "Pick all", ar: "اختر الكل", ko: "모두 선택" },
+  pur_sug_pick_none: { en: "Clear", ar: "إلغاء الكل", ko: "모두 해제" },
+  pur_sug_n_of: { en: "{n} of {m} dates", ar: "{n} من {m} تواريخ", ko: "{m}회 중 {n}회" },
   pur_sug_now: { en: "Now", ar: "الآن", ko: "지금" },
   pur_sug_when: { en: "When:", ar: "متى:", ko: "시기:" },
   pur_sug_dates: { en: "dates", ar: "تواريخ", ko: "회" },
-  pur_sug_more_dates: { en: "more, last", ar: "أخرى، آخرها", ko: "회 더, 마지막" },
   pur_sug_buy_now: { en: "Buy now", ar: "اشترِ الآن", ko: "지금 구매" },
   pur_sug_later: { en: "Later (until {date})", ar: "لاحقاً (حتى {date})", ko: "나중에 ({date}까지)" },
   pur_added_dates: { en: "Added on {n} dates", ar: "أضيفت في {n} تواريخ", ko: "{n}개 날짜에 추가됨" },
   pur_sug_title: { en: "Suggested packs (from Budgets)", ar: "حزم مقترحة (من الميزانيات)", ko: "추천 팩 (예산 기준)" },
-  pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy adds one line per date.", ar: "أرخص الحزم التي تغطي خططك بعد الحزم في هذه الصفحة. اضغط سأشتري لإضافتها.", ko: "이 페이지의 팩을 반영한 뒤 계획을 채우는 가장 저렴한 팩입니다. 구매 예정을 눌러 추가하세요." },
+  pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Tap a date to leave it out; Will buy adds one line per picked date.", ar: "أرخص الحزم التي تغطي خططك بعد الحزم في هذه الصفحة. اضغط سأشتري لإضافتها.", ko: "이 페이지의 팩을 반영한 뒤 계획을 채우는 가장 저렴한 팩입니다. 구매 예정을 눌러 추가하세요." },
   pur_sug_none: { en: "Nothing else to buy: your plans are covered.", ar: "لا شيء آخر للشراء: خططك مغطاة.", ko: "더 살 것이 없습니다: 계획이 충족됩니다." },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again.", ar: "تعذر حساب الاقتراحات. افتح الميزانيات مرة ثم أعد المحاولة.", ko: "추천을 계산하지 못했습니다. 예산을 한 번 연 뒤 다시 시도하세요." },
   pur_sug_total: { en: "Suggested total", ar: "إجمالي المقترح", ko: "추천 합계" },
@@ -6783,6 +6789,7 @@ function packNewGenLabel(start, reset) {
 // limit so it isn't counted again. Also holds the person's own pack dates
 // (New Gen Heroes, weekly cards).
 // ============================================================
+const PUR_SUG_OFF = new Map(); // suggested packs: dates left out by the person ("title|label|row" -> Set of day offsets), kept for the visit
 let PUR_FORM = { table: "", row: 0, count: 1, date: "", status: "planned" };
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
@@ -6915,6 +6922,8 @@ async function renderPurchasesPage() {
     let nowCost = 0, laterCost = 0, lastOff = 0;
     rows.forEach((r, i) => sched[i].forEach((x) => { const c = packConvert(r.price * x.count, r.currency || "USD").n; if (x.off <= 0) nowCost += c; else { laterCost += c; lastOff = Math.max(lastOff, x.off); } }));
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_sug_buy_now"))}</span><b>${esc(packFmtLocal(nowCost, rows[0].currency, true, rows[0].price))}</b></div><div><span class="meta">${esc(t("pur_sug_later").replace("{date}", fmtDay(dayOf(lastOff))))}</span><b>${laterCost ? esc(packFmtLocal(laterCost, rows[0].currency, true, rows[0].price)) : "—"}</b></div></div>`;
+    const sugKey = (r) => `${r.title}|${r.label}|${r.row}`;
+    const drawSug = () => {
     box.innerHTML = head + splitHtml + rows.map((r, i) => {
       const tb = byTitle.get(r.title);
       const names = tb ? packUsedForNames(tb) : [];
@@ -6926,20 +6935,45 @@ async function renderPurchasesPage() {
       return `<div class="pur-item">
         <div class="pur-item-h"><div style="min-width:0;"><b>${esc(r.title)}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats" style="margin-top:6px;">${chips}</div>` : ""}
-        <div class="pur-when"><span class="meta">${esc(t("pur_sug_when"))}</span>${sched[i].slice(0, 8).map((x) => `<span class="pur-when-c${x.off <= 0 ? " now" : ""}">${esc(whenTxt(x.off))} ×${x.count}</span>`).join("")}${sched[i].length > 8 ? `<span class="meta">+${sched[i].length - 8} ${esc(t("pur_sug_more_dates"))} · ${esc(fmtDay(dayOf(sched[i][sched[i].length - 1].off)))}</span>` : ""}</div>
-        <div class="pur-item-f"><span class="meta">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : "—"}</span>${tb && r.row != null && plainPack(tb) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}${sched[i].length > 1 ? ` (${sched[i].length} ${esc(t("pur_sug_dates"))})` : ""}</button>` : ""}</div>
+        ${(() => {
+          // Tap a date to leave it out (all dates start picked).
+          const can = tb && r.row != null && plainPack(tb), off = PUR_SUG_OFF.get(sugKey(r)) || new Set();
+          return `<div class="pur-when"><span class="meta">${esc(t("pur_sug_when"))}</span>${sched[i].map((x, k) => can && sched[i].length > 1
+            ? `<button type="button" class="pur-when-c pick${off.has(x.off) ? " off" : ""}${x.off <= 0 ? " now" : ""}" data-pursugday="${i}|${x.off}" aria-pressed="${!off.has(x.off)}">${off.has(x.off) ? "" : "&#10003; "}${esc(whenTxt(x.off))} ×${x.count}</button>`
+            : `<span class="pur-when-c${x.off <= 0 ? " now" : ""}">${esc(whenTxt(x.off))} ×${x.count}</span>`).join("")}
+            ${can && sched[i].length > 1 ? `<button type="button" class="linklike pur-when-all" data-pursugall="${i}">${esc(off.size ? t("pur_sug_pick_all") : t("pur_sug_pick_none"))}</button>` : ""}</div>
+          <div class="pur-item-f"><span class="meta">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : "—"}</span>${can ? (() => { const n = sched[i].filter((x) => !off.has(x.off)).length; return `<button type="button" class="btn small" data-pursug="${i}" ${n ? "" : "disabled"}>+ ${esc(t("pur_will_buy"))}${sched[i].length > 1 ? ` (${n === sched[i].length ? `${n} ${esc(t("pur_sug_dates"))}` : esc(t("pur_sug_n_of").replace("{n}", n).replace("{m}", sched[i].length))})` : ""}</button>`; })() : ""}</div>`;
+        })()}
       </div>`;
     }).join("") + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
+    box.querySelectorAll("[data-pursugday]").forEach((b) => b.addEventListener("click", () => {
+      const [i, o] = b.dataset.pursugday.split("|").map(Number), k = sugKey(rows[i]);
+      const set = PUR_SUG_OFF.get(k) || new Set();
+      if (set.has(o)) set.delete(o); else set.add(o);
+      PUR_SUG_OFF.set(k, set);
+      drawSug();
+    }));
+    box.querySelectorAll("[data-pursugall]").forEach((b) => b.addEventListener("click", () => {
+      const i = Number(b.dataset.pursugall), k = sugKey(rows[i]);
+      const set = PUR_SUG_OFF.get(k);
+      PUR_SUG_OFF.set(k, set && set.size ? new Set() : new Set(sched[i].map((x) => x.off)));
+      drawSug();
+    }));
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
       const r = rows[Number(b.dataset.pursug)], tb = byTitle.get(r.title);
       if (!tb) return;
-      // One "Will buy" line per date the pack can be bought.
-      const s0 = sched[Number(b.dataset.pursug)];
+      // One "Will buy" line per picked date.
+      const offSet = PUR_SUG_OFF.get(sugKey(r)) || new Set();
+      const s0 = sched[Number(b.dataset.pursug)].filter((x) => !offSet.has(x.off));
+      if (!s0.length) return;
+      PUR_SUG_OFF.delete(sugKey(r));
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(s0.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned" })));
       savePackPurchases();
       toast(s0.length > 1 ? t("pur_added_dates").replace("{n}", s0.length) : t("pur_added"));
       redraw();
     }));
+    };
+    drawSug();
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
 
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
