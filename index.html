@@ -291,6 +291,26 @@
   .pur-m-foot{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; font-size:13px; }
   .pur-sug-list{ overflow-y:auto; overscroll-behavior:contain; position:relative; scrollbar-width:thin; }
   .pur-sug-more{ text-align:center; font-size:10.5px; padding:4px 0 2px; border-top:1px dashed var(--line); }
+  .pur-form-f{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .pur-t-box{ max-width:640px; }
+  .pur-t-wrap{ overflow:auto; max-height:52vh; border:1px solid var(--line); border-radius:10px; }
+  .pur-t{ width:100%; border-collapse:collapse; font-size:12px; }
+  .pur-t th{ position:sticky; top:0; background:var(--panel-2); font-size:10.5px; font-weight:600; color:var(--muted); padding:6px 8px; text-align:start; white-space:nowrap; }
+  .pur-t td{ padding:6px 8px; border-top:1px solid var(--line); white-space:nowrap; }
+  .pur-t tr.on td{ background:rgba(108,199,230,.08); }
+  .pur-t-pr{ font-weight:700; }
+  .pur-t th:first-child, .pur-t td.pur-t-ctl{ position:sticky; inset-inline-start:0; background:var(--panel); z-index:1; }
+  .pur-t th:first-child{ background:var(--panel-2); z-index:2; }
+  .pur-t-step{ display:inline-flex; align-items:center; gap:6px; }
+  .pur-t-step button, .pur-t-pick button{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; padding:0; font-size:14px; line-height:1; }
+  .pur-t-step button:disabled, .pur-t-pick button:disabled{ opacity:.35; cursor:default; }
+  .pur-t-step i, .pur-t-pick i{ font-style:normal; min-width:16px; text-align:center; font-weight:700; }
+  .pur-t-tick{ width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background:none; color:#0f141b; cursor:pointer; padding:0; font-weight:800; }
+  .pur-t-tick.on{ background:var(--ice); border-color:var(--ice); }
+  .pur-t-cell{ background:none; border:1px dashed var(--line); color:var(--frost); border-radius:6px; padding:2px 8px; cursor:pointer; font:inherit; }
+  .pur-t-cell.on{ border:1px solid var(--ice); background:rgba(108,199,230,.15); font-weight:700; }
+  .pur-t-picks{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin-bottom:8px; font-size:12px; }
+  .pur-t-pick{ display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); border-radius:999px; padding:2px 4px 2px 10px; }
   .pur-sug-total{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:13px; }
   .pur-sug-total b{ font-size:17px; }
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
@@ -4248,6 +4268,14 @@ const T = {
   pur_pick_dates: { en: "Pick the dates you'll buy it", ar: "اختر تواريخ الشراء", ko: "구매할 날짜를 선택하세요" },
   pur_sug_scroll: { en: "Scroll for all {n} packs", ar: "مرّر لرؤية كل الحزم ({n})", ko: "스크롤하여 {n}개 팩 모두 보기" },
   pur_choice: { en: "Choice", ar: "الخيار", ko: "선택" },
+  pur_tbl_btn: { en: "Pick from table", ar: "اختر من الجدول", ko: "표에서 선택" },
+  pur_tbl_empty: { en: "This pack has no prices yet.", ar: "لا توجد أسعار لهذه الحزمة بعد.", ko: "이 팩에는 아직 가격이 없습니다." },
+  pur_tbl_price: { en: "Price", ar: "السعر", ko: "가격" },
+  pur_tbl_hint_rows: { en: "Use − / + on each row you'll buy, then Add.", ar: "استخدم − / + على كل صف ستشتريه ثم أضف.", ko: "구매할 행마다 − / +를 누른 뒤 추가하세요." },
+  pur_tbl_hint_ladder: { en: "Bought in order: tick the last tier you'll buy (all tiers before it are included).", ar: "يُشترى بالترتيب: حدد آخر مستوى ستشتريه (تُحسب كل المستويات قبله).", ko: "순서대로 구매: 마지막으로 살 단계를 체크하세요(이전 단계 포함)." },
+  pur_tbl_hint_cols: { en: "Tap the item you'll take in each tier.", ar: "اضغط العنصر الذي ستأخذه في كل مستوى.", ko: "각 단계에서 받을 아이템을 누르세요." },
+  pur_tbl_pick_n: { en: "Pick {n} items", ar: "اختر {n} عناصر", ko: "아이템 {n}개 선택" },
+  pur_tbl_nothing: { en: "Nothing picked yet", ar: "لم يتم اختيار شيء بعد", ko: "아직 선택 없음" },
   pur_sug_now: { en: "Now", ar: "الآن", ko: "지금" },
   pur_sug_buy_now: { en: "Buy now", ar: "اشترِ الآن", ko: "지금 구매" },
   pur_sug_later: { en: "Later (until {date})", ar: "لاحقاً (حتى {date})", ko: "나중에 ({date}까지)" },
@@ -6818,6 +6846,105 @@ function packNewGenLabel(start, reset) {
 // limit so it isn't counted again. Also holds the person's own pack dates
 // (New Gen Heroes, weekly cards).
 // ============================================================
+// ---- My Purchases: pick packs straight from a pack's table ----
+// Shows the pack's table in a pop-up. Depending on the pack:
+//   rows    - tap - / + on a row (or, for a buy-in-order pack, tap the last
+//             tier you'll buy: everything up to it is picked)
+//   pick    - "pick N items" packs (Mix & Match): choose the N items once,
+//             then the rows / tiers
+//   cols    - one item per tier (the columns are the options): tap the cell
+//             you'll take in each tier
+// "Add" saves the picks with the form's date and status.
+// A plan title without its category ("Weekly/Monthly Calendar Packs · Mix & Match" -> "Mix & Match").
+function purPackName(title, tables) {
+  const cats = [...new Set((tables || []).map((tb) => String(packLinkFor(tb.id).group || "").trim()).filter(Boolean))];
+  const c = cats.find((g) => String(title || "").startsWith(g + " · "));
+  return c ? String(title).slice(c.length + 3) : String(title || "");
+}
+function purTablePopup(tb, opts) {
+  const link = packLinkFor(tb.id);
+  const cols = packEffectiveCols(tb);
+  const pc = link.priceCol || 0;
+  const rows = (tb.rows || []).map((r, ri) => ({ ri, cells: r.cells || [] })).filter((r) => packParseNum(r.cells[pc]) > 0);
+  if (!rows.length) { toast(t("pur_tbl_empty")); return; }
+  const mode = link.pickCols > 0 ? "pick" : link.colOptions ? "cols" : "rows";
+  const choiceType = !!(link.option || link.pickCols > 0 || link.colOptions);
+  const freeSteps = link.linkSet ? !!packLinkFor(link.linkSet).freeSteps : false;
+  const ladder = mode === "pick" ? !!link.pickOrder : mode === "cols" ? true : (link.option ? !freeSteps : !!link.sequential);
+  const optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && cols[ci] && cols[ci] !== "Gems");
+  const showCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci === pc || !packIsNonResourceColumn(tb.columns[ci]));
+  const price = (r) => packParseNum(r.cells[pc]);
+  const colGive = (r, ci) => { const out = {}; const q = packParseNum(r.cells[ci]) * packColMultiplier(link, ci); if (q > 0 && cols[ci]) { const c = packBundleContents(cols[ci]); Object.keys(c).forEach((n) => { out[n] = (out[n] || 0) + q * c[n]; }); } return out; };
+  const add = (a, b, k) => { Object.entries(b).forEach(([n, v]) => { a[n] = (a[n] || 0) + v * (k == null ? 1 : k); }); return a; };
+  const offerOf = new Map(packOffersFor(tb, true).map((o) => [o.row, o]));
+  const money = (v) => packFmtMoney(v, link.currency);
+  const colName = (ci) => (cols[ci] ? materialDisplayName(cols[ci]) : String(tb.columns[ci] || ""));
+  // state
+  const S = { counts: {}, upTo: -1, picks: {}, cellPick: {} };
+  if (mode === "pick") { S.picks[optCols[0]] = link.pickCols; }
+  rows.forEach((r) => { if (mode === "cols") S.cellPick[r.ri] = optCols[0]; });
+  const pickTotal = () => Object.values(S.picks).reduce((a, b) => a + b, 0);
+  const rowGives = (r) => {
+    if (mode === "pick") { const g = {}; Object.entries(S.picks).forEach(([ci, k]) => add(g, colGive(r, Number(ci)), k)); return g; }
+    if (mode === "cols") return colGive(r, S.cellPick[r.ri]);
+    const o = offerOf.get(r.ri); return o ? { ...o.gives } : {};
+  };
+  // What will be added: [{ row, count, label, price, gives }]
+  const lines = () => {
+    if (ladder) {
+      if (S.upTo < 0) return [];
+      const upto = rows.filter((r) => r.ri <= S.upTo);
+      const pr = upto.reduce((a, r) => a + price(r), 0), g = {};
+      upto.forEach((r) => add(g, rowGives(r)));
+      const k = upto.length;
+      const what = mode === "pick" ? ` · ${optCols.filter((ci) => S.picks[ci]).map((ci) => `${S.picks[ci]}× ${colName(ci)}`).join(" + ")}` : mode === "cols" ? ` · ${upto.map((r) => colName(S.cellPick[r.ri]).split(" ")[0]).join(", ")}` : "";
+      return [{ row: S.upTo, count: Math.max(1, opts.count || 1), price: pr, gives: g, label: `${k > 1 ? t("pack_up_to") + " " : ""}${money(price(upto[k - 1]))}${rows.length > 1 ? ` (${t("pack_steps_of").replace("{k}", k).replace("{n}", rows.length)})` : ""}${what}` }];
+    }
+    return rows.filter((r) => S.counts[r.ri] > 0).map((r) => ({ row: r.ri, count: S.counts[r.ri], price: price(r), gives: rowGives(r), label: `${money(price(r))}${mode === "pick" ? ` · ${optCols.filter((ci) => S.picks[ci]).map((ci) => `${S.picks[ci]}× ${colName(ci)}`).join(" + ")}` : ""}` }));
+  };
+  let modal = document.getElementById("purTblModal");
+  if (!modal) { modal = document.createElement("div"); modal.id = "purTblModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+  const close = () => { modal.style.display = "none"; };
+  const draw = () => {
+    const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0);
+    const pickBar = mode === "pick" ? `<div class="pur-t-picks"><span class="meta">${esc(t("pur_tbl_pick_n").replace("{n}", link.pickCols))} (${pickTotal()}/${link.pickCols})</span>${optCols.map((ci) => `<span class="pur-t-pick"><b>${esc(colName(ci))}</b><button type="button" data-tpk="${ci}|-1">&minus;</button><i>${S.picks[ci] || 0}</i><button type="button" data-tpk="${ci}|1" ${pickTotal() >= link.pickCols ? "disabled" : ""}>+</button></span>`).join("")}</div>` : "";
+    // The tick / − + column comes first so it stays in view on phones.
+    const head = `<tr><th></th>${showCols.map((ci) => `<th>${esc(ci === pc ? t("pur_tbl_price") : colName(ci))}</th>`).join("")}</tr>`;
+    const body = rows.map((r) => {
+      const on = ladder ? r.ri <= S.upTo : S.counts[r.ri] > 0;
+      const max = Number((link.rowMax || {})[r.ri]) || 0;
+      const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${r.ri}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
+        : `<span class="pur-t-step"><button type="button" data-tct="${r.ri}|-1">&minus;</button><i>${S.counts[r.ri] || 0}</i><button type="button" data-tct="${r.ri}|1" ${max && (S.counts[r.ri] || 0) >= max ? "disabled" : ""}>+</button></span>`;
+      return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${showCols.map((ci) => {
+        const v = String(r.cells[ci] == null ? "" : r.cells[ci]);
+        if (ci === pc) return `<td class="pur-t-pr">${esc(money(price(r)))}${max ? ` <span class="meta">×${max}</span>` : ""}</td>`;
+        const picked = mode === "cols" && S.cellPick[r.ri] === ci;
+        return mode === "cols" && optCols.includes(ci) ? `<td><button type="button" class="pur-t-cell${picked ? " on" : ""}" data-tcell="${r.ri}|${ci}">${esc(v)}</button></td>` : `<td>${esc(v)}</td>`;
+      }).join("")}</tr>`;
+    }).join("");
+    modal.innerHTML = `<div class="modal-box pur-t-box">
+      <h2>${esc(opts.name || tb.title || "")}</h2>
+      <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows"))}${mode === "cols" ? " " + esc(t("pur_tbl_hint_cols")) : ""}</div>
+      ${pickBar}
+      <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
+      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")).slice(0, 140) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && (mode !== "pick" || pickTotal() === link.pickCols) ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
+    </div>`;
+    modal.style.display = "flex";
+    modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
+    modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.tct.split("|").map(Number); S.counts[ri] = Math.max(0, (S.counts[ri] || 0) + d); draw(); }));
+    modal.querySelectorAll("[data-tup]").forEach((b) => b.addEventListener("click", () => { const ri = Number(b.dataset.tup); S.upTo = S.upTo === ri ? -1 : ri; draw(); }));
+    modal.querySelectorAll("[data-tpk]").forEach((b) => b.addEventListener("click", () => { const [ci, d] = b.dataset.tpk.split("|").map(Number); S.picks[ci] = Math.max(0, (S.picks[ci] || 0) + d); if (pickTotal() > link.pickCols) S.picks[ci] -= 1; draw(); }));
+    modal.querySelectorAll("[data-tcell]").forEach((b) => b.addEventListener("click", () => { const [ri, ci] = b.dataset.tcell.split("|").map(Number); S.cellPick[ri] = ci; draw(); }));
+    const addBtn = modal.querySelector("[data-tadd]");
+    if (addBtn) addBtn.addEventListener("click", () => {
+      const ls2 = lines();
+      if (!ls2.length) return;
+      opts.onAdd(ls2.map((l) => ({ row: l.row, count: l.count, ...(choiceType ? { choice: { name: opts.name || tb.title || "", label: l.label, price: l.price, gives: l.gives } } : {}) })));
+      close();
+    });
+  };
+  draw();
+}
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 let PUR_FORM = { table: "", row: 0, count: 1, date: "", status: "planned" };
 async function renderPurchasesPage() {
@@ -6865,7 +6992,7 @@ async function renderPurchasesPage() {
       <div class="pur-f" style="flex:0 1 auto;"><span class="meta">${esc(t("pur_status"))}</span><div class="pur-seg">${["planned", "bought"].map((s) => `<button type="button" data-purstatus="${s}" class="${PUR_FORM.status === s ? "on" : ""}">${esc(t(s === "planned" ? "pur_will_buy" : "pur_bought"))}</button>`).join("")}</div></div>
       <button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>
     </div>
-    <div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
+    <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span><button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button></div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
   </div>`;
 
   // Purchase lists
@@ -6899,7 +7026,7 @@ async function renderPurchasesPage() {
     const when = dates.length === 1 ? shortDay(dates[0]) : `${t("pur_n_dates").replace("{n}", dates.length)} · ${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today);
     return `<div class="pur-item pur-grp${open ? " open" : ""}" data-purgrp="${esc(kind + "|" + g.key)}">
-      <div class="pur-item-h"><div style="min-width:0;"><b>${esc(tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
+      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
       <div class="bud-mats pur-chips">${chipsFor(purchaseGives(g.first, tb), n, 5)}</div>
       <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
         <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button>${kind === "c" ? `<button type="button" class="btn small" data-purgmove="bought">&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}<button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
@@ -6958,8 +7085,7 @@ async function renderPurchasesPage() {
     const titleOf = (tb) => { const l = packLinkFor(tb.id); return l.group && l.group !== (tb.title || "") ? l.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")); };
     const byTitle = new Map(tables.map((tb) => [titleOf(tb), tb]));
     // Just the pack name: the category in front ("Weekly/Monthly Calendar Packs · ") is dropped.
-    const catNames = [...new Set(tables.map((tb) => String(packLinkFor(tb.id).group || "").trim()).filter(Boolean))];
-    const sugName = (r) => { const c = catNames.find((g) => String(r.title).startsWith(g + " · ")); return c ? r.title.slice(c.length + 3) : r.title; };
+    const sugName = (r) => purPackName(r.title, tables);
     const sugTable = (r) => (r.tables && r.tables.length ? byId.get(String(r.tables[0])) : null) || byTitle.get(r.title) || null;
     // "Will buy" only for plain tables (option / pick-your-items packs give
     // what you choose, which a purchase line can't record).
@@ -7021,7 +7147,7 @@ async function renderPurchasesPage() {
       modal.querySelector("[data-pmadd]").addEventListener("click", () => {
         const pk = picked();
         if (!pk.length) return;
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { label: r.label, price: r.price, gives: r.gives } }) })));
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })));
         savePackPurchases();
         close();
         toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
@@ -7056,11 +7182,28 @@ async function renderPurchasesPage() {
     if (PUR_FORM.status === "bought" && date > today) date = today; // can't have bought it yet
     const count = Math.max(1, Math.floor(Number(countEl && countEl.value) || 1));
     const ch = formChoices.length ? formChoices[PUR_FORM.choice] || formChoices[0] : null;
-    PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(formTb.id), row: ch ? (ch.row != null ? ch.row : 0) : PUR_FORM.row, count, date, status: PUR_FORM.status, ...(ch ? { choice: { label: ch.label, price: ch.price, gives: ch.gives } } : {}) }]);
+    PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(formTb.id), row: ch ? (ch.row != null ? ch.row : 0) : PUR_FORM.row, count, date, status: PUR_FORM.status, ...(ch ? { choice: { name: purPackName(ch.tableTitle, tables) || formTb.title || "", label: ch.label, price: ch.price, gives: ch.gives } } : {}) }]);
     PUR_FORM.count = 1;
     savePackPurchases();
     toast(t("pur_added"));
     redraw();
+  });
+  const tblBtn = content.querySelector("[data-purtable]");
+  if (tblBtn) tblBtn.addEventListener("click", () => {
+    if (!formTb) return;
+    const dateEl = content.querySelector('[data-purf="date"]'), countEl = content.querySelector('[data-purf="count"]');
+    purTablePopup(formTb, {
+      name: formTb.title || "",
+      count: Math.max(1, Math.floor(Number(countEl && countEl.value) || 1)),
+      onAdd: (adds) => {
+        let date = packValidDay(dateEl && dateEl.value) || today;
+        if (PUR_FORM.status === "bought" && date > today) date = today;
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds.map((a, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(formTb.id), date, status: PUR_FORM.status, ...a })));
+        savePackPurchases();
+        toast(t("pur_added"));
+        redraw();
+      },
+    });
   });
   const toBought = (p) => ({ ...p, status: "bought", date: p.date > today ? today : p.date });
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
