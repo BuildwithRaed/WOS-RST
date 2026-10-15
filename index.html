@@ -610,6 +610,8 @@ input,select,textarea{
   .bpw-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); }
   .bpw-face{ width:34px; height:34px; border-radius:50%; overflow:hidden; background:var(--panel-2); flex-shrink:0; border:2px solid #e8913a; }
   .bpw-face img{ width:100%; height:100%; object-fit:cover; }
+  .bpw-faces{ display:flex; flex-shrink:0; width:52px; }
+  .bpw-faces img{ width:26px; height:26px; border-radius:50%; object-fit:cover; border:2px solid #e8913a; margin-inline-end:-10px; background:var(--panel-2); }
   .bpw-name{ flex:1; min-width:0; display:flex; flex-direction:column; font-size:13px; } .bpw-name .meta{ font-size:10.5px; }
   .bpw-row input{ width:80px; text-align:center; font-size:15px; padding:5px; }
   .bpw-x{ background:none; border:0; color:var(--danger); font-size:20px; line-height:1; cursor:pointer; padding:0 4px; }
@@ -3629,8 +3631,10 @@ const T = {
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
   bpw_desc: { en: "Every hero's widgets in one place. Type how many you have, remove a hero, or add one.", ar: "أدوات كل الأبطال في مكان واحد. اكتب ما لديك، أو أزل بطلاً، أو أضف واحداً.", ko: "모든 영웅의 위젯을 한곳에서. 보유 수를 입력하거나 영웅을 빼거나 추가하세요." },
   bpw_add: { en: "Add a hero's widgets", ar: "أضف أدوات بطل", ko: "영웅 위젯 추가" },
-  bpw_gen_in: { en: "✓ All already in the box", ar: "✓ كلهم موجودون في الصندوق", ko: "✓ 모두 이미 상자에 있음" },
-  bpw_add_gen: { en: "All {g} heroes", ar: "كل أبطال {g}", ko: "{g} 영웅 전체" },
+  bpw_gen_in: { en: "✓ Already in the box", ar: "✓ موجود في الصندوق", ko: "✓ 이미 상자에 있음" },
+  bpw_gen_row: { en: "{g} widgets", ar: "أدوات {g}", ko: "{g} 위젯" },
+  bpw_any_hero: { en: "any hero of this Gen", ar: "لأي بطل من هذا الجيل", ko: "이 세대 아무 영웅" },
+  bpw_one_hero: { en: "this hero only", ar: "لهذا البطل فقط", ko: "이 영웅 전용" },
   bpw_empty: { en: "No heroes here yet.", ar: "لا يوجد أبطال هنا بعد.", ko: "아직 영웅이 없습니다." },
   bpw_roster: { en: "roster", ar: "التشكيلة", ko: "로스터" },
   hs_page: { en: "Hero shards & widgets", ar: "شظايا الأبطال والأدوات", ko: "영웅 조각 · 위젯" },
@@ -5587,6 +5591,7 @@ async function renderOverview(opts = {}) {
     const starsOf = rosterStarsOf;
     const saveStars = async (heroId, star, sub) => {
       const value = Number((star + sub / 10).toFixed(1));
+      if (typeof budgetInvalidate === "function") budgetInvalidate(); // shards needed changed
       const existing = phByHero[heroId];
       if (existing) {
         // Shown at once, saved in the background in order; put back if
@@ -5709,7 +5714,8 @@ async function renderOverview(opts = {}) {
         localStorage.setItem("dashboard_roster_collapsed", nowCollapsed ? "0" : "1");
         renderRoster();
       });
-      const save = async () => { saveCalcState("dashboard_roster", roster); };
+      // Budgets' "Hero shards & widgets" and the suggestions follow the roster.
+      const save = async () => { saveCalcState("dashboard_roster", roster); if (typeof budgetInvalidate === "function") budgetInvalidate(); };
       // Heroes counted in the Dashboard change the stat cards, so redraw the
       // whole dashboard when one was or is now counted; otherwise only the
       // roster panel changes.
@@ -9253,6 +9259,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
   const general = {};
   Object.entries(HERO_GENERAL_SHARD).forEach(([r, n]) => { general[r] = Number((bp || {})[n]) || 0; });
   const pool = { ...general };
+  const genWPool = {};
   const notOut = [];
   const rows = ["Infantry", "Lancers", "Marksman"].map((troop) => {
     const hero = (heroes || []).find((h) => h.id === entry(troop));
@@ -9280,7 +9287,13 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(10, Number(e.widget) || 0)) : 0;
     const hasWidget = hero.rarity === "Legendary";
     const wNeed = hasWidget ? widgetNeedFrom(wLevel) : 0;
-    const wOwn = hasWidget ? Number((bp || {})[`${hero.name} Widgets`]) || 0 : 0;
+    // Own widgets first, then that Gen's general widgets ("Gen 14 Widgets", any hero of the Gen).
+    const wMine = hasWidget ? Number((bp || {})[`${hero.name} Widgets`]) || 0 : 0;
+    const gKey = `Gen ${Number(hero.generation) || 0} Widgets`;
+    if (!(gKey in genWPool)) genWPool[gKey] = Number((bp || {})[gKey]) || 0;
+    const wFromGen = hasWidget ? Math.min(genWPool[gKey], Math.max(0, wNeed - wMine)) : 0;
+    genWPool[gKey] -= wFromGen;
+    const wOwn = wMine + wFromGen;
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
     while (hasWidget && wReach < 10 && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
@@ -9368,15 +9381,22 @@ async function renderInventory() {
   // The Dashboard roster heroes are always shown too (their shards and widgets
   // are what the Backpack card and Budgets plan for).
   const rosterNames = ["Infantry", "Lancers", "Marksman"].map((k) => { const e = (rosterSaved || {})[k]; const id = !e ? "" : typeof e === "string" ? e : e.heroId || ""; const h = id && (heroes || []).find((x) => x.id === id); return h ? h.name : ""; }).filter(Boolean);
-  const shownHero = (name) => myHeroes.includes(name) || rosterNames.includes(name);
   // All mythic heroes' widgets sit in ONE "Widgets" box (tap it to edit each
   // hero's amount, remove a hero or add one). calc_state "backpack_widgets" =
   // { hide: [hero names], add: [hero names] }; amounts stay "<hero> Widgets".
-  const wState = { hide: Array.isArray((widgetsSaved || {}).hide) ? widgetsSaved.hide.slice() : [], add: Array.isArray((widgetsSaved || {}).add) ? widgetsSaved.add.slice() : [] };
+  // Rows are either a whole Gen ("Gen 14 Widgets": opens for any hero of that
+  // Gen, owner) or one hero ("<hero> Widgets"). The roster heroes' Gens are
+  // shown by default; { gens: [added Gens], genHide: [removed Gens] } too.
+  const arr = (k) => (Array.isArray((widgetsSaved || {})[k]) ? widgetsSaved[k].slice() : []);
+  const wState = { hide: arr("hide"), add: arr("add"), gens: arr("gens").map(Number), genHide: arr("genHide").map(Number) };
   const mythics = (heroes || []).filter((h) => h.rarity === "Legendary");
-  const widgetHeroes = () => mythics.filter((h) => (wState.add.includes(h.name) || shownHero(h.name)) && !wState.hide.includes(h.name))
-    .sort((a, b) => (rosterNames.includes(b.name) - rosterNames.includes(a.name)) || (Number(b.generation) || 0) - (Number(a.generation) || 0));
-  const widgetTotal = () => widgetHeroes().reduce((a, h) => a + (Number(bp[`${h.name} Widgets`]) || 0), 0);
+  const rosterGens = [...new Set(mythics.filter((h) => rosterNames.includes(h.name)).map((h) => Number(h.generation) || 0))];
+  const widgetGens = () => [...new Set(rosterGens.concat(wState.gens))].filter((g) => !wState.genHide.includes(g)).sort((a, b) => b - a);
+  const widgetHeroes = () => mythics.filter((h) => (wState.add.includes(h.name) || Number(bp[`${h.name} Widgets`]) > 0) && !wState.hide.includes(h.name))
+    .sort((a, b) => (Number(b.generation) || 0) - (Number(a.generation) || 0));
+  const widgetRows = () => widgetGens().map((g) => `g:${g}`).concat(widgetHeroes().map((h) => h.name));
+  const rowKey = (r) => (r.startsWith("g:") ? `Gen ${r.slice(2)} Widgets` : `${r} Widgets`);
+  const widgetTotal = () => widgetRows().reduce((a, r) => a + (Number(bp[rowKey(r)]) || 0), 0);
   const groups = backpackItems();
   // Each added hero's own shards (saved as "<hero name> Shards"), with an
   // "Add hero" tile per rarity.
@@ -9408,7 +9428,7 @@ async function renderInventory() {
   };
   const tile = (it, sp, kind) => {
     if (it.widgetsAll) {
-      const n = widgetHeroes().length, v = widgetTotal();
+      const n = widgetRows().length, v = widgetTotal();
       return `<button type="button" class="bp-tile" data-bpwidgets title="${esc(t("bp_widgets"))}"><img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" /><span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span><span class="bp-name">${esc(t("bp_widgets"))} (${n})</span></button>`;
     }
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
@@ -9524,33 +9544,44 @@ async function renderInventory() {
   const saveHeroes = () => { saveCalcState("backpack_heroes", myHeroes); renderInventory(); };
   // The "Widgets" box: every hero's widgets in one list.
   const openWidgetsBox = () => {
-    const list = widgetHeroes().map((h) => h.name);
+    const list = widgetRows();
     const draft = {};
-    list.forEach((n) => { draft[n] = Number(bp[`${n} Widgets`]) || 0; });
+    list.forEach((r) => { draft[r] = Number(bp[rowKey(r)]) || 0; });
     const byName = (n) => mythics.find((h) => h.name === n) || { name: n };
+    const genFaces = (g) => mythics.filter((h) => (Number(h.generation) || 0) === g).slice(0, 3);
     const modal = openModal(`<div class="modal-box bpw-box">
         <div class="bpw-head"><img src="${esc(HERO_ITEM_ICON.widget)}" alt="" /><div><h2>${esc(t("bp_widgets"))}</h2><p class="desc">${esc(t("bpw_desc"))}</p></div></div>
         <div class="bpw-list" data-bpwlist></div>
         <div class="bpw-add"><select data-bpwadd><option value="">+ ${esc(t("bpw_add"))}</option></select></div>
         <div class="bpw-foot"><button class="btn ghost" type="button" data-bpwcancel>${esc(t("cancel"))}</button><button class="btn" type="button" data-bpwsave>${esc(t("save"))}</button></div>
       </div>`);
-    const draw = () => {
-      modal.querySelector("[data-bpwlist]").innerHTML = list.length ? list.map((n) => { const h = byName(n); return `<div class="bpw-row">
+    const rowHtml = (r) => {
+      if (r.startsWith("g:")) {
+        const g = Number(r.slice(2)), fs = genFaces(g), label = `${t("gen_prefix")} ${g}`;
+        return `<div class="bpw-row">
+          <span class="bpw-faces">${fs.map((h) => (h.image_url ? `<img src="${esc(h.image_url)}" alt="" loading="lazy" />` : "")).join("")}</span>
+          <span class="bpw-name"><b>${esc(t("bpw_gen_row").replace("{g}", label))}</b><span class="meta">${esc(t("bpw_any_hero"))}${rosterGens.includes(g) ? ` · ${esc(t("bpw_roster"))}` : ""}</span></span>
+          <input type="number" min="0" inputmode="numeric" data-bpwqty="${esc(r)}" value="${draft[r] || ""}" placeholder="0" />
+          <button type="button" class="bpw-x" data-bpwrm="${esc(r)}" aria-label="${esc(t("backpack_remove_hero"))}">&times;</button>
+        </div>`;
+      }
+      const h = byName(r);
+      return `<div class="bpw-row">
           <span class="bpw-face">${h.image_url ? `<img src="${esc(h.image_url)}" alt="" loading="lazy" />` : ""}</span>
-          <span class="bpw-name"><b>${esc(dataName(n))}</b>${h.generation ? `<span class="meta">${esc(t("gen_prefix"))} ${h.generation}${rosterNames.includes(n) ? ` · ${esc(t("bpw_roster"))}` : ""}</span>` : ""}</span>
-          <input type="number" min="0" inputmode="numeric" data-bpwqty="${esc(n)}" value="${draft[n] || ""}" placeholder="0" />
-          <button type="button" class="bpw-x" data-bpwrm="${esc(n)}" aria-label="${esc(t("backpack_remove_hero"))}">&times;</button>
-        </div>`; }).join("") : `<div class="meta" style="padding:8px 0;">${esc(t("bpw_empty"))}</div>`;
-      const sel = modal.querySelector("[data-bpwadd]");
-      // Grouped by Gen, newest first; "All Gen N heroes" adds the whole Gen at once.
-      // Every Gen is listed; a Gen whose heroes are all in the box already says so.
-      const left = mythics.filter((h) => !list.includes(h.name));
+          <span class="bpw-name"><b>${esc(dataName(r))}</b>${h.generation ? `<span class="meta">${esc(t("gen_prefix"))} ${h.generation} · ${esc(t("bpw_one_hero"))}</span>` : ""}</span>
+          <input type="number" min="0" inputmode="numeric" data-bpwqty="${esc(r)}" value="${draft[r] || ""}" placeholder="0" />
+          <button type="button" class="bpw-x" data-bpwrm="${esc(r)}" aria-label="${esc(t("backpack_remove_hero"))}">&times;</button>
+        </div>`;
+    };
+    const draw = () => {
+      modal.querySelector("[data-bpwlist]").innerHTML = list.length ? list.map(rowHtml).join("") : `<div class="meta" style="padding:8px 0;">${esc(t("bpw_empty"))}</div>`;
+      // Grouped by Gen, newest first: the whole Gen (any hero) first, then each hero.
       const gens = [...new Set(mythics.map((h) => Number(h.generation) || 0))].sort((a, b) => b - a);
-      sel.innerHTML = `<option value="">+ ${esc(t("bpw_add"))}</option>` + gens.map((g) => {
-        const hs = left.filter((h) => (Number(h.generation) || 0) === g);
+      modal.querySelector("[data-bpwadd]").innerHTML = `<option value="">+ ${esc(t("bpw_add"))}</option>` + gens.map((g) => {
         const label = g ? `${t("gen_prefix")} ${g}` : "—";
-        if (!hs.length) return `<optgroup label="${esc(label)}"><option value="" disabled>${esc(t("bpw_gen_in"))}</option></optgroup>`;
-        return `<optgroup label="${esc(label)}">${hs.length > 1 ? `<option value="gen:${g}">${esc(t("bpw_add_gen").replace("{g}", label))}</option>` : ""}${hs.map((h) => `<option value="${esc(h.name)}">${esc(dataName(h.name))}</option>`).join("")}</optgroup>`;
+        const hs = mythics.filter((h) => (Number(h.generation) || 0) === g && !list.includes(h.name));
+        const genOpt = list.includes(`g:${g}`) ? `<option value="" disabled>${esc(t("bpw_gen_in"))}</option>` : `<option value="g:${g}">${esc(t("bpw_gen_row").replace("{g}", label))} · ${esc(t("bpw_any_hero"))}</option>`;
+        return `<optgroup label="${esc(label)}">${genOpt}${hs.map((h) => `<option value="${esc(h.name)}">${esc(dataName(h.name))} · ${esc(t("bpw_one_hero"))}</option>`).join("")}</optgroup>`;
       }).join("");
     };
     draw();
@@ -9558,17 +9589,23 @@ async function renderInventory() {
     modal.querySelector("[data-bpwlist]").addEventListener("click", (ev) => { const b = ev.target.closest("[data-bpwrm]"); if (!b) return; list.splice(list.indexOf(b.dataset.bpwrm), 1); draw(); });
     modal.querySelector("[data-bpwadd]").addEventListener("change", (ev) => {
       const v = ev.target.value;
-      const names = v.startsWith("gen:") ? mythics.filter((h) => String(Number(h.generation) || 0) === v.slice(4)).map((h) => h.name) : v ? [v] : [];
-      names.forEach((n) => { if (!list.includes(n)) { list.push(n); draft[n] = Number(bp[`${n} Widgets`]) || 0; } });
+      if (v && !list.includes(v)) { list.push(v); draft[v] = Number(bp[rowKey(v)]) || 0; }
       draw();
     });
     modal.querySelector("[data-bpwcancel]").onclick = () => { modal.style.display = "none"; };
     modal.querySelector("[data-bpwsave]").onclick = () => {
       modal.style.display = "none";
-      const before = widgetHeroes().map((h) => h.name);
-      // Removed heroes are hidden (and their amount cleared); added ones are kept in "add".
-      before.filter((n) => !list.includes(n)).forEach((n) => { if (!wState.hide.includes(n)) wState.hide.push(n); wState.add = wState.add.filter((x) => x !== n); delete bp[`${n} Widgets`]; });
-      list.forEach((n) => { wState.hide = wState.hide.filter((x) => x !== n); if (!shownHero(n) && !wState.add.includes(n)) wState.add.push(n); const v = draft[n] || 0; if (v) bp[`${n} Widgets`] = v; else delete bp[`${n} Widgets`]; });
+      // Removed rows are hidden and their amount cleared; added ones are remembered.
+      widgetRows().filter((r) => !list.includes(r)).forEach((r) => {
+        delete bp[rowKey(r)];
+        if (r.startsWith("g:")) { const g = Number(r.slice(2)); wState.gens = wState.gens.filter((x) => x !== g); if (!wState.genHide.includes(g)) wState.genHide.push(g); }
+        else { wState.add = wState.add.filter((x) => x !== r); if (!wState.hide.includes(r)) wState.hide.push(r); }
+      });
+      list.forEach((r) => {
+        if (r.startsWith("g:")) { const g = Number(r.slice(2)); wState.genHide = wState.genHide.filter((x) => x !== g); if (!rosterGens.includes(g) && !wState.gens.includes(g)) wState.gens.push(g); }
+        else { wState.hide = wState.hide.filter((x) => x !== r); if (!wState.add.includes(r)) wState.add.push(r); }
+        const v = draft[r] || 0; if (v) bp[rowKey(r)] = v; else delete bp[rowKey(r)];
+      });
       saveCalcState("backpack", bp);
       saveCalcState("backpack_widgets", wState);
       budgetInvalidate();
