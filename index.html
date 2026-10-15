@@ -265,6 +265,8 @@
   .pur-ng-row{ display:flex; gap:10px; }
   .pur-ng-pack{ border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
   .pur-ng-next{ display:flex; flex-direction:column; gap:3px; margin-top:6px; font-size:11.5px; }
+  .pur-sug-total{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:13px; }
+  .pur-sug-total b{ font-size:17px; }
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
   .bud-pending{ font-size:15px; font-weight:600; color:var(--ice); animation:budPulse 1.2s ease-in-out infinite; }
   .bud-pending.small{ font-size:12px; }
@@ -4207,6 +4209,11 @@ const T = {
   pk_preview_empty: { en: "Visitors don't see this box yet. Tick \"Visitors can set their own date\" in a pack's settings to add it here.", ar: "لا يرى الزوار هذا المربع بعد. حدّد \"يمكن للزوار تحديد تاريخهم\" في إعدادات حزمة لإضافتها.", ko: "아직 방문자에게 이 상자가 보이지 않습니다. 팩 설정에서 \"방문자가 날짜를 직접 설정 가능\"을 체크하세요." },
   pk_preview_open: { en: "Open settings", ar: "فتح الإعدادات", ko: "설정 열기" },
   pk_preview_notshown: { en: "That pack isn't shown with the current filter.", ar: "هذه الحزمة غير ظاهرة مع الفلتر الحالي.", ko: "현재 필터에서는 해당 팩이 표시되지 않습니다." },
+  pur_sug_title: { en: "Suggested packs (from Budgets)", ar: "حزم مقترحة (من الميزانيات)", ko: "추천 팩 (예산 기준)" },
+  pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page. Tap Will buy to add one.", ar: "أرخص الحزم التي تغطي خططك بعد الحزم في هذه الصفحة. اضغط سأشتري لإضافتها.", ko: "이 페이지의 팩을 반영한 뒤 계획을 채우는 가장 저렴한 팩입니다. 구매 예정을 눌러 추가하세요." },
+  pur_sug_none: { en: "Nothing else to buy: your plans are covered.", ar: "لا شيء آخر للشراء: خططك مغطاة.", ko: "더 살 것이 없습니다: 계획이 충족됩니다." },
+  pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again.", ar: "تعذر حساب الاقتراحات. افتح الميزانيات مرة ثم أعد المحاولة.", ko: "추천을 계산하지 못했습니다. 예산을 한 번 연 뒤 다시 시도하세요." },
+  pur_sug_total: { en: "Suggested total", ar: "إجمالي المقترح", ko: "추천 합계" },
   pur_title: { en: "My Purchases", ar: "مشترياتي", ko: "내 구매" },
   pur_loading: { en: "Loading…", ar: "جارٍ التحميل…", ko: "불러오는 중…" },
   pur_desc: { en: "Add the packs you bought or plan to buy. Budgets and the planner pages count them.", ar: "أضف الحزم التي اشتريتها أو تنوي شراءها. تحسبها الميزانيات وصفحات التخطيط.", ko: "구매했거나 구매할 팩을 추가하세요. 예산과 계산 페이지에 반영됩니다." },
@@ -6867,11 +6874,49 @@ async function renderPurchasesPage() {
       </aside>
       <div class="t12x-main">
         ${summary}
+        <div class="t12x-card" id="purSuggest" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div></div>
         <div style="margin-top:12px;">${addCard}</div>
         ${listsHtml}
       </div>
     </div>`;
   renderMyPackDates(document.getElementById("purMyDates"), tables, { editable: !IS_OWNER, skipNewGen: true });
+  // Suggested packs: the Budgets plan (it already counts the packs listed
+  // here), each with "Add" to put it under Coming.
+  budgetSuggestedPlan().then((plan) => {
+    const box = document.getElementById("purSuggest");
+    if (seq !== RENDER_SEQ || !box) return;
+    const titleOf = (tb) => { const l = packLinkFor(tb.id); return l.group && l.group !== (tb.title || "") ? l.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")); };
+    const byTitle = new Map(tables.map((tb) => [titleOf(tb), tb]));
+    // "Will buy" only for plain tables (option / pick-your-items packs give
+    // what you choose, which a purchase line can't record).
+    const plainPack = (tb) => { const l = packLinkFor(tb.id); return !l.option && !(l.pickCols > 0) && !l.colOptions; };
+    const rows = plan && plan.rows ? plan.rows.filter((r) => r.count > 0) : [];
+    const head = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta" style="font-size:11px; margin:-4px 0 8px;">${esc(t("pur_sug_desc"))}</div>`;
+    if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; return; }
+    const total = rows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
+    box.innerHTML = head + rows.map((r, i) => {
+      const tb = byTitle.get(r.title);
+      const names = tb ? packUsedForNames(tb) : [];
+      const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * r.count) > 0).slice(0, 6).map((k) => {
+        const v = r.gives[k] * r.count, icon = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
+        const short = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
+        return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
+      }).join("");
+      return `<div class="pur-item">
+        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(r.title)}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
+        ${chips ? `<div class="bud-mats" style="margin-top:6px;">${chips}</div>` : ""}
+        <div class="pur-item-f"><span class="meta">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : "—"}</span>${tb && r.row != null && plainPack(tb) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
+      </div>`;
+    }).join("") + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
+    box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
+      const r = rows[Number(b.dataset.pursug)], tb = byTitle.get(r.title);
+      if (!tb) return;
+      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row, count: r.count, date: today, status: "planned" }]);
+      savePackPurchases();
+      toast(t("pur_added"));
+      redraw();
+    }));
+  }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
 
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
@@ -11225,7 +11270,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -12707,7 +12752,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -12887,7 +12932,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
@@ -12985,7 +13030,32 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { BUDGET_DATA = null; PUR_SUGGEST = null; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+// My Purchases: the Budgets packs plan (what else to buy), worked out the
+// same way the Budgets page does; reused from Budgets when it's ready.
+let PUR_SUGGEST = null; // { key, promise | plan }
+async function budgetSuggestedPlan() {
+  if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending) return BUDGET_DATA.combined.chosen || null;
+  if (PUR_SUGGEST) return PUR_SUGGEST;
+  PUR_SUGGEST = (async () => {
+    const [, , , , savedSel, savedTarget] = await Promise.all([
+      ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensurePackLinks(),
+      BUDGET_SELECTED ? Promise.resolve(BUDGET_SELECTED) : loadCalcState("budget_selected"),
+      BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
+      ensurePackTables(), ensureTradeRates(), ensurePetMarksState(), ensureBudgetNeedsSnapshot(),
+    ]);
+    BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
+    BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let targetDays = null;
+    if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
+    const pages = await Promise.all(BUDGET_PAGES.map((pg) => budgetForPage(pg.key, targetDays, { noPlan: true })));
+    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
+    return (combined && combined.chosen) || null;
+  })();
+  PUR_SUGGEST.catch(() => { PUR_SUGGEST = null; });
+  return PUR_SUGGEST;
+}
 const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
 let BUDGET_MATS_OPEN = false; // Budgets: "Materials still needed" opened (starts closed, kept for the visit)
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
