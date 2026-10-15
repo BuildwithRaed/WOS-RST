@@ -260,6 +260,8 @@
   .sa-chip.i{ border-color:var(--ice); color:var(--ice); }
   .sa-box{ max-width:380px; }
   .sa-preview{ font-size:11.5px; margin-top:6px; min-height:16px; }
+  .sa-moved{ font-size:12px; padding:7px 10px; border-radius:10px; border:1px solid var(--ice); color:var(--ice); margin-bottom:8px; }
+  .sa-own{ margin-top:10px; padding-top:8px; border-top:1px solid var(--line); display:grid; gap:4px; }
   .sa-tip{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--line); font-size:12px; }
   .sa-tip b{ display:block; font-size:12.5px; }
   .sa-num{ width:22px; height:22px; border-radius:50%; background:var(--panel-2); display:grid; place-items:center; font-size:11px; font-weight:800; flex-shrink:0; }
@@ -4358,15 +4360,32 @@ const T = {
   sa_lock_hint_plan: { en: "From your state age. You can still plan it now.", ar: "حسب عمر ولايتك. يمكنك التخطيط له الآن.", ko: "주 나이 기준입니다. 지금 계획할 수 있습니다." },
   sa_title: { en: "Your state's age", ar: "عمر ولايتك", ko: "내 주(州)의 나이" },
   sa_desc: { en: "Used for your hero generations, New Gen packs, the calendar and what unlocks next. Saved to your account.", ar: "يُستخدم لأجيال الأبطال وحزم الجيل الجديد والتقويم وما سيُفتح لاحقاً. يُحفظ في حسابك.", ko: "영웅 세대, 신세대 팩, 캘린더, 다음 해금에 사용됩니다. 계정에 저장됩니다." },
+  bp_sh_notout: { en: "Left out, not out yet in your state: {names}", ar: "مستبعد، لم يصدر بعد في ولايتك: {names}", ko: "제외됨, 내 주에서 아직 미출시: {names}" },
+  hero_not_out: { en: "Not out yet", ar: "لم يصدر بعد", ko: "아직 미출시" },
+  hero_not_out_day: { en: "Not out yet · ~day {n}", ar: "لم يصدر بعد · ~اليوم {n}", ko: "아직 미출시 · ~{n}일차" },
+  hero_not_out_date: { en: "Not out yet · ~{date}", ar: "لم يصدر بعد · ~{date}", ko: "아직 미출시 · ~{date}" },
+  rfc_lab_open: { en: "Lab open in my state", ar: "المختبر مفتوح في ولايتي", ko: "내 주에서 연구소 열림" },
+  rfc_lab_closed: { en: "Off: the lab's Refined FC isn't counted on T12 and Budgets.", ar: "متوقف: لا يُحتسب FC المكرر من المختبر في T12 والميزانيات.", ko: "꺼짐: 연구소의 정제 FC가 T12와 예산에 반영되지 않습니다." },
+  cg_count_leg: { en: "Count Legendary levels", ar: "احتساب المستويات الأسطورية", ko: "전설 레벨 포함" },
+  sa_by_mon: { en: "Monument", ar: "النصب", ko: "기념비" },
+  sa_mon_beast: { en: "Beast Hunting (− 6 days)", ar: "صيد الوحوش (− 6 أيام)", ko: "야수 사냥 (− 6일)" },
+  sa_mon_kindling: { en: "Kindling Embers (− 3 days)", ar: "إشعال الجمر (− 3 أيام)", ko: "불씨 점화 (− 3일)" },
+  sa_mon_hint: { en: "Type that mission's \"Goal Met\" date:", ar: "اكتب تاريخ \"تحقيق الهدف\" لتلك المهمة:", ko: "그 임무의 \"목표 달성\" 날짜를 입력하세요:" },
+  sa_moved: { en: "Moved or merged states? Use your current state's Monument, not your VIP login days.", ar: "انتقلت أو دُمجت ولايتك؟ استخدم نصب ولايتك الحالية، وليس أيام دخول VIP.", ko: "주를 옮겼거나 합병됐나요? VIP 로그인 일수가 아니라 현재 주의 기념비를 사용하세요." },
+  sa_own_t: { en: "Your own days played (optional)", ar: "أيام لعبك أنت (اختياري)", ko: "내 플레이 일수 (선택)" },
+  sa_own_ph: { en: "VIP login days, e.g. 1054", ar: "أيام دخول VIP، مثال 1054", ko: "VIP 로그인 일수, 예: 1054" },
+  sa_own_hint: { en: "Can be more than your state's age if you moved from an older state.", ar: "قد يكون أكثر من عمر ولايتك إذا انتقلت من ولاية أقدم.", ko: "더 오래된 주에서 옮겼다면 주의 나이보다 클 수 있습니다." },
+  sa_auto: { en: "Both count up by themselves every day — set them once.", ar: "كلاهما يزيد تلقائياً كل يوم — اضبطهما مرة واحدة.", ko: "둘 다 매일 자동으로 늘어납니다 — 한 번만 설정하세요." },
+  sa_own_card: { en: "you: {n} days", ar: "أنت: {n} يوماً", ko: "나: {n}일" },
   sa_by_day: { en: "Day number", ar: "رقم اليوم", ko: "일차" },
   sa_by_date: { en: "Date it opened", ar: "تاريخ الافتتاح", ko: "개설일" },
   sa_day_ph: { en: "e.g. 1295", ar: "مثال 1295", ko: "예: 1295" },
   sa_preview: { en: "= opened about {date} · day {day} · Gen {gen} heroes now", ar: "= افتُتحت تقريباً {date} · اليوم {day} · أبطال الجيل {gen} الآن", ko: "= 약 {date} 개설 · {day}일차 · 현재 {gen}세대 영웅" },
   sa_tips_title: { en: "Don't know it? 3 ways to find it in game:", ar: "لا تعرفه؟ 3 طرق لمعرفته في اللعبة:", ko: "모르시나요? 게임에서 찾는 3가지 방법:" },
   sa_tip1_t: { en: "VIP login days", ar: "أيام دخول VIP", ko: "VIP 로그인 일수" },
-  sa_tip1: { en: "If you joined at the start and claimed VIP every day, that number ≈ your state's age.", ar: "إذا انضممت من البداية واستلمت VIP كل يوم فهذا الرقم ≈ عمر ولايتك.", ko: "처음부터 매일 VIP를 받았다면 그 숫자 ≈ 주의 나이입니다." },
+  sa_tip1: { en: "Only if you never moved states, joined at the start and claimed VIP every day: that number ≈ your state's age.", ar: "فقط إذا لم تنتقل من ولايتك وانضممت من البداية واستلمت VIP كل يوم: هذا الرقم ≈ عمر ولايتك.", ko: "주를 옮긴 적 없고 처음부터 매일 VIP를 받았다면: 그 숫자 ≈ 주의 나이입니다." },
   sa_tip2_t: { en: "Monument → Beast Hunt", ar: "النصب → صيد الوحوش", ko: "기념비 → 야수 사냥" },
-  sa_tip2: { en: "The date on the task minus 6 days = the day your state opened.", ar: "تاريخ المهمة ناقص 6 أيام = يوم افتتاح ولايتك.", ko: "임무 날짜에서 6일을 빼면 주 개설일입니다." },
+  sa_tip2: { en: "The Beast Hunting \"Goal Met\" date minus 6 days (or Kindling Embers minus 3) = the day your state opened. Use the Monument tab above.", ar: "تاريخ \"تحقيق الهدف\" لصيد الوحوش ناقص 6 أيام (أو إشعال الجمر ناقص 3) = يوم افتتاح ولايتك. استخدم تبويب النصب أعلاه.", ko: "야수 사냥 \"목표 달성\" 날짜 − 6일(또는 불씨 점화 − 3일) = 주 개설일입니다. 위의 기념비 탭을 사용하세요." },
   sa_tip3_t: { en: "Sunfire Castle → Hall of Fame", ar: "قلعة الشمس → قاعة المشاهير", ko: "선파이어 성 → 명예의 전당" },
   sa_tip3: { en: "The first President's date minus 54 days = the day your state opened.", ar: "تاريخ أول رئيس ناقص 54 يوماً = يوم افتتاح ولايتك.", ko: "첫 대통령 날짜에서 54일을 빼면 주 개설일입니다." },
   sa_clear: { en: "Remove", ar: "إزالة", ko: "삭제" },
@@ -5710,14 +5729,15 @@ async function renderOverview(opts = {}) {
                   <div style="width:100%; aspect-ratio:1; border-radius:8px; background:var(--panel-2); display:flex; align-items:center; justify-content:center;"><span class="meta">${esc(t("none_label"))}</span></div>
                   <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("none_label"))}</div>
                 </div>
-                ${choices.map((h) => `
-                <div data-pickhero="${esc(h.id)}" style="cursor:pointer; text-align:center; border:1px solid ${h.id === cur.heroId ? "var(--ice)" : "var(--line)"}; border-radius:10px; padding:6px;">
+                ${choices.map((h) => { const notOut = heroGenNotOut(h.generation); return `
+                <div data-pickhero="${esc(h.id)}" style="cursor:pointer; text-align:center; border:1px solid ${h.id === cur.heroId ? "var(--ice)" : "var(--line)"}; border-radius:10px; padding:6px;${notOut ? " opacity:.45; filter:grayscale(.8);" : ""}">
                   <div style="width:100%; aspect-ratio:1; border-radius:8px; background:var(--panel-2); overflow:hidden;">
                     ${h.image_url ? `<img src="${esc(h.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : ""}
                   </div>
                   <div style="font-size:12px; font-weight:600; margin-top:4px;">${esc(dataName(h.name))}</div>
                   ${h.generation ? `<div class="meta" style="font-size:10px;">${esc(t("gen_prefix"))} ${h.generation}</div>` : ""}
-                </div>`).join("")}
+                  ${notOut ? `<div class="meta" style="font-size:9.5px; color:var(--amber);">${esc(heroGenNotOutText(notOut))}</div>` : ""}
+                </div>`; }).join("")}
               </div>
               <div style="text-align:end; margin-top:12px;"><button class="btn ghost small" id="rosterPickClose">${esc(t("close_button"))}</button></div>
             </div>`;
@@ -9124,9 +9144,12 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
   const general = {};
   Object.entries(HERO_GENERAL_SHARD).forEach(([r, n]) => { general[r] = Number((bp || {})[n]) || 0; });
   const pool = { ...general };
+  const notOut = [];
   const rows = ["Infantry", "Lancers", "Marksman"].map((troop) => {
     const hero = (heroes || []).find((h) => h.id === entry(troop));
     if (!hero) return null;
+    // Not out yet in the person's state: no shards to plan for.
+    if (heroGenNotOut(hero.generation)) { notOut.push({ troop, hero }); return null; }
     const v = Number((phBy[hero.id] || {}).current_stars) || 0;
     const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
     const step = Math.min(30, star * 6 + sub);
@@ -9154,7 +9177,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     while (hasWidget && wReach < 10 && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
     return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
-  return { rows, general, generalLeft: pool };
+  return { rows, general, generalLeft: pool, notOut };
 }
 // Widgets for each Exclusive Gear (widget) level 1..10: 5, 10 ... 50 (275 in all).
 // Assumed from community tables; widgets cost $4.99 for 5.
@@ -9212,6 +9235,8 @@ async function renderInventory() {
     loadCalcState("dashboard_roster").catch(() => null),
     dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)).catch(() => []),
     dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)).catch(() => []),
+    // State age and "last new heroes": heroes not out yet are left out of the shards card.
+    ensureStateAge(), ensurePackLinks().catch(() => null),
   ]);
   if (seq !== RENDER_SEQ) return;
   const bp = saved || {};
@@ -9291,7 +9316,8 @@ async function renderInventory() {
   // shards from this Backpack (own shards first, then general shards).
   const shardCardHtml = () => {
     const plan = heroShardPlan({ heroes, roster: rosterSaved, playerHeroes, starRows, bp });
-    if (!plan.rows.length) return `<div class="bpsh"><div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b></div><div class="meta" style="font-size:12px;">${esc(t("bp_sh_none"))}</div></div>`;
+    const notOutLine = plan.notOut.length ? `<div class="meta" style="font-size:11px; margin-top:6px; color:var(--amber);">${esc(t("bp_sh_notout").replace("{names}", plan.notOut.map((x) => `${dataName(x.hero.name)} (${heroGenNotOutText(heroGenNotOut(x.hero.generation))})`).join(", ")))}</div>` : "";
+    if (!plan.rows.length) return `<div class="bpsh"><div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b></div><div class="meta" style="font-size:12px;">${esc(t("bp_sh_none"))}</div>${notOutLine}</div>`;
     const n = (v) => Math.round(v).toLocaleString();
     const rowsHtml = plan.rows.map((r) => {
       const tracked = myHeroes.includes(r.hero.name);
@@ -9319,6 +9345,7 @@ async function renderInventory() {
       <div class="bpsh-h"><b>${esc(t("bp_sh_title"))}</b>${totalShort ? `<span class="bpsh-short">${esc(t("bp_sh_total_short").replace("{n}", n(totalShort)))}</span>` : `<span class="bpsh-ok">${esc(t("bp_sh_enough"))}</span>`}</div>
       <div class="bpsh-rows">${rowsHtml}</div>
       <div class="bpsh-foot">${genLine}${wShortAll ? `<span class="bpsh-gen">&#9881; ${esc(t("bp_wd_total").replace("{n}", n(wShortAll)).replace("{cost}", packFmtMoney(widgetCostFor(wShortAll), "USD", false)))}</span>` : ""}</div>
+      ${notOutLine}
       <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("bp_sh_note"))} ${esc(t("bp_wd_note"))}</div>
     </div>`;
   };
@@ -10288,7 +10315,24 @@ function clampCharmState() {
 function chiefGearCapIdx() {
   const last = Math.max(0, (CHIEF_GEAR_ROWS || []).length - 1);
   const c = GEAR_CAPS ? GEAR_CAPS.chief_gear : null;
-  return Number.isInteger(c) && c >= 0 && c <= last ? c : last;
+  const cap = Number.isInteger(c) && c >= 0 && c <= last ? c : last;
+  return chiefLegendaryOn() ? cap : Math.min(cap, chiefGearLastEpicIdx());
+}
+// Last row before the Legendary tiers.
+function chiefGearLastEpicIdx() {
+  const rows = CHIEF_GEAR_ROWS || [];
+  const i = rows.findIndex((r) => /^legendary/i.test(String(r.tier || "")));
+  return i > 0 ? i - 1 : Math.max(0, rows.length - 1);
+}
+// "Count Legendary levels" (gear_caps.chief_legendary): the person's own
+// tick wins; never set → on unless the state age says Legendary Chief Gear
+// isn't open yet (day 180). A piece already at Legendary keeps it on.
+function chiefLegendaryOn() {
+  const v = GEAR_CAPS ? GEAR_CAPS.chief_legendary : null;
+  if (v === true || v === false) return v;
+  if (!stateNotYet("gear", "legendary chief gear")) return true;
+  const lastEpic = chiefGearLastEpicIdx();
+  return CHIEF_GEAR_PIECES.some((p) => (CHIEF_GEAR_STATE[p.key] || {}).from > lastEpic);
 }
 function clampChiefGearState() {
   const cap = chiefGearCapIdx();
@@ -10662,7 +10706,9 @@ let STATE_AGE = null;
 let STATE_AGE_LOADING = null;
 async function ensureStateAge() {
   if (STATE_AGE) return STATE_AGE;
-  if (!STATE_AGE_LOADING) STATE_AGE_LOADING = loadCalcState("state_age").catch(() => null).then((v) => { STATE_AGE = v && Number(v.day) >= 0 && packValidDay(v.on) ? { day: Math.floor(Number(v.day)), on: v.on } : { day: null, on: null }; return STATE_AGE; });
+  if (!STATE_AGE_LOADING) STATE_AGE_LOADING = loadCalcState("state_age").catch(() => null).then((v) => { STATE_AGE = v && Number(v.day) >= 0 && packValidDay(v.on) ? { day: Math.floor(Number(v.day)), on: v.on } : { day: null, on: null };
+    if (v && Number(v.own) >= 0 && packValidDay(v.ownOn)) { STATE_AGE.own = Math.floor(Number(v.own)); STATE_AGE.ownOn = v.ownOn; }
+    return STATE_AGE; });
   return STATE_AGE_LOADING;
 }
 // Today's state day, or null when not set.
@@ -10670,6 +10716,11 @@ function stateAgeDay() {
   if (!STATE_AGE || STATE_AGE.day == null) return null;
   const on = packParseDay(STATE_AGE.on);
   return STATE_AGE.day + Math.max(0, Math.round((packStartOfToday() - on) / 86400000));
+}
+// The person's own days played (VIP login days), counted up daily; null when not set.
+function ownDaysPlayed() {
+  if (!STATE_AGE || STATE_AGE.own == null) return null;
+  return STATE_AGE.own + Math.max(0, Math.round((packStartOfToday() - packParseDay(STATE_AGE.ownOn)) / 86400000));
 }
 // The state's day number on a given date.
 function stateDayOn(date) {
@@ -10691,8 +10742,11 @@ function stateGenInfo() {
   const st = stateDateOfDay(STATE_GEN_DAYS[gi]);
   return { gen: gi + 1, start: packDayKey(new Date(st.getTime() - ((st.getUTCDay() + 6) % 7) * 86400000)) };
 }
-function saveStateAge(day) {
-  STATE_AGE = day == null ? { day: null, on: null } : { day: Math.max(0, Math.floor(day)), on: packDayKey(packStartOfToday()) };
+// Both numbers are saved with today's date and count up by one each day.
+function saveStateAge(day, own) {
+  const today = packDayKey(packStartOfToday());
+  STATE_AGE = day == null ? { day: null, on: null } : { day: Math.max(0, Math.floor(day)), on: today };
+  if (day != null && own != null) { STATE_AGE.own = Math.max(0, Math.floor(own)); STATE_AGE.ownOn = today; }
   STATE_AGE_LOADING = Promise.resolve(STATE_AGE);
   // New Gen dates, unlock ticks, Budgets and suggestions all follow it.
   if (typeof PACK_PLAN_CACHE !== "undefined") PACK_PLAN_CACHE.clear();
@@ -10704,17 +10758,27 @@ function saveStateAge(day) {
 function openStateAgeModal(onSaved) {
   let modal = document.getElementById("stateAgeModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "stateAgeModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-  let mode = "day";
   const t0 = packStartOfToday();
   const cur = stateAgeDay();
+  let mode = cur != null ? "day" : "mon";
+  let mission = 6;
+  let own = ownDaysPlayed();
   const draw = () => {
     modal.innerHTML = `<div class="modal-box sa-box">
       <h2>🏰 ${esc(t("sa_title"))}</h2>
       <p class="desc">${esc(t("sa_desc"))}</p>
-      <div class="pur-seg" style="margin-bottom:8px;"><button type="button" data-samode="day" class="${mode === "day" ? "on" : ""}">${esc(t("sa_by_day"))}</button><button type="button" data-samode="date" class="${mode === "date" ? "on" : ""}">${esc(t("sa_by_date"))}</button></div>
+      <div class="sa-moved">🔀 ${esc(t("sa_moved"))}</div>
+      <div class="pur-seg" style="margin-bottom:8px;"><button type="button" data-samode="mon" class="${mode === "mon" ? "on" : ""}">${esc(t("sa_by_mon"))}</button><button type="button" data-samode="day" class="${mode === "day" ? "on" : ""}">${esc(t("sa_by_day"))}</button><button type="button" data-samode="date" class="${mode === "date" ? "on" : ""}">${esc(t("sa_by_date"))}</button></div>
       ${mode === "day" ? `<input type="number" min="0" max="5000" step="1" data-sainput value="${cur != null ? cur : ""}" placeholder="${esc(t("sa_day_ph"))}" style="width:100%; font-size:16px;" />`
-        : `<input type="date" data-sainput value="${cur != null ? packDayKey(new Date(t0.getTime() - cur * 86400000)) : ""}" style="width:100%; font-size:16px;" />`}
+        : mode === "date" ? `<input type="date" data-sainput value="${cur != null ? packDayKey(new Date(t0.getTime() - cur * 86400000)) : ""}" style="width:100%; font-size:16px;" />`
+        : `<select data-samission style="width:100%; font-size:15px; margin-bottom:6px;"><option value="6"${mission === 6 ? " selected" : ""}>${esc(t("sa_mon_beast"))}</option><option value="3"${mission === 3 ? " selected" : ""}>${esc(t("sa_mon_kindling"))}</option></select>
+          <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("sa_mon_hint"))}</div>
+          <input type="date" data-sainput style="width:100%; font-size:16px;" />`}
       <div class="meta sa-preview" data-sapreview></div>
+      <div class="sa-own"><label class="meta" style="font-size:11px; font-weight:700;">${esc(t("sa_own_t"))}</label>
+        <input type="number" min="0" max="5000" step="1" data-saown value="${own != null ? own : ""}" placeholder="${esc(t("sa_own_ph"))}" style="width:100%; font-size:16px;" />
+        <div class="meta" style="font-size:11px;">${esc(t("sa_own_hint"))}</div></div>
+      <div class="meta" style="font-size:11px; margin-top:6px;">⏱ ${esc(t("sa_auto"))}</div>
       <div class="meta" style="font-size:11px; font-weight:700; margin:10px 0 2px;">${esc(t("sa_tips_title"))}</div>
       ${[1, 2, 3].map((n) => `<div class="sa-tip"><span class="sa-num">${n}</span><span><b>${esc(t("sa_tip" + n + "_t"))}</b>${esc(t("sa_tip" + n))}</span></div>`).join("")}
       <div class="sa-foot">${cur != null ? `<button type="button" class="btn ghost small" data-saclear>${esc(t("sa_clear"))}</button>` : "<span></span>"}<span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-saclose>${esc(t("sa_later"))}</button><button type="button" class="btn small" data-sasave>${esc(t("sa_save"))}</button></span></div>
@@ -10724,7 +10788,8 @@ function openStateAgeModal(onSaved) {
     const dayFrom = () => {
       if (mode === "day") { const n = Math.floor(Number(inp.value)); return inp.value !== "" && n >= 0 ? n : null; }
       const d = packParseDay(packValidDay(inp.value));
-      return d ? Math.max(0, Math.round((t0 - d) / 86400000)) : null;
+      // Monument: the mission's "Goal Met" date minus its days = opened.
+      return d ? Math.max(0, Math.round((t0 - d) / 86400000) + (mode === "mon" ? mission : 0)) : null;
     };
     const preview = () => {
       const d = dayFrom(), el = modal.querySelector("[data-sapreview]");
@@ -10735,13 +10800,17 @@ function openStateAgeModal(onSaved) {
       el.textContent = t("sa_preview").replace("{date}", fmt(opened)).replace("{day}", d.toLocaleString()).replace("{gen}", gi + 1);
     };
     inp.addEventListener("input", preview);
+    const ms = modal.querySelector("[data-samission]");
+    if (ms) ms.addEventListener("change", () => { mission = Number(ms.value) || 6; preview(); });
+    const ownInp = modal.querySelector("[data-saown]");
+    ownInp.addEventListener("input", () => { const n = Math.floor(Number(ownInp.value)); own = ownInp.value !== "" && n >= 0 ? n : null; });
     preview();
     modal.querySelectorAll("[data-samode]").forEach((b) => b.addEventListener("click", () => { mode = b.dataset.samode; draw(); }));
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-saclose]")) modal.style.display = "none"; };
     modal.querySelector("[data-sasave]").addEventListener("click", () => {
       const d = dayFrom();
       if (d == null) { inp.focus(); return; }
-      saveStateAge(d);
+      saveStateAge(d, own);
       modal.style.display = "none";
       if (onSaved) onSaved();
     });
@@ -10757,7 +10826,8 @@ function openStateAgeModal(onSaved) {
 const STATE_UNLOCKS = [
   { kind: "page", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
   { kind: "page", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
-  { kind: "note", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
+  { kind: "lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
+  { kind: "gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
     ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
@@ -10802,7 +10872,7 @@ function stateAgeCardHtml() {
   const gen = newGenGen();
   return `<div class="sa-card"><div class="sa-ic">🏰</div><div style="min-width:0;">
     <div class="sa-k">${esc(t("sa_card_k"))}</div>
-    <div class="sa-v">${d.toLocaleString()} <span class="sa-s">· ${esc(t("sa_gen_heroes").replace("{n}", gen || g.gen))}</span></div>
+    <div class="sa-v">${d.toLocaleString()} <span class="sa-s">· ${esc(t("sa_gen_heroes").replace("{n}", gen || g.gen))}${ownDaysPlayed() != null ? ` · ${esc(t("sa_own_card").replace("{n}", ownDaysPlayed().toLocaleString()))}` : ""}</span></div>
     <div class="sa-chips">${next ? `<span class="sa-chip i">⭐ ${esc(t("sa_next_gen").replace("{n}", (gen || g.gen) + 1).replace("{d}", Math.round((next - t0) / 86400000)).replace("{date}", fmt(next)))}</span>` : ""}${wheelTxt ? `<span class="sa-chip">🎡 ${esc(wheelTxt)}</span>` : ""}</div>
   </div><button type="button" class="btn small ghost sa-edit" data-saopen aria-label="${esc(t("sa_title"))}">&#9998;</button></div>`;
 }
@@ -10898,6 +10968,22 @@ function newGenGen() {
   if (packValidDay(ng.last)) return Math.floor(Number(ng.gen) || 0) || null;
   const sg = stateGenInfo();
   return sg ? sg.gen : null;
+}
+// A hero Gen not out yet in the person's state: { day, date } (day null when
+// only the "last new heroes" date is set), or null when it's out / unknown.
+function heroGenNotOut(gen) {
+  const g = Math.floor(Number(gen) || 0), cur = newGenGen(), base = newGenBaseDay();
+  if (!g || !cur || !base || g <= cur) return null;
+  const date = newGenStarts(base, g - cur + 1)[g - cur] || null;
+  const day = date ? stateDayOn(date) : null;
+  return { day: day != null ? day : stateAgeDay() != null ? STATE_GEN_DAYS[g - 1] || null : null, date };
+}
+function heroGenNotOutText(info) {
+  if (!info) return "";
+  if (info.day != null) return t("hero_not_out_day").replace("{n}", info.day.toLocaleString());
+  if (!info.date) return t("hero_not_out");
+  let d; try { d = info.date.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { d = packDayKey(info.date); }
+  return t("hero_not_out_date").replace("{date}", d);
 }
 // This pack's appearances from the generation starts: [{ start, days, gen (0 = the base one) }].
 function newGenAppearances(tableId, win) {
@@ -12728,6 +12814,7 @@ async function renderRfcLabPage() {
   if (!RFC_LAB_STATE) {
     const saved = (await loadCalcState("rfc_lab")) || {};
     RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
+    if (saved.labOpen === true || saved.labOpen === false) RFC_LAB_STATE.labOpen = saved.labOpen;
   }
   rfcLabApplyRate(RFC_LAB_STATE);
   // Default the need from the T12 page's last totals when nothing typed
@@ -12799,6 +12886,8 @@ async function renderRfcLabPage() {
       <aside class="t12x-side">
         <div class="t12x-card">
           <div class="t12x-title">${esc(t("rfc_step_plan"))}</div>
+          <label class="t12x-check" style="margin-bottom:10px;"><span>${esc(t("rfc_lab_open"))}</span><input type="checkbox" data-rfclabopen ${rfcLabOn(st) ? "checked" : ""} /></label>
+          ${rfcLabOn(st) ? "" : `<div class="meta" style="font-size:10.5px; margin:-4px 0 10px; color:var(--amber);">${esc(t("rfc_lab_closed"))}</div>`}
           <div class="seg" style="display:flex; margin-bottom:10px;">
             <button type="button" data-rfcmode="schedule" class="${st.mode === "schedule" ? "active" : ""}" style="flex:1;">${esc(t("rfc_mode_schedule"))}</button>
             <button type="button" data-rfcmode="budget" class="${st.mode === "budget" ? "active" : ""}" style="flex:1;">${esc(t("rfc_mode_budget"))}</button>
@@ -12848,6 +12937,14 @@ async function renderRfcLabPage() {
   fcIn.addEventListener("input", () => { const v = numOf(fcIn); fcsIn.value = v ? fmt(Math.floor(v * FCS_PER_FC)) : ""; st.fcHave = v; });
   fcsIn.addEventListener("input", () => { const v = numOf(fcsIn); const fc = v ? Math.ceil(v / FCS_PER_FC) : 0; fcIn.value = fc ? fmt(fc) : ""; st.fcHave = fc; });
   [fcIn, fcsIn].forEach((el) => el.addEventListener("change", () => saveCalcState("rfc_lab", st)));
+  content.querySelector("[data-rfclabopen]").addEventListener("change", (e) => {
+    st.labOpen = e.target.checked;
+    saveCalcState("rfc_lab", st);
+    rfcLabApplyRate(st);
+    PACK_PLAN_CACHE.clear();
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    render();
+  });
   content.querySelectorAll("[data-rfcmode]").forEach((b) => b.addEventListener("click", async () => {
     st.mode = b.dataset.rfcmode;
     saveCalcState("rfc_lab", st);
@@ -12978,8 +13075,15 @@ function rfcLabChosenPlan(st) {
   }
   return rfcPlan(Math.min(5, Math.max(1, Number(st.top) || 3)), Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(st.attempts) || 6)));
 }
+// "Lab open" tick: the person's own choice wins; never set → open unless the
+// state age says the Crystal Lab isn't open yet (day 150). Closed = the
+// lab's Refined FC isn't counted on T12 / Budgets.
+function rfcLabOn(st) {
+  if (st && (st.labOpen === true || st.labOpen === false)) return st.labOpen;
+  return !stateNotYet("lab", "crystal lab");
+}
 function rfcLabApplyRate(st) {
-  const p = rfcLabChosenPlan(st);
+  const p = rfcLabOn(st) ? rfcLabChosenPlan(st) : null;
   const next = p && p.cost > 0 && p.rfc > 0
     ? { t12_research: [{ from: "Fire Crystal", to: "Refined FC", give: p.cost, get: Math.round(p.rfc * 100) / 100, max: 1, hidden: true, rfcLab: true }] }
     : {};
@@ -12991,7 +13095,7 @@ async function ensureRfcLabRate() {
   if (RFC_LAB_RATE_LOADED) return;
   RFC_LAB_RATE_LOADED = true;
   const saved = (await loadCalcState("rfc_lab")) || {};
-  rfcLabApplyRate({ top: saved.top, attempts: saved.attempts, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" });
+  rfcLabApplyRate({ top: saved.top, attempts: saved.attempts, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule", labOpen: saved.labOpen });
 }
 async function ensureTradeRates() {
   await ensureRfcLabRate();
@@ -14619,7 +14723,8 @@ async function renderChiefGearCalc() {
 
   content.innerHTML = plxShellHtml({
     title: navLabel("chiefgear"),
-    settings: capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}>${esc(chiefGearRowLabel(r))}</option>`).join("")),
+    settings: `<label class="t12x-check" style="margin-bottom:8px;"><span>${esc(t("cg_count_leg"))}</span><input type="checkbox" id="chiefLegTick" ${chiefLegendaryOn() ? "checked" : ""} /></label>`
+      + capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => (chiefLegendaryOn() || i <= chiefGearLastEpicIdx() ? `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}>${esc(chiefGearRowLabel(r))}</option>` : "")).join("")),
     amountsId: "gearOwned", needId: "gearNeed", tabsId: "gearTroopTabs",
     mainHtml: `<div id="gearRows"></div>
     <div class="t12x-card" style="margin-top:12px;">
@@ -14719,6 +14824,13 @@ async function renderChiefGearCalc() {
     syncSetAll();
   }
 
+  document.getElementById("chiefLegTick").addEventListener("change", (e) => {
+    GEAR_CAPS.chief_legendary = e.target.checked;
+    saveGearCaps();
+    if (clampChiefGearState()) saveCalcState("chief_gear", CHIEF_GEAR_STATE);
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    render();
+  });
   document.getElementById("chiefGearCapSelect").addEventListener("change", async (e) => {
     GEAR_CAPS.chief_gear = Number(e.target.value);
     await saveGearCaps();
