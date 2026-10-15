@@ -13325,7 +13325,8 @@ let TRADE_EXTRA_RFC = {};
 //    Shard, up to 100 a week (shared out over the heroes); the newest Gen's
 //    heroes: 10 marks a shard, up to 370 a week each
 //  - Widget Chest (any hero's widget) -> 1 widget
-//  - Mystery Points (Mystery shop) -> 800 for 2, 2,250 for 5, 2,500 for 5 widgets
+//  - Mystery Points (Mystery shop) -> 800 for 2 widgets (the free daily points and
+//    the Backpack's; the Mystery Badge Pack isn't used for widgets)
 let HERO_SHARD_TRADES = [];
 // General Sigils can be spent on any expert (1:1): a rule, not a trade.
 function tradeComposeExtra() {
@@ -13699,7 +13700,7 @@ async function heroShardBudget() {
     if (r.wNeed > 0) {
       totals[wd] = r.wNeed; owned[wd] = r.wOwn;
       rule("Widget Chest", wd, 1, 1, 0);
-      [[800, 2], [2250, 5], [2500, 5]].forEach(([g, n]) => rule("Mystery Points", wd, g, n, 0));
+      rule("Mystery Points", wd, 800, 2, 0); // only the 800 for 2 offer (owner)
     }
   });
   HERO_SHARD_TRADES = rules;
