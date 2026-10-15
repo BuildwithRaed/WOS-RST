@@ -690,10 +690,6 @@ input,select,textarea{
   .dash-stat-bar i{ display:block; height:100%; border-radius:9px; background:var(--tc, var(--ice)); }
   .dash-stat-gap{ grid-column:1 / -1; font-size:10.5px; color:#e0a030; }
   @media (max-width: 900px){ .dash-troops{ grid-template-columns:1fr; } }
-  .dash-view-sw{ display:flex; align-items:center; justify-content:flex-end; gap:4px; margin:0 0 8px; }
-  .dash-view-sw .meta{ font-size:11px; margin-inline-end:4px; }
-  .dash-view-sw button{ font:inherit; font-size:11.5px; padding:4px 11px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--muted); cursor:pointer; }
-  .dash-view-sw button.on{ background:rgba(111,211,242,.14); border-color:var(--ice); color:var(--ice); font-weight:700; }
   /* "Columns" look: three narrow columns in one row, also on phones */
   .dash-troops.cols{ grid-template-columns:repeat(3, minmax(0, 1fr)) !important; gap:8px; }
   .dash-troops.cols .dash-troop{ padding:8px 8px 6px; min-width:0; }
@@ -3599,9 +3595,6 @@ const T = {
   t12x_sp_cover: { en: "Speedups you own: general {g} · research {r}", ar: "التسريعات لديك: عامة {g} · بحث {r}", ko: "보유 가속: 일반 {g} · 연구 {r}" },
   t12x_now: { en: "Now", ar: "الحالي", ko: "현재" },
   plx_your_levels: { en: "Your levels", ar: "مستوياتك", ko: "내 레벨" },
-  dash_view_label: { en: "Stats look:", ar: "شكل الإحصائيات:", ko: "통계 보기:" },
-  dash_view_cards: { en: "Cards", ar: "بطاقات", ko: "카드" },
-  dash_view_cols: { en: "One row", ar: "صف واحد", ko: "한 줄" },
   dash_to_go: { en: "to go", ar: "متبقٍ", ko: "남음" },
   bd_left: { en: "Still to gain", ar: "المتبقي للكسب", ko: "남은 상승폭" },
   bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
@@ -5790,13 +5783,9 @@ async function renderOverview(opts = {}) {
   // All three troops side by side; each stat is a bar toward its max.
   // Tap a stat for the full breakdown (same pop-up as before).
   const DASH_TROOP_COLORS = { Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" };
-  // Two looks, picked by each person (kept in this browser): "cards" = a big
-  // card per troop; "cols" = three narrow columns in one row under the roster.
+  // Stats in one row under the roster: three narrow columns (also on phones).
   const DASH_SHORT = { ATT: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
-  const statsHtml = () => {
-    const cols = dashView() === "cols";
-    return `<div class="dash-view-sw" role="group"><span class="meta">${esc(t("dash_view_label"))}</span><button type="button" data-dashview="cards" class="${cols ? "" : "on"}">${esc(t("dash_view_cards"))}</button><button type="button" data-dashview="cols" class="${cols ? "on" : ""}">${esc(t("dash_view_cols"))}</button></div>
-    <div class="dash-troops${cols ? " cols" : ""}">${TROOP_TYPES.map((tt) => `
+  const statsHtml = () => `<div class="dash-troops cols">${TROOP_TYPES.map((tt) => `
     <div class="t12x-card dash-troop" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
       <div class="dash-troop-h">${esc(troopDisplayName(tt.key))}</div>
       ${STATS.map((st) => {
@@ -5804,22 +5793,15 @@ async function renderOverview(opts = {}) {
         const maxTotal = maxStatFor(tt.key, st.key);
         const pct = maxTotal > 0 ? Math.min(100, (total / maxTotal) * 100) : 0;
         const diff = Math.max(0, maxTotal - total);
-        const gap = diff > 0 ? `+${diff.toFixed(1)}%${cols ? "" : ` ${esc(t("dash_to_go"))}`}` : `&#10003;${cols ? "" : ` ${esc(t("t12x_done"))}`}`;
-        return cols ? `<button type="button" class="dash-stat" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(tStatLabel(st.label))}">
+        return `<button type="button" class="dash-stat" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(tStatLabel(st.label))}">
           <span class="dash-stat-k"><span>${esc(DASH_SHORT[st.key] || tStatLabel(st.label))}</span><small>/ ${maxTotal.toFixed(0)}%</small></span>
           <span class="dash-stat-v"><b>${total.toFixed(1)}%</b></span>
           <span class="dash-stat-bar"><i style="width:${pct}%;"></i></span>
-          <span class="dash-stat-gap">${gap}</span>
-        </button>` : `<button type="button" class="dash-stat" data-drilldown="${esc(tt.key)}|${esc(st.key)}">
-          <span class="dash-stat-k">${esc(tStatLabel(st.label))}</span>
-          <span class="dash-stat-v"><b>${total.toFixed(1)}%</b> <small>/ ${maxTotal.toFixed(0)}%</small></span>
-          <span class="dash-stat-bar"><i style="width:${pct}%;"></i></span>
-          <span class="dash-stat-gap">${gap}</span>
+          <span class="dash-stat-gap">${diff > 0 ? `+${diff.toFixed(1)}%` : "&#10003;"}</span>
         </button>`;
       }).join("")}
     </div>`).join("")}</div>
     <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("click_full_breakdown"))}</div>`;
-  };
   sections.innerHTML = statsHtml();
   statPassMemo = null; // first paint done - recompute fresh from here on
 
@@ -5862,10 +5844,8 @@ async function renderOverview(opts = {}) {
           );
           return { total, maxTotal, combined };
         };
-  // One handler for the whole block (it's redrawn when the look changes).
+  // One handler for every stat in the block.
   sections.onclick = (ev) => {
-    const sw = ev.target.closest("[data-dashview]");
-    if (sw) { setDashView(sw.dataset.dashview); sections.innerHTML = statsHtml(); return; }
     const card = ev.target.closest("[data-drilldown]");
     if (!card) return;
     {
@@ -5886,16 +5866,6 @@ async function renderOverview(opts = {}) {
       }
     }
   };
-}
-// Dashboard stats look ("cards" | "cols"), each person's own choice, kept in this browser.
-let DASH_VIEW = null;
-function dashView() {
-  if (!DASH_VIEW) { try { DASH_VIEW = localStorage.getItem("dash_view") === "cols" ? "cols" : "cards"; } catch (e) { DASH_VIEW = "cards"; } }
-  return DASH_VIEW;
-}
-function setDashView(v) {
-  DASH_VIEW = v === "cols" ? "cols" : "cards";
-  try { localStorage.setItem("dash_view", DASH_VIEW); } catch (e) { /* not kept */ }
 }
 
 function openDrilldownModal(title, total, maxTotal, sources, recompute) {
