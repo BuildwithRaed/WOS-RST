@@ -285,6 +285,20 @@
     .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:2; grid-row:2; font-size:8.5px; line-height:1.2; text-align:end; }
     .dash-fit .dash-troops.cols .dash-stat-bar{ grid-column:1 / -1; grid-row:3; }
     .dash-fit #troopSections > .meta{ display:none; }
+    .dash-fit #troopSections{ display:flex; flex-direction:column; }
+    .dash-fit #troopSections .dash-troops{ flex:1; }
+    .dash-fit .dash-troops.cols .dash-troop{ display:flex; flex-direction:column; justify-content:space-evenly; }
+    .dash-fit{ --sx:1; }
+    .dash-fit .dash-troops.cols .dash-troop-h{ font-size:calc(10px * min(var(--sx), 1.25)); }
+    .dash-fit .dash-troops.cols .dash-stat{ padding:calc(2px + (var(--sx) - 1) * 10px) 1px; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(9px * min(var(--sx), 1.2)); }
+    .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(13px * min(var(--sx), 1.12)); }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8.5px * min(var(--sx), 1.1)); }
+    .dash-fit .dash-troops.cols .dash-stat-bar{ height:calc(3px * min(var(--sx), 1.6)); }
+    .dash-fit .rc-pick{ width:calc(36px * min(var(--sx), 1.55)); height:calc(36px * min(var(--sx), 1.55)); }
+    .dash-fit .rc-stars > *{ width:calc(17px * min(var(--sx), 1.35)) !important; height:calc(17px * min(var(--sx), 1.35)) !important; }
+    .dash-fit .rc-name{ font-size:calc(11.5px * min(var(--sx), 1.15)); }
+    .dash-fit .rc-card{ padding:calc(5px + (var(--sx) - 1) * 10px) 4px; }
     .dash-fit{ margin-top:-10px; }
     .dash-fit .rc-card select{ height:22px; }
   }
@@ -4981,6 +4995,22 @@ function displaySourceName(key) {
 // since Admin edits the reference tables. Roster star changes update the
 // kept player_heroes rows in place.
 let DASH_DATA_CACHE = {};
+// Phones: the troop stats stretch down to the bottom of the screen, so the
+// Dashboard fills one screen with no empty gap (the footer is below it).
+// Taller screens make the stat rows bigger (--sx) rather than adding gaps.
+function fitDashToScreen() {
+  const el = document.getElementById("troopSections"), box = el && el.closest(".dash-fit");
+  if (!el || !box) return;
+  el.style.minHeight = ""; box.style.removeProperty("--sx");
+  if (innerWidth > 700) return;
+  const room = () => innerHeight - 10 - (el.getBoundingClientRect().bottom + scrollY);
+  const extra = room();
+  if (extra <= 0) return;
+  box.style.setProperty("--sx", String(Math.min(1.7, 1 + extra / (el.offsetHeight + 200))).slice(0, 5));
+  const left = room();
+  if (left > 0) el.style.minHeight = `${el.offsetHeight + left}px`;
+}
+window.addEventListener("resize", () => { if (TAB === "overview") fitDashToScreen(); });
 function dashCached(key, load) {
   if (!DASH_DATA_CACHE[key]) DASH_DATA_CACHE[key] = load().catch((e) => { delete DASH_DATA_CACHE[key]; throw e; });
   return DASH_DATA_CACHE[key];
@@ -5734,6 +5764,7 @@ async function renderOverview(opts = {}) {
         });
       });
       fillWidgetCosts(rosterEl);
+      fitDashToScreen(); // the roster's height may have changed
       // Clicking the portrait opens a picker grid of that class's heroes.
       rosterEl.querySelectorAll("[data-rosterpick]").forEach((box) => {
         box.addEventListener("click", () => {
@@ -5817,6 +5848,7 @@ async function renderOverview(opts = {}) {
     <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("click_full_breakdown"))}</div>`;
   sections.innerHTML = statsHtml();
   statPassMemo = null; // first paint done - recompute fresh from here on
+  fitDashToScreen();
 
   // Current and max per source for one troop + stat (the breakdown pop-up
   // and "Biggest gains left" both use it).
