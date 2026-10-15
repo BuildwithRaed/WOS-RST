@@ -4330,8 +4330,6 @@ const T = {
   pur_newgen_start: { en: "Pack starts", ar: "تبدأ الحزمة", ko: "팩 시작" },
   pur_newgen_with: { en: "Comes with the new heroes (from your date above).", ar: "تأتي مع الأبطال الجدد (من تاريخك أعلاه).", ko: "새 영웅과 함께 옵니다 (위 날짜 기준)." },
   pur_newgen_after: { en: "Comes {n} weeks after the new heroes (from your date above).", ar: "تأتي بعد {n} أسابيع من الأبطال الجدد (من تاريخك أعلاه).", ko: "새 영웅 {n}주 후에 옵니다 (위 날짜 기준)." },
-  pur_newgen_ev_last: { en: "Last {e} started", ar: "آخر {e} بدأ", ko: "마지막 {e} 시작일" },
-  pur_newgen_rule: { en: "New heroes come on a Monday once at least 80 days, 5 Lucky Wheels (SvS + KOI) and 3 SvS have passed. SvS and KOI dates differ by state: set yours (empty = the site's dates).", ar: "يأتي الأبطال الجدد يوم اثنين بعد مرور 80 يوماً على الأقل و5 عجلات حظ (SvS + KOI) و3 SvS. تختلف مواعيد SvS وKOI حسب الولاية: أدخل مواعيدك (فارغ = مواعيد الموقع).", ko: "최소 80일, 행운의 룰렛 5회(SvS + KOI), SvS 3회가 지나면 월요일에 새 영웅이 옵니다. SvS·KOI 날짜는 주마다 다르니 내 날짜를 입력하세요(비우면 사이트 날짜)." },
   pur_gen: { en: "Gen {n}", ar: "الجيل {n}", ko: "{n}세대" },
   pur_now: { en: "now", ar: "الآن", ko: "진행 중" },
   pur_budget_line: { en: "My Purchases: {n} coming packs counted", ar: "مشترياتي: {n} حزم قادمة محسوبة", ko: "내 구매: 예정 팩 {n}개 반영" },
@@ -7102,8 +7100,6 @@ async function renderPurchasesPage() {
     <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
     <div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
       <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>
-    <div class="pur-ng-row" style="margin-top:6px;">${GAME_EVENTS.map((ev) => `<label class="pur-f"><span class="meta">${esc(t("pur_newgen_ev_last").replace("{e}", ev.name))}</span><input type="date" data-purng="${ev.key}" value="${esc(packValidDay(ng[ev.key]) || "")}" placeholder="${esc(ev.anchor)}" /></label>`).join("")}</div>
-    <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pur_newgen_rule"))}</div>
     ${ngTables.map((tb) => {
       const l = packLinkFor(tb.id);
       const t0 = packStartOfToday();
@@ -7288,7 +7284,7 @@ async function renderPurchasesPage() {
   });
   content.querySelectorAll("[data-purng]").forEach((inp) => inp.addEventListener("change", () => {
     const ng0 = { ...(PACK_PURCHASES.newGen || {}) };
-    if (inp.dataset.purng === "last" || inp.dataset.purng === "svs" || inp.dataset.purng === "koi") { const k = inp.dataset.purng; if (packValidDay(inp.value)) ng0[k] = inp.value; else delete ng0[k]; }
+    if (inp.dataset.purng === "last") { if (packValidDay(inp.value)) ng0.last = inp.value; else delete ng0.last; }
     else { const n = Math.floor(Number(inp.value) || 0); if (n > 0) ng0.gen = n; else delete ng0.gen; }
     PACK_PURCHASES.newGen = ng0;
     if (inp.dataset.purng !== "gen") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); } // the New Gen packs' dates follow these
@@ -10515,17 +10511,14 @@ async function savePackLinks() {
 // ---- Game events: SvS and King of Icefield (KOI) ----
 // Each comes every 4 weeks for 6 days (Monday to Saturday); the Lucky Wheel
 // (heroes) opens on day 2 and stays 3 days. SvS 5-10 Oct 2026 and KOI
-// 21-26 Sep 2026 were seen in game. Every state is different, so each person
-// can set their own last SvS / KOI start (My Purchases, newGen.svs / .koi).
+// 21-26 Sep 2026 were seen in game (set here by the admin, used only to
+// work out the New Gen Heroes dates and shown on the calendar).
 const GAME_EVENTS = [
   { key: "svs", name: "SvS", anchor: "2026-10-05", every: 28, days: 6, wheelDay: 2, wheelDays: 3 },
   { key: "koi", name: "KOI", anchor: "2026-09-21", every: 28, days: 6, wheelDay: 2, wheelDays: 3 },
 ];
 // Start days of an event from `from` to `to` (Dates).
-function gameEventAnchor(ev) {
-  const mine = packValidDay(((typeof PACK_PURCHASES !== "undefined" && PACK_PURCHASES.newGen) || {})[ev.key]);
-  return mine || ev.anchor;
-}
+function gameEventAnchor(ev) { return ev.anchor; }
 function gameEventStarts(ev, from, to) {
   const a = packParseDay(gameEventAnchor(ev)), step = ev.every * 86400000, out = [];
   let k = Math.floor((from - a) / step) - 1;
