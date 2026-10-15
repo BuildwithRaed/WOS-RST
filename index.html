@@ -13540,9 +13540,15 @@ async function renderBudgetsPage(opts = {}) {
     return preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
   };
   const packRowsHtml = (plan) => packPlanRowsHtml(plan, budgetResetText);
-  const matsHtml = (needFull, needStill, owned) => `<div style="display:flex; flex-wrap:wrap; gap:4px 14px;">` + Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
-    const still = needStill[n] || 0;
-    return `<span style="white-space:nowrap; font-size:11px;"><span class="meta">${esc(materialDisplayName(n))}</span> <b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${qty(still)}</b><span class="meta"> / ${qty(needFull[n])}</span></span>`;
+  // Same chips as "Materials still needed": picture + amount still needed
+  // (green ✓ when covered), the full amount small after it; exact numbers in the title.
+  const matsHtml = (needFull, needStill) => `<div class="bud-mats">` + Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
+    const still = needStill[n] || 0, mins = /\(minutes\)$/.test(n);
+    const fmt = (v) => (mins ? t12FormatTime(v / 60) : shortAmount(v));
+    const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
+    const nm = materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "");
+    const label = `${nm}: ${qty(still)} / ${qty(needFull[n])}`;
+    return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}<b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${still > 0 ? esc(fmt(still)) : "&#10003;"}</b><span class="meta" style="font-size:11px;">/ ${esc(fmt(needFull[n]))}</span></span>`;
   }).join("") + `</div>`;
 
   // Per-page cards.
