@@ -227,6 +227,22 @@
   .bud-mat{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 5px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.03); font-size:13px; }
   .bud-mat img{ width:24px; height:24px; object-fit:contain; }
   .bud-mat i{ width:24px; height:24px; display:grid; place-items:center; font-style:normal; font-weight:800; color:var(--muted); }
+  .rc-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+  .rc-card{ text-align:center; border:1px solid var(--line); border-radius:14px; padding:10px 6px; min-width:0; background:linear-gradient(180deg, color-mix(in srgb, var(--rc) 14%, transparent), transparent 60%); }
+  .rc-troop{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--rc); }
+  .rc-pick{ width:54px; height:54px; margin:6px auto; border-radius:10px; background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .rc-pick img{ width:100%; height:100%; object-fit:cover; }
+  .rc-name{ font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rc-stars{ display:flex; flex-wrap:nowrap; justify-content:center; gap:1px; margin:4px 0; }
+  .rc-stars > *{ width:19px !important; height:19px !important; flex-shrink:0; }
+  .rc-step{ display:flex; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:2px; max-width:130px; margin:2px auto 6px; }
+  .rc-step span{ font-size:10.5px; font-weight:700; color:var(--ice); white-space:nowrap; }
+  .rc-pm{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:16px; line-height:1; display:grid; place-items:center; flex-shrink:0; cursor:pointer; padding:0; }
+  .rc-pm.plus{ background:var(--ice); color:#0f141b; border-color:var(--ice); font-weight:800; }
+  .rc-pm:disabled{ opacity:.35; cursor:default; }
+  .rc-pct{ font-size:10.5px; line-height:1.4; color:var(--frost); }
+  .rc-card select{ font-size:11px; padding:3px 6px; margin-top:6px; max-width:100%; }
+  @media (min-width:1000px){ .rc-pick{ width:72px; height:72px; } .rc-stars > *{ width:24px !important; height:24px !important; } .rc-name{ font-size:14px; } .rc-pct{ font-size:12px; } }
   .pur-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
   .pur-f{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; flex:1 1 130px; min-width:0; }
   .pur-f-wide{ flex:2 1 220px; }
@@ -335,8 +351,6 @@
     [style*="display: flex"]{ flex-wrap:wrap; }
     /* Roster heroes: keep the portrait beside its name/stats instead of
        stacking, even though the broad rule above wraps flex rows by default. */
-    .roster-row{ flex-wrap:nowrap !important; align-items:flex-start !important; }
-    #rosterHeroesGrid{ grid-template-columns:1fr !important; }
 
     /* Any other element with an inline pixel-based grid-template-columns
        (a handful of admin/table layouts) scrolls within itself rather
@@ -962,7 +976,6 @@ input,select,textarea{
     .topnav-groups{ display:none; }
     #mobileMenuBtn{ display:flex; }
     .stat-key{ display:none; }
-    #rosterHeroesGrid{ grid-template-columns:1fr !important; }
     .stats-row-scroll.sr-3col{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width:760px){
@@ -3417,6 +3430,7 @@ const T = {
   none_label: { en: "None", ar: "لا شيء", ko: "없음" },
   gen_prefix: { en: "Gen", ar: "الجيل", ko: "세대" },
   widget_level_label: { en: "Widget level", ar: "مستوى الأداة", ko: "위젯 레벨" },
+  widget_short: { en: "Widget", ar: "الأداة", ko: "위젯" },
   pick_hero_title: { en: "Pick", ar: "اختر", ko: "선택" },
   hero_suffix: { en: "hero", ar: "بطل", ko: "영웅" },
   close_button: { en: "Close", ar: "إغلاق", ko: "닫기" },
@@ -5318,7 +5332,7 @@ async function renderOverview(opts = {}) {
       const pickHeroPlaceholder = t("pick_hero_placeholder");
       const noneLabel = t("none_label");
       const genPrefix = t("gen_prefix");
-      const widgetLevelLabel = t("widget_level_label");
+      const widgetLevelLabel = t("widget_level_label"), widgetShort = t("widget_short");
       rosterEl.innerHTML = `
       <div class="panel" style="margin-bottom:16px;">
         <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;">
@@ -5340,29 +5354,29 @@ async function renderOverview(opts = {}) {
             <span class="meta" style="font-size:11px;">${esc(t("roster_max_top_gen"))} <b style="color:var(--frost);">(${esc(genPrefix)} ${Math.max(...gens)})</b></span>
           </label>`;
         })()}
-        <div class="grid g3" id="rosterHeroesGrid" style="gap:16px;">
+        <div class="rc-grid" id="rosterHeroesGrid">
           ${TROOP_TYPES.map((t) => {
             const { heroId, widget, used } = entryFor(t.key);
             const hero = heroCatalog.find((h) => h.id === heroId);
+            // Roster C: one card per troop; only the % (first line ATK & DEF from
+            // stars, second LETH & HP from the widget), − / + moves one shard.
+            const pct = (txt) => txt.replace(/[A-Z]+(?: & [A-Z]+)? /g, "");
+            const step = hero ? starsOf(hero.id).star * 6 + starsOf(hero.id).sub : 0;
+            const stepTxt = `${Math.floor(step / 6)}★${step < 30 ? ` ${step % 6}/6` : ""}`;
             return `
-            <div class="roster-row" style="display:flex; align-items:center; gap:12px; ${hero && !used ? "opacity:0.55;" : ""}">
-              <div data-rosterpick="${esc(t.key)}" class="roster-pick" title="Click to choose hero" style="width:64px; height:64px; border-radius:10px; background:var(--panel-2); overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-                ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">${pickHeroPlaceholder}</span>`}
+            <div class="rc-card roster-row" style="--rc:${{ Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" }[t.key] || "var(--ice)"}; ${hero && !used ? "opacity:0.55;" : ""}">
+              <div class="rc-troop">${esc(troopDisplayName(t.key))}</div>
+              <div data-rosterpick="${esc(t.key)}" class="roster-pick rc-pick" title="Click to choose hero">
+                ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">${pickHeroPlaceholder}</span>`}
               </div>
-              <div style="flex:1; min-width:0;">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin-bottom:2px;">
-                  <span style="font-weight:600; font-size:14px;">${hero ? esc(dataName(hero.name)) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</span>
-                </div>
-                <div data-starctl="${esc(hero ? hero.id : "")}" style="display:flex; align-items:center; gap:4px; margin-top:4px;">${starsHtml(hero)}</div>
-                ${hero ? `<div class="meta" style="font-size:11px; color:var(--frost); margin-top:4px;">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).join(" &nbsp;\u00b7&nbsp; ") || "&nbsp;"}</div>` : ""}
-                <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
-                  <span class="meta" style="font-size:11px;">${esc(widgetLevelLabel)}</span>
-                  <select data-rosterwidget="${esc(t.key)}" style="width:88px;">
-                    <option value="0" ${!widget ? "selected" : ""}>${esc(noneLabel)}</option>
-                    ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${i}</option>`).join("")}
-                  </select>
-                </div>
-              </div>
+              <div class="rc-name">${hero ? esc(dataName(hero.name)) : esc(noneLabel)}${hero && hero.generation ? ` <span class="meta" style="font-size:10.5px;">${esc(genPrefix)} ${hero.generation}</span>` : ""}</div>
+              ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
+              <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
+              <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).join("<br>") || "&nbsp;"}</div>` : ""}
+              <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
+                <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
+                ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${esc(widgetShort)} ${i}</option>`).join("")}
+              </select>
             </div>`;
           }).join("")}
         </div>
@@ -5401,6 +5415,13 @@ async function renderOverview(opts = {}) {
           renderOverview();
         });
       }
+      rosterEl.querySelectorAll("[data-starstep]").forEach((b) => b.addEventListener("click", async () => {
+        const [heroId, d] = b.dataset.starstep.split("|");
+        const cur = starsOf(heroId);
+        const step = Math.max(0, Math.min(30, cur.star * 6 + cur.sub + Number(d)));
+        await saveStars(heroId, Math.floor(step / 6), step % 6);
+        refreshAfterChange();
+      }));
       rosterEl.querySelectorAll("[data-starctl]").forEach((wrap) => {
         const heroId = wrap.dataset.starctl;
         wrap.querySelectorAll("[data-starseg]").forEach((seg) => {
