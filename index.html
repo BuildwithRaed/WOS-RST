@@ -221,6 +221,9 @@
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-row-v{ white-space:nowrap; font-size:13px; }
   .bud-mats{ display:flex; flex-wrap:wrap; gap:6px; }
+  .bud-mats[hidden]{ display:none; }
+  .bud-mat-btn{ display:inline-flex; align-items:center; gap:8px; }
+  .bud-mat-arrow{ color:var(--ice); }
   .bud-mat{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 5px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.03); font-size:13px; }
   .bud-mat img{ width:24px; height:24px; object-fit:contain; }
   .bud-mat i{ width:24px; height:24px; display:grid; place-items:center; font-style:normal; font-weight:800; color:var(--muted); }
@@ -12460,6 +12463,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
 function budgetInvalidate() { BUDGET_DATA = null; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
+let BUDGET_MATS_OPEN = false; // Budgets: "Materials still needed" opened (starts closed, kept for the visit)
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
@@ -12724,7 +12728,7 @@ async function renderBudgetsPage(opts = {}) {
       </div>
       ${viewCardsHtml}
       ${combinedHtml}
-      ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("budgets_materials_total"))}</div><div class="bud-mats">${Object.keys(grandMats).map((n) => {
+      ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><button type="button" class="btn small ghost bud-mat-btn" data-budmats aria-expanded="${BUDGET_MATS_OPEN}">&#128230; ${esc(t("budgets_materials_total"))} (${Object.keys(grandMats).length}) <span class="bud-mat-arrow">${BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;"}</span></button><div class="bud-mats"${BUDGET_MATS_OPEN ? "" : " hidden"} style="margin-top:8px;">${Object.keys(grandMats).map((n) => {
         // Picture + short amount; the name and exact number show on hover / long press.
         const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
         const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
@@ -12787,6 +12791,13 @@ async function renderBudgetsPage(opts = {}) {
     BUDGET_TARGET = "";
     saveCalcState("pack_target_budgets", { date: "" });
     renderBudgetsPage();
+  });
+  const matsBtn = content.querySelector("[data-budmats]");
+  if (matsBtn) matsBtn.addEventListener("click", () => {
+    BUDGET_MATS_OPEN = !BUDGET_MATS_OPEN;
+    matsBtn.nextElementSibling.hidden = !BUDGET_MATS_OPEN;
+    matsBtn.setAttribute("aria-expanded", String(BUDGET_MATS_OPEN));
+    matsBtn.querySelector(".bud-mat-arrow").innerHTML = BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;";
   });
   content.querySelectorAll("[data-budfold]").forEach((b) => b.addEventListener("click", () => {
     const k = b.dataset.budfold, box = b.closest("[data-budpage]");
