@@ -228,7 +228,9 @@
   .bud-mat img{ width:24px; height:24px; object-fit:contain; }
   .bud-mat i{ width:24px; height:24px; display:grid; place-items:center; font-style:normal; font-weight:800; color:var(--muted); }
   .rc-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
-  .rc-card{ text-align:center; border:1px solid var(--line); border-radius:14px; padding:10px 6px; min-width:0; background:linear-gradient(180deg, color-mix(in srgb, var(--rc) 14%, transparent), transparent 60%); }
+  .rc-card{ text-align:center; border:1px solid var(--line); border-radius:14px; padding:10px 6px; min-width:0; background:linear-gradient(180deg, color-mix(in srgb, var(--rc) 14%, transparent), transparent 60%), var(--panel); }
+  .rc-wrap #rosterCollapseToggle{ padding:0 2px; }
+  .rc-wrap #rosterCollapseToggle h2{ font-size:18px; }
   .rc-troop{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--rc); }
   .rc-pick{ width:54px; height:54px; margin:6px auto; border-radius:10px; background:var(--panel-2); overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .rc-pick img{ width:100%; height:100%; object-fit:cover; }
@@ -5334,7 +5336,7 @@ async function renderOverview(opts = {}) {
       const genPrefix = t("gen_prefix");
       const widgetLevelLabel = t("widget_level_label"), widgetShort = t("widget_short");
       rosterEl.innerHTML = `
-      <div class="panel" style="margin-bottom:16px;">
+      <div class="rc-wrap" style="margin-bottom:16px;">
         <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;">
           <h2 style="margin:0;">${esc(t("roster_heroes_title"))}</h2>
           <div style="display:flex; align-items:center; gap:12px;">
