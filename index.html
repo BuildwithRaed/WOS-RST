@@ -302,15 +302,16 @@
   .pur-t th:first-child, .pur-t td.pur-t-ctl{ position:sticky; inset-inline-start:0; background:var(--panel); z-index:1; }
   .pur-t th:first-child{ background:var(--panel-2); z-index:2; }
   .pur-t-step{ display:inline-flex; align-items:center; gap:6px; }
-  .pur-t-step button, .pur-t-pick button{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; padding:0; font-size:14px; line-height:1; }
-  .pur-t-step button:disabled, .pur-t-pick button:disabled{ opacity:.35; cursor:default; }
-  .pur-t-step i, .pur-t-pick i{ font-style:normal; min-width:16px; text-align:center; font-weight:700; }
+  .pur-t-step button{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; padding:0; font-size:14px; line-height:1; }
+  .pur-t-step button:disabled{ opacity:.35; cursor:default; }
+  .pur-t-step i{ font-style:normal; min-width:16px; text-align:center; font-weight:700; }
   .pur-t-tick{ width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background:none; color:#0f141b; cursor:pointer; padding:0; font-weight:800; }
   .pur-t-tick.on{ background:var(--ice); border-color:var(--ice); }
   .pur-t-cell{ background:none; border:1px dashed var(--line); color:var(--frost); border-radius:6px; padding:2px 8px; cursor:pointer; font:inherit; }
   .pur-t-cell.on{ border:1px solid var(--ice); background:rgba(108,199,230,.15); font-weight:700; }
-  .pur-t-picks{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin-bottom:8px; font-size:12px; }
-  .pur-t-pick{ display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); border-radius:999px; padding:2px 4px 2px 10px; }
+  .pur-t td.pur-t-pk{ white-space:normal; width:100%; }
+  .pur-t-picks3{ display:flex; flex-wrap:wrap; gap:4px; }
+  .pur-t-sel{ font-size:11.5px; padding:4px 6px; flex:1 1 150px; min-width:0; }
   .pur-sug-total{ display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; font-size:13px; }
   .pur-sug-total b{ font-size:17px; }
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
@@ -4274,7 +4275,9 @@ const T = {
   pur_tbl_hint_rows: { en: "Use − / + on each row you'll buy, then Add.", ar: "استخدم − / + على كل صف ستشتريه ثم أضف.", ko: "구매할 행마다 − / +를 누른 뒤 추가하세요." },
   pur_tbl_hint_ladder: { en: "Bought in order: tick the last tier you'll buy (all tiers before it are included).", ar: "يُشترى بالترتيب: حدد آخر مستوى ستشتريه (تُحسب كل المستويات قبله).", ko: "순서대로 구매: 마지막으로 살 단계를 체크하세요(이전 단계 포함)." },
   pur_tbl_hint_cols: { en: "Tap the item you'll take in each tier.", ar: "اضغط العنصر الذي ستأخذه في كل مستوى.", ko: "각 단계에서 받을 아이템을 누르세요." },
-  pur_tbl_pick_n: { en: "Pick {n} items", ar: "اختر {n} عناصر", ko: "아이템 {n}개 선택" },
+  pur_tbl_items_n: { en: "Your {n} items", ar: "عناصرك الـ {n}", ko: "내 아이템 {n}개" },
+  pur_tbl_item_n: { en: "Item {n}", ar: "العنصر {n}", ko: "아이템 {n}" },
+  pur_tbl_hint_pick: { en: "Choose your {n} items in each row.", ar: "اختر عناصرك الـ {n} في كل صف.", ko: "각 행에서 아이템 {n}개를 고르세요." },
   pur_tbl_nothing: { en: "Nothing picked yet", ar: "لم يتم اختيار شيء بعد", ko: "아직 선택 없음" },
   pur_sug_now: { en: "Now", ar: "الآن", ko: "지금" },
   pur_sug_buy_now: { en: "Buy now", ar: "اشترِ الآن", ko: "지금 구매" },
@@ -6850,8 +6853,8 @@ function packNewGenLabel(start, reset) {
 // Shows the pack's table in a pop-up. Depending on the pack:
 //   rows    - tap - / + on a row (or, for a buy-in-order pack, tap the last
 //             tier you'll buy: everything up to it is picked)
-//   pick    - "pick N items" packs (Mix & Match): choose the N items once,
-//             then the rows / tiers
+//   pick    - "pick N items" packs (Mix & Match): each price row has N
+//             dropdowns, one per item you pick in that row
 //   cols    - one item per tier (the columns are the options): tap the cell
 //             you'll take in each tier
 // "Add" saves the picks with the form's date and status.
@@ -6880,12 +6883,15 @@ function purTablePopup(tb, opts) {
   const money = (v) => packFmtMoney(v, link.currency);
   const colName = (ci) => (cols[ci] ? materialDisplayName(cols[ci]) : String(tb.columns[ci] || ""));
   // state
-  const S = { counts: {}, upTo: -1, picks: {}, cellPick: {} };
-  if (mode === "pick") { S.picks[optCols[0]] = link.pickCols; }
-  rows.forEach((r) => { if (mode === "cols") S.cellPick[r.ri] = optCols[0]; });
-  const pickTotal = () => Object.values(S.picks).reduce((a, b) => a + b, 0);
+  const S = { counts: {}, upTo: -1, rowPicks: {}, cellPick: {} };
+  rows.forEach((r) => {
+    if (mode === "cols") S.cellPick[r.ri] = optCols[0];
+    if (mode === "pick") S.rowPicks[r.ri] = Array.from({ length: link.pickCols }, () => optCols[0]);
+  });
+  // "2× Fire Crystal + 1× Construction Speedup 1h" for one row's picks.
+  const picksText = (ri) => { const cnt = {}; (S.rowPicks[ri] || []).forEach((ci) => { cnt[ci] = (cnt[ci] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([ci, k]) => `${k}× ${colName(Number(ci))}`).join(" + "); };
   const rowGives = (r) => {
-    if (mode === "pick") { const g = {}; Object.entries(S.picks).forEach(([ci, k]) => add(g, colGive(r, Number(ci)), k)); return g; }
+    if (mode === "pick") { const g = {}; (S.rowPicks[r.ri] || []).forEach((ci) => add(g, colGive(r, ci))); return g; }
     if (mode === "cols") return colGive(r, S.cellPick[r.ri]);
     const o = offerOf.get(r.ri); return o ? { ...o.gives } : {};
   };
@@ -6897,24 +6903,28 @@ function purTablePopup(tb, opts) {
       const pr = upto.reduce((a, r) => a + price(r), 0), g = {};
       upto.forEach((r) => add(g, rowGives(r)));
       const k = upto.length;
-      const what = mode === "pick" ? ` · ${optCols.filter((ci) => S.picks[ci]).map((ci) => `${S.picks[ci]}× ${colName(ci)}`).join(" + ")}` : mode === "cols" ? ` · ${upto.map((r) => colName(S.cellPick[r.ri]).split(" ")[0]).join(", ")}` : "";
+      const pt = mode === "pick" ? upto.map((r) => picksText(r.ri)) : [];
+      const what = mode === "pick" ? (pt.every((x) => x === pt[0]) ? ` · ${t("pk_each_step")}: ${pt[0]}` : ` · ${upto.map((r, i) => `${money(price(r))}: ${pt[i]}`).join("; ")}`) : mode === "cols" ? ` · ${upto.map((r) => colName(S.cellPick[r.ri]).split(" ")[0]).join(", ")}` : "";
       return [{ row: S.upTo, count: Math.max(1, opts.count || 1), price: pr, gives: g, label: `${k > 1 ? t("pack_up_to") + " " : ""}${money(price(upto[k - 1]))}${rows.length > 1 ? ` (${t("pack_steps_of").replace("{k}", k).replace("{n}", rows.length)})` : ""}${what}` }];
     }
-    return rows.filter((r) => S.counts[r.ri] > 0).map((r) => ({ row: r.ri, count: S.counts[r.ri], price: price(r), gives: rowGives(r), label: `${money(price(r))}${mode === "pick" ? ` · ${optCols.filter((ci) => S.picks[ci]).map((ci) => `${S.picks[ci]}× ${colName(ci)}`).join(" + ")}` : ""}` }));
+    return rows.filter((r) => S.counts[r.ri] > 0).map((r) => ({ row: r.ri, count: S.counts[r.ri], price: price(r), gives: rowGives(r), label: `${money(price(r))}${mode === "pick" ? ` · ${picksText(r.ri)}` : ""}` }));
   };
   let modal = document.getElementById("purTblModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "purTblModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
   const close = () => { modal.style.display = "none"; };
   const draw = () => {
     const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0);
-    const pickBar = mode === "pick" ? `<div class="pur-t-picks"><span class="meta">${esc(t("pur_tbl_pick_n").replace("{n}", link.pickCols))} (${pickTotal()}/${link.pickCols})</span>${optCols.map((ci) => `<span class="pur-t-pick"><b>${esc(colName(ci))}</b><button type="button" data-tpk="${ci}|-1">&minus;</button><i>${S.picks[ci] || 0}</i><button type="button" data-tpk="${ci}|1" ${pickTotal() >= link.pickCols ? "disabled" : ""}>+</button></span>`).join("")}</div>` : "";
     // The tick / − + column comes first so it stays in view on phones.
-    const head = `<tr><th></th>${showCols.map((ci) => `<th>${esc(ci === pc ? t("pur_tbl_price") : colName(ci))}</th>`).join("")}</tr>`;
+    // "Pick N items" packs: price, then one dropdown per pick (item + amount).
+    const head = mode === "pick"
+      ? `<tr><th></th><th>${esc(t("pur_tbl_price"))}</th><th>${esc(t("pur_tbl_items_n").replace("{n}", link.pickCols))}</th></tr>`
+      : `<tr><th></th>${showCols.map((ci) => `<th>${esc(ci === pc ? t("pur_tbl_price") : colName(ci))}</th>`).join("")}</tr>`;
     const body = rows.map((r) => {
       const on = ladder ? r.ri <= S.upTo : S.counts[r.ri] > 0;
       const max = Number((link.rowMax || {})[r.ri]) || 0;
       const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${r.ri}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
         : `<span class="pur-t-step"><button type="button" data-tct="${r.ri}|-1">&minus;</button><i>${S.counts[r.ri] || 0}</i><button type="button" data-tct="${r.ri}|1" ${max && (S.counts[r.ri] || 0) >= max ? "disabled" : ""}>+</button></span>`;
+      if (mode === "pick") return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td><td class="pur-t-pr">${esc(money(price(r)))}${max ? ` <span class="meta">×${max}</span>` : ""}</td><td class="pur-t-pk"><div class="pur-t-picks3">${(S.rowPicks[r.ri] || []).map((sel, k) => `<select class="pur-t-sel" data-tsel="${r.ri}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}">${optCols.map((ci) => `<option value="${ci}" ${ci === sel ? "selected" : ""}>${esc(colName(ci))} · ${esc(String(r.cells[ci] == null ? "" : r.cells[ci]))}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
       return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${showCols.map((ci) => {
         const v = String(r.cells[ci] == null ? "" : r.cells[ci]);
         if (ci === pc) return `<td class="pur-t-pr">${esc(money(price(r)))}${max ? ` <span class="meta">×${max}</span>` : ""}</td>`;
@@ -6924,16 +6934,15 @@ function purTablePopup(tb, opts) {
     }).join("");
     modal.innerHTML = `<div class="modal-box pur-t-box">
       <h2>${esc(opts.name || tb.title || "")}</h2>
-      <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows"))}${mode === "cols" ? " " + esc(t("pur_tbl_hint_cols")) : ""}</div>
-      ${pickBar}
+      <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows"))}${mode === "cols" ? " " + esc(t("pur_tbl_hint_cols")) : mode === "pick" ? " " + esc(t("pur_tbl_hint_pick").replace("{n}", link.pickCols)) : ""}</div>
       <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
-      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")).slice(0, 140) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && (mode !== "pick" || pickTotal() === link.pickCols) ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
+      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
     modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.tct.split("|").map(Number); S.counts[ri] = Math.max(0, (S.counts[ri] || 0) + d); draw(); }));
     modal.querySelectorAll("[data-tup]").forEach((b) => b.addEventListener("click", () => { const ri = Number(b.dataset.tup); S.upTo = S.upTo === ri ? -1 : ri; draw(); }));
-    modal.querySelectorAll("[data-tpk]").forEach((b) => b.addEventListener("click", () => { const [ci, d] = b.dataset.tpk.split("|").map(Number); S.picks[ci] = Math.max(0, (S.picks[ci] || 0) + d); if (pickTotal() > link.pickCols) S.picks[ci] -= 1; draw(); }));
+    modal.querySelectorAll("[data-tsel]").forEach((sl) => sl.addEventListener("change", () => { const [ri, k] = sl.dataset.tsel.split("|").map(Number); S.rowPicks[ri][k] = Number(sl.value); draw(); }));
     modal.querySelectorAll("[data-tcell]").forEach((b) => b.addEventListener("click", () => { const [ri, ci] = b.dataset.tcell.split("|").map(Number); S.cellPick[ri] = ci; draw(); }));
     const addBtn = modal.querySelector("[data-tadd]");
     if (addBtn) addBtn.addEventListener("click", () => {
