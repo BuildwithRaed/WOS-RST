@@ -13322,12 +13322,15 @@ let TRADE_EXTRA_RFC = {};
 // hero's own items (set by heroShardBudget):
 //  - Mythic General Hero Shard -> any mythic hero's shards (1:1)
 //  - Marks of Valor (Hall of Heroes, Fri-Sun) -> 12 for a Mythic General Hero
-//    Shard, up to 100 a week (shared out over the heroes); the newest Gen's
-//    heroes: 10 marks a shard, up to 370 a week each
+//    Shard, up to 100 a week (shared out over the heroes); each Gen's Hall
+//    of Heroes hero: 10 marks for its own shard, up to 370 a week
 //  - Widget Chest (any hero's widget) -> 1 widget
 //  - Mystery Points (Mystery shop) -> 800 for 2 widgets (the free daily points and
 //    the Backpack's; the Mystery Badge Pack isn't used for widgets)
 let HERO_SHARD_TRADES = [];
+// The one hero of each Gen sold in Hall of Heroes (gold ticket on the
+// community Server Timeline, Sep 2026); the Gen's other two heroes aren't.
+const HALL_OF_HEROES_HERO = { 2: "Alonso", 3: "Logan", 4: "Reina", 5: "Gwen", 6: "Wu Ming", 7: "Gordon", 8: "Hendrik", 9: "Magnus", 10: "Freya", 11: "Rufus", 12: "Hervor", 13: "Flora", 14: "Cara", 15: "Hank", 16: "Ursar", 17: "Eleanor", 18: "Jordan" };
 // General Sigils can be spent on any expert (1:1): a rule, not a trade.
 function tradeComposeExtra() {
   const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
@@ -13694,7 +13697,9 @@ async function heroShardBudget() {
       if (r.rarity === "Legendary") {
         rule("Mythic General Hero Shard", sh, 1, 1, 0);
         rule("Marks of Valor", sh, 12, 1, Math.max(1, Math.floor(100 / mythicShards.length)));
-        if (newestGen && Number(r.hero.generation) === newestGen) rule("Marks of Valor", sh, 10, 1, 370);
+        // Only each Gen's Hall of Heroes hero (gold ticket on the timeline) sells
+        // its own shards there, once that Gen is out in the person's state.
+        if (HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name && (!newestGen || Number(r.hero.generation) <= newestGen)) rule("Marks of Valor", sh, 10, 1, 370);
       }
     }
     if (r.wNeed > 0) {
