@@ -7442,7 +7442,7 @@ async function renderPackCalendarPage() {
         }
       };
       GAME_EVENTS.forEach((ev) => gameEventStarts(ev, firstDay, lastDay).forEach((st) => put(st, ev.days, ev.name)));
-      heroWheels(firstDay, lastDay).forEach((w) => put(w.day, 1, `🎡 ${t("pack_cal_wheel")} (${w.ev.name})`));
+      heroWheels(new Date(firstDay.getTime() - 3 * 86400000), lastDay).forEach((w) => put(w.day, w.ev.wheelDays || 1, `🎡 ${t("pack_cal_wheel")} (${w.ev.name})`));
       const ng = PACK_PURCHASES.newGen || {}, gen0 = Math.floor(Number(ng.gen) || 0), base = newGenBaseDay();
       if (base) newGenStarts(base, 12).forEach((d, i) => { if (d >= firstDay && d <= lastDay) put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 && packValidDay(ng.last) ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}`); });
     }
@@ -10509,11 +10509,12 @@ async function savePackLinks() {
   saveCalcState("packs_links", PACK_LINKS || {});
 }
 // ---- Game events: SvS and King of Icefield (KOI) ----
-// Each comes every 4 weeks for 6 days (Monday to Saturday); day 2 of each
-// has a hero wheel. SvS 5-10 Oct 2026 and KOI 21-26 Sep 2026 were seen in game.
+// Each comes every 4 weeks for 6 days (Monday to Saturday); the Lucky Wheel
+// (heroes) opens on day 2 and stays 3 days. SvS 5-10 Oct 2026 and KOI
+// 21-26 Sep 2026 were seen in game.
 const GAME_EVENTS = [
-  { key: "svs", name: "SvS", anchor: "2026-10-05", every: 28, days: 6, wheelDay: 2 },
-  { key: "koi", name: "KOI", anchor: "2026-09-21", every: 28, days: 6, wheelDay: 2 },
+  { key: "svs", name: "SvS", anchor: "2026-10-05", every: 28, days: 6, wheelDay: 2, wheelDays: 3 },
+  { key: "koi", name: "KOI", anchor: "2026-09-21", every: 28, days: 6, wheelDay: 2, wheelDays: 3 },
 ];
 // Start days of an event from `from` to `to` (Dates).
 function gameEventStarts(ev, from, to) {
