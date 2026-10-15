@@ -6729,6 +6729,11 @@ function packActiveNoteText(tableId) {
 // What a visitor's still-active weekly cards will still give (counted like owned items).
 // ---- My Purchases in the planner ----
 // What one purchase gives: that row, or for a ladder every step up to it.
+// A purchase of a pack where you choose what you get (Benefit Card, Mix &
+// Match, Myriad Bazaar...) remembers that choice: its label, price and items
+// are saved on the purchase line (choice: { label, price, gives }).
+function purchaseGives(p, tb) { return p.choice && p.choice.gives ? p.choice.gives : packPurchaseGives(tb, p.row); }
+function purchasePrice(p, tb) { return p.choice && Number.isFinite(Number(p.choice.price)) ? Number(p.choice.price) : packPurchasePrice(tb, p.row); }
 function packPurchaseGives(tb, row) {
   const link = packLinkFor(tb.id);
   const offers = packOffersFor(tb, true);
@@ -6775,7 +6780,7 @@ function packActiveCardSupply(calcKey, tables) {
     const tb = (tables || []).find((x) => String(x.id) === String(p.table));
     if (!tb || !packTableServesPage(tb, calcKey)) return;
     const n = Math.max(1, Math.floor(Number(p.count) || 1));
-    Object.entries(packPurchaseGives(tb, p.row)).forEach(([k, v]) => { out[k] = (out[k] || 0) + v * n; });
+    Object.entries(purchaseGives(p, tb)).forEach(([k, v]) => { out[k] = (out[k] || 0) + v * n; });
     used.push({ title: `${tb.title || ""} × ${n} (${t("pur_planned_short")} ${p.date})` });
   });
   (tables || []).forEach((tb) => {
@@ -6856,7 +6861,7 @@ async function renderPurchasesPage() {
   const list = (PACK_PURCHASES.list || []).filter((p) => byId.has(String(p.table)));
   const coming = list.filter((p) => p.status !== "bought").sort((a, b) => String(a.date).localeCompare(String(b.date)));
   const bought = list.filter((p) => p.status === "bought").sort((a, b) => String(b.date).localeCompare(String(a.date)));
-  const cost = (p) => { const tb = byId.get(String(p.table)); return packPurchasePrice(tb, p.row) * Math.max(1, Math.floor(Number(p.count) || 1)); };
+  const cost = (p) => { const tb = byId.get(String(p.table)); return purchasePrice(p, tb) * Math.max(1, Math.floor(Number(p.count) || 1)); };
   const sumCost = (arr) => arr.reduce((a, p) => a + packConvert(cost(p), packLinkFor(p.table).currency || "USD").n, 0);
   const sample = list[0] ? packLinkFor(list[0].table).currency : "USD";
   const chipsFor = (gives, n, max) => Object.keys(gives).filter((k) => k !== "Gems" && Math.round(gives[k] * n) > 0).slice(0, max || 99).map((k) => {
@@ -6865,10 +6870,11 @@ async function renderPurchasesPage() {
     const label = `${materialDisplayName(k).replace(/\s*\((minutes|min)\)$/, "")}: ${Math.round(v).toLocaleString()}`;
     return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
   }).join("");
-  // One card per pack (same table and tier); its dates fold open underneath.
+  // One card per pack (same table and tier, or same choice); its dates fold open underneath.
+  const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}`;
   const groupBy = (arr) => {
     const out = [];
-    arr.forEach((p) => { const k = `${p.table}|${p.row}`; let g = out.find((x) => x.key === k); if (!g) { g = { key: k, tb: byId.get(String(p.table)), row: p.row, items: [] }; out.push(g); } g.items.push(p); });
+    arr.forEach((p) => { const k = purGroupKey(p); let g = out.find((x) => x.key === k); if (!g) { g = { key: k, tb: byId.get(String(p.table)), row: p.row, first: p, items: [] }; out.push(g); } g.items.push(p); });
     return out;
   };
   const shortDay = (k) => fmtDay(k).replace(/,? \d{4}$/, "");
@@ -6882,8 +6888,8 @@ async function renderPurchasesPage() {
     const when = dates.length === 1 ? shortDay(dates[0]) : `${t("pur_n_dates").replace("{n}", dates.length)} · ${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today);
     return `<div class="pur-item pur-grp${open ? " open" : ""}" data-purgrp="${esc(kind + "|" + g.key)}">
-      <div class="pur-item-h"><div style="min-width:0;"><b>${esc(tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(tierLabel(tb, g.row))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
-      <div class="bud-mats pur-chips">${chipsFor(packPurchaseGives(tb, g.row), n, 5)}</div>
+      <div class="pur-item-h"><div style="min-width:0;"><b>${esc(tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
+      <div class="bud-mats pur-chips">${chipsFor(purchaseGives(g.first, tb), n, 5)}</div>
       <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
         <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button>${kind === "c" ? `<button type="button" class="btn small" data-purgmove="bought">&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}<button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
       ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
@@ -6940,6 +6946,7 @@ async function renderPurchasesPage() {
     if (seq !== RENDER_SEQ || !box) return;
     const titleOf = (tb) => { const l = packLinkFor(tb.id); return l.group && l.group !== (tb.title || "") ? l.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")); };
     const byTitle = new Map(tables.map((tb) => [titleOf(tb), tb]));
+    const sugTable = (r) => (r.tables && r.tables.length ? byId.get(String(r.tables[0])) : null) || byTitle.get(r.title) || null;
     // "Will buy" only for plain tables (option / pick-your-items packs give
     // what you choose, which a purchase line can't record).
     const plainPack = (tb) => { const l = packLinkFor(tb.id); return !l.option && !(l.pickCols > 0) && !l.colOptions; };
@@ -6957,7 +6964,7 @@ async function renderPurchasesPage() {
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_sug_buy_now"))}</span><b>${esc(packFmtLocal(nowCost, rows[0].currency, true, rows[0].price))}</b></div><div><span class="meta">${esc(t("pur_sug_later").replace("{date}", fmtDay(dayOf(lastOff))))}</span><b>${laterCost ? esc(packFmtLocal(laterCost, rows[0].currency, true, rows[0].price)) : "—"}</b></div></div>`;
     const drawSug = () => {
     box.innerHTML = head + splitHtml + `<div class="pur-sug-list">` + rows.map((r, i) => {
-      const tb = byTitle.get(r.title);
+      const tb = sugTable(r);
       const names = tb ? packUsedForNames(tb) : [];
       const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * r.count) > 0).slice(0, 5).map((k) => {
         const v = r.gives[k] * r.count, icon = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
@@ -6967,12 +6974,12 @@ async function renderPurchasesPage() {
       return `<div class="pur-item">
         <div class="pur-item-h"><div style="min-width:0;"><b>${esc(r.title)}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
-        <div class="pur-item-f"><span class="meta pur-for">${esc(sched[i].length > 1 ? `${t("pur_n_dates").replace("{n}", sched[i].length)} · ${whenTxt(sched[i][0].off)} → ${whenTxt(sched[i][sched[i].length - 1].off)}` : whenTxt(sched[i][0].off))}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && r.row != null && plainPack(tb) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
+        <div class="pur-item-f"><span class="meta pur-for">${esc(sched[i].length > 1 ? `${t("pur_n_dates").replace("{n}", sched[i].length)} · ${whenTxt(sched[i][0].off)} → ${whenTxt(sched[i][sched[i].length - 1].off)}` : whenTxt(sched[i][0].off))}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
     }).join("") + `</div>${rows.length > 3 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", rows.length))}</div>` : ""}<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
     // "+ Will buy" opens a small window: tick the dates to buy on (all ticked).
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
-      const i = Number(b.dataset.pursug), r = rows[i], tb = byTitle.get(r.title), s0 = sched[i];
+      const i = Number(b.dataset.pursug), r = rows[i], tb = sugTable(r), s0 = sched[i];
       if (!tb) return;
       let modal = document.getElementById("purSugModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
@@ -7000,7 +7007,7 @@ async function renderPurchasesPage() {
       modal.querySelector("[data-pmadd]").addEventListener("click", () => {
         const pk = picked();
         if (!pk.length) return;
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned" })));
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { label: r.label, price: r.price, gives: r.gives } }) })));
         savePackPurchases();
         close();
         toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
@@ -7041,8 +7048,8 @@ async function renderPurchasesPage() {
   });
   const toBought = (p) => ({ ...p, status: "bought", date: p.date > today ? today : p.date });
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
-    const [kind, table, row] = box.dataset.purgrp.split("|");
-    const inGroup = (p) => String(p.table) === table && String(p.row) === row && (kind === "c" ? p.status !== "bought" : p.status === "bought");
+    const kind = box.dataset.purgrp.slice(0, 1), gkey = box.dataset.purgrp.slice(2);
+    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought");
     box.querySelector("[data-purfold]").addEventListener("click", (e) => {
       const k = box.dataset.purgrp, open = !PUR_OPEN.has(k);
       if (open) PUR_OPEN.add(k); else PUR_OPEN.delete(k);
@@ -11430,7 +11437,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -12912,7 +12919,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -13092,7 +13099,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
