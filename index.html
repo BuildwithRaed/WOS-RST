@@ -907,6 +907,11 @@ input,select,textarea{
   .gallery-zone.uncounted .gallery-card:hover{ opacity:.85; }
 
   .cat-switcher{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .cat-menu-btn{
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:8px; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--frost); font-size:15px; cursor:pointer; position:relative;
+  }
   /* Swipe-card navigation (arrows + dots/counter). Swiping still works on
      touchscreens; these give mouse and keyboard users the same control. */
   .swipe-nav{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:nowrap; }
@@ -947,6 +952,19 @@ input,select,textarea{
     padding:9px 16px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;
   }
   .cat-tabs button.active{ background:var(--ice-dim); color:var(--frost); border-color:var(--ice-dim); }
+  .cat-menu-panel{
+    display:none; position:absolute; top:calc(100% + 6px); inset-inline-start:0; min-width:200px; max-width:calc(100vw - 24px); max-height:60vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35); z-index:30;
+  }
+  .cat-menu-panel.open{ display:block; }
+  .cat-menu-panel button{
+    display:flex; align-items:center; justify-content:space-between; width:100%; text-align:start;
+    background:transparent; border:none; color:var(--muted); padding:9px 10px; border-radius:8px;
+    font-size:13px; cursor:pointer;
+  }
+  .cat-menu-panel button:hover{ background:var(--panel-2); color:var(--frost); }
+  .cat-menu-panel button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
   .stats-row-scroll{ display:flex; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
   .stats-row-scroll > .metric{ flex:1 1 130px; min-width:130px; }
   .filter-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
@@ -7570,16 +7588,13 @@ async function renderPacksPage() {
     const tabs = categoryTabs();
     if (!tabs.some((pt) => pt.key === packsFilter)) packsFilter = "all";
     const countFor = (key) => { const keep = packsFilter; packsFilter = key; const n = tables.filter(tableMatchesFilter).length; packsFilter = keep; return n; };
-    // One row that scrolls sideways (it used to wrap onto 3 lines on phones).
-    el.innerHTML = `<div class="cat-tabs pk-cat-row">${tabs.map((pt) => {
-      const label = pt.key === "all" ? t("packs_filter_all") : pt.key === "none" ? t("packs_filter_none") : pt.name;
-      return `<button data-packsfilter="${esc(pt.key)}" class="${pt.key === packsFilter ? "active" : ""}">${esc(label)} <span class="meta" style="font-size:10px;">${countFor(pt.key)}</span></button>`;
-    }).join("")}</div>`;
-    el.querySelectorAll("[data-packsfilter]").forEach((b) => b.addEventListener("click", () => {
-      packsFilter = b.dataset.packsfilter;
+    // ☰ list + one row that scrolls sideways (it used to wrap onto 3 lines on phones).
+    const items = tabs.map((pt) => ({ key: pt.key, label: pt.key === "all" ? t("packs_filter_all") : pt.key === "none" ? t("packs_filter_none") : pt.name, count: countFor(pt.key) }));
+    renderCategorySwitcher(el, items, packsFilter, (k) => {
+      packsFilter = k;
       localStorage.setItem("packs_filter", packsFilter);
       renderAll();
-    }));
+    });
   }
   function renderAll() {
     renderPageTabs();
@@ -14542,16 +14557,34 @@ function updateChiefGearCurrentStats() {
 // Renders a "menu button + scrollable tab row" category switcher into
 // containerEl. Only one category is shown at a time (matching the game's
 // own menu pattern), selected via either the tabs or the "..." dropdown.
-// One row of category buttons that scrolls sideways (same as the Packs page);
-// `counts` (optional) adds a small number after each name.
+// Category buttons: ☰ opens the full list, next to one row of buttons that
+// scrolls sideways. Used by Backpack, Cosmetics, Islands and Packs.
+// `categories` are names, or { key, label, count } items; `counts`
+// (optional, by name) adds a small number after each name.
 function renderCategorySwitcher(containerEl, categories, current, onSelect, counts) {
+  const items = categories.map((c) => (typeof c === "object" ? c : { key: c, label: c, count: counts ? counts[c] : null }));
+  const cnt = (it) => (it.count != null ? ` <span class="meta" style="font-size:10px;">${it.count}</span>` : "");
   containerEl.innerHTML = `
     <div class="cat-switcher">
+      <div style="position:relative;">
+        <button class="cat-menu-btn" type="button" id="${containerEl.id}MenuBtn" title="${esc(t("all_categories"))}">&#9776;</button>
+        <div class="cat-menu-panel" id="${containerEl.id}MenuPanel">
+          ${items.map((it) => `<button data-cat="${esc(it.key)}" class="${it.key === current ? "active" : ""}"><span>${esc(it.label)}${cnt(it)}</span> ${it.key === current ? "&#10003;" : ""}</button>`).join("")}
+        </div>
+      </div>
       <div class="cat-tabs pk-cat-row" id="${containerEl.id}Tabs">
-        ${categories.map((c) => `<button data-cat="${esc(c)}" class="${c === current ? "active" : ""}">${esc(c)}${counts && counts[c] != null ? ` <span class="meta" style="font-size:10px;">${counts[c]}</span>` : ""}</button>`).join("")}
+        ${items.map((it) => `<button data-cat="${esc(it.key)}" class="${it.key === current ? "active" : ""}">${esc(it.label)}${cnt(it)}</button>`).join("")}
       </div>
     </div>
   `;
+  const menuBtn = document.getElementById(`${containerEl.id}MenuBtn`);
+  const menuPanel = document.getElementById(`${containerEl.id}MenuPanel`);
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    // Close on the next click anywhere else - armed each time it opens, so
+    // it still works after the first time.
+    if (menuPanel.classList.toggle("open")) document.addEventListener("click", () => menuPanel.classList.remove("open"), { once: true });
+  });
   containerEl.querySelectorAll("button[data-cat]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -14559,7 +14592,7 @@ function renderCategorySwitcher(containerEl, categories, current, onSelect, coun
     });
   });
   // Keep the chosen button in view after a redraw.
-  const act = containerEl.querySelector("button.active");
+  const act = containerEl.querySelector(".cat-tabs button.active");
   if (act) { const row = act.parentElement; row.scrollLeft = Math.max(0, act.offsetLeft - row.offsetLeft - 12); }
 }
 
