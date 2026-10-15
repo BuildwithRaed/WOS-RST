@@ -1178,15 +1178,15 @@ input,select,textarea{
         <button class="topnav-group-btn" type="button">Overview <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="overview" class="active"><span class="ic">&#9673;</span>Dashboard</button>
-          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
+          <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
         </div>
       </div>
-      <div class="topnav-group" data-group="My Profile">
-        <button class="topnav-group-btn" type="button">My Profile <span class="caret">&#9660;</span></button>
+      <div class="topnav-group" data-group="Marketplace">
+        <button class="topnav-group-btn" type="button">Marketplace / Budgeting <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
+          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
           <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
-          <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
           <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
         </div>
       </div>
@@ -3464,7 +3464,7 @@ function tT12Label(l) {
 let LANG = localStorage.getItem("lang") || "en";
 const NAV_GROUP_LABELS = {
   "Overview": { en: "Overview", ar: "نظرة عامة", ko: "개요" },
-  "My Profile": { en: "My Profile", ar: "ملفي", ko: "내 프로필" },
+  "Marketplace": { en: "Marketplace / Budgeting", ar: "المتجر / الميزانية", ko: "상점 / 예산" },
   "Gears": { en: "Gears", ar: "التجهيزات", ko: "기어" },
   "Experts": { en: "Experts", ar: "الخبراء", ko: "전문가" },
   "Pets": { en: "Pets", ar: "الحيوانات الأليفة", ko: "펫" },
@@ -4075,6 +4075,8 @@ const T = {
   budgets_stat_increase: { en: "Stat increase from this plan", ar: "زيادة الإحصائيات من هذه الخطة", ko: "이 계획의 스탯 증가" },
   budgets_stat_increase_total: { en: "Stat increase (all selected)", ar: "زيادة الإحصائيات (كل المحدد)", ko: "스탯 증가 (선택 항목 전체)" },
   budgets_open_page: { en: "Open", ar: "فتح", ko: "열기" },
+  budgets_not_counted: { en: "Not counted: \"Count toward Dashboard\" is off on this page (from your state age or your own tick).", ar: "غير محتسب: خيار \"احتساب في لوحة التحكم\" متوقف في هذه الصفحة (حسب عمر ولايتك أو اختيارك).", ko: "미반영: 이 페이지의 \"대시보드에 반영\"이 꺼져 있습니다(주 나이 또는 직접 설정)." },
+  budgets_open_again: { en: "Your state age changed what's open here: open this page once to update its plan.", ar: "غيّر عمر ولايتك ما هو مفتوح هنا: افتح هذه الصفحة مرة لتحديث خطتها.", ko: "주 나이로 열린 항목이 바뀌었습니다: 이 페이지를 한 번 열어 계획을 갱신하세요." },
   budgets_open_once: { en: "Open this page once so its plan can be totalled here.", ar: "افتح هذه الصفحة مرة واحدة ليتم احتساب خطتها هنا.", ko: "이 페이지를 한 번 열면 계획이 여기에 합산됩니다." },
   budgets_nothing_planned: { en: "Nothing planned on this page.", ar: "لا توجد خطة في هذه الصفحة.", ko: "이 페이지에 계획된 항목이 없습니다." },
   budgets_no_packs: { en: "No pack table assigned to this page.", ar: "لا يوجد جدول حزم مخصص لهذه الصفحة.", ko: "이 페이지에 배정된 패키지 표가 없습니다." },
@@ -13418,11 +13420,23 @@ async function recordBudgetNeeds(calcKey, groups) {
     // page's first visit looked like a change and threw away Budgets and the
     // My Purchases suggestions for nothing.
     const sig = (gs) => JSON.stringify((gs || []).map((g) => [g.label || null, Object.keys(g.totals || {}).filter((k) => Number(g.totals[k])).sort().map((k) => [k, Math.round(Number(g.totals[k]) * 1000) / 1000])]));
-    if (prev && sig(prev.groups) === sig(clean)) return;
+    const ticks = budgetStateSig(calcKey);
+    if (prev && sig(prev.groups) === sig(clean) && (prev.ticks || null) === ticks) return;
     snap[calcKey] = { groups: clean, at: Date.now() };
+    if (ticks) snap[calcKey].ticks = ticks;
     budgetInvalidate();
     saveCalcState("budget_needs", snap);
   } catch (e) { /* purely a convenience cache */ }
+}
+// Which of a page's state-age unlocks (pets / experts) were open when its needs
+// were saved: when that changes (state age set or a day passes), Budgets asks
+// to open the page again so newly ticked / unticked ones are counted right.
+const BUDGET_STATE_KIND = { pets: "pets", pets_refine: "pets", experts: "experts", experts_research: "experts" };
+function budgetStateSig(calcKey) {
+  const kind = BUDGET_STATE_KIND[calcKey];
+  if (!kind) return null;
+  const list = STATE_UNLOCKS.filter((u) => u.kind === kind);
+  return list.some((u) => stateNotYet(kind, u.name)) ? list.map((u) => (stateNotYet(kind, u.name) ? "0" : "1")).join("") : null;
 }
 // Live material needs for the pages whose data is global.
 function computeChiefGearNeeds() {
@@ -13430,8 +13444,9 @@ function computeChiefGearNeeds() {
   const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
   const totals = {};
   CHIEF_GEAR_PIECES.forEach((p) => {
-    const st = CHIEF_GEAR_STATE[p.key];
-    const fromIdx = Math.min(st.from, st.to), toIdx = Math.max(st.from, st.to);
+    const st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
+    // Nothing above the cap (or Legendary when it isn't counted).
+    const fromIdx = Math.min(st.from, st.to, cap), toIdx = Math.min(Math.max(st.from, st.to), cap);
     for (let i = fromIdx + 1; i <= toIdx; i++) cols.forEach(([col, label]) => {
       const v = Number((rows[i] || {})[col]) || 0;
       if (v) totals[label] = (totals[label] || 0) + v;
@@ -13513,8 +13528,8 @@ function budgetPlanLines(calcKey) {
   const lines = [];
   if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS) {
     CHIEF_GEAR_PIECES.forEach((p) => {
-      const st = CHIEF_GEAR_STATE[p.key];
-      if (st.to > st.from) lines.push(`${pieceDisplayName(p.name)} (${troopDisplayName(p.troop)}): ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.from])} → ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.to])}`);
+      const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, chiefGearCapIdx());
+      if (to > st.from) lines.push(`${pieceDisplayName(p.name)} (${troopDisplayName(p.troop)}): ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.from])} → ${chiefGearRowLabel(CHIEF_GEAR_ROWS[to])}`);
     });
   } else if (calcKey === "charm") {
     CHARM_PIECES.forEach((p) => {
@@ -13539,7 +13554,17 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
-  else { const snap = (await ensureBudgetNeedsSnapshot())[calcKey]; groups = snap ? snap.groups : null; live = false; }
+  else {
+    // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
+    if (calcKey === "t11_helios" || calcKey === "t12_research") {
+      await ensureResearchPageCountedData();
+      if (RESEARCH_PAGE_COUNTED && RESEARCH_PAGE_COUNTED[calcKey === "t11_helios" ? "t11" : "t12"] === false) return { calcKey, tables, missing: true, notCounted: true };
+    }
+    const snap = (await ensureBudgetNeedsSnapshot())[calcKey];
+    groups = snap ? snap.groups : null; live = false;
+    // Saved before the state age changed what's open: open the page again.
+    if (snap && (snap.ticks || null) !== budgetStateSig(calcKey)) return { calcKey, tables, missing: true, stale: true };
+  }
   if (!groups) return { calcKey, tables, missing: true };
   const owned = packMergeOwned(await budgetOwnedFor(calcKey), packActiveCardSupply(calcKey, tables).supply);
   const needFull = {};
@@ -14121,7 +14146,7 @@ async function renderBudgetsPage(opts = {}) {
         </div>
         ${body ? `<div class="bud-body"${isOpen ? "" : " hidden"}>${body}</div>` : ""}
       </div>`;
-    if (pg.missing) return pageRow(`<span class="meta" style="font-size:11px;">${esc(t("budgets_open_once"))}</span>`, "", true);
+    if (pg.missing) return pageRow(`<span class="meta" style="font-size:11px;">${esc(t(pg.notCounted ? "budgets_not_counted" : pg.stale ? "budgets_open_again" : "budgets_open_once"))}</span>`, "", true);
     const hasNeed = Object.keys(pg.needFull).some((n) => pg.needFull[n] > 0);
     if (!hasNeed) return pageRow(`<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>`, "", true);
     if (inc) {
@@ -14672,6 +14697,7 @@ async function loadChiefGearRows() {
     sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,progression_rows(id,tier,stars,stage,materials,stat,power,display_label,hardened_alloy,polishing_solution,design_plan,amber)&progression_rows.order=sort_order.asc`),
     setBonusPromise,
     ensureGearCaps(),
+    ensureStateAge(),
   ]);
   if (!table) {
     CHIEF_GEAR_ROWS = [];
@@ -16997,6 +17023,7 @@ async function renderT11HeliosPage() {
     RESEARCH_PAGE_COUNTED.t11 = e.target.checked;
     RESEARCH_PAGE_COUNTED.manual = { ...(RESEARCH_PAGE_COUNTED.manual || {}), t11: true };
     saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
+    budgetInvalidate(); // Budgets plans only counted pages
   });
 
   // Same as before: max every troop, or reset all if already maxed.
@@ -19680,6 +19707,7 @@ async function renderT12ResearchPage() {
     RESEARCH_PAGE_COUNTED.t12 = e.target.checked;
     RESEARCH_PAGE_COUNTED.manual = { ...(RESEARCH_PAGE_COUNTED.manual || {}), t12: true };
     saveCalcState("research_page_counted", RESEARCH_PAGE_COUNTED);
+    budgetInvalidate(); // Budgets plans only counted pages
   });
 
   // Same as before: max every troop's current levels, or reset them all if
