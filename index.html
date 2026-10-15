@@ -512,14 +512,7 @@ input,select,textarea{
   .dash-stat-bar{ grid-column:1 / -1; display:block; height:6px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; }
   .dash-stat-bar i{ display:block; height:100%; border-radius:9px; background:var(--tc, var(--ice)); }
   .dash-stat-gap{ grid-column:1 / -1; font-size:10.5px; color:#e0a030; }
-  .dash-gains{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 20px; }
-  .dash-gain{ display:grid; grid-template-columns:minmax(0, 130px) 1fr auto; gap:10px; align-items:center; font-size:13px; }
-  .dash-gain b{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .dash-gain-bar{ display:block; height:6px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; }
-  .dash-gain-bar i{ display:block; height:100%; border-radius:9px; background:var(--ice); }
-  .dash-gain-v{ color:#e0a030; font-weight:700; text-align:end; white-space:nowrap; }
-  .dash-gain-v small{ display:block; font-size:10px; font-weight:400; color:var(--muted); }
-  @media (max-width: 900px){ .dash-troops{ grid-template-columns:1fr; } .dash-gains{ grid-template-columns:1fr; } }
+  @media (max-width: 900px){ .dash-troops{ grid-template-columns:1fr; } }
   /* Packs B: compact cards, tap Edit to open the full table */
   .pk-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap:12px; align-items:start; }
   .pk-card{ margin:0; border-radius:16px; }
@@ -538,12 +531,28 @@ input,select,textarea{
     .pk-sum-f{ flex-wrap:wrap; gap:4px; font-size:10.5px; }
     .pk-sum-f .btn{ padding:3px 10px; }
   }
-  /* Breakdown pop-up on phones: keep all four columns in view */
-  @media (max-width: 560px){
-    #drilldownModal .modal-box{ padding:16px 14px; }
-    #drilldownModal .src-name{ white-space:normal !important; font-size:12px !important; min-width:0; }
-    #drilldownModal .src-val{ font-size:12.5px !important; }
-  }
+  /* Dashboard breakdown pop-up */
+  .bd-box{ max-width:500px; width:100%; max-height:86vh; overflow-y:auto; padding:18px 18px 16px; }
+  .bd-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .bd-head h2{ margin:0; font-size:18px; }
+  .bd-x{ width:32px; height:32px; border-radius:10px; border:1px solid var(--line); background:none; color:var(--frost); font-size:14px; cursor:pointer; flex-shrink:0; }
+  .bd-sets{ margin-bottom:10px; }
+  .bd-sets .t12x-tabs{ margin:0; max-width:none; }
+  .bd-sum{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px 10px; padding:12px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.03); }
+  .bd-sum .k{ display:block; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .bd-sum b{ font-size:18px; font-weight:800; }
+  .bd-bar{ height:6px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:6px; }
+  .bd-bar.big{ grid-column:1 / -1; height:8px; }
+  .bd-bar i{ display:block; height:100%; border-radius:9px; background:var(--ice); }
+  .bd-row{ padding:8px 0; border-bottom:1px solid var(--line); }
+  .bd-row-h{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:13px; }
+  .bd-row-h b{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .bd-row-h span{ white-space:nowrap; font-weight:700; }
+  .bd-row-h small{ color:var(--muted); font-weight:400; }
+  .bd-left{ font-size:11px; color:#e0a030; margin-top:3px; }
+  .bd-done{ margin-top:12px; }
+  .bd-done summary{ cursor:pointer; margin-bottom:4px; }
+  @media (max-width: 560px){ .bd-box{ padding:14px 13px; } .bd-sum b{ font-size:15px; } }
   /* Stat boxes and stat tabs */
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
@@ -3389,7 +3398,9 @@ const T = {
   t12x_now: { en: "Now", ar: "الحالي", ko: "현재" },
   plx_your_levels: { en: "Your levels", ar: "مستوياتك", ko: "내 레벨" },
   dash_to_go: { en: "to go", ar: "متبقٍ", ko: "남음" },
-  dash_gains_title: { en: "Biggest gains left", ar: "أكبر مكاسب متبقية", ko: "남은 최대 상승폭" },
+  bd_left: { en: "Still to gain", ar: "المتبقي للكسب", ko: "남은 상승폭" },
+  bd_maxed: { en: "Already maxed", ar: "مكتملة بالفعل", ko: "이미 최대" },
+  bd_of_max: { en: "of max", ar: "من الأقصى", ko: "최대 대비" },
   budgets_pages_title: { en: "Pages in this budget", ar: "الصفحات في هذه الميزانية", ko: "이 예산의 페이지" },
   budgets_details_title: { en: "Details per page", ar: "التفاصيل لكل صفحة", ko: "페이지별 상세" },
   pk_edit: { en: "Edit", ar: "تعديل", ko: "편집" },
@@ -5082,7 +5093,6 @@ async function renderOverview(opts = {}) {
     </div>
     ${IS_OWNER ? `<div id="ownerTotalTableWrap" style="margin-top:16px;"></div>` : ""}
     <div id="troopSections" style="margin-top:16px;"></div>
-    <div id="dashGains" style="margin-top:12px;"></div>
     <div id="dashboardRoster" style="margin-top:12px;"></div>
     ${IS_OWNER ? `<div class="grid g4" id="metricRow" style="margin-top:16px;"></div>` : ""}
   `;
@@ -5468,29 +5478,6 @@ async function renderOverview(opts = {}) {
       }
     });
   });
-
-  // "Biggest gains left": for each page/source, the most it can still add to
-  // one troop stat. Worked out after the page is drawn so it never slows it.
-  setTimeout(() => {
-    if (seq !== RENDER_SEQ) return;
-    const gainsEl = document.getElementById("dashGains");
-    if (!gainsEl) return;
-    try {
-      const bySrc = {};
-      TROOP_TYPES.forEach((tt) => STATS.forEach((st) => {
-        breakdownFor(tt.key, st.key).combined.forEach((x) => {
-          const g = bySrc[x.name] || (bySrc[x.name] = { cur: 0, max: 0, best: 0, where: "" });
-          g.cur += x.cur; g.max += x.max;
-          if (x.max - x.cur > g.best) { g.best = x.max - x.cur; g.where = `${troopDisplayName(tt.key)} ${tStatLabel(st.label)}`; }
-        });
-      }));
-      const top = Object.entries(bySrc).filter(([, g]) => g.best > 0.05).sort((x, y) => y[1].best - x[1].best).slice(0, 8);
-      gainsEl.innerHTML = top.length ? `<div class="t12x-card"><div class="t12x-title">${esc(t("dash_gains_title"))}</div>
-        <div class="dash-gains">${top.map(([name, g]) => `<div class="dash-gain"><b>${esc(displaySourceName(name))}</b><span class="dash-gain-bar"><i style="width:${g.max > 0 ? Math.min(100, (g.cur / g.max) * 100) : 0}%;"></i></span><span class="dash-gain-v">+${g.best.toFixed(1)}%<small>${esc(g.where)}</small></span></div>`).join("")}</div></div>` : "";
-    } catch (e) {
-      console.error("gains failed", e);
-    }
-  }, 0);
 }
 
 function openDrilldownModal(title, total, maxTotal, sources, recompute) {
@@ -5508,40 +5495,39 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
       }
     });
   }
+  // Set 1/2/3 switch for Heroes Gears (same as before).
   const setTabsHtml = recompute
-    ? `<div class="seg" id="drilldownSetTabs" style="margin-top:10px;">
-        ${HERO_GEAR_SET_NAMES.map((n) => `<button data-bdset="${esc(n)}" class="${n === BREAKDOWN_HERO_GEAR_SET ? "active" : ""}">${esc(gearSetDisplayName(n))}</button>`).join("")}
-      </div>
-      <p class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("hero_gear_switch_note"))}</p>`
+    ? `<div class="bd-sets"><div class="t12x-tabs" id="drilldownSetTabs">${HERO_GEAR_SET_NAMES.map((n) => `<button type="button" data-bdset="${esc(n)}" class="${n === BREAKDOWN_HERO_GEAR_SET ? "on" : ""}">${esc(gearSetDisplayName(n))}</button>`).join("")}</div>
+      <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("hero_gear_switch_note"))}</div></div>`
     : "";
+  const f1 = (v) => `+${v.toFixed(1)}%`;
+  const pctOf = (cur, max) => (max > 0 ? Math.min(100, (cur / max) * 100) : 0);
+  // Pages with something left first (biggest first), then the maxed ones.
+  const open = sources.filter((x) => x.max - x.cur > 0.05).sort((x, y) => (y.max - y.cur) - (x.max - x.cur));
+  const done = sources.filter((x) => !(x.max - x.cur > 0.05));
+  const row = (x) => {
+    const left = x.max - x.cur, p = pctOf(x.cur, x.max);
+    return `<div class="bd-row">
+      <div class="bd-row-h"><b>${esc(displaySourceName(x.name))}</b><span>${f1(x.cur)} <small>/ ${f1(x.max)}</small></span></div>
+      <div class="bd-bar"><i style="width:${p}%;${left > 0.05 ? "" : " background:var(--good);"}"></i></div>
+      ${left > 0.05 ? `<div class="bd-left">${f1(left)} ${esc(t("dash_to_go"))}</div>` : ""}
+    </div>`;
+  };
+  const totalPct = pctOf(total, maxTotal);
   modal.innerHTML = `
-    <div class="modal-box" style="max-width:480px; max-height:80vh; overflow-y:auto;">
-      <h2>${esc(title)}</h2>
+    <div class="modal-box bd-box">
+      <div class="bd-head"><h2>${esc(title)}</h2><button type="button" class="bd-x" id="drilldownClose" aria-label="Close">&#10005;</button></div>
       ${setTabsHtml}
-      <div class="desc" style="display:flex; flex-wrap:wrap; gap:6px 16px; margin:0 0 16px;">
-        <span>${esc(t("current_label"))}: <strong style="color:var(--frost); white-space:nowrap;">${total.toFixed(1)}%</strong></span>
-        <span>${esc(t("max_possible"))}: <strong style="color:var(--ice); white-space:nowrap;">${maxTotal.toFixed(1)}%</strong></span>
-        <span>${esc(t("difference_label"))}: <strong style="color:var(--warn, #e0a030); white-space:nowrap;">+${(maxTotal - total).toFixed(1)}%</strong></span>
+      <div class="bd-sum">
+        <div><span class="k">${esc(t("current_label"))}</span><b>${f1(total)}</b></div>
+        <div><span class="k">${esc(t("max_possible"))}</span><b style="color:var(--ice);">${f1(maxTotal)}</b></div>
+        <div><span class="k">${esc(t("difference_label"))}</span><b style="color:#e0a030;">${f1(Math.max(0, maxTotal - total))}</b></div>
+        <div class="bd-bar big"><i style="width:${totalPct}%;"></i></div>
+        <div class="meta" style="grid-column:1 / -1; font-size:11px;">${totalPct.toFixed(0)}% ${esc(t("bd_of_max"))}</div>
       </div>
-      <div style="display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:4px 10px; margin-top:12px; align-items:center;">
-        <div class="meta" style="font-size:10.5px;"></div>
-        <div class="meta" style="font-size:10.5px; text-align:end;">${esc(t("current_label"))}</div>
-        <div class="meta" style="font-size:10.5px; text-align:end;">${esc(t("max_label"))}</div>
-        <div class="meta" style="font-size:10.5px; text-align:end;">${esc(t("diff_label"))}</div>
-        ${
-          sources.length
-            ? sources
-                .map((s) => {
-                  const diff = s.max - s.cur;
-                  return `<div class="src-name" style="padding:6px 0; border-bottom:1px solid var(--line); white-space:nowrap; font-size:12.5px;">${esc(displaySourceName(s.name))}</div><div class="src-val" style="padding:6px 0; border-bottom:1px solid var(--line); text-align:end;">+${s.cur.toFixed(1)}%</div><div class="src-val" style="padding:6px 0; border-bottom:1px solid var(--line); text-align:end; color:var(--ice);">+${s.max.toFixed(1)}%</div><div class="src-val" style="padding:6px 0; border-bottom:1px solid var(--line); text-align:end; color:${diff > 0 ? "#e0a030" : "var(--muted)"};">${diff > 0 ? "+" + diff.toFixed(1) + "%" : "\u2014"}</div>`;
-                })
-                .join("")
-            : `<div class="src-name" style="grid-column:1/-1;">${esc(t("no_sources_yet"))}</div>`
-        }
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn" id="drilldownClose">Close</button>
-      </div>
+      ${!sources.length ? `<div class="meta">${esc(t("no_sources_yet"))}</div>` : ""}
+      ${open.length ? `<div class="t12x-k" style="margin:14px 0 6px;">${esc(t("bd_left"))} (${open.length})</div>${open.map(row).join("")}` : ""}
+      ${done.length ? `<details class="bd-done"${open.length ? "" : " open"}><summary class="t12x-k">${esc(t("bd_maxed"))} (${done.length})</summary>${done.map(row).join("")}</details>` : ""}
     </div>
   `;
   document.getElementById("drilldownClose").addEventListener("click", () => {
@@ -5552,8 +5538,10 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
     modal.querySelectorAll("[data-bdset]").forEach((btn) => {
       btn.addEventListener("click", () => {
         BREAKDOWN_HERO_GEAR_SET = btn.dataset.bdset;
+        const keepScroll = modal.querySelector(".bd-box").scrollTop;
         const next = recompute();
         openDrilldownModal(title, next.total, next.maxTotal, next.combined, recompute);
+        modal.querySelector(".bd-box").scrollTop = keepScroll;
       });
     });
   }
