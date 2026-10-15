@@ -227,6 +227,27 @@
   .bud-mat{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 5px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.03); font-size:13px; }
   .bud-mat img{ width:24px; height:24px; object-fit:contain; }
   .bud-mat i{ width:24px; height:24px; display:grid; place-items:center; font-style:normal; font-weight:800; color:var(--muted); }
+  .pur-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+  .pur-f{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; flex:1 1 130px; min-width:0; }
+  .pur-f-wide{ flex:2 1 220px; }
+  .pur-f-sm{ flex:0 1 80px; }
+  .pur-f select, .pur-f input{ width:100%; font-size:13px; padding:6px 8px; }
+  .pur-seg{ display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .pur-seg button{ flex:1; background:none; border:0; color:var(--frost); padding:7px 10px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .pur-seg button.on{ background:var(--ice); color:#0f141b; font-weight:700; }
+  .pur-item{ border-top:1px solid var(--line); padding:10px 2px; }
+  .pur-item:first-of-type{ border-top:0; }
+  .pur-item-h{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; font-size:13.5px; }
+  .pur-price{ font-weight:700; white-space:nowrap; }
+  .pur-item-f{ display:flex; justify-content:space-between; align-items:center; gap:6px 10px; flex-wrap:wrap; margin-top:8px; font-size:11.5px; }
+  .pur-sum{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .pur-sq{ display:flex; flex-direction:column; gap:2px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; }
+  .pur-sq b{ font-size:19px; }
+  .pur-how{ grid-column:1 / -1; font-size:11px; }
+  .pur-ng-row{ display:flex; gap:10px; }
+  .pur-ng-pack{ border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
+  .pur-ng-next{ display:flex; flex-direction:column; gap:3px; margin-top:6px; font-size:11.5px; }
+  .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
   .bud-pending{ font-size:15px; font-weight:600; color:var(--ice); animation:budPulse 1.2s ease-in-out infinite; }
   .bud-pending.small{ font-size:12px; }
   @keyframes budPulse{ 50%{ opacity:.45; } }
@@ -533,6 +554,7 @@ input,select,textarea{
   .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
+  .pk-sum-used{ flex:1; min-width:0; gap:8px; margin-inline-end:8px; }
   .pk-open .pk-sum{ padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--line); }
   @media (max-width: 560px){
     .pk-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
@@ -1010,9 +1032,15 @@ input,select,textarea{
         <button class="topnav-group-btn" type="button">Overview <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="overview" class="active"><span class="ic">&#9673;</span>Dashboard</button>
+          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="My Profile">
+        <button class="topnav-group-btn" type="button">My Profile <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
+          <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
           <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
-          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
           <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
         </div>
       </div>
@@ -3290,6 +3318,7 @@ function tT12Label(l) {
 let LANG = localStorage.getItem("lang") || "en";
 const NAV_GROUP_LABELS = {
   "Overview": { en: "Overview", ar: "نظرة عامة", ko: "개요" },
+  "My Profile": { en: "My Profile", ar: "ملفي", ko: "내 프로필" },
   "Gears": { en: "Gears", ar: "التجهيزات", ko: "기어" },
   "Experts": { en: "Experts", ar: "الخبراء", ko: "전문가" },
   "Pets": { en: "Pets", ar: "الحيوانات الأليفة", ko: "펫" },
@@ -3304,6 +3333,7 @@ const NAV_PAGE_LABELS = {
   "backpack": { en: "Backpack", ar: "الحقيبة", ko: "배낭" },
   "packs": { en: "Packs", ar: "الحزم", ko: "패키지" },
   "My packs": { en: "My packs", ar: "حزمي", ko: "내 팩" },
+  "purchases": { en: "My Purchases", ar: "مشترياتي", ko: "내 구매" },
   "charmscalc": { en: "Chief Charm", ar: "تعويذة القائد", ko: "족장 참" },
   "chiefgear": { en: "Chief Gear", ar: "معدات القائد", ko: "족장 장비" },
   "herogearcalc": { en: "Heroes Gears", ar: "معدات الأبطال", ko: "영웅 장비" },
@@ -4110,6 +4140,42 @@ const T = {
   pk_preview_empty: { en: "Visitors don't see this box yet. Tick \"Visitors can set their own date\" in a pack's settings to add it here.", ar: "لا يرى الزوار هذا المربع بعد. حدّد \"يمكن للزوار تحديد تاريخهم\" في إعدادات حزمة لإضافتها.", ko: "아직 방문자에게 이 상자가 보이지 않습니다. 팩 설정에서 \"방문자가 날짜를 직접 설정 가능\"을 체크하세요." },
   pk_preview_open: { en: "Open settings", ar: "فتح الإعدادات", ko: "설정 열기" },
   pk_preview_notshown: { en: "That pack isn't shown with the current filter.", ar: "هذه الحزمة غير ظاهرة مع الفلتر الحالي.", ko: "현재 필터에서는 해당 팩이 표시되지 않습니다." },
+  pur_title: { en: "My Purchases", ar: "مشترياتي", ko: "내 구매" },
+  pur_loading: { en: "Loading…", ar: "جارٍ التحميل…", ko: "불러오는 중…" },
+  pur_desc: { en: "Add the packs you bought or plan to buy. Budgets and the planner pages count them.", ar: "أضف الحزم التي اشتريتها أو تنوي شراءها. تحسبها الميزانيات وصفحات التخطيط.", ko: "구매했거나 구매할 팩을 추가하세요. 예산과 계산 페이지에 반영됩니다." },
+  pur_add_title: { en: "Add a pack", ar: "أضف حزمة", ko: "팩 추가" },
+  pur_pack: { en: "Pack", ar: "الحزمة", ko: "팩" },
+  pur_tier: { en: "Tier", ar: "المستوى", ko: "단계" },
+  pur_upto: { en: "Tiers 1–{tier} ({price})", ar: "المستويات 1–{tier} ({price})", ko: "1–{tier}단계 ({price})" },
+  pur_count: { en: "How many", ar: "العدد", ko: "개수" },
+  pur_date: { en: "Date", ar: "التاريخ", ko: "날짜" },
+  pur_status: { en: "Status", ar: "الحالة", ko: "상태" },
+  pur_will_buy: { en: "Will buy", ar: "سأشتري", ko: "구매 예정" },
+  pur_bought: { en: "Bought", ar: "تم الشراء", ko: "구매함" },
+  pur_add_btn: { en: "Add", ar: "إضافة", ko: "추가" },
+  pur_added: { en: "Pack added", ar: "تمت إضافة الحزمة", ko: "팩 추가됨" },
+  pur_coming: { en: "Coming (will buy)", ar: "القادمة (سأشتري)", ko: "구매 예정" },
+  pur_bought_list: { en: "Bought", ar: "تم شراؤها", ko: "구매한 팩" },
+  pur_none_coming: { en: "No packs planned yet.", ar: "لا توجد حزم مخططة بعد.", ko: "아직 예정된 팩이 없습니다." },
+  pur_none_bought: { en: "No bought packs yet.", ar: "لا توجد حزم مشتراة بعد.", ko: "아직 구매한 팩이 없습니다." },
+  pur_mark_bought: { en: "Bought", ar: "تم الشراء", ko: "구매함" },
+  pur_mark_planned: { en: "Not bought", ar: "لم أشترِ", ko: "구매 취소" },
+  pur_remove: { en: "Remove", ar: "إزالة", ko: "삭제" },
+  pur_for_none: { en: "no page", ar: "لا توجد صفحة", ko: "없음" },
+  pur_spend_coming: { en: "Will spend", ar: "سأنفق", ko: "지출 예정" },
+  pur_spend_bought: { en: "Spent", ar: "أنفقت", ko: "지출함" },
+  pur_how: { en: "Coming packs add their items to the planner pages and Budgets. Bought packs use up that pack's limit, so Budgets won't suggest it again (their items are already in your Backpack).", ar: "الحزم القادمة تضيف عناصرها إلى صفحات التخطيط والميزانيات. الحزم المشتراة تستهلك حدّ تلك الحزمة فلا تقترحها الميزانيات مرة أخرى (عناصرها موجودة في حقيبتك).", ko: "예정된 팩의 아이템은 계산 페이지와 예산에 포함됩니다. 구매한 팩은 구매 한도를 사용하므로 예산에서 다시 추천하지 않습니다(아이템은 이미 가방에 있음)." },
+  pur_past_note: { en: "This date has passed: tap Bought, or remove it.", ar: "مضى هذا التاريخ: اضغط تم الشراء أو احذفها.", ko: "날짜가 지났습니다: 구매함을 누르거나 삭제하세요." },
+  pur_planned_short: { en: "planned", ar: "مخطط", ko: "예정" },
+  pur_no_tables: { en: "No packs to choose from yet.", ar: "لا توجد حزم للاختيار بعد.", ko: "선택할 팩이 아직 없습니다." },
+  pur_newgen_title: { en: "New Gen Heroes", ar: "أبطال الجيل الجديد", ko: "신세대 영웅" },
+  pur_newgen_desc: { en: "These packs come with each new generation of heroes. Set when your state last got new heroes and the pack's start date; the calendar and Budgets follow it.", ar: "تأتي هذه الحزم مع كل جيل جديد من الأبطال. حدّد متى حصلت ولايتك على أبطال جدد وتاريخ بدء الحزمة؛ يتبعه التقويم والميزانيات.", ko: "이 팩은 새 영웅 세대마다 나옵니다. 내 주에 마지막으로 새 영웅이 나온 날과 팩 시작일을 설정하면 캘린더와 예산이 따라갑니다." },
+  pur_newgen_last: { en: "Last new heroes", ar: "آخر أبطال جدد", ko: "마지막 새 영웅" },
+  pur_newgen_gen: { en: "Their Gen", ar: "جيلهم", ko: "세대" },
+  pur_newgen_start: { en: "Pack starts", ar: "تبدأ الحزمة", ko: "팩 시작" },
+  pur_gen: { en: "Gen {n}", ar: "الجيل {n}", ko: "{n}세대" },
+  pur_now: { en: "now", ar: "الآن", ko: "진행 중" },
+  pur_budget_line: { en: "My Purchases: {n} coming packs counted", ar: "مشترياتي: {n} حزم قادمة محسوبة", ko: "내 구매: 예정 팩 {n}개 반영" },
   pk_my_dates_title: { en: "My pack dates", ar: "تواريخ حزمي", ko: "내 팩 날짜" },
   pk_my_dates_desc: { en: "Set the dates that match your state. Only you see these; they're saved to your account.", ar: "حدد التواريخ التي تناسب ولايتك. أنت فقط ترى هذه، وتُحفظ في حسابك.", ko: "내 주에 맞는 날짜를 설정하세요. 나만 보며 계정에 저장됩니다." },
   pk_arrives_on: { en: "Arrives on", ar: "يصل في", ko: "도착일" },
@@ -4297,7 +4363,7 @@ function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "budgets", "backpack", "packs", "mypacks", "packcalendar", "charmscalc", "chiefgear",
+  "overview", "budgets", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -4457,12 +4523,13 @@ async function render() {
   ["refineAdvModal", "drilldownModal"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "packs") await renderPacksPage();
     else if (TAB === "mypacks") await renderMyPacksPage();
+    else if (TAB === "purchases") await renderPurchasesPage();
     else if (TAB === "packcalendar") await renderPackCalendarPage();
     else if (TAB === "charmscalc") await renderCharmsCalc();
     else if (TAB === "chiefgear") await renderChiefGearCalc();
@@ -6420,10 +6487,12 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     });
   });
 }
-function renderMyPackDates(el, tables) {
+function renderMyPackDates(el, tables, opts = {}) {
   if (!el) return;
-  const preview = IS_OWNER; // admin: locked, collapsible copy of what visitors see
-  const list = tables.filter((tb) => { const l = packLinkForBase(tb.id); return l.visitorDate && (typeof l.reset === "number" || packStackInfo(l.reset)); });
+  // Packs page (admin): a locked, collapsible copy of what visitors see.
+  // My Purchases: editable for everyone; New Gen Heroes has its own card there.
+  const preview = IS_OWNER && !opts.editable;
+  const list = tables.filter((tb) => { const l = packLinkForBase(tb.id); return l.visitorDate && (typeof l.reset === "number" || packStackInfo(l.reset)) && !(opts.skipNewGen && packIsNewGen(l)); });
   if (!list.length && !preview) { el.innerHTML = ""; return; }
   if (preview) {
     const head = `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;">${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"} ${esc(t("pk_my_dates_title"))} <span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span></span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>`;
@@ -6490,7 +6559,7 @@ function renderMyPackDates(el, tables) {
     if (typeof budgetInvalidate === "function") budgetInvalidate();
     PACK_TABLES_CACHE = null;
     Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveDays(k)) delete MY_CARDS_ACTIVE[k]; });
-    setTimeout(() => renderMyPackDates(el, tables), 0); // not while the input is still handling its change/blur
+    setTimeout(() => renderMyPackDates(el, tables, opts), 0); // not while the input is still handling its change/blur
     await Promise.all([saveCalcState("my_pack_dates", MY_PACK_DATES), saveCalcState("my_cards_active", MY_CARDS_ACTIVE)]);
   };
   // Dated packs in the same group come together (e.g. New Gen Heroes), so a
@@ -6526,8 +6595,57 @@ function packActiveNoteText(tableId) {
   return t("pk_active_note").replace("{date}", fmtD(l.activeUntil)).replace("{left}", l.activeDaysLeft).replace("{next}", fmtD(next)).replace("{more}", more);
 }
 // What a visitor's still-active weekly cards will still give (counted like owned items).
+// ---- My Purchases in the planner ----
+// What one purchase gives: that row, or for a ladder every step up to it.
+function packPurchaseGives(tb, row) {
+  const link = packLinkFor(tb.id);
+  const offers = packOffersFor(tb, true);
+  const out = {};
+  offers.filter((o) => (link.sequential ? o.row <= row : o.row === row)).forEach((o) => Object.entries(o.gives).forEach(([n, v]) => { out[n] = (out[n] || 0) + v; }));
+  return out;
+}
+function packPurchasePrice(tb, row) {
+  const link = packLinkFor(tb.id);
+  return packOffersFor(tb, true).filter((o) => (link.sequential ? o.row <= row : o.row === row)).reduce((a, o) => a + o.price, 0);
+}
+// Planned packs (today or later) count as coming items; a pack bought within
+// its current reset (or a one-time pack) uses up that buy. Bought items are
+// already in the Backpack, so only their limit is counted.
+function packPurchaseUsesLimit(p, link) {
+  if (p.status !== "bought") return packValidDay(p.date) && p.date >= packDayKey(packStartOfToday());
+  if (link.reset === "once") return true;
+  if (typeof link.reset === "number" && link.reset > 0) {
+    const d = packParseDay(p.date);
+    return !!d && (packStartOfToday() - d) / 86400000 < link.reset;
+  }
+  return false;
+}
+function packPurchaseUse(groups) {
+  const list = (PACK_PURCHASES.list || []).filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
+  if (!list.length) return groups;
+  return groups.map((g) => {
+    let add = 0;
+    list.forEach((p) => {
+      if (!(g.tables || []).includes(String(p.table))) return;
+      const n = Math.max(1, Math.floor(Number(p.count) || 1));
+      if (g.ladder || g.choice || g.optionPack || g.offers.length !== 1) add += n;
+      else if (g.offers[0].row === p.row) add += n;
+    });
+    return add ? { ...g, used: (g.used || 0) + add } : g;
+  });
+}
 function packActiveCardSupply(calcKey, tables) {
   const out = {}, used = [];
+  // Packs you plan to buy (My Purchases): their items count as coming.
+  const today = packDayKey(packStartOfToday());
+  (PACK_PURCHASES.list || []).forEach((p) => {
+    if (p.status !== "planned" || !(packValidDay(p.date) && p.date >= today)) return;
+    const tb = (tables || []).find((x) => String(x.id) === String(p.table));
+    if (!tb || !packTableServesPage(tb, calcKey)) return;
+    const n = Math.max(1, Math.floor(Number(p.count) || 1));
+    Object.entries(packPurchaseGives(tb, p.row)).forEach(([k, v]) => { out[k] = (out[k] || 0) + v * n; });
+    used.push({ title: `${tb.title || ""} × ${n} (${t("pur_planned_short")} ${p.date})` });
+  });
   (tables || []).forEach((tb) => {
     const l = packLinkFor(tb.id);
     if (!l.activeBuys || !packTableServesPage(tb, calcKey)) return;
@@ -6542,6 +6660,197 @@ function packMergeOwned(owned, supply) {
   const o = { ...(owned || {}) };
   Object.entries(supply || {}).forEach(([n, v]) => { o[n] = (Number(o[n]) || 0) + v; });
   return o;
+}
+// Page names a pack table is used for ("Chief Gear · Charms").
+function packUsedForNames(tb) {
+  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel);
+}
+// New Gen Heroes: which Gen an appearance belongs to, from the person's
+// "last new heroes" date and that Gen's number.
+function packNewGenLabel(start, reset) {
+  const ng = PACK_PURCHASES.newGen || {};
+  const last = packParseDay(ng.last), gen = Math.floor(Number(ng.gen) || 0);
+  if (!last || !gen || !(reset > 0)) return "";
+  return t("pur_gen").replace("{n}", gen + Math.max(0, Math.round((start - last) / 86400000 / reset)));
+}
+
+// ============================================================
+// MY PURCHASES - packs a person bought or will buy. Coming packs add their
+// items to the planner pages and Budgets; bought packs use up that pack's
+// limit so it isn't counted again. Also holds the person's own pack dates
+// (New Gen Heroes, weekly cards).
+// ============================================================
+let PUR_FORM = { table: "", row: 0, count: 1, date: "", status: "planned" };
+async function renderPurchasesPage() {
+  const seq = RENDER_SEQ;
+  content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
+  const tables = await ensurePackTables();
+  if (seq !== RENDER_SEQ) return;
+  const today = packDayKey(packStartOfToday());
+  const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
+  const byId = new Map(tables.map((tb) => [String(tb.id), tb]));
+  const buyable = tables.filter((tb) => packOffersFor(tb, true).length);
+  if (!byId.has(String(PUR_FORM.table))) PUR_FORM.table = buyable[0] ? String(buyable[0].id) : "";
+  if (!PUR_FORM.date) PUR_FORM.date = today;
+  const formTb = byId.get(String(PUR_FORM.table));
+  const formOffers = formTb ? packOffersFor(formTb, true) : [];
+  if (!formOffers.some((o) => o.row === PUR_FORM.row)) PUR_FORM.row = formOffers[0] ? formOffers[0].row : 0;
+  const tierLabel = (tb, row) => {
+    const link = packLinkFor(tb.id), o = packOffersFor(tb, true).find((x) => x.row === row);
+    if (!o) return `#${row + 1}`;
+    return link.sequential ? t("pur_upto").replace("{tier}", row + 1).replace("{price}", packFmtMoney(packPurchasePrice(tb, row), link.currency)) : packFmtMoney(o.price, link.currency);
+  };
+
+  // Pack picker grouped like the Packs page.
+  const groups = [];
+  buyable.forEach((tb) => { const g = packLinkFor(tb.id).group || t("packs_title"); let e = groups.find((x) => x.g === g); if (!e) { e = { g, items: [] }; groups.push(e); } e.items.push(tb); });
+  const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(tb.title || "")}</option>`).join("")}</optgroup>`).join("");
+  const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
+  const formFor = formTb ? packUsedForNames(formTb) : [];
+  const addCard = `<div class="t12x-card"><div class="t12x-title">${esc(t("pur_add_title"))}</div>
+    ${buyable.length ? `<div class="pur-form">
+      <label class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table">${packOpts}</select></label>
+      <label class="pur-f"><span class="meta">${esc(t("pur_tier"))}</span><select data-purf="row">${tierOpts}</select></label>
+      <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_count"))}</span><input type="number" min="1" step="1" data-purf="count" value="${PUR_FORM.count}" /></label>
+      <label class="pur-f"><span class="meta">${esc(t("pur_date"))}</span><input type="date" data-purf="date" value="${esc(PUR_FORM.date)}" /></label>
+      <div class="pur-f" style="flex:0 1 auto;"><span class="meta">${esc(t("pur_status"))}</span><div class="pur-seg">${["planned", "bought"].map((s) => `<button type="button" data-purstatus="${s}" class="${PUR_FORM.status === s ? "on" : ""}">${esc(t(s === "planned" ? "pur_will_buy" : "pur_bought"))}</button>`).join("")}</div></div>
+      <button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>
+    </div>
+    <div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
+  </div>`;
+
+  // Purchase lists
+  const list = (PACK_PURCHASES.list || []).filter((p) => byId.has(String(p.table)));
+  const coming = list.filter((p) => p.status !== "bought").sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const bought = list.filter((p) => p.status === "bought").sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const cost = (p) => { const tb = byId.get(String(p.table)); return packPurchasePrice(tb, p.row) * Math.max(1, Math.floor(Number(p.count) || 1)); };
+  const sumCost = (arr) => arr.reduce((a, p) => a + packConvert(cost(p), packLinkFor(p.table).currency || "USD").n, 0);
+  const sample = list[0] ? packLinkFor(list[0].table).currency : "USD";
+  const itemHtml = (p) => {
+    const tb = byId.get(String(p.table)), link = packLinkFor(tb.id);
+    const n = Math.max(1, Math.floor(Number(p.count) || 1));
+    const gives = packPurchaseGives(tb, p.row);
+    const chips = Object.keys(gives).filter((k) => k !== "Gems").map((k) => {
+      const v = gives[k] * n, icon = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
+      const short = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
+      const label = `${materialDisplayName(k).replace(/\s*\((minutes|min)\)$/, "")}: ${Math.round(v).toLocaleString()}`;
+      return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
+    }).join("");
+    const names = packUsedForNames(tb);
+    const late = p.status !== "bought" && p.date < today;
+    return `<div class="pur-item" data-purid="${esc(p.id)}">
+      <div class="pur-item-h"><div style="min-width:0;"><b>${esc(tb.title || "")}</b>${n > 1 ? ` <span class="meta">× ${n}</span>` : ""}<div class="meta" style="font-size:11px;">${esc(link.group ? link.group + " · " : "")}${esc(tierLabel(tb, p.row))} · ${esc(fmtDay(p.date))}</div></div>
+        <span class="pur-price">${esc(packFmtMoney(cost(p), link.currency))}</span></div>
+      ${chips ? `<div class="bud-mats" style="margin-top:6px;">${chips}</div>` : ""}
+      <div class="pur-item-f"><span class="meta">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
+        <span style="display:flex; gap:6px;">${p.status === "bought" ? `<button type="button" class="btn small ghost" data-purmove="planned">${esc(t("pur_mark_planned"))}</button>` : `<button type="button" class="btn small" data-purmove="bought">&#10003; ${esc(t("pur_mark_bought"))}</button>`}<button type="button" class="btn small ghost" data-purdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
+      ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
+    </div>`;
+  };
+  const summary = `<div class="t12x-card pur-sum">
+    <div class="pur-sq"><span class="meta">${esc(t("pur_spend_coming"))}</span><b>${coming.length ? esc(packFmtLocal(sumCost(coming), sample, true)) : "—"}</b><span class="meta">${coming.length} ${esc(t("pk_preview_packs"))}</span></div>
+    <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
+    <div class="meta pur-how">${esc(t("pur_how"))}</div>
+  </div>`;
+  const listsHtml = `
+    <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_coming"))}</div>${coming.length ? coming.map(itemHtml).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`}</div>
+    <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_bought_list"))}</div>${bought.length ? bought.map(itemHtml).join("") : `<div class="meta">${esc(t("pur_none_bought"))}</div>`}</div>`;
+
+  // New Gen Heroes timing
+  const ng = PACK_PURCHASES.newGen || {};
+  const ngTables = tables.filter((tb) => packIsNewGen(packLinkForBase(tb.id)) && typeof packLinkFor(tb.id).reset === "number");
+  const ngCard = ngTables.length ? `<div class="t12x-card"><div class="t12x-k">${esc(t("pur_newgen_title"))}</div>
+    <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
+    <div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
+      <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>
+    ${ngTables.map((tb) => {
+      const l = packLinkFor(tb.id);
+      const apps = packAppearances(l.reset, l.resetDay, Number(l.window) || 0, 400).slice(0, 3);
+      const mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
+      return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(tb.title || "")}</b>${mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
+        <label class="pur-f" style="margin-top:6px;"><span class="meta">${esc(t("pur_newgen_start"))}</span><span style="display:flex; gap:6px; align-items:center;"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(apps[0] ? packDayKey(apps[0].start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>
+        <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
+      </div>`;
+    }).join("")}
+  </div>` : "";
+
+  content.innerHTML = `
+    <div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div>
+    <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("pur_desc"))}</p>
+    <div class="t12x">
+      <aside class="t12x-side" style="position:static;">
+        ${ngCard}
+        <div id="purMyDates"></div>
+      </aside>
+      <div class="t12x-main">
+        ${summary}
+        <div style="margin-top:12px;">${addCard}</div>
+        ${listsHtml}
+      </div>
+    </div>`;
+  renderMyPackDates(document.getElementById("purMyDates"), tables, { editable: !IS_OWNER, skipNewGen: true });
+
+  const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
+  content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
+    const k = inp.dataset.purf;
+    if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
+    if (k === "row") PUR_FORM.row = Number(inp.value);
+    else if (k === "count") PUR_FORM.count = Math.max(1, Math.floor(Number(inp.value) || 1));
+    else if (k === "date") PUR_FORM.date = inp.value || today;
+  }));
+  content.querySelectorAll("[data-purstatus]").forEach((b) => b.addEventListener("click", () => {
+    PUR_FORM.status = b.dataset.purstatus;
+    content.querySelectorAll("[data-purstatus]").forEach((x) => x.classList.toggle("on", x === b));
+  }));
+  const addBtn = content.querySelector("[data-puradd]");
+  if (addBtn) addBtn.addEventListener("click", () => {
+    if (!formTb) return;
+    const dateEl = content.querySelector('[data-purf="date"]'), countEl = content.querySelector('[data-purf="count"]');
+    let date = packValidDay(dateEl && dateEl.value) || today;
+    if (PUR_FORM.status === "bought" && date > today) date = today; // can't have bought it yet
+    const count = Math.max(1, Math.floor(Number(countEl && countEl.value) || 1));
+    PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), table: String(formTb.id), row: PUR_FORM.row, count, date, status: PUR_FORM.status }]);
+    PUR_FORM.count = 1;
+    savePackPurchases();
+    toast(t("pur_added"));
+    redraw();
+  });
+  content.querySelectorAll("[data-purid]").forEach((box) => {
+    const id = box.dataset.purid;
+    const mv = box.querySelector("[data-purmove]");
+    if (mv) mv.addEventListener("click", () => {
+      PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (p.id === id ? { ...p, status: mv.dataset.purmove, date: mv.dataset.purmove === "bought" && p.date > today ? today : p.date } : p));
+      savePackPurchases(); redraw();
+    });
+    box.querySelector("[data-purdel]").addEventListener("click", () => {
+      PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => p.id !== id);
+      savePackPurchases(); redraw();
+    });
+  });
+  content.querySelectorAll("[data-purng]").forEach((inp) => inp.addEventListener("change", () => {
+    const ng0 = { ...(PACK_PURCHASES.newGen || {}) };
+    if (inp.dataset.purng === "last") { if (packValidDay(inp.value)) ng0.last = inp.value; else delete ng0.last; }
+    else { const n = Math.floor(Number(inp.value) || 0); if (n > 0) ng0.gen = n; else delete ng0.gen; }
+    PACK_PURCHASES.newGen = ng0;
+    saveCalcState("pack_purchases", PACK_PURCHASES); // labels only; no plan change
+    redraw();
+  }));
+  const ngSave = () => {
+    PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    PACK_TABLES_CACHE = null;
+    saveCalcState("my_pack_dates", MY_PACK_DATES);
+    redraw();
+  };
+  // Each New Gen pack has its own start date (they don't always come together).
+  content.querySelectorAll("[data-purngstart]").forEach((inp) => inp.addEventListener("change", () => {
+    if (packValidDay(inp.value)) MY_PACK_DATES[inp.dataset.purngstart] = inp.value; else delete MY_PACK_DATES[inp.dataset.purngstart];
+    ngSave();
+  }));
+  content.querySelectorAll("[data-purngreset]").forEach((b) => b.addEventListener("click", () => {
+    delete MY_PACK_DATES[b.dataset.purngreset];
+    ngSave();
+  }));
 }
 
 // ============================================================
@@ -6645,14 +6954,17 @@ async function renderPackCalendarPage() {
       const l = gp.link;
       const kind = packCalKind(l.reset);
       if (PACK_CAL_OFF.has(kind)) return;
+      const newGen = packIsNewGen(packLinkForBase(gp.tables[0].id));
       packAppearances(l.reset, packPlanAnchor(l), l.window, startOff + span).forEach((app) => {
+        // New Gen Heroes packs carry their Gen (from My Purchases).
+        const gen = newGen ? packNewGenLabel(app.start, l.reset) : "";
         const width = l.window > 0 ? l.window : 1; // no window set = show the day it arrives
         const a = app.offset - startOff, b = a + width - 1;
         if (b < 0 || a >= span) return;
         for (let w = 0; w < weeks; w++) {
           const ws = w * 7, we = ws + 6;
           if (b < ws || a > we) continue;
-          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind, title: gp.label, days: width, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
+          segs.push({ week: w, col: Math.max(0, a - ws), end: Math.min(b, we) - ws, cont: a < ws, kind, title: gen ? `${gp.label} · ${gen}` : gp.label, days: width, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
         }
       });
     });
@@ -6811,7 +7123,6 @@ async function renderPacksPage() {
       </div>
     </div>
     <div id="packsPriceStrip"></div>
-    <div id="packsMyDates"></div>
     <div id="packsPageTabs" style="margin-bottom:6px;"></div>
     <div id="packsList"></div>
   `;
@@ -6854,7 +7165,6 @@ async function renderPacksPage() {
   // Visitors copy the templates in "My packs"; they aren't listed as packs.
   const templateTables = tables.filter((tb) => packLinkFor(tb.id).template);
   if (!IS_OWNER) tables = tables.filter((tb) => !packLinkFor(tb.id).template);
-  renderMyPackDates(document.getElementById("packsMyDates"), tables);
   // Admin: the three Pack templates are made once, copied from your own tables.
   if (IS_OWNER && !templateTables.length && !(await loadCalcState("pack_templates_seeded"))) {
     const made = await packSeedTemplates(tables);
@@ -7083,13 +7393,13 @@ async function renderPacksPage() {
         );
         const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
         const gives = t.columns.filter((_, ci) => ci !== (lk.priceCol || 0)).map((c) => materialDisplayName(c)).filter(Boolean);
-        const usedFor = packGroupsChecked(lk.pages) || 0;
+        const usedFor = packUsedForNames(t);
         return `
       <div class="panel pk-card${pkOpen ? " pk-open" : ""}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
         <div class="pk-sum">
           <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
           <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
-          <div class="pk-sum-f"><span>${esc(window.t("pack_used_for"))} (${usedFor})</span><button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
+          <div class="pk-sum-f"><span class="pk-sum-used">${esc(window.t("pack_used_for"))}: ${usedFor.length ? esc(usedFor.join(" · ")) : "—"}</span><button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
@@ -9572,12 +9882,14 @@ let PACK_LINKS = null;          // { [tableId]: { pages:[], priceCol:0, cols:{ i
 let PACK_TABLES_CACHE = null;   // pack_tables rows, for the calculator pages
 async function ensurePackLinks() {
   if (PACK_LINKS) return PACK_LINKS;
-  const [links, mine, active, myPacks] = await Promise.all([
+  const [links, mine, active, myPacks, purchases] = await Promise.all([
     IS_OWNER ? loadCalcState("packs_links") : loadOwnerState("packs_links"),
     loadCalcState("my_pack_dates").catch(() => null),
     loadCalcState("my_cards_active").catch(() => null),
     IS_OWNER ? null : loadCalcState("my_packs").catch(() => null),
+    loadCalcState("pack_purchases").catch(() => null),
   ]);
+  PACK_PURCHASES = purchases && typeof purchases === "object" ? { list: Array.isArray(purchases.list) ? purchases.list.filter((x) => x && x.table != null) : [], newGen: purchases.newGen && typeof purchases.newGen === "object" ? purchases.newGen : {} } : { list: [], newGen: {} };
   MY_PACKS = myPacks && Array.isArray(myPacks.tables) ? myPacks.tables.filter((x) => x && typeof x.id === "string" && x.id.startsWith("my-")) : [];
   MY_PACK_DATES = mine && typeof mine === "object" ? mine : {};
   MY_CARDS_ACTIVE = active && typeof active === "object" ? active : {};
@@ -9589,9 +9901,21 @@ async function savePackLinks() {
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   saveCalcState("packs_links", PACK_LINKS || {});
 }
+function packIsNewGen(l) { return !!l && typeof l.group === "string" && l.group.trim() === PACK_NEWGEN_GROUP; }
 function packValidDay(v) { return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null; }
 // Each visitor's own pack dates ({ tableId: "yyyy-mm-dd" }), saved to their account.
 let MY_PACK_DATES = {};
+// "My Purchases" (calc_state pack_purchases): packs a person bought or will
+// buy, and their New Gen Heroes timing.
+//   list: [{ id, table, row, count, date: "yyyy-mm-dd", status: "bought" | "planned" }]
+//   newGen: { last: "yyyy-mm-dd" (when their state last got new heroes), gen: number }
+let PACK_PURCHASES = { list: [], newGen: {} };
+const PACK_NEWGEN_GROUP = "New Gen Heroes";
+function savePackPurchases() {
+  PACK_PLAN_CACHE.clear();
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+  saveCalcState("pack_purchases", PACK_PURCHASES);
+}
 // "My packs": a visitor's own tables copied from the Pack templates, saved to
 // their account (calc_state my_packs). Each keeps its settings in `link`.
 // The admin's own copies are normal tables in the "My packs" category.
@@ -9762,12 +10086,13 @@ function packLinkForBase(tableId) {
     // A visitor's own date (their state's calendar, or when they start a
     // card) replaces it when the admin allows that for this table.
     // (The admin's own start date only applies to stacking cards, for the admin's plans.)
-    resetDay: ((IS_OWNER ? l.reset === "stack" : l.visitorDate === true) && packValidDay(MY_PACK_DATES[String(tableId)])) || packValidDay(l.resetDay),
+    resetDay: ((IS_OWNER ? (l.reset === "stack" || packIsNewGen(l)) : (l.visitorDate === true || packIsNewGen(l))) && packValidDay(MY_PACK_DATES[String(tableId)])) || packValidDay(l.resetDay),
     resetDayDefault: packValidDay(l.resetDay),
     // How many days one appearance stays up (0 = the whole cycle).
     window: Math.max(0, Math.round(Number(l.window) || 0)),
-    // Admin: visitors may set this table's date for themselves.
-    visitorDate: l.visitorDate === true,
+    // Admin: visitors may set this table's date for themselves (New Gen Heroes
+    // packs always: everyone's state gets new heroes on its own day).
+    visitorDate: l.visitorDate === true || packIsNewGen(l),
     // Admin: table not shown to (or planned for) visitors.
     hideVisitors: l.hideVisitors === true,
   };
@@ -10230,7 +10555,7 @@ function packGroupsFor(tables, calcKey) {
   const key = [stripGems ? 1 : 0, LANG, DISPLAY_CURRENCY, new Date().toDateString(), tables.map((tb) => tb.id).join(",")].join("|");
   let out = PACK_GROUPS_CACHE.map.get(key);
   if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
-  return out;
+  return packPurchaseUse(out);
 }
 function packGroupsForBuild(tables, stripGems) {
   // Copies (not in-place edits): a table's groups are shared by every page.
@@ -12173,7 +12498,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       for (const idx of order) {
         const pg = inc[idx];
         if (!Object.keys(pg.need || {}).length) continue;
-        const groupsAdj = res.groups.map((g, gi) => ({ ...g, used: used[gi] }));
+        const groupsAdj = res.groups.map((g, gi) => ({ ...g, used: (g.used || 0) + used[gi] }));
         const pl = packCheapestPlan(groupsAdj, pg.need, horizon, pg.calcKey, quick);
         if (!pl) return;
         pl.picks.forEach((pk) => { used[pk.gi] += pk.count; const e = picks.find((x) => x.gi === pk.gi && x.oi === pk.oi); if (e) e.count += pk.count; else picks.push({ ...pk }); });
@@ -12210,7 +12535,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
           const used = allGroups.map(() => 0);
           sub.chosen.picks.forEach((pk) => { const gi = allGroups.indexOf(sub.groups[pk.gi]); if (gi >= 0) used[gi] += pk.count; });
           const ids = new Set(); late.forEach((pg) => (pg.tableIds || []).forEach((id) => ids.add(String(id))));
-          const lateGroups = allGroups.map((g, gi) => ({ ...g, used: used[gi] })).filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
+          const lateGroups = allGroups.map((g, gi) => ({ ...g, used: (g.used || 0) + used[gi] })).filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
           const lateNeed = {}; late.forEach((pg) => Object.entries(pg.need).forEach(([n, q]) => { lateNeed[n] = (lateNeed[n] || 0) + q; }));
           const lateKey = "__budget:" + late.map((pg) => pg.calcKey).join(",");
           const e2 = lateGroups.length ? packEarliestDays(lateGroups, lateNeed, lateKey) : null;
@@ -12356,7 +12681,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     const perGroup = res.groups.map(() => 0);
     const picks = [];
     counts.forEach((e, k) => { const { gi, oi } = where.get(k); const c = pickCount(e); perGroup[gi] += c; picks.push({ gi, oi, count: c }); });
-    if (res.groups.some((g, gi) => perGroup[gi] > packCyclesWithin(g.reset, g.resetDay, days, g.window) * g.perCycle)) return null;
+    if (res.groups.some((g, gi) => perGroup[gi] > packCyclesWithin(g.reset, g.resetDay, days, g.window) * g.perCycle - (g.used || 0))) return null;
     const rem = {}; Object.entries(res.need).forEach(([n, q]) => { rem[n] = q; });
     picks.forEach((pk) => Object.entries(res.groups[pk.gi].offers[pk.oi].gives).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v * pk.count; }));
     const tr = packShortAfterTrades(rem, ctx);
@@ -12726,6 +13051,7 @@ async function renderBudgetsPage(opts = {}) {
         <span style="font-size:26px; font-weight:700;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan && split && BUDGET_VIEW === "main" ? `<span class="meta" style="font-size:11px;">${esc(t("budgets_split_parts"))}</span>` : anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
       </div>
+      ${(() => { const n = (PACK_PURCHASES.list || []).filter((p) => p.status !== "bought" && packValidDay(p.date) && p.date >= packDayKey(packStartOfToday())).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
       ${viewCardsHtml}
       ${combinedHtml}
       ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><button type="button" class="btn small ghost bud-mat-btn" data-budmats aria-expanded="${BUDGET_MATS_OPEN}">&#128230; ${esc(t("budgets_materials_total"))} (${Object.keys(grandMats).length}) <span class="bud-mat-arrow">${BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;"}</span></button><div class="bud-mats"${BUDGET_MATS_OPEN ? "" : " hidden"} style="margin-top:8px;">${Object.keys(grandMats).map((n) => {
