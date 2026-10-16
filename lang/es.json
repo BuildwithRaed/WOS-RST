@@ -94,6 +94,8 @@
  "t:bpw_one_hero": "solo este héroe",
  "t:bpw_empty": "Aún no hay héroes aquí.",
  "t:bpw_roster": "plantilla",
+ "t:hs_use_shards": "Fragmentos de héroe",
+ "t:hs_use_widgets": "Widgets de héroe",
  "t:hs_page": "Fragmentos y widgets de héroe",
  "t:pk_zone_note": "El contenido de estos paquetes se ha tomado de estados del rango 600. Los estados más antiguos y más nuevos pueden recibir cantidades distintas, porque los paquetes cambian con la edad del estado. Abre cualquier paquete con Editar para ajustar las cantidades a tu estado.",
  "t:pk_tables_n": "{n} tablas",

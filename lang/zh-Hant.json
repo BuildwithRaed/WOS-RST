@@ -93,6 +93,8 @@
 "t:bpw_one_hero":"僅限此英雄",
 "t:bpw_empty":"尚未加入英雄。",
 "t:bpw_roster":"陣容",
+"t:hs_use_shards":"英雄碎片",
+"t:hs_use_widgets":"英雄專屬部件",
 "t:hs_page":"英雄碎片與專屬零件",
 "t:pk_zone_note":"這些禮包內容取自 600 多號的州。較舊或較新的州數量可能不同，因為禮包會隨州齡變化。用「編輯」打開任一禮包，修改數量以符合你的州。",
 "t:pk_tables_n":"{n} 個表格",

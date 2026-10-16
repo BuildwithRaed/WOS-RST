@@ -93,6 +93,8 @@
 "t:bpw_one_hero":"chỉ anh hùng này",
 "t:bpw_empty":"Chưa có anh hùng nào.",
 "t:bpw_roster":"đội hình",
+"t:hs_use_shards":"Mảnh anh hùng",
+"t:hs_use_widgets":"Widget anh hùng",
 "t:hs_page":"Mảnh & Widget anh hùng",
 "t:pk_zone_note":"Nội dung gói này lấy từ các bang 600+. Bang cũ hơn hoặc mới hơn có thể nhận số lượng khác, vì gói thay đổi theo tuổi bang. Mở gói bằng Sửa để chỉnh số lượng cho khớp bang của bạn.",
 "t:pk_tables_n":"{n} bảng",

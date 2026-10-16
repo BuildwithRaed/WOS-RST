@@ -94,6 +94,8 @@
  "t:bpw_one_hero": "nur dieser Held",
  "t:bpw_empty": "Noch keine Helden hier.",
  "t:bpw_roster": "Aufstellung",
+ "t:hs_use_shards": "Heldensplitter",
+ "t:hs_use_widgets": "Helden-Widgets",
  "t:hs_page": "Heldensplitter & Widgets",
  "t:pk_zone_note": "Diese Paketinhalte stammen aus Staaten im 600er-Bereich. Ältere und neuere Staaten können andere Mengen bekommen, da sich Pakete mit dem Staatsalter ändern. Öffne ein Paket mit Bearbeiten, um die Mengen an deinen Staat anzupassen.",
  "t:pk_tables_n": "{n} Tabellen",

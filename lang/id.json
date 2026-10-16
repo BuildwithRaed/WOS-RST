@@ -93,6 +93,8 @@
 "t:bpw_one_hero":"hanya hero ini",
 "t:bpw_empty":"Belum ada hero di sini.",
 "t:bpw_roster":"roster",
+"t:hs_use_shards":"Pecahan pahlawan",
+"t:hs_use_widgets":"Widget pahlawan",
 "t:hs_page":"Shard & widget hero",
 "t:pk_zone_note":"Isi paket ini diambil dari state 600-an. State yang lebih tua atau lebih baru bisa mendapat jumlah berbeda, karena paket berubah sesuai umur state. Buka paket mana pun dengan Edit untuk menyesuaikan jumlahnya dengan statemu.",
 "t:pk_tables_n":"{n} tabel",

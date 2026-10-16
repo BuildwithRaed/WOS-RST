@@ -93,6 +93,8 @@
 "t:bpw_one_hero":"이 영웅 전용",
 "t:bpw_empty":"아직 영웅이 없습니다.",
 "t:bpw_roster":"로스터",
+"t:hs_use_shards":"영웅 조각",
+"t:hs_use_widgets":"영웅 위젯",
 "t:hs_page":"영웅 조각 · 위젯",
 "t:pk_zone_note":"이 팩 구성은 600번대 주 기준입니다. 팩은 주 나이에 따라 바뀌므로 더 오래되거나 새로운 주는 수량이 다를 수 있습니다. 편집으로 팩을 열어 내 주에 맞게 수량을 바꾸세요.",
 "t:pk_tables_n":"표 {n}개",

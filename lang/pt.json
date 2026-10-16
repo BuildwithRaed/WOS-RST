@@ -93,6 +93,8 @@
 "t:bpw_one_hero":"só este herói",
 "t:bpw_empty":"Nenhum herói aqui ainda.",
 "t:bpw_roster":"elenco",
+"t:hs_use_shards":"Fragmentos de herói",
+"t:hs_use_widgets":"Widgets de herói",
 "t:hs_page":"Fragmentos e widgets de herói",
 "t:pk_zone_note":"O conteúdo destes pacotes vem de estados na faixa dos 600. Estados mais antigos e mais novos podem ter quantidades diferentes, porque os pacotes mudam com a idade do estado. Abra qualquer pacote com Editar para ajustar as quantidades ao seu estado.",
 "t:pk_tables_n":"{n} tabelas",

@@ -399,6 +399,11 @@
   .pur-price{ font-weight:700; white-space:nowrap; }
   .pur-item-f{ display:flex; justify-content:space-between; align-items:center; gap:6px 10px; flex-wrap:wrap; margin-top:8px; font-size:11.5px; }
   .pur-sum{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .pur-list-sum{ cursor:pointer; list-style:none; margin-bottom:0; }
+  .pur-list-sum::-webkit-details-marker{ display:none; }
+  .pur-list-sum::before{ content:"\25B8"; display:inline-block; width:1.1em; color:var(--muted); }
+  .pur-listbox[open] > .pur-list-sum{ margin-bottom:8px; }
+  .pur-listbox[open] > .pur-list-sum::before{ content:"\25BE"; }
   .pur-sq{ display:flex; flex-direction:column; gap:2px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; }
   .pur-sq b{ font-size:19px; }
   .pur-how{ grid-column:1 / -1; font-size:11px; }
@@ -2663,7 +2668,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 10; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 11; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2867,6 +2872,8 @@ const T = {
   bpw_empty: { en: "No heroes here yet." },
   bpw_roster: { en: "roster" },
   hs_page: { en: "Hero shards & widgets" },
+  hs_use_shards: { en: "Hero shards" },
+  hs_use_widgets: { en: "Hero widgets" },
   pk_zone_note: { en: "These pack contents are taken from states in the 600s. Older and newer states can get different amounts, because packs change with state age. Open any pack with Edit to change its amounts to match your state." },
   pk_tables_n: { en: "{n} tables" },
   pk_in_budgets: { en: "Count in Budgets" },
@@ -3946,6 +3953,31 @@ function isValidTab(t) {
 }
 const SAVED_TAB = localStorage.getItem("last_tab");
 let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
+// Phones may reload a page left in the background (switching apps). The page
+// is reopened on the same tab (last_tab); this also keeps where it was
+// scrolled and the My Purchases form (owner, 16 Oct 2026).
+(() => {
+  const keep = () => {
+    try {
+      sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY) }));
+      if (typeof PUR_FORM !== "undefined") sessionStorage.setItem("pur_form", JSON.stringify(PUR_FORM));
+    } catch (e) { /* blocked */ }
+  };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") keep(); });
+  window.addEventListener("pagehide", keep);
+  let sp = null;
+  try { sp = JSON.parse(sessionStorage.getItem("scroll_pos") || "null"); sessionStorage.removeItem("scroll_pos"); } catch (e) { sp = null; }
+  if (!sp || sp.tab !== TAB || !(sp.y > 0)) return;
+  // Wait until the page is drawn tall enough (up to 10 s), unless the person scrolls or changes page first.
+  let tries = 0, moved = false;
+  const stop = () => { moved = true; };
+  window.addEventListener("touchstart", stop, { once: true, passive: true });
+  window.addEventListener("wheel", stop, { once: true, passive: true });
+  const iv = setInterval(() => {
+    if (moved || TAB !== sp.tab || ++tries > 40) { clearInterval(iv); return; }
+    if (document.documentElement.scrollHeight >= sp.y + innerHeight * 0.6) { clearInterval(iv); window.scrollTo(0, sp.y); }
+  }, 250);
+})();
 // Browser history: every page change is a history entry, so the Back
 // button (and the Android back gesture in the installed app) returns to the
 // previous page inside the site instead of leaving it.
@@ -6188,18 +6220,37 @@ function packPurchaseUsesLimit(p, link) {
   }
   return false;
 }
+// The day the running copy of a repeating pack came out (null when it
+// can't be told, e.g. calendar-month packs).
+function packCurrentCycleStart(reset, resetDay) {
+  if (typeof reset !== "number" || !(reset > 0) || reset === 30) return null;
+  const today = packStartOfToday(), anchor = packParseDay(resetDay);
+  let since;
+  if (anchor) { const first = Math.round((anchor - today) / 86400000); since = first > 0 ? (reset - (first % reset)) % reset : (-first) % reset; }
+  else if (reset === 7 || reset === 14) since = (packStartOfToday().getUTCDay() + 6) % 7;
+  else return null;
+  return new Date(today.getTime() - since * 86400000);
+}
 function packPurchaseUse(groups) {
   const list = (PACK_PURCHASES.list || []).filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
   if (!list.length) return groups;
+  const todayKey = packDayKey(packStartOfToday());
   return groups.map((g) => {
-    let add = 0;
+    let add = 0, now = 0;
+    const start = packCurrentCycleStart(g.reset, g.resetDay), startKey = start ? packDayKey(start) : null;
+    // A group is one price row of the pack (or a whole ladder): a purchase
+    // only counts for the row it bought (owner, 16 Oct 2026: a Benefit Card
+    // bought at $4.99 used up the $9.99 one too).
+    const rows = new Set(g.offers.map((o) => o.row));
     list.forEach((p) => {
       if (!(g.tables || []).includes(String(p.table))) return;
       const n = Math.max(1, Math.floor(Number(p.count) || 1));
-      if (g.ladder || g.choice || g.optionPack || g.offers.length !== 1) add += n;
-      else if (g.offers[0].row === p.row) add += n;
+      if (!(g.ladder || rows.has(undefined) || rows.has(p.row))) return;
+      add += n;
+      // Bought (or planned for today) in the running copy: that copy's buys are taken.
+      if (startKey && p.date >= startKey && p.date <= todayKey) now += n;
     });
-    return add ? { ...g, used: (g.used || 0) + add } : g;
+    return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now } : g;
   });
 }
 function packActiveCardSupply(calcKey, tables) {
@@ -6232,9 +6283,16 @@ function packMergeOwned(owned, supply) {
 // Page names a pack table is used for ("Chief Gear · Charms").
 function packUsedForNames(tb) {
   // The New Gen hero pack patterns feed every new hero's copy.
-  if ((tb.columns || []).some((c) => /^hero (shards?|widgets?)$/i.test(String(c || "")))) return [t("hs_page")];
+  if ((tb.columns || []).some((c) => /^hero (shards?|widgets?)$/i.test(String(c || "")))) return [packHeroUseLabel(tb)];
   return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel)
-    .concat((packLinkFor(tb.id).pages || []).includes("hero_shards") ? [t("hs_page")] : []);
+    .concat((packLinkFor(tb.id).pages || []).includes("hero_shards") ? [packHeroUseLabel(tb)] : []);
+}
+// "Hero shards", "Hero widgets" or both, from what the pack gives (owner,
+// 16 Oct 2026: Marks of Valor packs are for shards only).
+function packHeroUseLabel(tb) {
+  const names = (tb.columns || []).concat(Object.values(packLinkFor(tb.id).cols || {})).map((c) => String(c || ""));
+  const shards = names.some((n) => /shard|marks of valor|lucky box/i.test(n)), widgets = names.some((n) => /widget|mystery/i.test(n));
+  return shards && !widgets ? t("hs_use_shards") : widgets && !shards ? t("hs_use_widgets") : t("hs_page");
 }
 // New Gen Heroes: which Gen an appearance belongs to, from the person's
 // "last new heroes" date and that Gen's number.
@@ -6319,6 +6377,11 @@ function purTablePopup(tb, opts) {
   // state: S.sel[i] = chosen option per dropdown of row i
   // Every dropdown starts empty (-1) until you choose.
   const S = { counts: {}, upTo: -1, sel: R.map((r) => Array.from({ length: r.n }, () => -1)) };
+  // Picks made before the phone reloaded the page come back (same table and rows).
+  const rs = opts.restore;
+  if (rs && Array.isArray(rs.sel) && rs.sel.length === S.sel.length && rs.sel.every((x, i) => Array.isArray(x) && x.length === S.sel[i].length)) { S.counts = rs.counts || {}; S.upTo = Number.isInteger(rs.upTo) ? rs.upTo : -1; S.sel = rs.sel; }
+  const keepDraft = () => { try { sessionStorage.setItem("pur_tbl_draft", JSON.stringify({ table: String(tb.id), S })); } catch (e) { /* blocked */ } };
+  const dropDraft = () => { try { sessionStorage.removeItem("pur_tbl_draft"); } catch (e) { /* blocked */ } };
   const rowDone = (i) => S.sel[i].every((oi) => oi >= 0);
   const rowGives = (i) => (R[i].n ? S.sel[i].reduce((g, oi) => (oi >= 0 ? add(g, R[i].opts[oi].gives) : g), {}) : { ...R[i].gives });
   const rowText = (i) => { const cnt = {}; S.sel[i].forEach((oi) => { const nm = oi >= 0 ? R[i].opts[oi].name : "?"; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, k]) => (R[i].n > 1 ? `${k}× ${nm}` : nm)).join(" + "); };
@@ -6339,7 +6402,7 @@ function purTablePopup(tb, opts) {
   };
   let modal = document.getElementById("purTblModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "purTblModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-  const close = () => { modal.style.display = "none"; };
+  const close = () => { modal.style.display = "none"; dropDraft(); };
   const showCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && !packIsNonResourceColumn(tb.columns[ci]));
   const draw = () => {
     const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0), miss = missing();
@@ -6365,6 +6428,7 @@ function purTablePopup(tb, opts) {
       <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
+    keepDraft();
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
     modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.tct.split("|").map(Number); S.counts[i] = Math.max(0, (S.counts[i] || 0) + d); draw(); }));
     modal.querySelectorAll("[data-tup]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.tup); S.upTo = S.upTo === i ? -1 : i; draw(); }));
@@ -6380,7 +6444,8 @@ function purTablePopup(tb, opts) {
   draw();
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
-let PUR_FORM = { table: "", row: 0, count: 1, date: "", status: "planned" };
+// The Add a pack form survives the phone reloading the page (sessionStorage).
+let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
   content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
@@ -6481,9 +6546,12 @@ async function renderPurchasesPage() {
     <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
     <div class="meta pur-how">${esc(t("pur_how"))}</div>
   </div>`;
+  // Coming / Bought fold open and closed (owner, 16 Oct 2026); kept in this browser.
+  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
+  const listBox = (k, title, n, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${n})</span></summary>${inner}</details>`;
   const listsHtml = `
-    <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_coming"))}</div>${coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`}</div>
-    <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_bought_list"))}</div>${bought.length ? groupBy(bought).map((g) => groupHtml(g, "b")).join("") : `<div class="meta">${esc(t("pur_none_bought"))}</div>`}</div>`;
+    ${listBox("c", t("pur_coming"), coming.length, coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
+    ${listBox("b", t("pur_bought_list"), bought.length, bought.length ? groupBy(bought).map((g) => groupHtml(g, "b")).join("") : `<div class="meta">${esc(t("pur_none_bought"))}</div>`)}`;
 
   // New Gen Heroes timing
   const ng = PACK_PURCHASES.newGen || {};
@@ -6616,6 +6684,7 @@ async function renderPurchasesPage() {
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
 
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
+  content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
     const k = inp.dataset.purf;
     if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
@@ -6644,8 +6713,10 @@ async function renderPurchasesPage() {
   if (tblBtn) tblBtn.addEventListener("click", () => {
     if (!formTb) return;
     const dateEl = content.querySelector('[data-purf="date"]'), countEl = content.querySelector('[data-purf="count"]');
+    let restore = null;
+    try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && d.table === String(formTb.id)) restore = d.S; } catch (e) { /* none */ }
     purTablePopup(formTb, {
-      name: formTb.title || "",
+      name: formTb.title || "", restore,
       count: Math.max(1, Math.floor(Number(countEl && countEl.value) || 1)),
       onAdd: (adds) => {
         let date = packValidDay(dateEl && dateEl.value) || today;
@@ -6657,6 +6728,8 @@ async function renderPurchasesPage() {
       },
     });
   });
+  // The phone reloaded the page while the pack table was open: open it again.
+  try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && tblBtn && formTb && d.table === String(formTb.id) && !document.querySelector("#purTblModal[style*='flex']")) tblBtn.click(); } catch (e) { /* none */ }
   const toBought = (p) => ({ ...p, status: "bought", date: p.date > today ? today : p.date });
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
     const kind = box.dataset.purgrp.slice(0, 1), gkey = box.dataset.purgrp.slice(2);
@@ -11366,7 +11439,8 @@ function packPlanSchedule(rows) {
       return out;
     }
     if (typeof r.reset !== "number" || !(r.reset > 0)) return [{ off: 0, cap: Infinity }];
-    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).map((off) => ({ off, cap: r.perCycle || 1 }));
+    // Buys already made in the running copy (My Purchases) leave less of it.
+    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).map((off) => ({ off, cap: Math.max(0, (r.perCycle || 1) - (off === 0 ? (r.usedNow || 0) : 0)) }));
   };
   const out = rows.map(() => []);
   const pools = new Map();
@@ -11872,7 +11946,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -13499,7 +13573,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -13714,7 +13788,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
