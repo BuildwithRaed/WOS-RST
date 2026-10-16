@@ -879,7 +879,7 @@ input,select,textarea{
   .adm-b table td{ padding:3px !important; }
   .adm-b table input[type=number]{ width:74px !important; }
   .adm-b table input[type=text], .adm-b table input:not([type]){ width:118px !important; }
-  .adm-b td.adm-stick input{ width:96px !important; }
+  .adm-b td.adm-stick input, .adm-b td.adm-stick select{ width:var(--stickw, 96px) !important; }
   .adm-sorttoggle{ margin-bottom:6px; }
   .adm-sorttoggle.on{ border-color:var(--ice); }
   .adm-b td.adm-stick, .adm-b th.adm-stick{ position:sticky; left:0; z-index:2; background:var(--panel); box-shadow:2px 0 0 var(--line); }
@@ -21434,6 +21434,14 @@ function wireAdmEditBar(scope, o) {
     if (ci >= 0) {
       const table = firstTr.closest("table");
       [...table.rows].forEach((r) => { const c = r.cells[ci]; if (c) c.classList.add("adm-stick"); });
+      // Wide enough for the longest name in the column (owner: names show fully).
+      const boxes = [...table.querySelectorAll("td.adm-stick input:not([type=hidden]), td.adm-stick select")];
+      if (boxes.length) {
+        const ctx = document.createElement("canvas").getContext("2d");
+        const cs = getComputedStyle(boxes[0]); ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const longest = boxes.reduce((m, el) => Math.max(m, ctx.measureText(el.tagName === "SELECT" ? (el.selectedOptions[0]?.text || "") : el.value).width), 0);
+        wrap.style.setProperty("--stickw", Math.ceil(Math.min(280, Math.max(96, longest + 22 + (boxes[0].tagName === "SELECT" ? 18 : 0)))) + "px");
+      }
     }
   }
   (o.hide || []).forEach((h) => document.querySelectorAll(h).forEach((x) => { x.style.display = "none"; }));
