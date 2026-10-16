@@ -148,6 +148,8 @@
  "t:scan_loading": "Przygotowuję czytnik (ok. 3 MB, tylko za pierwszym razem)…",
  "t:scan_reading": "Czytam zrzut {n} z {m}…",
  "t:scan_failed": "Nie udało się wczytać czytnika. Sprawdź połączenie i spróbuj ponownie.",
+ "t:scan_step_pics": "obrazki przedmiotów",
+ "t:scan_step_ready": "czytnik gotowy",
  "t:scan_check_title": "Sprawdź odczyt",
  "t:scan_check_desc": "Popraw błędne liczby, odznacz niechciane, potem Zapisz.",
  "t:scan_nothing": "Nic nie odczytano. Użyj pełnych zrzutów powyższych ekranów.",

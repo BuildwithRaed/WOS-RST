@@ -148,6 +148,8 @@
  "t:scan_loading": "正在准备读取器（约 3 MB，仅首次）…",
  "t:scan_reading": "正在读取第 {n} / {m} 张截图…",
  "t:scan_failed": "读取器加载失败。请检查网络后重试。",
+ "t:scan_step_pics": "物品图片",
+ "t:scan_step_ready": "识别器已就绪",
  "t:scan_check_title": "检查读取结果",
  "t:scan_check_desc": "修正错误的数字，取消勾选不需要的项，然后保存。",
  "t:scan_nothing": "未能读取任何内容。请使用上述界面的完整截图。",

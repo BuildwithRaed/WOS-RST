@@ -148,6 +148,8 @@
  "t:scan_loading": "Préparation du lecteur (environ 3 Mo, la première fois seulement)…",
  "t:scan_reading": "Lecture de la capture {n} sur {m}…",
  "t:scan_failed": "Le lecteur n'a pas pu se charger. Vérifiez votre connexion et réessayez.",
+ "t:scan_step_pics": "images des objets",
+ "t:scan_step_ready": "lecteur prêt",
  "t:scan_check_title": "Vérifiez ce qui a été lu",
  "t:scan_check_desc": "Corrigez les nombres faux, décochez ce que vous ne voulez pas, puis Enregistrer.",
  "t:scan_nothing": "Rien n'a pu être lu. Utilisez des captures complètes des écrans ci-dessus.",

@@ -147,6 +147,8 @@
 "t:scan_loading":"Menyiapkan pembaca (sekitar 3 MB, hanya pertama kali)…",
 "t:scan_reading":"Membaca tangkapan layar {n} dari {m}…",
 "t:scan_failed":"Pembaca gagal dimuat. Cek koneksimu lalu coba lagi.",
+"t:scan_step_pics":"gambar item",
+"t:scan_step_ready":"pembaca siap",
 "t:scan_check_title":"Cek hasil bacaan",
 "t:scan_check_desc":"Perbaiki angka yang salah, hapus centang yang tidak diinginkan, lalu Simpan.",
 "t:scan_nothing":"Tidak ada yang terbaca. Pakai tangkapan layar penuh dari layar di atas.",

@@ -147,6 +147,8 @@
 "t:scan_loading":"Đang chuẩn bị trình đọc (khoảng 3 MB, chỉ lần đầu)…",
 "t:scan_reading":"Đang đọc ảnh {n} / {m}…",
 "t:scan_failed":"Không tải được trình đọc. Kiểm tra kết nối và thử lại.",
+"t:scan_step_pics":"hình vật phẩm",
+"t:scan_step_ready":"trình đọc sẵn sàng",
 "t:scan_check_title":"Kiểm tra dữ liệu đã đọc",
 "t:scan_check_desc":"Sửa số sai, bỏ chọn mục không muốn, rồi Lưu.",
 "t:scan_nothing":"Không đọc được gì. Hãy dùng ảnh chụp đầy đủ các màn hình trên.",

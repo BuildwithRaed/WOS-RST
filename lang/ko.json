@@ -147,6 +147,8 @@
 "t:scan_loading":"판독기를 준비하는 중 (약 3MB, 처음 한 번만)…",
 "t:scan_reading":"스크린샷 {m}개 중 {n}번째 읽는 중…",
 "t:scan_failed":"판독기를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.",
+"t:scan_step_pics":"아이템 그림",
+"t:scan_step_ready":"판독기 준비됨",
 "t:scan_check_title":"읽은 내용 확인",
 "t:scan_check_desc":"틀린 숫자를 고치고, 원하지 않는 항목은 체크를 해제한 뒤 저장하세요.",
 "t:scan_nothing":"읽은 내용이 없습니다. 위 화면의 전체 스크린샷을 사용하세요.",

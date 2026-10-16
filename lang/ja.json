@@ -148,6 +148,8 @@
  "t:scan_loading": "読み取り準備中(約3MB、初回のみ)…",
  "t:scan_reading": "スクショ {n}/{m} を読み取り中…",
  "t:scan_failed": "読み取り機能を読み込めませんでした。接続を確認して再度お試しください。",
+ "t:scan_step_pics": "アイテム画像",
+ "t:scan_step_ready": "読み取り準備完了",
  "t:scan_check_title": "読み取り結果を確認",
  "t:scan_check_desc": "間違った数字を直し、不要なもののチェックを外して保存してください。",
  "t:scan_nothing": "何も読み取れませんでした。上記画面の全体スクショを使ってください。",

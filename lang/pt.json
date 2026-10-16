@@ -147,6 +147,8 @@
 "t:scan_loading":"Preparando o leitor (cerca de 3 MB, só na primeira vez)…",
 "t:scan_reading":"Lendo captura {n} de {m}…",
 "t:scan_failed":"O leitor não carregou. Verifique sua conexão e tente de novo.",
+"t:scan_step_pics":"imagens dos itens",
+"t:scan_step_ready":"leitor pronto",
 "t:scan_check_title":"Confira o que foi lido",
 "t:scan_check_desc":"Corrija qualquer número errado, desmarque o que não quiser e depois Salve.",
 "t:scan_nothing":"Nada pôde ser lido. Use capturas inteiras das telas acima.",

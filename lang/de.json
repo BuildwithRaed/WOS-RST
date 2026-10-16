@@ -148,6 +148,8 @@
  "t:scan_loading": "Leser wird vorbereitet (ca. 3 MB, nur beim ersten Mal)…",
  "t:scan_reading": "Lese Screenshot {n} von {m}…",
  "t:scan_failed": "Der Leser konnte nicht laden. Prüfe deine Verbindung und versuch es erneut.",
+ "t:scan_step_pics": "Gegenstandsbilder",
+ "t:scan_step_ready": "Leser bereit",
  "t:scan_check_title": "Gelesenes prüfen",
  "t:scan_check_desc": "Korrigiere falsche Zahlen, entferne den Haken bei Unerwünschtem und tippe dann auf Speichern.",
  "t:scan_nothing": "Nichts lesbar. Nutze vollständige Screenshots der Bildschirme oben.",

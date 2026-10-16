@@ -2654,7 +2654,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 5; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 6; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2911,6 +2911,8 @@ const T = {
   scan_loading: { en: "Getting the reader ready (about 3 MB, first time only)…" },
   scan_reading: { en: "Reading screenshot {n} of {m}…" },
   scan_failed: { en: "The reader couldn't load. Check your connection and try again." },
+  scan_step_pics: { en: "item pictures" },
+  scan_step_ready: { en: "reader ready" },
   scan_check_title: { en: "Check what was read" },
   scan_check_desc: { en: "Fix any wrong number, untick what you don't want, then Save." },
   scan_nothing: { en: "Nothing could be read. Use full screenshots of the screens above." },
@@ -8962,6 +8964,7 @@ function scanMarkData() {
         resolve(g.getImageData(0, 0, img.width, img.height));
       };
       img.onerror = () => reject(new Error("marks"));
+      setTimeout(() => reject(new Error("marks timeout")), 45000); // no answer at all: stop waiting
       img.src = "icons/scan-marks.png";
     });
     SCAN_MARK_DATA.catch(() => { SCAN_MARK_DATA = null; });
@@ -9045,6 +9048,7 @@ function scanItemData() {
         resolve(g.getImageData(0, 0, img.width, img.height).data);
       };
       img.onerror = () => reject(new Error("items"));
+      setTimeout(() => reject(new Error("items timeout")), 45000); // no answer at all: stop waiting
       img.src = "icons/scan-items.png";
     });
     SCAN_ITEM_DATA.catch(() => { SCAN_ITEM_DATA = null; });
@@ -9316,13 +9320,22 @@ function openBackpackScan(groups, bp, done, more) {
   const readAll = async (files) => {
     progress(t("scan_loading"));
     // Download / start-up progress of the reader (its steps each go 0 → 100%).
-    SCAN_PROGRESS = (m) => {
+    // What it is waiting for: the reader's own steps, then the item pictures.
+    const steps = { reader: "", pics: 0 };
+    const showSteps = () => {
       const el = live() && modal.querySelector("[data-scanpct]");
-      if (el && m && typeof m.progress === "number" && /^(loading|initializ)/.test(m.status || "")) el.textContent = `${Math.round(m.progress * 100)}%`;
+      if (el) el.textContent = [steps.reader, `${t("scan_step_pics")} ${steps.pics}/2`].filter(Boolean).join(" · ");
     };
+    SCAN_PROGRESS = (m) => {
+      if (!m || typeof m.progress !== "number") return;
+      steps.reader = `${m.status || ""} ${Math.round(m.progress * 100)}%`;
+      showSteps();
+    };
+    const pic = (pr) => pr.then((v) => { steps.pics++; showSteps(); return v; });
     let worker, marks, refs;
-    try { [worker, marks, refs] = await Promise.all([scanWorker(), scanMarkData(), scanItemData()]); }
+    try { [worker, marks, refs] = await Promise.all([scanWorker().then((w) => { steps.reader = `${t("scan_step_ready")} \u2713`; showSteps(); return w; }), pic(scanMarkData()), pic(scanItemData())]); SCAN_PROGRESS = null; }
     catch (e) {
+      SCAN_PROGRESS = null;
       if (!live()) return; modal.innerHTML = `<div class="modal-box" style="max-width:360px;"><p>${esc(t("scan_failed"))}</p><div style="text-align:end;"><button class="btn" type="button" data-scanclose>${esc(t("close_button"))}</button></div></div>`; modal.querySelector("[data-scanclose]").onclick = close; return; }
     for (let i = 0; i < files.length; i++) {
       if (!live()) return;

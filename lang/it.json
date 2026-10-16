@@ -148,6 +148,8 @@
  "t:scan_loading": "Preparazione del lettore (circa 3 MB, solo la prima volta)…",
  "t:scan_reading": "Lettura screenshot {n} di {m}…",
  "t:scan_failed": "Il lettore non si è caricato. Controlla la connessione e riprova.",
+ "t:scan_step_pics": "immagini oggetti",
+ "t:scan_step_ready": "lettore pronto",
  "t:scan_check_title": "Controlla cosa è stato letto",
  "t:scan_check_desc": "Correggi i numeri sbagliati, togli la spunta a ciò che non vuoi, poi Salva.",
  "t:scan_nothing": "Non è stato letto niente. Usa screenshot interi delle schermate sopra.",
