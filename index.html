@@ -411,6 +411,16 @@
   .pur-ng-pack{ border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
   .pur-ng-next{ display:flex; flex-direction:column; gap:3px; margin-top:6px; font-size:11.5px; }
   .pur-sug-split{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .pur-wk-chips{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 6px; scrollbar-width:none; }
+  .pur-wk-chips::-webkit-scrollbar{ display:none; }
+  .pur-wk-chip{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:1px; min-width:86px; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font-size:11px; cursor:pointer; }
+  .pur-wk-chip b{ font-size:13px; }
+  .pur-wk-chip small{ font-size:10px; color:var(--muted); white-space:nowrap; }
+  .pur-wk-chip.on{ background:var(--ice-dim); border-color:var(--ice); }
+  .pur-wk-chip.on small{ color:#dbe9f7; }
+  .pur-wk-head{ font-size:12.5px; margin:6px 0 4px; }
+  .pur-wk-now{ font-size:10px; padding:1px 7px; border-radius:6px; background:var(--good); color:#06210f; font-weight:700; }
+  .pur-wk-all{ width:100%; margin-top:8px; }
   .pur-sug-split > div{ display:flex; flex-direction:column; gap:2px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; font-size:11px; }
   .pur-sug-split b{ font-size:17px; }
   .pur-chips{ margin-top:6px; gap:4px; }
@@ -2668,7 +2678,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 11; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 12; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3660,6 +3670,15 @@ const T = {
   pur_tbl_nothing: { en: "Nothing picked yet" },
   pur_sug_now: { en: "Now" },
   pur_sug_buy_now: { en: "Buy now" },
+  pur_wk_this: { en: "This week" },
+  pur_wk_next: { en: "Next week" },
+  pur_wk_n: { en: "Week {n}" },
+  pur_wk_target: { en: "Target week" },
+  pur_wk_after: { en: "After target" },
+  pur_wk_later: { en: "Later" },
+  pur_wk_none: { en: "Nothing to buy this week." },
+  pur_wk_buy_all: { en: "Will buy all of {week}" },
+  pur_sug_until: { en: "Until target" },
   pur_sug_later: { en: "Later (until {date})" },
   pur_added_dates: { en: "Added on {n} dates" },
   pur_sug_title: { en: "Suggested packs (from Budgets)" },
@@ -6237,7 +6256,10 @@ function packPurchaseUse(groups) {
   const todayKey = packDayKey(packStartOfToday());
   return groups.map((g) => {
     let add = 0, now = 0;
+    const usedAt = { ...(g.usedAt || {}) };
     const start = packCurrentCycleStart(g.reset, g.resetDay), startKey = start ? packDayKey(start) : null;
+    const t0 = packStartOfToday();
+    const offs = typeof g.reset === "number" && g.reset > 0 ? packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window) : [];
     // A group is one price row of the pack (or a whole ladder): a purchase
     // only counts for the row it bought (owner, 16 Oct 2026: a Benefit Card
     // bought at $4.99 used up the $9.99 one too).
@@ -6248,9 +6270,15 @@ function packPurchaseUse(groups) {
       if (!(g.ladder || rows.has(undefined) || rows.has(p.row))) return;
       add += n;
       // Bought (or planned for today) in the running copy: that copy's buys are taken.
-      if (startKey && p.date >= startKey && p.date <= todayKey) now += n;
+      if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; return; }
+      // Planned for a later appearance: that appearance's buys are taken.
+      const d = packParseDay(p.date);
+      if (!d || p.date <= todayKey || !offs.length) return;
+      const dd = Math.round((d - t0) / 86400000);
+      const at = offs.filter((o) => o <= dd).pop();
+      if (at != null) usedAt[at] = (usedAt[at] || 0) + n;
     });
-    return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now } : g;
+    return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now, usedAt } : g;
   });
 }
 function packActiveCardSupply(calcKey, tables) {
@@ -6445,6 +6473,7 @@ function purTablePopup(tb, opts) {
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 // The Add a pack form survives the phone reloading the page (sessionStorage).
+let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
@@ -6621,27 +6650,79 @@ async function renderPurchasesPage() {
     const sched = packPlanSchedule(rows);
     const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
     const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
-    let nowCost = 0, laterCost = 0, lastOff = 0;
-    rows.forEach((r, i) => sched[i].forEach((x) => { const c = packConvert(r.price * x.count, r.currency || "USD").n; if (x.off <= 0) nowCost += c; else { laterCost += c; lastOff = Math.max(lastOff, x.off); } }));
-    const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_sug_buy_now"))}</span><b>${esc(packFmtLocal(nowCost, rows[0].currency, true, rows[0].price))}</b></div><div><span class="meta">${esc(t("pur_sug_later").replace("{date}", fmtDay(dayOf(lastOff))))}</span><b>${laterCost ? esc(packFmtLocal(laterCost, rows[0].currency, true, rows[0].price)) : "—"}</b></div></div>`;
+    // Week tabs (owner picked C, 16 Oct 2026): this week, then each week (Mon–Sun)
+    // until the Budgets target, then what comes after it; without a target the
+    // next 8 weeks, then "Later".
+    const monIdx = (packStartOfToday().getUTCDay() + 6) % 7;
+    const weekOf = (off) => Math.floor((Math.max(0, off) + monIdx) / 7);
+    const tDay = packParseDay(packValidDay(BUDGET_TARGET));
+    const tOff = tDay ? Math.round((tDay - packStartOfToday()) / 86400000) : null;
+    const lastWeek = tOff != null && tOff >= 0 ? weekOf(tOff) : 7;
+    const bucketOf = (off) => (tOff != null && tOff >= 0 && off > tOff) || weekOf(off) > lastWeek ? "after" : weekOf(off);
+    const conv = (r, n) => packConvert(r.price * n, r.currency || "USD").n;
+    const buckets = new Map(); // key -> { key, cost, items: [{ i, xs: [entries] }] }
+    rows.forEach((r, i) => sched[i].forEach((x) => {
+      const k = bucketOf(x.off);
+      if (!buckets.has(k)) buckets.set(k, { key: k, cost: 0, items: new Map() });
+      const b = buckets.get(k);
+      b.cost += conv(r, x.count);
+      if (!b.items.has(i)) b.items.set(i, []);
+      b.items.get(i).push(x);
+    }));
+    const keys = [...buckets.keys()].filter((k) => k !== "after").sort((a, b) => a - b).concat(buckets.has("after") ? ["after"] : []);
+    if (!keys.includes(0)) keys.unshift(0);
+    const money = (v) => packFmtLocal(v, rows[0].currency, true, rows[0].price);
+    const wkStart = (w) => new Date(packStartOfToday().getTime() + (w * 7 - monIdx) * 86400000);
+    const wkName = (k) => (k === "after" ? t(tOff != null && tOff >= 0 ? "pur_wk_after" : "pur_wk_later") : k === 0 ? t("pur_wk_this") : k === 1 ? t("pur_wk_next") : tOff != null && k === lastWeek ? t("pur_wk_target") : t("pur_wk_n").replace("{n}", k + 1));
+    const short = (d) => fmtDay(packDayKey(d)).replace(/,? \d{4}$/, "");
+    const wkRange = (k) => {
+      if (k === "after") return tOff != null && tOff >= 0 ? `${short(new Date(tDay.getTime() + 86400000))} →` : `${short(wkStart(lastWeek + 1))} →`;
+      const a = k === 0 ? packStartOfToday() : wkStart(k);
+      let e = new Date(wkStart(k).getTime() + 6 * 86400000);
+      if (tDay && k === lastWeek && tDay < e) e = tDay;
+      return `${short(a)} – ${short(e)}`;
+    };
+    if (!keys.includes(PUR_SUG_WEEK)) PUR_SUG_WEEK = keys[0];
+    const thisCost = buckets.has(0) ? buckets.get(0).cost : 0;
+    const untilCost = keys.filter((k) => k !== "after").reduce((a, k) => a + (buckets.has(k) ? buckets.get(k).cost : 0), 0);
+    const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_wk_this"))}</span><b>${thisCost ? esc(money(thisCost)) : "—"}</b></div><div><span class="meta">${esc(tOff != null && tOff >= 0 ? t("pur_sug_until") : t("pur_sug_total"))}</span><b>${esc(money(tOff != null && tOff >= 0 ? untilCost : total))}</b></div></div>`;
     const drawSug = () => {
-    box.innerHTML = head + splitHtml + `<div class="pur-sug-list">` + rows.map((r, i) => {
-      const tb = sugTable(r);
+    const sel = buckets.get(PUR_SUG_WEEK);
+    const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small></button>`; }).join("")}</div>`;
+    const selHead = `<div class="pur-wk-head"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${PUR_SUG_WEEK === 0 ? ` <span class="pur-wk-now">${esc(t("pur_sug_now"))}</span>` : ""}</div>`;
+    const list = sel ? [...sel.items.entries()] : [];
+    box.innerHTML = head + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
+      const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
       const names = tb ? packUsedForNames(tb) : [];
-      const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * r.count) > 0).slice(0, 5).map((k) => {
-        const v = r.gives[k] * r.count, icon = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
-        const short = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
-        return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
+      const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0).slice(0, 5).map((k) => {
+        const v = r.gives[k] * n, icon = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
+        const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
+        return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
       }).join("");
+      const when = xs.map((x) => whenTxt(x.off)).join(", ");
       return `<div class="pur-item">
-        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${r.count}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.subtotal, r.currency))}</span></div>
+        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
-        <div class="pur-item-f"><span class="meta pur-for">${esc(sched[i].length > 1 ? `${t("pur_n_dates").replace("{n}", sched[i].length)} · ${whenTxt(sched[i][0].off)} → ${whenTxt(sched[i][sched[i].length - 1].off)}` : whenTxt(sched[i][0].off))}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
+        <div class="pur-item-f"><span class="meta pur-for">${esc(when)}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
-    }).join("") + `</div>${rows.length > 3 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", rows.length))}</div>` : ""}<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(packFmtLocal(total, rows[0].currency, true, rows[0].price))}</b></div>`;
+    }).join("") + `</div>${list.length > 3 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`)
+      + (list.some(([i]) => { const tb = sugTable(rows[i]); return tb && (rows[i].row != null || !plainPack(tb)); }) ? `<button type="button" class="btn pur-wk-all" data-purwkall>+ ${esc(t("pur_wk_buy_all").replace("{week}", wkName(PUR_SUG_WEEK).toLowerCase()))}</button>` : "")
+      + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(money(total))}</b></div>`;
+    box.querySelectorAll("[data-purwk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.purwk; PUR_SUG_WEEK = k === "after" ? k : Number(k); drawSug(); }));
+    // Every pack of the chosen week at once, on its dates.
+    const allBtn0 = box.querySelector("[data-purwkall]");
+    if (allBtn0) allBtn0.addEventListener("click", () => {
+      const adds = [];
+      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (!tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
+      if (!adds.length) return;
+      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
+      savePackPurchases();
+      toast(t("pur_added_dates").replace("{n}", adds.length));
+      redraw();
+    });
     // "+ Will buy" opens a small window: tick the dates to buy on (all ticked).
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
-      const i = Number(b.dataset.pursug), r = rows[i], tb = sugTable(r), s0 = sched[i];
+      const i = Number(b.dataset.pursug), r = rows[i], tb = sugTable(r), s0 = (sel && sel.items.get(i)) || sched[i];
       if (!tb) return;
       let modal = document.getElementById("purSugModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
@@ -11439,8 +11520,21 @@ function packPlanSchedule(rows) {
       return out;
     }
     if (typeof r.reset !== "number" || !(r.reset > 0)) return [{ off: 0, cap: Infinity }];
-    // Buys already made in the running copy (My Purchases) leave less of it.
-    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).map((off) => ({ off, cap: Math.max(0, (r.perCycle || 1) - (off === 0 ? (r.usedNow || 0) : 0)) }));
+    // Buys already made or planned in an appearance (My Purchases) leave less of it.
+    const usedAt = r.usedAt || { 0: r.usedNow || 0 };
+    const per = r.perCycle || 1, win = Number(r.window) || 0;
+    // A pack bought once a day while it runs (Hall of Heroes: 3 buys over 3
+    // days) gets one date per day instead of all on its first day.
+    const daily = win > 1 && per > 1 && per <= win;
+    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).flatMap((off) => {
+      const cap = Math.max(0, per - (usedAt[off] || 0));
+      if (!daily) return [{ off, cap }];
+      // The running copy only has the days it has left.
+      let left = per;
+      if (off === 0) { const st0 = packCurrentCycleStart(r.reset, r.resetDay); if (st0) left = Math.max(0, Math.min(per, win - Math.round((packStartOfToday() - st0) / 86400000))); }
+      const n = Math.min(left, cap);
+      return Array.from({ length: n }, (_, k) => ({ off: off + (left - n) + k, cap: 1 }));
+    });
   };
   const out = rows.map(() => []);
   const pools = new Map();
@@ -11946,7 +12040,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -13573,7 +13667,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -13788,7 +13882,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
