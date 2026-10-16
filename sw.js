@@ -17,7 +17,8 @@ self.addEventListener("fetch", (e) => {
   // The Supabase library at its exact (never-changing) version: cache-first,
   // so repeat visits skip the download and the app still opens offline.
   // A <script> fetch is "no-cors", so its response is opaque (status 0).
-  if (url.hostname === "cdn.jsdelivr.net" && url.pathname.startsWith("/npm/@supabase/supabase-js@2.117.3/")) {
+  // Same for the Budgets planner's solver (HiGHS, exact version, about 1 MB).
+  if (url.hostname === "cdn.jsdelivr.net" && (url.pathname.startsWith("/npm/@supabase/supabase-js@2.117.3/") || url.pathname.startsWith("/npm/highs@1.15.3/build/"))) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok || res.type === "opaque") { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })));
     return;
   }
