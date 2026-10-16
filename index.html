@@ -14427,9 +14427,9 @@ async function renderBudgetsPage(opts = {}) {
     renderBudgetsPage().then(() => window.scrollTo(0, y));
   }));
   content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
-    // One tick covers the whole group (Pets / Experts / Research).
-    const grp = packGroupOf(cb.dataset.budgetinc);
-    (grp ? grp.pages : [cb.dataset.budgetinc]).forEach((k) => { BUDGET_SELECTED[k] = cb.checked; });
+    // Each page has its own tick (owner, 16 Oct 2026; it used to switch its
+    // whole group: Experts Level + Research, the three Research pages).
+    BUDGET_SELECTED[cb.dataset.budgetinc] = cb.checked;
     renderBudgetsPage(); // instant redraw from the cached data
     saveCalcState("budget_selected", BUDGET_SELECTED);
   }));
