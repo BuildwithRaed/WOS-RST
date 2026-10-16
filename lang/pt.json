@@ -154,6 +154,7 @@
 "t:scan_please_check":"confira",
 "t:scan_flagged":"{n} número(s) podem estar errados (marcados).",
 "t:scan_skipped":"Não está na sua lista, ignorado: {list}",
+"t:scan_will_add":"será adicionado à sua mochila",
 "t:scan_rounded":"Os números do Resumo são arredondados pelo jogo.",
 "t:scan_speed_summary":"Os totais de aceleração do Resumo não são usados. Adicione a aba Aceleração da Mochila.",
 "t:scan_other_items":"Uma captura da Mochila não tinha itens que a página conhece.",

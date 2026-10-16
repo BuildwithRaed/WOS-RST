@@ -155,6 +155,7 @@
  "t:scan_please_check": "要確認",
  "t:scan_flagged": "{n}個の数字が間違っている可能性があります(印付き)。",
  "t:scan_skipped": "リストにないためスキップ:{list}",
+ "t:scan_will_add": "バッグに追加されます",
  "t:scan_rounded": "概要の数字はゲーム側で丸められています。",
  "t:scan_speed_summary": "概要の加速合計は使いません。代わりにバッグの加速タブを追加してください。",
  "t:scan_other_items": "バッグのスクショに、まだ対応していないアイテムしかありませんでした。",

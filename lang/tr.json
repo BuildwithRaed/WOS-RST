@@ -154,6 +154,7 @@
 "t:scan_please_check":"lütfen kontrol et",
 "t:scan_flagged":"{n} sayı yanlış olabilir (işaretli).",
 "t:scan_skipped":"Listende yok, atlandı: {list}",
+"t:scan_will_add":"çantana eklenecek",
 "t:scan_rounded":"Özet sayıları oyun tarafından yuvarlanır.",
 "t:scan_speed_summary":"Özetteki hızlandırma toplamları kullanılmaz. Bunun yerine Çanta Hızlandırma sekmesini ekle.",
 "t:scan_other_items":"Bir Çanta ekran görüntüsünde sayfanın bildiği eşya yoktu.",

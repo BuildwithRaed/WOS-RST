@@ -2639,7 +2639,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 4; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 5; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2903,6 +2903,7 @@ const T = {
   scan_please_check: { en: "please check" },
   scan_flagged: { en: "{n} number(s) may be wrong (marked)." },
   scan_skipped: { en: "Not on your list, skipped: {list}" },
+  scan_will_add: { en: "will be added to your Backpack" },
   scan_rounded: { en: "Summary numbers are rounded by the game." },
   scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead." },
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
@@ -8670,7 +8671,32 @@ async function renderInventory() {
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); }, tabCounts);
   drawGroups();
   // "Track shards": adds that hero's own shards tile to the Backpack.
-  document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); });
+  // Scan can also put heroes' shards and Gen widget boxes it finds on the list.
+  const scanMore = {
+    canAdd: (name) => {
+      const gm = /^Gen (\d+) Widgets$/.exec(name);
+      if (gm) return mythics.some((h) => Number(h.generation) === Number(gm[1])) ? { label: t("bpw_gen_row").replace("{g}", `${t("gen_prefix")} ${gm[1]}`), icon: HERO_ITEM_ICON.widget, listed: widgetGens().includes(Number(gm[1])) } : null;
+      const h = (heroes || []).find((x) => `${x.name} Shards` === name);
+      return h ? { label: `${dataName(h.name)} — ${t("backpack_hero_shards")}`, icon: HERO_ITEM_ICON.shard(h.rarity) } : null;
+    },
+    added: (names) => {
+      names.forEach((n) => {
+        const gm = /^Gen (\d+) Widgets$/.exec(n);
+        if (gm) {
+          const g = Number(gm[1]);
+          wState.genHide = wState.genHide.filter((x) => x !== g);
+          if (!rosterGens.includes(g) && !wState.gens.includes(g)) wState.gens.push(g);
+        } else {
+          const hero = n.replace(/ Shards$/, "");
+          if (!myHeroes.includes(hero)) myHeroes.push(hero);
+        }
+      });
+      saveCalcState("backpack_widgets", wState);
+      saveCalcState("backpack_heroes", myHeroes);
+      if (seq === RENDER_SEQ) renderInventory();
+    },
+  };
+  document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); }, scanMore);
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
   const openModal = (html) => {
@@ -8956,6 +8982,8 @@ function scanTextMask(td, x0, y0, x1, y1, digits) {
     c.tight = draw(ox, oy, Math.max(...blobs.map((b) => b.x + b.w)) - ox, Math.max(...blobs.map((b) => b.y + b.h)) - oy, 4, 20);
   }
   c.ones = ones;
+  // How many digits the number has (commas are shorter), to catch a digit the reader lost.
+  if (digits) { const tall = Math.max(...blobs.map((b) => b.h)); c.count = blobs.filter((b) => b.h >= tall * 0.6).length; }
   return c;
 }
 
@@ -8979,7 +9007,10 @@ function scanTileFeature(td) {
 // Item pictures learned from the owner's game screenshots: one row of
 // icons/scan-items.png (a scanTileFeature grid) per name, PC and phone
 // copies of some items.
-const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Fire Crystal", "Refined FC", "FC Shard", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Lucky Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "Mythic General Hero Shard", "Epic General Hero Shard", "XP 10", "XP 100", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "XP 10", "Mythic General Hero Shard", "Epic General Hero Shard"];
+const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Fire Crystal", "Refined FC", "FC Shard", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Lucky Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "Mythic General Hero Shard", "Epic General Hero Shard", "XP 10", "XP 100", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "XP 10", "Mythic General Hero Shard", "Epic General Hero Shard",
+  // Owner's phone screenshots, 16 Oct 2026. Heroes' own shards differ only by
+  // the face, so they need a closer match (scanItemTiles).
+  "FC Chest", "Holger Sigils", "Marks of Valor", "Mystery Points", "Gen Widgets", "Cara Shards", "Ligeia Shards", "Karol Shards", "Hervor Shards", "Rufus Shards", "Eleonora Shards", "Gregory Shards", "Fred Shards", "Sonya Shards", "Bradley Shards", "Renee Shards", "Wu Ming Shards", "Norah Shards", "Hector Shards", "Ahmose Shards", "Logan Shards"];
 let SCAN_ITEM_DATA = null;
 function scanItemData() {
   if (!SCAN_ITEM_DATA) {
@@ -9010,6 +9041,43 @@ function scanMatchItem(feat, refs) {
   const [first, second] = [...best.entries()].sort((a, b) => a[1] - b[1]);
   return { name: first[0], dist: first[1], next: second ? second[1] : Infinity };
 }
+// The cream "S14" on a Gen's widget box (top left), as black digits on white;
+// the "S" (first shape) is left out.
+function scanGenLabel(td) {
+  const x0 = 4, y0 = 14, w = 66, h = 40, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = ((y0 + y) * 140 + x0 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2];
+    mask[y * w + x] = r > 200 && g > 180 && b < 175 && r - b > 50 ? 1 : 0;
+  }
+  const blobs = scanBlobs(mask, w, h, true).filter((b) => b.h >= 12 && b.x + b.w < w - 1).sort((a, b) => a.x - b.x).slice(1);
+  if (!blobs.length) return null;
+  const k = 3, pad = 16, c = scanCanvas(w * k + pad * 2, h * k + pad * 2), g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+  blobs.forEach((b) => b.px.forEach((p) => { const x = p % w; g.fillRect(pad + x * k, pad + ((p - x) / w) * k, k, k); }));
+  return c;
+}
+// The amount at a tile's bottom right, and whether it can be trusted.
+async function scanTileAmount(worker, td) {
+  const num = scanTextMask(td, 21, 87, 136, 136, true);
+  if (!num) return { value: null, sure: false };
+  const read = (c, mode) => scanRead(worker, c, { tessedit_pageseg_mode: mode, tessedit_char_whitelist: "0123456789,." });
+  const got = (r) => r.text.replace(/\D/g, "").length;
+  let res = await read(num, "7");
+  // Very short numbers ("5", "11") sometimes read as nothing as a line, and a
+  // thin "1" next to other digits can go missing ("31" read as "3"): then the
+  // tight cut is read too and the one with all its digits is kept.
+  for (const mode of ["8", "7"]) {
+    if (got(res) >= num.count) break;
+    const tight = await read(num.tight, mode);
+    if (got(tight) > got(res) && got(tight) <= num.count) res = tight;
+  }
+  // Only thin "1" shapes: trust the count of shapes over the reader ("11" read as "1").
+  if (num.ones && res.text.replace(/\D/g, "") !== num.ones) res = { text: num.ones, conf: 0 };
+  const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return { value: null, sure: false };
+  return { value: Number(digits), sure: /^\d{1,3}(,\d{3})*$/.test(raw) && res.conf >= 70 && (num.ones || digits.length >= num.count) };
+}
 // Other Backpack tabs: tiles that match a learned item, with their amounts.
 async function scanItemTiles(worker, src, tiles, refs) {
   const found = [];
@@ -9022,6 +9090,20 @@ async function scanItemTiles(worker, src, tiles, refs) {
     const m = scanMatchItem(scanTileFeature(td), refs);
     if (m.dist > 20) { unknown++; continue; }
     let sure = m.dist <= 12 && m.next > m.dist * 1.4;
+    // A hero's own shards: the faces are small, so another (not learned) hero
+    // can come close. Only a near-exact match counts.
+    if (/ Shards$/.test(m.name)) {
+      if (m.dist > 11) { unknown++; continue; }
+      sure = m.dist <= 8 && m.next > m.dist * 1.4;
+    }
+    // A Gen's widget box: the Gen number is on the box ("S14").
+    if (m.name === "Gen Widgets") {
+      const label = scanGenLabel(td);
+      const g = label ? /\d+/.exec((await scanRead(worker, label, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789" })).text) : null;
+      if (!g || Number(g[0]) < 1 || Number(g[0]) > 40) { unknown++; continue; }
+      m.name = `Gen ${Number(g[0])} Widgets`;
+      sure = false; // one example learned so far: always ask to check
+    }
     // Custom Resource Chest Lv.1 and Lv.2 share a picture: green tile = Lv.1, blue = Lv.2.
     const lv = /^Custom Resource Chest Lv\.[12]( \(protected\))?$/.exec(m.name);
     if (lv) {
@@ -9030,22 +9112,9 @@ async function scanItemTiles(worker, src, tiles, refs) {
       const level = g > r + 40 && g > b + 40 ? 1 : b > r + 40 && b >= g ? 2 : 0;
       if (level) { m.name = `Custom Resource Chest Lv.${level}${lv[1] || ""}`; sure = m.dist <= 12; }
     }
-    const num = scanTextMask(td, 21, 87, 136, 136, true);
-    let value = null;
-    if (num) {
-      let res = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,." });
-      // Very short numbers ("5", "11") sometimes read as nothing as a line.
-      if (!/\d/.test(res.text)) res = await scanRead(worker, num.tight, { tessedit_pageseg_mode: "8", tessedit_char_whitelist: "0123456789,." });
-      // Only thin "1" shapes: trust the count of shapes over the reader ("11" read as "1").
-      if (num.ones && res.text.replace(/\D/g, "") !== num.ones) res = { text: num.ones, conf: 0 };
-      const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
-      const digits = raw.replace(/\D/g, "");
-      if (digits) {
-        value = Number(digits);
-        if (!/^\d{1,3}(,\d{3})*$/.test(raw) || res.conf < 70) sure = false;
-      }
-    }
-    if (value === null) sure = false;
+    const amount = await scanTileAmount(worker, td);
+    const value = amount.value;
+    if (!amount.sure) sure = false;
     found.push({ name: m.name, value, sure });
   }
   return { found, unknown };
@@ -9092,22 +9161,9 @@ async function scanSpeedTiles(worker, src, tiles, marks) {
     });
     if (best > 150) kind = "";
     // Amount: the number at the bottom right.
-    const num = scanTextMask(td, 21, 87, 136, 136, true);
-    let value = null;
-    if (num) {
-      let res = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,." });
-      // Very short numbers ("5", "11") sometimes read as nothing as a line.
-      if (!/\d/.test(res.text)) res = await scanRead(worker, num.tight, { tessedit_pageseg_mode: "8", tessedit_char_whitelist: "0123456789,." });
-      // Only thin "1" shapes: trust the count of shapes over the reader ("11" read as "1").
-      if (num.ones && res.text.replace(/\D/g, "") !== num.ones) res = { text: num.ones, conf: 0 };
-      const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
-      const digits = raw.replace(/\D/g, "");
-      if (digits) {
-        value = Number(digits);
-        if (!/^\d{1,3}(,\d{3})*$/.test(raw) || res.conf < 70) sure = false;
-      }
-    }
-    if (value === null) sure = false;
+    const amount = await scanTileAmount(worker, td);
+    const value = amount.value;
+    if (!amount.sure) sure = false;
     found.push({ name: `${kind ? kind + " " : ""}Speedup ${size}`, kind, value, sure, score: Math.round(best) });
   }
   return found;
@@ -9193,8 +9249,11 @@ async function scanShot(worker, file, marks, refs) {
   return { kind: /speedup/i.test(text) && /\bmin\b/i.test(text) ? "speedsummary" : tiles.length ? "other" : "unknown", items: [] };
 }
 
-function openBackpackScan(groups, bp, done) {
+// more.canAdd(name): a hero's shards or a Gen's widgets that aren't on the
+// person's list yet ({ label, icon } or null); more.added(names) puts them on it.
+function openBackpackScan(groups, bp, done, more) {
   const known = new Map(groups.flatMap((g) => g.items).map((it) => [it.name, it]));
+  const addable = new Map();
   let modal = document.getElementById("bpScanModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "bpScanModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
   modal.style.display = "flex";
@@ -9249,7 +9308,11 @@ function openBackpackScan(groups, bp, done) {
       else if (shot.kind === "unknown") notes.add(t("scan_unknown"));
       else if (shot.kind === "summary") notes.add(t("scan_rounded"));
       shot.items.forEach((it) => {
-        if (!known.has(it.name)) { skipped.add(it.name.replace(/ Speedup /, " ")); return; }
+        if (!known.has(it.name)) {
+          const add = more && more.canAdd(it.name);
+          if (!add) { skipped.add(it.name.replace(/ Speedup /, " ")); return; }
+          addable.set(it.name, add);
+        }
         const had = results.get(it.name);
         if (had && had.value !== it.value) it.sure = false;
         if (!had || it.value !== null) results.set(it.name, { value: it.value, sure: it.sure });
@@ -9263,13 +9326,13 @@ function openBackpackScan(groups, bp, done) {
       return rank(a) - rank(b);
     });
     const unsure = names.filter((n) => !results.get(n).sure).length;
-    const label = (n) => { const it = known.get(n); return /speedup/i.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(it.name); };
+    const label = (n) => { const it = known.get(n); return !it ? addable.get(n).label : /speedup/i.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(it.name); };
     const rows = names.map((n) => {
-      const r = results.get(n), old = Number(bp[n]) || 0, ic = bpIcon(known.get(n));
+      const r = results.get(n), old = Number(bp[n]) || 0, ic = known.has(n) ? bpIcon(known.get(n)) : addable.get(n).icon;
       return `<label class="scan-row${r.sure ? "" : " unsure"}">
         <input type="checkbox" data-scantick="${esc(n)}" checked />
         ${ic ? `<img src="${esc(ic)}" alt="" />` : `<span class="scan-img"></span>`}
-        <span class="scan-name"><b>${esc(label(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", old.toLocaleString()))}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
+        <span class="scan-name"><b>${esc(label(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", old.toLocaleString()))}${known.has(n) || addable.get(n).listed ? "" : ` · ${esc(t("scan_will_add"))}`}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
         <input type="text" inputmode="numeric" data-scanval="${esc(n)}" value="${r.value === null ? "" : r.value.toLocaleString("en-US")}" />
       </label>`;
     }).join("");
@@ -9293,16 +9356,18 @@ function openBackpackScan(groups, bp, done) {
     }));
     const save = modal.querySelector("[data-scansave]");
     if (save) save.onclick = () => {
+      const added = [];
       modal.querySelectorAll("[data-scantick]").forEach((tick) => {
         if (!tick.checked) return;
         const n = tick.dataset.scantick, v = modal.querySelector(`[data-scanval="${CSS.escape(n)}"]`).value.replace(/\D/g, "");
         if (v === "") return;
         if (Number(v)) bp[n] = Number(v); else delete bp[n];
+        if (addable.has(n) && Number(v)) added.push(n);
       });
       saveCalcState("backpack", bp);
       budgetInvalidate(); // planner pages read these amounts
       close();
-      done();
+      if (added.length) more.added(added); else done();
     };
   };
   showStart();

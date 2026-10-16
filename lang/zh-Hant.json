@@ -154,6 +154,7 @@
 "t:scan_please_check":"請檢查",
 "t:scan_flagged":"{n} 個數字可能有誤（已標記）。",
 "t:scan_skipped":"不在你的清單中，已略過：{list}",
+"t:scan_will_add":"將加入你的背包",
 "t:scan_rounded":"總覽中的數字已被遊戲四捨五入。",
 "t:scan_speed_summary":"不使用總覽中的加速總計。請改加入背包加速分頁。",
 "t:scan_other_items":"一張背包截圖中沒有本頁已知的道具。",

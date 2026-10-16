@@ -154,6 +154,7 @@
 "t:scan_please_check":"mohon cek",
 "t:scan_flagged":"{n} angka mungkin salah (ditandai).",
 "t:scan_skipped":"Tidak ada di daftarmu, dilewati: {list}",
+"t:scan_will_add":"akan ditambahkan ke Tas kamu",
 "t:scan_rounded":"Angka Ringkasan dibulatkan oleh game.",
 "t:scan_speed_summary":"Total percepatan dari Ringkasan tidak dipakai. Tambahkan tab Percepatan di Ransel saja.",
 "t:scan_other_items":"Tangkapan layar Ransel tidak berisi item yang dikenal halaman ini.",

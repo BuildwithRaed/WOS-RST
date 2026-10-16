@@ -154,6 +154,7 @@
 "t:scan_please_check":"hãy kiểm tra",
 "t:scan_flagged":"{n} số có thể sai (đã đánh dấu).",
 "t:scan_skipped":"Không có trong danh sách, đã bỏ qua: {list}",
+"t:scan_will_add":"sẽ được thêm vào Ba lô của bạn",
 "t:scan_rounded":"Số trong Tóm tắt đã được game làm tròn.",
 "t:scan_speed_summary":"Không dùng tổng tăng tốc từ Tóm tắt. Hãy thêm tab Tăng tốc của Túi đồ.",
 "t:scan_other_items":"Một ảnh Túi đồ không có vật phẩm nào trang này biết.",
