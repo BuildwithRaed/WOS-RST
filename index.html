@@ -808,6 +808,7 @@ input,select,textarea{
   .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
+  .page-note{ font-size:12.5px; line-height:1.45; padding:9px 12px; margin:0 0 12px; border-radius:12px; border:1px solid var(--ice); background:rgba(111,211,242,.07); color:var(--frost); }
   .pk-zone-note{ font-size:12px; line-height:1.45; padding:9px 12px; margin:0 0 12px; border-radius:12px; border:1px solid var(--ice); background:rgba(111,211,242,.07); color:var(--frost); }
   .pk-bud{ display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; }
   .pk-bud input{ width:14px; height:14px; margin:0; }
@@ -864,6 +865,24 @@ input,select,textarea{
   .adm-it.on{ background:var(--ice-dim); }
   .adm-it i, .adm-card i{ font-style:normal; width:20px; text-align:center; flex:none; }
   .adm-ext{ color:var(--muted); font-size:11px; margin-inline-start:auto; }
+  .mn-group{ border:1px solid var(--line); border-radius:14px; background:var(--panel); padding:10px 12px; margin-bottom:12px; }
+  .mn-ghead, .mn-prow{ display:flex; align-items:center; gap:8px; }
+  .mn-gname{ flex:1 1 auto; min-width:0; font-weight:700; font-size:14px; }
+  .mn-page{ border-top:1px solid var(--line); padding:8px 0 6px 12px; }
+  .mn-prow input{ flex:1 1 0; min-width:0; }
+  .mn-prow select{ flex:0 1 150px; min-width:0; }
+  .mn-btns{ display:inline-flex; gap:4px; flex:none; }
+  .mn-btns button{ width:30px; height:30px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--frost); cursor:pointer; font-size:12px; }
+  .mn-btns button:disabled{ opacity:.35; cursor:default; }
+  .mn-btns button.on{ border-color:var(--ice); }
+  .mn-langs{ margin:4px 0 0; font-size:11.5px; color:var(--muted); }
+  .mn-langs summary{ cursor:pointer; width:max-content; }
+  .mn-langs label, .mn-note label{ display:flex; align-items:center; gap:8px; margin-top:4px; }
+  .mn-langs label span, .mn-note label span{ flex:0 0 90px; font-size:11.5px; color:var(--muted); }
+  .mn-langs input, .mn-note textarea{ flex:1 1 auto; min-width:0; }
+  .mn-note{ margin-top:6px; padding:8px; border:1px dashed var(--line); border-radius:10px; }
+  @media (max-width:600px){ .mn-prow{ flex-wrap:wrap; } .mn-prow input{ flex-basis:100%; } .mn-prow select{ flex:1 1 0; } }
+  .mn-foot{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .adm[hidden], .adm-it[hidden], .adm-card[hidden], .adm-gk[hidden], .adm-cards[hidden]{ display:none; }
   .adm-crumb{ font-size:12px; color:var(--muted); }
   .adm-h{ font-size:22px; font-weight:800; margin:2px 0 12px; }
@@ -5047,6 +5066,13 @@ async function render() {
       const html = seq === RENDER_SEQ ? stateLockNotesHtml(TAB) : "";
       const head = html && !content.querySelector("[data-salock]") ? content.querySelector(".plx-head, .page-head") : null;
       if (head) head.insertAdjacentHTML("afterend", html);
+    }
+    // The admin's page note (Admin → Menu & pages), under the page title.
+    const note = seq === RENDER_SEQ ? pageNoteFor(TAB) : "";
+    if (note && !content.querySelector("[data-pagenote]")) {
+      const nh = `<div class="page-note" data-pagenote>${esc(note).replace(/\n/g, "<br>")}</div>`;
+      const head = content.querySelector(".plx-head, .page-head");
+      if (head) head.insertAdjacentHTML("afterend", nh); else content.insertAdjacentHTML("afterbegin", nh);
     }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
@@ -17901,6 +17927,62 @@ function applyCustomCurrencies() {
     if (found) found.symbol = c.symbol || found.symbol; else PACK_CURRENCIES.push({ code, symbol: c.symbol || code, custom: true });
   });
 }
+// ---- Menu & pages (Admin → Menu & pages) ----
+// site_config "menu_layout" = { groups: [{ key, label: { en, ar, ko } }] (menu
+// order), pages: { tab: { group, label: { en, ar, ko } } }, order: [tab…],
+// notes: { tab: { en, ar, ko } } }. Missing parts keep the built-in menu.
+let MENU_DEFAULT = null;
+const NAV_GROUP_LABELS_DEFAULT = JSON.parse(JSON.stringify(NAV_GROUP_LABELS));
+const NAV_PAGE_LABELS_DEFAULT = JSON.parse(JSON.stringify(NAV_PAGE_LABELS));
+function menuLayout() { const m = siteConfig("menu_layout", null); return m && typeof m === "object" ? m : {}; }
+function menuDefaults() {
+  if (!MENU_DEFAULT) {
+    MENU_DEFAULT = [...document.querySelectorAll("#topnavGroups .topnav-group")].filter((g) => g.id !== "adminNavGroup")
+      .map((g) => ({ key: g.dataset.group, pages: [...g.querySelectorAll("button[data-tab]")].map((b) => b.dataset.tab) }));
+    // Pages with no built-in translation (My packs…): their menu text is the default.
+    document.querySelectorAll("#topnavGroups button[data-tab]").forEach((b) => {
+      if (!NAV_PAGE_LABELS_DEFAULT[b.dataset.tab]) { const c = b.cloneNode(true); c.querySelectorAll(".ic").forEach((x) => x.remove()); NAV_PAGE_LABELS_DEFAULT[b.dataset.tab] = { en: c.textContent.trim() }; }
+    });
+  }
+  return MENU_DEFAULT;
+}
+function menuCleanLabel(l) { const o = {}; if (l && typeof l === "object") ["en", "ar", "ko"].forEach((k) => { if (l[k] && String(l[k]).trim()) o[k] = String(l[k]).trim(); }); return o; }
+function applyMenuLayout() {
+  const wrap = document.getElementById("topnavGroups"), admin = document.getElementById("adminNavGroup");
+  if (!wrap || !admin) return;
+  const def = menuDefaults(), m = menuLayout();
+  Object.keys(NAV_GROUP_LABELS).forEach((k) => { delete NAV_GROUP_LABELS[k]; });
+  Object.assign(NAV_GROUP_LABELS, JSON.parse(JSON.stringify(NAV_GROUP_LABELS_DEFAULT)));
+  Object.keys(NAV_PAGE_LABELS).forEach((k) => { delete NAV_PAGE_LABELS[k]; });
+  Object.assign(NAV_PAGE_LABELS, JSON.parse(JSON.stringify(NAV_PAGE_LABELS_DEFAULT)));
+  const mg = Array.isArray(m.groups) ? m.groups.filter((g) => g && g.key && g.key !== "Admin") : [];
+  mg.forEach((g) => { const l = menuCleanLabel(g.label); if (Object.keys(l).length) NAV_GROUP_LABELS[g.key] = { ...(NAV_GROUP_LABELS[g.key] || { en: g.key }), ...l }; });
+  Object.entries(m.pages || {}).forEach(([tab, v]) => { const l = menuCleanLabel(v && v.label); if (Object.keys(l).length) NAV_PAGE_LABELS[tab] = { ...(NAV_PAGE_LABELS[tab] || { en: tab }), ...l }; });
+  const groupKeys = [...mg.map((g) => g.key), ...def.map((g) => g.key)].filter((k, i, a) => a.indexOf(k) === i);
+  const allTabs = def.flatMap((g) => g.pages);
+  const groupOf = (tab) => { const v = m.pages && m.pages[tab]; return v && v.group && groupKeys.includes(v.group) ? v.group : (def.find((g) => g.pages.includes(tab)) || {}).key; };
+  const order = Array.isArray(m.order) ? m.order : [];
+  const rank = (tab) => { const i = order.indexOf(tab); return i >= 0 ? i : 1000 + allTabs.indexOf(tab); };
+  const btns = {};
+  wrap.querySelectorAll("button[data-tab]").forEach((b) => { if (!b.closest("#adminNavGroup")) btns[b.dataset.tab] = b; });
+  groupKeys.forEach((k) => {
+    let g = [...wrap.querySelectorAll(".topnav-group")].find((x) => x.dataset.group === k);
+    if (!g) {
+      g = document.createElement("div"); g.className = "topnav-group"; g.dataset.group = k;
+      g.innerHTML = `<button class="topnav-group-btn" type="button">${esc(k)} <span class="caret">&#9660;</span></button><div class="topnav-dropdown"></div>`;
+    }
+    wrap.insertBefore(g, admin);
+    const dd = g.querySelector(".topnav-dropdown");
+    allTabs.filter((tab) => groupOf(tab) === k).sort((a, b) => rank(a) - rank(b)).forEach((tab) => { if (btns[tab]) dd.appendChild(btns[tab]); });
+  });
+  wrap.querySelectorAll(".topnav-group").forEach((g) => { if (g.id !== "adminNavGroup" && !groupKeys.includes(g.dataset.group) && !g.querySelector("button[data-tab]")) g.remove(); });
+}
+// The admin's note for a page (Admin → Menu & pages), in the visitor's language.
+function pageNoteFor(tab) {
+  const n = (menuLayout().notes || {})[tab];
+  if (!n || typeof n !== "object") return "";
+  return String(n[LANG] || n.en || "").trim();
+}
 function siteConfig(key, fallback) { return (SITE_CONFIG && SITE_CONFIG[key] != null) ? SITE_CONFIG[key] : fallback; }
 // What visitors may open read-only (Admin -> Visibility -> Visitor access).
 function visitorCan(what) {
@@ -20508,6 +20590,7 @@ const ADMIN_GROUPS = [
 ];
 const ADMIN_TABLES = {
   visibility: { label: "Visibility", group: "site", icon: "👁", desc: "Hide pages, experts, pets", words: "hide unhide visitor access" },
+  menu: { label: "Menu & pages", group: "site", icon: "☰", desc: "Names, order, groups, notes", words: "menu nav rename order group note page" },
   contact: { label: "Contact us", group: "site", icon: "✉", desc: "Email and message", words: "email" },
   currencies: { label: "Currencies", group: "site", icon: "¤", desc: "Rates and store prices", words: "money qar usd price" },
   experts: { label: "Experts", group: "game", icon: "🧠", desc: "Roster, affinity, skills, research", words: "expert sigil affinity skill" },
@@ -20601,6 +20684,7 @@ async function renderAdminPage() {
 }
 async function drawAdminSection(key, body) {
   if (key === "visibility") await renderAdminVisibility(body);
+  else if (key === "menu") await renderAdminMenu(body);
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
   else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
@@ -20623,6 +20707,93 @@ async function drawAdminSection(key, body) {
   else if (key === "currencies") await renderAdminCurrencies(body);
   else if (key === "skins") await renderAdminSkinsGroup(body);
   else if (key === "herostars") await renderAdminHeroStars(body);
+}
+
+// ---- Menu & pages: rename, order, move between groups, page notes ----
+async function renderAdminMenu(body) {
+  await ensureSiteConfig();
+  const m = menuLayout(), L = ["en", "ar", "ko"], LN = { en: "English", ar: "Arabic", ko: "Korean" };
+  // Draft of the menu as it is now (DOM order, current names).
+  const defKeys = menuDefaults().map((g) => g.key);
+  const draft = [...document.querySelectorAll("#topnavGroups .topnav-group")].filter((g) => g.id !== "adminNavGroup").map((g) => ({
+    key: g.dataset.group, custom: !defKeys.includes(g.dataset.group),
+    label: { ...(NAV_GROUP_LABELS[g.dataset.group] || { en: g.dataset.group }) },
+    pages: [...g.querySelectorAll("button[data-tab]")].map((b) => ({ tab: b.dataset.tab, label: { ...(NAV_PAGE_LABELS[b.dataset.tab] || { en: b.dataset.tab }) }, note: { ...((m.notes || {})[b.dataset.tab] || {}) } })),
+  }));
+  let openNote = null, dirty = false;
+  const langInputs = (obj, attr) => `<details class="mn-langs"><summary>AR · KO</summary>${["ar", "ko"].map((k) => `<label><span>${LN[k]}</span><input type="text" ${attr}="${k}" value="${esc(obj[k] || "")}" dir="${k === "ar" ? "rtl" : "ltr"}" /></label>`).join("")}</details>`;
+  const draw = () => {
+    body.innerHTML = `
+      <p class="desc" style="margin:0 0 12px;">Rename menu groups and pages, change their order, move a page to another group, and add a note under a page's title. To hide a page from visitors use <a href="#" data-admingo="visibility">Visibility</a>. Nothing changes until you press Save.</p>
+      ${draft.map((g, gi) => `<div class="mn-group">
+        <div class="mn-ghead">
+          <input type="text" class="mn-gname" data-gname="${gi}" value="${esc(g.label.en || g.key)}" aria-label="Group name" />
+          <span class="mn-btns"><button type="button" data-gmove="${gi}|-1" ${gi === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-gmove="${gi}|1" ${gi === draft.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button>${g.custom && !g.pages.length ? `<button type="button" data-gdel="${gi}" aria-label="delete">&#128465;</button>` : ""}</span>
+        </div>
+        <div data-glangs="${gi}">${langInputs(g.label, "data-glang")}</div>
+        ${g.pages.length ? g.pages.map((pg, pi) => `<div class="mn-page">
+          <div class="mn-prow">
+            <input type="text" data-pname="${gi}|${pi}" value="${esc(pg.label.en || pg.tab)}" aria-label="Page name" />
+            <select data-pgroup="${gi}|${pi}" aria-label="Group">${draft.map((x, xi) => `<option value="${xi}" ${xi === gi ? "selected" : ""}>${esc(x.label.en || x.key)}</option>`).join("")}</select>
+            <span class="mn-btns"><button type="button" data-pmove="${gi}|${pi}|-1" ${pi === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-pmove="${gi}|${pi}|1" ${pi === g.pages.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-pnote="${esc(pg.tab)}" class="${Object.values(pg.note).some((v) => v) ? "on" : ""}" title="Page note">&#128221;</button></span>
+          </div>
+          <div data-plangs="${gi}|${pi}">${langInputs(pg.label, "data-plang")}</div>
+          ${openNote === pg.tab ? `<div class="mn-note">${L.map((k) => `<label><span>Note · ${LN[k]}</span><textarea rows="2" data-pnotetext="${gi}|${pi}|${k}" dir="${k === "ar" ? "rtl" : "ltr"}">${esc(pg.note[k] || "")}</textarea></label>`).join("")}<div class="meta" style="font-size:11px;">Shown in a box under the page title. Empty = no note.</div></div>` : ""}
+        </div>`).join("") : `<div class="meta" style="font-size:12px; padding:6px 0;">No pages — move pages here or delete the group.</div>`}
+      </div>`).join("")}
+      <div class="mn-foot">
+        <button type="button" class="btn ghost small" data-gadd>+ Add group</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn ghost small" data-menureset>Reset to default</button>
+        <button type="button" class="btn small" data-menusave>Save</button>
+      </div>`;
+    const go = body.querySelector("[data-admingo]");
+    if (go) go.addEventListener("click", (e) => { e.preventDefault(); ADMIN_ACTIVE_TABLE = "visibility"; renderAdminPage(); });
+    body.querySelectorAll("[data-gname]").forEach((inp) => inp.addEventListener("input", () => { draft[+inp.dataset.gname].label.en = inp.value; dirty = true; }));
+    body.querySelectorAll("[data-glangs]").forEach((w) => w.querySelectorAll("[data-glang]").forEach((inp) => inp.addEventListener("input", () => { draft[+w.dataset.glangs].label[inp.dataset.glang] = inp.value; dirty = true; })));
+    body.querySelectorAll("[data-pname]").forEach((inp) => inp.addEventListener("input", () => { const [gi, pi] = inp.dataset.pname.split("|").map(Number); draft[gi].pages[pi].label.en = inp.value; dirty = true; }));
+    body.querySelectorAll("[data-plangs]").forEach((w) => w.querySelectorAll("[data-plang]").forEach((inp) => inp.addEventListener("input", () => { const [gi, pi] = w.dataset.plangs.split("|").map(Number); draft[gi].pages[pi].label[inp.dataset.plang] = inp.value; dirty = true; })));
+    body.querySelectorAll("[data-pnotetext]").forEach((ta) => ta.addEventListener("input", () => { const [gi, pi, k] = ta.dataset.pnotetext.split("|"); draft[+gi].pages[+pi].note[k] = ta.value; dirty = true; }));
+    body.querySelectorAll("[data-gmove]").forEach((b) => b.addEventListener("click", () => { const [gi, d] = b.dataset.gmove.split("|").map(Number); const [x] = draft.splice(gi, 1); draft.splice(gi + d, 0, x); dirty = true; draw(); }));
+    body.querySelectorAll("[data-gdel]").forEach((b) => b.addEventListener("click", () => { draft.splice(+b.dataset.gdel, 1); dirty = true; draw(); }));
+    body.querySelectorAll("[data-pmove]").forEach((b) => b.addEventListener("click", () => { const [gi, pi, d] = b.dataset.pmove.split("|").map(Number); const ps = draft[gi].pages; const [x] = ps.splice(pi, 1); ps.splice(pi + d, 0, x); dirty = true; draw(); }));
+    body.querySelectorAll("[data-pgroup]").forEach((sel) => sel.addEventListener("change", () => { const [gi, pi] = sel.dataset.pgroup.split("|").map(Number); const [x] = draft[gi].pages.splice(pi, 1); draft[+sel.value].pages.push(x); dirty = true; draw(); }));
+    body.querySelectorAll("[data-pnote]").forEach((b) => b.addEventListener("click", () => { openNote = openNote === b.dataset.pnote ? null : b.dataset.pnote; draw(); }));
+    body.querySelector("[data-gadd]").addEventListener("click", () => {
+      const name = (prompt("Name of the new menu group:") || "").trim();
+      if (!name) return;
+      if (draft.some((g) => g.key === name || g.label.en === name) || name === "Admin") { toast("A group with that name already exists", true); return; }
+      draft.push({ key: name, custom: true, label: { en: name }, pages: [] }); dirty = true; draw();
+    });
+    body.querySelector("[data-menusave]").addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget; btn.disabled = true;
+      const keep = (l, d) => { const o = {}; L.forEach((k) => { const v = String(l[k] || "").trim(); if (v && v !== String((d || {})[k] || "")) o[k] = v; }); return o; };
+      const value = { groups: draft.map((g) => { const l = keep(g.label, NAV_GROUP_LABELS_DEFAULT[g.key] || (g.custom ? {} : { en: g.key })); return Object.keys(l).length ? { key: g.key, label: l } : { key: g.key }; }), pages: {}, order: [], notes: {} };
+      draft.forEach((g) => g.pages.forEach((pg) => {
+        value.order.push(pg.tab);
+        const l = keep(pg.label, NAV_PAGE_LABELS_DEFAULT[pg.tab]);
+        const defGroup = (menuDefaults().find((x) => x.pages.includes(pg.tab)) || {}).key;
+        if (Object.keys(l).length || g.key !== defGroup) value.pages[pg.tab] = { ...(g.key !== defGroup ? { group: g.key } : {}), ...(Object.keys(l).length ? { label: l } : {}) };
+        const n = {}; L.forEach((k) => { const v = String(pg.note[k] || "").trim(); if (v) n[k] = v; });
+        if (Object.keys(n).length) value.notes[pg.tab] = n;
+      }));
+      try {
+        await saveSiteConfig("menu_layout", value);
+        afterMenuChange(); dirty = false; toast("Menu saved");
+      } catch (err) { toast(err.message || "Couldn't save", true); }
+      btn.disabled = false;
+    });
+    body.querySelector("[data-menureset]").addEventListener("click", async () => {
+      if (!confirm("Put the menu back to the built-in names, order and groups, and remove all page notes?")) return;
+      try { await saveSiteConfig("menu_layout", {}); afterMenuChange(); toast("Menu reset"); renderAdminMenu(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+    });
+  };
+  draw();
+  void dirty;
+}
+function afterMenuChange() {
+  applyMenuLayout(); applyNavLanguage(); applyPageVisibility();
+  document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
 }
 
 // ---- Pack Resources: the Packs page column dropdown ----
@@ -23928,6 +24099,7 @@ if ("serviceWorker" in navigator) {
   loadCommander();
   const categoriesLoaded = loadBuffCategories();
   await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
+  applyMenuLayout();
   renderOwnerLoginUI();
   document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
   document.documentElement.lang = LANG;
