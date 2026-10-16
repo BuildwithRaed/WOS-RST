@@ -6237,7 +6237,10 @@ function packPurchaseUse(groups) {
   const todayKey = packDayKey(packStartOfToday());
   return groups.map((g) => {
     let add = 0, now = 0;
+    const usedAt = { ...(g.usedAt || {}) };
     const start = packCurrentCycleStart(g.reset, g.resetDay), startKey = start ? packDayKey(start) : null;
+    const t0 = packStartOfToday();
+    const offs = typeof g.reset === "number" && g.reset > 0 ? packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window) : [];
     // A group is one price row of the pack (or a whole ladder): a purchase
     // only counts for the row it bought (owner, 16 Oct 2026: a Benefit Card
     // bought at $4.99 used up the $9.99 one too).
@@ -6248,9 +6251,15 @@ function packPurchaseUse(groups) {
       if (!(g.ladder || rows.has(undefined) || rows.has(p.row))) return;
       add += n;
       // Bought (or planned for today) in the running copy: that copy's buys are taken.
-      if (startKey && p.date >= startKey && p.date <= todayKey) now += n;
+      if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; return; }
+      // Planned for a later appearance: that appearance's buys are taken.
+      const d = packParseDay(p.date);
+      if (!d || p.date <= todayKey || !offs.length) return;
+      const dd = Math.round((d - t0) / 86400000);
+      const at = offs.filter((o) => o <= dd).pop();
+      if (at != null) usedAt[at] = (usedAt[at] || 0) + n;
     });
-    return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now } : g;
+    return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now, usedAt } : g;
   });
 }
 function packActiveCardSupply(calcKey, tables) {
@@ -11439,8 +11448,21 @@ function packPlanSchedule(rows) {
       return out;
     }
     if (typeof r.reset !== "number" || !(r.reset > 0)) return [{ off: 0, cap: Infinity }];
-    // Buys already made in the running copy (My Purchases) leave less of it.
-    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).map((off) => ({ off, cap: Math.max(0, (r.perCycle || 1) - (off === 0 ? (r.usedNow || 0) : 0)) }));
+    // Buys already made or planned in an appearance (My Purchases) leave less of it.
+    const usedAt = r.usedAt || { 0: r.usedNow || 0 };
+    const per = r.perCycle || 1, win = Number(r.window) || 0;
+    // A pack bought once a day while it runs (Hall of Heroes: 3 buys over 3
+    // days) gets one date per day instead of all on its first day.
+    const daily = win > 1 && per > 1 && per <= win;
+    return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).flatMap((off) => {
+      const cap = Math.max(0, per - (usedAt[off] || 0));
+      if (!daily) return [{ off, cap }];
+      // The running copy only has the days it has left.
+      let left = per;
+      if (off === 0) { const st0 = packCurrentCycleStart(r.reset, r.resetDay); if (st0) left = Math.max(0, Math.min(per, win - Math.round((packStartOfToday() - st0) / 86400000))); }
+      const n = Math.min(left, cap);
+      return Array.from({ length: n }, (_, k) => ({ off: off + (left - n) + k, cap: 1 }));
+    });
   };
   const out = rows.map(() => []);
   const pools = new Map();
@@ -11946,7 +11968,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -13573,7 +13595,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -13788,7 +13810,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0 };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
