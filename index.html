@@ -871,6 +871,26 @@ input,select,textarea{
   .adm-skinmore input{ width:86px; }
   .adm-skinmore .adm-chk{ flex-direction:row; align-items:center; gap:6px; align-self:flex-end; }
   .adm-skinmore .adm-chk input{ width:auto; }
+  .adm-b table input:not([type=checkbox]), .adm-b table select{ background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:5px 6px; font-size:12.5px; }
+  .adm-b table input[type=number]{ text-align:right; font-variant-numeric:tabular-nums; }
+  .adm-b .chg{ border-color:var(--amber) !important; color:var(--amber); box-shadow:0 0 0 1px var(--amber) inset; }
+  .adm-b:not(.sorting) .adm-sortcell{ display:none; }
+  .adm-b table{ width:auto !important; min-width:100%; }
+  .adm-b table td{ padding:3px !important; }
+  .adm-b table input[type=number]{ width:74px !important; }
+  .adm-b table input[type=text], .adm-b table input:not([type]){ width:118px !important; }
+  .adm-b td.adm-stick input{ width:96px !important; }
+  .adm-sorttoggle{ margin-bottom:6px; }
+  .adm-sorttoggle.on{ border-color:var(--ice); }
+  .adm-b td.adm-stick, .adm-b th.adm-stick{ position:sticky; left:0; z-index:2; background:var(--panel); box-shadow:2px 0 0 var(--line); }
+  .adm-b td.adm-stick input{ font-weight:700; }
+  .panel.adm-addpanel{ padding:10px 12px; }
+  .adm-addfold > summary{ list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9px; background:var(--ice); color:#0f141b; font-weight:700; font-size:12.5px; }
+  .adm-addfold > summary::-webkit-details-marker{ display:none; }
+  .adm-addfold[open] > summary{ margin-bottom:10px; }
+  .adm-ebar{ position:sticky; bottom:10px; z-index:15; display:flex; align-items:center; gap:8px; margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--panel-2); border:1px solid var(--amber); box-shadow:0 6px 20px rgba(0,0,0,.45); font-size:13px; }
+  .adm-ebar[hidden]{ display:none; }
+  .adm-ebar > span{ flex:1 1 auto; }
   .admc-cats{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
   .admc-cats .adm-chips-row{ flex:1 1 auto; min-width:0; }
   .admc-catmenu{ position:relative; flex:none; }
@@ -19704,7 +19724,26 @@ async function renderAdminPage() {
     await drawAdminSection(cur, body);
   } finally { done(); }
 }
+// "Add a …" boxes in Admin sections fold into one "+ Add …" button (design
+// B, owner 16 Oct 2026); they open on tap. Watches #adminBody, since sections
+// redraw themselves after adding.
+function foldAdminAddPanels(root) {
+  root.querySelectorAll(".panel").forEach((pnl) => {
+    if (pnl.dataset.addfold) return;
+    const h = pnl.querySelector(":scope > h2");
+    if (!h || !/^Add\b/.test(h.textContent.trim()) || !pnl.querySelector("form, input")) return;
+    pnl.dataset.addfold = "1";
+    const d = document.createElement("details"); d.className = "adm-addfold";
+    const sm = document.createElement("summary"); sm.textContent = "+ " + h.textContent.trim().replace(/^Add (a |an )?(new )?/i, "Add ");
+    d.appendChild(sm);
+    [...pnl.childNodes].forEach((n) => { if (n !== h) d.appendChild(n); });
+    h.remove(); pnl.appendChild(d);
+    pnl.classList.add("adm-addpanel");
+  });
+}
+const ADMIN_ADD_OBSERVER = typeof MutationObserver !== "undefined" ? new MutationObserver(() => { const b = document.getElementById("adminBody"); if (b) foldAdminAddPanels(b); }) : null;
 async function drawAdminSection(key, body) {
+  if (ADMIN_ADD_OBSERVER) { ADMIN_ADD_OBSERVER.disconnect(); ADMIN_ADD_OBSERVER.observe(body, { childList: true, subtree: true }); }
   if (key === "visibility") await renderAdminVisibility(body);
   else if (key === "menu") await renderAdminMenu(body);
   else if (key === "languages") await renderAdminLanguages(body);
@@ -20922,6 +20961,7 @@ async function renderAdminExpertTable(body, tableKey) {
       </table>
     `;
 
+    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"] });
     wrap.querySelectorAll("[data-exprowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -21175,6 +21215,7 @@ async function renderAdminPets(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrow", "pets_nodes", rows, orderedIds); PETS_NODES_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
+    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: "pets_nodes", saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"] });
     wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -21353,6 +21394,91 @@ function adminColHeadHtml(cols, withReorder) {
   return (withReorder ? `<th></th>` : "") + cols.filter((c) => c.key !== "sort_order").map((c) => `${ADMIN_TH}${esc(c.label)}</th>`).join("");
 }
 
+// ---- Admin level tables, design B (owner, 16 Oct 2026) ----
+// Type straight into the table; changed boxes turn orange and one bar
+// ("N changes not saved · Undo · Save") saves only the changed rows, one at
+// a time. o: { rowAttr, table, fields = "[data-f]", saveRow(id) (instead of a
+// plain PATCH of the changed fields), after(), hide: [selectors] }.
+let ADM_EDIT_DIRTY = 0;
+const firstTrSort = (rows) => rows.length && rows[0].tagName === "TR" && rows[0].querySelector("[data-grip],[data-rowup]");
+window.addEventListener("beforeunload", (e) => { if (ADM_EDIT_DIRTY && TAB === "adminpage") { e.preventDefault(); e.returnValue = ""; } });
+function wireAdmEditBar(scope, o) {
+  const first = scope && scope.querySelector(`[${o.rowAttr}]`);
+  const wrap = (first && first.closest(".adm-scroll")) || scope;
+  if (!wrap) return;
+  const sel = o.fields || "[data-f]";
+  const rows = () => [...wrap.querySelectorAll(`[${o.rowAttr}]`)];
+  const inputsOf = (tr) => [...tr.querySelectorAll(sel)].filter((el) => el.type !== "hidden");
+  const val = (el) => (el.type === "checkbox" ? String(el.checked) : el.value);
+  rows().forEach((tr) => inputsOf(tr).forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); }));
+  wrap.classList.add("adm-b");
+  // Compact boxes: "keep-w" opts out of the phone rule that stretches every
+  // fixed-width box (the widths come from the .adm-b CSS).
+  wrap.querySelectorAll("table input, table select").forEach((el) => el.classList.add("keep-w"));
+  // The ⋮⋮ ▲▼ order column only shows after "⇅ Sort" (like the item lists).
+  if (firstTrSort(rows())) {
+    const tr0 = rows()[0], gi = [...tr0.cells].findIndex((td) => td.querySelector("[data-grip],[data-rowup]"));
+    if (gi >= 0) [...tr0.closest("table").rows].forEach((r) => { const c = r.cells[gi]; if (c) c.classList.add("adm-sortcell"); });
+    if (!wrap.previousElementSibling || !wrap.previousElementSibling.classList.contains("adm-sorttoggle")) {
+      const t = document.createElement("button"); t.type = "button"; t.className = "btn ghost small adm-sorttoggle"; t.innerHTML = "&#8645; Sort";
+      t.addEventListener("click", () => { wrap.classList.toggle("sorting"); t.classList.toggle("on", wrap.classList.contains("sorting")); });
+      wrap.before(t);
+    }
+  }
+  // Keep the row's first box (its name / level) in view when the table
+  // scrolls sideways on a phone.
+  const firstTr = rows()[0];
+  if (firstTr && firstTr.tagName === "TR") {
+    const cells = [...firstTr.cells];
+    const ci = cells.findIndex((td) => td.querySelector(sel) && !td.querySelector("input[type=hidden]:only-child"));
+    if (ci >= 0) {
+      const table = firstTr.closest("table");
+      [...table.rows].forEach((r) => { const c = r.cells[ci]; if (c) c.classList.add("adm-stick"); });
+    }
+  }
+  (o.hide || []).forEach((h) => document.querySelectorAll(h).forEach((x) => { x.style.display = "none"; }));
+  let bar = wrap.nextElementSibling && wrap.nextElementSibling.classList.contains("adm-ebar") ? wrap.nextElementSibling : null;
+  if (!bar) { bar = document.createElement("div"); bar.className = "adm-ebar"; wrap.after(bar); }
+  const count = () => wrap.querySelectorAll(".chg").length;
+  const refresh = () => {
+    const n = count(); ADM_EDIT_DIRTY = n;
+    bar.hidden = !n;
+    bar.innerHTML = n ? `<span><b>${n} change${n === 1 ? "" : "s"}</b> not saved</span><button type="button" class="btn ghost small" data-ebundo>Undo</button><button type="button" class="btn small" data-ebsave>Save</button>` : "";
+  };
+  const onEdit = (ev) => {
+    const el = ev.target; if (!el.matches || !el.matches(sel) || el.dataset.orig == null) return;
+    el.classList.toggle("chg", val(el) !== el.dataset.orig); refresh();
+  };
+  if (!wrap.__ebWired) { wrap.__ebWired = true; wrap.addEventListener("input", onEdit); wrap.addEventListener("change", onEdit); }
+  bar.onclick = async (ev) => {
+    if (ev.target.closest("[data-ebundo]")) {
+      wrap.querySelectorAll(".chg").forEach((el) => { if (el.type === "checkbox") el.checked = el.dataset.orig === "true"; else el.value = el.dataset.orig; el.classList.remove("chg"); });
+      refresh(); return;
+    }
+    const btn = ev.target.closest("[data-ebsave]"); if (!btn) return;
+    btn.disabled = true; btn.textContent = "Saving…";
+    const changed = rows().filter((tr) => tr.querySelector(".chg"));
+    try {
+      for (const tr of changed) {
+        const id = tr.getAttribute(o.rowAttr);
+        if (o.saveRow) await o.saveRow(id);
+        else {
+          const patch = {};
+          inputsOf(tr).filter((el) => el.classList.contains("chg")).forEach((el) => {
+            const k = el.dataset.f;
+            patch[k] = el.type === "checkbox" ? el.checked : el.type === "number" ? (el.value === "" ? null : Number(el.value)) : (el.value.trim() === "" ? null : el.value.trim());
+          });
+          await sb(`${o.table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(patch) });
+        }
+        inputsOf(tr).forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
+      }
+      if (o.after) o.after();
+      toast(`Saved ${changed.length} row${changed.length === 1 ? "" : "s"}`);
+    } catch (err) { toast("Couldn't save: " + (err.message || err), true); }
+    refresh();
+  };
+  refresh();
+}
 async function renderAdminFlatLevels(body, cfg) {
   const cols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
   const rows = await sb(`${cfg.table}?select=${cols}&order=${cfg.orderCol}.asc`);
@@ -21400,6 +21526,7 @@ async function renderAdminFlatLevels(body, cfg) {
     </div>
   `;
 
+  wireAdmEditBar(body, { rowAttr: "data-flatrow", table: cfg.table, after: () => { if (cfg.onSave) cfg.onSave(); }, hide: ["#adminFlatSaveAll", "[data-flatsave]"] });
   const saveRow = async (id) => {
     const tr = body.querySelector(`tr[data-flatrow="${id}"]`);
     const patch = {};
@@ -21573,6 +21700,7 @@ async function renderAdminVip(body) {
     try { await saveAdminRowOrderInPlace(body, "data-viprow", "buff_rows", rows, orderedIds); VIP_ROWS_CACHE = null; }
     catch (err) { toast("Couldn't reorder", true); renderAdminVip(body); }
   });
+  wireAdmEditBar(body, { rowAttr: "data-viprow", fields: "[data-vipname],[data-vipstat]", saveRow: (id) => saveVipRow(id), after: () => { VIP_ROWS_CACHE = null; dropKeptGameData(); }, hide: ["#adminVipSaveAll", "[data-vipsave]"] });
   body.querySelectorAll("[data-vipsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       try {
@@ -21863,6 +21991,7 @@ async function renderAdminProgression(body, nameFilter) {
       try { await saveAdminRowOrderInPlace(wrap, "data-progrow", "progression_rows", rows, orderedIds); invalidateCaches(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
+    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"] });
     wrap.querySelectorAll("[data-progsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -22084,6 +22213,7 @@ async function renderAdminResearch(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-resrow", cfg.table, rows, orderedIds); cfg.invalidate(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
+    wireAdmEditBar(wrap, { rowAttr: "data-resrow", table: cfg.table, saveRow: (id) => saveResRow(id), after: () => cfg.invalidate(), hide: ["#adminResearchSaveAll", "[data-ressave]"] });
     wrap.querySelectorAll("[data-ressave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -22566,6 +22696,7 @@ async function renderAdminHeroStars(body) {
       }
     });
   });
+  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); renderAdminHeroStars(body); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"] });
   body.querySelectorAll("[data-herostardel]").forEach((btn) => btn.addEventListener("click", async () => {
     const tr = btn.closest("tr"), row = rows.find((x) => x.id === btn.dataset.herostardel);
     if (!confirm(`Remove "${row ? row.name : ""}" from ${activeCol ? activeCol.name : "this hero"}?`)) return;
@@ -22780,6 +22911,7 @@ async function renderAdminPetsRefine(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrefinerow", "pet_refine_nodes", rows, orderedIds); PET_REFINE_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadRefineRows(); }
     });
+    wireAdmEditBar(wrap, { rowAttr: "data-petrefinerow", table: "pet_refine_nodes", after: () => { PET_REFINE_CACHE = null; }, hide: ["#adminPetRefineSaveAll", "[data-petrefinesave]"] });
     wrap.querySelectorAll("[data-petrefinesave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.petrefinesave;
