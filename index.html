@@ -890,6 +890,8 @@ input,select,textarea{
   .adm-addfold[open] > summary{ margin-bottom:10px; }
   .adm-ebar{ position:fixed; bottom:12px; z-index:60; display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:var(--panel-2); border:1px solid var(--amber); box-shadow:0 6px 20px rgba(0,0,0,.45); font-size:13px; }
   .adm-ebar[hidden]{ display:none; }
+  .adm-newrow{ display:block; width:100%; margin-top:8px; padding:8px; border:1px dashed var(--ice); border-radius:10px; background:transparent; color:var(--ice); font-weight:700; font-size:13px; cursor:pointer; }
+  .adm-b tr[data-newrow] input:not(.chg){ border-style:dashed; }
   .adm-ebar > span{ flex:1 1 auto; }
   .admc-cats{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
   .admc-cats .adm-chips-row{ flex:1 1 auto; min-width:0; }
@@ -20961,7 +20963,9 @@ async function renderAdminExpertTable(body, tableKey) {
       </table>
     `;
 
-    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"] });
+    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
+      addForm: "#adminAddRowForm", reload: () => loadRows(),
+      create: async (tr) => { await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify({ expert: ADMIN_ACTIVE_EXPERT, ...admNewRowPayload(tr, null) }) }); } });
     wrap.querySelectorAll("[data-exprowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -21215,7 +21219,14 @@ async function renderAdminPets(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrow", "pets_nodes", rows, orderedIds); PETS_NODES_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: "pets_nodes", saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"] });
+    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: "pets_nodes", saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
+      addForm: "#adminAddPetRowForm", reload: () => loadPetRows(),
+      create: async (tr) => {
+        const payload = { pet: ADMIN_ACTIVE_PET, ...admNewRowPayload(tr, 0) };
+        if (payload.level_label == null) payload.level_label = "";
+        payload.sort_order = await admNextOrder(`pets_nodes?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}`);
+        await sb(`pets_nodes`, { method: "POST", body: JSON.stringify(payload) });
+      } });
     wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -21400,6 +21411,22 @@ function adminColHeadHtml(cols, withReorder) {
 // a time. o: { rowAttr, table, fields = "[data-f]", saveRow(id) (instead of a
 // plain PATCH of the changed fields), after(), hide: [selectors] }.
 let ADM_EDIT_DIRTY = 0;
+// New rows (design B, owner 16 Oct 2026): the row's boxes as a database row.
+// Empty number boxes become numEmpty (0 or null, like each old Add form), empty
+// text null; an empty sort_order is left out (the caller sets the next one).
+function admNewRowPayload(tr, numEmpty = null) {
+  const out = {};
+  tr.querySelectorAll("[data-f]").forEach((el) => {
+    const k = el.dataset.f, v = el.value;
+    if (k === "sort_order" && v === "") return;
+    out[k] = el.type === "number" ? (v === "" ? numEmpty : Number(v)) : (v.trim() === "" ? null : v.trim());
+  });
+  return out;
+}
+async function admNextOrder(path) {
+  const r = await sb(`${path}${path.includes("?") ? "&" : "?"}select=sort_order&order=sort_order.desc&limit=1`);
+  return r.length ? (r[0].sort_order || 0) + 1 : 0;
+}
 const firstTrSort = (rows) => rows.length && rows[0].tagName === "TR" && rows[0].querySelector("[data-grip],[data-rowup]");
 window.addEventListener("beforeunload", (e) => { if (ADM_EDIT_DIRTY && TAB === "adminpage") { e.preventDefault(); e.returnValue = ""; } });
 function wireAdmEditBar(scope, o) {
@@ -21445,9 +21472,39 @@ function wireAdmEditBar(scope, o) {
     }
   }
   (o.hide || []).forEach((h) => document.querySelectorAll(h).forEach((x) => { x.style.display = "none"; }));
-  let bar = wrap.nextElementSibling && wrap.nextElementSibling.classList.contains("adm-ebar") ? wrap.nextElementSibling : null;
+  let nx = wrap.nextElementSibling; if (nx && nx.classList.contains("adm-newrow")) nx = nx.nextElementSibling;
+  let bar = nx && nx.classList.contains("adm-ebar") ? nx : null;
   if (!bar) { bar = document.createElement("div"); bar.className = "adm-ebar"; wrap.after(bar); }
-  const count = () => wrap.querySelectorAll(".chg").length;
+  const newRows = () => [...wrap.querySelectorAll("tr[data-newrow]")];
+  const count = () => wrap.querySelectorAll("tr:not([data-newrow]) .chg").length + newRows().length;
+  // "+ New row": an empty copy of the last row at the end of the table; it is
+  // added with the same Save bar (o.create(tr) adds it, o.reload() redraws).
+  // The old "Add a row" form is hidden (o.addForm) once the table has a row.
+  if (o.create && firstTr && firstTr.tagName === "TR") {
+    if (o.addForm) { const f = document.querySelector(o.addForm); const box = f && (f.closest(".adm-addpanel, .panel:not(:has(.adm-scroll))") || f.parentElement); if (box) box.style.display = "none"; }
+    let nb = bar.previousElementSibling && bar.previousElementSibling.classList.contains("adm-newrow") ? bar.previousElementSibling : null;
+    if (!nb) { nb = document.createElement("button"); nb.type = "button"; nb.className = "adm-newrow"; nb.textContent = "+ New row"; bar.before(nb); }
+    nb.onclick = () => {
+      const src = rows().at(-1); if (!src) return;
+      const tr = src.cloneNode(true);
+      [...tr.attributes].forEach((a) => { if (a.name.startsWith("data-")) tr.removeAttribute(a.name); });
+      tr.setAttribute("data-newrow", "1");
+      [...tr.cells].forEach((td, i, all) => {
+        if (td.querySelector("[data-grip],[data-rowup]")) td.innerHTML = "";
+        else if (i === all.length - 1 && td.querySelector("button")) td.innerHTML = `<button type="button" class="btn small ghost" data-ebdrop title="Remove this new row" style="color:var(--danger);">&#10005;</button>`;
+      });
+      tr.querySelectorAll("input, select").forEach((el) => {
+        el.classList.remove("chg");
+        if (el.tagName === "SELECT") { el.dataset.orig = el.value; return; }
+        if (el.type === "checkbox") { el.checked = false; el.dataset.orig = "false"; return; }
+        el.value = ""; el.dataset.orig = "";
+      });
+      src.after(tr);
+      refresh();
+      const firstBox = tr.querySelector(`${sel}:not([type=hidden])`.split(",").join(":not([type=hidden]),"));
+      if (firstBox) { firstBox.focus({ preventScroll: true }); tr.scrollIntoView({ block: "center" }); }
+    };
+  }
   const refresh = () => {
     const n = count(); ADM_EDIT_DIRTY = n;
     bar.hidden = !n;
@@ -21455,15 +21512,22 @@ function wireAdmEditBar(scope, o) {
     // clips sideways scroll, so a sticky bar would not stick).
     if (n) { const r = wrap.getBoundingClientRect(); bar.style.left = Math.max(8, r.left) + "px"; bar.style.width = Math.min(r.width, innerWidth - 16) + "px"; }
     wrap.style.paddingBottom = n ? "64px" : "";
-    bar.innerHTML = n ? `<span><b>${n} change${n === 1 ? "" : "s"}</b> not saved</span><button type="button" class="btn ghost small" data-ebundo>Undo</button><button type="button" class="btn small" data-ebsave>Save</button>` : "";
+    const nn = newRows().length, nc = n - nn;
+    const what = [nc ? `${nc} change${nc === 1 ? "" : "s"}` : "", nn ? `${nn} new row${nn === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
+    bar.innerHTML = n ? `<span><b>${what}</b> not saved</span><button type="button" class="btn ghost small" data-ebundo>Undo</button><button type="button" class="btn small" data-ebsave>Save</button>` : "";
   };
   const onEdit = (ev) => {
     const el = ev.target; if (!el.matches || !el.matches(sel) || el.dataset.orig == null) return;
     el.classList.toggle("chg", val(el) !== el.dataset.orig); refresh();
   };
-  if (!wrap.__ebWired) { wrap.__ebWired = true; wrap.addEventListener("input", onEdit); wrap.addEventListener("change", onEdit); }
+  if (!wrap.__ebWired) {
+    wrap.__ebWired = true; wrap.addEventListener("input", onEdit); wrap.addEventListener("change", onEdit);
+    wrap.addEventListener("click", (ev) => { const x = ev.target.closest("[data-ebdrop]"); if (x) { x.closest("tr").remove(); wrap.__ebRefresh(); } });
+  }
+  wrap.__ebRefresh = refresh;
   bar.onclick = async (ev) => {
     if (ev.target.closest("[data-ebundo]")) {
+      newRows().forEach((tr) => tr.remove());
       wrap.querySelectorAll(".chg").forEach((el) => { if (el.type === "checkbox") el.checked = el.dataset.orig === "true"; else el.value = el.dataset.orig; el.classList.remove("chg"); });
       refresh(); return;
     }
@@ -21484,8 +21548,16 @@ function wireAdmEditBar(scope, o) {
         }
         inputsOf(tr).forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
       }
+      let added = 0;
+      for (const tr of newRows()) {
+        if (!inputsOf(tr).some((el) => el.type !== "checkbox" && el.tagName !== "SELECT" && el.value.trim() !== "")) { tr.remove(); continue; }
+        await o.create(tr);
+        tr.remove(); added++;
+      }
       if (o.after) o.after();
-      toast(`Saved ${changed.length} row${changed.length === 1 ? "" : "s"}`);
+      const parts = [changed.length ? `${changed.length} row${changed.length === 1 ? "" : "s"} saved` : "", added ? `${added} added` : ""].filter(Boolean);
+      toast(parts.join(", ") || "Nothing to save");
+      if (added && o.reload) { ADM_EDIT_DIRTY = 0; await o.reload(); return; }
     } catch (err) { toast("Couldn't save: " + (err.message || err), true); }
     refresh();
   };
@@ -21538,7 +21610,13 @@ async function renderAdminFlatLevels(body, cfg) {
     </div>
   `;
 
-  wireAdmEditBar(body, { rowAttr: "data-flatrow", table: cfg.table, after: () => { if (cfg.onSave) cfg.onSave(); }, hide: ["#adminFlatSaveAll", "[data-flatsave]"] });
+  wireAdmEditBar(body, { rowAttr: "data-flatrow", table: cfg.table, after: () => { if (cfg.onSave) cfg.onSave(); }, hide: ["#adminFlatSaveAll", "[data-flatsave]"],
+    addForm: "#adminFlatAddForm", reload: () => renderAdminFlatLevels(body, cfg),
+    create: async (tr) => {
+      const payload = admNewRowPayload(tr, 0);
+      if (canReorder && payload.sort_order == null) payload.sort_order = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), -1) + 1;
+      await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify(payload) });
+    } });
   const saveRow = async (id) => {
     const tr = body.querySelector(`tr[data-flatrow="${id}"]`);
     const patch = {};
@@ -21712,7 +21790,15 @@ async function renderAdminVip(body) {
     try { await saveAdminRowOrderInPlace(body, "data-viprow", "buff_rows", rows, orderedIds); VIP_ROWS_CACHE = null; }
     catch (err) { toast("Couldn't reorder", true); renderAdminVip(body); }
   });
-  wireAdmEditBar(body, { rowAttr: "data-viprow", fields: "[data-vipname],[data-vipstat]", saveRow: (id) => saveVipRow(id), after: () => { VIP_ROWS_CACHE = null; dropKeptGameData(); }, hide: ["#adminVipSaveAll", "[data-vipsave]"] });
+  wireAdmEditBar(body, { rowAttr: "data-viprow", fields: "[data-vipname],[data-vipstat]", saveRow: (id) => saveVipRow(id), after: () => { VIP_ROWS_CACHE = null; dropKeptGameData(); }, hide: ["#adminVipSaveAll", "[data-vipsave]"],
+    addForm: "#adminVipAddForm", reload: () => renderAdminVip(body),
+    create: async (tr) => {
+      const name = tr.querySelector("[data-vipname]").value.trim();
+      if (!name) throw new Error("a new VIP tier needs a name");
+      const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+      const [created] = await sb(`buff_rows`, { method: "POST", body: JSON.stringify({ table_id: table.id, name, sort_order: maxOrder + 1 }) });
+      tr.setAttribute("data-viprow", created.id); await saveVipRow(created.id);
+    } });
   body.querySelectorAll("[data-vipsave]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       try {
@@ -22003,7 +22089,13 @@ async function renderAdminProgression(body, nameFilter) {
       try { await saveAdminRowOrderInPlace(wrap, "data-progrow", "progression_rows", rows, orderedIds); invalidateCaches(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"] });
+    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
+      addForm: "#adminProgAddForm", reload: () => loadRows(),
+      create: async (tr) => {
+        const payload = { table_id: ADMIN_ACTIVE_PROGRESSION, ...admNewRowPayload(tr, null) };
+        if (payload.sort_order == null) payload.sort_order = await admNextOrder(`progression_rows?table_id=eq.${ADMIN_ACTIVE_PROGRESSION}`);
+        await sb(`progression_rows`, { method: "POST", body: JSON.stringify(payload) });
+      } });
     wrap.querySelectorAll("[data-progsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -22225,7 +22317,13 @@ async function renderAdminResearch(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-resrow", cfg.table, rows, orderedIds); cfg.invalidate(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-resrow", table: cfg.table, saveRow: (id) => saveResRow(id), after: () => cfg.invalidate(), hide: ["#adminResearchSaveAll", "[data-ressave]"] });
+    wireAdmEditBar(wrap, { rowAttr: "data-resrow", table: cfg.table, saveRow: (id) => saveResRow(id), after: () => cfg.invalidate(), hide: ["#adminResearchSaveAll", "[data-ressave]"],
+      addForm: "#adminResearchAddForm", reload: () => loadRows(),
+      create: async (tr) => {
+        const payload = admNewRowPayload(tr, null);
+        if (payload.sort_order == null) payload.sort_order = await admNextOrder(cfg.table);
+        await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify(payload) });
+      } });
     wrap.querySelectorAll("[data-ressave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -22708,7 +22806,16 @@ async function renderAdminHeroStars(body) {
       }
     });
   });
-  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); renderAdminHeroStars(body); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"] });
+  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); renderAdminHeroStars(body); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"],
+    addForm: "#adminHeroStarAddForm", reload: () => renderAdminHeroStars(body),
+    create: async (tr) => {
+      const name = tr.querySelector('[data-f="name"]').value.trim();
+      if (!name) throw new Error("a new row needs a name");
+      const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+      const [created] = await sb(`buff_rows`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name, sort_order: maxOrder + 1 }) });
+      created.buff_cells = []; rows.push(created);
+      tr.setAttribute("data-herostarrow", created.id); tr.dataset.cellid = ""; await saveHeroStarRow(created.id);
+    } });
   body.querySelectorAll("[data-herostardel]").forEach((btn) => btn.addEventListener("click", async () => {
     const tr = btn.closest("tr"), row = rows.find((x) => x.id === btn.dataset.herostardel);
     if (!confirm(`Remove "${row ? row.name : ""}" from ${activeCol ? activeCol.name : "this hero"}?`)) return;
@@ -22923,7 +23030,15 @@ async function renderAdminPetsRefine(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrefinerow", "pet_refine_nodes", rows, orderedIds); PET_REFINE_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadRefineRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrefinerow", table: "pet_refine_nodes", after: () => { PET_REFINE_CACHE = null; }, hide: ["#adminPetRefineSaveAll", "[data-petrefinesave]"] });
+    wireAdmEditBar(wrap, { rowAttr: "data-petrefinerow", table: "pet_refine_nodes", after: () => { PET_REFINE_CACHE = null; }, hide: ["#adminPetRefineSaveAll", "[data-petrefinesave]"],
+      addForm: "#adminAddPetRefineRowForm", reload: () => loadRefineRows(),
+      create: async (tr) => {
+        const last = rows[rows.length - 1];
+        const payload = { pet: ADMIN_ACTIVE_PET_REFINE, ...admNewRowPayload(tr, 0) };
+        if (payload.category == null && last) payload.category = last.category ?? null;
+        payload.sort_order = await admNextOrder(`pet_refine_nodes?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET_REFINE)}`);
+        await sb(`pet_refine_nodes`, { method: "POST", body: JSON.stringify(payload) });
+      } });
     wrap.querySelectorAll("[data-petrefinesave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.petrefinesave;
