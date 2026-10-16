@@ -2663,7 +2663,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 8; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 9; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3352,6 +3352,8 @@ const T = {
   pack_not_reachable: { en: "Can't reach the target by that date." },
   pack_earliest: { en: "Earliest:" },
   budgets_title: { en: "Budgets" },
+  budgets_recalc: { en: "Recalculate" },
+  budgets_recalc_hint: { en: "Forget the saved results and work everything out again" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get." },
   budgets_working: { en: "Working out the cheapest packs…" },
   budgets_loading: { en: "Adding everything up…" },
@@ -13633,9 +13635,44 @@ function plannerRun(kind, payload) {
     w.postMessage({ id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES });
   }).catch((err) => { console.warn("Background planner failed, planning on the page instead", err); return local(); });
 }
+// The last packs plan is kept on the phone with a fingerprint of everything
+// the planner was given (pages' needs and packs, ticks, target, trades, game
+// rules, the day), so a page refresh with nothing changed shows it at once.
+const BUDGET_PLAN_STORE = "budget_plan_v1";
+function budgetPlanFingerprint(payload) {
+  const str = JSON.stringify({ v: 1, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  // cyrb53: a quick 53-bit hash of the text, plus its length.
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `${str.length}:${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
+}
 async function budgetCombinedPlanAsync(pages, selected, targetDays) {
   const inp = budgetCombinedInput(pages, selected);
-  return plannerRun("combined", { ...inp, targetDays });
+  const payload = { ...inp, targetDays };
+  let key = null;
+  try {
+    key = budgetPlanFingerprint(payload);
+    const kept = JSON.parse(localStorage.getItem(BUDGET_PLAN_STORE) || "null");
+    if (kept && kept.key === key && kept.res) return kept.res;
+  } catch (e) { /* storage blocked: work it out */ }
+  const res = await plannerRun("combined", payload);
+  try { if (key) localStorage.setItem(BUDGET_PLAN_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked: not kept */ }
+  return res;
+}
+// "Recalculate": forget every kept copy and work everything out again.
+function budgetForceRecalc() {
+  try { localStorage.removeItem(BUDGET_PLAN_STORE); } catch (e) { /* storage blocked */ }
+  if (PLANNER_WORKER && PLANNER_WORKER.terminate) { PLANNER_WORKER.terminate(); PLANNER_WORKER = null; }
+  if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
+  if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
+  PACK_TABLES_CACHE = null;
+  TRADE_RATES_CACHE = null;
+  BUDGET_NEEDS_SNAPSHOT = null;
+  BUDGET_PLAN_RUNNING = null;
+  budgetInvalidate();
+  dashDataChanged();
 }
 // Each page's own plan, added together as one plan over the combined packs.
 // Valid only if the packs' limits allow those purchases together and they
@@ -14054,7 +14091,7 @@ async function renderBudgetsPage(opts = {}) {
   // list (packs to buy) in the main column, each page's details below it.
   content.innerHTML = `
     <div class="budget-wrap">
-      <div class="plx-head"><h2>${esc(t("budgets_title"))}</h2></div>
+      <div class="plx-head"><h2>${esc(t("budgets_title"))}</h2><button type="button" class="btn small ghost" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}">&#8635; ${esc(t("budgets_recalc"))}</button></div>
       <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("budgets_desc"))}</p>
       <div class="t12x">
         <aside class="t12x-side">
@@ -14092,6 +14129,8 @@ async function renderBudgetsPage(opts = {}) {
     saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
     renderBudgetsPage();
   });
+  const recalcEl = content.querySelector("[data-budgetrecalc]");
+  if (recalcEl) recalcEl.addEventListener("click", () => { budgetForceRecalc(); renderBudgetsPage(); });
   const clearEl = content.querySelector("[data-budgettargetclear]");
   if (clearEl) clearEl.addEventListener("click", async () => {
     BUDGET_TARGET = "";

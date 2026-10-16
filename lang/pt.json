@@ -573,6 +573,8 @@
 "t:pack_not_reachable":"Não dá para chegar ao alvo até essa data.",
 "t:pack_earliest":"Mais cedo:",
 "t:budgets_title":"Orçamentos",
+"t:budgets_recalc":"Recalcular",
+"t:budgets_recalc_hint":"Esquecer os resultados salvos e calcular tudo de novo",
 "t:budgets_desc":"Todos os planos de melhoria em um só lugar: materiais que ainda faltam, quanto custam os pacotes atribuídos e o aumento de atributos que você teria.",
 "t:budgets_working":"Calculando os pacotes mais baratos…",
 "t:budgets_loading":"Somando tudo…",

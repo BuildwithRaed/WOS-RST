@@ -573,6 +573,8 @@
 "t:pack_not_reachable":"無法在該日期前達成目標。",
 "t:pack_earliest":"最早：",
 "t:budgets_title":"預算",
+"t:budgets_recalc":"重新計算",
+"t:budgets_recalc_hint":"清除已儲存的結果並全部重新計算",
 "t:budgets_desc":"所有升級計畫集中在一處：仍需的材料、指定禮包的費用，以及你將獲得的數據提升。",
 "t:budgets_working":"正在計算最便宜的禮包…",
 "t:budgets_loading":"正在加總…",

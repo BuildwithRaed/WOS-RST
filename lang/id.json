@@ -573,6 +573,8 @@
 "t:pack_not_reachable":"Target tidak tercapai pada tanggal itu.",
 "t:pack_earliest":"Paling cepat:",
 "t:budgets_title":"Anggaran",
+"t:budgets_recalc":"Hitung ulang",
+"t:budgets_recalc_hint":"Lupakan hasil tersimpan dan hitung semuanya lagi",
 "t:budgets_desc":"Semua rencana upgrade di satu tempat: material yang masih dibutuhkan, biaya paket yang ditetapkan, dan kenaikan statistik yang didapat.",
 "t:budgets_working":"Menghitung paket termurah…",
 "t:budgets_loading":"Menjumlahkan semuanya…",

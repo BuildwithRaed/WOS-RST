@@ -574,6 +574,8 @@
  "t:pack_not_reachable": "Impossibile raggiungere l'obiettivo entro quella data.",
  "t:pack_earliest": "Prima possibile:",
  "t:budgets_title": "Budget",
+ "t:budgets_recalc": "Ricalcola",
+ "t:budgets_recalc_hint": "Dimentica i risultati salvati e ricalcola tutto",
  "t:budgets_desc": "Tutti i piani di miglioramento in un solo posto: materiali ancora necessari, costo dei pacchetti assegnati e l'aumento di statistiche che otterresti.",
  "t:budgets_working": "Calcolo dei pacchetti più economici…",
  "t:budgets_loading": "Somma di tutto…",

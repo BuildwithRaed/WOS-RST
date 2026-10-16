@@ -574,6 +574,8 @@
  "t:pack_not_reachable": "その日までに目標に届きません。",
  "t:pack_earliest": "最短:",
  "t:budgets_title": "予算",
+ "t:budgets_recalc": "再計算",
+ "t:budgets_recalc_hint": "保存した結果を消して、すべて計算し直します",
  "t:budgets_desc": "すべての強化プランをまとめて表示:まだ必要な素材、割り当てたパックの費用、得られるステータス上昇。",
  "t:budgets_working": "最安のパックを計算中…",
  "t:budgets_loading": "集計中…",
