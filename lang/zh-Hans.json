@@ -844,6 +844,7 @@
  "t:pk_active_until": "至",
  "t:pk_preview_badge": "访客预览",
  "t:pk_preview_packs": "个礼包",
+ "t:pk_owner_dates_desc": "周卡：你自己的日期。集市等有日期的礼包：礼包的日期，也是访客自己设置前的默认日期。",
  "t:pk_preview_desc": "这是访客看到的内容。这里的字段已锁定 — 你自己的日期请在每个礼包的设置中修改。只列出勾选了“访客可设置自己的日期”的礼包。",
  "t:pk_preview_empty": "访客暂时看不到此框。在礼包设置中勾选“访客可设置自己的日期”即可添加到这里。",
  "t:pk_preview_open": "打开设置",

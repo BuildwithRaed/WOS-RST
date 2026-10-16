@@ -844,6 +844,7 @@
  "t:pk_active_until": "do",
  "t:pk_preview_badge": "Podgląd odwiedzającego",
  "t:pk_preview_packs": "paczek",
+ "t:pk_owner_dates_desc": "Karty tygodniowe: twoje własne daty. Pakiety z datą jak Bazar: data pakietu, od której startują też odwiedzający, dopóki nie ustawią własnej.",
  "t:pk_preview_desc": "Tak to widzą odwiedzający. Pola są tu zablokowane — własne daty zmieniasz w ustawieniach każdej paczki. Pokazane są tylko paczki z zaznaczonym \"Odwiedzający mogą ustawić własną datę\".",
  "t:pk_preview_empty": "Odwiedzający jeszcze nie widzą tego pola. Zaznacz \"Odwiedzający mogą ustawić własną datę\" w ustawieniach paczki, aby ją dodać.",
  "t:pk_preview_open": "Otwórz ustawienia",

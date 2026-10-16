@@ -843,6 +843,7 @@
 "t:pk_active_until":"直到",
 "t:pk_preview_badge":"訪客預覽",
 "t:pk_preview_packs":"個禮包",
+"t:pk_owner_dates_desc":"週卡：你自己的日期。市集等有日期的禮包：禮包的日期，也是訪客自行設定前的預設日期。",
 "t:pk_preview_desc":"這是訪客看到的畫面。此處欄位已鎖定 — 你自己的日期在每個禮包的設定中修改。只列出勾選了「訪客可設定自己的日期」的禮包。",
 "t:pk_preview_empty":"訪客還看不到此區塊。在禮包設定中勾選「訪客可設定自己的日期」即可加入。",
 "t:pk_preview_open":"開啟設定",

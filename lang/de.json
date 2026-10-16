@@ -844,6 +844,7 @@
  "t:pk_active_until": "bis",
  "t:pk_preview_badge": "Besuchervorschau",
  "t:pk_preview_packs": "Pakete",
+ "t:pk_owner_dates_desc": "Wochenkarten: deine eigenen Daten. Packs mit Datum wie der Basar: das Datum des Packs, mit dem auch Besucher starten, bis sie ihr eigenes setzen.",
  "t:pk_preview_desc": "So sehen es Besucher. Felder sind hier gesperrt – deine eigenen Daten änderst du in den Einstellungen jedes Pakets. Nur Pakete mit \"Besucher können ihr eigenes Datum setzen\" werden gelistet.",
  "t:pk_preview_empty": "Besucher sehen diese Box noch nicht. Hake in den Einstellungen eines Pakets \"Besucher können ihr eigenes Datum setzen\" an, um es hier hinzuzufügen.",
  "t:pk_preview_open": "Einstellungen öffnen",

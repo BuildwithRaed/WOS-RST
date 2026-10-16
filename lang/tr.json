@@ -843,6 +843,7 @@
 "t:pk_active_until":"şu tarihe kadar:",
 "t:pk_preview_badge":"Ziyaretçi önizlemesi",
 "t:pk_preview_packs":"paket",
+"t:pk_owner_dates_desc":"Haftalık kartlar: kendi tarihlerin. Pazar gibi tarihli paketler: paketin tarihi; ziyaretçiler kendi tarihlerini girene kadar buradan başlar.",
 "t:pk_preview_desc":"Ziyaretçilerin gördüğü budur. Alanlar burada kilitli — kendi tarihlerini her paketin ayarlarında değiştirirsin. Yalnızca \"Ziyaretçiler kendi tarihini ayarlayabilir\" işaretli paketler listelenir.",
 "t:pk_preview_empty":"Ziyaretçiler bu kutuyu henüz görmüyor. Buraya eklemek için bir paketin ayarlarında \"Ziyaretçiler kendi tarihini ayarlayabilir\"i işaretle.",
 "t:pk_preview_open":"Ayarları aç",

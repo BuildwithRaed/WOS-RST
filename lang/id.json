@@ -843,6 +843,7 @@
 "t:pk_active_until":"hingga",
 "t:pk_preview_badge":"Pratinjau pengunjung",
 "t:pk_preview_packs":"paket",
+"t:pk_owner_dates_desc":"Kartu mingguan: tanggalmu sendiri. Paket bertanggal seperti Bazar: tanggal paket, yang juga jadi awal pengunjung sampai mereka mengatur sendiri.",
 "t:pk_preview_desc":"Ini yang dilihat pengunjung. Isian dikunci di sini — ubah tanggalmu di pengaturan tiap paket. Hanya paket dengan \"Pengunjung bisa atur tanggal sendiri\" dicentang yang tampil.",
 "t:pk_preview_empty":"Pengunjung belum melihat kotak ini. Centang \"Pengunjung bisa atur tanggal sendiri\" di pengaturan paket untuk menambahkannya.",
 "t:pk_preview_open":"Buka pengaturan",
