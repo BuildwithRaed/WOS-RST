@@ -222,6 +222,24 @@
   .bud-row-v{ white-space:nowrap; font-size:13px; }
   .bud-mats{ display:flex; flex-wrap:wrap; gap:6px; }
   .bud-mats[hidden]{ display:none; }
+  .bud-seg{ display:flex; gap:3px; padding:3px; margin-top:12px; background:var(--panel-2); border-radius:10px; }
+  .bud-seg button{ flex:1 1 0; min-width:0; padding:7px 2px; border:0; border-radius:8px; background:none; color:var(--muted); font:inherit; font-size:11px; line-height:1.3; cursor:pointer; text-align:center; }
+  .bud-seg button b{ display:block; color:var(--frost); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bud-seg button.on{ background:var(--ice-dim); color:var(--frost); }
+  .bud-seg button.late span{ color:var(--danger); }
+  .bud-line{ border-top:1px solid var(--line); }
+  .bud-line:first-of-type{ margin-top:12px; }
+  .bud-line > summary{ list-style:none; display:flex; align-items:center; gap:10px; padding:10px 0; cursor:pointer; }
+  .bud-line > summary::-webkit-details-marker{ display:none; }
+  .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
+  .bud-line-t{ flex:1 1 auto; min-width:0; }
+  .bud-line-t b{ font-size:14.5px; }
+  .bud-line-t .meta{ font-size:11.5px; }
+  .bud-line-v{ text-align:end; white-space:nowrap; }
+  .bud-line-v b{ font-size:15.5px; }
+  .bud-line-v .meta{ display:block; font-size:11px; }
+  .bud-line[open] .bud-line-arrow{ display:inline-block; transform:rotate(90deg); }
+  .bud-line-body{ padding:0 0 10px 14px; }
   .bud-mat-btn{ display:inline-flex; align-items:center; gap:8px; }
   .bud-mat-arrow{ color:var(--ice); }
   .bud-mat{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 5px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.03); font-size:13px; }
@@ -4402,6 +4420,11 @@ const T = {
   about_privacy_2: { en: "Only you can see your own data; other visitors can't.", ar: "أنت فقط من يرى بياناتك؛ لا يستطيع الزوار الآخرون رؤيتها.", ko: "내 데이터는 나만 볼 수 있으며 다른 방문자는 볼 수 없습니다." },
   about_privacy_3: { en: "No ads, and we never sell or share your data.", ar: "لا إعلانات، ولا نبيع بياناتك أو نشاركها أبدًا.", ko: "광고가 없으며 데이터를 판매하거나 공유하지 않습니다." },
   about_privacy_4: { en: "Want your data removed? Email us and we'll delete it.", ar: "تريد حذف بياناتك؟ راسلنا وسنحذفها.", ko: "데이터 삭제를 원하시면 이메일을 보내 주세요. 삭제해 드립니다." },
+  bud_line_by: { en: "By {date}", ar: "بحلول {date}", ko: "{date}까지" },
+  bud_line_after: { en: "After your target", ar: "بعد هدفك", ko: "목표일 이후" },
+  bud_line_packs: { en: "{n} packs", ar: "{n} حزم", ko: "팩 {n}개" },
+  bud_line_all: { en: "Packs to buy", ar: "الحزم المطلوب شراؤها", ko: "구매할 패키지" },
+  bud_done_by: { en: "Done", ar: "الإنجاز", ko: "완료" },
   budgets_split_parts: { en: "2 parts: by your target + after it", ar: "جزءان: بحلول هدفك + بعده", ko: "2개 부분: 목표일까지 + 그 이후" },
   budgets_split_late: { en: "Can't make {date}", ar: "لا يمكن بحلول {date}", ko: "{date}까지 불가" },
   budgets_split_after: { en: "after your target", ar: "بعد هدفك", ko: "목표일 이후" },
@@ -14584,75 +14607,50 @@ async function renderBudgetsPage(opts = {}) {
     grandCurrency = grandCurrency || combined.chosen.rows[0]?.currency;
     grandDays = Math.max(grandDays, combined.chosen.days);
   }
+  // Design A: each part of the plan is one line (coloured bar, pages, price,
+  // "N packs ▸"); tapping it opens that part's packs.
+  const lineHtml = (color, title, sub, pl, open) => {
+    const money = packFmtLocal(Math.ceil(packPlanLocal(pl)), pl.rows[0]?.currency, true, pl.rows[0]?.price);
+    const trades = (pl.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${pl.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
+    return `<details class="bud-line"${open ? " open" : ""}><summary><span class="bud-line-bar" style="background:${color};"></span>
+      <span class="bud-line-t">${title}<br><span class="meta">${sub}</span></span>
+      <span class="bud-line-v"><b>${money}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", pl.rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary>
+      <div class="bud-line-body">${packRowsHtml(pl)}${trades}</div></details>`;
+  };
+  const namesOf = (keys) => keys.map((k) => esc(packPageLabel(k))).join(" · ");
+  const droppedHtml = combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : "";
   const splitHtml = () => {
     const tp = split.target.plan, lp = splitLate.plan;
-    const cur = (pl) => pl.rows[0]?.currency, price0 = (pl) => pl.rows[0]?.price;
-    const money = (pl) => packFmtLocal(Math.ceil(packPlanLocal(pl)), cur(pl), true, price0(pl));
-    const when = (d) => d === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(d))} · ${d} ${esc(t("pack_days_short_long"))}`;
-    const names = (keys) => keys.map((k) => esc(packPageLabel(k))).join(" · ");
-    const tradesHtml = (pl) => (pl.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${pl.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}`).join(" &middot; ")}</div>` : "";
-    const lateCard = (k) => {
-      const v = split.late[k]; if (!v) return "";
-      const sel = v === splitLate;
-      return `<button type="button" data-splitlate="${k}" style="flex:1 1 140px; min-width:0; text-align:start; cursor:pointer; background:none; color:inherit; font:inherit; border:1px solid ${sel ? "var(--ice)" : "var(--line)"}; box-shadow:${sel ? "0 0 0 1px var(--ice) inset" : "none"}; border-radius:10px; padding:6px 10px;">
-        <div class="meta" style="font-size:10px; font-weight:700; text-transform:uppercase;">${esc(k === "fastest" ? t("budgets_view_fastest") : t("budgets_view_cheapest"))}${sel ? ` <span style="font-size:9px; padding:1px 6px; border-radius:6px; background:var(--ice); color:#0f141b;">${esc(t("budgets_view_shown"))}</span>` : ""}</div>
-        <div style="font-size:15px; font-weight:700;">${money(v.plan)}</div><div class="meta" style="font-size:10.5px; color:var(--danger);">${when(v.plan.days)}</div></button>`;
-    };
-    return `<div style="margin-top:10px;">
-      <div style="border:1px solid var(--good); border-radius:10px; padding:10px 12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><b>${esc(t("budgets_view_target"))}</b><span style="font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--good); color:#0f141b; font-weight:700;">${when(tp.days)}</span></div>
-        <div class="meta" style="font-size:11px; margin-top:2px;">${names(split.target.keys)}</div>
-        <details open style="margin-top:6px;"><summary style="cursor:pointer;"><span style="font-size:18px; font-weight:700;">${money(tp)}</span> <span class="meta" style="font-size:11px;">${esc(t("budgets_packs_detail"))} (${tp.rows.length})</span></summary>${packRowsHtml(tp)}${tradesHtml(tp)}</details>
-      </div>
-      <div style="border:1px solid var(--danger); border-radius:10px; padding:10px 12px; margin-top:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><b>${esc(t("budgets_split_late").replace("{date}", fmtDate(targetDays)))}</b><span style="font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--danger); color:#fff; font-weight:700;">${esc(t("budgets_split_after"))}</span></div>
-        <div class="meta" style="font-size:11px; margin-top:2px;">${names(split.late.keys)} — ${esc(t("budgets_split_after_note"))}</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">${lateCard("fastest")}${lateCard("cheapest")}</div>
-        <details style="margin-top:6px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${lp.rows.length}) · ${money(lp)}</summary>${packRowsHtml(lp)}${tradesHtml(lp)}</details>
-      </div>
-      ${combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : ""}
-    </div>`;
+    const tDays = tp.days === 0 ? "" : ` <span class="meta" style="font-size:12px;">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>`;
+    return `${lineHtml("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tDays}`, namesOf(split.target.keys), tp)}
+      ${lineHtml("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${namesOf(split.late.keys)} · ${esc(t("bud_line_by").replace("{date}", fmtDate(lp.days)))}`, lp)}
+      ${droppedHtml}`;
   };
   const combinedHtml = split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
-      <div style="margin-top:10px;">
-        <div class="meta" style="font-size:10.5px; margin-bottom:4px;">${esc(t("combined_budget_note"))}</div>
-        ${combined.chosen ? `<details open><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${combined.chosen.rows.length}) · ${packFmtLocal(Math.ceil(packPlanLocal(combined.chosen)), combined.chosen.rows[0]?.currency, true, combined.chosen.rows[0]?.price)}</summary>${packRowsHtml(combined.chosen)}
-          ${(combined.chosen.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${combined.chosen.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
-          ${targetDays != null && !combined.byTarget && combined.earliest != null ? `<div class="meta" style="font-size:10.5px; color:var(--danger);">${esc(t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(combined.earliest))}</div>` : ""}</details>`
-          : `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
-        ${combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : ""}
-      </div>` : "";
+      ${combined.chosen ? lineHtml(targetDays != null && combined.chosen.days > targetDays ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, namesOf(combined.inc), combined.chosen)
+        : `<div class="meta" style="font-size:11px; margin-top:10px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
+      ${droppedHtml}` : "";
   // The plan cards under the big total.
   const viewCardsHtml = (() => {
     if (!combinedRaw.chosen || viewKeys.length < 2) return "";
-    const main = viewData("main");
     const title = (k) => k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
-    const card = (k) => {
-      const v = viewData(k), sel = k === BUDGET_VIEW;
-      const late = targetDays != null && v.days > targetDays;
-      const dCost = Math.ceil(v.total) - Math.ceil(main.total), dDays = v.days - main.days;
-      const diff = k === "main" ? "" : (dCost === 0 && dDays === 0) ? t("budgets_view_same")
-        : [dCost ? `${dCost > 0 ? "+" : "−"}${packFmtLocal(Math.abs(dCost), v.sample?.currency, true, v.sample?.price)}` : "", dDays ? t(dDays < 0 ? "budgets_view_sooner" : "budgets_view_later").replace("{n}", Math.abs(dDays)) : ""].filter(Boolean).join(" · ");
-      return `<button type="button" data-budgetview="${k}" style="flex:1 1 180px; min-width:0; text-align:start; cursor:pointer; background:none; color:inherit; font:inherit; border:1px solid ${sel ? "var(--ice)" : "var(--line)"}; box-shadow:${sel ? "0 0 0 1px var(--ice) inset" : "none"}; border-radius:10px; padding:8px 12px;">
-        <div style="font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;" class="meta">${esc(title(k))}${sel ? ` <span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("budgets_view_shown"))}</span>` : ""}</div>
-        <div style="font-size:17px; font-weight:700; margin-top:2px;">${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</div>
-        <div style="font-size:11px; color:${late ? "var(--danger)" : "var(--good)"};">${v.days === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(v.days))} · ${v.days} ${esc(t("pack_days_short_long"))}`}</div>
-        ${diff ? `<div class="meta" style="font-size:10.5px; margin-top:2px;">${esc(diff)}</div>` : ""}
-      </button>`;
+    const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
+    const seg = (k) => {
+      const v = viewData(k), late = targetDays != null && v.days > targetDays;
+      return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}${late ? " late" : ""}" title="${esc(`${title(k)} · ${fmtDate(v.days)}`)}">${esc(title(k))}<b>${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</b><span>${v.days === 0 ? esc(t("pack_ready_now")) : esc(shortDate(v.days))}</span></button>`;
     };
-    return `${targetDays != null && !reachable ? `<div class="meta" style="font-size:11px; margin-top:8px; padding:6px 10px; border:1px dashed var(--danger); border-radius:8px; color:var(--danger);">${esc(t("budgets_cant_target").replace("{date}", fmtDate(targetDays)))}</div>` : ""}
-      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">${viewKeys.map(card).join("")}</div>
-      <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("budgets_view_hint"))}</div>`;
+    return `${targetDays != null && !reachable ? `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("budgets_cant_target").replace("{date}", fmtDate(targetDays)))}</div>` : ""}
+      <div class="bud-seg">${viewKeys.map(seg).join("")}</div>`;
   })();
   const summary = `
     <div class="panel" style="border-color:var(--ice);">
       <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
-        <div style="font-size:14px; font-weight:700;">${esc(t("budgets_total_title"))}</div>
+        <div class="meta" style="font-size:12.5px;">${esc(t("budgets_total_title"))}</div>
 
       </div>
-      <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:8px;">
-        <span style="font-size:26px; font-weight:700;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
-        ${anyPlan && split && BUDGET_VIEW === "main" ? `<span class="meta" style="font-size:11px;">${esc(t("budgets_split_parts"))}</span>` : anyPlan ? `<span class="meta" style="font-size:11px; color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span>` : ""}
+      <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:2px;">
+        <span style="font-size:30px; font-weight:800; letter-spacing:-.3px;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
+        ${anyPlan ? `<span class="meta" style="font-size:12px; width:100%;">${esc(t("bud_done_by"))} <span style="color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span></span>` : ""}
       </div>
       ${(() => { const n = (PACK_PURCHASES.list || []).filter((p) => p.status !== "bought" && packValidDay(p.date) && p.date >= packDayKey(packStartOfToday())).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
       ${viewCardsHtml}
@@ -14690,11 +14688,6 @@ async function renderBudgetsPage(opts = {}) {
       </div>
     </div>`;
 
-  content.querySelectorAll("[data-splitlate]").forEach((b) => b.addEventListener("click", () => {
-    BUDGET_SPLIT_LATE = b.dataset.splitlate;
-    const y = window.scrollY;
-    renderBudgetsPage().then(() => window.scrollTo(0, y));
-  }));
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
     const y = window.scrollY;
