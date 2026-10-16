@@ -4831,7 +4831,6 @@ async function renderOverview(opts = {}) {
     const ROSTER_TROOP_CLASS = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
     const entryFor = rosterEntryFor;
     const renderRoster = () => {
-      const collapsed = localStorage.getItem("dashboard_roster_collapsed") === "1";
       const assignedTroops = TROOP_TYPES.filter((t) => entryFor(t.key).heroId);
       const allUsed = assignedTroops.length > 0 && assignedTroops.every((t) => entryFor(t.key).used);
       const pickHeroPlaceholder = t("pick_hero_placeholder");
@@ -4845,17 +4844,16 @@ async function renderOverview(opts = {}) {
       const shTitle = (r) => `${t("bp_sh_need")} ${Math.round(r.need).toLocaleString()} · ${t("bp_sh_own")} ${Math.round(r.own).toLocaleString()} · ${t("bp_sh_general")} ${Math.round(r.fromGeneral).toLocaleString()}`;
       rosterEl.innerHTML = `
       <div class="rc-wrap" style="margin-bottom:16px;">
-        <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;">
+        <div id="rosterCollapseToggle" style="display:flex; align-items:center; justify-content:space-between;">
           <h2 style="margin:0;">${esc(t("roster_heroes_title"))}</h2>
           <div style="display:flex; align-items:center; gap:12px;">
             <label style="display:flex; align-items:center; gap:4px; cursor:pointer; flex-shrink:0; flex-wrap:nowrap;" title="Include roster heroes' stats in the Dashboard totals" onclick="event.stopPropagation()">
               <input type="checkbox" id="rosterUsedAll" ${allUsed ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
               <span class="meta" style="font-size:10px; white-space:nowrap;">${esc(t("count_in_dashboard"))}</span>
             </label>
-            <span class="meta" style="font-size:16px; transition:transform .15s; transform:rotate(${collapsed ? "-90deg" : "0deg"});">&#9660;</span>
           </div>
         </div>
-        <div id="rosterCollapseBody" style="${collapsed ? "display:none;" : ""}">
+        <div id="rosterCollapseBody">
         ${(() => {
           const gens = TROOP_TYPES.map((t) => heroCatalog.find((h) => h.id === entryFor(t.key).heroId)).filter((h) => h && h.generation != null).map((h) => Number(h.generation));
           if (!gens.length) return "";
@@ -4895,11 +4893,8 @@ async function renderOverview(opts = {}) {
         </div>
         </div>
       </div>`;
-      rosterEl.querySelector("#rosterCollapseToggle").addEventListener("click", () => {
-        const nowCollapsed = localStorage.getItem("dashboard_roster_collapsed") === "1";
-        localStorage.setItem("dashboard_roster_collapsed", nowCollapsed ? "0" : "1");
-        renderRoster();
-      });
+      // The roster is always shown (owner, 16 Oct 2026: closed, the stats stretched to fill the screen).
+      try { localStorage.removeItem("dashboard_roster_collapsed"); } catch (e) { /* storage blocked */ }
       // Budgets' "Hero shards & widgets" and the suggestions follow the roster.
       const save = async () => { saveCalcState("dashboard_roster", roster); if (typeof budgetInvalidate === "function") budgetInvalidate(); };
       // Heroes counted in the Dashboard change the stat cards, so redraw the
