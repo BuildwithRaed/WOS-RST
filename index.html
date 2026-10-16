@@ -890,6 +890,11 @@ input,select,textarea{
   .adm-addfold[open] > summary{ margin-bottom:10px; }
   .adm-ebar{ position:fixed; bottom:12px; z-index:60; display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:var(--panel-2); border:1px solid var(--amber); box-shadow:0 6px 20px rgba(0,0,0,.45); font-size:13px; }
   .adm-ebar[hidden]{ display:none; }
+  .adm-b td.adm-upcell{ text-align:center; }
+  .adm-b td.adm-upcell input{ width:18px; height:18px; accent-color:var(--amber); }
+  .adm-b tr.adm-uprow td.adm-stick input{ color:var(--amber); }
+  .adm-b tr.adm-uprow td:not(.adm-stick):not(.adm-upcell) input{ opacity:.7; }
+  select option.opt-up{ color:var(--amber); }
   .adm-newrow{ display:block; width:100%; margin-top:8px; padding:8px; border:1px dashed var(--ice); border-radius:10px; background:transparent; color:var(--ice); font-weight:700; font-size:13px; cursor:pointer; }
   .adm-b tr[data-newrow] input:not(.chg){ border-style:dashed; }
   .adm-ebar > span{ flex:1 1 auto; }
@@ -2634,7 +2639,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 2; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 3; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3028,6 +3033,8 @@ const T = {
   backpack_desc_pets: { en: "Enter what you own \u2014 the rest shows what's still needed, across all 15 pets." },
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
+  upcoming_tag: { en: "Upcoming" },
+  upcoming_col: { en: "Upcoming" },
   pet_advanced: { en: "Advanced" },
   material_food: { en: "Food" },
   material_manual: { en: "Manual" },
@@ -4410,7 +4417,7 @@ async function renderOverview(opts = {}) {
       if (RESEARCH_PAGE_COUNTED.t12 === false) return 0;
       const rawStat = STAT_KEY_TO_RAW[statKey];
       if (useMax) {
-        return T12_ITEM_DEFS.filter((d) => d.stat === rawStat).reduce((sum, d) => sum + d.max * (d.pct || 1), 0);
+        return T12_ITEM_DEFS.filter((d) => d.stat === rawStat).reduce((sum, d) => sum + t12Rel(d) * (d.pct || 1), 0);
       }
       if (!T12_STATE || !T12_STATE[calcTroop]) return 0;
       return computeT12Stats(T12_STATE[calcTroop])[rawStat] || 0;
@@ -4426,7 +4433,7 @@ async function renderOverview(opts = {}) {
           const levels = RC_NODES_CACHE[trackName] || [];
           levels.forEach((r) => {
             if (r.stat !== rawStat) return;
-            if (useMax) total += Number(r.stat_pct) || 0;
+            if (useMax) { if (!isUpcomingRow("research_center_nodes", r)) total += Number(r.stat_pct) || 0; }
             else if (!useMax && r.level <= ((RC_STATE && RC_STATE[trackName]) || 0)) total += Number(r.stat_pct) || 0;
           });
         });
@@ -4486,11 +4493,11 @@ async function renderOverview(opts = {}) {
         if (!isPetUnlocked(pet)) return;
         if (useMax) {
           const petRows = PET_REFINE_CACHE[pet];
-          total += Number(petRows[petRows.length - 1][maxField]) * 100;
+          total += Number(petRows[Math.max(0, releasedLastIdx("pet_refine_nodes", petRows))][maxField]) * 100;
         } else {
           const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
           const petRows = PET_REFINE_CACHE[pet];
-          const cap = Math.round(Number(petRows[petRows.length - 1][maxField]) * 10000) / 100;
+          const cap = Math.round(Number(petRows[Math.max(0, releasedLastIdx("pet_refine_nodes", petRows))][maxField]) * 10000) / 100;
           total += Math.min(Number(s[statField]) || 0, cap);
         }
       });
@@ -4506,7 +4513,7 @@ async function renderOverview(opts = {}) {
         if (!isPetUnlocked(pet)) return;
         const levels = PETS_NODES_CACHE[pet];
         if (useMax) {
-          for (let i = levels.length - 1; i >= 0; i--) {
+          for (let i = petMaxIdx(pet); i >= 0; i--) {
             if (levels[i].atk_def_pct != null) {
               total += Number(levels[i].atk_def_pct) * 100;
               break;
@@ -4525,7 +4532,7 @@ async function renderOverview(opts = {}) {
     if (calcKey === "VIP") {
       const rawStat = STAT_KEY_TO_RAW[statKey];
       if (!VIP_ROWS_CACHE || !VIP_ROWS_CACHE.length) return 0;
-      const row = useMax ? VIP_ROWS_CACHE[VIP_ROWS_CACHE.length - 1] : VIP_ROWS_CACHE[VIP_SELECTED_INDEX ?? 0];
+      const row = useMax ? VIP_ROWS_CACHE[Math.max(0, releasedLastIdx("buff_rows", VIP_ROWS_CACHE))] : VIP_ROWS_CACHE[VIP_SELECTED_INDEX ?? 0];
       return row && row[rawStat] != null ? row[rawStat] : 0;
     }
     if (calcKey === "Album Buff") {
@@ -5222,7 +5229,7 @@ async function loadHeroGearData() {
       HERO_GEAR_PIECE_NAMES.forEach((piece) => {
         GEAR_LEVELING_TABLES.forEach((t) => {
           const st = state[troop][piece][t];
-          if (st.to === null) st.to = Math.max(0, HERO_GEAR_TABLES_CACHE[t].length - 1);
+          if (st.to === null) st.to = heroTrackCapIdx(t);
         });
       });
     });
@@ -5288,8 +5295,8 @@ async function renderGearLevelingGroup(target) {
 
   const optsByTrack = {};
   GEAR_LEVELING_TABLES.forEach((t) => {
-    const capIdx = heroTrackCapIdx(t);
-    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => (i <= capIdx ? `<option value="${i}">${esc(rowLabel(r))}</option>` : "")).join("");
+    const capIdx = heroTrackPickIdx(t), rel = heroTrackReleasedIdx(t);
+    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => (i <= capIdx ? `<option value="${i}"${i > rel ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(i > rel))}</option>` : "")).join("");
   });
 
   const tracksEl = document.getElementById("heroGearTracks");
@@ -5628,7 +5635,7 @@ function computeHeroGearStats(stateObj) {
     const statTotals = { Attack: 0, Defense: 0, Health: 0, Lethality: 0 };
     const continuousMax = { Health: 0, Lethality: 0 };
     HERO_GEAR_PIECE_NAMES.forEach((piece) => {
-      const mfIdx = Math.min(stateObj[troop][piece]["Hero Gear Mastery Forging"].from, heroTrackCapIdx("Hero Gear Mastery Forging"));
+      const mfIdx = Math.min(stateObj[troop][piece]["Hero Gear Mastery Forging"].from, heroTrackPickIdx("Hero Gear Mastery Forging"));
       const mfStat = parseStatPct(mfRows[mfIdx]?.stat) || 0;
       // Mastery Forging is a MULTIPLIER on the piece's Enhance stat, not a
       // stat of its own: piece stat = Enhance % x (1 + Mastery %).
@@ -5636,7 +5643,7 @@ function computeHeroGearStats(stateObj) {
       //      with Enhance 200 (+100%) it's +300%.
       const mfMult = 1 + mfStat / 100;
       if (enhRows && enhRows.length) {
-        const enhIdx = Math.min(stateObj[troop][piece]["Enhance Combined"].from, heroTrackCapIdx("Enhance Combined"));
+        const enhIdx = Math.min(stateObj[troop][piece]["Enhance Combined"].from, heroTrackPickIdx("Enhance Combined"));
         const continuousStat = (parseStatPct(enhRows[enhIdx]?.stat) || 0) * mfMult;
         HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece].forEach((stat) => {
           continuousMax[stat] += continuousStat;
@@ -5681,8 +5688,8 @@ function heroGearPieceStats(stateObj, troop, piece, role) {
   const enhRows = HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE["Enhance Combined"];
   if (!mfRows || !mfRows.length || !enhRows || !enhRows.length) return out;
   const st = stateObj[troop][piece];
-  const mfIdx = Math.min(st["Hero Gear Mastery Forging"][role], heroTrackCapIdx("Hero Gear Mastery Forging"));
-  const enhIdx = Math.min(st["Enhance Combined"][role], heroTrackCapIdx("Enhance Combined"));
+  const mfIdx = Math.min(st["Hero Gear Mastery Forging"][role], heroTrackPickIdx("Hero Gear Mastery Forging"));
+  const enhIdx = Math.min(st["Enhance Combined"][role], heroTrackPickIdx("Enhance Combined"));
   const cont = (parseStatPct(enhRows[enhIdx]?.stat) || 0) * (1 + (parseStatPct(mfRows[mfIdx]?.stat) || 0) / 100);
   let mile = 0;
   for (let i = 0; i <= enhIdx; i++) { const v = parseStatPct(enhRows[i].stat2); if (v != null) mile += v; }
@@ -9602,6 +9609,7 @@ function parseStatPct(stat) {
 // Health %) now lives in the `charm_levels` table (Admin-editable), not
 // hardcoded. Loaded once via ensureCharmLevelsData().
 let CHARM_LEVELS = [];
+let CHARM_LEVEL_ROWS = []; // the rows (with ids) for the "Upcoming" ticks
 let CHARM_STEP_COST = {};
 let CHARM_CUMULATIVE = {};
 let CHARM_CUMULATIVE_STAT = {};
@@ -9612,8 +9620,9 @@ async function ensureCharmLevelsData() {
   if (CHARM_LEVELS_LOADED) return CHARM_LEVELS_PROMISE;
   CHARM_LEVELS_LOADED = true;
   CHARM_LEVELS_PROMISE = (async () => {
-  const rows = await sb(`charm_levels?select=level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`);
+  const rows = await sb(`charm_levels?select=id,level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`);
   CHARM_LEVELS = rows.map((r) => r.level_label);
+  CHARM_LEVEL_ROWS = rows;
   CHARM_STEP_COST = {};
   CHARM_CUMULATIVE = {};
   CHARM_CUMULATIVE_STAT = {};
@@ -9643,9 +9652,11 @@ CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] = [0, 1, 2].map(() => ({ cu
 
 // Builds <option> tags for a charm/gear level <select> (up to the user's cap).
 function levelOptions(selected) {
-  const capIdx = charmCapIdx();
-  return CHARM_LEVELS.filter((l, i) => i <= capIdx).map((l) => `<option value="${l}" ${l === selected ? "selected" : ""}>${l === "0" ? "0" + t("none_suffix") : l}</option>`).join("");
+  const capIdx = charmCapIdx(), rel = charmReleasedIdx();
+  return CHARM_LEVELS.filter((l, i) => i <= capIdx).map((l, i) => `<option value="${l}" ${l === selected ? "selected" : ""}${i > rel ? ' class="opt-up"' : ""}>${l === "0" ? "0" + t("none_suffix") : l}${esc(upcomingTag(i > rel))}</option>`).join("");
 }
+// Last charm level that's out in the game.
+function charmReleasedIdx() { return releasedLastIdx("charm_levels", CHARM_LEVEL_ROWS.length === CHARM_LEVELS.length ? CHARM_LEVEL_ROWS : CHARM_LEVELS.map(() => ({}))); }
 // ---- "My max" caps (Chief Charm / Chief Gear / Hero Gear Enhance) ----
 // Saved per user in calc_state "gear_caps": { charm: "11", chief_gear: rowIndex,
 // hero_enhance: 100 | 200 }. Nothing above a cap is selectable or counted,
@@ -9657,9 +9668,8 @@ async function ensureGearCaps() {
 }
 function saveGearCaps() { return saveCalcState("gear_caps", GEAR_CAPS || {}); }
 function charmCapIdx() {
-  const last = CHARM_LEVELS.length - 1;
   const i = GEAR_CAPS ? CHARM_LEVELS.indexOf(String(GEAR_CAPS.charm)) : -1;
-  return i >= 0 ? i : last;
+  return i >= 0 ? i : charmReleasedIdx(); // never set → the last level that's out
 }
 function charmCapLabel() { return CHARM_LEVELS[charmCapIdx()] ?? "0"; }
 function clampCharmLabel(label) {
@@ -9673,10 +9683,11 @@ function clampCharmState() {
   }));
   return changed;
 }
+function chiefGearReleasedIdx() { return Math.max(0, releasedLastIdx("progression_rows", CHIEF_GEAR_ROWS || [])); }
 function chiefGearCapIdx() {
   const last = Math.max(0, (CHIEF_GEAR_ROWS || []).length - 1);
   const c = GEAR_CAPS ? GEAR_CAPS.chief_gear : null;
-  const cap = Number.isInteger(c) && c >= 0 && c <= last ? c : last;
+  const cap = Number.isInteger(c) && c >= 0 && c <= last ? c : chiefGearReleasedIdx(); // never set → last level that's out
   return chiefLegendaryOn() ? cap : Math.min(cap, chiefGearLastEpicIdx());
 }
 // Last row before the Legendary tiers.
@@ -9705,7 +9716,9 @@ function clampChiefGearState() {
   return changed;
 }
 // Enhance Combined rows 0..100 are Enhance, 101..200 Empower (Mithril).
-function heroTrackCapIdx(track) {
+// Highest level that can be picked (the 100 / 200 cap); upcoming levels
+// included, marked in the lists.
+function heroTrackPickIdx(track) {
   const rows = (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [];
   const last = Math.max(0, rows.length - 1);
   if (track !== "Enhance Combined" || !GEAR_CAPS || Number(GEAR_CAPS.hero_enhance) !== 100) return last;
@@ -9713,13 +9726,16 @@ function heroTrackCapIdx(track) {
   rows.forEach((r, i) => { if (Number(r.level) <= 100) idx = i; });
   return idx;
 }
+// "Max": the pick cap, but not past the last level that's out.
+function heroTrackReleasedIdx(track) { return Math.max(0, releasedLastIdx("progression_rows", (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [])); }
+function heroTrackCapIdx(track) { return Math.min(heroTrackPickIdx(track), heroTrackReleasedIdx(track)); }
 function clampHeroGearSets() {
   const changedSets = [];
   HERO_GEAR_SET_NAMES.forEach((setName) => {
     const state = HERO_GEAR_SETS[setName];
     let changed = false;
     HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => GEAR_LEVELING_TABLES.forEach((tr) => {
-      const cap = heroTrackCapIdx(tr), st = state[troop][piece][tr];
+      const cap = heroTrackPickIdx(tr), st = state[troop][piece][tr];
       ["from", "to"].forEach((k) => { if (typeof st[k] === "number" && st[k] > cap) { st[k] = cap; changed = true; } });
     })));
     if (changed) changedSets.push(setName);
@@ -14053,7 +14069,7 @@ async function renderCharmsCalc() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: navLabel("charmscalc"),
-    settings: capSettingsHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.filter((l) => l !== "0").map((l) => `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}>${esc(l)}</option>`).join("")),
+    settings: capSettingsHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.map((l, i) => (l === "0" ? "" : `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}${i > charmReleasedIdx() ? ' class="opt-up"' : ""}>${esc(l)}${esc(upcomingTag(i > charmReleasedIdx()))}</option>`)).join("")),
     amountsId: "charmOwned", needId: "charmNeed", tabsId: "charmTroopTabs",
     mainHtml: `<div id="charmRows"></div>
     <div class="t12x-card" style="margin-top:12px;">
@@ -14254,7 +14270,7 @@ async function loadChiefGearRows() {
   }
   CHIEF_GEAR_ROWS = table.progression_rows || [];
   CHIEF_GEAR_PIECES.forEach((p) => {
-    if (CHIEF_GEAR_STATE[p.key].to === null) CHIEF_GEAR_STATE[p.key].to = CHIEF_GEAR_ROWS.length - 1;
+    if (CHIEF_GEAR_STATE[p.key].to === null) CHIEF_GEAR_STATE[p.key].to = chiefGearReleasedIdx();
   });
   const saved = await loadCalcState("chief_gear");
   if (!saved && !IS_OWNER) CHIEF_GEAR_PIECES.forEach((p) => { CHIEF_GEAR_STATE[p.key].to = CHIEF_GEAR_STATE[p.key].from; });
@@ -14299,7 +14315,7 @@ async function renderChiefGearCalc() {
   content.innerHTML = plxShellHtml({
     title: navLabel("chiefgear"),
     settings: `<label class="t12x-check" style="margin-bottom:8px;"><span>${esc(t("cg_count_leg"))}</span><input type="checkbox" id="chiefLegTick" ${chiefLegendaryOn() ? "checked" : ""} /></label>`
-      + capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => (chiefLegendaryOn() || i <= chiefGearLastEpicIdx() ? `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}>${esc(chiefGearRowLabel(r))}</option>` : "")).join("")),
+      + capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => (chiefLegendaryOn() || i <= chiefGearLastEpicIdx() ? `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}${i > chiefGearReleasedIdx() ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > chiefGearReleasedIdx()))}</option>` : "")).join("")),
     amountsId: "gearOwned", needId: "gearNeed", tabsId: "gearTroopTabs",
     mainHtml: `<div id="gearRows"></div>
     <div class="t12x-card" style="margin-top:12px;">
@@ -14309,7 +14325,7 @@ async function renderChiefGearCalc() {
   });
 
   let opts = "";
-  const buildOpts = () => { opts = rows.map((r, i) => (i <= chiefGearCapIdx() ? `<option value="${i}">${esc(chiefGearRowLabel(r))}</option>` : "")).join(""); };
+  const buildOpts = () => { const rel = chiefGearReleasedIdx(); opts = rows.map((r, i) => (i <= chiefGearCapIdx() ? `<option value="${i}"${i > rel ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > rel))}</option>` : "")).join(""); };
   buildOpts();
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const troopOrder = ["Infantry", "Lancer", "Marksman"];
@@ -15703,9 +15719,9 @@ async function loadExpertsRosterGlobal() {
 // Level, Experts Research and the Dashboard (Level and Research used to
 // re-load them on every visit). Admin edits clear them (dropKeptGameData).
 const EXPERT_NODE_PATHS = {
-  affinity: "expert_affinity_nodes?select=expert,level,affinity_cost,sigil_cost,stat_type,stat_value,stat_type2,stat_value2&order=sort_order",
-  skill: "expert_skill_nodes?select=expert,skill,level,exp_cost,book_cost,stat_type,stat_value&order=sort_order",
-  research: "expert_research_nodes?select=expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,sigil_per_level,stat_type2,stat_value2&order=sort_order",
+  affinity: "expert_affinity_nodes?select=id,expert,level,affinity_cost,sigil_cost,stat_type,stat_value,stat_type2,stat_value2&order=sort_order",
+  skill: "expert_skill_nodes?select=id,expert,skill,level,exp_cost,book_cost,stat_type,stat_value&order=sort_order",
+  research: "expert_research_nodes?select=id,expert,path_number,path_name,level,stat_type,stat_value,sigil_cost,sigil_per_level,stat_type2,stat_value2&order=sort_order",
 };
 let EXPERT_NODE_ROWS = {};
 function loadExpertNodes(kind) {
@@ -15762,7 +15778,7 @@ function computeExpertsTroopStatsGlobal(useMax) {
     if (!rows.length) return;
     let row;
     if (useMax) {
-      row = rows[rows.length - 1];
+      row = rows[Math.max(0, releasedLastIdx("expert_affinity_nodes", rows))];
     } else {
       const lvl = EXPERTS_STATE_GLOBAL[hero] ? Math.floor(Number(EXPERTS_STATE_GLOBAL[hero].current) || 0) : 0;
       row = rows.find((r) => r.level === lvl);
@@ -15784,7 +15800,7 @@ function computeExpertsTroopStatsGlobal(useMax) {
     if (!rows.length) return;
     let row;
     if (useMax) {
-      row = rows[rows.length - 1];
+      row = rows[Math.max(0, releasedLastIdx("expert_skill_nodes", rows))];
     } else {
       const st = EXPERTS_STATE_GLOBAL[hero] && EXPERTS_STATE_GLOBAL[hero].skills && EXPERTS_STATE_GLOBAL[hero].skills[skill];
       const cur = st ? st.current : 0;
@@ -15869,7 +15885,9 @@ function computeExpertsResearchTroopStatsGlobal(calcTroop, useMax) {
     if (!expertsResearchIsUnlockedGlobal(expert)) return;
     expertsResearchPathNumbersGlobal(expert).forEach((p) => {
       if (useMax) {
-        const stats = expertsResearchPathCostGlobal(expert, p, 0, 200);
+        const rows = (EXPERTS_RESEARCH_NODES_GLOBAL[expert][p] || []).slice().sort((a, b) => Number(a.level) - Number(b.level));
+        const ri = releasedLastIdx("expert_research_nodes", rows);
+        const stats = expertsResearchPathCostGlobal(expert, p, 0, ri >= rows.length - 1 ? 200 : ri < 0 ? 0 : Number(rows[ri].level) || 0);
         Object.keys(stats).forEach((k) => (totals[k] += stats[k]));
       } else {
         const st = (EXPERTS_RESEARCH_STATE_GLOBAL[expert] || {})[p] || { current: 0 };
@@ -15903,7 +15921,7 @@ async function ensureVipData() {
       const { columns, rows } = vip;
       const colNameById = Object.fromEntries(columns.map((c) => [c.id, c.name]));
       VIP_ROWS_CACHE = rows.map((r) => {
-        const entry = { name: r.name };
+        const entry = { name: r.name, id: r.id };
         r.buff_cells.forEach((c) => {
           if (c.value == null) return;
           entry[colNameById[c.column_id]] = Number(c.value);
@@ -15942,7 +15960,7 @@ async function renderVipTierTable(target) {
       <div class="t12x-title">${esc(t("vip_tier_title"))}</div>
       <p class="desc" style="font-size:12px; margin:0 0 10px;">${esc(t("vip_tier_desc"))}</p>
       <select id="vipTierSelect" style="width:160px;">
-        ${rows.map((r, i) => `<option value="${i}">${esc(r.name)}</option>`).join("")}
+        ${rows.map((r, i) => `<option value="${i}"${i > releasedLastIdx("buff_rows", rows) ? ' class="opt-up"' : ""}>${esc(r.name)}${esc(upcomingTag(i > releasedLastIdx("buff_rows", rows)))}</option>`).join("")}
       </select>
     </div>
     <div class="t12x-card">
@@ -15956,7 +15974,7 @@ async function renderVipTierTable(target) {
     const r = rows[idx];
     const valByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
     // Of max = the highest tier's value for that stat.
-    const maxOf = (c) => Math.max(0, ...rows.map((row) => Number((row.buff_cells.find((x) => x.column_id === c.id) || {}).value) || 0));
+    const maxOf = (c) => Math.max(0, ...rows.slice(0, releasedLastIdx("buff_rows", rows) + 1).map((row) => Number((row.buff_cells.find((x) => x.column_id === c.id) || {}).value) || 0));
     statsEl.innerHTML = plxStatBoxesHtml(columns.map((c) => ({ label: c.name, val: Number(valByCol[c.id]) || 0, max: maxOf(c), dp: 0 })), true);
   }
   document.getElementById("vipTierSelect").addEventListener("change", async (e) => {
@@ -16085,10 +16103,12 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
 // ============================================================
 async function renderAlbumTundraPage() {
   const seq = RENDER_SEQ;
-  const rows = await sb(`tundra_album_levels?select=stat_type,value_pct&order=sort_order.asc`);
-  const OPTIONS_BY_STAT = { Attack: [], Defense: [] };
+  const rows = await sb(`tundra_album_levels?select=id,stat_type,value_pct&order=sort_order.asc`);
+  const OPTIONS_BY_STAT = { Attack: [], Defense: [] }, REL = { Attack: Infinity, Defense: Infinity };
   rows.forEach((r) => {
-    if (OPTIONS_BY_STAT[r.stat_type]) OPTIONS_BY_STAT[r.stat_type].push(Number(r.value_pct));
+    if (!OPTIONS_BY_STAT[r.stat_type]) return;
+    if (isUpcomingRow("tundra_album_levels", r) && REL[r.stat_type] === Infinity) REL[r.stat_type] = OPTIONS_BY_STAT[r.stat_type].length; // index in [0, ...options]
+    OPTIONS_BY_STAT[r.stat_type].push(Number(r.value_pct));
   });
   const saved = (await loadCalcState("album_tundra")) || { Attack: OPTIONS_BY_STAT.Attack[0] || 0, Defense: OPTIONS_BY_STAT.Defense[0] || 0 };
 
@@ -16097,14 +16117,15 @@ async function renderAlbumTundraPage() {
     <div class="plx-head"><h2>${esc(t("tundra_album_title"))}</h2></div>
     <div class="t12x-card" style="margin-bottom:12px;">
       <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
-      <div class="plx-selrow">${["Attack", "Defense"].map((k) => plxSelectHtml(tStatLabel(k), `album:${k}`, [0, ...OPTIONS_BY_STAT[k]], saved[k])).join("")}</div>
+      <div class="plx-selrow">${["Attack", "Defense"].map((k) => plxSelectHtml(tStatLabel(k), `album:${k}`, [0, ...OPTIONS_BY_STAT[k]], saved[k], REL[k])).join("")}</div>
     </div>
     <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="albumTundraTotals"></div></div>
   `;
 
   function renderTotals() {
-    const maxAttack = OPTIONS_BY_STAT.Attack[OPTIONS_BY_STAT.Attack.length - 1] || 0;
-    const maxDefense = OPTIONS_BY_STAT.Defense[OPTIONS_BY_STAT.Defense.length - 1] || 0;
+    const relMax = (k) => { const o = OPTIONS_BY_STAT[k]; return (REL[k] === Infinity ? o[o.length - 1] : [0, ...o][REL[k]]) || 0; };
+    const maxAttack = relMax("Attack");
+    const maxDefense = relMax("Defense");
     document.getElementById("albumTundraTotals").innerHTML = plxStatBoxesHtml([
       { label: t("total_attack"), val: saved.Attack, max: maxAttack, dp: 0 },
       { label: t("total_defense"), val: saved.Defense, max: maxDefense, dp: 0 },
@@ -16127,13 +16148,14 @@ async function renderAlbumTundraPage() {
 async function renderCollectionGalleryPage() {
   const seq = RENDER_SEQ;
   const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
-  const rows = await sb(`collection_gallery_levels?select=stat_type,value_pct&order=sort_order.asc`);
-  const optionsByStat = {};
+  const rows = await sb(`collection_gallery_levels?select=id,stat_type,value_pct&order=sort_order.asc`);
+  const optionsByStat = {}, relByStat = {};
   rows.forEach((r) => {
     if (!optionsByStat[r.stat_type]) optionsByStat[r.stat_type] = [];
+    if (isUpcomingRow("collection_gallery_levels", r) && relByStat[r.stat_type] == null) relByStat[r.stat_type] = optionsByStat[r.stat_type].length; // index in [0, ...options]
     optionsByStat[r.stat_type].push(Number(r.value_pct));
   });
-  const STATS = STAT_ORDER.filter((k) => optionsByStat[k]).map((key) => ({ key, options: optionsByStat[key] }));
+  const STATS = STAT_ORDER.filter((k) => optionsByStat[k]).map((key) => ({ key, options: optionsByStat[key], rel: relByStat[key] ?? Infinity }));
   const defaults = {};
   STATS.forEach((s) => (defaults[s.key] = s.options[0] || 0));
   const saved = (await loadCalcState("collection_gallery")) || defaults;
@@ -16143,13 +16165,13 @@ async function renderCollectionGalleryPage() {
     <div class="plx-head"><h2>${esc(t("collection_gallery_title"))}</h2></div>
     <div class="t12x-card" style="margin-bottom:12px;">
       <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
-      <div class="plx-selrow">${STATS.map((st) => plxSelectHtml(tStatLabel(st.key), `gallery:${st.key}`, [0, ...st.options], saved[st.key])).join("")}</div>
+      <div class="plx-selrow">${STATS.map((st) => plxSelectHtml(tStatLabel(st.key), `gallery:${st.key}`, [0, ...st.options], saved[st.key], st.rel)).join("")}</div>
     </div>
     <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="collectionGalleryTotals"></div></div>
   `;
 
   function renderTotals() {
-    document.getElementById("collectionGalleryTotals").innerHTML = plxStatBoxesHtml(STATS.map((st) => ({ label: tStatLabel(st.key), val: saved[st.key], max: st.options[st.options.length - 1], dp: 0 })), true);
+    document.getElementById("collectionGalleryTotals").innerHTML = plxStatBoxesHtml(STATS.map((st) => ({ label: tStatLabel(st.key), val: saved[st.key], max: (st.rel === Infinity ? st.options[st.options.length - 1] : [0, ...st.options][st.rel]) || 0, dp: 0 })), true);
   }
   renderTotals();
 
@@ -16342,12 +16364,22 @@ const T12_ITEM_DEFS = [
 ];
 const T12_TROOPS = ["Infantry", "Lancer", "Marksman"];
 let T12_NODES_CACHE = null;
+// Highest T12 level that's out for an item: its max, or the level before the
+// first row of its tier the admin ticked "Upcoming".
+function t12Rel(def) {
+  const ids = upcomingIds("t12_nodes");
+  const tier = T12_NODES_CACHE && T12_NODES_CACHE[def.tier];
+  if (!ids.size || !tier) return def.max;
+  let rel = def.max;
+  Object.values(tier).forEach((r) => { if (r && r.id != null && ids.has(String(r.id))) rel = Math.min(rel, Number(r.level) - 1); });
+  return Math.max(0, rel);
+}
 let T12_STATE = null;
 let T12_TARGET = null; // { troop: { itemKey: targetLevel } } - missing = max
 function t12TargetOf(troop, def) {
   const v = T12_TARGET && T12_TARGET[troop] && T12_TARGET[troop][def.key];
   if (typeof v === "number") return Math.min(def.max, Math.max(0, v));
-  return IS_OWNER ? def.max : Math.min(def.max, Number(T12_STATE && T12_STATE[troop] && T12_STATE[troop][def.key]) || 0);
+  return IS_OWNER ? t12Rel(def) : Math.min(t12Rel(def), Number(T12_STATE && T12_STATE[troop] && T12_STATE[troop][def.key]) || 0);
 }
 
 
@@ -16515,12 +16547,15 @@ let T11_TARGET = null; // { troop: { track: targetLevel } } - missing = max
 function t11TargetOf(troop, track, maxLvl) {
   const v = T11_TARGET && T11_TARGET[troop] && T11_TARGET[troop][track];
   if (typeof v === "number") return Math.min(maxLvl, Math.max(0, v));
-  return IS_OWNER ? maxLvl : Math.min(maxLvl, Number(T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0);
+  const rel = t11Len(troop, track);
+  return IS_OWNER ? rel : Math.min(rel, Number(T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0);
 }
+// Levels of a T11 track that are out in the game (upcoming ones after them).
+function t11Len(troop, track) { return releasedLastIdx("t11_helios_nodes", (T11_NODES_CACHE && T11_NODES_CACHE[troop] && T11_NODES_CACHE[troop][track]) || []) + 1; }
 
 async function ensureT11StateData() {
   if (!T11_NODES_CACHE) {
-    const rows = await sb(`t11_helios_nodes?select=track,troop,level,meat,wood,coal,iron,steel,refined_fc,fc_shard,time_hours,stat,stat_pct&order=troop,sort_order`);
+    const rows = await sb(`t11_helios_nodes?select=id,track,troop,level,meat,wood,coal,iron,steel,refined_fc,fc_shard,time_hours,stat,stat_pct&order=troop,sort_order`);
     T11_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!T11_NODES_CACHE[r.troop]) T11_NODES_CACHE[r.troop] = {};
@@ -16545,7 +16580,7 @@ function computeT11Stats(troop, useMax) {
   Object.entries(tracks).forEach(([track, levels]) => {
     const cur = useMax ? Infinity : ((T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0);
     levels.forEach((r) => {
-      if (r.level > cur || !r.stat) return;
+      if (r.level > cur || !r.stat || (useMax && isUpcomingRow("t11_helios_nodes", r))) return;
       stats[r.stat] += Number(r.stat_pct) || 0;
     });
   });
@@ -16590,13 +16625,13 @@ async function renderT11HeliosPage() {
     const allMaxed = T11_TROOPS.every((troop) => {
       const tracks = T11_NODES_CACHE[troop];
       if (!tracks) return true;
-      return Object.keys(tracks).every((track) => (T11_STATE[troop][track] || 0) >= tracks[track].length);
+      return Object.keys(tracks).every((track) => (T11_STATE[troop][track] || 0) >= t11Len(troop, track));
     });
     T11_TROOPS.forEach((troop) => {
       const tracks = T11_NODES_CACHE[troop];
       if (!tracks) return;
       Object.keys(tracks).forEach((track) => {
-        T11_STATE[troop][track] = allMaxed ? 0 : tracks[track].length;
+        T11_STATE[troop][track] = allMaxed ? 0 : t11Len(troop, track);
       });
     });
     saveCalcState("t11_helios", T11_STATE);
@@ -16656,7 +16691,7 @@ async function renderT11HeliosPage() {
   }
   const donePct = (troops) => {
     let cur = 0, max = 0;
-    troops.forEach((troop) => Object.entries(T11_NODES_CACHE[troop] || {}).forEach(([track, levels]) => { cur += Math.min(levels.length, T11_STATE[troop][track] || 0); max += levels.length; }));
+    troops.forEach((troop) => Object.entries(T11_NODES_CACHE[troop] || {}).forEach(([track]) => { const n = t11Len(troop, track); cur += Math.min(n, T11_STATE[troop][track] || 0); max += n; }));
     return max ? Math.floor((cur / max) * 100) : 0;
   };
   const costLine = (n) => [["steel", t("resource_steel")], ["fc_shard", t("t12x_shard")]].filter(([k]) => n[k] > 0).map(([k, l]) => `${l} ${shortAmount(n[k])}`).join(" · ");
@@ -16710,7 +16745,7 @@ async function renderT11HeliosPage() {
     const box = (k, v, sub) => `<div><div><span>${esc(k)}</span><b>${v}</b><small>${esc(sub)}</small></div></div>`;
     const node = (track) => {
       const levels = tracks[track];
-      return plxNodeHtml({ key: track, label: dataName(track), cur: T11_STATE[troop][track] || 0, max: levels.length, target: t11TargetOf(troop, track, levels.length), cost: costLine(computeNeeded(troop, track)) });
+      return plxNodeHtml({ key: track, label: dataName(track), cur: T11_STATE[troop][track] || 0, max: levels.length, rel: t11Len(troop, track), target: t11TargetOf(troop, track, levels.length), cost: costLine(computeNeeded(troop, track)) });
     };
     const names = Object.keys(tracks);
     const all = names.reduce((a, tr) => a + tracks[tr].length, 0), cur = names.reduce((a, tr) => a + Math.min(tracks[tr].length, T11_STATE[troop][tr] || 0), 0);
@@ -16735,8 +16770,8 @@ async function renderT11HeliosPage() {
       const dec = e.target.closest("[data-pxdec]"), inc = e.target.closest("[data-pxinc]");
       if (dec || inc) { const k = (dec || inc).dataset[dec ? "pxdec" : "pxinc"]; setLevel(k, (T11_STATE[troop][k] || 0) + (dec ? -1 : 1)); return; }
       if (e.target.closest("[data-pxmax]")) {
-        const maxed = names.every((tr) => (T11_STATE[troop][tr] || 0) >= tracks[tr].length);
-        names.forEach((tr) => { T11_STATE[troop][tr] = maxed ? 0 : tracks[tr].length; });
+        const maxed = names.every((tr) => (T11_STATE[troop][tr] || 0) >= t11Len(troop, tr));
+        names.forEach((tr) => { T11_STATE[troop][tr] = maxed ? 0 : t11Len(troop, tr); });
         saveCalcState("t11_helios", T11_STATE);
         renderGrandTotal();
         render();
@@ -16777,8 +16812,10 @@ let RC_TARGET = null; // { "Weapons Prep I": targetLevel } - missing = max (calc
 function rcTargetOf(track) {
   const max = (RC_NODES_CACHE && RC_NODES_CACHE[track] || []).length;
   const v = RC_TARGET && RC_TARGET[track];
-  return typeof v === "number" ? Math.max(0, Math.min(max, v)) : max;
+  return typeof v === "number" ? Math.max(0, Math.min(max, v)) : rcLen(track);
 }
+// Levels of a track that are out in the game (upcoming ones after them).
+function rcLen(track) { return releasedLastIdx("research_center_nodes", (RC_NODES_CACHE && RC_NODES_CACHE[track]) || []) + 1; }
 
 async function ensureRCStateData() {
   if (RC_STATE) return;
@@ -16788,7 +16825,7 @@ async function ensureRCStateData() {
 
 async function ensureRCData() {
   if (!RC_NODES_CACHE) {
-    const rows = await sb(`research_center_nodes?select=track,level,meat,wood,coal,iron,steel,time_hours,power,troop,stat,stat_pct,buff_text&order=track,level`);
+    const rows = await sb(`research_center_nodes?select=id,track,level,meat,wood,coal,iron,steel,time_hours,power,troop,stat,stat_pct,buff_text&order=track,level`);
     RC_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!RC_NODES_CACHE[r.track]) RC_NODES_CACHE[r.track] = [];
@@ -16852,6 +16889,8 @@ function petsStateFromSaved(saved, legacy) {
   });
   return out;
 }
+// Last level that's out in the game (upcoming levels after it).
+function petMaxIdx(pet) { return releasedLastIdx(PET_LEVELS_TABLE, (PETS_NODES_CACHE && PETS_NODES_CACHE[pet]) || []); }
 function savePetsState() {
   const out = {};
   Object.keys(PETS_STATE || {}).forEach((pet) => {
@@ -16922,10 +16961,10 @@ async function ensurePetsData() {
   // Start the refine table download now, so it runs alongside pets_nodes.
   const refineRowsPromise = PET_REFINE_CACHE
     ? null
-    : sb(`pet_refine_nodes?select=pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
+    : sb(`pet_refine_nodes?select=id,pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
   if (refineRowsPromise) refineRowsPromise.catch(() => {});
   if (!PETS_NODES_CACHE) {
-    const rows = await sb(`${PET_LEVELS_TABLE}?select=pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
+    const rows = await sb(`${PET_LEVELS_TABLE}?select=id,pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
     PETS_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!PETS_NODES_CACHE[r.pet]) PETS_NODES_CACHE[r.pet] = [];
@@ -17068,6 +17107,29 @@ function pageNoteFor(tab) {
   return String(n[LANG] || n.en || "").trim();
 }
 function siteConfig(key, fallback) { return (SITE_CONFIG && SITE_CONFIG[key] != null) ? SITE_CONFIG[key] : fallback; }
+// Upcoming levels (owner, 16 Oct 2026): rows the admin ticks "Upcoming" in a
+// level table (announced, not in the game yet). site_config
+// "upcoming_levels" = { table: [row ids] }. They stay in the lists, marked
+// "Upcoming", and can be picked to plan ahead, but "Max" / "Max everything",
+// the Dashboard max and the default "My max" stop at the last released level.
+let UPCOMING_MEMO = { src: null, sets: {} };
+function upcomingIds(table) {
+  const m = siteConfig("upcoming_levels", null);
+  if (UPCOMING_MEMO.src !== m) UPCOMING_MEMO = { src: m, sets: {} };
+  if (!UPCOMING_MEMO.sets[table]) UPCOMING_MEMO.sets[table] = new Set(m && Array.isArray(m[table]) ? m[table].map(String) : []);
+  return UPCOMING_MEMO.sets[table];
+}
+function isUpcomingRow(table, row) { return !!row && row.id != null && upcomingIds(table).has(String(row.id)); }
+// Index of the last released row (everything from the first upcoming row on
+// counts as upcoming), or the last row when nothing is upcoming.
+function releasedLastIdx(table, rows) {
+  const ids = upcomingIds(table);
+  if (!ids.size) return rows.length - 1;
+  const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
+  return i < 0 ? rows.length - 1 : Math.max(-1, i - 1);
+}
+function afterUpcomingChange() { if (typeof budgetInvalidate === "function") budgetInvalidate(); if (typeof dashDataChanged === "function") dashDataChanged(); }
+function upcomingTag(isUp) { return isUp ? ` · ${t("upcoming_tag")}` : ""; }
 // What visitors may open read-only (Admin -> Visibility -> Visitor access).
 function visitorCan(what) {
   if (IS_OWNER) return true;
@@ -17228,6 +17290,13 @@ async function renderExpertsResearchPage() {
     }
   });
   const EXPERTS_IN_ORDER = EXPERTS_IN_ORDER_GLOBAL.filter((e) => !hiddenForVisitor("experts", e));
+  // Highest level that's out on a path (200 unless the admin ticked later
+  // rows "Upcoming").
+  function pathTop(expert, p) {
+    const rows = ((RESEARCH_CACHE[expert] || {})[p] || []).slice().sort((a, b) => Number(a.level) - Number(b.level));
+    const i = releasedLastIdx("expert_research_nodes", rows);
+    return i >= rows.length - 1 ? 200 : i < 0 ? 0 : Number(rows[i].level) || 0;
+  }
   function pathNumbersFor(expert) {
     return Object.keys(RESEARCH_CACHE[expert] || {})
       .map(Number)
@@ -17368,7 +17437,7 @@ async function renderExpertsResearchPage() {
         const st = saved[expert][p];
         const { stats } = pathCost(expert, p, 0, st.current);
         Object.keys(stats).forEach((k) => (totals[k] += stats[k]));
-        const { stats: mStats } = pathCost(expert, p, 0, 200);
+        const { stats: mStats } = pathCost(expert, p, 0, pathTop(expert, p));
         Object.keys(mStats).forEach((k) => (maxTotals[k] += mStats[k]));
       });
     });
@@ -17449,9 +17518,9 @@ async function renderExpertsResearchPage() {
 
   const gridEl = document.getElementById("expResearchGrid");
   function pathLevelOpts(expert, pathNum, selected) {
-    const opts = [];
+    const opts = [], top = pathTop(expert, pathNum);
     for (let n = 0; n <= 200; n++) {
-      opts.push(`<option value="${n}" ${n === selected ? "selected" : ""}>${n}</option>`);
+      opts.push(`<option value="${n}" ${n === selected ? "selected" : ""}${n > top ? ' class="opt-up"' : ""}>${n}${esc(upcomingTag(n > top))}</option>`);
     }
     return opts.join("");
   }
@@ -17611,8 +17680,9 @@ async function renderExpertsResearchPage() {
         btn.addEventListener("click", async () => {
           const expert = btn.dataset.expresearchmax;
           const paths = pathNumbersFor(expert);
-          const bothMaxed = paths.every((p) => saved[expert][p].current >= 200 && saved[expert][p].desired >= 200);
-          const currentZeroTargetMaxed = paths.every((p) => saved[expert][p].current <= 0 && saved[expert][p].desired >= 200);
+          const top = (p) => pathTop(expert, p);
+          const bothMaxed = paths.every((p) => saved[expert][p].current >= top(p) && saved[expert][p].desired >= top(p));
+          const currentZeroTargetMaxed = paths.every((p) => saved[expert][p].current <= 0 && saved[expert][p].desired >= top(p));
           const bothZero = paths.every((p) => saved[expert][p].current <= 0 && saved[expert][p].desired <= 0);
           // Cycle: (0,0) -> (200,200) -> (0,200) -> (0,0) -> ...
           let nextCurrent, nextTarget;
@@ -17631,8 +17701,8 @@ async function renderExpertsResearchPage() {
             nextTarget = 200;
           }
           paths.forEach((p) => {
-            saved[expert][p].current = nextCurrent;
-            saved[expert][p].desired = nextTarget;
+            saved[expert][p].current = nextCurrent === 200 ? top(p) : nextCurrent;
+            saved[expert][p].desired = nextTarget === 200 ? top(p) : nextTarget;
           });
           saveCalcState("experts_research", saved);
           renderTotals();
@@ -17706,7 +17776,13 @@ async function renderExpertsPage() {
     if (!AFFINITY_CACHE[r.expert]) AFFINITY_CACHE[r.expert] = [];
     AFFINITY_CACHE[r.expert].push(r);
   });
+  // "Max" stops at the last level that's out; the lists go on to the
+  // upcoming levels (marked) so people can plan ahead.
   function skillMaxLevel(hero, skill) {
+    const rows = SKILL_CACHE[`${hero}|${skill}`];
+    return rows ? releasedLastIdx("expert_skill_nodes", rows) + 1 : EXPERT_SKILL_MAX_LEVEL;
+  }
+  function skillPickMax(hero, skill) {
     const rows = SKILL_CACHE[`${hero}|${skill}`];
     return rows ? rows.length : EXPERT_SKILL_MAX_LEVEL;
   }
@@ -17764,8 +17840,15 @@ async function renderExpertsPage() {
     const top = rows.reduce((m, r) => Math.max(m, Number(r.level) || 0), 0);
     return top || EXPERT_HERO_MAX_LEVEL;
   }
+  // Top level that's out in the game (upcoming rows after it).
+  function heroReleasedTop(hero) {
+    const rows = AFFINITY_CACHE[hero] || [];
+    const idx = releasedLastIdx("expert_affinity_nodes", rows);
+    if (idx >= rows.length - 1) return heroTopLevel(hero);
+    return rows.slice(0, idx + 1).reduce((m, r) => Math.max(m, Number(r.level) || 0), 0);
+  }
   function heroMaxLevelValue(hero) {
-    const top = heroTopLevel(hero);
+    const top = heroReleasedTop(hero);
     return heroSigilLevel(hero, top) ? top + 0.1 : top;
   }
   function heroCost(hero, fromLevel, toLevel) {
@@ -17783,14 +17866,15 @@ async function renderExpertsPage() {
   // Level dropdown for one hero: every level, plus a ".1" entry right after
   // each level that costs sigils (that entry means its Advance is paid).
   function heroLevelOpts(hero, selected) {
-    const top = heroTopLevel(hero);
+    const top = heroTopLevel(hero), rel = heroReleasedTop(hero);
     const sel = Number(selected) || 0;
     const out = [];
+    const up = (n) => (n > rel ? ' class="opt-up"' : "");
     for (let n = 0; n <= top; n++) {
-      out.push(`<option value="${n}" ${n === sel ? "selected" : ""}>${n}</option>`);
+      out.push(`<option value="${n}" ${n === sel ? "selected" : ""}${up(n)}>${n}${esc(upcomingTag(n > rel))}</option>`);
       if (n > 0 && heroSigilLevel(hero, n)) {
         const v = n + 0.1;
-        out.push(`<option value="${v.toFixed(1)}" ${Math.abs(sel - v) < 0.05 ? "selected" : ""}>${v.toFixed(1)}</option>`);
+        out.push(`<option value="${v.toFixed(1)}" ${Math.abs(sel - v) < 0.05 ? "selected" : ""}${up(n)}>${v.toFixed(1)}${esc(upcomingTag(n > rel))}</option>`);
       }
     }
     return out.join("");
@@ -17887,7 +17971,7 @@ async function renderExpertsPage() {
     const totals = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     EXPERTS_SHOWN.forEach((e) => {
       if (!isExpertUnlocked(e.key)) return;
-      const rows = AFFINITY_CACHE[e.key] || [];
+      const rows = (AFFINITY_CACHE[e.key] || []).slice(0, releasedLastIdx("expert_affinity_nodes", AFFINITY_CACHE[e.key] || []) + 1);
       if (!rows.length) return;
       // True peak across all levels, not just the last row - some curves dip at
       // level 100 because of a relationship-tier reset.
@@ -17911,7 +17995,7 @@ async function renderExpertsPage() {
     if (!isExpertUnlocked(hero)) return;
     const rows = SKILL_CACHE[`${hero}|${skill}`];
     if (!rows || !rows.length) return;
-    const last = rows[rows.length - 1];
+    const last = rows[Math.max(0, releasedLastIdx("expert_skill_nodes", rows))];
     if (!last.stat_type) return;
     last.stat_type.split(",").forEach((statName) => {
       if (totals[statName] != null) totals[statName] += Number(last.stat_value) || 0;
@@ -17947,7 +18031,7 @@ async function renderExpertsPage() {
   function addTalentMaxToTotals(totals, hero) {
     if (!isExpertUnlocked(hero)) return;
     const rows = AFFINITY_CACHE[hero] || [];
-    const last = rows[rows.length - 1];
+    const last = rows[Math.max(0, releasedLastIdx("expert_affinity_nodes", rows))];
     if (last && last.stat_type2) {
       last.stat_type2.split(",").forEach((statName) => {
         if (totals[statName] != null) totals[statName] += Number(last.stat_value2) || 0;
@@ -18076,9 +18160,9 @@ async function renderExpertsPage() {
   }
 
   const gridEl = document.getElementById("expertsGrid");
-  function levelOpts(max, selected) {
+  function levelOpts(max, selected, rel = max) {
     return Array.from({ length: max + 1 }, (_, i) => i)
-      .map((n) => `<option value="${n}" ${n === selected ? "selected" : ""}>${n}</option>`)
+      .map((n) => `<option value="${n}" ${n === selected ? "selected" : ""}${n > rel ? ' class="opt-up"' : ""}>${n}${esc(upcomingTag(n > rel))}</option>`)
       .join("");
   }
   function levelStatLine(hero, level) {
@@ -18166,8 +18250,8 @@ async function renderExpertsPage() {
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
               <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(sk))}</span>
               <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
-                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(max, Math.min(st.current, max))}</select>
-                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(max, Math.min(st.desired, max))}</select>
+                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.current, skillPickMax(e.key, sk)), max)}</select>
+                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.desired, skillPickMax(e.key, sk)), max)}</select>
               </div>
             </div>
             ${
@@ -18498,9 +18582,10 @@ async function renderRefinePage() {
     renderTotals();
   });
 
+  // The highest stage that's out (stages ticked "Upcoming" in Admin after it).
   function maxRow(pet) {
     const rows = PET_REFINE_CACHE[pet];
-    return rows[rows.length - 1];
+    return rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))];
   }
   let refineAdvOpen = false; // the Advanced refine calculator window is open
   function petState(pet) {
@@ -18819,7 +18904,7 @@ async function renderPetsDataPage() {
     const s = PETS_STATE[pet];
     if (s && typeof s === "object") return s;
     // migrate old single-index state (or default) to {from, to}
-    const maxIdx = PETS_NODES_CACHE[pet].length - 1;
+    const maxIdx = petMaxIdx(pet);
     return { from: -1, to: IS_OWNER ? maxIdx : -1 };
   }
 
@@ -18845,7 +18930,7 @@ async function renderPetsDataPage() {
   }
   function maxAtkDef(pet) {
     const levels = PETS_NODES_CACHE[pet];
-    for (let i = levels.length - 1; i >= 0; i--) {
+    for (let i = petMaxIdx(pet); i >= 0; i--) {
       if (levels[i].atk_def_pct != null) return Number(levels[i].atk_def_pct) * 100;
     }
     return 0;
@@ -18896,13 +18981,14 @@ async function renderPetsDataPage() {
     const unlocked = isPetUnlocked(pet);
     // Every level, in groups of 10 (the % is in the Troops Stats box); "N.1" rows are the
     // Advancement at N ("Lv 50 Advanced (Max)").
+    const relMax = petMaxIdx(pet);
     const levelOpts = (selected) => {
       let html = "", group = -1;
       levels.forEach((r, i) => {
         const lab = String(r.level_label), adv = /\.1$/.test(lab), n = parseInt(lab, 10) || 0;
         const g = Math.floor((Math.max(n, 1) - 1) / 10);
         if (g !== group && !adv) { if (group >= 0) html += "</optgroup>"; group = g; html += `<optgroup label="${esc(t("level_prefix"))} ${g * 10 + 1} – ${g * 10 + 10}">`; }
-        html += `<option value="${i}" ${i === selected ? "selected" : ""}>${esc(t("level_prefix"))} ${n}${adv ? " " + esc(t("pet_advanced")) : ""}${i === levels.length - 1 ? esc(t("max_suffix")) : ""}</option>`;
+        html += `<option value="${i}" ${i === selected ? "selected" : ""}${i > relMax ? ' class="opt-up"' : ""}>${esc(t("level_prefix"))} ${n}${adv ? " " + esc(t("pet_advanced")) : ""}${i === relMax ? esc(t("max_suffix")) : ""}${esc(upcomingTag(i > relMax))}</option>`;
       });
       return html + (group >= 0 ? "</optgroup>" : "");
     };
@@ -18975,9 +19061,9 @@ async function renderPetsDataPage() {
   }
 
   document.getElementById("petsMaxAllBtn").addEventListener("click", async () => {
-    const allMaxed = petNames.every((pet) => getState(pet).from >= PETS_NODES_CACHE[pet].length - 1);
+    const allMaxed = petNames.every((pet) => getState(pet).from >= petMaxIdx(pet));
     petNames.forEach((pet) => {
-      const maxIdx = PETS_NODES_CACHE[pet].length - 1;
+      const maxIdx = petMaxIdx(pet);
       PETS_STATE[pet] = allMaxed ? { from: -1, to: maxIdx } : { from: maxIdx, to: maxIdx };
     });
     savePetsState();
@@ -19014,9 +19100,9 @@ async function renderResearchCenterPage() {
   // Same as before: max every track, or reset all if already maxed.
   const maxEverything = () => {
     const tracks = Object.keys(RC_NODES_CACHE);
-    const allMaxed = tracks.every((track) => (RC_STATE[track] || 0) >= RC_NODES_CACHE[track].length);
+    const allMaxed = tracks.every((track) => (RC_STATE[track] || 0) >= rcLen(track));
     tracks.forEach((track) => {
-      RC_STATE[track] = allMaxed ? 0 : RC_NODES_CACHE[track].length;
+      RC_STATE[track] = allMaxed ? 0 : rcLen(track);
     });
     saveCalcState("research_center", RC_STATE);
     renderTotals();
@@ -19057,7 +19143,7 @@ async function renderResearchCenterPage() {
   const tracksOf = (bases) => bases.flatMap((base) => RC_TIERS.map((tier) => `${base} ${tier}`)).filter((tr) => RC_NODES_CACHE[tr]);
   const pctOf = (tracks) => {
     let cur = 0, max = 0;
-    tracks.forEach((tr) => { cur += Math.min(RC_NODES_CACHE[tr].length, RC_STATE[tr] || 0); max += RC_NODES_CACHE[tr].length; });
+    tracks.forEach((tr) => { cur += Math.min(rcLen(tr), RC_STATE[tr] || 0); max += rcLen(tr); });
     return max ? Math.floor((cur / max) * 100) : 0;
   };
   const sumNeed = (tracks) => tracks.reduce((a, tr) => { const n = computeNeeded(tr); Object.keys(n).forEach((k) => { a[k] = (a[k] || 0) + n[k]; }); return a; }, {});
@@ -19109,7 +19195,7 @@ async function renderResearchCenterPage() {
         const open = rcOpen[base] !== undefined ? rcOpen[base] : pct < 100;
         const left = costLine(sumNeed(tracks));
         return plxSectionHtml({ key: base, title: dataName(base), sub: `${t("t12x_nodes").replace("{n}", tracks.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left}`, pct, open, maxKey: base,
-          body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, target: rcTargetOf(tr), cost: costLine(computeNeeded(tr)) })).join("") });
+          body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, rel: rcLen(tr), target: rcTargetOf(tr), cost: costLine(computeNeeded(tr)) })).join("") });
       }).join("")}`;
     wireTroopSwipe(groupsEl, RC_GROUPS, rcActive, (g) => { rcActive = g; renderGroups(); });
     const setLevel = (tr, v) => {
@@ -19133,8 +19219,8 @@ async function renderResearchCenterPage() {
       const mx = e.target.closest("[data-pxmax]");
       if (mx) {
         const tracks = tracksOf([mx.dataset.pxmax]);
-        const maxed = tracks.every((tr) => (RC_STATE[tr] || 0) >= RC_NODES_CACHE[tr].length);
-        tracks.forEach((tr) => { RC_STATE[tr] = maxed ? 0 : RC_NODES_CACHE[tr].length; });
+        const maxed = tracks.every((tr) => (RC_STATE[tr] || 0) >= rcLen(tr));
+        tracks.forEach((tr) => { RC_STATE[tr] = maxed ? 0 : rcLen(tr); });
         saveCalcState("research_center", RC_STATE);
         renderTotals();
         renderGroups();
@@ -19192,8 +19278,9 @@ function plxPieceStatHtml(list) {
   return list.map((x) => `<span><em>${esc(x.label)}</em> <b>${f(x.now)}</b>${x.target > x.now + 1e-9 ? ` <i>&rarr; ${f(x.target)}</i>` : ""}</span>`).join("");
 }
 // One labelled level dropdown (+0% … max); several sit side by side in .plx-selrow.
-function plxSelectHtml(label, key, values, selected) {
-  return `<label class="plx-sel"><span>${esc(label)}</span><select data-plxsel="${esc(key)}">${values.map((v) => `<option value="${v}" ${Number(v) === Number(selected) ? "selected" : ""}>+${v}%</option>`).join("")}</select></label>`;
+// upAfter: options after this index are upcoming (marked).
+function plxSelectHtml(label, key, values, selected, upAfter = Infinity) {
+  return `<label class="plx-sel"><span>${esc(label)}</span><select data-plxsel="${esc(key)}">${values.map((v, i) => `<option value="${v}" ${Number(v) === Number(selected) ? "selected" : ""}${i > upAfter ? ' class="opt-up"' : ""}>+${v}%${esc(upcomingTag(i > upAfter))}</option>`).join("")}</select></label>`;
 }
 function wirePlxSelects(root, onPick) {
   root.querySelectorAll("select[data-plxsel]").forEach((sel) => sel.addEventListener("change", () => onPick(sel.dataset.plxsel, Number(sel.value))));
@@ -19294,9 +19381,11 @@ function plxTimeHtml(rawHours, calcKey) {
 }
 // One level node: NOW − n + … TARGET [select] / max, a note and a bar.
 // target === null: no target (the page plans to max).
+// o.rel: the last level that's out (levels after it are upcoming: still in
+// the target list, marked; "done" and "/ N" use rel).
 function plxNodeHtml(o) {
-  const { key, label, cur, max } = o, target = o.target;
-  const opts = target == null ? "" : Array.from({ length: max + 1 }, (_, i) => `<option value="${i}" ${i === target ? "selected" : ""}>${i}</option>`).join("");
+  const { key, label, cur } = o, target = o.target, all = o.max, max = o.rel != null ? Math.min(o.rel, o.max) : o.max;
+  const opts = target == null ? "" : Array.from({ length: all + 1 }, (_, i) => `<option value="${i}" ${i === target ? "selected" : ""}${i > max ? ' class="opt-up"' : ""}>${i}${esc(upcomingTag(i > max))}</option>`).join("");
   const note = cur >= max ? `<span class="t12x-done">&#10003; ${esc(t("t12x_done"))}</span>` : target != null && target <= cur ? `<span class="meta">${esc(t("t12x_not_planned"))}</span>` : o.cost ? `<span class="meta">${esc(o.cost)}</span>` : "";
   return `<div class="t12x-node" data-pxnode="${esc(key)}">
         <div class="t12x-nm"><span>${esc(label)}</span>${note}</div>
@@ -19304,7 +19393,7 @@ function plxNodeHtml(o) {
           <span class="t12x-grp"><span class="t12x-lbl">${esc(t("t12x_now"))}</span>
           <button type="button" data-pxdec="${esc(key)}" aria-label="−" ${cur <= 0 ? "disabled" : ""}>&minus;</button>
           <b title="${esc(t("research_current"))}">${cur}</b>
-          <button type="button" data-pxinc="${esc(key)}" aria-label="+" ${cur >= max ? "disabled" : ""}>+</button></span>
+          <button type="button" data-pxinc="${esc(key)}" aria-label="+" ${cur >= all ? "disabled" : ""}>+</button></span>
           ${target == null ? `<span class="t12x-grp t12x-tgt"><span class="meta" style="white-space:nowrap;">/ ${max}</span></span>` : `<span class="t12x-grp t12x-tgt"><span class="t12x-lbl">${esc(t("t12x_target"))}</span>
           <select data-pxtarget="${esc(key)}" title="${esc(t("research_target"))}"${target < cur ? ` style="border-color:var(--danger);"` : ""}>${opts}</select>
           <span class="meta" style="white-space:nowrap;">/ ${max}</span></span>`}
@@ -19332,7 +19421,7 @@ function plxTabsHtml(list, active, colors, sub, attr) {
 async function renderT12ResearchPage() {
   const seq = RENDER_SEQ;
   if (!T12_NODES_CACHE) {
-    const rows = await sb(`t12_nodes?select=tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
+    const rows = await sb(`t12_nodes?select=id,tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
     T12_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!T12_NODES_CACHE[r.tier]) T12_NODES_CACHE[r.tier] = {};
@@ -19377,10 +19466,10 @@ async function renderT12ResearchPage() {
   // Same as before: max every troop's current levels, or reset them all if
   // everything is already maxed.
   const maxEverything = () => {
-    const allMaxed = T12_TROOPS.every((troop) => T12_ITEM_DEFS.every((def) => (T12_STATE[troop][def.key] || 0) >= def.max));
+    const allMaxed = T12_TROOPS.every((troop) => T12_ITEM_DEFS.every((def) => (T12_STATE[troop][def.key] || 0) >= t12Rel(def)));
     T12_TROOPS.forEach((troop) => {
       T12_ITEM_DEFS.forEach((def) => {
-        T12_STATE[troop][def.key] = allMaxed ? 0 : def.max;
+        T12_STATE[troop][def.key] = allMaxed ? 0 : t12Rel(def);
       });
     });
     saveCalcState("t12_research", T12_STATE);
@@ -19396,7 +19485,7 @@ async function renderT12ResearchPage() {
     const totals = { steel: 0, refined_fc: 0, fc_shard: 0, meat_wood: 0, coal: 0, iron: 0, time_hours: 0 };
     (defs || T12_ITEM_DEFS).forEach((def) => {
       const cur = troopState[def.key] || 0;
-      const target = troop ? t12TargetOf(troop, def) : def.max;
+      const target = troop ? t12TargetOf(troop, def) : t12Rel(def);
       const tierRows = T12_NODES_CACHE[def.tier] || {};
       for (let lv = cur + 1; lv <= target; lv++) {
         const r = tierRows[lv];
@@ -19415,7 +19504,7 @@ async function renderT12ResearchPage() {
   // Share of levels done (current level out of max), for some troops/nodes.
   const donePct = (troops, defs) => {
     let cur = 0, max = 0;
-    troops.forEach((troop) => (defs || T12_ITEM_DEFS).forEach((def) => { cur += Math.min(def.max, T12_STATE[troop][def.key] || 0); max += def.max; }));
+    troops.forEach((troop) => (defs || T12_ITEM_DEFS).forEach((def) => { cur += Math.min(t12Rel(def), T12_STATE[troop][def.key] || 0); max += t12Rel(def); }));
     return max ? Math.floor((cur / max) * 100) : 0;
   };
   const costLine = (n) => [["steel", t("resource_steel")], ["refined_fc", "RFC"], ["fc_shard", t("t12x_shard")]].filter(([k]) => n[k] > 0).map(([k, l]) => `${l} ${shortAmount(n[k])}`).join(" · ");
@@ -19473,7 +19562,7 @@ async function renderT12ResearchPage() {
     const groups = [...new Set(T12_ITEM_DEFS.map((d) => d.group))];
     const statMax = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
     T12_ITEM_DEFS.forEach((def) => {
-      if (def.stat) statMax[def.stat] += def.max * (def.pct || 1);
+      if (def.stat) statMax[def.stat] += t12Rel(def) * (def.pct || 1);
     });
     const headHtml = () => {
       const stats = computeT12Stats(T12_STATE[troop]);
@@ -19488,8 +19577,9 @@ async function renderT12ResearchPage() {
     const nodeHtml = (def) => {
       const cur = T12_STATE[troop][def.key] || 0, target = t12TargetOf(troop, def);
       const n = computeNeeded(T12_STATE[troop], troop, [def]);
-      const opts = Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === target ? "selected" : ""}>${i}</option>`).join("");
-      const note = cur >= def.max ? `<span class="t12x-done">&#10003; ${esc(t("t12x_done"))}</span>` : target <= cur ? `<span class="meta">${esc(t("t12x_not_planned"))}</span>` : `<span class="meta">${esc(costLine(n))}</span>`;
+      const rel = t12Rel(def);
+      const opts = Array.from({ length: def.max + 1 }, (_, i) => `<option value="${i}" ${i === target ? "selected" : ""}${i > rel ? ' class="opt-up"' : ""}>${i}${esc(upcomingTag(i > rel))}</option>`).join("");
+      const note = cur >= rel ? `<span class="t12x-done">&#10003; ${esc(t("t12x_done"))}</span>` : target <= cur ? `<span class="meta">${esc(t("t12x_not_planned"))}</span>` : `<span class="meta">${esc(costLine(n))}</span>`;
       return `<div class="t12x-node" data-t12node="${def.key}">
         <div class="t12x-nm"><span>${esc(tT12Label(def.label))}</span>${note}</div>
         <div class="t12x-step">
@@ -19499,15 +19589,15 @@ async function renderT12ResearchPage() {
           <button type="button" data-t12inc="${def.key}" aria-label="+" ${cur >= def.max ? "disabled" : ""}>+</button></span>
           <span class="t12x-grp t12x-tgt"><span class="t12x-lbl">${esc(t("t12x_target"))}</span>
           <select data-t12target="${def.key}" title="${esc(t("research_target"))}"${target < cur ? ` style="border-color:var(--danger);"` : ""}>${opts}</select>
-          <span class="meta" style="white-space:nowrap;">/ ${def.max}</span></span>
+          <span class="meta" style="white-space:nowrap;">/ ${rel}</span></span>
         </div>
-        <div class="t12x-bar"><i style="width:${(Math.min(cur, def.max) / def.max) * 100}%;${cur >= def.max ? " background:var(--good);" : ""}"></i></div>
+        <div class="t12x-bar"><i style="width:${rel ? (Math.min(cur, rel) / rel) * 100 : 0}%;${cur >= rel ? " background:var(--good);" : ""}"></i></div>
       </div>`;
     };
     const groupInfo = (group) => {
       const defs = T12_ITEM_DEFS.filter((d) => d.group === group);
       const pct = donePct([troop], defs);
-      const maxed = defs.every((d) => (T12_STATE[troop][d.key] || 0) >= d.max);
+      const maxed = defs.every((d) => (T12_STATE[troop][d.key] || 0) >= t12Rel(d));
       const planned = defs.some((d) => t12TargetOf(troop, d) > (T12_STATE[troop][d.key] || 0));
       const sub = maxed ? t("t12x_all_maxed") : planned ? costLine(computeNeeded(T12_STATE[troop], troop, defs)) || t("t12x_planned") : t("t12x_not_planned");
       return { defs, pct, maxed, planned, sub };
@@ -19559,8 +19649,8 @@ async function renderT12ResearchPage() {
       const mg = e.target.closest("[data-t12maxgroup]");
       if (mg) {
         const defs = T12_ITEM_DEFS.filter((d) => d.group === mg.dataset.t12maxgroup);
-        const maxed = defs.every((d) => (T12_STATE[troop][d.key] || 0) >= d.max);
-        defs.forEach((d) => { T12_STATE[troop][d.key] = maxed ? 0 : d.max; });
+        const maxed = defs.every((d) => (T12_STATE[troop][d.key] || 0) >= t12Rel(d));
+        defs.forEach((d) => { T12_STATE[troop][d.key] = maxed ? 0 : t12Rel(d); });
         saveCalcState("t12_research", T12_STATE);
         renderTotals();
         renderTroopPanels();
@@ -21019,7 +21109,7 @@ async function renderAdminExpertTable(body, tableKey) {
       </table>
     `;
 
-    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
       addForm: "#adminAddRowForm", reload: () => loadRows(),
       create: async (tr) => { await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify({ expert: ADMIN_ACTIVE_EXPERT, ...admNewRowPayload(tr, null) }) }); } });
     wrap.querySelectorAll("[data-exprowsave]").forEach((btn) => {
@@ -21277,7 +21367,7 @@ async function renderAdminPets(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrow", PET_LEVELS_TABLE, rows, orderedIds); PETS_NODES_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, upTable: PET_LEVELS_TABLE, saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
       addForm: "#adminAddPetRowForm", reload: () => loadPetRows(),
       create: async (tr) => {
         const payload = { pet: ADMIN_ACTIVE_PET, ...admNewRowPayload(tr, 0) };
@@ -21491,12 +21581,26 @@ function wireAdmEditBar(scope, o) {
   const first = scope && scope.querySelector(`[${o.rowAttr}]`);
   const wrap = (first && first.closest(".adm-scroll")) || scope;
   if (!wrap) return;
-  const sel = o.fields || "[data-f]";
+  const sel = (o.fields || "[data-f]") + ",[data-up]";
   const rows = () => [...wrap.querySelectorAll(`[${o.rowAttr}]`)];
   const inputsOf = (tr) => [...tr.querySelectorAll(sel)].filter((el) => el.type !== "hidden");
   const val = (el) => (el.type === "checkbox" ? String(el.checked) : el.value);
   rows().forEach((tr) => inputsOf(tr).forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); }));
   wrap.classList.add("adm-b");
+  // "Upcoming" tick per row (o.upTable): saved in site_config
+  // "upcoming_levels" with the same Save bar.
+  if (o.upTable && first && first.tagName === "TR" && !wrap.querySelector("th.adm-upth")) {
+    const ids = upcomingIds(o.upTable);
+    const hr = first.closest("table").tHead && first.closest("table").tHead.rows[0];
+    if (hr) { const th = document.createElement("th"); th.className = "adm-upth"; th.textContent = t("upcoming_col"); hr.insertBefore(th, hr.lastElementChild); }
+    rows().forEach((tr) => {
+      const id = tr.getAttribute(o.rowAttr), td = document.createElement("td");
+      td.className = "adm-upcell";
+      td.innerHTML = `<input type="checkbox" data-up="${esc(id)}" data-orig="${ids.has(String(id))}" ${ids.has(String(id)) ? "checked" : ""} aria-label="${esc(t("upcoming_col"))}" />`;
+      tr.insertBefore(td, tr.lastElementChild);
+    });
+  }
+  wrap.querySelectorAll("tr").forEach((tr) => { const up = tr.querySelector("[data-up]"); tr.classList.toggle("adm-uprow", !!(up && up.checked)); });
   // Compact boxes: "keep-w" opts out of the phone rule that stretches every
   // fixed-width box (the widths come from the .adm-b CSS).
   wrap.querySelectorAll("table input, table select").forEach((el) => el.classList.add("keep-w"));
@@ -21551,6 +21655,8 @@ function wireAdmEditBar(scope, o) {
         if (td.querySelector("[data-grip],[data-rowup]")) td.innerHTML = "";
         else if (i === all.length - 1 && td.querySelector("button")) td.innerHTML = `<button type="button" class="btn small ghost" data-ebdrop title="Remove this new row" style="color:var(--danger);">&#10005;</button>`;
       });
+      tr.querySelectorAll("[data-up]").forEach((el) => { el.closest("td").innerHTML = ""; });
+      tr.classList.remove("adm-uprow");
       tr.querySelectorAll("input, select").forEach((el) => {
         el.classList.remove("chg");
         if (el.tagName === "SELECT") { el.dataset.orig = el.value; return; }
@@ -21576,7 +21682,9 @@ function wireAdmEditBar(scope, o) {
   };
   const onEdit = (ev) => {
     const el = ev.target; if (!el.matches || !el.matches(sel) || el.dataset.orig == null) return;
-    el.classList.toggle("chg", val(el) !== el.dataset.orig); refresh();
+    el.classList.toggle("chg", val(el) !== el.dataset.orig);
+    if (el.dataset.up != null) el.closest("tr").classList.toggle("adm-uprow", el.checked);
+    refresh();
   };
   if (!wrap.__ebWired) {
     wrap.__ebWired = true; wrap.addEventListener("input", onEdit); wrap.addEventListener("change", onEdit);
@@ -21587,24 +21695,35 @@ function wireAdmEditBar(scope, o) {
     if (ev.target.closest("[data-ebundo]")) {
       newRows().forEach((tr) => tr.remove());
       wrap.querySelectorAll(".chg").forEach((el) => { if (el.type === "checkbox") el.checked = el.dataset.orig === "true"; else el.value = el.dataset.orig; el.classList.remove("chg"); });
+      wrap.querySelectorAll("tr").forEach((tr) => { const up = tr.querySelector("[data-up]"); tr.classList.toggle("adm-uprow", !!(up && up.checked)); });
       refresh(); return;
     }
     const btn = ev.target.closest("[data-ebsave]"); if (!btn) return;
     btn.disabled = true; btn.textContent = "Saving…";
-    const changed = rows().filter((tr) => tr.querySelector(".chg"));
+    const changed = rows().filter((tr) => [...tr.querySelectorAll(".chg")].some((el) => el.dataset.up == null));
+    const upChanged = !!wrap.querySelector("[data-up].chg");
     try {
       for (const tr of changed) {
         const id = tr.getAttribute(o.rowAttr);
         if (o.saveRow) await o.saveRow(id);
         else {
           const patch = {};
-          inputsOf(tr).filter((el) => el.classList.contains("chg")).forEach((el) => {
+          inputsOf(tr).filter((el) => el.classList.contains("chg") && el.dataset.f).forEach((el) => {
             const k = el.dataset.f;
             patch[k] = el.type === "checkbox" ? el.checked : el.type === "number" ? (el.value === "" ? null : Number(el.value)) : (el.value.trim() === "" ? null : el.value.trim());
           });
           await sb(`${o.table}?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(patch) });
         }
-        inputsOf(tr).forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
+        inputsOf(tr).filter((el) => el.dataset.up == null).forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
+      }
+      if (upChanged && o.upTable) {
+        const all = { ...(siteConfig("upcoming_levels", {}) || {}) };
+        const keep = new Set(upcomingIds(o.upTable));
+        wrap.querySelectorAll("[data-up]").forEach((el) => { if (el.checked) keep.add(String(el.dataset.up)); else keep.delete(String(el.dataset.up)); });
+        if (keep.size) all[o.upTable] = [...keep]; else delete all[o.upTable];
+        await saveSiteConfig("upcoming_levels", all);
+        wrap.querySelectorAll("[data-up]").forEach((el) => { el.dataset.orig = val(el); el.classList.remove("chg"); });
+        afterUpcomingChange();
       }
       let added = 0;
       for (const tr of newRows()) {
@@ -21613,7 +21732,7 @@ function wireAdmEditBar(scope, o) {
         tr.remove(); added++;
       }
       if (o.after) o.after();
-      const parts = [changed.length ? `${changed.length} row${changed.length === 1 ? "" : "s"} saved` : "", added ? `${added} added` : ""].filter(Boolean);
+      const parts = [changed.length ? `${changed.length} row${changed.length === 1 ? "" : "s"} saved` : "", upChanged ? "Upcoming saved" : "", added ? `${added} added` : ""].filter(Boolean);
       toast(parts.join(", ") || "Nothing to save");
       if (added && o.reload) { ADM_EDIT_DIRTY = 0; await o.reload(); return; }
     } catch (err) { toast("Couldn't save: " + (err.message || err), true); }
@@ -21668,7 +21787,7 @@ async function renderAdminFlatLevels(body, cfg) {
     </div>
   `;
 
-  wireAdmEditBar(body, { rowAttr: "data-flatrow", table: cfg.table, after: () => { if (cfg.onSave) cfg.onSave(); }, hide: ["#adminFlatSaveAll", "[data-flatsave]"],
+  wireAdmEditBar(body, { rowAttr: "data-flatrow", table: cfg.table, upTable: cfg.table, after: () => { if (cfg.onSave) cfg.onSave(); }, hide: ["#adminFlatSaveAll", "[data-flatsave]"],
     addForm: "#adminFlatAddForm", reload: () => renderAdminFlatLevels(body, cfg),
     create: async (tr) => {
       const payload = admNewRowPayload(tr, 0);
@@ -21848,7 +21967,7 @@ async function renderAdminVip(body) {
     try { await saveAdminRowOrderInPlace(body, "data-viprow", "buff_rows", rows, orderedIds); VIP_ROWS_CACHE = null; }
     catch (err) { toast("Couldn't reorder", true); renderAdminVip(body); }
   });
-  wireAdmEditBar(body, { rowAttr: "data-viprow", fields: "[data-vipname],[data-vipstat]", saveRow: (id) => saveVipRow(id), after: () => { VIP_ROWS_CACHE = null; dropKeptGameData(); }, hide: ["#adminVipSaveAll", "[data-vipsave]"],
+  wireAdmEditBar(body, { rowAttr: "data-viprow", upTable: "buff_rows", fields: "[data-vipname],[data-vipstat]", saveRow: (id) => saveVipRow(id), after: () => { VIP_ROWS_CACHE = null; dropKeptGameData(); }, hide: ["#adminVipSaveAll", "[data-vipsave]"],
     addForm: "#adminVipAddForm", reload: () => renderAdminVip(body),
     create: async (tr) => {
       const name = tr.querySelector("[data-vipname]").value.trim();
@@ -22147,7 +22266,7 @@ async function renderAdminProgression(body, nameFilter) {
       try { await saveAdminRowOrderInPlace(wrap, "data-progrow", "progression_rows", rows, orderedIds); invalidateCaches(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-progrow", table: "progression_rows", upTable: "progression_rows", saveRow: (id) => saveProgRow(id), after: () => invalidateCaches(), hide: ["#adminProgSaveAll", "[data-progsave]"],
       addForm: "#adminProgAddForm", reload: () => loadRows(),
       create: async (tr) => {
         const payload = { table_id: ADMIN_ACTIVE_PROGRESSION, ...admNewRowPayload(tr, null) };
@@ -22375,7 +22494,7 @@ async function renderAdminResearch(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-resrow", cfg.table, rows, orderedIds); cfg.invalidate(); }
       catch (err) { toast("Couldn't reorder", true); loadRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-resrow", table: cfg.table, saveRow: (id) => saveResRow(id), after: () => cfg.invalidate(), hide: ["#adminResearchSaveAll", "[data-ressave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-resrow", table: cfg.table, upTable: cfg.table, saveRow: (id) => saveResRow(id), after: () => cfg.invalidate(), hide: ["#adminResearchSaveAll", "[data-ressave]"],
       addForm: "#adminResearchAddForm", reload: () => loadRows(),
       create: async (tr) => {
         const payload = admNewRowPayload(tr, null);
@@ -23088,7 +23207,7 @@ async function renderAdminPetsRefine(body) {
       try { await saveAdminRowOrderInPlace(wrap, "data-petrefinerow", "pet_refine_nodes", rows, orderedIds); PET_REFINE_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadRefineRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrefinerow", table: "pet_refine_nodes", after: () => { PET_REFINE_CACHE = null; }, hide: ["#adminPetRefineSaveAll", "[data-petrefinesave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-petrefinerow", table: "pet_refine_nodes", upTable: "pet_refine_nodes", after: () => { PET_REFINE_CACHE = null; }, hide: ["#adminPetRefineSaveAll", "[data-petrefinesave]"],
       addForm: "#adminAddPetRefineRowForm", reload: () => loadRefineRows(),
       create: async (tr) => {
         const last = rows[rows.length - 1];

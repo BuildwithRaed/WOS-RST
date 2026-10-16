@@ -1585,5 +1585,7 @@
 "p:rowsFor":"صفوف {name}",
 "p:rows":"صفوف {x}",
 "p:addItem":"إضافة عنصر {x}",
-"t:pet_advanced":"مُطوَّر"
+"t:pet_advanced":"مُطوَّر",
+"t:upcoming_tag":"قادم",
+"t:upcoming_col":"قادم"
 }
