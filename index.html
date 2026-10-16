@@ -12246,10 +12246,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>` : `
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
       <button type="button" data-packtoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("pack_cost_title"))}</button>
-      ${open && IS_OWNER ? `<div class="seg" data-packmode>
-        <button type="button" data-packmodebtn="still" class="${PACK_COST_MODE === "still" ? "active" : ""}">${esc(t("pack_mode_still"))}</button>
-        <button type="button" data-packmodebtn="full" class="${PACK_COST_MODE === "full" ? "active" : ""}">${esc(t("pack_mode_full"))}</button>
-      </div>` : ""}
     </div>`;
 
   if (!open) {
@@ -12272,8 +12268,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   Object.keys(needFull).forEach((name) => {
     needStill[name] = Math.max(0, needFull[name] - (Number((owned || {})[name]) || 0));
   });
-  // "Full amount" is an admin-only view; everyone else always prices what's still needed.
-  if (!IS_OWNER || cards) PACK_COST_MODE = "still";
+  // Pack cost always prices what's still needed (the admin's "Full amount"
+  // switch was removed, owner 16 Oct 2026).
+  PACK_COST_MODE = "still";
   // Days until the target date (today counts as day 0).
   const today = new Date(); today.setHours(0, 0, 0, 0);
   let targetDays = null;
@@ -12542,9 +12539,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const toBudgets = containerEl.querySelector("[data-gotobudgets]");
   if (toBudgets) toBudgets.addEventListener("click", () => { const b = document.querySelector('.topnav-groups [data-tab="budgets"]'); if (b) b.click(); });
   containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = false; rerender(); });
-  containerEl.querySelectorAll("[data-packmodebtn]").forEach((btn) => {
-    btn.addEventListener("click", () => { PACK_COST_MODE = btn.dataset.packmodebtn; rerender(); });
-  });
   const dateEl = containerEl.querySelector("[data-packtarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
     PACK_TARGET_CACHE[calcKey] = dateEl.value || "";
@@ -14433,9 +14427,9 @@ async function renderBudgetsPage(opts = {}) {
     renderBudgetsPage().then(() => window.scrollTo(0, y));
   }));
   content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
-    // One tick covers the whole group (Pets / Experts / Research).
-    const grp = packGroupOf(cb.dataset.budgetinc);
-    (grp ? grp.pages : [cb.dataset.budgetinc]).forEach((k) => { BUDGET_SELECTED[k] = cb.checked; });
+    // Each page has its own tick (owner, 16 Oct 2026; it used to switch its
+    // whole group: Experts Level + Research, the three Research pages).
+    BUDGET_SELECTED[cb.dataset.budgetinc] = cb.checked;
     renderBudgetsPage(); // instant redraw from the cached data
     saveCalcState("budget_selected", BUDGET_SELECTED);
   }));
