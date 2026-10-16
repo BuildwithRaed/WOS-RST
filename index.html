@@ -345,7 +345,7 @@
   .sa-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
   .sa-chip{ font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); }
   .sa-chip.i{ border-color:var(--ice); color:var(--ice); }
-  .sa-box{ max-width:380px; }
+  .sage-box{ max-width:380px; }
   .sa-preview{ font-size:11.5px; margin-top:6px; min-height:16px; }
   .sa-moved{ font-size:12px; padding:7px 10px; border-radius:10px; border:1px solid var(--ice); color:var(--ice); margin-bottom:8px; }
   .sa-own{ margin-top:10px; padding-top:8px; border-top:1px solid var(--line); display:grid; gap:4px; }
@@ -10318,7 +10318,7 @@ function openStateAgeModal(onSaved) {
   let mission = 6;
   let own = ownDaysPlayed();
   const draw = () => {
-    modal.innerHTML = `<div class="modal-box sa-box">
+    modal.innerHTML = `<div class="modal-box sage-box">
       <h2>🏰 ${esc(t("sa_title"))}</h2>
       <p class="desc">${esc(t("sa_desc"))}</p>
       <div class="sa-moved">🔀 ${esc(t("sa_moved"))}</div>
