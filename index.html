@@ -888,7 +888,7 @@ input,select,textarea{
   .adm-addfold > summary{ list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9px; background:var(--ice); color:#0f141b; font-weight:700; font-size:12.5px; }
   .adm-addfold > summary::-webkit-details-marker{ display:none; }
   .adm-addfold[open] > summary{ margin-bottom:10px; }
-  .adm-ebar{ position:sticky; bottom:10px; z-index:15; display:flex; align-items:center; gap:8px; margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--panel-2); border:1px solid var(--amber); box-shadow:0 6px 20px rgba(0,0,0,.45); font-size:13px; }
+  .adm-ebar{ position:fixed; bottom:12px; z-index:60; display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:var(--panel-2); border:1px solid var(--amber); box-shadow:0 6px 20px rgba(0,0,0,.45); font-size:13px; }
   .adm-ebar[hidden]{ display:none; }
   .adm-ebar > span{ flex:1 1 auto; }
   .admc-cats{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
@@ -21443,6 +21443,10 @@ function wireAdmEditBar(scope, o) {
   const refresh = () => {
     const n = count(); ADM_EDIT_DIRTY = n;
     bar.hidden = !n;
+    // Floats at the bottom of the screen over this table's column (the body
+    // clips sideways scroll, so a sticky bar would not stick).
+    if (n) { const r = wrap.getBoundingClientRect(); bar.style.left = Math.max(8, r.left) + "px"; bar.style.width = Math.min(r.width, innerWidth - 16) + "px"; }
+    wrap.style.paddingBottom = n ? "64px" : "";
     bar.innerHTML = n ? `<span><b>${n} change${n === 1 ? "" : "s"}</b> not saved</span><button type="button" class="btn ghost small" data-ebundo>Undo</button><button type="button" class="btn small" data-ebsave>Save</button>` : "";
   };
   const onEdit = (ev) => {
