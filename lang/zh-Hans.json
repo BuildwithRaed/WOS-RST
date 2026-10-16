@@ -160,6 +160,8 @@
  "t:scan_flagged": "{n} 个数字可能有误（已标记）。",
  "t:scan_skipped": "不在你的列表中，已跳过：{list}",
  "t:scan_will_add": "将添加到你的背包",
+ "t:scan_zero_title": "截图中没有 — 设为 0？",
+ "t:scan_zero_hint": "可能已打开或使用。仍有的请取消勾选。",
  "t:scan_rounded": "汇总中的数字已被游戏四舍五入。",
  "t:scan_speed_summary": "汇总中的加速总计不会使用。请改为添加背包的加速标签截图。",
  "t:scan_other_items": "有一张背包截图中没有本站已识别的物品。",

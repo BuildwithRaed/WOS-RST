@@ -160,6 +160,8 @@
  "t:scan_flagged": "{n} liczb(y) może być błędnych (oznaczone).",
  "t:scan_skipped": "Nie na liście, pominięte: {list}",
  "t:scan_will_add": "zostanie dodane do plecaka",
+ "t:scan_zero_title": "Brak na zrzutach — ustawić 0?",
+ "t:scan_zero_hint": "Może je otworzyłeś lub zużyłeś. Odznacz te, które nadal masz.",
  "t:scan_rounded": "Liczby z Podsumowania są zaokrąglane przez grę.",
  "t:scan_speed_summary": "Sumy przyspieszeń z Podsumowania nie są używane. Dodaj kartę Przyspieszenia z Plecaka.",
  "t:scan_other_items": "Zrzut Plecaka nie zawierał znanych przedmiotów.",

@@ -1276,6 +1276,9 @@ input,select,textarea{
   .scan-row .scan-name em{ color:#f5a623; font-style:normal; font-weight:700; }
   .scan-row > input[type=text]{ width:128px; text-align:end; flex:0 0 auto; font-size:14px; }
   .scan-row.unsure > input[type=text]{ border-color:#f5a623; }
+  .scan-zero-head{ margin:14px 0 4px; padding-top:10px; border-top:2px solid var(--line); font-size:13.5px; }
+  .scan-zero-head .meta{ font-size:11.5px; font-weight:400; }
+  .scan-zero-to{ flex:0 0 auto; font-weight:700; color:var(--danger); font-size:14px; padding-inline-end:6px; }
   .scan-spin{ width:28px; height:28px; margin:6px auto 12px; border:3px solid var(--line); border-top-color:var(--ice); border-radius:50%; animation:scanspin .8s linear infinite; }
   @keyframes scanspin{ to{ transform:rotate(360deg); } }
   .bp-tile .bp-name{ font-size:9.5px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -2660,7 +2663,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 7; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 8; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2929,6 +2932,8 @@ const T = {
   scan_flagged: { en: "{n} number(s) may be wrong (marked)." },
   scan_skipped: { en: "Not on your list, skipped: {list}" },
   scan_will_add: { en: "will be added to your Backpack" },
+  scan_zero_title: { en: "Not in your screenshots — set to 0?" },
+  scan_zero_hint: { en: "You may have opened or used these. Untick any you still have." },
   scan_rounded: { en: "Summary numbers are rounded by the game." },
   scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead." },
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
@@ -9306,6 +9311,11 @@ function openBackpackScan(groups, bp, done, more) {
   const results = new Map(); // name -> { value, sure }
   const notes = new Set();
   const skipped = new Set();
+  // Everything seen in the screenshots, and which kinds of tiles were read:
+  // items with an amount that weren't seen (opened chests, used items) are
+  // offered as "set to 0" (owner, 16 Oct 2026).
+  const seen = new Set();
+  let sawItems = false, sawSpeed = false;
   let unknownTiles = 0;
   const picker = () => {
     const input = document.createElement("input");
@@ -9366,6 +9376,9 @@ function openBackpackScan(groups, bp, done, more) {
       if (!live()) return;
       if (shot.kind === "speedsummary") notes.add(t("scan_speed_summary"));
       else if (shot.kind === "other") notes.add(t("scan_other_items"));
+      if (shot.kind === "items") sawItems = true;
+      if (shot.kind === "speedup") sawSpeed = true;
+      shot.items.forEach((it) => seen.add(it.name));
       if (shot.unknown) unknownTiles += shot.unknown;
       else if (shot.kind === "unknown") notes.add(t("scan_unknown"));
       else if (shot.kind === "summary") notes.add(t("scan_rounded"));
@@ -9398,16 +9411,30 @@ function openBackpackScan(groups, bp, done, more) {
         <input type="text" inputmode="numeric" data-scanval="${esc(n)}" value="${r.value === null ? "" : r.value.toLocaleString("en-US")}" />
       </label>`;
     }).join("");
+    // Items Scan can read that have an amount here but were in no screenshot.
+    const readable = (n) => (sawItems && (SCAN_ITEM_NAMES.includes(n) || /^Gen \d+ Widgets$/.test(n))) || (sawSpeed && /speedup/i.test(n));
+    const order = (n) => { const k = BP_GAME_ORDER.indexOf(n); return k !== -1 ? k : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
+    const zeroNames = Object.keys(bp).filter((n) => Number(bp[n]) > 0 && !seen.has(n) && !results.has(n) && readable(n)).sort((a, b) => order(a) - order(b));
+    const zeroRows = zeroNames.map((n) => {
+      const ic = known.has(n) ? bpIcon(known.get(n)) : "";
+      return `<label class="scan-row scan-zero">
+        <input type="checkbox" data-scanzero="${esc(n)}" checked />
+        ${ic ? `<img src="${esc(ic)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(/speedup/i.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", (Number(bp[n]) || 0).toLocaleString()))}</span></span>
+        <span class="scan-zero-to">&rarr; 0</span>
+      </label>`;
+    }).join("");
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles ? t("scan_unknown_tiles").replace("{n}", unknownTiles) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
       <p class="desc" style="margin:0 0 8px;">${esc(names.length ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
       <div style="margin-top:6px;">${rows}</div>
+      ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
-        ${names.length ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+        ${names.length || zeroRows ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
@@ -9426,6 +9453,8 @@ function openBackpackScan(groups, bp, done, more) {
         if (Number(v)) bp[n] = Number(v); else delete bp[n];
         if (addable.has(n) && Number(v)) added.push(n);
       });
+      // Not seen in the screenshots and left ticked: opened or used, now 0.
+      modal.querySelectorAll("[data-scanzero]").forEach((tick) => { if (tick.checked) delete bp[tick.dataset.scanzero]; });
       saveCalcState("backpack", bp);
       budgetInvalidate(); // planner pages read these amounts
       close();
