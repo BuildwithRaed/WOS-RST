@@ -1584,4 +1584,6 @@
 "p:statTroop":"{stat} {troop}",
 "p:rowsFor":"صفوف {name}",
 "p:rows":"صفوف {x}",
-"p:addItem":"إضافة عنصر {x}"}
+"p:addItem":"إضافة عنصر {x}",
+"t:pet_advanced":"مُطوَّر"
+}

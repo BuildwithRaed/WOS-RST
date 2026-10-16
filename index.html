@@ -2634,7 +2634,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 1; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 2; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3028,6 +3028,7 @@ const T = {
   backpack_desc_pets: { en: "Enter what you own \u2014 the rest shows what's still needed, across all 15 pets." },
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
+  pet_advanced: { en: "Advanced" },
   material_food: { en: "Food" },
   material_manual: { en: "Manual" },
   material_potion: { en: "Potion" },
@@ -16814,7 +16815,52 @@ function petImage(pet) {
 }
 const PET_IMAGE_SLUGS = new Set(["cave-hyena", "arctic-wolf", "musk-ox", "giant-tapir", "titan-roc", "giant-elk", "snow-leopard", "cave-lion", "snow-ape", "iron-rhino", "sabertooth-tiger", "mammoth", "frost-gorilla", "frostscale-chameleon"]);
 let PETS_NODES_CACHE = null; // { "Cave Hyena": [ {level_label, food, manual, potion, serum, atk_def_pct}, ... ] }
-let PETS_STATE = null; // { "Cave Hyena": currentIndex, ... }
+let PETS_STATE = null; // { "Cave Hyena": { from, to } } = positions in PETS_NODES_CACHE[pet] (-1 = not started)
+// Pet levels (owner, 16 Oct 2026): every level 1 → max from the table
+// pet_levels (whiteoutsurvival.wiki numbers). Each level's row is the food
+// to reach it; the Advancement items are on the level after 10, 20 … (you
+// advance at 10 to go on to 11), and the last row "<max>.1" is the
+// Advancement at max level. Pets without per-level data keep the old
+// "10, 10.1, 20 …" rows. The old pets_nodes table and calc_state
+// "pets_data" (positions in the old rows) stay for the live site; the new
+// saved state is calc_state "pets_levels" = { pet: { from: label | null, to: label } }.
+const PET_LEVELS_TABLE = "pet_levels";
+function petLabelIndex(pet, label, forTarget) {
+  const levels = PETS_NODES_CACHE[pet] || [];
+  if (label == null) return -1;
+  const at = (l) => levels.findIndex((r) => String(r.level_label) === String(l));
+  let i = at(label);
+  if (i >= 0) return i;
+  // An old "N.1" (advanced at N) on a pet that now has every level:
+  // current → Lv N, target → Lv N+1 (the Advancement is on that step).
+  const m = /^(\d+)\.1$/.exec(String(label));
+  if (m) { i = at(forTarget ? Number(m[1]) + 1 : m[1]); if (i >= 0) return i; i = at(m[1]); if (i >= 0) return i; }
+  return forTarget ? levels.length - 1 : -1;
+}
+function petsStateFromSaved(saved, legacy) {
+  const out = {};
+  Object.keys(PETS_NODES_CACHE).forEach((pet) => {
+    const s = saved && saved[pet];
+    if (s && typeof s === "object") { out[pet] = { from: petLabelIndex(pet, s.from, false), to: petLabelIndex(pet, s.to, true) }; return; }
+    // First visit after the change: read the old positions (rows were
+    // "10, 10.1, 20, 20.1 …": position i = Lv (⌊i/2⌋+1)×10, odd = advanced).
+    const o = legacy && legacy[pet];
+    if (o == null) return;
+    const oldLabel = (i) => (i == null || i < 0 ? null : `${(Math.floor(i / 2) + 1) * 10}${i % 2 ? ".1" : ""}`);
+    const from = typeof o === "object" ? o.from : o, to = typeof o === "object" ? o.to : o;
+    out[pet] = { from: petLabelIndex(pet, oldLabel(Number(from)), false), to: petLabelIndex(pet, oldLabel(Number(to)), true) };
+  });
+  return out;
+}
+function savePetsState() {
+  const out = {};
+  Object.keys(PETS_STATE || {}).forEach((pet) => {
+    const s = PETS_STATE[pet], levels = PETS_NODES_CACHE && PETS_NODES_CACHE[pet];
+    if (!s || typeof s !== "object" || !levels) return;
+    out[pet] = { from: s.from >= 0 && levels[s.from] ? levels[s.from].level_label : null, to: levels[s.to] ? levels[s.to].level_label : null };
+  });
+  saveCalcState("pets_levels", out);
+}
 
 // Pets Refine: Common Marks per 1% of a stat, by stage (see renderRefinePage).
 const PET_MARKS_DEFAULT_RATES = { Grey: 8, Green: 25, Blue: 83, Purple: 58.82, Orange: 100, Red: 100 };
@@ -16879,7 +16925,7 @@ async function ensurePetsData() {
     : sb(`pet_refine_nodes?select=pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
   if (refineRowsPromise) refineRowsPromise.catch(() => {});
   if (!PETS_NODES_CACHE) {
-    const rows = await sb(`pets_nodes?select=pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
+    const rows = await sb(`${PET_LEVELS_TABLE}?select=pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
     PETS_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!PETS_NODES_CACHE[r.pet]) PETS_NODES_CACHE[r.pet] = [];
@@ -16887,8 +16933,8 @@ async function ensurePetsData() {
     });
   }
   if (!PETS_STATE) {
-    const saved = await loadCalcState("pets_data");
-    PETS_STATE = saved || {};
+    const saved = await loadCalcState("pets_levels");
+    PETS_STATE = petsStateFromSaved(saved, saved ? null : await loadCalcState("pets_data"));
   }
   if (!PET_REFINE_CACHE && refineRowsPromise) {
     const rows = await refineRowsPromise;
@@ -18848,8 +18894,19 @@ async function renderPetsDataPage() {
     const max = maxAtkDef(pet);
     const color = PET_TROOP_COLORS_CYCLE[idx % PET_TROOP_COLORS_CYCLE.length];
     const unlocked = isPetUnlocked(pet);
-    const levelOpts = (selected) =>
-      levels.map((r, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>${esc(t("level_prefix"))} ${esc(r.level_label)}${i === levels.length - 1 ? esc(t("max_suffix")) : ""}</option>`).join("");
+    // Every level with its ATK/DEF %, in groups of 10; "N.1" rows are the
+    // Advancement at N ("Lv 50 Advanced (Max)").
+    const levelOpts = (selected) => {
+      let html = "", group = -1;
+      levels.forEach((r, i) => {
+        const lab = String(r.level_label), adv = /\.1$/.test(lab), n = parseInt(lab, 10) || 0;
+        const g = Math.floor((Math.max(n, 1) - 1) / 10);
+        if (g !== group && !adv) { if (group >= 0) html += "</optgroup>"; group = g; html += `<optgroup label="${esc(t("level_prefix"))} ${g * 10 + 1} – ${g * 10 + 10}">`; }
+        const pct = r.atk_def_pct != null ? ` · ${(Number(r.atk_def_pct) * 100).toFixed(2)}%` : "";
+        html += `<option value="${i}" ${i === selected ? "selected" : ""}>${esc(t("level_prefix"))} ${n}${adv ? " " + esc(t("pet_advanced")) : ""}${i === levels.length - 1 ? esc(t("max_suffix")) : ""}${pct}</option>`;
+      });
+      return html + (group >= 0 ? "</optgroup>" : "");
+    };
     const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>${esc(t("not_started"))}</option>` + levelOpts(from);
 
     listEl.innerHTML = `
@@ -18900,7 +18957,7 @@ async function renderPetsDataPage() {
         const s = getState(pet);
         s.from = Number(sel.value);
         PETS_STATE[pet] = s;
-        saveCalcState("pets_data", PETS_STATE);
+        savePetsState();
         renderTotals();
         renderList();
       });
@@ -18911,7 +18968,7 @@ async function renderPetsDataPage() {
         const s = getState(pet);
         s.to = Number(sel.value);
         PETS_STATE[pet] = s;
-        saveCalcState("pets_data", PETS_STATE);
+        savePetsState();
         renderTotals();
         renderList();
       });
@@ -18924,7 +18981,7 @@ async function renderPetsDataPage() {
       const maxIdx = PETS_NODES_CACHE[pet].length - 1;
       PETS_STATE[pet] = allMaxed ? { from: -1, to: maxIdx } : { from: maxIdx, to: maxIdx };
     });
-    saveCalcState("pets_data", PETS_STATE);
+    savePetsState();
     renderTotals();
     renderList();
   });
@@ -20239,7 +20296,7 @@ const BACKUP_TABLES = [
   { t: "calc_state", pk: ["user_id", "calc_name"], q: () => `user_id=eq.${PROGRESSION_OWNER_ID}`, drop: ["id"] },
   { t: "pack_tables", pk: ["id"] },
   { t: "experts", pk: ["id"] }, { t: "expert_affinity_nodes", pk: ["id"] }, { t: "expert_skill_nodes", pk: ["id"] }, { t: "expert_research_nodes", pk: ["id"] },
-  { t: "pets_nodes", pk: ["id"] }, { t: "pet_refine_nodes", pk: ["id"] },
+  { t: "pets_nodes", pk: ["id"] }, { t: PET_LEVELS_TABLE, pk: ["id"] }, { t: "pet_refine_nodes", pk: ["id"] },
   { t: "heroes", pk: ["id"] }, { t: "hero_gen_star_stats", pk: ["generation", "step"] }, { t: "hero_gen_widget_stats", pk: ["generation", "level"] },
   { t: "progression_tables", pk: ["id"] }, { t: "progression_rows", pk: ["id"] },
   { t: "charm_levels", pk: ["id"] }, { t: "chief_gear_set_bonus", pk: ["id"] },
@@ -21017,7 +21074,7 @@ async function renderAdminExpertTable(body, tableKey) {
 
 // ---- Pets editor ----
 async function renderAdminPets(body) {
-  const rows = await sb(`pets_nodes?select=pet&order=pet`);
+  const rows = await sb(`${PET_LEVELS_TABLE}?select=pet&order=pet`);
   const pets = Array.from(new Set(rows.map((r) => r.pet)));
   if (!ADMIN_ACTIVE_PET || !pets.includes(ADMIN_ACTIVE_PET)) ADMIN_ACTIVE_PET = pets[0] || null;
 
@@ -21083,6 +21140,7 @@ async function renderAdminPets(body) {
     if (pets.includes(name)) { toast("A pet with that name already exists", true); return; }
     try {
       await sb(`pets_nodes?pet=eq.${encodeURIComponent(old)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ pet: name }) });
+      await sb(`${PET_LEVELS_TABLE}?pet=eq.${encodeURIComponent(old)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ pet: name }) });
       await sb(`pet_refine_nodes?pet=eq.${encodeURIComponent(old)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ pet: name }) });
       const imgs = { ...(siteConfig("pet_images", {}) || {}) };
       if (imgs[old]) { imgs[name] = imgs[old]; delete imgs[old]; await saveSiteConfig("pet_images", imgs); }
@@ -21099,6 +21157,7 @@ async function renderAdminPets(body) {
     try {
       await sb(`pet_refine_nodes?pet=eq.${encodeURIComponent(pet)}`, { method: "DELETE", prefer: "return=minimal" });
       await sb(`pets_nodes?pet=eq.${encodeURIComponent(pet)}`, { method: "DELETE", prefer: "return=minimal" });
+      await sb(`${PET_LEVELS_TABLE}?pet=eq.${encodeURIComponent(pet)}`, { method: "DELETE", prefer: "return=minimal" });
       PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; ADMIN_ACTIVE_PET = null;
       toast("Pet deleted"); renderAdminPets(body);
     } catch (err) { toast(err.message || "Couldn't delete", true); }
@@ -21113,7 +21172,7 @@ async function renderAdminPets(body) {
     if (!pet) { errEl.textContent = "Enter a pet name"; return; }
     if (pets.includes(pet)) { errEl.textContent = "That pet already exists"; return; }
     try {
-      await sb(`pets_nodes`, {
+      await sb(`${PET_LEVELS_TABLE}`, {
         method: "POST",
         body: JSON.stringify({ pet, level_label: "1", food: 0, manual: 0, potion: 0, serum: 0, atk_def_pct: 0, sort_order: 0 }),
       });
@@ -21162,7 +21221,7 @@ async function renderAdminPets(body) {
           if (c.type === "number") v = v === "" ? null : Number(v);
           patch[el.dataset.f] = v;
         });
-        await sb(`pets_nodes?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+        await sb(`${PET_LEVELS_TABLE}?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
       }));
       PETS_NODES_CACHE = null;
       toast(`Saved ${currentPetRows.length} row${currentPetRows.length === 1 ? "" : "s"}`);
@@ -21175,7 +21234,7 @@ async function renderAdminPets(body) {
 
   async function loadPetRows() {
     const cols = ["id", ...petCols.map((c) => c.key)].join(",");
-    const rows = await sb(`pets_nodes?select=${cols}&pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}&order=sort_order`);
+    const rows = await sb(`${PET_LEVELS_TABLE}?select=${cols}&pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}&order=sort_order`);
     document.getElementById("adminPetRowsHeading").textContent = `Rows for ${ADMIN_ACTIVE_PET} (${rows.length})`;
     const wrap = document.getElementById("adminPetRowsWrap");
     wrap.innerHTML = `
@@ -21211,21 +21270,21 @@ async function renderAdminPets(body) {
         if (c.type === "number") v = v === "" ? null : Number(v);
         patch[el.dataset.f] = v;
       });
-      await sb(`pets_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+      await sb(`${PET_LEVELS_TABLE}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
       PETS_NODES_CACHE = null;
     };
     currentPetRows = rows;
     wireAdminReorder(wrap, "data-petrow", async (orderedIds) => {
-      try { await saveAdminRowOrderInPlace(wrap, "data-petrow", "pets_nodes", rows, orderedIds); PETS_NODES_CACHE = null; }
+      try { await saveAdminRowOrderInPlace(wrap, "data-petrow", PET_LEVELS_TABLE, rows, orderedIds); PETS_NODES_CACHE = null; }
       catch (err) { toast("Couldn't reorder", true); loadPetRows(); }
     });
-    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: "pets_nodes", saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
+    wireAdmEditBar(wrap, { rowAttr: "data-petrow", table: PET_LEVELS_TABLE, saveRow: (id) => savePetRow(id), after: () => { PETS_NODES_CACHE = null; }, hide: ["#adminPetRowsSaveAll", "[data-petrowsave]"],
       addForm: "#adminAddPetRowForm", reload: () => loadPetRows(),
       create: async (tr) => {
         const payload = { pet: ADMIN_ACTIVE_PET, ...admNewRowPayload(tr, 0) };
         if (payload.level_label == null) payload.level_label = "";
-        payload.sort_order = await admNextOrder(`pets_nodes?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}`);
-        await sb(`pets_nodes`, { method: "POST", body: JSON.stringify(payload) });
+        payload.sort_order = await admNextOrder(`${PET_LEVELS_TABLE}?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}`);
+        await sb(`${PET_LEVELS_TABLE}`, { method: "POST", body: JSON.stringify(payload) });
       } });
     wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -21241,7 +21300,7 @@ async function renderAdminPets(body) {
       btn.addEventListener("click", async () => {
         if (!confirm("Delete this row?")) return;
         try {
-          await sb(`pets_nodes?id=eq.${btn.dataset.petrowdel}`, { method: "DELETE" });
+          await sb(`${PET_LEVELS_TABLE}?id=eq.${btn.dataset.petrowdel}`, { method: "DELETE" });
           PETS_NODES_CACHE = null;
           toast("Deleted");
           loadPetRows();
@@ -21258,7 +21317,7 @@ async function renderAdminPets(body) {
     const errEl = document.getElementById("adminAddPetRowErr");
     errEl.textContent = "";
     try {
-      const existing = await sb(`pets_nodes?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}&select=sort_order&order=sort_order.desc&limit=1`);
+      const existing = await sb(`${PET_LEVELS_TABLE}?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}&select=sort_order&order=sort_order.desc&limit=1`);
       const nextOrder = existing.length ? (existing[0].sort_order || 0) + 1 : 0;
       const payload = { pet: ADMIN_ACTIVE_PET, sort_order: nextOrder };
       petCols.forEach((c) => {
@@ -21267,7 +21326,7 @@ async function renderAdminPets(body) {
         if (c.type === "number") v = v === "" ? 0 : Number(v);
         payload[c.key] = v;
       });
-      await sb(`pets_nodes`, { method: "POST", body: JSON.stringify(payload) });
+      await sb(`${PET_LEVELS_TABLE}`, { method: "POST", body: JSON.stringify(payload) });
       PETS_NODES_CACHE = null;
       toast("Row added");
       f.reset();
@@ -22877,7 +22936,7 @@ let ADMIN_ACTIVE_PET_REFINE = null;
 async function renderAdminPetsRefine(body) {
   const [refineRows, levelRows] = await Promise.all([
     sb(`pet_refine_nodes?select=pet&order=pet&limit=5000`),
-    sb(`pets_nodes?select=pet&order=pet&limit=5000`),
+    sb(`${PET_LEVELS_TABLE}?select=pet&order=pet&limit=5000`),
   ]);
   const petSet = new Set();
   refineRows.forEach((r) => { const p = (r.pet || "").trim(); if (p) petSet.add(p); });
