@@ -573,6 +573,8 @@
 "t:pack_not_reachable":"Không thể đạt mục tiêu trước ngày đó.",
 "t:pack_earliest":"Sớm nhất:",
 "t:budgets_title":"Ngân sách",
+"t:budgets_recalc":"Tính lại",
+"t:budgets_recalc_hint":"Bỏ kết quả đã lưu và tính lại tất cả",
 "t:budgets_desc":"Mọi kế hoạch nâng cấp ở một chỗ: nguyên liệu còn cần, chi phí các gói được gán, và chỉ số bạn sẽ tăng.",
 "t:budgets_working":"Đang tính các gói rẻ nhất…",
 "t:budgets_loading":"Đang cộng tất cả…",

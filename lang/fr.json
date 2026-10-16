@@ -574,6 +574,8 @@
  "t:pack_not_reachable": "Objectif impossible à atteindre pour cette date.",
  "t:pack_earliest": "Au plus tôt :",
  "t:budgets_title": "Budgets",
+ "t:budgets_recalc": "Recalculer",
+ "t:budgets_recalc_hint": "Oublier les résultats enregistrés et tout recalculer",
  "t:budgets_desc": "Tous vos plans d'amélioration au même endroit : matériaux encore nécessaires, coût des packs associés et gain de stats obtenu.",
  "t:budgets_working": "Calcul des packs les moins chers…",
  "t:budgets_loading": "Calcul des totaux…",

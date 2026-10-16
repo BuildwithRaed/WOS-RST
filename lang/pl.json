@@ -574,6 +574,8 @@
  "t:pack_not_reachable": "Nie da się osiągnąć celu do tej daty.",
  "t:pack_earliest": "Najwcześniej:",
  "t:budgets_title": "Budżety",
+ "t:budgets_recalc": "Przelicz",
+ "t:budgets_recalc_hint": "Zapomnij zapisane wyniki i przelicz wszystko od nowa",
  "t:budgets_desc": "Wszystkie plany ulepszeń w jednym miejscu: brakujące materiały, koszt przypisanych paczek i zysk w statystykach.",
  "t:budgets_working": "Obliczam najtańsze paczki…",
  "t:budgets_loading": "Sumuję wszystko…",

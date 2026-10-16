@@ -574,6 +574,8 @@
  "t:pack_not_reachable": "Ziel ist bis zu diesem Datum nicht erreichbar.",
  "t:pack_earliest": "Frühestens:",
  "t:budgets_title": "Budgets",
+ "t:budgets_recalc": "Neu berechnen",
+ "t:budgets_recalc_hint": "Gespeicherte Ergebnisse verwerfen und alles neu berechnen",
  "t:budgets_desc": "Alle Upgrade-Pläne an einem Ort: noch benötigte Materialien, was die zugewiesenen Pakete kosten und welchen Wertezuwachs du bekommst.",
  "t:budgets_working": "Die günstigsten Pakete werden berechnet…",
  "t:budgets_loading": "Alles wird zusammengerechnet…",

@@ -573,6 +573,8 @@
 "t:pack_not_reachable":"해당 날짜까지 목표에 도달할 수 없습니다.",
 "t:pack_earliest":"가장 빠른 날짜:",
 "t:budgets_title":"예산",
+"t:budgets_recalc":"다시 계산",
+"t:budgets_recalc_hint":"저장된 결과를 버리고 모두 다시 계산합니다",
 "t:budgets_desc":"모든 업그레이드 계획을 한곳에서: 남은 재료, 배정된 패키지 비용, 그리고 얻게 될 스탯 증가.",
 "t:budgets_working":"가장 저렴한 팩 계산 중…",
 "t:budgets_loading":"계산 중…",

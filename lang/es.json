@@ -574,6 +574,8 @@
  "t:pack_not_reachable": "No se llega al objetivo para esa fecha.",
  "t:pack_earliest": "Lo antes:",
  "t:budgets_title": "Presupuestos",
+ "t:budgets_recalc": "Recalcular",
+ "t:budgets_recalc_hint": "Olvidar los resultados guardados y calcular todo de nuevo",
  "t:budgets_desc": "Todos los planes de mejora en un sitio: materiales que aún faltan, lo que cuestan los paquetes asignados y la mejora de estadísticas que obtendrías.",
  "t:budgets_working": "Calculando los paquetes más baratos…",
  "t:budgets_loading": "Sumando todo…",

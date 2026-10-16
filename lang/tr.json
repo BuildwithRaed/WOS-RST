@@ -573,6 +573,8 @@
 "t:pack_not_reachable":"Bu tarihe kadar hedefe ulaşılamaz.",
 "t:pack_earliest":"En erken:",
 "t:budgets_title":"Bütçeler",
+"t:budgets_recalc":"Yeniden hesapla",
+"t:budgets_recalc_hint":"Kayıtlı sonuçları unut ve her şeyi yeniden hesapla",
 "t:budgets_desc":"Tüm yükseltme planları tek yerde: hâlâ gereken malzemeler, atanan paketlerin maliyeti ve kazanacağın istatistik artışı.",
 "t:budgets_working":"En ucuz paketler hesaplanıyor…",
 "t:budgets_loading":"Her şey toplanıyor…",
