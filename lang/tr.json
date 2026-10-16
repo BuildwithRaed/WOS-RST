@@ -93,6 +93,8 @@
 "t:bpw_one_hero":"yalnızca bu kahraman",
 "t:bpw_empty":"Henüz kahraman yok.",
 "t:bpw_roster":"kadro",
+"t:hs_use_shards":"Kahraman parçaları",
+"t:hs_use_widgets":"Kahraman aparatları",
 "t:hs_page":"Kahraman parçaları ve widget'lar",
 "t:pk_zone_note":"Bu paket içerikleri 600'lü eyaletlerden alındı. Daha eski ve yeni eyaletler farklı miktarlar alabilir, çünkü paketler eyalet yaşına göre değişir. Miktarları eyaletine uydurmak için bir paketi Düzenle ile aç.",
 "t:pk_tables_n":"{n} tablo",

@@ -94,6 +94,8 @@
  "t:bpw_one_hero": "solo questo eroe",
  "t:bpw_empty": "Ancora nessun eroe qui.",
  "t:bpw_roster": "squadra",
+ "t:hs_use_shards": "Frammenti eroe",
+ "t:hs_use_widgets": "Widget eroe",
  "t:hs_page": "Frammenti eroe e widget",
  "t:pk_zone_note": "Il contenuto di questi pacchetti viene da stati tra 600 e 699. Stati più vecchi o più nuovi possono avere quantità diverse, perché i pacchetti cambiano con l'età dello stato. Apri un pacchetto con Modifica per adattare le quantità al tuo stato.",
  "t:pk_tables_n": "{n} tabelle",

@@ -94,6 +94,8 @@
  "t:bpw_one_hero": "tylko ten bohater",
  "t:bpw_empty": "Brak bohaterów.",
  "t:bpw_roster": "skład",
+ "t:hs_use_shards": "Odłamki bohaterów",
+ "t:hs_use_widgets": "Widżety bohaterów",
  "t:hs_page": "Odłamki i widżety bohaterów",
  "t:pk_zone_note": "Zawartość paczek pochodzi ze stanów 600+. Starsze i nowsze stany mogą dostawać inne ilości, bo paczki zmieniają się z wiekiem stanu. Otwórz paczkę przyciskiem Edytuj, aby dopasować ilości do swojego stanu.",
  "t:pk_tables_n": "{n} tabel",

@@ -94,6 +94,8 @@
  "t:bpw_one_hero": "仅限该英雄",
  "t:bpw_empty": "这里还没有英雄。",
  "t:bpw_roster": "阵容",
+ "t:hs_use_shards": "英雄碎片",
+ "t:hs_use_widgets": "英雄专属部件",
  "t:hs_page": "英雄碎片和专属装备",
  "t:pk_zone_note": "这些礼包内容取自 600 多号的州。较老或较新的州数量可能不同，因为礼包会随州龄变化。用“编辑”打开任意礼包，可修改数量以匹配你的州。",
  "t:pk_tables_n": "{n} 个表",

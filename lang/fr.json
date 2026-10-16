@@ -94,6 +94,8 @@
  "t:bpw_one_hero": "ce héros seulement",
  "t:bpw_empty": "Aucun héros ici pour l'instant.",
  "t:bpw_roster": "équipe",
+ "t:hs_use_shards": "Fragments de héros",
+ "t:hs_use_widgets": "Widgets de héros",
  "t:hs_page": "Fragments et widgets de héros",
  "t:pk_zone_note": "Le contenu de ces packs vient d'États 600+. Les États plus anciens ou plus récents peuvent avoir d'autres quantités, car les packs changent avec l'âge de l'État. Ouvrez un pack avec Modifier pour ajuster ses quantités à votre État.",
  "t:pk_tables_n": "{n} tableaux",
