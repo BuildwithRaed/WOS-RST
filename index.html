@@ -6585,6 +6585,12 @@ async function renderPurchasesPage() {
   // New Gen Heroes timing
   const ng = PACK_PURCHASES.newGen || {};
   const ngTables = tables.filter((tb) => packIsNewGen(packLinkForBase(tb.id)) && typeof packLinkFor(tb.id).reset === "number");
+  // One line per event (owner, 16 Oct 2026): "Hero Ascension Training" and
+  // its "…: Value Hero Pack" come together, so only the first is listed and
+  // its own date moves every table of that event.
+  const ngBase = (tb) => String(tb.title || "").split(":")[0].trim();
+  const ngShown = ngTables.filter((tb, i) => ngTables.findIndex((x) => ngBase(x) === ngBase(tb)) === i);
+  const ngSame = (id) => { const tb = ngTables.find((x) => String(x.id) === String(id)); return tb ? ngTables.filter((x) => ngBase(x) === ngBase(tb)).map((x) => String(x.id)) : [String(id)]; };
   const ngCard = ngTables.length ? `<div class="t12x-card"><div class="t12x-k">${esc(t("pur_newgen_title"))}</div>
     <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
     ${(() => {
@@ -6597,7 +6603,7 @@ async function renderPurchasesPage() {
         <details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
       return `<button type="button" class="btn small" data-purngsa style="margin-bottom:8px;">🏰 ${esc(t("pur_ng_set_state"))}</button><details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
     })()}
-    ${ngTables.map((tb) => {
+    ${ngShown.map((tb) => {
       const l = packLinkFor(tb.id);
       const t0 = packStartOfToday();
       const ngApps = newGenAppearances(tb.id, Number(l.window) || 0).filter((x) => x.start.getTime() + (x.days - 1) * 86400000 >= t0.getTime()).map((x) => ({ ...x, offset: Math.round((x.start - t0) / 86400000) }));
@@ -6605,7 +6611,7 @@ async function renderPurchasesPage() {
       const mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
       // With a "last new heroes" date the pack follows it; otherwise its own date can be set.
       const fromLast = !!packNewGenAnchor(tb.id), off = packNewGenOffset(tb.id);
-      return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(tb.title || "")}</b>${!fromLast && mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
+      return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(ngBase(tb) || tb.title || "")}</b>${!fromLast && mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
         ${fromLast ? `<div class="meta" style="font-size:11px; margin-top:4px;">${esc(off ? t("pur_newgen_after").replace("{n}", Math.round(off / 7)) : t("pur_newgen_with"))}</div>` : `<label class="pur-f" style="margin-top:6px;"><span class="meta">${esc(t("pur_newgen_start"))}</span><span style="display:flex; gap:6px; align-items:center;"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(apps[0] ? packDayKey(apps[0].start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>`}
         <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
       </div>`;
@@ -6860,11 +6866,11 @@ async function renderPurchasesPage() {
   };
   // Each New Gen pack has its own start date (they don't always come together).
   content.querySelectorAll("[data-purngstart]").forEach((inp) => inp.addEventListener("change", () => {
-    if (packValidDay(inp.value)) MY_PACK_DATES[inp.dataset.purngstart] = inp.value; else delete MY_PACK_DATES[inp.dataset.purngstart];
+    ngSame(inp.dataset.purngstart).forEach((id) => { if (packValidDay(inp.value)) MY_PACK_DATES[id] = inp.value; else delete MY_PACK_DATES[id]; });
     ngSave();
   }));
   content.querySelectorAll("[data-purngreset]").forEach((b) => b.addEventListener("click", () => {
-    delete MY_PACK_DATES[b.dataset.purngreset];
+    ngSame(b.dataset.purngreset).forEach((id) => { delete MY_PACK_DATES[id]; });
     ngSave();
   }));
 }
