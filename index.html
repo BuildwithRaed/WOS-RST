@@ -869,6 +869,16 @@ input,select,textarea{
   .rfa-step input, .rfa-step .rfa-val{ width:64px; height:32px; border:0; border-inline:1px solid var(--line); border-radius:0; background:var(--bg); color:var(--frost); text-align:center; font-size:14px; font-weight:700; padding:0; display:inline-flex; align-items:center; justify-content:center; }
   .rfa-note{ font-size:10.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
   .rfa-btns{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
+  .sa-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .sa-btn{ border:1px solid var(--line); border-radius:18px; padding:5px 12px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .sa-wrap.open .sa-btn{ border-color:var(--ice); }
+  .sa-box{ display:none; border:1px solid var(--ice); border-radius:12px; padding:10px; background:var(--panel-2); margin-bottom:12px; }
+  .sa-wrap.open .sa-box{ display:block; }
+  .sa-row{ display:flex; align-items:center; gap:6px; }
+  .sa-row + .sa-row{ margin-top:8px; }
+  .sa-lbl{ flex:0 0 auto; min-width:64px; max-width:34%; font-size:12.5px; }
+  .sa-row select{ flex:1 1 0; min-width:0; font-size:13px; padding:6px 8px; }
+  .sa-arrow{ color:var(--muted); flex:none; }
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
   .plx-stat span{ display:block; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -3850,6 +3860,7 @@ const T = {
   target_upper: { en: "TARGET", ar: "الهدف", ko: "목표" },
   target_label: { en: "Target", ar: "الهدف", ko: "목표" },
   set_all_ellipsis: { en: "Set all\u2026", ar: "تعيين الكل\u2026", ko: "전체 설정\u2026" },
+  set_all_short: { en: "Set all", ar: "تعيين الكل", ko: "전체 설정" },
   set_all_to: { en: "Set all to:", ar: "تعيين الكل إلى:", ko: "전체 설정 대상:" },
   max_everything: { en: "Max everything", ar: "الحد الأقصى للكل", ko: "전체 최대치로" },
   islandgallery_title: { en: "Islands", ar: "الجزر", ko: "아일랜드" },
@@ -6185,7 +6196,7 @@ async function renderGearLevelingGroup(target) {
   // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
   const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
-  const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button"), setAllLbl = t("set_all_ellipsis");
+  const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button");
   const pieceCard = (troop, piece) => `
     <div class="t12x-card" style="padding:12px 14px;">
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
@@ -6223,19 +6234,12 @@ async function renderGearLevelingGroup(target) {
     wrap.dataset.troopanel = troop;
     wrap.style.display = "none";
     wrap.innerHTML = `
-      <div class="t12x-card" style="padding:12px 14px; margin-bottom:12px;">
-        <div class="t12x-k" style="margin-bottom:4px;">${esc(setAllLbl)}</div>
-        <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:4px 16px;">
-        ${GEAR_LEVELING_TABLES.map((tb) => `<div>
-          <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(trackDisplayName(tb))}</div>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <span class="t12x-lbl">${esc(nowLbl)}</span>
-            <select data-hgsetall="${esc(tb)}" data-role="from" style="flex:1; min-width:0;"><option value="">${esc(setAllLbl)}</option>${optsByTrack[tb]}</select>
-            <span class="t12x-lbl">${esc(tgtLbl)}</span>
-            <select data-hgsetall="${esc(tb)}" data-role="to" style="flex:1; min-width:0;"><option value="">${esc(setAllLbl)}</option>${optsByTrack[tb]}</select>
-          </div></div>`).join("")}
-        </div>
-      </div>
+      ${setAllWrapHtml("hero", `<div class="name" style="font-size:15px; font-weight:700; color:${HERO_GEAR_TROOP_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</div>`, GEAR_LEVELING_TABLES.map((tb) => `<div class="sa-row">
+          <span class="sa-lbl">${esc(trackDisplayName(tb))}</span>
+          <select data-hgsetall="${esc(tb)}" data-role="from" aria-label="${esc(nowLbl)}"><option value="">${esc(nowLbl)}…</option>${optsByTrack[tb]}</select>
+          <span class="sa-arrow">&rarr;</span>
+          <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
+        </div>`).join(""))}
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:12px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
       </div>`;
@@ -10628,6 +10632,25 @@ function navLabel(tab) {
   return e[LANG] || e.en || tab;
 }
 // The level cap as a line in the Settings card (new planner layout).
+// "Set all" (Chief Gear, Charms, Heroes Gears): a small "⇅ Set all ▾" button
+// next to the troop name opens the Now → Target dropdowns (owner picked B,
+// 16 Oct 2026). Open / closed is kept per page for the visit.
+const SETALL_OPEN = {};
+function setAllWrapHtml(key, headHtml, rowsHtml) {
+  const open = !!SETALL_OPEN[key];
+  return `<div class="sa-wrap${open ? " open" : ""}" data-sakey="${esc(key)}">
+    <div class="sa-head">${headHtml}<button type="button" class="sa-btn" data-satoggle aria-expanded="${open}">&#8645; ${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
+    <div class="sa-box">${rowsHtml}</div></div>`;
+}
+document.addEventListener("click", (ev) => {
+  const b = ev.target.closest && ev.target.closest("[data-satoggle]");
+  if (!b) return;
+  const w = b.closest(".sa-wrap"); if (!w) return;
+  const open = !w.classList.contains("open");
+  w.classList.toggle("open", open); SETALL_OPEN[w.dataset.sakey] = open;
+  b.setAttribute("aria-expanded", String(open));
+  const car = b.querySelector(".sa-car"); if (car) car.innerHTML = open ? "&#9652;" : "&#9662;";
+});
 function capSettingsHtml(id, label, optionsHtml) {
   return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px;">${optionsHtml}</select></label>
     <p class="desc" style="font-size:10.5px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>`;
@@ -14955,19 +14978,11 @@ async function renderCharmsCalc() {
     });
     rowsEl.innerHTML = `
         <div class="panel">
-          <div style="margin-bottom:10px;">
-            <div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]}; margin-bottom:8px;">${esc(troopDisplayName(troop))}</div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("current_upper"))}</span>
-                <select data-troopsetall="${esc(troop)}" data-role="current" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${levelOptions()}</select>
-              </div>
-              <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("target_upper"))}</span>
-                <select data-troopsetall="${esc(troop)}" data-role="target" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${levelOptions()}</select>
-              </div>
-            </div>
-          </div>
+          ${setAllWrapHtml("charm", `<div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>`, `<div class="sa-row">
+                <select data-troopsetall="${esc(troop)}" data-role="current" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${levelOptions()}</select>
+                <span class="sa-arrow">&rarr;</span>
+                <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
+              </div>`)}
           <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
             ${flatCharms
               .map(
@@ -15206,19 +15221,11 @@ async function renderChiefGearCalc() {
     const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
     rowsEl.innerHTML = `
         <div class="panel">
-          <div style="margin-bottom:10px;">
-            <div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]}; margin-bottom:8px;">${esc(troopDisplayName(troop))}</div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("current_upper"))}</span>
-                <select data-troopsetall="${esc(troop)}" data-role="from" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${opts}</select>
-              </div>
-              <div style="display:flex; gap:6px; align-items:center;">
-                <span class="meta" style="font-size:10px; width:60px; flex-shrink:0;">${esc(t("target_upper"))}</span>
-                <select data-troopsetall="${esc(troop)}" data-role="to" style="width:100%;"><option value="">${esc(t("set_all_ellipsis"))}</option>${opts}</select>
-              </div>
-            </div>
-          </div>
+          ${setAllWrapHtml("chief", `<div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>`, `<div class="sa-row">
+                <select data-troopsetall="${esc(troop)}" data-role="from" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${opts}</select>
+                <span class="sa-arrow">&rarr;</span>
+                <select data-troopsetall="${esc(troop)}" data-role="to" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${opts}</select>
+              </div>`)}
           <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
             ${pieces
               .map(
