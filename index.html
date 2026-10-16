@@ -1261,6 +1261,12 @@ input,select,textarea{
   .scan-step > b{ flex:0 0 22px; height:22px; border-radius:50%; background:var(--ice-dim); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; }
   .scan-step > div > div:first-child{ font-size:14px; font-weight:600; }
   .scan-step .meta{ font-size:12px; }
+  .scan-step > div{ flex:1; min-width:0; }
+  .scan-ex{ flex:0 0 74px; height:92px; padding:0; border-radius:9px; overflow:hidden; border:1px solid var(--line); background:#000; position:relative; cursor:zoom-in; }
+  .scan-ex img{ width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+  .scan-ex span{ position:absolute; right:3px; bottom:3px; background:rgba(0,0,0,.65); border-radius:6px; font-size:10px; padding:1px 4px; line-height:1.4; }
+  .scan-ex-view{ position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px; cursor:zoom-out; }
+  .scan-ex-view img{ max-width:100%; max-height:84vh; border-radius:12px; }
   .scan-row{ display:flex; align-items:center; gap:10px; padding:7px 6px; border-bottom:1px solid var(--line); cursor:pointer; }
   .scan-row.unsure{ background:rgba(245,166,35,.13); border-radius:8px; }
   .scan-row > input[type=checkbox]{ width:18px; height:18px; flex:0 0 auto; }
@@ -2654,7 +2660,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 6; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 7; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2904,7 +2910,9 @@ const T = {
   scan_title: { en: "Scan screenshots" },
   scan_intro: { en: "Add any of these screenshots from the game, as many as you like. They are read on your phone and never uploaded." },
   scan_summary: { en: "Resource & Speedup Summary → Resources tab" },
-  scan_summary_hint: { en: "Fills Meat, Wood, Coal, Iron, Steel, Gems and Pet Food (Total Resources). Resource chests are not counted there." },
+  scan_summary_hint: { en: "Fills Meat, Wood, Coal, Iron, Steel, Gems and Pet Food (Total Resources). Scroll down and add a 2nd one for the rest." },
+  scan_example: { en: "Example" },
+  scan_example_close: { en: "Example (amounts hidden) · tap to close" },
   scan_speedup: { en: "Backpack → Speedup tab" },
   scan_speedup_hint: { en: "Whole tiles showing. If you scroll, add a screenshot of each part." },
   scan_choose: { en: "Choose screenshots" },
@@ -2926,7 +2934,7 @@ const T = {
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
   scan_unknown_tiles: { en: "{n} tiles skipped (not on your list, or not learned yet)." },
   scan_items: { en: "Backpack → Resources and Other tabs" },
-  scan_items_hint: { en: "Fills chests, Fire Crystal, Chief Gear, Charms, Hero Gear, Pet and Expert items." },
+  scan_items_hint: { en: "Fills chests, Fire Crystal, Chief Gear, Charms, Hero Gear, Pet and Expert items, hero shards." },
   scan_unknown: { en: "A screenshot wasn't recognised." },
   scan_add_more: { en: "Add more" },
   backpack_search: { en: "Search items..." },
@@ -9314,15 +9322,23 @@ function openBackpackScan(groups, bp, done, more) {
     modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
       <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
       <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
-      <div class="scan-step"><b>1</b><div><div>${esc(t("scan_summary"))}</div><div class="meta">${esc(t("scan_summary_hint"))}</div></div></div>
-      <div class="scan-step"><b>2</b><div><div>${esc(t("scan_speedup"))}</div><div class="meta">${esc(t("scan_speedup_hint"))}</div></div></div>
-      <div class="scan-step"><b>3</b><div><div>${esc(t("scan_items"))}</div><div class="meta">${esc(t("scan_items_hint"))}</div></div></div>
+      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"]].map(([ex, head, hint], i) => `
+      <div class="scan-step"><b>${i + 1}</b><div><div>${esc(t(head))}</div><div class="meta">${esc(t(hint))}</div></div>
+        <button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button></div>`).join("")}
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn" type="button" data-scanpick>${esc(t("scan_choose"))}</button>
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
+    // Tap an example: see it full size; tap again to go back.
+    modal.querySelectorAll("[data-scanex]").forEach((b) => b.onclick = () => {
+      const view = document.createElement("div");
+      view.className = "scan-ex-view";
+      view.innerHTML = `<img src="${esc(b.dataset.scanex)}" alt="" /><div class="meta">${esc(t("scan_example_close"))}</div>`;
+      view.onclick = (ev) => { ev.stopPropagation(); view.remove(); };
+      modal.appendChild(view);
+    });
   };
   const progress = (msg) => {
     modal.innerHTML = `<div class="modal-box" style="max-width:360px; text-align:center;"><div class="scan-spin"></div><div>${esc(msg)}</div><div class="meta" data-scanpct></div></div>`;
