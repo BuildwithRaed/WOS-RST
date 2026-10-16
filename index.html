@@ -6214,18 +6214,21 @@ function packActiveNoteText(tableId) {
 // A purchase of a pack where you choose what you get (Benefit Card, Mix &
 // Match, Myriad Bazaar...) remembers that choice: its label, price and items
 // are saved on the purchase line (choice: { label, price, gives }).
-function purchaseGives(p, tb) { return p.choice && p.choice.gives ? p.choice.gives : packPurchaseGives(tb, p.row); }
-function purchasePrice(p, tb) { return p.choice && Number.isFinite(Number(p.choice.price)) ? Number(p.choice.price) : packPurchasePrice(tb, p.row); }
-function packPurchaseGives(tb, row) {
+function purchaseGives(p, tb) { return p.choice && p.choice.gives ? p.choice.gives : packPurchaseGives(tb, p.row, p.from); }
+function purchasePrice(p, tb) { return p.choice && Number.isFinite(Number(p.choice.price)) ? Number(p.choice.price) : packPurchasePrice(tb, p.row, p.from); }
+// `from`: a buy-in-order pack bought from that step on (the rest of a ladder
+// already partly bought); missing = from the first step.
+function packPurchaseGives(tb, row, from) {
   const link = packLinkFor(tb.id);
   const offers = packOffersFor(tb, true);
   const out = {};
-  offers.filter((o) => (link.sequential ? o.row <= row : o.row === row)).forEach((o) => Object.entries(o.gives).forEach(([n, v]) => { out[n] = (out[n] || 0) + v; }));
+  const lo = Number(from) || 0;
+  offers.filter((o) => (link.sequential ? o.row >= lo && o.row <= row : o.row === row)).forEach((o) => Object.entries(o.gives).forEach(([n, v]) => { out[n] = (out[n] || 0) + v; }));
   return out;
 }
-function packPurchasePrice(tb, row) {
-  const link = packLinkFor(tb.id);
-  return packOffersFor(tb, true).filter((o) => (link.sequential ? o.row <= row : o.row === row)).reduce((a, o) => a + o.price, 0);
+function packPurchasePrice(tb, row, from) {
+  const link = packLinkFor(tb.id), lo = Number(from) || 0;
+  return packOffersFor(tb, true).filter((o) => (link.sequential ? o.row >= lo && o.row <= row : o.row === row)).reduce((a, o) => a + o.price, 0);
 }
 // Planned packs (today or later) count as coming items; a pack bought within
 // its current reset (or a one-time pack) uses up that buy. Bought items are
@@ -6254,9 +6257,13 @@ function packPurchaseUse(groups) {
   const list = (PACK_PURCHASES.list || []).filter((p) => packPurchaseUsesLimit(p, packLinkFor(p.table)));
   if (!list.length) return groups;
   const todayKey = packDayKey(packStartOfToday());
-  return groups.map((g) => {
+  const extra = [];
+  const out = groups.map((g) => {
     let add = 0, now = 0;
     const usedAt = { ...(g.usedAt || {}) };
+    // Buy-in-order packs: the highest step bought in each run of the pack.
+    const top = {};
+    const noteTop = (k, p) => { if (g.ladder && !g.optionPack && !g.choice && !p.choice && (g.tables || []).length === 1) top[k] = Math.max(top[k] == null ? -1 : top[k], Number(p.row) || 0); };
     const start = packCurrentCycleStart(g.reset, g.resetDay), startKey = start ? packDayKey(start) : null;
     const t0 = packStartOfToday();
     const offs = typeof g.reset === "number" && g.reset > 0 ? packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window) : [];
@@ -6270,16 +6277,41 @@ function packPurchaseUse(groups) {
       if (!(g.ladder || rows.has(undefined) || rows.has(p.row))) return;
       add += n;
       // Bought (or planned for today) in the running copy: that copy's buys are taken.
-      if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; return; }
+      if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; noteTop(0, p); return; }
       // Planned for a later appearance: that appearance's buys are taken.
       const d = packParseDay(p.date);
-      if (!d || p.date <= todayKey || !offs.length) return;
+      if (!d || p.date <= todayKey || !offs.length) { noteTop("x", p); return; }
       const dd = Math.round((d - t0) / 86400000);
       const at = offs.filter((o) => o <= dd).pop();
-      if (at != null) usedAt[at] = (usedAt[at] || 0) + n;
+      if (at != null) { usedAt[at] = (usedAt[at] || 0) + n; noteTop(at, p); } else noteTop("x", p);
+    });
+    // A ladder bought only part way: the steps after it are still on sale in
+    // that run (owner, 16 Oct 2026: Elif's Forge pack planned up to $9.99
+    // left its $19.99 step out). They become a one-off group for that run,
+    // priced from the step after the one bought.
+    Object.entries(top).forEach(([k, row]) => {
+      const bi = g.offers.findIndex((o) => o.row === row);
+      if (bi < 0) return;
+      const base = g.offers[bi], rest = g.offers.slice(bi + 1).filter((o) => o.row > row);
+      if (!rest.length) return;
+      const from = Math.min(...rest.map((o) => o.row));
+      const offers = rest.map((o) => {
+        const gives = {};
+        Object.keys(o.gives).forEach((n) => { const v = o.gives[n] - (base.gives[n] || 0); if (v > 0) gives[n] = v; });
+        return { ...o, price: Math.round((o.price - base.price) * 100) / 100, gives, from };
+      }).filter((o) => o.price > 0 && Object.keys(o.gives).length);
+      if (!offers.length) return;
+      let reset = g.reset, resetDay = g.resetDay;
+      if (typeof g.reset === "number" && g.reset > 0 && k !== "x") {
+        reset = Math.max(PACK_ONE_TIME_DAYS, 3000);
+        resetDay = k === "0" ? startKey : packDayKey(new Date(t0.getTime() + Number(k) * 86400000));
+        if (!resetDay) return;
+      }
+      extra.push({ ...g, reset, resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true });
     });
     return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now, usedAt } : g;
   });
+  return extra.length ? out.concat(extra) : out;
 }
 function packActiveCardSupply(calcKey, tables) {
   const out = {}, used = [];
@@ -6505,9 +6537,11 @@ async function renderPurchasesPage() {
   // choice with the purchase. (The old one-long-list dropdown is gone.)
   const isChoicePack = (tb) => { const l = packLinkFor(tb.id); return !!(l.option || l.pickCols > 0 || l.colOptions); };
   const formChoice = !!(formTb && isChoicePack(formTb));
-  const tierLabel = (tb, row) => {
+  const tierLabel = (tb, row, from) => {
     const link = packLinkFor(tb.id), o = packOffersFor(tb, true).find((x) => x.row === row);
     if (!o) return `#${row + 1}`;
+    // The rest of a ladder bought part way: only those steps.
+    if (link.sequential && from > 0) return `${t("pur_tier")} ${from === row ? row + 1 : `${from + 1}–${row + 1}`} (${packFmtMoney(packPurchasePrice(tb, row, from), link.currency)})`;
     return link.sequential ? t("pur_upto").replace("{tier}", row + 1).replace("{price}", packFmtMoney(packPurchasePrice(tb, row), link.currency)) : packFmtMoney(o.price, link.currency);
   };
 
@@ -6545,7 +6579,7 @@ async function renderPurchasesPage() {
     return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
   }).join("");
   // One card per pack (same table and tier, or same choice); its dates fold open underneath.
-  const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}`;
+  const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}${p.from > 0 ? "f" + p.from : ""}`;
   const groupBy = (arr) => {
     const out = [];
     arr.forEach((p) => { const k = purGroupKey(p); let g = out.find((x) => x.key === k); if (!g) { g = { key: k, tb: byId.get(String(p.table)), row: p.row, first: p, items: [] }; out.push(g); } g.items.push(p); });
@@ -6562,7 +6596,7 @@ async function renderPurchasesPage() {
     const when = dates.length === 1 ? shortDay(dates[0]) : `${t("pur_n_dates").replace("{n}", dates.length)} · ${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today);
     return `<div class="pur-item pur-grp${open ? " open" : ""}" data-purgrp="${esc(kind + "|" + g.key)}">
-      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
+      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
       <div class="bud-mats pur-chips">${chipsFor(purchaseGives(g.first, tb), n, 5)}</div>
       <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
         <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button>${kind === "c" ? `<button type="button" class="btn small" data-purgmove="bought">&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}<button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
@@ -6719,7 +6753,7 @@ async function renderPurchasesPage() {
     const allBtn0 = box.querySelector("[data-purwkall]");
     if (allBtn0) allBtn0.addEventListener("click", () => {
       const adds = [];
-      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (!tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
+      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (!tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
       savePackPurchases();
@@ -6756,7 +6790,7 @@ async function renderPurchasesPage() {
       modal.querySelector("[data-pmadd]").addEventListener("click", () => {
         const pk = picked();
         if (!pk.length) return;
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })));
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })));
         savePackPurchases();
         close();
         toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
@@ -8651,7 +8685,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
     while (hasWidget && wReach < 10 && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
-    return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wShort, wReach, wCost: widgetCostFor(wShort) };
+    return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool, notOut };
 }
@@ -12046,7 +12080,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -13334,7 +13368,7 @@ async function heroShardBudget() {
   const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary");
   const newestGen = newGenGen();
   plan.rows.forEach((r) => {
-    const sh = `${r.hero.name} Shards`, wd = `${r.hero.name} Widgets`;
+    const sh = `${r.hero.name} Shards`;
     if (r.need > 0) {
       totals[sh] = r.need; owned[sh] = r.own + r.fromGeneral;
       if (r.rarity === "Legendary") {
@@ -13345,11 +13379,20 @@ async function heroShardBudget() {
         if (newestGen && Number(r.hero.generation) === newestGen && HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name) rule("Marks of Valor", sh, HERO_RULES.hallMarksPerShard, 1, HERO_RULES.hallWeekly);
       }
     }
-    if (r.wNeed > 0) {
-      totals[wd] = r.wNeed; owned[wd] = r.wOwn;
-      rule("Widget Chest", wd, 1, HERO_RULES.widgetChestGives, 0);
-      rule("Mystery Points", wd, HERO_RULES.mysteryGive, HERO_RULES.mysteryGet, 0); // only the 800 for 2 offer (owner)
-    }
+  });
+  // Widgets: the hero with the most still to go (lowest widget level) first,
+  // so shared widgets (a Gen's widgets, Mystery Points, Widget Chests) go to
+  // them before the heroes whose own cheap Forge pack can still cover them
+  // (owner, 16 Oct 2026). Trades follow this order.
+  plan.rows.filter((r) => r.wNeed > 0).sort((a, b) => (b.wNeed - b.wMine) - (a.wNeed - a.wMine)).forEach((r) => {
+    const wd = `${r.hero.name} Widgets`;
+    totals[wd] = r.wNeed; owned[wd] = r.wMine;
+    // A Gen's widgets ("Gen 14 Widgets") fit any hero of that Gen (the
+    // roster cards still share them in troop order).
+    owned[r.gKey] = Number((bp || {})[r.gKey]) || 0;
+    rule(r.gKey, wd, 1, 1, 0);
+    rule("Widget Chest", wd, 1, HERO_RULES.widgetChestGives, 0);
+    rule("Mystery Points", wd, HERO_RULES.mysteryGive, HERO_RULES.mysteryGet, 0); // only the 800 for 2 offer (owner)
   });
   HERO_SHARD_TRADES = rules;
   if (typeof tradeComposeExtra === "function") tradeComposeExtra();
@@ -13673,7 +13716,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -13888,7 +13931,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
   };
