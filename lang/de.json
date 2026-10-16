@@ -160,6 +160,8 @@
  "t:scan_flagged": "{n} Zahl(en) könnten falsch sein (markiert).",
  "t:scan_skipped": "Nicht auf deiner Liste, übersprungen: {list}",
  "t:scan_will_add": "wird deinem Rucksack hinzugefügt",
+ "t:scan_zero_title": "Nicht in deinen Screenshots — auf 0 setzen?",
+ "t:scan_zero_hint": "Vielleicht geöffnet oder verbraucht. Entferne den Haken bei allem, was du noch hast.",
  "t:scan_rounded": "Die Zahlen der Übersicht sind vom Spiel gerundet.",
  "t:scan_speed_summary": "Beschleunigungssummen aus der Übersicht werden nicht genutzt. Füge stattdessen den Rucksack-Tab Beschleunigung hinzu.",
  "t:scan_other_items": "Ein Rucksack-Screenshot enthielt keine Gegenstände, die die Seite schon kennt.",

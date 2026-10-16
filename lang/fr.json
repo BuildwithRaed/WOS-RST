@@ -160,6 +160,8 @@
  "t:scan_flagged": "{n} nombre(s) peut-être faux (marqués).",
  "t:scan_skipped": "Pas dans votre liste, ignorés : {list}",
  "t:scan_will_add": "sera ajouté à ton sac",
+ "t:scan_zero_title": "Absent de tes captures — mettre à 0 ?",
+ "t:scan_zero_hint": "Tu les as peut-être ouverts ou utilisés. Décoche ceux que tu as encore.",
  "t:scan_rounded": "Les nombres du résumé sont arrondis par le jeu.",
  "t:scan_speed_summary": "Les totaux d'accélérations du résumé ne sont pas utilisés. Ajoutez plutôt l'onglet Accélération du sac.",
  "t:scan_other_items": "Une capture du sac n'avait aucun objet connu de la page.",

@@ -159,6 +159,8 @@
 "t:scan_flagged":"{n}개 숫자가 틀렸을 수 있습니다 (표시됨).",
 "t:scan_skipped":"목록에 없어 건너뜀: {list}",
 "t:scan_will_add":"가방에 추가됩니다",
+"t:scan_zero_title":"스크린샷에 없음 — 0으로 할까요?",
+"t:scan_zero_hint":"열었거나 사용했을 수 있어요. 아직 있는 것은 체크를 해제하세요.",
 "t:scan_rounded":"요약 숫자는 게임에서 반올림됩니다.",
 "t:scan_speed_summary":"요약의 가속 합계는 쓰지 않습니다. 대신 배낭의 가속 탭을 추가하세요.",
 "t:scan_other_items":"배낭 스크린샷에 아직 페이지가 아는 아이템이 없습니다.",

@@ -160,6 +160,8 @@
  "t:scan_flagged": "{n} numero/i potrebbero essere sbagliati (segnati).",
  "t:scan_skipped": "Non nella tua lista, saltati: {list}",
  "t:scan_will_add": "verrà aggiunto al tuo zaino",
+ "t:scan_zero_title": "Non negli screenshot — impostare a 0?",
+ "t:scan_zero_hint": "Forse li hai aperti o usati. Togli la spunta a quelli che hai ancora.",
  "t:scan_rounded": "I numeri del Riepilogo sono arrotondati dal gioco.",
  "t:scan_speed_summary": "I totali delle accelerazioni del Riepilogo non vengono usati. Aggiungi invece la scheda Accelerazioni dello Zaino.",
  "t:scan_other_items": "Uno screenshot dello Zaino non aveva oggetti ancora noti alla pagina.",

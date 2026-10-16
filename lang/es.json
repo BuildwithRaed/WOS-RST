@@ -160,6 +160,8 @@
  "t:scan_flagged": "{n} número(s) pueden estar mal (marcados).",
  "t:scan_skipped": "No está en tu lista, omitido: {list}",
  "t:scan_will_add": "se añadirá a tu mochila",
+ "t:scan_zero_title": "No está en tus capturas — ¿poner a 0?",
+ "t:scan_zero_hint": "Puede que los hayas abierto o usado. Desmarca los que todavía tengas.",
  "t:scan_rounded": "El juego redondea los números del Resumen.",
  "t:scan_speed_summary": "No se usan los totales de aceleradores del Resumen. Añade la pestaña Aceleradores de la Mochila.",
  "t:scan_other_items": "Una captura de la Mochila no tenía objetos que la página conozca aún.",
