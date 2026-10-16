@@ -256,7 +256,8 @@
   .rc-stars{ display:flex; flex-wrap:nowrap; justify-content:center; gap:1px; margin:4px 0; }
   .rc-stars > *{ width:19px !important; height:19px !important; flex-shrink:0; }
   .rc-step{ display:flex; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:2px; max-width:130px; margin:2px auto 6px; }
-  .rc-step span{ font-size:10.5px; font-weight:700; color:var(--ice); white-space:nowrap; }
+  .rc-step span{ font-size:10.5px; font-weight:700; color:var(--ice); white-space:nowrap; min-width:0; }
+  @media (max-width:380px){ .rc-step span{ font-size:9.5px; letter-spacing:-.2px; } }
   .rc-pm{ width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:16px; line-height:1; display:grid; place-items:center; flex-shrink:0; cursor:pointer; padding:0; }
   .rc-pm.plus{ background:var(--ice); color:#0f141b; border-color:var(--ice); font-weight:800; }
   .rc-pm:disabled{ opacity:.35; cursor:default; }
@@ -312,6 +313,14 @@
     .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(9px * min(var(--sx), 1.2)); }
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(13px * min(var(--sx), 1.12)); }
     .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8.5px * min(var(--sx), 1.1)); }
+    /* Small phones (360 px): a little tighter so the numbers stay inside the cards. */
+    @media (max-width:380px){
+      .dash-fit .dash-troops.cols .dash-troop{ padding-left:4px; padding-right:4px; }
+      .dash-fit .dash-troops.cols .dash-stat-k{ letter-spacing:0; gap:2px; }
+      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:8px; }
+      .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(12px * min(var(--sx), 1.12)); }
+      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8px * min(var(--sx), 1.1)); }
+    }
     .dash-fit .dash-troops.cols .dash-stat-bar{ height:calc(3px * min(var(--sx), 1.6)); }
     .dash-fit .rc-pick{ width:calc(36px * min(var(--sx), 1.55)); height:calc(36px * min(var(--sx), 1.55)); }
     .dash-fit .rc-stars > *{ width:calc(17px * min(var(--sx), 1.35)) !important; height:calc(17px * min(var(--sx), 1.35)) !important; }
@@ -729,6 +738,10 @@ input,select,textarea{
   .t12x-need .bs-row .n small{ font-size:9.5px; line-height:1.25; margin-top:1px; }
   .t12x-need .bs-row b{ order:-1; font-size:15px; }
   .t12x-need .bs-row img{ order:-2; }
+  /* Values always fit their square: the number shrinks with a narrow square
+     and a long time ("30d 19h 20m") wraps at its spaces. */
+  .t12x-need .bs-row{ container-type:inline-size; min-width:0; }
+  .t12x-need .bs-row b{ max-width:100%; white-space:normal; line-height:1.15; font-size:max(11px, min(15px, 13cqi)); }
   .t12x-good{ font-size:11px; color:var(--good); margin-top:3px; }
   .t12x-prog{ height:8px; border-radius:9px; background:rgba(255,255,255,.08); overflow:hidden; margin:10px 0 5px; }
   .t12x-prog i{ display:block; height:100%; border-radius:9px; background:linear-gradient(90deg, var(--ice), var(--good)); }
@@ -1150,7 +1163,7 @@ input,select,textarea{
     .t12x-need .bs-sq{ grid-template-columns:repeat(auto-fill, minmax(66px, 1fr)); gap:5px; }
     .t12x-need .bs-row{ min-height:0; padding:7px 3px; }
     .t12x-need .bs-row img{ width:22px; height:22px; }
-    .t12x-need .bs-row b{ font-size:12.5px; }
+    .t12x-need .bs-row b{ font-size:max(10px, min(12.5px, 13cqi)); }
     .t12x-need .bs-row .n{ font-size:10px; }
     .t12x-need .bs-row .n small{ display:none; } /* "have … of …" stays on the Backpack tiles */
   }
@@ -1228,7 +1241,7 @@ input,select,textarea{
   .bs-row{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; margin-bottom:6px; background:rgba(255,107,107,.08); border:1px solid rgba(255,107,107,.22); }
   .bs-row img{ width:24px; height:24px; object-fit:contain; flex-shrink:0; }
   .bs-row .n{ flex:1; min-width:0; font-size:13px; font-weight:600; }
-  .bs-row .n small{ display:block; font-weight:400; font-size:11px; color:var(--muted); }
+  .bs-row .n small{ display:block; font-weight:400; font-size:11px; color:var(--muted); overflow-wrap:anywhere; }
   .bs-row b{ font-size:13px; color:var(--danger); white-space:nowrap; }
   .bs-title{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:4px 0 8px; }
   .bs-row.ok{ background:rgba(76,209,138,.06); border-color:rgba(76,209,138,.22); }
@@ -1292,7 +1305,9 @@ input,select,textarea{
   .gallery-card .thumb .ph{ font-size:22px; color:var(--muted); font-weight:600; }
   .gallery-card .badge{
     padding:5px 6px; font-size:10.5px; font-weight:600; text-align:center;
-    background:var(--panel-2); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    background:var(--panel-2); color:var(--muted); overflow:hidden;
+    /* Long names show in full on two lines instead of being cut. */
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-height:1.25; overflow-wrap:anywhere;
   }
   .gallery-card.owned .badge{ background:rgba(90,200,120,0.15); color:var(--good); }
   /* Counted / not-counted split: cards below the thick line are ignored by
@@ -8853,13 +8868,21 @@ async function renderInventory() {
 // Resources tab and the Backpack Speedup tab.
 const SCAN_CDN = "https://cdn.jsdelivr.net/npm/";
 let SCAN_WORKER = null;
+let SCAN_PROGRESS = null; // the open Scan box shows the download progress
 function scanWorker() {
   if (!SCAN_WORKER) {
     SCAN_WORKER = new Promise((resolve, reject) => {
+      // A download that stops moving (bad connection) ends with an error
+      // instead of spinning forever.
+      let last = Date.now();
+      const stall = setInterval(() => { if (Date.now() - last > 120000) { clearInterval(stall); reject(new Error("stalled")); } }, 5000);
+      const done = (fn) => (v) => { clearInterval(stall); fn(v); };
+      resolve = done(resolve); reject = done(reject);
       const start = () => window.Tesseract.createWorker("eng", 1, {
         workerPath: `${SCAN_CDN}tesseract.js@5.1.1/dist/worker.min.js`,
         corePath: `${SCAN_CDN}tesseract.js-core@5.1.1`,
         langPath: `${SCAN_CDN}@tesseract.js-data/eng@1.0.0/4.0.0_best_int`,
+        logger: (m) => { last = Date.now(); if (SCAN_PROGRESS) SCAN_PROGRESS(m); },
       }).then(resolve, reject);
       if (window.Tesseract) { start(); return; }
       const s = document.createElement("script");
@@ -9288,10 +9311,15 @@ function openBackpackScan(groups, bp, done, more) {
     modal.querySelector("[data-scanpick]").onclick = picker;
   };
   const progress = (msg) => {
-    modal.innerHTML = `<div class="modal-box" style="max-width:360px; text-align:center;"><div class="scan-spin"></div><div>${esc(msg)}</div></div>`;
+    modal.innerHTML = `<div class="modal-box" style="max-width:360px; text-align:center;"><div class="scan-spin"></div><div>${esc(msg)}</div><div class="meta" data-scanpct></div></div>`;
   };
   const readAll = async (files) => {
     progress(t("scan_loading"));
+    // Download / start-up progress of the reader (its steps each go 0 → 100%).
+    SCAN_PROGRESS = (m) => {
+      const el = live() && modal.querySelector("[data-scanpct]");
+      if (el && m && typeof m.progress === "number" && /^(loading|initializ)/.test(m.status || "")) el.textContent = `${Math.round(m.progress * 100)}%`;
+    };
     let worker, marks, refs;
     try { [worker, marks, refs] = await Promise.all([scanWorker(), scanMarkData(), scanItemData()]); }
     catch (e) {
