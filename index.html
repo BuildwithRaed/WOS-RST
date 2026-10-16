@@ -9621,7 +9621,7 @@ async function ensureCharmLevelsData() {
   if (CHARM_LEVELS_LOADED) return CHARM_LEVELS_PROMISE;
   CHARM_LEVELS_LOADED = true;
   CHARM_LEVELS_PROMISE = (async () => {
-  const rows = await sb(`charm_levels?select=id,level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`);
+  const rows = await sb(`charm_levels?select=${upId("charm_levels")}level_label,sort_order,guides_cost,designs_cost,secrets_cost,cumulative_pct&order=sort_order.asc`);
   CHARM_LEVELS = rows.map((r) => r.level_label);
   CHARM_LEVEL_ROWS = rows;
   CHARM_STEP_COST = {};
@@ -14091,7 +14091,7 @@ function wireIndexSwipe(el, count, activeIndex, onNavigate) {
 
 async function renderCharmsCalc() {
   const seq = RENDER_SEQ;
-  await ensureCharmData();
+  await Promise.all([ensureCharmData(), ensureCharmLevelsData()]); // levels reload after Upcoming ticks change
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
@@ -15766,7 +15766,8 @@ const EXPERT_NODE_PATHS = {
 };
 let EXPERT_NODE_ROWS = {};
 function loadExpertNodes(kind) {
-  if (!EXPERT_NODE_ROWS[kind]) EXPERT_NODE_ROWS[kind] = sbAllPagesAtOnce(EXPERT_NODE_PATHS[kind]).catch((e) => { delete EXPERT_NODE_ROWS[kind]; throw e; });
+  const table = EXPERT_NODE_PATHS[kind].split("?")[0];
+  if (!EXPERT_NODE_ROWS[kind]) EXPERT_NODE_ROWS[kind] = sbAllPagesAtOnce(EXPERT_NODE_PATHS[kind].replace("select=id,", `select=${upId(table)}`)).catch((e) => { delete EXPERT_NODE_ROWS[kind]; throw e; });
   return EXPERT_NODE_ROWS[kind];
 }
 // Reads a table that can pass the API's 1,000-row page size (the affinity
@@ -16144,7 +16145,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
 // ============================================================
 async function renderAlbumTundraPage() {
   const seq = RENDER_SEQ;
-  const rows = await sb(`tundra_album_levels?select=id,stat_type,value_pct&order=sort_order.asc`);
+  const rows = await sb(`tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`);
   const OPTIONS_BY_STAT = { Attack: [], Defense: [] }, REL = { Attack: Infinity, Defense: Infinity };
   rows.forEach((r) => {
     if (!OPTIONS_BY_STAT[r.stat_type]) return;
@@ -16189,7 +16190,7 @@ async function renderAlbumTundraPage() {
 async function renderCollectionGalleryPage() {
   const seq = RENDER_SEQ;
   const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
-  const rows = await sb(`collection_gallery_levels?select=id,stat_type,value_pct&order=sort_order.asc`);
+  const rows = await sb(`collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`);
   const optionsByStat = {}, relByStat = {};
   rows.forEach((r) => {
     if (!optionsByStat[r.stat_type]) optionsByStat[r.stat_type] = [];
@@ -16596,7 +16597,7 @@ function t11Len(troop, track) { return releasedLastIdx("t11_helios_nodes", (T11_
 
 async function ensureT11StateData() {
   if (!T11_NODES_CACHE) {
-    const rows = await sb(`t11_helios_nodes?select=id,track,troop,level,meat,wood,coal,iron,steel,refined_fc,fc_shard,time_hours,stat,stat_pct&order=troop,sort_order`);
+    const rows = await sb(`t11_helios_nodes?select=${upId("t11_helios_nodes")}track,troop,level,meat,wood,coal,iron,steel,refined_fc,fc_shard,time_hours,stat,stat_pct&order=troop,sort_order`);
     T11_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!T11_NODES_CACHE[r.troop]) T11_NODES_CACHE[r.troop] = {};
@@ -16866,7 +16867,7 @@ async function ensureRCStateData() {
 
 async function ensureRCData() {
   if (!RC_NODES_CACHE) {
-    const rows = await sb(`research_center_nodes?select=id,track,level,meat,wood,coal,iron,steel,time_hours,power,troop,stat,stat_pct,buff_text&order=track,level`);
+    const rows = await sb(`research_center_nodes?select=${upId("research_center_nodes")}track,level,meat,wood,coal,iron,steel,time_hours,power,troop,stat,stat_pct,buff_text&order=track,level`);
     RC_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!RC_NODES_CACHE[r.track]) RC_NODES_CACHE[r.track] = [];
@@ -17002,10 +17003,10 @@ async function ensurePetsData() {
   // Start the refine table download now, so it runs alongside pets_nodes.
   const refineRowsPromise = PET_REFINE_CACHE
     ? null
-    : sb(`pet_refine_nodes?select=id,pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
+    : sb(`pet_refine_nodes?select=${upId("pet_refine_nodes")}pet,category,stage,infantry_lethality_pct,infantry_health_pct,lancer_lethality_pct,lancer_health_pct,marksman_lethality_pct,marksman_health_pct&order=sort_order`);
   if (refineRowsPromise) refineRowsPromise.catch(() => {});
   if (!PETS_NODES_CACHE) {
-    const rows = await sb(`${PET_LEVELS_TABLE}?select=id,pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
+    const rows = await sbAllPagesAtOnce(`${PET_LEVELS_TABLE}?select=${upId(PET_LEVELS_TABLE)}pet,level_label,food,manual,potion,serum,atk_def_pct&order=sort_order`);
     PETS_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!PETS_NODES_CACHE[r.pet]) PETS_NODES_CACHE[r.pet] = [];
@@ -17169,7 +17170,16 @@ function releasedLastIdx(table, rows) {
   const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
   return i < 0 ? rows.length - 1 : Math.max(-1, i - 1);
 }
-function afterUpcomingChange() { if (typeof budgetInvalidate === "function") budgetInvalidate(); if (typeof dashDataChanged === "function") dashDataChanged(); }
+// Speed: row ids are only downloaded for tables that have "Upcoming" ticks
+// (they made every level table 30-100% bigger). Ticking clears the kept
+// tables (afterUpcomingChange), so they reload with ids.
+function upId(table) { return upcomingIds(table).size ? "id," : ""; }
+function afterUpcomingChange() {
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+  if (typeof dashDataChanged === "function") dashDataChanged();
+  if (typeof dropKeptGameData === "function") dropKeptGameData();
+  PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; CHARM_LEVELS_LOADED = false; RC_NODES_CACHE = null; T11_NODES_CACHE = null; T12_NODES_CACHE = null;
+}
 function upcomingTag(isUp) { return isUp ? ` · ${t("upcoming_tag")}` : ""; }
 // What visitors may open read-only (Admin -> Visibility -> Visitor access).
 function visitorCan(what) {
@@ -19469,7 +19479,7 @@ function plxTabsHtml(list, active, colors, sub, attr) {
 async function renderT12ResearchPage() {
   const seq = RENDER_SEQ;
   if (!T12_NODES_CACHE) {
-    const rows = await sb(`t12_nodes?select=id,tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
+    const rows = await sb(`t12_nodes?select=${upId("t12_nodes")}tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
     T12_NODES_CACHE = {};
     rows.forEach((r) => {
       if (!T12_NODES_CACHE[r.tier]) T12_NODES_CACHE[r.tier] = {};
