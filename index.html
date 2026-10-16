@@ -9670,7 +9670,17 @@ async function ensureGearCaps() {
 function saveGearCaps() { return saveCalcState("gear_caps", GEAR_CAPS || {}); }
 function charmCapIdx() {
   const i = GEAR_CAPS ? CHARM_LEVELS.indexOf(String(GEAR_CAPS.charm)) : -1;
-  return i >= 0 ? i : charmReleasedIdx(); // never set → the last level that's out
+  if (i >= 0) return i;
+  // Never set → the last level that's out, and not past 16 before Gen 5
+  // heroes are out in the person's state (16.1 – 18 come with Gen 5).
+  const at16 = CHARM_LEVELS.indexOf("16");
+  return charmHighLocked() && at16 >= 0 ? Math.min(at16, charmReleasedIdx()) : charmReleasedIdx();
+}
+// Lv 16.1 – 18 wait for Gen 5 in the person's state, unless a charm is already there.
+function charmHighLocked() {
+  if (!stateNotYet("gear", "charm 16.1 18")) return false;
+  const at16 = CHARM_LEVELS.indexOf("16");
+  return !CHARM_PIECES.some((p) => (CHARM_CALC_STATE[p.key] || []).some((slot) => CHARM_LEVELS.indexOf(String(slot.current)) > at16));
 }
 function charmCapLabel() { return CHARM_LEVELS[charmCapIdx()] ?? "0"; }
 function clampCharmLabel(label) {
@@ -10246,6 +10256,7 @@ const STATE_UNLOCKS = [
   { kind: "lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
   { kind: "gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
   { kind: "gear", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
+  { kind: "gear", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
     ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
