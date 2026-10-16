@@ -15701,8 +15701,11 @@ function expertsForTroop(troop, list) {
   return (list || []).filter((e) => expertTroopKey(e) === troop);
 }
 let EXPERT_UPCOMING_GLOBAL = {}; // {key: true} experts flagged "Upcoming" in Admin (shown as a badge)
+function upcomingBadgeHtml() {
+  return `<span style="display:inline-block; margin-top:3px; padding:1px 7px; border:1px solid var(--ice); color:var(--ice); border-radius:999px; font-size:9.5px; font-weight:600; letter-spacing:0.3px;">${esc(t("expert_upcoming"))}</span>`;
+}
 function expertBadgeHtml(key) {
-  return EXPERT_UPCOMING_GLOBAL[key] ? `<span style="display:inline-block; margin-top:3px; padding:1px 7px; border:1px solid var(--ice); color:var(--ice); border-radius:999px; font-size:9.5px; font-weight:600; letter-spacing:0.3px;">${esc(t("expert_upcoming"))}</span>` : "";
+  return EXPERT_UPCOMING_GLOBAL[key] ? upcomingBadgeHtml() : "";
 }
 let EXPERTS_ROSTER_LOADED = false;
 let EXPERTS_ROSTER_PROMISE = null;
@@ -16877,7 +16880,7 @@ function petImage(pet) {
   const slug = String(pet).toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
   return PET_IMAGE_SLUGS.has(slug) ? `icons/pets/${slug}.webp` : "";
 }
-const PET_IMAGE_SLUGS = new Set(["cave-hyena", "arctic-wolf", "musk-ox", "giant-tapir", "titan-roc", "giant-elk", "snow-leopard", "cave-lion", "snow-ape", "iron-rhino", "sabertooth-tiger", "mammoth", "frost-gorilla", "frostscale-chameleon"]);
+const PET_IMAGE_SLUGS = new Set(["cave-hyena", "arctic-wolf", "musk-ox", "giant-tapir", "titan-roc", "giant-elk", "snow-leopard", "cave-lion", "snow-ape", "iron-rhino", "sabertooth-tiger", "mammoth", "frost-gorilla", "frostscale-chameleon", "abyssal-shelldragon"]);
 let PETS_NODES_CACHE = null; // { "Cave Hyena": [ {level_label, food, manual, potion, serum, atk_def_pct}, ... ] }
 let PETS_STATE = null; // { "Cave Hyena": { from, to } } = positions in PETS_NODES_CACHE[pet] (-1 = not started)
 // Pet levels (owner, 16 Oct 2026): every level 1 → max from the table
@@ -17210,11 +17213,16 @@ function wireVisibilityBtns(rootEl, onChange) {
 }
 // The lock/unlock checkmark on cards is owner-only: a visitor's cards are
 // always unlocked (except hidden ones), whatever was saved earlier.
+// A whole pet the admin marked "Upcoming" (site_config "upcoming_pets").
+function petIsUpcoming(pet) { const l = siteConfig("upcoming_pets", []); return Array.isArray(l) && l.includes(pet); }
 function unlockedFor(kind, name, savedFlag) {
   if (hiddenForVisitor(kind, name)) return false;
   // Everyone (owner and visitors) can untick a card on their own copy; an
   // unticked card doesn't count in their Dashboard or its breakdown.
   if (savedFlag === true || savedFlag === false) return savedFlag;
+  // A whole expert / pet marked "Upcoming" in Admin starts unticked (not
+  // counted); ticking it plans it in.
+  if ((kind === "experts" && EXPERT_UPCOMING_GLOBAL[name]) || (kind === "pets" && petIsUpcoming(name))) return false;
   // Never set: open in the person's state (state age) → ticked, not yet → unticked.
   return !stateNotYet(kind, name);
 }
@@ -18833,7 +18841,7 @@ async function renderRefinePage() {
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
               <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
               ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
-              <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>
+              <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
             </label>
             ${visibilityBtnHtml("pets", pet)}
             <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">${esc(t("max_button"))}</button>
@@ -19028,6 +19036,7 @@ async function renderPetsDataPage() {
             <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
             ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0;" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(dataName(pet))}</div>
+            ${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
           </label>
           ${IS_OWNER ? `<div style="margin:-8px 0 12px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
           <div class="stats-row-scroll pet-level-row" style="margin-bottom:16px;">
@@ -20899,7 +20908,7 @@ async function renderAdminRoster(body) {
     { key: "main_stat_troop", label: "Troops", type: "select", options: TROOP_OPTS, value: r.main_stat_troop || "", half: true },
     ...[1, 2, 3, 4].map((k) => ({ key: "skill" + k, label: `Skill ${k}`, value: r["skill" + k], half: true })),
     { key: "talent", label: "Talent", value: r.talent },
-    { key: "upcoming", label: "Upcoming (shows a badge on this expert's cards)", type: "check", value: r.upcoming },
+    { key: "upcoming", label: "Upcoming (badge on its cards; not counted until people tick it)", type: "check", value: r.upcoming },
   ];
   wireAdmList(body, {
     onEdit: (id) => {
@@ -21217,6 +21226,7 @@ async function renderAdminPets(body) {
           <label class="meta" style="font-size:11.5px;">Picture (link or upload)</label>
           <div style="display:flex; gap:6px; align-items:center;"><input type="text" id="adminPetImg" value="${esc(((siteConfig("pet_images", {}) || {})[ADMIN_ACTIVE_PET]) || "")}" placeholder="${esc(petImage(ADMIN_ACTIVE_PET) || "no picture yet")}" style="flex:1; min-width:0;" />${uploadBtnHtml()}<button type="button" class="btn small" id="adminPetImgSave">Save picture</button></div>
           <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn ghost small" id="adminPetRename">Rename pet</button><button type="button" class="btn ghost small" id="adminPetDelete" style="color:var(--danger);">Delete pet</button></div>
+          <label class="t12x-check" style="margin-top:8px;"><span>Upcoming pet (not in the game yet: marked, and not counted until people tick it)</span><input type="checkbox" id="adminPetUpcoming" ${petIsUpcoming(ADMIN_ACTIVE_PET) ? "checked" : ""} /></label>
         </div></div>` : ""}
     </div>
     <div class="panel" style="margin-bottom:16px;">
@@ -21249,6 +21259,13 @@ async function renderAdminPets(body) {
     const cur = { ...(siteConfig("pet_images", {}) || {}) };
     if (v) cur[ADMIN_ACTIVE_PET] = v; else delete cur[ADMIN_ACTIVE_PET];
     try { await saveSiteConfig("pet_images", cur); toast(v ? "Picture saved" : "Back to the built-in picture"); renderAdminPets(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+  const petUp = document.getElementById("adminPetUpcoming");
+  if (petUp) petUp.addEventListener("change", async () => {
+    const list = new Set(siteConfig("upcoming_pets", []) || []);
+    if (petUp.checked) list.add(ADMIN_ACTIVE_PET); else list.delete(ADMIN_ACTIVE_PET);
+    try { await saveSiteConfig("upcoming_pets", [...list]); afterUpcomingChange(); toast("Saved"); }
+    catch (err) { petUp.checked = !petUp.checked; toast(err.message || "Couldn't save", true); }
   });
   const petRename = document.getElementById("adminPetRename");
   if (petRename) petRename.addEventListener("click", async () => {
