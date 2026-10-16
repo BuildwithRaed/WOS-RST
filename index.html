@@ -8958,10 +8958,15 @@ function scanMarkData() {
   if (!SCAN_MARK_DATA) {
     SCAN_MARK_DATA = new Promise((resolve, reject) => {
       const img = new Image();
+      // Read with CORS: the preview host serves pictures from another address,
+      // and a picture read without it can't be measured (the canvas is blocked).
+      img.crossOrigin = "anonymous";
       img.onload = () => {
-        const c = scanCanvas(img.width, img.height), g = c.getContext("2d", { willReadFrequently: true });
-        g.drawImage(img, 0, 0);
-        resolve(g.getImageData(0, 0, img.width, img.height));
+        try {
+          const c = scanCanvas(img.width, img.height), g = c.getContext("2d", { willReadFrequently: true });
+          g.drawImage(img, 0, 0);
+          resolve(g.getImageData(0, 0, img.width, img.height));
+        } catch (e) { reject(e); }
       };
       img.onerror = () => reject(new Error("marks"));
       setTimeout(() => reject(new Error("marks timeout")), 45000); // no answer at all: stop waiting
@@ -9042,10 +9047,15 @@ function scanItemData() {
   if (!SCAN_ITEM_DATA) {
     SCAN_ITEM_DATA = new Promise((resolve, reject) => {
       const img = new Image();
+      // Read with CORS: the preview host serves pictures from another address,
+      // and a picture read without it can't be measured (the canvas is blocked).
+      img.crossOrigin = "anonymous";
       img.onload = () => {
-        const c = scanCanvas(img.width, img.height), g = c.getContext("2d", { willReadFrequently: true });
-        g.drawImage(img, 0, 0);
-        resolve(g.getImageData(0, 0, img.width, img.height).data);
+        try {
+          const c = scanCanvas(img.width, img.height), g = c.getContext("2d", { willReadFrequently: true });
+          g.drawImage(img, 0, 0);
+          resolve(g.getImageData(0, 0, img.width, img.height).data);
+        } catch (e) { reject(e); }
       };
       img.onerror = () => reject(new Error("items"));
       setTimeout(() => reject(new Error("items timeout")), 45000); // no answer at all: stop waiting
