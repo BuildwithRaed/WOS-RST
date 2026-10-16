@@ -399,6 +399,11 @@
   .pur-price{ font-weight:700; white-space:nowrap; }
   .pur-item-f{ display:flex; justify-content:space-between; align-items:center; gap:6px 10px; flex-wrap:wrap; margin-top:8px; font-size:11.5px; }
   .pur-sum{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .pur-list-sum{ cursor:pointer; list-style:none; margin-bottom:0; }
+  .pur-list-sum::-webkit-details-marker{ display:none; }
+  .pur-list-sum::before{ content:"\25B8"; display:inline-block; width:1.1em; color:var(--muted); }
+  .pur-listbox[open] > .pur-list-sum{ margin-bottom:8px; }
+  .pur-listbox[open] > .pur-list-sum::before{ content:"\25BE"; }
   .pur-sq{ display:flex; flex-direction:column; gap:2px; padding:10px; border:1px solid var(--line); border-radius:12px; font-size:11px; }
   .pur-sq b{ font-size:19px; }
   .pur-how{ grid-column:1 / -1; font-size:11px; }
@@ -3946,6 +3951,31 @@ function isValidTab(t) {
 }
 const SAVED_TAB = localStorage.getItem("last_tab");
 let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
+// Phones may reload a page left in the background (switching apps). The page
+// is reopened on the same tab (last_tab); this also keeps where it was
+// scrolled and the My Purchases form (owner, 16 Oct 2026).
+(() => {
+  const keep = () => {
+    try {
+      sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY) }));
+      if (typeof PUR_FORM !== "undefined") sessionStorage.setItem("pur_form", JSON.stringify(PUR_FORM));
+    } catch (e) { /* blocked */ }
+  };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") keep(); });
+  window.addEventListener("pagehide", keep);
+  let sp = null;
+  try { sp = JSON.parse(sessionStorage.getItem("scroll_pos") || "null"); sessionStorage.removeItem("scroll_pos"); } catch (e) { sp = null; }
+  if (!sp || sp.tab !== TAB || !(sp.y > 0)) return;
+  // Wait until the page is drawn tall enough (up to 10 s), unless the person scrolls or changes page first.
+  let tries = 0, moved = false;
+  const stop = () => { moved = true; };
+  window.addEventListener("touchstart", stop, { once: true, passive: true });
+  window.addEventListener("wheel", stop, { once: true, passive: true });
+  const iv = setInterval(() => {
+    if (moved || TAB !== sp.tab || ++tries > 40) { clearInterval(iv); return; }
+    if (document.documentElement.scrollHeight >= sp.y + innerHeight * 0.6) { clearInterval(iv); window.scrollTo(0, sp.y); }
+  }, 250);
+})();
 // Browser history: every page change is a history entry, so the Back
 // button (and the Android back gesture in the installed app) returns to the
 // previous page inside the site instead of leaving it.
@@ -6319,6 +6349,11 @@ function purTablePopup(tb, opts) {
   // state: S.sel[i] = chosen option per dropdown of row i
   // Every dropdown starts empty (-1) until you choose.
   const S = { counts: {}, upTo: -1, sel: R.map((r) => Array.from({ length: r.n }, () => -1)) };
+  // Picks made before the phone reloaded the page come back (same table and rows).
+  const rs = opts.restore;
+  if (rs && Array.isArray(rs.sel) && rs.sel.length === S.sel.length && rs.sel.every((x, i) => Array.isArray(x) && x.length === S.sel[i].length)) { S.counts = rs.counts || {}; S.upTo = Number.isInteger(rs.upTo) ? rs.upTo : -1; S.sel = rs.sel; }
+  const keepDraft = () => { try { sessionStorage.setItem("pur_tbl_draft", JSON.stringify({ table: String(tb.id), S })); } catch (e) { /* blocked */ } };
+  const dropDraft = () => { try { sessionStorage.removeItem("pur_tbl_draft"); } catch (e) { /* blocked */ } };
   const rowDone = (i) => S.sel[i].every((oi) => oi >= 0);
   const rowGives = (i) => (R[i].n ? S.sel[i].reduce((g, oi) => (oi >= 0 ? add(g, R[i].opts[oi].gives) : g), {}) : { ...R[i].gives });
   const rowText = (i) => { const cnt = {}; S.sel[i].forEach((oi) => { const nm = oi >= 0 ? R[i].opts[oi].name : "?"; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, k]) => (R[i].n > 1 ? `${k}× ${nm}` : nm)).join(" + "); };
@@ -6339,7 +6374,7 @@ function purTablePopup(tb, opts) {
   };
   let modal = document.getElementById("purTblModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "purTblModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-  const close = () => { modal.style.display = "none"; };
+  const close = () => { modal.style.display = "none"; dropDraft(); };
   const showCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && !packIsNonResourceColumn(tb.columns[ci]));
   const draw = () => {
     const ls = lines(), total = ls.reduce((a, l) => a + l.price * l.count, 0), miss = missing();
@@ -6365,6 +6400,7 @@ function purTablePopup(tb, opts) {
       <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
+    keepDraft();
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
     modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.tct.split("|").map(Number); S.counts[i] = Math.max(0, (S.counts[i] || 0) + d); draw(); }));
     modal.querySelectorAll("[data-tup]").forEach((b) => b.addEventListener("click", () => { const i = Number(b.dataset.tup); S.upTo = S.upTo === i ? -1 : i; draw(); }));
@@ -6380,7 +6416,8 @@ function purTablePopup(tb, opts) {
   draw();
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
-let PUR_FORM = { table: "", row: 0, count: 1, date: "", status: "planned" };
+// The Add a pack form survives the phone reloading the page (sessionStorage).
+let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
   content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
@@ -6481,9 +6518,12 @@ async function renderPurchasesPage() {
     <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
     <div class="meta pur-how">${esc(t("pur_how"))}</div>
   </div>`;
+  // Coming / Bought fold open and closed (owner, 16 Oct 2026); kept in this browser.
+  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
+  const listBox = (k, title, n, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${n})</span></summary>${inner}</details>`;
   const listsHtml = `
-    <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_coming"))}</div>${coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`}</div>
-    <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_bought_list"))}</div>${bought.length ? groupBy(bought).map((g) => groupHtml(g, "b")).join("") : `<div class="meta">${esc(t("pur_none_bought"))}</div>`}</div>`;
+    ${listBox("c", t("pur_coming"), coming.length, coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
+    ${listBox("b", t("pur_bought_list"), bought.length, bought.length ? groupBy(bought).map((g) => groupHtml(g, "b")).join("") : `<div class="meta">${esc(t("pur_none_bought"))}</div>`)}`;
 
   // New Gen Heroes timing
   const ng = PACK_PURCHASES.newGen || {};
@@ -6616,6 +6656,7 @@ async function renderPurchasesPage() {
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
 
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
+  content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
     const k = inp.dataset.purf;
     if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
@@ -6644,8 +6685,10 @@ async function renderPurchasesPage() {
   if (tblBtn) tblBtn.addEventListener("click", () => {
     if (!formTb) return;
     const dateEl = content.querySelector('[data-purf="date"]'), countEl = content.querySelector('[data-purf="count"]');
+    let restore = null;
+    try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && d.table === String(formTb.id)) restore = d.S; } catch (e) { /* none */ }
     purTablePopup(formTb, {
-      name: formTb.title || "",
+      name: formTb.title || "", restore,
       count: Math.max(1, Math.floor(Number(countEl && countEl.value) || 1)),
       onAdd: (adds) => {
         let date = packValidDay(dateEl && dateEl.value) || today;
@@ -6657,6 +6700,8 @@ async function renderPurchasesPage() {
       },
     });
   });
+  // The phone reloaded the page while the pack table was open: open it again.
+  try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && tblBtn && formTb && d.table === String(formTb.id) && !document.querySelector("#purTblModal[style*='flex']")) tblBtn.click(); } catch (e) { /* none */ }
   const toBought = (p) => ({ ...p, status: "bought", date: p.date > today ? today : p.date });
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
     const kind = box.dataset.purgrp.slice(0, 1), gkey = box.dataset.purgrp.slice(2);
