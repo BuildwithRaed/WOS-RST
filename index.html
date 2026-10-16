@@ -850,6 +850,25 @@ input,select,textarea{
   .bd-done summary{ cursor:pointer; margin-bottom:4px; }
   @media (max-width: 560px){ .bd-box{ padding:14px 13px; } .bd-sum b{ font-size:15px; } }
   /* Stat boxes and stat tabs */
+  .rfa .rfa-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .rfa .rfa-head h2{ margin:0; font-size:17px; }
+  .rfa-x{ width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:14px; cursor:pointer; flex:none; }
+  .rfa-desc{ font-size:12px; color:var(--muted); margin:4px 0 12px; }
+  .rfa-top{ grid-template-columns:1fr 1fr; }
+  .rfa-top .plx-stat span{ white-space:normal; overflow:visible; }
+  .rfa-name small{ font-weight:400; font-size:11px; }
+  .rfa-sec{ margin-top:12px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.02); }
+  .rfa-off{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:13px; }
+  .rfa-k{ font-size:12px; font-weight:700; margin-bottom:4px; }
+  .rfa-list .rfa-row + .rfa-row{ border-top:1px solid var(--line); }
+  .rfa-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; }
+  .rfa-name{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; min-width:0; }
+  .rfa-name i{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .rfa-step{ display:inline-flex; align-items:center; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--panel-2); flex:none; }
+  .rfa-step button{ width:34px; height:32px; border:0; background:none; color:var(--ice); font-size:17px; cursor:pointer; }
+  .rfa-step input, .rfa-step .rfa-val{ width:64px; height:32px; border:0; border-inline:1px solid var(--line); border-radius:0; background:var(--bg); color:var(--frost); text-align:center; font-size:14px; font-weight:700; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+  .rfa-note{ font-size:10.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
+  .rfa-btns{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
   .plx-stat span{ display:block; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -4138,6 +4157,7 @@ const T = {
   pack_view_page_desc: { en: "Planned as if this is the only thing you're working on: every pack and ladder step can go to this page.", ar: "\u062a\u062e\u0637\u064a\u0637 \u0643\u0623\u0646 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062d\u0629 \u0647\u064a \u0627\u0644\u0648\u062d\u064a\u062f\u0629: \u0643\u0644 \u062d\u0632\u0645\u0629 \u0648\u062f\u0631\u062c\u0629 \u064a\u0645\u0643\u0646 \u0623\u0646 \u062a\u0630\u0647\u0628 \u0644\u0647\u0627.", ko: "\uc774 \ud398\uc774\uc9c0\ub9cc \uc9c4\ud589\ud55c\ub2e4\uace0 \ubcf4\uace0 \uacc4\ud68d: \ubaa8\ub4e0 \ud329\uacfc \ub2e8\uacc4\ub97c \uc774 \ud398\uc774\uc9c0\uc5d0 \uc0ac\uc6a9." },
   combined_title: { en: "Shared with the Budgets plan", ar: "\u0645\u0634\u062a\u0631\u0643\u0629 \u0645\u0639 \u062e\u0637\u0629 \u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0627\u062a", ko: "\uc608\uc0b0 \uacc4\ud68d\uacfc \uacf5\uc720" },
   combined_desc: { en: "Some packs here also help {pages}. They're planned once for all those pages, so each purchase and each ladder step is only counted once. This is this page's share.", ar: "\u0628\u0639\u0636 \u0627\u0644\u062d\u0632\u0645 \u0647\u0646\u0627 \u062a\u0641\u064a\u062f \u0623\u064a\u0636\u064b\u0627 {pages}. \u062a\u064f\u062e\u0637\u0637 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629 \u0644\u0643\u0644 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062d\u0627\u062a\u060c \u0641\u064a\u064f\u062d\u062a\u0633\u0628 \u0643\u0644 \u0634\u0631\u0627\u0621 \u0648\u0643\u0644 \u062f\u0631\u062c\u0629 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629. \u0647\u0630\u0647 \u062d\u0635\u0629 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062d\u0629.", ko: "\uc5ec\uae30 \uc788\ub294 \uc77c\ubd80 \ud329\uc740 {pages}\uc5d0\ub3c4 \uc4f0\uc785\ub2c8\ub2e4. \ubaa8\ub4e0 \ud398\uc774\uc9c0\ub97c \ud55c \ubc88\uc5d0 \uacc4\ud68d\ud574 \uad6c\ub9e4\uc640 \ub2e8\uacc4\ub97c \ud55c \ubc88\ub9cc \uc138\uba70, \uc774\uac83\uc740 \uc774 \ud398\uc774\uc9c0 \ubab8\uc785\ub2c8\ub2e4." },
+  pc_all_pages: { en: "All pages", ar: "كل الصفحات", ko: "모든 페이지" },
   combined_share: { en: "This page's share", ar: "\u062d\u0635\u0629 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062d\u0629", ko: "\uc774 \ud398\uc774\uc9c0 \ubab8" },
   combined_whole: { en: "Whole plan (all pages)", ar: "\u0627\u0644\u062e\u0637\u0629 \u0643\u0627\u0645\u0644\u0629 (\u0643\u0644 \u0627\u0644\u0635\u0641\u062d\u0627\u062a)", ko: "\uc804\uccb4 \uacc4\ud68d(\ubaa8\ub4e0 \ud398\uc774\uc9c0)" },
   combined_part: { en: "part", ar: "\u062c\u0632\u0621", ko: "\uc77c\ubd80" },
@@ -12706,6 +12726,34 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <button type="button" class="btn small ghost" data-gotobudgets style="margin-top:8px;">${esc(t("budgets_title"))} &rarr;</button>
       </div>`;
   }
+  // Card layout (planner pages): the shared view looks like "This page only":
+  // plan cards on top (this page's share, and the whole plan → Budgets), then
+  // one folding row per pack with this page's part of its price.
+  if (sharedSections && cards) {
+    const cb = shared.combined, p = cb.chosen, mineShare = cb.shares[calcKey] || { total: 0, rows: [] };
+    const cur = p.rows[0]?.currency || currency, price0 = p.rows[0]?.price;
+    const late = shared.targetDays != null && p.days > shared.targetDays;
+    const d = new Date(today.getTime() + p.days * 86400000);
+    let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }); } catch (e) { short = fmtDate(p.days); }
+    const whenTxt = p.days === 0 ? t("pack_ready_now") : `${short} · ${p.days}d`;
+    const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>');
+    const byPack = [];
+    mineShare.rows.forEach((r) => {
+      let g = byPack.find((x) => x.title === r.title);
+      if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, lines: [] }; byPack.push(g); }
+      g.count += r.count; g.subtotal += packShareLocal(r); g.sample = g.sample || r.price; g.lines.push(r);
+    });
+    const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
+      <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""}</span><span class="meta">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
+    const needKeys = new Set(Object.keys(need));
+    const trades = (p.trades || []).filter((x) => needKeys.has(x.to));
+    const tradesHtml = trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
+    sharedSections = `<div class="pc-plans">
+        <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
+        <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
+      </div>
+      ${mineShare.rows.length ? listHtml : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${tradesHtml}`;
+  }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
   if (!packGroups.length) {
@@ -19284,40 +19332,33 @@ async function renderRefinePage() {
     const usedStages = new Set(); petNames.forEach((pet) => (PET_REFINE_CACHE[pet] || []).forEach((r) => usedStages.add(r.stage)));
     const noEstimate = ["Grey", "Green", "Blue", "Purple", "Orange", "Red"].filter((sg) => usedStages.has(sg) && !(Number(rates[sg]) > 0));
     const noEstimateHtml = noEstimate.length ? `<div style="margin-top:8px; padding:6px 10px; border:1px solid #e0a030; border-radius:8px; font-size:11px; color:#e0a030;">${esc(t("marks_no_estimate"))} ${noEstimate.map((sg) => `<b style="color:${STAGE_COLORS[sg] || "inherit"};">${esc(sg)}</b>`).join(", ")}</div>` : "";
-    const stageBtn = (stage) => `<div style="display:flex; align-items:center; gap:4px;">
-        <span style="font-size:11px; font-weight:600; color:${STAGE_COLORS[stage] || "var(--ice)"}; min-width:52px;">${esc(stage)}</span>
-        <button class="btn small ghost" data-marksrate="${esc(stage)}" data-delta="-1" style="width:24px; padding:2px 0;">&minus;</button>
-        <input type="text" inputmode="decimal" data-marksrateinput="${esc(stage)}" value="${esc(rates[stage])}" style="width:58px; text-align:center; padding:3px 4px; font-size:12px;" />
-        <button class="btn small ghost" data-marksrate="${esc(stage)}" data-delta="1" style="width:24px; padding:2px 0;">+</button>
-      </div>`;
-    // Advanced refine calculator: rates and adjustment, in a pop-up window.
-    const advHtml = `<div class="grid g2" style="align-items:start; gap:16px;">
-          ${!IS_OWNER && !PET_MARKS_STATE.advanced ? `<div>
-            <div class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</div>
-            <button type="button" class="btn small" data-marksadvanced="1" style="margin-top:8px;">${esc(t("marks_use_own"))}</button>
-            <div class="meta" style="font-size:10px; margin-top:4px;">${esc(t("marks_advanced_desc"))}</div>
-          </div>` : true ? `<div>
-            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px;">${esc(t("marks_rates"))}</div>
-            <div style="display:flex; flex-direction:column; gap:6px;">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
-            <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("marks_rates_note"))}</div>
-            ${IS_OWNER ? "" : `<div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px;">
-              ${PET_MARKS_STATE.visitorCustom ? `<button type="button" class="btn small" data-markssite style="padding:2px 10px;">${esc(t("marks_use_site"))}</button>` : `<span class="meta" style="font-size:10.5px; color:var(--good);">${esc(t("marks_site_rates_on"))}</span>`}
-              <button type="button" class="btn small ghost" data-marksclear style="padding:2px 10px;">${esc(t("marks_clear"))}</button>
-              <button type="button" class="btn small ghost" data-marksadvanced="0" style="padding:2px 10px;">${esc(t("marks_advanced_close"))}</button>
-            </div>`}
-            <div class="meta" style="font-size:10.5px; margin-top:8px; ${IS_OWNER ? "" : "display:none;"} color:${PET_MARKS_STATE.testMode ? "#e0a030" : "var(--muted)"};">${PET_MARKS_STATE.testMode ? "Editing your test rates (visitors unaffected) \u2014 Admin \u2192 Pets \u2192 Marks Calculation" : "Editing the rates visitors use \u2014 Admin \u2192 Pets \u2192 Marks Calculation to test privately"}</div>
-          </div>` : ""}
-          <div>
-            <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:6px; ${!IS_OWNER && !PET_MARKS_STATE.advanced ? "display:none;" : ""}">${esc(t("marks_adjust"))}</div>
-            <div style="display:${!IS_OWNER && !PET_MARKS_STATE.advanced ? "none" : "flex"}; align-items:center; gap:6px;">
-              <button class="btn small ghost" data-marksadjust="-5" style="width:28px; padding:2px 0;">&minus;</button>
-              <span style="font-size:14px; font-weight:700; min-width:52px; text-align:center;">${PET_MARKS_STATE.adjust > 0 ? "+" : ""}${PET_MARKS_STATE.adjust}%</span>
-              <button class="btn small ghost" data-marksadjust="5" style="width:28px; padding:2px 0;">+</button>
-              <span class="meta" style="font-size:10.5px;">${esc(t("marks_adjust_note"))}</span>
-            </div>
+    // Advanced refine calculator (pop-up): totals on top, then one clean row
+    // per stage (colour dot, name, − value +), the adjustment, the buttons.
+    const advOn = IS_OWNER || PET_MARKS_STATE.advanced;
+    const stepper = (val, minus, plus) => `<span class="rfa-step"><button type="button" ${minus} aria-label="-">&minus;</button>${val}<button type="button" ${plus} aria-label="+">+</button></span>`;
+    const stageBtn = (stage) => `<div class="rfa-row"><span class="rfa-name"><i style="background:${STAGE_COLORS[stage] || "var(--ice)"};"></i>${esc(stage)}</span>
+        ${stepper(`<input type="text" inputmode="decimal" data-marksrateinput="${esc(stage)}" value="${esc(rates[stage])}" />`, `data-marksrate="${esc(stage)}" data-delta="-1"`, `data-marksrate="${esc(stage)}" data-delta="1"`)}</div>`;
+    const advHtml = `
+        <div class="plx-stats rfa-top"><div class="plx-stat"><span>${esc(t("marks_needed"))}</span><b>${marksNeeded.toLocaleString()}</b><small>${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</small></div><div class="plx-stat"><span>${esc(t("marks_as_advanced"))}</span><b>${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</b><small>1 = ${ADVANCED_MARK_VALUE} ${esc(materialDisplayName("Common Marks"))}</small></div></div>
+        ${!advOn ? `<div class="rfa-sec rfa-off">
+            <div style="color:var(--good); font-weight:600;">&#10003; ${esc(t("marks_site_rates_on"))}</div>
+            <button type="button" class="btn small" data-marksadvanced="1">${esc(t("marks_use_own"))}</button>
+          </div>` : `
+          <div class="rfa-sec">
+            <div class="rfa-k">${esc(t("marks_rates"))}</div>
+            <div class="rfa-list">${["Grey", "Green", "Blue", "Purple", "Orange", "Red"].map(stageBtn).join("")}</div>
+            <div class="rfa-note">${esc(t("marks_rates_note"))}</div>
           </div>
-        </div>
-        <div class="plx-stats" style="margin-top:12px;"><div class="plx-stat"><span>${esc(t("marks_needed"))}</span><b>${marksNeeded.toLocaleString()}</b><small>${Math.round(marksRaw).toLocaleString()} ${esc(t("marks_before_adjust"))}</small></div><div class="plx-stat"><span>${esc(t("marks_as_advanced"))}</span><b>${Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()}</b></div></div>`;
+          <div class="rfa-sec">
+            <div class="rfa-row"><span class="rfa-name"><span><b>${esc(t("marks_adjust"))}</b><br><small class="meta">${esc(t("marks_adjust_note"))}</small></span></span>
+              ${stepper(`<b class="rfa-val">${PET_MARKS_STATE.adjust > 0 ? "+" : ""}${PET_MARKS_STATE.adjust}%</b>`, `data-marksadjust="-5"`, `data-marksadjust="5"`)}</div>
+          </div>
+          ${IS_OWNER ? `<div class="rfa-note" style="color:${PET_MARKS_STATE.testMode ? "#e0a030" : "var(--muted)"};">${PET_MARKS_STATE.testMode ? "Editing your test rates (visitors unaffected) \u2014 Admin \u2192 Pets \u2192 Marks Calculation" : "Editing the rates visitors use \u2014 Admin \u2192 Pets \u2192 Marks Calculation to test privately"}</div>` : `
+          <div class="rfa-btns">
+            ${PET_MARKS_STATE.visitorCustom ? `<button type="button" class="btn small" data-markssite>${esc(t("marks_use_site"))}</button>` : `<span class="meta" style="color:var(--good);">&#10003; ${esc(t("marks_site_rates_on"))}</span>`}
+            <button type="button" class="btn small ghost" data-marksclear>${esc(t("marks_clear"))}</button>
+            <button type="button" class="btn small ghost" data-marksadvanced="0">${esc(t("marks_advanced_close"))}</button>
+          </div>`}`}`;
     document.getElementById("refineTotals").innerHTML = `
       <div class="t12x-card">
         <div class="t12x-title">${esc(t("total_refine_bonus"))}</div>
@@ -19396,9 +19437,9 @@ async function renderRefinePage() {
     function drawAdv() {
       let modal = document.getElementById("refineAdvModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "refineAdvModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
-      modal.innerHTML = `<div class="modal-box" style="max-width:560px; max-height:88vh; overflow-y:auto;">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;"><h2 style="margin:0;">${esc(t("marks_advanced_open"))}</h2><button type="button" class="btn ghost small" data-marksclose>&#10005;</button></div>
-        <p class="desc" style="font-size:12px; margin:0 0 10px;">${esc(t("marks_advanced_desc"))}</p>
+      modal.innerHTML = `<div class="modal-box rfa" style="max-width:440px; max-height:88vh; overflow-y:auto;">
+        <div class="rfa-head"><h2>&#9881; ${esc(t("marks_advanced_open"))}</h2><button type="button" class="rfa-x" data-marksclose aria-label="close">&#10005;</button></div>
+        <p class="rfa-desc">${esc(t("marks_advanced_desc"))}</p>
         ${advHtml}</div>`;
       modal.style.display = "flex";
       modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-marksclose]")) { refineAdvOpen = false; modal.style.display = "none"; } };
