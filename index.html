@@ -871,6 +871,10 @@ input,select,textarea{
   .adm-skinmore input{ width:86px; }
   .adm-skinmore .adm-chk{ flex-direction:row; align-items:center; gap:6px; align-self:flex-end; }
   .adm-skinmore .adm-chk input{ width:auto; }
+  .bk-list{ display:flex; flex-direction:column; gap:6px; }
+  .bk-row{ display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); font-size:13px; cursor:pointer; }
+  .bk-row small{ color:var(--muted); font-size:11.5px; }
+  .adm-bkbtn{ flex:none; }
   .adm-petedit{ display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
   .adm-petpic{ width:64px; height:64px; border-radius:12px; border:1px solid var(--line); background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:none; }
   .adm-petpic img{ width:100%; height:100%; object-fit:contain; }
@@ -19559,6 +19563,7 @@ const ADMIN_GROUPS = [
 ];
 const ADMIN_TABLES = {
   visibility: { label: "Visibility", group: "site", icon: "👁", desc: "Hide pages, experts, pets", words: "hide unhide visitor access" },
+  backup: { label: "Backup & Restore", group: "site", icon: "💾", desc: "Download all Admin data, restore it", words: "backup restore save file export import undo" },
   languages: { label: "Languages & Texts", group: "site", icon: "🌐", desc: "Languages, translations, download / upload", words: "language translate translation text arabic korean csv upload download" },
   menu: { label: "Menu & pages", group: "site", icon: "☰", desc: "Names, order, groups, notes", words: "menu nav rename order group note page" },
   contact: { label: "Contact us", group: "site", icon: "✉", desc: "Email and message", words: "email" },
@@ -19611,6 +19616,7 @@ async function renderAdminPage() {
         ${cur ? `<button type="button" class="adm-back" data-adminhome aria-label="back">&#8249;</button>` : ""}
         <h2>${cur ? `<span class="adm-title-sec">${esc(ADMIN_TABLES[cur].label)}</span><span class="adm-title-main">&#9881; Admin</span>` : "&#9881; Admin"}</h2>
         <input type="search" class="adm-search" data-adminsearch placeholder="Search admin…" value="${esc(ADMIN_SEARCH)}" />
+        <button type="button" class="btn ghost small adm-bkbtn" data-admintable="backup">&#8615; Backup</button>
       </div>
       <div class="adm-layout">
         <nav class="adm-side">${side}</nav>
@@ -19657,6 +19663,7 @@ async function drawAdminSection(key, body) {
   if (key === "visibility") await renderAdminVisibility(body);
   else if (key === "menu") await renderAdminMenu(body);
   else if (key === "languages") await renderAdminLanguages(body);
+  else if (key === "backup") await renderAdminBackup(body);
   else if (key === "rules") await renderAdminRules(body);
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
@@ -20135,6 +20142,114 @@ async function renderAdminTexts(body, code) {
     });
   };
   draw();
+}
+
+// ---- Backup & Restore (Admin) ----
+// Everything the admin controls, in one file: site settings (incl. languages,
+// rules, menu), visibility, the owner's saved states (pack links, trade
+// rates…) and every game-data table. Listed parents first (restore order).
+const BACKUP_TABLES = [
+  { t: "site_config", pk: ["key"] }, { t: "ui_visibility", pk: ["key"] },
+  { t: "calc_state", pk: ["user_id", "calc_name"], q: () => `user_id=eq.${PROGRESSION_OWNER_ID}`, drop: ["id"] },
+  { t: "pack_tables", pk: ["id"] },
+  { t: "experts", pk: ["id"] }, { t: "expert_affinity_nodes", pk: ["id"] }, { t: "expert_skill_nodes", pk: ["id"] }, { t: "expert_research_nodes", pk: ["id"] },
+  { t: "pets_nodes", pk: ["id"] }, { t: "pet_refine_nodes", pk: ["id"] },
+  { t: "heroes", pk: ["id"] }, { t: "hero_gen_star_stats", pk: ["generation", "step"] }, { t: "hero_gen_widget_stats", pk: ["generation", "level"] },
+  { t: "progression_tables", pk: ["id"] }, { t: "progression_rows", pk: ["id"] },
+  { t: "charm_levels", pk: ["id"] }, { t: "chief_gear_set_bonus", pk: ["id"] },
+  { t: "research_center_nodes", pk: ["id"] }, { t: "t11_helios_nodes", pk: ["id"] }, { t: "t12_nodes", pk: ["id"] },
+  { t: "skin_page_categories", pk: ["id"] }, { t: "skins_catalog", pk: ["id"] },
+  { t: "collection_gallery_levels", pk: ["id"] }, { t: "tundra_album_levels", pk: ["id"] },
+  { t: "buff_tables", pk: ["id"], q: () => `user_id=eq.${PROGRESSION_OWNER_ID}` }, { t: "buff_columns", pk: ["id"] }, { t: "buff_rows", pk: ["id"] }, { t: "buff_cells", pk: ["id"] },
+];
+const backupKey = (spec, row) => spec.pk.map((k) => String(row[k])).join("|");
+async function makeBackup(onStep) {
+  const out = { app: "WOS RST", kind: "admin-backup", version: 1, made: new Date().toISOString(), tables: {} };
+  for (const spec of BACKUP_TABLES) {
+    if (onStep) onStep(spec.t);
+    const q = spec.q ? spec.q() + "&" : "";
+    out.tables[spec.t] = await sb(`${spec.t}?${q}select=*&order=${spec.pk.map((k) => k + ".asc").join(",")}`);
+  }
+  return out;
+}
+function backupFileName(prefix) { const d = new Date(); const z = (n) => String(n).padStart(2, "0"); return `${prefix}-${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.json`; }
+async function downloadBackup(prefix, onStep) {
+  const data = await makeBackup(onStep);
+  downloadTextFile(backupFileName(prefix || "wosrst-backup"), JSON.stringify(data), "application/json");
+  try { localStorage.setItem("admin_last_backup", data.made); } catch (e) { /* storage blocked */ }
+  return data;
+}
+async function renderAdminBackup(body) {
+  let last = null; try { last = localStorage.getItem("admin_last_backup"); } catch (e) { /* none */ }
+  body.innerHTML = `
+    <div class="rl-card">
+      <div class="rl-h"><b>Backup</b></div>
+      <p class="desc" style="margin:4px 0 10px;">Downloads everything you control in Admin as one file: site settings (menu, rules, languages, contact, currencies, visibility), your pack tables and pack settings, and all game data (experts, pets, heroes, gear, charms, research, skins, VIP, alliance). Keep it somewhere safe — on your phone, PC or cloud drive.</p>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><button type="button" class="btn small" data-bkdown>&#8615; Download backup</button><span class="meta" data-bkstatus style="font-size:12px;">${last ? `Last backup from this browser: ${esc(new Date(last).toLocaleString())}` : "No backup made from this browser yet."}</span></div>
+    </div>
+    <div class="rl-card" style="margin-top:12px;">
+      <div class="rl-h"><b>Restore</b></div>
+      <p class="desc" style="margin:4px 0 10px;">Pick a backup file. Nothing changes yet: you'll see what's different for each part first, choose what to put back, and a copy of today's data is downloaded automatically before anything is restored.</p>
+      <label class="btn ghost small lg-up" role="button">&#8613; Choose backup file<input type="file" accept=".json,application/json" data-bkfile hidden /></label>
+      <div data-bkpreview style="margin-top:12px;"></div>
+    </div>`;
+  const status = body.querySelector("[data-bkstatus]");
+  body.querySelector("[data-bkdown]").addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget; btn.disabled = true;
+    try { const d = await downloadBackup("wosrst-backup", (t) => { status.textContent = `Reading ${t}…`; }); status.textContent = `Backup downloaded (${Object.values(d.tables).reduce((n, r) => n + r.length, 0).toLocaleString()} rows).`; }
+    catch (err) { status.textContent = "Backup failed: " + (err.message || err); toast("Backup failed", true); }
+    btn.disabled = false;
+  });
+  body.querySelector("[data-bkfile]").addEventListener("change", async (ev) => {
+    const f = ev.target.files && ev.target.files[0]; ev.target.value = "";
+    if (!f) return;
+    let file;
+    try { file = JSON.parse(await f.text()); } catch (e) { toast("That isn't a backup file", true); return; }
+    if (!file || file.kind !== "admin-backup" || !file.tables) { toast("That isn't a WOS RST backup file", true); return; }
+    showRestorePreview(body.querySelector("[data-bkpreview]"), file);
+  });
+}
+async function showRestorePreview(el, file) {
+  el.innerHTML = `<div class="meta">Comparing with today's data…</div>`;
+  const now = await makeBackup();
+  const plan = BACKUP_TABLES.filter((spec) => Array.isArray(file.tables[spec.t])).map((spec) => {
+    const cur = new Map(now.tables[spec.t].map((r) => [backupKey(spec, r), r]));
+    const inFile = new Map(file.tables[spec.t].map((r) => [backupKey(spec, r), r]));
+    const put = [], extra = [];
+    inFile.forEach((r, k) => { const c = cur.get(k); if (!c || JSON.stringify(c) !== JSON.stringify(r)) put.push(r); });
+    cur.forEach((r, k) => { if (!inFile.has(k)) extra.push(r); });
+    return { spec, put, extra, back: put.filter((r) => !cur.has(backupKey(spec, r))).length };
+  });
+  const changed = plan.filter((p) => p.put.length || p.extra.length);
+  el.innerHTML = `<div class="meta" style="font-size:12px; margin-bottom:6px;">Backup from <b>${esc(new Date(file.made).toLocaleString())}</b>. ${changed.length ? `${changed.length} part(s) differ from today:` : "Everything is the same as today — nothing to restore."}</div>
+    ${changed.length ? `<div class="bk-list">${changed.map((p) => `<label class="bk-row"><input type="checkbox" data-bkpart="${p.spec.t}" checked /><span><b>${esc(p.spec.t)}</b><br><small>${p.put.length - p.back ? `${p.put.length - p.back} changed` : ""}${p.put.length - p.back && p.back ? " · " : ""}${p.back ? `${p.back} deleted since — put back` : ""}${p.extra.length ? `${p.put.length ? " · " : ""}${p.extra.length} added since` : ""}</small></span></label>`).join("")}</div>
+      <label class="bk-row" style="margin-top:6px;"><input type="checkbox" data-bkremove /><span>Also delete rows added since the backup<br><small>Off: rows added later are kept.</small></span></label>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;"><button type="button" class="btn small" data-bkgo>Restore ticked parts</button></div>` : ""}`;
+  const go = el.querySelector("[data-bkgo]");
+  if (!go) return;
+  go.addEventListener("click", async () => {
+    const parts = plan.filter((p) => { const cb = el.querySelector(`[data-bkpart="${p.spec.t}"]`); return cb && cb.checked; });
+    const removeExtra = el.querySelector("[data-bkremove]").checked;
+    if (!parts.length) { toast("Tick at least one part", true); return; }
+    if (!confirm(`Restore ${parts.length} part(s) from the backup${removeExtra ? " and delete rows added since" : ""}? A copy of today's data is downloaded first.`)) return;
+    go.disabled = true;
+    try {
+      downloadTextFile(backupFileName("wosrst-before-restore"), JSON.stringify(now), "application/json"); // safety copy
+      for (const p of parts) { // parents first
+        const rows = p.spec.drop ? p.put.map((r) => { const c = { ...r }; p.spec.drop.forEach((k) => { delete c[k]; }); return c; }) : p.put;
+        for (let i = 0; i < rows.length; i += 300) await sb(`${p.spec.t}?on_conflict=${p.spec.pk.join(",")}`, { method: "POST", prefer: "resolution=merge-duplicates,return=minimal", body: JSON.stringify(rows.slice(i, i + 300)) });
+      }
+      if (removeExtra) for (const p of parts.slice().reverse()) { // children first
+        for (let i = 0; i < p.extra.length; i += 100) {
+          const chunk = p.extra.slice(i, i + 100);
+          const filter = p.spec.pk.length === 1 ? `${p.spec.pk[0]}=in.(${chunk.map((r) => encodeURIComponent(JSON.stringify(String(r[p.spec.pk[0]])))).join(",")})` : `or=(${chunk.map((r) => `and(${p.spec.pk.map((k) => `${k}.eq.${encodeURIComponent(r[k])}`).join(",")})`).join(",")})`;
+          await sb(`${p.spec.t}?${filter}`, { method: "DELETE", prefer: "return=minimal" });
+        }
+      }
+      toast("Restored — reloading the page");
+      setTimeout(() => location.reload(), 1200);
+    } catch (err) { toast("Restore stopped: " + (err.message || err), true); go.disabled = false; }
+  });
 }
 
 // ---- Pack Resources: the Packs page column dropdown ----
