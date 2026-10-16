@@ -871,6 +871,50 @@ input,select,textarea{
   .adm-skinmore input{ width:86px; }
   .adm-skinmore .adm-chk{ flex-direction:row; align-items:center; gap:6px; align-self:flex-end; }
   .adm-skinmore .adm-chk input{ width:auto; }
+  .admc-cats{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .admc-cats .adm-chips-row{ flex:1 1 auto; min-width:0; }
+  .admc-catmenu{ position:relative; flex:none; }
+  .admc-catmenu summary{ list-style:none; cursor:pointer; font-size:12.5px; padding:5px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); white-space:nowrap; }
+  .admc-catmenu summary::-webkit-details-marker{ display:none; }
+  .admc-catpop{ position:absolute; top:calc(100% + 4px); inset-inline-end:0; z-index:20; min-width:200px; display:flex; flex-direction:column; padding:6px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  .admc-catpop button{ text-align:start; padding:8px 10px; border:0; border-radius:8px; background:none; color:var(--frost); font:inherit; font-size:13px; cursor:pointer; }
+  .admc-catpop button:hover:not(:disabled){ background:var(--panel); }
+  .admc-catpop button:disabled{ opacity:.4; cursor:default; }
+  .admc-bar{ display:flex; align-items:center; gap:8px; margin:4px 0 10px; }
+  .admc-t{ flex:1 1 auto; min-width:0; font-weight:700; font-size:15px; }
+  .admc-add{ background:var(--ice); color:#0f141b; border-color:var(--ice); font-weight:700; }
+  .admc-list{ display:flex; flex-direction:column; gap:6px; }
+  .admc-row{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
+  .admc-pic{ width:46px; height:46px; border-radius:9px; background:#0f1620; display:flex; align-items:center; justify-content:center; overflow:hidden; flex:none; }
+  .admc-pic img{ width:100%; height:100%; object-fit:contain; }
+  .admc-pic i{ font-style:normal; font-weight:800; color:var(--ice); font-size:18px; }
+  .admc-pic.big{ width:72px; height:72px; }
+  .admc-txt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+  .admc-txt b{ font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admc-txt small{ font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admc-edit{ width:34px; height:34px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--frost); cursor:pointer; flex:none; }
+  .admc-sort{ display:none; align-items:center; gap:3px; flex:none; }
+  .admc-list.sorting .admc-sort{ display:inline-flex; }
+  .admc-sort [data-grip]{ cursor:grab; color:var(--muted); padding:0 3px; user-select:none; }
+  .admc-sort button{ width:26px; height:26px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2); color:var(--frost); font-size:11px; cursor:pointer; }
+  .admc-sort button:disabled{ opacity:.35; }
+  [data-admcsort].on{ border-color:var(--ice); }
+  .adm-sheet-wrap{ align-items:flex-end; }
+  .adm-sheet{ width:100%; max-width:560px; max-height:88vh; overflow-y:auto; border-radius:16px 16px 0 0; }
+  @media (min-width:700px){ .adm-sheet-wrap{ align-items:center; } .adm-sheet{ border-radius:16px; } }
+  .adm-sheet-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .adm-sheet-h b{ font-size:16px; }
+  .admf-grid{ display:flex; flex-wrap:wrap; gap:8px 10px; }
+  .admf{ display:flex; flex-direction:column; gap:3px; flex:1 1 100%; min-width:0; font-size:11.5px; color:var(--muted); }
+  .admf.half{ flex:1 1 calc(50% - 5px); }
+  .admf input, .admf select, .admf textarea{ width:100%; font-size:14px; }
+  .admf-chk{ flex-direction:row; align-items:center; gap:8px; color:var(--frost); font-size:13px; }
+  .admf-chk input{ width:auto; }
+  .admf-img{ flex-direction:row; align-items:flex-end; gap:10px; }
+  .admf-line{ display:flex; gap:6px; align-items:center; }
+  .admf-more{ margin-top:10px; }
+  .admf-more summary{ cursor:pointer; color:var(--ice); font-size:13px; margin-bottom:8px; }
+  .adm-sheet-foot{ display:flex; gap:8px; align-items:center; margin-top:14px; }
   .bk-list{ display:flex; flex-direction:column; gap:6px; }
   .bk-row{ display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); font-size:13px; cursor:pointer; }
   .bk-row small{ color:var(--muted); font-size:11.5px; }
@@ -19594,6 +19638,7 @@ let ADMIN_ACTIVE_EXPERT = null;
 let ADMIN_ACTIVE_PET = null;
 let ADMIN_ACTIVE_PROGRESSION = null;
 let ADMIN_ACTIVE_HERO_STAR_COL = null;
+let ADMIN_HERO_GEN = null; // Admin → Heroes: the Gen shown
 let ADMIN_ACTIVE_EXPERTS_SUBTAB = "roster";
 let ADMIN_ACTIVE_PETS_SUBTAB = "pets";
 let ADMIN_ACTIVE_CHIEFGEARS_SUBTAB = "chiefgearprog";
@@ -20261,168 +20306,119 @@ async function renderAdminPackResources(body) {
   const cfg = packResourceConfig();
   const custom = cfg.custom.map((x) => ({ name: x.name, icon: x.icon || "", contents: x.contents || {} }));
   const hidden = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
-  const removedLower = new Set(cfg.removed.map((n) => String(n).toLowerCase()));
+  let removed = cfg.removed.slice();
+  const removedLower = new Set(removed.map((n) => String(n).toLowerCase()));
   const builtin = PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n) && !removedLower.has(n.toLowerCase()));
-  const all = [...builtin.map((n) => ({ name: n, builtin: true })), ...custom.map((c) => ({ ...c, builtin: false }))];
+  let seq = 0;
+  const all = [...builtin.map((n) => ({ name: n, builtin: true, contents: cfg.gives[n] || PACK_BUNDLES[n] || {} })), ...custom.map((c) => ({ ...c, builtin: false }))].map((x) => ({ ...x, id: "r" + (++seq), hidden: hidden.has(x.name.toLowerCase()) }));
   const orderIdx = (n) => { const i = cfg.order.findIndex((o) => String(o).toLowerCase() === n.toLowerCase()); return i === -1 ? Infinity : i; };
   all.sort((a, b) => { const oa = orderIdx(a.name), ob = orderIdx(b.name); if (oa !== ob) return oa - ob; return materialDisplayName(a.name).localeCompare(materialDisplayName(b.name), undefined, { numeric: true, sensitivity: "base" }); });
   const contentsText = (c) => Object.entries(c || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
-  let resRowSeq = 0;
-  const rowHtml = (r, i, n) => `
-    <tr data-resrow="r${++resRowSeq}" ${r.builtin ? "" : `data-custom="1"`}>
-      ${adminReorderCellHtml(`r${resRowSeq}`, i, n == null ? all.length : n)}
-      <td style="padding:4px;">${r.builtin ? `<span style="font-weight:600;">${esc(materialDisplayName(r.name))}</span><input type="hidden" data-f="name" value="${esc(r.name)}" />` : `<input data-f="name" value="${esc(r.name)}" style="width:170px;" />`}</td>
-      <td style="padding:4px;">${r.builtin ? `<span class="meta" style="font-size:11px;">built-in</span>` : `<span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="icon" value="${esc(r.icon || "")}" placeholder="icons/…png" style="width:150px;" />${uploadBtnHtml()}</span>`}</td>
-      <td style="padding:4px;"><input data-f="contents" value="${esc(contentsText(r.builtin ? (cfg.gives[r.name] || PACK_BUNDLES[r.name]) : r.contents))}" placeholder="${r.builtin ? "nothing (plain item)" : "e.g. Design Plan: 1, Polishing Solution: 4"}" style="width:260px;" /></td>
-      <td style="padding:4px; text-align:center;"><input type="checkbox" data-f="hidden" ${hidden.has(r.name.toLowerCase()) ? "checked" : ""} /></td>
-      <td style="padding:4px;"><button class="btn ghost small" data-resdel type="button" title="Remove from the dropdown">&#10005;</button></td>
-    </tr>`;
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Pack Resources</h2>
-      <p class="desc">These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below. "Gives" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).</p>
-      <div class="adm-scroll">
-        <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
-          <thead><tr>${["", "Name", "Icon", "Gives (per 1)", "Hide", ""].map((h) => `<th style="text-align:start; padding:6px 4px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`).join("")}</tr></thead>
-          <tbody id="resRows">${all.map((r, i) => rowHtml(r, i, all.length)).join("")}</tbody>
-        </table>
-      </div>
-      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-        <button class="btn ghost small" id="resAdd" type="button">+ Add resource</button>
-        <button class="btn small" id="resSave" type="button">Save all</button>
-      </div>
-      ${cfg.removed.length ? `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
-        <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">Removed (not in the dropdown)</div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">${cfg.removed.map((n) => `<button class="btn ghost small" data-resrestore="${esc(n)}" type="button" title="Restore">${esc(materialDisplayName(n))} &#8634;</button>`).join("")}</div>
-      </div>` : ""}
-    </div>`;
-  let removedNow = cfg.removed.slice();
-  const rowsEl = body.querySelector("#resRows");
-  // ▲/▼ on the first/last rows are disabled; recheck after rows change.
-  const refreshResButtons = () => {
-    const list = [...rowsEl.querySelectorAll("tr[data-resrow]")];
-    list.forEach((tr, i) => {
-      const up = tr.querySelector("[data-rowup]"), down = tr.querySelector("[data-rowdown]");
-      if (up) up.disabled = i === 0;
-      if (down) down.disabled = i === list.length - 1;
-    });
-  };
-  // Restore puts the item back in the table; like ✕, it's kept by Save all
-  // (saving here would also save unsaved ✕ removals, and the reload would
-  // drop any other unsaved edits).
-  body.querySelectorAll("[data-resrestore]").forEach((b) => b.addEventListener("click", () => {
-    const name = b.dataset.resrestore;
-    removedNow = removedNow.filter((n) => n.toLowerCase() !== name.toLowerCase());
-    const builtinName = PACK_RESOURCE_NAMES.find((n) => n.toLowerCase() === name.toLowerCase());
-    if (builtinName && !PACK_RESOURCE_HIDDEN.has(builtinName)) {
-      rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: builtinName, builtin: true }, rowsEl.children.length, rowsEl.children.length + 1));
-      wireAdminReorder(rowsEl, "data-resrow", null);
-      refreshResButtons();
-    }
-    b.remove();
-    toast("Restored - Save all to keep it");
-  }));
-  wireAdminReorder(rowsEl, "data-resrow", null);
-  body.querySelector("#resAdd").addEventListener("click", () => {
-    rowsEl.insertAdjacentHTML("beforeend", rowHtml({ name: "", icon: "", contents: {}, builtin: false }, rowsEl.children.length, rowsEl.children.length + 1));
-    rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
-    // New row: its own move buttons / grip need wiring too.
-    wireAdminReorder(rowsEl, "data-resrow", null);
-    refreshResButtons();
-  });
-  rowsEl.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-resdel]"); if (!b) return;
-    const tr = b.closest("tr");
-    if (!tr.dataset.custom) { const n = tr.querySelector('[data-f="name"]').value; if (n && !removedNow.some((x) => x.toLowerCase() === n.toLowerCase())) removedNow.push(n); }
-    tr.remove();
-    refreshResButtons();
-  });
-  body.querySelector("#resSave").addEventListener("click", async () => {
-    const rows = [...rowsEl.querySelectorAll("[data-resrow]")];
-    const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
-    const items = rows.map((tr, i) => ({
-      builtin: !tr.dataset.custom,
-      order: i,
-      name: tr.querySelector('[data-f="name"]').value.trim(),
-      icon: (tr.querySelector('[data-f="icon"]') || {}).value || "",
-      contents: parseContents((tr.querySelector('[data-f="contents"]') || {}).value),
-      hidden: tr.querySelector('[data-f="hidden"]').checked,
-    })).filter((x) => x.name);
-    const dup = items.map((x) => x.name.toLowerCase()).find((n, i, a) => a.indexOf(n) !== i);
-    if (dup) { toast(`Duplicate name: ${dup}`, true); return; }
+  const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
+  // Every change is saved right away (the whole list is one setting).
+  const save = async (msg) => {
     const same = (a, b) => JSON.stringify(a || {}) === JSON.stringify(b || {});
     const gives = {};
-    items.filter((x) => x.builtin).forEach((x) => { if (!same(x.contents, PACK_BUNDLES[x.name] || {})) gives[x.name] = x.contents; });
-    const value = {
-      removed: removedNow,
-      gives,
-      custom: items.filter((x) => !x.builtin).map((x) => ({ name: x.name, icon: x.icon.trim(), contents: x.contents })),
-      hidden: items.filter((x) => x.hidden).map((x) => x.name),
-      order: items.slice().sort((a, b) => a.order - b.order).map((x) => x.name),
-    };
-    try { await saveSiteConfig("pack_resources", value); PACK_TABLES_CACHE = null; toast("Pack resources saved"); renderAdminPackResources(body); }
-    catch (err) { toast(err.message || "Couldn't save", true); }
-  });
+    all.filter((x) => x.builtin).forEach((x) => { if (!same(x.contents, PACK_BUNDLES[x.name] || {})) gives[x.name] = x.contents; });
+    await saveSiteConfig("pack_resources", { removed, gives, custom: all.filter((x) => !x.builtin).map((x) => ({ name: x.name, icon: (x.icon || "").trim(), contents: x.contents })), hidden: all.filter((x) => x.hidden).map((x) => x.name), order: all.map((x) => x.name) });
+    PACK_TABLES_CACHE = null; if (msg) toast(msg);
+  };
+  const draw = () => {
+    body.innerHTML = `<p class="desc" style="margin:0 0 8px;">The names offered in the column dropdown on the Packs page, in this order. "Gives" says what one of the item counts as (a chest or bundle).</p>`
+      + admListHtml(all, { title: "Pack resources", attr: "data-resrow", sortable: true, img: (r) => (r.builtin ? bpIcon({ name: r.name }) : r.icon), name: (r) => materialDisplayName(r.name), sub: (r) => [r.builtin ? "built-in" : "your item", r.hidden ? "hidden" : "", Object.keys(r.contents || {}).length ? "= " + contentsText(r.contents) : ""].filter(Boolean).join(" · ") })
+      + (removed.length ? `<div style="margin-top:14px;"><div class="meta" style="font-size:11.5px; font-weight:600; margin-bottom:6px;">Removed (not in the dropdown) — tap to put back</div><div style="display:flex; gap:6px; flex-wrap:wrap;">${removed.map((n) => `<button class="btn ghost small" data-resrestore="${esc(n)}" type="button">${esc(materialDisplayName(n))} &#8634;</button>`).join("")}</div></div>` : "");
+    wireAdminReorder(body, "data-resrow", async (ids) => {
+      const byId = new Map(all.map((x) => [x.id, x])); all.splice(0, all.length, ...ids.map((id) => byId.get(id)).filter(Boolean));
+      try { await save(); } catch (err) { toast(err.message || "Couldn't save", true); }
+    });
+    body.querySelectorAll("[data-resrestore]").forEach((b) => b.addEventListener("click", async () => {
+      const name = b.dataset.resrestore;
+      removed = removed.filter((n) => n.toLowerCase() !== name.toLowerCase());
+      const bn = PACK_RESOURCE_NAMES.find((n) => n.toLowerCase() === name.toLowerCase());
+      if (bn && !PACK_RESOURCE_HIDDEN.has(bn)) all.push({ id: "r" + (++seq), name: bn, builtin: true, contents: PACK_BUNDLES[bn] || {}, hidden: false });
+      try { await save("Put back"); draw(); } catch (err) { toast(err.message || "Couldn't save", true); }
+    }));
+    const fields = (r) => [
+      ...(r.builtin ? [] : [{ key: "icon", label: "Picture", type: "img", value: r.icon }, { key: "name", label: "Name", value: r.name }]),
+      { key: "contents", label: "Gives per 1 (e.g. Design Plan: 1, Polishing Solution: 4) — empty = a plain item", value: contentsText(r.contents) },
+      { key: "hidden", label: "Hide from the dropdown", type: "check", value: r.hidden },
+    ];
+    wireAdmList(body, {
+      onEdit: (id) => {
+        const r = all.find((x) => x.id === id);
+        openAdmSheet({ title: `Edit · ${materialDisplayName(r.name)}${r.builtin ? " (built-in)" : ""}`, fields: fields(r),
+          onSave: async (v) => {
+            if (!r.builtin) { if (!v.name) throw new Error("Enter a name"); if (all.some((x) => x !== r && x.name.toLowerCase() === v.name.toLowerCase())) throw new Error("That name is already in the list"); r.name = v.name; r.icon = v.icon || ""; }
+            r.contents = parseContents(v.contents); r.hidden = !!v.hidden;
+            await save("Saved"); draw();
+          },
+          onDelete: async () => { all.splice(all.indexOf(r), 1); if (r.builtin) removed.push(r.name); await save(r.builtin ? "Removed (you can put it back below)" : "Deleted"); draw(); },
+          deleteText: r.builtin ? `Remove "${materialDisplayName(r.name)}" from the dropdown? You can put it back later.` : `Delete "${r.name}"?` });
+      },
+      onAdd: () => openAdmSheet({ title: "Add a resource", fields: fields({ builtin: false, contents: {}, hidden: false }),
+        onSave: async (v) => {
+          if (!v.name) throw new Error("Enter a name");
+          if (all.some((x) => x.name.toLowerCase() === v.name.toLowerCase())) throw new Error("That name is already in the list");
+          all.push({ id: "r" + (++seq), name: v.name, icon: v.icon || "", contents: parseContents(v.contents), hidden: !!v.hidden, builtin: false });
+          await save("Resource added"); draw();
+        } }),
+    });
+  };
+  draw();
 }
 
 // ---- Backpack Items: the item list on the Backpack page ----
 // Saved in site_config "backpack_items" as { items: [{ group, name, icon }] };
 // row order = order on the page, groups in order of first appearance.
+let ADMIN_BP_GROUP = null;
 async function renderAdminBackpackItems(body) {
   await ensureSiteConfig();
-  const items = backpackItems().flatMap((g) => g.items.map((it) => ({ group: g.title, name: it.name, icon: it.icon })));
-  const groupNames = [...new Set(items.map((x) => x.group))];
-  let seqId = 0;
-  const rowHtml = (r, i, n) => `<tr data-bprow="b${++seqId}">
-      ${adminReorderCellHtml(`b${seqId}`, i, n)}
-      <td style="padding:4px;"><input data-f="group" list="bpGroupNames" value="${esc(r.group)}" style="width:140px;" /></td>
-      <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:180px;" /></td>
-      <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><img src="${esc(bpIcon(r))}" alt="" style="width:24px; height:24px; object-fit:contain;" onerror="this.style.visibility='hidden'" /><input data-f="icon" value="${esc(r.icon || "")}" placeholder="automatic" style="width:150px;" />${uploadBtnHtml()}</span></td>
-      <td style="padding:4px;"><button class="btn ghost small" data-bpdel type="button" title="Remove">&#10005;</button></td>
-    </tr>`;
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Backpack Items</h2>
-      <p class="desc">The items on the Backpack page. Each row is one item: its group (a tab on the page), its name, and a picture (leave empty to use the site's own picture for that name). Drag a row or use ▲▼ to change the order, then Save all. Renaming an item starts its amount from 0 for everyone, since amounts are saved by name. Speedup items named like "Research Speedup 1h" show their size and add up to a total.</p>
-      <datalist id="bpGroupNames">${groupNames.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>
-      <div class="adm-scroll">
-        <table style="border-collapse:collapse; font-size:12.5px; width:100%;">
-          <thead><tr>${["", "Group", "Name", "Picture", ""].map((h) => `${ADMIN_TH}${h}</th>`).join("")}</tr></thead>
-          <tbody id="bpRows">${items.map((r, i) => rowHtml(r, i, items.length)).join("")}</tbody>
-        </table>
-      </div>
-      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-        <button class="btn ghost small" id="bpAdd" type="button">+ Add item</button>
-        <button class="btn small" id="bpSaveAll" type="button">Save all</button>
-        <button class="btn ghost small" id="bpReset" type="button" style="margin-inline-start:auto;">Reset to the default list</button>
-      </div>
-    </div>`;
-  const rowsEl = body.querySelector("#bpRows");
-  wireAdminReorder(rowsEl, "data-bprow", null);
-  body.querySelector("#bpAdd").addEventListener("click", () => {
-    const last = rowsEl.lastElementChild;
-    const group = last ? last.querySelector('[data-f="group"]').value : "";
-    rowsEl.insertAdjacentHTML("beforeend", rowHtml({ group, name: "", icon: "" }, rowsEl.children.length, rowsEl.children.length + 1));
-    wireAdminReorder(rowsEl, "data-bprow", null);
-    rowsEl.lastElementChild.querySelector('[data-f="name"]').focus();
-  });
-  rowsEl.addEventListener("click", (e) => { const b = e.target.closest("[data-bpdel]"); if (b) b.closest("tr").remove(); });
-  body.querySelector("#bpSaveAll").addEventListener("click", async () => {
-    const list = [...rowsEl.querySelectorAll("tr[data-bprow]")].map((tr) => ({
-      group: tr.querySelector('[data-f="group"]').value.trim(),
-      name: tr.querySelector('[data-f="name"]').value.trim(),
-      icon: tr.querySelector('[data-f="icon"]').value.trim(),
-    })).filter((x) => x.name);
-    const dup = list.map((x) => x.name.toLowerCase()).find((n, i, a) => a.indexOf(n) !== i);
-    if (dup) { toast(`Duplicate name: ${dup}`, true); return; }
-    try { await saveSiteConfig("backpack_items", { items: list }); toast("Backpack items saved"); renderAdminBackpackItems(body); }
-    catch (err) { toast(err.message || "Couldn't save", true); }
-  });
-  body.querySelector("#bpReset").addEventListener("click", async () => {
-    if (!confirm("Replace the list with the default items? Amounts people saved are kept.")) return;
-    try { await saveSiteConfig("backpack_items", {}); toast("Default list restored"); renderAdminBackpackItems(body); }
-    catch (err) { toast(err.message || "Couldn't save", true); }
-  });
+  let seq = 0;
+  const items = backpackItems().flatMap((g) => g.items.map((it) => ({ id: "b" + (++seq), group: g.title, name: it.name, icon: it.icon || "" })));
+  const groups = () => [...new Set(items.map((x) => x.group))];
+  if (!groups().includes(ADMIN_BP_GROUP)) ADMIN_BP_GROUP = groups()[0] || "";
+  const save = async (msg) => { await saveSiteConfig("backpack_items", { items: items.map((x) => ({ group: x.group, name: x.name, icon: (x.icon || "").trim() })) }); if (msg) toast(msg); };
+  const draw = () => {
+    const list = items.filter((x) => x.group === ADMIN_BP_GROUP);
+    body.innerHTML = `<p class="desc" style="margin:0 0 8px;">The items on the Backpack page, by tab. Leave the picture empty to use the site's own picture for that name. Renaming an item starts its saved amounts from zero for everyone (amounts are kept by name).</p>
+      <div class="adm-chips"><div class="adm-chips-row">${groups().map((g) => `<button type="button" class="adm-chip${g === ADMIN_BP_GROUP ? " on" : ""}" data-bpgroup="${esc(g)}">${esc(g)} <span class="meta">${items.filter((x) => x.group === g).length}</span></button>`).join("")}</div></div>`
+      + admListHtml(list, { title: ADMIN_BP_GROUP, attr: "data-bprow", sortable: true, img: (r) => bpIcon(r), name: (r) => r.name, sub: (r) => (r.icon ? "own picture" : "") })
+      + `<div style="margin-top:12px;"><button class="btn ghost small" data-bpreset type="button">Reset to the default list</button></div>`;
+    body.querySelectorAll("[data-bpgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_BP_GROUP = b.dataset.bpgroup; draw(); }));
+    wireAdminReorder(body, "data-bprow", async (ids) => {
+      // New order inside this tab; other tabs keep their places.
+      const byId = new Map(items.map((x) => [x.id, x])), slots = items.map((x, i) => (x.group === ADMIN_BP_GROUP ? i : -1)).filter((i) => i >= 0);
+      ids.forEach((id, k) => { items[slots[k]] = byId.get(id); });
+      try { await save(); } catch (err) { toast(err.message || "Couldn't save", true); }
+    });
+    const fields = (r) => [
+      { key: "icon", label: "Picture (empty = the site's own)", type: "img", value: r.icon },
+      { key: "name", label: "Name", value: r.name },
+      { key: "group", label: "Tab (group)", type: "select", options: [...new Set([...groups(), r.group].filter(Boolean))], value: r.group, half: true },
+      { key: "newgroup", label: "…or a new tab", value: "", half: true },
+    ];
+    const apply = (r, v) => {
+      if (!v.name) throw new Error("Enter a name");
+      if (items.some((x) => x !== r && x.name.toLowerCase() === v.name.toLowerCase())) throw new Error(`Duplicate name: ${v.name}`);
+      r.name = v.name; r.icon = v.icon || ""; r.group = v.newgroup || v.group || ADMIN_BP_GROUP;
+    };
+    wireAdmList(body, {
+      onEdit: (id) => {
+        const r = items.find((x) => x.id === id);
+        openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
+          onSave: async (v) => { apply(r, v); await save("Saved"); ADMIN_BP_GROUP = r.group; draw(); },
+          onDelete: async () => { items.splice(items.indexOf(r), 1); await save("Removed"); draw(); },
+          deleteText: `Remove "${r.name}" from the Backpack? Amounts people saved are kept.` });
+      },
+      onAdd: () => openAdmSheet({ title: `Add an item`, fields: fields({ group: ADMIN_BP_GROUP }),
+        onSave: async (v) => { const r = { id: "b" + (++seq) }; apply(r, v); const last = items.map((x) => x.group).lastIndexOf(r.group); items.splice(last >= 0 ? last + 1 : items.length, 0, r); await save("Item added"); ADMIN_BP_GROUP = r.group; draw(); } }),
+    });
+    body.querySelector("[data-bpreset]").addEventListener("click", async () => {
+      if (!confirm("Replace the list with the default items? Amounts people saved are kept.")) return;
+      try { await saveSiteConfig("backpack_items", {}); toast("Default list restored"); renderAdminBackpackItems(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+    });
+  };
+  draw();
 }
 
 // ---- Currency rates (site-wide, stored in site_config "currency_rates") ----
@@ -20670,164 +20666,41 @@ function applyPageVisibility() {
 // ---- Roster editor ----
 async function renderAdminRoster(body) {
   const rows = await sb(`experts?select=id,key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
-  const STAT_OPTS = [
-    ["ATK", "Attack"],
-    ["DEF", "Defense"],
-    ["DMG", "Lethality"],
-    ["HP", "Health"],
-  ];
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Add a new expert</h2>
-      <p class="desc">After adding, go to Expert Affinity / Skills / Research below to add their stat data.</p>
-      <form class="inline" id="adminAddExpertForm">
-        <input class="flex1" name="key" placeholder="Expert name" required />
-        <span style="display:inline-flex; gap:4px; align-items:center; flex:1;"><input class="flex1" name="img" placeholder="Portrait image URL (optional)" style="flex:1;" />${uploadBtnHtml()}</span>
-        <select name="main_stat" required>${STAT_OPTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
-        <select name="main_stat_troop">
-          <option value="">All troops</option>
-          <option value="Lancers">Lancers only</option>
-          <option value="Infantry">Infantry only</option>
-          <option value="Marksman">Marksman only</option>
-        </select>
-        <label style="display:flex; align-items:center; gap:6px; font-size:12px;"><input type="checkbox" name="upcoming" /> Upcoming</label>
-        <button class="btn" type="submit">Add expert</button>
-      </form>
-      <div class="err" id="adminAddExpertErr"></div>
-    </div>
-    <div class="panel">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
-        <h2 style="margin:0;">Roster (${rows.length})</h2>
-        <button class="btn small" id="adminRosterSaveAll">Save all</button>
-      </div>
-      <div class="adm-scroll">
-        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-          <thead><tr>
-            ${["", "Name", "Image URL", "Skill 1", "Skill 2", "Skill 3", "Skill 4", "Main stat", "Troop restriction", "Upcoming", ""]
-              .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
-              .join("")}
-          </tr></thead>
-          <tbody>
-            ${rows
-              .map(
-                (r, idx) => `
-              <tr data-rosterrow="${r.id}">
-                ${adminReorderCellHtml(r.id, idx, rows.length)}
-                <td style="padding:4px;"><input data-f="key" value="${esc(r.key)}" readonly title="The name links this expert to its affinity, skill and research data and to everyone's saved levels, so it can't be changed here." style="width:100px; opacity:0.75; cursor:not-allowed;" /></td>
-                <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="img" value="${esc(r.img || "")}" style="width:160px;" />${uploadBtnHtml()}</span></td>
-                <td style="padding:4px;"><input data-f="skill1" value="${esc(r.skill1 || "")}" style="width:110px;" /></td>
-                <td style="padding:4px;"><input data-f="skill2" value="${esc(r.skill2 || "")}" style="width:110px;" /></td>
-                <td style="padding:4px;"><input data-f="skill3" value="${esc(r.skill3 || "")}" style="width:110px;" /></td>
-                <td style="padding:4px;"><input data-f="skill4" value="${esc(r.skill4 || "")}" style="width:110px;" /></td>
-                <td style="padding:4px;">
-                  <select data-f="main_stat">${STAT_OPTS.map(([v, l]) => `<option value="${v}" ${v === r.main_stat ? "selected" : ""}>${l}</option>`).join("")}</select>
-                </td>
-                <td style="padding:4px;">
-                  <select data-f="main_stat_troop">
-                    <option value="" ${!r.main_stat_troop ? "selected" : ""}>All troops</option>
-                    <option value="Lancers" ${r.main_stat_troop === "Lancers" ? "selected" : ""}>Lancers only</option>
-                    <option value="Infantry" ${r.main_stat_troop === "Infantry" ? "selected" : ""}>Infantry only</option>
-                    <option value="Marksman" ${r.main_stat_troop === "Marksman" ? "selected" : ""}>Marksman only</option>
-                  </select>
-                </td>
-                <td style="padding:4px; text-align:center;"><input type="checkbox" data-f="upcoming" ${r.upcoming ? "checked" : ""} title="Show an Upcoming badge on this expert's cards" /></td>
-                <td style="padding:4px; white-space:nowrap;">
-                  <button class="btn small ghost" data-rostersave="${r.id}">Save</button>
-                  <button class="btn small ghost" data-rosterdel="${r.id}" style="color:var(--danger);">Delete</button>
-                </td>
-              </tr>`
-              )
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("adminAddExpertForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("adminAddExpertErr");
-    errEl.textContent = "";
-    const key = f.key.value.trim();
-    if (!key) { errEl.textContent = "Enter a name"; return; }
-    try {
-      const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
-      await sb(`experts`, {
-        method: "POST",
-        body: JSON.stringify({
-          key,
-          img: f.img.value.trim() || null,
-          main_stat: f.main_stat.value,
-          main_stat_troop: f.main_stat_troop.value || null,
-          upcoming: !!f.upcoming.checked,
-          sort_order: maxOrder + 1,
-        }),
-      });
-      EXPERTS_ROSTER_LOADED = false; // force re-fetch everywhere
-      toast("Expert added");
-      renderAdminPage();
-    } catch (err) {
-      errEl.textContent = "Couldn't add expert (name might already exist)";
-    }
-  });
-
-  const saveRosterRow = async (id) => {
-    const tr = body.querySelector(`tr[data-rosterrow="${id}"]`);
-    const body_ = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
-      if (el.dataset.f === "upcoming") { body_.upcoming = !!el.checked; return; }
-      let v = el.value;
-      if (el.dataset.f === "sort_order") v = Number(v) || 0;
-      if ((el.dataset.f === "img" || el.dataset.f.startsWith("skill") || el.dataset.f === "main_stat_troop") && v.trim() === "") v = null;
-      body_[el.dataset.f] = v;
-    });
-    await sb(`experts?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(body_) });
-  };
+  const STAT_OPTS = [["ATK", "Attack"], ["DEF", "Defense"], ["DMG", "Lethality"], ["HP", "Health"]];
+  const TROOP_OPTS = [["", "All troops"], ["Lancers", "Lancers only"], ["Infantry", "Infantry only"], ["Marksman", "Marksman only"]];
+  body.innerHTML = admListHtml(rows, {
+    title: "Roster", attr: "data-rosterrow", sortable: true,
+    img: (r) => r.img, name: (r) => r.key,
+    sub: (r) => [(STAT_OPTS.find((x) => x[0] === r.main_stat) || [, r.main_stat])[1], r.main_stat_troop ? `${r.main_stat_troop} only` : "", r.upcoming ? "Upcoming" : ""].filter(Boolean).join(" · "),
+  }) + `<p class="desc" style="font-size:11.5px; margin-top:8px;">After adding an expert, fill its stat data in Affinity / Skills / Research.</p>`;
   wireAdminReorder(body, "data-rosterrow", async (orderedIds) => {
     try { await saveAdminRowOrderInPlace(body, "data-rosterrow", "experts", rows, orderedIds); EXPERTS_ROSTER_LOADED = false; }
     catch (err) { toast("Couldn't reorder", true); renderAdminRoster(body); }
   });
-  body.querySelectorAll("[data-rostersave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await saveRosterRow(btn.dataset.rostersave);
-        EXPERTS_ROSTER_LOADED = false;
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
-    });
-  });
-  const rosterSaveAllBtn = document.getElementById("adminRosterSaveAll");
-  if (rosterSaveAllBtn) {
-    rosterSaveAllBtn.addEventListener("click", async () => {
-      rosterSaveAllBtn.disabled = true;
-      rosterSaveAllBtn.textContent = "Saving\u2026";
-      try {
-        await Promise.all(rows.map((r) => saveRosterRow(r.id)));
-        EXPERTS_ROSTER_LOADED = false;
-        toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
-      } catch (err) {
-        toast("Couldn't save all", true);
-      }
-      rosterSaveAllBtn.disabled = false;
-      rosterSaveAllBtn.textContent = "Save all";
-    });
-  }
-
-  body.querySelectorAll("[data-rosterdel]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Delete this expert from the roster? Their affinity/skill/research data rows will remain but become orphaned.")) return;
-      try {
-        await sb(`experts?id=eq.${btn.dataset.rosterdel}`, { method: "DELETE" });
-        EXPERTS_ROSTER_LOADED = false;
-        toast("Deleted");
-        renderAdminPage();
-      } catch (err) {
-        toast("Couldn't delete", true);
-      }
-    });
+  const fields = (r, isNew) => [
+    { key: "img", label: "Portrait", type: "img", value: r.img },
+    ...(isNew ? [{ key: "key", label: "Name", value: r.key }] : []),
+    { key: "main_stat", label: "Main stat", type: "select", options: STAT_OPTS, value: r.main_stat || "ATK", half: true },
+    { key: "main_stat_troop", label: "Troops", type: "select", options: TROOP_OPTS, value: r.main_stat_troop || "", half: true },
+    ...[1, 2, 3, 4].map((k) => ({ key: "skill" + k, label: `Skill ${k}`, value: r["skill" + k], half: true })),
+    { key: "upcoming", label: "Upcoming (shows a badge on this expert's cards)", type: "check", value: r.upcoming },
+  ];
+  wireAdmList(body, {
+    onEdit: (id) => {
+      const r = rows.find((x) => String(x.id) === id);
+      openAdmSheet({ title: `Edit · ${r.key}`, fields: fields(r),
+        onSave: async (v) => { await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) }); EXPERTS_ROSTER_LOADED = false; toast("Saved"); renderAdminRoster(body); },
+        onDelete: async () => { await sb(`experts?id=eq.${r.id}`, { method: "DELETE" }); EXPERTS_ROSTER_LOADED = false; toast("Deleted"); renderAdminPage(); },
+        deleteText: `Delete ${r.key} from the roster? Their affinity / skill / research rows stay but won't be used.` });
+    },
+    onAdd: () => openAdmSheet({ title: "Add an expert", fields: fields({}, true),
+      onSave: async (v) => {
+        if (!v.key) throw new Error("Enter a name");
+        if (rows.some((r) => r.key === v.key)) throw new Error("That expert already exists");
+        const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+        await sb(`experts`, { method: "POST", body: JSON.stringify({ ...v, upcoming: !!v.upcoming, sort_order: maxOrder + 1 }) });
+        EXPERTS_ROSTER_LOADED = false; toast("Expert added"); renderAdminPage();
+      } }),
   });
 }
 
@@ -21372,7 +21245,7 @@ function adminReorderCellHtml(id, idx, n) {
 }
 function wireAdminReorder(container, rowAttr, onReorder) {
   let reorderQueue = Promise.resolve();
-  const rowsOf = () => [...container.querySelectorAll(`tr[${rowAttr}]`)];
+  const rowsOf = () => [...container.querySelectorAll(`[${rowAttr}]`)].filter((x) => !x.matches("[data-grip],[data-rowup],[data-rowdown]"));
   const idOf = (tr) => tr.getAttribute(rowAttr);
   const refreshButtons = () => {
     const list = rowsOf();
@@ -21411,11 +21284,11 @@ function wireAdminReorder(container, rowAttr, onReorder) {
       dragId.id = g.dataset.grip;
       e.dataTransfer.effectAllowed = "move";
       try { e.dataTransfer.setData("text/plain", dragId.id); } catch (_) {}
-      g.closest("tr").style.opacity = "0.45";
+      g.closest(`[${rowAttr}]`).style.opacity = "0.45";
     });
     g.addEventListener("dragend", () => { dragId.id = null; rowsOf().forEach((tr) => { tr.style.opacity = ""; tr.style.boxShadow = ""; }); });
   });
-  fresh(`tr[${rowAttr}]`).forEach((tr) => {
+  fresh(`[${rowAttr}]`).filter((x) => rowsOf().includes(x)).forEach((tr) => {
     tr.addEventListener("dragover", (e) => {
       if (!dragId.id) return;
       e.preventDefault(); e.dataTransfer.dropEffect = "move";
@@ -21465,7 +21338,7 @@ async function saveAdminRowOrder(table, rows, orderedIds) {
 async function saveAdminRowOrderInPlace(container, rowAttr, table, rows, orderedIds) {
   await saveAdminRowOrder(table, rows, orderedIds);
   rows.forEach((r) => {
-    const tr = [...container.querySelectorAll(`tr[${rowAttr}]`)].find((x) => x.getAttribute(rowAttr) === String(r.id));
+    const tr = [...container.querySelectorAll(`[${rowAttr}]`)].find((x) => x.getAttribute(rowAttr) === String(r.id));
     const input = tr && tr.querySelector('input[data-f="sort_order"]');
     if (input) input.value = r.sort_order ?? "";
   });
@@ -21757,159 +21630,99 @@ async function renderAdminVip(body) {
 }
 
 // ---- Facility / Alliance Tech editor (skins table, filtered by category) ----
+// ---- Admin item lists, design A (owner, 16 Oct 2026) ----
+// Each item is one row: picture, name, a short line and ✎; ✎ / "+ Add" open
+// an edit sheet. "⇅ Sort" shows the ⋮⋮ ▲▼ controls (wireAdminReorder).
+function admListHtml(items, o) {
+  return `<div class="admc-bar"><span class="admc-t">${esc(o.title || "")}${o.count !== false ? ` <span class="meta">(${items.length})</span>` : ""}</span>${o.sortable ? `<button type="button" class="btn ghost small" data-admcsort>&#8645; Sort</button>` : ""}${o.add !== false ? `<button type="button" class="btn small admc-add" data-admcadd>+ Add</button>` : ""}</div>
+    <div class="admc-list">${items.map((r, idx) => `<div class="admc-row" ${o.attr}="${esc(String(r.id))}">
+      ${o.sortable ? `<span class="admc-sort"><span draggable="true" data-grip="${esc(String(r.id))}" title="Drag to move">&#8942;&#8942;</span><button type="button" data-rowup="${esc(String(r.id))}" ${idx === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rowdown="${esc(String(r.id))}" ${idx === items.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button></span>` : ""}
+      <span class="admc-pic">${o.img && o.img(r) ? `<img src="${esc(o.img(r))}" alt="" loading="lazy" />` : `<i>${esc(String(o.name(r) || "?").charAt(0))}</i>`}</span>
+      <span class="admc-txt"><b>${esc(o.name(r) || "—")}</b>${o.sub && o.sub(r) ? `<small>${esc(o.sub(r))}</small>` : ""}</span>
+      <button type="button" class="admc-edit" data-admcedit="${esc(String(r.id))}" aria-label="edit">&#9998;</button></div>`).join("") || `<div class="meta" style="padding:8px;">Nothing here yet.</div>`}</div>`;
+}
+function wireAdmList(body, o) {
+  const sortBtn = body.querySelector("[data-admcsort]");
+  if (sortBtn) sortBtn.addEventListener("click", () => { const l = body.querySelector(".admc-list"); l.classList.toggle("sorting"); sortBtn.classList.toggle("on", l.classList.contains("sorting")); });
+  const add = body.querySelector("[data-admcadd]");
+  if (add && o.onAdd) add.addEventListener("click", o.onAdd);
+  body.querySelectorAll("[data-admcedit]").forEach((b) => b.addEventListener("click", () => o.onEdit(b.dataset.admcedit)));
+}
+// The edit sheet. fields: [{ key, label, type: text|num|check|img|select|area, value, options, more }]
+function openAdmSheet(o) {
+  let m = document.getElementById("admSheet");
+  if (!m) { m = document.createElement("div"); m.id = "admSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
+  const f = (x) => {
+    const id = `admf_${x.key}`, v = x.value == null ? "" : x.value;
+    if (x.type === "check") return `<label class="admf admf-chk"><input type="checkbox" id="${id}" ${v ? "checked" : ""} /> ${esc(x.label)}</label>`;
+    if (x.type === "select") return `<label class="admf"><span>${esc(x.label)}</span><select id="${id}">${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}</select></label>`;
+    if (x.type === "img") return `<div class="admf admf-img"><span class="admc-pic big" data-admimgprev>${v ? `<img src="${esc(v)}" alt="" />` : `<i>?</i>`}</span><label class="admf" style="flex:1; min-width:0;"><span>${esc(x.label)}</span><span class="admf-line"><input type="text" id="${id}" value="${esc(v)}" placeholder="link, or upload" />${uploadBtnHtml()}</span></label></div>`;
+    if (x.type === "area") return `<label class="admf"><span>${esc(x.label)}</span><textarea id="${id}" rows="3">${esc(v)}</textarea></label>`;
+    return `<label class="admf${x.half ? " half" : ""}"><span>${esc(x.label)}</span><input id="${id}" ${x.type === "num" ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} value="${esc(String(v))}" /></label>`;
+  };
+  const main = o.fields.filter((x) => !x.more), more = o.fields.filter((x) => x.more);
+  m.innerHTML = `<div class="modal-box adm-sheet"><div class="adm-sheet-h"><b>${esc(o.title)}</b><button type="button" class="rfa-x" data-admsclose aria-label="close">&#10005;</button></div>
+    <div class="admf-grid">${main.map(f).join("")}</div>
+    ${more.length ? `<details class="admf-more"><summary>More</summary><div class="admf-grid">${more.map(f).join("")}</div></details>` : ""}
+    <div class="adm-sheet-foot">${o.onDelete ? `<button type="button" class="btn ghost small" data-admsdel style="color:var(--danger);">Delete</button>` : ""}<span style="flex:1"></span><button type="button" class="btn ghost small" data-admsclose>Cancel</button><button type="button" class="btn small" data-admssave>Save</button></div></div>`;
+  m.style.display = "flex";
+  const close = () => { m.style.display = "none"; };
+  m.onclick = (ev) => { if (ev.target === m || ev.target.closest("[data-admsclose]")) close(); };
+  const img = o.fields.find((x) => x.type === "img");
+  if (img) { const inp = m.querySelector(`#admf_${img.key}`), prev = m.querySelector("[data-admimgprev]"); inp.addEventListener("input", () => { prev.innerHTML = inp.value.trim() ? `<img src="${esc(inp.value.trim())}" alt="" />` : `<i>?</i>`; }); }
+  const values = () => { const out = {}; o.fields.forEach((x) => { const el = m.querySelector(`#admf_${x.key}`); if (!el) return; if (x.type === "check") out[x.key] = el.checked; else if (x.type === "num") out[x.key] = el.value === "" ? null : Number(el.value); else out[x.key] = el.value.trim() === "" ? null : el.value.trim(); }); return out; };
+  m.querySelector("[data-admssave]").addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget; btn.disabled = true;
+    try { await o.onSave(values()); close(); } catch (err) { toast(err.message || "Couldn't save", true); }
+    btn.disabled = false;
+  });
+  const del = m.querySelector("[data-admsdel]");
+  if (del) del.addEventListener("click", async () => { if (!confirm(o.deleteText || "Delete this item?")) return; try { await o.onDelete(); close(); } catch (err) { toast(err.message || "Couldn't delete", true); } });
+  const first = m.querySelector("input[type=text], input[type=number]"); if (first && !o.noFocus) setTimeout(() => first.focus(), 50);
+}
+
 async function renderAdminSkinsCategory(body, category) {
   const rows = await sb(
     `skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(category)}&select=id,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,bonus_level1,bonus_level2,bonus_level3,bonus_level4,display_group,current_level,max_level,owned,sort_order,show_count_toggle&order=sort_order.asc`
   );
-
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Add a ${esc(category)} item</h2>
-      <form class="inline" id="adminSkinsAddForm">
-        <input class="flex1" name="name" placeholder="Name" required />
-        <span style="display:inline-flex; gap:4px; align-items:center;"><input class="field-num" name="image_url" placeholder="Image URL" style="width:180px;" />${uploadBtnHtml()}</span>
-        <input class="field-num" name="bonus_type" placeholder="Bonus stat (e.g. Attack)" style="width:130px;" />
-        <input class="field-num" name="bonus_value" type="number" step="any" placeholder="Bonus %" style="width:90px;" />
-        <input class="field-num" name="max_level" type="number" placeholder="Max level" style="width:90px;" />
-        <button class="btn" type="submit">Add item</button>
-      </form>
-      <div class="err" id="adminSkinsAddErr"></div>
-    </div>
-    <div class="panel">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
-        <h2 style="margin:0;">${esc(category)} (${rows.length})</h2>
-        <button class="btn small" id="adminSkinsCatSaveAll">Save all</button>
-      </div>
-      <p class="desc">"Has count trigger" shows a "Count in max" checkbox on that item's card and moves it below the divider line (used on Frame for unverified items).</p>
-      <div class="adm-scroll">
-        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-          <thead><tr>
-            ${["", "Name", "Image URL", "Bonus stat", "Bonus %", "Current lvl", "Max lvl", "Owned", ""]
-              .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
-              .join("")}
-          </tr></thead>
-          <tbody>
-            ${rows
-              .map(
-                (r, idx) => `
-              <tr data-skinrow="${r.id}">
-                ${adminReorderCellHtml(r.id, idx, rows.length)}
-                <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:110px;" /></td>
-                <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="image_url" value="${esc(r.image_url || "")}" style="width:150px;" />${uploadBtnHtml()}</span></td>
-                <td style="padding:4px;"><input data-f="bonus_type" value="${esc(r.bonus_type || "")}" style="width:100px;" /></td>
-                <td style="padding:4px;"><input data-f="bonus_value" type="number" step="any" value="${r.bonus_value ?? ""}" style="width:70px;" /></td>
-                <td style="padding:4px;"><input data-f="current_level" type="number" value="${r.current_level ?? ""}" style="width:70px;" /></td>
-                <td style="padding:4px;"><input data-f="max_level" type="number" value="${r.max_level ?? ""}" style="width:70px;" /></td>
-                <td style="padding:4px;"><input data-f="owned" type="checkbox" ${r.owned ? "checked" : ""} /></td>
-                <td style="padding:4px; white-space:nowrap;">
-                  <button class="btn small ghost" data-skinmoretoggle="${r.id}" title="More fields">More &#9662;</button>
-                  <button class="btn small ghost" data-skinsave="${r.id}">Save</button>
-                  <button class="btn small ghost" data-skindel="${r.id}" style="color:var(--danger);">Delete</button>
-                </td>
-              </tr>
-              <tr data-skinmore="${r.id}" hidden><td></td><td colspan="8" style="padding:6px 4px 10px;">
-                <div class="adm-skinmore">
-                  ${[2, 3, 4].map((k) => `<label>Bonus ${k}<span><input data-f="bonus_type${k}" value="${esc(r["bonus_type" + k] || "")}" placeholder="stat" /><input data-f="bonus_value${k}" type="number" step="any" value="${r["bonus_value" + k] ?? ""}" placeholder="%" /></span></label>`).join("")}
-                  <label>Bonus from level (1–4)<span>${[1, 2, 3, 4].map((k) => `<input data-f="bonus_level${k}" type="number" value="${r["bonus_level" + k] ?? ""}" placeholder="${k}" />`).join("")}</span></label>
-                  <label>Group<span><input data-f="display_group" value="${esc(r.display_group || "")}" placeholder="e.g. Event" /></span></label>
-                  <label class="adm-chk"><input data-f="show_count_toggle" type="checkbox" ${r.show_count_toggle ? "checked" : ""} /> Has count trigger</label>
-                </div></td></tr>`
-              )
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
+  const pct = (v) => (v == null ? "" : `+${v}%`);
+  body.innerHTML = admListHtml(rows, {
+    title: category, attr: "data-skinrow", sortable: true,
+    img: (r) => r.image_url, name: (r) => r.name,
+    sub: (r) => [r.bonus_type ? `${pct(r.bonus_value)} ${r.bonus_type}` : "", r.bonus_type2 ? `${pct(r.bonus_value2)} ${r.bonus_type2}` : "", r.max_level ? `max ${r.max_level}` : ""].filter(Boolean).join(" · "),
+  });
   wireAdminReorder(body, "data-skinrow", async (orderedIds) => {
-    try { await saveAdminRowOrderInPlace(body, "data-skinrow", "skins", rows, orderedIds); }
+    try { await saveAdminRowOrderInPlace(body, "data-skinrow", "skins", rows, orderedIds); dashDataChanged("skins"); }
     catch (err) { toast("Couldn't reorder", true); renderAdminSkinsCategory(body, category); }
   });
-
-  body.querySelectorAll("[data-skinmoretoggle]").forEach((b) => b.addEventListener("click", () => {
-    const m = body.querySelector(`tr[data-skinmore="${b.dataset.skinmoretoggle}"]`);
-    if (m) { m.hidden = !m.hidden; b.innerHTML = m.hidden ? "More &#9662;" : "Less &#9652;"; }
-  }));
-  const saveSkinRow = async (id) => {
-    const tr = body.querySelector(`tr[data-skinrow="${id}"]`);
-    const more = body.querySelector(`tr[data-skinmore="${id}"]`);
-    const patch = {};
-    [...tr.querySelectorAll("[data-f]"), ...(more ? more.querySelectorAll("[data-f]") : [])].forEach((el) => {
-      const f = el.dataset.f;
-      if (f === "owned" || f === "show_count_toggle") { patch[f] = el.checked; return; }
-      let v = el.value;
-      if (/^(bonus_value\d?|bonus_level\d|current_level|max_level|sort_order)$/.test(f)) v = v === "" ? null : Number(v);
-      else if (v.trim() === "") v = null;
-      patch[f] = v;
-    });
-    await sb(`skins?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-  };
-  body.querySelectorAll("[data-skinsave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await saveSkinRow(btn.dataset.skinsave);
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
-    });
-  });
-  document.getElementById("adminSkinsCatSaveAll").addEventListener("click", async () => {
-    const btn = document.getElementById("adminSkinsCatSaveAll");
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await Promise.all(rows.map((r) => saveSkinRow(r.id)));
-      toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
-    } catch (err) {
-      toast("Couldn't save all", true);
-    }
-    btn.disabled = false;
-    btn.textContent = "Save all";
-  });
-  body.querySelectorAll("[data-skindel]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Delete this item?")) return;
-      try {
-        await sb(`skins?id=eq.${btn.dataset.skindel}`, { method: "DELETE" });
-        toast("Deleted");
-        renderAdminSkinsCategory(body, category);
-      } catch (err) {
-        toast("Couldn't delete", true);
-      }
-    });
-  });
-
-  document.getElementById("adminSkinsAddForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("adminSkinsAddErr");
-    errEl.textContent = "";
-    const name = f.name.value.trim();
-    if (!name) { errEl.textContent = "Enter a name"; return; }
-    try {
-      const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
-      await sb(`skins`, {
-        method: "POST",
-        body: JSON.stringify({
-          user_id: USER_ID,
-          category,
-          name,
-          image_url: f.image_url.value.trim() || null,
-          bonus_type: f.bonus_type.value.trim() || null,
-          bonus_value: f.bonus_value.value === "" ? null : Number(f.bonus_value.value),
-          max_level: f.max_level.value === "" ? null : Number(f.max_level.value),
-          current_level: 0,
-          owned: false,
-          sort_order: maxOrder + 1,
-        }),
-      });
-      toast("Item added");
-      renderAdminSkinsCategory(body, category);
-    } catch (err) {
-      errEl.textContent = "Couldn't add item";
-    }
+  const fields = (r) => [
+    { key: "image_url", label: "Picture", type: "img", value: r.image_url },
+    { key: "name", label: "Name", value: r.name },
+    { key: "bonus_type", label: "Bonus stat (e.g. Troops Attack)", value: r.bonus_type, half: true },
+    { key: "bonus_value", label: "Bonus %", type: "num", value: r.bonus_value, half: true },
+    { key: "max_level", label: "Max level", type: "num", value: r.max_level, half: true },
+    ...[2, 3, 4].flatMap((k) => [{ key: "bonus_type" + k, label: `Bonus ${k} stat`, value: r["bonus_type" + k], half: true, more: true }, { key: "bonus_value" + k, label: `Bonus ${k} %`, type: "num", value: r["bonus_value" + k], half: true, more: true }]),
+    ...[1, 2, 3, 4].map((k) => ({ key: "bonus_level" + k, label: `Bonus ${k} from level`, type: "num", value: r["bonus_level" + k], half: true, more: true })),
+    { key: "display_group", label: "Group", value: r.display_group, more: true },
+    { key: "show_count_toggle", label: "Has count trigger (a \"Count in max\" tick on the card, below the divider)", type: "check", value: r.show_count_toggle, more: true },
+    { key: "current_level", label: "My current level", type: "num", value: r.current_level, half: true, more: true },
+    { key: "owned", label: "I own it", type: "check", value: r.owned, more: true },
+  ];
+  wireAdmList(body, {
+    onEdit: (id) => {
+      const r = rows.find((x) => String(x.id) === id);
+      openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
+        onSave: async (v) => { if (!v.name) throw new Error("Enter a name"); await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) }); dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category); },
+        onDelete: async () => { await sb(`skins?id=eq.${r.id}`, { method: "DELETE" }); dashDataChanged("skins"); toast("Deleted"); renderAdminSkinsCategory(body, category); },
+        deleteText: `Delete "${r.name}"?` });
+    },
+    onAdd: () => openAdmSheet({ title: `Add a ${category} item`, fields: fields({}),
+      onSave: async (v) => {
+        if (!v.name) throw new Error("Enter a name");
+        const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+        await sb(`skins`, { method: "POST", body: JSON.stringify({ ...v, user_id: USER_ID, category, current_level: v.current_level || 0, owned: !!v.owned, sort_order: maxOrder + 1 }) });
+        dashDataChanged("skins"); toast("Item added"); renderAdminSkinsCategory(body, category);
+      } }),
   });
 }
 
@@ -22336,149 +22149,54 @@ async function renderAdminResearch(body) {
 async function renderAdminHeroes(body) {
   let selectedGen = 0;
   const rows = await sb(`heroes?select=id,name,image_url,max_level,max_stars,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`);
-  const raritySelect = (cur, attrs) => `<select ${attrs} style="width:100px;">${["", "Rare", "Epic", "Legendary"].map((t) => `<option value="${t}" ${t === (cur || "") ? "selected" : ""}>${t || "\u2014 rarity \u2014"}</option>`).join("")}</select>`;
-  const troopSelect = (cur, attrs) => `<select ${attrs} style="width:110px;">${["", "Infantry", "Lancer", "Marksman"].map((t) => `<option value="${t}" ${t === (cur || "") ? "selected" : ""}>${t || "\u2014 class \u2014"}</option>`).join("")}</select>`;
-
-  body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Add a hero</h2>
-      <form class="inline" id="adminAddHeroForm">
-        <input class="flex1" name="name" placeholder="Hero name" required />
-        <input class="field-num" name="generation" type="number" placeholder="Gen" style="width:70px;" />
-        ${troopSelect("", 'name="troop_type"')}
-        ${raritySelect("", 'name="rarity"')}
-        <span style="display:inline-flex; gap:4px; align-items:center;"><input class="field-num" name="image_url" placeholder="Image URL" style="width:180px;" />${uploadBtnHtml()}</span>
-        <input class="field-num" name="max_level" type="number" placeholder="Max level" value="80" style="width:100px;" />
-        <input class="field-num" name="max_stars" type="number" placeholder="Max stars" value="5" style="width:100px;" />
-        <button class="btn" type="submit">Add hero</button>
-      </form>
-      <div class="err" id="adminAddHeroErr"></div>
-    </div>
-    <div class="panel" id="adminHeroPickPanel">
-      <h2>Edit a hero</h2>
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
-        <label class="meta" style="font-size:11px;">Generation</label>
-        <select id="adminHeroGen">${[...new Set(rows.map((r) => r.generation ?? -1))].sort((a, b) => b - a).map((g) => `<option value="${g}">${g < 0 ? "No gen" : `Gen ${g}`}</option>`).join("")}</select>
-        <label class="meta" style="font-size:11px;">Hero</label>
-        <select id="adminHeroPick"></select>
-      </div>
-      <div id="adminHeroEditor"></div>
-    </div>
-  `;
-
-  const genSel = body.querySelector("#adminHeroGen");
-  const heroSel = body.querySelector("#adminHeroPick");
-  const editorEl = body.querySelector("#adminHeroEditor");
-  const heroRowHtml = (r) => `
-      <div class="adm-scroll">
-        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-          <thead><tr>
-            ${["Name", "Gen", "Class", "Rarity", "Image URL", "Max ATK & DEF %", "Max widget LETH & HP %", "Max level", "Max stars", ""]
-              .map((h) => `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">${h}</th>`)
-              .join("")}
-          </tr></thead>
-          <tbody>
-              <tr data-herorow="${r.id}">
-                <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:130px;" /></td>
-                <td style="padding:4px;"><input data-f="generation" type="number" value="${r.generation ?? ""}" style="width:56px;" /></td>
-                <td style="padding:4px;">${troopSelect(r.troop_type, 'data-f="troop_type"')}</td>
-                <td style="padding:4px;">${raritySelect(r.rarity, 'data-f="rarity"')}</td>
-                <td style="padding:4px;"><span style="display:inline-flex; gap:4px; align-items:center;"><input data-f="image_url" value="${esc(r.image_url || "")}" style="width:180px;" />${uploadBtnHtml()}</span></td>
-                <td style="padding:4px;"><input data-f="exp_attack" type="number" step="any" value="${r.exp_attack ?? ""}" style="width:90px;" /></td>
-                <td style="padding:4px;"><input data-f="widget_lethality" type="number" step="any" value="${r.widget_lethality ?? ""}" style="width:90px;" /></td>
-                <td style="padding:4px;"><input data-f="max_level" type="number" value="${r.max_level ?? ""}" style="width:80px;" /></td>
-                <td style="padding:4px;"><input data-f="max_stars" type="number" value="${r.max_stars ?? ""}" style="width:80px;" /></td>
-                <td style="padding:4px; white-space:nowrap;">
-                  <button class="btn small ghost" data-herosave="${r.id}">Save</button>
-                  <button class="btn small ghost" data-herodel="${r.id}" style="color:var(--danger);">Delete</button>
-                </td>
-              </tr>
-          </tbody>
-        </table>
-      </div>`;
-  function fillHeroPick() {
-    const g = Number(genSel.value);
-    const list = rows.filter((r) => (r.generation ?? -1) === g);
-    heroSel.innerHTML = list.map((r) => `<option value="${r.id}">${esc(r.name)}${r.troop_type ? ` (${r.troop_type})` : ""}</option>`).join("");
-    renderHeroEditor();
-  }
-  function renderHeroEditor() {
-    const r = rows.find((x) => x.id === heroSel.value);
-    editorEl.innerHTML = r ? heroRowHtml(r) : `<p class="desc">No heroes in this generation.</p>`;
-    wireHeroRowButtons();
-    if (typeof renderGenStats === "function") { selectedGen = Number(genSel.value); renderGenStats(); }
-  }
-  genSel.addEventListener("change", fillHeroPick);
-  heroSel.addEventListener("change", renderHeroEditor);
-
-  function wireHeroRowButtons() {
-  body.querySelectorAll("[data-herosave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.herosave;
-      const tr = body.querySelector(`tr[data-herorow="${id}"]`);
-      const patch = {};
-      tr.querySelectorAll("[data-f]").forEach((el) => {
-        let v = el.value;
-        if (["max_level", "max_stars", "generation", "exp_attack", "exp_defense", "widget_lethality", "widget_health"].includes(el.dataset.f)) v = v === "" ? null : Number(v);
-        else if (v.trim() === "") v = null;
-        patch[el.dataset.f] = v;
-      });
-      // ATK/DEF and widget LETH/HP are always equal - mirror the single inputs.
-      if ("exp_attack" in patch) patch.exp_defense = patch.exp_attack;
-      if ("widget_lethality" in patch) patch.widget_health = patch.widget_lethality;
-      try {
-        await sb(`heroes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-        // Keep the local copy current, or picking this hero again shows the
-        // old values (and saving then would put them back).
-        const saved = rows.find((x) => x.id === id);
-        if (saved) Object.assign(saved, patch);
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
+  const gens = [...new Set(rows.map((r) => r.generation ?? -1))].sort((a, b) => b - a);
+  if (!gens.includes(ADMIN_HERO_GEN)) ADMIN_HERO_GEN = gens[0] ?? -1;
+  const listWrap = document.createElement("div");
+  body.innerHTML = "";
+  body.appendChild(listWrap);
+  const fields = (r) => [
+    { key: "image_url", label: "Picture", type: "img", value: r.image_url },
+    { key: "name", label: "Name", value: r.name },
+    { key: "generation", label: "Gen", type: "num", value: r.generation, half: true },
+    { key: "troop_type", label: "Class", type: "select", options: [["", "—"], "Infantry", "Lancer", "Marksman"], value: r.troop_type || "", half: true },
+    { key: "rarity", label: "Rarity", type: "select", options: [["", "—"], "Rare", "Epic", "Legendary"], value: r.rarity || "", half: true },
+    { key: "max_stars", label: "Max stars", type: "num", value: r.max_stars ?? 5, half: true },
+    { key: "exp_attack", label: "Max ATK & DEF %", type: "num", value: r.exp_attack, half: true },
+    { key: "widget_lethality", label: "Max widget LETH & HP %", type: "num", value: r.widget_lethality, half: true },
+    { key: "max_level", label: "Max level", type: "num", value: r.max_level ?? 80, half: true, more: true },
+  ];
+  // ATK/DEF and widget LETH/HP are always equal - one box each.
+  const mirror = (v) => ({ ...v, exp_defense: v.exp_attack, widget_health: v.widget_lethality });
+  function drawHeroes() {
+    const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
+    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">${rows.filter((r) => (r.generation ?? -1) === g).length}</span></button>`).join("")}</div></div>`
+      + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
+    listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); drawHeroes(); }));
+    wireAdmList(listWrap, {
+      onEdit: (id) => {
+        const r = rows.find((x) => String(x.id) === id);
+        openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
+          onSave: async (v) => {
+            if (!v.name) throw new Error("Enter a name");
+            const patch = mirror(v);
+            await sb(`heroes?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+            Object.assign(r, patch); toast("Saved");
+            if ((r.generation ?? -1) !== ADMIN_HERO_GEN) renderAdminHeroes(body); else drawHeroes();
+          },
+          onDelete: async () => { await sb(`heroes?id=eq.${r.id}`, { method: "DELETE" }); toast("Deleted"); renderAdminHeroes(body); },
+          deleteText: `Delete ${r.name} from the hero list?` });
+      },
+      onAdd: () => openAdmSheet({ title: "Add a hero", fields: fields({ generation: ADMIN_HERO_GEN < 0 ? null : ADMIN_HERO_GEN }),
+        onSave: async (v) => {
+          if (!v.name) throw new Error("Enter a name");
+          if (rows.some((r) => r.name === v.name)) throw new Error("That hero already exists");
+          await sb(`heroes`, { method: "POST", body: JSON.stringify({ ...mirror(v), max_level: v.max_level || 80, max_stars: v.max_stars || 5 }) });
+          toast("Hero added"); if (v.generation != null) ADMIN_HERO_GEN = v.generation; renderAdminHeroes(body);
+        } }),
     });
-  });
-  body.querySelectorAll("[data-herodel]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Delete this hero from the catalog?")) return;
-      try {
-        await sb(`heroes?id=eq.${btn.dataset.herodel}`, { method: "DELETE" });
-        toast("Deleted");
-        renderAdminHeroes(body);
-      } catch (err) {
-        toast("Couldn't delete", true);
-      }
-    });
-  });
-
+    selectedGen = ADMIN_HERO_GEN;
+    if (selectedGen >= 0) renderGenStats(); else statsWrap.innerHTML = `<p class="desc" style="margin-top:12px;">Pick a Gen to edit its star shard &amp; widget stats.</p>`;
   }
-
-  document.getElementById("adminAddHeroForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("adminAddHeroErr");
-    errEl.textContent = "";
-    const name = f.name.value.trim();
-    if (!name) { errEl.textContent = "Enter a hero name"; return; }
-    try {
-      await sb(`heroes`, {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          troop_type: f.troop_type.value || null,
-          rarity: f.rarity.value || null,
-          generation: f.generation.value === "" ? null : Number(f.generation.value),
-          image_url: f.image_url.value.trim() || null,
-          max_level: Number(f.max_level.value) || 80,
-          max_stars: Number(f.max_stars.value) || 5,
-        }),
-      });
-      toast("Hero added");
-      renderAdminHeroes(body);
-    } catch (err) {
-      errEl.textContent = "Couldn't add hero \u2014 name may already exist";
-    }
-  });
 
   // ---- Per-generation star-shard stats & widget-level stats editors ----
   // Stats are identical for every hero in a generation, so these are edited
@@ -22594,7 +22312,7 @@ async function renderAdminHeroes(body) {
       }
     });
   }
-  fillHeroPick();
+  drawHeroes();
 }
 
 
@@ -22607,40 +22325,10 @@ async function renderAdminIslands(body) {
   if (!ADMIN_ACTIVE_ISLAND_CAT || !catNames.includes(ADMIN_ACTIVE_ISLAND_CAT)) ADMIN_ACTIVE_ISLAND_CAT = catNames[0];
 
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Add a category</h2>
-      <p class="desc">Most trackers only need "Island", but you can add more groupings if needed.</p>
-      <form class="inline" id="adminAddIslandCatForm">
-        <input class="flex1" name="category" placeholder="Category name" required />
-        <button class="btn" type="submit">Add category</button>
-      </form>
-      <div class="err" id="adminAddIslandCatErr"></div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <p class="desc">Use the arrows to reorder.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        ${adminCategoryPickerHtml(cats, ADMIN_ACTIVE_ISLAND_CAT)}
-      </div>
-    </div>
+    ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_ISLAND_CAT)}
     <div id="adminIslandsBody"></div>
   `;
-  document.getElementById("adminAddIslandCatForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("adminAddIslandCatErr");
-    errEl.textContent = "";
-    const category = f.category.value.trim();
-    if (!category) { errEl.textContent = "Enter a category name"; return; }
-    try {
-      const maxOrder = cats.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
-      await sb(`skin_page_categories`, { method: "POST", body: JSON.stringify({ page: "islands", category, sort_order: maxOrder + 1 }) });
-      toast("Category added");
-      ADMIN_ACTIVE_ISLAND_CAT = category;
-      renderAdminIslands(body);
-    } catch (err) {
-      errEl.textContent = "Couldn't add category \u2014 may already exist";
-    }
-  });
+
   body.querySelectorAll("[data-catselect]").forEach((btn) => {
     btn.addEventListener("click", () => {
       ADMIN_ACTIVE_ISLAND_CAT = btn.dataset.catselect;
@@ -22651,20 +22339,19 @@ async function renderAdminIslands(body) {
   await renderAdminSkinsCategory(document.getElementById("adminIslandsBody"), ADMIN_ACTIVE_ISLAND_CAT);
 }
 
-// Reorderable category button row, shared by Skin Gallery and Islands admin
-// tabs. cats is the full [{id,category,sort_order}] list in current order.
-function adminCategoryPickerHtml(cats, activeCat) {
-  const act = cats.find((c) => c.category === activeCat);
-  return (act ? `<div style="flex-basis:100%; display:flex; gap:6px; margin-bottom:4px;"><button class="btn ghost small" data-catrename="${act.id}">Rename "${esc(act.category)}"</button><button class="btn ghost small" data-catdelete="${act.id}" style="color:var(--danger);">Delete category</button></div>` : "") + cats
-    .map(
-      (c, idx) => `
-    <div style="display:inline-flex; align-items:center; gap:2px;">
-      <button class="btn ${c.category === activeCat ? "" : "ghost"} small" data-catselect="${esc(c.category)}">${esc(c.category)}</button>
-      <button class="btn ghost small" data-catmoveup="${c.id}" ${idx === 0 ? "disabled" : ""} title="Move left" style="padding:4px 6px;">&#8592;</button>
-      <button class="btn ghost small" data-catmovedown="${c.id}" ${idx === cats.length - 1 ? "disabled" : ""} title="Move right" style="padding:4px 6px;">&#8594;</button>
-    </div>`
-    )
-    .join("");
+// Skin Gallery / Islands categories (design A): one row of chips + a
+// "⋯ Category" menu (new, rename, move, delete — wired by
+// wireAdminCategoryReorder). cats = [{ id, category, sort_order }] in order.
+function adminCatHeaderHtml(cats, activeCat) {
+  const idx = cats.findIndex((c) => c.category === activeCat), act = cats[idx];
+  return `<div class="admc-cats"><div class="adm-chips-row">${cats.map((c) => `<button type="button" class="adm-chip${c.category === activeCat ? " on" : ""}" data-catselect="${esc(c.category)}">${esc(c.category)}</button>`).join("")}</div>
+    <details class="admc-catmenu"><summary class="btn ghost small">&#8943; Category</summary><div class="admc-catpop">
+      <button type="button" data-catadd>+ New category</button>
+      ${act ? `<button type="button" data-catrename="${act.id}">Rename "${esc(act.category)}"</button>
+      <button type="button" data-catmoveup="${act.id}" ${idx === 0 ? "disabled" : ""}>&#8592; Move left</button>
+      <button type="button" data-catmovedown="${act.id}" ${idx === cats.length - 1 ? "disabled" : ""}>Move right &#8594;</button>
+      <button type="button" data-catdelete="${act.id}" style="color:var(--danger);">Delete "${esc(act.category)}"</button>` : ""}
+    </div></details></div>`;
 }
 function wireAdminCategoryReorder(container, page, cats, onChange) {
   // Moves one category and numbers them all 1…n again (two equal numbers
@@ -22681,6 +22368,18 @@ function wireAdminCategoryReorder(container, page, cats, onChange) {
   container.querySelectorAll("[data-catmoveup]").forEach((btn) => btn.addEventListener("click", () => move(btn.dataset.catmoveup, -1)));
   container.querySelectorAll("[data-catmovedown]").forEach((btn) => btn.addEventListener("click", () => move(btn.dataset.catmovedown, 1)));
   // Rename / delete the chosen category (its items move with a rename).
+  container.querySelectorAll("[data-catadd]").forEach((btn) => btn.addEventListener("click", async () => {
+    const name = (prompt("Name of the new category:") || "").trim();
+    if (!name) return;
+    if (cats.some((x) => x.category === name)) { toast("That category already exists", true); return; }
+    try {
+      const maxOrder = cats.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
+      await sb(`skin_page_categories`, { method: "POST", body: JSON.stringify({ page, category: name, sort_order: maxOrder + 1 }) });
+      if (page === "islands") ADMIN_ACTIVE_ISLAND_CAT = name; else ADMIN_ACTIVE_SKIN_CAT = name;
+      toast("Category added");
+    } catch (err) { toast(err.message || "Couldn't add", true); }
+    onChange();
+  }));
   container.querySelectorAll("[data-catrename]").forEach((btn) => btn.addEventListener("click", async () => {
     const c = cats.find((x) => x.id === btn.dataset.catrename); if (!c) return;
     const name = (prompt(`New name for the "${c.category}" category:`, c.category) || "").trim();
@@ -22713,39 +22412,10 @@ async function renderAdminSkinGallery(body) {
   if (!ADMIN_ACTIVE_SKIN_CAT || !catNames.includes(ADMIN_ACTIVE_SKIN_CAT)) ADMIN_ACTIVE_SKIN_CAT = catNames[0];
 
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <h2>Add a category</h2>
-      <form class="inline" id="adminAddSkinCatForm">
-        <input class="flex1" name="category" placeholder="Category name" required />
-        <button class="btn" type="submit">Add category</button>
-      </form>
-      <div class="err" id="adminAddSkinCatErr"></div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <p class="desc">Use the arrows to reorder.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        ${adminCategoryPickerHtml(cats, ADMIN_ACTIVE_SKIN_CAT)}
-      </div>
-    </div>
+    ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_SKIN_CAT)}
     <div id="adminSkinGalleryBody"></div>
   `;
-  document.getElementById("adminAddSkinCatForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = e.target;
-    const errEl = document.getElementById("adminAddSkinCatErr");
-    errEl.textContent = "";
-    const category = f.category.value.trim();
-    if (!category) { errEl.textContent = "Enter a category name"; return; }
-    try {
-      const maxOrder = cats.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
-      await sb(`skin_page_categories`, { method: "POST", body: JSON.stringify({ page: "gallery", category, sort_order: maxOrder + 1 }) });
-      toast("Category added");
-      ADMIN_ACTIVE_SKIN_CAT = category;
-      renderAdminSkinGallery(body);
-    } catch (err) {
-      errEl.textContent = "Couldn't add category \u2014 may already exist";
-    }
-  });
+
   body.querySelectorAll("[data-catselect]").forEach((btn) => {
     btn.addEventListener("click", () => {
       ADMIN_ACTIVE_SKIN_CAT = btn.dataset.catselect;
