@@ -156,6 +156,7 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - Tested: no sideways scroll or errors at 1280/393/624/430/412/884 px; click test of tabs, picker, Set all, tile pop-up, Max everything (saves blocked).
 
 ## Open to-dos
+- Dashboard budget card, design G4 (owner picked 16 Oct 2026, build later): one card between the state-age card and the roster. Left: "🛒 BUDGET · DONE <date>" small label, the Budgets total big (same plan as the Budgets switch: Fastest / By target / Cheapest), the pages it covers on one line (cut with …). Right: a big "<N> packs ›" button (ice-blue box). Tap → Budgets. "Working out…" until a plan is ready; hidden when nothing is left to buy. Must keep the Dashboard on one phone screen (`fitDashToScreen`). Mock-ups were G / G2 page pictures / G3 target bar / G4 one line / G5 page prices; G4 chosen.
 - Scan screenshot: still to learn when screenshots come: a hero's own widgets, Widget Chest, Mythic General Hero Lucky Box, other heroes' shards, Gen widget boxes of other Gens (only Gen 14 seen).
 - Earlier: (Issue #13 done 14 Oct 2026: 132 unused Storage files deleted; `skin-images` now holds 90 files: Justus's expert picture, the 88 gallery backup originals, and one unlinked city-skin picture `d248d1b3-….png` kept for the owner to decide.)
 
