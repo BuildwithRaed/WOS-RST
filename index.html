@@ -13866,16 +13866,49 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
   }
   return res;
 }
+// Pages that use the same item from the same Backpack amount (Experts Level +
+// Experts Research: Books, Sigils; Research Center / T11 / T12: resources,
+// Steel, FC Shards) each take that amount off their own need, so with two of
+// them ticked the Backpack was counted twice (owner, 16 Oct 2026). The amount
+// is shared once here: what's still short over the pages together, minus what
+// the pages already ask for, is added to the page that needs the item most.
+// Owned amounts that differ between pages (typed in by hand per page) are
+// left as they are.
+function budgetSharedOwnedExtra(pages) {
+  const out = {};
+  const items = new Set();
+  pages.forEach((pg) => Object.keys(pg.needFull || {}).forEach((n) => items.add(n)));
+  items.forEach((n) => {
+    const using = pages.filter((pg) => (Number((pg.needFull || {})[n]) || 0) > 0);
+    if (using.length < 2) return;
+    const owned = using.map((pg) => Number((pg.owned || {})[n]) || 0);
+    if (!(owned[0] > 0) || owned.some((o) => Math.abs(o - owned[0]) > 1e-6)) return;
+    const full = using.reduce((a, pg) => a + (Number(pg.needFull[n]) || 0), 0);
+    const asked = using.reduce((a, pg) => a + Math.max(0, (Number(pg.needFull[n]) || 0) - owned[0]), 0);
+    const add = Math.max(0, full - owned[0]) - asked;
+    if (!(add > 1e-9)) return;
+    const top = using.reduce((a, pg) => ((Number(pg.needFull[n]) || 0) > (Number(a.needFull[n]) || 0) ? pg : a), using[0]);
+    (out[top.calcKey] = out[top.calcKey] || {})[n] = add;
+  });
+  return out;
+}
 // Same inputs as before: builds every candidate pack group once (here, where
 // the pack tables live) and hands the plain data to the planner.
 function budgetCombinedInput(pages, selected) {
-  const cands = pages.filter((pg) => !pg.missing && selected[pg.calcKey] !== false && Object.keys(pg.need || {}).length);
+  // Pages sharing a Backpack amount count it once; a page can get a need
+  // from that even when its own still-needed list was empty.
+  const extra = budgetSharedOwnedExtra(pages.filter((pg) => !pg.missing && (selected || {})[pg.calcKey] !== false));
+  const cands = pages.filter((pg) => !pg.missing && (selected || {})[pg.calcKey] !== false && (Object.keys(pg.need || {}).length || extra[pg.calcKey]));
   const seen = new Set(), tables = [];
   cands.forEach((pg) => (pg.tables || []).forEach((tb) => { if (!seen.has(String(tb.id))) { seen.add(String(tb.id)); tables.push(tb); } }));
   const allGroups = cands.length ? packGroupsFor(tables, "__budget:" + cands.map((pg) => pg.calcKey).join(",")) : [];
   // Only the ticked pages' packs are sent: copying every page's packs to the
   // background planner took longer than the planning itself.
-  const lite = pages.map((pg) => ({ calcKey: pg.calcKey, missing: !!pg.missing, need: pg.need || {}, packGroups: cands.includes(pg) ? (pg.packGroups || []) : [], supplied: pg.supplied ? [...pg.supplied] : [], tableIds: (pg.tables || []).map((tb) => String(tb.id)) }));
+  const lite = pages.map((pg) => {
+    let need = pg.need || {};
+    if (extra[pg.calcKey]) { need = { ...need }; Object.entries(extra[pg.calcKey]).forEach(([n, q]) => { need[n] = (need[n] || 0) + q; }); }
+    return { calcKey: pg.calcKey, missing: !!pg.missing, need, packGroups: cands.includes(pg) ? (pg.packGroups || []) : [], supplied: pg.supplied ? [...pg.supplied] : [], tableIds: (pg.tables || []).map((tb) => String(tb.id)) };
+  });
   return { pages: lite, selected: selected || {}, allGroups };
 }
 // Runs the combined plan (and the own plans of pages it had to leave out).
@@ -14375,6 +14408,8 @@ async function renderBudgetsPage(opts = {}) {
     return `${targetDays != null && !reachable ? `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("budgets_cant_target").replace("{date}", fmtDate(targetDays)))}</div>` : ""}
       <div class="bud-seg">${viewKeys.map(seg).join("")}</div>`;
   })();
+  // Items shared by pages from one Backpack amount count it once (see budgetSharedOwnedExtra).
+  Object.values(budgetSharedOwnedExtra(pagesRaw.filter((pg) => !pg.missing && included(pg.calcKey)))).forEach((m) => Object.entries(m).forEach(([n, q]) => { grandMats[n] = (grandMats[n] || 0) + q; }));
   const summary = `
     <div class="panel" style="border-color:var(--ice);">
       <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
