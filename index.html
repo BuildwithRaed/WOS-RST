@@ -869,7 +869,7 @@ input,select,textarea{
   .lg-name{ flex:1 1 220px; min-width:0; }
   .lg-btns{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .lg-show{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; margin-inline-end:4px; }
-  .lg-up{ cursor:pointer; }
+  .lg-up{ cursor:pointer; display:inline-flex; align-items:center; font-size:12px; padding:5px 10px; }
   .lg-add{ margin-top:14px; padding:10px 12px; border:1px dashed var(--line); border-radius:12px; }
   .lg-addrow{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0 4px; }
   .lg-addrow input[type=text]{ flex:1 1 160px; min-width:0; }
@@ -2555,17 +2555,21 @@ let LANG = localStorage.getItem("lang") || "en";
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
 const LANG_FILES_VERSION = 1; // bump when a lang/*.json file changes (the offline cache keeps old links)
+// The game's other languages (machine-made files, 16 Oct 2026) start hidden;
+// the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
   { code: "en", name: "English" },
   { code: "ar", name: "العربية", dir: "rtl", file: true },
   { code: "ko", name: "한국어", file: true },
-];
+  ...[["es", "Español"], ["pt", "Português"], ["de", "Deutsch"], ["fr", "Français"], ["it", "Italiano"], ["pl", "Polski"], ["ru", "Русский"], ["tr", "Türkçe"],
+    ["ja", "日本語"], ["zh-Hans", "简体中文"], ["zh-Hant", "繁體中文"], ["id", "Bahasa Indonesia"], ["th", "ไทย"], ["vi", "Tiếng Việt"]].map(([code, name]) => ({ code, name, file: true, hidden: true })),
+].map((l) => ({ ...l, builtin: true }));
 let LANG_PACK = null; // the loaded texts of LANG
 const LANG_PACKS = {}; // code -> { pack, file, over }
 function languageList(all) {
   const extra = typeof siteConfig === "function" ? siteConfig("languages", []) : [];
   const list = LANG_BUILTIN.map((l) => ({ ...l }));
-  (Array.isArray(extra) ? extra : []).forEach((x) => { if (!x || !x.code) return; const f = list.find((l) => l.code === x.code); if (f) Object.assign(f, x, { file: f.file }); else list.push({ ...x, file: false }); });
+  (Array.isArray(extra) ? extra : []).forEach((x) => { if (!x || !x.code) return; const f = list.find((l) => l.code === x.code); if (f) Object.assign(f, x, { file: f.file, builtin: true }); else list.push({ ...x, file: false, builtin: false }); });
   return all ? list : list.filter((l) => l.code === "en" || !l.hidden || (typeof IS_OWNER !== "undefined" && IS_OWNER));
 }
 function langDir(code) { const l = languageList(true).find((x) => x.code === code); return l && l.dir === "rtl" ? "rtl" : "ltr"; }
@@ -9667,7 +9671,7 @@ document.addEventListener("click", (ev) => {
   const car = b.querySelector(".sa-car"); if (car) car.innerHTML = open ? "&#9652;" : "&#9662;";
 });
 function capSettingsHtml(id, label, optionsHtml) {
-  return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px;">${optionsHtml}</select></label>
+  return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px; min-width:110px; flex:none;">${optionsHtml}</select></label>
     <p class="desc" style="font-size:10.5px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>`;
 }
 
@@ -19947,7 +19951,7 @@ const LANG_EN_WORDS = { "w:stat.ATK": "ATK", "w:stat.ATT": "ATT", "w:stat.DEF": 
 function englishTexts() {
   const out = [];
   Object.entries(T).forEach(([k, v]) => { if (v && v.en) out.push(["t:" + k, v.en]); });
-  Object.entries(NAV_GROUP_LABELS_DEFAULT).forEach(([k, v]) => { if (k !== "Admin" && v && v.en) out.push(["nav.g:" + k, v.en]); });
+  Object.entries(NAV_GROUP_LABELS_DEFAULT).forEach(([k, v]) => { if (v && v.en) out.push(["nav.g:" + k, v.en]); });
   Object.entries(NAV_PAGE_LABELS_DEFAULT).forEach(([k, v]) => { if (v && v.en) out.push(["nav.p:" + k, v.en]); });
   Object.keys(DATA_NAME_I18N).forEach((k) => out.push(["data:" + k, k]));
   Object.keys(UI_TEXT_I18N).forEach((k) => out.push(["ui:" + k, k]));
@@ -19985,7 +19989,7 @@ async function saveLangOverrides(code, over) {
 async function renderAdminLanguages(body) {
   await ensureSiteConfig();
   const en = englishTexts(), total = en.length;
-  const saveList = async (list) => { await saveSiteConfig("languages", list.filter((l) => l.code !== "en").map((l) => ({ code: l.code, name: l.name, ...(l.dir === "rtl" ? { dir: "rtl" } : {}), ...(l.hidden ? { hidden: true } : {}) }))); renderLanguageSwitcher(); };
+  const saveList = async (list) => { await saveSiteConfig("languages", list.filter((l) => l.code !== "en").map((l) => ({ code: l.code, name: l.name, ...(l.dir === "rtl" ? { dir: "rtl" } : {}), hidden: !!l.hidden }))); renderLanguageSwitcher(); };
   if (ADMIN_LANG_OPEN) { await renderAdminTexts(body, ADMIN_LANG_OPEN); return; }
   const list = languageList(true);
   body.innerHTML = `<p class="desc" style="margin:0 0 10px;">English is the base. Every other language is a list of translated texts: edit them here, or download the file, translate it in any spreadsheet app, and upload it back. Texts that aren't translated show in English. Hidden languages are only in your own language menu.</p>
@@ -19996,14 +20000,14 @@ async function renderAdminLanguages(body) {
   const counts = {};
   await Promise.all(list.filter((l) => l.code !== "en").map(async (l) => { const e = await loadLangPack(l.code, true); counts[l.code] = { n: en.filter(([k]) => e.pack[k]).length, over: Object.keys(e.over).length }; }));
   body.querySelector(".lg-list").innerHTML = list.map((l) => `<div class="lg-row">
-      <div class="lg-name"><b>${esc(l.name)}</b> <span class="meta">${esc(l.code)}${l.dir === "rtl" ? " · right-to-left" : ""}${l.file ? "" : " · added by you"}</span><br>
+      <div class="lg-name"><b>${esc(l.name)}</b> <span class="meta">${esc(l.code)}${l.dir === "rtl" ? " · right-to-left" : ""}${l.builtin ? "" : " · added by you"}</span><br>
         <span class="meta" style="font-size:11.5px;">${l.code === "en" ? "Base language" : `${counts[l.code].n.toLocaleString()} / ${total.toLocaleString()} texts translated (${Math.floor(counts[l.code].n * 100 / total)}%)${counts[l.code].over ? ` · ${counts[l.code].over} changed by you` : ""}`}</span></div>
       ${l.code === "en" ? "" : `<div class="lg-btns">
         <label class="lg-show"><input type="checkbox" data-lgshow="${esc(l.code)}" ${l.hidden ? "" : "checked"} /> Shown</label>
         <button type="button" class="btn ghost small" data-lgtexts="${esc(l.code)}">Texts</button>
         <button type="button" class="btn ghost small" data-lgdown="${esc(l.code)}">&#8615; Download</button>
-        <label class="btn ghost small lg-up">&#8613; Upload<input type="file" accept=".csv,text/csv" data-lgup="${esc(l.code)}" hidden /></label>
-        ${l.file ? "" : `<button type="button" class="btn ghost small" data-lgdel="${esc(l.code)}" title="Remove">&#128465;</button>`}</div>`}
+        <label class="btn ghost small lg-up" role="button">&#8613; Upload<input type="file" accept=".csv,text/csv" data-lgup="${esc(l.code)}" hidden /></label>
+        ${l.builtin ? "" : `<button type="button" class="btn ghost small" data-lgdel="${esc(l.code)}" title="Remove">&#128465;</button>`}</div>`}
     </div>`).join("");
   body.querySelectorAll("[data-lgshow]").forEach((cb) => cb.addEventListener("change", async () => {
     const all = languageList(true); const l = all.find((x) => x.code === cb.dataset.lgshow); l.hidden = !cb.checked;
@@ -20044,7 +20048,7 @@ async function openTextUpload(code, text, body) {
   const e = await loadLangPack(code, true);
   const changes = {}, problems = [], unknown = []; let read = 0, empty = 0, same = 0;
   (hasHead ? rows.slice(1) : rows).forEach((r) => {
-    const k = (r[0] || "").trim(), v = (r[col] || "").trim();
+    const k = (r[0] || "").trim(), v0 = r[col] || "", v = v0.trim() ? v0 : ""; // keep spaces the text really has
     if (!k) return;
     if (!en.has(k)) { unknown.push(k); return; }
     read++;
@@ -20114,7 +20118,7 @@ async function renderAdminTexts(body, code) {
       const bad = Object.entries(draft).filter(([k, v]) => v.trim() && textPlaceholders(v) !== textPlaceholders(enMap.get(k)));
       if (bad.length) { toast(`Keep the {placeholders} as in English: ${bad[0][0]}`, true); return; }
       const over = { ...e.over };
-      Object.entries(draft).forEach(([k, v]) => { v = v.trim(); if (!v || v === (e.file[k] || "")) { if (!v && e.file[k]) over[k] = ""; else delete over[k]; } else over[k] = v; });
+      Object.entries(draft).forEach(([k, v]) => { if (!v.trim()) v = ""; if (!v || v === (e.file[k] || "")) { if (!v && e.file[k]) over[k] = ""; else delete over[k]; } else over[k] = v; });
       try { await saveLangOverrides(code, over); toast(`${Object.keys(draft).length} texts saved`); renderAdminTexts(body, code); } catch (err) { toast(err.message || "Couldn't save", true); }
     });
   };
