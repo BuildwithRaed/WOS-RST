@@ -844,6 +844,7 @@
  "t:pk_active_until": "jusqu'au",
  "t:pk_preview_badge": "Aperçu visiteur",
  "t:pk_preview_packs": "packs",
+ "t:pk_owner_dates_desc": "Cartes hebdo : tes propres dates. Packs datés comme le Bazar : la date du pack, qui est aussi celle des visiteurs tant qu'ils n'ont pas mis la leur.",
  "t:pk_preview_desc": "Voici ce que voient les visiteurs. Les champs sont verrouillés ici — vous changez vos dates dans les réglages de chaque pack. Seuls les packs avec « Les visiteurs peuvent régler leur propre date » coché sont listés.",
  "t:pk_preview_empty": "Les visiteurs ne voient pas encore cette case. Cochez « Les visiteurs peuvent régler leur propre date » dans les réglages d'un pack pour l'ajouter ici.",
  "t:pk_preview_open": "Ouvrir les réglages",

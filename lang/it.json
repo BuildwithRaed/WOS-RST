@@ -844,6 +844,7 @@
  "t:pk_active_until": "fino al",
  "t:pk_preview_badge": "Anteprima visitatore",
  "t:pk_preview_packs": "pacchetti",
+ "t:pk_owner_dates_desc": "Carte settimanali: le tue date. Pacchetti con data come il Bazar: la data del pacchetto, da cui partono anche i visitatori finché non impostano la loro.",
  "t:pk_preview_desc": "Questo è ciò che vedono i visitatori. Qui i campi sono bloccati — cambi le tue date nelle impostazioni di ogni pacchetto. Sono elencati solo i pacchetti con \"I visitatori possono impostare la propria data\" spuntato.",
  "t:pk_preview_empty": "I visitatori non vedono ancora questo riquadro. Spunta \"I visitatori possono impostare la propria data\" nelle impostazioni di un pacchetto per aggiungerlo qui.",
  "t:pk_preview_open": "Apri impostazioni",

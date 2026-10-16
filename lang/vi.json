@@ -843,6 +843,7 @@
 "t:pk_active_until":"đến",
 "t:pk_preview_badge":"Xem như khách",
 "t:pk_preview_packs":"gói",
+"t:pk_owner_dates_desc":"Thẻ tuần: ngày của riêng bạn. Gói có ngày như Chợ phiên: ngày của gói, cũng là ngày mặc định của khách cho đến khi họ tự đặt.",
 "t:pk_preview_desc":"Đây là những gì khách thấy. Các ô bị khóa ở đây — bạn đổi ngày của mình trong cài đặt từng gói. Chỉ liệt kê gói có chọn \"Khách có thể đặt ngày riêng\".",
 "t:pk_preview_empty":"Khách chưa thấy ô này. Chọn \"Khách có thể đặt ngày riêng\" trong cài đặt gói để thêm vào đây.",
 "t:pk_preview_open":"Mở cài đặt",

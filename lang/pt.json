@@ -843,6 +843,7 @@
 "t:pk_active_until":"até",
 "t:pk_preview_badge":"Prévia do visitante",
 "t:pk_preview_packs":"pacotes",
+"t:pk_owner_dates_desc":"Cartões semanais: suas próprias datas. Pacotes com data como o Bazar: a data do pacote, que também é o início dos visitantes até definirem a deles.",
 "t:pk_preview_desc":"É isto que os visitantes veem. Os campos estão travados aqui — você muda suas próprias datas nas configurações de cada pacote. Só aparecem pacotes com \"Visitantes podem definir a própria data\" marcado.",
 "t:pk_preview_empty":"Os visitantes ainda não veem esta caixa. Marque \"Visitantes podem definir a própria data\" nas configurações de um pacote para adicioná-lo aqui.",
 "t:pk_preview_open":"Abrir configurações",

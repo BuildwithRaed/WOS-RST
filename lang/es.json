@@ -844,6 +844,7 @@
  "t:pk_active_until": "hasta",
  "t:pk_preview_badge": "Vista de visitante",
  "t:pk_preview_packs": "paquetes",
+ "t:pk_owner_dates_desc": "Tarjetas semanales: tus propias fechas. Packs con fecha como el Bazar: la fecha del pack, que también es la inicial de los visitantes hasta que pongan la suya.",
  "t:pk_preview_desc": "Esto es lo que ven los visitantes. Los campos están bloqueados aquí: tus propias fechas se cambian en los ajustes de cada paquete. Solo aparecen los paquetes con \"Los visitantes pueden poner su propia fecha\" marcado.",
  "t:pk_preview_empty": "Los visitantes aún no ven esta caja. Marca \"Los visitantes pueden poner su propia fecha\" en los ajustes de un paquete para añadirlo aquí.",
  "t:pk_preview_open": "Abrir ajustes",
