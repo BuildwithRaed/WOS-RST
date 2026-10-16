@@ -11876,9 +11876,10 @@ function packOptionLadderGroups(optionTables) {
 // weekly choice; with order it's a ladder where every step uses the same picks.
 function packPickGroups(tb, link) {
   const cols = packEffectiveCols(tb);
-  const optCols = Object.keys(cols).map(Number).filter((ci) => ci !== link.priceCol && cols[ci] && cols[ci] !== "Gems").sort((a, b) => a - b);
+  let optCols = Object.keys(cols).map(Number).filter((ci) => ci !== link.priceCol && cols[ci] && cols[ci] !== "Gems").sort((a, b) => a - b);
   const rows = (tb.rows || []).map((r) => r.cells || []).filter((cells) => packParseNum(cells[link.priceCol]) > 0);
   if (!optCols.length || !rows.length) return [];
+  optCols = packPreferAdvancedMarks(optCols, cols, rows, link);
   const n = link.pickCols;
   const combos = [];
   const rec = (start, acc) => { if (acc.length === n) { combos.push(acc.slice()); return; } for (let j = start; j < optCols.length; j++) { acc.push(j); rec(j, acc); acc.pop(); } };
@@ -11916,11 +11917,21 @@ function packPickGroups(tb, link) {
 }
 // One table whose COLUMNS are the options: each row is a tier, and a
 // purchase of that tier takes the amount from one column only.
+// Packs that let you choose Common or Advanced Marks (Custom Pet Chest):
+// always take Advanced when it is worth at least as much (1 Advanced = 8
+// Common), so the plan buys Advanced (owner, 16 Oct 2026).
+function packPreferAdvancedMarks(optCols, cols, rows, link) {
+  const com = optCols.find((ci) => cols[ci] === "Common Marks"), adv = optCols.find((ci) => cols[ci] === "Advanced Marks");
+  if (com == null || adv == null) return optCols;
+  const better = rows.every((cells) => packParseNum(cells[adv]) * packColMultiplier(link, adv) * ADVANCED_MARK_VALUE >= packParseNum(cells[com]) * packColMultiplier(link, com));
+  return better ? optCols.filter((ci) => ci !== com) : optCols;
+}
 function packColumnOptionGroup(tb) {
   const link = packLinkFor(tb.id);
   const cols = packEffectiveCols(tb);
-  const optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== link.priceCol && !packIsNonResourceColumn(tb.columns[ci]));
+  let optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== link.priceCol && !packIsNonResourceColumn(tb.columns[ci]));
   const rows = (tb.rows || []).map((r) => r.cells || []).filter((cells) => packParseNum(cells[link.priceCol]) > 0);
+  optCols = packPreferAdvancedMarks(optCols, cols, rows, link);
   if (!optCols.length || !rows.length) return null;
   const perTable = optCols.map((ci) => rows.map((cells, ri) => {
     const price = packParseNum(cells[link.priceCol]);
@@ -13365,7 +13376,7 @@ async function renderRfcLabPage() {
 // Custom Resource Chests open into your choice of Meat, Wood, Coal or Iron:
 // the planner turns them into whichever the plan is short of (a rule, not a trade).
 const BACKPACK_RES_CHEST_RULES = Object.entries(BACKPACK_RES_CHEST_GIVES).flatMap(([from, gives]) => Object.entries(gives).map(([to, get]) => ({ from, to, give: 1, get, max: 0, hidden: true })));
-const ADVANCED_MARK_VALUE = 16; // 1 Advanced Mark counts as 16 Common Marks in refine chances (owner, 16 Oct 2026)
+const ADVANCED_MARK_VALUE = 8; // 1 Advanced Mark = 8 Common Marks
 const TRADE_DEFAULT_RATES = {
   chief_gear: [
     // max = how many times that trade can be made per week (0 = no limit)
@@ -13395,8 +13406,7 @@ const TRADE_DEFAULT_RATES = {
   ],
   // A Pet Chest opens into ONE of these (your choice): the planner turns
   // chests into whichever the plan is short of. Hidden - a rule, not a trade.
-  // Refine: an Advanced Mark counts as 16 Common in refine chances (owner,
-  // 16 Oct 2026; packs price both the same) (not a trade),
+  // Refine: Advanced Marks are simply spent at 8 Common each (not a trade),
   // and 500 of the Gems YOU OWN buy 1 Common Mark (packs' gems don't
   // count). Both hidden - rules, not trades.
   // Affinity gift items are simply worth a fixed amount of Affinity.
