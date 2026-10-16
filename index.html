@@ -850,6 +850,43 @@ input,select,textarea{
   .bd-done summary{ cursor:pointer; margin-bottom:4px; }
   @media (max-width: 560px){ .bd-box{ padding:14px 13px; } .bd-sum b{ font-size:15px; } }
   /* Stat boxes and stat tabs */
+  .adm-top{ display:flex; align-items:center; gap:10px; margin:4px 0 14px; flex-wrap:wrap; }
+  .adm-top h2{ margin:0; font-size:22px; display:flex; flex-direction:column; }
+  .adm-title-sec{ display:none; }
+  .adm-search{ flex:1 1 220px; min-width:0; max-width:520px; margin-inline-start:auto; padding:8px 12px; border-radius:10px; }
+  .adm-back{ width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--ice); font-size:22px; line-height:1; cursor:pointer; flex:none; }
+  .adm-layout{ display:grid; grid-template-columns:230px minmax(0,1fr); gap:20px; align-items:start; }
+  .adm-side{ position:sticky; top:70px; max-height:calc(100vh - 90px); overflow-y:auto; padding:6px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+  .adm-gk{ font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:12px 8px 4px; }
+  .adm-side .adm-gk:first-child{ margin-top:4px; }
+  .adm-it{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 10px; border:0; border-radius:8px; background:none; color:var(--frost); font:inherit; font-size:13.5px; text-align:start; cursor:pointer; }
+  .adm-it:hover{ background:var(--panel-2); }
+  .adm-it.on{ background:var(--ice-dim); }
+  .adm-it i, .adm-card i{ font-style:normal; width:20px; text-align:center; flex:none; }
+  .adm-ext{ color:var(--muted); font-size:11px; margin-inline-start:auto; }
+  .adm[hidden], .adm-it[hidden], .adm-card[hidden], .adm-gk[hidden], .adm-cards[hidden]{ display:none; }
+  .adm-crumb{ font-size:12px; color:var(--muted); }
+  .adm-h{ font-size:22px; font-weight:800; margin:2px 0 12px; }
+  .adm-cards{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px; }
+  .adm-card{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; min-width:0; }
+  .adm-card:hover{ border-color:var(--ice); }
+  .adm-card i{ font-size:22px; width:auto; }
+  .adm-card b{ font-size:14px; }
+  .adm-card span{ font-size:11.5px; color:var(--muted); }
+  .adm-home .adm-gk:first-child{ margin-top:0; }
+  .adm-chips{ margin-bottom:14px; }
+  .adm-chips-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .adm-chip{ flex:none; border:1px solid var(--line); border-radius:18px; padding:6px 14px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .adm-chip.on{ background:var(--ice-dim); border-color:var(--ice); }
+  @media (max-width:899px){
+    .adm-layout{ grid-template-columns:minmax(0,1fr); }
+    .adm-side{ display:none; }
+    .adm-open .adm-title-sec{ display:block; }
+    .adm-open .adm-title-main, .adm-open .adm-crumb, .adm-open .adm-h{ display:none; }
+    .adm-open .adm-search{ display:none; }
+    .adm-search{ flex-basis:100%; max-width:none; margin:0; order:3; }
+    .adm-cards{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  }
   .rfa .rfa-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .rfa .rfa-head h2{ margin:0; font-size:17px; }
   .rfa-x{ width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:14px; cursor:pointer; flex:none; }
@@ -4818,6 +4855,8 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 // previous page inside the site instead of leaving it.
 function goToTab(tab, opts = {}) {
   if (!isValidTab(tab)) tab = "overview";
+  // Leaving Admin: drop data copies kept for the visit so pages show the edits.
+  if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
   document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
@@ -20460,29 +20499,38 @@ async function renderFacilityPage() {
 // user add brand-new experts/pets and fix any stat data without
 // needing to ask Claude to run SQL.
 // ============================================================
+// Admin sections, grouped (owner picked: sidebar on PC, home cards on
+// phones, 16 Oct 2026). icon / desc / words feed the cards and the search.
+const ADMIN_GROUPS = [
+  { key: "site", label: "Site" },
+  { key: "game", label: "Game data" },
+  { key: "packs", label: "Packs & Budgets" },
+];
 const ADMIN_TABLES = {
-  visibility: { label: "Visibility" },
-  experts: { label: "Experts" },
-  pets: { label: "Pets" },
-  chiefgears: { label: "Chief Gears" },
-  charm: { label: "Chief Charm" },
-  herogearprog: { label: "Heroes Gears" },
-  vip: { label: "VIP" },
-  alliance: { label: "Alliance" },
-  centerresearch: { label: "Research" },
-  heroes: { label: "Heroes" },
-  packres: { label: "Pack Resources" },
-  backpackitems: { label: "Backpack Items" },
-  contact: { label: "Contact us" },
-  currencies: { label: "Currencies" },
-  skins: { label: "Skins" },
-  herostars: { label: "Heroes Special Skills" },
-  // These are full pages of their own; the Admin tab just opens them.
-  packs: { label: "Packs", tab: "packs" },
-  budgets: { label: "Budgets", tab: "budgets" },
-  backpack: { label: "Backpack", tab: "backpack" },
+  visibility: { label: "Visibility", group: "site", icon: "👁", desc: "Hide pages, experts, pets", words: "hide unhide visitor access" },
+  contact: { label: "Contact us", group: "site", icon: "✉", desc: "Email and message", words: "email" },
+  currencies: { label: "Currencies", group: "site", icon: "¤", desc: "Rates and store prices", words: "money qar usd price" },
+  experts: { label: "Experts", group: "game", icon: "🧠", desc: "Roster, affinity, skills, research", words: "expert sigil affinity skill" },
+  pets: { label: "Pets", group: "game", icon: "🐾", desc: "Pets, refine, marks", words: "pet refine marks" },
+  chiefgears: { label: "Chief Gear", group: "game", icon: "🛡", desc: "Tiers and set bonus", words: "chief gear alloy polish design" },
+  charm: { label: "Chief Charm", group: "game", icon: "💎", desc: "Charm levels", words: "charm guides designs secrets" },
+  herogearprog: { label: "Heroes Gears", group: "game", icon: "🔧", desc: "Mastery, enhance, mithril", words: "hero gear mastery enhance mithril" },
+  heroes: { label: "Heroes", group: "game", icon: "⚔", desc: "Heroes, Gen, shards", words: "hero gen rarity shards widgets stars" },
+  herostars: { label: "Heroes Special Skills", group: "game", icon: "✨", desc: "Special skill bonuses", words: "skill" },
+  vip: { label: "VIP", group: "game", icon: "👑", desc: "VIP tiers", words: "vip" },
+  alliance: { label: "Alliance", group: "game", icon: "🏰", desc: "Facility and tech", words: "facility alliance tech" },
+  centerresearch: { label: "Research", group: "game", icon: "🔬", desc: "Research Center, T11, T12", words: "research t11 t12 helios" },
+  skins: { label: "Skins", group: "game", icon: "🎨", desc: "Gallery, album, skins, islands", words: "skin gallery album islands" },
+  // These are full pages of their own; the Admin entry just opens them.
+  packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
+  packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
+  backpackitems: { label: "Backpack Items", group: "packs", icon: "🎒", desc: "Items in the Backpack", words: "backpack item" },
+  budgets: { label: "Budgets", group: "packs", icon: "💰", desc: "Opens the page", tab: "budgets", words: "budget" },
+  backpack: { label: "Backpack", group: "packs", icon: "🎒", desc: "Opens the page", tab: "backpack", words: "inventory" },
 };
-let ADMIN_ACTIVE_TABLE = "experts";
+let ADMIN_ACTIVE_TABLE = null; // null = the Admin home (cards)
+let ADMIN_SEARCH = "";
+let ADMIN_DRAWING = Promise.resolve(); // one section draws at a time
 let ADMIN_ACTIVE_EXPERT = null;
 let ADMIN_ACTIVE_PET = null;
 let ADMIN_ACTIVE_PROGRESSION = null;
@@ -20496,40 +20544,67 @@ let ADMIN_ACTIVE_ALLIANCE_SUBTAB = "facility";
 async function renderAdminPage() {
   // Admin edits the data other pages keep in memory for the visit.
   dropKeptGameData();
+  const cur = ADMIN_ACTIVE_TABLE && ADMIN_TABLES[ADMIN_ACTIVE_TABLE] ? ADMIN_ACTIVE_TABLE : null;
+  const q = ADMIN_SEARCH.trim().toLowerCase();
+  const match = (k) => { const e = ADMIN_TABLES[k]; return !q || `${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(q); };
+  const keysOf = (g) => Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].group === g && match(k));
+  const side = ADMIN_GROUPS.map((g) => { const ks = keysOf(g.key); return ks.length ? `<div class="adm-gk">${esc(g.label)}</div>${ks.map((k) => `<button type="button" class="adm-it${k === cur ? " on" : ""}" data-admintable="${k}"><i>${ADMIN_TABLES[k].icon}</i>${esc(ADMIN_TABLES[k].label)}${ADMIN_TABLES[k].tab ? ` <span class="adm-ext">&#8599;</span>` : ""}</button>`).join("")}` : ""; }).join("") || `<div class="meta" style="padding:8px;">No match</div>`;
+  const home = ADMIN_GROUPS.map((g) => { const ks = keysOf(g.key); return ks.length ? `<div class="adm-gk">${esc(g.label)}</div><div class="adm-cards">${ks.map((k) => `<button type="button" class="adm-card" data-admintable="${k}"><i>${ADMIN_TABLES[k].icon}</i><b>${esc(ADMIN_TABLES[k].label)}${ADMIN_TABLES[k].tab ? " &#8599;" : ""}</b><span>${esc(ADMIN_TABLES[k].desc)}</span></button>`).join("")}</div>` : ""; }).join("") || `<div class="meta">No match</div>`;
+  const grp = cur ? ADMIN_GROUPS.find((g) => g.key === ADMIN_TABLES[cur].group) : null;
   content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>Admin</h2>
+    <div class="adm${cur ? " adm-open" : ""}">
+      <div class="adm-top">
+        ${cur ? `<button type="button" class="adm-back" data-adminhome aria-label="back">&#8249;</button>` : ""}
+        <h2>${cur ? `<span class="adm-title-sec">${esc(ADMIN_TABLES[cur].label)}</span><span class="adm-title-main">&#9881; Admin</span>` : "&#9881; Admin"}</h2>
+        <input type="search" class="adm-search" data-adminsearch placeholder="Search admin…" value="${esc(ADMIN_SEARCH)}" />
       </div>
-    </div>
-    <div class="panel" style="margin-bottom:16px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        ${Object.entries(ADMIN_TABLES)
-          .map(
-            ([key, t]) =>
-              `<button class="btn ${key === ADMIN_ACTIVE_TABLE ? "" : "ghost"} small" data-admintable="${key}">${esc(t.label)}</button>`
-          )
-          .join("")}
+      <div class="adm-layout">
+        <nav class="adm-side">${side}</nav>
+        <div class="adm-main">
+          <div class="meta adm-nomatch" hidden>No match</div>
+          ${cur ? `<div class="adm-crumb">${esc(grp ? grp.label : "")} &rsaquo;</div><div class="adm-h">${esc(ADMIN_TABLES[cur].label)}</div><div id="adminBody"></div>` : `<div class="adm-home">${home}</div>`}
+        </div>
       </div>
-    </div>
-    <div id="adminBody"></div>
-  `;
-
-  content.querySelectorAll("[data-admintable]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const entry = ADMIN_TABLES[btn.dataset.admintable];
-      if (entry && entry.tab) { goToTab(entry.tab); return; }
-      ADMIN_ACTIVE_TABLE = btn.dataset.admintable;
-      renderAdminPage();
-    });
+    </div>`;
+  const open = (key) => {
+    const entry = ADMIN_TABLES[key];
+    if (entry && entry.tab) { goToTab(entry.tab); return; }
+    ADMIN_ACTIVE_TABLE = key;
+    renderAdminPage();
+    window.scrollTo(0, 0);
+  };
+  content.querySelectorAll("[data-admintable]").forEach((btn) => btn.addEventListener("click", () => open(btn.dataset.admintable)));
+  const home_ = content.querySelector("[data-adminhome]");
+  if (home_) home_.addEventListener("click", () => { ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0); });
+  const search = content.querySelector("[data-adminsearch]");
+  search.addEventListener("input", () => {
+    ADMIN_SEARCH = search.value;
+    // Redraw only the lists, so typing keeps the focus.
+    const qq = ADMIN_SEARCH.trim().toLowerCase();
+    content.querySelectorAll(".adm-side [data-admintable], .adm-home [data-admintable]").forEach((b) => { const e = ADMIN_TABLES[b.dataset.admintable]; b.hidden = !!qq && !`${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(qq); });
+    content.querySelectorAll(".adm-gk").forEach((h) => { const next = h.nextElementSibling; const list = next && next.classList.contains("adm-cards") ? [...next.children] : (() => { const a = []; let n = h.nextElementSibling; while (n && !n.classList.contains("adm-gk")) { a.push(n); n = n.nextElementSibling; } return a; })(); h.hidden = list.length > 0 && list.every((x) => x.hidden); });
+    const nm = content.querySelector(".adm-nomatch");
+    if (nm) nm.hidden = !qq || [...content.querySelectorAll(".adm-side [data-admintable]")].some((b) => !b.hidden);
   });
-
+  search.addEventListener("keydown", (e) => { if (e.key !== "Enter") return; const first = [...content.querySelectorAll(".adm-side [data-admintable]")].find((b) => !b.hidden); if (first) open(first.dataset.admintable); });
+  if (!cur) return;
   const body = document.getElementById("adminBody");
-  if (ADMIN_ACTIVE_TABLE === "visibility") await renderAdminVisibility(body);
-  else if (ADMIN_ACTIVE_TABLE === "experts") await renderAdminExpertsGroup(body);
-  else if (ADMIN_ACTIVE_TABLE === "pets") await renderAdminPetsGroup(body);
-  else if (ADMIN_ACTIVE_TABLE === "chiefgears") await renderAdminChiefGearsGroup(body);
-  else if (ADMIN_ACTIVE_TABLE === "charm") await renderAdminFlatLevels(body, { table: "charm_levels", title: "Chief Charm levels", cols: [
+  // A slow section finishes before the next one draws, so it can't draw or
+  // wire buttons over the section that was opened after it.
+  const prev = ADMIN_DRAWING;
+  let done; ADMIN_DRAWING = new Promise((r) => { done = r; });
+  try { await prev; } catch (e) { /* ignore */ }
+  try {
+    if (!body.isConnected) return;
+    await drawAdminSection(cur, body);
+  } finally { done(); }
+}
+async function drawAdminSection(key, body) {
+  if (key === "visibility") await renderAdminVisibility(body);
+  else if (key === "experts") await renderAdminExpertsGroup(body);
+  else if (key === "pets") await renderAdminPetsGroup(body);
+  else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
+  else if (key === "charm") await renderAdminFlatLevels(body, { table: "charm_levels", title: "Chief Charm levels", cols: [
     { key: "level_label", label: "Level", type: "text" },
     { key: "guides_cost", label: "Guides (step)", type: "number" },
     { key: "designs_cost", label: "Designs (step)", type: "number" },
@@ -20537,17 +20612,17 @@ async function renderAdminPage() {
     { key: "cumulative_pct", label: "Cumulative %", type: "number" },
     { key: "sort_order", label: "Order", type: "number" },
   ], orderCol: "sort_order", onSave: () => { CHARM_LEVELS_LOADED = false; } });
-  else if (ADMIN_ACTIVE_TABLE === "herogearprog") await renderAdminProgression(body, ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"]);
-  else if (ADMIN_ACTIVE_TABLE === "vip") await renderAdminVip(body);
-  else if (ADMIN_ACTIVE_TABLE === "alliance") await renderAdminAllianceGroup(body);
-  else if (ADMIN_ACTIVE_TABLE === "centerresearch") await renderAdminResearch(body);
-  else if (ADMIN_ACTIVE_TABLE === "heroes") await renderAdminHeroes(body);
-  else if (ADMIN_ACTIVE_TABLE === "packres") await renderAdminPackResources(body);
-  else if (ADMIN_ACTIVE_TABLE === "backpackitems") await renderAdminBackpackItems(body);
-  else if (ADMIN_ACTIVE_TABLE === "contact") await renderAdminContact(body);
-  else if (ADMIN_ACTIVE_TABLE === "currencies") await renderAdminCurrencies(body);
-  else if (ADMIN_ACTIVE_TABLE === "skins") await renderAdminSkinsGroup(body);
-  else if (ADMIN_ACTIVE_TABLE === "herostars") await renderAdminHeroStars(body);
+  else if (key === "herogearprog") await renderAdminProgression(body, ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"]);
+  else if (key === "vip") await renderAdminVip(body);
+  else if (key === "alliance") await renderAdminAllianceGroup(body);
+  else if (key === "centerresearch") await renderAdminResearch(body);
+  else if (key === "heroes") await renderAdminHeroes(body);
+  else if (key === "packres") await renderAdminPackResources(body);
+  else if (key === "backpackitems") await renderAdminBackpackItems(body);
+  else if (key === "contact") await renderAdminContact(body);
+  else if (key === "currencies") await renderAdminCurrencies(body);
+  else if (key === "skins") await renderAdminSkinsGroup(body);
+  else if (key === "herostars") await renderAdminHeroStars(body);
 }
 
 // ---- Pack Resources: the Packs page column dropdown ----
@@ -23370,10 +23445,10 @@ async function renderAdminExpertsGroup(body) {
     research: { label: "Experts Research" },
   };
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div class="adm-chips">
+      <div class="adm-chips-row">
         ${Object.entries(SUBTABS)
-          .map(([key, t]) => `<button class="btn ${key === ADMIN_ACTIVE_EXPERTS_SUBTAB ? "" : "ghost"} small" data-expertssubtab="${key}">${esc(t.label)}</button>`)
+          .map(([key, t]) => `<button class="adm-chip${key === ADMIN_ACTIVE_EXPERTS_SUBTAB ? " on" : ""}" data-expertssubtab="${key}">${esc(t.label)}</button>`)
           .join("")}
       </div>
     </div>
@@ -23394,10 +23469,10 @@ async function renderAdminExpertsGroup(body) {
 async function renderAdminPetsGroup(body) {
   const SUBTABS = { pets: { label: "Pets" }, petsrefine: { label: "Pets Refine" }, marks: { label: "Marks Calculation" } };
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div class="adm-chips">
+      <div class="adm-chips-row">
         ${Object.entries(SUBTABS)
-          .map(([key, t]) => `<button class="btn ${key === ADMIN_ACTIVE_PETS_SUBTAB ? "" : "ghost"} small" data-petssubtab="${key}">${esc(t.label)}</button>`)
+          .map(([key, t]) => `<button class="adm-chip${key === ADMIN_ACTIVE_PETS_SUBTAB ? " on" : ""}" data-petssubtab="${key}">${esc(t.label)}</button>`)
           .join("")}
       </div>
     </div>
@@ -23481,10 +23556,10 @@ async function renderAdminMarksCalc(body) {
 async function renderAdminChiefGearsGroup(body) {
   const SUBTABS = { chiefgearprog: { label: "Chief Gear" }, chiefbonus: { label: "Chief Bonus" } };
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div class="adm-chips">
+      <div class="adm-chips-row">
         ${Object.entries(SUBTABS)
-          .map(([key, t]) => `<button class="btn ${key === ADMIN_ACTIVE_CHIEFGEARS_SUBTAB ? "" : "ghost"} small" data-chiefgearssubtab="${key}">${esc(t.label)}</button>`)
+          .map(([key, t]) => `<button class="adm-chip${key === ADMIN_ACTIVE_CHIEFGEARS_SUBTAB ? " on" : ""}" data-chiefgearssubtab="${key}">${esc(t.label)}</button>`)
           .join("")}
       </div>
     </div>
@@ -23516,10 +23591,10 @@ async function renderAdminSkinsGroup(body) {
     islands: { label: "Islands" },
   };
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div class="adm-chips">
+      <div class="adm-chips-row">
         ${Object.entries(SUBTABS)
-          .map(([key, t]) => `<button class="btn ${key === ADMIN_ACTIVE_SKINS_SUBTAB ? "" : "ghost"} small" data-skinssubtab="${key}">${esc(t.label)}</button>`)
+          .map(([key, t]) => `<button class="adm-chip${key === ADMIN_ACTIVE_SKINS_SUBTAB ? " on" : ""}" data-skinssubtab="${key}">${esc(t.label)}</button>`)
           .join("")}
       </div>
     </div>
@@ -23555,10 +23630,10 @@ async function renderAdminSkinsGroup(body) {
 async function renderAdminAllianceGroup(body) {
   const SUBTABS = { facility: { label: "Facility" }, alliancetech: { label: "Alliance Tech" } };
   body.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <div class="adm-chips">
+      <div class="adm-chips-row">
         ${Object.entries(SUBTABS)
-          .map(([key, t]) => `<button class="btn ${key === ADMIN_ACTIVE_ALLIANCE_SUBTAB ? "" : "ghost"} small" data-alliancesubtab="${key}">${esc(t.label)}</button>`)
+          .map(([key, t]) => `<button class="adm-chip${key === ADMIN_ACTIVE_ALLIANCE_SUBTAB ? " on" : ""}" data-alliancesubtab="${key}">${esc(t.label)}</button>`)
           .join("")}
       </div>
     </div>
