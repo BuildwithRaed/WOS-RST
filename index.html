@@ -865,6 +865,27 @@ input,select,textarea{
   .adm-it.on{ background:var(--ice-dim); }
   .adm-it i, .adm-card i{ font-style:normal; width:20px; text-align:center; flex:none; }
   .adm-ext{ color:var(--muted); font-size:11px; margin-inline-start:auto; }
+  .rl-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+  .rl-item{ display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .rl-item:hover{ border-color:var(--ice); }
+  .rl-item > span{ flex:1 1 auto; min-width:0; }
+  .rl-item small{ color:var(--muted); font-size:11.5px; }
+  .rl-item i{ font-style:normal; color:var(--muted); font-size:20px; }
+  .rl-chg{ font-size:10.5px; padding:1px 7px; border-radius:6px; background:var(--amber); color:#0f141b; font-weight:700; vertical-align:middle; }
+  .rl-card{ border:1px solid var(--line); border-radius:14px; background:var(--panel); padding:12px 14px; }
+  .rl-h b{ font-size:16px; }
+  .rl-table-wrap{ overflow-x:auto; }
+  .rl-table{ border-collapse:collapse; width:100%; font-size:13px; }
+  .rl-table th{ text-align:start; font-size:11px; color:var(--muted); font-weight:600; padding:4px 6px; white-space:nowrap; }
+  .rl-table td{ padding:3px 4px; border-top:1px solid var(--line); }
+  .rl-table input[type=text], .rl-table input[type=number], .rl-table input[type=date], .rl-table select{ width:100%; min-width:70px; padding:5px 6px; font-size:13px; }
+  .rl-rowbtns{ white-space:nowrap; }
+  .rl-rowbtns button{ width:26px; height:26px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2); color:var(--frost); cursor:pointer; font-size:11px; }
+  .rl-rowbtns button:disabled{ opacity:.35; }
+  .rl-fields{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:8px 14px; }
+  .rl-fields label{ display:flex; flex-direction:column; gap:3px; font-size:12.5px; }
+  .rl-fields label span{ color:var(--muted); }
+  .rl-foot{ display:flex; align-items:center; gap:8px; margin-top:12px; }
   .mn-group{ border:1px solid var(--line); border-radius:14px; background:var(--panel); padding:10px 12px; margin-bottom:12px; }
   .mn-ghead, .mn-prow{ display:flex; align-items:center; gap:8px; }
   .mn-gname{ flex:1 1 auto; min-width:0; font-weight:700; font-size:14px; }
@@ -11285,7 +11306,7 @@ function newGenStartsCompute(lastKey, count) {
   }
   return out;
 }
-const NEW_GEN_MIN_DAYS = 80, NEW_GEN_WHEELS = 5, NEW_GEN_SVS = 3;
+let NEW_GEN_MIN_DAYS = 80, NEW_GEN_WHEELS = 5, NEW_GEN_SVS = 3; // editable: Admin → Rules & Timeline
 // The planner repeats a pack at a fixed gap: the gap between the next two generations.
 function newGenGapDays() {
   const g = newGenStarts(newGenBaseDay(), 3);
@@ -13464,7 +13485,7 @@ async function renderRfcLabPage() {
 // Custom Resource Chests open into your choice of Meat, Wood, Coal or Iron:
 // the planner turns them into whichever the plan is short of (a rule, not a trade).
 const BACKPACK_RES_CHEST_RULES = Object.entries(BACKPACK_RES_CHEST_GIVES).flatMap(([from, gives]) => Object.entries(gives).map(([to, get]) => ({ from, to, give: 1, get, max: 0, hidden: true })));
-const ADVANCED_MARK_VALUE = 8; // 1 Advanced Mark = 8 Common Marks
+let ADVANCED_MARK_VALUE = 8; // 1 Advanced Mark = 8 Common Marks (Admin → Rules & Timeline)
 const TRADE_DEFAULT_RATES = {
   chief_gear: [
     // max = how many times that trade can be made per week (0 = no limit)
@@ -13549,6 +13570,8 @@ let TRADE_EXTRA_RFC = {};
 //  - Mystery Points (Mystery Badge Pack, the free 200 a day, the Backpack) ->
 //    Mystery shop: 800 for 2 widgets (only that offer, owner)
 let HERO_SHARD_TRADES = [];
+// Hero shard / widget trade numbers (Admin → Rules & Timeline → Hero trades).
+const HERO_RULES = { marksPerGeneral: 12, marksGeneralWeekly: 100, hallMarksPerShard: 10, hallWeekly: 370, widgetChestGives: 1, mysteryGive: 800, mysteryGet: 2, mysteryDaily: 200 };
 // The one hero of each Gen sold in Hall of Heroes (gold ticket on the
 // community Server Timeline, Sep 2026); the Gen's other two heroes aren't.
 const HALL_OF_HEROES_HERO = { 2: "Alonso", 3: "Logan", 4: "Reina", 5: "Gwen", 6: "Wu Ming", 7: "Gordon", 8: "Hendrik", 9: "Magnus", 10: "Freya", 11: "Rufus", 12: "Hervor", 13: "Flora", 14: "Cara", 15: "Hank", 16: "Ursar", 17: "Eleanor", 18: "Jordan" };
@@ -13917,16 +13940,16 @@ async function heroShardBudget() {
       totals[sh] = r.need; owned[sh] = r.own + r.fromGeneral;
       if (r.rarity === "Legendary") {
         rule("Mythic General Hero Shard", sh, 1, 1, 0);
-        rule("Marks of Valor", sh, 12, 1, Math.max(1, Math.floor(100 / mythicShards.length)));
+        rule("Marks of Valor", sh, HERO_RULES.marksPerGeneral, 1, Math.max(1, Math.floor(HERO_RULES.marksGeneralWeekly / mythicShards.length)));
         // Only the newest Gen's Hall of Heroes hero (gold ticket on the timeline)
         // sells its own shards there (owner).
-        if (newestGen && Number(r.hero.generation) === newestGen && HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name) rule("Marks of Valor", sh, 10, 1, 370);
+        if (newestGen && Number(r.hero.generation) === newestGen && HALL_OF_HEROES_HERO[r.hero.generation] === r.hero.name) rule("Marks of Valor", sh, HERO_RULES.hallMarksPerShard, 1, HERO_RULES.hallWeekly);
       }
     }
     if (r.wNeed > 0) {
       totals[wd] = r.wNeed; owned[wd] = r.wOwn;
-      rule("Widget Chest", wd, 1, 1, 0);
-      rule("Mystery Points", wd, 800, 2, 0); // only the 800 for 2 offer (owner)
+      rule("Widget Chest", wd, 1, HERO_RULES.widgetChestGives, 0);
+      rule("Mystery Points", wd, HERO_RULES.mysteryGive, HERO_RULES.mysteryGet, 0); // only the 800 for 2 offer (owner)
     }
   });
   HERO_SHARD_TRADES = rules;
@@ -13939,7 +13962,7 @@ async function heroShardBudget() {
   if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.max(0, Math.round((d - packStartOfToday()) / 86400000)); }
   owned["Marks of Valor"] = bpv("Marks of Valor");
   owned["Widget Chest"] = bpv("Widget Chest");
-  owned["Mystery Points"] = bpv("Mystery Points") + 200 * days;
+  owned["Mystery Points"] = bpv("Mystery Points") + HERO_RULES.mysteryDaily * days;
   return { groups: [{ label: null, totals }], owned };
 }
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
@@ -20587,6 +20610,7 @@ const ADMIN_GROUPS = [
   { key: "site", label: "Site" },
   { key: "game", label: "Game data" },
   { key: "packs", label: "Packs & Budgets" },
+  { key: "rules", label: "Rules & Timeline" },
 ];
 const ADMIN_TABLES = {
   visibility: { label: "Visibility", group: "site", icon: "👁", desc: "Hide pages, experts, pets", words: "hide unhide visitor access" },
@@ -20604,6 +20628,7 @@ const ADMIN_TABLES = {
   alliance: { label: "Alliance", group: "game", icon: "🏰", desc: "Facility and tech", words: "facility alliance tech" },
   centerresearch: { label: "Research", group: "game", icon: "🔬", desc: "Research Center, T11, T12", words: "research t11 t12 helios" },
   skins: { label: "Skins", group: "game", icon: "🎨", desc: "Gallery, album, skins, islands", words: "skin gallery album islands" },
+  rules: { label: "Rules & Timeline", group: "rules", icon: "📅", desc: "State days, Gen, events, trades, chests", words: "rules timeline state day unlock gen svs koi trade chest widget hall heroes gems lab advanced marks" },
   // These are full pages of their own; the Admin entry just opens them.
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
   packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
@@ -20685,6 +20710,7 @@ async function renderAdminPage() {
 async function drawAdminSection(key, body) {
   if (key === "visibility") await renderAdminVisibility(body);
   else if (key === "menu") await renderAdminMenu(body);
+  else if (key === "rules") await renderAdminRules(body);
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
   else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
@@ -20794,6 +20820,190 @@ async function renderAdminMenu(body) {
 function afterMenuChange() {
   applyMenuLayout(); applyNavLanguage(); applyPageVisibility();
   document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
+}
+
+// ============================================================
+// RULES & TIMELINE (Admin → Rules & Timeline)
+// Game rules that used to live only in the code. Each rule's built-in value
+// is the default; the admin's version is saved in site_config "game_rules"
+// = { ruleKey: value } and applied in place at start (applyGameRules), so
+// every page keeps reading the same constants. "Reset" removes the key.
+// ============================================================
+const RULE_TAB_PAGES = { pets: ["petsdata", "refinepage"], experts: ["expertspage", "expertsresearchpage"], gear: ["chiefgear"], lab: ["rfclab"] };
+function ruleSetArray(arr, v) { arr.splice(0, arr.length, ...v); }
+function ruleSetObject(obj, v) { Object.keys(obj).forEach((k) => { delete obj[k]; }); Object.assign(obj, v); }
+const GAME_RULE_GROUPS = [
+  { key: "timeline", label: "State timeline" },
+  { key: "heroes", label: "Heroes, shards & widgets" },
+  { key: "trades", label: "Trades & chests" },
+  { key: "packs", label: "Packs & lab" },
+];
+let GAME_RULES = null; // built on first use (needs every constant above)
+function gameRules() {
+  if (GAME_RULES) return GAME_RULES;
+  const num = (key, label) => ({ key, label, type: "num" });
+  GAME_RULES = [
+    { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens.",
+      cols: [{ key: "label", label: "Shown as", type: "text" }, { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear"] }, { key: "name", label: "Name (pet / expert / id)", type: "text" }, { key: "tab", label: "Page", type: "page" }, { key: "day", label: "State day", type: "num" }],
+      get: () => STATE_UNLOCKS.map((u) => ({ label: u.label, kind: u.kind, name: u.name, tab: (u.tabs || [])[0] || "", day: u.day })),
+      set: (rows) => ruleSetArray(STATE_UNLOCKS, rows.filter((r) => r.name && Number(r.day) >= 0).map((r) => ({ kind: r.kind, name: r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name }))) },
+    { key: "genDays", group: "timeline", label: "Gen start days", help: "The state day each hero generation starts (Gen 1 = day 0).",
+      cols: [{ key: "gen", label: "Gen", type: "auto" }, { key: "day", label: "Starts on state day", type: "num" }],
+      get: () => STATE_GEN_DAYS.map((d, i) => ({ gen: i + 1, day: d })),
+      set: (rows) => ruleSetArray(STATE_GEN_DAYS, rows.map((r) => Number(r.day) || 0).sort((a, b) => a - b)) },
+    { key: "events", group: "timeline", label: "SvS / KOI events", help: "One seen start date of each event, how often it repeats and how long it lasts; the hero Lucky Wheel runs from 'wheel day' for 'wheel days'.",
+      cols: [{ key: "name", label: "Event", type: "text" }, { key: "anchor", label: "A start date", type: "date" }, { key: "every", label: "Every (days)", type: "num" }, { key: "days", label: "Lasts (days)", type: "num" }, { key: "wheelDay", label: "Wheel from day", type: "num" }, { key: "wheelDays", label: "Wheel days", type: "num" }],
+      get: () => GAME_EVENTS.map((e) => ({ name: e.name, anchor: e.anchor, every: e.every, days: e.days, wheelDay: e.wheelDay, wheelDays: e.wheelDays })),
+      set: (rows) => ruleSetArray(GAME_EVENTS, rows.filter((r) => r.name && packValidDay(r.anchor)).map((r) => ({ key: String(r.name).toLowerCase().replace(/[^a-z0-9]/g, ""), name: r.name, anchor: r.anchor, every: Number(r.every) || 28, days: Number(r.days) || 1, wheelDay: Number(r.wheelDay) || 0, wheelDays: Number(r.wheelDays) || 0 }))) },
+    { key: "newGenRule", group: "timeline", label: "When new heroes come", help: "New heroes come on the first Monday when all three have passed since the last ones.", type: "fields",
+      fields: [num("minDays", "At least (days)"), num("wheels", "Lucky Wheels (SvS or KOI)"), num("svs", "SvS wheels")],
+      get: () => ({ minDays: NEW_GEN_MIN_DAYS, wheels: NEW_GEN_WHEELS, svs: NEW_GEN_SVS }),
+      set: (v) => { NEW_GEN_MIN_DAYS = Number(v.minDays) || 0; NEW_GEN_WHEELS = Number(v.wheels) || 0; NEW_GEN_SVS = Number(v.svs) || 0; } },
+    { key: "hallHero", group: "heroes", label: "Hall of Heroes hero per Gen", help: "The hero whose own shards the Hall of Heroes sells (Marks of Valor) for each Gen; only the newest Gen's hero counts.",
+      cols: [{ key: "gen", label: "Gen", type: "num" }, { key: "hero", label: "Hero", type: "text" }],
+      get: () => Object.entries(HALL_OF_HEROES_HERO).map(([g, h]) => ({ gen: Number(g), hero: h })),
+      set: (rows) => ruleSetObject(HALL_OF_HEROES_HERO, Object.fromEntries(rows.filter((r) => r.gen && r.hero).map((r) => [Number(r.gen), r.hero]))) },
+    { key: "heroTrades", group: "heroes", label: "Hero shard & widget trades", type: "fields", help: "How Marks of Valor, Widget Chests and Mystery Points turn into shards / widgets in Budgets.",
+      fields: [num("marksPerGeneral", "Marks of Valor for 1 Mythic General shard"), num("marksGeneralWeekly", "…weekly limit (shards)"), num("hallMarksPerShard", "Marks for 1 newest-Gen hero shard"), num("hallWeekly", "…weekly limit (shards)"), num("widgetChestGives", "Widgets from 1 Widget Chest"), num("mysteryGive", "Mystery Points…"), num("mysteryGet", "…for this many widgets"), num("mysteryDaily", "Free Mystery Points a day")],
+      get: () => ({ ...HERO_RULES }), set: (v) => { Object.keys(HERO_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) HERO_RULES[k] = Number(v[k]); }); } },
+    { key: "widgetCost", group: "heroes", label: "Widgets per widget level", help: "Widgets needed to go from the level before to this level.",
+      cols: [{ key: "level", label: "Level", type: "auto" }, { key: "cost", label: "Widgets", type: "num" }],
+      get: () => WIDGET_LEVEL_COST.slice(1).map((c, i) => ({ level: i + 1, cost: c })),
+      set: (rows) => ruleSetArray(WIDGET_LEVEL_COST, [0, ...rows.map((r) => Number(r.cost) || 0)]) },
+    { key: "shardChart", group: "heroes", label: "Hero shards per star step (fallback)", help: "Used only when a hero's Gen has no shard costs in Admin → Heroes. Each star has 6 steps.",
+      cols: [{ key: "star", label: "Star", type: "num" }, ...[1, 2, 3, 4, 5, 6].map((k) => ({ key: "s" + k, label: "Step " + k, type: "num" }))],
+      get: () => Object.entries(HERO_SHARD_CHART).map(([st, a]) => ({ star: Number(st), ...Object.fromEntries(a.map((v, i) => ["s" + (i + 1), v])) })),
+      set: (rows) => ruleSetObject(HERO_SHARD_CHART, Object.fromEntries(rows.filter((r) => r.star).map((r) => [Number(r.star), [1, 2, 3, 4, 5, 6].map((k) => Number(r["s" + k]) || 0)]))) },
+    { key: "ngPacks", group: "heroes", label: "New heroes packs (built-in numbers)", help: "Used only when the Heroes packs tables on the Packs page are missing.", type: "fields",
+      fields: [num("price", "Value Hero Pack price ($)"), num("shards", "…hero shards")],
+      get: () => ({ ...NG_HERO_SHARD_PACK }), set: (v) => { NG_HERO_SHARD_PACK.price = Number(v.price) || 0; NG_HERO_SHARD_PACK.shards = Number(v.shards) || 0; } },
+    { key: "trades", group: "trades", label: "Built-in trades per page", help: "Item → item rules each page uses (hidden ones are rules, not shown in the Trade box). The page's own Trade box edits still win for visible trades.",
+      cols: [{ key: "page", label: "Page", type: "select", options: () => Object.keys(TRADE_DEFAULT_RATES) }, { key: "from", label: "Give item", type: "text" }, { key: "give", label: "Give", type: "num" }, { key: "to", label: "Get item", type: "text" }, { key: "get", label: "Get", type: "num" }, { key: "max", label: "Weekly max (0 = none)", type: "num" }, { key: "hidden", label: "Hidden rule", type: "check" }],
+      get: () => Object.entries(TRADE_DEFAULT_RATES).flatMap(([pg, rows]) => rows.map((r) => ({ page: pg, from: r.from, give: r.give, to: r.to, get: r.get, max: r.max || 0, hidden: !!r.hidden, ...(r.silent ? { silent: true } : {}) }))),
+      set: (rows) => { const out = {}; Object.keys(TRADE_DEFAULT_RATES).forEach((k) => { out[k] = []; }); rows.filter((r) => r.page && r.from && r.to && Number(r.give) > 0 && Number(r.get) > 0).forEach((r) => { (out[r.page] = out[r.page] || []).push({ from: r.from, to: r.to, give: Number(r.give), get: Number(r.get), max: Number(r.max) || 0, ...(r.hidden ? { hidden: true } : {}), ...(r.hidden && r.silent ? { silent: true } : {}) }); }); ruleSetObject(TRADE_DEFAULT_RATES, out); } },
+    { key: "advancedMark", group: "trades", label: "Advanced Mark value", type: "fields", help: "How many Common Marks one Advanced Mark is worth on Pet Refine.",
+      fields: [num("value", "1 Advanced Mark = Common Marks")],
+      get: () => ({ value: ADVANCED_MARK_VALUE }),
+      set: (v) => { ADVANCED_MARK_VALUE = Number(v.value) || 8; (TRADE_DEFAULT_RATES.pets_refine || []).forEach((r) => { if (r.from === "Advanced Marks" && r.to === "Common Marks") r.get = ADVANCED_MARK_VALUE; }); } },
+    { key: "bundles", group: "trades", label: "What chests and bundles count as", help: "One of the item on the left counts as these amounts (e.g. a Lucky Box = 1.5 Mythic General shards, a Chief Gear Chest = 400 Alloy + 4 Polish + 1 Design).",
+      cols: [{ key: "name", label: "Item", type: "text" }, { key: "item", label: "Counts as", type: "text" }, { key: "amount", label: "Amount", type: "num" }],
+      get: () => Object.entries(PACK_BUNDLES).flatMap(([n, c]) => Object.entries(c).map(([it, a]) => ({ name: n, item: it, amount: a }))),
+      set: (rows) => { const o = {}; rows.filter((r) => r.name && r.item).forEach((r) => { (o[r.name] = o[r.name] || {})[r.item] = Number(r.amount) || 0; }); ruleSetObject(PACK_BUNDLES, o); } },
+    { key: "resChests", group: "trades", label: "Custom Resource Chests", help: "What one chest gives of the resource you pick.",
+      cols: [{ key: "chest", label: "Chest", type: "text" }, { key: "Meat", label: "Meat", type: "num" }, { key: "Wood", label: "Wood", type: "num" }, { key: "Coal", label: "Coal", type: "num" }, { key: "Iron", label: "Iron", type: "num" }],
+      get: () => Object.entries(BACKPACK_RES_CHEST_GIVES).map(([c, g]) => ({ chest: c, ...g })),
+      set: (rows) => ruleSetObject(BACKPACK_RES_CHEST_GIVES, Object.fromEntries(rows.filter((r) => r.chest).map((r) => [r.chest, { Meat: Number(r.Meat) || 0, Wood: Number(r.Wood) || 0, Coal: Number(r.Coal) || 0, Iron: Number(r.Iron) || 0 }]))) },
+    { key: "gems", group: "packs", label: "Gems in a pack by price", help: "Gems a pack of this price includes (other prices: about 500 per dollar).",
+      cols: [{ key: "price", label: "Price ($)", type: "num" }, { key: "gems", label: "Gems", type: "num" }],
+      get: () => Object.entries(MP_GEMS).map(([pr, g]) => ({ price: Number(pr), gems: g })),
+      set: (rows) => ruleSetObject(MP_GEMS, Object.fromEntries(rows.filter((r) => Number(r.price) > 0).map((r) => [Math.round(Number(r.price) * 100) / 100, Number(r.gems) || 0]))) },
+    { key: "rfcLab", group: "packs", label: "Research Lab tiers", help: "Fire Crystal cost per refine and the chances of how many Refined FC it gives (\"1:0.65, 2:0.25, 3:0.10\" = 65% one, 25% two, 10% three).",
+      cols: [{ key: "tier", label: "Tier", type: "num" }, { key: "cost", label: "FC cost", type: "num" }, { key: "returns", label: "Returns (count:chance, …)", type: "text" }],
+      get: () => RFC_LAB_TIERS.map((t) => ({ tier: t.tier, cost: t.cost, returns: t.returns.map(([n, c]) => `${n}:${c}`).join(", ") })),
+      set: (rows) => ruleSetArray(RFC_LAB_TIERS, rows.filter((r) => r.tier).map((r) => ({ tier: Number(r.tier), cost: Number(r.cost) || 0, returns: String(r.returns || "").split(",").map((x) => x.split(":").map(Number)).filter((a) => a.length === 2 && a.every(Number.isFinite)) }))) },
+  ];
+  // The built-in values, kept for "Reset" and to show what changed.
+  GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
+  return GAME_RULES;
+}
+function gameRulesSaved() { const v = siteConfig("game_rules", null); return v && typeof v === "object" ? v : {}; }
+// Puts the built-in values back, then the admin's saved ones on top.
+function applyGameRules() {
+  const saved = gameRulesSaved();
+  gameRules().forEach((r) => {
+    try { r.set(JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def))); }
+    catch (e) { console.error("rule", r.key, e); try { r.set(JSON.parse(JSON.stringify(r.def))); } catch (e2) { /* keep */ } }
+  });
+}
+// After a rule changes: drop everything worked out from the old numbers.
+function afterGameRulesChange() {
+  applyGameRules();
+  if (typeof NEW_GEN_MEMO !== "undefined") NEW_GEN_MEMO.clear();
+  if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
+  if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
+  if (PLANNER_WORKER && PLANNER_WORKER.terminate) { PLANNER_WORKER.terminate(); PLANNER_WORKER = null; }
+  if (typeof budgetInvalidate === "function") budgetInvalidate();
+  if (typeof PACK_GROUPS_CACHE !== "undefined") PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
+  dropKeptGameData();
+}
+
+// ---- Admin editor ----
+let ADMIN_RULE_OPEN = null;
+async function renderAdminRules(body) {
+  await ensureSiteConfig();
+  const rules = gameRules(), saved = gameRulesSaved();
+  const pages = visitorPageList ? [{ tab: "", label: "—" }, ...visitorPageList(), { tab: "overview", label: "Dashboard" }] : [];
+  const changed = (r) => saved[r.key] != null;
+  const cell = (c, v, ri) => {
+    const a = `data-rcell="${ri}|${c.key}"`;
+    if (c.type === "auto") return `<span class="meta">${esc(String(v))}</span>`;
+    if (c.type === "check") return `<input type="checkbox" ${a} ${v ? "checked" : ""} />`;
+    if (c.type === "select") { const opts = typeof c.options === "function" ? c.options() : c.options; return `<select ${a}>${opts.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`; }
+    if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
+    return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
+  };
+  const listHtml = () => GAME_RULE_GROUPS.map((g) => `<div class="adm-gk">${esc(g.label)}</div>
+    <div class="rl-list">${rules.filter((r) => r.group === g.key).map((r) => `<button type="button" class="rl-item${ADMIN_RULE_OPEN === r.key ? " on" : ""}" data-ruleopen="${r.key}"><span><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ""}<br><small>${esc(r.help || "")}</small></span><i>&#8250;</i></button>`).join("")}</div>`).join("");
+  const draw = () => {
+    const r = rules.find((x) => x.key === ADMIN_RULE_OPEN);
+    if (!r) {
+      body.innerHTML = `<p class="desc" style="margin:0 0 10px;">Game rules the site calculates with. Each one starts with the built-in value; your changes apply to everyone. "Reset" puts the built-in value back.</p>${listHtml()}`;
+      body.querySelectorAll("[data-ruleopen]").forEach((b) => b.addEventListener("click", () => { ADMIN_RULE_OPEN = b.dataset.ruleopen; draw(); window.scrollTo(0, body.getBoundingClientRect().top + scrollY - 80); }));
+      return;
+    }
+    let val = JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def));
+    const drawEditor = () => {
+      const ed = body.querySelector(".rl-ed");
+      if (r.type === "fields") {
+        ed.innerHTML = `<div class="rl-fields">${r.fields.map((f) => `<label><span>${esc(f.label)}</span><input type="number" step="any" inputmode="decimal" data-rfield="${f.key}" value="${esc(String(val[f.key] != null ? val[f.key] : ""))}" />${r.def[f.key] !== val[f.key] ? `<small class="meta">built-in ${esc(String(r.def[f.key]))}</small>` : ""}</label>`).join("")}</div>`;
+        ed.querySelectorAll("[data-rfield]").forEach((inp) => inp.addEventListener("input", () => { val[inp.dataset.rfield] = inp.value === "" ? "" : Number(inp.value); }));
+        return;
+      }
+      ed.innerHTML = `<div class="rl-table-wrap"><table class="rl-table"><thead><tr>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
+        ${val.map((row, ri) => `<tr>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rmove="${ri}|-1" ${ri === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rmove="${ri}|1" ${ri === val.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
+        </tbody></table></div><button type="button" class="btn ghost small" data-radd style="margin-top:8px;">+ Add row</button>`;
+      ed.querySelectorAll("[data-rcell]").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
+        const [ri, k] = inp.dataset.rcell.split("|"); const c = r.cols.find((x) => x.key === k);
+        val[+ri][k] = inp.type === "checkbox" ? inp.checked : c.type === "num" ? (inp.value === "" ? "" : Number(inp.value)) : inp.value;
+      }));
+      ed.querySelectorAll("[data-rmove]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.rmove.split("|").map(Number); const [x] = val.splice(ri, 1); val.splice(ri + d, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); }));
+      ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
+      ed.querySelector("[data-radd]").addEventListener("click", () => {
+        const row = {}; r.cols.forEach((c) => { row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? ((typeof c.options === "function" ? c.options() : c.options)[0]) : ""; });
+        val.push(row); drawEditor();
+      });
+    };
+    body.innerHTML = `
+      <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>
+      <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
+        <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
+        <div class="rl-ed"></div>
+        <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed(r) ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
+      </div>`;
+    drawEditor();
+    body.querySelector("[data-ruleback]").addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
+    const store = async (next, msg) => {
+      try {
+        await saveSiteConfig("game_rules", next);
+        Object.keys(saved).forEach((k) => { delete saved[k]; }); Object.assign(saved, next);
+        afterGameRulesChange(); toast(msg); draw();
+      } catch (err) { toast(err.message || "Couldn't save", true); }
+    };
+    body.querySelector("[data-rulesave]").addEventListener("click", async () => {
+      // Try it first: a value the page can't use is not saved.
+      try { r.set(JSON.parse(JSON.stringify(val))); } catch (e) { toast("Check the values: " + e.message, true); applyGameRules(); return; }
+      const same = JSON.stringify(val) === JSON.stringify(r.def);
+      const next = { ...gameRulesSaved() };
+      if (same) delete next[r.key]; else next[r.key] = val;
+      await store(next, same ? "Saved (same as built-in)" : "Rule saved");
+    });
+    body.querySelector("[data-rulereset]").addEventListener("click", async () => {
+      if (!confirm(`Put "${r.label}" back to the built-in values?`)) return;
+      const next = { ...gameRulesSaved() }; delete next[r.key];
+      await store(next, "Back to built-in");
+    });
+  };
+  draw();
 }
 
 // ---- Pack Resources: the Packs page column dropdown ----
@@ -24099,6 +24309,7 @@ if ("serviceWorker" in navigator) {
   loadCommander();
   const categoriesLoaded = loadBuffCategories();
   await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
+  applyGameRules();
   applyMenuLayout();
   renderOwnerLoginUI();
   document.documentElement.dir = LANG === "ar" ? "rtl" : "ltr";
