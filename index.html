@@ -865,6 +865,16 @@ input,select,textarea{
   .adm-it.on{ background:var(--ice-dim); }
   .adm-it i, .adm-card i{ font-style:normal; width:20px; text-align:center; flex:none; }
   .adm-ext{ color:var(--muted); font-size:11px; margin-inline-start:auto; }
+  .adm-skinmore{ display:flex; flex-wrap:wrap; gap:8px 16px; font-size:12px; color:var(--muted); }
+  .adm-skinmore label{ display:flex; flex-direction:column; gap:3px; }
+  .adm-skinmore label span{ display:flex; gap:4px; }
+  .adm-skinmore input{ width:86px; }
+  .adm-skinmore .adm-chk{ flex-direction:row; align-items:center; gap:6px; align-self:flex-end; }
+  .adm-skinmore .adm-chk input{ width:auto; }
+  .adm-petedit{ display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
+  .adm-petpic{ width:64px; height:64px; border-radius:12px; border:1px solid var(--line); background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; flex:none; }
+  .adm-petpic img{ width:100%; height:100%; object-fit:contain; }
+  .adm-petpic i{ font-style:normal; font-size:24px; font-weight:800; color:var(--ice); }
   .lg-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel); margin-bottom:8px; }
   .lg-name{ flex:1 1 220px; min-width:0; }
   .lg-btns{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
@@ -16727,6 +16737,8 @@ const PET_TROOP_COLORS_CYCLE = ["var(--ice)", "#7ee6a8", "#f0a3c4", "#e0c068"];
 // Pet pictures (from whiteoutsurvival.wiki, resized to 128 px). A pet with no
 // picture yet shows its first letter instead.
 function petImage(pet) {
+  const own = (typeof siteConfig === "function" ? siteConfig("pet_images", {}) : {}) || {};
+  if (own[pet]) return own[pet]; // set in Admin → Pets
   const slug = String(pet).toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
   return PET_IMAGE_SLUGS.has(slug) ? `icons/pets/${slug}.webp` : "";
 }
@@ -20837,12 +20849,16 @@ async function renderAdminExpertTable(body, tableKey) {
       const btn = document.getElementById("qfCreate");
       btn.disabled = true;
       try {
+        // Add the new rows first and only then remove the old ones, so a failed
+        // save never leaves the path empty.
         for (const pathNum of paths) {
-          await sb(`expert_research_nodes?expert=eq.${encodeURIComponent(ADMIN_ACTIVE_EXPERT)}&path_number=eq.${pathNum}`, { method: "DELETE", prefer: "return=minimal" });
+          const old = await sb(`expert_research_nodes?expert=eq.${encodeURIComponent(ADMIN_ACTIVE_EXPERT)}&path_number=eq.${pathNum}&select=id`);
           const payload = rows.map((r) => ({ ...r, expert: ADMIN_ACTIVE_EXPERT, path_number: pathNum, sort_order: pathNum * 1000 + r.level }));
           await sb(`expert_research_nodes`, { method: "POST", prefer: "return=minimal", body: JSON.stringify(payload) });
+          if (old.length) await sb(`expert_research_nodes?id=in.(${old.map((x) => encodeURIComponent(x.id)).join(",")})`, { method: "DELETE", prefer: "return=minimal" });
         }
         EXPERTS_RESEARCH_NODES_GLOBAL = null;
+        dropKeptGameData();
         toast("Path rows created");
         status.textContent = `Created ${rows.length} rows on ${paths.length} path(s).`;
         loadRows();
@@ -20988,6 +21004,13 @@ async function renderAdminPets(body) {
       <select id="adminPetPicker" style="width:220px;">
         ${pets.map((p) => `<option value="${esc(p)}" ${p === ADMIN_ACTIVE_PET ? "selected" : ""}>${esc(p)}</option>`).join("")}
       </select>
+      ${ADMIN_ACTIVE_PET ? `<div class="adm-petedit">
+        <div class="adm-petpic">${petImage(ADMIN_ACTIVE_PET) ? `<img src="${esc(petImage(ADMIN_ACTIVE_PET))}" alt="" />` : `<i>${esc(ADMIN_ACTIVE_PET.charAt(0))}</i>`}</div>
+        <div style="flex:1 1 260px; min-width:0;">
+          <label class="meta" style="font-size:11.5px;">Picture (link or upload)</label>
+          <div style="display:flex; gap:6px; align-items:center;"><input type="text" id="adminPetImg" value="${esc(((siteConfig("pet_images", {}) || {})[ADMIN_ACTIVE_PET]) || "")}" placeholder="${esc(petImage(ADMIN_ACTIVE_PET) || "no picture yet")}" style="flex:1; min-width:0;" />${uploadBtnHtml()}<button type="button" class="btn small" id="adminPetImgSave">Save picture</button></div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn ghost small" id="adminPetRename">Rename pet</button><button type="button" class="btn ghost small" id="adminPetDelete" style="color:var(--danger);">Delete pet</button></div>
+        </div></div>` : ""}
     </div>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Add a level row</h2>
@@ -21012,6 +21035,42 @@ async function renderAdminPets(body) {
   `;
 
   document.getElementById("adminPetRowsSaveAll").addEventListener("click", () => saveAllPetRows());
+  // Picture / rename / delete the whole pet (its level rows and refine rows).
+  const petImgSave = document.getElementById("adminPetImgSave");
+  if (petImgSave) petImgSave.addEventListener("click", async () => {
+    const v = document.getElementById("adminPetImg").value.trim();
+    const cur = { ...(siteConfig("pet_images", {}) || {}) };
+    if (v) cur[ADMIN_ACTIVE_PET] = v; else delete cur[ADMIN_ACTIVE_PET];
+    try { await saveSiteConfig("pet_images", cur); toast(v ? "Picture saved" : "Back to the built-in picture"); renderAdminPets(body); } catch (err) { toast(err.message || "Couldn't save", true); }
+  });
+  const petRename = document.getElementById("adminPetRename");
+  if (petRename) petRename.addEventListener("click", async () => {
+    const old = ADMIN_ACTIVE_PET;
+    const name = (prompt(`New name for "${old}":\n\nNote: everyone's saved levels, refine numbers and ticks for this pet are stored under its name, so they will start from zero under the new name.`, old) || "").trim();
+    if (!name || name === old) return;
+    if (pets.includes(name)) { toast("A pet with that name already exists", true); return; }
+    try {
+      await sb(`pets_nodes?pet=eq.${encodeURIComponent(old)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ pet: name }) });
+      await sb(`pet_refine_nodes?pet=eq.${encodeURIComponent(old)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ pet: name }) });
+      const imgs = { ...(siteConfig("pet_images", {}) || {}) };
+      if (imgs[old]) { imgs[name] = imgs[old]; delete imgs[old]; await saveSiteConfig("pet_images", imgs); }
+      PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; ADMIN_ACTIVE_PET = name;
+      toast("Pet renamed"); renderAdminPets(body);
+    } catch (err) { toast(err.message || "Couldn't rename", true); }
+  });
+  const petDelete = document.getElementById("adminPetDelete");
+  if (petDelete) petDelete.addEventListener("click", async () => {
+    const pet = ADMIN_ACTIVE_PET;
+    const typed = prompt(`Delete "${pet}" with all its level rows and refine rows? This can't be undone.\n\nType the pet's name to confirm:`);
+    if (typed == null) return;
+    if (typed.trim() !== pet) { toast("The name didn't match — nothing deleted", true); return; }
+    try {
+      await sb(`pet_refine_nodes?pet=eq.${encodeURIComponent(pet)}`, { method: "DELETE", prefer: "return=minimal" });
+      await sb(`pets_nodes?pet=eq.${encodeURIComponent(pet)}`, { method: "DELETE", prefer: "return=minimal" });
+      PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; ADMIN_ACTIVE_PET = null;
+      toast("Pet deleted"); renderAdminPets(body);
+    } catch (err) { toast(err.message || "Couldn't delete", true); }
+  });
 
   document.getElementById("adminAddPetForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -21215,6 +21274,8 @@ function wireAdminReorder(container, rowAttr, onReorder) {
     const others = list.filter((x) => x !== tr);
     const ref = others[toIdx] || null;
     tr.parentNode.insertBefore(tr, ref);
+    const mate = tr.parentNode.querySelector(`tr[data-skinmore="${CSS.escape(id)}"]`); // its "More" row moves with it
+    if (mate) tr.after(mate);
     refreshButtons();
     // One save at a time, in click order, so quick moves can't overlap.
     if (onReorder) { const ids = rowsOf().map(idOf); reorderQueue = reorderQueue.then(() => onReorder(ids)).catch(() => {}); }
@@ -21583,7 +21644,7 @@ async function renderAdminVip(body) {
 // ---- Facility / Alliance Tech editor (skins table, filtered by category) ----
 async function renderAdminSkinsCategory(body, category) {
   const rows = await sb(
-    `skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(category)}&select=id,name,image_url,bonus_type,bonus_value,current_level,max_level,owned,sort_order,show_count_toggle&order=sort_order.asc`
+    `skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(category)}&select=id,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,bonus_level1,bonus_level2,bonus_level3,bonus_level4,display_group,current_level,max_level,owned,sort_order,show_count_toggle&order=sort_order.asc`
   );
 
   body.innerHTML = `
@@ -21626,10 +21687,18 @@ async function renderAdminSkinsCategory(body, category) {
                 <td style="padding:4px;"><input data-f="max_level" type="number" value="${r.max_level ?? ""}" style="width:70px;" /></td>
                 <td style="padding:4px;"><input data-f="owned" type="checkbox" ${r.owned ? "checked" : ""} /></td>
                 <td style="padding:4px; white-space:nowrap;">
+                  <button class="btn small ghost" data-skinmoretoggle="${r.id}" title="More fields">More &#9662;</button>
                   <button class="btn small ghost" data-skinsave="${r.id}">Save</button>
                   <button class="btn small ghost" data-skindel="${r.id}" style="color:var(--danger);">Delete</button>
                 </td>
-              </tr>`
+              </tr>
+              <tr data-skinmore="${r.id}" hidden><td></td><td colspan="8" style="padding:6px 4px 10px;">
+                <div class="adm-skinmore">
+                  ${[2, 3, 4].map((k) => `<label>Bonus ${k}<span><input data-f="bonus_type${k}" value="${esc(r["bonus_type" + k] || "")}" placeholder="stat" /><input data-f="bonus_value${k}" type="number" step="any" value="${r["bonus_value" + k] ?? ""}" placeholder="%" /></span></label>`).join("")}
+                  <label>Bonus from level (1–4)<span>${[1, 2, 3, 4].map((k) => `<input data-f="bonus_level${k}" type="number" value="${r["bonus_level" + k] ?? ""}" placeholder="${k}" />`).join("")}</span></label>
+                  <label>Group<span><input data-f="display_group" value="${esc(r.display_group || "")}" placeholder="e.g. Event" /></span></label>
+                  <label class="adm-chk"><input data-f="show_count_toggle" type="checkbox" ${r.show_count_toggle ? "checked" : ""} /> Has count trigger</label>
+                </div></td></tr>`
               )
               .join("")}
           </tbody>
@@ -21643,14 +21712,19 @@ async function renderAdminSkinsCategory(body, category) {
     catch (err) { toast("Couldn't reorder", true); renderAdminSkinsCategory(body, category); }
   });
 
+  body.querySelectorAll("[data-skinmoretoggle]").forEach((b) => b.addEventListener("click", () => {
+    const m = body.querySelector(`tr[data-skinmore="${b.dataset.skinmoretoggle}"]`);
+    if (m) { m.hidden = !m.hidden; b.innerHTML = m.hidden ? "More &#9662;" : "Less &#9652;"; }
+  }));
   const saveSkinRow = async (id) => {
     const tr = body.querySelector(`tr[data-skinrow="${id}"]`);
+    const more = body.querySelector(`tr[data-skinmore="${id}"]`);
     const patch = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
+    [...tr.querySelectorAll("[data-f]"), ...(more ? more.querySelectorAll("[data-f]") : [])].forEach((el) => {
       const f = el.dataset.f;
-      if (f === "owned") { patch[f] = el.checked; return; }
+      if (f === "owned" || f === "show_count_toggle") { patch[f] = el.checked; return; }
       let v = el.value;
-      if (["bonus_value", "current_level", "max_level", "sort_order"].includes(f)) v = v === "" ? null : Number(v);
+      if (/^(bonus_value\d?|bonus_level\d|current_level|max_level|sort_order)$/.test(f)) v = v === "" ? null : Number(v);
       else if (v.trim() === "") v = null;
       patch[f] = v;
     });
@@ -22157,6 +22231,7 @@ async function renderAdminHeroes(body) {
         <input class="flex1" name="name" placeholder="Hero name" required />
         <input class="field-num" name="generation" type="number" placeholder="Gen" style="width:70px;" />
         ${troopSelect("", 'name="troop_type"')}
+        ${raritySelect("", 'name="rarity"')}
         <span style="display:inline-flex; gap:4px; align-items:center;"><input class="field-num" name="image_url" placeholder="Image URL" style="width:180px;" />${uploadBtnHtml()}</span>
         <input class="field-num" name="max_level" type="number" placeholder="Max level" value="80" style="width:100px;" />
         <input class="field-num" name="max_stars" type="number" placeholder="Max stars" value="5" style="width:100px;" />
@@ -22276,6 +22351,7 @@ async function renderAdminHeroes(body) {
         body: JSON.stringify({
           name,
           troop_type: f.troop_type.value || null,
+          rarity: f.rarity.value || null,
           generation: f.generation.value === "" ? null : Number(f.generation.value),
           image_url: f.image_url.value.trim() || null,
           max_level: Number(f.max_level.value) || 80,
@@ -22463,7 +22539,8 @@ async function renderAdminIslands(body) {
 // Reorderable category button row, shared by Skin Gallery and Islands admin
 // tabs. cats is the full [{id,category,sort_order}] list in current order.
 function adminCategoryPickerHtml(cats, activeCat) {
-  return cats
+  const act = cats.find((c) => c.category === activeCat);
+  return (act ? `<div style="flex-basis:100%; display:flex; gap:6px; margin-bottom:4px;"><button class="btn ghost small" data-catrename="${act.id}">Rename "${esc(act.category)}"</button><button class="btn ghost small" data-catdelete="${act.id}" style="color:var(--danger);">Delete category</button></div>` : "") + cats
     .map(
       (c, idx) => `
     <div style="display:inline-flex; align-items:center; gap:2px;">
@@ -22475,30 +22552,44 @@ function adminCategoryPickerHtml(cats, activeCat) {
     .join("");
 }
 function wireAdminCategoryReorder(container, page, cats, onChange) {
-  container.querySelectorAll("[data-catmoveup]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const idx = cats.findIndex((c) => c.id === btn.dataset.catmoveup);
-      if (idx <= 0) return;
-      const a = cats[idx], b = cats[idx - 1];
-      await Promise.all([
-        sb(`skin_page_categories?id=eq.${a.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: b.sort_order }) }),
-        sb(`skin_page_categories?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: a.sort_order }) }),
-      ]);
-      onChange();
-    });
-  });
-  container.querySelectorAll("[data-catmovedown]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const idx = cats.findIndex((c) => c.id === btn.dataset.catmovedown);
-      if (idx === -1 || idx >= cats.length - 1) return;
-      const a = cats[idx], b = cats[idx + 1];
-      await Promise.all([
-        sb(`skin_page_categories?id=eq.${a.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: b.sort_order }) }),
-        sb(`skin_page_categories?id=eq.${b.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: a.sort_order }) }),
-      ]);
-      onChange();
-    });
-  });
+  // Moves one category and numbers them all 1…n again (two equal numbers
+  // used to make a swap do nothing).
+  const move = async (id, d) => {
+    const list = cats.slice(), idx = list.findIndex((c) => c.id === id);
+    if (idx < 0 || idx + d < 0 || idx + d >= list.length) return;
+    const [x] = list.splice(idx, 1); list.splice(idx + d, 0, x);
+    try {
+      await Promise.all(list.map((c, k) => (c.sort_order === k + 1 ? null : sb(`skin_page_categories?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: k + 1 }) }))).filter(Boolean));
+    } catch (err) { toast(err.message || "Couldn't reorder", true); }
+    onChange();
+  };
+  container.querySelectorAll("[data-catmoveup]").forEach((btn) => btn.addEventListener("click", () => move(btn.dataset.catmoveup, -1)));
+  container.querySelectorAll("[data-catmovedown]").forEach((btn) => btn.addEventListener("click", () => move(btn.dataset.catmovedown, 1)));
+  // Rename / delete the chosen category (its items move with a rename).
+  container.querySelectorAll("[data-catrename]").forEach((btn) => btn.addEventListener("click", async () => {
+    const c = cats.find((x) => x.id === btn.dataset.catrename); if (!c) return;
+    const name = (prompt(`New name for the "${c.category}" category:`, c.category) || "").trim();
+    if (!name || name === c.category) return;
+    if (cats.some((x) => x.category === name)) { toast("That category already exists", true); return; }
+    try {
+      await sb(`skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(c.category)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ category: name }) });
+      await sb(`skin_page_categories?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ category: name }) });
+      dashDataChanged("skins"); toast("Category renamed");
+      if (page === "islands") ADMIN_ACTIVE_ISLAND_CAT = name; else ADMIN_ACTIVE_SKIN_CAT = name;
+    } catch (err) { toast(err.message || "Couldn't rename", true); }
+    onChange();
+  }));
+  container.querySelectorAll("[data-catdelete]").forEach((btn) => btn.addEventListener("click", async () => {
+    const c = cats.find((x) => x.id === btn.dataset.catdelete); if (!c) return;
+    try {
+      const items = await sb(`skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(c.category)}&select=id&limit=1`);
+      if (items.length) { toast("Delete or move its items first — only an empty category can be deleted", true); return; }
+      if (!confirm(`Delete the empty "${c.category}" category?`)) return;
+      await sb(`skin_page_categories?id=eq.${c.id}`, { method: "DELETE" });
+      toast("Category deleted");
+    } catch (err) { toast(err.message || "Couldn't delete", true); }
+    onChange();
+  }));
 }
 
 async function renderAdminSkinGallery(body) {
@@ -22586,6 +22677,7 @@ async function renderAdminHeroStars(body) {
       <select id="adminHeroStarPicker" style="width:220px;">
         ${heroCols.map((c) => `<option value="${c.id}" ${c.id === ADMIN_ACTIVE_HERO_STAR_COL ? "selected" : ""}>${esc(c.name)}</option>`).join("")}
       </select>
+      ${activeCol ? `<button type="button" class="btn ghost small" id="adminHeroStarDelHero" style="margin-inline-start:8px; color:var(--danger);">Delete this hero</button>` : ""}
     </div>
     <div class="panel">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
@@ -22608,7 +22700,7 @@ async function renderAdminHeroStars(body) {
               <tr data-herostarrow="${r.id}" data-cellid="${cell ? cell.id : ""}">
                 <td style="padding:4px;"><input data-f="name" value="${esc(r.name)}" style="width:160px;" /></td>
                 <td style="padding:4px;"><input data-f="value" type="number" step="any" value="${cell && cell.value != null ? cell.value : ""}" style="width:100px;" /></td>
-                <td style="padding:4px;"><button class="btn small ghost" data-herostarsave="${r.id}">Save</button></td>
+                <td style="padding:4px; white-space:nowrap;"><button class="btn small ghost" data-herostarsave="${r.id}">Save</button> <button class="btn small ghost" data-herostardel="${r.id}" style="color:var(--danger);" title="Remove this row from this hero">&#10005;</button></td>
               </tr>`;
               })
               .join("")}
@@ -22651,12 +22743,28 @@ async function renderAdminHeroStars(body) {
     renderAdminHeroStars(body);
   });
 
-  const saveHeroStarRow = async (id) => {
-    const tr = body.querySelector(`tr[data-herostarrow="${id}"]`);
+  const saveHeroStarRow = async (rowId) => {
+    let id = rowId;
+    const tr = body.querySelector(`tr[data-herostarrow="${rowId}"]`);
     const name = tr.querySelector('[data-f="name"]').value.trim();
     const value = tr.querySelector('[data-f="value"]').value;
-    const cellId = tr.dataset.cellid;
-    await sb(`buff_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+    let cellId = tr.dataset.cellid;
+    const row = rows.find((x) => x.id === id);
+    if (row && name && name !== row.name) {
+      // Rows are shared by all heroes: renaming one hero's row moves only this
+      // hero's value to a row with the new name (other heroes keep theirs).
+      const shared = row.buff_cells.some((c) => c.column_id !== ADMIN_ACTIVE_HERO_STAR_COL && c.value != null);
+      if (shared) {
+        let target = rows.find((x) => x.name === name);
+        if (!target) { const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0); [target] = await sb(`buff_rows`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name, sort_order: maxOrder + 1 }) }); target.buff_cells = []; rows.push(target); }
+        const exists = (target.buff_cells || []).find((c) => c.column_id === ADMIN_ACTIVE_HERO_STAR_COL);
+        if (cellId) {
+          if (exists) { await sb(`buff_cells?id=eq.${cellId}`, { method: "DELETE" }); cellId = exists.id; }
+          else await sb(`buff_cells?id=eq.${cellId}`, { method: "PATCH", body: JSON.stringify({ row_id: target.id }) });
+        }
+        id = target.id; tr.dataset.cellid = cellId || "";
+      } else await sb(`buff_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+    }
     if (cellId) {
       await sb(`buff_cells?id=eq.${cellId}`, { method: "PATCH", body: JSON.stringify({ value: value === "" ? null : Number(value) }) });
     } else if (value !== "") {
@@ -22673,13 +22781,36 @@ async function renderAdminHeroStars(body) {
       }
     });
   });
+  body.querySelectorAll("[data-herostardel]").forEach((btn) => btn.addEventListener("click", async () => {
+    const tr = btn.closest("tr"), row = rows.find((x) => x.id === btn.dataset.herostardel);
+    if (!confirm(`Remove "${row ? row.name : ""}" from ${activeCol ? activeCol.name : "this hero"}?`)) return;
+    try {
+      if (tr.dataset.cellid) await sb(`buff_cells?id=eq.${tr.dataset.cellid}`, { method: "DELETE" });
+      // The row itself goes too when no other hero uses it.
+      if (row && !row.buff_cells.some((c) => c.column_id !== ADMIN_ACTIVE_HERO_STAR_COL && c.value != null)) await sb(`buff_rows?id=eq.${row.id}`, { method: "DELETE" });
+      dropKeptGameData(); toast("Row removed"); renderAdminHeroStars(body);
+    } catch (err) { toast(err.message || "Couldn't remove", true); }
+  }));
+  const delHero = document.getElementById("adminHeroStarDelHero");
+  if (delHero) delHero.addEventListener("click", async () => {
+    const typed = prompt(`Delete ${activeCol.name} and all its special-skill bonuses? This can't be undone.\n\nType the hero's name to confirm:`);
+    if (typed == null) return;
+    if (typed.trim() !== activeCol.name) { toast("The name didn't match — nothing deleted", true); return; }
+    try {
+      await sb(`buff_cells?column_id=eq.${activeCol.id}`, { method: "DELETE" });
+      await sb(`buff_columns?id=eq.${activeCol.id}`, { method: "DELETE" });
+      ADMIN_ACTIVE_HERO_STAR_COL = null; dropKeptGameData(); toast("Hero deleted"); renderAdminHeroStars(body);
+    } catch (err) { toast(err.message || "Couldn't delete", true); }
+  });
   document.getElementById("adminHeroStarSaveAll").addEventListener("click", async () => {
     const btn = document.getElementById("adminHeroStarSaveAll");
     btn.disabled = true;
     btn.textContent = "Saving\u2026";
     try {
-      await Promise.all(relevantRows.map((r) => saveHeroStarRow(r.id)));
+      for (const r of relevantRows) await saveHeroStarRow(r.id); // one at a time: a rename may add a row
+      dropKeptGameData();
       toast(`Saved ${relevantRows.length} row${relevantRows.length === 1 ? "" : "s"}`);
+      renderAdminHeroStars(body); return;
     } catch (err) {
       toast("Couldn't save all", true);
     }
