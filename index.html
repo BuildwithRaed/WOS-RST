@@ -2639,7 +2639,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 3; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 4; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3034,6 +3034,7 @@ const T = {
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
   upcoming_tag: { en: "Upcoming" },
+  expert_talent: { en: "Talent" },
   upcoming_col: { en: "Upcoming" },
   pet_advanced: { en: "Advanced" },
   material_food: { en: "Food" },
@@ -9687,8 +9688,22 @@ function chiefGearReleasedIdx() { return Math.max(0, releasedLastIdx("progressio
 function chiefGearCapIdx() {
   const last = Math.max(0, (CHIEF_GEAR_ROWS || []).length - 1);
   const c = GEAR_CAPS ? GEAR_CAPS.chief_gear : null;
-  const cap = Number.isInteger(c) && c >= 0 && c <= last ? c : chiefGearReleasedIdx(); // never set → last level that's out
+  // Never set → the last level that's out, and not past T4 before Gen 4
+  // heroes are out in the person's state (T5 – T6 come with Gen 4).
+  const cap = Number.isInteger(c) && c >= 0 && c <= last ? c : Math.min(chiefGearReleasedIdx(), chiefGearT5Locked() ? chiefGearLastBeforeIdx(/legendary t[56]/i) : last);
   return chiefLegendaryOn() ? cap : Math.min(cap, chiefGearLastEpicIdx());
+}
+// T5 – T6 wait for Gen 4 in the person's state, unless a piece is already there.
+function chiefGearT5Locked() {
+  if (!stateNotYet("gear", "chief gear t5 t6")) return false;
+  const lastT4 = chiefGearLastBeforeIdx(/legendary t[56]/i);
+  return !CHIEF_GEAR_PIECES.some((p) => ((CHIEF_GEAR_STATE[p.key] || {}).from ?? -1) > lastT4);
+}
+// Last row before the first row whose tier matches re (or the last row).
+function chiefGearLastBeforeIdx(re) {
+  const rows = CHIEF_GEAR_ROWS || [];
+  const i = rows.findIndex((r) => re.test(String(r.tier || "")));
+  return i > 0 ? i - 1 : Math.max(0, rows.length - 1);
 }
 // Last row before the Legendary tiers.
 function chiefGearLastEpicIdx() {
@@ -10230,6 +10245,7 @@ const STATE_UNLOCKS = [
   { kind: "page", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
   { kind: "lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
   { kind: "gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
+  { kind: "gear", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
     ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
@@ -15697,7 +15713,7 @@ function ensureExpertsRosterGlobal() {
   return EXPERTS_ROSTER_PROMISE;
 }
 async function loadExpertsRosterGlobal() {
-  const rows = await sb(`experts?select=key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
+  const rows = await sb(`experts?select=key,img,skill1,skill2,skill3,skill4,talent,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
   EXPERTS_IN_ORDER_GLOBAL = rows.map((r) => r.key);
   EXPERT_MAIN_STAT_GLOBAL_MAP = {};
   EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP = {};
@@ -15709,12 +15725,23 @@ async function loadExpertsRosterGlobal() {
     if (r.main_stat_troop) EXPERT_MAIN_STAT_TROOP_GLOBAL_MAP[r.key] = r.main_stat_troop;
     const skills = [r.skill1, r.skill2, r.skill3, r.skill4].filter(Boolean);
     if (r.img && skills.length === 4) {
-      EXPERTS_LIST.push({ key: r.key, img: r.img, skills });
+      EXPERTS_LIST.push({ key: r.key, img: r.img, skills, talent: r.talent || "" });
     }
   });
   tradeComposeExtra();
 }
 
+// Skills renamed in the data (16 Oct 2026, names from whiteoutsurvival.wiki):
+// saved levels move to the new name, so nobody loses them.
+const EXPERT_SKILL_RENAMES = { Fabian: { "Dawn Hymn": "Battle Bulwark" }, Justus: { "Tresure Seeker": "Treasure Seeker" } };
+function renameExpertSkills(saved) {
+  Object.entries(EXPERT_SKILL_RENAMES).forEach(([hero, map]) => {
+    const sk = saved && saved[hero] && saved[hero].skills;
+    if (!sk) return;
+    Object.entries(map).forEach(([from, to]) => { if (sk[from] && !sk[to]) { sk[to] = sk[from]; delete sk[from]; } });
+  });
+  return saved;
+}
 // Expert tables, loaded once per visit to the site and shared by Experts
 // Level, Experts Research and the Dashboard (Level and Research used to
 // re-load them on every visit). Admin edits clear them (dropKeptGameData).
@@ -15751,7 +15778,7 @@ async function ensureExpertsTroopStatsData() {
     // Only Romulus's and Gareth's skills with a stat matter here.
     loadExpertNodes("skill").then((rows) => rows.filter((r) => (r.expert === "Romulus" || r.expert === "Gareth") && r.stat_type != null)),
   ]);
-  EXPERTS_STATE_GLOBAL = savedExperts || {};
+  EXPERTS_STATE_GLOBAL = renameExpertSkills(savedExperts || {});
   EXPERTS_UNLOCKED_GLOBAL = savedUnlocked || {};
   EXPERT_AFFINITY_CACHE_GLOBAL = {};
   affinityRows.forEach((r) => {
@@ -17757,7 +17784,7 @@ async function renderExpertsPage() {
     loadExpertNodes("affinity"),
   ]);
   const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
-  const saved = loadedExperts || {};
+  const saved = renameExpertSkills(loadedExperts || {});
   const unlockedState = unlockedLoaded || {};
   function isExpertUnlocked(expert) {
     return unlockedFor("experts", expert, unlockedState[expert]);
@@ -18192,6 +18219,7 @@ async function renderExpertsPage() {
           <div style="text-align:center;">
             <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; padding:3px; box-sizing:border-box; object-fit:contain; margin-bottom:6px;" loading="lazy" />
             <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
+            ${e.talent ? `<div class="meta" style="font-size:11px; margin-top:2px;">${esc(t("expert_talent"))}: ${esc(dataName(e.talent))}</div>` : ""}
             ${expertBadgeHtml(e.key)}
             ${IS_OWNER ? `<div style="margin-top:4px;">${visibilityBtnHtml("experts", e.key)}</div>` : ""}
           </div>
@@ -20852,7 +20880,7 @@ function applyPageVisibility() {
 
 // ---- Roster editor ----
 async function renderAdminRoster(body) {
-  const rows = await sb(`experts?select=id,key,img,skill1,skill2,skill3,skill4,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
+  const rows = await sb(`experts?select=id,key,img,skill1,skill2,skill3,skill4,talent,main_stat,main_stat_troop,sort_order,upcoming&order=sort_order.asc`);
   const STAT_OPTS = [["ATK", "Attack"], ["DEF", "Defense"], ["DMG", "Lethality"], ["HP", "Health"]];
   const TROOP_OPTS = [["", "All troops"], ["Lancers", "Lancers only"], ["Infantry", "Infantry only"], ["Marksman", "Marksman only"]];
   body.innerHTML = admListHtml(rows, {
@@ -20870,6 +20898,7 @@ async function renderAdminRoster(body) {
     { key: "main_stat", label: "Main stat", type: "select", options: STAT_OPTS, value: r.main_stat || "ATK", half: true },
     { key: "main_stat_troop", label: "Troops", type: "select", options: TROOP_OPTS, value: r.main_stat_troop || "", half: true },
     ...[1, 2, 3, 4].map((k) => ({ key: "skill" + k, label: `Skill ${k}`, value: r["skill" + k], half: true })),
+    { key: "talent", label: "Talent", value: r.talent },
     { key: "upcoming", label: "Upcoming (shows a badge on this expert's cards)", type: "check", value: r.upcoming },
   ];
   wireAdmList(body, {

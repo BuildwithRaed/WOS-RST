@@ -1587,5 +1587,6 @@
 "p:addItem":"{x} 아이템 추가",
 "t:pet_advanced":"돌파",
 "t:upcoming_tag":"출시 예정",
-"t:upcoming_col":"출시 예정"
+"t:upcoming_col":"출시 예정",
+"t:expert_talent":"특성"
 }
