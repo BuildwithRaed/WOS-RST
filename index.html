@@ -4095,8 +4095,70 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 // Browser history: every page change is a history entry, so the Back
 // button (and the Android back gesture in the installed app) returns to the
 // previous page inside the site instead of leaving it.
+// ---- Keeping your place when a page redraws itself (owner, 17 Oct 2026) ----
+// A tap that redraws the same page must not move it: the page keeps at least
+// its old height while it's rebuilt (a short "Loading…" / "Working out…"
+// would pull the scroll up), then goes back where it was. Scroll boxes and
+// sideways rows keep their place, open folds stay open. Opening another page
+// (goToTab) still starts fresh.
+let LAST_RENDER_TAB = null;
+async function keepPlace(fn) {
+  const y = window.scrollY, tab = TAB, putBoxes = saveBoxScroll(content);
+  content.style.minHeight = content.offsetHeight + "px";
+  try { return await fn(); } finally {
+    if (TAB === tab) { putBoxes(); window.scrollTo(0, y); }
+    if (!content.dataset.holdUntilReady) content.style.minHeight = "";
+  }
+}
+// Hold the page's height until a part still being worked out is drawn
+// (Budgets' plan, My Purchases' suggestions); `false` lets it go.
+function holdPageHeight(on) {
+  if (on) { content.dataset.holdUntilReady = "1"; content.style.minHeight = Math.max(content.offsetHeight, parseFloat(content.style.minHeight) || 0) + "px"; }
+  else { delete content.dataset.holdUntilReady; content.style.minHeight = ""; }
+}
+// Scroll boxes / sideways rows inside `root` (matched by class and order) keep
+// their scroll across `fn` (which rebuilds them).
+const KEEP_BOX_SEL = ".pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap";
+// saveBoxScroll(root) notes them now and returns a function that puts them
+// back (in `root`, or in the box that replaced it).
+function saveBoxScroll(root) {
+  if (!root) return () => {};
+  const keyOf = (el, all) => `${el.className}|${all.filter((x) => x.className === el.className).indexOf(el)}`;
+  const old = [...root.querySelectorAll(KEEP_BOX_SEL)];
+  const saved = old.filter((el) => el.scrollTop || el.scrollLeft).map((el) => ({ k: keyOf(el, old), top: el.scrollTop, left: el.scrollLeft }));
+  return (into = root) => {
+    if (!saved.length || !into) return;
+    const now = [...into.querySelectorAll(KEEP_BOX_SEL)];
+    saved.forEach((sv) => { const el = now.find((x) => keyOf(x, now) === sv.k); if (el) { el.scrollTop = sv.top; el.scrollLeft = sv.left; } });
+  };
+}
+function keepBoxes(root, fn) {
+  if (!root) return fn();
+  const apply = saveBoxScroll(root);
+  const r = fn();
+  if (r && typeof r.then === "function") return r.then((v) => { apply(); return v; });
+  apply();
+  return r;
+}
+// Folds (<details>) inside `root` keep open / closed across `fn`, matched by
+// their class and summary text.
+function keepFolds(root, fn) {
+  if (!root) return fn();
+  // Numbers left out: a price filling in must not make it another fold.
+  const keyOf = (d) => `${d.className}|${((d.querySelector("summary") || {}).textContent || "").replace(/[\d.,]+/g, "#").replace(/\s+/g, " ").trim().slice(0, 80)}`;
+  const was = new Map([...root.querySelectorAll("details")].map((d) => [keyOf(d), d.open]));
+  const apply = () => { if (was.size) root.querySelectorAll("details").forEach((d) => { const k = keyOf(d); if (was.has(k)) d.open = was.get(k); }); };
+  const r = fn();
+  if (r && typeof r.then === "function") return r.then((v) => { apply(); return v; });
+  apply();
+  return r;
+}
+// Admin tables redrawn after a save keep the page and the table's scroll.
+function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
 function goToTab(tab, opts = {}) {
   if (!isValidTab(tab)) tab = "overview";
+  LAST_RENDER_TAB = null;
+  holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
   TAB = tab;
@@ -4241,6 +4303,10 @@ async function render() {
   const seq = ++RENDER_SEQ;
   // Page pop-ups: close them when the page changes.
   ["refineAdvModal", "drilldownModal"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
+  // The same page drawn again after a tap: keep its height and scroll place.
+  const same = LAST_RENDER_TAB === TAB && !!content.firstElementChild, y0 = window.scrollY;
+  const putBoxes = same ? saveBoxScroll(content) : null;
+  if (same) content.style.minHeight = content.offsetHeight + "px";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
@@ -4297,8 +4363,15 @@ async function render() {
       const head = content.querySelector(".plx-head, .page-head");
       if (head) head.insertAdjacentHTML("afterend", nh); else content.insertAdjacentHTML("afterbegin", nh);
     }
+    if (seq === RENDER_SEQ) {
+      if (same) { putBoxes(); window.scrollTo(0, y0); }
+      if (!content.dataset.holdUntilReady) content.style.minHeight = "";
+      LAST_RENDER_TAB = TAB;
+    }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
+    content.style.minHeight = "";
+    LAST_RENDER_TAB = TAB;
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">Something went wrong loading this tab.</div>${esc(e.message)}</div></div>`;
   }
 }
@@ -4918,7 +4991,7 @@ async function renderOverview(opts = {}) {
   </div>`;
 
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
-  content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => renderOverview()); });
+  content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => keepPlace(() => renderOverview())); });
 
 
   // ---- Roster heroes: the 3 heroes affecting Infantry / Lancers / Marksman ----
@@ -4939,7 +5012,7 @@ async function renderOverview(opts = {}) {
         const prev = existing.current_stars;
         existing.current_stars = value;
         patchRowQueued("player_heroes", existing.id, { current_stars: value, updated_at: new Date().toISOString() }).catch(() => {
-          if (existing.current_stars === value) { existing.current_stars = prev; renderOverview(); }
+          if (existing.current_stars === value) { existing.current_stars = prev; keepPlace(() => renderOverview()); }
           toast("Couldn't save", true);
         });
       } else {
@@ -5057,14 +5130,14 @@ async function renderOverview(opts = {}) {
       const anyCounted = () => TROOP_TYPES.some((t) => entryFor(t.key).heroId && entryFor(t.key).used);
       const countedBefore = anyCounted();
       const refreshAfterChange = () => {
-        if (countedBefore || anyCounted()) renderOverview();
+        if (countedBefore || anyCounted()) keepPlace(() => renderOverview());
         else renderRoster();
       };
       const maxTopGenBox = document.getElementById("rosterMaxTopGen");
       if (maxTopGenBox) maxTopGenBox.addEventListener("change", () => {
         roster.maxTopGen = maxTopGenBox.checked;
         save();
-        renderOverview(); // the max values change
+        keepPlace(() => renderOverview()); // the max values change
       });
       const rosterUsedAllBox = document.getElementById("rosterUsedAll");
       if (rosterUsedAllBox) {
@@ -5075,7 +5148,7 @@ async function renderOverview(opts = {}) {
           });
           await save();
           // Re-render the whole dashboard so the stat totals/breakdown reflect the change.
-          renderOverview();
+          keepPlace(() => renderOverview());
         });
       }
       rosterEl.querySelectorAll("[data-starstep]").forEach((b) => b.addEventListener("click", async () => {
@@ -6054,7 +6127,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         <button type="button" class="btn small ghost" data-mpaddrow ${canRow ? "" : "disabled"} style="width:26px; padding:3px 0;">+</button>
         <button type="button" class="btn small ghost" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} style="width:26px; padding:3px 0;">&minus;</button>
       </div>
-      <div style="overflow-x:auto; margin-top:8px;">
+      <div class="mp-wrap" style="overflow-x:auto; margin-top:8px;">
         <table style="border-collapse:collapse; font-size:12px; min-width:100%;">
           <thead><tr>${mp.columns.map((_, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center; min-width:${ci === priceCol ? 52 : 74}px;">${head(ci)}</th>`).join("")}<th class="meta" style="padding:4px; border-bottom:1px solid var(--line); width:58px;">${esc(t("mp_max"))}</th></tr></thead>
           <tbody>${mp.rows.map((r, ri) => `<tr>${mp.columns.map((_, ci) => ci === priceCol || ci === gemsCi
@@ -6084,7 +6157,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
   ${used ? "" : `<div class="empty" style="margin-top:10px;">${esc(t("mp_empty"))}</div>`}
   <div class="grid g2" style="align-items:start;">${MY_PACKS.map(cardHtml).join("")}</div>
   ${used ? `<div style="margin-top:12px; padding:8px 10px; border:1px dashed #e0b25a; border-radius:8px; color:#e0b25a; font-size:11.5px;">⏱ ${esc(t("mp_speed_note"))}</div>` : ""}`;
-  const redraw = () => renderMyPacks(el, templates, rerenderPage);
+  const redraw = () => keepBoxes(el, () => renderMyPacks(el, templates, rerenderPage)); // the table keeps its sideways scroll
   const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
   el.querySelectorAll("[data-mpdup]").forEach((b) => b.addEventListener("click", () => {
     if (MY_PACKS.length >= packMyPacksLimit()) return;
@@ -6584,6 +6657,8 @@ function purTablePopup(tb, opts) {
       return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
     }).join("");
     const hint = t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows") + (mode === "pick" ? " " + t("pur_tbl_hint_pick").replace("{n}", link.pickCols) : choiceType ? " " + t("pur_tbl_hint_opt") : "");
+    // A tap redraws the pop-up: its table keeps its scroll.
+    const putBoxes = modal.style.display === "flex" ? saveBoxScroll(modal) : () => {};
     modal.innerHTML = `<div class="modal-box pur-t-box">
       <h2>${esc(name)}</h2>
       <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
@@ -6592,6 +6667,7 @@ function purTablePopup(tb, opts) {
       <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
+    putBoxes();
     keepDraft();
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
     modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.tct.split("|").map(Number); S.counts[i] = Math.max(0, (S.counts[i] || 0) + d); draw(); }));
@@ -6614,9 +6690,19 @@ const PUR_SUG_TICK = new Map(); // "week|row" -> ticked to buy (default: the fol
 const PUR_SUG_VER = new Set();  // "week|row" using the other plan's version of that pack
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
+let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
-  content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
+  // Redrawn after a tap: the suggestions box keeps its height while it's
+  // worked out again, and its rows / list keep their scroll.
+  // (Redrawn again before the box was filled: what the last filled one had.)
+  const oldSug = document.getElementById("purSuggest"), oldCl = oldSug && oldSug.querySelector(".pur-cl-list");
+  if (!oldSug) PUR_SUG_KEEP = null;
+  else if (oldSug.dataset.drawn) PUR_SUG_KEEP = { h: oldSug.offsetHeight, boxes: saveBoxScroll(oldSug), cl: oldCl ? { week: oldCl.dataset.week, top: oldCl.scrollTop } : null };
+  const sugH = PUR_SUG_KEEP ? PUR_SUG_KEEP.h : 0, sugBoxes = PUR_SUG_KEEP ? PUR_SUG_KEEP.boxes : () => {};
+  const oldClTop = PUR_SUG_KEEP && PUR_SUG_KEEP.cl;
+  // "Loading…" only on the first draw; a redraw keeps the page until it's ready.
+  if (!oldSug) content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
   const tables = await ensurePackTables();
   if (seq !== RENDER_SEQ) return;
   const today = packDayKey(packStartOfToday());
@@ -6769,7 +6855,7 @@ async function renderPurchasesPage() {
       </aside>
       <div class="t12x-main">
         ${summary}
-        <div class="t12x-card" id="purSuggest" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div></div>
+        <div class="t12x-card" id="purSuggest" style="margin-top:12px;${sugH ? ` min-height:${sugH}px;` : ""}"><div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div></div>
         <div style="margin-top:12px;">${addCard}</div>
         ${listsHtml}
       </div>
@@ -6875,11 +6961,14 @@ async function renderPurchasesPage() {
     const thisCost = buckets.has(0) ? buckets.get(0).cost : 0;
     const untilCost = keys.filter((k) => k !== "after").reduce((a, k) => a + (buckets.has(k) ? buckets.get(k).cost : 0), 0);
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_wk_this"))}</span><b>${thisCost ? esc(money(thisCost)) : "—"}</b></div><div><span class="meta">${esc(tOff != null && tOff >= 0 ? t("pur_sug_until") : t("pur_sug_total"))}</span><b>${esc(money(tOff != null && tOff >= 0 ? untilCost : total))}</b></div></div>`;
+    let firstDraw = true;
     const drawSug = () => {
     // Keep the pack list where it was scrolled when it's redrawn for the same
     // week (opening a pack line, ticking all); another week starts at the top.
     const oldList = box.querySelector(".pur-cl-list");
-    const keepTop = oldList && oldList.dataset.week === String(PUR_SUG_WEEK) ? oldList.scrollTop : 0;
+    const was = oldList ? { week: oldList.dataset.week, top: oldList.scrollTop } : firstDraw ? oldClTop : null;
+    const keepTop = was && was.week === String(PUR_SUG_WEEK) ? was.top : 0;
+    const putBoxes = firstDraw ? sugBoxes : saveBoxScroll(box);
     const sel = buckets.get(PUR_SUG_WEEK);
     const otherName = follow === "target" ? "budget" : "target";
     const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<small class="pur-alt pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</small>` : ""}</button>`; }).join("")}</div>`;
@@ -7130,9 +7219,13 @@ async function renderPurchasesPage() {
       const clEl = box.querySelector(".pur-cl-list"), clRows = clEl ? [...clEl.querySelectorAll(".pur-cl-row")] : [];
       if (clRows.length > 5) clEl.style.maxHeight = `${clRows[4].offsetTop + clRows[4].offsetHeight / 2}px`;
       if (clEl && keepTop) clEl.scrollTop = keepTop;
+      putBoxes(box);
+      firstDraw = false;
+      box.style.minHeight = "";
+      box.dataset.drawn = "1";
     };
     drawSug();
-  }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
+  }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; } });
 
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
   content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
@@ -7486,6 +7579,9 @@ async function renderPackCalendarPage() {
       return weeksL.join("") || `<div class="meta" style="font-size:12px;">${esc(t("pack_cal_empty"))}</div>`;
     };
 
+    // A chip / view tap redraws the calendar: the page, the chip row and the
+    // month grid keep their scroll.
+    const y = window.scrollY, putBoxes = saveBoxScroll(content);
     content.innerHTML = `
       <div class="plx-head"><h2>${esc(t("pack_cal_title"))}</h2><button class="btn ghost small" id="packCalBack">${esc(t("pack_cal_back"))}</button></div>
       <div class="panel pc-panel">
@@ -7503,6 +7599,8 @@ async function renderPackCalendarPage() {
         ${hideAllWeek && allWeekNames.size ? `<div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_all_week_hidden").replace("{n}", allWeekNames.size))} · <button class="btn ghost small" data-calchip="allweek" style="padding:1px 8px; font-size:10px; border-radius:999px;">${esc(t("pack_cal_show_them"))}</button></div>` : ""}
         <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_utc"))}</div>
       </div>`;
+    putBoxes();
+    if (y && Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
 
     document.getElementById("packCalBack").addEventListener("click", () => goToTab("packs"));
     content.querySelectorAll("[data-calchip]").forEach((b) => b.addEventListener("click", () => {
@@ -7571,7 +7669,7 @@ async function renderPacksPage() {
 
   const calBtn = document.getElementById("packsCalendarBtn");
   if (calBtn) calBtn.addEventListener("click", () => goToTab("packcalendar"));
-  wireVisibilityBtns(content, () => renderPacksPage());
+  wireVisibilityBtns(content, () => keepPlace(() => renderPacksPage()));
   const listEl = document.getElementById("packsList");
   // Tap a summary card's Edit (or its title) to open / close that table.
   // "Budgets" tick on each card: count this pack in Budgets or not.
@@ -7812,7 +7910,14 @@ async function renderPacksPage() {
       renderAll();
     });
   }
+  // A redraw keeps the page where it was, and the editors' sideways boxes too.
   function renderAll() {
+    const y = window.scrollY, putBoxes = saveBoxScroll(listEl);
+    renderAllCore();
+    putBoxes();
+    if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+  }
+  function renderAllCore() {
     renderPageTabs();
     if (!tables.length) {
       listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_tables_yet"))}</div>${esc(t("no_tables_hint"))}</div>`;
@@ -7855,7 +7960,7 @@ async function renderPacksPage() {
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
+        <div class="pk-ed-scroll" style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
           <input data-pt-group list="packGroupNames" value="${esc(packLinkFor(t.id).group)}" placeholder="${esc(groupPh)}" title="${esc(groupTitle)}" style="font-size:11px; padding:3px 6px; flex:0 1 110px; min-width:70px;" />
           <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.">
@@ -7879,7 +7984,7 @@ async function renderPacksPage() {
           <button class="btn small ghost" data-pt-duplicate title="${esc(dupTitle)}" style="flex-shrink:0; width:28px; padding:4px 0;">&#10697;</button>
           <button class="btn small ghost" data-pt-delete title="Delete table" style="color:var(--danger); flex-shrink:0; width:28px; padding:4px 0;">&times;</button>
         </div>
-        <div style="overflow-x:auto;">
+        <div class="pk-tbl-wrap" style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:11px; table-layout:fixed;">
             <thead>
               <tr>
@@ -10096,7 +10201,9 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
     target.innerHTML = `<div class="empty">Category not found.</div>`;
     return;
   }
-  const refresh = rerenderFn || ((name) => renderCategoryInto(target, name, rerenderFn));
+  // Redrawn after an edit: the page stays where it was.
+  const redrawFn = rerenderFn || ((name) => renderCategoryInto(target, name, rerenderFn));
+  const refresh = (name) => keepPlace(() => redrawFn(name));
   const rows = await sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`);
 
   if (seq !== RENDER_SEQ) return;
@@ -10204,7 +10311,7 @@ async function renderGroupPage(parentName) {
   content.querySelectorAll("[data-groupsub]").forEach((btn) => {
     btn.addEventListener("click", () => {
       GROUP_SUBTAB[parentName] = btn.dataset.groupsub;
-      renderGroupPage(parentName);
+      keepPlace(() => renderGroupPage(parentName));
     });
   });
 
@@ -12692,6 +12799,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   if (!open) {
+    containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
     return;
@@ -12699,6 +12807,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
 
   // Changing several levels in a row: wait until the changes stop, so the
   // plan is worked out once for the final numbers instead of after every click.
+  // The card keeps its height meanwhile (it sits low on phones: a short
+  // "Working out…" would pull the page up).
+  if (containerEl.offsetHeight) containerEl.style.minHeight = containerEl.offsetHeight + "px";
   containerEl.innerHTML = `${wrapOpen}${head}<div class="meta" style="font-size:11px; margin-top:8px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`;
   await new Promise((r) => setTimeout(r, 450));
   if (stale()) return;
@@ -12957,6 +13068,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     ...activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`),
     ...(traded && traded.trades.length ? traded.trades.map((x) => `${qty(x.giveQty)} ${materialDisplayName(x.from)} → ${qty(x.getQty)} ${materialDisplayName(x.to)}`) : []),
   ];
+  containerEl.style.minHeight = "";
   containerEl.innerHTML = cards ? `
     <div class="pc-card">
       ${head}
@@ -13406,26 +13518,26 @@ async function renderRfcLabPage() {
   content.querySelectorAll("[data-rfcmode]").forEach((b) => b.addEventListener("click", async () => {
     st.mode = b.dataset.rfcmode;
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   }));
   const schedSel = content.querySelector("[data-rfcschedule]");
   if (schedSel) schedSel.addEventListener("change", async () => {
     const [top, n] = schedSel.value.split("|").map(Number);
     st.top = top; st.attempts = n;
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   });
   content.querySelectorAll("[data-rfcuse]").forEach((btn) => btn.addEventListener("click", async () => {
     const [top, n] = btn.dataset.rfcuse.split("|").map(Number);
     st.top = top; st.attempts = n; st.mode = "schedule";
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   }));
   content.querySelectorAll("[data-rfc]").forEach((inp) => inp.addEventListener("change", async () => {
     const v = Math.max(0, Number(String(inp.value).replace(/[^0-9.]/g, "")) || 0);
     st[inp.dataset.rfc] = v;
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   }));
 }
 
@@ -15072,7 +15184,10 @@ async function renderBudgetsPage(opts = {}) {
 
   // Budgets B: settings + pages on the side, the total and the shopping
   // list (packs to buy) in the main column, each page's details below it.
-  content.innerHTML = `
+  // While the plan is worked out the page keeps its old height (the short
+  // "Working out…" would pull the scroll up); open folds stay open.
+  if (planPending) holdPageHeight(true);
+  keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap">
       <div class="plx-head"><h2>${esc(t("budgets_title"))}</h2><button type="button" class="btn small ghost" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}">&#8635; ${esc(t("budgets_recalc"))}</button></div>
       <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("budgets_desc"))}</p>
@@ -15102,7 +15217,8 @@ async function renderBudgetsPage(opts = {}) {
           <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${cards.join("")}</div>
         </div>
       </div>
-    </div>`;
+    </div>`; });
+  if (!planPending) holdPageHeight(false);
 
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
@@ -15113,11 +15229,11 @@ async function renderBudgetsPage(opts = {}) {
     // Each page has its own tick (owner, 16 Oct 2026; it used to switch its
     // whole group: Experts Level + Research, the three Research pages).
     BUDGET_SELECTED[cb.dataset.budgetinc] = cb.checked;
-    renderBudgetsPage(); // instant redraw from the cached data
+    keepPlace(() => renderBudgetsPage()); // instant redraw from the cached data
     saveCalcState("budget_selected", BUDGET_SELECTED);
   }));
   const curEl = content.querySelector("#budgetsCurrency");
-  if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); renderBudgetsPage(); });
+  if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); keepPlace(() => renderBudgetsPage()); });
   // My budget: saved at once; a new amount only re-checks the plans already worked out.
   const spendSave = (patch, show) => {
     BUDGET_SPEND = { ...(BUDGET_SPEND || {}), ...patch };
@@ -15136,7 +15252,7 @@ async function renderBudgetsPage(opts = {}) {
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
     saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
-    renderBudgetsPage();
+    keepPlace(() => renderBudgetsPage());
   });
   const recalcEl = content.querySelector("[data-budgetrecalc]");
   if (recalcEl) recalcEl.addEventListener("click", () => { budgetForceRecalc(); renderBudgetsPage(); });
@@ -15144,7 +15260,7 @@ async function renderBudgetsPage(opts = {}) {
   if (clearEl) clearEl.addEventListener("click", async () => {
     BUDGET_TARGET = "";
     saveCalcState("pack_target_budgets", { date: "" });
-    renderBudgetsPage();
+    keepPlace(() => renderBudgetsPage());
   });
   const matsBtn = content.querySelector("[data-budmats]");
   if (matsBtn) matsBtn.addEventListener("click", () => {
@@ -20007,11 +20123,14 @@ async function renderRefinePage() {
     function drawAdv() {
       let modal = document.getElementById("refineAdvModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "refineAdvModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+      // Each − / + redraws the pop-up: it keeps its scroll.
+      const putBoxes = modal.style.display === "flex" ? saveBoxScroll(modal) : () => {};
       modal.innerHTML = `<div class="modal-box rfa" style="max-width:440px; max-height:88vh; overflow-y:auto;">
         <div class="rfa-head"><h2>&#9881; ${esc(t("marks_advanced_open"))}</h2><button type="button" class="rfa-x" data-marksclose aria-label="close">&#10005;</button></div>
         <p class="rfa-desc">${esc(t("marks_advanced_desc"))}</p>
         ${advHtml}</div>`;
       modal.style.display = "flex";
+      putBoxes();
       modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-marksclose]")) { refineAdvOpen = false; modal.style.display = "none"; } };
       wireMarks(modal);
     }
@@ -21833,7 +21952,7 @@ async function renderAdminBackpackItems(body) {
       <div class="adm-chips"><div class="adm-chips-row">${groups().map((g) => `<button type="button" class="adm-chip${g === ADMIN_BP_GROUP ? " on" : ""}" data-bpgroup="${esc(g)}">${esc(g)} <span class="meta">${items.filter((x) => x.group === g).length}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_BP_GROUP, attr: "data-bprow", sortable: true, img: (r) => bpIcon(r), name: (r) => r.name, sub: (r) => (r.icon ? "own picture" : "") })
       + `<div style="margin-top:12px;"><button class="btn ghost small" data-bpreset type="button">Reset to the default list</button></div>`;
-    body.querySelectorAll("[data-bpgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_BP_GROUP = b.dataset.bpgroup; draw(); }));
+    body.querySelectorAll("[data-bpgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_BP_GROUP = b.dataset.bpgroup; keepBoxes(body, draw); }));
     wireAdminReorder(body, "data-bprow", async (ids) => {
       // New order inside this tab; other tabs keep their places.
       const byId = new Map(items.map((x) => [x.id, x])), slots = items.map((x, i) => (x.group === ADMIN_BP_GROUP ? i : -1)).filter((i) => i >= 0);
@@ -23006,7 +23125,7 @@ function wireAdmEditBar(scope, o) {
       if (o.after) o.after();
       const parts = [changed.length ? `${changed.length} row${changed.length === 1 ? "" : "s"} saved` : "", upChanged ? "Upcoming saved" : "", added ? `${added} added` : ""].filter(Boolean);
       toast(parts.join(", ") || "Nothing to save");
-      if (added && o.reload) { ADM_EDIT_DIRTY = 0; await o.reload(); return; }
+      if (added && o.reload) { ADM_EDIT_DIRTY = 0; await admRedrawKeep(() => o.reload()); return; }
     } catch (err) { toast("Couldn't save: " + (err.message || err), true); }
     refresh();
   };
@@ -23860,7 +23979,7 @@ async function renderAdminHeroes(body) {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
     listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">${rows.filter((r) => (r.generation ?? -1) === g).length}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
-    listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); drawHeroes(); }));
+    listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); keepBoxes(listWrap, drawHeroes); }));
     wireAdmList(listWrap, {
       onEdit: (id) => {
         const r = rows.find((x) => String(x.id) === id);
@@ -24255,7 +24374,7 @@ async function renderAdminHeroStars(body) {
       }
     });
   });
-  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); renderAdminHeroStars(body); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"],
+  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); admRedrawKeep(() => renderAdminHeroStars(body)); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"],
     addForm: "#adminHeroStarAddForm", reload: () => renderAdminHeroStars(body),
     create: async (tr) => {
       const name = tr.querySelector('[data-f="name"]').value.trim();
@@ -24272,7 +24391,7 @@ async function renderAdminHeroStars(body) {
       if (tr.dataset.cellid) await sb(`buff_cells?id=eq.${tr.dataset.cellid}`, { method: "DELETE" });
       // The row itself goes too when no other hero uses it.
       if (row && !row.buff_cells.some((c) => c.column_id !== ADMIN_ACTIVE_HERO_STAR_COL && c.value != null)) await sb(`buff_rows?id=eq.${row.id}`, { method: "DELETE" });
-      dropKeptGameData(); toast("Row removed"); renderAdminHeroStars(body);
+      dropKeptGameData(); toast("Row removed"); admRedrawKeep(() => renderAdminHeroStars(body));
     } catch (err) { toast(err.message || "Couldn't remove", true); }
   }));
   const delHero = document.getElementById("adminHeroStarDelHero");
