@@ -448,22 +448,27 @@
   .pur-alt.pur-cmp-budget{ color:var(--good); background:none; }
   .pur-follow{ margin:0 0 6px; }
   .pur-m-ver{ margin:6px 0 10px; }
-  .pur-ms-vers{ display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; }
-  .pur-ms-vers button{ border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font:inherit; font-size:11px; padding:5px 10px; border-radius:999px; cursor:pointer; }
-  .pur-ms-vers button b{ color:var(--text); }
-  .pur-ms-vers button.on{ border-color:var(--ice); background:var(--ice-dim); color:var(--text); }
+  .pur-ms-vers{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:6px 0 10px; }
+  .pur-ms-vers button{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:start; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font:inherit; padding:8px 10px; border-radius:10px; cursor:pointer; }
+  .pur-ms-vers .pur-vb-k{ font-size:11px; }
+  .pur-ms-vers button b{ color:var(--text); font-size:15px; }
+  .pur-ms-vers .pur-vb-s{ font-size:10.5px; }
+  .pur-ms-vers button.on{ border-color:var(--ice); background:var(--ice-dim); color:var(--text); box-shadow:0 0 0 1px var(--ice) inset; }
   .pur-ms{ border:1px solid var(--line); border-radius:10px; margin-bottom:8px; max-height:42vh; overflow-y:auto; }
-  .pur-ms-row{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:7px 10px; border-top:1px solid var(--line); }
+  .pur-ms-row{ padding:7px 10px; border-top:1px solid var(--line); }
   .pur-ms-row:first-child{ border-top:0; }
   .pur-ms-row:not(.on) .pur-ms-pr, .pur-ms-row:not(.on) .pur-ms-n, .pur-ms-row:not(.on) .pur-ms-g{ opacity:.45; }
   .pur-ms-tick{ width:20px; height:20px; border-radius:5px; border:1.5px solid var(--line); background:transparent; color:#fff; font-size:12px; line-height:1; padding:0; cursor:pointer; flex:none; }
   .pur-ms-row.on .pur-ms-tick{ background:var(--ice-dim); border-color:var(--ice); }
   .pur-ms-n{ color:var(--ice); font-size:12px; }
-  .pur-ms-pr{ font-size:13px; }
-  .pur-ms-sw{ display:inline-flex; flex-wrap:wrap; margin-inline-start:auto; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:2px; }
-  .pur-ms-sw button{ border:0; background:transparent; color:var(--muted); font:inherit; font-size:11px; padding:3px 6px; white-space:nowrap; border-radius:6px; cursor:pointer; }
+  .pur-ms-l{ display:flex; align-items:center; gap:6px; min-width:0; }
+  .pur-ms-pr{ font-size:12.5px; white-space:nowrap; }
+  .pur-ms-row.card .pur-ms-l{ flex-wrap:wrap; }
+  .pur-ms-row.card .pur-ms-sw{ flex-wrap:wrap; overflow:visible; margin-inline-start:0; }
+  .pur-ms-sw{ display:inline-flex; flex-wrap:nowrap; flex:0 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none; margin-inline-start:auto; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:2px; }
+  .pur-ms-sw button{ border:0; background:transparent; color:var(--muted); font:inherit; font-size:10.5px; padding:3px 5px; white-space:nowrap; flex:none; border-radius:6px; cursor:pointer; }
   .pur-ms-sw button.on{ background:var(--ice-dim); color:var(--text); }
-  .pur-ms-g{ flex-basis:100%; display:flex; flex-wrap:wrap; gap:4px 10px; padding-inline-start:28px; font-size:11.5px; color:var(--muted); }
+  .pur-ms-g{ display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; padding-inline-start:26px; font-size:11.5px; color:var(--muted); }
   .pur-ms-g span{ display:inline-flex; align-items:center; gap:3px; }
   .pur-ms-g img{ width:16px; height:16px; object-fit:contain; }
   .pur-ms-g i{ font-style:normal; }
@@ -7232,10 +7237,10 @@ async function renderPurchasesPage() {
       const fmtN = (cnt) => (M ? packFmtLocal(unitLocal * cnt, r.currency, false, r.price) : packFmtMoney(unit * cnt, r.currency));
       const stepsHtml = M ? `<div class="pur-ms">${M.steps.map((st, k) => {
         const on = k < kk, j = pick[k], swt = st.opts.length > 1;
-        return `<div class="pur-ms-row${on ? " on" : ""}">
+        return `<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" ? " card" : ""}"><div class="pur-ms-l">
           <button type="button" class="pur-ms-tick" data-pmtick="${k}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>
           ${M.kind === "card" ? "" : `<b class="pur-ms-n">${k + 1}</b>`}<b class="pur-ms-pr">${esc(packFmtLocal(packConvert(st.price, r.currency).n, r.currency, false, st.price))}</b>
-          ${swt ? `<span class="pur-ms-sw">${st.opts.map((o, oj) => `<button type="button" data-pmopt="${k}|${oj}" class="${oj === j ? "on" : ""}">${esc(o.tag)}</button>`).join("")}</span>` : ""}
+          ${swt ? `<span class="pur-ms-sw">${st.opts.map((o, oj) => `<button type="button" data-pmopt="${k}|${oj}" class="${oj === j ? "on" : ""}">${esc(o.tag)}</button>`).join("")}</span>` : ""}</div>
           <div class="pur-ms-g">${givesHtml(st.opts[j].gives)}</div></div>`;
       }).join("")}</div>${M.kind !== "card" ? `<div class="meta" style="font-size:10.5px; margin:-4px 0 8px;">${esc(t("pur_ms_order"))}</div>` : ""}` : "";
       const notes = [];
@@ -7244,7 +7249,7 @@ async function renderPurchasesPage() {
       if (M) pick.slice(0, Math.min(kk, M.planK)).forEach((j, k) => { if (j !== M.planPick[k]) notes.push(t(M.kind === "card" ? "pur_ms_card" : "pur_ms_step").replace("{k}", k + 1).replace("{tag}", M.steps[k].opts[j].tag)); });
       const noteHtml = notes.length ? `<div class="pur-ms-note">${esc(notes.join(" · "))}. ${esc(t("pur_ms_replan"))}</div>` : "";
       // Version pills: price and steps only, so they stay small.
-      const verHtml = vers.length > 1 ? `<div class="pur-ms-vers">${vers.map((v, k) => { const vm = stepModel(v.r, sugTable(v.r) || tb), vLocal = vm && vm.kind === "plain" ? vm.steps.slice(0, vm.planK).reduce((a, st) => a + packConvert(st.price, v.r.currency).n, 0) : packRowLocalUnits(v.r).reduce((a, x) => a + x, 0); return `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))} · <b>${esc(packFmtLocal(vLocal, v.r.currency, false, v.r.price))}</b>${vm && vm.kind !== "card" ? ` · ${esc(nSteps(vm.planK))}` : ""}${v.s0.length ? ` · ×${v.s0.reduce((a, x) => a + x.count, 0)}` : ""}</button>`; }).join("")}</div>` : "";
+      const verHtml = vers.length > 1 ? `<div class="pur-ms-vers">${vers.map((v, k) => { const vm = stepModel(v.r, sugTable(v.r) || tb), vLocal = vm && vm.kind === "plain" ? vm.steps.slice(0, vm.planK).reduce((a, st) => a + packConvert(st.price, v.r.currency).n, 0) : packRowLocalUnits(v.r).reduce((a, x) => a + x, 0); return `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}"><span class="pur-vb-k">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}</span><b>${esc(packFmtLocal(vLocal, v.r.currency, false, v.r.price))}</b><span class="pur-vb-s">${vm && vm.kind !== "card" ? esc(nSteps(vm.planK)) : ""}${v.s0.length ? `${vm && vm.kind !== "card" ? " · " : ""}×${v.s0.reduce((a, x) => a + x.count, 0)}` : ""}</span></button>`; }).join("")}</div>` : "";
       modal.innerHTML = `<div class="modal-box pur-modal">
         <h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${partLabel !== fmtN(1) ? `${esc(partLabel)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
