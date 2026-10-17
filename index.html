@@ -280,7 +280,7 @@
   .pk-chip .pk-tmw{ width:22px; height:22px; border-radius:6px; }
   .pk-chip .pk-tmw img{ width:16px; height:16px; }
   .pk-tm{ position:absolute; inset-inline-start:-5px; bottom:-5px; text-decoration:none; font-size:8.5px; font-weight:700; line-height:1; padding:2px 3px; border-radius:5px; background:#0b0f15; color:#fff; border:1px solid var(--ring); }
-  .pk-chip .pk-tm{ font-size:7.5px; padding:1px 2px; bottom:-4px; }
+  .pk-chip .pk-tm{ font-size:9px; padding:1px 2px; bottom:-5px; }
   .pk-arrange .pk-arr{ display:flex; }
   .pk-chips{ display:flex; flex-wrap:wrap; gap:4px; }
   .pk-chip{ display:inline-flex; align-items:center; gap:3px; padding:2px 7px 2px 3px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); font-size:11.5px; }
@@ -394,27 +394,27 @@
     .dash-fit .rc-wrap{ margin-bottom:0 !important; }
     .dash-fit .rc-grid{ gap:6px; }
     .dash-fit .rc-card{ padding:5px 4px; border-radius:12px; }
-    .dash-fit .rc-troop{ font-size:9px; }
+    .dash-fit .rc-troop{ font-size:10px; }
     .dash-fit .rc-pick{ width:36px; height:36px; margin:2px auto; border-radius:8px; }
     .dash-fit .rc-name{ font-size:11.5px; }
     .dash-fit .rc-stars{ margin:1px 0; }
     .dash-fit .rc-stars > *{ width:17px !important; height:17px !important; }
     .dash-fit .rc-step{ margin:1px auto 2px; max-width:110px; font-size:11px; }
     .dash-fit .rc-pm{ width:22px; height:22px; font-size:14px; }
-    .dash-fit .rc-sh{ font-size:9.5px; margin:0; line-height:1.3; }
-    .dash-fit .rc-pct{ font-size:9.5px; line-height:1.25; }
+    .dash-fit .rc-sh{ font-size:10px; margin:0; line-height:1.3; }
+    .dash-fit .rc-pct{ font-size:10px; line-height:1.25; }
     .dash-fit .rc-pct span{ display:inline; } .dash-fit .rc-pct span + span::before{ content:" · "; }
     .dash-fit .rc-card select{ font-size:11px; padding:1px 4px; margin-top:2px; height:24px; }
     .dash-fit .dash-troops.cols .dash-troop{ padding:5px 6px 3px; }
     .dash-fit .dash-troops.cols .dash-troop-h{ font-size:10px; margin-bottom:0; }
     .dash-fit .dash-troops.cols .dash-stat{ padding:2px 1px; gap:0; }
-    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:9px; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:10px; }
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:13px; }
     .dash-fit .dash-troops.cols .dash-stat-bar{ height:3px; margin-top:1px; }
     .dash-fit .dash-troops.cols .dash-stat{ grid-template-columns:1fr auto; align-items:baseline; }
     .dash-fit .dash-troops.cols .dash-stat-k{ grid-column:1 / -1; }
     .dash-fit .dash-troops.cols .dash-stat-v{ grid-column:1; grid-row:2; }
-    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:2; grid-row:2; font-size:8.5px; line-height:1.2; text-align:end; }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:2; grid-row:2; font-size:10px; line-height:1.2; text-align:end; }
     .dash-fit .dash-troops.cols .dash-stat-bar{ grid-column:1 / -1; grid-row:3; }
     .dash-fit #troopSections > .meta{ display:none; }
     .dash-fit #troopSections{ display:flex; flex-direction:column; }
@@ -423,16 +423,16 @@
     .dash-fit{ --sx:1; }
     .dash-fit .dash-troops.cols .dash-troop-h{ font-size:calc(10px * min(var(--sx), 1.25)); }
     .dash-fit .dash-troops.cols .dash-stat{ padding:calc(2px + (var(--sx) - 1) * 10px) 1px; }
-    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(9px * min(var(--sx), 1.2)); }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(10px * min(var(--sx), 1.2)); }
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(13px * min(var(--sx), 1.12)); }
-    .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8.5px * min(var(--sx), 1.1)); }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(10px * min(var(--sx), 1.1)); }
     /* Small phones (360 px): a little tighter so the numbers stay inside the cards. */
     @media (max-width:380px){
       .dash-fit .dash-troops.cols .dash-troop{ padding-left:4px; padding-right:4px; }
       .dash-fit .dash-troops.cols .dash-stat-k{ letter-spacing:0; gap:2px; }
-      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:8px; }
+      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:10px; }
       .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(12px * min(var(--sx), 1.12)); }
-      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8px * min(var(--sx), 1.1)); }
+      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(10px * min(var(--sx), 1.1)); }
     }
     .dash-fit .dash-troops.cols .dash-stat-bar{ height:calc(3px * min(var(--sx), 1.6)); }
     .dash-fit .rc-pick{ width:calc(36px * min(var(--sx), 1.55)); height:calc(36px * min(var(--sx), 1.55)); }
@@ -1066,7 +1066,7 @@ input,select,textarea{
   .pk-card.pk-open{ grid-column:1 / -1; border-color:var(--ice); }
   .pk-sum-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .pk-sum-h b{ font-size:14px; line-height:1.3; cursor:pointer; min-width:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
+  .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
   .page-note{ font-size:12.5px; line-height:1.45; padding:9px 12px; margin:0 0 12px; border-radius:12px; border:1px solid var(--ice); background:rgba(111,211,242,.07); color:var(--frost); }
@@ -1326,7 +1326,7 @@ input,select,textarea{
   .sa-arrow{ color:var(--muted); flex:none; }
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
-  .plx-stat span{ display:block; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .plx-stat span{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:10.5px; line-height:1.25; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; overflow:hidden; }
   .plx-stat b{ display:block; font-size:18px; font-weight:800; margin-top:2px; }
   .plx-stat small{ display:block; font-size:10px; color:var(--muted); }
   .plx-stat .t12x-bar{ margin-top:6px; }
@@ -1335,6 +1335,7 @@ input,select,textarea{
     .plx-stats.one{ gap:5px; }
     .plx-stats.one .plx-stat{ padding:7px 6px; }
     .plx-stats.one .plx-stat b{ font-size:14px; }
+    .plx-stats.one .plx-stat span{ letter-spacing:0; }
     .plx-stats.one .plx-stat small{ font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   }
   .t12x-tabs.plx-stat-tabs{ margin:0 0 10px; max-width:none; }
@@ -1344,12 +1345,12 @@ input,select,textarea{
   .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-bottom:6px; scrollbar-width:thin; }
   .plx-pick button{ flex:0 0 auto; width:76px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
   .plx-pick button img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
-  .plx-pick button > span:last-child{ width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+  .plx-pick button > span:last-child{ width:100%; text-align:center; line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
   .plx-pick-ph{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
   .plx-pick button.on{ border-color:var(--tc); color:var(--frost); background:rgba(255,255,255,.07); box-shadow:inset 0 -2px 0 var(--tc); }
   .plx-pick button.dim{ opacity:.45; }
   @media (min-width: 901px){ .plx-pick{ flex-wrap:wrap; overflow:visible; } }
-  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:66px; } .plx-pick button img, .plx-pick-ph{ width:34px; height:34px; } }
+  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:66px; padding:6px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:34px; height:34px; } }
   .t12x-tabs{ display:flex; flex:1 1 320px; max-width:560px; margin-inline-start:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; }
   .t12x-tabs button{ flex:1; border:0; background:none; color:var(--muted); font:inherit; font-weight:600; font-size:13px; padding:7px 4px; border-radius:10px; cursor:pointer; }
   .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }
@@ -1530,7 +1531,10 @@ input,select,textarea{
   .scan-zero-to{ flex:0 0 auto; font-weight:700; color:var(--danger); font-size:14px; padding-inline-end:6px; }
   .scan-spin{ width:28px; height:28px; margin:6px auto 12px; border:3px solid var(--line); border-top-color:var(--ice); border-radius:50%; animation:scanspin .8s linear infinite; }
   @keyframes scanspin{ to{ transform:rotate(360deg); } }
-  .bp-tile .bp-name{ font-size:9.5px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* Names up to 2 lines ("Custom Resource Chest Lv.1"), so tiles of one family can be told apart. */
+  .bp-tile .bp-name{ font-size:10px; line-height:1.15; color:var(--muted); max-width:100%; text-align:center; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .bp-grid .bp-tile{ padding:5px 3px; gap:1px; }
+  .bp-grid .bp-tile img{ width:34px; height:34px; }
   .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
   .skin-card .info{ padding:8px 10px 10px; }
@@ -9856,12 +9860,16 @@ async function renderInventory() {
       return `<button type="button" class="bp-tile" data-bpwidgets title="${esc(t("bp_widgets"))}"><img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" /><span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span><span class="bp-name">${esc(t("bp_widgets"))} (${n})</span></button>`;
     }
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
+    // The Lv badge and the shield already show the level and "protected", so
+    // the name under the picture leaves them out and fits in 2 lines
+    // ("Custom Resource Chest"); the full name stays in the title.
+    const tileName = !it.hero && /Lv\.\d/.test(it.name) ? label.replace(/\s*Lv\.\d+/, "").replace(/\s*\(protected\)$/i, "") : label;
     return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : label)}">
       ${it.hero && it.face ? `<span class="bp-heroic"><img class="bp-item" src="${esc(ic)}" alt="" loading="lazy" /><img class="bp-face" src="${esc(it.face)}" alt="" loading="lazy" /></span>` : ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
       ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : /Lv\.\d/.test(it.name) ? `<span class="bp-size">${esc(/Lv\.\d/.exec(it.name)[0])}</span>` : ""}
       ${/\(protected\)$/.test(it.name) ? `<span class="bp-shield" title="Protected">&#128737;</span>` : ""}
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
-      ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(label)}</span>`}
+      ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(tileName)}</span>`}
     </button>`;
   };
   const drawGroups = () => {
