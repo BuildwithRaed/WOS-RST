@@ -247,6 +247,81 @@
   html[dir="rtl"] .bset-sw::after{ left:18px; }
   html[dir="rtl"] .bset-sw:checked::after{ left:2px; }
   .bset-note{ font-size:10.5px; margin-top:6px; }
+  /* Pack table editor = design A1 + settings S1 (owner, 17 Oct 2026). */
+  .pk-ed-bar{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:nowrap; }
+  .pk-ed-bar [data-pkarrange].on{ background:var(--ice-dim); color:var(--frost); border-color:var(--ice-dim); }
+  .pk-more{ position:relative; flex-shrink:0; }
+  .pk-more > summary{ list-style:none; cursor:pointer; padding:4px 10px; letter-spacing:1px; }
+  .pk-more > summary::-webkit-details-marker{ display:none; }
+  .pk-menu{ position:absolute; inset-inline-end:0; top:calc(100% + 4px); z-index:30; width:240px; padding:6px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); box-shadow:0 10px 26px rgba(0,0,0,.45); display:flex; flex-direction:column; gap:2px; }
+  .pk-mi{ display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:38px; padding:4px 8px; border-radius:8px; font-size:12.5px; color:var(--frost); background:none; border:0; font:inherit; text-align:start; width:100%; }
+  .pk-mi-b{ cursor:pointer; }
+  .pk-mi-b:hover{ background:var(--panel); }
+  .pk-mi-del{ color:var(--danger); }
+  .pk-mi input[data-pt-group]{ width:120px; font-size:12px; padding:4px 6px; }
+  .pk-mi-pm{ display:inline-flex; gap:4px; }
+  .pk-mi-pm .btn{ width:30px; padding:3px 0; }
+  .pk-th{ vertical-align:top; }
+  .pk-hd{ display:flex; justify-content:center; }
+  .pk-hd-ctl{ display:none; }
+  .pk-hdi{ position:relative; display:inline-grid; place-items:center; width:34px; height:34px; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); padding:0; color:var(--frost); cursor:default; }
+  button.pk-hdi{ cursor:pointer; }
+  button.pk-hdi:hover{ border-color:var(--ice); }
+  .pk-hdi img{ width:26px; height:26px; object-fit:contain; }
+  .pk-hdi b{ font-size:10px; }
+  .pk-hdi i{ position:absolute; inset-inline-end:-4px; bottom:-4px; font-size:8px; font-style:normal; line-height:13px; width:13px; height:13px; border-radius:50%; background:var(--ice-dim); color:var(--frost); }
+  .pk-hdx{ position:absolute; inset-inline-end:-5px; top:-5px; width:15px; height:15px; border-radius:50%; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-size:10px; line-height:12px; padding:0; cursor:pointer; }
+  .pk-arr{ display:none; justify-content:center; gap:2px; margin-top:3px; }
+  .pk-arrange .pk-arr{ display:flex; }
+  .pk-chips{ display:flex; flex-wrap:wrap; gap:4px; }
+  .pk-chip{ display:inline-flex; align-items:center; gap:3px; padding:2px 7px 2px 3px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); font-size:11.5px; }
+  .pk-chip img{ width:18px; height:18px; object-fit:contain; }
+  .pk-chip em{ font-style:normal; color:var(--muted); padding-inline-start:4px; }
+  .pk-sheet-back{ position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; }
+  .pk-sheet{ width:min(520px, 100%); max-height:82vh; display:flex; flex-direction:column; background:var(--panel); border:1px solid var(--line); border-radius:16px 16px 0 0; overflow:hidden; }
+  @media (min-width:701px){ .pk-sheet-back{ align-items:center; } .pk-sheet{ border-radius:16px; } }
+  .pk-sheet-h{ display:flex; align-items:center; gap:8px; padding:12px; border-bottom:1px solid var(--line); }
+  .pk-sheet-h b{ white-space:nowrap; font-size:13px; }
+  .pk-sheet-h input{ flex:1 1 auto; min-width:0; font-size:16px; padding:6px 10px; }
+  .pk-sheet-x{ background:none; border:0; color:var(--muted); font-size:20px; cursor:pointer; padding:0 4px; }
+  .pk-sheet-mv{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); font-size:12px; flex-wrap:wrap; }
+  .pk-sheet-mv > span:last-child{ display:inline-flex; gap:6px; }
+  .pk-sheet-list{ overflow:auto; padding:6px; display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .pk-sheet-o{ display:flex; align-items:center; gap:8px; min-height:42px; padding:4px 8px; border:1px solid transparent; border-radius:10px; background:none; color:var(--frost); font:inherit; font-size:12.5px; text-align:start; cursor:pointer; }
+  .pk-sheet-o:hover{ background:var(--panel-2); }
+  .pk-sheet-o.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .pk-sheet-o.del{ color:var(--danger); }
+  .pk-sheet-ic{ flex:0 0 26px; height:26px; display:grid; place-items:center; }
+  .pk-sheet-ic img{ max-width:26px; max-height:26px; object-fit:contain; }
+  .pks{ margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
+  .pks-sum{ cursor:pointer; font-size:12.5px; color:var(--ice); font-weight:600; }
+  .pks-notes{ margin-top:8px; }
+  .pks-note{ display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; border:1px solid rgba(111,211,242,.35); color:var(--ice); font-size:11.5px; }
+  .pks-note img{ width:16px; height:16px; object-fit:contain; }
+  .pks-i{ display:inline-grid; place-items:center; width:15px; height:15px; border-radius:50%; border:1px solid var(--muted); background:none; color:var(--muted); font:italic 700 9px/1 Georgia, serif; padding:0; cursor:pointer; vertical-align:middle; text-transform:none; letter-spacing:0; }
+  .pks-info{ font-size:11px; line-height:1.45; color:var(--muted); background:var(--panel-2); border-radius:8px; padding:7px 9px; margin:4px 0 6px; }
+  .pks-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px; }
+  .pks-chip{ position:relative; cursor:pointer; }
+  .pks-chip input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .pks-chip span{ display:inline-block; padding:6px 11px; border-radius:999px; border:1px solid var(--line); font-size:12px; color:var(--frost); }
+  .pks-chip input:checked + span{ background:var(--ice-dim); border-color:var(--ice); }
+  .pks-chip input:focus-visible + span{ outline:2px solid var(--ice); }
+  .pks-seg{ display:flex; gap:2px; padding:2px; margin:4px 0 6px; background:var(--panel-2); border-radius:10px; }
+  .pks-seg-o{ flex:1 1 0; position:relative; cursor:pointer; }
+  .pks-seg-o input{ position:absolute; opacity:0; width:1px; height:1px; }
+  .pks-seg-o span{ display:block; text-align:center; padding:7px 4px; border-radius:8px; font-size:12px; color:var(--muted); }
+  .pks-seg-o input:checked + span{ background:var(--ice-dim); color:var(--frost); font-weight:600; }
+  .pks-step{ display:inline-flex; align-items:center; gap:4px; }
+  .pks .pks-step input[type=number]{ width:46px; min-width:0; flex:0 0 auto; text-align:center; padding:5px 4px; }
+  .pks-step .btn{ width:30px; padding:4px 0; }
+  .pks .bset-c select{ width:auto; max-width:180px; }
+  .pks .bset-c{ flex-wrap:nowrap; }
+  .pk-tbl-wrap td{ padding-left:1px !important; padding-right:1px !important; }
+  .pks-opt:has(.bset-c > input[style*="display: none"]), .pks-opt:has(.bset-c > input[style*="display:none"]){ display:none; }
+  .pks-more{ border-top:1px solid var(--line); }
+  .pks-more > summary{ cursor:pointer; padding:11px 0; font-size:13px; color:var(--frost); }
+  .pks-more[open] > summary{ color:var(--ice); }
+  .pks [data-pktrigwrap], .pks [data-pkownwrap]{ margin-top:6px; }
   @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } }
   .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 10px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
@@ -2816,7 +2891,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 13; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 14; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3027,6 +3102,27 @@ const T = {
   pk_in_budgets: { en: "Count in Budgets" },
   pk_in_budgets_hint: { en: "Ticked: Budgets can use this pack. Unticked: left out of Budgets and the suggested packs." },
   pk_edit: { en: "Edit" },
+  pk_arrange: { en: "Arrange" },
+  pk_more: { en: "More" },
+  pk_group: { en: "Group" },
+  pk_scale: { en: "Fill from Row 1" },
+  pk_delete_table: { en: "Delete table" },
+  pk_col_item: { en: "Column {n} item" },
+  pk_col_pos: { en: "Position {n} of {m}" },
+  pk_search_items: { en: "Search items" },
+  pk_move_left: { en: "Move left" },
+  pk_move_right: { en: "Move right" },
+  pk_settings: { en: "Pack settings" },
+  pk_none_picked: { en: "none picked" },
+  pk_sec_columns: { en: "Columns" },
+  pk_sec_buying: { en: "Buying" },
+  pk_sec_schedule: { en: "Schedule" },
+  pk_sec_visitors: { en: "Visitors" },
+  pk_sec_more: { en: "More" },
+  pk_any_s: { en: "Any row" },
+  pk_tiers_s: { en: "In steps" },
+  pk_choice_s: { en: "One row" },
+  pk_picks_s: { en: "Pick options" },
   pk_close: { en: "Close" },
   plx_all_troops: { en: "All troops" },
   t12x_target: { en: "Target" },
@@ -3721,7 +3817,7 @@ const T = {
   mp_admin_settings: { en: "admin settings" },
   mp_limit_label: { en: "Tables each visitor can have" },
   mp_limit_saved: { en: "My packs limit saved" },
-  mp_admin_desc: { en: "Visitors copy the tables in the \"Pack templates\" category into their own My packs. Templates aren't used in Budgets or Pack cost. Your own copies (⧉ on a template) go to \"My packs\", hidden from visitors, with no limit." },
+  mp_admin_desc: { en: "Visitors copy the templates below into their own My packs. Templates aren't used in Budgets or Pack cost. Your own copies (Duplicate on a template) go to \"My packs\", hidden from visitors, with no limit." },
   mp_templates_added: { en: "pack templates added" },
   mp_template_note: { en: "Not used in Budgets or Pack cost · visitors copy these" },
   mp_admin_mine_note: { en: "Your own copies · hidden from visitors" },
@@ -3730,7 +3826,7 @@ const T = {
   mp_where: { en: "A copy appears below under \"Your tables\", where you can edit it." },
   mp_your_tables: { en: "Your tables" },
   mp_empty: { en: "No tables yet. Press Duplicate on a template above." },
-  mp_template_edit_hint: { en: "Edit the templates themselves on the Packs page, in the \"Pack templates\" category." },
+  mp_template_edit_hint: { en: "Edit opens the template on the Packs page (templates aren't listed there otherwise)." },
   mp_edit_in_packs: { en: "Edit in Packs" },
   mp_admin_none: { en: "No copies yet. Press Duplicate on a template." },
   mp_admin_copied: { en: "Copied to My packs — opening it on the Packs page" },
@@ -6147,7 +6243,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const mine = (allTables || []).filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP);
     const tplRow = (tb) => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;">
         <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))}</span></span>
-        <button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}" style="flex-shrink:0;">${esc(t("mp_duplicate"))}</button></div>`;
+        <span style="display:inline-flex; gap:6px; flex-shrink:0;"><button type="button" class="btn small ghost" data-mpaedit>${esc(t("pk_edit"))}</button><button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}">${esc(t("mp_duplicate"))}</button></span></div>`;
     el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
       <div style="font-size:14px; font-weight:700;">${esc(t("mp_admin_settings"))}</div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;">${esc(t("mp_limit_label"))} <input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" style="width:64px; font-size:12px; padding:3px 6px;" /></label>
@@ -6173,6 +6269,8 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     });
     const openPacks = () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_MINE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); };
     el.querySelector("[data-mpopenpacks]").addEventListener("click", openPacks);
+    // Templates are no longer listed on the Packs page; Edit opens just them there.
+    el.querySelectorAll("[data-mpaedit]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_TEMPLATE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); }));
     el.querySelectorAll("[data-mpadup]").forEach((b) => b.addEventListener("click", async () => {
       const tb = templates.find((x) => String(x.id) === b.dataset.mpadup);
       if (!tb) return;
@@ -6618,8 +6716,7 @@ function packMergeOwned(owned, supply) {
 function packUsedForNames(tb) {
   // The New Gen hero pack patterns feed every new hero's copy.
   if ((tb.columns || []).some((c) => /^hero (shards?|widgets?)$/i.test(String(c || "")))) return [packHeroUseLabel(tb)];
-  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel)
-    .concat((packLinkFor(tb.id).pages || []).includes("hero_shards") ? [packHeroUseLabel(tb)] : []);
+  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map((g) => (g.key === "hero_shards" ? packHeroUseLabel(tb) : packGroupLabel(g)));
 }
 // "Hero shards", "Hero widgets" or both, from what the pack gives (owner,
 // 16 Oct 2026: Marks of Valor packs are for shards only).
@@ -7932,6 +8029,8 @@ async function renderPackCalendarPage() {
 // Packs B: tables open for editing (kept for the visit). Closed tables show a
 // small summary card only.
 const PACKS_OPEN = new Set();
+// Pack tables in "⇅ Arrange" mode (◀ ▶ under each column), kept for the visit.
+const PK_ARRANGE = new Set();
 async function renderPacksPage() {
   const seq = RENDER_SEQ;
   content.innerHTML = `
@@ -7992,6 +8091,80 @@ async function renderPacksPage() {
     sel.innerHTML = packColumnOptionsHtml(tb, Number(sel.dataset.col));
   };
   ["pointerdown", "mousedown", "touchstart", "focusin", "keydown"].forEach((ev) => listEl.addEventListener(ev, fillPackColPick, true));
+  // A1: "⇅ Arrange" shows the ◀ ▶ under each column; a column picture opens
+  // the item list (with search and Move left / right).
+  listEl.addEventListener("click", (e) => {
+    // A tap anywhere else closes an open ⋯ menu.
+    listEl.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(e.target)) m.open = false; });
+    const arr = e.target.closest("[data-pkarrange]");
+    if (arr) {
+      const panel = arr.closest("[data-packtable]"), id = panel && panel.dataset.pkid;
+      if (!id) return;
+      if (PK_ARRANGE.has(id)) PK_ARRANGE.delete(id); else PK_ARRANGE.add(id);
+      panel.classList.toggle("pk-arrange", PK_ARRANGE.has(id));
+      arr.classList.toggle("on", PK_ARRANGE.has(id));
+      return;
+    }
+    const inf = e.target.closest("[data-pksinfo]");
+    if (inf) {
+      e.preventDefault();
+      const box = inf.closest("[data-packlink]"), txt = box && box.querySelector(`[data-pksinfotext="${CSS.escape(inf.dataset.pksinfo)}"]`);
+      if (txt) txt.hidden = !txt.hidden;
+      return;
+    }
+    const step = e.target.closest("[data-pksstep]");
+    if (step) {
+      const inp = step.parentElement.querySelector("input[type=number]");
+      if (!inp) return;
+      const v = Math.max(Number(inp.min) || 1, Math.min(Number(inp.max) || 99, (Number(inp.value) || 0) + Number(step.dataset.pksstep)));
+      if (v !== Number(inp.value)) { inp.value = v; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+      return;
+    }
+    const hd = e.target.closest("[data-pkhd]");
+    if (hd) {
+      const panel = hd.closest("[data-packtable]"), tb = panel && tables[Number(panel.dataset.packtable)];
+      if (tb) pkOpenItemSheet(panel, tb, Number(hd.dataset.pkhd));
+    }
+  });
+  function pkOpenItemSheet(panel, tb, ci) {
+    const th = panel.querySelectorAll("thead th.pk-th")[ci];
+    const sel = th && th.querySelector("select[data-pt-colpick]");
+    if (!sel) return;
+    if (sel.hasAttribute("data-pt-lazy")) { sel.removeAttribute("data-pt-lazy"); sel.innerHTML = packColumnOptionsHtml(tb, ci); }
+    const opts = [...sel.options].map((o) => ({ v: o.value, txt: o.textContent, on: o.selected }));
+    const left = th.querySelector('[data-pt-colmove="-1"]'), right = th.querySelector('[data-pt-colmove="1"]');
+    document.querySelector(".pk-sheet-back")?.remove();
+    const back = document.createElement("div");
+    back.className = "pk-sheet-back";
+    const listHtml = (q) => opts.filter((o) => !q || o.txt.toLowerCase().includes(q)).map((o) => {
+      const ic = o.v && !o.v.startsWith("__") ? pkItemIcon(o.v) : "";
+      return `<button type="button" class="pk-sheet-o${o.on ? " on" : ""}${o.v === "__remove__" ? " del" : ""}" data-pkopt="${esc(o.v)}"><span class="pk-sheet-ic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}</span><span>${esc(o.txt)}</span></button>`;
+    }).join("") || `<div class="meta" style="padding:10px;">—</div>`;
+    back.innerHTML = `<div class="pk-sheet" role="dialog">
+      <div class="pk-sheet-h"><b>${esc(t("pk_col_item").replace("{n}", ci + 1))}</b><input type="search" data-pksearch placeholder="${esc(t("pk_search_items"))}" /><button type="button" class="pk-sheet-x" data-pkclose aria-label="Close">&times;</button></div>
+      <div class="pk-sheet-mv"><span class="meta">${esc(t("pk_col_pos").replace("{n}", ci + 1).replace("{m}", tb.columns.length))}</span><span><button type="button" class="btn small ghost" data-pkmv="-1" ${!left || left.disabled ? "disabled" : ""}>&#9664; ${esc(t("pk_move_left"))}</button><button type="button" class="btn small ghost" data-pkmv="1" ${!right || right.disabled ? "disabled" : ""}>${esc(t("pk_move_right"))} &#9654;</button></span></div>
+      <div class="pk-sheet-list">${listHtml("")}</div></div>`;
+    document.body.appendChild(back);
+    const close = () => { back.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    const list = back.querySelector(".pk-sheet-list");
+    list.querySelector(".on")?.scrollIntoView({ block: "center" });
+    back.querySelector("[data-pksearch]").addEventListener("input", (e) => { list.innerHTML = listHtml(e.target.value.trim().toLowerCase()); });
+    back.addEventListener("click", (e) => {
+      if (e.target === back || e.target.closest("[data-pkclose]")) { close(); return; }
+      const mv = e.target.closest("[data-pkmv]");
+      if (mv) { close(); (mv.dataset.pkmv === "-1" ? left : right)?.click(); return; }
+      const o = e.target.closest("[data-pkopt]");
+      if (o) {
+        close();
+        if (sel.value === o.dataset.pkopt && o.dataset.pkopt !== "__custom__") return;
+        sel.value = o.dataset.pkopt;
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+  }
+
   const [tablesLoaded] = await Promise.all([
     sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`),
     ensurePackLinks(),
@@ -8063,6 +8236,39 @@ async function renderPacksPage() {
   }
   function fmtNum(n) {
     return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+  // Totals of 100,000 and up are shortened so they fit their column (444K,
+  // 1.11M); the full number is in the cell's title (long-press).
+  function pkShortNum(n) {
+    const a = Math.abs(n);
+    if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, "") + "M";
+    if (a >= 1e5) return Math.round(n / 1e3) + "K";
+    return fmtNum(n);
+  }
+  // A1 header (owner, 17 Oct 2026): each column shows its item's picture.
+  // The owner taps it to choose the item (pkOpenItemSheet); the real
+  // dropdown stays hidden underneath and does the work.
+  function pkColItem(tb, ci) {
+    return packEffectiveCols(tb)[ci] || String(tb.columns[ci] || "").trim();
+  }
+  function pkItemIcon(name) {
+    if (!name) return "";
+    if (String(name).toLowerCase() === "gems") return MATERIAL_ICONS.gems;
+    return bpIcon({ name }) || materialIconSrc(name) || "";
+  }
+  function pkHeadHtml(tb, ci) {
+    const link = packLinkFor(tb.id);
+    const cur = String(tb.columns[ci] || "").trim();
+    const fixed = ci === link.priceCol || (packIsNonResourceColumn(cur) && cur.toLowerCase() !== "gems");
+    if (fixed) return `<div class="pk-hd">${packColumnControlHtml(tb, ci)}</div>`;
+    const name = pkColItem(tb, ci), icon = pkItemIcon(name), label = materialDisplayName(name) || name;
+    const face = icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<b>${esc(String(label || "?").slice(0, 3))}</b>`;
+    if (cur.toLowerCase() === "gems") {
+      return `<div class="pk-hd"><span class="pk-hdi" title="${esc(label)}">${face}${IS_OWNER ? `<button type="button" class="pk-hdx" data-pt-gemsdel data-col="${ci}" title="${esc(t("pack_remove_column"))}">&times;</button>` : ""}</span></div>`;
+    }
+    return `<div class="pk-hd">${IS_OWNER
+      ? `<button type="button" class="pk-hdi" data-pkhd="${ci}" title="${esc(label)}" aria-label="${esc(label)}">${face}<i>&#9662;</i></button>`
+      : `<span class="pk-hdi" title="${esc(label)}">${face}</span>`}</div><div class="pk-hd-ctl">${packColumnControlHtml(tb, ci)}</div>`;
   }
   // Which column holds the price - the only one that may have decimals.
   function priceColOf(tb) {
@@ -8157,7 +8363,7 @@ async function renderPacksPage() {
         if (money && v) { const c = packConvert(v, link.currency); sum += c.n; code = c.code; } else sum += v;
       });
       const cell = panel.querySelector(`[data-pt-total="${ci}"]`);
-      if (cell) cell.textContent = sum ? (money ? fmtMoneyIn(sum, code) : fmtNum(sum)) : "";
+      if (cell) { cell.textContent = sum ? (money ? fmtMoneyIn(sum, code) : pkShortNum(sum)) : ""; cell.title = sum && !money ? fmtNum(sum) : ""; }
     });
   }
 
@@ -8168,9 +8374,13 @@ async function renderPacksPage() {
   const categoryOf = (tb) => packLinkFor(tb.id).group;
   // Category order: saved by the owner (PACK_LINKS.__order.categories);
   // categories not in that list follow in order of first appearance.
+  // Pack templates live on the My packs page (owner, 17 Oct 2026): here they
+  // show only when "Edit" there opens their category.
+  const tplOpen = () => packsFilter === "cat:" + PACK_TEMPLATE_GROUP;
+  const isTpl = (tb) => !!packLinkFor(tb.id).template;
   function categoryOrder() {
     const seen = [];
-    tables.forEach((tb) => { const g = categoryOf(tb); if (g && !seen.includes(g)) seen.push(g); });
+    tables.forEach((tb) => { const g = categoryOf(tb); if (g && !seen.includes(g) && (!isTpl(tb) || tplOpen())) seen.push(g); });
     const saved = (PACK_LINKS && PACK_LINKS.__order && Array.isArray(PACK_LINKS.__order.categories)) ? PACK_LINKS.__order.categories : [];
     return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g))];
   }
@@ -8178,6 +8388,7 @@ async function renderPacksPage() {
     return [{ key: "all" }, ...categoryOrder().map((g) => ({ key: "cat:" + g, name: g })), { key: "none" }];
   }
   function tableMatchesFilter(tb) {
+    if (isTpl(tb) && !tplOpen()) return false;
     if (packsFilter === "all") return true;
     if (packsFilter === "none") return !categoryOf(tb);
     return packsFilter.startsWith("cat:") && categoryOf(tb) === packsFilter.slice(4);
@@ -8224,7 +8435,7 @@ async function renderPacksPage() {
     listEl.innerHTML = `<div class="pk-grid">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_TEMPLATE_GROUP ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_template_note"))}</span>` : g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
         lastGroup = g;
         return heading + (() => {
         // Auto-computed total row: sums every column's numeric cells across
@@ -8234,41 +8445,37 @@ async function renderPacksPage() {
           t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
         );
         const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
-        const gives = t.columns.filter((_, ci) => ci !== (lk.priceCol || 0)).map((c) => materialDisplayName(c)).filter(Boolean);
+        // Closed card: what the whole table gives, as item pictures with amounts.
+        const giveChips = t.columns.map((c, ci) => {
+          if (ci === (lk.priceCol || 0)) return "";
+          const name = pkColItem(t, ci), label = materialDisplayName(name) || name;
+          if (!label) return "";
+          const ic = pkItemIcon(name), n = totals[ci];
+          return `<span class="pk-chip" title="${esc(label)}${n ? `: ${esc(fmtNum(n))}` : ""}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<em>${esc(label)}</em>`}${n ? `<b>${esc(pkShortNum(n))}</b>` : ""}</span>`;
+        }).join("");
         const usedFor = packUsedForNames(t);
         return `
-      <div class="panel pk-card${pkOpen ? " pk-open" : ""}${packInBudgets(t.id) ? "" : " pk-budoff"}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
+      <div class="panel pk-card${pkOpen ? " pk-open" : ""}${PK_ARRANGE.has(String(t.id)) ? " pk-arrange" : ""}${packInBudgets(t.id) ? "" : " pk-budoff"}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
         <div class="pk-sum">
           <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
-          <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
-          <label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>
-          <div class="pk-sum-f">${usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
+          <div class="pk-sum-gives pk-chips">${giveChips || "—"}</div>
+          ${lk.template ? "" : `<label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>`}
+          <div class="pk-sum-f">${lk.template ? `<span class="pk-sum-used">${esc(window.t("mp_template_note"))}</span>` : usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
-        <div class="pk-ed-scroll" style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
+        <div class="pk-ed-scroll pk-ed-bar">
           <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
-          <input data-pt-group list="packGroupNames" value="${esc(packLinkFor(t.id).group)}" placeholder="${esc(groupPh)}" title="${esc(groupTitle)}" style="font-size:11px; padding:3px 6px; flex:0 1 110px; min-width:70px;" />
-          <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.">
-            <input type="checkbox" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} style="cursor:pointer; flex-shrink:0;" />
-          </label>
-          <span style="display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; white-space:nowrap;">
-            <span class="meta" style="font-size:9px;">Column</span>
-            <span style="display:inline-flex; gap:4px;">
-              <button class="btn small ghost" data-pt-addcol title="Add column" style="width:24px; padding:3px 0;">+</button>
-              <button class="btn small ghost" data-pt-delcollast title="Remove last column" style="width:24px; padding:3px 0;">&minus;</button>
-            </span>
-          </span>
-          <span style="display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; white-space:nowrap;">
-            <span class="meta" style="font-size:9px;">Row</span>
-            <span style="display:inline-flex; gap:4px;">
-              <button class="btn small ghost" data-pt-addrow title="Add row" style="width:24px; padding:3px 0;">+</button>
-              <button class="btn small ghost" data-pt-delrowlast title="Remove last row" style="width:24px; padding:3px 0;">&minus;</button>
-            </span>
-          </span>
-          ${PACK_PRESET_TABLES.some((pp) => pp.title === t.title) ? `<button class="btn small ghost" data-pt-restore title="${esc(restoreTitle)}" style="flex-shrink:0; width:28px; padding:4px 0;">&#8634;</button>` : ""}
-          <button class="btn small ghost" data-pt-duplicate title="${esc(dupTitle)}" style="flex-shrink:0; width:28px; padding:4px 0;">&#10697;</button>
-          <button class="btn small ghost" data-pt-delete title="Delete table" style="color:var(--danger); flex-shrink:0; width:28px; padding:4px 0;">&times;</button>
+          ${IS_OWNER ? `<button type="button" class="btn small ghost${PK_ARRANGE.has(String(t.id)) ? " on" : ""}" data-pkarrange>&#8645; ${esc(window.t("pk_arrange"))}</button>` : ""}
+          <details class="pk-more"><summary class="btn small ghost" title="${esc(window.t("pk_more"))}">&middot;&middot;&middot;</summary><div class="pk-menu">
+            <label class="pk-mi"><span>${esc(window.t("pk_group"))}</span><input data-pt-group list="packGroupNames" value="${esc(packLinkFor(t.id).group)}" placeholder="${esc(groupPh)}" title="${esc(groupTitle)}" class="keep-w" /></label>
+            <label class="pk-mi" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale."><span>${esc(window.t("pk_scale"))}</span><input type="checkbox" class="bset-sw" data-pt-scaletoggle ${t.scale_enabled !== false ? "checked" : ""} /></label>
+            <div class="pk-mi"><span>${esc(window.t("mp_column"))}</span><span class="pk-mi-pm"><button type="button" class="btn small ghost" data-pt-addcol title="Add column">+</button><button type="button" class="btn small ghost" data-pt-delcollast title="Remove last column">&minus;</button></span></div>
+            <div class="pk-mi"><span>${esc(window.t("mp_row"))}</span><span class="pk-mi-pm"><button type="button" class="btn small ghost" data-pt-addrow title="Add row">+</button><button type="button" class="btn small ghost" data-pt-delrowlast title="Remove last row">&minus;</button></span></div>
+            ${PACK_PRESET_TABLES.some((pp) => pp.title === t.title) ? `<button type="button" class="pk-mi pk-mi-b" data-pt-restore><span>${esc(restoreTitle)}</span><span>&#8634;</span></button>` : ""}
+            <button type="button" class="pk-mi pk-mi-b" data-pt-duplicate><span>${esc(dupTitle)}</span><span>&#10697;</span></button>
+            <button type="button" class="pk-mi pk-mi-b pk-mi-del" data-pt-delete><span>${esc(window.t("pk_delete_table"))}</span><span>&times;</span></button>
+          </div></details>
         </div>
         <div class="pk-tbl-wrap" style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:11px; table-layout:fixed;">
@@ -8276,15 +8483,15 @@ async function renderPacksPage() {
               <tr>
                 ${t.columns
                   .map(
-                    (c, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center;">
-                      ${packColumnControlHtml(t, ci)}
-                      ${IS_OWNER ? `<div style="display:flex; justify-content:center; gap:2px; margin-top:2px;"><button type="button" class="btn ghost small" data-pt-colmove="-1" data-col="${ci}" ${ci === 0 ? "disabled" : ""} title="Move left" style="padding:0 5px; font-size:9px; line-height:14px;">&#9664;</button><button type="button" class="btn ghost small" data-pt-colmove="1" data-col="${ci}" ${ci === t.columns.length - 1 ? "disabled" : ""} title="Move right" style="padding:0 5px; font-size:9px; line-height:14px;">&#9654;</button></div>` : ""}
+                    (c, ci) => `<th class="pk-th" style="padding:4px 2px; border-bottom:1px solid var(--line); text-align:center;">
+                      ${pkHeadHtml(t, ci)}
+                      ${IS_OWNER ? `<div class="pk-arr"><button type="button" class="btn ghost small" data-pt-colmove="-1" data-col="${ci}" ${ci === 0 ? "disabled" : ""} title="Move left" style="padding:0 5px; font-size:9px; line-height:14px;">&#9664;</button><button type="button" class="btn ghost small" data-pt-colmove="1" data-col="${ci}" ${ci === t.columns.length - 1 ? "disabled" : ""} title="Move right" style="padding:0 5px; font-size:9px; line-height:14px;">&#9654;</button></div>` : ""}
                       ${packColMultiplier(packLinkFor(t.id), ci) > 1 ? `<div class="meta" style="font-size:9px; color:var(--ice);">/${esc(dailyDayLbl)} \u00d7${packLinkFor(t.id).daily.days}</div>` : ""}
                       <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
                   )
                   .join("")}
-                <th style="width:48px;" class="meta" title="${esc(rowMaxTitle)}">${esc(rowMaxHead)}</th>
+                <th style="width:36px;" class="meta" title="${esc(rowMaxTitle)}">${esc(rowMaxHead)}</th>
               </tr>
             </thead>
             <tbody>
@@ -8294,18 +8501,18 @@ async function renderPacksPage() {
                     ${t.columns
                       .map(
                         (_, ci) => `<td style="padding:3px; text-align:center;">
-                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; max-width:54px; font-size:14px; text-align:center; padding:4px 4px;" />
+                          <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; max-width:54px; font-size:14px; text-align:center; padding:4px 1px;" />
                         </td>`
                       )
                       .join("")}
                     <td style="text-align:center; white-space:nowrap;">
-                      <input type="number" min="1" data-pt-rowmax data-row="${ri}" value="${esc((packLinkFor(t.id).rowMax || {})[ri] || "")}" placeholder="×" title="${esc(rowMaxTitle)}" style="width:44px; font-size:10px; padding:2px 3px; text-align:center;" />
+                      <input type="number" min="1" data-pt-rowmax data-row="${ri}" value="${esc((packLinkFor(t.id).rowMax || {})[ri] || "")}" placeholder="×" title="${esc(rowMaxTitle)}" style="width:34px; font-size:10px; padding:2px 1px; text-align:center;" />
                     </td>
                   </tr>`
                 )
                 .join("")}
               <tr style="border-top:2px solid var(--line); font-weight:700;">
-                ${totals.map((sum, ci) => `<td data-pt-total="${ci}" style="padding:5px 3px; font-size:11px; text-align:center;">${sum ? fmtNum(sum) : ""}</td>`).join("")}
+                ${totals.map((sum, ci) => `<td data-pt-total="${ci}" title="${sum ? esc(fmtNum(sum)) : ""}" style="padding:5px 1px; font-size:11px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sum ? esc(pkShortNum(sum)) : ""}</td>`).join("")}
                 <td></td>
               </tr>
             </tbody>
@@ -8328,6 +8535,7 @@ async function renderPacksPage() {
   // Visitors: the tables are shown exactly as the owner set them, with every
   // editing control removed and the settings ("Used for") hidden.
   function applyPacksReadOnly(root) {
+    root.querySelectorAll(".pk-more, [data-pkarrange]").forEach((el) => el.remove());
     root.querySelectorAll("[data-packlink], [data-pt-delete], [data-pt-duplicate], [data-pt-restore], [data-pt-group], [data-pt-scaletoggle]").forEach((el) => { const lbl = el.closest("label"); (lbl && el.matches("[data-pt-scaletoggle]") ? lbl : el).remove(); });
     root.querySelectorAll("[data-pt-addcol], [data-pt-addrow]").forEach((el) => { const box = el.parentElement && el.parentElement.parentElement; (box || el).remove(); });
     root.querySelectorAll("[data-pt-title]").forEach((inp) => { inp.readOnly = true; inp.tabIndex = -1; inp.style.pointerEvents = "none"; });
@@ -8468,8 +8676,8 @@ async function renderPacksPage() {
     // wirePackLinkEditors. Building all of them made every redraw slow.
     const link = packLinkFor(tb.id);
     return `
-      <details class="pack-link" data-packlink="${esc(tb.id)}" data-packlinklazy style="margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
-        <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${packGroupsChecked(link.pages) ? ` (${packGroupsChecked(link.pages)})` : ""}</summary>
+      <details class="pack-link pks" data-packlink="${esc(tb.id)}" data-packlinklazy>
+        <summary class="pks-sum">${esc(packLinkSummaryText(packGroupsChecked(link.pages)))}</summary>
       </details>`;
   }
   function packLinkEditorFullHtml(tb) {
@@ -8477,38 +8685,49 @@ async function renderPacksPage() {
     const resOpts = (selected) =>
       `<option value="">${esc(t("pack_col_unused"))}</option>` +
       packResourceChoices(selected).map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
+    const nPages = packGroupsChecked(link.pages);
+    // S1 (owner, 17 Oct 2026): settings as short sections; the longer
+    // explanations open under an ⓘ (data-pksinfo, wired once on the list).
+    const info = (k) => `<button type="button" class="pks-i" data-pksinfo="${k}" aria-label="info">i</button>`;
+    const infoText = (k, txt) => `<div class="pks-info" data-pksinfotext="${k}" hidden>${txt}</div>`;
+    const cap = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
     return `
-      <details class="pack-link" data-packlink="${esc(tb.id)}" style="margin-top:12px; border-top:1px solid var(--line); padding-top:10px;">
-        <summary style="cursor:pointer; font-size:12px; color:var(--ice);">${esc(t("pack_used_for"))}${packGroupsChecked(link.pages) ? ` (${packGroupsChecked(link.pages)})` : ""}</summary>
-        <p class="desc" style="font-size:11px; margin:8px 0;">${esc(t("pack_used_for_desc"))}</p>
-        ${Object.values(packEffectiveCols(tb)).filter((r) => PACK_BUNDLE_NOTES[r]).map((r) => `<p class="desc" style="font-size:10.5px; margin:0 0 8px; color:var(--ice);">${esc(materialDisplayName(r))}: ${esc(PACK_BUNDLE_NOTES[r])}</p>`).join("")}
-        <div style="display:flex; flex-wrap:wrap; gap:8px 14px; margin-bottom:10px;">
-          ${PACK_PAGE_GROUPS.map((g) => `
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;">
-              <input type="checkbox" data-packgroup="${esc(g.key)}" ${g.pages.some((k) => link.pages.includes(k)) ? "checked" : ""} style="flex-shrink:0;" />
-              <span>${esc(packGroupLabel(g))}</span>
-            </label>`).join("")}
+      <details class="pack-link pks" data-packlink="${esc(tb.id)}">
+        <summary class="pks-sum">${esc(packLinkSummaryText(nPages))}</summary>
+        ${Object.values(packEffectiveCols(tb)).filter((r, i, a) => PACK_BUNDLE_NOTES[r] && a.indexOf(r) === i).map((r) => `<div class="pks-notes"><span class="pks-note">${pkItemIcon(r) ? `<img src="${esc(pkItemIcon(r))}" alt="" />` : ""}${esc(materialDisplayName(r))} ${info("n" + esc(r))}</span>${infoText("n" + esc(r), `${esc(materialDisplayName(r))}: ${esc(PACK_BUNDLE_NOTES[r])}`)}</div>`).join("")}
+        <div class="bset-sec"><b>${esc(t("pack_used_for"))} ${info("used")}</b><span class="bset-tag" data-pknonetag ${nPages ? "hidden" : ""}>${esc(t("pk_none_picked"))}</span></div>
+        ${infoText("used", esc(t("pack_used_for_desc")))}
+        <div class="pks-chips">
+          ${PACK_PAGE_GROUPS.map((g) => `<label class="pks-chip"><input type="checkbox" data-packgroup="${esc(g.key)}" ${g.pages.some((k) => link.pages.includes(k)) ? "checked" : ""} /><span>${esc(packGroupLabel(g))}</span></label>`).join("")}
         </div>
+        ${(() => {
+          // Columns whose name isn't an item: say which item they give.
+          const rows = tb.columns.map((c, ci) => {
+            // Price column, Gems, and any column already named after a
+            // resource are sorted out by the header dropdown itself.
+            if (ci === link.priceCol || packIsNonResourceColumn(c) || packResourceByName(c)) return "";
+            return `<div class="bset-row"><span class="bset-l">${esc(c || "#" + (ci + 1))}</span><span class="bset-c"><select data-packcol="${ci}">${resOpts((link.cols || {})[ci])}</select></span></div>`;
+          }).join("");
+          return rows.trim() ? `<div class="bset-sec"><b>${esc(t("pk_sec_columns"))}</b></div>${rows}` : "";
+        })()}
         ${(() => {
           // Q1: how is it bought?  Q2 (tiers only): what does one tier give?
           const how = link.pickCols > 0 ? "picks" : link.choice ? "choice" : link.sequential ? "tiers" : "any";
           const gives = !link.sequential ? "all" : (link.colOptions && !link.linkSet) ? (link.lockOption ? "one_locked" : "one_each") : "all";
+          const seg = (val, label) => `<label class="pks-seg-o"><input type="radio" name="pkhow-${esc(tb.id)}" data-pkhow="${val}" ${how === val ? "checked" : ""} /><span>${esc(label)}</span></label>`;
           const radio = (name, val, cur, label, desc, attr) => `
             <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px;">
               <input type="radio" name="${name}-${esc(tb.id)}" ${attr}="${val}" ${cur === val ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" />
               <span style="flex:1 1 0; min-width:0;"><span style="font-weight:600;">${esc(label)}</span>${desc ? `<br><span class="meta" style="font-size:10.5px;">${esc(desc)}</span>` : ""}</span>
             </label>`;
-          return `<div data-pkhowwrap style="display:${link.linkSet ? "none" : "block"};"><div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q1"))}</div>
-          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
-            ${radio("pkhow", "any", how, t("pk_any"), t("pk_any_desc"), "data-pkhow")}
-            ${radio("pkhow", "tiers", how, t("pk_tiers"), t("pk_tiers_desc"), "data-pkhow")}
-            ${how === "choice" ? radio("pkhow", "choice", how, t("pk_choice"), t("pk_choice_desc"), "data-pkhow") : ""}
-            ${radio("pkhow", "picks", how, t("pk_picks"), t("pk_picks_desc"), "data-pkhow")}
-          </div>
-          <div data-pkpickswrap style="display:${how === "picks" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line); font-size:12px;">
-            <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><span>${esc(t("pk_picks_count"))}</span><input type="number" min="1" max="6" step="1" class="keep-w" data-pkpicks value="${link.pickCols || 3}" style="width:56px; font-size:12px; padding:3px 6px;" /></label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-pkpickorder ${link.pickOrder ? "checked" : ""} /><span><b>${esc(t("pk_picks_order"))}</b> <span class="meta" style="font-size:10.5px;">${esc(t("pk_picks_order_desc"))}</span></span></label>
-            <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pk_picks_order_off"))}</div>
+          const howInfo = [["pk_any", "pk_any_desc"], ["pk_tiers", "pk_tiers_desc"]].concat(how === "choice" ? [["pk_choice", "pk_choice_desc"]] : []).concat([["pk_picks", "pk_picks_desc"]]).map(([a, b]) => `<b>${esc(t(a))}</b>: ${esc(t(b))}`).join("<br>");
+          return `<div data-pkhowwrap style="display:${link.linkSet ? "none" : "block"};"><div class="bset-sec"><b>${esc(t("pk_sec_buying"))} ${info("how")}</b></div>
+          ${infoText("how", howInfo)}
+          <div class="pks-seg">${seg("any", t("pk_any_s"))}${seg("tiers", t("pk_tiers_s"))}${how === "choice" ? seg("choice", t("pk_choice_s")) : ""}${seg("picks", t("pk_picks_s"))}</div>
+          <div data-pkpickswrap style="display:${how === "picks" ? "block" : "none"};">
+            <div class="bset-row"><span class="bset-l">${esc(t("pk_picks_count"))}</span><span class="bset-c"><span class="pks-step"><button type="button" class="btn small ghost" data-pksstep="-1">&minus;</button><input type="number" min="1" max="6" step="1" class="keep-w" data-pkpicks value="${link.pickCols || 3}" /><button type="button" class="btn small ghost" data-pksstep="1">+</button></span></span></div>
+            <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("pk_picks_order"))} ${info("order")}<small>${esc(t("pk_picks_order_desc"))}</small></span><input type="checkbox" class="bset-sw" data-pkpickorder ${link.pickOrder ? "checked" : ""} /></label>
+            ${infoText("order", esc(t("pk_picks_order_off")))}
           </div>
           <div data-pkgiveswrap style="display:${how === "tiers" && gives !== "all" ? "block" : "none"}; margin:0 0 12px 24px; padding-inline-start:10px; border-inline-start:2px solid var(--line);">
             <div class="meta" style="font-size:11px; font-weight:600; margin-bottom:6px;">${esc(t("pk_q2"))}</div>
@@ -8520,48 +8739,13 @@ async function renderPacksPage() {
           </div></div>`;
         })()}
         ${(() => {
-          // Daily-reward cards: one purchase, then a smaller reward every day.
-          const d = link.daily;
-          const cols = (tb.columns || []).map((c, ci) => ({ c, ci })).filter(({ c, ci }) => ci !== link.priceCol && !packIsNonResourceColumn(c));
-          if (!cols.length) return "";
-          return `<details data-pkdailywrap ${d ? "open" : ""} style="margin:0 0 12px; font-size:12px;">
-            <summary style="cursor:pointer; color:var(--ice);">${esc(t("pk_daily_title"))}${d ? ` (${d.days} ${esc(t("pk_daily_days"))})` : ""}</summary>
-            <p class="desc" style="font-size:10.5px; margin:6px 0 8px;">${esc(t("pk_daily_desc"))}</p>
-            <label style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">${esc(t("pk_daily_for"))} <input type="number" min="1" max="365" data-pkdailydays value="${d ? d.days : 7}" style="width:64px; font-size:12px; padding:3px 6px;" /> ${esc(t("pk_daily_days"))}</label>
-            <div style="display:flex; flex-direction:column; gap:5px; padding-inline-start:4px;">
-              ${cols.map(({ c, ci }) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" data-pkdailycol="${ci}" ${d && d.cols.includes(ci) ? "checked" : ""} style="flex-shrink:0;" /><span>${esc(materialDisplayName(packEffectiveCols(tb)[ci] || c || "#" + (ci + 1)))} <span class="meta" style="font-size:10px;">${esc(t("pk_daily_per_day"))}</span></span></label>`).join("")}
-            </div>
-          </details>`;
-        })()}
-        ${(() => {
-          // Same pack, several tables (Classic / Sublime / Exquisite...):
-          // tick the partner tables; each step then picks one of them.
-          const others = tables.filter((x) => x.id !== tb.id);
-          if (!others.length) return "";
-          const setId = link.linkSet;
-          const members = setId ? packLinkSetMembers(setId).map((x) => String(x.id)) : [];
-          const mode = link.lockOption ? "locked" : "each";
-          return `<details data-pksamewrap ${setId ? "open" : ""} style="margin:0 0 12px; font-size:12px;">
-            <summary style="cursor:pointer; color:var(--ice);">${esc(t("pk_same_title"))}${members.length > 1 ? ` (${members.length})` : ""}</summary>
-            <p class="desc" style="font-size:10.5px; margin:6px 0 8px;">${esc(t("pk_same_desc"))}</p>
-            <div style="display:flex; flex-direction:column; gap:5px; max-height:180px; overflow:auto; padding-inline-start:4px;">
-              ${others.map((x) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" data-pksame="${esc(x.id)}" ${members.includes(String(x.id)) ? "checked" : ""} style="flex-shrink:0;" /><span>${esc(x.title || "")}</span></label>`).join("")}
-            </div>
-            <div data-pksamemode style="display:${members.length > 1 ? "flex" : "none"}; flex-direction:column; gap:6px; margin-top:10px;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="each" ${mode === "each" ? "checked" : ""} /><span>${esc(t("pk_same_each"))}</span></label>
-              ${mode === "locked" ? `<label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="locked" checked /><span>${esc(t("pk_same_locked"))}</span></label>` : ""}
-              <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-top:4px;"><input type="checkbox" data-pksamefree ${link.freeSteps ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" /><span><span>${esc(t("pk_same_free"))}</span><br><span class="meta" style="font-size:10.5px;">${esc(t("pk_same_free_desc"))}</span></span></label>
-            </div>
-          </details>`;
-        })()}
-        ${(() => {
           const r = link.reset;
           const preset = link.trigger ? "trigger" : packStackInfo(r) ? "stack" : typeof r === "number" ? (PACK_RESET_PRESETS.find((p) => p.days === r) || { key: "custom" }).key : r;
           return `
-        <div style="display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap; margin-bottom:6px; font-size:12px;">
-          <label style="display:flex; align-items:center; gap:6px;">
-            <span>${esc(t("pack_reset_every"))}</span>
-            <select data-packreset style="font-size:12px;">
+        <div class="bset-sec"><b>${esc(t("pk_sec_schedule"))} ${info("reset")}</b></div>
+        ${infoText("reset", esc(t("pack_reset_desc")))}
+        <div class="bset-row"><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
+            <select data-packreset>
               ${preset === "unlimited" ? `<option value="unlimited" selected>${esc(t("pack_reset_unlimited"))}</option>` : ""}
               ${preset === "once" ? `<option value="once" selected>${esc(t("pack_reset_once"))}</option>` : ""}
               ${PACK_RESET_PRESETS.map((p) => `<option value="${p.key}" ${preset === p.key ? "selected" : ""}>${esc(t("pack_reset_" + p.key))}</option>`).join("")}
@@ -8573,17 +8757,13 @@ async function renderPacksPage() {
             <span class="meta" data-packstackcaplabel style="font-size:11px; ${preset === "stack" ? "" : "display:none;"}">${esc(t("pack_stack_max"))}</span>
             <input type="number" min="1" step="1" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
-            <span class="meta" data-packanchorlabel style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span>
-            <input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="font-size:12px; padding:3px 6px; ${typeof r === "number" ? "" : "display:none;"}" />
-            <span class="meta" data-packwindowlabel style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_label"))}</span>
-            <input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:56px; flex:0 0 auto; font-size:12px; padding:3px 6px; ${typeof r === "number" ? "" : "display:none;"}" />
-            <span class="meta" data-packwindowlabel2 style="font-size:11px; ${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span>
-          </label>
-          <label style="display:flex; align-items:center; gap:6px; ${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
-            <span>${esc(t("pack_buys_per_reset"))}</span>
-            <input type="number" min="1" step="1" data-packbuys value="${link.buys}" style="width:56px; font-size:12px; padding:3px 6px;" />
-          </label>
-        </div>
+        </span></div>
+        <div class="bset-row pks-opt"><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
+        <div class="bset-row pks-opt"><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
+        <label class="bset-row" style="${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
+            <span class="bset-l">${esc(t("pack_buys_per_reset"))}</span>
+            <span class="bset-c"><input type="number" min="1" step="1" data-packbuys value="${link.buys}" style="width:64px;" /></span>
+        </label>
         ${(() => {
           const tr = link.trigger || { expert: "", levels: {}, days: 1 };
           const experts = expertKeysAll();
@@ -8603,7 +8783,6 @@ async function renderPacksPage() {
           </div>`;
         })()}
         <p class="desc" data-packstackhint style="font-size:10.5px; margin:0 0 6px; color:var(--ice); ${preset === "stack" ? "" : "display:none;"}">${esc(t("pack_stack_hint"))}</p>
-        <p class="desc" style="font-size:10.5px; margin:0 0 10px;">${esc(t("pack_reset_desc"))}</p>
         ${IS_OWNER ? `<div data-pkownwrap style="display:${preset === "stack" ? "block" : "none"}; margin:0 0 10px; padding:10px; border:1px solid var(--ice); border-radius:10px; font-size:12px;">
           <div style="font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ice);">${esc(t("pk_own_card_title"))}</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-top:8px;">
@@ -8613,23 +8792,52 @@ async function renderPacksPage() {
           <div data-ownnote style="font-size:10.5px; color:var(--good); margin-top:6px;">${esc(packActiveNoteText(tb.id))}</div>
           <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("pk_own_card_desc"))}</div>
         </div>` : ""}
-        ${IS_OWNER ? `<div data-pkvisitorwrap style="display:flex; flex-direction:column; gap:6px; margin:0 0 12px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px; font-size:12px;">
-          <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;"><input type="checkbox" data-pkvisitordate ${link.visitorDate ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" /><span><b data-pkvisitordatelabel>${esc(preset === "stack" ? t("pk_visitor_start") : t("pk_visitor_date"))}</b><br><span class="meta" style="font-size:10.5px;" data-pkvisitordatedesc>${esc(preset === "stack" ? t("pk_visitor_start_desc") : t("pk_visitor_date_desc"))}</span></span></label>
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" data-pkhidevisitors ${link.hideVisitors ? "checked" : ""} style="flex-shrink:0;" /><span><b>${esc(t("pk_hide_visitors"))}</b></span></label>
+        ${IS_OWNER ? `<div data-pkvisitorwrap>
+          <div class="bset-sec"><b>${esc(t("pk_sec_visitors"))}</b></div>
+          <label class="bset-row" style="cursor:pointer;"><span class="bset-l"><span data-pkvisitordatelabel>${esc(preset === "stack" ? t("pk_visitor_start") : t("pk_visitor_date"))}</span><small data-pkvisitordatedesc>${esc(preset === "stack" ? t("pk_visitor_start_desc") : t("pk_visitor_date_desc"))}</small></span><input type="checkbox" class="bset-sw" data-pkvisitordate ${link.visitorDate ? "checked" : ""} /></label>
+          <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("pk_hide_visitors"))}</span><input type="checkbox" class="bset-sw" data-pkhidevisitors ${link.hideVisitors ? "checked" : ""} /></label>
         </div>` : ""}`;
         })()}
-        <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px;">
-          ${tb.columns.map((c, ci) => {
-            // Price column, Gems, and any column already named after a
-            // resource are sorted out by the header dropdown itself.
-            if (ci === link.priceCol || packIsNonResourceColumn(c) || packResourceByName(c)) return "";
-            return `
-            <div>
-              <div class="meta" style="font-size:10px; margin-bottom:3px;">${esc(c || "#" + (ci + 1))}</div>
-              <select data-packcol="${ci}" style="width:100%;">${resOpts((link.cols || {})[ci])}</select>
-            </div>`;
-          }).join("")}
-        </div>
+        ${(() => {
+          const body = `
+        ${(() => {
+          // Daily-reward cards: one purchase, then a smaller reward every day.
+          const d = link.daily;
+          const cols = (tb.columns || []).map((c, ci) => ({ c, ci })).filter(({ c, ci }) => ci !== link.priceCol && !packIsNonResourceColumn(c));
+          if (!cols.length) return "";
+          return `<details class="pks-more" data-pkdailywrap ${d ? "open" : ""}>
+            <summary>${esc(t("pk_daily_title"))}${d ? ` (${d.days} ${esc(t("pk_daily_days"))})` : ""}</summary>
+            <p class="desc" style="font-size:10.5px; margin:6px 0 8px;">${esc(t("pk_daily_desc"))}</p>
+            <label style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">${esc(t("pk_daily_for"))} <input type="number" min="1" max="365" data-pkdailydays value="${d ? d.days : 7}" style="width:64px; font-size:12px; padding:3px 6px;" /> ${esc(t("pk_daily_days"))}</label>
+            <div style="display:flex; flex-direction:column; gap:5px; padding-inline-start:4px;">
+              ${cols.map(({ c, ci }) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" data-pkdailycol="${ci}" ${d && d.cols.includes(ci) ? "checked" : ""} style="flex-shrink:0;" /><span>${esc(materialDisplayName(packEffectiveCols(tb)[ci] || c || "#" + (ci + 1)))} <span class="meta" style="font-size:10px;">${esc(t("pk_daily_per_day"))}</span></span></label>`).join("")}
+            </div>
+          </details>`;
+        })()}
+        ${(() => {
+          // Same pack, several tables (Classic / Sublime / Exquisite...):
+          // tick the partner tables; each step then picks one of them.
+          const others = tables.filter((x) => x.id !== tb.id);
+          if (!others.length) return "";
+          const setId = link.linkSet;
+          const members = setId ? packLinkSetMembers(setId).map((x) => String(x.id)) : [];
+          const mode = link.lockOption ? "locked" : "each";
+          return `<details class="pks-more" data-pksamewrap ${setId ? "open" : ""}>
+            <summary>${esc(t("pk_same_title"))}${members.length > 1 ? ` (${members.length})` : ""}</summary>
+            <p class="desc" style="font-size:10.5px; margin:6px 0 8px;">${esc(t("pk_same_desc"))}</p>
+            <div style="display:flex; flex-direction:column; gap:5px; max-height:180px; overflow:auto; padding-inline-start:4px;">
+              ${others.map((x) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" data-pksame="${esc(x.id)}" ${members.includes(String(x.id)) ? "checked" : ""} style="flex-shrink:0;" /><span>${esc(x.title || "")}</span></label>`).join("")}
+            </div>
+            <div data-pksamemode style="display:${members.length > 1 ? "flex" : "none"}; flex-direction:column; gap:6px; margin-top:10px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="each" ${mode === "each" ? "checked" : ""} /><span>${esc(t("pk_same_each"))}</span></label>
+              ${mode === "locked" ? `<label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="radio" name="pksamemode-${esc(tb.id)}" data-pksamemode="locked" checked /><span>${esc(t("pk_same_locked"))}</span></label>` : ""}
+              <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-top:4px;"><input type="checkbox" data-pksamefree ${link.freeSteps ? "checked" : ""} style="flex-shrink:0; margin-top:2px;" /><span><span>${esc(t("pk_same_free"))}</span><br><span class="meta" style="font-size:10.5px;">${esc(t("pk_same_free_desc"))}</span></span></label>
+            </div>
+          </details>`;
+        })()}
+`;
+          return body.trim() ? `<div class="bset-sec"><b>${esc(t("pk_sec_more"))}</b></div>${body}` : "";
+        })()}
       </details>`;
   }
   function wirePackLinkEditors(boxes) {
@@ -8663,7 +8871,9 @@ async function renderPacksPage() {
           await savePackLinks();
           const sum = box.querySelector("summary");
           const n = packGroupsChecked(l.pages);
-          if (sum) sum.textContent = t("pack_used_for") + (n ? ` (${n})` : "");
+          if (sum) sum.textContent = packLinkSummaryText(n);
+          const none = box.querySelector("[data-pknonetag]");
+          if (none) none.hidden = n > 0;
           renderPageTabs();
         });
       });
@@ -10940,7 +11150,13 @@ const PACK_PAGE_GROUPS = [
   { key: "pets_refine", pages: ["pets_refine"] },
   { key: "experts_group", group: "Experts", pages: ["experts", "experts_research"] },
   { key: "research_group", group: "Research", pages: ["research_center", "t11_helios", "t12_research"] },
+  // Budgets' "Hero shards & widgets" (owner, 17 Oct 2026: old packs that give hero shards).
+  { key: "hero_shards", pages: ["hero_shards"] },
 ];
+// The pack settings box title: "Pack settings · Used for (2)".
+function packLinkSummaryText(n) {
+  return `${t("pk_settings")} · ${t("pack_used_for")}${n ? ` (${n})` : ""}`;
+}
 function packGroupLabel(g) {
   if (g.group) { const e = NAV_GROUP_LABELS[g.group]; return e ? (e[LANG] || e.en) : g.group; }
   return packPageLabel(g.pages[0]);
@@ -11005,6 +11221,8 @@ const PACK_RESOURCE_NAMES = [
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
+  "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
+  "Marks of Valor", "Widget Chest", "Mystery Points",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
