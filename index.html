@@ -7190,7 +7190,7 @@ async function renderPurchasesPage() {
   // Tables joined as one pack ("Same pack, several tables": Dawn Market,
   // Dawn of Wisdom, Myriad Bazaar, Benefit Cards…) are one entry in the pack
   // list; which table each tier comes from is picked in the pack table.
-  const setLead = (tb) => { const l = packLinkFor(tb.id); if (!l.option || !l.linkSet) return null; const lead = tables.find((x) => String(x.id) === String(l.linkSet)) || tables.find((x) => packLinkFor(x.id).linkSet === l.linkSet); return lead || null; };
+  const setLead = (tb) => { const l = packLinkFor(tb.id); if (!l.option || !l.linkSet) return null; const lead = tables.find((x) => String(x.id) === String(l.linkSet)) || tables.find((x) => packLinkSetOf(x.id) === l.linkSet); return lead || null; };
   const setName = (tb) => {
     const g = packGroupsFor(tables, "__purchases").find((x) => (x.tables || []).includes(String(tb.id)));
     let n = g && g.offers && g.offers[0] ? purPackName(g.offers[0].tableTitle, tables) : (tb.title || "");
@@ -11552,7 +11552,8 @@ function packTableServesPage(tb, calcKey) {
 }
 let PACK_TABLES_ALL = null; // every table, for "same pack" lookups (Packs page keeps it fresh)
 function packLinkSetMembers(setId) {
-  return (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).filter((x) => packLinkFor(x.id).linkSet === setId);
+  // (Speed: only the linkSet is read, not every table's whole link - this runs per table per page.)
+  return (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).filter((x) => packLinkSetOf(x.id) === setId);
 }
 // Short tag telling linked tables apart ("Classic" / "Sublime"): the part
 // of the title that isn't shared with the others.
@@ -11800,6 +11801,7 @@ async function ensurePackLinks() {
   return PACK_LINKS;
 }
 async function savePackLinks() {
+  NEW_GEN_BASE_MEMO = null;
   PACK_PLAN_CACHE.clear();
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   saveCalcState("packs_links", PACK_LINKS || {});
@@ -12075,7 +12077,21 @@ function packNewGenOffset(tableId) {
   return Math.max(0, Math.round((own - Math.min(...days)) / 86400000));
 }
 // The person's "last new heroes" day, else the admin's own New Gen start.
+// Speed: packLinkFor asks for it thousands of times while a page draws, so the
+// answer is kept until the current piece of work ends (and dropped at once
+// when the purchases' date, the state age, the day or the pack links object
+// change, or anything calls budgetInvalidate / savePackLinks / a rules change).
+let NEW_GEN_BASE_MEMO = null;
 function newGenBaseDay() {
+  const key = `${(PACK_PURCHASES.newGen || {}).last}|${STATE_AGE ? STATE_AGE.day + "|" + STATE_AGE.on : ""}|${Math.floor(Date.now() / 86400000)}`;
+  const m = NEW_GEN_BASE_MEMO;
+  if (m && m.key === key && m.links === PACK_LINKS) return m.v;
+  const v = newGenBaseDayCompute();
+  if (!NEW_GEN_BASE_MEMO) queueMicrotask(() => { NEW_GEN_BASE_MEMO = null; });
+  NEW_GEN_BASE_MEMO = { key, links: PACK_LINKS, v };
+  return v;
+}
+function newGenBaseDayCompute() {
   const mine = packValidDay((PACK_PURCHASES.newGen || {}).last);
   if (mine) return mine;
   const sg = stateGenInfo();
@@ -12304,11 +12320,20 @@ function packTriggerRowStatus(trig, ri) {
   if (target < level) return { state: "notreached", counted: false, level, current, target };
   return { state: current === level ? "now" : "coming", counted: true, level, current, target };
 }
-function packLinkForBase(tableId) {
-  const links = PACK_LINKS || {};
+// The saved settings behind a table's link (a new hero's copy, a "My packs"
+// table, or the admin's packs_links entry).
+function packLinkRaw(tableId) {
   const mine = String(tableId).startsWith("my-") ? packMineFind(tableId) : null;
   const ng = String(tableId).startsWith("ng-") ? NG_HERO_LINKS[String(tableId)] : null;
-  const l = ng || (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : links[String(tableId)]) || {};
+  return { mine, l: ng || (mine ? { ...(mine.link || {}), group: PACK_MINE_GROUP } : (PACK_LINKS || {})[String(tableId)]) || {} };
+}
+// packLinkFor(tableId).linkSet without working out the whole link.
+function packLinkSetOf(tableId) {
+  const { l } = packLinkRaw(tableId);
+  return !packTriggerOf(l) && typeof l.linkSet === "string" && l.linkSet ? l.linkSet : "";
+}
+function packLinkForBase(tableId) {
+  const { mine, l } = packLinkRaw(tableId);
   // Templates are only there to be copied: never used by Budgets or Pack cost.
   const template = !mine && typeof l.group === "string" && l.group.trim() === PACK_TEMPLATE_GROUP;
   const trig = packTriggerOf(l);
@@ -12943,10 +12968,13 @@ function packGroupsFor(tables, calcKey) {
   if (!out) { out = packGroupsForBuild(tables, stripGems); PACK_GROUPS_CACHE.map.set(key, out); }
   return packPurchaseUse(out);
 }
+const PACK_GEM_FREE = new WeakMap();
 function packGroupsForBuild(tables, stripGems) {
   // Copies (not in-place edits): a table's groups are shared by every page.
   let out = packGroupsForRaw(tables);
-  if (stripGems) out = out.map((g) => ({ ...g, offers: g.offers.map((o) => { if (!o.gives || o.gives.Gems == null) return o; const gv = { ...o.gives }; delete gv.Gems; return { ...o, gives: gv }; }) }));
+  // The gem-free copy of an offer is made once and reused by every page, so
+  // the planner message can send each offer once (plannerPayloadEncode).
+  if (stripGems) out = out.map((g) => ({ ...g, offers: g.offers.map((o) => { if (!o.gives || o.gives.Gems == null) return o; let s = PACK_GEM_FREE.get(o); if (!s) { const gv = { ...o.gives }; delete gv.Gems; s = { ...o, gives: gv }; PACK_GEM_FREE.set(o, s); } return s; }) }));
   return out.filter((g) => g.offers.some((o) => Object.keys(o.gives).length)).map((g) => ({ ...g, offers: g.offers.filter((o) => Object.keys(o.gives).length || g.ladder) }));
 }
 // One table's offer groups. Budgets builds groups for ~10 pages that share
@@ -13045,30 +13073,39 @@ function packTradeCtx(calcKey, days) {
 // short, plus the trades made and the weeks the limits needed.
 function packShortAfterTrades(remaining, ctx) {
   const short = {}, spare = {};
-  Object.keys(remaining).forEach((n) => { if (remaining[n] > 1e-9) short[n] = remaining[n]; else if (remaining[n] < -1e-9) spare[n] = -remaining[n]; });
+  let nShort = 0;
+  for (const n of Object.keys(remaining)) { const v = remaining[n]; if (v > 1e-9) { short[n] = v; nShort++; } else if (v < -1e-9) spare[n] = -v; }
   const trades = [];
-  if (!ctx || !Object.keys(short).length) return { short, trades, weeksNeeded: 0 };
+  if (!ctx || !nShort) return { short, trades, weeksNeeded: 0 };
   const used = new Map();
   // Per-ctx lookups built once (this runs thousands of times per plan):
-  // routes into each item in cheapest-first order, and how many routes each has.
+  // routes into each item in cheapest-first order, how many routes each has,
+  // and each item's place in the priority list.
   if (!ctx._routes) {
-    ctx._routes = {}; ctx._src = {};
+    ctx._routes = {}; ctx._src = {}; ctx._pri = new Map();
     ctx.rates.forEach((r) => { (ctx._routes[r.to] = ctx._routes[r.to] || []).push(r); ctx._src[r.to] = (ctx._src[r.to] || 0) + 1; });
     Object.values(ctx._routes).forEach((list) => list.sort((a, b) => (ctx.worth[a.from] * a.give / a.get) - (ctx.worth[b.from] * b.give / b.get)));
+    ctx.priority.forEach((n, i) => { if (!ctx._pri.has(n)) ctx._pri.set(n, i); });
   }
-  const pr = ctx.priority;
-  const order = Object.keys(short).sort((a, b) => {
-    const pa = pr.indexOf(a), pb = pr.indexOf(b);
+  const pri = ctx._pri, src = ctx._src, routes = ctx._routes;
+  const at = (n) => { const i = pri.get(n); return i === undefined ? -1 : i; };
+  // Items with no route into them are skipped below, so only the others are
+  // sorted (same order: the sort is stable and the order is a ranking while
+  // the priority list is shorter than 99).
+  const keys = Object.keys(short);
+  const order = (ctx.priority.length < 99 ? keys.filter((n) => routes[n]) : keys).sort((a, b) => {
+    const pa = at(a), pb = at(b);
     if (pa !== -1 || pb !== -1) return (pa === -1 ? 99 : pa) - (pb === -1 ? 99 : pb);
-    return (ctx._src[a] || 0) - (ctx._src[b] || 0);
+    return (src[a] || 0) - (src[b] || 0);
   });
   let weeksNeeded = 0;
-  order.forEach((to) => {
-    const all = ctx._routes[to];
-    if (!all) return;
-    const routes = all.filter((r) => spare[r.from] > 0);
-    for (const r of routes) {
+  for (const to of order) {
+    const all = routes[to];
+    if (!all) continue;
+    for (const r of all) {
       if (!(short[to] > 1e-9)) break;
+      // (A route whose item ran out gives no lots; spare only goes down.)
+      if (!(spare[r.from] > 0)) continue;
       const capLeft = r.max > 0 ? r.max * ctx.weeks - (used.get(r) || 0) : Infinity;
       const lots = Math.min(Math.ceil(short[to] / r.get), Math.floor(spare[r.from] / r.give), capLeft);
       if (lots <= 0) continue;
@@ -13079,7 +13116,7 @@ function packShortAfterTrades(remaining, ctx) {
       trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab });
     }
     if (short[to] <= 1e-9) delete short[to];
-  });
+  }
   return { short, trades, weeksNeeded };
 }
 function packCoveredBy(supply, need, ctx) {
@@ -13102,7 +13139,20 @@ function packEarliestDaysCompute(groups, need, calcKey) {
   // The supply check is an upper bound (a "choose one option" pack can't
   // give every option at once), so a day only counts when a real plan
   // exists for it.
-  const feasible = (d) => packCoveredBy(packMaxSupply(groups, d), need, ctx(d)) && !!packCheapestPlan(groups, need, d, calcKey, true);
+  // Speed (17 Oct 2026): a yes / no is all that's needed here, so when the
+  // greedy plan already covers day d the solver step is skipped (a greedy
+  // plan that covers always means a plan exists). Those quick "yes" answers
+  // are not cached; every full answer is cached as before.
+  const feasible = (d) => {
+    if (!packCoveredBy(packMaxSupply(groups, d), need, ctx(d))) return false;
+    const key = packPlanCacheKey(groups, need, d, calcKey, true);
+    if (PACK_PLAN_CACHE.has(key)) return !!PACK_PLAN_CACHE.get(key);
+    const r = packCheapestPlanCompute(groups, need, d, calcKey, true, true);
+    if (r === true) return true;
+    if (PACK_PLAN_CACHE.size > 300) PACK_PLAN_CACHE.clear();
+    PACK_PLAN_CACHE.set(key, r);
+    return !!r;
+  };
   if (feasible(0)) return 0;
   if (!feasible(Infinity)) return null;
   const steps = new Set();
@@ -13350,7 +13400,7 @@ function packPruneOffersFor(groups, need, ctx) {
     return offers.length ? { ...g, offers } : { ...g, offers: g.offers.slice(0, 1) };
   });
 }
-function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
+function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly) {
   let ctx = packTradeCtx(calcKey, days);
   // Free, unlimited 1-for-N conversions (Sail of Conquest -> 1,000 Affinity,
   // Expert Speedups -> Speedups) are folded straight into what the packs
@@ -13529,6 +13579,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   let best = null;
   const consider = (r) => { if (r) { finish(r); if (betterPlan(r, best)) best = r; } };
   consider(run(null));
+  if (feasOnly && best) return true; // packEarliestDays only asks "is there a plan?"
   // The exact plan (when the solver is loaded): kept when it beats the greedy ones.
   // A cheaper exact plan always wins (the 2% "sooner" rule is only for
   // choosing between greedy tries); with it, the slow greedy tries below are skipped.
@@ -15381,8 +15432,26 @@ function budgetCombinedInput(pages, selected) {
   });
   return { pages: lite, selected: selected || {}, allGroups };
 }
+// Speed (17 Oct 2026): every page's pack groups are copies of groups in
+// allGroups, so the same offers were sent (and hashed for the fingerprint)
+// up to ten times. The message now carries each offer object once (`offers`)
+// and the groups point to it by number; the planner puts them back exactly
+// (same groups, same order, same gem-free copies per page).
+function plannerPayloadEncode(p) {
+  const ids = new Map(), offers = [];
+  const enc = (gs) => (gs || []).map((g) => ({ ...g, offers: g.offers.map((o) => { let i = ids.get(o); if (i === undefined) { i = offers.length; ids.set(o, i); offers.push(o); } return i; }) }));
+  return { ...p, allGroups: enc(p.allGroups), pages: p.pages.map((pg) => ({ ...pg, packGroups: enc(pg.packGroups) })), offers };
+}
+function plannerPayloadDecode(p) {
+  if (!p || !Array.isArray(p.offers)) return p;
+  const dec = (gs) => gs.map((g) => ({ ...g, offers: g.offers.map((i) => p.offers[i]) }));
+  const out = { ...p, allGroups: dec(p.allGroups), pages: p.pages.map((pg) => ({ ...pg, packGroups: dec(pg.packGroups) })) };
+  delete out.offers;
+  return out;
+}
 // Runs the combined plan (and the own plans of pages it had to leave out).
 function plannerCombinedLocal(payload) {
+  payload = plannerPayloadDecode(payload);
   const pages = payload.pages.map((pg) => ({ ...pg, supplied: new Set(pg.supplied || []) }));
   const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands });
   res.droppedPlans = {};
@@ -15407,9 +15476,16 @@ function plannerPagePlans(payload) {
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
+// Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
+// gets one request at a time (PLANNER_QUEUE holds the rest, PLANNER_BUSY is
+// the one it's on), so a plan nobody wants any more (Budgets' ticks or date
+// changed meanwhile) can be dropped before it starts, or stopped while it
+// runs (plannerSupersede), and the other requests are sent again to a fresh
+// worker - nothing is left waiting.
 const PLANNER_WAIT = new Map();
+let PLANNER_QUEUE = [], PLANNER_BUSY = null;
 function plannerWorker() {
   if (PLANNER_WORKER === false) return null;
   if (PLANNER_WORKER) return PLANNER_WORKER;
@@ -15427,12 +15503,19 @@ function plannerWorker() {
       "const plannerSolver = () => PLAN_SOLVER_P || (PLAN_SOLVER_P = new Promise((done) => { const t = setTimeout(() => done(null), 20000); try { importScripts(PLAN_SOLVER_URL + 'highs.js'); Module({ locateFile: (f) => PLAN_SOLVER_URL + f }).then((h) => { clearTimeout(t); PLAN_SOLVER = h; done(h); }, () => { clearTimeout(t); done(null); }); } catch (err) { clearTimeout(t); done(null); } }));",
       "const PACK_PLAN_CACHE = new Map(); const PACK_EARLIEST_CACHE = new Map();",
       ...fns,
+      "plannerSolver();", // start loading the solver as soon as the worker starts
       "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
       "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
-    w.onmessage = (e) => { const cb = PLANNER_WAIT.get(e.data.id); if (!cb) return; PLANNER_WAIT.delete(e.data.id); if (e.data.ok) cb.resolve(e.data.result); else cb.reject(new Error(e.data.error)); };
-    w.onerror = () => { PLANNER_WORKER = false; PLANNER_WAIT.forEach((cb) => cb.reject(new Error("planner worker failed"))); PLANNER_WAIT.clear(); };
+    w.onmessage = (e) => {
+      if (w !== PLANNER_WORKER) return; // an answer from a worker that was stopped
+      if (PLANNER_BUSY === e.data.id) PLANNER_BUSY = null;
+      const cb = PLANNER_WAIT.get(e.data.id);
+      if (cb) { PLANNER_WAIT.delete(e.data.id); if (e.data.ok) cb.resolve(e.data.result); else cb.reject(new Error(e.data.error)); }
+      plannerPump();
+    };
+    w.onerror = () => { if (w !== PLANNER_WORKER) return; PLANNER_WORKER = false; PLANNER_BUSY = null; PLANNER_QUEUE = []; PLANNER_WAIT.forEach((cb) => cb.reject(new Error("planner worker failed"))); PLANNER_WAIT.clear(); };
     PLANNER_WORKER = w;
   } catch (e) {
     console.warn("Background planner unavailable, planning on the page instead", e);
@@ -15445,17 +15528,65 @@ function plannerRun(kind, payload) {
   const w = plannerWorker();
   if (!w) return Promise.resolve().then(local);
   const id = ++PLANNER_SEQ;
-  return new Promise((resolve, reject) => {
-    PLANNER_WAIT.set(id, { resolve, reject });
-    w.postMessage({ id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES });
-  }).catch((err) => { console.warn("Background planner failed, planning on the page instead", err); return local(); });
+  const p = new Promise((resolve, reject) => {
+    // Sent at once when the worker is free (copied then, as before); a request
+    // that has to wait is copied now, so later changes on the page can't reach it.
+    const msg = { id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES };
+    const idle = !PLANNER_BUSY && !PLANNER_QUEUE.length;
+    PLANNER_WAIT.set(id, { resolve, reject, msg: idle ? msg : structuredClone(msg) });
+    PLANNER_QUEUE.push(id);
+    plannerPump();
+  }).catch((err) => {
+    if (err && err.superseded) throw err; // dropped on purpose: no plan on the page either
+    console.warn("Background planner failed, planning on the page instead", err); return local();
+  });
+  p.plannerId = id;
+  return p;
 }
+// Sends the next waiting request when the worker is free.
+function plannerPump() {
+  while (!PLANNER_BUSY && PLANNER_QUEUE.length) {
+    const id = PLANNER_QUEUE.shift(), cb = PLANNER_WAIT.get(id);
+    if (!cb) continue;
+    const w = plannerWorker();
+    if (!w) { PLANNER_WAIT.delete(id); cb.reject(new Error("planner worker failed")); continue; }
+    PLANNER_BUSY = id;
+    // (once sent, the copy is the worker's; keep the message only to send it again after a restart)
+    w.postMessage(cb.msg);
+  }
+}
+// Stops the worker and starts a fresh one; every request still waiting
+// (the one it was on first) is sent again, except those in `drop`.
+function plannerRestart(drop) {
+  const busy = PLANNER_BUSY;
+  if (PLANNER_WORKER && PLANNER_WORKER.terminate) PLANNER_WORKER.terminate();
+  PLANNER_WORKER = null; PLANNER_BUSY = null;
+  if (busy != null && !(drop && drop.has(busy)) && PLANNER_WAIT.has(busy)) PLANNER_QUEUE.unshift(busy);
+  plannerPump();
+}
+// A request whose answer nobody wants any more (`p` = what plannerRun
+// returned). Waiting: taken out of the line. Running: the worker is stopped
+// (its answer would take as long as a new plan) and the others go on in a
+// fresh one. Its promise rejects with err.superseded.
+function plannerSupersede(p) {
+  const id = p && p.plannerId;
+  const cb = id != null && PLANNER_WAIT.get(id);
+  if (!cb) return;
+  PLANNER_WAIT.delete(id);
+  PLANNER_QUEUE = PLANNER_QUEUE.filter((x) => x !== id);
+  if (PLANNER_BUSY === id) plannerRestart(new Set([id]));
+  const err = new Error("plan no longer needed"); err.superseded = true;
+  cb.reject(err);
+}
+// Starts the worker (and the solver download) early, while a page that will
+// need a plan is still loading its data.
+function plannerWarm() { if (PLANNER_WORKER === null && typeof Worker !== "undefined") plannerWorker(); }
 // The last packs plan is kept on the phone with a fingerprint of everything
 // the planner was given (pages' needs and packs, ticks, target, trades, game
 // rules, the day), so a page refresh with nothing changed shows it at once.
 const BUDGET_PLAN_STORE = "budget_plan_v1";
 function budgetPlanFingerprint(payload) {
-  const str = JSON.stringify({ v: 2, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
+  const str = JSON.stringify({ v: 3, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
@@ -15465,7 +15596,7 @@ function budgetPlanFingerprint(payload) {
 }
 async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   const inp = budgetCombinedInput(pages, selected);
-  const payload = { ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) };
+  const payload = plannerPayloadEncode({ ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) });
   // Nothing to plan gives no "My budget" candidates: mark them as an empty list,
   // or Budgets keeps waiting for them and redraws forever.
   const withCands = (r) => { if (payload.spendCands && r && !Array.isArray(r.budgetCands)) r.budgetCands = []; return r; };
@@ -15475,14 +15606,19 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
     const kept = JSON.parse(localStorage.getItem(BUDGET_PLAN_STORE) || "null");
     if (kept && kept.key === key && kept.res) return withCands(kept.res);
   } catch (e) { /* storage blocked: work it out */ }
-  const res = await plannerRun("combined", payload);
+  const req = plannerRun("combined", payload);
+  if (more && more.track) more.track.req = req;
+  const res = await req;
   try { if (key) localStorage.setItem(BUDGET_PLAN_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked: not kept */ }
   return withCands(res);
 }
 // "Recalculate": forget every kept copy and work everything out again.
 function budgetForceRecalc() {
   try { localStorage.removeItem(BUDGET_PLAN_STORE); } catch (e) { /* storage blocked */ }
-  if (PLANNER_WORKER && PLANNER_WORKER.terminate) { PLANNER_WORKER.terminate(); PLANNER_WORKER = null; }
+  // The Budgets plan being worked out is dropped (a new one starts); other
+  // requests (Pack cost, widget prices, My Purchases) go on in the fresh worker.
+  if (BUDGET_PLAN_TRACK.req) { plannerSupersede(BUDGET_PLAN_TRACK.req); BUDGET_PLAN_TRACK = {}; }
+  plannerRestart();
   if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
   if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
   PACK_TABLES_CACHE = null;
@@ -15624,7 +15760,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; PUR_SUGGEST = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 // ---- My budget: a spending limit (owner, 17 Oct 2026, design C + D) ----
 // calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
 // Only the admin sees it unless Admin → Visibility → Visitor access
@@ -15780,6 +15916,7 @@ async function budgetSuggestedPlan() {
   const wantCands = spendActive();
   if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && (!wantCands || BUDGET_DATA.combined.budgetCands)) return budgetSuggestOf(BUDGET_DATA.combined);
   if (PUR_SUGGEST) return PUR_SUGGEST;
+  plannerWarm();
   PUR_SUGGEST = (async () => {
     const [, , , , savedSel, savedTarget] = await Promise.all([
       ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensurePackLinks(),
@@ -15802,9 +15939,11 @@ async function budgetSuggestedPlan() {
 const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
 let BUDGET_MATS_OPEN = false; // Budgets: "Materials still needed" opened (starts closed, kept for the visit)
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
+let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
   if (!dataReady) {
+    plannerWarm();
     content.innerHTML = `
       <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
       <div class="panel" style="margin-top:12px;"><div class="empty"><div class="big">${esc(t("budgets_loading"))}</div><div class="meta" style="font-size:11.5px; margin-top:6px;">${esc(t("pack_calc_wait"))}</div></div></div>`;
@@ -15852,13 +15991,22 @@ async function renderBudgetsPage(opts = {}) {
   const combinedRaw = haveCombined ? BUDGET_DATA.combined : { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
   if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey) {
     BUDGET_PLAN_RUNNING = planKey;
-    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands }).then((real) => {
+    // A plan for other ticks / another date still being worked out is no
+    // longer wanted: it's dropped, so the new one doesn't wait behind it.
+    if (BUDGET_PLAN_TRACK.req) plannerSupersede(BUDGET_PLAN_TRACK.req);
+    const track = (BUDGET_PLAN_TRACK = {});
+    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track }).then((real) => {
+      if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
       if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
       // Only if nothing changed meanwhile (date, ticks, data).
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
       BUDGET_DATA.combined = real;
       if (TAB === "budgets") { const y = window.scrollY; renderBudgetsPage().then(() => window.scrollTo(0, y)); }
-    }).catch((e) => { console.error("budget plan failed", e); if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null; });
+    }).catch((e) => {
+      if (e && e.superseded) return; // a newer plan took its place
+      if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
+      console.error("budget plan failed", e); if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
+    });
   }
   const planPending = !!combinedRaw.pending;
   const pagesRaw = pages;
@@ -22691,10 +22839,11 @@ function applyGameRules() {
 // After a rule changes: drop everything worked out from the old numbers.
 function afterGameRulesChange() {
   applyGameRules();
+  NEW_GEN_BASE_MEMO = null;
   if (typeof NEW_GEN_MEMO !== "undefined") NEW_GEN_MEMO.clear();
   if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
   if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
-  if (PLANNER_WORKER && PLANNER_WORKER.terminate) { PLANNER_WORKER.terminate(); PLANNER_WORKER = null; }
+  plannerRestart(); // a fresh worker (requests still waiting are sent to it again)
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   if (typeof PACK_GROUPS_CACHE !== "undefined") PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
   dropKeptGameData();
