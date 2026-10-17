@@ -3490,6 +3490,8 @@ const T = {
   experts_sigils_summary_note: { en: "Change these on each expert's card" },
   experts_affinity_have: { en: "Affinity you have" },
   skill_exp_have: { en: "EXP you have" },
+  expert_count_tick: { en: "Count" },
+  expert_count_tip: { en: "Ticked: this expert counts in the totals, Dashboard and Budgets." },
   minutes_short: { en: "min" },
   piece_helmet: { en: "Helmet" },
   piece_watch: { en: "Watch" },
@@ -13392,7 +13394,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const rerender = () => renderPackCostBlock(containerEl, calcKey, groups, ownedOrig);
   // Card layout (summary pages): plans as cards to pick from, then the
   // picked plan's packs as a short list.
-  const cards = BAR_SUMMARY_KEYS.has(calcKey);
+  const cards = BAR_SUMMARY_KEYS.has(calcKey) || PACK_COST_CARD_KEYS.has(calcKey);
   const wrapOpen = cards ? `<div class="pc-card">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
   const head = cards ? `
     <div class="pc-head">
@@ -16428,6 +16430,8 @@ async function renderChiefGearCalc() {
 // Pages whose Backpack shows the short summary (what's still missing, ready
 // items as chips) with the boxes behind "Show all / edit".
 // Every planner page with a Backpack bar uses the new layout (plxShellHtml).
+// Pages with their own totals squares (not the shared bar) that still use the Pack Cost card.
+const PACK_COST_CARD_KEYS = new Set(["experts", "experts_research"]);
 const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center", "chief_gear", "charm", "hero_gear", "pets", "pets_refine"]);
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
@@ -17166,7 +17170,7 @@ async function renderSkinGallery() {
         <div class="sub" id="skinSummaryLine"></div>
       </div>
     </div>
-    <div class="stats-row-scroll" id="skinTotals" style="margin-bottom:16px;"></div>
+    <div class="t12x-card" style="margin-bottom:16px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="skinTotals"></div></div>
     <div id="skinCatSwitcher"></div>
     <div class="filter-bar" style="margin-bottom:12px;">
       <input id="skinSearch" placeholder="${esc(t("search_skins_placeholder"))}" style="flex:1; min-width:160px;" />
@@ -17334,15 +17338,13 @@ async function renderSkinGallery() {
       if (ib === -1) return -1;
       return ia - ib;
     });
+    // Same stat boxes as VIP / Tundra Album (one row when they fit).
     document.getElementById("skinTotals").innerHTML = totalEntries.length
-      ? totalEntries
-          .map(([type, maxVal]) => {
-            const bare = type.replace(/^Troops?\s+/i, "");
-            const label = STAT_ORDER.includes(bare) ? `Troop ${bare}` : type;
-            return `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(label)}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxVal.toFixed(1)}%</div></div>`;
-          })
-          .join("")
-      : `<div class="metric" style="grid-column:1/-1;"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div><div class="meta" style="font-size:11px; margin-top:2px;">${esc(t("mark_skins_owned_hint"))}</div></div>`;
+      ? plxStatBoxesHtml(totalEntries.map(([type, maxVal]) => {
+          const bare = type.replace(/^Troops?\s+/i, "");
+          return { label: STAT_ORDER.includes(bare) ? tStatLabel(bare) : tStatLabel(type), val: totalsByType[type] || 0, max: maxVal };
+        }), totalEntries.length <= 4)
+      : `${plxStatBoxesHtml([{ label: t("total_bonus"), val: 0 }])}<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mark_skins_owned_hint"))}</div>`;
 
 
     const sections = document.getElementById("skinSections");
@@ -17446,7 +17448,7 @@ async function renderIslandGallery() {
         <div class="sub" id="islandSummaryLine"></div>
       </div>
     </div>
-    <div class="stats-row-scroll" id="islandTroopTotals" style="margin-bottom:20px;"></div>
+    <div class="t12x-card" style="margin-bottom:20px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="islandTroopTotals"></div></div>
     <div id="islandCatSwitcher"></div>
     <div class="filter-bar" style="margin-bottom:12px;">
       <input id="islandSearch" placeholder="${esc(t("search_islands_placeholder"))}" style="flex:1; min-width:160px;" />
@@ -17516,17 +17518,16 @@ async function renderIslandGallery() {
       });
     }
     const STAT_ABBR2 = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-    const row1 = RAW_STATS.map((stat) => {
-      const tot = generalTotals[stat] || { cur: 0, max: 0 };
-      return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">Troops ${esc(STAT_ABBR2[stat] || stat)}</div><div class="val" style="font-size:13px;">+${tot.cur.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${tot.max.toFixed(1)}%</div></div>`;
-    }).join("");
-    const row2Order = ["Infantry Attack", "Infantry Defense", "Lancers Attack", "Lancers Defense", "Marksman Attack", "Marksman Defense"];
-    const row2Abbr = { "Infantry Attack": "Inf ATK", "Infantry Defense": "Inf DEF", "Lancers Attack": "Lan ATK", "Lancers Defense": "Lan DEF", "Marksman Attack": "Mark ATK", "Marksman Defense": "Mark DEF" };
-    const row2 = row2Order.map((label) => {
-      const tot = specificTotals[label] || { cur: 0, max: 0 };
-      return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">${esc(row2Abbr[label] || label)}</div><div class="val" style="font-size:13px;">+${tot.cur.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${tot.max.toFixed(1)}%</div></div>`;
-    }).join("");
-    document.getElementById("islandTroopTotals").innerHTML = row1 + row2;
+    // Same stat boxes and troop tabs as Alliance Tech: all troops, then each troop's own.
+    const box = (label, tot) => ({ label, val: tot ? tot.cur : 0, max: tot ? tot.max : 0 });
+    const troopTab = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
+    document.getElementById("islandTroopTotals").innerHTML = plxStatTabsHtml("islands", [
+      { key: "all", label: t("plx_all_troops"), html: plxStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat])), true) },
+      ...["Infantry", "Lancers", "Marksman"].map((tr) => ({
+        key: tr, label: troopDisplayName(troopTab[tr]), color: PLX_TROOP_COLORS[troopTab[tr]],
+        html: plxStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`])), true),
+      })),
+    ]);
 
     const sections = document.getElementById("islandSections");
     // filtered is already scoped to the one selected category, so render a
@@ -19576,7 +19577,7 @@ async function renderExpertsResearchPage() {
     return `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:4px;">
-          <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
+          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           <div style="min-width:0; text-align:center;">
             ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; padding:2px; box-sizing:border-box; border-radius:8px; object-fit:contain; margin-bottom:4px;" loading="lazy" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(dataName(expert))}</div>
@@ -19931,11 +19932,14 @@ async function renderExpertsPage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
-    settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap;">
-      <span>${esc(t("speedups_label"))}</span>
-      <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:72px; flex-shrink:0; padding:4px 6px;" />
-      <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
-      <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
+    // Same row look as the research pages' "Speedups" box (rs-row).
+    settings: `<div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
+        <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:72px; flex-shrink:0; padding:4px 6px;" />
+        <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
+        <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
+      </div>
     </div>`,
     amountsId: "expertsAmounts", needId: "expertsSummary",
     mainHtml: `
@@ -20209,7 +20213,7 @@ async function renderExpertsPage() {
     gridEl.innerHTML = `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:10px;">
-          <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
+          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           <div style="text-align:center;">
             <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; padding:3px; box-sizing:border-box; object-fit:contain; margin-bottom:6px;" loading="lazy" />
             <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
@@ -20272,8 +20276,8 @@ async function renderExpertsPage() {
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
               <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(sk))}</span>
               <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
-                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.current, skillPickMax(e.key, sk)), max)}</select>
-                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.desired, skillPickMax(e.key, sk)), max)}</select>
+                <label class="exp-skl"><span>${esc(t("current_label"))}</span><select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.current, skillPickMax(e.key, sk)), max)}</select></label>
+                <label class="exp-skl"><span>${esc(t("target_label"))}</span><select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.desired, skillPickMax(e.key, sk)), max)}</select></label>
               </div>
             </div>
             ${
@@ -21718,7 +21722,7 @@ async function renderFacilityPage() {
         <div class="sub" id="facilitySummaryLine"></div>
       </div>
     </div>
-    <div class="stats-row-scroll" id="facilityTotals" style="margin-bottom:16px;"></div>
+    <div class="t12x-card" style="margin-bottom:16px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="facilityTotals"></div></div>
     <div class="panel">
       <h2>${esc(t("facility_title"))}</h2>
       <p class="desc">${esc(t("facility_click_desc"))}</p>
@@ -21738,14 +21742,10 @@ async function renderFacilityPage() {
       maxByType[key] = (maxByType[key] || 0) + Number(b.bonus_value);
       if (b.owned) totalsByType[key] = (totalsByType[key] || 0) + Number(b.bonus_value);
     });
-    document.getElementById("facilityTotals").innerHTML = Object.entries(maxByType).length
-      ? Object.entries(maxByType)
-          .map(
-            ([type, maxVal]) =>
-              `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_prefix"))} ${esc(tStatLabel(type))}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxVal.toFixed(1)}%</div></div>`
-          )
-          .join("")
-      : `<div class="metric"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div></div>`;
+    const facEntries = Object.entries(maxByType);
+    document.getElementById("facilityTotals").innerHTML = facEntries.length
+      ? plxStatBoxesHtml(facEntries.map(([type, maxVal]) => ({ label: tStatLabel(type), val: totalsByType[type] || 0, max: maxVal })), facEntries.length <= 4)
+      : plxStatBoxesHtml([{ label: t("total_bonus"), val: 0 }]);
 
 
 
