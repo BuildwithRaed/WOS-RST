@@ -485,7 +485,7 @@
   .pur-slot-strip{ display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 2px; padding:6px; border:1px solid var(--ice); border-radius:10px; }
   .pur-m-row.has-dsel{ grid-template-columns:auto 1fr auto auto auto; gap:6px; }
   .pur-m-row.has-dsel > span:first-of-type{ white-space:nowrap; }
-  .pur-dsel{ font:inherit; font-size:11px; color:var(--ice); background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:3px 4px; max-width:104px; cursor:pointer; }
+  .pur-dsel{ font:inherit; font-size:11px; color:var(--ice); background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:3px 4px; max-width:160px; cursor:pointer; }
   .pur-m-row.has-dsel > span.meta, .pur-m-row.has-dsel > b{ white-space:nowrap; }
   .pur-dsel.on{ border-color:var(--ice); }
   .pur-dmenu{ display:flex; flex-direction:column; gap:6px; padding:8px 12px 10px 40px; border-top:1px solid var(--line); background:var(--panel-2); font-size:12.5px; }
@@ -540,6 +540,17 @@
   .pur-mini{ width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; padding:0; font-size:12px; line-height:1; }
   .pur-mini.ok{ border-color:var(--good); color:var(--good); }
   .pur-modal{ max-width:380px; }
+  #purSugModal .pur-modal{ max-height:82vh; padding:14px 16px 16px; }
+  .pur-m-head{ position:sticky; top:-14px; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:10px; margin:-14px -16px 6px; padding:12px 16px 8px; background:var(--panel); }
+  .pur-m-head h2{ margin:0; }
+  #purSugModal .pur-ms{ max-height:30vh; }
+  #purSugModal .pur-m-list{ max-height:26vh; }
+  @media (max-width:380px){
+    #purSugModal .pur-m-row.has-dsel{ gap:4px; padding:8px 8px; font-size:12px; }
+    #purSugModal .pur-m-row.has-dsel b{ font-size:12px; }
+    #purSugModal .pur-dsel{ font-size:10.5px; padding:3px 2px; }
+  }
+  #purSugModal .pur-m-foot{ position:sticky; bottom:-16px; z-index:2; margin:8px -16px -16px; padding:10px 16px 14px; background:var(--panel); border-top:1px solid var(--line); }
   .pur-m-top{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; margin-bottom:4px; }
   .pur-m-top .linklike{ background:none; border:0; color:var(--ice); text-decoration:underline; cursor:pointer; font-size:11.5px; padding:0; }
   .pur-m-list{ max-height:50vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; }
@@ -7386,7 +7397,7 @@ async function renderPurchasesPage() {
       const dayMenu = (d) => (isPick && openDay === d ? `<div class="pur-dmenu">${M.steps.map((st, k) => `<label><input type="checkbox" data-pmdt="${d}|${k}" ${selOf(d)[k] ? "checked" : ""} /> ${esc(fmtL(local(st.price)))}<span class="meta">${tset[k] ? esc(pickText(k)) : ""}</span></label>`).join("")}<div class="meta" style="font-size:10.5px;">${esc(t("pur_ms_items_above"))}</div></div>` : "");
       const daysOn = keep && keep.days ? keep.days : null;
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
+        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2><button type="button" class="rfa-x" data-pmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
         <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">× ${x.count}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
