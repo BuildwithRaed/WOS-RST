@@ -7296,7 +7296,10 @@ async function renderPurchasesPage() {
         return null;
       };
       const nSteps = (n) => (n === 1 ? t("pur_ms_1step") : t("pur_ms_nsteps").replace("{n}", n));
-      const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = materialIconSrc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
+      // Item pictures (the site's own: speedups, expert items, materials).
+      const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
+      const itemIc = (n) => speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : "");
+      const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
       const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
       if (!tb) return;
@@ -7343,8 +7346,7 @@ async function renderPurchasesPage() {
       // Item picks as picture slots (owner picked A, 17 Oct 2026): tap a slot,
       // a strip of every item's picture opens under it to choose from.
       const openSlot = keep ? keep.openSlot || "" : "";
-      const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
-      const picOf = (o) => { const ic = speedIc(String(o.name || "")) || materialIconSrc(o.name) || materialIconSrc(Object.keys(o.gives || {})[0] || ""); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(o.tag.slice(0, 2))}</i>`; };
+      const picOf = (o) => { const ic = itemIc(o.name || "") || itemIc(Object.keys(o.gives || {})[0] || ""); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(o.tag.slice(0, 2))}</i>`; };
       const slotsHtml = (key, opts, sel) => `<span class="pur-slots">${sel.map((sj, p) => { const o = opts[sj]; return `<button type="button" class="pur-slot${openSlot === key + "|" + p ? " open" : ""}" data-pmslot="${key}|${p}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>`; }).join("")}</span>`;
       const stripHtml = (key, opts, sel) => { const m = /^(.*)\|(\d+)$/.exec(openSlot); if (!m || m[1] !== key) return ""; const p = Number(m[2]); return `<div class="pur-slot-strip">${opts.map((o, oj) => (o.q > 0 ? `<button type="button" class="pur-slot${oj === sel[p] ? " on" : ""}" data-pmslotopt="${key}|${p}|${oj}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>` : "")).join("")}</div>`; };
       const plHtml = isPL ? `<div class="pur-ms-plpick"><div class="pur-ms-l"><span class="meta">${esc(t("pur_ms_each_items").replace("{n}", M.n))}</span>${slotsHtml("all", M.steps[0].opts, pp0)}</div>${stripHtml("all", M.steps[0].opts, pp0)}</div>` : "";
