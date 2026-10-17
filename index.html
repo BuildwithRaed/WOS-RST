@@ -11856,7 +11856,41 @@ function packArcSteps(list, rowItem) {
   };
   return walk([], [], 0, {}) ? { tiers, match } : null;
 }
+// The plan split into parts that share no item, trade or pack limit (e.g.
+// Experts, Hero shards, Chief Gear + Charm): each part is its own smaller
+// problem, solved on its own; together they are the same plan.
 function packExactPicks(groups, need, caps, ctx, timeLimit) {
+  if (!PLAN_SOLVER) return null;
+  const rates = ctx ? ctx.rates : [];
+  const par = new Map();
+  const find = (x) => { if (!par.has(x)) par.set(x, x); while (par.get(x) !== x) { par.set(x, par.get(par.get(x))); x = par.get(x); } return x; };
+  const join = (a, b) => { a = find(a); b = find(b); if (a !== b) par.set(a, b); };
+  const fromItems = new Set(rates.map((r) => r.from));
+  const used = (n) => need[n] > 0 || fromItems.has(n);
+  rates.forEach((r) => join(r.from, r.to));
+  const gItems = groups.map((g, gi) => {
+    if (!(caps[gi] > 0)) return null;
+    const its = new Set();
+    g.offers.forEach((o) => Object.keys(o.gives).forEach((n) => { if (o.gives[n] > 0 && used(n)) its.add(n); }));
+    const list = [...its]; list.slice(1).forEach((n) => join(list[0], n));
+    return list.length ? list : null;
+  });
+  const parts = new Map();
+  Object.keys(need).forEach((n) => { if (need[n] > 0) { const k = find(n); if (!parts.has(k)) parts.set(k, true); } });
+  if (parts.size <= 1) return packExactPicksPart(groups, need, caps, ctx, timeLimit);
+  const picks = [], lots = rates.map(() => 0);
+  for (const k of parts.keys()) {
+    const subCaps = caps.map((c, gi) => (gItems[gi] && find(gItems[gi][0]) === k ? c : 0));
+    const subNeed = {}; Object.keys(need).forEach((n) => { if (need[n] > 0 && find(n) === k) subNeed[n] = need[n]; });
+    const idx = []; rates.forEach((r, i) => { if (find(r.from) === k) idx.push(i); });
+    const res = packExactPicksPart(groups, subNeed, subCaps, ctx ? { ...ctx, rates: idx.map((i) => rates[i]) } : null, timeLimit);
+    if (!res) return null;
+    res.picks.forEach((p) => picks.push(p));
+    res.lots.forEach((n, j) => { lots[idx[j]] = n; });
+  }
+  return picks.length ? { picks, lots } : null;
+}
+function packExactPicksPart(groups, need, caps, ctx, timeLimit) {
   if (!PLAN_SOLVER) return null;
   try {
     const num = (v) => { const r = Math.round(v * 1e6) / 1e6; return Math.abs(r) < 1e-9 ? "0" : String(r); };
@@ -14013,7 +14047,7 @@ function plannerPagePlans(payload) {
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 const PLANNER_WAIT = new Map();
 function plannerWorker() {
