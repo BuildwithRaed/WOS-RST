@@ -1270,7 +1270,12 @@ input,select,textarea{
   .mn-btns button:disabled{ opacity:.35; cursor:default; }
   .mn-btns button.on{ border-color:var(--ice); }
   .mn-langs{ margin:4px 0 0; font-size:11.5px; color:var(--muted); }
-  .mn-langs summary{ cursor:pointer; width:max-content; }
+  .mn-langs summary{ cursor:pointer; max-width:100%; overflow-wrap:anywhere; }
+  .adm-cur-add{ display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; align-items:end; }
+  .adm-cur-add label{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .adm-cur-add label span{ font-size:11px; color:var(--muted); }
+  .adm-cur-add input{ width:100%; min-width:0; }
+  .adm-cur-add .btn{ min-height:36px; }
   .mn-langs label, .mn-note label{ display:flex; align-items:center; gap:8px; margin-top:4px; }
   .mn-langs label span, .mn-note label span{ flex:0 0 90px; font-size:11.5px; color:var(--muted); }
   .mn-langs input, .mn-note textarea{ flex:1 1 auto; min-width:0; }
@@ -22651,10 +22656,10 @@ async function renderAdminCurrencies(body) {
       <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"><button class="btn small" id="adminRatesSave" type="button">Save</button><button class="btn small ghost" id="adminRatesReset" type="button">Reset to defaults</button></div>
       <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
         <div class="meta" style="margin-bottom:6px;">Add a currency</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <input id="adminCurCode" placeholder="Code (e.g. PKR)" maxlength="5" style="width:130px;" />
-          <input id="adminCurSymbol" placeholder="Symbol (e.g. Rs)" maxlength="6" style="width:120px;" />
-          <input id="adminCurRate" type="number" step="any" min="0" placeholder="Per 1 USD" style="width:120px;" />
+        <div class="adm-cur-add">
+          <label><span>Code</span><input id="adminCurCode" placeholder="e.g. PKR" maxlength="5" /></label>
+          <label><span>Symbol</span><input id="adminCurSymbol" placeholder="e.g. Rs" maxlength="6" /></label>
+          <label><span>Per 1 USD</span><input id="adminCurRate" type="number" step="any" min="0" placeholder="e.g. 280" /></label>
           <button class="btn small" id="adminCurAdd" type="button">Add</button>
         </div>
       </div>
@@ -22692,7 +22697,7 @@ async function renderAdminCurrencies(body) {
     slotsBody.innerHTML = currencyPriceSlots().map((s) => `<tr>
       <td style="padding:4px 8px;">$${s}${` <button class="btn small ghost" type="button" data-slotdel="${s}" title="Remove this price point" style="padding:1px 7px; margin-inline-start:6px;">\u00d7</button>`}</td>
       <td style="padding:4px 8px;" class="meta">${rate > 0 ? (Number(s) * rate).toFixed(2) : "—"}</td>
-      <td style="padding:4px 8px;"><input type="number" step="any" min="0" data-slot="${s}" value="${cur[s] ?? ""}" placeholder="${rate > 0 ? (Number(s) * rate).toFixed(2) : ""}" style="width:130px;" /></td></tr>`).join("");
+      <td style="padding:4px 8px;"><input type="number" step="any" min="0" data-slot="${s}" value="${cur[s] ?? ""}" placeholder="${rate > 0 ? (Number(s) * rate).toFixed(2) : ""}" class="keep-w" style="width:100%; max-width:130px; min-width:64px;" /></td></tr>`).join("");
   };
   let lastCode = curSel.value;
   curSel.addEventListener("change", () => { readSlots(lastCode); lastCode = curSel.value; renderSlots(); });
@@ -24622,7 +24627,7 @@ async function renderAdminHeroes(body) {
   const mirror = (v) => ({ ...v, exp_defense: v.exp_attack, widget_health: v.widget_lethality });
   function drawHeroes() {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
-    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">${rows.filter((r) => (r.generation ?? -1) === g).length}</span></button>`).join("")}</div></div>`
+    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">· ${((n) => `${n} ${n === 1 ? "hero" : "heroes"}`)(rows.filter((r) => (r.generation ?? -1) === g).length)}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
     listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); keepBoxes(listWrap, drawHeroes); }));
     wireAdmList(listWrap, {
@@ -24677,11 +24682,11 @@ async function renderAdminHeroes(body) {
           <h2 style="margin:0;">Star shard & widget stats</h2>
           <span class="meta" style="font-size:12px; font-weight:600; color:var(--frost);">Gen ${gen}</span>
           <button class="btn small" id="adminGenStatsSave">Save all</button>
-          <span style="display:inline-flex; align-items:center; gap:6px; margin-left:auto;">
+          <span style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:6px; margin-left:auto;">
             <span class="meta" style="font-size:11px;">Max ATK&amp;DEF %</span>
-            <input id="adminGenMaxAtk" type="number" step="any" style="width:90px;" placeholder="e.g. 1621.3" />
+            <input id="adminGenMaxAtk" type="number" step="any" class="keep-w" style="width:120px;" placeholder="e.g. 1621.3" />
             <span class="meta" style="font-size:11px;">Max widget %</span>
-            <input id="adminGenMaxWidget" type="number" step="any" style="width:80px;" placeholder="e.g. 482" />
+            <input id="adminGenMaxWidget" type="number" step="any" class="keep-w" style="width:110px;" placeholder="e.g. 482" />
             <button class="btn small ghost" id="adminGenGenerate" title="Fills all 30 shard steps and 10 widget levels from the max values using the standard curve">Generate from max</button>
           </span>
         </div>
@@ -24697,8 +24702,8 @@ async function renderAdminHeroes(body) {
                   return `<tr data-starstep="${step}">
                     <td style="padding:3px 8px;">${step}</td>
                     <td style="padding:3px 8px;" class="meta">${star}\u2605 ${shard}/6</td>
-                    <td style="padding:3px;"><input data-sf="atk_pct" type="number" step="any" value="${r.atk_pct ?? ""}" style="width:100px;" /></td>
-                    <td style="padding:3px;"><input data-sf="shards" type="number" value="${r.shards ?? ""}" style="width:64px;" /></td>
+                    <td style="padding:3px;"><input data-sf="atk_pct" type="number" step="any" value="${r.atk_pct ?? ""}" class="keep-w" style="width:100%; max-width:110px; min-width:64px;" /></td>
+                    <td style="padding:3px;"><input data-sf="shards" type="number" value="${r.shards ?? ""}" class="keep-w" style="width:100%; max-width:80px; min-width:52px;" /></td>
                   </tr>`;
                 }).join("")}
               </tbody>
@@ -24712,7 +24717,7 @@ async function renderAdminHeroes(body) {
                   const r = widgetBy[lvl] || {};
                   return `<tr data-widgetlvl="${lvl}">
                     <td style="padding:3px 8px;">${lvl}</td>
-                    <td style="padding:3px;"><input data-wf="leth_pct" type="number" step="any" value="${r.leth_pct ?? ""}" style="width:100px;" /></td>
+                    <td style="padding:3px;"><input data-wf="leth_pct" type="number" step="any" value="${r.leth_pct ?? ""}" class="keep-w" style="width:100%; max-width:110px; min-width:64px;" /></td>
                   </tr>`;
                 }).join("")}
               </tbody>
