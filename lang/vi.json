@@ -773,7 +773,7 @@
 "t:mp_where":"Bản sao xuất hiện bên dưới ở \"Bảng của bạn\", nơi bạn có thể sửa.",
 "t:mp_your_tables":"Bảng của bạn",
 "t:mp_empty":"Chưa có bảng. Bấm Nhân bản trên một mẫu ở trên.",
-"t:mp_template_edit_hint":"Sửa chính các mẫu ở trang Gói, trong danh mục \"Mẫu gói\".",
+"t:mp_template_edit_hint":"Sửa sẽ mở mẫu ở trang Gói (bình thường các mẫu không hiện ở đó).",
 "t:mp_edit_in_packs":"Sửa ở trang Gói",
 "t:mp_admin_none":"Chưa có bản sao. Bấm Nhân bản trên một mẫu.",
 "t:mp_admin_copied":"Đã sao chép vào Gói của tôi — đang mở ở trang Gói",

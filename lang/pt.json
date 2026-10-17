@@ -773,7 +773,7 @@
 "t:mp_where":"A cópia aparece abaixo em \"Suas tabelas\", onde você pode editá-la.",
 "t:mp_your_tables":"Suas tabelas",
 "t:mp_empty":"Nenhuma tabela ainda. Toque em Duplicar em um modelo acima.",
-"t:mp_template_edit_hint":"Edite os próprios modelos na página Pacotes, na categoria \"Modelos de pacote\".",
+"t:mp_template_edit_hint":"Editar abre o modelo na página Pacotes (os modelos não aparecem lá de outra forma).",
 "t:mp_edit_in_packs":"Editar em Pacotes",
 "t:mp_admin_none":"Nenhuma cópia ainda. Toque em Duplicar em um modelo.",
 "t:mp_admin_copied":"Copiado para Meus pacotes — abrindo na página Pacotes",

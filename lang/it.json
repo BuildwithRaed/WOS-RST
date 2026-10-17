@@ -774,7 +774,7 @@
  "t:mp_where": "La copia appare sotto in \"Le tue tabelle\", dove puoi modificarla.",
  "t:mp_your_tables": "Le tue tabelle",
  "t:mp_empty": "Ancora nessuna tabella. Premi Duplica su un modello qui sopra.",
- "t:mp_template_edit_hint": "Modifica i modelli stessi nella pagina Pacchetti, nella categoria \"Modelli di pacchetti\".",
+ "t:mp_template_edit_hint": "Modifica apre il modello nella pagina Pacchetti (altrimenti i modelli non vi sono elencati).",
  "t:mp_edit_in_packs": "Modifica in Pacchetti",
  "t:mp_admin_none": "Ancora nessuna copia. Premi Duplica su un modello.",
  "t:mp_admin_copied": "Copiato in I miei pacchetti — apertura nella pagina Pacchetti",

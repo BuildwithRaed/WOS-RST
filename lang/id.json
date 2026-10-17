@@ -773,7 +773,7 @@
 "t:mp_where":"Salinan muncul di bawah pada \"Tabelmu\", tempat kamu bisa mengeditnya.",
 "t:mp_your_tables":"Tabelmu",
 "t:mp_empty":"Belum ada tabel. Tekan Duplikat pada templat di atas.",
-"t:mp_template_edit_hint":"Edit templatnya sendiri di halaman Paket, di kategori \"Templat paket\".",
+"t:mp_template_edit_hint":"Edit membuka templat di halaman Paket (templat tidak tercantum di sana jika tidak begitu).",
 "t:mp_edit_in_packs":"Edit di Paket",
 "t:mp_admin_none":"Belum ada salinan. Tekan Duplikat pada templat.",
 "t:mp_admin_copied":"Disalin ke Paketku — membukanya di halaman Paket",

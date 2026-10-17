@@ -773,7 +773,7 @@
 "t:mp_where":"Kopya aşağıda \"Tabloların\" altında görünür, orada düzenleyebilirsin.",
 "t:mp_your_tables":"Tabloların",
 "t:mp_empty":"Henüz tablo yok. Yukarıdaki bir şablonda Çoğalt'a bas.",
-"t:mp_template_edit_hint":"Şablonların kendisini Paketler sayfasında, \"Paket şablonları\" kategorisinde düzenle.",
+"t:mp_template_edit_hint":"Düzenle, şablonu Paketler sayfasında açar (şablonlar orada başka türlü listelenmez).",
 "t:mp_edit_in_packs":"Paketlerde düzenle",
 "t:mp_admin_none":"Henüz kopya yok. Bir şablonda Çoğalt'a bas.",
 "t:mp_admin_copied":"Paketlerim'e kopyalandı — Paketler sayfasında açılıyor",

@@ -774,7 +774,7 @@
  "t:mp_where": "Aparece una copia abajo en \"Tus tablas\", donde puedes editarla.",
  "t:mp_your_tables": "Tus tablas",
  "t:mp_empty": "Aún no hay tablas. Pulsa Duplicar en una plantilla de arriba.",
- "t:mp_template_edit_hint": "Edita las plantillas en la página Paquetes, en la categoría \"Plantillas de paquetes\".",
+ "t:mp_template_edit_hint": "Editar abre la plantilla en la página Paquetes (las plantillas no aparecen allí de otro modo).",
  "t:mp_edit_in_packs": "Editar en Paquetes",
  "t:mp_admin_none": "Aún no hay copias. Pulsa Duplicar en una plantilla.",
  "t:mp_admin_copied": "Copiado a Mis paquetes: abriéndolo en la página Paquetes",

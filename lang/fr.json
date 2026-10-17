@@ -774,7 +774,7 @@
  "t:mp_where": "Une copie apparaît ci-dessous dans « Vos tableaux », où vous pouvez la modifier.",
  "t:mp_your_tables": "Vos tableaux",
  "t:mp_empty": "Aucun tableau pour l'instant. Appuyez sur Dupliquer sur un modèle ci-dessus.",
- "t:mp_template_edit_hint": "Modifiez les modèles eux-mêmes sur la page Packs, dans la catégorie « Modèles de packs ».",
+ "t:mp_template_edit_hint": "Modifier ouvre le modèle sur la page Packs (les modèles n'y sont pas listés autrement).",
  "t:mp_edit_in_packs": "Modifier dans Packs",
  "t:mp_admin_none": "Aucune copie pour l'instant. Appuyez sur Dupliquer sur un modèle.",
  "t:mp_admin_copied": "Copié dans Mes packs — ouverture sur la page Packs",

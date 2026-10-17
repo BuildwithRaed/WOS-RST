@@ -774,7 +774,7 @@
  "t:mp_where": "副本会出现在下方“你的表”中，可在那里编辑。",
  "t:mp_your_tables": "你的表",
  "t:mp_empty": "还没有表。在上方模板上点击“复制”。",
- "t:mp_template_edit_hint": "模板本身请在礼包页面的“礼包模板”分类中编辑。",
+ "t:mp_template_edit_hint": "“编辑”会在礼包页面打开该模板（否则模板不会在那里列出）。",
  "t:mp_edit_in_packs": "在礼包中编辑",
  "t:mp_admin_none": "还没有副本。在模板上点击“复制”。",
  "t:mp_admin_copied": "已复制到我的礼包 — 正在礼包页面打开",

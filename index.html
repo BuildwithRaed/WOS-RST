@@ -2816,7 +2816,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 13; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 14; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3730,7 +3730,7 @@ const T = {
   mp_where: { en: "A copy appears below under \"Your tables\", where you can edit it." },
   mp_your_tables: { en: "Your tables" },
   mp_empty: { en: "No tables yet. Press Duplicate on a template above." },
-  mp_template_edit_hint: { en: "Edit the templates themselves on the Packs page, in the \"Pack templates\" category." },
+  mp_template_edit_hint: { en: "Edit opens the template on the Packs page (templates aren't listed there otherwise)." },
   mp_edit_in_packs: { en: "Edit in Packs" },
   mp_admin_none: { en: "No copies yet. Press Duplicate on a template." },
   mp_admin_copied: { en: "Copied to My packs — opening it on the Packs page" },
@@ -6147,7 +6147,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const mine = (allTables || []).filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP);
     const tplRow = (tb) => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;">
         <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))}</span></span>
-        <button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}" style="flex-shrink:0;">${esc(t("mp_duplicate"))}</button></div>`;
+        <span style="display:inline-flex; gap:6px; flex-shrink:0;"><button type="button" class="btn small ghost" data-mpaedit>${esc(t("pk_edit"))}</button><button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}">${esc(t("mp_duplicate"))}</button></span></div>`;
     el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
       <div style="font-size:14px; font-weight:700;">${esc(t("mp_admin_settings"))}</div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;">${esc(t("mp_limit_label"))} <input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" style="width:64px; font-size:12px; padding:3px 6px;" /></label>
@@ -6173,6 +6173,8 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     });
     const openPacks = () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_MINE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); };
     el.querySelector("[data-mpopenpacks]").addEventListener("click", openPacks);
+    // Templates are no longer listed on the Packs page; Edit opens just them there.
+    el.querySelectorAll("[data-mpaedit]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_TEMPLATE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); }));
     el.querySelectorAll("[data-mpadup]").forEach((b) => b.addEventListener("click", async () => {
       const tb = templates.find((x) => String(x.id) === b.dataset.mpadup);
       if (!tb) return;
@@ -8167,9 +8169,13 @@ async function renderPacksPage() {
   const categoryOf = (tb) => packLinkFor(tb.id).group;
   // Category order: saved by the owner (PACK_LINKS.__order.categories);
   // categories not in that list follow in order of first appearance.
+  // Pack templates live on the My packs page (owner, 17 Oct 2026): here they
+  // show only when "Edit" there opens their category.
+  const tplOpen = () => packsFilter === "cat:" + PACK_TEMPLATE_GROUP;
+  const isTpl = (tb) => !!packLinkFor(tb.id).template;
   function categoryOrder() {
     const seen = [];
-    tables.forEach((tb) => { const g = categoryOf(tb); if (g && !seen.includes(g)) seen.push(g); });
+    tables.forEach((tb) => { const g = categoryOf(tb); if (g && !seen.includes(g) && (!isTpl(tb) || tplOpen())) seen.push(g); });
     const saved = (PACK_LINKS && PACK_LINKS.__order && Array.isArray(PACK_LINKS.__order.categories)) ? PACK_LINKS.__order.categories : [];
     return [...saved.filter((g) => seen.includes(g)), ...seen.filter((g) => !saved.includes(g))];
   }
@@ -8177,6 +8183,7 @@ async function renderPacksPage() {
     return [{ key: "all" }, ...categoryOrder().map((g) => ({ key: "cat:" + g, name: g })), { key: "none" }];
   }
   function tableMatchesFilter(tb) {
+    if (isTpl(tb) && !tplOpen()) return false;
     if (packsFilter === "all") return true;
     if (packsFilter === "none") return !categoryOf(tb);
     return packsFilter.startsWith("cat:") && categoryOf(tb) === packsFilter.slice(4);
@@ -8240,8 +8247,8 @@ async function renderPacksPage() {
         <div class="pk-sum">
           <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
           <div class="pk-sum-gives">${gives.map(esc).join(" · ") || "—"}</div>
-          <label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>
-          <div class="pk-sum-f">${usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
+          ${lk.template ? "" : `<label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>`}
+          <div class="pk-sum-f">${lk.template ? `<span class="pk-sum-used">${esc(window.t("mp_template_note"))}</span>` : usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}

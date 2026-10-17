@@ -773,7 +773,7 @@
 "t:mp_where":"副本會出現在下方「你的表格」中，可在那裡編輯。",
 "t:mp_your_tables":"你的表格",
 "t:mp_empty":"尚無表格。請在上方範本按「複製」。",
-"t:mp_template_edit_hint":"在禮包頁面的「禮包範本」類別中編輯範本本身。",
+"t:mp_template_edit_hint":"「編輯」會在禮包頁面開啟該範本（否則範本不會在那裡列出）。",
 "t:mp_edit_in_packs":"在禮包頁面編輯",
 "t:mp_admin_none":"尚無副本。請在範本上按「複製」。",
 "t:mp_admin_copied":"已複製到我的禮包 — 正在禮包頁面開啟",

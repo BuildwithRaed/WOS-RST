@@ -774,7 +774,7 @@
  "t:mp_where": "Kopia pojawi się poniżej w \"Twoje tabele\", gdzie możesz ją edytować.",
  "t:mp_your_tables": "Twoje tabele",
  "t:mp_empty": "Brak tabel. Naciśnij Duplikuj na szablonie powyżej.",
- "t:mp_template_edit_hint": "Same szablony edytujesz na stronie Paczki, w kategorii \"Szablony paczek\".",
+ "t:mp_template_edit_hint": "Edytuj otwiera szablon na stronie Paczki (inaczej szablony nie są tam widoczne).",
  "t:mp_edit_in_packs": "Edytuj w Paczkach",
  "t:mp_admin_none": "Brak kopii. Naciśnij Duplikuj na szablonie.",
  "t:mp_admin_copied": "Skopiowano do Moich paczek — otwieram na stronie Paczki",

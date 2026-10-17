@@ -774,7 +774,7 @@
  "t:mp_where": "Eine Kopie erscheint unten unter \"Deine Tabellen\", wo du sie bearbeiten kannst.",
  "t:mp_your_tables": "Deine Tabellen",
  "t:mp_empty": "Noch keine Tabellen. Tippe oben bei einer Vorlage auf Duplizieren.",
- "t:mp_template_edit_hint": "Die Vorlagen selbst bearbeitest du auf der Paketseite in der Kategorie \"Paketvorlagen\".",
+ "t:mp_template_edit_hint": "Bearbeiten öffnet die Vorlage auf der Paketseite (Vorlagen werden dort sonst nicht angezeigt).",
  "t:mp_edit_in_packs": "In Paketen bearbeiten",
  "t:mp_admin_none": "Noch keine Kopien. Tippe bei einer Vorlage auf Duplizieren.",
  "t:mp_admin_copied": "In Meine Pakete kopiert – wird auf der Paketseite geöffnet",
