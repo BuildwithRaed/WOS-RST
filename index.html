@@ -4913,7 +4913,7 @@ async function renderOverview(opts = {}) {
           const levels = RC_NODES_CACHE[trackName] || [];
           levels.forEach((r) => {
             if (r.stat !== rawStat) return;
-            if (useMax) { if (!isUpcomingRow("research_center_nodes", r)) total += Number(r.stat_pct) || 0; }
+            if (useMax) { if (!isUpcomingRow("research_center_nodes", r) && !levelLockedRow("research_center_nodes", r)) total += Number(r.stat_pct) || 0; }
             else if (!useMax && r.level <= ((RC_STATE && RC_STATE[trackName]) || 0)) total += Number(r.stat_pct) || 0;
           });
         });
@@ -11628,12 +11628,14 @@ function openStateAgeModal(onSaved) {
 // unticked (not counted in the Dashboard / Budgets) and its page shows when it
 // opens; the person can still tick it. Items not listed are never touched.
 const STATE_UNLOCKS = [
-  { kind: "page", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
-  { kind: "page", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
-  { kind: "lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
-  { kind: "gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
-  { kind: "gear", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
-  { kind: "gear", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
+  // Rows with a `key` are read by the code under that key (Admin can change
+  // the day and label, not the key, so renaming never switches them off).
+  { kind: "page", key: "t11", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
+  { kind: "page", key: "t12", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
+  { kind: "lab", key: "crystal lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
+  { kind: "gear", key: "legendary chief gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
+  { kind: "gear", key: "chief gear t5 t6", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
+  { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
     ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
@@ -11641,10 +11643,17 @@ const STATE_UNLOCKS = [
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
 ];
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
+// The built-in rows the code reads by key (kind + key).
+const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key }));
+function stateUnlockBuiltinKey(kind, name) {
+  const k = stateKeyNorm(name);
+  const b = STATE_UNLOCK_KEYS.find((x) => x.kind === kind && stateKeyNorm(x.key) === k);
+  return b ? b.key : null;
+}
 // The state day something opens on, or null if it isn't in the list.
 function stateUnlockDay(kind, name) {
   const k = stateKeyNorm(name);
-  const u = STATE_UNLOCKS.find((x) => x.kind === kind && stateKeyNorm(x.name) === k);
+  const u = STATE_UNLOCKS.find((x) => x.kind === kind && stateKeyNorm(x.key || x.name) === k);
   return u ? u.day : null;
 }
 // True when the state age is set and this isn't open yet in the person's state.
@@ -14652,11 +14661,16 @@ async function recordBudgetNeeds(calcKey, groups) {
 // were saved: when that changes (state age set or a day passes), Budgets asks
 // to open the page again so newly ticked / unticked ones are counted right.
 const BUDGET_STATE_KIND = { pets: "pets", pets_refine: "pets", experts: "experts", experts_research: "experts" };
+// Level unlocks (Rules & Timeline, kind "level") that change these pages' max.
+const BUDGET_LEVEL_LOCKS = { pets: ["pets"], experts: ["expert_level", "expert_skill"], experts_research: ["expert_research"] };
 function budgetStateSig(calcKey) {
   const kind = BUDGET_STATE_KIND[calcKey];
   if (!kind) return null;
   const list = STATE_UNLOCKS.filter((u) => u.kind === kind);
-  return list.some((u) => stateNotYet(kind, u.name)) ? list.map((u) => (stateNotYet(kind, u.name) ? "0" : "1")).join("") : null;
+  const base = list.some((u) => stateNotYet(kind, u.name)) ? list.map((u) => (stateNotYet(kind, u.name) ? "0" : "1")).join("") : null;
+  const d = stateAgeDay(), lv = LEVEL_LOCKS_ON && d != null ? STATE_UNLOCKS.filter((u) => u.kind === "level" && (BUDGET_LEVEL_LOCKS[calcKey] || []).includes(u.table)) : [];
+  if (!lv.some((u) => d < u.day)) return base;
+  return `${base || ""}|L${lv.map((u) => (d < u.day ? "0" : "1")).join("")}`;
 }
 // Live material needs for the pages whose data is global.
 function computeChiefGearNeeds() {
@@ -18321,6 +18335,11 @@ let T12_NODES_CACHE = null;
 function t12Rel(def) {
   const ids = upcomingIds("t12_nodes");
   const tier = T12_NODES_CACHE && T12_NODES_CACHE[def.tier];
+  const top = levelLockTop("t12_nodes");
+  if (top !== Infinity) return Math.max(0, Math.min(t12RelUp(def, ids, tier), top));
+  return t12RelUp(def, ids, tier);
+}
+function t12RelUp(def, ids, tier) {
   if (!ids.size || !tier) return def.max;
   let rel = def.max;
   Object.values(tier).forEach((r) => { if (r && r.id != null && ids.has(String(r.id))) rel = Math.min(rel, Number(r.level) - 1); });
@@ -18532,7 +18551,7 @@ function computeT11Stats(troop, useMax) {
   Object.entries(tracks).forEach(([track, levels]) => {
     const cur = useMax ? Infinity : ((T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0);
     levels.forEach((r) => {
-      if (r.level > cur || !r.stat || (useMax && isUpcomingRow("t11_helios_nodes", r))) return;
+      if (r.level > cur || !r.stat || (useMax && (isUpcomingRow("t11_helios_nodes", r) || levelLockedRow("t11_helios_nodes", r)))) return;
       stats[r.stat] += Number(r.stat_pct) || 0;
     });
   });
@@ -19076,9 +19095,119 @@ function isUpcomingRow(table, row) { return !!row && row.id != null && upcomingI
 // counts as upcoming), or the last row when nothing is upcoming.
 function releasedLastIdx(table, rows) {
   const ids = upcomingIds(table);
-  if (!ids.size) return rows.length - 1;
-  const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
-  return i < 0 ? rows.length - 1 : Math.max(-1, i - 1);
+  let last = rows.length - 1;
+  if (ids.size) {
+    const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
+    if (i >= 0) last = Math.max(-1, i - 1);
+  }
+  // Levels not open yet in the person's state (Admin → Rules & Timeline →
+  // Unlocks, kind "level") stop "Max" and the default "My max" the same way.
+  if (LEVEL_LOCKS_ON) {
+    const j = levelLockIdx(table, rows);
+    if (j >= 0) last = Math.min(last, Math.max(-1, j - 1));
+  }
+  return last;
+}
+// ---- Level unlocks by state age (owner, 17 Oct 2026) ----
+// An unlock row { kind: "level", table: <target key below>, level, day } says
+// the levels from `level` on open on that state day. Before then (state age
+// set), "Max", "Max everything", the Dashboard max and the default "My max"
+// stop at the level before, like "Upcoming" ticks; the levels stay in the
+// lists (marked) so people can plan ahead. A lock is skipped when the person
+// already has something at or above that level (like the built-in Chief Gear
+// T5 – T6 and Charm 16.1 – 18 locks).
+// Each target: label, db table, pages (for the 🔒 note), which rows it is
+// about (match), each row's rank, the rank of the picked level, the levels to
+// pick from in Admin (choices, after load) and whether the person is already
+// there (inUse). `row: true` = a single row can be judged on its own (plain
+// level numbers).
+let LEVEL_LOCKS_ON = false; // any "level" unlock rows (set with the rules)
+const lvNum = (r) => Number(r && r.level);
+const lvLevels = (rows) => [...new Set(rows.map((r) => Number(r && r.level)).filter((n) => Number.isFinite(n) && n > 0))].sort((a, b) => a - b).map(String);
+const LEVEL_LOCK_ROWS = {};
+const LEVEL_LOCK_TARGETS = {
+  charms: { label: "Chief Charm levels", table: "charm_levels", tabs: ["charmscalc"],
+    rank: (r, i) => i, rankOf: (v) => CHARM_LEVELS.indexOf(String(v)),
+    load: () => ensureCharmData(), choices: () => CHARM_LEVELS.filter((l) => l !== "0"),
+    inUse: (k) => CHARM_PIECES.some((p) => (CHARM_CALC_STATE[p.key] || []).some((sl) => CHARM_LEVELS.indexOf(String(sl.current)) >= k)) },
+  chief_gear: { label: "Chief Gear tiers", table: "progression_rows", tabs: ["chiefgear"], match: (rows) => rows === CHIEF_GEAR_ROWS,
+    rank: (r, i) => i, rankOf: (v, rows) => (rows || CHIEF_GEAR_ROWS || []).findIndex((r) => chiefGearRowLabel(r) === String(v)),
+    load: () => loadChiefGearRows(), choices: () => (CHIEF_GEAR_ROWS || []).slice(1).map(chiefGearRowLabel),
+    inUse: (k) => CHIEF_GEAR_PIECES.some((p) => ((CHIEF_GEAR_STATE[p.key] || {}).from ?? -1) >= k) },
+  ...Object.fromEntries([["hero_mastery", "Hero Gear Mastery Forging", "Hero Gear Mastery levels"], ["hero_enhance", "Enhance Combined", "Hero Gear Enhance levels (101+ = Mithril)"]].map(([key, track, label]) => [key, {
+    label, table: "progression_rows", tabs: ["herogearcalc"], match: (rows) => !!HERO_GEAR_TABLES_CACHE && rows === HERO_GEAR_TABLES_CACHE[track],
+    rank: lvNum, rankOf: (v) => Number(v),
+    load: () => ensureHeroGearData(), choices: () => lvLevels((HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || []),
+    inUse: (k) => {
+      const rows = (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [];
+      return HERO_GEAR_SET_NAMES.some((sn) => HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => {
+        const st = (((HERO_GEAR_SETS[sn] || {})[tr] || {})[pc] || {})[track];
+        const f = st ? st.from : null;
+        return typeof f === "number" && f > 0 && !!rows[f] && lvNum(rows[f]) >= k;
+      })));
+    } }])),
+  t11: { label: "War Academy (T11) levels", table: "t11_helios_nodes", tabs: ["t11helios"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: () => ensureT11StateData(), choices: () => lvLevels(Object.values(T11_NODES_CACHE || {}).flatMap((tr) => Object.values(tr || {}).flat())).slice(1),
+    inUse: (k) => Object.values(T11_STATE || {}).some((tr) => tr && typeof tr === "object" && Object.values(tr).some((v) => Number(v) >= k)) },
+  t12: { label: "Flame Tech (T12) levels", table: "t12_nodes", tabs: ["t12research"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: () => ensureT12StateData(), choices: () => Array.from({ length: Math.max(0, ...T12_ITEM_DEFS.map((d) => d.max)) }, (x, i) => String(i + 1)).slice(1),
+    inUse: (k) => Object.values(T12_STATE || {}).some((tr) => tr && typeof tr === "object" && Object.values(tr).some((v) => Number(v) >= k)) },
+  research_center: { label: "Research Center levels", table: "research_center_nodes", tabs: ["researchcenter"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: () => ensureRCData(), choices: () => lvLevels(Object.values(RC_NODES_CACHE || {}).flat()).slice(1),
+    inUse: (k) => Object.values(RC_STATE || {}).some((v) => Number(v) >= k) },
+  pets: { label: "Pet levels", table: PET_LEVELS_TABLE, tabs: ["petsdata"], rank: (r) => parseFloat(r && r.level_label), rankOf: (v) => Number(v), row: true,
+    load: () => ensurePetsData(), choices: () => [...new Set(Object.values(PETS_NODES_CACHE || {}).flat().map((r) => parseFloat(r.level_label)).filter((n) => Number.isFinite(n) && n > 1))].sort((a, b) => a - b).map(String),
+    inUse: (k) => Object.entries(PETS_STATE || {}).some(([pet, st]) => {
+      const f = st && typeof st === "object" ? st.from : st, r = ((PETS_NODES_CACHE || {})[pet] || [])[f];
+      return typeof f === "number" && f >= 0 && !!r && parseFloat(r.level_label) >= k;
+    }) },
+  expert_level: { label: "Expert levels (affinity)", table: "expert_affinity_nodes", tabs: ["expertspage"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: async () => { LEVEL_LOCK_ROWS.expert_level = await loadExpertNodes("affinity"); }, choices: () => lvLevels(LEVEL_LOCK_ROWS.expert_level || []).slice(1), inUse: () => false },
+  expert_skill: { label: "Expert skill levels", table: "expert_skill_nodes", tabs: ["expertspage"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: async () => { LEVEL_LOCK_ROWS.expert_skill = await loadExpertNodes("skill"); }, choices: () => lvLevels(LEVEL_LOCK_ROWS.expert_skill || []).slice(1), inUse: () => false },
+  expert_research: { label: "Expert research levels", table: "expert_research_nodes", tabs: ["expertsresearchpage"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: async () => { LEVEL_LOCK_ROWS.expert_research = await loadExpertNodes("research"); }, choices: () => lvLevels(LEVEL_LOCK_ROWS.expert_research || []).slice(1), inUse: () => false },
+  vip: { label: "VIP tiers", table: "buff_rows", tabs: ["extrabonus:Vip Tier"], rank: (r, i) => i, rankOf: (v, rows) => (rows || VIP_ROWS_CACHE || []).findIndex((r) => r && r.name === String(v)),
+    load: () => ensureVipData(), choices: () => (VIP_ROWS_CACHE || []).slice(1).map((r) => r.name),
+    inUse: (k) => VIP_SELECTED_INDEX != null && VIP_SELECTED_INDEX >= k },
+};
+// Waiting level unlocks of a db table (with the rank of the first locked level
+// when rows are given), leaving out ones the person is already past.
+function levelLocksFor(table, rows) {
+  const d = stateAgeDay();
+  if (d == null) return [];
+  const out = [];
+  STATE_UNLOCKS.forEach((u) => {
+    const def = u.kind === "level" && d < u.day ? LEVEL_LOCK_TARGETS[u.table] : null;
+    if (!def || def.table !== table) return;
+    if (rows && def.match && !def.match(rows)) return;
+    if (!rows && !def.row) return;
+    const k = def.rankOf(u.level, rows);
+    if (k == null || !Number.isFinite(k) || k < 0) return;
+    try { if (def.inUse(k)) return; } catch (e) { /* state not loaded yet: the lock applies */ }
+    out.push({ def, k });
+  });
+  return out;
+}
+// Index of the first row a waiting level unlock covers, or -1.
+function levelLockIdx(table, rows) {
+  let first = -1;
+  if (!rows || !rows.length) return first;
+  levelLocksFor(table, rows).forEach(({ def, k }) => {
+    const i = rows.findIndex((r, ix) => def.rank(r, ix) >= k);
+    if (i >= 0 && (first < 0 || i < first)) first = i;
+  });
+  return first;
+}
+// Tables with plain level numbers: is this row behind a waiting lock?
+function levelLockedRow(table, row) {
+  if (!LEVEL_LOCKS_ON || !row) return false;
+  return levelLocksFor(table).some(({ def, k }) => def.rank(row) >= k);
+}
+// The highest level number the waiting locks leave open (T12), or Infinity.
+function levelLockTop(table) {
+  if (!LEVEL_LOCKS_ON) return Infinity;
+  return levelLocksFor(table).reduce((m, { k }) => Math.min(m, k - 1), Infinity);
 }
 // Speed: row ids are only downloaded for tables that have "Upcoming" ticks
 // (they made every level table 30-100% bigger). Ticking clears the kept
@@ -22000,10 +22129,27 @@ function gameRules() {
   if (GAME_RULES) return GAME_RULES;
   const num = (key, label) => ({ key, label, type: "num" });
   GAME_RULES = [
-    { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens.",
-      cols: [{ key: "label", label: "Shown as", type: "text" }, { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear"] }, { key: "name", label: "Name (pet / expert / id)", type: "text" }, { key: "tab", label: "Page", type: "page" }, { key: "day", label: "State day", type: "num" }],
-      get: () => STATE_UNLOCKS.map((u) => ({ label: u.label, kind: u.kind, name: u.name, tab: (u.tabs || [])[0] || "", day: u.day })),
-      set: (rows) => ruleSetArray(STATE_UNLOCKS, rows.filter((r) => r.name && Number(r.day) >= 0).map((r) => ({ kind: r.kind, name: r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name }))) },
+    { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens. Kind \"level\": pick a page's levels and the first one not open yet; until that day Max and the default My max stop just below it (like Upcoming).",
+      prepare: () => loadLevelLockChoices(),
+      cols: [{ key: "label", label: "Shown as", type: "text" },
+        { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear", "level"], redraw: true, locked: (row) => !!row.key,
+          after: (row) => { if (row.kind === "level" && !LEVEL_LOCK_TARGETS[row.table]) { row.table = Object.keys(LEVEL_LOCK_TARGETS)[0]; row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; } } },
+        { key: "name", label: "Name (pet / expert / id)", type: "text", locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
+        { key: "tab", label: "Page", type: "page", when: (row) => row.kind !== "level" },
+        { key: "table", label: "Levels of (kind level)", type: "select", options: () => Object.entries(LEVEL_LOCK_TARGETS).map(([k, d]) => [k, d.label]), redraw: true,
+          after: (row) => { row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; }, when: (row) => row.kind === "level" },
+        { key: "level", label: "First locked level", type: "select", options: (row) => LEVEL_LOCK_CHOICES[row.table] || null, when: (row) => row.kind === "level" },
+        { key: "day", label: "State day", type: "num" }],
+      get: () => STATE_UNLOCKS.map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day })),
+      set: (rows) => {
+        ruleSetArray(STATE_UNLOCKS, rows.filter((r) => (r.kind === "level" ? !!LEVEL_LOCK_TARGETS[r.table] && r.level != null && r.level !== "" : !!r.name) && Number(r.day) >= 0).map((r) => {
+          if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: Number(r.day), label: r.label || `${d.label} ${r.level}+` }; }
+          // Built-in rows the code reads keep their key (also rows saved before keys existed).
+          const key = r.key || stateUnlockBuiltinKey(r.kind, r.name);
+          return { ...(key ? { key } : {}), kind: r.kind, name: key || r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name };
+        }));
+        LEVEL_LOCKS_ON = STATE_UNLOCKS.some((u) => u.kind === "level");
+      } },
     { key: "genDays", group: "timeline", label: "Gen start days", help: "The state day each hero generation starts (Gen 1 = day 0).",
       cols: [{ key: "gen", label: "Gen", type: "auto" }, { key: "day", label: "Starts on state day", type: "num" }],
       get: () => STATE_GEN_DAYS.map((d, i) => ({ gen: i + 1, day: d })),
@@ -22063,6 +22209,13 @@ function gameRules() {
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
   return GAME_RULES;
 }
+// Levels to pick from for "level" unlocks (Admin), loaded when that rule opens.
+const LEVEL_LOCK_CHOICES = {};
+async function loadLevelLockChoices() {
+  await Promise.all(Object.entries(LEVEL_LOCK_TARGETS).map(async ([k, d]) => {
+    try { await d.load(); const c = d.choices(); LEVEL_LOCK_CHOICES[k] = c && c.length ? c : null; } catch (e) { LEVEL_LOCK_CHOICES[k] = null; }
+  }));
+}
 function gameRulesSaved() { const v = siteConfig("game_rules", null); return v && typeof v === "object" ? v : {}; }
 // Puts the built-in values back, then the admin's saved ones on top.
 function applyGameRules() {
@@ -22091,11 +22244,19 @@ async function renderAdminRules(body) {
   const rules = gameRules(), saved = gameRulesSaved();
   const pages = visitorPageList ? [{ tab: "", label: "—" }, ...visitorPageList(), { tab: "overview", label: "Dashboard" }] : [];
   const changed = (r) => saved[r.key] != null;
-  const cell = (c, v, ri) => {
+  const cell = (c, v, ri, row) => {
     const a = `data-rcell="${ri}|${c.key}"`;
+    if (row && c.when && !c.when(row)) return `<span class="meta">—</span>`;
+    if (row && c.locked && c.locked(row)) return `<span class="meta" title="Built-in: the site reads this one by its id">${esc(String(v == null ? "" : v))}</span>`;
     if (c.type === "auto") return `<span class="meta">${esc(String(v))}</span>`;
     if (c.type === "check") return `<input type="checkbox" ${a} ${v ? "checked" : ""} />`;
-    if (c.type === "select") { const opts = typeof c.options === "function" ? c.options() : c.options; return `<select ${a}>${opts.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`; }
+    if (c.type === "select") {
+      const opts = typeof c.options === "function" ? c.options(row || {}) : c.options;
+      if (!opts) return `<input ${a} type="text" value="${esc(v == null ? "" : String(v))}" />`;
+      const pair = (o) => (Array.isArray(o) ? o : [o, o]);
+      const has = opts.some((o) => String(pair(o)[0]) === String(v));
+      return `<select ${a}>${!has && v != null && v !== "" ? `<option selected>${esc(String(v))}</option>` : ""}${opts.map((o) => { const [ov, ol] = pair(o); return `<option value="${esc(String(ov))}" ${String(ov) === String(v) ? "selected" : ""}>${esc(String(ol))}</option>`; }).join("")}</select>`;
+    }
     if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
     return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
   };
@@ -22117,16 +22278,18 @@ async function renderAdminRules(body) {
         return;
       }
       ed.innerHTML = `<div class="rl-table-wrap"><table class="rl-table"><thead><tr>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
-        ${val.map((row, ri) => `<tr>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rmove="${ri}|-1" ${ri === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rmove="${ri}|1" ${ri === val.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
+        ${val.map((row, ri) => `<tr>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri, row)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rmove="${ri}|-1" ${ri === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rmove="${ri}|1" ${ri === val.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
         </tbody></table></div><button type="button" class="btn ghost small" data-radd style="margin-top:8px;">+ Add row</button>`;
       ed.querySelectorAll("[data-rcell]").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
         const [ri, k] = inp.dataset.rcell.split("|"); const c = r.cols.find((x) => x.key === k);
         val[+ri][k] = inp.type === "checkbox" ? inp.checked : c.type === "num" ? (inp.value === "" ? "" : Number(inp.value)) : inp.value;
+        if (c.after) c.after(val[+ri]);
+        if (c.redraw) drawEditor();
       }));
       ed.querySelectorAll("[data-rmove]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.rmove.split("|").map(Number); const [x] = val.splice(ri, 1); val.splice(ri + d, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); }));
       ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
       ed.querySelector("[data-radd]").addEventListener("click", () => {
-        const row = {}; r.cols.forEach((c) => { row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? ((typeof c.options === "function" ? c.options() : c.options)[0]) : ""; });
+        const row = {}; r.cols.forEach((c) => { const first = c.type === "select" ? ((typeof c.options === "function" ? c.options(row) : c.options) || [""])[0] : ""; row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? (Array.isArray(first) ? first[0] : first) : ""; });
         val.push(row); drawEditor();
       });
     };
@@ -22134,10 +22297,14 @@ async function renderAdminRules(body) {
       <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>
       <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
         <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
-        <div class="rl-ed"></div>
+        <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
         <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed(r) ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
       </div>`;
-    drawEditor();
+    if (r.prepare) {
+      // Lists to pick from load first (the editor falls back to typing).
+      const ed0 = body.querySelector(".rl-ed");
+      Promise.resolve().then(() => r.prepare()).catch(() => {}).then(() => { if (ADMIN_RULE_OPEN === r.key && body.contains(ed0)) drawEditor(); });
+    } else drawEditor();
     body.querySelector("[data-ruleback]").addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
     const store = async (next, msg) => {
       try {
