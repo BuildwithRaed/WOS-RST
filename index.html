@@ -324,7 +324,8 @@
   .pks .pks-step input[type=number]{ width:46px; min-width:0; flex:0 0 auto; text-align:center; padding:5px 4px; }
   .pks-step .btn{ width:30px; padding:4px 0; }
   .pks .bset-c select{ width:auto; max-width:180px; }
-  .pks .bset-c{ flex-wrap:nowrap; }
+  .pks .bset-l{ flex:1 1 0; }
+  .pks .pks-nw .bset-c{ flex-wrap:nowrap; flex:0 0 auto; }
   .pk-tbl-wrap td{ padding-left:1px !important; padding-right:1px !important; }
   .pks-opt:has(.bset-c > input[style*="display: none"]), .pks-opt:has(.bset-c > input[style*="display:none"]){ display:none; }
   .pks-more{ border-top:1px solid var(--line); }
@@ -1756,6 +1757,8 @@ input,select,textarea{
   /* Packs: tables far off screen skip layout until scrolled near (the owner's
      editable view is thousands of inputs); the reserved height keeps scrolling smooth. */
   [data-packtable]{ content-visibility:auto; contain-intrinsic-size:auto 600px; }
+  /* An open ⋯ menu must show over the cards below (content-visibility clips it). */
+  [data-packtable]:has(.pk-more[open]){ content-visibility:visible; position:relative; z-index:40; }
 </style>
 </head>
 <body>
@@ -3537,7 +3540,7 @@ const T = {
   pack_reset_once: { en: "Once only" },
   pack_reset_stack: { en: "Any time \u2014 stack up to N days" },
   pack_stack_max: { en: "days max ahead" },
-  pack_stack_hint: { en: "No start day. Each purchase gives the \u201cDaily rewards\u201d days above (7 if not set); rewards are counted as they arrive." },
+  pack_stack_hint: { en: "No start day. Each purchase gives the \u201cDaily rewards\u201d days (under More; 7 if not set); rewards are counted as they arrive." },
   pack_stack_text: { en: "Any time \u00b7 {d} days per buy \u00b7 up to {cap} days ahead (max {n} at once)" },
   pack_stack_later: { en: "buy {n} now, the rest as days run down" },
   price_points_title: { en: "Pack prices" },
@@ -8038,6 +8041,11 @@ async function renderPackCalendarPage() {
 // Packs B: tables open for editing (kept for the visit). Closed tables show a
 // small summary card only.
 const PACKS_OPEN = new Set();
+// Close any open pack ⋯ menu that a tap landed outside of.
+function pkCloseMenus(target) {
+  document.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(target)) m.open = false; });
+}
+document.addEventListener("click", (e) => pkCloseMenus(e.target));
 // Pack tables in "⇅ Arrange" mode (◀ ▶ under each column), kept for the visit.
 const PK_ARRANGE = new Set();
 async function renderPacksPage() {
@@ -8104,7 +8112,7 @@ async function renderPacksPage() {
   // the item list (with search and Move left / right).
   listEl.addEventListener("click", (e) => {
     // A tap anywhere else closes an open ⋯ menu.
-    listEl.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(e.target)) m.open = false; });
+    pkCloseMenus(e.target);
     const arr = e.target.closest("[data-pkarrange]");
     if (arr) {
       const panel = arr.closest("[data-packtable]"), id = panel && panel.dataset.pkid;
@@ -8249,8 +8257,9 @@ async function renderPacksPage() {
   }
   // Totals of 100,000 and up are shortened so they fit their column (444K,
   // 1.11M); the full number is in the cell's title (long-press).
-  function pkShortNum(n) {
+  function pkShortNum(n, tight) {
     const a = Math.abs(n);
+    if (tight && a >= 1e4 && a < 1e5) return (Math.round(n / 100) / 10).toString().replace(/\.0$/, "") + "K";
     if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 1 : 2).replace(/\.?0+$/, "") + "M";
     if (a >= 1e5) return Math.round(n / 1e3) + "K";
     return fmtNum(n);
@@ -8390,7 +8399,7 @@ async function renderPacksPage() {
         if (money && v) { const c = packConvert(v, link.currency); sum += c.n; code = c.code; } else sum += v;
       });
       const cell = panel.querySelector(`[data-pt-total="${ci}"]`);
-      if (cell) { cell.textContent = sum ? (money ? fmtMoneyIn(sum, code) : pkShortNum(sum)) : ""; cell.title = sum && !money ? fmtNum(sum) : ""; }
+      if (cell) { cell.textContent = sum ? (money ? fmtMoneyIn(sum, code) : pkShortNum(sum, t.columns.length > 8)) : ""; cell.title = sum && !money ? fmtNum(sum) : ""; }
     });
   }
 
@@ -8539,7 +8548,7 @@ async function renderPacksPage() {
                 )
                 .join("")}
               <tr style="border-top:2px solid var(--line); font-weight:700;">
-                ${totals.map((sum, ci) => `<td data-pt-total="${ci}" title="${sum ? esc(fmtNum(sum)) : ""}" style="padding:5px 1px; font-size:11px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sum ? esc(pkShortNum(sum)) : ""}</td>`).join("")}
+                ${totals.map((sum, ci) => `<td data-pt-total="${ci}" title="${sum ? esc(fmtNum(sum)) : ""}" style="padding:5px 1px; font-size:11px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sum ? esc(pkShortNum(sum, t.columns.length > 8)) : ""}</td>`).join("")}
                 <td></td>
               </tr>
             </tbody>
@@ -8786,7 +8795,7 @@ async function renderPacksPage() {
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
         </span></div>
         <div class="bset-row pks-opt"><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
-        <div class="bset-row pks-opt"><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
+        <div class="bset-row pks-opt pks-nw"><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
         <label class="bset-row" style="${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
             <span class="bset-l">${esc(t("pack_buys_per_reset"))}</span>
             <span class="bset-c"><input type="number" min="1" step="1" data-packbuys value="${link.buys}" style="width:64px;" /></span>
