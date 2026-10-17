@@ -501,7 +501,7 @@
  "t:pack_reset_once": "1回のみ",
  "t:pack_reset_stack": "いつでも — 最大N日分まで重ねられる",
  "t:pack_stack_max": "日先まで",
- "t:pack_stack_hint": "開始日なし。1回の購入で上の「毎日報酬」の日数分(未設定なら7日)。報酬は届いた分だけ計算します。",
+ "t:pack_stack_hint": "開始日なし。1回の購入で「購入後の毎日報酬」の日数分（「その他」内、未設定なら7日）。報酬は届いた分だけ計算します。",
  "t:pack_stack_text": "いつでも · 1回{d}日分 · 最大{cap}日先まで(一度に最大{n})",
  "t:pack_stack_later": "今{n}個、残りは日数が減ってから購入",
  "t:price_points_title": "パック価格",

@@ -500,7 +500,7 @@
 "t:pack_reset_once":"Sekali saja",
 "t:pack_reset_stack":"Kapan saja — tumpuk hingga N hari",
 "t:pack_stack_max":"hari maks ke depan",
-"t:pack_stack_hint":"Tanpa hari mulai. Tiap pembelian memberi jumlah hari “Hadiah harian” di atas (7 jika tidak diatur); hadiah dihitung saat tiba.",
+"t:pack_stack_hint":"Tanpa hari mulai. Tiap pembelian memberi jumlah hari “Hadiah harian setelah beli” (di Lainnya; 7 jika tidak diatur); hadiah dihitung saat tiba.",
 "t:pack_stack_text":"Kapan saja · {d} hari per beli · hingga {cap} hari ke depan (maks {n} sekaligus)",
 "t:pack_stack_later":"beli {n} sekarang, sisanya saat hari habis",
 "t:price_points_title":"Harga paket",

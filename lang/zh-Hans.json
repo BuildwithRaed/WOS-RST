@@ -501,7 +501,7 @@
  "t:pack_reset_once": "仅一次",
  "t:pack_reset_stack": "随时 — 最多叠加 N 天",
  "t:pack_stack_max": "天（最多提前）",
- "t:pack_stack_hint": "无开始日期。每次购买提供上面“每日奖励”的天数（未设置则为 7 天）；奖励按到账时间计算。",
+ "t:pack_stack_hint": "无开始日期。每次购买提供“购买后每日奖励”的天数（在“更多”中；未设置则为 7 天）；奖励按到账时间计算。",
  "t:pack_stack_text": "随时 · 每次 {d} 天 · 最多提前 {cap} 天（一次最多 {n} 个）",
  "t:pack_stack_later": "现在买 {n} 个，其余随天数减少再买",
  "t:price_points_title": "礼包价格",

@@ -501,7 +501,7 @@
  "t:pack_reset_once": "Nur einmal",
  "t:pack_reset_stack": "Jederzeit – bis zu N Tage stapeln",
  "t:pack_stack_max": "Tage max. im Voraus",
- "t:pack_stack_hint": "Kein Starttag. Jeder Kauf gibt die „Täglichen Belohnungen“-Tage oben (7, wenn nicht gesetzt); Belohnungen zählen, sobald sie ankommen.",
+ "t:pack_stack_hint": "Kein Starttag. Jeder Kauf gibt die Tage aus „Tägliche Belohnungen nach dem Kauf“ (unter Mehr; 7, wenn nicht gesetzt); Belohnungen zählen, sobald sie ankommen.",
  "t:pack_stack_text": "Jederzeit · {d} Tage pro Kauf · bis zu {cap} Tage im Voraus (max. {n} auf einmal)",
  "t:pack_stack_later": "{n} jetzt kaufen, den Rest, wenn die Tage ablaufen",
  "t:price_points_title": "Paketpreise",

@@ -500,7 +500,7 @@
 "t:pack_reset_once":"Chỉ một lần",
 "t:pack_reset_stack":"Bất cứ lúc nào — cộng dồn tối đa N ngày",
 "t:pack_stack_max":"ngày tối đa trước",
-"t:pack_stack_hint":"Không có ngày bắt đầu. Mỗi lần mua cho số ngày “Thưởng hằng ngày” ở trên (7 nếu chưa đặt); thưởng được tính khi đến.",
+"t:pack_stack_hint":"Không có ngày bắt đầu. Mỗi lần mua cho số ngày “Thưởng hằng ngày sau khi mua” (trong Thêm; 7 nếu chưa đặt); thưởng được tính khi đến.",
 "t:pack_stack_text":"Bất cứ lúc nào · {d} ngày mỗi lần mua · tối đa {cap} ngày trước (tối đa {n} cùng lúc)",
 "t:pack_stack_later":"mua {n} ngay, phần còn lại khi hết ngày",
 "t:price_points_title":"Giá gói",
