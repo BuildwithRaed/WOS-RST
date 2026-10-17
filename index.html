@@ -4780,7 +4780,7 @@ async function renderOverview(opts = {}) {
     if (statKey === "DMG" || statKey === "HP") {
       const table = ROSTER_WIDGET_STATS_BY_GEN[gen];
       if (!table) return 0;
-      const level = useMax ? 10 : widget;
+      const level = useMax ? widgetMaxLevel() : widget;
       const row = table[level];
       if (!row) return 0;
       return Number(statKey === "DMG" ? row.leth_pct : row.hp_pct) || 0;
@@ -5335,11 +5335,11 @@ async function renderOverview(opts = {}) {
               ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>${sh.short && sh.reach > sh.step ? `<div class="rc-sh rc-reach">${esc(shReach.replace("{s}", heroStepText(sh.reach)))}</div>` : ""}` : ""}
-              ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
+              ${sh && sh.hasWidget && sh.wLevel < widgetMaxLevel() ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).map((x) => `<span>${x}</span>`).join("") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
-                ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${esc(widgetShort)} ${i}</option>`).join("")}
+                ${Array.from({ length: widgetMaxLevel() }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${esc(widgetShort)} ${i}</option>`).join("")}
               </select>
             </div>`;
           }).join("")}
@@ -9736,7 +9736,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     while (reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
     // Widgets (mythic heroes): from the roster's widget level to 10.
     const e = (roster || {})[troop];
-    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(10, Number(e.widget) || 0)) : 0;
+    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(widgetMaxLevel(), Number(e.widget) || 0)) : 0;
     const hasWidget = hero.rarity === "Legendary";
     const wNeed = hasWidget ? widgetNeedFrom(wLevel) : 0;
     // Own widgets first, then that Gen's general widgets ("Gen 14 Widgets", any hero of the Gen).
@@ -9748,7 +9748,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     const wOwn = wMine + wFromGen;
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
-    while (hasWidget && wReach < 10 && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
+    while (hasWidget && wReach < widgetMaxLevel() && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
     return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool, notOut };
@@ -9757,7 +9757,9 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
 // Assumed from community tables; widgets cost $4.99 for 5.
 const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const WIDGET_PACK = { count: 5, price: 4.99 };
-function widgetNeedFrom(level) { let n = 0; for (let k = Math.max(0, level) + 1; k <= 10; k++) n += WIDGET_LEVEL_COST[k]; return n; }
+// Top widget level = the Rules "Widgets per widget level" table's length (10 built in).
+function widgetMaxLevel() { return Math.max(1, WIDGET_LEVEL_COST.length - 1); }
+function widgetNeedFrom(level) { let n = 0; for (let k = Math.max(0, level) + 1; k <= widgetMaxLevel(); k++) n += Number(WIDGET_LEVEL_COST[k]) || 0; return n; }
 function widgetCostFor(count) { return count > 0 ? Math.ceil(count / WIDGET_PACK.count) * WIDGET_PACK.price : 0; }
 // Widget prices on the Backpack card and the roster cards come from the same
 // planner as Budgets' "Hero shards & widgets" (its packs, trades, free points
