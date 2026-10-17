@@ -232,10 +232,10 @@
   .t12x-k + .bset-row, .bset-sec + .bset-row{ border-top:0; }
   .bset-l{ display:flex; flex-direction:column; min-width:0; font-size:13px; }
   .bset-l small{ font-size:11px; color:var(--muted); }
-  .bset-c{ display:flex; align-items:center; gap:6px; flex:0 1 auto; min-width:0; }
+  .bset-c{ display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px; flex:0 1 auto; min-width:0; }
   .bset-c input[type=date]{ width:142px; font-size:13px; padding:6px 8px; }
   .bset-c select{ width:150px; font-size:13px; padding:6px 8px; }
-  .bset-c input[type=number]{ width:96px; text-align:right; font-size:13px; padding:6px 8px; }
+  .bset-c input[type=number]{ width:96px; flex:1 1 56px; min-width:56px; text-align:right; font-size:13px; padding:6px 8px; }
   .bset-x{ width:32px; height:32px; padding:0 !important; flex:0 0 32px; }
   .bset-sec{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0 2px; border-top:1px solid var(--line); }
   .bset-sec b{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
@@ -245,8 +245,8 @@
   .bset-sw:checked{ background:var(--ice-dim); border-color:var(--ice-dim); }
   .bset-sw:checked::after{ left:18px; background:var(--frost); }
   .bset-note{ font-size:10.5px; margin-top:6px; }
-  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } .bset-c .bud-spend-per button{ padding:6px 10px; } }
-  .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 13px; }
+  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } }
+  .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 10px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
   .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
   .bud-spend-per button.on{ background:var(--ice-dim); color:var(--frost); }
@@ -13496,15 +13496,6 @@ function setPacksPageCurrency(code) {
 }
 // Budgets only offers the two currencies from the Packs page: US dollars and
 // the one picked there (with the store prices typed for it).
-function currencyPickerHtml(attr) {
-  const mine = packsPageCurrency() || (DISPLAY_CURRENCY && DISPLAY_CURRENCY !== "USD" ? DISPLAY_CURRENCY : "");
-  const c = PACK_CURRENCIES.find((x) => x.code === mine);
-  const showingMine = !!c && DISPLAY_CURRENCY === mine;
-  return `<label style="display:inline-flex; align-items:center; gap:6px; font-size:11px;"><span class="meta">${esc(t("show_prices_in"))}</span>
-    <select ${attr} style="font-size:11px; padding:3px 6px;">
-      ${currencyOptionsHtml(c, showingMine)}
-    </select></label>`;
-}
 function currencyOptionsHtml(c, showingMine) {
   return `<option value="" ${showingMine ? "" : "selected"}>USD $</option>
       ${c ? `<option value="${c.code}" ${showingMine ? "selected" : ""}>${c.code} ${esc(c.symbol)}</option>` : ""}`;
