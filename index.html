@@ -475,6 +475,10 @@
   .pur-cl-add{ width:30px; height:30px; flex:0 0 30px; border:0; border-radius:8px; background:var(--ice-dim); color:var(--frost); font-size:17px; cursor:pointer; }
   .pur-cl-add.off{ background:none; }
   .pur-cl-ex{ margin:0 0 8px; padding:8px 10px; border-radius:10px; background:var(--panel-2); font-size:11.5px; display:flex; flex-direction:column; gap:5px; }
+  .pur-cl-top{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; margin:4px 0 2px; }
+  .pur-cl-list{ position:relative; overflow-y:auto; }
+  .pur-cl-tick{ width:20px; height:20px; flex:0 0 20px; margin:0; accent-color:var(--ice); }
+  .pur-cl-row:not(.on) .pur-cl-n, .pur-cl-row:not(.on) .pur-cl-p{ opacity:.6; }
   .pur-cl-foot{ display:flex; justify-content:space-between; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:13px; }
   .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
   .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
@@ -3750,9 +3754,8 @@ const T = {
   pur_following: { en: "Following:" },
   pur_n_packs: { en: "{n} packs" },
   pur_other_would: { en: "{plan} plan would be {v}" },
-  pur_show_packs: { en: "Show packs" },
-  pur_hide_packs: { en: "Hide packs" },
-  pur_next_week: { en: "Next week" },
+  pur_tick_hint: { en: "Tick what you'll buy" },
+  pur_tick_none: { en: "Tick the packs you'll buy" },
   pur_tag_both: { en: "both" },
   pur_tag_target: { en: "target" },
   pur_tag_budget: { en: "budget" },
@@ -6601,8 +6604,9 @@ function purTablePopup(tb, opts) {
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 // The Add a pack form survives the phone reloading the page (sessionStorage).
-let PUR_SUG_OPEN = false; // My Purchases (admin): suggested packs list opened ("Show packs"), kept for the visit
-let PUR_SUG_ROW = null;   // the pack line opened in it ("week|row")
+let PUR_SUG_ROW = null;   // My Purchases (admin): the suggested pack line opened ("week|row")
+const PUR_SUG_TICK = new Map(); // "week|row" -> ticked to buy (default: the followed plan's packs), for the visit
+const PUR_SUG_VER = new Set();  // "week|row" using the other plan's version of that pack
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
@@ -6901,6 +6905,14 @@ async function renderPurchasesPage() {
     // Admin (owner picked C + B, 17 Oct 2026): a short summary of the chosen
     // week; "Show packs" opens big week boxes and one line per pack (tap a line
     // for its items, dates and the other plan's version; ＋ = Will buy).
+    // Ticks (default: the followed plan's packs) and the version picked for a
+    // pack both plans buy differently, per week.
+    const tickOf = (i) => { const k = `${PUR_SUG_WEEK}|${i}`; return PUR_SUG_TICK.has(k) ? PUR_SUG_TICK.get(k) : i < nFollow; };
+    const verOf = (i) => {
+      const xs = (sel && sel.items.get(i)) || [], m = cmp && sel && sel.match.get(i);
+      if (m && PUR_SUG_VER.has(`${PUR_SUG_WEEK}|${i}`)) return { r: rows[m.j], xs: m.xs, n: m.n };
+      return { r: rows[i], xs, n: xs.reduce((a, x) => a + x.count, 0) };
+    };
     const compactHtml = () => {
       // A pack you pick one option of ("QAR 17.99 · Chief Gear"): its option on the line.
       const optOf = (r) => { const m = /^[^·]*\d[^·]*·\s*([^·]+)$/.exec(String(r.label || "")); return m && !/\d/.test(m[1]) ? m[1].trim() : ""; };
@@ -6921,6 +6933,7 @@ async function renderPurchasesPage() {
         const first = Object.keys(r.gives || {}).find((k) => k !== "Gems" && r.gives[k] > 0);
         const icon = first ? bpIcon({ name: first.replace(/ \(minutes\)$/, "") }) : null;
         const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${i}`;
+        const tk = tickOf(i), vr = verOf(i);
         const kind = cmp ? (i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow) : null;
         const m = kind === "both" ? sel.match.get(i) : null;
         const star = m && (!m.same || m.n !== n) ? "*" : "";
@@ -6929,24 +6942,23 @@ async function renderPurchasesPage() {
           const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
           return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
         }).join("");
-        return `<div class="pur-cl-row${open ? " open" : ""}" data-purrow="${i}">
+        return `<div class="pur-cl-row${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
+          ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
           <span class="pur-cl-ic">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}</span>
           <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
           ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
-          <span class="pur-cl-p">${esc(packFmtMoney(r.price * n, r.currency))}</span>
-          ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
-        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(xs))} · ${esc(r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
+          <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtMoney(vr.r.price * vr.n, vr.r.currency))}</span>
+        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${star ? `<div class="bud-seg pur-m-ver">${[["", follow, r, n], ["1", otherName, rows[m.j], m.n]].map(([v, key, rr, nn]) => `<button type="button" data-purver="${i}|${v}" class="${(PUR_SUG_VER.has(`${PUR_SUG_WEEK}|${i}`) ? "1" : "") === v ? "on" : ""}">${esc(t(key === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(packFmtMoney(rr.price * nn, rr.currency))}</b><span>${esc(rr.label)} ×${nn}</span></button>`).join("")}</div>` : cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
       };
-      const ki = keys.indexOf(PUR_SUG_WEEK), next = ki >= 0 && ki < keys.length - 1 ? keys[ki + 1] : null;
       const boxes = `<div class="pur-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
       return `<div class="pur-cl-head"><div class="t12x-title" style="margin:0;">${esc(t("pur_sug_title"))}</div>${cmp ? `<button type="button" class="pur-cl-swap" data-purfollow="${follow === "target" ? "budget" : "target"}" title="${esc(t("pur_follow_line"))}">&#8644;</button>` : ""}</div>
         <div class="pur-cl-wk"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${followName ? ` <span class="meta">· ${esc(t("pur_following").replace(/:$/, "").toLowerCase())} ${esc(followName)}</span>` : ""}</div>
         <div class="pur-cl-big"><b>${sel && sel.cost ? esc(money(sel.cost)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", list.length))}</span></div>
         ${bi || (cmp && sel) ? `<div class="pur-cl-line">${bi ? `<span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)} ${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span>` : ""}${cmp && sel ? ` <span class="meta">${esc(t("pur_other_would").replace("{plan}", t("pur_tag_" + otherName)).replace("{v}", money(sel.alt || 0)))}</span>` : ""}</div>` : ""}
         ${cmp ? `<div class="pur-cl-line">${["both", "target", "budget"].filter((k) => counts[k]).map((k) => `<span class="pur-cmp pur-cmp-${k}">${counts[k]} ${esc(t("pur_tag_" + k))}</span>`).join(" ")}</div>` : ""}
-        ${PUR_SUG_OPEN ? boxes + (list.length ? `<div class="pur-cl-list">${list.map(rowHtml).join("")}</div>` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`) : ""}
-        ${list.some(([i]) => i < nFollow && canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purwkall>+ ${esc(t("pur_wk_buy_all").replace("{week}", wkName(PUR_SUG_WEEK).toLowerCase()))}</button>` : ""}
-        <div class="pur-cl-foot"><button type="button" class="linklike" data-purshow>${esc(t(PUR_SUG_OPEN ? "pur_hide_packs" : "pur_show_packs"))} ${PUR_SUG_OPEN ? "&#9662;" : "&#9656;"}</button>${next != null ? `<button type="button" class="linklike" data-purwk="${next}">${esc(t("pur_next_week"))} &#8250;</button>` : ""}</div>`;
+        ${boxes}
+        ${list.length ? `<div class="pur-cl-top"><span class="meta">${esc(t("pur_tick_hint"))}</span><button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button></div><div class="pur-cl-list">${list.map(rowHtml).join("")}</div>${list.length > 4 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`}
+        ${list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : ""}`;
     };
     if (IS_OWNER) box.innerHTML = compactHtml();
     else box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
@@ -6968,10 +6980,48 @@ async function renderPurchasesPage() {
       + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(money(total))}</b></div>`;
     box.querySelectorAll("[data-purwk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.purwk; PUR_SUG_WEEK = k === "after" ? k : Number(k); drawSug(); }));
     box.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
-    const showBtn = box.querySelector("[data-purshow]");
-    if (showBtn) showBtn.addEventListener("click", () => { PUR_SUG_OPEN = !PUR_SUG_OPEN; drawSug(); });
+    // Admin list: tick what you'll buy, then one "Will buy" adds every date of
+    // the ticked packs this week (owner, 17 Oct 2026).
+    const tickBuy = box.querySelector("[data-purtickbuy]");
+    const tickedNow = () => list.filter(([i]) => { const tb = sugTable(rows[i]); return tb && (rows[i].row != null || !plainPack(tb)) && tickOf(i); });
+    const syncTick = () => {
+      if (!tickBuy) return;
+      const pk = tickedNow(), sum = pk.reduce((a, [i]) => { const v = verOf(i); return a + packRowLocalUnits(v.r).reduce((x, y) => x + y, 0) * v.n; }, 0);
+      tickBuy.textContent = pk.length ? `+ ${t("pur_will_buy")} (${pk.length}) · ${money(sum)}` : t("pur_tick_none");
+      tickBuy.disabled = !pk.length;
+    };
+    syncTick();
+    box.querySelectorAll("[data-purtick]").forEach((cb) => cb.addEventListener("change", () => {
+      PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${cb.dataset.purtick}`, cb.checked);
+      cb.closest(".pur-cl-row").classList.toggle("on", cb.checked);
+      syncTick();
+    }));
+    const tickAll = box.querySelector("[data-purtickall]");
+    if (tickAll) tickAll.addEventListener("click", () => {
+      const on = !list.every(([i]) => tickOf(i) || !sugTable(rows[i]));
+      list.forEach(([i]) => PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${i}`, on));
+      drawSug();
+    });
+    box.querySelectorAll("[data-purver]").forEach((vb) => vb.addEventListener("click", () => {
+      const [i, v] = vb.dataset.purver.split("|"), k = `${PUR_SUG_WEEK}|${i}`;
+      if (v) PUR_SUG_VER.add(k); else PUR_SUG_VER.delete(k);
+      drawSug();
+    }));
+    if (tickBuy) tickBuy.addEventListener("click", () => {
+      const adds = [];
+      tickedNow().forEach(([i]) => {
+        const { r, xs } = verOf(i), tb = sugTable(r);
+        if (!tb) return;
+        xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
+      });
+      if (!adds.length) return;
+      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
+      savePackPurchases();
+      toast(t("pur_added_dates").replace("{n}", adds.length));
+      redraw();
+    });
     box.querySelectorAll("[data-purrow]").forEach((rw) => rw.addEventListener("click", (e) => {
-      if (e.target.closest("[data-pursug]")) return;
+      if (e.target.closest("[data-pursug], [data-purtick], [data-purver]")) return;
       const k = `${PUR_SUG_WEEK}|${rw.dataset.purrow}`;
       PUR_SUG_ROW = PUR_SUG_ROW === k ? null : k;
       drawSug();
@@ -7038,6 +7088,9 @@ async function renderPurchasesPage() {
       // Show the top 3 packs; the rest scroll inside the box.
       const listEl = box.querySelector(".pur-sug-list"), items = listEl ? [...listEl.children] : [];
       if (items.length > 3) listEl.style.maxHeight = `${items[3].offsetTop + 1}px`; // the list is the cards' offset parent
+      // Admin list: about 4½ pack lines, the rest scroll inside the box.
+      const clEl = box.querySelector(".pur-cl-list"), clRows = clEl ? [...clEl.querySelectorAll(".pur-cl-row")] : [];
+      if (clRows.length > 5) clEl.style.maxHeight = `${clRows[4].offsetTop + clRows[4].offsetHeight / 2}px`;
     };
     drawSug();
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
