@@ -15630,7 +15630,7 @@ async function renderBudgetsPage(opts = {}) {
       html: `<div class="plx-stats">${stats.map((s) => {
         const d = by[`${tr}|${s}`] || 0, cur = curStat(tr, s);
         return `<div class="plx-stat"><span>${esc(tStatLabel(STAT_RAW[s]))}</span>${d
-          ? `<b style="color:var(--good);">${esc(bidiNum("+" + pct(d)))}</b>${cur == null ? "" : `<small>${esc(bidiNum(pct(cur)))} &rarr; ${esc(bidiNum(pct(cur + d)))}</small>`}`
+          ? `<b style="color:var(--good);">${esc(bidiNum("+" + pct(d)))}</b>${cur == null ? "" : `<small>${esc(bidiNum(`${pct(cur)} \u2192 ${pct(cur + d)}`))}</small>`}`
           : `<b class="meta">&mdash;</b>`}</div>`;
       }).join("")}</div>`,
     })));
