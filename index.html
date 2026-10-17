@@ -8314,15 +8314,17 @@ async function renderPacksPage() {
   // Gems is a fixed, universal WOS price table (not something that varies
   // per-pack like FC/Speedups), so it's looked up directly rather than
   // scaled from Row 1 - it fills on every row, including Row 1 itself.
-  const AMOUNT_TO_GEMS = { 0.99: 500, 2.99: 1500, 4.99: 2500, 9.99: 5000, 19.99: 10000, 49.99: 25000, 99.99: 50000 };
+  // (Admin → Rules "Gems in a pack by price", MP_GEMS / mpGems.)
 
   // The Amount column itself follows this same fixed sequence in every
   // table. Typing Row 1's Amount as one of these values auto-fills every
   // row below it with the next value in the sequence - e.g. Row 1 = 0.99
   // fills Row 2 with 2.99, Row 3 with 4.99, and so on for however many
   // rows exist (or however far the sequence goes, whichever is shorter).
-  const AMOUNT_SEQUENCE = [0.99, 2.99, 4.99, 9.99, 19.99, 49.99, 99.99];
+  // The prices of the Rules "Gems in a pack by price" table, low to high.
+  const amountSequence = () => Object.keys(MP_GEMS).map(Number).filter((v) => v > 0).sort((a, b) => a - b);
   function applyAmountSequence(panel, t, onlyRowIndex) {
+    const AMOUNT_SEQUENCE = amountSequence();
     const row0Amount = parseNum(panel.querySelector('[data-pt-cell][data-row="0"][data-col="0"]')?.value);
     const startIdx = AMOUNT_SEQUENCE.findIndex((v) => Math.abs(v - row0Amount) < 0.001);
     if (startIdx === -1) return;
@@ -8338,7 +8340,7 @@ async function renderPacksPage() {
   }
 
   // Row 1 (the first row) sets the scale for every OTHER column (not Gems -
-  // see AMOUNT_TO_GEMS above): its ratio to the Amount (column 0) is measured
+  // see mpGems): its ratio to the Amount (column 0) is measured
   // from Row 1's own values. Typing an Amount into any other row then
   // auto-fills that row's remaining (non-Gems) columns using that ratio -
   // e.g. if Row 1 is $4.99 / 60 FC / 35 Speedups, FC is locked at 12.02x the
@@ -8427,9 +8429,7 @@ async function renderPacksPage() {
   // Gems for a price: the fixed game table, or the same 500-per-dollar
   // rule for any other price (4.99 -> 2,500, 9.99 -> 5,000, 49.99 -> 25,000).
   function gemsForPrice(amount) {
-    const key = Math.round(amount * 100) / 100;
-    if (AMOUNT_TO_GEMS[key] != null) return AMOUNT_TO_GEMS[key];
-    return Math.round((amount + 0.01) * 500);
+    return mpGems(amount);
   }
   function applyGemsLookup(panel, t, onlyRowIndex) {
     const lastCi = gemsColOf(t);
