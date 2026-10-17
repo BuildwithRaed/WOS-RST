@@ -430,14 +430,16 @@
     .dash-fit .dash-troops.cols .dash-stat{ padding:calc(2px + (var(--sx) - 1) * 10px) 1px; }
     .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(10px * min(var(--sx), 1.2)); }
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(13px * min(var(--sx), 1.12)); }
-    .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(10px * min(var(--sx), 1.1)); }
+    /* "/ 1988%" and "+1843.3%" stay 10px (no growing) with tight letters, so they fit the narrow columns. */
+    .dash-fit .dash-troops.cols .dash-stat-gap, .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:10px; letter-spacing:-.4px; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ letter-spacing:0; }
     /* Small phones (360 px): a little tighter so the numbers stay inside the cards. */
     @media (max-width:380px){
       .dash-fit .dash-troops.cols .dash-troop{ padding-left:4px; padding-right:4px; }
       .dash-fit .dash-troops.cols .dash-stat-k{ letter-spacing:0; gap:2px; }
-      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:10px; }
+      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:10px; letter-spacing:-.4px; }
       .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(12px * min(var(--sx), 1.12)); }
-      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(10px * min(var(--sx), 1.1)); }
+      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:10px; letter-spacing:-.4px; }
     }
     .dash-fit .dash-troops.cols .dash-stat-bar{ height:calc(3px * min(var(--sx), 1.6)); }
     .dash-fit .rc-pick{ width:calc(36px * min(var(--sx), 1.55)); height:calc(36px * min(var(--sx), 1.55)); }
@@ -1795,6 +1797,7 @@ input,select,textarea{
     .pc-chip{ min-height:32px; }
     .pc-nav .btn{ min-height:32px; min-width:32px; }
     .t12x-step button{ width:32px; height:32px; }
+    .plx-stat-tabs button{ min-height:32px; }
   }
   /* Pets Level: Current and Target one per row on narrow phones, so the
      longest level ("Lv. 50 Advanced (Max)") is not cut. */
