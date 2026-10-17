@@ -1946,6 +1946,17 @@ input,select,textarea{
   }
 
   async function sb(path, opts = {}, _retried = false) {
+    // A write to a table whose rows are kept for the visit drops that copy
+    // (before, and again after it lands, in case a page re-read it meanwhile).
+    const keptTable = opts.method && opts.method.toUpperCase() !== "GET" ? keptRowsTableOf(path) : "";
+    if (keptTable) keptRowsWritten(keptTable);
+    try {
+      return await sbRequest(path, opts, _retried);
+    } finally {
+      if (keptTable) keptRowsWritten(keptTable);
+    }
+  }
+  async function sbRequest(path, opts, _retried) {
     const token = (CURRENT_SESSION && CURRENT_SESSION.access_token) || SUPABASE_KEY;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       ...opts,
@@ -4657,8 +4668,32 @@ function dashCached(key, load) {
   return DASH_DATA_CACHE[key];
 }
 function dashDataChanged(key) {
-  if (key) delete DASH_DATA_CACHE[key];
-  else DASH_DATA_CACHE = {};
+  if (!key) { DASH_DATA_CACHE = {}; return; }
+  // "skins" also drops the pages' own kept copies ("skins:<request>").
+  Object.keys(DASH_DATA_CACHE).forEach((k) => { if (k === key || k.startsWith(key + ":")) delete DASH_DATA_CACHE[k]; });
+}
+// Rows that pages used to read again on every visit (galleries, Facility,
+// Alliance Tech, Tundra Album, Collection Gallery, pack tables) are kept for
+// the visit too. Each caller gets its own copy, so a page can change its rows
+// freely. Any write to those tables through sb() drops them (keptRowsWritten),
+// and Admin entry / exit drops everything (dropKeptGameData).
+function keptRowsKey(table) {
+  switch (table) {
+    case "skins": case "skins_catalog": return "skins";
+    case "pack_tables": return "pack_tables";
+    case "tundra_album_levels": case "collection_gallery_levels": return "lv:" + table;
+    default: return "";
+  }
+}
+function keptRowsTableOf(path) { const tb = String(path).split("?")[0]; return keptRowsKey(tb) ? tb : ""; }
+function keptRowsWritten(table) { if (typeof dashDataChanged === "function") dashDataChanged(keptRowsKey(table)); }
+function keptRows(table, path) {
+  return dashCached(keptRowsKey(table) + ":" + path, () => sb(path)).then((rows) => JSON.parse(JSON.stringify(rows || [])));
+}
+// Every pack table (select=*), shared by Packs, My packs, the Pack calendar
+// and Budgets (each used to read it with its own request).
+function packTablesRows() {
+  return keptRows("pack_tables", `pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`);
 }
 // Drops every game-data copy kept for the visit (Dashboard data, expert
 // tables): called when Admin is opened and after the category pages edit
@@ -4690,19 +4725,45 @@ function heroStarSvg(filledSegs, opts = {}) {
   });
   return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" style="display:block;">${petals.join("")}<circle cx="${c}" cy="${c}" r="1.3" style="fill:var(--panel);" pointer-events="none" /></svg>`;
 }
+// The Dashboard's reference reads that need nothing from the site settings
+// (no "Upcoming" ids, no game rules). boot() starts them together with the
+// settings when the Dashboard is the first page; renderOverview then finds
+// them in dashCached. Same requests and keys as before.
+function dashFixedReads() {
+  return {
+    buff: dashCached("buff", async () => {
+      if (!BUFF_TABLE_ID) {
+        // One request: the buff table with its columns and rows (was the
+        // table lookup, then columns + rows).
+        const [tb] = (await sb(`buff_tables?select=id,buff_columns(id,name,category),buff_rows(id,name,buff_cells(value,column_id))&user_id=eq.${PROGRESSION_OWNER_ID}&name=neq.VIP%20Tier&order=created_at.asc&limit=1`)) || [];
+        if (tb && !BUFF_TABLE_ID) BUFF_TABLE_ID = tb.id;
+        if (tb && tb.id === BUFF_TABLE_ID) return [tb.buff_columns || [], tb.buff_rows || []];
+      }
+      await ensureBuffTable();
+      return Promise.all([
+        sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
+        sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
+      ]);
+    }),
+    skins: dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`)),
+    heroes: dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)),
+    player_heroes: dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
+    star_stats: dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)),
+    widget_stats: dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)),
+    vip: loadVipTable(),
+  };
+}
 async function renderOverview(opts = {}) {
   const seq = RENDER_SEQ;
   // Speed: everything the Dashboard needs is requested in one parallel batch
   // (saved states come from the shared calc_state cache), instead of several
   // waves of requests that each waited for the previous one to finish.
   preloadCalcStates();
-  const skinsPromise = Promise.all([ensureGalleryUncounted(), dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`))]).then(([, rows]) => rows);
+  const fixed = dashFixedReads();
+  const skinsPromise = Promise.all([ensureGalleryUncounted(), fixed.skins]).then(([, rows]) => rows);
   const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
     , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED, ROSTER_BACKPACK] = await Promise.all([
-    dashCached("buff", () => ensureBuffTable().then(() => Promise.all([
-      sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
-      sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
-    ]))),
+    fixed.buff,
     skinsPromise,
     // Which skins.category values actually represent an Island sub-category
     // (Attack/Defense/Lighthouse/MVP/Islands Guide, etc) - driven by the same
@@ -4711,11 +4772,11 @@ async function renderOverview(opts = {}) {
     ensureIslandCategories(),
     // Roster heroes (Infantry/Lancers/Marksman) - fetched here, early, so
     // the stat totals below can include them when a troop's "used" flag is on.
-    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)),
+    fixed.heroes,
     loadCalcState("dashboard_roster"),
-    dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
-    dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)),
-    dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)),
+    fixed.player_heroes,
+    fixed.star_stats,
+    fixed.widget_stats,
     // live data from the calculators, for the Charm/Chief/Hero Gears/etc. sources below
     Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensureT12StateData(), ensureRCData(), ensureT11StateData(), ensurePetsData(), ensureVipData(), ensureExpertsTroopStatsData(), ensureExpertsResearchDataGlobal(), skinsPromise.then(ensureGlobeLevelData), ensureResearchPageCountedData(), ensureStateAge(), ensurePackLinks().catch(() => null)]),
     loadCalcState("collection_gallery"),
@@ -6245,7 +6306,7 @@ async function renderMyPacksPage() {
     <div class="page-head"><div><h2>${esc(t("mp_title"))}</h2><p class="desc">${esc(IS_OWNER ? t("mp_page_desc_admin") : t("mp_desc"))}</p></div></div>
     <div id="myPacksBody"><div class="empty">Loading&hellip;</div></div>`;
   const [loaded] = await Promise.all([
-    sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`),
+    packTablesRows(),
     ensurePackLinks(),
   ]);
   if (TAB !== "mypacks") return;
@@ -7807,7 +7868,7 @@ let PACK_CAL_OPEN_WEEKS = new Set();
 async function renderPackCalendarPage() {
   const seq = RENDER_SEQ;
   const [tablesLoaded] = await Promise.all([
-    sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,sort_order&order=sort_order.asc`),
+    packTablesRows().then((rows) => rows.map((tb) => ({ id: tb.id, title: tb.title, sort_order: tb.sort_order }))),
     ensurePackLinks(),
   ]);
   if (seq !== RENDER_SEQ) return;
@@ -8125,6 +8186,7 @@ async function renderPacksPage() {
     const id = panel.dataset.pkid;
     const open = !PACKS_OPEN.has(id);
     if (open) PACKS_OPEN.add(id); else PACKS_OPEN.delete(id);
+    if (open) buildPkBody(panel);
     panel.classList.toggle("pk-open", open);
     panel.querySelector(".pk-body").hidden = !open;
     panel.querySelector("[data-pk-toggle].btn").textContent = open ? t("pk_close") : t("pk_edit");
@@ -8217,7 +8279,7 @@ async function renderPacksPage() {
   }
 
   const [tablesLoaded] = await Promise.all([
-    sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`),
+    packTablesRows(),
     ensurePackLinks(),
     ensureSiteConfig(),
   ]);
@@ -8483,55 +8545,17 @@ async function renderPacksPage() {
     putBoxes();
     if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
   }
-  function renderAllCore() {
-    renderPageTabs();
-    if (!tables.length) {
-      listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_tables_yet"))}</div>${esc(t("no_tables_hint"))}</div>`;
-      return;
-    }
-    // Tables that share a group name sit together under one heading;
-    // ungrouped tables come first, in their own order.
-    const groupOf = (tb) => packLinkFor(tb.id).group;
-    const groupOrder = categoryOrder();
-    const ordered = tables.map((tb, ti) => ({ tb, ti })).filter(({ tb }) => tableMatchesFilter(tb)).sort((a, b) => {
-      const ga = groupOf(a.tb), gb = groupOf(b.tb);
-      const ra = ga ? groupOrder.indexOf(ga) + 1 : 0, rb = gb ? groupOrder.indexOf(gb) + 1 : 0;
-      return ra - rb || a.ti - b.ti;
-    });
-    let lastGroup = null;
-    const groupPh = t("pack_group_placeholder"), groupTitle = t("pack_group_title"); // `t` is the table inside the map below
-    const rowMaxTitle = t("pack_rowmax_title"), rowMaxHead = t("pack_rowmax_head"), dupTitle = t("pack_duplicate"), restoreTitle = t("pack_restore"), dailyDayLbl = t("pk_daily_day"), hiddenTag = t("pk_hidden_tag");
-    listEl.innerHTML = `<div class="pk-grid">` + ordered
-      .map(({ tb: t, ti }) => {
-        const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
-        lastGroup = g;
-        return heading + (() => {
-        // Auto-computed total row: sums every column's numeric cells across
-        // all data rows (non-numeric cells like "Free" or "2d 20h" just
-        // don't contribute). Display-only - not stored, not editable.
-        const totals = t.columns.map((_, ci) =>
-          t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
-        );
-        const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
-        // Closed card: what the whole table gives, as item pictures with amounts.
-        const giveChips = t.columns.map((c, ci) => {
-          if (ci === (lk.priceCol || 0)) return "";
-          const name = pkColItem(t, ci), label = materialDisplayName(name) || name;
-          if (!label) return "";
-          const ic = pkIconHtml(name), n = totals[ci];
-          return `<span class="pk-chip" title="${esc(label)}${n ? `: ${esc(fmtNum(n))}` : ""}">${ic || `<em>${esc(label)}</em>`}${n ? `<b>${esc(pkShortNum(n))}</b>` : ""}</span>`;
-        }).join("");
-        const usedFor = packUsedForNames(t);
-        return `
-      <div class="panel pk-card${pkOpen ? " pk-open" : ""}${PK_ARRANGE.has(String(t.id)) ? " pk-arrange" : ""}${packInBudgets(t.id) ? "" : " pk-budoff"}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
-        <div class="pk-sum">
-          <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
-          <div class="pk-sum-gives pk-chips">${giveChips || "—"}</div>
-          ${lk.template ? "" : `<label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>`}
-          <div class="pk-sum-f">${lk.template ? `<span class="pk-sum-used">${esc(window.t("mp_template_note"))}</span>` : usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
-        </div>
-        <div class="pk-body"${pkOpen ? "" : " hidden"}>
+  // Speed (Packs B): a table's editor is built the first time it's opened
+  // (Edit), or when it's drawn open (PACKS_OPEN); closed cards only carry an
+  // empty hidden body (data-pk-lazy). buildPkBody fills and wires it.
+  function pkBodyHtml(t, ti) {
+    const totals = t.columns.map((_, ci) =>
+      t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
+    );
+    const lk = packLinkFor(t.id);
+    const groupPh = window.t("pack_group_placeholder"), groupTitle = window.t("pack_group_title");
+    const rowMaxTitle = window.t("pack_rowmax_title"), rowMaxHead = window.t("pack_rowmax_head"), dupTitle = window.t("pack_duplicate"), restoreTitle = window.t("pack_restore"), dailyDayLbl = window.t("pk_daily_day"), hiddenTag = window.t("pk_hidden_tag");
+    return `
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
         <div class="pk-ed-scroll pk-ed-bar">
           <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
@@ -8588,22 +8612,87 @@ async function renderPacksPage() {
           </table>
         </div>
         ${packTriggerStatusHtml(t)}
-        ${packLinkEditorHtml(t)}
+        ${packLinkEditorHtml(t)}`;
+  }
+  function buildPkBody(panel) {
+    const body = panel && panel.querySelector(".pk-body[data-pk-lazy]");
+    if (!body) return;
+    const ti = Number(panel.dataset.packtable), tb = tables[ti];
+    if (!tb) return;
+    body.removeAttribute("data-pk-lazy");
+    body.innerHTML = pkBodyHtml(tb, ti) + "\n        ";
+    wireTable([panel]);
+    wirePackLinkEditors(null, body);
+    if (!IS_OWNER) {
+      applyPacksReadOnly(panel, true);
+      refreshTotalsIn(panel, tb);
+    }
+  }
+  function renderAllCore() {
+    renderPageTabs();
+    if (!tables.length) {
+      listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_tables_yet"))}</div>${esc(t("no_tables_hint"))}</div>`;
+      return;
+    }
+    // Tables that share a group name sit together under one heading;
+    // ungrouped tables come first, in their own order.
+    const groupOf = (tb) => packLinkFor(tb.id).group;
+    const groupOrder = categoryOrder();
+    const ordered = tables.map((tb, ti) => ({ tb, ti })).filter(({ tb }) => tableMatchesFilter(tb)).sort((a, b) => {
+      const ga = groupOf(a.tb), gb = groupOf(b.tb);
+      const ra = ga ? groupOrder.indexOf(ga) + 1 : 0, rb = gb ? groupOrder.indexOf(gb) + 1 : 0;
+      return ra - rb || a.ti - b.ti;
+    });
+    let lastGroup = null;
+    listEl.innerHTML = `<div class="pk-grid">` + ordered
+      .map(({ tb: t, ti }) => {
+        const g = groupOf(t);
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
+        lastGroup = g;
+        return heading + (() => {
+        // Auto-computed total row: sums every column's numeric cells across
+        // all data rows (non-numeric cells like "Free" or "2d 20h" just
+        // don't contribute). Display-only - not stored, not editable.
+        const totals = t.columns.map((_, ci) =>
+          t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
+        );
+        const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
+        // Closed card: what the whole table gives, as item pictures with amounts.
+        const giveChips = t.columns.map((c, ci) => {
+          if (ci === (lk.priceCol || 0)) return "";
+          const name = pkColItem(t, ci), label = materialDisplayName(name) || name;
+          if (!label) return "";
+          const ic = pkIconHtml(name), n = totals[ci];
+          return `<span class="pk-chip" title="${esc(label)}${n ? `: ${esc(fmtNum(n))}` : ""}">${ic || `<em>${esc(label)}</em>`}${n ? `<b>${esc(pkShortNum(n))}</b>` : ""}</span>`;
+        }).join("");
+        const usedFor = packUsedForNames(t);
+        return `
+      <div class="panel pk-card${pkOpen ? " pk-open" : ""}${PK_ARRANGE.has(String(t.id)) ? " pk-arrange" : ""}${packInBudgets(t.id) ? "" : " pk-budoff"}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
+        <div class="pk-sum">
+          <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
+          <div class="pk-sum-gives pk-chips">${giveChips || "—"}</div>
+          ${lk.template ? "" : `<label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>`}
+          <div class="pk-sum-f">${lk.template ? `<span class="pk-sum-used">${esc(window.t("mp_template_note"))}</span>` : usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
+        </div>
+        <div class="pk-body"${pkOpen ? "" : " hidden data-pk-lazy"}>${pkOpen ? pkBodyHtml(t, ti) : ""}
         </div>
       </div>`;
         })();
       })
       .join("") + `</div><datalist id="packGroupNames">${groupOrder.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>`;
-    wireTable();
+    // Only the editors drawn open are built; the rest are built on Edit.
+    const builtPanels = [...listEl.querySelectorAll("[data-packtable]")].filter((panel) => !panel.querySelector(".pk-body[data-pk-lazy]"));
+    wireTable(builtPanels);
     wirePackLinkEditors();
     if (!IS_OWNER) {
       applyPacksReadOnly(listEl);
-      listEl.querySelectorAll("[data-packtable]").forEach((panel) => refreshTotalsIn(panel, tables[Number(panel.dataset.packtable)]));
+      builtPanels.forEach((panel) => refreshTotalsIn(panel, tables[Number(panel.dataset.packtable)]));
     }
   }
   // Visitors: the tables are shown exactly as the owner set them, with every
   // editing control removed and the settings ("Used for") hidden.
-  function applyPacksReadOnly(root) {
+  function applyPacksReadOnly(root, bodyOnly) {
+    const panelsIn = root.matches && root.matches("[data-packtable]") ? [root] : [...root.querySelectorAll("[data-packtable]")];
     root.querySelectorAll(".pk-more, [data-pkarrange]").forEach((el) => el.remove());
     root.querySelectorAll("[data-packlink], [data-pt-delete], [data-pt-duplicate], [data-pt-restore], [data-pt-group], [data-pt-scaletoggle]").forEach((el) => { const lbl = el.closest("label"); (lbl && el.matches("[data-pt-scaletoggle]") ? lbl : el).remove(); });
     root.querySelectorAll("[data-pt-addcol], [data-pt-addrow]").forEach((el) => { const box = el.parentElement && el.parentElement.parentElement; (box || el).remove(); });
@@ -8611,7 +8700,7 @@ async function renderPacksPage() {
     // Price and Gems cells are locked; the price shows in the viewer's own
     // currency (their store prices, else Admin prices/rates). Every other
     // cell can be changed for their own planning.
-    root.querySelectorAll("[data-packtable]").forEach((panel) => {
+    panelsIn.forEach((panel) => {
       const tb = tables[Number(panel.dataset.packtable)];
       if (!tb) return;
       const link = packLinkFor(tb.id);
@@ -8635,7 +8724,7 @@ async function renderPacksPage() {
         const orig = tb._orig && tb._orig[ri] ? String(tb._orig[ri].cells[ci] ?? "") : inp.value;
         if (inp.value !== orig) { inp.style.borderColor = "var(--ice)"; inp.title = orig ? `${orig} \u2192 ${inp.value}` : ""; }
       });
-      const edits = packMyEdits()[String(tb.id)];
+      const edits = !bodyOnly && packMyEdits()[String(tb.id)];
       const headRow = panel.firstElementChild;
       if (edits && Object.keys(edits).length && headRow) {
         const b = document.createElement("button");
@@ -8651,7 +8740,7 @@ async function renderPacksPage() {
     });
     // The "you can change the amounts" note sits inside each table's editor
     // (seen after tapping Edit), not above the whole list.
-    root.querySelectorAll(".pk-body").forEach((body) => {
+    root.querySelectorAll(".pk-body:not([data-pk-lazy])").forEach((body) => {
       if (body.querySelector("[data-pack-visitor-hint]")) return;
       const hint = document.createElement("p");
       hint.className = "desc"; hint.dataset.packVisitorHint = "1"; hint.style.cssText = "font-size:11px; margin:0 0 8px;";
@@ -8909,10 +8998,10 @@ async function renderPacksPage() {
         })()}
       </details>`;
   }
-  function wirePackLinkEditors(boxes) {
+  function wirePackLinkEditors(boxes, root = listEl) {
     if (!boxes) {
       // Closed editors are built on first open, then wired like the rest.
-      listEl.querySelectorAll("[data-packlinklazy]").forEach((shell) => shell.addEventListener("toggle", () => {
+      root.querySelectorAll("[data-packlinklazy]").forEach((shell) => shell.addEventListener("toggle", () => {
         if (!shell.open || !shell.isConnected) return;
         const tb = tables.find((x) => String(x.id) === shell.dataset.packlink);
         if (!tb) return;
@@ -8924,7 +9013,7 @@ async function renderPacksPage() {
         wirePackLinkEditors([full]);
       }));
     }
-    (boxes || listEl.querySelectorAll("[data-packlink]:not([data-packlinklazy])")).forEach((box) => {
+    (boxes || root.querySelectorAll("[data-packlink]:not([data-packlinklazy])")).forEach((box) => {
       const id = box.dataset.packlink;
       const current = () => {
         PACK_LINKS[id] = PACK_LINKS[id] || { pages: [], priceCol: 0, cols: {} };
@@ -9132,8 +9221,8 @@ async function renderPacksPage() {
     });
   }
 
-  function wireTable() {
-    listEl.querySelectorAll("[data-packtable]").forEach((panel) => {
+  function wireTable(panels) {
+    panels.forEach((panel) => {
       const ti = Number(panel.dataset.packtable);
       const t = tables[ti];
 
@@ -9383,6 +9472,7 @@ async function renderPacksPage() {
         // than using the stale one.
         const freshPanel = listEl.querySelector(`[data-packtable="${ti}"]`);
         if (freshPanel) {
+          buildPkBody(freshPanel); // drawn closed (e.g. a new table got its id): fill it anyway, as before
           applyAmountSequence(freshPanel, t, newRowIndex);
           applyGemsLookup(freshPanel, t, newRowIndex);
           if (t.scale_enabled !== false) applyRatioScale(freshPanel, t, newRowIndex);
@@ -12129,7 +12219,7 @@ async function ensurePackTables() {
   PACK_TABLES_LOADING = (async () => {
     try {
       await ensurePackLinks();
-      const baseTables = packApplyMyEdits(await sb(`pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=id,title,columns,rows,sort_order&order=sort_order.asc`))
+      const baseTables = packApplyMyEdits((await packTablesRows()).map((tb) => ({ id: tb.id, title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tb.sort_order })))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
         .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
       PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables));
@@ -17088,7 +17178,7 @@ async function renderSkinGallery() {
   const [ISLAND_CATEGORIES, , allSkinsRaw] = await Promise.all([
     ensureIslandCategories(),
     ensureGalleryUncounted(),
-    sb(`skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
+    keptRows("skins", `skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
   ]);
   const skins = allSkinsRaw.filter(
     (s) => !ISLAND_CATEGORIES.has(s.category) && s.category !== "Facility" && s.category !== "Alliance Tech"
@@ -17354,7 +17444,7 @@ async function renderIslandGallery() {
     ensureGalleryUncounted(),
   ]);
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
-  const islands = await sb(
+  const islands = await keptRows("skins",
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
   );
   const TROOPS = ["Infantry", "Lancers", "Marksman"];
@@ -17855,13 +17945,11 @@ function computeExpertsResearchTroopStatsGlobal(calcTroop, useMax) {
 // Dashboard (ensureVipData) and the VIP page; kept for the visit (dashCached).
 function loadVipTable() {
   return dashCached("vip_table", async () => {
-    const [table] = await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id`);
-    if (!table) return null;
-    const [columns, rows] = await Promise.all([
-      sb(`buff_columns?table_id=eq.${table.id}&select=id,name&order=sort_order.asc`),
-      sb(`buff_rows?table_id=eq.${table.id}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`),
-    ]);
-    return { table, columns, rows };
+    // One request: the table with its columns and rows embedded, in the same
+    // order (was the table lookup, then columns + rows).
+    const [tb] = (await sb(`buff_tables?name=eq.VIP Tier&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,buff_columns(id,name),buff_rows(id,name,sort_order,buff_cells(value,column_id))&buff_columns.order=sort_order.asc&buff_rows.order=sort_order.asc`)) || [];
+    if (!tb) return null;
+    return { table: { id: tb.id }, columns: tb.buff_columns || [], rows: tb.buff_rows || [] };
   });
 }
 async function ensureVipData() {
@@ -18055,7 +18143,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
 // ============================================================
 async function renderAlbumTundraPage() {
   const seq = RENDER_SEQ;
-  const rows = await sb(`tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`);
+  const rows = await keptRows("tundra_album_levels", `tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`);
   const OPTIONS_BY_STAT = { Attack: [], Defense: [] }, REL = { Attack: Infinity, Defense: Infinity };
   rows.forEach((r) => {
     if (!OPTIONS_BY_STAT[r.stat_type]) return;
@@ -18100,7 +18188,7 @@ async function renderAlbumTundraPage() {
 async function renderCollectionGalleryPage() {
   const seq = RENDER_SEQ;
   const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
-  const rows = await sb(`collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`);
+  const rows = await keptRows("collection_gallery_levels", `collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`);
   const optionsByStat = {}, relByStat = {};
   rows.forEach((r) => {
     if (!optionsByStat[r.stat_type]) optionsByStat[r.stat_type] = [];
@@ -18151,7 +18239,7 @@ async function renderExtraBonusHeroes() {
 
 async function renderAllianceTechPage() {
   const seq = RENDER_SEQ;
-  const items = await sb(`skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech&select=id,name,bonus_type,bonus_value,current_level,max_level&order=sort_order.asc`);
+  const items = await keptRows("skins", `skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech&select=id,name,bonus_type,bonus_value,current_level,max_level&order=sort_order.asc`);
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
@@ -21653,7 +21741,7 @@ async function renderT12ResearchPage() {
 
 async function renderFacilityPage() {
   const seq = RENDER_SEQ;
-  const buildings = await sb(`skins?user_id=eq.${USER_ID}&category=eq.Facility&select=id,name,bonus_type,bonus_value,owned,image_url&order=sort_order.asc`);
+  const buildings = await keptRows("skins", `skins?user_id=eq.${USER_ID}&category=eq.Facility&select=id,name,bonus_type,bonus_value,owned,image_url&order=sort_order.asc`);
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = `
@@ -25758,6 +25846,8 @@ if ("serviceWorker" in navigator) {
   // name and the category list right away - none of them needs the
   // visibility/site settings below, so they don't wait for them.
   preloadCalcStates();
+  // The Dashboard's fixed reference reads start now, alongside the settings.
+  if (TAB === "overview") Object.values(dashFixedReads()).forEach((p) => p.catch(() => {}));
   loadCommander();
   const categoriesLoaded = loadBuffCategories();
   await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
