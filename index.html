@@ -5989,12 +5989,67 @@ const BACKPACK_PAGE_LINKS = {
   pets_refine: ["Common Marks", "Advanced Marks", "Gems"],
   experts: ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", "Expert Speedups (minutes)", "Speedups (minutes)"],
 };
+// ---- Item registry (Admin → Items, owner 17 Oct 2026) ----
+// site_config "item_registry" = { "<item name>": { icon, short, minutes,
+// pages: [calcKey], chests: [calcKey], count: [calcKey], from: "<old name>" } }.
+// Only what the admin changed is stored; a field left out keeps the code's
+// value (the maps above / below), so with nothing saved the site is unchanged.
+// pages = the planner pages whose box of this name fills from the Backpack,
+// chests = pages showing it read-only as a chest, count = pages counting it
+// as its contents (Pack Resources "Gives"). from = the name the pages use for
+// it (kept when the item is renamed in Admin → Backpack Items).
+const ITEM_PAGE_KEYS = [["chief_gear", "Chief Gear"], ["charm", "Charms"], ["hero_gear", "Heroes Gears"], ["t11_helios", "T11 Helios"], ["t12_research", "T12 Research"], ["research_center", "Research Center"], ["pets", "Pets Level"], ["pets_refine", "Pet Refine"], ["experts", "Experts"]];
+let ITEM_REG_MEMO = null;
+const ITEM_REG_EMPTY = Object.freeze({});
+function itemRegistry() { const v = siteConfig("item_registry", null); return v && typeof v === "object" && !Array.isArray(v) ? v : ITEM_REG_EMPTY; }
+function itemReg(name) { const reg = itemRegistry(); let r = reg[name]; if (!r && reg !== ITEM_REG_EMPTY) { const a = itemPageMaps().alias[name]; if (a) r = reg[a]; } return r && typeof r === "object" ? r : null; }
+function itemRegIcon(name) { const r = itemReg(name); return r && r.icon ? String(r.icon) : ""; }
+function itemShortName(name) { const r = itemReg(name); return (r && r.short) || MATERIAL_NAME_SHORT[name] || name; }
+// Minutes of one speedup item: the admin's number, else the size in its name.
+function itemMinutes(name) {
+  const r = itemReg(name);
+  if (r && Number(r.minutes) > 0) return Number(r.minutes);
+  const m = /speedup (\d+[mh])$/i.exec(String(name));
+  return (m && BP_MINUTES[m[1]]) || 0;
+}
+// The page maps with the admin's changes on top (kept until the registry changes).
+function itemPageMaps() {
+  const reg = itemRegistry();
+  if (ITEM_REG_MEMO && ITEM_REG_MEMO.reg === reg) return ITEM_REG_MEMO;
+  const build = (def, field) => {
+    const out = {};
+    Object.entries(def).forEach(([k, l]) => { out[k] = l.slice(); });
+    Object.entries(reg).forEach(([name, r]) => {
+      if (!r || !Array.isArray(r[field])) return;
+      const box = r.from || name;
+      Object.keys(out).forEach((k) => { out[k] = out[k].filter((x) => x !== box); });
+      r[field].forEach((k) => { (out[k] = out[k] || []).push(box); });
+    });
+    return out;
+  };
+  const alias = {};
+  Object.entries(reg).forEach(([name, r]) => { if (r && r.from && r.from !== name) alias[r.from] = name; });
+  // Speedup items the admin gave minutes, by kind ("" = general, "Research " …).
+  const speed = {};
+  Object.entries(reg).forEach(([name, r]) => {
+    const m = /^(Research |Troop |Construction |Expert )?Speedup \S+$/.exec(name);
+    if (m && r && Number(r.minutes) > 0) (speed[m[1] || ""] = speed[m[1] || ""] || []).push(name);
+  });
+  ITEM_REG_MEMO = { reg, links: build(BACKPACK_PAGE_LINKS, "pages"), chests: build(BACKPACK_PAGE_CHESTS, "chests"), fixed: build(BACKPACK_FIXED_CHESTS, "count"), alias, speed };
+  return ITEM_REG_MEMO;
+}
+// The Backpack name an item is saved under (a renamed item keeps its page links).
+function bpKeyFor(name) { return itemPageMaps().alias[name] || name; }
 // What the Backpack holds of a planner item (null = not a Backpack item).
 function backpackAmountFor(name, bp) {
-  const n = (k) => Number(bp[k]) || 0;
+  const n = (k) => Number(bp[bpKeyFor(k)]) || 0;
   if (name === "XP Component") return n("XP 10") * 10 + n("XP 100") * 100;
   const sp = /^(Research |Troop |Construction |Expert )?Speedups \(minutes\)$/.exec(name);
-  if (sp) return Object.entries(BP_MINUTES).reduce((sum, [z, m]) => sum + n(`${sp[1] || ""}Speedup ${z}`) * m, 0);
+  if (sp) {
+    const kind = sp[1] || "", extra = itemPageMaps().speed[kind] || [];
+    const sizes = Object.keys(BP_MINUTES).map((z) => `${kind}Speedup ${z}`).filter((x) => !extra.includes(x));
+    return [...sizes, ...extra].reduce((sum, x) => sum + n(x) * itemMinutes(x), 0);
+  }
   if (BACKPACK_RES_CHESTS.includes(name)) return n(name) + n(`${name} (protected)`);
   return n(name);
 }
@@ -6015,20 +6070,28 @@ const BACKPACK_PAGE_CHESTS = {
 const BACKPACK_FIXED_CHESTS = { chief_gear: ["Chief Gear Chest"] };
 // The owned amounts a page calculates with: its boxes plus fixed chests.
 function ownedWithChests(calcKey, owned, link) {
-  const chests = BACKPACK_FIXED_CHESTS[calcKey];
+  const chests = itemPageMaps().fixed[calcKey];
   if (!chests || !Object.keys(link.bp).length) return owned;
   const out = { ...owned };
   chests.forEach((ch) => {
     const qty = backpackAmountFor(ch, link.bp);
-    if (qty > 0) Object.entries(PACK_BUNDLES[ch]).forEach(([n, v]) => { out[n] = (Number(out[n]) || 0) + qty * v; });
+    if (qty > 0) Object.entries(chestGives(ch)).forEach(([n, v]) => { out[n] = (Number(out[n]) || 0) + qty * v; });
   });
   return out;
 }
+// What one counted chest opens into (Admin → Pack Resources / Items "Gives" first).
+function chestGives(ch) {
+  const ov = packResourceConfig().gives[ch];
+  if (ov && typeof ov === "object") return ov;
+  if (PACK_BUNDLES[ch]) return PACK_BUNDLES[ch];
+  const c = packCustomResource(ch);
+  return (c && c.contents) || {};
+}
 function backpackShownChests(calcKey, link) {
-  return Object.keys(link.bp).length ? (BACKPACK_PAGE_CHESTS[calcKey] || []).filter((n) => backpackAmountFor(n, link.bp) > 0) : [];
+  return Object.keys(link.bp).length ? (itemPageMaps().chests[calcKey] || []).filter((n) => backpackAmountFor(n, link.bp) > 0) : [];
 }
 function backpackLinks(calcKey, name) {
-  return (BACKPACK_PAGE_LINKS[calcKey] || []).includes(name) || (calcKey === "experts" && / Sigils$/.test(name));
+  return (itemPageMaps().links[calcKey] || []).includes(name) || (calcKey === "experts" && / Sigils$/.test(name));
 }
 async function backpackLinkState() {
   const [bp, manual] = await Promise.all([loadCalcState("backpack"), loadCalcState("backpack_manual")]);
@@ -6039,7 +6102,7 @@ function backpackLinked(calcKey, name, link) {
   return Object.keys(link.bp).length > 0 && backpackLinks(calcKey, name) && !(link.manual[calcKey] || {})[name];
 }
 function applyBackpackLink(calcKey, owned, link, names) {
-  (names || BACKPACK_PAGE_LINKS[calcKey] || []).forEach((name) => {
+  (names || itemPageMaps().links[calcKey] || []).forEach((name) => {
     if (backpackLinked(calcKey, name, link)) owned[name] = backpackAmountFor(name, link.bp);
   });
 }
@@ -7490,7 +7553,7 @@ async function renderPurchasesPage() {
       const nSteps = (n) => (n === 1 ? t("pur_ms_1step") : t("pur_ms_nsteps").replace("{n}", n));
       // Item pictures (the site's own: speedups, expert items, materials).
       const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
-      const itemIc = (n) => speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : /^XP 10/.test(n) ? MATERIAL_ICONS["xp component"] : "");
+      const itemIc = (n) => itemRegIcon(n) || speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : /^XP 10/.test(n) ? MATERIAL_ICONS["xp component"] : "");
       const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
       const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
@@ -8305,6 +8368,7 @@ async function renderPacksPage() {
   }
   function pkItemIcon(name) {
     if (!name) return "";
+    if (itemRegIcon(name)) return itemRegIcon(name);
     if (String(name).toLowerCase() === "gems") return MATERIAL_ICONS.gems;
     return bpIcon({ name }) || materialIconSrc(name) || "";
   }
@@ -9739,7 +9803,7 @@ const BP_CHEST_ICONS = {
   "Custom Resource Chest Lv.1": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3": "icons/item_icon_100103.png",
   "Custom Resource Chest Lv.1 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3 (protected)": "icons/item_icon_100103.png", "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
 // Speedup items ("Research Speedup 1h") show their size and add up to a total.
-const bpSpeedupSize = (name) => { const m = /speedup (\d+[mh])$/i.exec(name); return m && BP_MINUTES[m[1]] ? m[1] : null; };
+const bpSpeedupSize = (name) => { const m = /speedup (\d+[mhd])$/i.exec(name); return m && (BP_MINUTES[m[1]] || itemMinutes(name) > 0) ? m[1] : null; };
 function backpackItems() {
   const saved = siteConfig("backpack_items", null);
   const list = saved && Array.isArray(saved.items) ? saved.items.filter((x) => x && x.name) : BACKPACK_DEFAULT_ITEMS;
@@ -9766,6 +9830,7 @@ const BP_EXTRA_ICONS = { "Marks of Valor": "icons/hall-marks.png", "Mystery Poin
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
+  if (itemRegIcon(name)) return itemRegIcon(name);
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
   if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
@@ -9837,7 +9902,7 @@ async function renderInventory() {
   const tabs = [t("all_label")].concat(groups.filter((g) => !g.speedups && !g.heroShards).map((g) => g.title), groups.some((g) => g.heroShards) ? [shardTab] : [], groups.some((g) => g.speedups) ? [speedupsTab] : []);
   if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
   const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e9 ? `${Math.round(n / 1e8) / 10}B` : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
-  const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
+  const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (bpSpeedupSize(it.name) ? itemMinutes(it.name) : 0), 0);
   const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h ${Math.round(m % 60)}m` : "—";
   // Total time of each speedup type, in the game's order, as a summary strip.
   const speedSummary = () => {
@@ -11360,6 +11425,9 @@ function packBundleContents(name) {
   // Admin -> Pack Resources can override what a built-in item gives.
   const ov = packResourceConfig().gives[name];
   if (ov && typeof ov === "object") return Object.keys(ov).length ? ov : { [name]: 1 };
+  // Admin → Items: a speedup item with its own minutes (a new size counts too).
+  const sp = /^(Research |Troop |Construction |Expert )?Speedup \S+$/.exec(String(name)), rg = itemReg(name);
+  if (sp && rg && Number(rg.minutes) > 0) return { [`${sp[1] || ""}Speedups (minutes)`]: Number(rg.minutes) };
   if (PACK_BUNDLES[name]) return PACK_BUNDLES[name];
   const c = packCustomResource(name);
   if (c && c.contents && Object.keys(c.contents).length) return c.contents;
@@ -15588,7 +15656,7 @@ async function renderBudgetsPage(opts = {}) {
   const matsHtml = (needFull, needStill) => `<div class="bud-mats">` + Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
     const still = needStill[n] || 0, mins = /\(minutes\)$/.test(n);
     const fmt = (v) => (mins ? t12FormatTime(v / 60) : shortAmount(v));
-    const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
+    const icon = itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") }));
     const nm = materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "");
     const label = `${nm}: ${qty(still)} / ${qty(needFull[n])}`;
     return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}${heroItemMark(n)}<b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${still > 0 ? esc(fmt(still)) : "&#10003;"}</b><span class="meta" style="font-size:11px;">/ ${esc(fmt(needFull[n]))}</span></span>`;
@@ -15754,7 +15822,7 @@ async function renderBudgetsPage(opts = {}) {
       ${combinedHtml}
       ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><button type="button" class="btn small ghost bud-mat-btn" data-budmats aria-expanded="${BUDGET_MATS_OPEN}">&#128230; ${esc(t("budgets_materials_total"))} (${Object.keys(grandMats).length}) <span class="bud-mat-arrow">${BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;"}</span></button><div class="bud-mats"${BUDGET_MATS_OPEN ? "" : " hidden"} style="margin-top:8px;">${Object.keys(grandMats).map((n) => {
         // Picture + short amount; the name and exact number show on hover / long press.
-        const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
+        const icon = itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") }));
         const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
         const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
         return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
@@ -16396,6 +16464,7 @@ function heroItemMark(name) {
   return hm && HERO_IMG_BY_NAME[hm[1]] ? `<img class="bud-face" src="${esc(HERO_IMG_BY_NAME[hm[1]])}" alt="" loading="lazy" />` : "";
 }
 function materialIconSrc(name) {
+  if (itemRegIcon(name)) return itemRegIcon(name);
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
   if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
@@ -16492,7 +16561,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       if (used.length) {
         return {
           statusColor: "var(--good)",
-          statusText: used.map((tr) => `\u2192 ${summaryOn ? shortAmount(tr.getQty) : Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(MATERIAL_NAME_SHORT[tr.to] || tr.to)}`).join(" \u00b7 "),
+          statusText: used.map((tr) => `\u2192 ${summaryOn ? shortAmount(tr.getQty) : Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(itemShortName(tr.to))}`).join(" \u00b7 "),
         };
       }
       if (hiddenRates.some((r) => r.from === name) && (Number(owned[name]) || 0) > 0) return { statusColor: "var(--muted)", statusText: t("chest_not_needed") };
@@ -16512,6 +16581,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
 
   const iconFor = (name) => {
+    if (itemRegIcon(name)) return itemRegIcon(name);
     const lower = name.toLowerCase();
     const custom = packCustomResource(name);
     const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
@@ -16525,7 +16595,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
     const hosted = !!BAR_SUMMARY_HOST[calcKey];
-    const label = (n) => (hosted && { "Refined FC": "RFC", "FC Shard": t("t12x_shard"), "Polishing Solution": "Polish", "Hardened Alloy": "Alloy", "Design Plan": "Design" }[n]) || materialDisplayName(MATERIAL_NAME_SHORT[n] || n).replace(/\s*\((minutes|min)\)$/, "");
+    const label = (n) => (hosted && { "Refined FC": "RFC", "FC Shard": t("t12x_shard"), "Polishing Solution": "Polish", "Hardened Alloy": "Alloy", "Design Plan": "Design" }[n]) || materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
     // Research pages show research speedups in their time box instead of a square.
     const items = names.filter((n) => needOf(n) > 0 && !(BAR_TIME_KEYS.has(calcKey) && /^Research Speedups/.test(n)));
     const short = items.filter((n) => (effOwned[n] || 0) < needOf(n));
@@ -16544,7 +16614,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // Square tile per item (like the Backpack page); tap to type an amount.
   function editRowHtml(name) {
     const iconSrc = iconFor(name), haveQty = owned[name] || 0;
-    const label = materialDisplayName(MATERIAL_NAME_SHORT[name] || name).replace(/\s*\((minutes|min)\)$/, "");
+    const label = materialDisplayName(itemShortName(name)).replace(/\s*\((minutes|min)\)$/, "");
     const isMin = /\(minutes\)$/.test(name), ro = chests.includes(name);
     const status = groups.map((g) => {
       const needed = Number((g.totals || {})[name]) || 0;
@@ -16565,7 +16635,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
   // Pop-up to type an amount (or go back to the Backpack's).
   function editTileModal(name) {
-    const label = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
+    const label = materialDisplayName(itemShortName(name));
     let modal = document.getElementById("bsEditModal");
     if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
     const canLink = Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name);
@@ -16611,7 +16681,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const iconSrc = iconFor(name);
     const icon = iconSrc ? `<img src="${esc(iconSrc)}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
     const haveQty = owned[name] || 0;
-    const shortName = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
+    const shortName = materialDisplayName(itemShortName(name));
     const groupStatusHtml = groups
       .map((g) => {
         const needed = Number((g.totals || {})[name]) || 0;
@@ -16628,8 +16698,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         <span class="meta mat-name" style="font-size:11px; font-weight:600; letter-spacing:0.3px; order:1;">${esc(shortName)}</span>
       </div>
       ${chests.includes(name)
-        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : (BACKPACK_FIXED_CHESTS[calcKey || "chief_gear"] || []).includes(name)
-          ? `<div style="font-size:11px; margin-top:4px; color:var(--good); line-height:1.35;">${["Hardened Alloy", "Polishing Solution", "Design Plan"].map((n) => `+${(PACK_BUNDLES[name][n] * haveQty).toLocaleString()} ${esc(materialDisplayName(MATERIAL_NAME_SHORT[n] || n))}`).join("<br>")}</div><div class="meta" style="font-size:9.5px; line-height:1.3;">${esc(t("bp_chest_fixed_note"))}</div>`
+        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : (itemPageMaps().fixed[calcKey || "chief_gear"] || []).includes(name)
+          ? `<div style="font-size:11px; margin-top:4px; color:var(--good); line-height:1.35;">${(() => { const g = chestGives(name), first = ["Hardened Alloy", "Polishing Solution", "Design Plan"]; return [...first.filter((n) => n in g), ...Object.keys(g).filter((n) => !first.includes(n))]; })().map((n) => `+${(chestGives(name)[n] * haveQty).toLocaleString()} ${esc(materialDisplayName(itemShortName(n)))}`).join("<br>")}</div><div class="meta" style="font-size:9.5px; line-height:1.3;">${esc(t("bp_chest_fixed_note"))}</div>`
           : `<div style="font-size:11px; margin-top:4px; color:var(--muted);">${esc(t("bp_chest_chance"))}</div>`}`
         : `<input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
       <span data-bplinknote="${esc(name)}">${backpackLinkNoteHtml(calcKey || "chief_gear", name, link)}</span>
@@ -19189,7 +19259,7 @@ function expertSpeedupOwnedFrom(inv) {
 // Experts inventory boxes linked to the Backpack: the shared items, the
 // general and expert speedup minutes, and every expert's own sigils.
 function expertsBackpackNames() {
-  return [...EXPERT_INVENTORY_BASE_FIELDS, GENERAL_SPEEDUP_KEY, ...expertKeysAll().map((k) => `${k} Sigils`)];
+  return [...new Set([...EXPERT_INVENTORY_BASE_FIELDS, GENERAL_SPEEDUP_KEY, ...expertKeysAll().map((k) => `${k} Sigils`), ...(itemPageMaps().links.experts || [])])];
 }
 async function expertsInventoryWithBackpack(inv) {
   const link = await backpackLinkState();
@@ -20399,7 +20469,7 @@ async function renderExpertsPage() {
       const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
       return `<button type="button" class="bp-tile bs-tile" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}">
         <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
-        <img src="${EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png")}" alt="" loading="lazy" />
+        <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png"))}" alt="" loading="lazy" />
         <span class="bp-qty">${minutes ? t12FormatTime(v / 60) : shortAmount(v)}</span>
         <span class="bp-name">${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</span>
       </button>`;
@@ -20412,7 +20482,7 @@ async function renderExpertsPage() {
       const f = btn.dataset.expedit;
       const linkable = hasBp && backpackLinks("experts", f);
       plxAmountModal({
-        label: materialDisplayName(f), icon: EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),
+        label: materialDisplayName(f), icon: itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),
         linked: linkable ? backpackLinked("experts", f, bpLink) : null,
         onSave: (val) => {
           invSaved[f] = val;
@@ -21767,6 +21837,7 @@ const ADMIN_TABLES = {
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
   packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
   backpackitems: { label: "Backpack Items", group: "packs", icon: "🎒", desc: "Items in the Backpack", words: "backpack item" },
+  items: { label: "Items", group: "packs", icon: "🏷", desc: "Pictures, short names, pages, speedup minutes", words: "item picture icon short name page link speedup minutes chest counts gives sigils" },
   budgets: { label: "Budgets", group: "packs", icon: "💰", desc: "Opens the page", tab: "budgets", words: "budget" },
   backpack: { label: "Backpack", group: "packs", icon: "🎒", desc: "Opens the page", tab: "backpack", words: "inventory" },
 };
@@ -21886,6 +21957,7 @@ async function drawAdminSection(key, body) {
   else if (key === "heroes") await renderAdminHeroes(body);
   else if (key === "packres") await renderAdminPackResources(body);
   else if (key === "backpackitems") await renderAdminBackpackItems(body);
+  else if (key === "items") await renderAdminItems(body);
   else if (key === "contact") await renderAdminContact(body);
   else if (key === "currencies") await renderAdminCurrencies(body);
   else if (key === "skins") await renderAdminSkinsGroup(body);
@@ -22525,6 +22597,125 @@ async function renderAdminPackResources(body) {
   draw();
 }
 
+// ---- Items (owner, 17 Oct 2026): one place for each item's picture, short
+// name, the planner pages it fills, speedup minutes and what it counts as.
+// Saved in site_config "item_registry" (only changes; see itemPageMaps);
+// "Counts as" is the same setting as Pack Resources "Gives".
+function afterItemRegistryChange() {
+  ITEM_REG_MEMO = null;
+  PACK_TABLES_CACHE = null;
+  afterGameRulesChange();
+}
+async function saveItemRegistry(next) {
+  await saveSiteConfig("item_registry", next);
+  afterItemRegistryChange();
+}
+// Is this name (or the box it stands for) used by a planner page?
+function itemIsLinked(name) {
+  const m = itemPageMaps(), box = (itemReg(name) || {}).from || name;
+  return [m.links, m.chests, m.fixed].some((map) => Object.values(map).some((l) => l.includes(box))) || !!itemReg(name);
+}
+async function itemRegistryRename(oldName, newName) {
+  const reg = { ...itemRegistry() }, old = reg[oldName] || {};
+  const box = old.from || oldName;
+  const icon = old.icon || bpIcon({ name: oldName }) || "";
+  delete reg[oldName];
+  reg[newName] = { ...old, ...(icon ? { icon } : {}), ...(box !== newName ? { from: box } : {}) };
+  if (box === newName) delete reg[newName].from;
+  if (!Object.keys(reg[newName]).length) delete reg[newName];
+  await saveItemRegistry(reg);
+}
+let ADMIN_ITEMS_GROUP = null, ADMIN_ITEMS_Q = "";
+async function renderAdminItems(body) {
+  await ensureSiteConfig();
+  const names = new Map();
+  const add = (n, g) => { if (n && !names.has(n)) names.set(n, g); };
+  const maps = itemPageMaps();
+  backpackItems().forEach((g) => g.items.forEach((it) => add(it.name, g.title)));
+  [maps.links, maps.chests, maps.fixed].forEach((map) => Object.values(map).forEach((l) => l.forEach((n) => { if (!maps.alias[n]) add(n, "Page boxes"); })));
+  PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n)).forEach((n) => add(n, "Pack items"));
+  packResourceConfig().custom.forEach((c) => add(c.name, "Pack items"));
+  Object.keys(itemRegistry()).forEach((n) => add(n, "Other"));
+  let seq = 0;
+  const all = [...names].map(([name, group]) => ({ id: "i" + (++seq), name, group }));
+  const groups = [...new Set(all.map((x) => x.group))];
+  if (!groups.includes(ADMIN_ITEMS_GROUP)) ADMIN_ITEMS_GROUP = groups[0] || "";
+  const contentsText = (c) => Object.entries(c || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
+  const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
+  const boxOf = (name) => (itemReg(name) || {}).from || name;
+  const defIn = (def, k, box) => (def[k] || []).includes(box);
+  const pagesOf = (r) => ITEM_PAGE_KEYS.filter(([k]) => (maps.links[k] || []).includes(boxOf(r.name))).map(([, l]) => l);
+  const isSpeed = (n) => /^(Research |Troop |Construction |Expert )?Speedup \S+$/.test(n);
+  const draw = () => {
+    const q = ADMIN_ITEMS_Q.trim().toLowerCase();
+    const list = q ? all.filter((x) => x.name.toLowerCase().includes(q)) : all.filter((x) => x.group === ADMIN_ITEMS_GROUP);
+    body.innerHTML = `<p class="desc" style="margin:0 0 8px;">Every item the site knows. Change its picture (shown everywhere: Backpack, planner tiles, Budgets, My Purchases, Packs), its short name on the planner tiles, which planner pages fill their box of this name from the Backpack, and the minutes of a speedup (so a new size counts). Nothing changed = the site's own values. To rename an item, use Backpack Items: its page links move with it.</p>
+      <input type="search" data-itemq placeholder="Search items" value="${esc(ADMIN_ITEMS_Q)}" style="width:100%; max-width:320px; margin-bottom:8px;" />
+      ${q ? "" : `<div class="adm-chips"><div class="adm-chips-row">${groups.map((g) => `<button type="button" class="adm-chip${g === ADMIN_ITEMS_GROUP ? " on" : ""}" data-itemgroup="${esc(g)}">${esc(g)} <span class="meta">${all.filter((x) => x.group === g).length}</span></button>`).join("")}</div></div>`}`
+      + admListHtml(list, { title: q ? "Search" : ADMIN_ITEMS_GROUP, attr: "data-itemrow", add: false, img: (r) => bpIcon({ name: r.name }) || materialIconSrc(r.name), name: (r) => r.name,
+        sub: (r) => [itemReg(r.name) ? "changed" : "", pagesOf(r).join(", "), itemMinutes(r.name) && isSpeed(r.name) ? `${itemMinutes(r.name)} min` : ""].filter(Boolean).join(" · ") });
+    const qi = body.querySelector("[data-itemq]");
+    qi.addEventListener("input", () => { ADMIN_ITEMS_Q = qi.value; const pos = qi.selectionStart; draw(); const n = body.querySelector("[data-itemq]"); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* search box */ } });
+    body.querySelectorAll("[data-itemgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_ITEMS_GROUP = b.dataset.itemgroup; keepBoxes(body, draw); }));
+    wireAdmList(body, {
+      onEdit: (id) => {
+        const r = all.find((x) => x.id === id), name = r.name, box = boxOf(name), cur = itemReg(name) || {};
+        const sigils = / Sigils$/.test(box);
+        const cfg = packResourceConfig(), custom = packCustomResource(name);
+        const givesNow = custom ? (custom.contents || {}) : (cfg.gives[name] || PACK_BUNDLES[name] || {});
+        const fields = [
+          { key: "icon", label: "Picture (empty = the site's own)", type: "img", value: cur.icon || "" },
+          { key: "short", label: `Short name on planner tiles (empty = ${MATERIAL_NAME_SHORT[box] || "full name"})`, value: cur.short || "", half: true },
+          ...(isSpeed(name) || cur.minutes ? [{ key: "minutes", label: "Minutes (speedups)", type: "num", value: cur.minutes || itemMinutes(name) || null, half: true }] : []),
+          { key: "pgnote", type: "note", label: box !== name ? `Fills the page box "${box}" on:` : "Fills its box from the Backpack on:" },
+          ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "pg_" + k, label: l + (k === "experts" && sigils ? " (sigils: always)" : ""), type: "check", half: true, value: (maps.links[k] || []).includes(box) })),
+          { key: "chnote", type: "note", label: "Shown read-only as a chest on:", more: true },
+          ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "ch_" + k, label: l, type: "check", half: true, more: true, value: (maps.chests[k] || []).includes(box) })),
+          { key: "ctnote", type: "note", label: "…and counted as its contents (below) on:", more: true },
+          ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "ct_" + k, label: l, type: "check", half: true, more: true, value: (maps.fixed[k] || []).includes(box) })),
+          { key: "gives", label: "Counts as, per 1 (e.g. Design Plan: 1, Polishing Solution: 4) — same as Pack Resources \"Gives\"", value: contentsText(givesNow), more: true },
+        ];
+        openAdmSheet({ title: `Item · ${name}`, fields, noFocus: true, deleteLabel: "Reset to built-in",
+          deleteText: `Put "${name}" back to the site's own picture, short name, pages and minutes? ("Counts as" stays.)`,
+          onSave: async (v) => {
+            const e = { ...cur };
+            const setOr = (k, val, def) => { if (val == null || val === "" || val === def) delete e[k]; else e[k] = val; };
+            setOr("icon", v.icon, "");
+            setOr("short", v.short, MATERIAL_NAME_SHORT[box] || "");
+            if ("minutes" in v) { const defMin = (() => { const m = /speedup (\d+[mh])$/i.exec(name); return (m && BP_MINUTES[m[1]]) || 0; })(); setOr("minutes", Number(v.minutes) > 0 ? Number(v.minutes) : null, defMin); }
+            [["pages", "pg_", BACKPACK_PAGE_LINKS], ["chests", "ch_", BACKPACK_PAGE_CHESTS], ["count", "ct_", BACKPACK_FIXED_CHESTS]].forEach(([field, pre, def]) => {
+              const on = ITEM_PAGE_KEYS.map(([k]) => k).filter((k) => v[pre + k]);
+              const same = ITEM_PAGE_KEYS.every(([k]) => !!v[pre + k] === defIn(def, k, box));
+              if (same) delete e[field]; else e[field] = on;
+            });
+            const reg = { ...itemRegistry() };
+            if (Object.keys(e).length) reg[name] = e; else delete reg[name];
+            // "Counts as" lives in Pack Resources (one setting for packs and pages).
+            const g = parseContents(v.gives);
+            if (JSON.stringify(g) !== JSON.stringify(givesNow)) {
+              const c = { ...(siteConfig("pack_resources", {}) || {}) };
+              if (custom) c.custom = (c.custom || []).map((x) => (String(x.name).toLowerCase() === name.toLowerCase() ? { ...x, contents: g } : x));
+              else {
+                const gv = { ...(c.gives || {}) };
+                if (JSON.stringify(g) === JSON.stringify(PACK_BUNDLES[name] || {})) delete gv[name]; else gv[name] = g;
+                c.gives = gv;
+              }
+              await saveSiteConfig("pack_resources", c);
+            }
+            await saveItemRegistry(reg);
+            toast("Saved"); renderAdminItems(body);
+          },
+          onDelete: async () => {
+            const reg = { ...itemRegistry() };
+            if (cur.from) reg[name] = { from: cur.from }; else delete reg[name];
+            await saveItemRegistry(reg); toast("Back to built-in"); renderAdminItems(body);
+          } });
+      },
+    });
+  };
+  draw();
+}
+
 // ---- Backpack Items: the item list on the Backpack page ----
 // Saved in site_config "backpack_items" as { items: [{ group, name, icon }] };
 // row order = order on the page, groups in order of first appearance.
@@ -22560,11 +22751,17 @@ async function renderAdminBackpackItems(body) {
       if (items.some((x) => x !== r && x.name.toLowerCase() === v.name.toLowerCase())) throw new Error(`Duplicate name: ${v.name}`);
       r.name = v.name; r.icon = v.icon || ""; r.group = v.newgroup || v.group || ADMIN_BP_GROUP;
     };
+    // A renamed item keeps its page links and picture (Admin → Items).
+    const keepLinks = async (oldName, newName) => {
+      if (!oldName || oldName === newName || !itemIsLinked(oldName)) return;
+      if (!confirm(`"${oldName}" fills boxes on planner pages. Keep those links for "${newName}"? (Amounts saved under the old name still start from zero.)`)) return;
+      await itemRegistryRename(oldName, newName);
+    };
     wireAdmList(body, {
       onEdit: (id) => {
         const r = items.find((x) => x.id === id);
         openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
-          onSave: async (v) => { apply(r, v); await save("Saved"); ADMIN_BP_GROUP = r.group; draw(); },
+          onSave: async (v) => { const old = r.name; apply(r, v); await save("Saved"); await keepLinks(old, r.name); ADMIN_BP_GROUP = r.group; draw(); },
           onDelete: async () => { items.splice(items.indexOf(r), 1); await save("Removed"); draw(); },
           deleteText: `Remove "${r.name}" from the Backpack? Amounts people saved are kept.` });
       },
@@ -24038,7 +24235,8 @@ function openAdmSheet(o) {
   if (!m) { m = document.createElement("div"); m.id = "admSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
   const f = (x) => {
     const id = `admf_${x.key}`, v = x.value == null ? "" : x.value;
-    if (x.type === "check") return `<label class="admf admf-chk"><input type="checkbox" id="${id}" ${v ? "checked" : ""} /> ${esc(x.label)}</label>`;
+    if (x.type === "check") return `<label class="admf admf-chk${x.half ? " half" : ""}"><input type="checkbox" id="${id}" ${v ? "checked" : ""} /> ${esc(x.label)}</label>`;
+    if (x.type === "note") return `<div class="admf meta" style="font-size:11.5px;">${esc(x.label)}</div>`;
     if (x.type === "select") return `<label class="admf"><span>${esc(x.label)}</span><select id="${id}">${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}</select></label>`;
     if (x.type === "img") return `<div class="admf admf-img"><span class="admc-pic big" data-admimgprev>${v ? `<img src="${esc(v)}" alt="" />` : `<i>?</i>`}</span><label class="admf" style="flex:1; min-width:0;"><span>${esc(x.label)}</span><span class="admf-line"><input type="text" id="${id}" value="${esc(v)}" placeholder="link, or upload" />${uploadBtnHtml()}</span></label></div>`;
     if (x.type === "area") return `<label class="admf"><span>${esc(x.label)}</span><textarea id="${id}" rows="3">${esc(v)}</textarea></label>`;
@@ -24048,7 +24246,7 @@ function openAdmSheet(o) {
   m.innerHTML = `<div class="modal-box adm-sheet"><div class="adm-sheet-h"><b>${esc(o.title)}</b><button type="button" class="rfa-x" data-admsclose aria-label="close">&#10005;</button></div>
     <div class="admf-grid">${main.map(f).join("")}</div>
     ${more.length ? `<details class="admf-more"><summary>More</summary><div class="admf-grid">${more.map(f).join("")}</div></details>` : ""}
-    <div class="adm-sheet-foot">${o.onDelete ? `<button type="button" class="btn ghost small" data-admsdel style="color:var(--danger);">Delete</button>` : ""}<span style="flex:1"></span><button type="button" class="btn ghost small" data-admsclose>Cancel</button><button type="button" class="btn small" data-admssave>Save</button></div></div>`;
+    <div class="adm-sheet-foot">${o.onDelete ? `<button type="button" class="btn ghost small" data-admsdel style="color:var(--danger);">${esc(o.deleteLabel || "Delete")}</button>` : ""}<span style="flex:1"></span><button type="button" class="btn ghost small" data-admsclose>Cancel</button><button type="button" class="btn small" data-admssave>Save</button></div></div>`;
   m.style.display = "flex";
   const close = () => { m.style.display = "none"; };
   m.onclick = (ev) => { if (ev.target === m || ev.target.closest("[data-admsclose]")) close(); };
