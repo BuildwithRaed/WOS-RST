@@ -22028,7 +22028,10 @@ const GAME_RULE_GROUPS = [
   { key: "heroes", label: "Heroes, shards & widgets" },
   { key: "trades", label: "Trades & chests" },
   { key: "packs", label: "Packs & lab" },
+  { key: "research", label: "Research trees" },
 ];
+const RULE_STATS = ["", "Attack", "Defense", "Lethality", "Health"];
+const ruleSlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 let GAME_RULES = null; // built on first use (needs every constant above)
 function gameRules() {
   if (GAME_RULES) return GAME_RULES;
@@ -22092,6 +22095,45 @@ function gameRules() {
       cols: [{ key: "tier", label: "Tier", type: "num" }, { key: "cost", label: "FC cost", type: "num" }, { key: "returns", label: "Returns (count:chance, …)", type: "text" }],
       get: () => RFC_LAB_TIERS.map((t) => ({ tier: t.tier, cost: t.cost, returns: t.returns.map(([n, c]) => `${n}:${c}`).join(", ") })),
       set: (rows) => ruleSetArray(RFC_LAB_TIERS, rows.filter((r) => r.tier).map((r) => ({ tier: Number(r.tier), cost: Number(r.cost) || 0, returns: String(r.returns || "").split(",").map((x) => x.split(":").map(Number)).filter((a) => a.length === 2 && a.every(Number.isFinite)) }))) },
+    // T12 tree (T12_ITEM_DEFS): the T12 page, its Budgets needs and the
+    // Dashboard all read this list. "Cost rows" = the tier name of the level
+    // rows in Admin → Research → T12 (items of one tier share those rows).
+    { key: "t12Tree", group: "research", label: "T12 research items", help: "Every item on the T12 page: section, name, which level rows it costs (the Tier in Admin → Research → T12), max level, and the stat it gives (% per level, empty = 1). People's levels are saved by Id, so keep an item's Id when you rename it; a new item with no Id gets one from its section and name.",
+      cols: [{ key: "key", label: "Id", type: "text" }, { key: "group", label: "Section", type: "text" }, { key: "label", label: "Shown as", type: "text" }, { key: "tier", label: "Cost rows (tier)", type: "text" }, { key: "max", label: "Max level", type: "num" }, { key: "stat", label: "Stat", type: "select", options: RULE_STATS }, { key: "pct", label: "% per level", type: "num" }],
+      get: () => T12_ITEM_DEFS.map((d) => ({ key: d.key, group: d.group, label: d.label, tier: d.tier, max: d.max, stat: d.stat || "", pct: d.pct != null ? d.pct : "" })),
+      set: (rows) => {
+        const used = new Set();
+        const out = rows.filter((r) => String(r.tier || "").trim() && Number(r.max) > 0 && String(r.label || "").trim()).map((r) => {
+          let key = String(r.key || "").trim() || ruleSlug(`${r.group || ""} ${r.label}`) || "item";
+          for (let n = 2; used.has(key); n++) key = `${String(r.key || "").trim() || ruleSlug(`${r.group || ""} ${r.label}`)}_${n}`;
+          used.add(key);
+          const label = String(r.label).trim(), d = { key, tier: String(r.tier).trim(), label, max: Math.round(Number(r.max)), group: String(r.group || "").trim() || label };
+          if (RULE_STATS.includes(r.stat) && r.stat) d.stat = r.stat;
+          if (r.pct !== "" && r.pct != null && Number(r.pct) > 0) d.pct = Number(r.pct);
+          return d;
+        });
+        if (!out.length) throw new Error("the T12 tree needs at least one item");
+        ruleSetArray(T12_ITEM_DEFS, out);
+      } },
+    // Research Center tracks (RC_BASE_CATEGORIES × RC_TIERS): a track's level
+    // rows in Admin → Research → Research Center are named "<track> <tier>".
+    { key: "rcTracks", group: "research", label: "Research Center tracks", help: "The tracks on the Research Center page and which tab they're on (Shared counts for every troop on the Dashboard). Each track's level rows are named \"<track> <tier>\" in Admin → Research → Research Center, e.g. \"Weapons Prep I\".",
+      cols: [{ key: "tab", label: "Tab", type: "select", options: ["Shared", "Infantry", "Lancer", "Marksman"] }, { key: "track", label: "Track", type: "text" }],
+      get: () => Object.entries(RC_BASE_CATEGORIES).flatMap(([tab, list]) => list.map((track) => ({ tab, track }))),
+      set: (rows) => {
+        const o = {};
+        rows.filter((r) => r.tab && String(r.track || "").trim()).forEach((r) => { const l = (o[r.tab] = o[r.tab] || []), tr = String(r.track).trim(); if (!l.includes(tr)) l.push(tr); });
+        if (!Object.keys(o).length) throw new Error("add at least one track");
+        ruleSetObject(RC_BASE_CATEGORIES, o);
+      } },
+    { key: "rcTiers", group: "research", label: "Research Center tiers", help: "The tiers each Research Center track has, in order (the end of the level rows' name: \"Weapons Prep VII\" needs a tier VII here).",
+      cols: [{ key: "tier", label: "Tier", type: "text" }],
+      get: () => RC_TIERS.map((tier) => ({ tier })),
+      set: (rows) => {
+        const out = rows.map((r) => String(r.tier || "").trim()).filter((x, i, a) => x && a.indexOf(x) === i);
+        if (!out.length) throw new Error("add at least one tier");
+        ruleSetArray(RC_TIERS, out);
+      } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
@@ -22235,10 +22277,15 @@ function gameNameTexts() {
     lists.flat().forEach((r) => Object.values(r || {}).forEach((v) => names.push(v)));
     try { packAllResourceNames().forEach((n) => names.push(n)); } catch (e) { /* pack items not ready */ }
     try { backpackItems().forEach((g) => { names.push(g.title); g.items.forEach((x) => names.push(x.name)); }); } catch (e) { /* default list */ }
+    // Research trees set in Rules & Timeline (built-in names already have texts).
+    T12_ITEM_DEFS.forEach((d) => { if (!T12_GROUP_KEYS[d.group]) names.push(d.group); if (!T12_LABEL_KEYS[d.label] && !statLabelKey(d.label)) names.push(d.label); });
+    Object.values(RC_BASE_CATEGORIES).flat().forEach((n) => names.push(n));
     const seen = new Set(), out = [];
     names.forEach((v) => {
       const n = typeof v === "string" ? v.trim() : "";
       if (!n || n.length > 80 || !/[A-Za-z]{2}/.test(n) || seen.has(n) || n in DATA_NAME_I18N) return;
+      // Already translated another way (item words, on-screen texts, "<expert> Sigils", speedups).
+      if (MATERIAL_LABEL_KEYS[n.toLowerCase()] || n in UI_TEXT_I18N || / Sigils$/i.test(n) || /Speedups? \d+[mh]$/i.test(n)) return;
       seen.add(n); out.push(["data:" + n, n]);
     });
     return out.sort((a, b) => a[1].localeCompare(b[1]));
