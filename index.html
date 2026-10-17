@@ -17218,12 +17218,9 @@ async function renderSkinGallery() {
   const globeLevelSelect = document.getElementById("globeLevelSelect");
   globeLevelSelect.value = globeLevelSaved.level;
   const GLOBE_LEVEL_ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI" };
-  // Extra skins auto-owned at specific globe levels, beyond the matching Frost Sphere.
-  const GLOBE_LEVEL_EXTRA_SKINS = {
-    2: ["Fireborn Expeditioner"],
-    3: ["Gate of Time"],
-    5: ["Star Radiance"],
-  };
+  // Extra skins auto-owned at specific globe levels, beyond the matching
+  // Frost Sphere (Admin → Rules "Globe Level extra skins").
+  const GLOBE_LEVEL_EXTRA_SKINS = GLOBE_LEVEL_EXTRA_SKINS_GLOBAL;
   function namesForGlobeLevel(level) {
     if (!level) return [];
     const roman = GLOBE_LEVEL_ROMAN[level];
@@ -22137,6 +22134,16 @@ function gameRules() {
       cols: [{ key: "category", label: "Category", type: "text" }],
       get: () => [...GALLERY_BIG_THUMB].map((c) => ({ category: c })),
       set: (rows) => { GALLERY_BIG_THUMB.clear(); rows.forEach((r) => { if (r.category) GALLERY_BIG_THUMB.add(String(r.category).trim()); }); } },
+    { key: "globeSkins", group: "pages", label: "Globe Level extra skins", help: "Cosmetics that come with a Globe Level (1–6) besides that level's Frost Sphere: picking the level on Cosmetics counts them as owned.",
+      cols: [{ key: "level", label: "Globe level", type: "num" }, { key: "skin", label: "Skin name", type: "text" }],
+      get: () => Object.entries(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flatMap(([lv, l]) => l.map((s) => ({ level: Number(lv), skin: s }))),
+      set: (rows) => {
+        const o = {};
+        rows.filter((r) => Number(r.level) >= 1 && Number(r.level) <= 6 && r.skin).forEach((r) => { (o[Number(r.level)] = o[Number(r.level)] || []).push(String(r.skin).trim()); });
+        ruleSetObject(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL, o);
+        ALL_GLOBE_WIRED_NAMES_GLOBAL.clear();
+        [...Object.values(GLOBE_LEVEL_ROMAN_GLOBAL).map((roman) => `Frost Sphere ${roman}`), ...Object.values(o).flat()].forEach((n) => ALL_GLOBE_WIRED_NAMES_GLOBAL.add(n));
+      } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
@@ -24310,7 +24317,13 @@ async function renderAdminSkinsCategory(body, category) {
     onEdit: (id) => {
       const r = rows.find((x) => String(x.id) === id);
       openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
-        onSave: async (v) => { if (!v.name) throw new Error("Enter a name"); await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) }); dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category); },
+        onSave: async (v) => {
+          if (!v.name) throw new Error("Enter a name");
+          await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) });
+          // A Globe Level extra skin keeps its link under the new name.
+          if (v.name !== r.name && Object.values(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).some((l) => l.includes(r.name))) await saveGameRule("globeSkins", Object.entries(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flatMap(([lv, l]) => l.map((s) => ({ level: Number(lv), skin: s === r.name ? v.name : s }))));
+          dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category);
+        },
         onDelete: async () => { await sb(`skins?id=eq.${r.id}`, { method: "DELETE" }); dashDataChanged("skins"); toast("Deleted"); renderAdminSkinsCategory(body, category); },
         deleteText: `Delete "${r.name}"?` });
     },
