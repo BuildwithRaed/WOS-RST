@@ -227,6 +227,14 @@
   .bud-seg button b{ display:block; color:var(--frost); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-seg button.on{ background:var(--ice-dim); color:var(--frost); }
   .bud-seg button.late span{ color:var(--danger); }
+  .bud-spend-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .bud-spend-row input[type=number]{ width:110px; font-size:13px; padding:5px 8px; }
+  .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
+  .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
+  .bud-spend-per button.on{ background:var(--ice-dim); color:var(--frost); }
+  .bud-spend-bar{ display:block; height:6px; margin:5px 0 3px; background:var(--panel-2); border-radius:4px; overflow:hidden; }
+  .bud-spend-bar i{ display:block; height:100%; background:var(--ice); border-radius:4px; }
+  .bud-spend-more > summary{ cursor:pointer; font-size:11.5px; padding:8px 0 2px; }
   .bud-line{ border-top:1px solid var(--line); }
   .bud-line:first-of-type{ margin-top:12px; }
   .bud-line > summary{ list-style:none; display:flex; align-items:center; gap:10px; padding:10px 0; cursor:pointer; }
@@ -413,6 +421,9 @@
   .pur-sug-split{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
   .pur-wk-chips{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 6px; scrollbar-width:none; }
   .pur-wk-chips::-webkit-scrollbar{ display:none; }
+  .pur-wk-bud{ margin:2px 0 8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; }
+  .pur-wk-bud-h{ display:flex; gap:8px; font-size:12px; }
+  .pur-wk-bud-h b{ margin-inline-start:auto; }
   .pur-wk-chip{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:1px; min-width:86px; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font-size:11px; cursor:pointer; }
   .pur-wk-chip b{ font-size:13px; }
   .pur-wk-chip small{ font-size:10px; color:var(--muted); white-space:nowrap; }
@@ -3377,6 +3388,24 @@ const T = {
   budgets_view_target: { en: "By your target" },
   budgets_view_fastest: { en: "Fastest" },
   budgets_view_cheapest: { en: "Cheapest" },
+  budgets_view_budget: { en: "My budget" },
+  spend_title: { en: "My budget" },
+  spend_week: { en: "a week" },
+  spend_month: { en: "a month" },
+  spend_carry: { en: "Keep what I don't spend for next time" },
+  spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
+  spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
+  spend_cant: { en: "Can't finish within this budget in the next 3 years. Try a bigger amount." },
+  spend_kept_week: { en: "{v} kept for next week" },
+  spend_kept_month: { en: "{v} kept for next month" },
+  spend_of: { en: "of {v}" },
+  spend_all_done: { en: "all done ✓" },
+  spend_fixed: { en: "incl. {v} in My Purchases" },
+  spend_left: { en: "{v} left" },
+  spend_over: { en: "{v} over" },
+  spend_show_all: { en: "Show all ({n})" },
+  spend_bar_week: { en: "This week's budget" },
+  spend_bar_month: { en: "{month} budget" },
   budgets_view_shown: { en: "shown" },
   budgets_view_hint: { en: "Tap a card to show its packs and each page's share below." },
   budgets_view_sooner: { en: "{n} days sooner" },
@@ -6687,7 +6716,8 @@ async function renderPurchasesPage() {
     const total = rows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
     // Packs come on the calendar, so each suggestion is spread over the days it
     // can actually be bought (Now, then each time the pack comes back).
-    const sched = packPlanSchedule(rows);
+    // With "My budget" set, the days come from that plan (never over the limit).
+    const sched = plan.spendSched || packPlanSchedule(rows);
     const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
     const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
     // Week tabs (owner picked C, 16 Oct 2026): this week, then each week (Mon–Sun)
@@ -6729,7 +6759,18 @@ async function renderPurchasesPage() {
     const drawSug = () => {
     const sel = buckets.get(PUR_SUG_WEEK);
     const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small></button>`; }).join("")}</div>`;
-    const selHead = `<div class="pur-wk-head"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${PUR_SUG_WEEK === 0 ? ` <span class="pur-wk-now">${esc(t("pur_sug_now"))}</span>` : ""}</div>`;
+    // Design D: the budget of the chosen week (or its month) as a bar.
+    const budBar = (() => {
+      const sp = plan.spend;
+      if (!sp || PUR_SUG_WEEK === "after") return "";
+      const startOff = PUR_SUG_WEEK === 0 ? 0 : PUR_SUG_WEEK * 7 - monIdx;
+      const pd = sp.periods.find((x) => x.p === spendPeriodOf(startOff, sp.per)) || { spent: 0, avail: sp.amount + 0, kept: 0, fixed: 0 };
+      const avail = pd.avail || sp.amount, fill = avail > 0 ? Math.min(100, (pd.spent / avail) * 100) : 0;
+      const name = sp.per === "week" ? t("spend_bar_week") : t("spend_bar_month").replace("{month}", new Date(packStartOfToday().getTime() + startOff * 86400000).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", timeZone: "UTC" }));
+      const rest = avail - pd.spent;
+      return `<div class="pur-wk-bud"><div class="pur-wk-bud-h"><span>${esc(name)}</span><b>${esc(money(pd.spent))} / ${esc(money(avail))}</b></div><span class="bud-spend-bar"><i style="width:${fill.toFixed(1)}%;"></i></span><span class="meta" style="font-size:11px; color:${rest < -0.5 ? "var(--danger)" : "var(--good)"};">${esc(t(rest < -0.5 ? "spend_over" : "spend_left").replace("{v}", money(Math.abs(rest))))}</span></div>`;
+    })();
+    const selHead = `<div class="pur-wk-head"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${PUR_SUG_WEEK === 0 ? ` <span class="pur-wk-now">${esc(t("pur_sug_now"))}</span>` : ""}</div>` + budBar;
     const list = sel ? [...sel.items.entries()] : [];
     box.innerHTML = head + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
       const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
@@ -11554,8 +11595,9 @@ let PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
 // spread over the pack's appearances (perCycle per appearance), from today.
 // Rows of one pack that share its limit (same title, limit and resets) share
 // each appearance. Returns, per row, [{ off (days from today), count }].
-function packPlanSchedule(rows) {
-  const slotsFor = (r) => {
+// Every time a plan row's pack can be bought (days from today) and how many
+// each time, after what My Purchases already uses.
+function packRowSlots(r) {
     const st = packStackInfo(r.reset);
     if (st) {
       // Stacked cards: up to `atOnce` can be held at a time, then one more each card length.
@@ -11580,7 +11622,9 @@ function packPlanSchedule(rows) {
       const n = Math.min(left, cap);
       return Array.from({ length: n }, (_, k) => ({ off: off + (left - n) + k, cap: 1 }));
     });
-  };
+}
+function packPlanSchedule(rows) {
+  const slotsFor = packRowSlots;
   const out = rows.map(() => []);
   const pools = new Map();
   rows.forEach((r, i) => {
@@ -13972,6 +14016,16 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
         fastest: fastest ? { plan: fastest, shares: budgetShares(fastest, inc) } : null,
         cheapest: cheapest ? { plan: cheapest, shares: cheapest === res.chosen ? res.shares : budgetShares(cheapest, inc) } : null,
       };
+      // "My budget": plans for several finish dates between the fastest and the
+      // cheapest; the page then checks which one fits the spending limit and
+      // finishes soonest (budgetSpendBest), so changing the amount needs no new plans.
+      if (opts.spendCands) {
+        const seen = new Set(), cands = [];
+        const add = (pl) => { if (!pl) return; const k = Math.round(pl.total * 100) + "|" + pl.days; if (seen.has(k)) return; seen.add(k); cands.push({ plan: pl, shares: pl === res.chosen ? res.shares : budgetShares(pl, inc) }); };
+        add(fastest); add(res.chosen); add(cheapest);
+        [14, 28, 56, 84, 112, 168, 224, 280].forEach((d) => add(packCheapestPlan(res.groups, res.need, earliest + d, res.calcKey, true)));
+        res.budgetCands = cands;
+      }
     }
   }
   return res;
@@ -14024,7 +14078,7 @@ function budgetCombinedInput(pages, selected) {
 // Runs the combined plan (and the own plans of pages it had to leave out).
 function plannerCombinedLocal(payload) {
   const pages = payload.pages.map((pg) => ({ ...pg, supplied: new Set(pg.supplied || []) }));
-  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups);
+  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands });
   res.droppedPlans = {};
   (res.dropped || []).forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg) res.droppedPlans[k] = budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, payload.targetDays); });
   delete res.groups;
@@ -14103,9 +14157,9 @@ function budgetPlanFingerprint(payload) {
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return `${str.length}:${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
 }
-async function budgetCombinedPlanAsync(pages, selected, targetDays) {
+async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   const inp = budgetCombinedInput(pages, selected);
-  const payload = { ...inp, targetDays };
+  const payload = { ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) };
   let key = null;
   try {
     key = budgetPlanFingerprint(payload);
@@ -14258,11 +14312,157 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
 function budgetInvalidate() { BUDGET_DATA = null; PUR_SUGGEST = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+// ---- My budget: a spending limit (owner, 17 Oct 2026, design C + D) ----
+// calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
+// Only the admin sees it unless Admin → Visibility → Visitor access
+// "spendbudget" is ticked. The worker sends plans for several finish dates
+// (budgetCands); each is bought month by month (or week by week) without
+// going over the limit, money not spent carried over when ticked, and the
+// one that finishes soonest (then the cheapest) is shown.
+let BUDGET_SPEND = null;
+async function ensureBudgetSpend() {
+  if (BUDGET_SPEND === null) { const st = await loadCalcState("budget_spend"); BUDGET_SPEND = st && typeof st === "object" ? st : {}; }
+  return BUDGET_SPEND;
+}
+function spendFeatureOn() { return visitorCan("spendbudget"); }
+// The limit in the currency prices are shown in.
+function spendAmountLocal() {
+  const sp = BUDGET_SPEND || {}, a = Number(sp.amount) || 0;
+  if (!(a > 0)) return 0;
+  const cur = sp.cur || "USD", disp = DISPLAY_CURRENCY || "USD";
+  if (cur === disp) return a;
+  const r = currencyRates();
+  return r[cur] > 0 && r[disp] > 0 ? (a / r[cur]) * r[disp] : a;
+}
+function spendActive() { return spendFeatureOn() && spendAmountLocal() > 0; }
+function spendSettings() {
+  const sp = BUDGET_SPEND || {};
+  return { amount: spendAmountLocal(), per: sp.per === "week" ? "week" : "month", carry: sp.carry !== false };
+}
+// Period (week Mon–Sun, or calendar month) of a day; 0 = the current one.
+function spendPeriodOf(off, per) {
+  const d0 = packStartOfToday();
+  if (per === "week") return Math.floor((off + (d0.getUTCDay() + 6) % 7) / 7);
+  const d = new Date(d0.getTime() + off * 86400000);
+  return (d.getUTCFullYear() - d0.getUTCFullYear()) * 12 + d.getUTCMonth() - d0.getUTCMonth();
+}
+function spendPeriodStart(p, per) {
+  const d0 = packStartOfToday();
+  if (per === "week") return Math.max(0, p * 7 - (d0.getUTCDay() + 6) % 7);
+  if (p <= 0) return 0;
+  return Math.round((Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + p, 1) - d0.getTime()) / 86400000);
+}
+// Purchases already in My Purchases count as spending in their week / month
+// (bought ones only in the current one).
+function budgetSpendFixed() {
+  const out = [];
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
+  (PACK_PURCHASES.list || []).forEach((pu) => {
+    const day = packParseDay(packValidDay(pu.date));
+    if (!day) return;
+    const off = Math.round((day - packStartOfToday()) / 86400000);
+    if (pu.status !== "bought" && off < 0) return;
+    const tb = tables.find((x) => String(x.id) === String(pu.table));
+    if (!tb) return;
+    const v = packConvert(purchasePrice(pu, tb), packLinkFor(tb.id).currency).n * (Number(pu.count) || 1);
+    if (v > 0) out.push({ off, amount: v });
+  });
+  return out;
+}
+// One plan bought under the limit: each pack on the days it's on sale, the
+// ones with the fewest chances left first. Returns when it's all bought,
+// what each row buys on which day, and the spending per week / month.
+function budgetSpendSimulate(plan, sp) {
+  const rows = ((plan && plan.rows) || []).filter((r) => r.count > 0);
+  const per = sp.per, amount = sp.amount;
+  const unit = rows.map((r) => packRowLocalUnits(r).reduce((a, b) => a + b, 0));
+  const lists = [];
+  const pools = new Map();
+  rows.forEach((r, i) => { const k = `${r.title}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`; if (!pools.has(k)) pools.set(k, []); pools.get(k).push(i); });
+  pools.forEach((idx) => {
+    const sum = idx.reduce((a, i) => a + rows[i].count, 0), r0 = rows[idx[0]];
+    const shared = idx.length > 1 && Number.isFinite(r0.cycles) && sum <= r0.cycles * (r0.perCycle || 1);
+    if (shared) { const l = packRowSlots(r0).map((x) => ({ ...x })); idx.forEach((i) => { lists[i] = l; }); }
+    else idx.forEach((i) => { lists[i] = packRowSlots(rows[i]).map((x) => ({ ...x })); });
+  });
+  // Packs on sale any time can be bought whenever money is there.
+  const anyTime = lists.map((l) => l.length === 1 && !Number.isFinite(l[0].cap));
+  const days = new Set();
+  lists.forEach((l, i) => { if (!anyTime[i]) l.forEach((x) => { if (x.off <= PACK_HORIZON_DAYS) days.add(Math.max(0, x.off)); }); });
+  if (anyTime.some(Boolean)) for (let p = 0; spendPeriodStart(p, per) <= PACK_HORIZON_DAYS; p++) days.add(spendPeriodStart(p, per));
+  const spent = new Map(), fixedP = new Map();
+  (sp.fixed || []).forEach((f) => { const p = spendPeriodOf(f.off, per); if (p < 0) return; spent.set(p, (spent.get(p) || 0) + f.amount); fixedP.set(p, (fixedP.get(p) || 0) + f.amount); });
+  const upTo = (p) => { let t = 0; spent.forEach((v, k) => { if (k <= p) t += v; }); return t; };
+  const left = rows.map((r) => r.count);
+  const sched = rows.map(() => []);
+  const bought = new Map(); // period -> [{ i, count }]
+  let last = 0;
+  [...days].sort((a, b) => a - b).forEach((d) => {
+    if (!left.some((n) => n > 0)) return;
+    const p = spendPeriodOf(d, per);
+    let avail = sp.carry ? amount * (p + 1) - upTo(p) : amount - (spent.get(p) || 0);
+    if (avail <= 0.005) return;
+    const cands = [];
+    rows.forEach((r, i) => {
+      if (!(left[i] > 0)) return;
+      const slot = anyTime[i] ? lists[i][0] : lists[i].find((x) => Math.max(0, x.off) === d && x.cap > 0);
+      if (!slot) return;
+      const later = anyTime[i] ? Infinity : lists[i].reduce((a, x) => a + (Math.max(0, x.off) > d ? x.cap : 0), 0);
+      cands.push({ i, slot, urgent: left[i] - later });
+    });
+    cands.sort((a, b) => b.urgent - a.urgent || unit[a.i] - unit[b.i]);
+    cands.forEach(({ i, slot }) => {
+      const n = Math.min(left[i], slot.cap, unit[i] > 0 ? Math.floor((avail + 0.005) / unit[i]) : left[i]);
+      if (!(n > 0)) return;
+      slot.cap -= n; left[i] -= n; avail -= n * unit[i];
+      spent.set(p, (spent.get(p) || 0) + n * unit[i]);
+      const prev = sched[i].find((x) => x.off === d);
+      if (prev) prev.count += n; else sched[i].push({ off: d, count: n });
+      if (!bought.has(p)) bought.set(p, []);
+      const b = bought.get(p).find((x) => x.i === i);
+      if (b) b.count += n; else bought.get(p).push({ i, count: n });
+      last = Math.max(last, d);
+    });
+  });
+  if (left.some((n) => n > 0)) return { ok: false };
+  const finish = Math.max(last, plan.days || 0);
+  const lastP = spendPeriodOf(last, per);
+  const periods = [];
+  for (let p = 0; p <= lastP; p++) {
+    const before = sp.carry ? amount * p - upTo(p - 1) : 0;
+    periods.push({ p, start: spendPeriodStart(p, per), spent: spent.get(p) || 0, fixed: fixedP.get(p) || 0, avail: amount + Math.max(0, before), kept: sp.carry ? Math.max(0, amount * (p + 1) - upTo(p)) : 0, items: bought.get(p) || [] });
+  }
+  return { ok: true, finish, plan: { ...plan, rows, days: finish }, sched, periods, total: rows.reduce((a, r, i) => a + unit[i] * r.count, 0), per, carry: sp.carry, amount };
+}
+const BUDGET_SPEND_MEMO = new WeakMap();
+function budgetSpendBest(combined) {
+  if (!combined || !Array.isArray(combined.budgetCands) || !spendActive()) return null;
+  const sp = { ...spendSettings(), fixed: budgetSpendFixed() };
+  const sig = JSON.stringify(sp) + "|" + DISPLAY_CURRENCY;
+  const kept = BUDGET_SPEND_MEMO.get(combined);
+  if (kept && kept.sig === sig) return kept.v;
+  let best = null;
+  combined.budgetCands.forEach((c) => {
+    const r = budgetSpendSimulate(c.plan, sp);
+    if (r.ok && (!best || r.finish < best.finish || (r.finish === best.finish && r.total < best.total - 0.005))) best = { ...r, shares: c.shares };
+  });
+  const v = best || { ok: false };
+  BUDGET_SPEND_MEMO.set(combined, { sig, v });
+  return v;
+}
 // My Purchases: the Budgets packs plan (what else to buy), worked out the
 // same way the Budgets page does; reused from Budgets when it's ready.
 let PUR_SUGGEST = null; // { key, promise | plan }
+// With "My budget" set, the suggestions are that plan, on the days it buys them.
+function budgetSuggestOf(combined) {
+  const sb_ = spendActive() ? budgetSpendBest(combined) : null;
+  if (sb_ && sb_.ok) return { ...sb_.plan, spendSched: sb_.sched, spend: sb_ };
+  return (combined && combined.chosen) || null;
+}
 async function budgetSuggestedPlan() {
-  if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending) return BUDGET_DATA.combined.chosen || null;
+  await ensureBudgetSpend();
+  const wantCands = spendActive();
+  if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && (!wantCands || BUDGET_DATA.combined.budgetCands)) return budgetSuggestOf(BUDGET_DATA.combined);
   if (PUR_SUGGEST) return PUR_SUGGEST;
   PUR_SUGGEST = (async () => {
     const [, , , , savedSel, savedTarget] = await Promise.all([
@@ -14277,8 +14477,8 @@ async function budgetSuggestedPlan() {
     let targetDays = null;
     if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
     const pages = await Promise.all(BUDGET_PAGES.map((pg) => budgetForPage(pg.key, targetDays, { noPlan: true })));
-    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
-    return (combined && combined.chosen) || null;
+    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands });
+    return budgetSuggestOf(combined);
   })();
   PUR_SUGGEST.catch(() => { PUR_SUGGEST = null; });
   return PUR_SUGGEST;
@@ -14305,6 +14505,7 @@ async function renderBudgetsPage(opts = {}) {
     BUDGET_SELECTED ? Promise.resolve(BUDGET_SELECTED) : loadCalcState("budget_selected"),
     BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
     dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
+    ensureBudgetSpend(),
   ]);
   if (TAB !== "budgets") return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
@@ -14328,12 +14529,14 @@ async function renderBudgetsPage(opts = {}) {
   const selSig = JSON.stringify(BUDGET_PAGES.map((p) => included(p.key)));
   // The page (settings, pages, materials) is drawn at once; the packs plan is
   // worked out in the background and the prices fill in when it's ready.
-  const planKey = `${targetDays}|${selSig}`;
-  const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig;
+  // "My budget" needs plans for several finish dates (worked out only when an amount is set).
+  const wantCands = spendActive();
+  const planKey = `${targetDays}|${selSig}|${wantCands ? 1 : 0}`;
+  const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig && (!wantCands || !!BUDGET_DATA.combined.budgetCands);
   const combinedRaw = haveCombined ? BUDGET_DATA.combined : { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
   if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey) {
     BUDGET_PLAN_RUNNING = planKey;
-    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays).then((real) => {
+    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands }).then((real) => {
       if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
       // Only if nothing changed meanwhile (date, ticks, data).
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
@@ -14357,11 +14560,13 @@ async function renderBudgetsPage(opts = {}) {
   } : null;
   const reachable = targetDays != null && (!!combinedRaw.byTarget || !!split);
   const views = combinedRaw.views || {};
-  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan));
-  if (!viewKeys.includes(BUDGET_VIEW)) BUDGET_VIEW = "main";
+  const spendBest = wantCands ? budgetSpendBest(combinedRaw) : null;
+  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
+  // (kept on "My budget" while its plans are still being worked out)
+  if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && planPending)) BUDGET_VIEW = "main";
   const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
   const viewData = (k) => {
-    const v = k === "main" ? (splitMain || { plan: combinedRaw.chosen, shares: combinedRaw.shares }) : views[k];
+    const v = k === "main" ? (splitMain || { plan: combinedRaw.chosen, shares: combinedRaw.shares }) : k === "budget" ? (spendBest && spendBest.ok ? { plan: spendBest.plan, shares: spendBest.shares } : null) : views[k];
     const dropPlans = combinedRaw.dropped.map((dk) => pagesRaw.find((x) => x.calcKey === dk)).filter((pg) => pg && included(pg.calcKey)).map((pg) => pickDropped(pg, k)).filter(Boolean);
     const plans = (v && v.plan ? [v.plan] : []).concat(dropPlans);
     return { plan: v && v.plan, shares: (v && v.shares) || {}, total: plans.reduce((a, pl) => a + packPlanLocal(pl), 0), days: Math.max(0, ...plans.map((pl) => pl.days || 0)), sample: plans[0] && plans[0].rows[0] };
@@ -14483,6 +14688,7 @@ async function renderBudgetsPage(opts = {}) {
     grandCurrency = grandCurrency || combined.chosen.rows[0]?.currency;
     grandDays = Math.max(grandDays, combined.chosen.days);
   }
+  if (BUDGET_VIEW === "budget" && !(spendBest && spendBest.ok)) anyPlan = false;
   // Design A: each part of the plan is one line (coloured bar, pages, price,
   // "N packs ▸"); tapping it opens that part's packs.
   const lineHtml = (color, title, sub, pl, open) => {
@@ -14502,16 +14708,45 @@ async function renderBudgetsPage(opts = {}) {
       ${lineHtml("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${namesOf(split.late.keys)} · ${esc(t("bud_line_by").replace("{date}", fmtDate(lp.days)))}`, lp)}
       ${droppedHtml}`;
   };
-  const combinedHtml = split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
+  // "My budget": one line per month (or week): spent of what was there, money
+  // kept for the next one, and that period's packs (design C).
+  const spendHtml = () => {
+    if (!spendBest || !spendBest.ok) return `<div class="meta" style="font-size:11.5px; margin-top:10px; color:var(--danger);">${esc(t("spend_cant"))}</div>`;
+    const pl = spendBest.plan, cur = pl.rows[0]?.currency, smp = pl.rows[0]?.price;
+    const money = (v) => packFmtLocal(Math.round(v), cur, true, smp);
+    const label = (pd) => {
+      const d = new Date(packStartOfToday().getTime() + pd.start * 86400000);
+      if (spendBest.per === "month") return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", ...(d.getUTCFullYear() !== new Date().getUTCFullYear() ? { year: "numeric" } : {}), timeZone: "UTC" });
+      const e = new Date(packStartOfToday().getTime() + (spendPeriodStart(pd.p + 1, "week") - 1) * 86400000);
+      const f = (x) => x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" });
+      return `${f(d)} – ${f(e)}`;
+    };
+    const lastP = spendBest.periods.length - 1;
+    const one = (pd) => {
+      // (no "Weekly · N resets": that's the whole plan's, not this month's)
+      const rows = pd.items.map((it) => ({ ...pl.rows[it.i], count: it.count, subtotal: pl.rows[it.i].price * it.count, reset: null }));
+      const fill = pd.avail > 0 ? Math.min(100, (pd.spent / pd.avail) * 100) : 0;
+      const sub = pd.p === lastP ? t("spend_all_done") : spendBest.carry && pd.kept > 0.5 ? t(spendBest.per === "week" ? "spend_kept_week" : "spend_kept_month").replace("{v}", money(pd.kept)) : t("spend_of").replace("{v}", money(pd.avail));
+      const fixed = pd.fixed > 0.5 ? ` · ${esc(t("spend_fixed").replace("{v}", money(pd.fixed)))}` : "";
+      return `<details class="bud-line bud-spend-p"><summary><span class="bud-line-bar" style="background:${pd.p === lastP ? "var(--good)" : "var(--ice)"};"></span>
+        <span class="bud-line-t"><b>${esc(label(pd))}</b>${pd.p === 0 ? ` <span class="meta">· ${esc(t("pur_sug_now"))}</span>` : ""}<span class="bud-spend-bar"><i style="width:${fill.toFixed(1)}%;"></i></span><span class="meta" style="color:${pd.p === lastP || pd.kept > 0.5 ? "var(--good)" : ""};">${esc(sub)}</span>${fixed ? `<span class="meta">${fixed}</span>` : ""}</span>
+        <span class="bud-line-v"><b>${money(pd.spent)}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary>
+        <div class="bud-line-body">${rows.length ? packRowsHtml({ rows }) : ""}</div></details>`;
+    };
+    const ps = spendBest.periods;
+    return ps.slice(0, 8).map(one).join("") + (ps.length > 8 ? `<details class="bud-spend-more"><summary class="meta">${esc(t("spend_show_all").replace("{n}", ps.length))}</summary>${ps.slice(8).map(one).join("")}</details>` : "");
+  };
+  const combinedHtml = BUDGET_VIEW === "budget" ? spendHtml() : split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
       ${combined.chosen ? lineHtml(targetDays != null && combined.chosen.days > targetDays ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, namesOf(combined.inc), combined.chosen)
         : `<div class="meta" style="font-size:11px; margin-top:10px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
       ${droppedHtml}` : "";
   // The plan cards under the big total.
   const viewCardsHtml = (() => {
     if (!combinedRaw.chosen || viewKeys.length < 2) return "";
-    const title = (k) => k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
+    const title = (k) => k === "budget" ? t("budgets_view_budget") : k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
     const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
     const seg = (k) => {
+      if (k === "budget" && !(spendBest && spendBest.ok)) return `<button type="button" data-budgetview="budget" class="${k === BUDGET_VIEW ? "on" : ""} late">${esc(title(k))}<b>—</b><span>&nbsp;</span></button>`;
       const v = viewData(k), late = targetDays != null && v.days > targetDays;
       return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}${late ? " late" : ""}" title="${esc(`${title(k)} · ${fmtDate(v.days)}`)}">${esc(title(k))}<b>${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</b><span>${v.days === 0 ? esc(t("pack_ready_now")) : esc(shortDate(v.days))}</span></button>`;
     };
@@ -14557,6 +14792,18 @@ async function renderBudgetsPage(opts = {}) {
           ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
           ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label></div>
             <div class="bud-set" style="margin-top:8px;">${currencyPickerHtml('id="budgetsCurrency"')}</div>
+            ${spendFeatureOn() ? (() => {
+              const sp = spendSettings(), amt = spendAmountLocal();
+              const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
+              return `<div class="bud-set bud-spend" style="margin-top:10px;">
+                <div class="meta" style="font-size:11.5px; font-weight:700;">${esc(t("spend_title"))}</div>
+                <div class="bud-spend-row"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span>
+                  <span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month"))}</button></span></div>
+                <label style="display:flex; gap:6px; align-items:center; font-size:11.5px; margin-top:6px;"><input type="checkbox" data-spendcarry ${sp.carry ? "checked" : ""} /> ${esc(t("spend_carry"))}</label>
+                ${amt > 0 ? "" : `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("spend_hint"))}</div>`}
+                ${IS_OWNER && !visitorsToo ? `<div class="meta" style="font-size:10px; margin-top:4px;">&#128274; ${esc(t("spend_admin_only"))}</div>` : ""}
+              </div>`;
+            })() : ""}
           </div>
         </aside>
         <div class="t12x-main">
@@ -14580,6 +14827,20 @@ async function renderBudgetsPage(opts = {}) {
   }));
   const curEl = content.querySelector("#budgetsCurrency");
   if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); renderBudgetsPage(); });
+  // My budget: saved at once; a new amount only re-checks the plans already worked out.
+  const spendSave = (patch, show) => {
+    BUDGET_SPEND = { ...(BUDGET_SPEND || {}), ...patch };
+    saveCalcState("budget_spend", BUDGET_SPEND);
+    PUR_SUGGEST = null;
+    if (show && spendActive()) BUDGET_VIEW = "budget";
+    const y = window.scrollY;
+    renderBudgetsPage().then(() => window.scrollTo(0, y));
+  };
+  const amtEl = content.querySelector("[data-spendamt]");
+  if (amtEl) amtEl.addEventListener("change", () => { const v = Math.max(0, Number(amtEl.value) || 0); spendSave({ amount: v, cur: DISPLAY_CURRENCY || "USD" }, v > 0); });
+  content.querySelectorAll("[data-spendper]").forEach((b) => b.addEventListener("click", () => spendSave({ per: b.dataset.spendper }, true)));
+  const carryEl = content.querySelector("[data-spendcarry]");
+  if (carryEl) carryEl.addEventListener("change", () => spendSave({ carry: carryEl.checked }, true));
   const dateEl = content.querySelector("[data-budgettarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
@@ -21517,6 +21778,7 @@ async function renderAdminVisibility(body) {
       accessRow("packs", "Packs page", "the pack tables, read-only"),
       accessRow("budgets", "Budgets page", "their own monthly plan against your packs"),
       accessRow("backpack", "Backpack page", "their own inventory overview"),
+      accessRow("spendbudget", "My budget (spending limit)", "the \"My budget\" box and plan on Budgets, and the weekly budget bar on My Purchases"),
     ].join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""))}
     ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""))}
