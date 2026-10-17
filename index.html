@@ -272,6 +272,15 @@
   .pk-hdi i{ position:absolute; inset-inline-end:-4px; bottom:-4px; font-size:8px; font-style:normal; line-height:13px; width:13px; height:13px; border-radius:50%; background:var(--ice-dim); color:var(--frost); }
   .pk-hdx{ position:absolute; inset-inline-end:-5px; top:-5px; width:15px; height:15px; border-radius:50%; border:1px solid var(--line); background:var(--panel); color:var(--muted); font-size:10px; line-height:12px; padding:0; cursor:pointer; }
   .pk-arr{ display:none; justify-content:center; gap:2px; margin-top:3px; }
+  .pk-hdi.pk-ring, .pk-sheet-ic .pk-tmw, .pk-chip .pk-tmw{ box-shadow:0 0 0 2px var(--ring) inset; }
+  .pk-hdi.pk-ring{ border-color:var(--ring); }
+  .pk-tmw{ position:relative; display:inline-grid; place-items:center; border-radius:7px; }
+  .pk-hdi .pk-tmw{ box-shadow:none; }
+  .pk-sheet-ic .pk-tmw{ width:30px; height:30px; }
+  .pk-chip .pk-tmw{ width:22px; height:22px; border-radius:6px; }
+  .pk-chip .pk-tmw img{ width:16px; height:16px; }
+  .pk-tm{ position:absolute; inset-inline-start:-5px; bottom:-5px; text-decoration:none; font-size:8.5px; font-weight:700; line-height:1; padding:2px 3px; border-radius:5px; background:#0b0f15; color:#fff; border:1px solid var(--ring); }
+  .pk-chip .pk-tm{ font-size:7.5px; padding:1px 2px; bottom:-4px; }
   .pk-arrange .pk-arr{ display:flex; }
   .pk-chips{ display:flex; flex-wrap:wrap; gap:4px; }
   .pk-chip{ display:inline-flex; align-items:center; gap:3px; padding:2px 7px 2px 3px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); font-size:11.5px; }
@@ -291,7 +300,7 @@
   .pk-sheet-o:hover{ background:var(--panel-2); }
   .pk-sheet-o.on{ border-color:var(--ice); background:var(--ice-dim); }
   .pk-sheet-o.del{ color:var(--danger); }
-  .pk-sheet-ic{ flex:0 0 26px; height:26px; display:grid; place-items:center; }
+  .pk-sheet-ic{ flex:0 0 30px; height:30px; display:grid; place-items:center; }
   .pk-sheet-ic img{ max-width:26px; max-height:26px; object-fit:contain; }
   .pks{ margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
   .pks-sum{ cursor:pointer; font-size:12.5px; color:var(--ice); font-weight:600; }
@@ -8137,8 +8146,9 @@ async function renderPacksPage() {
     const back = document.createElement("div");
     back.className = "pk-sheet-back";
     const listHtml = (q) => opts.filter((o) => !q || o.txt.toLowerCase().includes(q)).map((o) => {
-      const ic = o.v && !o.v.startsWith("__") ? pkItemIcon(o.v) : "";
-      return `<button type="button" class="pk-sheet-o${o.on ? " on" : ""}${o.v === "__remove__" ? " del" : ""}" data-pkopt="${esc(o.v)}"><span class="pk-sheet-ic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}</span><span>${esc(o.txt)}</span></button>`;
+      const real = o.v && !o.v.startsWith("__"), tm = real ? pkSpeedTime(o.v) : "";
+      const txt = tm ? `<b>${esc(tm)}</b> · ${esc(o.txt.replace(/\s*\d+\s*(m|min|mins|h|hr|hrs)\.?$/i, ""))}` : esc(o.txt);
+      return `<button type="button" class="pk-sheet-o${o.on ? " on" : ""}${o.v === "__remove__" ? " del" : ""}" data-pkopt="${esc(o.v)}"><span class="pk-sheet-ic">${real ? pkIconHtml(o.v) : ""}</span><span>${txt}</span></button>`;
     }).join("") || `<div class="meta" style="padding:10px;">—</div>`;
     back.innerHTML = `<div class="pk-sheet" role="dialog">
       <div class="pk-sheet-h"><b>${esc(t("pk_col_item").replace("{n}", ci + 1))}</b><input type="search" data-pksearch placeholder="${esc(t("pk_search_items"))}" /><button type="button" class="pk-sheet-x" data-pkclose aria-label="Close">&times;</button></div>
@@ -8256,19 +8266,36 @@ async function renderPacksPage() {
     if (String(name).toLowerCase() === "gems") return MATERIAL_ICONS.gems;
     return bpIcon({ name }) || materialIconSrc(name) || "";
   }
+  // Speedups of one type share a picture: D3 (owner, 17 Oct 2026) adds the
+  // game's tile colour for the size as a ring and the time as a badge.
+  function pkSpeedTime(name) {
+    const m = /speedup\s*(\d+)\s*(m|h)\b/i.exec(String(name || ""));
+    return m ? m[1] + m[2].toLowerCase() : "";
+  }
+  function pkTimeRing(tm) {
+    const c = (SCAN_SIZE_COLORS.find(([z]) => z === tm) || [null, [155, 161, 164]])[1];
+    return `rgb(${c.join(",")})`;
+  }
+  // The item's picture (with ring + time for speedups), or "" when it has none.
+  function pkIconHtml(name) {
+    const icon = pkItemIcon(name);
+    if (!icon) return "";
+    const tm = pkSpeedTime(name);
+    return tm ? `<span class="pk-tmw" style="--ring:${pkTimeRing(tm)}"><img src="${esc(icon)}" alt="" loading="lazy" /><u class="pk-tm">${esc(tm)}</u></span>` : `<img src="${esc(icon)}" alt="" loading="lazy" />`;
+  }
   function pkHeadHtml(tb, ci) {
     const link = packLinkFor(tb.id);
     const cur = String(tb.columns[ci] || "").trim();
     const fixed = ci === link.priceCol || (packIsNonResourceColumn(cur) && cur.toLowerCase() !== "gems");
     if (fixed) return `<div class="pk-hd">${packColumnControlHtml(tb, ci)}</div>`;
-    const name = pkColItem(tb, ci), icon = pkItemIcon(name), label = materialDisplayName(name) || name;
-    const face = icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<b>${esc(String(label || "?").slice(0, 3))}</b>`;
+    const name = pkColItem(tb, ci), label = materialDisplayName(name) || name, tm = pkSpeedTime(name);
+    const face = pkIconHtml(name) || `<b>${esc(String(label || "?").slice(0, 3))}</b>`;
     if (cur.toLowerCase() === "gems") {
       return `<div class="pk-hd"><span class="pk-hdi" title="${esc(label)}">${face}${IS_OWNER ? `<button type="button" class="pk-hdx" data-pt-gemsdel data-col="${ci}" title="${esc(t("pack_remove_column"))}">&times;</button>` : ""}</span></div>`;
     }
     return `<div class="pk-hd">${IS_OWNER
-      ? `<button type="button" class="pk-hdi" data-pkhd="${ci}" title="${esc(label)}" aria-label="${esc(label)}">${face}<i>&#9662;</i></button>`
-      : `<span class="pk-hdi" title="${esc(label)}">${face}</span>`}</div><div class="pk-hd-ctl">${packColumnControlHtml(tb, ci)}</div>`;
+      ? `<button type="button" class="pk-hdi${tm ? " pk-ring" : ""}" data-pkhd="${ci}"${tm ? ` style="--ring:${pkTimeRing(tm)}"` : ""} title="${esc(label)}" aria-label="${esc(label)}">${face}<i>&#9662;</i></button>`
+      : `<span class="pk-hdi${tm ? " pk-ring" : ""}"${tm ? ` style="--ring:${pkTimeRing(tm)}"` : ""} title="${esc(label)}">${face}</span>`}</div><div class="pk-hd-ctl">${packColumnControlHtml(tb, ci)}</div>`;
   }
   // Which column holds the price - the only one that may have decimals.
   function priceColOf(tb) {
@@ -8450,8 +8477,8 @@ async function renderPacksPage() {
           if (ci === (lk.priceCol || 0)) return "";
           const name = pkColItem(t, ci), label = materialDisplayName(name) || name;
           if (!label) return "";
-          const ic = pkItemIcon(name), n = totals[ci];
-          return `<span class="pk-chip" title="${esc(label)}${n ? `: ${esc(fmtNum(n))}` : ""}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<em>${esc(label)}</em>`}${n ? `<b>${esc(pkShortNum(n))}</b>` : ""}</span>`;
+          const ic = pkIconHtml(name), n = totals[ci];
+          return `<span class="pk-chip" title="${esc(label)}${n ? `: ${esc(fmtNum(n))}` : ""}">${ic || `<em>${esc(label)}</em>`}${n ? `<b>${esc(pkShortNum(n))}</b>` : ""}</span>`;
         }).join("");
         const usedFor = packUsedForNames(t);
         return `
