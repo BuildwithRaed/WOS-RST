@@ -7298,7 +7298,7 @@ async function renderPurchasesPage() {
       const nSteps = (n) => (n === 1 ? t("pur_ms_1step") : t("pur_ms_nsteps").replace("{n}", n));
       // Item pictures (the site's own: speedups, expert items, materials).
       const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
-      const itemIc = (n) => speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : "");
+      const itemIc = (n) => speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : /^XP 10/.test(n) ? MATERIAL_ICONS["xp component"] : "");
       const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
       const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
