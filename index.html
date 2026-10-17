@@ -3326,6 +3326,7 @@ const T = {
   category_not_found: { en: "category not found." },
   click_star_desc: { en: "Click a star to set your current level (0\u20135)." },
   stars_of_5: { en: "/ 5 stars" },
+  hs_no_heroes: { en: "No heroes here yet." },
   troops_prefix: { en: "Troops" },
   needed_for_max: { en: "needed for max" },
   maxed_label: { en: "Maxed" },
@@ -4698,7 +4699,7 @@ async function renderOverview(opts = {}) {
   preloadCalcStates();
   const skinsPromise = Promise.all([ensureGalleryUncounted(), dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`))]).then(([, rows]) => rows);
   const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
-    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED, ROSTER_BACKPACK] = await Promise.all([
+    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED, ROSTER_BACKPACK, GALLERY_LEVEL_ROWS, ALBUM_LEVEL_ROWS] = await Promise.all([
     dashCached("buff", () => ensureBuffTable().then(() => Promise.all([
       sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
       sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
@@ -4723,7 +4724,26 @@ async function renderOverview(opts = {}) {
     loadCalcState("hero_stars_natalia"),
     loadCalcState("album_tundra"),
     loadCalcState("backpack").catch(() => null), // roster cards: shards still short
+    // Collection Gallery / Tundra Album levels for their "of max" (null = the built-in numbers).
+    dashCached("gallery_levels", () => sb(`collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`)).catch(() => null),
+    dashCached("album_levels", () => sb(`tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`)).catch(() => null),
   ]);
+  // Heroes Special Skills: every hero column in the buff table (Jero, Natalia
+  // and any added in Admin) counts by its stars: max = the hero's value in the
+  // "<troop> <stat>" row, now = max / 5 × stars.
+  const SPECIAL_HEROES = specialSkillHeroNames(columns.map((c) => c.category || c.name));
+  const SPECIAL_HERO_SET = new Set(SPECIAL_HEROES);
+  const HERO_STARS = {};
+  (await Promise.all(SPECIAL_HEROES.map((h) => (h === "Jero" ? JERO_SAVED : h === "Natalia" ? NATALIA_SAVED : loadCalcState(`hero_stars_${h.toLowerCase()}`))))).forEach((s, i) => { HERO_STARS[SPECIAL_HEROES[i]] = (s || {})["__shared__"] ?? 0; });
+  // The highest released level of a Collection Gallery / Tundra Album stat
+  // (same as their pages), or null when the table didn't load.
+  const levelTableMax = (rows, table, stat) => {
+    if (!Array.isArray(rows)) return null;
+    const opts = [];
+    let rel = Infinity;
+    rows.forEach((r) => { if (r.stat_type !== stat) return; if (isUpcomingRow(table, r) && rel === Infinity) rel = opts.length; opts.push(Number(r.value_pct)); });
+    return (rel === Infinity ? opts[opts.length - 1] : [0, ...opts][rel]) || 0;
+  };
   // ---- Roster heroes: shared lookups, needed by statFor()/liveCalcValue() below ----
   const ROSTER_STATE = ROSTER_SAVED || {};
   const ROSTER_PH_BY_HERO = {};
@@ -4788,9 +4808,7 @@ async function renderOverview(opts = {}) {
     return 0;
   }
   const GALLERY_STATE = GALLERY_SAVED || { Attack: 2, Defense: 2, Lethality: 2, Health: 2 };
-  const GALLERY_MAX = { Attack: 6, Defense: 6, Lethality: 6, Health: 4 };
-  const JERO_STARS = (JERO_SAVED || {})["__shared__"] ?? 0;
-  const NATALIA_STARS = (NATALIA_SAVED || {})["__shared__"] ?? 0;
+  const GALLERY_MAX = { Attack: 6, Defense: 6, Lethality: 6, Health: 4 }; // used only if the table didn't load
   const ALBUM_STATE = ALBUM_SAVED || { Attack: 2, Defense: 2 };
   // Alliance Tech rows are already in allSkins (same table, same user) - no extra request.
   const ALLIANCE_TECH_CACHE = allSkins.filter((s) => s.category === "Alliance Tech");
@@ -4830,6 +4848,10 @@ async function renderOverview(opts = {}) {
     "Facility", "Alliance Buff", "Album Buff", "Gallery",
     "Research Center", "T11 Helios Research", "T12 Research", "Experts", "Experts Research",
   ];
+  // Heroes added in Admin → Heroes Special Skills count like Jero / Natalia
+  // (listed after them in the breakdown).
+  SPECIAL_HEROES.filter((h) => !SOURCE_DISPLAY_ORDER.includes(h)).forEach((h, i) => SOURCE_DISPLAY_ORDER.splice(SOURCE_DISPLAY_ORDER.indexOf("Natalia") + 1 + i, 0, h));
+  SPECIAL_HEROES.forEach((h) => { ALLOWED_STAT_CATEGORIES.add(h); if (!LIVE_CALC_KEYS.includes(h)) LIVE_CALC_KEYS.push(h); });
   function sortBySourceOrder(entries) {
     return entries.slice().sort((a, b) => {
       const ia = SOURCE_DISPLAY_ORDER.indexOf(a[0]);
@@ -4941,7 +4963,7 @@ async function renderOverview(opts = {}) {
     }
     if (calcKey === "Gallery") {
       const rawStat = STAT_KEY_TO_RAW[statKey];
-      if (useMax) return GALLERY_MAX[rawStat] || 0;
+      if (useMax) { const m = levelTableMax(GALLERY_LEVEL_ROWS, "collection_gallery_levels", rawStat); return m != null ? m : GALLERY_MAX[rawStat] || 0; }
       return GALLERY_STATE[rawStat] || 0;
     }
     if (calcKey === "T11 Helios Research") {
@@ -4950,17 +4972,13 @@ async function renderOverview(opts = {}) {
       if (!T11_NODES_CACHE) return 0;
       return computeT11Stats(calcTroop, useMax)[rawStat] || 0;
     }
-    if (calcKey === "Jero") {
-      if (statKey !== "DMG" && statKey !== "HP") return null;
-      const maxPct = 15;
+    if (SPECIAL_HERO_SET.has(calcKey)) {
+      const row = rows.find((r) => r.name.toLowerCase() === `${troop} ${statKey}`.toLowerCase());
+      let maxPct = null;
+      if (row) row.buff_cells.forEach((c) => { if (c.value != null && colById[c.column_id] === calcKey) maxPct = (maxPct || 0) + Number(c.value); });
+      if (maxPct == null) return null;
       if (useMax) return maxPct;
-      return (maxPct / 5) * JERO_STARS;
-    }
-    if (calcKey === "Natalia") {
-      if (statKey !== "ATT" && statKey !== "DEF") return null;
-      const maxPct = 10;
-      if (useMax) return maxPct;
-      return (maxPct / 5) * NATALIA_STARS;
+      return (maxPct / 5) * HERO_STARS[calcKey];
     }
     if (calcKey === "Pets Refine") {
       if (statKey !== "DMG" && statKey !== "HP") return null;
@@ -5017,7 +5035,7 @@ async function renderOverview(opts = {}) {
     }
     if (calcKey === "Album Buff") {
       if (statKey !== "ATT" && statKey !== "DEF") return null;
-      if (useMax) return 14;
+      if (useMax) { const m = levelTableMax(ALBUM_LEVEL_ROWS, "tundra_album_levels", STAT_KEY_TO_RAW[statKey]); return m != null ? m : 14; }
       return ALBUM_STATE[STAT_KEY_TO_RAW[statKey]] || 0;
     }
     if (calcKey === "Alliance Buff") {
@@ -10732,7 +10750,7 @@ async function loadBuffCategories() {
   }
   BUFF_CATEGORIES = grouped;
 
-  const HERO_SUBCATS = new Set(["Jero", "Natalia", "Hero Gears"]);
+  const HERO_SUBCATS = new Set(["Jero", "Natalia", "Hero Gears", ...specialSkillHeroNames(grouped.map((c) => c.name))]);
   const GROUPED_CHILDREN = new Set(Object.values(CATEGORY_GROUPS).flat());
   const EXTRA_BUFF_SET = new Set(EXTRA_BUFF_SUBCATS);
   const HIDDEN_BUFF_CATS = new Set(["Chief Bonus", "Charm", "Chief", "Extra Buff", "Buff", "Skins", "Islands", "War Acd.", "Research", "Pets", "Expert", "Exp. Research"]);
@@ -17999,6 +18017,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
   }
   // Shared by both hero sections and kept for the visit (see dashCached).
   const rows = await dashCached("buff_rows_sorted", () => sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`));
+  if (!el || !el.isConnected) return; // the page changed meanwhile
   const STAT_LABELS = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
   const seenStats = new Set();
   const statRows = rows
@@ -18157,19 +18176,32 @@ async function renderCollectionGalleryPage() {
   });
 }
 
+// The heroes on Heroes Special Skills: every hero column of the buff table
+// (Admin → Heroes Special Skills → Add a new hero), i.e. every category that
+// isn't one of the app's own and isn't counted as a flat bonus source.
+const SPECIAL_HERO_META = { Jero: { name: "Jeronimo", img: "icons/jeronimo.png" }, Natalia: { name: "Natalia", img: "icons/natalia.png" } };
+function specialSkillHeroNames(catNames) {
+  return [...new Set(catNames)].filter((n) => n && !ADMIN_RESERVED_BUFF_CATEGORIES.has(n));
+}
 async function renderExtraBonusHeroes() {
+  const seq = RENDER_SEQ;
+  if (!BUFF_CATEGORIES.length) { await ensureBuffTable(); if (!BUFF_CATEGORIES.length) await loadBuffCategories(); }
+  if (seq !== RENDER_SEQ) return;
+  const found = specialSkillHeroNames(BUFF_CATEGORIES.map((c) => c.name));
+  const heroes = BUFF_CATEGORIES.length ? found : ["Jero", "Natalia"]; // no table: the old two sections ("not found")
+  // Pictures of heroes added in Admin come from the heroes table (same name).
+  if (heroes.some((h) => !SPECIAL_HERO_META[h] && !HERO_IMG_BY_NAME[h])) {
+    try { noteHeroImages(await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`))); } catch (e) { /* no picture */ }
+    if (seq !== RENDER_SEQ) return;
+  }
+  const boxId = (h) => "extraBonusHeroes" + h.replace(/[^A-Za-z0-9_-]/g, "_");
   content.innerHTML = `
     <div class="plx-head"><h2>${esc(navLabel("extrabonusheroes"))}</h2></div>
     <div class="hero-special-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-      <div id="extraBonusHeroesJero"></div>
-      <div id="extraBonusHeroesNatalia"></div>
-    </div>
-  `;
-  // Both sections load at the same time (they used to load one after the other).
-  await Promise.all([
-    renderHeroStarSection("Jero", "Jeronimo", "icons/jeronimo.png", "extraBonusHeroesJero"),
-    renderHeroStarSection("Natalia", "Natalia", "icons/natalia.png", "extraBonusHeroesNatalia"),
-  ]);
+${heroes.map((h) => `      <div id="${esc(boxId(h))}"></div>\n`).join("")}    </div>
+  ` + (heroes.length ? "" : `<div class="panel"><div class="empty">${esc(t("hs_no_heroes"))}</div></div>`);
+  // The sections load at the same time (they used to load one after the other).
+  await Promise.all(heroes.map((h) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return renderHeroStarSection(h, m.name, m.img, boxId(h)); }));
 }
 
 async function renderAllianceTechPage() {
