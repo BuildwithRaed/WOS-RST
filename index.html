@@ -448,6 +448,50 @@
   .pur-alt.pur-cmp-budget{ color:var(--good); background:none; }
   .pur-follow{ margin:0 0 6px; }
   .pur-m-ver{ margin:6px 0 10px; }
+  .pur-ms-vers{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:6px 0 10px; }
+  .pur-ms-vers button{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:start; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font:inherit; padding:8px 10px; border-radius:10px; cursor:pointer; }
+  .pur-ms-vers .pur-vb-k{ font-size:11px; }
+  .pur-ms-vers button b{ color:var(--text); font-size:15px; }
+  .pur-ms-vers .pur-vb-s{ font-size:10.5px; }
+  .pur-ms-vers button.on{ border-color:var(--ice); background:var(--ice-dim); color:var(--text); box-shadow:0 0 0 1px var(--ice) inset; }
+  .pur-ms{ border:1px solid var(--line); border-radius:10px; margin-bottom:8px; max-height:42vh; overflow-y:auto; }
+  .pur-ms-row{ padding:7px 10px; border-top:1px solid var(--line); }
+  .pur-ms-row:first-child{ border-top:0; }
+  .pur-ms-row:not(.on) .pur-ms-pr, .pur-ms-row:not(.on) .pur-ms-n, .pur-ms-row:not(.on) .pur-ms-g{ opacity:.45; }
+  .pur-ms-tick{ width:20px; height:20px; border-radius:5px; border:1.5px solid var(--line); background:transparent; color:#fff; font-size:12px; line-height:1; padding:0; cursor:pointer; flex:none; }
+  .pur-ms-row.on .pur-ms-tick{ background:var(--ice-dim); border-color:var(--ice); }
+  .pur-ms-n{ color:var(--ice); font-size:12px; }
+  .pur-ms-l{ display:flex; align-items:center; gap:6px; min-width:0; }
+  .pur-ms-pr{ font-size:12.5px; white-space:nowrap; }
+  .pur-ms-row.card .pur-ms-l{ flex-wrap:wrap; }
+  .pur-ms-row.card .pur-ms-sw{ flex-wrap:wrap; overflow:visible; margin-inline-start:0; }
+  .pur-ms-sw{ display:inline-flex; flex-wrap:nowrap; flex:0 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none; margin-inline-start:auto; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:2px; }
+  .pur-ms-sw button{ border:0; background:transparent; color:var(--muted); font:inherit; font-size:10.5px; padding:3px 5px; white-space:nowrap; flex:none; border-radius:6px; cursor:pointer; }
+  .pur-ms-sw button.on{ background:var(--ice-dim); color:var(--text); }
+  .pur-ms-g{ display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:4px; padding-inline-start:26px; font-size:11.5px; color:var(--muted); }
+  .pur-ms-g span{ display:inline-flex; align-items:center; gap:3px; }
+  .pur-ms-g img{ width:16px; height:16px; object-fit:contain; }
+  .pur-ms-g i{ font-style:normal; }
+  .pur-ms-head{ display:flex; align-items:center; gap:8px; margin:2px 0 4px; font-size:11.5px; }
+  .pur-ms-differ{ font-size:10.5px; color:var(--amber); border:1px solid var(--amber); border-radius:999px; padding:0 7px; }
+  .pur-ms-pickn{ margin-inline-start:auto; font-size:11px; }
+  .pur-ms-plpick{ margin:0 0 8px; font-size:11.5px; }
+  .pur-slots{ display:inline-flex; gap:5px; margin-inline-start:auto; flex:none; }
+  .pur-slot{ display:inline-flex; flex-direction:column; align-items:center; justify-content:center; width:38px; height:40px; padding:2px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--text); cursor:pointer; flex:none; }
+  .pur-slot img{ width:24px; height:24px; object-fit:contain; }
+  .pur-slot i{ font-style:normal; font-size:11px; }
+  .pur-slot small{ font-size:9.5px; color:var(--muted); line-height:1.1; }
+  .pur-slot.open, .pur-slot.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .pur-slot-strip{ display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 2px; padding:6px; border:1px solid var(--ice); border-radius:10px; }
+  .pur-m-row.has-dsel{ grid-template-columns:auto 1fr auto auto auto; gap:6px; }
+  .pur-m-row.has-dsel > span:first-of-type{ white-space:nowrap; }
+  .pur-dsel{ font:inherit; font-size:11px; color:var(--ice); background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:3px 4px; max-width:160px; cursor:pointer; }
+  .pur-m-row.has-dsel > span.meta, .pur-m-row.has-dsel > b{ white-space:nowrap; }
+  .pur-dsel.on{ border-color:var(--ice); }
+  .pur-dmenu{ display:flex; flex-direction:column; gap:6px; padding:8px 12px 10px 40px; border-top:1px solid var(--line); background:var(--panel-2); font-size:12.5px; }
+  .pur-dmenu label{ display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .pur-dmenu label .meta{ font-size:10.5px; }
+  .pur-ms-note{ font-size:11px; color:var(--amber); margin:-2px 0 8px; }
   .pur-m-steps{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin:4px 0 10px; }
   .pur-m-steps button{ border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; font-size:11px; padding:4px 8px; border-radius:8px; cursor:pointer; }
   .pur-m-steps button b{ color:var(--ice); margin-inline-end:3px; }
@@ -496,6 +540,17 @@
   .pur-mini{ width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; padding:0; font-size:12px; line-height:1; }
   .pur-mini.ok{ border-color:var(--good); color:var(--good); }
   .pur-modal{ max-width:380px; }
+  #purSugModal .pur-modal{ max-height:82vh; padding:14px 16px 16px; }
+  .pur-m-head{ position:sticky; top:-14px; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:10px; margin:-14px -16px 6px; padding:12px 16px 8px; background:var(--panel); }
+  .pur-m-head h2{ margin:0; }
+  #purSugModal .pur-ms{ max-height:30vh; }
+  #purSugModal .pur-m-list{ max-height:26vh; }
+  @media (max-width:380px){
+    #purSugModal .pur-m-row.has-dsel{ gap:4px; padding:8px 8px; font-size:12px; }
+    #purSugModal .pur-m-row.has-dsel b{ font-size:12px; }
+    #purSugModal .pur-dsel{ font-size:10.5px; padding:3px 2px; }
+  }
+  #purSugModal .pur-m-foot{ position:sticky; bottom:-16px; z-index:2; margin:8px -16px -16px; padding:10px 16px 14px; background:var(--panel); border-top:1px solid var(--line); }
   .pur-m-top{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; margin-bottom:4px; }
   .pur-m-top .linklike{ background:none; border:0; color:var(--ice); text-decoration:underline; cursor:pointer; font-size:11.5px; padding:0; }
   .pur-m-list{ max-height:50vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; }
@@ -3760,6 +3815,24 @@ const T = {
   pur_other_would: { en: "{plan} plan would be {v}" },
   pur_tick_hint: { en: "Tick what you'll buy" },
   pur_buy_upto: { en: "Buy up to" },
+  pur_ms_order: { en: "Bought in order: ticking a step ticks the ones before it." },
+  pur_ms_left: { en: "You unticked step {a}–{b}" },
+  pur_ms_added: { en: "You added step {a}–{b}" },
+  pur_ms_step: { en: "Step {k} changed to {tag}" },
+  pur_ms_card: { en: "Card changed to {tag}" },
+  pur_ms_replan: { en: "Budgets will plan the rest again." },
+  pur_ms_nsteps: { en: "{n} steps" },
+  pur_ms_1step: { en: "1 step" },
+  pur_ms_setall: { en: "Set all dates" },
+  pur_ms_differ: { en: "dates differ" },
+  pur_ms_dates_differ: { en: "Some dates buy other steps" },
+  pur_ms_dates_differ_p: { en: "Some dates buy other prices" },
+  pur_ms_any: { en: "Any prices, not in order: each price has its own tick." },
+  pur_ms_pickn: { en: "pick {n} items" },
+  pur_ms_pick_changed: { en: "Prices or items changed" },
+  pur_ms_upto_n: { en: "up to {n}" },
+  pur_ms_items_above: { en: "Items as set above" },
+  pur_ms_each_items: { en: "Items (every step, pick {n})" },
   pur_tick_none: { en: "Tick the packs you'll buy" },
   pur_tag_both: { en: "both" },
   pur_tag_target: { en: "target" },
@@ -4095,8 +4168,70 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 // Browser history: every page change is a history entry, so the Back
 // button (and the Android back gesture in the installed app) returns to the
 // previous page inside the site instead of leaving it.
+// ---- Keeping your place when a page redraws itself (owner, 17 Oct 2026) ----
+// A tap that redraws the same page must not move it: the page keeps at least
+// its old height while it's rebuilt (a short "Loading…" / "Working out…"
+// would pull the scroll up), then goes back where it was. Scroll boxes and
+// sideways rows keep their place, open folds stay open. Opening another page
+// (goToTab) still starts fresh.
+let LAST_RENDER_TAB = null;
+async function keepPlace(fn) {
+  const y = window.scrollY, tab = TAB, putBoxes = saveBoxScroll(content);
+  content.style.minHeight = content.offsetHeight + "px";
+  try { return await fn(); } finally {
+    if (TAB === tab) { putBoxes(); window.scrollTo(0, y); }
+    if (!content.dataset.holdUntilReady) content.style.minHeight = "";
+  }
+}
+// Hold the page's height until a part still being worked out is drawn
+// (Budgets' plan, My Purchases' suggestions); `false` lets it go.
+function holdPageHeight(on) {
+  if (on) { content.dataset.holdUntilReady = "1"; content.style.minHeight = Math.max(content.offsetHeight, parseFloat(content.style.minHeight) || 0) + "px"; }
+  else { delete content.dataset.holdUntilReady; content.style.minHeight = ""; }
+}
+// Scroll boxes / sideways rows inside `root` (matched by class and order) keep
+// their scroll across `fn` (which rebuilds them).
+const KEEP_BOX_SEL = ".pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap";
+// saveBoxScroll(root) notes them now and returns a function that puts them
+// back (in `root`, or in the box that replaced it).
+function saveBoxScroll(root) {
+  if (!root) return () => {};
+  const keyOf = (el, all) => `${el.className}|${all.filter((x) => x.className === el.className).indexOf(el)}`;
+  const old = [...root.querySelectorAll(KEEP_BOX_SEL)];
+  const saved = old.filter((el) => el.scrollTop || el.scrollLeft).map((el) => ({ k: keyOf(el, old), top: el.scrollTop, left: el.scrollLeft }));
+  return (into = root) => {
+    if (!saved.length || !into) return;
+    const now = [...into.querySelectorAll(KEEP_BOX_SEL)];
+    saved.forEach((sv) => { const el = now.find((x) => keyOf(x, now) === sv.k); if (el) { el.scrollTop = sv.top; el.scrollLeft = sv.left; } });
+  };
+}
+function keepBoxes(root, fn) {
+  if (!root) return fn();
+  const apply = saveBoxScroll(root);
+  const r = fn();
+  if (r && typeof r.then === "function") return r.then((v) => { apply(); return v; });
+  apply();
+  return r;
+}
+// Folds (<details>) inside `root` keep open / closed across `fn`, matched by
+// their class and summary text.
+function keepFolds(root, fn) {
+  if (!root) return fn();
+  // Numbers left out: a price filling in must not make it another fold.
+  const keyOf = (d) => `${d.className}|${((d.querySelector("summary") || {}).textContent || "").replace(/[\d.,]+/g, "#").replace(/\s+/g, " ").trim().slice(0, 80)}`;
+  const was = new Map([...root.querySelectorAll("details")].map((d) => [keyOf(d), d.open]));
+  const apply = () => { if (was.size) root.querySelectorAll("details").forEach((d) => { const k = keyOf(d); if (was.has(k)) d.open = was.get(k); }); };
+  const r = fn();
+  if (r && typeof r.then === "function") return r.then((v) => { apply(); return v; });
+  apply();
+  return r;
+}
+// Admin tables redrawn after a save keep the page and the table's scroll.
+function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
 function goToTab(tab, opts = {}) {
   if (!isValidTab(tab)) tab = "overview";
+  LAST_RENDER_TAB = null;
+  holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
   TAB = tab;
@@ -4241,6 +4376,10 @@ async function render() {
   const seq = ++RENDER_SEQ;
   // Page pop-ups: close them when the page changes.
   ["refineAdvModal", "drilldownModal"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
+  // The same page drawn again after a tap: keep its height and scroll place.
+  const same = LAST_RENDER_TAB === TAB && !!content.firstElementChild, y0 = window.scrollY;
+  const putBoxes = same ? saveBoxScroll(content) : null;
+  if (same) content.style.minHeight = content.offsetHeight + "px";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
@@ -4297,8 +4436,15 @@ async function render() {
       const head = content.querySelector(".plx-head, .page-head");
       if (head) head.insertAdjacentHTML("afterend", nh); else content.insertAdjacentHTML("afterbegin", nh);
     }
+    if (seq === RENDER_SEQ) {
+      if (same) { putBoxes(); window.scrollTo(0, y0); }
+      if (!content.dataset.holdUntilReady) content.style.minHeight = "";
+      LAST_RENDER_TAB = TAB;
+    }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
+    content.style.minHeight = "";
+    LAST_RENDER_TAB = TAB;
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">Something went wrong loading this tab.</div>${esc(e.message)}</div></div>`;
   }
 }
@@ -4918,7 +5064,7 @@ async function renderOverview(opts = {}) {
   </div>`;
 
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
-  content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => renderOverview()); });
+  content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => keepPlace(() => renderOverview())); });
 
 
   // ---- Roster heroes: the 3 heroes affecting Infantry / Lancers / Marksman ----
@@ -4939,7 +5085,7 @@ async function renderOverview(opts = {}) {
         const prev = existing.current_stars;
         existing.current_stars = value;
         patchRowQueued("player_heroes", existing.id, { current_stars: value, updated_at: new Date().toISOString() }).catch(() => {
-          if (existing.current_stars === value) { existing.current_stars = prev; renderOverview(); }
+          if (existing.current_stars === value) { existing.current_stars = prev; keepPlace(() => renderOverview()); }
           toast("Couldn't save", true);
         });
       } else {
@@ -5057,14 +5203,14 @@ async function renderOverview(opts = {}) {
       const anyCounted = () => TROOP_TYPES.some((t) => entryFor(t.key).heroId && entryFor(t.key).used);
       const countedBefore = anyCounted();
       const refreshAfterChange = () => {
-        if (countedBefore || anyCounted()) renderOverview();
+        if (countedBefore || anyCounted()) keepPlace(() => renderOverview());
         else renderRoster();
       };
       const maxTopGenBox = document.getElementById("rosterMaxTopGen");
       if (maxTopGenBox) maxTopGenBox.addEventListener("change", () => {
         roster.maxTopGen = maxTopGenBox.checked;
         save();
-        renderOverview(); // the max values change
+        keepPlace(() => renderOverview()); // the max values change
       });
       const rosterUsedAllBox = document.getElementById("rosterUsedAll");
       if (rosterUsedAllBox) {
@@ -5075,7 +5221,7 @@ async function renderOverview(opts = {}) {
           });
           await save();
           // Re-render the whole dashboard so the stat totals/breakdown reflect the change.
-          renderOverview();
+          keepPlace(() => renderOverview());
         });
       }
       rosterEl.querySelectorAll("[data-starstep]").forEach((b) => b.addEventListener("click", async () => {
@@ -6054,7 +6200,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         <button type="button" class="btn small ghost" data-mpaddrow ${canRow ? "" : "disabled"} style="width:26px; padding:3px 0;">+</button>
         <button type="button" class="btn small ghost" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} style="width:26px; padding:3px 0;">&minus;</button>
       </div>
-      <div style="overflow-x:auto; margin-top:8px;">
+      <div class="mp-wrap" style="overflow-x:auto; margin-top:8px;">
         <table style="border-collapse:collapse; font-size:12px; min-width:100%;">
           <thead><tr>${mp.columns.map((_, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center; min-width:${ci === priceCol ? 52 : 74}px;">${head(ci)}</th>`).join("")}<th class="meta" style="padding:4px; border-bottom:1px solid var(--line); width:58px;">${esc(t("mp_max"))}</th></tr></thead>
           <tbody>${mp.rows.map((r, ri) => `<tr>${mp.columns.map((_, ci) => ci === priceCol || ci === gemsCi
@@ -6084,7 +6230,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
   ${used ? "" : `<div class="empty" style="margin-top:10px;">${esc(t("mp_empty"))}</div>`}
   <div class="grid g2" style="align-items:start;">${MY_PACKS.map(cardHtml).join("")}</div>
   ${used ? `<div style="margin-top:12px; padding:8px 10px; border:1px dashed #e0b25a; border-radius:8px; color:#e0b25a; font-size:11.5px;">⏱ ${esc(t("mp_speed_note"))}</div>` : ""}`;
-  const redraw = () => renderMyPacks(el, templates, rerenderPage);
+  const redraw = () => keepBoxes(el, () => renderMyPacks(el, templates, rerenderPage)); // the table keeps its sideways scroll
   const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
   el.querySelectorAll("[data-mpdup]").forEach((b) => b.addEventListener("click", () => {
     if (MY_PACKS.length >= packMyPacksLimit()) return;
@@ -6584,6 +6730,8 @@ function purTablePopup(tb, opts) {
       return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
     }).join("");
     const hint = t(ladder ? "pur_tbl_hint_ladder" : "pur_tbl_hint_rows") + (mode === "pick" ? " " + t("pur_tbl_hint_pick").replace("{n}", link.pickCols) : choiceType ? " " + t("pur_tbl_hint_opt") : "");
+    // A tap redraws the pop-up: its table keeps its scroll.
+    const putBoxes = modal.style.display === "flex" ? saveBoxScroll(modal) : () => {};
     modal.innerHTML = `<div class="modal-box pur-t-box">
       <h2>${esc(name)}</h2>
       <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
@@ -6592,6 +6740,7 @@ function purTablePopup(tb, opts) {
       <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
+    putBoxes();
     keepDraft();
     modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-tclose]")) close(); };
     modal.querySelectorAll("[data-tct]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.tct.split("|").map(Number); S.counts[i] = Math.max(0, (S.counts[i] || 0) + d); draw(); }));
@@ -6614,9 +6763,19 @@ const PUR_SUG_TICK = new Map(); // "week|row" -> ticked to buy (default: the fol
 const PUR_SUG_VER = new Set();  // "week|row" using the other plan's version of that pack
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
+let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
-  content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
+  // Redrawn after a tap: the suggestions box keeps its height while it's
+  // worked out again, and its rows / list keep their scroll.
+  // (Redrawn again before the box was filled: what the last filled one had.)
+  const oldSug = document.getElementById("purSuggest"), oldCl = oldSug && oldSug.querySelector(".pur-cl-list");
+  if (!oldSug) PUR_SUG_KEEP = null;
+  else if (oldSug.dataset.drawn) PUR_SUG_KEEP = { h: oldSug.offsetHeight, boxes: saveBoxScroll(oldSug), cl: oldCl ? { week: oldCl.dataset.week, top: oldCl.scrollTop } : null };
+  const sugH = PUR_SUG_KEEP ? PUR_SUG_KEEP.h : 0, sugBoxes = PUR_SUG_KEEP ? PUR_SUG_KEEP.boxes : () => {};
+  const oldClTop = PUR_SUG_KEEP && PUR_SUG_KEEP.cl;
+  // "Loading…" only on the first draw; a redraw keeps the page until it's ready.
+  if (!oldSug) content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
   const tables = await ensurePackTables();
   if (seq !== RENDER_SEQ) return;
   const today = packDayKey(packStartOfToday());
@@ -6769,7 +6928,7 @@ async function renderPurchasesPage() {
       </aside>
       <div class="t12x-main">
         ${summary}
-        <div class="t12x-card" id="purSuggest" style="margin-top:12px;"><div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div></div>
+        <div class="t12x-card" id="purSuggest" style="margin-top:12px;${sugH ? ` min-height:${sugH}px;` : ""}"><div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div></div>
         <div style="margin-top:12px;">${addCard}</div>
         ${listsHtml}
       </div>
@@ -6875,11 +7034,14 @@ async function renderPurchasesPage() {
     const thisCost = buckets.has(0) ? buckets.get(0).cost : 0;
     const untilCost = keys.filter((k) => k !== "after").reduce((a, k) => a + (buckets.has(k) ? buckets.get(k).cost : 0), 0);
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_wk_this"))}</span><b>${thisCost ? esc(money(thisCost)) : "—"}</b></div><div><span class="meta">${esc(tOff != null && tOff >= 0 ? t("pur_sug_until") : t("pur_sug_total"))}</span><b>${esc(money(tOff != null && tOff >= 0 ? untilCost : total))}</b></div></div>`;
+    let firstDraw = true;
     const drawSug = () => {
     // Keep the pack list where it was scrolled when it's redrawn for the same
     // week (opening a pack line, ticking all); another week starts at the top.
     const oldList = box.querySelector(".pur-cl-list");
-    const keepTop = oldList && oldList.dataset.week === String(PUR_SUG_WEEK) ? oldList.scrollTop : 0;
+    const was = oldList ? { week: oldList.dataset.week, top: oldList.scrollTop } : firstDraw ? oldClTop : null;
+    const keepTop = was && was.week === String(PUR_SUG_WEEK) ? was.top : 0;
+    const putBoxes = firstDraw ? sugBoxes : saveBoxScroll(box);
     const sel = buckets.get(PUR_SUG_WEEK);
     const otherName = follow === "target" ? "budget" : "target";
     const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<small class="pur-alt pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</small>` : ""}</button>`; }).join("")}</div>`;
@@ -7058,68 +7220,242 @@ async function renderPurchasesPage() {
       let modal = document.getElementById("purSugModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
       const close = () => { modal.style.display = "none"; };
-      // Packs bought in steps: "Buy up to" picks fewer steps than the plan
-      // (admin, owner 17 Oct 2026); the rest stays on offer for that run.
-      const stepsOf = (r, tb) => {
-        if (!IS_OWNER || /\+ \d+×/.test(String(r.label || ""))) return null;
-        if (Array.isArray(r.steps) && r.steps.length > 1 && !r.steps.some((st) => st.k)) {
-          const parts = String(r.label || "").split(" · "), all = /·\s*all (.+)$/.exec(String(r.label || ""));
-          return r.steps.map((st, k) => ({ price: st.price, gives: st.gives || {}, label: parts.length === r.steps.length ? parts[k] : `${packFmtMoney(st.price, r.currency)}${all ? " " + all[1] : ""}` }));
+      // Packs bought in steps (admin, owner 17 Oct 2026, design B): one line
+      // per step with a tick (bought in order) and, for option packs, a switch
+      // of the step's versions (Classic / Exquisite / Sublime …) with all the
+      // items it gives. Fewer steps or other versions than the plan: Budgets
+      // plans the rest again. Pick-one packs (Benefit Card) switch the card.
+      // "Any price" packs (Mix & Match) list every price with its own tick and
+      // item picks. Each date can buy other steps / prices (design A).
+      // A pick pack's prices, each with the items you can pick (amounts per row).
+      const pickRows = (tb, lk) => {
+        const cols = packEffectiveCols(tb), pc = lk.priceCol || 0;
+        const optCols = (tb.columns || []).map((c, ci) => ci).filter((ci) => ci !== pc && cols[ci] && cols[ci] !== "Gems");
+        const steps = [];
+        (tb.rows || []).forEach((row, ri) => {
+          const cells = row.cells || [], price = packParseNum(cells[pc]);
+          if (!(price > 0)) return;
+          const opts = optCols.map((ci) => {
+            const g = {}, q = packParseNum(cells[ci]) * packColMultiplier(lk, ci);
+            if (q > 0) { const c = packBundleContents(cols[ci]); Object.keys(c).forEach((n) => { g[n] = (g[n] || 0) + q * c[n]; }); }
+            return { tag: materialDisplayName(cols[ci]), name: cols[ci], q, gives: g };
+          });
+          steps.push({ price, row: ri, opts });
+        });
+        return steps;
+      };
+      const stepModel = (r, tb) => {
+        if (!IS_OWNER || (Array.isArray(r.steps) && r.steps.some((st) => st.k))) return null;
+        const tbs = (r.tables || []).map((id) => byId.get(String(id))).filter(Boolean);
+        const tagsOf = () => (packLinkFor(tbs[0].id).linkSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag));
+        // Nearest version to what the plan's step gives (gems left out).
+        const pickOf = (opts, gives) => {
+          let best = 0, bd = Infinity;
+          opts.forEach((o, j) => {
+            const ks = new Set([...Object.keys(o.gives || {}), ...Object.keys(gives || {})].filter((n) => n !== "Gems"));
+            let d = 0; ks.forEach((n) => { const a = (o.gives || {})[n] || 0, b = (gives || {})[n] || 0; d += Math.abs(a - b) / Math.max(1, a, b); });
+            if (d < bd) { bd = d; best = j; }
+          });
+          return best;
+        };
+        const lk = packLinkFor(tb.id);
+        // "Pick N items" packs in order (Mix & Match): every step takes the
+        // same items, picked once.
+        if (lk.pickCols > 0 && lk.pickOrder && Array.isArray(r.steps) && tbs.length <= 1) {
+          const steps = pickRows(tb, lk);
+          if (steps.length < 2 || r.steps.length > steps.length) return null;
+          const each = String(r.label || "").split(`${t("pk_each_step")}: `)[1] || "";
+          const want = [];
+          each.split(" + ").forEach((part) => { const m = /^(\d+)× (.+)$/.exec(part.trim()); if (!m) return; const j = steps[0].opts.findIndex((o) => o.tag === m[2]); if (j >= 0) for (let i = 0; i < Number(m[1]); i++) want.push(j); });
+          return { kind: "pickladder", n: lk.pickCols, steps, planK: r.steps.length, planPick: steps.map(() => 0), planPP: want.length === lk.pickCols ? want : Array(lk.pickCols).fill(0) };
         }
-        if (packLinkFor(tb.id).sequential && !r.steps && r.row > (r.from || 0)) {
-          const offs = packOffersFor(tb, true).filter((o) => o.row >= (r.from || 0) && o.row <= r.row);
-          if (offs.length > 1) return offs.map((o) => ({ price: o.price, gives: o.gives, label: o.label, row: o.row }));
+        if (lk.pickCols > 0 && !lk.pickOrder && !r.steps && r.row != null) {
+          // Every price of the table, each with `pickCols` item picks.
+          const steps = pickRows(tb, lk);
+          const k0 = steps.findIndex((st) => st.row === r.row);
+          if (k0 < 0) return null;
+          // The plan's items, from its label ("$4.99 · 2× Fire Crystal").
+          const want = [];
+          String(r.label || "").split(" · ").slice(1).join(" · ").split(" + ").forEach((part) => {
+            const m = /^(\d+)× (.+)$/.exec(part.trim()); if (!m) return;
+            const j = steps[k0].opts.findIndex((o) => o.tag === m[2]);
+            if (j >= 0) for (let i = 0; i < Number(m[1]); i++) want.push(j);
+          });
+          const n = lk.pickCols, base = want.length === n ? want : Array(n).fill(0);
+          const picks = steps.map((st) => base.map((j) => Math.min(j, st.opts.length - 1)));
+          return { kind: "pick", n, steps, planSet: steps.map((st, k) => k === k0), planPicks: picks, planRowK: k0 };
+        }
+        // Ladders with the last step repeated ("+ 3× …") keep the plain pop-up.
+        if (/\+ \d+× /.test(String(r.label || "").split(`${t("pk_each_step")}: `)[0]) && !(lk.pickCols > 0)) return null;
+        if (Array.isArray(r.steps) && r.steps.length && tbs.length > 1) {
+          const perTable = tbs.map((x) => packOffersFor(x, true)), tags = tagsOf();
+          const tiers = Math.min(...perTable.map((o) => o.length));
+          if (!tiers || r.steps.length > tiers) return null;
+          const steps = [];
+          for (let k = 0; k < tiers; k++) steps.push({ price: perTable[0][k].price, opts: perTable.map((offs, j) => ({ tag: tags[j], gives: offs[k].gives || {} })) });
+          return { kind: "opt", steps, planK: r.steps.length, planPick: steps.map((st, k) => (k < r.steps.length ? pickOf(st.opts, r.steps[k].gives) : 0)) };
+        }
+        if (!r.steps && tbs.length > 1 && r.row != null) {
+          const tags = tagsOf(), opts = tbs.map((x, j) => { const o = packOffersFor(x, true)[r.row]; return o ? { tag: tags[j], gives: o.gives || {} } : null; });
+          if (opts.some((o) => !o)) return null;
+          return { kind: "card", steps: [{ price: r.price, opts }], planK: 1, planPick: [pickOf(opts, r.gives)] };
+        }
+        if (!r.steps && lk.sequential && r.row != null) {
+          const offs = packOffersFor(tb, true).filter((o) => o.row >= (r.from || 0));
+          if (offs.length > 1) return { kind: "plain", steps: offs.map((o) => ({ price: o.price, row: o.row, opts: [{ tag: "", gives: o.gives || {} }] })), planK: Math.max(1, offs.filter((o) => o.row <= r.row).length), planPick: offs.map(() => 0) };
         }
         return null;
       };
-      const openVer = (vi, kPick) => {
+      const nSteps = (n) => (n === 1 ? t("pur_ms_1step") : t("pur_ms_nsteps").replace("{n}", n));
+      // Item pictures (the site's own: speedups, expert items, materials).
+      const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
+      const itemIc = (n) => speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : /^XP 10/.test(n) ? MATERIAL_ICONS["xp component"] : "");
+      const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
+      const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
       if (!tb) return;
-      const steps = stepsOf(r, tb), kk = steps ? Math.min(steps.length, kPick || steps.length) : 0;
-      const unit = steps ? steps.slice(0, kk).reduce((a, st) => a + st.price, 0) : r.price;
-      const partLabel = steps && kk < steps.length ? steps.slice(0, kk).map((st) => st.label).join(" · ") : r.label;
-      // Money shown step by step in store prices (QAR 17.99 + 36.99 = 54.98).
-      const unitLocal = steps ? steps.slice(0, kk).reduce((a, st) => a + packConvert(st.price, r.currency).n, 0) : null;
-      const fmtN = (cnt) => (steps ? packFmtLocal(unitLocal * cnt, r.currency, false, steps[0].price) : packFmtMoney(unit * cnt, r.currency));
-      const partGives = {};
-      if (steps) steps.slice(0, kk).forEach((st) => Object.entries(st.gives || {}).forEach(([n, v]) => { partGives[n] = (partGives[n] || 0) + v; }));
-      const stepsHtml = steps ? `<div class="pur-m-steps"><span class="meta">${esc(t("pur_buy_upto"))}</span>${steps.map((st, j) => `<button type="button" data-pmstep="${j + 1}" class="${j + 1 === kk ? "on" : ""}"><b>${j + 1}</b> ${esc(st.label)}</button>`).join("")}</div>` : "";
-      const verHtml = vers.length > 1 ? `<div class="bud-seg pur-m-ver">${vers.map((v, k) => `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(packFmtLocal(packRowLocalUnits(v.r).reduce((a, x) => a + x, 0) * v.s0.reduce((a, x) => a + x.count, 0), v.r.currency, false, v.r.price))}</b><span>${esc(v.r.label)} ×${v.s0.reduce((a, x) => a + x.count, 0)}</span></button>`).join("")}</div>` : "";
+      const M = stepModel(r, tb), isPick = !!M && M.kind === "pick";
+      const ordered = !!M && (M.kind === "opt" || M.kind === "plain" || M.kind === "pickladder");
+      const isPL = !!M && M.kind === "pickladder";
+      // Top list = "Set all dates": kk steps (in order) or a set of prices (any price).
+      const kk = M && !isPick ? (keep ? keep.kk : M.planK) : 0;
+      const tset = isPick ? (keep ? keep.tset : M.planSet.slice()) : null;
+      const pick = M && !isPick ? (keep ? keep.pick : M.planPick.slice()) : [];
+      const pp = isPick ? (keep ? keep.pp : M.planPicks.map((x) => x.slice())) : null;
+      const pp0 = isPL ? (keep ? keep.pp0 : M.planPP.slice()) : null;
+      const plGives = (k) => { const g = {}; pp0.forEach((j) => Object.entries(M.steps[k].opts[j].gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; })); return g; };
+      const plText = () => { const cnt = {}; pp0.forEach((j) => { const nm = M.steps[0].opts[j].tag; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, c]) => `${c}× ${nm}`).join(" + "); };
+      // Dates set apart from the top: { date index: steps (number) | prices (bool[]) }.
+      const dsel = keep && keep.dsel ? keep.dsel : {};
+      const openDay = keep ? keep.openDay : -1;
+      const local = (usd) => packConvert(usd, r.currency).n;
+      const pickText = (k) => { const cnt = {}; pp[k].forEach((j) => { const nm = M.steps[k].opts[j].tag; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, c]) => `${c}× ${nm}`).join(" + "); };
+      // What one date buys: [{ row, label, price (pack currency), local, gives }].
+      const partsOf = (sel) => {
+        if (!M) return [{ row: r.row != null ? r.row : 0, label: r.label, price: r.price, local: packRowLocalUnits(r).reduce((a, x) => a + x, 0), gives: r.gives, plain: true }];
+        if (isPick) return sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0).map((k) => {
+          const st = M.steps[k], g = {};
+          pp[k].forEach((j) => Object.entries(st.opts[j].gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
+          const asPlan = k === M.planRowK && pp[k].join() === M.planPicks[k].join();
+          return { row: st.row, label: asPlan ? r.label : `${packFmtMoney(st.price, r.currency)} · ${pickText(k)}`, price: st.price, local: local(st.price), gives: asPlan ? r.gives : g };
+        });
+        const m = sel;
+        if (!m) return [];
+        const same = m === M.planK && (isPL ? pp0.join() === M.planPP.join() : pick.slice(0, m).every((j, k) => j === M.planPick[k]));
+        const ch = M.steps.slice(0, m).map((st, k) => ({ price: st.price, row: st.row, tag: isPL ? "" : st.opts[pick[k]].tag, gives: isPL ? plGives(k) : st.opts[pick[k]].gives }));
+        const g = {}; ch.forEach((st) => Object.entries(st.gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
+        const label = same ? r.label : isPL ? `${m === 1 ? "" : t("pack_up_to") + " "}${packFmtMoney(M.steps[m - 1].price, r.currency)}${M.steps.length > 1 ? ` (${t("pack_steps_of").replace("{k}", m).replace("{n}", M.steps.length)})` : ""} · ${t("pk_each_step")}: ${plText()}` : M.kind === "plain" ? ch.map((st) => packFmtMoney(st.price, r.currency)).join(" · ") : M.kind === "card" ? ch.map((st) => `${packFmtMoney(st.price, r.currency)} · ${st.tag}`).join("") : ch.map((st) => `${packFmtMoney(st.price, r.currency)} ${st.tag}`).join(" · ");
+        const row = same ? (r.row != null ? r.row : 0) : M.kind === "plain" ? ch[m - 1].row : M.kind === "card" ? r.row : m - 1;
+        return [{ row, label, price: same ? r.price : Math.round(ch.reduce((a, st) => a + st.price, 0) * 100) / 100, local: ch.reduce((a, st) => a + local(st.price), 0), gives: same ? r.gives : g, plain: M.kind === "plain" }];
+      };
+      const topSel = isPick ? tset : kk;
+      const selOf = (d) => (dsel[d] !== undefined ? dsel[d] : topSel);
+      const localOf = (sel) => partsOf(sel).reduce((a, p) => a + p.local, 0);
+      const fmtL = (v) => packFmtLocal(v, r.currency, false, r.price);
+      const fmtN = (cnt, sel = topSel) => (M ? fmtL(localOf(sel) * cnt) : packFmtMoney(r.price * cnt, r.currency));
+      const differ = Object.keys(dsel).length > 0;
+      // Item picks as picture slots (owner picked A, 17 Oct 2026): tap a slot,
+      // a strip of every item's picture opens under it to choose from.
+      const openSlot = keep ? keep.openSlot || "" : "";
+      const picOf = (o) => { const ic = itemIc(o.name || "") || itemIc(Object.keys(o.gives || {})[0] || ""); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(o.tag.slice(0, 2))}</i>`; };
+      const slotsHtml = (key, opts, sel) => `<span class="pur-slots">${sel.map((sj, p) => { const o = opts[sj]; return `<button type="button" class="pur-slot${openSlot === key + "|" + p ? " open" : ""}" data-pmslot="${key}|${p}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>`; }).join("")}</span>`;
+      const stripHtml = (key, opts, sel) => { const m = /^(.*)\|(\d+)$/.exec(openSlot); if (!m || m[1] !== key) return ""; const p = Number(m[2]); return `<div class="pur-slot-strip">${opts.map((o, oj) => (o.q > 0 ? `<button type="button" class="pur-slot${oj === sel[p] ? " on" : ""}" data-pmslotopt="${key}|${p}|${oj}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>` : "")).join("")}</div>`; };
+      const plHtml = isPL ? `<div class="pur-ms-plpick"><div class="pur-ms-l"><span class="meta">${esc(t("pur_ms_each_items").replace("{n}", M.n))}</span>${slotsHtml("all", M.steps[0].opts, pp0)}</div>${stripHtml("all", M.steps[0].opts, pp0)}</div>` : "";
+      const stepsHtml = M ? `${plHtml}${s0.length > 1 && M.kind !== "card" ? `<div class="pur-ms-head"><span class="meta">${esc(t("pur_ms_setall"))}</span>${differ ? `<span class="pur-ms-differ">${esc(t("pur_ms_differ"))}</span>` : ""}</div>` : ""}<div class="pur-ms">${M.steps.map((st, k) => {
+        const on = isPick ? tset[k] : k < kk, j = isPick || isPL ? 0 : pick[k], swt = !isPick && !isPL && st.opts.length > 1;
+        const items = isPL ? `<div class="pur-ms-g">${givesHtml(plGives(k))}</div>` : isPick
+          ? (on ? stripHtml(String(k), st.opts, pp[k]) : "")
+          : `<div class="pur-ms-g">${givesHtml(st.opts[j].gives)}</div>`;
+        return `<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" ? " card" : ""}"><div class="pur-ms-l">
+          <button type="button" class="pur-ms-tick" data-pmtick="${k}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>
+          ${M.kind === "card" || isPick ? "" : `<b class="pur-ms-n">${k + 1}</b>`}<b class="pur-ms-pr">${esc(fmtL(local(st.price)))}</b>
+          ${swt ? `<span class="pur-ms-sw">${st.opts.map((o, oj) => `<button type="button" data-pmopt="${k}|${oj}" class="${oj === j ? "on" : ""}">${esc(o.tag)}</button>`).join("")}</span>` : ""}
+          ${isPick && !on ? `<span class="meta pur-ms-pickn">${esc(t("pur_ms_pickn").replace("{n}", M.n))}</span>` : ""}${isPick && on ? slotsHtml(String(k), st.opts, pp[k]) : ""}</div>
+          ${items}</div>`;
+      }).join("")}</div>${M.kind !== "card" ? `<div class="meta" style="font-size:10.5px; margin:-4px 0 8px;">${esc(t(isPick ? "pur_ms_any" : "pur_ms_order"))}</div>` : ""}` : "";
+      const notes = [];
+      const range = (a, b) => (a === b ? String(a) : `${a}–${b}`);
+      if (M && !isPick && kk < M.planK) notes.push(t("pur_ms_left").replace("{a}–{b}", range(kk + 1, M.planK)));
+      if (M && !isPick && kk > M.planK) notes.push(t("pur_ms_added").replace("{a}–{b}", range(M.planK + 1, kk)));
+      if (M && !isPick) pick.slice(0, Math.min(kk, M.planK)).forEach((j, k) => { if (j !== M.planPick[k]) notes.push(t(M.kind === "card" ? "pur_ms_card" : "pur_ms_step").replace("{k}", k + 1).replace("{tag}", M.steps[k].opts[j].tag)); });
+      if (isPL && pp0.join() !== M.planPP.join()) notes.push(t("pur_ms_pick_changed"));
+      if (isPick && (tset.join() !== M.planSet.join() || tset.some((on, k) => on && pp[k].join() !== M.planPicks[k].join()))) notes.push(t("pur_ms_pick_changed"));
+      if (differ) notes.push(t(isPick ? "pur_ms_dates_differ_p" : "pur_ms_dates_differ"));
+      const noteHtml = notes.length ? `<div class="pur-ms-note">${esc(notes.join(" · "))}. ${esc(t("pur_ms_replan"))}</div>` : "";
+      // My budget / By your target: two boxes, price and steps only.
+      const verHtml = vers.length > 1 ? `<div class="pur-ms-vers">${vers.map((v, k) => { const vm = stepModel(v.r, sugTable(v.r) || tb), vLocal = vm && vm.kind === "plain" ? vm.steps.slice(0, vm.planK).reduce((a, st) => a + packConvert(st.price, v.r.currency).n, 0) : packRowLocalUnits(v.r).reduce((a, x) => a + x, 0); return `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}"><span class="pur-vb-k">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}</span><b>${esc(packFmtLocal(vLocal, v.r.currency, false, v.r.price))}</b><span class="pur-vb-s">${vm && vm.kind !== "card" && vm.kind !== "pick" ? esc(nSteps(vm.planK)) : ""}${v.s0.length ? `${vm && vm.kind !== "card" && vm.kind !== "pick" ? " · " : ""}×${v.s0.reduce((a, x) => a + x.count, 0)}` : ""}</span></button>`; }).join("")}</div>` : "";
+      // The button on each date: "up to N" (in order) or the prices it buys.
+      const priceShort2 = (loc) => fmtL(loc).replace(/[^\d.,]/g, "");
+      const priceShort = (usd) => priceShort2(local(usd));
+      const dayCtl = (d) => {
+        if (!M || M.kind === "card" || s0.length < 2) return "";
+        const sel = selOf(d);
+        if (ordered) return `<select class="pur-dsel${dsel[d] !== undefined ? " on" : ""}" data-pmdk="${d}" aria-label="${esc(t("pur_ms_upto_n").replace("{n}", ""))}">${M.steps.map((st, k) => `<option value="${k + 1}" ${k + 1 === sel ? "selected" : ""}>${esc(t("pur_ms_upto_n").replace("{n}", k + 1))} · ${esc(priceShort2(M.steps.slice(0, k + 1).reduce((a, x) => a + local(x.price), 0)))}</option>`).join("")}</select>`;
+        const ks = sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0);
+        return `<button type="button" class="pur-dsel${dsel[d] !== undefined ? " on" : ""}" data-pmdopen="${d}">${esc(ks.length ? ks.map((k) => priceShort(M.steps[k].price)).join(" + ") : "—")} &#9662;</button>`;
+      };
+      const dayMenu = (d) => (isPick && openDay === d ? `<div class="pur-dmenu">${M.steps.map((st, k) => `<label><input type="checkbox" data-pmdt="${d}|${k}" ${selOf(d)[k] ? "checked" : ""} /> ${esc(fmtL(local(st.price)))}<span class="meta">${tset[k] ? esc(pickText(k)) : ""}</span></label>`).join("")}<div class="meta" style="font-size:10.5px;">${esc(t("pur_ms_items_above"))}</div></div>` : "");
+      const daysOn = keep && keep.days ? keep.days : null;
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <h2>${esc(sugName(r))}</h2>${verHtml}${stepsHtml}<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${partLabel !== fmtN(1) ? `${esc(partLabel)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>
+        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2><button type="button" class="rfa-x" data-pmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(fmtN(x.count))}</b></label>`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">× ${x.count}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
       modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-pmclose]")) close(); };
       const boxes = [...modal.querySelectorAll("[data-pmday]")];
-      const picked = () => boxes.filter((c) => c.checked).map((c) => s0[Number(c.dataset.pmday)]);
+      const pickedIdx = () => boxes.filter((c) => c.checked).map((c) => Number(c.dataset.pmday));
       const sync = () => {
-        const pk = picked(), cnt = pk.reduce((a, x) => a + x.count, 0);
-        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(fmtN(cnt))}</b> <span class="meta">${esc(t("pur_sug_n_of").replace("{n}", pk.length).replace("{m}", s0.length))}</span>`;
-        modal.querySelector("[data-pmadd]").disabled = !pk.length;
-        const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = pk.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
+        const ix = pickedIdx(), tot = ix.reduce((a, d) => a + (M ? localOf(selOf(d)) : r.price) * s0[d].count, 0);
+        const empty = ix.some((d) => (M ? !partsOf(selOf(d)).length : false));
+        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(M ? fmtL(tot) : packFmtMoney(tot, r.currency))}</b> <span class="meta">${ordered && !differ ? esc(nSteps(kk)) + " · " : ""}${esc(t("pur_sug_n_of").replace("{n}", ix.length).replace("{m}", s0.length))}</span>`;
+        modal.querySelector("[data-pmadd]").disabled = !ix.length || empty;
+        const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = ix.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
       };
       boxes.forEach((c) => c.addEventListener("change", sync));
       const allBtn = modal.querySelector("[data-pmall]");
-      if (allBtn) allBtn.addEventListener("click", () => { const on = picked().length !== s0.length; boxes.forEach((c) => { c.checked = on; }); sync(); });
+      if (allBtn) allBtn.addEventListener("click", () => { const on = pickedIdx().length !== s0.length; boxes.forEach((c) => { c.checked = on; }); sync(); });
       sync();
       modal.querySelector("[data-pmadd]").addEventListener("click", () => {
-        const pk = picked();
-        if (!pk.length) return;
-        // Fewer steps: an option pack saves its first steps as the choice; a
-        // plain ladder saves the last step bought (from where its run starts).
-        const part = steps && kk < steps.length;
-        const row = part ? (Array.isArray(r.steps) ? kk - 1 : steps[kk - 1].row) : (r.row != null ? r.row : 0);
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: partLabel, price: unit, gives: part ? partGives : r.gives } }) })));
+        const ix = pickedIdx();
+        if (!ix.length) return;
+        // One purchase per date (and per price for "any price" packs). Changed
+        // steps: an option pack saves its steps as the choice; a plain ladder
+        // saves the last step bought (from where its run starts).
+        const adds = [];
+        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), count: s0[d].count, date: dayOf(Math.max(0, s0[d].off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        if (!adds.length) return;
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
         close();
-        toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
+        toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
         redraw();
       });
+      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, days: new Set(pickedIdx()), ...patch });
       modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
-      modal.querySelectorAll("[data-pmstep]").forEach((v) => v.addEventListener("click", () => openVer(vi, Number(v.dataset.pmstep))));
+      // Set all dates. Bought in order: ticking a step ticks the ones before
+      // it; unticking one unticks the ones after it. Any price: each on its own.
+      modal.querySelectorAll("[data-pmtick]").forEach((v) => v.addEventListener("click", () => {
+        const k = Number(v.dataset.pmtick);
+        if (isPick) { const t2 = tset.slice(); t2[k] = !t2[k]; openVer(vi, state({ tset: t2, dsel: {} })); return; }
+        openVer(vi, state({ kk: k < kk ? (M.kind === "card" ? 0 : k) : k + 1, dsel: {} }));
+      }));
+      modal.querySelectorAll("[data-pmopt]").forEach((v) => v.addEventListener("click", () => { const [k, j] = v.dataset.pmopt.split("|").map(Number); const p2 = pick.slice(); p2[k] = j; openVer(vi, state({ kk: Math.max(kk, k + 1), pick: p2, dsel: k + 1 > kk ? {} : dsel })); }));
+      modal.querySelectorAll("[data-pmslot]").forEach((v) => v.addEventListener("click", () => openVer(vi, state({ openSlot: openSlot === v.dataset.pmslot ? "" : v.dataset.pmslot }))));
+      modal.querySelectorAll("[data-pmslotopt]").forEach((v) => v.addEventListener("click", () => {
+        const [key, p, oj] = v.dataset.pmslotopt.split("|");
+        if (key === "all") { const p2 = pp0.slice(); p2[Number(p)] = Number(oj); openVer(vi, state({ pp0: p2, openSlot: "" })); return; }
+        const p2 = pp.map((x) => x.slice()); p2[Number(key)][Number(p)] = Number(oj); openVer(vi, state({ pp: p2, openSlot: "" }));
+      }));
+      // Each date: its own steps / prices (the same as the top drops the override).
+      const setDay = (d, sel) => { const ds = { ...dsel }; if (JSON.stringify(sel) === JSON.stringify(topSel)) delete ds[d]; else ds[d] = sel; return ds; };
+      modal.querySelectorAll("[data-pmdk]").forEach((v) => {
+        ["click", "pointerdown"].forEach((ev) => v.addEventListener(ev, (e) => e.stopPropagation()));
+        v.addEventListener("change", () => openVer(vi, state({ dsel: setDay(Number(v.dataset.pmdk), Number(v.value)) })));
+      });
+      modal.querySelectorAll("[data-pmdopen]").forEach((v) => v.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); const d = Number(v.dataset.pmdopen); openVer(vi, state({ openDay: openDay === d ? -1 : d })); }));
+      modal.querySelectorAll("[data-pmdt]").forEach((v) => v.addEventListener("change", () => { const [d, k] = v.dataset.pmdt.split("|").map(Number); const s2 = selOf(d).slice(); s2[k] = v.checked; openVer(vi, state({ dsel: setDay(d, s2) })); }));
       };
       openVer(0);
     }));
@@ -7130,9 +7466,13 @@ async function renderPurchasesPage() {
       const clEl = box.querySelector(".pur-cl-list"), clRows = clEl ? [...clEl.querySelectorAll(".pur-cl-row")] : [];
       if (clRows.length > 5) clEl.style.maxHeight = `${clRows[4].offsetTop + clRows[4].offsetHeight / 2}px`;
       if (clEl && keepTop) clEl.scrollTop = keepTop;
+      putBoxes(box);
+      firstDraw = false;
+      box.style.minHeight = "";
+      box.dataset.drawn = "1";
     };
     drawSug();
-  }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
+  }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; } });
 
   const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
   content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
@@ -7486,6 +7826,9 @@ async function renderPackCalendarPage() {
       return weeksL.join("") || `<div class="meta" style="font-size:12px;">${esc(t("pack_cal_empty"))}</div>`;
     };
 
+    // A chip / view tap redraws the calendar: the page, the chip row and the
+    // month grid keep their scroll.
+    const y = window.scrollY, putBoxes = saveBoxScroll(content);
     content.innerHTML = `
       <div class="plx-head"><h2>${esc(t("pack_cal_title"))}</h2><button class="btn ghost small" id="packCalBack">${esc(t("pack_cal_back"))}</button></div>
       <div class="panel pc-panel">
@@ -7503,6 +7846,8 @@ async function renderPackCalendarPage() {
         ${hideAllWeek && allWeekNames.size ? `<div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_all_week_hidden").replace("{n}", allWeekNames.size))} · <button class="btn ghost small" data-calchip="allweek" style="padding:1px 8px; font-size:10px; border-radius:999px;">${esc(t("pack_cal_show_them"))}</button></div>` : ""}
         <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_utc"))}</div>
       </div>`;
+    putBoxes();
+    if (y && Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
 
     document.getElementById("packCalBack").addEventListener("click", () => goToTab("packs"));
     content.querySelectorAll("[data-calchip]").forEach((b) => b.addEventListener("click", () => {
@@ -7571,7 +7916,7 @@ async function renderPacksPage() {
 
   const calBtn = document.getElementById("packsCalendarBtn");
   if (calBtn) calBtn.addEventListener("click", () => goToTab("packcalendar"));
-  wireVisibilityBtns(content, () => renderPacksPage());
+  wireVisibilityBtns(content, () => keepPlace(() => renderPacksPage()));
   const listEl = document.getElementById("packsList");
   // Tap a summary card's Edit (or its title) to open / close that table.
   // "Budgets" tick on each card: count this pack in Budgets or not.
@@ -7812,7 +8157,14 @@ async function renderPacksPage() {
       renderAll();
     });
   }
+  // A redraw keeps the page where it was, and the editors' sideways boxes too.
   function renderAll() {
+    const y = window.scrollY, putBoxes = saveBoxScroll(listEl);
+    renderAllCore();
+    putBoxes();
+    if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+  }
+  function renderAllCore() {
     renderPageTabs();
     if (!tables.length) {
       listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_tables_yet"))}</div>${esc(t("no_tables_hint"))}</div>`;
@@ -7855,7 +8207,7 @@ async function renderPacksPage() {
         </div>
         <div class="pk-body"${pkOpen ? "" : " hidden"}>
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
+        <div class="pk-ed-scroll" style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:nowrap; overflow-x:auto;">
           <input data-pt-title value="${esc(t.title)}" style="font-size:14px; font-weight:700; background:none; border:none; padding:0; flex:1 1 90px; min-width:90px;" />
           <input data-pt-group list="packGroupNames" value="${esc(packLinkFor(t.id).group)}" placeholder="${esc(groupPh)}" title="${esc(groupTitle)}" style="font-size:11px; padding:3px 6px; flex:0 1 110px; min-width:70px;" />
           <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;" title="Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.">
@@ -7879,7 +8231,7 @@ async function renderPacksPage() {
           <button class="btn small ghost" data-pt-duplicate title="${esc(dupTitle)}" style="flex-shrink:0; width:28px; padding:4px 0;">&#10697;</button>
           <button class="btn small ghost" data-pt-delete title="Delete table" style="color:var(--danger); flex-shrink:0; width:28px; padding:4px 0;">&times;</button>
         </div>
-        <div style="overflow-x:auto;">
+        <div class="pk-tbl-wrap" style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:11px; table-layout:fixed;">
             <thead>
               <tr>
@@ -10096,7 +10448,9 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
     target.innerHTML = `<div class="empty">Category not found.</div>`;
     return;
   }
-  const refresh = rerenderFn || ((name) => renderCategoryInto(target, name, rerenderFn));
+  // Redrawn after an edit: the page stays where it was.
+  const redrawFn = rerenderFn || ((name) => renderCategoryInto(target, name, rerenderFn));
+  const refresh = (name) => keepPlace(() => redrawFn(name));
   const rows = await sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`);
 
   if (seq !== RENDER_SEQ) return;
@@ -10204,7 +10558,7 @@ async function renderGroupPage(parentName) {
   content.querySelectorAll("[data-groupsub]").forEach((btn) => {
     btn.addEventListener("click", () => {
       GROUP_SUBTAB[parentName] = btn.dataset.groupsub;
-      renderGroupPage(parentName);
+      keepPlace(() => renderGroupPage(parentName));
     });
   });
 
@@ -12692,6 +13046,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   if (!open) {
+    containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
     return;
@@ -12699,6 +13054,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
 
   // Changing several levels in a row: wait until the changes stop, so the
   // plan is worked out once for the final numbers instead of after every click.
+  // The card keeps its height meanwhile (it sits low on phones: a short
+  // "Working out…" would pull the page up).
+  if (containerEl.offsetHeight) containerEl.style.minHeight = containerEl.offsetHeight + "px";
   containerEl.innerHTML = `${wrapOpen}${head}<div class="meta" style="font-size:11px; margin-top:8px; padding:8px 10px; border:1px dashed var(--line); border-radius:8px;"><b style="color:var(--ice);">${esc(t("budgets_loading"))}</b><br>${esc(t("pack_calc_wait"))}</div></div>`;
   await new Promise((r) => setTimeout(r, 450));
   if (stale()) return;
@@ -12957,6 +13315,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     ...activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`),
     ...(traded && traded.trades.length ? traded.trades.map((x) => `${qty(x.giveQty)} ${materialDisplayName(x.from)} → ${qty(x.getQty)} ${materialDisplayName(x.to)}`) : []),
   ];
+  containerEl.style.minHeight = "";
   containerEl.innerHTML = cards ? `
     <div class="pc-card">
       ${head}
@@ -13406,26 +13765,26 @@ async function renderRfcLabPage() {
   content.querySelectorAll("[data-rfcmode]").forEach((b) => b.addEventListener("click", async () => {
     st.mode = b.dataset.rfcmode;
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   }));
   const schedSel = content.querySelector("[data-rfcschedule]");
   if (schedSel) schedSel.addEventListener("change", async () => {
     const [top, n] = schedSel.value.split("|").map(Number);
     st.top = top; st.attempts = n;
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   });
   content.querySelectorAll("[data-rfcuse]").forEach((btn) => btn.addEventListener("click", async () => {
     const [top, n] = btn.dataset.rfcuse.split("|").map(Number);
     st.top = top; st.attempts = n; st.mode = "schedule";
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   }));
   content.querySelectorAll("[data-rfc]").forEach((inp) => inp.addEventListener("change", async () => {
     const v = Math.max(0, Number(String(inp.value).replace(/[^0-9.]/g, "")) || 0);
     st[inp.dataset.rfc] = v;
     saveCalcState("rfc_lab", st);
-    renderRfcLabPage();
+    keepPlace(() => renderRfcLabPage());
   }));
 }
 
@@ -15072,7 +15431,10 @@ async function renderBudgetsPage(opts = {}) {
 
   // Budgets B: settings + pages on the side, the total and the shopping
   // list (packs to buy) in the main column, each page's details below it.
-  content.innerHTML = `
+  // While the plan is worked out the page keeps its old height (the short
+  // "Working out…" would pull the scroll up); open folds stay open.
+  if (planPending) holdPageHeight(true);
+  keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap">
       <div class="plx-head"><h2>${esc(t("budgets_title"))}</h2><button type="button" class="btn small ghost" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}">&#8635; ${esc(t("budgets_recalc"))}</button></div>
       <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("budgets_desc"))}</p>
@@ -15102,7 +15464,8 @@ async function renderBudgetsPage(opts = {}) {
           <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${cards.join("")}</div>
         </div>
       </div>
-    </div>`;
+    </div>`; });
+  if (!planPending) holdPageHeight(false);
 
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
@@ -15113,11 +15476,11 @@ async function renderBudgetsPage(opts = {}) {
     // Each page has its own tick (owner, 16 Oct 2026; it used to switch its
     // whole group: Experts Level + Research, the three Research pages).
     BUDGET_SELECTED[cb.dataset.budgetinc] = cb.checked;
-    renderBudgetsPage(); // instant redraw from the cached data
+    keepPlace(() => renderBudgetsPage()); // instant redraw from the cached data
     saveCalcState("budget_selected", BUDGET_SELECTED);
   }));
   const curEl = content.querySelector("#budgetsCurrency");
-  if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); renderBudgetsPage(); });
+  if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); keepPlace(() => renderBudgetsPage()); });
   // My budget: saved at once; a new amount only re-checks the plans already worked out.
   const spendSave = (patch, show) => {
     BUDGET_SPEND = { ...(BUDGET_SPEND || {}), ...patch };
@@ -15136,7 +15499,7 @@ async function renderBudgetsPage(opts = {}) {
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
     saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
-    renderBudgetsPage();
+    keepPlace(() => renderBudgetsPage());
   });
   const recalcEl = content.querySelector("[data-budgetrecalc]");
   if (recalcEl) recalcEl.addEventListener("click", () => { budgetForceRecalc(); renderBudgetsPage(); });
@@ -15144,7 +15507,7 @@ async function renderBudgetsPage(opts = {}) {
   if (clearEl) clearEl.addEventListener("click", async () => {
     BUDGET_TARGET = "";
     saveCalcState("pack_target_budgets", { date: "" });
-    renderBudgetsPage();
+    keepPlace(() => renderBudgetsPage());
   });
   const matsBtn = content.querySelector("[data-budmats]");
   if (matsBtn) matsBtn.addEventListener("click", () => {
@@ -20007,11 +20370,14 @@ async function renderRefinePage() {
     function drawAdv() {
       let modal = document.getElementById("refineAdvModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "refineAdvModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
+      // Each − / + redraws the pop-up: it keeps its scroll.
+      const putBoxes = modal.style.display === "flex" ? saveBoxScroll(modal) : () => {};
       modal.innerHTML = `<div class="modal-box rfa" style="max-width:440px; max-height:88vh; overflow-y:auto;">
         <div class="rfa-head"><h2>&#9881; ${esc(t("marks_advanced_open"))}</h2><button type="button" class="rfa-x" data-marksclose aria-label="close">&#10005;</button></div>
         <p class="rfa-desc">${esc(t("marks_advanced_desc"))}</p>
         ${advHtml}</div>`;
       modal.style.display = "flex";
+      putBoxes();
       modal.onclick = (ev) => { if (ev.target === modal || ev.target.closest("[data-marksclose]")) { refineAdvOpen = false; modal.style.display = "none"; } };
       wireMarks(modal);
     }
@@ -21833,7 +22199,7 @@ async function renderAdminBackpackItems(body) {
       <div class="adm-chips"><div class="adm-chips-row">${groups().map((g) => `<button type="button" class="adm-chip${g === ADMIN_BP_GROUP ? " on" : ""}" data-bpgroup="${esc(g)}">${esc(g)} <span class="meta">${items.filter((x) => x.group === g).length}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_BP_GROUP, attr: "data-bprow", sortable: true, img: (r) => bpIcon(r), name: (r) => r.name, sub: (r) => (r.icon ? "own picture" : "") })
       + `<div style="margin-top:12px;"><button class="btn ghost small" data-bpreset type="button">Reset to the default list</button></div>`;
-    body.querySelectorAll("[data-bpgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_BP_GROUP = b.dataset.bpgroup; draw(); }));
+    body.querySelectorAll("[data-bpgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_BP_GROUP = b.dataset.bpgroup; keepBoxes(body, draw); }));
     wireAdminReorder(body, "data-bprow", async (ids) => {
       // New order inside this tab; other tabs keep their places.
       const byId = new Map(items.map((x) => [x.id, x])), slots = items.map((x, i) => (x.group === ADMIN_BP_GROUP ? i : -1)).filter((i) => i >= 0);
@@ -23006,7 +23372,7 @@ function wireAdmEditBar(scope, o) {
       if (o.after) o.after();
       const parts = [changed.length ? `${changed.length} row${changed.length === 1 ? "" : "s"} saved` : "", upChanged ? "Upcoming saved" : "", added ? `${added} added` : ""].filter(Boolean);
       toast(parts.join(", ") || "Nothing to save");
-      if (added && o.reload) { ADM_EDIT_DIRTY = 0; await o.reload(); return; }
+      if (added && o.reload) { ADM_EDIT_DIRTY = 0; await admRedrawKeep(() => o.reload()); return; }
     } catch (err) { toast("Couldn't save: " + (err.message || err), true); }
     refresh();
   };
@@ -23860,7 +24226,7 @@ async function renderAdminHeroes(body) {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
     listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">${rows.filter((r) => (r.generation ?? -1) === g).length}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
-    listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); drawHeroes(); }));
+    listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); keepBoxes(listWrap, drawHeroes); }));
     wireAdmList(listWrap, {
       onEdit: (id) => {
         const r = rows.find((x) => String(x.id) === id);
@@ -24255,7 +24621,7 @@ async function renderAdminHeroStars(body) {
       }
     });
   });
-  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); renderAdminHeroStars(body); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"],
+  wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); admRedrawKeep(() => renderAdminHeroStars(body)); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"],
     addForm: "#adminHeroStarAddForm", reload: () => renderAdminHeroStars(body),
     create: async (tr) => {
       const name = tr.querySelector('[data-f="name"]').value.trim();
@@ -24272,7 +24638,7 @@ async function renderAdminHeroStars(body) {
       if (tr.dataset.cellid) await sb(`buff_cells?id=eq.${tr.dataset.cellid}`, { method: "DELETE" });
       // The row itself goes too when no other hero uses it.
       if (row && !row.buff_cells.some((c) => c.column_id !== ADMIN_ACTIVE_HERO_STAR_COL && c.value != null)) await sb(`buff_rows?id=eq.${row.id}`, { method: "DELETE" });
-      dropKeptGameData(); toast("Row removed"); renderAdminHeroStars(body);
+      dropKeptGameData(); toast("Row removed"); admRedrawKeep(() => renderAdminHeroStars(body));
     } catch (err) { toast(err.message || "Couldn't remove", true); }
   }));
   const delHero = document.getElementById("adminHeroStarDelHero");
