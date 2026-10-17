@@ -11823,7 +11823,7 @@ function packIsNewGen(l) { return !!l && (l.newGen === true || (typeof l.group =
 // Exclusive Gear Forge 4 weeks (28 days) later.
 function packNewGenOffset(tableId) {
   const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => String(x.id) === String(tableId));
-  if (tb) return /forge/i.test(String(tb.title || "")) ? 28 : 0;
+  if (tb) return /forge/i.test(String(tb.title || "")) ? NG_HERO_DAYS : 0;
   // Title not loaded yet: the gap between the admin's own dates for the New Gen tables.
   const links = PACK_LINKS || {}, own = packParseDay((links[String(tableId)] || {}).resetDay);
   const days = Object.values(links).filter((l) => l && packIsNewGen(l)).map((l) => packParseDay(l.resetDay)).filter(Boolean);
@@ -11911,13 +11911,13 @@ const PACK_MINE_GROUP = "My packs";
 // other items in these packs aren't counted. They're only for the Budgets
 // "Hero shards & widgets" page, built from the person's state's Gen dates.
 const NG_HERO_GROUP = "Heroes packs";
-const NG_HERO_DAYS = 28; // each part runs 4 weeks
+let NG_HERO_DAYS = 28; // each part runs 4 weeks (Admin → Rules "New heroes packs timing")
 const PACK_ONE_TIME_DAYS = 1000; // a "reset" this long is one time only (these packs use 3000)
 const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
 const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
 const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
 const ngGems = (price) => Math.round((price + 0.01) * 500);
-function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday())].join("|"); }
+function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday()), NG_HERO_DAYS].join("|"); }
 // The two New Gen tables on the Packs page with a "Hero Shards" / "Hero Widgets"
 // column are the patterns (owner edits prices and amounts there); each new
 // hero gets its own copy. Without them the built-in numbers above are used.
@@ -22073,6 +22073,7 @@ let GAME_RULES = null; // built on first use (needs every constant above)
 function gameRules() {
   if (GAME_RULES) return GAME_RULES;
   const num = (key, label) => ({ key, label, type: "num" });
+  const affDef = { ...AFFINITY_ITEM_VALUE }; // code values (before any saved rule)
   GAME_RULES = [
     { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens.",
       cols: [{ key: "label", label: "Shown as", type: "text" }, { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear"] }, { key: "name", label: "Name (pet / expert / id)", type: "text" }, { key: "tab", label: "Page", type: "page" }, { key: "day", label: "State day", type: "num" }],
@@ -22120,6 +22121,21 @@ function gameRules() {
       cols: [{ key: "name", label: "Item", type: "text" }, { key: "item", label: "Counts as", type: "text" }, { key: "amount", label: "Amount", type: "num" }],
       get: () => Object.entries(PACK_BUNDLES).flatMap(([n, c]) => Object.entries(c).map(([it, a]) => ({ name: n, item: it, amount: a }))),
       set: (rows) => { const o = {}; rows.filter((r) => r.name && r.item).forEach((r) => { (o[r.name] = o[r.name] || {})[r.item] = Number(r.amount) || 0; }); ruleSetObject(PACK_BUNDLES, o); } },
+    { key: "affinity", group: "trades", label: "Affinity per expert gift item", help: "Affinity one gift item is worth on the Experts pages. A changed value is also used for packs and the Experts trade rule.",
+      cols: [{ key: "item", label: "Item", type: "text" }, { key: "value", label: "Affinity", type: "num" }],
+      get: () => Object.entries(AFFINITY_ITEM_VALUE).map(([item, value]) => ({ item, value })),
+      set: (rows) => {
+        const o = Object.fromEntries(rows.filter((r) => r.item && Number(r.value) > 0).map((r) => [String(r.item), Number(r.value)]));
+        ruleSetObject(AFFINITY_ITEM_VALUE, o);
+        // Only changed values reach packs / trades (their own rules stay as saved otherwise).
+        Object.entries(o).forEach(([it, v]) => {
+          if (affDef[it] === v) return;
+          PACK_BUNDLES[it] = { Affinity: v };
+          const ex = TRADE_DEFAULT_RATES.experts || (TRADE_DEFAULT_RATES.experts = []);
+          const tr = ex.find((r) => r.from === it && r.to === "Affinity");
+          if (tr) tr.get = v; else ex.push({ from: it, to: "Affinity", give: 1, get: v, max: 0, hidden: true, silent: true });
+        });
+      } },
     { key: "resChests", group: "trades", label: "Custom Resource Chests", help: "What one chest gives of the resource you pick.",
       cols: [{ key: "chest", label: "Chest", type: "text" }, { key: "Meat", label: "Meat", type: "num" }, { key: "Wood", label: "Wood", type: "num" }, { key: "Coal", label: "Coal", type: "num" }, { key: "Iron", label: "Iron", type: "num" }],
       get: () => Object.entries(BACKPACK_RES_CHEST_GIVES).map(([c, g]) => ({ chest: c, ...g })),
@@ -22146,6 +22162,13 @@ function gameRules() {
         ALL_GLOBE_WIRED_NAMES_GLOBAL.clear();
         [...Object.values(GLOBE_LEVEL_ROMAN_GLOBAL).map((roman) => `Frost Sphere ${roman}`), ...Object.values(o).flat()].forEach((n) => ALL_GLOBE_WIRED_NAMES_GLOBAL.add(n));
       } },
+    { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
+      cols: [{ key: "group", label: "Pack group", type: "text" }],
+      get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
+      set: (rows) => ruleSetArray(PACK_DATES_ON_PACKS_PAGE, rows.map((r) => String(r.group || "").trim()).filter(Boolean)) },
+    { key: "ngForge", group: "heroes", label: "New heroes packs timing", type: "fields", help: "Days from the new heroes (Hero Ascension Training) to the Exclusive Gear Forge; also how long each runs when its table on the Packs page has no window.",
+      fields: [num("days", "Forge starts after (days)")],
+      get: () => ({ days: NG_HERO_DAYS }), set: (v) => { NG_HERO_DAYS = Number(v.days) > 0 ? Number(v.days) : 28; } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
