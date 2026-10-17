@@ -448,6 +448,10 @@
   .pur-alt.pur-cmp-budget{ color:var(--good); background:none; }
   .pur-follow{ margin:0 0 6px; }
   .pur-m-ver{ margin:6px 0 10px; }
+  .pur-m-steps{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin:4px 0 10px; }
+  .pur-m-steps button{ border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; font-size:11px; padding:4px 8px; border-radius:8px; cursor:pointer; }
+  .pur-m-steps button b{ color:var(--ice); margin-inline-end:3px; }
+  .pur-m-steps button.on{ border-color:var(--ice); background:var(--ice-dim); }
   .pur-m-ver button span{ white-space:normal; font-size:10px; }
   .pur-cl-head{ display:flex; align-items:center; gap:8px; }
   .pur-cl-swap{ margin-inline-start:auto; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:15px; cursor:pointer; }
@@ -3755,6 +3759,7 @@ const T = {
   pur_n_packs: { en: "{n} packs" },
   pur_other_would: { en: "{plan} plan would be {v}" },
   pur_tick_hint: { en: "Tick what you'll buy" },
+  pur_buy_upto: { en: "Buy up to" },
   pur_tick_none: { en: "Tick the packs you'll buy" },
   pur_tag_both: { en: "both" },
   pur_tag_target: { en: "target" },
@@ -6951,7 +6956,7 @@ async function renderPurchasesPage() {
           <span class="pur-cl-ic">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}</span>
           <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
           ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
-          <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtMoney(vr.r.price * vr.n, vr.r.currency))}</span>
+          <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
           ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
         </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
       };
@@ -7053,14 +7058,37 @@ async function renderPurchasesPage() {
       let modal = document.getElementById("purSugModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
       const close = () => { modal.style.display = "none"; };
-      const openVer = (vi) => {
+      // Packs bought in steps: "Buy up to" picks fewer steps than the plan
+      // (admin, owner 17 Oct 2026); the rest stays on offer for that run.
+      const stepsOf = (r, tb) => {
+        if (!IS_OWNER || /\+ \d+×/.test(String(r.label || ""))) return null;
+        if (Array.isArray(r.steps) && r.steps.length > 1 && !r.steps.some((st) => st.k)) {
+          const parts = String(r.label || "").split(" · "), all = /·\s*all (.+)$/.exec(String(r.label || ""));
+          return r.steps.map((st, k) => ({ price: st.price, gives: st.gives || {}, label: parts.length === r.steps.length ? parts[k] : `${packFmtMoney(st.price, r.currency)}${all ? " " + all[1] : ""}` }));
+        }
+        if (packLinkFor(tb.id).sequential && !r.steps && r.row > (r.from || 0)) {
+          const offs = packOffersFor(tb, true).filter((o) => o.row >= (r.from || 0) && o.row <= r.row);
+          if (offs.length > 1) return offs.map((o) => ({ price: o.price, gives: o.gives, label: o.label, row: o.row }));
+        }
+        return null;
+      };
+      const openVer = (vi, kPick) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
       if (!tb) return;
-      const verHtml = vers.length > 1 ? `<div class="bud-seg pur-m-ver">${vers.map((v, k) => `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(packFmtMoney(v.r.price * v.s0.reduce((a, x) => a + x.count, 0), v.r.currency))}</b><span>${esc(v.r.label)} ×${v.s0.reduce((a, x) => a + x.count, 0)}</span></button>`).join("")}</div>` : "";
+      const steps = stepsOf(r, tb), kk = steps ? Math.min(steps.length, kPick || steps.length) : 0;
+      const unit = steps ? steps.slice(0, kk).reduce((a, st) => a + st.price, 0) : r.price;
+      const partLabel = steps && kk < steps.length ? steps.slice(0, kk).map((st) => st.label).join(" · ") : r.label;
+      // Money shown step by step in store prices (QAR 17.99 + 36.99 = 54.98).
+      const unitLocal = steps ? steps.slice(0, kk).reduce((a, st) => a + packConvert(st.price, r.currency).n, 0) : null;
+      const fmtN = (cnt) => (steps ? packFmtLocal(unitLocal * cnt, r.currency, false, steps[0].price) : packFmtMoney(unit * cnt, r.currency));
+      const partGives = {};
+      if (steps) steps.slice(0, kk).forEach((st) => Object.entries(st.gives || {}).forEach(([n, v]) => { partGives[n] = (partGives[n] || 0) + v; }));
+      const stepsHtml = steps ? `<div class="pur-m-steps"><span class="meta">${esc(t("pur_buy_upto"))}</span>${steps.map((st, j) => `<button type="button" data-pmstep="${j + 1}" class="${j + 1 === kk ? "on" : ""}"><b>${j + 1}</b> ${esc(st.label)}</button>`).join("")}</div>` : "";
+      const verHtml = vers.length > 1 ? `<div class="bud-seg pur-m-ver">${vers.map((v, k) => `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(packFmtLocal(packRowLocalUnits(v.r).reduce((a, x) => a + x, 0) * v.s0.reduce((a, x) => a + x.count, 0), v.r.currency, false, v.r.price))}</b><span>${esc(v.r.label)} ×${v.s0.reduce((a, x) => a + x.count, 0)}</span></button>`).join("")}</div>` : "";
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <h2>${esc(sugName(r))}</h2>${verHtml}<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== packFmtMoney(r.price, r.currency) ? `${esc(r.label)} · ` : ""}${esc(packFmtMoney(r.price, r.currency))} ${esc(t("pur_each"))}</div>
+        <h2>${esc(sugName(r))}</h2>${verHtml}${stepsHtml}<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${partLabel !== fmtN(1) ? `${esc(partLabel)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(packFmtMoney(r.price * x.count, r.currency))}</b></label>`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(fmtN(x.count))}</b></label>`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -7068,8 +7096,8 @@ async function renderPurchasesPage() {
       const boxes = [...modal.querySelectorAll("[data-pmday]")];
       const picked = () => boxes.filter((c) => c.checked).map((c) => s0[Number(c.dataset.pmday)]);
       const sync = () => {
-        const pk = picked(), sum = pk.reduce((a, x) => a + r.price * x.count, 0);
-        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(packFmtMoney(sum, r.currency))}</b> <span class="meta">${esc(t("pur_sug_n_of").replace("{n}", pk.length).replace("{m}", s0.length))}</span>`;
+        const pk = picked(), cnt = pk.reduce((a, x) => a + x.count, 0);
+        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(fmtN(cnt))}</b> <span class="meta">${esc(t("pur_sug_n_of").replace("{n}", pk.length).replace("{m}", s0.length))}</span>`;
         modal.querySelector("[data-pmadd]").disabled = !pk.length;
         const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = pk.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
       };
@@ -7080,13 +7108,18 @@ async function renderPurchasesPage() {
       modal.querySelector("[data-pmadd]").addEventListener("click", () => {
         const pk = picked();
         if (!pk.length) return;
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })));
+        // Fewer steps: an option pack saves its first steps as the choice; a
+        // plain ladder saves the last step bought (from where its run starts).
+        const part = steps && kk < steps.length;
+        const row = part ? (Array.isArray(r.steps) ? kk - 1 : steps[kk - 1].row) : (r.row != null ? r.row : 0);
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: partLabel, price: unit, gives: part ? partGives : r.gives } }) })));
         savePackPurchases();
         close();
         toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
         redraw();
       });
       modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
+      modal.querySelectorAll("[data-pmstep]").forEach((v) => v.addEventListener("click", () => openVer(vi, Number(v.dataset.pmstep))));
       };
       openVer(0);
     }));
