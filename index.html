@@ -245,7 +245,7 @@
   .bset-sw:checked{ background:var(--ice-dim); border-color:var(--ice-dim); }
   .bset-sw:checked::after{ left:18px; background:var(--frost); }
   .bset-note{ font-size:10.5px; margin-top:6px; }
-  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } }
+  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } .bset-c .bud-spend-per button{ padding:6px 10px; } }
   .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 13px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
   .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
@@ -3521,7 +3521,6 @@ const T = {
   spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
   spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
   spend_amount: { en: "Amount" },
-  spend_every: { en: "Every" },
   spend_week_s: { en: "week" },
   spend_month_s: { en: "month" },
   spend_carry_short: { en: "Keep what I don't spend" },
@@ -15497,8 +15496,7 @@ async function renderBudgetsPage(opts = {}) {
               const adminOnly = IS_OWNER && !visitorsToo;
               return `<div class="bud-spend">
                 <div class="bset-sec"><b>${esc(t("spend_title"))}</b>${adminOnly ? `<span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</div>
-                <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span></span></div>
-                <div class="bset-row"><span class="bset-l">${esc(t("spend_every"))}</span><span class="bset-c"><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
+                <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
                 <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
                 ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
                 ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
