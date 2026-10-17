@@ -6584,7 +6584,9 @@ async function renderPurchasesPage() {
   const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(setLead(tb) ? setName(tb) : (tb.title || ""))}</option>`).join("")}</optgroup>`).join("");
   const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
-  const addCard = `<div class="t12x-card"><div class="t12x-title">${esc(t("pur_add_title"))}</div>
+  // Add a pack, New Gen Heroes, Coming and Bought fold open and closed (owner, 16 / 17 Oct 2026); kept in this browser.
+  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
+  const addCard = `<details class="t12x-card pur-listbox" data-purlist="a" ${listOpen("a") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_add_title"))}</summary>
     ${buyable.length ? `<div class="pur-form">
       <label class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table">${packOpts}</select></label>
       ${formChoice
@@ -6596,7 +6598,7 @@ async function renderPurchasesPage() {
       ${formChoice ? "" : `<button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>`}
     </div>
     <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span>${formChoice ? "" : `<button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button>`}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
-  </div>`;
+  </details>`;
 
   // Purchase lists
   const list = (PACK_PURCHASES.list || []).filter((p) => byId.has(String(p.table)));
@@ -6642,8 +6644,6 @@ async function renderPurchasesPage() {
     <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
     <div class="meta pur-how">${esc(t("pur_how"))}</div>
   </div>`;
-  // Coming / Bought fold open and closed (owner, 16 Oct 2026); kept in this browser.
-  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
   const listBox = (k, title, n, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${n})</span></summary>${inner}</details>`;
   const listsHtml = `
     ${listBox("c", t("pur_coming"), coming.length, coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
@@ -6658,7 +6658,7 @@ async function renderPurchasesPage() {
   const ngBase = (tb) => String(tb.title || "").split(":")[0].trim();
   const ngShown = ngTables.filter((tb, i) => ngTables.findIndex((x) => ngBase(x) === ngBase(tb)) === i);
   const ngSame = (id) => { const tb = ngTables.find((x) => String(x.id) === String(id)); return tb ? ngTables.filter((x) => ngBase(x) === ngBase(tb)).map((x) => String(x.id)) : [String(id)]; };
-  const ngCard = ngTables.length ? `<div class="t12x-card"><div class="t12x-k">${esc(t("pur_newgen_title"))}</div>
+  const ngCard = ngTables.length ? `<details class="t12x-card pur-listbox" data-purlist="n" ${listOpen("n") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_newgen_title"))}</summary>
     <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
     ${(() => {
       // From the state age (Dashboard) unless the person typed their own date.
@@ -6683,7 +6683,7 @@ async function renderPurchasesPage() {
         <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
       </div>`;
     }).join("")}
-  </div>` : "";
+  </details>` : "";
 
   content.innerHTML = `
     <div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div>
