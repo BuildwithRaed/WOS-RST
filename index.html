@@ -332,7 +332,7 @@
   .pks-more > summary{ cursor:pointer; padding:11px 0; font-size:13px; color:var(--frost); }
   .pks-more[open] > summary{ color:var(--ice); }
   .pks [data-pktrigwrap], .pks [data-pkownwrap]{ margin-top:6px; }
-  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } }
+  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; font-size:16px; } .bset-c input[type=number]{ width:84px; font-size:16px; } }
   .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 10px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
   .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
@@ -1774,6 +1774,21 @@ input,select,textarea{
   [data-packtable]{ content-visibility:auto; contain-intrinsic-size:auto 600px; }
   /* An open ⋯ menu must show over the cards below (content-visibility clips it). */
   [data-packtable]:has(.pk-more[open]){ content-visibility:visible; position:relative; z-index:40; }
+  /* Phones: tap areas at least 32px high. Text links and small labels grow
+     invisibly (padding, taken back with the same negative margin); pills and
+     the research − / + get a little taller. */
+  @media (max-width: 700px){
+    .bs-foot .linklike, .pc-card .linklike, .t12x .linklike{ padding-block:9px; margin-block:-9px; }
+    .pc-card .pc-title{ padding-block:9px; margin-block:-9px; }
+    .pk-bud{ padding-block:9px; margin-top:-3px; margin-bottom:-9px; }
+    details.pk-sum-used summary{ min-height:32px; }
+    .pc-chip{ min-height:32px; }
+    .pc-nav .btn{ min-height:32px; min-width:32px; }
+    .t12x-step button{ width:32px; height:32px; }
+  }
+  /* Pets Level: Current and Target one per row on narrow phones, so the
+     longest level ("Lv. 50 Advanced (Max)") is not cut. */
+  @media (max-width: 480px){ .pet-level-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
