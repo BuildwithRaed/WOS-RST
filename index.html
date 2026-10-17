@@ -12788,7 +12788,20 @@ function packEarliestDaysCompute(groups, need, calcKey) {
   // The supply check is an upper bound (a "choose one option" pack can't
   // give every option at once), so a day only counts when a real plan
   // exists for it.
-  const feasible = (d) => packCoveredBy(packMaxSupply(groups, d), need, ctx(d)) && !!packCheapestPlan(groups, need, d, calcKey, true);
+  // Speed (17 Oct 2026): a yes / no is all that's needed here, so when the
+  // greedy plan already covers day d the solver step is skipped (a greedy
+  // plan that covers always means a plan exists). Those quick "yes" answers
+  // are not cached; every full answer is cached as before.
+  const feasible = (d) => {
+    if (!packCoveredBy(packMaxSupply(groups, d), need, ctx(d))) return false;
+    const key = packPlanCacheKey(groups, need, d, calcKey, true);
+    if (PACK_PLAN_CACHE.has(key)) return !!PACK_PLAN_CACHE.get(key);
+    const r = packCheapestPlanCompute(groups, need, d, calcKey, true, true);
+    if (r === true) return true;
+    if (PACK_PLAN_CACHE.size > 300) PACK_PLAN_CACHE.clear();
+    PACK_PLAN_CACHE.set(key, r);
+    return !!r;
+  };
   if (feasible(0)) return 0;
   if (!feasible(Infinity)) return null;
   const steps = new Set();
@@ -13036,7 +13049,7 @@ function packPruneOffersFor(groups, need, ctx) {
     return offers.length ? { ...g, offers } : { ...g, offers: g.offers.slice(0, 1) };
   });
 }
-function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
+function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly) {
   let ctx = packTradeCtx(calcKey, days);
   // Free, unlimited 1-for-N conversions (Sail of Conquest -> 1,000 Affinity,
   // Expert Speedups -> Speedups) are folded straight into what the packs
@@ -13215,6 +13228,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick) {
   let best = null;
   const consider = (r) => { if (r) { finish(r); if (betterPlan(r, best)) best = r; } };
   consider(run(null));
+  if (feasOnly && best) return true; // packEarliestDays only asks "is there a plan?"
   // The exact plan (when the solver is loaded): kept when it beats the greedy ones.
   // A cheaper exact plan always wins (the 2% "sooner" rule is only for
   // choosing between greedy tries); with it, the slow greedy tries below are skipped.
