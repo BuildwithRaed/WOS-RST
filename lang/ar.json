@@ -1692,5 +1692,8 @@
 "t:pk_any_s":"أي صف",
 "t:pk_tiers_s":"على مراحل",
 "t:pk_choice_s":"صف واحد",
-"t:pk_picks_s":"اختيار خيارات"
+"t:pk_picks_s":"اختيار خيارات",
+"t:pur_role_main":"أساسي",
+"t:pur_role_needed":"مطلوب",
+"t:pur_role_extra":"إضافي"
 }

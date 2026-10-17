@@ -1693,5 +1693,8 @@
  "t:pk_any_s": "任意行",
  "t:pk_tiers_s": "按档",
  "t:pk_choice_s": "选一行",
- "t:pk_picks_s": "选择选项"
+ "t:pk_picks_s": "选择选项",
+ "t:pur_role_main": "主要",
+ "t:pur_role_needed": "所需",
+ "t:pur_role_extra": "额外"
 }

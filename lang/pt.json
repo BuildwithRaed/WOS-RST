@@ -1692,4 +1692,7 @@
 "t:pk_any_s":"Qualquer linha",
 "t:pk_tiers_s":"Em etapas",
 "t:pk_choice_s":"Uma linha",
-"t:pk_picks_s":"Escolher opções"}
+"t:pk_picks_s":"Escolher opções",
+"t:pur_role_main":"principal",
+"t:pur_role_needed":"necessário",
+"t:pur_role_extra":"extra"}

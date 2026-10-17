@@ -1693,5 +1693,8 @@
  "t:pk_any_s": "Toute ligne",
  "t:pk_tiers_s": "Par étapes",
  "t:pk_choice_s": "Une ligne",
- "t:pk_picks_s": "Choix d'options"
+ "t:pk_picks_s": "Choix d'options",
+ "t:pur_role_main": "principal",
+ "t:pur_role_needed": "requis",
+ "t:pur_role_extra": "bonus"
 }

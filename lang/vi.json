@@ -1692,4 +1692,7 @@
 "t:pk_any_s":"Hàng bất kỳ",
 "t:pk_tiers_s":"Theo bước",
 "t:pk_choice_s":"Một hàng",
-"t:pk_picks_s":"Chọn tùy chọn"}
+"t:pk_picks_s":"Chọn tùy chọn",
+"t:pur_role_main":"chính",
+"t:pur_role_needed":"cần",
+"t:pur_role_extra":"thêm"}

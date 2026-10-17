@@ -1692,4 +1692,7 @@
 "t:pk_any_s":"แถวใดก็ได้",
 "t:pk_tiers_s":"เป็นขั้น",
 "t:pk_choice_s":"หนึ่งแถว",
-"t:pk_picks_s":"เลือกตัวเลือก"}
+"t:pk_picks_s":"เลือกตัวเลือก",
+"t:pur_role_main":"หลัก",
+"t:pur_role_needed":"ต้องใช้",
+"t:pur_role_extra":"แถม"}

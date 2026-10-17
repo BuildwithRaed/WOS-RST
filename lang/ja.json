@@ -1693,5 +1693,8 @@
  "t:pk_any_s": "どの行でも",
  "t:pk_tiers_s": "段階式",
  "t:pk_choice_s": "1行選択",
- "t:pk_picks_s": "選択式"
+ "t:pk_picks_s": "選択式",
+ "t:pur_role_main": "メイン",
+ "t:pur_role_needed": "必要",
+ "t:pur_role_extra": "おまけ"
 }
