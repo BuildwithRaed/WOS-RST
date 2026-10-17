@@ -438,9 +438,6 @@
   .pur-chips .bud-mat{ padding:2px 9px 2px 3px; font-size:12px; }
   .pur-chips .bud-mat img, .pur-chips .bud-mat i{ width:20px; height:20px; }
   .pur-for{ flex:1 1 140px; min-width:0; font-size:11px; }
-  .pur-more-d{ border:1px solid var(--line); background:var(--panel-2); color:var(--ice); font:inherit; font-size:10.5px; padding:1px 7px; border-radius:8px; cursor:pointer; white-space:nowrap; }
-  .pur-dpop{ position:fixed; z-index:60; max-height:200px; overflow:auto; padding:8px 10px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.45); font-size:11.5px; line-height:1.6; color:var(--frost); }
-  .pur-dpop b{ color:var(--ice); margin-inline-end:4px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
   .pur-acts .btn{ padding:3px 9px; }
   .pur-dates{ margin-top:8px; border:1px solid var(--line); border-radius:10px; padding:2px 8px; }
@@ -3709,7 +3706,10 @@ const T = {
   pur_wk_after: { en: "After target" },
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
-  pur_more_dates: { en: "dates" },
+  pur_when_daily: { en: "every day ({n} days)" },
+  pur_when_weekly: { en: "every week ({n}×)" },
+  pur_when_weeks: { en: "every {w} weeks ({n}×)" },
+  pur_when_dates: { en: "{n} dates" },
   pur_wk_buy_all: { en: "Will buy all of {week}" },
   pur_sug_until: { en: "Until target" },
   pur_sug_later: { en: "Later (until {date})" },
@@ -6538,28 +6538,6 @@ function purTablePopup(tb, opts) {
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 // The Add a pack form survives the phone reloading the page (sessionStorage).
-// The small "+N dates" box on suggested packs: one element, placed next to its
-// button; a tap elsewhere or any scroll closes it (it never blocks the page).
-let PUR_DPOP = null;
-function purDatesPopClose() { if (PUR_DPOP) PUR_DPOP.hidden = true; }
-function purDatesPop(btn, html) {
-  if (!PUR_DPOP) {
-    PUR_DPOP = document.createElement("div");
-    PUR_DPOP.className = "pur-dpop";
-    document.body.appendChild(PUR_DPOP);
-    document.addEventListener("click", (e) => { if (PUR_DPOP && !PUR_DPOP.contains(e.target)) purDatesPopClose(); });
-    window.addEventListener("scroll", purDatesPopClose, true);
-    window.addEventListener("resize", purDatesPopClose);
-  }
-  PUR_DPOP.innerHTML = html;
-  PUR_DPOP.dataset.for = btn.dataset.purdates;
-  PUR_DPOP.hidden = false;
-  const r = btn.getBoundingClientRect(), w = Math.min(260, window.innerWidth - 24);
-  PUR_DPOP.style.width = w + "px";
-  const h = PUR_DPOP.offsetHeight;
-  PUR_DPOP.style.left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left)) + "px";
-  PUR_DPOP.style.top = (r.top - h - 6 > 8 ? r.top - h - 6 : r.bottom + 6) + "px";
-}
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
@@ -6746,13 +6724,20 @@ async function renderPurchasesPage() {
     const sched = plan.spendSched || packPlanSchedule(rows);
     const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
     const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
-    // Dates (owner, 17 Oct 2026): up to 3 written out, then a "+N dates"
-    // button; tapping it (hovering on a PC) shows them all in a small box.
-    const sugOffs = (list) => [...new Set(list.map((x) => Math.max(0, x.off)))].sort((a, b) => a - b);
-    const whenHtml = (list, i) => {
-      const offs = sugOffs(list);
-      if (offs.length <= 3) return esc(offs.map(whenTxt).join(", "));
-      return `${esc(offs.slice(0, 3).map(whenTxt).join(", "))} <button type="button" class="pur-more-d" data-purdates="${i}">+${offs.length - 3} ${esc(t("pur_more_dates"))}</button>`;
+    // Short "when" (owner, 17 Oct 2026: the full list of days was too long):
+    // days in a row → "Dec 7 → Feb 21 · every day (77 days)"; evenly spaced →
+    // "every 4 weeks (4×)"; a few dates or runs as they are; else first → last · N dates.
+    const whenShort = (list) => {
+      const offs = [...new Set(list.map((x) => Math.max(0, x.off)))].sort((a, b) => a - b);
+      if (offs.length <= 2) return offs.map(whenTxt).join(", ");
+      const n = offs.length, span = `${whenTxt(offs[0])} → ${whenTxt(offs[n - 1])}`;
+      const gaps = offs.slice(1).map((o, i) => o - offs[i]);
+      const same = gaps.every((g) => g === gaps[0]) ? gaps[0] : 0;
+      if (same === 1) return `${span} · ${t("pur_when_daily").replace("{n}", n)}`;
+      if (same && same % 7 === 0) return `${span} · ${t(same === 7 ? "pur_when_weekly" : "pur_when_weeks").replace("{w}", same / 7).replace("{n}", n)}`;
+      const runs = [];
+      offs.forEach((o) => { const r = runs[runs.length - 1]; if (r && o === r[1] + 1) r[1] = o; else runs.push([o, o]); });
+      return runs.length <= 3 ? runs.map(([a, b]) => (a === b ? whenTxt(a) : `${whenTxt(a)} – ${whenTxt(b)}`)).join(", ") : `${span} · ${t("pur_when_dates").replace("{n}", n)}`;
     };
     // Week tabs (owner picked C, 16 Oct 2026): this week, then each week (Mon–Sun)
     // until the Budgets target, then what comes after it; without a target the
@@ -6814,34 +6799,16 @@ async function renderPurchasesPage() {
         const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
         return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
       }).join("");
-      const when = whenHtml(xs, i);
+      const when = whenShort(xs);
       return `<div class="pur-item">
         <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
-        <div class="pur-item-f"><span class="meta pur-for">${when}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
+        <div class="pur-item-f"><span class="meta pur-for">${esc(when)}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
     }).join("") + `</div>${list.length > 3 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`)
       + (list.some(([i]) => { const tb = sugTable(rows[i]); return tb && (rows[i].row != null || !plainPack(tb)); }) ? `<button type="button" class="btn pur-wk-all" data-purwkall>+ ${esc(t("pur_wk_buy_all").replace("{week}", wkName(PUR_SUG_WEEK).toLowerCase()))}</button>` : "")
       + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(money(total))}</b></div>`;
     box.querySelectorAll("[data-purwk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.purwk; PUR_SUG_WEEK = k === "after" ? k : Number(k); drawSug(); }));
-    // "+N dates": every date of that pack this week, by month, in a small box
-    // next to the button (closes on a tap elsewhere or a scroll).
-    box.querySelectorAll("[data-purdates]").forEach((btn) => {
-      const show = () => {
-        const xs = (sel && sel.items.get(Number(btn.dataset.purdates))) || [];
-        const byMonth = new Map();
-        sugOffs(xs).forEach((off) => {
-          const d = new Date(packStartOfToday().getTime() + off * 86400000);
-          const m = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", timeZone: "UTC" });
-          if (!byMonth.has(m)) byMonth.set(m, []);
-          byMonth.get(m).push(off === 0 ? t("pur_sug_now") : String(d.getUTCDate()));
-        });
-        purDatesPop(btn, [...byMonth.entries()].map(([m, ds]) => `<div><b>${esc(m)}</b> ${esc(ds.join(", "))}</div>`).join(""));
-      };
-      btn.addEventListener("click", (e) => { e.stopPropagation(); show(); });
-      btn.addEventListener("mouseenter", () => { if (matchMedia("(hover: hover)").matches) show(); });
-      btn.addEventListener("mouseleave", () => { if (matchMedia("(hover: hover)").matches) purDatesPopClose(); });
-    });
     // Every pack of the chosen week at once, on its dates.
     const allBtn0 = box.querySelector("[data-purwkall]");
     if (allBtn0) allBtn0.addEventListener("click", () => {
