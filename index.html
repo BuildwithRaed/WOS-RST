@@ -17155,15 +17155,17 @@ let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
 const GALLERY_BIG_THUMB = new Set(["City Skin", "Teleport Skin", "Private Chat", "Rally"]);
 async function renderSkinGallery() {
   const seq = RENDER_SEQ;
-  const [ISLAND_CATEGORIES, , allSkinsRaw] = await Promise.all([
+  const [ISLAND_CATEGORIES, , allSkinsRaw, galleryCats] = await Promise.all([
     ensureIslandCategories(),
     ensureGalleryUncounted(),
     sb(`skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
+    // The order set in Admin → Skins (Move left / right).
+    dashCached("gallery_cats", () => sb(`skin_page_categories?page=eq.gallery&select=category,sort_order&order=sort_order.asc`)).catch(() => []),
   ]);
   const skins = allSkinsRaw.filter(
     (s) => !ISLAND_CATEGORIES.has(s.category) && s.category !== "Facility" && s.category !== "Alliance Tech"
   );
-  const CATEGORY_ORDER = ["City Skin", "Frame", "Teleport Skin", "Name Card", "Private Chat", "Chief Profile", "Rally"];
+  const CATEGORY_ORDER = galleryCats && galleryCats.length ? galleryCats.map((c) => c.category) : ["City Skin", "Frame", "Teleport Skin", "Name Card", "Private Chat", "Chief Profile", "Rally"];
   const categories = [...new Set(skins.map((s) => s.category))].sort((a, b) => {
     const ia = CATEGORY_ORDER.indexOf(a);
     const ib = CATEGORY_ORDER.indexOf(b);
@@ -22066,6 +22068,7 @@ const GAME_RULE_GROUPS = [
   { key: "heroes", label: "Heroes, shards & widgets" },
   { key: "trades", label: "Trades & chests" },
   { key: "packs", label: "Packs & lab" },
+  { key: "pages", label: "Pages" },
 ];
 let GAME_RULES = null; // built on first use (needs every constant above)
 function gameRules() {
@@ -22130,12 +22133,25 @@ function gameRules() {
       cols: [{ key: "tier", label: "Tier", type: "num" }, { key: "cost", label: "FC cost", type: "num" }, { key: "returns", label: "Returns (count:chance, …)", type: "text" }],
       get: () => RFC_LAB_TIERS.map((t) => ({ tier: t.tier, cost: t.cost, returns: t.returns.map(([n, c]) => `${n}:${c}`).join(", ") })),
       set: (rows) => ruleSetArray(RFC_LAB_TIERS, rows.filter((r) => r.tier).map((r) => ({ tier: Number(r.tier), cost: Number(r.cost) || 0, returns: String(r.returns || "").split(",").map((x) => x.split(":").map(Number)).filter((a) => a.length === 2 && a.every(Number.isFinite)) }))) },
+    { key: "galleryBig", group: "pages", label: "Cosmetics with big pictures", help: "Cosmetics categories whose pictures are shown bigger (less space around them). Also switched in Admin → Skins → ⋯ Category.",
+      cols: [{ key: "category", label: "Category", type: "text" }],
+      get: () => [...GALLERY_BIG_THUMB].map((c) => ({ category: c })),
+      set: (rows) => { GALLERY_BIG_THUMB.clear(); rows.forEach((r) => { if (r.category) GALLERY_BIG_THUMB.add(String(r.category).trim()); }); } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
   return GAME_RULES;
 }
 function gameRulesSaved() { const v = siteConfig("game_rules", null); return v && typeof v === "object" ? v : {}; }
+// Saves one rule from another Admin screen (same as its Save in Rules & Timeline).
+async function saveGameRule(key, value) {
+  const r = gameRules().find((x) => x.key === key);
+  if (!r) return;
+  const next = { ...gameRulesSaved() };
+  if (JSON.stringify(value) === JSON.stringify(r.def)) delete next[key]; else next[key] = value;
+  await saveSiteConfig("game_rules", next);
+  afterGameRulesChange();
+}
 // Puts the built-in values back, then the admin's saved ones on top.
 function applyGameRules() {
   const saved = gameRulesSaved();
@@ -24938,7 +24954,7 @@ async function renderAdminIslands(body) {
 // Skin Gallery / Islands categories (design A): one row of chips + a
 // "⋯ Category" menu (new, rename, move, delete — wired by
 // wireAdminCategoryReorder). cats = [{ id, category, sort_order }] in order.
-function adminCatHeaderHtml(cats, activeCat) {
+function adminCatHeaderHtml(cats, activeCat, opts = {}) {
   const idx = cats.findIndex((c) => c.category === activeCat), act = cats[idx];
   return `<div class="admc-cats"><div class="adm-chips-row">${cats.map((c) => `<button type="button" class="adm-chip${c.category === activeCat ? " on" : ""}" data-catselect="${esc(c.category)}">${esc(c.category)}</button>`).join("")}</div>
     <details class="admc-catmenu"><summary class="btn ghost small">&#8943; Category</summary><div class="admc-catpop">
@@ -24946,6 +24962,7 @@ function adminCatHeaderHtml(cats, activeCat) {
       ${act ? `<button type="button" data-catrename="${act.id}">Rename "${esc(act.category)}"</button>
       <button type="button" data-catmoveup="${act.id}" ${idx === 0 ? "disabled" : ""}>&#8592; Move left</button>
       <button type="button" data-catmovedown="${act.id}" ${idx === cats.length - 1 ? "disabled" : ""}>Move right &#8594;</button>
+      ${opts.big ? `<button type="button" data-catbig="${esc(act.category)}">Big pictures: ${GALLERY_BIG_THUMB.has(act.category) ? "on &#10003;" : "off"}</button>` : ""}
       <button type="button" data-catdelete="${act.id}" style="color:var(--danger);">Delete "${esc(act.category)}"</button>` : ""}
     </div></details></div>`;
 }
@@ -24984,9 +25001,17 @@ function wireAdminCategoryReorder(container, page, cats, onChange) {
     try {
       await sb(`skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(c.category)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ category: name }) });
       await sb(`skin_page_categories?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ category: name }) });
+      // The "big pictures" setting follows the new name.
+      if (page === "gallery" && GALLERY_BIG_THUMB.has(c.category)) await saveGameRule("galleryBig", [...GALLERY_BIG_THUMB].map((x) => ({ category: x === c.category ? name : x })));
       dashDataChanged("skins"); toast("Category renamed");
       if (page === "islands") ADMIN_ACTIVE_ISLAND_CAT = name; else ADMIN_ACTIVE_SKIN_CAT = name;
     } catch (err) { toast(err.message || "Couldn't rename", true); }
+    onChange();
+  }));
+  container.querySelectorAll("[data-catbig]").forEach((btn) => btn.addEventListener("click", async () => {
+    const cat = btn.dataset.catbig, set = new Set(GALLERY_BIG_THUMB);
+    if (set.has(cat)) set.delete(cat); else set.add(cat);
+    try { await saveGameRule("galleryBig", [...set].map((x) => ({ category: x }))); toast("Saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
     onChange();
   }));
   container.querySelectorAll("[data-catdelete]").forEach((btn) => btn.addEventListener("click", async () => {
@@ -25008,7 +25033,7 @@ async function renderAdminSkinGallery(body) {
   if (!ADMIN_ACTIVE_SKIN_CAT || !catNames.includes(ADMIN_ACTIVE_SKIN_CAT)) ADMIN_ACTIVE_SKIN_CAT = catNames[0];
 
   body.innerHTML = `
-    ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_SKIN_CAT)}
+    ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_SKIN_CAT, { big: true })}
     <div id="adminSkinGalleryBody"></div>
   `;
 
