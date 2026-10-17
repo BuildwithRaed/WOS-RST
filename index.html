@@ -1253,6 +1253,12 @@ input,select,textarea{
   .rl-fields label{ display:flex; flex-direction:column; gap:3px; font-size:12.5px; }
   .rl-fields label span{ color:var(--muted); }
   .rl-foot{ display:flex; align-items:center; gap:8px; margin-top:12px; }
+  .ds-row{ display:flex; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--line); }
+  .ds-n{ flex:1 1 auto; min-width:0; font-size:13.5px; }
+  .ds-n small{ display:block; color:var(--muted); font-size:11.5px; }
+  .ds-grid{ border:1px solid var(--line); border-radius:12px; padding:10px; margin:2px 0 8px; background:var(--panel-2); }
+  .ds-cells{ display:grid; grid-template-columns:auto repeat(4, minmax(0, 1fr)); gap:6px; align-items:center; font-size:12.5px; }
+  .ds-cells input{ width:100%; min-width:0; padding:5px 6px; font-size:16px; }
   .mn-group{ border:1px solid var(--line); border-radius:14px; background:var(--panel); padding:10px 12px; margin-bottom:12px; }
   .mn-ghead, .mn-prow{ display:flex; align-items:center; gap:8px; }
   .mn-gname{ flex:1 1 auto; min-width:0; font-weight:700; font-size:14px; }
@@ -4629,6 +4635,34 @@ const SOURCE_DISPLAY_NAME = {
 function displaySourceName(key) {
   return dataName(SOURCE_DISPLAY_NAME[key] || key);
 }
+// Dashboard sources (Admin → Dashboard sources): site_config
+// "dashboard_sources" = { extra: [buff categories counted as flat bonuses],
+// order: [source keys, breakdown order] }. Nothing saved = the built-in lists.
+// The breakdown order of the built-in sources (matches the menu).
+const DASH_SOURCE_ORDER_DEFAULT = [
+  "VIP", "Jero", "Natalia", "Skins", "Islands", "Roster Heroes",
+  "Chief", "Chief Bonus", "Charm", "Hero Gears",
+  "Pets Level", "Pets Refine",
+  "Facility", "Alliance Buff", "Album Buff", "Gallery",
+  "Research Center", "T11 Helios Research", "T12 Research", "Experts", "Experts Research",
+];
+function dashSourcesConfig() {
+  const v = typeof siteConfig === "function" ? siteConfig("dashboard_sources", null) : null;
+  return { extra: v && Array.isArray(v.extra) ? v.extra.filter((x) => typeof x === "string" && x) : [], order: v && Array.isArray(v.order) ? v.order.filter((x) => typeof x === "string" && x) : [] };
+}
+// The breakdown order: built-in order with the special-skill heroes after
+// Natalia and the extra sources last, then the admin's order on top.
+function dashSourceOrderBase(heroes, extra) {
+  const list = DASH_SOURCE_ORDER_DEFAULT.slice();
+  (heroes || []).filter((h) => !list.includes(h)).forEach((h, i) => list.splice(list.indexOf("Natalia") + 1 + i, 0, h));
+  (extra || []).filter((x) => !list.includes(x)).forEach((x) => list.push(x));
+  return list;
+}
+function dashSourceOrder(heroes, extra) {
+  const list = dashSourceOrderBase(heroes, extra);
+  const saved = dashSourcesConfig().order.filter((k) => list.includes(k));
+  return saved.length ? [...saved, ...list.filter((k) => !saved.includes(k))] : list;
+}
 
 // Dashboard data kept in memory between visits, so coming back to the
 // Dashboard (or redrawing it after a roster change) needs no requests.
@@ -4732,6 +4766,8 @@ async function renderOverview(opts = {}) {
   // and any added in Admin) counts by its stars: max = the hero's value in the
   // "<troop> <stat>" row, now = max / 5 × stars.
   const SPECIAL_HEROES = specialSkillHeroNames(columns.map((c) => c.category || c.name));
+  // Flat bonus sources the admin added (counted as their values are).
+  const EXTRA_SOURCES = dashSourcesConfig().extra;
   const SPECIAL_HERO_SET = new Set(SPECIAL_HEROES);
   const HERO_STARS = {};
   (await Promise.all(SPECIAL_HEROES.map((h) => (h === "Jero" ? JERO_SAVED : h === "Natalia" ? NATALIA_SAVED : loadCalcState(`hero_stars_${h.toLowerCase()}`))))).forEach((s, i) => { HERO_STARS[SPECIAL_HEROES[i]] = (s || {})["__shared__"] ?? 0; });
@@ -4841,17 +4877,13 @@ async function renderOverview(opts = {}) {
   // Fixed display order for the stat breakdown (top-3 preview and full
   // modal), matching the order sources appear in the sidebar. Anything
   // not in this list falls back to value-sorted order at the end.
-  const SOURCE_DISPLAY_ORDER = [
-    "VIP", "Jero", "Natalia", "Skins", "Islands", "Roster Heroes",
-    "Chief", "Chief Bonus", "Charm", "Hero Gears",
-    "Pets Level", "Pets Refine",
-    "Facility", "Alliance Buff", "Album Buff", "Gallery",
-    "Research Center", "T11 Helios Research", "T12 Research", "Experts", "Experts Research",
-  ];
-  // Heroes added in Admin → Heroes Special Skills count like Jero / Natalia
-  // (listed after them in the breakdown).
-  SPECIAL_HEROES.filter((h) => !SOURCE_DISPLAY_ORDER.includes(h)).forEach((h, i) => SOURCE_DISPLAY_ORDER.splice(SOURCE_DISPLAY_ORDER.indexOf("Natalia") + 1 + i, 0, h));
+  // (Admin → Dashboard sources can change it; heroes added in Admin → Heroes
+  // Special Skills come after Natalia, extra sources last.)
+  const SOURCE_DISPLAY_ORDER = dashSourceOrder(SPECIAL_HEROES, EXTRA_SOURCES);
+  // Heroes added in Admin → Heroes Special Skills count like Jero / Natalia;
+  // the admin's extra sources count their values as they are.
   SPECIAL_HEROES.forEach((h) => { ALLOWED_STAT_CATEGORIES.add(h); if (!LIVE_CALC_KEYS.includes(h)) LIVE_CALC_KEYS.push(h); });
+  EXTRA_SOURCES.forEach((x) => ALLOWED_STAT_CATEGORIES.add(x));
   function sortBySourceOrder(entries) {
     return entries.slice().sort((a, b) => {
       const ia = SOURCE_DISPLAY_ORDER.indexOf(a[0]);
@@ -18181,7 +18213,8 @@ async function renderCollectionGalleryPage() {
 // isn't one of the app's own and isn't counted as a flat bonus source.
 const SPECIAL_HERO_META = { Jero: { name: "Jeronimo", img: "icons/jeronimo.png" }, Natalia: { name: "Natalia", img: "icons/natalia.png" } };
 function specialSkillHeroNames(catNames) {
-  return [...new Set(catNames)].filter((n) => n && !ADMIN_RESERVED_BUFF_CATEGORIES.has(n));
+  const extra = new Set(dashSourcesConfig().extra);
+  return [...new Set(catNames)].filter((n) => n && !ADMIN_RESERVED_BUFF_CATEGORIES.has(n) && !extra.has(n));
 }
 async function renderExtraBonusHeroes() {
   const seq = RENDER_SEQ;
@@ -21928,6 +21961,7 @@ const ADMIN_TABLES = {
   herogearprog: { label: "Heroes Gears", group: "game", icon: "🔧", desc: "Mastery, enhance, mithril", words: "hero gear mastery enhance mithril" },
   heroes: { label: "Heroes", group: "game", icon: "⚔", desc: "Heroes, Gen, shards", words: "hero gen rarity shards widgets stars" },
   herostars: { label: "Heroes Special Skills", group: "game", icon: "✨", desc: "Special skill bonuses", words: "skill" },
+  dashsources: { label: "Dashboard sources", group: "game", icon: "📊", desc: "What the Dashboard adds up, new bonus sources", words: "dashboard source stat buff bonus category count order breakdown total" },
   vip: { label: "VIP", group: "game", icon: "👑", desc: "VIP tiers", words: "vip" },
   alliance: { label: "Alliance", group: "game", icon: "🏰", desc: "Facility and tech", words: "facility alliance tech" },
   centerresearch: { label: "Research", group: "game", icon: "🔬", desc: "Research Center, T11, T12", words: "research t11 t12 helios" },
@@ -22060,6 +22094,7 @@ async function drawAdminSection(key, body) {
   else if (key === "currencies") await renderAdminCurrencies(body);
   else if (key === "skins") await renderAdminSkinsGroup(body);
   else if (key === "herostars") await renderAdminHeroStars(body);
+  else if (key === "dashsources") await renderAdminDashSources(body);
 }
 
 // ---- Menu & pages: rename, order, move between groups, page notes ----
@@ -22913,6 +22948,119 @@ async function renderAdminCurrencies(body) {
 }
 
 // ---- Contact us settings (site-wide, stored in site_config "contact") ----
+// ---- Dashboard sources: order of the breakdown + simple bonus sources ----
+// A new bonus from the game can be added as a "flat" source: a buff column of
+// its own whose numbers (per troop and stat) count on everyone's Dashboard as
+// they are. Saved in site_config "dashboard_sources" = { extra, order }.
+const DASH_SOURCE_KIND = { "Roster Heroes": "Heroes roster", Skins: "Skin Gallery page", Islands: "Islands page" };
+async function renderAdminDashSources(body) {
+  await ensureSiteConfig();
+  await ensureBuffTable();
+  if (!BUFF_TABLE_ID) { body.innerHTML = `<p class="desc">The buff table isn't there yet.</p>`; return; }
+  const [columns, rows] = await Promise.all([
+    sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category,sort_order&order=sort_order.asc`),
+    sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(id,value,column_id)&order=sort_order.asc`),
+  ]);
+  const cfg = dashSourcesConfig();
+  const catOf = (c) => c.category || c.name;
+  const heroes = specialSkillHeroNames(columns.map(catOf));
+  const newHeroes = heroes.filter((h) => !SPECIAL_HERO_META[h]);
+  let extra = cfg.extra.slice();
+  let order = dashSourceOrder(heroes, extra);
+  let open = null;
+  const TROOPS = ["Infantry", "Lancers", "Marksman"], STATS = [["ATT", "Attack"], ["DEF", "Defense"], ["DMG", "Lethality"], ["HP", "Health"]];
+  const kindOf = (k) => (extra.includes(k) ? "flat bonus (counted as typed)" : heroes.includes(k) ? "special-skill hero (by stars)" : DASH_SOURCE_KIND[k] || "page (its own data)");
+  const save = async (msg) => {
+    const sameOrder = JSON.stringify(order) === JSON.stringify(dashSourceOrderBase(heroes, extra));
+    const value = { ...(extra.length ? { extra } : {}), ...(sameOrder ? {} : { order }) };
+    await saveSiteConfig("dashboard_sources", value);
+    dashDataChanged(); dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+    loadBuffCategories().catch(() => {});
+    toast(msg);
+  };
+  const draw = () => {
+    body.innerHTML = `<p class="desc" style="margin:0 0 10px;">The Dashboard adds these up for each troop and stat (top numbers and the breakdown pop-up). Pages count from their own data; special-skill heroes by their stars. When the game adds a new kind of bonus, add it below as a simple bonus source and type its numbers: it counts on everyone's Dashboard.</p>
+      <div class="rl-card"><div class="rl-h"><b>Sources, in breakdown order</b></div>
+        <div style="margin-top:6px;">${order.map((k, i) => `<div class="ds-row"><span class="ds-n"><b>${esc(displaySourceName(k))}</b>${displaySourceName(k) !== k ? ` <span class="meta">(${esc(k)})</span>` : ""}<small>${esc(kindOf(k))}</small></span>
+          <span class="rl-rowbtns">${extra.includes(k) ? `<button type="button" data-dsedit="${esc(k)}" title="Numbers" aria-label="numbers">&#9998;</button><button type="button" data-dsoff="${esc(k)}" title="Stop counting" aria-label="stop counting">&#10005;</button>` : ""}<button type="button" data-dsmove="${i}|-1" ${i === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-dsmove="${i}|1" ${i === order.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button></span></div>
+          ${open === k ? numbersHtml(k) : ""}`).join("")}</div>
+        <div class="rl-foot"><button type="button" class="btn ghost small" data-dsreset ${cfg.order.length ? "" : "disabled"}>Built-in order</button><span style="flex:1"></span><button type="button" class="btn small" data-dssave>Save order</button></div>
+      </div>
+      <div class="rl-card" style="margin-top:12px;"><div class="rl-h"><b>Add a simple bonus source</b></div>
+        <p class="desc" style="margin:4px 0 8px;">A new bonus with fixed numbers per troop and stat (e.g. a new building or event buff). After adding it, tap &#9998; to type its numbers.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="text" data-dsname placeholder="Name, e.g. Frost Star" maxlength="40" style="flex:1 1 200px; min-width:0;" /><button type="button" class="btn small" data-dsadd>Add</button></div>
+        ${newHeroes.length ? `<p class="meta" style="font-size:11.5px; margin:8px 0 0;">Columns added in Admin count as special-skill heroes (by stars). Tick one to count it as a flat bonus instead: ${newHeroes.map((h) => `<label style="margin-inline-end:8px;"><input type="checkbox" data-dsflat="${esc(h)}" /> ${esc(h)}</label>`).join("")}</p>` : ""}
+      </div>`;
+    body.querySelectorAll("[data-dsmove]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.dsmove.split("|").map(Number); const [x] = order.splice(i, 1); order.splice(i + d, 0, x); draw(); }));
+    body.querySelector("[data-dssave]").addEventListener("click", async () => { try { await save("Order saved"); cfg.order = order.slice(); draw(); } catch (err) { toast(err.message || "Couldn't save", true); } });
+    body.querySelector("[data-dsreset]").addEventListener("click", async () => { order = dashSourceOrderBase(heroes, extra); try { await save("Built-in order"); cfg.order = []; draw(); } catch (err) { toast(err.message || "Couldn't save", true); } });
+    body.querySelectorAll("[data-dsedit]").forEach((b) => b.addEventListener("click", () => { open = open === b.dataset.dsedit ? null : b.dataset.dsedit; draw(); }));
+    body.querySelectorAll("[data-dsoff]").forEach((b) => b.addEventListener("click", async () => {
+      const k = b.dataset.dsoff;
+      if (!confirm(`Stop counting "${k}" on the Dashboard? Its numbers stay (add it again with the same name to count them).`)) return;
+      extra = extra.filter((x) => x !== k); order = order.filter((x) => x !== k);
+      try { await save("Not counted any more"); } catch (err) { toast(err.message || "Couldn't save", true); }
+      renderAdminDashSources(body);
+    }));
+    body.querySelectorAll("[data-dsflat]").forEach((cb) => cb.addEventListener("change", async () => {
+      const k = cb.dataset.dsflat;
+      if (!confirm(`Count "${k}" as a flat bonus (its numbers as typed) instead of a special-skill hero?`)) { cb.checked = false; return; }
+      extra.push(k);
+      try { await save("Counted as a flat bonus"); } catch (err) { toast(err.message || "Couldn't save", true); }
+      renderAdminDashSources(body);
+    }));
+    body.querySelector("[data-dsadd]").addEventListener("click", async () => {
+      const name = body.querySelector("[data-dsname]").value.trim();
+      if (!name) { toast("Enter a name", true); return; }
+      const taken = new Set([...columns.map(catOf), ...DASH_SOURCE_ORDER_DEFAULT, "Pets Level", "Pets Refine", "VIP", "Roster Heroes"]);
+      if (ADMIN_RESERVED_BUFF_CATEGORIES.has(name) || [...taken].some((x) => x.toLowerCase() === name.toLowerCase())) { toast("That name is already used — pick another", true); return; }
+      try {
+        const maxOrder = columns.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
+        await sb(`buff_columns`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name, category: name, sort_order: maxOrder + 1 }) });
+        extra.push(name); order.push(name);
+        await save("Source added — now type its numbers");
+        open = name;
+      } catch (err) { toast(err.message || "Couldn't add", true); return; }
+      renderAdminDashSources(body).then(() => { const b = [...body.querySelectorAll("[data-dsedit]")].find((x) => x.dataset.dsedit === name); if (b && !body.querySelector("[data-dsgrid]")) b.click(); });
+    });
+    const grid = body.querySelector("[data-dsgrid]");
+    if (grid) grid.querySelector("[data-dsgridsave]").addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget, col = columns.find((c) => catOf(c) === grid.dataset.dsgrid);
+      if (!col) { toast("Column not found", true); return; }
+      btn.disabled = true;
+      try {
+        for (const inp of grid.querySelectorAll("[data-dscell]")) {
+          if (inp.value === inp.dataset.orig) continue;
+          const rowName = inp.dataset.dscell, v = inp.value === "" ? null : Number(inp.value);
+          let row = rows.find((r) => r.name.toLowerCase() === rowName.toLowerCase());
+          if (!row) {
+            if (v == null) continue;
+            const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+            [row] = await sb(`buff_rows`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name: rowName, sort_order: maxOrder + 1 }) });
+            row.buff_cells = []; rows.push(row);
+          }
+          const cell = (row.buff_cells || []).find((c) => c.column_id === col.id);
+          if (cell) { await sb(`buff_cells?id=eq.${cell.id}`, { method: "PATCH", body: JSON.stringify({ value: v }) }); cell.value = v; }
+          else if (v != null) { const [made] = await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: row.id, column_id: col.id, value: v }) }); row.buff_cells.push(made || { column_id: col.id, value: v }); }
+          inp.dataset.orig = inp.value;
+        }
+        dashDataChanged(); dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+        toast("Numbers saved");
+      } catch (err) { toast(err.message || "Couldn't save", true); }
+      btn.disabled = false;
+    });
+  };
+  // The numbers of one flat source: troops × stats.
+  function numbersHtml(k) {
+    const col = columns.find((c) => catOf(c) === k);
+    const valOf = (rowName) => { const r = rows.find((x) => x.name.toLowerCase() === rowName.toLowerCase()); const c = r && col && r.buff_cells.find((x) => x.column_id === col.id); return c && c.value != null ? String(c.value) : ""; };
+    return `<div class="ds-grid" data-dsgrid="${esc(k)}">${col ? "" : `<p class="meta">No column named "${esc(k)}" in the buff table.</p>`}
+      <div class="ds-cells"><span></span>${STATS.map(([s]) => `<span class="meta">${esc(s)} %</span>`).join("")}
+      ${TROOPS.map((tr) => `<b>${esc(tr)}</b>${STATS.map(([s]) => { const n = `${tr} ${s}`, v = valOf(n); return `<input type="number" step="any" inputmode="decimal" data-dscell="${esc(n)}" data-orig="${esc(v)}" value="${esc(v)}" aria-label="${esc(n)}" />`; }).join("")}`).join("")}</div>
+      <div class="rl-foot"><span class="meta" style="font-size:11.5px;">Empty = doesn't change that stat.</span><span style="flex:1"></span><button type="button" class="btn small" data-dsgridsave>Save numbers</button></div></div>`;
+  }
+  draw();
+}
 async function renderAdminContact(body) {
   await ensureSiteConfig();
   const cfg = siteConfig("contact", {}) || {};
