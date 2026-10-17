@@ -449,6 +449,33 @@
   .pur-follow{ margin:0 0 6px; }
   .pur-m-ver{ margin:6px 0 10px; }
   .pur-m-ver button span{ white-space:normal; font-size:10px; }
+  .pur-cl-head{ display:flex; align-items:center; gap:8px; }
+  .pur-cl-swap{ margin-inline-start:auto; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:15px; cursor:pointer; }
+  .pur-cl-wk{ margin-top:6px; font-size:14px; }
+  .pur-cl-big{ display:flex; align-items:baseline; gap:8px; margin:2px 0 4px; }
+  .pur-cl-big b{ font-size:26px; letter-spacing:-.3px; }
+  .pur-cl-line{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:12px; margin:4px 0; }
+  .pur-wbs{ display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; margin:10px 0 6px; padding-bottom:2px; }
+  .pur-wbs::-webkit-scrollbar{ display:none; }
+  .pur-wb{ flex:0 0 auto; min-width:104px; display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 9px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font:inherit; cursor:pointer; }
+  .pur-wb span{ font-size:12px; color:var(--muted); }
+  .pur-wb b{ font-size:15px; }
+  .pur-wb small{ font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .pur-wb i{ font-style:normal; font-size:11px; font-weight:600; }
+  .pur-wb i.pur-cmp-target{ color:#e0b25a; background:none; } .pur-wb i.pur-cmp-budget{ color:var(--good); background:none; }
+  .pur-wb.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .pur-wb.on span, .pur-wb.on small{ color:#dfe9f5; }
+  .pur-cl-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px; }
+  .pur-cl-row.open{ border-top-color:var(--ice); }
+  .pur-cl-ic{ width:26px; height:26px; flex:0 0 26px; display:flex; align-items:center; justify-content:center; }
+  .pur-cl-ic img{ max-width:26px; max-height:26px; }
+  .pur-cl-n{ flex:1 1 auto; min-width:0; }
+  .pur-cl-n i{ font-style:normal; color:var(--muted); font-size:10px; }
+  .pur-cl-p{ font-weight:700; white-space:nowrap; }
+  .pur-cl-add{ width:30px; height:30px; flex:0 0 30px; border:0; border-radius:8px; background:var(--ice-dim); color:var(--frost); font-size:17px; cursor:pointer; }
+  .pur-cl-add.off{ background:none; }
+  .pur-cl-ex{ margin:0 0 8px; padding:8px 10px; border-radius:10px; background:var(--panel-2); font-size:11.5px; display:flex; flex-direction:column; gap:5px; }
+  .pur-cl-foot{ display:flex; justify-content:space-between; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:13px; }
   .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
   .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
@@ -3721,6 +3748,11 @@ const T = {
   pur_wk_none: { en: "Nothing to buy this week." },
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
   pur_following: { en: "Following:" },
+  pur_n_packs: { en: "{n} packs" },
+  pur_other_would: { en: "{plan} plan would be {v}" },
+  pur_show_packs: { en: "Show packs" },
+  pur_hide_packs: { en: "Hide packs" },
+  pur_next_week: { en: "Next week" },
   pur_tag_both: { en: "both" },
   pur_tag_target: { en: "target" },
   pur_tag_budget: { en: "budget" },
@@ -6560,6 +6592,8 @@ function purTablePopup(tb, opts) {
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 // The Add a pack form survives the phone reloading the page (sessionStorage).
+let PUR_SUG_OPEN = false; // My Purchases (admin): suggested packs list opened ("Show packs"), kept for the visit
+let PUR_SUG_ROW = null;   // the pack line opened in it ("week|row")
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
@@ -6855,7 +6889,57 @@ async function renderPurchasesPage() {
       const note = !m.same ? `${t("pur_tag_" + otherName)}: ${m.label} ×${m.n}` : m.n !== n ? t("pur_tag_counts").replace("{a}", t("pur_tag_" + follow)).replace("{n}", n).replace("{b}", t("pur_tag_" + otherName)).replace("{m}", m.n) : "";
       return `<span class="pur-cmp pur-cmp-both">${esc(t("pur_tag_both"))}</span> ${note ? `<span class="pur-cmp-note">${esc(note)}</span> ` : ""}`;
     };
-    box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
+    // Admin (owner picked C + B, 17 Oct 2026): a short summary of the chosen
+    // week; "Show packs" opens big week boxes and one line per pack (tap a line
+    // for its items, dates and the other plan's version; ＋ = Will buy).
+    const compactHtml = () => {
+      const counts = {};
+      if (cmp) list.forEach(([i]) => { const k = i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow; counts[k] = (counts[k] || 0) + 1; });
+      const bi = (() => {
+        const sp = plan.spend;
+        if (!sp || PUR_SUG_WEEK === "after" || follow !== "budget") return null;
+        const startOff = PUR_SUG_WEEK === 0 ? 0 : PUR_SUG_WEEK * 7 - monIdx;
+        const pd = sp.periods.find((x) => x.p === spendPeriodOf(startOff, sp.per)) || { spent: 0, avail: sp.amount };
+        const name = sp.per === "week" ? t("pur_wk_this") : new Date(packStartOfToday().getTime() + startOff * 86400000).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", timeZone: "UTC" });
+        return { name, spent: pd.spent, avail: pd.avail || sp.amount };
+      })();
+      const followName = cmp || plan.spend ? t(follow === "target" ? "budgets_view_target" : "budgets_view_budget") : "";
+      const canBuy = (i) => { const tb = sugTable(rows[i]); return !!tb && (rows[i].row != null || !plainPack(tb)); };
+      const rowHtml = ([i, xs]) => {
+        const r = rows[i], n = xs.reduce((a, x) => a + x.count, 0), tb = sugTable(r);
+        const first = Object.keys(r.gives || {}).find((k) => k !== "Gems" && r.gives[k] > 0);
+        const icon = first ? bpIcon({ name: first.replace(/ \(minutes\)$/, "") }) : null;
+        const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${i}`;
+        const kind = cmp ? (i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow) : null;
+        const m = kind === "both" ? sel.match.get(i) : null;
+        const star = m && (!m.same || m.n !== n) ? "*" : "";
+        const names = tb ? packUsedForNames(tb) : [];
+        const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0).slice(0, 6).map((k) => {
+          const v = r.gives[k] * n, ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
+          const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
+          return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
+        }).join("");
+        return `<div class="pur-cl-row${open ? " open" : ""}" data-purrow="${i}">
+          <span class="pur-cl-ic">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}</span>
+          <span class="pur-cl-n"><b>${esc(sugName(r).split(" · ").filter((part, k) => k === 0 || !part.includes(" / ")).join(" · "))}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
+          ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
+          <span class="pur-cl-p">${esc(packFmtMoney(r.price * n, r.currency))}</span>
+          ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
+        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(xs))} · ${esc(r.label)}${names.length ? ` · ${esc(names.join(" · "))}` : ""}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
+      };
+      const ki = keys.indexOf(PUR_SUG_WEEK), next = ki >= 0 && ki < keys.length - 1 ? keys[ki + 1] : null;
+      const boxes = `<div class="pur-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
+      return `<div class="pur-cl-head"><div class="t12x-title" style="margin:0;">${esc(t("pur_sug_title"))}</div>${cmp ? `<button type="button" class="pur-cl-swap" data-purfollow="${follow === "target" ? "budget" : "target"}" title="${esc(t("pur_follow_line"))}">&#8644;</button>` : ""}</div>
+        <div class="pur-cl-wk"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${followName ? ` <span class="meta">· ${esc(t("pur_following").replace(/:$/, "").toLowerCase())} ${esc(followName)}</span>` : ""}</div>
+        <div class="pur-cl-big"><b>${sel && sel.cost ? esc(money(sel.cost)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", list.length))}</span></div>
+        ${bi || (cmp && sel) ? `<div class="pur-cl-line">${bi ? `<span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)} ${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span>` : ""}${cmp && sel ? ` <span class="meta">${esc(t("pur_other_would").replace("{plan}", t("pur_tag_" + otherName)).replace("{v}", money(sel.alt || 0)))}</span>` : ""}</div>` : ""}
+        ${cmp ? `<div class="pur-cl-line">${["both", "target", "budget"].filter((k) => counts[k]).map((k) => `<span class="pur-cmp pur-cmp-${k}">${counts[k]} ${esc(t("pur_tag_" + k))}</span>`).join(" ")}</div>` : ""}
+        ${PUR_SUG_OPEN ? boxes + (list.length ? `<div class="pur-cl-list">${list.map(rowHtml).join("")}</div>` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`) : ""}
+        ${list.some(([i]) => i < nFollow && canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purwkall>+ ${esc(t("pur_wk_buy_all").replace("{week}", wkName(PUR_SUG_WEEK).toLowerCase()))}</button>` : ""}
+        <div class="pur-cl-foot"><button type="button" class="linklike" data-purshow>${esc(t(PUR_SUG_OPEN ? "pur_hide_packs" : "pur_show_packs"))} ${PUR_SUG_OPEN ? "&#9662;" : "&#9656;"}</button>${next != null ? `<button type="button" class="linklike" data-purwk="${next}">${esc(t("pur_next_week"))} &#8250;</button>` : ""}</div>`;
+    };
+    if (IS_OWNER) box.innerHTML = compactHtml();
+    else box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
       const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
       const names = tb ? packUsedForNames(tb) : [];
       const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0).slice(0, 5).map((k) => {
@@ -6874,6 +6958,14 @@ async function renderPurchasesPage() {
       + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(money(total))}</b></div>`;
     box.querySelectorAll("[data-purwk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.purwk; PUR_SUG_WEEK = k === "after" ? k : Number(k); drawSug(); }));
     box.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
+    const showBtn = box.querySelector("[data-purshow]");
+    if (showBtn) showBtn.addEventListener("click", () => { PUR_SUG_OPEN = !PUR_SUG_OPEN; drawSug(); });
+    box.querySelectorAll("[data-purrow]").forEach((rw) => rw.addEventListener("click", (e) => {
+      if (e.target.closest("[data-pursug]")) return;
+      const k = `${PUR_SUG_WEEK}|${rw.dataset.purrow}`;
+      PUR_SUG_ROW = PUR_SUG_ROW === k ? null : k;
+      drawSug();
+    }));
     // Every pack of the chosen week at once, on its dates.
     const allBtn0 = box.querySelector("[data-purwkall]");
     if (allBtn0) allBtn0.addEventListener("click", () => {
