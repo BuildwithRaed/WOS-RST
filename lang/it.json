@@ -501,7 +501,7 @@
  "t:pack_reset_once": "Una volta sola",
  "t:pack_reset_stack": "Sempre — accumula fino a N giorni",
  "t:pack_stack_max": "giorni max in anticipo",
- "t:pack_stack_hint": "Nessun giorno di inizio. Ogni acquisto dà i giorni di “Ricompense giornaliere” sopra (7 se non impostati); le ricompense si contano quando arrivano.",
+ "t:pack_stack_hint": "Nessun giorno di inizio. Ogni acquisto dà i giorni di “Ricompense giornaliere dopo l'acquisto” (in Altro; 7 se non impostati); le ricompense si contano quando arrivano.",
  "t:pack_stack_text": "Sempre · {d} giorni per acquisto · fino a {cap} giorni in anticipo (max {n} alla volta)",
  "t:pack_stack_later": "compra {n} ora, il resto man mano che i giorni finiscono",
  "t:price_points_title": "Prezzi pacchetti",

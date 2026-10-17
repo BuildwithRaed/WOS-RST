@@ -501,7 +501,7 @@
  "t:pack_reset_once": "Solo una vez",
  "t:pack_reset_stack": "Cuando quieras: acumula hasta N días",
  "t:pack_stack_max": "días máx. por adelantado",
- "t:pack_stack_hint": "Sin día de inicio. Cada compra da los días de “Recompensas diarias” de arriba (7 si no se fija); las recompensas se cuentan según llegan.",
+ "t:pack_stack_hint": "Sin día de inicio. Cada compra da los días de “Recompensas diarias tras comprar” (en Más; 7 si no se fija); las recompensas se cuentan según llegan.",
  "t:pack_stack_text": "Cuando quieras · {d} días por compra · hasta {cap} días por adelantado (máx. {n} a la vez)",
  "t:pack_stack_later": "compra {n} ahora y el resto según pasen los días",
  "t:price_points_title": "Precios de paquetes",

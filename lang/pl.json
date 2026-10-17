@@ -501,7 +501,7 @@
  "t:pack_reset_once": "Tylko raz",
  "t:pack_reset_stack": "Zawsze — kumuluj do N dni",
  "t:pack_stack_max": "dni maks. naprzód",
- "t:pack_stack_hint": "Bez dnia startu. Każdy zakup daje dni z „Dziennych nagród” powyżej (7, jeśli nie ustawiono); nagrody liczone są w miarę napływu.",
+ "t:pack_stack_hint": "Bez dnia startu. Każdy zakup daje dni z „Dzienne nagrody po zakupie” (w sekcji Więcej; 7, jeśli nie ustawiono); nagrody liczone są w miarę napływu.",
  "t:pack_stack_text": "Zawsze · {d} dni na zakup · do {cap} dni naprzód (maks. {n} naraz)",
  "t:pack_stack_later": "kup {n} teraz, resztę w miarę upływu dni",
  "t:price_points_title": "Ceny paczek",

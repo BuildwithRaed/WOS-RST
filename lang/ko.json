@@ -500,7 +500,7 @@
 "t:pack_reset_once":"1회 한정",
 "t:pack_reset_stack":"언제든지 — 최대 N일 누적",
 "t:pack_stack_max":"일 최대 누적",
-"t:pack_stack_hint":"시작일 없음. 구매 1회당 위 ‘일일 보상’ 일수(미설정 시 7일)를 지급하며, 보상은 도착하는 대로 계산됩니다.",
+"t:pack_stack_hint":"시작일 없음. 구매 1회당 ‘구매 후 일일 보상’ 일수(기타 안, 미설정 시 7일)를 지급하며, 보상은 도착하는 대로 계산됩니다.",
 "t:pack_stack_text":"언제든지 · 구매당 {d}일 · 최대 {cap}일 누적 (한 번에 최대 {n}개)",
 "t:pack_stack_later":"지금 {n}개, 나머지는 일수가 줄면 구매",
 "t:price_points_title":"팩 가격",

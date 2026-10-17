@@ -500,7 +500,7 @@
 "t:pack_reset_once":"Yalnızca bir kez",
 "t:pack_reset_stack":"Her zaman — N güne kadar biriktir",
 "t:pack_stack_max":"gün en fazla ileri",
-"t:pack_stack_hint":"Başlangıç günü yok. Her alım yukarıdaki “Günlük ödüller” günlerini verir (ayarlı değilse 7); ödüller geldikçe sayılır.",
+"t:pack_stack_hint":"Başlangıç günü yok. Her alım “Satın alımdan sonra günlük ödüller” günlerini verir (Daha fazla altında; ayarlı değilse 7); ödüller geldikçe sayılır.",
 "t:pack_stack_text":"Her zaman · alım başına {d} gün · en fazla {cap} gün ileri (aynı anda maks {n})",
 "t:pack_stack_later":"şimdi {n} al, kalanını günler azaldıkça",
 "t:price_points_title":"Paket fiyatları",

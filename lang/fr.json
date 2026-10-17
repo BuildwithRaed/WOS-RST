@@ -501,7 +501,7 @@
  "t:pack_reset_once": "Une seule fois",
  "t:pack_reset_stack": "À tout moment — cumul jusqu'à N jours",
  "t:pack_stack_max": "jours max d'avance",
- "t:pack_stack_hint": "Pas de jour de début. Chaque achat donne les jours de « Récompenses quotidiennes » ci-dessus (7 si non réglé) ; les récompenses sont comptées à leur arrivée.",
+ "t:pack_stack_hint": "Pas de jour de début. Chaque achat donne les jours de « Récompenses quotidiennes après achat » (sous Plus ; 7 si non réglé) ; les récompenses sont comptées à leur arrivée.",
  "t:pack_stack_text": "À tout moment · {d} jours par achat · jusqu'à {cap} jours d'avance (max {n} à la fois)",
  "t:pack_stack_later": "en acheter {n} maintenant, le reste au fil des jours",
  "t:price_points_title": "Prix des packs",

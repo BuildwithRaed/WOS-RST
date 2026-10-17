@@ -500,7 +500,7 @@
 "t:pack_reset_once":"僅一次",
 "t:pack_reset_stack":"隨時 — 最多累積 N 天",
 "t:pack_stack_max":"天（最多提前）",
-"t:pack_stack_hint":"無開始日。每次購買提供上方「每日獎勵」的天數（未設定則為 7 天）；獎勵在發放時計算。",
+"t:pack_stack_hint":"無開始日。每次購買提供「購買後每日獎勵」的天數（在「更多」中；未設定則為 7 天）；獎勵在發放時計算。",
 "t:pack_stack_text":"隨時 · 每次購買 {d} 天 · 最多提前 {cap} 天（一次最多 {n} 個）",
 "t:pack_stack_later":"現在買 {n} 個，其餘隨天數消耗再買",
 "t:price_points_title":"禮包價格",
