@@ -227,8 +227,26 @@
   .bud-seg button b{ display:block; color:var(--frost); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-seg button.on{ background:var(--ice-dim); color:var(--frost); }
   .bud-seg button.late span{ color:var(--danger); }
-  .bud-spend-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:4px; }
-  .bud-spend-row input[type=number]{ width:110px; font-size:13px; padding:5px 8px; }
+  /* Budgets Settings = design A (owner, 17 Oct 2026): label left, control right, equal rows. */
+  .bset-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; padding:6px 0; border-top:1px solid var(--line); }
+  .t12x-k + .bset-row, .bset-sec + .bset-row{ border-top:0; }
+  .bset-l{ display:flex; flex-direction:column; min-width:0; font-size:13px; }
+  .bset-l small{ font-size:11px; color:var(--muted); }
+  .bset-c{ display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px; flex:0 1 auto; min-width:0; }
+  .bset-c input[type=date]{ width:142px; font-size:13px; padding:6px 8px; }
+  .bset-c select{ width:150px; font-size:13px; padding:6px 8px; }
+  .bset-c input[type=number]{ width:96px; flex:1 1 56px; min-width:56px; text-align:right; font-size:13px; padding:6px 8px; }
+  .bset-x{ width:32px; height:32px; padding:0 !important; flex:0 0 32px; }
+  .bset-sec{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0 2px; border-top:1px solid var(--line); }
+  .bset-sec b{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+  .bset-tag{ font-size:10px; padding:1px 7px; border-radius:999px; border:1px solid rgba(232,162,60,.5); color:var(--amber); font-weight:600; white-space:nowrap; }
+  .bset-sw{ appearance:none; -webkit-appearance:none; width:38px; height:22px; flex:0 0 38px; margin:0; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); position:relative; cursor:pointer; transition:background .15s; }
+  .bset-sw::after{ content:""; position:absolute; left:2px; top:2px; width:16px; height:16px; border-radius:50%; background:var(--muted); transition:left .15s, background .15s; }
+  .bset-sw:checked{ background:var(--ice-dim); border-color:var(--ice-dim); }
+  .bset-sw:checked::after{ left:18px; background:var(--frost); }
+  .bset-note{ font-size:10.5px; margin-top:6px; }
+  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } }
+  .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 10px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
   .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
   .bud-spend-per button.on{ background:var(--ice-dim); color:var(--frost); }
@@ -529,6 +547,10 @@
   .pur-cl-row:not(.on) .pur-cl-n, .pur-cl-row:not(.on) .pur-cl-p{ opacity:.6; }
   .pur-cl-foot{ display:flex; justify-content:space-between; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:13px; }
   .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
+  [data-purgospend]{ cursor:pointer; }
+  [data-purgospend] .pur-go{ color:var(--ice); white-space:nowrap; }
+  .bud-spend.flash{ animation:budSpendFlash 1.6s ease-out; border-radius:10px; outline:2px solid transparent; outline-offset:4px; }
+  @keyframes budSpendFlash{ 0%,40%{ outline-color:var(--ice); } 100%{ outline-color:transparent; } }
   .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
   .pur-acts .btn{ padding:3px 9px; }
@@ -3498,6 +3520,13 @@ const T = {
   spend_carry: { en: "Keep what I don't spend for next time" },
   spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
   spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
+  spend_amount: { en: "Amount" },
+  spend_week_s: { en: "week" },
+  spend_month_s: { en: "month" },
+  spend_carry_short: { en: "Keep what I don't spend" },
+  spend_carry_sub: { en: "Moves to next week / month" },
+  spend_admin_tag: { en: "Admin only" },
+  spend_visitors_note: { en: "Visitors get My budget when you tick it in Admin → Visibility." },
   spend_cant: { en: "Can't finish within this budget in the next 3 years. Try a bigger amount." },
   spend_kept_week: { en: "{v} kept for next week" },
   spend_kept_month: { en: "{v} kept for next month" },
@@ -3811,6 +3840,7 @@ const T = {
   pur_wk_none: { en: "Nothing to buy this week." },
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
   pur_following: { en: "Following:" },
+  pur_go_spend: { en: "Change ›" },
   pur_n_packs: { en: "{n} packs" },
   pur_other_would: { en: "{plan} plan would be {v}" },
   pur_tick_hint: { en: "Tick what you'll buy" },
@@ -4234,6 +4264,7 @@ function goToTab(tab, opts = {}) {
   holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
+  if (tab !== "budgets") BUDGET_FOCUS_SPEND = false;
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
   document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
@@ -6950,7 +6981,7 @@ async function renderPurchasesPage() {
     // Admin (owner, 17 Oct 2026): with My budget and a target both set, the list
     // follows one plan (switch, kept in this browser) and labels every pack
     // "both" / "target" / "budget"; the other plan's packs are listed too.
-    const cmp = IS_OWNER && plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
+    const cmp = (PUR_NEW_FOR_ALL || IS_OWNER) && plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
     let follow = "budget";
     try { if (localStorage.getItem("pur_follow") === "target") follow = "target"; } catch (e) { /* blocked */ }
     if (!cmp) follow = "budget";
@@ -7049,7 +7080,7 @@ async function renderPurchasesPage() {
       <div class="bud-seg pur-follow">${["target", "budget"].map((k) => { const pl = k === "target" ? cmp.targetPlan : plan; return `<button type="button" data-purfollow="${k}" class="${follow === k ? "on" : ""}">${esc(t(k === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(money(packPlanLocal(pl)))}</b><span>${esc(whenTxt(pl.days))}</span></button>`; }).join("")}</div>
       <div class="pur-legend">${["both", "target", "budget"].map((k) => `<span><span class="pur-cmp pur-cmp-${k}">${esc(t("pur_tag_" + k))}</span> ${esc(t("pur_tag_" + k + "_d"))}</span>`).join("")}</div>`
       // No target to compare with: just say which plan the list is (owner, 17 Oct 2026).
-      : plan.spend ? `<div class="pur-following">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(t(plan.spend.per === "week" ? "spend_week" : "spend_month"))})</span></div>` : "";
+      : plan.spend ? `<div class="pur-following" data-purgospend role="button" tabindex="0">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(t(plan.spend.per === "week" ? "spend_week" : "spend_month"))})</span> <span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
     // Design D: the budget of the chosen week (or its month) as a bar.
     const budBar = (() => {
       const sp = plan.spend;
@@ -7124,7 +7155,7 @@ async function renderPurchasesPage() {
       };
       const boxes = `<div class="pur-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
       return `<div class="pur-cl-head"><div class="t12x-title" style="margin:0;">${esc(t("pur_sug_title"))}</div>${cmp ? `<button type="button" class="pur-cl-swap" data-purfollow="${follow === "target" ? "budget" : "target"}" title="${esc(t("pur_follow_line"))}">&#8644;</button>` : ""}</div>
-        <div class="pur-cl-wk"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${followName ? ` <span class="meta">· ${esc(t("pur_following").replace(/:$/, "").toLowerCase())} ${esc(followName)}</span>` : ""}</div>
+        <div class="pur-cl-wk"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${followName ? ` <span class="meta"${follow === "budget" ? ` data-purgospend role="button" tabindex="0"` : ""}>· ${esc(t("pur_following").replace(/:$/, "").toLowerCase())} ${esc(followName)}${follow === "budget" ? ` <span class="pur-go">${esc(t("pur_go_spend"))}</span>` : ""}</span>` : ""}</div>
         <div class="pur-cl-big"><b>${sel && sel.cost ? esc(money(sel.cost)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", list.length))}</span></div>
         ${bi || (cmp && sel) ? `<div class="pur-cl-line">${bi ? `<span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)} ${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span>` : ""}${cmp && sel ? ` <span class="meta">${esc(t("pur_other_would").replace("{plan}", t("pur_tag_" + otherName)).replace("{v}", money(sel.alt || 0)))}</span>` : ""}</div>` : ""}
         ${cmp ? `<div class="pur-cl-line">${["both", "target", "budget"].filter((k) => counts[k]).map((k) => `<span class="pur-cmp pur-cmp-${k}">${counts[k]} ${esc(t("pur_tag_" + k))}</span>`).join(" ")}</div>` : ""}
@@ -7132,7 +7163,7 @@ async function renderPurchasesPage() {
         ${list.length ? `<div class="pur-cl-top"><span class="meta">${esc(t("pur_tick_hint"))}</span><button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button></div><div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${list.map(rowHtml).join("")}</div>${list.length > 4 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`}
         ${list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : ""}`;
     };
-    if (IS_OWNER) box.innerHTML = compactHtml();
+    if (PUR_NEW_FOR_ALL || IS_OWNER) box.innerHTML = compactHtml();
     else box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
       const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
       const names = tb ? packUsedForNames(tb) : [];
@@ -7152,6 +7183,12 @@ async function renderPurchasesPage() {
       + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(money(total))}</b></div>`;
     box.querySelectorAll("[data-purwk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.purwk; PUR_SUG_WEEK = k === "after" ? k : Number(k); drawSug(); }));
     box.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
+    // "Following: My budget" opens Budgets at the My budget box (owner, 17 Oct 2026).
+    box.querySelectorAll("[data-purgospend]").forEach((b) => {
+      const go = () => { BUDGET_FOCUS_SPEND = true; goToTab("budgets"); };
+      b.addEventListener("click", go);
+      b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
     // Admin list: tick what you'll buy, then one "Will buy" adds every date of
     // the ticked packs this week (owner, 17 Oct 2026).
     const tickBuy = box.querySelector("[data-purtickbuy]");
@@ -7245,7 +7282,7 @@ async function renderPurchasesPage() {
         return steps;
       };
       const stepModel = (r, tb) => {
-        if (!IS_OWNER || (Array.isArray(r.steps) && r.steps.some((st) => st.k))) return null;
+        if (!(PUR_NEW_FOR_ALL || IS_OWNER) || (Array.isArray(r.steps) && r.steps.some((st) => st.k))) return null;
         const tbs = (r.tables || []).map((id) => byId.get(String(id))).filter(Boolean);
         const tagsOf = () => (packLinkFor(tbs[0].id).linkSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag));
         // Nearest version to what the plan's step gives (gems left out).
@@ -13459,15 +13496,15 @@ function setPacksPageCurrency(code) {
 }
 // Budgets only offers the two currencies from the Packs page: US dollars and
 // the one picked there (with the store prices typed for it).
-function currencyPickerHtml(attr) {
+function currencyOptionsHtml(c, showingMine) {
+  return `<option value="" ${showingMine ? "" : "selected"}>USD $</option>
+      ${c ? `<option value="${c.code}" ${showingMine ? "selected" : ""}>${c.code} ${esc(c.symbol)}</option>` : ""}`;
+}
+// Just the currency dropdown (Budgets Settings rows put the label themselves).
+function currencySelectHtml(attr) {
   const mine = packsPageCurrency() || (DISPLAY_CURRENCY && DISPLAY_CURRENCY !== "USD" ? DISPLAY_CURRENCY : "");
   const c = PACK_CURRENCIES.find((x) => x.code === mine);
-  const showingMine = !!c && DISPLAY_CURRENCY === mine;
-  return `<label style="display:inline-flex; align-items:center; gap:6px; font-size:11px;"><span class="meta">${esc(t("show_prices_in"))}</span>
-    <select ${attr} style="font-size:11px; padding:3px 6px;">
-      <option value="" ${showingMine ? "" : "selected"}>USD $</option>
-      ${c ? `<option value="${c.code}" ${showingMine ? "selected" : ""}>${c.code} ${esc(c.symbol)}</option>` : ""}
-    </select></label>`;
+  return `<select ${attr}>${currencyOptionsHtml(c, !!c && DISPLAY_CURRENCY === mine)}</select>`;
 }
 // Money shown in the viewer's currency, worked out purchase by purchase with
 // the same store prices the pack labels use (never a sum converted at the
@@ -14954,6 +14991,10 @@ async function budgetCombinedFor(calcKey, groups, opts = {}) {
 let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
 let BUDGET_TARGET = undefined; // yyyy-mm-dd or ""
 let BUDGET_SPLIT_LATE = "cheapest"; // split plan: which plan the late pages use ("cheapest" | "fastest")
+// Visitors get the same Suggested packs list, Will buy pop-up and plan compare
+// as the admin (owner, 17 Oct 2026). false = visitors get the older layout back.
+const PUR_NEW_FOR_ALL = true;
+let BUDGET_FOCUS_SPEND = false; // set by My Purchases' "Following: My budget": scroll to the My budget box once
 let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (not saved)
 // What the Budgets page last computed, so ticking a box or coming back to
 // the page redraws instantly instead of re-adding everything up. Cleared
@@ -15441,20 +15482,19 @@ async function renderBudgetsPage(opts = {}) {
       <div class="t12x">
         <aside class="t12x-side">
           <div class="t12x-card t12x-settings"><div class="t12x-k">${esc(t("t12x_settings"))}</div>
-            <div class="bud-set">        <label style="display:flex; align-items:center; gap:8px; font-size:12px; flex-wrap:wrap;"><span class="meta">${esc(t("pack_target_by"))}</span><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" style="font-size:12px; padding:4px 6px;" />
-          ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
-          ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label></div>
-            <div class="bud-set" style="margin-top:8px;">${currencyPickerHtml('id="budgetsCurrency"')}</div>
+            <div class="bset-row"><span class="bset-l">${esc(t("pack_target_by"))}${targetDays != null ? `<small style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</small>` : `<small>${esc(t("pack_no_date"))}</small>`}</span>
+              <span class="bset-c"><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" aria-label="${esc(t("pack_target_by"))}" />${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
+            <div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div>
             ${spendFeatureOn() ? (() => {
               const sp = spendSettings(), amt = spendAmountLocal();
               const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
-              return `<div class="bud-set bud-spend" style="margin-top:10px;">
-                <div class="meta" style="font-size:11.5px; font-weight:700;">${esc(t("spend_title"))}</div>
-                <div class="bud-spend-row"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span>
-                  <span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month"))}</button></span></div>
-                <label style="display:flex; gap:6px; align-items:center; font-size:11.5px; margin-top:6px;"><input type="checkbox" data-spendcarry ${sp.carry ? "checked" : ""} /> ${esc(t("spend_carry"))}</label>
-                ${amt > 0 ? "" : `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("spend_hint"))}</div>`}
-                ${IS_OWNER && !visitorsToo ? `<div class="meta" style="font-size:10px; margin-top:4px;">&#128274; ${esc(t("spend_admin_only"))}</div>` : ""}
+              const adminOnly = IS_OWNER && !visitorsToo;
+              return `<div class="bud-spend">
+                <div class="bset-sec"><b>${esc(t("spend_title"))}</b>${adminOnly ? `<span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</div>
+                <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
+                <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
+                ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
+                ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
               </div>`;
             })() : ""}
           </div>
@@ -15466,6 +15506,16 @@ async function renderBudgetsPage(opts = {}) {
       </div>
     </div>`; });
   if (!planPending) holdPageHeight(false);
+  if (BUDGET_FOCUS_SPEND) {
+    const sb = content.querySelector(".bud-spend");
+    if (sb) {
+      // Scroll once; flash again when the packs plan redraws the page.
+      if (BUDGET_FOCUS_SPEND === true) sb.scrollIntoView({ block: "center" });
+      BUDGET_FOCUS_SPEND = planPending ? "scrolled" : false;
+      sb.classList.add("flash");
+      setTimeout(() => sb.classList.remove("flash"), 1700);
+    }
+  }
 
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
