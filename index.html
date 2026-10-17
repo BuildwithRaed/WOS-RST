@@ -549,8 +549,8 @@
   .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
   [data-purgospend]{ cursor:pointer; }
   [data-purgospend] .pur-go{ color:var(--ice); white-space:nowrap; }
-  .bud-spend.flash{ animation:budSpendFlash 1.6s ease-out; border-radius:10px; }
-  @keyframes budSpendFlash{ 0%,40%{ box-shadow:0 0 0 2px var(--ice); } 100%{ box-shadow:0 0 0 2px transparent; } }
+  .bud-spend.flash{ animation:budSpendFlash 1.6s ease-out; border-radius:10px; outline:2px solid transparent; outline-offset:4px; }
+  @keyframes budSpendFlash{ 0%,40%{ outline-color:var(--ice); } 100%{ outline-color:transparent; } }
   .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
   .pur-acts .btn{ padding:3px 9px; }
@@ -4264,6 +4264,7 @@ function goToTab(tab, opts = {}) {
   holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
+  if (tab !== "budgets") BUDGET_FOCUS_SPEND = false;
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
   document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
@@ -15517,8 +15518,9 @@ async function renderBudgetsPage(opts = {}) {
   if (BUDGET_FOCUS_SPEND) {
     const sb = content.querySelector(".bud-spend");
     if (sb) {
-      BUDGET_FOCUS_SPEND = false;
-      sb.scrollIntoView({ block: "center" });
+      // Scroll once; flash again when the packs plan redraws the page.
+      if (BUDGET_FOCUS_SPEND === true) sb.scrollIntoView({ block: "center" });
+      BUDGET_FOCUS_SPEND = planPending ? "scrolled" : false;
       sb.classList.add("flash");
       setTimeout(() => sb.classList.remove("flash"), 1700);
     }
