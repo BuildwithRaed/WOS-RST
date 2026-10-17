@@ -6980,7 +6980,7 @@ async function renderPurchasesPage() {
     // Admin (owner, 17 Oct 2026): with My budget and a target both set, the list
     // follows one plan (switch, kept in this browser) and labels every pack
     // "both" / "target" / "budget"; the other plan's packs are listed too.
-    const cmp = IS_OWNER && plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
+    const cmp = (PUR_NEW_FOR_ALL || IS_OWNER) && plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
     let follow = "budget";
     try { if (localStorage.getItem("pur_follow") === "target") follow = "target"; } catch (e) { /* blocked */ }
     if (!cmp) follow = "budget";
@@ -7162,7 +7162,7 @@ async function renderPurchasesPage() {
         ${list.length ? `<div class="pur-cl-top"><span class="meta">${esc(t("pur_tick_hint"))}</span><button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button></div><div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${list.map(rowHtml).join("")}</div>${list.length > 4 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`}
         ${list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : ""}`;
     };
-    if (IS_OWNER) box.innerHTML = compactHtml();
+    if (PUR_NEW_FOR_ALL || IS_OWNER) box.innerHTML = compactHtml();
     else box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
       const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
       const names = tb ? packUsedForNames(tb) : [];
@@ -7281,7 +7281,7 @@ async function renderPurchasesPage() {
         return steps;
       };
       const stepModel = (r, tb) => {
-        if (!IS_OWNER || (Array.isArray(r.steps) && r.steps.some((st) => st.k))) return null;
+        if (!(PUR_NEW_FOR_ALL || IS_OWNER) || (Array.isArray(r.steps) && r.steps.some((st) => st.k))) return null;
         const tbs = (r.tables || []).map((id) => byId.get(String(id))).filter(Boolean);
         const tagsOf = () => (packLinkFor(tbs[0].id).linkSet ? packLinkSetTags(tbs) : tbs.map(packOptionTag));
         // Nearest version to what the plan's step gives (gems left out).
@@ -14999,6 +14999,9 @@ async function budgetCombinedFor(calcKey, groups, opts = {}) {
 let BUDGET_SELECTED = null;    // { [calcKey]: true/false }, default: included
 let BUDGET_TARGET = undefined; // yyyy-mm-dd or ""
 let BUDGET_SPLIT_LATE = "cheapest"; // split plan: which plan the late pages use ("cheapest" | "fastest")
+// Visitors get the same Suggested packs list, Will buy pop-up and plan compare
+// as the admin (owner, 17 Oct 2026). false = visitors get the older layout back.
+const PUR_NEW_FOR_ALL = true;
 let BUDGET_FOCUS_SPEND = false; // set by My Purchases' "Following: My budget": scroll to the My budget box once
 let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" | "cheapest" (not saved)
 // What the Budgets page last computed, so ticking a box or coming back to
