@@ -244,6 +244,8 @@
   .bset-sw::after{ content:""; position:absolute; left:2px; top:2px; width:16px; height:16px; border-radius:50%; background:var(--muted); transition:left .15s, background .15s; }
   .bset-sw:checked{ background:var(--ice-dim); border-color:var(--ice-dim); }
   .bset-sw:checked::after{ left:18px; background:var(--frost); }
+  html[dir="rtl"] .bset-sw::after{ left:18px; }
+  html[dir="rtl"] .bset-sw:checked::after{ left:2px; }
   .bset-note{ font-size:10.5px; margin-top:6px; }
   @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } }
   .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 10px; }
@@ -14845,15 +14847,18 @@ function budgetPlanFingerprint(payload) {
 async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   const inp = budgetCombinedInput(pages, selected);
   const payload = { ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) };
+  // Nothing to plan gives no "My budget" candidates: mark them as an empty list,
+  // or Budgets keeps waiting for them and redraws forever.
+  const withCands = (r) => { if (payload.spendCands && r && !Array.isArray(r.budgetCands)) r.budgetCands = []; return r; };
   let key = null;
   try {
     key = budgetPlanFingerprint(payload);
     const kept = JSON.parse(localStorage.getItem(BUDGET_PLAN_STORE) || "null");
-    if (kept && kept.key === key && kept.res) return kept.res;
+    if (kept && kept.key === key && kept.res) return withCands(kept.res);
   } catch (e) { /* storage blocked: work it out */ }
   const res = await plannerRun("combined", payload);
   try { if (key) localStorage.setItem(BUDGET_PLAN_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked: not kept */ }
-  return res;
+  return withCands(res);
 }
 // "Recalculate": forget every kept copy and work everything out again.
 function budgetForceRecalc() {
@@ -15125,7 +15130,7 @@ function budgetSpendSimulate(plan, sp) {
 }
 const BUDGET_SPEND_MEMO = new WeakMap();
 function budgetSpendBest(combined) {
-  if (!combined || !Array.isArray(combined.budgetCands) || !spendActive()) return null;
+  if (!combined || !Array.isArray(combined.budgetCands) || !combined.budgetCands.length || !spendActive()) return null;
   const sp = { ...spendSettings(), fixed: budgetSpendFixed() };
   const sig = JSON.stringify(sp) + "|" + DISPLAY_CURRENCY;
   const kept = BUDGET_SPEND_MEMO.get(combined);
