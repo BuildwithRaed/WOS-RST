@@ -227,6 +227,14 @@
   .bud-seg button b{ display:block; color:var(--frost); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-seg button.on{ background:var(--ice-dim); color:var(--frost); }
   .bud-seg button.late span{ color:var(--danger); }
+  .bud-spend-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .bud-spend-row input[type=number]{ width:110px; font-size:13px; padding:5px 8px; }
+  .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
+  .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
+  .bud-spend-per button.on{ background:var(--ice-dim); color:var(--frost); }
+  .bud-spend-bar{ display:block; height:6px; margin:5px 0 3px; background:var(--panel-2); border-radius:4px; overflow:hidden; }
+  .bud-spend-bar i{ display:block; height:100%; background:var(--ice); border-radius:4px; }
+  .bud-spend-more > summary{ cursor:pointer; font-size:11.5px; padding:8px 0 2px; }
   .bud-line{ border-top:1px solid var(--line); }
   .bud-line:first-of-type{ margin-top:12px; }
   .bud-line > summary{ list-style:none; display:flex; align-items:center; gap:10px; padding:10px 0; cursor:pointer; }
@@ -413,6 +421,9 @@
   .pur-sug-split{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
   .pur-wk-chips{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 6px; scrollbar-width:none; }
   .pur-wk-chips::-webkit-scrollbar{ display:none; }
+  .pur-wk-bud{ margin:2px 0 8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; }
+  .pur-wk-bud-h{ display:flex; gap:8px; font-size:12px; }
+  .pur-wk-bud-h b{ margin-inline-start:auto; }
   .pur-wk-chip{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:1px; min-width:86px; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font-size:11px; cursor:pointer; }
   .pur-wk-chip b{ font-size:13px; }
   .pur-wk-chip small{ font-size:10px; color:var(--muted); white-space:nowrap; }
@@ -427,6 +438,54 @@
   .pur-chips .bud-mat{ padding:2px 9px 2px 3px; font-size:12px; }
   .pur-chips .bud-mat img, .pur-chips .bud-mat i{ width:20px; height:20px; }
   .pur-for{ flex:1 1 140px; min-width:0; font-size:11px; }
+  .pur-cmp{ display:inline-block; border-radius:7px; padding:0 7px; font-size:10.5px; font-weight:700; line-height:1.6; }
+  .pur-cmp-both{ background:rgba(124,196,255,.15); color:var(--ice); }
+  .pur-cmp-target{ background:rgba(224,178,90,.18); color:#e0b25a; }
+  .pur-cmp-budget{ background:rgba(76,209,138,.15); color:var(--good); }
+  .pur-alt{ font-weight:600; }
+  .pur-cmp-note{ font-size:10.5px; color:#e0b25a; }
+  .pur-alt.pur-cmp-target{ color:#e0b25a; background:none; }
+  .pur-alt.pur-cmp-budget{ color:var(--good); background:none; }
+  .pur-follow{ margin:0 0 6px; }
+  .pur-m-ver{ margin:6px 0 10px; }
+  .pur-m-steps{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin:4px 0 10px; }
+  .pur-m-steps button{ border:1px solid var(--line); background:var(--panel-2); color:var(--text); font:inherit; font-size:11px; padding:4px 8px; border-radius:8px; cursor:pointer; }
+  .pur-m-steps button b{ color:var(--ice); margin-inline-end:3px; }
+  .pur-m-steps button.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .pur-m-ver button span{ white-space:normal; font-size:10px; }
+  .pur-cl-head{ display:flex; align-items:center; gap:8px; }
+  .pur-cl-swap{ margin-inline-start:auto; width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:15px; cursor:pointer; }
+  .pur-cl-wk{ margin-top:6px; font-size:14px; }
+  .pur-cl-big{ display:flex; align-items:baseline; gap:8px; margin:2px 0 4px; }
+  .pur-cl-big b{ font-size:26px; letter-spacing:-.3px; }
+  .pur-cl-line{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:12px; margin:4px 0; }
+  .pur-wbs{ display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; margin:10px 0 6px; padding-bottom:2px; }
+  .pur-wbs::-webkit-scrollbar{ display:none; }
+  .pur-wb{ flex:0 0 auto; min-width:104px; display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 9px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font:inherit; cursor:pointer; }
+  .pur-wb span{ font-size:12px; color:var(--muted); }
+  .pur-wb b{ font-size:15px; }
+  .pur-wb small{ font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .pur-wb i{ font-style:normal; font-size:11px; font-weight:600; }
+  .pur-wb i.pur-cmp-target{ color:#e0b25a; background:none; } .pur-wb i.pur-cmp-budget{ color:var(--good); background:none; }
+  .pur-wb.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .pur-wb.on span, .pur-wb.on small{ color:#dfe9f5; }
+  .pur-cl-row{ display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px; }
+  .pur-cl-row.open{ border-top-color:var(--ice); }
+  .pur-cl-ic{ width:26px; height:26px; flex:0 0 26px; display:flex; align-items:center; justify-content:center; }
+  .pur-cl-ic img{ max-width:26px; max-height:26px; }
+  .pur-cl-n{ flex:1 1 auto; min-width:0; }
+  .pur-cl-n i{ font-style:normal; color:var(--muted); font-size:10px; }
+  .pur-cl-p{ font-weight:700; white-space:nowrap; }
+  .pur-cl-add{ width:30px; height:30px; flex:0 0 30px; border:0; border-radius:8px; background:var(--ice-dim); color:var(--frost); font-size:17px; cursor:pointer; }
+  .pur-cl-add.off{ background:none; }
+  .pur-cl-ex{ margin:0 0 8px; padding:8px 10px; border-radius:10px; background:var(--panel-2); font-size:11.5px; display:flex; flex-direction:column; gap:5px; }
+  .pur-cl-top{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; margin:4px 0 2px; }
+  .pur-cl-list{ position:relative; overflow-y:auto; }
+  .pur-cl-tick{ width:20px; height:20px; flex:0 0 20px; margin:0; accent-color:var(--ice); }
+  .pur-cl-row:not(.on) .pur-cl-n, .pur-cl-row:not(.on) .pur-cl-p{ opacity:.6; }
+  .pur-cl-foot{ display:flex; justify-content:space-between; gap:8px; margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:13px; }
+  .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
+  .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
   .pur-acts .btn{ padding:3px 9px; }
   .pur-dates{ margin-top:8px; border:1px solid var(--line); border-radius:10px; padding:2px 8px; }
@@ -3377,6 +3436,24 @@ const T = {
   budgets_view_target: { en: "By your target" },
   budgets_view_fastest: { en: "Fastest" },
   budgets_view_cheapest: { en: "Cheapest" },
+  budgets_view_budget: { en: "My budget" },
+  spend_title: { en: "My budget" },
+  spend_week: { en: "a week" },
+  spend_month: { en: "a month" },
+  spend_carry: { en: "Keep what I don't spend for next time" },
+  spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
+  spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
+  spend_cant: { en: "Can't finish within this budget in the next 3 years. Try a bigger amount." },
+  spend_kept_week: { en: "{v} kept for next week" },
+  spend_kept_month: { en: "{v} kept for next month" },
+  spend_of: { en: "of {v}" },
+  spend_all_done: { en: "all done ✓" },
+  spend_fixed: { en: "incl. {v} in My Purchases" },
+  spend_left: { en: "{v} left" },
+  spend_over: { en: "{v} over" },
+  spend_show_all: { en: "Show all ({n})" },
+  spend_bar_week: { en: "This week's budget" },
+  spend_bar_month: { en: "{month} budget" },
   budgets_view_shown: { en: "shown" },
   budgets_view_hint: { en: "Tap a card to show its packs and each page's share below." },
   budgets_view_sooner: { en: "{n} days sooner" },
@@ -3677,6 +3754,24 @@ const T = {
   pur_wk_after: { en: "After target" },
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
+  pur_follow_line: { en: "The list follows this plan · tap to switch" },
+  pur_following: { en: "Following:" },
+  pur_n_packs: { en: "{n} packs" },
+  pur_other_would: { en: "{plan} plan would be {v}" },
+  pur_tick_hint: { en: "Tick what you'll buy" },
+  pur_buy_upto: { en: "Buy up to" },
+  pur_tick_none: { en: "Tick the packs you'll buy" },
+  pur_tag_both: { en: "both" },
+  pur_tag_target: { en: "target" },
+  pur_tag_budget: { en: "budget" },
+  pur_tag_both_d: { en: "in both plans" },
+  pur_tag_target_d: { en: "only to make your target" },
+  pur_tag_budget_d: { en: "only in My budget" },
+  pur_tag_counts: { en: "{a} ×{n} · {b} ×{m}" },
+  pur_when_daily: { en: "every day ({n} days)" },
+  pur_when_weekly: { en: "every week ({n}×)" },
+  pur_when_weeks: { en: "every {w} weeks ({n}×)" },
+  pur_when_dates: { en: "{n} dates" },
   pur_wk_buy_all: { en: "Will buy all of {week}" },
   pur_sug_until: { en: "Until target" },
   pur_sug_later: { en: "Later (until {date})" },
@@ -6382,6 +6477,15 @@ function packNewGenLabel(start, reset, tableId) {
 //     for packs whose columns are the options
 // "Add" saves the picks with the form's date and status.
 // A plan title without its category ("Weekly/Monthly Calendar Packs · Mix & Match" -> "Mix & Match").
+// Shorter names in the admin's Suggested packs list (owner, 17 Oct 2026); the
+// option list after "·" ("Classic / Sublime / Exquisite") is dropped too.
+function purShortName(name) {
+  let n = String(name || "").split(" · ").filter((part, k) => k === 0 || !part.includes(" / ")).join(" · ");
+  n = n.replace(/^Hall of Heroes:\s*Marks of Valor/i, "Hall of Heroes")
+    .replace(/^Exclusive Gear Enhancement Special/i, "Exclusive Weapon")
+    .replace(/^Exclusive Gear Pack(?= ·|$)/i, "Exclusive Weapon");
+  return n;
+}
 function purPackName(title, tables) {
   const cats = [...new Set((tables || []).map((tb) => String(packLinkFor(tb.id).group || "").trim()).filter(Boolean))];
   const c = cats.find((g) => String(title || "").startsWith(g + " · "));
@@ -6505,6 +6609,9 @@ function purTablePopup(tb, opts) {
 }
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 // The Add a pack form survives the phone reloading the page (sessionStorage).
+let PUR_SUG_ROW = null;   // My Purchases (admin): the suggested pack line opened ("week|row")
+const PUR_SUG_TICK = new Map(); // "week|row" -> ticked to buy (default: the followed plan's packs), for the visit
+const PUR_SUG_VER = new Set();  // "week|row" using the other plan's version of that pack
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 async function renderPurchasesPage() {
@@ -6551,7 +6658,9 @@ async function renderPurchasesPage() {
   const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(setLead(tb) ? setName(tb) : (tb.title || ""))}</option>`).join("")}</optgroup>`).join("");
   const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
-  const addCard = `<div class="t12x-card"><div class="t12x-title">${esc(t("pur_add_title"))}</div>
+  // Add a pack, New Gen Heroes, Coming and Bought fold open and closed (owner, 16 / 17 Oct 2026); kept in this browser.
+  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
+  const addCard = `<details class="t12x-card pur-listbox" data-purlist="a" ${listOpen("a") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_add_title"))}</summary>
     ${buyable.length ? `<div class="pur-form">
       <label class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table">${packOpts}</select></label>
       ${formChoice
@@ -6563,7 +6672,7 @@ async function renderPurchasesPage() {
       ${formChoice ? "" : `<button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>`}
     </div>
     <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span>${formChoice ? "" : `<button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button>`}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
-  </div>`;
+  </details>`;
 
   // Purchase lists
   const list = (PACK_PURCHASES.list || []).filter((p) => byId.has(String(p.table)));
@@ -6609,8 +6718,6 @@ async function renderPurchasesPage() {
     <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
     <div class="meta pur-how">${esc(t("pur_how"))}</div>
   </div>`;
-  // Coming / Bought fold open and closed (owner, 16 Oct 2026); kept in this browser.
-  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
   const listBox = (k, title, n, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${n})</span></summary>${inner}</details>`;
   const listsHtml = `
     ${listBox("c", t("pur_coming"), coming.length, coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
@@ -6625,7 +6732,7 @@ async function renderPurchasesPage() {
   const ngBase = (tb) => String(tb.title || "").split(":")[0].trim();
   const ngShown = ngTables.filter((tb, i) => ngTables.findIndex((x) => ngBase(x) === ngBase(tb)) === i);
   const ngSame = (id) => { const tb = ngTables.find((x) => String(x.id) === String(id)); return tb ? ngTables.filter((x) => ngBase(x) === ngBase(tb)).map((x) => String(x.id)) : [String(id)]; };
-  const ngCard = ngTables.length ? `<div class="t12x-card"><div class="t12x-k">${esc(t("pur_newgen_title"))}</div>
+  const ngCard = ngTables.length ? `<details class="t12x-card pur-listbox" data-purlist="n" ${listOpen("n") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_newgen_title"))}</summary>
     <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
     ${(() => {
       // From the state age (Dashboard) unless the person typed their own date.
@@ -6650,7 +6757,7 @@ async function renderPurchasesPage() {
         <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
       </div>`;
     }).join("")}
-  </div>` : "";
+  </details>` : "";
 
   content.innerHTML = `
     <div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div>
@@ -6681,15 +6788,43 @@ async function renderPurchasesPage() {
     // "Will buy" only for plain tables (option / pick-your-items packs give
     // what you choose, which a purchase line can't record).
     const plainPack = (tb) => { const l = packLinkFor(tb.id); return !l.option && !(l.pickCols > 0) && !l.colOptions; };
-    const rows = plan && plan.rows ? plan.rows.filter((r) => r.count > 0) : [];
+    // Admin (owner, 17 Oct 2026): with My budget and a target both set, the list
+    // follows one plan (switch, kept in this browser) and labels every pack
+    // "both" / "target" / "budget"; the other plan's packs are listed too.
+    const cmp = IS_OWNER && plan && plan.spend && plan.targetPlan && (plan.targetPlan.rows || []).length ? plan : null;
+    let follow = "budget";
+    try { if (localStorage.getItem("pur_follow") === "target") follow = "target"; } catch (e) { /* blocked */ }
+    if (!cmp) follow = "budget";
+    const budRows = plan && plan.rows ? plan.rows.filter((r) => r.count > 0) : [];
+    const tgtRows = cmp ? cmp.targetPlan.rows.filter((r) => r.count > 0) : [];
+    const followRows = follow === "target" ? tgtRows : budRows, otherRows = follow === "target" ? budRows : tgtRows;
+    const nFollow = followRows.length;
+    const rows = followRows.concat(otherRows);
     const head = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta" style="font-size:11px; margin:-4px 0 8px;">${esc(t("pur_sug_desc"))}</div>`;
     if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; return; }
-    const total = rows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
+    const total = followRows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
     // Packs come on the calendar, so each suggestion is spread over the days it
     // can actually be bought (Now, then each time the pack comes back).
-    const sched = packPlanSchedule(rows);
+    // With "My budget" set, the days come from that plan (never over the limit).
+    const budSched = plan.spendSched || packPlanSchedule(budRows), tgtSched = cmp ? packPlanSchedule(tgtRows) : [];
+    const sched = follow === "target" ? tgtSched.concat(budSched) : budSched.concat(tgtSched);
     const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
     const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
+    // Short "when" (owner, 17 Oct 2026: the full list of days was too long):
+    // days in a row → "Dec 7 → Feb 21 · every day (77 days)"; evenly spaced →
+    // "every 4 weeks (4×)"; a few dates or runs as they are; else first → last · N dates.
+    const whenShort = (list) => {
+      const offs = [...new Set(list.map((x) => Math.max(0, x.off)))].sort((a, b) => a - b);
+      if (offs.length <= 2) return offs.map(whenTxt).join(", ");
+      const n = offs.length, span = `${whenTxt(offs[0])} → ${whenTxt(offs[n - 1])}`;
+      const gaps = offs.slice(1).map((o, i) => o - offs[i]);
+      const same = gaps.every((g) => g === gaps[0]) ? gaps[0] : 0;
+      if (same === 1) return `${span} · ${t("pur_when_daily").replace("{n}", n)}`;
+      if (same && same % 7 === 0) return `${span} · ${t(same === 7 ? "pur_when_weekly" : "pur_when_weeks").replace("{w}", same / 7).replace("{n}", n)}`;
+      const runs = [];
+      offs.forEach((o) => { const r = runs[runs.length - 1]; if (r && o === r[1] + 1) r[1] = o; else runs.push([o, o]); });
+      return runs.length <= 3 ? runs.map(([a, b]) => (a === b ? whenTxt(a) : `${whenTxt(a)} – ${whenTxt(b)}`)).join(", ") : `${span} · ${t("pur_when_dates").replace("{n}", n)}`;
+    };
     // Week tabs (owner picked C, 16 Oct 2026): this week, then each week (Mon–Sun)
     // until the Budgets target, then what comes after it; without a target the
     // next 8 weeks, then "Later".
@@ -6700,15 +6835,29 @@ async function renderPurchasesPage() {
     const lastWeek = tOff != null && tOff >= 0 ? weekOf(tOff) : 7;
     const bucketOf = (off) => (tOff != null && tOff >= 0 && off > tOff) || weekOf(off) > lastWeek ? "after" : weekOf(off);
     const conv = (r, n) => packConvert(r.price * n, r.currency || "USD").n;
-    const buckets = new Map(); // key -> { key, cost, items: [{ i, xs: [entries] }] }
+    const buckets = new Map(); // key -> { key, cost, alt (other plan's cost), items: Map(i -> [entries]), match: Map(follow i -> other i) }
+    const rowKey = (r) => `${r.title}|${r.label}`;
     rows.forEach((r, i) => sched[i].forEach((x) => {
       const k = bucketOf(x.off);
-      if (!buckets.has(k)) buckets.set(k, { key: k, cost: 0, items: new Map() });
+      if (!buckets.has(k)) buckets.set(k, { key: k, cost: 0, alt: 0, items: new Map(), match: new Map() });
       const b = buckets.get(k);
-      b.cost += conv(r, x.count);
+      if (i < nFollow) b.cost += conv(r, x.count); else b.alt += conv(r, x.count);
       if (!b.items.has(i)) b.items.set(i, []);
       b.items.get(i).push(x);
     }));
+    // The same pack in the other plan in the same week is one line, "both" (the
+    // same step first, then any step of that pack; a different step is noted).
+    if (cmp) buckets.forEach((b) => {
+      const others = [...b.items.keys()].filter((i) => i >= nFollow);
+      const pair = (same) => others.forEach((j) => {
+        if (!b.items.has(j)) return;
+        const i = [...b.items.keys()].find((x) => x < nFollow && !b.match.has(x) && rows[x].title === rows[j].title && (!same || rowKey(rows[x]) === rowKey(rows[j])));
+        if (i == null) return;
+        b.match.set(i, { n: b.items.get(j).reduce((a, x) => a + x.count, 0), label: rows[j].label, same: rowKey(rows[i]) === rowKey(rows[j]), j, xs: b.items.get(j) });
+        b.items.delete(j);
+      });
+      pair(true); pair(false);
+    });
     const keys = [...buckets.keys()].filter((k) => k !== "after").sort((a, b) => a - b).concat(buckets.has("after") ? ["after"] : []);
     if (!keys.includes(0)) keys.unshift(0);
     const money = (v) => packFmtLocal(v, rows[0].currency, true, rows[0].price);
@@ -6727,11 +6876,102 @@ async function renderPurchasesPage() {
     const untilCost = keys.filter((k) => k !== "after").reduce((a, k) => a + (buckets.has(k) ? buckets.get(k).cost : 0), 0);
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_wk_this"))}</span><b>${thisCost ? esc(money(thisCost)) : "—"}</b></div><div><span class="meta">${esc(tOff != null && tOff >= 0 ? t("pur_sug_until") : t("pur_sug_total"))}</span><b>${esc(money(tOff != null && tOff >= 0 ? untilCost : total))}</b></div></div>`;
     const drawSug = () => {
+    // Keep the pack list where it was scrolled when it's redrawn for the same
+    // week (opening a pack line, ticking all); another week starts at the top.
+    const oldList = box.querySelector(".pur-cl-list");
+    const keepTop = oldList && oldList.dataset.week === String(PUR_SUG_WEEK) ? oldList.scrollTop : 0;
     const sel = buckets.get(PUR_SUG_WEEK);
-    const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small></button>`; }).join("")}</div>`;
-    const selHead = `<div class="pur-wk-head"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${PUR_SUG_WEEK === 0 ? ` <span class="pur-wk-now">${esc(t("pur_sug_now"))}</span>` : ""}</div>`;
-    const list = sel ? [...sel.items.entries()] : [];
-    box.innerHTML = head + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
+    const otherName = follow === "target" ? "budget" : "target";
+    const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<small class="pur-alt pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</small>` : ""}</button>`; }).join("")}</div>`;
+    const followHtml = cmp ? `<div class="meta" style="font-size:11px; margin:0 0 4px;">${esc(t("pur_follow_line"))}</div>
+      <div class="bud-seg pur-follow">${["target", "budget"].map((k) => { const pl = k === "target" ? cmp.targetPlan : plan; return `<button type="button" data-purfollow="${k}" class="${follow === k ? "on" : ""}">${esc(t(k === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(money(packPlanLocal(pl)))}</b><span>${esc(whenTxt(pl.days))}</span></button>`; }).join("")}</div>
+      <div class="pur-legend">${["both", "target", "budget"].map((k) => `<span><span class="pur-cmp pur-cmp-${k}">${esc(t("pur_tag_" + k))}</span> ${esc(t("pur_tag_" + k + "_d"))}</span>`).join("")}</div>`
+      // No target to compare with: just say which plan the list is (owner, 17 Oct 2026).
+      : plan.spend ? `<div class="pur-following">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(t(plan.spend.per === "week" ? "spend_week" : "spend_month"))})</span></div>` : "";
+    // Design D: the budget of the chosen week (or its month) as a bar.
+    const budBar = (() => {
+      const sp = plan.spend;
+      if (!sp || PUR_SUG_WEEK === "after" || follow !== "budget") return "";
+      const startOff = PUR_SUG_WEEK === 0 ? 0 : PUR_SUG_WEEK * 7 - monIdx;
+      const pd = sp.periods.find((x) => x.p === spendPeriodOf(startOff, sp.per)) || { spent: 0, avail: sp.amount + 0, kept: 0, fixed: 0 };
+      const avail = pd.avail || sp.amount, fill = avail > 0 ? Math.min(100, (pd.spent / avail) * 100) : 0;
+      const name = sp.per === "week" ? t("spend_bar_week") : t("spend_bar_month").replace("{month}", new Date(packStartOfToday().getTime() + startOff * 86400000).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", timeZone: "UTC" }));
+      const rest = avail - pd.spent;
+      return `<div class="pur-wk-bud"><div class="pur-wk-bud-h"><span>${esc(name)}</span><b>${esc(money(pd.spent))} / ${esc(money(avail))}</b></div><span class="bud-spend-bar"><i style="width:${fill.toFixed(1)}%;"></i></span><span class="meta" style="font-size:11px; color:${rest < -0.5 ? "var(--danger)" : "var(--good)"};">${esc(t(rest < -0.5 ? "spend_over" : "spend_left").replace("{v}", money(Math.abs(rest))))}</span></div>`;
+    })();
+    const selHead = `<div class="pur-wk-head"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${PUR_SUG_WEEK === 0 ? ` <span class="pur-wk-now">${esc(t("pur_sug_now"))}</span>` : ""}</div>` + budBar;
+    // Both plans first, then this plan only, then the other plan only.
+    const rank = (i) => (i >= nFollow ? 2 : sel.match.has(i) ? 0 : 1);
+    const list = sel ? [...sel.items.entries()].sort((a, b) => (cmp ? rank(a[0]) - rank(b[0]) : 0) || Math.min(...a[1].map((x) => x.off)) - Math.min(...b[1].map((x) => x.off))) : [];
+    const tagHtml = (i, n) => {
+      if (!cmp) return "";
+      if (i >= nFollow) return `<span class="pur-cmp pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))}</span> `;
+      if (!sel.match.has(i)) return `<span class="pur-cmp pur-cmp-${follow}">${esc(t("pur_tag_" + follow))}</span> `;
+      const m = sel.match.get(i);
+      const note = !m.same ? `${t("pur_tag_" + otherName)}: ${m.label} ×${m.n}` : m.n !== n ? t("pur_tag_counts").replace("{a}", t("pur_tag_" + follow)).replace("{n}", n).replace("{b}", t("pur_tag_" + otherName)).replace("{m}", m.n) : "";
+      return `<span class="pur-cmp pur-cmp-both">${esc(t("pur_tag_both"))}</span> ${note ? `<span class="pur-cmp-note">${esc(note)}</span> ` : ""}`;
+    };
+    // Admin (owner picked C + B, 17 Oct 2026): a short summary of the chosen
+    // week; "Show packs" opens big week boxes and one line per pack (tap a line
+    // for its items, dates and the other plan's version; ＋ = Will buy).
+    // Ticks (default: the followed plan's packs) and the version picked for a
+    // pack both plans buy differently, per week.
+    const tickOf = (i) => { const k = `${PUR_SUG_WEEK}|${i}`; return PUR_SUG_TICK.has(k) ? PUR_SUG_TICK.get(k) : i < nFollow; };
+    const verOf = (i) => {
+      const xs = (sel && sel.items.get(i)) || [], m = cmp && sel && sel.match.get(i);
+      if (m && PUR_SUG_VER.has(`${PUR_SUG_WEEK}|${i}`)) return { r: rows[m.j], xs: m.xs, n: m.n };
+      return { r: rows[i], xs, n: xs.reduce((a, x) => a + x.count, 0) };
+    };
+    const compactHtml = () => {
+      // A pack you pick one option of ("QAR 17.99 · Chief Gear"): its option on the line.
+      const optOf = (r) => { const m = /^[^·]*\d[^·]*·\s*([^·]+)$/.exec(String(r.label || "")); return m && !/\d/.test(m[1]) ? m[1].trim() : ""; };
+      const counts = {};
+      if (cmp) list.forEach(([i]) => { const k = i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow; counts[k] = (counts[k] || 0) + 1; });
+      const bi = (() => {
+        const sp = plan.spend;
+        if (!sp || PUR_SUG_WEEK === "after" || follow !== "budget") return null;
+        const startOff = PUR_SUG_WEEK === 0 ? 0 : PUR_SUG_WEEK * 7 - monIdx;
+        const pd = sp.periods.find((x) => x.p === spendPeriodOf(startOff, sp.per)) || { spent: 0, avail: sp.amount };
+        const name = sp.per === "week" ? t("pur_wk_this") : new Date(packStartOfToday().getTime() + startOff * 86400000).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", timeZone: "UTC" });
+        return { name, spent: pd.spent, avail: pd.avail || sp.amount };
+      })();
+      const followName = cmp || plan.spend ? t(follow === "target" ? "budgets_view_target" : "budgets_view_budget") : "";
+      const canBuy = (i) => { const tb = sugTable(rows[i]); return !!tb && (rows[i].row != null || !plainPack(tb)); };
+      const rowHtml = ([i, xs]) => {
+        const r = rows[i], n = xs.reduce((a, x) => a + x.count, 0), tb = sugTable(r);
+        const first = Object.keys(r.gives || {}).find((k) => k !== "Gems" && r.gives[k] > 0);
+        const icon = first ? bpIcon({ name: first.replace(/ \(minutes\)$/, "") }) : null;
+        const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${i}`;
+        const tk = tickOf(i), vr = verOf(i);
+        const kind = cmp ? (i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow) : null;
+        const m = kind === "both" ? sel.match.get(i) : null;
+        const star = m && (!m.same || m.n !== n) ? "*" : "";
+        const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0).slice(0, 6).map((k) => {
+          const v = r.gives[k] * n, ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
+          const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
+          return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
+        }).join("");
+        return `<div class="pur-cl-row${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
+          ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
+          <span class="pur-cl-ic">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}</span>
+          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
+          ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
+          <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
+          ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
+        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
+      };
+      const boxes = `<div class="pur-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
+      return `<div class="pur-cl-head"><div class="t12x-title" style="margin:0;">${esc(t("pur_sug_title"))}</div>${cmp ? `<button type="button" class="pur-cl-swap" data-purfollow="${follow === "target" ? "budget" : "target"}" title="${esc(t("pur_follow_line"))}">&#8644;</button>` : ""}</div>
+        <div class="pur-cl-wk"><b>${esc(wkName(PUR_SUG_WEEK))} · ${esc(wkRange(PUR_SUG_WEEK))}</b>${followName ? ` <span class="meta">· ${esc(t("pur_following").replace(/:$/, "").toLowerCase())} ${esc(followName)}</span>` : ""}</div>
+        <div class="pur-cl-big"><b>${sel && sel.cost ? esc(money(sel.cost)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", list.length))}</span></div>
+        ${bi || (cmp && sel) ? `<div class="pur-cl-line">${bi ? `<span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)} ${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span>` : ""}${cmp && sel ? ` <span class="meta">${esc(t("pur_other_would").replace("{plan}", t("pur_tag_" + otherName)).replace("{v}", money(sel.alt || 0)))}</span>` : ""}</div>` : ""}
+        ${cmp ? `<div class="pur-cl-line">${["both", "target", "budget"].filter((k) => counts[k]).map((k) => `<span class="pur-cmp pur-cmp-${k}">${counts[k]} ${esc(t("pur_tag_" + k))}</span>`).join(" ")}</div>` : ""}
+        ${boxes}
+        ${list.length ? `<div class="pur-cl-top"><span class="meta">${esc(t("pur_tick_hint"))}</span><button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button></div><div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${list.map(rowHtml).join("")}</div>${list.length > 4 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`}
+        ${list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : ""}`;
+    };
+    if (IS_OWNER) box.innerHTML = compactHtml();
+    else box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
       const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
       const names = tb ? packUsedForNames(tb) : [];
       const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0).slice(0, 5).map((k) => {
@@ -6739,21 +6979,68 @@ async function renderPurchasesPage() {
         const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
         return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
       }).join("");
-      const when = xs.map((x) => whenTxt(x.off)).join(", ");
+      const when = whenShort(xs);
       return `<div class="pur-item">
         <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
-        <div class="pur-item-f"><span class="meta pur-for">${esc(when)}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
+        <div class="pur-item-f"><span class="meta pur-for">${tagHtml(i, n)}${esc(when)}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
     }).join("") + `</div>${list.length > 3 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`)
       + (list.some(([i]) => { const tb = sugTable(rows[i]); return tb && (rows[i].row != null || !plainPack(tb)); }) ? `<button type="button" class="btn pur-wk-all" data-purwkall>+ ${esc(t("pur_wk_buy_all").replace("{week}", wkName(PUR_SUG_WEEK).toLowerCase()))}</button>` : "")
       + `<div class="pur-sug-total"><span class="meta">${esc(t("pur_sug_total"))}</span><b>${esc(money(total))}</b></div>`;
     box.querySelectorAll("[data-purwk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.purwk; PUR_SUG_WEEK = k === "after" ? k : Number(k); drawSug(); }));
+    box.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
+    // Admin list: tick what you'll buy, then one "Will buy" adds every date of
+    // the ticked packs this week (owner, 17 Oct 2026).
+    const tickBuy = box.querySelector("[data-purtickbuy]");
+    const tickedNow = () => list.filter(([i]) => { const tb = sugTable(rows[i]); return tb && (rows[i].row != null || !plainPack(tb)) && tickOf(i); });
+    const syncTick = () => {
+      if (!tickBuy) return;
+      const pk = tickedNow(), sum = pk.reduce((a, [i]) => { const v = verOf(i); return a + packRowLocalUnits(v.r).reduce((x, y) => x + y, 0) * v.n; }, 0);
+      tickBuy.textContent = pk.length ? `+ ${t("pur_will_buy")} (${pk.length}) · ${money(sum)}` : t("pur_tick_none");
+      tickBuy.disabled = !pk.length;
+    };
+    syncTick();
+    box.querySelectorAll("[data-purtick]").forEach((cb) => cb.addEventListener("change", () => {
+      PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${cb.dataset.purtick}`, cb.checked);
+      cb.closest(".pur-cl-row").classList.toggle("on", cb.checked);
+      syncTick();
+    }));
+    const tickAll = box.querySelector("[data-purtickall]");
+    if (tickAll) tickAll.addEventListener("click", () => {
+      const on = !list.every(([i]) => tickOf(i) || !sugTable(rows[i]));
+      list.forEach(([i]) => PUR_SUG_TICK.set(`${PUR_SUG_WEEK}|${i}`, on));
+      drawSug();
+    });
+    box.querySelectorAll("[data-purver]").forEach((vb) => vb.addEventListener("click", () => {
+      const [i, v] = vb.dataset.purver.split("|"), k = `${PUR_SUG_WEEK}|${i}`;
+      if (v) PUR_SUG_VER.add(k); else PUR_SUG_VER.delete(k);
+      drawSug();
+    }));
+    if (tickBuy) tickBuy.addEventListener("click", () => {
+      const adds = [];
+      tickedNow().forEach(([i]) => {
+        const { r, xs } = verOf(i), tb = sugTable(r);
+        if (!tb) return;
+        xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
+      });
+      if (!adds.length) return;
+      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
+      savePackPurchases();
+      toast(t("pur_added_dates").replace("{n}", adds.length));
+      redraw();
+    });
+    box.querySelectorAll("[data-purrow]").forEach((rw) => rw.addEventListener("click", (e) => {
+      if (e.target.closest("[data-pursug], [data-purtick], [data-purver]")) return;
+      const k = `${PUR_SUG_WEEK}|${rw.dataset.purrow}`;
+      PUR_SUG_ROW = PUR_SUG_ROW === k ? null : k;
+      drawSug();
+    }));
     // Every pack of the chosen week at once, on its dates.
     const allBtn0 = box.querySelector("[data-purwkall]");
     if (allBtn0) allBtn0.addEventListener("click", () => {
       const adds = [];
-      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (!tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
+      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (i >= nFollow || !tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
       savePackPurchases();
@@ -6762,15 +7049,46 @@ async function renderPurchasesPage() {
     });
     // "+ Will buy" opens a small window: tick the dates to buy on (all ticked).
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
-      const i = Number(b.dataset.pursug), r = rows[i], tb = sugTable(r), s0 = (sel && sel.items.get(i)) || sched[i];
-      if (!tb) return;
+      const i0 = Number(b.dataset.pursug);
+      // A pack both plans buy differently (another step or count): pick which
+      // plan's version to add (owner, 17 Oct 2026).
+      const m = cmp && sel && sel.match.get(i0);
+      const vers = [{ key: i0 >= nFollow ? otherName : follow, r: rows[i0], s0: (sel && sel.items.get(i0)) || sched[i0] }];
+      if (m && (!m.same || m.n !== (sel.items.get(i0) || []).reduce((a, x) => a + x.count, 0))) vers.push({ key: otherName, r: rows[m.j], s0: m.xs });
       let modal = document.getElementById("purSugModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
       const close = () => { modal.style.display = "none"; };
+      // Packs bought in steps: "Buy up to" picks fewer steps than the plan
+      // (admin, owner 17 Oct 2026); the rest stays on offer for that run.
+      const stepsOf = (r, tb) => {
+        if (!IS_OWNER || /\+ \d+×/.test(String(r.label || ""))) return null;
+        if (Array.isArray(r.steps) && r.steps.length > 1 && !r.steps.some((st) => st.k)) {
+          const parts = String(r.label || "").split(" · "), all = /·\s*all (.+)$/.exec(String(r.label || ""));
+          return r.steps.map((st, k) => ({ price: st.price, gives: st.gives || {}, label: parts.length === r.steps.length ? parts[k] : `${packFmtMoney(st.price, r.currency)}${all ? " " + all[1] : ""}` }));
+        }
+        if (packLinkFor(tb.id).sequential && !r.steps && r.row > (r.from || 0)) {
+          const offs = packOffersFor(tb, true).filter((o) => o.row >= (r.from || 0) && o.row <= r.row);
+          if (offs.length > 1) return offs.map((o) => ({ price: o.price, gives: o.gives, label: o.label, row: o.row }));
+        }
+        return null;
+      };
+      const openVer = (vi, kPick) => {
+      const { r, s0 } = vers[vi], tb = sugTable(r);
+      if (!tb) return;
+      const steps = stepsOf(r, tb), kk = steps ? Math.min(steps.length, kPick || steps.length) : 0;
+      const unit = steps ? steps.slice(0, kk).reduce((a, st) => a + st.price, 0) : r.price;
+      const partLabel = steps && kk < steps.length ? steps.slice(0, kk).map((st) => st.label).join(" · ") : r.label;
+      // Money shown step by step in store prices (QAR 17.99 + 36.99 = 54.98).
+      const unitLocal = steps ? steps.slice(0, kk).reduce((a, st) => a + packConvert(st.price, r.currency).n, 0) : null;
+      const fmtN = (cnt) => (steps ? packFmtLocal(unitLocal * cnt, r.currency, false, steps[0].price) : packFmtMoney(unit * cnt, r.currency));
+      const partGives = {};
+      if (steps) steps.slice(0, kk).forEach((st) => Object.entries(st.gives || {}).forEach(([n, v]) => { partGives[n] = (partGives[n] || 0) + v; }));
+      const stepsHtml = steps ? `<div class="pur-m-steps"><span class="meta">${esc(t("pur_buy_upto"))}</span>${steps.map((st, j) => `<button type="button" data-pmstep="${j + 1}" class="${j + 1 === kk ? "on" : ""}"><b>${j + 1}</b> ${esc(st.label)}</button>`).join("")}</div>` : "";
+      const verHtml = vers.length > 1 ? `<div class="bud-seg pur-m-ver">${vers.map((v, k) => `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(packFmtLocal(packRowLocalUnits(v.r).reduce((a, x) => a + x, 0) * v.s0.reduce((a, x) => a + x.count, 0), v.r.currency, false, v.r.price))}</b><span>${esc(v.r.label)} ×${v.s0.reduce((a, x) => a + x.count, 0)}</span></button>`).join("")}</div>` : "";
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <h2>${esc(sugName(r))}</h2><div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== packFmtMoney(r.price, r.currency) ? `${esc(r.label)} · ` : ""}${esc(packFmtMoney(r.price, r.currency))} ${esc(t("pur_each"))}</div>
+        <h2>${esc(sugName(r))}</h2>${verHtml}${stepsHtml}<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${partLabel !== fmtN(1) ? `${esc(partLabel)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(packFmtMoney(r.price * x.count, r.currency))}</b></label>`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(fmtN(x.count))}</b></label>`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -6778,8 +7096,8 @@ async function renderPurchasesPage() {
       const boxes = [...modal.querySelectorAll("[data-pmday]")];
       const picked = () => boxes.filter((c) => c.checked).map((c) => s0[Number(c.dataset.pmday)]);
       const sync = () => {
-        const pk = picked(), sum = pk.reduce((a, x) => a + r.price * x.count, 0);
-        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(packFmtMoney(sum, r.currency))}</b> <span class="meta">${esc(t("pur_sug_n_of").replace("{n}", pk.length).replace("{m}", s0.length))}</span>`;
+        const pk = picked(), cnt = pk.reduce((a, x) => a + x.count, 0);
+        modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(fmtN(cnt))}</b> <span class="meta">${esc(t("pur_sug_n_of").replace("{n}", pk.length).replace("{m}", s0.length))}</span>`;
         modal.querySelector("[data-pmadd]").disabled = !pk.length;
         const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = pk.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
       };
@@ -6790,16 +7108,28 @@ async function renderPurchasesPage() {
       modal.querySelector("[data-pmadd]").addEventListener("click", () => {
         const pk = picked();
         if (!pk.length) return;
-        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })));
+        // Fewer steps: an option pack saves its first steps as the choice; a
+        // plain ladder saves the last step bought (from where its run starts).
+        const part = steps && kk < steps.length;
+        const row = part ? (Array.isArray(r.steps) ? kk - 1 : steps[kk - 1].row) : (r.row != null ? r.row : 0);
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(pk.map((x, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: partLabel, price: unit, gives: part ? partGives : r.gives } }) })));
         savePackPurchases();
         close();
         toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
         redraw();
       });
+      modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
+      modal.querySelectorAll("[data-pmstep]").forEach((v) => v.addEventListener("click", () => openVer(vi, Number(v.dataset.pmstep))));
+      };
+      openVer(0);
     }));
       // Show the top 3 packs; the rest scroll inside the box.
       const listEl = box.querySelector(".pur-sug-list"), items = listEl ? [...listEl.children] : [];
       if (items.length > 3) listEl.style.maxHeight = `${items[3].offsetTop + 1}px`; // the list is the cards' offset parent
+      // Admin list: about 4½ pack lines, the rest scroll inside the box.
+      const clEl = box.querySelector(".pur-cl-list"), clRows = clEl ? [...clEl.querySelectorAll(".pur-cl-row")] : [];
+      if (clRows.length > 5) clEl.style.maxHeight = `${clRows[4].offsetTop + clRows[4].offsetHeight / 2}px`;
+      if (clEl && keepTop) clEl.scrollTop = keepTop;
     };
     drawSug();
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
@@ -11554,8 +11884,9 @@ let PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
 // spread over the pack's appearances (perCycle per appearance), from today.
 // Rows of one pack that share its limit (same title, limit and resets) share
 // each appearance. Returns, per row, [{ off (days from today), count }].
-function packPlanSchedule(rows) {
-  const slotsFor = (r) => {
+// Every time a plan row's pack can be bought (days from today) and how many
+// each time, after what My Purchases already uses.
+function packRowSlots(r) {
     const st = packStackInfo(r.reset);
     if (st) {
       // Stacked cards: up to `atOnce` can be held at a time, then one more each card length.
@@ -11580,7 +11911,9 @@ function packPlanSchedule(rows) {
       const n = Math.min(left, cap);
       return Array.from({ length: n }, (_, k) => ({ off: off + (left - n) + k, cap: 1 }));
     });
-  };
+}
+function packPlanSchedule(rows) {
+  const slotsFor = packRowSlots;
   const out = rows.map(() => []);
   const pools = new Map();
   rows.forEach((r, i) => {
@@ -13972,6 +14305,16 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
         fastest: fastest ? { plan: fastest, shares: budgetShares(fastest, inc) } : null,
         cheapest: cheapest ? { plan: cheapest, shares: cheapest === res.chosen ? res.shares : budgetShares(cheapest, inc) } : null,
       };
+      // "My budget": plans for several finish dates between the fastest and the
+      // cheapest; the page then checks which one fits the spending limit and
+      // finishes soonest (budgetSpendBest), so changing the amount needs no new plans.
+      if (opts.spendCands) {
+        const seen = new Set(), cands = [];
+        const add = (pl) => { if (!pl) return; const k = Math.round(pl.total * 100) + "|" + pl.days; if (seen.has(k)) return; seen.add(k); cands.push({ plan: pl, shares: pl === res.chosen ? res.shares : budgetShares(pl, inc) }); };
+        add(fastest); add(res.chosen); add(cheapest);
+        [14, 28, 56, 84, 112, 168, 224, 280].forEach((d) => add(packCheapestPlan(res.groups, res.need, earliest + d, res.calcKey, true)));
+        res.budgetCands = cands;
+      }
     }
   }
   return res;
@@ -14024,7 +14367,7 @@ function budgetCombinedInput(pages, selected) {
 // Runs the combined plan (and the own plans of pages it had to leave out).
 function plannerCombinedLocal(payload) {
   const pages = payload.pages.map((pg) => ({ ...pg, supplied: new Set(pg.supplied || []) }));
-  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups);
+  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands });
   res.droppedPlans = {};
   (res.dropped || []).forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg) res.droppedPlans[k] = budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, payload.targetDays); });
   delete res.groups;
@@ -14103,9 +14446,9 @@ function budgetPlanFingerprint(payload) {
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return `${str.length}:${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
 }
-async function budgetCombinedPlanAsync(pages, selected, targetDays) {
+async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   const inp = budgetCombinedInput(pages, selected);
-  const payload = { ...inp, targetDays };
+  const payload = { ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) };
   let key = null;
   try {
     key = budgetPlanFingerprint(payload);
@@ -14258,11 +14601,159 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
 function budgetInvalidate() { BUDGET_DATA = null; PUR_SUGGEST = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+// ---- My budget: a spending limit (owner, 17 Oct 2026, design C + D) ----
+// calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
+// Only the admin sees it unless Admin → Visibility → Visitor access
+// "spendbudget" is ticked. The worker sends plans for several finish dates
+// (budgetCands); each is bought month by month (or week by week) without
+// going over the limit, money not spent carried over when ticked, and the
+// one that finishes soonest (then the cheapest) is shown.
+let BUDGET_SPEND = null;
+async function ensureBudgetSpend() {
+  if (BUDGET_SPEND === null) { const st = await loadCalcState("budget_spend"); BUDGET_SPEND = st && typeof st === "object" ? st : {}; }
+  return BUDGET_SPEND;
+}
+function spendFeatureOn() { return visitorCan("spendbudget"); }
+// The limit in the currency prices are shown in.
+function spendAmountLocal() {
+  const sp = BUDGET_SPEND || {}, a = Number(sp.amount) || 0;
+  if (!(a > 0)) return 0;
+  const cur = sp.cur || "USD", disp = DISPLAY_CURRENCY || "USD";
+  if (cur === disp) return a;
+  const r = currencyRates();
+  return r[cur] > 0 && r[disp] > 0 ? (a / r[cur]) * r[disp] : a;
+}
+function spendActive() { return spendFeatureOn() && spendAmountLocal() > 0; }
+function spendSettings() {
+  const sp = BUDGET_SPEND || {};
+  return { amount: spendAmountLocal(), per: sp.per === "week" ? "week" : "month", carry: sp.carry !== false };
+}
+// Period (week Mon–Sun, or calendar month) of a day; 0 = the current one.
+function spendPeriodOf(off, per) {
+  const d0 = packStartOfToday();
+  if (per === "week") return Math.floor((off + (d0.getUTCDay() + 6) % 7) / 7);
+  const d = new Date(d0.getTime() + off * 86400000);
+  return (d.getUTCFullYear() - d0.getUTCFullYear()) * 12 + d.getUTCMonth() - d0.getUTCMonth();
+}
+function spendPeriodStart(p, per) {
+  const d0 = packStartOfToday();
+  if (per === "week") return Math.max(0, p * 7 - (d0.getUTCDay() + 6) % 7);
+  if (p <= 0) return 0;
+  return Math.round((Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + p, 1) - d0.getTime()) / 86400000);
+}
+// Purchases already in My Purchases count as spending in their week / month
+// (bought ones only in the current one).
+function budgetSpendFixed() {
+  const out = [];
+  const tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
+  (PACK_PURCHASES.list || []).forEach((pu) => {
+    const day = packParseDay(packValidDay(pu.date));
+    if (!day) return;
+    const off = Math.round((day - packStartOfToday()) / 86400000);
+    if (pu.status !== "bought" && off < 0) return;
+    const tb = tables.find((x) => String(x.id) === String(pu.table));
+    if (!tb) return;
+    const v = packConvert(purchasePrice(pu, tb), packLinkFor(tb.id).currency).n * (Number(pu.count) || 1);
+    if (v > 0) out.push({ off, amount: v });
+  });
+  return out;
+}
+// One plan bought under the limit: each pack on the days it's on sale, the
+// ones with the fewest chances left first. Returns when it's all bought,
+// what each row buys on which day, and the spending per week / month.
+function budgetSpendSimulate(plan, sp) {
+  const rows = ((plan && plan.rows) || []).filter((r) => r.count > 0);
+  const per = sp.per, amount = sp.amount;
+  const unit = rows.map((r) => packRowLocalUnits(r).reduce((a, b) => a + b, 0));
+  const lists = [];
+  const pools = new Map();
+  rows.forEach((r, i) => { const k = `${r.title}|${r.perCycle}|${r.cycles}|${r.reset}|${r.resetDay}`; if (!pools.has(k)) pools.set(k, []); pools.get(k).push(i); });
+  pools.forEach((idx) => {
+    const sum = idx.reduce((a, i) => a + rows[i].count, 0), r0 = rows[idx[0]];
+    const shared = idx.length > 1 && Number.isFinite(r0.cycles) && sum <= r0.cycles * (r0.perCycle || 1);
+    if (shared) { const l = packRowSlots(r0).map((x) => ({ ...x })); idx.forEach((i) => { lists[i] = l; }); }
+    else idx.forEach((i) => { lists[i] = packRowSlots(rows[i]).map((x) => ({ ...x })); });
+  });
+  // Packs on sale any time can be bought whenever money is there.
+  const anyTime = lists.map((l) => l.length === 1 && !Number.isFinite(l[0].cap));
+  const days = new Set();
+  lists.forEach((l, i) => { if (!anyTime[i]) l.forEach((x) => { if (x.off <= PACK_HORIZON_DAYS) days.add(Math.max(0, x.off)); }); });
+  if (anyTime.some(Boolean)) for (let p = 0; spendPeriodStart(p, per) <= PACK_HORIZON_DAYS; p++) days.add(spendPeriodStart(p, per));
+  const spent = new Map(), fixedP = new Map();
+  (sp.fixed || []).forEach((f) => { const p = spendPeriodOf(f.off, per); if (p < 0) return; spent.set(p, (spent.get(p) || 0) + f.amount); fixedP.set(p, (fixedP.get(p) || 0) + f.amount); });
+  const upTo = (p) => { let t = 0; spent.forEach((v, k) => { if (k <= p) t += v; }); return t; };
+  const left = rows.map((r) => r.count);
+  const sched = rows.map(() => []);
+  const bought = new Map(); // period -> [{ i, count }]
+  let last = 0;
+  [...days].sort((a, b) => a - b).forEach((d) => {
+    if (!left.some((n) => n > 0)) return;
+    const p = spendPeriodOf(d, per);
+    let avail = sp.carry ? amount * (p + 1) - upTo(p) : amount - (spent.get(p) || 0);
+    if (avail <= 0.005) return;
+    const cands = [];
+    rows.forEach((r, i) => {
+      if (!(left[i] > 0)) return;
+      const slot = anyTime[i] ? lists[i][0] : lists[i].find((x) => Math.max(0, x.off) === d && x.cap > 0);
+      if (!slot) return;
+      const later = anyTime[i] ? Infinity : lists[i].reduce((a, x) => a + (Math.max(0, x.off) > d ? x.cap : 0), 0);
+      cands.push({ i, slot, urgent: left[i] - later });
+    });
+    cands.sort((a, b) => b.urgent - a.urgent || unit[a.i] - unit[b.i]);
+    cands.forEach(({ i, slot }) => {
+      const n = Math.min(left[i], slot.cap, unit[i] > 0 ? Math.floor((avail + 0.005) / unit[i]) : left[i]);
+      if (!(n > 0)) return;
+      slot.cap -= n; left[i] -= n; avail -= n * unit[i];
+      spent.set(p, (spent.get(p) || 0) + n * unit[i]);
+      const prev = sched[i].find((x) => x.off === d);
+      if (prev) prev.count += n; else sched[i].push({ off: d, count: n });
+      if (!bought.has(p)) bought.set(p, []);
+      const b = bought.get(p).find((x) => x.i === i);
+      if (b) b.count += n; else bought.get(p).push({ i, count: n });
+      last = Math.max(last, d);
+    });
+  });
+  if (left.some((n) => n > 0)) return { ok: false };
+  const finish = Math.max(last, plan.days || 0);
+  const lastP = spendPeriodOf(last, per);
+  const periods = [];
+  for (let p = 0; p <= lastP; p++) {
+    const before = sp.carry ? amount * p - upTo(p - 1) : 0;
+    periods.push({ p, start: spendPeriodStart(p, per), spent: spent.get(p) || 0, fixed: fixedP.get(p) || 0, avail: amount + Math.max(0, before), kept: sp.carry ? Math.max(0, amount * (p + 1) - upTo(p)) : 0, items: bought.get(p) || [] });
+  }
+  return { ok: true, finish, plan: { ...plan, rows, days: finish }, sched, periods, total: rows.reduce((a, r, i) => a + unit[i] * r.count, 0), per, carry: sp.carry, amount };
+}
+const BUDGET_SPEND_MEMO = new WeakMap();
+function budgetSpendBest(combined) {
+  if (!combined || !Array.isArray(combined.budgetCands) || !spendActive()) return null;
+  const sp = { ...spendSettings(), fixed: budgetSpendFixed() };
+  const sig = JSON.stringify(sp) + "|" + DISPLAY_CURRENCY;
+  const kept = BUDGET_SPEND_MEMO.get(combined);
+  if (kept && kept.sig === sig) return kept.v;
+  let best = null;
+  combined.budgetCands.forEach((c) => {
+    const r = budgetSpendSimulate(c.plan, sp);
+    if (r.ok && (!best || r.finish < best.finish || (r.finish === best.finish && r.total < best.total - 0.005))) best = { ...r, shares: c.shares };
+  });
+  const v = best || { ok: false };
+  BUDGET_SPEND_MEMO.set(combined, { sig, v });
+  return v;
+}
 // My Purchases: the Budgets packs plan (what else to buy), worked out the
 // same way the Budgets page does; reused from Budgets when it's ready.
 let PUR_SUGGEST = null; // { key, promise | plan }
+// With "My budget" set, the suggestions are that plan, on the days it buys them.
+function budgetSuggestOf(combined) {
+  const sb_ = spendActive() ? budgetSpendBest(combined) : null;
+  // (the admin also gets the "By target" plan to compare: My Purchases labels)
+  const tp = combined ? (combined.byTarget || (combined.split && combined.split.target && combined.split.target.plan) || null) : null;
+  if (sb_ && sb_.ok) return { ...sb_.plan, spendSched: sb_.sched, spend: sb_, targetPlan: tp };
+  return (combined && combined.chosen) || null;
+}
 async function budgetSuggestedPlan() {
-  if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending) return BUDGET_DATA.combined.chosen || null;
+  await ensureBudgetSpend();
+  const wantCands = spendActive();
+  if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && (!wantCands || BUDGET_DATA.combined.budgetCands)) return budgetSuggestOf(BUDGET_DATA.combined);
   if (PUR_SUGGEST) return PUR_SUGGEST;
   PUR_SUGGEST = (async () => {
     const [, , , , savedSel, savedTarget] = await Promise.all([
@@ -14277,8 +14768,8 @@ async function budgetSuggestedPlan() {
     let targetDays = null;
     if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
     const pages = await Promise.all(BUDGET_PAGES.map((pg) => budgetForPage(pg.key, targetDays, { noPlan: true })));
-    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays);
-    return (combined && combined.chosen) || null;
+    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands });
+    return budgetSuggestOf(combined);
   })();
   PUR_SUGGEST.catch(() => { PUR_SUGGEST = null; });
   return PUR_SUGGEST;
@@ -14305,6 +14796,7 @@ async function renderBudgetsPage(opts = {}) {
     BUDGET_SELECTED ? Promise.resolve(BUDGET_SELECTED) : loadCalcState("budget_selected"),
     BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
     dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
+    ensureBudgetSpend(),
   ]);
   if (TAB !== "budgets") return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
@@ -14328,12 +14820,14 @@ async function renderBudgetsPage(opts = {}) {
   const selSig = JSON.stringify(BUDGET_PAGES.map((p) => included(p.key)));
   // The page (settings, pages, materials) is drawn at once; the packs plan is
   // worked out in the background and the prices fill in when it's ready.
-  const planKey = `${targetDays}|${selSig}`;
-  const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig;
+  // "My budget" needs plans for several finish dates (worked out only when an amount is set).
+  const wantCands = spendActive();
+  const planKey = `${targetDays}|${selSig}|${wantCands ? 1 : 0}`;
+  const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig && (!wantCands || !!BUDGET_DATA.combined.budgetCands);
   const combinedRaw = haveCombined ? BUDGET_DATA.combined : { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
   if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey) {
     BUDGET_PLAN_RUNNING = planKey;
-    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays).then((real) => {
+    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands }).then((real) => {
       if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
       // Only if nothing changed meanwhile (date, ticks, data).
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
@@ -14357,11 +14851,13 @@ async function renderBudgetsPage(opts = {}) {
   } : null;
   const reachable = targetDays != null && (!!combinedRaw.byTarget || !!split);
   const views = combinedRaw.views || {};
-  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan));
-  if (!viewKeys.includes(BUDGET_VIEW)) BUDGET_VIEW = "main";
+  const spendBest = wantCands ? budgetSpendBest(combinedRaw) : null;
+  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
+  // (kept on "My budget" while its plans are still being worked out)
+  if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && planPending)) BUDGET_VIEW = "main";
   const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
   const viewData = (k) => {
-    const v = k === "main" ? (splitMain || { plan: combinedRaw.chosen, shares: combinedRaw.shares }) : views[k];
+    const v = k === "main" ? (splitMain || { plan: combinedRaw.chosen, shares: combinedRaw.shares }) : k === "budget" ? (spendBest && spendBest.ok ? { plan: spendBest.plan, shares: spendBest.shares } : null) : views[k];
     const dropPlans = combinedRaw.dropped.map((dk) => pagesRaw.find((x) => x.calcKey === dk)).filter((pg) => pg && included(pg.calcKey)).map((pg) => pickDropped(pg, k)).filter(Boolean);
     const plans = (v && v.plan ? [v.plan] : []).concat(dropPlans);
     return { plan: v && v.plan, shares: (v && v.shares) || {}, total: plans.reduce((a, pl) => a + packPlanLocal(pl), 0), days: Math.max(0, ...plans.map((pl) => pl.days || 0)), sample: plans[0] && plans[0].rows[0] };
@@ -14483,6 +14979,7 @@ async function renderBudgetsPage(opts = {}) {
     grandCurrency = grandCurrency || combined.chosen.rows[0]?.currency;
     grandDays = Math.max(grandDays, combined.chosen.days);
   }
+  if (BUDGET_VIEW === "budget" && !(spendBest && spendBest.ok)) anyPlan = false;
   // Design A: each part of the plan is one line (coloured bar, pages, price,
   // "N packs ▸"); tapping it opens that part's packs.
   const lineHtml = (color, title, sub, pl, open) => {
@@ -14502,16 +14999,45 @@ async function renderBudgetsPage(opts = {}) {
       ${lineHtml("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${namesOf(split.late.keys)} · ${esc(t("bud_line_by").replace("{date}", fmtDate(lp.days)))}`, lp)}
       ${droppedHtml}`;
   };
-  const combinedHtml = split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
+  // "My budget": one line per month (or week): spent of what was there, money
+  // kept for the next one, and that period's packs (design C).
+  const spendHtml = () => {
+    if (!spendBest || !spendBest.ok) return `<div class="meta" style="font-size:11.5px; margin-top:10px; color:var(--danger);">${esc(t("spend_cant"))}</div>`;
+    const pl = spendBest.plan, cur = pl.rows[0]?.currency, smp = pl.rows[0]?.price;
+    const money = (v) => packFmtLocal(Math.round(v), cur, true, smp);
+    const label = (pd) => {
+      const d = new Date(packStartOfToday().getTime() + pd.start * 86400000);
+      if (spendBest.per === "month") return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", ...(d.getUTCFullYear() !== new Date().getUTCFullYear() ? { year: "numeric" } : {}), timeZone: "UTC" });
+      const e = new Date(packStartOfToday().getTime() + (spendPeriodStart(pd.p + 1, "week") - 1) * 86400000);
+      const f = (x) => x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" });
+      return `${f(d)} – ${f(e)}`;
+    };
+    const lastP = spendBest.periods.length - 1;
+    const one = (pd) => {
+      // (no "Weekly · N resets": that's the whole plan's, not this month's)
+      const rows = pd.items.map((it) => ({ ...pl.rows[it.i], count: it.count, subtotal: pl.rows[it.i].price * it.count, reset: null }));
+      const fill = pd.avail > 0 ? Math.min(100, (pd.spent / pd.avail) * 100) : 0;
+      const sub = pd.p === lastP ? t("spend_all_done") : spendBest.carry && pd.kept > 0.5 ? t(spendBest.per === "week" ? "spend_kept_week" : "spend_kept_month").replace("{v}", money(pd.kept)) : t("spend_of").replace("{v}", money(pd.avail));
+      const fixed = pd.fixed > 0.5 ? ` · ${esc(t("spend_fixed").replace("{v}", money(pd.fixed)))}` : "";
+      return `<details class="bud-line bud-spend-p"><summary><span class="bud-line-bar" style="background:${pd.p === lastP ? "var(--good)" : "var(--ice)"};"></span>
+        <span class="bud-line-t"><b>${esc(label(pd))}</b>${pd.p === 0 ? ` <span class="meta">· ${esc(t("pur_sug_now"))}</span>` : ""}<span class="bud-spend-bar"><i style="width:${fill.toFixed(1)}%;"></i></span><span class="meta" style="color:${pd.p === lastP || pd.kept > 0.5 ? "var(--good)" : ""};">${esc(sub)}</span>${fixed ? `<span class="meta">${fixed}</span>` : ""}</span>
+        <span class="bud-line-v"><b>${money(pd.spent)}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary>
+        <div class="bud-line-body">${rows.length ? packRowsHtml({ rows }) : ""}</div></details>`;
+    };
+    const ps = spendBest.periods;
+    return ps.slice(0, 8).map(one).join("") + (ps.length > 8 ? `<details class="bud-spend-more"><summary class="meta">${esc(t("spend_show_all").replace("{n}", ps.length))}</summary>${ps.slice(8).map(one).join("")}</details>` : "");
+  };
+  const combinedHtml = BUDGET_VIEW === "budget" ? spendHtml() : split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
       ${combined.chosen ? lineHtml(targetDays != null && combined.chosen.days > targetDays ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, namesOf(combined.inc), combined.chosen)
         : `<div class="meta" style="font-size:11px; margin-top:10px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
       ${droppedHtml}` : "";
   // The plan cards under the big total.
   const viewCardsHtml = (() => {
     if (!combinedRaw.chosen || viewKeys.length < 2) return "";
-    const title = (k) => k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
+    const title = (k) => k === "budget" ? t("budgets_view_budget") : k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
     const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
     const seg = (k) => {
+      if (k === "budget" && !(spendBest && spendBest.ok)) return `<button type="button" data-budgetview="budget" class="${k === BUDGET_VIEW ? "on" : ""} late">${esc(title(k))}<b>—</b><span>&nbsp;</span></button>`;
       const v = viewData(k), late = targetDays != null && v.days > targetDays;
       return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}${late ? " late" : ""}" title="${esc(`${title(k)} · ${fmtDate(v.days)}`)}">${esc(title(k))}<b>${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</b><span>${v.days === 0 ? esc(t("pack_ready_now")) : esc(shortDate(v.days))}</span></button>`;
     };
@@ -14557,6 +15083,18 @@ async function renderBudgetsPage(opts = {}) {
           ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
           ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label></div>
             <div class="bud-set" style="margin-top:8px;">${currencyPickerHtml('id="budgetsCurrency"')}</div>
+            ${spendFeatureOn() ? (() => {
+              const sp = spendSettings(), amt = spendAmountLocal();
+              const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
+              return `<div class="bud-set bud-spend" style="margin-top:10px;">
+                <div class="meta" style="font-size:11.5px; font-weight:700;">${esc(t("spend_title"))}</div>
+                <div class="bud-spend-row"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span>
+                  <span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month"))}</button></span></div>
+                <label style="display:flex; gap:6px; align-items:center; font-size:11.5px; margin-top:6px;"><input type="checkbox" data-spendcarry ${sp.carry ? "checked" : ""} /> ${esc(t("spend_carry"))}</label>
+                ${amt > 0 ? "" : `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("spend_hint"))}</div>`}
+                ${IS_OWNER && !visitorsToo ? `<div class="meta" style="font-size:10px; margin-top:4px;">&#128274; ${esc(t("spend_admin_only"))}</div>` : ""}
+              </div>`;
+            })() : ""}
           </div>
         </aside>
         <div class="t12x-main">
@@ -14580,6 +15118,20 @@ async function renderBudgetsPage(opts = {}) {
   }));
   const curEl = content.querySelector("#budgetsCurrency");
   if (curEl) curEl.addEventListener("change", () => { setDisplayCurrency(curEl.value); renderBudgetsPage(); });
+  // My budget: saved at once; a new amount only re-checks the plans already worked out.
+  const spendSave = (patch, show) => {
+    BUDGET_SPEND = { ...(BUDGET_SPEND || {}), ...patch };
+    saveCalcState("budget_spend", BUDGET_SPEND);
+    PUR_SUGGEST = null;
+    if (show && spendActive()) BUDGET_VIEW = "budget";
+    const y = window.scrollY;
+    renderBudgetsPage().then(() => window.scrollTo(0, y));
+  };
+  const amtEl = content.querySelector("[data-spendamt]");
+  if (amtEl) amtEl.addEventListener("change", () => { const v = Math.max(0, Number(amtEl.value) || 0); spendSave({ amount: v, cur: DISPLAY_CURRENCY || "USD" }, v > 0); });
+  content.querySelectorAll("[data-spendper]").forEach((b) => b.addEventListener("click", () => spendSave({ per: b.dataset.spendper }, true)));
+  const carryEl = content.querySelector("[data-spendcarry]");
+  if (carryEl) carryEl.addEventListener("change", () => spendSave({ carry: carryEl.checked }, true));
   const dateEl = content.querySelector("[data-budgettarget]");
   if (dateEl) dateEl.addEventListener("change", async () => {
     BUDGET_TARGET = dateEl.value || "";
@@ -21517,6 +22069,7 @@ async function renderAdminVisibility(body) {
       accessRow("packs", "Packs page", "the pack tables, read-only"),
       accessRow("budgets", "Budgets page", "their own monthly plan against your packs"),
       accessRow("backpack", "Backpack page", "their own inventory overview"),
+      accessRow("spendbudget", "My budget (spending limit)", "the \"My budget\" box and plan on Budgets, and the weekly budget bar on My Purchases"),
     ].join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""))}
     ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""))}
