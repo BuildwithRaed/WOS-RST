@@ -227,8 +227,26 @@
   .bud-seg button b{ display:block; color:var(--frost); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-seg button.on{ background:var(--ice-dim); color:var(--frost); }
   .bud-seg button.late span{ color:var(--danger); }
-  .bud-spend-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:4px; }
-  .bud-spend-row input[type=number]{ width:110px; font-size:13px; padding:5px 8px; }
+  /* Budgets Settings = design A (owner, 17 Oct 2026): label left, control right, equal rows. */
+  .bset-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; padding:6px 0; border-top:1px solid var(--line); }
+  .t12x-k + .bset-row, .bset-sec + .bset-row{ border-top:0; }
+  .bset-l{ display:flex; flex-direction:column; min-width:0; font-size:13px; }
+  .bset-l small{ font-size:11px; color:var(--muted); }
+  .bset-c{ display:flex; align-items:center; gap:6px; flex:0 1 auto; min-width:0; }
+  .bset-c input[type=date]{ width:142px; font-size:13px; padding:6px 8px; }
+  .bset-c select{ width:150px; font-size:13px; padding:6px 8px; }
+  .bset-c input[type=number]{ width:96px; text-align:right; font-size:13px; padding:6px 8px; }
+  .bset-x{ width:32px; height:32px; padding:0 !important; flex:0 0 32px; }
+  .bset-sec{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0 2px; border-top:1px solid var(--line); }
+  .bset-sec b{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+  .bset-tag{ font-size:10px; padding:1px 7px; border-radius:999px; border:1px solid rgba(232,162,60,.5); color:var(--amber); font-weight:600; white-space:nowrap; }
+  .bset-sw{ appearance:none; -webkit-appearance:none; width:38px; height:22px; flex:0 0 38px; margin:0; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); position:relative; cursor:pointer; transition:background .15s; }
+  .bset-sw::after{ content:""; position:absolute; left:2px; top:2px; width:16px; height:16px; border-radius:50%; background:var(--muted); transition:left .15s, background .15s; }
+  .bset-sw:checked{ background:var(--ice-dim); border-color:var(--ice-dim); }
+  .bset-sw:checked::after{ left:18px; background:var(--frost); }
+  .bset-note{ font-size:10.5px; margin-top:6px; }
+  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } }
+  .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 13px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
   .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
   .bud-spend-per button.on{ background:var(--ice-dim); color:var(--frost); }
@@ -3502,6 +3520,14 @@ const T = {
   spend_carry: { en: "Keep what I don't spend for next time" },
   spend_hint: { en: "Type what you can spend: Budgets shows the plan that finishes soonest without going over it." },
   spend_admin_only: { en: "Only you see this. Visitors get it when you tick it in Admin → Visibility." },
+  spend_amount: { en: "Amount" },
+  spend_every: { en: "Every" },
+  spend_week_s: { en: "week" },
+  spend_month_s: { en: "month" },
+  spend_carry_short: { en: "Keep what I don't spend" },
+  spend_carry_sub: { en: "Moves to next week / month" },
+  spend_admin_tag: { en: "Admin only" },
+  spend_visitors_note: { en: "Visitors get My budget when you tick it in Admin → Visibility." },
   spend_cant: { en: "Can't finish within this budget in the next 3 years. Try a bigger amount." },
   spend_kept_week: { en: "{v} kept for next week" },
   spend_kept_month: { en: "{v} kept for next month" },
@@ -13476,9 +13502,18 @@ function currencyPickerHtml(attr) {
   const showingMine = !!c && DISPLAY_CURRENCY === mine;
   return `<label style="display:inline-flex; align-items:center; gap:6px; font-size:11px;"><span class="meta">${esc(t("show_prices_in"))}</span>
     <select ${attr} style="font-size:11px; padding:3px 6px;">
-      <option value="" ${showingMine ? "" : "selected"}>USD $</option>
-      ${c ? `<option value="${c.code}" ${showingMine ? "selected" : ""}>${c.code} ${esc(c.symbol)}</option>` : ""}
+      ${currencyOptionsHtml(c, showingMine)}
     </select></label>`;
+}
+function currencyOptionsHtml(c, showingMine) {
+  return `<option value="" ${showingMine ? "" : "selected"}>USD $</option>
+      ${c ? `<option value="${c.code}" ${showingMine ? "selected" : ""}>${c.code} ${esc(c.symbol)}</option>` : ""}`;
+}
+// Just the currency dropdown (Budgets Settings rows put the label themselves).
+function currencySelectHtml(attr) {
+  const mine = packsPageCurrency() || (DISPLAY_CURRENCY && DISPLAY_CURRENCY !== "USD" ? DISPLAY_CURRENCY : "");
+  const c = PACK_CURRENCIES.find((x) => x.code === mine);
+  return `<select ${attr}>${currencyOptionsHtml(c, !!c && DISPLAY_CURRENCY === mine)}</select>`;
 }
 // Money shown in the viewer's currency, worked out purchase by purchase with
 // the same store prices the pack labels use (never a sum converted at the
@@ -15453,20 +15488,20 @@ async function renderBudgetsPage(opts = {}) {
       <div class="t12x">
         <aside class="t12x-side">
           <div class="t12x-card t12x-settings"><div class="t12x-k">${esc(t("t12x_settings"))}</div>
-            <div class="bud-set">        <label style="display:flex; align-items:center; gap:8px; font-size:12px; flex-wrap:wrap;"><span class="meta">${esc(t("pack_target_by"))}</span><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" style="font-size:12px; padding:4px 6px;" />
-          ${BUDGET_TARGET ? `<button type="button" class="btn small ghost" data-budgettargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
-          ${targetDays != null ? `<span class="meta" style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : ""}</label></div>
-            <div class="bud-set" style="margin-top:8px;">${currencyPickerHtml('id="budgetsCurrency"')}</div>
+            <div class="bset-row"><span class="bset-l">${esc(t("pack_target_by"))}${targetDays != null ? `<small style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</small>` : `<small>${esc(t("pack_no_date"))}</small>`}</span>
+              <span class="bset-c"><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" aria-label="${esc(t("pack_target_by"))}" />${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
+            <div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div>
             ${spendFeatureOn() ? (() => {
               const sp = spendSettings(), amt = spendAmountLocal();
               const visitorsToo = !!((siteConfig("visitor_access", {}) || {}).spendbudget === true);
-              return `<div class="bud-set bud-spend" style="margin-top:10px;">
-                <div class="meta" style="font-size:11.5px; font-weight:700;">${esc(t("spend_title"))}</div>
-                <div class="bud-spend-row"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span>
-                  <span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month"))}</button></span></div>
-                <label style="display:flex; gap:6px; align-items:center; font-size:11.5px; margin-top:6px;"><input type="checkbox" data-spendcarry ${sp.carry ? "checked" : ""} /> ${esc(t("spend_carry"))}</label>
-                ${amt > 0 ? "" : `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("spend_hint"))}</div>`}
-                ${IS_OWNER && !visitorsToo ? `<div class="meta" style="font-size:10px; margin-top:4px;">&#128274; ${esc(t("spend_admin_only"))}</div>` : ""}
+              const adminOnly = IS_OWNER && !visitorsToo;
+              return `<div class="bud-spend">
+                <div class="bset-sec"><b>${esc(t("spend_title"))}</b>${adminOnly ? `<span class="bset-tag" title="${esc(t("spend_admin_only"))}">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</div>
+                <div class="bset-row"><span class="bset-l">${esc(t("spend_amount"))}</span><span class="bset-c"><input type="number" min="0" step="1" inputmode="decimal" data-spendamt value="${amt > 0 ? Math.round(amt) : ""}" placeholder="0" aria-label="${esc(t("spend_title"))}" /><span class="meta">${esc(packLocalCode("USD", 4.99))}</span></span></div>
+                <div class="bset-row"><span class="bset-l">${esc(t("spend_every"))}</span><span class="bset-c"><span class="bud-spend-per"><button type="button" data-spendper="week" class="${sp.per === "week" ? "on" : ""}">${esc(t("spend_week_s"))}</button><button type="button" data-spendper="month" class="${sp.per === "month" ? "on" : ""}">${esc(t("spend_month_s"))}</button></span></span></div>
+                <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("spend_carry_short"))}<small>${esc(t("spend_carry_sub"))}</small></span><input type="checkbox" class="bset-sw" data-spendcarry ${sp.carry ? "checked" : ""} aria-label="${esc(t("spend_carry"))}" /></label>
+                ${amt > 0 ? "" : `<div class="meta bset-note">${esc(t("spend_hint"))}</div>`}
+                ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
               </div>`;
             })() : ""}
           </div>
