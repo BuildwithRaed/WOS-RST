@@ -686,6 +686,7 @@
   .pur-t td{ padding:6px 8px; border-top:1px solid var(--line); white-space:nowrap; }
   .pur-t tr.on td{ background:rgba(108,199,230,.08); }
   .pur-t-pr{ font-weight:700; }
+  .pur-t-pr .meta{ margin-inline-start:4px; }
   .pur-t th:first-child, .pur-t td.pur-t-ctl{ position:sticky; inset-inline-start:0; background:var(--panel); z-index:1; }
   .pur-t th:first-child{ background:var(--panel-2); z-index:2; }
   .pur-t-step{ display:inline-flex; align-items:center; gap:6px; }
@@ -1491,6 +1492,7 @@ input,select,textarea{
   .bs-row .n small{ display:block; font-weight:400; font-size:11px; color:var(--muted); overflow-wrap:anywhere; }
   .bs-row b{ font-size:13px; color:var(--danger); white-space:nowrap; }
   .bs-title{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:4px 0 8px; }
+  .bs-row b .bs-sw{ display:block; font-size:10px; font-weight:600; line-height:1.2; opacity:.85; }
   .bs-row.ok{ background:rgba(76,209,138,.06); border-color:rgba(76,209,138,.22); }
   .bs-row.ok b{ color:var(--good); }
   .bs-ok{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
@@ -6878,7 +6880,7 @@ function purTablePopup(tb, opts) {
       const on = ladder ? i <= S.upTo : S.counts[i] > 0;
       const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
         : `<span class="pur-t-step"><button type="button" data-tct="${i}|-1">&minus;</button><i>${S.counts[i] || 0}</i><button type="button" data-tct="${i}|1" ${r.max && (S.counts[i] || 0) >= r.max ? "disabled" : ""}>+</button></span>`;
-      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">×${r.max}</span>` : ""}</td>`;
+      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">${bidiNum("×" + r.max)}</span>` : ""}</td>`;
       if (choiceType) return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}<td class="pur-t-pk"><div class="pur-t-picks3">${S.sel[i].map((sel, k) => `<select class="pur-t-sel${sel < 0 ? " unset" : ""}" data-tsel="${i}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}"><option value="-1" ${sel < 0 ? "selected" : ""} disabled>${esc(t("pur_tbl_pick"))}</option>${r.opts.map((o, oi) => `<option value="${oi}" ${oi === sel ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
       const cells = (tb.rows[r.ri] || {}).cells || [];
       return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
@@ -6891,7 +6893,7 @@ function purTablePopup(tb, opts) {
       <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
       <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
       ${miss ? `<div class="pur-t-miss">${esc(t("pur_tbl_missing").replace("{n}", miss))}</div>` : ""}
-      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
+      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? bidiNum(l.count + "×") + " " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
     putBoxes();
@@ -7018,12 +7020,12 @@ async function renderPurchasesPage() {
     const when = dates.length === 1 ? shortDay(dates[0]) : `${t("pur_n_dates").replace("{n}", dates.length)} · ${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today);
     return `<div class="pur-item pur-grp${open ? " open" : ""}" data-purgrp="${esc(kind + "|" + g.key)}">
-      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
+      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">${bidiNum("× " + n)}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
       <div class="bud-mats pur-chips">${chipsFor(purchaseGives(g.first, tb), n, 5)}</div>
       <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
         <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button>${kind === "c" ? `<button type="button" class="btn small" data-purgmove="bought">&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}<button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
       ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
-      <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">× ${Math.max(1, Math.floor(Number(p.count) || 1))}</span><span class="pur-date-p">${esc(packFmtMoney(cost(p), link.currency))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
+      <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span><span class="pur-date-p">${esc(packFmtMoney(cost(p), link.currency))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
     </div>`;
   };
   const summary = `<div class="t12x-card pur-sum">
@@ -7291,7 +7293,7 @@ async function renderPurchasesPage() {
         return `<div class="pur-cl-row${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
           ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
           <span class="pur-cl-ic" title="${first ? esc(materialDisplayName(first.replace(/ \(minutes\)$/, ""))) : ""}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}${more ? `<u class="pur-cl-more">+${more}</u>` : ""}</span>
-          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
+          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ${bidiNum("×" + n)} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
           ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
           <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
           ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
@@ -7318,7 +7320,7 @@ async function renderPurchasesPage() {
       }).join("");
       const when = whenShort(xs);
       return `<div class="pur-item">
-        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
+        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">${bidiNum("× " + n)}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
         <div class="pur-item-f"><span class="meta pur-for">${tagHtml(i, n)}${esc(when)}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
@@ -7580,7 +7582,7 @@ async function renderPurchasesPage() {
       modal.innerHTML = `<div class="modal-box pur-modal">
         <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2><button type="button" class="rfa-x" data-pmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">× ${x.count}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">${bidiNum("× " + x.count)}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -13497,7 +13499,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const d = new Date(today.getTime() + p.days * 86400000);
     let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }); } catch (e) { short = fmtDate(p.days); }
     const whenTxt = p.days === 0 ? t("pack_ready_now") : `${short} · ${p.days}d`;
-    const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>');
+    const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>');
     const byPack = [];
     mineShare.rows.forEach((r) => {
       let g = byPack.find((x) => x.title === r.title);
@@ -13595,7 +13597,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }); } catch (e) { short = fmtDate(c.plan.days); }
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
         };
         const p = pick && pick.plan;
         const byPack = [];
@@ -13756,11 +13758,24 @@ function myStorePrice(usd, code) {
   const v = key ? Number(slots[key]) : 0;
   return v > 0 ? v : null;
 }
+// Numbers and money inside right-to-left text (Arabic) keep their own
+// left-to-right order: "US$ 99.99", "−1.77B", "×3" (not "$US", "1.77B−",
+// "3×"). Unicode isolate marks (LRI … PDI) are plain text, so this works in
+// HTML, attributes, <option> labels and textContent alike. Left-to-right
+// languages get the text unchanged.
+function bidiNum(s) {
+  if (s == null || s === "" || typeof document === "undefined" || document.documentElement.dir !== "rtl") return s;
+  return "\u2066" + s + "\u2069";
+}
+// A planner total that is still short: the amount (no minus sign) with a
+// small "short" under it, in the squares' red. Used by every planner page's
+// "Total resources needed" squares.
+function bsShortHtml(amountText) { return `${esc(bidiNum(amountText))}<small class="bs-sw">${esc(t("bs_short_word"))}</small>`; }
 function fmtMoneyIn(n, code) {
   try {
-    return new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    return bidiNum(new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n));
   } catch (e) {
-    return packCurrencySymbol(code) + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return bidiNum(packCurrencySymbol(code) + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   }
 }
 function packConvert(n, from) {
@@ -13822,9 +13837,9 @@ function packFmtMoney(n, currency, whole, raw) {
     const fk = `${LANG}|${code}|${digits}`;
     let f = PACK_MONEY_FMT.get(fk);
     if (!f) { f = new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits }); PACK_MONEY_FMT.set(fk, f); }
-    return f.format(n);
+    return bidiNum(f.format(n));
   } catch (e) {
-    return packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return bidiNum(packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }));
   }
 }
 
@@ -16504,7 +16519,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (summaryOn) {
       // Edit list: short amounts with a word, shown as a pill.
       const amt = (v) => (/\(minutes\)$/.test(name) ? t12FormatTime(v / 60) : shortAmount(v));
-      const text = needed === 0 ? t("bs_not_needed") : stillNeed > 0 ? `\u2212${amt(stillNeed)} ${t("bs_short_word")}` : surplus > 0 ? `\u2713 ${amt(surplus)} ${t("bs_spare_word")}` : "\u2713";
+      const text = needed === 0 ? t("bs_not_needed") : stillNeed > 0 ? `${bidiNum(amt(stillNeed))} ${t("bs_short_word")}` : surplus > 0 ? `\u2713 ${bidiNum(amt(surplus))} ${t("bs_spare_word")}` : "\u2713";
       return { statusColor, statusText: text };
     }
     const statusText = needed === 0 ? "\u2014" : stillNeed > 0 ? `${stillNeed.toLocaleString()}` : surplus > 0 ? `\u2713 ${surplus.toLocaleString()}` : "\u2713";
@@ -16534,8 +16549,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     return `${hosted ? "" : footHtml()}
       ${items.length ? (hosted ? "" : `<div class="bs-title">${esc(t("bs_title_needed"))}</div>`) : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-sq" style="--n:${Math.max(1, Math.min(7, items.length))};">
-      ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&minus;${esc(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
-      ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(amount(n, (effOwned[n] || 0) - needOf(n)))}</b></div>`).join("")}
+      ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>${bsShortHtml(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
+      ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(bidiNum(amount(n, (effOwned[n] || 0) - needOf(n))))}</b></div>`).join("")}
       </div>`;
   };
 
@@ -19453,7 +19468,7 @@ async function renderExpertsResearchPage() {
     // Experts Level's share), or a tick when covered.
     const sigilHave = Math.max(0, totalSigil - stillSigil);
     sigilsEl.innerHTML = totalSigil > 0 ? `<div class="bs-box"><div class="bs-sq" style="--n:1;">
-      <div class="bs-row${stillSigil > 0 ? "" : " ok"}"><img src="icons/item_icon_570000.png" alt="" /><div class="n">${esc(t("resource_sigils"))}<small>${esc(t("bs_have_of").replace("{have}", shortAmount(sigilHave)).replace("{need}", shortAmount(totalSigil)))}</small></div><b>${stillSigil > 0 ? `&minus;${esc(shortAmount(stillSigil))}` : `&#10003;`}</b></div>
+      <div class="bs-row${stillSigil > 0 ? "" : " ok"}"><img src="icons/item_icon_570000.png" alt="" /><div class="n">${esc(t("resource_sigils"))}<small>${esc(t("bs_have_of").replace("{have}", shortAmount(sigilHave)).replace("{need}", shortAmount(totalSigil)))}</small></div><b>${stillSigil > 0 ? bsShortHtml(shortAmount(stillSigil)) : `&#10003;`}</b></div>
       </div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`;
     document.getElementById("expResearchOwned").innerHTML = `${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })))}
       <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
@@ -20110,8 +20125,8 @@ async function renderExpertsPage() {
     footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
-      ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&minus;${esc(amt(r, r.need - r.have))}</b></div>`).join("")}
-      ${ready.map((r) => `<div class="bs-row ok"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&#10003; ${esc(amt(r, r.have - r.need))}</b></div>`).join("")}
+      ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>${bsShortHtml(amt(r, r.need - r.have))}</b></div>`).join("")}
+      ${ready.map((r) => `<div class="bs-row ok"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&#10003; ${esc(bidiNum(amt(r, r.have - r.need)))}</b></div>`).join("")}
       </div></div>`;
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
@@ -21261,7 +21276,7 @@ function wirePlxSelects(root, onPick) {
 function plxStatBoxesHtml(list, oneRow) {
   return `<div class="plx-stats${oneRow ? " one" : ""}"${oneRow ? ` style="--n:${list.length};"` : ""}>${list.map((s) => {
     const dp = s.dp == null ? 1 : s.dp, pct = s.max > 0 ? Math.min(100, (s.val / s.max) * 100) : 0;
-    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>+${Number(s.val || 0).toFixed(dp)}%</b>${s.max != null ? `<small>${oneRow ? "/ " : `${esc(t("of_max_prefix"))} `}+${oneRow ? Number(Number(s.max).toFixed(dp)) : Number(s.max).toFixed(dp)}%</small><div class="t12x-bar"><i style="width:${pct}%;${pct >= 100 ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
+    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>${bidiNum(`+${Number(s.val || 0).toFixed(dp)}%`)}</b>${s.max != null ? `<small>${oneRow ? "/ " : `${esc(t("of_max_prefix"))} `}${bidiNum(`+${oneRow ? Number(Number(s.max).toFixed(dp)) : Number(s.max).toFixed(dp)}%`)}</small><div class="t12x-bar"><i style="width:${pct}%;${pct >= 100 ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
   }).join("")}</div>`;
 }
 // Several stat groups in one card, picked with tabs (like the troop tabs).
@@ -21346,7 +21361,7 @@ function plxTimeHtml(rawHours, calcKey) {
   const coverH = Math.min(totalH, genH + resH), shortH = Math.max(0, totalH - genH - resH);
   const covPct = totalH > 0 ? Math.min(100, (coverH / totalH) * 100) : 100;
   return `
-      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${t12FormatTime(totalH)}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">&minus;${t12FormatTime(shortH)} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
+      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${bidiNum(t12FormatTime(totalH))}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">${bidiNum(t12FormatTime(shortH))} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
       <div class="t12x-prog"><i style="width:${covPct}%;${shortH > 0 ? "" : " background:var(--good);"}"></i></div>
       <div class="t12x-row"><span>${esc(t("t12x_sp_cover").replace("{g}", t12FormatTime(genH)).replace("{r}", t12FormatTime(resH)))}</span></div>`;
 }
@@ -21509,7 +21524,7 @@ async function renderT12ResearchPage() {
       const coverH = Math.min(totalH, genH + resH), shortH = Math.max(0, totalH - genH - resH);
       const covPct = totalH > 0 ? Math.min(100, (coverH / totalH) * 100) : 100;
       el.innerHTML = `
-      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${t12FormatTime(totalH)}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">&minus;${t12FormatTime(shortH)} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
+      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${bidiNum(t12FormatTime(totalH))}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">${bidiNum(t12FormatTime(shortH))} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
       <div class="t12x-prog"><i style="width:${covPct}%;${shortH > 0 ? "" : " background:var(--good);"}"></i></div>
       <div class="t12x-row"><span>${esc(t("t12x_sp_cover").replace("{g}", t12FormatTime(genH)).replace("{r}", t12FormatTime(resH)))}</span></div>`;
       document.getElementById("t12MaxAllBtn").onclick = maxEverything;
