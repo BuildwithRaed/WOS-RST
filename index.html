@@ -447,6 +447,7 @@
   .pur-alt.pur-cmp-target{ color:#e0b25a; background:none; }
   .pur-alt.pur-cmp-budget{ color:var(--good); background:none; }
   .pur-follow{ margin:0 0 6px; }
+  .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
   .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
   .pur-acts .btn{ padding:3px 9px; }
@@ -3717,6 +3718,7 @@ const T = {
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
+  pur_following: { en: "Following:" },
   pur_tag_both: { en: "both" },
   pur_tag_target: { en: "target" },
   pur_tag_budget: { en: "budget" },
@@ -6825,7 +6827,9 @@ async function renderPurchasesPage() {
     const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<small class="pur-alt pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</small>` : ""}</button>`; }).join("")}</div>`;
     const followHtml = cmp ? `<div class="meta" style="font-size:11px; margin:0 0 4px;">${esc(t("pur_follow_line"))}</div>
       <div class="bud-seg pur-follow">${["target", "budget"].map((k) => { const pl = k === "target" ? cmp.targetPlan : plan; return `<button type="button" data-purfollow="${k}" class="${follow === k ? "on" : ""}">${esc(t(k === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(money(packPlanLocal(pl)))}</b><span>${esc(whenTxt(pl.days))}</span></button>`; }).join("")}</div>
-      <div class="pur-legend">${["both", "target", "budget"].map((k) => `<span><span class="pur-cmp pur-cmp-${k}">${esc(t("pur_tag_" + k))}</span> ${esc(t("pur_tag_" + k + "_d"))}</span>`).join("")}</div>` : "";
+      <div class="pur-legend">${["both", "target", "budget"].map((k) => `<span><span class="pur-cmp pur-cmp-${k}">${esc(t("pur_tag_" + k))}</span> ${esc(t("pur_tag_" + k + "_d"))}</span>`).join("")}</div>`
+      // No target to compare with: just say which plan the list is (owner, 17 Oct 2026).
+      : plan.spend ? `<div class="pur-following">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(t(plan.spend.per === "week" ? "spend_week" : "spend_month"))})</span></div>` : "";
     // Design D: the budget of the chosen week (or its month) as a bar.
     const budBar = (() => {
       const sp = plan.spend;
