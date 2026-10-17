@@ -1634,6 +1634,7 @@
  "t:pur_follow_line": "Список следует этому плану · нажмите, чтобы сменить",
  "t:pur_following": "По плану:",
  "t:pur_go_spend": "Изменить ›",
+ "t:pur_main_item": "Главный предмет: {name} (покрывает большую часть того, что ещё нужно)",
  "t:budgets_view_budget": "Мой бюджет",
  "t:pur_n_packs": "Наборов: {n}",
  "t:pur_other_would": "План «{plan}» стоил бы {v}",

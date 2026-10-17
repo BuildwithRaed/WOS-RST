@@ -1633,6 +1633,7 @@
 "t:pur_follow_line":"รายการตามแผนนี้ · แตะเพื่อสลับ",
 "t:pur_following":"ตามแผน:",
 "t:pur_go_spend":"เปลี่ยน ›",
+"t:pur_main_item":"ไอเทมหลัก: {name} (ครอบคลุมส่วนใหญ่ของที่คุณยังต้องการ)",
 "t:budgets_view_budget":"งบของฉัน",
 "t:pur_n_packs":"{n} แพ็ก",
 "t:pur_other_would":"แผน{plan}จะใช้ {v}",

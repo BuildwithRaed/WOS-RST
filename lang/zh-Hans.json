@@ -1634,6 +1634,7 @@
  "t:pur_follow_line": "列表按此计划 · 点击切换",
  "t:pur_following": "按计划:",
  "t:pur_go_spend": "更改 ›",
+ "t:pur_main_item": "主要物品：{name}（覆盖你仍需要的大部分）",
  "t:budgets_view_budget": "我的预算",
  "t:pur_n_packs": "{n} 个礼包",
  "t:pur_other_would": "{plan}计划需 {v}",

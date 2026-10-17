@@ -1637,6 +1637,7 @@
 "t:pur_follow_line":"القائمة تتبع هذه الخطة · اضغط للتبديل",
 "t:pur_following":"المتّبع:",
 "t:pur_go_spend":"تغيير ‹",
+"t:pur_main_item":"العنصر الرئيسي: {name} (يغطي الجزء الأكبر مما تبقى لك)",
 "t:budgets_view_budget":"ميزانيتي",
 "t:pur_n_packs":"{n} حزم",
 "t:pur_other_would":"خطة {plan} ستكلف {v}",

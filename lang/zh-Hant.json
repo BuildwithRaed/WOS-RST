@@ -1633,6 +1633,7 @@
 "t:pur_follow_line":"清單依此計畫 · 點擊切換",
 "t:pur_following":"依計畫:",
 "t:pur_go_spend":"變更 ›",
+"t:pur_main_item":"主要物品：{name}（涵蓋你仍需要的大部分）",
 "t:budgets_view_budget":"我的預算",
 "t:pur_n_packs":"{n} 個禮包",
 "t:pur_other_would":"{plan}計畫需 {v}",

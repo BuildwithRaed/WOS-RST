@@ -1633,6 +1633,7 @@
 "t:pur_follow_line":"A lista segue este plano · toque para trocar",
 "t:pur_following":"Seguindo:",
 "t:pur_go_spend":"Mudar ›",
+"t:pur_main_item":"Item principal: {name} (cobre a maior parte do que você ainda precisa)",
 "t:budgets_view_budget":"Meu orçamento",
 "t:pur_n_packs":"{n} pacotes",
 "t:pur_other_would":"O plano {plan} custaria {v}",

@@ -1634,6 +1634,7 @@
  "t:pur_follow_line": "Lista podąża za tym planem · dotknij, by zmienić",
  "t:pur_following": "Według:",
  "t:pur_go_spend": "Zmień ›",
+ "t:pur_main_item": "Główny przedmiot: {name} (pokrywa największą część tego, czego jeszcze potrzebujesz)",
  "t:budgets_view_budget": "Mój budżet",
  "t:pur_n_packs": "{n} paczek",
  "t:pur_other_would": "Plan {plan} kosztowałby {v}",

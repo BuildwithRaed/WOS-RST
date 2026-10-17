@@ -1633,6 +1633,7 @@
 "t:pur_follow_line":"Daftar mengikuti rencana ini · ketuk untuk ganti",
 "t:pur_following":"Mengikuti:",
 "t:pur_go_spend":"Ubah ›",
+"t:pur_main_item":"Item utama: {name} (menutupi sebagian besar yang masih kamu butuhkan)",
 "t:budgets_view_budget":"Anggaranku",
 "t:pur_n_packs":"{n} paket",
 "t:pur_other_would":"Rencana {plan} akan {v}",

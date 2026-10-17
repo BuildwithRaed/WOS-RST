@@ -1637,6 +1637,7 @@
 "t:pur_follow_line":"목록이 이 계획을 따릅니다 · 탭하여 전환",
 "t:pur_following":"따르는 계획:",
 "t:pur_go_spend":"변경 ›",
+"t:pur_main_item":"주요 아이템: {name} (아직 필요한 양의 대부분을 채워요)",
 "t:budgets_view_budget":"내 예산",
 "t:pur_n_packs":"{n}개 팩",
 "t:pur_other_would":"{plan} 계획은 {v}",

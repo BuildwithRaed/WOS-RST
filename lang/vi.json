@@ -1633,6 +1633,7 @@
 "t:pur_follow_line":"Danh sách theo kế hoạch này · chạm để đổi",
 "t:pur_following":"Theo:",
 "t:pur_go_spend":"Đổi ›",
+"t:pur_main_item":"Vật phẩm chính: {name} (đáp ứng phần lớn những gì bạn còn cần)",
 "t:budgets_view_budget":"Ngân sách của tôi",
 "t:pur_n_packs":"{n} gói",
 "t:pur_other_would":"Kế hoạch {plan} sẽ tốn {v}",

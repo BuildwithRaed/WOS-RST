@@ -1634,6 +1634,7 @@
  "t:pur_follow_line": "La lista sigue este plan · toca para cambiar",
  "t:pur_following": "Siguiendo:",
  "t:pur_go_spend": "Cambiar ›",
+ "t:pur_main_item": "Objeto principal: {name} (cubre la mayor parte de lo que aún necesitas)",
  "t:budgets_view_budget": "Mi presupuesto",
  "t:pur_n_packs": "{n} paquetes",
  "t:pur_other_would": "El plan {plan} costaría {v}",
