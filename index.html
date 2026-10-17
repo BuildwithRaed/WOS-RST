@@ -17672,11 +17672,20 @@ async function loadExpertsRosterGlobal() {
 // Skills renamed in the data (16 Oct 2026, names from whiteoutsurvival.wiki):
 // saved levels move to the new name, so nobody loses them.
 const EXPERT_SKILL_RENAMES = { Fabian: { "Dawn Hymn": "Battle Bulwark" }, Justus: { "Tresure Seeker": "Treasure Seeker" } };
+// Renames made in Admin → Experts → Roster are added in site_config
+// "expert_skill_renames" = [{ hero, from, to }] (in order; Admin never reuses a
+// name, so applying them again does nothing).
+function expertSkillRenameList() {
+  const out = [];
+  Object.entries(EXPERT_SKILL_RENAMES).forEach(([hero, map]) => Object.entries(map).forEach(([from, to]) => out.push({ hero, from, to })));
+  const extra = typeof siteConfig === "function" ? siteConfig("expert_skill_renames", null) : null;
+  if (Array.isArray(extra)) extra.forEach((x) => { if (x && x.hero && x.from && x.to) out.push({ hero: String(x.hero), from: String(x.from), to: String(x.to) }); });
+  return out;
+}
 function renameExpertSkills(saved) {
-  Object.entries(EXPERT_SKILL_RENAMES).forEach(([hero, map]) => {
+  expertSkillRenameList().forEach(({ hero, from, to }) => {
     const sk = saved && saved[hero] && saved[hero].skills;
-    if (!sk) return;
-    Object.entries(map).forEach(([from, to]) => { if (sk[from] && !sk[to]) { sk[to] = sk[from]; delete sk[from]; } });
+    if (sk && sk[from] && !sk[to]) { sk[to] = sk[from]; delete sk[from]; }
   });
   return saved;
 }
@@ -23016,7 +23025,27 @@ async function renderAdminRoster(body) {
     onEdit: (id) => {
       const r = rows.find((x) => String(x.id) === id);
       openAdmSheet({ title: `Edit · ${r.key}`, fields: fields(r),
-        onSave: async (v) => { await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) }); EXPERTS_ROSTER_LOADED = false; toast("Saved"); renderAdminRoster(body); },
+        onSave: async (v) => {
+          // A renamed skill: its level rows (Skills tab) are renamed too and
+          // everyone's saved levels move to the new name (like a pet rename).
+          const renames = [1, 2, 3, 4].map((k) => ({ from: r["skill" + k], to: v["skill" + k] })).filter((x) => x.from && x.to && x.from !== x.to);
+          if (renames.length) {
+            const used = new Set([1, 2, 3, 4].map((k) => r["skill" + k]).filter(Boolean));
+            expertSkillRenameList().filter((x) => x.hero === r.key).forEach((x) => { used.add(x.from); used.add(x.to); });
+            const clash = renames.find((x) => used.has(x.to) || renames.filter((y) => y.to === x.to).length > 1);
+            if (clash) throw new Error(`"${clash.to}" was already used by ${r.key}; pick a name it never had (saved levels are moved by name)`);
+            if (!confirm(`Rename ${renames.map((x) => `"${x.from}" → "${x.to}"`).join(", ")}?\n\nThe skill's level rows in Experts → Skills get the new name too, and everyone's saved levels for it move to the new name the next time they open the site.`)) throw new Error("Not saved");
+          }
+          await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) });
+          if (renames.length) {
+            for (const x of renames) await sb(`expert_skill_nodes?expert=eq.${encodeURIComponent(r.key)}&skill=eq.${encodeURIComponent(x.from)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ skill: x.to }) });
+            const list = Array.isArray(siteConfig("expert_skill_renames", null)) ? siteConfig("expert_skill_renames", null).slice() : [];
+            renames.forEach((x) => list.push({ hero: r.key, from: x.from, to: x.to, at: new Date().toISOString().slice(0, 10) }));
+            await saveSiteConfig("expert_skill_renames", list);
+            EXPERTS_STATE_GLOBAL = null; dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+          }
+          EXPERTS_ROSTER_LOADED = false; toast(renames.length ? "Saved · skill renamed" : "Saved"); renderAdminRoster(body);
+        },
         onDelete: async () => { await sb(`experts?id=eq.${r.id}`, { method: "DELETE" }); EXPERTS_ROSTER_LOADED = false; toast("Deleted"); renderAdminPage(); },
         deleteText: `Delete ${r.key} from the roster? Their affinity / skill / research rows stay but won't be used.` });
     },
