@@ -1633,7 +1633,6 @@
 "t:pur_follow_line":"Daftar mengikuti rencana ini · ketuk untuk ganti",
 "t:pur_following":"Mengikuti:",
 "t:pur_go_spend":"Ubah ›",
-"t:pur_main_item":"Item utama: {name} (menutupi sebagian besar yang masih kamu butuhkan)",
 "t:budgets_view_budget":"Anggaranku",
 "t:pur_n_packs":"{n} paket",
 "t:pur_other_would":"Rencana {plan} akan {v}",
@@ -1693,4 +1692,7 @@
 "t:pk_any_s":"Baris mana saja",
 "t:pk_tiers_s":"Bertahap",
 "t:pk_choice_s":"Satu baris",
-"t:pk_picks_s":"Pilih opsi"}
+"t:pk_picks_s":"Pilih opsi",
+"t:pur_role_main":"utama",
+"t:pur_role_needed":"perlu",
+"t:pur_role_extra":"bonus"}

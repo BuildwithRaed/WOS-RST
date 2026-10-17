@@ -1634,7 +1634,6 @@
  "t:pur_follow_line": "リストはこのプランに従います · タップで切替",
  "t:pur_following": "対象:",
  "t:pur_go_spend": "変更 ›",
- "t:pur_main_item": "メインアイテム：{name}（まだ必要な分の大部分をカバー）",
  "t:budgets_view_budget": "マイ予算",
  "t:pur_n_packs": "{n}パック",
  "t:pur_other_would": "{plan}プランなら {v}",
@@ -1694,5 +1693,8 @@
  "t:pk_any_s": "どの行でも",
  "t:pk_tiers_s": "段階式",
  "t:pk_choice_s": "1行選択",
- "t:pk_picks_s": "選択式"
+ "t:pk_picks_s": "選択式",
+ "t:pur_role_main": "メイン",
+ "t:pur_role_needed": "必要",
+ "t:pur_role_extra": "おまけ"
 }

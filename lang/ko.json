@@ -1637,7 +1637,6 @@
 "t:pur_follow_line":"목록이 이 계획을 따릅니다 · 탭하여 전환",
 "t:pur_following":"따르는 계획:",
 "t:pur_go_spend":"변경 ›",
-"t:pur_main_item":"주요 아이템: {name} (아직 필요한 양의 대부분을 채워요)",
 "t:budgets_view_budget":"내 예산",
 "t:pur_n_packs":"{n}개 팩",
 "t:pur_other_would":"{plan} 계획은 {v}",
@@ -1693,5 +1692,8 @@
 "t:pk_any_s":"아무 행",
 "t:pk_tiers_s":"단계별",
 "t:pk_choice_s":"한 행",
-"t:pk_picks_s":"옵션 선택"
+"t:pk_picks_s":"옵션 선택",
+"t:pur_role_main":"주요",
+"t:pur_role_needed":"필요",
+"t:pur_role_extra":"추가"
 }

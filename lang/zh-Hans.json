@@ -1634,7 +1634,6 @@
  "t:pur_follow_line": "列表按此计划 · 点击切换",
  "t:pur_following": "按计划:",
  "t:pur_go_spend": "更改 ›",
- "t:pur_main_item": "主要物品：{name}（覆盖你仍需要的大部分）",
  "t:budgets_view_budget": "我的预算",
  "t:pur_n_packs": "{n} 个礼包",
  "t:pur_other_would": "{plan}计划需 {v}",
@@ -1694,5 +1693,8 @@
  "t:pk_any_s": "任意行",
  "t:pk_tiers_s": "按档",
  "t:pk_choice_s": "选一行",
- "t:pk_picks_s": "选择选项"
+ "t:pk_picks_s": "选择选项",
+ "t:pur_role_main": "主要",
+ "t:pur_role_needed": "所需",
+ "t:pur_role_extra": "额外"
 }

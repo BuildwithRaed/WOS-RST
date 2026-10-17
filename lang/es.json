@@ -1634,7 +1634,6 @@
  "t:pur_follow_line": "La lista sigue este plan · toca para cambiar",
  "t:pur_following": "Siguiendo:",
  "t:pur_go_spend": "Cambiar ›",
- "t:pur_main_item": "Objeto principal: {name} (cubre la mayor parte de lo que aún necesitas)",
  "t:budgets_view_budget": "Mi presupuesto",
  "t:pur_n_packs": "{n} paquetes",
  "t:pur_other_would": "El plan {plan} costaría {v}",
@@ -1694,5 +1693,8 @@
  "t:pk_any_s": "Cualquier fila",
  "t:pk_tiers_s": "Por pasos",
  "t:pk_choice_s": "Una fila",
- "t:pk_picks_s": "Elegir opciones"
+ "t:pk_picks_s": "Elegir opciones",
+ "t:pur_role_main": "principal",
+ "t:pur_role_needed": "necesario",
+ "t:pur_role_extra": "extra"
 }

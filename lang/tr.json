@@ -1633,7 +1633,6 @@
 "t:pur_follow_line":"Liste bu planı izliyor · değiştirmek için dokun",
 "t:pur_following":"İzlenen:",
 "t:pur_go_spend":"Değiştir ›",
-"t:pur_main_item":"Ana eşya: {name} (hâlâ ihtiyacın olanın en büyük kısmını karşılar)",
 "t:budgets_view_budget":"Bütçem",
 "t:pur_n_packs":"{n} paket",
 "t:pur_other_would":"{plan} planı {v} tutardı",
@@ -1693,4 +1692,7 @@
 "t:pk_any_s":"Herhangi bir satır",
 "t:pk_tiers_s":"Adım adım",
 "t:pk_choice_s":"Tek satır",
-"t:pk_picks_s":"Seçenek seç"}
+"t:pk_picks_s":"Seçenek seç",
+"t:pur_role_main":"ana",
+"t:pur_role_needed":"gerekli",
+"t:pur_role_extra":"ekstra"}

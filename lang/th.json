@@ -1633,7 +1633,6 @@
 "t:pur_follow_line":"รายการตามแผนนี้ · แตะเพื่อสลับ",
 "t:pur_following":"ตามแผน:",
 "t:pur_go_spend":"เปลี่ยน ›",
-"t:pur_main_item":"ไอเทมหลัก: {name} (ครอบคลุมส่วนใหญ่ของที่คุณยังต้องการ)",
 "t:budgets_view_budget":"งบของฉัน",
 "t:pur_n_packs":"{n} แพ็ก",
 "t:pur_other_would":"แผน{plan}จะใช้ {v}",
@@ -1693,4 +1692,7 @@
 "t:pk_any_s":"แถวใดก็ได้",
 "t:pk_tiers_s":"เป็นขั้น",
 "t:pk_choice_s":"หนึ่งแถว",
-"t:pk_picks_s":"เลือกตัวเลือก"}
+"t:pk_picks_s":"เลือกตัวเลือก",
+"t:pur_role_main":"หลัก",
+"t:pur_role_needed":"ต้องใช้",
+"t:pur_role_extra":"แถม"}

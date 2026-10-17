@@ -1634,7 +1634,6 @@
  "t:pur_follow_line": "La liste suit ce plan · touche pour changer",
  "t:pur_following": "Suivi :",
  "t:pur_go_spend": "Modifier ›",
- "t:pur_main_item": "Objet principal : {name} (couvre la plus grande partie de ce qu'il vous manque)",
  "t:budgets_view_budget": "Mon budget",
  "t:pur_n_packs": "{n} packs",
  "t:pur_other_would": "Le plan {plan} coûterait {v}",
@@ -1694,5 +1693,8 @@
  "t:pk_any_s": "Toute ligne",
  "t:pk_tiers_s": "Par étapes",
  "t:pk_choice_s": "Une ligne",
- "t:pk_picks_s": "Choix d'options"
+ "t:pk_picks_s": "Choix d'options",
+ "t:pur_role_main": "principal",
+ "t:pur_role_needed": "requis",
+ "t:pur_role_extra": "bonus"
 }

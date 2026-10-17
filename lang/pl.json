@@ -1634,7 +1634,6 @@
  "t:pur_follow_line": "Lista podąża za tym planem · dotknij, by zmienić",
  "t:pur_following": "Według:",
  "t:pur_go_spend": "Zmień ›",
- "t:pur_main_item": "Główny przedmiot: {name} (pokrywa największą część tego, czego jeszcze potrzebujesz)",
  "t:budgets_view_budget": "Mój budżet",
  "t:pur_n_packs": "{n} paczek",
  "t:pur_other_would": "Plan {plan} kosztowałby {v}",
@@ -1694,5 +1693,8 @@
  "t:pk_any_s": "Dowolny wiersz",
  "t:pk_tiers_s": "Krokami",
  "t:pk_choice_s": "Jeden wiersz",
- "t:pk_picks_s": "Wybór opcji"
+ "t:pk_picks_s": "Wybór opcji",
+ "t:pur_role_main": "główny",
+ "t:pur_role_needed": "potrzebny",
+ "t:pur_role_extra": "dodatek"
 }
