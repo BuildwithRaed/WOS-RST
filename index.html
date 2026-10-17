@@ -622,6 +622,9 @@
   .pur-cl-row.open{ border-top-color:var(--ice); }
   .pur-cl-ic{ width:26px; height:26px; flex:0 0 26px; display:flex; align-items:center; justify-content:center; }
   .pur-cl-ic img{ max-width:26px; max-height:26px; }
+  .pur-cl-ic{ position:relative; }
+  .pur-cl-more{ position:absolute; inset-inline-end:-6px; bottom:-5px; text-decoration:none; font-size:8.5px; font-weight:700; line-height:1; padding:2px 3px; border-radius:6px; background:var(--ice-dim); color:var(--frost); }
+  .bud-mat.pur-main{ box-shadow:0 0 0 1.5px var(--ice) inset; }
   .pur-cl-n{ flex:1 1 auto; min-width:0; }
   .pur-cl-n i{ font-style:normal; color:var(--muted); font-size:10px; }
   .pur-cl-p{ font-weight:700; white-space:nowrap; }
@@ -3951,6 +3954,7 @@ const T = {
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
   pur_following: { en: "Following:" },
   pur_go_spend: { en: "Change ›" },
+  pur_main_item: { en: "Main item: {name} (covers the biggest part of what you still need)" },
   pur_n_packs: { en: "{n} packs" },
   pur_other_would: { en: "{plan} plan would be {v}" },
   pur_tick_hint: { en: "Tick what you'll buy" },
@@ -7241,9 +7245,20 @@ async function renderPurchasesPage() {
       })();
       const followName = cmp || plan.spend ? t(follow === "target" ? "budgets_view_target" : "budgets_view_budget") : "";
       const canBuy = (i) => { const tb = sugTable(rows[i]); return !!tb && (rows[i].row != null || !plainPack(tb)); };
+      // O1 (owner, 17 Oct 2026): a line's picture is its main item, the one
+      // this pack covers the biggest share of (of everything the plan buys);
+      // "+N" = the other items it gives.
+      const planTot = {};
+      rows.forEach((x) => Object.entries(x.gives || {}).forEach(([k, v]) => { planTot[k] = (planTot[k] || 0) + v * (x.count || 1); }));
+      const mainOf = (r) => {
+        const ks = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && r.gives[k] > 0);
+        let best = ks[0] || null, bs = -1;
+        ks.forEach((k) => { const sh = planTot[k] > 0 ? (r.gives[k] * (r.count || 1)) / planTot[k] : 0; if (sh > bs + 1e-9) { bs = sh; best = k; } });
+        return { main: best, more: Math.max(0, ks.length - 1) };
+      };
       const rowHtml = ([i, xs]) => {
         const r = rows[i], n = xs.reduce((a, x) => a + x.count, 0), tb = sugTable(r);
-        const first = Object.keys(r.gives || {}).find((k) => k !== "Gems" && r.gives[k] > 0);
+        const { main: first, more } = mainOf(r);
         const icon = first ? bpIcon({ name: first.replace(/ \(minutes\)$/, "") }) : null;
         const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${i}`;
         const tk = tickOf(i), vr = verOf(i);
@@ -7253,16 +7268,16 @@ async function renderPurchasesPage() {
         const chips = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0).slice(0, 6).map((k) => {
           const v = r.gives[k] * n, ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
           const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
-          return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
+          return `<span class="bud-mat${k === first ? " pur-main" : ""}" title="${esc(materialDisplayName(k))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
         }).join("");
         return `<div class="pur-cl-row${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
           ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
-          <span class="pur-cl-ic">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}</span>
+          <span class="pur-cl-ic" title="${first ? esc(materialDisplayName(first.replace(/ \(minutes\)$/, ""))) : ""}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}${more ? `<u class="pur-cl-more">+${more}</u>` : ""}</span>
           <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
           ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
           <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
           ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
-        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
+        </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}${first && more ? `<div class="meta">${esc(t("pur_main_item").replace("{name}", materialDisplayName(first.replace(/ \(minutes\)$/, ""))))}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
       };
       const boxes = `<div class="pur-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
       return `<div class="pur-cl-head"><div class="t12x-title" style="margin:0;">${esc(t("pur_sug_title"))}</div>${cmp ? `<button type="button" class="pur-cl-swap" data-purfollow="${follow === "target" ? "budget" : "target"}" title="${esc(t("pur_follow_line"))}">&#8644;</button>` : ""}</div>
