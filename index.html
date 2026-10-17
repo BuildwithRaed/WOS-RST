@@ -6618,8 +6618,7 @@ function packMergeOwned(owned, supply) {
 function packUsedForNames(tb) {
   // The New Gen hero pack patterns feed every new hero's copy.
   if ((tb.columns || []).some((c) => /^hero (shards?|widgets?)$/i.test(String(c || "")))) return [packHeroUseLabel(tb)];
-  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map(packGroupLabel)
-    .concat((packLinkFor(tb.id).pages || []).includes("hero_shards") ? [packHeroUseLabel(tb)] : []);
+  return PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packTableServesPage(tb, k))).map((g) => (g.key === "hero_shards" ? packHeroUseLabel(tb) : packGroupLabel(g)));
 }
 // "Hero shards", "Hero widgets" or both, from what the pack gives (owner,
 // 16 Oct 2026: Marks of Valor packs are for shards only).
@@ -10940,6 +10939,8 @@ const PACK_PAGE_GROUPS = [
   { key: "pets_refine", pages: ["pets_refine"] },
   { key: "experts_group", group: "Experts", pages: ["experts", "experts_research"] },
   { key: "research_group", group: "Research", pages: ["research_center", "t11_helios", "t12_research"] },
+  // Budgets' "Hero shards & widgets" (owner, 17 Oct 2026: old packs that give hero shards).
+  { key: "hero_shards", pages: ["hero_shards"] },
 ];
 function packGroupLabel(g) {
   if (g.group) { const e = NAV_GROUP_LABELS[g.group]; return e ? (e[LANG] || e.en) : g.group; }
@@ -11005,6 +11006,8 @@ const PACK_RESOURCE_NAMES = [
   "XP 10", "XP 100",
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
+  "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
+  "Marks of Valor", "Widget Chest", "Mystery Points",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
