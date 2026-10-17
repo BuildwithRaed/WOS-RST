@@ -25212,7 +25212,8 @@ const ADMIN_RESERVED_BUFF_CATEGORIES = new Set([
 async function renderAdminHeroStars(body) {
   await ensureBuffTable();
   const columns = await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order&order=sort_order.asc`);
-  const heroCols = columns.filter((c) => !ADMIN_RESERVED_BUFF_CATEGORIES.has(c.name));
+  const flatSources = new Set(dashSourcesConfig().extra); // Admin → Dashboard sources (not heroes)
+  const heroCols = columns.filter((c) => !ADMIN_RESERVED_BUFF_CATEGORIES.has(c.name) && !flatSources.has(c.name));
   if (!ADMIN_ACTIVE_HERO_STAR_COL || !heroCols.find((c) => c.id === ADMIN_ACTIVE_HERO_STAR_COL)) {
     ADMIN_ACTIVE_HERO_STAR_COL = (heroCols.find((c) => c.name === "Jero") || heroCols[0])?.id;
   }
@@ -25285,7 +25286,7 @@ async function renderAdminHeroStars(body) {
     errEl.textContent = "";
     const name = f.name.value.trim();
     if (!name) { errEl.textContent = "Enter a hero name"; return; }
-    if (ADMIN_RESERVED_BUFF_CATEGORIES.has(name)) { errEl.textContent = "That name is reserved by the app \u2014 pick another"; return; }
+    if (ADMIN_RESERVED_BUFF_CATEGORIES.has(name) || flatSources.has(name)) { errEl.textContent = "That name is reserved by the app \u2014 pick another"; return; }
     try {
       const maxOrder = columns.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
       const [newCol] = await sb(`buff_columns`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name, category: name, sort_order: maxOrder + 1 }) });
