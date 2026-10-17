@@ -3817,7 +3817,7 @@ const T = {
   mp_admin_settings: { en: "admin settings" },
   mp_limit_label: { en: "Tables each visitor can have" },
   mp_limit_saved: { en: "My packs limit saved" },
-  mp_admin_desc: { en: "Visitors copy the tables in the \"Pack templates\" category into their own My packs. Templates aren't used in Budgets or Pack cost. Your own copies (⧉ on a template) go to \"My packs\", hidden from visitors, with no limit." },
+  mp_admin_desc: { en: "Visitors copy the templates below into their own My packs. Templates aren't used in Budgets or Pack cost. Your own copies (Duplicate on a template) go to \"My packs\", hidden from visitors, with no limit." },
   mp_templates_added: { en: "pack templates added" },
   mp_template_note: { en: "Not used in Budgets or Pack cost · visitors copy these" },
   mp_admin_mine_note: { en: "Your own copies · hidden from visitors" },
@@ -8435,7 +8435,7 @@ async function renderPacksPage() {
     listEl.innerHTML = `<div class="pk-grid">` + ordered
       .map(({ tb: t, ti }) => {
         const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_TEMPLATE_GROUP ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_template_note"))}</span>` : g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
+        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
         lastGroup = g;
         return heading + (() => {
         // Auto-computed total row: sums every column's numeric cells across
