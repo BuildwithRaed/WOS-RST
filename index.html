@@ -344,6 +344,11 @@
   .bud-line:first-of-type{ margin-top:12px; }
   .bud-line > summary{ list-style:none; display:flex; align-items:center; gap:10px; padding:10px 0; cursor:pointer; }
   .bud-line > summary::-webkit-details-marker{ display:none; }
+  .exp-count{ display:flex; align-items:center; gap:6px; justify-self:start; min-height:32px; font-size:11px; color:var(--muted); cursor:pointer; }
+  .exp-count input{ width:16px; height:16px; margin:0; cursor:pointer; }
+  .exp-skl{ display:flex; flex-direction:column; gap:1px; }
+  .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
+  .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
   .bud-line-t{ flex:1 1 auto; min-width:0; }
   .bud-line-t b{ font-size:14.5px; }
@@ -3693,6 +3698,7 @@ const T = {
   budgets_not_counted: { en: "Not counted: \"Count toward Dashboard\" is off on this page (from your state age or your own tick)." },
   budgets_open_again: { en: "Your state age changed what's open here: open this page once to update its plan." },
   budgets_open_once: { en: "Open this page once so its plan can be totalled here." },
+  budgets_total_partial: { en: "Counts {n} of {m} ticked pages. Open the others once (list below) to add them." },
   budgets_nothing_planned: { en: "Nothing planned on this page." },
   budgets_no_packs: { en: "No pack table assigned to this page." },
   budgets_packs_detail: { en: "Packs to buy" },
@@ -15601,17 +15607,23 @@ async function renderBudgetsPage(opts = {}) {
   const STAT_RAW = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
   const TROOPS = ["Infantry", "Lancers", "Marksman"];
 
-  const statTableHtml = (deltas, compact) => {
+  // Stat increase: troop tabs, one box per stat (green gain, "now → after"
+  // under it), so phones see every stat without a hidden sideways scroll.
+  const statTableHtml = (deltas, id) => {
     if (!deltas.length) return "";
     const by = {}; deltas.forEach((d) => { by[`${d.troop}|${d.stat}`] = (by[`${d.troop}|${d.stat}`] || 0) + d.delta; });
     const stats = STAT_KEYS.filter((s) => TROOPS.some((tr) => by[`${tr}|${s}`]));
-    return `<div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
-      <thead><tr><th style="text-align:start; padding:4px 6px; border-bottom:1px solid var(--line);"></th>${stats.map((s) => `<th style="padding:4px 6px; border-bottom:1px solid var(--line); text-align:center;">${esc(tStatLabel(STAT_RAW[s]))}</th>`).join("")}</tr></thead>
-      <tbody>${TROOPS.map((tr) => `<tr><td style="padding:4px 6px; font-weight:600; white-space:nowrap;">${esc(troopDisplayName(tr))}</td>${stats.map((s) => {
-        const d = by[`${tr}|${s}`] || 0; const cur = curStat(tr, s);
-        if (!d) return `<td style="padding:4px 6px; text-align:center;" class="meta">—</td>`;
-        return `<td style="padding:4px 6px; text-align:center; white-space:nowrap;">${cur == null ? "" : `<span class="meta">${pct(cur)}</span> → <b>${pct(cur + d)}</b> `}<span style="color:var(--good);">+${pct(d)}</span></td>`;
-      }).join("")}</tr>`).join("")}</tbody></table></div>`;
+    const troops = TROOPS.filter((tr) => stats.some((s) => by[`${tr}|${s}`]));
+    const tabColor = { Infantry: PLX_TROOP_COLORS.Infantry, Lancers: PLX_TROOP_COLORS.Lancer, Marksman: PLX_TROOP_COLORS.Marksman };
+    return plxStatTabsHtml("bud_stat_" + id, troops.map((tr) => ({
+      key: tr, label: troopDisplayName(tr), color: tabColor[tr],
+      html: `<div class="plx-stats">${stats.map((s) => {
+        const d = by[`${tr}|${s}`] || 0, cur = curStat(tr, s);
+        return `<div class="plx-stat"><span>${esc(tStatLabel(STAT_RAW[s]))}</span>${d
+          ? `<b style="color:var(--good);">${esc(bidiNum("+" + pct(d)))}</b>${cur == null ? "" : `<small>${esc(bidiNum(pct(cur)))} &rarr; ${esc(bidiNum(pct(cur + d)))}</small>`}`
+          : `<b class="meta">&mdash;</b>`}</div>`;
+      }).join("")}</div>`,
+    })));
   };
   const budgetResetText = (r, day) => {
     if (r === "unlimited") return t("pack_reset_unlimited");
@@ -15701,7 +15713,7 @@ async function renderBudgetsPage(opts = {}) {
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
-      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}`);
+      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas, pg.calcKey)}</div>` : ""}`);
   });
 
   if (combined.chosen) {
@@ -15787,6 +15799,11 @@ async function renderBudgetsPage(opts = {}) {
         <span style="font-size:30px; font-weight:800; letter-spacing:-.3px;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan ? `<span class="meta" style="font-size:12px; width:100%;">${esc(t("bud_done_by"))} <span style="color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span></span>` : ""}
       </div>
+      ${(() => {
+        // The total only covers pages with a saved plan: say so when some ticked pages have none yet.
+        const ticked = pagesRaw.filter((pg) => included(pg.calcKey)), noPlan = ticked.filter((pg) => pg.missing).length;
+        return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : "";
+      })()}
       ${(() => { const n = (PACK_PURCHASES.list || []).filter((p) => p.status !== "bought" && packValidDay(p.date) && p.date >= packDayKey(packStartOfToday())).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
       ${viewCardsHtml}
       ${combinedHtml}
@@ -15797,7 +15814,7 @@ async function renderBudgetsPage(opts = {}) {
         const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
         return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
       }).join("")}</div></div>` : ""}
-      ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
+      ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas, "all")}</div>` : ""}
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
     </div>`;
 
