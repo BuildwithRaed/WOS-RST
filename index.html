@@ -447,6 +447,8 @@
   .pur-alt.pur-cmp-target{ color:#e0b25a; background:none; }
   .pur-alt.pur-cmp-budget{ color:var(--good); background:none; }
   .pur-follow{ margin:0 0 6px; }
+  .pur-m-ver{ margin:6px 0 10px; }
+  .pur-m-ver button span{ white-space:normal; font-size:10px; }
   .pur-following{ font-size:12px; margin:-2px 0 8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
   .pur-legend{ display:flex; flex-wrap:wrap; gap:4px 10px; font-size:10.5px; color:var(--muted); margin:0 0 8px; }
   .pur-acts{ display:flex; gap:6px; flex-wrap:nowrap; }
@@ -6799,7 +6801,7 @@ async function renderPurchasesPage() {
         if (!b.items.has(j)) return;
         const i = [...b.items.keys()].find((x) => x < nFollow && !b.match.has(x) && rows[x].title === rows[j].title && (!same || rowKey(rows[x]) === rowKey(rows[j])));
         if (i == null) return;
-        b.match.set(i, { n: b.items.get(j).reduce((a, x) => a + x.count, 0), label: rows[j].label, same: rowKey(rows[i]) === rowKey(rows[j]) });
+        b.match.set(i, { n: b.items.get(j).reduce((a, x) => a + x.count, 0), label: rows[j].label, same: rowKey(rows[i]) === rowKey(rows[j]), j, xs: b.items.get(j) });
         b.items.delete(j);
       });
       pair(true); pair(false);
@@ -6885,13 +6887,21 @@ async function renderPurchasesPage() {
     });
     // "+ Will buy" opens a small window: tick the dates to buy on (all ticked).
     box.querySelectorAll("[data-pursug]").forEach((b) => b.addEventListener("click", () => {
-      const i = Number(b.dataset.pursug), r = rows[i], tb = sugTable(r), s0 = (sel && sel.items.get(i)) || sched[i];
-      if (!tb) return;
+      const i0 = Number(b.dataset.pursug);
+      // A pack both plans buy differently (another step or count): pick which
+      // plan's version to add (owner, 17 Oct 2026).
+      const m = cmp && sel && sel.match.get(i0);
+      const vers = [{ key: i0 >= nFollow ? otherName : follow, r: rows[i0], s0: (sel && sel.items.get(i0)) || sched[i0] }];
+      if (m && (!m.same || m.n !== (sel.items.get(i0) || []).reduce((a, x) => a + x.count, 0))) vers.push({ key: otherName, r: rows[m.j], s0: m.xs });
       let modal = document.getElementById("purSugModal");
       if (!modal) { modal = document.createElement("div"); modal.id = "purSugModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
       const close = () => { modal.style.display = "none"; };
+      const openVer = (vi) => {
+      const { r, s0 } = vers[vi], tb = sugTable(r);
+      if (!tb) return;
+      const verHtml = vers.length > 1 ? `<div class="bud-seg pur-m-ver">${vers.map((v, k) => `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}<b>${esc(packFmtMoney(v.r.price * v.s0.reduce((a, x) => a + x.count, 0), v.r.currency))}</b><span>${esc(v.r.label)} ×${v.s0.reduce((a, x) => a + x.count, 0)}</span></button>`).join("")}</div>` : "";
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <h2>${esc(sugName(r))}</h2><div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== packFmtMoney(r.price, r.currency) ? `${esc(r.label)} · ` : ""}${esc(packFmtMoney(r.price, r.currency))} ${esc(t("pur_each"))}</div>
+        <h2>${esc(sugName(r))}</h2>${verHtml}<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== packFmtMoney(r.price, r.currency) ? `${esc(r.label)} · ` : ""}${esc(packFmtMoney(r.price, r.currency))} ${esc(t("pur_each"))}</div>
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
         <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row"><input type="checkbox" data-pmday="${k}" checked /><span>${esc(whenTxt(x.off))}</span><span class="meta">× ${x.count}</span><b>${esc(packFmtMoney(r.price * x.count, r.currency))}</b></label>`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
@@ -6919,6 +6929,9 @@ async function renderPurchasesPage() {
         toast(pk.length > 1 ? t("pur_added_dates").replace("{n}", pk.length) : t("pur_added"));
         redraw();
       });
+      modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
+      };
+      openVer(0);
     }));
       // Show the top 3 packs; the rest scroll inside the box.
       const listEl = box.querySelector(".pur-sug-list"), items = listEl ? [...listEl.children] : [];
