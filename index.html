@@ -476,11 +476,17 @@
   .pur-ms-differ{ font-size:10.5px; color:var(--amber); border:1px solid var(--amber); border-radius:999px; padding:0 7px; }
   .pur-ms-pickn{ margin-inline-start:auto; font-size:11px; }
   .pur-ms-plpick{ margin:0 0 8px; font-size:11.5px; }
-  .pur-ms-plpick .pur-ms-picks{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
-  .pur-ms-picks select{ font-size:11px; padding:3px 6px; max-width:100%; }
-  .pur-m-row.has-dsel{ grid-template-columns:auto 1fr auto auto auto; gap:8px; }
+  .pur-slots{ display:inline-flex; gap:5px; margin-inline-start:auto; flex:none; }
+  .pur-slot{ display:inline-flex; flex-direction:column; align-items:center; justify-content:center; width:38px; height:40px; padding:2px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--text); cursor:pointer; flex:none; }
+  .pur-slot img{ width:24px; height:24px; object-fit:contain; }
+  .pur-slot i{ font-style:normal; font-size:11px; }
+  .pur-slot small{ font-size:9.5px; color:var(--muted); line-height:1.1; }
+  .pur-slot.open, .pur-slot.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .pur-slot-strip{ display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 2px; padding:6px; border:1px solid var(--ice); border-radius:10px; }
+  .pur-m-row.has-dsel{ grid-template-columns:auto 1fr auto auto auto; gap:6px; }
   .pur-m-row.has-dsel > span:first-of-type{ white-space:nowrap; }
-  .pur-dsel{ font:inherit; font-size:11.5px; color:var(--ice); background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:3px 6px; max-width:120px; cursor:pointer; }
+  .pur-dsel{ font:inherit; font-size:11px; color:var(--ice); background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:3px 4px; max-width:104px; cursor:pointer; }
+  .pur-m-row.has-dsel > span.meta, .pur-m-row.has-dsel > b{ white-space:nowrap; }
   .pur-dsel.on{ border-color:var(--ice); }
   .pur-dmenu{ display:flex; flex-direction:column; gap:6px; padding:8px 12px 10px 40px; border-top:1px solid var(--line); background:var(--panel-2); font-size:12.5px; }
   .pur-dmenu label{ display:flex; align-items:center; gap:8px; cursor:pointer; }
@@ -7221,7 +7227,7 @@ async function renderPurchasesPage() {
           const opts = optCols.map((ci) => {
             const g = {}, q = packParseNum(cells[ci]) * packColMultiplier(lk, ci);
             if (q > 0) { const c = packBundleContents(cols[ci]); Object.keys(c).forEach((n) => { g[n] = (g[n] || 0) + q * c[n]; }); }
-            return { tag: materialDisplayName(cols[ci]), q, gives: g };
+            return { tag: materialDisplayName(cols[ci]), name: cols[ci], q, gives: g };
           });
           steps.push({ price, row: ri, opts });
         });
@@ -7326,7 +7332,7 @@ async function renderPurchasesPage() {
         const g = {}; ch.forEach((st) => Object.entries(st.gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
         const label = same ? r.label : isPL ? `${m === 1 ? "" : t("pack_up_to") + " "}${packFmtMoney(M.steps[m - 1].price, r.currency)}${M.steps.length > 1 ? ` (${t("pack_steps_of").replace("{k}", m).replace("{n}", M.steps.length)})` : ""} · ${t("pk_each_step")}: ${plText()}` : M.kind === "plain" ? ch.map((st) => packFmtMoney(st.price, r.currency)).join(" · ") : M.kind === "card" ? ch.map((st) => `${packFmtMoney(st.price, r.currency)} · ${st.tag}`).join("") : ch.map((st) => `${packFmtMoney(st.price, r.currency)} ${st.tag}`).join(" · ");
         const row = same ? (r.row != null ? r.row : 0) : M.kind === "plain" ? ch[m - 1].row : M.kind === "card" ? r.row : m - 1;
-        return [{ row, label, price: same ? r.price : ch.reduce((a, st) => a + st.price, 0), local: ch.reduce((a, st) => a + local(st.price), 0), gives: same ? r.gives : g, plain: M.kind === "plain" }];
+        return [{ row, label, price: same ? r.price : Math.round(ch.reduce((a, st) => a + st.price, 0) * 100) / 100, local: ch.reduce((a, st) => a + local(st.price), 0), gives: same ? r.gives : g, plain: M.kind === "plain" }];
       };
       const topSel = isPick ? tset : kk;
       const selOf = (d) => (dsel[d] !== undefined ? dsel[d] : topSel);
@@ -7334,17 +7340,24 @@ async function renderPurchasesPage() {
       const fmtL = (v) => packFmtLocal(v, r.currency, false, r.price);
       const fmtN = (cnt, sel = topSel) => (M ? fmtL(localOf(sel) * cnt) : packFmtMoney(r.price * cnt, r.currency));
       const differ = Object.keys(dsel).length > 0;
-      const plHtml = isPL ? `<div class="pur-ms-plpick"><span class="meta">${esc(t("pur_ms_each_items").replace("{n}", M.n))}</span><div class="pur-ms-picks">${pp0.map((sj, p) => `<select data-pmpick0="${p}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", p + 1))}">${M.steps[0].opts.map((o, oj) => (o.q > 0 || oj === sj ? `<option value="${oj}" ${oj === sj ? "selected" : ""}>${esc(o.tag)} ${esc(shortAmount(o.q))}</option>` : "")).join("")}</select>`).join("")}</div></div>` : "";
+      // Item picks as picture slots (owner picked A, 17 Oct 2026): tap a slot,
+      // a strip of every item's picture opens under it to choose from.
+      const openSlot = keep ? keep.openSlot || "" : "";
+      const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
+      const picOf = (o) => { const ic = speedIc(String(o.name || "")) || materialIconSrc(o.name) || materialIconSrc(Object.keys(o.gives || {})[0] || ""); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(o.tag.slice(0, 2))}</i>`; };
+      const slotsHtml = (key, opts, sel) => `<span class="pur-slots">${sel.map((sj, p) => { const o = opts[sj]; return `<button type="button" class="pur-slot${openSlot === key + "|" + p ? " open" : ""}" data-pmslot="${key}|${p}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>`; }).join("")}</span>`;
+      const stripHtml = (key, opts, sel) => { const m = /^(.*)\|(\d+)$/.exec(openSlot); if (!m || m[1] !== key) return ""; const p = Number(m[2]); return `<div class="pur-slot-strip">${opts.map((o, oj) => (o.q > 0 ? `<button type="button" class="pur-slot${oj === sel[p] ? " on" : ""}" data-pmslotopt="${key}|${p}|${oj}" title="${esc(o.tag)}">${picOf(o)}<small>${esc(shortAmount(o.q))}</small></button>` : "")).join("")}</div>`; };
+      const plHtml = isPL ? `<div class="pur-ms-plpick"><div class="pur-ms-l"><span class="meta">${esc(t("pur_ms_each_items").replace("{n}", M.n))}</span>${slotsHtml("all", M.steps[0].opts, pp0)}</div>${stripHtml("all", M.steps[0].opts, pp0)}</div>` : "";
       const stepsHtml = M ? `${plHtml}${s0.length > 1 && M.kind !== "card" ? `<div class="pur-ms-head"><span class="meta">${esc(t("pur_ms_setall"))}</span>${differ ? `<span class="pur-ms-differ">${esc(t("pur_ms_differ"))}</span>` : ""}</div>` : ""}<div class="pur-ms">${M.steps.map((st, k) => {
         const on = isPick ? tset[k] : k < kk, j = isPick || isPL ? 0 : pick[k], swt = !isPick && !isPL && st.opts.length > 1;
         const items = isPL ? `<div class="pur-ms-g">${givesHtml(plGives(k))}</div>` : isPick
-          ? (on ? `<div class="pur-ms-g pur-ms-picks">${pp[k].map((sj, p) => `<select data-pmpick="${k}|${p}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", p + 1))}">${st.opts.map((o, oj) => (o.q > 0 || oj === sj ? `<option value="${oj}" ${oj === sj ? "selected" : ""}>${esc(o.tag)} ${esc(shortAmount(o.q))}</option>` : "")).join("")}</select>`).join("")}</div>` : "")
+          ? (on ? stripHtml(String(k), st.opts, pp[k]) : "")
           : `<div class="pur-ms-g">${givesHtml(st.opts[j].gives)}</div>`;
         return `<div class="pur-ms-row${on ? " on" : ""}${M.kind === "card" ? " card" : ""}"><div class="pur-ms-l">
           <button type="button" class="pur-ms-tick" data-pmtick="${k}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>
           ${M.kind === "card" || isPick ? "" : `<b class="pur-ms-n">${k + 1}</b>`}<b class="pur-ms-pr">${esc(fmtL(local(st.price)))}</b>
           ${swt ? `<span class="pur-ms-sw">${st.opts.map((o, oj) => `<button type="button" data-pmopt="${k}|${oj}" class="${oj === j ? "on" : ""}">${esc(o.tag)}</button>`).join("")}</span>` : ""}
-          ${isPick && !on ? `<span class="meta pur-ms-pickn">${esc(t("pur_ms_pickn").replace("{n}", M.n))}</span>` : ""}</div>
+          ${isPick && !on ? `<span class="meta pur-ms-pickn">${esc(t("pur_ms_pickn").replace("{n}", M.n))}</span>` : ""}${isPick && on ? slotsHtml(String(k), st.opts, pp[k]) : ""}</div>
           ${items}</div>`;
       }).join("")}</div>${M.kind !== "card" ? `<div class="meta" style="font-size:10.5px; margin:-4px 0 8px;">${esc(t(isPick ? "pur_ms_any" : "pur_ms_order"))}</div>` : ""}` : "";
       const notes = [];
@@ -7359,11 +7372,12 @@ async function renderPurchasesPage() {
       // My budget / By your target: two boxes, price and steps only.
       const verHtml = vers.length > 1 ? `<div class="pur-ms-vers">${vers.map((v, k) => { const vm = stepModel(v.r, sugTable(v.r) || tb), vLocal = vm && vm.kind === "plain" ? vm.steps.slice(0, vm.planK).reduce((a, st) => a + packConvert(st.price, v.r.currency).n, 0) : packRowLocalUnits(v.r).reduce((a, x) => a + x, 0); return `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}"><span class="pur-vb-k">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}</span><b>${esc(packFmtLocal(vLocal, v.r.currency, false, v.r.price))}</b><span class="pur-vb-s">${vm && vm.kind !== "card" && vm.kind !== "pick" ? esc(nSteps(vm.planK)) : ""}${v.s0.length ? `${vm && vm.kind !== "card" && vm.kind !== "pick" ? " · " : ""}×${v.s0.reduce((a, x) => a + x.count, 0)}` : ""}</span></button>`; }).join("")}</div>` : "";
       // The button on each date: "up to N" (in order) or the prices it buys.
-      const priceShort = (usd) => fmtL(local(usd)).replace(/[^\d.,]/g, "");
+      const priceShort2 = (loc) => fmtL(loc).replace(/[^\d.,]/g, "");
+      const priceShort = (usd) => priceShort2(local(usd));
       const dayCtl = (d) => {
         if (!M || M.kind === "card" || s0.length < 2) return "";
         const sel = selOf(d);
-        if (ordered) return `<select class="pur-dsel${dsel[d] !== undefined ? " on" : ""}" data-pmdk="${d}" aria-label="${esc(t("pur_ms_upto_n").replace("{n}", ""))}">${M.steps.map((st, k) => `<option value="${k + 1}" ${k + 1 === sel ? "selected" : ""}>${esc(t("pur_ms_upto_n").replace("{n}", k + 1))} · ${esc(fmtL(M.steps.slice(0, k + 1).reduce((a, x) => a + local(x.price), 0)))}</option>`).join("")}</select>`;
+        if (ordered) return `<select class="pur-dsel${dsel[d] !== undefined ? " on" : ""}" data-pmdk="${d}" aria-label="${esc(t("pur_ms_upto_n").replace("{n}", ""))}">${M.steps.map((st, k) => `<option value="${k + 1}" ${k + 1 === sel ? "selected" : ""}>${esc(t("pur_ms_upto_n").replace("{n}", k + 1))} · ${esc(priceShort2(M.steps.slice(0, k + 1).reduce((a, x) => a + local(x.price), 0)))}</option>`).join("")}</select>`;
         const ks = sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0);
         return `<button type="button" class="pur-dsel${dsel[d] !== undefined ? " on" : ""}" data-pmdopen="${d}">${esc(ks.length ? ks.map((k) => priceShort(M.steps[k].price)).join(" + ") : "—")} &#9662;</button>`;
       };
@@ -7372,7 +7386,7 @@ async function renderPurchasesPage() {
       modal.innerHTML = `<div class="modal-box pur-modal">
         <h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}<span class="meta">× ${x.count}</span><b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">× ${x.count}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -7405,7 +7419,7 @@ async function renderPurchasesPage() {
         toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
         redraw();
       });
-      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, days: new Set(pickedIdx()), ...patch });
+      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, days: new Set(pickedIdx()), ...patch });
       modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
       // Set all dates. Bought in order: ticking a step ticks the ones before
       // it; unticking one unticks the ones after it. Any price: each on its own.
@@ -7415,8 +7429,12 @@ async function renderPurchasesPage() {
         openVer(vi, state({ kk: k < kk ? (M.kind === "card" ? 0 : k) : k + 1, dsel: {} }));
       }));
       modal.querySelectorAll("[data-pmopt]").forEach((v) => v.addEventListener("click", () => { const [k, j] = v.dataset.pmopt.split("|").map(Number); const p2 = pick.slice(); p2[k] = j; openVer(vi, state({ kk: Math.max(kk, k + 1), pick: p2, dsel: k + 1 > kk ? {} : dsel })); }));
-      modal.querySelectorAll("[data-pmpick0]").forEach((v) => v.addEventListener("change", () => { const p2 = pp0.slice(); p2[Number(v.dataset.pmpick0)] = Number(v.value); openVer(vi, state({ pp0: p2 })); }));
-      modal.querySelectorAll("[data-pmpick]").forEach((v) => v.addEventListener("change", () => { const [k, p] = v.dataset.pmpick.split("|").map(Number); const p2 = pp.map((x) => x.slice()); p2[k][p] = Number(v.value); openVer(vi, state({ pp: p2 })); }));
+      modal.querySelectorAll("[data-pmslot]").forEach((v) => v.addEventListener("click", () => openVer(vi, state({ openSlot: openSlot === v.dataset.pmslot ? "" : v.dataset.pmslot }))));
+      modal.querySelectorAll("[data-pmslotopt]").forEach((v) => v.addEventListener("click", () => {
+        const [key, p, oj] = v.dataset.pmslotopt.split("|");
+        if (key === "all") { const p2 = pp0.slice(); p2[Number(p)] = Number(oj); openVer(vi, state({ pp0: p2, openSlot: "" })); return; }
+        const p2 = pp.map((x) => x.slice()); p2[Number(key)][Number(p)] = Number(oj); openVer(vi, state({ pp: p2, openSlot: "" }));
+      }));
       // Each date: its own steps / prices (the same as the top drops the override).
       const setDay = (d, sel) => { const ds = { ...dsel }; if (JSON.stringify(sel) === JSON.stringify(topSel)) delete ds[d]; else ds[d] = sel; return ds; };
       modal.querySelectorAll("[data-pmdk]").forEach((v) => {
