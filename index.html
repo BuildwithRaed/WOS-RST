@@ -11814,20 +11814,71 @@ function packEarliestDaysCompute(groups, need, calcKey) {
 // lots per ctx rate] } or null (no solver,
 // nothing found in time, or an error); the greedy planner is always the backup.
 let PLAN_SOLVER = null; // set inside the background planner once HiGHS is loaded
+// An option pack (each step: pick one of a few options) given to the solver
+// step by step: one integer per step option instead of one per whole
+// sequence of options (Dawn of Wisdom: 15 instead of 363). Same plans, but
+// the solver finishes far sooner on big Budgets plans. Only used when every
+// sequence maps to an offer that gives at least as much at the same price,
+// so the answer can be bought as the pack's offers. Returns
+// { tiers: [[{ price, gives }]], match: Map("j,j,..." -> offer index) } or null.
+function packArcSteps(list, rowItem) {
+  if (!list.every(({ o }) => Array.isArray(o.steps) && o.steps.length === o.tiers && o.tiers > 0)) return null;
+  const proj = (gives) => { const out = {}; Object.keys(gives || {}).forEach((n) => { if (gives[n] > 0 && rowItem(n)) out[n] = gives[n]; }); return out; };
+  const keyOf = (s) => s.price + "|" + Object.keys(s.gives).sort().map((n) => n + "=" + s.gives[n]).join(",");
+  const T = Math.max(...list.map(({ o }) => o.tiers));
+  const maps = Array.from({ length: T }, () => new Map());
+  const offs = list.map(({ o, oi }) => {
+    const keys = o.steps.map((st, k) => { const s = { price: st.price, gives: proj(st.gives) }; const key = keyOf(s); if (!maps[k].has(key)) maps[k].set(key, { ...s, key }); return key; });
+    return { oi, len: o.tiers, price: o.price, gives: proj(o.gives), key: keys.join(";") };
+  });
+  const tiers = maps.map((m) => [...m.values()]);
+  let count = 0, prod = 1;
+  for (const opts of tiers) { prod *= opts.length; count += prod; }
+  if (count > 4000) return null;
+  const exact = new Map(offs.map((x) => [x.key, x.oi]));
+  const match = new Map();
+  const walk = (seq, keys, price, gives) => {
+    if (seq.length) {
+      const key = keys.join(";");
+      let oi = exact.get(key);
+      if (oi == null) {
+        const hit = offs.find((x) => x.len === seq.length && x.price <= price + 0.005 && Object.keys(gives).every((n) => (x.gives[n] || 0) >= gives[n] - 1e-9));
+        if (!hit) return false;
+        oi = hit.oi;
+      }
+      match.set(seq.join(","), oi);
+    }
+    if (seq.length === T) return true;
+    return tiers[seq.length].every((s, j) => {
+      const g2 = { ...gives }; Object.keys(s.gives).forEach((n) => { g2[n] = (g2[n] || 0) + s.gives[n]; });
+      return walk([...seq, j], [...keys, s.key], price + s.price, g2);
+    });
+  };
+  return walk([], [], 0, {}) ? { tiers, match } : null;
+}
 function packExactPicks(groups, need, caps, ctx, timeLimit) {
   if (!PLAN_SOLVER) return null;
   try {
     const num = (v) => { const r = Math.round(v * 1e6) / 1e6; return Math.abs(r) < 1e-9 ? "0" : String(r); };
-    const xs = [];
+    const rates = ctx ? ctx.rates : [];
+    // Items that get a row: needed, or traded into something.
+    const fromItems = new Set(rates.map((r) => r.from));
+    const rowItem = (n) => need[n] > 0 || fromItems.has(n);
+    const xs = [], arcs = [];
     groups.forEach((g, gi) => {
       if (!(caps[gi] > 0)) return;
-      g.offers.forEach((o, oi) => { if (Object.keys(o.gives).some((n) => o.gives[n] > 0)) xs.push({ gi, oi, o }); });
+      const list = [];
+      g.offers.forEach((o, oi) => { if (Object.keys(o.gives).some((n) => o.gives[n] > 0)) list.push({ o, oi }); });
+      const arc = g.optionPack && list.length >= 12 ? packArcSteps(list, rowItem) : null;
+      if (arc) arcs.push({ gi, ...arc });
+      else list.forEach(({ o, oi }) => xs.push({ gi, oi, o }));
     });
-    if (!xs.length) return null;
-    const rates = ctx ? ctx.rates : [];
+    if (!xs.length && !arcs.length) return null;
     const rows = new Map(); // item -> terms
     const term = (n, coef, v) => { if (!rows.has(n)) rows.set(n, []); rows.get(n).push(`${coef >= 0 ? "+" : "-"} ${num(Math.abs(coef))} ${v}`); };
     xs.forEach((x, j) => Object.keys(x.o.gives).forEach((n) => { if (x.o.gives[n]) term(n, x.o.gives[n], `x${j}`); }));
+    const sv = (a, k, j) => `s${a}_${k}_${j}`;
+    arcs.forEach((a, ai) => a.tiers.forEach((opts, k) => opts.forEach((s, j) => Object.keys(s.gives).forEach((n) => term(n, s.gives[n], sv(ai, k, j))))));
     rates.forEach((r, k) => { term(r.to, r.get, `y${k}`); term(r.from, -r.give, `y${k}`); });
     const lines = (terms) => { const out = []; for (let i = 0; i < terms.length; i += 8) out.push(" " + terms.slice(i, i + 8).join(" ")); return out.join("\n"); };
     const cons = [];
@@ -11839,11 +11890,18 @@ function packExactPicks(groups, need, caps, ctx, timeLimit) {
     const byGroup = new Map();
     xs.forEach((x, j) => { if (!byGroup.has(x.gi)) byGroup.set(x.gi, []); byGroup.get(x.gi).push(`+ 1 x${j}`); });
     byGroup.forEach((terms, gi) => { if (Number.isFinite(caps[gi])) cons.push(` g${gi}:\n${lines(terms)} <= ${num(caps[gi])}`); });
+    // Step k of an option pack can only be bought as often as step k-1.
+    const arcVars = [], arcCost = [];
+    arcs.forEach((a, ai) => a.tiers.forEach((opts, k) => {
+      const here = opts.map((s, j) => { arcVars.push(sv(ai, k, j)); arcCost.push(`+ ${num(s.price)} ${sv(ai, k, j)}`); return `+ 1 ${sv(ai, k, j)}`; });
+      if (k === 0) { if (Number.isFinite(caps[a.gi])) cons.push(` a${ai}_0:\n${lines(here)} <= ${num(caps[a.gi])}`); }
+      else cons.push(` a${ai}_${k}:\n${lines(here.concat(a.tiers[k - 1].map((_, j) => `- 1 ${sv(ai, k - 1, j)}`)))} <= 0`);
+    }));
     const bounds = [];
     rates.forEach((r, k) => { if (r.max > 0) bounds.push(` y${k} <= ${num(r.max * ctx.weeks)}`); });
-    const vars = xs.map((_, j) => `x${j}`).concat(rates.map((_, k) => `y${k}`));
+    const vars = xs.map((_, j) => `x${j}`).concat(arcVars, rates.map((_, k) => `y${k}`));
     // A tiny cost per trade keeps the solver from making trades nobody needs.
-    const lp = ["Minimize", " obj:", lines(xs.map((x, j) => `+ ${num(x.o.price)} x${j}`).concat(rates.map((_, k) => `+ 0.000001 y${k}`))), "Subject To", ...cons, "Bounds", ...vars.map((v) => ` ${v} >= 0`), ...bounds, "Generals", lines(vars), "End"].join("\n");
+    const lp = ["Minimize", " obj:", lines(xs.map((x, j) => `+ ${num(x.o.price)} x${j}`).concat(arcCost, rates.map((_, k) => `+ 0.000001 y${k}`))), "Subject To", ...cons, "Bounds", ...vars.map((v) => ` ${v} >= 0`), ...bounds, "Generals", lines(vars), "End"].join("\n");
     const res = PLAN_SOLVER.solve(lp, { time_limit: timeLimit, output_flag: false, mip_rel_gap: 1e-4 });
     if (!res || !res.Columns || !/Optimal|Time limit/i.test(String(res.Status))) return null;
     const picks = [];
@@ -11851,6 +11909,24 @@ function packExactPicks(groups, need, caps, ctx, timeLimit) {
       const c = res.Columns[`x${j}`];
       const v = c && Number.isFinite(c.Primal) ? Math.round(c.Primal) : 0;
       if (v > 0) picks.push({ gi: xs[j].gi, oi: xs[j].oi, count: v });
+    }
+    // Option packs back to whole runs: run r takes step k while r < the
+    // number of step-k buys; each run is then bought as its matching offer.
+    const val = (name) => { const c = res.Columns[name]; return c && Number.isFinite(c.Primal) ? Math.max(0, Math.round(c.Primal)) : 0; };
+    for (let ai = 0; ai < arcs.length; ai++) {
+      const a = arcs[ai];
+      const seqs = [];
+      a.tiers.forEach((opts, k) => {
+        let r = 0;
+        opts.forEach((_, j) => { for (let n = val(sv(ai, k, j)); n > 0; n--, r++) { if (k === 0) seqs.push([]); if (seqs[r]) seqs[r].push(j); } });
+      });
+      const counts = new Map();
+      for (const seq of seqs) {
+        const oi = a.match.get(seq.join(","));
+        if (oi == null) return null;
+        counts.set(oi, (counts.get(oi) || 0) + 1);
+      }
+      counts.forEach((count, oi) => picks.push({ gi: a.gi, oi, count }));
     }
     const lots = rates.map((_, k) => { const c = res.Columns[`y${k}`]; return c && Number.isFinite(c.Primal) ? Math.max(0, Math.round(c.Primal)) : 0; });
     return picks.length ? { picks, lots } : null;
@@ -13937,7 +14013,7 @@ function plannerPagePlans(payload) {
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packExactPicks", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerCombinedLocal", "plannerPagePlans"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 const PLANNER_WAIT = new Map();
 function plannerWorker() {
