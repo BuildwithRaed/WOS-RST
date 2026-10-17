@@ -3706,6 +3706,10 @@ const T = {
   pur_wk_after: { en: "After target" },
   pur_wk_later: { en: "Later" },
   pur_wk_none: { en: "Nothing to buy this week." },
+  pur_when_daily: { en: "every day ({n} days)" },
+  pur_when_weekly: { en: "every week ({n}×)" },
+  pur_when_weeks: { en: "every {w} weeks ({n}×)" },
+  pur_when_dates: { en: "{n} dates" },
   pur_wk_buy_all: { en: "Will buy all of {week}" },
   pur_sug_until: { en: "Until target" },
   pur_sug_later: { en: "Later (until {date})" },
@@ -6720,6 +6724,21 @@ async function renderPurchasesPage() {
     const sched = plan.spendSched || packPlanSchedule(rows);
     const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
     const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
+    // Short "when" (owner, 17 Oct 2026: the full list of days was too long):
+    // days in a row → "Dec 7 → Feb 21 · every day (77 days)"; evenly spaced →
+    // "every 4 weeks (4×)"; a few dates or runs as they are; else first → last · N dates.
+    const whenShort = (list) => {
+      const offs = [...new Set(list.map((x) => Math.max(0, x.off)))].sort((a, b) => a - b);
+      if (offs.length <= 2) return offs.map(whenTxt).join(", ");
+      const n = offs.length, span = `${whenTxt(offs[0])} → ${whenTxt(offs[n - 1])}`;
+      const gaps = offs.slice(1).map((o, i) => o - offs[i]);
+      const same = gaps.every((g) => g === gaps[0]) ? gaps[0] : 0;
+      if (same === 1) return `${span} · ${t("pur_when_daily").replace("{n}", n)}`;
+      if (same && same % 7 === 0) return `${span} · ${t(same === 7 ? "pur_when_weekly" : "pur_when_weeks").replace("{w}", same / 7).replace("{n}", n)}`;
+      const runs = [];
+      offs.forEach((o) => { const r = runs[runs.length - 1]; if (r && o === r[1] + 1) r[1] = o; else runs.push([o, o]); });
+      return runs.length <= 3 ? runs.map(([a, b]) => (a === b ? whenTxt(a) : `${whenTxt(a)} – ${whenTxt(b)}`)).join(", ") : `${span} · ${t("pur_when_dates").replace("{n}", n)}`;
+    };
     // Week tabs (owner picked C, 16 Oct 2026): this week, then each week (Mon–Sun)
     // until the Budgets target, then what comes after it; without a target the
     // next 8 weeks, then "Later".
@@ -6780,7 +6799,7 @@ async function renderPurchasesPage() {
         const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
         return `<span class="bud-mat" title="${esc(materialDisplayName(k))}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(sh)}</b></span>`;
       }).join("");
-      const when = xs.map((x) => whenTxt(x.off)).join(", ");
+      const when = whenShort(xs);
       return `<div class="pur-item">
         <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
