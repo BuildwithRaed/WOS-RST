@@ -6871,6 +6871,10 @@ async function renderPurchasesPage() {
     const untilCost = keys.filter((k) => k !== "after").reduce((a, k) => a + (buckets.has(k) ? buckets.get(k).cost : 0), 0);
     const splitHtml = `<div class="pur-sug-split"><div><span class="meta">${esc(t("pur_wk_this"))}</span><b>${thisCost ? esc(money(thisCost)) : "—"}</b></div><div><span class="meta">${esc(tOff != null && tOff >= 0 ? t("pur_sug_until") : t("pur_sug_total"))}</span><b>${esc(money(tOff != null && tOff >= 0 ? untilCost : total))}</b></div></div>`;
     const drawSug = () => {
+    // Keep the pack list where it was scrolled when it's redrawn for the same
+    // week (opening a pack line, ticking all); another week starts at the top.
+    const oldList = box.querySelector(".pur-cl-list");
+    const keepTop = oldList && oldList.dataset.week === String(PUR_SUG_WEEK) ? oldList.scrollTop : 0;
     const sel = buckets.get(PUR_SUG_WEEK);
     const otherName = follow === "target" ? "budget" : "target";
     const chipsHtml = `<div class="pur-wk-chips">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wk-chip${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<small class="pur-alt pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</small>` : ""}</button>`; }).join("")}</div>`;
@@ -6958,7 +6962,7 @@ async function renderPurchasesPage() {
         ${bi || (cmp && sel) ? `<div class="pur-cl-line">${bi ? `<span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)} ${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span>` : ""}${cmp && sel ? ` <span class="meta">${esc(t("pur_other_would").replace("{plan}", t("pur_tag_" + otherName)).replace("{v}", money(sel.alt || 0)))}</span>` : ""}</div>` : ""}
         ${cmp ? `<div class="pur-cl-line">${["both", "target", "budget"].filter((k) => counts[k]).map((k) => `<span class="pur-cmp pur-cmp-${k}">${counts[k]} ${esc(t("pur_tag_" + k))}</span>`).join(" ")}</div>` : ""}
         ${boxes}
-        ${list.length ? `<div class="pur-cl-top"><span class="meta">${esc(t("pur_tick_hint"))}</span><button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button></div><div class="pur-cl-list">${list.map(rowHtml).join("")}</div>${list.length > 4 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`}
+        ${list.length ? `<div class="pur-cl-top"><span class="meta">${esc(t("pur_tick_hint"))}</span><button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button></div><div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${list.map(rowHtml).join("")}</div>${list.length > 4 ? `<div class="meta pur-sug-more">&#8597; ${esc(t("pur_sug_scroll").replace("{n}", list.length))}</div>` : ""}` : `<div class="meta" style="padding:8px 0;">${esc(t("pur_wk_none"))}</div>`}
         ${list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : ""}`;
     };
     if (IS_OWNER) box.innerHTML = compactHtml();
@@ -7092,6 +7096,7 @@ async function renderPurchasesPage() {
       // Admin list: about 4½ pack lines, the rest scroll inside the box.
       const clEl = box.querySelector(".pur-cl-list"), clRows = clEl ? [...clEl.querySelectorAll(".pur-cl-row")] : [];
       if (clRows.length > 5) clEl.style.maxHeight = `${clRows[4].offsetTop + clRows[4].offsetHeight / 2}px`;
+      if (clEl && keepTop) clEl.scrollTop = keepTop;
     };
     drawSug();
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; });
