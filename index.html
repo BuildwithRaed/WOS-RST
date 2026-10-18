@@ -1253,6 +1253,12 @@ input,select,textarea{
   .rl-fields label{ display:flex; flex-direction:column; gap:3px; font-size:12.5px; }
   .rl-fields label span{ color:var(--muted); }
   .rl-foot{ display:flex; align-items:center; gap:8px; margin-top:12px; }
+  .ds-row{ display:flex; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--line); }
+  .ds-n{ flex:1 1 auto; min-width:0; font-size:13.5px; }
+  .ds-n small{ display:block; color:var(--muted); font-size:11.5px; }
+  .ds-grid{ border:1px solid var(--line); border-radius:12px; padding:10px; margin:2px 0 8px; background:var(--panel-2); }
+  .ds-cells{ display:grid; grid-template-columns:auto repeat(4, minmax(0, 1fr)); gap:6px; align-items:center; font-size:12.5px; }
+  .ds-cells input{ width:100%; min-width:0; padding:5px 6px; font-size:16px; }
   .mn-group{ border:1px solid var(--line); border-radius:14px; background:var(--panel); padding:10px 12px; margin-bottom:12px; }
   .mn-ghead, .mn-prow{ display:flex; align-items:center; gap:8px; }
   .mn-gname{ flex:1 1 auto; min-width:0; font-weight:700; font-size:14px; }
@@ -3359,6 +3365,7 @@ const T = {
   category_not_found: { en: "category not found." },
   click_star_desc: { en: "Click a star to set your current level (0\u20135)." },
   stars_of_5: { en: "/ 5 stars" },
+  hs_no_heroes: { en: "No heroes here yet." },
   troops_prefix: { en: "Troops" },
   needed_for_max: { en: "needed for max" },
   maxed_label: { en: "Maxed" },
@@ -4668,6 +4675,34 @@ const SOURCE_DISPLAY_NAME = {
 function displaySourceName(key) {
   return dataName(SOURCE_DISPLAY_NAME[key] || key);
 }
+// Dashboard sources (Admin → Dashboard sources): site_config
+// "dashboard_sources" = { extra: [buff categories counted as flat bonuses],
+// order: [source keys, breakdown order] }. Nothing saved = the built-in lists.
+// The breakdown order of the built-in sources (matches the menu).
+const DASH_SOURCE_ORDER_DEFAULT = [
+  "VIP", "Jero", "Natalia", "Skins", "Islands", "Roster Heroes",
+  "Chief", "Chief Bonus", "Charm", "Hero Gears",
+  "Pets Level", "Pets Refine",
+  "Facility", "Alliance Buff", "Album Buff", "Gallery",
+  "Research Center", "T11 Helios Research", "T12 Research", "Experts", "Experts Research",
+];
+function dashSourcesConfig() {
+  const v = typeof siteConfig === "function" ? siteConfig("dashboard_sources", null) : null;
+  return { extra: v && Array.isArray(v.extra) ? v.extra.filter((x) => typeof x === "string" && x) : [], order: v && Array.isArray(v.order) ? v.order.filter((x) => typeof x === "string" && x) : [] };
+}
+// The breakdown order: built-in order with the special-skill heroes after
+// Natalia and the extra sources last, then the admin's order on top.
+function dashSourceOrderBase(heroes, extra) {
+  const list = DASH_SOURCE_ORDER_DEFAULT.slice();
+  (heroes || []).filter((h) => !list.includes(h)).forEach((h, i) => list.splice(list.indexOf("Natalia") + 1 + i, 0, h));
+  (extra || []).filter((x) => !list.includes(x)).forEach((x) => list.push(x));
+  return list;
+}
+function dashSourceOrder(heroes, extra) {
+  const list = dashSourceOrderBase(heroes, extra);
+  const saved = dashSourcesConfig().order.filter((k) => list.includes(k));
+  return saved.length ? [...saved, ...list.filter((k) => !saved.includes(k))] : list;
+}
 
 // Dashboard data kept in memory between visits, so coming back to the
 // Dashboard (or redrawing it after a roster change) needs no requests.
@@ -4739,7 +4774,7 @@ async function renderOverview(opts = {}) {
   preloadCalcStates();
   const skinsPromise = Promise.all([ensureGalleryUncounted(), dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`))]).then(([, rows]) => rows);
   const [[columns, rows], allSkins, ISLAND_CATEGORIES, ROSTER_HERO_CATALOG, ROSTER_SAVED, ROSTER_PLAYER_HEROES, ROSTER_STAR_ROWS, ROSTER_WIDGET_ROWS,
-    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED, ROSTER_BACKPACK] = await Promise.all([
+    , GALLERY_SAVED, JERO_SAVED, NATALIA_SAVED, ALBUM_SAVED, ROSTER_BACKPACK, GALLERY_LEVEL_ROWS, ALBUM_LEVEL_ROWS] = await Promise.all([
     dashCached("buff", () => ensureBuffTable().then(() => Promise.all([
       sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category`),
       sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
@@ -4764,7 +4799,28 @@ async function renderOverview(opts = {}) {
     loadCalcState("hero_stars_natalia"),
     loadCalcState("album_tundra"),
     loadCalcState("backpack").catch(() => null), // roster cards: shards still short
+    // Collection Gallery / Tundra Album levels for their "of max" (null = the built-in numbers).
+    dashCached("gallery_levels", () => sb(`collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`)).catch(() => null),
+    dashCached("album_levels", () => sb(`tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`)).catch(() => null),
   ]);
+  // Heroes Special Skills: every hero column in the buff table (Jero, Natalia
+  // and any added in Admin) counts by its stars: max = the hero's value in the
+  // "<troop> <stat>" row, now = max / 5 × stars.
+  const SPECIAL_HEROES = specialSkillHeroNames(columns.map((c) => c.category || c.name));
+  // Flat bonus sources the admin added (counted as their values are).
+  const EXTRA_SOURCES = dashSourcesConfig().extra;
+  const SPECIAL_HERO_SET = new Set(SPECIAL_HEROES);
+  const HERO_STARS = {};
+  (await Promise.all(SPECIAL_HEROES.map((h) => (h === "Jero" ? JERO_SAVED : h === "Natalia" ? NATALIA_SAVED : loadCalcState(`hero_stars_${h.toLowerCase()}`))))).forEach((s, i) => { HERO_STARS[SPECIAL_HEROES[i]] = (s || {})["__shared__"] ?? 0; });
+  // The highest released level of a Collection Gallery / Tundra Album stat
+  // (same as their pages), or null when the table didn't load.
+  const levelTableMax = (rows, table, stat) => {
+    if (!Array.isArray(rows)) return null;
+    const opts = [];
+    let rel = Infinity;
+    rows.forEach((r) => { if (r.stat_type !== stat) return; if (isUpcomingRow(table, r) && rel === Infinity) rel = opts.length; opts.push(Number(r.value_pct)); });
+    return (rel === Infinity ? opts[opts.length - 1] : [0, ...opts][rel]) || 0;
+  };
   // ---- Roster heroes: shared lookups, needed by statFor()/liveCalcValue() below ----
   const ROSTER_STATE = ROSTER_SAVED || {};
   const ROSTER_PH_BY_HERO = {};
@@ -4829,9 +4885,7 @@ async function renderOverview(opts = {}) {
     return 0;
   }
   const GALLERY_STATE = GALLERY_SAVED || { Attack: 2, Defense: 2, Lethality: 2, Health: 2 };
-  const GALLERY_MAX = { Attack: 6, Defense: 6, Lethality: 6, Health: 4 };
-  const JERO_STARS = (JERO_SAVED || {})["__shared__"] ?? 0;
-  const NATALIA_STARS = (NATALIA_SAVED || {})["__shared__"] ?? 0;
+  const GALLERY_MAX = { Attack: 6, Defense: 6, Lethality: 6, Health: 4 }; // used only if the table didn't load
   const ALBUM_STATE = ALBUM_SAVED || { Attack: 2, Defense: 2 };
   // Alliance Tech rows are already in allSkins (same table, same user) - no extra request.
   const ALLIANCE_TECH_CACHE = allSkins.filter((s) => s.category === "Alliance Tech");
@@ -4864,13 +4918,13 @@ async function renderOverview(opts = {}) {
   // Fixed display order for the stat breakdown (top-3 preview and full
   // modal), matching the order sources appear in the sidebar. Anything
   // not in this list falls back to value-sorted order at the end.
-  const SOURCE_DISPLAY_ORDER = [
-    "VIP", "Jero", "Natalia", "Skins", "Islands", "Roster Heroes",
-    "Chief", "Chief Bonus", "Charm", "Hero Gears",
-    "Pets Level", "Pets Refine",
-    "Facility", "Alliance Buff", "Album Buff", "Gallery",
-    "Research Center", "T11 Helios Research", "T12 Research", "Experts", "Experts Research",
-  ];
+  // (Admin → Dashboard sources can change it; heroes added in Admin → Heroes
+  // Special Skills come after Natalia, extra sources last.)
+  const SOURCE_DISPLAY_ORDER = dashSourceOrder(SPECIAL_HEROES, EXTRA_SOURCES);
+  // Heroes added in Admin → Heroes Special Skills count like Jero / Natalia;
+  // the admin's extra sources count their values as they are.
+  SPECIAL_HEROES.forEach((h) => { ALLOWED_STAT_CATEGORIES.add(h); if (!LIVE_CALC_KEYS.includes(h)) LIVE_CALC_KEYS.push(h); });
+  EXTRA_SOURCES.forEach((x) => ALLOWED_STAT_CATEGORIES.add(x));
   function sortBySourceOrder(entries) {
     return entries.slice().sort((a, b) => {
       const ia = SOURCE_DISPLAY_ORDER.indexOf(a[0]);
@@ -4954,7 +5008,7 @@ async function renderOverview(opts = {}) {
           const levels = RC_NODES_CACHE[trackName] || [];
           levels.forEach((r) => {
             if (r.stat !== rawStat) return;
-            if (useMax) { if (!isUpcomingRow("research_center_nodes", r)) total += Number(r.stat_pct) || 0; }
+            if (useMax) { if (!isUpcomingRow("research_center_nodes", r) && !levelLockedRow("research_center_nodes", r)) total += Number(r.stat_pct) || 0; }
             else if (!useMax && r.level <= ((RC_STATE && RC_STATE[trackName]) || 0)) total += Number(r.stat_pct) || 0;
           });
         });
@@ -4982,7 +5036,7 @@ async function renderOverview(opts = {}) {
     }
     if (calcKey === "Gallery") {
       const rawStat = STAT_KEY_TO_RAW[statKey];
-      if (useMax) return GALLERY_MAX[rawStat] || 0;
+      if (useMax) { const m = levelTableMax(GALLERY_LEVEL_ROWS, "collection_gallery_levels", rawStat); return m != null ? m : GALLERY_MAX[rawStat] || 0; }
       return GALLERY_STATE[rawStat] || 0;
     }
     if (calcKey === "T11 Helios Research") {
@@ -4991,17 +5045,13 @@ async function renderOverview(opts = {}) {
       if (!T11_NODES_CACHE) return 0;
       return computeT11Stats(calcTroop, useMax)[rawStat] || 0;
     }
-    if (calcKey === "Jero") {
-      if (statKey !== "DMG" && statKey !== "HP") return null;
-      const maxPct = 15;
+    if (SPECIAL_HERO_SET.has(calcKey)) {
+      const row = rows.find((r) => r.name.toLowerCase() === `${troop} ${statKey}`.toLowerCase());
+      let maxPct = null;
+      if (row) row.buff_cells.forEach((c) => { if (c.value != null && colById[c.column_id] === calcKey) maxPct = (maxPct || 0) + Number(c.value); });
+      if (maxPct == null) return null;
       if (useMax) return maxPct;
-      return (maxPct / 5) * JERO_STARS;
-    }
-    if (calcKey === "Natalia") {
-      if (statKey !== "ATT" && statKey !== "DEF") return null;
-      const maxPct = 10;
-      if (useMax) return maxPct;
-      return (maxPct / 5) * NATALIA_STARS;
+      return (maxPct / 5) * HERO_STARS[calcKey];
     }
     if (calcKey === "Pets Refine") {
       if (statKey !== "DMG" && statKey !== "HP") return null;
@@ -5058,7 +5108,7 @@ async function renderOverview(opts = {}) {
     }
     if (calcKey === "Album Buff") {
       if (statKey !== "ATT" && statKey !== "DEF") return null;
-      if (useMax) return 14;
+      if (useMax) { const m = levelTableMax(ALBUM_LEVEL_ROWS, "tundra_album_levels", STAT_KEY_TO_RAW[statKey]); return m != null ? m : 14; }
       return ALBUM_STATE[STAT_KEY_TO_RAW[statKey]] || 0;
     }
     if (calcKey === "Alliance Buff") {
@@ -10786,7 +10836,7 @@ async function loadBuffCategories() {
   }
   BUFF_CATEGORIES = grouped;
 
-  const HERO_SUBCATS = new Set(["Jero", "Natalia", "Hero Gears"]);
+  const HERO_SUBCATS = new Set(["Jero", "Natalia", "Hero Gears", ...specialSkillHeroNames(grouped.map((c) => c.name))]);
   const GROUPED_CHILDREN = new Set(Object.values(CATEGORY_GROUPS).flat());
   const EXTRA_BUFF_SET = new Set(EXTRA_BUFF_SUBCATS);
   const HIDDEN_BUFF_CATS = new Set(["Chief Bonus", "Charm", "Chief", "Extra Buff", "Buff", "Skins", "Islands", "War Acd.", "Research", "Pets", "Expert", "Exp. Research"]);
@@ -11682,12 +11732,14 @@ function openStateAgeModal(onSaved) {
 // unticked (not counted in the Dashboard / Budgets) and its page shows when it
 // opens; the person can still tick it. Items not listed are never touched.
 const STATE_UNLOCKS = [
-  { kind: "page", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
-  { kind: "page", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
-  { kind: "lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
-  { kind: "gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
-  { kind: "gear", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
-  { kind: "gear", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
+  // Rows with a `key` are read by the code under that key (Admin can change
+  // the day and label, not the key, so renaming never switches them off).
+  { kind: "page", key: "t11", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
+  { kind: "page", key: "t12", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
+  { kind: "lab", key: "crystal lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
+  { kind: "gear", key: "legendary chief gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
+  { kind: "gear", key: "chief gear t5 t6", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
+  { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
     ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
@@ -11695,10 +11747,17 @@ const STATE_UNLOCKS = [
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
 ];
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
+// The built-in rows the code reads by key (kind + key).
+const STATE_UNLOCK_KEYS = STATE_UNLOCKS.filter((u) => u.key).map((u) => ({ kind: u.kind, key: u.key }));
+function stateUnlockBuiltinKey(kind, name) {
+  const k = stateKeyNorm(name);
+  const b = STATE_UNLOCK_KEYS.find((x) => x.kind === kind && stateKeyNorm(x.key) === k);
+  return b ? b.key : null;
+}
 // The state day something opens on, or null if it isn't in the list.
 function stateUnlockDay(kind, name) {
   const k = stateKeyNorm(name);
-  const u = STATE_UNLOCKS.find((x) => x.kind === kind && stateKeyNorm(x.name) === k);
+  const u = STATE_UNLOCKS.find((x) => x.kind === kind && stateKeyNorm(x.key || x.name) === k);
   return u ? u.day : null;
 }
 // True when the state age is set and this isn't open yet in the person's state.
@@ -14706,11 +14765,16 @@ async function recordBudgetNeeds(calcKey, groups) {
 // were saved: when that changes (state age set or a day passes), Budgets asks
 // to open the page again so newly ticked / unticked ones are counted right.
 const BUDGET_STATE_KIND = { pets: "pets", pets_refine: "pets", experts: "experts", experts_research: "experts" };
+// Level unlocks (Rules & Timeline, kind "level") that change these pages' max.
+const BUDGET_LEVEL_LOCKS = { pets: ["pets"], experts: ["expert_level", "expert_skill"], experts_research: ["expert_research"] };
 function budgetStateSig(calcKey) {
   const kind = BUDGET_STATE_KIND[calcKey];
   if (!kind) return null;
   const list = STATE_UNLOCKS.filter((u) => u.kind === kind);
-  return list.some((u) => stateNotYet(kind, u.name)) ? list.map((u) => (stateNotYet(kind, u.name) ? "0" : "1")).join("") : null;
+  const base = list.some((u) => stateNotYet(kind, u.name)) ? list.map((u) => (stateNotYet(kind, u.name) ? "0" : "1")).join("") : null;
+  const d = stateAgeDay(), lv = LEVEL_LOCKS_ON && d != null ? STATE_UNLOCKS.filter((u) => u.kind === "level" && (BUDGET_LEVEL_LOCKS[calcKey] || []).includes(u.table)) : [];
+  if (!lv.some((u) => d < u.day)) return base;
+  return `${base || ""}|L${lv.map((u) => (d < u.day ? "0" : "1")).join("")}`;
 }
 // Live material needs for the pages whose data is global.
 function computeChiefGearNeeds() {
@@ -17712,11 +17776,20 @@ async function loadExpertsRosterGlobal() {
 // Skills renamed in the data (16 Oct 2026, names from whiteoutsurvival.wiki):
 // saved levels move to the new name, so nobody loses them.
 const EXPERT_SKILL_RENAMES = { Fabian: { "Dawn Hymn": "Battle Bulwark" }, Justus: { "Tresure Seeker": "Treasure Seeker" } };
+// Renames made in Admin → Experts → Roster are added in site_config
+// "expert_skill_renames" = [{ hero, from, to }] (in order; Admin never reuses a
+// name, so applying them again does nothing).
+function expertSkillRenameList() {
+  const out = [];
+  Object.entries(EXPERT_SKILL_RENAMES).forEach(([hero, map]) => Object.entries(map).forEach(([from, to]) => out.push({ hero, from, to })));
+  const extra = typeof siteConfig === "function" ? siteConfig("expert_skill_renames", null) : null;
+  if (Array.isArray(extra)) extra.forEach((x) => { if (x && x.hero && x.from && x.to) out.push({ hero: String(x.hero), from: String(x.from), to: String(x.to) }); });
+  return out;
+}
 function renameExpertSkills(saved) {
-  Object.entries(EXPERT_SKILL_RENAMES).forEach(([hero, map]) => {
+  expertSkillRenameList().forEach(({ hero, from, to }) => {
     const sk = saved && saved[hero] && saved[hero].skills;
-    if (!sk) return;
-    Object.entries(map).forEach(([from, to]) => { if (sk[from] && !sk[to]) { sk[to] = sk[from]; delete sk[from]; } });
+    if (sk && sk[from] && !sk[to]) { sk[to] = sk[from]; delete sk[from]; }
   });
   return saved;
 }
@@ -18030,6 +18103,7 @@ async function renderHeroStarSection(heroName, displayName, imageUrl, containerI
   }
   // Shared by both hero sections and kept for the visit (see dashCached).
   const rows = await dashCached("buff_rows_sorted", () => sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`));
+  if (!el || !el.isConnected) return; // the page changed meanwhile
   const STAT_LABELS = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
   const seenStats = new Set();
   const statRows = rows
@@ -18188,19 +18262,33 @@ async function renderCollectionGalleryPage() {
   });
 }
 
+// The heroes on Heroes Special Skills: every hero column of the buff table
+// (Admin → Heroes Special Skills → Add a new hero), i.e. every category that
+// isn't one of the app's own and isn't counted as a flat bonus source.
+const SPECIAL_HERO_META = { Jero: { name: "Jeronimo", img: "icons/jeronimo.png" }, Natalia: { name: "Natalia", img: "icons/natalia.png" } };
+function specialSkillHeroNames(catNames) {
+  const extra = new Set(dashSourcesConfig().extra);
+  return [...new Set(catNames)].filter((n) => n && !ADMIN_RESERVED_BUFF_CATEGORIES.has(n) && !extra.has(n));
+}
 async function renderExtraBonusHeroes() {
+  const seq = RENDER_SEQ;
+  if (!BUFF_CATEGORIES.length) { await ensureBuffTable(); if (!BUFF_CATEGORIES.length) await loadBuffCategories(); }
+  if (seq !== RENDER_SEQ) return;
+  const found = specialSkillHeroNames(BUFF_CATEGORIES.map((c) => c.name));
+  const heroes = BUFF_CATEGORIES.length ? found : ["Jero", "Natalia"]; // no table: the old two sections ("not found")
+  // Pictures of heroes added in Admin come from the heroes table (same name).
+  if (heroes.some((h) => !SPECIAL_HERO_META[h] && !HERO_IMG_BY_NAME[h])) {
+    try { noteHeroImages(await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`))); } catch (e) { /* no picture */ }
+    if (seq !== RENDER_SEQ) return;
+  }
+  const boxId = (h) => "extraBonusHeroes" + h.replace(/[^A-Za-z0-9_-]/g, "_");
   content.innerHTML = `
     <div class="plx-head"><h2>${esc(navLabel("extrabonusheroes"))}</h2></div>
     <div class="hero-special-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-      <div id="extraBonusHeroesJero"></div>
-      <div id="extraBonusHeroesNatalia"></div>
-    </div>
-  `;
-  // Both sections load at the same time (they used to load one after the other).
-  await Promise.all([
-    renderHeroStarSection("Jero", "Jeronimo", "icons/jeronimo.png", "extraBonusHeroesJero"),
-    renderHeroStarSection("Natalia", "Natalia", "icons/natalia.png", "extraBonusHeroesNatalia"),
-  ]);
+${heroes.map((h) => `      <div id="${esc(boxId(h))}"></div>\n`).join("")}    </div>
+  ` + (heroes.length ? "" : `<div class="panel"><div class="empty">${esc(t("hs_no_heroes"))}</div></div>`);
+  // The sections load at the same time (they used to load one after the other).
+  await Promise.all(heroes.map((h) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return renderHeroStarSection(h, m.name, m.img, boxId(h)); }));
 }
 
 async function renderAllianceTechPage() {
@@ -18375,6 +18463,11 @@ let T12_NODES_CACHE = null;
 function t12Rel(def) {
   const ids = upcomingIds("t12_nodes");
   const tier = T12_NODES_CACHE && T12_NODES_CACHE[def.tier];
+  const top = levelLockTop("t12_nodes");
+  if (top !== Infinity) return Math.max(0, Math.min(t12RelUp(def, ids, tier), top));
+  return t12RelUp(def, ids, tier);
+}
+function t12RelUp(def, ids, tier) {
   if (!ids.size || !tier) return def.max;
   let rel = def.max;
   Object.values(tier).forEach((r) => { if (r && r.id != null && ids.has(String(r.id))) rel = Math.min(rel, Number(r.level) - 1); });
@@ -18593,7 +18686,7 @@ function computeT11Stats(troop, useMax) {
   Object.entries(tracks).forEach(([track, levels]) => {
     const cur = useMax ? Infinity : ((T11_STATE && T11_STATE[troop] && T11_STATE[troop][track]) || 0);
     levels.forEach((r) => {
-      if (r.level > cur || !r.stat || (useMax && isUpcomingRow("t11_helios_nodes", r))) return;
+      if (r.level > cur || !r.stat || (useMax && (isUpcomingRow("t11_helios_nodes", r) || levelLockedRow("t11_helios_nodes", r)))) return;
       stats[r.stat] += Number(r.stat_pct) || 0;
     });
   });
@@ -19137,9 +19230,119 @@ function isUpcomingRow(table, row) { return !!row && row.id != null && upcomingI
 // counts as upcoming), or the last row when nothing is upcoming.
 function releasedLastIdx(table, rows) {
   const ids = upcomingIds(table);
-  if (!ids.size) return rows.length - 1;
-  const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
-  return i < 0 ? rows.length - 1 : Math.max(-1, i - 1);
+  let last = rows.length - 1;
+  if (ids.size) {
+    const i = rows.findIndex((r) => r && r.id != null && ids.has(String(r.id)));
+    if (i >= 0) last = Math.max(-1, i - 1);
+  }
+  // Levels not open yet in the person's state (Admin → Rules & Timeline →
+  // Unlocks, kind "level") stop "Max" and the default "My max" the same way.
+  if (LEVEL_LOCKS_ON) {
+    const j = levelLockIdx(table, rows);
+    if (j >= 0) last = Math.min(last, Math.max(-1, j - 1));
+  }
+  return last;
+}
+// ---- Level unlocks by state age (owner, 17 Oct 2026) ----
+// An unlock row { kind: "level", table: <target key below>, level, day } says
+// the levels from `level` on open on that state day. Before then (state age
+// set), "Max", "Max everything", the Dashboard max and the default "My max"
+// stop at the level before, like "Upcoming" ticks; the levels stay in the
+// lists (marked) so people can plan ahead. A lock is skipped when the person
+// already has something at or above that level (like the built-in Chief Gear
+// T5 – T6 and Charm 16.1 – 18 locks).
+// Each target: label, db table, pages (for the 🔒 note), which rows it is
+// about (match), each row's rank, the rank of the picked level, the levels to
+// pick from in Admin (choices, after load) and whether the person is already
+// there (inUse). `row: true` = a single row can be judged on its own (plain
+// level numbers).
+let LEVEL_LOCKS_ON = false; // any "level" unlock rows (set with the rules)
+const lvNum = (r) => Number(r && r.level);
+const lvLevels = (rows) => [...new Set(rows.map((r) => Number(r && r.level)).filter((n) => Number.isFinite(n) && n > 0))].sort((a, b) => a - b).map(String);
+const LEVEL_LOCK_ROWS = {};
+const LEVEL_LOCK_TARGETS = {
+  charms: { label: "Chief Charm levels", table: "charm_levels", tabs: ["charmscalc"],
+    rank: (r, i) => i, rankOf: (v) => CHARM_LEVELS.indexOf(String(v)),
+    load: () => ensureCharmData(), choices: () => CHARM_LEVELS.filter((l) => l !== "0"),
+    inUse: (k) => CHARM_PIECES.some((p) => (CHARM_CALC_STATE[p.key] || []).some((sl) => CHARM_LEVELS.indexOf(String(sl.current)) >= k)) },
+  chief_gear: { label: "Chief Gear tiers", table: "progression_rows", tabs: ["chiefgear"], match: (rows) => rows === CHIEF_GEAR_ROWS,
+    rank: (r, i) => i, rankOf: (v, rows) => (rows || CHIEF_GEAR_ROWS || []).findIndex((r) => chiefGearRowLabel(r) === String(v)),
+    load: () => loadChiefGearRows(), choices: () => (CHIEF_GEAR_ROWS || []).slice(1).map(chiefGearRowLabel),
+    inUse: (k) => CHIEF_GEAR_PIECES.some((p) => ((CHIEF_GEAR_STATE[p.key] || {}).from ?? -1) >= k) },
+  ...Object.fromEntries([["hero_mastery", "Hero Gear Mastery Forging", "Hero Gear Mastery levels"], ["hero_enhance", "Enhance Combined", "Hero Gear Enhance levels (101+ = Mithril)"]].map(([key, track, label]) => [key, {
+    label, table: "progression_rows", tabs: ["herogearcalc"], match: (rows) => !!HERO_GEAR_TABLES_CACHE && rows === HERO_GEAR_TABLES_CACHE[track],
+    rank: lvNum, rankOf: (v) => Number(v),
+    load: () => ensureHeroGearData(), choices: () => lvLevels((HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || []),
+    inUse: (k) => {
+      const rows = (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [];
+      return HERO_GEAR_SET_NAMES.some((sn) => HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => {
+        const st = (((HERO_GEAR_SETS[sn] || {})[tr] || {})[pc] || {})[track];
+        const f = st ? st.from : null;
+        return typeof f === "number" && f > 0 && !!rows[f] && lvNum(rows[f]) >= k;
+      })));
+    } }])),
+  t11: { label: "War Academy (T11) levels", table: "t11_helios_nodes", tabs: ["t11helios"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: () => ensureT11StateData(), choices: () => lvLevels(Object.values(T11_NODES_CACHE || {}).flatMap((tr) => Object.values(tr || {}).flat())).slice(1),
+    inUse: (k) => Object.values(T11_STATE || {}).some((tr) => tr && typeof tr === "object" && Object.values(tr).some((v) => Number(v) >= k)) },
+  t12: { label: "Flame Tech (T12) levels", table: "t12_nodes", tabs: ["t12research"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: () => ensureT12StateData(), choices: () => Array.from({ length: Math.max(0, ...T12_ITEM_DEFS.map((d) => d.max)) }, (x, i) => String(i + 1)).slice(1),
+    inUse: (k) => Object.values(T12_STATE || {}).some((tr) => tr && typeof tr === "object" && Object.values(tr).some((v) => Number(v) >= k)) },
+  research_center: { label: "Research Center levels", table: "research_center_nodes", tabs: ["researchcenter"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: () => ensureRCData(), choices: () => lvLevels(Object.values(RC_NODES_CACHE || {}).flat()).slice(1),
+    inUse: (k) => Object.values(RC_STATE || {}).some((v) => Number(v) >= k) },
+  pets: { label: "Pet levels", table: PET_LEVELS_TABLE, tabs: ["petsdata"], rank: (r) => parseFloat(r && r.level_label), rankOf: (v) => Number(v), row: true,
+    load: () => ensurePetsData(), choices: () => [...new Set(Object.values(PETS_NODES_CACHE || {}).flat().map((r) => parseFloat(r.level_label)).filter((n) => Number.isFinite(n) && n > 1))].sort((a, b) => a - b).map(String),
+    inUse: (k) => Object.entries(PETS_STATE || {}).some(([pet, st]) => {
+      const f = st && typeof st === "object" ? st.from : st, r = ((PETS_NODES_CACHE || {})[pet] || [])[f];
+      return typeof f === "number" && f >= 0 && !!r && parseFloat(r.level_label) >= k;
+    }) },
+  expert_level: { label: "Expert levels (affinity)", table: "expert_affinity_nodes", tabs: ["expertspage"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: async () => { LEVEL_LOCK_ROWS.expert_level = await loadExpertNodes("affinity"); }, choices: () => lvLevels(LEVEL_LOCK_ROWS.expert_level || []).slice(1), inUse: () => false },
+  expert_skill: { label: "Expert skill levels", table: "expert_skill_nodes", tabs: ["expertspage"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: async () => { LEVEL_LOCK_ROWS.expert_skill = await loadExpertNodes("skill"); }, choices: () => lvLevels(LEVEL_LOCK_ROWS.expert_skill || []).slice(1), inUse: () => false },
+  expert_research: { label: "Expert research levels", table: "expert_research_nodes", tabs: ["expertsresearchpage"], rank: lvNum, rankOf: (v) => Number(v), row: true,
+    load: async () => { LEVEL_LOCK_ROWS.expert_research = await loadExpertNodes("research"); }, choices: () => lvLevels(LEVEL_LOCK_ROWS.expert_research || []).slice(1), inUse: () => false },
+  vip: { label: "VIP tiers", table: "buff_rows", tabs: ["extrabonus:Vip Tier"], rank: (r, i) => i, rankOf: (v, rows) => (rows || VIP_ROWS_CACHE || []).findIndex((r) => r && r.name === String(v)),
+    load: () => ensureVipData(), choices: () => (VIP_ROWS_CACHE || []).slice(1).map((r) => r.name),
+    inUse: (k) => VIP_SELECTED_INDEX != null && VIP_SELECTED_INDEX >= k },
+};
+// Waiting level unlocks of a db table (with the rank of the first locked level
+// when rows are given), leaving out ones the person is already past.
+function levelLocksFor(table, rows) {
+  const d = stateAgeDay();
+  if (d == null) return [];
+  const out = [];
+  STATE_UNLOCKS.forEach((u) => {
+    const def = u.kind === "level" && d < u.day ? LEVEL_LOCK_TARGETS[u.table] : null;
+    if (!def || def.table !== table) return;
+    if (rows && def.match && !def.match(rows)) return;
+    if (!rows && !def.row) return;
+    const k = def.rankOf(u.level, rows);
+    if (k == null || !Number.isFinite(k) || k < 0) return;
+    try { if (def.inUse(k)) return; } catch (e) { /* state not loaded yet: the lock applies */ }
+    out.push({ def, k });
+  });
+  return out;
+}
+// Index of the first row a waiting level unlock covers, or -1.
+function levelLockIdx(table, rows) {
+  let first = -1;
+  if (!rows || !rows.length) return first;
+  levelLocksFor(table, rows).forEach(({ def, k }) => {
+    const i = rows.findIndex((r, ix) => def.rank(r, ix) >= k);
+    if (i >= 0 && (first < 0 || i < first)) first = i;
+  });
+  return first;
+}
+// Tables with plain level numbers: is this row behind a waiting lock?
+function levelLockedRow(table, row) {
+  if (!LEVEL_LOCKS_ON || !row) return false;
+  return levelLocksFor(table).some(({ def, k }) => def.rank(row) >= k);
+}
+// The highest level number the waiting locks leave open (T12), or Infinity.
+function levelLockTop(table) {
+  if (!LEVEL_LOCKS_ON) return Infinity;
+  return levelLocksFor(table).reduce((m, { k }) => Math.min(m, k - 1), Infinity);
 }
 // Speed: row ids are only downloaded for tables that have "Upcoming" ticks
 // (they made every level table 30-100% bigger). Ticking clears the kept
@@ -21819,6 +22022,7 @@ const ADMIN_TABLES = {
   herogearprog: { label: "Heroes Gears", group: "game", icon: "🔧", desc: "Mastery, enhance, mithril", words: "hero gear mastery enhance mithril" },
   heroes: { label: "Heroes", group: "game", icon: "⚔", desc: "Heroes, Gen, shards", words: "hero gen rarity shards widgets stars" },
   herostars: { label: "Heroes Special Skills", group: "game", icon: "✨", desc: "Special skill bonuses", words: "skill" },
+  dashsources: { label: "Dashboard sources", group: "game", icon: "📊", desc: "What the Dashboard adds up, new bonus sources", words: "dashboard source stat buff bonus category count order breakdown total" },
   vip: { label: "VIP", group: "game", icon: "👑", desc: "VIP tiers", words: "vip" },
   alliance: { label: "Alliance", group: "game", icon: "🏰", desc: "Facility and tech", words: "facility alliance tech" },
   centerresearch: { label: "Research", group: "game", icon: "🔬", desc: "Research Center, T11, T12", words: "research t11 t12 helios" },
@@ -21953,6 +22157,7 @@ async function drawAdminSection(key, body) {
   else if (key === "currencies") await renderAdminCurrencies(body);
   else if (key === "skins") await renderAdminSkinsGroup(body);
   else if (key === "herostars") await renderAdminHeroStars(body);
+  else if (key === "dashsources") await renderAdminDashSources(body);
 }
 
 // ---- Menu & pages: rename, order, move between groups, page notes ----
@@ -22066,10 +22271,27 @@ function gameRules() {
   if (GAME_RULES) return GAME_RULES;
   const num = (key, label) => ({ key, label, type: "num" });
   GAME_RULES = [
-    { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens.",
-      cols: [{ key: "label", label: "Shown as", type: "text" }, { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear"] }, { key: "name", label: "Name (pet / expert / id)", type: "text" }, { key: "tab", label: "Page", type: "page" }, { key: "day", label: "State day", type: "num" }],
-      get: () => STATE_UNLOCKS.map((u) => ({ label: u.label, kind: u.kind, name: u.name, tab: (u.tabs || [])[0] || "", day: u.day })),
-      set: (rows) => ruleSetArray(STATE_UNLOCKS, rows.filter((r) => r.name && Number(r.day) >= 0).map((r) => ({ kind: r.kind, name: r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name }))) },
+    { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens. Kind \"level\": pick a page's levels and the first one not open yet; until that day Max and the default My max stop just below it (like Upcoming).",
+      prepare: () => loadLevelLockChoices(),
+      cols: [{ key: "label", label: "Shown as", type: "text" },
+        { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear", "level"], redraw: true, locked: (row) => !!row.key,
+          after: (row) => { if (row.kind === "level" && !LEVEL_LOCK_TARGETS[row.table]) { row.table = Object.keys(LEVEL_LOCK_TARGETS)[0]; row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; } } },
+        { key: "name", label: "Name (pet / expert / id)", type: "text", locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
+        { key: "tab", label: "Page", type: "page", when: (row) => row.kind !== "level" },
+        { key: "table", label: "Levels of (kind level)", type: "select", options: () => Object.entries(LEVEL_LOCK_TARGETS).map(([k, d]) => [k, d.label]), redraw: true,
+          after: (row) => { row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; }, when: (row) => row.kind === "level" },
+        { key: "level", label: "First locked level", type: "select", options: (row) => LEVEL_LOCK_CHOICES[row.table] || null, when: (row) => row.kind === "level" },
+        { key: "day", label: "State day", type: "num" }],
+      get: () => STATE_UNLOCKS.map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day })),
+      set: (rows) => {
+        ruleSetArray(STATE_UNLOCKS, rows.filter((r) => (r.kind === "level" ? !!LEVEL_LOCK_TARGETS[r.table] && r.level != null && r.level !== "" : !!r.name) && Number(r.day) >= 0).map((r) => {
+          if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: Number(r.day), label: r.label || `${d.label} ${r.level}+` }; }
+          // Built-in rows the code reads keep their key (also rows saved before keys existed).
+          const key = r.key || stateUnlockBuiltinKey(r.kind, r.name);
+          return { ...(key ? { key } : {}), kind: r.kind, name: key || r.name, tabs: r.kind === "pets" || r.kind === "experts" ? RULE_TAB_PAGES[r.kind] : (r.tab ? [r.tab] : (RULE_TAB_PAGES[r.kind] || [])), day: Number(r.day), label: r.label || r.name };
+        }));
+        LEVEL_LOCKS_ON = STATE_UNLOCKS.some((u) => u.kind === "level");
+      } },
     { key: "genDays", group: "timeline", label: "Gen start days", help: "The state day each hero generation starts (Gen 1 = day 0).",
       cols: [{ key: "gen", label: "Gen", type: "auto" }, { key: "day", label: "Starts on state day", type: "num" }],
       get: () => STATE_GEN_DAYS.map((d, i) => ({ gen: i + 1, day: d })),
@@ -22168,6 +22390,13 @@ function gameRules() {
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
   return GAME_RULES;
 }
+// Levels to pick from for "level" unlocks (Admin), loaded when that rule opens.
+const LEVEL_LOCK_CHOICES = {};
+async function loadLevelLockChoices() {
+  await Promise.all(Object.entries(LEVEL_LOCK_TARGETS).map(async ([k, d]) => {
+    try { await d.load(); const c = d.choices(); LEVEL_LOCK_CHOICES[k] = c && c.length ? c : null; } catch (e) { LEVEL_LOCK_CHOICES[k] = null; }
+  }));
+}
 function gameRulesSaved() { const v = siteConfig("game_rules", null); return v && typeof v === "object" ? v : {}; }
 // Puts the built-in values back, then the admin's saved ones on top.
 function applyGameRules() {
@@ -22196,11 +22425,19 @@ async function renderAdminRules(body) {
   const rules = gameRules(), saved = gameRulesSaved();
   const pages = visitorPageList ? [{ tab: "", label: "—" }, ...visitorPageList(), { tab: "overview", label: "Dashboard" }] : [];
   const changed = (r) => saved[r.key] != null;
-  const cell = (c, v, ri) => {
+  const cell = (c, v, ri, row) => {
     const a = `data-rcell="${ri}|${c.key}"`;
+    if (row && c.when && !c.when(row)) return `<span class="meta">—</span>`;
+    if (row && c.locked && c.locked(row)) return `<span class="meta" title="Built-in: the site reads this one by its id">${esc(String(v == null ? "" : v))}</span>`;
     if (c.type === "auto") return `<span class="meta">${esc(String(v))}</span>`;
     if (c.type === "check") return `<input type="checkbox" ${a} ${v ? "checked" : ""} />`;
-    if (c.type === "select") { const opts = typeof c.options === "function" ? c.options() : c.options; return `<select ${a}>${opts.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`; }
+    if (c.type === "select") {
+      const opts = typeof c.options === "function" ? c.options(row || {}) : c.options;
+      if (!opts) return `<input ${a} type="text" value="${esc(v == null ? "" : String(v))}" />`;
+      const pair = (o) => (Array.isArray(o) ? o : [o, o]);
+      const has = opts.some((o) => String(pair(o)[0]) === String(v));
+      return `<select ${a}>${!has && v != null && v !== "" ? `<option selected>${esc(String(v))}</option>` : ""}${opts.map((o) => { const [ov, ol] = pair(o); return `<option value="${esc(String(ov))}" ${String(ov) === String(v) ? "selected" : ""}>${esc(String(ol))}</option>`; }).join("")}</select>`;
+    }
     if (c.type === "page") return `<select ${a}>${pages.map((p) => `<option value="${esc(p.tab)}" ${p.tab === v ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select>`;
     return `<input ${a} type="${c.type === "num" ? "number" : c.type === "date" ? "date" : "text"}" ${c.type === "num" ? 'step="any" inputmode="decimal"' : ""} value="${esc(v == null ? "" : String(v))}" />`;
   };
@@ -22222,16 +22459,18 @@ async function renderAdminRules(body) {
         return;
       }
       ed.innerHTML = `<div class="rl-table-wrap"><table class="rl-table"><thead><tr>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
-        ${val.map((row, ri) => `<tr>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rmove="${ri}|-1" ${ri === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rmove="${ri}|1" ${ri === val.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
+        ${val.map((row, ri) => `<tr>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri, row)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rmove="${ri}|-1" ${ri === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rmove="${ri}|1" ${ri === val.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
         </tbody></table></div><button type="button" class="btn ghost small" data-radd style="margin-top:8px;">+ Add row</button>`;
       ed.querySelectorAll("[data-rcell]").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
         const [ri, k] = inp.dataset.rcell.split("|"); const c = r.cols.find((x) => x.key === k);
         val[+ri][k] = inp.type === "checkbox" ? inp.checked : c.type === "num" ? (inp.value === "" ? "" : Number(inp.value)) : inp.value;
+        if (c.after) c.after(val[+ri]);
+        if (c.redraw) drawEditor();
       }));
       ed.querySelectorAll("[data-rmove]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.rmove.split("|").map(Number); const [x] = val.splice(ri, 1); val.splice(ri + d, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); }));
       ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
       ed.querySelector("[data-radd]").addEventListener("click", () => {
-        const row = {}; r.cols.forEach((c) => { row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? ((typeof c.options === "function" ? c.options() : c.options)[0]) : ""; });
+        const row = {}; r.cols.forEach((c) => { const first = c.type === "select" ? ((typeof c.options === "function" ? c.options(row) : c.options) || [""])[0] : ""; row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? (Array.isArray(first) ? first[0] : first) : ""; });
         val.push(row); drawEditor();
       });
     };
@@ -22239,10 +22478,14 @@ async function renderAdminRules(body) {
       <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>
       <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
         <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
-        <div class="rl-ed"></div>
+        <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
         <div class="rl-foot"><button type="button" class="btn ghost small" data-rulereset ${changed(r) ? "" : "disabled"}>Reset to built-in</button><span style="flex:1"></span><button type="button" class="btn small" data-rulesave>Save</button></div>
       </div>`;
-    drawEditor();
+    if (r.prepare) {
+      // Lists to pick from load first (the editor falls back to typing).
+      const ed0 = body.querySelector(".rl-ed");
+      Promise.resolve().then(() => r.prepare()).catch(() => {}).then(() => { if (ADMIN_RULE_OPEN === r.key && body.contains(ed0)) drawEditor(); });
+    } else drawEditor();
     body.querySelector("[data-ruleback]").addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
     const store = async (next, msg) => {
       try {
@@ -22872,6 +23115,119 @@ async function renderAdminCurrencies(body) {
 }
 
 // ---- Contact us settings (site-wide, stored in site_config "contact") ----
+// ---- Dashboard sources: order of the breakdown + simple bonus sources ----
+// A new bonus from the game can be added as a "flat" source: a buff column of
+// its own whose numbers (per troop and stat) count on everyone's Dashboard as
+// they are. Saved in site_config "dashboard_sources" = { extra, order }.
+const DASH_SOURCE_KIND = { "Roster Heroes": "Heroes roster", Skins: "Skin Gallery page", Islands: "Islands page" };
+async function renderAdminDashSources(body) {
+  await ensureSiteConfig();
+  await ensureBuffTable();
+  if (!BUFF_TABLE_ID) { body.innerHTML = `<p class="desc">The buff table isn't there yet.</p>`; return; }
+  const [columns, rows] = await Promise.all([
+    sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category,sort_order&order=sort_order.asc`),
+    sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(id,value,column_id)&order=sort_order.asc`),
+  ]);
+  const cfg = dashSourcesConfig();
+  const catOf = (c) => c.category || c.name;
+  const heroes = specialSkillHeroNames(columns.map(catOf));
+  const newHeroes = heroes.filter((h) => !SPECIAL_HERO_META[h]);
+  let extra = cfg.extra.slice();
+  let order = dashSourceOrder(heroes, extra);
+  let open = null;
+  const TROOPS = ["Infantry", "Lancers", "Marksman"], STATS = [["ATT", "Attack"], ["DEF", "Defense"], ["DMG", "Lethality"], ["HP", "Health"]];
+  const kindOf = (k) => (extra.includes(k) ? "flat bonus (counted as typed)" : heroes.includes(k) ? "special-skill hero (by stars)" : DASH_SOURCE_KIND[k] || "page (its own data)");
+  const save = async (msg) => {
+    const sameOrder = JSON.stringify(order) === JSON.stringify(dashSourceOrderBase(heroes, extra));
+    const value = { ...(extra.length ? { extra } : {}), ...(sameOrder ? {} : { order }) };
+    await saveSiteConfig("dashboard_sources", value);
+    dashDataChanged(); dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+    loadBuffCategories().catch(() => {});
+    toast(msg);
+  };
+  const draw = () => {
+    body.innerHTML = `<p class="desc" style="margin:0 0 10px;">The Dashboard adds these up for each troop and stat (top numbers and the breakdown pop-up). Pages count from their own data; special-skill heroes by their stars. When the game adds a new kind of bonus, add it below as a simple bonus source and type its numbers: it counts on everyone's Dashboard.</p>
+      <div class="rl-card"><div class="rl-h"><b>Sources, in breakdown order</b></div>
+        <div style="margin-top:6px;">${order.map((k, i) => `<div class="ds-row"><span class="ds-n"><b>${esc(displaySourceName(k))}</b>${displaySourceName(k) !== k ? ` <span class="meta">(${esc(k)})</span>` : ""}<small>${esc(kindOf(k))}</small></span>
+          <span class="rl-rowbtns">${extra.includes(k) ? `<button type="button" data-dsedit="${esc(k)}" title="Numbers" aria-label="numbers">&#9998;</button><button type="button" data-dsoff="${esc(k)}" title="Stop counting" aria-label="stop counting">&#10005;</button>` : ""}<button type="button" data-dsmove="${i}|-1" ${i === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-dsmove="${i}|1" ${i === order.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button></span></div>
+          ${open === k ? numbersHtml(k) : ""}`).join("")}</div>
+        <div class="rl-foot"><button type="button" class="btn ghost small" data-dsreset ${cfg.order.length ? "" : "disabled"}>Built-in order</button><span style="flex:1"></span><button type="button" class="btn small" data-dssave>Save order</button></div>
+      </div>
+      <div class="rl-card" style="margin-top:12px;"><div class="rl-h"><b>Add a simple bonus source</b></div>
+        <p class="desc" style="margin:4px 0 8px;">A new bonus with fixed numbers per troop and stat (e.g. a new building or event buff). After adding it, tap &#9998; to type its numbers.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="text" data-dsname placeholder="Name, e.g. Frost Star" maxlength="40" style="flex:1 1 200px; min-width:0;" /><button type="button" class="btn small" data-dsadd>Add</button></div>
+        ${newHeroes.length ? `<p class="meta" style="font-size:11.5px; margin:8px 0 0;">Columns added in Admin count as special-skill heroes (by stars). Tick one to count it as a flat bonus instead: ${newHeroes.map((h) => `<label style="margin-inline-end:8px;"><input type="checkbox" data-dsflat="${esc(h)}" /> ${esc(h)}</label>`).join("")}</p>` : ""}
+      </div>`;
+    body.querySelectorAll("[data-dsmove]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.dsmove.split("|").map(Number); const [x] = order.splice(i, 1); order.splice(i + d, 0, x); draw(); }));
+    body.querySelector("[data-dssave]").addEventListener("click", async () => { try { await save("Order saved"); cfg.order = order.slice(); draw(); } catch (err) { toast(err.message || "Couldn't save", true); } });
+    body.querySelector("[data-dsreset]").addEventListener("click", async () => { order = dashSourceOrderBase(heroes, extra); try { await save("Built-in order"); cfg.order = []; draw(); } catch (err) { toast(err.message || "Couldn't save", true); } });
+    body.querySelectorAll("[data-dsedit]").forEach((b) => b.addEventListener("click", () => { open = open === b.dataset.dsedit ? null : b.dataset.dsedit; draw(); }));
+    body.querySelectorAll("[data-dsoff]").forEach((b) => b.addEventListener("click", async () => {
+      const k = b.dataset.dsoff;
+      if (!confirm(`Stop counting "${k}" on the Dashboard? Its numbers stay (add it again with the same name to count them).`)) return;
+      extra = extra.filter((x) => x !== k); order = order.filter((x) => x !== k);
+      try { await save("Not counted any more"); } catch (err) { toast(err.message || "Couldn't save", true); }
+      renderAdminDashSources(body);
+    }));
+    body.querySelectorAll("[data-dsflat]").forEach((cb) => cb.addEventListener("change", async () => {
+      const k = cb.dataset.dsflat;
+      if (!confirm(`Count "${k}" as a flat bonus (its numbers as typed) instead of a special-skill hero?`)) { cb.checked = false; return; }
+      extra.push(k);
+      try { await save("Counted as a flat bonus"); } catch (err) { toast(err.message || "Couldn't save", true); }
+      renderAdminDashSources(body);
+    }));
+    body.querySelector("[data-dsadd]").addEventListener("click", async () => {
+      const name = body.querySelector("[data-dsname]").value.trim();
+      if (!name) { toast("Enter a name", true); return; }
+      const taken = new Set([...columns.map(catOf), ...DASH_SOURCE_ORDER_DEFAULT, "Pets Level", "Pets Refine", "VIP", "Roster Heroes"]);
+      if (ADMIN_RESERVED_BUFF_CATEGORIES.has(name) || [...taken].some((x) => x.toLowerCase() === name.toLowerCase())) { toast("That name is already used — pick another", true); return; }
+      try {
+        const maxOrder = columns.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
+        await sb(`buff_columns`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name, category: name, sort_order: maxOrder + 1 }) });
+        extra.push(name); order.push(name);
+        await save("Source added — now type its numbers");
+        open = name;
+      } catch (err) { toast(err.message || "Couldn't add", true); return; }
+      renderAdminDashSources(body).then(() => { const b = [...body.querySelectorAll("[data-dsedit]")].find((x) => x.dataset.dsedit === name); if (b && !body.querySelector("[data-dsgrid]")) b.click(); });
+    });
+    const grid = body.querySelector("[data-dsgrid]");
+    if (grid) grid.querySelector("[data-dsgridsave]").addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget, col = columns.find((c) => catOf(c) === grid.dataset.dsgrid);
+      if (!col) { toast("Column not found", true); return; }
+      btn.disabled = true;
+      try {
+        for (const inp of grid.querySelectorAll("[data-dscell]")) {
+          if (inp.value === inp.dataset.orig) continue;
+          const rowName = inp.dataset.dscell, v = inp.value === "" ? null : Number(inp.value);
+          let row = rows.find((r) => r.name.toLowerCase() === rowName.toLowerCase());
+          if (!row) {
+            if (v == null) continue;
+            const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+            [row] = await sb(`buff_rows`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name: rowName, sort_order: maxOrder + 1 }) });
+            row.buff_cells = []; rows.push(row);
+          }
+          const cell = (row.buff_cells || []).find((c) => c.column_id === col.id);
+          if (cell) { await sb(`buff_cells?id=eq.${cell.id}`, { method: "PATCH", body: JSON.stringify({ value: v }) }); cell.value = v; }
+          else if (v != null) { const [made] = await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: row.id, column_id: col.id, value: v }) }); row.buff_cells.push(made || { column_id: col.id, value: v }); }
+          inp.dataset.orig = inp.value;
+        }
+        dashDataChanged(); dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+        toast("Numbers saved");
+      } catch (err) { toast(err.message || "Couldn't save", true); }
+      btn.disabled = false;
+    });
+  };
+  // The numbers of one flat source: troops × stats.
+  function numbersHtml(k) {
+    const col = columns.find((c) => catOf(c) === k);
+    const valOf = (rowName) => { const r = rows.find((x) => x.name.toLowerCase() === rowName.toLowerCase()); const c = r && col && r.buff_cells.find((x) => x.column_id === col.id); return c && c.value != null ? String(c.value) : ""; };
+    return `<div class="ds-grid" data-dsgrid="${esc(k)}">${col ? "" : `<p class="meta">No column named "${esc(k)}" in the buff table.</p>`}
+      <div class="ds-cells"><span></span>${STATS.map(([s]) => `<span class="meta">${esc(s)} %</span>`).join("")}
+      ${TROOPS.map((tr) => `<b>${esc(tr)}</b>${STATS.map(([s]) => { const n = `${tr} ${s}`, v = valOf(n); return `<input type="number" step="any" inputmode="decimal" data-dscell="${esc(n)}" data-orig="${esc(v)}" value="${esc(v)}" aria-label="${esc(n)}" />`; }).join("")}`).join("")}</div>
+      <div class="rl-foot"><span class="meta" style="font-size:11.5px;">Empty = doesn't change that stat.</span><span style="flex:1"></span><button type="button" class="btn small" data-dsgridsave>Save numbers</button></div></div>`;
+  }
+  draw();
+}
 async function renderAdminContact(body) {
   await ensureSiteConfig();
   const cfg = siteConfig("contact", {}) || {};
@@ -23016,7 +23372,27 @@ async function renderAdminRoster(body) {
     onEdit: (id) => {
       const r = rows.find((x) => String(x.id) === id);
       openAdmSheet({ title: `Edit · ${r.key}`, fields: fields(r),
-        onSave: async (v) => { await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) }); EXPERTS_ROSTER_LOADED = false; toast("Saved"); renderAdminRoster(body); },
+        onSave: async (v) => {
+          // A renamed skill: its level rows (Skills tab) are renamed too and
+          // everyone's saved levels move to the new name (like a pet rename).
+          const renames = [1, 2, 3, 4].map((k) => ({ from: r["skill" + k], to: v["skill" + k] })).filter((x) => x.from && x.to && x.from !== x.to);
+          if (renames.length) {
+            const used = new Set([1, 2, 3, 4].map((k) => r["skill" + k]).filter(Boolean));
+            expertSkillRenameList().filter((x) => x.hero === r.key).forEach((x) => { used.add(x.from); used.add(x.to); });
+            const clash = renames.find((x) => used.has(x.to) || renames.filter((y) => y.to === x.to).length > 1);
+            if (clash) throw new Error(`"${clash.to}" was already used by ${r.key}; pick a name it never had (saved levels are moved by name)`);
+            if (!confirm(`Rename ${renames.map((x) => `"${x.from}" → "${x.to}"`).join(", ")}?\n\nThe skill's level rows in Experts → Skills get the new name too, and everyone's saved levels for it move to the new name the next time they open the site.`)) throw new Error("Not saved");
+          }
+          await sb(`experts?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify({ ...v, upcoming: !!v.upcoming }) });
+          if (renames.length) {
+            for (const x of renames) await sb(`expert_skill_nodes?expert=eq.${encodeURIComponent(r.key)}&skill=eq.${encodeURIComponent(x.from)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ skill: x.to }) });
+            const list = Array.isArray(siteConfig("expert_skill_renames", null)) ? siteConfig("expert_skill_renames", null).slice() : [];
+            renames.forEach((x) => list.push({ hero: r.key, from: x.from, to: x.to, at: new Date().toISOString().slice(0, 10) }));
+            await saveSiteConfig("expert_skill_renames", list);
+            EXPERTS_STATE_GLOBAL = null; dropKeptGameData(); if (typeof budgetInvalidate === "function") budgetInvalidate();
+          }
+          EXPERTS_ROSTER_LOADED = false; toast(renames.length ? "Saved · skill renamed" : "Saved"); renderAdminRoster(body);
+        },
         onDelete: async () => { await sb(`experts?id=eq.${r.id}`, { method: "DELETE" }); EXPERTS_ROSTER_LOADED = false; toast("Deleted"); renderAdminPage(); },
         deleteText: `Delete ${r.key} from the roster? Their affinity / skill / research rows stay but won't be used.` });
     },
@@ -25022,7 +25398,8 @@ const ADMIN_RESERVED_BUFF_CATEGORIES = new Set([
 async function renderAdminHeroStars(body) {
   await ensureBuffTable();
   const columns = await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order&order=sort_order.asc`);
-  const heroCols = columns.filter((c) => !ADMIN_RESERVED_BUFF_CATEGORIES.has(c.name));
+  const flatSources = new Set(dashSourcesConfig().extra); // Admin → Dashboard sources (not heroes)
+  const heroCols = columns.filter((c) => !ADMIN_RESERVED_BUFF_CATEGORIES.has(c.name) && !flatSources.has(c.name));
   if (!ADMIN_ACTIVE_HERO_STAR_COL || !heroCols.find((c) => c.id === ADMIN_ACTIVE_HERO_STAR_COL)) {
     ADMIN_ACTIVE_HERO_STAR_COL = (heroCols.find((c) => c.name === "Jero") || heroCols[0])?.id;
   }
@@ -25095,7 +25472,7 @@ async function renderAdminHeroStars(body) {
     errEl.textContent = "";
     const name = f.name.value.trim();
     if (!name) { errEl.textContent = "Enter a hero name"; return; }
-    if (ADMIN_RESERVED_BUFF_CATEGORIES.has(name)) { errEl.textContent = "That name is reserved by the app \u2014 pick another"; return; }
+    if (ADMIN_RESERVED_BUFF_CATEGORIES.has(name) || flatSources.has(name)) { errEl.textContent = "That name is reserved by the app \u2014 pick another"; return; }
     try {
       const maxOrder = columns.reduce((m, c) => Math.max(m, c.sort_order || 0), 0);
       const [newCol] = await sb(`buff_columns`, { method: "POST", body: JSON.stringify({ table_id: BUFF_TABLE_ID, name, category: name, sort_order: maxOrder + 1 }) });
