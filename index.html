@@ -4877,7 +4877,7 @@ async function renderOverview(opts = {}) {
     if (statKey === "DMG" || statKey === "HP") {
       const table = ROSTER_WIDGET_STATS_BY_GEN[gen];
       if (!table) return 0;
-      const level = useMax ? 10 : widget;
+      const level = useMax ? widgetMaxLevel() : widget;
       const row = table[level];
       if (!row) return 0;
       return Number(statKey === "DMG" ? row.leth_pct : row.hp_pct) || 0;
@@ -5426,11 +5426,11 @@ async function renderOverview(opts = {}) {
               ${hero ? `<div data-starctl="${esc(hero.id)}" class="rc-stars">${starsHtml(hero)}</div>
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>${sh.short && sh.reach > sh.step ? `<div class="rc-sh rc-reach">${esc(shReach.replace("{s}", heroStepText(sh.reach)))}</div>` : ""}` : ""}
-              ${sh && sh.hasWidget && sh.wLevel < 10 ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
+              ${sh && sh.hasWidget && sh.wLevel < widgetMaxLevel() ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).map((x) => `<span>${x}</span>`).join("") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
-                ${Array.from({ length: 10 }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${esc(widgetShort)} ${i}</option>`).join("")}
+                ${Array.from({ length: widgetMaxLevel() }, (_, i) => i + 1).map((i) => `<option value="${i}" ${i === widget ? "selected" : ""}>${esc(widgetShort)} ${i}</option>`).join("")}
               </select>
             </div>`;
           }).join("")}
@@ -6080,12 +6080,67 @@ const BACKPACK_PAGE_LINKS = {
   pets_refine: ["Common Marks", "Advanced Marks", "Gems"],
   experts: ["Books of Knowledge", "Sail of Conquest", "Fiery Heart", "Compass", "General Sigils", "Expert Speedups (minutes)", "Speedups (minutes)"],
 };
+// ---- Item registry (Admin → Items, owner 17 Oct 2026) ----
+// site_config "item_registry" = { "<item name>": { icon, short, minutes,
+// pages: [calcKey], chests: [calcKey], count: [calcKey], from: "<old name>" } }.
+// Only what the admin changed is stored; a field left out keeps the code's
+// value (the maps above / below), so with nothing saved the site is unchanged.
+// pages = the planner pages whose box of this name fills from the Backpack,
+// chests = pages showing it read-only as a chest, count = pages counting it
+// as its contents (Pack Resources "Gives"). from = the name the pages use for
+// it (kept when the item is renamed in Admin → Backpack Items).
+const ITEM_PAGE_KEYS = [["chief_gear", "Chief Gear"], ["charm", "Charms"], ["hero_gear", "Heroes Gears"], ["t11_helios", "T11 Helios"], ["t12_research", "T12 Research"], ["research_center", "Research Center"], ["pets", "Pets Level"], ["pets_refine", "Pet Refine"], ["experts", "Experts"]];
+let ITEM_REG_MEMO = null;
+const ITEM_REG_EMPTY = Object.freeze({});
+function itemRegistry() { const v = siteConfig("item_registry", null); return v && typeof v === "object" && !Array.isArray(v) ? v : ITEM_REG_EMPTY; }
+function itemReg(name) { const reg = itemRegistry(); let r = reg[name]; if (!r && reg !== ITEM_REG_EMPTY) { const a = itemPageMaps().alias[name]; if (a) r = reg[a]; } return r && typeof r === "object" ? r : null; }
+function itemRegIcon(name) { const r = itemReg(name); return r && r.icon ? String(r.icon) : ""; }
+function itemShortName(name) { const r = itemReg(name); return (r && r.short) || MATERIAL_NAME_SHORT[name] || name; }
+// Minutes of one speedup item: the admin's number, else the size in its name.
+function itemMinutes(name) {
+  const r = itemReg(name);
+  if (r && Number(r.minutes) > 0) return Number(r.minutes);
+  const m = /speedup (\d+[mh])$/i.exec(String(name));
+  return (m && BP_MINUTES[m[1]]) || 0;
+}
+// The page maps with the admin's changes on top (kept until the registry changes).
+function itemPageMaps() {
+  const reg = itemRegistry();
+  if (ITEM_REG_MEMO && ITEM_REG_MEMO.reg === reg) return ITEM_REG_MEMO;
+  const build = (def, field) => {
+    const out = {};
+    Object.entries(def).forEach(([k, l]) => { out[k] = l.slice(); });
+    Object.entries(reg).forEach(([name, r]) => {
+      if (!r || !Array.isArray(r[field])) return;
+      const box = r.from || name;
+      Object.keys(out).forEach((k) => { out[k] = out[k].filter((x) => x !== box); });
+      r[field].forEach((k) => { (out[k] = out[k] || []).push(box); });
+    });
+    return out;
+  };
+  const alias = {};
+  Object.entries(reg).forEach(([name, r]) => { if (r && r.from && r.from !== name) alias[r.from] = name; });
+  // Speedup items the admin gave minutes, by kind ("" = general, "Research " …).
+  const speed = {};
+  Object.entries(reg).forEach(([name, r]) => {
+    const m = /^(Research |Troop |Construction |Expert )?Speedup \S+$/.exec(name);
+    if (m && r && Number(r.minutes) > 0) (speed[m[1] || ""] = speed[m[1] || ""] || []).push(name);
+  });
+  ITEM_REG_MEMO = { reg, links: build(BACKPACK_PAGE_LINKS, "pages"), chests: build(BACKPACK_PAGE_CHESTS, "chests"), fixed: build(BACKPACK_FIXED_CHESTS, "count"), alias, speed };
+  return ITEM_REG_MEMO;
+}
+// The Backpack name an item is saved under (a renamed item keeps its page links).
+function bpKeyFor(name) { return itemPageMaps().alias[name] || name; }
 // What the Backpack holds of a planner item (null = not a Backpack item).
 function backpackAmountFor(name, bp) {
-  const n = (k) => Number(bp[k]) || 0;
+  const n = (k) => Number(bp[bpKeyFor(k)]) || 0;
   if (name === "XP Component") return n("XP 10") * 10 + n("XP 100") * 100;
   const sp = /^(Research |Troop |Construction |Expert )?Speedups \(minutes\)$/.exec(name);
-  if (sp) return Object.entries(BP_MINUTES).reduce((sum, [z, m]) => sum + n(`${sp[1] || ""}Speedup ${z}`) * m, 0);
+  if (sp) {
+    const kind = sp[1] || "", extra = itemPageMaps().speed[kind] || [];
+    const sizes = Object.keys(BP_MINUTES).map((z) => `${kind}Speedup ${z}`).filter((x) => !extra.includes(x));
+    return [...sizes, ...extra].reduce((sum, x) => sum + n(x) * itemMinutes(x), 0);
+  }
   if (BACKPACK_RES_CHESTS.includes(name)) return n(name) + n(`${name} (protected)`);
   return n(name);
 }
@@ -6106,20 +6161,28 @@ const BACKPACK_PAGE_CHESTS = {
 const BACKPACK_FIXED_CHESTS = { chief_gear: ["Chief Gear Chest"] };
 // The owned amounts a page calculates with: its boxes plus fixed chests.
 function ownedWithChests(calcKey, owned, link) {
-  const chests = BACKPACK_FIXED_CHESTS[calcKey];
+  const chests = itemPageMaps().fixed[calcKey];
   if (!chests || !Object.keys(link.bp).length) return owned;
   const out = { ...owned };
   chests.forEach((ch) => {
     const qty = backpackAmountFor(ch, link.bp);
-    if (qty > 0) Object.entries(PACK_BUNDLES[ch]).forEach(([n, v]) => { out[n] = (Number(out[n]) || 0) + qty * v; });
+    if (qty > 0) Object.entries(chestGives(ch)).forEach(([n, v]) => { out[n] = (Number(out[n]) || 0) + qty * v; });
   });
   return out;
 }
+// What one counted chest opens into (Admin → Pack Resources / Items "Gives" first).
+function chestGives(ch) {
+  const ov = packResourceConfig().gives[ch];
+  if (ov && typeof ov === "object") return ov;
+  if (PACK_BUNDLES[ch]) return PACK_BUNDLES[ch];
+  const c = packCustomResource(ch);
+  return (c && c.contents) || {};
+}
 function backpackShownChests(calcKey, link) {
-  return Object.keys(link.bp).length ? (BACKPACK_PAGE_CHESTS[calcKey] || []).filter((n) => backpackAmountFor(n, link.bp) > 0) : [];
+  return Object.keys(link.bp).length ? (itemPageMaps().chests[calcKey] || []).filter((n) => backpackAmountFor(n, link.bp) > 0) : [];
 }
 function backpackLinks(calcKey, name) {
-  return (BACKPACK_PAGE_LINKS[calcKey] || []).includes(name) || (calcKey === "experts" && / Sigils$/.test(name));
+  return (itemPageMaps().links[calcKey] || []).includes(name) || (calcKey === "experts" && / Sigils$/.test(name));
 }
 async function backpackLinkState() {
   const [bp, manual] = await Promise.all([loadCalcState("backpack"), loadCalcState("backpack_manual")]);
@@ -6130,7 +6193,7 @@ function backpackLinked(calcKey, name, link) {
   return Object.keys(link.bp).length > 0 && backpackLinks(calcKey, name) && !(link.manual[calcKey] || {})[name];
 }
 function applyBackpackLink(calcKey, owned, link, names) {
-  (names || BACKPACK_PAGE_LINKS[calcKey] || []).forEach((name) => {
+  (names || itemPageMaps().links[calcKey] || []).forEach((name) => {
     if (backpackLinked(calcKey, name, link)) owned[name] = backpackAmountFor(name, link.bp);
   });
 }
@@ -7594,7 +7657,7 @@ async function renderPurchasesPage() {
       const nSteps = (n) => (n === 1 ? t("pur_ms_1step") : t("pur_ms_nsteps").replace("{n}", n));
       // Item pictures (the site's own: speedups, expert items, materials).
       const speedIc = (n) => (/speed/i.test(n) ? `icons/speedup-${/constr/i.test(n) ? "construction" : /troop/i.test(n) ? "troop" : /research/i.test(n) ? "research" : /expert/i.test(n) ? "expert" : "general"}.png` : "");
-      const itemIc = (n) => speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : /^XP 10/.test(n) ? MATERIAL_ICONS["xp component"] : "");
+      const itemIc = (n) => itemRegIcon(n) || speedIc(String(n)) || EXPERT_INVENTORY_ICONS[n] || materialIconSrc(n) || (/sigil/i.test(n) ? "icons/item_icon_570000.png" : /book/i.test(n) ? EXPERT_INVENTORY_ICONS["Books of Knowledge"] : /essence/i.test(n) ? MATERIAL_ICONS["essence stone"] : /^XP 10/.test(n) ? MATERIAL_ICONS["xp component"] : "");
       const givesHtml = (g) => Object.entries(g || {}).filter(([n, v]) => n !== "Gems" && v > 0).map(([n, v]) => { const ic = itemIc(n); return `<span title="${esc(materialDisplayName(n))}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n))}</i>`}${esc(shortAmount(v))}</span>`; }).join("");
       const openVer = (vi, keep) => {
       const { r, s0 } = vers[vi], tb = sugTable(r);
@@ -8355,15 +8418,17 @@ async function renderPacksPage() {
   // Gems is a fixed, universal WOS price table (not something that varies
   // per-pack like FC/Speedups), so it's looked up directly rather than
   // scaled from Row 1 - it fills on every row, including Row 1 itself.
-  const AMOUNT_TO_GEMS = { 0.99: 500, 2.99: 1500, 4.99: 2500, 9.99: 5000, 19.99: 10000, 49.99: 25000, 99.99: 50000 };
+  // (Admin → Rules "Gems in a pack by price", MP_GEMS / mpGems.)
 
   // The Amount column itself follows this same fixed sequence in every
   // table. Typing Row 1's Amount as one of these values auto-fills every
   // row below it with the next value in the sequence - e.g. Row 1 = 0.99
   // fills Row 2 with 2.99, Row 3 with 4.99, and so on for however many
   // rows exist (or however far the sequence goes, whichever is shorter).
-  const AMOUNT_SEQUENCE = [0.99, 2.99, 4.99, 9.99, 19.99, 49.99, 99.99];
+  // The prices of the Rules "Gems in a pack by price" table, low to high.
+  const amountSequence = () => Object.keys(MP_GEMS).map(Number).filter((v) => v > 0).sort((a, b) => a - b);
   function applyAmountSequence(panel, t, onlyRowIndex) {
+    const AMOUNT_SEQUENCE = amountSequence();
     const row0Amount = parseNum(panel.querySelector('[data-pt-cell][data-row="0"][data-col="0"]')?.value);
     const startIdx = AMOUNT_SEQUENCE.findIndex((v) => Math.abs(v - row0Amount) < 0.001);
     if (startIdx === -1) return;
@@ -8379,7 +8444,7 @@ async function renderPacksPage() {
   }
 
   // Row 1 (the first row) sets the scale for every OTHER column (not Gems -
-  // see AMOUNT_TO_GEMS above): its ratio to the Amount (column 0) is measured
+  // see mpGems): its ratio to the Amount (column 0) is measured
   // from Row 1's own values. Typing an Amount into any other row then
   // auto-fills that row's remaining (non-Gems) columns using that ratio -
   // e.g. if Row 1 is $4.99 / 60 FC / 35 Speedups, FC is locked at 12.02x the
@@ -8409,6 +8474,7 @@ async function renderPacksPage() {
   }
   function pkItemIcon(name) {
     if (!name) return "";
+    if (itemRegIcon(name)) return itemRegIcon(name);
     if (String(name).toLowerCase() === "gems") return MATERIAL_ICONS.gems;
     return bpIcon({ name }) || materialIconSrc(name) || "";
   }
@@ -8467,9 +8533,7 @@ async function renderPacksPage() {
   // Gems for a price: the fixed game table, or the same 500-per-dollar
   // rule for any other price (4.99 -> 2,500, 9.99 -> 5,000, 49.99 -> 25,000).
   function gemsForPrice(amount) {
-    const key = Math.round(amount * 100) / 100;
-    if (AMOUNT_TO_GEMS[key] != null) return AMOUNT_TO_GEMS[key];
-    return Math.round((amount + 0.01) * 500);
+    return mpGems(amount);
   }
   function applyGemsLookup(panel, t, onlyRowIndex) {
     const lastCi = gemsColOf(t);
@@ -9776,7 +9840,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     while (reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
     // Widgets (mythic heroes): from the roster's widget level to 10.
     const e = (roster || {})[troop];
-    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(10, Number(e.widget) || 0)) : 0;
+    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(widgetMaxLevel(), Number(e.widget) || 0)) : 0;
     const hasWidget = hero.rarity === "Legendary";
     const wNeed = hasWidget ? widgetNeedFrom(wLevel) : 0;
     // Own widgets first, then that Gen's general widgets ("Gen 14 Widgets", any hero of the Gen).
@@ -9788,7 +9852,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     const wOwn = wMine + wFromGen;
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
-    while (hasWidget && wReach < 10 && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
+    while (hasWidget && wReach < widgetMaxLevel() && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
     return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool, notOut };
@@ -9797,7 +9861,9 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
 // Assumed from community tables; widgets cost $4.99 for 5.
 const WIDGET_LEVEL_COST = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const WIDGET_PACK = { count: 5, price: 4.99 };
-function widgetNeedFrom(level) { let n = 0; for (let k = Math.max(0, level) + 1; k <= 10; k++) n += WIDGET_LEVEL_COST[k]; return n; }
+// Top widget level = the Rules "Widgets per widget level" table's length (10 built in).
+function widgetMaxLevel() { return Math.max(1, WIDGET_LEVEL_COST.length - 1); }
+function widgetNeedFrom(level) { let n = 0; for (let k = Math.max(0, level) + 1; k <= widgetMaxLevel(); k++) n += Number(WIDGET_LEVEL_COST[k]) || 0; return n; }
 function widgetCostFor(count) { return count > 0 ? Math.ceil(count / WIDGET_PACK.count) * WIDGET_PACK.price : 0; }
 // Widget prices on the Backpack card and the roster cards come from the same
 // planner as Budgets' "Hero shards & widgets" (its packs, trades, free points
@@ -9843,7 +9909,7 @@ const BP_CHEST_ICONS = {
   "Custom Resource Chest Lv.1": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3": "icons/item_icon_100103.png",
   "Custom Resource Chest Lv.1 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.2 (protected)": "icons/item_icon_100101.png", "Custom Resource Chest Lv.3 (protected)": "icons/item_icon_100103.png", "Chief Gear Chest": "icons/item_icon_510000.png", "Random Chief Gear Chest": "icons/item_icon_510002.png", "Random Charm Chest": "icons/item_icon_510003.png", "Lucky Gear Chest": "icons/item_icon_510001.png", "FC Chest": "icons/fc-chest.png", "FC Crate": "icons/item_icon_720002.png" };
 // Speedup items ("Research Speedup 1h") show their size and add up to a total.
-const bpSpeedupSize = (name) => { const m = /speedup (\d+[mh])$/i.exec(name); return m && BP_MINUTES[m[1]] ? m[1] : null; };
+const bpSpeedupSize = (name) => { const m = /speedup (\d+[mhd])$/i.exec(name); return m && (BP_MINUTES[m[1]] || itemMinutes(name) > 0) ? m[1] : null; };
 function backpackItems() {
   const saved = siteConfig("backpack_items", null);
   const list = saved && Array.isArray(saved.items) ? saved.items.filter((x) => x && x.name) : BACKPACK_DEFAULT_ITEMS;
@@ -9870,6 +9936,7 @@ const BP_EXTRA_ICONS = { "Marks of Valor": "icons/hall-marks.png", "Mystery Poin
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
+  if (itemRegIcon(name)) return itemRegIcon(name);
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
   if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (EXPERT_INVENTORY_ICONS[name]) return EXPERT_INVENTORY_ICONS[name];
@@ -9941,7 +10008,7 @@ async function renderInventory() {
   const tabs = [t("all_label")].concat(groups.filter((g) => !g.speedups && !g.heroShards).map((g) => g.title), groups.some((g) => g.heroShards) ? [shardTab] : [], groups.some((g) => g.speedups) ? [speedupsTab] : []);
   if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
   const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e9 ? `${Math.round(n / 1e8) / 10}B` : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
-  const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
+  const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (bpSpeedupSize(it.name) ? itemMinutes(it.name) : 0), 0);
   const fmtMin = (m) => { if (!m) return "—"; const r = Math.round(m); return `${Math.floor(r / 1440)}d ${Math.floor((r % 1440) / 60)}h ${r % 60}m`; };
   // Total time of each speedup type, in the game's order, as a summary strip.
   const speedSummary = () => {
@@ -11464,6 +11531,9 @@ function packBundleContents(name) {
   // Admin -> Pack Resources can override what a built-in item gives.
   const ov = packResourceConfig().gives[name];
   if (ov && typeof ov === "object") return Object.keys(ov).length ? ov : { [name]: 1 };
+  // Admin → Items: a speedup item with its own minutes (a new size counts too).
+  const sp = /^(Research |Troop |Construction |Expert )?Speedup \S+$/.exec(String(name)), rg = itemReg(name);
+  if (sp && rg && Number(rg.minutes) > 0) return { [`${sp[1] || ""}Speedups (minutes)`]: Number(rg.minutes) };
   if (PACK_BUNDLES[name]) return PACK_BUNDLES[name];
   const c = packCustomResource(name);
   if (c && c.contents && Object.keys(c.contents).length) return c.contents;
@@ -11866,7 +11936,7 @@ function packIsNewGen(l) { return !!l && (l.newGen === true || (typeof l.group =
 // Exclusive Gear Forge 4 weeks (28 days) later.
 function packNewGenOffset(tableId) {
   const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => String(x.id) === String(tableId));
-  if (tb) return /forge/i.test(String(tb.title || "")) ? 28 : 0;
+  if (tb) return /forge/i.test(String(tb.title || "")) ? NG_HERO_DAYS : 0;
   // Title not loaded yet: the gap between the admin's own dates for the New Gen tables.
   const links = PACK_LINKS || {}, own = packParseDay((links[String(tableId)] || {}).resetDay);
   const days = Object.values(links).filter((l) => l && packIsNewGen(l)).map((l) => packParseDay(l.resetDay)).filter(Boolean);
@@ -11954,13 +12024,13 @@ const PACK_MINE_GROUP = "My packs";
 // other items in these packs aren't counted. They're only for the Budgets
 // "Hero shards & widgets" page, built from the person's state's Gen dates.
 const NG_HERO_GROUP = "Heroes packs";
-const NG_HERO_DAYS = 28; // each part runs 4 weeks
+let NG_HERO_DAYS = 28; // each part runs 4 weeks (Admin → Rules "New heroes packs timing")
 const PACK_ONE_TIME_DAYS = 1000; // a "reset" this long is one time only (these packs use 3000)
 const NG_HERO_SHARD_PACK = { price: 4.99, shards: 10 };
 const NG_HERO_WIDGET_LADDER = [[0.99, 5], [2.99, 10], [4.99, 15], [9.99, 25], [19.99, 40]];
 const NG_HERO_LINKS = {}; // table id -> link (read by packLinkForBase)
 const ngGems = (price) => Math.round((price + 0.01) * 500);
-function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday())].join("|"); }
+function ngHeroSig() { return [newGenBaseDay(), newGenGen(), packDayKey(packStartOfToday()), NG_HERO_DAYS].join("|"); }
 // The two New Gen tables on the Packs page with a "Hero Shards" / "Hero Widgets"
 // column are the patterns (owner edits prices and amounts there); each new
 // hero gets its own copy. Without them the built-in numbers above are used.
@@ -15706,7 +15776,7 @@ async function renderBudgetsPage(opts = {}) {
   const matsHtml = (needFull, needStill) => `<div class="bud-mats">` + Object.keys(needFull).filter((n) => needFull[n] > 0).map((n) => {
     const still = needStill[n] || 0, mins = /\(minutes\)$/.test(n);
     const fmt = (v) => (mins ? t12FormatTime(v / 60) : shortAmount(v));
-    const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
+    const icon = itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") }));
     const nm = materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "");
     const label = `${nm}: ${qty(still)} / ${qty(needFull[n])}`;
     return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}${heroItemMark(n)}<b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${still > 0 ? esc(fmt(still)) : "&#10003;"}</b><span class="meta" style="font-size:11px;">/ ${esc(fmt(needFull[n]))}</span></span>`;
@@ -15872,7 +15942,7 @@ async function renderBudgetsPage(opts = {}) {
       ${combinedHtml}
       ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><button type="button" class="btn small ghost bud-mat-btn" data-budmats aria-expanded="${BUDGET_MATS_OPEN}">&#128230; ${esc(t("budgets_materials_total"))} (${Object.keys(grandMats).length}) <span class="bud-mat-arrow">${BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;"}</span></button><div class="bud-mats"${BUDGET_MATS_OPEN ? "" : " hidden"} style="margin-top:8px;">${Object.keys(grandMats).map((n) => {
         // Picture + short amount; the name and exact number show on hover / long press.
-        const icon = /^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") });
+        const icon = itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") }));
         const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
         const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
         return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
@@ -16514,6 +16584,7 @@ function heroItemMark(name) {
   return hm && HERO_IMG_BY_NAME[hm[1]] ? `<img class="bud-face" src="${esc(HERO_IMG_BY_NAME[hm[1]])}" alt="" loading="lazy" />` : "";
 }
 function materialIconSrc(name) {
+  if (itemRegIcon(name)) return itemRegIcon(name);
   const hm = /^(.+) (Shards|Widgets)$/.exec(String(name));
   if (hm && HERO_IMG_BY_NAME[hm[1]]) return hm[2] === "Widgets" ? HERO_ITEM_ICON.widget : HERO_ITEM_ICON.shard(HERO_RARITY_BY_NAME[hm[1]]);
   if (/^Research Speedups/.test(name)) return "icons/speedup-research.png";
@@ -16610,7 +16681,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       if (used.length) {
         return {
           statusColor: "var(--good)",
-          statusText: used.map((tr) => `\u2192 ${summaryOn ? shortAmount(tr.getQty) : Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(MATERIAL_NAME_SHORT[tr.to] || tr.to)}`).join(" \u00b7 "),
+          statusText: used.map((tr) => `\u2192 ${summaryOn ? shortAmount(tr.getQty) : Math.round(tr.getQty).toLocaleString()} ${materialDisplayName(itemShortName(tr.to))}`).join(" \u00b7 "),
         };
       }
       if (hiddenRates.some((r) => r.from === name) && (Number(owned[name]) || 0) > 0) return { statusColor: "var(--muted)", statusText: t("chest_not_needed") };
@@ -16630,6 +16701,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
 
   const iconFor = (name) => {
+    if (itemRegIcon(name)) return itemRegIcon(name);
     const lower = name.toLowerCase();
     const custom = packCustomResource(name);
     const iconKey = Object.keys(MATERIAL_ICONS).find((k) => lower.includes(k));
@@ -16643,7 +16715,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
     const hosted = !!BAR_SUMMARY_HOST[calcKey];
-    const label = (n) => (hosted && { "Refined FC": "RFC", "FC Shard": t("t12x_shard"), "Polishing Solution": "Polish", "Hardened Alloy": "Alloy", "Design Plan": "Design" }[n]) || materialDisplayName(MATERIAL_NAME_SHORT[n] || n).replace(/\s*\((minutes|min)\)$/, "");
+    const label = (n) => (hosted && { "Refined FC": "RFC", "FC Shard": t("t12x_shard"), "Polishing Solution": "Polish", "Hardened Alloy": "Alloy", "Design Plan": "Design" }[n]) || materialDisplayName(itemShortName(n)).replace(/\s*\((minutes|min)\)$/, "");
     // Research pages show research speedups in their time box instead of a square.
     const items = names.filter((n) => needOf(n) > 0 && !(BAR_TIME_KEYS.has(calcKey) && /^Research Speedups/.test(n)));
     const short = items.filter((n) => (effOwned[n] || 0) < needOf(n));
@@ -16662,7 +16734,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // Square tile per item (like the Backpack page); tap to type an amount.
   function editRowHtml(name) {
     const iconSrc = iconFor(name), haveQty = owned[name] || 0;
-    const label = materialDisplayName(MATERIAL_NAME_SHORT[name] || name).replace(/\s*\((minutes|min)\)$/, "");
+    const label = materialDisplayName(itemShortName(name)).replace(/\s*\((minutes|min)\)$/, "");
     const isMin = /\(minutes\)$/.test(name), ro = chests.includes(name);
     const status = groups.map((g) => {
       const needed = Number((g.totals || {})[name]) || 0;
@@ -16683,7 +16755,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
   // Pop-up to type an amount (or go back to the Backpack's).
   function editTileModal(name) {
-    const label = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
+    const label = materialDisplayName(itemShortName(name));
     let modal = document.getElementById("bsEditModal");
     if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
     const canLink = Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name);
@@ -16729,7 +16801,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const iconSrc = iconFor(name);
     const icon = iconSrc ? `<img src="${esc(iconSrc)}" alt="" style="width:22px; height:22px; object-fit:contain; flex-shrink:0; order:0;" loading="lazy" />` : "";
     const haveQty = owned[name] || 0;
-    const shortName = materialDisplayName(MATERIAL_NAME_SHORT[name] || name);
+    const shortName = materialDisplayName(itemShortName(name));
     const groupStatusHtml = groups
       .map((g) => {
         const needed = Number((g.totals || {})[name]) || 0;
@@ -16746,8 +16818,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         <span class="meta mat-name" style="font-size:11px; font-weight:600; letter-spacing:0.3px; order:1;">${esc(shortName)}</span>
       </div>
       ${chests.includes(name)
-        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : (BACKPACK_FIXED_CHESTS[calcKey || "chief_gear"] || []).includes(name)
-          ? `<div style="font-size:11px; margin-top:4px; color:var(--good); line-height:1.35;">${["Hardened Alloy", "Polishing Solution", "Design Plan"].map((n) => `+${(PACK_BUNDLES[name][n] * haveQty).toLocaleString()} ${esc(materialDisplayName(MATERIAL_NAME_SHORT[n] || n))}`).join("<br>")}</div><div class="meta" style="font-size:9.5px; line-height:1.3;">${esc(t("bp_chest_fixed_note"))}</div>`
+        ? `<div class="bp-ro">${Number(haveQty).toLocaleString()}</div><span class="bp-link">&#127890; ${esc(t("bp_link_from"))}</span>${BACKPACK_RES_CHESTS.includes(name) ? groupStatusHtml : (itemPageMaps().fixed[calcKey || "chief_gear"] || []).includes(name)
+          ? `<div style="font-size:11px; margin-top:4px; color:var(--good); line-height:1.35;">${(() => { const g = chestGives(name), first = ["Hardened Alloy", "Polishing Solution", "Design Plan"]; return [...first.filter((n) => n in g), ...Object.keys(g).filter((n) => !first.includes(n))]; })().map((n) => `+${(chestGives(name)[n] * haveQty).toLocaleString()} ${esc(materialDisplayName(itemShortName(n)))}`).join("<br>")}</div><div class="meta" style="font-size:9.5px; line-height:1.3;">${esc(t("bp_chest_fixed_note"))}</div>`
           : `<div style="font-size:11px; margin-top:4px; color:var(--muted);">${esc(t("bp_chest_chance"))}</div>`}`
         : `<input type="text" inputmode="numeric" data-ownedmat="${esc(name)}" value="${haveQty}" style="width:100%; padding:8px 10px; font-size:14px;" />
       <span data-bplinknote="${esc(name)}">${backpackLinkNoteHtml(calcKey || "chief_gear", name, link)}</span>
@@ -17203,15 +17275,17 @@ let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
 const GALLERY_BIG_THUMB = new Set(["City Skin", "Teleport Skin", "Private Chat", "Rally"]);
 async function renderSkinGallery() {
   const seq = RENDER_SEQ;
-  const [ISLAND_CATEGORIES, , allSkinsRaw] = await Promise.all([
+  const [ISLAND_CATEGORIES, , allSkinsRaw, galleryCats] = await Promise.all([
     ensureIslandCategories(),
     ensureGalleryUncounted(),
     sb(`skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
+    // The order set in Admin → Skins (Move left / right).
+    dashCached("gallery_cats", () => sb(`skin_page_categories?page=eq.gallery&select=category,sort_order&order=sort_order.asc`)).catch(() => []),
   ]);
   const skins = allSkinsRaw.filter(
     (s) => !ISLAND_CATEGORIES.has(s.category) && s.category !== "Facility" && s.category !== "Alliance Tech"
   );
-  const CATEGORY_ORDER = ["City Skin", "Frame", "Teleport Skin", "Name Card", "Private Chat", "Chief Profile", "Rally"];
+  const CATEGORY_ORDER = galleryCats && galleryCats.length ? galleryCats.map((c) => c.category) : ["City Skin", "Frame", "Teleport Skin", "Name Card", "Private Chat", "Chief Profile", "Rally"];
   const categories = [...new Set(skins.map((s) => s.category))].sort((a, b) => {
     const ia = CATEGORY_ORDER.indexOf(a);
     const ib = CATEGORY_ORDER.indexOf(b);
@@ -17264,12 +17338,9 @@ async function renderSkinGallery() {
   const globeLevelSelect = document.getElementById("globeLevelSelect");
   globeLevelSelect.value = globeLevelSaved.level;
   const GLOBE_LEVEL_ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI" };
-  // Extra skins auto-owned at specific globe levels, beyond the matching Frost Sphere.
-  const GLOBE_LEVEL_EXTRA_SKINS = {
-    2: ["Fireborn Expeditioner"],
-    3: ["Gate of Time"],
-    5: ["Star Radiance"],
-  };
+  // Extra skins auto-owned at specific globe levels, beyond the matching
+  // Frost Sphere (Admin → Rules "Globe Level extra skins").
+  const GLOBE_LEVEL_EXTRA_SKINS = GLOBE_LEVEL_EXTRA_SKINS_GLOBAL;
   function namesForGlobeLevel(level) {
     if (!level) return [];
     const roman = GLOBE_LEVEL_ROMAN[level];
@@ -18957,6 +19028,16 @@ function petImage(pet) {
   return PET_IMAGE_SLUGS.has(slug) ? `icons/pets/${slug}.webp` : "";
 }
 const PET_IMAGE_SLUGS = new Set(["cave-hyena", "arctic-wolf", "musk-ox", "giant-tapir", "titan-roc", "giant-elk", "snow-leopard", "cave-lion", "snow-ape", "iron-rhino", "sabertooth-tiger", "mammoth", "frost-gorilla", "frostscale-chameleon", "abyssal-shelldragon"]);
+// Admin → Pets "Pet order" (site_config pet_order = [names]); nothing saved =
+// each page's own order. Pets not in the list keep their place after it.
+function petOrderSort(names, inPlace) {
+  const o = siteConfig("pet_order", null);
+  if (!Array.isArray(o) || !o.length) return names;
+  const idx = (n) => { const i = o.indexOf(n); return i === -1 ? Infinity : i; };
+  const out = names.map((n, i) => [n, i]).sort((a, b) => idx(a[0]) - idx(b[0]) || a[1] - b[1]).map((x) => x[0]);
+  if (inPlace) { names.splice(0, names.length, ...out); return names; }
+  return out;
+}
 let PETS_NODES_CACHE = null; // { "Cave Hyena": [ {level_label, food, manual, potion, serum, atk_def_pct}, ... ] }
 let PETS_STATE = null; // { "Cave Hyena": { from, to } } = positions in PETS_NODES_CACHE[pet] (-1 = not started)
 // Pet levels (owner, 16 Oct 2026): every level 1 → max from the table
@@ -19453,7 +19534,7 @@ function expertSpeedupOwnedFrom(inv) {
 // Experts inventory boxes linked to the Backpack: the shared items, the
 // general and expert speedup minutes, and every expert's own sigils.
 function expertsBackpackNames() {
-  return [...EXPERT_INVENTORY_BASE_FIELDS, GENERAL_SPEEDUP_KEY, ...expertKeysAll().map((k) => `${k} Sigils`)];
+  return [...new Set([...EXPERT_INVENTORY_BASE_FIELDS, GENERAL_SPEEDUP_KEY, ...expertKeysAll().map((k) => `${k} Sigils`), ...(itemPageMaps().links.experts || [])])];
 }
 async function expertsInventoryWithBackpack(inv) {
   const link = await backpackLinkState();
@@ -20663,7 +20744,7 @@ async function renderExpertsPage() {
       const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
       return `<button type="button" class="bp-tile bs-tile" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}">
         <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
-        <img src="${EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png")}" alt="" loading="lazy" />
+        <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png"))}" alt="" loading="lazy" />
         <span class="bp-qty">${minutes ? t12FormatTime(v / 60) : shortAmount(v)}</span>
         <span class="bp-name">${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</span>
       </button>`;
@@ -20676,7 +20757,7 @@ async function renderExpertsPage() {
       const f = btn.dataset.expedit;
       const linkable = hasBp && backpackLinks("experts", f);
       plxAmountModal({
-        label: materialDisplayName(f), icon: EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),
+        label: materialDisplayName(f), icon: itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f], value: invSaved[f] || 0, minutes: /\(minutes\)$/.test(f),
         linked: linkable ? backpackLinked("experts", f, bpLink) : null,
         onSave: (val) => {
           invSaved[f] = val;
@@ -20751,6 +20832,7 @@ async function renderRefinePage() {
     if (ib === -1) return -1;
     return ia - ib;
   });
+  petOrderSort(petNames, true);
   if (!PET_REFINE_TYPED_STATE) {
     const saved = await loadCalcState("pet_refine_typed");
     PET_REFINE_TYPED_STATE = saved || {};
@@ -21122,7 +21204,7 @@ async function renderRefinePage() {
 async function renderPetsDataPage() {
   const seq = RENDER_SEQ;
   await ensurePetsData();
-  const petNames = Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p));
+  const petNames = petOrderSort(Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p)));
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
@@ -22032,6 +22114,7 @@ const ADMIN_TABLES = {
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
   packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
   backpackitems: { label: "Backpack Items", group: "packs", icon: "🎒", desc: "Items in the Backpack", words: "backpack item" },
+  items: { label: "Items", group: "packs", icon: "🏷", desc: "Pictures, short names, pages, speedup minutes", words: "item picture icon short name page link speedup minutes chest counts gives sigils" },
   budgets: { label: "Budgets", group: "packs", icon: "💰", desc: "Opens the page", tab: "budgets", words: "budget" },
   backpack: { label: "Backpack", group: "packs", icon: "🎒", desc: "Opens the page", tab: "backpack", words: "inventory" },
 };
@@ -22153,6 +22236,7 @@ async function drawAdminSection(key, body) {
   else if (key === "heroes") await renderAdminHeroes(body);
   else if (key === "packres") await renderAdminPackResources(body);
   else if (key === "backpackitems") await renderAdminBackpackItems(body);
+  else if (key === "items") await renderAdminItems(body);
   else if (key === "contact") await renderAdminContact(body);
   else if (key === "currencies") await renderAdminCurrencies(body);
   else if (key === "skins") await renderAdminSkinsGroup(body);
@@ -22263,6 +22347,7 @@ const GAME_RULE_GROUPS = [
   { key: "trades", label: "Trades & chests" },
   { key: "packs", label: "Packs & lab" },
   { key: "research", label: "Research trees" },
+  { key: "pages", label: "Pages" },
 ];
 const RULE_STATS = ["", "Attack", "Defense", "Lethality", "Health"];
 const ruleSlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -22270,6 +22355,7 @@ let GAME_RULES = null; // built on first use (needs every constant above)
 function gameRules() {
   if (GAME_RULES) return GAME_RULES;
   const num = (key, label) => ({ key, label, type: "num" });
+  const affDef = { ...AFFINITY_ITEM_VALUE }; // code values (before any saved rule)
   GAME_RULES = [
     { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens. Kind \"level\": pick a page's levels and the first one not open yet; until that day Max and the default My max stop just below it (like Upcoming).",
       prepare: () => loadLevelLockChoices(),
@@ -22334,6 +22420,21 @@ function gameRules() {
       cols: [{ key: "name", label: "Item", type: "text" }, { key: "item", label: "Counts as", type: "text" }, { key: "amount", label: "Amount", type: "num" }],
       get: () => Object.entries(PACK_BUNDLES).flatMap(([n, c]) => Object.entries(c).map(([it, a]) => ({ name: n, item: it, amount: a }))),
       set: (rows) => { const o = {}; rows.filter((r) => r.name && r.item).forEach((r) => { (o[r.name] = o[r.name] || {})[r.item] = Number(r.amount) || 0; }); ruleSetObject(PACK_BUNDLES, o); } },
+    { key: "affinity", group: "trades", label: "Affinity per expert gift item", help: "Affinity one gift item is worth on the Experts pages. A changed value is also used for packs and the Experts trade rule.",
+      cols: [{ key: "item", label: "Item", type: "text" }, { key: "value", label: "Affinity", type: "num" }],
+      get: () => Object.entries(AFFINITY_ITEM_VALUE).map(([item, value]) => ({ item, value })),
+      set: (rows) => {
+        const o = Object.fromEntries(rows.filter((r) => r.item && Number(r.value) > 0).map((r) => [String(r.item), Number(r.value)]));
+        ruleSetObject(AFFINITY_ITEM_VALUE, o);
+        // Only changed values reach packs / trades (their own rules stay as saved otherwise).
+        Object.entries(o).forEach(([it, v]) => {
+          if (affDef[it] === v) return;
+          PACK_BUNDLES[it] = { Affinity: v };
+          const ex = TRADE_DEFAULT_RATES.experts || (TRADE_DEFAULT_RATES.experts = []);
+          const tr = ex.find((r) => r.from === it && r.to === "Affinity");
+          if (tr) tr.get = v; else ex.push({ from: it, to: "Affinity", give: 1, get: v, max: 0, hidden: true, silent: true });
+        });
+      } },
     { key: "resChests", group: "trades", label: "Custom Resource Chests", help: "What one chest gives of the resource you pick.",
       cols: [{ key: "chest", label: "Chest", type: "text" }, { key: "Meat", label: "Meat", type: "num" }, { key: "Wood", label: "Wood", type: "num" }, { key: "Coal", label: "Coal", type: "num" }, { key: "Iron", label: "Iron", type: "num" }],
       get: () => Object.entries(BACKPACK_RES_CHEST_GIVES).map(([c, g]) => ({ chest: c, ...g })),
@@ -22385,6 +22486,27 @@ function gameRules() {
         if (!out.length) throw new Error("add at least one tier");
         ruleSetArray(RC_TIERS, out);
       } },
+    { key: "galleryBig", group: "pages", label: "Cosmetics with big pictures", help: "Cosmetics categories whose pictures are shown bigger (less space around them). Also switched in Admin → Skins → ⋯ Category.",
+      cols: [{ key: "category", label: "Category", type: "text" }],
+      get: () => [...GALLERY_BIG_THUMB].map((c) => ({ category: c })),
+      set: (rows) => { GALLERY_BIG_THUMB.clear(); rows.forEach((r) => { if (r.category) GALLERY_BIG_THUMB.add(String(r.category).trim()); }); } },
+    { key: "globeSkins", group: "pages", label: "Globe Level extra skins", help: "Cosmetics that come with a Globe Level (1–6) besides that level's Frost Sphere: picking the level on Cosmetics counts them as owned.",
+      cols: [{ key: "level", label: "Globe level", type: "num" }, { key: "skin", label: "Skin name", type: "text" }],
+      get: () => Object.entries(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flatMap(([lv, l]) => l.map((s) => ({ level: Number(lv), skin: s }))),
+      set: (rows) => {
+        const o = {};
+        rows.filter((r) => Number(r.level) >= 1 && Number(r.level) <= 6 && r.skin).forEach((r) => { (o[Number(r.level)] = o[Number(r.level)] || []).push(String(r.skin).trim()); });
+        ruleSetObject(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL, o);
+        ALL_GLOBE_WIRED_NAMES_GLOBAL.clear();
+        [...Object.values(GLOBE_LEVEL_ROMAN_GLOBAL).map((roman) => `Frost Sphere ${roman}`), ...Object.values(o).flat()].forEach((n) => ALL_GLOBE_WIRED_NAMES_GLOBAL.add(n));
+      } },
+    { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
+      cols: [{ key: "group", label: "Pack group", type: "text" }],
+      get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
+      set: (rows) => ruleSetArray(PACK_DATES_ON_PACKS_PAGE, rows.map((r) => String(r.group || "").trim()).filter(Boolean)) },
+    { key: "ngForge", group: "heroes", label: "New heroes packs timing", type: "fields", help: "Days from the new heroes (Hero Ascension Training) to the Exclusive Gear Forge; also how long each runs when its table on the Packs page has no window.",
+      fields: [num("days", "Forge starts after (days)")],
+      get: () => ({ days: NG_HERO_DAYS }), set: (v) => { NG_HERO_DAYS = Number(v.days) > 0 ? Number(v.days) : 28; } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
@@ -22398,6 +22520,15 @@ async function loadLevelLockChoices() {
   }));
 }
 function gameRulesSaved() { const v = siteConfig("game_rules", null); return v && typeof v === "object" ? v : {}; }
+// Saves one rule from another Admin screen (same as its Save in Rules & Timeline).
+async function saveGameRule(key, value) {
+  const r = gameRules().find((x) => x.key === key);
+  if (!r) return;
+  const next = { ...gameRulesSaved() };
+  if (JSON.stringify(value) === JSON.stringify(r.def)) delete next[key]; else next[key] = value;
+  await saveSiteConfig("game_rules", next);
+  afterGameRulesChange();
+}
 // Puts the built-in values back, then the admin's saved ones on top.
 function applyGameRules() {
   const saved = gameRulesSaved();
@@ -22935,6 +23066,125 @@ async function renderAdminPackResources(body) {
   draw();
 }
 
+// ---- Items (owner, 17 Oct 2026): one place for each item's picture, short
+// name, the planner pages it fills, speedup minutes and what it counts as.
+// Saved in site_config "item_registry" (only changes; see itemPageMaps);
+// "Counts as" is the same setting as Pack Resources "Gives".
+function afterItemRegistryChange() {
+  ITEM_REG_MEMO = null;
+  PACK_TABLES_CACHE = null;
+  afterGameRulesChange();
+}
+async function saveItemRegistry(next) {
+  await saveSiteConfig("item_registry", next);
+  afterItemRegistryChange();
+}
+// Is this name (or the box it stands for) used by a planner page?
+function itemIsLinked(name) {
+  const m = itemPageMaps(), box = (itemReg(name) || {}).from || name;
+  return [m.links, m.chests, m.fixed].some((map) => Object.values(map).some((l) => l.includes(box))) || !!itemReg(name);
+}
+async function itemRegistryRename(oldName, newName) {
+  const reg = { ...itemRegistry() }, old = reg[oldName] || {};
+  const box = old.from || oldName;
+  const icon = old.icon || bpIcon({ name: oldName }) || "";
+  delete reg[oldName];
+  reg[newName] = { ...old, ...(icon ? { icon } : {}), ...(box !== newName ? { from: box } : {}) };
+  if (box === newName) delete reg[newName].from;
+  if (!Object.keys(reg[newName]).length) delete reg[newName];
+  await saveItemRegistry(reg);
+}
+let ADMIN_ITEMS_GROUP = null, ADMIN_ITEMS_Q = "";
+async function renderAdminItems(body) {
+  await ensureSiteConfig();
+  const names = new Map();
+  const add = (n, g) => { if (n && !names.has(n)) names.set(n, g); };
+  const maps = itemPageMaps();
+  backpackItems().forEach((g) => g.items.forEach((it) => add(it.name, g.title)));
+  [maps.links, maps.chests, maps.fixed].forEach((map) => Object.values(map).forEach((l) => l.forEach((n) => { if (!maps.alias[n]) add(n, "Page boxes"); })));
+  PACK_RESOURCE_NAMES.filter((n) => !PACK_RESOURCE_HIDDEN.has(n)).forEach((n) => add(n, "Pack items"));
+  packResourceConfig().custom.forEach((c) => add(c.name, "Pack items"));
+  Object.keys(itemRegistry()).forEach((n) => add(n, "Other"));
+  let seq = 0;
+  const all = [...names].map(([name, group]) => ({ id: "i" + (++seq), name, group }));
+  const groups = [...new Set(all.map((x) => x.group))];
+  if (!groups.includes(ADMIN_ITEMS_GROUP)) ADMIN_ITEMS_GROUP = groups[0] || "";
+  const contentsText = (c) => Object.entries(c || {}).map(([k, v]) => `${k}: ${v}`).join(", ");
+  const parseContents = (txt) => { const out = {}; String(txt || "").split(",").forEach((part) => { const m = part.split(":"); if (m.length < 2) return; const k = m[0].trim(), v = Number(String(m[1]).replace(/,/g, "").trim()); if (k && v > 0) out[k] = v; }); return out; };
+  const boxOf = (name) => (itemReg(name) || {}).from || name;
+  const defIn = (def, k, box) => (def[k] || []).includes(box);
+  const pagesOf = (r) => ITEM_PAGE_KEYS.filter(([k]) => (maps.links[k] || []).includes(boxOf(r.name))).map(([, l]) => l);
+  const isSpeed = (n) => /^(Research |Troop |Construction |Expert )?Speedup \S+$/.test(n);
+  const draw = () => {
+    const q = ADMIN_ITEMS_Q.trim().toLowerCase();
+    const list = q ? all.filter((x) => x.name.toLowerCase().includes(q)) : all.filter((x) => x.group === ADMIN_ITEMS_GROUP);
+    body.innerHTML = `<p class="desc" style="margin:0 0 8px;">Every item the site knows. Change its picture (shown everywhere: Backpack, planner tiles, Budgets, My Purchases, Packs), its short name on the planner tiles, which planner pages fill their box of this name from the Backpack, and the minutes of a speedup (so a new size counts). Nothing changed = the site's own values. To rename an item, use Backpack Items: its page links move with it.</p>
+      <input type="search" data-itemq placeholder="Search items" value="${esc(ADMIN_ITEMS_Q)}" style="width:100%; max-width:320px; margin-bottom:8px;" />
+      ${q ? "" : `<div class="adm-chips"><div class="adm-chips-row">${groups.map((g) => `<button type="button" class="adm-chip${g === ADMIN_ITEMS_GROUP ? " on" : ""}" data-itemgroup="${esc(g)}">${esc(g)} <span class="meta">${all.filter((x) => x.group === g).length}</span></button>`).join("")}</div></div>`}`
+      + admListHtml(list, { title: q ? "Search" : ADMIN_ITEMS_GROUP, attr: "data-itemrow", add: false, img: (r) => bpIcon({ name: r.name }) || materialIconSrc(r.name), name: (r) => r.name,
+        sub: (r) => [itemReg(r.name) ? "changed" : "", pagesOf(r).join(", "), itemMinutes(r.name) && isSpeed(r.name) ? `${itemMinutes(r.name)} min` : ""].filter(Boolean).join(" · ") });
+    const qi = body.querySelector("[data-itemq]");
+    qi.addEventListener("input", () => { ADMIN_ITEMS_Q = qi.value; const pos = qi.selectionStart; draw(); const n = body.querySelector("[data-itemq]"); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* search box */ } });
+    body.querySelectorAll("[data-itemgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_ITEMS_GROUP = b.dataset.itemgroup; keepBoxes(body, draw); }));
+    wireAdmList(body, {
+      onEdit: (id) => {
+        const r = all.find((x) => x.id === id), name = r.name, box = boxOf(name), cur = itemReg(name) || {};
+        const sigils = / Sigils$/.test(box);
+        const cfg = packResourceConfig(), custom = packCustomResource(name);
+        const givesNow = custom ? (custom.contents || {}) : (cfg.gives[name] || PACK_BUNDLES[name] || {});
+        const fields = [
+          { key: "icon", label: "Picture (empty = the site's own)", type: "img", value: cur.icon || "" },
+          { key: "short", label: `Short name on planner tiles (empty = ${MATERIAL_NAME_SHORT[box] || "full name"})`, value: cur.short || "", half: true },
+          ...(isSpeed(name) || cur.minutes ? [{ key: "minutes", label: "Minutes (speedups)", type: "num", value: cur.minutes || itemMinutes(name) || null, half: true }] : []),
+          { key: "pgnote", type: "note", label: box !== name ? `Fills the page box "${box}" on:` : "Fills its box from the Backpack on:" },
+          ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "pg_" + k, label: l + (k === "experts" && sigils ? " (sigils: always)" : ""), type: "check", half: true, value: (maps.links[k] || []).includes(box) })),
+          { key: "chnote", type: "note", label: "Shown read-only as a chest on:", more: true },
+          ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "ch_" + k, label: l, type: "check", half: true, more: true, value: (maps.chests[k] || []).includes(box) })),
+          { key: "ctnote", type: "note", label: "…and counted as its contents (below) on:", more: true },
+          ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "ct_" + k, label: l, type: "check", half: true, more: true, value: (maps.fixed[k] || []).includes(box) })),
+          { key: "gives", label: "Counts as, per 1 (e.g. Design Plan: 1, Polishing Solution: 4) — same as Pack Resources \"Gives\"", value: contentsText(givesNow), more: true },
+        ];
+        openAdmSheet({ title: `Item · ${name}`, fields, noFocus: true, deleteLabel: "Reset to built-in",
+          deleteText: `Put "${name}" back to the site's own picture, short name, pages and minutes? ("Counts as" stays.)`,
+          onSave: async (v) => {
+            const e = { ...cur };
+            const setOr = (k, val, def) => { if (val == null || val === "" || val === def) delete e[k]; else e[k] = val; };
+            setOr("icon", v.icon, "");
+            setOr("short", v.short, MATERIAL_NAME_SHORT[box] || "");
+            if ("minutes" in v) { const defMin = (() => { const m = /speedup (\d+[mh])$/i.exec(name); return (m && BP_MINUTES[m[1]]) || 0; })(); setOr("minutes", Number(v.minutes) > 0 ? Number(v.minutes) : null, defMin); }
+            [["pages", "pg_", BACKPACK_PAGE_LINKS], ["chests", "ch_", BACKPACK_PAGE_CHESTS], ["count", "ct_", BACKPACK_FIXED_CHESTS]].forEach(([field, pre, def]) => {
+              const on = ITEM_PAGE_KEYS.map(([k]) => k).filter((k) => v[pre + k]);
+              const same = ITEM_PAGE_KEYS.every(([k]) => !!v[pre + k] === defIn(def, k, box));
+              if (same) delete e[field]; else e[field] = on;
+            });
+            const reg = { ...itemRegistry() };
+            if (Object.keys(e).length) reg[name] = e; else delete reg[name];
+            // "Counts as" lives in Pack Resources (one setting for packs and pages).
+            const g = parseContents(v.gives);
+            if (JSON.stringify(g) !== JSON.stringify(givesNow)) {
+              const c = { ...(siteConfig("pack_resources", {}) || {}) };
+              if (custom) c.custom = (c.custom || []).map((x) => (String(x.name).toLowerCase() === name.toLowerCase() ? { ...x, contents: g } : x));
+              else {
+                const gv = { ...(c.gives || {}) };
+                if (JSON.stringify(g) === JSON.stringify(PACK_BUNDLES[name] || {})) delete gv[name]; else gv[name] = g;
+                c.gives = gv;
+              }
+              await saveSiteConfig("pack_resources", c);
+            }
+            await saveItemRegistry(reg);
+            toast("Saved"); renderAdminItems(body);
+          },
+          onDelete: async () => {
+            const reg = { ...itemRegistry() };
+            if (cur.from) reg[name] = { from: cur.from }; else delete reg[name];
+            await saveItemRegistry(reg); toast("Back to built-in"); renderAdminItems(body);
+          } });
+      },
+    });
+  };
+  draw();
+}
+
 // ---- Backpack Items: the item list on the Backpack page ----
 // Saved in site_config "backpack_items" as { items: [{ group, name, icon }] };
 // row order = order on the page, groups in order of first appearance.
@@ -22970,11 +23220,17 @@ async function renderAdminBackpackItems(body) {
       if (items.some((x) => x !== r && x.name.toLowerCase() === v.name.toLowerCase())) throw new Error(`Duplicate name: ${v.name}`);
       r.name = v.name; r.icon = v.icon || ""; r.group = v.newgroup || v.group || ADMIN_BP_GROUP;
     };
+    // A renamed item keeps its page links and picture (Admin → Items).
+    const keepLinks = async (oldName, newName) => {
+      if (!oldName || oldName === newName || !itemIsLinked(oldName)) return;
+      if (!confirm(`"${oldName}" fills boxes on planner pages. Keep those links for "${newName}"? (Amounts saved under the old name still start from zero.)`)) return;
+      await itemRegistryRename(oldName, newName);
+    };
     wireAdmList(body, {
       onEdit: (id) => {
         const r = items.find((x) => x.id === id);
         openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
-          onSave: async (v) => { apply(r, v); await save("Saved"); ADMIN_BP_GROUP = r.group; draw(); },
+          onSave: async (v) => { const old = r.name; apply(r, v); await save("Saved"); await keepLinks(old, r.name); ADMIN_BP_GROUP = r.group; draw(); },
           onDelete: async () => { items.splice(items.indexOf(r), 1); await save("Removed"); draw(); },
           deleteText: `Remove "${r.name}" from the Backpack? Amounts people saved are kept.` });
       },
@@ -23678,6 +23934,7 @@ async function renderAdminExpertTable(body, tableKey) {
 }
 
 // ---- Pets editor ----
+let ADMIN_PET_ORDER_OPEN = false;
 async function renderAdminPets(body) {
   const rows = await sb(`${PET_LEVELS_TABLE}?select=pet&order=pet`);
   const pets = Array.from(new Set(rows.map((r) => r.pet)));
@@ -23707,6 +23964,12 @@ async function renderAdminPets(body) {
           <label class="t12x-check" style="margin-top:8px;"><span>Upcoming pet (not in the game yet: marked, and not counted until people tick it)</span><input type="checkbox" id="adminPetUpcoming" ${petIsUpcoming(ADMIN_ACTIVE_PET) ? "checked" : ""} /></label>
         </div></div>` : ""}
     </div>
+    <details class="panel" id="adminPetOrder" style="margin-bottom:16px;"${ADMIN_PET_ORDER_OPEN ? " open" : ""}>
+      <summary style="cursor:pointer; font-weight:600;">Pet order on the Pets pages${Array.isArray(siteConfig("pet_order", null)) && siteConfig("pet_order", null).length ? ` <span class="rl-chg">changed</span>` : ""}</summary>
+      <p class="desc" style="margin:6px 0 8px;">The order of the pets on Pets Level and Pet Refine. Tap "&#8645; Sort", then drag or use &#9650;&#9660;. A new pet goes last until you move it.</p>
+      <div id="adminPetOrderList"></div>
+      <button type="button" class="btn ghost small" id="adminPetOrderReset" style="margin-top:8px;">Reset to the built-in order</button>
+    </details>
     <div class="panel" style="margin-bottom:16px;">
       <h2>Add a level row</h2>
       <form class="inline" id="adminAddPetRowForm">
@@ -23730,6 +23993,28 @@ async function renderAdminPets(body) {
   `;
 
   document.getElementById("adminPetRowsSaveAll").addEventListener("click", () => saveAllPetRows());
+  // Pet order (site_config pet_order): starts from the Pets Level page's order.
+  const orderBox = document.getElementById("adminPetOrder");
+  orderBox.addEventListener("toggle", () => { ADMIN_PET_ORDER_OPEN = orderBox.open; });
+  const drawPetOrder = async () => {
+    try { await ensurePetsData(); } catch (e) { /* fall back to the Admin list */ }
+    const base = PETS_NODES_CACHE ? Object.keys(PETS_NODES_CACHE) : pets;
+    const order = petOrderSort([...base, ...pets.filter((p) => !base.includes(p))]);
+    const items = order.map((p) => ({ id: p, name: p }));
+    const host = document.getElementById("adminPetOrderList");
+    if (!host) return;
+    host.innerHTML = admListHtml(items, { title: "Pets", attr: "data-petord", sortable: true, add: false, img: (r) => petImage(r.name), name: (r) => r.name, sub: (r) => (petIsUpcoming(r.name) ? "upcoming" : "") });
+    wireAdmList(host, { onEdit: (id) => { ADMIN_ACTIVE_PET = id; renderAdminPets(body); } });
+    wireAdminReorder(host, "data-petord", async (ids) => {
+      try { await saveSiteConfig("pet_order", ids); PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; dropKeptGameData(); toast("Order saved"); }
+      catch (err) { toast(err.message || "Couldn't save", true); drawPetOrder(); }
+    });
+  };
+  drawPetOrder();
+  document.getElementById("adminPetOrderReset").addEventListener("click", async () => {
+    try { await saveSiteConfig("pet_order", []); PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; dropKeptGameData(); toast("Built-in order"); renderAdminPets(body); }
+    catch (err) { toast(err.message || "Couldn't save", true); }
+  });
   // Picture / rename / delete the whole pet (its level rows and refine rows).
   const petImgSave = document.getElementById("adminPetImgSave");
   if (petImgSave) petImgSave.addEventListener("click", async () => {
@@ -24600,7 +24885,8 @@ function openAdmSheet(o) {
   if (!m) { m = document.createElement("div"); m.id = "admSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
   const f = (x) => {
     const id = `admf_${x.key}`, v = x.value == null ? "" : x.value;
-    if (x.type === "check") return `<label class="admf admf-chk"><input type="checkbox" id="${id}" ${v ? "checked" : ""} /> ${esc(x.label)}</label>`;
+    if (x.type === "check") return `<label class="admf admf-chk${x.half ? " half" : ""}"><input type="checkbox" id="${id}" ${v ? "checked" : ""} /> ${esc(x.label)}</label>`;
+    if (x.type === "note") return `<div class="admf meta" style="font-size:11.5px;">${esc(x.label)}</div>`;
     if (x.type === "select") return `<label class="admf"><span>${esc(x.label)}</span><select id="${id}">${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}</select></label>`;
     if (x.type === "img") return `<div class="admf admf-img"><span class="admc-pic big" data-admimgprev>${v ? `<img src="${esc(v)}" alt="" />` : `<i>?</i>`}</span><label class="admf" style="flex:1; min-width:0;"><span>${esc(x.label)}</span><span class="admf-line"><input type="text" id="${id}" value="${esc(v)}" placeholder="link, or upload" />${uploadBtnHtml()}</span></label></div>`;
     if (x.type === "area") return `<label class="admf"><span>${esc(x.label)}</span><textarea id="${id}" rows="3">${esc(v)}</textarea></label>`;
@@ -24610,7 +24896,7 @@ function openAdmSheet(o) {
   m.innerHTML = `<div class="modal-box adm-sheet"><div class="adm-sheet-h"><b>${esc(o.title)}</b><button type="button" class="rfa-x" data-admsclose aria-label="close">&#10005;</button></div>
     <div class="admf-grid">${main.map(f).join("")}</div>
     ${more.length ? `<details class="admf-more"><summary>More</summary><div class="admf-grid">${more.map(f).join("")}</div></details>` : ""}
-    <div class="adm-sheet-foot">${o.onDelete ? `<button type="button" class="btn ghost small" data-admsdel style="color:var(--danger);">Delete</button>` : ""}<span style="flex:1"></span><button type="button" class="btn ghost small" data-admsclose>Cancel</button><button type="button" class="btn small" data-admssave>Save</button></div></div>`;
+    <div class="adm-sheet-foot">${o.onDelete ? `<button type="button" class="btn ghost small" data-admsdel style="color:var(--danger);">${esc(o.deleteLabel || "Delete")}</button>` : ""}<span style="flex:1"></span><button type="button" class="btn ghost small" data-admsclose>Cancel</button><button type="button" class="btn small" data-admssave>Save</button></div></div>`;
   m.style.display = "flex";
   const close = () => { m.style.display = "none"; };
   m.onclick = (ev) => { if (ev.target === m || ev.target.closest("[data-admsclose]")) close(); };
@@ -24658,7 +24944,13 @@ async function renderAdminSkinsCategory(body, category) {
     onEdit: (id) => {
       const r = rows.find((x) => String(x.id) === id);
       openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
-        onSave: async (v) => { if (!v.name) throw new Error("Enter a name"); await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) }); dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category); },
+        onSave: async (v) => {
+          if (!v.name) throw new Error("Enter a name");
+          await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) });
+          // A Globe Level extra skin keeps its link under the new name.
+          if (v.name !== r.name && Object.values(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).some((l) => l.includes(r.name))) await saveGameRule("globeSkins", Object.entries(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flatMap(([lv, l]) => l.map((s) => ({ level: Number(lv), skin: s === r.name ? v.name : s }))));
+          dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category);
+        },
         onDelete: async () => { await sb(`skins?id=eq.${r.id}`, { method: "DELETE" }); dashDataChanged("skins"); toast("Deleted"); renderAdminSkinsCategory(body, category); },
         deleteText: `Delete "${r.name}"?` });
     },
@@ -25302,7 +25594,7 @@ async function renderAdminIslands(body) {
 // Skin Gallery / Islands categories (design A): one row of chips + a
 // "⋯ Category" menu (new, rename, move, delete — wired by
 // wireAdminCategoryReorder). cats = [{ id, category, sort_order }] in order.
-function adminCatHeaderHtml(cats, activeCat) {
+function adminCatHeaderHtml(cats, activeCat, opts = {}) {
   const idx = cats.findIndex((c) => c.category === activeCat), act = cats[idx];
   return `<div class="admc-cats"><div class="adm-chips-row">${cats.map((c) => `<button type="button" class="adm-chip${c.category === activeCat ? " on" : ""}" data-catselect="${esc(c.category)}">${esc(c.category)}</button>`).join("")}</div>
     <details class="admc-catmenu"><summary class="btn ghost small">&#8943; Category</summary><div class="admc-catpop">
@@ -25310,6 +25602,7 @@ function adminCatHeaderHtml(cats, activeCat) {
       ${act ? `<button type="button" data-catrename="${act.id}">Rename "${esc(act.category)}"</button>
       <button type="button" data-catmoveup="${act.id}" ${idx === 0 ? "disabled" : ""}>&#8592; Move left</button>
       <button type="button" data-catmovedown="${act.id}" ${idx === cats.length - 1 ? "disabled" : ""}>Move right &#8594;</button>
+      ${opts.big ? `<button type="button" data-catbig="${esc(act.category)}">Big pictures: ${GALLERY_BIG_THUMB.has(act.category) ? "on &#10003;" : "off"}</button>` : ""}
       <button type="button" data-catdelete="${act.id}" style="color:var(--danger);">Delete "${esc(act.category)}"</button>` : ""}
     </div></details></div>`;
 }
@@ -25348,9 +25641,17 @@ function wireAdminCategoryReorder(container, page, cats, onChange) {
     try {
       await sb(`skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(c.category)}`, { method: "PATCH", prefer: "return=minimal", body: JSON.stringify({ category: name }) });
       await sb(`skin_page_categories?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ category: name }) });
+      // The "big pictures" setting follows the new name.
+      if (page === "gallery" && GALLERY_BIG_THUMB.has(c.category)) await saveGameRule("galleryBig", [...GALLERY_BIG_THUMB].map((x) => ({ category: x === c.category ? name : x })));
       dashDataChanged("skins"); toast("Category renamed");
       if (page === "islands") ADMIN_ACTIVE_ISLAND_CAT = name; else ADMIN_ACTIVE_SKIN_CAT = name;
     } catch (err) { toast(err.message || "Couldn't rename", true); }
+    onChange();
+  }));
+  container.querySelectorAll("[data-catbig]").forEach((btn) => btn.addEventListener("click", async () => {
+    const cat = btn.dataset.catbig, set = new Set(GALLERY_BIG_THUMB);
+    if (set.has(cat)) set.delete(cat); else set.add(cat);
+    try { await saveGameRule("galleryBig", [...set].map((x) => ({ category: x }))); toast("Saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
     onChange();
   }));
   container.querySelectorAll("[data-catdelete]").forEach((btn) => btn.addEventListener("click", async () => {
@@ -25372,7 +25673,7 @@ async function renderAdminSkinGallery(body) {
   if (!ADMIN_ACTIVE_SKIN_CAT || !catNames.includes(ADMIN_ACTIVE_SKIN_CAT)) ADMIN_ACTIVE_SKIN_CAT = catNames[0];
 
   body.innerHTML = `
-    ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_SKIN_CAT)}
+    ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_SKIN_CAT, { big: true })}
     <div id="adminSkinGalleryBody"></div>
   `;
 
