@@ -1804,5 +1804,21 @@
 "t:ht_add": "+ 영웅 추가",
 "t:ht_pushgen": "새 Gen마다: 영웅 2명 우선",
 "t:ht_pushgen_sub": "우선 영웅은 \"다음 SvS\" 목표가 됩니다. 새 Gen이 나오면 어떤 2명인지 묻습니다.",
-"t:ht_gen_pick": "Gen {g} 출시: 우선할 영웅 2명을 고르세요"
+"t:ht_gen_pick": "Gen {g} 출시: 우선할 영웅 2명을 고르세요",
+"t:rm_page_desc":"예산 계획을 주별로 보고, 각 목표를 언제 달성하는지 확인하세요.",
+"t:rm_next_week":"다음 주",
+"t:rm_now":"지금",
+"t:rm_n_packs":"패키지 {n}개",
+"t:rm_so_far_v":"지금까지 {v} 지출",
+"t:rm_sum_next":"다음 목표",
+"t:rm_sum_done":"모두 완료",
+"t:rm_goals":"목표",
+"t:rm_tap_goal":"목표를 누르면 해당 주로 이동",
+"t:rm_load_more":"더 많은 주 불러오기",
+"t:rm_gap":"{n}주",
+"t:rm_open":"열기",
+"t:rm_link_next":"다음: {goal} · {date}",
+"t:rm_empty":"아직 목표가 없습니다: 예산에서 목표가 있는 페이지를 선택하세요.",
+"t:rm_back":"예산",
+"nav.p:roadmap":"로드맵"
 }

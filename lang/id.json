@@ -1804,5 +1804,21 @@
 "t:ht_add": "+ Tambah hero",
 "t:ht_pushgen": "Setiap Gen baru: utamakan 2 hero",
 "t:ht_pushgen_sub": "Hero yang diutamakan mendapat \"SvS berikutnya\"; saat Gen baru keluar, Anda akan ditanya 2 hero mana.",
-"t:ht_gen_pick": "Gen {g} sudah keluar: pilih 2 hero untuk diutamakan"
+"t:ht_gen_pick": "Gen {g} sudah keluar: pilih 2 hero untuk diutamakan",
+"t:rm_page_desc":"Rencana Anggaran per minggu, dengan kapan tiap target tercapai.",
+"t:rm_next_week":"Minggu depan",
+"t:rm_now":"sekarang",
+"t:rm_n_packs":"{n} paket",
+"t:rm_so_far_v":"{v} terpakai sejauh ini",
+"t:rm_sum_next":"Target berikutnya",
+"t:rm_sum_done":"Semua selesai",
+"t:rm_goals":"Target",
+"t:rm_tap_goal":"ketuk target untuk melompat ke minggunya",
+"t:rm_load_more":"Muat minggu lainnya",
+"t:rm_gap":"{n} minggu",
+"t:rm_open":"Buka",
+"t:rm_link_next":"berikutnya: {goal} · {date}",
+"t:rm_empty":"Belum ada target: centang halaman dengan target di Anggaran.",
+"t:rm_back":"Anggaran",
+"nav.p:roadmap":"Peta jalan"
 }

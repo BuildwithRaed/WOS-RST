@@ -1805,5 +1805,21 @@
 "t:ht_add": "+ Aggiungi eroe",
 "t:ht_pushgen": "Ogni nuova Gen: dai priorità a 2 eroi",
 "t:ht_pushgen_sub": "Gli eroi prioritari ricevono \"Prossimo SvS\"; quando esce una nuova Gen ti chiederemo quali 2.",
-"t:ht_gen_pick": "È uscita la Gen {g}: scegli i 2 eroi prioritari"
+"t:ht_gen_pick": "È uscita la Gen {g}: scegli i 2 eroi prioritari",
+"t:rm_page_desc":"Il tuo piano Budget settimana per settimana, con quando si raggiunge ogni obiettivo.",
+"t:rm_next_week":"Settimana prossima",
+"t:rm_now":"ora",
+"t:rm_n_packs":"{n} pacchetti",
+"t:rm_so_far_v":"{v} speso finora",
+"t:rm_sum_next":"Prossimo obiettivo",
+"t:rm_sum_done":"Tutto fatto",
+"t:rm_goals":"Obiettivi",
+"t:rm_tap_goal":"tocca un obiettivo per andare alla sua settimana",
+"t:rm_load_more":"Carica altre settimane",
+"t:rm_gap":"{n} settimane",
+"t:rm_open":"Apri",
+"t:rm_link_next":"prossimo: {goal} · {date}",
+"t:rm_empty":"Ancora nessun obiettivo: spunta le pagine con un obiettivo in Budget.",
+"t:rm_back":"Budget",
+"nav.p:roadmap":"Tabella di marcia"
 }

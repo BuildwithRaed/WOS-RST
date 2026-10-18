@@ -1805,5 +1805,21 @@
 "t:ht_add": "+ Ajouter un héros",
 "t:ht_pushgen": "Chaque nouvelle Gen : prioriser 2 héros",
 "t:ht_pushgen_sub": "Les héros prioritaires reçoivent \"Prochain SvS\" ; à chaque nouvelle Gen, on vous demandera lesquels.",
-"t:ht_gen_pick": "La Gen {g} est sortie : choisissez les 2 héros prioritaires"
+"t:ht_gen_pick": "La Gen {g} est sortie : choisissez les 2 héros prioritaires",
+"t:rm_page_desc":"Ton plan Budgets semaine par semaine, avec la date de chaque objectif.",
+"t:rm_next_week":"Semaine prochaine",
+"t:rm_now":"maintenant",
+"t:rm_n_packs":"{n} packs",
+"t:rm_so_far_v":"{v} dépensé jusqu'ici",
+"t:rm_sum_next":"Prochain objectif",
+"t:rm_sum_done":"Tout est fait",
+"t:rm_goals":"Objectifs",
+"t:rm_tap_goal":"touche un objectif pour aller à sa semaine",
+"t:rm_load_more":"Charger plus de semaines",
+"t:rm_gap":"{n} semaines",
+"t:rm_open":"Ouvrir",
+"t:rm_link_next":"suivant : {goal} · {date}",
+"t:rm_empty":"Aucun objectif : coche des pages avec un objectif dans Budgets.",
+"t:rm_back":"Budgets",
+"nav.p:roadmap":"Feuille de route"
 }

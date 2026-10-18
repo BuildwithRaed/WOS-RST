@@ -1805,5 +1805,21 @@
 "t:ht_add": "+ Held hinzufügen",
 "t:ht_pushgen": "Jede neue Gen: 2 Helden zuerst vorziehen",
 "t:ht_pushgen_sub": "Vorgezogene Helden bekommen \"Nächstes SvS\"; wenn eine neue Gen erscheint, wirst du gefragt, welche 2.",
-"t:ht_gen_pick": "Gen {g} ist da: wähle die 2 Helden zum Vorziehen"
+"t:ht_gen_pick": "Gen {g} ist da: wähle die 2 Helden zum Vorziehen",
+"t:rm_page_desc":"Dein Budget-Plan Woche für Woche, mit dem Datum jedes Ziels.",
+"t:rm_next_week":"Nächste Woche",
+"t:rm_now":"jetzt",
+"t:rm_n_packs":"{n} Pakete",
+"t:rm_so_far_v":"{v} bisher ausgegeben",
+"t:rm_sum_next":"Nächstes Ziel",
+"t:rm_sum_done":"Alles erledigt",
+"t:rm_goals":"Ziele",
+"t:rm_tap_goal":"Tippe auf ein Ziel, um zu seiner Woche zu springen",
+"t:rm_load_more":"Weitere Wochen laden",
+"t:rm_gap":"{n} Wochen",
+"t:rm_open":"Öffnen",
+"t:rm_link_next":"nächstes: {goal} · {date}",
+"t:rm_empty":"Noch keine Ziele: Hake in Budgets Seiten mit einem Ziel an.",
+"t:rm_back":"Budgets",
+"nav.p:roadmap":"Fahrplan"
 }

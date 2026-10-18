@@ -1804,5 +1804,21 @@
 "t:ht_add": "+ Adicionar herói",
 "t:ht_pushgen": "Cada nova Gen: priorizar 2 heróis",
 "t:ht_pushgen_sub": "Heróis priorizados recebem \"Próximo SvS\"; quando sair uma nova Gen, perguntaremos quais 2.",
-"t:ht_gen_pick": "Gen {g} saiu: escolha os 2 heróis para priorizar"
+"t:ht_gen_pick": "Gen {g} saiu: escolha os 2 heróis para priorizar",
+"t:rm_page_desc":"Seu plano de Orçamentos semana a semana, com quando cada meta é alcançada.",
+"t:rm_next_week":"Próxima semana",
+"t:rm_now":"agora",
+"t:rm_n_packs":"{n} pacotes",
+"t:rm_so_far_v":"{v} gasto até agora",
+"t:rm_sum_next":"Próxima meta",
+"t:rm_sum_done":"Tudo pronto",
+"t:rm_goals":"Metas",
+"t:rm_tap_goal":"toque numa meta para ir à semana dela",
+"t:rm_load_more":"Carregar mais semanas",
+"t:rm_gap":"{n} semanas",
+"t:rm_open":"Abrir",
+"t:rm_link_next":"próxima: {goal} · {date}",
+"t:rm_empty":"Ainda sem metas: marque páginas com meta em Orçamentos.",
+"t:rm_back":"Orçamentos",
+"nav.p:roadmap":"Roteiro"
 }
