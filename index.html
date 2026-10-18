@@ -23326,13 +23326,9 @@ async function renderAdminPackResources(body) {
   await ensureSiteConfig();
   const cfg = packResourceConfig();
   // A custom item with a built-in item's name (an "FC Crate" added before it
-  // was built in) showed twice; the built-in one is kept, with its contents.
+  // was built in) showed twice; the built-in one (and its contents) is kept.
   const builtinLower = new Set(PACK_RESOURCE_NAMES.map((n) => n.toLowerCase()));
   const custom = cfg.custom.filter((x) => !builtinLower.has(String(x.name).toLowerCase())).map((x) => ({ name: x.name, icon: x.icon || "", contents: x.contents || {} }));
-  cfg.custom.filter((x) => builtinLower.has(String(x.name).toLowerCase())).forEach((x) => {
-    const bn = PACK_RESOURCE_NAMES.find((n) => n.toLowerCase() === String(x.name).toLowerCase());
-    if (!cfg.gives[bn] && x.contents && Object.keys(x.contents).length) cfg.gives[bn] = x.contents;
-  });
   const hidden = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
   let removed = cfg.removed.slice();
   const removedLower = new Set(removed.map((n) => String(n).toLowerCase()));
