@@ -1964,12 +1964,17 @@ input,select,textarea{
         </div>
       </div>
       <div class="topnav-group" data-group="Marketplace">
-        <button class="topnav-group-btn" type="button">Marketplace / Budgeting <span class="caret">&#9660;</span></button>
+        <button class="topnav-group-btn" type="button">Packs <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
+          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
+          <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="Planning">
+        <button class="topnav-group-btn" type="button">Planning <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
           <button data-tab="roadmap" data-ownertab style="display:none;"><span class="ic">&#128506;</span>Roadmap</button>
-          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
-          <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
           <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
         </div>
       </div>
@@ -3114,7 +3119,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 25; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 26; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3215,7 +3220,8 @@ function LP(key, vars, fallback) {
 }
 const NAV_GROUP_LABELS = {
   "Overview": { en: "Overview" },
-  "Marketplace": { en: "Marketplace / Budgeting" },
+  "Marketplace": { en: "Packs" },
+  "Planning": { en: "Planning" },
   "Gears": { en: "Gears" },
   "Experts": { en: "Experts" },
   "Pets": { en: "Pets" },
