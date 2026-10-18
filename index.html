@@ -11597,16 +11597,22 @@ function saveGearCaps() { return saveCalcState("gear_caps", GEAR_CAPS || {}); }
 function charmCapIdx() {
   const i = GEAR_CAPS ? CHARM_LEVELS.indexOf(String(GEAR_CAPS.charm)) : -1;
   if (i >= 0) return i;
-  // Never set → the last level that's out, and not past 16 before Gen 5
-  // heroes are out in the person's state (16.1 – 18 come with Gen 5).
-  const at16 = CHARM_LEVELS.indexOf("16");
-  return charmHighLocked() && at16 >= 0 ? Math.min(at16, charmReleasedIdx()) : charmReleasedIdx();
+  // Never set → the last level that's out, and not past a level that isn't
+  // open yet in the person's state (12 – 16 come with Gen 7, 17 – 18 with Gen 8).
+  const lk = charmLockCapIdx();
+  return lk != null ? Math.min(lk, charmReleasedIdx()) : charmReleasedIdx();
 }
-// Lv 16.1 – 18 wait for Gen 5 in the person's state, unless a charm is already there.
-function charmHighLocked() {
-  if (!stateNotYet("gear", "charm 16.1 18")) return false;
-  const at16 = CHARM_LEVELS.indexOf("16");
-  return !CHARM_PIECES.some((p) => (CHARM_CALC_STATE[p.key] || []).some((slot) => CHARM_LEVELS.indexOf(String(slot.current)) > at16));
+// Charm levels by state age: [timeline key, last open level before it].
+// A lock is skipped once a charm is already past it.
+const CHARM_STATE_LOCKS = [["charm 11.1 16", "11"], ["charm 16.1 18", "16"]];
+function charmLockCapIdx() {
+  for (const [key, lv] of CHARM_STATE_LOCKS) {
+    const at = CHARM_LEVELS.indexOf(lv);
+    if (at < 0 || !stateNotYet("gear", key)) continue;
+    if (CHARM_PIECES.some((p) => (CHARM_CALC_STATE[p.key] || []).some((slot) => CHARM_LEVELS.indexOf(String(slot.current)) > at))) continue;
+    return at;
+  }
+  return null;
 }
 function charmCapLabel() { return CHARM_LEVELS[charmCapIdx()] ?? "0"; }
 function clampCharmLabel(label) {
@@ -12194,14 +12200,15 @@ const STATE_UNLOCKS = [
   // the day and label, not the key, so renaming never switches them off).
   { kind: "page", key: "t11", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
   { kind: "page", key: "t12", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
-  { kind: "lab", key: "crystal lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
+  { kind: "lab", key: "crystal lab", name: "crystal lab", tabs: ["rfclab"], day: 315, label: "Crystal Lab" }, // RFC Lab calculator (owner, 18 Oct 2026; was 150)
   { kind: "gear", key: "legendary chief gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
   { kind: "gear", key: "chief gear t5 t6", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
-  { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
+  { kind: "gear", key: "charm 11.1 16", name: "charm 11.1 16", tabs: ["charmscalc"], day: 440, label: "Chief Charm Lv 12 – 16" }, // with Gen 7 heroes (owner, 18 Oct 2026)
+  { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 520, label: "Chief Charm Lv 17 – 18" }, // with Gen 8 heroes (owner, 18 Oct 2026; was Gen 5, day 270)
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
-    ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
+    ["Iron Rhino", 200], ["Saber-tooth Tiger", 200], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
-  ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 195], ["Baldur", 195], ["Fabian", 195], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
+  ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 200], ["Baldur", 200], ["Fabian", 200], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
 ];
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
