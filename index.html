@@ -7,7 +7,14 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co https://cdn.jsdelivr.net https://cloudflareinsights.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:" />
 <meta http-equiv="X-Content-Type-Options" content="nosniff" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>
+  // Pinch zoom is on (owner, 18 Oct 2026). iPhones / iPads would also zoom
+  // into any box under 16px when it is tapped; maximum-scale stops that, and
+  // iOS still lets people pinch. Android keeps no maximum (it would block
+  // pinch there and Android doesn't zoom into boxes).
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="WOS RST" />
@@ -2104,6 +2111,19 @@ async function loadCalcState(calcName) {
     return row ? row.state : null;
   } catch (err) {
     return null;
+  }
+}
+// A one-time flag ("…_seeded"): like loadCalcState, but a failed read counts
+// as "already done", so a network error can never make the Packs pages
+// create the starter tables / templates a second time.
+async function calcFlagSet(calcName) {
+  await preloadCalcStates();
+  if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) return CALC_STATE_CACHE[calcName] != null;
+  try {
+    const rows = await sb(`calc_state?user_id=eq.${USER_ID}&calc_name=eq.${encodeURIComponent(calcName)}&select=calc_name`);
+    return !Array.isArray(rows) || rows.length > 0;
+  } catch (err) {
+    return true;
   }
 }
 // Saves run in the background, one at a time per state, newest wins: a
@@ -4805,7 +4825,7 @@ function keptRows(table, path) {
 // Every pack table (select=*), shared by Packs, My packs, the Pack calendar
 // and Budgets (each used to read it with its own request).
 function packTablesRows() {
-  return keptRows("pack_tables", `pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc`);
+  return keptRows("pack_tables", `pack_tables?user_id=eq.${IS_OWNER ? USER_ID : PROGRESSION_OWNER_ID}&select=*&order=sort_order.asc,created_at.asc`);
 }
 // Drops every game-data copy kept for the visit (Dashboard data, expert
 // tables): called when Admin is opened and after the category pages edit
@@ -5932,7 +5952,7 @@ async function renderGearLevelingGroup(target) {
       </div>
       ${capSettingsHtml("heroEnhanceCapSelect", t("cap_hero_enhance_label"), [100, 200].map((n) => `<option value="${n}" ${n === enhanceCapNow ? "selected" : ""}>${n}</option>`).join(""))}`,
     amountsId: "heroGearOwned", needId: "heroGearNeed", tabsId: "heroGearTroopDots",
-    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y;"></div>
+    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y pinch-zoom;"></div>
     <div class="t12x-card" style="margin-top:12px;">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("hero_gear_stats_desc"))}</p>
@@ -6503,7 +6523,7 @@ async function renderMyPacksPage() {
   if (TAB !== "mypacks") return;
   let all = (loaded || []).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
   let templates = all.filter((tb) => packLinkFor(tb.id).template);
-  if (IS_OWNER && !templates.length && !(await loadCalcState("pack_templates_seeded"))) {
+  if (IS_OWNER && !templates.length && !(await calcFlagSet("pack_templates_seeded"))) {
     const made = await packSeedTemplates(all);
     saveCalcState("pack_templates_seeded", { at: Date.now(), made });
     if (made) { toast(`${made} ${t("mp_templates_added")}`); return renderMyPacksPage(); }
@@ -8493,7 +8513,7 @@ async function renderPacksPage() {
   const templateTables = tables.filter((tb) => packLinkFor(tb.id).template);
   if (!IS_OWNER) tables = tables.filter((tb) => !packLinkFor(tb.id).template);
   // Admin: the three Pack templates are made once, copied from your own tables.
-  if (IS_OWNER && !templateTables.length && !(await loadCalcState("pack_templates_seeded"))) {
+  if (IS_OWNER && !templateTables.length && !(await calcFlagSet("pack_templates_seeded"))) {
     const made = await packSeedTemplates(tables);
     saveCalcState("pack_templates_seeded", { at: Date.now(), made });
     if (made) { toast(`${made} ${t("mp_templates_added")}`); renderPacksPage(); return; }
@@ -8503,7 +8523,7 @@ async function renderPacksPage() {
   PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
   // First visit: the in-game pack tables are created automatically (once
   // per account, so deleting one later doesn't bring it back).
-  if (IS_OWNER && !(await loadCalcState("pack_presets_seeded"))) {
+  if (IS_OWNER && !(await calcFlagSet("pack_presets_seeded"))) {
     saveCalcState("pack_presets_seeded", { at: Date.now() });
     const added = await packAddPresets(tables);
     if (added) { toast(`${added} ${t("pack_presets_added")}`); renderPacksPage(); return; }
@@ -16390,7 +16410,7 @@ function wireSwipeGesture(el, onSwipe, opts = {}) {
   // gesture silently never registers as a swipe at all. This explicitly
   // tells the browser vertical scrolling is expected and shouldn't hijack
   // the gesture, leaving horizontal swipe detection to this code.
-  el.style.touchAction = "pan-y";
+  el.style.touchAction = "pan-y pinch-zoom";
   // Dragging that starts on a control belongs to the control, not the card:
   // without this, dragging a dropdown open, moving a slider, or selecting
   // text in a field would also flip to the next card.
@@ -16399,6 +16419,8 @@ function wireSwipeGesture(el, onSwipe, opts = {}) {
   el.onpointerdown = (e) => {
     if (opts.stopPropagation) e.stopPropagation();
     if (e.target.closest && e.target.closest(INTERACTIVE)) { dragging = false; startX = null; return; }
+    // A second finger means a pinch (zoom), not a swipe.
+    if (!e.isPrimary) { dragging = false; startX = null; return; }
     // Mouse: left button only, so a right-click menu isn't read as a swipe.
     if (e.pointerType === "mouse" && e.button !== 0) return;
     startX = e.clientX;
@@ -17432,7 +17454,7 @@ function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
     openGalleryDetailModal(list, newIndex, { isIsland, onSave });
   };
   modal.innerHTML = `
-    <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y; padding:18px;">
+    <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y pinch-zoom; padding:18px;">
       ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length}</div>` : ""}
       ${isIsland ? "" : `<div class="thumb" style="width:140px; height:140px; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:16%;">
         ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:28px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
@@ -23303,7 +23325,14 @@ async function showRestorePreview(el, file) {
 async function renderAdminPackResources(body) {
   await ensureSiteConfig();
   const cfg = packResourceConfig();
-  const custom = cfg.custom.map((x) => ({ name: x.name, icon: x.icon || "", contents: x.contents || {} }));
+  // A custom item with a built-in item's name (an "FC Crate" added before it
+  // was built in) showed twice; the built-in one is kept, with its contents.
+  const builtinLower = new Set(PACK_RESOURCE_NAMES.map((n) => n.toLowerCase()));
+  const custom = cfg.custom.filter((x) => !builtinLower.has(String(x.name).toLowerCase())).map((x) => ({ name: x.name, icon: x.icon || "", contents: x.contents || {} }));
+  cfg.custom.filter((x) => builtinLower.has(String(x.name).toLowerCase())).forEach((x) => {
+    const bn = PACK_RESOURCE_NAMES.find((n) => n.toLowerCase() === String(x.name).toLowerCase());
+    if (!cfg.gives[bn] && x.contents && Object.keys(x.contents).length) cfg.gives[bn] = x.contents;
+  });
   const hidden = new Set(cfg.hidden.map((n) => String(n).toLowerCase()));
   let removed = cfg.removed.slice();
   const removedLower = new Set(removed.map((n) => String(n).toLowerCase()));
