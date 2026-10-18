@@ -447,6 +447,38 @@
   .bud-rm-flag.mini{ border-color:rgba(232,162,60,.55); color:var(--amber); background:rgba(232,162,60,.06); }
   .bud-rm-flag span, .bud-rm-ev span{ font-weight:400; white-space:nowrap; }
   .bud-rm-ev{ border-color:rgba(167,139,250,.55); color:#c4b5fd; background:rgba(167,139,250,.07); }
+  .bud-rm-link{ display:flex; align-items:center; gap:10px; }
+  .bud-rm-ic{ font-size:22px; flex:none; }
+  .bud-rm-lt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+  .bud-rm-lt small{ font-size:11.5px; color:var(--muted); }
+  .rm-cols{ display:grid; gap:12px; grid-template-columns:minmax(0, 1fr); }
+  .rm-cols > div{ min-width:0; }
+  @media (min-width:900px){ .rm-cols{ grid-template-columns:minmax(300px, 420px) minmax(0, 1fr); align-items:start; } }
+  .rm-sum{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-bottom:12px; }
+  .rm-sum > div{ border:1px solid var(--line); border-radius:10px; padding:8px; background:var(--panel-2); display:flex; flex-direction:column; min-width:0; }
+  .rm-sum small{ font-size:10.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; }
+  .rm-sum b{ font-size:15px; color:var(--ice); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rm-sum b.good{ color:var(--good); }
+  .rm-goals .bud-rm-t tr[data-rmjump]{ cursor:pointer; }
+  .rm-wh{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .rm-wv{ font-size:15px; white-space:nowrap; }
+  .rm-ws{ display:flex; justify-content:space-between; gap:8px; font-size:11px; margin:2px 0 6px; }
+  .rm-now{ font-size:10px; font-weight:600; padding:1px 7px; border-radius:999px; background:rgba(125,211,252,.18); color:var(--ice); vertical-align:middle; }
+  .rm-w{ scroll-margin-top:70px; }
+  .rm-w .rm-wk{ margin-bottom:8px; }
+  .rm-gap{ text-align:center; color:var(--muted); font-size:11px; margin:6px 0; }
+  .rm-chips{ display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; }
+  .rm-chips button{ flex:none; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:12px; min-height:32px; }
+  .rm-chips button.on{ background:rgba(125,211,252,.18); border-color:var(--ice); color:var(--ice); }
+  .rm-flag{ display:block; }
+  .rm-flag > summary{ list-style:none; display:flex; justify-content:space-between; gap:8px; cursor:pointer; }
+  .rm-flag > summary::-webkit-details-marker{ display:none; }
+  .rm-flag > summary span{ font-weight:400; white-space:nowrap; }
+  .rm-gl{ display:flex; gap:8px; align-items:baseline; font-weight:400; color:var(--text); padding:5px 0 0; font-size:12px; border-top:1px solid var(--line); margin-top:5px; }
+  .rm-gl > span:nth-child(2){ flex:1 1 auto; min-width:0; }
+  .rm-gl > .meta:first-child{ flex:none; width:64px; font-size:11px; }
+  .bud-rm-l.rm-hot{ border-color:var(--ice); box-shadow:inset 3px 0 0 var(--ice); }
+  .rm-more{ width:100%; margin-top:8px; padding:10px; border:1px dashed var(--line); border-radius:10px; background:transparent; color:var(--ice); font-weight:600; }
   .bud-rm-more > summary{ cursor:pointer; font-size:12px; color:var(--ice); padding:6px 0; list-style:none; }
   .bud-g-sum{ margin-top:10px; padding:8px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:12px; }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
@@ -1935,6 +1967,7 @@ input,select,textarea{
         <button class="topnav-group-btn" type="button">Marketplace / Budgeting <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
+          <button data-tab="roadmap" data-ownertab style="display:none;"><span class="ic">&#128506;</span>Roadmap</button>
           <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
           <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
           <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
@@ -3081,7 +3114,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 23; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 25; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3194,6 +3227,7 @@ const NAV_GROUP_LABELS = {
 const NAV_PAGE_LABELS = {
   "overview": { en: "Dashboard" },
   "budgets": { en: "Budgets" },
+  "roadmap": { en: "Roadmap" },
   "backpack": { en: "Backpack" },
   "packs": { en: "Packs" },
   "My packs": { en: "My packs" },
@@ -4154,6 +4188,23 @@ const T = {
   rm_more_packs: { en: "{n} more packs" },
   rm_for: { en: "for" },
   rm_fold: { en: "This week {v} \u00b7 {n} packs" },
+  rm_page_desc: { en: "Your Budgets plan week by week, with when each goal is reached." },
+  rm_next_week: { en: "Next week" },
+  rm_now: { en: "now" },
+  rm_n_packs: { en: "{n} packs" },
+  rm_so_far_v: { en: "{v} spent so far" },
+  rm_sum_next: { en: "Next goal" },
+  rm_sum_done: { en: "All done" },
+  rm_goals: { en: "Goals" },
+  rm_tap_goal: { en: "tap a goal to jump to its week" },
+  rm_load_more: { en: "Load more weeks" },
+  rm_gap: { en: "{n} weeks" },
+  rm_open: { en: "Open" },
+  rm_link_next: { en: "next: {goal} \u00b7 {date}" },
+  rm_empty: { en: "No goals yet: tick pages with a target on Budgets." },
+  rm_back: { en: "Budgets" },
+  rm_goal_cost: { en: "its packs {v}" },
+  rm_goal_nopacks: { en: "Nothing to buy: what you have already covers it." },
   ht_title: { en: "Hero targets" },
   ht_desc: { en: "Each hero's own target. Push = straight to the top of your goals; Later = not planned for now." },
   ht_push: { en: "push" },
@@ -4563,7 +4614,7 @@ async function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "budgets", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
+  "overview", "budgets", "roadmap", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -4823,9 +4874,9 @@ async function render() {
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     // (Admin is for the owner only.)
-    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || TAB === "roadmap" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
-    else if (TAB === "budgets") await renderBudgetsPage();
+    else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "packs") await renderPacksPage();
     else if (TAB === "mypacks") await renderMyPacksPage();
@@ -16254,7 +16305,6 @@ let BUDGET_GOALS = null;
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
 let BUDGET_GOAL_BY_OPEN = null; // goal id whose "By" picker is open
-let BUDGET_RM_OPEN = true;      // Roadmap card's fold (for the visit)
 let BUDGET_RM_WITH = true;      // Roadmap: with priorities / without
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
 // Pages whose levels Budgets works out live (the others come from the pages' saved minis).
@@ -16707,12 +16757,17 @@ const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolde
 let BUDGET_MATS_OPEN = false; // Budgets: "Materials still needed" opened (starts closed, kept for the visit)
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
+// Budgets and the Roadmap page (admin) share one pipeline: the Roadmap is
+// drawn from the same plan, goals and dates as the Budgets page.
+function budTab() { return TAB === "budgets" || (TAB === "roadmap" && IS_OWNER); }
+let ROADMAP_WEEKS = 6;     // Roadmap page: weeks shown (Load more adds 6)
+let ROADMAP_JUMP = null;   // week to scroll to after a redraw
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
   if (!dataReady) {
     plannerWarm();
     content.innerHTML = `
-      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
+      <div class="page-head"><div><h2>${esc(t(TAB === "roadmap" ? "rm_title" : "budgets_title"))}</h2><p class="desc">${esc(t(TAB === "roadmap" ? "rm_page_desc" : "budgets_desc"))}</p></div></div>
       <div class="panel" style="margin-top:12px;"><div class="empty"><div class="big">${esc(t("budgets_loading"))}</div><div class="meta" style="font-size:11.5px; margin-top:6px;">${esc(t("pack_calc_wait"))}</div></div></div>`;
   }
   // Load every calculator's saved plan plus the dashboard's current totals
@@ -16730,7 +16785,7 @@ async function renderBudgetsPage(opts = {}) {
     ensureBudgetSpend(),
     IS_OWNER ? ensureBudgetGoals() : null,
   ]);
-  if (TAB !== "budgets") return;
+  if (!budTab()) return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
   BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
   const included = (k) => BUDGET_SELECTED[k] !== false;
@@ -16748,7 +16803,7 @@ async function renderBudgetsPage(opts = {}) {
     (dataReady && BUDGET_DATA.targetDays === targetDays) ? BUDGET_DATA.pages : Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true }))),
     dashStatsPromise,
   ]);
-  if (TAB !== "budgets") return;
+  if (!budTab()) return;
   const selSig = JSON.stringify(BUDGET_PAGES.map((p) => included(p.key)));
   // The page (settings, pages, materials) is drawn at once; the packs plan is
   // worked out in the background and the prices fill in when it's ready.
@@ -16769,7 +16824,7 @@ async function renderBudgetsPage(opts = {}) {
       // Only if nothing changed meanwhile (date, ticks, data).
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
       BUDGET_DATA.combined = real;
-      if (TAB === "budgets") { const y = window.scrollY; renderBudgetsPage().then(() => window.scrollTo(0, y)); }
+      if (budTab()) { const y = window.scrollY; renderBudgetsPage().then(() => window.scrollTo(0, y)); }
     }).catch((e) => {
       if (e && e.superseded) return; // a newer plan took its place
       if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
@@ -17025,6 +17080,10 @@ async function renderBudgetsPage(opts = {}) {
     </div>`;
 
   // Order of goals (admin): see budgetGoalList / budgetGoalDates.
+  let rmPageHtml = null; // the Roadmap page (drawn instead of Budgets on its tab)
+  const rmShell = (inner) => `<div class="rm-page">
+      <div class="plx-head"><h2>${esc(t("rm_title"))} <span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span></h2><button type="button" class="btn small ghost" data-gototab="budgets">&#8249; ${esc(t("rm_back"))}</button></div>
+      <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("rm_page_desc"))}</p>${inner}</div>`;
   const goalsHtml = (() => {
     if (!IS_OWNER) return "";
     const planKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
@@ -17034,7 +17093,7 @@ async function renderBudgetsPage(opts = {}) {
     const incKeys = planKeys.concat(droppedKeys);
     const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
     const goals = budgetGoalList(pagesRaw, keys);
-    if (!goals.length) return "";
+    if (!goals.length) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="meta">${esc(t("rm_empty"))}</div></div></div>`); return ""; }
     const ck = "__budget:" + incKeys.join(",");
     const basePlan0 = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
     const dropPlans = droppedKeys.map((k) => pagesRaw.find((x) => x.calcKey === k)).filter(Boolean).map((pg) => pickDropped(pg, BUDGET_VIEW === "budget" ? "main" : BUDGET_VIEW)).filter(Boolean);
@@ -17043,7 +17102,7 @@ async function renderBudgetsPage(opts = {}) {
     // Goals with their own dates: the plan bought for those dates (background planner).
     const mainDay = targetDays != null ? targetDays : basePlan ? basePlan.days || 0 : null;
     const dl = !planPending && basePlan && due.some((d) => d != null)
-      ? budgetDeadlineFor(pagesRaw, BUDGET_SELECTED, goals, due, mainDay, incKeys, () => { if (TAB === "budgets") keepPlace(() => renderBudgetsPage()); })
+      ? budgetDeadlineFor(pagesRaw, BUDGET_SELECTED, goals, due, mainDay, incKeys, () => { if (budTab()) keepPlace(() => renderBudgetsPage()); })
       : null;
     const dlPending = !planPending && basePlan && due.some((d) => d != null) && !dl;
     const dlPlan = dl && !dl.failed ? dl.plan : null;
@@ -17180,22 +17239,24 @@ async function renderBudgetsPage(opts = {}) {
 
     // Roadmap: the packs week by week with a flag where each goal is reached,
     // and "Without": the plain plan with the default order and no dates.
-    if (planPending || !plan || !dates) return goalsCard;
+    if (planPending || !plan || !dates) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="big"><span class="bud-pending">${esc(t("budgets_working"))}</span></div></div></div>`); return goalsCard; }
     const plainGoals = budgetGoalList(pagesRaw, keys, true);
     const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.indexOf(goals.find((x) => x.id === g.id))])) : null;
     const plainOf = (g) => { const k = plainGoals.findIndex((x) => x.id === g.id); return plainDates && k >= 0 ? plainDates[k] : null; };
     const withOn = BUDGET_RM_WITH;
     const rmPlan = withOn ? plan : basePlan;
     const rmDates = withOn ? dates : goals.map((g) => plainOf(g));
+    const dow = (packStartOfToday().getDay() + 6) % 7;
     const dCell = (x) => (!x ? "—" : x.done ? "&#10003;" : `${x.approx ? "~" : ""}${esc(shortD(x.day))}`);
     const missed = goals.filter((g, i) => due[i] != null && plainOf(g) && !plainOf(g).done && plainOf(g).day > due[i]).length;
     const tableHtml = `<table class="bud-rm-t"><thead><tr><th>${esc(t("rm_goal"))}</th><th>${esc(t("rm_with"))}</th><th>${esc(t("rm_without"))}</th><th>${esc(t("rm_deadline"))}</th></tr></thead><tbody>
       ${goals.map((g, i) => { const w = dates[i], o = plainOf(g), dd = due[i]; const ok = w && (w.done || dd == null || w.day <= dd); const oLate = o && !o.done && dd != null && o.day > dd;
-        return `<tr><td>${g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(g))}</td><td class="${w && !w.done && o && !o.done && w.day < o.day ? "good" : ""}">${dCell(w)}</td><td class="${oLate ? "warn" : ""}">${dCell(o)}</td><td class="${ok ? "good" : "warn"}">${dd != null ? `${ok ? "&#10003;" : "&#9888;"} ${esc(goalByName(by[g.id]) || fmtDate(dd))}` : ok ? "&#10003;" : "&#9888;"}</td></tr>`; }).join("")}
+        const jw = rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null;
+        return `<tr${jw != null ? ` data-rmjump="${jw}"` : ""}><td>${g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(g))}</td><td class="${w && !w.done && o && !o.done && w.day < o.day ? "good" : ""}">${dCell(w)}</td><td class="${oLate ? "warn" : ""}">${dCell(o)}</td><td class="${ok ? "good" : "warn"}">${dd != null ? `${ok ? "&#10003;" : "&#9888;"} ${esc(goalByName(by[g.id]) || fmtDate(dd))}` : ok ? "&#10003;" : "&#9888;"}</td></tr>`; }).join("")}
       <tr class="tot"><td>${esc(t("rm_total"))}</td><td>${esc(money(total))}</td><td>${esc(money(baseTotal))}</td><td></td></tr></tbody></table>
       <div class="meta bud-rm-note">${esc(t(Math.abs(total - baseTotal) < 0.5 ? "rm_same" : "rm_diff"))}${missed ? ` ${esc(t("rm_missed").replace("{n}", missed))}` : ""}</div>`;
     // Weeks (Monday to Sunday) with the packs bought in them.
-    const sched = packPlanSchedule(rmPlan.rows), t0 = packStartOfToday(), dow = (t0.getDay() + 6) % 7;
+    const sched = packPlanSchedule(rmPlan.rows), t0 = packStartOfToday();
     const weeks = new Map();
     rmPlan.rows.forEach((r, i) => sched[i].forEach((sl) => {
       const w = Math.floor((sl.off + dow) / 7), wk = weeks.get(w) || { lines: [], money: 0 };
@@ -17211,45 +17272,110 @@ async function renderBudgetsPage(opts = {}) {
     const segs = budgetGoalSegs(goals, pagesRaw);
     const forGoal = (x) => { const items = Object.keys(x.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
     const flagsIn = (w) => goals.map((g, i) => ({ g, d: rmDates[i] })).filter((x) => x.d && !x.d.done && Math.floor((x.d.day + dow) / 7) === w);
+    // Each week's pack goes to the first goal (in order) that needs what it
+    // gives and isn't reached before that week; a goal's own packs and price
+    // are those, up to the week it's reached.
+    const gWeek = (i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null);
+    // A goal's items plus what trades into them (Mystery Points → widgets, General shards → a hero's shards …).
+    const allTrades = BUDGET_PAGES.flatMap((pg) => { try { return tradeRatesFor(pg.key); } catch (e) { return []; } }).concat(rmPlan.trades || []);
+    const gItems = new Map();
+    const itemsOf = (g) => {
+      if (!gItems.has(g.id)) {
+        const set = new Set(Object.keys(segs.get(g.id) || {}).filter((n) => segs.get(g.id)[n] > 0));
+        for (let grew = true; grew;) { grew = false; allTrades.forEach((r) => { if (set.has(r.to) && !set.has(r.from)) { set.add(r.from); grew = true; } }); }
+        gItems.set(g.id, set);
+      }
+      return gItems.get(g.id);
+    };
+    const forGoalAt = (x, w) => { const items = Object.keys(x.gives || {}).filter((n) => n !== "Gems"); return goals.find((g, i) => gWeek(i) != null && gWeek(i) >= w && items.some((n) => itemsOf(g).has(n))) || null; };
+    const goalPacks = new Map();
+    [...weeks.keys()].sort((a, b) => a - b).forEach((w) => weeks.get(w).lines.forEach((x) => {
+      const g = forGoalAt(x, w);
+      x.goal = g;
+      if (!g) return;
+      const gp = goalPacks.get(g.id) || { m: 0, lines: [] };
+      gp.m += x.m; gp.lines.push({ w, x });
+      goalPacks.set(g.id, gp);
+    }));
     const evKeys = [...new Set(Object.values(by).filter((b) => b === "svs" || b === "koi"))];
     const evIn = (w) => evKeys.flatMap((k) => { const ev = GAME_EVENTS.find((e) => e.key === k); const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000); return ev ? gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).map((d) => ({ ev, d })) : []; });
     const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" });
     const allW = [...new Set([...weeks.keys(), ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null)).filter((x) => x != null)])].sort((a, b) => a - b);
     let run = 0;
-    const weekHtml = (w) => {
-      const wk = weeks.get(w) || { lines: [], money: 0 }; run += wk.money;
-      const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000);
-      const head = `${w === 0 ? esc(t("rm_this_week")) + " · " : ""}${esc(dayTxt(ws))} – ${esc(dayTxt(we))}`;
-      const lineHtml = (x) => {
-        const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
-        const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
-        const fg = forGoal(x);
-        return `<details class="bud-rm-l"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
-          <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
-      };
-      const sorted = wk.lines.slice().sort((p, q) => q.m - p.m);
-      const lines = sorted.slice(0, 5).map(lineHtml).join("") + (sorted.length > 5 ? `<details class="bud-rm-more"><summary>${esc(t("rm_more_packs").replace("{n}", sorted.length - 5))} &#9656;</summary>${sorted.slice(5).map(lineHtml).join("")}</details>` : "");
-      const ev = evIn(w).map((x) => `<div class="bud-rm-ev">&#9876; ${esc(x.ev.name)} <span>${esc(dayTxt(x.d))} – ${esc(dayTxt(new Date(x.d.getTime() + (x.ev.days - 1) * 86400000)))}</span></div>`).join("");
-      const flags = flagsIn(w).map((x) => `<div class="bud-rm-flag${x.g.mini ? " mini" : ""}">${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(money(x.d.spent))}</span></div>`).join("");
-      return `<div class="bud-rm-w"><div class="bud-rm-wh"><b>${head}</b><span class="meta">${esc(money(run))}</span></div>${lines}${ev}${flags}</div>`;
+    const lineHtml = (x) => {
+      const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
+      const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
+      const fg = x.goal !== undefined ? x.goal : forGoal(x);
+      return `<details class="bud-rm-l${x.hot ? " rm-hot" : ""}"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
+        <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
     };
-    const first = allW.slice(0, 3).map(weekHtml).join("");
-    const rest = allW.slice(3);
-    const restHtml = rest.length ? `<details class="bud-rm-more"><summary>${esc(t("rm_more").replace("{n}", rest.length))} &#9656;</summary>${rest.map(weekHtml).join("")}</details>` : "";
-    const rmCard = `<div class="t12x-card bud-rm" style="margin-top:12px;">
-      <button type="button" class="bud-g-head" data-rmfold aria-expanded="${BUDGET_RM_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("rm_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_RM_OPEN ? "&#9662;" : "&#9656;"}</span></button>
-      ${BUDGET_RM_OPEN ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${withOn ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${withOn ? "" : "on"}">${esc(t("rm_without"))}</button></div>
-        ${tableHtml}
-        <div class="bud-rm-k"><b>${esc(t("rm_by_week"))}</b><span class="meta">${esc(t("rm_so_far"))}</span></div>
-        ${first}${restHtml}` : `<div class="meta bud-g-fold">${esc(t("rm_fold").replace("{v}", money(weeks.get(0) ? weeks.get(0).money : 0)).replace("{n}", weeks.get(0) ? weeks.get(0).lines.length : 0))}</div>`}
-    </div>`;
-    return goalsCard + rmCard;
+    const wkStart = (w) => new Date(t0.getTime() + (w * 7 - dow) * 86400000);
+    // One week: a card with its packs (top 5, the rest folded), then the
+    // SvS / KOI bars and the goals reached that week.
+    const weekHtml = (w, prev) => {
+      const wk = weeks.get(w) || { lines: [], money: 0 }; run += wk.money;
+      const ws = wkStart(w), we = new Date(ws.getTime() + 6 * 86400000), range = `${dayTxt(ws)} – ${dayTxt(we)}`;
+      const gap = prev != null && w - prev > 1 ? `<div class="rm-gap">· · · ${esc(t("rm_gap").replace("{n}", w - prev - 1))} · · ·</div>` : "";
+      // Packs for a goal reached this week come first.
+      const hotIds = new Set(flagsIn(w).map((x) => x.g.id));
+      wk.lines.forEach((x) => { x.hot = !!(x.goal && hotIds.has(x.goal.id)); });
+      const sorted = wk.lines.slice().sort((p, q) => (q.hot - p.hot) || (q.m - p.m));
+      const lines = sorted.slice(0, 5).map(lineHtml).join("") + (sorted.length > 5 ? `<details class="bud-rm-more"><summary>${esc(t("rm_more_packs").replace("{n}", sorted.length - 5))} &#9656;</summary>${sorted.slice(5).map(lineHtml).join("")}</details>` : "");
+      const title = w === 0 ? `${esc(t("rm_this_week"))} <span class="rm-now">${esc(t("rm_now"))}</span>` : w === 1 ? esc(t("rm_next_week")) : esc(range);
+      const card = sorted.length ? `<div class="t12x-card rm-wk">
+          <div class="rm-wh"><b>${title}</b><b class="rm-wv">${esc(money(wk.money))}</b></div>
+          <div class="rm-ws meta"><span>${w <= 1 ? `${esc(range)} · ` : ""}${esc(t("rm_n_packs").replace("{n}", sorted.length))}</span><span>${esc(t("rm_so_far_v").replace("{v}", money(run)))}</span></div>
+          ${lines}</div>` : "";
+      const ev = evIn(w).map((x) => `<div class="bud-rm-ev">&#9876; ${esc(x.ev.name)} <span>${esc(dayTxt(x.d))} – ${esc(dayTxt(new Date(x.d.getTime() + (x.ev.days - 1) * 86400000)))}</span></div>`).join("");
+      // A goal's flag: its own packs' price; tap to see them.
+      const flags = flagsIn(w).map((x) => {
+        const gp = goalPacks.get(x.g.id);
+        const list = gp ? gp.lines.map(({ w: lw, x: lx }) => `<div class="rm-gl"><span class="meta">${esc(lw === 0 ? t("rm_this_week") : dayTxt(wkStart(lw)))}</span><span>${esc(lx.nm)}${lx.n > 1 ? ` <span class="meta">×${lx.n}</span>` : ""}</span><b>${esc(money(lx.m))}</b></div>`).join("") : `<div class="meta rm-gl">${esc(t("rm_goal_nopacks"))}</div>`;
+        return `<details class="bud-rm-flag rm-flag${x.g.mini ? " mini" : ""}"><summary>${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(t("rm_goal_cost").replace("{v}", money(gp ? gp.m : 0)))} &#9656;</span></summary>${list}</details>`;
+      }).join("");
+      return `${gap}<div class="rm-w" id="rmw-${w}">${card}${ev}${flags}</div>`;
+    };
+    const wk0 = weeks.get(0);
+    const nextI = goals.findIndex((g, i) => rmDates[i] && !rmDates[i].done);
+    // Budgets keeps one line for the Roadmap; the page itself has the rest.
+    const rmLink = `<div class="t12x-card bud-rm-link" style="margin-top:12px;"><span class="bud-rm-ic">&#128506;</span>
+      <div class="bud-rm-lt"><b>${esc(t("rm_title"))}</b><small>${esc(t("rm_fold").replace("{v}", money(wk0 ? wk0.money : 0)).replace("{n}", wk0 ? wk0.lines.length : 0))}</small>${nextI >= 0 ? `<small>${esc(t("rm_link_next").replace("{goal}", nameOf(goals[nextI])).replace("{date}", shortD(rmDates[nextI].day)))}</small>` : ""}</div>
+      <button type="button" class="btn small" data-gototab="roadmap">${esc(t("rm_open"))} &#8250;</button></div>`;
+    if (TAB === "roadmap") {
+      const lastDay = Math.max(rmPlan.days || 0, ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? rmDates[i].day : 0)));
+      const sumHtml2 = `<div class="rm-sum">
+        <div><small>${esc(t("rm_this_week"))}</small><b>${esc(money(wk0 ? wk0.money : 0))}</b><small>${esc(t("rm_n_packs").replace("{n}", wk0 ? wk0.lines.length : 0))}</small></div>
+        <div><small>${esc(t("rm_sum_next"))}</small><b>${nextI >= 0 ? esc(shortD(rmDates[nextI].day)) : "&#10003;"}</b><small>${nextI >= 0 ? esc(nameOf(goals[nextI])) : ""}</small></div>
+        <div><small>${esc(t("rm_sum_done"))}</small><b class="good">${esc(fmtDate(lastDay))}</b><small>${esc(money(withOn ? total : baseTotal))}</small></div></div>`;
+      const goalsCardRm = `<div class="t12x-card rm-goals"><div class="rm-wh"><b>${esc(t("rm_goals"))}</b><span class="meta" style="font-size:11px;">${esc(t("rm_tap_goal"))}</span></div>
+        <div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${withOn ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${withOn ? "" : "on"}">${esc(t("rm_without"))}</button></div>
+        ${tableHtml}</div>`;
+      // Week chips: the first four weeks, then one per month.
+      const chips = [];
+      let lastM = null;
+      allW.forEach((w, k) => {
+        const ws = wkStart(w), m = `${ws.getFullYear()}-${ws.getMonth()}`;
+        if (k < 4) { chips.push({ w, label: w === 0 ? t("rm_this_week") : dayTxt(ws) }); lastM = m; return; }
+        if (m === lastM) return;
+        lastM = m;
+        chips.push({ w, label: ws.toLocaleDateString(LANG === "en" ? undefined : LANG, ws.getFullYear() !== t0.getFullYear() ? { month: "short", year: "numeric" } : { month: "short" }) });
+      });
+      const shown = allW.slice(0, ROADMAP_WEEKS);
+      const weeksHtml = shown.map((w, k) => weekHtml(w, k ? shown[k - 1] : null)).join("");
+      const more = allW.length > shown.length ? `<button type="button" class="rm-more" data-rmmore>${esc(t("rm_load_more"))} &#9662;</button>` : "";
+      rmPageHtml = rmShell(`<div class="rm-cols">
+        <div class="rm-left">${sumHtml2}${goalsCardRm}</div>
+        <div class="rm-right"><div class="rm-chips">${chips.map((c, k) => `<button type="button" data-rmjump="${c.w}" class="${k === 0 ? "on" : ""}">${esc(c.label)}</button>`).join("")}</div>${weeksHtml}${more}</div>
+      </div>`);
+    }
+    return goalsCard + rmLink;
   })();
 
   // Budgets B: settings + pages on the side, the total and the shopping
   // list (packs to buy) in the main column, each page's details below it.
   // While the plan is worked out the page keeps its old height (the short
   // "Working out…" would pull the scroll up); open folds stay open.
+  if (TAB === "roadmap") { drawRoadmapPage(rmPageHtml); return; }
   if (planPending) holdPageHeight(true);
   keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap">
@@ -17357,14 +17483,33 @@ async function renderBudgetsPage(opts = {}) {
   }));
   const goalsBox = content.querySelector(".bud-goals");
   if (goalsBox) wireBudgetGoals(goalsBox);
-  const rmBox = content.querySelector(".bud-rm");
-  if (rmBox) rmBox.onclick = (e) => {
-    const b = e.target.closest("button");
+}
+// The Roadmap page (admin): drawn from Budgets' data by renderBudgetsPage.
+function drawRoadmapPage(html) {
+  keepFolds(content, () => { content.innerHTML = html || rmEmptyHtml(); });
+  if (ROADMAP_JUMP != null) {
+    const el = document.getElementById("rmw-" + ROADMAP_JUMP);
+    ROADMAP_JUMP = null;
+    if (el) el.scrollIntoView({ block: "start" });
+  }
+  const pg = content.querySelector(".rm-page");
+  if (pg) pg.onclick = (e) => {
+    const b = e.target.closest("[data-rmjump], [data-rmmore], [data-rmwith], [data-gototab]");
     if (!b) return;
-    if (b.hasAttribute("data-rmfold")) { BUDGET_RM_OPEN = !BUDGET_RM_OPEN; keepPlace(() => renderBudgetsPage()); }
-    else if (b.dataset.rmwith != null) { BUDGET_RM_WITH = b.dataset.rmwith === "1"; keepPlace(() => renderBudgetsPage()); }
+    if (b.dataset.gototab) { goToTab(b.dataset.gototab); return; }
+    if (b.dataset.rmwith != null) { BUDGET_RM_WITH = b.dataset.rmwith === "1"; keepPlace(() => renderBudgetsPage()); return; }
+    if (b.hasAttribute("data-rmmore")) { ROADMAP_WEEKS += 6; keepPlace(() => renderBudgetsPage()); return; }
+    const w = b.dataset.rmjump, el = document.getElementById("rmw-" + w);
+    content.querySelectorAll(".rm-chips button").forEach((c) => c.classList.toggle("on", c.dataset.rmjump === w));
+    if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    // Not drawn yet: show weeks up to it, then jump.
+    const ids = [...content.querySelectorAll(".rm-chips button")].map((c) => Number(c.dataset.rmjump));
+    ROADMAP_WEEKS = Math.max(ROADMAP_WEEKS, ids.filter((x) => x <= Number(w)).length + 50);
+    ROADMAP_JUMP = w;
+    renderBudgetsPage();
   };
 }
+function rmEmptyHtml() { return `<div class="panel"><div class="empty"><div class="meta">${esc(t("rm_empty"))}</div></div></div>`; }
 
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
 // which unifies touch, mouse, and pen into one event model. Calls onSwipe(-1)
