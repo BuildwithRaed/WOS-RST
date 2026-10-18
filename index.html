@@ -12199,9 +12199,9 @@ const STATE_UNLOCKS = [
   { kind: "gear", key: "chief gear t5 t6", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
   { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
   ...[["Cave Hyena", 25], ["Arctic Wolf", 25], ["Musk Ox", 25], ["Titan Roc", 50], ["Giant Tapir", 50], ["Giant Elk", 71], ["Snow Leopard", 71], ["Snow Ape", 113], ["Cave Lion", 113],
-    ["Iron Rhino", 195], ["Saber-tooth Tiger", 195], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
+    ["Iron Rhino", 200], ["Saber-tooth Tiger", 200], ["Frost Gorilla", 270], ["Mammoth", 270], ["Frostscale Chameleon", 360]]
     .map(([n, d]) => ({ kind: "pets", name: n, tabs: ["petsdata", "refinepage"], day: d, label: n })),
-  ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 195], ["Baldur", 195], ["Fabian", 195], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
+  ...[["Holger", 121], ["Agnes", 121], ["Cyrille", 121], ["Romulus", 160], ["Valeria", 200], ["Baldur", 200], ["Fabian", 200], ["Kathy", 230], ["Ronne", 230], ["Gareth", 270]]
     .map(([n, d]) => ({ kind: "experts", name: n, tabs: ["expertspage", "expertsresearchpage"], day: d, label: n })),
 ];
 const stateKeyNorm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "").replace(/tiger$/, "");
