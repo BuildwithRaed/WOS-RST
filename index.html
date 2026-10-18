@@ -2724,7 +2724,8 @@ const UI_TEXT_CACHE = new Map();
 // "Updated: Frame"); names like "Chief Gear" never translate part of a title.
 const UI_PREFIX_KEYS = Object.keys(UI_TEXT_I18N).filter((k) => /^(Couldn't|Updated|Duplicate name|Applies to every hero)/.test(k)).sort((a, b) => b.length - a.length);
 function uiText(raw) {
-  if (LANG === "en" || raw == null) return raw;
+  if (raw == null) return raw;
+  if (LANG === "en") return EN_UI_OVER.size ? enUiText(raw) : raw;
   const str = String(raw);
   const m0 = str.match(/^(\s*)([\s\S]*?)(\s*)$/);
   const core = m0[2];
@@ -2782,7 +2783,7 @@ function uiSetText(tn, v) {
   tn.nodeValue = v;
 }
 function localizeDom(root) {
-  if (LANG === "en" || !root) return;
+  if (uiLocOff() || !root) return;
   if (root.nodeType === 3) { const v = uiText(root.nodeValue); if (v !== root.nodeValue && !(root.parentElement && root.parentElement.closest("[data-noloc],script,style,textarea"))) uiSetText(root, v); return; }
   if (root.nodeType !== 1 || root.closest("[data-noloc]")) return;
   // Speed: checking every text node's ancestors is costly on big pages (Hero
@@ -2796,7 +2797,7 @@ function localizeDom(root) {
   els.forEach((el) => ["title", "placeholder", "aria-label"].forEach((a) => { const v0 = el.getAttribute && el.getAttribute(a); if (v0) { const v = uiText(v0); if (v !== v0) el.setAttribute(a, v); } }));
 }
 const UI_LOC_OBSERVER = (typeof MutationObserver !== "undefined") ? new MutationObserver((muts) => {
-  if (LANG === "en") return;
+  if (uiLocOff()) return;
   muts.forEach((mu) => {
     if (mu.type === "childList") mu.addedNodes.forEach((nd) => localizeDom(nd));
     else if (mu.type === "characterData") { const nd = mu.target; if (nd.parentElement && nd.parentElement.closest("[data-noloc],script,style,textarea")) return; const v = uiText(nd.nodeValue); if (v !== nd.nodeValue) uiSetText(nd, v); }
@@ -2971,6 +2972,38 @@ async function useLanguage(code) {
   LANG_PACK = e.pack;
   return code;
 }
+// English overrides (Admin → Languages & Texts → English): site_config
+// "lang_en" = { "t:<T key>": text, "ui:<built-in English text>": text }.
+// Loaded with the other site settings and put on top of the built-in English
+// (kept in EN_BUILTIN_T for "↺ back to built-in"). With nothing saved nothing
+// changes. Other languages fall back to English, so where they have no
+// translation they show the changed English.
+const EN_EDIT_KINDS = ["t", "ui"];
+const EN_BUILTIN_T = {}; // T key -> built-in English, for the keys changed now
+const EN_UI_OVER = new Map(); // built-in English UI text -> the admin's English
+function applyEnglishOverrides(over) {
+  Object.entries(EN_BUILTIN_T).forEach(([k, v]) => { if (T[k]) T[k].en = v; delete EN_BUILTIN_T[k]; });
+  EN_UI_OVER.clear();
+  Object.entries(over && typeof over === "object" ? over : {}).forEach(([k, v]) => {
+    if (typeof v !== "string" || !v.trim()) return;
+    const i = k.indexOf(":"), kind = k.slice(0, i), key = k.slice(i + 1);
+    if (kind === "ui") { if (key && key !== v) EN_UI_OVER.set(key, v); }
+    else if (kind === "t" && T[key] && T[key].en) { EN_BUILTIN_T[key] = T[key].en; T[key].en = v; }
+  });
+  if (typeof UI_TEXT_CACHE !== "undefined") UI_TEXT_CACHE.clear();
+}
+// English on screen: only the admin's exact changes (no patterns). A change
+// whose new text is itself a changed text is skipped, so two changes can't
+// swap each other back and forth.
+function enUiText(raw) {
+  const str = String(raw), m0 = str.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  const o = EN_UI_OVER.get(m0[2]);
+  return o == null || EN_UI_OVER.has(o) ? str : m0[1] + o + m0[3];
+}
+// The automatic translator has nothing to do in English unless the admin
+// changed some English texts.
+function uiLocOff() { return LANG === "en" && !EN_UI_OVER.size; }
+function enBuiltinText(key) { return key in EN_BUILTIN_T ? EN_BUILTIN_T[key] : (T[key] && T[key].en); }
 // A word / sentence pattern of the chosen language for the automatic
 // translator ("w:color.Red", "p:rowsFor" = "{name} 행").
 function LW(key, fallback) { const v = LANG_PACK && LANG_PACK["w:" + key]; return v != null && v !== "" ? v : fallback; }
@@ -4673,6 +4706,7 @@ function dashDataChanged(key) {
 function dropKeptGameData() {
   dashDataChanged();
   if (typeof EXPERT_NODE_ROWS !== "undefined") EXPERT_NODE_ROWS = {};
+  if (typeof GAME_NAME_TEXTS !== "undefined") GAME_NAME_TEXTS = null;
 }
 // The hero star: six rounded teal petals (the game's look), thin lines
 // between them. filledSegs = how many petals are lit (6 = whole star).
@@ -19010,7 +19044,7 @@ let SITE_CONFIG = null;
 async function ensureSiteConfig() {
   if (SITE_CONFIG) return SITE_CONFIG;
   try {
-    const rows = await sb(`site_config?select=key,value&key=not.like.lang_*`); // languages load on their own
+    const rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en)`); // other languages load on their own; English changes come with the settings
     SITE_CONFIG = {};
     rows.forEach((r) => { SITE_CONFIG[r.key] = r.value; });
   } catch (err) { SITE_CONFIG = {}; }
@@ -22023,7 +22057,10 @@ const GAME_RULE_GROUPS = [
   { key: "heroes", label: "Heroes, shards & widgets" },
   { key: "trades", label: "Trades & chests" },
   { key: "packs", label: "Packs & lab" },
+  { key: "research", label: "Research trees" },
 ];
+const RULE_STATS = ["", "Attack", "Defense", "Lethality", "Health"];
+const ruleSlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 let GAME_RULES = null; // built on first use (needs every constant above)
 function gameRules() {
   if (GAME_RULES) return GAME_RULES;
@@ -22087,6 +22124,45 @@ function gameRules() {
       cols: [{ key: "tier", label: "Tier", type: "num" }, { key: "cost", label: "FC cost", type: "num" }, { key: "returns", label: "Returns (count:chance, …)", type: "text" }],
       get: () => RFC_LAB_TIERS.map((t) => ({ tier: t.tier, cost: t.cost, returns: t.returns.map(([n, c]) => `${n}:${c}`).join(", ") })),
       set: (rows) => ruleSetArray(RFC_LAB_TIERS, rows.filter((r) => r.tier).map((r) => ({ tier: Number(r.tier), cost: Number(r.cost) || 0, returns: String(r.returns || "").split(",").map((x) => x.split(":").map(Number)).filter((a) => a.length === 2 && a.every(Number.isFinite)) }))) },
+    // T12 tree (T12_ITEM_DEFS): the T12 page, its Budgets needs and the
+    // Dashboard all read this list. "Cost rows" = the tier name of the level
+    // rows in Admin → Research → T12 (items of one tier share those rows).
+    { key: "t12Tree", group: "research", label: "T12 research items", help: "Every item on the T12 page: section, name, which level rows it costs (the Tier in Admin → Research → T12), max level, and the stat it gives (% per level, empty = 1). People's levels are saved by Id, so keep an item's Id when you rename it; a new item with no Id gets one from its section and name.",
+      cols: [{ key: "key", label: "Id", type: "text" }, { key: "group", label: "Section", type: "text" }, { key: "label", label: "Shown as", type: "text" }, { key: "tier", label: "Cost rows (tier)", type: "text" }, { key: "max", label: "Max level", type: "num" }, { key: "stat", label: "Stat", type: "select", options: RULE_STATS }, { key: "pct", label: "% per level", type: "num" }],
+      get: () => T12_ITEM_DEFS.map((d) => ({ key: d.key, group: d.group, label: d.label, tier: d.tier, max: d.max, stat: d.stat || "", pct: d.pct != null ? d.pct : "" })),
+      set: (rows) => {
+        const used = new Set();
+        const out = rows.filter((r) => String(r.tier || "").trim() && Number(r.max) > 0 && String(r.label || "").trim()).map((r) => {
+          let key = String(r.key || "").trim() || ruleSlug(`${r.group || ""} ${r.label}`) || "item";
+          for (let n = 2; used.has(key); n++) key = `${String(r.key || "").trim() || ruleSlug(`${r.group || ""} ${r.label}`)}_${n}`;
+          used.add(key);
+          const label = String(r.label).trim(), d = { key, tier: String(r.tier).trim(), label, max: Math.round(Number(r.max)), group: String(r.group || "").trim() || label };
+          if (RULE_STATS.includes(r.stat) && r.stat) d.stat = r.stat;
+          if (r.pct !== "" && r.pct != null && Number(r.pct) > 0) d.pct = Number(r.pct);
+          return d;
+        });
+        if (!out.length) throw new Error("the T12 tree needs at least one item");
+        ruleSetArray(T12_ITEM_DEFS, out);
+      } },
+    // Research Center tracks (RC_BASE_CATEGORIES × RC_TIERS): a track's level
+    // rows in Admin → Research → Research Center are named "<track> <tier>".
+    { key: "rcTracks", group: "research", label: "Research Center tracks", help: "The tracks on the Research Center page and which tab they're on (Shared counts for every troop on the Dashboard). Each track's level rows are named \"<track> <tier>\" in Admin → Research → Research Center, e.g. \"Weapons Prep I\".",
+      cols: [{ key: "tab", label: "Tab", type: "select", options: ["Shared", "Infantry", "Lancer", "Marksman"] }, { key: "track", label: "Track", type: "text" }],
+      get: () => Object.entries(RC_BASE_CATEGORIES).flatMap(([tab, list]) => list.map((track) => ({ tab, track }))),
+      set: (rows) => {
+        const o = {};
+        rows.filter((r) => r.tab && String(r.track || "").trim()).forEach((r) => { const l = (o[r.tab] = o[r.tab] || []), tr = String(r.track).trim(); if (!l.includes(tr)) l.push(tr); });
+        if (!Object.keys(o).length) throw new Error("add at least one track");
+        ruleSetObject(RC_BASE_CATEGORIES, o);
+      } },
+    { key: "rcTiers", group: "research", label: "Research Center tiers", help: "The tiers each Research Center track has, in order (the end of the level rows' name: \"Weapons Prep VII\" needs a tier VII here).",
+      cols: [{ key: "tier", label: "Tier", type: "text" }],
+      get: () => RC_TIERS.map((tier) => ({ tier })),
+      set: (rows) => {
+        const out = rows.map((r) => String(r.tier || "").trim()).filter((x, i, a) => x && a.indexOf(x) === i);
+        if (!out.length) throw new Error("add at least one tier");
+        ruleSetArray(RC_TIERS, out);
+      } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
@@ -22201,13 +22277,63 @@ const LANG_EN_WORDS = { "w:stat.ATK": "ATK", "w:stat.ATT": "ATT", "w:stat.DEF": 
   "p:speedup": "{kind}Speedup {n}{unit}", "p:statTroop": "{troop} {stat}", "p:rowsFor": "Rows for {name}", "p:rows": "{x} rows", "p:addItem": "Add a {x} item" };
 function englishTexts() {
   const out = [];
-  Object.entries(T).forEach(([k, v]) => { if (v && v.en) out.push(["t:" + k, v.en]); });
+  Object.entries(T).forEach(([k, v]) => { if (v && v.en) out.push(["t:" + k, enBuiltinText(k)]); });
   Object.entries(NAV_GROUP_LABELS_DEFAULT).forEach(([k, v]) => { if (v && v.en) out.push(["nav.g:" + k, v.en]); });
   Object.entries(NAV_PAGE_LABELS_DEFAULT).forEach(([k, v]) => { if (v && v.en) out.push(["nav.p:" + k, v.en]); });
   Object.keys(DATA_NAME_I18N).forEach((k) => out.push(["data:" + k, k]));
   Object.keys(UI_TEXT_I18N).forEach((k) => out.push(["ui:" + k, k]));
   Object.entries(LANG_EN_WORDS).forEach(([k, v]) => out.push([k, v]));
   return out;
+}
+// Every name in the game tables (heroes, pets, experts and their skills /
+// talents, cosmetics and their categories, pack tables and pack items,
+// Backpack items, bonus names), so a new name can be translated in Admin
+// without code: listed as "data:<name>" next to the built-in ones and saved
+// in the same site_config "lang_<code>" (injectLangPack applies them).
+// Read once per Admin visit (cleared when Admin opens, dropKeptGameData).
+let GAME_NAME_TEXTS = null;
+function gameNameTexts() {
+  if (GAME_NAME_TEXTS) return GAME_NAME_TEXTS;
+  const get = (q) => sb(q).catch(() => []);
+  const own = `user_id=eq.${PROGRESSION_OWNER_ID}`;
+  GAME_NAME_TEXTS = Promise.all([
+    get(`heroes?select=name`), get(`experts?select=key,skill1,skill2,skill3,skill4,talent`),
+    get(`${PET_LEVELS_TABLE}?select=pet`), get(`pet_refine_nodes?select=pet`),
+    get(`skins_catalog?select=name,category`), get(`skin_page_categories?select=category`),
+    get(`pack_tables?${own}&select=title`), get(`buff_columns?select=name,category`), get(`buff_rows?select=name`),
+  ]).then((lists) => {
+    const names = [];
+    lists.flat().forEach((r) => Object.values(r || {}).forEach((v) => names.push(v)));
+    try { packAllResourceNames().forEach((n) => names.push(n)); } catch (e) { /* pack items not ready */ }
+    try { backpackItems().forEach((g) => { names.push(g.title); g.items.forEach((x) => names.push(x.name)); }); } catch (e) { /* default list */ }
+    // Research trees set in Rules & Timeline (built-in names already have texts).
+    T12_ITEM_DEFS.forEach((d) => { if (!T12_GROUP_KEYS[d.group]) names.push(d.group); if (!T12_LABEL_KEYS[d.label] && !statLabelKey(d.label)) names.push(d.label); });
+    Object.values(RC_BASE_CATEGORIES).flat().forEach((n) => names.push(n));
+    const seen = new Set(), out = [];
+    names.forEach((v) => {
+      const n = typeof v === "string" ? v.trim() : "";
+      if (!n || n.length > 80 || !/[A-Za-z]{2}/.test(n) || seen.has(n) || n in DATA_NAME_I18N) return;
+      // Already translated another way (item words, on-screen texts, "<expert> Sigils", speedups).
+      if (MATERIAL_LABEL_KEYS[n.toLowerCase()] || n in UI_TEXT_I18N || / Sigils$/i.test(n) || /Speedups? \d+[mh]$/i.test(n)) return;
+      seen.add(n); out.push(["data:" + n, n]);
+    });
+    return out.sort((a, b) => a[1].localeCompare(b[1]));
+  }).catch(() => { GAME_NAME_TEXTS = null; return []; });
+  return GAME_NAME_TEXTS;
+}
+// The texts a language can have: built-in ones plus the game names. English
+// itself can change its page texts (T keys) and on-screen texts (ui:) only.
+async function textsFor(code) {
+  const base = englishTexts();
+  if (code === "en") return base.filter(([k]) => EN_EDIT_KINDS.includes(k.slice(0, k.indexOf(":"))));
+  const have = new Set(base.map(([k]) => k));
+  return base.concat((await gameNameTexts()).filter(([k]) => !have.has(k)));
+}
+// A language's texts (English: only the admin's changes, kept with the settings).
+function langPackFor(code, fresh) {
+  if (code !== "en") return loadLangPack(code, fresh);
+  const o = siteConfig("lang_en", null), over = o && typeof o === "object" ? o : {};
+  return Promise.resolve({ pack: over, file: {}, over });
 }
 const textPlaceholders = (x) => (String(x).match(/\{[a-zA-Z_]+\}/g) || []).sort().join(",");
 function csvCell(v) { const s = String(v == null ? "" : v); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
@@ -22233,27 +22359,33 @@ function downloadTextFile(name, text, type) {
 let ADMIN_LANG_OPEN = null, ADMIN_TEXT_Q = "", ADMIN_TEXT_FILTER = "all", ADMIN_TEXT_PAGE = 0;
 async function saveLangOverrides(code, over) {
   await saveSiteConfig("lang_" + code, over);
+  if (code === "en") { applyEnglishOverrides(over); if (LANG === "en") localizeDom(document.body); return; } // kept with the settings
   if (SITE_CONFIG) delete SITE_CONFIG["lang_" + code]; // not kept with the other settings
   delete LANG_PACKS[code];
   if (code === LANG) { await useLanguage(code); applyMenuLayout(); applyNavLanguage(); }
 }
 async function renderAdminLanguages(body) {
   await ensureSiteConfig();
-  const en = englishTexts(), total = en.length;
   const saveList = async (list) => { await saveSiteConfig("languages", list.filter((l) => l.code !== "en").map((l) => ({ code: l.code, name: l.name, ...(l.dir === "rtl" ? { dir: "rtl" } : {}), hidden: !!l.hidden }))); renderLanguageSwitcher(); };
   if (ADMIN_LANG_OPEN) { await renderAdminTexts(body, ADMIN_LANG_OPEN); return; }
   const list = languageList(true);
-  body.innerHTML = `<p class="desc" style="margin:0 0 10px;">English is the base. Every other language is a list of translated texts: edit them here, or download the file, translate it in any spreadsheet app, and upload it back. Texts that aren't translated show in English. Hidden languages are only in your own language menu.</p>
+  body.innerHTML = `<p class="desc" style="margin:0 0 10px;">English is the base. Every other language is a list of translated texts: edit them here, or download the file, translate it in any spreadsheet app, and upload it back. Texts that aren't translated show in English. Hidden languages are only in your own language menu. Names from the game data (heroes, pets, experts, skins, packs, items…) are in the list too, so new ones can be translated here. English texts can be changed under English → Texts.</p>
     <div class="lg-list"><div class="meta" style="font-size:12px;">Counting translated texts…</div></div>
     <div class="lg-add"><b>Add a language</b>
       <div class="lg-addrow"><input type="text" data-lgcode placeholder="Code, e.g. fr or pt-BR" maxlength="10" /><input type="text" data-lgname placeholder="Name people see, e.g. Français" maxlength="40" /><label><input type="checkbox" data-lgrtl /> Right-to-left</label><button type="button" class="btn small" data-lgadd>Add</button></div>
       <div class="meta" style="font-size:11px;">New languages start hidden, so you can translate before visitors see them.</div></div>`;
   const counts = {};
+  const en = await textsFor(""), total = en.length;
+  if (!body.isConnected) return;
   await Promise.all(list.filter((l) => l.code !== "en").map(async (l) => { const e = await loadLangPack(l.code, true); counts[l.code] = { n: en.filter(([k]) => e.pack[k]).length, over: Object.keys(e.over).length }; }));
+  const enOver = Object.keys((await langPackFor("en")).over).length;
   body.querySelector(".lg-list").innerHTML = list.map((l) => `<div class="lg-row">
       <div class="lg-name"><b>${esc(l.name)}</b> <span class="meta">${esc(l.code)}${l.dir === "rtl" ? " · right-to-left" : ""}${l.builtin ? "" : " · added by you"}</span><br>
-        <span class="meta" style="font-size:11.5px;">${l.code === "en" ? "Base language" : `${counts[l.code].n.toLocaleString()} / ${total.toLocaleString()} texts translated (${Math.floor(counts[l.code].n * 100 / total)}%)${counts[l.code].over ? ` · ${counts[l.code].over} changed by you` : ""}`}</span></div>
-      ${l.code === "en" ? "" : `<div class="lg-btns">
+        <span class="meta" style="font-size:11.5px;">${l.code === "en" ? `Base language${enOver ? ` · ${enOver} changed by you` : ""}` : `${counts[l.code].n.toLocaleString()} / ${total.toLocaleString()} texts translated (${Math.floor(counts[l.code].n * 100 / total)}%)${counts[l.code].over ? ` · ${counts[l.code].over} changed by you` : ""}`}</span></div>
+      ${l.code === "en" ? `<div class="lg-btns">
+        <button type="button" class="btn ghost small" data-lgtexts="en">Texts</button>
+        <button type="button" class="btn ghost small" data-lgdown="en">&#8615; Download</button>
+        <label class="btn ghost small lg-up" role="button">&#8613; Upload<input type="file" accept=".csv,text/csv" data-lgup="en" hidden /></label></div>` : `<div class="lg-btns">
         <label class="lg-show"><input type="checkbox" data-lgshow="${esc(l.code)}" ${l.hidden ? "" : "checked"} /> Shown</label>
         <button type="button" class="btn ghost small" data-lgtexts="${esc(l.code)}">Texts</button>
         <button type="button" class="btn ghost small" data-lgdown="${esc(l.code)}">&#8615; Download</button>
@@ -22266,8 +22398,9 @@ async function renderAdminLanguages(body) {
   }));
   body.querySelectorAll("[data-lgtexts]").forEach((b) => b.addEventListener("click", () => { ADMIN_LANG_OPEN = b.dataset.lgtexts; ADMIN_TEXT_PAGE = 0; renderAdminLanguages(body); }));
   body.querySelectorAll("[data-lgdown]").forEach((b) => b.addEventListener("click", async () => {
-    const code = b.dataset.lgdown, e = await loadLangPack(code), name = (languageList(true).find((x) => x.code === code) || {}).name || code;
-    const lines = [["key", "English", name].map(csvCell).join(","), ...en.map(([k, v]) => [k, v, e.pack[k] || ""].map(csvCell).join(","))];
+    const code = b.dataset.lgdown, e = await langPackFor(code), name = code === "en" ? "Your English" : (languageList(true).find((x) => x.code === code) || {}).name || code;
+    const texts = code === "en" ? await textsFor("en") : en;
+    const lines = [["key", "English", name].map(csvCell).join(","), ...texts.map(([k, v]) => [k, v, e.pack[k] || ""].map(csvCell).join(","))];
     downloadTextFile(`wosrst-texts-${code}.csv`, "﻿" + lines.join("\r\n"), "text/csv;charset=utf-8");
   }));
   body.querySelectorAll("[data-lgup]").forEach((inp) => inp.addEventListener("change", async () => {
@@ -22295,8 +22428,10 @@ async function openTextUpload(code, text, body) {
   const head = rows[0] || [];
   const hasHead = /^key$/i.test((head[0] || "").trim());
   const col = 2; // key, English, translation
-  const en = new Map(englishTexts());
-  const e = await loadLangPack(code, true);
+  const en = new Map(await textsFor(code));
+  const e0 = await langPackFor(code, true);
+  // English: the built-in text counts as "the file" (same text = no change).
+  const e = code === "en" ? { ...e0, pack: { ...Object.fromEntries(en), ...e0.pack }, file: Object.fromEntries(en) } : e0;
   const changes = {}, problems = [], unknown = []; let read = 0, empty = 0, same = 0;
   (hasHead ? rows.slice(1) : rows).forEach((r) => {
     const k = (r[0] || "").trim(), v0 = r[col] || "", v = v0.trim() ? v0 : ""; // keep spaces the text really has
@@ -22331,8 +22466,10 @@ async function openTextUpload(code, text, body) {
 }
 // Texts editor for one language: search, untranslated / changed filter, 40 a page.
 async function renderAdminTexts(body, code) {
-  const en = englishTexts(), e = await loadLangPack(code, true);
+  const en = await textsFor(code), e = await langPackFor(code, true), isEn = code === "en";
   const l = languageList(true).find((x) => x.code === code) || { name: code };
+  const backTxt = isEn ? "Back to built-in" : "Back to the file's text";
+  if (isEn && ADMIN_TEXT_FILTER !== "changed") ADMIN_TEXT_FILTER = "all";
   const draft = {};
   const draw = () => {
     const q = ADMIN_TEXT_Q.trim().toLowerCase();
@@ -22340,6 +22477,7 @@ async function renderAdminTexts(body, code) {
     let rows = en.filter(([k, v]) => !q || k.toLowerCase().includes(q) || v.toLowerCase().includes(q) || cur(k).toLowerCase().includes(q));
     if (ADMIN_TEXT_FILTER === "missing") rows = rows.filter(([k]) => !cur(k));
     if (ADMIN_TEXT_FILTER === "changed") rows = rows.filter(([k]) => k in e.over || k in draft);
+    if (ADMIN_TEXT_FILTER === "names") rows = rows.filter(([k]) => k.startsWith("data:"));
     const per = 40, pages = Math.max(1, Math.ceil(rows.length / per));
     ADMIN_TEXT_PAGE = Math.min(ADMIN_TEXT_PAGE, pages - 1);
     const shown = rows.slice(ADMIN_TEXT_PAGE * per, ADMIN_TEXT_PAGE * per + per);
@@ -22347,9 +22485,9 @@ async function renderAdminTexts(body, code) {
     body.innerHTML = `<button type="button" class="btn ghost small" data-txback style="margin-bottom:10px;">&#8249; Languages</button>
       <div class="rl-card"><div class="rl-h"><b>${esc(l.name)} texts</b> <span class="meta" style="font-size:11.5px;">${esc(code)}</span></div>
       <div class="tx-tools"><input type="search" data-txq placeholder="Search English or ${esc(l.name)}…" value="${esc(ADMIN_TEXT_Q)}" />
-        <div class="seg">${[["all", "All"], ["missing", "Not translated"], ["changed", "Changed by you"]].map(([k, n]) => `<button type="button" data-txf="${k}" class="${ADMIN_TEXT_FILTER === k ? "active" : ""}">${n}</button>`).join("")}</div></div>
+        <div class="seg">${(isEn ? [["all", "All"], ["changed", "Changed by you"]] : [["all", "All"], ["missing", "Not translated"], ["changed", "Changed by you"], ["names", "Game names"]]).map(([k, n]) => `<button type="button" data-txf="${k}" class="${ADMIN_TEXT_FILTER === k ? "active" : ""}">${n}</button>`).join("")}</div></div>
       <div class="meta" style="font-size:11.5px; margin:6px 0;">${rows.length.toLocaleString()} texts · page ${ADMIN_TEXT_PAGE + 1} / ${pages}</div>
-      <div class="tx-list">${shown.map(([k, v]) => `<div class="tx-row${k in e.over ? " chg" : ""}"><div class="tx-en"><small>${esc(k)}</small>${esc(v)}</div><textarea rows="${v.length > 70 ? 3 : 1}" data-txkey="${esc(k)}" dir="${langDir(code)}" placeholder="(shows in English)">${esc(cur(k))}</textarea>${k in e.over ? `<button type="button" class="tx-reset" data-txreset="${esc(k)}" title="Back to the file's text">&#8634;</button>` : ""}</div>`).join("") || `<div class="meta">Nothing here.</div>`}</div>
+      <div class="tx-list">${shown.map(([k, v]) => `<div class="tx-row${k in e.over ? " chg" : ""}"><div class="tx-en"><small>${esc(k)}</small>${esc(v)}</div><textarea rows="${v.length > 70 ? 3 : 1}" data-txkey="${esc(k)}" dir="${langDir(code)}" placeholder="${isEn ? "(built-in text)" : "(shows in English)"}">${esc(cur(k))}</textarea>${k in e.over ? `<button type="button" class="tx-reset" data-txreset="${esc(k)}" title="${backTxt}">&#8634;</button>` : ""}</div>`).join("") || `<div class="meta">Nothing here.</div>`}</div>
       <div class="rl-foot"><button type="button" class="btn ghost small" data-txpage="-1" ${ADMIN_TEXT_PAGE ? "" : "disabled"}>&#8249; Prev</button><button type="button" class="btn ghost small" data-txpage="1" ${ADMIN_TEXT_PAGE < pages - 1 ? "" : "disabled"}>Next &#8250;</button><span style="flex:1"></span><button type="button" class="btn small" data-txsave ${dirty ? "" : "disabled"}>Save ${dirty || ""}</button></div></div>`;
     body.querySelector("[data-txback]").addEventListener("click", () => { if (dirty && !confirm("Leave without saving your changes?")) return; ADMIN_LANG_OPEN = null; renderAdminLanguages(body); });
     const qi = body.querySelector("[data-txq]");
@@ -22362,14 +22500,14 @@ async function renderAdminTexts(body, code) {
     }));
     body.querySelectorAll("[data-txreset]").forEach((b) => b.addEventListener("click", async () => {
       const over = { ...e.over }; delete over[b.dataset.txreset];
-      try { await saveLangOverrides(code, over); toast("Back to the file's text"); renderAdminTexts(body, code); } catch (err) { toast(err.message || "Couldn't save", true); }
+      try { await saveLangOverrides(code, over); toast(backTxt); renderAdminTexts(body, code); } catch (err) { toast(err.message || "Couldn't save", true); }
     }));
     body.querySelector("[data-txsave]").addEventListener("click", async () => {
       const enMap = new Map(en);
       const bad = Object.entries(draft).filter(([k, v]) => v.trim() && textPlaceholders(v) !== textPlaceholders(enMap.get(k)));
       if (bad.length) { toast(`Keep the {placeholders} as in English: ${bad[0][0]}`, true); return; }
       const over = { ...e.over };
-      Object.entries(draft).forEach(([k, v]) => { if (!v.trim()) v = ""; if (!v || v === (e.file[k] || "")) { if (!v && e.file[k]) over[k] = ""; else delete over[k]; } else over[k] = v; });
+      Object.entries(draft).forEach(([k, v]) => { if (!v.trim()) v = ""; if (isEn) { if (!v || v === enMap.get(k)) delete over[k]; else over[k] = v; return; } if (!v || v === (e.file[k] || "")) { if (!v && e.file[k]) over[k] = ""; else delete over[k]; } else over[k] = v; });
       try { await saveLangOverrides(code, over); toast(`${Object.keys(draft).length} texts saved`); renderAdminTexts(body, code); } catch (err) { toast(err.message || "Couldn't save", true); }
     });
   };
@@ -25811,6 +25949,7 @@ if ("serviceWorker" in navigator) {
   loadCommander();
   const categoriesLoaded = loadBuffCategories();
   await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
+  applyEnglishOverrides(siteConfig("lang_en", null));
   if (LANG !== "en") LANG = await useLanguage(LANG);
   applyGameRules();
   applyMenuLayout();
