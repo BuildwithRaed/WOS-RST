@@ -1777,5 +1777,16 @@
 "t:rm_more": "{n} minggu lagi",
 "t:rm_more_packs": "{n} paket lagi",
 "t:rm_for": "untuk",
-"t:rm_fold": "Minggu ini {v} · {n} paket"
+"t:rm_fold": "Minggu ini {v} · {n} paket",
+"t:ht_title": "Target hero",
+"t:ht_desc": "Target masing-masing hero. Utamakan = langsung ke atas target Anda; Nanti = belum direncanakan.",
+"t:ht_push": "utamakan",
+"t:ht_later": "Nanti",
+"t:ht_stars": "Bintang",
+"t:ht_widgets": "widget",
+"t:ht_added": "ditambahkan",
+"t:ht_add": "+ Tambah hero",
+"t:ht_pushgen": "Setiap Gen baru: utamakan 2 hero",
+"t:ht_pushgen_sub": "Hero yang diutamakan mendapat \"SvS berikutnya\"; saat Gen baru keluar, Anda akan ditanya 2 hero mana.",
+"t:ht_gen_pick": "Gen {g} sudah keluar: pilih 2 hero untuk diutamakan"
 }

@@ -1778,5 +1778,16 @@
 "t:rm_more": "jeszcze {n} tyg.",
 "t:rm_more_packs": "jeszcze {n} paczek",
 "t:rm_for": "dla",
-"t:rm_fold": "Ten tydzień {v} · {n} paczek"
+"t:rm_fold": "Ten tydzień {v} · {n} paczek",
+"t:ht_title": "Cele bohaterów",
+"t:ht_desc": "Własny cel każdego bohatera. Priorytet = od razu na szczyt celów; Później = na razie nieplanowane.",
+"t:ht_push": "priorytet",
+"t:ht_later": "Później",
+"t:ht_stars": "Gwiazdki",
+"t:ht_widgets": "widżety",
+"t:ht_added": "dodano",
+"t:ht_add": "+ Dodaj bohatera",
+"t:ht_pushgen": "Każda nowa Gen: 2 bohaterów najpierw",
+"t:ht_pushgen_sub": "Bohaterowie z priorytetem dostają \"Następny SvS\"; gdy wyjdzie nowa Gen, zapytamy, których 2.",
+"t:ht_gen_pick": "Gen {g} jest już dostępna: wybierz 2 bohaterów z priorytetem"
 }
