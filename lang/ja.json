@@ -1778,5 +1778,16 @@
 "t:rm_more": "あと{n}週",
 "t:rm_more_packs": "あと{n}パック",
 "t:rm_for": "対象",
-"t:rm_fold": "今週 {v} · {n}パック"
+"t:rm_fold": "今週 {v} · {n}パック",
+"t:ht_title": "英雄の目標",
+"t:ht_desc": "英雄ごとの目標。優先 = 目標の一番上へ、後で = 今は計画しない。",
+"t:ht_push": "優先",
+"t:ht_later": "後で",
+"t:ht_stars": "星",
+"t:ht_widgets": "専用装備",
+"t:ht_added": "追加済み",
+"t:ht_add": "+ 英雄を追加",
+"t:ht_pushgen": "新しいGenごと：英雄2人を優先",
+"t:ht_pushgen_sub": "優先した英雄は「次のSvS」が目標になります。新しいGenが出たら、どの2人か聞かれます。",
+"t:ht_gen_pick": "Gen {g} 登場：優先する英雄を2人選択"
 }

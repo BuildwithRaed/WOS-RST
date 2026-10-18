@@ -3069,7 +3069,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 19; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 21; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4135,7 +4135,7 @@ const T = {
   ht_added: { en: "added" },
   ht_add: { en: "+ Add a hero" },
   ht_pushgen: { en: "Each new Gen: push 2 heroes first" },
-  ht_pushgen_sub: { en: "Pushed heroes get \"By next SvS\"; when a new Gen is out you'll be asked which 2." },
+  ht_pushgen_sub: { en: "Pushed heroes get \"Next SvS\" as their date; when a new Gen is out you'll be asked which 2." },
   ht_gen_pick: { en: "Gen {g} is out: pick the 2 heroes to push" },
   budgets_split_parts: { en: "2 parts: by your target + after it" },
   budgets_split_late: { en: "Can't make {date}" },

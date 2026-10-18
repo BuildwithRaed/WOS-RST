@@ -1778,5 +1778,16 @@
 "t:rm_more": "altre {n} settimane",
 "t:rm_more_packs": "altri {n} pacchetti",
 "t:rm_for": "per",
-"t:rm_fold": "Questa settimana {v} · {n} pacchetti"
+"t:rm_fold": "Questa settimana {v} · {n} pacchetti",
+"t:ht_title": "Obiettivi eroi",
+"t:ht_desc": "Obiettivo di ogni eroe. Priorità = subito in cima ai tuoi obiettivi; Più tardi = non pianificato per ora.",
+"t:ht_push": "priorità",
+"t:ht_later": "Più tardi",
+"t:ht_stars": "Stelle",
+"t:ht_widgets": "widget",
+"t:ht_added": "aggiunto",
+"t:ht_add": "+ Aggiungi eroe",
+"t:ht_pushgen": "Ogni nuova Gen: dai priorità a 2 eroi",
+"t:ht_pushgen_sub": "Gli eroi prioritari ricevono \"Prossimo SvS\"; quando esce una nuova Gen ti chiederemo quali 2.",
+"t:ht_gen_pick": "È uscita la Gen {g}: scegli i 2 eroi prioritari"
 }

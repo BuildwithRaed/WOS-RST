@@ -1777,5 +1777,16 @@
 "t:rm_more": "{n} hafta daha",
 "t:rm_more_packs": "{n} paket daha",
 "t:rm_for": "için",
-"t:rm_fold": "Bu hafta {v} · {n} paket"
+"t:rm_fold": "Bu hafta {v} · {n} paket",
+"t:ht_title": "Kahraman hedefleri",
+"t:ht_desc": "Her kahramanın kendi hedefi. Öne al = doğrudan hedeflerinin en üstüne; Sonra = şimdilik planlanmadı.",
+"t:ht_push": "öne al",
+"t:ht_later": "Sonra",
+"t:ht_stars": "Yıldızlar",
+"t:ht_widgets": "widget",
+"t:ht_added": "eklendi",
+"t:ht_add": "+ Kahraman ekle",
+"t:ht_pushgen": "Her yeni Gen: önce 2 kahramanı öne al",
+"t:ht_pushgen_sub": "Öne alınan kahramanlar \"Sonraki SvS\" hedefini alır; yeni Gen çıkınca hangi 2'si olduğu sorulur.",
+"t:ht_gen_pick": "Gen {g} çıktı: öne alınacak 2 kahramanı seç"
 }

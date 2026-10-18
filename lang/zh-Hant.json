@@ -1777,5 +1777,16 @@
 "t:rm_more": "還有 {n} 週",
 "t:rm_more_packs": "還有 {n} 個禮包",
 "t:rm_for": "用於",
-"t:rm_fold": "本週 {v} · {n} 個禮包"
+"t:rm_fold": "本週 {v} · {n} 個禮包",
+"t:ht_title": "英雄目標",
+"t:ht_desc": "每位英雄自己的目標。優先 = 直接排到目標最前；稍後 = 暫不規劃。",
+"t:ht_push": "優先",
+"t:ht_later": "稍後",
+"t:ht_stars": "星級",
+"t:ht_widgets": "零件",
+"t:ht_added": "已新增",
+"t:ht_add": "+ 新增英雄",
+"t:ht_pushgen": "每個新 Gen：先優先 2 位英雄",
+"t:ht_pushgen_sub": "優先的英雄目標為「下次 SvS」；新 Gen 推出時會詢問你選哪 2 位。",
+"t:ht_gen_pick": "Gen {g} 已推出：選擇 2 位優先英雄"
 }

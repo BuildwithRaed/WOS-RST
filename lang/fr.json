@@ -1778,5 +1778,16 @@
 "t:rm_more": "{n} semaines de plus",
 "t:rm_more_packs": "{n} packs de plus",
 "t:rm_for": "pour",
-"t:rm_fold": "Cette semaine {v} · {n} packs"
+"t:rm_fold": "Cette semaine {v} · {n} packs",
+"t:ht_title": "Objectifs des héros",
+"t:ht_desc": "Objectif propre à chaque héros. Priorité = tout en haut de vos objectifs ; Plus tard = pas prévu pour l'instant.",
+"t:ht_push": "priorité",
+"t:ht_later": "Plus tard",
+"t:ht_stars": "Étoiles",
+"t:ht_widgets": "widgets",
+"t:ht_added": "ajouté",
+"t:ht_add": "+ Ajouter un héros",
+"t:ht_pushgen": "Chaque nouvelle Gen : prioriser 2 héros",
+"t:ht_pushgen_sub": "Les héros prioritaires reçoivent \"Prochain SvS\" ; à chaque nouvelle Gen, on vous demandera lesquels.",
+"t:ht_gen_pick": "La Gen {g} est sortie : choisissez les 2 héros prioritaires"
 }
