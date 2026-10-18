@@ -356,6 +356,14 @@
   .exp-skl{ display:flex; flex-direction:column; gap:1px; }
   .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
   .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
+  .bud-vip{ margin-top:8px; padding:7px 10px; border-radius:8px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:11.5px; }
+  .vip-bundle{ display:flex; align-items:center; gap:10px; }
+  .vip-b-ic{ position:relative; width:44px; height:44px; flex:none; }
+  .vip-b-ic img{ width:44px; height:44px; object-fit:contain; }
+  .vip-b-ic b{ position:absolute; right:-4px; bottom:-4px; font-size:11px; background:var(--panel-2); border:1px solid var(--line); border-radius:999px; padding:0 5px; }
+  .vip-b-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:13px; }
+  .vip-b-t small{ color:var(--good); font-size:11.5px; }
+  .vip-bundle .btn{ white-space:nowrap; flex:none; }
   /* Order of goals (admin, owner 18 Oct 2026). */
   .bud-g-head{ display:flex; align-items:center; gap:8px; width:100%; background:none; border:0; padding:0; color:inherit; font:inherit; cursor:pointer; text-align:start; min-height:32px; }
   .bud-g-arrow{ margin-inline-start:auto; color:var(--ice); }
@@ -3069,7 +3077,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 21; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 22; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4077,6 +4085,15 @@ const T = {
   bud_line_packs: { en: "{n} packs" },
   bud_line_all: { en: "Packs to buy" },
   bud_done_by: { en: "Done" },
+  vip_bundle_title: { en: "Daily Free Bundle" },
+  vip_bundle_line: { en: "{n} Mythic General Hero Shards a day" },
+  vip_bundle_none: { en: "This tier's daily bundle gives no hero shards." },
+  vip_bundle_budget: { en: "Counted in Budgets until {date}: +{n} shards" },
+  vip_bundle_budget30: { en: "Counted in Budgets for the next 30 days: +{n} shards (no target date set)" },
+  vip_bundle_go: { en: "Budgets \u203a" },
+  vip_bundle_30d: { en: "in the next 30 days" },
+  vip_bundle_by: { en: "by {date}" },
+  bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
   goals_desc: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ or use ▲▼." },
   goal_main: { en: "main" },
@@ -14763,6 +14780,18 @@ let TRADE_EXTRA_RFC = {};
 //    Mystery shop: 800 for 2 widgets (only that offer, owner)
 let HERO_SHARD_TRADES = [];
 // Hero shard / widget trade numbers (Admin → Rules & Timeline → Hero trades).
+// VIP Daily Free Bundle: Mythic General Hero Shards a day by VIP tier
+// number (owner's screenshots, 18 Oct 2026; tiers not listed give none).
+// Rules & Timeline → "VIP daily shards" can change it.
+const VIP_DAILY_SHARDS = { 7: 1, 8: 1, 9: 2, 10: 2, 11: 3, 12: 6 };
+function vipTierNumber(name) { const m = String(name || "").match(/(\d+)/); return m ? Number(m[1]) : null; }
+function vipShardsFor(name) { const n = vipTierNumber(name); return n != null ? Number(VIP_DAILY_SHARDS[n]) || 0 : 0; }
+// Days counted for free daily items: up to the Budgets date, 30 without one.
+function budgetFreeDays() {
+  let days = 30;
+  if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.max(0, Math.round((d - packStartOfToday()) / 86400000)); }
+  return days;
+}
 const HERO_RULES = { marksPerGeneral: 12, marksGeneralWeekly: 100, hallMarksPerShard: 10, hallWeekly: 370, widgetChestGives: 1, mysteryGive: 800, mysteryGet: 2, mysteryDaily: 200 };
 // The one hero of each Gen sold in Hall of Heroes (gold ticket on the
 // community Server Timeline, Sep 2026); the Gen's other two heroes aren't.
@@ -15131,6 +15160,7 @@ async function heroShardBudget() {
     loadCalcState("backpack").catch(() => null),
     ensureStateAge(),
   ]);
+  const vipTier = await loadCalcState("vip_tier").catch(() => null);
   noteHeroImages(heroes);
   // Each hero's own target and extra heroes (admin, Order of goals).
   const ht = IS_OWNER ? await ensureHeroTargets() : null;
@@ -15173,12 +15203,16 @@ async function heroShardBudget() {
   // come free from the dailies, 200 a day, counted up to the Budgets date
   // (30 days when none is set).
   const bpv = (n) => Number((bp || {})[n]) || 0;
-  let days = 30;
-  if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.max(0, Math.round((d - packStartOfToday()) / 86400000)); }
+  const days = budgetFreeDays();
   owned["Marks of Valor"] = bpv("Marks of Valor");
   owned["Widget Chest"] = bpv("Widget Chest");
   owned["Mystery Points"] = bpv("Mystery Points") + HERO_RULES.mysteryDaily * days;
-  return { groups: [{ label: null, totals }], owned };
+  // The VIP Daily Free Bundle's Mythic General Hero Shards (the tier picked
+  // on the VIP page), counted the same days; they trade 1:1 into each
+  // mythic roster hero's shards like the Backpack's General shards.
+  const vipDaily = vipShardsFor(vipTier && vipTier.name), vip = vipDaily && mythicShards.length ? { tier: vipTier.name, daily: vipDaily, days, total: vipDaily * days } : null;
+  if (vip) owned["Mythic General Hero Shard"] = (owned["Mythic General Hero Shard"] || 0) + vip.total;
+  return { groups: [{ label: null, totals }], owned, vip };
 }
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
@@ -15341,12 +15375,12 @@ function budgetPlanLines(calcKey) {
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
-  let groups, live = true;
+  let groups, live = true, vipNote = null;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
-  else if (calcKey === "hero_shards") groups = (await heroShardBudget()).groups;
+  else if (calcKey === "hero_shards") { const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip; }
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
     if (calcKey === "t11_helios" || calcKey === "t12_research") {
@@ -15374,7 +15408,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
   packSplitUncoverable(packGroups, viaTrades, calcKey);
   const need = viaTrades.need;
-  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  const res = { calcKey, tables, live, groups, owned, vip: vipNote, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!opts.noPlan && packGroups.length && Object.keys(need).length) {
     res.earliest = packEarliestDays(packGroups, need, calcKey);
     if (res.earliest != null) {
@@ -16785,6 +16819,7 @@ async function renderBudgetsPage(opts = {}) {
     return pageRow(rowCost, `
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
+      ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
@@ -19271,6 +19306,7 @@ async function renderVipTierTable(target) {
         ${rows.map((r, i) => `<option value="${i}"${i > releasedLastIdx("buff_rows", rows) ? ' class="opt-up"' : ""}>${esc(r.name)}${esc(upcomingTag(i > releasedLastIdx("buff_rows", rows)))}</option>`).join("")}
       </select>
     </div>
+    <div class="t12x-card" id="vipBundle" style="margin-bottom:12px;"></div>
     <div class="t12x-card">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div id="vipTierStats"></div>
@@ -19278,6 +19314,22 @@ async function renderVipTierTable(target) {
   `;
 
   const statsEl = document.getElementById("vipTierStats");
+  // The tier's Daily Free Bundle: Mythic General Hero Shards a day, and what
+  // Budgets counts of them (up to its date, or 30 days).
+  const bundleEl = document.getElementById("vipBundle");
+  const shardIcon = bpIcon({ name: "Mythic General Hero Shard" });
+  function showBundle(idx) {
+    const n = vipShardsFor(rows[idx] && rows[idx].name);
+    if (!n) { bundleEl.innerHTML = `<div class="t12x-title">${esc(t("vip_bundle_title"))}</div><div class="meta" style="font-size:12px;">${esc(t("vip_bundle_none"))}</div>`; return; }
+    const days = budgetFreeDays();
+    const when = BUDGET_TARGET ? t("vip_bundle_budget").replace("{date}", (() => { const d = new Date(packStartOfToday().getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return packDayKey(d); } })()) : t("vip_bundle_budget30");
+    bundleEl.innerHTML = `<div class="t12x-title">${esc(t("vip_bundle_title"))}</div>
+      <div class="vip-bundle"><span class="vip-b-ic">${shardIcon ? `<img src="${esc(shardIcon)}" alt="" />` : ""}<b>&times;${n}</b></span>
+        <span class="vip-b-t"><b>${esc(t("vip_bundle_line").replace("{n}", n))}</b><small>${esc(when.replace("{n}", (n * days).toLocaleString()))}</small></span>
+        <button type="button" class="btn small ghost" data-gototab="budgets">${esc(t("vip_bundle_go"))}</button></div>`;
+    const go = bundleEl.querySelector("[data-gototab]");
+    if (go) go.onclick = () => goToTab("budgets");
+  }
   function showTier(idx) {
     const r = rows[idx];
     const valByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
@@ -19288,7 +19340,9 @@ async function renderVipTierTable(target) {
   document.getElementById("vipTierSelect").addEventListener("change", async (e) => {
     const idx = Number(e.target.value);
     showTier(idx);
+    showBundle(idx);
     saveCalcState("vip_tier", { index: idx, name: rows[idx].name });
+    budgetInvalidate(); // the free shards change what Budgets plans
   });
 
   const saved = await loadCalcState("vip_tier");
@@ -19300,6 +19354,9 @@ async function renderVipTierTable(target) {
   }
   document.getElementById("vipTierSelect").value = String(startIdx);
   showTier(startIdx);
+  // Budgets' date (for "counted until …") when Budgets wasn't opened yet.
+  if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); if (seq !== RENDER_SEQ) return; if (BUDGET_TARGET === undefined) BUDGET_TARGET = (sv && sv.date) || ""; }
+  showBundle(startIdx);
 }
 
 // ============================================================
@@ -23551,6 +23608,10 @@ function gameRules() {
       cols: [{ key: "gen", label: "Gen", type: "num" }, { key: "hero", label: "Hero", type: "text" }],
       get: () => Object.entries(HALL_OF_HEROES_HERO).map(([g, h]) => ({ gen: Number(g), hero: h })),
       set: (rows) => ruleSetObject(HALL_OF_HEROES_HERO, Object.fromEntries(rows.filter((r) => r.gen && r.hero).map((r) => [Number(r.gen), r.hero]))) },
+    { key: "vipShards", group: "heroes", label: "VIP daily shards", help: "Mythic General Hero Shards the VIP Daily Free Bundle gives each day, by VIP tier number. Budgets counts them up to its date (30 days without one) for the tier picked on the VIP page.",
+      cols: [{ key: "tier", label: "VIP tier", type: "num" }, { key: "shards", label: "Shards a day", type: "num" }],
+      get: () => Object.entries(VIP_DAILY_SHARDS).map(([k, v]) => ({ tier: Number(k), shards: v })),
+      set: (rows) => ruleSetObject(VIP_DAILY_SHARDS, Object.fromEntries(rows.filter((r) => r.tier && Number(r.shards) > 0).map((r) => [Number(r.tier), Number(r.shards)]))) },
     { key: "heroTrades", group: "heroes", label: "Hero shard & widget trades", type: "fields", help: "How Marks of Valor, Widget Chests and Mystery Points turn into shards / widgets in Budgets.",
       fields: [num("marksPerGeneral", "Marks of Valor for 1 Mythic General shard"), num("marksGeneralWeekly", "…weekly limit (shards)"), num("hallMarksPerShard", "Marks for 1 newest-Gen hero shard"), num("hallWeekly", "…weekly limit (shards)"), num("widgetChestGives", "Widgets from 1 Widget Chest"), num("mysteryGive", "Mystery Points…"), num("mysteryGet", "…for this many widgets"), num("mysteryDaily", "Free Mystery Points a day")],
       get: () => ({ ...HERO_RULES }), set: (v) => { Object.keys(HERO_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) HERO_RULES[k] = Number(v[k]); }); } },
