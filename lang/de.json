@@ -1821,5 +1821,7 @@
 "t:rm_link_next":"nächstes: {goal} · {date}",
 "t:rm_empty":"Noch keine Ziele: Hake in Budgets Seiten mit einem Ziel an.",
 "t:rm_back":"Budgets",
+"t:rm_goal_cost":"seine Pakete {v}",
+"t:rm_goal_nopacks":"Nichts zu kaufen: Was du hast, reicht schon.",
 "nav.p:roadmap":"Fahrplan"
 }

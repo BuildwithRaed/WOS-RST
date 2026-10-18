@@ -1821,5 +1821,7 @@
 "t:rm_link_next":"prossimo: {goal} · {date}",
 "t:rm_empty":"Ancora nessun obiettivo: spunta le pagine con un obiettivo in Budget.",
 "t:rm_back":"Budget",
+"t:rm_goal_cost":"i suoi pacchetti {v}",
+"t:rm_goal_nopacks":"Niente da comprare: ciò che hai basta già.",
 "nav.p:roadmap":"Tabella di marcia"
 }

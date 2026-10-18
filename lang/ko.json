@@ -1820,5 +1820,7 @@
 "t:rm_link_next":"다음: {goal} · {date}",
 "t:rm_empty":"아직 목표가 없습니다: 예산에서 목표가 있는 페이지를 선택하세요.",
 "t:rm_back":"예산",
+"t:rm_goal_cost":"패키지 {v}",
+"t:rm_goal_nopacks":"구매할 것 없음: 보유량으로 이미 충분합니다.",
 "nav.p:roadmap":"로드맵"
 }

@@ -1821,5 +1821,7 @@
 "t:rm_link_next":"下一个：{goal} · {date}",
 "t:rm_empty":"还没有目标：在预算中勾选有目标的页面。",
 "t:rm_back":"预算",
+"t:rm_goal_cost":"其礼包 {v}",
+"t:rm_goal_nopacks":"无需购买：现有的已经足够。",
 "nav.p:roadmap":"路线图"
 }

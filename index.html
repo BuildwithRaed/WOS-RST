@@ -470,6 +470,14 @@
   .rm-chips{ display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; }
   .rm-chips button{ flex:none; padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:12px; min-height:32px; }
   .rm-chips button.on{ background:rgba(125,211,252,.18); border-color:var(--ice); color:var(--ice); }
+  .rm-flag{ display:block; }
+  .rm-flag > summary{ list-style:none; display:flex; justify-content:space-between; gap:8px; cursor:pointer; }
+  .rm-flag > summary::-webkit-details-marker{ display:none; }
+  .rm-flag > summary span{ font-weight:400; white-space:nowrap; }
+  .rm-gl{ display:flex; gap:8px; align-items:baseline; font-weight:400; color:var(--text); padding:5px 0 0; font-size:12px; border-top:1px solid var(--line); margin-top:5px; }
+  .rm-gl > span:nth-child(2){ flex:1 1 auto; min-width:0; }
+  .rm-gl > .meta:first-child{ flex:none; width:64px; font-size:11px; }
+  .bud-rm-l.rm-hot{ border-color:var(--ice); box-shadow:inset 3px 0 0 var(--ice); }
   .rm-more{ width:100%; margin-top:8px; padding:10px; border:1px dashed var(--line); border-radius:10px; background:transparent; color:var(--ice); font-weight:600; }
   .bud-rm-more > summary{ cursor:pointer; font-size:12px; color:var(--ice); padding:6px 0; list-style:none; }
   .bud-g-sum{ margin-top:10px; padding:8px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:12px; }
@@ -3106,7 +3114,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 24; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 25; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4195,6 +4203,8 @@ const T = {
   rm_link_next: { en: "next: {goal} \u00b7 {date}" },
   rm_empty: { en: "No goals yet: tick pages with a target on Budgets." },
   rm_back: { en: "Budgets" },
+  rm_goal_cost: { en: "its packs {v}" },
+  rm_goal_nopacks: { en: "Nothing to buy: what you have already covers it." },
   ht_title: { en: "Hero targets" },
   ht_desc: { en: "Each hero's own target. Push = straight to the top of your goals; Later = not planned for now." },
   ht_push: { en: "push" },
@@ -17262,6 +17272,31 @@ async function renderBudgetsPage(opts = {}) {
     const segs = budgetGoalSegs(goals, pagesRaw);
     const forGoal = (x) => { const items = Object.keys(x.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
     const flagsIn = (w) => goals.map((g, i) => ({ g, d: rmDates[i] })).filter((x) => x.d && !x.d.done && Math.floor((x.d.day + dow) / 7) === w);
+    // Each week's pack goes to the first goal (in order) that needs what it
+    // gives and isn't reached before that week; a goal's own packs and price
+    // are those, up to the week it's reached.
+    const gWeek = (i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null);
+    // A goal's items plus what trades into them (Mystery Points → widgets, General shards → a hero's shards …).
+    const allTrades = BUDGET_PAGES.flatMap((pg) => { try { return tradeRatesFor(pg.key); } catch (e) { return []; } }).concat(rmPlan.trades || []);
+    const gItems = new Map();
+    const itemsOf = (g) => {
+      if (!gItems.has(g.id)) {
+        const set = new Set(Object.keys(segs.get(g.id) || {}).filter((n) => segs.get(g.id)[n] > 0));
+        for (let grew = true; grew;) { grew = false; allTrades.forEach((r) => { if (set.has(r.to) && !set.has(r.from)) { set.add(r.from); grew = true; } }); }
+        gItems.set(g.id, set);
+      }
+      return gItems.get(g.id);
+    };
+    const forGoalAt = (x, w) => { const items = Object.keys(x.gives || {}).filter((n) => n !== "Gems"); return goals.find((g, i) => gWeek(i) != null && gWeek(i) >= w && items.some((n) => itemsOf(g).has(n))) || null; };
+    const goalPacks = new Map();
+    [...weeks.keys()].sort((a, b) => a - b).forEach((w) => weeks.get(w).lines.forEach((x) => {
+      const g = forGoalAt(x, w);
+      x.goal = g;
+      if (!g) return;
+      const gp = goalPacks.get(g.id) || { m: 0, lines: [] };
+      gp.m += x.m; gp.lines.push({ w, x });
+      goalPacks.set(g.id, gp);
+    }));
     const evKeys = [...new Set(Object.values(by).filter((b) => b === "svs" || b === "koi"))];
     const evIn = (w) => evKeys.flatMap((k) => { const ev = GAME_EVENTS.find((e) => e.key === k); const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000); return ev ? gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).map((d) => ({ ev, d })) : []; });
     const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" });
@@ -17270,8 +17305,8 @@ async function renderBudgetsPage(opts = {}) {
     const lineHtml = (x) => {
       const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
       const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
-      const fg = forGoal(x);
-      return `<details class="bud-rm-l"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
+      const fg = x.goal !== undefined ? x.goal : forGoal(x);
+      return `<details class="bud-rm-l${x.hot ? " rm-hot" : ""}"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
         <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
     };
     const wkStart = (w) => new Date(t0.getTime() + (w * 7 - dow) * 86400000);
@@ -17281,7 +17316,10 @@ async function renderBudgetsPage(opts = {}) {
       const wk = weeks.get(w) || { lines: [], money: 0 }; run += wk.money;
       const ws = wkStart(w), we = new Date(ws.getTime() + 6 * 86400000), range = `${dayTxt(ws)} – ${dayTxt(we)}`;
       const gap = prev != null && w - prev > 1 ? `<div class="rm-gap">· · · ${esc(t("rm_gap").replace("{n}", w - prev - 1))} · · ·</div>` : "";
-      const sorted = wk.lines.slice().sort((p, q) => q.m - p.m);
+      // Packs for a goal reached this week come first.
+      const hotIds = new Set(flagsIn(w).map((x) => x.g.id));
+      wk.lines.forEach((x) => { x.hot = !!(x.goal && hotIds.has(x.goal.id)); });
+      const sorted = wk.lines.slice().sort((p, q) => (q.hot - p.hot) || (q.m - p.m));
       const lines = sorted.slice(0, 5).map(lineHtml).join("") + (sorted.length > 5 ? `<details class="bud-rm-more"><summary>${esc(t("rm_more_packs").replace("{n}", sorted.length - 5))} &#9656;</summary>${sorted.slice(5).map(lineHtml).join("")}</details>` : "");
       const title = w === 0 ? `${esc(t("rm_this_week"))} <span class="rm-now">${esc(t("rm_now"))}</span>` : w === 1 ? esc(t("rm_next_week")) : esc(range);
       const card = sorted.length ? `<div class="t12x-card rm-wk">
@@ -17289,7 +17327,12 @@ async function renderBudgetsPage(opts = {}) {
           <div class="rm-ws meta"><span>${w <= 1 ? `${esc(range)} · ` : ""}${esc(t("rm_n_packs").replace("{n}", sorted.length))}</span><span>${esc(t("rm_so_far_v").replace("{v}", money(run)))}</span></div>
           ${lines}</div>` : "";
       const ev = evIn(w).map((x) => `<div class="bud-rm-ev">&#9876; ${esc(x.ev.name)} <span>${esc(dayTxt(x.d))} – ${esc(dayTxt(new Date(x.d.getTime() + (x.ev.days - 1) * 86400000)))}</span></div>`).join("");
-      const flags = flagsIn(w).map((x) => `<div class="bud-rm-flag${x.g.mini ? " mini" : ""}">${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(money(x.d.spent))}</span></div>`).join("");
+      // A goal's flag: its own packs' price; tap to see them.
+      const flags = flagsIn(w).map((x) => {
+        const gp = goalPacks.get(x.g.id);
+        const list = gp ? gp.lines.map(({ w: lw, x: lx }) => `<div class="rm-gl"><span class="meta">${esc(lw === 0 ? t("rm_this_week") : dayTxt(wkStart(lw)))}</span><span>${esc(lx.nm)}${lx.n > 1 ? ` <span class="meta">×${lx.n}</span>` : ""}</span><b>${esc(money(lx.m))}</b></div>`).join("") : `<div class="meta rm-gl">${esc(t("rm_goal_nopacks"))}</div>`;
+        return `<details class="bud-rm-flag rm-flag${x.g.mini ? " mini" : ""}"><summary>${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(t("rm_goal_cost").replace("{v}", money(gp ? gp.m : 0)))} &#9656;</span></summary>${list}</details>`;
+      }).join("");
       return `${gap}<div class="rm-w" id="rmw-${w}">${card}${ev}${flags}</div>`;
     };
     const wk0 = weeks.get(0);

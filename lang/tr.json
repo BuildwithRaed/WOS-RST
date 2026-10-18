@@ -1820,5 +1820,7 @@
 "t:rm_link_next":"sonraki: {goal} · {date}",
 "t:rm_empty":"Henüz hedef yok: Bütçeler'de hedefi olan sayfaları işaretle.",
 "t:rm_back":"Bütçeler",
+"t:rm_goal_cost":"paketleri {v}",
+"t:rm_goal_nopacks":"Alınacak bir şey yok: elindekiler zaten yetiyor.",
 "nav.p:roadmap":"Yol haritası"
 }

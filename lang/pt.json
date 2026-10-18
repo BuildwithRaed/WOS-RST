@@ -1820,5 +1820,7 @@
 "t:rm_link_next":"próxima: {goal} · {date}",
 "t:rm_empty":"Ainda sem metas: marque páginas com meta em Orçamentos.",
 "t:rm_back":"Orçamentos",
+"t:rm_goal_cost":"seus pacotes {v}",
+"t:rm_goal_nopacks":"Nada a comprar: o que você tem já cobre.",
 "nav.p:roadmap":"Roteiro"
 }

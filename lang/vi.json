@@ -1820,5 +1820,7 @@
 "t:rm_link_next":"tiếp theo: {goal} · {date}",
 "t:rm_empty":"Chưa có mục tiêu: đánh dấu các trang có mục tiêu trong Ngân sách.",
 "t:rm_back":"Ngân sách",
+"t:rm_goal_cost":"các gói của nó {v}",
+"t:rm_goal_nopacks":"Không cần mua: những gì bạn có đã đủ.",
 "nav.p:roadmap":"Lộ trình"
 }

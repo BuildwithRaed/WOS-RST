@@ -1821,5 +1821,7 @@
 "t:rm_link_next":"następny: {goal} · {date}",
 "t:rm_empty":"Brak celów: zaznacz strony z celem w Budżetach.",
 "t:rm_back":"Budżety",
+"t:rm_goal_cost":"jego paczki {v}",
+"t:rm_goal_nopacks":"Nic do kupienia: to, co masz, już wystarcza.",
 "nav.p:roadmap":"Plan działania"
 }

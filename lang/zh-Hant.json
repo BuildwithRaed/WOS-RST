@@ -1820,5 +1820,7 @@
 "t:rm_link_next":"下一個：{goal} · {date}",
 "t:rm_empty":"還沒有目標：在預算中勾選有目標的頁面。",
 "t:rm_back":"預算",
+"t:rm_goal_cost":"其禮包 {v}",
+"t:rm_goal_nopacks":"無需購買：現有的已經足夠。",
 "nav.p:roadmap":"路線圖"
 }
