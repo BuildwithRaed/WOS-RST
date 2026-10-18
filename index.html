@@ -12195,6 +12195,7 @@ const STATE_UNLOCKS = [
   { kind: "page", key: "t11", name: "t11", tabs: ["t11helios"], day: 220, label: "War Academy (T11)" },
   { kind: "page", key: "t12", name: "t12", tabs: ["t12research"], day: 700, label: "Flame Tech (T12)" },
   { kind: "lab", key: "crystal lab", name: "crystal lab", tabs: ["rfclab"], day: 150, label: "Crystal Lab" },
+  { kind: "note", key: "crystal lab 6", name: "crystal lab 6", tabs: ["rfclab"], day: 315, label: "Crystal Lab Lv 6" }, // owner, 18 Oct 2026 (note only until its refine numbers are in)
   { kind: "gear", key: "legendary chief gear", name: "legendary chief gear", tabs: ["chiefgear"], day: 180, label: "Legendary Chief Gear" },
   { kind: "gear", key: "chief gear t5 t6", name: "chief gear t5 t6", tabs: ["chiefgear"], day: 195, label: "Chief Gear Legendary T5 – T6" }, // with Gen 4 heroes (owner, Aug 17 update)
   { kind: "gear", key: "charm 16.1 18", name: "charm 16.1 18", tabs: ["charmscalc"], day: 270, label: "Chief Charm Lv 16.1 – 18" }, // with Gen 5 heroes (owner)
@@ -23905,7 +23906,7 @@ function gameRules() {
     { key: "unlocks", group: "timeline", label: "Unlocks by state age", help: "What opens on which state day (pets, experts, T11 / T12, Crystal Lab, Legendary Chief Gear…). Pages show a 🔒 note before that day and leave it out of the totals until it opens. Kind \"level\": pick a page's levels and the first one not open yet; until that day Max and the default My max stop just below it (like Upcoming).",
       prepare: () => loadLevelLockChoices(),
       cols: [{ key: "label", label: "Shown as", type: "text" },
-        { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear", "level"], redraw: true, locked: (row) => !!row.key,
+        { key: "kind", label: "Kind", type: "select", options: ["pets", "experts", "page", "lab", "gear", "level", "note"], redraw: true, locked: (row) => !!row.key,
           after: (row) => { if (row.kind === "level" && !LEVEL_LOCK_TARGETS[row.table]) { row.table = Object.keys(LEVEL_LOCK_TARGETS)[0]; row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; } } },
         { key: "name", label: "Name (pet / expert / id)", type: "text", locked: (row) => !!row.key, when: (row) => row.kind !== "level" },
         { key: "tab", label: "Page", type: "page", when: (row) => row.kind !== "level" },
