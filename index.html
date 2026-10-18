@@ -280,7 +280,7 @@
   .pk-chip .pk-tmw{ width:22px; height:22px; border-radius:6px; }
   .pk-chip .pk-tmw img{ width:16px; height:16px; }
   .pk-tm{ position:absolute; inset-inline-start:-5px; bottom:-5px; text-decoration:none; font-size:8.5px; font-weight:700; line-height:1; padding:2px 3px; border-radius:5px; background:#0b0f15; color:#fff; border:1px solid var(--ring); }
-  .pk-chip .pk-tm{ font-size:7.5px; padding:1px 2px; bottom:-4px; }
+  .pk-chip .pk-tm{ font-size:9px; padding:1px 2px; bottom:-5px; }
   .pk-arrange .pk-arr{ display:flex; }
   .pk-chips{ display:flex; flex-wrap:wrap; gap:4px; }
   .pk-chip{ display:inline-flex; align-items:center; gap:3px; padding:2px 7px 2px 3px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); font-size:11.5px; }
@@ -332,7 +332,7 @@
   .pks-more > summary{ cursor:pointer; padding:11px 0; font-size:13px; color:var(--frost); }
   .pks-more[open] > summary{ color:var(--ice); }
   .pks [data-pktrigwrap], .pks [data-pkownwrap]{ margin-top:6px; }
-  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; } .bset-c input[type=number]{ width:84px; } }
+  @media (max-width:700px){ .bset-c input, .bset-c select{ font-size:16px; } .bset-c input[type=date]{ width:156px; font-size:16px; } .bset-c input[type=number]{ width:84px; font-size:16px; } }
   .bset-c .bud-spend-per button{ font-size:12.5px; padding:6px 10px; }
   .bud-spend-per{ display:inline-flex; gap:2px; padding:2px; background:var(--panel-2); border-radius:8px; }
   .bud-spend-per button{ border:0; background:none; color:var(--muted); font:inherit; font-size:11px; padding:4px 9px; border-radius:6px; cursor:pointer; }
@@ -344,6 +344,11 @@
   .bud-line:first-of-type{ margin-top:12px; }
   .bud-line > summary{ list-style:none; display:flex; align-items:center; gap:10px; padding:10px 0; cursor:pointer; }
   .bud-line > summary::-webkit-details-marker{ display:none; }
+  .exp-count{ display:flex; align-items:center; gap:6px; justify-self:start; min-height:32px; font-size:11px; color:var(--muted); cursor:pointer; }
+  .exp-count input{ width:16px; height:16px; margin:0; cursor:pointer; }
+  .exp-skl{ display:flex; flex-direction:column; gap:1px; }
+  .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
+  .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
   .bud-line-t{ flex:1 1 auto; min-width:0; }
   .bud-line-t b{ font-size:14.5px; }
@@ -394,27 +399,27 @@
     .dash-fit .rc-wrap{ margin-bottom:0 !important; }
     .dash-fit .rc-grid{ gap:6px; }
     .dash-fit .rc-card{ padding:5px 4px; border-radius:12px; }
-    .dash-fit .rc-troop{ font-size:9px; }
+    .dash-fit .rc-troop{ font-size:10px; }
     .dash-fit .rc-pick{ width:36px; height:36px; margin:2px auto; border-radius:8px; }
     .dash-fit .rc-name{ font-size:11.5px; }
     .dash-fit .rc-stars{ margin:1px 0; }
     .dash-fit .rc-stars > *{ width:17px !important; height:17px !important; }
     .dash-fit .rc-step{ margin:1px auto 2px; max-width:110px; font-size:11px; }
     .dash-fit .rc-pm{ width:22px; height:22px; font-size:14px; }
-    .dash-fit .rc-sh{ font-size:9.5px; margin:0; line-height:1.3; }
-    .dash-fit .rc-pct{ font-size:9.5px; line-height:1.25; }
+    .dash-fit .rc-sh{ font-size:10px; margin:0; line-height:1.3; }
+    .dash-fit .rc-pct{ font-size:10px; line-height:1.25; }
     .dash-fit .rc-pct span{ display:inline; } .dash-fit .rc-pct span + span::before{ content:" · "; }
     .dash-fit .rc-card select{ font-size:11px; padding:1px 4px; margin-top:2px; height:24px; }
     .dash-fit .dash-troops.cols .dash-troop{ padding:5px 6px 3px; }
     .dash-fit .dash-troops.cols .dash-troop-h{ font-size:10px; margin-bottom:0; }
     .dash-fit .dash-troops.cols .dash-stat{ padding:2px 1px; gap:0; }
-    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:9px; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:10px; }
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:13px; }
     .dash-fit .dash-troops.cols .dash-stat-bar{ height:3px; margin-top:1px; }
     .dash-fit .dash-troops.cols .dash-stat{ grid-template-columns:1fr auto; align-items:baseline; }
     .dash-fit .dash-troops.cols .dash-stat-k{ grid-column:1 / -1; }
     .dash-fit .dash-troops.cols .dash-stat-v{ grid-column:1; grid-row:2; }
-    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:2; grid-row:2; font-size:8.5px; line-height:1.2; text-align:end; }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:2; grid-row:2; font-size:10px; line-height:1.2; text-align:end; }
     .dash-fit .dash-troops.cols .dash-stat-bar{ grid-column:1 / -1; grid-row:3; }
     .dash-fit #troopSections > .meta{ display:none; }
     .dash-fit #troopSections{ display:flex; flex-direction:column; }
@@ -423,16 +428,18 @@
     .dash-fit{ --sx:1; }
     .dash-fit .dash-troops.cols .dash-troop-h{ font-size:calc(10px * min(var(--sx), 1.25)); }
     .dash-fit .dash-troops.cols .dash-stat{ padding:calc(2px + (var(--sx) - 1) * 10px) 1px; }
-    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(9px * min(var(--sx), 1.2)); }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:calc(10px * min(var(--sx), 1.2)); }
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(13px * min(var(--sx), 1.12)); }
-    .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8.5px * min(var(--sx), 1.1)); }
+    /* "/ 1988%" and "+1843.3%" stay 10px (no growing) with tight letters, so they fit the narrow columns. */
+    .dash-fit .dash-troops.cols .dash-stat-gap, .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:10px; letter-spacing:-.4px; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ letter-spacing:0; }
     /* Small phones (360 px): a little tighter so the numbers stay inside the cards. */
     @media (max-width:380px){
       .dash-fit .dash-troops.cols .dash-troop{ padding-left:4px; padding-right:4px; }
       .dash-fit .dash-troops.cols .dash-stat-k{ letter-spacing:0; gap:2px; }
-      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:8px; }
+      .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:10px; letter-spacing:-.4px; }
       .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:calc(12px * min(var(--sx), 1.12)); }
-      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:calc(8px * min(var(--sx), 1.1)); }
+      .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:10px; letter-spacing:-.4px; }
     }
     .dash-fit .dash-troops.cols .dash-stat-bar{ height:calc(3px * min(var(--sx), 1.6)); }
     .dash-fit .rc-pick{ width:calc(36px * min(var(--sx), 1.55)); height:calc(36px * min(var(--sx), 1.55)); }
@@ -686,6 +693,7 @@
   .pur-t td{ padding:6px 8px; border-top:1px solid var(--line); white-space:nowrap; }
   .pur-t tr.on td{ background:rgba(108,199,230,.08); }
   .pur-t-pr{ font-weight:700; }
+  .pur-t-pr .meta{ margin-inline-start:4px; }
   .pur-t th:first-child, .pur-t td.pur-t-ctl{ position:sticky; inset-inline-start:0; background:var(--panel); z-index:1; }
   .pur-t th:first-child{ background:var(--panel-2); z-index:2; }
   .pur-t-step{ display:inline-flex; align-items:center; gap:6px; }
@@ -1065,7 +1073,7 @@ input,select,textarea{
   .pk-card.pk-open{ grid-column:1 / -1; border-color:var(--ice); }
   .pk-sum-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .pk-sum-h b{ font-size:14px; line-height:1.3; cursor:pointer; min-width:0; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; }
+  .pk-chip{ font-size:10px; padding:2px 7px; border-radius:8px; border:1px solid var(--line); color:var(--muted); white-space:nowrap; flex-shrink:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
   .pk-sum-gives{ font-size:11.5px; color:var(--muted); margin-top:4px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .pk-sum-f{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--ice); }
   .page-note{ font-size:12.5px; line-height:1.45; padding:9px 12px; margin:0 0 12px; border-radius:12px; border:1px solid var(--ice); background:rgba(111,211,242,.07); color:var(--frost); }
@@ -1270,7 +1278,12 @@ input,select,textarea{
   .mn-btns button:disabled{ opacity:.35; cursor:default; }
   .mn-btns button.on{ border-color:var(--ice); }
   .mn-langs{ margin:4px 0 0; font-size:11.5px; color:var(--muted); }
-  .mn-langs summary{ cursor:pointer; width:max-content; }
+  .mn-langs summary{ cursor:pointer; max-width:100%; overflow-wrap:anywhere; }
+  .adm-cur-add{ display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; align-items:end; }
+  .adm-cur-add label{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .adm-cur-add label span{ font-size:11px; color:var(--muted); }
+  .adm-cur-add input{ width:100%; min-width:0; }
+  .adm-cur-add .btn{ min-height:36px; }
   .mn-langs label, .mn-note label{ display:flex; align-items:center; gap:8px; margin-top:4px; }
   .mn-langs label span, .mn-note label span{ flex:0 0 90px; font-size:11.5px; color:var(--muted); }
   .mn-langs input, .mn-note textarea{ flex:1 1 auto; min-width:0; }
@@ -1331,7 +1344,7 @@ input,select,textarea{
   .sa-arrow{ color:var(--muted); flex:none; }
   .plx-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
   .plx-stat{ border:1px solid var(--line); border-radius:12px; padding:9px 11px; background:rgba(255,255,255,.02); min-width:0; }
-  .plx-stat span{ display:block; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .plx-stat span{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; font-size:10.5px; line-height:1.25; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; overflow:hidden; }
   .plx-stat b{ display:block; font-size:18px; font-weight:800; margin-top:2px; }
   .plx-stat small{ display:block; font-size:10px; color:var(--muted); }
   .plx-stat .t12x-bar{ margin-top:6px; }
@@ -1340,6 +1353,7 @@ input,select,textarea{
     .plx-stats.one{ gap:5px; }
     .plx-stats.one .plx-stat{ padding:7px 6px; }
     .plx-stats.one .plx-stat b{ font-size:14px; }
+    .plx-stats.one .plx-stat span{ letter-spacing:0; }
     .plx-stats.one .plx-stat small{ font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   }
   .t12x-tabs.plx-stat-tabs{ margin:0 0 10px; max-width:none; }
@@ -1349,12 +1363,12 @@ input,select,textarea{
   .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-bottom:6px; scrollbar-width:thin; }
   .plx-pick button{ flex:0 0 auto; width:76px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
   .plx-pick button img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
-  .plx-pick button > span:last-child{ width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+  .plx-pick button > span:last-child{ width:100%; text-align:center; line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
   .plx-pick-ph{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
   .plx-pick button.on{ border-color:var(--tc); color:var(--frost); background:rgba(255,255,255,.07); box-shadow:inset 0 -2px 0 var(--tc); }
   .plx-pick button.dim{ opacity:.45; }
   @media (min-width: 901px){ .plx-pick{ flex-wrap:wrap; overflow:visible; } }
-  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:66px; } .plx-pick button img, .plx-pick-ph{ width:34px; height:34px; } }
+  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:66px; padding:6px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:34px; height:34px; } }
   .t12x-tabs{ display:flex; flex:1 1 320px; max-width:560px; margin-inline-start:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; }
   .t12x-tabs button{ flex:1; border:0; background:none; color:var(--muted); font:inherit; font-weight:600; font-size:13px; padding:7px 4px; border-radius:10px; cursor:pointer; }
   .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }
@@ -1497,6 +1511,7 @@ input,select,textarea{
   .bs-row .n small{ display:block; font-weight:400; font-size:11px; color:var(--muted); overflow-wrap:anywhere; }
   .bs-row b{ font-size:13px; color:var(--danger); white-space:nowrap; }
   .bs-title{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin:4px 0 8px; }
+  .bs-row b .bs-sw{ display:block; font-size:10px; font-weight:600; line-height:1.2; opacity:.85; }
   .bs-row.ok{ background:rgba(76,209,138,.06); border-color:rgba(76,209,138,.22); }
   .bs-row.ok b{ color:var(--good); }
   .bs-ok{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
@@ -1534,7 +1549,10 @@ input,select,textarea{
   .scan-zero-to{ flex:0 0 auto; font-weight:700; color:var(--danger); font-size:14px; padding-inline-end:6px; }
   .scan-spin{ width:28px; height:28px; margin:6px auto 12px; border:3px solid var(--line); border-top-color:var(--ice); border-radius:50%; animation:scanspin .8s linear infinite; }
   @keyframes scanspin{ to{ transform:rotate(360deg); } }
-  .bp-tile .bp-name{ font-size:9.5px; color:var(--muted); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* Names up to 2 lines ("Custom Resource Chest Lv.1"), so tiles of one family can be told apart. */
+  .bp-tile .bp-name{ font-size:10px; line-height:1.15; color:var(--muted); max-width:100%; text-align:center; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .bp-grid .bp-tile{ padding:5px 3px; gap:1px; }
+  .bp-grid .bp-tile img{ width:34px; height:34px; }
   .island-thumb.facility-thumb{ padding:10% !important; }
   .island-thumb img{ object-fit:contain !important; border-radius:8px !important; }
   .skin-card .info{ padding:8px 10px 10px; }
@@ -1774,6 +1792,22 @@ input,select,textarea{
   [data-packtable]{ content-visibility:auto; contain-intrinsic-size:auto 600px; }
   /* An open ⋯ menu must show over the cards below (content-visibility clips it). */
   [data-packtable]:has(.pk-more[open]){ content-visibility:visible; position:relative; z-index:40; }
+  /* Phones: tap areas at least 32px high. Text links and small labels grow
+     invisibly (padding, taken back with the same negative margin); pills and
+     the research − / + get a little taller. */
+  @media (max-width: 700px){
+    .bs-foot .linklike, .pc-card .linklike, .t12x .linklike{ padding-block:9px; margin-block:-9px; }
+    .pc-card .pc-title{ padding-block:9px; margin-block:-9px; }
+    .pk-bud{ padding-block:9px; margin-top:-3px; margin-bottom:-9px; }
+    details.pk-sum-used summary{ min-height:32px; }
+    .pc-chip{ min-height:32px; }
+    .pc-nav .btn{ min-height:32px; min-width:32px; }
+    .t12x-step button{ width:32px; height:32px; }
+    .plx-stat-tabs button{ min-height:32px; }
+  }
+  /* Pets Level: Current and Target one per row on narrow phones, so the
+     longest level ("Lv. 50 Advanced (Max)") is not cut. */
+  @media (max-width: 480px){ .pet-level-row{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -3516,6 +3550,8 @@ const T = {
   experts_sigils_summary_note: { en: "Change these on each expert's card" },
   experts_affinity_have: { en: "Affinity you have" },
   skill_exp_have: { en: "EXP you have" },
+  expert_count_tick: { en: "Count" },
+  expert_count_tip: { en: "Ticked: this expert counts in the totals, Dashboard and Budgets." },
   minutes_short: { en: "min" },
   piece_helmet: { en: "Helmet" },
   piece_watch: { en: "Watch" },
@@ -3724,6 +3760,7 @@ const T = {
   budgets_not_counted: { en: "Not counted: \"Count toward Dashboard\" is off on this page (from your state age or your own tick)." },
   budgets_open_again: { en: "Your state age changed what's open here: open this page once to update its plan." },
   budgets_open_once: { en: "Open this page once so its plan can be totalled here." },
+  budgets_total_partial: { en: "Counts {n} of {m} ticked pages. Open the others once (list below) to add them." },
   budgets_nothing_planned: { en: "Nothing planned on this page." },
   budgets_no_packs: { en: "No pack table assigned to this page." },
   budgets_packs_detail: { en: "Packs to buy" },
@@ -7093,7 +7130,7 @@ function purTablePopup(tb, opts) {
       const on = ladder ? i <= S.upTo : S.counts[i] > 0;
       const ctl = ladder ? `<button type="button" class="pur-t-tick${on ? " on" : ""}" data-tup="${i}" aria-pressed="${on}">${on ? "&#10003;" : ""}</button>`
         : `<span class="pur-t-step"><button type="button" data-tct="${i}|-1">&minus;</button><i>${S.counts[i] || 0}</i><button type="button" data-tct="${i}|1" ${r.max && (S.counts[i] || 0) >= r.max ? "disabled" : ""}>+</button></span>`;
-      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">×${r.max}</span>` : ""}</td>`;
+      const pr = `<td class="pur-t-pr">${esc(money(r.price))}${r.max ? ` <span class="meta">${bidiNum("×" + r.max)}</span>` : ""}</td>`;
       if (choiceType) return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}<td class="pur-t-pk"><div class="pur-t-picks3">${S.sel[i].map((sel, k) => `<select class="pur-t-sel${sel < 0 ? " unset" : ""}" data-tsel="${i}|${k}" aria-label="${esc(t("pur_tbl_item_n").replace("{n}", k + 1))}"><option value="-1" ${sel < 0 ? "selected" : ""} disabled>${esc(t("pur_tbl_pick"))}</option>${r.opts.map((o, oi) => `<option value="${oi}" ${oi === sel ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`).join("")}</div></td></tr>`;
       const cells = (tb.rows[r.ri] || {}).cells || [];
       return `<tr class="${on ? "on" : ""}"><td class="pur-t-ctl">${ctl}</td>${pr}${showCols.map((ci) => `<td>${esc(String(cells[ci] == null ? "" : cells[ci]))}</td>`).join("")}</tr>`;
@@ -7106,7 +7143,7 @@ function purTablePopup(tb, opts) {
       <div class="meta" style="font-size:11.5px; margin-bottom:8px;">${esc(hint)}</div>
       <div class="pur-t-wrap"><table class="pur-t">${head}${body}</table></div>
       ${miss ? `<div class="pur-t-miss">${esc(t("pur_tbl_missing").replace("{n}", miss))}</div>` : ""}
-      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? l.count + "× " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
+      <div class="pur-m-foot"><span><b>${esc(money(total))}</b> <span class="meta">${ls.length ? esc(ls.map((l) => (l.count > 1 ? bidiNum(l.count + "×") + " " : "") + l.label).join(" · ")) : esc(t("pur_tbl_nothing"))}</span></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-tclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-tadd ${ls.length && !miss ? "" : "disabled"}>+ ${esc(t("pur_add_btn"))}</button></span></div>
     </div>`;
     modal.style.display = "flex";
     putBoxes();
@@ -7233,12 +7270,12 @@ async function renderPurchasesPage() {
     const when = dates.length === 1 ? shortDay(dates[0]) : `${t("pur_n_dates").replace("{n}", dates.length)} · ${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today);
     return `<div class="pur-item pur-grp${open ? " open" : ""}" data-purgrp="${esc(kind + "|" + g.key)}">
-      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
+      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">${bidiNum("× " + n)}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
       <div class="bud-mats pur-chips">${chipsFor(purchaseGives(g.first, tb), n, 5)}</div>
       <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
         <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button>${kind === "c" ? `<button type="button" class="btn small" data-purgmove="bought">&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}<button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
       ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
-      <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">× ${Math.max(1, Math.floor(Number(p.count) || 1))}</span><span class="pur-date-p">${esc(packFmtMoney(cost(p), link.currency))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
+      <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span><span class="pur-date-p">${esc(packFmtMoney(cost(p), link.currency))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
     </div>`;
   };
   const summary = `<div class="t12x-card pur-sum">
@@ -7519,7 +7556,7 @@ async function renderPurchasesPage() {
         return `<div class="pur-cl-row${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
           ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
           <span class="pur-cl-ic" title="${first ? esc(materialDisplayName(first.replace(/ \(minutes\)$/, ""))) : ""}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}${more ? `<u class="pur-cl-more">+${more}</u>` : ""}</span>
-          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ×${n} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
+          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""}</b> ${bidiNum("×" + n)} <i>${open ? "&#9662;" : "&#9656;"}</i></span>
           ${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span>` : ""}
           <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
           ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
@@ -7546,7 +7583,7 @@ async function renderPurchasesPage() {
       }).join("");
       const when = whenShort(xs);
       return `<div class="pur-item">
-        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">× ${n}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
+        <div class="pur-item-h"><div style="min-width:0;"><b>${esc(sugName(r))}</b> <span class="meta">${bidiNum("× " + n)}</span><div class="meta" style="font-size:11px;">${esc(r.label)}</div></div><span class="pur-price">${esc(packFmtMoney(r.price * n, r.currency))}</span></div>
         ${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}
         <div class="pur-item-f"><span class="meta pur-for">${tagHtml(i, n)}${esc(when)}${names.length ? ` · ${names.join(" · ")}` : ""}</span>${tb && (r.row != null || !plainPack(tb)) ? `<button type="button" class="btn small" data-pursug="${i}">+ ${esc(t("pur_will_buy"))}</button>` : ""}</div>
       </div>`;
@@ -7808,7 +7845,7 @@ async function renderPurchasesPage() {
       modal.innerHTML = `<div class="modal-box pur-modal">
         <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2><button type="button" class="rfa-x" data-pmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">× ${x.count}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">${bidiNum("× " + x.count)}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -10115,12 +10152,16 @@ async function renderInventory() {
       return `<button type="button" class="bp-tile" data-bpwidgets title="${esc(t("bp_widgets"))}"><img src="${esc(HERO_ITEM_ICON.widget)}" alt="" loading="lazy" /><span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span><span class="bp-name">${esc(t("bp_widgets"))} (${n})</span></button>`;
     }
     const ic = bpIcon(it), v = Number(bp[it.name]) || 0, label = it.hero || materialDisplayName(it.name);
+    // The Lv badge and the shield already show the level and "protected", so
+    // the name under the picture leaves them out and fits in 2 lines
+    // ("Custom Resource Chest"); the full name stays in the title.
+    const tileName = !it.hero && /Lv\.\d/.test(it.name) ? label.replace(/\s*Lv\.\d+/, "").replace(/\s*\(protected\)$/i, "") : label;
     return `<button type="button" class="bp-tile${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : label)}">
       ${it.hero && it.face ? `<span class="bp-heroic"><img class="bp-item" src="${esc(ic)}" alt="" loading="lazy" /><img class="bp-face" src="${esc(it.face)}" alt="" loading="lazy" /></span>` : ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
       ${sp ? `<span class="bp-size">${esc(bpSpeedupSize(it.name))}</span>` : /Lv\.\d/.test(it.name) ? `<span class="bp-size">${esc(/Lv\.\d/.exec(it.name)[0])}</span>` : ""}
       ${/\(protected\)$/.test(it.name) ? `<span class="bp-shield" title="Protected">&#128737;</span>` : ""}
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
-      ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(label)}</span>`}
+      ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(tileName)}</span>`}
     </button>`;
   };
   const drawGroups = () => {
@@ -13634,7 +13675,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const rerender = () => renderPackCostBlock(containerEl, calcKey, groups, ownedOrig);
   // Card layout (summary pages): plans as cards to pick from, then the
   // picked plan's packs as a short list.
-  const cards = BAR_SUMMARY_KEYS.has(calcKey);
+  const cards = BAR_SUMMARY_KEYS.has(calcKey) || PACK_COST_CARD_KEYS.has(calcKey);
   const wrapOpen = cards ? `<div class="pc-card">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
   const head = cards ? `
     <div class="pc-head">
@@ -13770,7 +13811,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const d = new Date(today.getTime() + p.days * 86400000);
     let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { short = fmtDate(p.days); }
     const whenTxt = p.days === 0 ? t("pack_ready_now") : `${short} · ${p.days}d`;
-    const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>');
+    const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>');
     const byPack = [];
     mineShare.rows.forEach((r) => {
       let g = byPack.find((x) => x.title === r.title);
@@ -13868,7 +13909,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
         };
         const p = pick && pick.plan;
         const byPack = [];
@@ -14029,11 +14070,24 @@ function myStorePrice(usd, code) {
   const v = key ? Number(slots[key]) : 0;
   return v > 0 ? v : null;
 }
+// Numbers and money inside right-to-left text (Arabic) keep their own
+// left-to-right order: "US$ 99.99", "−1.77B", "×3" (not "$US", "1.77B−",
+// "3×"). Unicode isolate marks (LRI … PDI) are plain text, so this works in
+// HTML, attributes, <option> labels and textContent alike. Left-to-right
+// languages get the text unchanged.
+function bidiNum(s) {
+  if (s == null || s === "" || typeof document === "undefined" || document.documentElement.dir !== "rtl") return s;
+  return "\u2066" + s + "\u2069";
+}
+// A planner total that is still short: the amount (no minus sign) with a
+// small "short" under it, in the squares' red. Used by every planner page's
+// "Total resources needed" squares.
+function bsShortHtml(amountText) { return `${esc(bidiNum(amountText))}<small class="bs-sw">${esc(t("bs_short_word"))}</small>`; }
 function fmtMoneyIn(n, code) {
   try {
-    return new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    return bidiNum(new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n));
   } catch (e) {
-    return packCurrencySymbol(code) + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return bidiNum(packCurrencySymbol(code) + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   }
 }
 function packConvert(n, from) {
@@ -14095,9 +14149,9 @@ function packFmtMoney(n, currency, whole, raw) {
     const fk = `${LANG}|${code}|${digits}`;
     let f = PACK_MONEY_FMT.get(fk);
     if (!f) { f = new Intl.NumberFormat(LANG === "en" ? undefined : LANG, { style: "currency", currency: code, minimumFractionDigits: digits, maximumFractionDigits: digits }); PACK_MONEY_FMT.set(fk, f); }
-    return f.format(n);
+    return bidiNum(f.format(n));
   } catch (e) {
-    return packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return bidiNum(packCurrencySymbol(code) + n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }));
   }
 }
 
@@ -15841,17 +15895,23 @@ async function renderBudgetsPage(opts = {}) {
   const STAT_RAW = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
   const TROOPS = ["Infantry", "Lancers", "Marksman"];
 
-  const statTableHtml = (deltas, compact) => {
+  // Stat increase: troop tabs, one box per stat (green gain, "now → after"
+  // under it), so phones see every stat without a hidden sideways scroll.
+  const statTableHtml = (deltas, id) => {
     if (!deltas.length) return "";
     const by = {}; deltas.forEach((d) => { by[`${d.troop}|${d.stat}`] = (by[`${d.troop}|${d.stat}`] || 0) + d.delta; });
     const stats = STAT_KEYS.filter((s) => TROOPS.some((tr) => by[`${tr}|${s}`]));
-    return `<div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
-      <thead><tr><th style="text-align:start; padding:4px 6px; border-bottom:1px solid var(--line);"></th>${stats.map((s) => `<th style="padding:4px 6px; border-bottom:1px solid var(--line); text-align:center;">${esc(tStatLabel(STAT_RAW[s]))}</th>`).join("")}</tr></thead>
-      <tbody>${TROOPS.map((tr) => `<tr><td style="padding:4px 6px; font-weight:600; white-space:nowrap;">${esc(troopDisplayName(tr))}</td>${stats.map((s) => {
-        const d = by[`${tr}|${s}`] || 0; const cur = curStat(tr, s);
-        if (!d) return `<td style="padding:4px 6px; text-align:center;" class="meta">—</td>`;
-        return `<td style="padding:4px 6px; text-align:center; white-space:nowrap;">${cur == null ? "" : `<span class="meta">${pct(cur)}</span> → <b>${pct(cur + d)}</b> `}<span style="color:var(--good);">+${pct(d)}</span></td>`;
-      }).join("")}</tr>`).join("")}</tbody></table></div>`;
+    const troops = TROOPS.filter((tr) => stats.some((s) => by[`${tr}|${s}`]));
+    const tabColor = { Infantry: PLX_TROOP_COLORS.Infantry, Lancers: PLX_TROOP_COLORS.Lancer, Marksman: PLX_TROOP_COLORS.Marksman };
+    return plxStatTabsHtml("bud_stat_" + id, troops.map((tr) => ({
+      key: tr, label: troopDisplayName(tr), color: tabColor[tr],
+      html: `<div class="plx-stats">${stats.map((s) => {
+        const d = by[`${tr}|${s}`] || 0, cur = curStat(tr, s);
+        return `<div class="plx-stat"><span>${esc(tStatLabel(STAT_RAW[s]))}</span>${d
+          ? `<b style="color:var(--good);">${esc(bidiNum("+" + pct(d)))}</b>${cur == null ? "" : `<small>${esc(bidiNum(`${pct(cur)} \u2192 ${pct(cur + d)}`))}</small>`}`
+          : `<b class="meta">&mdash;</b>`}</div>`;
+      }).join("")}</div>`,
+    })));
   };
   const budgetResetText = (r, day) => {
     if (r === "unlimited") return t("pack_reset_unlimited");
@@ -15941,7 +16001,7 @@ async function renderBudgetsPage(opts = {}) {
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
-      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas)}</div>` : ""}`);
+      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas, pg.calcKey)}</div>` : ""}`);
   });
 
   if (combined.chosen) {
@@ -16027,6 +16087,11 @@ async function renderBudgetsPage(opts = {}) {
         <span style="font-size:30px; font-weight:800; letter-spacing:-.3px;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
         ${anyPlan ? `<span class="meta" style="font-size:12px; width:100%;">${esc(t("bud_done_by"))} <span style="color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span></span>` : ""}
       </div>
+      ${(() => {
+        // The total only covers pages with a saved plan: say so when some ticked pages have none yet.
+        const ticked = pagesRaw.filter((pg) => included(pg.calcKey)), noPlan = ticked.filter((pg) => pg.missing).length;
+        return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : "";
+      })()}
       ${(() => { const n = (PACK_PURCHASES.list || []).filter((p) => p.status !== "bought" && packValidDay(p.date) && p.date >= packDayKey(packStartOfToday())).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
       ${viewCardsHtml}
       ${combinedHtml}
@@ -16037,7 +16102,7 @@ async function renderBudgetsPage(opts = {}) {
         const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
         return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
       }).join("")}</div></div>` : ""}
-      ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas)}</div>` : ""}
+      ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas, "all")}</div>` : ""}
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
     </div>`;
 
@@ -16651,6 +16716,8 @@ async function renderChiefGearCalc() {
 // Pages whose Backpack shows the short summary (what's still missing, ready
 // items as chips) with the boxes behind "Show all / edit".
 // Every planner page with a Backpack bar uses the new layout (plxShellHtml).
+// Pages with their own totals squares (not the shared bar) that still use the Pack Cost card.
+const PACK_COST_CARD_KEYS = new Set(["experts", "experts_research"]);
 const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center", "chief_gear", "charm", "hero_gear", "pets", "pets_refine"]);
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
@@ -16783,7 +16850,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (summaryOn) {
       // Edit list: short amounts with a word, shown as a pill.
       const amt = (v) => (/\(minutes\)$/.test(name) ? t12FormatTime(v / 60) : shortAmount(v));
-      const text = needed === 0 ? t("bs_not_needed") : stillNeed > 0 ? `\u2212${amt(stillNeed)} ${t("bs_short_word")}` : surplus > 0 ? `\u2713 ${amt(surplus)} ${t("bs_spare_word")}` : "\u2713";
+      const text = needed === 0 ? t("bs_not_needed") : stillNeed > 0 ? `${bidiNum(amt(stillNeed))} ${t("bs_short_word")}` : surplus > 0 ? `\u2713 ${bidiNum(amt(surplus))} ${t("bs_spare_word")}` : "\u2713";
       return { statusColor, statusText: text };
     }
     const statusText = needed === 0 ? "\u2014" : stillNeed > 0 ? `${stillNeed.toLocaleString()}` : surplus > 0 ? `\u2713 ${surplus.toLocaleString()}` : "\u2713";
@@ -16814,8 +16881,8 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     return `${hosted ? "" : footHtml()}
       ${items.length ? (hosted ? "" : `<div class="bs-title">${esc(t("bs_title_needed"))}</div>`) : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-sq" style="--n:${Math.max(1, Math.min(7, items.length))};">
-      ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&minus;${esc(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
-      ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(amount(n, (effOwned[n] || 0) - needOf(n)))}</b></div>`).join("")}
+      ${short.map((n) => `<div class="bs-row">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>${bsShortHtml(amount(n, needOf(n) - (effOwned[n] || 0)))}</b></div>`).join("")}
+      ${ready.map((n) => `<div class="bs-row ok">${img(n)}<div class="n">${esc(label(n))}<small>${esc(t("bs_have_of").replace("{have}", amount(n, effOwned[n] || 0)).replace("{need}", amount(n, needOf(n))))}</small></div><b>&#10003; ${esc(bidiNum(amount(n, (effOwned[n] || 0) - needOf(n))))}</b></div>`).join("")}
       </div>`;
   };
 
@@ -17393,7 +17460,7 @@ async function renderSkinGallery() {
         <div class="sub" id="skinSummaryLine"></div>
       </div>
     </div>
-    <div class="stats-row-scroll" id="skinTotals" style="margin-bottom:16px;"></div>
+    <div class="t12x-card" style="margin-bottom:16px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="skinTotals"></div></div>
     <div id="skinCatSwitcher"></div>
     <div class="filter-bar" style="margin-bottom:12px;">
       <input id="skinSearch" placeholder="${esc(t("search_skins_placeholder"))}" style="flex:1; min-width:160px;" />
@@ -17558,15 +17625,13 @@ async function renderSkinGallery() {
       if (ib === -1) return -1;
       return ia - ib;
     });
+    // Same stat boxes as VIP / Tundra Album (one row when they fit).
     document.getElementById("skinTotals").innerHTML = totalEntries.length
-      ? totalEntries
-          .map(([type, maxVal]) => {
-            const bare = type.replace(/^Troops?\s+/i, "");
-            const label = STAT_ORDER.includes(bare) ? `Troop ${bare}` : type;
-            return `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">Total ${esc(label)}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxVal.toFixed(1)}%</div></div>`;
-          })
-          .join("")
-      : `<div class="metric" style="grid-column:1/-1;"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div><div class="meta" style="font-size:11px; margin-top:2px;">${esc(t("mark_skins_owned_hint"))}</div></div>`;
+      ? plxStatBoxesHtml(totalEntries.map(([type, maxVal]) => {
+          const bare = type.replace(/^Troops?\s+/i, "");
+          return { label: STAT_ORDER.includes(bare) ? tStatLabel(bare) : tStatLabel(type), val: totalsByType[type] || 0, max: maxVal };
+        }), totalEntries.length <= 4)
+      : `${plxStatBoxesHtml([{ label: t("total_bonus"), val: 0 }])}<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mark_skins_owned_hint"))}</div>`;
 
 
     const sections = document.getElementById("skinSections");
@@ -17670,7 +17735,7 @@ async function renderIslandGallery() {
         <div class="sub" id="islandSummaryLine"></div>
       </div>
     </div>
-    <div class="stats-row-scroll" id="islandTroopTotals" style="margin-bottom:20px;"></div>
+    <div class="t12x-card" style="margin-bottom:20px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="islandTroopTotals"></div></div>
     <div id="islandCatSwitcher"></div>
     <div class="filter-bar" style="margin-bottom:12px;">
       <input id="islandSearch" placeholder="${esc(t("search_islands_placeholder"))}" style="flex:1; min-width:160px;" />
@@ -17740,17 +17805,16 @@ async function renderIslandGallery() {
       });
     }
     const STAT_ABBR2 = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-    const row1 = RAW_STATS.map((stat) => {
-      const tot = generalTotals[stat] || { cur: 0, max: 0 };
-      return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">Troops ${esc(STAT_ABBR2[stat] || stat)}</div><div class="val" style="font-size:13px;">+${tot.cur.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${tot.max.toFixed(1)}%</div></div>`;
-    }).join("");
-    const row2Order = ["Infantry Attack", "Infantry Defense", "Lancers Attack", "Lancers Defense", "Marksman Attack", "Marksman Defense"];
-    const row2Abbr = { "Infantry Attack": "Inf ATK", "Infantry Defense": "Inf DEF", "Lancers Attack": "Lan ATK", "Lancers Defense": "Lan DEF", "Marksman Attack": "Mark ATK", "Marksman Defense": "Mark DEF" };
-    const row2 = row2Order.map((label) => {
-      const tot = specificTotals[label] || { cur: 0, max: 0 };
-      return `<div class="metric" style="padding:6px; min-width:75px;"><div class="label" style="font-size:9px;">${esc(row2Abbr[label] || label)}</div><div class="val" style="font-size:13px;">+${tot.cur.toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${tot.max.toFixed(1)}%</div></div>`;
-    }).join("");
-    document.getElementById("islandTroopTotals").innerHTML = row1 + row2;
+    // Same stat boxes and troop tabs as Alliance Tech: all troops, then each troop's own.
+    const box = (label, tot) => ({ label, val: tot ? tot.cur : 0, max: tot ? tot.max : 0 });
+    const troopTab = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
+    document.getElementById("islandTroopTotals").innerHTML = plxStatTabsHtml("islands", [
+      { key: "all", label: t("plx_all_troops"), html: plxStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat])), true) },
+      ...["Infantry", "Lancers", "Marksman"].map((tr) => ({
+        key: tr, label: troopDisplayName(troopTab[tr]), color: PLX_TROOP_COLORS[troopTab[tr]],
+        html: plxStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`])), true),
+      })),
+    ]);
 
     const sections = document.getElementById("islandSections");
     // filtered is already scoped to the one selected category, so render a
@@ -19886,7 +19950,7 @@ async function renderExpertsResearchPage() {
     // Experts Level's share), or a tick when covered.
     const sigilHave = Math.max(0, totalSigil - stillSigil);
     sigilsEl.innerHTML = totalSigil > 0 ? `<div class="bs-box"><div class="bs-sq" style="--n:1;">
-      <div class="bs-row${stillSigil > 0 ? "" : " ok"}"><img src="icons/item_icon_570000.png" alt="" /><div class="n">${esc(t("resource_sigils"))}<small>${esc(t("bs_have_of").replace("{have}", shortAmount(sigilHave)).replace("{need}", shortAmount(totalSigil)))}</small></div><b>${stillSigil > 0 ? `&minus;${esc(shortAmount(stillSigil))}` : `&#10003;`}</b></div>
+      <div class="bs-row${stillSigil > 0 ? "" : " ok"}"><img src="icons/item_icon_570000.png" alt="" /><div class="n">${esc(t("resource_sigils"))}<small>${esc(t("bs_have_of").replace("{have}", shortAmount(sigilHave)).replace("{need}", shortAmount(totalSigil)))}</small></div><b>${stillSigil > 0 ? bsShortHtml(shortAmount(stillSigil)) : `&#10003;`}</b></div>
       </div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`;
     document.getElementById("expResearchOwned").innerHTML = `${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })))}
       <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
@@ -19954,7 +20018,7 @@ async function renderExpertsResearchPage() {
     return `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:4px;">
-          <input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
+          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           <div style="min-width:0; text-align:center;">
             ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; padding:2px; box-sizing:border-box; border-radius:8px; object-fit:contain; margin-bottom:4px;" loading="lazy" />` : ""}
             <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(dataName(expert))}</div>
@@ -20309,11 +20373,14 @@ async function renderExpertsPage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
-    settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap;">
-      <span>${esc(t("speedups_label"))}</span>
-      <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:72px; flex-shrink:0; padding:4px 6px;" />
-      <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
-      <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
+    // Same row look as the research pages' "Speedups" box (rs-row).
+    settings: `<div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:4px;">
+      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
+        <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:72px; flex-shrink:0; padding:4px 6px;" />
+        <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
+        <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
+      </div>
     </div>`,
     amountsId: "expertsAmounts", needId: "expertsSummary",
     mainHtml: `
@@ -20543,8 +20610,8 @@ async function renderExpertsPage() {
     footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
-      ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&minus;${esc(amt(r, r.need - r.have))}</b></div>`).join("")}
-      ${ready.map((r) => `<div class="bs-row ok"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&#10003; ${esc(amt(r, r.have - r.need))}</b></div>`).join("")}
+      ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>${bsShortHtml(amt(r, r.need - r.have))}</b></div>`).join("")}
+      ${ready.map((r) => `<div class="bs-row ok"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>&#10003; ${esc(bidiNum(amt(r, r.have - r.need)))}</b></div>`).join("")}
       </div></div>`;
     // Packs: sigils are what's left after each expert's own sigils, so
     // General Sigils (and packs) only need to cover that shortfall.
@@ -20587,7 +20654,7 @@ async function renderExpertsPage() {
     gridEl.innerHTML = `
       <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
         <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:10px;">
-          <input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; justify-self:start;" />
+          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           <div style="text-align:center;">
             <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; padding:3px; box-sizing:border-box; object-fit:contain; margin-bottom:6px;" loading="lazy" />
             <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
@@ -20650,8 +20717,8 @@ async function renderExpertsPage() {
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
               <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(sk))}</span>
               <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
-                <select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.current, skillPickMax(e.key, sk)), max)}</select>
-                <select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.desired, skillPickMax(e.key, sk)), max)}</select>
+                <label class="exp-skl"><span>${esc(t("current_label"))}</span><select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.current, skillPickMax(e.key, sk)), max)}</select></label>
+                <label class="exp-skl"><span>${esc(t("target_label"))}</span><select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.desired, skillPickMax(e.key, sk)), max)}</select></label>
               </div>
             </div>
             ${
@@ -21695,7 +21762,7 @@ function wirePlxSelects(root, onPick) {
 function plxStatBoxesHtml(list, oneRow) {
   return `<div class="plx-stats${oneRow ? " one" : ""}"${oneRow ? ` style="--n:${list.length};"` : ""}>${list.map((s) => {
     const dp = s.dp == null ? 1 : s.dp, pct = s.max > 0 ? Math.min(100, (s.val / s.max) * 100) : 0;
-    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>+${Number(s.val || 0).toFixed(dp)}%</b>${s.max != null ? `<small>${oneRow ? "/ " : `${esc(t("of_max_prefix"))} `}+${oneRow ? Number(Number(s.max).toFixed(dp)) : Number(s.max).toFixed(dp)}%</small><div class="t12x-bar"><i style="width:${pct}%;${pct >= 100 ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
+    return `<div class="plx-stat"><span>${esc(s.label)}</span><b>${bidiNum(`+${Number(s.val || 0).toFixed(dp)}%`)}</b>${s.max != null ? `<small>${oneRow ? "/ " : `${esc(t("of_max_prefix"))} `}${bidiNum(`+${oneRow ? Number(Number(s.max).toFixed(dp)) : Number(s.max).toFixed(dp)}%`)}</small><div class="t12x-bar"><i style="width:${pct}%;${pct >= 100 ? " background:var(--good);" : ""}"></i></div>` : ""}</div>`;
   }).join("")}</div>`;
 }
 // Several stat groups in one card, picked with tabs (like the troop tabs).
@@ -21780,7 +21847,7 @@ function plxTimeHtml(rawHours, calcKey) {
   const coverH = Math.min(totalH, genH + resH), shortH = Math.max(0, totalH - genH - resH);
   const covPct = totalH > 0 ? Math.min(100, (coverH / totalH) * 100) : 100;
   return `
-      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${t12FormatTime(totalH)}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">&minus;${t12FormatTime(shortH)} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
+      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${bidiNum(t12FormatTime(totalH))}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">${bidiNum(t12FormatTime(shortH))} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
       <div class="t12x-prog"><i style="width:${covPct}%;${shortH > 0 ? "" : " background:var(--good);"}"></i></div>
       <div class="t12x-row"><span>${esc(t("t12x_sp_cover").replace("{g}", t12FormatTime(genH)).replace("{r}", t12FormatTime(resH)))}</span></div>`;
 }
@@ -21943,7 +22010,7 @@ async function renderT12ResearchPage() {
       const coverH = Math.min(totalH, genH + resH), shortH = Math.max(0, totalH - genH - resH);
       const covPct = totalH > 0 ? Math.min(100, (coverH / totalH) * 100) : 100;
       el.innerHTML = `
-      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${t12FormatTime(totalH)}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">&minus;${t12FormatTime(shortH)} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
+      <div class="t12x-time-top"><img src="icons/speedup-research.png" alt="" /><div><span class="t12x-k">${esc(t("research_time_label"))}</span><b>${bidiNum(t12FormatTime(totalH))}</b>${totalH > 0 ? (shortH > 0 ? `<span style="color:var(--danger); font-weight:700;">${bidiNum(t12FormatTime(shortH))} ${esc(t("bs_short_word"))}</span>` : `<span class="t12x-good">&#10003; ${esc(t("t12x_covered"))}</span>`) : ""}</div></div>
       <div class="t12x-prog"><i style="width:${covPct}%;${shortH > 0 ? "" : " background:var(--good);"}"></i></div>
       <div class="t12x-row"><span>${esc(t("t12x_sp_cover").replace("{g}", t12FormatTime(genH)).replace("{r}", t12FormatTime(resH)))}</span></div>`;
       document.getElementById("t12MaxAllBtn").onclick = maxEverything;
@@ -22097,7 +22164,7 @@ async function renderFacilityPage() {
         <div class="sub" id="facilitySummaryLine"></div>
       </div>
     </div>
-    <div class="stats-row-scroll" id="facilityTotals" style="margin-bottom:16px;"></div>
+    <div class="t12x-card" style="margin-bottom:16px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="facilityTotals"></div></div>
     <div class="panel">
       <h2>${esc(t("facility_title"))}</h2>
       <p class="desc">${esc(t("facility_click_desc"))}</p>
@@ -22117,14 +22184,10 @@ async function renderFacilityPage() {
       maxByType[key] = (maxByType[key] || 0) + Number(b.bonus_value);
       if (b.owned) totalsByType[key] = (totalsByType[key] || 0) + Number(b.bonus_value);
     });
-    document.getElementById("facilityTotals").innerHTML = Object.entries(maxByType).length
-      ? Object.entries(maxByType)
-          .map(
-            ([type, maxVal]) =>
-              `<div class="metric" style="padding:6px; min-width:80px;"><div class="label" style="font-size:9px;">${esc(t("total_prefix"))} ${esc(tStatLabel(type))}</div><div class="val" style="font-size:13px;">+${(totalsByType[type] || 0).toFixed(1)}%</div><div class="meta" style="font-size:8.5px; margin-top:2px;">${esc(t("of_max_prefix"))} +${maxVal.toFixed(1)}%</div></div>`
-          )
-          .join("")
-      : `<div class="metric"><div class="label">${esc(t("total_bonus"))}</div><div class="val">+0%</div></div>`;
+    const facEntries = Object.entries(maxByType);
+    document.getElementById("facilityTotals").innerHTML = facEntries.length
+      ? plxStatBoxesHtml(facEntries.map(([type, maxVal]) => ({ label: tStatLabel(type), val: totalsByType[type] || 0, max: maxVal })), facEntries.length <= 4)
+      : plxStatBoxesHtml([{ label: t("total_bonus"), val: 0 }]);
 
 
 
@@ -23350,10 +23413,10 @@ async function renderAdminCurrencies(body) {
       <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"><button class="btn small" id="adminRatesSave" type="button">Save</button><button class="btn small ghost" id="adminRatesReset" type="button">Reset to defaults</button></div>
       <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
         <div class="meta" style="margin-bottom:6px;">Add a currency</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <input id="adminCurCode" placeholder="Code (e.g. PKR)" maxlength="5" style="width:130px;" />
-          <input id="adminCurSymbol" placeholder="Symbol (e.g. Rs)" maxlength="6" style="width:120px;" />
-          <input id="adminCurRate" type="number" step="any" min="0" placeholder="Per 1 USD" style="width:120px;" />
+        <div class="adm-cur-add">
+          <label><span>Code</span><input id="adminCurCode" placeholder="e.g. PKR" maxlength="5" /></label>
+          <label><span>Symbol</span><input id="adminCurSymbol" placeholder="e.g. Rs" maxlength="6" /></label>
+          <label><span>Per 1 USD</span><input id="adminCurRate" type="number" step="any" min="0" placeholder="e.g. 280" /></label>
           <button class="btn small" id="adminCurAdd" type="button">Add</button>
         </div>
       </div>
@@ -23391,7 +23454,7 @@ async function renderAdminCurrencies(body) {
     slotsBody.innerHTML = currencyPriceSlots().map((s) => `<tr>
       <td style="padding:4px 8px;">$${s}${` <button class="btn small ghost" type="button" data-slotdel="${s}" title="Remove this price point" style="padding:1px 7px; margin-inline-start:6px;">\u00d7</button>`}</td>
       <td style="padding:4px 8px;" class="meta">${rate > 0 ? (Number(s) * rate).toFixed(2) : "—"}</td>
-      <td style="padding:4px 8px;"><input type="number" step="any" min="0" data-slot="${s}" value="${cur[s] ?? ""}" placeholder="${rate > 0 ? (Number(s) * rate).toFixed(2) : ""}" style="width:130px;" /></td></tr>`).join("");
+      <td style="padding:4px 8px;"><input type="number" step="any" min="0" data-slot="${s}" value="${cur[s] ?? ""}" placeholder="${rate > 0 ? (Number(s) * rate).toFixed(2) : ""}" class="keep-w" style="width:100%; max-width:130px; min-width:64px;" /></td></tr>`).join("");
   };
   let lastCode = curSel.value;
   curSel.addEventListener("change", () => { readSlots(lastCode); lastCode = curSel.value; renderSlots(); });
@@ -25509,7 +25572,7 @@ async function renderAdminHeroes(body) {
   const mirror = (v) => ({ ...v, exp_defense: v.exp_attack, widget_health: v.widget_lethality });
   function drawHeroes() {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
-    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">${rows.filter((r) => (r.generation ?? -1) === g).length}</span></button>`).join("")}</div></div>`
+    listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">· ${((n) => `${n} ${n === 1 ? "hero" : "heroes"}`)(rows.filter((r) => (r.generation ?? -1) === g).length)}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_HERO_GEN < 0 ? "No gen" : `Gen ${ADMIN_HERO_GEN} heroes`, attr: "data-herorow", img: (r) => r.image_url, name: (r) => r.name, sub: (r) => [r.troop_type, r.rarity === "Legendary" ? "Mythic" : r.rarity].filter(Boolean).join(" · ") });
     listWrap.querySelectorAll("[data-herogen]").forEach((b) => b.addEventListener("click", () => { ADMIN_HERO_GEN = Number(b.dataset.herogen); keepBoxes(listWrap, drawHeroes); }));
     wireAdmList(listWrap, {
@@ -25564,11 +25627,11 @@ async function renderAdminHeroes(body) {
           <h2 style="margin:0;">Star shard & widget stats</h2>
           <span class="meta" style="font-size:12px; font-weight:600; color:var(--frost);">Gen ${gen}</span>
           <button class="btn small" id="adminGenStatsSave">Save all</button>
-          <span style="display:inline-flex; align-items:center; gap:6px; margin-left:auto;">
+          <span style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:6px; margin-left:auto;">
             <span class="meta" style="font-size:11px;">Max ATK&amp;DEF %</span>
-            <input id="adminGenMaxAtk" type="number" step="any" style="width:90px;" placeholder="e.g. 1621.3" />
+            <input id="adminGenMaxAtk" type="number" step="any" class="keep-w" style="width:120px;" placeholder="e.g. 1621.3" />
             <span class="meta" style="font-size:11px;">Max widget %</span>
-            <input id="adminGenMaxWidget" type="number" step="any" style="width:80px;" placeholder="e.g. 482" />
+            <input id="adminGenMaxWidget" type="number" step="any" class="keep-w" style="width:110px;" placeholder="e.g. 482" />
             <button class="btn small ghost" id="adminGenGenerate" title="Fills all 30 shard steps and 10 widget levels from the max values using the standard curve">Generate from max</button>
           </span>
         </div>
@@ -25584,8 +25647,8 @@ async function renderAdminHeroes(body) {
                   return `<tr data-starstep="${step}">
                     <td style="padding:3px 8px;">${step}</td>
                     <td style="padding:3px 8px;" class="meta">${star}\u2605 ${shard}/6</td>
-                    <td style="padding:3px;"><input data-sf="atk_pct" type="number" step="any" value="${r.atk_pct ?? ""}" style="width:100px;" /></td>
-                    <td style="padding:3px;"><input data-sf="shards" type="number" value="${r.shards ?? ""}" style="width:64px;" /></td>
+                    <td style="padding:3px;"><input data-sf="atk_pct" type="number" step="any" value="${r.atk_pct ?? ""}" class="keep-w" style="width:100%; max-width:110px; min-width:64px;" /></td>
+                    <td style="padding:3px;"><input data-sf="shards" type="number" value="${r.shards ?? ""}" class="keep-w" style="width:100%; max-width:80px; min-width:52px;" /></td>
                   </tr>`;
                 }).join("")}
               </tbody>
@@ -25599,7 +25662,7 @@ async function renderAdminHeroes(body) {
                   const r = widgetBy[lvl] || {};
                   return `<tr data-widgetlvl="${lvl}">
                     <td style="padding:3px 8px;">${lvl}</td>
-                    <td style="padding:3px;"><input data-wf="leth_pct" type="number" step="any" value="${r.leth_pct ?? ""}" style="width:100px;" /></td>
+                    <td style="padding:3px;"><input data-wf="leth_pct" type="number" step="any" value="${r.leth_pct ?? ""}" class="keep-w" style="width:100%; max-width:110px; min-width:64px;" /></td>
                   </tr>`;
                 }).join("")}
               </tbody>
