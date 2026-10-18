@@ -3339,6 +3339,7 @@ const T = {
   upcoming_tag: { en: "Upcoming" },
   expert_talent: { en: "Talent" },
   upcoming_col: { en: "Upcoming" },
+  adm_unsaved_leave: { en: "You have {n} unsaved changes. Leave without saving?" },
   pet_advanced: { en: "Advanced" },
   material_food: { en: "Food" },
   material_manual: { en: "Manual" },
@@ -4382,6 +4383,11 @@ function keepFolds(root, fn) {
 function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
 function goToTab(tab, opts = {}) {
   if (!isValidTab(tab)) tab = "overview";
+  // Unsaved Admin table edits: ask before leaving them.
+  if (TAB === "adminpage" && typeof admConfirmLeave === "function" && !admConfirmLeave()) {
+    if (opts.fromHistory) history.pushState({ tab: TAB }, "", location.pathname + location.search);
+    return;
+  }
   LAST_RENDER_TAB = null;
   holdPageHeight(false);
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
@@ -4535,7 +4541,8 @@ async function render() {
   if (same) content.style.minHeight = content.offsetHeight + "px";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    if (!IS_OWNER && (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    // (Admin is for the owner only.)
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -6512,7 +6519,7 @@ function renderMyPackDates(el, tables, opts = {}) {
     e.items.push(tb);
   });
   const rowTitle = (tb) => { const n = together.get(String(tb.id)); return n ? `${String(tb.title || "").split(":")[0].trim()} (${t("pk_tables_n").replace("{n}", n)})` : tb.title || ""; };
-  const previewHead = true ? `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"}</span> ${esc(t("pk_my_dates_title"))} ${preview ? `<span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span>` : ""}${!preview && list.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveDays(tb.id)) ? `<span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:6px;">${esc(t("pk_your_date"))}</span>` : ""}</span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>` : "";
+  const previewHead = `<summary style="cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:14px; font-weight:700;"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "▾" : "▸"}</span> ${esc(t("pk_my_dates_title"))} ${preview ? `<span style="font-size:10px; padding:2px 8px; border-radius:6px; background:var(--ice); color:#0f141b; margin-inline-start:4px;">${esc(t("pk_preview_badge"))}</span>` : ""}${!preview && list.some((tb) => MY_PACK_DATES[String(tb.id)] || packActiveDays(tb.id)) ? `<span style="font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; margin-inline-start:6px;">${esc(t("pk_your_date"))}</span>` : ""}</span><span class="meta" style="font-size:11px;">${list.length} ${esc(t("pk_preview_packs"))}</span></summary>`;
   el.innerHTML = `<details class="panel" ${preview ? "data-mydatespreview" : "data-mydatesbox"} ${MY_DATES_PREVIEW_OPEN ? "open" : ""} style="margin:0 0 12px; border:1px ${preview ? "dashed" : "solid"} var(--ice);">
     ${previewHead}
     <div class="meta" style="font-size:11.5px; margin-top:6px;">${esc(ownerEdit ? t("pk_owner_dates_desc") : t("pk_my_dates_desc"))}</div>
@@ -7261,27 +7268,40 @@ async function renderPurchasesPage() {
       const planTot = {};
       rows.forEach((x) => Object.entries(x.gives || {}).forEach(([k, v]) => { planTot[k] = (planTot[k] || 0) + v * (x.count || 1); }));
       const needMap = plan.need || null;
+      // Items the plan can use: needed ones plus everything a trade rule of a
+      // planned page turns into them silently (chained). plan.trades leaves out
+      // those silent ones (General Sigils, Mythic General Hero Shards, Widget
+      // Chests, General Speedups …), so the rules are read here.
       const tradeFrom = new Set((plan.trades || []).map((x) => x.from));
+      if (needMap) {
+        const rules = BUDGET_PAGES.filter((pg) => !BUDGET_SELECTED || BUDGET_SELECTED[pg.key] !== false).flatMap((pg) => { try { return tradeRatesFor(pg.key).filter((x) => x.silent); } catch (e) { return []; } });
+        const want = new Set([...Object.keys(needMap).filter((k) => needMap[k] > 0), ...tradeFrom]);
+        for (let grew = true; grew;) { grew = false; rules.forEach((x) => { if (want.has(x.to) && !want.has(x.from)) { want.add(x.from); grew = true; } }); }
+        want.forEach((k) => tradeFrom.add(k));
+      }
       const isNeeded = (k, d = 0) => !needMap || (needMap[k] || 0) > 0 || tradeFrom.has(k) || (d < 2 && PACK_BUNDLES[k] && Object.keys(PACK_BUNDLES[k]).some((c) => isNeeded(c, d + 1)));
-      const mainOf = (r) => {
-        const ks = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && r.gives[k] > 0);
+      // The items an opened line shows (same filter and limit as its chips),
+      // with the main item always among them.
+      const shownOf = (r, n) => {
+        const ks = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0);
         const pool = ks.filter((k) => isNeeded(k));
         let best = (pool[0] || ks[0]) || null, bs = -1;
         (pool.length ? pool : ks).forEach((k) => { const sh = planTot[k] > 0 ? (r.gives[k] * (r.count || 1)) / planTot[k] : 0; if (sh > bs + 1e-9) { bs = sh; best = k; } });
-        return { main: best, more: Math.max(0, ks.length - 1) };
+        let keys = ks.slice(0, 6);
+        if (best && !keys.includes(best)) keys = [...ks.slice(0, 5), best];
+        return { main: best, keys, more: Math.max(0, keys.length - 1) };
       };
       const rowHtml = ([i, xs]) => {
-        const r = rows[i], n = xs.reduce((a, x) => a + x.count, 0), tb = sugTable(r);
-        const { main: first, more } = mainOf(r);
+        const r = rows[i], n = xs.reduce((a, x) => a + x.count, 0);
+        const { main: first, keys: chipKeys, more } = shownOf(r, n);
         const icon = first ? bpIcon({ name: first.replace(/ \(minutes\)$/, "") }) : null;
         const open = PUR_SUG_ROW === `${PUR_SUG_WEEK}|${i}`;
         const tk = tickOf(i), vr = verOf(i);
         const kind = cmp ? (i >= nFollow ? otherName : sel.match.has(i) ? "both" : follow) : null;
         const m = kind === "both" ? sel.match.get(i) : null;
         const star = m && (!m.same || m.n !== n) ? "*" : "";
-        const chipKeys = Object.keys(r.gives || {}).filter((k) => k !== "Gems" && Math.round(r.gives[k] * n) > 0);
         const tagged = chipKeys.length > 1 && !!needMap;
-        const chips = chipKeys.slice(0, 6).map((k) => {
+        const chips = chipKeys.map((k) => {
           const v = r.gives[k] * n, ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") });
           const sh = /\(minutes\)$/.test(k) ? t12FormatTime(v / 60) : shortAmount(v);
           const role = k === first ? "main" : isNeeded(k) ? "needed" : "extra";
@@ -9838,7 +9858,7 @@ async function renderInventory() {
   if (!tabs.includes(BP_TAB)) BP_TAB = tabs[0];
   const fmtShort = (n) => { n = Number(n) || 0; return n >= 1e9 ? `${Math.round(n / 1e8) / 10}B` : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString(); };
   const minutesOf = (g) => g.items.reduce((sum, it) => sum + (Number(bp[it.name]) || 0) * (BP_MINUTES[bpSpeedupSize(it.name)] || 0), 0);
-  const fmtMin = (m) => m ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h ${Math.round(m % 60)}m` : "—";
+  const fmtMin = (m) => { if (!m) return "—"; const r = Math.round(m); return `${Math.floor(r / 1440)}d ${Math.floor((r % 1440) / 60)}h ${r % 60}m`; };
   // Total time of each speedup type, in the game's order, as a summary strip.
   const speedSummary = () => {
     const kinds = ["General", "Construction", "Troop", "Research", "Expert"];
@@ -13495,7 +13515,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const cur = p.rows[0]?.currency || currency, price0 = p.rows[0]?.price;
     const late = shared.targetDays != null && p.days > shared.targetDays;
     const d = new Date(today.getTime() + p.days * 86400000);
-    let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }); } catch (e) { short = fmtDate(p.days); }
+    let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { short = fmtDate(p.days); }
     const whenTxt = p.days === 0 ? t("pack_ready_now") : `${short} · ${p.days}d`;
     const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>');
     const byPack = [];
@@ -13594,7 +13614,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
-          let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }); } catch (e) { short = fmtDate(c.plan.days); }
+          let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
           return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([^\d\s-]+)\s?/, '<small class="cur">$1</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
         };
         const p = pick && pick.plan;
@@ -18445,10 +18465,17 @@ function wireResearchSpeedInput(onChange) {
   });
 }
 
+// Pack Cost cards: a date in another year gets a short year mark ("Jan 8 ’28"),
+// so plans a year apart don't both read "Jan 8" (fits the narrow cards).
+function packYearMark(d) {
+  return d.getFullYear() !== new Date().getFullYear() ? ` \u2019${String(d.getFullYear()).slice(2)}` : "";
+}
 function t12FormatTime(hours) {
   if (!hours) return "0h";
-  const d = Math.floor(hours / 24);
-  const h = Math.round(hours % 24);
+  // Round the total first, so 23.6h rolls over to the next day (not "24h").
+  const tot = Math.round(hours);
+  const d = Math.floor(tot / 24);
+  const h = tot % 24;
   return d > 0 ? `${d}d ${h}h` : `${h}h`;
 }
 function formatTimeDHM(hours) {
@@ -21813,13 +21840,14 @@ async function renderAdminPage() {
   const open = (key) => {
     const entry = ADMIN_TABLES[key];
     if (entry && entry.tab) { goToTab(entry.tab); return; }
+    if (!admConfirmLeave()) return;
     ADMIN_ACTIVE_TABLE = key;
     renderAdminPage();
     window.scrollTo(0, 0);
   };
   content.querySelectorAll("[data-admintable]").forEach((btn) => btn.addEventListener("click", () => open(btn.dataset.admintable)));
   const home_ = content.querySelector("[data-adminhome]");
-  if (home_) home_.addEventListener("click", () => { ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0); });
+  if (home_) home_.addEventListener("click", () => { if (!admConfirmLeave()) return; ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0); });
   const search = content.querySelector("[data-adminsearch]");
   search.addEventListener("input", () => {
     ADMIN_SEARCH = search.value;
@@ -21862,6 +21890,7 @@ function foldAdminAddPanels(root) {
 }
 const ADMIN_ADD_OBSERVER = typeof MutationObserver !== "undefined" ? new MutationObserver(() => { const b = document.getElementById("adminBody"); if (b) foldAdminAddPanels(b); }) : null;
 async function drawAdminSection(key, body) {
+  ADM_EDIT_DIRTY = 0; // a fresh section has no unsaved edits
   if (ADMIN_ADD_OBSERVER) { ADMIN_ADD_OBSERVER.disconnect(); ADMIN_ADD_OBSERVER.observe(body, { childList: true, subtree: true }); }
   if (key === "visibility") await renderAdminVisibility(body);
   else if (key === "menu") await renderAdminMenu(body);
@@ -23557,7 +23586,26 @@ async function admNextOrder(path) {
   return r.length ? (r[0].sort_order || 0) + 1 : 0;
 }
 const firstTrSort = (rows) => rows.length && rows[0].tagName === "TR" && rows[0].querySelector("[data-grip],[data-rowup]");
-window.addEventListener("beforeunload", (e) => { if (ADM_EDIT_DIRTY && TAB === "adminpage") { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", (e) => { if (TAB === "adminpage" && admUnsavedCount()) { e.preventDefault(); e.returnValue = ""; } });
+// Unsaved edits still on screen (a Save bar showing): the count, else 0 (a
+// table redrawn or left keeps no stale count).
+function admUnsavedCount() {
+  if (!ADM_EDIT_DIRTY) return 0;
+  return TAB === "adminpage" && content.querySelector(".adm-ebar:not([hidden])") ? ADM_EDIT_DIRTY : 0;
+}
+// Before leaving a section / page / sub-tab: true = go on (edits dropped).
+function admConfirmLeave() {
+  const n = admUnsavedCount();
+  if (n && !confirm(t("adm_unsaved_leave").replace("{n}", n))) return false;
+  ADM_EDIT_DIRTY = 0;
+  return true;
+}
+// Sub-tabs and pickers inside a section (chips) redraw it too: ask first.
+document.addEventListener("click", (e) => {
+  if (TAB !== "adminpage" || !ADM_EDIT_DIRTY) return;
+  const chip = e.target.closest && e.target.closest("#adminBody .adm-chip:not(.on)");
+  if (chip && !admConfirmLeave()) { e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
 function wireAdmEditBar(scope, o) {
   const first = scope && scope.querySelector(`[${o.rowAttr}]`);
   const wrap = (first && first.closest(".adm-scroll")) || scope;
@@ -25630,6 +25678,8 @@ function renderOwnerLoginUI() {
       await supabaseClient.auth.signOut();
       // Every cached calculator state belongs to the account that just left:
       // reload so the fresh (anonymous) session starts clean.
+      // (Admin is for the owner only: don't reopen it for the visitor.)
+      try { if (localStorage.getItem("last_tab") === "adminpage") localStorage.setItem("last_tab", "overview"); } catch (e) { /* storage blocked */ }
       location.hash = "";
       location.reload();
     });
