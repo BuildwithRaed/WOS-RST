@@ -356,6 +356,14 @@
   .exp-skl{ display:flex; flex-direction:column; gap:1px; }
   .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
   .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
+  .bud-vip{ margin-top:8px; padding:7px 10px; border-radius:8px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:11.5px; }
+  .vip-bundle{ display:flex; align-items:center; gap:10px; }
+  .vip-b-ic{ position:relative; width:44px; height:44px; flex:none; }
+  .vip-b-ic img{ width:44px; height:44px; object-fit:contain; }
+  .vip-b-ic b{ position:absolute; right:-4px; bottom:-4px; font-size:11px; background:var(--panel-2); border:1px solid var(--line); border-radius:999px; padding:0 5px; }
+  .vip-b-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:13px; }
+  .vip-b-t small{ color:var(--good); font-size:11.5px; }
+  .vip-bundle .btn{ white-space:nowrap; flex:none; }
   /* Order of goals (admin, owner 18 Oct 2026). */
   .bud-g-head{ display:flex; align-items:center; gap:8px; width:100%; background:none; border:0; padding:0; color:inherit; font:inherit; cursor:pointer; text-align:start; min-height:32px; }
   .bud-g-arrow{ margin-inline-start:auto; color:var(--ice); }
@@ -368,7 +376,7 @@
   .bud-g-n{ width:20px; height:20px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:11px; font-weight:700; display:grid; place-items:center; flex:none; }
   .bud-g > img, .bud-g > i{ width:30px; height:30px; object-fit:contain; flex:none; }
   .bud-g > i{ font-style:normal; display:grid; place-items:center; border-radius:8px; background:var(--panel); }
-  .bud-g-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .bud-g-t{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:3px; }
   .bud-g-nm{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .bud-g-nm b{ font-size:13px; }
   .bud-g-tag{ font-size:10px; padding:0 7px; border-radius:999px; border:1px solid var(--ice); color:var(--ice); line-height:16px; }
@@ -389,6 +397,57 @@
   .bud-g-chips button.on{ border-color:var(--ice); background:var(--ice-dim); }
   .bud-g-form select{ width:100%; margin-top:4px; }
   .bud-g-fbtn{ display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+  .bud-g-row2{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .bud-g-by{ border:1px solid var(--line); background:var(--panel); color:var(--muted); border-radius:999px; font:inherit; font-size:10.5px; padding:2px 8px; cursor:pointer; min-height:24px; white-space:nowrap; }
+  .bud-g-by.ev{ border-color:rgba(167,139,250,.55); color:#c4b5fd; }
+  .bud-g-by.date{ border-color:var(--ice); color:var(--ice); }
+  .bud-g{ flex-wrap:wrap; }
+  .bud-g-by-box{ flex:1 1 100%; display:flex; flex-direction:column; gap:6px; margin-top:6px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+  .bud-g-by-box button{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; min-height:36px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
+  .bud-g-by-box button.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .bud-g-by-box small{ color:var(--muted); }
+  .bud-g-by-date{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12.5px; }
+  .bud-g-by-date input{ max-width:160px; }
+  .bud-g-sum.warn{ border-color:rgba(232,162,60,.45); background:rgba(232,162,60,.08); color:var(--amber); }
+  .bud-g-tag.push{ border-color:var(--good); color:var(--good); }
+  .bud-ht{ margin-top:10px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--panel-2); }
+  .bud-ht > summary{ cursor:pointer; font-weight:600; font-size:13px; min-height:28px; display:flex; align-items:center; gap:6px; }
+  .bud-ht-r{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line); }
+  .bud-ht-r > img, .bud-ht-r > i{ width:34px; height:34px; border-radius:8px; object-fit:cover; flex:none; font-style:normal; display:grid; place-items:center; background:var(--panel); }
+  .bud-ht-n{ display:flex; flex-direction:column; min-width:80px; flex:1 1 auto; font-size:12.5px; }
+  .bud-ht-n small{ color:var(--muted); font-size:10.5px; }
+  .bud-ht-ctl{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .bud-ht-ctl select{ padding:4px 6px; font-size:12px; }
+  .bud-ht-c{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; min-height:32px; cursor:pointer; }
+  .bud-ht-x{ min-width:32px; min-height:32px; border:1px solid var(--line); background:var(--panel); color:var(--frost); border-radius:6px; cursor:pointer; }
+  .bud-ht-gen{ margin:6px 0; padding:8px; border:1px solid rgba(80,200,120,.35); border-radius:8px; background:rgba(80,200,120,.07); font-size:12px; }
+  .bud-ht-add{ padding:8px 0; border-top:1px solid var(--line); }
+  .bud-ht-add select{ width:100%; }
+  @media (max-width:700px){ .bud-ht-ctl select{ font-size:16px; } }
+  .bud-rm-seg{ margin:8px 0; }
+  .bud-rm-t{ width:100%; border-collapse:collapse; font-size:11.5px; margin-top:4px; }
+  .bud-rm-t th{ text-align:start; font-weight:600; color:var(--muted); font-size:10.5px; padding:4px 3px; border-bottom:1px solid var(--line); }
+  .bud-rm-t td{ padding:5px 3px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .bud-rm-t td:not(:first-child), .bud-rm-t th:not(:first-child){ text-align:end; white-space:nowrap; }
+  .bud-rm-t td.good{ color:var(--good); } .bud-rm-t td.warn{ color:var(--amber); }
+  .bud-rm-t tr.tot td{ font-weight:700; border-bottom:0; }
+  .bud-rm-note{ font-size:11px; margin:4px 0 10px; }
+  .bud-rm-k{ display:flex; justify-content:space-between; align-items:baseline; margin:6px 0; }
+  .bud-rm-w{ border-inline-start:2px solid var(--line); padding:0 0 8px 10px; margin-inline-start:4px; }
+  .bud-rm-wh{ display:flex; justify-content:space-between; gap:8px; font-size:12px; padding:4px 0; }
+  .bud-rm-l{ margin:3px 0; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); }
+  .bud-rm-l > summary{ list-style:none; display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; font-size:12px; }
+  .bud-rm-l > summary::-webkit-details-marker{ display:none; }
+  .bud-rm-l > summary img, .bud-rm-l > summary i{ width:22px; height:22px; object-fit:contain; flex:none; }
+  .bud-rm-l > summary span{ flex:1 1 auto; min-width:0; }
+  .bud-rm-l > summary b{ white-space:nowrap; }
+  .bud-rm-items{ display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 8px; }
+  .bud-rm-for{ flex:1 1 100%; font-size:11px; color:var(--amber); }
+  .bud-rm-flag, .bud-rm-ev{ display:flex; justify-content:space-between; gap:8px; margin:5px 0; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--ice); color:var(--ice); background:rgba(125,211,252,.06); }
+  .bud-rm-flag.mini{ border-color:rgba(232,162,60,.55); color:var(--amber); background:rgba(232,162,60,.06); }
+  .bud-rm-flag span, .bud-rm-ev span{ font-weight:400; white-space:nowrap; }
+  .bud-rm-ev{ border-color:rgba(167,139,250,.55); color:#c4b5fd; background:rgba(167,139,250,.07); }
+  .bud-rm-more > summary{ cursor:pointer; font-size:12px; color:var(--ice); padding:6px 0; list-style:none; }
   .bud-g-sum{ margin-top:10px; padding:8px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:12px; }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
   .bud-line-t{ flex:1 1 auto; min-width:0; }
@@ -3022,7 +3081,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 18; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 22; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4030,6 +4089,15 @@ const T = {
   bud_line_packs: { en: "{n} packs" },
   bud_line_all: { en: "Packs to buy" },
   bud_done_by: { en: "Done" },
+  vip_bundle_title: { en: "Daily Free Bundle" },
+  vip_bundle_line: { en: "{n} Mythic General Hero Shards a day" },
+  vip_bundle_none: { en: "This tier's daily bundle gives no hero shards." },
+  vip_bundle_budget: { en: "Counted in Budgets until {date}: +{n} shards" },
+  vip_bundle_budget30: { en: "Counted in Budgets for the next 30 days: +{n} shards (no target date set)" },
+  vip_bundle_go: { en: "Budgets \u203a" },
+  vip_bundle_30d: { en: "in the next 30 days" },
+  vip_bundle_by: { en: "by {date}" },
+  bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
   goals_desc: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ or use ▲▼." },
   goal_main: { en: "main" },
@@ -4052,6 +4120,44 @@ const T = {
   goal_up: { en: "Move up" },
   goal_down: { en: "Move down" },
   goal_own_plan: { en: "Planned on its own" },
+  goal_by_main: { en: "Main target" },
+  goal_by_svs: { en: "Next SvS" },
+  goal_by_koi: { en: "Next KOI" },
+  goal_by_gen: { en: "Next new Gen" },
+  goal_by_date: { en: "Pick a date" },
+  goal_by_title: { en: "By when?" },
+  goal_by_note: { en: "Can't make it? You'll see how far you get by then and when it's fully done." },
+  goal_ready: { en: "ready {date}" },
+  goal_late: { en: "By {by}: {p}% \u00b7 fully done {date}" },
+  goal_with_dates: { en: "With your dates: total {v} ({d}) \u00b7 without them {w}" },
+  goal_dates_cant: { en: "Some dates can't be met: those goals are planned for their earliest day." },
+  rm_title: { en: "Roadmap" },
+  rm_with: { en: "With priorities" },
+  rm_without: { en: "Without" },
+  rm_goal: { en: "Goal" },
+  rm_deadline: { en: "Deadline" },
+  rm_total: { en: "Total" },
+  rm_same: { en: "Same packs, bought in a different order." },
+  rm_diff: { en: "With your dates some packs are bought earlier, or a different step." },
+  rm_missed: { en: "Goals that miss their date without priorities: {n}." },
+  rm_by_week: { en: "Packs by week" },
+  rm_so_far: { en: "spent so far" },
+  rm_this_week: { en: "This week" },
+  rm_more: { en: "{n} more weeks" },
+  rm_more_packs: { en: "{n} more packs" },
+  rm_for: { en: "for" },
+  rm_fold: { en: "This week {v} \u00b7 {n} packs" },
+  ht_title: { en: "Hero targets" },
+  ht_desc: { en: "Each hero's own target. Push = straight to the top of your goals; Later = not planned for now." },
+  ht_push: { en: "push" },
+  ht_later: { en: "Later" },
+  ht_stars: { en: "Stars" },
+  ht_widgets: { en: "widgets" },
+  ht_added: { en: "added" },
+  ht_add: { en: "+ Add a hero" },
+  ht_pushgen: { en: "Each new Gen: push 2 heroes first" },
+  ht_pushgen_sub: { en: "Pushed heroes get \"Next SvS\" as their date; when a new Gen is out you'll be asked which 2." },
+  ht_gen_pick: { en: "Gen {g} is out: pick the 2 heroes to push" },
   budgets_split_parts: { en: "2 parts: by your target + after it" },
   budgets_split_late: { en: "Can't make {date}" },
   budgets_split_after: { en: "after your target" },
@@ -10014,7 +10120,10 @@ function heroShardCostByGen(starRows) {
 // For each roster troop: how many shards to 5★ and to the next star, the
 // hero's own shards, and how many general shards it gets (shared in troop
 // order: Infantry, Lancers, Marksman).
-function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
+// `targets` (Budgets, admin): { heroId: { stars 1-5, widget 0-10, later, wNow } }
+// sets each hero's own target (default 5★ / widget 10); `extra` = heroes
+// planned besides the roster (e.g. a new Gen's heroes to push).
+function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp, targets, extra }) {
   const costByGen = heroShardCostByGen(starRows);
   const phBy = {};
   (playerHeroes || []).forEach((p) => { phBy[p.hero_id] = p; });
@@ -10024,16 +10133,22 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
   const pool = { ...general };
   const genWPool = {};
   const notOut = [];
-  const rows = ["Infantry", "Lancers", "Marksman"].map((troop) => {
-    const hero = (heroes || []).find((h) => h.id === entry(troop));
+  const slots = ["Infantry", "Lancers", "Marksman"].map((troop) => ({ troop, id: entry(troop), inRoster: true }));
+  (extra || []).forEach((id) => { if (id && !slots.some((x) => x.id === id)) slots.push({ troop: null, id, inRoster: false }); });
+  const tg = targets || {};
+  const rows = slots.map(({ troop: slotTroop, id, inRoster }) => {
+    const hero = (heroes || []).find((h) => h.id === id);
     if (!hero) return null;
+    const troop = slotTroop || hero.troop_type || "";
+    const T = tg[hero.id] || {};
     // Not out yet in the person's state: no shards to plan for.
     if (heroGenNotOut(hero.generation)) { notOut.push({ troop, hero }); return null; }
     const v = Number((phBy[hero.id] || {}).current_stars) || 0;
     const star = Math.min(5, Math.floor(v)), sub = Math.min(6, Math.round((v - star) * 10));
     const step = Math.min(30, star * 6 + sub);
+    const tStep = T.later ? step : Math.max(step, Math.min(30, T.stars != null ? Number(T.stars) * 6 : 30));
     let need = 0;
-    for (let k = step + 1; k <= 30; k++) need += heroShardStepCost(costByGen, hero.generation, k);
+    for (let k = step + 1; k <= tStep; k++) need += heroShardStepCost(costByGen, hero.generation, k);
     let next = 0;
     const nextStep = step >= 30 ? 30 : (Math.floor(step / 6) + 1) * 6;
     for (let k = step + 1; k <= nextStep; k++) next += heroShardStepCost(costByGen, hero.generation, k);
@@ -10046,10 +10161,11 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     let reach = step, left = have;
     while (reach < 30 && left >= heroShardStepCost(costByGen, hero.generation, reach + 1)) { left -= heroShardStepCost(costByGen, hero.generation, reach + 1); reach++; }
     // Widgets (mythic heroes): from the roster's widget level to 10.
-    const e = (roster || {})[troop];
-    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(widgetMaxLevel(), Number(e.widget) || 0)) : 0;
+    const e = inRoster ? (roster || {})[troop] : null;
+    const wLevel = e && typeof e === "object" ? Math.max(0, Math.min(widgetMaxLevel(), Number(e.widget) || 0)) : Math.max(0, Math.min(widgetMaxLevel(), Number(T.wNow) || 0));
     const hasWidget = hero.rarity === "Legendary";
-    const wNeed = hasWidget ? widgetNeedFrom(wLevel) : 0;
+    const tW = T.later ? wLevel : Math.max(wLevel, Math.min(widgetMaxLevel(), T.widget != null ? Number(T.widget) : widgetMaxLevel()));
+    const wNeed = hasWidget ? widgetNeedFrom(wLevel) - widgetNeedFrom(tW) : 0;
     // Own widgets first, then that Gen's general widgets ("Gen 14 Widgets", any hero of the Gen).
     const wMine = hasWidget ? Number((bp || {})[`${hero.name} Widgets`]) || 0 : 0;
     const gKey = `Gen ${Number(hero.generation) || 0} Widgets`;
@@ -10060,7 +10176,7 @@ function heroShardPlan({ heroes, roster, playerHeroes, starRows, bp }) {
     const wShort = Math.max(0, wNeed - wOwn);
     let wReach = wLevel, wLeft = wOwn;
     while (hasWidget && wReach < widgetMaxLevel() && wLeft >= WIDGET_LEVEL_COST[wReach + 1]) { wLeft -= WIDGET_LEVEL_COST[wReach + 1]; wReach++; }
-    return { troop, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
+    return { troop, inRoster, tStep, tW, hero, step, need, next, own, fromGeneral, short: Math.max(0, need - have), reach, rarity, hasWidget, wLevel, wNeed, wOwn, wMine, gKey, wShort, wReach, wCost: widgetCostFor(wShort) };
   }).filter(Boolean);
   return { rows, general, generalLeft: pool, notOut };
 }
@@ -14668,6 +14784,18 @@ let TRADE_EXTRA_RFC = {};
 //    Mystery shop: 800 for 2 widgets (only that offer, owner)
 let HERO_SHARD_TRADES = [];
 // Hero shard / widget trade numbers (Admin → Rules & Timeline → Hero trades).
+// VIP Daily Free Bundle: Mythic General Hero Shards a day by VIP tier
+// number (owner's screenshots, 18 Oct 2026; tiers not listed give none).
+// Rules & Timeline → "VIP daily shards" can change it.
+const VIP_DAILY_SHARDS = { 7: 1, 8: 1, 9: 2, 10: 2, 11: 3, 12: 6 };
+function vipTierNumber(name) { const m = String(name || "").match(/(\d+)/); return m ? Number(m[1]) : null; }
+function vipShardsFor(name) { const n = vipTierNumber(name); return n != null ? Number(VIP_DAILY_SHARDS[n]) || 0 : 0; }
+// Days counted for free daily items: up to the Budgets date, 30 without one.
+function budgetFreeDays() {
+  let days = 30;
+  if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.max(0, Math.round((d - packStartOfToday()) / 86400000)); }
+  return days;
+}
 const HERO_RULES = { marksPerGeneral: 12, marksGeneralWeekly: 100, hallMarksPerShard: 10, hallWeekly: 370, widgetChestGives: 1, mysteryGive: 800, mysteryGet: 2, mysteryDaily: 200 };
 // The one hero of each Gen sold in Hall of Heroes (gold ticket on the
 // community Server Timeline, Sep 2026); the Gen's other two heroes aren't.
@@ -15013,6 +15141,17 @@ const BUDGET_PAGES = [
   { key: "experts_research", tab: "expertsresearchpage" },
   { key: "hero_shards", tab: "backpack" },
 ];
+// Hero targets (admin, owner 18 Oct 2026): calc_state "hero_targets" =
+// { heroes: { heroId: { push, stars, widget, later, wNow } }, extra: [heroId], pushGen }.
+let HERO_TARGETS = null;
+let HERO_PLAN_LAST = null; // the last hero shard plan (rows, heroes, roster) for Order of goals
+async function ensureHeroTargets() {
+  if (!HERO_TARGETS) {
+    const s = (await loadCalcState("hero_targets")) || {};
+    HERO_TARGETS = { heroes: s.heroes && typeof s.heroes === "object" ? s.heroes : {}, extra: Array.isArray(s.extra) ? s.extra : [], pushGen: !!s.pushGen };
+  }
+  return HERO_TARGETS;
+}
 // Budgets "Hero shards & widgets": the Dashboard roster heroes' shards to 5★
 // and widgets to level 10 (same numbers as the Backpack card). Their own
 // shards and the shared General Hero Shards count as owned.
@@ -15025,8 +15164,12 @@ async function heroShardBudget() {
     loadCalcState("backpack").catch(() => null),
     ensureStateAge(),
   ]);
+  const vipTier = await loadCalcState("vip_tier").catch(() => null);
   noteHeroImages(heroes);
-  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {} });
+  // Each hero's own target and extra heroes (admin, Order of goals).
+  const ht = IS_OWNER ? await ensureHeroTargets() : null;
+  const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null });
+  HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
   const rule = (from, to, give, get, max) => rules.push({ from, to, give, get, max, hidden: true, silent: true });
   const mythicShards = plan.rows.filter((r) => r.need > 0 && r.rarity === "Legendary");
@@ -15064,12 +15207,16 @@ async function heroShardBudget() {
   // come free from the dailies, 200 a day, counted up to the Budgets date
   // (30 days when none is set).
   const bpv = (n) => Number((bp || {})[n]) || 0;
-  let days = 30;
-  if (typeof BUDGET_TARGET === "string" && BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) days = Math.max(0, Math.round((d - packStartOfToday()) / 86400000)); }
+  const days = budgetFreeDays();
   owned["Marks of Valor"] = bpv("Marks of Valor");
   owned["Widget Chest"] = bpv("Widget Chest");
   owned["Mystery Points"] = bpv("Mystery Points") + HERO_RULES.mysteryDaily * days;
-  return { groups: [{ label: null, totals }], owned };
+  // The VIP Daily Free Bundle's Mythic General Hero Shards (the tier picked
+  // on the VIP page), counted the same days; they trade 1:1 into each
+  // mythic roster hero's shards like the Backpack's General shards.
+  const vipDaily = vipShardsFor(vipTier && vipTier.name), vip = vipDaily && mythicShards.length ? { tier: vipTier.name, daily: vipDaily, days, total: vipDaily * days } : null;
+  if (vip) owned["Mythic General Hero Shard"] = (owned["Mythic General Hero Shard"] || 0) + vip.total;
+  return { groups: [{ label: null, totals }], owned, vip };
 }
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
@@ -15232,12 +15379,12 @@ function budgetPlanLines(calcKey) {
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
-  let groups, live = true;
+  let groups, live = true, vipNote = null;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
-  else if (calcKey === "hero_shards") groups = (await heroShardBudget()).groups;
+  else if (calcKey === "hero_shards") { const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip; }
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
     if (calcKey === "t11_helios" || calcKey === "t12_research") {
@@ -15265,7 +15412,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
   packSplitUncoverable(packGroups, viaTrades, calcKey);
   const need = viaTrades.need;
-  const res = { calcKey, tables, live, groups, owned, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  const res = { calcKey, tables, live, groups, owned, vip: vipNote, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!opts.noPlan && packGroups.length && Object.keys(need).length) {
     res.earliest = packEarliestDays(packGroups, need, calcKey);
     if (res.earliest != null) {
@@ -15539,6 +15686,60 @@ function plannerCombinedLocal(payload) {
   delete res.groups;
   return res;
 }
+// Goals with their own "By" dates (owner, 18 Oct 2026): plan the parts in
+// date order, each by its date with what the parts before it left of every
+// pack's limits (and their spare items); the rest by the main target. A part
+// that can't make its date is planned for its earliest day. Returns the
+// joined plan (one row per offer) and, per part, if it made its date.
+function plannerDeadlineLocal(payload) {
+  payload = plannerPayloadDecode(payload);
+  const { calcKey } = payload;
+  let groups = payload.allGroups;
+  const carry = {}, parts = [], picks = [], trades = [];
+  let total = 0, days = 0;
+  const offerKey = (x) => [(x.tables || []).join(","), x.reset, x.resetDay, x.perCycle, x.label, x.price, x.row, x.from].join("|");
+  const offerAt = new Map();
+  groups.forEach((g, gi) => g.offers.forEach((o, oi) => { const k = offerKey({ ...o, tables: g.tables, reset: g.reset, resetDay: g.resetDay, perCycle: g.perCycle }); if (!offerAt.has(k)) offerAt.set(k, { gi, oi }); }));
+  for (const st of payload.stages) {
+    const need = {};
+    Object.entries(st.need).forEach(([n, q]) => { const have = carry[n] || 0; carry[n] = Math.max(0, have - q); if (q - have > 1e-9) need[n] = q - have; });
+    if (!Object.keys(need).length) { parts.push({ day: st.day, ok: true, total: 0 }); continue; }
+    let pl = packCheapestPlan(groups, need, st.day, calcKey), ok = !!pl, earliest = null;
+    if (!pl) {
+      earliest = packEarliestDays(groups, need, calcKey);
+      if (earliest == null) return { failed: true, parts };
+      pl = packCheapestPlan(groups, need, earliest, calcKey);
+      if (!pl) return { failed: true, parts };
+    }
+    // The plan's rows back to this list's groups / offers (its own picks
+    // point into a trimmed copy of the groups).
+    const used = groups.map(() => 0);
+    pl.rows.forEach((r) => {
+      const at = offerAt.get(offerKey(r));
+      if (!at) return;
+      used[at.gi] += r.count;
+      const e = picks.find((x) => x.gi === at.gi && x.oi === at.oi);
+      if (e) e.count += r.count; else picks.push({ gi: at.gi, oi: at.oi, count: r.count });
+    });
+    groups = groups.map((g, gi) => (used[gi] ? { ...g, used: (g.used || 0) + used[gi] } : g));
+    const spare = {};
+    pl.rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { spare[n] = (spare[n] || 0) + v * r.count; }));
+    (pl.trades || []).forEach((x) => { spare[x.from] = (spare[x.from] || 0) - x.giveQty; spare[x.to] = (spare[x.to] || 0) + x.getQty; });
+    Object.entries(spare).forEach(([n, v]) => { const left = v - (need[n] || 0); if (left > 1e-9) carry[n] = (carry[n] || 0) + left; });
+    (pl.trades || []).forEach((x) => trades.push(x));
+    total += pl.total; days = Math.max(days, pl.days || 0);
+    parts.push({ day: st.day, ok, earliest, total: pl.total });
+  }
+  // One row per offer over all the parts (like the combined plan's rows), so
+  // a pack bought in two parts shares its buying days.
+  const base = payload.allGroups, perGroup = base.map(() => 0);
+  picks.forEach((pk) => { perGroup[pk.gi] += pk.count; });
+  const out = picks.map((pk) => {
+    const g = base[pk.gi], o = g.offers[pk.oi];
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+  }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
+  return { plan: { rows: out, total, days, trades }, parts };
+}
 // A page's own Fastest / By target / Cheapest plans (the Pack cost cards).
 function plannerPagePlans(payload) {
   const { groups, need, calcKey, targetDays } = payload;
@@ -15556,7 +15757,7 @@ function plannerPagePlans(payload) {
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
 // gets one request at a time (PLANNER_QUEUE holds the rest, PLANNER_BUSY is
@@ -15585,7 +15786,7 @@ function plannerWorker() {
       ...fns,
       "plannerSolver();", // start loading the solver as soon as the worker starts
       "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
-      "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
+      "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : kind === 'deadline' ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
     w.onmessage = (e) => {
@@ -15604,7 +15805,7 @@ function plannerWorker() {
   return PLANNER_WORKER || null;
 }
 function plannerRun(kind, payload) {
-  const local = () => (kind === "solver" ? !!PLAN_SOLVER : kind === "page" ? plannerPagePlans(payload) : plannerCombinedLocal(payload));
+  const local = () => (kind === "solver" ? !!PLAN_SOLVER : kind === "page" ? plannerPagePlans(payload) : kind === "deadline" ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload));
   const w = plannerWorker();
   if (!w) return Promise.resolve().then(local);
   const id = ++PLANNER_SEQ;
@@ -16021,15 +16222,19 @@ async function budgetSuggestedPlan() {
 // every charm to Lv 17 before the target Lv 18), in the admin's order. The
 // packs plan is the same; each goal shows when the plan's packs (bought on
 // their first chances) reach it if what arrives goes to the goals in order.
-// calc_state "budget_goals" = { order: [goal id], minis: [{ id, page, level }] }.
+// calc_state "budget_goals" = { order: [goal id], minis: [{ id, page, level }], by: { goal id: deadline } }.
 let BUDGET_GOALS = null;
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
+let BUDGET_GOAL_BY_OPEN = null; // goal id whose "By" picker is open
+let BUDGET_RM_OPEN = true;      // Roadmap card's fold (for the visit)
+let BUDGET_RM_WITH = true;      // Roadmap: with priorities / without
+let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
 const GOAL_MINI_PAGES = ["charm", "chief_gear"];
 async function ensureBudgetGoals() {
   if (!BUDGET_GOALS) {
     const s = (await loadCalcState("budget_goals")) || {};
-    BUDGET_GOALS = { order: Array.isArray(s.order) ? s.order : [], minis: Array.isArray(s.minis) ? s.minis.filter((m) => m && m.page && m.level != null) : [] };
+    BUDGET_GOALS = { order: Array.isArray(s.order) ? s.order : [], minis: Array.isArray(s.minis) ? s.minis.filter((m) => m && m.page && m.level != null) : [], by: s.by && typeof s.by === "object" ? s.by : {} };
   }
   return BUDGET_GOALS;
 }
@@ -16102,11 +16307,16 @@ function goalMiniIdx(page, level) {
 // page ticked, a new mini) goes where it sits in the default list (pages in
 // Budgets order, each page's minis just before its target). A page's own
 // goals always stay in level order (a mini can't come after its target).
-function budgetGoalList(pages, incKeys) {
-  const G = BUDGET_GOALS || { order: [], minis: [] };
+function budgetGoalList(pages, incKeys, defaultOrder) {
+  const G0 = BUDGET_GOALS || { order: [], minis: [] }, G = defaultOrder ? { ...G0, order: [] } : G0;
   const def = [];
   pages.forEach((pg) => {
     if (!incKeys.includes(pg.calcKey)) return;
+    // Hero shards & widgets (admin): one goal per hero, with its own target.
+    if (pg.calcKey === "hero_shards" && IS_OWNER && HERO_PLAN_LAST) {
+      HERO_PLAN_LAST.rows.filter((r) => r.need > 0 || r.wNeed > 0).forEach((r) => def.push({ id: "hero:" + r.hero.id, page: "hero_shards", grp: "hero:" + r.hero.id, hero: r.hero, hrow: r, items: [`${r.hero.name} Shards`, `${r.hero.name} Widgets`], lvl: Infinity }));
+      return;
+    }
     const ok = new Set(goalMiniLevels(pg.calcKey).map((x) => x.value));
     G.minis.filter((m) => m.page === pg.calcKey && ok.has(String(m.level)))
       .sort((a, b) => goalMiniIdx(pg.calcKey, a.level) - goalMiniIdx(pg.calcKey, b.level))
@@ -16120,8 +16330,8 @@ function budgetGoalList(pages, incKeys) {
     const next = def.slice(i + 1).find((x) => out.includes(x));
     if (next) out.splice(out.indexOf(next), 0, g); else out.push(g);
   });
-  [...new Set(out.map((g) => g.page))].forEach((page) => {
-    const slots = out.map((g, i) => (g.page === page ? i : -1)).filter((i) => i >= 0);
+  [...new Set(out.map((g) => g.grp || g.page))].forEach((page) => {
+    const slots = out.map((g, i) => ((g.grp || g.page) === page ? i : -1)).filter((i) => i >= 0);
     const mine = slots.map((i) => out[i]).sort((a, b) => a.lvl - b.lvl);
     slots.forEach((i, k) => { out[i] = mine[k]; });
   });
@@ -16132,11 +16342,20 @@ function budgetGoalList(pages, incKeys) {
 // reached once everything goals 1..k need of goal k's items has arrived
 // (trades counted, within their weekly limits by then). Returns per goal
 // { day, spent (in the shown currency), done (nothing left), approx }.
-function budgetGoalDates(goals, pages, plan, calcKey) {
+// What each goal still needs on its own: a page's minis split its need by
+// level, its target takes the rest. { goal id: { item: amount } }.
+function budgetGoalSegs(goals, pages) {
   const segs = new Map();
   [...new Set(goals.map((g) => g.page))].forEach((page) => {
     const pg = pages.find((x) => x.calcKey === page);
     if (!pg) return;
+    // One goal per hero: that hero's own shards and widgets still needed.
+    const itemGoals = goals.filter((g) => g.page === page && g.items);
+    if (itemGoals.length) {
+      const st = pg.needStill || {};
+      itemGoals.forEach((g) => { const seg = {}; g.items.forEach((n) => { if (st[n] > 1e-9) seg[n] = st[n]; }); segs.set(g.id, seg); });
+      return;
+    }
     // A page without minis uses its need exactly as the plan does (pg.need,
     // after trades into items the packs give); with minis, the still-needed
     // amounts are split by level (trades are counted in the check below).
@@ -16156,6 +16375,12 @@ function budgetGoalDates(goals, pages, plan, calcKey) {
       prev = cur;
     });
   });
+  return segs;
+}
+// `due` (optional): each goal's own deadline day (null = none); the answer
+// then also says how much of the goal is there by that day (`pctDue`, 0..1).
+function budgetGoalDates(goals, pages, plan, calcKey, due) {
+  const segs = budgetGoalSegs(goals, pages);
   const rows = (plan && plan.rows) || [];
   const sched = rows.length ? packPlanSchedule(rows) : [];
   const offs = [...new Set(sched.flatMap((s) => s.map((x) => x.off)))].sort((a, b) => a - b);
@@ -16184,8 +16409,8 @@ function budgetGoalDates(goals, pages, plan, calcKey) {
     Object.entries(seg).forEach(([n, v]) => { cum[n] = (cum[n] || 0) + v; });
     const mine = Object.keys(seg);
     if (!mine.length) return { day: 0, spent: 0, done: true };
-    const covered = (j) => {
-      const rem = { ...cum }, got = at[j] >= 0 ? arrive[at[j]] : {};
+    const shortAt = (j) => {
+      const rem = { ...cum }, got = j >= 0 && at[j] >= 0 ? arrive[at[j]] : {};
       Object.entries(got).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v; });
       // The plan's own trades, made as their items come in (the greedy trade
       // check alone can miss the mix the solver found).
@@ -16194,14 +16419,79 @@ function budgetGoalDates(goals, pages, plan, calcKey) {
         rem[x.from] = (rem[x.from] || 0) + x.giveQty * f;
         rem[x.to] = (rem[x.to] || 0) - x.getQty * f;
       });
-      const left = packShortAfterTrades(rem, packTradeCtx(calcKey, days[j])).short;
-      return !mine.some((n) => left[n] > 1e-6);
+      return packShortAfterTrades(rem, packTradeCtx(calcKey, j >= 0 ? days[j] : 0)).short;
     };
-    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true };
+    const covered = (j) => { const left = shortAt(j); return !mine.some((n) => left[n] > 1e-6); };
+    // How much of the goal is there by its own deadline (each item's share, averaged).
+    let pctDue = null;
+    const dd = due ? due[goals.indexOf(g)] : null;
+    if (dd != null) {
+      let j = -1; while (j + 1 < days.length && days[j + 1] <= dd) j++;
+      const left = shortAt(j);
+      pctDue = mine.reduce((a, n) => a + Math.max(0, 1 - Math.min(seg[n], left[n] || 0) / seg[n]), 0) / mine.length;
+    }
+    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true, pctDue };
     let lo = 0, hi = days.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (covered(mid)) hi = mid; else lo = mid + 1; }
-    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0 };
+    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0, pctDue };
   });
+}
+// A goal's "By" choice (BUDGET_GOALS.by[goal id]): "svs" / "koi" (the next
+// one's first day), "gen" (the next new heroes day), "date:yyyy-mm-dd", or
+// nothing = the main target. Returns the day from today, or null.
+function goalDeadlineDay(by) {
+  const t0 = packStartOfToday(), off = (d) => Math.round((d - t0) / 86400000);
+  if (by === "svs" || by === "koi") {
+    const ev = GAME_EVENTS.find((e) => e.key === by);
+    const st = ev && gameEventStarts(ev, t0, new Date(t0.getTime() + 200 * 86400000)).find((d) => d > t0);
+    return st ? off(st) : null;
+  }
+  if (by === "gen") { const n = newGenStarts(newGenBaseDay(), 3).find((d) => d > t0); return n ? off(n) : null; }
+  if (typeof by === "string" && by.startsWith("date:")) { const d = packParseDay(by.slice(5)); return d ? Math.max(0, off(d)) : null; }
+  return null;
+}
+function goalByIcon(by) { return by === "svs" || by === "koi" ? "\u2694" : by === "gen" ? "\u2B50" : by && String(by).startsWith("date:") ? "\uD83D\uDCC5" : "\u2605"; }
+function goalByName(by) {
+  if (by === "svs") return t("goal_by_svs");
+  if (by === "koi") return t("goal_by_koi");
+  if (by === "gen") return t("goal_by_gen");
+  return by && String(by).startsWith("date:") ? "" : t("goal_by_main");
+}
+// Each goal's deadline: its own, or an earlier one set on a later goal of the
+// same page (a mini must be ready before its target).
+function budgetGoalDue(goals) {
+  const by = (BUDGET_GOALS && BUDGET_GOALS.by) || {};
+  const due = goals.map((g) => goalDeadlineDay(by[g.id]));
+  goals.forEach((g, i) => goals.forEach((h, j) => { if (h.page === g.page && h.lvl > g.lvl && due[j] != null && (due[i] == null || due[j] < due[i])) due[i] = due[j]; }));
+  return due;
+}
+// The plan with the goals' own dates (worked out in the background planner,
+// kept like the Budgets plan: in memory and on the phone by fingerprint).
+const BUDGET_DEADLINE_STORE = "budget_deadline_v1";
+let BUDGET_DEADLINE = { key: null, res: null, running: null };
+function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady) {
+  const segs = budgetGoalSegs(goals, pages), byDay = new Map();
+  goals.forEach((g, i) => {
+    const d = due[i] != null ? (mainDay != null ? Math.min(due[i], mainDay) : due[i]) : mainDay;
+    const m = byDay.get(d) || {};
+    Object.entries(segs.get(g.id) || {}).forEach(([n, q]) => { m[n] = (m[n] || 0) + q; });
+    byDay.set(d, m);
+  });
+  const stages = [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, need]) => ({ day, need }));
+  const inp = budgetCombinedInput(pages, selected);
+  const payload = plannerPayloadEncode({ pages: [], selected: {}, allGroups: inp.allGroups, stages, calcKey: "__budget:" + keys.join(",") });
+  const key = budgetPlanFingerprint({ deadline: 1, payload });
+  if (BUDGET_DEADLINE.key === key) return BUDGET_DEADLINE.res;
+  try { const kept = JSON.parse(localStorage.getItem(BUDGET_DEADLINE_STORE) || "null"); if (kept && kept.key === key) { BUDGET_DEADLINE = { key, res: kept.res, running: null }; return kept.res; } } catch (e) { /* storage blocked */ }
+  if (BUDGET_DEADLINE.running === key) return null;
+  BUDGET_DEADLINE = { key: null, res: null, running: key };
+  plannerRun("deadline", payload).then((res) => {
+    if (BUDGET_DEADLINE.running !== key) return;
+    BUDGET_DEADLINE = { key, res, running: null };
+    try { localStorage.setItem(BUDGET_DEADLINE_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked */ }
+    if (onReady) onReady();
+  }).catch((e) => { if (BUDGET_DEADLINE.running === key) BUDGET_DEADLINE.running = null; if (!(e && e.superseded)) console.error("deadline plan failed", e); });
+  return null;
 }
 // The Order of goals card's buttons: fold, ▲▼ / drag ⋮⋮ (saved order),
 // ✕ on a mini, and the "+ Add mini target" form.
@@ -16226,6 +16516,13 @@ function wireBudgetGoals(box) {
       saveOrder(ids().filter((x) => x !== gid));
       return;
     }
+    if (b.hasAttribute("data-goalby")) { const gid = b.closest("[data-goal]").dataset.goal; BUDGET_GOAL_BY_OPEN = BUDGET_GOAL_BY_OPEN === gid ? null : gid; redraw(); return; }
+    if (b.dataset.goalbyset != null) {
+      const gid = b.closest("[data-goal]").dataset.goal;
+      BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}) };
+      if (b.dataset.goalbyset) BUDGET_GOALS.by[gid] = b.dataset.goalbyset; else delete BUDGET_GOALS.by[gid];
+      BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw(); return;
+    }
     if (b.hasAttribute("data-goaladd")) { BUDGET_GOAL_ADD = {}; redraw(); return; }
     if (b.hasAttribute("data-goalcancel")) { BUDGET_GOAL_ADD = null; redraw(); return; }
     if (b.dataset.goalpage) { BUDGET_GOAL_ADD = { page: b.dataset.goalpage }; redraw(); return; }
@@ -16237,6 +16534,52 @@ function wireBudgetGoals(box) {
       saveOrder(ids()); // the new mini goes just before its page's target
     }
   };
+  // Hero targets: saved at once; Budgets works the hero shards out again.
+  const htSave = () => { saveCalcState("hero_targets", HERO_TARGETS); budgetInvalidate(); keepPlace(() => renderBudgetsPage()); };
+  const pushFirst = (id, on) => {
+    const gid = "hero:" + id;
+    if (on) {
+      BUDGET_GOALS.order = [gid, ...ids().filter((x) => x !== gid)];
+      if (HERO_TARGETS.pushGen && !(BUDGET_GOALS.by || {})[gid]) BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "svs" };
+      saveBudgetGoals();
+    }
+  };
+  const htBox = box.querySelector(".bud-ht");
+  if (htBox) htBox.addEventListener("toggle", () => { BUDGET_HT_OPEN = htBox.open; });
+  box.addEventListener("change", (e) => {
+    const el = e.target, row = el.closest("[data-hthero]"), id = row && row.dataset.hthero;
+    if (el.hasAttribute("data-htpushgen")) { HERO_TARGETS.pushGen = el.checked; htSave(); return; }
+    if (el.hasAttribute("data-htadd")) { if (el.value && !HERO_TARGETS.extra.includes(el.value)) HERO_TARGETS.extra = [...HERO_TARGETS.extra, el.value]; htSave(); return; }
+    if (!id) return;
+    const T = { ...(HERO_TARGETS.heroes[id] || {}) };
+    if (el.hasAttribute("data-htpush")) { T.push = el.checked; pushFirst(id, el.checked); }
+    else if (el.hasAttribute("data-htstars")) T.stars = Number(el.value);
+    else if (el.hasAttribute("data-htw")) T.widget = Number(el.value);
+    else if (el.hasAttribute("data-htlater")) T.later = el.checked;
+    else return;
+    HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: T };
+    htSave();
+  });
+  box.querySelectorAll("[data-htpick]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.htpick, T = { ...(HERO_TARGETS.heroes[id] || {}) };
+    T.push = !T.push;
+    HERO_TARGETS.heroes = { ...HERO_TARGETS.heroes, [id]: T };
+    if (T.push && !HERO_TARGETS.extra.includes(id)) HERO_TARGETS.extra = [...HERO_TARGETS.extra, id];
+    pushFirst(id, T.push);
+    htSave();
+  }));
+  box.querySelectorAll("[data-htrm]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.closest("[data-hthero]").dataset.hthero;
+    HERO_TARGETS.extra = HERO_TARGETS.extra.filter((x) => x !== id);
+    htSave();
+  }));
+  const dateEl = box.querySelector("[data-goalbydate]");
+  if (dateEl) dateEl.addEventListener("change", () => {
+    if (!packValidDay(dateEl.value)) return;
+    const gid = dateEl.closest("[data-goal]").dataset.goal;
+    BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "date:" + dateEl.value };
+    BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw();
+  });
   // Drag a row by its ⋮⋮ handle (move / up are followed on the document:
   // moving the row in the list would drop a pointer capture on the handle).
   box.querySelectorAll("[data-goaldrag]").forEach((h) => {
@@ -16481,6 +16824,7 @@ async function renderBudgetsPage(opts = {}) {
     return pageRow(rowCost, `
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
+      ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
@@ -16597,38 +16941,75 @@ async function renderBudgetsPage(opts = {}) {
     const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
     const goals = budgetGoalList(pagesRaw, keys);
     if (!goals.length) return "";
-    const plan = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
-    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, "__budget:" + incKeys.join(",")) : null;
+    const ck = "__budget:" + incKeys.join(",");
+    const basePlan = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
+    const by = BUDGET_GOALS.by || {}, due = budgetGoalDue(goals);
+    // Goals with their own dates: the plan bought for those dates (background planner).
+    const mainDay = targetDays != null ? targetDays : basePlan ? basePlan.days || 0 : null;
+    const dl = !planPending && basePlan && due.some((d) => d != null)
+      ? budgetDeadlineFor(pagesRaw, BUDGET_SELECTED, goals, due, mainDay, incKeys, () => { if (TAB === "budgets") keepPlace(() => renderBudgetsPage()); })
+      : null;
+    const dlPending = !planPending && basePlan && due.some((d) => d != null) && !dl;
+    const dlPlan = dl && !dl.failed ? dl.plan : null;
+    const plan = dlPlan || basePlan;
+    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due) : null;
+    // A goal with its own date: the planner planned its part for that date
+    // (or, when it can't make it, for its earliest day), so that answer wins.
+    if (dates && dlPlan) goals.forEach((g, i) => {
+      if (due[i] == null || !dates[i] || dates[i].done) return;
+      const dEff = mainDay != null ? Math.min(due[i], mainDay) : due[i];
+      const part = dl.parts.find((x) => x.day === dEff);
+      if (!part) return;
+      if (part.ok) dates[i] = { ...dates[i], day: Math.min(dates[i].day, dEff), approx: false, pctDue: 1 };
+      else if (part.earliest != null) dates[i] = { ...dates[i], day: part.earliest, approx: false };
+    });
     const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
     const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
-    const total = plan ? packPlanLocal(plan) : 0;
+    const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
     const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
     const nameOf = (g) => {
+      if (g.hero) {
+        const r = g.hrow, st = Math.floor(r.tStep / 6), sub = r.tStep % 6;
+        return `${g.hero.name} ${st}\u2605${sub ? ` ${sub}/6` : ""}${r.hasWidget && r.wNeed > 0 ? ` + ${t("ht_widgets")} ${r.tW}` : ""}`;
+      }
       const lbl = packPageLabel(g.page);
-      if (g.mini) return `${lbl} \u2192 ${goalMiniLevels(g.page).find((x) => x.value === String(g.mini.level))?.label || g.mini.level}`;
+      if (g.mini) return `${lbl} → ${goalMiniLevels(g.page).find((x) => x.value === String(g.mini.level))?.label || g.mini.level}`;
       const tg = goalTargetLabel(g.page);
-      return tg ? `${lbl} \u2192 ${tg}` : lbl;
+      return tg ? `${lbl} → ${tg}` : lbl;
     };
+    const byText = (b, d) => { const nm = goalByName(b); return `${goalByIcon(b)} ${nm}${nm && d != null ? " · " : ""}${d != null ? fmtDate(d) : ""}`; };
     const rowHtml = (g, i) => {
-      const pg = pagesRaw.find((x) => x.calcKey === g.page), ic = goalPageIcon(pg), dt = dates && dates[i];
+      const pg = pagesRaw.find((x) => x.calcKey === g.page), ic = g.hero ? g.hero.image_url || HERO_IMG_BY_NAME[g.hero.name] || goalPageIcon(pg) : goalPageIcon(pg), dt = dates && dates[i];
       const own = !planPending && !incKeys.includes(g.page);
-      const status = planPending ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`
+      const myBy = by[g.id] || "", d = due[i], dIn = goalDeadlineDay(myBy);
+      const late = dt && !dt.done && d != null && dt.day > d;
+      const status = planPending || (dlPending && d != null) ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`
         : own ? esc(t("goal_own_plan"))
-        : !dt ? "\u2014"
+        : !dt ? "—"
         : dt.done ? `<span style="color:var(--good);">&#10003; ${esc(t("goal_have"))}</span>`
-        : `${dt.approx ? "~" : ""}${esc(shortD(dt.day))} \u00b7 <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`;
+        : late ? `<span style="color:var(--amber);">&#9888; ${esc(t("goal_late").replace("{by}", goalByName(myBy) || fmtDate(d)).replace("{p}", Math.floor((dt.pctDue || 0) * 100)).replace("{date}", fmtDate(dt.day)))}</span>`
+        : d != null ? `<span style="color:var(--good);">&#10003; ${esc(t("goal_ready").replace("{date}", shortD(dt.day)))}</span> · <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`
+        : `${dt.approx ? "~" : ""}${esc(shortD(dt.day))} · <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`;
       const fill = dt && total > 0 ? Math.min(100, (dt.done ? 0 : dt.spent / total) * 100) : 0;
+      const kind = myBy === "svs" || myBy === "koi" || myBy === "gen" ? " ev" : myBy ? " date" : "";
+      const picker = BUDGET_GOAL_BY_OPEN === g.id ? `<div class="bud-g-by-box">
+          <div class="meta" style="font-weight:600;">${esc(t("goal_by_title"))}</div>
+          ${["", "svs", "koi", "gen"].map((b) => { const dd = b ? goalDeadlineDay(b) : mainDay; return `<button type="button" data-goalbyset="${b}" class="${myBy === b ? "on" : ""}"><span>${goalByIcon(b)} ${esc(goalByName(b))}</span><small>${dd != null ? esc(fmtDate(dd)) : "—"}</small></button>`; }).join("")}
+          <label class="bud-g-by-date"><span>&#128197; ${esc(t("goal_by_date"))}</span><input type="date" data-goalbydate value="${myBy.startsWith("date:") ? esc(myBy.slice(5)) : ""}" /></label>
+          <div class="meta" style="font-size:10.5px;">${esc(t("goal_by_note"))}</div>
+        </div>` : "";
       return `<li class="bud-g" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag title="${esc(t("goals_desc"))}">&#8942;&#8942;</span>
         <span class="bud-g-n">${i + 1}</span>
         ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(packPageLabel(g.page).charAt(0))}</i>`}
-        <span class="bud-g-t"><span class="bud-g-nm"><b>${esc(nameOf(g))}</b><span class="bud-g-tag${g.mini ? " mini" : ""}">${esc(t(g.mini ? "goal_mini" : "goal_main"))}</span></span>
-          <small>${status}</small><span class="bud-g-bar"><i class="${g.mini ? "mini" : ""}" style="width:${fill.toFixed(1)}%;"></i></span></span>
+        <span class="bud-g-t"><span class="bud-g-nm"><b>${esc(nameOf(g))}</b><span class="bud-g-tag${g.mini ? " mini" : g.hero && (HERO_TARGETS && (HERO_TARGETS.heroes[g.hero.id] || {}).push) ? " push" : ""}">${esc(t(g.mini ? "goal_mini" : g.hero && (HERO_TARGETS && (HERO_TARGETS.heroes[g.hero.id] || {}).push) ? "ht_push" : "goal_main"))}</span></span>
+          <span class="bud-g-row2"><button type="button" class="bud-g-by${kind}" data-goalby>${esc(byText(myBy, myBy ? dIn : mainDay))} &#9662;</button><small>${status}</small></span>
+          <span class="bud-g-bar"><i class="${g.mini ? "mini" : ""}" style="width:${fill.toFixed(1)}%;"></i></span></span>
         <span class="bud-g-btns">
           <button type="button" data-goalmove="-1" aria-label="${esc(t("goal_up"))}" ${i === 0 ? "disabled" : ""}>&#9650;</button>
           <button type="button" data-goalmove="1" aria-label="${esc(t("goal_down"))}" ${i === goals.length - 1 ? "disabled" : ""}>&#9660;</button>
           ${g.mini ? `<button type="button" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button>` : ""}
-        </span></li>`;
+        </span>${picker}</li>`;
     };
     const miniPages = GOAL_MINI_PAGES.filter((k) => keys.includes(k) && goalMiniLevels(k).length);
     const addHtml = () => {
@@ -16645,16 +17026,118 @@ async function renderBudgetsPage(opts = {}) {
         <div class="bud-g-fbtn"><button type="button" class="btn small ghost" data-goalcancel>${esc(t("goal_cancel"))}</button><button type="button" class="btn small" data-goalsave data-page="${esc(page)}" ${levels.length ? "" : "disabled"}>${esc(t("goal_add_btn"))}</button></div>
       </div>`;
     };
+    // Hero targets: each hero's own target, push first, extra heroes, and
+    // "each new Gen: push 2 heroes first" (asks when a new Gen is out).
+    const heroEdHtml = () => {
+      if (!keys.includes("hero_shards") || !HERO_PLAN_LAST || !HERO_TARGETS) return "";
+      const HT = HERO_TARGETS, rows = HERO_PLAN_LAST.rows, heroes = HERO_PLAN_LAST.heroes || [], wMax = widgetMaxLevel();
+      const opts = (from, to, v, fmt) => { let o = ""; for (let n = from; n <= to; n++) o += `<option value="${n}"${n === v ? " selected" : ""}>${esc(fmt(n))}</option>`; return o; };
+      const line = (r) => {
+        const T = HT.heroes[r.hero.id] || {}, st = T.stars != null ? Number(T.stars) : 5, w = T.widget != null ? Number(T.widget) : wMax, img = r.hero.image_url || HERO_IMG_BY_NAME[r.hero.name];
+        return `<div class="bud-ht-r" data-hthero="${esc(r.hero.id)}">
+          ${img ? `<img src="${esc(img)}" alt="" loading="lazy" />` : `<i>${esc(r.hero.name.charAt(0))}</i>`}
+          <span class="bud-ht-n"><b>${esc(r.hero.name)}</b><small>Gen ${esc(String(r.hero.generation || "?"))}${r.inRoster ? "" : ` \u00b7 ${esc(t("ht_added"))}`}</small></span>
+          <span class="bud-ht-ctl">
+            <label class="bud-ht-c"><input type="checkbox" data-htpush ${T.push ? "checked" : ""} /> ${esc(t("ht_push"))}</label>
+            <select data-htstars aria-label="${esc(t("ht_stars"))}" ${T.later ? "disabled" : ""}>${opts(1, 5, st, (n) => `${n}\u2605`)}</select>
+            ${r.hasWidget ? `<select data-htw aria-label="${esc(t("ht_widgets"))}" ${T.later ? "disabled" : ""}>${opts(0, wMax, w, (n) => `${t("ht_widgets")} ${n}`)}</select>` : ""}
+            <label class="bud-ht-c"><input type="checkbox" data-htlater ${T.later ? "checked" : ""} /> ${esc(t("ht_later"))}</label>
+            ${r.inRoster ? "" : `<button type="button" class="bud-ht-x" data-htrm aria-label="${esc(t("goal_remove"))}">&times;</button>`}
+          </span></div>`;
+      };
+      const listed = new Set(rows.map((r) => r.hero.id));
+      const addable = heroes.filter((h) => !listed.has(h.id) && !heroGenNotOut(h.generation));
+      const gen = newGenGen(), genHeroes = gen ? heroes.filter((h) => Number(h.generation) === gen) : [];
+      const pushed = genHeroes.filter((h) => (HT.heroes[h.id] || {}).push).length;
+      const prompt = HT.pushGen && genHeroes.length > 2 && pushed < 2 ? `<div class="bud-ht-gen"><b>${esc(t("ht_gen_pick").replace("{g}", gen))}</b><div class="bud-g-chips">${genHeroes.map((h) => `<button type="button" data-htpick="${esc(h.id)}" class="${(HT.heroes[h.id] || {}).push ? "on" : ""}">${esc(h.name)}</button>`).join("")}</div></div>` : "";
+      return `<details class="bud-ht"${BUDGET_HT_OPEN ? " open" : ""}><summary>${esc(t("ht_title"))} <span class="meta">(${rows.length})</span></summary>
+        <p class="meta bud-g-desc">${esc(t("ht_desc"))}</p>
+        ${prompt}${rows.map(line).join("")}
+        ${addable.length ? `<div class="bud-ht-add"><select data-htadd aria-label="${esc(t("ht_add"))}"><option value="">${esc(t("ht_add"))}</option>${addable.map((h) => `<option value="${esc(h.id)}">Gen ${esc(String(h.generation || "?"))} \u00b7 ${esc(h.name)}</option>`).join("")}</select></div>` : ""}
+        <label class="bset-row" style="cursor:pointer;"><span class="bset-l">${esc(t("ht_pushgen"))}<small>${esc(t("ht_pushgen_sub"))}</small></span><input type="checkbox" class="bset-sw" data-htpushgen ${HT.pushGen ? "checked" : ""} /></label>
+      </details>`;
+    };
     const next = dates ? goals.findIndex((g, i) => dates[i] && !dates[i].done) : -1;
     const foldLine = next >= 0 ? t("goal_next").replace("{n}", goals.length).replace("{goal}", nameOf(goals[next])).replace("{date}", shortD(dates[next].day)) : t("goal_count").replace("{n}", goals.length);
-    return `<div class="t12x-card bud-goals" style="margin-top:12px;">
+    const sumHtml = !plan || planPending ? ""
+      : dlPlan ? `<div class="bud-g-sum${dl.parts.some((x) => !x.ok) ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${dl.parts.some((x) => !x.ok) ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
+      : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
+    const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
       ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc"))}</p>
       <ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
       ${addHtml()}
-      ${plan && !planPending ? `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>` : ""}`
+      ${heroEdHtml()}
+      ${sumHtml}`
       : `<div class="meta bud-g-fold">${esc(foldLine)}</div>`}
     </div>`;
+
+    // Roadmap: the packs week by week with a flag where each goal is reached,
+    // and "Without": the plain plan with the default order and no dates.
+    if (planPending || !plan || !dates) return goalsCard;
+    const plainGoals = budgetGoalList(pagesRaw, keys, true);
+    const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.indexOf(goals.find((x) => x.id === g.id))])) : null;
+    const plainOf = (g) => { const k = plainGoals.findIndex((x) => x.id === g.id); return plainDates && k >= 0 ? plainDates[k] : null; };
+    const withOn = BUDGET_RM_WITH;
+    const rmPlan = withOn ? plan : basePlan;
+    const rmDates = withOn ? dates : goals.map((g) => plainOf(g));
+    const dCell = (x) => (!x ? "—" : x.done ? "&#10003;" : `${x.approx ? "~" : ""}${esc(shortD(x.day))}`);
+    const missed = goals.filter((g, i) => due[i] != null && plainOf(g) && !plainOf(g).done && plainOf(g).day > due[i]).length;
+    const tableHtml = `<table class="bud-rm-t"><thead><tr><th>${esc(t("rm_goal"))}</th><th>${esc(t("rm_with"))}</th><th>${esc(t("rm_without"))}</th><th>${esc(t("rm_deadline"))}</th></tr></thead><tbody>
+      ${goals.map((g, i) => { const w = dates[i], o = plainOf(g), dd = due[i]; const ok = w && (w.done || dd == null || w.day <= dd); const oLate = o && !o.done && dd != null && o.day > dd;
+        return `<tr><td>${g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(g))}</td><td class="${w && !w.done && o && !o.done && w.day < o.day ? "good" : ""}">${dCell(w)}</td><td class="${oLate ? "warn" : ""}">${dCell(o)}</td><td class="${ok ? "good" : "warn"}">${dd != null ? `${ok ? "&#10003;" : "&#9888;"} ${esc(goalByName(by[g.id]) || fmtDate(dd))}` : ok ? "&#10003;" : "&#9888;"}</td></tr>`; }).join("")}
+      <tr class="tot"><td>${esc(t("rm_total"))}</td><td>${esc(money(total))}</td><td>${esc(money(baseTotal))}</td><td></td></tr></tbody></table>
+      <div class="meta bud-rm-note">${esc(t(Math.abs(total - baseTotal) < 0.5 ? "rm_same" : "rm_diff"))}${missed ? ` ${esc(t("rm_missed").replace("{n}", missed))}` : ""}</div>`;
+    // Weeks (Monday to Sunday) with the packs bought in them.
+    const sched = packPlanSchedule(rmPlan.rows), t0 = packStartOfToday(), dow = (t0.getDay() + 6) % 7;
+    const weeks = new Map();
+    rmPlan.rows.forEach((r, i) => sched[i].forEach((sl) => {
+      const w = Math.floor((sl.off + dow) / 7), wk = weeks.get(w) || { lines: [], money: 0 };
+      const m = r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
+      // One line per pack (its steps / options added up), short name.
+      const nm = purShortName(purPackName(r.title, (r.tables || []).map((id) => ({ id }))));
+      let ex = wk.lines.find((x) => x.nm === nm);
+      if (!ex) { ex = { nm, n: 0, m: 0, gives: {} }; wk.lines.push(ex); }
+      ex.n += sl.count; ex.m += m;
+      Object.entries(r.gives || {}).forEach(([n, v]) => { ex.gives[n] = (ex.gives[n] || 0) + v * sl.count; });
+      wk.money += m; weeks.set(w, wk);
+    }));
+    const segs = budgetGoalSegs(goals, pagesRaw);
+    const forGoal = (x) => { const items = Object.keys(x.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
+    const flagsIn = (w) => goals.map((g, i) => ({ g, d: rmDates[i] })).filter((x) => x.d && !x.d.done && Math.floor((x.d.day + dow) / 7) === w);
+    const evKeys = [...new Set(Object.values(by).filter((b) => b === "svs" || b === "koi"))];
+    const evIn = (w) => evKeys.flatMap((k) => { const ev = GAME_EVENTS.find((e) => e.key === k); const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000); return ev ? gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).map((d) => ({ ev, d })) : []; });
+    const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" });
+    const allW = [...new Set([...weeks.keys(), ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null)).filter((x) => x != null)])].sort((a, b) => a - b);
+    let run = 0;
+    const weekHtml = (w) => {
+      const wk = weeks.get(w) || { lines: [], money: 0 }; run += wk.money;
+      const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000);
+      const head = `${w === 0 ? esc(t("rm_this_week")) + " · " : ""}${esc(dayTxt(ws))} – ${esc(dayTxt(we))}`;
+      const lineHtml = (x) => {
+        const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
+        const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
+        const fg = forGoal(x);
+        return `<details class="bud-rm-l"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
+          <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
+      };
+      const sorted = wk.lines.slice().sort((p, q) => q.m - p.m);
+      const lines = sorted.slice(0, 5).map(lineHtml).join("") + (sorted.length > 5 ? `<details class="bud-rm-more"><summary>${esc(t("rm_more_packs").replace("{n}", sorted.length - 5))} &#9656;</summary>${sorted.slice(5).map(lineHtml).join("")}</details>` : "");
+      const ev = evIn(w).map((x) => `<div class="bud-rm-ev">&#9876; ${esc(x.ev.name)} <span>${esc(dayTxt(x.d))} – ${esc(dayTxt(new Date(x.d.getTime() + (x.ev.days - 1) * 86400000)))}</span></div>`).join("");
+      const flags = flagsIn(w).map((x) => `<div class="bud-rm-flag${x.g.mini ? " mini" : ""}">${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(money(x.d.spent))}</span></div>`).join("");
+      return `<div class="bud-rm-w"><div class="bud-rm-wh"><b>${head}</b><span class="meta">${esc(money(run))}</span></div>${lines}${ev}${flags}</div>`;
+    };
+    const first = allW.slice(0, 3).map(weekHtml).join("");
+    const rest = allW.slice(3);
+    const restHtml = rest.length ? `<details class="bud-rm-more"><summary>${esc(t("rm_more").replace("{n}", rest.length))} &#9656;</summary>${rest.map(weekHtml).join("")}</details>` : "";
+    const rmCard = `<div class="t12x-card bud-rm" style="margin-top:12px;">
+      <button type="button" class="bud-g-head" data-rmfold aria-expanded="${BUDGET_RM_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("rm_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_RM_OPEN ? "&#9662;" : "&#9656;"}</span></button>
+      ${BUDGET_RM_OPEN ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${withOn ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${withOn ? "" : "on"}">${esc(t("rm_without"))}</button></div>
+        ${tableHtml}
+        <div class="bud-rm-k"><b>${esc(t("rm_by_week"))}</b><span class="meta">${esc(t("rm_so_far"))}</span></div>
+        ${first}${restHtml}` : `<div class="meta bud-g-fold">${esc(t("rm_fold").replace("{v}", money(weeks.get(0) ? weeks.get(0).money : 0)).replace("{n}", weeks.get(0) ? weeks.get(0).lines.length : 0))}</div>`}
+    </div>`;
+    return goalsCard + rmCard;
   })();
 
   // Budgets B: settings + pages on the side, the total and the shopping
@@ -16768,6 +17251,13 @@ async function renderBudgetsPage(opts = {}) {
   }));
   const goalsBox = content.querySelector(".bud-goals");
   if (goalsBox) wireBudgetGoals(goalsBox);
+  const rmBox = content.querySelector(".bud-rm");
+  if (rmBox) rmBox.onclick = (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.hasAttribute("data-rmfold")) { BUDGET_RM_OPEN = !BUDGET_RM_OPEN; keepPlace(() => renderBudgetsPage()); }
+    else if (b.dataset.rmwith != null) { BUDGET_RM_WITH = b.dataset.rmwith === "1"; keepPlace(() => renderBudgetsPage()); }
+  };
 }
 
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
@@ -18821,6 +19311,7 @@ async function renderVipTierTable(target) {
         ${rows.map((r, i) => `<option value="${i}"${i > releasedLastIdx("buff_rows", rows) ? ' class="opt-up"' : ""}>${esc(r.name)}${esc(upcomingTag(i > releasedLastIdx("buff_rows", rows)))}</option>`).join("")}
       </select>
     </div>
+    <div class="t12x-card" id="vipBundle" style="margin-bottom:12px;"></div>
     <div class="t12x-card">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div id="vipTierStats"></div>
@@ -18828,6 +19319,22 @@ async function renderVipTierTable(target) {
   `;
 
   const statsEl = document.getElementById("vipTierStats");
+  // The tier's Daily Free Bundle: Mythic General Hero Shards a day, and what
+  // Budgets counts of them (up to its date, or 30 days).
+  const bundleEl = document.getElementById("vipBundle");
+  const shardIcon = bpIcon({ name: "Mythic General Hero Shard" });
+  function showBundle(idx) {
+    const n = vipShardsFor(rows[idx] && rows[idx].name);
+    if (!n) { bundleEl.innerHTML = `<div class="t12x-title">${esc(t("vip_bundle_title"))}</div><div class="meta" style="font-size:12px;">${esc(t("vip_bundle_none"))}</div>`; return; }
+    const days = budgetFreeDays();
+    const when = BUDGET_TARGET ? t("vip_bundle_budget").replace("{date}", (() => { const d = new Date(packStartOfToday().getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return packDayKey(d); } })()) : t("vip_bundle_budget30");
+    bundleEl.innerHTML = `<div class="t12x-title">${esc(t("vip_bundle_title"))}</div>
+      <div class="vip-bundle"><span class="vip-b-ic">${shardIcon ? `<img src="${esc(shardIcon)}" alt="" />` : ""}<b>&times;${n}</b></span>
+        <span class="vip-b-t"><b>${esc(t("vip_bundle_line").replace("{n}", n))}</b><small>${esc(when.replace("{n}", (n * days).toLocaleString()))}</small></span>
+        <button type="button" class="btn small ghost" data-gototab="budgets">${esc(t("vip_bundle_go"))}</button></div>`;
+    const go = bundleEl.querySelector("[data-gototab]");
+    if (go) go.onclick = () => goToTab("budgets");
+  }
   function showTier(idx) {
     const r = rows[idx];
     const valByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
@@ -18838,7 +19345,9 @@ async function renderVipTierTable(target) {
   document.getElementById("vipTierSelect").addEventListener("change", async (e) => {
     const idx = Number(e.target.value);
     showTier(idx);
+    showBundle(idx);
     saveCalcState("vip_tier", { index: idx, name: rows[idx].name });
+    budgetInvalidate(); // the free shards change what Budgets plans
   });
 
   const saved = await loadCalcState("vip_tier");
@@ -18850,6 +19359,9 @@ async function renderVipTierTable(target) {
   }
   document.getElementById("vipTierSelect").value = String(startIdx);
   showTier(startIdx);
+  // Budgets' date (for "counted until …") when Budgets wasn't opened yet.
+  if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); if (seq !== RENDER_SEQ) return; if (BUDGET_TARGET === undefined) BUDGET_TARGET = (sv && sv.date) || ""; }
+  showBundle(startIdx);
 }
 
 // ============================================================
@@ -23101,6 +23613,10 @@ function gameRules() {
       cols: [{ key: "gen", label: "Gen", type: "num" }, { key: "hero", label: "Hero", type: "text" }],
       get: () => Object.entries(HALL_OF_HEROES_HERO).map(([g, h]) => ({ gen: Number(g), hero: h })),
       set: (rows) => ruleSetObject(HALL_OF_HEROES_HERO, Object.fromEntries(rows.filter((r) => r.gen && r.hero).map((r) => [Number(r.gen), r.hero]))) },
+    { key: "vipShards", group: "heroes", label: "VIP daily shards", help: "Mythic General Hero Shards the VIP Daily Free Bundle gives each day, by VIP tier number. Budgets counts them up to its date (30 days without one) for the tier picked on the VIP page.",
+      cols: [{ key: "tier", label: "VIP tier", type: "num" }, { key: "shards", label: "Shards a day", type: "num" }],
+      get: () => Object.entries(VIP_DAILY_SHARDS).map(([k, v]) => ({ tier: Number(k), shards: v })),
+      set: (rows) => ruleSetObject(VIP_DAILY_SHARDS, Object.fromEntries(rows.filter((r) => r.tier && Number(r.shards) > 0).map((r) => [Number(r.tier), Number(r.shards)]))) },
     { key: "heroTrades", group: "heroes", label: "Hero shard & widget trades", type: "fields", help: "How Marks of Valor, Widget Chests and Mystery Points turn into shards / widgets in Budgets.",
       fields: [num("marksPerGeneral", "Marks of Valor for 1 Mythic General shard"), num("marksGeneralWeekly", "…weekly limit (shards)"), num("hallMarksPerShard", "Marks for 1 newest-Gen hero shard"), num("hallWeekly", "…weekly limit (shards)"), num("widgetChestGives", "Widgets from 1 Widget Chest"), num("mysteryGive", "Mystery Points…"), num("mysteryGet", "…for this many widgets"), num("mysteryDaily", "Free Mystery Points a day")],
       get: () => ({ ...HERO_RULES }), set: (v) => { Object.keys(HERO_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) HERO_RULES[k] = Number(v[k]); }); } },
