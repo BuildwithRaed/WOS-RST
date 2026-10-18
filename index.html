@@ -23920,7 +23920,8 @@ function gameRules() {
           after: (row) => { row.level = (LEVEL_LOCK_CHOICES[row.table] || [""])[0]; }, when: (row) => row.kind === "level" },
         { key: "level", label: "First locked level", type: "select", options: (row) => LEVEL_LOCK_CHOICES[row.table] || null, when: (row) => row.kind === "level" },
         { key: "day", label: "State day", type: "num" }],
-      get: () => STATE_UNLOCKS.map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day })),
+      // Shown by state day (owner, 18 Oct 2026); same day keeps the built-in order.
+      get: () => STATE_UNLOCKS.map((u) => ({ ...(u.key ? { key: u.key } : {}), label: u.label, kind: u.kind, name: u.kind === "level" ? "" : u.name, tab: u.kind === "level" ? "" : (u.tabs || [])[0] || "", table: u.table || "", level: u.level != null ? String(u.level) : "", day: u.day })).sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)),
       set: (rows) => {
         ruleSetArray(STATE_UNLOCKS, rows.filter((r) => (r.kind === "level" ? !!LEVEL_LOCK_TARGETS[r.table] && r.level != null && r.level !== "" : !!r.name) && Number(r.day) >= 0).map((r) => {
           if (r.kind === "level") { const d = LEVEL_LOCK_TARGETS[r.table]; return { kind: "level", name: `${r.table}:${r.level}`, table: r.table, level: String(r.level), tabs: d.tabs, day: Number(r.day), label: r.label || `${d.label} ${r.level}+` }; }
@@ -24139,6 +24140,7 @@ async function renderAdminRules(body) {
       return;
     }
     let val = JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def));
+    if (r.key === "unlocks" && Array.isArray(val)) val.sort((a, b) => (Number(a.day) || 0) - (Number(b.day) || 0)); // by state day
     const drawEditor = () => {
       const ed = body.querySelector(".rl-ed");
       if (r.type === "fields") {
