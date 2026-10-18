@@ -16937,12 +16937,18 @@ async function renderBudgetsPage(opts = {}) {
   // Order of goals (admin): see budgetGoalList / budgetGoalDates.
   const goalsHtml = (() => {
     if (!IS_OWNER) return "";
-    const incKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
+    const planKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
+    // Pages the combined plan had to plan on their own are goals too (their
+    // own plan's packs join the dates below).
+    const droppedKeys = (combinedRaw.dropped || []).filter((k) => included(k) && !planKeys.includes(k));
+    const incKeys = planKeys.concat(droppedKeys);
     const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
     const goals = budgetGoalList(pagesRaw, keys);
     if (!goals.length) return "";
     const ck = "__budget:" + incKeys.join(",");
-    const basePlan = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
+    const basePlan0 = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
+    const dropPlans = droppedKeys.map((k) => pagesRaw.find((x) => x.calcKey === k)).filter(Boolean).map((pg) => pickDropped(pg, BUDGET_VIEW === "budget" ? "main" : BUDGET_VIEW)).filter(Boolean);
+    const basePlan = !dropPlans.length ? basePlan0 : [basePlan0, ...dropPlans].filter(Boolean).reduce((a, pl) => ({ rows: a.rows.concat(pl.rows || []), total: a.total + (pl.total || 0), days: Math.max(a.days, pl.days || 0), trades: a.trades.concat(pl.trades || []) }), { rows: [], total: 0, days: 0, trades: [] });
     const by = BUDGET_GOALS.by || {}, due = budgetGoalDue(goals);
     // Goals with their own dates: the plan bought for those dates (background planner).
     const mainDay = targetDays != null ? targetDays : basePlan ? basePlan.days || 0 : null;
