@@ -356,6 +356,40 @@
   .exp-skl{ display:flex; flex-direction:column; gap:1px; }
   .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
   .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
+  /* Order of goals (admin, owner 18 Oct 2026). */
+  .bud-g-head{ display:flex; align-items:center; gap:8px; width:100%; background:none; border:0; padding:0; color:inherit; font:inherit; cursor:pointer; text-align:start; min-height:32px; }
+  .bud-g-arrow{ margin-inline-start:auto; color:var(--ice); }
+  .bud-g-desc{ font-size:11.5px; margin:6px 0 8px; }
+  .bud-g-fold{ font-size:12px; margin-top:6px; }
+  .bud-g-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+  .bud-g{ display:flex; align-items:center; gap:8px; padding:8px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; }
+  .bud-g.drag{ border-color:var(--ice); opacity:.85; }
+  .bud-g-h{ cursor:grab; color:var(--muted); touch-action:none; padding:8px 2px; letter-spacing:-3px; user-select:none; -webkit-user-select:none; }
+  .bud-g-n{ width:20px; height:20px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:11px; font-weight:700; display:grid; place-items:center; flex:none; }
+  .bud-g > img, .bud-g > i{ width:30px; height:30px; object-fit:contain; flex:none; }
+  .bud-g > i{ font-style:normal; display:grid; place-items:center; border-radius:8px; background:var(--panel); }
+  .bud-g-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .bud-g-nm{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .bud-g-nm b{ font-size:13px; }
+  .bud-g-tag{ font-size:10px; padding:0 7px; border-radius:999px; border:1px solid var(--ice); color:var(--ice); line-height:16px; }
+  .bud-g-tag.mini{ border-color:rgba(232,162,60,.6); color:var(--amber); }
+  .bud-g-t small{ font-size:11px; color:var(--muted); }
+  .bud-g-t small b{ color:var(--frost); font-weight:600; }
+  .bud-g-bar{ display:block; height:4px; background:var(--panel); border-radius:3px; overflow:hidden; }
+  .bud-g-bar i{ display:block; height:100%; background:var(--ice); }
+  .bud-g-bar i.mini{ background:var(--amber); }
+  .bud-g-btns{ display:flex; flex-direction:column; gap:3px; flex:none; }
+  .bud-g-btns button{ min-width:32px; min-height:26px; border:1px solid var(--line); background:var(--panel); color:var(--frost); border-radius:6px; font-size:10px; cursor:pointer; padding:0; }
+  .bud-g-btns button:disabled{ opacity:.35; cursor:default; }
+  .bud-g-add{ width:100%; margin-top:8px; padding:10px; border:1px dashed var(--line); border-radius:10px; background:none; color:var(--ice); font:inherit; font-size:13px; cursor:pointer; }
+  .bud-g-note{ font-size:10.5px; margin-top:4px; }
+  .bud-g-form{ margin-top:8px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font-size:12px; }
+  .bud-g-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .bud-g-chips button{ padding:6px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--frost); font:inherit; font-size:12px; cursor:pointer; min-height:32px; }
+  .bud-g-chips button.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .bud-g-form select{ width:100%; margin-top:4px; }
+  .bud-g-fbtn{ display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+  .bud-g-sum{ margin-top:10px; padding:8px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:12px; }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
   .bud-line-t{ flex:1 1 auto; min-width:0; }
   .bud-line-t b{ font-size:14.5px; }
@@ -2984,7 +3018,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 17; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 18; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3992,6 +4026,28 @@ const T = {
   bud_line_packs: { en: "{n} packs" },
   bud_line_all: { en: "Packs to buy" },
   bud_done_by: { en: "Done" },
+  goals_title: { en: "Order of goals" },
+  goals_desc: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ or use ▲▼." },
+  goal_main: { en: "main" },
+  goal_mini: { en: "mini" },
+  goal_lv: { en: "Lv" },
+  goal_add: { en: "+ Add mini target" },
+  goal_page: { en: "Page" },
+  goal_level: { en: "Level to reach first" },
+  goal_add_btn: { en: "Add" },
+  goal_cancel: { en: "Cancel" },
+  goal_so_far: { en: "{v} so far" },
+  goal_have: { en: "Already there" },
+  goal_now: { en: "Now" },
+  goal_same_path: { en: "Same packs as your plan, only the order changes · total {v} · done {date}" },
+  goal_next: { en: "{n} goals · next: {goal} · {date}" },
+  goal_count: { en: "{n} goals" },
+  goal_mini_note: { en: "Mini targets can be set on Charms and Chief Gear for now." },
+  goal_no_levels: { en: "No level between today and the target on these pages." },
+  goal_remove: { en: "Remove" },
+  goal_up: { en: "Move up" },
+  goal_down: { en: "Move down" },
+  goal_own_plan: { en: "Planned on its own" },
   budgets_split_parts: { en: "2 parts: by your target + after it" },
   budgets_split_late: { en: "Can't make {date}" },
   budgets_split_after: { en: "after your target" },
@@ -15956,6 +16012,260 @@ async function budgetSuggestedPlan() {
   PUR_SUGGEST.catch(() => { PUR_SUGGEST = null; });
   return PUR_SUGGEST;
 }
+// ---- Order of goals (admin, owner 18 Oct 2026) ----
+// The ticked pages' own targets ("main") plus mini targets on the way (e.g.
+// every charm to Lv 17 before the target Lv 18), in the admin's order. The
+// packs plan is the same; each goal shows when the plan's packs (bought on
+// their first chances) reach it if what arrives goes to the goals in order.
+// calc_state "budget_goals" = { order: [goal id], minis: [{ id, page, level }] }.
+let BUDGET_GOALS = null;
+let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
+let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
+const GOAL_MINI_PAGES = ["charm", "chief_gear"];
+async function ensureBudgetGoals() {
+  if (!BUDGET_GOALS) {
+    const s = (await loadCalcState("budget_goals")) || {};
+    BUDGET_GOALS = { order: Array.isArray(s.order) ? s.order : [], minis: Array.isArray(s.minis) ? s.minis.filter((m) => m && m.page && m.level != null) : [] };
+  }
+  return BUDGET_GOALS;
+}
+function saveBudgetGoals() { saveCalcState("budget_goals", BUDGET_GOALS); }
+// Levels a mini target can take on a page: above the lowest level today and
+// below the highest target (the target itself is the page's main goal).
+function goalMiniLevels(page) {
+  if (page === "charm") {
+    const at = (l) => CHARM_LEVELS.indexOf(String(l));
+    let lo = Infinity, hi = -1;
+    CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((s) => { const c = at(s.current), tg = at(s.target); if (c >= 0 && tg > c) { lo = Math.min(lo, c); hi = Math.max(hi, tg); } }));
+    return hi < 0 ? [] : CHARM_LEVELS.slice(lo + 1, hi).map((l) => ({ value: String(l), label: `${t("goal_lv")} ${l}` }));
+  }
+  if (page === "chief_gear" && CHIEF_GEAR_ROWS) {
+    const cap = chiefGearCapIdx();
+    let lo = Infinity, hi = -1;
+    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, cap); if (to > st.from) { lo = Math.min(lo, st.from); hi = Math.max(hi, to); } });
+    return hi < 0 ? [] : CHIEF_GEAR_ROWS.slice(lo + 1, hi).map((r) => ({ value: chiefGearRowLabel(r), label: chiefGearRowLabel(r) }));
+  }
+  return [];
+}
+// The page's target as a short label ("Lv 18", "Myth T2"), when all pieces share one.
+function goalTargetLabel(page) {
+  if (page === "charm") {
+    let hi = -1;
+    CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((s) => { const c = CHARM_LEVELS.indexOf(String(s.current)), tg = CHARM_LEVELS.indexOf(String(s.target)); if (tg > c) hi = Math.max(hi, tg); }));
+    return hi < 0 ? "" : `${t("goal_lv")} ${CHARM_LEVELS[hi]}`;
+  }
+  if (page === "chief_gear" && CHIEF_GEAR_ROWS) {
+    const cap = chiefGearCapIdx();
+    let hi = -1;
+    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, cap); if (to > st.from) hi = Math.max(hi, to); });
+    return hi < 0 ? "" : chiefGearRowLabel(CHIEF_GEAR_ROWS[hi]);
+  }
+  return "";
+}
+// What reaching a mini level takes on its page (same sums as the page's own
+// needs, with every piece's target capped at that level).
+function goalMiniTotals(page, level) {
+  if (page === "charm") {
+    const m = CHARM_LEVELS.indexOf(String(level));
+    if (m < 0) return null;
+    let g = 0, d = 0, s = 0;
+    CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((slot) => {
+      const c = CHARM_LEVELS.indexOf(String(slot.current)), to = Math.min(CHARM_LEVELS.indexOf(String(slot.target)), Math.max(c, m));
+      if (c < 0 || to <= c) return;
+      const a = CHARM_CUMULATIVE[slot.current] || [0, 0, 0], b = CHARM_CUMULATIVE[CHARM_LEVELS[to]] || [0, 0, 0];
+      g += Math.max(0, b[0] - a[0]); d += Math.max(0, b[1] - a[1]); s += Math.max(0, b[2] - a[2]);
+    }));
+    return { "Charm Guides": g, "Charm Designs": d, "Jewel Secrets": s };
+  }
+  if (page === "chief_gear" && CHIEF_GEAR_ROWS) {
+    const m = CHIEF_GEAR_ROWS.findIndex((r) => chiefGearRowLabel(r) === String(level));
+    if (m < 0) return null;
+    const rows = CHIEF_GEAR_ROWS, cap = chiefGearCapIdx(), totals = {};
+    const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+    CHIEF_GEAR_PIECES.forEach((p) => {
+      const st = CHIEF_GEAR_STATE[p.key];
+      const fromIdx = Math.min(st.from, st.to, cap), toIdx = Math.min(Math.max(st.from, st.to), cap, Math.max(st.from, m));
+      for (let i = fromIdx + 1; i <= toIdx; i++) cols.forEach(([col, label]) => { const v = Number((rows[i] || {})[col]) || 0; if (v) totals[label] = (totals[label] || 0) + v; });
+    });
+    return totals;
+  }
+  return null;
+}
+function goalMiniIdx(page, level) {
+  return page === "charm" ? CHARM_LEVELS.indexOf(String(level)) : (CHIEF_GEAR_ROWS || []).findIndex((r) => chiefGearRowLabel(r) === String(level));
+}
+// The goals in order: the saved order first; a goal not in it yet (a new
+// page ticked, a new mini) goes where it sits in the default list (pages in
+// Budgets order, each page's minis just before its target). A page's own
+// goals always stay in level order (a mini can't come after its target).
+function budgetGoalList(pages, incKeys) {
+  const G = BUDGET_GOALS || { order: [], minis: [] };
+  const def = [];
+  pages.forEach((pg) => {
+    if (!incKeys.includes(pg.calcKey)) return;
+    const ok = new Set(goalMiniLevels(pg.calcKey).map((x) => x.value));
+    G.minis.filter((m) => m.page === pg.calcKey && ok.has(String(m.level)))
+      .sort((a, b) => goalMiniIdx(pg.calcKey, a.level) - goalMiniIdx(pg.calcKey, b.level))
+      .forEach((m) => def.push({ id: "mini:" + m.id, page: pg.calcKey, mini: m, lvl: goalMiniIdx(pg.calcKey, m.level) }));
+    def.push({ id: "page:" + pg.calcKey, page: pg.calcKey, lvl: Infinity });
+  });
+  const byId = new Map(def.map((g) => [g.id, g]));
+  const out = G.order.filter((id, i, a) => byId.has(id) && a.indexOf(id) === i).map((id) => byId.get(id));
+  def.forEach((g, i) => {
+    if (out.includes(g)) return;
+    const next = def.slice(i + 1).find((x) => out.includes(x));
+    if (next) out.splice(out.indexOf(next), 0, g); else out.push(g);
+  });
+  [...new Set(out.map((g) => g.page))].forEach((page) => {
+    const slots = out.map((g, i) => (g.page === page ? i : -1)).filter((i) => i >= 0);
+    const mine = slots.map((i) => out[i]).sort((a, b) => a.lvl - b.lvl);
+    slots.forEach((i, k) => { out[i] = mine[k]; });
+  });
+  return out;
+}
+// When each goal is reached: the plan's packs bought on their first chances
+// (packPlanSchedule), what they give going to the goals in order. Goal k is
+// reached once everything goals 1..k need of goal k's items has arrived
+// (trades counted, within their weekly limits by then). Returns per goal
+// { day, spent (in the shown currency), done (nothing left), approx }.
+function budgetGoalDates(goals, pages, plan, calcKey) {
+  const segs = new Map();
+  [...new Set(goals.map((g) => g.page))].forEach((page) => {
+    const pg = pages.find((x) => x.calcKey === page);
+    if (!pg) return;
+    // A page without minis uses its need exactly as the plan does (pg.need,
+    // after trades into items the packs give); with minis, the still-needed
+    // amounts are split by level (trades are counted in the check below).
+    const hasMini = goals.some((g) => g.page === page && g.mini);
+    const still = (hasMini ? pg.needStill : pg.need) || {}, owned = pg.owned || {};
+    let prev = {};
+    goals.filter((g) => g.page === page).forEach((g) => {
+      let cur;
+      if (g.mini) {
+        const tot = goalMiniTotals(page, g.mini.level) || {};
+        cur = {};
+        Object.keys(still).forEach((n) => { cur[n] = Math.min(still[n] || 0, Math.max(0, (Number(tot[n]) || 0) - (Number(owned[n]) || 0))); });
+      } else cur = { ...still };
+      const seg = {};
+      Object.keys(cur).forEach((n) => { const v = (cur[n] || 0) - (prev[n] || 0); if (v > 1e-9) seg[n] = v; });
+      segs.set(g.id, seg);
+      prev = cur;
+    });
+  });
+  const rows = (plan && plan.rows) || [];
+  const sched = rows.length ? packPlanSchedule(rows) : [];
+  const offs = [...new Set(sched.flatMap((s) => s.map((x) => x.off)))].sort((a, b) => a - b);
+  // Arrivals and money spent up to each day a pack is bought.
+  const arrive = [], spent = [];
+  let acc = {}, money = 0;
+  offs.forEach((off) => {
+    acc = { ...acc };
+    rows.forEach((r, i) => sched[i].forEach((s) => {
+      if (s.off !== off) return;
+      Object.entries(r.gives || {}).forEach(([n, v]) => { acc[n] = (acc[n] || 0) + v * s.count; });
+      money += r.count ? (packRowLocal(r) / r.count) * s.count : 0;
+    }));
+    arrive.push(acc); spent.push(money);
+  });
+  // Days to check: each buying day, then weekly up to the plan's end (trades
+  // with a weekly limit can finish a goal after the last pack is bought).
+  const days = offs.slice(), end = Math.max(plan ? plan.days || 0 : 0, offs.length ? offs[offs.length - 1] : 0);
+  for (let d = (offs.length ? offs[offs.length - 1] : 0) + 7; d < end; d += 7) days.push(d);
+  if (end > (days.length ? days[days.length - 1] : -1)) days.push(end);
+  const at = days.map((d) => { let k = -1; while (k + 1 < offs.length && offs[k + 1] <= d) k++; return k; });
+  const planTrades = (plan && plan.trades) || [], totalGot = arrive.length ? arrive[arrive.length - 1] : {};
+  const cum = {};
+  return goals.map((g) => {
+    const seg = segs.get(g.id) || {};
+    Object.entries(seg).forEach(([n, v]) => { cum[n] = (cum[n] || 0) + v; });
+    const mine = Object.keys(seg);
+    if (!mine.length) return { day: 0, spent: 0, done: true };
+    const covered = (j) => {
+      const rem = { ...cum }, got = at[j] >= 0 ? arrive[at[j]] : {};
+      Object.entries(got).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v; });
+      // The plan's own trades, made as their items come in (the greedy trade
+      // check alone can miss the mix the solver found).
+      planTrades.forEach((x) => {
+        const f = totalGot[x.from] > 0 ? Math.min(1, (got[x.from] || 0) / totalGot[x.from]) : 1;
+        rem[x.from] = (rem[x.from] || 0) + x.giveQty * f;
+        rem[x.to] = (rem[x.to] || 0) - x.getQty * f;
+      });
+      const left = packShortAfterTrades(rem, packTradeCtx(calcKey, days[j])).short;
+      return !mine.some((n) => left[n] > 1e-6);
+    };
+    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true };
+    let lo = 0, hi = days.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (covered(mid)) hi = mid; else lo = mid + 1; }
+    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0 };
+  });
+}
+// The Order of goals card's buttons: fold, ▲▼ / drag ⋮⋮ (saved order),
+// ✕ on a mini, and the "+ Add mini target" form.
+function wireBudgetGoals(box) {
+  const redraw = () => keepPlace(() => renderBudgetsPage());
+  const ids = () => [...box.querySelectorAll("[data-goal]")].map((li) => li.dataset.goal);
+  const saveOrder = (list) => { BUDGET_GOALS.order = list; saveBudgetGoals(); redraw(); };
+  box.onclick = (e) => {
+    const b = e.target.closest("button");
+    if (!b || b.disabled) return;
+    if (b.hasAttribute("data-goalsfold")) { BUDGET_GOALS_OPEN = !BUDGET_GOALS_OPEN; redraw(); return; }
+    if (b.dataset.goalmove) {
+      const list = ids(), i = list.indexOf(b.closest("[data-goal]").dataset.goal), j = i + Number(b.dataset.goalmove);
+      if (i < 0 || j < 0 || j >= list.length) return;
+      [list[i], list[j]] = [list[j], list[i]];
+      saveOrder(list);
+      return;
+    }
+    if (b.hasAttribute("data-goalrm")) {
+      const gid = b.closest("[data-goal]").dataset.goal;
+      BUDGET_GOALS.minis = BUDGET_GOALS.minis.filter((m) => "mini:" + m.id !== gid);
+      saveOrder(ids().filter((x) => x !== gid));
+      return;
+    }
+    if (b.hasAttribute("data-goaladd")) { BUDGET_GOAL_ADD = {}; redraw(); return; }
+    if (b.hasAttribute("data-goalcancel")) { BUDGET_GOAL_ADD = null; redraw(); return; }
+    if (b.dataset.goalpage) { BUDGET_GOAL_ADD = { page: b.dataset.goalpage }; redraw(); return; }
+    if (b.hasAttribute("data-goalsave")) {
+      const sel = box.querySelector("[data-goallevel]");
+      if (!sel || !sel.value) return;
+      BUDGET_GOALS.minis.push({ id: Date.now().toString(36), page: b.dataset.page, level: sel.value });
+      BUDGET_GOAL_ADD = null;
+      saveOrder(ids()); // the new mini goes just before its page's target
+    }
+  };
+  // Drag a row by its ⋮⋮ handle (move / up are followed on the document:
+  // moving the row in the list would drop a pointer capture on the handle).
+  box.querySelectorAll("[data-goaldrag]").forEach((h) => {
+    h.onpointerdown = (e) => {
+      const li = h.closest("[data-goal]"), list = li.parentElement, before = ids().join("|");
+      e.preventDefault();
+      li.classList.add("drag");
+      const move = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        const over = [...list.children].find((x) => { if (x === li) return false; const r = x.getBoundingClientRect(); return ev.clientY >= r.top && ev.clientY <= r.bottom; });
+        if (!over) return;
+        const r = over.getBoundingClientRect();
+        list.insertBefore(li, ev.clientY < r.top + r.height / 2 ? over : over.nextSibling);
+      };
+      const up = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        document.removeEventListener("pointermove", move);
+        document.removeEventListener("pointerup", up);
+        document.removeEventListener("pointercancel", up);
+        li.classList.remove("drag");
+        if (ids().join("|") !== before) saveOrder(ids());
+      };
+      document.addEventListener("pointermove", move);
+      document.addEventListener("pointerup", up);
+      document.addEventListener("pointercancel", up);
+    };
+  });
+}
+// A picture for a page: its first needed item's.
+function goalPageIcon(pg) {
+  for (const n of Object.keys((pg && pg.needFull) || {})) { const ic = itemRegIcon(n) || bpIcon({ name: n.replace(/ \(minutes\)$/, "") }); if (ic) return ic; }
+  return "";
+}
 const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
 let BUDGET_MATS_OPEN = false; // Budgets: "Materials still needed" opened (starts closed, kept for the visit)
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
@@ -15981,6 +16291,7 @@ async function renderBudgetsPage(opts = {}) {
     BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
     dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
     ensureBudgetSpend(),
+    IS_OWNER ? ensureBudgetGoals() : null,
   ]);
   if (TAB !== "budgets") return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
@@ -16274,6 +16585,73 @@ async function renderBudgetsPage(opts = {}) {
       ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
     </div>`;
 
+  // Order of goals (admin): see budgetGoalList / budgetGoalDates.
+  const goalsHtml = (() => {
+    if (!IS_OWNER) return "";
+    const incKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
+    const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
+    const goals = budgetGoalList(pagesRaw, keys);
+    if (!goals.length) return "";
+    const plan = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
+    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, "__budget:" + incKeys.join(",")) : null;
+    const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
+    const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
+    const total = plan ? packPlanLocal(plan) : 0;
+    const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
+    const nameOf = (g) => {
+      const lbl = packPageLabel(g.page);
+      if (g.mini) return `${lbl} \u2192 ${goalMiniLevels(g.page).find((x) => x.value === String(g.mini.level))?.label || g.mini.level}`;
+      const tg = goalTargetLabel(g.page);
+      return tg ? `${lbl} \u2192 ${tg}` : lbl;
+    };
+    const rowHtml = (g, i) => {
+      const pg = pagesRaw.find((x) => x.calcKey === g.page), ic = goalPageIcon(pg), dt = dates && dates[i];
+      const own = !planPending && !incKeys.includes(g.page);
+      const status = planPending ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`
+        : own ? esc(t("goal_own_plan"))
+        : !dt ? "\u2014"
+        : dt.done ? `<span style="color:var(--good);">&#10003; ${esc(t("goal_have"))}</span>`
+        : `${dt.approx ? "~" : ""}${esc(shortD(dt.day))} \u00b7 <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`;
+      const fill = dt && total > 0 ? Math.min(100, (dt.done ? 0 : dt.spent / total) * 100) : 0;
+      return `<li class="bud-g" data-goal="${esc(g.id)}">
+        <span class="bud-g-h" data-goaldrag title="${esc(t("goals_desc"))}">&#8942;&#8942;</span>
+        <span class="bud-g-n">${i + 1}</span>
+        ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(packPageLabel(g.page).charAt(0))}</i>`}
+        <span class="bud-g-t"><span class="bud-g-nm"><b>${esc(nameOf(g))}</b><span class="bud-g-tag${g.mini ? " mini" : ""}">${esc(t(g.mini ? "goal_mini" : "goal_main"))}</span></span>
+          <small>${status}</small><span class="bud-g-bar"><i class="${g.mini ? "mini" : ""}" style="width:${fill.toFixed(1)}%;"></i></span></span>
+        <span class="bud-g-btns">
+          <button type="button" data-goalmove="-1" aria-label="${esc(t("goal_up"))}" ${i === 0 ? "disabled" : ""}>&#9650;</button>
+          <button type="button" data-goalmove="1" aria-label="${esc(t("goal_down"))}" ${i === goals.length - 1 ? "disabled" : ""}>&#9660;</button>
+          ${g.mini ? `<button type="button" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button>` : ""}
+        </span></li>`;
+    };
+    const miniPages = GOAL_MINI_PAGES.filter((k) => keys.includes(k) && goalMiniLevels(k).length);
+    const addHtml = () => {
+      if (!BUDGET_GOAL_ADD) return `<button type="button" class="bud-g-add" data-goaladd>${esc(t("goal_add"))}</button><div class="meta bud-g-note">${esc(t("goal_mini_note"))}</div>`;
+      if (!miniPages.length) return `<div class="bud-g-form"><div class="meta">${esc(t("goal_no_levels"))}</div><div class="bud-g-fbtn"><button type="button" class="btn small ghost" data-goalcancel>${esc(t("goal_cancel"))}</button></div></div>`;
+      const page = miniPages.includes(BUDGET_GOAL_ADD.page) ? BUDGET_GOAL_ADD.page : miniPages[0];
+      const have = new Set((BUDGET_GOALS.minis || []).filter((m) => m.page === page).map((m) => String(m.level)));
+      const levels = goalMiniLevels(page).filter((x) => !have.has(x.value));
+      return `<div class="bud-g-form">
+        <div class="meta">${esc(t("goal_page"))}</div>
+        <div class="bud-g-chips">${miniPages.map((k) => `<button type="button" data-goalpage="${esc(k)}" class="${k === page ? "on" : ""}">${esc(packPageLabel(k))}</button>`).join("")}</div>
+        <div class="meta" style="margin-top:8px;">${esc(t("goal_level"))}${goalTargetLabel(page) ? ` (${esc(t("goal_main"))}: ${esc(goalTargetLabel(page))})` : ""}</div>
+        <select data-goallevel>${levels.map((x) => `<option value="${esc(x.value)}">${esc(x.label)}</option>`).join("")}</select>
+        <div class="bud-g-fbtn"><button type="button" class="btn small ghost" data-goalcancel>${esc(t("goal_cancel"))}</button><button type="button" class="btn small" data-goalsave data-page="${esc(page)}" ${levels.length ? "" : "disabled"}>${esc(t("goal_add_btn"))}</button></div>
+      </div>`;
+    };
+    const next = dates ? goals.findIndex((g, i) => dates[i] && !dates[i].done) : -1;
+    const foldLine = next >= 0 ? t("goal_next").replace("{n}", goals.length).replace("{goal}", nameOf(goals[next])).replace("{date}", shortD(dates[next].day)) : t("goal_count").replace("{n}", goals.length);
+    return `<div class="t12x-card bud-goals" style="margin-top:12px;">
+      <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
+      ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc"))}</p>
+      <ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
+      ${addHtml()}
+      ${plan && !planPending ? `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>` : ""}`
+      : `<div class="meta bud-g-fold">${esc(foldLine)}</div>`}
+    </div>`;
+  })();
+
   // Budgets B: settings + pages on the side, the total and the shopping
   // list (packs to buy) in the main column, each page's details below it.
   // While the plan is worked out the page keeps its old height (the short
@@ -16305,6 +16683,7 @@ async function renderBudgetsPage(opts = {}) {
         </aside>
         <div class="t12x-main">
           ${summary}
+          ${goalsHtml}
           <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${cards.join("")}</div>
         </div>
       </div>
@@ -16382,6 +16761,8 @@ async function renderBudgetsPage(opts = {}) {
     const btn = document.querySelector(`.topnav-groups [data-tab="${b.dataset.gototab}"]`);
     if (btn) btn.click();
   }));
+  const goalsBox = content.querySelector(".bud-goals");
+  if (goalsBox) wireBudgetGoals(goalsBox);
 }
 
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
