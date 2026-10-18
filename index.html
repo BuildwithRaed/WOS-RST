@@ -389,6 +389,42 @@
   .bud-g-chips button.on{ border-color:var(--ice); background:var(--ice-dim); }
   .bud-g-form select{ width:100%; margin-top:4px; }
   .bud-g-fbtn{ display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+  .bud-g-row2{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .bud-g-by{ border:1px solid var(--line); background:var(--panel); color:var(--muted); border-radius:999px; font:inherit; font-size:10.5px; padding:2px 8px; cursor:pointer; min-height:24px; white-space:nowrap; }
+  .bud-g-by.ev{ border-color:rgba(167,139,250,.55); color:#c4b5fd; }
+  .bud-g-by.date{ border-color:var(--ice); color:var(--ice); }
+  .bud-g{ flex-wrap:wrap; }
+  .bud-g-by-box{ flex:1 1 100%; display:flex; flex-direction:column; gap:6px; margin-top:6px; padding:10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+  .bud-g-by-box button{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; min-height:36px; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
+  .bud-g-by-box button.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .bud-g-by-box small{ color:var(--muted); }
+  .bud-g-by-date{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12.5px; }
+  .bud-g-by-date input{ max-width:160px; }
+  .bud-g-sum.warn{ border-color:rgba(232,162,60,.45); background:rgba(232,162,60,.08); color:var(--amber); }
+  .bud-rm-seg{ margin:8px 0; }
+  .bud-rm-t{ width:100%; border-collapse:collapse; font-size:11.5px; margin-top:4px; }
+  .bud-rm-t th{ text-align:start; font-weight:600; color:var(--muted); font-size:10.5px; padding:4px 3px; border-bottom:1px solid var(--line); }
+  .bud-rm-t td{ padding:5px 3px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .bud-rm-t td:not(:first-child), .bud-rm-t th:not(:first-child){ text-align:end; white-space:nowrap; }
+  .bud-rm-t td.good{ color:var(--good); } .bud-rm-t td.warn{ color:var(--amber); }
+  .bud-rm-t tr.tot td{ font-weight:700; border-bottom:0; }
+  .bud-rm-note{ font-size:11px; margin:4px 0 10px; }
+  .bud-rm-k{ display:flex; justify-content:space-between; align-items:baseline; margin:6px 0; }
+  .bud-rm-w{ border-inline-start:2px solid var(--line); padding:0 0 8px 10px; margin-inline-start:4px; }
+  .bud-rm-wh{ display:flex; justify-content:space-between; gap:8px; font-size:12px; padding:4px 0; }
+  .bud-rm-l{ margin:3px 0; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); }
+  .bud-rm-l > summary{ list-style:none; display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; font-size:12px; }
+  .bud-rm-l > summary::-webkit-details-marker{ display:none; }
+  .bud-rm-l > summary img, .bud-rm-l > summary i{ width:22px; height:22px; object-fit:contain; flex:none; }
+  .bud-rm-l > summary span{ flex:1 1 auto; min-width:0; }
+  .bud-rm-l > summary b{ white-space:nowrap; }
+  .bud-rm-items{ display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 8px; }
+  .bud-rm-for{ flex:1 1 100%; font-size:11px; color:var(--amber); }
+  .bud-rm-flag, .bud-rm-ev{ display:flex; justify-content:space-between; gap:8px; margin:5px 0; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--ice); color:var(--ice); background:rgba(125,211,252,.06); }
+  .bud-rm-flag.mini{ border-color:rgba(232,162,60,.55); color:var(--amber); background:rgba(232,162,60,.06); }
+  .bud-rm-flag span, .bud-rm-ev span{ font-weight:400; white-space:nowrap; }
+  .bud-rm-ev{ border-color:rgba(167,139,250,.55); color:#c4b5fd; background:rgba(167,139,250,.07); }
+  .bud-rm-more > summary{ cursor:pointer; font-size:12px; color:var(--ice); padding:6px 0; list-style:none; }
   .bud-g-sum{ margin-top:10px; padding:8px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:12px; }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
   .bud-line-t{ flex:1 1 auto; min-width:0; }
@@ -4048,6 +4084,32 @@ const T = {
   goal_up: { en: "Move up" },
   goal_down: { en: "Move down" },
   goal_own_plan: { en: "Planned on its own" },
+  goal_by_main: { en: "Main target" },
+  goal_by_svs: { en: "Next SvS" },
+  goal_by_koi: { en: "Next KOI" },
+  goal_by_gen: { en: "Next new Gen" },
+  goal_by_date: { en: "Pick a date" },
+  goal_by_title: { en: "By when?" },
+  goal_by_note: { en: "Can't make it? You'll see how far you get by then and when it's fully done." },
+  goal_ready: { en: "ready {date}" },
+  goal_late: { en: "By {by}: {p}% \u00b7 fully done {date}" },
+  goal_with_dates: { en: "With your dates: total {v} ({d}) \u00b7 without them {w}" },
+  goal_dates_cant: { en: "Some dates can't be met: those goals are planned for their earliest day." },
+  rm_title: { en: "Roadmap" },
+  rm_with: { en: "With priorities" },
+  rm_without: { en: "Without" },
+  rm_goal: { en: "Goal" },
+  rm_deadline: { en: "Deadline" },
+  rm_total: { en: "Total" },
+  rm_same: { en: "Same packs, bought in a different order." },
+  rm_diff: { en: "With your dates some packs are bought earlier, or a different step." },
+  rm_missed: { en: "Without priorities, {n} goals miss their dates." },
+  rm_by_week: { en: "Packs by week" },
+  rm_so_far: { en: "spent so far" },
+  rm_this_week: { en: "This week" },
+  rm_more: { en: "{n} more weeks" },
+  rm_for: { en: "for" },
+  rm_fold: { en: "This week {v} \u00b7 {n} packs" },
   budgets_split_parts: { en: "2 parts: by your target + after it" },
   budgets_split_late: { en: "Can't make {date}" },
   budgets_split_after: { en: "after your target" },
@@ -15535,6 +15597,52 @@ function plannerCombinedLocal(payload) {
   delete res.groups;
   return res;
 }
+// Goals with their own "By" dates (owner, 18 Oct 2026): plan the parts in
+// date order, each by its date with what the parts before it left of every
+// pack's limits (and their spare items); the rest by the main target. A part
+// that can't make its date is planned for its earliest day. Returns the
+// joined plan (one row per offer) and, per part, if it made its date.
+function plannerDeadlineLocal(payload) {
+  payload = plannerPayloadDecode(payload);
+  const { calcKey } = payload;
+  let groups = payload.allGroups;
+  const carry = {}, parts = [], rows = [], trades = [];
+  let total = 0, days = 0;
+  for (const st of payload.stages) {
+    const need = {};
+    Object.entries(st.need).forEach(([n, q]) => { const have = carry[n] || 0; carry[n] = Math.max(0, have - q); if (q - have > 1e-9) need[n] = q - have; });
+    if (!Object.keys(need).length) { parts.push({ day: st.day, ok: true, total: 0 }); continue; }
+    let pl = packCheapestPlan(groups, need, st.day, calcKey), ok = !!pl, earliest = null;
+    if (!pl) {
+      earliest = packEarliestDays(groups, need, calcKey);
+      if (earliest == null) return { failed: true, parts };
+      pl = packCheapestPlan(groups, need, earliest, calcKey);
+      if (!pl) return { failed: true, parts };
+    }
+    const used = groups.map(() => 0);
+    (pl.picks || []).forEach((pk) => { used[pk.gi] += pk.count; });
+    groups = groups.map((g, gi) => (used[gi] ? { ...g, used: (g.used || 0) + used[gi] } : g));
+    const spare = {};
+    pl.rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { spare[n] = (spare[n] || 0) + v * r.count; }));
+    (pl.trades || []).forEach((x) => { spare[x.from] = (spare[x.from] || 0) - x.giveQty; spare[x.to] = (spare[x.to] || 0) + x.getQty; });
+    Object.entries(spare).forEach(([n, v]) => { const left = v - (need[n] || 0); if (left > 1e-9) carry[n] = (carry[n] || 0) + left; });
+    pl.rows.forEach((r) => rows.push(r));
+    (pl.trades || []).forEach((x) => trades.push(x));
+    total += pl.total; days = Math.max(days, pl.days || 0);
+    parts.push({ day: st.day, ok, earliest, total: pl.total });
+  }
+  // A pack bought in two parts is one row, so its buying days are shared.
+  const merged = new Map();
+  rows.forEach((r) => {
+    const k = [r.title, r.label, r.price, r.reset, r.resetDay, r.row, r.from].join("|"), m = merged.get(k);
+    if (m) { m.count += r.count; m.subtotal += r.subtotal; } else merged.set(k, { ...r });
+  });
+  const out = [...merged.values()], pool = new Map();
+  const pk = (r) => [r.title, r.perCycle, r.reset, r.resetDay].join("|");
+  out.forEach((r) => pool.set(pk(r), (pool.get(pk(r)) || 0) + r.count));
+  out.forEach((r) => { if (Number.isFinite(r.cycles)) r.cycles = Math.ceil(pool.get(pk(r)) / (r.perCycle || 1)); });
+  return { plan: { rows: out, total, days, trades }, parts };
+}
 // A page's own Fastest / By target / Cheapest plans (the Pack cost cards).
 function plannerPagePlans(payload) {
   const { groups, need, calcKey, targetDays } = payload;
@@ -15552,7 +15660,7 @@ function plannerPagePlans(payload) {
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
 // gets one request at a time (PLANNER_QUEUE holds the rest, PLANNER_BUSY is
@@ -15581,7 +15689,7 @@ function plannerWorker() {
       ...fns,
       "plannerSolver();", // start loading the solver as soon as the worker starts
       "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
-      "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
+      "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : kind === 'deadline' ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
     w.onmessage = (e) => {
@@ -15600,7 +15708,7 @@ function plannerWorker() {
   return PLANNER_WORKER || null;
 }
 function plannerRun(kind, payload) {
-  const local = () => (kind === "solver" ? !!PLAN_SOLVER : kind === "page" ? plannerPagePlans(payload) : plannerCombinedLocal(payload));
+  const local = () => (kind === "solver" ? !!PLAN_SOLVER : kind === "page" ? plannerPagePlans(payload) : kind === "deadline" ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload));
   const w = plannerWorker();
   if (!w) return Promise.resolve().then(local);
   const id = ++PLANNER_SEQ;
@@ -16017,15 +16125,18 @@ async function budgetSuggestedPlan() {
 // every charm to Lv 17 before the target Lv 18), in the admin's order. The
 // packs plan is the same; each goal shows when the plan's packs (bought on
 // their first chances) reach it if what arrives goes to the goals in order.
-// calc_state "budget_goals" = { order: [goal id], minis: [{ id, page, level }] }.
+// calc_state "budget_goals" = { order: [goal id], minis: [{ id, page, level }], by: { goal id: deadline } }.
 let BUDGET_GOALS = null;
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
+let BUDGET_GOAL_BY_OPEN = null; // goal id whose "By" picker is open
+let BUDGET_RM_OPEN = true;      // Roadmap card's fold (for the visit)
+let BUDGET_RM_WITH = true;      // Roadmap: with priorities / without
 const GOAL_MINI_PAGES = ["charm", "chief_gear"];
 async function ensureBudgetGoals() {
   if (!BUDGET_GOALS) {
     const s = (await loadCalcState("budget_goals")) || {};
-    BUDGET_GOALS = { order: Array.isArray(s.order) ? s.order : [], minis: Array.isArray(s.minis) ? s.minis.filter((m) => m && m.page && m.level != null) : [] };
+    BUDGET_GOALS = { order: Array.isArray(s.order) ? s.order : [], minis: Array.isArray(s.minis) ? s.minis.filter((m) => m && m.page && m.level != null) : [], by: s.by && typeof s.by === "object" ? s.by : {} };
   }
   return BUDGET_GOALS;
 }
@@ -16098,8 +16209,8 @@ function goalMiniIdx(page, level) {
 // page ticked, a new mini) goes where it sits in the default list (pages in
 // Budgets order, each page's minis just before its target). A page's own
 // goals always stay in level order (a mini can't come after its target).
-function budgetGoalList(pages, incKeys) {
-  const G = BUDGET_GOALS || { order: [], minis: [] };
+function budgetGoalList(pages, incKeys, defaultOrder) {
+  const G0 = BUDGET_GOALS || { order: [], minis: [] }, G = defaultOrder ? { ...G0, order: [] } : G0;
   const def = [];
   pages.forEach((pg) => {
     if (!incKeys.includes(pg.calcKey)) return;
@@ -16128,7 +16239,9 @@ function budgetGoalList(pages, incKeys) {
 // reached once everything goals 1..k need of goal k's items has arrived
 // (trades counted, within their weekly limits by then). Returns per goal
 // { day, spent (in the shown currency), done (nothing left), approx }.
-function budgetGoalDates(goals, pages, plan, calcKey) {
+// What each goal still needs on its own: a page's minis split its need by
+// level, its target takes the rest. { goal id: { item: amount } }.
+function budgetGoalSegs(goals, pages) {
   const segs = new Map();
   [...new Set(goals.map((g) => g.page))].forEach((page) => {
     const pg = pages.find((x) => x.calcKey === page);
@@ -16152,6 +16265,12 @@ function budgetGoalDates(goals, pages, plan, calcKey) {
       prev = cur;
     });
   });
+  return segs;
+}
+// `due` (optional): each goal's own deadline day (null = none); the answer
+// then also says how much of the goal is there by that day (`pctDue`, 0..1).
+function budgetGoalDates(goals, pages, plan, calcKey, due) {
+  const segs = budgetGoalSegs(goals, pages);
   const rows = (plan && plan.rows) || [];
   const sched = rows.length ? packPlanSchedule(rows) : [];
   const offs = [...new Set(sched.flatMap((s) => s.map((x) => x.off)))].sort((a, b) => a - b);
@@ -16180,8 +16299,8 @@ function budgetGoalDates(goals, pages, plan, calcKey) {
     Object.entries(seg).forEach(([n, v]) => { cum[n] = (cum[n] || 0) + v; });
     const mine = Object.keys(seg);
     if (!mine.length) return { day: 0, spent: 0, done: true };
-    const covered = (j) => {
-      const rem = { ...cum }, got = at[j] >= 0 ? arrive[at[j]] : {};
+    const shortAt = (j) => {
+      const rem = { ...cum }, got = j >= 0 && at[j] >= 0 ? arrive[at[j]] : {};
       Object.entries(got).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v; });
       // The plan's own trades, made as their items come in (the greedy trade
       // check alone can miss the mix the solver found).
@@ -16190,14 +16309,79 @@ function budgetGoalDates(goals, pages, plan, calcKey) {
         rem[x.from] = (rem[x.from] || 0) + x.giveQty * f;
         rem[x.to] = (rem[x.to] || 0) - x.getQty * f;
       });
-      const left = packShortAfterTrades(rem, packTradeCtx(calcKey, days[j])).short;
-      return !mine.some((n) => left[n] > 1e-6);
+      return packShortAfterTrades(rem, packTradeCtx(calcKey, j >= 0 ? days[j] : 0)).short;
     };
-    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true };
+    const covered = (j) => { const left = shortAt(j); return !mine.some((n) => left[n] > 1e-6); };
+    // How much of the goal is there by its own deadline (each item's share, averaged).
+    let pctDue = null;
+    const dd = due ? due[goals.indexOf(g)] : null;
+    if (dd != null) {
+      let j = -1; while (j + 1 < days.length && days[j + 1] <= dd) j++;
+      const left = shortAt(j);
+      pctDue = mine.reduce((a, n) => a + Math.max(0, 1 - Math.min(seg[n], left[n] || 0) / seg[n]), 0) / mine.length;
+    }
+    if (!days.length || !covered(days.length - 1)) return { day: end, spent: plan ? packPlanLocal(plan) : 0, approx: true, pctDue };
     let lo = 0, hi = days.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (covered(mid)) hi = mid; else lo = mid + 1; }
-    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0 };
+    return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0, pctDue };
   });
+}
+// A goal's "By" choice (BUDGET_GOALS.by[goal id]): "svs" / "koi" (the next
+// one's first day), "gen" (the next new heroes day), "date:yyyy-mm-dd", or
+// nothing = the main target. Returns the day from today, or null.
+function goalDeadlineDay(by) {
+  const t0 = packStartOfToday(), off = (d) => Math.round((d - t0) / 86400000);
+  if (by === "svs" || by === "koi") {
+    const ev = GAME_EVENTS.find((e) => e.key === by);
+    const st = ev && gameEventStarts(ev, t0, new Date(t0.getTime() + 200 * 86400000)).find((d) => d > t0);
+    return st ? off(st) : null;
+  }
+  if (by === "gen") { const n = newGenStarts(newGenBaseDay(), 3).find((d) => d > t0); return n ? off(n) : null; }
+  if (typeof by === "string" && by.startsWith("date:")) { const d = packParseDay(by.slice(5)); return d ? Math.max(0, off(d)) : null; }
+  return null;
+}
+function goalByIcon(by) { return by === "svs" || by === "koi" ? "\u2694" : by === "gen" ? "\u2B50" : by && String(by).startsWith("date:") ? "\uD83D\uDCC5" : "\u2605"; }
+function goalByName(by) {
+  if (by === "svs") return t("goal_by_svs");
+  if (by === "koi") return t("goal_by_koi");
+  if (by === "gen") return t("goal_by_gen");
+  return by && String(by).startsWith("date:") ? "" : t("goal_by_main");
+}
+// Each goal's deadline: its own, or an earlier one set on a later goal of the
+// same page (a mini must be ready before its target).
+function budgetGoalDue(goals) {
+  const by = (BUDGET_GOALS && BUDGET_GOALS.by) || {};
+  const due = goals.map((g) => goalDeadlineDay(by[g.id]));
+  goals.forEach((g, i) => goals.forEach((h, j) => { if (h.page === g.page && h.lvl > g.lvl && due[j] != null && (due[i] == null || due[j] < due[i])) due[i] = due[j]; }));
+  return due;
+}
+// The plan with the goals' own dates (worked out in the background planner,
+// kept like the Budgets plan: in memory and on the phone by fingerprint).
+const BUDGET_DEADLINE_STORE = "budget_deadline_v1";
+let BUDGET_DEADLINE = { key: null, res: null, running: null };
+function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady) {
+  const segs = budgetGoalSegs(goals, pages), byDay = new Map();
+  goals.forEach((g, i) => {
+    const d = due[i] != null ? (mainDay != null ? Math.min(due[i], mainDay) : due[i]) : mainDay;
+    const m = byDay.get(d) || {};
+    Object.entries(segs.get(g.id) || {}).forEach(([n, q]) => { m[n] = (m[n] || 0) + q; });
+    byDay.set(d, m);
+  });
+  const stages = [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, need]) => ({ day, need }));
+  const inp = budgetCombinedInput(pages, selected);
+  const payload = plannerPayloadEncode({ pages: [], selected: {}, allGroups: inp.allGroups, stages, calcKey: "__budget:" + keys.join(",") });
+  const key = budgetPlanFingerprint({ deadline: 1, payload });
+  if (BUDGET_DEADLINE.key === key) return BUDGET_DEADLINE.res;
+  try { const kept = JSON.parse(localStorage.getItem(BUDGET_DEADLINE_STORE) || "null"); if (kept && kept.key === key) { BUDGET_DEADLINE = { key, res: kept.res, running: null }; return kept.res; } } catch (e) { /* storage blocked */ }
+  if (BUDGET_DEADLINE.running === key) return null;
+  BUDGET_DEADLINE = { key: null, res: null, running: key };
+  plannerRun("deadline", payload).then((res) => {
+    if (BUDGET_DEADLINE.running !== key) return;
+    BUDGET_DEADLINE = { key, res, running: null };
+    try { localStorage.setItem(BUDGET_DEADLINE_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked */ }
+    if (onReady) onReady();
+  }).catch((e) => { if (BUDGET_DEADLINE.running === key) BUDGET_DEADLINE.running = null; if (!(e && e.superseded)) console.error("deadline plan failed", e); });
+  return null;
 }
 // The Order of goals card's buttons: fold, ▲▼ / drag ⋮⋮ (saved order),
 // ✕ on a mini, and the "+ Add mini target" form.
@@ -16222,6 +16406,13 @@ function wireBudgetGoals(box) {
       saveOrder(ids().filter((x) => x !== gid));
       return;
     }
+    if (b.hasAttribute("data-goalby")) { const gid = b.closest("[data-goal]").dataset.goal; BUDGET_GOAL_BY_OPEN = BUDGET_GOAL_BY_OPEN === gid ? null : gid; redraw(); return; }
+    if (b.dataset.goalbyset != null) {
+      const gid = b.closest("[data-goal]").dataset.goal;
+      BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}) };
+      if (b.dataset.goalbyset) BUDGET_GOALS.by[gid] = b.dataset.goalbyset; else delete BUDGET_GOALS.by[gid];
+      BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw(); return;
+    }
     if (b.hasAttribute("data-goaladd")) { BUDGET_GOAL_ADD = {}; redraw(); return; }
     if (b.hasAttribute("data-goalcancel")) { BUDGET_GOAL_ADD = null; redraw(); return; }
     if (b.dataset.goalpage) { BUDGET_GOAL_ADD = { page: b.dataset.goalpage }; redraw(); return; }
@@ -16233,6 +16424,13 @@ function wireBudgetGoals(box) {
       saveOrder(ids()); // the new mini goes just before its page's target
     }
   };
+  const dateEl = box.querySelector("[data-goalbydate]");
+  if (dateEl) dateEl.addEventListener("change", () => {
+    if (!packValidDay(dateEl.value)) return;
+    const gid = dateEl.closest("[data-goal]").dataset.goal;
+    BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "date:" + dateEl.value };
+    BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw();
+  });
   // Drag a row by its ⋮⋮ handle (move / up are followed on the document:
   // moving the row in the list would drop a pointer capture on the handle).
   box.querySelectorAll("[data-goaldrag]").forEach((h) => {
@@ -16592,38 +16790,61 @@ async function renderBudgetsPage(opts = {}) {
     const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
     const goals = budgetGoalList(pagesRaw, keys);
     if (!goals.length) return "";
-    const plan = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
-    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, "__budget:" + incKeys.join(",")) : null;
+    const ck = "__budget:" + incKeys.join(",");
+    const basePlan = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
+    const by = BUDGET_GOALS.by || {}, due = budgetGoalDue(goals);
+    // Goals with their own dates: the plan bought for those dates (background planner).
+    const mainDay = targetDays != null ? targetDays : basePlan ? basePlan.days || 0 : null;
+    const dl = !planPending && basePlan && due.some((d) => d != null)
+      ? budgetDeadlineFor(pagesRaw, BUDGET_SELECTED, goals, due, mainDay, incKeys, () => { if (TAB === "budgets") keepPlace(() => renderBudgetsPage()); })
+      : null;
+    const dlPending = !planPending && basePlan && due.some((d) => d != null) && !dl;
+    const dlPlan = dl && !dl.failed ? dl.plan : null;
+    const plan = dlPlan || basePlan;
+    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due) : null;
     const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
     const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
-    const total = plan ? packPlanLocal(plan) : 0;
+    const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
     const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
     const nameOf = (g) => {
       const lbl = packPageLabel(g.page);
-      if (g.mini) return `${lbl} \u2192 ${goalMiniLevels(g.page).find((x) => x.value === String(g.mini.level))?.label || g.mini.level}`;
+      if (g.mini) return `${lbl} → ${goalMiniLevels(g.page).find((x) => x.value === String(g.mini.level))?.label || g.mini.level}`;
       const tg = goalTargetLabel(g.page);
-      return tg ? `${lbl} \u2192 ${tg}` : lbl;
+      return tg ? `${lbl} → ${tg}` : lbl;
     };
+    const byText = (b, d) => { const nm = goalByName(b); return `${goalByIcon(b)} ${nm}${nm && d != null ? " · " : ""}${d != null ? fmtDate(d) : ""}`; };
     const rowHtml = (g, i) => {
       const pg = pagesRaw.find((x) => x.calcKey === g.page), ic = goalPageIcon(pg), dt = dates && dates[i];
       const own = !planPending && !incKeys.includes(g.page);
-      const status = planPending ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`
+      const myBy = by[g.id] || "", d = due[i], dIn = goalDeadlineDay(myBy);
+      const late = dt && !dt.done && d != null && dt.day > d;
+      const status = planPending || (dlPending && d != null) ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`
         : own ? esc(t("goal_own_plan"))
-        : !dt ? "\u2014"
+        : !dt ? "—"
         : dt.done ? `<span style="color:var(--good);">&#10003; ${esc(t("goal_have"))}</span>`
-        : `${dt.approx ? "~" : ""}${esc(shortD(dt.day))} \u00b7 <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`;
+        : late ? `<span style="color:var(--amber);">&#9888; ${esc(t("goal_late").replace("{by}", goalByName(myBy) || fmtDate(d)).replace("{p}", Math.floor((dt.pctDue || 0) * 100)).replace("{date}", fmtDate(dt.day)))}</span>`
+        : d != null ? `<span style="color:var(--good);">&#10003; ${esc(t("goal_ready").replace("{date}", shortD(dt.day)))}</span> · <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`
+        : `${dt.approx ? "~" : ""}${esc(shortD(dt.day))} · <b>${esc(t("goal_so_far").replace("{v}", money(dt.spent)))}</b>`;
       const fill = dt && total > 0 ? Math.min(100, (dt.done ? 0 : dt.spent / total) * 100) : 0;
+      const kind = myBy === "svs" || myBy === "koi" || myBy === "gen" ? " ev" : myBy ? " date" : "";
+      const picker = BUDGET_GOAL_BY_OPEN === g.id ? `<div class="bud-g-by-box">
+          <div class="meta" style="font-weight:600;">${esc(t("goal_by_title"))}</div>
+          ${["", "svs", "koi", "gen"].map((b) => { const dd = b ? goalDeadlineDay(b) : mainDay; return `<button type="button" data-goalbyset="${b}" class="${myBy === b ? "on" : ""}"><span>${goalByIcon(b)} ${esc(goalByName(b))}</span><small>${dd != null ? esc(fmtDate(dd)) : "—"}</small></button>`; }).join("")}
+          <label class="bud-g-by-date"><span>&#128197; ${esc(t("goal_by_date"))}</span><input type="date" data-goalbydate value="${myBy.startsWith("date:") ? esc(myBy.slice(5)) : ""}" /></label>
+          <div class="meta" style="font-size:10.5px;">${esc(t("goal_by_note"))}</div>
+        </div>` : "";
       return `<li class="bud-g" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag title="${esc(t("goals_desc"))}">&#8942;&#8942;</span>
         <span class="bud-g-n">${i + 1}</span>
         ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(packPageLabel(g.page).charAt(0))}</i>`}
         <span class="bud-g-t"><span class="bud-g-nm"><b>${esc(nameOf(g))}</b><span class="bud-g-tag${g.mini ? " mini" : ""}">${esc(t(g.mini ? "goal_mini" : "goal_main"))}</span></span>
-          <small>${status}</small><span class="bud-g-bar"><i class="${g.mini ? "mini" : ""}" style="width:${fill.toFixed(1)}%;"></i></span></span>
+          <span class="bud-g-row2"><button type="button" class="bud-g-by${kind}" data-goalby>${esc(byText(myBy, myBy ? dIn : mainDay))} &#9662;</button><small>${status}</small></span>
+          <span class="bud-g-bar"><i class="${g.mini ? "mini" : ""}" style="width:${fill.toFixed(1)}%;"></i></span></span>
         <span class="bud-g-btns">
           <button type="button" data-goalmove="-1" aria-label="${esc(t("goal_up"))}" ${i === 0 ? "disabled" : ""}>&#9650;</button>
           <button type="button" data-goalmove="1" aria-label="${esc(t("goal_down"))}" ${i === goals.length - 1 ? "disabled" : ""}>&#9660;</button>
           ${g.mini ? `<button type="button" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button>` : ""}
-        </span></li>`;
+        </span>${picker}</li>`;
     };
     const miniPages = GOAL_MINI_PAGES.filter((k) => keys.includes(k) && goalMiniLevels(k).length);
     const addHtml = () => {
@@ -16642,14 +16863,78 @@ async function renderBudgetsPage(opts = {}) {
     };
     const next = dates ? goals.findIndex((g, i) => dates[i] && !dates[i].done) : -1;
     const foldLine = next >= 0 ? t("goal_next").replace("{n}", goals.length).replace("{goal}", nameOf(goals[next])).replace("{date}", shortD(dates[next].day)) : t("goal_count").replace("{n}", goals.length);
-    return `<div class="t12x-card bud-goals" style="margin-top:12px;">
+    const sumHtml = !plan || planPending ? ""
+      : dlPlan ? `<div class="bud-g-sum${dl.parts.some((x) => !x.ok) ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${dl.parts.some((x) => !x.ok) ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
+      : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
+    const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
       ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc"))}</p>
       <ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
       ${addHtml()}
-      ${plan && !planPending ? `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>` : ""}`
+      ${sumHtml}`
       : `<div class="meta bud-g-fold">${esc(foldLine)}</div>`}
     </div>`;
+
+    // Roadmap: the packs week by week with a flag where each goal is reached,
+    // and "Without": the plain plan with the default order and no dates.
+    if (planPending || !plan || !dates) return goalsCard;
+    const plainGoals = budgetGoalList(pagesRaw, keys, true);
+    const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.indexOf(goals.find((x) => x.id === g.id))])) : null;
+    const plainOf = (g) => { const k = plainGoals.findIndex((x) => x.id === g.id); return plainDates && k >= 0 ? plainDates[k] : null; };
+    const withOn = BUDGET_RM_WITH;
+    const rmPlan = withOn ? plan : basePlan;
+    const rmDates = withOn ? dates : goals.map((g) => plainOf(g));
+    const dCell = (x) => (!x ? "—" : x.done ? "&#10003;" : `${x.approx ? "~" : ""}${esc(shortD(x.day))}`);
+    const missed = goals.filter((g, i) => due[i] != null && plainOf(g) && !plainOf(g).done && plainOf(g).day > due[i]).length;
+    const tableHtml = `<table class="bud-rm-t"><thead><tr><th>${esc(t("rm_goal"))}</th><th>${esc(t("rm_with"))}</th><th>${esc(t("rm_without"))}</th><th>${esc(t("rm_deadline"))}</th></tr></thead><tbody>
+      ${goals.map((g, i) => { const w = dates[i], o = plainOf(g), dd = due[i]; const ok = w && (w.done || dd == null || w.day <= dd); const oLate = o && !o.done && dd != null && o.day > dd;
+        return `<tr><td>${g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(g))}</td><td class="${w && !w.done && o && !o.done && w.day < o.day ? "good" : ""}">${dCell(w)}</td><td class="${oLate ? "warn" : ""}">${dCell(o)}</td><td class="${ok ? "good" : "warn"}">${dd != null ? `${ok ? "&#10003;" : "&#9888;"} ${esc(goalByName(by[g.id]) || fmtDate(dd))}` : ok ? "&#10003;" : "&#9888;"}</td></tr>`; }).join("")}
+      <tr class="tot"><td>${esc(t("rm_total"))}</td><td>${esc(money(total))}</td><td>${esc(money(baseTotal))}</td><td></td></tr></tbody></table>
+      <div class="meta bud-rm-note">${esc(t(Math.abs(total - baseTotal) < 0.5 ? "rm_same" : "rm_diff"))}${missed ? ` ${esc(t("rm_missed").replace("{n}", missed))}` : ""}</div>`;
+    // Weeks (Monday to Sunday) with the packs bought in them.
+    const sched = packPlanSchedule(rmPlan.rows), t0 = packStartOfToday(), dow = (t0.getDay() + 6) % 7;
+    const weeks = new Map();
+    rmPlan.rows.forEach((r, i) => sched[i].forEach((sl) => {
+      const w = Math.floor((sl.off + dow) / 7), wk = weeks.get(w) || { lines: [], money: 0 };
+      const m = r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
+      const ex = wk.lines.find((x) => x.r === r);
+      if (ex) { ex.n += sl.count; ex.m += m; } else wk.lines.push({ r, n: sl.count, m });
+      wk.money += m; weeks.set(w, wk);
+    }));
+    const segs = budgetGoalSegs(goals, pagesRaw);
+    const forGoal = (r) => { const items = Object.keys(r.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
+    const flagsIn = (w) => goals.map((g, i) => ({ g, d: rmDates[i] })).filter((x) => x.d && !x.d.done && Math.floor((x.d.day + dow) / 7) === w);
+    const evKeys = [...new Set(Object.values(by).filter((b) => b === "svs" || b === "koi"))];
+    const evIn = (w) => evKeys.flatMap((k) => { const ev = GAME_EVENTS.find((e) => e.key === k); const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000); return ev ? gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).map((d) => ({ ev, d })) : []; });
+    const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" });
+    const allW = [...new Set([...weeks.keys(), ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null)).filter((x) => x != null)])].sort((a, b) => a - b);
+    let run = 0;
+    const weekHtml = (w) => {
+      const wk = weeks.get(w) || { lines: [], money: 0 }; run += wk.money;
+      const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000);
+      const head = `${w === 0 ? esc(t("rm_this_week")) + " · " : ""}${esc(dayTxt(ws))} – ${esc(dayTxt(we))}`;
+      const lines = wk.lines.map((x) => {
+        const items = Object.entries(x.r.gives || {}).filter(([n, v]) => n !== "Gems" && v > 0);
+        const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
+        const fg = forGoal(x.r);
+        return `<details class="bud-rm-l"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.r.title)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
+          <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v * x.n))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
+      }).join("");
+      const ev = evIn(w).map((x) => `<div class="bud-rm-ev">&#9876; ${esc(x.ev.name)} <span>${esc(dayTxt(x.d))} – ${esc(dayTxt(new Date(x.d.getTime() + (x.ev.days - 1) * 86400000)))}</span></div>`).join("");
+      const flags = flagsIn(w).map((x) => `<div class="bud-rm-flag${x.g.mini ? " mini" : ""}">${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(money(x.d.spent))}</span></div>`).join("");
+      return `<div class="bud-rm-w"><div class="bud-rm-wh"><b>${head}</b><span class="meta">${esc(money(run))}</span></div>${lines}${ev}${flags}</div>`;
+    };
+    const first = allW.slice(0, 3).map(weekHtml).join("");
+    const rest = allW.slice(3);
+    const restHtml = rest.length ? `<details class="bud-rm-more"><summary>${esc(t("rm_more").replace("{n}", rest.length))} &#9656;</summary>${rest.map(weekHtml).join("")}</details>` : "";
+    const rmCard = `<div class="t12x-card bud-rm" style="margin-top:12px;">
+      <button type="button" class="bud-g-head" data-rmfold aria-expanded="${BUDGET_RM_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("rm_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_RM_OPEN ? "&#9662;" : "&#9656;"}</span></button>
+      ${BUDGET_RM_OPEN ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${withOn ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${withOn ? "" : "on"}">${esc(t("rm_without"))}</button></div>
+        ${tableHtml}
+        <div class="bud-rm-k"><b>${esc(t("rm_by_week"))}</b><span class="meta">${esc(t("rm_so_far"))}</span></div>
+        ${first}${restHtml}` : `<div class="meta bud-g-fold">${esc(t("rm_fold").replace("{v}", money(weeks.get(0) ? weeks.get(0).money : 0)).replace("{n}", weeks.get(0) ? weeks.get(0).lines.length : 0))}</div>`}
+    </div>`;
+    return goalsCard + rmCard;
   })();
 
   // Budgets B: settings + pages on the side, the total and the shopping
@@ -16763,6 +17048,13 @@ async function renderBudgetsPage(opts = {}) {
   }));
   const goalsBox = content.querySelector(".bud-goals");
   if (goalsBox) wireBudgetGoals(goalsBox);
+  const rmBox = content.querySelector(".bud-rm");
+  if (rmBox) rmBox.onclick = (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.hasAttribute("data-rmfold")) { BUDGET_RM_OPEN = !BUDGET_RM_OPEN; keepPlace(() => renderBudgetsPage()); }
+    else if (b.dataset.rmwith != null) { BUDGET_RM_WITH = b.dataset.rmwith === "1"; keepPlace(() => renderBudgetsPage()); }
+  };
 }
 
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
