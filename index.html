@@ -4103,11 +4103,12 @@ const T = {
   rm_total: { en: "Total" },
   rm_same: { en: "Same packs, bought in a different order." },
   rm_diff: { en: "With your dates some packs are bought earlier, or a different step." },
-  rm_missed: { en: "Without priorities, {n} goals miss their dates." },
+  rm_missed: { en: "Goals that miss their date without priorities: {n}." },
   rm_by_week: { en: "Packs by week" },
   rm_so_far: { en: "spent so far" },
   rm_this_week: { en: "This week" },
   rm_more: { en: "{n} more weeks" },
+  rm_more_packs: { en: "{n} more packs" },
   rm_for: { en: "for" },
   rm_fold: { en: "This week {v} \u00b7 {n} packs" },
   budgets_split_parts: { en: "2 parts: by your target + after it" },
@@ -15606,8 +15607,11 @@ function plannerDeadlineLocal(payload) {
   payload = plannerPayloadDecode(payload);
   const { calcKey } = payload;
   let groups = payload.allGroups;
-  const carry = {}, parts = [], rows = [], trades = [];
+  const carry = {}, parts = [], picks = [], trades = [];
   let total = 0, days = 0;
+  const offerKey = (x) => [(x.tables || []).join(","), x.reset, x.resetDay, x.perCycle, x.label, x.price, x.row, x.from].join("|");
+  const offerAt = new Map();
+  groups.forEach((g, gi) => g.offers.forEach((o, oi) => { const k = offerKey({ ...o, tables: g.tables, reset: g.reset, resetDay: g.resetDay, perCycle: g.perCycle }); if (!offerAt.has(k)) offerAt.set(k, { gi, oi }); }));
   for (const st of payload.stages) {
     const need = {};
     Object.entries(st.need).forEach(([n, q]) => { const have = carry[n] || 0; carry[n] = Math.max(0, have - q); if (q - have > 1e-9) need[n] = q - have; });
@@ -15619,28 +15623,33 @@ function plannerDeadlineLocal(payload) {
       pl = packCheapestPlan(groups, need, earliest, calcKey);
       if (!pl) return { failed: true, parts };
     }
+    // The plan's rows back to this list's groups / offers (its own picks
+    // point into a trimmed copy of the groups).
     const used = groups.map(() => 0);
-    (pl.picks || []).forEach((pk) => { used[pk.gi] += pk.count; });
+    pl.rows.forEach((r) => {
+      const at = offerAt.get(offerKey(r));
+      if (!at) return;
+      used[at.gi] += r.count;
+      const e = picks.find((x) => x.gi === at.gi && x.oi === at.oi);
+      if (e) e.count += r.count; else picks.push({ gi: at.gi, oi: at.oi, count: r.count });
+    });
     groups = groups.map((g, gi) => (used[gi] ? { ...g, used: (g.used || 0) + used[gi] } : g));
     const spare = {};
     pl.rows.forEach((r) => Object.entries(r.gives || {}).forEach(([n, v]) => { spare[n] = (spare[n] || 0) + v * r.count; }));
     (pl.trades || []).forEach((x) => { spare[x.from] = (spare[x.from] || 0) - x.giveQty; spare[x.to] = (spare[x.to] || 0) + x.getQty; });
     Object.entries(spare).forEach(([n, v]) => { const left = v - (need[n] || 0); if (left > 1e-9) carry[n] = (carry[n] || 0) + left; });
-    pl.rows.forEach((r) => rows.push(r));
     (pl.trades || []).forEach((x) => trades.push(x));
     total += pl.total; days = Math.max(days, pl.days || 0);
     parts.push({ day: st.day, ok, earliest, total: pl.total });
   }
-  // A pack bought in two parts is one row, so its buying days are shared.
-  const merged = new Map();
-  rows.forEach((r) => {
-    const k = [r.title, r.label, r.price, r.reset, r.resetDay, r.row, r.from].join("|"), m = merged.get(k);
-    if (m) { m.count += r.count; m.subtotal += r.subtotal; } else merged.set(k, { ...r });
-  });
-  const out = [...merged.values()], pool = new Map();
-  const pk = (r) => [r.title, r.perCycle, r.reset, r.resetDay].join("|");
-  out.forEach((r) => pool.set(pk(r), (pool.get(pk(r)) || 0) + r.count));
-  out.forEach((r) => { if (Number.isFinite(r.cycles)) r.cycles = Math.ceil(pool.get(pk(r)) / (r.perCycle || 1)); });
+  // One row per offer over all the parts (like the combined plan's rows), so
+  // a pack bought in two parts shares its buying days.
+  const base = payload.allGroups, perGroup = base.map(() => 0);
+  picks.forEach((pk) => { perGroup[pk.gi] += pk.count; });
+  const out = picks.map((pk) => {
+    const g = base[pk.gi], o = g.offers[pk.oi];
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+  }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return { plan: { rows: out, total, days, trades }, parts };
 }
 // A page's own Fastest / By target / Cheapest plans (the Pack cost cards).
@@ -16802,6 +16811,16 @@ async function renderBudgetsPage(opts = {}) {
     const dlPlan = dl && !dl.failed ? dl.plan : null;
     const plan = dlPlan || basePlan;
     const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due) : null;
+    // A goal with its own date: the planner planned its part for that date
+    // (or, when it can't make it, for its earliest day), so that answer wins.
+    if (dates && dlPlan) goals.forEach((g, i) => {
+      if (due[i] == null || !dates[i] || dates[i].done) return;
+      const dEff = mainDay != null ? Math.min(due[i], mainDay) : due[i];
+      const part = dl.parts.find((x) => x.day === dEff);
+      if (!part) return;
+      if (part.ok) dates[i] = { ...dates[i], day: Math.min(dates[i].day, dEff), approx: false, pctDue: 1 };
+      else if (part.earliest != null) dates[i] = { ...dates[i], day: part.earliest, approx: false };
+    });
     const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
     const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
     const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
@@ -16897,12 +16916,16 @@ async function renderBudgetsPage(opts = {}) {
     rmPlan.rows.forEach((r, i) => sched[i].forEach((sl) => {
       const w = Math.floor((sl.off + dow) / 7), wk = weeks.get(w) || { lines: [], money: 0 };
       const m = r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
-      const ex = wk.lines.find((x) => x.r === r);
-      if (ex) { ex.n += sl.count; ex.m += m; } else wk.lines.push({ r, n: sl.count, m });
+      // One line per pack (its steps / options added up), short name.
+      const nm = purShortName(purPackName(r.title, (r.tables || []).map((id) => ({ id }))));
+      let ex = wk.lines.find((x) => x.nm === nm);
+      if (!ex) { ex = { nm, n: 0, m: 0, gives: {} }; wk.lines.push(ex); }
+      ex.n += sl.count; ex.m += m;
+      Object.entries(r.gives || {}).forEach(([n, v]) => { ex.gives[n] = (ex.gives[n] || 0) + v * sl.count; });
       wk.money += m; weeks.set(w, wk);
     }));
     const segs = budgetGoalSegs(goals, pagesRaw);
-    const forGoal = (r) => { const items = Object.keys(r.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
+    const forGoal = (x) => { const items = Object.keys(x.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
     const flagsIn = (w) => goals.map((g, i) => ({ g, d: rmDates[i] })).filter((x) => x.d && !x.d.done && Math.floor((x.d.day + dow) / 7) === w);
     const evKeys = [...new Set(Object.values(by).filter((b) => b === "svs" || b === "koi"))];
     const evIn = (w) => evKeys.flatMap((k) => { const ev = GAME_EVENTS.find((e) => e.key === k); const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000); return ev ? gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).map((d) => ({ ev, d })) : []; });
@@ -16913,13 +16936,15 @@ async function renderBudgetsPage(opts = {}) {
       const wk = weeks.get(w) || { lines: [], money: 0 }; run += wk.money;
       const ws = new Date(t0.getTime() + (w * 7 - dow) * 86400000), we = new Date(ws.getTime() + 6 * 86400000);
       const head = `${w === 0 ? esc(t("rm_this_week")) + " · " : ""}${esc(dayTxt(ws))} – ${esc(dayTxt(we))}`;
-      const lines = wk.lines.map((x) => {
-        const items = Object.entries(x.r.gives || {}).filter(([n, v]) => n !== "Gems" && v > 0);
+      const lineHtml = (x) => {
+        const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
         const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
-        const fg = forGoal(x.r);
-        return `<details class="bud-rm-l"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.r.title)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
-          <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v * x.n))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
-      }).join("");
+        const fg = forGoal(x);
+        return `<details class="bud-rm-l"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
+          <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
+      };
+      const sorted = wk.lines.slice().sort((p, q) => q.m - p.m);
+      const lines = sorted.slice(0, 5).map(lineHtml).join("") + (sorted.length > 5 ? `<details class="bud-rm-more"><summary>${esc(t("rm_more_packs").replace("{n}", sorted.length - 5))} &#9656;</summary>${sorted.slice(5).map(lineHtml).join("")}</details>` : "");
       const ev = evIn(w).map((x) => `<div class="bud-rm-ev">&#9876; ${esc(x.ev.name)} <span>${esc(dayTxt(x.d))} – ${esc(dayTxt(new Date(x.d.getTime() + (x.ev.days - 1) * 86400000)))}</span></div>`).join("");
       const flags = flagsIn(w).map((x) => `<div class="bud-rm-flag${x.g.mini ? " mini" : ""}">${x.g.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(x.g))}<span>${esc(fmtDate(x.d.day))} · ${esc(money(x.d.spent))}</span></div>`).join("");
       return `<div class="bud-rm-w"><div class="bud-rm-wh"><b>${head}</b><span class="meta">${esc(money(run))}</span></div>${lines}${ev}${flags}</div>`;
