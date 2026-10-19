@@ -7839,6 +7839,8 @@ async function renderPurchasesPage() {
   const monIdx = (packStartOfToday().getUTCDay() + 6) % 7;
   const dOff = (k) => { const d = packParseDay(k); return d ? Math.round((d - packStartOfToday()) / 86400000) : 0; };
   const bucketOf = (kind, k) => (kind === "c" ? "w" + (dOff(k) < 0 ? -1 : Math.floor((dOff(k) + monIdx) / 7)) : "m" + String(k || "").slice(0, 7));
+  // Triggered packs still waiting have their own heading; ✓ / × find a row's dates by the same key.
+  const bucketFor = (kind, p) => (kind === "c" && purTriggerWaiting(p) ? "w-2" : bucketOf(kind, p.date));
   const groupBy = (arr) => {
     const out = [];
     arr.forEach((p) => { const k = purGroupKey(p); let g = out.find((x) => x.key === k); if (!g) { g = { key: k, tb: byId.get(String(p.table)), row: p.row, first: p, items: [] }; out.push(g); } g.items.push(p); });
@@ -7900,7 +7902,7 @@ async function renderPurchasesPage() {
   const listHtml = (kind, arr) => {
     const bks = [];
     const byB = new Map();
-    arr.forEach((p) => { const bk = kind === "c" && purTriggerWaiting(p) ? "w-2" : bucketOf(kind, p.date); if (!byB.has(bk)) { byB.set(bk, []); bks.push(bk); } byB.get(bk).push(p); });
+    arr.forEach((p) => { const bk = bucketFor(kind, p); if (!byB.has(bk)) { byB.set(bk, []); bks.push(bk); } byB.get(bk).push(p); });
     if (kind === "c") bks.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
     return `<div class="pur-scroll" data-purscroll="${kind}">${bks.map((bk, i) => {
       const part = byB.get(bk), rows = groupBy(part).map((g) => groupHtml(g, kind, bk)).join("");
@@ -8715,7 +8717,7 @@ async function renderPurchasesPage() {
   content.querySelectorAll("[data-wcopen]").forEach((b) => b.addEventListener("click", () => packOpenSettingsOnPacks(b.dataset.wcopen)));
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
     const id = box.dataset.purgrp, kind = id.slice(0, 1), rest = id.slice(2), bk = rest.slice(0, rest.indexOf("|")), gkey = rest.slice(rest.indexOf("|") + 1);
-    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought") && bucketOf(kind, p.date) === bk;
+    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought") && bucketFor(kind, p) === bk;
     // Tap a line: its items, Used for and buttons open under it.
     const head = box.querySelector("[data-purrowtap]");
     const tog = () => {
