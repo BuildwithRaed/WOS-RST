@@ -355,6 +355,67 @@
   .exp-count input{ width:16px; height:16px; margin:0; cursor:pointer; }
   .exp-skl{ display:flex; flex-direction:column; gap:1px; }
   .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
+  /* Experts skill "EXP you have" = one compact line (design B, 19 Oct 2026). */
+  .exp-xl{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; margin-top:4px; font-size:11px; color:var(--muted); }
+  .exp-xl input{ width:calc(var(--xw, 4) * 1ch + 22px); min-width:58px; max-width:130px; flex:none; padding:4px 8px; font-size:12.5px; font-weight:700; text-align:center; border-radius:8px; }
+  .exp-xl input.has{ border-color:var(--ice); }
+  .exp-xl .btn{ padding:3px 9px; font-size:11px; min-height:28px; flex:none; }
+  .exp-xl-b{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:4px; font-weight:700; color:var(--frost); white-space:nowrap; }
+  .exp-xl-b img{ width:16px; height:16px; object-fit:contain; }
+  .exp-xl-b.ok{ color:var(--good); }
+  /* Level chips + level list sheet (Heroes Gears cards, design A, 19 Oct 2026). */
+  .hgc-head{ display:flex; align-items:center; gap:10px; }
+  /* The picture files have see-through space around the tile: the box is
+     bigger and pulled out by that space, so the tile itself lines up with the
+     card's left edge and is as tall as the name + stat lines beside it. */
+  .hgc-pic{ width:74px; height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:center; margin:-12px -6px -12px -10px; }
+  .hgc-pic img{ width:100%; height:100%; object-fit:contain; } /* the picture as it is: no box, no zoom (owner, 19 Oct 2026) */
+  .hgc-name{ flex:1; min-width:0; }
+  .hgc-name .name{ font-size:15px; font-weight:700; }
+  .plx-piecestat.hgc-stat{ margin-top:2px; padding-top:0; border-top:0; font-size:11.5px; gap:2px 10px; }
+  .plx-piecestat.hgc-stat:empty{ display:none; }
+  .hgc-row{ display:flex; align-items:center; gap:6px; padding:8px 0 0; margin-top:8px; border-top:1px dashed var(--line); }
+  .hgc-tr{ flex:1; min-width:0; font-size:12.5px; color:var(--frost); }
+  .lvchip{ font:inherit; font-size:13px; font-weight:700; min-width:64px; max-width:110px; min-height:34px; padding:5px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; white-space:nowrap; -webkit-appearance:none; appearance:none; text-align:center; text-align-last:center; }
+  .lvchip.tgt{ border-color:rgba(125,200,255,.55); color:var(--ice); }
+  .lvchip.up{ border-color:var(--amber); color:var(--amber); }
+  .lvarr{ color:var(--muted); font-size:12px; }
+  @media (max-width:700px){
+      }
+  /* Pets Level card, design C v2 (19 Oct 2026). */
+  .pc-head{ display:flex; align-items:center; gap:10px; }
+  .pc-head img{ width:48px; height:48px; border-radius:12px; object-fit:cover; flex-shrink:0; }
+  .pc-head .name{ font-size:16px; font-weight:700; min-width:0; }
+  .pc-head .exp-count{ margin-inline-start:auto; flex-shrink:0; }
+  .pc-done-ic{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(80,200,120,.18); color:var(--good); font-size:12px; flex-shrink:0; }
+  .pc-row{ display:flex; align-items:flex-end; gap:10px; margin-top:10px; }
+  .pc-stat{ flex:1 1 0; min-width:0; }
+  .pc-stat span{ display:block; font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .pc-stat b{ display:block; font-size:20px; line-height:1.15; }
+  .pc-stat small{ display:block; font-size:10.5px; color:var(--muted); }
+  .pc-bar{ display:flex; height:5px; margin-top:5px; border-radius:3px; overflow:hidden; background:var(--panel-2); }
+  .pc-bar i{ display:block; height:100%; background:var(--good); }
+  .pc-bar i + i{ background:rgba(125,200,255,.6); }
+  .pc-st{ flex:0 0 auto; text-align:center; }
+  .pc-st > span{ display:block; font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+  .pc-step{ display:flex; align-items:center; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); }
+  .pc-step.tgt{ border-color:rgba(125,200,255,.55); }
+  .pc-step button{ border:0; background:none; color:var(--ice); font-size:18px; font-weight:700; width:30px; min-height:38px; cursor:pointer; touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+  .pc-step button:disabled{ color:var(--muted); opacity:.45; cursor:default; }
+  .pc-val{ position:relative; min-width:46px; font-size:14px; font-weight:700; white-space:nowrap; text-align:center; }
+  .pc-step.tgt .pc-val{ color:var(--ice); }
+  .pc-val.up{ color:var(--amber) !important; }
+  .pc-val select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
+  .pc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .pc-chip{ display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border:1px solid var(--line); border-radius:999px; font-size:12.5px; font-weight:600; }
+  .pc-chip img{ width:18px; height:18px; object-fit:contain; }
+  .pc-done{ display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:5px 12px; border:1px solid rgba(80,200,120,.5); border-radius:999px; color:var(--good); font-size:12.5px; }
+  @media (max-width:379px){
+    .pc-row{ flex-wrap:wrap; }
+    .pc-stat{ flex:1 1 100%; }
+    .pc-st{ flex:1 1 0; }
+    .pc-step{ justify-content:space-between; }
+  }
   .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
   .bud-vip{ margin-top:8px; padding:7px 10px; border-radius:8px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:11.5px; }
   .vip-bundle{ display:flex; align-items:center; gap:10px; }
@@ -1110,6 +1171,156 @@ input,select,textarea{
   .t12x-time-top b{ font-size:22px; font-weight:800; }
   .t12x-time .t12x-prog{ margin:8px 0 4px; height:6px; }
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  /* Settings: compact, explanations behind the small i (owner, 19 Oct 2026). */
+  .t12x-settings{ padding:10px 12px; }
+  .t12x-settings.one-line > .t12x-k{ display:none; }
+  .exp-spd{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .exp-spd .meta{ font-size:11px; letter-spacing:.03em; }
+  .exp-spd-k{ color:var(--muted); font-size:14px; }
+  .exp-spd input{ width:92px; padding:5px 8px; text-align:end; }
+  #expertsGeneralSpeedupNote{ font-size:11px; }
+  .t12x-settings > .t12x-k{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .t12x-settings p.desc{ display:none; }
+  .t12x-settings.info p.desc{ display:block; }
+  .t12x-settings .cap-l{ display:none; }
+  .t12x-settings.info .cap-l{ display:inline; }
+  .set-info{ width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--muted); font:italic 700 11px/1 Georgia, serif; padding:0; cursor:pointer; text-transform:none; }
+  .t12x-settings.info .set-info{ border-color:var(--ice); color:var(--ice); }
+  .plx-stats-top{ margin-top:12px; }
+  /* One troop switch per page, pinned under the top menu while scrolling (owner, 19 Oct 2026). */
+  .plx-tsw{ position:sticky; top:var(--navh, 56px); z-index:15; margin:12px 0; padding:8px; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:0 6px 18px rgba(0,0,0,.35); }
+  .plx-tsw-seg{ display:flex; gap:4px; padding:3px; border-radius:11px; background:rgba(255,255,255,.04); }
+  .plx-tsw-seg button{ flex:1; min-height:34px; border:0; border-radius:9px; background:none; color:var(--muted); font-weight:700; font-size:13px; cursor:pointer; }
+  .plx-tsw-seg button.on{ background:var(--tc, var(--ice)); color:#0f141b; }
+  .plx-tsw-stats:empty{ display:none; }
+  .plx-tsw-stats{ margin-top:8px; }
+  /* Chief Charm tiles (design B, owner 19 Oct 2026) */
+  .ch-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .ch-tile{ display:flex; flex-direction:column; gap:6px; min-width:0; padding:8px 7px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .ch-tile:hover{ border-color:var(--ice-dim); }
+  .ch-tile.done{ border-color:rgba(91,201,138,.45); }
+  .ch-t-h{ display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+  .ch-pic.tile{ width:44px; height:44px; }
+  .ch-pic{ position:relative; width:30px; height:30px; flex-shrink:0; }
+  .ch-pic img{ width:100%; height:100%; object-fit:contain; }
+  .ch-pic.none img{ opacity:.35; filter:grayscale(.6); }
+  .ch-pic i{ position:absolute; inset-inline-end:-5px; bottom:-5px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#0f141b; border:1px solid var(--line); color:var(--frost); font-style:normal; font-size:10px; font-weight:800; line-height:14px; text-align:center; }
+  .ch-pic.big{ width:46px; height:46px; }
+  .ch-t-n{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ch-t-v{ font-size:clamp(14px, 4.4vw, 19px); font-weight:800; white-space:nowrap; text-align:center; }
+  .ch-t-v em{ font-style:normal; font-size:.72em; color:var(--muted); margin:0 2px; }
+  .ch-t-v b{ color:var(--ice); } .ch-t-v b.up{ color:var(--amber); } .ch-t-v b.ok{ color:var(--good); }
+  .ch-bar{ position:relative; display:block; height:5px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .ch-bar i, .ch-bar s{ position:absolute; top:0; bottom:0; }
+  .ch-bar i{ inset-inline-start:0; background:var(--good); }
+  .ch-bar s{ background:var(--ice); opacity:.75; }
+  .ch-piece{ margin-top:10px; padding:10px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.02); }
+  .ch-p-h{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .ch-p-h img{ width:28px; height:28px; border-radius:7px; object-fit:contain; }
+  .ch-p-h b{ flex:1; font-size:14px; }
+  .ch-p-go{ font-size:12px; color:var(--muted); padding:2px 9px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .ch-piece .ch-t-v{ display:flex; flex-direction:column; align-items:center; gap:3px; font-size:15px; }
+  .ch-t-v .ch-tc{ display:inline-block; padding:0 6px; border-radius:9px; border:1px solid var(--ice-dim); color:var(--ice); font-size:11px; font-weight:700; line-height:17px; vertical-align:2px; }
+  .ch-t-v .ch-tc.up{ border-color:rgba(240,180,80,.55); color:var(--amber); }
+  .ch-t-v .ch-tc.ok{ border-color:rgba(91,201,138,.5); color:var(--good); }
+  .ch-stg{ display:flex; gap:2px; }
+  .ch-stg i{ flex:1; height:6px; border-radius:2px; background:rgba(255,255,255,.08); }
+  .ch-stg .n{ background:var(--good); } .ch-stg .t{ background:#3a86d4; }
+  .ch-stg.pick{ gap:4px; margin-top:8px; }
+  .ch-stg.pick button{ position:relative; flex:1; min-width:0; height:26px; margin-bottom:16px; padding:0; border:2px solid transparent; border-radius:6px; background:rgba(255,255,255,.08); cursor:pointer; }
+  .ch-stg.pick button.n{ background:var(--good); } .ch-stg.pick button.t{ background:#3a86d4; }
+  .ch-stg.pick button.on{ border-color:#fff; }
+  .ch-stg.pick button:disabled{ cursor:default; }
+  .ch-stg.pick em{ position:absolute; top:100%; left:0; right:0; margin-top:2px; font-style:normal; font-size:10px; color:var(--muted); }
+  .ch-stg.pick button.on em{ color:var(--frost); font-weight:800; }
+  .ch-sheet .gs-head .rfa-x{ margin-inline-start:2px; }
+  .ch-nav{ width:34px; height:34px; flex-shrink:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--ice); font-size:20px; cursor:pointer; }
+  .ch-nav:disabled{ opacity:.3; cursor:default; }
+  .ch-sec{ padding:10px 10px 4px; margin-bottom:10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
+  .ch-sec.tgt{ border-color:var(--ice-dim); }
+  .ch-sec-h{ display:flex; justify-content:space-between; gap:8px; font-size:12px; margin-bottom:6px; }
+  .ch-sec-h b{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .ch-sec-h span{ color:var(--muted); } .ch-sec-h span.up{ color:var(--amber); }
+  .ch-strip{ display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; padding:2px 0; }
+  .ch-strip::-webkit-scrollbar{ display:none; }
+  .ch-lvp{ flex:0 0 54px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 0; border:0; border-radius:10px; background:none; color:var(--muted); font:inherit; cursor:pointer; }
+  .ch-lvp b{ font-size:11px; font-weight:600; }
+  .ch-lvp small{ font-size:9px; font-weight:700; color:var(--ice); }
+  .ch-lvp small.up, .ch-lvp.up b{ color:var(--amber); }
+  .ch-lvp.on{ background:rgba(120,190,255,.12); }
+  .ch-lvp.on b{ color:var(--frost); font-weight:800; }
+  .ch-lvp.on .ch-pic{ border-radius:50%; box-shadow:0 0 0 2px var(--ice); }
+  .ch-sec.tgt .ch-lvp.on .ch-pic{ box-shadow:0 0 0 2px #e8b84a; }
+  .ch-lvp:disabled{ opacity:.35; cursor:default; }
+  .ch-pic.strip{ width:40px; height:40px; }
+  .ch-foot{ grid-template-columns:1fr 1fr !important; }
+  .ch-foot .btn.ghost{ color:var(--ice); border-color:var(--ice-dim); }
+  .ch-foot .btn.ghost:disabled{ opacity:.4; }
+  .ch-t-g{ text-align:center; font-size:12px; font-weight:700; color:var(--ice); }
+  .ch-tile.done .ch-t-g{ color:var(--good); }
+  .ch-hint{ font-size:11px; margin:10px 0 0; }
+  /* Chief Charm / Chief Gear sheet */
+  .gs-box{ padding:16px; }
+  .gs-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .gs-head b{ font-size:16px; }
+  .gs-head .meta{ font-size:12px; }
+  .gs-row{ display:grid; grid-template-columns:58px minmax(0,1fr) 62px; gap:8px; align-items:center; margin-bottom:10px; }
+  .gs-l{ font-size:11px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase; margin-bottom:4px; }
+  .gs-row .gs-l{ margin:0; }
+  .gs-stp{ display:flex; align-items:center; min-height:52px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .gs-stp.tgt{ border-color:var(--ice-dim); }
+  .gs-stp button{ width:48px; align-self:stretch; border:0; background:none; color:var(--ice); font-size:24px; cursor:pointer; }
+  .gs-stp button:disabled{ opacity:.3; cursor:default; }
+  .gs-stp b{ flex:1; display:flex; flex-direction:column; align-items:center; font-size:24px; font-weight:800; line-height:1.1; }
+  .gs-stp.tgt b{ color:var(--ice); }
+  .gs-stp b small{ font-size:10px; font-weight:600; color:var(--amber); }
+  .gs-max{ min-height:52px; padding:0 6px; }
+  .gs-needs{ margin:4px 0 12px; padding:10px; border:1px solid var(--line); border-radius:12px; }
+  .gs-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .gs-chip{ display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; font-size:13px; }
+  .gs-chip.ok{ color:var(--good); }
+  .gs-chip img{ width:18px; height:18px; object-fit:contain; }
+  .gs-foot{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .gs-foot > *{ min-height:44px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gs-lists{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+  .gs-list{ max-height:min(46vh, 380px); overflow-y:auto; border:1px solid var(--line); border-radius:12px; overscroll-behavior:contain; }
+  .gs-grp{ position:sticky; top:0; z-index:1; padding:6px 10px; background:var(--panel-2); color:var(--muted); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; }
+  .gs-opt{ display:block; width:100%; min-height:40px; padding:8px 10px; border:0; border-top:1px solid var(--line); background:none; color:var(--frost); font:inherit; font-size:14px; text-align:start; cursor:pointer; }
+  .gs-opt.on{ background:rgba(111,211,242,.18); font-weight:800; }
+  .gs-opt.up{ color:var(--amber); }
+  .gs-opt small{ font-size:10px; }
+  .gs-opt:disabled{ opacity:.35; cursor:default; }
+  /* Chief Gear slots (design D3, owner 19 Oct 2026) */
+  .cg-slots{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); grid-template-areas:"helmet . watch" "jacket mid pants" "ring . cane"; gap:14px 6px; max-width:520px; margin:0 auto; padding:14px 8px 10px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.02); }
+  .cg-slot{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; padding:0; border:0; background:none; color:var(--frost); font:inherit; cursor:pointer; }
+  .cg-pic{ position:relative; display:block; width:min(78px, 100%); aspect-ratio:1; border:3px solid var(--edge, var(--line)); border-radius:12px; background:radial-gradient(circle at 50% 40%, rgba(255,255,255,.12), rgba(0,0,0,.15)); }
+  .cg-pic img{ width:100%; height:100%; object-fit:contain; border-radius:9px; display:block; }
+  .cg-pic.sm{ width:46px; flex-shrink:0; border-width:2px; }
+  .cg-badge{ position:absolute; top:-9px; inset-inline-start:-7px; padding:1px 5px; border:1px solid var(--line); border-radius:6px; background:#0f141b; font-size:10px; font-weight:800; white-space:nowrap; }
+  .cg-tgt{ position:absolute; bottom:-9px; inset-inline-end:-9px; padding:2px 6px; border-radius:999px; background:#2c5f8f; color:#fff; font-size:10px; font-weight:800; white-space:nowrap; }
+  .cg-tgt.up{ background:#8a5a1c; }
+  .cg-tgt.ok{ background:#2a6b45; }
+  .cg-nm{ margin-top:7px; font-size:11.5px; font-weight:700; text-align:center; line-height:1.25; }
+  .cg-mid{ grid-area:mid; align-self:center; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; border:1px solid var(--line); border-radius:12px; background:var(--panel); text-align:center; font-size:12px; }
+  .cg-mid > b{ font-size:30px; line-height:1; }
+  .cg-mid .meta{ font-size:10.5px; }
+  .cg-mid .sa-btn{ margin-top:6px; }
+  .cg-sabox{ margin-top:10px; }
+  .cg-sabox[hidden]{ display:none; }
+  .cg-pin-h{ display:flex; align-items:baseline; gap:4px; font-size:14px; margin:0 2px 8px; }
+  .cg-setboxes{ margin-bottom:8px; }
+  .cg-setline{ display:none; font-size:11.5px; margin:0 2px 6px; }
+  .cg-pin.is-pinned .cg-pin-h, .cg-pin.is-pinned .cg-setboxes{ display:none; }
+  .cg-pin.is-pinned .cg-setline{ display:block; }
+  .plx-tsw.is-pinned{ position:fixed; top:0; z-index:40; margin:0; border-radius:0 0 14px 14px; }
+  /* Phones: the Chief Charm / Chief Gear sheet sits at the bottom. */
+  @media (max-width:699px){ .gs-wrap.modal-overlay{ align-items:flex-end; padding:0; } .gs-wrap .gs-box{ max-width:none !important; width:100% !important; max-height:92vh; border-radius:16px 16px 0 0; } }
+  /* Stats inside the pinned troop switch: compact; one stat = one slim line. */
+  .plx-tsw-stats .plx-stat{ padding:6px 9px; }
+  .plx-tsw-stats .plx-stat b{ font-size:15px; margin-top:0; }
+  .plx-tsw-stats .plx-stat .t12x-bar{ margin-top:4px; }
+  .plx-tsw-stats .plx-stats.one[style*="--n:1;"] .plx-stat{ display:grid; grid-template-columns:auto auto auto minmax(40px, 1fr); align-items:center; gap:0 8px; }
+  .plx-tsw-stats .plx-stats.one[style*="--n:1;"] .plx-stat .t12x-bar{ margin:0; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
@@ -1496,15 +1707,15 @@ input,select,textarea{
   .plx-stat-tabs{ overflow-x:auto; scrollbar-width:none; }
   .plx-stat-tabs button{ font-size:12.5px; flex:1 0 auto; white-space:nowrap; padding:7px 10px; }
   /* Pet / expert picker strip */
-  .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-bottom:6px; scrollbar-width:thin; }
-  .plx-pick button{ flex:0 0 auto; width:76px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
-  .plx-pick button img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
+  .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-top:12px; margin-bottom:6px; scrollbar-width:thin; }
+  .plx-pick button{ flex:0 0 auto; width:62px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
+  .plx-pick button img{ width:48px; height:48px; object-fit:cover; border-radius:8px; }
   .plx-pick button > span:last-child{ width:100%; text-align:center; line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
-  .plx-pick-ph{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
+  .plx-pick-ph{ width:48px; height:48px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
   .plx-pick button.on{ border-color:var(--tc); color:var(--frost); background:rgba(255,255,255,.07); box-shadow:inset 0 -2px 0 var(--tc); }
   .plx-pick button.dim{ opacity:.45; }
   @media (min-width: 901px){ .plx-pick{ flex-wrap:wrap; overflow:visible; } }
-  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:66px; padding:6px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:34px; height:34px; } }
+  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:56px; padding:5px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:44px; height:44px; } }
   .t12x-tabs{ display:flex; flex:1 1 320px; max-width:560px; margin-inline-start:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; }
   .t12x-tabs button{ flex:1; border:0; background:none; color:var(--muted); font:inherit; font-weight:600; font-size:13px; padding:7px 4px; border-radius:10px; cursor:pointer; }
   .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }
@@ -3088,10 +3299,6 @@ function materialDisplayName(name) {
   if (m) return t("sigils_suffix").replace("{name}", dataName(m[1]));
   return uiText(name);
 }
-function tPosition(pos) {
-  const map = { "Top left": "pos_top_left", "Top right": "pos_top_right", "Middle left": "pos_middle_left", "Middle right": "pos_middle_right", "Bottom left": "pos_bottom_left", "Bottom right": "pos_bottom_right" };
-  return map[pos] ? t(map[pos]) : pos;
-}
 const T12_GROUP_KEYS = { "Troop Unlock": "t12_group_troop_unlock", "Skills I": "t12_group_skills1", "Skills II": "t12_group_skills2", "Skills III": "t12_group_skills3", "Troop Skill": "t12_group_troop_skill", "Exalted Support": "t12_group_exalted_support", "Solar Supremacy": "t12_group_solar_supremacy" };
 const T12_LABEL_KEYS = { "Head Slot": "t12_label_head_slot", "Shoulder Slot": "t12_label_shoulder_slot", "Body Slot": "t12_label_body_slot", "Leg Slot": "t12_label_leg_slot", "Weapon Slot": "t12_label_weapon_slot", "Troop Skill": "t12_label_troop_skill", "Exalted Healing": "t12_label_exalted_healing", "Exalted First Aid": "t12_label_exalted_first_aid", "Exalted Training": "t12_label_exalted_training", "Solar Supremacy": "t12_label_solar_supremacy" };
 function tT12Group(g) {
@@ -3119,7 +3326,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 26; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 32; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3583,6 +3790,9 @@ const T = {
   upcoming_col: { en: "Upcoming" },
   adm_unsaved_leave: { en: "You have {n} unsaved changes. Leave without saving?" },
   pet_advanced: { en: "Advanced" },
+  pet_adv_short: { en: "Adv" },
+  pet_done: { en: "Done · nothing needed" },
+  pet_count_tip: { en: "Ticked: this pet counts in the totals, Dashboard and Budgets." },
   material_food: { en: "Food" },
   material_manual: { en: "Manual" },
   material_potion: { en: "Potion" },
@@ -4343,11 +4553,13 @@ const T = {
   pur_sug_title: { en: "Suggested packs (from Budgets)" },
   pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy lets you pick the dates." },
   pur_sug_none: { en: "Nothing else to buy: your plans are covered." },
+  set_info: { en: "What these settings do" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_sug_total: { en: "Suggested total" },
   sa_lock_line: { en: "{what} opens around day {day} — in about {n} days (≈ {date})." },
   sa_lock_hint: { en: "Not counted in your Dashboard and Budgets yet (from your state age). You can still plan it and tick it yourself." },
   sa_lock_hint_plan: { en: "From your state age. You can still plan it now." },
+  sa_lock_hint_cap: { en: "\"Max\" and \"Max everything\" stop before it for now (from your state age). You can still pick it as a target." },
   sa_title: { en: "Your state's age" },
   sa_desc: { en: "Used for your hero generations, New Gen packs, the calendar and what unlocks next. Saved to your account." },
   bp_sh_notout: { en: "Left out, not out yet in your state: {names}" },
@@ -4357,6 +4569,19 @@ const T = {
   rfc_lab_open: { en: "Lab open in my state" },
   rfc_lab_closed: { en: "Off: the lab's Refined FC isn't counted on T12 and Budgets." },
   cg_count_leg: { en: "Count Legendary levels" },
+  charm_to_go: { en: "{n} to go" },
+  charm_tiles_hint: { en: "Green bar = now, blue = what the target adds. Tap a charm to change it." },
+  charm_needs_this: { en: "Needs for this charm" },
+  charm_lv: { en: "Lv" },
+  charm_stage: { en: "Stage {a} / {b}" },
+  charm_target_max: { en: "Target = Max ({lv})" },
+  gs_nothing: { en: "Nothing needed" },
+  gs_done: { en: "Done" },
+  cg_pieces_to_go: { en: "pieces to go" },
+  cg_at_target: { en: "{n} of {m} at target" },
+  cg_slots_hint: { en: "Edge colour = tier (red Legendary, gold Mythic). Badge top-left = now, blue = target. Tap a piece to change it." },
+  cg_set_bonus: { en: "Set bonus" },
+  bud_not_open: { en: "Includes levels not open in your state yet ({what})" },
   sa_by_mon: { en: "Monument" },
   sa_mon_beast: { en: "Beast Hunting (− 6 days)" },
   sa_mon_kindling: { en: "Kindling Embers (− 3 days)" },
@@ -4872,7 +5097,7 @@ let RENDER_SEQ = 0;
 async function render() {
   const seq = ++RENDER_SEQ;
   // Page pop-ups: close them when the page changes.
-  ["refineAdvModal", "drilldownModal"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
+  ["refineAdvModal", "drilldownModal", "gearSheet"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   // The same page drawn again after a tap: keep its height and scroll place.
   const same = LAST_RENDER_TAB === TAB && !!content.firstElementChild, y0 = window.scrollY;
   const putBoxes = same ? saveBoxScroll(content) : null;
@@ -6122,7 +6347,6 @@ async function ensureHeroGearData() {
   return HERO_GEAR_LOADING;
 }
 async function loadHeroGearData() {
-  const capsPromise = ensureGearCaps();
   const results = await Promise.all(
     ["Hero Gear Mastery Forging", "Hero Gear Enhancement", "Hero Gear Mithril"].map(async (name) => {
       // The table and its rows in one request (they used to be two).
@@ -6163,8 +6387,6 @@ async function loadHeroGearData() {
       });
     }
   }
-  await capsPromise;
-  clampHeroGearSets();
 }
 
 
@@ -6173,21 +6395,17 @@ async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
   await ensureHeroGearData();
 
-  const enhanceCapNow = Number((GEAR_CAPS || {}).hero_enhance) === 100 ? 100 : 200;
   if (seq !== RENDER_SEQ) return;
+  PLX_TROOP.hero_gear = heroGearActiveTroop;
   target.innerHTML = plxShellHtml({
     title: navLabel("herogearcalc"),
     settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
         ${HERO_GEAR_SET_NAMES.map((name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`).join("")}
-      </div>
-      ${capSettingsHtml("heroEnhanceCapSelect", t("cap_hero_enhance_label"), [100, 200].map((n) => `<option value="${n}" ${n === enhanceCapNow ? "selected" : ""}>${n}</option>`).join(""))}`,
-    amountsId: "heroGearOwned", needId: "heroGearNeed", tabsId: "heroGearTroopDots",
-    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y pinch-zoom;"></div>
-    <div class="t12x-card" style="margin-top:12px;">
-      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("hero_gear_stats_desc"))}</p>
-      <div id="heroGearCurrentStats"></div>
-    </div>`,
+      </div>`,
+    amountsId: "heroGearOwned", needId: "heroGearNeed",
+    // One pinned troop switch with that troop's stats (owner, 19 Oct 2026).
+    statsHtml: plxTroopSwitchHtml("hero_gear", ""),
+    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y pinch-zoom;"></div>`,
   });
 
   target.querySelectorAll("[data-herogearset]").forEach((btn) => {
@@ -6199,18 +6417,10 @@ async function renderGearLevelingGroup(target) {
 
   const activeState = HERO_GEAR_SETS[heroGearActiveSet];
   const activeStorageKey = HERO_GEAR_STORAGE_KEYS[heroGearActiveSet];
-  document.getElementById("heroEnhanceCapSelect").addEventListener("change", async (e) => {
-    GEAR_CAPS.hero_enhance = Number(e.target.value);
-    await saveGearCaps();
-    const changed = clampHeroGearSets();
-    await Promise.all(changed.map((setName) => saveCalcState(HERO_GEAR_STORAGE_KEYS[setName], HERO_GEAR_SETS[setName])));
-    renderGearLevelingGroup(target);
-  });
-
   const optsByTrack = {};
   GEAR_LEVELING_TABLES.forEach((t) => {
-    const capIdx = heroTrackPickIdx(t), rel = heroTrackReleasedIdx(t);
-    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => (i <= capIdx ? `<option value="${i}"${i > rel ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(i > rel))}</option>` : "")).join("");
+    const open = heroTrackCapIdx(t);
+    optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => `<option value="${i}"${i > open ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(i > open))}</option>`).join("");
   });
 
   const tracksEl = document.getElementById("heroGearTracks");
@@ -6218,30 +6428,25 @@ async function renderGearLevelingGroup(target) {
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
   const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
   const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button");
+  // Piece cards = design A compact rows (owner, 19 Oct 2026): picture, name,
+  // stat now → target, Max; one row per track with Now / Target level chips.
+  // The chips are real dropdowns (owner, 19 Oct 2026: "it should be a dropdown"),
+  // styled as chips; the phone opens its own level list.
+  const chipHtml = (troop, piece, t, role) => {
+    const v = activeState[troop][piece][t][role];
+    return `<select class="lvchip${role === "to" ? " tgt" : ""}${v > heroTrackReleasedIdx(t) ? " up" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)} · ${esc(trackDisplayName(t))}">${optsByTrack[t]}</select>`;
+  };
   const pieceCard = (troop, piece) => `
     <div class="t12x-card" style="padding:12px 14px;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-        <img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" style="width:48px; height:48px; object-fit:contain; flex-shrink:0;" loading="lazy" />
-        <div class="name" style="flex:1; min-width:0; font-size:15px; font-weight:700;">${esc(pieceDisplayName(piece))}</div>
+      <div class="hgc-head">
+        <span class="hgc-pic"><img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" loading="lazy" /></span>
+        <div class="hgc-name"><div class="name">${esc(pieceDisplayName(piece))}</div><div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div></div>
         <button type="button" class="t12x-maxall" data-heropiecemax="${esc(troop)}|${esc(piece)}">${esc(maxLbl)}</button>
       </div>
-      ${GEAR_LEVELING_TABLES.map(
-        (t) => `
-      <div style="padding:6px 0; border-top:1px solid var(--line);">
-        <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(trackDisplayName(t))}</div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <span class="t12x-lbl">${esc(nowLbl)}</span>
-          <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="from" style="flex:1; min-width:0;">${optsByTrack[t]}</select>
-          <span class="t12x-lbl">${esc(tgtLbl)}</span>
-          <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="to" style="flex:1; min-width:0;">${optsByTrack[t]}</select>
-        </div>
-      </div>`
-      ).join("")}
-      <div class="plx-piecestat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
+      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span>${chipHtml(troop, piece, t, "to")}</div>`).join("")}
     </div>`;
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  const heroGearDotsEl = document.getElementById("heroGearTroopDots");
   // Performance: these dropdowns pull from tables with ~85-200 levels each
   // (Mastery Forging, and Enhancement+Empowerment combined), 2 dropdowns x
   // 2 tracks x 4 pieces = ~2,300 <option> tags rebuilt per troop. Rebuilding
@@ -6304,27 +6509,31 @@ async function renderGearLevelingGroup(target) {
           }
         });
         saveCalcState(activeStorageKey, activeState);
-        // Only this piece's 4 dropdowns change: set them and refresh the
-        // totals, instead of redrawing the whole page (~2,300 options).
-        wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
-          if (sel.dataset.troop !== troop || sel.dataset.piece !== piece) return;
-          sel.value = String(activeState[troop][piece][sel.dataset.track][sel.dataset.role]);
-        });
+        // Only this piece's 4 chips change: set them and refresh the totals.
+        syncChips((c) => c.dataset.troop === troop && c.dataset.piece === piece);
         syncSetAll();
         updateHeroGearTotals();
       });
     });
 
-    wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
-      const { troop, piece, track, role } = sel.dataset;
-      sel.value = String(activeState[troop][piece][track][role]);
-      sel.addEventListener("change", () => {
-        activeState[troop][piece][track][role] = Number(sel.value);
-        saveCalcState(activeStorageKey, activeState);
-        syncSetAll();
-        updateHeroGearTotals();
+    // Chip text (and the Upcoming colour) from the saved levels.
+    function syncChips(match) {
+      wrap.querySelectorAll("select.lvchip[data-troop]").forEach((c) => {
+        if (match && !match(c)) return;
+        const { troop, piece, track, role } = c.dataset, v = activeState[troop][piece][track][role];
+        c.value = String(v);
+        c.classList.toggle("up", v > heroTrackReleasedIdx(track));
       });
-    });
+    }
+    wrap.querySelectorAll("select.lvchip[data-troop]").forEach((c) => c.addEventListener("change", () => {
+      const { troop, piece, track, role } = c.dataset;
+      activeState[troop][piece][track][role] = Number(c.value);
+      saveCalcState(activeStorageKey, activeState);
+      syncChips((x) => x === c);
+      syncSetAll();
+      updateHeroGearTotals();
+    }));
+    syncChips();
     // "Set all" for this troop: shows the level when all 4 pieces are on it.
     function syncSetAll() {
       wrap.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
@@ -6338,9 +6547,7 @@ async function renderGearLevelingGroup(target) {
       const track = sel.dataset.hgsetall, role = sel.dataset.role;
       HERO_GEAR_PIECE_NAMES.forEach((pc) => { activeState[troop][pc][track][role] = Number(sel.value); });
       saveCalcState(activeStorageKey, activeState);
-      wrap.querySelectorAll("select[data-troop]").forEach((ps) => {
-        if (ps.dataset.track === track && ps.dataset.role === role) ps.value = sel.value;
-      });
+      syncChips((c) => c.dataset.track === track && c.dataset.role === role);
       updateHeroGearTotals();
     }));
     syncSetAll();
@@ -6356,35 +6563,13 @@ async function renderGearLevelingGroup(target) {
       builtPanels[tr].style.display = tr === troop ? "block" : "none";
     });
   }
-  // Wired once - tracksEl itself is never rebuilt after this, only which
-  // panel is visible changes. Reads heroGearActiveTroop fresh on every
-  // swipe (rather than via wireTroopSwipe, which captures the current
-  // troop's index ONCE at wire-time - that would go stale the moment you
-  // swipe past the first card, since this only wires a single time).
-  function goToHeroGearTroop(troop) {
-    heroGearActiveTroop = troop;
-    showPanel(heroGearActiveTroop);
-    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS, goToHeroGearTroop);
-  }
-  let swipeWired = false;
-  function wireSwipeOnce() {
-    if (swipeWired) return;
-    swipeWired = true;
-    wireSwipeGesture(tracksEl, (dir) => {
-      const idx = HERO_GEAR_TROOPS.indexOf(heroGearActiveTroop);
-      const next = idx + dir;
-      if (next < 0 || next >= HERO_GEAR_TROOPS.length) return;
-      heroGearActiveTroop = HERO_GEAR_TROOPS[next];
-      showPanel(heroGearActiveTroop);
-      renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS, goToHeroGearTroop);
-    });
-  }
-  function renderTracks() {
-    renderSwipeDots(heroGearDotsEl, HERO_GEAR_TROOPS, heroGearActiveTroop, HERO_GEAR_TROOP_COLORS, goToHeroGearTroop);
-    showPanel(heroGearActiveTroop);
-    wireSwipeOnce();
-  }
-  renderTracks();
+  // The pinned troop switch shows that troop's pieces and stats.
+  showPanel(heroGearActiveTroop);
+  wirePlxTroopSwitch(target, "hero_gear", (tr) => {
+    heroGearActiveTroop = tr;
+    showPanel(tr);
+    updateHeroGearCurrentStats();
+  });
 
   updateHeroGearTotals();
 }
@@ -6688,7 +6873,7 @@ function fillHeroGearPieceStats() {
 }
 function updateHeroGearCurrentStats() {
   fillHeroGearPieceStats();
-  const el = document.getElementById("heroGearCurrentStats");
+  const el = document.querySelector('[data-tsw="hero_gear"] .plx-tsw-stats');
   if (!el || !HERO_GEAR_TABLES_CACHE) return;
   const statsByTroop = computeHeroGearStats(HERO_GEAR_SETS[heroGearActiveSet]);
   const maxByTroop = computeHeroGearStats(maxedHeroGearState());
@@ -6698,12 +6883,9 @@ function updateHeroGearCurrentStats() {
     el.innerHTML = `<div class="empty">${esc(t("stats_data_not_available"))}</div>`;
     return;
   }
-  const results = HERO_GEAR_TROOPS.map((troop) => ({ troop, statTotals: statsByTroop[troop], maxTotals: maxByTroop[troop] }));
-
-  el.innerHTML = plxStatTabsHtml("hero_gear", results.map((r) => ({
-    key: r.troop, label: troopDisplayName(r.troop), color: PLX_TROOP_COLORS[r.troop],
-    html: plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: r.statTotals[k], max: r.maxTotals[k] })), true),
-  })));
+  // The troop picked in the pinned switch (heroGearActiveTroop).
+  const troop = HERO_GEAR_TROOPS.includes(heroGearActiveTroop) ? heroGearActiveTroop : HERO_GEAR_TROOPS[0];
+  el.innerHTML = plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: statsByTroop[troop][k], max: maxByTroop[troop][k] })), true);
 }
 
 
@@ -11585,26 +11767,21 @@ CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] = [0, 1, 2].map(() => ({ cu
 
 // Builds <option> tags for a charm/gear level <select> (up to the user's cap).
 function levelOptions(selected) {
-  const capIdx = charmCapIdx(), rel = charmReleasedIdx();
-  return CHARM_LEVELS.filter((l, i) => i <= capIdx).map((l, i) => `<option value="${l}" ${l === selected ? "selected" : ""}${i > rel ? ' class="opt-up"' : ""}>${l === "0" ? "0" + t("none_suffix") : l}${esc(upcomingTag(i > rel))}</option>`).join("");
+  const cap = charmCapIdx();
+  return CHARM_LEVELS.map((l, i) => `<option value="${l}" ${l === selected ? "selected" : ""}${i > cap ? ' class="opt-up"' : ""}>${l === "0" ? "0" + t("none_suffix") : l}${esc(upcomingTag(i > cap))}</option>`).join("");
 }
 // Last charm level that's out in the game.
 function charmReleasedIdx() { return releasedLastIdx("charm_levels", CHARM_LEVEL_ROWS.length === CHARM_LEVELS.length ? CHARM_LEVEL_ROWS : CHARM_LEVELS.map(() => ({}))); }
-// ---- "My max" caps (Chief Charm / Chief Gear / Hero Gear Enhance) ----
-// Saved per user in calc_state "gear_caps": { charm: "11", chief_gear: rowIndex,
-// hero_enhance: 100 | 200 }. Nothing above a cap is selectable or counted,
-// on the page or in the Dashboard (its "max" uses the cap too).
-let GEAR_CAPS = null;
-async function ensureGearCaps() {
-  if (!GEAR_CAPS) { const v = await loadCalcState("gear_caps"); GEAR_CAPS = v && typeof v === "object" ? v : {}; }
-  return GEAR_CAPS;
-}
-function saveGearCaps() { return saveCalcState("gear_caps", GEAR_CAPS || {}); }
+// ---- What is open in the person's state (Chief Charm / Chief Gear / Hero Gear) ----
+// "My max" was removed (owner, 19 Oct 2026; the old calc_state "gear_caps" is
+// ignored, not deleted). The cap is what is open: released levels, the
+// state-age locks and level unlocks, skipped when a piece is already past.
+// No state age = everything open. Higher levels stay pickable as targets
+// ("· Upcoming"); "Max", "Max everything", the Troops Stats max and the
+// Dashboard max stop at the cap.
 function charmCapIdx() {
-  const i = GEAR_CAPS ? CHARM_LEVELS.indexOf(String(GEAR_CAPS.charm)) : -1;
-  if (i >= 0) return i;
-  // Never set → the last level that's out, and not past a level that isn't
-  // open yet in the person's state (12 – 16 come with Gen 7, 17 – 18 with Gen 8).
+  // Not past a level that isn't open yet in the person's state
+  // (12 – 16 come with Gen 7, 17 – 18 with Gen 8).
   const lk = charmLockCapIdx();
   return lk != null ? Math.min(lk, charmReleasedIdx()) : charmReleasedIdx();
 }
@@ -11621,24 +11798,12 @@ function charmLockCapIdx() {
   return null;
 }
 function charmCapLabel() { return CHARM_LEVELS[charmCapIdx()] ?? "0"; }
-function clampCharmLabel(label) {
-  const i = CHARM_LEVELS.indexOf(String(label));
-  return i > charmCapIdx() ? charmCapLabel() : label;
-}
-function clampCharmState() {
-  let changed = false;
-  CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] || []).forEach((slot) => {
-    ["current", "target"].forEach((k) => { const c = clampCharmLabel(slot[k]); if (c !== slot[k]) { slot[k] = c; changed = true; } });
-  }));
-  return changed;
-}
 function chiefGearReleasedIdx() { return Math.max(0, releasedLastIdx("progression_rows", CHIEF_GEAR_ROWS || [])); }
+function chiefGearLastIdx() { return Math.max(0, (CHIEF_GEAR_ROWS || []).length - 1); }
 function chiefGearCapIdx() {
-  const last = Math.max(0, (CHIEF_GEAR_ROWS || []).length - 1);
-  const c = GEAR_CAPS ? GEAR_CAPS.chief_gear : null;
-  // Never set → the last level that's out, and not past T4 before Gen 4
-  // heroes are out in the person's state (T5 – T6 come with Gen 4).
-  const cap = Number.isInteger(c) && c >= 0 && c <= last ? c : Math.min(chiefGearReleasedIdx(), chiefGearT5Locked() ? chiefGearLastBeforeIdx(/legendary t[56]/i) : last);
+  // Not past T4 before Gen 4 heroes are out in the person's state (T5 – T6
+  // come with Gen 4), nor into Legendary before it opens (day 180).
+  const cap = Math.min(chiefGearReleasedIdx(), chiefGearT5Locked() ? chiefGearLastBeforeIdx(/legendary t[56]/i) : chiefGearLastIdx());
   return chiefLegendaryOn() ? cap : Math.min(cap, chiefGearLastEpicIdx());
 }
 // T5 – T6 wait for Gen 4 in the person's state, unless a piece is already there.
@@ -11659,52 +11824,22 @@ function chiefGearLastEpicIdx() {
   const i = rows.findIndex((r) => /^legendary/i.test(String(r.tier || "")));
   return i > 0 ? i - 1 : Math.max(0, rows.length - 1);
 }
-// "Count Legendary levels" (gear_caps.chief_legendary): the person's own
-// tick wins; never set → on unless the state age says Legendary Chief Gear
-// isn't open yet (day 180). A piece already at Legendary keeps it on.
+// Legendary Chief Gear is open unless the state age says it isn't yet
+// (day 180). A piece already at Legendary keeps it open.
 function chiefLegendaryOn() {
-  const v = GEAR_CAPS ? GEAR_CAPS.chief_legendary : null;
-  if (v === true || v === false) return v;
   if (!stateNotYet("gear", "legendary chief gear")) return true;
   const lastEpic = chiefGearLastEpicIdx();
   return CHIEF_GEAR_PIECES.some((p) => (CHIEF_GEAR_STATE[p.key] || {}).from > lastEpic);
 }
-function clampChiefGearState() {
-  const cap = chiefGearCapIdx();
-  let changed = false;
-  CHIEF_GEAR_PIECES.forEach((p) => ["from", "to"].forEach((k) => {
-    const st = CHIEF_GEAR_STATE[p.key];
-    if (typeof st[k] === "number" && st[k] > cap) { st[k] = cap; changed = true; }
-  }));
-  return changed;
-}
 // Enhance Combined rows 0..100 are Enhance, 101..200 Empower (Mithril).
-// Highest level that can be picked (the 100 / 200 cap); upcoming levels
-// included, marked in the lists.
+// Every level can be picked; ones not open yet are marked in the lists.
 function heroTrackPickIdx(track) {
   const rows = (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [];
-  const last = Math.max(0, rows.length - 1);
-  if (track !== "Enhance Combined" || !GEAR_CAPS || Number(GEAR_CAPS.hero_enhance) !== 100) return last;
-  let idx = 0;
-  rows.forEach((r, i) => { if (Number(r.level) <= 100) idx = i; });
-  return idx;
+  return Math.max(0, rows.length - 1);
 }
-// "Max": the pick cap, but not past the last level that's out.
+// "Max": the last level that's out and open in the person's state.
 function heroTrackReleasedIdx(track) { return Math.max(0, releasedLastIdx("progression_rows", (HERO_GEAR_TABLES_CACHE && HERO_GEAR_TABLES_CACHE[track]) || [])); }
 function heroTrackCapIdx(track) { return Math.min(heroTrackPickIdx(track), heroTrackReleasedIdx(track)); }
-function clampHeroGearSets() {
-  const changedSets = [];
-  HERO_GEAR_SET_NAMES.forEach((setName) => {
-    const state = HERO_GEAR_SETS[setName];
-    let changed = false;
-    HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => GEAR_LEVELING_TABLES.forEach((tr) => {
-      const cap = heroTrackPickIdx(tr), st = state[troop][piece][tr];
-      ["from", "to"].forEach((k) => { if (typeof st[k] === "number" && st[k] > cap) { st[k] = cap; changed = true; } });
-    })));
-    if (changed) changedSets.push(setName);
-  });
-  return changedSets;
-}
 // Page name from the menu, in the chosen language.
 function navLabel(tab) {
   const e = NAV_PAGE_LABELS[tab] || {};
@@ -11730,10 +11865,6 @@ document.addEventListener("click", (ev) => {
   b.setAttribute("aria-expanded", String(open));
   const car = b.querySelector(".sa-car"); if (car) car.innerHTML = open ? "&#9652;" : "&#9662;";
 });
-function capSettingsHtml(id, label, optionsHtml) {
-  return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px; min-width:110px; flex:none;">${optionsHtml}</select></label>
-    <p class="desc" style="font-size:10.5px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>`;
-}
 
 // Renders the 3-troop-type x 2-piece x 3-charm-slot calculator,
 // each slot with its own current\u2192target level pair.
@@ -11750,7 +11881,7 @@ async function ensureCharmData() {
   return CHARM_STATE_PROMISE;
 }
 async function loadCharmData() {
-  await Promise.all([ensureCharmLevelsData(), ensureGearCaps()]);
+  await ensureCharmLevelsData();
   const saved = await loadCalcState("charm");
   if (!saved && !IS_OWNER) CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((slot) => { slot.target = slot.current; }));
   if (saved) {
@@ -11765,7 +11896,6 @@ async function loadCharmData() {
       }
     });
   }
-  clampCharmState();
 }
 
 
@@ -12246,7 +12376,7 @@ function stateLockNotesHtml(tab) {
   const byDay = new Map();
   list.forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
   const lines = [...byDay.entries()].sort((a, b) => a[0] - b[0]).map(([day, names]) => t("sa_lock_line").replace("{what}", names.join(", ")).replace("{day}", day).replace("{n}", day - d).replace("{date}", fmt(stateDateOfDay(day))));
-  return `<div class="sa-lock" data-salock>🔒 <span>${lines.map(esc).join("<br>")}<br><span style="opacity:.85; font-size:11.5px;">${esc(t(list.some((u) => u.kind !== "note") ? "sa_lock_hint" : "sa_lock_hint_plan"))}</span></span></div>`;
+  return `<div class="sa-lock" data-salock>🔒 <span>${lines.map(esc).join("<br>")}<br><span style="opacity:.85; font-size:11.5px;">${esc(t(["charmscalc", "chiefgear", "herogearcalc"].includes(tab) ? "sa_lock_hint_cap" : list.some((u) => u.kind !== "note") ? "sa_lock_hint" : "sa_lock_hint_plan"))}</span></span></div>`;
 }
 // Dashboard card: state day, current Gen, next new heroes and Lucky Wheel.
 function stateAgeCardHtml() {
@@ -15365,8 +15495,8 @@ function computeChiefGearNeeds() {
   const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
   const totals = {};
   CHIEF_GEAR_PIECES.forEach((p) => {
-    const st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
-    // Nothing above the cap (or Legendary when it isn't counted).
+    const st = CHIEF_GEAR_STATE[p.key], cap = chiefGearLastIdx();
+    // Up to the chosen target (levels not open yet included, noted in Budgets).
     const fromIdx = Math.min(st.from, st.to, cap), toIdx = Math.min(Math.max(st.from, st.to), cap);
     for (let i = fromIdx + 1; i <= toIdx; i++) cols.forEach(([col, label]) => {
       const v = Number((rows[i] || {})[col]) || 0;
@@ -15444,12 +15574,39 @@ function budgetStatDeltas(calcKey) {
   }
   return out;
 }
+// Budgets: the levels of a page's target that aren't open in the person's
+// state yet (Chief Charm / Chief Gear / Hero Gear), e.g. "Lv 12 – 18".
+function budgetNotOpenText(calcKey) {
+  if (calcKey === "charm" && CHARM_LEVELS.length) {
+    const cap = charmCapIdx();
+    let hi = -1;
+    CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] || []).forEach((sl) => { const c = CHARM_LEVELS.indexOf(String(sl.current)), tg = CHARM_LEVELS.indexOf(String(sl.target)); if (tg > c && tg > cap) hi = Math.max(hi, tg); }));
+    return hi > cap ? `${t("goal_lv")} ${CHARM_LEVELS[cap + 1]} – ${CHARM_LEVELS[hi]}` : "";
+  }
+  if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS && CHIEF_GEAR_ROWS.length) {
+    const cap = chiefGearCapIdx(), last = CHIEF_GEAR_ROWS.length - 1;
+    let hi = -1;
+    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to ?? 0, last); if (to > st.from && to > cap) hi = Math.max(hi, to); });
+    return hi > cap ? `${chiefGearRowLabel(CHIEF_GEAR_ROWS[cap + 1])} – ${chiefGearRowLabel(CHIEF_GEAR_ROWS[hi])}` : "";
+  }
+  if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
+    const setState = HERO_GEAR_SETS[heroGearActiveSet], out = [];
+    GEAR_LEVELING_TABLES.forEach((tn) => {
+      const rows = HERO_GEAR_TABLES_CACHE[tn] || [], cap = heroTrackCapIdx(tn);
+      let hi = -1;
+      HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((pc) => { const st = setState[tr][pc][tn]; if (st && st.to > st.from && st.to > cap) hi = Math.max(hi, st.to); }));
+      if (hi > cap && rows[cap + 1] && rows[hi]) out.push(`${trackDisplayName(tn)} ${rowLabel(rows[cap + 1])} – ${rowLabel(rows[hi])}`);
+    });
+    return out.join(", ");
+  }
+  return "";
+}
 // Short "what changes" lines for a page's plan (e.g. "Helmet: T5 ★0.4 → T6").
 function budgetPlanLines(calcKey) {
   const lines = [];
   if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS) {
     CHIEF_GEAR_PIECES.forEach((p) => {
-      const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, chiefGearCapIdx());
+      const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, chiefGearLastIdx());
       if (to > st.from) lines.push(`${pieceDisplayName(p.name)} (${troopDisplayName(p.troop)}): ${chiefGearRowLabel(CHIEF_GEAR_ROWS[st.from])} → ${chiefGearRowLabel(CHIEF_GEAR_ROWS[to])}`);
     });
   } else if (calcKey === "charm") {
@@ -16344,7 +16501,7 @@ function goalMiniLevels(page) {
     if (hi >= 0) CHARM_LEVELS.slice(lo + 1, hi).forEach((l) => push({ value: String(l), label: `${t("goal_lv")} ${l}` }));
   } else if (page === "chief_gear") {
     if (CHIEF_GEAR_ROWS) {
-      const cap = chiefGearCapIdx();
+      const cap = chiefGearLastIdx();
       let lo = Infinity, hi = -1;
       CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, cap); if (to > st.from) { lo = Math.min(lo, st.from); hi = Math.max(hi, to); } });
       if (hi >= 0) CHIEF_GEAR_ROWS.slice(lo + 1, hi).forEach((r) => push({ value: chiefGearRowLabel(r), label: chiefGearRowLabel(r) }));
@@ -16385,7 +16542,7 @@ function goalTargetLabel(page) {
     return hi < 0 ? "" : `${t("goal_lv")} ${CHARM_LEVELS[hi]}`;
   }
   if (page === "chief_gear" && CHIEF_GEAR_ROWS) {
-    const cap = chiefGearCapIdx();
+    const cap = chiefGearLastIdx();
     let hi = -1;
     CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], to = Math.min(st.to, cap); if (to > st.from) hi = Math.max(hi, to); });
     return hi < 0 ? "" : chiefGearRowLabel(CHIEF_GEAR_ROWS[hi]);
@@ -16426,7 +16583,7 @@ function goalMiniTotals(page, level) {
   if (page === "chief_gear" && CHIEF_GEAR_ROWS) {
     const m = CHIEF_GEAR_ROWS.findIndex((r) => chiefGearRowLabel(r) === String(level));
     if (m < 0) return null;
-    const rows = CHIEF_GEAR_ROWS, cap = chiefGearCapIdx(), totals = {};
+    const rows = CHIEF_GEAR_ROWS, cap = chiefGearLastIdx(), totals = {};
     const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
     CHIEF_GEAR_PIECES.forEach((p) => {
       const st = CHIEF_GEAR_STATE[p.key];
@@ -16982,6 +17139,7 @@ async function renderBudgetsPage(opts = {}) {
     return pageRow(rowCost, `
       ${pg.lines.length ? `<details style="margin-top:8px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_plan_detail"))} (${pg.lines.length})</summary><div style="font-size:11px; margin-top:4px; line-height:1.6;">${pg.lines.map(esc).join("<br>")}</div></details>` : ""}
       ${!pg.live ? `<div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("budgets_snapshot_note"))}</div>` : ""}
+      ${((x) => (x ? `<div class="bud-partial">&#128274; ${esc(t("bud_not_open").replace("{what}", x))}</div>` : ""))(budgetNotOpenText(pg.calcKey))}
       ${pg.vip ? `<div class="bud-vip">&#127873; ${esc(t("bud_vip_note").replace("{tier}", pg.vip.tier).replace("{n}", qty(pg.vip.total)).replace("{when}", BUDGET_TARGET ? t("vip_bundle_by").replace("{date}", fmtDate(pg.vip.days)) : t("vip_bundle_30d")).replace("{d}", pg.vip.daily))}</div>` : ""}
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_materials"))} <span style="font-weight:400;">(${esc(t("pack_mode_still"))} / ${esc(t("pack_mode_full"))})</span></div>${matsHtml(pg.needFull, pg.needStill, pg.owned)}
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
@@ -17652,6 +17810,58 @@ function wireIndexSwipe(el, count, activeIndex, onNavigate) {
   });
 }
 
+// Chief Charm = tile grid (owner picked B, 19 Oct 2026): one pinned troop
+// switch (with that troop's stat), the troop's 6 charms as tiles 3 a row
+// (gear picture + charm number, "16.8 → 18", now / target bar, gain); tap a
+// tile → a sheet with − / + for Now and Target, Max, this charm's needs and
+// ‹ › to the troop's other charms.
+function charmFlat(troop) {
+  const out = [];
+  CHARM_PIECES.filter((p) => p.troop === troop).forEach((p) => [0, 1, 2].forEach((i) => out.push({ piece: p, slot: i })));
+  return out;
+}
+// Each charm shows the game's picture for its troop and level (icons/charms/
+// charm-<troop>-<1..18>.webp, cut from the owner's Charm Guide screenshots,
+// 19 Oct 2026); a sub-level like 16.8 uses Lv 16, not started uses Lv 1 faded.
+function charmIconSrc(troop, lv) {
+  const n = Math.max(1, Math.min(18, Math.floor(Number(lv) || 0)));
+  return `icons/charms/charm-${String(troop).toLowerCase()}-${n}.webp`;
+}
+function charmPicHtml(c, n, cls, lv) {
+  const st = (CHARM_CALC_STATE[c.piece.key] || [])[c.slot] || {};
+  const at = lv != null ? lv : st.current;
+  return `<span class="ch-pic${cls ? " " + cls : ""}${Number(at) > 0 ? "" : " none"}"><img src="${charmIconSrc(c.piece.troop, at)}" alt="" loading="lazy" /></span>`;
+}
+const charmStatAt = (lv) => CHARM_CUMULATIVE_STAT[lv] || 0;
+// Charm levels grouped like the game: a level (its picture) and its stages
+// (16, 16.1 … 16.8 = 9 stages of Lv 16; Lv 1–3 and 18 have one). Index lists
+// into CHARM_LEVELS per whole level.
+function charmMajor(lv) { return Math.floor(Number(lv) || 0); }
+function charmStageGroups() {
+  const g = new Map();
+  CHARM_LEVELS.forEach((lv, i) => { const k = charmMajor(lv); if (!g.has(k)) g.set(k, []); g.get(k).push(i); });
+  return g;
+}
+// The segmented stage bar of the level `ci` is in: green = stages done,
+// blue = up to the target (all the rest when the target is a higher level).
+// pick = role → each segment is a button (data-chseg="role|index").
+function charmStageBarHtml(ci, ti, pick, groups) {
+  groups = groups || charmStageGroups();
+  const at = pick === "target" ? ti : ci;
+  const grp = groups.get(charmMajor(CHARM_LEVELS[at])) || [at];
+  const top = CHARM_LEVELS.length - 1;
+  const seg = (k) => {
+    if (pick === "target") return k < ci ? "n" : k < ti || (k === ti && ti === top) ? (ti > ci ? "t" : "n") : "";
+    if (ci === top || k < ci) return "n";
+    return ti > ci && (k < ti || charmMajor(CHARM_LEVELS[ti]) > charmMajor(CHARM_LEVELS[ci])) ? "t" : "";
+  };
+  return `<span class="ch-stg${pick ? " pick" : ""}">${grp.map((k, j) => {
+    if (!pick) return `<i class="${seg(k)}"></i>`;
+    const lab = grp.length > 1 ? `.${j}` : CHARM_LEVELS[k];
+    return `<button type="button" class="${seg(k)}${k === at ? " on" : ""}" data-chseg="${pick}|${k}" ${pick === "target" && k < ci ? "disabled" : ""}><em>${esc(lab)}</em></button>`;
+  }).join("")}</span>`;
+}
+const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
 async function renderCharmsCalc() {
   const seq = RENDER_SEQ;
   await Promise.all([ensureCharmData(), ensureCharmLevelsData()]); // levels reload after Upcoming ticks change
@@ -17659,114 +17869,158 @@ async function renderCharmsCalc() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: navLabel("charmscalc"),
-    settings: capSettingsHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.map((l, i) => (l === "0" ? "" : `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}${i > charmReleasedIdx() ? ' class="opt-up"' : ""}>${esc(l)}${esc(upcomingTag(i > charmReleasedIdx()))}</option>`)).join("")),
-    amountsId: "charmOwned", needId: "charmNeed", tabsId: "charmTroopTabs",
-    mainHtml: `<div id="charmRows"></div>
-    <div class="t12x-card" style="margin-top:12px;">
-      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      <div id="charmCurrentStats"></div>
-    </div>`,
+    amountsId: "charmOwned", needId: "charmNeed",
+    statsHtml: plxTroopSwitchHtml("charm", ""),
+    mainHtml: `<div id="charmRows"></div>`,
   });
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
-
-  const tabsEl = document.getElementById("charmTroopTabs");
   const rowsEl = document.getElementById("charmRows");
-  const troopOrder = ["Infantry", "Lancer", "Marksman"];
-  let activeTroop = troopOrder[0];
 
+  // Design B (owner, 19 Oct 2026): one card per gear piece with its 3 charms
+  // in a row; each shows its picture, level, target chip and stage bar.
+  function tileHtml(c, n, cap) {
+    const st = CHARM_CALC_STATE[c.piece.key][c.slot];
+    const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = CHARM_LEVELS.indexOf(String(st.target));
+    const go = ti > ci, now = charmStatAt(st.current), tg = go ? charmStatAt(st.target) : now;
+    const chip = go ? `<span class="ch-tc${ti > cap ? " up" : ""}"${ti > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(st.target)}</span>`
+      : ci >= cap ? `<span class="ch-tc ok">&#10003; ${esc(t("max_button"))}</span>` : "";
+    const foot = go ? `${pctShort(tg - now)} · ${esc(st.current)}` : `${esc(st.current)} &#10003;`;
+    return `<button type="button" class="ch-tile${go ? "" : " done"}" data-chtile="${n}" aria-label="${esc(`${pieceDisplayName(c.piece.name)} · ${t("charm_slot_label")} ${c.slot + 1}`)}">
+      <span class="ch-t-h">${charmPicHtml(c, n, "tile")}</span>
+      <span class="ch-t-v">${esc(t("charm_lv"))} ${charmMajor(st.current)}${chip}</span>
+      ${charmStageBarHtml(ci, Math.max(ci, ti))}
+      <span class="ch-t-g">${foot}</span>
+    </button>`;
+  }
   function renderTroopSections() {
-    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (tr) => { activeTroop = tr; renderTroopSections(); });
-    const troop = activeTroop;
-    const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
-    // flatten each piece's 3 slots into a single Charm 1-6 list
-    const flatCharms = [];
-    pieces.forEach((p) => {
-      [0, 1, 2].forEach((i) => flatCharms.push({ piece: p.key, slot: i }));
-    });
+    const troop = plxTroopOf("charm");
+    const flat = charmFlat(troop), cap = charmCapIdx();
+    const toGo = flat.filter((c) => { const st = CHARM_CALC_STATE[c.piece.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
     rowsEl.innerHTML = `
         <div class="panel">
-          ${setAllWrapHtml("charm", `<div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>`, `<div class="sa-row">
+          ${setAllWrapHtml("charm", `<div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))} <span class="meta" style="font-size:12px; font-weight:500;">· ${esc(t("charm_to_go").replace("{n}", toGo))}</span></div>`, `<div class="sa-row">
                 <select data-troopsetall="${esc(troop)}" data-role="current" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${levelOptions()}</select>
                 <span class="sa-arrow">&rarr;</span>
                 <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
               </div>`)}
-          <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
-            ${flatCharms
-              .map(
-                (c, i) => `
-              <div>
-                <div class="meta" style="font-size:11px; margin-bottom:4px;">${esc(t("charm_slot_label"))} ${i + 1}</div>
-                <div style="display:flex; gap:8px;">
-                  <div style="flex:1; min-width:0;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("current_label"))}</div>
-                    <select data-piece="${c.piece}" data-slot="${c.slot}" data-role="current" style="width:100%;">${levelOptions(CHARM_CALC_STATE[c.piece][c.slot].current)}</select>
-                  </div>
-                  <div style="flex:1; min-width:0;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("target_label"))}</div>
-                    <select data-piece="${c.piece}" data-slot="${c.slot}" data-role="target" style="width:100%;">${levelOptions(CHARM_CALC_STATE[c.piece][c.slot].target)}</select>
-                  </div>
-                </div>
-                <div class="plx-piecestat" data-charmstat="${c.piece}|${c.slot}"></div>
-              </div>`
-              )
-              .join("")}
-          </div>
+          ${CHARM_PIECES.filter((p) => p.troop === troop).map((p) => {
+            const mine = flat.map((c, i) => [c, i]).filter(([c]) => c.piece === p);
+            const left = mine.filter(([c]) => { const st = CHARM_CALC_STATE[p.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
+            return `<div class="ch-piece"><div class="ch-p-h"><img src="${esc(CHIEF_GEAR_ICONS[p.key] || "")}" alt="" /><b>${esc(pieceDisplayName(p.name))}</b><span class="ch-p-go">${left ? esc(t("charm_to_go").replace("{n}", left)) : "&#10003;"}</span></div>
+              <div class="ch-grid">${mine.map(([c, i]) => tileHtml(c, i, cap)).join("")}</div></div>`;
+          }).join("")}
+          <p class="meta ch-hint">${esc(t("charm_tiles_hint"))}</p>
         </div>`;
-    wireTroopSwipe(rowsEl, troopOrder, activeTroop, (t) => { activeTroop = t; renderTroopSections(); });
     // "Set all" shows the level when every charm of this troop is on it.
-    const syncSetAll = () => rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
+    rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
       const vals = new Set(CHARM_PIECES.filter((p) => p.troop === sel.dataset.troopsetall).flatMap((p) => CHARM_CALC_STATE[p.key].map((slot) => String(slot[sel.dataset.role]))));
       sel.value = vals.size === 1 ? [...vals][0] : "";
       if (sel.selectedIndex < 0) sel.value = "";
-    });
-    syncSetAll();
-
-    rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
       sel.addEventListener("change", () => {
         if (!sel.value) return;
-        const troop = sel.dataset.troopsetall;
         const role = sel.dataset.role;
-        const pieces = CHARM_PIECES.filter((p) => p.troop === troop);
-        pieces.forEach((p) => {
-          CHARM_CALC_STATE[p.key].forEach((slot) => {
-            slot[role] = sel.value;
-          });
+        CHARM_PIECES.filter((p) => p.troop === sel.dataset.troopsetall).forEach((p) => {
+          CHARM_CALC_STATE[p.key].forEach((slot) => { slot[role] = sel.value; });
         });
         saveCalcState("charm", CHARM_CALC_STATE);
         renderTroopSections();
         updateCharmTotals();
       });
     });
-
-    rowsEl.querySelectorAll("select[data-piece]").forEach((sel) => {
-      sel.addEventListener("change", () => {
-        CHARM_CALC_STATE[sel.dataset.piece][Number(sel.dataset.slot)][sel.dataset.role] = sel.value;
-        saveCalcState("charm", CHARM_CALC_STATE);
-        syncSetAll();
-        updateCharmTotals();
-      });
-    });
+    rowsEl.querySelectorAll("[data-chtile]").forEach((b) => b.addEventListener("click", () => openCharmSheet(Number(b.dataset.chtile))));
   }
 
-  document.getElementById("charmCapSelect").addEventListener("change", async (e) => {
-    GEAR_CAPS.charm = e.target.value;
-    await saveGearCaps();
-    if (clampCharmState()) saveCalcState("charm", CHARM_CALC_STATE);
-    renderTroopSections();
-    updateCharmTotals();
-  });
+  // The sheet for one charm (bottom sheet on phones, small window on PC).
+  function openCharmSheet(n) {
+    const m = gearSheetEl();
+    // Sheet 1 (owner, 19 Oct 2026): Now and Target each pick the level by its
+    // picture (a strip of the 18 levels) and the stage on the bar under it.
+    const draw = () => {
+      const troop = plxTroopOf("charm"), flat = charmFlat(troop), c = flat[n], cap = charmCapIdx();
+      const st = CHARM_CALC_STATE[c.piece.key][c.slot];
+      const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
+      const groups = charmStageGroups();
+      const a = CHARM_CUMULATIVE[st.current] || [0, 0, 0], b = CHARM_CUMULATIVE[CHARM_LEVELS[ti]] || [0, 0, 0];
+      const needs = [["Charm Guides", b[0] - a[0]], ["Charm Designs", b[1] - a[1]], ["Jewel Secrets", b[2] - a[2]]].filter(([, q]) => q > 0);
+      const stageTxt = (i) => {
+        const g = groups.get(charmMajor(CHARM_LEVELS[i])) || [i];
+        return g.length > 1 ? `${esc(t("charm_stage").replace("{a}", g.indexOf(i)).replace("{b}", g.length - 1))} · ${esc(CHARM_LEVELS[i])}` : esc(CHARM_LEVELS[i]);
+      };
+      const strip = (role, i) => {
+        const cm = charmMajor(CHARM_LEVELS[ci]), sel = charmMajor(CHARM_LEVELS[i]);
+        return `<div class="ch-strip" data-chstrip>${[...groups.keys()].filter((k) => role === "current" || k > 0).map((k) => {
+          const first = groups.get(k)[0], up = first > cap, off = role === "target" && k < cm;
+          const tag = up ? `<small class="up">${esc(t("upcoming_tag").replace(/^\s*·\s*/, ""))}</small>` : role === "target" && k === cm && k !== sel ? `<small>${esc(t("t12x_now"))}</small>` : "";
+          return `<button type="button" class="ch-lvp${k === sel ? " on" : ""}${up ? " up" : ""}" data-chlv="${role}|${k}" ${off ? "disabled" : ""}><span class="ch-pic strip${k > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, k)}" alt="" loading="lazy" /></span><b>${k > 0 ? `${esc(t("charm_lv"))} ${k}` : "0"}</b>${tag}</button>`;
+        }).join("")}</div>`;
+      };
+      const sec = (role, i) => `<div class="ch-sec${role === "target" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "target" ? "t12x_target" : "t12x_now"))}</b><span class="${i > cap ? "up" : ""}">${stageTxt(i)}${i > cap ? ` · ${esc(t("upcoming_tag").replace(/^\s*·\s*/, ""))}` : ""}</span></div>${strip(role, i)}${charmStageBarHtml(ci, ti, role, groups)}</div>`;
+      const nav = (d) => `<button type="button" class="ch-nav" data-gsnav="${d}" ${n + d < 0 || n + d >= flat.length ? "disabled" : ""} aria-label="${d < 0 ? "‹" : "›"}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet" role="dialog" aria-modal="true">
+        <div class="gs-head">${nav(-1)}<div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(c.piece.name))} · ${esc(t("charm_slot_label"))} ${c.slot + 1}</b>
+          <div class="meta">${esc(st.current)}${ti > ci ? ` &rarr; ${esc(CHARM_LEVELS[ti])} · <span style="color:var(--good);">${pctShort(charmStatAt(CHARM_LEVELS[ti]) - charmStatAt(st.current))} LETH/HP</span>` : ` · ${pctShort(charmStatAt(st.current))} LETH/HP`}</div></div>
+          ${nav(1)}<button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        ${sec("current", ci)}${sec("target", ti)}
+        <div class="gs-needs"><div class="meta">${esc(t("charm_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(q.toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
+        <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-gsmax ${ti === Math.max(ci, cap) ? "disabled" : ""}>${esc(t("charm_target_max").replace("{lv}", CHARM_LEVELS[Math.max(ci, cap)]))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
+      </div>`;
+      // Each strip starts with its chosen level in view (no page scroll).
+      m.querySelectorAll("[data-chstrip]").forEach((sb) => { const on = sb.querySelector(".on"); if (on) sb.scrollLeft = on.offsetLeft - (sb.clientWidth - on.offsetWidth) / 2; });
+    };
+    const changed = () => {
+      const keep = [...m.querySelectorAll("[data-chstrip]")].map((x) => x.scrollLeft);
+      saveCalcState("charm", CHARM_CALC_STATE); draw(); renderTroopSections(); updateCharmTotals();
+      m.querySelectorAll("[data-chstrip]").forEach((x, i) => { if (keep[i] != null) x.scrollLeft = keep[i]; });
+    };
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-gsclose]")) { closeGearSheet(); return; }
+      const flat = charmFlat(plxTroopOf("charm")), c = flat[n], st = CHARM_CALC_STATE[c.piece.key][c.slot];
+      const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
+      const set = (role, k) => {
+        if (role === "current") { st.current = CHARM_LEVELS[k]; if (ti < k) st.target = st.current; } // the target is never below now
+        else st.target = CHARM_LEVELS[Math.max(ci, k)];
+        changed();
+      };
+      const lvb = ev.target.closest("[data-chlv]");
+      if (lvb && !lvb.disabled) {
+        const [role, mj] = lvb.dataset.chlv.split("|");
+        const g = charmStageGroups().get(Number(mj)) || [];
+        const cur = role === "current" ? ci : ti;
+        if (charmMajor(CHARM_LEVELS[cur]) === Number(mj)) return;
+        // A level picked = its first stage (the target's own level keeps now's stage).
+        set(role, role === "target" && charmMajor(CHARM_LEVELS[ci]) === Number(mj) ? ci : g[0]);
+        return;
+      }
+      const sg = ev.target.closest("[data-chseg]");
+      if (sg && !sg.disabled) { const [role, k] = sg.dataset.chseg.split("|"); set(role, Number(k)); return; }
+      if (ev.target.closest("[data-gsmax]")) { st.target = CHARM_LEVELS[Math.max(ci, charmCapIdx())]; changed(); return; }
+      const nv = ev.target.closest("[data-gsnav]");
+      if (nv && !nv.disabled) { n = Math.max(0, Math.min(flat.length - 1, n + Number(nv.dataset.gsnav))); draw(); }
+    };
+    draw();
+    m.style.display = "flex";
+  }
+
+  wirePlxTroopSwitch(content, "charm", () => { renderTroopSections(); updateCharmCurrentStats(); });
   renderTroopSections();
   updateCharmTotals();
 }
+// One sheet element for the Chief Charm / Chief Gear pop-ups (closed by render()).
+function gearSheetEl() {
+  let m = document.getElementById("gearSheet");
+  if (!m) { m = document.createElement("div"); m.id = "gearSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
+  return m;
+}
+function closeGearSheet() { const m = document.getElementById("gearSheet"); if (m) m.style.display = "none"; }
 
 // Sums Guides/Designs/Secrets across all 18 charm slots.
 async function updateCharmTotals() {
   let totalG = 0, totalD = 0, totalS = 0;
   CHARM_PIECES.forEach((p) => {
     CHARM_CALC_STATE[p.key].forEach((slot) => {
-      const from = CHARM_CUMULATIVE[clampCharmLabel(slot.current)] || [0, 0, 0];
-      const to = CHARM_CUMULATIVE[clampCharmLabel(slot.target)] || [0, 0, 0];
+      const from = CHARM_CUMULATIVE[slot.current] || [0, 0, 0];
+      const to = CHARM_CUMULATIVE[slot.target] || [0, 0, 0];
       totalG += Math.max(0, to[0] - from[0]);
       totalD += Math.max(0, to[1] - from[1]);
       totalS += Math.max(0, to[2] - from[2]);
@@ -17787,7 +18041,7 @@ function computeCharmStats(stateObj) {
     let sumStat = 0;
     for (const p of pieces) {
       for (const slot of stateObj[p.key]) {
-        sumStat += CHARM_CUMULATIVE_STAT[clampCharmLabel(slot.current)] || 0;
+        sumStat += CHARM_CUMULATIVE_STAT[slot.current] || 0;
       }
     }
     out[troop] = sumStat;
@@ -17802,26 +18056,15 @@ function maxedCharmState() {
   return out;
 }
 
-// Sums each troop type's current Lethality/Health from its 6
-// charms (2 pieces x 3 slots), matching the Skin Gallery card style.
+// The pinned troop switch's stat: the chosen troop's Lethality / Health from
+// its 6 charms (2 pieces x 3 slots), of the max open in the person's state.
 function updateCharmCurrentStats() {
-  const el = document.getElementById("charmCurrentStats");
+  const el = document.querySelector('[data-tsw="charm"] .plx-tsw-stats');
   if (!el) return;
-  // Each charm's own Lethality & Health on its card (now -> target).
-  document.querySelectorAll("[data-charmstat]").forEach((box) => {
-    const [piece, slot] = box.dataset.charmstat.split("|");
-    const st = (CHARM_CALC_STATE[piece] || [])[Number(slot)];
-    if (!st) return;
-    const at = (lv) => CHARM_CUMULATIVE_STAT[clampCharmLabel(lv)] || 0;
-    box.innerHTML = plxPieceStatHtml([{ label: "LETH & HP", now: at(st.current), target: at(st.target) }]);
-  });
-  const statByTroop = computeCharmStats(CHARM_CALC_STATE);
-  const maxByTroop = computeCharmStats(maxedCharmState());
-  const rows = Object.entries(statByTroop).map(([troop, avg]) => ({ troop, avg, max: maxByTroop[troop] || 0 }));
-  el.innerHTML = plxStatTabsHtml("charm", rows.sort((x, y) => ["Infantry", "Lancer", "Marksman"].indexOf(x.troop) - ["Infantry", "Lancer", "Marksman"].indexOf(y.troop)).map((r) => ({
-    key: r.troop, label: troopDisplayName(r.troop), color: PLX_TROOP_COLORS[r.troop],
-    html: plxStatBoxesHtml([{ label: "LETH & HP", val: r.avg, max: r.max }]),
-  })));
+  const troop = plxTroopOf("charm");
+  const statByTroop = computeCharmStats(CHARM_CALC_STATE), maxByTroop = computeCharmStats(maxedCharmState());
+  const v = statByTroop[troop] || 0, m = maxByTroop[troop] || 0; // charms give the same % to both
+  el.innerHTML = plxStatBoxesHtml([{ label: "LETH", val: v, max: m }, { label: "HP", val: v, max: m }], true);
 }
 
 // ============================================================
@@ -17851,7 +18094,6 @@ async function loadChiefGearRows() {
   let [[table]] = await Promise.all([
     sb(`progression_tables?name=eq.Chief Gear&user_id=eq.${PROGRESSION_OWNER_ID}&select=id,progression_rows(id,tier,stars,stage,materials,stat,power,display_label,hardened_alloy,polishing_solution,design_plan,amber)&progression_rows.order=sort_order.asc`),
     setBonusPromise,
-    ensureGearCaps(),
     ensureStateAge(),
   ]);
   if (!table) {
@@ -17870,20 +18112,9 @@ async function loadChiefGearRows() {
       if (typeof saved[p.key]?.to === "number") CHIEF_GEAR_STATE[p.key].to = saved[p.key].to;
     });
   }
-  clampChiefGearState();
   return CHIEF_GEAR_ROWS;
 }
 
-// Renders the 3-troop-type x 2-piece calculator with per-troop-type
-// bulk "set both to" controls.
-const CHIEF_GEAR_POSITIONS = {
-  helmet: "Top left",
-  watch: "Top right",
-  jacket: "Middle left",
-  pants: "Middle right",
-  ring: "Bottom left",
-  cane: "Bottom right",
-};
 const CHIEF_GEAR_ICONS = {
   helmet: "icons/chief-gear-helmet-gold.webp",
   watch: "icons/chief-gear-watch-gold.webp",
@@ -17892,7 +18123,30 @@ const CHIEF_GEAR_ICONS = {
   ring: "icons/chief-gear-ring-gold.webp",
   cane: "icons/chief-gear-cane-gold.webp",
 };
+// Legendary (red) gear has its own pictures, cut from the game's Gear Guide
+// (owner, 19 Oct 2026); every tier before it keeps the orange (gold) ones.
+const CHIEF_GEAR_ICONS_RED = Object.fromEntries(Object.entries(CHIEF_GEAR_ICONS).map(([k, v]) => [k, v.replace("-gold.webp", "-red.webp")]));
+function chiefGearIcon(key, rowIdx) {
+  const r = (CHIEF_GEAR_ROWS || [])[rowIdx];
+  return r && /^legendary/i.test(String(r.tier || "")) ? CHIEF_GEAR_ICONS_RED[key] : CHIEF_GEAR_ICONS[key];
+}
 
+// Chief Gear = "like the game" (owner picked D3, 19 Oct 2026): all 6 pieces
+// on one screen, 3 slots left (Helmet, Jacket, Ring) and 3 right (Watch,
+// Pants, Cane) around a plain box with what's left and Set all; each slot has
+// its tier badge (now) and a "→ ★3" target chip. Tap a slot → a sheet with the
+// Now / Target lists side by side and ‹ › to the next piece. The Troops Stats
+// card (set bonus + the 3 troops' ATK & DEF) is pinned while scrolling.
+const CG_SLOT_ORDER = ["helmet", "jacket", "ring", "watch", "pants", "cane"];
+// Edge colour of a piece by its tier family (Legendary red, Mythic gold …).
+function cgEdge(r) {
+  const tier = String((r && r.tier) || "");
+  return /^legendary/i.test(tier) ? "#e0645f" : /^mythic/i.test(tier) ? "#e8a23c" : /^epic/i.test(tier) ? "#b98ae0" : /^rare/i.test(tier) ? "#6fb4f2" : "#5bc98a";
+}
+// Short tier label for the badge: "T6 ★0" ("Red T6 ★0" without the colour).
+function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purple|Gold|Red) (?=T\d)/, "") : ""; }
+// Just the stars part when the tier doesn't change ("★3" / "★3.2").
+function cgStars(r) { return r && r.tier && r.stars != null ? `★${r.stars}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}` : cgBadge(r); }
 async function renderChiefGearCalc() {
   const seq = RENDER_SEQ;
   const rows = await loadChiefGearRows();
@@ -17904,114 +18158,132 @@ async function renderChiefGearCalc() {
 
   content.innerHTML = plxShellHtml({
     title: navLabel("chiefgear"),
-    settings: `<label class="t12x-check" style="margin-bottom:8px;"><span>${esc(t("cg_count_leg"))}</span><input type="checkbox" id="chiefLegTick" ${chiefLegendaryOn() ? "checked" : ""} /></label>`
-      + capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => (chiefLegendaryOn() || i <= chiefGearLastEpicIdx() ? `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}${i > chiefGearReleasedIdx() ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > chiefGearReleasedIdx()))}</option>` : "")).join("")),
-    amountsId: "gearOwned", needId: "gearNeed", tabsId: "gearTroopTabs",
-    mainHtml: `<div id="gearRows"></div>
-    <div class="t12x-card" style="margin-top:12px;">
-      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      <div id="gearCurrentStats"></div>
-    </div>`,
+    maxId: "gearMaxAllBtn",
+    amountsId: "gearOwned", needId: "gearNeed",
+    statsHtml: `<div class="plx-tsw cg-pin" data-cgpin><div id="gearCurrentStats"></div></div>`,
+    mainHtml: `<div id="gearRows"></div>`,
   });
 
-  let opts = "";
-  const buildOpts = () => { const rel = chiefGearReleasedIdx(); opts = rows.map((r, i) => (i <= chiefGearCapIdx() ? `<option value="${i}"${i > rel ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > rel))}</option>` : "")).join(""); };
-  buildOpts();
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
-  const troopOrder = ["Infantry", "Lancer", "Marksman"];
-  let activeTroop = troopOrder[0];
-
-  const tabsEl = document.getElementById("gearTroopTabs");
   const rowsEl = document.getElementById("gearRows");
+  const optsHtml = () => { const cap = chiefGearCapIdx(); return rows.map((r, i) => `<option value="${i}"${i > cap ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > cap))}</option>`).join(""); };
+  const pieceOf = (key) => CHIEF_GEAR_PIECES.find((p) => p.key === key);
+
+  function slotHtml(p) {
+    const st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
+    const from = Math.min(st.from, rows.length - 1), to = Math.min(st.to == null ? from : st.to, rows.length - 1);
+    const rf = rows[from], rt = rows[to];
+    const chip = to > from
+      ? `<span class="cg-tgt${to > cap ? " up" : ""}"${to > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(rt && rf && rt.tier === rf.tier ? cgStars(rt) : cgBadge(rt))}</span>`
+      : from >= cap ? `<span class="cg-tgt ok">&#10003; ${esc(t("max_button"))}</span>` : "";
+    return `<button type="button" class="cg-slot" data-cgslot="${p.key}" style="grid-area:${p.key};" aria-label="${esc(pieceDisplayName(p.name))}">
+      <span class="cg-pic" style="--edge:${cgEdge(rf)};"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
+      <span class="cg-nm">${esc(pieceDisplayName(p.name))} · <span style="color:${TROOP_COLORS[p.troop]};">${esc(troopDisplayName(p.troop))}</span></span>
+    </button>`;
+  }
   function renderPieces() {
-    renderSwipeDots(tabsEl, troopOrder, activeTroop, TROOP_COLORS, (tr) => { activeTroop = tr; renderPieces(); });
-    const troop = activeTroop;
-    const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
+    const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
+    const open = !!SETALL_OPEN.chief;
     rowsEl.innerHTML = `
         <div class="panel">
-          ${setAllWrapHtml("chief", `<div class="name" style="font-size:15px; font-weight:700; color:${TROOP_COLORS[troop]};">${esc(troopDisplayName(troop))}</div>`, `<div class="sa-row">
-                <select data-troopsetall="${esc(troop)}" data-role="from" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${opts}</select>
-                <span class="sa-arrow">&rarr;</span>
-                <select data-troopsetall="${esc(troop)}" data-role="to" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${opts}</select>
-              </div>`)}
-          <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
-            ${pieces
-              .map(
-                (p) => `
-              <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">
-                  <div class="meta" style="font-size:12px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(pieceDisplayName(p.name))}</div>
-                  <span class="meta" style="font-size:10.5px; flex-shrink:0;">${esc(tPosition(CHIEF_GEAR_POSITIONS[p.key] || ""))}</span>
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <img src="${CHIEF_GEAR_ICONS[p.key]}" alt="${esc(pieceDisplayName(p.name))}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" loading="lazy" />
-                  <div style="flex:1;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("current_label"))}</div>
-                    <select data-piece="${p.key}" data-role="from" style="width:100%;">${opts}</select>
-                  </div>
-                  <div style="flex:1;">
-                    <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("target_label"))}</div>
-                    <select data-piece="${p.key}" data-role="to" style="width:100%;">${opts}</select>
-                  </div>
-                </div>
-                <div class="plx-piecestat" data-cgstat="${p.key}"></div>
-              </div>`
-              )
-              .join("")}
+          <div class="cg-slots">
+            ${CG_SLOT_ORDER.map((k) => slotHtml(pieceOf(k))).join("")}
+            <div class="cg-mid"><b>${toGo}</b><span>${esc(t("cg_pieces_to_go"))}</span><span class="meta">${esc(t("cg_at_target").replace("{n}", CHIEF_GEAR_PIECES.length - toGo).replace("{m}", CHIEF_GEAR_PIECES.length))}</span>
+              <button type="button" class="sa-btn" data-cgsa aria-expanded="${open}">&#8645; ${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
           </div>
+          <div class="sa-row cg-sabox"${open ? "" : " hidden"}>
+            <select data-cgsetall data-role="from" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${optsHtml()}</select>
+            <span class="sa-arrow">&rarr;</span>
+            <select data-cgsetall data-role="to" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${optsHtml()}</select>
+          </div>
+          <p class="meta ch-hint">${esc(t("cg_slots_hint"))}</p>
         </div>`;
-    wireTroopSwipe(rowsEl, troopOrder, activeTroop, (t) => { activeTroop = t; renderPieces(); });
-    // "Set all" shows the level when both pieces of this troop are on it.
-    const syncSetAll = () => rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
-      const vals = new Set(CHIEF_GEAR_PIECES.filter((p) => p.troop === sel.dataset.troopsetall).map((p) => String(CHIEF_GEAR_STATE[p.key][sel.dataset.role])));
+    // "Set all" shows the level when all 6 pieces are on it.
+    rowsEl.querySelectorAll("[data-cgsetall]").forEach((sel) => {
+      const vals = new Set(CHIEF_GEAR_PIECES.map((p) => String(CHIEF_GEAR_STATE[p.key][sel.dataset.role])));
       sel.value = vals.size === 1 ? [...vals][0] : "";
       if (sel.selectedIndex < 0) sel.value = "";
-    });
-
-    rowsEl.querySelectorAll("[data-troopsetall]").forEach((sel) => {
       sel.addEventListener("change", () => {
         if (sel.value === "") return;
-        const troop = sel.dataset.troopsetall;
-        const role = sel.dataset.role;
-        const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
-        pieces.forEach((p) => {
-          CHIEF_GEAR_STATE[p.key][role] = Number(sel.value);
+        const role = sel.dataset.role, v = Number(sel.value);
+        CHIEF_GEAR_PIECES.forEach((p) => {
+          const st = CHIEF_GEAR_STATE[p.key];
+          st[role] = v;
+          if (role === "from" && (st.to ?? 0) < v) st.to = v;
         });
-        saveCalcState("chief_gear", CHIEF_GEAR_STATE);
-        renderPieces();
-        updateChiefGearTotals();
+        changed();
       });
     });
-
-    rowsEl.querySelectorAll("select[data-piece]").forEach((sel) => {
-      const piece = sel.dataset.piece;
-      const role = sel.dataset.role;
-      sel.value = String(CHIEF_GEAR_STATE[piece][role]);
-      sel.addEventListener("change", () => {
-        CHIEF_GEAR_STATE[piece][role] = Number(sel.value);
-        saveCalcState("chief_gear", CHIEF_GEAR_STATE);
-        syncSetAll();
-        updateChiefGearTotals();
-      });
-    });
-    syncSetAll();
   }
-
-  document.getElementById("chiefLegTick").addEventListener("change", (e) => {
-    GEAR_CAPS.chief_legendary = e.target.checked;
-    saveGearCaps();
-    if (clampChiefGearState()) saveCalcState("chief_gear", CHIEF_GEAR_STATE);
-    if (typeof budgetInvalidate === "function") budgetInvalidate();
-    render();
-  });
-  document.getElementById("chiefGearCapSelect").addEventListener("change", async (e) => {
-    GEAR_CAPS.chief_gear = Number(e.target.value);
-    await saveGearCaps();
-    if (clampChiefGearState()) saveCalcState("chief_gear", CHIEF_GEAR_STATE);
-    buildOpts();
+  function changed() {
+    saveCalcState("chief_gear", CHIEF_GEAR_STATE);
     renderPieces();
     updateChiefGearTotals();
+  }
+  rowsEl.addEventListener("click", (e) => {
+    const sa = e.target.closest("[data-cgsa]");
+    if (sa) { SETALL_OPEN.chief = !SETALL_OPEN.chief; renderPieces(); return; }
+    const slot = e.target.closest("[data-cgslot]");
+    if (slot) openGearSheet(slot.dataset.cgslot);
   });
+
+  // The sheet for one piece: Now and Target lists side by side.
+  function openGearSheet(key) {
+    const m = gearSheetEl();
+    const draw = (keepScroll) => {
+      const p = pieceOf(key), st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
+      const from = st.from, to = Math.max(from, st.to ?? from);
+      const keep = keepScroll ? [...m.querySelectorAll(".gs-list")].map((x) => x.scrollTop) : null;
+      const pct = (i) => parseStatPct(rows[i]?.stat) || 0;
+      const list = (role, sel, lo) => {
+        let tier = null, out = "";
+        rows.forEach((r, i) => {
+          if (r.tier !== tier) { tier = r.tier; out += `<div class="gs-grp">${esc(CHIEF_GEAR_TIER_SHORT[r.tier] || r.tier || "")}</div>`; }
+          out += `<button type="button" class="gs-opt${i === sel ? " on" : ""}${i > cap ? " up" : ""}" data-gspick="${role}|${i}" ${i < lo ? "disabled" : ""}>${esc(cgBadge(r))}${i === sel ? " &#10003;" : ""}${i > cap ? `<small> · ${esc(t("upcoming_tag"))}</small>` : ""}</button>`;
+        });
+        return `<div class="gs-list" data-gslist="${role}">${out}</div>`;
+      };
+      const k = CG_SLOT_ORDER.indexOf(key);
+      const nav = (d) => { const nk = CG_SLOT_ORDER[k + d]; return nk ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(pieceDisplayName(pieceOf(nk).name))}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
+        <div class="gs-head"><span class="cg-pic sm" style="--edge:${cgEdge(rows[from])};"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
+          <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div>
+          <button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        <div class="gs-lists"><div><div class="gs-l">${esc(t("t12x_now"))}</div>${list("from", from, 0)}</div><div><div class="gs-l">${esc(t("t12x_target"))}</div>${list("to", to, from)}</div></div>
+        <div class="gs-foot">${nav(-1)}<button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button>${nav(1)}</div>
+      </div>`;
+      const lists = [...m.querySelectorAll(".gs-list")];
+      lists.forEach((l, i) => {
+        if (keep) { l.scrollTop = keep[i]; return; }
+        const on = l.querySelector(".gs-opt.on");
+        if (on) l.scrollTop = Math.max(0, on.offsetTop - l.clientHeight / 2 + on.offsetHeight / 2);
+      });
+    };
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-gsclose]")) { closeGearSheet(); return; }
+      const pk = ev.target.closest("[data-gspick]");
+      if (pk) {
+        const [role, i] = pk.dataset.gspick.split("|"), st = CHIEF_GEAR_STATE[key], v = Number(i);
+        st[role] = v;
+        if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
+        changed(); draw(true); return;
+      }
+      const nv = ev.target.closest("[data-gsnav]");
+      if (nv) { key = CG_SLOT_ORDER[CG_SLOT_ORDER.indexOf(key) + Number(nv.dataset.gsnav)] || key; draw(false); }
+    };
+    m.style.display = "flex";
+    draw(false);
+  }
+
+  // Max everything: every target to the highest open level (tap again: targets back to now).
+  document.getElementById("gearMaxAllBtn").addEventListener("click", () => {
+    const cap = chiefGearCapIdx();
+    const allMax = CHIEF_GEAR_PIECES.every((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) >= Math.max(cap, CHIEF_GEAR_STATE[p.key].from));
+    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.to = allMax ? st.from : Math.max(cap, st.from); });
+    changed();
+  });
+  // The Troops Stats card is pinned at the top while scrolling (slim then).
+  wirePlxPinned(content.querySelector("[data-cgpin]"));
   renderPieces();
   updateChiefGearTotals();
 }
@@ -18443,7 +18715,7 @@ async function ensureChiefGearSetBonusData() {
 function computeChiefGearSetBonus(stateObj) {
   if (!CHIEF_GEAR_ROWS) return { threeTier: null, threeBonus: 0, sixTier: null, sixBonus: 0 };
   const pieceTierIdx = CHIEF_GEAR_PIECES.map((p) => {
-    const idx = Math.min(stateObj[p.key].from, chiefGearCapIdx());
+    const idx = Math.min(stateObj[p.key].from, chiefGearLastIdx());
     const tier = CHIEF_GEAR_ROWS[idx]?.tier;
     return tier ? CHIEF_GEAR_TIER_ORDER.indexOf(tier) : -1;
   });
@@ -18481,7 +18753,7 @@ function computeChiefGearRawStat(stateObj) {
     const pieces = CHIEF_GEAR_PIECES.filter((p) => p.troop === troop);
     let sumStat = 0;
     for (const p of pieces) {
-      const idx = Math.min(stateObj[p.key].from, chiefGearCapIdx());
+      const idx = Math.min(stateObj[p.key].from, chiefGearLastIdx());
       sumStat += parseStatPct(rows[idx]?.stat) || 0;
     }
     out[troop] = { Attack: sumStat, Defense: sumStat };
@@ -18496,27 +18768,20 @@ function maxedChiefGearState() {
   return out;
 }
 
+// The pinned Troops Stats card: Set bonus (3-piece / 6-piece) as 2 small
+// boxes (a slim line when pinned) over the 3 troops' ATK & DEF in one row.
 function updateChiefGearCurrentStats() {
   const el = document.getElementById("gearCurrentStats");
   if (!el || !CHIEF_GEAR_ROWS) return;
-  // Each piece's own ATK & DEF on its card (now -> target).
-  document.querySelectorAll("[data-cgstat]").forEach((box) => {
-    const st = CHIEF_GEAR_STATE[box.dataset.cgstat];
-    if (!st) return;
-    const cap = chiefGearCapIdx(), at = (i) => parseStatPct(CHIEF_GEAR_ROWS[Math.min(Number(i) || 0, cap)]?.stat) || 0;
-    box.innerHTML = plxPieceStatHtml([{ label: "ATK & DEF", now: at(st.from), target: st.to == null ? at(st.from) : at(st.to) }]);
-  });
   const statByTroop = computeChiefGearRawStat(CHIEF_GEAR_STATE);
   const maxByTroop = computeChiefGearRawStat(maxedChiefGearState());
   const { threeBonus, sixBonus } = computeChiefGearSetBonus(CHIEF_GEAR_STATE);
-  const results = Object.entries(statByTroop).map(([troop, stats]) => ({ troop, stats, max: maxByTroop[troop] }));
-
-  const setBox = (label, v) => `<div class="plx-stat"><span>${esc(label)}</span><b style="color:${v ? "var(--good)" : "var(--muted)"};">${v ? `+${v}%` : esc(t("not_active"))}</b></div>`;
-  el.innerHTML = `<div class="plx-stats" style="margin-bottom:12px;">${setBox(t("three_piece_def"), threeBonus)}${setBox(t("six_piece_atk"), sixBonus)}</div>` +
-    plxStatTabsHtml("chief_gear", results.sort((x, y) => ["Infantry", "Lancer", "Marksman"].indexOf(x.troop) - ["Infantry", "Lancer", "Marksman"].indexOf(y.troop)).map((r) => ({
-      key: r.troop, label: troopDisplayName(r.troop), color: PLX_TROOP_COLORS[r.troop],
-      html: plxStatBoxesHtml([{ label: "ATK & DEF", val: r.stats.Attack, max: r.max.Attack, dp: 2 }]),
-    })));
+  const setBox = (label, v) => `<div class="plx-stat"><span>${esc(label)}</span><b style="color:${v ? "var(--good)" : "var(--muted)"};">${v ? bidiNum(`+${v}%`) : esc(t("not_active"))}</b></div>`;
+  const slim = (v, stat) => (v ? `<b style="color:var(--good);">${bidiNum(`+${v}%`)}</b> ${stat}` : `<span class="meta">${stat} ${esc(t("not_active"))}</span>`);
+  el.innerHTML = `<div class="cg-pin-h"><b>${esc(t("troops_stats_title"))}</b> <span class="meta">· ATK &amp; DEF</span></div>
+    <div class="plx-stats one cg-setboxes" style="--n:2;">${setBox(t("three_piece_def"), threeBonus)}${setBox(t("six_piece_atk"), sixBonus)}</div>
+    <div class="cg-setline">${esc(t("cg_set_bonus"))} ${slim(threeBonus, "DEF")} &middot; ${slim(sixBonus, "ATK")}</div>
+    ${plxStatBoxesHtml(PLX_TROOPS.map((tr) => ({ label: troopDisplayName(tr), val: (statByTroop[tr] || {}).Attack || 0, max: (maxByTroop[tr] || {}).Attack || 0, dp: 2 })), true)}`;
 }
 
 // ============================================================
@@ -20248,16 +20513,6 @@ function computeT11Stats(troop, useMax) {
   return stats;
 }
 
-function smallResourceCard(icon, name, value) {
-  return `<div class="metric" style="padding:6px 8px; min-width:80px;">
-    <div style="display:flex; align-items:center; gap:6px;">
-      ${icon ? `<img src="${icon}" alt="" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : ""}
-      <div class="label" style="text-align:start; font-size:9px;">${esc(name)}</div>
-    </div>
-    <div class="val" style="margin-top:4px; font-size:13px;">${value}</div>
-  </div>`;
-}
-
 async function renderT11HeliosPage() {
   const seq = RENDER_SEQ;
   await ensureT11StateData();
@@ -21209,13 +21464,13 @@ async function renderExpertsResearchPage() {
   content.innerHTML = plxShellHtml({
     title: t("experts_research_title"),
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
-    mainHtml: `<div id="expResearchSwipeCounter"></div>
-    <div id="expResearchGrid"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       ${plxStatTabsHtml("experts_research", [{ key: "all", label: t("plx_all_troops"), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t("experts_research_desc"))}</p><div id="expResearchTotals"></div>` }]
         .concat(["Infantry", "Lancer", "Marksman"].map((tr) => ({ key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr], html: `<p class="desc" style="font-size:12px; margin:0 0 8px;" data-ertroopwho="${tr}"></p><div data-ertroop="${tr}"></div>` }))))}
     </div>`,
+    mainHtml: `<div id="expResearchSwipeCounter"></div>
+    <div id="expResearchGrid"></div>`,
   });
   document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span></div>
     <div id="expResearchOwned"></div>
@@ -21250,7 +21505,7 @@ async function renderExpertsResearchPage() {
   }
   // Two decimals: the main stat moves 0.01% per level, which one decimal hides.
   function statTotalsHtml(totals, maxTotals) {
-    return plxStatBoxesHtml([["ATK", "ATK"], ["DEF", "DEF"], ["LETH", "DMG"], ["HP", "HP"]].map(([label, k]) => ({ label, val: totals[k], max: maxTotals[k], dp: 2 })));
+    return plxStatBoxesHtml([["ATK", "ATK"], ["DEF", "DEF"], ["LETH", "DMG"], ["HP", "HP"]].map(([label, k]) => ({ label, val: totals[k], max: maxTotals[k], dp: 2 })), true);
   }
   const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => !expertTroopKey(e)));
   function renderTotals() {
@@ -21727,27 +21982,27 @@ async function renderExpertsPage() {
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
     // Same row look as the research pages' "Speedups" box (rs-row).
-    settings: `<div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:4px;">
-      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-        <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
-        <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" style="width:72px; flex-shrink:0; padding:4px 6px;" />
-        <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
+    // One line (owner, 19 Oct 2026: the box took too much space).
+    settings: `<div class="exp-spd"><span class="exp-spd-k">&#9881;</span>
+        <span class="meta">${esc(t("speedups_label"))}</span>
+        <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" />
+        <span class="meta">${esc(t("minutes_short"))}</span>
         <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
-      </div>
     </div>`,
     amountsId: "expertsAmounts", needId: "expertsSummary",
-    mainHtml: `
-    <div id="expertsSwipeCounter"></div>
-    <div id="expertsGrid"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    statsHtml: `<div class="t12x-card plx-stats-top">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       ${plxStatTabsHtml("experts", [
-        ["base", "troops_stats_title", "experts_base_stats_desc", "expertsStatHeader"],
+        ["base", "plx_all_troops", "experts_base_stats_desc", "expertsStatHeader"],
         ["foundry", "foundry_title", "foundry_desc", "expertsFoundryHeader"],
         ["svs", "svs_title", "svs_desc", "expertsSvsHeader"],
         ["frostfire", "frostfire_mine_title", "frostfire_mine_desc", "expertsFrostfireHeader"],
         ["tundra", "tundra_trade_routes_title", "tundra_trade_routes_desc", "expertsTundraHeader"],
       ].map(([key, title, desc, id]) => ({ key, label: t(title), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t(desc))}</p><div id="${id}"></div>` })))}
     </div>`,
+    mainHtml: `
+    <div id="expertsSwipeCounter"></div>
+    <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
@@ -21808,7 +22063,7 @@ async function renderExpertsPage() {
     return totals;
   }
   function statHeaderHtml(totals, maxTotals) {
-    return plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, key]) => ({ label, val: totals[key], max: maxTotals ? maxTotals[key] : null })));
+    return plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, key]) => ({ label, val: totals[key], max: maxTotals ? maxTotals[key] : null })), true);
   }
   function addSkillMaxToTotals(totals, hero, skill) {
     if (!isExpertUnlocked(hero)) return;
@@ -22054,7 +22309,7 @@ async function renderExpertsPage() {
             .map((sk) => {
               const max = skillMaxLevel(e.key, sk);
               const st = s.skills[sk];
-              const { exp, book, have: expHaveUsed, expNeed } = skillNeed(e.key, sk, st);
+              const { exp, book, expNeed } = skillNeed(e.key, sk, st);
               const expHaveVal = skillExpHave(st);
               const skillRows = SKILL_CACHE[`${e.key}|${sk}`];
               let curRow = null, desRow = null;
@@ -22089,17 +22344,21 @@ async function renderExpertsPage() {
                 : ""
             }
             ${
-              exp || book
-                ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px;">${Math.round(expNeed).toLocaleString()} EXP \u00b7 ${Math.round(book).toLocaleString()} Books${
-                    expHaveUsed > 0 ? ` <span style="color:var(--good);">(${Math.round(exp).toLocaleString()} \u2212 ${Math.round(expHaveUsed).toLocaleString()})</span>` : ""
-                  }</div>`
-                : ""
+              // EXP line = design B (owner, 19 Oct 2026): "EXP [box] / step EXP [Max]",
+              // then the step's Books still needed. The EXP counts against the whole
+              // current → target step (skillNeed), as before.
+              `<div class="exp-xl">
+              <span>EXP</span>
+              <input type="number" min="0" step="1" inputmode="numeric" class="keep-w${expHaveVal > 0 ? " has" : ""}" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" aria-label="${esc(t("skill_exp_have"))}" style="--xw:${Math.max(3, Math.round(expHaveVal || 0).toLocaleString().length)};" />
+              <span>/ ${bidiNum(Math.round(exp).toLocaleString())} EXP</span>
+              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}">${esc(t("max_button"))}</button>
+              ${
+                expNeed <= 0 && book <= 0
+                  ? `<span class="exp-xl-b ok">&#10003; 0 ${esc(t("resource_books"))}</span>`
+                  : `<span class="exp-xl-b" title="${esc(`${Math.round(expNeed).toLocaleString()} EXP · ${Math.round(book).toLocaleString()} ${t("resource_books")}`)}"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="${esc(t("resource_books"))}" />${bidiNum(Math.round(book).toLocaleString())}</span>`
+              }
+            </div>`
             }
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:3px;">
-              <span class="meta" style="font-size:10px;">${esc(t("skill_exp_have"))}</span>
-              <input type="number" min="0" step="1" inputmode="numeric" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" style="width:110px; flex-shrink:0; padding:4px 8px; font-size:12px; text-align:end;" />
-              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}" style="padding:3px 8px; font-size:11px; flex-shrink:0;">${esc(t("skill_max_exp"))}</button>
-            </div>
           </div>`;
             })
             .join("")}
@@ -22400,6 +22659,8 @@ async function renderRefinePage() {
     title: t("pets_refine_title"),
     settings: `<label class="t12x-check" style="justify-content:flex-start; gap:8px; cursor:pointer;"><input type="checkbox" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /><span>${esc(t("marks_pack_gems"))}</span></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
+    // One pinned troop switch: it picks which troop's LETH / HP boxes show.
+    statsHtml: plxTroopSwitchHtml("pets_refine", ""),
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
@@ -22412,6 +22673,16 @@ async function renderRefinePage() {
     renderTotals();
   });
 
+  // The pinned troop switch's stat boxes (summed over every pet).
+  let refineStatsNow = null;
+  function drawRefineStats() {
+    const el = content.querySelector('[data-tsw="pets_refine"] .plx-tsw-stats');
+    if (!el || !refineStatsNow) return;
+    const [l, h] = { Infantry: ["il", "ih"], Lancer: ["ll", "lh"], Marksman: ["ml", "mh"] }[plxTroopOf("pets_refine")];
+    const { grand, grandMax } = refineStatsNow;
+    el.innerHTML = plxStatBoxesHtml([{ label: "LETH", val: grand[l], max: grandMax[l], dp: 2 }, { label: "HP", val: grand[h], max: grandMax[h], dp: 2 }], true);
+  }
+  wirePlxTroopSwitch(content, "pets_refine", drawRefineStats);
   // The highest stage that's out (stages ticked "Upcoming" in Admin after it).
   function maxRow(pet) {
     const rows = PET_REFINE_CACHE[pet];
@@ -22515,16 +22786,10 @@ async function renderRefinePage() {
             <button type="button" class="btn small ghost" data-marksclear>${esc(t("marks_clear"))}</button>
             <button type="button" class="btn small ghost" data-marksadvanced="0">${esc(t("marks_advanced_close"))}</button>
           </div>`}`}`;
+    refineStatsNow = { grand, grandMax };
+    drawRefineStats();
     document.getElementById("refineTotals").innerHTML = `
       <div class="t12x-card">
-        <div class="t12x-title">${esc(t("total_refine_bonus"))}</div>
-        <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("refine_summed_desc"))}</p>
-        ${plxStatTabsHtml("pets_refine", [["Infantry", "il", "ih"], ["Lancer", "ll", "lh"], ["Marksman", "ml", "mh"]].map(([tr, l, h]) => ({
-          key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr],
-          html: plxStatBoxesHtml([{ label: "LETH", val: grand[l], max: grandMax[l], dp: 2 }, { label: "HP", val: grand[h], max: grandMax[h], dp: 2 }]),
-        })))}
-      </div>
-      <div class="t12x-card" style="margin-top:12px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
           <div class="t12x-title" style="margin:0;">${esc(t("marks_title"))}</div>
           <button type="button" class="plx-maxbtn" data-marksopen>&#9881; ${esc(t("marks_advanced_open"))}</button>
@@ -22745,9 +23010,9 @@ async function renderPetsDataPage() {
     title: t("pets_level_title"),
     amountsId: "petsMaterialsBar", needId: "petsNeed",
     maxId: "petsMaxAllBtn",
+    statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
     mainHtml: `<div id="petsSwipeCounter"></div>
-    <div id="petsList"></div>
-    <div class="t12x-card" style="margin-top:12px;" id="petsTotals"></div>`,
+    <div id="petsList"></div>`,
   });
 
   function getState(pet) {
@@ -22855,36 +23120,57 @@ async function renderPetsDataPage() {
       return html + (group >= 0 ? "</optgroup>" : "");
     };
     const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>${esc(t("not_started"))}</option>` + levelOpts(from);
+    // Card = design C v2 (owner, 19 Oct 2026): stat box (now, of max, bar: green
+    // = now, blue = what the target adds) beside Now / Target steppers; the
+    // number opens the level list (a see-through select on top of it).
+    const lastIdx = levels.length - 1;
+    const shortLbl = (i) => {
+      if (i < 0 || !levels[i]) return "—";
+      const lab = String(levels[i].level_label), n = parseInt(lab, 10) || 0;
+      return /\.1$/.test(lab) ? `${n} ${t("pet_adv_short")}` : String(n);
+    };
+    const statAt = (i) => {
+      for (let k = Math.min(i, lastIdx); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100;
+      return 0;
+    };
+    const tgtStat = Math.max(cur, statAt(to));
+    const pctW = (v) => (max > 0 ? Math.max(0, Math.min(100, (v / max) * 100)) : 0);
+    const nowW = pctW(cur), addW = Math.max(0, pctW(tgtStat) - nowW);
+    const done = needed.food + needed.manual + needed.potion + needed.serum <= 0 && from >= relMax;
+    const step = (role, val, minI, maxI, opts) => `<div class="pc-st"><span>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</span>
+        <div class="pc-step${role === "to" ? " tgt" : ""}">
+          <button type="button" data-petstep="${role}" data-d="-1" aria-label="−" ${val <= minI ? "disabled" : ""}>&minus;</button>
+          <span class="pc-val${val > relMax ? " up" : ""}" data-petval="${role}">${esc(shortLbl(val))}<select data-pet${role}="${esc(pet)}" aria-label="${esc(t(role === "to" ? "target_label" : "current_label"))}">${opts}</select></span>
+          <button type="button" data-petstep="${role}" data-d="1" aria-label="+" ${val >= maxI ? "disabled" : ""}>+</button>
+        </div></div>`;
+    const chip = (icon, name, v) => `<span class="pc-chip" title="${esc(name)}"><img src="${esc(icon)}" alt="" />${Math.round(v).toLocaleString()}</span>`;
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px; justify-content:flex-start; flex-wrap:nowrap;">
-            <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
-            ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0;" />` : ""}
-            <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(dataName(pet))}</div>
+          <div class="pc-head">
+            ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" />` : ""}
+            <div class="name" style="color:${color};">${esc(dataName(pet))}</div>
+            ${done ? `<span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}
             ${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
-          </label>
-          ${IS_OWNER ? `<div style="margin:-8px 0 12px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
-          <div class="stats-row-scroll pet-level-row" style="margin-bottom:16px;">
-            <div class="metric" style="padding:8px; min-width:110px; flex:1 1 110px;">
-              <div class="label" style="font-size:9px;">${esc(t("troops_stats_title"))}</div>
-              <div class="val" style="font-size:13px; white-space:nowrap;">${cur.toFixed(1)}% <span style="font-size:9px; color:var(--muted); font-weight:400;">/ ${max.toFixed(1)}%</span></div>
-            </div>
-            <div style="min-width:110px; flex:1 1 110px;">
-              <div class="meta" style="font-size:9px; margin-bottom:4px;">${esc(t("current_label"))}</div>
-              <select data-petfrom="${esc(pet)}" style="width:100%;">${fromOpts}</select>
-            </div>
-            <div style="min-width:110px; flex:1 1 110px;">
-              <div class="meta" style="font-size:9px; margin-bottom:4px;">${esc(t("target_label"))}</div>
-              <select data-petto="${esc(pet)}" style="width:100%;">${levelOpts(to)}</select>
-            </div>
+            <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           </div>
-          <div class="stats-row-scroll">
-            ${smallResourceCard(PET_MATERIAL_ICONS.food, t("material_food"), Math.round(needed.food).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.manual, t("material_manual"), Math.round(needed.manual).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.potion, t("material_potion"), Math.round(needed.potion).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.serum, t("material_serum"), Math.round(needed.serum).toLocaleString())}
+          ${IS_OWNER ? `<div style="margin-top:6px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
+          <div class="pc-row">
+            <div class="pc-stat">
+              <span>${esc(t("troops_stats_title"))}</span>
+              <b>${bidiNum(`+${cur.toFixed(1)}%`)}</b>
+              <small>${esc(t("of_max_prefix"))} ${bidiNum(`+${max.toFixed(1)}%`)}</small>
+              <div class="pc-bar"><i style="width:${nowW}%;"></i><i style="width:${addW}%;"></i></div>
+            </div>
+            ${step("from", from, -1, lastIdx, fromOpts)}
+            ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
+          ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
+            ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
+            ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
+            ${chip(PET_MATERIAL_ICONS.potion, t("material_potion"), needed.potion)}
+            ${chip(PET_MATERIAL_ICONS.serum, t("material_serum"), needed.serum)}
+          </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
 
@@ -22920,6 +23206,54 @@ async function renderPetsDataPage() {
         renderTotals();
         renderList();
       });
+    });
+    // − / +: one level a tap; holding moves on by itself (the card text
+    // follows while held, saved and redrawn when let go). Now going past the
+    // target takes the target with it; the target stops at Now.
+    let hold = null;
+    const stepOnce = (role, d) => {
+      const s = getState(pet);
+      if (role === "from") {
+        const v = Math.max(-1, Math.min(lastIdx, s.from + d));
+        if (v === s.from) return false;
+        s.from = v;
+        if (s.to < v) s.to = v;
+      } else {
+        const v = Math.max(Math.max(0, s.from), Math.min(lastIdx, s.to + d));
+        if (v === s.to) return false;
+        s.to = v;
+      }
+      PETS_STATE[pet] = s;
+      listEl.querySelectorAll("[data-petval]").forEach((el) => {
+        const i = el.dataset.petval === "from" ? s.from : s.to;
+        el.firstChild.nodeValue = shortLbl(i);
+        el.classList.toggle("up", i > relMax);
+      });
+      return true;
+    };
+    const finish = () => {
+      if (!hold) return;
+      clearTimeout(hold.timer); clearInterval(hold.iv);
+      const changed = hold.changed;
+      hold = null;
+      if (!changed) return;
+      savePetsState();
+      renderTotals();
+      renderList();
+    };
+    listEl.querySelectorAll("[data-petstep]").forEach((b) => {
+      b.onpointerdown = (e) => {
+        if (!e.isPrimary || b.disabled) return;
+        e.preventDefault();
+        finish();
+        const role = b.dataset.petstep, d = Number(b.dataset.d);
+        hold = { changed: stepOnce(role, d), timer: 0, iv: 0 };
+        hold.timer = setTimeout(() => { if (hold) hold.iv = setInterval(() => { if (hold && stepOnce(role, d)) hold.changed = true; }, 90); }, 420);
+      };
+      b.onpointerup = finish;
+      b.onpointerleave = finish;
+      b.onpointercancel = finish;
+      b.onclick = (e) => { if (e.detail === 0) { hold = { changed: stepOnce(b.dataset.petstep, Number(b.dataset.d)) }; finish(); } };
     });
   }
 
@@ -23122,7 +23456,7 @@ function plxShellHtml(o) {
     </div>
     <div class="t12x">
       <aside class="t12x-side">
-        ${o.settings ? `<div class="t12x-card t12x-settings${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">${esc(t("t12x_settings"))}</div>${o.settings}</div>` : ""}
+        ${o.settings ? `<div class="t12x-card t12x-settings${o.settings.includes("rs-row") ? " has-rs" : ""}${o.settings.includes('class="exp-spd"') ? " one-line" : ""}"><div class="t12x-k">&#9881; ${esc(t("t12x_settings"))}${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
         <div class="t12x-card"><div id="${o.amountsId}"></div></div>
         ${o.sideExtra || ""}
       </aside>
@@ -23132,6 +23466,7 @@ function plxShellHtml(o) {
           ${o.timeId ? `<div id="${o.timeId}" class="t12x-time"></div>` : ""}
           <div id="${o.needId}"></div>
         </div>
+        ${o.statsHtml || ""}
         ${o.tabsId || o.topExtra ? `<div class="t12x-top">
           ${o.tabsId ? `<div class="t12x-tabs" id="${o.tabsId}"></div>` : ""}
           ${o.topExtra || ""}
@@ -23166,11 +23501,72 @@ function plxStatBoxesHtml(list, oneRow) {
 // groups: [{ key, label, color, html }]. The chosen tab is kept for the visit.
 const PLX_STAT_TAB = {};
 const PLX_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+// One Infantry | Lancer | Marksman switch per page (owner, 19 Oct 2026): it
+// drives both the page's Troops Stats and its cards, and stays pinned under the
+// top menu (position: sticky inside .t12x-main, so put it straight in the main
+// column, before the cards). The page fills .plx-tsw-stats with the chosen
+// troop's stat boxes (plxStatBoxesHtml(…, true)) and redraws its cards in onChange.
+const PLX_TROOPS = ["Infantry", "Lancer", "Marksman"];
+const PLX_TROOP = {}; // page key -> chosen troop, kept for the visit
+function plxTroopOf(key) { return PLX_TROOP[key] || PLX_TROOPS[0]; }
+function plxTroopSwitchHtml(key, statsHtml) {
+  const tr = plxTroopOf(key);
+  return `<div class="plx-tsw" data-tsw="${esc(key)}"><div class="plx-tsw-seg" role="tablist">${PLX_TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === tr}" data-tswtroop="${x}" class="${x === tr ? "on" : ""}" style="--tc:${PLX_TROOP_COLORS[x]};">${esc(troopDisplayName(x))}</button>`).join("")}</div><div class="plx-tsw-stats">${statsHtml || ""}</div></div>`;
+}
+// Pins el at the top of the screen while its main column scrolls past
+// (position: sticky can't work here: the body's overflow-x:hidden makes it the
+// scroll box). A placeholder keeps its place, so nothing below jumps; the
+// element gets .is-pinned while pinned (Chief Gear's card goes slim then).
+function wirePlxPinned(el) {
+  if (!el || el.dataset.pinWired) return;
+  el.dataset.pinWired = "1";
+  const ph = document.createElement("div");
+  ph.className = "plx-pin-ph";
+  el.before(ph);
+  const box = el.closest(".t12x-main") || el.parentElement;
+  const onScroll = () => {
+    if (!el.isConnected) { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); return; }
+    const r = ph.getBoundingClientRect(), mt = parseFloat(getComputedStyle(el).marginTop) || 0;
+    const pinned = el.classList.contains("is-pinned");
+    const pin = r.top + mt < 0 && box.getBoundingClientRect().bottom > el.offsetHeight + 16;
+    if (pin !== pinned) {
+      ph.style.height = pin ? `${el.offsetHeight + mt + (parseFloat(getComputedStyle(el).marginBottom) || 0)}px` : "";
+      el.classList.toggle("is-pinned", pin);
+    }
+    if (pin) { el.style.left = `${r.left}px`; el.style.width = `${r.width}px`; } else { el.style.left = ""; el.style.width = ""; }
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  onScroll();
+}
+function wirePlxTroopSwitch(root, key, onChange) {
+  const el = root && root.querySelector(`[data-tsw="${key}"]`);
+  if (!el) return;
+  wirePlxPinned(el);
+  el.onclick = (e) => {
+    const b = e.target.closest("[data-tswtroop]");
+    if (!b || b.dataset.tswtroop === plxTroopOf(key)) return;
+    PLX_TROOP[key] = b.dataset.tswtroop;
+    el.querySelectorAll("[data-tswtroop]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", String(x === b)); });
+    onChange(PLX_TROOP[key]);
+  };
+}
+// The pinned switch sits right under the top menu, whatever its height.
+(() => {
+  const setNavH = () => { const n = document.querySelector("nav.topnav"); if (n) document.documentElement.style.setProperty("--navh", `${n.offsetHeight}px`); };
+  window.addEventListener("resize", setNavH);
+  document.addEventListener("DOMContentLoaded", setNavH);
+  setTimeout(setNavH, 0);
+})();
 function plxStatTabsHtml(id, groups) {
   const active = groups.some((g) => g.key === PLX_STAT_TAB[id]) ? PLX_STAT_TAB[id] : groups[0].key;
   return `<div class="t12x-tabs plx-stat-tabs" data-stattabs="${esc(id)}">${groups.map((g) => `<button type="button" class="${g.key === active ? "on" : ""}" data-stattab="${esc(g.key)}" style="--tc:${g.color || "var(--ice)"};">${esc(g.label)}</button>`).join("")}</div>
     ${groups.map((g) => `<div data-statpane="${esc(g.key)}"${g.key === active ? "" : " hidden"}>${g.html}</div>`).join("")}`;
 }
+document.addEventListener("click", (ev) => {
+  const i = ev.target.closest && ev.target.closest("[data-setinfo]");
+  if (i) i.closest(".t12x-settings").classList.toggle("info");
+});
 document.addEventListener("click", (ev) => {
   const b = ev.target.closest && ev.target.closest("[data-stattab]");
   if (!b) return;
@@ -23225,9 +23621,8 @@ function expertSigilTilesHtml(inv, experts) {
 // items: [{ label, img, color, dim }]
 function renderPickStrip(containerEl, items, activeIndex, onPick) {
   containerEl.className = "plx-pick";
-  containerEl.innerHTML = items.map((it, i) => `<button type="button" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" data-pick="${i}" style="--tc:${it.color || "var(--ice)"};" title="${esc(it.label)}">
-      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="plx-pick-ph">${esc(String(it.label).trim().charAt(0))}</span>`}
-      <span>${esc(it.label)}</span></button>`).join("");
+  containerEl.innerHTML = items.map((it, i) => `<button type="button" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" data-pick="${i}" style="--tc:${it.color || "var(--ice)"};" title="${esc(it.label)}" aria-label="${esc(it.label)}">
+      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="plx-pick-ph">${esc(String(it.label).trim().charAt(0))}</span>`}</button>`).join(""); // pictures only: the card below shows the name (owner, 19 Oct 2026)
   containerEl.onclick = (ev) => {
     const b = ev.target.closest("[data-pick]");
     if (b) onPick(Number(b.dataset.pick));
