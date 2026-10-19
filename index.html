@@ -1190,7 +1190,8 @@ input,select,textarea{
   .ch-tile{ display:flex; flex-direction:column; gap:6px; min-width:0; padding:8px 7px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .ch-tile:hover{ border-color:var(--ice-dim); }
   .ch-tile.done{ border-color:rgba(91,201,138,.45); }
-  .ch-t-h{ display:flex; align-items:center; gap:6px; min-width:0; }
+  .ch-t-h{ display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+  .ch-pic.tile{ width:44px; height:44px; }
   .ch-pic{ position:relative; width:30px; height:30px; flex-shrink:0; }
   .ch-pic img{ width:100%; height:100%; object-fit:contain; }
   .ch-pic.none img{ opacity:.35; filter:grayscale(.6); }
@@ -17801,7 +17802,7 @@ async function renderCharmsCalc() {
     const w = (v) => Math.max(0, Math.min(100, (v / top) * 100));
     const foot = go ? pctShort(tg - now) : ci >= cap ? `${esc(t("max_button"))} &#10003;` : "&#10003;";
     return `<button type="button" class="ch-tile${go ? "" : " done"}" data-chtile="${n}" aria-label="${esc(`${t("charm_slot_label")} ${n + 1}`)}">
-      <span class="ch-t-h">${charmPicHtml(c, n)}<span class="ch-t-n">${esc(t("charm_slot_label"))} ${n + 1}</span></span>
+      <span class="ch-t-h">${charmPicHtml(c, n, "tile")}</span>
       <span class="ch-t-v">${go ? `${esc(st.current)}<em>&rarr;</em><b class="${ti > cap ? "up" : ""}"${ti > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(st.target)}</b>` : `<b class="ok">${esc(st.current)}</b>`}</span>
       <span class="ch-bar"><i style="width:${w(now)}%;"></i>${go ? `<s style="inset-inline-start:${w(now)}%; width:${Math.max(0, w(tg) - w(now))}%;"></s>` : ""}</span>
       <span class="ch-t-g">${foot}</span>
