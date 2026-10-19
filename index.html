@@ -17892,6 +17892,13 @@ const CHIEF_GEAR_ICONS = {
   ring: "icons/chief-gear-ring-gold.webp",
   cane: "icons/chief-gear-cane-gold.webp",
 };
+// Legendary (red) gear has its own pictures, cut from the game's Gear Guide
+// (owner, 19 Oct 2026); every tier before it keeps the orange (gold) ones.
+const CHIEF_GEAR_ICONS_RED = Object.fromEntries(Object.entries(CHIEF_GEAR_ICONS).map(([k, v]) => [k, v.replace("-gold.webp", "-red.webp")]));
+function chiefGearIcon(key, rowIdx) {
+  const r = (CHIEF_GEAR_ROWS || [])[rowIdx];
+  return r && /^legendary/i.test(String(r.tier || "")) ? CHIEF_GEAR_ICONS_RED[key] : CHIEF_GEAR_ICONS[key];
+}
 
 async function renderChiefGearCalc() {
   const seq = RENDER_SEQ;
@@ -17944,7 +17951,7 @@ async function renderChiefGearCalc() {
                   <span class="meta" style="font-size:10.5px; flex-shrink:0;">${esc(tPosition(CHIEF_GEAR_POSITIONS[p.key] || ""))}</span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                  <img src="${CHIEF_GEAR_ICONS[p.key]}" alt="${esc(pieceDisplayName(p.name))}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" loading="lazy" />
+                  <img src="${chiefGearIcon(p.key, CHIEF_GEAR_STATE[p.key].from)}" data-gearicon="${p.key}" alt="${esc(pieceDisplayName(p.name))}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;" loading="lazy" />
                   <div style="flex:1;">
                     <div class="meta" style="font-size:9.5px; margin-bottom:2px; opacity:0.75;">${esc(t("current_label"))}</div>
                     <select data-piece="${p.key}" data-role="from" style="width:100%;">${opts}</select>
@@ -17990,6 +17997,7 @@ async function renderChiefGearCalc() {
       sel.addEventListener("change", () => {
         CHIEF_GEAR_STATE[piece][role] = Number(sel.value);
         saveCalcState("chief_gear", CHIEF_GEAR_STATE);
+        if (role === "from") { const img = rowsEl.querySelector(`[data-gearicon="${piece}"]`); if (img) img.src = chiefGearIcon(piece, CHIEF_GEAR_STATE[piece].from); }
         syncSetAll();
         updateChiefGearTotals();
       });
