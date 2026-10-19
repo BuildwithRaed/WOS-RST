@@ -17776,7 +17776,7 @@ function charmIconSrc(troop, lv) {
 function charmPicHtml(c, n, cls, lv) {
   const st = (CHARM_CALC_STATE[c.piece.key] || [])[c.slot] || {};
   const at = lv != null ? lv : st.current;
-  return `<span class="ch-pic${cls ? " " + cls : ""}${Number(at) > 0 ? "" : " none"}"><img src="${charmIconSrc(c.piece.troop, at)}" alt="" loading="lazy" /><i>${n + 1}</i></span>`;
+  return `<span class="ch-pic${cls ? " " + cls : ""}${Number(at) > 0 ? "" : " none"}"><img src="${charmIconSrc(c.piece.troop, at)}" alt="" loading="lazy" /></span>`;
 }
 const charmStatAt = (lv) => CHARM_CUMULATIVE_STAT[lv] || 0;
 const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
