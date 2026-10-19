@@ -279,6 +279,6 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #83: notes (Dashboard Stats | Plan tabs idea)
 - PR #86: planner pages: Troops Stats under Total needed, compact Settings, Experts stats in one row
 - PR #87: red Legendary Chief Gear pictures
-- PR #??: "My max" removed (cap = what is open in your state), Chief Charm tiles, Chief Gear slots, pinned troop switch
-- PR #??: new cards on Heroes Gears (level chips + list), Pets Level (steppers) and the Experts skill EXP line
+- PR #89: "My max" removed (cap = what is open in your state), Chief Charm tiles, Chief Gear slots, pinned troop switch
+- PR #89: new cards on Heroes Gears (level chips + list), Pets Level (steppers) and the Experts skill EXP line
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)

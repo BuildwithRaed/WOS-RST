@@ -1825,19 +1825,5 @@
 "t:rm_goal_cost":"ses packs {v}",
 "t:rm_goal_nopacks":"Rien à acheter : ce que vous avez suffit déjà.",
 "nav.p:roadmap":"Feuille de route",
-"t:set_info":"À quoi servent ces réglages",
-"t:pet_adv_short":"Av.",
-"t:pet_done":"Terminé · rien à prévoir",
-"t:pet_count_tip":"Coché : ce familier compte dans les totaux, le tableau de bord et les budgets.",
-"t:charm_to_go":"Encore {n}",
-"t:charm_tiles_hint":"Barre verte = maintenant, bleue = ce que l'objectif ajoute. Touchez un charme pour le changer.",
-"t:charm_needs_this":"Besoins pour ce charme",
-"t:gs_nothing":"Rien à prévoir",
-"t:gs_done":"OK",
-"t:cg_pieces_to_go":"pièces restantes",
-"t:cg_at_target":"{n} sur {m} à l'objectif",
-"t:cg_slots_hint":"Couleur du bord = palier (rouge Légendaire, or Mythique). Badge en haut à gauche = maintenant, bleu = objectif. Touchez une pièce pour la changer.",
-"t:cg_set_bonus":"Bonus d'ensemble",
-"t:bud_not_open":"Inclut des niveaux pas encore ouverts dans votre État ({what})",
-"t:sa_lock_hint_cap":"\"Max\" et \"Tout au max\" s'arrêtent avant pour l'instant (selon l'âge de votre État). Vous pouvez quand même le choisir comme objectif."
+"t:set_info":"À quoi servent ces réglages"
 }
