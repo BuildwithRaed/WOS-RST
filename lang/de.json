@@ -1825,5 +1825,19 @@
 "t:rm_goal_cost":"seine Pakete {v}",
 "t:rm_goal_nopacks":"Nichts zu kaufen: Was du hast, reicht schon.",
 "nav.p:roadmap":"Fahrplan",
-"t:set_info":"Was diese Einstellungen tun"
+"t:set_info":"Was diese Einstellungen tun",
+"t:pet_adv_short":"Fortg.",
+"t:pet_done":"Fertig · nichts nötig",
+"t:pet_count_tip":"Angehakt: Dieses Haustier zählt in den Summen, der Übersicht und den Budgets.",
+"t:charm_to_go":"Noch {n}",
+"t:charm_tiles_hint":"Grüner Balken = jetzt, blau = was das Ziel hinzufügt. Tippe auf ein Amulett, um es zu ändern.",
+"t:charm_needs_this":"Bedarf für dieses Amulett",
+"t:gs_nothing":"Nichts nötig",
+"t:gs_done":"Fertig",
+"t:cg_pieces_to_go":"Teile offen",
+"t:cg_at_target":"{n} von {m} am Ziel",
+"t:cg_slots_hint":"Randfarbe = Stufe (rot Legendär, gold Mythisch). Abzeichen oben links = jetzt, blau = Ziel. Tippe auf ein Teil, um es zu ändern.",
+"t:cg_set_bonus":"Set-Bonus",
+"t:bud_not_open":"Enthält Stufen, die in deinem Staat noch nicht offen sind ({what})",
+"t:sa_lock_hint_cap":"\"Max\" und \"Alles maximieren\" halten vorerst davor an (wegen deines Staatsalters). Als Ziel kannst du es trotzdem wählen."
 }

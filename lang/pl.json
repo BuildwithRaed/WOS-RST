@@ -1825,5 +1825,19 @@
 "t:rm_goal_cost":"jego paczki {v}",
 "t:rm_goal_nopacks":"Nic do kupienia: to, co masz, już wystarcza.",
 "nav.p:roadmap":"Plan działania",
-"t:set_info":"Do czego służą te ustawienia"
+"t:set_info":"Do czego służą te ustawienia",
+"t:pet_adv_short":"Zaaw.",
+"t:pet_done":"Gotowe · nic nie trzeba",
+"t:pet_count_tip":"Zaznaczone: ten zwierzak liczy się do sum, Panelu i Budżetów.",
+"t:charm_to_go":"Zostało {n}",
+"t:charm_tiles_hint":"Zielony pasek = teraz, niebieski = to, co dodaje cel. Dotknij talizmanu, aby go zmienić.",
+"t:charm_needs_this":"Potrzebne dla tego talizmanu",
+"t:gs_nothing":"Nic nie trzeba",
+"t:gs_done":"Gotowe",
+"t:cg_pieces_to_go":"części do celu",
+"t:cg_at_target":"{n} z {m} na celu",
+"t:cg_slots_hint":"Kolor ramki = poziom (czerwony Legendarny, złoty Mityczny). Plakietka w lewym górnym rogu = teraz, niebieska = cel. Dotknij części, aby ją zmienić.",
+"t:cg_set_bonus":"Bonus zestawu",
+"t:bud_not_open":"Zawiera poziomy jeszcze nieotwarte w twoim stanie ({what})",
+"t:sa_lock_hint_cap":"\"Maks.\" i \"Maks. wszystko\" na razie zatrzymują się przed tym (z wieku stanu). Nadal możesz wybrać to jako cel."
 }
