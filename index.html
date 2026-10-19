@@ -1705,14 +1705,14 @@ input,select,textarea{
   .plx-stat-tabs button{ font-size:12.5px; flex:1 0 auto; white-space:nowrap; padding:7px 10px; }
   /* Pet / expert picker strip */
   .plx-pick{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 8px; margin-top:12px; margin-bottom:6px; scrollbar-width:thin; }
-  .plx-pick button{ flex:0 0 auto; width:76px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
-  .plx-pick button img{ width:40px; height:40px; object-fit:cover; border-radius:8px; }
+  .plx-pick button{ flex:0 0 auto; width:62px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 4px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--muted); font:inherit; font-size:10.5px; cursor:pointer; }
+  .plx-pick button img{ width:48px; height:48px; object-fit:cover; border-radius:8px; }
   .plx-pick button > span:last-child{ width:100%; text-align:center; line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
-  .plx-pick-ph{ width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
+  .plx-pick-ph{ width:48px; height:48px; border-radius:50%; display:grid; place-items:center; font-size:17px; font-weight:800; color:var(--tc); background:rgba(255,255,255,.05); border:2px solid var(--tc); }
   .plx-pick button.on{ border-color:var(--tc); color:var(--frost); background:rgba(255,255,255,.07); box-shadow:inset 0 -2px 0 var(--tc); }
   .plx-pick button.dim{ opacity:.45; }
   @media (min-width: 901px){ .plx-pick{ flex-wrap:wrap; overflow:visible; } }
-  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:66px; padding:6px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:34px; height:34px; } }
+  @media (max-width: 760px){ .plx-head h2{ font-size:19px; } .plx-pick button{ width:56px; padding:5px 2px; font-size:10px; } .plx-pick button img, .plx-pick-ph{ width:44px; height:44px; } }
   .t12x-tabs{ display:flex; flex:1 1 320px; max-width:560px; margin-inline-start:auto; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:4px; }
   .t12x-tabs button{ flex:1; border:0; background:none; color:var(--muted); font:inherit; font-weight:600; font-size:13px; padding:7px 4px; border-radius:10px; cursor:pointer; }
   .t12x-tabs button small{ display:block; font-weight:400; font-size:10.5px; }
@@ -23618,9 +23618,8 @@ function expertSigilTilesHtml(inv, experts) {
 // items: [{ label, img, color, dim }]
 function renderPickStrip(containerEl, items, activeIndex, onPick) {
   containerEl.className = "plx-pick";
-  containerEl.innerHTML = items.map((it, i) => `<button type="button" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" data-pick="${i}" style="--tc:${it.color || "var(--ice)"};" title="${esc(it.label)}">
-      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="plx-pick-ph">${esc(String(it.label).trim().charAt(0))}</span>`}
-      <span>${esc(it.label)}</span></button>`).join("");
+  containerEl.innerHTML = items.map((it, i) => `<button type="button" class="${i === activeIndex ? "on" : ""}${it.dim ? " dim" : ""}" data-pick="${i}" style="--tc:${it.color || "var(--ice)"};" title="${esc(it.label)}" aria-label="${esc(it.label)}">
+      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy" />` : `<span class="plx-pick-ph">${esc(String(it.label).trim().charAt(0))}</span>`}</button>`).join(""); // pictures only: the card below shows the name (owner, 19 Oct 2026)
   containerEl.onclick = (ev) => {
     const b = ev.target.closest("[data-pick]");
     if (b) onPick(Number(b.dataset.pick));
