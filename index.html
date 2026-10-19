@@ -1120,6 +1120,13 @@ input,select,textarea{
   .set-info{ width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--muted); font:italic 700 11px/1 Georgia, serif; padding:0; cursor:pointer; text-transform:none; }
   .t12x-settings.info .set-info{ border-color:var(--ice); color:var(--ice); }
   .plx-stats-top{ margin-top:12px; }
+  /* One troop switch per page, pinned under the top menu while scrolling (owner, 19 Oct 2026). */
+  .plx-tsw{ position:sticky; top:var(--navh, 56px); z-index:15; margin:12px 0; padding:8px; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:0 6px 18px rgba(0,0,0,.35); }
+  .plx-tsw-seg{ display:flex; gap:4px; padding:3px; border-radius:11px; background:rgba(255,255,255,.04); }
+  .plx-tsw-seg button{ flex:1; min-height:34px; border:0; border-radius:9px; background:none; color:var(--muted); font-weight:700; font-size:13px; cursor:pointer; }
+  .plx-tsw-seg button.on{ background:var(--tc, var(--ice)); color:#0f141b; }
+  .plx-tsw-stats:empty{ display:none; }
+  .plx-tsw-stats{ margin-top:8px; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
@@ -23188,6 +23195,36 @@ function plxStatBoxesHtml(list, oneRow) {
 // groups: [{ key, label, color, html }]. The chosen tab is kept for the visit.
 const PLX_STAT_TAB = {};
 const PLX_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+// One Infantry | Lancer | Marksman switch per page (owner, 19 Oct 2026): it
+// drives both the page's Troops Stats and its cards, and stays pinned under the
+// top menu (position: sticky inside .t12x-main, so put it straight in the main
+// column, before the cards). The page fills .plx-tsw-stats with the chosen
+// troop's stat boxes (plxStatBoxesHtml(…, true)) and redraws its cards in onChange.
+const PLX_TROOPS = ["Infantry", "Lancer", "Marksman"];
+const PLX_TROOP = {}; // page key -> chosen troop, kept for the visit
+function plxTroopOf(key) { return PLX_TROOP[key] || PLX_TROOPS[0]; }
+function plxTroopSwitchHtml(key, statsHtml) {
+  const tr = plxTroopOf(key);
+  return `<div class="plx-tsw" data-tsw="${esc(key)}"><div class="plx-tsw-seg" role="tablist">${PLX_TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === tr}" data-tswtroop="${x}" class="${x === tr ? "on" : ""}" style="--tc:${PLX_TROOP_COLORS[x]};">${esc(troopDisplayName(x))}</button>`).join("")}</div><div class="plx-tsw-stats">${statsHtml || ""}</div></div>`;
+}
+function wirePlxTroopSwitch(root, key, onChange) {
+  const el = root && root.querySelector(`[data-tsw="${key}"]`);
+  if (!el) return;
+  el.onclick = (e) => {
+    const b = e.target.closest("[data-tswtroop]");
+    if (!b || b.dataset.tswtroop === plxTroopOf(key)) return;
+    PLX_TROOP[key] = b.dataset.tswtroop;
+    el.querySelectorAll("[data-tswtroop]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", String(x === b)); });
+    onChange(PLX_TROOP[key]);
+  };
+}
+// The pinned switch sits right under the top menu, whatever its height.
+(() => {
+  const setNavH = () => { const n = document.querySelector("nav.topnav"); if (n) document.documentElement.style.setProperty("--navh", `${n.offsetHeight}px`); };
+  window.addEventListener("resize", setNavH);
+  document.addEventListener("DOMContentLoaded", setNavH);
+  setTimeout(setNavH, 0);
+})();
 function plxStatTabsHtml(id, groups) {
   const active = groups.some((g) => g.key === PLX_STAT_TAB[id]) ? PLX_STAT_TAB[id] : groups[0].key;
   return `<div class="t12x-tabs plx-stat-tabs" data-stattabs="${esc(id)}">${groups.map((g) => `<button type="button" class="${g.key === active ? "on" : ""}" data-stattab="${esc(g.key)}" style="--tc:${g.color || "var(--ice)"};">${esc(g.label)}</button>`).join("")}</div>
