@@ -712,6 +712,8 @@
   .pur-sum-tot{ margin-inline-start:auto; font-size:14px; font-weight:700; }
   .pur-bh{ display:flex; align-items:baseline; gap:6px; font-size:12px; padding:8px 2px 4px; color:var(--ice); }
   .pur-bh.late{ color:#e0b25a; }
+  .pur-bh.wait{ color:var(--ice); }
+  .pur-bh.wait .meta{ font-size:11px; }
   .pur-bh .meta{ font-size:11px; }
   .pur-bh-t{ margin-inline-start:auto; color:var(--frost); font-size:12.5px; }
   details.pur-mon > summary{ cursor:pointer; list-style:none; }
@@ -3411,7 +3413,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 33; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 34; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4588,6 +4590,8 @@ const T = {
   pur_wk_next: { en: "Next week" },
   pur_wk_n: { en: "Week {n}" },
   pur_wk_past: { en: "Date passed" },
+  pur_wk_waiting: { en: "Waiting for the pack to appear" },
+  pur_wait_note: { en: "still counted" },
   pur_1_pack: { en: "1 pack" },
   pur_wk_target: { en: "Target week" },
   pur_wk_after: { en: "After target" },
@@ -4966,7 +4970,16 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 (() => {
   const keep = () => {
     try {
-      sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY) }));
+      // Packs: the open editors and the pack at the top of the screen come back
+      // too (owner, 19 Oct 2026: after switching to the game and back the open
+      // pack was closed and the page sat at the top).
+      let anchor = null;
+      if (TAB === "packs") {
+        const card = [...document.querySelectorAll("[data-packtable][data-pkid]")].find((el) => el.getBoundingClientRect().bottom > 60);
+        if (card) anchor = { id: card.dataset.pkid, off: Math.round(card.getBoundingClientRect().top) };
+        if (typeof PACKS_OPEN !== "undefined") sessionStorage.setItem("packs_open", JSON.stringify([...PACKS_OPEN]));
+      }
+      sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY), anchor }));
       if (typeof PUR_FORM !== "undefined") sessionStorage.setItem("pur_form", JSON.stringify(PUR_FORM));
     } catch (e) { /* blocked */ }
   };
@@ -4982,6 +4995,11 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
   window.addEventListener("wheel", stop, { once: true, passive: true });
   const iv = setInterval(() => {
     if (moved || TAB !== sp.tab || ++tries > 40) { clearInterval(iv); return; }
+    if (sp.anchor) {
+      const card = [...document.querySelectorAll("[data-packtable][data-pkid]")].find((el) => el.dataset.pkid === sp.anchor.id);
+      if (card) { clearInterval(iv); window.scrollTo(0, window.scrollY + card.getBoundingClientRect().top - sp.anchor.off); }
+      return;
+    }
     if (document.documentElement.scrollHeight >= sp.y + innerHeight * 0.6) { clearInterval(iv); window.scrollTo(0, sp.y); }
   }, 250);
 })();
@@ -7405,8 +7423,20 @@ function packPurchasePrice(tb, row, from) {
 // Planned packs (today or later) count as coming items; a pack bought within
 // its current reset (or a one-time pack) uses up that buy. Bought items are
 // already in the Backpack, so only their limit is counted.
+// A triggered pack (e.g. Dawn Mark Pack at an expert level) has no fixed day:
+// a "will buy" for it whose date has passed is still waiting for the pack to
+// appear, so it keeps counting (owner, 19 Oct 2026). Not once the expert is
+// past that level (the pack is gone).
+function purTriggerWaiting(p) {
+  if (!p || p.status !== "planned" || !packValidDay(p.date) || p.date >= packDayKey(packStartOfToday())) return false;
+  const trig = packTriggerOf(packLinkFor(p.table));
+  return !!trig && packTriggerRowStatus(trig, Number(p.row) || 0).state !== "done";
+}
+function purPlannedCounts(p) {
+  return p.status === "planned" && packValidDay(p.date) && (p.date >= packDayKey(packStartOfToday()) || purTriggerWaiting(p));
+}
 function packPurchaseUsesLimit(p, link) {
-  if (p.status !== "bought") return packValidDay(p.date) && p.date >= packDayKey(packStartOfToday());
+  if (p.status !== "bought") return purPlannedCounts(p);
   if (link.reset === "once") return true;
   if (typeof link.reset === "number" && link.reset > 0) {
     const d = packParseDay(p.date);
@@ -7488,9 +7518,8 @@ function packPurchaseUse(groups) {
 function packActiveCardSupply(calcKey, tables) {
   const out = {}, used = [];
   // Packs you plan to buy (My Purchases): their items count as coming.
-  const today = packDayKey(packStartOfToday());
   (PACK_PURCHASES.list || []).forEach((p) => {
-    if (p.status !== "planned" || !(packValidDay(p.date) && p.date >= today)) return;
+    if (!purPlannedCounts(p)) return;
     const tb = (tables || []).find((x) => String(x.id) === String(p.table));
     if (!tb || !packTableServesPage(tb, calcKey)) return;
     const n = Math.max(1, Math.floor(Number(p.count) || 1));
@@ -7822,7 +7851,7 @@ async function renderPurchasesPage() {
     const open = PUR_OPEN.has(id), rowOpen = PUR_OPEN.has("o|" + id);
     const dates = g.items.map((p) => p.date);
     const when = dates.length === 1 ? shortDay(dates[0]) : `${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
-    const late = kind === "c" && g.items.some((p) => p.date < today);
+    const late = kind === "c" && g.items.some((p) => p.date < today && !purTriggerWaiting(p));
     const gives = purchaseGives(g.first, tb), ic = mainIcon(gives);
     const name = purShortName((g.first.choice && g.first.choice.name) || tb.title || "");
     // Rows = design B (owner, 19 Oct 2026): name on up to 2 lines with its "×n"
@@ -7843,7 +7872,7 @@ async function renderPurchasesPage() {
         <div class="bud-mats pur-chips">${chipsFor(gives, n, 5)}</div>
         ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
         <div class="pur-item-f" style="justify-content:flex-end;"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button></div>
-        <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
+        <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" && !purTriggerWaiting(p) ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
       </div>
     </div>`;
   };
@@ -7853,9 +7882,9 @@ async function renderPurchasesPage() {
     const tot = esc(packFmtLocal(sumCost(arr), sample, false));
     if (kind === "c") {
       const w = Number(bk.slice(1));
-      const name = w < 0 ? t("pur_wk_past") : w === 0 ? t("pur_wk_this") : w === 1 ? t("pur_wk_next") : t("pur_wk_n").replace("{n}", w + 1);
+      const name = w === -2 ? t("pur_wk_waiting") : w < 0 ? t("pur_wk_past") : w === 0 ? t("pur_wk_this") : w === 1 ? t("pur_wk_next") : t("pur_wk_n").replace("{n}", w + 1);
       const range = w < 0 ? "" : `${shortDay(packDayKey(w === 0 ? packStartOfToday() : wkStart(w)))} – ${shortDay(packDayKey(new Date(wkStart(w).getTime() + 6 * 86400000)))}`;
-      return `<div class="pur-bh${w < 0 ? " late" : ""}"><b>${esc(name)}</b> <span class="meta">${esc(range)}</span><b class="pur-bh-t">${tot}</b></div>`;
+      return `<div class="pur-bh${w === -2 ? " wait" : w < 0 ? " late" : ""}"><b>${esc(name)}</b>${w === -2 ? ` <span class="meta">${esc(t("pur_wait_note"))}</span>` : ""} <span class="meta">${esc(range)}</span><b class="pur-bh-t">${tot}</b></div>`;
     }
     const d = packParseDay(bk.slice(1) + "-01");
     let name = bk.slice(1);
@@ -7865,7 +7894,7 @@ async function renderPurchasesPage() {
   const listHtml = (kind, arr) => {
     const bks = [];
     const byB = new Map();
-    arr.forEach((p) => { const bk = bucketOf(kind, p.date); if (!byB.has(bk)) { byB.set(bk, []); bks.push(bk); } byB.get(bk).push(p); });
+    arr.forEach((p) => { const bk = kind === "c" && purTriggerWaiting(p) ? "w-2" : bucketOf(kind, p.date); if (!byB.has(bk)) { byB.set(bk, []); bks.push(bk); } byB.get(bk).push(p); });
     if (kind === "c") bks.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
     return `<div class="pur-scroll" data-purscroll="${kind}">${bks.map((bk, i) => {
       const part = byB.get(bk), rows = groupBy(part).map((g) => groupHtml(g, kind, bk)).join("");
@@ -9056,7 +9085,7 @@ async function renderPackCalendarPage() {
 
 // Packs B: tables open for editing (kept for the visit). Closed tables show a
 // small summary card only.
-const PACKS_OPEN = new Set();
+const PACKS_OPEN = new Set((() => { try { const v = JSON.parse(sessionStorage.getItem("packs_open") || "[]"); sessionStorage.removeItem("packs_open"); return Array.isArray(v) ? v.map(String) : []; } catch (e) { return []; } })());
 // Close any open pack ⋯ menu that a tap landed outside of.
 function pkCloseMenus(target) {
   document.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(target)) m.open = false; });
@@ -17529,7 +17558,7 @@ async function renderBudgetsPage(opts = {}) {
         const ticked = pagesRaw.filter((pg) => included(pg.calcKey)), noPlan = ticked.filter((pg) => pg.missing).length;
         return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : "";
       })()}
-      ${(() => { const n = (PACK_PURCHASES.list || []).filter((p) => p.status !== "bought" && packValidDay(p.date) && p.date >= packDayKey(packStartOfToday())).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
+      ${(() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
       ${viewCardsHtml}
       ${combinedHtml}
       ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><button type="button" class="btn small ghost bud-mat-btn" data-budmats aria-expanded="${BUDGET_MATS_OPEN}">&#128230; ${esc(t("budgets_materials_total"))} (${Object.keys(grandMats).length}) <span class="bud-mat-arrow">${BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;"}</span></button><div class="bud-mats"${BUDGET_MATS_OPEN ? "" : " hidden"} style="margin-top:8px;">${Object.keys(grandMats).map((n) => {
