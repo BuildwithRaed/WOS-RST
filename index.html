@@ -4970,7 +4970,16 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 (() => {
   const keep = () => {
     try {
-      sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY) }));
+      // Packs: the open editors and the pack at the top of the screen come back
+      // too (owner, 19 Oct 2026: after switching to the game and back the open
+      // pack was closed and the page sat at the top).
+      let anchor = null;
+      if (TAB === "packs") {
+        const card = [...document.querySelectorAll("[data-packtable][data-pkid]")].find((el) => el.getBoundingClientRect().bottom > 60);
+        if (card) anchor = { id: card.dataset.pkid, off: Math.round(card.getBoundingClientRect().top) };
+        if (typeof PACKS_OPEN !== "undefined") sessionStorage.setItem("packs_open", JSON.stringify([...PACKS_OPEN]));
+      }
+      sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY), anchor }));
       if (typeof PUR_FORM !== "undefined") sessionStorage.setItem("pur_form", JSON.stringify(PUR_FORM));
     } catch (e) { /* blocked */ }
   };
@@ -4986,6 +4995,11 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
   window.addEventListener("wheel", stop, { once: true, passive: true });
   const iv = setInterval(() => {
     if (moved || TAB !== sp.tab || ++tries > 40) { clearInterval(iv); return; }
+    if (sp.anchor) {
+      const card = [...document.querySelectorAll("[data-packtable][data-pkid]")].find((el) => el.dataset.pkid === sp.anchor.id);
+      if (card) { clearInterval(iv); window.scrollTo(0, window.scrollY + card.getBoundingClientRect().top - sp.anchor.off); }
+      return;
+    }
     if (document.documentElement.scrollHeight >= sp.y + innerHeight * 0.6) { clearInterval(iv); window.scrollTo(0, sp.y); }
   }, 250);
 })();
@@ -9071,7 +9085,7 @@ async function renderPackCalendarPage() {
 
 // Packs B: tables open for editing (kept for the visit). Closed tables show a
 // small summary card only.
-const PACKS_OPEN = new Set();
+const PACKS_OPEN = new Set((() => { try { const v = JSON.parse(sessionStorage.getItem("packs_open") || "[]"); sessionStorage.removeItem("packs_open"); return Array.isArray(v) ? v.map(String) : []; } catch (e) { return []; } })());
 // Close any open pack ⋯ menu that a tap landed outside of.
 function pkCloseMenus(target) {
   document.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(target)) m.open = false; });
