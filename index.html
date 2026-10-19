@@ -7490,7 +7490,7 @@ function packPurchaseUsesLimit(p, link) {
 }
 // The day the running copy of a repeating pack came out (null when it
 // can't be told, e.g. calendar-month packs).
-// Bought packs stay in Bought while that copy of the pack is still out
+// Bought packs stay in Bought while that copy of the pack is on sale
 // (owner, 19 Oct 2026): { until: "yyyy-mm-dd" (last day), once: one-time
 // packs that stay }. New-heroes packs end when the next Gen's packs come, or
 // when that hero is already maxed; triggered packs once the expert is past
@@ -7506,8 +7506,16 @@ function purBoughtUntil(p) {
     const rows = (typeof HERO_PLAN_LAST !== "undefined" && HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
     const r = ng ? rows.find((x) => x.hero && String(x.hero.id) === ng[2]) : null;
     if (r && (ng[1] === "s" ? r.step >= 30 : !r.hasWidget || r.wLevel >= widgetMaxLevel())) return { until: minus1(packStartOfToday()), maxed: true };
+    // On sale for its own weeks after each new-heroes day (Training: weeks 1–4,
+    // Forge: weeks 5–8); it leaves when those end.
     const base = newGenBaseDay();
-    const next = base ? newGenStarts(base, 12).find((x) => x > d) : null;
+    if (!base) return { until: null, once: true };
+    const off = (ng ? (ng[1] === "w" ? NG_HERO_DAYS : 0) : packNewGenOffset(p.table)) * DAY;
+    const win = Number(l.window) > 0 ? Math.round(Number(l.window)) : 28;
+    const starts = newGenStarts(base, 12).map((g) => new Date(g.getTime() + off));
+    const at = starts.filter((x) => x <= d).pop();
+    if (at && d < new Date(at.getTime() + win * DAY)) return { until: packDayKey(new Date(at.getTime() + (win - 1) * DAY)) };
+    const next = starts.find((x) => x > d);
     return next ? { until: minus1(next) } : { until: null, once: true };
   }
   const r = l.reset;
@@ -7518,7 +7526,10 @@ function purBoughtUntil(p) {
   let start;
   if (anchor) start = new Date(anchor.getTime() + Math.floor(Math.round((d - anchor) / DAY) / r) * r * DAY);
   else start = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * DAY);
-  return { until: packDayKey(new Date(start.getTime() + (r - 1) * DAY)) };
+  // The copy ends when the pack leaves the shop: after its "Lasts" days when
+  // set (Hall of Heroes Sun–Tue), else when the next copy comes (owner, 19 Oct 2026).
+  const win = Number(l.window) > 0 ? Math.min(r, Math.round(Number(l.window))) : r;
+  return { until: packDayKey(new Date(start.getTime() + (win - 1) * DAY)) };
 }
 function packCurrentCycleStart(reset, resetDay) {
   if (typeof reset !== "number" || !(reset > 0) || reset === 30) return null;
