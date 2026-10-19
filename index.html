@@ -728,6 +728,24 @@
   .pur-rm-cancel{ width:100%; }
   .pur-until{ display:block; margin-top:2px; font-size:12px; color:var(--ice); }
   .pur-until.soon{ color:#e0b25a; }
+  /* How many (owner, 19 Oct 2026): − n + on Will buy dates, Coming rows and the Mark as bought sheet. */
+  .pur-cnt{ display:flex; align-items:center; gap:8px; margin:4px 0 8px; font-size:13px; }
+  .pur-cnt-l{ flex:1; min-width:0; }
+  .pur-cnt-l small{ display:block; font-size:11px; color:var(--muted); }
+  .pur-step{ display:inline-flex; align-items:stretch; border:1px solid var(--line); border-radius:10px; overflow:hidden; flex:0 0 auto; }
+  .pur-step button{ width:36px; min-height:34px; background:none; border:0; color:var(--ice); font-size:18px; cursor:pointer; }
+  .pur-step button:disabled{ opacity:.35; cursor:default; }
+  .pur-step b{ min-width:36px; padding:0 4px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.25); font-size:15px; }
+  .pur-cnt-max{ flex:0 0 auto; padding:6px 9px; border-radius:9px; border:1px solid var(--ice-dim); background:none; color:var(--ice); font-size:12px; cursor:pointer; }
+  .pur-cnt-max:disabled{ opacity:.4; cursor:default; }
+  #purSugModal .pur-cnt{ margin:-2px 0 6px; padding:0 8px 8px; flex-wrap:wrap; row-gap:4px; }
+  .pur-cnt-note{ flex:1 0 100%; font-size:11px; color:var(--muted); }
+  .pur-bs-row{ display:flex; align-items:center; gap:10px; margin:10px 0; font-size:14px; }
+  .pur-bs-row > span:first-child{ flex:1; }
+  .pur-bs-row input[type=date]{ max-width:170px; }
+  .pur-bs-note{ font-size:12px; color:var(--muted); margin:4px 0 12px; }
+  .pur-bs-foot{ display:flex; gap:8px; }
+  .pur-bs-foot .btn:first-child{ flex:1; }
   .pur-until.once{ color:var(--good); }
   .pur-bh.wait .meta{ font-size:11px; }
   .pur-bh .meta{ font-size:11px; }
@@ -3432,7 +3450,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 35; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 36; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4780,6 +4798,15 @@ const T = {
   pur_none_coming: { en: "No packs planned yet." },
   pur_none_bought: { en: "No bought packs yet." },
   pur_mark_bought: { en: "Bought" },
+  pur_cnt_will: { en: "How many will you buy?" },
+  pur_cnt_plan: { en: "Plan: {n} · fewer is fine, Budgets plans the rest again" },
+  pur_cnt_max: { en: "Max {n}" },
+  pur_bs_title: { en: "Mark as bought" },
+  pur_bs_planned: { en: "Planned: {n} · {price} each" },
+  pur_bs_how: { en: "How many did you buy?" },
+  pur_bs_on: { en: "Bought on" },
+  pur_bs_note: { en: "Bought fewer? The rest is dropped and Budgets plans it again." },
+  pur_bs_btn: { en: "Bought {n} · {price}" },
   pur_mark_planned: { en: "Not bought" },
   pur_remove: { en: "Remove" },
   pur_for_none: { en: "no page" },
@@ -7950,6 +7977,7 @@ async function renderPurchasesPage() {
     const when = left <= 0 ? t("pur_until_today") : left === 1 ? t("pur_until_tomorrow") : t("pur_until_days").replace("{n}", left);
     return `<span class="pur-until${left <= 2 ? " soon" : ""}">${esc(t("pur_until").replace("{date}", shortDay(last)))} · ${esc(when)}</span>`;
   };
+  const cntNow = (p) => Math.max(1, Math.floor(Number(p.count) || 1));
   const groupHtml = (g, kind, bk) => {
     const tb = g.tb, link = packLinkFor(tb.id);
     const n = g.items.reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
@@ -7981,7 +8009,7 @@ async function renderPurchasesPage() {
         <div class="bud-mats pur-chips">${chipsFor(gives, n, 5)}</div>
         ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
         <div class="pur-item-f" style="justify-content:flex-end;"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button></div>
-        <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" && !purTriggerWaiting(p) ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
+        <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" && !purTriggerWaiting(p) ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + cntNow(p))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
       </div>
     </div>`;
   };
@@ -8653,10 +8681,14 @@ async function renderPurchasesPage() {
       };
       const dayMenu = (d) => (isPick && openDay === d ? `<div class="pur-dmenu">${M.steps.map((st, k) => `<label><input type="checkbox" data-pmdt="${d}|${k}" ${selOf(d)[k] ? "checked" : ""} /> ${esc(fmtL(local(st.price)))}<span class="meta">${tset[k] ? esc(pickText(k)) : ""}</span></label>`).join("")}<div class="meta" style="font-size:10.5px;">${esc(t("pur_ms_items_above"))}</div></div>` : "");
       const daysOn = keep && keep.days ? keep.days : null;
+      // How many on each date (owner, 19 Oct 2026): 1 … the plan's count.
+      const cnt = keep && keep.cnt ? keep.cnt : {};
+      const cntOf = (d) => (cnt[d] != null ? cnt[d] : s0[d].count);
+      const cntHtml = (d) => (s0[d].count > 1 ? `<div class="pur-cnt" data-pmcnt="${d}"><span class="pur-cnt-l">${esc(t("pur_cnt_will"))}</span>${purStepHtml("pmstep", cntOf(d), s0[d].count)}<button type="button" class="pur-cnt-max" data-pmcmax${cntOf(d) >= s0[d].count ? " disabled" : ""}>${esc(t("pur_cnt_max").replace("{n}", s0[d].count))}</button><small class="pur-cnt-note">${esc(t("pur_cnt_plan").replace("{n}", s0[d].count))}</small></div>` : "");
       modal.innerHTML = `<div class="modal-box pur-modal">
         <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2><button type="button" class="rfa-x" data-pmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
-        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta">${bidiNum("× " + x.count)}</span>`}<b>${esc(fmtN(x.count, selOf(k)))}</b></label>${dayMenu(k)}`).join("")}</div>
+        <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(fmtN(cntOf(k), selOf(k)))}</b></label>${cntHtml(k)}${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
       </div>`;
       modal.style.display = "flex";
@@ -8664,13 +8696,29 @@ async function renderPurchasesPage() {
       const boxes = [...modal.querySelectorAll("[data-pmday]")];
       const pickedIdx = () => boxes.filter((c) => c.checked).map((c) => Number(c.dataset.pmday));
       const sync = () => {
-        const ix = pickedIdx(), tot = ix.reduce((a, d) => a + (M ? localOf(selOf(d)) : r.price) * s0[d].count, 0);
+        const ix = pickedIdx(), tot = ix.reduce((a, d) => a + (M ? localOf(selOf(d)) : r.price) * cntOf(d), 0);
         const empty = ix.some((d) => (M ? !partsOf(selOf(d)).length : false));
         modal.querySelector("[data-pmsum]").innerHTML = `<b>${esc(M ? fmtL(tot) : packFmtMoney(tot, r.currency))}</b> <span class="meta">${ordered && !differ ? esc(nSteps(kk)) + " · " : ""}${esc(t("pur_sug_n_of").replace("{n}", ix.length).replace("{m}", s0.length))}</span>`;
         modal.querySelector("[data-pmadd]").disabled = !ix.length || empty;
         const all = modal.querySelector("[data-pmall]"); if (all) all.textContent = ix.length === s0.length ? t("pur_sug_pick_none") : t("pur_sug_pick_all");
       };
       boxes.forEach((c) => c.addEventListener("change", sync));
+      // − / + / Max on a date: the number, its price and the total change in place.
+      modal.querySelectorAll("[data-pmcnt]").forEach((row) => {
+        const d = Number(row.dataset.pmcnt), max = s0[d].count, lab = boxes[d] && boxes[d].closest("label");
+        const set = (n) => {
+          cnt[d] = Math.max(1, Math.min(max, n));
+          row.querySelector("[data-pmstep-n]").textContent = cnt[d];
+          row.querySelector('[data-pmstep="-1"]').disabled = cnt[d] <= 1;
+          row.querySelector('[data-pmstep="1"]').disabled = cnt[d] >= max;
+          row.querySelector("[data-pmcmax]").disabled = cnt[d] >= max;
+          if (lab) { const x = lab.querySelector("[data-pmx]"); if (x) x.textContent = bidiNum("× " + cnt[d]); lab.querySelector("[data-pmpr]").textContent = fmtN(cnt[d], selOf(d)); }
+          if (boxes[d] && !boxes[d].checked) boxes[d].checked = true;
+          sync();
+        };
+        row.querySelectorAll("[data-pmstep]").forEach((b) => b.addEventListener("click", () => set(cntOf(d) + Number(b.dataset.pmstep))));
+        row.querySelector("[data-pmcmax]").addEventListener("click", () => set(max));
+      });
       const allBtn = modal.querySelector("[data-pmall]");
       if (allBtn) allBtn.addEventListener("click", () => { const on = pickedIdx().length !== s0.length; boxes.forEach((c) => { c.checked = on; }); sync(); });
       sync();
@@ -8681,18 +8729,18 @@ async function renderPurchasesPage() {
         // steps: an option pack saves its steps as the choice; a plain ladder
         // saves the last step bought (from where its run starts).
         const adds = [];
-        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), count: s0[d].count, date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), count: cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
         // The plan's own pack, step and choice on some of its dates: the rest stays as planned.
         const ri = rows.indexOf(r), base = r.row != null ? r.row : 0;
-        if (ri >= 0 && ri < nFollow && ix.every((d) => { const ps = partsOf(selOf(d)); return ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })));
+        if (ri >= 0 && ri < nFollow && ix.every((d) => { const ps = partsOf(selOf(d)); return cntOf(d) === s0[d].count && ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })));
         close();
         toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
         redraw();
       });
-      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, days: new Set(pickedIdx()), ...patch });
+      const state = (patch) => ({ kk, tset, pick, pp, pp0, dsel, openDay, openSlot, cnt, days: new Set(pickedIdx()), ...patch });
       modal.querySelectorAll("[data-pmver]").forEach((v) => v.addEventListener("click", () => openVer(Number(v.dataset.pmver))));
       // Set all dates. Bought in order: ticking a step ticks the ones before
       // it; unticking one unticks the ones after it. Any price: each on its own.
@@ -8884,6 +8932,45 @@ async function renderPurchasesPage() {
     };
     m.style.display = "flex";
   };
+  // ✓ on a "will buy" of several (owner picked 3, 19 Oct 2026): how many did you
+  // really buy, and when? Fewer: the rest is dropped and Budgets plans it again.
+  const openBoughtSheet = (p0) => {
+    const tb = byId.get(String(p0.table));
+    if (!tb) return;
+    const cur = packLinkFor(tb.id).currency, each = purchasePrice(p0, tb), max = cntNow(p0);
+    const name = purShortName((p0.choice && p0.choice.name) || tb.title || ""), ic = mainIcon(purchaseGives(p0, tb));
+    let n = max;
+    let m = document.getElementById("purBsSheet");
+    if (!m) { m = document.createElement("div"); m.id = "purBsSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
+    const btnText = () => t("pur_bs_btn").replace("{n}", n).replace("{price}", packFmtMoney(each * n, cur));
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box pur-rm" role="dialog" aria-modal="true">
+      <div class="gs-head"><b style="flex:1;">${esc(t("pur_bs_title"))}</b><button type="button" class="rfa-x" data-bsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="pur-rm-pk"><span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" />` : `<i>${esc(name.charAt(0))}</i>`}</span><span><b>${esc(name)}</b><span class="meta">${esc(t("pur_bs_planned").replace("{n}", max).replace("{price}", packFmtMoney(each, cur)))}</span></span></div>
+      <div class="pur-bs-row"><span>${esc(t("pur_bs_how"))}</span>${purStepHtml("bsstep", n, max)}</div>
+      <div class="pur-bs-row"><span>${esc(t("pur_bs_on"))}</span><input type="date" data-bsday value="${esc(p0.date > today ? today : p0.date)}" max="${esc(today)}" /></div>
+      <div class="pur-bs-note">${esc(t("pur_bs_note"))}</div>
+      <div class="pur-bs-foot"><button type="button" class="btn" data-bsok>${esc(btnText())}</button><button type="button" class="btn ghost" data-bsx>${esc(t("pur_rm_cancel"))}</button></div>
+    </div>`;
+    const close = () => { m.style.display = "none"; };
+    const sync = () => {
+      m.querySelector("[data-bsstep-n]").textContent = n;
+      m.querySelector('[data-bsstep="-1"]').disabled = n <= 1;
+      m.querySelector('[data-bsstep="1"]').disabled = n >= max;
+      m.querySelector("[data-bsok]").textContent = btnText();
+    };
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-bsx]")) { close(); return; }
+      const st = ev.target.closest("[data-bsstep]");
+      if (st) { n = Math.max(1, Math.min(max, n + Number(st.dataset.bsstep))); sync(); return; }
+      if (!ev.target.closest("[data-bsok]")) return;
+      const v = m.querySelector("[data-bsday]").value, day = packValidDay(v) && v <= today ? v : (p0.date > today ? today : p0.date);
+      PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => { if (p.id !== p0.id) return p; return { ...p, status: "bought", count: n, date: day }; });
+      close();
+      savePackPurchases();
+      redraw();
+    };
+    m.style.display = "flex";
+  };
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
     const id = box.dataset.purgrp, kind = id.slice(0, 1), rest = id.slice(2), bk = rest.slice(0, rest.indexOf("|")), gkey = rest.slice(rest.indexOf("|") + 1);
     const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought" && boughtShown(p)) && bucketFor(kind, p) === bk;
@@ -8906,7 +8993,7 @@ async function renderPurchasesPage() {
       e.currentTarget.innerHTML = `${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}`;
     });
     const gm = box.querySelector("[data-purgmove]");
-    if (gm) gm.addEventListener("click", () => { PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (inGroup(p) ? toBought(p) : p)); savePackPurchases(); redraw(); });
+    if (gm) gm.addEventListener("click", () => { const its = PACK_PURCHASES.list.filter(inGroup); if (its.length === 1 && cntNow(its[0]) > 1) { openBoughtSheet(its[0]); return; } PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (inGroup(p) ? toBought(p) : p)); savePackPurchases(); redraw(); });
     box.querySelector("[data-purgdel]").addEventListener("click", () => {
       if (kind === "b") { openBoughtRemove(PACK_PURCHASES.list.filter(inGroup)); return; }
       const n = PACK_PURCHASES.list.filter(inGroup).length;
@@ -8916,7 +9003,7 @@ async function renderPurchasesPage() {
     box.querySelectorAll("[data-purid]").forEach((row0) => {
       const id = row0.dataset.purid;
       const mv = row0.querySelector("[data-purmove]");
-      mv.addEventListener("click", () => { PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (p.id === id ? (mv.dataset.purmove === "bought" ? toBought(p) : { ...p, status: "planned" }) : p)); savePackPurchases(); redraw(); });
+      mv.addEventListener("click", () => { const p1 = PACK_PURCHASES.list.find((p) => p.id === id); if (mv.dataset.purmove === "bought" && p1 && cntNow(p1) > 1) { openBoughtSheet(p1); return; } PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (p.id === id ? (mv.dataset.purmove === "bought" ? toBought(p) : { ...p, status: "planned" }) : p)); savePackPurchases(); redraw(); });
       row0.querySelector("[data-purdel]").addEventListener("click", () => { PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => p.id !== id); savePackPurchases(); redraw(); });
     });
   });
@@ -13047,6 +13134,10 @@ const PACK_NEWGEN_GROUP = "New Gen Heroes";
 const PACK_HEROES_GROUP = "Heroes packs";
 // Packs whose own date is set on the Packs page (owner, 16 Oct 2026), not in My Purchases.
 const PACK_DATES_ON_PACKS_PAGE = ["Bazzar"];
+// − n + stepper (How many, owner 19 Oct 2026). `attr` names the buttons' data attribute.
+function purStepHtml(attr, n, max, min = 1) {
+  return `<span class="pur-step"><button type="button" data-${attr}="-1" aria-label="−"${n <= min ? " disabled" : ""}>&minus;</button><b data-${attr}-n>${n}</b><button type="button" data-${attr}="1" aria-label="+"${n >= max ? " disabled" : ""}>+</button></span>`;
+}
 function savePackPurchases() {
   PACK_PLAN_CACHE.clear();
   if (typeof budgetInvalidate === "function") budgetInvalidate();
