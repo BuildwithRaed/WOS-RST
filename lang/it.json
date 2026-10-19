@@ -1826,6 +1826,8 @@
 "t:rm_goal_nopacks":"Niente da comprare: ciò che hai basta già.",
 "nav.p:roadmap":"Tabella di marcia",
 "t:pur_wk_past":"Data passata",
+"t:pur_wk_waiting":"In attesa che appaia il pacchetto",
+"t:pur_wait_note":"ancora conteggiato",
 "t:pur_1_pack":"1 pacchetto",
 "t:pur_updating":"Aggiornamento…",
 "t:pur_tiers_upto":"Gradi 1–{tier}",
