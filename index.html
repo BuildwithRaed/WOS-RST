@@ -17949,7 +17949,8 @@ function updateCharmCurrentStats() {
   if (!el) return;
   const troop = plxTroopOf("charm");
   const statByTroop = computeCharmStats(CHARM_CALC_STATE), maxByTroop = computeCharmStats(maxedCharmState());
-  el.innerHTML = plxStatBoxesHtml([{ label: "LETH & HP", val: statByTroop[troop] || 0, max: maxByTroop[troop] || 0 }], true);
+  const v = statByTroop[troop] || 0, m = maxByTroop[troop] || 0; // charms give the same % to both
+  el.innerHTML = plxStatBoxesHtml([{ label: "LETH", val: v, max: m }, { label: "HP", val: v, max: m }], true);
 }
 
 // ============================================================
