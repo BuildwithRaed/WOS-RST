@@ -1839,5 +1839,8 @@
 "t:cg_slots_hint":"Randfarbe = Stufe (rot Legendär, gold Mythisch). Abzeichen oben links = jetzt, blau = Ziel. Tippe auf ein Teil, um es zu ändern.",
 "t:cg_set_bonus":"Set-Bonus",
 "t:bud_not_open":"Enthält Stufen, die in deinem Staat noch nicht offen sind ({what})",
-"t:sa_lock_hint_cap":"\"Max\" und \"Alles maximieren\" halten vorerst davor an (wegen deines Staatsalters). Als Ziel kannst du es trotzdem wählen."
+"t:sa_lock_hint_cap":"\"Max\" und \"Alles maximieren\" halten vorerst davor an (wegen deines Staatsalters). Als Ziel kannst du es trotzdem wählen.",
+"t:charm_lv":"Lv.",
+"t:charm_stage":"Stufe {a} / {b}",
+"t:charm_target_max":"Ziel = Max ({lv})"
 }

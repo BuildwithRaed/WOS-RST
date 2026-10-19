@@ -1838,5 +1838,8 @@
 "t:cg_slots_hint":"Màu viền = bậc (đỏ Huyền Thoại, vàng Thần Thoại). Huy hiệu góc trên trái = hiện tại, xanh dương = mục tiêu. Chạm vào món để đổi.",
 "t:cg_set_bonus":"Thưởng bộ",
 "t:bud_not_open":"Gồm các cấp chưa mở ở bang của bạn ({what})",
-"t:sa_lock_hint_cap":"\"Tối đa\" và \"Tối đa tất cả\" tạm dừng trước nó (theo tuổi bang). Bạn vẫn có thể chọn nó làm mục tiêu."
+"t:sa_lock_hint_cap":"\"Tối đa\" và \"Tối đa tất cả\" tạm dừng trước nó (theo tuổi bang). Bạn vẫn có thể chọn nó làm mục tiêu.",
+"t:charm_lv":"Cấp",
+"t:charm_stage":"Giai đoạn {a} / {b}",
+"t:charm_target_max":"Mục tiêu = Tối đa ({lv})"
 }

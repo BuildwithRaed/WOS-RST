@@ -1838,5 +1838,8 @@
 "t:cg_slots_hint":"邊框顏色 = 階級（紅色傳說，金色神話）。左上角徽章 = 目前，藍色 = 目標。點按裝備即可更改。",
 "t:cg_set_bonus":"套裝加成",
 "t:bud_not_open":"包含你的州尚未開放的等級（{what}）",
-"t:sa_lock_hint_cap":"依你的州齡，「最大」和「全部最大」目前會停在它之前。你仍可將它選為目標。"
+"t:sa_lock_hint_cap":"依你的州齡，「最大」和「全部最大」目前會停在它之前。你仍可將它選為目標。",
+"t:charm_lv":"Lv",
+"t:charm_stage":"階段 {a} / {b}",
+"t:charm_target_max":"目標 = 最大 ({lv})"
 }

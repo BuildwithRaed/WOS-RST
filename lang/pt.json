@@ -1838,5 +1838,8 @@
 "t:cg_slots_hint":"Cor da borda = nível (vermelho Lendário, dourado Mítico). Selo no canto superior esquerdo = agora, azul = alvo. Toque em uma peça para mudá-la.",
 "t:cg_set_bonus":"Bônus de conjunto",
 "t:bud_not_open":"Inclui níveis ainda não abertos no seu estado ({what})",
-"t:sa_lock_hint_cap":"\"Máx\" e \"Maximizar tudo\" param antes dele por enquanto (pela idade do estado). Você ainda pode escolhê-lo como alvo."
+"t:sa_lock_hint_cap":"\"Máx\" e \"Maximizar tudo\" param antes dele por enquanto (pela idade do estado). Você ainda pode escolhê-lo como alvo.",
+"t:charm_lv":"Nv.",
+"t:charm_stage":"Etapa {a} / {b}",
+"t:charm_target_max":"Alvo = Máx. ({lv})"
 }

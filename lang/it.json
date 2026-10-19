@@ -1839,5 +1839,8 @@
 "t:cg_slots_hint":"Colore del bordo = livello (rosso Leggendario, oro Mitico). Badge in alto a sinistra = ora, blu = obiettivo. Tocca un pezzo per cambiarlo.",
 "t:cg_set_bonus":"Bonus set",
 "t:bud_not_open":"Include livelli non ancora aperti nel tuo stato ({what})",
-"t:sa_lock_hint_cap":"\"Max\" e \"Tutto al massimo\" per ora si fermano prima (dall'età del tuo stato). Puoi comunque sceglierlo come obiettivo."
+"t:sa_lock_hint_cap":"\"Max\" e \"Tutto al massimo\" per ora si fermano prima (dall'età del tuo stato). Puoi comunque sceglierlo come obiettivo.",
+"t:charm_lv":"Liv.",
+"t:charm_stage":"Fase {a} / {b}",
+"t:charm_target_max":"Obiettivo = Max ({lv})"
 }

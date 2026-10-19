@@ -1839,5 +1839,8 @@
 "t:cg_slots_hint":"Kolor ramki = poziom (czerwony Legendarny, złoty Mityczny). Plakietka w lewym górnym rogu = teraz, niebieska = cel. Dotknij części, aby ją zmienić.",
 "t:cg_set_bonus":"Bonus zestawu",
 "t:bud_not_open":"Zawiera poziomy jeszcze nieotwarte w twoim stanie ({what})",
-"t:sa_lock_hint_cap":"\"Maks.\" i \"Maks. wszystko\" na razie zatrzymują się przed tym (z wieku stanu). Nadal możesz wybrać to jako cel."
+"t:sa_lock_hint_cap":"\"Maks.\" i \"Maks. wszystko\" na razie zatrzymują się przed tym (z wieku stanu). Nadal możesz wybrać to jako cel.",
+"t:charm_lv":"Poz.",
+"t:charm_stage":"Etap {a} / {b}",
+"t:charm_target_max":"Cel = Maks. ({lv})"
 }

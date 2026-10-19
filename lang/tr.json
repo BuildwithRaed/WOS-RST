@@ -1838,5 +1838,8 @@
 "t:cg_slots_hint":"Kenar rengi = kademe (kırmızı Efsanevi, altın Mitik). Sol üstteki rozet = şimdi, mavi = hedef. Değiştirmek için bir parçaya dokun.",
 "t:cg_set_bonus":"Set bonusu",
 "t:bud_not_open":"Eyaletinde henüz açılmamış seviyeler içeriyor ({what})",
-"t:sa_lock_hint_cap":"\"Maks\" ve \"Her şeyi maksla\" şimdilik bundan önce durur (eyalet yaşından). Yine de hedef olarak seçebilirsin."
+"t:sa_lock_hint_cap":"\"Maks\" ve \"Her şeyi maksla\" şimdilik bundan önce durur (eyalet yaşından). Yine de hedef olarak seçebilirsin.",
+"t:charm_lv":"Sv.",
+"t:charm_stage":"Aşama {a} / {b}",
+"t:charm_target_max":"Hedef = Maks ({lv})"
 }

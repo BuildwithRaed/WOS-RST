@@ -1839,5 +1839,8 @@
 "t:cg_slots_hint":"Couleur du bord = palier (rouge Légendaire, or Mythique). Badge en haut à gauche = maintenant, bleu = objectif. Touchez une pièce pour la changer.",
 "t:cg_set_bonus":"Bonus d'ensemble",
 "t:bud_not_open":"Inclut des niveaux pas encore ouverts dans votre État ({what})",
-"t:sa_lock_hint_cap":"\"Max\" et \"Tout au max\" s'arrêtent avant pour l'instant (selon l'âge de votre État). Vous pouvez quand même le choisir comme objectif."
+"t:sa_lock_hint_cap":"\"Max\" et \"Tout au max\" s'arrêtent avant pour l'instant (selon l'âge de votre État). Vous pouvez quand même le choisir comme objectif.",
+"t:charm_lv":"Niv.",
+"t:charm_stage":"Étape {a} / {b}",
+"t:charm_target_max":"Objectif = Max ({lv})"
 }

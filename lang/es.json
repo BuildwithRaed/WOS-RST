@@ -1839,5 +1839,8 @@
 "t:cg_slots_hint":"Color del borde = nivel (rojo Legendario, dorado Mítico). Insignia arriba a la izquierda = ahora, azul = objetivo. Toca una pieza para cambiarla.",
 "t:cg_set_bonus":"Bonus de conjunto",
 "t:bud_not_open":"Incluye niveles aún no abiertos en tu estado ({what})",
-"t:sa_lock_hint_cap":"\"Máx\" y \"Maximizar todo\" se detienen antes por ahora (por la edad de tu estado). Aún puedes elegirlo como objetivo."
+"t:sa_lock_hint_cap":"\"Máx\" y \"Maximizar todo\" se detienen antes por ahora (por la edad de tu estado). Aún puedes elegirlo como objetivo.",
+"t:charm_lv":"Nv.",
+"t:charm_stage":"Etapa {a} / {b}",
+"t:charm_target_max":"Objetivo = Máx. ({lv})"
 }

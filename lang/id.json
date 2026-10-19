@@ -1838,5 +1838,8 @@
 "t:cg_slots_hint":"Warna tepi = tier (merah Legendary, emas Mythic). Lencana kiri atas = sekarang, biru = target. Ketuk bagian untuk mengubahnya.",
 "t:cg_set_bonus":"Bonus set",
 "t:bud_not_open":"Termasuk level yang belum buka di statemu ({what})",
-"t:sa_lock_hint_cap":"\"Maks\" dan \"Maks semuanya\" untuk sekarang berhenti sebelum ini (dari umur statemu). Kamu tetap bisa memilihnya sebagai target."
+"t:sa_lock_hint_cap":"\"Maks\" dan \"Maks semuanya\" untuk sekarang berhenti sebelum ini (dari umur statemu). Kamu tetap bisa memilihnya sebagai target.",
+"t:charm_lv":"Lv.",
+"t:charm_stage":"Tahap {a} / {b}",
+"t:charm_target_max":"Target = Maks ({lv})"
 }
