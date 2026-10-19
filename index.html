@@ -1110,6 +1110,16 @@ input,select,textarea{
   .t12x-time-top b{ font-size:22px; font-weight:800; }
   .t12x-time .t12x-prog{ margin:8px 0 4px; height:6px; }
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+  /* Settings: compact, explanations behind the small i (owner, 19 Oct 2026). */
+  .t12x-settings{ padding:10px 12px; }
+  .t12x-settings > .t12x-k{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .t12x-settings p.desc{ display:none; }
+  .t12x-settings.info p.desc{ display:block; }
+  .t12x-settings .cap-l{ display:none; }
+  .t12x-settings.info .cap-l{ display:inline; }
+  .set-info{ width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--muted); font:italic 700 11px/1 Georgia, serif; padding:0; cursor:pointer; text-transform:none; }
+  .t12x-settings.info .set-info{ border-color:var(--ice); color:var(--ice); }
+  .plx-stats-top{ margin-top:12px; }
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
@@ -3119,7 +3129,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 26; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 29; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4343,6 +4353,7 @@ const T = {
   pur_sug_title: { en: "Suggested packs (from Budgets)" },
   pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy lets you pick the dates." },
   pur_sug_none: { en: "Nothing else to buy: your plans are covered." },
+  set_info: { en: "What these settings do" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_sug_total: { en: "Suggested total" },
   sa_lock_line: { en: "{what} opens around day {day} — in about {n} days (≈ {date})." },
@@ -6182,12 +6193,13 @@ async function renderGearLevelingGroup(target) {
       </div>
       ${capSettingsHtml("heroEnhanceCapSelect", t("cap_hero_enhance_label"), [100, 200].map((n) => `<option value="${n}" ${n === enhanceCapNow ? "selected" : ""}>${n}</option>`).join(""))}`,
     amountsId: "heroGearOwned", needId: "heroGearNeed", tabsId: "heroGearTroopDots",
-    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y pinch-zoom;"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    // Troops Stats sit right under "Total resources needed" (owner, 19 Oct 2026).
+    statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("hero_gear_stats_desc"))}</p>
       <div id="heroGearCurrentStats"></div>
     </div>`,
+    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y pinch-zoom;"></div>`,
   });
 
   target.querySelectorAll("[data-herogearset]").forEach((btn) => {
@@ -11731,7 +11743,7 @@ document.addEventListener("click", (ev) => {
   const car = b.querySelector(".sa-car"); if (car) car.innerHTML = open ? "&#9652;" : "&#9662;";
 });
 function capSettingsHtml(id, label, optionsHtml) {
-  return `<label class="t12x-check"><span>${esc(t("cap_title"))} · ${esc(label)}</span><select id="${id}" style="max-width:150px; min-width:110px; flex:none;">${optionsHtml}</select></label>
+  return `<label class="t12x-check"><span>${esc(t("cap_title"))}<span class="cap-l"> · ${esc(label)}</span></span><select id="${id}" style="max-width:150px; min-width:110px; flex:none;">${optionsHtml}</select></label>
     <p class="desc" style="font-size:10.5px; margin:6px 0 0;">${esc(t("cap_desc"))}</p>`;
 }
 
@@ -17661,11 +17673,11 @@ async function renderCharmsCalc() {
     title: navLabel("charmscalc"),
     settings: capSettingsHtml("charmCapSelect", t("cap_charm_label"), CHARM_LEVELS.map((l, i) => (l === "0" ? "" : `<option value="${esc(l)}" ${l === charmCapLabel() ? "selected" : ""}${i > charmReleasedIdx() ? ' class="opt-up"' : ""}>${esc(l)}${esc(upcomingTag(i > charmReleasedIdx()))}</option>`)).join("")),
     amountsId: "charmOwned", needId: "charmNeed", tabsId: "charmTroopTabs",
-    mainHtml: `<div id="charmRows"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div id="charmCurrentStats"></div>
     </div>`,
+    mainHtml: `<div id="charmRows"></div>`,
   });
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
@@ -17907,11 +17919,11 @@ async function renderChiefGearCalc() {
     settings: `<label class="t12x-check" style="margin-bottom:8px;"><span>${esc(t("cg_count_leg"))}</span><input type="checkbox" id="chiefLegTick" ${chiefLegendaryOn() ? "checked" : ""} /></label>`
       + capSettingsHtml("chiefGearCapSelect", t("cap_chief_gear_label"), rows.map((r, i) => (chiefLegendaryOn() || i <= chiefGearLastEpicIdx() ? `<option value="${i}" ${i === chiefGearCapIdx() ? "selected" : ""}${i > chiefGearReleasedIdx() ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > chiefGearReleasedIdx()))}</option>` : "")).join("")),
     amountsId: "gearOwned", needId: "gearNeed", tabsId: "gearTroopTabs",
-    mainHtml: `<div id="gearRows"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div id="gearCurrentStats"></div>
     </div>`,
+    mainHtml: `<div id="gearRows"></div>`,
   });
 
   let opts = "";
@@ -21209,13 +21221,13 @@ async function renderExpertsResearchPage() {
   content.innerHTML = plxShellHtml({
     title: t("experts_research_title"),
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
-    mainHtml: `<div id="expResearchSwipeCounter"></div>
-    <div id="expResearchGrid"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       ${plxStatTabsHtml("experts_research", [{ key: "all", label: t("plx_all_troops"), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t("experts_research_desc"))}</p><div id="expResearchTotals"></div>` }]
         .concat(["Infantry", "Lancer", "Marksman"].map((tr) => ({ key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr], html: `<p class="desc" style="font-size:12px; margin:0 0 8px;" data-ertroopwho="${tr}"></p><div data-ertroop="${tr}"></div>` }))))}
     </div>`,
+    mainHtml: `<div id="expResearchSwipeCounter"></div>
+    <div id="expResearchGrid"></div>`,
   });
   document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span></div>
     <div id="expResearchOwned"></div>
@@ -21736,18 +21748,19 @@ async function renderExpertsPage() {
       </div>
     </div>`,
     amountsId: "expertsAmounts", needId: "expertsSummary",
-    mainHtml: `
-    <div id="expertsSwipeCounter"></div>
-    <div id="expertsGrid"></div>
-    <div class="t12x-card" style="margin-top:12px;">
+    statsHtml: `<div class="t12x-card plx-stats-top">
+      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       ${plxStatTabsHtml("experts", [
-        ["base", "troops_stats_title", "experts_base_stats_desc", "expertsStatHeader"],
+        ["base", "plx_all_troops", "experts_base_stats_desc", "expertsStatHeader"],
         ["foundry", "foundry_title", "foundry_desc", "expertsFoundryHeader"],
         ["svs", "svs_title", "svs_desc", "expertsSvsHeader"],
         ["frostfire", "frostfire_mine_title", "frostfire_mine_desc", "expertsFrostfireHeader"],
         ["tundra", "tundra_trade_routes_title", "tundra_trade_routes_desc", "expertsTundraHeader"],
       ].map(([key, title, desc, id]) => ({ key, label: t(title), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t(desc))}</p><div id="${id}"></div>` })))}
     </div>`,
+    mainHtml: `
+    <div id="expertsSwipeCounter"></div>
+    <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
@@ -22400,6 +22413,7 @@ async function renderRefinePage() {
     title: t("pets_refine_title"),
     settings: `<label class="t12x-check" style="justify-content:flex-start; gap:8px; cursor:pointer;"><input type="checkbox" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /><span>${esc(t("marks_pack_gems"))}</span></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
+    statsHtml: `<div class="t12x-card plx-stats-top" id="refineStats"></div>`,
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
@@ -22515,16 +22529,15 @@ async function renderRefinePage() {
             <button type="button" class="btn small ghost" data-marksclear>${esc(t("marks_clear"))}</button>
             <button type="button" class="btn small ghost" data-marksadvanced="0">${esc(t("marks_advanced_close"))}</button>
           </div>`}`}`;
-    document.getElementById("refineTotals").innerHTML = `
-      <div class="t12x-card">
-        <div class="t12x-title">${esc(t("total_refine_bonus"))}</div>
+    document.getElementById("refineStats").innerHTML = `
+        <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
         <p class="desc" style="font-size:12px; margin:2px 0 8px;">${esc(t("refine_summed_desc"))}</p>
         ${plxStatTabsHtml("pets_refine", [["Infantry", "il", "ih"], ["Lancer", "ll", "lh"], ["Marksman", "ml", "mh"]].map(([tr, l, h]) => ({
           key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr],
           html: plxStatBoxesHtml([{ label: "LETH", val: grand[l], max: grandMax[l], dp: 2 }, { label: "HP", val: grand[h], max: grandMax[h], dp: 2 }]),
-        })))}
-      </div>
-      <div class="t12x-card" style="margin-top:12px;">
+        })))}`;
+    document.getElementById("refineTotals").innerHTML = `
+      <div class="t12x-card">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
           <div class="t12x-title" style="margin:0;">${esc(t("marks_title"))}</div>
           <button type="button" class="plx-maxbtn" data-marksopen>&#9881; ${esc(t("marks_advanced_open"))}</button>
@@ -22745,9 +22758,9 @@ async function renderPetsDataPage() {
     title: t("pets_level_title"),
     amountsId: "petsMaterialsBar", needId: "petsNeed",
     maxId: "petsMaxAllBtn",
+    statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
     mainHtml: `<div id="petsSwipeCounter"></div>
-    <div id="petsList"></div>
-    <div class="t12x-card" style="margin-top:12px;" id="petsTotals"></div>`,
+    <div id="petsList"></div>`,
   });
 
   function getState(pet) {
@@ -23122,7 +23135,7 @@ function plxShellHtml(o) {
     </div>
     <div class="t12x">
       <aside class="t12x-side">
-        ${o.settings ? `<div class="t12x-card t12x-settings${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">${esc(t("t12x_settings"))}</div>${o.settings}</div>` : ""}
+        ${o.settings ? `<div class="t12x-card t12x-settings${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">&#9881; ${esc(t("t12x_settings"))}${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
         <div class="t12x-card"><div id="${o.amountsId}"></div></div>
         ${o.sideExtra || ""}
       </aside>
@@ -23132,6 +23145,7 @@ function plxShellHtml(o) {
           ${o.timeId ? `<div id="${o.timeId}" class="t12x-time"></div>` : ""}
           <div id="${o.needId}"></div>
         </div>
+        ${o.statsHtml || ""}
         ${o.tabsId || o.topExtra ? `<div class="t12x-top">
           ${o.tabsId ? `<div class="t12x-tabs" id="${o.tabsId}"></div>` : ""}
           ${o.topExtra || ""}
@@ -23171,6 +23185,10 @@ function plxStatTabsHtml(id, groups) {
   return `<div class="t12x-tabs plx-stat-tabs" data-stattabs="${esc(id)}">${groups.map((g) => `<button type="button" class="${g.key === active ? "on" : ""}" data-stattab="${esc(g.key)}" style="--tc:${g.color || "var(--ice)"};">${esc(g.label)}</button>`).join("")}</div>
     ${groups.map((g) => `<div data-statpane="${esc(g.key)}"${g.key === active ? "" : " hidden"}>${g.html}</div>`).join("")}`;
 }
+document.addEventListener("click", (ev) => {
+  const i = ev.target.closest && ev.target.closest("[data-setinfo]");
+  if (i) i.closest(".t12x-settings").classList.toggle("info");
+});
 document.addEventListener("click", (ev) => {
   const b = ev.target.closest && ev.target.closest("[data-stattab]");
   if (!b) return;

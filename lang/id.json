@@ -1823,5 +1823,6 @@
 "t:rm_back":"Anggaran",
 "t:rm_goal_cost":"paketnya {v}",
 "t:rm_goal_nopacks":"Tidak perlu beli: yang kamu punya sudah cukup.",
-"nav.p:roadmap":"Peta jalan"
+"nav.p:roadmap":"Peta jalan",
+"t:set_info":"Fungsi pengaturan ini"
 }

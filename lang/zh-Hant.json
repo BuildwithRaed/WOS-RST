@@ -1823,5 +1823,6 @@
 "t:rm_back":"預算",
 "t:rm_goal_cost":"其禮包 {v}",
 "t:rm_goal_nopacks":"無需購買：現有的已經足夠。",
-"nav.p:roadmap":"路線圖"
+"nav.p:roadmap":"路線圖",
+"t:set_info":"這些設定的作用"
 }

@@ -1823,5 +1823,6 @@
 "t:rm_back":"Ngân sách",
 "t:rm_goal_cost":"các gói của nó {v}",
 "t:rm_goal_nopacks":"Không cần mua: những gì bạn có đã đủ.",
-"nav.p:roadmap":"Lộ trình"
+"nav.p:roadmap":"Lộ trình",
+"t:set_info":"Các cài đặt này làm gì"
 }
