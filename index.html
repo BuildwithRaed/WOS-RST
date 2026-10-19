@@ -1192,7 +1192,8 @@ input,select,textarea{
   .ch-tile.done{ border-color:rgba(91,201,138,.45); }
   .ch-t-h{ display:flex; align-items:center; gap:6px; min-width:0; }
   .ch-pic{ position:relative; width:30px; height:30px; flex-shrink:0; }
-  .ch-pic img{ width:100%; height:100%; object-fit:contain; border-radius:7px; background:rgba(232,162,60,.18); }
+  .ch-pic img{ width:100%; height:100%; object-fit:contain; }
+  .ch-pic.none img{ opacity:.35; filter:grayscale(.6); }
   .ch-pic i{ position:absolute; inset-inline-end:-5px; bottom:-5px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#0f141b; border:1px solid var(--line); color:var(--frost); font-style:normal; font-size:10px; font-weight:800; line-height:14px; text-align:center; }
   .ch-pic.big{ width:46px; height:46px; }
   .ch-t-n{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -17764,8 +17765,17 @@ function charmFlat(troop) {
   CHARM_PIECES.filter((p) => p.troop === troop).forEach((p) => [0, 1, 2].forEach((i) => out.push({ piece: p, slot: i })));
   return out;
 }
-function charmPicHtml(c, n, cls) {
-  return `<span class="ch-pic${cls ? " " + cls : ""}"><img src="${CHIEF_GEAR_ICONS[c.piece.key]}" alt="" loading="lazy" /><i>${n + 1}</i></span>`;
+// Each charm shows the game's picture for its troop and level (icons/charms/
+// charm-<troop>-<1..18>.webp, cut from the owner's Charm Guide screenshots,
+// 19 Oct 2026); a sub-level like 16.8 uses Lv 16, not started uses Lv 1 faded.
+function charmIconSrc(troop, lv) {
+  const n = Math.max(1, Math.min(18, Math.floor(Number(lv) || 0)));
+  return `icons/charms/charm-${String(troop).toLowerCase()}-${n}.webp`;
+}
+function charmPicHtml(c, n, cls, lv) {
+  const st = (CHARM_CALC_STATE[c.piece.key] || [])[c.slot] || {};
+  const at = lv != null ? lv : st.current;
+  return `<span class="ch-pic${cls ? " " + cls : ""}${Number(at) > 0 ? "" : " none"}"><img src="${charmIconSrc(c.piece.troop, at)}" alt="" loading="lazy" /><i>${n + 1}</i></span>`;
 }
 const charmStatAt = (lv) => CHARM_CUMULATIVE_STAT[lv] || 0;
 const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
@@ -17845,7 +17855,7 @@ async function renderCharmsCalc() {
       const stepper = (role, i, lo) => `<div class="gs-stp${role === "target" ? " tgt" : ""}"><button type="button" data-gsstep="${role}|-1" aria-label="−" ${i <= lo ? "disabled" : ""}>&minus;</button><b>${lv(i)}</b><button type="button" data-gsstep="${role}|1" aria-label="+" ${i >= last ? "disabled" : ""}>+</button></div>`;
       const nav = (d) => { const k = n + d; return k >= 0 && k < flat.length ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(t("charm_slot_label"))} ${k + 1}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
       m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
-        <div class="gs-head">${charmPicHtml(c, n, "big")}<div style="flex:1; min-width:0;"><b>${esc(t("charm_slot_label"))} ${n + 1} · ${esc(pieceDisplayName(c.piece.name))}</b>
+        <div class="gs-head">${charmPicHtml(c, n, "big")}${ti > ci ? `<span class="meta">&rarr;</span>${charmPicHtml(c, n, "big", CHARM_LEVELS[ti])}` : ""}<div style="flex:1; min-width:0;"><b>${esc(t("charm_slot_label"))} ${n + 1} · ${esc(pieceDisplayName(c.piece.name))}</b>
           <div class="meta">LETH &amp; HP <span style="color:var(--good);">${pctShort(charmStatAt(st.current))}</span>${ti > ci ? ` &rarr; <span style="color:var(--ice);">${pctShort(charmStatAt(CHARM_LEVELS[ti]))}</span>` : ""}</div></div>
           <button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
         <div class="gs-row"><span class="gs-l">${esc(t("t12x_now"))}</span>${stepper("current", ci, 0)}<span></span></div>
