@@ -1824,5 +1824,7 @@
 "t:rm_back":"予算",
 "t:rm_goal_cost":"パック {v}",
 "t:rm_goal_nopacks":"購入不要：手持ちで足りています。",
-"nav.p:roadmap":"ロードマップ"
+"nav.p:roadmap":"ロードマップ",
+"t:pur_wk_past":"日付が過ぎました",
+"t:pur_1_pack":"1パック"
 }

@@ -646,6 +646,31 @@
   .pur-seg button{ flex:1; background:none; border:0; color:var(--frost); padding:7px 10px; font-size:12px; cursor:pointer; white-space:nowrap; }
   .pur-seg button.on{ background:var(--ice); color:#0f141b; font-weight:700; }
   .pur-item{ border-top:1px solid var(--line); padding:10px 2px; }
+  .pur-scroll{ max-height:380px; overflow-y:auto; overscroll-behavior:contain; margin:0 -4px; padding:0 4px; }
+  .pur-list-sum{ display:flex; align-items:center; gap:4px; }
+  .pur-sum-tot{ margin-inline-start:auto; font-size:14px; font-weight:700; }
+  .pur-bh{ display:flex; align-items:baseline; gap:6px; font-size:12px; padding:8px 2px 4px; color:var(--ice); }
+  .pur-bh.late{ color:#e0b25a; }
+  .pur-bh .meta{ font-size:11px; }
+  .pur-bh-t{ margin-inline-start:auto; color:var(--frost); font-size:12.5px; }
+  details.pur-mon > summary{ cursor:pointer; list-style:none; }
+  details.pur-mon > summary::-webkit-details-marker{ display:none; }
+  details.pur-mon > summary::before{ content:"\25B8"; color:var(--muted); width:1em; }
+  details.pur-mon[open] > summary::before{ content:"\25BE"; }
+  .pur-rw{ border-top:1px solid var(--line); }
+  .pur-row{ display:flex; align-items:center; gap:10px; padding:8px 2px; min-height:40px; cursor:pointer; }
+  .pur-pic{ flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pur-pic img{ width:26px; height:26px; object-fit:contain; }
+  .pur-pic i{ font-style:normal; font-weight:700; color:var(--muted); }
+  .pur-row-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .pur-row-n{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; }
+  .pur-row-t small{ font-size:11px; }
+  .pur-row .pur-price{ font-size:13px; }
+  .pur-tick{ width:32px; height:32px; flex:0 0 32px; font-size:14px; }
+  .pur-chev{ color:var(--muted); font-size:11px; width:10px; }
+  .pur-row-d{ padding:0 2px 10px; padding-inline-start:46px; }
+  .pur-row-d[hidden]{ display:none; }
+  .pur-rw.open > .pur-row{ padding-bottom:4px; }
   .pur-item:first-of-type{ border-top:0; }
   .pur-item-h{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; font-size:13.5px; }
   .pur-price{ font-weight:700; white-space:nowrap; }
@@ -3119,7 +3144,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 26; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 28; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4292,6 +4317,8 @@ const T = {
   pur_wk_this: { en: "This week" },
   pur_wk_next: { en: "Next week" },
   pur_wk_n: { en: "Week {n}" },
+  pur_wk_past: { en: "Date passed" },
+  pur_1_pack: { en: "1 pack" },
   pur_wk_target: { en: "Target week" },
   pur_wk_after: { en: "After target" },
   pur_wk_later: { en: "Later" },
@@ -4682,7 +4709,7 @@ function holdPageHeight(on) {
 }
 // Scroll boxes / sideways rows inside `root` (matched by class and order) keep
 // their scroll across `fn` (which rebuilds them).
-const KEEP_BOX_SEL = ".pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap";
+const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap";
 // saveBoxScroll(root) notes them now and returns a function that puts them
 // back (in `root`, or in the box that replaced it).
 function saveBoxScroll(root) {
@@ -7412,6 +7439,7 @@ function purTablePopup(tb, opts) {
   };
   draw();
 }
+const PUR_MON = new Map(); // My Purchases: Bought month folds opened / closed ("m2026-10" -> bool), kept for the visit
 const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded ("c|table|row" / "b|..."), kept for the visit
 // The Add a pack form survives the phone reloading the page (sessionStorage).
 let PUR_SUG_ROW = null;   // My Purchases (admin): the suggested pack line opened ("week|row")
@@ -7502,41 +7530,88 @@ async function renderPurchasesPage() {
     const label = `${materialDisplayName(k).replace(/\s*\((minutes|min)\)$/, "")}: ${Math.round(v).toLocaleString()}`;
     return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(k).charAt(0))}</i>`}<b>${esc(short)}</b></span>`;
   }).join("");
-  // One card per pack (same table and tier, or same choice); its dates fold open underneath.
+  // Compact lists (owner picked A + B, 19 Oct 2026): one short line per pack
+  // (picture, name × count, date, price, ✓), tap it for its items, Used for and
+  // dates; Coming grouped by week, Bought by month (older months folded); each
+  // list scrolls inside its own box.
   const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}${p.from > 0 ? "f" + p.from : ""}`;
+  const monIdx = (packStartOfToday().getUTCDay() + 6) % 7;
+  const dOff = (k) => { const d = packParseDay(k); return d ? Math.round((d - packStartOfToday()) / 86400000) : 0; };
+  const bucketOf = (kind, k) => (kind === "c" ? "w" + (dOff(k) < 0 ? -1 : Math.floor((dOff(k) + monIdx) / 7)) : "m" + String(k || "").slice(0, 7));
   const groupBy = (arr) => {
     const out = [];
     arr.forEach((p) => { const k = purGroupKey(p); let g = out.find((x) => x.key === k); if (!g) { g = { key: k, tb: byId.get(String(p.table)), row: p.row, first: p, items: [] }; out.push(g); } g.items.push(p); });
     return out;
   };
   const shortDay = (k) => fmtDay(k).replace(/,? \d{4}$/, "");
-  const groupHtml = (g, kind) => {
+  const mainIcon = (gives) => { for (const k of Object.keys(gives || {})) { if (k === "Gems") continue; const ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") }); if (ic) return ic; } return ""; };
+  const groupHtml = (g, kind, bk) => {
     const tb = g.tb, link = packLinkFor(tb.id);
     const n = g.items.reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
     const total = g.items.reduce((a, p) => a + cost(p), 0);
     const names = packUsedForNames(tb);
-    const open = PUR_OPEN.has(kind + "|" + g.key);
+    const id = `${kind}|${bk}|${g.key}`;
+    const open = PUR_OPEN.has(id), rowOpen = PUR_OPEN.has("o|" + id);
     const dates = g.items.map((p) => p.date);
-    const when = dates.length === 1 ? shortDay(dates[0]) : `${t("pur_n_dates").replace("{n}", dates.length)} · ${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
+    const when = dates.length === 1 ? shortDay(dates[0]) : `${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today);
-    return `<div class="pur-item pur-grp${open ? " open" : ""}" data-purgrp="${esc(kind + "|" + g.key)}">
-      <div class="pur-item-h"><div style="min-width:0;"><b>${esc((g.first.choice && g.first.choice.name) || tb.title || "")}</b> <span class="meta">${bidiNum("× " + n)}</span><div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))} · ${esc(when)}</div></div><span class="pur-price">${esc(packFmtMoney(total, link.currency))}</span></div>
-      <div class="bud-mats pur-chips">${chipsFor(purchaseGives(g.first, tb), n, 5)}</div>
-      <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
-        <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button>${kind === "c" ? `<button type="button" class="btn small" data-purgmove="bought">&#10003; ${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}</button>` : ""}<button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
-      ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
-      <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span><span class="pur-date-p">${esc(packFmtMoney(cost(p), link.currency))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
+    const gives = purchaseGives(g.first, tb), ic = mainIcon(gives);
+    const name = purShortName((g.first.choice && g.first.choice.name) || tb.title || "");
+    return `<div class="pur-rw${rowOpen ? " open" : ""}" data-purgrp="${esc(id)}">
+      <div class="pur-row" data-purrowtap role="button" tabindex="0" aria-expanded="${rowOpen}">
+        <span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(name.charAt(0))}</i>`}</span>
+        <span class="pur-row-t"><span class="pur-row-n"><b>${esc(name)}</b> <span class="meta">${bidiNum("× " + n)}</span></span><small class="meta">${esc(when)}${late ? " &#9888;" : ""}</small></span>
+        <b class="pur-price">${esc(packFmtMoney(total, link.currency))}</b>
+        ${kind === "c" ? `<button type="button" class="pur-mini ok pur-tick" data-purgmove="bought" title="${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}" aria-label="${esc(t(g.items.length > 1 ? "pur_all_bought" : "pur_mark_bought"))}">&#10003;</button>` : ""}
+        <span class="pur-chev" aria-hidden="true">${rowOpen ? "&#9662;" : "&#9656;"}</span>
+      </div>
+      <div class="pur-row-d"${rowOpen ? "" : " hidden"}>
+        <div class="meta" style="font-size:11px;">${esc(g.first.choice ? g.first.choice.label : tierLabel(tb, g.row, Number(g.first.from) || 0))}${dates.length > 1 ? " · " + esc(t("pur_n_dates").replace("{n}", dates.length)) : ""}</div>
+        <div class="bud-mats pur-chips">${chipsFor(gives, n, 5)}</div>
+        <div class="pur-item-f"><span class="meta pur-for">${esc(t("pack_used_for"))}: ${names.length ? esc(names.join(" · ")) : esc(t("pur_for_none"))}</span>
+          <span class="pur-acts"><button type="button" class="btn small ghost" data-purfold>${open ? "&#9662;" : "&#9656;"} ${esc(t("pur_dates_btn"))}</button><button type="button" class="btn small ghost" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></span></div>
+        ${late ? `<div style="font-size:11px; color:#e0b25a; margin-top:4px;">${esc(t("pur_past_note"))}</div>` : ""}
+        <div class="pur-dates"${open ? "" : " hidden"}>${g.items.map((p) => `<div class="pur-date" data-purid="${esc(p.id)}"><span>${esc(shortDay(p.date))}${p.date < today && kind === "c" ? " &#9888;" : ""}</span><span class="meta">${bidiNum("× " + Math.max(1, Math.floor(Number(p.count) || 1)))}</span><span class="pur-date-p">${esc(packFmtMoney(cost(p), link.currency))}</span>${kind === "c" ? `<button type="button" class="pur-mini ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}">&#10003;</button>` : `<button type="button" class="pur-mini" data-purmove="planned" title="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-mini" data-purdel title="${esc(t("pur_remove"))}">&times;</button></div>`).join("")}</div>
+      </div>
     </div>`;
+  };
+  // Week / month headings with their totals.
+  const wkStart = (w) => new Date(packStartOfToday().getTime() + (w * 7 - monIdx) * 86400000);
+  const bucketHead = (kind, bk, arr) => {
+    const tot = esc(packFmtLocal(sumCost(arr), sample, false));
+    if (kind === "c") {
+      const w = Number(bk.slice(1));
+      const name = w < 0 ? t("pur_wk_past") : w === 0 ? t("pur_wk_this") : w === 1 ? t("pur_wk_next") : t("pur_wk_n").replace("{n}", w + 1);
+      const range = w < 0 ? "" : `${shortDay(packDayKey(w === 0 ? packStartOfToday() : wkStart(w)))} – ${shortDay(packDayKey(new Date(wkStart(w).getTime() + 6 * 86400000)))}`;
+      return `<div class="pur-bh${w < 0 ? " late" : ""}"><b>${esc(name)}</b> <span class="meta">${esc(range)}</span><b class="pur-bh-t">${tot}</b></div>`;
+    }
+    const d = packParseDay(bk.slice(1) + "-01");
+    let name = bk.slice(1);
+    try { if (d) name = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", ...(bk.slice(1, 5) !== today.slice(0, 4) ? { year: "numeric" } : {}), timeZone: "UTC" }); } catch (e) { /* keep yyyy-mm */ }
+    return { name, tot };
+  };
+  const listHtml = (kind, arr) => {
+    const bks = [];
+    const byB = new Map();
+    arr.forEach((p) => { const bk = bucketOf(kind, p.date); if (!byB.has(bk)) { byB.set(bk, []); bks.push(bk); } byB.get(bk).push(p); });
+    if (kind === "c") bks.sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+    return `<div class="pur-scroll" data-purscroll="${kind}">${bks.map((bk, i) => {
+      const part = byB.get(bk), rows = groupBy(part).map((g) => groupHtml(g, kind, bk)).join("");
+      if (kind === "c") return bucketHead(kind, bk, part) + rows;
+      // Bought: months fold, the newest open.
+      const h = bucketHead(kind, bk, part), on = PUR_MON.has(bk) ? PUR_MON.get(bk) : i === 0;
+      return `<details class="pur-mon" data-purmon="${esc(bk)}" ${on ? "open" : ""}><summary class="pur-bh"><b>${esc(h.name)}</b> <span class="meta">${part.length === 1 ? esc(t("pur_1_pack")) : `${bidiNum(String(part.length))} ${esc(t("pk_preview_packs"))}`}</span><b class="pur-bh-t">${h.tot}</b></summary>${rows}</details>`;
+    }).join("")}</div>`;
   };
   const summary = `<div class="t12x-card pur-sum">
     <div class="pur-sq"><span class="meta">${esc(t("pur_spend_coming"))}</span><b>${coming.length ? esc(packFmtLocal(sumCost(coming), sample, true)) : "—"}</b><span class="meta">${coming.length} ${esc(t("pk_preview_packs"))}</span></div>
     <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
     <div class="meta pur-how">${esc(t("pur_how"))}</div>
   </div>`;
-  const listBox = (k, title, n, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${n})</span></summary>${inner}</details>`;
+  const listBox = (k, title, arr, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${arr.length})</span>${arr.length ? `<span class="pur-sum-tot">${esc(packFmtLocal(sumCost(arr), sample, false))}</span>` : ""}</summary>${inner}</details>`;
   const listsHtml = `
-    ${listBox("c", t("pur_coming"), coming.length, coming.length ? groupBy(coming).map((g) => groupHtml(g, "c")).join("") : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
-    ${listBox("b", t("pur_bought_list"), bought.length, bought.length ? groupBy(bought).map((g) => groupHtml(g, "b")).join("") : `<div class="meta">${esc(t("pur_none_bought"))}</div>`)}`;
+    ${listBox("c", t("pur_coming"), coming, coming.length ? listHtml("c", coming) : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
+    ${listBox("b", t("pur_bought_list"), bought, bought.length ? listHtml("b", bought) : `<div class="meta">${esc(t("pur_none_bought"))}</div>`)}`;
 
   // New Gen Heroes timing
   const ng = PACK_PURCHASES.newGen || {};
@@ -8170,7 +8245,7 @@ async function renderPurchasesPage() {
     drawSug();
   }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; } });
 
-  const redraw = () => { const y = window.scrollY; renderPurchasesPage().then(() => window.scrollTo(0, y)); };
+  const redraw = () => { const y = window.scrollY, put = saveBoxScroll(content); renderPurchasesPage().then(() => { window.scrollTo(0, y); put(content); }); };
   content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
     const k = inp.dataset.purf;
@@ -8218,9 +8293,22 @@ async function renderPurchasesPage() {
   // The phone reloaded the page while the pack table was open: open it again.
   try { const d = JSON.parse(sessionStorage.getItem("pur_tbl_draft") || "null"); if (d && tblBtn && formTb && d.table === String(formTb.id) && !document.querySelector("#purTblModal[style*='flex']")) tblBtn.click(); } catch (e) { /* none */ }
   const toBought = (p) => ({ ...p, status: "bought", date: p.date > today ? today : p.date });
+  content.querySelectorAll("[data-purmon]").forEach((d) => d.addEventListener("toggle", () => PUR_MON.set(d.dataset.purmon, d.open)));
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
-    const kind = box.dataset.purgrp.slice(0, 1), gkey = box.dataset.purgrp.slice(2);
-    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought");
+    const id = box.dataset.purgrp, kind = id.slice(0, 1), rest = id.slice(2), bk = rest.slice(0, rest.indexOf("|")), gkey = rest.slice(rest.indexOf("|") + 1);
+    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought") && bucketOf(kind, p.date) === bk;
+    // Tap a line: its items, Used for and buttons open under it.
+    const head = box.querySelector("[data-purrowtap]");
+    const tog = () => {
+      const k = "o|" + id, on = !PUR_OPEN.has(k);
+      if (on) PUR_OPEN.add(k); else PUR_OPEN.delete(k);
+      box.classList.toggle("open", on);
+      box.querySelector(".pur-row-d").hidden = !on;
+      head.setAttribute("aria-expanded", String(on));
+      head.querySelector(".pur-chev").innerHTML = on ? "&#9662;" : "&#9656;";
+    };
+    head.addEventListener("click", (e) => { if (!e.target.closest("button")) tog(); });
+    head.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !e.target.closest("button")) { e.preventDefault(); tog(); } });
     box.querySelector("[data-purfold]").addEventListener("click", (e) => {
       const k = box.dataset.purgrp, open = !PUR_OPEN.has(k);
       if (open) PUR_OPEN.add(k); else PUR_OPEN.delete(k);
