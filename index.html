@@ -355,6 +355,77 @@
   .exp-count input{ width:16px; height:16px; margin:0; cursor:pointer; }
   .exp-skl{ display:flex; flex-direction:column; gap:1px; }
   .exp-skl > span{ font-size:10px; color:var(--muted); text-align:start; }
+  /* Experts skill "EXP you have" = one compact line (design B, 19 Oct 2026). */
+  .exp-xl{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; margin-top:4px; font-size:11px; color:var(--muted); }
+  .exp-xl input{ width:calc(var(--xw, 4) * 1ch + 22px); min-width:58px; max-width:130px; flex:none; padding:4px 8px; font-size:12.5px; font-weight:700; text-align:center; border-radius:8px; }
+  .exp-xl input.has{ border-color:var(--ice); }
+  .exp-xl .btn{ padding:3px 9px; font-size:11px; min-height:28px; flex:none; }
+  .exp-xl-b{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:4px; font-weight:700; color:var(--frost); white-space:nowrap; }
+  .exp-xl-b img{ width:16px; height:16px; object-fit:contain; }
+  .exp-xl-b.ok{ color:var(--good); }
+  /* Level chips + level list sheet (Heroes Gears cards, design A, 19 Oct 2026). */
+  .hgc-head{ display:flex; align-items:center; gap:10px; }
+  .hgc-pic{ width:50px; height:50px; flex-shrink:0; border-radius:12px; border:1px solid var(--line); background:var(--panel-2); display:flex; align-items:center; justify-content:center; }
+  .hgc-pic img{ width:42px; height:42px; object-fit:contain; }
+  .hgc-name{ flex:1; min-width:0; }
+  .hgc-name .name{ font-size:15px; font-weight:700; }
+  .plx-piecestat.hgc-stat{ margin-top:2px; padding-top:0; border-top:0; font-size:11.5px; gap:2px 10px; }
+  .plx-piecestat.hgc-stat:empty{ display:none; }
+  .hgc-row{ display:flex; align-items:center; gap:6px; padding:8px 0 0; margin-top:8px; border-top:1px dashed var(--line); }
+  .hgc-tr{ flex:1; min-width:0; font-size:12.5px; color:var(--frost); }
+  .lvchip{ font:inherit; font-size:13px; font-weight:700; min-width:64px; min-height:34px; padding:5px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; white-space:nowrap; }
+  .lvchip.tgt{ border-color:rgba(125,200,255,.55); color:var(--ice); }
+  .lvchip.up{ border-color:var(--amber); color:var(--amber); }
+  .lvarr{ color:var(--muted); font-size:12px; }
+  .lvs-ov{ position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .lvs-box{ background:var(--panel); border:1px solid var(--line); border-radius:14px; width:100%; max-width:340px; max-height:70vh; display:flex; flex-direction:column; overflow:hidden; }
+  .lvs-head{ display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line); }
+  .lvs-head b{ flex:1; min-width:0; font-size:14px; }
+  .lvs-head small{ display:block; font-weight:400; font-size:11px; color:var(--muted); }
+  .lvs-x{ border:0; background:none; color:var(--muted); font-size:18px; min-width:32px; min-height:32px; cursor:pointer; }
+  .lvs-list{ overflow-y:auto; padding:6px; display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:6px; }
+  .lvs-list button{ font:inherit; font-size:13px; min-height:36px; padding:6px 8px; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; }
+  .lvs-list button.on{ border-color:var(--ice); background:var(--ice-dim); color:var(--ice); font-weight:700; }
+  .lvs-list button.up{ color:var(--amber); }
+  .lvs-list button small{ display:block; font-size:10px; }
+  @media (max-width:700px){
+    .lvs-ov{ align-items:flex-end; padding:0; }
+    .lvs-box{ max-width:none; border-radius:16px 16px 0 0; max-height:62vh; }
+  }
+  /* Pets Level card, design C v2 (19 Oct 2026). */
+  .pc-head{ display:flex; align-items:center; gap:10px; }
+  .pc-head img{ width:48px; height:48px; border-radius:12px; object-fit:cover; flex-shrink:0; }
+  .pc-head .name{ font-size:16px; font-weight:700; min-width:0; }
+  .pc-head .exp-count{ margin-inline-start:auto; flex-shrink:0; }
+  .pc-done-ic{ display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:rgba(80,200,120,.18); color:var(--good); font-size:12px; flex-shrink:0; }
+  .pc-row{ display:flex; align-items:flex-end; gap:10px; margin-top:10px; }
+  .pc-stat{ flex:1 1 0; min-width:0; }
+  .pc-stat span{ display:block; font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .pc-stat b{ display:block; font-size:20px; line-height:1.15; }
+  .pc-stat small{ display:block; font-size:10.5px; color:var(--muted); }
+  .pc-bar{ display:flex; height:5px; margin-top:5px; border-radius:3px; overflow:hidden; background:var(--panel-2); }
+  .pc-bar i{ display:block; height:100%; background:var(--good); }
+  .pc-bar i + i{ background:rgba(125,200,255,.6); }
+  .pc-st{ flex:0 0 auto; text-align:center; }
+  .pc-st > span{ display:block; font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+  .pc-step{ display:flex; align-items:center; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); }
+  .pc-step.tgt{ border-color:rgba(125,200,255,.55); }
+  .pc-step button{ border:0; background:none; color:var(--ice); font-size:18px; font-weight:700; width:30px; min-height:38px; cursor:pointer; touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+  .pc-step button:disabled{ color:var(--muted); opacity:.45; cursor:default; }
+  .pc-val{ position:relative; min-width:46px; font-size:14px; font-weight:700; white-space:nowrap; text-align:center; }
+  .pc-step.tgt .pc-val{ color:var(--ice); }
+  .pc-val.up{ color:var(--amber) !important; }
+  .pc-val select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
+  .pc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .pc-chip{ display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border:1px solid var(--line); border-radius:999px; font-size:12.5px; font-weight:600; }
+  .pc-chip img{ width:18px; height:18px; object-fit:contain; }
+  .pc-done{ display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:5px 12px; border:1px solid rgba(80,200,120,.5); border-radius:999px; color:var(--good); font-size:12.5px; }
+  @media (max-width:379px){
+    .pc-row{ flex-wrap:wrap; }
+    .pc-stat{ flex:1 1 100%; }
+    .pc-st{ flex:1 1 0; }
+    .pc-step{ justify-content:space-between; }
+  }
   .bud-partial{ font-size:11.5px; margin-top:6px; color:var(--amber); }
   .bud-vip{ margin-top:8px; padding:7px 10px; border-radius:8px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:11.5px; }
   .vip-bundle{ display:flex; align-items:center; gap:10px; }
@@ -3600,6 +3671,9 @@ const T = {
   upcoming_col: { en: "Upcoming" },
   adm_unsaved_leave: { en: "You have {n} unsaved changes. Leave without saving?" },
   pet_advanced: { en: "Advanced" },
+  pet_adv_short: { en: "Adv" },
+  pet_done: { en: "Done · nothing needed" },
+  pet_count_tip: { en: "Ticked: this pet counts in the totals, Dashboard and Budgets." },
   material_food: { en: "Food" },
   material_manual: { en: "Manual" },
   material_potion: { en: "Potion" },
@@ -6187,6 +6261,33 @@ async function loadHeroGearData() {
 
 
 // Renders the Quick Select + per-piece calculator + totals + stats.
+// Level list to pick one level (Heroes Gears chips, owner picked A, 19 Oct
+// 2026): a bottom sheet on phones, a small window on PC.
+// o: { title, sub, items: [{ v, label, up }], value, onPick(v) }
+function cardLevelSheet(o) {
+  const old = document.getElementById("cardLvSheet");
+  if (old) old.remove();
+  const ov = document.createElement("div");
+  ov.id = "cardLvSheet"; ov.className = "lvs-ov";
+  ov.innerHTML = `<div class="lvs-box" role="dialog" aria-modal="true">
+      <div class="lvs-head"><b>${esc(o.title)}${o.sub ? `<small>${esc(o.sub)}</small>` : ""}</b><button type="button" class="lvs-x" data-lvsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="lvs-list">${o.items.map((it) => `<button type="button" data-lvsv="${esc(String(it.v))}" class="${String(it.v) === String(o.value) ? "on" : ""}${it.up ? " up" : ""}">${esc(it.label)}${it.up ? `<small>${esc(t("upcoming_tag"))}</small>` : ""}</button>`).join("")}</div>
+    </div>`;
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); window.removeEventListener("popstate", close); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  window.addEventListener("popstate", close);
+  ov.onclick = (e) => {
+    if (e.target === ov || e.target.closest("[data-lvsx]")) { close(); return; }
+    const b = e.target.closest("[data-lvsv]");
+    if (!b) return;
+    close();
+    o.onPick(b.dataset.lvsv);
+  };
+  const on = ov.querySelector(".lvs-list .on"), list = ov.querySelector(".lvs-list");
+  if (on) list.scrollTop = Math.max(0, on.offsetTop - list.clientHeight / 2 + on.offsetHeight / 2);
+}
 async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
   await ensureHeroGearData();
@@ -6237,26 +6338,25 @@ async function renderGearLevelingGroup(target) {
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
   const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
   const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button");
+  // Piece cards = design A compact rows (owner, 19 Oct 2026): picture, name,
+  // stat now → target, Max; one row per track with Now / Target chips that
+  // open the level list (cardLevelSheet).
+  const chipLabel = (t, i) => {
+    const r = HERO_GEAR_TABLES_CACHE[t][i];
+    return r ? rowLabel(r) : String(i);
+  };
+  const chipHtml = (troop, piece, t, role) => {
+    const v = activeState[troop][piece][t][role];
+    return `<button type="button" class="lvchip${role === "to" ? " tgt" : ""}${v > heroTrackReleasedIdx(t) ? " up" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)}">${esc(chipLabel(t, v))}</button>`;
+  };
   const pieceCard = (troop, piece) => `
     <div class="t12x-card" style="padding:12px 14px;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-        <img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" style="width:48px; height:48px; object-fit:contain; flex-shrink:0;" loading="lazy" />
-        <div class="name" style="flex:1; min-width:0; font-size:15px; font-weight:700;">${esc(pieceDisplayName(piece))}</div>
+      <div class="hgc-head">
+        <span class="hgc-pic"><img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" loading="lazy" /></span>
+        <div class="hgc-name"><div class="name">${esc(pieceDisplayName(piece))}</div><div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div></div>
         <button type="button" class="t12x-maxall" data-heropiecemax="${esc(troop)}|${esc(piece)}">${esc(maxLbl)}</button>
       </div>
-      ${GEAR_LEVELING_TABLES.map(
-        (t) => `
-      <div style="padding:6px 0; border-top:1px solid var(--line);">
-        <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(trackDisplayName(t))}</div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <span class="t12x-lbl">${esc(nowLbl)}</span>
-          <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="from" style="flex:1; min-width:0;">${optsByTrack[t]}</select>
-          <span class="t12x-lbl">${esc(tgtLbl)}</span>
-          <select data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="to" style="flex:1; min-width:0;">${optsByTrack[t]}</select>
-        </div>
-      </div>`
-      ).join("")}
-      <div class="plx-piecestat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
+      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span>${chipHtml(troop, piece, t, "to")}</div>`).join("")}
     </div>`;
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
@@ -6323,25 +6423,39 @@ async function renderGearLevelingGroup(target) {
           }
         });
         saveCalcState(activeStorageKey, activeState);
-        // Only this piece's 4 dropdowns change: set them and refresh the
-        // totals, instead of redrawing the whole page (~2,300 options).
-        wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
-          if (sel.dataset.troop !== troop || sel.dataset.piece !== piece) return;
-          sel.value = String(activeState[troop][piece][sel.dataset.track][sel.dataset.role]);
-        });
+        // Only this piece's 4 chips change: set them and refresh the totals.
+        syncChips((c) => c.dataset.troop === troop && c.dataset.piece === piece);
         syncSetAll();
         updateHeroGearTotals();
       });
     });
 
-    wrap.querySelectorAll("select[data-troop]").forEach((sel) => {
-      const { troop, piece, track, role } = sel.dataset;
-      sel.value = String(activeState[troop][piece][track][role]);
-      sel.addEventListener("change", () => {
-        activeState[troop][piece][track][role] = Number(sel.value);
-        saveCalcState(activeStorageKey, activeState);
-        syncSetAll();
-        updateHeroGearTotals();
+    // Chip text (and the Upcoming colour) from the saved levels.
+    function syncChips(match) {
+      wrap.querySelectorAll("button.lvchip[data-troop]").forEach((c) => {
+        if (match && !match(c)) return;
+        const { troop, piece, track, role } = c.dataset, v = activeState[troop][piece][track][role];
+        c.textContent = chipLabel(track, v);
+        c.classList.toggle("up", v > heroTrackReleasedIdx(track));
+      });
+    }
+    wrap.addEventListener("click", (ev) => {
+      const c = ev.target.closest("button.lvchip[data-troop]");
+      if (!c) return;
+      const { troop, piece, track, role } = c.dataset;
+      const capIdx = heroTrackPickIdx(track), rel = heroTrackReleasedIdx(track);
+      cardLevelSheet({
+        title: `${pieceDisplayName(piece)} · ${role === "to" ? tgtLbl : nowLbl}`,
+        sub: `${troopDisplayName(troop)} · ${trackDisplayName(track)}`,
+        items: HERO_GEAR_TABLES_CACHE[track].slice(0, capIdx + 1).map((r, i) => ({ v: i, label: rowLabel(r), up: i > rel })),
+        value: activeState[troop][piece][track][role],
+        onPick: (v) => {
+          activeState[troop][piece][track][role] = Number(v);
+          saveCalcState(activeStorageKey, activeState);
+          syncChips((x) => x === c);
+          syncSetAll();
+          updateHeroGearTotals();
+        },
       });
     });
     // "Set all" for this troop: shows the level when all 4 pieces are on it.
@@ -6357,9 +6471,7 @@ async function renderGearLevelingGroup(target) {
       const track = sel.dataset.hgsetall, role = sel.dataset.role;
       HERO_GEAR_PIECE_NAMES.forEach((pc) => { activeState[troop][pc][track][role] = Number(sel.value); });
       saveCalcState(activeStorageKey, activeState);
-      wrap.querySelectorAll("select[data-troop]").forEach((ps) => {
-        if (ps.dataset.track === track && ps.dataset.role === role) ps.value = sel.value;
-      });
+      syncChips((c) => c.dataset.track === track && c.dataset.role === role);
       updateHeroGearTotals();
     }));
     syncSetAll();
@@ -20275,16 +20387,6 @@ function computeT11Stats(troop, useMax) {
   return stats;
 }
 
-function smallResourceCard(icon, name, value) {
-  return `<div class="metric" style="padding:6px 8px; min-width:80px;">
-    <div style="display:flex; align-items:center; gap:6px;">
-      ${icon ? `<img src="${icon}" alt="" style="width:16px; height:16px; object-fit:contain; flex-shrink:0;" loading="lazy" />` : ""}
-      <div class="label" style="text-align:start; font-size:9px;">${esc(name)}</div>
-    </div>
-    <div class="val" style="margin-top:4px; font-size:13px;">${value}</div>
-  </div>`;
-}
-
 async function renderT11HeliosPage() {
   const seq = RENDER_SEQ;
   await ensureT11StateData();
@@ -22082,7 +22184,7 @@ async function renderExpertsPage() {
             .map((sk) => {
               const max = skillMaxLevel(e.key, sk);
               const st = s.skills[sk];
-              const { exp, book, have: expHaveUsed, expNeed } = skillNeed(e.key, sk, st);
+              const { exp, book, expNeed } = skillNeed(e.key, sk, st);
               const expHaveVal = skillExpHave(st);
               const skillRows = SKILL_CACHE[`${e.key}|${sk}`];
               let curRow = null, desRow = null;
@@ -22117,17 +22219,21 @@ async function renderExpertsPage() {
                 : ""
             }
             ${
-              exp || book
-                ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px;">${Math.round(expNeed).toLocaleString()} EXP \u00b7 ${Math.round(book).toLocaleString()} Books${
-                    expHaveUsed > 0 ? ` <span style="color:var(--good);">(${Math.round(exp).toLocaleString()} \u2212 ${Math.round(expHaveUsed).toLocaleString()})</span>` : ""
-                  }</div>`
-                : ""
+              // EXP line = design B (owner, 19 Oct 2026): "EXP [box] / step EXP [Max]",
+              // then the step's Books still needed. The EXP counts against the whole
+              // current → target step (skillNeed), as before.
+              `<div class="exp-xl">
+              <span>EXP</span>
+              <input type="number" min="0" step="1" inputmode="numeric" class="keep-w${expHaveVal > 0 ? " has" : ""}" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" aria-label="${esc(t("skill_exp_have"))}" style="--xw:${Math.max(3, Math.round(expHaveVal || 0).toLocaleString().length)};" />
+              <span>/ ${bidiNum(Math.round(exp).toLocaleString())} EXP</span>
+              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}">${esc(t("max_button"))}</button>
+              ${
+                expNeed <= 0 && book <= 0
+                  ? `<span class="exp-xl-b ok">&#10003; 0 ${esc(t("resource_books"))}</span>`
+                  : `<span class="exp-xl-b" title="${esc(`${Math.round(expNeed).toLocaleString()} EXP · ${Math.round(book).toLocaleString()} ${t("resource_books")}`)}"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="${esc(t("resource_books"))}" />${bidiNum(Math.round(book).toLocaleString())}</span>`
+              }
+            </div>`
             }
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:3px;">
-              <span class="meta" style="font-size:10px;">${esc(t("skill_exp_have"))}</span>
-              <input type="number" min="0" step="1" inputmode="numeric" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" style="width:110px; flex-shrink:0; padding:4px 8px; font-size:12px; text-align:end;" />
-              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}" style="padding:3px 8px; font-size:11px; flex-shrink:0;">${esc(t("skill_max_exp"))}</button>
-            </div>
           </div>`;
             })
             .join("")}
@@ -22883,36 +22989,57 @@ async function renderPetsDataPage() {
       return html + (group >= 0 ? "</optgroup>" : "");
     };
     const fromOpts = `<option value="-1" ${from === -1 ? "selected" : ""}>${esc(t("not_started"))}</option>` + levelOpts(from);
+    // Card = design C v2 (owner, 19 Oct 2026): stat box (now, of max, bar: green
+    // = now, blue = what the target adds) beside Now / Target steppers; the
+    // number opens the level list (a see-through select on top of it).
+    const lastIdx = levels.length - 1;
+    const shortLbl = (i) => {
+      if (i < 0 || !levels[i]) return "—";
+      const lab = String(levels[i].level_label), n = parseInt(lab, 10) || 0;
+      return /\.1$/.test(lab) ? `${n} ${t("pet_adv_short")}` : String(n);
+    };
+    const statAt = (i) => {
+      for (let k = Math.min(i, lastIdx); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100;
+      return 0;
+    };
+    const tgtStat = Math.max(cur, statAt(to));
+    const pctW = (v) => (max > 0 ? Math.max(0, Math.min(100, (v / max) * 100)) : 0);
+    const nowW = pctW(cur), addW = Math.max(0, pctW(tgtStat) - nowW);
+    const done = needed.food + needed.manual + needed.potion + needed.serum <= 0 && from >= relMax;
+    const step = (role, val, minI, maxI, opts) => `<div class="pc-st"><span>${esc(t(role === "to" ? "t12x_target" : "t12x_now"))}</span>
+        <div class="pc-step${role === "to" ? " tgt" : ""}">
+          <button type="button" data-petstep="${role}" data-d="-1" aria-label="−" ${val <= minI ? "disabled" : ""}>&minus;</button>
+          <span class="pc-val${val > relMax ? " up" : ""}" data-petval="${role}">${esc(shortLbl(val))}<select data-pet${role}="${esc(pet)}" aria-label="${esc(t(role === "to" ? "target_label" : "current_label"))}">${opts}</select></span>
+          <button type="button" data-petstep="${role}" data-d="1" aria-label="+" ${val >= maxI ? "disabled" : ""}>+</button>
+        </div></div>`;
+    const chip = (icon, name, v) => `<span class="pc-chip" title="${esc(name)}"><img src="${esc(icon)}" alt="" />${Math.round(v).toLocaleString()}</span>`;
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:14px; justify-content:flex-start; flex-wrap:nowrap;">
-            <input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:16px; height:16px; cursor:pointer; flex-shrink:0;" />
-            ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0;" />` : ""}
-            <div class="name" style="font-size:16px; font-weight:700; color:${color};">${esc(dataName(pet))}</div>
+          <div class="pc-head">
+            ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" />` : ""}
+            <div class="name" style="color:${color};">${esc(dataName(pet))}</div>
+            ${done ? `<span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}
             ${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
-          </label>
-          ${IS_OWNER ? `<div style="margin:-8px 0 12px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
-          <div class="stats-row-scroll pet-level-row" style="margin-bottom:16px;">
-            <div class="metric" style="padding:8px; min-width:110px; flex:1 1 110px;">
-              <div class="label" style="font-size:9px;">${esc(t("troops_stats_title"))}</div>
-              <div class="val" style="font-size:13px; white-space:nowrap;">${cur.toFixed(1)}% <span style="font-size:9px; color:var(--muted); font-weight:400;">/ ${max.toFixed(1)}%</span></div>
-            </div>
-            <div style="min-width:110px; flex:1 1 110px;">
-              <div class="meta" style="font-size:9px; margin-bottom:4px;">${esc(t("current_label"))}</div>
-              <select data-petfrom="${esc(pet)}" style="width:100%;">${fromOpts}</select>
-            </div>
-            <div style="min-width:110px; flex:1 1 110px;">
-              <div class="meta" style="font-size:9px; margin-bottom:4px;">${esc(t("target_label"))}</div>
-              <select data-petto="${esc(pet)}" style="width:100%;">${levelOpts(to)}</select>
-            </div>
+            <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           </div>
-          <div class="stats-row-scroll">
-            ${smallResourceCard(PET_MATERIAL_ICONS.food, t("material_food"), Math.round(needed.food).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.manual, t("material_manual"), Math.round(needed.manual).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.potion, t("material_potion"), Math.round(needed.potion).toLocaleString())}
-            ${smallResourceCard(PET_MATERIAL_ICONS.serum, t("material_serum"), Math.round(needed.serum).toLocaleString())}
+          ${IS_OWNER ? `<div style="margin-top:6px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
+          <div class="pc-row">
+            <div class="pc-stat">
+              <span>${esc(t("troops_stats_title"))}</span>
+              <b>${bidiNum(`+${cur.toFixed(1)}%`)}</b>
+              <small>${esc(t("of_max_prefix"))} ${bidiNum(`+${max.toFixed(1)}%`)}</small>
+              <div class="pc-bar"><i style="width:${nowW}%;"></i><i style="width:${addW}%;"></i></div>
+            </div>
+            ${step("from", from, -1, lastIdx, fromOpts)}
+            ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
+          ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
+            ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
+            ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
+            ${chip(PET_MATERIAL_ICONS.potion, t("material_potion"), needed.potion)}
+            ${chip(PET_MATERIAL_ICONS.serum, t("material_serum"), needed.serum)}
+          </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
 
@@ -22948,6 +23075,54 @@ async function renderPetsDataPage() {
         renderTotals();
         renderList();
       });
+    });
+    // − / +: one level a tap; holding moves on by itself (the card text
+    // follows while held, saved and redrawn when let go). Now going past the
+    // target takes the target with it; the target stops at Now.
+    let hold = null;
+    const stepOnce = (role, d) => {
+      const s = getState(pet);
+      if (role === "from") {
+        const v = Math.max(-1, Math.min(lastIdx, s.from + d));
+        if (v === s.from) return false;
+        s.from = v;
+        if (s.to < v) s.to = v;
+      } else {
+        const v = Math.max(Math.max(0, s.from), Math.min(lastIdx, s.to + d));
+        if (v === s.to) return false;
+        s.to = v;
+      }
+      PETS_STATE[pet] = s;
+      listEl.querySelectorAll("[data-petval]").forEach((el) => {
+        const i = el.dataset.petval === "from" ? s.from : s.to;
+        el.firstChild.nodeValue = shortLbl(i);
+        el.classList.toggle("up", i > relMax);
+      });
+      return true;
+    };
+    const finish = () => {
+      if (!hold) return;
+      clearTimeout(hold.timer); clearInterval(hold.iv);
+      const changed = hold.changed;
+      hold = null;
+      if (!changed) return;
+      savePetsState();
+      renderTotals();
+      renderList();
+    };
+    listEl.querySelectorAll("[data-petstep]").forEach((b) => {
+      b.onpointerdown = (e) => {
+        if (!e.isPrimary || b.disabled) return;
+        e.preventDefault();
+        finish();
+        const role = b.dataset.petstep, d = Number(b.dataset.d);
+        hold = { changed: stepOnce(role, d), timer: 0, iv: 0 };
+        hold.timer = setTimeout(() => { if (hold) hold.iv = setInterval(() => { if (hold && stepOnce(role, d)) hold.changed = true; }, 90); }, 420);
+      };
+      b.onpointerup = finish;
+      b.onpointerleave = finish;
+      b.onpointercancel = finish;
+      b.onclick = (e) => { if (e.detail === 0) { hold = { changed: stepOnce(b.dataset.petstep, Number(b.dataset.d)) }; finish(); } };
     });
   }
 
