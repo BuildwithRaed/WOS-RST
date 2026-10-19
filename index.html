@@ -713,6 +713,22 @@
   .pur-bh{ display:flex; align-items:baseline; gap:6px; font-size:12px; padding:8px 2px 4px; color:var(--ice); }
   .pur-bh.late{ color:#e0b25a; }
   .pur-bh.wait{ color:var(--ice); }
+  .pur-rm .gs-head b{ font-size:17px; }
+  .pur-rm-warn{ margin:0 0 10px; padding:8px 10px; border:1px solid rgba(224,178,90,.5); border-radius:10px; background:rgba(224,178,90,.08); color:#e0b25a; font-size:12.5px; }
+  .pur-rm-pk{ display:flex; align-items:center; gap:10px; padding:10px; margin-bottom:8px; border-radius:12px; background:rgba(255,255,255,.04); }
+  .pur-rm-pk > span:last-child{ display:flex; flex-direction:column; min-width:0; }
+  .pur-rm-pk .meta{ font-size:12px; }
+  .pur-rm-q{ margin:10px 0 8px; font-size:14px; }
+  .pur-rm-b{ display:flex; flex-direction:column; gap:3px; width:100%; margin-bottom:8px; padding:11px 13px; border-radius:12px; border:1px solid var(--line); background:none; color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pur-rm-b b{ font-size:14.5px; }
+  .pur-rm-b span{ font-size:12px; color:var(--muted); line-height:1.35; }
+  .pur-rm-b.add{ border-color:rgba(76,209,138,.5); background:rgba(76,209,138,.07); }
+  .pur-rm-b.add b{ color:var(--good); }
+  .pur-rm-b.yes{ border-color:var(--ice-dim); background:rgba(80,140,200,.25); }
+  .pur-rm-cancel{ width:100%; }
+  .pur-until{ display:block; margin-top:2px; font-size:12px; color:var(--ice); }
+  .pur-until.soon{ color:#e0b25a; }
+  .pur-until.once{ color:var(--good); }
   .pur-bh.wait .meta{ font-size:11px; }
   .pur-bh .meta{ font-size:11px; }
   .pur-bh-t{ margin-inline-start:auto; color:var(--frost); font-size:12.5px; }
@@ -2494,6 +2510,8 @@ input,select,textarea{
 // Values are handed out as copies, so pages behave exactly as if each state
 // had just been fetched fresh.
 let CALC_STATE_CACHE = null; // { calc_name: state } for CALC_STATE_CACHE_USER
+// When each saved state last changed (from the bulk load, then this visit's saves).
+const CALC_STATE_UPDATED = {};
 let CALC_STATE_CACHE_USER = null;
 let CALC_STATE_PROMISE = null;
 // Saves made before the bulk fetch above has filled the cache. That fetch
@@ -2513,11 +2531,11 @@ function preloadCalcStates() {
   }
   if (!CALC_STATE_PROMISE) {
     const uid = USER_ID;
-    CALC_STATE_PROMISE = sb(`calc_state?user_id=eq.${uid}&select=calc_name,state`)
+    CALC_STATE_PROMISE = sb(`calc_state?user_id=eq.${uid}&select=calc_name,state,updated_at`)
       .then((rows) => {
         if (uid !== USER_ID) return;
         const map = {};
-        (rows || []).forEach((r) => { map[r.calc_name] = r.state; });
+        (rows || []).forEach((r) => { map[r.calc_name] = r.state; if (r.updated_at) CALC_STATE_UPDATED[r.calc_name] = r.updated_at; });
         Object.assign(map, CALC_STATE_PENDING);
         CALC_STATE_PENDING = {};
         CALC_STATE_CACHE = map;
@@ -2599,6 +2617,7 @@ function patchSkinQueued(id, patch) {
 }
 const CALC_SAVE_QUEUE = {}; // calc_name -> { running: Promise|null, next: body|null }
 function saveCalcState(calcName, state) {
+  CALC_STATE_UPDATED[calcName] = new Date().toISOString();
   if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_CACHE[calcName] = cloneState(state);
   else if (CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_PENDING[calcName] = cloneState(state);
   // Serialised now: callers keep changing the same object afterwards.
@@ -3413,7 +3432,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 34; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 35; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4590,6 +4609,27 @@ const T = {
   pur_wk_next: { en: "Next week" },
   pur_wk_n: { en: "Week {n}" },
   pur_wk_past: { en: "Date passed" },
+  pur_until: { en: "Until {date}" },
+  pur_rm_title: { en: "Remove from Bought?" },
+  pur_rm_bought: { en: "bought {date}" },
+  pur_rm_q: { en: "Are this pack's items in your Backpack already?" },
+  pur_rm_add: { en: "Add the items to my Backpack, then remove" },
+  pur_rm_add_d: { en: "Adds them to your Backpack amounts; the pack stays counted as bought." },
+  pur_rm_yes: { en: "Yes, they're in my Backpack" },
+  pur_rm_yes_d: { en: "Removed from the list. Its items count from your Backpack, and the pack stays counted as bought until {date}, so it won't be suggested again." },
+  pur_rm_yes_d_once: { en: "Removed from the list. Its items count from your Backpack, and the pack stays counted as bought, so it won't be suggested again." },
+  pur_rm_no: { en: "No, I didn't get them" },
+  pur_rm_no_d: { en: "Removed. The plan needs these items again and may suggest this pack." },
+  pur_rm_cancel: { en: "Cancel" },
+  pur_rm_old: { en: "Your Backpack was last updated {date}, before you bought this." },
+  pur_rm_never: { en: "Your Backpack has no amounts saved yet." },
+  pur_rm_done_yes: { en: "Removed from Bought · still counted as bought" },
+  pur_rm_done_add: { en: "Added to your Backpack · removed from Bought" },
+  pur_rm_done_no: { en: "Removed · the plan needs these items again" },
+  pur_until_days: { en: "{n} days" },
+  pur_until_tomorrow: { en: "tomorrow" },
+  pur_until_today: { en: "last day" },
+  pur_until_once: { en: "One time · stays" },
   pur_wk_waiting: { en: "Waiting for the pack to appear" },
   pur_wait_note: { en: "still counted" },
   pur_1_pack: { en: "1 pack" },
@@ -7450,6 +7490,47 @@ function packPurchaseUsesLimit(p, link) {
 }
 // The day the running copy of a repeating pack came out (null when it
 // can't be told, e.g. calendar-month packs).
+// Bought packs stay in Bought while that copy of the pack is on sale
+// (owner, 19 Oct 2026): { until: "yyyy-mm-dd" (last day), once: one-time
+// packs that stay }. New-heroes packs end when the next Gen's packs come, or
+// when that hero is already maxed; triggered packs once the expert is past
+// that pack's level.
+function purBoughtUntil(p) {
+  const l = packLinkFor(p.table), d = packParseDay(p.date), DAY = 86400000;
+  if (!d) return { until: null, once: true };
+  const minus1 = (x) => packDayKey(new Date(x.getTime() - DAY));
+  const trig = packTriggerOf(l);
+  if (trig) return packTriggerRowStatus(trig, Number(p.row) || 0).state === "done" ? { until: minus1(packStartOfToday()) } : { until: null, once: true };
+  const ng = /^ng-([sw])-\d+-(.+)$/.exec(String(p.table));
+  if (ng || packIsNewGen(l)) {
+    const rows = (typeof HERO_PLAN_LAST !== "undefined" && HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || [];
+    const r = ng ? rows.find((x) => x.hero && String(x.hero.id) === ng[2]) : null;
+    if (r && (ng[1] === "s" ? r.step >= 30 : !r.hasWidget || r.wLevel >= widgetMaxLevel())) return { until: minus1(packStartOfToday()), maxed: true };
+    // On sale for its own weeks after each new-heroes day (Training: weeks 1–4,
+    // Forge: weeks 5–8); it leaves when those end.
+    const base = newGenBaseDay();
+    if (!base) return { until: null, once: true };
+    const off = (ng ? (ng[1] === "w" ? NG_HERO_DAYS : 0) : packNewGenOffset(p.table)) * DAY;
+    const win = Number(l.window) > 0 ? Math.round(Number(l.window)) : 28;
+    const starts = newGenStarts(base, 12).map((g) => new Date(g.getTime() + off));
+    const at = starts.filter((x) => x <= d).pop();
+    if (at && d < new Date(at.getTime() + win * DAY)) return { until: packDayKey(new Date(at.getTime() + (win - 1) * DAY)) };
+    const next = starts.find((x) => x > d);
+    return next ? { until: minus1(next) } : { until: null, once: true };
+  }
+  const r = l.reset;
+  if (typeof r !== "number" || !(r > 0)) return r === "unlimited" ? { until: p.date } : { until: null, once: true };
+  if (r >= PACK_ONE_TIME_DAYS) return { until: null, once: true };
+  if (r === 30) return { until: packDayKey(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0))) };
+  const anchor = packParseDay(l.resetDay);
+  let start;
+  if (anchor) start = new Date(anchor.getTime() + Math.floor(Math.round((d - anchor) / DAY) / r) * r * DAY);
+  else start = new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * DAY);
+  // The copy ends when the pack leaves the shop: after its "Lasts" days when
+  // set (Hall of Heroes Sun–Tue), else when the next copy comes (owner, 19 Oct 2026).
+  const win = Number(l.window) > 0 ? Math.min(r, Math.round(Number(l.window))) : r;
+  return { until: packDayKey(new Date(start.getTime() + (win - 1) * DAY)) };
+}
 function packCurrentCycleStart(reset, resetDay) {
   if (typeof reset !== "number" || !(reset > 0) || reset === 30) return null;
   const today = packStartOfToday(), anchor = packParseDay(resetDay);
@@ -7818,8 +7899,19 @@ async function renderPurchasesPage() {
     <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span>${formChoice ? "" : `<button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button>`}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
   </details>`;
 
+  // Bought packs whose copy is over leave the list (purBoughtUntil); their data
+  // is erased once their week and month are over too, so My budget's spending
+  // for the running week / month stays right.
+  const untilOf = new Map();
+  const untilFor = (p) => { if (!untilOf.has(p.id)) untilOf.set(p.id, purBoughtUntil(p)); return untilOf.get(p.id); };
+  {
+    const t0 = packStartOfToday(), monthKey = today.slice(0, 7) + "-01", weekKey = packDayKey(new Date(t0.getTime() - ((t0.getUTCDay() + 6) % 7) * 86400000));
+    const keep = (PACK_PURCHASES.list || []).filter((p) => { if (p.status !== "bought") return true; const u = untilFor(p); return u.once || !u.until || u.until >= today || p.date >= monthKey || p.date >= weekKey; });
+    if (keep.length !== (PACK_PURCHASES.list || []).length) { PACK_PURCHASES.list = keep; savePackPurchases(); }
+  }
+  const boughtShown = (p) => { if (p.hidden) return false; const u = untilFor(p); return u.once || !u.until || u.until >= today; };
   // Purchase lists
-  const list = (PACK_PURCHASES.list || []).filter((p) => byId.has(String(p.table)));
+  const list = (PACK_PURCHASES.list || []).filter((p) => byId.has(String(p.table)) && (p.status !== "bought" || boughtShown(p)));
   const coming = list.filter((p) => p.status !== "bought").sort((a, b) => String(a.date).localeCompare(String(b.date)));
   const bought = list.filter((p) => p.status === "bought").sort((a, b) => String(b.date).localeCompare(String(a.date)));
   const cost = (p) => { const tb = byId.get(String(p.table)); return purchasePrice(p, tb) * Math.max(1, Math.floor(Number(p.count) || 1)); };
@@ -7850,6 +7942,14 @@ async function renderPurchasesPage() {
   const mainIcon = (gives) => { for (const k of Object.keys(gives || {})) { if (k === "Gems") continue; const ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") }); if (ic) return ic; } return ""; };
   // The plan a "will buy" came from (saved with it since 19 Oct 2026; older ones have none).
   const planTagOf = (g) => { const k = g.items[0].plan; return ["both", "target", "budget"].includes(k) && g.items.every((p) => p.plan === k) ? k : ""; };
+  const untilHtml = (g) => {
+    const us = g.items.map(untilFor);
+    if (us.every((u) => u.once || !u.until)) return `<span class="pur-until once">&infin; ${esc(t("pur_until_once"))}</span>`;
+    const last = us.filter((u) => u.until).map((u) => u.until).sort().pop();
+    const left = Math.round((packParseDay(last) - packStartOfToday()) / 86400000);
+    const when = left <= 0 ? t("pur_until_today") : left === 1 ? t("pur_until_tomorrow") : t("pur_until_days").replace("{n}", left);
+    return `<span class="pur-until${left <= 2 ? " soon" : ""}">${esc(t("pur_until").replace("{date}", shortDay(last)))} · ${esc(when)}</span>`;
+  };
   const groupHtml = (g, kind, bk) => {
     const tb = g.tb, link = packLinkFor(tb.id);
     const n = g.items.reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
@@ -7860,6 +7960,7 @@ async function renderPurchasesPage() {
     const dates = g.items.map((p) => p.date);
     const when = dates.length === 1 ? shortDay(dates[0]) : `${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today && !purTriggerWaiting(p));
+    // Bought (owner, 19 Oct 2026): how long the row stays — "Until Oct 25 · 6 days" (amber at 2 days or less), one-time packs stay.
     const gives = purchaseGives(g.first, tb), ic = mainIcon(gives);
     const name = purShortName((g.first.choice && g.first.choice.name) || tb.title || "");
     // Rows = design B (owner, 19 Oct 2026): name on up to 2 lines with its "×n"
@@ -7871,7 +7972,7 @@ async function renderPurchasesPage() {
     return `<div class="pur-rw${rowOpen ? " open" : ""}" data-purgrp="${esc(id)}">
       <div class="pur-row" data-purrowtap role="button" tabindex="0" aria-expanded="${rowOpen}">
         <span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(name.charAt(0))}</i>`}</span>
-        <span class="pur-row-t"><b class="pur-row-n">${nameHtml}</b><span class="pur-row-s"><b class="pur-price">${esc(packFmtMoney(total, link.currency))}</b><span class="meta"> · ${esc(when)}</span>${planTagOf(g) ? ` <span class="pur-cmp pur-cmp-${planTagOf(g)}">${esc(t("pur_tag_" + planTagOf(g)))}</span>` : ""}${late ? ` <span class="pur-late">&#9888;</span>` : ""}</span></span>
+        <span class="pur-row-t"><b class="pur-row-n">${nameHtml}</b><span class="pur-row-s"><b class="pur-price">${esc(packFmtMoney(total, link.currency))}</b><span class="meta"> · ${esc(when)}</span>${planTagOf(g) ? ` <span class="pur-cmp pur-cmp-${planTagOf(g)}">${esc(t("pur_tag_" + planTagOf(g)))}</span>` : ""}${late ? ` <span class="pur-late">&#9888;</span>` : ""}</span>${kind === "b" ? untilHtml(g) : ""}</span>
         ${kind === "c" ? `<button type="button" class="pur-bt ok" data-purgmove="bought" title="${esc(allBought)}" aria-label="${esc(allBought)}">&#10003;</button>` : ""}
         <button type="button" class="pur-bt" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button>
       </div>
@@ -8715,9 +8816,77 @@ async function renderPurchasesPage() {
   const wcReset = content.querySelector("[data-wcresetall]");
   if (wcReset) wcReset.addEventListener("click", () => { wcCards.forEach((tb) => { delete MY_CARDS_ACTIVE[String(tb.id)]; }); wcSave(); });
   content.querySelectorAll("[data-wcopen]").forEach((b) => b.addEventListener("click", () => packOpenSettingsOnPacks(b.dataset.wcopen)));
+  // ✕ on a Bought pack (owner picked B, 19 Oct 2026): are its items in the
+  // Backpack already? Yes → off the list but still counted as bought until
+  // its copy ends (p.hidden); "Add them" → added to the Backpack, then the
+  // same; No → removed, the plan needs the items again.
+  const rawGives = (p, tb) => {
+    if (p.choice && p.choice.gives) return { ...p.choice.gives };
+    const link = packLinkFor(tb.id), cols = packEffectiveCols(tb), out = {};
+    const rows = link.sequential ? (tb.rows || []).map((_, i) => i).filter((i) => i >= (Number(p.from) || 0) && i <= (Number(p.row) || 0)) : [Number(p.row) || 0];
+    rows.forEach((ri) => {
+      const cells = ((tb.rows || [])[ri] || {}).cells || [];
+      Object.keys(cols).forEach((ci) => { if (!cols[ci]) return; const q = packParseNum(cells[ci]) * packColMultiplier(link, ci); if (q > 0) out[cols[ci]] = (out[cols[ci]] || 0) + q; });
+    });
+    return out;
+  };
+  const openBoughtRemove = (items) => {
+    if (!items.length) return;
+    const tb = byId.get(String(items[0].table));
+    if (!tb) return;
+    const n = items.reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
+    const gives = {};
+    items.forEach((p) => { const c = Math.max(1, Math.floor(Number(p.count) || 1)); Object.entries(rawGives(p, tb)).forEach(([k, v]) => { gives[k] = (gives[k] || 0) + v * c; }); });
+    const addable = Object.keys(gives).filter((k) => k !== "Gems" && gives[k] > 0);
+    const name = purShortName((items[0].choice && items[0].choice.name) || tb.title || "");
+    const lastBuy = items.map((p) => p.date).sort().pop();
+    const bpAt = CALC_STATE_UPDATED.backpack ? CALC_STATE_UPDATED.backpack.slice(0, 10) : null;
+    const old = !bpAt || bpAt < lastBuy;
+    const ends = items.map(untilFor).filter((u) => u.until).map((u) => u.until).sort().pop();
+    const total = items.reduce((a, p) => a + cost(p), 0);
+    const ic = mainIcon(purchaseGives(items[0], tb));
+    let m = document.getElementById("purRmSheet");
+    if (!m) { m = document.createElement("div"); m.id = "purRmSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
+    const yesLine = ends ? t("pur_rm_yes_d").replace("{date}", shortDay(ends)) : t("pur_rm_yes_d_once");
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box pur-rm" role="dialog" aria-modal="true">
+      <div class="gs-head"><b style="flex:1;">${esc(t("pur_rm_title"))}</b><button type="button" class="rfa-x" data-rmx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      ${old && addable.length ? `<div class="pur-rm-warn">&#9888; ${esc(bpAt ? t("pur_rm_old").replace("{date}", shortDay(bpAt)) : t("pur_rm_never"))}</div>` : ""}
+      <div class="pur-rm-pk"><span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" />` : `<i>${esc(name.charAt(0))}</i>`}</span><span><b>${esc(name)} ${bidiNum("×" + n)}</b><span class="meta">${esc(packFmtMoney(total, packLinkFor(tb.id).currency))} · ${esc(t("pur_rm_bought").replace("{date}", shortDay(lastBuy)))}</span></span></div>
+      <div class="bud-mats pur-chips">${chipsFor(gives, 1, 8)}</div>
+      <div class="pur-rm-q">${esc(t("pur_rm_q"))}</div>
+      ${addable.length ? `<button type="button" class="pur-rm-b add" data-rm="add"><b>${esc(t("pur_rm_add"))}</b><span>${esc(t("pur_rm_add_d"))}</span></button>` : ""}
+      <button type="button" class="pur-rm-b yes" data-rm="yes"><b>${esc(t("pur_rm_yes"))}</b><span>${esc(yesLine)}</span></button>
+      <button type="button" class="pur-rm-b no" data-rm="no"><b>${esc(t("pur_rm_no"))}</b><span>${esc(t("pur_rm_no_d"))}</span></button>
+      <button type="button" class="btn ghost pur-rm-cancel" data-rmx>${esc(t("pur_rm_cancel"))}</button>
+    </div>`;
+    const close = () => { m.style.display = "none"; };
+    m.onclick = async (ev) => {
+      if (ev.target === m || ev.target.closest("[data-rmx]")) { close(); return; }
+      const b = ev.target.closest("[data-rm]");
+      if (!b) return;
+      const ids = new Set(items.map((p) => p.id));
+      if (b.dataset.rm === "add") {
+        const bp = cloneState((await loadCalcState("backpack").catch(() => null)) || {});
+        addable.forEach((k) => {
+          // Speedups counted in minutes go in as 1-minute speedups (same total time).
+          const sp = /^(Research |Troop |Construction |Expert )?Speedups \(minutes\)$/.exec(k);
+          const key = sp ? `${sp[1] || ""}Speedup 1m` : bpKeyFor(k);
+          bp[key] = Math.round((Number(bp[key]) || 0) + gives[k]);
+        });
+        saveCalcState("backpack", bp);
+      }
+      if (b.dataset.rm === "no") PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => !ids.has(p.id));
+      else PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (ids.has(p.id) ? { ...p, hidden: true } : p));
+      close();
+      savePackPurchases();
+      toast(t(b.dataset.rm === "no" ? "pur_rm_done_no" : b.dataset.rm === "add" ? "pur_rm_done_add" : "pur_rm_done_yes"));
+      redraw();
+    };
+    m.style.display = "flex";
+  };
   content.querySelectorAll("[data-purgrp]").forEach((box) => {
     const id = box.dataset.purgrp, kind = id.slice(0, 1), rest = id.slice(2), bk = rest.slice(0, rest.indexOf("|")), gkey = rest.slice(rest.indexOf("|") + 1);
-    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought") && bucketFor(kind, p) === bk;
+    const inGroup = (p) => purGroupKey(p) === gkey && (kind === "c" ? p.status !== "bought" : p.status === "bought" && boughtShown(p)) && bucketFor(kind, p) === bk;
     // Tap a line: its items, Used for and buttons open under it.
     const head = box.querySelector("[data-purrowtap]");
     const tog = () => {
@@ -8739,6 +8908,7 @@ async function renderPurchasesPage() {
     const gm = box.querySelector("[data-purgmove]");
     if (gm) gm.addEventListener("click", () => { PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (inGroup(p) ? toBought(p) : p)); savePackPurchases(); redraw(); });
     box.querySelector("[data-purgdel]").addEventListener("click", () => {
+      if (kind === "b") { openBoughtRemove(PACK_PURCHASES.list.filter(inGroup)); return; }
       const n = PACK_PURCHASES.list.filter(inGroup).length;
       if (n > 1 && !confirm(t("pur_remove_all_q").replace("{n}", n))) return;
       PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => !inGroup(p)); savePackPurchases(); redraw();
