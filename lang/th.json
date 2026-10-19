@@ -1825,6 +1825,8 @@
 "t:rm_goal_nopacks":"ไม่ต้องซื้อ: ของที่มีพอแล้ว",
 "nav.p:roadmap":"แผนงาน",
 "t:pur_wk_past":"เลยวันที่แล้ว",
+"t:pur_wk_waiting":"รอแพ็กปรากฏ",
+"t:pur_wait_note":"ยังนับอยู่",
 "t:pur_1_pack":"1 แพ็ก",
 "t:pur_updating":"กำลังอัปเดต…",
 "t:pur_tiers_upto":"ระดับ 1–{tier}",

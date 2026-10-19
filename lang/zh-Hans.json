@@ -1826,6 +1826,8 @@
 "t:rm_goal_nopacks":"无需购买：现有的已经足够。",
 "nav.p:roadmap":"路线图",
 "t:pur_wk_past":"日期已过",
+"t:pur_wk_waiting":"等待礼包出现",
+"t:pur_wait_note":"仍计入",
 "t:pur_1_pack":"1个礼包",
 "t:pur_updating":"正在更新…",
 "t:pur_tiers_upto":"第1–{tier}阶",

@@ -1825,6 +1825,8 @@
 "t:rm_goal_nopacks":"Không cần mua: những gì bạn có đã đủ.",
 "nav.p:roadmap":"Lộ trình",
 "t:pur_wk_past":"Đã qua ngày",
+"t:pur_wk_waiting":"Đang chờ gói xuất hiện",
+"t:pur_wait_note":"vẫn được tính",
 "t:pur_1_pack":"1 gói",
 "t:pur_updating":"Đang cập nhật…",
 "t:pur_tiers_upto":"Bậc 1–{tier}",

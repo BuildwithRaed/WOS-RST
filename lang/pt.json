@@ -1825,6 +1825,8 @@
 "t:rm_goal_nopacks":"Nada a comprar: o que você tem já cobre.",
 "nav.p:roadmap":"Roteiro",
 "t:pur_wk_past":"Data passada",
+"t:pur_wk_waiting":"Aguardando o pacote aparecer",
+"t:pur_wait_note":"ainda contado",
 "t:pur_1_pack":"1 pacote",
 "t:pur_updating":"Atualizando…",
 "t:pur_tiers_upto":"Níveis 1–{tier}",
