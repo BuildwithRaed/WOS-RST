@@ -373,25 +373,12 @@
   .plx-piecestat.hgc-stat:empty{ display:none; }
   .hgc-row{ display:flex; align-items:center; gap:6px; padding:8px 0 0; margin-top:8px; border-top:1px dashed var(--line); }
   .hgc-tr{ flex:1; min-width:0; font-size:12.5px; color:var(--frost); }
-  .lvchip{ font:inherit; font-size:13px; font-weight:700; min-width:64px; min-height:34px; padding:5px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; white-space:nowrap; }
+  .lvchip{ font:inherit; font-size:13px; font-weight:700; min-width:64px; max-width:110px; min-height:34px; padding:5px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; white-space:nowrap; -webkit-appearance:none; appearance:none; text-align:center; text-align-last:center; }
   .lvchip.tgt{ border-color:rgba(125,200,255,.55); color:var(--ice); }
   .lvchip.up{ border-color:var(--amber); color:var(--amber); }
   .lvarr{ color:var(--muted); font-size:12px; }
-  .lvs-ov{ position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
-  .lvs-box{ background:var(--panel); border:1px solid var(--line); border-radius:14px; width:100%; max-width:340px; max-height:70vh; display:flex; flex-direction:column; overflow:hidden; }
-  .lvs-head{ display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--line); }
-  .lvs-head b{ flex:1; min-width:0; font-size:14px; }
-  .lvs-head small{ display:block; font-weight:400; font-size:11px; color:var(--muted); }
-  .lvs-x{ border:0; background:none; color:var(--muted); font-size:18px; min-width:32px; min-height:32px; cursor:pointer; }
-  .lvs-list{ overflow-y:auto; padding:6px; display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:6px; }
-  .lvs-list button{ font:inherit; font-size:13px; min-height:36px; padding:6px 8px; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; }
-  .lvs-list button.on{ border-color:var(--ice); background:var(--ice-dim); color:var(--ice); font-weight:700; }
-  .lvs-list button.up{ color:var(--amber); }
-  .lvs-list button small{ display:block; font-size:10px; }
   @media (max-width:700px){
-    .lvs-ov{ align-items:flex-end; padding:0; }
-    .lvs-box{ max-width:none; border-radius:16px 16px 0 0; max-height:62vh; }
-  }
+      }
   /* Pets Level card, design C v2 (19 Oct 2026). */
   .pc-head{ display:flex; align-items:center; gap:10px; }
   .pc-head img{ width:48px; height:48px; border-radius:12px; object-fit:cover; flex-shrink:0; }
@@ -6261,33 +6248,6 @@ async function loadHeroGearData() {
 
 
 // Renders the Quick Select + per-piece calculator + totals + stats.
-// Level list to pick one level (Heroes Gears chips, owner picked A, 19 Oct
-// 2026): a bottom sheet on phones, a small window on PC.
-// o: { title, sub, items: [{ v, label, up }], value, onPick(v) }
-function cardLevelSheet(o) {
-  const old = document.getElementById("cardLvSheet");
-  if (old) old.remove();
-  const ov = document.createElement("div");
-  ov.id = "cardLvSheet"; ov.className = "lvs-ov";
-  ov.innerHTML = `<div class="lvs-box" role="dialog" aria-modal="true">
-      <div class="lvs-head"><b>${esc(o.title)}${o.sub ? `<small>${esc(o.sub)}</small>` : ""}</b><button type="button" class="lvs-x" data-lvsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
-      <div class="lvs-list">${o.items.map((it) => `<button type="button" data-lvsv="${esc(String(it.v))}" class="${String(it.v) === String(o.value) ? "on" : ""}${it.up ? " up" : ""}">${esc(it.label)}${it.up ? `<small>${esc(t("upcoming_tag"))}</small>` : ""}</button>`).join("")}</div>
-    </div>`;
-  document.body.appendChild(ov);
-  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); window.removeEventListener("popstate", close); };
-  const onKey = (e) => { if (e.key === "Escape") close(); };
-  document.addEventListener("keydown", onKey);
-  window.addEventListener("popstate", close);
-  ov.onclick = (e) => {
-    if (e.target === ov || e.target.closest("[data-lvsx]")) { close(); return; }
-    const b = e.target.closest("[data-lvsv]");
-    if (!b) return;
-    close();
-    o.onPick(b.dataset.lvsv);
-  };
-  const on = ov.querySelector(".lvs-list .on"), list = ov.querySelector(".lvs-list");
-  if (on) list.scrollTop = Math.max(0, on.offsetTop - list.clientHeight / 2 + on.offsetHeight / 2);
-}
 async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
   await ensureHeroGearData();
@@ -6339,15 +6299,12 @@ async function renderGearLevelingGroup(target) {
   const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
   const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button");
   // Piece cards = design A compact rows (owner, 19 Oct 2026): picture, name,
-  // stat now → target, Max; one row per track with Now / Target chips that
-  // open the level list (cardLevelSheet).
-  const chipLabel = (t, i) => {
-    const r = HERO_GEAR_TABLES_CACHE[t][i];
-    return r ? rowLabel(r) : String(i);
-  };
+  // stat now → target, Max; one row per track with Now / Target level chips.
+  // The chips are real dropdowns (owner, 19 Oct 2026: "it should be a dropdown"),
+  // styled as chips; the phone opens its own level list.
   const chipHtml = (troop, piece, t, role) => {
     const v = activeState[troop][piece][t][role];
-    return `<button type="button" class="lvchip${role === "to" ? " tgt" : ""}${v > heroTrackReleasedIdx(t) ? " up" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)}">${esc(chipLabel(t, v))}</button>`;
+    return `<select class="lvchip${role === "to" ? " tgt" : ""}${v > heroTrackReleasedIdx(t) ? " up" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)} · ${esc(trackDisplayName(t))}">${optsByTrack[t]}</select>`;
   };
   const pieceCard = (troop, piece) => `
     <div class="t12x-card" style="padding:12px 14px;">
@@ -6432,32 +6389,22 @@ async function renderGearLevelingGroup(target) {
 
     // Chip text (and the Upcoming colour) from the saved levels.
     function syncChips(match) {
-      wrap.querySelectorAll("button.lvchip[data-troop]").forEach((c) => {
+      wrap.querySelectorAll("select.lvchip[data-troop]").forEach((c) => {
         if (match && !match(c)) return;
         const { troop, piece, track, role } = c.dataset, v = activeState[troop][piece][track][role];
-        c.textContent = chipLabel(track, v);
+        c.value = String(v);
         c.classList.toggle("up", v > heroTrackReleasedIdx(track));
       });
     }
-    wrap.addEventListener("click", (ev) => {
-      const c = ev.target.closest("button.lvchip[data-troop]");
-      if (!c) return;
+    wrap.querySelectorAll("select.lvchip[data-troop]").forEach((c) => c.addEventListener("change", () => {
       const { troop, piece, track, role } = c.dataset;
-      const capIdx = heroTrackPickIdx(track), rel = heroTrackReleasedIdx(track);
-      cardLevelSheet({
-        title: `${pieceDisplayName(piece)} · ${role === "to" ? tgtLbl : nowLbl}`,
-        sub: `${troopDisplayName(troop)} · ${trackDisplayName(track)}`,
-        items: HERO_GEAR_TABLES_CACHE[track].slice(0, capIdx + 1).map((r, i) => ({ v: i, label: rowLabel(r), up: i > rel })),
-        value: activeState[troop][piece][track][role],
-        onPick: (v) => {
-          activeState[troop][piece][track][role] = Number(v);
-          saveCalcState(activeStorageKey, activeState);
-          syncChips((x) => x === c);
-          syncSetAll();
-          updateHeroGearTotals();
-        },
-      });
-    });
+      activeState[troop][piece][track][role] = Number(c.value);
+      saveCalcState(activeStorageKey, activeState);
+      syncChips((x) => x === c);
+      syncSetAll();
+      updateHeroGearTotals();
+    }));
+    syncChips();
     // "Set all" for this troop: shows the level when all 4 pieces are on it.
     function syncSetAll() {
       wrap.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
