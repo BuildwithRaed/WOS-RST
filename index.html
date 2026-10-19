@@ -7300,9 +7300,14 @@ function renderMyPackDates(el, tables) {
   // Dated packs of one group move together (see partners below), so they're
   // one row: e.g. both Myriad Bazaar tables are "Myriad Bazzar".
   const rows = [], together = new Map(); // lead id -> how many tables it stands for
+  // Only tables linked as one pack (same "Same pack as" set, e.g. the two
+  // Myriad Bazaar tables) share a row; a shared category (Events: Fishing Event,
+  // Dreamscape Memory) does not (owner, 19 Oct 2026: Fishing Event was hidden
+  // inside the Dreamscape Memory row).
+  const setKey = (id) => packLinkSetOf(id) || "";
   list.forEach((tb) => {
-    const g = packLinkFor(tb.id).group || "";
-    const lead = g ? rows.find((x) => (packLinkFor(x.id).group || "") === g) : null;
+    const g = setKey(tb.id);
+    const lead = g ? rows.find((x) => setKey(x.id) === g) : null;
     if (lead) { together.set(String(lead.id), (together.get(String(lead.id)) || 1) + 1); return; }
     rows.push(tb);
   });
@@ -7342,12 +7347,11 @@ function renderMyPackDates(el, tables) {
     setTimeout(() => renderMyPackDates(el, tables), 0); // not while the input is still handling its change/blur
     await saveCalcState("my_pack_dates", MY_PACK_DATES);
   };
-  // Dated packs in the same group come together, so a new date moves every
-  // allowed dated table of that group.
+  // Linked dated packs come together, so a new date moves every table of the set.
   const partners = (id) => {
-    const l = packLinkFor(id);
-    if (!l.group) return [String(id)];
-    return list.filter((tb) => packLinkFor(tb.id).group === l.group).map((tb) => String(tb.id));
+    const g = setKey(id);
+    if (!g) return [String(id)];
+    return list.filter((tb) => setKey(tb.id) === g).map((tb) => String(tb.id));
   };
   el.querySelectorAll("[data-mydate]").forEach((inp) => inp.addEventListener("change", () => {
     const id0 = inp.dataset.mydate;
@@ -7842,6 +7846,8 @@ async function renderPurchasesPage() {
   };
   const shortDay = (k) => fmtDay(k).replace(/,? \d{4}$/, "");
   const mainIcon = (gives) => { for (const k of Object.keys(gives || {})) { if (k === "Gems") continue; const ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") }); if (ic) return ic; } return ""; };
+  // The plan a "will buy" came from (saved with it since 19 Oct 2026; older ones have none).
+  const planTagOf = (g) => { const k = g.items[0].plan; return ["both", "target", "budget"].includes(k) && g.items.every((p) => p.plan === k) ? k : ""; };
   const groupHtml = (g, kind, bk) => {
     const tb = g.tb, link = packLinkFor(tb.id);
     const n = g.items.reduce((a, p) => a + Math.max(1, Math.floor(Number(p.count) || 1)), 0);
@@ -7863,7 +7869,7 @@ async function renderPurchasesPage() {
     return `<div class="pur-rw${rowOpen ? " open" : ""}" data-purgrp="${esc(id)}">
       <div class="pur-row" data-purrowtap role="button" tabindex="0" aria-expanded="${rowOpen}">
         <span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(name.charAt(0))}</i>`}</span>
-        <span class="pur-row-t"><b class="pur-row-n">${nameHtml}</b><span class="pur-row-s"><b class="pur-price">${esc(packFmtMoney(total, link.currency))}</b><span class="meta"> · ${esc(when)}</span>${late ? ` <span class="pur-late">&#9888;</span>` : ""}</span></span>
+        <span class="pur-row-t"><b class="pur-row-n">${nameHtml}</b><span class="pur-row-s"><b class="pur-price">${esc(packFmtMoney(total, link.currency))}</b><span class="meta"> · ${esc(when)}</span>${planTagOf(g) ? ` <span class="pur-cmp pur-cmp-${planTagOf(g)}">${esc(t("pur_tag_" + planTagOf(g)))}</span>` : ""}${late ? ` <span class="pur-late">&#9888;</span>` : ""}</span></span>
         ${kind === "c" ? `<button type="button" class="pur-bt ok" data-purgmove="bought" title="${esc(allBought)}" aria-label="${esc(allBought)}">&#10003;</button>` : ""}
         <button type="button" class="pur-bt" data-purgdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button>
       </div>
@@ -8144,6 +8150,9 @@ async function renderPurchasesPage() {
     // Both plans first, then this plan only, then the other plan only.
     const rank = (i) => (i >= nFollow ? 2 : sel.match.has(i) ? 0 : 1);
     const list = sel ? [...sel.items.entries()].sort((a, b) => (cmp ? rank(a[0]) - rank(b[0]) : 0) || Math.min(...a[1].map((x) => x.off)) - Math.min(...b[1].map((x) => x.off))) : [];
+    // Which plan a pick came from, kept on the purchase so Coming shows it
+    // (owner, 19 Oct 2026): "both" / "target" / "budget".
+    const planTag = (i) => (cmp ? (i >= nFollow ? otherName : sel && sel.match.has(i) ? "both" : follow) : plan && plan.spend ? "budget" : "target");
     const tagHtml = (i, n) => {
       if (!cmp) return "";
       if (i >= nFollow) return `<span class="pur-cmp pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))}</span> `;
@@ -8327,7 +8336,7 @@ async function renderPurchasesPage() {
         if (!tb) return;
         if (r !== rows[i] || i >= nFollow) asPlanned = false;
         xs.forEach((x) => took.push({ i, off: x.off, count: x.count }));
-        xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
+        xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", plan: r !== rows[i] ? otherName : planTag(i), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
       });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
@@ -8346,7 +8355,7 @@ async function renderPurchasesPage() {
     const allBtn0 = box.querySelector("[data-purwkall]");
     if (allBtn0) allBtn0.addEventListener("click", () => {
       const adds = [], took = [];
-      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (i >= nFollow || !tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x) => took.push({ i, off: x.off, count: x.count })); xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
+      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (i >= nFollow || !tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x) => took.push({ i, off: x.off, count: x.count })); xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", plan: planTag(i), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
       savePackPurchases();
@@ -8569,7 +8578,7 @@ async function renderPurchasesPage() {
         // steps: an option pack saves its steps as the choice; a plain ladder
         // saves the last step bought (from where its run starts).
         const adds = [];
-        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), count: s0[d].count, date: dayOf(Math.max(0, s0[d].off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), count: s0[d].count, date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
