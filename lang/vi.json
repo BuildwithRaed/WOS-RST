@@ -1826,5 +1826,21 @@
 "nav.p:roadmap":"Lộ trình",
 "t:pur_wk_past":"Đã qua ngày",
 "t:pur_1_pack":"1 gói",
-"t:pur_updating":"Đang cập nhật…"
+"t:pur_updating":"Đang cập nhật…",
+"t:pur_tiers_upto":"Bậc 1–{tier}",
+"t:pur_card_following":"đang theo",
+"t:pur_card_tap":"chạm để theo",
+"t:pur_tags_week":"gói tuần này",
+"t:pur_wc_title":"Thẻ tuần",
+"t:pur_wc_running_n":"{n} đang chạy",
+"t:pur_wc_notbought_n":"{n} chưa mua",
+"t:pur_wc_desc":"Nhập số ngày thưởng còn lại trên các thẻ bạn đã mua.",
+"t:pur_wc_running":"Chạy đến {date} · lần mua tới {next} · có thể cộng dồn thêm {more}",
+"t:pur_wc_idle":"Không chạy · có thể mua hôm nay · có thể cộng dồn {n}",
+"t:pur_wc_foot":"Mỗi thẻ: {d} ngày · cộng dồn tối đa {cap} ngày",
+"t:pk_dates_title":"Ngày gói",
+"t:pk_dates_desc":"Khi nào mỗi gói đến bang của bạn. Đổi ngày nếu bang của bạn nhận vào ngày khác.",
+"t:pk_dates_owner_desc":"Khi nào mỗi gói đến. Ngày của bạn ở đây là ngày của gói, khách bắt đầu từ đó cho đến khi tự đặt.",
+"t:pk_dates_next":"lần tới {date}",
+"t:pk_admin_only":"chỉ admin"
 }

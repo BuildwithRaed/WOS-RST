@@ -1827,5 +1827,21 @@
 "nav.p:roadmap":"Feuille de route",
 "t:pur_wk_past":"Date passée",
 "t:pur_1_pack":"1 pack",
-"t:pur_updating":"Mise à jour…"
+"t:pur_updating":"Mise à jour…",
+"t:pur_tiers_upto":"Paliers 1–{tier}",
+"t:pur_card_following":"suivi",
+"t:pur_card_tap":"touche pour suivre",
+"t:pur_tags_week":"packs de la semaine",
+"t:pur_wc_title":"Cartes hebdo",
+"t:pur_wc_running_n":"{n} en cours",
+"t:pur_wc_notbought_n":"{n} non achetées",
+"t:pur_wc_desc":"Indique les jours de récompense qu'il te reste sur les cartes déjà achetées.",
+"t:pur_wc_running":"En cours jusqu'au {date} · prochain achat {next} · encore {more} cumulables",
+"t:pur_wc_idle":"Inactive · achetable aujourd'hui · {n} cumulables",
+"t:pur_wc_foot":"Chaque carte : {d} jours · cumulable jusqu'à {cap} jours",
+"t:pk_dates_title":"Dates des packs",
+"t:pk_dates_desc":"Quand chaque pack arrive dans ton État. Change une date si ton État le reçoit un autre jour.",
+"t:pk_dates_owner_desc":"Quand chaque pack arrive. Ta date ici est la date du pack, d'où partent les visiteurs tant qu'ils n'ont pas mis la leur.",
+"t:pk_dates_next":"prochain {date}",
+"t:pk_admin_only":"admin uniquement"
 }

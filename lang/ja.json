@@ -1827,5 +1827,21 @@
 "nav.p:roadmap":"ロードマップ",
 "t:pur_wk_past":"日付が過ぎました",
 "t:pur_1_pack":"1パック",
-"t:pur_updating":"更新中…"
+"t:pur_updating":"更新中…",
+"t:pur_tiers_upto":"{tier}段階まで",
+"t:pur_card_following":"対象中",
+"t:pur_card_tap":"タップで対象に",
+"t:pur_tags_week":"今週のパック",
+"t:pur_wc_title":"週間カード",
+"t:pur_wc_running_n":"{n}件 有効中",
+"t:pur_wc_notbought_n":"{n}件 未購入",
+"t:pur_wc_desc":"購入済みのカードに残っている報酬日数を入力してください。",
+"t:pur_wc_running":"{date}まで有効 · 次回購入 {next} · あと{more}回重ねられます",
+"t:pur_wc_idle":"有効なし · 今日購入可能 · {n}回重ねられます",
+"t:pur_wc_foot":"各カード:{d}日 · 最大{cap}日まで重ねられます",
+"t:pk_dates_title":"パックの日付",
+"t:pk_dates_desc":"各パックがあなたの州に来る日です。別の日に来る場合は日付を変更してください。",
+"t:pk_dates_owner_desc":"各パックが来る日です。ここでの日付がパックの日付となり、訪問者が自分で設定するまでの初期値になります。",
+"t:pk_dates_next":"次回 {date}",
+"t:pk_admin_only":"管理者のみ"
 }

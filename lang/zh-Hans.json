@@ -1827,5 +1827,21 @@
 "nav.p:roadmap":"路线图",
 "t:pur_wk_past":"日期已过",
 "t:pur_1_pack":"1个礼包",
-"t:pur_updating":"正在更新…"
+"t:pur_updating":"正在更新…",
+"t:pur_tiers_upto":"第1–{tier}阶",
+"t:pur_card_following":"正在按此",
+"t:pur_card_tap":"点击按此计划",
+"t:pur_tags_week":"本周礼包",
+"t:pur_wc_title":"周卡",
+"t:pur_wc_running_n":"{n} 张生效中",
+"t:pur_wc_notbought_n":"{n} 张未购买",
+"t:pur_wc_desc":"输入已购买的卡上还剩的奖励天数。",
+"t:pur_wc_running":"生效至 {date} · 下次购买 {next} · 还可叠加 {more} 张",
+"t:pur_wc_idle":"未生效 · 今天可购买 · 可叠加 {n} 张",
+"t:pur_wc_foot":"每张卡：{d} 天 · 最多叠加 {cap} 天",
+"t:pk_dates_title":"礼包日期",
+"t:pk_dates_desc":"每个礼包来到你所在州的日期。如果你的州在其他日子获得，请修改日期。",
+"t:pk_dates_owner_desc":"每个礼包到来的日期。你在这里的日期就是礼包的日期，访客自己设置前都从它开始。",
+"t:pk_dates_next":"下次 {date}",
+"t:pk_admin_only":"仅管理员"
 }

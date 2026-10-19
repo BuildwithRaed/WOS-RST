@@ -1827,5 +1827,21 @@
 "nav.p:roadmap":"Plan działania",
 "t:pur_wk_past":"Data minęła",
 "t:pur_1_pack":"1 pakiet",
-"t:pur_updating":"Aktualizowanie…"
+"t:pur_updating":"Aktualizowanie…",
+"t:pur_tiers_upto":"Poziomy 1–{tier}",
+"t:pur_card_following":"wybrany",
+"t:pur_card_tap":"dotknij, aby wybrać",
+"t:pur_tags_week":"pakiety z tego tygodnia",
+"t:pur_wc_title":"Karty tygodniowe",
+"t:pur_wc_running_n":"{n} aktywne",
+"t:pur_wc_notbought_n":"{n} niekupione",
+"t:pur_wc_desc":"Wpisz dni nagród, które zostały na już kupionych kartach.",
+"t:pur_wc_running":"Aktywna do {date} · następny zakup {next} · można dokumulować jeszcze {more}",
+"t:pur_wc_idle":"Nieaktywna · można kupić dziś · można kumulować {n}",
+"t:pur_wc_foot":"Każda karta: {d} dni · kumuluje się do {cap} dni",
+"t:pk_dates_title":"Daty pakietów",
+"t:pk_dates_desc":"Kiedy każdy pakiet pojawia się w twoim stanie. Zmień datę, jeśli twój stan dostaje go innego dnia.",
+"t:pk_dates_owner_desc":"Kiedy pojawia się każdy pakiet. Twoja data tutaj to data pakietu, od której startują odwiedzający, dopóki nie ustawią własnej.",
+"t:pk_dates_next":"następny {date}",
+"t:pk_admin_only":"tylko admin"
 }

@@ -1826,5 +1826,21 @@
 "nav.p:roadmap":"로드맵",
 "t:pur_wk_past":"날짜 지남",
 "t:pur_1_pack":"패키지 1개",
-"t:pur_updating":"업데이트 중…"
+"t:pur_updating":"업데이트 중…",
+"t:pur_tiers_upto":"1–{tier}단계",
+"t:pur_card_following":"따르는 중",
+"t:pur_card_tap":"탭하여 따르기",
+"t:pur_tags_week":"이번 주 팩",
+"t:pur_wc_title":"주간 카드",
+"t:pur_wc_running_n":"{n}개 진행 중",
+"t:pur_wc_notbought_n":"{n}개 미구매",
+"t:pur_wc_desc":"이미 구매한 카드에 남은 보상 일수를 입력하세요.",
+"t:pur_wc_running":"{date}까지 진행 · 다음 구매 {next} · {more}개 더 누적 가능",
+"t:pur_wc_idle":"진행 중 아님 · 오늘 구매 가능 · {n}개 누적 가능",
+"t:pur_wc_foot":"카드당 {d}일 · 최대 {cap}일까지 누적",
+"t:pk_dates_title":"팩 날짜",
+"t:pk_dates_desc":"각 팩이 내 주에 오는 날짜입니다. 내 주에 다른 날 오면 날짜를 바꾸세요.",
+"t:pk_dates_owner_desc":"각 팩이 오는 날짜입니다. 여기의 내 날짜가 팩의 날짜이며, 방문자가 직접 정하기 전까지 이 날짜에서 시작합니다.",
+"t:pk_dates_next":"다음 {date}",
+"t:pk_admin_only":"관리자 전용"
 }

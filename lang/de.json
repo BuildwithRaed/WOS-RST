@@ -1827,5 +1827,21 @@
 "nav.p:roadmap":"Fahrplan",
 "t:pur_wk_past":"Datum vorbei",
 "t:pur_1_pack":"1 Paket",
-"t:pur_updating":"Wird aktualisiert…"
+"t:pur_updating":"Wird aktualisiert…",
+"t:pur_tiers_upto":"Stufen 1–{tier}",
+"t:pur_card_following":"folgt",
+"t:pur_card_tap":"tippen zum Folgen",
+"t:pur_tags_week":"Pakete dieser Woche",
+"t:pur_wc_title":"Wochenkarten",
+"t:pur_wc_running_n":"{n} aktiv",
+"t:pur_wc_notbought_n":"{n} nicht gekauft",
+"t:pur_wc_desc":"Gib die Belohnungstage ein, die auf bereits gekauften Karten noch übrig sind.",
+"t:pur_wc_running":"Aktiv bis {date} · nächster Kauf {next} · {more} weitere stapelbar",
+"t:pur_wc_idle":"Nicht aktiv · heute kaufbar · {n} stapelbar",
+"t:pur_wc_foot":"Jede Karte: {d} Tage · stapelbar bis {cap} Tage",
+"t:pk_dates_title":"Paketdaten",
+"t:pk_dates_desc":"Wann jedes Paket in deinen Staat kommt. Ändere ein Datum, wenn dein Staat es an einem anderen Tag bekommt.",
+"t:pk_dates_owner_desc":"Wann jedes Paket kommt. Dein Datum hier ist das Datum des Pakets, mit dem Besucher starten, bis sie ihr eigenes setzen.",
+"t:pk_dates_next":"nächstes {date}",
+"t:pk_admin_only":"nur Admin"
 }

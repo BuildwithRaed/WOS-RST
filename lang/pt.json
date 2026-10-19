@@ -1826,5 +1826,21 @@
 "nav.p:roadmap":"Roteiro",
 "t:pur_wk_past":"Data passada",
 "t:pur_1_pack":"1 pacote",
-"t:pur_updating":"Atualizando…"
+"t:pur_updating":"Atualizando…",
+"t:pur_tiers_upto":"Níveis 1–{tier}",
+"t:pur_card_following":"seguindo",
+"t:pur_card_tap":"toque para seguir",
+"t:pur_tags_week":"pacotes desta semana",
+"t:pur_wc_title":"Cartões semanais",
+"t:pur_wc_running_n":"{n} ativos",
+"t:pur_wc_notbought_n":"{n} não comprados",
+"t:pur_wc_desc":"Digite os dias de recompensa que ainda restam nos cartões que você já comprou.",
+"t:pur_wc_running":"Ativo até {date} · próxima compra {next} · mais {more} podem ser acumulados",
+"t:pur_wc_idle":"Inativo · pode comprar hoje · {n} podem ser acumulados",
+"t:pur_wc_foot":"Cada cartão: {d} dias · acumula até {cap} dias",
+"t:pk_dates_title":"Datas dos pacotes",
+"t:pk_dates_desc":"Quando cada pacote chega ao seu estado. Mude uma data se o seu estado o recebe em outro dia.",
+"t:pk_dates_owner_desc":"Quando cada pacote chega. Sua data aqui é a data do pacote, da qual os visitantes partem até definirem a deles.",
+"t:pk_dates_next":"próximo {date}",
+"t:pk_admin_only":"só admin"
 }
