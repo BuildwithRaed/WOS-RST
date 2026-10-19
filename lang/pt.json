@@ -1823,5 +1823,6 @@
 "t:rm_back":"Orçamentos",
 "t:rm_goal_cost":"seus pacotes {v}",
 "t:rm_goal_nopacks":"Nada a comprar: o que você tem já cobre.",
-"nav.p:roadmap":"Roteiro"
+"nav.p:roadmap":"Roteiro",
+"t:pur_updating":"Atualizando…"
 }
