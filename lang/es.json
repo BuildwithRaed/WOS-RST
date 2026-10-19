@@ -1825,5 +1825,19 @@
 "t:rm_goal_cost":"sus paquetes {v}",
 "t:rm_goal_nopacks":"Nada que comprar: lo que tienes ya lo cubre.",
 "nav.p:roadmap":"Hoja de ruta",
-"t:set_info":"Qué hacen estos ajustes"
+"t:set_info":"Qué hacen estos ajustes",
+"t:pet_adv_short":"Av.",
+"t:pet_done":"Listo · no falta nada",
+"t:pet_count_tip":"Marcado: esta mascota cuenta en los totales, el Panel y los Presupuestos.",
+"t:charm_to_go":"Faltan {n}",
+"t:charm_tiles_hint":"Barra verde = ahora, azul = lo que añade el objetivo. Toca un amuleto para cambiarlo.",
+"t:charm_needs_this":"Necesario para este amuleto",
+"t:gs_nothing":"No falta nada",
+"t:gs_done":"Listo",
+"t:cg_pieces_to_go":"piezas por mejorar",
+"t:cg_at_target":"{n} de {m} en el objetivo",
+"t:cg_slots_hint":"Color del borde = nivel (rojo Legendario, dorado Mítico). Insignia arriba a la izquierda = ahora, azul = objetivo. Toca una pieza para cambiarla.",
+"t:cg_set_bonus":"Bonus de conjunto",
+"t:bud_not_open":"Incluye niveles aún no abiertos en tu estado ({what})",
+"t:sa_lock_hint_cap":"\"Máx\" y \"Maximizar todo\" se detienen antes por ahora (por la edad de tu estado). Aún puedes elegirlo como objetivo."
 }
