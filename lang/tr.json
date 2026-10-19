@@ -1825,5 +1825,6 @@
 "t:rm_goal_nopacks":"Alınacak bir şey yok: elindekiler zaten yetiyor.",
 "nav.p:roadmap":"Yol haritası",
 "t:pur_wk_past":"Tarih geçti",
-"t:pur_1_pack":"1 paket"
+"t:pur_1_pack":"1 paket",
+"t:pur_updating":"Güncelleniyor…"
 }

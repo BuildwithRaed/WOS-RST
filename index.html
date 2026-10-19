@@ -701,6 +701,10 @@
   .pur-wk-head{ font-size:12.5px; margin:6px 0 4px; }
   .pur-wk-now{ font-size:10px; padding:1px 7px; border-radius:6px; background:var(--good); color:#06210f; font-weight:700; }
   .pur-wk-all{ width:100%; margin-top:8px; }
+  #purSuggest{ position:relative; }
+  .pur-upd{ position:absolute; top:172px; left:50%; transform:translateX(-50%); z-index:1; padding:7px 14px; border-radius:999px; background:rgba(13,20,30,.94); border:1px solid rgba(125,211,252,.45); box-shadow:0 4px 14px rgba(0,0,0,.4); white-space:nowrap; }
+  .pur-stale{ opacity:.45; pointer-events:none; }
+  #purSuggest.pur-upding > :not(.pur-upd){ opacity:.7; }
   .pur-sug-split > div{ display:flex; flex-direction:column; gap:2px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; font-size:11px; }
   .pur-sug-split b{ font-size:17px; }
   .pur-chips{ margin-top:6px; gap:4px; }
@@ -4371,6 +4375,7 @@ const T = {
   pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy lets you pick the dates." },
   pur_sug_none: { en: "Nothing else to buy: your plans are covered." },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
+  pur_updating: { en: "Updating…" },
   pur_sug_total: { en: "Suggested total" },
   sa_lock_line: { en: "{what} opens around day {day} — in about {n} days (≈ {date})." },
   sa_lock_hint: { en: "Not counted in your Dashboard and Budgets yet (from your state age). You can still plan it and tick it yourself." },
@@ -7445,6 +7450,14 @@ const PUR_OPEN = new Set(); // My Purchases: pack cards whose dates are unfolded
 let PUR_SUG_ROW = null;   // My Purchases (admin): the suggested pack line opened ("week|row")
 const PUR_SUG_TICK = new Map(); // "week|row" -> ticked to buy (default: the followed plan's packs), for the visit
 const PUR_SUG_VER = new Set();  // "week|row" using the other plan's version of that pack
+// Picking packs the plan suggested (same pack, step and dates) leaves the rest of
+// the plan as it was (owner, 19 Oct 2026): the list is drawn at once from the
+// same plan without what was picked, while the new plan is worked out quietly.
+// { plan, taken: [{ ref: "b:<row>" | "t:<row>", off, count }] }; cleared by budgetInvalidate.
+let PUR_SUG_OVERLAY = null;
+let PUR_SUG_SHOWN = null;   // { plan, taken }: the plan last drawn in the box (kept tappable while a new one is worked out)
+let PUR_SUGGEST_DONE = null; // { p: the PUR_SUGGEST promise, plan } once it has its answer
+let PUR_SUG_TRACK = {};      // { req }: the suggestions' planner request, dropped when a newer one starts
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
@@ -7455,7 +7468,7 @@ async function renderPurchasesPage() {
   // (Redrawn again before the box was filled: what the last filled one had.)
   const oldSug = document.getElementById("purSuggest"), oldCl = oldSug && oldSug.querySelector(".pur-cl-list");
   if (!oldSug) PUR_SUG_KEEP = null;
-  else if (oldSug.dataset.drawn) PUR_SUG_KEEP = { h: oldSug.offsetHeight, boxes: saveBoxScroll(oldSug), cl: oldCl ? { week: oldCl.dataset.week, top: oldCl.scrollTop } : null };
+  else if (oldSug.dataset.drawn) PUR_SUG_KEEP = { h: oldSug.offsetHeight, boxes: saveBoxScroll(oldSug), cl: oldCl ? { week: oldCl.dataset.week, top: oldCl.scrollTop } : null, html: oldSug.innerHTML };
   const sugH = PUR_SUG_KEEP ? PUR_SUG_KEEP.h : 0, sugBoxes = PUR_SUG_KEEP ? PUR_SUG_KEEP.boxes : () => {};
   const oldClTop = PUR_SUG_KEEP && PUR_SUG_KEEP.cl;
   // "Loading…" only on the first draw; a redraw keeps the page until it's ready.
@@ -7659,7 +7672,10 @@ async function renderPurchasesPage() {
       </aside>
       <div class="t12x-main">
         ${summary}
-        <div class="t12x-card" id="purSuggest" style="margin-top:12px;${sugH ? ` min-height:${sugH}px;` : ""}"><div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div></div>
+        <div class="t12x-card" id="purSuggest" style="margin-top:12px;${sugH ? ` min-height:${sugH}px;` : ""}">${PUR_SUG_KEEP && PUR_SUG_KEEP.html
+          // While it's worked out again, the last list stays (faded) instead of a blank box.
+          ? `<div class="pur-upd bud-pending small">${esc(t("pur_updating"))}</div><div class="pur-stale" aria-hidden="true" inert>${PUR_SUG_KEEP.html}</div>`
+          : `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div>`}</div>
         <div style="margin-top:12px;">${addCard}</div>
         ${listsHtml}
       </div>
@@ -7667,9 +7683,10 @@ async function renderPurchasesPage() {
   renderMyPackDates(document.getElementById("purMyDates"), tables, { editable: !IS_OWNER, skipNewGen: true, skipGroups: PACK_DATES_ON_PACKS_PAGE });
   // Suggested packs: the Budgets plan (it already counts the packs listed
   // here), each with "Add" to put it under Coming.
-  budgetSuggestedPlan().then((plan) => {
+  const drawPlan = (plan, taken, updating) => {
     const box = document.getElementById("purSuggest");
     if (seq !== RENDER_SEQ || !box) return;
+    PUR_SUG_SHOWN = { plan, taken };
     const titleOf = (tb) => { const l = packLinkFor(tb.id); return l.group && l.group !== (tb.title || "") ? l.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")); };
     const byTitle = new Map(tables.map((tb) => [titleOf(tb), tb]));
     // Just the pack name: the category in front ("Weekly/Monthly Calendar Packs · ") is dropped.
@@ -7692,12 +7709,29 @@ async function renderPurchasesPage() {
     const rows = followRows.concat(otherRows);
     const head = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta" style="font-size:11px; margin:-4px 0 8px;">${esc(t("pur_sug_desc"))}</div>`;
     if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; return; }
-    const total = followRows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
+    let total = followRows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
     // Packs come on the calendar, so each suggestion is spread over the days it
     // can actually be bought (Now, then each time the pack comes back).
     // With "My budget" set, the days come from that plan (never over the limit).
     const budSched = plan.spendSched || packPlanSchedule(budRows), tgtSched = cmp ? packPlanSchedule(tgtRows) : [];
-    const sched = follow === "target" ? tgtSched.concat(budSched) : budSched.concat(tgtSched);
+    let sched = follow === "target" ? tgtSched.concat(budSched) : budSched.concat(tgtSched);
+    // Each row as "<plan>:<row>" (b = My budget / main plan, t = By target), so
+    // picks stay matched when the list follows the other plan.
+    const rowRef = (i) => (i < nFollow ? (follow === "target" ? "t:" : "b:") + i : (follow === "target" ? "b:" : "t:") + (i - nFollow));
+    // Packs already picked from this same plan (PUR_SUG_OVERLAY) are left out.
+    if (taken && taken.length) {
+      const left = taken.map((x) => ({ ...x }));
+      sched = sched.map((xs, i) => {
+        const ref = rowRef(i);
+        return xs.map((x) => {
+          let c = x.count;
+          left.forEach((tk) => { if (c > 0 && tk.count > 0 && tk.ref === ref && tk.off === x.off) { const d = Math.min(c, tk.count); c -= d; tk.count -= d; if (i < nFollow) total -= packConvert(rows[i].price * d, rows[i].currency || "USD").n; } });
+          return c === x.count ? x : { ...x, count: c };
+        }).filter((x) => x.count > 0);
+      });
+    }
+    // Picked exactly as suggested: draw the rest at once from this plan.
+    const takeAsPlanned = (entries) => { PUR_SUG_OVERLAY = { plan, taken: (taken || []).concat(entries.map((e) => ({ ref: rowRef(e.i), off: e.off, count: e.count }))) }; };
     const dayOf = (off) => packDayKey(new Date(packStartOfToday().getTime() + off * 86400000));
     const whenTxt = (off) => off <= 0 ? t("pur_sug_now") : fmtDay(dayOf(off)).replace(/,? \d{4}$/, "");
     // Short "when" (owner, 17 Oct 2026: the full list of days was too long):
@@ -7951,15 +7985,19 @@ async function renderPurchasesPage() {
       drawSug();
     }));
     if (tickBuy) tickBuy.addEventListener("click", () => {
-      const adds = [];
+      const adds = [], took = [];
+      let asPlanned = true;
       tickedNow().forEach(([i]) => {
         const { r, xs } = verOf(i), tb = sugTable(r);
         if (!tb) return;
+        if (r !== rows[i] || i >= nFollow) asPlanned = false;
+        xs.forEach((x) => took.push({ i, off: x.off, count: x.count }));
         xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
       });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
       savePackPurchases();
+      if (asPlanned) takeAsPlanned(took);
       toast(t("pur_added_dates").replace("{n}", adds.length));
       redraw();
     });
@@ -7972,11 +8010,12 @@ async function renderPurchasesPage() {
     // Every pack of the chosen week at once, on its dates.
     const allBtn0 = box.querySelector("[data-purwkall]");
     if (allBtn0) allBtn0.addEventListener("click", () => {
-      const adds = [];
-      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (i >= nFollow || !tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
+      const adds = [], took = [];
+      list.forEach(([i, xs]) => { const r = rows[i], tb = sugTable(r); if (i >= nFollow || !tb || !(r.row != null || !plainPack(tb))) return; xs.forEach((x) => took.push({ i, off: x.off, count: x.count })); xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) })); });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
       savePackPurchases();
+      takeAsPlanned(took);
       toast(t("pur_added_dates").replace("{n}", adds.length));
       redraw();
     });
@@ -8199,6 +8238,9 @@ async function renderPurchasesPage() {
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
+        // The plan's own pack, step and choice on some of its dates: the rest stays as planned.
+        const ri = rows.indexOf(r), base = r.row != null ? r.row : 0;
+        if (ri >= 0 && ri < nFollow && ix.every((d) => { const ps = partsOf(selOf(d)); return ps.length === 1 && ps[0].label === r.label && ps[0].row === base; })) takeAsPlanned(ix.map((d) => ({ i: ri, off: s0[d].off, count: s0[d].count })));
         close();
         toast(ix.length > 1 ? t("pur_added_dates").replace("{n}", ix.length) : t("pur_added"));
         redraw();
@@ -8240,10 +8282,26 @@ async function renderPurchasesPage() {
       putBoxes(box);
       firstDraw = false;
       box.style.minHeight = "";
+      // The last plan stays tappable while the new one is worked out (owner, 19 Oct 2026).
+      if (updating) box.insertAdjacentHTML("afterbegin", `<div class="pur-upd bud-pending small">${esc(t("pur_updating"))}</div>`);
+      box.classList.toggle("pur-upding", !!updating);
       box.dataset.drawn = "1";
     };
     drawSug();
-  }).catch(() => { const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; } });
+  };
+  const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; } };
+  const ov = PUR_SUG_OVERLAY;
+  if (ov) {
+    // Drawn at once from the same plan; the new plan replaces it quietly when ready.
+    drawPlan(ov.plan, ov.taken);
+    budgetSuggestedPlan().then(() => { if (seq !== RENDER_SEQ || PUR_SUG_OVERLAY !== ov) return; PUR_SUG_OVERLAY = null; redraw(); }).catch((e) => { if (e && e.superseded) return; if (PUR_SUG_OVERLAY === ov) PUR_SUG_OVERLAY = null; });
+  } else if (PUR_SUGGEST && PUR_SUGGEST_DONE && PUR_SUGGEST_DONE.p === PUR_SUGGEST) drawPlan(PUR_SUGGEST_DONE.plan);
+  else {
+    // Redrawn on this page while a new plan is worked out: the last plan stays, tappable, with "Updating…".
+    const last = PUR_SUG_KEEP && PUR_SUG_KEEP.html && PUR_SUG_SHOWN;
+    if (last) drawPlan(last.plan, last.taken, true);
+    budgetSuggestedPlan().then((p) => drawPlan(p)).catch(sugFail);
+  }
 
   const redraw = () => { const y = window.scrollY, put = saveBoxScroll(content); renderPurchasesPage().then(() => { window.scrollTo(0, y); put(content); }); };
   content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
@@ -16220,7 +16278,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 // ---- My budget: a spending limit (owner, 17 Oct 2026, design C + D) ----
 // calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
 // Only the admin sees it unless Admin → Visibility → Visitor access
@@ -16377,6 +16435,9 @@ async function budgetSuggestedPlan() {
   if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && (!wantCands || BUDGET_DATA.combined.budgetCands)) return budgetSuggestOf(BUDGET_DATA.combined);
   if (PUR_SUGGEST) return PUR_SUGGEST;
   plannerWarm();
+  // A plan for older picks still being worked out is no longer wanted.
+  if (PUR_SUG_TRACK.req) plannerSupersede(PUR_SUG_TRACK.req);
+  const track = (PUR_SUG_TRACK = {});
   PUR_SUGGEST = (async () => {
     const [, , , , savedSel, savedTarget] = await Promise.all([
       ensureCharmData(), loadChiefGearRows(), ensureHeroGearData(), ensurePackLinks(),
@@ -16390,11 +16451,12 @@ async function budgetSuggestedPlan() {
     let targetDays = null;
     if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
     const pages = await Promise.all(BUDGET_PAGES.map((pg) => budgetForPage(pg.key, targetDays, { noPlan: true })));
-    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands });
+    const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track });
     return budgetSuggestOf(combined);
   })();
-  PUR_SUGGEST.catch(() => { PUR_SUGGEST = null; });
-  return PUR_SUGGEST;
+  const p = PUR_SUGGEST;
+  p.then((plan) => { if (PUR_SUGGEST === p) PUR_SUGGEST_DONE = { p, plan }; }, () => { if (PUR_SUGGEST === p) PUR_SUGGEST = null; });
+  return p;
 }
 // ---- Order of goals (admin, owner 18 Oct 2026) ----
 // The ticked pages' own targets ("main") plus mini targets on the way (e.g.

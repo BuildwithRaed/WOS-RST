@@ -1825,5 +1825,6 @@
 "t:rm_goal_nopacks":"無需購買：現有的已經足夠。",
 "nav.p:roadmap":"路線圖",
 "t:pur_wk_past":"日期已過",
-"t:pur_1_pack":"1個禮包"
+"t:pur_1_pack":"1個禮包",
+"t:pur_updating":"正在更新…"
 }

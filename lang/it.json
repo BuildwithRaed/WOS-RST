@@ -1826,5 +1826,6 @@
 "t:rm_goal_nopacks":"Niente da comprare: ciò che hai basta già.",
 "nav.p:roadmap":"Tabella di marcia",
 "t:pur_wk_past":"Data passata",
-"t:pur_1_pack":"1 pacchetto"
+"t:pur_1_pack":"1 pacchetto",
+"t:pur_updating":"Aggiornamento…"
 }

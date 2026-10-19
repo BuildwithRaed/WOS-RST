@@ -1825,5 +1825,6 @@
 "t:rm_goal_nopacks":"구매할 것 없음: 보유량으로 이미 충분합니다.",
 "nav.p:roadmap":"로드맵",
 "t:pur_wk_past":"날짜 지남",
-"t:pur_1_pack":"패키지 1개"
+"t:pur_1_pack":"패키지 1개",
+"t:pur_updating":"업데이트 중…"
 }
