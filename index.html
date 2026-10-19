@@ -365,7 +365,10 @@
   .exp-xl-b.ok{ color:var(--good); }
   /* Level chips + level list sheet (Heroes Gears cards, design A, 19 Oct 2026). */
   .hgc-head{ display:flex; align-items:center; gap:10px; }
-  .hgc-pic{ width:60px; height:60px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  /* The picture files have see-through space around the tile: the box is
+     bigger and pulled out by that space, so the tile itself lines up with the
+     card's left edge and is as tall as the name + stat lines beside it. */
+  .hgc-pic{ width:74px; height:74px; flex-shrink:0; display:flex; align-items:center; justify-content:center; margin:-12px -6px -12px -10px; }
   .hgc-pic img{ width:100%; height:100%; object-fit:contain; } /* the picture as it is: no box, no zoom (owner, 19 Oct 2026) */
   .hgc-name{ flex:1; min-width:0; }
   .hgc-name .name{ font-size:15px; font-weight:700; }
