@@ -21250,7 +21250,7 @@ async function renderExpertsResearchPage() {
   }
   // Two decimals: the main stat moves 0.01% per level, which one decimal hides.
   function statTotalsHtml(totals, maxTotals) {
-    return plxStatBoxesHtml([["ATK", "ATK"], ["DEF", "DEF"], ["LETH", "DMG"], ["HP", "HP"]].map(([label, k]) => ({ label, val: totals[k], max: maxTotals[k], dp: 2 })));
+    return plxStatBoxesHtml([["ATK", "ATK"], ["DEF", "DEF"], ["LETH", "DMG"], ["HP", "HP"]].map(([label, k]) => ({ label, val: totals[k], max: maxTotals[k], dp: 2 })), true);
   }
   const GENERAL_EXPERTS = new Set(EXPERTS_IN_ORDER.filter((e) => !expertTroopKey(e)));
   function renderTotals() {
@@ -21808,7 +21808,7 @@ async function renderExpertsPage() {
     return totals;
   }
   function statHeaderHtml(totals, maxTotals) {
-    return plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, key]) => ({ label, val: totals[key], max: maxTotals ? maxTotals[key] : null })));
+    return plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, key]) => ({ label, val: totals[key], max: maxTotals ? maxTotals[key] : null })), true);
   }
   function addSkillMaxToTotals(totals, hero, skill) {
     if (!isExpertUnlocked(hero)) return;
