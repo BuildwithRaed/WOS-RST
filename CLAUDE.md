@@ -279,5 +279,5 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #83: notes (Dashboard Stats | Plan tabs idea)
 - PR #85: My Purchases Coming / Bought as short lines, grouped by week / month, each list scrolls in its own box
 - PR #84: My Purchases: picking a suggested pack shows the rest at once; other changes keep the list (faded, "Updating…")
-- PR #??: My Purchases rows B, Suggested packs header C, Weekly cards at the top; Pack dates for every dated pack on the Packs page
+- PR #88: My Purchases rows B, Suggested packs header C, Weekly cards at the top; Pack dates for every dated pack on the Packs page
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
