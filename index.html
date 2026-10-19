@@ -1205,6 +1205,48 @@ input,select,textarea{
   .ch-bar i, .ch-bar s{ position:absolute; top:0; bottom:0; }
   .ch-bar i{ inset-inline-start:0; background:var(--good); }
   .ch-bar s{ background:var(--ice); opacity:.75; }
+  .ch-piece{ margin-top:10px; padding:10px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.02); }
+  .ch-p-h{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .ch-p-h img{ width:28px; height:28px; border-radius:7px; object-fit:contain; }
+  .ch-p-h b{ flex:1; font-size:14px; }
+  .ch-p-go{ font-size:12px; color:var(--muted); padding:2px 9px; border-radius:10px; background:rgba(255,255,255,.05); }
+  .ch-piece .ch-t-v{ display:flex; flex-direction:column; align-items:center; gap:3px; font-size:15px; }
+  .ch-t-v .ch-tc{ display:inline-block; padding:0 6px; border-radius:9px; border:1px solid var(--ice-dim); color:var(--ice); font-size:11px; font-weight:700; line-height:17px; vertical-align:2px; }
+  .ch-t-v .ch-tc.up{ border-color:rgba(240,180,80,.55); color:var(--amber); }
+  .ch-t-v .ch-tc.ok{ border-color:rgba(91,201,138,.5); color:var(--good); }
+  .ch-stg{ display:flex; gap:2px; }
+  .ch-stg i{ flex:1; height:6px; border-radius:2px; background:rgba(255,255,255,.08); }
+  .ch-stg .n{ background:var(--good); } .ch-stg .t{ background:#3a86d4; }
+  .ch-stg.pick{ gap:4px; margin-top:8px; }
+  .ch-stg.pick button{ position:relative; flex:1; min-width:0; height:26px; margin-bottom:16px; padding:0; border:2px solid transparent; border-radius:6px; background:rgba(255,255,255,.08); cursor:pointer; }
+  .ch-stg.pick button.n{ background:var(--good); } .ch-stg.pick button.t{ background:#3a86d4; }
+  .ch-stg.pick button.on{ border-color:#fff; }
+  .ch-stg.pick button:disabled{ cursor:default; }
+  .ch-stg.pick em{ position:absolute; top:100%; left:0; right:0; margin-top:2px; font-style:normal; font-size:10px; color:var(--muted); }
+  .ch-stg.pick button.on em{ color:var(--frost); font-weight:800; }
+  .ch-sheet .gs-head .rfa-x{ margin-inline-start:2px; }
+  .ch-nav{ width:34px; height:34px; flex-shrink:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--ice); font-size:20px; cursor:pointer; }
+  .ch-nav:disabled{ opacity:.3; cursor:default; }
+  .ch-sec{ padding:10px 10px 4px; margin-bottom:10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
+  .ch-sec.tgt{ border-color:var(--ice-dim); }
+  .ch-sec-h{ display:flex; justify-content:space-between; gap:8px; font-size:12px; margin-bottom:6px; }
+  .ch-sec-h b{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+  .ch-sec-h span{ color:var(--muted); } .ch-sec-h span.up{ color:var(--amber); }
+  .ch-strip{ display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; padding:2px 0; }
+  .ch-strip::-webkit-scrollbar{ display:none; }
+  .ch-lvp{ flex:0 0 54px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 0; border:0; border-radius:10px; background:none; color:var(--muted); font:inherit; cursor:pointer; }
+  .ch-lvp b{ font-size:11px; font-weight:600; }
+  .ch-lvp small{ font-size:9px; font-weight:700; color:var(--ice); }
+  .ch-lvp small.up, .ch-lvp.up b{ color:var(--amber); }
+  .ch-lvp.on{ background:rgba(120,190,255,.12); }
+  .ch-lvp.on b{ color:var(--frost); font-weight:800; }
+  .ch-lvp.on .ch-pic{ border-radius:50%; box-shadow:0 0 0 2px var(--ice); }
+  .ch-sec.tgt .ch-lvp.on .ch-pic{ box-shadow:0 0 0 2px #e8b84a; }
+  .ch-lvp:disabled{ opacity:.35; cursor:default; }
+  .ch-pic.strip{ width:40px; height:40px; }
+  .ch-foot{ grid-template-columns:1fr 1fr !important; }
+  .ch-foot .btn.ghost{ color:var(--ice); border-color:var(--ice-dim); }
+  .ch-foot .btn.ghost:disabled{ opacity:.4; }
   .ch-t-g{ text-align:center; font-size:12px; font-weight:700; color:var(--ice); }
   .ch-tile.done .ch-t-g{ color:var(--good); }
   .ch-hint{ font-size:11px; margin:10px 0 0; }
@@ -4521,6 +4563,9 @@ const T = {
   charm_to_go: { en: "{n} to go" },
   charm_tiles_hint: { en: "Green bar = now, blue = what the target adds. Tap a charm to change it." },
   charm_needs_this: { en: "Needs for this charm" },
+  charm_lv: { en: "Lv" },
+  charm_stage: { en: "Stage {a} / {b}" },
+  charm_target_max: { en: "Target = Max ({lv})" },
   gs_nothing: { en: "Nothing needed" },
   gs_done: { en: "Done" },
   cg_pieces_to_go: { en: "pieces to go" },
@@ -17779,6 +17824,34 @@ function charmPicHtml(c, n, cls, lv) {
   return `<span class="ch-pic${cls ? " " + cls : ""}${Number(at) > 0 ? "" : " none"}"><img src="${charmIconSrc(c.piece.troop, at)}" alt="" loading="lazy" /></span>`;
 }
 const charmStatAt = (lv) => CHARM_CUMULATIVE_STAT[lv] || 0;
+// Charm levels grouped like the game: a level (its picture) and its stages
+// (16, 16.1 … 16.8 = 9 stages of Lv 16; Lv 1–3 and 18 have one). Index lists
+// into CHARM_LEVELS per whole level.
+function charmMajor(lv) { return Math.floor(Number(lv) || 0); }
+function charmStageGroups() {
+  const g = new Map();
+  CHARM_LEVELS.forEach((lv, i) => { const k = charmMajor(lv); if (!g.has(k)) g.set(k, []); g.get(k).push(i); });
+  return g;
+}
+// The segmented stage bar of the level `ci` is in: green = stages done,
+// blue = up to the target (all the rest when the target is a higher level).
+// pick = role → each segment is a button (data-chseg="role|index").
+function charmStageBarHtml(ci, ti, pick, groups) {
+  groups = groups || charmStageGroups();
+  const at = pick === "target" ? ti : ci;
+  const grp = groups.get(charmMajor(CHARM_LEVELS[at])) || [at];
+  const top = CHARM_LEVELS.length - 1;
+  const seg = (k) => {
+    if (pick === "target") return k < ci ? "n" : k < ti || (k === ti && ti === top) ? (ti > ci ? "t" : "n") : "";
+    if (ci === top || k < ci) return "n";
+    return ti > ci && (k < ti || charmMajor(CHARM_LEVELS[ti]) > charmMajor(CHARM_LEVELS[ci])) ? "t" : "";
+  };
+  return `<span class="ch-stg${pick ? " pick" : ""}">${grp.map((k, j) => {
+    if (!pick) return `<i class="${seg(k)}"></i>`;
+    const lab = grp.length > 1 ? `.${j}` : CHARM_LEVELS[k];
+    return `<button type="button" class="${seg(k)}${k === at ? " on" : ""}" data-chseg="${pick}|${k}" ${pick === "target" && k < ci ? "disabled" : ""}><em>${esc(lab)}</em></button>`;
+  }).join("")}</span>`;
+}
 const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
 async function renderCharmsCalc() {
   const seq = RENDER_SEQ;
@@ -17795,23 +17868,25 @@ async function renderCharmsCalc() {
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const rowsEl = document.getElementById("charmRows");
 
-  function tileHtml(c, n, cap, top) {
+  // Design B (owner, 19 Oct 2026): one card per gear piece with its 3 charms
+  // in a row; each shows its picture, level, target chip and stage bar.
+  function tileHtml(c, n, cap) {
     const st = CHARM_CALC_STATE[c.piece.key][c.slot];
     const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = CHARM_LEVELS.indexOf(String(st.target));
     const go = ti > ci, now = charmStatAt(st.current), tg = go ? charmStatAt(st.target) : now;
-    const w = (v) => Math.max(0, Math.min(100, (v / top) * 100));
-    const foot = go ? pctShort(tg - now) : ci >= cap ? `${esc(t("max_button"))} &#10003;` : "&#10003;";
-    return `<button type="button" class="ch-tile${go ? "" : " done"}" data-chtile="${n}" aria-label="${esc(`${t("charm_slot_label")} ${n + 1}`)}">
+    const chip = go ? `<span class="ch-tc${ti > cap ? " up" : ""}"${ti > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(st.target)}</span>`
+      : ci >= cap ? `<span class="ch-tc ok">&#10003; ${esc(t("max_button"))}</span>` : "";
+    const foot = go ? `${pctShort(tg - now)} · ${esc(st.current)}` : `${esc(st.current)} &#10003;`;
+    return `<button type="button" class="ch-tile${go ? "" : " done"}" data-chtile="${n}" aria-label="${esc(`${pieceDisplayName(c.piece.name)} · ${t("charm_slot_label")} ${c.slot + 1}`)}">
       <span class="ch-t-h">${charmPicHtml(c, n, "tile")}</span>
-      <span class="ch-t-v">${go ? `${esc(st.current)}<em>&rarr;</em><b class="${ti > cap ? "up" : ""}"${ti > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${esc(st.target)}</b>` : `<b class="ok">${esc(st.current)}</b>`}</span>
-      <span class="ch-bar"><i style="width:${w(now)}%;"></i>${go ? `<s style="inset-inline-start:${w(now)}%; width:${Math.max(0, w(tg) - w(now))}%;"></s>` : ""}</span>
+      <span class="ch-t-v">${esc(t("charm_lv"))} ${charmMajor(st.current)}${chip}</span>
+      ${charmStageBarHtml(ci, Math.max(ci, ti))}
       <span class="ch-t-g">${foot}</span>
     </button>`;
   }
   function renderTroopSections() {
     const troop = plxTroopOf("charm");
     const flat = charmFlat(troop), cap = charmCapIdx();
-    const top = charmStatAt(CHARM_LEVELS[CHARM_LEVELS.length - 1]) || 1;
     const toGo = flat.filter((c) => { const st = CHARM_CALC_STATE[c.piece.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
     rowsEl.innerHTML = `
         <div class="panel">
@@ -17820,7 +17895,12 @@ async function renderCharmsCalc() {
                 <span class="sa-arrow">&rarr;</span>
                 <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
               </div>`)}
-          <div class="ch-grid">${flat.map((c, i) => tileHtml(c, i, cap, top)).join("")}</div>
+          ${CHARM_PIECES.filter((p) => p.troop === troop).map((p) => {
+            const mine = flat.map((c, i) => [c, i]).filter(([c]) => c.piece === p);
+            const left = mine.filter(([c]) => { const st = CHARM_CALC_STATE[p.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
+            return `<div class="ch-piece"><div class="ch-p-h"><img src="${esc(CHIEF_GEAR_ICONS[p.key] || "")}" alt="" /><b>${esc(pieceDisplayName(p.name))}</b><span class="ch-p-go">${left ? esc(t("charm_to_go").replace("{n}", left)) : "&#10003;"}</span></div>
+              <div class="ch-grid">${mine.map(([c, i]) => tileHtml(c, i, cap)).join("")}</div></div>`;
+          }).join("")}
           <p class="meta ch-hint">${esc(t("charm_tiles_hint"))}</p>
         </div>`;
     // "Set all" shows the level when every charm of this troop is on it.
@@ -17845,44 +17925,69 @@ async function renderCharmsCalc() {
   // The sheet for one charm (bottom sheet on phones, small window on PC).
   function openCharmSheet(n) {
     const m = gearSheetEl();
+    // Sheet 1 (owner, 19 Oct 2026): Now and Target each pick the level by its
+    // picture (a strip of the 18 levels) and the stage on the bar under it.
     const draw = () => {
       const troop = plxTroopOf("charm"), flat = charmFlat(troop), c = flat[n], cap = charmCapIdx();
       const st = CHARM_CALC_STATE[c.piece.key][c.slot];
       const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
-      const last = CHARM_LEVELS.length - 1;
+      const groups = charmStageGroups();
       const a = CHARM_CUMULATIVE[st.current] || [0, 0, 0], b = CHARM_CUMULATIVE[CHARM_LEVELS[ti]] || [0, 0, 0];
       const needs = [["Charm Guides", b[0] - a[0]], ["Charm Designs", b[1] - a[1]], ["Jewel Secrets", b[2] - a[2]]].filter(([, q]) => q > 0);
-      const lv = (i) => `${esc(CHARM_LEVELS[i])}${i > cap ? `<small>${esc(t("upcoming_tag"))}</small>` : ""}`;
-      const stepper = (role, i, lo) => `<div class="gs-stp${role === "target" ? " tgt" : ""}"><button type="button" data-gsstep="${role}|-1" aria-label="−" ${i <= lo ? "disabled" : ""}>&minus;</button><b>${lv(i)}</b><button type="button" data-gsstep="${role}|1" aria-label="+" ${i >= last ? "disabled" : ""}>+</button></div>`;
-      const nav = (d) => { const k = n + d; return k >= 0 && k < flat.length ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(t("charm_slot_label"))} ${k + 1}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
-      m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
-        <div class="gs-head">${charmPicHtml(c, n, "big")}${ti > ci ? `<span class="meta">&rarr;</span>${charmPicHtml(c, n, "big", CHARM_LEVELS[ti])}` : ""}<div style="flex:1; min-width:0;"><b>${esc(t("charm_slot_label"))} ${n + 1} · ${esc(pieceDisplayName(c.piece.name))}</b>
-          <div class="meta">LETH &amp; HP <span style="color:var(--good);">${pctShort(charmStatAt(st.current))}</span>${ti > ci ? ` &rarr; <span style="color:var(--ice);">${pctShort(charmStatAt(CHARM_LEVELS[ti]))}</span>` : ""}</div></div>
-          <button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
-        <div class="gs-row"><span class="gs-l">${esc(t("t12x_now"))}</span>${stepper("current", ci, 0)}<span></span></div>
-        <div class="gs-row"><span class="gs-l">${esc(t("t12x_target"))}</span>${stepper("target", ti, ci)}<button type="button" class="btn ghost gs-max" data-gsmax ${ti === Math.max(ci, cap) ? "disabled" : ""}>${esc(t("max_button"))}</button></div>
+      const stageTxt = (i) => {
+        const g = groups.get(charmMajor(CHARM_LEVELS[i])) || [i];
+        return g.length > 1 ? `${esc(t("charm_stage").replace("{a}", g.indexOf(i)).replace("{b}", g.length - 1))} · ${esc(CHARM_LEVELS[i])}` : esc(CHARM_LEVELS[i]);
+      };
+      const strip = (role, i) => {
+        const cm = charmMajor(CHARM_LEVELS[ci]), sel = charmMajor(CHARM_LEVELS[i]);
+        return `<div class="ch-strip" data-chstrip>${[...groups.keys()].filter((k) => role === "current" || k > 0).map((k) => {
+          const first = groups.get(k)[0], up = first > cap, off = role === "target" && k < cm;
+          const tag = up ? `<small class="up">${esc(t("upcoming_tag").replace(/^\s*·\s*/, ""))}</small>` : role === "target" && k === cm && k !== sel ? `<small>${esc(t("t12x_now"))}</small>` : "";
+          return `<button type="button" class="ch-lvp${k === sel ? " on" : ""}${up ? " up" : ""}" data-chlv="${role}|${k}" ${off ? "disabled" : ""}><span class="ch-pic strip${k > 0 ? "" : " none"}"><img src="${charmIconSrc(troop, k)}" alt="" loading="lazy" /></span><b>${k > 0 ? `${esc(t("charm_lv"))} ${k}` : "0"}</b>${tag}</button>`;
+        }).join("")}</div>`;
+      };
+      const sec = (role, i) => `<div class="ch-sec${role === "target" ? " tgt" : ""}"><div class="ch-sec-h"><b>${esc(t(role === "target" ? "t12x_target" : "t12x_now"))}</b><span class="${i > cap ? "up" : ""}">${stageTxt(i)}${i > cap ? ` · ${esc(t("upcoming_tag").replace(/^\s*·\s*/, ""))}` : ""}</span></div>${strip(role, i)}${charmStageBarHtml(ci, ti, role, groups)}</div>`;
+      const nav = (d) => `<button type="button" class="ch-nav" data-gsnav="${d}" ${n + d < 0 || n + d >= flat.length ? "disabled" : ""} aria-label="${d < 0 ? "‹" : "›"}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet" role="dialog" aria-modal="true">
+        <div class="gs-head">${nav(-1)}<div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(c.piece.name))} · ${esc(t("charm_slot_label"))} ${c.slot + 1}</b>
+          <div class="meta">${esc(st.current)}${ti > ci ? ` &rarr; ${esc(CHARM_LEVELS[ti])} · <span style="color:var(--good);">${pctShort(charmStatAt(CHARM_LEVELS[ti]) - charmStatAt(st.current))} LETH/HP</span>` : ` · ${pctShort(charmStatAt(st.current))} LETH/HP`}</div></div>
+          ${nav(1)}<button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        ${sec("current", ci)}${sec("target", ti)}
         <div class="gs-needs"><div class="meta">${esc(t("charm_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(q.toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
-        <div class="gs-foot">${nav(-1)}<button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button>${nav(1)}</div>
+        <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-gsmax ${ti === Math.max(ci, cap) ? "disabled" : ""}>${esc(t("charm_target_max").replace("{lv}", CHARM_LEVELS[Math.max(ci, cap)]))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
       </div>`;
+      // Each strip starts with its chosen level in view (no page scroll).
+      m.querySelectorAll("[data-chstrip]").forEach((sb) => { const on = sb.querySelector(".on"); if (on) sb.scrollLeft = on.offsetLeft - (sb.clientWidth - on.offsetWidth) / 2; });
     };
-    const changed = () => { saveCalcState("charm", CHARM_CALC_STATE); draw(); renderTroopSections(); updateCharmTotals(); };
+    const changed = () => {
+      const keep = [...m.querySelectorAll("[data-chstrip]")].map((x) => x.scrollLeft);
+      saveCalcState("charm", CHARM_CALC_STATE); draw(); renderTroopSections(); updateCharmTotals();
+      m.querySelectorAll("[data-chstrip]").forEach((x, i) => { if (keep[i] != null) x.scrollLeft = keep[i]; });
+    };
     m.onclick = (ev) => {
       if (ev.target === m || ev.target.closest("[data-gsclose]")) { closeGearSheet(); return; }
       const flat = charmFlat(plxTroopOf("charm")), c = flat[n], st = CHARM_CALC_STATE[c.piece.key][c.slot];
-      const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target))), last = CHARM_LEVELS.length - 1;
-      const step = ev.target.closest("[data-gsstep]");
-      if (step) {
-        const [role, d] = step.dataset.gsstep.split("|");
-        if (role === "current") {
-          const k = Math.max(0, Math.min(last, ci + Number(d)));
-          st.current = CHARM_LEVELS[k];
-          if (ti < k) st.target = st.current; // the target is never below now
-        } else st.target = CHARM_LEVELS[Math.max(ci, Math.min(last, ti + Number(d)))];
-        changed(); return;
+      const ci = CHARM_LEVELS.indexOf(String(st.current)), ti = Math.max(ci, CHARM_LEVELS.indexOf(String(st.target)));
+      const set = (role, k) => {
+        if (role === "current") { st.current = CHARM_LEVELS[k]; if (ti < k) st.target = st.current; } // the target is never below now
+        else st.target = CHARM_LEVELS[Math.max(ci, k)];
+        changed();
+      };
+      const lvb = ev.target.closest("[data-chlv]");
+      if (lvb && !lvb.disabled) {
+        const [role, mj] = lvb.dataset.chlv.split("|");
+        const g = charmStageGroups().get(Number(mj)) || [];
+        const cur = role === "current" ? ci : ti;
+        if (charmMajor(CHARM_LEVELS[cur]) === Number(mj)) return;
+        // A level picked = its first stage (the target's own level keeps now's stage).
+        set(role, role === "target" && charmMajor(CHARM_LEVELS[ci]) === Number(mj) ? ci : g[0]);
+        return;
       }
+      const sg = ev.target.closest("[data-chseg]");
+      if (sg && !sg.disabled) { const [role, k] = sg.dataset.chseg.split("|"); set(role, Number(k)); return; }
       if (ev.target.closest("[data-gsmax]")) { st.target = CHARM_LEVELS[Math.max(ci, charmCapIdx())]; changed(); return; }
       const nv = ev.target.closest("[data-gsnav]");
-      if (nv) { n = Math.max(0, Math.min(flat.length - 1, n + Number(nv.dataset.gsnav))); draw(); }
+      if (nv && !nv.disabled) { n = Math.max(0, Math.min(flat.length - 1, n + Number(nv.dataset.gsnav))); draw(); }
     };
     draw();
     m.style.display = "flex";
