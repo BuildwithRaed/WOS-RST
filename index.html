@@ -19366,6 +19366,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       ownedChanged(name);
     });
   });
+  el.querySelectorAll("[data-chestopen]").forEach((btn) => { btn.onclick = () => goToTab("backpack"); });
   const toggleBoxes = () => {
     BAR_SHOW_ALL[calcKey] = BAR_SHOW_ALL[calcKey] === false;
     document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
@@ -19377,7 +19378,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // Summary drawn elsewhere: its "Show all / edit" link (onclick, so redraws don't stack).
   if (sumHost) sumHost.onclick = (e) => { if (e.target.closest("[data-bstoggle]")) toggleBoxes(); };
   el.addEventListener("click", (e) => {
-    if (e.target.closest("[data-chestopen]")) { goToTab("backpack"); return; }
     const tileEl = e.target.closest("[data-bsedit]");
     if (tileEl) { editTileModal(tileEl.dataset.bsedit); return; }
     if (e.target.closest("[data-bstoggle]")) { toggleBoxes(); return; }
