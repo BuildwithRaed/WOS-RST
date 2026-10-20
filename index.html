@@ -677,7 +677,12 @@
   .tl-pic img{ width:28px; height:28px; object-fit:contain; border-radius:8px; }
   .tl-pic b{ font-size:13px; color:var(--ice); }
   .tl-pic i{ position:absolute; top:-5px; inset-inline-end:-5px; font-style:normal; font-size:10px; line-height:14px; width:14px; height:14px; text-align:center; border-radius:50%; background:var(--amber); color:#1b1406; }
+  .tl-cw{ display:flex; flex-direction:column; min-width:0; line-height:1.15; }
   .tl-cn{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tl-src{ font-size:10px; color:var(--muted); white-space:nowrap; }
+  .tl-src.hall{ color:var(--amber); }
+  .tl-src.wheel{ color:var(--ice); }
+  .tl-src.event{ color:var(--good); }
   .tl-open > summary{ list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; background:rgba(76,209,138,.10); border:1px solid rgba(76,209,138,.35); border-radius:14px; padding:10px 12px; }
   .tl-open > summary::-webkit-details-marker{ display:none; }
   .tl-open > summary .tl-dot{ top:14px; }
@@ -3589,7 +3594,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 44; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 45; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4183,6 +4188,9 @@ const T = {
   tl_gen: { en: "Gen {g}" },
   tl_hall: { en: "Hall of Heroes hero" },
   tl_gen_heroes: { en: "Gen {g} heroes" },
+  tl_src_hall: { en: "Hall of Heroes" },
+  tl_src_wheel: { en: "Lucky Wheel" },
+  tl_src_event: { en: "Event" },
   tl_admin_edit: { en: "Edit the days in Admin › Rules & Timeline" },
   chest_not_needed: { en: "nothing to cover" },
   pk_same_title: { en: "Same pack, several tables" },
@@ -13229,6 +13237,16 @@ function stateAgeCardHtml() {
 const TL_ICONS = { t11: "icons/item_icon_100081.png", t12: "icons/item_icon_100082.png", "crystal lab": "icons/item_icon_100083.png",
   "legendary chief gear": "icons/chief-gear-helmet-red.webp", "chief gear t5 t6": "icons/chief-gear-coat-red.webp",
   "charm 11.1 16": "icons/charms/charm-infantry-12.webp", "charm 16.1 18": "icons/charms/charm-infantry-17.webp" };
+// Where a hero comes from: Admin → Heroes "How to get" (site_config
+// hero_sources = { name: "hall" | "wheel" | "event" | "none" }), else the
+// Gen's Hall of Heroes hero (HALL_OF_HEROES_HERO).
+function heroSourceAuto(name, gen) { return name && HALL_OF_HEROES_HERO[Number(gen)] === name ? "hall" : ""; }
+function heroSource(name, gen) {
+  const own = ((typeof siteConfig === "function" ? siteConfig("hero_sources", {}) : {}) || {})[name];
+  return own === "none" ? "" : own || heroSourceAuto(name, gen);
+}
+function heroSourceLabel(src) { return src ? t(`tl_src_${src}`) : ""; }
+const HERO_SOURCE_ICON = { hall: "🏛", wheel: "🎡", event: "🎉" };
 async function renderStateTimelinePage() {
   const seq = RENDER_SEQ;
   const [heroes] = await Promise.all([
@@ -13254,8 +13272,8 @@ async function renderStateTimelinePage() {
     genAt.set(gd, g);
     const list = (heroes || []).filter((h) => Number(h.generation) === g);
     const names = new Set(list.map((h) => h.name));
-    list.forEach((h) => items.push({ day: gd, name: h.name, img: h.image_url || "", kind: "hero", star: h.name === hall, gen: g }));
-    if (hall && !names.has(hall)) items.push({ day: gd, name: hall, img: "", kind: "hero", star: true, gen: g });
+    list.forEach((h) => items.push({ day: gd, name: h.name, img: h.image_url || "", kind: "hero", star: h.name === hall, gen: g, src: heroSource(h.name, g) }));
+    if (hall && !names.has(hall)) items.push({ day: gd, name: hall, img: "", kind: "hero", star: true, gen: g, src: heroSource(hall, g) });
   });
   const order = { hero: 0, gear: 1, page: 2, lab: 3, level: 4, pets: 5, experts: 6 };
   items.sort((a, b) => a.day - b.day || (b.star ? 1 : 0) - (a.star ? 1 : 0) || (order[a.kind] ?? 9) - (order[b.kind] ?? 9));
@@ -13269,7 +13287,7 @@ async function renderStateTimelinePage() {
     if (n < 365) return t("tl_in_months").replace("{n}", Math.round(n / 30.4));
     return t("tl_in_years").replace("{n}", Math.round(n / 36.5) / 10);
   };
-  const chip = (x) => `<span class="tl-chip" title="${esc(x.star ? `${x.name} · ${t("tl_hall")}` : x.name)}"><span class="tl-pic">${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<b>${esc((x.name || "?")[0])}</b>`}${x.star ? `<i>★</i>` : ""}</span><span class="tl-cn">${esc(x.name)}</span></span>`;
+  const chip = (x) => `<span class="tl-chip" title="${esc(x.star ? `${x.name} · ${t("tl_hall")}` : x.name)}"><span class="tl-pic">${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<b>${esc((x.name || "?")[0])}</b>`}${x.star ? `<i>★</i>` : ""}</span><span class="tl-cw"><span class="tl-cn">${esc(x.name)}</span>${x.src ? `<span class="tl-src ${esc(x.src)}">${HERO_SOURCE_ICON[x.src] || ""} ${esc(heroSourceLabel(x.src))}</span>` : ""}</span></span>`;
   const byDay = new Map();
   items.forEach((x) => { if (!byDay.has(x.day)) byDay.set(x.day, []); byDay.get(x.day).push(x); });
   const days = [...byDay.keys()].sort((a, b) => a - b);
@@ -28469,9 +28487,19 @@ async function renderAdminHeroes(body) {
     { key: "exp_attack", label: "Max ATK & DEF %", type: "num", value: r.exp_attack, half: true },
     { key: "widget_lethality", label: "Max widget LETH & HP %", type: "num", value: r.widget_lethality, half: true },
     { key: "max_level", label: "Max level", type: "num", value: r.max_level ?? 80, half: true, more: true },
+    // Where the hero comes from (State Timeline tags); saved in site_config
+    // hero_sources, not in the heroes table. Empty = the built-in guess
+    // (the Gen's Hall of Heroes hero), "none" = no tag.
+    { key: "source", label: "How to get", type: "select", options: [["", `Auto (${heroSourceLabel(heroSourceAuto(r.name, r.generation)) || "none"})`], ["hall", heroSourceLabel("hall")], ["wheel", heroSourceLabel("wheel")], ["event", heroSourceLabel("event")], ["none", "No tag"]], value: (siteConfig("hero_sources", {}) || {})[r.name] || "", half: true },
   ];
   // ATK/DEF and widget LETH/HP are always equal - one box each.
-  const mirror = (v) => ({ ...v, exp_defense: v.exp_attack, widget_health: v.widget_lethality });
+  const mirror = (v) => { const o = { ...v, exp_defense: v.exp_attack, widget_health: v.widget_lethality }; delete o.source; return o; };
+  const saveSource = async (name, src, oldName) => {
+    const cur = { ...(siteConfig("hero_sources", {}) || {}) };
+    if (oldName && oldName !== name) delete cur[oldName];
+    if (src) cur[name] = src; else delete cur[name];
+    if (JSON.stringify(cur) !== JSON.stringify(siteConfig("hero_sources", {}) || {})) await saveSiteConfig("hero_sources", cur);
+  };
   function drawHeroes() {
     const list = rows.filter((r) => (r.generation ?? -1) === ADMIN_HERO_GEN);
     listWrap.innerHTML = `<div class="adm-chips"><div class="adm-chips-row">${gens.map((g) => `<button type="button" class="adm-chip${g === ADMIN_HERO_GEN ? " on" : ""}" data-herogen="${g}">${g < 0 ? "No gen" : `Gen ${g}`} <span class="meta">· ${((n) => `${n} ${n === 1 ? "hero" : "heroes"}`)(rows.filter((r) => (r.generation ?? -1) === g).length)}</span></button>`).join("")}</div></div>`
@@ -28485,6 +28513,7 @@ async function renderAdminHeroes(body) {
             if (!v.name) throw new Error("Enter a name");
             const patch = mirror(v);
             await sb(`heroes?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+            await saveSource(v.name, v.source, r.name);
             Object.assign(r, patch); toast("Saved");
             if ((r.generation ?? -1) !== ADMIN_HERO_GEN) renderAdminHeroes(body); else drawHeroes();
           },
@@ -28496,6 +28525,7 @@ async function renderAdminHeroes(body) {
           if (!v.name) throw new Error("Enter a name");
           if (rows.some((r) => r.name === v.name)) throw new Error("That hero already exists");
           await sb(`heroes`, { method: "POST", body: JSON.stringify({ ...mirror(v), max_level: v.max_level || 80, max_stars: v.max_stars || 5 }) });
+          await saveSource(v.name, v.source);
           toast("Hero added"); if (v.generation != null) ADMIN_HERO_GEN = v.generation; renderAdminHeroes(body);
         } }),
     });
