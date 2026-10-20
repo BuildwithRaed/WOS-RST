@@ -63,6 +63,7 @@
  "t:pick_hero_title": "選択:",
  "t:hero_suffix": "英雄",
  "t:close_button": "閉じる",
+ "t:no_connection_retry": "接続がありません — 再試行中…",
  "t:your_backpack": "あなたのバッグ",
  "t:backpack_desc": "サイトで使うすべてのアイテム。タップして所持数を入力します。",
  "t:backpack_scan": "スクショ読み取り",

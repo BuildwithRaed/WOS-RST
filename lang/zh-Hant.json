@@ -62,6 +62,7 @@
 "t:pick_hero_title":"選擇",
 "t:hero_suffix":"英雄",
 "t:close_button":"關閉",
+"t:no_connection_retry": "沒有網路連線 — 正在重試…",
 "t:your_backpack":"你的背包",
 "t:backpack_desc":"本站使用的所有道具。點擊道具輸入你擁有的數量。",
 "t:backpack_scan":"掃描截圖",

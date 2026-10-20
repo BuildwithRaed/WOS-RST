@@ -62,6 +62,7 @@
 "t:pick_hero_title":"Seç:",
 "t:hero_suffix":"kahraman",
 "t:close_button":"Kapat",
+"t:no_connection_retry": "Bağlantı yok — yeniden deneniyor…",
 "t:your_backpack":"Çantan",
 "t:backpack_desc":"Sitenin kullandığı her eşya. Kaç tane olduğunu yazmak için bir eşyaya dokun.",
 "t:backpack_scan":"Ekran görüntüsü tara",

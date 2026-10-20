@@ -63,6 +63,7 @@
  "t:pick_hero_title": "Wähle",
  "t:hero_suffix": "Held",
  "t:close_button": "Schließen",
+ "t:no_connection_retry": "Keine Verbindung — neuer Versuch…",
  "t:your_backpack": "Dein Rucksack",
  "t:backpack_desc": "Alle Gegenstände, die die Seite nutzt. Tippe auf einen Gegenstand und gib ein, wie viele du hast.",
  "t:backpack_scan": "Screenshot scannen",

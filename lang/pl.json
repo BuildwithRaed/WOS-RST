@@ -63,6 +63,7 @@
  "t:pick_hero_title": "Wybierz",
  "t:hero_suffix": "bohatera",
  "t:close_button": "Zamknij",
+ "t:no_connection_retry": "Brak połączenia — ponawianie…",
  "t:your_backpack": "Twój plecak",
  "t:backpack_desc": "Każdy przedmiot używany na stronie. Dotknij przedmiotu, aby wpisać, ile masz.",
  "t:backpack_scan": "Skanuj zrzut",

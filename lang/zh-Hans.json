@@ -63,6 +63,7 @@
  "t:pick_hero_title": "选择",
  "t:hero_suffix": "英雄",
  "t:close_button": "关闭",
+ "t:no_connection_retry": "没有网络连接 — 正在重试…",
  "t:your_backpack": "你的背包",
  "t:backpack_desc": "本站用到的所有物品。点击物品输入你拥有的数量。",
  "t:backpack_scan": "扫描截图",

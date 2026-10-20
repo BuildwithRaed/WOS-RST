@@ -63,6 +63,7 @@
  "t:pick_hero_title": "Choisir",
  "t:hero_suffix": "héros",
  "t:close_button": "Fermer",
+ "t:no_connection_retry": "Pas de connexion — nouvel essai…",
  "t:your_backpack": "Votre sac",
  "t:backpack_desc": "Tous les objets utilisés par le site. Touchez un objet pour saisir combien vous en avez.",
  "t:backpack_scan": "Scanner une capture",

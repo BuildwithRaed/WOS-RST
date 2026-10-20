@@ -63,6 +63,7 @@
  "t:pick_hero_title": "Выбрать",
  "t:hero_suffix": "герой",
  "t:close_button": "Закрыть",
+ "t:no_connection_retry": "Нет соединения — повторная попытка…",
  "t:your_backpack": "Ваш рюкзак",
  "t:backpack_desc": "Все предметы, которые использует сайт. Нажмите на предмет и введите количество.",
  "t:backpack_scan": "Скан скриншота",

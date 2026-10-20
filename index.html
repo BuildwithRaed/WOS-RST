@@ -2425,8 +2425,28 @@ input,select,textarea{
   // Ensures a session exists (signing in anonymously if needed), and sets
   // USER_ID / IS_OWNER from it. Called once before the app renders, and
   // again after any login/logout so the whole app reflects the new session.
+  // A saved login that can't be refreshed because the connection is weak (the
+  // phone coming back from the game) is tried again, not swapped for a guest
+  // login: that logged the owner out and sent owner pages to the Dashboard
+  // (owner, 20 Oct 2026). Only a login the server turns down starts a guest one.
+  function hasSavedLogin() {
+    try { return !!localStorage.getItem(supabaseClient.auth.storageKey || "sb-hzourauekkiorojrhpko-auth-token"); } catch (e) { return false; }
+  }
   async function ensureAuthSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    let session = null;
+    for (let attempt = 0; ; attempt++) {
+      const res = await supabaseClient.auth.getSession();
+      session = res.data.session;
+      const err = res.error;
+      if (session || !err || (err.status >= 400 && err.status < 500) || !hasSavedLogin()) break;
+      const box = document.getElementById("content");
+      if (box) box.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`;
+      await new Promise((ok) => {
+        const go = () => { window.removeEventListener("online", go); clearTimeout(tm); ok(); };
+        const tm = setTimeout(go, Math.min(2000 * (attempt + 1), 10000));
+        window.addEventListener("online", go);
+      });
+    }
     if (session) {
       CURRENT_SESSION = session;
     } else {
@@ -3450,7 +3470,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 36; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 37; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3656,6 +3676,7 @@ const T = {
   pick_hero_title: { en: "Pick" },
   hero_suffix: { en: "hero" },
   close_button: { en: "Close" },
+  no_connection_retry: { en: "No connection — trying again…" },
   your_backpack: { en: "Your backpack" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have." },
   backpack_scan: { en: "Scan screenshot" },
@@ -5293,8 +5314,18 @@ async function render() {
   if (same) content.style.minHeight = content.offsetHeight + "px";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    // (Admin is for the owner only.)
-    if (!IS_OWNER && (TAB === "adminpage" || TAB === "roadmap" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    // Visitor pages that follow Admin's visitor access: when the settings
+    // didn't load (weak connection), stay on the page and try again instead of
+    // sending the person to the Dashboard (owner, 20 Oct 2026).
+    if (!IS_OWNER && SITE_CONFIG_FAILED && ["budgets", "backpack", "packs", "mypacks", "purchases", "packcalendar"].includes(TAB)) {
+      content.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`;
+      await ensureSiteConfig();
+      if (seq !== RENDER_SEQ) return;
+      if (SITE_CONFIG_FAILED) { content.style.minHeight = ""; setTimeout(() => { if (seq === RENDER_SEQ) render(); }, 5000); return; }
+    }
+    // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
+    // stays, so a page the person can't open now isn't forgotten.
+    if (!IS_OWNER && (TAB === "adminpage" || TAB === "roadmap" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -21558,13 +21589,24 @@ async function ensureUiVisibility() {
 // Site-wide settings edited from Admin (site_config table: public read,
 // owner write). Loaded once at start; missing keys fall back to defaults.
 let SITE_CONFIG = null;
+// A failed load (weak connection) is tried 3 times, then marked so the next
+// call tries again instead of keeping empty settings for the whole visit.
+let SITE_CONFIG_FAILED = false;
 async function ensureSiteConfig() {
-  if (SITE_CONFIG) return SITE_CONFIG;
-  try {
-    const rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en)`); // other languages load on their own; English changes come with the settings
+  if (SITE_CONFIG && !SITE_CONFIG_FAILED) return SITE_CONFIG;
+  let rows = null;
+  for (let i = 0; i < 3 && !rows; i++) {
+    try { rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en)`); } // other languages load on their own; English changes come with the settings
+    catch (err) { if (i < 2) await new Promise((ok) => setTimeout(ok, 800 * (i + 1))); }
+  }
+  if (rows) {
     SITE_CONFIG = {};
     rows.forEach((r) => { SITE_CONFIG[r.key] = r.value; });
-  } catch (err) { SITE_CONFIG = {}; }
+    SITE_CONFIG_FAILED = false;
+  } else {
+    if (!SITE_CONFIG) SITE_CONFIG = {};
+    SITE_CONFIG_FAILED = true;
+  }
   applyCustomCurrencies();
   return SITE_CONFIG;
 }
