@@ -1568,7 +1568,7 @@ input,select,textarea{
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
-  .t12x-side #expertsInventory{ display:block !important; }
+  .t12x-side #expertsInventory:not([style*="none"]){ display:block !important; } /* "Hide boxes" sets display:none */
   .t12x-need .bs-box{ margin:0; }
   .t12x-need .bs-row{ margin:0; }
   /* Small square tiles, like the Backpack page */
