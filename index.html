@@ -683,6 +683,7 @@
   .tl-src.hall{ color:var(--amber); }
   .tl-src.wheel{ color:var(--ice); }
   .tl-src.event{ color:var(--good); }
+  .tl-src.packs, .tl-src.signin, .tl-src.recruit{ color:#c9a7f0; }
   .tl-open > summary{ list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; background:rgba(76,209,138,.10); border:1px solid rgba(76,209,138,.35); border-radius:14px; padding:10px 12px; }
   .tl-open > summary::-webkit-details-marker{ display:none; }
   .tl-open > summary .tl-dot{ top:14px; }
@@ -3614,7 +3615,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 49; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 50; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4222,7 +4223,10 @@ const T = {
   tl_open_tag: { en: "open" },
   tl_src_hall: { en: "Hall of Heroes" },
   tl_src_wheel: { en: "Lucky Wheel" },
-  tl_src_event: { en: "Event" },
+  tl_src_event: { en: "Events" },
+  tl_src_packs: { en: "Packs" },
+  tl_src_signin: { en: "Sign-in" },
+  tl_src_recruit: { en: "Recruitment" },
   tl_admin_edit: { en: "Edit the days in Admin › Rules & Timeline" },
   chest_not_needed: { en: "nothing to cover" },
   pk_same_title: { en: "Same pack, several tables" },
@@ -13311,15 +13315,28 @@ const TL_ICONS = { t11: "icons/item_icon_100081.png", t12: "icons/item_icon_1000
   "legendary chief gear": "icons/chief-gear-helmet-red.webp", "chief gear t5 t6": "icons/chief-gear-coat-red.webp",
   "charm 11.1 16": "icons/charms/charm-infantry-12.webp", "charm 16.1 18": "icons/charms/charm-infantry-17.webp" };
 // Where a hero comes from: Admin → Heroes "How to get" (site_config
-// hero_sources = { name: "hall" | "wheel" | "event" | "none" }), else the
-// Gen's Hall of Heroes hero (HALL_OF_HEROES_HERO).
-function heroSourceAuto(name, gen) { return name && HALL_OF_HEROES_HERO[Number(gen)] === name ? "hall" : ""; }
+// hero_sources = { name: "hall" | "wheel" | "event" | "packs" | "signin" |
+// "recruit" | "none" }), else the built-in list below, else the Gen's Hall of
+// Heroes hero (HALL_OF_HEROES_HERO). Built-in list from each hero's "Sources"
+// on whiteoutsurvival.wiki (20 Oct 2026); Events = KOI / SoP / Hall of
+// Chiefs / Hero Rally (Bertha from a guide: the wiki has no page yet).
+const HERO_SOURCE_DEFAULT = (() => {
+  const out = {};
+  const put = (src, names) => names.split(",").forEach((n) => { out[n.trim()] = src; });
+  put("wheel", "Zinman, Flint, Mia, Lynn, Hector, Renee, Bradley, Gatot, Fred, Blanchette, Eleonora, Karol, Vulcanus, Elif, Estrella, Aisling, Aiden");
+  put("event", "Philly, Greg, Ahmose, Norah, Wayne, Edith, Sonya, Xura, Gregory, Lloyd, Ligeia, Gisela, Dominic, Viveca, Seigel, Bertha, Gina");
+  put("packs", "Jeronimo, Natalia");
+  put("signin", "Molly");
+  put("recruit", "Smith, Eugene, Charlie, Cloris, Sergey, Jessie, Patrick, Bahiti, Jasser, Lumak Bokan, Seo-yoon, Ling Xue");
+  return out;
+})();
+function heroSourceAuto(name, gen) { return name && HALL_OF_HEROES_HERO[Number(gen)] === name ? "hall" : HERO_SOURCE_DEFAULT[name] || ""; }
 function heroSource(name, gen) {
   const own = ((typeof siteConfig === "function" ? siteConfig("hero_sources", {}) : {}) || {})[name];
   return own === "none" ? "" : own || heroSourceAuto(name, gen);
 }
 function heroSourceLabel(src) { return src ? t(`tl_src_${src}`) : ""; }
-const HERO_SOURCE_ICON = { hall: "🏛", wheel: "🎡", event: "🎉" };
+const HERO_SOURCE_ICON = { hall: "🏛", wheel: "🎡", event: "⚔", packs: "💳", signin: "🎁", recruit: "🎲" };
 async function renderStateTimelinePage() {
   const seq = RENDER_SEQ;
   const [heroes] = await Promise.all([
@@ -28727,7 +28744,7 @@ async function renderAdminHeroes(body) {
     // Where the hero comes from (State Timeline tags); saved in site_config
     // hero_sources, not in the heroes table. Empty = the built-in guess
     // (the Gen's Hall of Heroes hero), "none" = no tag.
-    { key: "source", label: "How to get", type: "select", options: [["", `Auto (${heroSourceLabel(heroSourceAuto(r.name, r.generation)) || "none"})`], ["hall", heroSourceLabel("hall")], ["wheel", heroSourceLabel("wheel")], ["event", heroSourceLabel("event")], ["none", "No tag"]], value: (siteConfig("hero_sources", {}) || {})[r.name] || "", half: true },
+    { key: "source", label: "How to get", type: "select", options: [["", `Auto (${heroSourceLabel(heroSourceAuto(r.name, r.generation)) || "none"})`], ["hall", heroSourceLabel("hall")], ["wheel", heroSourceLabel("wheel")], ["event", heroSourceLabel("event")], ["packs", heroSourceLabel("packs")], ["signin", heroSourceLabel("signin")], ["recruit", heroSourceLabel("recruit")], ["none", "No tag"]], value: (siteConfig("hero_sources", {}) || {})[r.name] || "", half: true },
   ];
   // ATK/DEF and widget LETH/HP are always equal - one box each.
   const mirror = (v) => { const o = { ...v, exp_defense: v.exp_attack, widget_health: v.widget_lethality }; delete o.source; return o; };
