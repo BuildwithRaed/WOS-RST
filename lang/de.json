@@ -418,6 +418,7 @@
  "t:tl_gen": "Gen {g}",
  "t:tl_hall": "Hall-of-Heroes-Held",
  "t:tl_gen_heroes": "Gen-{g}-Helden",
+ "t:tl_open_tag": "offen",
  "t:tl_src_hall": "Halle der Helden",
  "t:tl_src_wheel": "Glücksrad",
  "t:tl_src_event": "Event",

@@ -690,9 +690,9 @@
   .tl-stack{ display:inline-flex; }
   .tl-stack img{ width:20px; height:20px; object-fit:contain; border-radius:50%; margin-inline-end:-6px; background:var(--panel-2); }
   .tl-os{ font-size:12px; color:var(--muted); margin-inline-start:8px; }
-  .tl-open-l{ padding:8px 2px 0; }
-  .tl-ol{ margin-bottom:8px; }
-  .tl-old{ display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
+  .tl-open-l{ padding:10px 0 0; }
+  .tl-day.done .tl-dot{ border-color:var(--good); background:var(--good); }
+  .tl-in.ok{ color:var(--good); }
   .sa-card{ display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
   .sa-ic{ width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, rgba(108,199,230,.25), rgba(108,199,230,.05)); display:grid; place-items:center; font-size:22px; flex-shrink:0; }
   .sa-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
@@ -3594,7 +3594,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 45; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 46; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4188,6 +4188,7 @@ const T = {
   tl_gen: { en: "Gen {g}" },
   tl_hall: { en: "Hall of Heroes hero" },
   tl_gen_heroes: { en: "Gen {g} heroes" },
+  tl_open_tag: { en: "open" },
   tl_src_hall: { en: "Hall of Heroes" },
   tl_src_wheel: { en: "Lucky Wheel" },
   tl_src_event: { en: "Event" },
@@ -13260,7 +13261,7 @@ async function renderStateTimelinePage() {
   STATE_UNLOCKS.forEach((u) => {
     if (u.day == null || !(u.day >= 0)) return;
     const k = String(u.key || u.name || "").toLowerCase();
-    const img = u.kind === "pets" ? petImage(u.name) : u.kind === "experts" ? (expImg[u.name] || "") : TL_ICONS[k] || "";
+    const img = u.kind === "pets" ? (petImage(u.name) || petImage(String(u.name).replace(/-/g, ""))) : u.kind === "experts" ? (expImg[u.name] || "") : TL_ICONS[k] || "";
     items.push({ day: Number(u.day), name: u.kind === "pets" || u.kind === "experts" ? dataName(u.name) : (u.label || u.name), img, kind: u.kind });
   });
   // New heroes: the same day as the Dashboard / My Purchases (the owner's
@@ -13294,10 +13295,10 @@ async function renderStateTimelinePage() {
   const open = now == null ? [] : items.filter((x) => x.day <= now);
   const comingDays = now == null ? days : days.filter((d) => d > now);
   const isGenDay = (d) => genAt.has(d);
-  const dayCard = (d, next) => {
+  const dayCard = (d, next, done) => {
     const date = now != null ? stateDateOfDay(d) : null;
-    return `<div class="tl-day${next ? " next" : ""}"><span class="tl-dot"></span>
-      <div class="tl-dh"><b>${esc(t("tl_day").replace("{d}", d.toLocaleString()))}</b>${date ? `<span class="tl-dt">· ≈ ${esc(fmt(date))}</span>` : ""}${isGenDay(d) ? `<span class="tl-gen">${esc(t("tl_gen").replace("{g}", genAt.get(d)))}</span>` : ""}${now != null ? `<span class="tl-in">${esc(inTxt(d))}</span>` : ""}</div>
+    return `<div class="tl-day${next ? " next" : ""}${done ? " done" : ""}"><span class="tl-dot"></span>
+      <div class="tl-dh"><b>${esc(t("tl_day").replace("{d}", d.toLocaleString()))}</b>${date ? `<span class="tl-dt">· ≈ ${esc(fmt(date))}</span>` : ""}${isGenDay(d) ? `<span class="tl-gen">${esc(t("tl_gen").replace("{g}", genAt.get(d)))}</span>` : ""}${done ? `<span class="tl-in ok">✓ ${esc(t("tl_open_tag"))}</span>` : now != null ? `<span class="tl-in">${esc(inTxt(d))}</span>` : ""}</div>
       <div class="tl-chips">${byDay.get(d).map(chip).join("")}</div></div>`;
   };
   // Top card: state day + Gen, next Gen start, what comes next.
@@ -13316,7 +13317,7 @@ async function renderStateTimelinePage() {
       ${nd != null ? `<div class="tl-nx"><span class="tl-nxk">${esc(t("tl_next"))}</span> ${esc(nextTxt)} <b>${esc(inTxt(nd))}</b></div>` : `<div class="tl-nx">${esc(t("tl_all_open"))}</div>`}</div>`;
   }
   const openHtml = open.length ? `<details class="tl-open"><summary><span class="tl-dot g">✓</span><span class="tl-ok">✓ ${esc(t("tl_open_n").replace("{n}", open.length))}</span><span class="tl-stack">${open.slice(-5).map((x) => x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : "").join("")}</span><span class="tl-os">${esc(t("tl_open_sub").replace("{d}", now.toLocaleString()))}</span></summary>
-      <div class="tl-open-l">${days.filter((d) => d <= now).map((d) => `<div class="tl-ol"><span class="tl-old">${esc(t("tl_day").replace("{d}", d.toLocaleString()))}</span><div class="tl-chips">${byDay.get(d).map(chip).join("")}</div></div>`).join("")}</div></details>` : "";
+      <div class="tl-open-l">${days.filter((d) => d <= now).map((d) => dayCard(d, false, true)).join("")}</div></details>` : "";
   keepFolds(content, () => { content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("tl_title"))}</h2><p class="desc">${esc(t("tl_desc"))}</p></div></div>
     ${top}
