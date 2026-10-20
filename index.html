@@ -1354,10 +1354,29 @@ input,select,textarea{
   .t12x-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
   /* Settings: compact, explanations behind the small i (owner, 19 Oct 2026). */
   .t12x-settings{ padding:10px 12px; }
-  .t12x-settings.one-line > .t12x-k{ display:none; }
+  /* Every planner page's Settings box is one compact row (owner, 20 Oct 2026):
+     only the ⚙ (and "i") in front, each label beside its box, wrapping only when it must. */
+  .t12x-settings.one-line{ display:flex !important; align-items:center; flex-wrap:wrap; gap:6px 14px !important; padding:8px 12px !important; }
+  .t12x-settings.one-line > .t12x-k{ margin:0 !important; color:var(--muted); font-size:14px; line-height:1; align-self:center; }
+  .t12x-settings.one-line .t12x-kt{ display:none; }
+  .t12x-settings.one-line .rs-row{ display:contents !important; }
+  .t12x-settings.one-line .rs-row > div{ display:flex !important; align-items:center; flex-wrap:wrap; gap:4px 6px !important; max-width:none !important; }
+  .t12x-settings.one-line .meta{ font-size:12px !important; white-space:nowrap; }
+  .t12x-settings.one-line .rs-row input{ width:72px !important; padding:5px 8px !important; text-align:end; font-size:14px; }
+  .t12x-settings.one-line #researchSpeedupNote{ font-size:11px; }
+  /* Experts Level: same sizes as the research pages' row (owner, 20 Oct 2026). */
+  .t12x-settings.one-line .exp-spd{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; }
+  .t12x-settings.one-line .exp-spd input{ width:72px; padding:5px 8px; font-size:14px; }
+  @media (max-width: 900px){
+    .t12x-settings.one-line .exp-spd .meta:first-child{ font-size:10px !important; }
+    .t12x-settings.one-line .exp-spd input{ padding:5px 6px; font-size:13px; }
+    .t12x-settings.one-line .exp-spd #expertsGeneralSpeedupNote{ font-size:9.5px; }
+  }
+  .t12x-settings.one-line label.t12x-check{ flex:1 1 0; min-width:0; }
+  .t12x-settings.one-line .rs-row ~ label.t12x-check, .t12x-settings.one-line label.t12x-check:has(> span:first-child){ flex:0 0 auto; }
+  .t12x-settings.one-line .t12x-check{ flex-direction:row !important; justify-content:flex-start !important; gap:6px !important; margin:0 !important; max-width:none !important; font-size:12px !important; text-align:start !important; }
   .exp-spd{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .exp-spd .meta{ font-size:11px; letter-spacing:.03em; }
-  .exp-spd-k{ color:var(--muted); font-size:14px; }
   .exp-spd input{ width:92px; padding:5px 8px; text-align:end; }
   #expertsGeneralSpeedupNote{ font-size:11px; }
   .t12x-settings > .t12x-k{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
@@ -3530,7 +3549,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 41; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 43; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4101,6 +4120,9 @@ const T = {
   path_label: { en: "Path" },
   research_speed_label: { en: "RESEARCH SPEED" },
   speedups_label: { en: "GENERAL SPEEDUPS" },
+  set_speed: { en: "Research Speed" },
+  set_speedups: { en: "Speed Ups" },
+  set_count: { en: "Count" },
   chest_not_needed: { en: "nothing to cover" },
   pk_same_title: { en: "Same pack, several tables" },
   pk_same_desc: { en: "Tick the other tables that are this same pack (e.g. Classic / Sublime / Exquisite). Each step of the pack can then be bought as any one of them, and the plan picks the best." },
@@ -21128,12 +21150,12 @@ function researchSpeedInputHtml() {
   return `
     <div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:14px;">
       <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-        <span class="meta" style="font-size:10px;">${esc(t("research_speed_label"))}</span>
+        <span class="meta" style="font-size:10px;" title="${esc(t("research_speed_label"))}">${esc(t("set_speed"))}</span>
         <input type="text" inputmode="decimal" id="researchSpeedInput" class="keep-w" value="${RESEARCH_SPEED_PCT}" style="width:58px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">%</span>
       </div>
       <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-        <span class="meta" style="font-size:10px;">${esc(t("speedups_label"))}</span>
+        <span class="meta" style="font-size:10px;" title="${esc(t("speedups_label"))}">${esc(t("set_speedups"))}</span>
         <input type="text" inputmode="decimal" id="researchSpeedupInput" class="keep-w" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
         <span id="researchSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, GENERAL_SPEEDUP_LINK)}</span>
@@ -21294,7 +21316,7 @@ async function renderT11HeliosPage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("t11_helios_title"),
-    settings: `${researchSpeedInputHtml()}<label class="t12x-check"><span>${esc(t("count_toward_dashboard"))}</span><input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} /></label>`,
+    settings: `${researchSpeedInputHtml()}<label class="t12x-check" title="${esc(t("count_toward_dashboard"))}"><span>${esc(t("set_count"))}</span><input type="checkbox" id="t11CountedToggle" ${RESEARCH_PAGE_COUNTED.t11 ? "checked" : ""} /></label>`,
     amountsId: "t11GrandTotal", needId: "t11Need", timeId: "t11Hero", tabsId: "t11TroopDots", maxId: "t11MaxAllBtn",
     needTitle: t("bs_title_t12"),
     mainHtml: `<div id="t11Troops"></div>`,
@@ -22766,8 +22788,7 @@ async function renderExpertsPage() {
     title: t("expertspage_title"),
     // Same row look as the research pages' "Speedups" box (rs-row).
     // One line (owner, 19 Oct 2026: the box took too much space).
-    settings: `<div class="exp-spd"><span class="exp-spd-k">&#9881;</span>
-        <span class="meta">${esc(t("speedups_label"))}</span>
+    settings: `<div class="exp-spd"><span class="meta" title="${esc(t("speedups_label"))}">${esc(t("set_speedups"))}</span>
         <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" />
         <span class="meta">${esc(t("minutes_short"))}</span>
         <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
@@ -24239,7 +24260,7 @@ function plxShellHtml(o) {
     </div>
     <div class="t12x">
       <aside class="t12x-side">
-        ${o.settings ? `<div class="t12x-card t12x-settings${o.settings.includes("rs-row") ? " has-rs" : ""}${o.settings.includes('class="exp-spd"') ? " one-line" : ""}"><div class="t12x-k">&#9881; ${esc(t("t12x_settings"))}${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
+        ${o.settings ? `<div class="t12x-card t12x-settings one-line${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">&#9881;<span class="t12x-kt"> ${esc(t("t12x_settings"))}</span>${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
         <div class="t12x-card"><div id="${o.amountsId}"></div></div>
         ${o.sideExtra || ""}
       </aside>
@@ -24497,7 +24518,7 @@ async function renderT12ResearchPage() {
   content.innerHTML = plxShellHtml({
     title: t("t12_research_title"),
     settings: `${researchSpeedInputHtml()}
-          <label class="t12x-check"><span>${esc(t("count_toward_dashboard"))}</span><input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} /></label>`,
+          <label class="t12x-check" title="${esc(t("count_toward_dashboard"))}"><span>${esc(t("set_count"))}</span><input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} /></label>`,
     amountsId: "t12Totals", needId: "t12Need", needTitle: t("bs_title_t12"), timeId: "t12Hero", tabsId: "t12TroopDots", maxId: "t12MaxAllBtn",
     mainHtml: `<div id="t12Troops"></div>`,
   });
