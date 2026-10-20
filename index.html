@@ -1388,6 +1388,7 @@ input,select,textarea{
   .t12x{ display:grid; grid-template-columns:340px minmax(0,1fr); gap:18px; align-items:start; }
   .t12x-side{ position:sticky; top:70px; display:flex; flex-direction:column; gap:12px; }
   .t12x-card{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; }
+  .t12x-buy:empty{ display:none; }
   .t12x-time{ border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin-bottom:10px; background:linear-gradient(135deg, rgba(90,160,230,.12), transparent); }
   .t12x-time-top{ display:flex; align-items:center; gap:10px; }
   .t12x-time-top img{ width:30px; height:30px; object-fit:contain; }
@@ -2001,7 +2002,8 @@ input,select,textarea{
     .t12x{ grid-template-columns:minmax(0,1fr); }
     /* Phones: time left first, then the troop, then Backpack and settings. */
     .t12x-side{ display:contents; }
-    .t12x-settings{ order:-2; }
+    .t12x-settings{ order:-3; }
+    .t12x-amts{ order:-2; }
     .t12x-main{ order:-1; }
     .t12x-boxes{ gap:6px; }
     .t12x-boxes > div{ padding:7px 8px; gap:6px; }
@@ -19607,6 +19609,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
 
   const sumHost = summaryOn && BAR_SUMMARY_HOST[calcKey] && document.getElementById(BAR_SUMMARY_HOST[calcKey]);
+  // Planner pages: Trade items and Pack Cost sit in their own card, so on
+  // phones the boxes can be at the top and these stay at the bottom (owner, 20 Oct 2026).
+  const buyHost = el.closest(".t12x") ? el.closest(".t12x").querySelector(".t12x-buy") : null;
   if (sumHost) sumHost.innerHTML = `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>`;
   el.innerHTML = `
     ${sumHost ? `<div id="${rowsId}_foot">${footHtml()}</div>` : ""}
@@ -19616,9 +19621,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}${timePage ? genTileHtml() : ""}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
     ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
-    <div id="${rowsId}_trades"></div>
-    <div id="${rowsId}_packs"></div>
+    ${buyHost ? "" : `<div id="${rowsId}_trades"></div>
+    <div id="${rowsId}_packs"></div>`}
   `;
+  if (buyHost) buyHost.innerHTML = `<div id="${rowsId}_trades"></div><div id="${rowsId}_packs"></div>`;
   const packBox = document.getElementById(`${rowsId}_packs`);
   const tradeBox = document.getElementById(`${rowsId}_trades`);
   const refreshPacks = () => renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
@@ -22581,7 +22587,8 @@ async function renderExpertsResearchPage() {
   });
   document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span></div>
     <div id="expResearchOwned"></div>
-    <div id="expResearchPacks"></div>`;
+`;
+  document.getElementById("expResearchAmounts_buy").innerHTML = `<div id="expResearchPacks"></div>`;
 
   const sigilsEl = document.getElementById("expResearchSigils");
   const totalsEl = document.getElementById("expResearchTotals");
@@ -23111,7 +23118,8 @@ async function renderExpertsPage() {
   });
   document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
-    <div id="expertsPacks"></div>`;
+`;
+  document.getElementById("expertsAmounts_buy").innerHTML = `<div id="expertsPacks"></div>`;
 
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
@@ -24589,7 +24597,8 @@ function plxShellHtml(o) {
     <div class="t12x">
       <aside class="t12x-side">
         ${o.settings ? `<div class="t12x-card t12x-settings one-line${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">&#9881;<span class="t12x-kt"> ${esc(t("t12x_settings"))}</span>${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
-        <div class="t12x-card"><div id="${o.amountsId}"></div></div>
+        <div class="t12x-card t12x-amts"><div id="${o.amountsId}"></div></div>
+        <div class="t12x-card t12x-buy" id="${o.amountsId}_buy"></div>
         ${o.sideExtra || ""}
       </aside>
       <div class="t12x-main">
