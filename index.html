@@ -2098,6 +2098,13 @@ input,select,textarea{
   .bs-time .sh{ color:var(--danger); font-weight:700; }
   .bs-time .ok{ color:var(--good); font-weight:600; }
   .bs-time-bar{ height:4px; margin:5px 0 10px; }
+  .t12x-amts.bs-folded .bs-foot, .t12x-amts.bs-folded .bs-time-bar{ margin-bottom:0; }
+  .t12x-amts.bs-folded .bs-time{ margin-top:10px; }
+  .bs-aff{ grid-column:span 3; aspect-ratio:auto; cursor:default; gap:2px; }
+  .bs-aff-items{ display:flex; justify-content:space-around; width:100%; }
+  .bs-aff-it{ position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:1px; background:none; border:0; color:inherit; font:inherit; cursor:pointer; padding:2px 0; }
+  .bs-aff-it .bs-mark{ top:0; inset-inline-start:4px; }
+  .bs-aff .bs-st{ -webkit-line-clamp:1; }
   .bs-help{ font-size:12px; line-height:1.4; color:var(--muted); margin:0 0 10px; }
   .bs-help b{ color:var(--danger); }
   .bs-help .ok{ color:var(--good); font-weight:700; }
@@ -19625,6 +19632,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     <div id="${rowsId}_packs"></div>`}
   `;
   if (buyHost) buyHost.innerHTML = `<div id="${rowsId}_trades"></div><div id="${rowsId}_packs"></div>`;
+  bsFoldMark(el, summaryOn && BAR_SHOW_ALL[calcKey] === false);
   const packBox = document.getElementById(`${rowsId}_packs`);
   const tradeBox = document.getElementById(`${rowsId}_trades`);
   const refreshPacks = () => renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
@@ -19684,6 +19692,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const toggleBoxes = () => {
     BAR_SHOW_ALL[calcKey] = BAR_SHOW_ALL[calcKey] === false;
     document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
+    bsFoldMark(el, !BAR_SHOW_ALL[calcKey]);
     document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
     const foot = document.getElementById(`${rowsId}_foot`);
     if (foot) foot.innerHTML = footHtml();
@@ -23117,6 +23126,7 @@ async function renderExpertsPage() {
     <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
+    <div id="expertsTime"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
 `;
   document.getElementById("expertsAmounts_buy").innerHTML = `<div id="expertsPacks"></div>`;
@@ -23281,6 +23291,7 @@ async function renderExpertsPage() {
     if (!ev.target.closest("[data-bstoggle]")) return;
     BAR_SHOW_ALL.experts = BAR_SHOW_ALL.experts === false;
     document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts !== false ? "" : "none";
+    bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
     renderTotals();
   });
   function renderTotals() {
@@ -23343,6 +23354,7 @@ async function renderExpertsPage() {
     };
     Object.keys(AFFINITY_ITEM_VALUE).forEach((n) => { tileNeed[n] = { need: totalAffinity, short: affShort, aff: true }; });
     if (document.getElementById("expertsInventory").firstChild) renderInventory();
+    bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
     footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
@@ -23662,7 +23674,25 @@ async function renderExpertsPage() {
     const tn = tileNeed && tileNeed["Expert Speedups (minutes)"];
     const timeLine = tn && tn.need > 0 ? `<div class="bs-time"><img src="icons/speedup-expert.png" alt="" /><span>${esc(t("resource_time"))} <b>${bidiNum(bsTime(tn.need))}</b></span>${tn.short > 0 ? `<span class="sh">${bidiNum(bsTime(tn.short))} ${esc(t("bs_short_word"))}</span>` : `<span class="ok">&#10003; ${esc(t("t12x_covered"))}</span>`}</div>
       <div class="t12x-prog bs-time-bar"><i style="width:${Math.min(100, ((tn.need - tn.short) / tn.need) * 100)}%;${tn.short > 0 ? "" : " background:var(--good);"}"></i></div>` : "";
-    invEl.innerHTML = `${timeLine}${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${fields.map(tile).join("")}</div>
+    // Outside the boxes, so it stays when "Hide boxes" folds them (like the research pages).
+    document.getElementById("expertsTime").innerHTML = timeLine;
+    // The three Affinity items share one box and one short line (owner, 20 Oct 2026).
+    const affItems = fields.filter((f) => f in AFFINITY_ITEM_VALUE);
+    const affHtml = () => {
+      const nd = tileNeed && tileNeed[affItems[0]], have = affinityOwnedFrom(invSaved);
+      const line = !nd || !(nd.need > 0) ? `<span style="color:var(--muted);">\u2014</span>` : nd.short > 0
+        ? `<span style="color:var(--danger);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u00b7 ${bidiNum(shortAmount(nd.short))} ${esc(t("bs_short_word"))}</span>`
+        : `<span style="color:var(--good);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u2713</span>`;
+      return `<div class="bp-tile bs-tile bs-aff${nd && !(nd.need > 0) ? " off" : ""}"><div class="bs-aff-items">${affItems.map((f) => {
+        const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
+        return `<button type="button" class="bs-aff-it" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))} (= ${AFFINITY_ITEM_VALUE[f]} ${esc(t("resource_affinity"))})">
+          <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
+          <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || "icons/item_icon_570201.png")}" alt="" loading="lazy" />
+          <span class="bp-qty">${shortAmount(Number(invSaved[f]) || 0)}</span></button>`;
+      }).join("")}</div><span class="bs-st">${line}</span></div>`;
+    };
+    const tilesHtml = fields.map((f) => (f === affItems[0] ? affHtml() : affItems.includes(f) ? "" : tile(f))).join("");
+    invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}</div>
       <div class="t12x-k" style="margin:12px 0 6px;">${esc(t("experts_sigils_summary"))}</div>
       ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}
       <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
@@ -24756,6 +24786,12 @@ function bsTileStatus(need, short, fmt = shortAmount, shortText) {
   if (!(need > 0)) return { html: `<span class="bs-st"><span style="color:var(--muted);">\u2014</span></span>`, off: true };
   if (short > 0) return { html: `<span class="bs-st"><span style="color:var(--danger);">${esc(shortText || `${bidiNum(fmt(short))} ${t("bs_short_word")}`)}</span></span>`, off: false };
   return { html: `<span class="bs-st"><span style="color:var(--good);">\u2713</span></span>`, off: false };
+}
+// "Hide boxes": the card then holds only its title (and time line), so drop
+// the bottom gaps and it sits centred.
+function bsFoldMark(el, folded) {
+  const c = el && el.closest(".t12x-amts");
+  if (c) c.classList.toggle("bs-folded", !!folded);
 }
 // The line under "Amounts from your Backpack" that says what the colours mean.
 function bsHelpHtml(dash, chest, tap = true) {
