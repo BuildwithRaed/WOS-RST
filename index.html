@@ -8049,6 +8049,19 @@ async function renderPurchasesPage() {
     return out;
   };
   const shortDay = (k) => fmtDay(k).replace(/,? \d{4}$/, "");
+  // What a purchase gives as the pack table shows it (Lucky Gear Chest stays a
+  // chest; the planner's gives count it as 0.016 Mythic Gear). Owner, 20 Oct
+  // 2026: the Gear Weekly Card / Hero Ascension Training showed the Mythic Gear box.
+  const rawOf = (p, tb) => {
+    if (p.choice && p.choice.gives) return { ...p.choice.gives };
+    const link = packLinkFor(tb.id), cols = packEffectiveCols(tb), out = {};
+    const rows = link.sequential ? (tb.rows || []).map((_, i) => i).filter((i) => i >= (Number(p.from) || 0) && i <= (Number(p.row) || 0)) : [Number(p.row) || 0];
+    rows.forEach((ri) => {
+      const cells = ((tb.rows || [])[ri] || {}).cells || [];
+      Object.keys(cols).forEach((ci) => { if (!cols[ci]) return; const q = packParseNum(cells[ci]) * packColMultiplier(link, ci); if (q > 0) out[cols[ci]] = (out[cols[ci]] || 0) + q; });
+    });
+    return Object.keys(out).length ? out : purchaseGives(p, tb);
+  };
   const mainIcon = (gives) => { for (const k of Object.keys(gives || {})) { if (k === "Gems") continue; const ic = bpIcon({ name: k.replace(/ \(minutes\)$/, "") }); if (ic) return ic; } return ""; };
   // The plan a "will buy" came from (saved with it since 19 Oct 2026; older ones have none).
   const planTagOf = (g) => { const k = g.items[0].plan; return ["both", "target", "budget"].includes(k) && g.items.every((p) => p.plan === k) ? k : ""; };
@@ -8072,7 +8085,7 @@ async function renderPurchasesPage() {
     const when = dates.length === 1 ? shortDay(dates[0]) : `${shortDay(dates[0])} → ${shortDay(dates[dates.length - 1])}`;
     const late = kind === "c" && g.items.some((p) => p.date < today && !purTriggerWaiting(p));
     // Bought (owner, 19 Oct 2026): how long the row stays — "Until Oct 25 · 6 days" (amber at 2 days or less), one-time packs stay.
-    const gives = purchaseGives(g.first, tb), ic = mainIcon(gives);
+    const gives = rawOf(g.first, tb), ic = mainIcon(gives);
     const name = purShortName((g.first.choice && g.first.choice.name) || tb.title || "");
     // Rows = design B (owner, 19 Oct 2026): name on up to 2 lines with its "×n"
     // kept on the last word, price once under it next to the date, then a big
@@ -8182,7 +8195,7 @@ async function renderPurchasesPage() {
     <div class="pur-wc-colh meta"${IS_OWNER ? "" : ` style="padding-inline-end:0;"`}>${esc(t("pk_active_label"))}</div>
     ${wcCards.map((tb) => {
       const base = packLinkForBase(tb.id), st = packStackInfo(base.reset), l = packLinkFor(tb.id);
-      const offer = packOffersFor(tb, true)[0], ic = offer ? mainIcon(offer.gives) : "";
+      const offer = packOffersFor(tb, true)[0], ic = offer ? mainIcon(rawOf({ row: offer.row }, tb)) : "";
       const run = l.activeDaysLeft > 0;
       const line = run
         ? t("pur_wc_running").replace("{date}", wcFmt(l.activeUntil)).replace("{next}", wcFmt(new Date(l.activeUntil.getTime() + 86400000))).replace("{more}", Math.max(0, Math.floor((st.cap - l.activeDaysLeft) / st.days)))
@@ -8951,16 +8964,8 @@ async function renderPurchasesPage() {
   // Backpack already? Yes → off the list but still counted as bought until
   // its copy ends (p.hidden); "Add them" → added to the Backpack, then the
   // same; No → removed, the plan needs the items again.
-  const rawGives = (p, tb) => {
-    if (p.choice && p.choice.gives) return { ...p.choice.gives };
-    const link = packLinkFor(tb.id), cols = packEffectiveCols(tb), out = {};
-    const rows = link.sequential ? (tb.rows || []).map((_, i) => i).filter((i) => i >= (Number(p.from) || 0) && i <= (Number(p.row) || 0)) : [Number(p.row) || 0];
-    rows.forEach((ri) => {
-      const cells = ((tb.rows || [])[ri] || {}).cells || [];
-      Object.keys(cols).forEach((ci) => { if (!cols[ci]) return; const q = packParseNum(cells[ci]) * packColMultiplier(link, ci); if (q > 0) out[cols[ci]] = (out[cols[ci]] || 0) + q; });
-    });
-    return out;
-  };
+  const rawGives = rawOf;
+
   const openBoughtRemove = (items) => {
     if (!items.length) return;
     const tb = byId.get(String(items[0].table));
