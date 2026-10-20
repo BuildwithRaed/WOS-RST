@@ -320,4 +320,5 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #105: State Timeline page (design A), hidden from visitors until shown in Visibility
 - PR #106: State Timeline: how-to-get tags under the heroes, open days as cards
 - Mythic Gear scan: Gear tab orange pieces + the Mythic Gear box
+- Experts Level "Hide boxes" works again (the side-column CSS `display:block !important` now skips the hidden box)
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
