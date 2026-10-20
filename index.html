@@ -2090,6 +2090,12 @@ input,select,textarea{
   .bs-tile img{ width:34px; height:34px; }
   .bp-tile.bs-tile > .bp-name{ display:none; }
   .bs-tile.off > :not(.bs-st){ opacity:.45; }
+  .bs-time{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+  .bs-time img{ width:18px; height:18px; object-fit:contain; }
+  .bs-time b{ color:var(--frost); font-size:13px; }
+  .bs-time .sh{ color:var(--danger); font-weight:700; }
+  .bs-time .ok{ color:var(--good); font-weight:600; }
+  .bs-time-bar{ height:4px; margin:5px 0 10px; }
   .bs-help{ font-size:12px; line-height:1.4; color:var(--muted); margin:0 0 10px; }
   .bs-help b{ color:var(--danger); }
   .bs-help .ok{ color:var(--good); font-weight:700; }
@@ -19497,6 +19503,28 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       <span class="bs-st">${status}</span>
     </button>`;
   }
+  // Research pages: the general speedups (one pool with Experts) as a tile,
+  // and a small research time line above the boxes (owner, 20 Oct 2026).
+  const timePage = summaryOn && BAR_TIME_KEYS.has(calcKey);
+  const timeNums = () => {
+    const tot = RESEARCH_TIME_NEED[calcKey] || 0, gen = Number(RESEARCH_SPEEDUP_MINUTES) || 0, res = Number(owned["Research Speedups (minutes)"]) || 0;
+    return { tot, gen, res, short: Math.max(0, tot - gen - res) };
+  };
+  function genTileHtml() {
+    const { tot, gen, short } = timeNums(), lk = GENERAL_SPEEDUP_LINK;
+    const st = bsTileStatus(tot, short, bsTime);
+    const mark = Object.keys(lk.bp || {}).length ? (backpackLinked("experts", GENERAL_SPEEDUP_KEY, lk) ? "&#127890;" : "&#9998;") : "";
+    return `<button type="button" class="bp-tile bs-tile${st.off ? " off" : ""}" data-bsgen title="${esc(t("speedups_label"))}">
+      <span class="bs-mark">${mark}</span><img src="icons/speedup-general.png" alt="" loading="lazy" />
+      <span class="bp-qty">${bsTime(gen)}</span><span class="bp-name">${esc(t("speedups_label"))}</span>${st.html}</button>`;
+  }
+  function timeLineHtml() {
+    const { tot, gen, res, short } = timeNums();
+    if (!(tot > 0)) return "";
+    const pct = Math.min(100, ((tot - short) / tot) * 100);
+    return `<div class="bs-time"><img src="icons/speedup-research.png" alt="" /><span>${esc(t("research_time_label"))} <b>${bidiNum(bsTime(tot))}</b></span>${short > 0 ? `<span class="sh">${bidiNum(bsTime(short))} ${esc(t("bs_short_word"))}</span>` : `<span class="ok">&#10003; ${esc(t("t12x_covered"))}</span>`}</div>
+      <div class="t12x-prog bs-time-bar" title="${esc(t("t12x_sp_cover").replace("{g}", bsTime(gen)).replace("{r}", bsTime(res)))}"><i style="width:${pct}%;${short > 0 ? "" : " background:var(--good);"}"></i></div>`;
+  }
   // Not used on this page: no group needs it and it covers nothing (shown "—").
   function tileOff(name) {
     return groups.every((g) => {
@@ -19582,9 +19610,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   if (sumHost) sumHost.innerHTML = `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>`;
   el.innerHTML = `
     ${sumHost ? `<div id="${rowsId}_foot">${footHtml()}</div>` : ""}
+    ${timePage ? `<div id="${rowsId}_time">${timeLineHtml()}</div>` : ""}
     ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && BAR_SHOW_ALL[calcKey] === false ? ` style="display:none;"` : ""}>${summaryOn
-      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}</div>`
+      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}${timePage ? genTileHtml() : ""}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
     ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
     <div id="${rowsId}_trades"></div>
@@ -19622,6 +19651,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     renderPackCostBlock(document.getElementById(`${rowsId}_packs`), calcKey || "chief_gear", groups, calcOwned);
     const sum = document.getElementById(`${rowsId}_sum`);
     if (sum) sum.innerHTML = summaryHtml();
+    const tl = document.getElementById(`${rowsId}_time`);
+    if (tl) tl.innerHTML = timeLineHtml();
+    const gt = el.querySelector("[data-bsgen]");
+    if (gt) gt.outerHTML = genTileHtml();
     if (BAR_AFTER_CHANGE[calcKey]) BAR_AFTER_CHANGE[calcKey]();
   };
   el.querySelectorAll("[data-ownedmat]").forEach((input) => {
@@ -19657,6 +19690,26 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   el.onclick = (e) => {
     const tileEl = e.target.closest("[data-bsedit]");
     if (tileEl) { editTileModal(tileEl.dataset.bsedit); return; }
+    if (e.target.closest("[data-bsgen]")) {
+      const lk = GENERAL_SPEEDUP_LINK, linkable = Object.keys(lk.bp || {}).length > 0;
+      plxAmountModal({
+        label: t("speedups_label"), icon: "icons/speedup-general.png", value: Number(RESEARCH_SPEEDUP_MINUTES) || 0, minutes: true,
+        linked: linkable ? backpackLinked("experts", GENERAL_SPEEDUP_KEY, lk) : null,
+        onSave: async (val) => { await saveGeneralSpeedupMinutes(val); GENERAL_SPEEDUP_LINK = await backpackLinkState(); refreshFn(); },
+        onUse: async () => {
+          const link = await backpackLinkState();
+          setBackpackManual("experts", GENERAL_SPEEDUP_KEY, false, link);
+          GENERAL_SPEEDUP_LINK = link;
+          RESEARCH_SPEEDUP_MINUTES = backpackAmountFor(GENERAL_SPEEDUP_KEY, link.bp);
+          const inv = (await loadCalcState("experts_inventory")) || {};
+          inv[GENERAL_SPEEDUP_KEY] = RESEARCH_SPEEDUP_MINUTES;
+          saveCalcState("experts_inventory", inv);
+          budgetInvalidate();
+          refreshFn();
+        },
+      });
+      return;
+    }
     if (e.target.closest("[data-bstoggle]")) { toggleBoxes(); return; }
     const b = e.target.closest("[data-bpuse]");
     if (!b) return;
@@ -21388,6 +21441,7 @@ function applyResearchPct(rawHours) {
 // Renders "Research Speed %" and "Speedups" inputs together; reused
 // identically on the T11 Helios, T12 Research, and Research Center pages
 // since they're the same real buffs/items applied everywhere.
+// (The general speedups box moved to "Amounts from your Backpack", owner 20 Oct 2026.)
 function researchSpeedInputHtml() {
   return `
     <div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:14px;">
@@ -21395,12 +21449,6 @@ function researchSpeedInputHtml() {
         <span class="meta" style="font-size:10px;" title="${esc(t("research_speed_label"))}">${esc(t("set_speed"))}</span>
         <input type="text" inputmode="decimal" id="researchSpeedInput" class="keep-w" value="${RESEARCH_SPEED_PCT}" style="width:58px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">%</span>
-      </div>
-      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-        <span class="meta" style="font-size:10px;" title="${esc(t("speedups_label"))}">${esc(t("set_speedups"))}</span>
-        <input type="text" inputmode="decimal" id="researchSpeedupInput" class="keep-w" value="${RESEARCH_SPEEDUP_MINUTES}" style="width:66px; flex-shrink:0; padding:4px 6px;" />
-        <span class="meta" style="font-size:10px;">${esc(t("minutes_short"))}</span>
-        <span id="researchSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, GENERAL_SPEEDUP_LINK)}</span>
       </div>
     </div>
   `;
@@ -23043,13 +23091,8 @@ async function renderExpertsPage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
-    // Same row look as the research pages' "Speedups" box (rs-row).
-    // One line (owner, 19 Oct 2026: the box took too much space).
-    settings: `<div class="exp-spd"><span class="meta" title="${esc(t("speedups_label"))}">${esc(t("set_speedups"))}</span>
-        <input type="text" inputmode="decimal" id="expertsGeneralSpeedupInput" class="keep-w" value="${Number(invSaved[GENERAL_SPEEDUP_KEY]) || 0}" />
-        <span class="meta">${esc(t("minutes_short"))}</span>
-        <span id="expertsGeneralSpeedupNote">${backpackLinkNoteHtml("experts", GENERAL_SPEEDUP_KEY, bpLink)}</span>
-    </div>`,
+    // General speedups are a box in "Amounts from your Backpack" now (owner,
+    // 20 Oct 2026), so this page has no Settings card.
     amountsId: "expertsAmounts", needId: "expertsSummary",
     statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
@@ -23605,8 +23648,13 @@ async function renderExpertsPage() {
         ${st ? st.html : ""}
       </button>`;
     };
-    const fields = expertInventoryFields();
-    invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${fields.map(tile).join("")}</div>
+    // General speedups (shared with the research pages) right after the Expert ones.
+    const fields = expertInventoryFields().flatMap((f) => (f === "Expert Speedups (minutes)" ? [f, GENERAL_SPEEDUP_KEY] : [f]));
+    // Skill time left after all your speedups, small, above the boxes (like the research pages).
+    const tn = tileNeed && tileNeed["Expert Speedups (minutes)"];
+    const timeLine = tn && tn.need > 0 ? `<div class="bs-time"><img src="icons/speedup-expert.png" alt="" /><span>${esc(t("resource_time"))} <b>${bidiNum(bsTime(tn.need))}</b></span>${tn.short > 0 ? `<span class="sh">${bidiNum(bsTime(tn.short))} ${esc(t("bs_short_word"))}</span>` : `<span class="ok">&#10003; ${esc(t("t12x_covered"))}</span>`}</div>
+      <div class="t12x-prog bs-time-bar"><i style="width:${Math.min(100, ((tn.need - tn.short) / tn.need) * 100)}%;${tn.short > 0 ? "" : " background:var(--good);"}"></i></div>` : "";
+    invEl.innerHTML = `${timeLine}${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${fields.map(tile).join("")}</div>
       <div class="t12x-k" style="margin:12px 0 6px;">${esc(t("experts_sigils_summary"))}</div>
       ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}
       <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
@@ -23618,6 +23666,7 @@ async function renderExpertsPage() {
         linked: linkable ? backpackLinked("experts", f, bpLink) : null,
         onSave: (val) => {
           invSaved[f] = val;
+          if (f === GENERAL_SPEEDUP_KEY) RESEARCH_SPEEDUP_MINUTES = val;
           if (hasBp) setBackpackManual("experts", f, true, bpLink);
           budgetInvalidate();
           saveCalcState("experts_inventory", invSaved);
