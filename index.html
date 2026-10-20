@@ -1272,14 +1272,13 @@ input,select,textarea{
   .bp-tile img{ width:38px; height:38px; object-fit:contain; }
   .bp-tile .bp-ph{ font-size:19px; color:var(--muted); font-weight:600; }
   .bp-tile .bp-open{ position:absolute; top:-1px; inset-inline-end:-1px; padding:1px 5px; border-radius:0 12px 0 8px; background:#e0b25a; color:#1a1408; font-size:9px; font-weight:700; }
-  .chest-open{ margin-top:10px; padding:10px 12px; border:1px solid rgba(224,178,90,.5); border-radius:12px; background:rgba(224,178,90,.08); font-size:12.5px; line-height:1.4; }
-  .chest-open-r{ display:flex; align-items:center; gap:8px; margin:4px 0; }
-  .chest-open-r img{ width:26px; height:26px; object-fit:contain; flex:0 0 auto; }
-  .chest-open .linklike{ color:#e0b25a; font-size:12.5px; margin-top:2px; }
-  .chest-open-do{ display:flex; align-items:center; gap:10px; margin-top:6px; }
-  .chest-open-do > span{ flex:1; }
-  .bp-chest-open{ margin:10px 0 0; }
-  .bp-chest-open > b{ display:block; color:#e0b25a; margin-bottom:2px; }
+  .chest-open{ display:flex; align-items:center; gap:8px; margin-top:8px; padding:6px 10px; border:1px solid rgba(224,178,90,.5); border-radius:10px; background:rgba(224,178,90,.08); font-size:12px; line-height:1.35; }
+  .chest-open img{ width:24px; height:24px; object-fit:contain; flex:0 0 auto; }
+  .chest-open > span{ flex:1; min-width:0; }
+  .chest-open .linklike{ color:#e0b25a; font-size:12px; font-weight:700; white-space:nowrap; }
+  .bp-tile .bp-avg{ font-size:9.5px; line-height:1.15; color:#e0b25a; font-weight:600; text-align:center; overflow-wrap:anywhere; }
+  .bp-chest-note{ margin-top:8px; padding:4px 8px; border:1px solid rgba(224,178,90,.55); border-radius:10px; background:rgba(224,178,90,.12); color:#f0c46a; font-size:11px; font-weight:500; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bp-chest-note b{ color:#1b1406; background:#e0b25a; border-radius:5px; padding:0 4px; font-size:10px; font-weight:700; }
   .bp-tile .bp-size{ position:absolute; top:4px; inset-inline-start:6px; font-size:9.5px; font-weight:700; color:var(--frost); }
   .bp-tile .bp-shield{ position:absolute; top:3px; inset-inline-end:5px; font-size:11px; }
   .bp-tile .bp-qty{ font-size:13px; font-weight:700; }
@@ -3530,7 +3529,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 40; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 41; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3833,10 +3832,10 @@ const T = {
   bp_link_from: { en: "From Backpack" },
   bp_link_typed: { en: "Typed" },
   bp_chest_chance: { en: "Chance chest: not counted" },
-  chest_open_line: { en: "{n} × {name} not counted. Each gives on average {each} ({all} for all {n})." },
-  chest_open_do: { en: "Open them in the game, then update your Backpack" },
-  chest_open_bp: { en: "These chance chests aren't counted until you open them:" },
-  chest_open_bp_do: { en: "Open them in the game, then Scan or type the new amounts." },
+  chest_open_line: { en: "{n} × {name} · avg gives {all}" },
+  chest_open_do: { en: "Open" },
+  chest_open_note: { en: "Chests marked {tag} aren't counted until opened." },
+  chest_tile_avg: { en: "avg {all}" },
   chest_open_tag: { en: "Open in game" },
   bp_chest_fixed_note: { en: "Counted, assuming 1 chest = 400 Alloy, 4 Polish, 1 Design" },
   bp_link_use: { en: "Use Backpack" },
@@ -7002,20 +7001,25 @@ const BACKPACK_FIXED_CHESTS = { chief_gear: ["Chief Gear Chest"] };
 // Chance chests (owner, 20 Oct 2026): not counted until opened in the game, so
 // the Backpack and the pages using them ask to open them, with what each one
 // gives on average (from the chest's contents, `chestGives`).
-const CHANCE_CHESTS = ["Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "FC Chest", "FC Crate"];
+const CHANCE_CHESTS = ["Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "FC Chest", "FC Crate", "Mythic General Hero Lucky Box"];
 function chanceAvgNum(v) {
   if (v >= 100) return Math.round(v).toLocaleString();
   if (v >= 1) return (Math.round(v * 10) / 10).toLocaleString();
   return String(Number(v.toPrecision(2)));
 }
 // "0.016 Mythic Gear" (each) or "0.66 Mythic Gear" (times n).
-function chanceAvgText(name, n = 1) {
+function chanceAvgParts(name, n = 1) {
   const g = chestGives(name);
-  return Object.keys(g).filter((k) => g[k] > 0).map((k) => `${chanceAvgNum(g[k] * n)} ${materialDisplayName(itemShortName(k))}`).join(" + ");
+  return Object.keys(g).filter((k) => g[k] > 0).map((k) => `${chanceAvgNum(g[k] * n)} ${materialDisplayName(itemShortName(k))}`);
 }
+// Planner pages: "41 × Lucky Gear Chest · avg gives 0.66 Mythic Gear".
 function chanceChestLine(name, n) {
-  const each = chanceAvgText(name, 1), all = chanceAvgText(name, n);
-  return t("chest_open_line").split("{n}").join(Number(n).toLocaleString()).replace("{name}", materialDisplayName(name)).replace("{each}", each).replace("{all}", all);
+  return t("chest_open_line").replace("{n}", Number(n).toLocaleString()).replace("{name}", materialDisplayName(name)).replace("{all}", chanceAvgParts(name, n).join(" · "));
+}
+// Backpack tile: "avg 154 FC", "avg 2,345 Alloy +2".
+function chanceTileAvg(name, n) {
+  const parts = chanceAvgParts(name, n);
+  return parts.length ? t("chest_tile_avg").replace("{all}", parts[0] + (parts.length > 1 ? ` +${parts.length - 1}` : "")) : "";
 }
 // The owned amounts a page calculates with: its boxes plus fixed chests.
 function ownedWithChests(calcKey, owned, link) {
@@ -11327,6 +11331,7 @@ async function renderInventory() {
       ${CHANCE_CHESTS.includes(it.name) && v > 0 ? `<span class="bp-open">${esc(t("chest_open_tag"))}</span>` : ""}
       <span class="bp-qty${v ? "" : " zero"}">${fmtShort(v)}</span>
       ${sp ? (kind ? `<span class="bp-name">${esc(kind)}</span>` : "") : `<span class="bp-name">${esc(tileName)}</span>`}
+      ${CHANCE_CHESTS.includes(it.name) && v > 0 ? `<span class="bp-avg" title="${esc(chanceAvgParts(it.name, v).join(" · "))}">${esc(chanceTileAvg(it.name, v))}</span>` : ""}
     </button>`;
   };
   const drawGroups = () => {
@@ -11362,7 +11367,7 @@ async function renderInventory() {
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
       <button class="btn small" type="button" id="bpScan" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
-    ${(() => { const ch = CHANCE_CHESTS.filter((n) => (Number(bp[n]) || 0) > 0); return ch.length ? `<div class="chest-open bp-chest-open"><b>&#128230; ${esc(t("chest_open_bp"))}</b>${ch.map((n) => `<div class="chest-open-r">${bpIcon({ name: n }) ? `<img src="${esc(bpIcon({ name: n }))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, Number(bp[n])))}</span></div>`).join("")}<div class="chest-open-do"><span>${esc(t("chest_open_bp_do"))}</span><button type="button" class="btn small ghost" data-chestscan>&#128247; ${esc(t("backpack_scan"))}</button></div></div>` : ""; })()}
+    ${CHANCE_CHESTS.some((n) => (Number(bp[n]) || 0) > 0) ? `<div class="bp-chest-note">&#127873; ${esc(t("chest_open_note")).replace("{tag}", `<b>${esc(t("chest_open_tag"))}</b>`)}</div>` : ""}
     <div id="bpTabs" style="margin-top:12px;"></div>
     <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
     <div id="bpGroups"></div>`;
@@ -11401,8 +11406,6 @@ async function renderInventory() {
     },
   };
   document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); }, scanMore);
-  const chestScan = content.querySelector("[data-chestscan]");
-  if (chestScan) chestScan.onclick = () => document.getElementById("bpScan").click();
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
   const openModal = (html) => {
@@ -19308,7 +19311,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && BAR_SHOW_ALL[calcKey] === false ? ` style="display:none;"` : ""}>${summaryOn
       ? `<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
-    ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? `<div class="chest-open">${ch.map((n) => `<div class="chest-open-r">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span></div>`).join("")}<button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>` : ""; })()}
+    ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
     <div id="${rowsId}_trades"></div>
     <div id="${rowsId}_packs"></div>
   `;
