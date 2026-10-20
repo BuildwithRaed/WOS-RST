@@ -1364,8 +1364,14 @@ input,select,textarea{
   .t12x-settings.one-line .meta{ font-size:12px !important; white-space:nowrap; }
   .t12x-settings.one-line .rs-row input{ width:72px !important; padding:5px 8px !important; text-align:end; font-size:14px; }
   .t12x-settings.one-line #researchSpeedupNote{ font-size:11px; }
-  .t12x-settings.one-line .exp-spd{ display:contents; }
-  .t12x-settings.one-line .exp-spd input{ width:72px; }
+  /* Experts Level: same sizes as the research pages' row (owner, 20 Oct 2026). */
+  .t12x-settings.one-line .exp-spd{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; }
+  .t12x-settings.one-line .exp-spd input{ width:72px; padding:5px 8px; font-size:14px; }
+  @media (max-width: 900px){
+    .t12x-settings.one-line .exp-spd .meta:first-child{ font-size:10px !important; }
+    .t12x-settings.one-line .exp-spd input{ padding:5px 6px; font-size:13px; }
+    .t12x-settings.one-line .exp-spd #expertsGeneralSpeedupNote{ font-size:9.5px; }
+  }
   .t12x-settings.one-line label.t12x-check{ flex:1 1 0; min-width:0; }
   .t12x-settings.one-line .rs-row ~ label.t12x-check, .t12x-settings.one-line label.t12x-check:has(> span:first-child){ flex:0 0 auto; }
   .t12x-settings.one-line .t12x-check{ flex-direction:row !important; justify-content:flex-start !important; gap:6px !important; margin:0 !important; max-width:none !important; font-size:12px !important; text-align:start !important; }
