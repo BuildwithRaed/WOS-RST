@@ -3599,7 +3599,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 48; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 49; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3869,6 +3869,7 @@ const T = {
   pk_picks_s: { en: "Pick options" },
   pk_close: { en: "Close" },
   plx_all_troops: { en: "All troops" },
+  plx_all: { en: "All" },
   t12x_target: { en: "Target" },
   t12x_node1: { en: "1 node" },
   t12x_max_pct: { en: "max {n}%" },
@@ -4163,6 +4164,7 @@ const T = {
   frostfire_mine_title: { en: "Frostfire Mine" },
   frostfire_mine_desc: { en: "Troop Stats + Kathy's Child of Frost talent, for Frostfire Mine." },
   tundra_trade_routes_title: { en: "Tundra Trade Routes" },
+  tundra_trade_tab: { en: "Tundra Trade" },
   tundra_trade_routes_desc: { en: "Troop Stats + Ronne's Trade Dominion talent, for the Tundra Trade Route." },
   resource_time: { en: "Time" },
   resource_books: { en: "Books" },
@@ -23052,11 +23054,12 @@ async function renderExpertsPage() {
     statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       ${plxStatTabsHtml("experts", [
-        ["base", "plx_all_troops", "experts_base_stats_desc", "expertsStatHeader"],
-        ["foundry", "foundry_title", "foundry_desc", "expertsFoundryHeader"],
+        // Short tab names, SvS before Foundry (owner, 20 Oct 2026).
+        ["base", "plx_all", "experts_base_stats_desc", "expertsStatHeader"],
         ["svs", "svs_title", "svs_desc", "expertsSvsHeader"],
+        ["foundry", "foundry_title", "foundry_desc", "expertsFoundryHeader"],
         ["frostfire", "frostfire_mine_title", "frostfire_mine_desc", "expertsFrostfireHeader"],
-        ["tundra", "tundra_trade_routes_title", "tundra_trade_routes_desc", "expertsTundraHeader"],
+        ["tundra", "tundra_trade_tab", "tundra_trade_routes_desc", "expertsTundraHeader"],
       ].map(([key, title, desc, id]) => ({ key, label: t(title), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t(desc))}</p><div id="${id}"></div>` })))}
     </div>`,
     mainHtml: `
