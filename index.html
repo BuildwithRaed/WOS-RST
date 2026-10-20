@@ -24713,6 +24713,8 @@ const ADMIN_TABLES = {
   alliance: { label: "Alliance", group: "game", icon: "🏰", desc: "Facility and tech", words: "facility alliance tech" },
   centerresearch: { label: "Research", group: "game", icon: "🔬", desc: "Research Center, T11, T12", words: "research t11 t12 helios" },
   skins: { label: "Skins", group: "game", icon: "🎨", desc: "Gallery, album, skins, islands", words: "skin gallery album islands" },
+  // Opens the "Globe Level extra skins" rule on its own (owner, 20 Oct 2026).
+  globe: { label: "Globe Level", group: "game", icon: "🔮", desc: "Skins that come with each Globe Level", words: "globe level frost sphere skin cosmetics" },
   rules: { label: "Rules & Timeline", group: "rules", icon: "📅", desc: "State days, Gen, events, trades, chests", words: "rules timeline state day unlock gen svs koi trade chest widget hall heroes gems lab advanced marks" },
   // These are full pages of their own; the Admin entry just opens them.
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
@@ -24835,7 +24837,8 @@ async function drawAdminSection(key, body) {
   else if (key === "menu") await renderAdminMenu(body);
   else if (key === "languages") await renderAdminLanguages(body);
   else if (key === "backup") await renderAdminBackup(body);
-  else if (key === "rules") await renderAdminRules(body);
+  else if (key === "rules") { if (ADMIN_RULE_ONLY) { ADMIN_RULE_ONLY = false; ADMIN_RULE_OPEN = null; } await renderAdminRules(body); }
+  else if (key === "globe") { ADMIN_RULE_OPEN = "globeSkins"; ADMIN_RULE_ONLY = true; await renderAdminRules(body, { only: true }); }
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
   else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
@@ -25175,7 +25178,8 @@ function afterGameRulesChange() {
 
 // ---- Admin editor ----
 let ADMIN_RULE_OPEN = null;
-async function renderAdminRules(body) {
+let ADMIN_RULE_ONLY = false; // a rule opened on its own (Admin → Globe Level)
+async function renderAdminRules(body, opts = {}) {
   await ensureSiteConfig();
   const rules = gameRules(), saved = gameRulesSaved();
   const pages = visitorPageList ? [{ tab: "", label: "—" }, ...visitorPageList(), { tab: "overview", label: "Dashboard" }] : [];
@@ -25231,7 +25235,7 @@ async function renderAdminRules(body) {
       });
     };
     body.innerHTML = `
-      <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>
+      ${opts.only ? "" : `<button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>`}
       <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
         <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
         <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
@@ -25242,7 +25246,8 @@ async function renderAdminRules(body) {
       const ed0 = body.querySelector(".rl-ed");
       Promise.resolve().then(() => r.prepare()).catch(() => {}).then(() => { if (ADMIN_RULE_OPEN === r.key && body.contains(ed0)) drawEditor(); });
     } else drawEditor();
-    body.querySelector("[data-ruleback]").addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
+    const back = body.querySelector("[data-ruleback]");
+    if (back) back.addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
     const store = async (next, msg) => {
       try {
         await saveSiteConfig("game_rules", next);
