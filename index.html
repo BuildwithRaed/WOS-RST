@@ -728,6 +728,43 @@
   .pur-rm-cancel{ width:100%; }
   .pur-until{ display:block; margin-top:2px; font-size:12px; color:var(--ice); }
   .pur-until.soon{ color:#e0b25a; }
+  /* Admin → Globe Level (owner, 20 Oct 2026) */
+  .gl-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .gl-row{ display:flex; align-items:center; gap:10px; padding:10px; margin-bottom:8px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.02); }
+  .gl-lv{ flex:0 0 auto; padding:3px 8px; border-radius:8px; border:1px solid var(--ice-dim); color:var(--ice); font-size:12px; font-weight:700; }
+  .gl-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .gl-city{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .gl-city b{ font-size:14px; overflow-wrap:anywhere; }
+  .gl-pic{ width:34px; height:34px; object-fit:contain; flex:0 0 auto; }
+  .gl-nopic{ display:inline-flex; align-items:center; justify-content:center; border-radius:8px; background:rgba(255,255,255,.06); color:var(--muted); font-size:13px; }
+  .gl-extra{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .gl-chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 8px 3px 4px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.04); font-size:12.5px; max-width:100%; }
+  .gl-chip button{ background:none; border:0; color:var(--muted); cursor:pointer; padding:0 2px; font-size:12px; }
+  .gl-cpic{ width:20px; height:20px; object-fit:contain; flex:0 0 auto; font-size:10px; }
+  .gl-ed{ flex:0 0 auto; width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--ice); cursor:pointer; font-size:15px; }
+  .gl-add, .gl-addskin{ width:100%; padding:10px; border-radius:12px; border:1px dashed var(--ice-dim); background:none; color:var(--ice); font:inherit; font-size:14px; cursor:pointer; }
+  .gl-addskin{ width:auto; padding:4px 10px; border-radius:999px; font-size:12.5px; }
+  .gl-foot{ display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .gl-note{ font-size:11.5px; margin-top:8px; }
+  .gl-miss{ color:#e0b25a; font-size:11px; font-weight:600; }
+  .gl-lab{ font-size:12px; color:var(--muted); margin:10px 0 6px; }
+  .gl-citybtn{ display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--frost); font:inherit; cursor:pointer; text-align:start; }
+  .gl-citybtn b{ flex:1; font-size:15px; }
+  .gl-citybtn i{ font-style:normal; color:var(--muted); }
+  .gl-sfoot{ display:flex; align-items:center; gap:8px; margin-top:16px; }
+  .gl-del:not(:disabled){ color:#f06b6b; }
+  .gl-search{ width:100%; margin-bottom:8px; }
+  .gl-cats{ display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:6px; }
+  .gl-cats button{ flex:0 0 auto; padding:6px 11px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--frost); font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .gl-cats button.on{ background:var(--ice-dim); border-color:var(--ice); }
+  .gl-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; max-height:46vh; overflow-y:auto; overscroll-behavior:contain; padding:2px; }
+  .gl-tile{ position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--frost); font:inherit; font-size:11.5px; cursor:pointer; }
+  .gl-tile span{ overflow-wrap:anywhere; text-align:center; line-height:1.25; }
+  .gl-tile.on{ border-color:var(--ice); background:rgba(108,199,230,.12); }
+  .gl-tile.on::after{ content:"\2713"; position:absolute; top:4px; right:6px; color:var(--ice); font-weight:700; }
+  .gl-tile em{ font-style:normal; font-size:10px; color:var(--muted); }
+  .gl-tpic{ width:64px; height:64px; object-fit:contain; }
+  .gl-pickok{ width:100%; margin-top:10px; }
   /* How many (owner, 19 Oct 2026): − n + on Will buy dates, Coming rows and the Mark as bought sheet. */
   .pur-cnt{ display:flex; align-items:center; gap:8px; margin:4px 0 8px; font-size:13px; }
   .pur-cnt-l{ flex:1; min-width:0; }
@@ -19689,7 +19726,7 @@ async function renderSkinGallery() {
       <span class="meta" style="font-size:11px;">${esc(t("globe_level"))}</span>
       <select id="globeLevelSelect" style="width:130px;">
         <option value="0">${esc(t("no_globe"))}</option>
-        ${[1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}</option>`).join("")}
+        ${GLOBE_LEVELS.map((r) => `<option value="${r.level}">${r.level}</option>`).join("")}
       </select>
     </div>
     <div id="skinSections"></div>
@@ -19709,34 +19746,17 @@ async function renderSkinGallery() {
   if (seq !== RENDER_SEQ) return;
   const globeLevelSelect = document.getElementById("globeLevelSelect");
   globeLevelSelect.value = globeLevelSaved.level;
-  const GLOBE_LEVEL_ROMAN = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI" };
-  // Extra skins auto-owned at specific globe levels, beyond the matching
-  // Frost Sphere (Admin → Rules "Globe Level extra skins").
-  const GLOBE_LEVEL_EXTRA_SKINS = GLOBE_LEVEL_EXTRA_SKINS_GLOBAL;
-  function namesForGlobeLevel(level) {
-    if (!level) return [];
-    const roman = GLOBE_LEVEL_ROMAN[level];
-    return [`Frost Sphere ${roman}`, ...(GLOBE_LEVEL_EXTRA_SKINS[level] || [])];
-  }
-  // Every skin tied to the Globe Level selector, across all 6 levels (Frost
-  // Sphere I-VI plus the extra per-level unlocks). These are excluded from
-  // totals entirely until a globe level is picked, and only the currently
-  // selected level's items count afterward (not a theoretical ceiling).
-  const ALL_GLOBE_WIRED_NAMES = new Set([
-    ...Object.values(GLOBE_LEVEL_ROMAN).map((roman) => `Frost Sphere ${roman}`),
-    ...Object.values(GLOBE_LEVEL_EXTRA_SKINS).flat(),
-  ]);
+  // Each Globe Level's City Skin and extra skins (Admin → Globe Level).
+  const namesForGlobeLevel = namesForGlobeLevelGlobal;
+  // Every skin tied to the Globe Level selector, across all levels. These are
+  // excluded from totals entirely until a globe level is picked, and only the
+  // currently selected level's items count afterward (not a theoretical ceiling).
+  const ALL_GLOBE_WIRED_NAMES = ALL_GLOBE_WIRED_NAMES_GLOBAL;
   // Regardless of the dropdown, if the user has manually toggled one or more
-  // Frost Sphere cards owned directly, the HIGHEST owned tier is what
+  // City Skin cards of a level owned directly, the HIGHEST owned level is what
   // actually counts toward current/max - not necessarily the dropdown value.
   function deriveEffectiveGlobeLevel() {
-    let highest = 0;
-    for (let level = 1; level <= 6; level++) {
-      const roman = GLOBE_LEVEL_ROMAN[level];
-      const skin = skins.find((s) => s.name === `Frost Sphere ${roman}`);
-      if (skin && skin.owned) highest = level;
-    }
-    return highest || globeLevelSaved.level;
+    return globeHighestOwnedLevel(skins) || globeLevelSaved.level;
   }
   globeLevelSelect.addEventListener("change", async (e) => {
     const level = Number(e.target.value);
@@ -20132,34 +20152,41 @@ async function ensureIslandCategories() {
 }
 // ---- Globe Level (Skin Gallery) global state, for Dashboard wiring ----
 let GLOBE_LEVEL_GLOBAL = 0;
-const GLOBE_LEVEL_ROMAN_GLOBAL = { 1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI" };
-const GLOBE_LEVEL_EXTRA_SKINS_GLOBAL = {
-  2: ["Fireborn Expeditioner"],
-  3: ["Gate of Time"],
-  5: ["Star Radiance"],
-};
-const ALL_GLOBE_WIRED_NAMES_GLOBAL = new Set([
-  ...Object.values(GLOBE_LEVEL_ROMAN_GLOBAL).map((roman) => `Frost Sphere ${roman}`),
-  ...Object.values(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flat(),
-]);
+// Globe Levels (owner, 20 Oct 2026): one row per level with its City Skin and
+// extra skins; Admin → Globe Level edits the list and can add levels (rule
+// "globeLevels"). Built-in: Frost Sphere I–VI.
+const GLOBE_LEVELS = ["I", "II", "III", "IV", "V", "VI"].map((roman, i) => ({ level: i + 1, city: `Frost Sphere ${roman}`, extra: ({ 2: ["Fireborn Expeditioner"], 3: ["Gate of Time"], 5: ["Star Radiance"] })[i + 1] || [] }));
+const GLOBE_LEVEL_EXTRA_SKINS_GLOBAL = {}; // { level: [extra skin names] }
+const ALL_GLOBE_WIRED_NAMES_GLOBAL = new Set();
+function setGlobeLevels(rows) {
+  const seen = new Set();
+  const out = (rows || []).map((r) => ({ level: Math.floor(Number(r.level)), city: String(r.city || "").trim(), extra: (Array.isArray(r.extra) ? r.extra : []).map((x) => String(x).trim()).filter(Boolean) }))
+    .filter((r) => r.level >= 1 && !seen.has(r.level) && seen.add(r.level)).sort((a, b) => a.level - b.level);
+  if (!out.length) throw new Error("add at least one level");
+  GLOBE_LEVELS.length = 0; GLOBE_LEVELS.push(...out);
+  Object.keys(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).forEach((k) => { delete GLOBE_LEVEL_EXTRA_SKINS_GLOBAL[k]; });
+  out.forEach((r) => { if (r.extra.length) GLOBE_LEVEL_EXTRA_SKINS_GLOBAL[r.level] = r.extra.slice(); });
+  ALL_GLOBE_WIRED_NAMES_GLOBAL.clear();
+  out.forEach((r) => { if (r.city) ALL_GLOBE_WIRED_NAMES_GLOBAL.add(r.city); r.extra.forEach((n) => ALL_GLOBE_WIRED_NAMES_GLOBAL.add(n)); });
+}
+setGlobeLevels(JSON.parse(JSON.stringify(GLOBE_LEVELS)));
 function namesForGlobeLevelGlobal(level) {
-  if (!level) return [];
-  const roman = GLOBE_LEVEL_ROMAN_GLOBAL[level];
-  return [`Frost Sphere ${roman}`, ...(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL[level] || [])];
+  const r = level ? GLOBE_LEVELS.find((x) => x.level === Number(level)) : null;
+  return r ? [r.city, ...r.extra].filter(Boolean) : [];
+}
+// The highest level whose City Skin is marked owned.
+function globeHighestOwnedLevel(list) {
+  let highest = 0;
+  GLOBE_LEVELS.forEach((r) => { const s = r.city && list.find((x) => x.name === r.city); if (s && s.owned) highest = Math.max(highest, r.level); });
+  return highest;
 }
 async function ensureGlobeLevelData(allSkinsData) {
   const saved = await loadCalcState("skin_globe_level");
   const savedLevel = (saved && typeof saved.level === "number") ? saved.level : 0;
-  // Regardless of the saved dropdown value, if one or more Frost Sphere
-  // skins are actually marked owned, the HIGHEST owned tier wins.
+  // Regardless of the saved dropdown value, if one or more City Skins of a
+  // level are actually marked owned, the HIGHEST owned level wins.
   // Reuses the already-fetched allSkins list instead of a second query.
-  let highest = 0;
-  for (let level = 1; level <= 6; level++) {
-    const roman = GLOBE_LEVEL_ROMAN_GLOBAL[level];
-    const skin = allSkinsData.find((s) => s.name === `Frost Sphere ${roman}`);
-    if (skin && skin.owned) highest = level;
-  }
-  GLOBE_LEVEL_GLOBAL = highest || savedLevel;
+  GLOBE_LEVEL_GLOBAL = globeHighestOwnedLevel(allSkinsData) || savedLevel;
 }
 let EXPERTS_UNLOCKED_GLOBAL = null;
 let EXPERT_AFFINITY_CACHE_GLOBAL = null;
@@ -24837,8 +24864,8 @@ async function drawAdminSection(key, body) {
   else if (key === "menu") await renderAdminMenu(body);
   else if (key === "languages") await renderAdminLanguages(body);
   else if (key === "backup") await renderAdminBackup(body);
-  else if (key === "rules") { if (ADMIN_RULE_ONLY) { ADMIN_RULE_ONLY = false; ADMIN_RULE_OPEN = null; } await renderAdminRules(body); }
-  else if (key === "globe") { ADMIN_RULE_OPEN = "globeSkins"; ADMIN_RULE_ONLY = true; await renderAdminRules(body, { only: true }); }
+  else if (key === "rules") await renderAdminRules(body);
+  else if (key === "globe") await renderAdminGlobe(body);
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
   else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
@@ -25116,16 +25143,9 @@ function gameRules() {
       cols: [{ key: "category", label: "Category", type: "text" }],
       get: () => [...GALLERY_BIG_THUMB].map((c) => ({ category: c })),
       set: (rows) => { GALLERY_BIG_THUMB.clear(); rows.forEach((r) => { if (r.category) GALLERY_BIG_THUMB.add(String(r.category).trim()); }); } },
-    { key: "globeSkins", group: "pages", label: "Globe Level extra skins", help: "Cosmetics that come with a Globe Level (1–6) besides that level's Frost Sphere: picking the level on Cosmetics counts them as owned.",
-      cols: [{ key: "level", label: "Globe level", type: "num" }, { key: "skin", label: "Skin name", type: "text" }],
-      get: () => Object.entries(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flatMap(([lv, l]) => l.map((s) => ({ level: Number(lv), skin: s }))),
-      set: (rows) => {
-        const o = {};
-        rows.filter((r) => Number(r.level) >= 1 && Number(r.level) <= 6 && r.skin).forEach((r) => { (o[Number(r.level)] = o[Number(r.level)] || []).push(String(r.skin).trim()); });
-        ruleSetObject(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL, o);
-        ALL_GLOBE_WIRED_NAMES_GLOBAL.clear();
-        [...Object.values(GLOBE_LEVEL_ROMAN_GLOBAL).map((roman) => `Frost Sphere ${roman}`), ...Object.values(o).flat()].forEach((n) => ALL_GLOBE_WIRED_NAMES_GLOBAL.add(n));
-      } },
+    { key: "globeLevels", group: "pages", label: "Globe Levels", help: "Each Globe Level's City Skin and the extra skins that come with it; picking the level on Skin gallery counts them as owned. Edited in Admin → Globe Level.", link: "globe",
+      get: () => GLOBE_LEVELS.map((r) => ({ level: r.level, city: r.city, extra: r.extra.slice() })),
+      set: (rows) => setGlobeLevels(rows) },
     { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
       cols: [{ key: "group", label: "Pack group", type: "text" }],
       get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
@@ -25178,8 +25198,125 @@ function afterGameRulesChange() {
 
 // ---- Admin editor ----
 let ADMIN_RULE_OPEN = null;
-let ADMIN_RULE_ONLY = false; // a rule opened on its own (Admin → Globe Level)
-async function renderAdminRules(body, opts = {}) {
+// Admin → Globe Level (owner picked the mock-up, 20 Oct 2026): one row per
+// level (City Skin + extra skins), ✎ opens a sheet to pick them from the skins
+// list, "+ Add level" for levels the game adds. Saved as rule "globeLevels".
+async function renderAdminGlobe(body) {
+  // Skin gallery skins only (its categories in their page order), not Islands / Alliance Tech.
+  let cat = [];
+  try {
+    const [rows, pcs] = await Promise.all([sb(`skins_catalog?select=name,category,image_url&order=name.asc`), sb(`skin_page_categories?page=eq.gallery&select=category,sort_order&order=sort_order.asc`)]);
+    const order = pcs.map((c) => c.category);
+    cat = rows.filter((x) => order.includes(x.category)).sort((x, y) => order.indexOf(x.category) - order.indexOf(y.category) || x.name.localeCompare(y.name));
+  } catch (e) { cat = []; }
+  const byName = new Map(cat.map((x) => [x.name, x]));
+  const builtIn = new Set(((gameRules().find((r) => r.key === "globeLevels") || {}).def || []).map((r) => r.level));
+  const pic = (n, cls = "gl-pic") => { const x = byName.get(n); return x && x.image_url ? `<img class="${cls}" src="${esc(x.image_url)}" alt="" loading="lazy" />` : `<span class="${cls} gl-nopic">?</span>`; };
+  const nameHtml = (n) => `${esc(n)}${cat.length && !byName.has(n) ? ` <span class="gl-miss" title="No skin with this name in Admin → Skins">not found</span>` : ""}`;
+  const chip = (n, x) => `<span class="gl-chip">${pic(n, "gl-cpic")}<span>${nameHtml(n)}</span>${x ? `<button type="button" data-glx="${esc(n)}" aria-label="Remove">&#10005;</button>` : ""}</span>`;
+  const store = async (rows, msg) => {
+    try { await saveGameRule("globeLevels", rows); toast(msg || "Saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
+    draw();
+  };
+  const current = () => GLOBE_LEVELS.map((r) => ({ level: r.level, city: r.city, extra: r.extra.slice() }));
+  const draw = () => {
+    const changed = gameRulesSaved().globeLevels != null;
+    body.innerHTML = `<div class="gl-card">
+      <p class="desc" style="margin:0 0 10px;">Each level gives its City Skin plus any extra skins. Picking a level on Skin gallery counts them as owned.</p>
+      ${GLOBE_LEVELS.map((r) => `<div class="gl-row">
+        <span class="gl-lv">Lv ${r.level}</span>
+        <span class="gl-main"><span class="gl-city">${r.city ? `${pic(r.city)}<b>${nameHtml(r.city)}</b>` : `<span class="gl-miss">No City Skin picked</span>`}</span>
+          <span class="gl-extra">${r.extra.length ? r.extra.map((n) => chip(n)).join("") : `<span class="meta">— no extra skins</span>`}</span></span>
+        <button type="button" class="gl-ed" data-gled="${r.level}" aria-label="Edit level ${r.level}">&#9998;</button>
+      </div>`).join("")}
+      <button type="button" class="gl-add" data-gladd>+ Add level</button>
+      <div class="gl-foot"><button type="button" class="btn ghost small" data-glreset ${changed ? "" : "disabled"}>Reset to built-in</button><span class="meta" style="font-size:11.5px;">${changed ? "Changed · saved for everyone" : "Built-in levels"}</span></div>
+      <div class="gl-note meta">New levels show in Skin gallery's Globe Level list for everyone after Save.</div>
+    </div>`;
+    body.querySelectorAll("[data-gled]").forEach((b) => b.addEventListener("click", () => openLevel(Number(b.dataset.gled))));
+    body.querySelector("[data-gladd]").addEventListener("click", () => openLevel(Math.max(0, ...GLOBE_LEVELS.map((r) => r.level)) + 1, true));
+    body.querySelector("[data-glreset]").addEventListener("click", async () => {
+      if (!confirm("Put the built-in Globe Levels back (Frost Sphere I–VI and their extra skins)?")) return;
+      const next = { ...gameRulesSaved() }; delete next.globeLevels;
+      try { await saveSiteConfig("game_rules", next); afterGameRulesChange(); toast("Reset to built-in"); } catch (err) { toast(err.message || "Couldn't save", true); }
+      draw();
+    });
+  };
+  const sheet = (id) => {
+    let m = document.getElementById(id);
+    if (!m) { m = document.createElement("div"); m.id = id; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
+    m.style.display = "flex";
+    return m;
+  };
+  // One level: its City Skin and extra skins; Save saves for everyone at once.
+  const openLevel = (level, isNew) => {
+    const r0 = GLOBE_LEVELS.find((r) => r.level === level);
+    const ed = { city: r0 ? r0.city : "", extra: r0 ? r0.extra.slice() : [] };
+    const m = sheet("glSheet");
+    const close = () => { m.style.display = "none"; };
+    const drawSheet = () => {
+      const canDel = !isNew && !builtIn.has(level);
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box gl-sheet" role="dialog" aria-modal="true">
+        <div class="gs-head"><b style="flex:1; font-size:17px;">Globe Level ${level}</b><button type="button" class="rfa-x" data-glclose aria-label="Close">&#10005;</button></div>
+        <div class="gl-lab">City Skin</div>
+        <button type="button" class="gl-citybtn" data-glcity>${ed.city ? `${pic(ed.city)}<b>${nameHtml(ed.city)}</b>` : `<span class="meta">Pick the City Skin</span>`}<i>&#9662;</i></button>
+        <div class="gl-lab">Extra skins</div>
+        <div class="gl-extra">${ed.extra.map((n) => chip(n, true)).join("")}<button type="button" class="gl-addskin" data-gladdskin>+ Add skin</button></div>
+        <div class="gl-sfoot"><button type="button" class="btn ghost small gl-del" data-gldel ${canDel ? "" : "disabled"}>Delete level</button><span style="flex:1"></span><button type="button" class="btn ghost small" data-glclose>Cancel</button><button type="button" class="btn small" data-glsave ${ed.city ? "" : "disabled"}>Save</button></div>
+        ${canDel ? "" : `<div class="meta" style="font-size:11.5px; margin-top:6px;">${isNew ? "Pick its City Skin, then Save." : "Built-in levels can't be deleted (Delete shows only for levels you added)."}</div>`}
+      </div>`;
+      m.onclick = async (ev) => {
+        if (ev.target === m || ev.target.closest("[data-glclose]")) { close(); return; }
+        const x = ev.target.closest("[data-glx]");
+        if (x) { ed.extra = ed.extra.filter((n) => n !== x.dataset.glx); drawSheet(); return; }
+        if (ev.target.closest("[data-glcity]")) { pickSkins({ single: true, chosen: ed.city ? [ed.city] : [], cat: "City Skin", onDone: (l) => { ed.city = l[0] || ed.city; drawSheet(); } }); return; }
+        if (ev.target.closest("[data-gladdskin]")) { pickSkins({ chosen: [], skip: [ed.city, ...ed.extra], onDone: (l) => { ed.extra = [...ed.extra, ...l.filter((n) => !ed.extra.includes(n))]; drawSheet(); } }); return; }
+        if (ev.target.closest("[data-gldel]")) {
+          if (!confirm(`Delete Globe Level ${level}?`)) return;
+          close(); await store(current().filter((r) => r.level !== level), `Globe Level ${level} deleted`); return;
+        }
+        if (ev.target.closest("[data-glsave]")) {
+          if (!ed.city) return;
+          const rows = current().filter((r) => r.level !== level).concat([{ level, city: ed.city, extra: ed.extra.filter((n) => n !== ed.city) }]);
+          close(); await store(rows, `Globe Level ${level} saved`);
+        }
+      };
+    };
+    drawSheet();
+  };
+  // Skin picker: search, category chips, picture tiles to tick.
+  const pickSkins = ({ single, chosen, cat: cat0, skip = [], onDone }) => {
+    const m = sheet("glPick");
+    const picked = new Set(chosen);
+    const cats = [...new Set(cat.map((x) => x.category).filter(Boolean))];
+    let q = "", c = cats.includes(cat0) ? cat0 : "all";
+    const wiredAt = new Map();
+    GLOBE_LEVELS.forEach((r) => [r.city, ...r.extra].forEach((n) => { if (n && !wiredAt.has(n)) wiredAt.set(n, r.level); }));
+    const close = () => { m.style.display = "none"; };
+    const tiles = () => cat.filter((x) => (c === "all" || x.category === c) && (!q || x.name.toLowerCase().includes(q)) && !skip.includes(x.name)).map((x) => `<button type="button" class="gl-tile${picked.has(x.name) ? " on" : ""}" data-glpick="${esc(x.name)}">${pic(x.name, "gl-tpic")}<span>${esc(x.name)}</span>${wiredAt.has(x.name) ? `<em>Lv ${wiredAt.get(x.name)}</em>` : ""}</button>`).join("") || `<div class="meta" style="grid-column:1/-1; padding:10px 0;">No skins found.</div>`;
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box gl-sheet" role="dialog" aria-modal="true">
+      <div class="gs-head"><b style="flex:1; font-size:17px;">${single ? "Pick the City Skin" : "Pick a skin"}</b><button type="button" class="rfa-x" data-glpclose aria-label="Close">&#10005;</button></div>
+      <input type="search" class="gl-search" placeholder="Search skins…" data-glq />
+      <div class="gl-cats">${["all", ...cats].map((k) => `<button type="button" data-glcat="${esc(k)}" class="${k === c ? "on" : ""}">${esc(k === "all" ? "All" : k)}</button>`).join("")}</div>
+      <div class="gl-grid">${tiles()}</div>
+      <button type="button" class="btn gl-pickok" data-glpok>${single ? "Use" : `Add (${picked.size})`}</button>
+    </div>`;
+    const grid = m.querySelector(".gl-grid"), ok = m.querySelector("[data-glpok]");
+    const sync = () => { grid.innerHTML = tiles(); ok.textContent = single ? "Use" : `Add (${picked.size})`; ok.disabled = !picked.size; };
+    ok.disabled = !picked.size;
+    m.querySelector("[data-glq]").addEventListener("input", (e) => { q = e.target.value.trim().toLowerCase(); sync(); });
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-glpclose]")) { close(); return; }
+      const cb = ev.target.closest("[data-glcat]");
+      if (cb) { c = cb.dataset.glcat; m.querySelectorAll("[data-glcat]").forEach((b) => b.classList.toggle("on", b === cb)); sync(); return; }
+      const tl = ev.target.closest("[data-glpick]");
+      if (tl) { const n = tl.dataset.glpick; if (single) { picked.clear(); picked.add(n); } else if (picked.has(n)) picked.delete(n); else picked.add(n); sync(); return; }
+      if (ev.target.closest("[data-glpok]") && picked.size) { close(); onDone([...picked]); }
+    };
+  };
+  draw();
+}
+async function renderAdminRules(body) {
   await ensureSiteConfig();
   const rules = gameRules(), saved = gameRulesSaved();
   const pages = visitorPageList ? [{ tab: "", label: "—" }, ...visitorPageList(), { tab: "overview", label: "Dashboard" }] : [];
@@ -25206,7 +25343,10 @@ async function renderAdminRules(body, opts = {}) {
     const r = rules.find((x) => x.key === ADMIN_RULE_OPEN);
     if (!r) {
       body.innerHTML = `<p class="desc" style="margin:0 0 10px;">Game rules the site calculates with. Each one starts with the built-in value; your changes apply to everyone. "Reset" puts the built-in value back.</p>${listHtml()}`;
-      body.querySelectorAll("[data-ruleopen]").forEach((b) => b.addEventListener("click", () => { ADMIN_RULE_OPEN = b.dataset.ruleopen; draw(); window.scrollTo(0, body.getBoundingClientRect().top + scrollY - 80); }));
+      body.querySelectorAll("[data-ruleopen]").forEach((b) => b.addEventListener("click", () => {
+        const lk = (rules.find((x) => x.key === b.dataset.ruleopen) || {}).link;
+        if (lk) { admPushSection(lk); ADMIN_ACTIVE_TABLE = lk; renderAdminPage(); window.scrollTo(0, 0); return; } // edited on its own Admin screen
+        ADMIN_RULE_OPEN = b.dataset.ruleopen; draw(); window.scrollTo(0, body.getBoundingClientRect().top + scrollY - 80); }));
       return;
     }
     let val = JSON.parse(JSON.stringify(saved[r.key] != null ? saved[r.key] : r.def));
@@ -25235,7 +25375,7 @@ async function renderAdminRules(body, opts = {}) {
       });
     };
     body.innerHTML = `
-      ${opts.only ? "" : `<button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>`}
+      <button type="button" class="btn ghost small" data-ruleback style="margin-bottom:10px;">&#8249; All rules</button>
       <div class="rl-card"><div class="rl-h"><b>${esc(r.label)}</b>${changed(r) ? ` <span class="rl-chg">changed</span>` : ` <span class="meta" style="font-size:11.5px;">built-in values</span>`}</div>
         <p class="desc" style="margin:4px 0 10px;">${esc(r.help || "")}</p>
         <div class="rl-ed">${r.prepare ? `<div class="meta" style="font-size:12px;">Loading…</div>` : ""}</div>
@@ -25246,8 +25386,7 @@ async function renderAdminRules(body, opts = {}) {
       const ed0 = body.querySelector(".rl-ed");
       Promise.resolve().then(() => r.prepare()).catch(() => {}).then(() => { if (ADMIN_RULE_OPEN === r.key && body.contains(ed0)) drawEditor(); });
     } else drawEditor();
-    const back = body.querySelector("[data-ruleback]");
-    if (back) back.addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
+    body.querySelector("[data-ruleback]").addEventListener("click", () => { ADMIN_RULE_OPEN = null; draw(); });
     const store = async (next, msg) => {
       try {
         await saveSiteConfig("game_rules", next);
@@ -27581,7 +27720,7 @@ async function renderAdminSkinsCategory(body, category) {
           if (!v.name) throw new Error("Enter a name");
           await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) });
           // A Globe Level extra skin keeps its link under the new name.
-          if (v.name !== r.name && Object.values(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).some((l) => l.includes(r.name))) await saveGameRule("globeSkins", Object.entries(GLOBE_LEVEL_EXTRA_SKINS_GLOBAL).flatMap(([lv, l]) => l.map((s) => ({ level: Number(lv), skin: s === r.name ? v.name : s }))));
+          if (v.name !== r.name && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(r.name)) await saveGameRule("globeLevels", GLOBE_LEVELS.map((g) => ({ level: g.level, city: g.city === r.name ? v.name : g.city, extra: g.extra.map((x) => (x === r.name ? v.name : x)) })));
           dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category);
         },
         onDelete: async () => { await sb(`skins?id=eq.${r.id}`, { method: "DELETE" }); dashDataChanged("skins"); toast("Deleted"); renderAdminSkinsCategory(body, category); },
