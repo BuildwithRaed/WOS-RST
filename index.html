@@ -19432,6 +19432,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (summaryOn) {
       // Edit list: short amounts with a word, shown as a pill.
       const amt = (v) => (/\(minutes\)$/.test(name) ? bsTime(v) : shortAmount(v));
+      // Research speedups: the page's need is what's left after the general
+      // speedups, so 0 can mean "covered", not "not used".
+      if (needed === 0 && /^Research Speedups/.test(name) && RESEARCH_TIME_NEED[calcKey] > 0) return { statusColor: "var(--good)", statusText: "\u2713" };
       const text = needed === 0 ? "\u2014" : stillNeed > 0 ? `${bidiNum(amt(stillNeed))} ${t("bs_short_word")}` : "\u2713";
       return { statusColor, statusText: text };
     }
@@ -21376,6 +21379,7 @@ function applyResearchSpeed(rawHours) {
   const afterPct = rawHours / (1 + RESEARCH_SPEED_PCT / 100);
   return Math.max(0, afterPct - RESEARCH_SPEEDUP_MINUTES / 60);
 }
+const RESEARCH_TIME_NEED = {}; // { calcKey: research minutes after the % buff, before speedups }
 function applyResearchPct(rawHours) {
   return rawHours / (1 + RESEARCH_SPEED_PCT / 100);
 }
@@ -21659,6 +21663,8 @@ async function renderT11HeliosPage() {
       const t = computeNeeded(troop);
       Object.keys(grand).forEach((k) => (grand[k] += t[k]));
     });
+    // Full research time (after the % buff): its tile shows ✓, not "—", when general speedups cover it all.
+    RESEARCH_TIME_NEED.t11_helios = Math.round(applyResearchPct(grand.time_hours) * 60);
     const matTotals = {
       Steel: Math.round(grand.steel),
       "FC Shard": Math.round(grand.fc_shard),
@@ -24425,6 +24431,8 @@ async function renderResearchCenterPage() {
       const n = computeNeeded(t);
       Object.keys(grand).forEach((k) => (grand[k] += n[k]));
     });
+    // Full research time (after the % buff): its tile shows ✓, not "—", when general speedups cover it all.
+    RESEARCH_TIME_NEED.research_center = Math.round(applyResearchPct(grand.time_hours) * 60);
     const matTotals = {
       Meat: Math.round(grand.meat),
       Wood: Math.round(grand.wood),
@@ -24867,6 +24875,8 @@ async function renderT12ResearchPage() {
       const t = computeNeeded(T12_STATE[troop], troop);
       Object.keys(grand).forEach((k) => (grand[k] += t[k]));
     });
+    // Full research time (after the % buff): its tile shows ✓, not "—", when general speedups cover it all.
+    RESEARCH_TIME_NEED.t12_research = Math.round(applyResearchPct(grand.time_hours) * 60);
     const matTotals = {
       Steel: Math.round(grand.steel),
       "Refined FC": Math.round(grand.refined_fc),
