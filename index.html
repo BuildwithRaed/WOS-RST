@@ -649,6 +649,45 @@
   .pur-ng-link{ background:none; border:0; padding:0; color:var(--ice); text-decoration:underline; cursor:pointer; font-size:12px; }
   .pur-ng-own{ font-size:11.5px; margin:4px 0; }
   .pur-ng-own summary{ cursor:pointer; }
+  /* State Timeline page */
+  .tl-top{ position:relative; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 14px; margin-bottom:12px; }
+  .tl-edit{ position:absolute; top:10px; inset-inline-end:10px; }
+  .tl-k{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .tl-v{ font-size:22px; font-weight:800; margin:2px 0 6px; }
+  .tl-pill{ display:inline-block; font-size:12px; padding:3px 9px; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); }
+  .tl-nx{ font-size:13px; margin-top:8px; }
+  .tl-nx b{ color:var(--amber); }
+  .tl-nxk{ font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; background:rgba(124,196,255,.18); color:var(--ice); }
+  .tl{ position:relative; padding-inline-start:22px; }
+  .tl::before{ content:""; position:absolute; top:8px; bottom:8px; inset-inline-start:7px; width:2px; background:var(--line); }
+  .tl-day, .tl-open{ position:relative; margin-bottom:10px; }
+  .tl-day{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px; }
+  .tl-day.next{ border-color:rgba(124,196,255,.65); box-shadow:0 0 0 1px rgba(124,196,255,.25), 0 0 18px rgba(124,196,255,.18); }
+  .tl-dot{ position:absolute; inset-inline-start:-21px; top:14px; width:12px; height:12px; border-radius:50%; border:2px solid var(--muted); background:var(--bg); }
+  .tl-day.next .tl-dot{ border-color:var(--ice); background:var(--ice); box-shadow:0 0 8px var(--ice); }
+  .tl-dot.g{ border-color:var(--good); background:var(--good); color:#06210f; font-size:8px; display:flex; align-items:center; justify-content:center; }
+  .tl-dh{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; font-size:13px; margin-bottom:6px; }
+  .tl-dt{ color:var(--muted); }
+  .tl-gen{ font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; background:rgba(124,196,255,.18); color:var(--ice); }
+  .tl-in{ margin-inline-start:auto; font-size:12px; color:var(--muted); }
+  .tl-day.next .tl-in{ color:var(--ice); font-weight:700; }
+  .tl-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tl-chip{ display:inline-flex; align-items:center; gap:6px; background:var(--panel-2); border-radius:12px; padding:3px 9px 3px 3px; font-size:12px; max-width:100%; }
+  .tl-pic{ position:relative; width:28px; height:28px; flex:0 0 auto; border-radius:8px; overflow:visible; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); }
+  .tl-pic img{ width:28px; height:28px; object-fit:contain; border-radius:8px; }
+  .tl-pic b{ font-size:13px; color:var(--ice); }
+  .tl-pic i{ position:absolute; top:-5px; inset-inline-end:-5px; font-style:normal; font-size:10px; line-height:14px; width:14px; height:14px; text-align:center; border-radius:50%; background:var(--amber); color:#1b1406; }
+  .tl-cn{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tl-open > summary{ list-style:none; cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; background:rgba(76,209,138,.10); border:1px solid rgba(76,209,138,.35); border-radius:14px; padding:10px 12px; }
+  .tl-open > summary::-webkit-details-marker{ display:none; }
+  .tl-open > summary .tl-dot{ top:14px; }
+  .tl-ok{ color:var(--good); font-weight:700; font-size:14px; flex:1 1 100%; }
+  .tl-stack{ display:inline-flex; }
+  .tl-stack img{ width:20px; height:20px; object-fit:contain; border-radius:50%; margin-inline-end:-6px; background:var(--panel-2); }
+  .tl-os{ font-size:12px; color:var(--muted); margin-inline-start:8px; }
+  .tl-open-l{ padding:8px 2px 0; }
+  .tl-ol{ margin-bottom:8px; }
+  .tl-old{ display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
   .sa-card{ display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
   .sa-ic{ width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, rgba(108,199,230,.25), rgba(108,199,230,.05)); display:grid; place-items:center; font-size:22px; flex-shrink:0; }
   .sa-k{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
@@ -2372,6 +2411,7 @@ input,select,textarea{
         <div class="topnav-dropdown">
           <button data-tab="overview" class="active"><span class="ic">&#9673;</span>Dashboard</button>
           <button data-tab="backpack" data-ownertab style="display:none;"><span class="ic">&#9733;</span>Backpack</button>
+          <button data-tab="statetimeline"><span class="ic">&#128197;</span>State Timeline</button>
         </div>
       </div>
       <div class="topnav-group" data-group="Marketplace">
@@ -3665,6 +3705,7 @@ const NAV_PAGE_LABELS = {
   "budgets": { en: "Budgets" },
   "roadmap": { en: "Roadmap" },
   "backpack": { en: "Backpack" },
+  "statetimeline": { en: "State Timeline" },
   "packs": { en: "Packs" },
   "My packs": { en: "My packs" },
   "purchases": { en: "My Purchases" },
@@ -4123,6 +4164,26 @@ const T = {
   set_speed: { en: "Research Speed" },
   set_speedups: { en: "Speed Ups" },
   set_count: { en: "Count" },
+  tl_title: { en: "State Timeline" },
+  tl_desc: { en: "What opens in your state, and when, from your state age." },
+  tl_your_state: { en: "Your state" },
+  tl_day_gen: { en: "Day {d} · Gen {g}" },
+  tl_next_gen: { en: "Gen {g} starts day {d} · ≈ {date}" },
+  tl_next: { en: "Next" },
+  tl_in_days: { en: "in {n} days" },
+  tl_in_months: { en: "in ~{n} months" },
+  tl_in_years: { en: "in ~{n} years" },
+  tl_today: { en: "today" },
+  tl_open_n: { en: "{n} things already open" },
+  tl_open_sub: { en: "Day 0 – {d} · tap to see them" },
+  tl_all_open: { en: "Everything in the timeline is open in your state." },
+  tl_no_age: { en: "Set your state age to see what is already open and when the rest comes." },
+  tl_set_age: { en: "Set state age" },
+  tl_day: { en: "Day {d}" },
+  tl_gen: { en: "Gen {g}" },
+  tl_hall: { en: "Hall of Heroes hero" },
+  tl_gen_heroes: { en: "Gen {g} heroes" },
+  tl_admin_edit: { en: "Edit the days in Admin › Rules & Timeline" },
   chest_not_needed: { en: "nothing to cover" },
   pk_same_title: { en: "Same pack, several tables" },
   pk_same_desc: { en: "Tick the other tables that are this same pack (e.g. Classic / Sublime / Exquisite). Each step of the pack can then be bought as any one of them, and the plan picks the best." },
@@ -5135,7 +5196,7 @@ async function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "budgets", "roadmap", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
+  "overview", "statetimeline", "budgets", "roadmap", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -5438,6 +5499,7 @@ async function render() {
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
+    else if (TAB === "statetimeline") await renderStateTimelinePage();
     else if (TAB === "packs") await renderPacksPage();
     else if (TAB === "mypacks") await renderMyPacksPage();
     else if (TAB === "purchases") await renderPurchasesPage();
@@ -13157,6 +13219,95 @@ function stateAgeCardHtml() {
     <div class="sa-v">${d.toLocaleString()} <span class="sa-s">· ${esc(t("sa_gen_heroes").replace("{n}", gen || g.gen))}${ownDaysPlayed() != null ? ` · ${esc(t("sa_own_card").replace("{n}", ownDaysPlayed().toLocaleString()))}` : ""}</span></div>
     <div class="sa-chips">${next ? `<span class="sa-chip i">⭐ ${esc(t("sa_next_gen").replace("{n}", (gen || g.gen) + 1).replace("{d}", Math.round((next - t0) / 86400000)).replace("{date}", fmt(next)))}</span>` : ""}${wheelTxt ? `<span class="sa-chip">🎡 ${esc(wheelTxt)}</span>` : ""}</div>
   </div><button type="button" class="btn small ghost sa-edit" data-saopen aria-label="${esc(t("sa_title"))}">&#9998;</button></div>`;
+}
+// ---- State Timeline page (owner picked design A, 20 Oct 2026) ----
+// One stop per state day: the Gen's heroes (★ = Hall of Heroes hero) and
+// every row of STATE_UNLOCKS that opens that day. Everything comes from data
+// the admin can change: Rules & Timeline (Unlocks, Gen start days, Hall of
+// Heroes hero) and Admin → Heroes (each hero's Gen). Things already open in
+// the person's state fold into one green row; the next day glows.
+const TL_ICONS = { t11: "icons/item_icon_100081.png", t12: "icons/item_icon_100082.png", "crystal lab": "icons/item_icon_100083.png",
+  "legendary chief gear": "icons/chief-gear-helmet-red.webp", "chief gear t5 t6": "icons/chief-gear-coat-red.webp",
+  "charm 11.1 16": "icons/charms/charm-infantry-12.webp", "charm 16.1 18": "icons/charms/charm-infantry-17.webp" };
+async function renderStateTimelinePage() {
+  const seq = RENDER_SEQ;
+  const [heroes] = await Promise.all([
+    dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
+    ensureStateAge(), ensureExpertsRosterGlobal().catch(() => {}),
+  ]);
+  if (seq !== RENDER_SEQ) return;
+  const now = stateAgeDay();
+  const expImg = {}; (EXPERTS_LIST || []).forEach((e) => { expImg[e.key] = e.img; });
+  const items = [];
+  STATE_UNLOCKS.forEach((u) => {
+    if (u.day == null || !(u.day >= 0)) return;
+    const k = String(u.key || u.name || "").toLowerCase();
+    const img = u.kind === "pets" ? petImage(u.name) : u.kind === "experts" ? (expImg[u.name] || "") : TL_ICONS[k] || "";
+    items.push({ day: Number(u.day), name: u.kind === "pets" || u.kind === "experts" ? dataName(u.name) : (u.label || u.name), img, kind: u.kind });
+  });
+  // New heroes: the same day as the Dashboard / My Purchases (the owner's
+  // new-heroes rule from the last new heroes), else the timeline's Gen day.
+  const genDay = (g) => { const nx = now != null ? heroGenNotOut(g) : null; return nx && nx.day != null ? nx.day : STATE_GEN_DAYS[g - 1]; };
+  const genAt = new Map();
+  STATE_GEN_DAYS.forEach((gd0, i) => {
+    const g = i + 1, hall = HALL_OF_HEROES_HERO[g], gd = genDay(g);
+    genAt.set(gd, g);
+    const list = (heroes || []).filter((h) => Number(h.generation) === g);
+    const names = new Set(list.map((h) => h.name));
+    list.forEach((h) => items.push({ day: gd, name: h.name, img: h.image_url || "", kind: "hero", star: h.name === hall, gen: g }));
+    if (hall && !names.has(hall)) items.push({ day: gd, name: hall, img: "", kind: "hero", star: true, gen: g });
+  });
+  const order = { hero: 0, gear: 1, page: 2, lab: 3, level: 4, pets: 5, experts: 6 };
+  items.sort((a, b) => a.day - b.day || (b.star ? 1 : 0) - (a.star ? 1 : 0) || (order[a.kind] ?? 9) - (order[b.kind] ?? 9));
+  const genOf = (day) => { let g = 1; STATE_GEN_DAYS.forEach((gd, i) => { if (gd <= day) g = i + 1; }); return g; };
+  const fmt = (dt) => { let s0; try { s0 = dt.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { s0 = packDayKey(dt); }
+    return dt.getUTCFullYear() !== packStartOfToday().getUTCFullYear() ? `${s0} ’${String(dt.getUTCFullYear()).slice(2)}` : s0; };
+  const inTxt = (day) => {
+    const n = day - now;
+    if (n <= 0) return t("tl_today");
+    if (n < 60) return t("tl_in_days").replace("{n}", n);
+    if (n < 365) return t("tl_in_months").replace("{n}", Math.round(n / 30.4));
+    return t("tl_in_years").replace("{n}", Math.round(n / 36.5) / 10);
+  };
+  const chip = (x) => `<span class="tl-chip" title="${esc(x.star ? `${x.name} · ${t("tl_hall")}` : x.name)}"><span class="tl-pic">${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : `<b>${esc((x.name || "?")[0])}</b>`}${x.star ? `<i>★</i>` : ""}</span><span class="tl-cn">${esc(x.name)}</span></span>`;
+  const byDay = new Map();
+  items.forEach((x) => { if (!byDay.has(x.day)) byDay.set(x.day, []); byDay.get(x.day).push(x); });
+  const days = [...byDay.keys()].sort((a, b) => a - b);
+  const open = now == null ? [] : items.filter((x) => x.day <= now);
+  const comingDays = now == null ? days : days.filter((d) => d > now);
+  const isGenDay = (d) => genAt.has(d);
+  const dayCard = (d, next) => {
+    const date = now != null ? stateDateOfDay(d) : null;
+    return `<div class="tl-day${next ? " next" : ""}"><span class="tl-dot"></span>
+      <div class="tl-dh"><b>${esc(t("tl_day").replace("{d}", d.toLocaleString()))}</b>${date ? `<span class="tl-dt">· ≈ ${esc(fmt(date))}</span>` : ""}${isGenDay(d) ? `<span class="tl-gen">${esc(t("tl_gen").replace("{g}", genAt.get(d)))}</span>` : ""}${now != null ? `<span class="tl-in">${esc(inTxt(d))}</span>` : ""}</div>
+      <div class="tl-chips">${byDay.get(d).map(chip).join("")}</div></div>`;
+  };
+  // Top card: state day + Gen, next Gen start, what comes next.
+  let top;
+  if (now == null) {
+    top = `<div class="tl-top"><div class="tl-k">${esc(t("tl_your_state"))}</div><p class="desc" style="margin:4px 0 8px;">${esc(t("tl_no_age"))}</p><button type="button" class="btn small" data-saopen>${esc(t("tl_set_age"))}</button></div>`;
+  } else {
+    const g = genOf(now), ng = g < STATE_GEN_DAYS.length ? genDay(g + 1) : null;
+    const nd = comingDays[0];
+    const nextNames = nd != null ? byDay.get(nd).filter((x) => x.kind !== "hero").map((x) => x.name) : [];
+    const nextTxt = nd == null ? "" : [byDay.get(nd).some((x) => x.kind === "hero") ? t("tl_gen_heroes").replace("{g}", genAt.get(nd) || genOf(nd)) : "", ...nextNames].filter(Boolean).join(" + ");
+    top = `<div class="tl-top"><button type="button" class="btn small ghost tl-edit" data-saopen aria-label="${esc(t("sa_title"))}">&#9998;</button>
+      <div class="tl-k">${esc(t("tl_your_state"))}</div>
+      <div class="tl-v">${esc(t("tl_day_gen").replace("{d}", now.toLocaleString()).replace("{g}", g))}</div>
+      ${ng != null ? `<span class="tl-pill">${esc(t("tl_next_gen").replace("{g}", g + 1).replace("{d}", ng.toLocaleString()).replace("{date}", fmt(stateDateOfDay(ng))))}</span>` : ""}
+      ${nd != null ? `<div class="tl-nx"><span class="tl-nxk">${esc(t("tl_next"))}</span> ${esc(nextTxt)} <b>${esc(inTxt(nd))}</b></div>` : `<div class="tl-nx">${esc(t("tl_all_open"))}</div>`}</div>`;
+  }
+  const openHtml = open.length ? `<details class="tl-open"><summary><span class="tl-dot g">✓</span><span class="tl-ok">✓ ${esc(t("tl_open_n").replace("{n}", open.length))}</span><span class="tl-stack">${open.slice(-5).map((x) => x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" />` : "").join("")}</span><span class="tl-os">${esc(t("tl_open_sub").replace("{d}", now.toLocaleString()))}</span></summary>
+      <div class="tl-open-l">${days.filter((d) => d <= now).map((d) => `<div class="tl-ol"><span class="tl-old">${esc(t("tl_day").replace("{d}", d.toLocaleString()))}</span><div class="tl-chips">${byDay.get(d).map(chip).join("")}</div></div>`).join("")}</div></details>` : "";
+  keepFolds(content, () => { content.innerHTML = `
+    <div class="page-head"><div><h2>${esc(t("tl_title"))}</h2><p class="desc">${esc(t("tl_desc"))}</p></div></div>
+    ${top}
+    <div class="tl">${openHtml}${comingDays.map((d, i) => dayCard(d, i === 0 && now != null)).join("")}</div>
+    ${IS_OWNER ? `<p style="margin:12px 0 0;"><button type="button" class="btn small ghost" data-tladmin>${esc(t("tl_admin_edit"))} &rsaquo;</button></p>` : ""}`; });
+  content.onclick = (e) => {
+    if (e.target.closest("[data-saopen]")) { openStateAgeModal(() => keepPlace(() => renderStateTimelinePage())); return; }
+    if (e.target.closest("[data-tladmin]")) { ADMIN_ACTIVE_TABLE = "rules"; goToTab("adminpage"); }
+  };
 }
 // ---- Game events: SvS and King of Icefield (KOI) ----
 // Each comes every 4 weeks for 6 days (Monday to Saturday); the Lucky Wheel
@@ -21746,6 +21897,7 @@ let PETS_UNLOCKED = null; // { "Cave Hyena": true/false, ... } - shared between 
 // the ui_visibility table (public read, owner write) as "<kind>:<name>".
 // Visitors never see a hidden card and it never counts in their totals.
 let UI_HIDDEN = null; // { "experts:Justus": true, ... }
+const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true };
 async function ensureUiVisibility() {
   if (UI_HIDDEN) return UI_HIDDEN;
   try {
@@ -21753,6 +21905,9 @@ async function ensureUiVisibility() {
     UI_HIDDEN = {};
     rows.forEach((r) => { UI_HIDDEN[r.key] = !!r.hidden; });
   } catch (err) { UI_HIDDEN = {}; }
+  // New pages that start hidden from visitors until the admin shows them in
+  // Admin → Visibility (owner, 20 Oct 2026: State Timeline).
+  Object.entries(UI_HIDDEN_DEFAULTS).forEach(([k, v]) => { if (!(k in UI_HIDDEN)) UI_HIDDEN[k] = v; });
   return UI_HIDDEN;
 }
 // Site-wide settings edited from Admin (site_config table: public read,
@@ -22020,7 +22175,7 @@ function packCustomResource(name) {
   const lower = String(name || "").toLowerCase();
   return packResourceConfig().custom.find((x) => String(x.name).toLowerCase() === lower) || null;
 }
-function isHiddenFromVisitors(kind, name) { return !!(UI_HIDDEN && UI_HIDDEN[`${kind}:${name}`]); }
+function isHiddenFromVisitors(kind, name) { const k = `${kind}:${name}`; return !!(UI_HIDDEN ? UI_HIDDEN[k] : UI_HIDDEN_DEFAULTS[k]); }
 function hiddenForVisitor(kind, name) { return !IS_OWNER && isHiddenFromVisitors(kind, name); }
 async function setHiddenFromVisitors(kind, name, hidden) {
   await sb(`ui_visibility`, { method: "POST", prefer: "resolution=merge-duplicates,return=representation", body: JSON.stringify({ key: `${kind}:${name}`, hidden: !!hidden, label: name, updated_at: new Date().toISOString() }) });
