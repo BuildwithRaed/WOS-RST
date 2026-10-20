@@ -1568,9 +1568,6 @@ input,select,textarea{
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
-  /* "Total resources needed" is gone: the Backpack boxes show what's short
-     (owner, 20 Oct 2026). Research pages keep only the research time box. */
-  .t12x-need.time-only > :not(.t12x-time){ display:none; }
   .t12x-side #expertsInventory:not([style*="none"]){ display:block !important; } /* "Hide boxes" sets display:none */
   .t12x-need .bs-box{ margin:0; }
   .t12x-need .bs-row{ margin:0; }
@@ -19434,7 +19431,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     // number" states (nothing needed yet / exactly enough) keep a short word.
     if (summaryOn) {
       // Edit list: short amounts with a word, shown as a pill.
-      const amt = (v) => (/\(minutes\)$/.test(name) ? t12FormatTime(v / 60) : shortAmount(v));
+      const amt = (v) => (/\(minutes\)$/.test(name) ? bsTime(v) : shortAmount(v));
       const text = needed === 0 ? "\u2014" : stillNeed > 0 ? `${bidiNum(amt(stillNeed))} ${t("bs_short_word")}` : "\u2713";
       return { statusColor, statusText: text };
     }
@@ -19490,7 +19487,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     return `<button type="button" class="bp-tile bs-tile${ro ? " ro" : ""}${tileOff(name) ? " off" : ""}" ${ro ? "disabled" : `data-bsedit="${esc(name)}"`} title="${esc(label)}">
       <span class="bs-mark" data-bplinknote="${esc(name)}">${typed ? "&#9998;" : Object.keys(link.bp).length && (ro || backpackLinks(calcKey || "chief_gear", name)) ? "&#127890;" : ""}</span>
       ${iconSrc ? `<img src="${esc(iconSrc)}" alt="" loading="lazy" />` : ""}
-      <span class="bp-qty">${isMin ? t12FormatTime(haveQty / 60) : shortAmount(haveQty)}</span>
+      <span class="bp-qty">${isMin ? bsTime(haveQty) : shortAmount(haveQty)}</span>
       <span class="bp-name">${esc(label)}</span>
       <span class="bs-st">${status}</span>
     </button>`;
@@ -21457,6 +21454,12 @@ function t12FormatTime(hours) {
   const d = Math.floor(tot / 24);
   const h = tot % 24;
   return d > 0 ? `${d}d ${h}h` : `${h}h`;
+}
+// Time on a small Backpack tile: "5d 1h", or whole days from 100 days up
+// ("2,684d"), so a long time fits on one line.
+function bsTime(minutes) {
+  const h = (Number(minutes) || 0) / 60;
+  return h >= 2400 ? `${Math.round(h / 24).toLocaleString()}d` : t12FormatTime(h);
 }
 function formatTimeDHM(hours) {
   if (!hours || hours <= 0) return "0m";
@@ -23584,11 +23587,11 @@ async function renderExpertsPage() {
       const minutes = /\(minutes\)$/.test(f), v = Number(invSaved[f]) || 0;
       const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
       const nd = tileNeed && tileNeed[f];
-      const st = nd ? bsTileStatus(nd.need, nd.short, nd.time ? (m) => t12FormatTime(m / 60) : shortAmount, nd.aff && nd.short > 0 ? t("bs_aff_short") : null) : null;
+      const st = nd ? bsTileStatus(nd.need, nd.short, nd.time ? bsTime : shortAmount, nd.aff && nd.short > 0 ? t("bs_aff_short") : null) : null;
       return `<button type="button" class="bp-tile bs-tile${st && st.off ? " off" : ""}" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}">
         <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
         <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png"))}" alt="" loading="lazy" />
-        <span class="bp-qty">${minutes ? t12FormatTime(v / 60) : shortAmount(v)}</span>
+        <span class="bp-qty">${minutes ? bsTime(v) : shortAmount(v)}</span>
         <span class="bp-name">${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</span>
         ${st ? st.html : ""}
       </button>`;
@@ -24530,7 +24533,7 @@ function plxShellHtml(o) {
         ${o.sideExtra || ""}
       </aside>
       <div class="t12x-main">
-        <div class="t12x-card t12x-need${o.timeId ? " time-only" : ""}"${o.timeId ? "" : ' style="display:none;"'}>
+        <div class="t12x-card t12x-need" style="display:none;">
           <div class="t12x-title">${esc(o.needTitle || t("bs_title_needed"))}</div>
           ${o.timeId ? `<div id="${o.timeId}" class="t12x-time"></div>` : ""}
           <div id="${o.needId}"></div>
