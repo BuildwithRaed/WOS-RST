@@ -5174,7 +5174,22 @@ function goToTab(tab, opts = {}) {
 }
 window.addEventListener("popstate", (e) => {
   const tab = e.state && e.state.tab;
-  if (tab) goToTab(tab, { fromHistory: true });
+  if (!tab) return;
+  // Admin sections: Back / Forward between the Admin home and its sections.
+  if (tab === "adminpage" && typeof ADMIN_ACTIVE_TABLE !== "undefined") {
+    const adm = e.state.adm || null;
+    if (TAB === "adminpage") {
+      if (adm === ADMIN_ACTIVE_TABLE) return;
+      if (!ADMIN_SKIP_CONFIRM && !admConfirmLeave()) { history.pushState({ tab: "adminpage", adm: ADMIN_ACTIVE_TABLE }, "", location.pathname + location.search); return; }
+      ADMIN_SKIP_CONFIRM = false;
+      ADMIN_ACTIVE_TABLE = adm;
+      renderAdminPage();
+      window.scrollTo(0, 0);
+      return;
+    }
+    ADMIN_ACTIVE_TABLE = adm;
+  }
+  goToTab(tab, { fromHistory: true });
 });
 const CATEGORY_GROUPS = { "War Acd.": ["T11", "T12"] };
 const EXTRA_BUFF_SUBCATS = ["Vip Tier", "Facility", "Alliance Buff", "Gallery", "Album Buff"];
@@ -24708,6 +24723,14 @@ const ADMIN_TABLES = {
   backpack: { label: "Backpack", group: "packs", icon: "🎒", desc: "Opens the page", tab: "backpack", words: "inventory" },
 };
 let ADMIN_ACTIVE_TABLE = null; // null = the Admin home (cards)
+// Each opened Admin section is a step in the browser history, so Back from a
+// section returns to the Admin home instead of the page before Admin (owner,
+// 20 Oct 2026).
+let ADMIN_SKIP_CONFIRM = false;
+function admPushSection(key) {
+  if (history.state && history.state.tab === "adminpage" && history.state.adm === key) return;
+  history.pushState({ tab: "adminpage", adm: key }, "", location.pathname + location.search);
+}
 let ADMIN_SEARCH = "";
 let ADMIN_DRAWING = Promise.resolve(); // one section draws at a time
 let ADMIN_ACTIVE_EXPERT = null;
@@ -24751,13 +24774,19 @@ async function renderAdminPage() {
     const entry = ADMIN_TABLES[key];
     if (entry && entry.tab) { goToTab(entry.tab); return; }
     if (!admConfirmLeave()) return;
+    admPushSection(key);
     ADMIN_ACTIVE_TABLE = key;
     renderAdminPage();
     window.scrollTo(0, 0);
   };
   content.querySelectorAll("[data-admintable]").forEach((btn) => btn.addEventListener("click", () => open(btn.dataset.admintable)));
   const home_ = content.querySelector("[data-adminhome]");
-  if (home_) home_.addEventListener("click", () => { if (!admConfirmLeave()) return; ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0); });
+  if (home_) home_.addEventListener("click", () => {
+    if (!admConfirmLeave()) return;
+    // The section has its own history step: going back to it is the same as the browser's Back.
+    if (history.state && history.state.tab === "adminpage" && history.state.adm === ADMIN_ACTIVE_TABLE) { ADMIN_SKIP_CONFIRM = true; history.back(); return; }
+    ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0);
+  });
   const search = content.querySelector("[data-adminsearch]");
   search.addEventListener("input", () => {
     ADMIN_SEARCH = search.value;
@@ -24872,7 +24901,7 @@ async function renderAdminMenu(body) {
         <button type="button" class="btn small" data-menusave>Save</button>
       </div>`;
     const go = body.querySelector("[data-admingo]");
-    if (go) go.addEventListener("click", (e) => { e.preventDefault(); ADMIN_ACTIVE_TABLE = "visibility"; renderAdminPage(); });
+    if (go) go.addEventListener("click", (e) => { e.preventDefault(); if (!admConfirmLeave()) return; admPushSection("visibility"); ADMIN_ACTIVE_TABLE = "visibility"; renderAdminPage(); });
     body.querySelectorAll("[data-gname]").forEach((inp) => inp.addEventListener("input", () => { draft[+inp.dataset.gname].label.en = inp.value; dirty = true; }));
     body.querySelectorAll("[data-glangs]").forEach((w) => w.querySelectorAll("[data-glang]").forEach((inp) => inp.addEventListener("input", () => { draft[+w.dataset.glangs].label[inp.dataset.glang] = inp.value; dirty = true; })));
     body.querySelectorAll("[data-pname]").forEach((inp) => inp.addEventListener("input", () => { const [gi, pi] = inp.dataset.pname.split("|").map(Number); draft[gi].pages[pi].label.en = inp.value; dirty = true; }));
