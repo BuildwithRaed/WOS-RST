@@ -1568,6 +1568,9 @@ input,select,textarea{
   .t12x-big{ font-size:30px; font-weight:800; line-height:1.1; }
   .t12x-title{ font-size:15px; font-weight:700; margin-bottom:8px; }
   .t12x-need{ margin-bottom:16px; }
+  /* "Total resources needed" is gone: the Backpack boxes show what's short
+     (owner, 20 Oct 2026). Research pages keep only the research time box. */
+  .t12x-need.time-only > :not(.t12x-time){ display:none; }
   .t12x-side #expertsInventory:not([style*="none"]){ display:block !important; } /* "Hide boxes" sets display:none */
   .t12x-need .bs-box{ margin:0; }
   .t12x-need .bs-row{ margin:0; }
@@ -24527,7 +24530,7 @@ function plxShellHtml(o) {
         ${o.sideExtra || ""}
       </aside>
       <div class="t12x-main">
-        <div class="t12x-card t12x-need">
+        <div class="t12x-card t12x-need${o.timeId ? " time-only" : ""}"${o.timeId ? "" : ' style="display:none;"'}>
           <div class="t12x-title">${esc(o.needTitle || t("bs_title_needed"))}</div>
           ${o.timeId ? `<div id="${o.timeId}" class="t12x-time"></div>` : ""}
           <div id="${o.needId}"></div>
