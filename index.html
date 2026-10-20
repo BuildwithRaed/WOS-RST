@@ -737,6 +737,9 @@
   .gi-list{ margin-top:6px; padding:8px 12px; border:1px solid var(--line); border-radius:12px; font-size:12.5px; }
   .gi-row{ display:flex; gap:10px; padding:4px 0; }
   .gi-row b{ flex:0 0 38px; color:var(--muted); }
+  .gi-row > span{ display:block; flex:1; min-width:0; }
+  .gi-ex{ font-size:12px; margin-top:2px; }
+  .gi-row.on .meta{ color:var(--ice); }
   .gi-row.on b, .gi-row.on > span{ color:var(--ice); }
   .gi-note{ font-size:11.5px; margin-top:6px; }
   /* Admin → Globe Level (owner, 20 Oct 2026) */
@@ -3518,7 +3521,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 38; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 39; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3920,13 +3923,13 @@ const T = {
   owned_label: { en: "Owned" },
   not_owned_label: { en: "Not owned" },
   globe_level: { en: "GLOBE LEVEL" },
-  globe_info_none: { en: "Pick your Globe Level: each level gives its Frost Sphere city skin{max} and some extra skins, counted in your stats." },
-  globe_info_upto: { en: " (up to {max})" },
-  globe_info_lv: { en: "Your Globe Level {n} gives {city}{bonus}{extra}. Only this level counts: lower Frost Spheres are replaced." },
-  globe_info_and: { en: " and {names}" },
-  globe_info_more: { en: "Higher levels unlock more." },
-  globe_info_top: { en: "This is the highest level." },
-  globe_info_note: { en: "Picking a level marks its skins as owned. Only the chosen level's skins count in Troops Stats." },
+  globe_msg_none: { en: "Pick your Globe Level. It decides which globe skins count: each level adds its Frost Sphere{max} and its extra skins, both to your stats and to the max. Until you pick one, no globe skins count." },
+  globe_msg_upto: { en: " (up to {max})" },
+  globe_msg_lv: { en: "Your Globe Level {n} counts {city}{extra}, in your stats and in the max." },
+  globe_msg_and: { en: " and {names}" },
+  globe_msg_more: { en: "Lower Frost Spheres are replaced, and skins from levels {levels} don't count, even if marked owned, until you reach that level. Raising your level raises the max too." },
+  globe_msg_top: { en: "Lower Frost Spheres are replaced. This is the highest level." },
+  globe_msg_note: { en: "Skins of a level above yours aren't counted in owned or max. Pick a higher Globe Level when you reach it." },
   no_globe: { en: "No Globe" },
   total_bonus: { en: "Total bonus" },
   no_skins_match_filters: { en: "No skins match your filters." },
@@ -19820,19 +19823,23 @@ async function renderSkinGallery() {
     const box = document.getElementById("globeInfo");
     if (!box) return;
     const short = (bt) => (/attack/i.test(bt) ? "ATK" : /defen/i.test(bt) ? "DEF" : /lethal/i.test(bt) ? "LETH" : /health/i.test(bt) ? "HP" : tStatLabel(bt || ""));
-    const bonusOf = (n) => { const sk = skins.find((x) => x.name === n); return sk && sk.bonus_value != null ? `+${Number(sk.bonus_value)}% ${short(sk.bonus_type)}` : ""; };
+    // Every stat a skin gives, from its own bonuses ("+2.5% LETH").
+    const bonusOf = (n) => { const sk = skins.find((x) => x.name === n); if (!sk) return ""; return [["bonus_type", "bonus_value"], ["bonus_type2", "bonus_value2"], ["bonus_type3", "bonus_value3"], ["bonus_type4", "bonus_value4"]].filter(([, v]) => sk[v] != null).map(([k, v]) => `+${Number(sk[v])}% ${short(sk[k])}`).join(", "); };
+    const catOf = (n) => { const sk = skins.find((x) => x.name === n); return sk && sk.category ? sk.category : ""; };
     const lv = deriveEffectiveGlobeLevel(), top = GLOBE_LEVELS.length ? GLOBE_LEVELS[GLOBE_LEVELS.length - 1] : null;
     const row = GLOBE_LEVELS.find((r) => r.level === lv);
     const hl = (x) => `<b class="gi-b">${esc(x)}</b>`;
+    const named = (n) => hl(bonusOf(n) ? `${n} (${bonusOf(n)})` : n);
     let msg;
-    if (!row) msg = esc(t("globe_info_none")).replace("{max}", top && bonusOf(top.city) ? esc(t("globe_info_upto")).replace("{max}", hl(bonusOf(top.city))) : "");
+    if (!row) msg = esc(t("globe_msg_none")).replace("{max}", top && bonusOf(top.city) ? esc(t("globe_msg_upto")).replace("{max}", hl(bonusOf(top.city))) : "");
     else {
-      const b = bonusOf(row.city);
-      msg = esc(t("globe_info_lv")).replace("{n}", lv).replace("{city}", esc(row.city)).replace("{bonus}", b ? ` (${hl(b)})` : "")
-        .replace("{extra}", row.extra.length ? esc(t("globe_info_and")).replace("{names}", esc(row.extra.join(", "))) : "");
-      msg += " " + esc(t(top && lv < top.level ? "globe_info_more" : "globe_info_top"));
+      msg = esc(t("globe_msg_lv")).replace("{n}", lv).replace("{city}", named(row.city))
+        .replace("{extra}", row.extra.length ? esc(t("globe_msg_and")).replace("{names}", row.extra.map(named).join(", ")) : "");
+      const above = GLOBE_LEVELS.filter((r) => r.level > lv).map((r) => r.level);
+      msg += " " + (above.length ? esc(t("globe_msg_more")).replace("{levels}", above.length > 1 ? `${above[0]}–${above[above.length - 1]}` : String(above[0])) : esc(t("globe_msg_top")));
     }
-    const list = globeInfoOpen ? `<div class="gi-list">${GLOBE_LEVELS.map((r) => `<div class="gi-row${r.level === lv ? " on" : ""}"><b>Lv ${r.level}</b><span>${esc(r.city)}${bonusOf(r.city) ? ` <span class="meta">${esc(bonusOf(r.city))}</span>` : ""}${r.extra.length ? ` + ${esc(r.extra.join(" + "))}` : ""}</span></div>`).join("")}<div class="meta gi-note">${esc(t("globe_info_note"))}</div></div>` : "";
+    const extraLine = (n) => `<div class="gi-ex">+ ${esc(n)} <span class="meta">${catOf(n) ? `(${esc(catOf(n))})` : ""}${bonusOf(n) ? ` · ${esc(bonusOf(n))}` : ""}</span></div>`;
+    const list = globeInfoOpen ? `<div class="gi-list">${GLOBE_LEVELS.map((r) => `<div class="gi-row${r.level === lv ? " on" : ""}"><b>Lv ${r.level}</b><span>${esc(r.city)}${bonusOf(r.city) ? ` <span class="meta">${esc(bonusOf(r.city))}</span>` : ""}${r.extra.map(extraLine).join("")}</span></div>`).join("")}<div class="meta gi-note">${esc(t("globe_msg_note"))}</div></div>` : "";
     box.innerHTML = `<div class="gi-line"><span>${msg}</span><button type="button" class="gi-i" data-globeinfo aria-expanded="${globeInfoOpen}" aria-label="${esc(t("set_info"))}">i</button></div>${list}`;
     box.querySelector("[data-globeinfo]").onclick = () => { globeInfoOpen = !globeInfoOpen; drawGlobeInfo(); };
   }
