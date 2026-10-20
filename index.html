@@ -19316,7 +19316,21 @@ const PACK_COST_CARD_KEYS = new Set(["experts", "experts_research"]);
 const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center", "chief_gear", "charm", "hero_gear", "pets", "pets_refine"]);
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
-const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden for the visit (they start shown)
+const BAR_SHOW_ALL = {}; // { calcKey: false } - item tiles hidden (they start shown)
+// "Hide boxes" is remembered per page on the person's account (owner, 20 Oct
+// 2026): calc_state "bar_hidden" = { calcKey: true }.
+let BAR_HIDDEN_LOAD = null;
+function ensureBarHidden() {
+  if (!BAR_HIDDEN_LOAD) BAR_HIDDEN_LOAD = loadCalcState("bar_hidden").then((v) => {
+    Object.entries(v || {}).forEach(([k, h]) => { if (h && !(k in BAR_SHOW_ALL)) BAR_SHOW_ALL[k] = false; });
+  }).catch(() => {});
+  return BAR_HIDDEN_LOAD;
+}
+function saveBarHidden() {
+  const out = {};
+  Object.keys(BAR_SHOW_ALL).forEach((k) => { if (BAR_SHOW_ALL[k] === false) out[k] = true; });
+  saveCalcState("bar_hidden", out);
+}
 // Where a page wants its summary drawn instead of above its boxes (element id).
 const BAR_SUMMARY_HOST = { t12_research: "t12Need", t11_helios: "t11Need", research_center: "rcNeed", chief_gear: "gearNeed", charm: "charmNeed", hero_gear: "heroGearNeed", pets: "petsNeed", pets_refine: "refineNeed" };
 const BAR_AFTER_CHANGE = {}; // { calcKey: fn } called after an owned amount changes
@@ -19374,6 +19388,8 @@ const MATERIAL_NAME_SHORT = {
   "Custom Resource Chest Lv.3": "Res. Chest Lv.3",
 };
 async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNames, refreshFn, calcKey) {
+  if (!document.getElementById(containerId)) return;
+  await ensureBarHidden();
   const el = document.getElementById(containerId);
   if (!el) return;
   const groups = Array.isArray(matTotals) ? matTotals : [{ label: null, totals: matTotals }];
@@ -19552,7 +19568,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       ${iconFor(name) ? `<img src="${esc(iconFor(name))}" alt="" style="width:56px; height:56px; object-fit:contain;" />` : ""}
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(label)}</h2>
       ${canLink ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
-      <input id="bsEditQty" type="text" inputmode="decimal" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="decimal" autocomplete="off" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(/\(minutes\)$/.test(name) ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${canLink && !linked ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
@@ -19693,6 +19709,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     BAR_SHOW_ALL[calcKey] = BAR_SHOW_ALL[calcKey] === false;
     document.getElementById(rowsId).style.display = BAR_SHOW_ALL[calcKey] ? "" : "none";
     bsFoldMark(el, !BAR_SHOW_ALL[calcKey]);
+    saveBarHidden();
     document.getElementById(`${rowsId}_sum`).innerHTML = summaryHtml();
     const foot = document.getElementById(`${rowsId}_foot`);
     if (foot) foot.innerHTML = footHtml();
@@ -23104,6 +23121,7 @@ async function renderExpertsPage() {
     if (loadedExperts) saveCalcState("experts", saved);
   }
 
+  await ensureBarHidden();
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
@@ -23292,6 +23310,7 @@ async function renderExpertsPage() {
     BAR_SHOW_ALL.experts = BAR_SHOW_ALL.experts === false;
     document.getElementById("expertsInventory").style.display = BAR_SHOW_ALL.experts !== false ? "" : "none";
     bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
+    saveBarHidden();
     renderTotals();
   });
   function renderTotals() {
@@ -24755,7 +24774,7 @@ function plxAmountModal(o) {
       ${o.icon ? `<img src="${esc(o.icon)}" alt="" style="width:56px; height:56px; object-fit:contain;" />` : ""}
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
-      <input id="bsEditQty" type="text" inputmode="decimal" value="${Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="decimal" autocomplete="off" value="${Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${o.linked === false && o.onUse ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
