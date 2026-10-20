@@ -62,6 +62,7 @@
 "t:pick_hero_title":"Chọn",
 "t:hero_suffix":"anh hùng",
 "t:close_button":"Đóng",
+"t:no_connection_retry": "Không có kết nối — đang thử lại…",
 "t:your_backpack":"Túi đồ của bạn",
 "t:backpack_desc":"Mọi vật phẩm trang web dùng. Chạm vào vật phẩm để nhập số lượng bạn có.",
 "t:backpack_scan":"Quét ảnh chụp",

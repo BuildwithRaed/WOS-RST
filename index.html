@@ -2425,8 +2425,28 @@ input,select,textarea{
   // Ensures a session exists (signing in anonymously if needed), and sets
   // USER_ID / IS_OWNER from it. Called once before the app renders, and
   // again after any login/logout so the whole app reflects the new session.
+  // A saved login that can't be refreshed because the connection is weak (the
+  // phone coming back from the game) is tried again, not swapped for a guest
+  // login: that logged the owner out and sent owner pages to the Dashboard
+  // (owner, 20 Oct 2026). Only a login the server turns down starts a guest one.
+  function hasSavedLogin() {
+    try { return !!localStorage.getItem(supabaseClient.auth.storageKey || "sb-hzourauekkiorojrhpko-auth-token"); } catch (e) { return false; }
+  }
   async function ensureAuthSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    let session = null;
+    for (let attempt = 0; ; attempt++) {
+      const res = await supabaseClient.auth.getSession();
+      session = res.data.session;
+      const err = res.error;
+      if (session || !err || (err.status >= 400 && err.status < 500) || !hasSavedLogin()) break;
+      const box = document.getElementById("content");
+      if (box) box.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`;
+      await new Promise((ok) => {
+        const go = () => { window.removeEventListener("online", go); clearTimeout(tm); ok(); };
+        const tm = setTimeout(go, Math.min(2000 * (attempt + 1), 10000));
+        window.addEventListener("online", go);
+      });
+    }
     if (session) {
       CURRENT_SESSION = session;
     } else {
@@ -3450,7 +3470,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 36; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 37; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3656,6 +3676,7 @@ const T = {
   pick_hero_title: { en: "Pick" },
   hero_suffix: { en: "hero" },
   close_button: { en: "Close" },
+  no_connection_retry: { en: "No connection — trying again…" },
   your_backpack: { en: "Your backpack" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have." },
   backpack_scan: { en: "Scan screenshot" },
@@ -5153,7 +5174,22 @@ function goToTab(tab, opts = {}) {
 }
 window.addEventListener("popstate", (e) => {
   const tab = e.state && e.state.tab;
-  if (tab) goToTab(tab, { fromHistory: true });
+  if (!tab) return;
+  // Admin sections: Back / Forward between the Admin home and its sections.
+  if (tab === "adminpage" && typeof ADMIN_ACTIVE_TABLE !== "undefined") {
+    const adm = e.state.adm || null;
+    if (TAB === "adminpage") {
+      if (adm === ADMIN_ACTIVE_TABLE) return;
+      if (!ADMIN_SKIP_CONFIRM && !admConfirmLeave()) { history.pushState({ tab: "adminpage", adm: ADMIN_ACTIVE_TABLE }, "", location.pathname + location.search); return; }
+      ADMIN_SKIP_CONFIRM = false;
+      ADMIN_ACTIVE_TABLE = adm;
+      renderAdminPage();
+      window.scrollTo(0, 0);
+      return;
+    }
+    ADMIN_ACTIVE_TABLE = adm;
+  }
+  goToTab(tab, { fromHistory: true });
 });
 const CATEGORY_GROUPS = { "War Acd.": ["T11", "T12"] };
 const EXTRA_BUFF_SUBCATS = ["Vip Tier", "Facility", "Alliance Buff", "Gallery", "Album Buff"];
@@ -5293,8 +5329,18 @@ async function render() {
   if (same) content.style.minHeight = content.offsetHeight + "px";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
-    // (Admin is for the owner only.)
-    if (!IS_OWNER && (TAB === "adminpage" || TAB === "roadmap" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; localStorage.setItem("last_tab", TAB); history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    // Visitor pages that follow Admin's visitor access: when the settings
+    // didn't load (weak connection), stay on the page and try again instead of
+    // sending the person to the Dashboard (owner, 20 Oct 2026).
+    if (!IS_OWNER && SITE_CONFIG_FAILED && ["budgets", "backpack", "packs", "mypacks", "purchases", "packcalendar"].includes(TAB)) {
+      content.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`;
+      await ensureSiteConfig();
+      if (seq !== RENDER_SEQ) return;
+      if (SITE_CONFIG_FAILED) { content.style.minHeight = ""; setTimeout(() => { if (seq === RENDER_SEQ) render(); }, 5000); return; }
+    }
+    // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
+    // stays, so a page the person can't open now isn't forgotten.
+    if (!IS_OWNER && (TAB === "adminpage" || TAB === "roadmap" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -21558,13 +21604,24 @@ async function ensureUiVisibility() {
 // Site-wide settings edited from Admin (site_config table: public read,
 // owner write). Loaded once at start; missing keys fall back to defaults.
 let SITE_CONFIG = null;
+// A failed load (weak connection) is tried 3 times, then marked so the next
+// call tries again instead of keeping empty settings for the whole visit.
+let SITE_CONFIG_FAILED = false;
 async function ensureSiteConfig() {
-  if (SITE_CONFIG) return SITE_CONFIG;
-  try {
-    const rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en)`); // other languages load on their own; English changes come with the settings
+  if (SITE_CONFIG && !SITE_CONFIG_FAILED) return SITE_CONFIG;
+  let rows = null;
+  for (let i = 0; i < 3 && !rows; i++) {
+    try { rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en)`); } // other languages load on their own; English changes come with the settings
+    catch (err) { if (i < 2) await new Promise((ok) => setTimeout(ok, 800 * (i + 1))); }
+  }
+  if (rows) {
     SITE_CONFIG = {};
     rows.forEach((r) => { SITE_CONFIG[r.key] = r.value; });
-  } catch (err) { SITE_CONFIG = {}; }
+    SITE_CONFIG_FAILED = false;
+  } else {
+    if (!SITE_CONFIG) SITE_CONFIG = {};
+    SITE_CONFIG_FAILED = true;
+  }
   applyCustomCurrencies();
   return SITE_CONFIG;
 }
@@ -24666,6 +24723,14 @@ const ADMIN_TABLES = {
   backpack: { label: "Backpack", group: "packs", icon: "🎒", desc: "Opens the page", tab: "backpack", words: "inventory" },
 };
 let ADMIN_ACTIVE_TABLE = null; // null = the Admin home (cards)
+// Each opened Admin section is a step in the browser history, so Back from a
+// section returns to the Admin home instead of the page before Admin (owner,
+// 20 Oct 2026).
+let ADMIN_SKIP_CONFIRM = false;
+function admPushSection(key) {
+  if (history.state && history.state.tab === "adminpage" && history.state.adm === key) return;
+  history.pushState({ tab: "adminpage", adm: key }, "", location.pathname + location.search);
+}
 let ADMIN_SEARCH = "";
 let ADMIN_DRAWING = Promise.resolve(); // one section draws at a time
 let ADMIN_ACTIVE_EXPERT = null;
@@ -24709,13 +24774,19 @@ async function renderAdminPage() {
     const entry = ADMIN_TABLES[key];
     if (entry && entry.tab) { goToTab(entry.tab); return; }
     if (!admConfirmLeave()) return;
+    admPushSection(key);
     ADMIN_ACTIVE_TABLE = key;
     renderAdminPage();
     window.scrollTo(0, 0);
   };
   content.querySelectorAll("[data-admintable]").forEach((btn) => btn.addEventListener("click", () => open(btn.dataset.admintable)));
   const home_ = content.querySelector("[data-adminhome]");
-  if (home_) home_.addEventListener("click", () => { if (!admConfirmLeave()) return; ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0); });
+  if (home_) home_.addEventListener("click", () => {
+    if (!admConfirmLeave()) return;
+    // The section has its own history step: going back to it is the same as the browser's Back.
+    if (history.state && history.state.tab === "adminpage" && history.state.adm === ADMIN_ACTIVE_TABLE) { ADMIN_SKIP_CONFIRM = true; history.back(); return; }
+    ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0);
+  });
   const search = content.querySelector("[data-adminsearch]");
   search.addEventListener("input", () => {
     ADMIN_SEARCH = search.value;
@@ -24830,7 +24901,7 @@ async function renderAdminMenu(body) {
         <button type="button" class="btn small" data-menusave>Save</button>
       </div>`;
     const go = body.querySelector("[data-admingo]");
-    if (go) go.addEventListener("click", (e) => { e.preventDefault(); ADMIN_ACTIVE_TABLE = "visibility"; renderAdminPage(); });
+    if (go) go.addEventListener("click", (e) => { e.preventDefault(); if (!admConfirmLeave()) return; admPushSection("visibility"); ADMIN_ACTIVE_TABLE = "visibility"; renderAdminPage(); });
     body.querySelectorAll("[data-gname]").forEach((inp) => inp.addEventListener("input", () => { draft[+inp.dataset.gname].label.en = inp.value; dirty = true; }));
     body.querySelectorAll("[data-glangs]").forEach((w) => w.querySelectorAll("[data-glang]").forEach((inp) => inp.addEventListener("input", () => { draft[+w.dataset.glangs].label[inp.dataset.glang] = inp.value; dirty = true; })));
     body.querySelectorAll("[data-pname]").forEach((inp) => inp.addEventListener("input", () => { const [gi, pi] = inp.dataset.pname.split("|").map(Number); draft[gi].pages[pi].label.en = inp.value; dirty = true; }));

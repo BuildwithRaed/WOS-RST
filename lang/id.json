@@ -62,6 +62,7 @@
 "t:pick_hero_title":"Pilih",
 "t:hero_suffix":"hero",
 "t:close_button":"Tutup",
+"t:no_connection_retry": "Tidak ada koneksi — mencoba lagi…",
 "t:your_backpack":"Ranselmu",
 "t:backpack_desc":"Semua item yang dipakai situs ini. Ketuk item untuk mengetik jumlah yang kamu punya.",
 "t:backpack_scan":"Pindai tangkapan layar",

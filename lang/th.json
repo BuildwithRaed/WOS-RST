@@ -62,6 +62,7 @@
 "t:pick_hero_title":"เลือก",
 "t:hero_suffix":"ฮีโร่",
 "t:close_button":"ปิด",
+"t:no_connection_retry": "ไม่มีการเชื่อมต่อ — กำลังลองอีกครั้ง…",
 "t:your_backpack":"กระเป๋าของคุณ",
 "t:backpack_desc":"ไอเทมทุกชิ้นที่เว็บใช้ แตะไอเทมเพื่อกรอกจำนวนที่มี",
 "t:backpack_scan":"สแกนภาพหน้าจอ",
