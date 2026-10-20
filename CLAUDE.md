@@ -13,6 +13,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - **If the site doesn't update after a merge**, check the "pages build and deployment" run in GitHub Actions. On 14 Oct 2026 GitHub's deploy step timed out ("Timeout reached") for PR #29 with no code problem; a new merge to `main` publishes again.
 - **After the owner says "merged", check it really is** (`git fetch origin main` and look for the merge commit). The final "Confirm merge" click has been missed before. Then restart the working branch from the new `main`.
 - **Never trim, crop, zoom or edit an image without asking the owner first** (owner, 19 Oct 2026). Show pictures as they are.
+- **When the owner says "wait" (e.g. "wait, I have a job"), stop at once** (owner, 20 Oct 2026): don't finish the current work first; say where it was left and ask what the job is.
 - Explanations should be short and non-technical. Show before/after numbers or pictures when useful.
 
 ## Files
