@@ -395,7 +395,7 @@
 "t:path_label":"경로",
 "t:research_speed_label":"연구 속도",
 "t:speedups_label":"가속",
-"t:set_speed":"속도",
+"t:set_speed":"연구 속도",
 "t:set_speedups":"가속",
 "t:set_count":"반영",
 "t:chest_not_needed":"부족 없음",

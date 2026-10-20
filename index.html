@@ -1361,8 +1361,7 @@ input,select,textarea{
   .t12x-settings.one-line .t12x-kt{ display:none; }
   .t12x-settings.one-line .rs-row{ display:contents !important; }
   .t12x-settings.one-line .rs-row > div{ display:flex !important; align-items:center; flex-wrap:wrap; gap:4px 6px !important; max-width:none !important; }
-  .t12x-settings.one-line .meta{ font-size:11px !important; letter-spacing:.03em; white-space:nowrap; }
-  .t12x-settings.one-line .meta[title]{ text-transform:uppercase; }
+  .t12x-settings.one-line .meta{ font-size:12px !important; white-space:nowrap; }
   .t12x-settings.one-line .rs-row input{ width:72px !important; padding:5px 8px !important; text-align:end; font-size:14px; }
   .t12x-settings.one-line #researchSpeedupNote{ font-size:11px; }
   .t12x-settings.one-line .exp-spd{ display:contents; }
@@ -3544,7 +3543,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 42; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 43; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4115,8 +4114,8 @@ const T = {
   path_label: { en: "Path" },
   research_speed_label: { en: "RESEARCH SPEED" },
   speedups_label: { en: "GENERAL SPEEDUPS" },
-  set_speed: { en: "Speed" },
-  set_speedups: { en: "Speedups" },
+  set_speed: { en: "Research Speed" },
+  set_speedups: { en: "Speed Ups" },
   set_count: { en: "Count" },
   chest_not_needed: { en: "nothing to cover" },
   pk_same_title: { en: "Same pack, several tables" },
