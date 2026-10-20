@@ -3594,7 +3594,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 46; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 47; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3933,8 +3933,9 @@ const T = {
   scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead." },
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
   scan_unknown_tiles: { en: "{n} tiles skipped (not on your list, or not learned yet)." },
-  scan_items: { en: "Backpack → Resources and Other tabs" },
-  scan_items_hint: { en: "Fills chests, Fire Crystal, Chief Gear, Charms, Hero Gear, Pet and Expert items, hero shards." },
+  scan_items: { en: "Backpack → Resources, Gear and Other tabs" },
+  scan_items_hint: { en: "Fills chests, Fire Crystal, Chief Gear, Charms, Hero Gear, Pet and Expert items, hero shards. Mythic Gear = boxes + orange hero gear pieces." },
+  scan_mg_parts: { en: "{box} boxes + {gear} orange gear pieces" },
   scan_unknown: { en: "A screenshot wasn't recognised." },
   scan_add_more: { en: "Add more" },
   backpack_search: { en: "Search items..." },
@@ -11838,7 +11839,9 @@ function scanTileFeature(td) {
 const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Fire Crystal", "Refined FC", "FC Shard", "Resource Chest", "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3", "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Lucky Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "Mythic General Hero Shard", "Epic General Hero Shard", "XP 10", "XP 100", "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils", "Cyrille Sigils", "Agnes Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "XP 10", "Mythic General Hero Shard", "Epic General Hero Shard",
   // Owner's phone screenshots, 16 Oct 2026. Heroes' own shards differ only by
   // the face, so they need a closer match (scanItemTiles).
-  "FC Chest", "Holger Sigils", "Marks of Valor", "Mystery Points", "Gen Widgets", "Cara Shards", "Ligeia Shards", "Karol Shards", "Hervor Shards", "Rufus Shards", "Eleonora Shards", "Gregory Shards", "Fred Shards", "Sonya Shards", "Bradley Shards", "Renee Shards", "Wu Ming Shards", "Norah Shards", "Hector Shards", "Ahmose Shards", "Logan Shards"];
+  "FC Chest", "Holger Sigils", "Marks of Valor", "Mystery Points", "Gen Widgets", "Cara Shards", "Ligeia Shards", "Karol Shards", "Hervor Shards", "Rufus Shards", "Eleonora Shards", "Gregory Shards", "Fred Shards", "Sonya Shards", "Bradley Shards", "Renee Shards", "Wu Ming Shards", "Norah Shards", "Hector Shards", "Ahmose Shards", "Logan Shards",
+  // The Mythic Gear box (Other tab, owner's phone screenshot, 20 Oct 2026).
+  "Mythic Gear"];
 let SCAN_ITEM_DATA = null;
 function scanItemData() {
   if (!SCAN_ITEM_DATA) {
@@ -11856,7 +11859,7 @@ function scanItemData() {
       };
       img.onerror = () => reject(new Error("items"));
       setTimeout(() => reject(new Error("items timeout")), 45000); // no answer at all: stop waiting
-      img.src = "icons/scan-items.png";
+      img.src = "icons/scan-items.png?v=2"; // bump when rows are added (icons are cached cache-first)
     });
     SCAN_ITEM_DATA.catch(() => { SCAN_ITEM_DATA = null; });
   }
@@ -11867,6 +11870,7 @@ function scanItemData() {
 function scanMatchItem(feat, refs) {
   const n = feat.length, best = new Map();
   SCAN_ITEM_NAMES.forEach((name, k) => {
+    if ((k + 1) * (n / 3) * 4 > refs.length) return; // an older copy of the picture: no row yet
     let sum = 0;
     for (let i = 0, j = k * (n / 3) * 4; i < n; i += 3, j += 4) sum += Math.abs(feat[i] - refs[j]) + Math.abs(feat[i + 1] - refs[j + 1]) + Math.abs(feat[i + 2] - refs[j + 2]);
     const d = sum / n;
@@ -12063,10 +12067,39 @@ function scanLightPanel(src) {
   return { x: x0 / k, y: y0 / k, w: (x1 - x0 + 1) / k, h: (best[1] - y0) / k };
 }
 
+// Backpack Gear tab: every hero gear tile has the light-blue troop badge at
+// its top-left corner. Orange (Mythic) pieces count as 1 Mythic Gear each;
+// red (worn / upgraded) and purple ones don't (owner, 20 Oct 2026).
+// Returns the number of orange pieces, or null when this isn't the Gear tab.
+function scanGearTiles(src, tiles) {
+  const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
+  let badged = 0, orange = 0;
+  for (const box of tiles) {
+    tg.clearRect(0, 0, 140, 140);
+    tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
+    const td = tg.getImageData(0, 0, 140, 140).data;
+    let badge = 0, r = 0, g = 0, b = 0, n = 0;
+    for (let y = 0; y < 35; y++) for (let x = 0; x < 35; x++) {
+      const i = (y * 140 + x) * 4;
+      if (td[i + 2] > 170 && td[i + 2] > td[i] + 50 && td[i + 1] > 120) badge++;
+    }
+    // Tile colour on the right edge, between the "+19" and the "Lv.10".
+    for (let y = 50; y < 90; y++) for (let x = 120; x < 131; x++) { const i = (y * 140 + x) * 4; r += td[i]; g += td[i + 1]; b += td[i + 2]; n++; }
+    r /= n; g /= n; b /= n;
+    // A light-blue tile (an item, not gear) also lights up that corner.
+    if (badge < 150 || (g > r + 30 && b > r + 60)) continue;
+    badged++;
+    if (r > g + 25 && g > b + 25) orange++;
+  }
+  return badged >= 3 && badged >= tiles.length * 0.6 ? orange : null;
+}
+
 async function scanShot(worker, file, marks, refs) {
   const src = await createImageBitmap(file);
   const tiles = scanFindTiles(src);
   if (tiles.length) {
+    const gear = scanGearTiles(src, tiles);
+    if (gear !== null) return { kind: "gear", items: [{ name: "Mythic Gear", part: "gear", value: gear, sure: false }] };
     // Learned item pictures first (quick); speedup tiles match none of them.
     const known = await scanItemTiles(worker, src, tiles, refs);
     if (known.found.length) return { kind: "items", items: known.found, unknown: known.unknown };
@@ -12106,6 +12139,8 @@ function openBackpackScan(groups, bp, done, more) {
   const seen = new Set();
   let sawItems = false, sawSpeed = false;
   let unknownTiles = 0;
+  // Mythic Gear = boxes (Other tab) + orange hero gear pieces (Gear tab).
+  const mgParts = { box: null, gear: null };
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -12172,6 +12207,13 @@ function openBackpackScan(groups, bp, done, more) {
       else if (shot.kind === "unknown") notes.add(t("scan_unknown"));
       else if (shot.kind === "summary") notes.add(t("scan_rounded"));
       shot.items.forEach((it) => {
+        if (it.name === "Mythic Gear") {
+          // Several Gear tab screenshots add up (scrolled further down).
+          if (it.part === "gear") mgParts.gear = (mgParts.gear || 0) + it.value;
+          else if (it.value !== null) mgParts.box = it.value;
+          it.value = mgParts.box === null && mgParts.gear === null ? null : (mgParts.box || 0) + (mgParts.gear || 0);
+          it.sure = false;
+        }
         if (!known.has(it.name)) {
           const add = more && more.canAdd(it.name);
           if (!add) { skipped.add(it.name.replace(/ Speedup /, " ")); return; }
@@ -12196,7 +12238,7 @@ function openBackpackScan(groups, bp, done, more) {
       return `<label class="scan-row${r.sure ? "" : " unsure"}">
         <input type="checkbox" data-scantick="${esc(n)}" checked />
         ${ic ? `<img src="${esc(ic)}" alt="" />` : `<span class="scan-img"></span>`}
-        <span class="scan-name"><b>${esc(label(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", old.toLocaleString()))}${known.has(n) || addable.get(n).listed ? "" : ` · ${esc(t("scan_will_add"))}`}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
+        <span class="scan-name"><b>${esc(label(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", old.toLocaleString()))}${known.has(n) || addable.get(n).listed ? "" : ` · ${esc(t("scan_will_add"))}`}${n === "Mythic Gear" ? ` · ${esc(t("scan_mg_parts").replace("{box}", mgParts.box ?? "?").replace("{gear}", mgParts.gear ?? "?"))}` : ""}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
         <input type="text" inputmode="numeric" data-scanval="${esc(n)}" value="${r.value === null ? "" : r.value.toLocaleString("en-US")}" />
       </label>`;
     }).join("");
