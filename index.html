@@ -2083,11 +2083,16 @@ input,select,textarea{
   .pc-lines .meta{ margin-inline-start:auto; }
   /* Backpack summary (Design C): what's still missing, ready items as chips */
   .bs-edit{ margin-top:10px; }
-  .bs-tiles{ display:grid; grid-template-columns:repeat(auto-fill, minmax(92px, 1fr)); gap:7px; }
-  .bs-tiles.plx-sig{ grid-template-columns:repeat(auto-fill, minmax(68px, 1fr)); gap:6px; }
-  .bs-tiles.plx-sig .bp-tile{ aspect-ratio:auto; min-height:0; padding:6px 2px 5px; }
-  .bs-tile{ gap:1px; padding:8px 4px 6px; }
-  .bs-tile img{ width:30px; height:30px; }
+  /* Same size as the Backpack page's tiles; the picture says what it is, so no
+     name (owner, 20 Oct 2026). Third line: red short / green ✓ / grey —. */
+  .bs-tiles{ display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr)); gap:8px; }
+  .bs-tile{ gap:1px; padding:5px 3px; }
+  .bs-tile img{ width:34px; height:34px; }
+  .bp-tile.bs-tile > .bp-name{ display:none; }
+  .bs-tile.off > :not(.bs-st){ opacity:.45; }
+  .bs-help{ font-size:12px; line-height:1.4; color:var(--muted); margin:0 0 10px; }
+  .bs-help b{ color:var(--danger); }
+  .bs-help .ok{ color:var(--good); font-weight:700; }
   .bs-tile .bp-name{ font-size:10px; line-height:1.2; text-align:center; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .bs-tile .bs-st{ font-size:10px; font-weight:700; line-height:1.2; text-align:center; max-width:100%; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .bs-tile .bs-mark{ position:absolute; top:4px; inset-inline-start:6px; font-size:10px; opacity:.85; }
@@ -3887,6 +3892,14 @@ const T = {
   bs_short_word: { en: "short" },
   bs_spare_word: { en: "spare" },
   bs_not_needed: { en: "not needed" },
+  bs_help_have: { en: "What you have now." },
+  bs_help_red: { en: "Red" },
+  bs_help_short: { en: "= still short after using it" },
+  bs_help_ok: { en: "= enough" },
+  bs_help_dash: { en: "= not used on this page" },
+  bs_help_chest: { en: "Dashed boxes are chests (read-only)." },
+  bs_help_tap: { en: "Tap a box to change it." },
+  bs_aff_short: { en: "Affinity short" },
   bs_short: { en: "still short" },
   bs_ready: { en: "ready" },
   bs_nothing: { en: "Nothing needed yet." },
@@ -19407,6 +19420,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
         };
       }
       if (hiddenRates.some((r) => r.from === name) && (Number(owned[name]) || 0) > 0) return { statusColor: "var(--muted)", statusText: t("chest_not_needed") };
+      // None owned, but it would count as something this page needs (Advanced
+      // Marks, Gems → Common Marks): say so instead of "—" (not used).
+      const to = [...new Set(hiddenRates.filter((r) => r.from === name).map((r) => r.to))];
+      if (summaryOn && to.length) return { statusColor: "var(--muted)", statusText: to.length === 1 ? `\u2192 ${materialDisplayName(itemShortName(to[0]))}` : t("bs_used_trades") };
     }
     const statusColor = needed === 0 ? "var(--muted)" : stillNeed > 0 ? "var(--danger)" : "var(--good)";
     // Per-material status: just the number (still needed / extra), no
@@ -19415,7 +19432,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (summaryOn) {
       // Edit list: short amounts with a word, shown as a pill.
       const amt = (v) => (/\(minutes\)$/.test(name) ? t12FormatTime(v / 60) : shortAmount(v));
-      const text = needed === 0 ? t("bs_not_needed") : stillNeed > 0 ? `${bidiNum(amt(stillNeed))} ${t("bs_short_word")}` : surplus > 0 ? `\u2713 ${bidiNum(amt(surplus))} ${t("bs_spare_word")}` : "\u2713";
+      const text = needed === 0 ? "\u2014" : stillNeed > 0 ? `${bidiNum(amt(stillNeed))} ${t("bs_short_word")}` : "\u2713";
       return { statusColor, statusText: text };
     }
     const statusText = needed === 0 ? "\u2014" : stillNeed > 0 ? `${stillNeed.toLocaleString()}` : surplus > 0 ? `\u2713 ${surplus.toLocaleString()}` : "\u2713";
@@ -19467,13 +19484,20 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       return `<span data-neededstatus="${esc(name)}|${esc(g.label || "")}"><span style="color:${statusColor};">${statusText}</span></span>`;
     }).join("");
     const typed = !ro && Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name) && !backpackLinked(calcKey || "chief_gear", name, link);
-    return `<button type="button" class="bp-tile bs-tile${ro ? " ro" : ""}" ${ro ? "disabled" : `data-bsedit="${esc(name)}"`} title="${esc(label)}">
+    return `<button type="button" class="bp-tile bs-tile${ro ? " ro" : ""}${tileOff(name) ? " off" : ""}" ${ro ? "disabled" : `data-bsedit="${esc(name)}"`} title="${esc(label)}">
       <span class="bs-mark" data-bplinknote="${esc(name)}">${typed ? "&#9998;" : Object.keys(link.bp).length && (ro || backpackLinks(calcKey || "chief_gear", name)) ? "&#127890;" : ""}</span>
       ${iconSrc ? `<img src="${esc(iconSrc)}" alt="" loading="lazy" />` : ""}
       <span class="bp-qty">${isMin ? t12FormatTime(haveQty / 60) : shortAmount(haveQty)}</span>
       <span class="bp-name">${esc(label)}</span>
       <span class="bs-st">${status}</span>
     </button>`;
+  }
+  // Not used on this page: no group needs it and it covers nothing (shown "—").
+  function tileOff(name) {
+    return groups.every((g) => {
+      const needed = Number((g.totals || {})[name]) || 0;
+      return needed === 0 && statusFor(name, needed).statusText === "\u2014" && !hiddenTrades.some((tr) => tr.from === name);
+    });
   }
   // Pop-up to type an amount (or go back to the Backpack's).
   function editTileModal(name) {
@@ -19555,7 +19579,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     ${sumHost ? `<div id="${rowsId}_foot">${footHtml()}</div>` : ""}
     ${summaryOn && !sumHost ? `<div id="${rowsId}_sum" class="bs-box">${summaryHtml()}</div>` : ""}
     <div id="${rowsId}" class="${summaryOn ? "bs-edit" : "mat-row"}"${summaryOn && BAR_SHOW_ALL[calcKey] === false ? ` style="display:none;"` : ""}>${summaryOn
-      ? `<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}</div>`
+      ? `${bsHelpHtml(matEntries.some(([n]) => tileOff(n)), chests.some((n) => matEntries.some(([m]) => m === n)))}<div class="bs-tiles">${[...matEntries].sort((a, b) => ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(a[0])) - ["bs_g_fc", "bs_g_resources", "bs_g_speedups", "bs_g_chests"].indexOf(editGroupOf(b[0]))).map(([n]) => editRowHtml(n)).join("")}</div>`
       : matEntries.map(materialCellHtml).join("")}</div>
     ${(() => { const ch = chests.filter((n) => CHANCE_CHESTS.includes(n) && (owned[n] || 0) > 0); return ch.length ? ch.map((n) => `<div class="chest-open">${iconFor(n) ? `<img src="${esc(iconFor(n))}" alt="" loading="lazy" />` : ""}<span>${esc(chanceChestLine(n, owned[n]))}</span><button type="button" class="linklike" data-chestopen>${esc(t("chest_open_do"))} &rsaquo;</button></div>`).join("") : ""; })()}
     <div id="${rowsId}_trades"></div>
@@ -22570,7 +22594,10 @@ async function renderExpertsResearchPage() {
     sigilsEl.innerHTML = totalSigil > 0 ? `<div class="bs-box"><div class="bs-sq" style="--n:1;">
       <div class="bs-row${stillSigil > 0 ? "" : " ok"}"><img src="icons/item_icon_570000.png" alt="" /><div class="n">${esc(t("resource_sigils"))}<small>${esc(t("bs_have_of").replace("{have}", shortAmount(sigilHave)).replace("{need}", shortAmount(totalSigil)))}</small></div><b>${stillSigil > 0 ? bsShortHtml(shortAmount(stillSigil)) : `&#10003;`}</b></div>
       </div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`;
-    document.getElementById("expResearchOwned").innerHTML = `${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })))}
+    // Each tile's short / ✓ / — line: General Sigils cover what the experts' own leave.
+    const tileNeed = { General: { need: sigilShortfall, short: stillSigil } };
+    EXPERTS_IN_ORDER.forEach((ex) => { tileNeed[ex] = { need: isResearchUnlocked(ex) ? Math.max(1, sigilNeededByExpert[ex] || 0) : 0, short: Math.max(0, (sigilNeededByExpert[ex] || 0) - ownedLeft[ex]) }; });
+    document.getElementById("expResearchOwned").innerHTML = `${bsHelpHtml(Object.values(tileNeed).some((n) => !(n.need > 0)), false, false)}${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })), tileNeed)}
       <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
     const sigilTotals = {};
     EXPERTS_IN_ORDER.forEach((expert) => { const short = Math.max(0, (sigilNeededByExpert[expert] || 0) - ownedLeft[expert]); if (short > 0) sigilTotals[`${expert} Sigils`] = short; });
@@ -23182,6 +23209,8 @@ async function renderExpertsPage() {
 
   const totalsEl = document.getElementById("expertsSummary");
   const footEl = document.getElementById("expertsFoot");
+  // What each Backpack tile still lacks (set by renderTotals, drawn by renderInventory).
+  let tileNeed = null;
   footEl.addEventListener("click", (ev) => {
     if (!ev.target.closest("[data-bstoggle]")) return;
     BAR_SHOW_ALL.experts = BAR_SHOW_ALL.experts === false;
@@ -23235,6 +23264,19 @@ async function renderExpertsPage() {
     ].filter((r) => r.need > 0);
     const amt = (r, v) => (r.fmt ? r.fmt(v) : shortAmount(v));
     const short = rows.filter((r) => r.have < r.need), ready = rows.filter((r) => r.have >= r.need);
+    // Tiles: Books, speedups (both pools count for the time), the Affinity
+    // items together, General Sigils (what the experts' own sigils leave), each expert.
+    const timeNeedMin = Math.round(totalTimeHours * 60), timeShortMin = Math.max(0, timeNeedMin - expertSpeedupOwnedFrom(invSaved));
+    const affShort = Math.max(0, totalAffinity - affinityOwnedFrom(invSaved));
+    tileNeed = {
+      "Books of Knowledge": { need: totalBook, short: Math.max(0, totalBook - (Number(invSaved["Books of Knowledge"]) || 0)) },
+      "Expert Speedups (minutes)": { need: timeNeedMin, short: timeShortMin, time: true },
+      "Speedups (minutes)": { need: timeNeedMin, short: timeShortMin, time: true },
+      "General Sigils": { need: sigilShortfall, short: stillSigil },
+      sigils: Object.fromEntries(EXPERTS_SHOWN.map((e) => [e.key, { need: isExpertUnlocked(e.key) ? Math.max(1, sigilNeededByExpert[e.key] || 0) : 0, short: Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)) }])),
+    };
+    Object.keys(AFFINITY_ITEM_VALUE).forEach((n) => { tileNeed[n] = { need: totalAffinity, short: affShort, aff: true }; });
+    if (document.getElementById("expertsInventory").firstChild) renderInventory();
     footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
@@ -23538,16 +23580,20 @@ async function renderExpertsPage() {
     const tile = (f) => {
       const minutes = /\(minutes\)$/.test(f), v = Number(invSaved[f]) || 0;
       const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
-      return `<button type="button" class="bp-tile bs-tile" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}">
+      const nd = tileNeed && tileNeed[f];
+      const st = nd ? bsTileStatus(nd.need, nd.short, nd.time ? (m) => t12FormatTime(m / 60) : shortAmount, nd.aff && nd.short > 0 ? t("bs_aff_short") : null) : null;
+      return `<button type="button" class="bp-tile bs-tile${st && st.off ? " off" : ""}" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))}">
         <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
         <img src="${esc(itemRegIcon(f) || EXPERT_INVENTORY_ICONS[f] || (f.endsWith(" Sigils") ? "icons/item_icon_570000.png" : "icons/item_icon_570201.png"))}" alt="" loading="lazy" />
         <span class="bp-qty">${minutes ? t12FormatTime(v / 60) : shortAmount(v)}</span>
         <span class="bp-name">${esc(materialDisplayName(f).replace(/\s*\((minutes|min)\)$/, ""))}</span>
+        ${st ? st.html : ""}
       </button>`;
     };
-    invEl.innerHTML = `<div class="bs-tiles">${expertInventoryFields().map(tile).join("")}</div>
+    const fields = expertInventoryFields();
+    invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${fields.map(tile).join("")}</div>
       <div class="t12x-k" style="margin:12px 0 6px;">${esc(t("experts_sigils_summary"))}</div>
-      ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN)}
+      ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}
       <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
@@ -24629,13 +24675,29 @@ function plxAmountModal(o) {
   const use = modal.querySelector("#bsEditUse");
   if (use) use.onclick = () => { close(); o.onUse(); };
 }
+// Third line of a Backpack tile: red "N short", green ✓, or grey — when
+// this page doesn't use it (need 0). { html, off }.
+function bsTileStatus(need, short, fmt = shortAmount, shortText) {
+  if (!(need > 0)) return { html: `<span class="bs-st"><span style="color:var(--muted);">\u2014</span></span>`, off: true };
+  if (short > 0) return { html: `<span class="bs-st"><span style="color:var(--danger);">${esc(shortText || `${bidiNum(fmt(short))} ${t("bs_short_word")}`)}</span></span>`, off: false };
+  return { html: `<span class="bs-st"><span style="color:var(--good);">\u2713</span></span>`, off: false };
+}
+// The line under "Amounts from your Backpack" that says what the colours mean.
+function bsHelpHtml(dash, chest, tap = true) {
+  return `<div class="bs-help">${esc(t("bs_help_have"))} <b>${esc(t("bs_help_red"))}</b> ${esc(t("bs_help_short"))} \u00b7 <span class="ok">\u2713</span> ${esc(t("bs_help_ok"))}${dash ? ` \u00b7 \u2014 ${esc(t("bs_help_dash"))}` : ""}.${chest ? ` ${esc(t("bs_help_chest"))}` : ""}${tap ? ` ${esc(t("bs_help_tap"))}` : ""}</div>`;
+}
 // Expert sigil tiles (each expert's picture and the sigils you hold for them).
-function expertSigilTilesHtml(inv, experts) {
-  return `<div class="bs-tiles plx-sig">${experts.map((e) => `<div class="bp-tile bs-tile ro" title="${esc(dataName(e.key))}">
-      ${e.img ? `<img src="${esc(e.img)}" alt="" loading="lazy" style="width:34px; height:34px; border-radius:8px;" />` : ""}
+// need: { key: { need, short } } adds the short / ✓ / — line.
+function expertSigilTilesHtml(inv, experts, need) {
+  return `<div class="bs-tiles plx-sig">${experts.map((e) => {
+    const st = need && need[e.key] ? bsTileStatus(need[e.key].need, need[e.key].short) : null;
+    return `<div class="bp-tile bs-tile ro${st && st.off ? " off" : ""}" title="${esc(dataName(e.key))}">
+      ${e.img ? `<img src="${esc(e.img)}" alt="" loading="lazy" style="border-radius:8px;" />` : ""}
       <span class="bp-qty">${(Number(inv[`${e.key} Sigils`]) || 0).toLocaleString()}</span>
       <span class="bp-name">${esc(dataName(e.key))}</span>
-    </div>`).join("")}</div>`;
+      ${st ? st.html : ""}
+    </div>`;
+  }).join("")}</div>`;
 }
 // Picture strip to pick one pet/expert (replaces the ‹ 1/15 › arrows).
 // items: [{ label, img, color, dim }]
