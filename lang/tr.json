@@ -1951,5 +1951,6 @@
 "t:google_continue":"Google ile devam et",
 "t:or_email":"veya e-posta ile",
 "t:google_failed":"Google ile giriş başarısız oldu. Lütfen tekrar deneyin.",
-"t:google_in_use":"Bu Google hesabının burada zaten kendi hesabı var. Ona giriş yapılıyor…"
+"t:google_in_use":"Bu Google hesabının burada zaten kendi hesabı var. Ona giriş yapılıyor…",
+"t:privacy_link":"Gizlilik"
 }

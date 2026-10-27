@@ -1951,5 +1951,6 @@
 "t:google_continue":"Lanjutkan dengan Google",
 "t:or_email":"atau dengan email",
 "t:google_failed":"Masuk dengan Google gagal. Silakan coba lagi.",
-"t:google_in_use":"Akun Google ini sudah punya akun sendiri di sini. Memasukkan Anda ke akun itu…"
+"t:google_in_use":"Akun Google ini sudah punya akun sendiri di sini. Memasukkan Anda ke akun itu…",
+"t:privacy_link":"Privasi"
 }
