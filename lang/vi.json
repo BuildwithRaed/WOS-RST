@@ -12,7 +12,7 @@
 "t:forgot_password":"Quên mật khẩu?",
 "t:enter_email_first":"Hãy nhập email trước.",
 "t:reset_sent":"Đã gửi email đặt lại mật khẩu. Hãy kiểm tra hộp thư.",
-"t:password_short":"Mật khẩu phải có ít nhất 6 ký tự.",
+"t:password_short":"Mật khẩu phải có ít nhất 8 ký tự.",
 "t:confirm_email_sent":"Kiểm tra email và bấm liên kết xác nhận để hoàn tất.",
 "t:confirm_email_hint":"Email chưa được xác nhận — hãy kiểm tra hộp thư.",
 "t:email_taken":"Email này đã có tài khoản. Hãy thử đăng nhập.",
@@ -1947,5 +1947,9 @@
 "t:pur_until_days":"{n} ngày",
 "t:pur_until_tomorrow":"ngày mai",
 "t:pur_until_today":"ngày cuối",
-"t:pur_until_once":"Một lần · giữ lại"
+"t:pur_until_once":"Một lần · giữ lại",
+"t:google_continue":"Tiếp tục với Google",
+"t:or_email":"hoặc bằng email",
+"t:google_failed":"Đăng nhập bằng Google không thành công. Vui lòng thử lại.",
+"t:google_in_use":"Tài khoản Google này đã có tài khoản riêng ở đây. Đang đăng nhập vào tài khoản đó…"
 }
