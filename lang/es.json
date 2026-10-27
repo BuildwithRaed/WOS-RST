@@ -13,7 +13,7 @@
  "t:forgot_password": "¿Olvidaste la contraseña?",
  "t:enter_email_first": "Primero escribe tu email.",
  "t:reset_sent": "Email de restablecimiento enviado. Revisa tu bandeja de entrada.",
- "t:password_short": "La contraseña debe tener al menos 8 caracteres.",
+ "t:password_short": "La contraseña debe tener al menos 6 caracteres.",
  "t:confirm_email_sent": "Revisa tu email y pulsa el enlace de confirmación para terminar.",
  "t:confirm_email_hint": "Email aún no confirmado: revisa tu bandeja de entrada.",
  "t:email_taken": "Ese email ya tiene una cuenta. Prueba a iniciar sesión.",

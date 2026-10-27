@@ -3787,7 +3787,7 @@ const T = {
   forgot_password: { en: "Forgot password?" },
   enter_email_first: { en: "Enter your email first." },
   reset_sent: { en: "Password reset email sent. Check your inbox." },
-  password_short: { en: "Password must be at least 8 characters." },
+  password_short: { en: "Password must be at least 6 characters." },
   google_continue: { en: "Continue with Google" },
   or_email: { en: "or with email" },
   google_failed: { en: "Google sign-in didn't work. Please try again." },
@@ -29985,7 +29985,7 @@ function openAccountModal(mode) {
 // to the account they already have (linkIdentity: same user id, everything
 // saved in this browser is kept); if that Google account already has its own
 // account (or linking is off), it signs in to that one instead.
-const PASSWORD_MIN = 8;
+const PASSWORD_MIN = 6;
 let AUTH_SETTINGS_P = null;
 function authSettings() {
   return AUTH_SETTINGS_P || (AUTH_SETTINGS_P = fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_KEY } })
