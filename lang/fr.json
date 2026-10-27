@@ -13,7 +13,7 @@
  "t:forgot_password": "Mot de passe oublié ?",
  "t:enter_email_first": "Saisissez d'abord votre e-mail.",
  "t:reset_sent": "E-mail de réinitialisation envoyé. Vérifiez votre boîte de réception.",
- "t:password_short": "Le mot de passe doit contenir au moins 6 caractères.",
+ "t:password_short": "Le mot de passe doit contenir au moins 8 caractères.",
  "t:confirm_email_sent": "Vérifiez vos e-mails et cliquez sur le lien de confirmation pour terminer.",
  "t:confirm_email_hint": "E-mail pas encore confirmé — vérifiez votre boîte de réception.",
  "t:email_taken": "Cet e-mail a déjà un compte. Essayez de vous connecter.",
@@ -1948,5 +1948,9 @@
 "t:pur_until_days":"{n} jours",
 "t:pur_until_tomorrow":"demain",
 "t:pur_until_today":"dernier jour",
-"t:pur_until_once":"Unique · reste"
+"t:pur_until_once":"Unique · reste",
+"t:google_continue":"Continuer avec Google",
+"t:or_email":"ou par e-mail",
+"t:google_failed":"La connexion avec Google n'a pas fonctionné. Veuillez réessayer.",
+"t:google_in_use":"Ce compte Google a déjà son propre compte ici. Connexion à ce compte…"
 }

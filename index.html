@@ -2296,6 +2296,9 @@ input,select,textarea{
     position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100;
     display:flex; align-items:center; justify-content:center; padding:20px;
   }
+  .acc-google{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; min-height:40px; }
+  .acc-or{ display:flex; align-items:center; gap:8px; margin:10px 0; color:var(--muted); font-size:11px; }
+  .acc-or::before, .acc-or::after{ content:""; flex:1; height:1px; background:var(--line); }
   .modal-box{
     background:var(--panel); border:1px solid var(--line); border-radius:12px;
     padding:22px; width:100%; max-width:420px; max-height:90vh; overflow-y:auto;
@@ -3619,7 +3622,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 50; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 51; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3784,7 +3787,11 @@ const T = {
   forgot_password: { en: "Forgot password?" },
   enter_email_first: { en: "Enter your email first." },
   reset_sent: { en: "Password reset email sent. Check your inbox." },
-  password_short: { en: "Password must be at least 6 characters." },
+  password_short: { en: "Password must be at least 8 characters." },
+  google_continue: { en: "Continue with Google" },
+  or_email: { en: "or with email" },
+  google_failed: { en: "Google sign-in didn't work. Please try again." },
+  google_in_use: { en: "That Google account already has its own account here. Signing you in to it…" },
   confirm_email_sent: { en: "Check your email and click the confirmation link to finish." },
   confirm_email_hint: { en: "Email not confirmed yet — check your inbox." },
   email_taken: { en: "That email already has an account. Try signing in." },
@@ -29916,6 +29923,7 @@ function openAccountModal(mode) {
     <div class="modal-box" style="max-width:360px;">
       <div style="display:flex; gap:6px; margin-bottom:10px;">${tabBtn("signin", t("log_in"))}${tabBtn("create", t("create_account"))}</div>
       <p class="desc" style="margin:0 0 10px;">${esc(t(isCreate ? "create_account_desc" : "sign_in_desc"))}</p>
+      <div id="accGoogle"></div>
       <div style="display:flex; flex-direction:column; gap:8px;">
         <input type="email" id="ownerLoginEmail" placeholder="${esc(t("email_placeholder"))}" autocomplete="email" style="width:100%;" />
         <input type="password" id="ownerLoginPassword" placeholder="${esc(t("password_placeholder"))}" autocomplete="${isCreate ? "new-password" : "current-password"}" style="width:100%;" />
@@ -29926,6 +29934,7 @@ function openAccountModal(mode) {
       </div>
     </div>`;
   modal.style.display = "flex";
+  fillGoogleButton(document.getElementById("accGoogle"));
   modal.querySelectorAll("[data-accmode]").forEach((b) => b.addEventListener("click", () => openAccountModal(b.dataset.accmode)));
   document.getElementById("ownerLoginClose").addEventListener("click", () => { modal.style.display = "none"; });
   const errEl = document.getElementById("ownerLoginErr");
@@ -29944,7 +29953,7 @@ function openAccountModal(mode) {
     errEl.style.color = "";
     errEl.textContent = "";
     if (!email || !password) { errEl.textContent = t("enter_both"); return; }
-    if (isCreate && password.length < 6) { errEl.textContent = t("password_short"); return; }
+    if (isCreate && password.length < PASSWORD_MIN) { errEl.textContent = t("password_short"); return; }
     try {
       if (isCreate) {
         const anon = CURRENT_SESSION && CURRENT_SESSION.user && CURRENT_SESSION.user.is_anonymous;
@@ -29970,6 +29979,57 @@ function openAccountModal(mode) {
       errEl.textContent = err.message || t("login_failed");
     }
   });
+}
+// Sign in with Google (shown only once Google is switched on in Supabase →
+// Authentication → Providers; /auth/v1/settings says so). A guest links Google
+// to the account they already have (linkIdentity: same user id, everything
+// saved in this browser is kept); if that Google account already has its own
+// account (or linking is off), it signs in to that one instead.
+const PASSWORD_MIN = 8;
+let AUTH_SETTINGS_P = null;
+function authSettings() {
+  return AUTH_SETTINGS_P || (AUTH_SETTINGS_P = fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_KEY } })
+    .then((r) => (r.ok ? r.json() : {})).catch(() => { AUTH_SETTINGS_P = null; return {}; }));
+}
+const GOOGLE_G = `<svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>`;
+async function fillGoogleButton(host) {
+  if (!host) return;
+  const st = await authSettings();
+  if (!(st && st.external && st.external.google) || !host.isConnected) return;
+  host.innerHTML = `<button type="button" class="btn ghost acc-google" data-accgoogle>${GOOGLE_G}<span>${esc(t("google_continue"))}</span></button>
+    <div class="acc-or"><span>${esc(t("or_email"))}</span></div>`;
+  host.querySelector("[data-accgoogle]").addEventListener("click", () => googleSignIn(host));
+}
+async function googleSignIn(host) {
+  const redirectTo = location.href.split("#")[0];
+  const btn = host && host.querySelector("[data-accgoogle]");
+  if (btn) btn.disabled = true;
+  const anon = CURRENT_SESSION && CURRENT_SESSION.user && CURRENT_SESSION.user.is_anonymous;
+  if (anon && supabaseClient.auth.linkIdentity) {
+    try { sessionStorage.setItem("google_link", "1"); } catch (e) {}
+    const { error } = await supabaseClient.auth.linkIdentity({ provider: "google", options: { redirectTo } });
+    if (!error) return; // the browser goes to Google
+  }
+  try { sessionStorage.removeItem("google_link"); } catch (e) {}
+  const { error } = await supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+  if (error) { if (btn) btn.disabled = false; toast(t("google_failed"), true); }
+}
+// Back from Google with an error. Linking a Google account that already has
+// its own account comes back as "identity_already_exists": sign in to it.
+function googleReturnCheck() {
+  const q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const code = q.get("error_code") || h.get("error_code") || "", desc = q.get("error_description") || h.get("error_description") || "";
+  if (!code && !q.get("error") && !h.get("error")) return;
+  let linking = false;
+  try { linking = sessionStorage.getItem("google_link") === "1"; sessionStorage.removeItem("google_link"); } catch (e) {}
+  ["error", "error_code", "error_description"].forEach((k) => q.delete(k));
+  history.replaceState(history.state, "", location.pathname + (q.toString() ? "?" + q.toString() : ""));
+  if (linking && (code === "identity_already_exists" || /already/i.test(desc))) {
+    toast(t("google_in_use"));
+    supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.href.split("#")[0] } });
+    return;
+  }
+  toast(t("google_failed"), true);
 }
 function friendlyAuthError(error) {
   const m = String(error && error.message || "");
@@ -30034,6 +30094,7 @@ if ("serviceWorker" in navigator) {
 (async function boot() {
   try {
     await ensureAuthSession();
+    googleReturnCheck();
   } catch (err) {
     content.innerHTML = `
       <div class="empty">

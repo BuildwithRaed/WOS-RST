@@ -13,7 +13,7 @@
  "t:forgot_password": "Nie pamiętasz hasła?",
  "t:enter_email_first": "Najpierw wpisz e-mail.",
  "t:reset_sent": "Wysłano e-mail do resetu hasła. Sprawdź skrzynkę.",
- "t:password_short": "Hasło musi mieć co najmniej 6 znaków.",
+ "t:password_short": "Hasło musi mieć co najmniej 8 znaków.",
  "t:confirm_email_sent": "Sprawdź e-mail i kliknij link potwierdzający, aby zakończyć.",
  "t:confirm_email_hint": "E-mail jeszcze niepotwierdzony — sprawdź skrzynkę.",
  "t:email_taken": "Ten e-mail ma już konto. Spróbuj się zalogować.",
@@ -1948,5 +1948,9 @@
 "t:pur_until_days":"{n} dni",
 "t:pur_until_tomorrow":"jutro",
 "t:pur_until_today":"ostatni dzień",
-"t:pur_until_once":"Jednorazowa · zostaje"
+"t:pur_until_once":"Jednorazowa · zostaje",
+"t:google_continue":"Kontynuuj z Google",
+"t:or_email":"lub przez e-mail",
+"t:google_failed":"Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
+"t:google_in_use":"To konto Google ma już tutaj własne konto. Logowanie do niego…"
 }

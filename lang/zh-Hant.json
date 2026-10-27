@@ -12,7 +12,7 @@
 "t:forgot_password":"忘記密碼？",
 "t:enter_email_first":"請先輸入電子郵件。",
 "t:reset_sent":"已寄出重設密碼郵件，請查看收件匣。",
-"t:password_short":"密碼至少需要 6 個字元。",
+"t:password_short":"密碼至少需要 8 個字元。",
 "t:confirm_email_sent":"請查看電子郵件並點擊確認連結以完成。",
 "t:confirm_email_hint":"電子郵件尚未確認 — 請查看收件匣。",
 "t:email_taken":"此電子郵件已有帳號，請嘗試登入。",
@@ -1947,5 +1947,9 @@
 "t:pur_until_days":"{n} 天",
 "t:pur_until_tomorrow":"明天",
 "t:pur_until_today":"最後一天",
-"t:pur_until_once":"一次性 · 保留"
+"t:pur_until_once":"一次性 · 保留",
+"t:google_continue":"使用 Google 繼續",
+"t:or_email":"或使用電子郵件",
+"t:google_failed":"Google 登入失敗，請再試一次。",
+"t:google_in_use":"此 Google 帳號在這裡已有自己的帳號，正在登入該帳號…"
 }

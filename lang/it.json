@@ -13,7 +13,7 @@
  "t:forgot_password": "Password dimenticata?",
  "t:enter_email_first": "Inserisci prima la tua email.",
  "t:reset_sent": "Email per reimpostare la password inviata. Controlla la posta.",
- "t:password_short": "La password deve avere almeno 6 caratteri.",
+ "t:password_short": "La password deve avere almeno 8 caratteri.",
  "t:confirm_email_sent": "Controlla la tua email e clicca il link di conferma per finire.",
  "t:confirm_email_hint": "Email non ancora confermata — controlla la posta.",
  "t:email_taken": "Questa email ha già un account. Prova ad accedere.",
@@ -1948,5 +1948,9 @@
 "t:pur_until_days":"{n} giorni",
 "t:pur_until_tomorrow":"domani",
 "t:pur_until_today":"ultimo giorno",
-"t:pur_until_once":"Una volta · resta"
+"t:pur_until_once":"Una volta · resta",
+"t:google_continue":"Continua con Google",
+"t:or_email":"oppure con l'email",
+"t:google_failed":"L'accesso con Google non è riuscito. Riprova.",
+"t:google_in_use":"Questo account Google ha già un proprio account qui. Accesso in corso…"
 }

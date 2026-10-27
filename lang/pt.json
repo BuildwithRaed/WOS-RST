@@ -12,7 +12,7 @@
 "t:forgot_password":"Esqueceu a senha?",
 "t:enter_email_first":"Digite seu e-mail primeiro.",
 "t:reset_sent":"E-mail de redefinição de senha enviado. Veja sua caixa de entrada.",
-"t:password_short":"A senha precisa ter pelo menos 6 caracteres.",
+"t:password_short":"A senha precisa ter pelo menos 8 caracteres.",
 "t:confirm_email_sent":"Veja seu e-mail e clique no link de confirmação para concluir.",
 "t:confirm_email_hint":"E-mail ainda não confirmado — veja sua caixa de entrada.",
 "t:email_taken":"Esse e-mail já tem uma conta. Tente entrar.",
@@ -1947,5 +1947,9 @@
 "t:pur_until_days":"{n} dias",
 "t:pur_until_tomorrow":"amanhã",
 "t:pur_until_today":"último dia",
-"t:pur_until_once":"Uma vez · fica"
+"t:pur_until_once":"Uma vez · fica",
+"t:google_continue":"Continuar com o Google",
+"t:or_email":"ou com e-mail",
+"t:google_failed":"O login com o Google não funcionou. Tente novamente.",
+"t:google_in_use":"Essa conta do Google já tem sua própria conta aqui. Entrando nela…"
 }

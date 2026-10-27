@@ -13,7 +13,7 @@
  "t:forgot_password": "¿Olvidaste la contraseña?",
  "t:enter_email_first": "Primero escribe tu email.",
  "t:reset_sent": "Email de restablecimiento enviado. Revisa tu bandeja de entrada.",
- "t:password_short": "La contraseña debe tener al menos 6 caracteres.",
+ "t:password_short": "La contraseña debe tener al menos 8 caracteres.",
  "t:confirm_email_sent": "Revisa tu email y pulsa el enlace de confirmación para terminar.",
  "t:confirm_email_hint": "Email aún no confirmado: revisa tu bandeja de entrada.",
  "t:email_taken": "Ese email ya tiene una cuenta. Prueba a iniciar sesión.",
@@ -1948,5 +1948,9 @@
 "t:pur_until_days":"{n} días",
 "t:pur_until_tomorrow":"mañana",
 "t:pur_until_today":"último día",
-"t:pur_until_once":"Una vez · se queda"
+"t:pur_until_once":"Una vez · se queda",
+"t:google_continue":"Continuar con Google",
+"t:or_email":"o con correo electrónico",
+"t:google_failed":"El inicio de sesión con Google no funcionó. Inténtalo de nuevo.",
+"t:google_in_use":"Esa cuenta de Google ya tiene su propia cuenta aquí. Iniciando sesión en ella…"
 }
