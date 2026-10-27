@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <!-- Content Security Policy: only this site, the Supabase library CDN and the
      Supabase API may be loaded/contacted; no plugins; no base-URL hijacking. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co https://cdn.jsdelivr.net https://cloudflareinsights.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/ https://cdn.jsdelivr.net/npm/highs@1.15.3/ https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/ https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/ https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://hzourauekkiorojrhpko.supabase.co https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/ https://cdn.jsdelivr.net/npm/highs@1.15.3/ https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/ https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/ https://cloudflareinsights.com; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:" />
 <meta http-equiv="X-Content-Type-Options" content="nosniff" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -49,8 +49,12 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="preconnect" href="https://hzourauekkiorojrhpko.supabase.co" crossorigin />
 <!-- Exact version: an exact-version URL never changes, so browsers (and the
-     service worker) can keep it cached instead of re-checking "@2". -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+     service worker) can keep it cached instead of re-checking "@2".
+     integrity = the file's fingerprint: a changed copy from the CDN is refused.
+     If it can't load (blocked, or refused), the same file from this site's
+     vendor/ folder is used, so the site still opens. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
+<script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
 <style>
   /* ============================================================
      GLOBAL THEME & LAYOUT
@@ -3652,11 +3656,18 @@ async function loadLangPack(code, fresh) {
 }
 // Puts a language's texts into the dictionaries the pages read (T, menu,
 // game names, the automatic translator), replacing what it had before.
+// Texts from the language files and Admin (Languages & Texts, CSV upload)
+// go on screen as they are, so they may not carry page code: tags other than
+// <br> and "on…=" / "javascript:" parts are taken out. Real texts never have them.
+function safeLangText(v) {
+  return String(v).replace(/<(?!br\s*\/?>)[^>]*>?/gi, "").replace(/\bon[a-z]+\s*=/gi, "").replace(/javascript\s*:/gi, "");
+}
 function injectLangPack(code, pack) {
   const dicts = [T, NAV_GROUP_LABELS_DEFAULT, NAV_PAGE_LABELS_DEFAULT, DATA_NAME_I18N, UI_TEXT_I18N];
   if (code !== "en") dicts.forEach((d) => Object.values(d).forEach((v) => { if (v && typeof v === "object") delete v[code]; }));
   Object.entries(pack || {}).forEach(([k, v]) => {
     if (typeof v !== "string" || !v) return;
+    v = safeLangText(v);
     const i = k.indexOf(":"), kind = k.slice(0, i), key = k.slice(i + 1);
     if (kind === "t") { if (T[key]) T[key][code] = v; }
     else if (kind === "nav.g") (NAV_GROUP_LABELS_DEFAULT[key] = NAV_GROUP_LABELS_DEFAULT[key] || { en: key })[code] = v;
@@ -3688,6 +3699,7 @@ function applyEnglishOverrides(over) {
   EN_UI_OVER.clear();
   Object.entries(over && typeof over === "object" ? over : {}).forEach(([k, v]) => {
     if (typeof v !== "string" || !v.trim()) return;
+    v = safeLangText(v);
     const i = k.indexOf(":"), kind = k.slice(0, i), key = k.slice(i + 1);
     if (kind === "ui") { if (key && key !== v) EN_UI_OVER.set(key, v); }
     else if (kind === "t" && T[key] && T[key].en) { EN_BUILTIN_T[key] = T[key].en; T[key].en = v; }
@@ -11719,11 +11731,18 @@ function scanWorker() {
         logger: (m) => { last = Date.now(); if (SCAN_PROGRESS) SCAN_PROGRESS(m); },
       }).then(resolve, reject);
       if (window.Tesseract) { start(); return; }
-      const s = document.createElement("script");
-      s.src = `${SCAN_CDN}tesseract.js@5.1.1/dist/tesseract.min.js`;
-      s.onload = start;
-      s.onerror = () => reject(new Error("load"));
-      document.head.appendChild(s);
+      // The reader file is checked against its fingerprint (a changed copy is
+      // refused); if the CDN copy can't be used, this site's own copy is.
+      const load = (src, sri, fail) => {
+        const s = document.createElement("script");
+        if (sri) { s.integrity = sri; s.crossOrigin = "anonymous"; }
+        s.src = src;
+        s.onload = start;
+        s.onerror = fail;
+        document.head.appendChild(s);
+      };
+      load(`${SCAN_CDN}tesseract.js@5.1.1/dist/tesseract.min.js`, "sha384-GJqSu7vueQ9qN0E9yLPb3Wtpd7OrgK8KmYzC8T1IysG1bcvxvIO4qtYR/D3A991F",
+        () => load("vendor/tesseract-5.1.1.min.js", "", () => reject(new Error("load"))));
     });
     SCAN_WORKER.catch(() => { SCAN_WORKER = null; });
   }
@@ -17031,6 +17050,7 @@ function plannerPagePlans(payload) {
 // can't start the worker, the same functions simply run here instead.
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
+const PLAN_SOLVER_SRI = { "highs.js": "sha384-8VF/84lUdwWTmd6C4TlyNI0GCoMmX0iTMuYiSgqm4Q+A36WnVSQAAHMvAGdx71U1", "highs.wasm": "sha384-MAiNyO4ydZtZMzFnxQmbxtpRfMmzGm/wbmtOYrOuns7GS6PMI/RukPAEV9MJjvCB" };
 const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
@@ -17055,7 +17075,10 @@ function plannerWorker() {
       // The exact solver loads once per worker; plans wait for it (or for the
       // time-out), then the greedy planner is used if it couldn't load.
       `const PLAN_SOLVER_URL = ${JSON.stringify(PLAN_SOLVER_URL)}; let PLAN_SOLVER = null, PLAN_SOLVER_P = null;`,
-      "const plannerSolver = () => PLAN_SOLVER_P || (PLAN_SOLVER_P = new Promise((done) => { const t = setTimeout(() => done(null), 20000); try { importScripts(PLAN_SOLVER_URL + 'highs.js'); Module({ locateFile: (f) => PLAN_SOLVER_URL + f }).then((h) => { clearTimeout(t); PLAN_SOLVER = h; done(h); }, () => { clearTimeout(t); done(null); }); } catch (err) { clearTimeout(t); done(null); } }));",
+      // Both solver files are checked against their fingerprints (fetch
+      // integrity); a changed copy is refused and the greedy planner is used.
+      `const PLAN_SOLVER_SRI = ${JSON.stringify(PLAN_SOLVER_SRI)};`,
+      "const plannerSolver = () => PLAN_SOLVER_P || (PLAN_SOLVER_P = new Promise((done) => { const t = setTimeout(() => done(null), 20000); const fail = () => { clearTimeout(t); done(null); }; const get = (f) => fetch(PLAN_SOLVER_URL + f, { integrity: PLAN_SOLVER_SRI[f], mode: 'cors' }).then((r) => { if (!r.ok) throw new Error('solver ' + r.status); return r; }); Promise.all([get('highs.js').then((r) => r.text()), get('highs.wasm').then((r) => r.arrayBuffer())]).then(([js, wasm]) => { importScripts(URL.createObjectURL(new Blob([js], { type: 'text/javascript' }))); return Module({ wasmBinary: wasm, locateFile: (f) => PLAN_SOLVER_URL + f }); }).then((h) => { clearTimeout(t); PLAN_SOLVER = h; done(h); }, fail); }));",
       "const PACK_PLAN_CACHE = new Map(); const PACK_EARLIEST_CACHE = new Map();",
       ...fns,
       "plannerSolver();", // start loading the solver as soon as the worker starts
@@ -21911,9 +21934,15 @@ async function ensureRCData() {
 const PET_TROOP_COLORS_CYCLE = ["var(--ice)", "#7ee6a8", "#f0a3c4", "#e0c068"];
 // Pet pictures (from whiteoutsurvival.wiki, resized to 128 px). A pet with no
 // picture yet shows its first letter instead.
+// A picture link typed in Admin: only https:// links or files of this site
+// (e.g. icons/...), so a link can't run anything; anything else shows no picture.
+function safeImgUrl(u) {
+  const v = String(u == null ? "" : u).trim();
+  return /^(https:\/\/[^\s"'<>`\\]+|(?!\/\/)[\w.\/%-]+)$/.test(v) ? v : "";
+}
 function petImage(pet) {
   const own = (typeof siteConfig === "function" ? siteConfig("pet_images", {}) : {}) || {};
-  if (own[pet]) return own[pet]; // set in Admin → Pets
+  if (own[pet]) return safeImgUrl(own[pet]); // set in Admin → Pets
   const slug = String(pet).toLowerCase().replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
   return PET_IMAGE_SLUGS.has(slug) ? `icons/pets/${slug}.webp` : "";
 }
@@ -24123,7 +24152,7 @@ async function renderRefinePage() {
           <div style="display:flex; align-items:center; justify-content:flex-start; gap:8px; margin-bottom:12px; flex-wrap:nowrap;">
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; min-width:0; flex-wrap:nowrap;">
               <input type="checkbox" data-petunlockrefine="${esc(pet)}" ${unlocked ? "checked" : ""} style="width:14px; height:14px; cursor:pointer; flex-shrink:0;" />
-              ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
+              ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
               <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
             </label>
             ${visibilityBtnHtml("pets", pet)}
@@ -24352,7 +24381,7 @@ async function renderPetsDataPage() {
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
           <div class="pc-head">
-            ${petImage(pet) ? `<img src="${petImage(pet)}" alt="" />` : ""}
+            ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" />` : ""}
             <div class="name" style="color:${color};">${esc(dataName(pet))}</div>
             ${done ? `<span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}
             ${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
@@ -26229,6 +26258,25 @@ const BACKUP_TABLES = [
   { t: "buff_tables", pk: ["id"], q: () => `user_id=eq.${PROGRESSION_OWNER_ID}` }, { t: "buff_columns", pk: ["id"] }, { t: "buff_rows", pk: ["id"] }, { t: "buff_cells", pk: ["id"] },
 ];
 const backupKey = (spec, row) => spec.pk.map((k) => String(row[k])).join("|");
+// A restore file is checked before anything is written: each row must be a
+// plain object with its key filled, only the table's own columns, the owner's
+// id where the table has one, and no text that could run as page code
+// (script tags, on…= handlers, javascript: / data:text links). Rows that fail
+// are left out and counted in the preview.
+const BACKUP_UNSAFE = /<\s*\/?\s*(script|iframe|object|embed|svg|math|link|meta|style|base|form)\b|\bon[a-z]+\s*=|^\s*(javascript|vbscript)\s*:|^\s*data\s*:\s*text\/html/i;
+function backupValueSafe(v, depth) {
+  if (v == null || typeof v === "number" || typeof v === "boolean") return true;
+  if (typeof v === "string") return !BACKUP_UNSAFE.test(v);
+  if ((depth || 0) > 40 || typeof v !== "object") return false;
+  return Object.entries(v).every(([k, x]) => !BACKUP_UNSAFE.test(k) && backupValueSafe(x, (depth || 0) + 1));
+}
+function backupRowOk(spec, row, cols) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return false;
+  if (spec.pk.some((k) => row[k] == null || row[k] === "")) return false;
+  if (cols && cols.size && Object.keys(row).some((k) => !cols.has(k))) return false;
+  if ("user_id" in row && (spec.t === "calc_state" || spec.t === "buff_tables") && row.user_id !== PROGRESSION_OWNER_ID) return false;
+  return backupValueSafe(row);
+}
 async function makeBackup(onStep) {
   const out = { app: "WOS RST", kind: "admin-backup", version: 1, made: new Date().toISOString(), tables: {} };
   for (const spec of BACKUP_TABLES) {
@@ -26280,15 +26328,20 @@ async function showRestorePreview(el, file) {
   const now = await makeBackup();
   const plan = BACKUP_TABLES.filter((spec) => Array.isArray(file.tables[spec.t])).map((spec) => {
     const cur = new Map(now.tables[spec.t].map((r) => [backupKey(spec, r), r]));
-    const inFile = new Map(file.tables[spec.t].map((r) => [backupKey(spec, r), r]));
+    const cols = new Set(); now.tables[spec.t].forEach((r) => Object.keys(r).forEach((k) => cols.add(k)));
+    const okRows = file.tables[spec.t].filter((r) => backupRowOk(spec, r, cols));
+    const bad = file.tables[spec.t].length - okRows.length;
+    const inFile = new Map(okRows.map((r) => [backupKey(spec, r), r]));
     const put = [], extra = [];
     inFile.forEach((r, k) => { const c = cur.get(k); if (!c || JSON.stringify(c) !== JSON.stringify(r)) put.push(r); });
     cur.forEach((r, k) => { if (!inFile.has(k)) extra.push(r); });
-    return { spec, put, extra, back: put.filter((r) => !cur.has(backupKey(spec, r))).length };
+    return { spec, put, extra, bad, back: put.filter((r) => !cur.has(backupKey(spec, r))).length };
   });
-  const changed = plan.filter((p) => p.put.length || p.extra.length);
+  const changed = plan.filter((p) => p.put.length || p.extra.length || p.bad);
+  const badRows = plan.reduce((a, p) => a + p.bad, 0);
   el.innerHTML = `<div class="meta" style="font-size:12px; margin-bottom:6px;">Backup from <b>${esc(new Date(file.made).toLocaleString())}</b>. ${changed.length ? `${changed.length} part(s) differ from today:` : "Everything is the same as today — nothing to restore."}</div>
-    ${changed.length ? `<div class="bk-list">${changed.map((p) => `<label class="bk-row"><input type="checkbox" data-bkpart="${p.spec.t}" checked /><span><b>${esc(p.spec.t)}</b><br><small>${p.put.length - p.back ? `${p.put.length - p.back} changed` : ""}${p.put.length - p.back && p.back ? " · " : ""}${p.back ? `${p.back} deleted since — put back` : ""}${p.extra.length ? `${p.put.length ? " · " : ""}${p.extra.length} added since` : ""}</small></span></label>`).join("")}</div>
+    ${changed.length ? `<div class="bk-list">${changed.map((p) => `<label class="bk-row"><input type="checkbox" data-bkpart="${p.spec.t}" checked /><span><b>${esc(p.spec.t)}</b><br><small>${p.put.length - p.back ? `${p.put.length - p.back} changed` : ""}${p.put.length - p.back && p.back ? " · " : ""}${p.back ? `${p.back} deleted since — put back` : ""}${p.extra.length ? `${p.put.length ? " · " : ""}${p.extra.length} added since` : ""}${p.bad ? `${p.put.length || p.extra.length ? " · " : ""}<span style="color:var(--danger,#e66);">${p.bad} row(s) left out (not valid)</span>` : ""}</small></span></label>`).join("")}</div>
+      ${badRows ? `<div class="meta" style="font-size:12px; color:var(--danger,#e66); margin-top:6px;">${badRows} row(s) in this file don't match the tables (unknown columns, missing key, another user's data or page code) and won't be restored.</div>` : ""}
       <label class="bk-row" style="margin-top:6px;"><input type="checkbox" data-bkremove /><span>Also delete rows added since the backup<br><small>Off: rows added later are kept.</small></span></label>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;"><button type="button" class="btn small" data-bkgo>Restore ticked parts</button></div>` : ""}`;
   const go = el.querySelector("[data-bkgo]");
@@ -29930,13 +29983,46 @@ function friendlyAuthError(error) {
 // ask for the new password once, then reload into the account.
 supabaseClient.auth.onAuthStateChange((event) => {
   if (event !== "PASSWORD_RECOVERY") return;
-  const pw = prompt(t("new_password_prompt"));
-  if (!pw) return;
-  supabaseClient.auth.updateUser({ password: pw }).then(({ error }) => {
-    toast(error ? friendlyAuthError(error) : t("password_updated"), !!error);
-    if (!error) { location.hash = ""; location.reload(); }
-  });
+  openNewPasswordModal();
 });
+// The new password is typed in a hidden password box (it used to be a plain
+// prompt that showed it on screen), same look as the log-in box.
+function openNewPasswordModal() {
+  let modal = document.getElementById("newPwModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "newPwModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:360px;">
+      <p class="desc" style="margin:0 0 10px;">${esc(t("new_password_prompt"))}</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input type="password" id="newPwInput" placeholder="${esc(t("password_placeholder"))}" autocomplete="new-password" style="width:100%;" />
+        <div class="err" id="newPwErr" style="min-height:16px;"></div>
+        <button class="btn" id="newPwSave">${esc(t("save"))}</button>
+        <button class="btn ghost small" id="newPwCancel">${esc(t("cancel"))}</button>
+      </div>
+    </div>`;
+  modal.style.display = "flex";
+  const input = document.getElementById("newPwInput"), errEl = document.getElementById("newPwErr"), save = document.getElementById("newPwSave");
+  document.getElementById("newPwCancel").addEventListener("click", () => { modal.style.display = "none"; });
+  const go = async () => {
+    const pw = input.value;
+    if (!pw) { input.focus(); return; }
+    save.disabled = true; errEl.textContent = "";
+    const { error } = await supabaseClient.auth.updateUser({ password: pw });
+    save.disabled = false;
+    if (error) { errEl.textContent = friendlyAuthError(error); return; }
+    modal.style.display = "none";
+    toast(t("password_updated"));
+    location.hash = ""; location.reload();
+  };
+  save.addEventListener("click", go);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+  setTimeout(() => input.focus(), 50);
+}
 
 // App entry point: establish (or restore) a session before anything else
 // runs, since every data call needs USER_ID / the session's access token.
