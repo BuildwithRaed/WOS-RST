@@ -12,7 +12,7 @@
 "t:forgot_password":"忘記密碼？",
 "t:enter_email_first":"請先輸入電子郵件。",
 "t:reset_sent":"已寄出重設密碼郵件，請查看收件匣。",
-"t:password_short":"密碼至少需要 8 個字元。",
+"t:password_short":"密碼至少需要 6 個字元。",
 "t:confirm_email_sent":"請查看電子郵件並點擊確認連結以完成。",
 "t:confirm_email_hint":"電子郵件尚未確認 — 請查看收件匣。",
 "t:email_taken":"此電子郵件已有帳號，請嘗試登入。",

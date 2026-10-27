@@ -13,7 +13,7 @@
  "t:forgot_password": "忘记密码？",
  "t:enter_email_first": "请先输入邮箱。",
  "t:reset_sent": "重置密码邮件已发送，请查收。",
- "t:password_short": "密码至少需要 8 个字符。",
+ "t:password_short": "密码至少需要 6 个字符。",
  "t:confirm_email_sent": "请查收邮件并点击确认链接完成注册。",
  "t:confirm_email_hint": "邮箱尚未确认，请查收邮件。",
  "t:email_taken": "该邮箱已注册，请尝试登录。",
