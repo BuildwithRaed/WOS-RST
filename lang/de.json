@@ -1952,5 +1952,6 @@
 "t:google_continue":"Weiter mit Google",
 "t:or_email":"oder mit E-Mail",
 "t:google_failed":"Die Anmeldung mit Google hat nicht geklappt. Bitte versuche es erneut.",
-"t:google_in_use":"Dieses Google-Konto hat hier bereits ein eigenes Konto. Du wirst dort angemeldet…"
+"t:google_in_use":"Dieses Google-Konto hat hier bereits ein eigenes Konto. Du wirst dort angemeldet…",
+"t:privacy_link":"Datenschutz"
 }

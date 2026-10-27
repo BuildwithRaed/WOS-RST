@@ -23,6 +23,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - `manifest.webmanifest`, `pwa/icons/`: installable app.
 - `icons/`: game images. `icons/skins/opt/` holds optimized copies of the gallery images (see Images).
 - `CNAME` (www.wosrst.com), `.nojekyll`.
+- `privacy.html`: Privacy Policy (owner, 27 Oct 2026, needed for Google's branding check), a standalone page in the site colours, no scripts; linked from the footer (`renderFooter`, T key `privacy_link`, `LANG_FILES_VERSION` 52). Deletion requests go to contact@wosrst.com (site_config `contact`). Update its date and text if what the site saves or the services it uses change.
 
 ## Backend: Supabase (project `hzourauekkiorojrhpko`)
 - REST through `sb(path, opts)`. Reads over 1,000 rows page automatically; `sbAllPagesAtOnce(path)` fetches the first two pages in parallel.

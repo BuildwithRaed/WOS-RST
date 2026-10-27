@@ -1952,5 +1952,6 @@
 "t:google_continue":"Googleで続ける",
 "t:or_email":"またはメールで",
 "t:google_failed":"Googleでのログインに失敗しました。もう一度お試しください。",
-"t:google_in_use":"このGoogleアカウントにはすでにここでのアカウントがあります。そのアカウントにログインしています…"
+"t:google_in_use":"このGoogleアカウントにはすでにここでのアカウントがあります。そのアカウントにログインしています…",
+"t:privacy_link":"プライバシー"
 }

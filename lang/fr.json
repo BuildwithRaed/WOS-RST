@@ -1952,5 +1952,6 @@
 "t:google_continue":"Continuer avec Google",
 "t:or_email":"ou par e-mail",
 "t:google_failed":"La connexion avec Google n'a pas fonctionné. Veuillez réessayer.",
-"t:google_in_use":"Ce compte Google a déjà son propre compte ici. Connexion à ce compte…"
+"t:google_in_use":"Ce compte Google a déjà son propre compte ici. Connexion à ce compte…",
+"t:privacy_link":"Confidentialité"
 }

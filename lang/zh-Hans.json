@@ -1952,5 +1952,6 @@
 "t:google_continue":"使用 Google 继续",
 "t:or_email":"或使用电子邮件",
 "t:google_failed":"Google 登录失败，请重试。",
-"t:google_in_use":"此 Google 账号在这里已有自己的账号，正在登录该账号…"
+"t:google_in_use":"此 Google 账号在这里已有自己的账号，正在登录该账号…",
+"t:privacy_link":"隐私"
 }

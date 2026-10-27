@@ -1952,5 +1952,6 @@
 "t:google_continue":"Continuar con Google",
 "t:or_email":"o con correo electrónico",
 "t:google_failed":"El inicio de sesión con Google no funcionó. Inténtalo de nuevo.",
-"t:google_in_use":"Esa cuenta de Google ya tiene su propia cuenta aquí. Iniciando sesión en ella…"
+"t:google_in_use":"Esa cuenta de Google ya tiene su propia cuenta aquí. Iniciando sesión en ella…",
+"t:privacy_link":"Privacidad"
 }

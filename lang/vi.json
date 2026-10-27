@@ -1951,5 +1951,6 @@
 "t:google_continue":"Tiếp tục với Google",
 "t:or_email":"hoặc bằng email",
 "t:google_failed":"Đăng nhập bằng Google không thành công. Vui lòng thử lại.",
-"t:google_in_use":"Tài khoản Google này đã có tài khoản riêng ở đây. Đang đăng nhập vào tài khoản đó…"
+"t:google_in_use":"Tài khoản Google này đã có tài khoản riêng ở đây. Đang đăng nhập vào tài khoản đó…",
+"t:privacy_link":"Quyền riêng tư"
 }

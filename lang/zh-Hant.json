@@ -1951,5 +1951,6 @@
 "t:google_continue":"使用 Google 繼續",
 "t:or_email":"或使用電子郵件",
 "t:google_failed":"Google 登入失敗，請再試一次。",
-"t:google_in_use":"此 Google 帳號在這裡已有自己的帳號，正在登入該帳號…"
+"t:google_in_use":"此 Google 帳號在這裡已有自己的帳號，正在登入該帳號…",
+"t:privacy_link":"隱私"
 }

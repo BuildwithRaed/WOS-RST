@@ -1951,5 +1951,6 @@
 "t:google_continue":"Continuar com o Google",
 "t:or_email":"ou com e-mail",
 "t:google_failed":"O login com o Google não funcionou. Tente novamente.",
-"t:google_in_use":"Essa conta do Google já tem sua própria conta aqui. Entrando nela…"
+"t:google_in_use":"Essa conta do Google já tem sua própria conta aqui. Entrando nela…",
+"t:privacy_link":"Privacidade"
 }

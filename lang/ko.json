@@ -1951,5 +1951,6 @@
 "t:google_continue":"Google로 계속하기",
 "t:or_email":"또는 이메일로",
 "t:google_failed":"Google 로그인에 실패했습니다. 다시 시도해 주세요.",
-"t:google_in_use":"이 Google 계정에는 이미 이곳의 계정이 있습니다. 그 계정으로 로그인하는 중…"
+"t:google_in_use":"이 Google 계정에는 이미 이곳의 계정이 있습니다. 그 계정으로 로그인하는 중…",
+"t:privacy_link":"개인정보"
 }

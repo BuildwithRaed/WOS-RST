@@ -3622,7 +3622,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 51; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 52; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4263,6 +4263,7 @@ const T = {
   show_prices_in: { en: "Show prices in" },
   packs_desc_visitor: { en: "The in-game packs and what each one gives, as tracked by this site. These prices feed the Pack cost and Budgets calculations." },
   contact_link: { en: "Contact us" },
+  privacy_link: { en: "Privacy" },
   contact_title: { en: "Contact us" },
   contact_default_msg: { en: "Questions, wrong numbers, or an idea for the tracker? Send us an email." },
   contact_copy: { en: "Copy" },
@@ -5118,7 +5119,7 @@ function applyNavLanguage() {
 function renderFooter() {
   const el = document.getElementById("siteFooter");
   if (!el) return;
-  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker &nbsp;&middot;&nbsp; <a href="#" data-tab="aboutpage" id="footerAboutLink">${esc(t("about_title"))}</a> &nbsp;&middot;&nbsp; <a href="#" data-tab="contactpage" id="footerContactLink">${esc(t("contact_link"))}</a></p>`;
+  el.innerHTML = `<p>${esc(t("footer_disclaimer"))}</p><p>&copy; ${new Date().getFullYear()} WOS RST &mdash; Whiteout Survival Raw Stats Tracker &nbsp;&middot;&nbsp; <a href="#" data-tab="aboutpage" id="footerAboutLink">${esc(t("about_title"))}</a> &nbsp;&middot;&nbsp; <a href="#" data-tab="contactpage" id="footerContactLink">${esc(t("contact_link"))}</a> &nbsp;&middot;&nbsp; <a href="privacy.html">${esc(t("privacy_link"))}</a></p>`;
   el.querySelector("#footerAboutLink").addEventListener("click", (e) => { e.preventDefault(); goToTab("aboutpage"); window.scrollTo(0, 0); });
   el.querySelector("#footerContactLink").addEventListener("click", (e) => { e.preventDefault(); goToTab("contactpage"); window.scrollTo(0, 0); });
 }
