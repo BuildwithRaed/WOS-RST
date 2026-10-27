@@ -13,7 +13,7 @@
  "t:forgot_password": "Nie pamiętasz hasła?",
  "t:enter_email_first": "Najpierw wpisz e-mail.",
  "t:reset_sent": "Wysłano e-mail do resetu hasła. Sprawdź skrzynkę.",
- "t:password_short": "Hasło musi mieć co najmniej 8 znaków.",
+ "t:password_short": "Hasło musi mieć co najmniej 6 znaków.",
  "t:confirm_email_sent": "Sprawdź e-mail i kliknij link potwierdzający, aby zakończyć.",
  "t:confirm_email_hint": "E-mail jeszcze niepotwierdzony — sprawdź skrzynkę.",
  "t:email_taken": "Ten e-mail ma już konto. Spróbuj się zalogować.",

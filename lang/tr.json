@@ -12,7 +12,7 @@
 "t:forgot_password":"Şifreni mi unuttun?",
 "t:enter_email_first":"Önce e-postanı gir.",
 "t:reset_sent":"Şifre sıfırlama e-postası gönderildi. Gelen kutunu kontrol et.",
-"t:password_short":"Şifre en az 8 karakter olmalı.",
+"t:password_short":"Şifre en az 6 karakter olmalı.",
 "t:confirm_email_sent":"Bitirmek için e-postanı kontrol et ve onay bağlantısına tıkla.",
 "t:confirm_email_hint":"E-posta henüz onaylanmadı — gelen kutunu kontrol et.",
 "t:email_taken":"Bu e-postanın zaten bir hesabı var. Giriş yapmayı dene.",

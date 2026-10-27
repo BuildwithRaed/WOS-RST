@@ -13,7 +13,7 @@
  "t:forgot_password": "Mot de passe oublié ?",
  "t:enter_email_first": "Saisissez d'abord votre e-mail.",
  "t:reset_sent": "E-mail de réinitialisation envoyé. Vérifiez votre boîte de réception.",
- "t:password_short": "Le mot de passe doit contenir au moins 8 caractères.",
+ "t:password_short": "Le mot de passe doit contenir au moins 6 caractères.",
  "t:confirm_email_sent": "Vérifiez vos e-mails et cliquez sur le lien de confirmation pour terminer.",
  "t:confirm_email_hint": "E-mail pas encore confirmé — vérifiez votre boîte de réception.",
  "t:email_taken": "Cet e-mail a déjà un compte. Essayez de vous connecter.",

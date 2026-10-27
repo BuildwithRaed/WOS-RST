@@ -12,7 +12,7 @@
 "t:forgot_password":"Lupa kata sandi?",
 "t:enter_email_first":"Masukkan email dulu.",
 "t:reset_sent":"Email reset kata sandi terkirim. Cek kotak masukmu.",
-"t:password_short":"Kata sandi minimal 8 karakter.",
+"t:password_short":"Kata sandi minimal 6 karakter.",
 "t:confirm_email_sent":"Cek email dan klik tautan konfirmasi untuk menyelesaikan.",
 "t:confirm_email_hint":"Email belum dikonfirmasi — cek kotak masukmu.",
 "t:email_taken":"Email itu sudah punya akun. Coba masuk.",

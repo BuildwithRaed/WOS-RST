@@ -12,7 +12,7 @@
 "t:forgot_password":"Esqueceu a senha?",
 "t:enter_email_first":"Digite seu e-mail primeiro.",
 "t:reset_sent":"E-mail de redefinição de senha enviado. Veja sua caixa de entrada.",
-"t:password_short":"A senha precisa ter pelo menos 8 caracteres.",
+"t:password_short":"A senha precisa ter pelo menos 6 caracteres.",
 "t:confirm_email_sent":"Veja seu e-mail e clique no link de confirmação para concluir.",
 "t:confirm_email_hint":"E-mail ainda não confirmado — veja sua caixa de entrada.",
 "t:email_taken":"Esse e-mail já tem uma conta. Tente entrar.",
