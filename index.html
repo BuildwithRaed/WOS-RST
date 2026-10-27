@@ -5256,6 +5256,7 @@ async function setLanguage(lang) {
   renderOwnerLoginUI();
   render();
   localizeDom(document.body);
+  syncAccountLang();
 }
 
 const KNOWN_TABS = new Set([
@@ -29959,12 +29960,12 @@ function openAccountModal(mode) {
         const anon = CURRENT_SESSION && CURRENT_SESSION.user && CURRENT_SESSION.user.is_anonymous;
         if (anon) {
           // Upgrade the anonymous account: same user id, all saved progress kept.
-          const { data, error } = await supabaseClient.auth.updateUser({ email, password });
+          const { data, error } = await supabaseClient.auth.updateUser({ email, password, data: { lang: LANG } });
           if (error) { errEl.textContent = friendlyAuthError(error); return; }
           const pending = data && data.user && (data.user.new_email || !data.user.email_confirmed_at);
           if (pending) { errEl.style.color = "var(--good)"; errEl.textContent = t("confirm_email_sent"); return; }
         } else {
-          const { data, error } = await supabaseClient.auth.signUp({ email, password });
+          const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { lang: LANG } } });
           if (error) { errEl.textContent = friendlyAuthError(error); return; }
           if (!data.session) { errEl.style.color = "var(--good)"; errEl.textContent = t("confirm_email_sent"); return; }
         }
@@ -29979,6 +29980,15 @@ function openAccountModal(mode) {
       errEl.textContent = err.message || t("login_failed");
     }
   });
+}
+// Account emails (confirm, reset password) come in the language used on the
+// site: it is kept on the account (user_metadata.lang), which the Supabase
+// email templates read (ar / ko, anything else English). Set at sign-up,
+// on each start and when the language is changed.
+function syncAccountLang() {
+  const u = CURRENT_SESSION && CURRENT_SESSION.user;
+  if (!u || u.is_anonymous || !u.email || (u.user_metadata || {}).lang === LANG) return;
+  supabaseClient.auth.updateUser({ data: { lang: LANG } }).catch(() => {});
 }
 // Sign in with Google (shown only once Google is switched on in Supabase →
 // Authentication → Providers; /auth/v1/settings says so). A guest links Google
@@ -30095,6 +30105,7 @@ if ("serviceWorker" in navigator) {
   try {
     await ensureAuthSession();
     googleReturnCheck();
+    syncAccountLang();
   } catch (err) {
     content.innerHTML = `
       <div class="empty">
