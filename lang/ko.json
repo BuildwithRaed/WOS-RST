@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"상자에서 {n}",
 "t:bs_nb_from":"{item}에서 {n}",
 "t:bs_nb_bought":"{g} {item}(으)로 {n} 구매",
-"t:bs_nb_counted":"{g} {item} ({n}로 계산)"
+"t:bs_nb_counted":"{g} {item} ({n}로 계산)",
+"t:scan_tabs_read":"읽은 탭: {list}",
+"t:scan_tab_res":"자원",
+"t:scan_tab_other":"기타",
+"t:scan_tab_speed":"가속",
+"t:scan_tab_gear":"장비"
 }

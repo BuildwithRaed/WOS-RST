@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"宝箱 {n}",
 "t:bs_nb_from":"{item} {n}",
 "t:bs_nb_bought":"用 {g} {item} 购买 {n}",
-"t:bs_nb_counted":"{g} {item}（计为 {n}）"
+"t:bs_nb_counted":"{g} {item}（计为 {n}）",
+"t:scan_tabs_read":"已读取的标签：{list}",
+"t:scan_tab_res":"资源",
+"t:scan_tab_other":"其他",
+"t:scan_tab_speed":"加速",
+"t:scan_tab_gear":"装备"
 }

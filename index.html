@@ -3635,7 +3635,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 55; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 56; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4002,6 +4002,11 @@ const T = {
   scan_will_add: { en: "will be added to your Backpack" },
   scan_zero_title: { en: "Not in your screenshots — set to 0?" },
   scan_zero_hint: { en: "You may have opened or used these. Untick any you still have." },
+  scan_tabs_read: { en: "Tabs read: {list}" },
+  scan_tab_res: { en: "Resources" },
+  scan_tab_other: { en: "Other" },
+  scan_tab_speed: { en: "Speedup" },
+  scan_tab_gear: { en: "Gear" },
   scan_rounded: { en: "Summary numbers are rounded by the game." },
   scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead." },
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
@@ -11949,6 +11954,24 @@ const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resou
   "Custom Resource Chest Lv.3 (protected)",
   // Gareth Sigils (read as Cyrille before) and Amber (Other tab, owner's phone screenshot, 31 Oct 2026).
   "Gareth Sigils", "Amber"];
+// Which game Backpack tab each item Scan reads is in, and the items' order in
+// that tab (owner, 31 Oct 2026; order from the owner's screenshots and the
+// order the items were learned in). Items without a known place (Marks of
+// Valor, a Gen's widget box, heroes' own shards) aren't in the order, so a
+// missing one is never offered for "set to 0".
+const SCAN_RES_TAB = ["Fire Crystal", "Refined FC", "FC Shard", "FC Chest", "FC Crate",
+  "Custom Resource Chest Lv.1", "Custom Resource Chest Lv.2", "Custom Resource Chest Lv.3",
+  "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Custom Resource Chest Lv.3 (protected)", "Resource Chest"];
+const SCAN_TAB_ORDER = {
+  res: SCAN_RES_TAB,
+  other: ["Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Mystery Points",
+    "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils",
+    "Cyrille Sigils", "Agnes Sigils", "Holger Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Gareth Sigils", "Justus Sigils",
+    "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Amber",
+    "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Mythic Gear", "Essence Stones", "XP 10", "XP 100",
+    "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard"],
+};
+const scanItemTab = (n) => (/speedup/i.test(n) ? "speed" : SCAN_RES_TAB.includes(n) ? "res" : "other");
 let SCAN_ITEM_DATA = null;
 function scanItemData() {
   if (!SCAN_ITEM_DATA) {
@@ -12386,7 +12409,25 @@ function openBackpackScan(groups, bp, done, more) {
       </label>`;
     }).join("");
     // Items Scan can read that have an amount here but were in no screenshot.
-    const readable = (n) => (sawItems && (SCAN_ITEM_NAMES.includes(n) || /^Gen \d+ Widgets$/.test(n))) || (sawSpeed && /speedup/i.test(n));
+    // "Set to 0?" only for items of the tabs you scanned, and inside a tab only
+    // between the first and last item seen (owner, 31 Oct 2026): scanning the
+    // Resources tab no longer offers to zero Other-tab items.
+    const rng = {};
+    seen.forEach((n) => {
+      const tab = scanItemTab(n), k = SCAN_TAB_ORDER[tab] ? SCAN_TAB_ORDER[tab].indexOf(n) : -1;
+      if (k < 0) return;
+      const r = rng[tab] || (rng[tab] = { min: k, max: k });
+      r.min = Math.min(r.min, k); r.max = Math.max(r.max, k);
+    });
+    const readable = (n) => {
+      if (/speedup/i.test(n)) return sawSpeed;
+      if (!sawItems || !SCAN_ITEM_NAMES.includes(n)) return false;
+      // Mythic Gear = the box + the Gear tab's orange pieces: only with the Gear tab read too.
+      if (n === "Mythic Gear" && mgParts.gear === null) return false;
+      const tab = scanItemTab(n), r = rng[tab], k = SCAN_TAB_ORDER[tab].indexOf(n);
+      return !!r && k > r.min && k < r.max;
+    };
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear"].filter(Boolean).map((k) => t(k));
     const order = (n) => { const k = BP_GAME_ORDER.indexOf(n); return k !== -1 ? k : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
     const zeroNames = Object.keys(bp).filter((n) => Number(bp[n]) > 0 && !seen.has(n) && !results.has(n) && readable(n)).sort((a, b) => order(a) - order(b));
     const zeroRows = zeroNames.map((n) => {
@@ -12404,6 +12445,7 @@ function openBackpackScan(groups, bp, done, more) {
       <p class="desc" style="margin:0 0 8px;">${esc(names.length ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
       <div style="margin-top:6px;">${rows}</div>
+      ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
       ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>

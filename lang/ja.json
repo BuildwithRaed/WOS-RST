@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"宝箱から {n}",
 "t:bs_nb_from":"{item}から {n}",
 "t:bs_nb_bought":"{g} {item}で {n} 購入",
-"t:bs_nb_counted":"{g} {item}（{n} として計算）"
+"t:bs_nb_counted":"{g} {item}（{n} として計算）",
+"t:scan_tabs_read":"読み取ったタブ: {list}",
+"t:scan_tab_res":"資源",
+"t:scan_tab_other":"その他",
+"t:scan_tab_speed":"加速",
+"t:scan_tab_gear":"装備"
 }

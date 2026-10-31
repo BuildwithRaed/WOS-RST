@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"{n} จากหีบ",
 "t:bs_nb_from":"{n} จาก {item}",
 "t:bs_nb_bought":"ซื้อ {n} ด้วย {g} {item}",
-"t:bs_nb_counted":"{g} {item} (นับเป็น {n})"
+"t:bs_nb_counted":"{g} {item} (นับเป็น {n})",
+"t:scan_tabs_read":"แท็บที่อ่าน: {list}",
+"t:scan_tab_res":"ทรัพยากร",
+"t:scan_tab_other":"อื่นๆ",
+"t:scan_tab_speed":"เร่งความเร็ว",
+"t:scan_tab_gear":"อุปกรณ์"
 }

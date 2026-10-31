@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"{n} из сундуков",
 "t:bs_nb_from":"{n} из {item}",
 "t:bs_nb_bought":"{n} куплено за {g} {item}",
-"t:bs_nb_counted":"{g} {item} (считаются как {n})"
+"t:bs_nb_counted":"{g} {item} (считаются как {n})",
+"t:scan_tabs_read":"Прочитанные вкладки: {list}",
+"t:scan_tab_res":"Ресурсы",
+"t:scan_tab_other":"Другое",
+"t:scan_tab_speed":"Ускорения",
+"t:scan_tab_gear":"Снаряжение"
 }
