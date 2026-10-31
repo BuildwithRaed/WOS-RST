@@ -12180,10 +12180,16 @@ async function scanItemTiles(worker, src, tiles, refs) {
     r /= 120; g /= 120; b /= 120;
     const rarity = r > g + 30 && g > b + 20 ? "Legendary" : r > g + 30 && b > g + 30 ? "Epic" : b > r + 40 ? "Rare" : null;
     const c = scanCanvas(96, 96); c.getContext("2d").drawImage(t, 0, 0, 96, 96);
-    unk.push({ td: new Uint8ClampedArray(td), feat, rarity, after: found.length ? found[found.length - 1].name : null, img: c.toDataURL("image/jpeg", 0.85) });
+    // gap: tiles between the item before it and this one (to know later whether a
+    // screenshot showed the spot where it sits).
+    const last = found.length ? found[found.length - 1] : null;
+    unk.push({ td: new Uint8ClampedArray(td), feat, rarity, after: last ? last.name : null, gap: last ? tileIdx - last.k - 1 : null, img: c.toDataURL("image/jpeg", 0.85) });
   };
   const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
+  let tileIdx = -1;
+  const seq = []; // each tile's item name in reading order (null = not read)
   for (const box of tiles) {
+    tileIdx++; seq.push(null);
     tg.clearRect(0, 0, 140, 140);
     tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
     const td = tg.getImageData(0, 0, 140, 140).data;
@@ -12222,9 +12228,10 @@ async function scanItemTiles(worker, src, tiles, refs) {
     const amount = await scanTileAmount(worker, td);
     const value = amount.value;
     if (!amount.sure) sure = false;
-    found.push({ name: m.name, value, sure });
+    found.push({ name: m.name, value, sure, k: tileIdx });
+    seq[tileIdx] = m.name;
   }
-  return { found, unknown, unk };
+  return { found, unknown, unk, seq };
 }
 
 async function scanSpeedTiles(worker, src, tiles, marks) {
@@ -12394,7 +12401,7 @@ async function scanShot(worker, file, marks, refs) {
     if (gear !== null) return { kind: "gear", items: [{ name: "Mythic Gear", part: "gear", value: gear.orange, seq: gear.seq, sure: false }] };
     // Learned item pictures first (quick); speedup tiles match none of them.
     const known = await scanItemTiles(worker, src, tiles, refs);
-    if (known.found.length) return { kind: "items", items: known.found, unknown: known.unknown, unk: known.unk };
+    if (known.found.length) return { kind: "items", items: known.found, unknown: known.unknown, unk: known.unk, seq: known.seq };
     const items = await scanSpeedTiles(worker, src, tiles, marks);
     if (items.length) return { kind: "speedup", items };
   }
@@ -12436,6 +12443,7 @@ function openBackpackScan(groups, bp, done, more) {
   const mgParts = { box: null, gear: null };
   const gearSeqs = []; // the Gear screenshots read so far
   const shotSpans = []; // per item screenshot: { tab: { min, max } } in game order
+  const shotSeqs = []; // per item screenshot: item names tile by tile (null = not read)
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -12507,6 +12515,7 @@ function openBackpackScan(groups, bp, done, more) {
           r.min = Math.min(r.min, k); r.max = Math.max(r.max, k);
         });
         shotSpans.push(sp);
+        shotSeqs.push(shot.seq || []);
         // Tiles Scan didn't know, with this screenshot's tab, to teach on the check screen.
         const shotTab = Object.keys(tabCount).sort((a, b) => tabCount[b] - tabCount[a])[0] || "other";
         // Only the owner teaches Scan (owner, 31 Oct 2026); visitors just see them counted as skipped.
@@ -12568,8 +12577,15 @@ function openBackpackScan(groups, bp, done, more) {
       list.forEach((r) => { const last = out[out.length - 1]; if (last && r.min <= last.max) last.max = Math.max(last.max, r.max); else out.push(r); });
       rng[tab] = out;
     });
+    // A hero's own widgets or shards taught on the site have no fixed place, but
+    // their lesson knows the item before them and how many tiles apart: a
+    // screenshot showing that item and the tiles up to that spot covers it
+    // (owner, 31 Oct 2026: used widgets stayed at 285).
+    const spotShown = (n) => SCAN_LEARNED.some((e) => e.n === n && e.after && e.gap != null && e.gap >= 0
+      && shotSeqs.some((sq) => { const i = sq.indexOf(e.after); return i >= 0 && i + e.gap + 1 < sq.length; }));
     const readable = (n) => {
       if (/speedup/i.test(n)) return sawSpeed;
+      if (/ (Widgets|Shards)$/.test(n) && !/^Gen \d+ Widgets$/.test(n) && !/General Hero Shard$/.test(n) && SCAN_LEARNED.some((e) => e.n === n)) return sawItems && spotShown(n);
       if (!sawItems || !scanKnowsName(n)) return false;
       // Mythic Gear = the box + the Gear tab's orange pieces: only with the Gear tab read too.
       if (n === "Mythic Gear" && mgParts.gear === null) return false;
@@ -12580,11 +12596,11 @@ function openBackpackScan(groups, bp, done, more) {
     const order = (n) => { const k = BP_GAME_ORDER.indexOf(n); return k !== -1 ? k : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
     const zeroNames = Object.keys(bp).filter((n) => Number(bp[n]) > 0 && !seen.has(n) && !results.has(n) && readable(n)).sort((a, b) => order(a) - order(b));
     const zeroRows = zeroNames.map((n) => {
-      const ic = known.has(n) ? bpIcon(known.get(n)) : "";
+      const ic = known.has(n) ? bpIcon(known.get(n)) : ((more && more.canAdd(n)) || {}).icon || "";
       return `<label class="scan-row scan-zero">
         <input type="checkbox" data-scanzero="${esc(n)}" checked />
         ${ic ? `<img src="${esc(ic)}" alt="" />` : `<span class="scan-img"></span>`}
-        <span class="scan-name"><b>${esc(/speedup/i.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", (Number(bp[n]) || 0).toLocaleString()))}</span></span>
+        <span class="scan-name"><b>${esc(/speedup/i.test(n) ? n.replace(/^Speedup/, "General Speedup") : !known.has(n) && more && more.canAdd(n) ? more.canAdd(n).label : materialDisplayName(n))}</b><span class="meta">${esc(t("scan_now").replace("{n}", (Number(bp[n]) || 0).toLocaleString()))}</span></span>
         <span class="scan-zero-to">&rarr; 0</span>
       </label>`;
     }).join("");
@@ -12679,7 +12695,7 @@ function openBackpackScan(groups, bp, done, more) {
       const taught = unknownList.filter((u) => u.pick && !u.skip);
       taught.forEach((u) => { if (Number(u.amount) > 0) { bp[u.pick] = Number(u.amount); if (!known.has(u.pick) && !added.includes(u.pick)) added.push(u.pick); } });
       const skippedTiles = unknownList.filter((u) => u.skip);
-      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after }))
+      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }))
         .concat(skippedTiles.map((u) => ({ n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
       saveCalcState("backpack", bp);
       budgetInvalidate(); // planner pages read these amounts
