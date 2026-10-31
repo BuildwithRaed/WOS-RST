@@ -1952,5 +1952,10 @@
 "t:or_email":"veya e-posta ile",
 "t:google_failed":"Google ile giriş başarısız oldu. Lütfen tekrar deneyin.",
 "t:google_in_use":"Bu Google hesabının burada zaten kendi hesabı var. Ona giriş yapılıyor…",
-"t:privacy_link":"Gizlilik"
+"t:privacy_link":"Gizlilik",
+"t:bs_need":"gerekli {n}",
+"t:bs_nb_needed":"Gerekli",
+"t:bs_nb_have":"Sende",
+"t:bs_nb_spare":"Fazla",
+"t:bs_nb_short":"Eksik"
 }

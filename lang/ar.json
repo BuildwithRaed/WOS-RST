@@ -1952,5 +1952,10 @@
 "t:or_email":"أو بالبريد الإلكتروني",
 "t:google_failed":"لم ينجح تسجيل الدخول عبر Google. حاول مرة أخرى.",
 "t:google_in_use":"حساب Google هذا لديه حساب خاص به هنا بالفعل. جارٍ تسجيل دخولك إليه…",
-"t:privacy_link":"الخصوصية"
+"t:privacy_link":"الخصوصية",
+"t:bs_need":"تحتاج {n}",
+"t:bs_nb_needed":"المطلوب",
+"t:bs_nb_have":"لديك",
+"t:bs_nb_spare":"فائض",
+"t:bs_nb_short":"ناقص"
 }

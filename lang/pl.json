@@ -1953,5 +1953,10 @@
 "t:or_email":"lub przez e-mail",
 "t:google_failed":"Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
 "t:google_in_use":"To konto Google ma już tutaj własne konto. Logowanie do niego…",
-"t:privacy_link":"Prywatność"
+"t:privacy_link":"Prywatność",
+"t:bs_need":"potrzeba {n}",
+"t:bs_nb_needed":"Potrzeba",
+"t:bs_nb_have":"Masz",
+"t:bs_nb_spare":"Zapas",
+"t:bs_nb_short":"Brakuje"
 }

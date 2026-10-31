@@ -1953,5 +1953,10 @@
 "t:or_email":"或使用电子邮件",
 "t:google_failed":"Google 登录失败，请重试。",
 "t:google_in_use":"此 Google 账号在这里已有自己的账号，正在登录该账号…",
-"t:privacy_link":"隐私"
+"t:privacy_link":"隐私",
+"t:bs_need":"需要 {n}",
+"t:bs_nb_needed":"需要",
+"t:bs_nb_have":"拥有",
+"t:bs_nb_spare":"剩余",
+"t:bs_nb_short":"缺少"
 }

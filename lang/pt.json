@@ -1952,5 +1952,10 @@
 "t:or_email":"ou com e-mail",
 "t:google_failed":"O login com o Google não funcionou. Tente novamente.",
 "t:google_in_use":"Essa conta do Google já tem sua própria conta aqui. Entrando nela…",
-"t:privacy_link":"Privacidade"
+"t:privacy_link":"Privacidade",
+"t:bs_need":"precisa {n}",
+"t:bs_nb_needed":"Necessário",
+"t:bs_nb_have":"Você tem",
+"t:bs_nb_spare":"Sobra",
+"t:bs_nb_short":"Falta"
 }

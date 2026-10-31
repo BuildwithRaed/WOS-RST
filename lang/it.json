@@ -1953,5 +1953,10 @@
 "t:or_email":"oppure con l'email",
 "t:google_failed":"L'accesso con Google non è riuscito. Riprova.",
 "t:google_in_use":"Questo account Google ha già un proprio account qui. Accesso in corso…",
-"t:privacy_link":"Privacy"
+"t:privacy_link":"Privacy",
+"t:bs_need":"servono {n}",
+"t:bs_nb_needed":"Richiesti",
+"t:bs_nb_have":"Hai",
+"t:bs_nb_spare":"In più",
+"t:bs_nb_short":"Mancano"
 }

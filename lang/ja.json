@@ -1953,5 +1953,10 @@
 "t:or_email":"またはメールで",
 "t:google_failed":"Googleでのログインに失敗しました。もう一度お試しください。",
 "t:google_in_use":"このGoogleアカウントにはすでにここでのアカウントがあります。そのアカウントにログインしています…",
-"t:privacy_link":"プライバシー"
+"t:privacy_link":"プライバシー",
+"t:bs_need":"必要 {n}",
+"t:bs_nb_needed":"必要",
+"t:bs_nb_have":"所持",
+"t:bs_nb_spare":"余り",
+"t:bs_nb_short":"不足"
 }

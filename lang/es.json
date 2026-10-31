@@ -1953,5 +1953,10 @@
 "t:or_email":"o con correo electrónico",
 "t:google_failed":"El inicio de sesión con Google no funcionó. Inténtalo de nuevo.",
 "t:google_in_use":"Esa cuenta de Google ya tiene su propia cuenta aquí. Iniciando sesión en ella…",
-"t:privacy_link":"Privacidad"
+"t:privacy_link":"Privacidad",
+"t:bs_need":"necesitas {n}",
+"t:bs_nb_needed":"Necesario",
+"t:bs_nb_have":"Tienes",
+"t:bs_nb_spare":"Sobra",
+"t:bs_nb_short":"Falta"
 }

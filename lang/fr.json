@@ -1953,5 +1953,10 @@
 "t:or_email":"ou par e-mail",
 "t:google_failed":"La connexion avec Google n'a pas fonctionné. Veuillez réessayer.",
 "t:google_in_use":"Ce compte Google a déjà son propre compte ici. Connexion à ce compte…",
-"t:privacy_link":"Confidentialité"
+"t:privacy_link":"Confidentialité",
+"t:bs_need":"besoin {n}",
+"t:bs_nb_needed":"Requis",
+"t:bs_nb_have":"Vous avez",
+"t:bs_nb_spare":"Surplus",
+"t:bs_nb_short":"Manque"
 }
