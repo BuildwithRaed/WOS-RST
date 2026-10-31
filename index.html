@@ -11876,7 +11876,14 @@ function scanTextMask(td, x0, y0, x1, y1, digits) {
     if (!big.length) return null;
     // The number is right-aligned: its line is the one of the rightmost character.
     const last = big.reduce((a, b) => (b.x + b.w > a.x + a.w ? b : a)), base = last.y + last.h;
-    const onLine = big.filter((b) => Math.abs(b.y + b.h - base) < 7);
+    // Only the number's own band: a badge drawn above it (the shield on
+    // protected chests) can touch a digit and make it look too tall.
+    const top = base - last.h - 3;
+    if (blobs.some((b) => b.y < top && b.y + b.h > top)) {
+      for (let y = 0; y < Math.max(0, top); y++) for (let x = 0; x < w; x++) mask[y * w + x] = 0;
+      blobs = scanBlobs(mask, w, h, true).filter((b) => b.n > 2);
+    }
+    const onLine = blobs.filter((b) => b.h >= 12 && b.h <= 34 && b.w < 28 && Math.abs(b.y + b.h - base) < 7);
     const left = Math.min(...onLine.map((b) => b.x));
     blobs = blobs.filter((b) => Math.abs(b.y + b.h - base) < 9 && b.x >= left - 2 && b.h <= 34);
   }
@@ -11898,7 +11905,14 @@ function scanTextMask(td, x0, y0, x1, y1, digits) {
   }
   c.ones = ones;
   // How many digits the number has (commas are shorter), to catch a digit the reader lost.
-  if (digits) { const tall = Math.max(...blobs.map((b) => b.h)); c.count = blobs.filter((b) => b.h >= tall * 0.6).length; }
+  if (digits) {
+    // Digits stand on one line; a mark that ends higher (a badge's edge) is not a digit.
+    const tall = Math.max(...blobs.map((b) => b.h)), foot = Math.max(...blobs.filter((b) => b.h >= tall * 0.6).map((b) => b.y + b.h));
+    const shapes = blobs.filter((b) => b.h >= tall * 0.6 && b.y + b.h >= foot - 3).sort((a, b) => a.x - b.x);
+    c.count = shapes.length;
+    // Which digit shapes are thin "1"s, left to right (the reader can lose them: "171" → "7").
+    c.thin = shapes.map((b) => b.w < b.h * 0.45);
+  }
   return c;
 }
 
@@ -11929,7 +11943,10 @@ const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resou
   // The Mythic Gear box (Other tab, owner's phone screenshot, 20 Oct 2026).
   "Mythic Gear",
   // Justus Sigils (Other tab, owner's phone screenshot, 27 Oct 2026).
-  "Justus Sigils"];
+  "Justus Sigils",
+  // Protected Lv.3 chest (Resources tab, owner's phone screenshot, 31 Oct 2026;
+  // it used to match the plain Lv.3 chest and overwrite its amount).
+  "Custom Resource Chest Lv.3 (protected)"];
 let SCAN_ITEM_DATA = null;
 function scanItemData() {
   if (!SCAN_ITEM_DATA) {
@@ -11947,7 +11964,7 @@ function scanItemData() {
       };
       img.onerror = () => reject(new Error("items"));
       setTimeout(() => reject(new Error("items timeout")), 45000); // no answer at all: stop waiting
-      img.src = "icons/scan-items.png?v=3"; // bump when rows are added (icons are cached cache-first)
+      img.src = "icons/scan-items.png?v=4"; // bump when rows are added (icons are cached cache-first)
     });
     SCAN_ITEM_DATA.catch(() => { SCAN_ITEM_DATA = null; });
   }
@@ -11999,10 +12016,21 @@ async function scanTileAmount(worker, td) {
   }
   // Only thin "1" shapes: trust the count of shapes over the reader ("11" read as "1").
   if (num.ones && res.text.replace(/\D/g, "") !== num.ones) res = { text: num.ones, conf: 0 };
+  // Some "1"s lost among other digits ("171" read as "7"): the reader gave
+  // exactly the other digits, so put a "1" back at each thin shape.
+  let rebuilt = false;
+  if (!num.ones && num.thin && num.thin.some(Boolean)) {
+    const d = res.text.replace(/\D/g, ""), wide = num.thin.filter((x) => !x).length;
+    if (d.length < num.count && d.length === wide) {
+      let k = 0;
+      res = { text: num.thin.map((x) => (x ? "1" : d[k++])).join(""), conf: 0 };
+      rebuilt = true;
+    }
+  }
   const raw = res.text.replace(/\s/g, "").replace(/\./g, ",");
   const digits = raw.replace(/\D/g, "");
   if (!digits) return { value: null, sure: false };
-  return { value: Number(digits), sure: /^\d{1,3}(,\d{3})*$/.test(raw) && res.conf >= 70 && (num.ones || digits.length >= num.count) };
+  return { value: Number(digits), sure: !rebuilt && /^\d{1,3}(,\d{3})*$/.test(raw) && res.conf >= 70 && (num.ones || digits.length >= num.count) };
 }
 // Other Backpack tabs: tiles that match a learned item, with their amounts.
 async function scanItemTiles(worker, src, tiles, refs) {
@@ -12162,6 +12190,7 @@ function scanLightPanel(src) {
 function scanGearTiles(src, tiles) {
   const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
   let badged = 0, orange = 0;
+  const seq = []; // each gear tile's picture grid + orange, in reading order (to spot overlapping screenshots)
   for (const box of tiles) {
     tg.clearRect(0, 0, 140, 140);
     tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
@@ -12177,9 +12206,31 @@ function scanGearTiles(src, tiles) {
     // A light-blue tile (an item, not gear) also lights up that corner.
     if (badge < 150 || (g > r + 30 && b > r + 60)) continue;
     badged++;
-    if (r > g + 25 && g > b + 25) orange++;
+    const isOrange = r > g + 25 && g > b + 25;
+    if (isOrange) orange++;
+    seq.push({ f: scanTileFeature(td), o: isOrange });
   }
-  return badged >= 3 && badged >= tiles.length * 0.6 ? orange : null;
+  return badged >= 3 && badged >= tiles.length * 0.6 ? { orange, seq } : null;
+}
+// Two Gear screenshots scrolled with some rows in both: how many orange
+// pieces of the new one were already counted (the longest run of tiles at the
+// end of one screenshot that matches the start of the other; a whole row at least).
+function scanGearOverlap(prev, next) {
+  const same = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length < 8; };
+  const run = (a, b) => {
+    for (let k = Math.min(a.length, b.length); k >= 4; k--) {
+      let ok = true;
+      for (let i = 0; i < k && ok; i++) ok = same(a[a.length - k + i].f, b[i].f);
+      if (ok) return k;
+    }
+    return 0;
+  };
+  let best = 0;
+  prev.forEach((p) => {
+    const k1 = run(p, next), k2 = run(next, p);
+    best = Math.max(best, next.slice(0, k1).filter((x) => x.o).length, next.slice(next.length - k2).filter((x) => x.o).length);
+  });
+  return best;
 }
 
 async function scanShot(worker, file, marks, refs) {
@@ -12187,7 +12238,7 @@ async function scanShot(worker, file, marks, refs) {
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const gear = scanGearTiles(src, tiles);
-    if (gear !== null) return { kind: "gear", items: [{ name: "Mythic Gear", part: "gear", value: gear, sure: false }] };
+    if (gear !== null) return { kind: "gear", items: [{ name: "Mythic Gear", part: "gear", value: gear.orange, seq: gear.seq, sure: false }] };
     // Learned item pictures first (quick); speedup tiles match none of them.
     const known = await scanItemTiles(worker, src, tiles, refs);
     if (known.found.length) return { kind: "items", items: known.found, unknown: known.unknown };
@@ -12229,6 +12280,7 @@ function openBackpackScan(groups, bp, done, more) {
   let unknownTiles = 0;
   // Mythic Gear = boxes (Other tab) + orange hero gear pieces (Gear tab).
   const mgParts = { box: null, gear: null };
+  const gearSeqs = []; // the Gear screenshots read so far
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -12296,8 +12348,9 @@ function openBackpackScan(groups, bp, done, more) {
       else if (shot.kind === "summary") notes.add(t("scan_rounded"));
       shot.items.forEach((it) => {
         if (it.name === "Mythic Gear") {
-          // Several Gear tab screenshots add up (scrolled further down).
-          if (it.part === "gear") mgParts.gear = (mgParts.gear || 0) + it.value;
+          // Several Gear tab screenshots add up (scrolled further down); rows
+          // that are in two screenshots count once (owner, 31 Oct 2026: 27 read as 35).
+          if (it.part === "gear") { mgParts.gear = (mgParts.gear || 0) + it.value - scanGearOverlap(gearSeqs, it.seq || []); gearSeqs.push(it.seq || []); }
           else if (it.value !== null) mgParts.box = it.value;
           it.value = mgParts.box === null && mgParts.gear === null ? null : (mgParts.box || 0) + (mgParts.gear || 0);
           it.sure = false;
