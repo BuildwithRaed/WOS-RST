@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"เศษฮีโร่",
 "t:scan_learn_widgets":"วิดเจ็ตฮีโร่",
 "t:scan_learn_items":"ไอเทมในกระเป๋า",
-"t:scan_learn_all":"แสดงฮีโร่ทั้งหมด"
+"t:scan_learn_all":"แสดงฮีโร่ทั้งหมด",
+"t:scan_learn_skip":"ข้าม — ไม่ต้องถามอีก",
+"t:scan_learn_skip_short":"ข้าม",
+"t:scan_learn_skipped":"ข้ามแล้ว — Scan จะไม่ถามอีก",
+"t:scan_learn_skipall":"ข้ามทั้งหมดที่ยังไม่เลือก",
+"t:scan_learn_undo":"เลิกทำ"
 }

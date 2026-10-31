@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"Frammenti eroe",
 "t:scan_learn_widgets":"Widget eroe",
 "t:scan_learn_items":"Oggetti dello zaino",
-"t:scan_learn_all":"Mostra tutti gli eroi"
+"t:scan_learn_all":"Mostra tutti gli eroi",
+"t:scan_learn_skip":"Salta — non chiedere più",
+"t:scan_learn_skip_short":"Salta",
+"t:scan_learn_skipped":"Saltato — Scan non chiederà più",
+"t:scan_learn_skipall":"Salta tutto ciò che non è scelto",
+"t:scan_learn_undo":"Annulla"
 }

@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"Odłamki bohaterów",
 "t:scan_learn_widgets":"Widżety bohaterów",
 "t:scan_learn_items":"Przedmioty z plecaka",
-"t:scan_learn_all":"Pokaż wszystkich bohaterów"
+"t:scan_learn_all":"Pokaż wszystkich bohaterów",
+"t:scan_learn_skip":"Pomiń — nie pytaj więcej",
+"t:scan_learn_skip_short":"Pomiń",
+"t:scan_learn_skipped":"Pominięto — Scan nie zapyta ponownie",
+"t:scan_learn_skipall":"Pomiń wszystkie niewybrane",
+"t:scan_learn_undo":"Cofnij"
 }

@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"英雄碎片",
 "t:scan_learn_widgets":"英雄部件",
 "t:scan_learn_items":"背包物品",
-"t:scan_learn_all":"显示所有英雄"
+"t:scan_learn_all":"显示所有英雄",
+"t:scan_learn_skip":"跳过 — 不再询问",
+"t:scan_learn_skip_short":"跳过",
+"t:scan_learn_skipped":"已跳过 — 扫描不会再问",
+"t:scan_learn_skipall":"跳过所有未选的",
+"t:scan_learn_undo":"撤销"
 }

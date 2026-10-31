@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"영웅 조각",
 "t:scan_learn_widgets":"영웅 위젯",
 "t:scan_learn_items":"배낭 아이템",
-"t:scan_learn_all":"모든 영웅 보기"
+"t:scan_learn_all":"모든 영웅 보기",
+"t:scan_learn_skip":"건너뛰기 — 다시 묻지 않음",
+"t:scan_learn_skip_short":"건너뛰기",
+"t:scan_learn_skipped":"건너뜀 — Scan이 다시 묻지 않음",
+"t:scan_learn_skipall":"선택 안 한 것 모두 건너뛰기",
+"t:scan_learn_undo":"되돌리기"
 }

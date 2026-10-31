@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"Pecahan pahlawan",
 "t:scan_learn_widgets":"Widget pahlawan",
 "t:scan_learn_items":"Item tas",
-"t:scan_learn_all":"Tampilkan semua pahlawan"
+"t:scan_learn_all":"Tampilkan semua pahlawan",
+"t:scan_learn_skip":"Lewati — jangan tanya lagi",
+"t:scan_learn_skip_short":"Lewati",
+"t:scan_learn_skipped":"Dilewati — Scan tidak akan bertanya lagi",
+"t:scan_learn_skipall":"Lewati semua yang belum dipilih",
+"t:scan_learn_undo":"Urungkan"
 }

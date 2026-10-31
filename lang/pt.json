@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"Fragmentos de herói",
 "t:scan_learn_widgets":"Widgets de herói",
 "t:scan_learn_items":"Itens da mochila",
-"t:scan_learn_all":"Mostrar todos os heróis"
+"t:scan_learn_all":"Mostrar todos os heróis",
+"t:scan_learn_skip":"Pular — nunca perguntar de novo",
+"t:scan_learn_skip_short":"Pular",
+"t:scan_learn_skipped":"Pulado — o Scan não pergunta de novo",
+"t:scan_learn_skipall":"Pular tudo que não foi escolhido",
+"t:scan_learn_undo":"Desfazer"
 }

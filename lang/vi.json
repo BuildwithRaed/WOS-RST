@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"Mảnh tướng",
 "t:scan_learn_widgets":"Widget tướng",
 "t:scan_learn_items":"Vật phẩm ba lô",
-"t:scan_learn_all":"Hiện tất cả tướng"
+"t:scan_learn_all":"Hiện tất cả tướng",
+"t:scan_learn_skip":"Bỏ qua — không hỏi lại",
+"t:scan_learn_skip_short":"Bỏ qua",
+"t:scan_learn_skipped":"Đã bỏ qua — Scan sẽ không hỏi lại",
+"t:scan_learn_skipall":"Bỏ qua tất cả chưa chọn",
+"t:scan_learn_undo":"Hoàn tác"
 }

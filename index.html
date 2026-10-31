@@ -2176,6 +2176,8 @@ input,select,textarea{
   .scan-learn{ margin-top:14px; padding-top:10px; border-top:2px solid var(--line); }
   .scan-learn > summary{ cursor:pointer; font-size:13.5px; }
   .scan-lrow{ cursor:default; }
+  .scan-lrow.skipped .scan-ltile, .scan-lrow.skipped .scan-name{ opacity:.45; }
+  .scan-lrow .btn.small{ flex-shrink:0; }
   .scan-lrow .scan-ltile{ width:46px; height:46px; border-radius:8px; object-fit:cover; flex-shrink:0; }
   .scan-lpick{ padding:6px 2px 10px; border-bottom:1px solid var(--line); }
   .scan-lchips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
@@ -3649,7 +3651,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 58; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 59; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4026,6 +4028,11 @@ const T = {
   scan_learn_widgets: { en: "Hero widgets" },
   scan_learn_items: { en: "Backpack items" },
   scan_learn_all: { en: "Show all heroes" },
+  scan_learn_skip: { en: "Skip — never ask again" },
+  scan_learn_skip_short: { en: "Skip" },
+  scan_learn_skipped: { en: "Skipped — Scan won't ask again" },
+  scan_learn_skipall: { en: "Skip all not chosen" },
+  scan_learn_undo: { en: "Undo" },
   scan_tab_res: { en: "Resources" },
   scan_tab_other: { en: "Other" },
   scan_tab_speed: { en: "Speedup" },
@@ -12025,12 +12032,16 @@ const scanItemTab = (n) => bpItemTab(n) || "other";
 // item just before it in the screenshot }] } — taught by the owner only, used
 // by everyone's Scan.
 let SCAN_LEARNED = [];
+const SCAN_SKIP = "__skip__"; // a taught "never ask again" picture
 const scanFeatToB64 = (f) => btoa(String.fromCharCode(...f));
 const scanB64ToFeat = (v) => { try { return Uint8Array.from(atob(v), (c) => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } };
 async function scanLearnedLoad() {
   await ensureSiteConfig();
   const all = ((siteConfig("scan_learned", null) || {}).items || []).slice();
-  SCAN_LEARNED = all.filter((e) => e && e.n && e.f).map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
+  // Items read from the Summary screen (Meat, Wood, Coal, Iron, Gems, Steel, Pet
+  // Food, Chief Stamina, Hero XP) are never taught from tiles: a tile of them is
+  // a bundle, and its count isn't the total (owner, 31 Oct 2026).
+  SCAN_LEARNED = all.filter((e) => e && e.n && e.f && !SCAN_SUMMARY_ROWS.some(([, n]) => n === e.n)).map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
   return SCAN_LEARNED;
 }
 async function scanLearnedSave(entries) {
@@ -12038,13 +12049,13 @@ async function scanLearnedSave(entries) {
   await ensureSiteConfig();
   await saveSiteConfig("scan_learned", { items: (((siteConfig("scan_learned", null) || {}).items) || []).concat(entries) });
 }
-const scanKnowsName = (n) => SCAN_ITEM_NAMES.includes(n) || SCAN_LEARNED.some((e) => e.n === n);
+const scanKnowsName = (n) => n !== SCAN_SKIP && (SCAN_ITEM_NAMES.includes(n) || SCAN_LEARNED.some((e) => e.n === n));
 // A tab's item order with the taught items put after the item they followed
 // (heroes' own shards have no fixed place, so they're left out).
 function scanTabOrder(tab) {
   const list = (SCAN_TAB_ORDER[tab] || []).slice();
   SCAN_LEARNED.forEach((e) => {
-    if (list.includes(e.n) || scanItemTab(e.n) !== tab || !e.after || (/ (Shards|Widgets)$/.test(e.n) && !/General Hero Shard/.test(e.n))) return;
+    if (e.n === SCAN_SKIP || list.includes(e.n) || scanItemTab(e.n) !== tab || !e.after || (/ (Shards|Widgets)$/.test(e.n) && !/General Hero Shard/.test(e.n))) return;
     const k = list.indexOf(e.after);
     if (k >= 0) list.splice(k + 1, 0, e.n);
   });
@@ -12092,6 +12103,22 @@ function scanMatchItem(feat, refs) {
   });
   const [first, second] = [...best.entries()].sort((a, b) => a[1] - b[1]);
   return { name: first[0], dist: first[1], next: second ? second[1] : Infinity };
+}
+// A size label printed on top of the tile ("1K", "10K", "100", "1M", "10"):
+// resource bundles (Meat / Wood / Coal / Iron / Gems), Hero XP bottles and
+// Chief Stamina cans. Their totals come from the Summary screen, so Scan never
+// asks about them (owner, 31 Oct 2026). White digits across the top centre.
+function scanTopLabel(td) {
+  const x0 = 30, y0 = 2, w = 80, h = 30, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = ((y0 + y) * 140 + x0 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2];
+    mask[y * w + x] = r > 225 && g > 225 && b > 215 ? 1 : 0;
+  }
+  const blobs = scanBlobs(mask, w, h, false).filter((b) => b.h >= 10 && b.h <= 26 && b.w <= 22 && b.n > 12);
+  if (blobs.length < 2 && !(blobs.length === 1 && blobs[0].w < blobs[0].h * 0.5)) return false;
+  const bot = Math.max(...blobs.map((b) => b.y + b.h));
+  const line = blobs.filter((b) => Math.abs(b.y + b.h - bot) <= 4);
+  return line.length >= 1 && line.length === blobs.length && line.every((b) => b.y + b.h <= 28);
 }
 // The cream "S14" on a Gen's widget box (top left), as black digits on white;
 // the "S" (first shape) is left out.
@@ -12161,10 +12188,14 @@ async function scanItemTiles(worker, src, tiles, refs) {
     tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
     const td = tg.getImageData(0, 0, 140, 140).data;
     const feat = scanTileFeature(td), m = scanMatchItem(feat, refs);
+    // A tile the owner marked "Skip — never ask again".
+    if (m.name === SCAN_SKIP && m.dist <= 20) { unknown++; continue; }
     // A Gen's widget box with other things pictured inside (another Gen than the
     // learned S14 box): the cream "S15" in the corner still says what it is (owner, 31 Oct 2026).
     if (m.dist > 20 && scanGenLabel(td)) { m.name = "Gen Widgets"; m.dist = 20; }
-    if (m.dist > 20) { unknown++; keepUnknown(td, feat); continue; }
+    // Bundles with a size label on top (Meat / Wood / Coal / Iron / Gems, Hero XP,
+    // Chief Stamina): their totals come from the Summary screen, never asked about.
+    if (m.dist > 20) { unknown++; if (!scanTopLabel(td)) keepUnknown(td, feat); continue; }
     let sure = m.dist <= 12 && m.next > m.dist * 1.4;
     // A hero's own shards: the faces are small, so another (not learned) hero
     // can come close. Only a near-exact match counts.
@@ -12569,7 +12600,7 @@ function openBackpackScan(groups, bp, done, more) {
     const learnPicker = (u, i) => {
       const r = u.mode === "widgets" ? "Legendary" : u.all ? null : u.rarity;
       const cells = u.mode === "items"
-        ? [...known.values()].filter((it) => !/speedup/i.test(it.name) && scanItemTab(it.name) === u.tab).map((it) => [it.name, bpIcon(it), materialDisplayName(itemShortName(it.name))])
+        ? [...known.values()].filter((it) => !/speedup/i.test(it.name) && scanItemTab(it.name) === u.tab && !SCAN_SUMMARY_ROWS.some(([, n]) => n === it.name)).map((it) => [it.name, bpIcon(it), materialDisplayName(itemShortName(it.name))])
         : heroList.filter((h) => !r || h.rarity === r).sort((a, b) => (Number(b.generation) || 0) - (Number(a.generation) || 0) || String(a.name).localeCompare(String(b.name)))
           .map((h) => [`${h.name} ${u.mode === "widgets" ? "Widgets" : "Shards"}`, h.image_url || "", dataName(h.name)]);
       return `<div class="scan-lpick">
@@ -12580,12 +12611,14 @@ function openBackpackScan(groups, bp, done, more) {
     };
     const learnHtml = (open) => !unknownList.length ? "" : `<details class="scan-learn"${open ? " open" : ""}><summary><b>${esc(t("scan_learn_title").replace("{n}", unknownList.length))}</b></summary>
       <div class="meta" style="margin:4px 0 6px; font-size:12px;">${esc(t("scan_learn_hint"))}</div>
-      ${unknownList.map((u, i) => `<div class="scan-row scan-lrow">
+      ${unknownList.some((u) => !u.pick && !u.skip) ? `<div style="text-align:end;"><button type="button" class="linklike" data-lskipall style="font-size:12px;">${esc(t("scan_learn_skipall"))}</button></div>` : ""}
+      ${unknownList.map((u, i) => `<div class="scan-row scan-lrow${u.skip ? " skipped" : ""}">
         <img src="${esc(u.img)}" alt="" class="scan-ltile" />
-        <span class="scan-name"><b>${esc(u.pick ? labelFor(u.pick) : t("scan_learn_unknown"))}</b>${u.pick && u.amount === undefined ? `<span class="meta">${esc(t("scan_learn_reading"))}</span>` : ""}</span>
+        <span class="scan-name"><b>${esc(u.skip ? t("scan_learn_skipped") : u.pick ? labelFor(u.pick) : t("scan_learn_unknown"))}</b>${u.pick && u.amount === undefined ? `<span class="meta">${esc(t("scan_learn_reading"))}</span>` : ""}</span>
         ${u.pick && u.amount !== undefined ? `<input type="text" inputmode="numeric" data-lamt="${i}" value="${u.amount == null ? "" : Number(u.amount).toLocaleString("en-US")}" />` : ""}
-        <button type="button" class="btn ghost small" data-lopen="${i}">${u.pick ? "&#9998;" : esc(t("scan_learn_choose"))}</button>
-      </div>${u.open ? learnPicker(u, i) : ""}`).join("")}</details>`;
+        ${u.skip ? `<button type="button" class="btn ghost small" data-lskip="${i}">${esc(t("scan_learn_undo"))}</button>`
+          : `<button type="button" class="btn ghost small" data-lopen="${i}">${u.pick ? "&#9998;" : esc(t("scan_learn_choose"))}</button>${u.pick ? "" : `<button type="button" class="btn ghost small" data-lskip="${i}" title="${esc(t("scan_learn_skip"))}">${esc(t("scan_learn_skip_short"))}</button>`}`}
+      </div>${u.open && !u.skip ? learnPicker(u, i) : ""}`).join("")}</details>`;
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
@@ -12606,6 +12639,9 @@ function openBackpackScan(groups, bp, done, more) {
     const redrawLearn = () => { const d = learnBox.querySelector("details"); learnBox.innerHTML = learnHtml(!d || d.open); };
     learnBox.onclick = async (ev) => {
       const o = ev.target.closest("[data-lopen]"), md = ev.target.closest("[data-lmode]"), al = ev.target.closest("[data-lall]"), pk = ev.target.closest("[data-lpick]");
+      const sk = ev.target.closest("[data-lskip]");
+      if (sk) { const u = unknownList[Number(sk.dataset.lskip)]; u.skip = !u.skip; u.open = false; redrawLearn(); return; }
+      if (ev.target.closest("[data-lskipall]")) { unknownList.forEach((u) => { if (!u.pick) { u.skip = true; u.open = false; } }); redrawLearn(); return; }
       if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.rarity ? "shards" : "items"; redrawLearn(); return; }
       if (md) { const [i, m] = md.dataset.lmode.split("|"); unknownList[Number(i)].mode = m; redrawLearn(); return; }
       if (al) { unknownList[Number(al.dataset.lall)].all = true; redrawLearn(); return; }
@@ -12640,9 +12676,11 @@ function openBackpackScan(groups, bp, done, more) {
       // Not seen in the screenshots and left ticked: opened or used, now 0.
       modal.querySelectorAll("[data-scanzero]").forEach((tick) => { if (tick.checked) delete bp[tick.dataset.scanzero]; });
       // Taught tiles: their amounts, and Scan remembers their pictures.
-      const taught = unknownList.filter((u) => u.pick);
+      const taught = unknownList.filter((u) => u.pick && !u.skip);
       taught.forEach((u) => { if (Number(u.amount) > 0) { bp[u.pick] = Number(u.amount); if (!known.has(u.pick) && !added.includes(u.pick)) added.push(u.pick); } });
-      if (taught.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after }))).catch((err) => toast(err.message || "Couldn't save", true));
+      const skippedTiles = unknownList.filter((u) => u.skip);
+      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after }))
+        .concat(skippedTiles.map((u) => ({ n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
       saveCalcState("backpack", bp);
       budgetInvalidate(); // planner pages read these amounts
       close();
@@ -26945,7 +26983,8 @@ async function renderAdminBackpackItems(body) {
     body.innerHTML = `<p class="desc" style="margin:0 0 8px;">The items on the Backpack page, by tab. Leave the picture empty to use the site's own picture for that name. Renaming an item starts its saved amounts from zero for everyone (amounts are kept by name).</p>
       <div class="adm-chips"><div class="adm-chips-row">${groups().map((g) => `<button type="button" class="adm-chip${g === ADMIN_BP_GROUP ? " on" : ""}" data-bpgroup="${esc(g)}">${esc(g)} <span class="meta">${items.filter((x) => x.group === g).length}</span></button>`).join("")}</div></div>`
       + admListHtml(list, { title: ADMIN_BP_GROUP, attr: "data-bprow", sortable: true, img: (r) => bpIcon(r), name: (r) => r.name, sub: (r) => [r.icon ? "own picture" : "", tabOf(r) ? `game tab: ${TAB_LABEL[tabOf(r)]}` : "game tab: not set", taughtCount(r.name) ? `Scan taught ${taughtCount(r.name)}×` : ""].filter(Boolean).join(" · ") })
-      + `<div style="margin-top:12px;"><button class="btn ghost small" data-bpreset type="button">Reset to the default list</button></div>`;
+      + `<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button class="btn ghost small" data-bpreset type="button">Reset to the default list</button>
+        ${SCAN_LEARNED.some((e) => e.n === SCAN_SKIP) ? `<span class="meta">Scan skips ${SCAN_LEARNED.filter((e) => e.n === SCAN_SKIP).length} tile picture(s) you marked "never ask again".</span><button class="btn ghost small" data-bpunskip type="button">Ask about them again</button>` : ""}</div>`;
     body.querySelectorAll("[data-bpgroup]").forEach((b) => b.addEventListener("click", () => { ADMIN_BP_GROUP = b.dataset.bpgroup; keepBoxes(body, draw); }));
     wireAdminReorder(body, "data-bprow", async (ids) => {
       // New order inside this tab; other tabs keep their places.
@@ -26989,6 +27028,11 @@ async function renderAdminBackpackItems(body) {
       },
       onAdd: () => openAdmSheet({ title: `Add an item`, fields: fields({ group: ADMIN_BP_GROUP }),
         onSave: async (v) => { const r = { id: "b" + (++seq) }; apply(r, v); const last = items.map((x) => x.group).lastIndexOf(r.group); items.splice(last >= 0 ? last + 1 : items.length, 0, r); await save("Item added"); ADMIN_BP_GROUP = r.group; draw(); } }),
+    });
+    const unskip = body.querySelector("[data-bpunskip]");
+    if (unskip) unskip.addEventListener("click", async () => {
+      if (!confirm("Forget every \"never ask again\" tile? Scan will list them again as tiles it doesn't know.")) return;
+      try { await forgetTaught(SCAN_SKIP); toast("Scan will ask about them again"); draw(); } catch (err) { toast(err.message || "Couldn't save", true); }
     });
     body.querySelector("[data-bpreset]").addEventListener("click", async () => {
       if (!confirm("Replace the list with the default items? Amounts people saved are kept.")) return;
