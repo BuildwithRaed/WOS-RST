@@ -11953,7 +11953,9 @@ const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resou
   // it used to match the plain Lv.3 chest and overwrite its amount).
   "Custom Resource Chest Lv.3 (protected)",
   // Gareth Sigils (read as Cyrille before) and Amber (Other tab, owner's phone screenshot, 31 Oct 2026).
-  "Gareth Sigils", "Amber"];
+  "Gareth Sigils", "Amber",
+  // Rare General Hero Shard (blue puzzle piece, Other tab, owner's screenshot, 31 Oct 2026).
+  "Rare General Hero Shard"];
 // Which game Backpack tab each item Scan reads is in, and the items' order in
 // that tab (owner, 31 Oct 2026; order from the owner's screenshots and the
 // order the items were learned in). Items without a known place (Marks of
@@ -11990,7 +11992,7 @@ function scanItemData() {
       };
       img.onerror = () => reject(new Error("items"));
       setTimeout(() => reject(new Error("items timeout")), 45000); // no answer at all: stop waiting
-      img.src = "icons/scan-items.png?v=5"; // bump when rows are added (icons are cached cache-first)
+      img.src = "icons/scan-items.png?v=6"; // bump when rows are added (icons are cached cache-first)
     });
     SCAN_ITEM_DATA.catch(() => { SCAN_ITEM_DATA = null; });
   }
