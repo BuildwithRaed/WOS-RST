@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"Fragments de héros",
 "t:scan_learn_widgets":"Widgets de héros",
 "t:scan_learn_items":"Objets du sac",
-"t:scan_learn_all":"Voir tous les héros"
+"t:scan_learn_all":"Voir tous les héros",
+"t:scan_learn_skip":"Ignorer — ne plus demander",
+"t:scan_learn_skip_short":"Ignorer",
+"t:scan_learn_skipped":"Ignoré — Scan ne demandera plus",
+"t:scan_learn_skipall":"Ignorer tout ce qui n'est pas choisi",
+"t:scan_learn_undo":"Annuler"
 }

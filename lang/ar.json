@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"شظايا الأبطال",
 "t:scan_learn_widgets":"قطع الأبطال الخاصة",
 "t:scan_learn_items":"عناصر الحقيبة",
-"t:scan_learn_all":"عرض كل الأبطال"
+"t:scan_learn_all":"عرض كل الأبطال",
+"t:scan_learn_skip":"تخطَّ — لا تسأل مجددًا",
+"t:scan_learn_skip_short":"تخطَّ",
+"t:scan_learn_skipped":"تم التخطي — لن يسأل المسح مجددًا",
+"t:scan_learn_skipall":"تخطَّ كل غير المختار",
+"t:scan_learn_undo":"تراجع"
 }

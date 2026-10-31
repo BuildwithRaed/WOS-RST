@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"Heldensplitter",
 "t:scan_learn_widgets":"Helden-Widgets",
 "t:scan_learn_items":"Rucksack-Gegenstände",
-"t:scan_learn_all":"Alle Helden zeigen"
+"t:scan_learn_all":"Alle Helden zeigen",
+"t:scan_learn_skip":"Überspringen — nie mehr fragen",
+"t:scan_learn_skip_short":"Überspringen",
+"t:scan_learn_skipped":"Übersprungen — Scan fragt nicht mehr",
+"t:scan_learn_skipall":"Alle nicht gewählten überspringen",
+"t:scan_learn_undo":"Rückgängig"
 }

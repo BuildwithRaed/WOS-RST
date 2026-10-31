@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"英雄の欠片",
 "t:scan_learn_widgets":"英雄ウィジェット",
 "t:scan_learn_items":"バックパックのアイテム",
-"t:scan_learn_all":"すべての英雄を表示"
+"t:scan_learn_all":"すべての英雄を表示",
+"t:scan_learn_skip":"スキップ — 今後聞かない",
+"t:scan_learn_skip_short":"スキップ",
+"t:scan_learn_skipped":"スキップ済み — 今後聞きません",
+"t:scan_learn_skipall":"未選択をすべてスキップ",
+"t:scan_learn_undo":"元に戻す"
 }

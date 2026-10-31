@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"Осколки героев",
 "t:scan_learn_widgets":"Виджеты героев",
 "t:scan_learn_items":"Предметы рюкзака",
-"t:scan_learn_all":"Показать всех героев"
+"t:scan_learn_all":"Показать всех героев",
+"t:scan_learn_skip":"Пропустить — больше не спрашивать",
+"t:scan_learn_skip_short":"Пропустить",
+"t:scan_learn_skipped":"Пропущено — Scan больше не спросит",
+"t:scan_learn_skipall":"Пропустить все невыбранные",
+"t:scan_learn_undo":"Отменить"
 }

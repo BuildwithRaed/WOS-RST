@@ -1978,5 +1978,10 @@
 "t:scan_learn_shards":"Fragmentos de héroe",
 "t:scan_learn_widgets":"Widgets de héroe",
 "t:scan_learn_items":"Objetos de la mochila",
-"t:scan_learn_all":"Ver todos los héroes"
+"t:scan_learn_all":"Ver todos los héroes",
+"t:scan_learn_skip":"Omitir — no volver a preguntar",
+"t:scan_learn_skip_short":"Omitir",
+"t:scan_learn_skipped":"Omitido — Scan no volverá a preguntar",
+"t:scan_learn_skipall":"Omitir todo lo no elegido",
+"t:scan_learn_undo":"Deshacer"
 }

@@ -1977,5 +1977,10 @@
 "t:scan_learn_shards":"Kahraman parçaları",
 "t:scan_learn_widgets":"Kahraman widget'ları",
 "t:scan_learn_items":"Çanta eşyaları",
-"t:scan_learn_all":"Tüm kahramanları göster"
+"t:scan_learn_all":"Tüm kahramanları göster",
+"t:scan_learn_skip":"Atla — bir daha sorma",
+"t:scan_learn_skip_short":"Atla",
+"t:scan_learn_skipped":"Atlandı — Scan bir daha sormaz",
+"t:scan_learn_skipall":"Seçilmeyenlerin hepsini atla",
+"t:scan_learn_undo":"Geri al"
 }
