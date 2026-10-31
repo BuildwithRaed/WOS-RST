@@ -11946,7 +11946,9 @@ const SCAN_ITEM_NAMES = ["Fire Crystal", "Refined FC", "FC Shard", "Custom Resou
   "Justus Sigils",
   // Protected Lv.3 chest (Resources tab, owner's phone screenshot, 31 Oct 2026;
   // it used to match the plain Lv.3 chest and overwrite its amount).
-  "Custom Resource Chest Lv.3 (protected)"];
+  "Custom Resource Chest Lv.3 (protected)",
+  // Gareth Sigils (read as Cyrille before) and Amber (Other tab, owner's phone screenshot, 31 Oct 2026).
+  "Gareth Sigils", "Amber"];
 let SCAN_ITEM_DATA = null;
 function scanItemData() {
   if (!SCAN_ITEM_DATA) {
@@ -11964,7 +11966,7 @@ function scanItemData() {
       };
       img.onerror = () => reject(new Error("items"));
       setTimeout(() => reject(new Error("items timeout")), 45000); // no answer at all: stop waiting
-      img.src = "icons/scan-items.png?v=4"; // bump when rows are added (icons are cached cache-first)
+      img.src = "icons/scan-items.png?v=5"; // bump when rows are added (icons are cached cache-first)
     });
     SCAN_ITEM_DATA.catch(() => { SCAN_ITEM_DATA = null; });
   }
