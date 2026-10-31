@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"寶箱 {n}",
 "t:bs_nb_from":"{item} {n}",
 "t:bs_nb_bought":"用 {g} {item} 購買 {n}",
-"t:bs_nb_counted":"{g} {item}（計為 {n}）"
+"t:bs_nb_counted":"{g} {item}（計為 {n}）",
+"t:scan_tabs_read":"已讀取的分頁：{list}",
+"t:scan_tab_res":"資源",
+"t:scan_tab_other":"其他",
+"t:scan_tab_speed":"加速",
+"t:scan_tab_gear":"裝備"
 }

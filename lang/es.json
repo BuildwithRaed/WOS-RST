@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"{n} de cofres",
 "t:bs_nb_from":"{n} de {item}",
 "t:bs_nb_bought":"{n} comprados con {g} {item}",
-"t:bs_nb_counted":"{g} {item} (cuentan como {n})"
+"t:bs_nb_counted":"{g} {item} (cuentan como {n})",
+"t:scan_tabs_read":"Pestañas leídas: {list}",
+"t:scan_tab_res":"Recursos",
+"t:scan_tab_other":"Otros",
+"t:scan_tab_speed":"Aceleración",
+"t:scan_tab_gear":"Equipo"
 }

@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"{n} dai forzieri",
 "t:bs_nb_from":"{n} da {item}",
 "t:bs_nb_bought":"{n} comprati con {g} {item}",
-"t:bs_nb_counted":"{g} {item} (valgono {n})"
+"t:bs_nb_counted":"{g} {item} (valgono {n})",
+"t:scan_tabs_read":"Schede lette: {list}",
+"t:scan_tab_res":"Risorse",
+"t:scan_tab_other":"Altro",
+"t:scan_tab_speed":"Accelerazioni",
+"t:scan_tab_gear":"Equipaggiamento"
 }

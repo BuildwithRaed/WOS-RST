@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"Sandıklardan {n}",
 "t:bs_nb_from":"{item} ile {n}",
 "t:bs_nb_bought":"{g} {item} ile {n} alındı",
-"t:bs_nb_counted":"{g} {item} ({n} sayılır)"
+"t:bs_nb_counted":"{g} {item} ({n} sayılır)",
+"t:scan_tabs_read":"Okunan sekmeler: {list}",
+"t:scan_tab_res":"Kaynaklar",
+"t:scan_tab_other":"Diğer",
+"t:scan_tab_speed":"Hızlandırma",
+"t:scan_tab_gear":"Teçhizat"
 }

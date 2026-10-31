@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"{n} de baús",
 "t:bs_nb_from":"{n} de {item}",
 "t:bs_nb_bought":"{n} comprados com {g} {item}",
-"t:bs_nb_counted":"{g} {item} (contam como {n})"
+"t:bs_nb_counted":"{g} {item} (contam como {n})",
+"t:scan_tabs_read":"Abas lidas: {list}",
+"t:scan_tab_res":"Recursos",
+"t:scan_tab_other":"Outros",
+"t:scan_tab_speed":"Aceleração",
+"t:scan_tab_gear":"Equipamento"
 }

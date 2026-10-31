@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"{n} des coffres",
 "t:bs_nb_from":"{n} via {item}",
 "t:bs_nb_bought":"{n} achetés avec {g} {item}",
-"t:bs_nb_counted":"{g} {item} (comptent pour {n})"
+"t:bs_nb_counted":"{g} {item} (comptent pour {n})",
+"t:scan_tabs_read":"Onglets lus : {list}",
+"t:scan_tab_res":"Ressources",
+"t:scan_tab_other":"Autres",
+"t:scan_tab_speed":"Accélérations",
+"t:scan_tab_gear":"Équipement"
 }

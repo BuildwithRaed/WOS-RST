@@ -1964,5 +1964,10 @@
 "t:bs_nb_from_chest":"{n} aus Truhen",
 "t:bs_nb_from":"{n} aus {item}",
 "t:bs_nb_bought":"{n} gekauft mit {g} {item}",
-"t:bs_nb_counted":"{g} {item} (zählen als {n})"
+"t:bs_nb_counted":"{g} {item} (zählen als {n})",
+"t:scan_tabs_read":"Gelesene Reiter: {list}",
+"t:scan_tab_res":"Ressourcen",
+"t:scan_tab_other":"Sonstiges",
+"t:scan_tab_speed":"Beschleuniger",
+"t:scan_tab_gear":"Ausrüstung"
 }

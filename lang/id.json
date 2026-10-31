@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"{n} dari peti",
 "t:bs_nb_from":"{n} dari {item}",
 "t:bs_nb_bought":"{n} dibeli dengan {g} {item}",
-"t:bs_nb_counted":"{g} {item} (dihitung {n})"
+"t:bs_nb_counted":"{g} {item} (dihitung {n})",
+"t:scan_tabs_read":"Tab yang dibaca: {list}",
+"t:scan_tab_res":"Sumber daya",
+"t:scan_tab_other":"Lainnya",
+"t:scan_tab_speed":"Percepatan",
+"t:scan_tab_gear":"Perlengkapan"
 }

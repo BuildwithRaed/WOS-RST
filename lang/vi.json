@@ -1963,5 +1963,10 @@
 "t:bs_nb_from_chest":"{n} từ rương",
 "t:bs_nb_from":"{n} từ {item}",
 "t:bs_nb_bought":"{n} mua bằng {g} {item}",
-"t:bs_nb_counted":"{g} {item} (tính là {n})"
+"t:bs_nb_counted":"{g} {item} (tính là {n})",
+"t:scan_tabs_read":"Tab đã đọc: {list}",
+"t:scan_tab_res":"Tài nguyên",
+"t:scan_tab_other":"Khác",
+"t:scan_tab_speed":"Tăng tốc",
+"t:scan_tab_gear":"Trang bị"
 }
