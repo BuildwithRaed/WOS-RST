@@ -1969,5 +1969,14 @@
 "t:scan_tab_res":"资源",
 "t:scan_tab_other":"其他",
 "t:scan_tab_speed":"加速",
-"t:scan_tab_gear":"装备"
+"t:scan_tab_gear":"装备",
+"t:scan_learn_title":"扫描还不认识的格子（{n}）— 教它",
+"t:scan_learn_hint":"选择每个是什么：扫描从此为所有人记住。不追踪的留空。",
+"t:scan_learn_choose":"这是什么？",
+"t:scan_learn_unknown":"尚未识别",
+"t:scan_learn_reading":"正在读取数量…",
+"t:scan_learn_shards":"英雄碎片",
+"t:scan_learn_widgets":"英雄部件",
+"t:scan_learn_items":"背包物品",
+"t:scan_learn_all":"显示所有英雄"
 }

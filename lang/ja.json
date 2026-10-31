@@ -1969,5 +1969,14 @@
 "t:scan_tab_res":"資源",
 "t:scan_tab_other":"その他",
 "t:scan_tab_speed":"加速",
-"t:scan_tab_gear":"装備"
+"t:scan_tab_gear":"装備",
+"t:scan_learn_title":"Scanがまだ知らないマス ({n}) — 教える",
+"t:scan_learn_hint":"それぞれ何かを選ぶと、Scanが今後みんなのために覚えます。管理しないものはそのままで。",
+"t:scan_learn_choose":"これは何？",
+"t:scan_learn_unknown":"まだ不明",
+"t:scan_learn_reading":"数量を読み取り中…",
+"t:scan_learn_shards":"英雄の欠片",
+"t:scan_learn_widgets":"英雄ウィジェット",
+"t:scan_learn_items":"バックパックのアイテム",
+"t:scan_learn_all":"すべての英雄を表示"
 }

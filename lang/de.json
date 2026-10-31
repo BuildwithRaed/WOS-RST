@@ -1969,5 +1969,14 @@
 "t:scan_tab_res":"Ressourcen",
 "t:scan_tab_other":"Sonstiges",
 "t:scan_tab_speed":"Beschleuniger",
-"t:scan_tab_gear":"Ausrüstung"
+"t:scan_tab_gear":"Ausrüstung",
+"t:scan_learn_title":"Felder, die Scan noch nicht kennt ({n}) — beibringen",
+"t:scan_learn_hint":"Wähle, was jedes ist: Scan merkt es sich ab jetzt für alle. Lass die weg, die du nicht verfolgst.",
+"t:scan_learn_choose":"Was ist das?",
+"t:scan_learn_unknown":"Noch unbekannt",
+"t:scan_learn_reading":"Menge wird gelesen…",
+"t:scan_learn_shards":"Heldensplitter",
+"t:scan_learn_widgets":"Helden-Widgets",
+"t:scan_learn_items":"Rucksack-Gegenstände",
+"t:scan_learn_all":"Alle Helden zeigen"
 }

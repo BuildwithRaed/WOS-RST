@@ -1968,5 +1968,14 @@
 "t:scan_tab_res":"Recursos",
 "t:scan_tab_other":"Outros",
 "t:scan_tab_speed":"Aceleração",
-"t:scan_tab_gear":"Equipamento"
+"t:scan_tab_gear":"Equipamento",
+"t:scan_learn_title":"Itens que o Scan ainda não conhece ({n}) — ensine-os",
+"t:scan_learn_hint":"Escolha o que é cada um: o Scan lembra a partir de agora, para todos. Deixe os que você não acompanha.",
+"t:scan_learn_choose":"O que é isto?",
+"t:scan_learn_unknown":"Ainda desconhecido",
+"t:scan_learn_reading":"lendo a quantidade…",
+"t:scan_learn_shards":"Fragmentos de herói",
+"t:scan_learn_widgets":"Widgets de herói",
+"t:scan_learn_items":"Itens da mochila",
+"t:scan_learn_all":"Mostrar todos os heróis"
 }

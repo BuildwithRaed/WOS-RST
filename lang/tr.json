@@ -1968,5 +1968,14 @@
 "t:scan_tab_res":"Kaynaklar",
 "t:scan_tab_other":"Diğer",
 "t:scan_tab_speed":"Hızlandırma",
-"t:scan_tab_gear":"Teçhizat"
+"t:scan_tab_gear":"Teçhizat",
+"t:scan_learn_title":"Scan'in henüz tanımadığı kutular ({n}) — öğret",
+"t:scan_learn_hint":"Her birinin ne olduğunu seç: Scan bundan sonra herkes için hatırlar. Takip etmediklerini bırak.",
+"t:scan_learn_choose":"Bu ne?",
+"t:scan_learn_unknown":"Henüz bilinmiyor",
+"t:scan_learn_reading":"miktar okunuyor…",
+"t:scan_learn_shards":"Kahraman parçaları",
+"t:scan_learn_widgets":"Kahraman widget'ları",
+"t:scan_learn_items":"Çanta eşyaları",
+"t:scan_learn_all":"Tüm kahramanları göster"
 }

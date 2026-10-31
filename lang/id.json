@@ -1968,5 +1968,14 @@
 "t:scan_tab_res":"Sumber daya",
 "t:scan_tab_other":"Lainnya",
 "t:scan_tab_speed":"Percepatan",
-"t:scan_tab_gear":"Perlengkapan"
+"t:scan_tab_gear":"Perlengkapan",
+"t:scan_learn_title":"Kotak yang belum dikenal Scan ({n}) — ajarkan",
+"t:scan_learn_hint":"Pilih apa masing-masing: Scan mengingatnya mulai sekarang untuk semua. Biarkan yang tidak kamu lacak.",
+"t:scan_learn_choose":"Apa ini?",
+"t:scan_learn_unknown":"Belum dikenal",
+"t:scan_learn_reading":"membaca jumlah…",
+"t:scan_learn_shards":"Pecahan pahlawan",
+"t:scan_learn_widgets":"Widget pahlawan",
+"t:scan_learn_items":"Item tas",
+"t:scan_learn_all":"Tampilkan semua pahlawan"
 }
