@@ -11964,11 +11964,12 @@ const SCAN_RES_TAB = ["Fire Crystal", "Refined FC", "FC Shard", "FC Chest", "FC 
   "Custom Resource Chest Lv.1 (protected)", "Custom Resource Chest Lv.2 (protected)", "Custom Resource Chest Lv.3 (protected)", "Resource Chest"];
 const SCAN_TAB_ORDER = {
   res: SCAN_RES_TAB,
-  other: ["Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Mystery Points",
+  // The Mythic Gear box sits right after Pet Chest, next to the Gen widget box (owner's screenshots).
+  other: ["Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest", "Chief Gear Chest", "Pet Chest", "Mythic Gear", "Mystery Points",
     "Sail of Conquest", "Fiery Heart", "Compass", "Books of Knowledge", "General Sigils",
     "Cyrille Sigils", "Agnes Sigils", "Holger Sigils", "Romulus Sigils", "Fabian Sigils", "Baldur Sigils", "Valeria Sigils", "Ronne Sigils", "Kathy Sigils", "Gareth Sigils", "Justus Sigils",
     "Serum", "Potion", "Manual", "Advanced Marks", "Common Marks", "Jewel Secrets", "Charm Designs", "Charm Guides", "Amber",
-    "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Mythic Gear", "Essence Stones", "XP 10", "XP 100",
+    "Design Plan", "Polishing Solution", "Hardened Alloy", "Mithril", "Essence Stones", "XP 10", "XP 100",
     "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard"],
 };
 const scanItemTab = (n) => (/speedup/i.test(n) ? "speed" : SCAN_RES_TAB.includes(n) ? "res" : "other");
