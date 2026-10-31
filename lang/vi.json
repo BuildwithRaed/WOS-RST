@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"Cần",
 "t:bs_nb_have":"Bạn có",
 "t:bs_nb_spare":"Dư",
-"t:bs_nb_short":"Thiếu"
+"t:bs_nb_short":"Thiếu",
+"t:bs_nb_in_bp":"{n} trong ba lô",
+"t:bs_nb_from_trade":"{n} từ {item} (đổi)",
+"t:bs_nb_from_chest":"{n} từ rương"
 }

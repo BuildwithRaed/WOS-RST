@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"Gerekli",
 "t:bs_nb_have":"Sende",
 "t:bs_nb_spare":"Fazla",
-"t:bs_nb_short":"Eksik"
+"t:bs_nb_short":"Eksik",
+"t:bs_nb_in_bp":"Çantanda {n}",
+"t:bs_nb_from_trade":"{item} ile {n} (takas)",
+"t:bs_nb_from_chest":"Sandıklardan {n}"
 }

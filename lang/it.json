@@ -1958,5 +1958,8 @@
 "t:bs_nb_needed":"Richiesti",
 "t:bs_nb_have":"Hai",
 "t:bs_nb_spare":"In più",
-"t:bs_nb_short":"Mancano"
+"t:bs_nb_short":"Mancano",
+"t:bs_nb_in_bp":"{n} nello zaino",
+"t:bs_nb_from_trade":"{n} da {item} (scambio)",
+"t:bs_nb_from_chest":"{n} dai forzieri"
 }

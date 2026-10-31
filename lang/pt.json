@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"Necessário",
 "t:bs_nb_have":"Você tem",
 "t:bs_nb_spare":"Sobra",
-"t:bs_nb_short":"Falta"
+"t:bs_nb_short":"Falta",
+"t:bs_nb_in_bp":"{n} na sua mochila",
+"t:bs_nb_from_trade":"{n} de {item} (troca)",
+"t:bs_nb_from_chest":"{n} de baús"
 }

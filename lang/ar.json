@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"المطلوب",
 "t:bs_nb_have":"لديك",
 "t:bs_nb_spare":"فائض",
-"t:bs_nb_short":"ناقص"
+"t:bs_nb_short":"ناقص",
+"t:bs_nb_in_bp":"{n} في حقيبتك",
+"t:bs_nb_from_trade":"{n} من {item} (مقايضة)",
+"t:bs_nb_from_chest":"{n} من الصناديق"
 }

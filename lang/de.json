@@ -1958,5 +1958,8 @@
 "t:bs_nb_needed":"Benötigt",
 "t:bs_nb_have":"Vorhanden",
 "t:bs_nb_spare":"Übrig",
-"t:bs_nb_short":"Fehlt"
+"t:bs_nb_short":"Fehlt",
+"t:bs_nb_in_bp":"{n} im Rucksack",
+"t:bs_nb_from_trade":"{n} aus {item} (Tausch)",
+"t:bs_nb_from_chest":"{n} aus Truhen"
 }

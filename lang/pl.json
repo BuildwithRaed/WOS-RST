@@ -1958,5 +1958,8 @@
 "t:bs_nb_needed":"Potrzeba",
 "t:bs_nb_have":"Masz",
 "t:bs_nb_spare":"Zapas",
-"t:bs_nb_short":"Brakuje"
+"t:bs_nb_short":"Brakuje",
+"t:bs_nb_in_bp":"{n} w plecaku",
+"t:bs_nb_from_trade":"{n} z {item} (wymiana)",
+"t:bs_nb_from_chest":"{n} ze skrzyń"
 }

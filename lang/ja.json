@@ -1958,5 +1958,8 @@
 "t:bs_nb_needed":"必要",
 "t:bs_nb_have":"所持",
 "t:bs_nb_spare":"余り",
-"t:bs_nb_short":"不足"
+"t:bs_nb_short":"不足",
+"t:bs_nb_in_bp":"バックパックに {n}",
+"t:bs_nb_from_trade":"{item}から {n}（交換）",
+"t:bs_nb_from_chest":"宝箱から {n}"
 }

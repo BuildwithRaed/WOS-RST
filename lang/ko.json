@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"필요",
 "t:bs_nb_have":"보유",
 "t:bs_nb_spare":"여유",
-"t:bs_nb_short":"부족"
+"t:bs_nb_short":"부족",
+"t:bs_nb_in_bp":"배낭에 {n}",
+"t:bs_nb_from_trade":"{item}에서 {n} (교환)",
+"t:bs_nb_from_chest":"상자에서 {n}"
 }

@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"ต้องใช้",
 "t:bs_nb_have":"มีอยู่",
 "t:bs_nb_spare":"เหลือ",
-"t:bs_nb_short":"ขาด"
+"t:bs_nb_short":"ขาด",
+"t:bs_nb_in_bp":"{n} ในกระเป๋า",
+"t:bs_nb_from_trade":"{n} จาก {item} (แลก)",
+"t:bs_nb_from_chest":"{n} จากหีบ"
 }

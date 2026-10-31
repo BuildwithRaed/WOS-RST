@@ -1957,5 +1957,8 @@
 "t:bs_nb_needed":"Dibutuhkan",
 "t:bs_nb_have":"Dimiliki",
 "t:bs_nb_spare":"Sisa",
-"t:bs_nb_short":"Kurang"
+"t:bs_nb_short":"Kurang",
+"t:bs_nb_in_bp":"{n} di tas",
+"t:bs_nb_from_trade":"{n} dari {item} (tukar)",
+"t:bs_nb_from_chest":"{n} dari peti"
 }

@@ -1958,5 +1958,8 @@
 "t:bs_nb_needed":"Requis",
 "t:bs_nb_have":"Vous avez",
 "t:bs_nb_spare":"Surplus",
-"t:bs_nb_short":"Manque"
+"t:bs_nb_short":"Manque",
+"t:bs_nb_in_bp":"{n} dans votre sac",
+"t:bs_nb_from_trade":"{n} via {item} (échange)",
+"t:bs_nb_from_chest":"{n} des coffres"
 }
