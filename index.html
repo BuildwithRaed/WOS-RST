@@ -3635,7 +3635,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 54; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 55; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3943,6 +3943,9 @@ const T = {
   bs_nb_in_bp: { en: "{n} in your Backpack" },
   bs_nb_from_trade: { en: "{n} from {item} (trade)" },
   bs_nb_from_chest: { en: "{n} from chests" },
+  bs_nb_from: { en: "{n} from {item}" },
+  bs_nb_bought: { en: "{n} bought with {g} {item}" },
+  bs_nb_counted: { en: "{g} {item} (counted as {n})" },
   bs_title_t12: { en: "Total research resources needed · all 3 troops" },
   bs_title_needed: { en: "Total resources needed" },
   bs_used_trades: { en: "used in trades" },
@@ -19580,15 +19583,20 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // 31 Oct 2026): "2,115 in your Backpack + 1,703 from Fire Crystal (trade)".
   function haveFromHtml(name) {
     const fmt = /\(minutes\)$/.test(name) ? bsTime : bsNbNum;
-    const byFrom = {};
-    hiddenTrades.filter((tr) => tr.to === name && tr.getQty > 0).forEach((tr) => { byFrom[tr.from] = (byFrom[tr.from] || 0) + tr.getQty; });
+    const byFrom = {}, gave = {};
+    hiddenTrades.filter((tr) => tr.to === name && tr.getQty > 0).forEach((tr) => { byFrom[tr.from] = (byFrom[tr.from] || 0) + tr.getQty; gave[tr.from] = (gave[tr.from] || 0) + (tr.giveQty || 0); });
     const chest = Math.max(0, (Number(calcOwned[name]) || 0) - (Number(owned[name]) || 0));
     if (!Object.keys(byFrom).length && !(chest > 0)) return "";
     const b = (v) => `<b>${bidiNum(fmt(v))}</b>`;
     const parts = [esc(t("bs_nb_in_bp")).replace("{n}", b(Number(owned[name]) || 0))];
     Object.entries(byFrom).forEach(([from, q]) => {
-      const ic = iconFor(from);
-      parts.push(esc(t("bs_nb_from_trade")).replace("{n}", b(q)).replace("{item}", `${ic ? `<img src="${esc(ic)}" alt="" />` : ""}${esc(materialDisplayName(itemShortName(from)))}`));
+      const ic = iconFor(from), item = `${ic ? `<img src="${esc(ic)}" alt="" />` : ""}${esc(materialDisplayName(itemShortName(from)))}`;
+      const rule = hiddenRates.find((r) => r.from === from && r.to === name);
+      // Only real in-game trades say "(trade)" (owner, 31 Oct 2026): Gems buy
+      // Common Marks; an Advanced Mark isn't traded, it counts as 8 Common;
+      // chests (Pet Chest) just open into the item.
+      const key = from === "Gems" ? "bs_nb_bought" : from === "Advanced Marks" ? "bs_nb_counted" : rule && rule.hidden ? "bs_nb_from" : "bs_nb_from_trade";
+      parts.push(esc(t(key)).replace("{n}", b(q)).replace("{g}", b(gave[from] || 0)).replace("{item}", item));
     });
     if (chest > 0) parts.push(esc(t("bs_nb_from_chest")).replace("{n}", b(chest)));
     return parts.join(" + ");

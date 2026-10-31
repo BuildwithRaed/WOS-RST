@@ -1960,5 +1960,8 @@
 "t:bs_nb_short":"缺少",
 "t:bs_nb_in_bp":"背包中 {n}",
 "t:bs_nb_from_trade":"{item} 兌換 {n}",
-"t:bs_nb_from_chest":"寶箱 {n}"
+"t:bs_nb_from_chest":"寶箱 {n}",
+"t:bs_nb_from":"{item} {n}",
+"t:bs_nb_bought":"用 {g} {item} 購買 {n}",
+"t:bs_nb_counted":"{g} {item}（計為 {n}）"
 }

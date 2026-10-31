@@ -1961,5 +1961,8 @@
 "t:bs_nb_short":"Mancano",
 "t:bs_nb_in_bp":"{n} nello zaino",
 "t:bs_nb_from_trade":"{n} da {item} (scambio)",
-"t:bs_nb_from_chest":"{n} dai forzieri"
+"t:bs_nb_from_chest":"{n} dai forzieri",
+"t:bs_nb_from":"{n} da {item}",
+"t:bs_nb_bought":"{n} comprati con {g} {item}",
+"t:bs_nb_counted":"{g} {item} (valgono {n})"
 }

@@ -1960,5 +1960,8 @@
 "t:bs_nb_short":"Falta",
 "t:bs_nb_in_bp":"{n} na sua mochila",
 "t:bs_nb_from_trade":"{n} de {item} (troca)",
-"t:bs_nb_from_chest":"{n} de baús"
+"t:bs_nb_from_chest":"{n} de baús",
+"t:bs_nb_from":"{n} de {item}",
+"t:bs_nb_bought":"{n} comprados com {g} {item}",
+"t:bs_nb_counted":"{g} {item} (contam como {n})"
 }

@@ -1961,5 +1961,8 @@
 "t:bs_nb_short":"Brakuje",
 "t:bs_nb_in_bp":"{n} w plecaku",
 "t:bs_nb_from_trade":"{n} z {item} (wymiana)",
-"t:bs_nb_from_chest":"{n} ze skrzyń"
+"t:bs_nb_from_chest":"{n} ze skrzyń",
+"t:bs_nb_from":"{n} z {item}",
+"t:bs_nb_bought":"{n} kupione za {g} {item}",
+"t:bs_nb_counted":"{g} {item} (liczone jako {n})"
 }

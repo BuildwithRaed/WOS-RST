@@ -1961,5 +1961,8 @@
 "t:bs_nb_short":"Manque",
 "t:bs_nb_in_bp":"{n} dans votre sac",
 "t:bs_nb_from_trade":"{n} via {item} (échange)",
-"t:bs_nb_from_chest":"{n} des coffres"
+"t:bs_nb_from_chest":"{n} des coffres",
+"t:bs_nb_from":"{n} via {item}",
+"t:bs_nb_bought":"{n} achetés avec {g} {item}",
+"t:bs_nb_counted":"{g} {item} (comptent pour {n})"
 }

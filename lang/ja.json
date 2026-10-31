@@ -1961,5 +1961,8 @@
 "t:bs_nb_short":"不足",
 "t:bs_nb_in_bp":"バックパックに {n}",
 "t:bs_nb_from_trade":"{item}から {n}（交換）",
-"t:bs_nb_from_chest":"宝箱から {n}"
+"t:bs_nb_from_chest":"宝箱から {n}",
+"t:bs_nb_from":"{item}から {n}",
+"t:bs_nb_bought":"{g} {item}で {n} 購入",
+"t:bs_nb_counted":"{g} {item}（{n} として計算）"
 }

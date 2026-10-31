@@ -1960,5 +1960,8 @@
 "t:bs_nb_short":"Eksik",
 "t:bs_nb_in_bp":"Çantanda {n}",
 "t:bs_nb_from_trade":"{item} ile {n} (takas)",
-"t:bs_nb_from_chest":"Sandıklardan {n}"
+"t:bs_nb_from_chest":"Sandıklardan {n}",
+"t:bs_nb_from":"{item} ile {n}",
+"t:bs_nb_bought":"{g} {item} ile {n} alındı",
+"t:bs_nb_counted":"{g} {item} ({n} sayılır)"
 }

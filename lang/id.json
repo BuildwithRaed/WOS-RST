@@ -1960,5 +1960,8 @@
 "t:bs_nb_short":"Kurang",
 "t:bs_nb_in_bp":"{n} di tas",
 "t:bs_nb_from_trade":"{n} dari {item} (tukar)",
-"t:bs_nb_from_chest":"{n} dari peti"
+"t:bs_nb_from_chest":"{n} dari peti",
+"t:bs_nb_from":"{n} dari {item}",
+"t:bs_nb_bought":"{n} dibeli dengan {g} {item}",
+"t:bs_nb_counted":"{g} {item} (dihitung {n})"
 }
