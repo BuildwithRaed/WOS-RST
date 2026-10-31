@@ -1969,5 +1969,15 @@
 "t:scan_tab_res":"Risorse",
 "t:scan_tab_other":"Altro",
 "t:scan_tab_speed":"Accelerazioni",
-"t:scan_tab_gear":"Equipaggiamento"
+"t:scan_tab_gear":"Equipaggiamento",
+"t:scan_learn_title":"Caselle che Scan non conosce ancora ({n}) — insegnagliele",
+"t:scan_learn_hint":"Scegli cosa è ognuna: Scan lo ricorderà da ora per tutti. Lascia quelle che non segui.",
+"t:scan_learn_hint_visitor":"Frammenti eroe: scegli l'eroe e Scan lo ricorderà per te. Lascia le altre.",
+"t:scan_learn_choose":"Cos'è questo?",
+"t:scan_learn_unknown":"Non ancora noto",
+"t:scan_learn_reading":"lettura della quantità…",
+"t:scan_learn_shards":"Frammenti eroe",
+"t:scan_learn_widgets":"Widget eroe",
+"t:scan_learn_items":"Oggetti dello zaino",
+"t:scan_learn_all":"Mostra tutti gli eroi"
 }

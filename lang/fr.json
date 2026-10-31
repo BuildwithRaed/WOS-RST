@@ -1969,5 +1969,15 @@
 "t:scan_tab_res":"Ressources",
 "t:scan_tab_other":"Autres",
 "t:scan_tab_speed":"Accélérations",
-"t:scan_tab_gear":"Équipement"
+"t:scan_tab_gear":"Équipement",
+"t:scan_learn_title":"Cases que Scan ne connaît pas encore ({n}) — apprenez-les-lui",
+"t:scan_learn_hint":"Choisissez ce qu'est chacune : Scan s'en souviendra désormais pour tous. Laissez celles que vous ne suivez pas.",
+"t:scan_learn_hint_visitor":"Fragments de héros : choisissez le héros et Scan s'en souviendra pour vous. Laissez les autres.",
+"t:scan_learn_choose":"Qu'est-ce que c'est ?",
+"t:scan_learn_unknown":"Pas encore connu",
+"t:scan_learn_reading":"lecture de la quantité…",
+"t:scan_learn_shards":"Fragments de héros",
+"t:scan_learn_widgets":"Widgets de héros",
+"t:scan_learn_items":"Objets du sac",
+"t:scan_learn_all":"Voir tous les héros"
 }

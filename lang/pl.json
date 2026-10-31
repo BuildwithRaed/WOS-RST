@@ -1969,5 +1969,15 @@
 "t:scan_tab_res":"Zasoby",
 "t:scan_tab_other":"Inne",
 "t:scan_tab_speed":"Przyspieszenia",
-"t:scan_tab_gear":"Sprzęt"
+"t:scan_tab_gear":"Sprzęt",
+"t:scan_learn_title":"Pola, których Scan jeszcze nie zna ({n}) — naucz go",
+"t:scan_learn_hint":"Wybierz, czym jest każde: Scan zapamięta to od teraz dla wszystkich. Pomiń te, których nie śledzisz.",
+"t:scan_learn_hint_visitor":"Odłamki bohaterów: wybierz bohatera, a Scan to zapamięta. Pomiń resztę.",
+"t:scan_learn_choose":"Co to jest?",
+"t:scan_learn_unknown":"Jeszcze nieznane",
+"t:scan_learn_reading":"odczyt ilości…",
+"t:scan_learn_shards":"Odłamki bohaterów",
+"t:scan_learn_widgets":"Widżety bohaterów",
+"t:scan_learn_items":"Przedmioty z plecaka",
+"t:scan_learn_all":"Pokaż wszystkich bohaterów"
 }

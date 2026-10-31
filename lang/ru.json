@@ -1969,5 +1969,15 @@
 "t:scan_tab_res":"Ресурсы",
 "t:scan_tab_other":"Другое",
 "t:scan_tab_speed":"Ускорения",
-"t:scan_tab_gear":"Снаряжение"
+"t:scan_tab_gear":"Снаряжение",
+"t:scan_learn_title":"Ячейки, которые Scan ещё не знает ({n}) — научите",
+"t:scan_learn_hint":"Выберите, что это: Scan запомнит это для всех. Пропустите то, что вы не отслеживаете.",
+"t:scan_learn_hint_visitor":"Осколки героев: выберите героя, и Scan запомнит это для вас. Остальное пропустите.",
+"t:scan_learn_choose":"Что это?",
+"t:scan_learn_unknown":"Пока неизвестно",
+"t:scan_learn_reading":"чтение количества…",
+"t:scan_learn_shards":"Осколки героев",
+"t:scan_learn_widgets":"Виджеты героев",
+"t:scan_learn_items":"Предметы рюкзака",
+"t:scan_learn_all":"Показать всех героев"
 }

@@ -1968,5 +1968,15 @@
 "t:scan_tab_res":"資源",
 "t:scan_tab_other":"其他",
 "t:scan_tab_speed":"加速",
-"t:scan_tab_gear":"裝備"
+"t:scan_tab_gear":"裝備",
+"t:scan_learn_title":"掃描還不認識的格子（{n}）— 教它",
+"t:scan_learn_hint":"選擇每個是什麼：掃描從此為所有人記住。不追蹤的留空。",
+"t:scan_learn_hint_visitor":"英雄碎片：選擇英雄，掃描會為你記住。其他留空。",
+"t:scan_learn_choose":"這是什麼？",
+"t:scan_learn_unknown":"尚未識別",
+"t:scan_learn_reading":"正在讀取數量…",
+"t:scan_learn_shards":"英雄碎片",
+"t:scan_learn_widgets":"英雄部件",
+"t:scan_learn_items":"背包物品",
+"t:scan_learn_all":"顯示所有英雄"
 }
