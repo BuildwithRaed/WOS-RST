@@ -12068,6 +12068,9 @@ async function scanItemTiles(worker, src, tiles, refs) {
     tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
     const td = tg.getImageData(0, 0, 140, 140).data;
     const m = scanMatchItem(scanTileFeature(td), refs);
+    // A Gen's widget box with other things pictured inside (another Gen than the
+    // learned S14 box): the cream "S15" in the corner still says what it is (owner, 31 Oct 2026).
+    if (m.dist > 20 && scanGenLabel(td)) { m.name = "Gen Widgets"; m.dist = 20; }
     if (m.dist > 20) { unknown++; continue; }
     let sure = m.dist <= 12 && m.next > m.dist * 1.4;
     // A hero's own shards: the faces are small, so another (not learned) hero
