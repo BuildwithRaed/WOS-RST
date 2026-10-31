@@ -3649,7 +3649,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 57; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 58; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4019,7 +4019,6 @@ const T = {
   scan_tabs_read: { en: "Tabs read: {list}" },
   scan_learn_title: { en: "Tiles Scan doesn't know yet ({n}) — teach them" },
   scan_learn_hint: { en: "Pick what each one is: Scan remembers it from now on, for everyone. Leave the ones you don't track." },
-  scan_learn_hint_visitor: { en: "Hero shards: pick the hero and Scan remembers it for you. Leave the others." },
   scan_learn_choose: { en: "What is this?" },
   scan_learn_unknown: { en: "Not known yet" },
   scan_learn_reading: { en: "reading the amount…" },
@@ -12023,26 +12022,21 @@ function bpItemTab(n) {
 const scanItemTab = (n) => bpItemTab(n) || "other";
 // Tiles taught on the site (owner, 31 Oct 2026): site_config "scan_learned" =
 // { items: [{ n: item name, f: picture grid (base64), tab, after: the known
-// item just before it in the screenshot }] } — the owner's picks, for everyone;
-// a visitor's own picks (hero shards) in calc_state "scan_learned", theirs only.
+// item just before it in the screenshot }] } — taught by the owner only, used
+// by everyone's Scan.
 let SCAN_LEARNED = [];
 const scanFeatToB64 = (f) => btoa(String.fromCharCode(...f));
 const scanB64ToFeat = (v) => { try { return Uint8Array.from(atob(v), (c) => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } };
 async function scanLearnedLoad() {
   await ensureSiteConfig();
   const all = ((siteConfig("scan_learned", null) || {}).items || []).slice();
-  if (!IS_OWNER) { const mine = await loadCalcState("scan_learned").catch(() => null); all.push(...((mine && mine.items) || []).map((e) => ({ ...e, mine: true }))); }
   SCAN_LEARNED = all.filter((e) => e && e.n && e.f).map((e) => ({ ...e, g: scanB64ToFeat(e.f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
   return SCAN_LEARNED;
 }
 async function scanLearnedSave(entries) {
-  if (IS_OWNER) {
-    await ensureSiteConfig();
-    await saveSiteConfig("scan_learned", { items: (((siteConfig("scan_learned", null) || {}).items) || []).concat(entries) });
-  } else {
-    const cur = (await loadCalcState("scan_learned").catch(() => null)) || {};
-    saveCalcState("scan_learned", { items: (cur.items || []).concat(entries) });
-  }
+  if (!IS_OWNER) return;
+  await ensureSiteConfig();
+  await saveSiteConfig("scan_learned", { items: (((siteConfig("scan_learned", null) || {}).items) || []).concat(entries) });
 }
 const scanKnowsName = (n) => SCAN_ITEM_NAMES.includes(n) || SCAN_LEARNED.some((e) => e.n === n);
 // A tab's item order with the taught items put after the item they followed
@@ -12484,7 +12478,8 @@ function openBackpackScan(groups, bp, done, more) {
         shotSpans.push(sp);
         // Tiles Scan didn't know, with this screenshot's tab, to teach on the check screen.
         const shotTab = Object.keys(tabCount).sort((a, b) => tabCount[b] - tabCount[a])[0] || "other";
-        (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
+        // Only the owner teaches Scan (owner, 31 Oct 2026); visitors just see them counted as skipped.
+        if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
       }
       if (shot.kind === "speedup") sawSpeed = true;
       shot.items.forEach((it) => seen.add(it.name));
@@ -12562,15 +12557,15 @@ function openBackpackScan(groups, bp, done, more) {
         <span class="scan-zero-to">&rarr; 0</span>
       </label>`;
     }).join("");
-    // Tiles Scan didn't know: pick what each is (owner: any Backpack item or a
-    // hero's shards / widgets; visitors: a hero's shards), Scan remembers it.
+    // Tiles Scan didn't know (owner only): pick what each is (a Backpack item or
+    // a hero's shards / widgets); Scan remembers it for everyone.
     const heroList = (more && more.heroes) || [];
     const labelFor = (n) => {
       if (known.has(n)) return materialDisplayName(known.get(n).name);
       const m = / (Shards|Widgets)$/.exec(n), hero = n.replace(/ (Shards|Widgets)$/, "");
       return m ? `${dataName(hero)} — ${t(m[1] === "Shards" ? "backpack_hero_shards" : "scan_learn_widgets")}` : n;
     };
-    const learnModes = IS_OWNER ? ["shards", "widgets", "items"] : ["shards"];
+    const learnModes = ["shards", "widgets", "items"];
     const learnPicker = (u, i) => {
       const r = u.mode === "widgets" ? "Legendary" : u.all ? null : u.rarity;
       const cells = u.mode === "items"
@@ -12584,7 +12579,7 @@ function openBackpackScan(groups, bp, done, more) {
       </div>`;
     };
     const learnHtml = (open) => !unknownList.length ? "" : `<details class="scan-learn"${open ? " open" : ""}><summary><b>${esc(t("scan_learn_title").replace("{n}", unknownList.length))}</b></summary>
-      <div class="meta" style="margin:4px 0 6px; font-size:12px;">${esc(t(IS_OWNER ? "scan_learn_hint" : "scan_learn_hint_visitor"))}</div>
+      <div class="meta" style="margin:4px 0 6px; font-size:12px;">${esc(t("scan_learn_hint"))}</div>
       ${unknownList.map((u, i) => `<div class="scan-row scan-lrow">
         <img src="${esc(u.img)}" alt="" class="scan-ltile" />
         <span class="scan-name"><b>${esc(u.pick ? labelFor(u.pick) : t("scan_learn_unknown"))}</b>${u.pick && u.amount === undefined ? `<span class="meta">${esc(t("scan_learn_reading"))}</span>` : ""}</span>
@@ -12611,7 +12606,7 @@ function openBackpackScan(groups, bp, done, more) {
     const redrawLearn = () => { const d = learnBox.querySelector("details"); learnBox.innerHTML = learnHtml(!d || d.open); };
     learnBox.onclick = async (ev) => {
       const o = ev.target.closest("[data-lopen]"), md = ev.target.closest("[data-lmode]"), al = ev.target.closest("[data-lall]"), pk = ev.target.closest("[data-lpick]");
-      if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.rarity || !IS_OWNER ? "shards" : "items"; redrawLearn(); return; }
+      if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.rarity ? "shards" : "items"; redrawLearn(); return; }
       if (md) { const [i, m] = md.dataset.lmode.split("|"); unknownList[Number(i)].mode = m; redrawLearn(); return; }
       if (al) { unknownList[Number(al.dataset.lall)].all = true; redrawLearn(); return; }
       if (!pk) return;
@@ -26941,7 +26936,7 @@ async function renderAdminBackpackItems(body) {
   // Game tab (where the item is in the game's Backpack): helps Scan (owner, 31 Oct 2026).
   const TAB_LABEL = { res: "Resources", speed: "Speedup", gear: "Gear", other: "Other", none: "Not in the game Backpack" };
   const tabOf = (r) => r.tab || bpItemTabBuiltin(r.name);
-  const taughtCount = (n) => SCAN_LEARNED.filter((e) => e.n === n && !e.mine).length;
+  const taughtCount = (n) => SCAN_LEARNED.filter((e) => e.n === n).length;
   const groups = () => [...new Set(items.map((x) => x.group))];
   if (!groups().includes(ADMIN_BP_GROUP)) ADMIN_BP_GROUP = groups()[0] || "";
   const save = async (msg) => { await saveSiteConfig("backpack_items", { items: items.map((x) => ({ group: x.group, name: x.name, icon: (x.icon || "").trim(), ...(x.tab ? { tab: x.tab } : {}) })) }); if (msg) toast(msg); };

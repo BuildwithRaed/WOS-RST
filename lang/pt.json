@@ -1971,7 +1971,6 @@
 "t:scan_tab_gear":"Equipamento",
 "t:scan_learn_title":"Itens que o Scan ainda não conhece ({n}) — ensine-os",
 "t:scan_learn_hint":"Escolha o que é cada um: o Scan lembra a partir de agora, para todos. Deixe os que você não acompanha.",
-"t:scan_learn_hint_visitor":"Fragmentos de herói: escolha o herói e o Scan lembra para você. Deixe os outros.",
 "t:scan_learn_choose":"O que é isto?",
 "t:scan_learn_unknown":"Ainda desconhecido",
 "t:scan_learn_reading":"lendo a quantidade…",

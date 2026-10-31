@@ -1971,7 +1971,6 @@
 "t:scan_tab_gear":"장비",
 "t:scan_learn_title":"Scan이 아직 모르는 칸 ({n}) — 가르쳐 주세요",
 "t:scan_learn_hint":"각각 무엇인지 고르면 Scan이 이제부터 모두를 위해 기억합니다. 관리하지 않는 것은 그대로 두세요.",
-"t:scan_learn_hint_visitor":"영웅 조각: 영웅을 고르면 Scan이 기억합니다. 나머지는 그대로 두세요.",
 "t:scan_learn_choose":"이게 뭔가요?",
 "t:scan_learn_unknown":"아직 모름",
 "t:scan_learn_reading":"수량 읽는 중…",

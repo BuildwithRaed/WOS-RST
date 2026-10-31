@@ -1972,7 +1972,6 @@
 "t:scan_tab_gear":"装備",
 "t:scan_learn_title":"Scanがまだ知らないマス ({n}) — 教える",
 "t:scan_learn_hint":"それぞれ何かを選ぶと、Scanが今後みんなのために覚えます。管理しないものはそのままで。",
-"t:scan_learn_hint_visitor":"英雄の欠片：英雄を選ぶとScanがあなた用に覚えます。他はそのままで。",
 "t:scan_learn_choose":"これは何？",
 "t:scan_learn_unknown":"まだ不明",
 "t:scan_learn_reading":"数量を読み取り中…",

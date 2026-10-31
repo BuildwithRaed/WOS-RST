@@ -1971,7 +1971,6 @@
 "t:scan_tab_gear":"Trang bị",
 "t:scan_learn_title":"Ô mà Scan chưa biết ({n}) — dạy nó",
 "t:scan_learn_hint":"Chọn mỗi ô là gì: Scan sẽ nhớ từ nay cho mọi người. Bỏ qua những ô bạn không theo dõi.",
-"t:scan_learn_hint_visitor":"Mảnh tướng: chọn tướng và Scan sẽ nhớ cho bạn. Bỏ qua phần còn lại.",
 "t:scan_learn_choose":"Đây là gì?",
 "t:scan_learn_unknown":"Chưa biết",
 "t:scan_learn_reading":"đang đọc số lượng…",

@@ -1971,7 +1971,6 @@
 "t:scan_tab_gear":"อุปกรณ์",
 "t:scan_learn_title":"ช่องที่ Scan ยังไม่รู้จัก ({n}) — สอนมัน",
 "t:scan_learn_hint":"เลือกว่าแต่ละช่องคืออะไร: Scan จะจำไว้สำหรับทุกคน ปล่อยช่องที่คุณไม่ติดตามไว้",
-"t:scan_learn_hint_visitor":"เศษฮีโร่: เลือกฮีโร่แล้ว Scan จะจำไว้ให้คุณ ปล่อยที่เหลือไว้",
 "t:scan_learn_choose":"นี่คืออะไร?",
 "t:scan_learn_unknown":"ยังไม่รู้จัก",
 "t:scan_learn_reading":"กำลังอ่านจำนวน…",

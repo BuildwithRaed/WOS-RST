@@ -1971,7 +1971,6 @@
 "t:scan_tab_gear":"المعدات",
 "t:scan_learn_title":"عناصر لا يعرفها المسح بعد ({n}) — علّمه إياها",
 "t:scan_learn_hint":"اختر ما هو كل عنصر: يتذكره المسح من الآن للجميع. اترك ما لا تتابعه.",
-"t:scan_learn_hint_visitor":"شظايا الأبطال: اختر البطل وسيتذكره المسح لك. اترك الباقي.",
 "t:scan_learn_choose":"ما هذا؟",
 "t:scan_learn_unknown":"غير معروف بعد",
 "t:scan_learn_reading":"جارٍ قراءة الكمية…",

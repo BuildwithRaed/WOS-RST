@@ -1972,7 +1972,6 @@
 "t:scan_tab_gear":"Equipo",
 "t:scan_learn_title":"Casillas que Scan aún no conoce ({n}) — enséñaselas",
 "t:scan_learn_hint":"Elige qué es cada una: Scan lo recordará desde ahora para todos. Deja las que no sigues.",
-"t:scan_learn_hint_visitor":"Fragmentos de héroe: elige el héroe y Scan lo recordará para ti. Deja las demás.",
 "t:scan_learn_choose":"¿Qué es esto?",
 "t:scan_learn_unknown":"Aún desconocido",
 "t:scan_learn_reading":"leyendo la cantidad…",
