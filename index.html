@@ -12306,6 +12306,7 @@ function openBackpackScan(groups, bp, done, more) {
   // Mythic Gear = boxes (Other tab) + orange hero gear pieces (Gear tab).
   const mgParts = { box: null, gear: null };
   const gearSeqs = []; // the Gear screenshots read so far
+  const shotSpans = []; // per item screenshot: { tab: { min, max } } in game order
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -12365,7 +12366,18 @@ function openBackpackScan(groups, bp, done, more) {
       if (!live()) return;
       if (shot.kind === "speedsummary") notes.add(t("scan_speed_summary"));
       else if (shot.kind === "other") notes.add(t("scan_other_items"));
-      if (shot.kind === "items") sawItems = true;
+      if (shot.kind === "items") {
+        sawItems = true;
+        // The stretch of each tab this screenshot shows (game order).
+        const sp = {};
+        shot.items.forEach((it) => {
+          const tab = scanItemTab(it.name), k = SCAN_TAB_ORDER[tab] ? SCAN_TAB_ORDER[tab].indexOf(it.name) : -1;
+          if (k < 0) return;
+          const r = sp[tab] || (sp[tab] = { min: k, max: k });
+          r.min = Math.min(r.min, k); r.max = Math.max(r.max, k);
+        });
+        shotSpans.push(sp);
+      }
       if (shot.kind === "speedup") sawSpeed = true;
       shot.items.forEach((it) => seen.add(it.name));
       if (shot.unknown) unknownTiles += shot.unknown;
@@ -12412,20 +12424,23 @@ function openBackpackScan(groups, bp, done, more) {
     // "Set to 0?" only for items of the tabs you scanned, and inside a tab only
     // between the first and last item seen (owner, 31 Oct 2026): scanning the
     // Resources tab no longer offers to zero Other-tab items.
+    // Each item screenshot covers one stretch of its tab (first to last item it
+    // showed); stretches that share items join up. A gap between two screenshots
+    // (rows scrolled past) isn't covered, so items there are kept.
     const rng = {};
-    seen.forEach((n) => {
-      const tab = scanItemTab(n), k = SCAN_TAB_ORDER[tab] ? SCAN_TAB_ORDER[tab].indexOf(n) : -1;
-      if (k < 0) return;
-      const r = rng[tab] || (rng[tab] = { min: k, max: k });
-      r.min = Math.min(r.min, k); r.max = Math.max(r.max, k);
+    shotSpans.forEach((sp) => Object.entries(sp).forEach(([tab, r]) => { (rng[tab] = rng[tab] || []).push({ ...r }); }));
+    Object.keys(rng).forEach((tab) => {
+      const list = rng[tab].sort((a, b) => a.min - b.min), out = [];
+      list.forEach((r) => { const last = out[out.length - 1]; if (last && r.min <= last.max) last.max = Math.max(last.max, r.max); else out.push(r); });
+      rng[tab] = out;
     });
     const readable = (n) => {
       if (/speedup/i.test(n)) return sawSpeed;
       if (!sawItems || !SCAN_ITEM_NAMES.includes(n)) return false;
       // Mythic Gear = the box + the Gear tab's orange pieces: only with the Gear tab read too.
       if (n === "Mythic Gear" && mgParts.gear === null) return false;
-      const tab = scanItemTab(n), r = rng[tab], k = SCAN_TAB_ORDER[tab].indexOf(n);
-      return !!r && k > r.min && k < r.max;
+      const tab = scanItemTab(n), k = SCAN_TAB_ORDER[tab].indexOf(n);
+      return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
     const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear"].filter(Boolean).map((k) => t(k));
     const order = (n) => { const k = BP_GAME_ORDER.indexOf(n); return k !== -1 ? k : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
