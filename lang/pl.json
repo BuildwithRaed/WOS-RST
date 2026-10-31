@@ -1953,5 +1953,16 @@
 "t:or_email":"lub przez e-mail",
 "t:google_failed":"Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
 "t:google_in_use":"To konto Google ma już tutaj własne konto. Logowanie do niego…",
-"t:privacy_link":"Prywatność"
+"t:privacy_link":"Prywatność",
+"t:bs_need":"potrzeba {n}",
+"t:bs_nb_needed":"Potrzeba",
+"t:bs_nb_have":"Masz",
+"t:bs_nb_spare":"Zapas",
+"t:bs_nb_short":"Brakuje",
+"t:bs_nb_in_bp":"{n} w plecaku",
+"t:bs_nb_from_trade":"{n} z {item} (wymiana)",
+"t:bs_nb_from_chest":"{n} ze skrzyń",
+"t:bs_nb_from":"{n} z {item}",
+"t:bs_nb_bought":"{n} kupione za {g} {item}",
+"t:bs_nb_counted":"{g} {item} (liczone jako {n})"
 }

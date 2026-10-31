@@ -1953,5 +1953,16 @@
 "t:or_email":"またはメールで",
 "t:google_failed":"Googleでのログインに失敗しました。もう一度お試しください。",
 "t:google_in_use":"このGoogleアカウントにはすでにここでのアカウントがあります。そのアカウントにログインしています…",
-"t:privacy_link":"プライバシー"
+"t:privacy_link":"プライバシー",
+"t:bs_need":"必要 {n}",
+"t:bs_nb_needed":"必要",
+"t:bs_nb_have":"所持",
+"t:bs_nb_spare":"余り",
+"t:bs_nb_short":"不足",
+"t:bs_nb_in_bp":"バックパックに {n}",
+"t:bs_nb_from_trade":"{item}から {n}（交換）",
+"t:bs_nb_from_chest":"宝箱から {n}",
+"t:bs_nb_from":"{item}から {n}",
+"t:bs_nb_bought":"{g} {item}で {n} 購入",
+"t:bs_nb_counted":"{g} {item}（{n} として計算）"
 }

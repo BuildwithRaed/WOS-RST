@@ -1953,5 +1953,16 @@
 "t:or_email":"oder mit E-Mail",
 "t:google_failed":"Die Anmeldung mit Google hat nicht geklappt. Bitte versuche es erneut.",
 "t:google_in_use":"Dieses Google-Konto hat hier bereits ein eigenes Konto. Du wirst dort angemeldet…",
-"t:privacy_link":"Datenschutz"
+"t:privacy_link":"Datenschutz",
+"t:bs_need":"Bedarf {n}",
+"t:bs_nb_needed":"Benötigt",
+"t:bs_nb_have":"Vorhanden",
+"t:bs_nb_spare":"Übrig",
+"t:bs_nb_short":"Fehlt",
+"t:bs_nb_in_bp":"{n} im Rucksack",
+"t:bs_nb_from_trade":"{n} aus {item} (Tausch)",
+"t:bs_nb_from_chest":"{n} aus Truhen",
+"t:bs_nb_from":"{n} aus {item}",
+"t:bs_nb_bought":"{n} gekauft mit {g} {item}",
+"t:bs_nb_counted":"{g} {item} (zählen als {n})"
 }

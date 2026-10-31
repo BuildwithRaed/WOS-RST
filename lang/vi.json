@@ -1952,5 +1952,16 @@
 "t:or_email":"hoặc bằng email",
 "t:google_failed":"Đăng nhập bằng Google không thành công. Vui lòng thử lại.",
 "t:google_in_use":"Tài khoản Google này đã có tài khoản riêng ở đây. Đang đăng nhập vào tài khoản đó…",
-"t:privacy_link":"Quyền riêng tư"
+"t:privacy_link":"Quyền riêng tư",
+"t:bs_need":"cần {n}",
+"t:bs_nb_needed":"Cần",
+"t:bs_nb_have":"Bạn có",
+"t:bs_nb_spare":"Dư",
+"t:bs_nb_short":"Thiếu",
+"t:bs_nb_in_bp":"{n} trong ba lô",
+"t:bs_nb_from_trade":"{n} từ {item} (đổi)",
+"t:bs_nb_from_chest":"{n} từ rương",
+"t:bs_nb_from":"{n} từ {item}",
+"t:bs_nb_bought":"{n} mua bằng {g} {item}",
+"t:bs_nb_counted":"{g} {item} (tính là {n})"
 }

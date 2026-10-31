@@ -1952,5 +1952,16 @@
 "t:or_email":"或使用電子郵件",
 "t:google_failed":"Google 登入失敗，請再試一次。",
 "t:google_in_use":"此 Google 帳號在這裡已有自己的帳號，正在登入該帳號…",
-"t:privacy_link":"隱私"
+"t:privacy_link":"隱私",
+"t:bs_need":"需要 {n}",
+"t:bs_nb_needed":"需要",
+"t:bs_nb_have":"擁有",
+"t:bs_nb_spare":"剩餘",
+"t:bs_nb_short":"缺少",
+"t:bs_nb_in_bp":"背包中 {n}",
+"t:bs_nb_from_trade":"{item} 兌換 {n}",
+"t:bs_nb_from_chest":"寶箱 {n}",
+"t:bs_nb_from":"{item} {n}",
+"t:bs_nb_bought":"用 {g} {item} 購買 {n}",
+"t:bs_nb_counted":"{g} {item}（計為 {n}）"
 }

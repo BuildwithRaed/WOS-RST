@@ -1952,5 +1952,16 @@
 "t:or_email":"أو بالبريد الإلكتروني",
 "t:google_failed":"لم ينجح تسجيل الدخول عبر Google. حاول مرة أخرى.",
 "t:google_in_use":"حساب Google هذا لديه حساب خاص به هنا بالفعل. جارٍ تسجيل دخولك إليه…",
-"t:privacy_link":"الخصوصية"
+"t:privacy_link":"الخصوصية",
+"t:bs_need":"تحتاج {n}",
+"t:bs_nb_needed":"المطلوب",
+"t:bs_nb_have":"لديك",
+"t:bs_nb_spare":"فائض",
+"t:bs_nb_short":"ناقص",
+"t:bs_nb_in_bp":"{n} في حقيبتك",
+"t:bs_nb_from_trade":"{n} من {item} (مقايضة)",
+"t:bs_nb_from_chest":"{n} من الصناديق",
+"t:bs_nb_from":"{n} من {item}",
+"t:bs_nb_bought":"{n} مشتراة بـ {g} {item}",
+"t:bs_nb_counted":"{g} {item} (تُحسب {n})"
 }

@@ -1953,5 +1953,16 @@
 "t:or_email":"или по эл. почте",
 "t:google_failed":"Не удалось войти через Google. Попробуйте ещё раз.",
 "t:google_in_use":"У этого аккаунта Google уже есть свой аккаунт здесь. Выполняется вход в него…",
-"t:privacy_link":"Конфиденциальность"
+"t:privacy_link":"Конфиденциальность",
+"t:bs_need":"нужно {n}",
+"t:bs_nb_needed":"Нужно",
+"t:bs_nb_have":"Есть",
+"t:bs_nb_spare":"Запас",
+"t:bs_nb_short":"Не хватает",
+"t:bs_nb_in_bp":"{n} в рюкзаке",
+"t:bs_nb_from_trade":"{n} из {item} (обмен)",
+"t:bs_nb_from_chest":"{n} из сундуков",
+"t:bs_nb_from":"{n} из {item}",
+"t:bs_nb_bought":"{n} куплено за {g} {item}",
+"t:bs_nb_counted":"{g} {item} (считаются как {n})"
 }

@@ -1952,5 +1952,16 @@
 "t:or_email":"ou com e-mail",
 "t:google_failed":"O login com o Google não funcionou. Tente novamente.",
 "t:google_in_use":"Essa conta do Google já tem sua própria conta aqui. Entrando nela…",
-"t:privacy_link":"Privacidade"
+"t:privacy_link":"Privacidade",
+"t:bs_need":"precisa {n}",
+"t:bs_nb_needed":"Necessário",
+"t:bs_nb_have":"Você tem",
+"t:bs_nb_spare":"Sobra",
+"t:bs_nb_short":"Falta",
+"t:bs_nb_in_bp":"{n} na sua mochila",
+"t:bs_nb_from_trade":"{n} de {item} (troca)",
+"t:bs_nb_from_chest":"{n} de baús",
+"t:bs_nb_from":"{n} de {item}",
+"t:bs_nb_bought":"{n} comprados com {g} {item}",
+"t:bs_nb_counted":"{g} {item} (contam como {n})"
 }
