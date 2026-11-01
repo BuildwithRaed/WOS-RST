@@ -1982,5 +1982,18 @@
 "t:scan_learn_skip_short":"Atla",
 "t:scan_learn_skipped":"Atlandı — Scan bir daha sormaz",
 "t:scan_learn_skipall":"Seçilmeyenlerin hepsini atla",
-"t:scan_learn_undo":"Geri al"
+"t:scan_learn_undo":"Geri al",
+"t:bud_hg_sets": "Bütçedeki setler:",
+"t:bud_hg_nothing": "kalan yok",
+"t:bud_hg_set1": "{set} (Panel)",
+"t:bud_hg_note": "{sets} ekipmanı da planlanır, ama Panel istatistiklerini yalnızca Set 1 değiştirir.",
+"t:hg_set_heroes": "{set} giyen kahramanlar",
+"t:hg_set_tap": "değiştirmek için dokun",
+"t:hg_set1_roster": "{set} Panel kahramanlarını kullanır.",
+"t:hg_open_dash": "Paneli aç ›",
+"t:hg_pick_hero": "Kahraman seç",
+"t:hg_no_hero": "Kahraman yok",
+"t:hg_stars": "Yıldızlar",
+"t:hg_stars_note": "Yıldızlar kahramana aittir, bu yüzden Panelde de değişir.",
+"t:hg_set_note": "Panel toplamında yalnızca Set 1 sayılır. Bu seti seçince bu kahramanlar döküm penceresinde görünür."
 }

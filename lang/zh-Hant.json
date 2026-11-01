@@ -1982,5 +1982,18 @@
 "t:scan_learn_skip_short":"跳過",
 "t:scan_learn_skipped":"已跳過 — 掃描不會再問",
 "t:scan_learn_skipall":"跳過所有未選的",
-"t:scan_learn_undo":"復原"
+"t:scan_learn_undo":"復原",
+"t:bud_hg_sets": "預算中的套裝：",
+"t:bud_hg_nothing": "已無剩餘",
+"t:bud_hg_set1": "{set}（總覽）",
+"t:bud_hg_note": "{sets} 的裝備也會規劃，但只有套裝 1 會改變總覽數據。",
+"t:hg_set_heroes": "穿戴 {set} 的英雄",
+"t:hg_set_tap": "點擊更改",
+"t:hg_set1_roster": "{set} 使用總覽中的英雄。",
+"t:hg_open_dash": "開啟總覽 ›",
+"t:hg_pick_hero": "選擇英雄",
+"t:hg_no_hero": "無英雄",
+"t:hg_stars": "星級",
+"t:hg_stars_note": "星級屬於英雄，所以總覽中的英雄也會一起變化。",
+"t:hg_set_note": "只有套裝 1 計入總覽合計。選擇此套裝時，這些英雄會顯示在明細彈窗中。"
 }

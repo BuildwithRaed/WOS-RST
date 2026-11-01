@@ -1982,5 +1982,18 @@
 "t:scan_learn_skip_short":"Lewati",
 "t:scan_learn_skipped":"Dilewati — Scan tidak akan bertanya lagi",
 "t:scan_learn_skipall":"Lewati semua yang belum dipilih",
-"t:scan_learn_undo":"Urungkan"
+"t:scan_learn_undo":"Urungkan",
+"t:bud_hg_sets": "Set dalam anggaran:",
+"t:bud_hg_nothing": "tidak ada sisa",
+"t:bud_hg_set1": "{set} (Dasbor)",
+"t:bud_hg_note": "Gear {sets} juga direncanakan, tapi hanya Set 1 yang mengubah statistik Dasbor.",
+"t:hg_set_heroes": "Hero yang memakai {set}",
+"t:hg_set_tap": "ketuk untuk ubah",
+"t:hg_set1_roster": "{set} memakai hero di Dasbor.",
+"t:hg_open_dash": "Buka Dasbor ›",
+"t:hg_pick_hero": "Pilih hero",
+"t:hg_no_hero": "Tanpa hero",
+"t:hg_stars": "Bintang",
+"t:hg_stars_note": "Bintang milik hero, jadi juga berubah di daftar hero Dasbor.",
+"t:hg_set_note": "Hanya Set 1 yang dihitung di total Dasbor. Hero ini muncul di rincian saat kamu memilih set ini."
 }

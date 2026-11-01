@@ -1983,5 +1983,18 @@
 "t:scan_learn_skip_short":"スキップ",
 "t:scan_learn_skipped":"スキップ済み — 今後聞きません",
 "t:scan_learn_skipall":"未選択をすべてスキップ",
-"t:scan_learn_undo":"元に戻す"
+"t:scan_learn_undo":"元に戻す",
+"t:bud_hg_sets": "予算に含むセット:",
+"t:bud_hg_nothing": "残りなし",
+"t:bud_hg_set1": "{set}（ダッシュボード）",
+"t:bud_hg_note": "{sets} の装備も計画されますが、ダッシュボードのステータスを変えるのはセット 1 だけです。",
+"t:hg_set_heroes": "{set} を装備する英雄",
+"t:hg_set_tap": "タップで変更",
+"t:hg_set1_roster": "{set} はダッシュボードの英雄を使います。",
+"t:hg_open_dash": "ダッシュボードを開く ›",
+"t:hg_pick_hero": "英雄を選ぶ",
+"t:hg_no_hero": "英雄なし",
+"t:hg_stars": "星",
+"t:hg_stars_note": "星は英雄のものなので、ダッシュボードの英雄でも変わります。",
+"t:hg_set_note": "ダッシュボードの合計に入るのはセット 1 だけです。このセットを選ぶと、内訳ポップアップにこれらの英雄が表示されます。"
 }

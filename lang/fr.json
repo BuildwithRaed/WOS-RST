@@ -1983,5 +1983,18 @@
 "t:scan_learn_skip_short":"Ignorer",
 "t:scan_learn_skipped":"Ignoré — Scan ne demandera plus",
 "t:scan_learn_skipall":"Ignorer tout ce qui n'est pas choisi",
-"t:scan_learn_undo":"Annuler"
+"t:scan_learn_undo":"Annuler",
+"t:bud_hg_sets": "Ensembles dans le budget :",
+"t:bud_hg_nothing": "plus rien",
+"t:bud_hg_set1": "{set} (Tableau de bord)",
+"t:bud_hg_note": "L'équipement de {sets} est aussi planifié, mais seul Ensemble 1 change vos stats du Tableau de bord.",
+"t:hg_set_heroes": "Héros portant {set}",
+"t:hg_set_tap": "touchez pour changer",
+"t:hg_set1_roster": "{set} utilise vos héros du Tableau de bord.",
+"t:hg_open_dash": "Ouvrir le Tableau de bord ›",
+"t:hg_pick_hero": "Choisir un héros",
+"t:hg_no_hero": "Aucun héros",
+"t:hg_stars": "Étoiles",
+"t:hg_stars_note": "Les étoiles appartiennent au héros, elles changent donc aussi sur le Tableau de bord.",
+"t:hg_set_note": "Seul Ensemble 1 compte dans le total du Tableau de bord. Ces héros apparaissent dans le détail quand vous choisissez cet ensemble."
 }

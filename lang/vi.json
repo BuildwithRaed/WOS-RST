@@ -1982,5 +1982,18 @@
 "t:scan_learn_skip_short":"Bỏ qua",
 "t:scan_learn_skipped":"Đã bỏ qua — Scan sẽ không hỏi lại",
 "t:scan_learn_skipall":"Bỏ qua tất cả chưa chọn",
-"t:scan_learn_undo":"Hoàn tác"
+"t:scan_learn_undo":"Hoàn tác",
+"t:bud_hg_sets": "Bộ trong ngân sách:",
+"t:bud_hg_nothing": "không còn gì",
+"t:bud_hg_set1": "{set} (Bảng chỉ số)",
+"t:bud_hg_note": "Trang bị {sets} cũng được lên kế hoạch, nhưng chỉ Bộ 1 thay đổi chỉ số trên Bảng chỉ số.",
+"t:hg_set_heroes": "Anh hùng mặc {set}",
+"t:hg_set_tap": "chạm để đổi",
+"t:hg_set1_roster": "{set} dùng anh hùng trên Bảng chỉ số.",
+"t:hg_open_dash": "Mở Bảng chỉ số ›",
+"t:hg_pick_hero": "Chọn anh hùng",
+"t:hg_no_hero": "Không có anh hùng",
+"t:hg_stars": "Sao",
+"t:hg_stars_note": "Sao thuộc về anh hùng nên cũng đổi trên Bảng chỉ số.",
+"t:hg_set_note": "Chỉ Bộ 1 được tính vào tổng Bảng chỉ số. Các anh hùng này hiện trong bảng chi tiết khi bạn chọn bộ này."
 }

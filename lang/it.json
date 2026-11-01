@@ -1983,5 +1983,18 @@
 "t:scan_learn_skip_short":"Salta",
 "t:scan_learn_skipped":"Saltato — Scan non chiederà più",
 "t:scan_learn_skipall":"Salta tutto ciò che non è scelto",
-"t:scan_learn_undo":"Annulla"
+"t:scan_learn_undo":"Annulla",
+"t:bud_hg_sets": "Set nel budget:",
+"t:bud_hg_nothing": "niente da fare",
+"t:bud_hg_set1": "{set} (Dashboard)",
+"t:bud_hg_note": "Anche l'equipaggiamento di {sets} è pianificato, ma solo Set 1 cambia le statistiche della Dashboard.",
+"t:hg_set_heroes": "Eroi con {set}",
+"t:hg_set_tap": "tocca per cambiare",
+"t:hg_set1_roster": "{set} usa gli eroi della Dashboard.",
+"t:hg_open_dash": "Apri Dashboard ›",
+"t:hg_pick_hero": "Scegli un eroe",
+"t:hg_no_hero": "Nessun eroe",
+"t:hg_stars": "Stelle",
+"t:hg_stars_note": "Le stelle appartengono all'eroe, quindi cambiano anche nella Dashboard.",
+"t:hg_set_note": "Solo Set 1 conta nel totale della Dashboard. Questi eroi compaiono nel dettaglio quando scegli questo set."
 }
