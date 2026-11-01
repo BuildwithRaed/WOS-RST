@@ -234,16 +234,16 @@
   .qk-wrap{ margin:0 0 8px; }
   .qk-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:1px 0; }
   .qk-row::-webkit-scrollbar{ display:none; }
-  .qk-chip{ display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:34px; box-sizing:border-box; padding:3px 11px 3px 4px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
-  .qk-chip img, .qk-em{ width:26px; height:26px; border-radius:50%; object-fit:cover; flex-shrink:0; }
-  .qk-em{ display:inline-flex; align-items:center; justify-content:center; font-size:15px; }
+  .qk-chip{ display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:32px; box-sizing:border-box; padding:2px 11px 2px 5px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
+  .qk-chip img, .qk-em{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
+  .qk-em{ display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
   .qk-chip.qk-ed{ position:sticky; right:0; padding:3px 12px; color:var(--ice); background:var(--panel-2); box-shadow:-10px 0 10px -4px var(--bg); }
   .qk-box{ max-width:520px; max-height:86vh; overflow-y:auto; }
   .qk-k{ font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); margin:14px 0 4px; }
   .qk-list{ border:1px solid var(--line); border-radius:10px; overflow:hidden; }
   .qk-li{ display:flex; align-items:center; gap:10px; padding:6px 10px; border-top:1px solid var(--line); font-size:14px; }
   .qk-li:first-child{ border-top:0; }
-  .qk-li img, .qk-li .qk-em{ width:28px; height:28px; border-radius:7px; }
+  .qk-li img, .qk-li .qk-em{ width:28px; height:28px; }
   .qk-n{ flex:1; min-width:0; }
   .qk-mv{ display:inline-flex; gap:4px; }
   .qk-mv button, .qk-star{ min-width:34px; min-height:34px; border:1px solid var(--line); border-radius:8px; background:none; color:var(--muted); cursor:pointer; font-size:14px; }
@@ -5825,10 +5825,17 @@ let DASH_DATA_CACHE = {};
 // calc_state quick_pages = { pages: [tabs] }.
 const QUICK_DEFAULT = ["chiefgear", "charmscalc", "herogearcalc", "petsdata", "expertspage", "budgets"];
 const QUICK_ICONS = {
-  chiefgear: "icons/chief-gear-helmet-red.webp", charmscalc: "icons/charms/charm-infantry-16.webp", herogearcalc: "icons/hero-gear-goggles.webp",
-  petsdata: "icons/pets/arctic-wolf.webp", refinepage: "icons/pets/cave-hyena.webp", expertspage: "icons/experts/cyrille.png", expertsresearchpage: "icons/experts/agnes.png",
-  t12research: "icons/speedup-research.png", t11helios: "icons/speedup-research.png", researchcenter: "icons/speedup-research.png",
+  overview: "icons/logo-64.png", statetimeline: "icons/quick/events.png", packs: "icons/quick/gift.png", mypacks: "icons/quick/gift.png",
+  budgets: "icons/quick/calculator.png", roadmap: "icons/quick/territory.png", purchases: "icons/quick/froststar.png",
+  charmscalc: "icons/charms/charm-infantry-16.webp", chiefgear: "icons/quick/chief-gear.png", herogearcalc: "icons/quick/hero-gear.png",
+  expertspage: "icons/quick/experts.png", expertsresearchpage: "icons/quick/experts.png", petsdata: "icons/quick/pets.png", refinepage: "icons/quick/pets.png",
+  researchcenter: "icons/quick/research.png", t11helios: "icons/quick/microscope.png", t12research: "icons/quick/microscope.png", rfclab: "icons/quick/microscope.png",
+  skingallery: "icons/quick/castle.png", islandgallery: "icons/quick/decoration.png", "extrabonus:Vip Tier": "icons/quick/vip.png",
+  extrabonusheroes: "icons/quick/heroes.png", facilitypage: "icons/quick/facility.png", alliancetechpage: "icons/quick/tech.png",
+  albumtundrapage: "icons/quick/tundra.png", collectiongallerypage: "icons/quick/collection.png",
 };
+// Pages shown with a symbol instead of a picture (others use the Menu's own).
+const QUICK_EMOJI = { backpack: "\u{1F392}" };
 let QUICK_PAGES = null;
 async function quickPages() {
   if (!QUICK_PAGES) { const s = await loadCalcState("quick_pages").catch(() => null); QUICK_PAGES = s && Array.isArray(s.pages) ? s.pages.slice() : QUICK_DEFAULT.slice(); }
@@ -5837,7 +5844,7 @@ async function quickPages() {
 function quickIconHtml(tab) {
   if (QUICK_ICONS[tab]) return `<img src="${esc(QUICK_ICONS[tab])}" alt="" />`;
   const ic = document.querySelector(`#topnavGroups [data-tab="${tab}"] .ic`);
-  return `<span class="qk-em">${esc(ic ? ic.textContent : "\u2022")}</span>`;
+  return `<span class="qk-em">${esc(QUICK_EMOJI[tab] || (ic ? ic.textContent : "\u2022"))}</span>`;
 }
 async function drawQuickRow(el) {
   if (!el || !IS_OWNER) return;
