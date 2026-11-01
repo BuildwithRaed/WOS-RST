@@ -17,7 +17,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - Explanations should be short and non-technical. Show before/after numbers or pictures when useful.
 
 ## Files
-- `index.html`: the whole app, about 19,900 lines. HTML shell, inline `<style>`, then one large inline `<script>`. No framework, no build.
+- `index.html`: the whole app, about 31,000 lines. HTML shell, inline `<style>`, then one large inline `<script>`. No framework, no build.
 - `sw.js`: service worker. The page is network-first; icons are cache-first; the pinned supabase-js and HiGHS URLs are cache-first. Only good copies (status 200, not opaque) are kept; an old opaque copy is fetched again and replaced (27 Oct 2026). Cache name `wosrst-v2`; don't bump it without a reason, since that makes every user re-download all icons.
 - `vendor/`: this site's own copies of supabase-js 2.117.3 and tesseract.js 5.1.1 (with their MIT licences), used only when the jsdelivr copy can't load or fails its fingerprint check.
 - `manifest.webmanifest`, `pwa/icons/`: installable app.
@@ -356,5 +356,6 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #122: Scan fixes (171, Mythic Gear overlap, protected Lv.3 chest, Gareth Sigils, Amber, Rare shard), set to 0 only for scanned tabs, any Gen widget box
 - PR #126: Scan: taught hero widgets / own shards can be set to 0 when their spot is in the screenshot and they're gone
 - PR #127: Heroes Gears: saved targets kept, Budgets set ticks (stat increase from Set 1 only), Set 2 / Set 3 heroes for the breakdown pop-up
-- Quick pages row on the Dashboard (owner only)
+- PR #128: quick pages row on the Dashboard (owner only, small picture tiles with short names), game pictures for every page (also in the Menu), "T11 Helios Research" renamed "T11 Research"
+- PR #129: phone Menu as picture tiles (3 a row); separate 🌐 Language and Sign in / account buttons in the top bar (⚙ removed)
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
