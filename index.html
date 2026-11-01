@@ -231,6 +231,37 @@
   .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-row-v{ white-space:nowrap; font-size:13px; }
+  .bud-hgsets{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 4px 8px 30px; font-size:12px; }
+  .bud-hgset{ display:inline-flex; align-items:center; gap:6px; min-height:32px; box-sizing:border-box; padding:4px 11px; border:1px solid var(--line); border-radius:999px; cursor:pointer; }
+  .bud-hgset.on{ border-color:var(--ice); background:rgba(111,211,242,.12); }
+  .bud-hgset.done{ opacity:.6; }
+  .bud-hgset input{ margin:0; }
+  .hgh-wrap:empty{ display:none; }
+  .hgh-wrap{ flex:1 1 100%; min-width:0; margin-top:2px; }
+  .t12x-settings.one-line .hgh-wrap .meta{ white-space:normal !important; }
+  .hgh-s1{ font-size:12px; }
+  .hgh-s1 .linklike{ font-size:12px; }
+  .hgh-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:13px; margin-bottom:6px; }
+  .hgh-head .meta{ font-size:11px; color:var(--ice); }
+  .hgh-cards{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
+  .hgh-card{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 4px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); cursor:pointer; min-width:0; font:inherit; }
+  .hgh-card .hgh-tr{ font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--tc); }
+  .hgh-card img, .hgh-card .hgh-ph{ width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid var(--tc); }
+  .hgh-ph{ display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:18px; box-sizing:border-box; }
+  .hgh-card b{ font-size:12px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hgh-st{ font-size:10.5px; color:var(--muted); }
+  .hgh-note{ font-size:10.5px; margin-top:6px; }
+  .hgh-box{ max-width:560px; max-height:86vh; overflow-y:auto; }
+  .hgh-ctl{ border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:8px 0; }
+  .hgh-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:4px 0; font-size:13px; }
+  .hgh-step{ display:inline-flex; align-items:center; gap:8px; }
+  .hgh-step b{ min-width:60px; text-align:center; }
+  .hgh-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(84px, 1fr)); gap:8px; margin-top:8px; }
+  .hgh-pick{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px; border:1px solid var(--line); border-radius:10px; background:none; color:var(--frost); cursor:pointer; font:inherit; font-size:11.5px; }
+  .hgh-pick.on{ border-color:var(--ice); background:rgba(111,211,242,.12); }
+  .hgh-pick.out{ opacity:.45; filter:grayscale(.8); }
+  .hgh-pick img, .hgh-pick .hgh-ph{ width:100%; aspect-ratio:1; border-radius:8px; object-fit:cover; background:var(--panel-2); }
+  .bud-hgnote{ font-size:11px; margin-top:8px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; }
   .bud-mats{ display:flex; flex-wrap:wrap; gap:6px; }
   .bud-mats[hidden]{ display:none; }
   .bud-seg{ display:flex; gap:3px; padding:3px; margin-top:12px; background:var(--panel-2); border-radius:10px; }
@@ -4545,6 +4576,19 @@ const T = {
   budgets_materials: { en: "Materials" },
   budgets_materials_total: { en: "Materials still needed (all selected)" },
   budgets_stat_increase: { en: "Stat increase from this plan" },
+  bud_hg_sets: { en: "Sets in budget:" },
+  bud_hg_nothing: { en: "nothing left" },
+  bud_hg_set1: { en: "{set} (Dashboard)" },
+  bud_hg_note: { en: "{sets} gear is planned too, but only Set 1 changes your Dashboard stats." },
+  hg_set_heroes: { en: "Heroes wearing {set}" },
+  hg_set_tap: { en: "tap to change" },
+  hg_set1_roster: { en: "{set} uses your Dashboard roster." },
+  hg_open_dash: { en: "Open Dashboard ›" },
+  hg_pick_hero: { en: "Pick a hero" },
+  hg_no_hero: { en: "No hero" },
+  hg_stars: { en: "Stars" },
+  hg_stars_note: { en: "Stars belong to the hero, so they change on the Dashboard roster too." },
+  hg_set_note: { en: "Only Set 1 counts in your Dashboard total. These heroes show in the breakdown pop-up when you pick this set." },
   budgets_stat_increase_total: { en: "Stat increase (all selected)" },
   budgets_open_page: { en: "Open" },
   budgets_not_counted: { en: "Not counted: \"Count toward Dashboard\" is off on this page (from your state age or your own tick)." },
@@ -5925,7 +5969,13 @@ async function renderOverview(opts = {}) {
     return { star, sub };
   };
   // Backward compat: entries may be a bare heroId string or { heroId, widget, used }.
+  // The breakdown pop-up's Set 2 / Set 3 tabs use the heroes picked for that
+  // set on the Heroes Gears page (HG_SET_HEROES, owner 1 Nov 2026).
   const rosterEntryFor = (troopKey) => {
+    if (BREAKDOWN_HERO_GEAR_SET !== "Set 1") {
+      const se = (HG_SET_HEROES[BREAKDOWN_HERO_GEAR_SET] || {})[troopKey] || {};
+      return { heroId: se.heroId || "", widget: Number(se.widget) || 0, used: true };
+    }
     const e = ROSTER_STATE[troopKey];
     if (!e) return { heroId: "", widget: 0, used: true };
     if (typeof e === "string") return { heroId: e, widget: 0, used: true };
@@ -6667,7 +6717,19 @@ async function renderOverview(opts = {}) {
 
   // Current and max per source for one troop + stat (the breakdown pop-up
   // and "Biggest gains left" both use it).
+  // Set 2 / Set 3 (breakdown tabs): the same sources with that set's gear and
+  // heroes; the totals move by what those two sources change from Set 1.
   const breakdownFor = (troop, statKey) => {
+    const setName = BREAKDOWN_HERO_GEAR_SET;
+    if (setName === "Set 1") return breakdownCore(troop, statKey);
+    BREAKDOWN_HERO_GEAR_SET = "Set 1";
+    let base;
+    try { base = breakdownCore(troop, statKey); } finally { BREAKDOWN_HERO_GEAR_SET = setName; }
+    const cur = breakdownCore(troop, statKey);
+    const sum = (list, k) => list.reduce((a, x) => a + (Number(x[k]) || 0), 0);
+    return { ...cur, total: base.total + sum(cur.combined, "cur") - sum(base.combined, "cur"), maxTotal: base.maxTotal + sum(cur.combined, "max") - sum(base.combined, "max") };
+  };
+  const breakdownCore = (troop, statKey) => {
           const { total } = statFor(troop, statKey);
           const maxTotal = maxStatFor(troop, statKey);
           const row = rows.find((r) => r.name.toLowerCase() === `${troop} ${statKey}`.toLowerCase());
@@ -6840,6 +6902,19 @@ const HERO_GEAR_SET_NAMES = ["Set 1", "Set 2", "Set 3"];
 const HERO_GEAR_SETS = { "Set 1": HERO_GEAR_STATE, "Set 2": HERO_GEAR_STATE_SET2, "Set 3": HERO_GEAR_STATE_SET3 };
 const HERO_GEAR_STORAGE_KEYS = { "Set 1": "hero_gear", "Set 2": "hero_gear_set2", "Set 3": "hero_gear_set3" };
 let heroGearActiveSet = "Set 1";
+// Sets Budgets plans (owner, 1 Nov 2026: picked in Budgets with tick chips,
+// not the set last opened here). calc_state budget_hg_sets = { sets: [...] }.
+let BUDGET_HG_SETS = ["Set 1"];
+// Heroes wearing Set 2 / Set 3 (Set 1 = the Dashboard roster), for the
+// breakdown pop-up's set tabs. calc_state hero_gear_heroes =
+// { "Set 2": { Infantry: { heroId, widget }, Lancers: …, Marksman: … }, … }.
+let HG_SET_HEROES = {};
+const budgetHgSetStates = () => BUDGET_HG_SETS.map((n) => HERO_GEAR_SETS[n]).filter(Boolean);
+// Anything still to do in a set (a target above its current level)?
+function heroGearSetLeft(name) {
+  const st = HERO_GEAR_SETS[name];
+  return !!st && HERO_GEAR_TROOPS.some((tr) => HERO_GEAR_PIECE_NAMES.some((pc) => GEAR_LEVELING_TABLES.some((tn) => { const x = st[tr][pc][tn]; return x && x.to > x.from; })));
+}
 let heroGearActiveTroop = "Infantry";
 // Which hero gear set the Dashboard breakdown modal is currently showing.
 let BREAKDOWN_HERO_GEAR_SET = "Set 1";
@@ -6897,13 +6972,125 @@ async function loadHeroGearData() {
           GEAR_LEVELING_TABLES.forEach((t) => {
             const savedVal = saved?.[troop]?.[piece]?.[t]?.from;
             if (typeof savedVal === "number") state[troop][piece][t].from = savedVal;
+            // The saved target too (owner, 1 Nov 2026: it was always put
+            // back to Max when the page opened, and the next change saved
+            // Max over the target you picked).
+            const savedTo = saved?.[troop]?.[piece]?.[t]?.to;
+            if (typeof savedTo === "number") state[troop][piece][t].to = Math.max(0, Math.min(savedTo, heroTrackPickIdx(t)));
           });
         });
       });
     }
   }
+  const bs = await loadCalcState("budget_hg_sets");
+  if (bs && Array.isArray(bs.sets)) BUDGET_HG_SETS = HERO_GEAR_SET_NAMES.filter((n) => bs.sets.includes(n));
+  HG_SET_HEROES = (await loadCalcState("hero_gear_heroes")) || {};
 }
 
+
+// "Heroes wearing Set 2 / Set 3" (owner picked A, 1 Nov 2026): one hero per
+// troop for each extra set, with its widget level; stars are the hero's own
+// (player_heroes, same as the Dashboard roster). Set 1 is the Dashboard
+// roster. Used by the Dashboard breakdown pop-up's set tabs.
+const HG_ROSTER_TROOPS = [["Infantry", "Infantry"], ["Lancers", "Lancer"], ["Marksman", "Marksman"]];
+const hgHeroRows = () => Promise.all([
+  dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)),
+  dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
+]);
+const hgStarsOf = (ph, heroId) => {
+  const v = Number(((ph || []).find((p) => p.hero_id === heroId) || {}).current_stars) || 0;
+  const star = Math.min(5, Math.floor(v));
+  return { star, sub: Math.min(6, Math.round((v - star) * 10)) };
+};
+const hgStarsText = (st) => `${st.star}\u2605${st.sub ? ` ${st.sub}/6` : ""}`;
+async function drawHgSetHeroes(el) {
+  if (!el) return;
+  const setName = heroGearActiveSet;
+  if (setName === "Set 1") {
+    el.innerHTML = `<div class="meta hgh-s1">${esc(t("hg_set1_roster").replace("{set}", gearSetDisplayName(setName)))} <button type="button" class="linklike" data-hgdash>${esc(t("hg_open_dash"))}</button></div>`;
+    el.querySelector("[data-hgdash]").addEventListener("click", () => goToTab("overview"));
+    return;
+  }
+  let heroes = [], ph = [];
+  try { [heroes, ph] = await hgHeroRows(); } catch (e) { return; }
+  if (!el.isConnected || heroGearActiveSet !== setName) return;
+  const mine = HG_SET_HEROES[setName] || {};
+  el.innerHTML = `<div class="hgh-head"><b>${esc(t("hg_set_heroes").replace("{set}", gearSetDisplayName(setName)))}</b><span class="meta">${esc(t("hg_set_tap"))}</span></div>
+    <div class="hgh-cards">${HG_ROSTER_TROOPS.map(([key]) => {
+      const e = mine[key] || {}, h = e.heroId && heroes.find((x) => x.id === e.heroId);
+      return `<button type="button" class="hgh-card" data-hghero="${esc(key)}" style="--tc:${PLX_TROOP_COLORS[key === "Lancers" ? "Lancer" : key] || "var(--ice)"};">
+        <span class="hgh-tr">${esc(troopDisplayName(key))}</span>
+        ${h && h.image_url ? `<img src="${esc(h.image_url)}" alt="" loading="lazy" />` : `<span class="hgh-ph">+</span>`}
+        <b>${h ? esc(dataName(h.name)) : esc(t("hg_pick_hero"))}</b>
+        ${h ? `<span class="hgh-st">${esc(hgStarsText(hgStarsOf(ph, h.id)))} · ${esc(t("widget_short"))} ${Number(e.widget) || 0}</span>` : ""}
+      </button>`;
+    }).join("")}</div>
+    <div class="meta hgh-note">${esc(t("hg_set_note"))}</div>`;
+  el.querySelectorAll("[data-hghero]").forEach((b) => b.addEventListener("click", () => openHgHeroSheet(setName, b.dataset.hghero, () => drawHgSetHeroes(el))));
+}
+// Pick the hero for one troop of a set, its stars and widget level.
+async function openHgHeroSheet(setName, troopKey, after) {
+  let heroes = [], ph = [];
+  try { [heroes, ph] = await hgHeroRows(); } catch (e) { toast("Couldn't load", true); return; }
+  const cls = (HG_ROSTER_TROOPS.find((x) => x[0] === troopKey) || [])[1];
+  const choices = heroes.filter((h) => h.troop_type === cls);
+  let modal = document.getElementById("hgHeroModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "hgHeroModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal && modal._close) modal._close(); });
+  }
+  function close() { modal.style.display = "none"; after(); }
+  modal._close = close;
+  const save = () => saveCalcState("hero_gear_heroes", HG_SET_HEROES);
+  const entry = () => ((HG_SET_HEROES[setName] = HG_SET_HEROES[setName] || {})[troopKey] = HG_SET_HEROES[setName][troopKey] || { heroId: "", widget: 0 });
+  const saveStars = async (heroId, step) => {
+    const value = Number((Math.floor(step / 6) + (step % 6) / 10).toFixed(1));
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    const existing = ph.find((p) => p.hero_id === heroId);
+    if (existing) {
+      const prev = existing.current_stars;
+      existing.current_stars = value;
+      patchRowQueued("player_heroes", existing.id, { current_stars: value, updated_at: new Date().toISOString() }).catch(() => {
+        if (existing.current_stars === value) { existing.current_stars = prev; draw(); }
+        toast("Couldn't save", true);
+      });
+    } else {
+      const [row] = await sb(`player_heroes`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, hero_id: heroId, current_level: 0, current_stars: value }) });
+      ph.push(row || { hero_id: heroId, current_stars: value });
+    }
+  };
+  const draw = () => {
+    const e = entry(), h = e.heroId && heroes.find((x) => x.id === e.heroId), st = h ? hgStarsOf(ph, h.id) : null;
+    modal.innerHTML = `<div class="modal-box hgh-box">
+      <div class="bd-head"><h2>${esc(gearSetDisplayName(setName))} · ${esc(troopDisplayName(troopKey))}</h2><button type="button" class="bd-x" data-hgx aria-label="Close">&#10005;</button></div>
+      ${h ? `<div class="hgh-ctl">
+        <div class="hgh-row"><span>${esc(t("hg_stars"))}</span><span class="hgh-step"><button type="button" class="btn small ghost" data-hgstar="-1">&minus;</button><b>${esc(hgStarsText(st))}</b><button type="button" class="btn small ghost" data-hgstar="1">+</button></span></div>
+        <div class="hgh-row"><span>${esc(t("widget_level_label"))}</span><select data-hgwidget class="keep-w">${Array.from({ length: widgetMaxLevel() + 1 }, (_, i) => `<option value="${i}"${i === (Number(e.widget) || 0) ? " selected" : ""}>${i}</option>`).join("")}</select></div>
+        <div class="meta" style="font-size:11px;">${esc(t("hg_stars_note"))}</div>
+      </div>` : ""}
+      <div class="hgh-grid">
+        <button type="button" class="hgh-pick${e.heroId ? "" : " on"}" data-hgpick=""><span class="hgh-ph">&mdash;</span><span>${esc(t("hg_no_hero"))}</span></button>
+        ${choices.map((c) => { const notOut = heroGenNotOut(c.generation); return `<button type="button" class="hgh-pick${c.id === e.heroId ? " on" : ""}${notOut ? " out" : ""}" data-hgpick="${esc(c.id)}">${c.image_url ? `<img src="${esc(c.image_url)}" alt="" loading="lazy" />` : `<span class="hgh-ph">${esc(c.name.charAt(0))}</span>`}<span>${esc(dataName(c.name))}</span>${c.generation ? `<small class="meta">${esc(t("gen_prefix"))} ${c.generation}</small>` : ""}</button>`; }).join("")}
+      </div>
+      <div style="text-align:end; margin-top:12px;"><button type="button" class="btn small" data-hgdone>${esc(t("close_button"))}</button></div>
+    </div>`;
+    modal.querySelector("[data-hgx]").addEventListener("click", close);
+    modal.querySelector("[data-hgdone]").addEventListener("click", close);
+    modal.querySelectorAll("[data-hgpick]").forEach((b) => b.addEventListener("click", () => { entry().heroId = b.dataset.hgpick; save(); draw(); }));
+    modal.querySelectorAll("[data-hgstar]").forEach((b) => b.addEventListener("click", async () => {
+      const cur = hgStarsOf(ph, e.heroId), step = Math.max(0, Math.min(30, cur.star * 6 + cur.sub + Number(b.dataset.hgstar)));
+      await saveStars(e.heroId, step);
+      draw();
+    }));
+    const ws = modal.querySelector("[data-hgwidget]");
+    if (ws) ws.addEventListener("change", () => { entry().widget = Number(ws.value) || 0; save(); });
+  };
+  draw();
+  modal.style.display = "flex";
+}
 
 // Renders the Quick Select + per-piece calculator + totals + stats.
 async function renderGearLevelingGroup(target) {
@@ -6916,7 +7103,7 @@ async function renderGearLevelingGroup(target) {
     title: navLabel("herogearcalc"),
     settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
         ${HERO_GEAR_SET_NAMES.map((name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`).join("")}
-      </div>`,
+      </div><div id="hgSetHeroes" class="hgh-wrap"></div>`,
     amountsId: "heroGearOwned", needId: "heroGearNeed",
     // One pinned troop switch with that troop's stats (owner, 19 Oct 2026).
     statsHtml: plxTroopSwitchHtml("hero_gear", ""),
@@ -6929,6 +7116,7 @@ async function renderGearLevelingGroup(target) {
       renderGearLevelingGroup(target);
     });
   });
+  drawHgSetHeroes(target.querySelector("#hgSetHeroes"));
 
   const activeState = HERO_GEAR_SETS[heroGearActiveSet];
   const activeStorageKey = HERO_GEAR_STORAGE_KEYS[heroGearActiveSet];
@@ -16921,8 +17109,8 @@ function computeHeroGearNeeds() {
   if (!HERO_GEAR_TABLES_CACHE) return [{ label: null, totals: {} }];
   const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
   const totals = {};
-  const setState = HERO_GEAR_SETS[heroGearActiveSet];
-  HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => GEAR_LEVELING_TABLES.forEach((tname) => {
+  // Every set ticked in Budgets (owner, 1 Nov 2026).
+  budgetHgSetStates().forEach((setState) => HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => GEAR_LEVELING_TABLES.forEach((tname) => {
     const rows = HERO_GEAR_TABLES_CACHE[tname] || [];
     if (!rows.length) return;
     const st = setState[troop][piece][tname];
@@ -16931,7 +17119,7 @@ function computeHeroGearNeeds() {
       const v = Number(rows[i][col]) || 0;
       if (v) totals[label] = (totals[label] || 0) + v;
     });
-  })));
+  }))));
   return [{ label: null, totals }];
 }
 // What a page's plan would add to each dashboard stat line, as
@@ -16961,8 +17149,9 @@ function budgetStatDeltas(calcKey) {
       push(tr, "DMG", (tgt[tr] || 0) - (cur[tr] || 0));
       push(tr, "HP", (tgt[tr] || 0) - (cur[tr] || 0));
     });
-  } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
-    const setState = HERO_GEAR_SETS[heroGearActiveSet];
+  } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE && BUDGET_HG_SETS.includes("Set 1")) {
+    // Only Set 1 counts on the Dashboard (owner, 1 Nov 2026).
+    const setState = HERO_GEAR_STATE;
     const target = {};
     HERO_GEAR_TROOPS.forEach((tr) => {
       target[tr] = {};
@@ -16993,11 +17182,11 @@ function budgetNotOpenText(calcKey) {
     return hi > cap ? `${chiefGearRowLabel(CHIEF_GEAR_ROWS[cap + 1])} – ${chiefGearRowLabel(CHIEF_GEAR_ROWS[hi])}` : "";
   }
   if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
-    const setState = HERO_GEAR_SETS[heroGearActiveSet], out = [];
+    const out = [];
     GEAR_LEVELING_TABLES.forEach((tn) => {
       const rows = HERO_GEAR_TABLES_CACHE[tn] || [], cap = heroTrackCapIdx(tn);
       let hi = -1;
-      HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((pc) => { const st = setState[tr][pc][tn]; if (st && st.to > st.from && st.to > cap) hi = Math.max(hi, st.to); }));
+      budgetHgSetStates().forEach((setState) => HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((pc) => { const st = setState[tr][pc][tn]; if (st && st.to > st.from && st.to > cap) hi = Math.max(hi, st.to); })));
       if (hi > cap && rows[cap + 1] && rows[hi]) out.push(`${trackDisplayName(tn)} ${rowLabel(rows[cap + 1])} – ${rowLabel(rows[hi])}`);
     });
     return out.join(", ");
@@ -17018,11 +17207,13 @@ function budgetPlanLines(calcKey) {
       if (ups.length) lines.push(`${pieceDisplayName(p.name || p.key)} (${troopDisplayName(p.troop)}): ${ups.join(", ")}`);
     });
   } else if (calcKey === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
-    const setState = HERO_GEAR_SETS[heroGearActiveSet];
-    HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
-      const ups = GEAR_LEVELING_TABLES.map((tname) => { const st = setState[tr][piece][tname]; return st.to > st.from ? `${st.from}→${st.to}` : null; }).filter(Boolean);
-      if (ups.length) lines.push(`${troopDisplayName(tr)} ${piece}: ${ups.join(" / ")}`);
-    }));
+    BUDGET_HG_SETS.forEach((sn) => {
+      const setState = HERO_GEAR_SETS[sn], pre = BUDGET_HG_SETS.length > 1 ? `${gearSetDisplayName(sn)} · ` : "";
+      HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+        const ups = GEAR_LEVELING_TABLES.map((tname) => { const st = setState[tr][piece][tname]; return st.to > st.from ? `${st.from}→${st.to}` : null; }).filter(Boolean);
+        if (ups.length) lines.push(`${pre}${troopDisplayName(tr)} ${piece}: ${ups.join(" / ")}`);
+      }));
+    });
   }
   return lines;
 }
@@ -17920,11 +18111,10 @@ function goalMiniLevels(page) {
   } else if (page === "hero_gear") {
     // Per track (Mastery / Enhance): levels between the lowest piece and the highest target.
     if (HERO_GEAR_TABLES_CACHE) {
-      const setState = HERO_GEAR_SETS[heroGearActiveSet];
       GEAR_LEVELING_TABLES.forEach((tname) => {
         const rows = HERO_GEAR_TABLES_CACHE[tname] || [];
         let lo = Infinity, hi = -1;
-        HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => { const st = setState[troop][piece][tname]; if (st && st.to > st.from) { lo = Math.min(lo, st.from); hi = Math.max(hi, st.to); } }));
+        budgetHgSetStates().forEach((setState) => HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => { const st = setState[troop][piece][tname]; if (st && st.to > st.from) { lo = Math.min(lo, st.from); hi = Math.max(hi, st.to); } })));
         const step = rows.length > 40 ? 10 : 1;
         for (let i = lo + 1; i < hi; i++) if (rows[i] && i % step === 0) push({ value: `${tname}|${i}`, label: rowLabel(rows[i]), grp: tname, grpLabel: tname === "Enhance Combined" ? t("goal_hg_enhance") : t("goal_hg_mastery") });
       });
@@ -17965,14 +18155,14 @@ function goalTargetLabel(page) {
 function goalMiniTotals(page, level) {
   if (page === "hero_gear" && HERO_GEAR_TABLES_CACHE) {
     const k = String(level).lastIndexOf("|"), tname = String(level).slice(0, k), m = Number(String(level).slice(k + 1));
-    const rows = HERO_GEAR_TABLES_CACHE[tname] || [], setState = HERO_GEAR_SETS[heroGearActiveSet], totals = {};
+    const rows = HERO_GEAR_TABLES_CACHE[tname] || [], totals = {};
     const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
-    HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+    budgetHgSetStates().forEach((setState) => HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
       const st = setState[troop][piece][tname];
       if (!st) return;
       const fromIdx = Math.min(st.from, st.to), toIdx = Math.min(Math.max(st.from, st.to), Math.max(st.from, m));
       for (let i = fromIdx + 1; i <= toIdx; i++) cols.forEach(([col, label]) => { const v = Number((rows[i] || {})[col]) || 0; if (v) totals[label] = (totals[label] || 0) + v; });
-    }));
+    })));
     return totals;
   }
   if (page !== "charm" && page !== "chief_gear") {
@@ -18485,6 +18675,13 @@ async function renderBudgetsPage(opts = {}) {
     return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}${heroItemMark(n)}<b style="color:${still > 0 ? "var(--danger)" : "var(--good)"};">${still > 0 ? esc(fmt(still)) : "&#10003;"}</b><span class="meta" style="font-size:11px;">/ ${esc(fmt(needFull[n]))}</span></span>`;
   }).join("") + `</div>`;
 
+  // Heroes Gears: which sets Budgets plans (owner, 1 Nov 2026), tick chips
+  // under the page's row; a set with nothing left is faded.
+  const hgSetsHtml = () => `<div class="bud-hgsets"><span class="meta">${esc(t("bud_hg_sets"))}</span>${HERO_GEAR_SET_NAMES.map((n) => {
+    const on = BUDGET_HG_SETS.includes(n), left = heroGearSetLeft(n);
+    return `<label class="bud-hgset${on ? " on" : ""}${left ? "" : " done"}"><input type="checkbox" data-budhgset="${esc(n)}"${on ? " checked" : ""} /><span>${esc(gearSetDisplayName(n))}${left ? "" : ` · ${esc(t("bud_hg_nothing"))}`}</span></label>`;
+  }).join("")}</div>`;
+  const hgOther = BUDGET_HG_SETS.filter((n) => n !== "Set 1");
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
   const grandMats = {}, grandDeltas = [];
@@ -18502,6 +18699,7 @@ async function renderBudgetsPage(opts = {}) {
           <button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}">${esc(t("budgets_open_page"))}</button>
           ${body ? `<button type="button" class="bud-fold" data-budfold="${esc(pg.calcKey)}" aria-label="details">${isOpen ? "&#9662;" : "&#9656;"}</button>` : `<span class="bud-fold"></span>`}
         </div>
+        ${pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
         ${body ? `<div class="bud-body"${isOpen ? "" : " hidden"}>${body}</div>` : ""}
       </div>`;
     if (pg.missing) return pageRow(`<span class="meta" style="font-size:11px;">${esc(t(pg.notCounted ? "budgets_not_counted" : pg.stale ? "budgets_open_again" : "budgets_open_once"))}</span>`, "", true);
@@ -18556,7 +18754,8 @@ async function renderBudgetsPage(opts = {}) {
         ${pg.trades && pg.trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--good);">${esc(t("trade_free"))}: ${pg.trades.map((tr) => `${qty(tr.giveQty)} ${esc(materialDisplayName(tr.from))} → ${qty(tr.getQty)} ${esc(materialDisplayName(tr.to))}`).join(" &middot; ")}</div>` : ""}
         ${pg.viaTrades && pg.viaTrades.conversions.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px; color:var(--ice);">${esc(t("trade_via_packs"))}: ${pg.viaTrades.conversions.map((c) => `${qty(c.qty)} ${esc(materialDisplayName(c.item))} ← ${qty(c.fromQty)} ${esc(materialDisplayName(c.from))}`).join(" &middot; ")}</div>` : ""}</div>
       <div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("pack_cost_title"))}</div>${costHtml}</div>
-      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}</div>${statTableHtml(pg.deltas, pg.calcKey)}</div>` : ""}`);
+      ${pg.deltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase"))}${pg.calcKey === "hero_gear" ? ` · ${esc(t("bud_hg_set1").replace("{set}", gearSetDisplayName("Set 1")))}` : ""}</div>${statTableHtml(pg.deltas, pg.calcKey)}</div>` : ""}
+      ${pg.calcKey === "hero_gear" && hgOther.length ? `<div class="meta bud-hgnote">${esc(t("bud_hg_note").replace("{sets}", hgOther.map(gearSetDisplayName).join(" / ")))}</div>` : ""}`);
   });
 
   if (combined.chosen) {
@@ -19006,6 +19205,15 @@ async function renderBudgetsPage(opts = {}) {
     BUDGET_VIEW = b.dataset.budgetview;
     const y = window.scrollY;
     renderBudgetsPage().then(() => window.scrollTo(0, y));
+  }));
+  // Heroes Gears sets in Budgets: saved on the account, then the plan is worked out again.
+  content.querySelectorAll("[data-budhgset]").forEach((cb) => cb.addEventListener("change", () => {
+    const on = new Set(BUDGET_HG_SETS);
+    if (cb.checked) on.add(cb.dataset.budhgset); else on.delete(cb.dataset.budhgset);
+    BUDGET_HG_SETS = HERO_GEAR_SET_NAMES.filter((n) => on.has(n));
+    saveCalcState("budget_hg_sets", { sets: BUDGET_HG_SETS });
+    budgetInvalidate();
+    keepPlace(() => renderBudgetsPage());
   }));
   content.querySelectorAll("[data-budgetinc]").forEach((cb) => cb.addEventListener("change", async () => {
     // Each page has its own tick (owner, 16 Oct 2026; it used to switch its
