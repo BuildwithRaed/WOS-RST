@@ -22,6 +22,8 @@
 "t:password_updated":"تم تحديث كلمة المرور.",
 "t:logged_in_owner":"تم تسجيل الدخول كمالك",
 "t:log_out":"تسجيل الخروج",
+"t:acc_sign_in":"تسجيل الدخول",
+"t:acc_signed_in":"تم تسجيل الدخول",
 "t:email_placeholder":"البريد الإلكتروني",
 "t:password_placeholder":"كلمة المرور",
 "t:enter_both":"أدخل البريد الإلكتروني وكلمة المرور.",

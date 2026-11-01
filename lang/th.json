@@ -22,6 +22,8 @@
 "t:password_updated":"อัปเดตรหัสผ่านแล้ว",
 "t:logged_in_owner":"เข้าสู่ระบบในฐานะเจ้าของ",
 "t:log_out":"ออกจากระบบ",
+"t:acc_sign_in":"เข้าสู่ระบบ",
+"t:acc_signed_in":"เข้าสู่ระบบแล้ว",
 "t:email_placeholder":"อีเมล",
 "t:password_placeholder":"รหัสผ่าน",
 "t:enter_both":"กรอกทั้งอีเมลและรหัสผ่าน",

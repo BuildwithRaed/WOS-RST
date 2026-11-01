@@ -23,6 +23,8 @@
  "t:password_updated": "Password aggiornata.",
  "t:logged_in_owner": "Accesso come proprietario",
  "t:log_out": "Esci",
+ "t:acc_sign_in": "Accedi",
+ "t:acc_signed_in": "Accesso effettuato",
  "t:email_placeholder": "Email",
  "t:password_placeholder": "Password",
  "t:enter_both": "Inserisci email e password.",

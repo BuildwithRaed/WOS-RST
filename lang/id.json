@@ -22,6 +22,8 @@
 "t:password_updated":"Kata sandi diperbarui.",
 "t:logged_in_owner":"Masuk sebagai pemilik",
 "t:log_out":"Keluar",
+"t:acc_sign_in":"Masuk",
+"t:acc_signed_in":"Sudah masuk",
 "t:email_placeholder":"Email",
 "t:password_placeholder":"Kata sandi",
 "t:enter_both":"Masukkan email dan kata sandi.",

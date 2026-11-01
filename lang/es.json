@@ -23,6 +23,8 @@
  "t:password_updated": "Contraseña actualizada.",
  "t:logged_in_owner": "Sesión iniciada como propietario",
  "t:log_out": "Cerrar sesión",
+ "t:acc_sign_in": "Entrar",
+ "t:acc_signed_in": "Sesión iniciada",
  "t:email_placeholder": "Email",
  "t:password_placeholder": "Contraseña",
  "t:enter_both": "Escribe el email y la contraseña.",

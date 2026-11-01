@@ -22,6 +22,8 @@
 "t:password_updated":"Şifre güncellendi.",
 "t:logged_in_owner":"Sahip olarak giriş yapıldı",
 "t:log_out":"Çıkış yap",
+"t:acc_sign_in":"Giriş yap",
+"t:acc_signed_in":"Giriş yapıldı",
 "t:email_placeholder":"E-posta",
 "t:password_placeholder":"Şifre",
 "t:enter_both":"E-posta ve şifreyi gir.",

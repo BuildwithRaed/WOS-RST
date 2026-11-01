@@ -23,6 +23,8 @@
  "t:password_updated": "パスワードを更新しました。",
  "t:logged_in_owner": "オーナーとしてログイン中",
  "t:log_out": "ログアウト",
+ "t:acc_sign_in": "ログイン",
+ "t:acc_signed_in": "ログイン済み",
  "t:email_placeholder": "メールアドレス",
  "t:password_placeholder": "パスワード",
  "t:enter_both": "メールアドレスとパスワードを入力してください。",

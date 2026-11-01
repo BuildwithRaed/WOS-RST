@@ -23,6 +23,8 @@
  "t:password_updated": "密码已更新。",
  "t:logged_in_owner": "已以站长身份登录",
  "t:log_out": "退出登录",
+ "t:acc_sign_in": "登录",
+ "t:acc_signed_in": "已登录",
  "t:email_placeholder": "邮箱",
  "t:password_placeholder": "密码",
  "t:enter_both": "请输入邮箱和密码。",

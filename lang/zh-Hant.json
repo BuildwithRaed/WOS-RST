@@ -22,6 +22,8 @@
 "t:password_updated":"密碼已更新。",
 "t:logged_in_owner":"已以站長身分登入",
 "t:log_out":"登出",
+"t:acc_sign_in":"登入",
+"t:acc_signed_in":"已登入",
 "t:email_placeholder":"電子郵件",
 "t:password_placeholder":"密碼",
 "t:enter_both":"請輸入電子郵件和密碼。",
