@@ -376,7 +376,7 @@
 "t:resource_coal":"煤炭",
 "t:resource_iron":"鐵礦",
 "t:time_label":"時間",
-"t:t11_helios_title":"T11 赫利俄斯研究",
+"t:t11_helios_title":"T11 研究",
 "t:data_not_available_troop":"此兵種尚無資料。",
 "t:stats_data_not_available":"尚無數據資料。",
 "t:experts_base_stats_desc":"每位專家的基礎數據，以及部分主要數據技能。",
@@ -1087,7 +1087,7 @@
 "nav.p:petsdata":"寵物等級",
 "nav.p:refinepage":"寵物精煉",
 "nav.p:researchcenter":"研究中心",
-"nav.p:t11helios":"T11 赫利俄斯研究",
+"nav.p:t11helios":"T11 研究",
 "nav.p:t12research":"T12 研究",
 "nav.p:rfclab":"研究實驗室",
 "nav.p:skingallery":"造型圖鑑",
@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "無英雄",
 "t:hg_stars": "星級",
 "t:hg_stars_note": "星級屬於英雄，所以總覽中的英雄也會一起變化。",
-"t:hg_set_note": "只有套裝 1 計入總覽合計。選擇此套裝時，這些英雄會顯示在明細彈窗中。"
+"t:hg_set_note": "只有套裝 1 計入總覽合計。選擇此套裝時，這些英雄會顯示在明細彈窗中。",
+"t:qk_edit": "選擇快捷頁面",
+"t:qk_done": "完成",
+"t:qk_pinned": "已釘選",
+"t:qk_hint": "點 ★ 將頁面釘選到總覽的快捷列；▲▼ 調整順序。",
+"t:qk_none": "尚未釘選頁面：點下方頁面旁的 ★。"
 }

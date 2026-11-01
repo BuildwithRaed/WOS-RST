@@ -376,7 +376,7 @@
 "t:resource_coal":"석탄",
 "t:resource_iron":"철",
 "t:time_label":"시간",
-"t:t11_helios_title":"T11 헬리오스 연구",
+"t:t11_helios_title":"T11 연구",
 "t:data_not_available_troop":"이 부대 유형에 대한 데이터가 아직 없습니다.",
 "t:stats_data_not_available":"스탯 데이터를 아직 사용할 수 없습니다.",
 "t:experts_base_stats_desc":"10명 전문가의 기본 스탯과 선택된 주요 스킬입니다.",
@@ -1087,7 +1087,7 @@
 "nav.p:petsdata":"펫 레벨",
 "nav.p:refinepage":"펫 정제",
 "nav.p:researchcenter":"연구 센터",
-"nav.p:t11helios":"T11 헬리오스 연구",
+"nav.p:t11helios":"T11 연구",
 "nav.p:t12research":"T12 연구",
 "nav.p:rfclab":"연구소",
 "nav.p:skingallery":"스킨 갤러리",
@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "영웅 없음",
 "t:hg_stars": "별",
 "t:hg_stars_note": "별은 영웅에 속하므로 대시보드 로스터에서도 바뀝니다.",
-"t:hg_set_note": "대시보드 합계에는 세트 1만 계산됩니다. 이 세트를 고르면 상세 팝업에 이 영웅들이 표시됩니다."
+"t:hg_set_note": "대시보드 합계에는 세트 1만 계산됩니다. 이 세트를 고르면 상세 팝업에 이 영웅들이 표시됩니다.",
+"t:qk_edit": "빠른 페이지 선택",
+"t:qk_done": "완료",
+"t:qk_pinned": "고정됨",
+"t:qk_hint": "★를 눌러 대시보드 줄에 페이지를 고정하세요. ▲▼로 순서를 바꿉니다.",
+"t:qk_none": "아직 고정된 페이지가 없습니다. 아래 페이지 옆의 ★를 누르세요."
 }

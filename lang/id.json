@@ -376,7 +376,7 @@
 "t:resource_coal":"Batu Bara",
 "t:resource_iron":"Besi",
 "t:time_label":"Waktu",
-"t:t11_helios_title":"Riset T11 Helios",
+"t:t11_helios_title":"Riset T11",
 "t:data_not_available_troop":"Data belum tersedia untuk jenis pasukan ini.",
 "t:stats_data_not_available":"Data statistik belum tersedia.",
 "t:experts_base_stats_desc":"Statistik dasar tiap expert, plus beberapa skill statistik utama.",
@@ -1087,7 +1087,7 @@
 "nav.p:petsdata":"Level Pet",
 "nav.p:refinepage":"Pet Refine",
 "nav.p:researchcenter":"Research Center",
-"nav.p:t11helios":"Riset T11 Helios",
+"nav.p:t11helios":"Riset T11",
 "nav.p:t12research":"Riset T12",
 "nav.p:rfclab":"Research Lab",
 "nav.p:skingallery":"Galeri Skin",
@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "Tanpa hero",
 "t:hg_stars": "Bintang",
 "t:hg_stars_note": "Bintang milik hero, jadi juga berubah di daftar hero Dasbor.",
-"t:hg_set_note": "Hanya Set 1 yang dihitung di total Dasbor. Hero ini muncul di rincian saat kamu memilih set ini."
+"t:hg_set_note": "Hanya Set 1 yang dihitung di total Dasbor. Hero ini muncul di rincian saat kamu memilih set ini.",
+"t:qk_edit": "Pilih halaman cepat",
+"t:qk_done": "Selesai",
+"t:qk_pinned": "Disematkan",
+"t:qk_hint": "Ketuk ★ untuk menyematkan halaman ke baris di Dasbor; ▲▼ mengubah urutan.",
+"t:qk_none": "Belum ada yang disematkan: ketuk ★ di samping halaman di bawah."
 }

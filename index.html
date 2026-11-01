@@ -142,7 +142,7 @@
     padding:10px 8px; border-radius:8px; font-size:13.5px; cursor:pointer; margin-bottom:2px;
   }
   .mm-pages button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
-  .mm-pages button .ic{ width:18px; text-align:center; flex-shrink:0; font-size:13px; }
+  .mm-pages button .ic{ width:20px; text-align:center; flex-shrink:0; font-size:13px; }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -168,7 +168,7 @@
   }
   .topnav-dropdown button:hover{ background:var(--panel-2); color:var(--frost); }
   .topnav-dropdown button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
-  .topnav-dropdown button .ic{ width:16px; text-align:center; flex-shrink:0; font-size:13px; }
+  .topnav-dropdown button .ic{ width:18px; text-align:center; flex-shrink:0; font-size:13px; }
   /* margin-inline-start (not margin-left) so the gear sits at the far end of
      the bar in both directions - in Arabic the whole bar is mirrored. */
   .topnav-settings{ position:relative; margin-inline-start:auto; flex-shrink:0; }
@@ -231,6 +231,27 @@
   .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-row-v{ white-space:nowrap; font-size:13px; }
+  .qk-wrap{ margin:0 0 8px; }
+  .qk-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:1px 0; }
+  .qk-row::-webkit-scrollbar{ display:none; }
+  .qk-chip{ display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; flex:0 0 auto; width:62px; min-height:52px; box-sizing:border-box; padding:5px 2px 4px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--frost); font:inherit; font-size:10.5px; line-height:1.15; cursor:pointer; }
+  .qk-chip > span:last-child{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .qk-chip img, .qk-em{ width:26px; height:26px; object-fit:contain; flex-shrink:0; }
+  .qk-em{ display:inline-flex; align-items:center; justify-content:center; font-size:17px; }
+  .qk-chip.qk-ed{ position:sticky; right:0; width:40px; font-size:16px; color:var(--ice); background:var(--panel-2); box-shadow:-10px 0 10px -4px var(--bg); }
+  .topnav-dropdown button .ic img, .mm-pages button .ic img{ width:100%; height:18px; object-fit:contain; vertical-align:middle; display:block; }
+  .qk-box{ max-width:520px; max-height:86vh; overflow-y:auto; }
+  .qk-k{ font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); margin:14px 0 4px; }
+  .qk-list{ border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .qk-li{ display:flex; align-items:center; gap:10px; padding:6px 10px; border-top:1px solid var(--line); font-size:14px; }
+  .qk-li:first-child{ border-top:0; }
+  .qk-li img, .qk-li .qk-em{ width:28px; height:28px; }
+  .qk-n{ flex:1; min-width:0; }
+  .qk-mv{ display:inline-flex; gap:4px; }
+  .qk-mv button, .qk-star{ min-width:34px; min-height:34px; border:1px solid var(--line); border-radius:8px; background:none; color:var(--muted); cursor:pointer; font-size:14px; }
+  .qk-mv button:disabled{ opacity:.3; }
+  .qk-star{ border:0; font-size:20px; }
+  .qk-star.on{ color:#f3c64a; }
   .bud-hgsets{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 4px 8px 30px; font-size:12px; }
   .bud-hgset{ display:inline-flex; align-items:center; gap:6px; min-height:32px; box-sizing:border-box; padding:4px 11px; border:1px solid var(--line); border-radius:999px; cursor:pointer; }
   .bud-hgset.on{ border-color:var(--ice); background:rgba(111,211,242,.12); }
@@ -2548,7 +2569,7 @@ input,select,textarea{
         <button class="topnav-group-btn" type="button">Research <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="researchcenter"><span class="ic">&#9670;</span>Research Center</button>
-          <button data-tab="t11helios"><span class="ic">&#9670;</span>T11 Helios Research</button>
+          <button data-tab="t11helios"><span class="ic">&#9670;</span>T11 Research</button>
           <button data-tab="t12research"><span class="ic">&#9670;</span>T12 Research</button>
           <button data-tab="rfclab"><span class="ic">&#9670;</span>Research Lab</button>
         </div>
@@ -3682,7 +3703,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 60; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 62; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3818,7 +3839,7 @@ const NAV_PAGE_LABELS = {
   "petsdata": { en: "Pets Level" },
   "refinepage": { en: "Pets Refine" },
   "researchcenter": { en: "Research Center" },
-  "t11helios": { en: "T11 Helios Research" },
+  "t11helios": { en: "T11 Research" },
   "t12research": { en: "T12 Research" },
   "rfclab": { en: "Research Lab" },
   "skingallery": { en: "Skin Gallery" },
@@ -4277,7 +4298,7 @@ const T = {
   resource_coal: { en: "Coal" },
   resource_iron: { en: "Iron" },
   time_label: { en: "Time" },
-  t11_helios_title: { en: "T11 Helios Research" },
+  t11_helios_title: { en: "T11 Research" },
   data_not_available_troop: { en: "Data not yet available for this troop type." },
   stats_data_not_available: { en: "Stats data not available yet." },
   experts_base_stats_desc: { en: "Base stats for every expert, plus select main-stat skills." },
@@ -4586,6 +4607,11 @@ const T = {
   hg_open_dash: { en: "Open Dashboard ›" },
   hg_pick_hero: { en: "Pick a hero" },
   hg_no_hero: { en: "No hero" },
+  qk_edit: { en: "Choose quick pages" },
+  qk_done: { en: "Done" },
+  qk_pinned: { en: "Pinned" },
+  qk_hint: { en: "Tap ★ to pin a page to the row on your Dashboard; ▲▼ change the order." },
+  qk_none: { en: "Nothing pinned yet: tap ★ next to a page below." },
   hg_stars: { en: "Stars" },
   hg_stars_note: { en: "Stars belong to the hero, so they change on the Dashboard roster too." },
   hg_set_note: { en: "Only Set 1 counts in your Dashboard total. These heroes show in the breakdown pop-up when you pick this set." },
@@ -5796,6 +5822,118 @@ let DASH_DATA_CACHE = {};
 // Phones: the troop stats stretch down to the bottom of the screen, so the
 // Dashboard fills one screen with no empty gap (the footer is below it).
 // Taller screens make the stat rows bigger (--sx) rather than adding gaps.
+// Quick pages row on the Dashboard (owner picked A, 1 Nov 2026; admin only
+// for now): the pages the owner pins, one tap each; ✎ chooses them. Saved in
+// calc_state quick_pages = { pages: [tabs] }.
+const QUICK_DEFAULT = ["chiefgear", "charmscalc", "herogearcalc", "petsdata", "expertspage", "budgets"];
+const QUICK_ICONS = {
+  overview: "icons/logo-64.png", statetimeline: "icons/quick/events.png", packs: "icons/quick/gift.png", mypacks: "icons/quick/gift.png",
+  budgets: "icons/quick/calculator.png", roadmap: "icons/quick/territory.png", purchases: "icons/quick/froststar.png",
+  charmscalc: "icons/charms/charm-infantry-16.webp", chiefgear: "icons/quick/chief-gear.png", herogearcalc: "icons/quick/hero-gear.png",
+  expertspage: "icons/quick/experts.png", expertsresearchpage: "icons/quick/experts.png", petsdata: "icons/quick/pets.png", refinepage: "icons/quick/pets.png",
+  researchcenter: "icons/quick/research.png", t11helios: "icons/quick/microscope.png", t12research: "icons/quick/microscope.png", rfclab: "icons/quick/microscope.png",
+  skingallery: "icons/quick/castle.png", islandgallery: "icons/quick/decoration.png", "extrabonus:Vip Tier": "icons/quick/vip.png",
+  extrabonusheroes: "icons/quick/heroes.png", facilitypage: "icons/quick/facility.png", alliancetechpage: "icons/quick/tech.png",
+  albumtundrapage: "icons/quick/tundra.png", collectiongallerypage: "icons/quick/collection.png",
+};
+// Pages shown with a symbol instead of a picture (others use the Menu's own).
+const QUICK_EMOJI = { backpack: "\u{1F392}" };
+// Short names for the row's tiles (owner picked B, 1 Nov 2026), English only;
+// other languages, and pages renamed in Admin, keep the Menu name.
+const QUICK_SHORT = {
+  overview: "Dashboard", statetimeline: "Timeline", mypacks: "My packs", budgets: "Budget", purchases: "Buys", charmscalc: "Charm",
+  herogearcalc: "Hero Gear", expertsresearchpage: "Exp. Res.", petsdata: "Pets", refinepage: "Refine", researchcenter: "Research",
+  t11helios: "T11", t12research: "T12", rfclab: "Lab", skingallery: "Skins", islandgallery: "Islands", extrabonusheroes: "Skills",
+  alliancetechpage: "Tech", albumtundrapage: "Album", collectiongallerypage: "Collection", expertspage: "Experts",
+};
+function quickShortName(tab) {
+  const own = ((siteConfig("menu_layout", {}) || {}).pages || {})[tab];
+  return LANG === "en" && QUICK_SHORT[tab] && !(own && own.label) ? QUICK_SHORT[tab] : navLabel(tab);
+}
+// The Menu shows the same pictures (owner, 1 Nov 2026); its own symbol is
+// kept in data-sym for pages without one. Runs after every menu rebuild.
+function applyMenuIcons() {
+  document.querySelectorAll("#topnavGroups [data-tab] .ic").forEach((ic) => {
+    const tab = ic.closest("[data-tab]").dataset.tab;
+    if (ic.dataset.sym == null) ic.dataset.sym = ic.textContent;
+    if (QUICK_ICONS[tab]) ic.innerHTML = `<img src="${esc(QUICK_ICONS[tab])}" alt="" loading="lazy" />`;
+    else ic.textContent = QUICK_EMOJI[tab] || ic.dataset.sym;
+  });
+}
+let QUICK_PAGES = null;
+async function quickPages() {
+  if (!QUICK_PAGES) { const s = await loadCalcState("quick_pages").catch(() => null); QUICK_PAGES = s && Array.isArray(s.pages) ? s.pages.slice() : QUICK_DEFAULT.slice(); }
+  // The row sits on the Dashboard, so the Dashboard itself isn't offered.
+  return QUICK_PAGES.filter((tb) => tb !== "overview" && document.querySelector(`#topnavGroups [data-tab="${tb}"]`));
+}
+function quickIconHtml(tab) {
+  if (QUICK_ICONS[tab]) return `<img src="${esc(QUICK_ICONS[tab])}" alt="" />`;
+  const ic = document.querySelector(`#topnavGroups [data-tab="${tab}"] .ic`);
+  return `<span class="qk-em">${esc(QUICK_EMOJI[tab] || (ic ? (ic.dataset.sym != null ? ic.dataset.sym : ic.textContent) : "\u2022"))}</span>`;
+}
+async function drawQuickRow(el) {
+  if (!el || !IS_OWNER) return;
+  const pages = await quickPages();
+  if (!el.isConnected) return;
+  el.innerHTML = `<div class="qk-row">${pages.map((tb) => `<button type="button" class="qk-chip" data-quick="${esc(tb)}" title="${esc(navLabel(tb))}">${quickIconHtml(tb)}<span>${esc(quickShortName(tb))}</span></button>`).join("")}<button type="button" class="qk-chip qk-ed" data-quickedit aria-label="${esc(t("qk_edit"))}" title="${esc(t("qk_edit"))}">${pages.length ? "&#9998;" : `&#9998; ${esc(t("qk_edit"))}`}</button></div>`;
+  el.onclick = (e) => {
+    const b = e.target.closest("[data-quick]");
+    if (b) { goToTab(b.dataset.quick); return; }
+    if (e.target.closest("[data-quickedit]")) openQuickSheet(() => { drawQuickRow(el); fitDashToScreen(); });
+  };
+  fitDashToScreen();
+}
+// ✎: every page of the menu grouped like the menu, ★ to pin; pinned pages on
+// top with ▲▼ to change their order.
+async function openQuickSheet(after) {
+  await quickPages();
+  let pins = QUICK_PAGES.slice();
+  let modal = document.getElementById("quickModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "quickModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal && modal._done) modal._done(); });
+  }
+  const groups = [...document.querySelectorAll("#topnavGroups .topnav-group")].map((g) => ({
+    name: (NAV_GROUP_LABELS[g.dataset.group] && (NAV_GROUP_LABELS[g.dataset.group][LANG] || NAV_GROUP_LABELS[g.dataset.group].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/\u25BC/g, "").trim(),
+    tabs: [...g.querySelectorAll("[data-tab]")].map((b) => b.dataset.tab).filter((tb, i, a) => tb !== "overview" && a.indexOf(tb) === i),
+  })).filter((g) => g.tabs.length);
+  const known = new Set(groups.flatMap((g) => g.tabs));
+  const done = () => {
+    modal.style.display = "none";
+    QUICK_PAGES = pins.slice();
+    saveCalcState("quick_pages", { pages: QUICK_PAGES });
+    after();
+  };
+  modal._done = done;
+  const star = (tb) => `<button type="button" class="qk-star${pins.includes(tb) ? " on" : ""}" data-qkpin="${esc(tb)}" aria-label="★">${pins.includes(tb) ? "&#9733;" : "&#9734;"}</button>`;
+  const row = (tb, extra) => `<div class="qk-li">${quickIconHtml(tb)}<span class="qk-n">${esc(navLabel(tb))}</span>${extra || ""}${star(tb)}</div>`;
+  const draw = () => {
+    pins = pins.filter((tb) => known.has(tb));
+    modal.innerHTML = `<div class="modal-box qk-box">
+      <div class="bd-head"><h2>${esc(t("qk_edit"))}</h2><button type="button" class="btn small" data-qkdone>${esc(t("qk_done"))}</button></div>
+      <div class="meta" style="font-size:11.5px;">${esc(t("qk_hint"))}</div>
+      <div class="qk-k">${esc(t("qk_pinned"))} (${pins.length})</div>
+      <div class="qk-list">${pins.length ? pins.map((tb, i) => row(tb, `<span class="qk-mv"><button type="button" data-qkup="${i}"${i ? "" : " disabled"}>&#9650;</button><button type="button" data-qkdn="${i}"${i < pins.length - 1 ? "" : " disabled"}>&#9660;</button></span>`)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
+      ${groups.map((g) => `<div class="qk-k">${esc(g.name)}</div><div class="qk-list">${g.tabs.map((tb) => row(tb)).join("")}</div>`).join("")}
+    </div>`;
+    modal.querySelector("[data-qkdone]").addEventListener("click", done);
+    modal.querySelectorAll("[data-qkpin]").forEach((b) => b.addEventListener("click", () => {
+      const tb = b.dataset.qkpin;
+      pins = pins.includes(tb) ? pins.filter((x) => x !== tb) : pins.concat(tb);
+      const y = modal.querySelector(".qk-box").scrollTop;
+      draw();
+      modal.querySelector(".qk-box").scrollTop = y;
+    }));
+    const move = (i, d) => { const j = i + d; if (j < 0 || j >= pins.length) return; [pins[i], pins[j]] = [pins[j], pins[i]]; draw(); };
+    modal.querySelectorAll("[data-qkup]").forEach((b) => b.addEventListener("click", () => move(Number(b.dataset.qkup), -1)));
+    modal.querySelectorAll("[data-qkdn]").forEach((b) => b.addEventListener("click", () => move(Number(b.dataset.qkdn), 1)));
+  };
+  draw();
+  modal.style.display = "flex";
+}
 function fitDashToScreen() {
   const el = document.getElementById("troopSections"), box = el && el.closest(".dash-fit");
   if (!el || !box) return;
@@ -6440,11 +6578,13 @@ async function renderOverview(opts = {}) {
         <h2>${esc(t("stats_dashboard"))}</h2>
       </div>
     </div>
+    ${IS_OWNER ? `<div id="quickRow" class="qk-wrap"></div>` : ""}
     <div id="stateAgeCard" class="dash-sec">${stateAgeCardHtml()}</div>
     <div id="dashboardRoster" class="dash-sec"></div>
     <div id="troopSections" class="dash-sec2"></div>
   </div>`;
 
+  drawQuickRow(content.querySelector("#quickRow"));
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
   content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => keepPlace(() => renderOverview())); });
 
@@ -22813,6 +22953,7 @@ function applyMenuLayout() {
     allTabs.filter((tab) => groupOf(tab) === k).sort((a, b) => rank(a) - rank(b)).forEach((tab) => { if (btns[tab]) dd.appendChild(btns[tab]); });
   });
   wrap.querySelectorAll(".topnav-group").forEach((g) => { if (g.id !== "adminNavGroup" && !groupKeys.includes(g.dataset.group) && !g.querySelector("button[data-tab]")) g.remove(); });
+  applyMenuIcons();
 }
 // The admin's note for a page (Admin → Menu & pages), in the visitor's language.
 function pageNoteFor(tab) {

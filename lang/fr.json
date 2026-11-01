@@ -377,7 +377,7 @@
  "t:resource_coal": "Charbon",
  "t:resource_iron": "Fer",
  "t:time_label": "Temps",
- "t:t11_helios_title": "Recherche T11 Hélios",
+ "t:t11_helios_title": "Recherche T11",
  "t:data_not_available_troop": "Données pas encore disponibles pour ce type de troupe.",
  "t:stats_data_not_available": "Données de stats pas encore disponibles.",
  "t:experts_base_stats_desc": "Stats de base de chaque expert, plus certaines compétences de stat principale.",
@@ -1088,7 +1088,7 @@
  "nav.p:petsdata": "Niveau des familiers",
  "nav.p:refinepage": "Raffinage des familiers",
  "nav.p:researchcenter": "Centre de recherche",
- "nav.p:t11helios": "Recherche T11 Hélios",
+ "nav.p:t11helios": "Recherche T11",
  "nav.p:t12research": "Recherche T12",
  "nav.p:rfclab": "Labo de recherche",
  "nav.p:skingallery": "Galerie de skins",
@@ -1996,5 +1996,10 @@
 "t:hg_no_hero": "Aucun héros",
 "t:hg_stars": "Étoiles",
 "t:hg_stars_note": "Les étoiles appartiennent au héros, elles changent donc aussi sur le Tableau de bord.",
-"t:hg_set_note": "Seul Ensemble 1 compte dans le total du Tableau de bord. Ces héros apparaissent dans le détail quand vous choisissez cet ensemble."
+"t:hg_set_note": "Seul Ensemble 1 compte dans le total du Tableau de bord. Ces héros apparaissent dans le détail quand vous choisissez cet ensemble.",
+"t:qk_edit": "Choisir les pages rapides",
+"t:qk_done": "OK",
+"t:qk_pinned": "Épinglées",
+"t:qk_hint": "Touchez ★ pour épingler une page à la rangée de votre Tableau de bord ; ▲▼ changent l'ordre.",
+"t:qk_none": "Rien d'épinglé pour l'instant : touchez ★ à côté d'une page ci-dessous."
 }

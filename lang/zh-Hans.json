@@ -377,7 +377,7 @@
  "t:resource_coal": "煤",
  "t:resource_iron": "铁",
  "t:time_label": "时间",
- "t:t11_helios_title": "T11 赫利俄斯研究",
+ "t:t11_helios_title": "T11 研究",
  "t:data_not_available_troop": "该兵种暂无数据。",
  "t:stats_data_not_available": "暂无属性数据。",
  "t:experts_base_stats_desc": "每位专家的基础属性，以及部分主属性技能。",
@@ -1088,7 +1088,7 @@
  "nav.p:petsdata": "宠物等级",
  "nav.p:refinepage": "宠物洗练",
  "nav.p:researchcenter": "研究中心",
- "nav.p:t11helios": "T11 赫利俄斯研究",
+ "nav.p:t11helios": "T11 研究",
  "nav.p:t12research": "T12 研究",
  "nav.p:rfclab": "研究实验室",
  "nav.p:skingallery": "皮肤图鉴",
@@ -1996,5 +1996,10 @@
 "t:hg_no_hero": "无英雄",
 "t:hg_stars": "星级",
 "t:hg_stars_note": "星级属于英雄，所以总览中的英雄也会一起变化。",
-"t:hg_set_note": "只有套装 1 计入总览合计。选择此套装时，这些英雄会显示在明细弹窗中。"
+"t:hg_set_note": "只有套装 1 计入总览合计。选择此套装时，这些英雄会显示在明细弹窗中。",
+"t:qk_edit": "选择快捷页面",
+"t:qk_done": "完成",
+"t:qk_pinned": "已固定",
+"t:qk_hint": "点 ★ 将页面固定到总览的快捷栏；▲▼ 调整顺序。",
+"t:qk_none": "还没有固定页面：点下方页面旁的 ★。"
 }

@@ -377,7 +377,7 @@
  "t:resource_coal": "Węgiel",
  "t:resource_iron": "Żelazo",
  "t:time_label": "Czas",
- "t:t11_helios_title": "Badania T11 Helios",
+ "t:t11_helios_title": "Badania T11",
  "t:data_not_available_troop": "Brak danych dla tego typu jednostek.",
  "t:stats_data_not_available": "Brak danych statystyk.",
  "t:experts_base_stats_desc": "Bazowe statystyki każdego eksperta oraz wybrane umiejętności głównych statystyk.",
@@ -1088,7 +1088,7 @@
  "nav.p:petsdata": "Poziom Zwierzaków",
  "nav.p:refinepage": "Ulepszanie Zwierzaków",
  "nav.p:researchcenter": "Centrum Badań",
- "nav.p:t11helios": "Badania T11 Helios",
+ "nav.p:t11helios": "Badania T11",
  "nav.p:t12research": "Badania T12",
  "nav.p:rfclab": "Laboratorium Badań",
  "nav.p:skingallery": "Galeria skórek",
@@ -1996,5 +1996,10 @@
 "t:hg_no_hero": "Brak bohatera",
 "t:hg_stars": "Gwiazdki",
 "t:hg_stars_note": "Gwiazdki należą do bohatera, więc zmieniają się też w Panelu.",
-"t:hg_set_note": "Tylko Zestaw 1 liczy się do sumy Panelu. Ci bohaterowie pokazują się w szczegółach po wybraniu tego zestawu."
+"t:hg_set_note": "Tylko Zestaw 1 liczy się do sumy Panelu. Ci bohaterowie pokazują się w szczegółach po wybraniu tego zestawu.",
+"t:qk_edit": "Wybierz szybkie strony",
+"t:qk_done": "Gotowe",
+"t:qk_pinned": "Przypięte",
+"t:qk_hint": "Dotknij ★, aby przypiąć stronę do paska na stronie Panel; ▲▼ zmieniają kolejność.",
+"t:qk_none": "Nic jeszcze nie przypięto: dotknij ★ obok strony poniżej."
 }

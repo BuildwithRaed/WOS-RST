@@ -376,7 +376,7 @@
 "t:resource_coal":"Than",
 "t:resource_iron":"Sắt",
 "t:time_label":"Thời gian",
-"t:t11_helios_title":"Nghiên cứu T11 Helios",
+"t:t11_helios_title":"Nghiên cứu T11",
 "t:data_not_available_troop":"Chưa có dữ liệu cho binh chủng này.",
 "t:stats_data_not_available":"Chưa có dữ liệu chỉ số.",
 "t:experts_base_stats_desc":"Chỉ số gốc của mọi chuyên gia, cùng một số kỹ năng chỉ số chính.",
@@ -1087,7 +1087,7 @@
 "nav.p:petsdata":"Cấp Thú cưng",
 "nav.p:refinepage":"Tinh luyện Thú cưng",
 "nav.p:researchcenter":"Trung Tâm Nghiên Cứu",
-"nav.p:t11helios":"Nghiên cứu T11 Helios",
+"nav.p:t11helios":"Nghiên cứu T11",
 "nav.p:t12research":"Nghiên cứu T12",
 "nav.p:rfclab":"Phòng Nghiên Cứu",
 "nav.p:skingallery":"Trang phục",
@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "Không có anh hùng",
 "t:hg_stars": "Sao",
 "t:hg_stars_note": "Sao thuộc về anh hùng nên cũng đổi trên Bảng chỉ số.",
-"t:hg_set_note": "Chỉ Bộ 1 được tính vào tổng Bảng chỉ số. Các anh hùng này hiện trong bảng chi tiết khi bạn chọn bộ này."
+"t:hg_set_note": "Chỉ Bộ 1 được tính vào tổng Bảng chỉ số. Các anh hùng này hiện trong bảng chi tiết khi bạn chọn bộ này.",
+"t:qk_edit": "Chọn trang nhanh",
+"t:qk_done": "Xong",
+"t:qk_pinned": "Đã ghim",
+"t:qk_hint": "Chạm ★ để ghim trang vào hàng trên Bảng chỉ số; ▲▼ đổi thứ tự.",
+"t:qk_none": "Chưa ghim trang nào: chạm ★ cạnh một trang bên dưới."
 }
