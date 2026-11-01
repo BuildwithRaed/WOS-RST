@@ -143,6 +143,13 @@
   }
   .mm-pages button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
   .mm-pages button .ic{ width:20px; text-align:center; flex-shrink:0; font-size:13px; }
+  .mm-tl{ margin:0 0 14px; }
+  .mm-tl-h{ font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:0 2px 7px; }
+  .mm-tl-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+  .mm-tl-grid button{ display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:6px; min-height:92px; padding:12px 4px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; font-size:13px; line-height:1.2; text-align:center; cursor:pointer; }
+  .mm-tl-grid button.active{ border-color:var(--ice); color:var(--ice); box-shadow:0 0 0 1px var(--ice) inset; }
+  .mm-tl-grid button .ic{ width:100%; height:40px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
+  .mm-tl-grid button .ic img{ width:40px; height:40px; object-fit:contain; display:block; }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -5606,10 +5613,12 @@ function renderMobileMenu() {
         const name = g.dataset.group;
         const label = (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || name;
         const pagesHtml = g.querySelector(".topnav-dropdown").innerHTML;
+        // Picture tiles (owner picked idea 1, 1 Nov 2026): a heading per
+        // group and its pages as big tiles, 3 a row, like the wiki's home page.
         return `
-      <div class="mm-category" data-group="${esc(name)}">
-        <button class="mm-category-btn" type="button">${esc(label)} <span class="caret">&#9660;</span></button>
-        <div class="mm-pages">${pagesHtml}</div>
+      <div class="mm-tl" data-group="${esc(name)}">
+        <div class="mm-tl-h">&#10052; ${esc(label)}</div>
+        <div class="mm-tl-grid">${pagesHtml}</div>
       </div>`;
       })
       .join("")}
