@@ -5844,7 +5844,7 @@ const QUICK_SHORT = {
   overview: "Dashboard", statetimeline: "Timeline", mypacks: "My packs", budgets: "Budget", purchases: "Buys", charmscalc: "Charm",
   herogearcalc: "Hero Gear", expertsresearchpage: "Exp. Res.", petsdata: "Pets", refinepage: "Refine", researchcenter: "Research",
   t11helios: "T11", t12research: "T12", rfclab: "Lab", skingallery: "Skins", islandgallery: "Islands", extrabonusheroes: "Skills",
-  alliancetechpage: "Tech", albumtundrapage: "Tundra", collectiongallerypage: "Collection", expertspage: "Experts",
+  alliancetechpage: "Tech", albumtundrapage: "Album", collectiongallerypage: "Collection", expertspage: "Experts",
 };
 function quickShortName(tab) {
   const own = ((siteConfig("menu_layout", {}) || {}).pages || {})[tab];
@@ -5863,7 +5863,8 @@ function applyMenuIcons() {
 let QUICK_PAGES = null;
 async function quickPages() {
   if (!QUICK_PAGES) { const s = await loadCalcState("quick_pages").catch(() => null); QUICK_PAGES = s && Array.isArray(s.pages) ? s.pages.slice() : QUICK_DEFAULT.slice(); }
-  return QUICK_PAGES.filter((tb) => document.querySelector(`#topnavGroups [data-tab="${tb}"]`));
+  // The row sits on the Dashboard, so the Dashboard itself isn't offered.
+  return QUICK_PAGES.filter((tb) => tb !== "overview" && document.querySelector(`#topnavGroups [data-tab="${tb}"]`));
 }
 function quickIconHtml(tab) {
   if (QUICK_ICONS[tab]) return `<img src="${esc(QUICK_ICONS[tab])}" alt="" />`;
@@ -5897,7 +5898,7 @@ async function openQuickSheet(after) {
   }
   const groups = [...document.querySelectorAll("#topnavGroups .topnav-group")].map((g) => ({
     name: (NAV_GROUP_LABELS[g.dataset.group] && (NAV_GROUP_LABELS[g.dataset.group][LANG] || NAV_GROUP_LABELS[g.dataset.group].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/\u25BC/g, "").trim(),
-    tabs: [...g.querySelectorAll("[data-tab]")].map((b) => b.dataset.tab).filter((tb, i, a) => a.indexOf(tb) === i),
+    tabs: [...g.querySelectorAll("[data-tab]")].map((b) => b.dataset.tab).filter((tb, i, a) => tb !== "overview" && a.indexOf(tb) === i),
   })).filter((g) => g.tabs.length);
   const known = new Set(groups.flatMap((g) => g.tabs));
   const done = () => {
