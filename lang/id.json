@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "Tanpa hero",
 "t:hg_stars": "Bintang",
 "t:hg_stars_note": "Bintang milik hero, jadi juga berubah di daftar hero Dasbor.",
-"t:hg_set_note": "Hanya Set 1 yang dihitung di total Dasbor. Hero ini muncul di rincian saat kamu memilih set ini."
+"t:hg_set_note": "Hanya Set 1 yang dihitung di total Dasbor. Hero ini muncul di rincian saat kamu memilih set ini.",
+"t:qk_edit": "Pilih halaman cepat",
+"t:qk_done": "Selesai",
+"t:qk_pinned": "Disematkan",
+"t:qk_hint": "Ketuk ★ untuk menyematkan halaman ke baris di Dasbor; ▲▼ mengubah urutan.",
+"t:qk_none": "Belum ada yang disematkan: ketuk ★ di samping halaman di bawah."
 }

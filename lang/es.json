@@ -1996,5 +1996,10 @@
 "t:hg_no_hero": "Sin héroe",
 "t:hg_stars": "Estrellas",
 "t:hg_stars_note": "Las estrellas son del héroe, así que también cambian en los héroes del Panel.",
-"t:hg_set_note": "Solo Conjunto 1 cuenta en el total del Panel. Estos héroes aparecen en el desglose al elegir este conjunto."
+"t:hg_set_note": "Solo Conjunto 1 cuenta en el total del Panel. Estos héroes aparecen en el desglose al elegir este conjunto.",
+"t:qk_edit": "Elegir páginas rápidas",
+"t:qk_done": "Listo",
+"t:qk_pinned": "Fijadas",
+"t:qk_hint": "Toca ★ para fijar una página en la fila de tu Panel; ▲▼ cambian el orden.",
+"t:qk_none": "Aún no hay nada fijado: toca ★ junto a una página abajo."
 }

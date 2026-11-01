@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "Sem herói",
 "t:hg_stars": "Estrelas",
 "t:hg_stars_note": "As estrelas são do herói, então também mudam no Painel.",
-"t:hg_set_note": "Só Conjunto 1 conta no total do Painel. Estes heróis aparecem no detalhamento ao escolher este conjunto."
+"t:hg_set_note": "Só Conjunto 1 conta no total do Painel. Estes heróis aparecem no detalhamento ao escolher este conjunto.",
+"t:qk_edit": "Escolher páginas rápidas",
+"t:qk_done": "Concluído",
+"t:qk_pinned": "Fixadas",
+"t:qk_hint": "Toque em ★ para fixar uma página na linha do seu Painel; ▲▼ mudam a ordem.",
+"t:qk_none": "Nada fixado ainda: toque em ★ ao lado de uma página abaixo."
 }

@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "Kahraman yok",
 "t:hg_stars": "Yıldızlar",
 "t:hg_stars_note": "Yıldızlar kahramana aittir, bu yüzden Panelde de değişir.",
-"t:hg_set_note": "Panel toplamında yalnızca Set 1 sayılır. Bu seti seçince bu kahramanlar döküm penceresinde görünür."
+"t:hg_set_note": "Panel toplamında yalnızca Set 1 sayılır. Bu seti seçince bu kahramanlar döküm penceresinde görünür.",
+"t:qk_edit": "Hızlı sayfaları seç",
+"t:qk_done": "Tamam",
+"t:qk_pinned": "Sabitlenenler",
+"t:qk_hint": "Panel satırına bir sayfa sabitlemek için ★'ya dokun; ▲▼ sırayı değiştirir.",
+"t:qk_none": "Henüz sabitlenen yok: aşağıda bir sayfanın yanındaki ★'ya dokun."
 }

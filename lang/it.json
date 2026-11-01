@@ -1996,5 +1996,10 @@
 "t:hg_no_hero": "Nessun eroe",
 "t:hg_stars": "Stelle",
 "t:hg_stars_note": "Le stelle appartengono all'eroe, quindi cambiano anche nella Dashboard.",
-"t:hg_set_note": "Solo Set 1 conta nel totale della Dashboard. Questi eroi compaiono nel dettaglio quando scegli questo set."
+"t:hg_set_note": "Solo Set 1 conta nel totale della Dashboard. Questi eroi compaiono nel dettaglio quando scegli questo set.",
+"t:qk_edit": "Scegli le pagine rapide",
+"t:qk_done": "Fatto",
+"t:qk_pinned": "Fissate",
+"t:qk_hint": "Tocca ★ per fissare una pagina nella riga della tua Dashboard; ▲▼ cambiano l'ordine.",
+"t:qk_none": "Ancora niente di fissato: tocca ★ accanto a una pagina qui sotto."
 }

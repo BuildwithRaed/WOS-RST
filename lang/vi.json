@@ -1995,5 +1995,10 @@
 "t:hg_no_hero": "Không có anh hùng",
 "t:hg_stars": "Sao",
 "t:hg_stars_note": "Sao thuộc về anh hùng nên cũng đổi trên Bảng chỉ số.",
-"t:hg_set_note": "Chỉ Bộ 1 được tính vào tổng Bảng chỉ số. Các anh hùng này hiện trong bảng chi tiết khi bạn chọn bộ này."
+"t:hg_set_note": "Chỉ Bộ 1 được tính vào tổng Bảng chỉ số. Các anh hùng này hiện trong bảng chi tiết khi bạn chọn bộ này.",
+"t:qk_edit": "Chọn trang nhanh",
+"t:qk_done": "Xong",
+"t:qk_pinned": "Đã ghim",
+"t:qk_hint": "Chạm ★ để ghim trang vào hàng trên Bảng chỉ số; ▲▼ đổi thứ tự.",
+"t:qk_none": "Chưa ghim trang nào: chạm ★ cạnh một trang bên dưới."
 }

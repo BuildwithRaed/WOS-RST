@@ -231,6 +231,25 @@
   .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
   .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bud-row-v{ white-space:nowrap; font-size:13px; }
+  .qk-wrap{ margin:0 0 8px; }
+  .qk-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:1px 0; }
+  .qk-row::-webkit-scrollbar{ display:none; }
+  .qk-chip{ display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:34px; box-sizing:border-box; padding:3px 11px 3px 4px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
+  .qk-chip img, .qk-em{ width:26px; height:26px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+  .qk-em{ display:inline-flex; align-items:center; justify-content:center; font-size:15px; }
+  .qk-chip.qk-ed{ position:sticky; right:0; padding:3px 12px; color:var(--ice); background:var(--panel-2); box-shadow:-10px 0 10px -4px var(--bg); }
+  .qk-box{ max-width:520px; max-height:86vh; overflow-y:auto; }
+  .qk-k{ font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); margin:14px 0 4px; }
+  .qk-list{ border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .qk-li{ display:flex; align-items:center; gap:10px; padding:6px 10px; border-top:1px solid var(--line); font-size:14px; }
+  .qk-li:first-child{ border-top:0; }
+  .qk-li img, .qk-li .qk-em{ width:28px; height:28px; border-radius:7px; }
+  .qk-n{ flex:1; min-width:0; }
+  .qk-mv{ display:inline-flex; gap:4px; }
+  .qk-mv button, .qk-star{ min-width:34px; min-height:34px; border:1px solid var(--line); border-radius:8px; background:none; color:var(--muted); cursor:pointer; font-size:14px; }
+  .qk-mv button:disabled{ opacity:.3; }
+  .qk-star{ border:0; font-size:20px; }
+  .qk-star.on{ color:#f3c64a; }
   .bud-hgsets{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 4px 8px 30px; font-size:12px; }
   .bud-hgset{ display:inline-flex; align-items:center; gap:6px; min-height:32px; box-sizing:border-box; padding:4px 11px; border:1px solid var(--line); border-radius:999px; cursor:pointer; }
   .bud-hgset.on{ border-color:var(--ice); background:rgba(111,211,242,.12); }
@@ -3682,7 +3701,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 60; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 61; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4586,6 +4605,11 @@ const T = {
   hg_open_dash: { en: "Open Dashboard ›" },
   hg_pick_hero: { en: "Pick a hero" },
   hg_no_hero: { en: "No hero" },
+  qk_edit: { en: "Choose quick pages" },
+  qk_done: { en: "Done" },
+  qk_pinned: { en: "Pinned" },
+  qk_hint: { en: "Tap ★ to pin a page to the row on your Dashboard; ▲▼ change the order." },
+  qk_none: { en: "Nothing pinned yet: tap ★ next to a page below." },
   hg_stars: { en: "Stars" },
   hg_stars_note: { en: "Stars belong to the hero, so they change on the Dashboard roster too." },
   hg_set_note: { en: "Only Set 1 counts in your Dashboard total. These heroes show in the breakdown pop-up when you pick this set." },
@@ -5796,6 +5820,88 @@ let DASH_DATA_CACHE = {};
 // Phones: the troop stats stretch down to the bottom of the screen, so the
 // Dashboard fills one screen with no empty gap (the footer is below it).
 // Taller screens make the stat rows bigger (--sx) rather than adding gaps.
+// Quick pages row on the Dashboard (owner picked A, 1 Nov 2026; admin only
+// for now): the pages the owner pins, one tap each; ✎ chooses them. Saved in
+// calc_state quick_pages = { pages: [tabs] }.
+const QUICK_DEFAULT = ["chiefgear", "charmscalc", "herogearcalc", "petsdata", "expertspage", "budgets"];
+const QUICK_ICONS = {
+  chiefgear: "icons/chief-gear-helmet-red.webp", charmscalc: "icons/charms/charm-infantry-16.webp", herogearcalc: "icons/hero-gear-goggles.webp",
+  petsdata: "icons/pets/arctic-wolf.webp", refinepage: "icons/pets/cave-hyena.webp", expertspage: "icons/experts/cyrille.png", expertsresearchpage: "icons/experts/agnes.png",
+  t12research: "icons/speedup-research.png", t11helios: "icons/speedup-research.png", researchcenter: "icons/speedup-research.png",
+};
+let QUICK_PAGES = null;
+async function quickPages() {
+  if (!QUICK_PAGES) { const s = await loadCalcState("quick_pages").catch(() => null); QUICK_PAGES = s && Array.isArray(s.pages) ? s.pages.slice() : QUICK_DEFAULT.slice(); }
+  return QUICK_PAGES.filter((tb) => document.querySelector(`#topnavGroups [data-tab="${tb}"]`));
+}
+function quickIconHtml(tab) {
+  if (QUICK_ICONS[tab]) return `<img src="${esc(QUICK_ICONS[tab])}" alt="" />`;
+  const ic = document.querySelector(`#topnavGroups [data-tab="${tab}"] .ic`);
+  return `<span class="qk-em">${esc(ic ? ic.textContent : "\u2022")}</span>`;
+}
+async function drawQuickRow(el) {
+  if (!el || !IS_OWNER) return;
+  const pages = await quickPages();
+  if (!el.isConnected) return;
+  el.innerHTML = `<div class="qk-row">${pages.map((tb) => `<button type="button" class="qk-chip" data-quick="${esc(tb)}">${quickIconHtml(tb)}<span>${esc(navLabel(tb))}</span></button>`).join("")}<button type="button" class="qk-chip qk-ed" data-quickedit aria-label="${esc(t("qk_edit"))}" title="${esc(t("qk_edit"))}">${pages.length ? "&#9998;" : `&#9998; ${esc(t("qk_edit"))}`}</button></div>`;
+  el.onclick = (e) => {
+    const b = e.target.closest("[data-quick]");
+    if (b) { goToTab(b.dataset.quick); return; }
+    if (e.target.closest("[data-quickedit]")) openQuickSheet(() => { drawQuickRow(el); fitDashToScreen(); });
+  };
+  fitDashToScreen();
+}
+// ✎: every page of the menu grouped like the menu, ★ to pin; pinned pages on
+// top with ▲▼ to change their order.
+async function openQuickSheet(after) {
+  await quickPages();
+  let pins = QUICK_PAGES.slice();
+  let modal = document.getElementById("quickModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "quickModal";
+    modal.className = "modal-overlay";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal && modal._done) modal._done(); });
+  }
+  const groups = [...document.querySelectorAll("#topnavGroups .topnav-group")].map((g) => ({
+    name: (NAV_GROUP_LABELS[g.dataset.group] && (NAV_GROUP_LABELS[g.dataset.group][LANG] || NAV_GROUP_LABELS[g.dataset.group].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/\u25BC/g, "").trim(),
+    tabs: [...g.querySelectorAll("[data-tab]")].map((b) => b.dataset.tab).filter((tb, i, a) => a.indexOf(tb) === i),
+  })).filter((g) => g.tabs.length);
+  const known = new Set(groups.flatMap((g) => g.tabs));
+  const done = () => {
+    modal.style.display = "none";
+    QUICK_PAGES = pins.slice();
+    saveCalcState("quick_pages", { pages: QUICK_PAGES });
+    after();
+  };
+  modal._done = done;
+  const star = (tb) => `<button type="button" class="qk-star${pins.includes(tb) ? " on" : ""}" data-qkpin="${esc(tb)}" aria-label="★">${pins.includes(tb) ? "&#9733;" : "&#9734;"}</button>`;
+  const row = (tb, extra) => `<div class="qk-li">${quickIconHtml(tb)}<span class="qk-n">${esc(navLabel(tb))}</span>${extra || ""}${star(tb)}</div>`;
+  const draw = () => {
+    pins = pins.filter((tb) => known.has(tb));
+    modal.innerHTML = `<div class="modal-box qk-box">
+      <div class="bd-head"><h2>${esc(t("qk_edit"))}</h2><button type="button" class="btn small" data-qkdone>${esc(t("qk_done"))}</button></div>
+      <div class="meta" style="font-size:11.5px;">${esc(t("qk_hint"))}</div>
+      <div class="qk-k">${esc(t("qk_pinned"))} (${pins.length})</div>
+      <div class="qk-list">${pins.length ? pins.map((tb, i) => row(tb, `<span class="qk-mv"><button type="button" data-qkup="${i}"${i ? "" : " disabled"}>&#9650;</button><button type="button" data-qkdn="${i}"${i < pins.length - 1 ? "" : " disabled"}>&#9660;</button></span>`)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
+      ${groups.map((g) => `<div class="qk-k">${esc(g.name)}</div><div class="qk-list">${g.tabs.map((tb) => row(tb)).join("")}</div>`).join("")}
+    </div>`;
+    modal.querySelector("[data-qkdone]").addEventListener("click", done);
+    modal.querySelectorAll("[data-qkpin]").forEach((b) => b.addEventListener("click", () => {
+      const tb = b.dataset.qkpin;
+      pins = pins.includes(tb) ? pins.filter((x) => x !== tb) : pins.concat(tb);
+      const y = modal.querySelector(".qk-box").scrollTop;
+      draw();
+      modal.querySelector(".qk-box").scrollTop = y;
+    }));
+    const move = (i, d) => { const j = i + d; if (j < 0 || j >= pins.length) return; [pins[i], pins[j]] = [pins[j], pins[i]]; draw(); };
+    modal.querySelectorAll("[data-qkup]").forEach((b) => b.addEventListener("click", () => move(Number(b.dataset.qkup), -1)));
+    modal.querySelectorAll("[data-qkdn]").forEach((b) => b.addEventListener("click", () => move(Number(b.dataset.qkdn), 1)));
+  };
+  draw();
+  modal.style.display = "flex";
+}
 function fitDashToScreen() {
   const el = document.getElementById("troopSections"), box = el && el.closest(".dash-fit");
   if (!el || !box) return;
@@ -6440,11 +6546,13 @@ async function renderOverview(opts = {}) {
         <h2>${esc(t("stats_dashboard"))}</h2>
       </div>
     </div>
+    ${IS_OWNER ? `<div id="quickRow" class="qk-wrap"></div>` : ""}
     <div id="stateAgeCard" class="dash-sec">${stateAgeCardHtml()}</div>
     <div id="dashboardRoster" class="dash-sec"></div>
     <div id="troopSections" class="dash-sec2"></div>
   </div>`;
 
+  drawQuickRow(content.querySelector("#quickRow"));
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
   content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => keepPlace(() => renderOverview())); });
 
