@@ -142,7 +142,7 @@
     padding:10px 8px; border-radius:8px; font-size:13.5px; cursor:pointer; margin-bottom:2px;
   }
   .mm-pages button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
-  .mm-pages button .ic{ width:18px; text-align:center; flex-shrink:0; font-size:13px; }
+  .mm-pages button .ic{ width:20px; text-align:center; flex-shrink:0; font-size:13px; }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -168,7 +168,7 @@
   }
   .topnav-dropdown button:hover{ background:var(--panel-2); color:var(--frost); }
   .topnav-dropdown button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
-  .topnav-dropdown button .ic{ width:16px; text-align:center; flex-shrink:0; font-size:13px; }
+  .topnav-dropdown button .ic{ width:18px; text-align:center; flex-shrink:0; font-size:13px; }
   /* margin-inline-start (not margin-left) so the gear sits at the far end of
      the bar in both directions - in Arabic the whole bar is mirrored. */
   .topnav-settings{ position:relative; margin-inline-start:auto; flex-shrink:0; }
@@ -234,10 +234,12 @@
   .qk-wrap{ margin:0 0 8px; }
   .qk-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:1px 0; }
   .qk-row::-webkit-scrollbar{ display:none; }
-  .qk-chip{ display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; min-height:32px; box-sizing:border-box; padding:2px 11px 2px 5px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--frost); font:inherit; font-size:12.5px; cursor:pointer; }
-  .qk-chip img, .qk-em{ width:22px; height:22px; object-fit:contain; flex-shrink:0; }
-  .qk-em{ display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
-  .qk-chip.qk-ed{ position:sticky; right:0; padding:3px 12px; color:var(--ice); background:var(--panel-2); box-shadow:-10px 0 10px -4px var(--bg); }
+  .qk-chip{ display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; flex:0 0 auto; width:62px; min-height:52px; box-sizing:border-box; padding:5px 2px 4px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--frost); font:inherit; font-size:10.5px; line-height:1.15; cursor:pointer; }
+  .qk-chip > span:last-child{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .qk-chip img, .qk-em{ width:26px; height:26px; object-fit:contain; flex-shrink:0; }
+  .qk-em{ display:inline-flex; align-items:center; justify-content:center; font-size:17px; }
+  .qk-chip.qk-ed{ position:sticky; right:0; width:40px; font-size:16px; color:var(--ice); background:var(--panel-2); box-shadow:-10px 0 10px -4px var(--bg); }
+  .topnav-dropdown button .ic img, .mm-pages button .ic img{ width:100%; height:18px; object-fit:contain; vertical-align:middle; display:block; }
   .qk-box{ max-width:520px; max-height:86vh; overflow-y:auto; }
   .qk-k{ font-size:11px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted); margin:14px 0 4px; }
   .qk-list{ border:1px solid var(--line); border-radius:10px; overflow:hidden; }
@@ -5836,6 +5838,28 @@ const QUICK_ICONS = {
 };
 // Pages shown with a symbol instead of a picture (others use the Menu's own).
 const QUICK_EMOJI = { backpack: "\u{1F392}" };
+// Short names for the row's tiles (owner picked B, 1 Nov 2026), English only;
+// other languages, and pages renamed in Admin, keep the Menu name.
+const QUICK_SHORT = {
+  overview: "Dashboard", statetimeline: "Timeline", mypacks: "My packs", budgets: "Budget", purchases: "Buys", charmscalc: "Charm",
+  herogearcalc: "Hero Gear", expertsresearchpage: "Exp. Res.", petsdata: "Pets", refinepage: "Refine", researchcenter: "Research",
+  t11helios: "T11", t12research: "T12", rfclab: "Lab", skingallery: "Skins", islandgallery: "Islands", extrabonusheroes: "Skills",
+  alliancetechpage: "Tech", albumtundrapage: "Tundra", collectiongallerypage: "Collection", expertspage: "Experts",
+};
+function quickShortName(tab) {
+  const own = ((siteConfig("menu_layout", {}) || {}).pages || {})[tab];
+  return LANG === "en" && QUICK_SHORT[tab] && !(own && own.label) ? QUICK_SHORT[tab] : navLabel(tab);
+}
+// The Menu shows the same pictures (owner, 1 Nov 2026); its own symbol is
+// kept in data-sym for pages without one. Runs after every menu rebuild.
+function applyMenuIcons() {
+  document.querySelectorAll("#topnavGroups [data-tab] .ic").forEach((ic) => {
+    const tab = ic.closest("[data-tab]").dataset.tab;
+    if (ic.dataset.sym == null) ic.dataset.sym = ic.textContent;
+    if (QUICK_ICONS[tab]) ic.innerHTML = `<img src="${esc(QUICK_ICONS[tab])}" alt="" loading="lazy" />`;
+    else ic.textContent = QUICK_EMOJI[tab] || ic.dataset.sym;
+  });
+}
 let QUICK_PAGES = null;
 async function quickPages() {
   if (!QUICK_PAGES) { const s = await loadCalcState("quick_pages").catch(() => null); QUICK_PAGES = s && Array.isArray(s.pages) ? s.pages.slice() : QUICK_DEFAULT.slice(); }
@@ -5844,13 +5868,13 @@ async function quickPages() {
 function quickIconHtml(tab) {
   if (QUICK_ICONS[tab]) return `<img src="${esc(QUICK_ICONS[tab])}" alt="" />`;
   const ic = document.querySelector(`#topnavGroups [data-tab="${tab}"] .ic`);
-  return `<span class="qk-em">${esc(QUICK_EMOJI[tab] || (ic ? ic.textContent : "\u2022"))}</span>`;
+  return `<span class="qk-em">${esc(QUICK_EMOJI[tab] || (ic ? (ic.dataset.sym != null ? ic.dataset.sym : ic.textContent) : "\u2022"))}</span>`;
 }
 async function drawQuickRow(el) {
   if (!el || !IS_OWNER) return;
   const pages = await quickPages();
   if (!el.isConnected) return;
-  el.innerHTML = `<div class="qk-row">${pages.map((tb) => `<button type="button" class="qk-chip" data-quick="${esc(tb)}">${quickIconHtml(tb)}<span>${esc(navLabel(tb))}</span></button>`).join("")}<button type="button" class="qk-chip qk-ed" data-quickedit aria-label="${esc(t("qk_edit"))}" title="${esc(t("qk_edit"))}">${pages.length ? "&#9998;" : `&#9998; ${esc(t("qk_edit"))}`}</button></div>`;
+  el.innerHTML = `<div class="qk-row">${pages.map((tb) => `<button type="button" class="qk-chip" data-quick="${esc(tb)}" title="${esc(navLabel(tb))}">${quickIconHtml(tb)}<span>${esc(quickShortName(tb))}</span></button>`).join("")}<button type="button" class="qk-chip qk-ed" data-quickedit aria-label="${esc(t("qk_edit"))}" title="${esc(t("qk_edit"))}">${pages.length ? "&#9998;" : `&#9998; ${esc(t("qk_edit"))}`}</button></div>`;
   el.onclick = (e) => {
     const b = e.target.closest("[data-quick]");
     if (b) { goToTab(b.dataset.quick); return; }
@@ -22928,6 +22952,7 @@ function applyMenuLayout() {
     allTabs.filter((tab) => groupOf(tab) === k).sort((a, b) => rank(a) - rank(b)).forEach((tab) => { if (btns[tab]) dd.appendChild(btns[tab]); });
   });
   wrap.querySelectorAll(".topnav-group").forEach((g) => { if (g.id !== "adminNavGroup" && !groupKeys.includes(g.dataset.group) && !g.querySelector("button[data-tab]")) g.remove(); });
+  applyMenuIcons();
 }
 // The admin's note for a page (Admin → Menu & pages), in the visitor's language.
 function pageNoteFor(tab) {
