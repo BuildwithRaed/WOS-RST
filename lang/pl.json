@@ -1983,5 +1983,18 @@
 "t:scan_learn_skip_short":"Pomiń",
 "t:scan_learn_skipped":"Pominięto — Scan nie zapyta ponownie",
 "t:scan_learn_skipall":"Pomiń wszystkie niewybrane",
-"t:scan_learn_undo":"Cofnij"
+"t:scan_learn_undo":"Cofnij",
+"t:bud_hg_sets": "Zestawy w budżecie:",
+"t:bud_hg_nothing": "nic nie zostało",
+"t:bud_hg_set1": "{set} (Panel)",
+"t:bud_hg_note": "Sprzęt dla {sets} też jest planowany, ale tylko Zestaw 1 zmienia statystyki Panelu.",
+"t:hg_set_heroes": "Bohaterowie w {set}",
+"t:hg_set_tap": "dotknij, aby zmienić",
+"t:hg_set1_roster": "{set} używa bohaterów z Panelu.",
+"t:hg_open_dash": "Otwórz Panel ›",
+"t:hg_pick_hero": "Wybierz bohatera",
+"t:hg_no_hero": "Brak bohatera",
+"t:hg_stars": "Gwiazdki",
+"t:hg_stars_note": "Gwiazdki należą do bohatera, więc zmieniają się też w Panelu.",
+"t:hg_set_note": "Tylko Zestaw 1 liczy się do sumy Panelu. Ci bohaterowie pokazują się w szczegółach po wybraniu tego zestawu."
 }

@@ -1982,5 +1982,18 @@
 "t:scan_learn_skip_short":"건너뛰기",
 "t:scan_learn_skipped":"건너뜀 — Scan이 다시 묻지 않음",
 "t:scan_learn_skipall":"선택 안 한 것 모두 건너뛰기",
-"t:scan_learn_undo":"되돌리기"
+"t:scan_learn_undo":"되돌리기",
+"t:bud_hg_sets": "예산에 포함된 세트:",
+"t:bud_hg_nothing": "남은 것 없음",
+"t:bud_hg_set1": "{set} (대시보드)",
+"t:bud_hg_note": "{sets} 장비도 계획되지만, 대시보드 스탯은 세트 1만 바꿉니다.",
+"t:hg_set_heroes": "{set} 착용 영웅",
+"t:hg_set_tap": "눌러서 변경",
+"t:hg_set1_roster": "{set}은(는) 대시보드 로스터를 사용합니다.",
+"t:hg_open_dash": "대시보드 열기 ›",
+"t:hg_pick_hero": "영웅 선택",
+"t:hg_no_hero": "영웅 없음",
+"t:hg_stars": "별",
+"t:hg_stars_note": "별은 영웅에 속하므로 대시보드 로스터에서도 바뀝니다.",
+"t:hg_set_note": "대시보드 합계에는 세트 1만 계산됩니다. 이 세트를 고르면 상세 팝업에 이 영웅들이 표시됩니다."
 }

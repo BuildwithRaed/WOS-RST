@@ -1983,5 +1983,18 @@
 "t:scan_learn_skip_short":"Überspringen",
 "t:scan_learn_skipped":"Übersprungen — Scan fragt nicht mehr",
 "t:scan_learn_skipall":"Alle nicht gewählten überspringen",
-"t:scan_learn_undo":"Rückgängig"
+"t:scan_learn_undo":"Rückgängig",
+"t:bud_hg_sets": "Sets im Budget:",
+"t:bud_hg_nothing": "nichts mehr offen",
+"t:bud_hg_set1": "{set} (Übersicht)",
+"t:bud_hg_note": "Ausrüstung für {sets} wird auch geplant, aber nur Set 1 ändert deine Übersicht-Werte.",
+"t:hg_set_heroes": "Helden mit {set}",
+"t:hg_set_tap": "tippen zum Ändern",
+"t:hg_set1_roster": "{set} nutzt deine Helden aus der Übersicht.",
+"t:hg_open_dash": "Übersicht öffnen ›",
+"t:hg_pick_hero": "Held wählen",
+"t:hg_no_hero": "Kein Held",
+"t:hg_stars": "Sterne",
+"t:hg_stars_note": "Sterne gehören zum Helden, daher ändern sie sich auch in der Übersicht.",
+"t:hg_set_note": "Nur Set 1 zählt zur Gesamtsumme der Übersicht. Diese Helden erscheinen im Aufschlüsselungs-Pop-up, wenn du dieses Set wählst."
 }

@@ -1983,5 +1983,18 @@
 "t:scan_learn_skip_short":"Omitir",
 "t:scan_learn_skipped":"Omitido — Scan no volverá a preguntar",
 "t:scan_learn_skipall":"Omitir todo lo no elegido",
-"t:scan_learn_undo":"Deshacer"
+"t:scan_learn_undo":"Deshacer",
+"t:bud_hg_sets": "Conjuntos en el presupuesto:",
+"t:bud_hg_nothing": "nada pendiente",
+"t:bud_hg_set1": "{set} (Panel)",
+"t:bud_hg_note": "El equipo de {sets} también se planifica, pero solo Conjunto 1 cambia tus estadísticas del Panel.",
+"t:hg_set_heroes": "Héroes con {set}",
+"t:hg_set_tap": "toca para cambiar",
+"t:hg_set1_roster": "{set} usa tus héroes del Panel.",
+"t:hg_open_dash": "Abrir Panel ›",
+"t:hg_pick_hero": "Elige un héroe",
+"t:hg_no_hero": "Sin héroe",
+"t:hg_stars": "Estrellas",
+"t:hg_stars_note": "Las estrellas son del héroe, así que también cambian en los héroes del Panel.",
+"t:hg_set_note": "Solo Conjunto 1 cuenta en el total del Panel. Estos héroes aparecen en el desglose al elegir este conjunto."
 }
