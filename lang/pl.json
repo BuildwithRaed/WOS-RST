@@ -23,6 +23,8 @@
  "t:password_updated": "Hasło zmienione.",
  "t:logged_in_owner": "Zalogowano jako właściciel",
  "t:log_out": "Wyloguj",
+ "t:acc_sign_in": "Zaloguj",
+ "t:acc_signed_in": "Zalogowano",
  "t:email_placeholder": "E-mail",
  "t:password_placeholder": "Hasło",
  "t:enter_both": "Wpisz e-mail i hasło.",

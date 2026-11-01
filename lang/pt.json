@@ -22,6 +22,8 @@
 "t:password_updated":"Senha atualizada.",
 "t:logged_in_owner":"Conectado como dono",
 "t:log_out":"Sair",
+"t:acc_sign_in":"Entrar",
+"t:acc_signed_in":"Sessão iniciada",
 "t:email_placeholder":"E-mail",
 "t:password_placeholder":"Senha",
 "t:enter_both":"Digite o e-mail e a senha.",

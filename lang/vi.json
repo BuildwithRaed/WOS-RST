@@ -22,6 +22,8 @@
 "t:password_updated":"Đã cập nhật mật khẩu.",
 "t:logged_in_owner":"Đã đăng nhập với quyền chủ sở hữu",
 "t:log_out":"Đăng xuất",
+"t:acc_sign_in":"Đăng nhập",
+"t:acc_signed_in":"Đã đăng nhập",
 "t:email_placeholder":"Email",
 "t:password_placeholder":"Mật khẩu",
 "t:enter_both":"Nhập cả email và mật khẩu.",

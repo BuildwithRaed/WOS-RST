@@ -23,6 +23,8 @@
  "t:password_updated": "Mot de passe mis à jour.",
  "t:logged_in_owner": "Connecté en tant que propriétaire",
  "t:log_out": "Se déconnecter",
+ "t:acc_sign_in": "Se connecter",
+ "t:acc_signed_in": "Connecté",
  "t:email_placeholder": "E-mail",
  "t:password_placeholder": "Mot de passe",
  "t:enter_both": "Saisissez l'e-mail et le mot de passe.",

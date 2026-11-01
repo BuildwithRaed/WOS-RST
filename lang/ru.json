@@ -23,6 +23,8 @@
  "t:password_updated": "Пароль обновлён.",
  "t:logged_in_owner": "Вы вошли как владелец",
  "t:log_out": "Выйти",
+ "t:acc_sign_in": "Войти",
+ "t:acc_signed_in": "Вы вошли",
  "t:email_placeholder": "Email",
  "t:password_placeholder": "Пароль",
  "t:enter_both": "Введите email и пароль.",

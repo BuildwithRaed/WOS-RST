@@ -23,6 +23,8 @@
  "t:password_updated": "Passwort geändert.",
  "t:logged_in_owner": "Als Inhaber angemeldet",
  "t:log_out": "Abmelden",
+ "t:acc_sign_in": "Anmelden",
+ "t:acc_signed_in": "Angemeldet",
  "t:email_placeholder": "E-Mail",
  "t:password_placeholder": "Passwort",
  "t:enter_both": "Gib E-Mail und Passwort ein.",
