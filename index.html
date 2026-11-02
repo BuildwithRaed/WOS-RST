@@ -458,6 +458,34 @@
   .lvchip.tgt{ border-color:rgba(125,200,255,.55); color:var(--ice); }
   .lvchip.up{ border-color:var(--amber); color:var(--amber); }
   .lvarr{ color:var(--muted); font-size:12px; }
+  /* "What you can do now" marks (design B, 2 Nov 2026) */
+  .rch-slot{ display:contents; }
+  .rch-mark{ display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:30px; padding:3px 7px; border-radius:10px; border:1px dashed rgba(91,201,138,.7); color:var(--good); font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .rch-mark.full{ border-style:solid; background:rgba(91,201,138,.12); }
+  .rch-mark.none{ border-color:var(--line); color:var(--muted); }
+  .rch-bar{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--muted); }
+  .rch-track{ flex:1; height:4px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .rch-track i{ display:block; height:100%; background:var(--good); border-radius:3px; }
+  .rch-bar > span{ white-space:nowrap; }
+  .rch-amber{ color:var(--amber); }
+  .rch-sum{ margin:0 0 10px; padding:9px 12px; border:1px solid rgba(91,201,138,.45); border-radius:12px; background:rgba(91,201,138,.07); font-size:12.5px; }
+  .rch-sum-t{ line-height:1.35; }
+  .rch-first{ color:var(--amber); font-weight:700; }
+  .rch-sum-c{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:7px; }
+  .rch-seg{ display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .rch-seg button{ font:inherit; font-size:12px; min-height:32px; padding:4px 11px; border:0; background:transparent; color:var(--muted); cursor:pointer; }
+  .rch-seg button.on{ background:var(--ice-dim); color:var(--frost); font-weight:700; }
+  .rch-edit{ font-size:12px; }
+  .rch-key{ display:flex; align-items:center; gap:5px; margin-top:6px; font-size:10.5px; color:var(--muted); }
+  .rch-key i{ width:14px; height:4px; border-radius:2px; background:var(--good); margin-inline-start:6px; }
+  .rch-key i:first-child{ margin-inline-start:0; }
+  .rch-key i.r{ background:var(--line); }
+  .rch-ord-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid var(--line); font-size:13.5px; }
+  .rch-ord-row b{ width:20px; color:var(--muted); font-size:12px; }
+  .rch-ord-row span:not(.st){ flex:1; font-weight:700; }
+  .rch-ord-row .st{ width:44px; font-weight:700; }
+  .rch-ord-row button{ width:34px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); }
+  .rch-ord-row button:disabled{ opacity:.3; }
   @media (max-width:700px){
       }
   /* Pets Level card, design C v2 (19 Oct 2026). */
@@ -4092,6 +4120,22 @@ const T = {
   chest_open_do: { en: "Open" },
   chest_open_note: { en: "Chests marked {tag} aren't counted until opened." },
   chest_tile_avg: { en: "avg {all}" },
+  rch_sum: { en: "With your Backpack: {n} of {m} {unit} reach target" },
+  rch_first: { en: "{item} runs out first · {n} left" },
+  rch_my_order: { en: "My order" },
+  rch_best: { en: "Best value" },
+  rch_edit_order: { en: "Edit order ›" },
+  rch_key_covers: { en: "Backpack covers" },
+  rch_key_left: { en: "still to go to target" },
+  rch_mark_tip: { en: "How far your Backpack gets you now" },
+  rch_covers: { en: "Backpack covers it" },
+  rch_none: { en: "0 of {m} {unit} · {item}" },
+  rch_part: { en: "{n} of {m} {unit}" },
+  rch_u_levels: { en: "levels" },
+  rch_u_tracks: { en: "tracks" },
+  rch_order_title: { en: "Upgrade order" },
+  rch_order_hint: { en: "Your Backpack goes to these stats in this order (one troop and stat per row), on every page. Each row gets the upgrades that give the most for your items." },
+  rch_order_reset: { en: "Reset" },
   gx_title: { en: "Hero gear for XP" },
   gx_desc: { en: "Gear below Mythic you can feed into a mythic piece." },
   gx_Purple: { en: "Purple" },
@@ -7337,7 +7381,7 @@ async function openHgHeroSheet(setName, troopKey, after) {
 // Renders the Quick Select + per-piece calculator + totals + stats.
 async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
-  await ensureHeroGearData();
+  await Promise.all([ensureHeroGearData(), ensureUpgradeOrder()]);
 
   if (seq !== RENDER_SEQ) return;
   PLX_TROOP.hero_gear = heroGearActiveTroop;
@@ -7388,7 +7432,7 @@ async function renderGearLevelingGroup(target) {
         <div class="hgc-name"><div class="name">${esc(pieceDisplayName(piece))}</div><div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div></div>
         <button type="button" class="t12x-maxall" data-heropiecemax="${esc(troop)}|${esc(piece)}">${esc(maxLbl)}</button>
       </div>
-      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span>${chipHtml(troop, piece, t, "to")}</div>`).join("")}
+      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span><span class="rch-slot" data-rch="${esc(troop)}|${esc(piece)}|${esc(t)}"></span>${chipHtml(troop, piece, t, "to")}</div><div data-rchbar="${esc(troop)}|${esc(piece)}|${esc(t)}"></div>`).join("")}
     </div>`;
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
@@ -7411,6 +7455,7 @@ async function renderGearLevelingGroup(target) {
           <span class="sa-arrow">&rarr;</span>
           <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
         </div>`).join(""))}
+      <div data-rchsum="${esc(troop)}" data-rchpage="hero_gear"></div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:12px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
       </div>`;
@@ -7500,6 +7545,7 @@ async function renderGearLevelingGroup(target) {
     tracksEl.appendChild(wrap);
     builtPanels[troop] = wrap;
     fillHeroGearPieceStats();
+    fillHeroGearReach();
     return wrap;
   }
   function showPanel(troop) {
@@ -7752,6 +7798,184 @@ function backpackLinkNoteHtml(calcKey, name, link, compact) {
     : `<span class="bp-link typed">&#9998; ${esc(t("bp_link_typed"))} · <button type="button" class="linklike" data-bpuse="${esc(name)}">${esc(t("bp_link_use"))}</button></span>`;
 }
 
+// ---- What you can do now with your Backpack (owner picked design B, 2 Nov 2026) ----
+// Each page lists its tracks (a piece / node from its Now level to its Target);
+// reachPlan spends the page's Backpack amounts (what the "Amounts from your
+// Backpack" boxes count, BAR_HAVE[calcKey]) on them and returns how far each
+// track gets. Two ways (calc_state "upgrade_order"): "order" follows the
+// owner's stat order (one row = one troop + one stat; the steps raising that
+// stat that give the most per item first, then the next row), "best" takes the
+// steps giving the most stat % per item over every troop. Both stay inside the
+// person's targets. Steps that raise no stat are filled last.
+const UPGRADE_ORDER_DEFAULT = [["Infantry", "Health"], ["Infantry", "Defense"], ["Marksman", "Lethality"], ["Marksman", "Attack"], ["Lancer", "Lethality"], ["Lancer", "Attack"], ["Marksman", "Health"], ["Marksman", "Defense"], ["Infantry", "Lethality"], ["Infantry", "Attack"], ["Lancer", "Health"], ["Lancer", "Defense"]];
+let UPGRADE_ORDER = { mode: "order", rows: UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
+let UPGRADE_ORDER_LOADED = false;
+async function ensureUpgradeOrder() {
+  if (UPGRADE_ORDER_LOADED) return UPGRADE_ORDER;
+  const s = await loadCalcState("upgrade_order").catch(() => null);
+  UPGRADE_ORDER_LOADED = true;
+  if (s && typeof s === "object") {
+    const ok = Array.isArray(s.rows) && s.rows.length === UPGRADE_ORDER_DEFAULT.length && s.rows.every((r) => Array.isArray(r) && UPGRADE_ORDER_DEFAULT.some((d) => d[0] === r[0] && d[1] === r[1]));
+    UPGRADE_ORDER = { mode: s.mode === "best" ? "best" : "order", rows: ok ? s.rows.map((r) => r.slice()) : UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
+  }
+  return UPGRADE_ORDER;
+}
+function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
+const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
+const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
+const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
+// tracks: [{ id, troop ("Infantry" / "Lancer" / "Marksman" / "all" / null), from, to,
+//   cost(i) = items to go from level i-1 to i, gain(i, lv) = { stat: value } at level i
+//   (lv = every track's planned level, for stats that depend on another track) }]
+function reachPlan(tracks, have, mode, rows) {
+  const left = {};
+  Object.keys(have || {}).forEach((k) => { left[k] = Math.max(0, Number(have[k]) || 0); });
+  const lv = {};
+  tracks.forEach((tr) => { lv[tr.id] = tr.from; });
+  const weight = (cost) => {
+    let w = 0;
+    Object.keys(cost).forEach((k) => { const q = cost[k]; if (q > 0) { const h = Number(have[k]) || 0; w += h > 0 ? q / h : 1e9; } });
+    return w;
+  };
+  // Best run of steps on a track (up to 60 ahead) that can be paid now:
+  // the most gain (of one stat, or of all) per share of the Backpack it uses.
+  const chunk = (tr, stat) => {
+    const cur = lv[tr.id], cum = {};
+    let best = null;
+    const g0 = tr.gain(cur, lv) || {};
+    for (let j = cur + 1; j <= tr.to && j <= cur + 60; j++) {
+      const c = tr.cost(j) || {};
+      let ok = true;
+      Object.keys(c).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) { cum[k] = (cum[k] || 0) + q; if (cum[k] > (left[k] || 0) + 1e-9) ok = false; } });
+      if (!ok) break;
+      const g1 = tr.gain(j, lv) || {};
+      let gain = 0;
+      if (stat) gain = (g1[stat] || 0) - (g0[stat] || 0);
+      else Object.keys(g1).forEach((k) => { gain += (g1[k] || 0) - (g0[k] || 0); });
+      if (gain > 1e-9) {
+        const r = gain / Math.max(weight(cum), 1e-12);
+        if (!best || r > best.r) best = { to: j, r, cost: { ...cum } };
+      }
+    }
+    return best;
+  };
+  const take = (tr, b) => { lv[tr.id] = b.to; Object.keys(b.cost).forEach((k) => { left[k] = (left[k] || 0) - b.cost[k]; }); };
+  const run = (list, stat) => {
+    for (let guard = 0; guard < 20000; guard++) {
+      let pick = null, pt = null;
+      list.forEach((tr) => { if (lv[tr.id] >= tr.to) return; const b = chunk(tr, stat); if (b && (!pick || b.r > pick.r)) { pick = b; pt = tr; } });
+      if (!pick) return;
+      take(pt, pick);
+    }
+  };
+  const open = tracks.filter((tr) => tr.to > tr.from);
+  if (mode === "best") run(open, null);
+  else (rows || UPGRADE_ORDER_DEFAULT).forEach(([troop, stat]) => run(open.filter((tr) => tr.troop === "all" || reachTroopKey(tr.troop) === troop), stat));
+  // Steps that raise no stat (or are only worth it together with later ones):
+  // lowest level first, one step at a time, while the Backpack pays.
+  for (let guard = 0; guard < 50000; guard++) {
+    let pt = null;
+    open.forEach((tr) => {
+      if (lv[tr.id] >= tr.to) return;
+      const c = tr.cost(lv[tr.id] + 1) || {};
+      if (Object.keys(c).some((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9)) return;
+      if (!pt || lv[tr.id] - tr.from < lv[pt.id] - pt.from) pt = tr;
+    });
+    if (!pt) break;
+    const c = pt.cost(lv[pt.id] + 1) || {};
+    Object.keys(c).forEach((k) => { left[k] = (left[k] || 0) - (Number(c[k]) || 0); });
+    lv[pt.id]++;
+  }
+  // The item that stops the most tracks first ("runs out first").
+  const stop = {};
+  open.forEach((tr) => {
+    if (lv[tr.id] >= tr.to) return;
+    const c = tr.cost(lv[tr.id] + 1) || {};
+    Object.keys(c).forEach((k) => { if ((Number(c[k]) || 0) > (left[k] || 0) + 1e-9) stop[k] = (stop[k] || 0) + 1; });
+  });
+  const stopItems = Object.keys(stop).sort((a, b) => stop[b] - stop[a] || ((left[a] || 0) / ((Number(have[a]) || 1))) - ((left[b] || 0) / ((Number(have[b]) || 1))));
+  const blocker = {};
+  open.forEach((tr) => {
+    if (lv[tr.id] >= tr.to) return;
+    const c = tr.cost(lv[tr.id] + 1) || {};
+    blocker[tr.id] = Object.keys(c).find((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9) || null;
+  });
+  return { lv, left, first: stopItems[0] || null, blocker, reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
+}
+// The one-line summary above a page's pieces, with the order switch.
+function reachSummaryHtml(plan, scopeTracks, unit) {
+  const tracks = scopeTracks.filter((tr) => tr.to > tr.from);
+  if (!tracks.length) return "";
+  const reached = tracks.filter((tr) => plan.lv[tr.id] >= tr.to).length;
+  const first = plan.first ? `${esc(materialDisplayName(itemShortName(plan.first)))}` : "";
+  const leftN = plan.first ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
+  const fmtN = (n) => (n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
+  return `<div class="rch-sum">
+    <div class="rch-sum-t">&#127890; ${esc(t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)))}${first ? ` · <b class="rch-first">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</b>` : ""}</div>
+    <div class="rch-sum-c">
+      <div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+      ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="linklike rch-edit" data-rchedit>${esc(t("rch_edit_order"))}</button>` : ""}
+    </div>
+    <div class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</div>
+  </div>`;
+}
+// "✓178" between Now and Target, and the bar + "6 of 28 levels" under it.
+function reachMarkHtml(from, reach, to, label) {
+  if (!(to > from)) return "";
+  const done = reach >= to, none = reach <= from;
+  return `<span class="rch-mark${done ? " full" : none ? " none" : ""}" title="${esc(t("rch_mark_tip"))}">${none ? "—" : `&#10003;${esc(label(reach))}`}</span><span class="lvarr">&rarr;</span>`;
+}
+function reachBarHtml(from, reach, to, blockItem, unitKey) {
+  if (!(to > from)) return "";
+  const pct = Math.max(0, Math.min(100, ((reach - from) / (to - from)) * 100));
+  const done = reach >= to;
+  const txt = done ? `${esc(t("rch_covers"))} &#10003;` : reach <= from
+    ? `<span class="rch-amber">${esc(t("rch_none").replace("{m}", to - from).replace("{unit}", t(unitKey)).replace("{item}", blockItem ? materialDisplayName(itemShortName(blockItem)) : "—"))}</span>`
+    : esc(t("rch_part").replace("{n}", reach - from).replace("{m}", to - from).replace("{unit}", t(unitKey)));
+  return `<div class="rch-bar"><div class="rch-track"><i style="width:${pct}%;"></i></div><span>${txt}</span></div>`;
+}
+// Order editor: the 12 rows, ▲▼ and Reset (one order for every page).
+function openUpgradeOrderSheet(after) {
+  let m = document.getElementById("rchOrderModal");
+  if (!m) { m = document.createElement("div"); m.id = "rchOrderModal"; m.className = "modal-overlay"; document.body.appendChild(m); }
+  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+  const COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  const draw = () => {
+    const rows = UPGRADE_ORDER.rows;
+    m.innerHTML = `<div class="modal-box rch-ord" style="max-width:380px;">
+      <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("rch_order_title"))}</h2>
+      <div class="meta" style="font-size:12px; margin-bottom:8px;">${esc(t("rch_order_hint"))}</div>
+      ${rows.map(([troop, stat], i) => `<div class="rch-ord-row"><b>${i + 1}</b><span style="color:${COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>
+        <button type="button" data-rchup="${i}" ${i ? "" : "disabled"} aria-label="▲">&#9650;</button><button type="button" data-rchdn="${i}" ${i < rows.length - 1 ? "" : "disabled"} aria-label="▼">&#9660;</button></div>`).join("")}
+      <div style="display:flex; gap:8px; justify-content:space-between; margin-top:12px;">
+        <button type="button" class="btn ghost" data-rchreset>${esc(t("rch_order_reset"))}</button>
+        <button type="button" class="btn" data-rchdone>${esc(t("gs_done"))}</button>
+      </div></div>`;
+  };
+  draw();
+  m.style.display = "flex";
+  m.onclick = (ev) => {
+    const up = ev.target.closest("[data-rchup]"), dn = ev.target.closest("[data-rchdn]");
+    if (ev.target === m || ev.target.closest("[data-rchdone]")) { m.style.display = "none"; saveUpgradeOrder(); if (after) after(); return; }
+    if (ev.target.closest("[data-rchreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); draw(); return; }
+    const i = up ? Number(up.dataset.rchup) : dn ? Number(dn.dataset.rchdn) : -1;
+    if (i < 0) return;
+    const j = up ? i - 1 : i + 1, rows = UPGRADE_ORDER.rows;
+    if (j < 0 || j >= rows.length) return;
+    [rows[i], rows[j]] = [rows[j], rows[i]];
+    draw();
+  };
+}
+// One click handler for the order switch / edit link on every page.
+document.addEventListener("click", (ev) => {
+  const md = ev.target.closest("[data-rchmode]"), ed = ev.target.closest("[data-rchedit]");
+  if (!md && !ed) return;
+  const box = ev.target.closest("[data-rchpage]"), key = box && box.dataset.rchpage;
+  const redraw = () => { if (key && REACH_HOOKS[key]) REACH_HOOKS[key](); };
+  if (md) { if (UPGRADE_ORDER.mode === md.dataset.rchmode) return; UPGRADE_ORDER.mode = md.dataset.rchmode; saveUpgradeOrder(); redraw(); return; }
+  openUpgradeOrderSheet(redraw);
+});
+
 async function updateHeroGearTotals() {
   if (!HERO_GEAR_TABLES_CACHE) return;
   const HERO_GEAR_MATERIAL_COLS = [
@@ -7874,6 +8098,60 @@ function fillHeroGearPieceStats() {
     box.innerHTML = plxPieceStatHtml(keys.map((k) => ({ label: ABBR[k], now: now[k], target: Math.max(now[k], tgt[k]) })));
   });
 }
+// Heroes Gears "can reach" marks (design B, 2 Nov 2026): the set on screen,
+// all 3 troops, spending the Backpack boxes' amounts.
+function heroGearReachTracks(state) {
+  const mfRows = HERO_GEAR_TABLES_CACHE["Hero Gear Mastery Forging"] || [], enhRows = HERO_GEAR_TABLES_CACHE["Enhance Combined"] || [];
+  if (!mfRows.length || !enhRows.length) return [];
+  const mfPct = mfRows.map((r) => parseStatPct(r.stat) || 0), enhPct = enhRows.map((r) => parseStatPct(r.stat) || 0);
+  const ms = {};
+  HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+    const main = HERO_GEAR_MILESTONE_MAIN[piece], other = main === "Attack" ? "Defense" : "Attack";
+    const acc = { Attack: 0, Defense: 0 };
+    let n = 0;
+    ms[piece] = enhRows.map((r) => { const v = parseStatPct(r.stat2); if (v != null) { acc[n % 2 === 1 ? other : main] += v; n++; } return { ...acc }; });
+  });
+  const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
+  const costs = {};
+  GEAR_LEVELING_TABLES.forEach((tn) => { costs[tn] = (HERO_GEAR_TABLES_CACHE[tn] || []).map((r) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(r[col]) || 0; if (v) c[lab] = v; }); return c; }); });
+  const MF = "Hero Gear Mastery Forging", EN = "Enhance Combined";
+  const out = [];
+  HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+    const id = (tn) => `${troop}|${piece}|${tn}`;
+    const stats = (mf, en) => {
+      const o = { Attack: ms[piece][en].Attack, Defense: ms[piece][en].Defense, Health: 0, Lethality: 0 };
+      const cont = (enhPct[en] || 0) * (1 + (mfPct[mf] || 0) / 100);
+      HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece].forEach((k) => { o[k] += cont; });
+      return o;
+    };
+    GEAR_LEVELING_TABLES.forEach((tn) => {
+      const st = state[troop][piece][tn], rows = HERO_GEAR_TABLES_CACHE[tn] || [];
+      const to = Math.min(Number(st.to) || 0, rows.length - 1);
+      out.push({ id: id(tn), troop, from: Number(st.from) || 0, to, cost: (i) => costs[tn][i] || {},
+        gain: (i, lv) => (tn === MF ? stats(i, lv[id(EN)] ?? state[troop][piece][EN].from) : stats(lv[id(MF)] ?? state[troop][piece][MF].from, i)) });
+    });
+  }));
+  return out;
+}
+function fillHeroGearReach() {
+  const state = HERO_GEAR_SETS[heroGearActiveSet], have = BAR_HAVE.hero_gear;
+  if (!state || !HERO_GEAR_TABLES_CACHE || !have) return;
+  const tracks = heroGearReachTracks(state);
+  if (!tracks.length) return;
+  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+  const rowsOf = (tn) => HERO_GEAR_TABLES_CACHE[tn] || [];
+  const lab = (tn) => (i) => { const r = rowsOf(tn)[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
+  tracks.forEach((tr) => {
+    const [, , tn] = tr.id.split("|");
+    const slot = document.querySelector(`[data-rch="${CSS.escape(tr.id)}"]`), bar = document.querySelector(`[data-rchbar="${CSS.escape(tr.id)}"]`);
+    if (slot) slot.innerHTML = reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab(tn));
+    if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
+  });
+  document.querySelectorAll("[data-rchsum][data-rchpage='hero_gear']").forEach((box) => {
+    box.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === box.dataset.rchsum), "rch_u_tracks");
+  });
+}
+REACH_HOOKS.hero_gear = fillHeroGearReach;
 function updateHeroGearCurrentStats() {
   fillHeroGearPieceStats();
   const el = document.querySelector('[data-tsw="hero_gear"] .plx-tsw-stats');
@@ -20451,6 +20729,13 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
   recomputeEffOwned();
+  // What the page's "can reach" marks spend (design B, 2 Nov 2026); redrawn
+  // when a box amount changes too.
+  const reachRefresh = () => {
+    BAR_HAVE[calcKey || "chief_gear"] = { ...effOwned };
+    if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
+  };
+  reachRefresh();
 
   function statusFor(name, needed) {
     const haveQty = effOwned[name] || 0;
@@ -20711,6 +20996,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
+    reachRefresh();
     names.forEach((n) => groups.forEach((g) => {
       const needed = Number((g.totals || {})[n]) || 0;
       let { statusColor, statusText } = statusFor(n, needed);
