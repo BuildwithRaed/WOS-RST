@@ -480,6 +480,24 @@
   .rch-key i{ width:14px; height:4px; border-radius:2px; background:var(--good); margin-inline-start:6px; }
   .rch-key i:first-child{ margin-inline-start:0; }
   .rch-key i.r{ background:var(--line); }
+  .rch-mini{ display:inline-block; font-size:11.5px; font-weight:700; color:var(--good); }
+  .rch-mini.none{ color:var(--amber); font-weight:600; }
+  .cg-rch{ display:block; width:100%; margin-top:2px; }
+  .cg-rch .rch-bar{ margin-top:2px; font-size:10px; gap:2px; flex-direction:column; align-items:stretch; }
+  .cg-rch .rch-track{ flex:none; }
+  .cg-rch .rch-bar > span{ white-space:normal; line-height:1.15; }
+  .ch-rch{ display:block; min-height:14px; margin-top:2px; line-height:1.15; }
+  .ch-rch .rch-mini{ font-size:10.5px; }
+  .exp-rch:empty{ display:none; }
+  .exp-rch{ margin:4px 0 6px; text-align:start; }
+  .exp-rch .rch-line{ font-size:12px; color:var(--muted); }
+  .exp-rch .rch-mark{ min-height:24px; min-width:38px; }
+  .t12-rch:empty{ display:none; }
+  .t12-rch{ margin-top:6px; }
+  .t12-rch .rch-mark{ min-height:26px; }
+  .pc-rch{ margin-top:8px; }
+  .pc-rch:empty{ display:none; }
+  .rch-line{ display:flex; align-items:center; gap:6px; font-size:12.5px; }
   .rch-ord-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid var(--line); font-size:13.5px; }
   .rch-ord-row b{ width:20px; color:var(--muted); font-size:12px; }
   .rch-ord-row span:not(.st){ flex:1; font-weight:700; }
@@ -4132,6 +4150,15 @@ const T = {
   rch_none: { en: "0 of {m} {unit} · {item}" },
   rch_part: { en: "{n} of {m} {unit}" },
   rch_u_levels: { en: "levels" },
+  rch_u_steps: { en: "steps" },
+  rch_u_pieces: { en: "pieces" },
+  rch_u_charms: { en: "charms" },
+  rch_u_pets: { en: "pets" },
+  rch_u_nodes: { en: "nodes" },
+  rch_u_experts: { en: "experts" },
+  rch_can_reach: { en: "Can reach" },
+  rch_covers_short: { en: "covers it" },
+  rch_none_short: { en: "— · {item} short" },
   rch_u_tracks: { en: "tracks" },
   rch_order_title: { en: "Upgrade order" },
   rch_order_hint: { en: "Your Backpack goes to these stats in this order (one troop and stat per row), on every page. Each row gets the upgrades that give the most for your items." },
@@ -7909,7 +7936,7 @@ function reachSummaryHtml(plan, scopeTracks, unit) {
   const reached = tracks.filter((tr) => plan.lv[tr.id] >= tr.to).length;
   const first = plan.first ? `${esc(materialDisplayName(itemShortName(plan.first)))}` : "";
   const leftN = plan.first ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
-  const fmtN = (n) => (n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
+  const fmtN = (n) => (/\(minutes\)$/.test(plan.first || "") ? bsTime(n) : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
   return `<div class="rch-sum">
     <div class="rch-sum-t">&#127890; ${esc(t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)))}${first ? ` · <b class="rch-first">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</b>` : ""}</div>
     <div class="rch-sum-c">
@@ -20169,7 +20196,7 @@ function charmStageBarHtml(ci, ti, pick, groups) {
 const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
 async function renderCharmsCalc() {
   const seq = RENDER_SEQ;
-  await Promise.all([ensureCharmData(), ensureCharmLevelsData()]); // levels reload after Upcoming ticks change
+  await Promise.all([ensureCharmData(), ensureCharmLevelsData(), ensureUpgradeOrder()]); // levels reload after Upcoming ticks change
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
@@ -20196,8 +20223,33 @@ async function renderCharmsCalc() {
       <span class="ch-t-v">${esc(t("charm_lv"))} ${charmMajor(st.current)}${chip}</span>
       ${charmStageBarHtml(ci, Math.max(ci, ti))}
       <span class="ch-t-g">${foot}</span>
+      <span class="ch-rch" data-rch="ch|${c.piece.key}|${c.slot}"></span>
     </button>`;
   }
+  // "Can reach" marks (design B, 2 Nov 2026): all 18 charms share the Backpack.
+  function fillCharmReach() {
+    const have = BAR_HAVE.charm;
+    if (!have || !rowsEl.isConnected) return;
+    const tracks = [];
+    CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st, slot) => {
+      const from = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), to = Math.max(from, CHARM_LEVELS.indexOf(String(st.target)));
+      tracks.push({ id: `${p.key}|${slot}`, troop: p.troop, from, to,
+        cost: (i) => { const c = CHARM_STEP_COST[CHARM_LEVELS[i]] || [0, 0, 0]; return { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }; },
+        gain: (i) => { const v = charmStatAt(CHARM_LEVELS[i]); return { Lethality: v, Health: v }; } });
+    }));
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    tracks.forEach((tr) => {
+      const el = rowsEl.querySelector(`[data-rch="ch|${tr.id}"]`);
+      if (!el) return;
+      const r = plan.lv[tr.id];
+      el.innerHTML = tr.to > tr.from ? (r >= tr.to ? `<span class="rch-mini full">&#10003; ${esc(t("rch_covers_short"))}</span>`
+        : r <= tr.from ? `<span class="rch-mini none">${esc(t("rch_none_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"))}</span>`
+        : `<span class="rch-mini">&#10003;${esc(CHARM_LEVELS[r])}</span>`) : "";
+    });
+    const troop = plxTroopOf("charm"), sum = rowsEl.querySelector("[data-rchsum]");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === troop), "rch_u_charms");
+  }
+  REACH_HOOKS.charm = fillCharmReach;
   function renderTroopSections() {
     const troop = plxTroopOf("charm");
     const flat = charmFlat(troop), cap = charmCapIdx();
@@ -20209,6 +20261,7 @@ async function renderCharmsCalc() {
                 <span class="sa-arrow">&rarr;</span>
                 <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
               </div>`)}
+          <div data-rchsum data-rchpage="charm"></div>
           ${CHARM_PIECES.filter((p) => p.troop === troop).map((p) => {
             const mine = flat.map((c, i) => [c, i]).filter(([c]) => c.piece === p);
             const left = mine.filter(([c]) => { const st = CHARM_CALC_STATE[p.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
@@ -20234,6 +20287,7 @@ async function renderCharmsCalc() {
       });
     });
     rowsEl.querySelectorAll("[data-chtile]").forEach((b) => b.addEventListener("click", () => openCharmSheet(Number(b.dataset.chtile))));
+    fillCharmReach();
   }
 
   // The sheet for one charm (bottom sheet on phones, small window on PC).
@@ -20454,7 +20508,7 @@ function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purp
 function cgStars(r) { return r && r.tier && r.stars != null ? `★${r.stars}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}` : cgBadge(r); }
 async function renderChiefGearCalc() {
   const seq = RENDER_SEQ;
-  const rows = await loadChiefGearRows();
+  const [rows] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder()]);
   if (seq !== RENDER_SEQ) return;
   if (!rows.length) {
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_chief_gear_data"))}</div></div></div>`;
@@ -20484,13 +20538,37 @@ async function renderChiefGearCalc() {
     return `<button type="button" class="cg-slot" data-cgslot="${p.key}" style="grid-area:${p.key};" aria-label="${esc(pieceDisplayName(p.name))}">
       <span class="cg-pic" style="--edge:${cgEdge(rf)};"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
       <span class="cg-nm">${esc(pieceDisplayName(p.name))} · <span style="color:${TROOP_COLORS[p.troop]};">${esc(troopDisplayName(p.troop))}</span></span>
+      <span class="cg-rch" data-rch="cg|${p.key}"></span>
     </button>`;
   }
+  // "Can reach" marks (design B, 2 Nov 2026): each piece's star line and bar.
+  function fillChiefGearReach() {
+    const have = BAR_HAVE.chief_gear;
+    if (!have || !rowsEl.isConnected) return;
+    const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+    const tracks = CHIEF_GEAR_PIECES.map((p) => {
+      const st = CHIEF_GEAR_STATE[p.key], from = Math.min(st.from, rows.length - 1);
+      return { id: p.key, troop: p.troop, from, to: Math.max(from, Math.min(st.to == null ? from : st.to, rows.length - 1)),
+        cost: (i) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(rows[i] && rows[i][col]) || 0; if (v) c[lab] = v; }); return c; },
+        gain: (i) => { const v = parseStatPct(rows[i] && rows[i].stat) || 0; return { Attack: v, Defense: v }; } };
+    });
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    tracks.forEach((tr) => {
+      const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
+      if (!el) return;
+      const r = plan.lv[tr.id];
+      el.innerHTML = tr.to > tr.from ? `<span class="rch-mini${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(rows[r] && rows[tr.from] && rows[r].tier === rows[tr.from].tier ? cgStars(rows[r]) : cgBadge(rows[r]))}`}</span>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_steps")}` : "";
+    });
+    const sum = rowsEl.querySelector("[data-rchsum]");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pieces");
+  }
+  REACH_HOOKS.chief_gear = fillChiefGearReach;
   function renderPieces() {
     const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
     const open = !!SETALL_OPEN.chief;
     rowsEl.innerHTML = `
         <div class="panel">
+          <div data-rchsum data-rchpage="chief_gear"></div>
           <div class="cg-slots">
             ${CG_SLOT_ORDER.map((k) => slotHtml(pieceOf(k))).join("")}
             <div class="cg-mid"><b>${toGo}</b><span>${esc(t("cg_pieces_to_go"))}</span><span class="meta">${esc(t("cg_at_target").replace("{n}", CHIEF_GEAR_PIECES.length - toGo).replace("{m}", CHIEF_GEAR_PIECES.length))}</span>
@@ -20503,6 +20581,7 @@ async function renderChiefGearCalc() {
           </div>
           <p class="meta ch-hint">${esc(t("cg_slots_hint"))}</p>
         </div>`;
+    fillChiefGearReach();
     // "Set all" shows the level when all 6 pieces are on it.
     rowsEl.querySelectorAll("[data-cgsetall]").forEach((sel) => {
       const vals = new Set(CHIEF_GEAR_PIECES.map((p) => String(CHIEF_GEAR_STATE[p.key][sel.dataset.role])));
@@ -24308,6 +24387,7 @@ async function renderExpertsPage() {
     loadCalcState("experts_inventory"),
     loadExpertNodes("skill"),
     loadExpertNodes("affinity"),
+    ensureUpgradeOrder(),
   ]);
   const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
   const saved = renameExpertSkills(loadedExperts || {});
@@ -24480,6 +24560,7 @@ async function renderExpertsPage() {
     </div>`,
     mainHtml: `
     <div id="expertsSwipeCounter"></div>
+    <div id="expertsReach" data-rchsum data-rchpage="experts"></div>
     <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
@@ -24738,9 +24819,51 @@ async function renderExpertsPage() {
       return out;
     }), {});
     recordBudgetNeeds("experts", packGroups);
+    fillExpertsReach();
   }
 
   const gridEl = document.getElementById("expertsGrid");
+  // "Can reach" marks (design B, 2 Nov 2026): every counted expert's level
+  // (Affinity + Sigils) and skills (Books + expert / general speedups) share
+  // the amounts in the boxes. General Sigils count for each expert.
+  function fillExpertsReach() {
+    const gridBox = document.getElementById("expertsGrid");
+    if (!gridBox) return;
+    const TIME = "Expert Speedups (minutes)", AFF = "Affinity", BOOKS = "Books of Knowledge";
+    const have = { [AFF]: affinityOwnedFrom(invSaved), [BOOKS]: Number(invSaved[BOOKS]) || 0, [TIME]: expertSpeedupOwnedFrom(invSaved) };
+    const tracks = [];
+    EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).forEach((e) => {
+      const hs = saved[e.key], hero = e.key, SIG = `${hero} Sigils`;
+      have[SIG] = (Number(invSaved[SIG]) || 0) + (Number(invSaved["General Sigils"]) || 0);
+      const pos = [];
+      for (let n = 0; n <= heroTopLevel(hero); n++) { pos.push(n); if (n > 0 && heroSigilLevel(hero, n)) pos.push(n + 0.1); }
+      const idxOf = (v) => { const k = pos.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
+      const from = idxOf(hs.current), to = Math.max(from, idxOf(hs.desired)), banked = heroAffinityHave(hero);
+      const cum = (i) => { const c = heroCost(hero, pos[from], pos[i]); return { a: Math.max(0, c.affinity - banked), s: c.sigil }; };
+      const rows = AFFINITY_CACHE[hero] || [];
+      const statAt = (v) => { const r = rows.find((x) => x.level === heroLevelBase(v)); const o = {}; if (r && r.stat_type) r.stat_type.split(",").forEach((k) => { o[k.trim()] = Number(r.stat_value) || 0; }); return o; };
+      tracks.push({ id: `exp|${hero}`, troop: "all", from, to, pos,
+        cost: (i) => { const a = cum(i), b = cum(i - 1); return { [AFF]: a.a - b.a, [SIG]: a.s - b.s }; },
+        gain: (i) => statAt(pos[i]) });
+      e.skills.forEach((sk) => {
+        const st = hs.skills[sk], sr = SKILL_CACHE[`${hero}|${sk}`] || [], bankedExp = skillExpHave(st);
+        const cumS = (lv) => { const c = skillCost(hero, sk, st.current, lv); return { b: c.book, t: Math.max(0, c.exp - bankedExp) / 60 }; };
+        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
+          cost: (lv) => { const a = cumS(lv), b = cumS(lv - 1); return { [BOOKS]: a.b - b.b, [TIME]: a.t - b.t }; },
+          gain: () => ({}) });
+      });
+    });
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const sum = document.getElementById("expertsReach");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts");
+    gridBox.querySelectorAll("[data-rch]").forEach((el) => {
+      const tr = tracks.find((x) => x.id === el.dataset.rch);
+      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
+      const lab = tr.pos ? (i) => { const v = tr.pos[i]; return v % 1 ? v.toFixed(1) : String(v); } : (i) => String(i);
+      el.innerHTML = `<div class="rch-line">${esc(t("rch_can_reach"))} <span class="lvarr">${esc(lab(tr.from))} &rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab)} <span class="lvarr">${esc(lab(tr.to))}</span></div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels")}`;
+    });
+  }
+  REACH_HOOKS.experts = fillExpertsReach;
   function levelOpts(max, selected, rel = max) {
     return Array.from({ length: max + 1 }, (_, i) => i)
       .map((n) => `<option value="${n}" ${n === selected ? "selected" : ""}${n > rel ? ' class="opt-up"' : ""}>${n}${esc(upcomingTag(n > rel))}</option>`)
@@ -24802,6 +24925,7 @@ async function renderExpertsPage() {
             ${levelStatLine(e.key, s.desired)}
           </div>
         </div>
+        <div class="exp-rch" data-rch="exp|${esc(e.key)}"></div>
         <div style="border-top:1px solid var(--line); padding-top:10px; text-align:start;">
           ${e.skills
             .map((sk) => {
@@ -24841,6 +24965,7 @@ async function renderExpertsPage() {
                 ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px; color:var(--ice);">${curStat || "\u2014"} \u00b7 ${desStat || "\u2014"}</div>`
                 : ""
             }
+            <div class="exp-rch" data-rch="exps|${esc(e.key)}|${esc(sk)}"></div>
             ${
               // EXP line = design B (owner, 19 Oct 2026): "EXP [box] / step EXP [Max]",
               // then the step's Books still needed. The EXP counts against the whole
@@ -24863,6 +24988,7 @@ async function renderExpertsPage() {
         </div>
       </div>`;
     wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
+    fillExpertsReach();
 
     gridEl.querySelectorAll("select[data-expcur]").forEach((sel) => {
       sel.addEventListener("change", async () => {
@@ -25529,7 +25655,7 @@ async function renderRefinePage() {
 
 async function renderPetsDataPage() {
   const seq = RENDER_SEQ;
-  await ensurePetsData();
+  await Promise.all([ensurePetsData(), ensureUpgradeOrder()]);
   const petNames = petOrderSort(Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p)));
 
   if (seq !== RENDER_SEQ) return;
@@ -25539,6 +25665,7 @@ async function renderPetsDataPage() {
     maxId: "petsMaxAllBtn",
     statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
     mainHtml: `<div id="petsSwipeCounter"></div>
+    <div id="petsReach" data-rchsum data-rchpage="pets"></div>
     <div id="petsList"></div>`,
   });
 
@@ -25621,6 +25748,30 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
+  // "Can reach" marks (design B, 2 Nov 2026): every counted pet shares the
+  // Backpack; the card shows the pet on screen, the line above counts all.
+  function fillPetsReach() {
+    const have = BAR_HAVE.pets;
+    if (!have || !listEl.isConnected) return;
+    const tracks = petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
+      const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
+      return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)),
+        cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
+        gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
+    });
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const sum = document.getElementById("petsReach");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pets");
+    listEl.querySelectorAll("[data-rch^='pet|']").forEach((el) => {
+      const tr = tracks.find((x) => `pet|${x.id}` === el.dataset.rch);
+      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
+      const levels = PETS_NODES_CACHE[tr.id] || [], r = plan.lv[tr.id];
+      const lab = (i) => { if (i < 0 || !levels[i]) return "—"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
+      el.innerHTML = `<div class="rch-line">${esc(lab(tr.from))} <span class="lvarr">&rarr;</span> <span class="rch-mark${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(lab(r))}`}</span> <span class="lvarr">&rarr;</span> ${esc(lab(tr.to))}</div>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_levels")}`;
+    });
+  }
+  REACH_HOOKS.pets = fillPetsReach;
   let activePetIdx = 0;
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; renderList(); });
@@ -25692,6 +25843,7 @@ async function renderPetsDataPage() {
             ${step("from", from, -1, lastIdx, fromOpts)}
             ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
+          <div class="pc-rch" data-rch="pet|${esc(pet)}"></div>
           ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
             ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
             ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
@@ -25700,6 +25852,7 @@ async function renderPetsDataPage() {
           </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
+    fillPetsReach();
 
     wireVisibilityBtns(listEl, () => { renderTotals(); renderList(); });
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
@@ -26282,6 +26435,7 @@ async function renderT12ResearchPage() {
     });
   }
   if (!T12_TARGET) T12_TARGET = (await loadCalcState("t12_research_target")) || {};
+  await ensureUpgradeOrder();
 
   await ensureResearchSpeedData();
   await ensureResearchPageCountedData();
@@ -26447,6 +26601,7 @@ async function renderT12ResearchPage() {
           <span class="meta" style="white-space:nowrap;">/ ${rel}</span></span>
         </div>
         <div class="t12x-bar"><i style="width:${rel ? (Math.min(cur, rel) / rel) * 100 : 0}%;${cur >= rel ? " background:var(--good);" : ""}"></i></div>
+        <div class="t12-rch" data-rch="t12|${esc(troop)}|${def.key}"></div>
       </div>`;
     };
     const groupInfo = (group) => {
@@ -26467,6 +26622,7 @@ async function renderT12ResearchPage() {
     };
     troopsEl.innerHTML = `
       <div data-t12head>${headHtml()}</div>
+      <div data-rchsum data-rchpage="t12_research"></div>
       ${groups.map((group) => {
         const g = groupInfo(group);
         const open = t12Open[group] !== undefined ? t12Open[group] : g.planned;
@@ -26529,7 +26685,32 @@ async function renderT12ResearchPage() {
       renderTotals();
       refresh(T12_ITEM_DEFS.find((d) => d.key === sel.dataset.t12target));
     };
+    fillT12Reach();
   }
+  // "Can reach" marks (design B, 2 Nov 2026): every troop's nodes share the
+  // Backpack; research time is paid with research + general speedups.
+  function fillT12Reach() {
+    const have0 = BAR_HAVE.t12_research, troopsEl = document.getElementById("t12Troops");
+    if (!have0 || !troopsEl) return;
+    const TIME = "Research Speedups (minutes)";
+    const have = { ...have0, [TIME]: (Number(have0[TIME]) || 0) + (Number(RESEARCH_SPEEDUP_MINUTES) || 0) };
+    const tracks = [];
+    T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.forEach((def) => {
+      const from = T12_STATE[troop][def.key] || 0, tierRows = T12_NODES_CACHE[def.tier] || {};
+      tracks.push({ id: `${troop}|${def.key}`, troop, from, to: Math.max(from, t12TargetOf(troop, def)),
+        cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [TIME]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+        gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
+    }));
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    tracks.forEach((tr) => {
+      const el = troopsEl.querySelector(`[data-rch="t12|${CSS.escape(tr.id)}"]`);
+      if (!el) return;
+      el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels")}` : "";
+    });
+    const sum = troopsEl.querySelector("[data-rchsum]");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === t12ActiveTroop), "rch_u_nodes");
+  }
+  REACH_HOOKS.t12_research = fillT12Reach;
 
   renderTotals();
   renderTroopPanels();
