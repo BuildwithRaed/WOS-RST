@@ -2057,5 +2057,9 @@
 "t:rch_u_tracks": "branches",
 "t:rch_order_title": "Ordre d'amélioration",
 "t:rch_order_hint": "Votre sac va à ces stats dans cet ordre (une troupe et une stat par ligne), sur chaque page. Chaque ligne reçoit les améliorations qui rapportent le plus pour vos objets.",
-"t:rch_order_reset": "Réinitialiser"
+"t:rch_order_reset": "Réinitialiser",
+"t:rlk_all_at": "tout {group} au niv. {lv}",
+"t:rlk_or": "ou",
+"t:rlk_wait": "Niv. {lv}+ nécessite d'abord {needs}",
+"t:rlk_wait_target": "augmentez son objectif"
 }

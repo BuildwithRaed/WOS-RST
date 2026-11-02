@@ -2057,5 +2057,9 @@
 "t:rch_u_tracks": "ścieżek",
 "t:rch_order_title": "Kolejność ulepszeń",
 "t:rch_order_hint": "Plecak trafia do tych statystyk w tej kolejności (jedna jednostka i statystyka w wierszu), na każdej stronie. Każdy wiersz dostaje ulepszenia, które dają najwięcej za twoje przedmioty.",
-"t:rch_order_reset": "Resetuj"
+"t:rch_order_reset": "Resetuj",
+"t:rlk_all_at": "całe {group} na {lv}",
+"t:rlk_or": "lub",
+"t:rlk_wait": "Poz. {lv}+ wymaga najpierw: {needs}",
+"t:rlk_wait_target": "podnieś jego cel"
 }

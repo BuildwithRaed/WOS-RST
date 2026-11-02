@@ -2056,5 +2056,9 @@
 "t:rch_u_tracks": "트랙",
 "t:rch_order_title": "업그레이드 순서",
 "t:rch_order_hint": "배낭 아이템은 모든 페이지에서 이 순서대로 이 스탯에 쓰입니다(한 줄에 병종과 스탯 하나). 각 줄은 아이템 대비 효과가 가장 큰 업그레이드를 받습니다.",
-"t:rch_order_reset": "초기화"
+"t:rch_order_reset": "초기화",
+"t:rlk_all_at": "{group} 전부 Lv {lv}",
+"t:rlk_or": "또는",
+"t:rlk_wait": "Lv {lv}+는 먼저 {needs} 필요",
+"t:rlk_wait_target": "그 목표를 올리세요"
 }

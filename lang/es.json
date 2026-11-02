@@ -2057,5 +2057,9 @@
 "t:rch_u_tracks": "ramas",
 "t:rch_order_title": "Orden de mejora",
 "t:rch_order_hint": "Tu Mochila va a estas estadísticas en este orden (una tropa y estadística por fila), en todas las páginas. Cada fila recibe las mejoras que más dan por tus objetos.",
-"t:rch_order_reset": "Reiniciar"
+"t:rch_order_reset": "Reiniciar",
+"t:rlk_all_at": "todo {group} a {lv}",
+"t:rlk_or": "o",
+"t:rlk_wait": "Nv. {lv}+ requiere antes {needs}",
+"t:rlk_wait_target": "sube su objetivo"
 }

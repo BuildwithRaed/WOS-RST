@@ -2056,5 +2056,9 @@
 "t:rch_u_tracks": "yol",
 "t:rch_order_title": "Yükseltme sırası",
 "t:rch_order_hint": "Çantan her sayfada bu istatistiklere bu sırayla gider (her satırda bir birlik ve istatistik). Her satır, eşyaların için en çok kazandıran yükseltmeleri alır.",
-"t:rch_order_reset": "Sıfırla"
+"t:rch_order_reset": "Sıfırla",
+"t:rlk_all_at": "tüm {group} {lv} seviyesinde",
+"t:rlk_or": "veya",
+"t:rlk_wait": "Sv. {lv}+ için önce {needs} gerekli",
+"t:rlk_wait_target": "onun hedefini yükselt"
 }

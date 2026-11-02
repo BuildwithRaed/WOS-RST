@@ -2057,5 +2057,9 @@
 "t:rch_u_tracks": "路线",
 "t:rch_order_title": "升级顺序",
 "t:rch_order_hint": "背包物品在每个页面都按此顺序用于这些属性（每行一个兵种和属性）。每行获得对你的物品收益最高的升级。",
-"t:rch_order_reset": "重置"
+"t:rch_order_reset": "重置",
+"t:rlk_all_at": "{group}全部{lv}级",
+"t:rlk_or": "或",
+"t:rlk_wait": "Lv{lv}+需先完成{needs}",
+"t:rlk_wait_target": "请提高其目标"
 }

@@ -2056,5 +2056,9 @@
 "t:rch_u_tracks": "nhánh",
 "t:rch_order_title": "Thứ tự nâng cấp",
 "t:rch_order_hint": "Túi đồ được dùng cho các chỉ số này theo thứ tự này (mỗi hàng một binh chủng và chỉ số), trên mọi trang. Mỗi hàng nhận các nâng cấp lợi nhất cho vật phẩm của bạn.",
-"t:rch_order_reset": "Đặt lại"
+"t:rch_order_reset": "Đặt lại",
+"t:rlk_all_at": "tất cả {group} cấp {lv}",
+"t:rlk_or": "hoặc",
+"t:rlk_wait": "Cấp {lv}+ cần {needs} trước",
+"t:rlk_wait_target": "hãy tăng mục tiêu của nó"
 }
