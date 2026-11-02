@@ -463,6 +463,33 @@
   .rch-mark{ display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:30px; padding:3px 7px; border-radius:10px; border:1px dashed rgba(91,201,138,.7); color:var(--good); font-size:12.5px; font-weight:700; white-space:nowrap; }
   .rch-mark.full{ border-style:solid; background:rgba(91,201,138,.12); }
   .rch-mark.none{ border-color:var(--line); color:var(--muted); }
+  .rlk-top{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .rlk-pill{ font-size:11.5px; color:#7ee6a8; background:rgba(126,230,168,.12); border:1px solid rgba(126,230,168,.35); border-radius:999px; padding:3px 10px; }
+  .rlk-pages{ display:flex; gap:6px; overflow-x:auto; margin-bottom:8px; }
+  .rlk-pages button{ flex:0 0 auto; min-height:32px; padding:4px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:13px; }
+  .rlk-pages button.on{ border-color:var(--ice); color:var(--ice); background:rgba(111,211,242,.12); }
+  .rlk-desc{ margin:0 0 10px; font-size:12px; }
+  .rlk-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:10px; align-items:start; }
+  .rlk-card{ border:1px solid var(--line); border-radius:12px; padding:10px; background:rgba(255,255,255,.02); }
+  .rlk-card.rlk-empty{ opacity:.85; }
+  .rlk-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:6px; }
+  .rlk-h b{ font-size:14px; }
+  .rlk-line{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid rgba(255,255,255,.05); font-size:12.5px; }
+  .rlk-chip{ flex:0 0 auto; font-size:11px; color:var(--ice); background:rgba(111,211,242,.12); border-radius:6px; padding:2px 7px; white-space:nowrap; }
+  .rlk-txt{ flex:1 1 auto; min-width:0; }
+  .rlk-ed{ flex:0 0 auto; min-width:32px; min-height:32px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--frost); }
+  .rlk-none{ font-size:12px; padding:4px 0; }
+  .rlk-add{ width:100%; margin-top:6px; min-height:32px; border:1px dashed rgba(111,211,242,.45); border-radius:8px; background:transparent; color:var(--ice); font-size:12.5px; }
+  .rlk-lab{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:10px 0 5px; }
+  .rlk-sel{ width:100%; }
+  .rlk-row{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:13px; flex-wrap:wrap; }
+  .rlk-num{ width:70px !important; text-align:center; }
+  .rlk-need{ display:flex; align-items:center; gap:6px; margin-top:6px; }
+  .rlk-need .rlk-sel{ flex:1 1 auto; min-width:0; width:auto; }
+  .rlk-x{ min-width:32px; min-height:32px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--frost); }
+  .rlk-prev{ margin-top:10px; font-size:12px; padding:8px 10px; border-radius:8px; background:rgba(111,211,242,.08); line-height:1.4; }
+  .rlk-err{ color:#ff8a8a; font-size:12px; min-height:4px; margin-top:4px; }
+  .rch-wait{ margin-top:4px; font-size:11px; color:#f0c674; line-height:1.35; }
   .rch-bar{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--muted); }
   .rch-track{ flex:1; height:4px; border-radius:3px; background:var(--line); overflow:hidden; }
   .rch-track i{ display:block; height:100%; background:var(--good); border-radius:3px; }
@@ -4173,6 +4200,10 @@ const T = {
   rch_none: { en: "0 of {m} {unit} · {item}" },
   rch_part: { en: "{n} of {m} {unit}" },
   rch_u_levels: { en: "levels" },
+  rlk_all_at: { en: "all {group} at {lv}" },
+  rlk_or: { en: "or" },
+  rlk_wait: { en: "Lv {lv}+ needs {needs} first" },
+  rlk_wait_target: { en: "raise its target" },
   rch_u_steps: { en: "steps" },
   rch_u_pieces: { en: "pieces" },
   rch_u_charms: { en: "charms" },
@@ -7855,6 +7886,103 @@ function backpackLinkNoteHtml(calcKey, name, link, compact) {
     : `<span class="bp-link typed">&#9998; ${esc(t("bp_link_typed"))} · <button type="button" class="linklike" data-bpuse="${esc(name)}">${esc(t("bp_link_use"))}</button></span>`;
 }
 
+// ---- Research unlock rules (owner, 2 Nov 2026; Admin → Rules & Timeline →
+// Research unlock rules, design A) ----
+// Which levels of a research node wait for other research (same for every
+// troop). They don't lock anything on the pages: the "can reach" planner
+// (My order / Best value) does the research before a step first, and a node
+// stopped by them says what it waits for. Rule = { node: key | "group:<name>",
+// from: first level it applies to (until the next rule of the same node),
+// any: one of the needs is enough, needs: [{ node, lv }] }. Saved as game rule
+// "researchLocks" = { t12: [...], t11: [...], rc: [...] }.
+const RESEARCH_LOCK_PAGES = [["t12", "T12"], ["t11", "T11"], ["rc", "Research Center"]];
+const rlk = (node, from, needs, any) => ({ node, from, needs: needs.map(([n, lv]) => ({ node: n, lv })), ...(any ? { any: true } : {}) });
+// T12 from whiteoutsurvival.wiki (Infantry pages, the same for every troop);
+// Skills I after the Troop Unlock slots (owner, 2 Nov 2026).
+let RESEARCH_LOCKS = {
+  t12: [
+    rlk("group:Skills I", 1, [["group:Troop Unlock", 1]]),
+    rlk("troopskill", 1, [["group:Skills I", 5]]), rlk("troopskill", 2, [["group:Skills I", 10]]), rlk("troopskill", 3, [["group:Skills I", 15]]),
+    rlk("exalted_heal", 1, [["troopskill", 1]]), rlk("exalted_aid", 1, [["troopskill", 1]]), rlk("exalted_train", 1, [["exalted_heal", 1], ["exalted_aid", 1]]),
+    rlk("group:Skills II", 1, [["troopskill", 1]]), rlk("group:Skills II", 15, [["troopskill", 2]]), rlk("group:Skills II", 30, [["troopskill", 3]]),
+    rlk("solar", 1, [["group:Skills II", 30]]), rlk("solar", 6, [["group:Skills II", 40]]), rlk("solar", 11, [["group:Skills II", 50]]),
+    rlk("group:Skills III", 1, [["solar", 15]]),
+  ],
+  t11: [],
+  rc: [],
+};
+function researchLocksSet(v) {
+  const out = {};
+  RESEARCH_LOCK_PAGES.forEach(([pg]) => {
+    out[pg] = (Array.isArray(v && v[pg]) ? v[pg] : []).filter((r) => r && r.node && Number(r.from) >= 1 && Array.isArray(r.needs)).map((r) => ({
+      node: String(r.node), from: Math.round(Number(r.from)), ...(r.any ? { any: true } : {}),
+      needs: r.needs.filter((n) => n && n.node && Number(n.lv) >= 1).map((n) => ({ node: String(n.node), lv: Math.round(Number(n.lv)) })),
+    })).filter((r) => r.needs.length);
+  });
+  RESEARCH_LOCKS = out;
+}
+// The nodes of a page: [{ key, label, short, group, max }] (troop names left out).
+function researchLockNodes(pg) {
+  // "Skills II Attack", but "Exalted Healing" / "Shoulder Slot" on their own.
+  if (pg === "t12") return T12_ITEM_DEFS.map((d) => ({ key: d.key, group: d.group, max: d.max, short: tT12Label(d.label), label: d.group === d.label ? tT12Group(d.group) : /^(Attack|Lethality|Health|Defense)$/.test(d.label) ? `${tT12Group(d.group)} ${tT12Label(d.label)}` : tT12Label(d.label) }));
+  if (pg === "t11") {
+    const seen = new Map();
+    T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE && T11_NODES_CACHE[troop]) || {}).forEach(([track, rows]) => {
+      const key = track.split(troop).join("{troop}");
+      if (seen.has(key)) return;
+      const label = key.replace(/\s*\{troop\}\s*/g, " ").trim();
+      seen.set(key, { key, label, short: label, group: label.split(" ")[0], max: rows.length });
+    }));
+    return [...seen.values()];
+  }
+  if (pg === "rc") {
+    const out = [];
+    RC_TIERS.forEach((tier) => Object.values(RC_BASE_CATEGORIES).forEach((list) => list.forEach((base) => {
+      const key = `${base} ${tier}`;
+      if (out.some((n) => n.key === key)) return;
+      out.push({ key, label: key, short: base, group: `Tier ${tier}`, max: ((RC_NODES_CACHE && RC_NODES_CACHE[key]) || []).length || 0 });
+    })));
+    return out;
+  }
+  return [];
+}
+const researchLockGroups = (nodes) => [...new Set(nodes.map((n) => n.group))];
+// Rules in force for one node at one level: per target (the node itself, its
+// group), the rule with the highest "from" at or below the level.
+function researchLockRulesAt(pg, nodes, key, level) {
+  const node = nodes.find((n) => n.key === key);
+  if (!node) return [];
+  const out = [];
+  [key, `group:${node.group}`].forEach((tg) => {
+    let pick = null;
+    (RESEARCH_LOCKS[pg] || []).forEach((r) => { if (r.node === tg && r.from <= level && (!pick || r.from > pick.from)) pick = r; });
+    if (pick) out.push(pick);
+  });
+  return out;
+}
+// What a step needs, as reachPlan requirements: [[option = [[id, level], …], …], …].
+function researchNeedsOf(pg, nodes, key, level, idOf) {
+  const rules = researchLockRulesAt(pg, nodes, key, level);
+  if (!rules.length) return null;
+  const conj = (need) => (/^group:/.test(need.node) ? nodes.filter((n) => `group:${n.group}` === need.node).map((n) => n.key) : [need.node]).filter((k) => k !== key).map((k) => [idOf(k), need.lv]);
+  const reqs = [];
+  rules.forEach((r) => {
+    const opts = r.needs.map(conj).filter((o) => o.length);
+    if (!opts.length) return;
+    if (r.any) reqs.push(opts); else opts.forEach((o) => reqs.push([o]));
+  });
+  return reqs.length ? reqs : null;
+}
+function researchNeedName(pg, nodes, node) {
+  if (/^group:/.test(node)) { const g = node.slice(6); return pg === "t12" ? tT12Group(g) : g; }
+  const n = nodes.find((x) => x.key === node);
+  return n ? n.label : node;
+}
+// "all Skills II at 40" / "Healing 1 + First Aid 1" / "… or …"
+function researchNeedsText(pg, nodes, r) {
+  return r.needs.map((n) => (/^group:/.test(n.node) ? t("rlk_all_at").replace("{group}", researchNeedName(pg, nodes, n.node)).replace("{lv}", n.lv) : `${researchNeedName(pg, nodes, n.node)} ${n.lv}`)).join(r.any ? ` ${t("rlk_or")} ` : " + ");
+}
+
 // ---- What you can do now with your Backpack (owner picked design B, 2 Nov 2026) ----
 // Each page lists its tracks (a piece / node from its Now level to its Target);
 // reachPlan spends the page's Backpack amounts (what the "Amounts from your
@@ -7898,27 +8026,72 @@ function reachPlan(tracks, have, mode, rows) {
   };
   // Best run of steps on a track (up to 60 ahead) that can be paid now:
   // the most gain (of one stat, or of all) per share of the Backpack it uses.
+  // Research unlock rules (tr.needs(level) = [[option, …], …]: every
+  // requirement needs one of its options, an option = [[trackId, level], …]):
+  // a step whose research before it isn't done yet takes those steps with it
+  // (paid from the same Backpack, inside their targets), so the order and
+  // best value see what the step really costs. Admin → Research unlock rules.
+  const byId = new Map(tracks.map((tr) => [tr.id, tr]));
+  const needsMet = (tr, k, lvOf) => {
+    const reqs = tr.needs ? tr.needs(k) : null;
+    return !reqs || reqs.every((req) => req.some((opt) => opt.every(([id, l]) => lvOf(id) >= l)));
+  };
   const chunk = (tr, stat) => {
-    const cur = lv[tr.id], cum = {};
+    const cur = lv[tr.id];
+    let cum = {}, tmp = new Map();
     let best = null;
+    const lvOf = (id) => (tmp.has(id) ? tmp.get(id) : lv[id] != null ? lv[id] : (byId.get(id) || {}).from || 0);
+    const pay = (c) => {
+      let ok = true;
+      Object.keys(c || {}).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) { cum[k] = (cum[k] || 0) + q; if (cum[k] > (left[k] || 0) + 1e-9) ok = false; } });
+      return ok;
+    };
+    const raise = (id, target, depth) => {
+      const t2 = byId.get(id);
+      if (lvOf(id) >= target) return true;
+      if (!t2 || target > t2.to || depth > 12) return false;
+      for (let k = lvOf(id) + 1; k <= target; k++) {
+        if (!meet(t2, k, depth + 1) || !pay(t2.cost(k))) return false;
+        tmp.set(id, k);
+      }
+      return true;
+    };
+    const meet = (t2, k, depth) => {
+      const reqs = t2.needs ? t2.needs(k) : null;
+      if (!reqs) return true;
+      for (const req of reqs) {
+        if (req.some((opt) => opt.every(([id, l]) => lvOf(id) >= l))) continue;
+        let done = false;
+        for (const opt of req) {
+          const c0 = { ...cum }, m0 = new Map(tmp);
+          if (opt.every(([id, l]) => raise(id, l, depth))) { done = true; break; }
+          cum = c0; tmp = m0;
+        }
+        if (!done) return false;
+      }
+      return true;
+    };
+    const statGain = (a, b) => {
+      let g = 0;
+      if (stat) g = (a[stat] || 0) - (b[stat] || 0);
+      else Object.keys(a).forEach((k) => { g += (a[k] || 0) - (b[k] || 0); });
+      return g;
+    };
     const g0 = tr.gain(cur, lv) || {};
     for (let j = cur + 1; j <= tr.to && j <= cur + 60; j++) {
-      const c = tr.cost(j) || {};
-      let ok = true;
-      Object.keys(c).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) { cum[k] = (cum[k] || 0) + q; if (cum[k] > (left[k] || 0) + 1e-9) ok = false; } });
-      if (!ok) break;
-      const g1 = tr.gain(j, lv) || {};
-      let gain = 0;
-      if (stat) gain = (g1[stat] || 0) - (g0[stat] || 0);
-      else Object.keys(g1).forEach((k) => { gain += (g1[k] || 0) - (g0[k] || 0); });
+      if (!meet(tr, j, 0) || !pay(tr.cost(j))) break;
+      tmp.set(tr.id, j);
+      let gain = statGain(tr.gain(j, lv) || {}, g0);
+      // Research done first for this step counts with it.
+      tmp.forEach((l, id) => { if (id === tr.id) return; const t2 = byId.get(id); gain += statGain(t2.gain(l, lv) || {}, t2.gain(lv[id], lv) || {}); });
       if (gain > 1e-9) {
         const r = gain / Math.max(weight(cum), 1e-12);
-        if (!best || r > best.r) best = { to: j, r, cost: { ...cum } };
+        if (!best || r > best.r) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, cost: { ...cum }, pre }; }
       }
     }
     return best;
   };
-  const take = (tr, b) => { lv[tr.id] = b.to; Object.keys(b.cost).forEach((k) => { left[k] = (left[k] || 0) - b.cost[k]; }); };
+  const take = (tr, b) => { Object.keys(b.pre || {}).forEach((id) => { lv[id] = Math.max(lv[id], b.pre[id]); }); lv[tr.id] = b.to; Object.keys(b.cost).forEach((k) => { left[k] = (left[k] || 0) - b.cost[k]; }); };
   // Equally good steps (same gain for the same items): the owner's troop
   // order Infantry > Marksman > Lancer, then the lowest level first, so a
   // troop isn't pushed just because its piece comes first in the list.
@@ -7949,6 +8122,7 @@ function reachPlan(tracks, have, mode, rows) {
       if (lv[tr.id] >= tr.to) return;
       const c = tr.cost(lv[tr.id] + 1) || {};
       if (Object.keys(c).some((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9)) return;
+      if (!needsMet(tr, lv[tr.id] + 1, (id) => lv[id])) return;
       if (!pt || rank(tr) < rank(pt) || (rank(tr) === rank(pt) && lv[tr.id] - tr.from < lv[pt.id] - pt.from)) pt = tr;
     });
     if (!pt) break;
@@ -7970,7 +8144,15 @@ function reachPlan(tracks, have, mode, rows) {
     const c = tr.cost(lv[tr.id] + 1) || {};
     blocker[tr.id] = Object.keys(c).find((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9) || null;
   });
-  return { lv, left, first: stopItems[0] || null, blocker, reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
+  // Tracks stopped by research before them (not by the Backpack): what they wait for.
+  const waits = {};
+  open.forEach((tr) => {
+    if (lv[tr.id] >= tr.to || !tr.needs) return;
+    const reqs = tr.needs(lv[tr.id] + 1);
+    const miss = (reqs || []).find((req) => !req.some((opt) => opt.every(([id, l]) => lv[id] >= l)));
+    if (miss) waits[tr.id] = (miss[0] || []).filter(([id, l]) => lv[id] < l);
+  });
+  return { lv, left, first: stopItems[0] || null, blocker, waits, reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
 }
 // The one-line summary above a page's pieces, with the order switch.
 function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
@@ -8082,10 +8264,22 @@ function reachBarHtml(from, reach, to, blockItem, unitKey) {
   if (!(to > from)) return "";
   const pct = Math.max(0, Math.min(100, ((reach - from) / (to - from)) * 100));
   const done = reach >= to;
-  const txt = done ? `${esc(t("rch_covers"))} &#10003;` : reach <= from
+  const txt = done ? `${esc(t("rch_covers"))} &#10003;` : reach <= from && !blockItem ? esc(t("rch_part").replace("{n}", 0).replace("{m}", to - from).replace("{unit}", t(unitKey))) : reach <= from
     ? `<span class="rch-amber">${esc(t("rch_none").replace("{m}", to - from).replace("{unit}", t(unitKey)).replace("{item}", blockItem ? materialDisplayName(itemShortName(blockItem)) : "—"))}</span>`
     : esc(t("rch_part").replace("{n}", reach - from).replace("{m}", to - from).replace("{unit}", t(unitKey)));
   return `<div class="rch-bar"><div class="rch-track"><i style="width:${pct}%;"></i></div><span>${txt}</span></div>`;
+}
+// A node the planner stopped because research before it isn't done:
+// "🔒 Lv 15+ needs Troop Skill 2 first" (+ "raise its target" when that
+// research's own target is lower).
+function reachWaitHtml(pg, nodes, tr, plan, tracks) {
+  const w = plan.waits && plan.waits[tr.id];
+  if (!w || !w.length) return "";
+  const lvl = plan.lv[tr.id] + 1;
+  const rules = researchLockRulesAt(pg, nodes, tr.key, lvl);
+  if (!rules.length) return "";
+  const low = w.some(([id, l]) => { const x = tracks.find((y) => y.id === id); return x && x.to < l; });
+  return `<div class="rch-wait">&#128274; ${esc(t("rlk_wait").replace("{lv}", lvl).replace("{needs}", rules.map((r) => researchNeedsText(pg, nodes, r)).join(" + ")))}${low ? ` <span class="rch-amber">· ${esc(t("rlk_wait_target"))}</span>` : ""}</div>`;
 }
 // Order editor: the 12 rows, ▲▼ and Reset (one order for every page).
 function openUpgradeOrderSheet(after) {
@@ -26832,10 +27026,11 @@ async function renderT12ResearchPage() {
     if (!have0 || !troopsEl) return;
     const TIME = "Research Speedups (minutes)";
     const have = { ...have0, [TIME]: (Number(have0[TIME]) || 0) + (Number(RESEARCH_SPEEDUP_MINUTES) || 0) };
-    const tracks = [];
+    const tracks = [], lockNodes = researchLockNodes("t12");
     T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.forEach((def) => {
       const from = T12_STATE[troop][def.key] || 0, tierRows = T12_NODES_CACHE[def.tier] || {};
-      tracks.push({ id: `${troop}|${def.key}`, troop, from, to: Math.max(from, t12TargetOf(troop, def)), name: def.group === def.label ? tT12Group(def.group) : `${tT12Group(def.group)} · ${tT12Label(def.label)}`, lab: (i) => String(i),
+      tracks.push({ id: `${troop}|${def.key}`, troop, key: def.key, from, to: Math.max(from, t12TargetOf(troop, def)), name: def.group === def.label ? tT12Group(def.group) : `${tT12Group(def.group)} · ${tT12Label(def.label)}`, lab: (i) => String(i),
+        needs: (lv) => researchNeedsOf("t12", lockNodes, def.key, lv, (k) => `${troop}|${k}`),
         cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [TIME]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
         gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
     }));
@@ -26844,7 +27039,7 @@ async function renderT12ResearchPage() {
     tracks.forEach((tr) => {
       const el = troopsEl.querySelector(`[data-rch="t12|${CSS.escape(tr.id)}"]`);
       if (!el) return;
-      el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels")}` : "";
+      el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.waits[tr.id] && !plan.blocker[tr.id] ? null : plan.blocker[tr.id], "rch_u_levels")}${reachWaitHtml("t12", lockNodes, tr, plan, tracks)}` : "";
     });
     const sum = troopsEl.querySelector("[data-rchsum]");
     if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === t12ActiveTroop), "rch_u_nodes", "t12_research");
@@ -26966,6 +27161,8 @@ const ADMIN_TABLES = {
   // Opens the "Globe Level extra skins" rule on its own (owner, 20 Oct 2026).
   globe: { label: "Globe Level", group: "game", icon: "🔮", desc: "Skins that come with each Globe Level", words: "globe level frost sphere skin cosmetics" },
   rules: { label: "Rules & Timeline", group: "rules", icon: "📅", desc: "State days, Gen, events, trades, chests", words: "rules timeline state day unlock gen svs koi trade chest widget hall heroes gems lab advanced marks" },
+  // Research unlock rules have their own screen (owner picked design A, 2 Nov 2026).
+  reslocks: { label: "Research unlock rules", group: "rules", icon: "🔓", desc: "Which research needs which first", words: "research unlock rule need prerequisite before t12 t11 order can reach" },
   // These are full pages of their own; the Admin entry just opens them.
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
   packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
@@ -27089,6 +27286,7 @@ async function drawAdminSection(key, body) {
   else if (key === "backup") await renderAdminBackup(body);
   else if (key === "rules") await renderAdminRules(body);
   else if (key === "globe") await renderAdminGlobe(body);
+  else if (key === "reslocks") await renderAdminResearchLocks(body);
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
   else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
@@ -27369,6 +27567,9 @@ function gameRules() {
     { key: "globeLevels", group: "pages", label: "Globe Levels", help: "Each Globe Level's City Skin and the extra skins that come with it; picking the level on Skin gallery counts them as owned. Edited in Admin → Globe Level.", link: "globe",
       get: () => GLOBE_LEVELS.map((r) => ({ level: r.level, city: r.city, extra: r.extra.slice() })),
       set: (rows) => setGlobeLevels(rows) },
+    { key: "researchLocks", group: "research", label: "Research unlock rules", help: "Which levels of a research node wait for other research (same for every troop). Used by \"can reach\": it does that research first. Edited in Admin → Research unlock rules.", link: "reslocks",
+      get: () => JSON.parse(JSON.stringify(RESEARCH_LOCKS)),
+      set: (v) => researchLocksSet(v) },
     { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
       cols: [{ key: "group", label: "Pack group", type: "text" }],
       get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
@@ -27536,6 +27737,158 @@ async function renderAdminGlobe(body) {
       if (tl) { const n = tl.dataset.glpick; if (single) { picked.clear(); picked.add(n); } else if (picked.has(n)) picked.delete(n); else picked.add(n); sync(); return; }
       if (ev.target.closest("[data-glpok]") && picked.size) { close(); onDone([...picked]); }
     };
+  };
+  draw();
+}
+// Admin → Research unlock rules (owner picked design A, 2 Nov 2026): page
+// chips, one card per group with its rules in plain words, ✎ / "+ Add rule"
+// open a sheet (which levels, what they need, All / Any). Saved for everyone
+// as game rule "researchLocks"; nothing is locked on the pages, "can reach"
+// does the research before a step first.
+let RLK_PAGE = "t12";
+async function renderAdminResearchLocks(body) {
+  await ensureSiteConfig();
+  await Promise.all([ensureT11StateData().catch(() => null), ensureRCData().catch(() => null)]);
+  const defOf = (pg) => (((gameRules().find((r) => r.key === "researchLocks") || {}).def || {})[pg]) || [];
+  const store = async (pg, list, msg) => {
+    const all = JSON.parse(JSON.stringify(RESEARCH_LOCKS));
+    all[pg] = list;
+    try { await saveGameRule("researchLocks", all); toast(msg || "Saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
+    draw();
+  };
+  const ctx = () => {
+    const pg = RLK_PAGE, nodes = researchLockNodes(pg), list = RESEARCH_LOCKS[pg] || [];
+    const nodeOf = (key) => nodes.find((n) => n.key === key);
+    const groupOf = (tg) => (/^group:/.test(tg) ? tg.slice(6) : (nodeOf(tg) || {}).group);
+    const inGroup = (g) => nodes.filter((n) => n.group === g);
+    const maxOf = (tg) => (/^group:/.test(tg) ? Math.max(0, ...inGroup(tg.slice(6)).map((n) => n.max)) : (nodeOf(tg) || {}).max || 0);
+    const nameOf = (tg) => researchNeedName(pg, nodes, tg);
+    const gName = (g) => (pg === "t12" ? tT12Group(g) : g);
+    // A rule runs until the next rule of the same node starts.
+    const endOf = (r, rules) => { const nx = rules.filter((x) => x.node === r.node && x.from > r.from).map((x) => x.from); return nx.length ? Math.min(...nx) - 1 : maxOf(r.node); };
+    const rangeTxt = (r, rules) => { const e = endOf(r, rules); return e > r.from ? `Lv ${r.from}–${e}` : `Lv ${r.from}`; };
+    const optsHtml = (sel, skip) => researchLockGroups(nodes).map((g) => {
+      const ns = inGroup(g);
+      return `<optgroup label="${esc(gName(g))}">${ns.length > 1 ? `<option value="group:${esc(g)}" ${sel === `group:${g}` ? "selected" : ""}>All of ${esc(gName(g))} (${ns.length} nodes)</option>` : ""}${ns.filter((n) => n.key !== skip).map((n) => `<option value="${esc(n.key)}" ${sel === n.key ? "selected" : ""}>${esc(n.label)}</option>`).join("")}</optgroup>`;
+    }).join("");
+    return { pg, nodes, list, nodeOf, groupOf, inGroup, maxOf, nameOf, gName, endOf, rangeTxt, optsHtml };
+  };
+  const draw = () => {
+    const c = ctx(), { pg, nodes, list } = c;
+    const changed = JSON.stringify(list) !== JSON.stringify(defOf(pg));
+    const groups = researchLockGroups(nodes);
+    const line = (r, i) => {
+      const multi = c.inGroup(c.groupOf(r.node)).length > 1;
+      const pre = !/^group:/.test(r.node) && multi ? `${(c.nodeOf(r.node) || {}).short || r.node} · ` : "";
+      return `<div class="rlk-line"><span class="rlk-chip">${esc(pre + c.rangeTxt(r, list))}</span><span class="rlk-txt">needs <b>${esc(researchNeedsText(pg, nodes, r))}</b></span><button type="button" class="rlk-ed" data-rlked="${i}" aria-label="Edit rule">&#9998;</button></div>`;
+    };
+    const order = (r) => (/^group:/.test(r.node) ? -1 : nodes.findIndex((n) => n.key === r.node));
+    const cards = groups.map((g) => {
+      const ns = c.inGroup(g), rules = list.map((r, i) => ({ r, i })).filter((x) => c.groupOf(x.r.node) === g).sort((a, b) => order(a.r) - order(b.r) || a.r.from - b.r.from);
+      return `<div class="rlk-card${rules.length ? "" : " rlk-empty"}">
+        <div class="rlk-h"><b>${esc(c.gName(g))}</b><span class="meta">${ns.length} node${ns.length > 1 ? "s" : ""} · max ${Math.max(0, ...ns.map((n) => n.max))}</span></div>
+        ${rules.length ? rules.map((x) => line(x.r, x.i)).join("") : `<div class="meta rlk-none">No rules · open from the start</div>`}
+        <button type="button" class="rlk-add" data-rlkadd="${esc(g)}">+ Add rule</button>
+      </div>`;
+    }).join("");
+    body.innerHTML = `<div class="rlk">
+      <div class="rlk-top"><span class="rlk-pill">&#10003; Same rules for all troops</span><span style="flex:1"></span><button type="button" class="btn ghost small" data-rlkreset ${changed ? "" : "disabled"}>Reset to built-in</button></div>
+      <div class="rlk-pages">${RESEARCH_LOCK_PAGES.map(([k, l]) => `<button type="button" data-rlkpg="${k}" class="${k === pg ? "on" : ""}">${esc(l)}</button>`).join("")}</div>
+      <p class="desc rlk-desc">Which levels of a node wait for other research. Nothing is locked on the pages: <b>"can reach"</b> (My order / Best value) does the research before a step first, and a node it stops shows what it waits for.${pg === "t12" ? "" : ` <b>${esc(RESEARCH_LOCK_PAGES.find((x) => x[0] === pg)[1])}:</b> saved now, used once "can reach" is on this page.`}${changed ? ` <span class="rl-chg">changed</span>` : ""}</p>
+      ${nodes.length ? `<div class="rlk-grid">${cards}</div>` : `<div class="meta">This page's research couldn't be loaded. Try again.</div>`}
+    </div>`;
+  };
+  // Edit / add one rule.
+  const openRule = (idx, group) => {
+    const c = ctx(), { pg, nodes } = c;
+    const ns = c.inGroup(group || c.groupOf(c.list[idx].node));
+    const first = ns.length > 1 ? `group:${ns[0].group}` : (ns[0] || {}).key;
+    // A new rule starts with the group before it (the research done earlier).
+    const gs = researchLockGroups(nodes), gi = gs.indexOf((ns[0] || {}).group), pg0 = gs[gi > 0 ? gi - 1 : gi + 1];
+    const other = nodes.find((n) => n.group === pg0) || nodes.find((n) => n.group !== (ns[0] || {}).group) || nodes[0] || {};
+    const ed = idx != null ? JSON.parse(JSON.stringify(c.list[idx])) : { node: first, from: 1, needs: [{ node: c.inGroup(other.group || "").length > 1 ? `group:${other.group}` : other.key, lv: 1 }] };
+    let m = document.getElementById("rlkSheet");
+    if (!m) { m = document.createElement("div"); m.id = "rlkSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
+    m.style.display = "flex";
+    const close = () => { m.style.display = "none"; };
+    const rest = () => c.list.filter((r, i) => i !== idx);
+    const preview = () => {
+      const all = rest().concat([ed]), e = c.endOf(ed, all);
+      return `"Can reach" does <b>${esc(researchNeedsText(pg, nodes, ed))}</b> before <b>${esc(c.nameOf(ed.node))} ${e > ed.from ? `Lv ${ed.from}–${e}` : `Lv ${ed.from}`}</b>.`;
+    };
+    const drawSheet = () => {
+      const all = rest().concat([ed]), e = c.endOf(ed, all);
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box rlk-sheet" role="dialog" aria-modal="true">
+        <div class="gs-head"><b style="flex:1; font-size:17px;">${idx != null ? "Edit rule" : "New rule"} · ${esc(c.gName(c.groupOf(ed.node) || ""))}</b><button type="button" class="rfa-x" data-rlkclose aria-label="Close">&#10005;</button></div>
+        <div class="meta" style="font-size:11.5px; margin:-4px 0 8px;">${esc(RESEARCH_LOCK_PAGES.find((x) => x[0] === pg)[1])} · works the same for Infantry, Lancer and Marksman</div>
+        <div class="rlk-lab">Which levels</div>
+        <select class="rlk-sel" data-rlknode>${c.optsHtml(ed.node)}</select>
+        <div class="rlk-row"><span>from Lv</span><input type="number" min="1" max="${c.maxOf(ed.node)}" inputmode="numeric" value="${ed.from}" data-rlkfrom class="rlk-num" /><span class="meta">to Lv ${e}${e === c.maxOf(ed.node) ? " (max)" : " (next rule starts after)"}</span></div>
+        <div class="rlk-lab">Needs</div>
+        <div class="rlk-row"><span>Done when</span><span style="flex:1"></span><div class="rch-seg"><button type="button" data-rlkany="0" class="${ed.any ? "" : "on"}">All needs</button><button type="button" data-rlkany="1" class="${ed.any ? "on" : ""}">Any one</button></div></div>
+        ${ed.needs.map((n, i) => `<div class="rlk-need"><select class="rlk-sel" data-rlkneed="${i}">${c.optsHtml(n.node, /^group:/.test(ed.node) ? null : ed.node)}</select><span class="meta" style="white-space:nowrap;">at Lv</span><input type="number" min="1" max="${c.maxOf(n.node)}" inputmode="numeric" value="${n.lv}" data-rlkneedlv="${i}" class="rlk-num" /><button type="button" class="rlk-x" data-rlkdel="${i}" aria-label="Remove" ${ed.needs.length > 1 ? "" : "disabled"}>&#10005;</button></div>`).join("")}
+        <button type="button" class="rlk-add" data-rlkmore>+ Add another need</button>
+        <div class="rlk-prev" data-rlkprev>${preview()}</div>
+        <div class="rlk-err" data-rlkerr></div>
+        <div class="gl-sfoot"><button type="button" class="btn ghost small gl-del" data-rlkremove ${idx != null ? "" : "disabled"}>Delete</button><span style="flex:1"></span><button type="button" class="btn ghost small" data-rlkclose>Cancel</button><button type="button" class="btn small" data-rlksave>Save</button></div>
+      </div>`;
+    };
+    const err = () => {
+      if (!(ed.from >= 1 && ed.from <= c.maxOf(ed.node))) return `"from Lv" must be 1 – ${c.maxOf(ed.node)}.`;
+      if (!ed.needs.length) return "Add at least one need.";
+      for (const n of ed.needs) {
+        if (n.node === ed.node) return "A node can't need itself.";
+        if (!(n.lv >= 1 && n.lv <= c.maxOf(n.node))) return `${c.nameOf(n.node)} goes up to Lv ${c.maxOf(n.node)}.`;
+      }
+      if (rest().some((r) => r.node === ed.node && r.from === ed.from)) return `There is already a rule for ${c.nameOf(ed.node)} from Lv ${ed.from}.`;
+      return "";
+    };
+    drawSheet();
+    m.oninput = (ev) => {
+      const el = ev.target;
+      if (el.matches("[data-rlkfrom]")) ed.from = Math.round(Number(el.value) || 0);
+      else if (el.matches("[data-rlkneedlv]")) ed.needs[Number(el.dataset.rlkneedlv)].lv = Math.round(Number(el.value) || 0);
+      else return;
+      const pv = m.querySelector("[data-rlkprev]"); if (pv) pv.innerHTML = preview();
+    };
+    m.onchange = (ev) => {
+      const el = ev.target;
+      if (el.matches("[data-rlknode]")) { ed.node = el.value; drawSheet(); }
+      else if (el.matches("[data-rlkneed]")) { ed.needs[Number(el.dataset.rlkneed)].node = el.value; drawSheet(); }
+    };
+    m.onclick = async (ev) => {
+      if (ev.target === m || ev.target.closest("[data-rlkclose]")) { close(); return; }
+      const a = ev.target.closest("[data-rlkany]");
+      if (a) { if (a.dataset.rlkany === "1") ed.any = true; else delete ed.any; drawSheet(); return; }
+      const d = ev.target.closest("[data-rlkdel]");
+      if (d) { ed.needs.splice(Number(d.dataset.rlkdel), 1); drawSheet(); return; }
+      if (ev.target.closest("[data-rlkmore]")) { const last = ed.needs[ed.needs.length - 1] || { node: other.key, lv: 1 }; ed.needs.push({ node: last.node, lv: last.lv }); drawSheet(); return; }
+      if (ev.target.closest("[data-rlkremove]") && idx != null) {
+        if (!confirm("Delete this rule?")) return;
+        close(); await store(pg, rest(), "Rule deleted"); return;
+      }
+      if (ev.target.closest("[data-rlksave]")) {
+        const e = err();
+        if (e) { m.querySelector("[data-rlkerr]").textContent = e; return; }
+        const out = { node: ed.node, from: ed.from, ...(ed.any ? { any: true } : {}), needs: ed.needs.map((n) => ({ node: n.node, lv: n.lv })) };
+        const list = c.list.slice();
+        if (idx != null) list[idx] = out; else list.push(out);
+        close(); await store(pg, list, "Rule saved");
+      }
+    };
+  };
+  body.onclick = async (ev) => {
+    const pgb = ev.target.closest("[data-rlkpg]");
+    if (pgb) { RLK_PAGE = pgb.dataset.rlkpg; draw(); return; }
+    const e = ev.target.closest("[data-rlked]");
+    if (e) { openRule(Number(e.dataset.rlked)); return; }
+    const a = ev.target.closest("[data-rlkadd]");
+    if (a) { openRule(null, a.dataset.rlkadd); return; }
+    if (ev.target.closest("[data-rlkreset]")) {
+      const pg = RLK_PAGE;
+      if (!confirm(`Put the built-in rules for ${RESEARCH_LOCK_PAGES.find((x) => x[0] === pg)[1]} back?`)) return;
+      await store(pg, JSON.parse(JSON.stringify(defOf(pg))), "Reset to built-in");
+    }
   };
   draw();
 }
