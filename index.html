@@ -499,6 +499,28 @@
   .pc-rch{ margin-top:8px; }
   .pc-rch:empty{ display:none; }
   .rch-line{ display:flex; align-items:center; gap:6px; font-size:12.5px; }
+  .rch-allbtn{ margin-inline-start:auto; font:inherit; font-size:12px; font-weight:700; min-height:32px; padding:4px 11px; border-radius:10px; border:1px solid var(--ice-dim); background:transparent; color:var(--ice); cursor:pointer; }
+  .rcs-box{ padding:14px 14px 12px; max-height:min(70vh, 560px); }
+  .rcs-head{ display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; font-size:14px; }
+  .rcs-head > div{ flex:1; min-width:0; }
+  .rcs-head .rch-first{ font-size:12px; margin-top:2px; }
+  .rcs-tr{ border-top:1px solid var(--line); }
+  .rcs-tr.open{ border-inline-start:3px solid var(--tc); padding-inline-start:6px; }
+  .rcs-line{ display:flex; align-items:center; gap:8px; width:100%; min-height:42px; padding:6px 2px; border:0; background:none; color:inherit; font:inherit; font-size:13px; text-align:start; cursor:pointer; }
+  .rcs-line:disabled{ cursor:default; opacity:.75; }
+  .rcs-line i{ width:9px; height:9px; border-radius:50%; background:var(--tc); flex:none; }
+  .rcs-line b{ color:var(--tc); }
+  .rcs-line .meta{ font-size:12px; }
+  .rcs-g{ margin-inline-start:auto; color:var(--good); font-weight:700; font-size:12px; text-align:end; }
+  .rcs-car{ color:var(--muted); font-size:11px; }
+  .rcs-body{ padding:0 2px 10px; }
+  .rcs-row{ display:flex; align-items:baseline; gap:8px; padding:4px 0; font-size:12.5px; }
+  .rcs-row b{ min-width:74px; font-weight:600; }
+  .rcs-row span{ flex:1; color:var(--muted); line-height:1.4; }
+  .rcs-row span i{ font-style:normal; color:var(--frost); font-weight:700; font-size:11px; }
+  .rcs-row em{ font-style:normal; color:var(--good); font-weight:700; }
+  .rcs-go{ display:block; margin:6px 0 0 auto; }
+  .rcs-foot{ display:flex; justify-content:flex-end; padding-top:10px; border-top:1px solid var(--line); }
   .rch-ord-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid var(--line); font-size:13.5px; }
   .rch-ord-row b{ width:20px; color:var(--muted); font-size:12px; }
   .rch-ord-row span:not(.st){ flex:1; font-weight:700; }
@@ -4156,6 +4178,13 @@ const T = {
   rch_u_charms: { en: "charms" },
   rch_u_pets: { en: "pets" },
   rch_u_nodes: { en: "nodes" },
+  rch_all_btn: { en: "See all troops ›" },
+  rch_sum_done: { en: "This troop is at its targets" },
+  rch_all_title: { en: "All troops · {n} {unit} go up" },
+  rch_all_up: { en: "{n} {unit} go up" },
+  rch_all_none: { en: "nothing yet" },
+  rch_all_done: { en: "at target" },
+  rch_all_go: { en: "Go to {troop} ›" },
   rch_u_experts: { en: "experts" },
   rch_can_reach: { en: "Can reach" },
   rch_covers_short: { en: "covers it" },
@@ -7944,22 +7973,105 @@ function reachPlan(tracks, have, mode, rows) {
   return { lv, left, first: stopItems[0] || null, blocker, reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
 }
 // The one-line summary above a page's pieces, with the order switch.
-function reachSummaryHtml(plan, scopeTracks, unit) {
+function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
   const tracks = scopeTracks.filter((tr) => tr.to > tr.from);
-  if (!tracks.length) return "";
+  // "See all troops ›" (design C, owner 2 Nov 2026) stays even when the troop
+  // on screen has nothing planned.
+  if (!tracks.length && !(allKey && REACH_LAST[allKey] && REACH_LAST[allKey].tracks.some((tr) => tr.to > tr.from))) return "";
   const reached = tracks.filter((tr) => plan.lv[tr.id] >= tr.to).length;
   const first = plan.first ? `${esc(materialDisplayName(itemShortName(plan.first)))}` : "";
   const leftN = plan.first ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
   const fmtN = (n) => (/\(minutes\)$/.test(plan.first || "") ? bsTime(n) : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
   return `<div class="rch-sum">
-    <div class="rch-sum-t">&#127890; ${esc(t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)))}${first ? ` · <b class="rch-first">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</b>` : ""}</div>
+    <div class="rch-sum-t">&#127890; ${esc(tracks.length ? t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)) : t("rch_sum_done"))}${first ? ` · <b class="rch-first">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</b>` : ""}</div>
     <div class="rch-sum-c">
       <div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
       ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="linklike rch-edit" data-rchedit>${esc(t("rch_edit_order"))}</button>` : ""}
+      ${allKey ? `<button type="button" class="rch-allbtn" data-rchall="${esc(allKey)}">${esc(t("rch_all_btn"))}</button>` : ""}
     </div>
     <div class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</div>
   </div>`;
 }
+// ---- "See all troops ›": a small sheet with every troop at once (design C) ----
+// Pages with troops keep their last plan here: { plan, tracks, unit, go(troop) };
+// tracks carry name (piece), short (track letter), lab(i) (level label) and grp
+// (tracks of one piece share their stats, counted once).
+const REACH_LAST = {};
+const reachGoTroop = (key) => (troop) => { const b = document.querySelector(`[data-tsw="${key}"] [data-tswtroop="${troop}"]`); if (b) b.click(); };
+let REACH_ALL_OPEN = null; // troop open in the sheet
+const REACH_STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+function reachTroopGain(tracks, plan) {
+  const before = {}, out = {}, seen = new Set();
+  tracks.forEach((tr) => { before[tr.id] = tr.from; });
+  tracks.forEach((tr) => {
+    if (tr.grp) { if (seen.has(tr.grp)) return; seen.add(tr.grp); }
+    const a = tr.gain(plan.lv[tr.id], plan.lv) || {}, b = tr.gain(tr.from, before) || {};
+    Object.keys(a).forEach((k) => { const d = (a[k] || 0) - (b[k] || 0); if (d > 1e-9) out[k] = (out[k] || 0) + d; });
+  });
+  return out;
+}
+function reachGainText(g) {
+  const ks = ["Attack", "Defense", "Lethality", "Health"].filter((k) => g[k] > 0.005);
+  if (!ks.length) return "";
+  const r = (v) => `+${Math.round(v * 10) / 10}%`;
+  if (ks.length > 1 && ks.every((k) => Math.abs(g[k] - g[ks[0]]) < 0.05)) return `${r(g[ks[0]])} ${ks.map((k) => REACH_STAT_ABBR[k]).join(" · ")}`;
+  return ks.map((k) => `${r(g[k])} ${REACH_STAT_ABBR[k]}`).join(" ");
+}
+function openReachAllSheet(key) {
+  const last = REACH_LAST[key];
+  if (!last) return;
+  let m = document.getElementById("rchAllSheet");
+  if (!m) { m = document.createElement("div"); m.id = "rchAllSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
+  const COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  const draw = () => {
+    const { plan, tracks, unit } = REACH_LAST[key];
+    const troops = ["Infantry", "Marksman", "Lancer"].map((troop) => {
+      const mine = tracks.filter((tr) => reachTroopKey(tr.troop) === troop && tr.to > tr.from);
+      const up = mine.filter((tr) => plan.lv[tr.id] > tr.from);
+      return { troop, mine, up, gain: reachGainText(reachTroopGain(mine, plan)) };
+    });
+    const total = troops.reduce((n, x) => n + x.up.length, 0);
+    if (!REACH_ALL_OPEN || !troops.some((x) => x.troop === REACH_ALL_OPEN && x.up.length)) REACH_ALL_OPEN = (troops.find((x) => x.up.length) || {}).troop || null;
+    const first = plan.first ? esc(t("rch_first").replace("{item}", "@@").replace("{n}", /\(minutes\)$/.test(plan.first) ? bsTime(Math.max(0, plan.left[plan.first] || 0)) : Math.floor(Math.max(0, plan.left[plan.first] || 0)).toLocaleString())).replace("@@", esc(materialDisplayName(itemShortName(plan.first)))) : "";
+    const rowsOf = (x) => {
+      const byName = new Map();
+      x.up.forEach((tr) => { if (!byName.has(tr.name)) byName.set(tr.name, []); byName.get(tr.name).push(tr); });
+      return [...byName.entries()].map(([name, list]) => {
+        const parts = list.map((tr) => `${tr.short ? `<i>${esc(tr.short)}</i> ` : ""}${esc(tr.lab(tr.from))}&rarr;<em>${esc(tr.lab(plan.lv[tr.id]))}</em>`);
+        // The same step on every charm of a piece shows once ("Jacket ×3 16.8→17").
+        const shown = parts.every((x) => x === parts[0]) ? [parts[0]] : parts;
+        return `<div class="rcs-row"><b>${esc(name)}${list.length > 1 && !list[0].short ? ` <span class="meta">×${list.length}</span>` : ""}</b><span>${shown.join(" · ")}</span></div>`;
+      }).join("");
+    };
+    m.innerHTML = `<div class="modal-box adm-sheet rcs-box" role="dialog" aria-modal="true">
+      <div class="rcs-head"><div><b>${esc(t("rch_all_title").replace("{n}", total).replace("{unit}", t(unit)))}</b>${first ? `<div class="rch-first">${first}</div>` : ""}</div><button type="button" class="rfa-x" data-rcsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      ${troops.map((x) => {
+        const open = REACH_ALL_OPEN === x.troop && x.up.length;
+        return `<div class="rcs-tr${open ? " open" : ""}" style="--tc:${COLORS[x.troop]};">
+          <button type="button" class="rcs-line" data-rcstr="${x.troop}" ${x.up.length ? "" : "disabled"}><i></i><b>${esc(troopDisplayName(x.troop))}</b><span class="meta">${x.up.length ? esc(t("rch_all_up").replace("{n}", x.up.length).replace("{unit}", t(unit))) : esc(t(x.mine.length ? "rch_all_none" : "rch_all_done"))}</span><span class="rcs-g">${esc(x.gain)}</span>${x.up.length ? `<span class="rcs-car">${open ? "&#9652;" : "&#9662;"}</span>` : ""}</button>
+          ${open ? `<div class="rcs-body">${rowsOf(x)}${last.go ? `<button type="button" class="btn ghost small rcs-go" data-rcsgo="${x.troop}">${esc(t("rch_all_go").replace("{troop}", troopDisplayName(x.troop)))}</button>` : ""}</div>` : ""}
+        </div>`;
+      }).join("")}
+      <div class="rcs-foot"><div class="rch-seg"><button type="button" data-rcsmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rcsmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div></div>
+    </div>`;
+  };
+  draw();
+  m.style.display = "flex";
+  m.onclick = (ev) => {
+    if (ev.target === m || ev.target.closest("[data-rcsx]")) { m.style.display = "none"; return; }
+    const tr = ev.target.closest("[data-rcstr]"), go = ev.target.closest("[data-rcsgo]"), md = ev.target.closest("[data-rcsmode]");
+    if (tr) { REACH_ALL_OPEN = REACH_ALL_OPEN === tr.dataset.rcstr ? "" : tr.dataset.rcstr; draw(); return; }
+    if (md) { if (UPGRADE_ORDER.mode !== md.dataset.rcsmode) { UPGRADE_ORDER.mode = md.dataset.rcsmode; saveUpgradeOrder(); if (REACH_HOOKS[key]) REACH_HOOKS[key](); draw(); } return; }
+    if (go) {
+      m.style.display = "none";
+      const l = REACH_LAST[key];
+      if (l && l.go) l.go(go.dataset.rcsgo);
+      // Then scroll to the first piece the Backpack takes up.
+      setTimeout(() => { const el = [...document.querySelectorAll(".rch-mark:not(.none), .rch-mini:not(.none)")].find((x) => x.offsetParent); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 350);
+    }
+  };
+}
+document.addEventListener("click", (ev) => { const b = ev.target.closest("[data-rchall]"); if (b) openReachAllSheet(b.dataset.rchall); });
 // "✓178" between Now and Target, and the bar + "6 of 28 levels" under it.
 function reachMarkHtml(from, reach, to, label) {
   if (!(to > from)) return "";
@@ -8168,7 +8280,9 @@ function heroGearReachTracks(state) {
     GEAR_LEVELING_TABLES.forEach((tn) => {
       const st = state[troop][piece][tn], rows = HERO_GEAR_TABLES_CACHE[tn] || [];
       const to = Math.min(Number(st.to) || 0, rows.length - 1);
+      const rl = (i) => { const r = rows[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
       out.push({ id: id(tn), troop, from: Number(st.from) || 0, to, cost: (i) => costs[tn][i] || {},
+        name: pieceDisplayName(piece), short: tn === MF ? "M" : "E", grp: `${troop}|${piece}`, lab: rl,
         gain: (i, lv) => (tn === MF ? stats(i, lv[id(EN)] ?? state[troop][piece][EN].from) : stats(lv[id(MF)] ?? state[troop][piece][MF].from, i)) });
     });
   }));
@@ -8181,6 +8295,7 @@ function fillHeroGearReach() {
   const tracks = heroGearReachTracks(state);
   if (!tracks.length) return;
   const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+  REACH_LAST.hero_gear = { plan, tracks, unit: "rch_u_tracks", go: reachGoTroop("hero_gear") };
   const rowsOf = (tn) => HERO_GEAR_TABLES_CACHE[tn] || [];
   const lab = (tn) => (i) => { const r = rowsOf(tn)[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
   tracks.forEach((tr) => {
@@ -8190,7 +8305,7 @@ function fillHeroGearReach() {
     if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
   });
   document.querySelectorAll("[data-rchsum][data-rchpage='hero_gear']").forEach((box) => {
-    box.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === box.dataset.rchsum), "rch_u_tracks");
+    box.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === box.dataset.rchsum), "rch_u_tracks", "hero_gear");
   });
 }
 REACH_HOOKS.hero_gear = fillHeroGearReach;
@@ -20249,11 +20364,12 @@ async function renderCharmsCalc() {
     const tracks = [];
     CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st, slot) => {
       const from = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), to = Math.max(from, CHARM_LEVELS.indexOf(String(st.target)));
-      tracks.push({ id: `${p.key}|${slot}`, troop: p.troop, from, to,
+      tracks.push({ id: `${p.key}|${slot}`, troop: p.troop, from, to, name: pieceDisplayName(p.name), lab: (i) => String(CHARM_LEVELS[i]),
         cost: (i) => { const c = CHARM_STEP_COST[CHARM_LEVELS[i]] || [0, 0, 0]; return { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }; },
         gain: (i) => { const v = charmStatAt(CHARM_LEVELS[i]); return { Lethality: v, Health: v }; } });
     }));
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    REACH_LAST.charm = { plan, tracks, unit: "rch_u_charms", go: reachGoTroop("charm") };
     tracks.forEach((tr) => {
       const el = rowsEl.querySelector(`[data-rch="ch|${tr.id}"]`);
       if (!el) return;
@@ -20263,7 +20379,7 @@ async function renderCharmsCalc() {
         : `<span class="rch-mini">&#10003;${esc(CHARM_LEVELS[r])}</span>`) : "";
     });
     const troop = plxTroopOf("charm"), sum = rowsEl.querySelector("[data-rchsum]");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === troop), "rch_u_charms");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === troop), "rch_u_charms", "charm");
   }
   REACH_HOOKS.charm = fillCharmReach;
   function renderTroopSections() {
@@ -20566,10 +20682,12 @@ async function renderChiefGearCalc() {
     const tracks = CHIEF_GEAR_PIECES.map((p) => {
       const st = CHIEF_GEAR_STATE[p.key], from = Math.min(st.from, rows.length - 1);
       return { id: p.key, troop: p.troop, from, to: Math.max(from, Math.min(st.to == null ? from : st.to, rows.length - 1)),
+        name: pieceDisplayName(p.name), lab: (i) => cgBadge(rows[i]),
         cost: (i) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(rows[i] && rows[i][col]) || 0; if (v) c[lab] = v; }); return c; },
         gain: (i) => { const v = parseStatPct(rows[i] && rows[i].stat) || 0; return { Attack: v, Defense: v }; } };
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    REACH_LAST.chief_gear = { plan, tracks, unit: "rch_u_pieces", go: null };
     tracks.forEach((tr) => {
       const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
       if (!el) return;
@@ -20577,7 +20695,7 @@ async function renderChiefGearCalc() {
       el.innerHTML = tr.to > tr.from ? `<span class="rch-mini${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(rows[r] && rows[tr.from] && rows[r].tier === rows[tr.from].tier ? cgStars(rows[r]) : cgBadge(rows[r]))}`}</span>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_steps")}` : "";
     });
     const sum = rowsEl.querySelector("[data-rchsum]");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pieces");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pieces", "chief_gear");
   }
   REACH_HOOKS.chief_gear = fillChiefGearReach;
   function renderPieces() {
@@ -26717,18 +26835,19 @@ async function renderT12ResearchPage() {
     const tracks = [];
     T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.forEach((def) => {
       const from = T12_STATE[troop][def.key] || 0, tierRows = T12_NODES_CACHE[def.tier] || {};
-      tracks.push({ id: `${troop}|${def.key}`, troop, from, to: Math.max(from, t12TargetOf(troop, def)),
+      tracks.push({ id: `${troop}|${def.key}`, troop, from, to: Math.max(from, t12TargetOf(troop, def)), name: def.group === def.label ? tT12Group(def.group) : `${tT12Group(def.group)} · ${tT12Label(def.label)}`, lab: (i) => String(i),
         cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [TIME]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
         gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
     }));
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    REACH_LAST.t12_research = { plan, tracks, unit: "rch_u_nodes", go: (troop) => { const b = document.querySelector(`[data-t12tab="${troop}"]`); if (b) b.click(); } };
     tracks.forEach((tr) => {
       const el = troopsEl.querySelector(`[data-rch="t12|${CSS.escape(tr.id)}"]`);
       if (!el) return;
       el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels")}` : "";
     });
     const sum = troopsEl.querySelector("[data-rchsum]");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === t12ActiveTroop), "rch_u_nodes");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === t12ActiveTroop), "rch_u_nodes", "t12_research");
   }
   REACH_HOOKS.t12_research = fillT12Reach;
 
