@@ -8008,13 +8008,14 @@ async function ensureUpgradeOrder() {
 function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
 const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
 const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
+const BAR_CONV = {};    // calcKey -> choice chests' rules, opened by reachPlan as needed
 const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
 // Which troop goes first when two upgrades are equally good (owner, 2 Nov 2026).
 const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
 // tracks: [{ id, troop ("Infantry" / "Lancer" / "Marksman" / "all" / null), from, to,
 //   cost(i) = items to go from level i-1 to i, gain(i, lv) = { stat: value } at level i
 //   (lv = every track's planned level, for stats that depend on another track) }]
-function reachPlan(tracks, have, mode, rows) {
+function reachPlan(tracks, have, mode, rows, conv) {
   const left = {};
   Object.keys(have || {}).forEach((k) => { left[k] = Math.max(0, Number(have[k]) || 0); });
   const lv = {};
@@ -8023,6 +8024,45 @@ function reachPlan(tracks, have, mode, rows) {
     let w = 0;
     Object.keys(cost).forEach((k) => { const q = cost[k]; if (q > 0) { const h = Number(have[k]) || 0; w += h > 0 ? q / h : 1e9; } });
     return w;
+  };
+  // Choice chests (owner, 2 Nov 2026: a Pet Chest opens into 7 Manual, 2
+  // Potion or 1 Serum; Custom Resource Chests into a resource): kept closed
+  // and opened into whatever a step is short of, instead of the Backpack
+  // boxes' split (which follows the whole target's needs). conv = the
+  // page's hidden choice rules [{ from, to, give, get, max }].
+  const convTo = {};
+  (conv || []).forEach((r) => { if (r && r.from && r.to && r.give > 0 && r.get > 0) (convTo[r.to] = convTo[r.to] || []).push({ ...r, cap: r.max > 0 ? r.max : Infinity }); });
+  const convUsed = new Map(); // rule -> lots used so far
+  // What paying `cost` takes from what's left: { draw, lots, extra } or { fail: item }.
+  const settle = (cost) => {
+    const draw = {}, lots = new Map(), extra = {}, short = {};
+    Object.keys(cost || {}).forEach((k) => {
+      const q = Number(cost[k]) || 0;
+      if (!(q > 1e-9)) return;
+      const d = Math.min(q, Math.max(0, left[k] || 0));
+      draw[k] = (draw[k] || 0) + d;
+      if (q - d > 1e-9) short[k] = q - d;
+    });
+    for (const k of Object.keys(short)) {
+      let sh = short[k];
+      for (const r of convTo[k] || []) {
+        const avail = (left[r.from] || 0) - (draw[r.from] || 0);
+        const capLeft = r.cap - (convUsed.get(r) || 0) - (lots.get(r) || 0);
+        const n = Math.min(Math.ceil(sh / r.get - 1e-9), Math.floor(avail / r.give + 1e-9), capLeft);
+        if (!(n > 0)) continue;
+        draw[r.from] = (draw[r.from] || 0) + n * r.give;
+        lots.set(r, (lots.get(r) || 0) + n);
+        sh -= n * r.get;
+        if (sh <= 1e-9) { extra[k] = (extra[k] || 0) - sh; sh = 0; break; }
+      }
+      if (sh > 1e-9) return { fail: k };
+    }
+    return { draw, lots, extra };
+  };
+  const applySettle = (st) => {
+    Object.keys(st.draw).forEach((k) => { left[k] = (left[k] || 0) - st.draw[k]; });
+    Object.keys(st.extra).forEach((k) => { left[k] = (left[k] || 0) + st.extra[k]; });
+    st.lots.forEach((n, r) => convUsed.set(r, (convUsed.get(r) || 0) + n));
   };
   // Best run of steps on a track (up to 60 ahead) that can be paid now:
   // the most gain (of one stat, or of all) per share of the Backpack it uses.
@@ -8038,13 +8078,13 @@ function reachPlan(tracks, have, mode, rows) {
   };
   const chunk = (tr, stat) => {
     const cur = lv[tr.id];
-    let cum = {}, tmp = new Map();
+    let cum = {}, tmp = new Map(), st = null;
     let best = null;
     const lvOf = (id) => (tmp.has(id) ? tmp.get(id) : lv[id] != null ? lv[id] : (byId.get(id) || {}).from || 0);
     const pay = (c) => {
-      let ok = true;
-      Object.keys(c || {}).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) { cum[k] = (cum[k] || 0) + q; if (cum[k] > (left[k] || 0) + 1e-9) ok = false; } });
-      return ok;
+      Object.keys(c || {}).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) cum[k] = (cum[k] || 0) + q; });
+      st = settle(cum);
+      return !st.fail;
     };
     const raise = (id, target, depth) => {
       const t2 = byId.get(id);
@@ -8085,13 +8125,13 @@ function reachPlan(tracks, have, mode, rows) {
       // Research done first for this step counts with it.
       tmp.forEach((l, id) => { if (id === tr.id) return; const t2 = byId.get(id); gain += statGain(t2.gain(l, lv) || {}, t2.gain(lv[id], lv) || {}); });
       if (gain > 1e-9) {
-        const r = gain / Math.max(weight(cum), 1e-12);
-        if (!best || r > best.r) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, cost: { ...cum }, pre }; }
+        const r = gain / Math.max(weight(st.draw), 1e-12);
+        if (!best || r > best.r) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, st, pre }; }
       }
     }
     return best;
   };
-  const take = (tr, b) => { Object.keys(b.pre || {}).forEach((id) => { lv[id] = Math.max(lv[id], b.pre[id]); }); lv[tr.id] = b.to; Object.keys(b.cost).forEach((k) => { left[k] = (left[k] || 0) - b.cost[k]; }); };
+  const take = (tr, b) => { Object.keys(b.pre || {}).forEach((id) => { lv[id] = Math.max(lv[id], b.pre[id]); }); lv[tr.id] = b.to; applySettle(b.st); };
   // Equally good steps (same gain for the same items): the owner's troop
   // order Infantry > Marksman > Lancer, then the lowest level first, so a
   // troop isn't pushed just because its piece comes first in the list.
@@ -8120,29 +8160,26 @@ function reachPlan(tracks, have, mode, rows) {
     let pt = null;
     open.forEach((tr) => {
       if (lv[tr.id] >= tr.to) return;
-      const c = tr.cost(lv[tr.id] + 1) || {};
-      if (Object.keys(c).some((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9)) return;
+      if (settle(tr.cost(lv[tr.id] + 1) || {}).fail) return;
       if (!needsMet(tr, lv[tr.id] + 1, (id) => lv[id])) return;
       if (!pt || rank(tr) < rank(pt) || (rank(tr) === rank(pt) && lv[tr.id] - tr.from < lv[pt.id] - pt.from)) pt = tr;
     });
     if (!pt) break;
-    const c = pt.cost(lv[pt.id] + 1) || {};
-    Object.keys(c).forEach((k) => { left[k] = (left[k] || 0) - (Number(c[k]) || 0); });
+    applySettle(settle(pt.cost(lv[pt.id] + 1) || {}));
     lv[pt.id]++;
   }
   // The item that stops the most tracks first ("runs out first").
   const stop = {};
   open.forEach((tr) => {
     if (lv[tr.id] >= tr.to) return;
-    const c = tr.cost(lv[tr.id] + 1) || {};
-    Object.keys(c).forEach((k) => { if ((Number(c[k]) || 0) > (left[k] || 0) + 1e-9) stop[k] = (stop[k] || 0) + 1; });
+    const f = settle(tr.cost(lv[tr.id] + 1) || {}).fail;
+    if (f) stop[f] = (stop[f] || 0) + 1;
   });
   const stopItems = Object.keys(stop).sort((a, b) => stop[b] - stop[a] || ((left[a] || 0) / ((Number(have[a]) || 1))) - ((left[b] || 0) / ((Number(have[b]) || 1))));
   const blocker = {};
   open.forEach((tr) => {
     if (lv[tr.id] >= tr.to) return;
-    const c = tr.cost(lv[tr.id] + 1) || {};
-    blocker[tr.id] = Object.keys(c).find((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9) || null;
+    blocker[tr.id] = settle(tr.cost(lv[tr.id] + 1) || {}).fail || null;
   });
   // Tracks stopped by research before them (not by the Backpack): what they wait for.
   const waits = {};
@@ -8488,7 +8525,7 @@ function fillHeroGearReach() {
   if (!state || !HERO_GEAR_TABLES_CACHE || !have) return;
   const tracks = heroGearReachTracks(state);
   if (!tracks.length) return;
-  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.hero_gear);
   REACH_LAST.hero_gear = { plan, tracks, unit: "rch_u_tracks", go: reachGoTroop("hero_gear") };
   const rowsOf = (tn) => HERO_GEAR_TABLES_CACHE[tn] || [];
   const lab = (tn) => (i) => { const r = rowsOf(tn)[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
@@ -20562,7 +20599,7 @@ async function renderCharmsCalc() {
         cost: (i) => { const c = CHARM_STEP_COST[CHARM_LEVELS[i]] || [0, 0, 0]; return { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }; },
         gain: (i) => { const v = charmStatAt(CHARM_LEVELS[i]); return { Lethality: v, Health: v }; } });
     }));
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.charm);
     REACH_LAST.charm = { plan, tracks, unit: "rch_u_charms", go: reachGoTroop("charm") };
     tracks.forEach((tr) => {
       const el = rowsEl.querySelector(`[data-rch="ch|${tr.id}"]`);
@@ -20880,7 +20917,7 @@ async function renderChiefGearCalc() {
         cost: (i) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(rows[i] && rows[i][col]) || 0; if (v) c[lab] = v; }); return c; },
         gain: (i) => { const v = parseStatPct(rows[i] && rows[i].stat) || 0; return { Attack: v, Defense: v }; } };
     });
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.chief_gear);
     REACH_LAST.chief_gear = { plan, tracks, unit: "rch_u_pieces", go: null };
     tracks.forEach((tr) => {
       const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
@@ -21140,7 +21177,15 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // What the page's "can reach" marks spend (design B, 2 Nov 2026); redrawn
   // when a box amount changes too.
   const reachRefresh = () => {
-    BAR_HAVE[calcKey || "chief_gear"] = { ...effOwned };
+    // Choice chests (one source, several things to open into) stay closed
+    // here: "can reach" opens them into what each step is short of.
+    const outs = {};
+    hiddenRates.forEach((r) => { (outs[r.from] = outs[r.from] || new Set()).add(r.to); });
+    const choice = new Set(Object.keys(outs).filter((k) => outs[k].size > 1 && /Chest/.test(k)));
+    const have = { ...calcOwned };
+    hiddenTrades.forEach((tr) => { if (!choice.has(tr.from)) have[tr.to] = (have[tr.to] || 0) + tr.getQty; });
+    BAR_HAVE[calcKey || "chief_gear"] = have;
+    BAR_CONV[calcKey || "chief_gear"] = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }));
     if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
   };
   reachRefresh();
@@ -26091,7 +26136,7 @@ async function renderPetsDataPage() {
         cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
         gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
     });
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.pets);
     const sum = document.getElementById("petsReach");
     if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pets");
     listEl.querySelectorAll("[data-rch^='pet|']").forEach((el) => {
@@ -27034,7 +27079,7 @@ async function renderT12ResearchPage() {
         cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [TIME]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
         gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
     }));
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.t12_research);
     REACH_LAST.t12_research = { plan, tracks, unit: "rch_u_nodes", go: (troop) => { const b = document.querySelector(`[data-t12tab="${troop}"]`); if (b) b.click(); } };
     tracks.forEach((tr) => {
       const el = troopsEl.querySelector(`[data-rch="t12|${CSS.escape(tr.id)}"]`);
