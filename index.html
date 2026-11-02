@@ -7053,12 +7053,32 @@ const HERO_GEAR_ENHANCE_CONTINUOUS_STATS = {
   Gloves: ["Health"],
   Belt: ["Health"],
 };
+// Mithril milestones (Enhance 120 / 160 / 200 = the game's Empowerment +20 /
+// +60 / +100; the +40 / +80 ones are Exploration and not counted): the 1st
+// and 3rd give the piece's main stat, the 2nd gives the other one (owner's
+// game screenshots, 2 Nov 2026: Goggles / Belt +20% ATK, +30% DEF, +50% ATK;
+// Gloves / Boots +20% DEF, +30% ATK, +50% DEF). Before, every milestone went
+// to one stat and Belt / Boots had theirs swapped.
+const HERO_GEAR_MILESTONE_MAIN = { Goggles: "Attack", Belt: "Attack", Gloves: "Defense", Boots: "Defense" };
 const HERO_GEAR_ENHANCE_MILESTONE_STATS = {
-  Goggles: ["Attack"],
-  Boots: ["Attack"],
-  Gloves: ["Defense"],
-  Belt: ["Defense"],
+  Goggles: ["Attack", "Defense"],
+  Belt: ["Attack", "Defense"],
+  Gloves: ["Defense", "Attack"],
+  Boots: ["Defense", "Attack"],
 };
+// ATK / DEF a piece gets from the milestones up to Enhance row enhIdx.
+function heroGearMilestones(enhRows, enhIdx, piece) {
+  const out = { Attack: 0, Defense: 0 };
+  const main = HERO_GEAR_MILESTONE_MAIN[piece], other = main === "Attack" ? "Defense" : "Attack";
+  let n = 0;
+  for (let i = 0; i <= enhIdx && i < enhRows.length; i++) {
+    const v = parseStatPct(enhRows[i].stat2);
+    if (v == null) continue;
+    out[n % 2 === 1 ? other : main] += v;
+    n++;
+  }
+  return out;
+}
 const HERO_GEAR_TROOPS = ["Infantry", "Lancer", "Marksman"];
 function makeEmptyHeroGearState() {
   const state = {};
@@ -7718,14 +7738,9 @@ function computeHeroGearStats(stateObj) {
         HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece].forEach((stat) => {
           continuousMax[stat] += continuousStat;
         });
-        let milestoneStat = 0;
-        for (let i = 0; i <= enhIdx; i++) {
-          const v = parseStatPct(enhRows[i].stat2);
-          if (v != null) milestoneStat += v;
-        }
-        HERO_GEAR_ENHANCE_MILESTONE_STATS[piece].forEach((stat) => {
-          statTotals[stat] += milestoneStat;
-        });
+        const ms = heroGearMilestones(enhRows, enhIdx, piece);
+        statTotals.Attack += ms.Attack;
+        statTotals.Defense += ms.Defense;
       }
     });
     statTotals.Health += continuousMax.Health;
@@ -7761,10 +7776,10 @@ function heroGearPieceStats(stateObj, troop, piece, role) {
   const mfIdx = Math.min(st["Hero Gear Mastery Forging"][role], heroTrackPickIdx("Hero Gear Mastery Forging"));
   const enhIdx = Math.min(st["Enhance Combined"][role], heroTrackPickIdx("Enhance Combined"));
   const cont = (parseStatPct(enhRows[enhIdx]?.stat) || 0) * (1 + (parseStatPct(mfRows[mfIdx]?.stat) || 0) / 100);
-  let mile = 0;
-  for (let i = 0; i <= enhIdx; i++) { const v = parseStatPct(enhRows[i].stat2); if (v != null) mile += v; }
+  const ms = heroGearMilestones(enhRows, enhIdx, piece);
   HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece].forEach((k) => { out[k] += cont; });
-  HERO_GEAR_ENHANCE_MILESTONE_STATS[piece].forEach((k) => { out[k] += mile; });
+  out.Attack += ms.Attack;
+  out.Defense += ms.Defense;
   return out;
 }
 function fillHeroGearPieceStats() {
