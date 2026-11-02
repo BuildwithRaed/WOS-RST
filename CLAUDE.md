@@ -361,5 +361,5 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #128: quick pages row on the Dashboard (owner only, small picture tiles with short names), game pictures for every page (also in the Menu), "T11 Helios Research" renamed "T11 Research"
 - Hero gear milestones fixed (Enhance 120 / 160 / 200: main stat, other stat, main stat; Belt is ATK, Boots DEF)
 - PR #129: phone Menu as picture tiles (3 a row); separate 🌐 Language and Sign in / account buttons in the top bar (⚙ removed)
-- PR #??: hero gear below Mythic counts as XP (in the XP 10 pop-up, Scan reads purple "+N", Heroes Gears / Budgets count it)
+- PR #132: hero gear below Mythic counts as XP (in the XP 10 pop-up, Scan reads purple "+N", Heroes Gears / Budgets count it)
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
