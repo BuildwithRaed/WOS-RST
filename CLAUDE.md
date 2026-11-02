@@ -366,4 +366,5 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #129: phone Menu as picture tiles (3 a row); separate 🌐 Language and Sign in / account buttons in the top bar (⚙ removed)
 - PR #132: hero gear below Mythic counts as XP (in the XP 10 pop-up, Scan reads purple "+N", Heroes Gears / Budgets count it)
 - PR #133: what your Backpack can upgrade now (design B marks on 6 planner pages, My order | Best value, upgrade order list); research unlock rules in Admin (T12 "can reach" does the research before a step first)
+- PR #134: "can reach" opens Pet Chests / Custom Resource Chests into what each step needs (Abyssal Shelldragon ✓30 → ✓80)
 - PR #23: correct FC Chest picture (`icons/fc-chest.png`, cut from the owner's game screenshot; the wiki's "Fire Crystal Chest" icon is a different item)
