@@ -499,6 +499,8 @@
   .pc-rch{ margin-top:8px; }
   .pc-rch:empty{ display:none; }
   .rch-line{ display:flex; align-items:center; gap:6px; font-size:12.5px; }
+  .unit-keys{ display:flex; gap:8px; justify-content:center; margin-top:8px; }
+  .unit-keys button{ min-width:48px; min-height:36px; border-radius:10px; border:1px solid var(--ice-dim); background:var(--panel-2); color:var(--ice); font:inherit; font-size:16px; font-weight:700; cursor:pointer; }
   .rch-allbtn{ margin-inline-start:auto; font:inherit; font-size:12px; font-weight:700; min-height:32px; padding:4px 11px; border-radius:10px; border:1px solid var(--ice-dim); background:transparent; color:var(--ice); cursor:pointer; }
   .rcs-box{ padding:14px 14px 12px; max-height:min(70vh, 560px); }
   .rcs-head{ display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; font-size:14px; }
@@ -3821,7 +3823,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 66; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 67; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4120,6 +4122,9 @@ const T = {
   pc_by_target: { en: "By target" },
   pc_cheapest: { en: "Cheapest" },
   bs_edit_hint_min: { en: "In minutes, or type 5d 18h" },
+  unit_key_d: { en: "days" },
+  unit_key_h: { en: "hours" },
+  unit_key_m: { en: "minutes" },
   bs_edit_hint: { en: "You can type 5m or 10.8b" },
   bs_need: { en: "need {n}" },
   bs_nb_needed: { en: "Needed" },
@@ -20872,6 +20877,25 @@ function parseAmount(str) {
   return Math.round(Number(m[1].replace(/,/g, "")) * ({ k: 1e3, m: 1e6, b: 1e9 }[(m[2] || "").toLowerCase()] || 1));
 }
 // Typed time in minutes: "8270", "5d 18h", "3h 30m".
+// Time boxes keep the phone's number pad; three small buttons put in the
+// "d" / "h" / "m" it can't type (owner picked this, 2 Nov 2026: "5d 18h").
+function unitKeysHtml() {
+  return `<div class="unit-keys">${["d", "h", "m"].map((k) => `<button type="button" data-unitkey="${k}" aria-label="${esc(t("unit_key_" + k))}">${k}</button>`).join("")}</div>`;
+}
+function wireUnitKeys(root, input) {
+  root.querySelectorAll("[data-unitkey]").forEach((b) => {
+    // pointerdown + preventDefault keeps the box focused, so the number pad stays up.
+    b.onpointerdown = (ev) => ev.preventDefault();
+    b.onclick = () => {
+      const v = input.value, a = input.selectionStart == null ? v.length : input.selectionStart, z = input.selectionEnd == null ? v.length : input.selectionEnd;
+      const ins = `${b.dataset.unitkey} `;
+      input.value = v.slice(0, a) + ins + v.slice(z);
+      const pos = a + ins.length;
+      try { input.setSelectionRange(pos, pos); } catch (e) { /* some keyboards don't allow it */ }
+      input.focus();
+    };
+  });
+}
 function parseMinutes(str) {
   const v = String(str).trim().toLowerCase();
   if (/^[\d.,]+$/.test(v)) return Math.round(Number(v.replace(/,/g, "")));
@@ -21112,6 +21136,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       ${canLink ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${bsNeedBoxesHtml({ need: needSum(name), have: effOwned[name] || 0, fmt: /\(minutes\)$/.test(name) ? bsTime : bsNbNum, parts: groups.map((g) => [g.label, Number((g.totals || {})[name]) || 0]), from: haveFromHtml(name) })}
       <input id="bsEditQty" type="text" inputmode="decimal" autocomplete="off" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      ${/\(minutes\)$/.test(name) ? unitKeysHtml() : ""}
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(/\(minutes\)$/.test(name) ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${canLink && !linked ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
@@ -21122,6 +21147,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const close = () => { modal.style.display = "none"; };
     modal.onclick = (ev) => { if (ev.target === modal) close(); };
     const input = modal.querySelector("#bsEditQty");
+    wireUnitKeys(modal, input);
     input.focus(); input.select();
     const save = () => {
       let val = /\(minutes\)$/.test(name) ? parseMinutes(input.value) : parseAmount(input.value);
@@ -26406,6 +26432,7 @@ function plxAmountModal(o) {
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
       <input id="bsEditQty" type="text" inputmode="decimal" autocomplete="off" value="${Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      ${o.minutes ? unitKeysHtml() : ""}
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${o.linked === false && o.onUse ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
@@ -26416,6 +26443,7 @@ function plxAmountModal(o) {
   const close = () => { modal.style.display = "none"; };
   modal.onclick = (ev) => { if (ev.target === modal) close(); };
   const input = modal.querySelector("#bsEditQty");
+  wireUnitKeys(modal, input);
   input.focus(); input.select();
   const save = () => {
     let val = o.minutes ? parseMinutes(input.value) : parseAmount(input.value);

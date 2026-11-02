@@ -2057,5 +2057,8 @@
 "t:rch_u_tracks": "branches",
 "t:rch_order_title": "Ordre d'amélioration",
 "t:rch_order_hint": "Votre sac va à ces stats dans cet ordre (une troupe et une stat par ligne), sur chaque page. Chaque ligne reçoit les améliorations qui rapportent le plus pour vos objets.",
-"t:rch_order_reset": "Réinitialiser"
+"t:rch_order_reset": "Réinitialiser",
+"t:unit_key_d": "jours",
+"t:unit_key_h": "heures",
+"t:unit_key_m": "minutes"
 }

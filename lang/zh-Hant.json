@@ -2056,5 +2056,8 @@
 "t:rch_u_tracks": "路線",
 "t:rch_order_title": "升級順序",
 "t:rch_order_hint": "背包物品在每個頁面都按此順序用於這些數據（每行一個兵種和數據）。每行獲得對你的物品收益最高的升級。",
-"t:rch_order_reset": "重設"
+"t:rch_order_reset": "重設",
+"t:unit_key_d": "天",
+"t:unit_key_h": "小時",
+"t:unit_key_m": "分鐘"
 }

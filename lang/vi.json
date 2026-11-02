@@ -2056,5 +2056,8 @@
 "t:rch_u_tracks": "nhánh",
 "t:rch_order_title": "Thứ tự nâng cấp",
 "t:rch_order_hint": "Túi đồ được dùng cho các chỉ số này theo thứ tự này (mỗi hàng một binh chủng và chỉ số), trên mọi trang. Mỗi hàng nhận các nâng cấp lợi nhất cho vật phẩm của bạn.",
-"t:rch_order_reset": "Đặt lại"
+"t:rch_order_reset": "Đặt lại",
+"t:unit_key_d": "ngày",
+"t:unit_key_h": "giờ",
+"t:unit_key_m": "phút"
 }

@@ -2057,5 +2057,8 @@
 "t:rch_u_tracks": "路线",
 "t:rch_order_title": "升级顺序",
 "t:rch_order_hint": "背包物品在每个页面都按此顺序用于这些属性（每行一个兵种和属性）。每行获得对你的物品收益最高的升级。",
-"t:rch_order_reset": "重置"
+"t:rch_order_reset": "重置",
+"t:unit_key_d": "天",
+"t:unit_key_h": "小时",
+"t:unit_key_m": "分钟"
 }

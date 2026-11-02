@@ -2057,5 +2057,8 @@
 "t:rch_u_tracks": "系統",
 "t:rch_order_title": "強化の順番",
 "t:rch_order_hint": "バッグのアイテムは全ページでこの順番でこれらのステータスに使われます(1行に兵種とステータス1つ)。各行にはアイテムに対して効果が最も大きい強化が入ります。",
-"t:rch_order_reset": "リセット"
+"t:rch_order_reset": "リセット",
+"t:unit_key_d": "日",
+"t:unit_key_h": "時間",
+"t:unit_key_m": "分"
 }
