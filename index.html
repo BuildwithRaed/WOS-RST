@@ -458,6 +458,102 @@
   .lvchip.tgt{ border-color:rgba(125,200,255,.55); color:var(--ice); }
   .lvchip.up{ border-color:var(--amber); color:var(--amber); }
   .lvarr{ color:var(--muted); font-size:12px; }
+  /* "What you can do now" marks (design B, 2 Nov 2026) */
+  .rch-slot{ display:contents; }
+  .rch-mark{ display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:30px; padding:3px 7px; border-radius:10px; border:1px dashed rgba(91,201,138,.7); color:var(--good); font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .rch-mark.full{ border-style:solid; background:rgba(91,201,138,.12); }
+  .rch-mark.none{ border-color:var(--line); color:var(--muted); }
+  .rlk-top{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .rlk-pill{ font-size:11.5px; color:#7ee6a8; background:rgba(126,230,168,.12); border:1px solid rgba(126,230,168,.35); border-radius:999px; padding:3px 10px; }
+  .rlk-pages{ display:flex; gap:6px; overflow-x:auto; margin-bottom:8px; }
+  .rlk-pages button{ flex:0 0 auto; min-height:32px; padding:4px 12px; border-radius:999px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:13px; }
+  .rlk-pages button.on{ border-color:var(--ice); color:var(--ice); background:rgba(111,211,242,.12); }
+  .rlk-desc{ margin:0 0 10px; font-size:12px; }
+  .rlk-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:10px; align-items:start; }
+  .rlk-card{ border:1px solid var(--line); border-radius:12px; padding:10px; background:rgba(255,255,255,.02); }
+  .rlk-card.rlk-empty{ opacity:.85; }
+  .rlk-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:6px; }
+  .rlk-h b{ font-size:14px; }
+  .rlk-line{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid rgba(255,255,255,.05); font-size:12.5px; }
+  .rlk-chip{ flex:0 0 auto; font-size:11px; color:var(--ice); background:rgba(111,211,242,.12); border-radius:6px; padding:2px 7px; white-space:nowrap; }
+  .rlk-txt{ flex:1 1 auto; min-width:0; }
+  .rlk-ed{ flex:0 0 auto; min-width:32px; min-height:32px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--frost); }
+  .rlk-none{ font-size:12px; padding:4px 0; }
+  .rlk-add{ width:100%; margin-top:6px; min-height:32px; border:1px dashed rgba(111,211,242,.45); border-radius:8px; background:transparent; color:var(--ice); font-size:12.5px; }
+  .rlk-lab{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:10px 0 5px; }
+  .rlk-sel{ width:100%; }
+  .rlk-row{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:13px; flex-wrap:wrap; }
+  .rlk-num{ width:70px !important; text-align:center; }
+  .rlk-need{ display:flex; align-items:center; gap:6px; margin-top:6px; }
+  .rlk-need .rlk-sel{ flex:1 1 auto; min-width:0; width:auto; }
+  .rlk-x{ min-width:32px; min-height:32px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--frost); }
+  .rlk-prev{ margin-top:10px; font-size:12px; padding:8px 10px; border-radius:8px; background:rgba(111,211,242,.08); line-height:1.4; }
+  .rlk-err{ color:#ff8a8a; font-size:12px; min-height:4px; margin-top:4px; }
+  .rch-wait{ margin-top:4px; font-size:11px; color:#f0c674; line-height:1.35; }
+  .rch-bar{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--muted); }
+  .rch-track{ flex:1; height:4px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .rch-track i{ display:block; height:100%; background:var(--good); border-radius:3px; }
+  .rch-bar > span{ white-space:nowrap; }
+  .rch-amber{ color:var(--amber); }
+  .rch-sum{ margin:0 0 10px; padding:9px 12px; border:1px solid rgba(91,201,138,.45); border-radius:12px; background:rgba(91,201,138,.07); font-size:12.5px; }
+  .rch-sum-t{ line-height:1.35; }
+  .rch-first{ color:var(--amber); font-weight:700; }
+  .rch-sum-c{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:7px; }
+  .rch-seg{ display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .rch-seg button{ font:inherit; font-size:12px; min-height:32px; padding:4px 11px; border:0; background:transparent; color:var(--muted); cursor:pointer; }
+  .rch-seg button.on{ background:var(--ice-dim); color:var(--frost); font-weight:700; }
+  .rch-edit{ font-size:12px; }
+  .rch-key{ display:flex; align-items:center; gap:5px; margin-top:6px; font-size:10.5px; color:var(--muted); }
+  .rch-key i{ width:14px; height:4px; border-radius:2px; background:var(--good); margin-inline-start:6px; }
+  .rch-key i:first-child{ margin-inline-start:0; }
+  .rch-key i.r{ background:var(--line); }
+  .rch-mini{ display:inline-block; font-size:11.5px; font-weight:700; color:var(--good); }
+  .rch-mini.none{ color:var(--amber); font-weight:600; }
+  .cg-rch{ display:block; width:100%; margin-top:2px; }
+  .cg-rch .rch-bar{ margin-top:2px; font-size:10px; gap:2px; flex-direction:column; align-items:stretch; }
+  .cg-rch .rch-track{ flex:none; }
+  .cg-rch .rch-bar > span{ white-space:normal; line-height:1.15; }
+  .ch-rch{ display:block; min-height:14px; margin-top:2px; line-height:1.15; }
+  .ch-rch:empty, .cg-rch:empty{ display:none; }
+  .ch-rch .rch-mini{ font-size:10.5px; }
+  .exp-rch:empty{ display:none; }
+  .exp-rch{ margin:4px 0 6px; text-align:start; }
+  .exp-rch .rch-line{ font-size:12px; color:var(--muted); }
+  .exp-rch .rch-mark{ min-height:24px; min-width:38px; }
+  .t12-rch:empty{ display:none; }
+  .t12-rch{ margin-top:6px; }
+  .t12-rch .rch-mark{ min-height:26px; }
+  .pc-rch{ margin-top:8px; }
+  .pc-rch:empty{ display:none; }
+  .rch-line{ display:flex; align-items:center; gap:6px; font-size:12.5px; }
+  .rch-allbtn{ margin-inline-start:auto; font:inherit; font-size:12px; font-weight:700; min-height:32px; padding:4px 11px; border-radius:10px; border:1px solid var(--ice-dim); background:transparent; color:var(--ice); cursor:pointer; }
+  .rcs-box{ padding:14px 14px 12px; max-height:min(70vh, 560px); }
+  .rcs-head{ display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; font-size:14px; }
+  .rcs-head > div{ flex:1; min-width:0; }
+  .rcs-head .rch-first{ font-size:12px; margin-top:2px; }
+  .rcs-tr{ border-top:1px solid var(--line); }
+  .rcs-tr.open{ border-inline-start:3px solid var(--tc); padding-inline-start:6px; }
+  .rcs-line{ display:flex; align-items:center; gap:8px; width:100%; min-height:42px; padding:6px 2px; border:0; background:none; color:inherit; font:inherit; font-size:13px; text-align:start; cursor:pointer; }
+  .rcs-line:disabled{ cursor:default; opacity:.75; }
+  .rcs-line i{ width:9px; height:9px; border-radius:50%; background:var(--tc); flex:none; }
+  .rcs-line b{ color:var(--tc); }
+  .rcs-line .meta{ font-size:12px; }
+  .rcs-g{ margin-inline-start:auto; color:var(--good); font-weight:700; font-size:12px; text-align:end; }
+  .rcs-car{ color:var(--muted); font-size:11px; }
+  .rcs-body{ padding:0 2px 10px; }
+  .rcs-row{ display:flex; align-items:baseline; gap:8px; padding:4px 0; font-size:12.5px; }
+  .rcs-row b{ min-width:74px; font-weight:600; }
+  .rcs-row span{ flex:1; color:var(--muted); line-height:1.4; }
+  .rcs-row span i{ font-style:normal; color:var(--frost); font-weight:700; font-size:11px; }
+  .rcs-row em{ font-style:normal; color:var(--good); font-weight:700; }
+  .rcs-go{ display:block; margin:6px 0 0 auto; }
+  .rcs-foot{ display:flex; justify-content:flex-end; padding-top:10px; border-top:1px solid var(--line); }
+  .rch-ord-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid var(--line); font-size:13.5px; }
+  .rch-ord-row b{ width:20px; color:var(--muted); font-size:12px; }
+  .rch-ord-row span:not(.st){ flex:1; font-weight:700; }
+  .rch-ord-row .st{ width:44px; font-weight:700; }
+  .rch-ord-row button{ width:34px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); }
+  .rch-ord-row button:disabled{ opacity:.3; }
   @media (max-width:700px){
       }
   /* Pets Level card, design C v2 (19 Oct 2026). */
@@ -3752,7 +3848,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 64; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 67; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4092,6 +4188,42 @@ const T = {
   chest_open_do: { en: "Open" },
   chest_open_note: { en: "Chests marked {tag} aren't counted until opened." },
   chest_tile_avg: { en: "avg {all}" },
+  rch_sum: { en: "With your Backpack: {n} of {m} {unit} reach target" },
+  rch_first: { en: "{item} runs out first · {n} left" },
+  rch_my_order: { en: "My order" },
+  rch_best: { en: "Best value" },
+  rch_edit_order: { en: "Edit order ›" },
+  rch_key_covers: { en: "Backpack covers" },
+  rch_key_left: { en: "still to go to target" },
+  rch_mark_tip: { en: "How far your Backpack gets you now" },
+  rch_covers: { en: "Backpack covers it" },
+  rch_none: { en: "0 of {m} {unit} · {item}" },
+  rch_part: { en: "{n} of {m} {unit}" },
+  rch_u_levels: { en: "levels" },
+  rlk_all_at: { en: "all {group} at {lv}" },
+  rlk_or: { en: "or" },
+  rlk_wait: { en: "Lv {lv}+ needs {needs} first" },
+  rlk_wait_target: { en: "raise its target" },
+  rch_u_steps: { en: "steps" },
+  rch_u_pieces: { en: "pieces" },
+  rch_u_charms: { en: "charms" },
+  rch_u_pets: { en: "pets" },
+  rch_u_nodes: { en: "nodes" },
+  rch_all_btn: { en: "See all troops ›" },
+  rch_sum_done: { en: "This troop is at its targets" },
+  rch_all_title: { en: "All troops · {n} {unit} go up" },
+  rch_all_up: { en: "{n} {unit} go up" },
+  rch_all_none: { en: "nothing yet" },
+  rch_all_done: { en: "at target" },
+  rch_all_go: { en: "Go to {troop} ›" },
+  rch_u_experts: { en: "experts" },
+  rch_can_reach: { en: "Can reach" },
+  rch_covers_short: { en: "covers it" },
+  rch_none_short: { en: "— · {item} short" },
+  rch_u_tracks: { en: "tracks" },
+  rch_order_title: { en: "Upgrade order" },
+  rch_order_hint: { en: "Your Backpack goes to these stats in this order (one troop and stat per row), on every page. Each row gets the upgrades that give the most for your items." },
+  rch_order_reset: { en: "Reset" },
   gx_title: { en: "Hero gear for XP" },
   gx_desc: { en: "Gear below Mythic you can feed into a mythic piece." },
   gx_Purple: { en: "Purple" },
@@ -7337,7 +7469,7 @@ async function openHgHeroSheet(setName, troopKey, after) {
 // Renders the Quick Select + per-piece calculator + totals + stats.
 async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
-  await ensureHeroGearData();
+  await Promise.all([ensureHeroGearData(), ensureUpgradeOrder()]);
 
   if (seq !== RENDER_SEQ) return;
   PLX_TROOP.hero_gear = heroGearActiveTroop;
@@ -7388,7 +7520,7 @@ async function renderGearLevelingGroup(target) {
         <div class="hgc-name"><div class="name">${esc(pieceDisplayName(piece))}</div><div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div></div>
         <button type="button" class="t12x-maxall" data-heropiecemax="${esc(troop)}|${esc(piece)}">${esc(maxLbl)}</button>
       </div>
-      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span>${chipHtml(troop, piece, t, "to")}</div>`).join("")}
+      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span><span class="rch-slot" data-rch="${esc(troop)}|${esc(piece)}|${esc(t)}"></span>${chipHtml(troop, piece, t, "to")}</div><div data-rchbar="${esc(troop)}|${esc(piece)}|${esc(t)}"></div>`).join("")}
     </div>`;
 
   const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
@@ -7411,6 +7543,7 @@ async function renderGearLevelingGroup(target) {
           <span class="sa-arrow">&rarr;</span>
           <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
         </div>`).join(""))}
+      <div data-rchsum="${esc(troop)}" data-rchpage="hero_gear"></div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:12px;">
         ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
       </div>`;
@@ -7500,6 +7633,7 @@ async function renderGearLevelingGroup(target) {
     tracksEl.appendChild(wrap);
     builtPanels[troop] = wrap;
     fillHeroGearPieceStats();
+    fillHeroGearReach();
     return wrap;
   }
   function showPanel(troop) {
@@ -7752,6 +7886,443 @@ function backpackLinkNoteHtml(calcKey, name, link, compact) {
     : `<span class="bp-link typed">&#9998; ${esc(t("bp_link_typed"))} · <button type="button" class="linklike" data-bpuse="${esc(name)}">${esc(t("bp_link_use"))}</button></span>`;
 }
 
+// ---- Research unlock rules (owner, 2 Nov 2026; Admin → Rules & Timeline →
+// Research unlock rules, design A) ----
+// Which levels of a research node wait for other research (same for every
+// troop). They don't lock anything on the pages: the "can reach" planner
+// (My order / Best value) does the research before a step first, and a node
+// stopped by them says what it waits for. Rule = { node: key | "group:<name>",
+// from: first level it applies to (until the next rule of the same node),
+// any: one of the needs is enough, needs: [{ node, lv }] }. Saved as game rule
+// "researchLocks" = { t12: [...], t11: [...], rc: [...] }.
+const RESEARCH_LOCK_PAGES = [["t12", "T12"], ["t11", "T11"], ["rc", "Research Center"]];
+const rlk = (node, from, needs, any) => ({ node, from, needs: needs.map(([n, lv]) => ({ node: n, lv })), ...(any ? { any: true } : {}) });
+// T12 from whiteoutsurvival.wiki (Infantry pages, the same for every troop);
+// Skills I after the Troop Unlock slots (owner, 2 Nov 2026).
+let RESEARCH_LOCKS = {
+  t12: [
+    rlk("group:Skills I", 1, [["group:Troop Unlock", 1]]),
+    rlk("troopskill", 1, [["group:Skills I", 5]]), rlk("troopskill", 2, [["group:Skills I", 10]]), rlk("troopskill", 3, [["group:Skills I", 15]]),
+    rlk("exalted_heal", 1, [["troopskill", 1]]), rlk("exalted_aid", 1, [["troopskill", 1]]), rlk("exalted_train", 1, [["exalted_heal", 1], ["exalted_aid", 1]]),
+    rlk("group:Skills II", 1, [["troopskill", 1]]), rlk("group:Skills II", 15, [["troopskill", 2]]), rlk("group:Skills II", 30, [["troopskill", 3]]),
+    rlk("solar", 1, [["group:Skills II", 30]]), rlk("solar", 6, [["group:Skills II", 40]]), rlk("solar", 11, [["group:Skills II", 50]]),
+    rlk("group:Skills III", 1, [["solar", 15]]),
+  ],
+  t11: [],
+  rc: [],
+};
+function researchLocksSet(v) {
+  const out = {};
+  RESEARCH_LOCK_PAGES.forEach(([pg]) => {
+    out[pg] = (Array.isArray(v && v[pg]) ? v[pg] : []).filter((r) => r && r.node && Number(r.from) >= 1 && Array.isArray(r.needs)).map((r) => ({
+      node: String(r.node), from: Math.round(Number(r.from)), ...(r.any ? { any: true } : {}),
+      needs: r.needs.filter((n) => n && n.node && Number(n.lv) >= 1).map((n) => ({ node: String(n.node), lv: Math.round(Number(n.lv)) })),
+    })).filter((r) => r.needs.length);
+  });
+  RESEARCH_LOCKS = out;
+}
+// The nodes of a page: [{ key, label, short, group, max }] (troop names left out).
+function researchLockNodes(pg) {
+  // "Skills II Attack", but "Exalted Healing" / "Shoulder Slot" on their own.
+  if (pg === "t12") return T12_ITEM_DEFS.map((d) => ({ key: d.key, group: d.group, max: d.max, short: tT12Label(d.label), label: d.group === d.label ? tT12Group(d.group) : /^(Attack|Lethality|Health|Defense)$/.test(d.label) ? `${tT12Group(d.group)} ${tT12Label(d.label)}` : tT12Label(d.label) }));
+  if (pg === "t11") {
+    const seen = new Map();
+    T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE && T11_NODES_CACHE[troop]) || {}).forEach(([track, rows]) => {
+      const key = track.split(troop).join("{troop}");
+      if (seen.has(key)) return;
+      const label = key.replace(/\s*\{troop\}\s*/g, " ").trim();
+      seen.set(key, { key, label, short: label, group: label.split(" ")[0], max: rows.length });
+    }));
+    return [...seen.values()];
+  }
+  if (pg === "rc") {
+    const out = [];
+    RC_TIERS.forEach((tier) => Object.values(RC_BASE_CATEGORIES).forEach((list) => list.forEach((base) => {
+      const key = `${base} ${tier}`;
+      if (out.some((n) => n.key === key)) return;
+      out.push({ key, label: key, short: base, group: `Tier ${tier}`, max: ((RC_NODES_CACHE && RC_NODES_CACHE[key]) || []).length || 0 });
+    })));
+    return out;
+  }
+  return [];
+}
+const researchLockGroups = (nodes) => [...new Set(nodes.map((n) => n.group))];
+// Rules in force for one node at one level: per target (the node itself, its
+// group), the rule with the highest "from" at or below the level.
+function researchLockRulesAt(pg, nodes, key, level) {
+  const node = nodes.find((n) => n.key === key);
+  if (!node) return [];
+  const out = [];
+  [key, `group:${node.group}`].forEach((tg) => {
+    let pick = null;
+    (RESEARCH_LOCKS[pg] || []).forEach((r) => { if (r.node === tg && r.from <= level && (!pick || r.from > pick.from)) pick = r; });
+    if (pick) out.push(pick);
+  });
+  return out;
+}
+// What a step needs, as reachPlan requirements: [[option = [[id, level], …], …], …].
+function researchNeedsOf(pg, nodes, key, level, idOf) {
+  const rules = researchLockRulesAt(pg, nodes, key, level);
+  if (!rules.length) return null;
+  const conj = (need) => (/^group:/.test(need.node) ? nodes.filter((n) => `group:${n.group}` === need.node).map((n) => n.key) : [need.node]).filter((k) => k !== key).map((k) => [idOf(k), need.lv]);
+  const reqs = [];
+  rules.forEach((r) => {
+    const opts = r.needs.map(conj).filter((o) => o.length);
+    if (!opts.length) return;
+    if (r.any) reqs.push(opts); else opts.forEach((o) => reqs.push([o]));
+  });
+  return reqs.length ? reqs : null;
+}
+function researchNeedName(pg, nodes, node) {
+  if (/^group:/.test(node)) { const g = node.slice(6); return pg === "t12" ? tT12Group(g) : g; }
+  const n = nodes.find((x) => x.key === node);
+  return n ? n.label : node;
+}
+// "all Skills II at 40" / "Healing 1 + First Aid 1" / "… or …"
+function researchNeedsText(pg, nodes, r) {
+  return r.needs.map((n) => (/^group:/.test(n.node) ? t("rlk_all_at").replace("{group}", researchNeedName(pg, nodes, n.node)).replace("{lv}", n.lv) : `${researchNeedName(pg, nodes, n.node)} ${n.lv}`)).join(r.any ? ` ${t("rlk_or")} ` : " + ");
+}
+
+// ---- What you can do now with your Backpack (owner picked design B, 2 Nov 2026) ----
+// Each page lists its tracks (a piece / node from its Now level to its Target);
+// reachPlan spends the page's Backpack amounts (what the "Amounts from your
+// Backpack" boxes count, BAR_HAVE[calcKey]) on them and returns how far each
+// track gets. Two ways (calc_state "upgrade_order"): "order" follows the
+// owner's stat order (one row = one troop + one stat; the steps raising that
+// stat that give the most per item first, then the next row), "best" takes the
+// steps giving the most stat % per item over every troop. Both stay inside the
+// person's targets. Steps that raise no stat are filled last.
+const UPGRADE_ORDER_DEFAULT = [["Infantry", "Health"], ["Infantry", "Defense"], ["Marksman", "Lethality"], ["Marksman", "Attack"], ["Lancer", "Lethality"], ["Lancer", "Attack"], ["Marksman", "Health"], ["Marksman", "Defense"], ["Infantry", "Lethality"], ["Infantry", "Attack"], ["Lancer", "Health"], ["Lancer", "Defense"]];
+let UPGRADE_ORDER = { mode: "order", rows: UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
+let UPGRADE_ORDER_LOADED = false;
+async function ensureUpgradeOrder() {
+  if (UPGRADE_ORDER_LOADED) return UPGRADE_ORDER;
+  const s = await loadCalcState("upgrade_order").catch(() => null);
+  UPGRADE_ORDER_LOADED = true;
+  if (s && typeof s === "object") {
+    const ok = Array.isArray(s.rows) && s.rows.length === UPGRADE_ORDER_DEFAULT.length && s.rows.every((r) => Array.isArray(r) && UPGRADE_ORDER_DEFAULT.some((d) => d[0] === r[0] && d[1] === r[1]));
+    UPGRADE_ORDER = { mode: s.mode === "best" ? "best" : "order", rows: ok ? s.rows.map((r) => r.slice()) : UPGRADE_ORDER_DEFAULT.map((r) => r.slice()) };
+  }
+  return UPGRADE_ORDER;
+}
+function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
+const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
+const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
+const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
+// Which troop goes first when two upgrades are equally good (owner, 2 Nov 2026).
+const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
+// tracks: [{ id, troop ("Infantry" / "Lancer" / "Marksman" / "all" / null), from, to,
+//   cost(i) = items to go from level i-1 to i, gain(i, lv) = { stat: value } at level i
+//   (lv = every track's planned level, for stats that depend on another track) }]
+function reachPlan(tracks, have, mode, rows) {
+  const left = {};
+  Object.keys(have || {}).forEach((k) => { left[k] = Math.max(0, Number(have[k]) || 0); });
+  const lv = {};
+  tracks.forEach((tr) => { lv[tr.id] = tr.from; });
+  const weight = (cost) => {
+    let w = 0;
+    Object.keys(cost).forEach((k) => { const q = cost[k]; if (q > 0) { const h = Number(have[k]) || 0; w += h > 0 ? q / h : 1e9; } });
+    return w;
+  };
+  // Best run of steps on a track (up to 60 ahead) that can be paid now:
+  // the most gain (of one stat, or of all) per share of the Backpack it uses.
+  // Research unlock rules (tr.needs(level) = [[option, …], …]: every
+  // requirement needs one of its options, an option = [[trackId, level], …]):
+  // a step whose research before it isn't done yet takes those steps with it
+  // (paid from the same Backpack, inside their targets), so the order and
+  // best value see what the step really costs. Admin → Research unlock rules.
+  const byId = new Map(tracks.map((tr) => [tr.id, tr]));
+  const needsMet = (tr, k, lvOf) => {
+    const reqs = tr.needs ? tr.needs(k) : null;
+    return !reqs || reqs.every((req) => req.some((opt) => opt.every(([id, l]) => lvOf(id) >= l)));
+  };
+  const chunk = (tr, stat) => {
+    const cur = lv[tr.id];
+    let cum = {}, tmp = new Map();
+    let best = null;
+    const lvOf = (id) => (tmp.has(id) ? tmp.get(id) : lv[id] != null ? lv[id] : (byId.get(id) || {}).from || 0);
+    const pay = (c) => {
+      let ok = true;
+      Object.keys(c || {}).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) { cum[k] = (cum[k] || 0) + q; if (cum[k] > (left[k] || 0) + 1e-9) ok = false; } });
+      return ok;
+    };
+    const raise = (id, target, depth) => {
+      const t2 = byId.get(id);
+      if (lvOf(id) >= target) return true;
+      if (!t2 || target > t2.to || depth > 12) return false;
+      for (let k = lvOf(id) + 1; k <= target; k++) {
+        if (!meet(t2, k, depth + 1) || !pay(t2.cost(k))) return false;
+        tmp.set(id, k);
+      }
+      return true;
+    };
+    const meet = (t2, k, depth) => {
+      const reqs = t2.needs ? t2.needs(k) : null;
+      if (!reqs) return true;
+      for (const req of reqs) {
+        if (req.some((opt) => opt.every(([id, l]) => lvOf(id) >= l))) continue;
+        let done = false;
+        for (const opt of req) {
+          const c0 = { ...cum }, m0 = new Map(tmp);
+          if (opt.every(([id, l]) => raise(id, l, depth))) { done = true; break; }
+          cum = c0; tmp = m0;
+        }
+        if (!done) return false;
+      }
+      return true;
+    };
+    const statGain = (a, b) => {
+      let g = 0;
+      if (stat) g = (a[stat] || 0) - (b[stat] || 0);
+      else Object.keys(a).forEach((k) => { g += (a[k] || 0) - (b[k] || 0); });
+      return g;
+    };
+    const g0 = tr.gain(cur, lv) || {};
+    for (let j = cur + 1; j <= tr.to && j <= cur + 60; j++) {
+      if (!meet(tr, j, 0) || !pay(tr.cost(j))) break;
+      tmp.set(tr.id, j);
+      let gain = statGain(tr.gain(j, lv) || {}, g0);
+      // Research done first for this step counts with it.
+      tmp.forEach((l, id) => { if (id === tr.id) return; const t2 = byId.get(id); gain += statGain(t2.gain(l, lv) || {}, t2.gain(lv[id], lv) || {}); });
+      if (gain > 1e-9) {
+        const r = gain / Math.max(weight(cum), 1e-12);
+        if (!best || r > best.r) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, cost: { ...cum }, pre }; }
+      }
+    }
+    return best;
+  };
+  const take = (tr, b) => { Object.keys(b.pre || {}).forEach((id) => { lv[id] = Math.max(lv[id], b.pre[id]); }); lv[tr.id] = b.to; Object.keys(b.cost).forEach((k) => { left[k] = (left[k] || 0) - b.cost[k]; }); };
+  // Equally good steps (same gain for the same items): the owner's troop
+  // order Infantry > Marksman > Lancer, then the lowest level first, so a
+  // troop isn't pushed just because its piece comes first in the list.
+  const rank = (tr) => { const k = REACH_TROOP_RANK[reachTroopKey(tr.troop)]; return k == null ? 3 : k; };
+  const better = (b, tr, pick, pt) => {
+    if (!pick) return true;
+    if (b.r > pick.r * (1 + 1e-6)) return true;
+    if (b.r < pick.r * (1 - 1e-6)) return false;
+    if (rank(tr) !== rank(pt)) return rank(tr) < rank(pt);
+    return lv[tr.id] < lv[pt.id];
+  };
+  const run = (list, stat) => {
+    for (let guard = 0; guard < 20000; guard++) {
+      let pick = null, pt = null;
+      list.forEach((tr) => { if (lv[tr.id] >= tr.to) return; const b = chunk(tr, stat); if (b && better(b, tr, pick, pt)) { pick = b; pt = tr; } });
+      if (!pick) return;
+      take(pt, pick);
+    }
+  };
+  const open = tracks.filter((tr) => tr.to > tr.from);
+  if (mode === "best") run(open, null);
+  else (rows || UPGRADE_ORDER_DEFAULT).forEach(([troop, stat]) => run(open.filter((tr) => tr.troop === "all" || reachTroopKey(tr.troop) === troop), stat));
+  // Steps that raise no stat (or are only worth it together with later ones):
+  // lowest level first, one step at a time, while the Backpack pays.
+  for (let guard = 0; guard < 50000; guard++) {
+    let pt = null;
+    open.forEach((tr) => {
+      if (lv[tr.id] >= tr.to) return;
+      const c = tr.cost(lv[tr.id] + 1) || {};
+      if (Object.keys(c).some((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9)) return;
+      if (!needsMet(tr, lv[tr.id] + 1, (id) => lv[id])) return;
+      if (!pt || rank(tr) < rank(pt) || (rank(tr) === rank(pt) && lv[tr.id] - tr.from < lv[pt.id] - pt.from)) pt = tr;
+    });
+    if (!pt) break;
+    const c = pt.cost(lv[pt.id] + 1) || {};
+    Object.keys(c).forEach((k) => { left[k] = (left[k] || 0) - (Number(c[k]) || 0); });
+    lv[pt.id]++;
+  }
+  // The item that stops the most tracks first ("runs out first").
+  const stop = {};
+  open.forEach((tr) => {
+    if (lv[tr.id] >= tr.to) return;
+    const c = tr.cost(lv[tr.id] + 1) || {};
+    Object.keys(c).forEach((k) => { if ((Number(c[k]) || 0) > (left[k] || 0) + 1e-9) stop[k] = (stop[k] || 0) + 1; });
+  });
+  const stopItems = Object.keys(stop).sort((a, b) => stop[b] - stop[a] || ((left[a] || 0) / ((Number(have[a]) || 1))) - ((left[b] || 0) / ((Number(have[b]) || 1))));
+  const blocker = {};
+  open.forEach((tr) => {
+    if (lv[tr.id] >= tr.to) return;
+    const c = tr.cost(lv[tr.id] + 1) || {};
+    blocker[tr.id] = Object.keys(c).find((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9) || null;
+  });
+  // Tracks stopped by research before them (not by the Backpack): what they wait for.
+  const waits = {};
+  open.forEach((tr) => {
+    if (lv[tr.id] >= tr.to || !tr.needs) return;
+    const reqs = tr.needs(lv[tr.id] + 1);
+    const miss = (reqs || []).find((req) => !req.some((opt) => opt.every(([id, l]) => lv[id] >= l)));
+    if (miss) waits[tr.id] = (miss[0] || []).filter(([id, l]) => lv[id] < l);
+  });
+  return { lv, left, first: stopItems[0] || null, blocker, waits, reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
+}
+// The one-line summary above a page's pieces, with the order switch.
+function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
+  const tracks = scopeTracks.filter((tr) => tr.to > tr.from);
+  // "See all troops ›" (design C, owner 2 Nov 2026) stays even when the troop
+  // on screen has nothing planned.
+  if (!tracks.length && !(allKey && REACH_LAST[allKey] && REACH_LAST[allKey].tracks.some((tr) => tr.to > tr.from))) return "";
+  const reached = tracks.filter((tr) => plan.lv[tr.id] >= tr.to).length;
+  const first = plan.first ? `${esc(materialDisplayName(itemShortName(plan.first)))}` : "";
+  const leftN = plan.first ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
+  const fmtN = (n) => (/\(minutes\)$/.test(plan.first || "") ? bsTime(n) : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
+  return `<div class="rch-sum">
+    <div class="rch-sum-t">&#127890; ${esc(tracks.length ? t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)) : t("rch_sum_done"))}${first ? ` · <b class="rch-first">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</b>` : ""}</div>
+    <div class="rch-sum-c">
+      <div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+      ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="linklike rch-edit" data-rchedit>${esc(t("rch_edit_order"))}</button>` : ""}
+      ${allKey ? `<button type="button" class="rch-allbtn" data-rchall="${esc(allKey)}">${esc(t("rch_all_btn"))}</button>` : ""}
+    </div>
+    <div class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</div>
+  </div>`;
+}
+// ---- "See all troops ›": a small sheet with every troop at once (design C) ----
+// Pages with troops keep their last plan here: { plan, tracks, unit, go(troop) };
+// tracks carry name (piece), short (track letter), lab(i) (level label) and grp
+// (tracks of one piece share their stats, counted once).
+const REACH_LAST = {};
+const reachGoTroop = (key) => (troop) => { const b = document.querySelector(`[data-tsw="${key}"] [data-tswtroop="${troop}"]`); if (b) b.click(); };
+let REACH_ALL_OPEN = null; // troop open in the sheet
+const REACH_STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+function reachTroopGain(tracks, plan) {
+  const before = {}, out = {}, seen = new Set();
+  tracks.forEach((tr) => { before[tr.id] = tr.from; });
+  tracks.forEach((tr) => {
+    if (tr.grp) { if (seen.has(tr.grp)) return; seen.add(tr.grp); }
+    const a = tr.gain(plan.lv[tr.id], plan.lv) || {}, b = tr.gain(tr.from, before) || {};
+    Object.keys(a).forEach((k) => { const d = (a[k] || 0) - (b[k] || 0); if (d > 1e-9) out[k] = (out[k] || 0) + d; });
+  });
+  return out;
+}
+function reachGainText(g) {
+  const ks = ["Attack", "Defense", "Lethality", "Health"].filter((k) => g[k] > 0.005);
+  if (!ks.length) return "";
+  const r = (v) => `+${Math.round(v * 10) / 10}%`;
+  if (ks.length > 1 && ks.every((k) => Math.abs(g[k] - g[ks[0]]) < 0.05)) return `${r(g[ks[0]])} ${ks.map((k) => REACH_STAT_ABBR[k]).join(" · ")}`;
+  return ks.map((k) => `${r(g[k])} ${REACH_STAT_ABBR[k]}`).join(" ");
+}
+function openReachAllSheet(key) {
+  const last = REACH_LAST[key];
+  if (!last) return;
+  let m = document.getElementById("rchAllSheet");
+  if (!m) { m = document.createElement("div"); m.id = "rchAllSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
+  const COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  const draw = () => {
+    const { plan, tracks, unit } = REACH_LAST[key];
+    const troops = ["Infantry", "Marksman", "Lancer"].map((troop) => {
+      const mine = tracks.filter((tr) => reachTroopKey(tr.troop) === troop && tr.to > tr.from);
+      const up = mine.filter((tr) => plan.lv[tr.id] > tr.from);
+      return { troop, mine, up, gain: reachGainText(reachTroopGain(mine, plan)) };
+    });
+    const total = troops.reduce((n, x) => n + x.up.length, 0);
+    if (!REACH_ALL_OPEN || !troops.some((x) => x.troop === REACH_ALL_OPEN && x.up.length)) REACH_ALL_OPEN = (troops.find((x) => x.up.length) || {}).troop || null;
+    const first = plan.first ? esc(t("rch_first").replace("{item}", "@@").replace("{n}", /\(minutes\)$/.test(plan.first) ? bsTime(Math.max(0, plan.left[plan.first] || 0)) : Math.floor(Math.max(0, plan.left[plan.first] || 0)).toLocaleString())).replace("@@", esc(materialDisplayName(itemShortName(plan.first)))) : "";
+    const rowsOf = (x) => {
+      const byName = new Map();
+      x.up.forEach((tr) => { if (!byName.has(tr.name)) byName.set(tr.name, []); byName.get(tr.name).push(tr); });
+      return [...byName.entries()].map(([name, list]) => {
+        const parts = list.map((tr) => `${tr.short ? `<i>${esc(tr.short)}</i> ` : ""}${esc(tr.lab(tr.from))}&rarr;<em>${esc(tr.lab(plan.lv[tr.id]))}</em>`);
+        // The same step on every charm of a piece shows once ("Jacket ×3 16.8→17").
+        const shown = parts.every((x) => x === parts[0]) ? [parts[0]] : parts;
+        return `<div class="rcs-row"><b>${esc(name)}${list.length > 1 && !list[0].short ? ` <span class="meta">×${list.length}</span>` : ""}</b><span>${shown.join(" · ")}</span></div>`;
+      }).join("");
+    };
+    m.innerHTML = `<div class="modal-box adm-sheet rcs-box" role="dialog" aria-modal="true">
+      <div class="rcs-head"><div><b>${esc(t("rch_all_title").replace("{n}", total).replace("{unit}", t(unit)))}</b>${first ? `<div class="rch-first">${first}</div>` : ""}</div><button type="button" class="rfa-x" data-rcsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      ${troops.map((x) => {
+        const open = REACH_ALL_OPEN === x.troop && x.up.length;
+        return `<div class="rcs-tr${open ? " open" : ""}" style="--tc:${COLORS[x.troop]};">
+          <button type="button" class="rcs-line" data-rcstr="${x.troop}" ${x.up.length ? "" : "disabled"}><i></i><b>${esc(troopDisplayName(x.troop))}</b><span class="meta">${x.up.length ? esc(t("rch_all_up").replace("{n}", x.up.length).replace("{unit}", t(unit))) : esc(t(x.mine.length ? "rch_all_none" : "rch_all_done"))}</span><span class="rcs-g">${esc(x.gain)}</span>${x.up.length ? `<span class="rcs-car">${open ? "&#9652;" : "&#9662;"}</span>` : ""}</button>
+          ${open ? `<div class="rcs-body">${rowsOf(x)}${last.go ? `<button type="button" class="btn ghost small rcs-go" data-rcsgo="${x.troop}">${esc(t("rch_all_go").replace("{troop}", troopDisplayName(x.troop)))}</button>` : ""}</div>` : ""}
+        </div>`;
+      }).join("")}
+      <div class="rcs-foot"><div class="rch-seg"><button type="button" data-rcsmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rcsmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div></div>
+    </div>`;
+  };
+  draw();
+  m.style.display = "flex";
+  m.onclick = (ev) => {
+    if (ev.target === m || ev.target.closest("[data-rcsx]")) { m.style.display = "none"; return; }
+    const tr = ev.target.closest("[data-rcstr]"), go = ev.target.closest("[data-rcsgo]"), md = ev.target.closest("[data-rcsmode]");
+    if (tr) { REACH_ALL_OPEN = REACH_ALL_OPEN === tr.dataset.rcstr ? "" : tr.dataset.rcstr; draw(); return; }
+    if (md) { if (UPGRADE_ORDER.mode !== md.dataset.rcsmode) { UPGRADE_ORDER.mode = md.dataset.rcsmode; saveUpgradeOrder(); if (REACH_HOOKS[key]) REACH_HOOKS[key](); draw(); } return; }
+    if (go) {
+      m.style.display = "none";
+      const l = REACH_LAST[key];
+      if (l && l.go) l.go(go.dataset.rcsgo);
+      // Then scroll to the first piece the Backpack takes up.
+      setTimeout(() => { const el = [...document.querySelectorAll(".rch-mark:not(.none), .rch-mini:not(.none)")].find((x) => x.offsetParent); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 350);
+    }
+  };
+}
+document.addEventListener("click", (ev) => { const b = ev.target.closest("[data-rchall]"); if (b) openReachAllSheet(b.dataset.rchall); });
+// "✓178" between Now and Target, and the bar + "6 of 28 levels" under it.
+function reachMarkHtml(from, reach, to, label) {
+  if (!(to > from)) return "";
+  const done = reach >= to, none = reach <= from;
+  return `<span class="rch-mark${done ? " full" : none ? " none" : ""}" title="${esc(t("rch_mark_tip"))}">${none ? "—" : `&#10003;${esc(label(reach))}`}</span><span class="lvarr">&rarr;</span>`;
+}
+function reachBarHtml(from, reach, to, blockItem, unitKey) {
+  if (!(to > from)) return "";
+  const pct = Math.max(0, Math.min(100, ((reach - from) / (to - from)) * 100));
+  const done = reach >= to;
+  const txt = done ? `${esc(t("rch_covers"))} &#10003;` : reach <= from && !blockItem ? esc(t("rch_part").replace("{n}", 0).replace("{m}", to - from).replace("{unit}", t(unitKey))) : reach <= from
+    ? `<span class="rch-amber">${esc(t("rch_none").replace("{m}", to - from).replace("{unit}", t(unitKey)).replace("{item}", blockItem ? materialDisplayName(itemShortName(blockItem)) : "—"))}</span>`
+    : esc(t("rch_part").replace("{n}", reach - from).replace("{m}", to - from).replace("{unit}", t(unitKey)));
+  return `<div class="rch-bar"><div class="rch-track"><i style="width:${pct}%;"></i></div><span>${txt}</span></div>`;
+}
+// A node the planner stopped because research before it isn't done:
+// "🔒 Lv 15+ needs Troop Skill 2 first" (+ "raise its target" when that
+// research's own target is lower).
+function reachWaitHtml(pg, nodes, tr, plan, tracks) {
+  const w = plan.waits && plan.waits[tr.id];
+  if (!w || !w.length) return "";
+  const lvl = plan.lv[tr.id] + 1;
+  const rules = researchLockRulesAt(pg, nodes, tr.key, lvl);
+  if (!rules.length) return "";
+  const low = w.some(([id, l]) => { const x = tracks.find((y) => y.id === id); return x && x.to < l; });
+  return `<div class="rch-wait">&#128274; ${esc(t("rlk_wait").replace("{lv}", lvl).replace("{needs}", rules.map((r) => researchNeedsText(pg, nodes, r)).join(" + ")))}${low ? ` <span class="rch-amber">· ${esc(t("rlk_wait_target"))}</span>` : ""}</div>`;
+}
+// Order editor: the 12 rows, ▲▼ and Reset (one order for every page).
+function openUpgradeOrderSheet(after) {
+  let m = document.getElementById("rchOrderModal");
+  if (!m) { m = document.createElement("div"); m.id = "rchOrderModal"; m.className = "modal-overlay"; document.body.appendChild(m); }
+  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+  const COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+  const draw = () => {
+    const rows = UPGRADE_ORDER.rows;
+    m.innerHTML = `<div class="modal-box rch-ord" style="max-width:380px;">
+      <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("rch_order_title"))}</h2>
+      <div class="meta" style="font-size:12px; margin-bottom:8px;">${esc(t("rch_order_hint"))}</div>
+      ${rows.map(([troop, stat], i) => `<div class="rch-ord-row"><b>${i + 1}</b><span style="color:${COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>
+        <button type="button" data-rchup="${i}" ${i ? "" : "disabled"} aria-label="▲">&#9650;</button><button type="button" data-rchdn="${i}" ${i < rows.length - 1 ? "" : "disabled"} aria-label="▼">&#9660;</button></div>`).join("")}
+      <div style="display:flex; gap:8px; justify-content:space-between; margin-top:12px;">
+        <button type="button" class="btn ghost" data-rchreset>${esc(t("rch_order_reset"))}</button>
+        <button type="button" class="btn" data-rchdone>${esc(t("gs_done"))}</button>
+      </div></div>`;
+  };
+  draw();
+  m.style.display = "flex";
+  m.onclick = (ev) => {
+    const up = ev.target.closest("[data-rchup]"), dn = ev.target.closest("[data-rchdn]");
+    if (ev.target === m || ev.target.closest("[data-rchdone]")) { m.style.display = "none"; saveUpgradeOrder(); if (after) after(); return; }
+    if (ev.target.closest("[data-rchreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); draw(); return; }
+    const i = up ? Number(up.dataset.rchup) : dn ? Number(dn.dataset.rchdn) : -1;
+    if (i < 0) return;
+    const j = up ? i - 1 : i + 1, rows = UPGRADE_ORDER.rows;
+    if (j < 0 || j >= rows.length) return;
+    [rows[i], rows[j]] = [rows[j], rows[i]];
+    draw();
+  };
+}
+// One click handler for the order switch / edit link on every page.
+document.addEventListener("click", (ev) => {
+  const md = ev.target.closest("[data-rchmode]"), ed = ev.target.closest("[data-rchedit]");
+  if (!md && !ed) return;
+  const box = ev.target.closest("[data-rchpage]"), key = box && box.dataset.rchpage;
+  const redraw = () => { if (key && REACH_HOOKS[key]) REACH_HOOKS[key](); };
+  if (md) { if (UPGRADE_ORDER.mode === md.dataset.rchmode) return; UPGRADE_ORDER.mode = md.dataset.rchmode; saveUpgradeOrder(); redraw(); return; }
+  openUpgradeOrderSheet(redraw);
+});
+
 async function updateHeroGearTotals() {
   if (!HERO_GEAR_TABLES_CACHE) return;
   const HERO_GEAR_MATERIAL_COLS = [
@@ -7874,6 +8445,64 @@ function fillHeroGearPieceStats() {
     box.innerHTML = plxPieceStatHtml(keys.map((k) => ({ label: ABBR[k], now: now[k], target: Math.max(now[k], tgt[k]) })));
   });
 }
+// Heroes Gears "can reach" marks (design B, 2 Nov 2026): the set on screen,
+// all 3 troops, spending the Backpack boxes' amounts.
+function heroGearReachTracks(state) {
+  const mfRows = HERO_GEAR_TABLES_CACHE["Hero Gear Mastery Forging"] || [], enhRows = HERO_GEAR_TABLES_CACHE["Enhance Combined"] || [];
+  if (!mfRows.length || !enhRows.length) return [];
+  const mfPct = mfRows.map((r) => parseStatPct(r.stat) || 0), enhPct = enhRows.map((r) => parseStatPct(r.stat) || 0);
+  const ms = {};
+  HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+    const main = HERO_GEAR_MILESTONE_MAIN[piece], other = main === "Attack" ? "Defense" : "Attack";
+    const acc = { Attack: 0, Defense: 0 };
+    let n = 0;
+    ms[piece] = enhRows.map((r) => { const v = parseStatPct(r.stat2); if (v != null) { acc[n % 2 === 1 ? other : main] += v; n++; } return { ...acc }; });
+  });
+  const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
+  const costs = {};
+  GEAR_LEVELING_TABLES.forEach((tn) => { costs[tn] = (HERO_GEAR_TABLES_CACHE[tn] || []).map((r) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(r[col]) || 0; if (v) c[lab] = v; }); return c; }); });
+  const MF = "Hero Gear Mastery Forging", EN = "Enhance Combined";
+  const out = [];
+  HERO_GEAR_TROOPS.forEach((troop) => HERO_GEAR_PIECE_NAMES.forEach((piece) => {
+    const id = (tn) => `${troop}|${piece}|${tn}`;
+    const stats = (mf, en) => {
+      const o = { Attack: ms[piece][en].Attack, Defense: ms[piece][en].Defense, Health: 0, Lethality: 0 };
+      const cont = (enhPct[en] || 0) * (1 + (mfPct[mf] || 0) / 100);
+      HERO_GEAR_ENHANCE_CONTINUOUS_STATS[piece].forEach((k) => { o[k] += cont; });
+      return o;
+    };
+    GEAR_LEVELING_TABLES.forEach((tn) => {
+      const st = state[troop][piece][tn], rows = HERO_GEAR_TABLES_CACHE[tn] || [];
+      const to = Math.min(Number(st.to) || 0, rows.length - 1);
+      const rl = (i) => { const r = rows[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
+      out.push({ id: id(tn), troop, from: Number(st.from) || 0, to, cost: (i) => costs[tn][i] || {},
+        name: pieceDisplayName(piece), short: tn === MF ? "M" : "E", grp: `${troop}|${piece}`, lab: rl,
+        gain: (i, lv) => (tn === MF ? stats(i, lv[id(EN)] ?? state[troop][piece][EN].from) : stats(lv[id(MF)] ?? state[troop][piece][MF].from, i)) });
+    });
+  }));
+  return out;
+}
+function fillHeroGearReach() {
+  if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+  const state = HERO_GEAR_SETS[heroGearActiveSet], have = BAR_HAVE.hero_gear;
+  if (!state || !HERO_GEAR_TABLES_CACHE || !have) return;
+  const tracks = heroGearReachTracks(state);
+  if (!tracks.length) return;
+  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+  REACH_LAST.hero_gear = { plan, tracks, unit: "rch_u_tracks", go: reachGoTroop("hero_gear") };
+  const rowsOf = (tn) => HERO_GEAR_TABLES_CACHE[tn] || [];
+  const lab = (tn) => (i) => { const r = rowsOf(tn)[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
+  tracks.forEach((tr) => {
+    const [, , tn] = tr.id.split("|");
+    const slot = document.querySelector(`[data-rch="${CSS.escape(tr.id)}"]`), bar = document.querySelector(`[data-rchbar="${CSS.escape(tr.id)}"]`);
+    if (slot) slot.innerHTML = reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab(tn));
+    if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
+  });
+  document.querySelectorAll("[data-rchsum][data-rchpage='hero_gear']").forEach((box) => {
+    box.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === box.dataset.rchsum), "rch_u_tracks", "hero_gear");
+  });
+}
+REACH_HOOKS.hero_gear = fillHeroGearReach;
 function updateHeroGearCurrentStats() {
   fillHeroGearPieceStats();
   const el = document.querySelector('[data-tsw="hero_gear"] .plx-tsw-stats');
@@ -19891,7 +20520,7 @@ function charmStageBarHtml(ci, ti, pick, groups) {
 const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
 async function renderCharmsCalc() {
   const seq = RENDER_SEQ;
-  await Promise.all([ensureCharmData(), ensureCharmLevelsData()]); // levels reload after Upcoming ticks change
+  await Promise.all([ensureCharmData(), ensureCharmLevelsData(), ensureUpgradeOrder()]); // levels reload after Upcoming ticks change
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
@@ -19918,8 +20547,35 @@ async function renderCharmsCalc() {
       <span class="ch-t-v">${esc(t("charm_lv"))} ${charmMajor(st.current)}${chip}</span>
       ${charmStageBarHtml(ci, Math.max(ci, ti))}
       <span class="ch-t-g">${foot}</span>
+      <span class="ch-rch" data-rch="ch|${c.piece.key}|${c.slot}"></span>
     </button>`;
   }
+  // "Can reach" marks (design B, 2 Nov 2026): all 18 charms share the Backpack.
+  function fillCharmReach() {
+    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    const have = BAR_HAVE.charm;
+    if (!have || !rowsEl.isConnected) return;
+    const tracks = [];
+    CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st, slot) => {
+      const from = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), to = Math.max(from, CHARM_LEVELS.indexOf(String(st.target)));
+      tracks.push({ id: `${p.key}|${slot}`, troop: p.troop, from, to, name: pieceDisplayName(p.name), lab: (i) => String(CHARM_LEVELS[i]),
+        cost: (i) => { const c = CHARM_STEP_COST[CHARM_LEVELS[i]] || [0, 0, 0]; return { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }; },
+        gain: (i) => { const v = charmStatAt(CHARM_LEVELS[i]); return { Lethality: v, Health: v }; } });
+    }));
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    REACH_LAST.charm = { plan, tracks, unit: "rch_u_charms", go: reachGoTroop("charm") };
+    tracks.forEach((tr) => {
+      const el = rowsEl.querySelector(`[data-rch="ch|${tr.id}"]`);
+      if (!el) return;
+      const r = plan.lv[tr.id];
+      el.innerHTML = tr.to > tr.from ? (r >= tr.to ? `<span class="rch-mini full">&#10003; ${esc(t("rch_covers_short"))}</span>`
+        : r <= tr.from ? `<span class="rch-mini none">${esc(t("rch_none_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"))}</span>`
+        : `<span class="rch-mini">&#10003;${esc(CHARM_LEVELS[r])}</span>`) : "";
+    });
+    const troop = plxTroopOf("charm"), sum = rowsEl.querySelector("[data-rchsum]");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === troop), "rch_u_charms", "charm");
+  }
+  REACH_HOOKS.charm = fillCharmReach;
   function renderTroopSections() {
     const troop = plxTroopOf("charm");
     const flat = charmFlat(troop), cap = charmCapIdx();
@@ -19931,6 +20587,7 @@ async function renderCharmsCalc() {
                 <span class="sa-arrow">&rarr;</span>
                 <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
               </div>`)}
+          <div data-rchsum data-rchpage="charm"></div>
           ${CHARM_PIECES.filter((p) => p.troop === troop).map((p) => {
             const mine = flat.map((c, i) => [c, i]).filter(([c]) => c.piece === p);
             const left = mine.filter(([c]) => { const st = CHARM_CALC_STATE[p.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
@@ -19956,6 +20613,7 @@ async function renderCharmsCalc() {
       });
     });
     rowsEl.querySelectorAll("[data-chtile]").forEach((b) => b.addEventListener("click", () => openCharmSheet(Number(b.dataset.chtile))));
+    fillCharmReach();
   }
 
   // The sheet for one charm (bottom sheet on phones, small window on PC).
@@ -20176,7 +20834,7 @@ function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purp
 function cgStars(r) { return r && r.tier && r.stars != null ? `★${r.stars}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}` : cgBadge(r); }
 async function renderChiefGearCalc() {
   const seq = RENDER_SEQ;
-  const rows = await loadChiefGearRows();
+  const [rows] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder()]);
   if (seq !== RENDER_SEQ) return;
   if (!rows.length) {
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_chief_gear_data"))}</div></div></div>`;
@@ -20206,13 +20864,40 @@ async function renderChiefGearCalc() {
     return `<button type="button" class="cg-slot" data-cgslot="${p.key}" style="grid-area:${p.key};" aria-label="${esc(pieceDisplayName(p.name))}">
       <span class="cg-pic" style="--edge:${cgEdge(rf)};"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
       <span class="cg-nm">${esc(pieceDisplayName(p.name))} · <span style="color:${TROOP_COLORS[p.troop]};">${esc(troopDisplayName(p.troop))}</span></span>
+      <span class="cg-rch" data-rch="cg|${p.key}"></span>
     </button>`;
   }
+  // "Can reach" marks (design B, 2 Nov 2026): each piece's star line and bar.
+  function fillChiefGearReach() {
+    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    const have = BAR_HAVE.chief_gear;
+    if (!have || !rowsEl.isConnected) return;
+    const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+    const tracks = CHIEF_GEAR_PIECES.map((p) => {
+      const st = CHIEF_GEAR_STATE[p.key], from = Math.min(st.from, rows.length - 1);
+      return { id: p.key, troop: p.troop, from, to: Math.max(from, Math.min(st.to == null ? from : st.to, rows.length - 1)),
+        name: pieceDisplayName(p.name), lab: (i) => cgBadge(rows[i]),
+        cost: (i) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(rows[i] && rows[i][col]) || 0; if (v) c[lab] = v; }); return c; },
+        gain: (i) => { const v = parseStatPct(rows[i] && rows[i].stat) || 0; return { Attack: v, Defense: v }; } };
+    });
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    REACH_LAST.chief_gear = { plan, tracks, unit: "rch_u_pieces", go: null };
+    tracks.forEach((tr) => {
+      const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
+      if (!el) return;
+      const r = plan.lv[tr.id];
+      el.innerHTML = tr.to > tr.from ? `<span class="rch-mini${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(rows[r] && rows[tr.from] && rows[r].tier === rows[tr.from].tier ? cgStars(rows[r]) : cgBadge(rows[r]))}`}</span>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_steps")}` : "";
+    });
+    const sum = rowsEl.querySelector("[data-rchsum]");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pieces", "chief_gear");
+  }
+  REACH_HOOKS.chief_gear = fillChiefGearReach;
   function renderPieces() {
     const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
     const open = !!SETALL_OPEN.chief;
     rowsEl.innerHTML = `
         <div class="panel">
+          <div data-rchsum data-rchpage="chief_gear"></div>
           <div class="cg-slots">
             ${CG_SLOT_ORDER.map((k) => slotHtml(pieceOf(k))).join("")}
             <div class="cg-mid"><b>${toGo}</b><span>${esc(t("cg_pieces_to_go"))}</span><span class="meta">${esc(t("cg_at_target").replace("{n}", CHIEF_GEAR_PIECES.length - toGo).replace("{m}", CHIEF_GEAR_PIECES.length))}</span>
@@ -20225,6 +20910,7 @@ async function renderChiefGearCalc() {
           </div>
           <p class="meta ch-hint">${esc(t("cg_slots_hint"))}</p>
         </div>`;
+    fillChiefGearReach();
     // "Set all" shows the level when all 6 pieces are on it.
     rowsEl.querySelectorAll("[data-cgsetall]").forEach((sel) => {
       const vals = new Set(CHIEF_GEAR_PIECES.map((p) => String(CHIEF_GEAR_STATE[p.key][sel.dataset.role])));
@@ -20451,6 +21137,13 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     hiddenTrades.forEach((tr) => { effOwned[tr.to] = (effOwned[tr.to] || 0) + tr.getQty; });
   }
   recomputeEffOwned();
+  // What the page's "can reach" marks spend (design B, 2 Nov 2026); redrawn
+  // when a box amount changes too.
+  const reachRefresh = () => {
+    BAR_HAVE[calcKey || "chief_gear"] = { ...effOwned };
+    if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
+  };
+  reachRefresh();
 
   function statusFor(name, needed) {
     const haveQty = effOwned[name] || 0;
@@ -20612,7 +21305,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(label)}</h2>
       ${canLink ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${bsNeedBoxesHtml({ need: needSum(name), have: effOwned[name] || 0, fmt: /\(minutes\)$/.test(name) ? bsTime : bsNbNum, parts: groups.map((g) => [g.label, Number((g.totals || {})[name]) || 0]), from: haveFromHtml(name) })}
-      <input id="bsEditQty" type="text" inputmode="decimal" autocomplete="off" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="${/\(minutes\)$/.test(name) ? "text" : "decimal"}" autocomplete="off" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(/\(minutes\)$/.test(name) ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${canLink && !linked ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
@@ -20711,6 +21404,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
+    reachRefresh();
     names.forEach((n) => groups.forEach((g) => {
       const needed = Number((g.totals || {})[n]) || 0;
       let { statusColor, statusText } = statusFor(n, needed);
@@ -24022,6 +24716,7 @@ async function renderExpertsPage() {
     loadCalcState("experts_inventory"),
     loadExpertNodes("skill"),
     loadExpertNodes("affinity"),
+    ensureUpgradeOrder(),
   ]);
   const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
   const saved = renameExpertSkills(loadedExperts || {});
@@ -24194,6 +24889,7 @@ async function renderExpertsPage() {
     </div>`,
     mainHtml: `
     <div id="expertsSwipeCounter"></div>
+    <div id="expertsReach" data-rchsum data-rchpage="experts"></div>
     <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
@@ -24452,9 +25148,52 @@ async function renderExpertsPage() {
       return out;
     }), {});
     recordBudgetNeeds("experts", packGroups);
+    fillExpertsReach();
   }
 
   const gridEl = document.getElementById("expertsGrid");
+  // "Can reach" marks (design B, 2 Nov 2026): every counted expert's level
+  // (Affinity + Sigils) and skills (Books + expert / general speedups) share
+  // the amounts in the boxes. General Sigils count for each expert.
+  function fillExpertsReach() {
+    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    const gridBox = document.getElementById("expertsGrid");
+    if (!gridBox) return;
+    const TIME = "Expert Speedups (minutes)", AFF = "Affinity", BOOKS = "Books of Knowledge";
+    const have = { [AFF]: affinityOwnedFrom(invSaved), [BOOKS]: Number(invSaved[BOOKS]) || 0, [TIME]: expertSpeedupOwnedFrom(invSaved) };
+    const tracks = [];
+    EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).forEach((e) => {
+      const hs = saved[e.key], hero = e.key, SIG = `${hero} Sigils`;
+      have[SIG] = (Number(invSaved[SIG]) || 0) + (Number(invSaved["General Sigils"]) || 0);
+      const pos = [];
+      for (let n = 0; n <= heroTopLevel(hero); n++) { pos.push(n); if (n > 0 && heroSigilLevel(hero, n)) pos.push(n + 0.1); }
+      const idxOf = (v) => { const k = pos.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
+      const from = idxOf(hs.current), to = Math.max(from, idxOf(hs.desired)), banked = heroAffinityHave(hero);
+      const cum = (i) => { const c = heroCost(hero, pos[from], pos[i]); return { a: Math.max(0, c.affinity - banked), s: c.sigil }; };
+      const rows = AFFINITY_CACHE[hero] || [];
+      const statAt = (v) => { const r = rows.find((x) => x.level === heroLevelBase(v)); const o = {}; if (r && r.stat_type) r.stat_type.split(",").forEach((k) => { o[k.trim()] = Number(r.stat_value) || 0; }); return o; };
+      tracks.push({ id: `exp|${hero}`, troop: "all", from, to, pos,
+        cost: (i) => { const a = cum(i), b = cum(i - 1); return { [AFF]: a.a - b.a, [SIG]: a.s - b.s }; },
+        gain: (i) => statAt(pos[i]) });
+      e.skills.forEach((sk) => {
+        const st = hs.skills[sk], sr = SKILL_CACHE[`${hero}|${sk}`] || [], bankedExp = skillExpHave(st);
+        const cumS = (lv) => { const c = skillCost(hero, sk, st.current, lv); return { b: c.book, t: Math.max(0, c.exp - bankedExp) / 60 }; };
+        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
+          cost: (lv) => { const a = cumS(lv), b = cumS(lv - 1); return { [BOOKS]: a.b - b.b, [TIME]: a.t - b.t }; },
+          gain: () => ({}) });
+      });
+    });
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const sum = document.getElementById("expertsReach");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts");
+    gridBox.querySelectorAll("[data-rch]").forEach((el) => {
+      const tr = tracks.find((x) => x.id === el.dataset.rch);
+      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
+      const lab = tr.pos ? (i) => { const v = tr.pos[i]; return v % 1 ? v.toFixed(1) : String(v); } : (i) => String(i);
+      el.innerHTML = `<div class="rch-line">${esc(t("rch_can_reach"))} <span class="lvarr">${esc(lab(tr.from))} &rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab)} <span class="lvarr">${esc(lab(tr.to))}</span></div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels")}`;
+    });
+  }
+  REACH_HOOKS.experts = fillExpertsReach;
   function levelOpts(max, selected, rel = max) {
     return Array.from({ length: max + 1 }, (_, i) => i)
       .map((n) => `<option value="${n}" ${n === selected ? "selected" : ""}${n > rel ? ' class="opt-up"' : ""}>${n}${esc(upcomingTag(n > rel))}</option>`)
@@ -24516,6 +25255,7 @@ async function renderExpertsPage() {
             ${levelStatLine(e.key, s.desired)}
           </div>
         </div>
+        <div class="exp-rch" data-rch="exp|${esc(e.key)}"></div>
         <div style="border-top:1px solid var(--line); padding-top:10px; text-align:start;">
           ${e.skills
             .map((sk) => {
@@ -24555,6 +25295,7 @@ async function renderExpertsPage() {
                 ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px; color:var(--ice);">${curStat || "\u2014"} \u00b7 ${desStat || "\u2014"}</div>`
                 : ""
             }
+            <div class="exp-rch" data-rch="exps|${esc(e.key)}|${esc(sk)}"></div>
             ${
               // EXP line = design B (owner, 19 Oct 2026): "EXP [box] / step EXP [Max]",
               // then the step's Books still needed. The EXP counts against the whole
@@ -24577,6 +25318,7 @@ async function renderExpertsPage() {
         </div>
       </div>`;
     wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
+    fillExpertsReach();
 
     gridEl.querySelectorAll("select[data-expcur]").forEach((sel) => {
       sel.addEventListener("change", async () => {
@@ -25243,7 +25985,7 @@ async function renderRefinePage() {
 
 async function renderPetsDataPage() {
   const seq = RENDER_SEQ;
-  await ensurePetsData();
+  await Promise.all([ensurePetsData(), ensureUpgradeOrder()]);
   const petNames = petOrderSort(Object.keys(PETS_NODES_CACHE).filter((p) => !hiddenForVisitor("pets", p)));
 
   if (seq !== RENDER_SEQ) return;
@@ -25253,6 +25995,7 @@ async function renderPetsDataPage() {
     maxId: "petsMaxAllBtn",
     statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
     mainHtml: `<div id="petsSwipeCounter"></div>
+    <div id="petsReach" data-rchsum data-rchpage="pets"></div>
     <div id="petsList"></div>`,
   });
 
@@ -25335,6 +26078,31 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
+  // "Can reach" marks (design B, 2 Nov 2026): every counted pet shares the
+  // Backpack; the card shows the pet on screen, the line above counts all.
+  function fillPetsReach() {
+    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    const have = BAR_HAVE.pets;
+    if (!have || !listEl.isConnected) return;
+    const tracks = petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
+      const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
+      return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)),
+        cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
+        gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
+    });
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    const sum = document.getElementById("petsReach");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pets");
+    listEl.querySelectorAll("[data-rch^='pet|']").forEach((el) => {
+      const tr = tracks.find((x) => `pet|${x.id}` === el.dataset.rch);
+      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
+      const levels = PETS_NODES_CACHE[tr.id] || [], r = plan.lv[tr.id];
+      const lab = (i) => { if (i < 0 || !levels[i]) return "—"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
+      el.innerHTML = `<div class="rch-line">${esc(lab(tr.from))} <span class="lvarr">&rarr;</span> <span class="rch-mark${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(lab(r))}`}</span> <span class="lvarr">&rarr;</span> ${esc(lab(tr.to))}</div>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_levels")}`;
+    });
+  }
+  REACH_HOOKS.pets = fillPetsReach;
   let activePetIdx = 0;
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; renderList(); });
@@ -25406,6 +26174,7 @@ async function renderPetsDataPage() {
             ${step("from", from, -1, lastIdx, fromOpts)}
             ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
+          <div class="pc-rch" data-rch="pet|${esc(pet)}"></div>
           ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
             ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
             ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
@@ -25414,6 +26183,7 @@ async function renderPetsDataPage() {
           </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
+    fillPetsReach();
 
     wireVisibilityBtns(listEl, () => { renderTotals(); renderList(); });
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
@@ -25829,7 +26599,7 @@ function plxAmountModal(o) {
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
-      <input id="bsEditQty" type="text" inputmode="decimal" autocomplete="off" value="${Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${o.linked === false && o.onUse ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
@@ -25996,6 +26766,7 @@ async function renderT12ResearchPage() {
     });
   }
   if (!T12_TARGET) T12_TARGET = (await loadCalcState("t12_research_target")) || {};
+  await ensureUpgradeOrder();
 
   await ensureResearchSpeedData();
   await ensureResearchPageCountedData();
@@ -26161,6 +26932,7 @@ async function renderT12ResearchPage() {
           <span class="meta" style="white-space:nowrap;">/ ${rel}</span></span>
         </div>
         <div class="t12x-bar"><i style="width:${rel ? (Math.min(cur, rel) / rel) * 100 : 0}%;${cur >= rel ? " background:var(--good);" : ""}"></i></div>
+        <div class="t12-rch" data-rch="t12|${esc(troop)}|${def.key}"></div>
       </div>`;
     };
     const groupInfo = (group) => {
@@ -26181,6 +26953,7 @@ async function renderT12ResearchPage() {
     };
     troopsEl.innerHTML = `
       <div data-t12head>${headHtml()}</div>
+      <div data-rchsum data-rchpage="t12_research"></div>
       ${groups.map((group) => {
         const g = groupInfo(group);
         const open = t12Open[group] !== undefined ? t12Open[group] : g.planned;
@@ -26243,7 +27016,35 @@ async function renderT12ResearchPage() {
       renderTotals();
       refresh(T12_ITEM_DEFS.find((d) => d.key === sel.dataset.t12target));
     };
+    fillT12Reach();
   }
+  // "Can reach" marks (design B, 2 Nov 2026): every troop's nodes share the
+  // Backpack; research time is paid with research + general speedups.
+  function fillT12Reach() {
+    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    const have0 = BAR_HAVE.t12_research, troopsEl = document.getElementById("t12Troops");
+    if (!have0 || !troopsEl) return;
+    const TIME = "Research Speedups (minutes)";
+    const have = { ...have0, [TIME]: (Number(have0[TIME]) || 0) + (Number(RESEARCH_SPEEDUP_MINUTES) || 0) };
+    const tracks = [], lockNodes = researchLockNodes("t12");
+    T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.forEach((def) => {
+      const from = T12_STATE[troop][def.key] || 0, tierRows = T12_NODES_CACHE[def.tier] || {};
+      tracks.push({ id: `${troop}|${def.key}`, troop, key: def.key, from, to: Math.max(from, t12TargetOf(troop, def)), name: def.group === def.label ? tT12Group(def.group) : `${tT12Group(def.group)} · ${tT12Label(def.label)}`, lab: (i) => String(i),
+        needs: (lv) => researchNeedsOf("t12", lockNodes, def.key, lv, (k) => `${troop}|${k}`),
+        cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [TIME]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+        gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
+    }));
+    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
+    REACH_LAST.t12_research = { plan, tracks, unit: "rch_u_nodes", go: (troop) => { const b = document.querySelector(`[data-t12tab="${troop}"]`); if (b) b.click(); } };
+    tracks.forEach((tr) => {
+      const el = troopsEl.querySelector(`[data-rch="t12|${CSS.escape(tr.id)}"]`);
+      if (!el) return;
+      el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.waits[tr.id] && !plan.blocker[tr.id] ? null : plan.blocker[tr.id], "rch_u_levels")}${reachWaitHtml("t12", lockNodes, tr, plan, tracks)}` : "";
+    });
+    const sum = troopsEl.querySelector("[data-rchsum]");
+    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === t12ActiveTroop), "rch_u_nodes", "t12_research");
+  }
+  REACH_HOOKS.t12_research = fillT12Reach;
 
   renderTotals();
   renderTroopPanels();
@@ -26360,6 +27161,8 @@ const ADMIN_TABLES = {
   // Opens the "Globe Level extra skins" rule on its own (owner, 20 Oct 2026).
   globe: { label: "Globe Level", group: "game", icon: "🔮", desc: "Skins that come with each Globe Level", words: "globe level frost sphere skin cosmetics" },
   rules: { label: "Rules & Timeline", group: "rules", icon: "📅", desc: "State days, Gen, events, trades, chests", words: "rules timeline state day unlock gen svs koi trade chest widget hall heroes gems lab advanced marks" },
+  // Research unlock rules have their own screen (owner picked design A, 2 Nov 2026).
+  reslocks: { label: "Research unlock rules", group: "rules", icon: "🔓", desc: "Which research needs which first", words: "research unlock rule need prerequisite before t12 t11 order can reach" },
   // These are full pages of their own; the Admin entry just opens them.
   packs: { label: "Packs", group: "packs", icon: "📦", desc: "Pack tables (opens the page)", tab: "packs", words: "pack" },
   packres: { label: "Pack Resources", group: "packs", icon: "🧺", desc: "Columns used in packs", words: "resource column chest" },
@@ -26483,6 +27286,7 @@ async function drawAdminSection(key, body) {
   else if (key === "backup") await renderAdminBackup(body);
   else if (key === "rules") await renderAdminRules(body);
   else if (key === "globe") await renderAdminGlobe(body);
+  else if (key === "reslocks") await renderAdminResearchLocks(body);
   else if (key === "experts") await renderAdminExpertsGroup(body);
   else if (key === "pets") await renderAdminPetsGroup(body);
   else if (key === "chiefgears") await renderAdminChiefGearsGroup(body);
@@ -26763,6 +27567,9 @@ function gameRules() {
     { key: "globeLevels", group: "pages", label: "Globe Levels", help: "Each Globe Level's City Skin and the extra skins that come with it; picking the level on Skin gallery counts them as owned. Edited in Admin → Globe Level.", link: "globe",
       get: () => GLOBE_LEVELS.map((r) => ({ level: r.level, city: r.city, extra: r.extra.slice() })),
       set: (rows) => setGlobeLevels(rows) },
+    { key: "researchLocks", group: "research", label: "Research unlock rules", help: "Which levels of a research node wait for other research (same for every troop). Used by \"can reach\": it does that research first. Edited in Admin → Research unlock rules.", link: "reslocks",
+      get: () => JSON.parse(JSON.stringify(RESEARCH_LOCKS)),
+      set: (v) => researchLocksSet(v) },
     { key: "packDatesGroups", group: "packs", label: "Pack groups dated on the Packs page", help: "Pack groups (name as on the Packs page) whose start date everyone sets above Pack prices on the Packs page instead of in My Purchases → My pack dates.",
       cols: [{ key: "group", label: "Pack group", type: "text" }],
       get: () => PACK_DATES_ON_PACKS_PAGE.map((g) => ({ group: g })),
@@ -26930,6 +27737,158 @@ async function renderAdminGlobe(body) {
       if (tl) { const n = tl.dataset.glpick; if (single) { picked.clear(); picked.add(n); } else if (picked.has(n)) picked.delete(n); else picked.add(n); sync(); return; }
       if (ev.target.closest("[data-glpok]") && picked.size) { close(); onDone([...picked]); }
     };
+  };
+  draw();
+}
+// Admin → Research unlock rules (owner picked design A, 2 Nov 2026): page
+// chips, one card per group with its rules in plain words, ✎ / "+ Add rule"
+// open a sheet (which levels, what they need, All / Any). Saved for everyone
+// as game rule "researchLocks"; nothing is locked on the pages, "can reach"
+// does the research before a step first.
+let RLK_PAGE = "t12";
+async function renderAdminResearchLocks(body) {
+  await ensureSiteConfig();
+  await Promise.all([ensureT11StateData().catch(() => null), ensureRCData().catch(() => null)]);
+  const defOf = (pg) => (((gameRules().find((r) => r.key === "researchLocks") || {}).def || {})[pg]) || [];
+  const store = async (pg, list, msg) => {
+    const all = JSON.parse(JSON.stringify(RESEARCH_LOCKS));
+    all[pg] = list;
+    try { await saveGameRule("researchLocks", all); toast(msg || "Saved"); } catch (err) { toast(err.message || "Couldn't save", true); }
+    draw();
+  };
+  const ctx = () => {
+    const pg = RLK_PAGE, nodes = researchLockNodes(pg), list = RESEARCH_LOCKS[pg] || [];
+    const nodeOf = (key) => nodes.find((n) => n.key === key);
+    const groupOf = (tg) => (/^group:/.test(tg) ? tg.slice(6) : (nodeOf(tg) || {}).group);
+    const inGroup = (g) => nodes.filter((n) => n.group === g);
+    const maxOf = (tg) => (/^group:/.test(tg) ? Math.max(0, ...inGroup(tg.slice(6)).map((n) => n.max)) : (nodeOf(tg) || {}).max || 0);
+    const nameOf = (tg) => researchNeedName(pg, nodes, tg);
+    const gName = (g) => (pg === "t12" ? tT12Group(g) : g);
+    // A rule runs until the next rule of the same node starts.
+    const endOf = (r, rules) => { const nx = rules.filter((x) => x.node === r.node && x.from > r.from).map((x) => x.from); return nx.length ? Math.min(...nx) - 1 : maxOf(r.node); };
+    const rangeTxt = (r, rules) => { const e = endOf(r, rules); return e > r.from ? `Lv ${r.from}–${e}` : `Lv ${r.from}`; };
+    const optsHtml = (sel, skip) => researchLockGroups(nodes).map((g) => {
+      const ns = inGroup(g);
+      return `<optgroup label="${esc(gName(g))}">${ns.length > 1 ? `<option value="group:${esc(g)}" ${sel === `group:${g}` ? "selected" : ""}>All of ${esc(gName(g))} (${ns.length} nodes)</option>` : ""}${ns.filter((n) => n.key !== skip).map((n) => `<option value="${esc(n.key)}" ${sel === n.key ? "selected" : ""}>${esc(n.label)}</option>`).join("")}</optgroup>`;
+    }).join("");
+    return { pg, nodes, list, nodeOf, groupOf, inGroup, maxOf, nameOf, gName, endOf, rangeTxt, optsHtml };
+  };
+  const draw = () => {
+    const c = ctx(), { pg, nodes, list } = c;
+    const changed = JSON.stringify(list) !== JSON.stringify(defOf(pg));
+    const groups = researchLockGroups(nodes);
+    const line = (r, i) => {
+      const multi = c.inGroup(c.groupOf(r.node)).length > 1;
+      const pre = !/^group:/.test(r.node) && multi ? `${(c.nodeOf(r.node) || {}).short || r.node} · ` : "";
+      return `<div class="rlk-line"><span class="rlk-chip">${esc(pre + c.rangeTxt(r, list))}</span><span class="rlk-txt">needs <b>${esc(researchNeedsText(pg, nodes, r))}</b></span><button type="button" class="rlk-ed" data-rlked="${i}" aria-label="Edit rule">&#9998;</button></div>`;
+    };
+    const order = (r) => (/^group:/.test(r.node) ? -1 : nodes.findIndex((n) => n.key === r.node));
+    const cards = groups.map((g) => {
+      const ns = c.inGroup(g), rules = list.map((r, i) => ({ r, i })).filter((x) => c.groupOf(x.r.node) === g).sort((a, b) => order(a.r) - order(b.r) || a.r.from - b.r.from);
+      return `<div class="rlk-card${rules.length ? "" : " rlk-empty"}">
+        <div class="rlk-h"><b>${esc(c.gName(g))}</b><span class="meta">${ns.length} node${ns.length > 1 ? "s" : ""} · max ${Math.max(0, ...ns.map((n) => n.max))}</span></div>
+        ${rules.length ? rules.map((x) => line(x.r, x.i)).join("") : `<div class="meta rlk-none">No rules · open from the start</div>`}
+        <button type="button" class="rlk-add" data-rlkadd="${esc(g)}">+ Add rule</button>
+      </div>`;
+    }).join("");
+    body.innerHTML = `<div class="rlk">
+      <div class="rlk-top"><span class="rlk-pill">&#10003; Same rules for all troops</span><span style="flex:1"></span><button type="button" class="btn ghost small" data-rlkreset ${changed ? "" : "disabled"}>Reset to built-in</button></div>
+      <div class="rlk-pages">${RESEARCH_LOCK_PAGES.map(([k, l]) => `<button type="button" data-rlkpg="${k}" class="${k === pg ? "on" : ""}">${esc(l)}</button>`).join("")}</div>
+      <p class="desc rlk-desc">Which levels of a node wait for other research. Nothing is locked on the pages: <b>"can reach"</b> (My order / Best value) does the research before a step first, and a node it stops shows what it waits for.${pg === "t12" ? "" : ` <b>${esc(RESEARCH_LOCK_PAGES.find((x) => x[0] === pg)[1])}:</b> saved now, used once "can reach" is on this page.`}${changed ? ` <span class="rl-chg">changed</span>` : ""}</p>
+      ${nodes.length ? `<div class="rlk-grid">${cards}</div>` : `<div class="meta">This page's research couldn't be loaded. Try again.</div>`}
+    </div>`;
+  };
+  // Edit / add one rule.
+  const openRule = (idx, group) => {
+    const c = ctx(), { pg, nodes } = c;
+    const ns = c.inGroup(group || c.groupOf(c.list[idx].node));
+    const first = ns.length > 1 ? `group:${ns[0].group}` : (ns[0] || {}).key;
+    // A new rule starts with the group before it (the research done earlier).
+    const gs = researchLockGroups(nodes), gi = gs.indexOf((ns[0] || {}).group), pg0 = gs[gi > 0 ? gi - 1 : gi + 1];
+    const other = nodes.find((n) => n.group === pg0) || nodes.find((n) => n.group !== (ns[0] || {}).group) || nodes[0] || {};
+    const ed = idx != null ? JSON.parse(JSON.stringify(c.list[idx])) : { node: first, from: 1, needs: [{ node: c.inGroup(other.group || "").length > 1 ? `group:${other.group}` : other.key, lv: 1 }] };
+    let m = document.getElementById("rlkSheet");
+    if (!m) { m = document.createElement("div"); m.id = "rlkSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
+    m.style.display = "flex";
+    const close = () => { m.style.display = "none"; };
+    const rest = () => c.list.filter((r, i) => i !== idx);
+    const preview = () => {
+      const all = rest().concat([ed]), e = c.endOf(ed, all);
+      return `"Can reach" does <b>${esc(researchNeedsText(pg, nodes, ed))}</b> before <b>${esc(c.nameOf(ed.node))} ${e > ed.from ? `Lv ${ed.from}–${e}` : `Lv ${ed.from}`}</b>.`;
+    };
+    const drawSheet = () => {
+      const all = rest().concat([ed]), e = c.endOf(ed, all);
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box rlk-sheet" role="dialog" aria-modal="true">
+        <div class="gs-head"><b style="flex:1; font-size:17px;">${idx != null ? "Edit rule" : "New rule"} · ${esc(c.gName(c.groupOf(ed.node) || ""))}</b><button type="button" class="rfa-x" data-rlkclose aria-label="Close">&#10005;</button></div>
+        <div class="meta" style="font-size:11.5px; margin:-4px 0 8px;">${esc(RESEARCH_LOCK_PAGES.find((x) => x[0] === pg)[1])} · works the same for Infantry, Lancer and Marksman</div>
+        <div class="rlk-lab">Which levels</div>
+        <select class="rlk-sel" data-rlknode>${c.optsHtml(ed.node)}</select>
+        <div class="rlk-row"><span>from Lv</span><input type="number" min="1" max="${c.maxOf(ed.node)}" inputmode="numeric" value="${ed.from}" data-rlkfrom class="rlk-num" /><span class="meta">to Lv ${e}${e === c.maxOf(ed.node) ? " (max)" : " (next rule starts after)"}</span></div>
+        <div class="rlk-lab">Needs</div>
+        <div class="rlk-row"><span>Done when</span><span style="flex:1"></span><div class="rch-seg"><button type="button" data-rlkany="0" class="${ed.any ? "" : "on"}">All needs</button><button type="button" data-rlkany="1" class="${ed.any ? "on" : ""}">Any one</button></div></div>
+        ${ed.needs.map((n, i) => `<div class="rlk-need"><select class="rlk-sel" data-rlkneed="${i}">${c.optsHtml(n.node, /^group:/.test(ed.node) ? null : ed.node)}</select><span class="meta" style="white-space:nowrap;">at Lv</span><input type="number" min="1" max="${c.maxOf(n.node)}" inputmode="numeric" value="${n.lv}" data-rlkneedlv="${i}" class="rlk-num" /><button type="button" class="rlk-x" data-rlkdel="${i}" aria-label="Remove" ${ed.needs.length > 1 ? "" : "disabled"}>&#10005;</button></div>`).join("")}
+        <button type="button" class="rlk-add" data-rlkmore>+ Add another need</button>
+        <div class="rlk-prev" data-rlkprev>${preview()}</div>
+        <div class="rlk-err" data-rlkerr></div>
+        <div class="gl-sfoot"><button type="button" class="btn ghost small gl-del" data-rlkremove ${idx != null ? "" : "disabled"}>Delete</button><span style="flex:1"></span><button type="button" class="btn ghost small" data-rlkclose>Cancel</button><button type="button" class="btn small" data-rlksave>Save</button></div>
+      </div>`;
+    };
+    const err = () => {
+      if (!(ed.from >= 1 && ed.from <= c.maxOf(ed.node))) return `"from Lv" must be 1 – ${c.maxOf(ed.node)}.`;
+      if (!ed.needs.length) return "Add at least one need.";
+      for (const n of ed.needs) {
+        if (n.node === ed.node) return "A node can't need itself.";
+        if (!(n.lv >= 1 && n.lv <= c.maxOf(n.node))) return `${c.nameOf(n.node)} goes up to Lv ${c.maxOf(n.node)}.`;
+      }
+      if (rest().some((r) => r.node === ed.node && r.from === ed.from)) return `There is already a rule for ${c.nameOf(ed.node)} from Lv ${ed.from}.`;
+      return "";
+    };
+    drawSheet();
+    m.oninput = (ev) => {
+      const el = ev.target;
+      if (el.matches("[data-rlkfrom]")) ed.from = Math.round(Number(el.value) || 0);
+      else if (el.matches("[data-rlkneedlv]")) ed.needs[Number(el.dataset.rlkneedlv)].lv = Math.round(Number(el.value) || 0);
+      else return;
+      const pv = m.querySelector("[data-rlkprev]"); if (pv) pv.innerHTML = preview();
+    };
+    m.onchange = (ev) => {
+      const el = ev.target;
+      if (el.matches("[data-rlknode]")) { ed.node = el.value; drawSheet(); }
+      else if (el.matches("[data-rlkneed]")) { ed.needs[Number(el.dataset.rlkneed)].node = el.value; drawSheet(); }
+    };
+    m.onclick = async (ev) => {
+      if (ev.target === m || ev.target.closest("[data-rlkclose]")) { close(); return; }
+      const a = ev.target.closest("[data-rlkany]");
+      if (a) { if (a.dataset.rlkany === "1") ed.any = true; else delete ed.any; drawSheet(); return; }
+      const d = ev.target.closest("[data-rlkdel]");
+      if (d) { ed.needs.splice(Number(d.dataset.rlkdel), 1); drawSheet(); return; }
+      if (ev.target.closest("[data-rlkmore]")) { const last = ed.needs[ed.needs.length - 1] || { node: other.key, lv: 1 }; ed.needs.push({ node: last.node, lv: last.lv }); drawSheet(); return; }
+      if (ev.target.closest("[data-rlkremove]") && idx != null) {
+        if (!confirm("Delete this rule?")) return;
+        close(); await store(pg, rest(), "Rule deleted"); return;
+      }
+      if (ev.target.closest("[data-rlksave]")) {
+        const e = err();
+        if (e) { m.querySelector("[data-rlkerr]").textContent = e; return; }
+        const out = { node: ed.node, from: ed.from, ...(ed.any ? { any: true } : {}), needs: ed.needs.map((n) => ({ node: n.node, lv: n.lv })) };
+        const list = c.list.slice();
+        if (idx != null) list[idx] = out; else list.push(out);
+        close(); await store(pg, list, "Rule saved");
+      }
+    };
+  };
+  body.onclick = async (ev) => {
+    const pgb = ev.target.closest("[data-rlkpg]");
+    if (pgb) { RLK_PAGE = pgb.dataset.rlkpg; draw(); return; }
+    const e = ev.target.closest("[data-rlked]");
+    if (e) { openRule(Number(e.dataset.rlked)); return; }
+    const a = ev.target.closest("[data-rlkadd]");
+    if (a) { openRule(null, a.dataset.rlkadd); return; }
+    if (ev.target.closest("[data-rlkreset]")) {
+      const pg = RLK_PAGE;
+      if (!confirm(`Put the built-in rules for ${RESEARCH_LOCK_PAGES.find((x) => x[0] === pg)[1]} back?`)) return;
+      await store(pg, JSON.parse(JSON.stringify(defOf(pg))), "Reset to built-in");
+    }
   };
   draw();
 }
