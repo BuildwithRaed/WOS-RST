@@ -2056,8 +2056,5 @@
 "t:rch_u_tracks": "trilhas",
 "t:rch_order_title": "Ordem de melhoria",
 "t:rch_order_hint": "Sua Mochila vai para estes atributos nesta ordem (uma tropa e um atributo por linha), em todas as páginas. Cada linha recebe as melhorias que mais rendem pelos seus itens.",
-"t:rch_order_reset": "Zerar",
-"t:unit_key_d": "dias",
-"t:unit_key_h": "horas",
-"t:unit_key_m": "minutos"
+"t:rch_order_reset": "Zerar"
 }

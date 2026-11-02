@@ -2057,8 +2057,5 @@
 "t:rch_u_tracks": "rami",
 "t:rch_order_title": "Ordine di potenziamento",
 "t:rch_order_hint": "Lo Zaino va a queste statistiche in quest'ordine (una truppa e una statistica per riga), su ogni pagina. Ogni riga riceve i potenziamenti che rendono di più per i tuoi oggetti.",
-"t:rch_order_reset": "Azzera",
-"t:unit_key_d": "giorni",
-"t:unit_key_h": "ore",
-"t:unit_key_m": "minuti"
+"t:rch_order_reset": "Azzera"
 }

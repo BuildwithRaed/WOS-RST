@@ -2057,8 +2057,5 @@
 "t:rch_u_tracks": "Pfaden",
 "t:rch_order_title": "Ausbau-Reihenfolge",
 "t:rch_order_hint": "Dein Rucksack geht in dieser Reihenfolge an diese Werte (eine Truppe und ein Wert pro Zeile), auf jeder Seite. Jede Zeile bekommt die Ausbauten, die für deine Gegenstände am meisten bringen.",
-"t:rch_order_reset": "Zurücksetzen",
-"t:unit_key_d": "Tage",
-"t:unit_key_h": "Stunden",
-"t:unit_key_m": "Minuten"
+"t:rch_order_reset": "Zurücksetzen"
 }

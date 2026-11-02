@@ -2056,8 +2056,5 @@
 "t:rch_u_tracks": "jalur",
 "t:rch_order_title": "Urutan upgrade",
 "t:rch_order_hint": "Ranselmu dipakai untuk stat ini dengan urutan ini (satu pasukan dan stat per baris), di setiap halaman. Tiap baris mendapat upgrade yang memberi paling banyak untuk itemmu.",
-"t:rch_order_reset": "Reset",
-"t:unit_key_d": "hari",
-"t:unit_key_h": "jam",
-"t:unit_key_m": "menit"
+"t:rch_order_reset": "Reset"
 }
