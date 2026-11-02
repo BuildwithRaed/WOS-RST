@@ -7852,6 +7852,8 @@ function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
 const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
 const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
 const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
+// Which troop goes first when two upgrades are equally good (owner, 2 Nov 2026).
+const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
 // tracks: [{ id, troop ("Infantry" / "Lancer" / "Marksman" / "all" / null), from, to,
 //   cost(i) = items to go from level i-1 to i, gain(i, lv) = { stat: value } at level i
 //   (lv = every track's planned level, for stats that depend on another track) }]
@@ -7888,10 +7890,21 @@ function reachPlan(tracks, have, mode, rows) {
     return best;
   };
   const take = (tr, b) => { lv[tr.id] = b.to; Object.keys(b.cost).forEach((k) => { left[k] = (left[k] || 0) - b.cost[k]; }); };
+  // Equally good steps (same gain for the same items): the owner's troop
+  // order Infantry > Marksman > Lancer, then the lowest level first, so a
+  // troop isn't pushed just because its piece comes first in the list.
+  const rank = (tr) => { const k = REACH_TROOP_RANK[reachTroopKey(tr.troop)]; return k == null ? 3 : k; };
+  const better = (b, tr, pick, pt) => {
+    if (!pick) return true;
+    if (b.r > pick.r * (1 + 1e-6)) return true;
+    if (b.r < pick.r * (1 - 1e-6)) return false;
+    if (rank(tr) !== rank(pt)) return rank(tr) < rank(pt);
+    return lv[tr.id] < lv[pt.id];
+  };
   const run = (list, stat) => {
     for (let guard = 0; guard < 20000; guard++) {
       let pick = null, pt = null;
-      list.forEach((tr) => { if (lv[tr.id] >= tr.to) return; const b = chunk(tr, stat); if (b && (!pick || b.r > pick.r)) { pick = b; pt = tr; } });
+      list.forEach((tr) => { if (lv[tr.id] >= tr.to) return; const b = chunk(tr, stat); if (b && better(b, tr, pick, pt)) { pick = b; pt = tr; } });
       if (!pick) return;
       take(pt, pick);
     }
@@ -7907,7 +7920,7 @@ function reachPlan(tracks, have, mode, rows) {
       if (lv[tr.id] >= tr.to) return;
       const c = tr.cost(lv[tr.id] + 1) || {};
       if (Object.keys(c).some((k) => (Number(c[k]) || 0) > (left[k] || 0) + 1e-9)) return;
-      if (!pt || lv[tr.id] - tr.from < lv[pt.id] - pt.from) pt = tr;
+      if (!pt || rank(tr) < rank(pt) || (rank(tr) === rank(pt) && lv[tr.id] - tr.from < lv[pt.id] - pt.from)) pt = tr;
     });
     if (!pt) break;
     const c = pt.cost(lv[pt.id] + 1) || {};
