@@ -3549,10 +3549,7 @@ input,select,textarea{
   /* Dashboard troop stats = boxes, vertical (owner, 3 Nov 2026): a column per troop, its
      4 boxes going down. Phone sizes are written 2 px bigger: the phone layer takes 2 px
      off (11.5 px label, 12 px left, 18 px number, 12 px max). */
-  .dh3-k{ display:flex; align-items:center; gap:8px; margin:0 2px; font-size:14px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
-  .dh3-k .has-info{ display:inline-flex; align-items:center; gap:7px; }
-  .dh3-u{ margin-inline-start:auto; font-size:14px; font-weight:600; letter-spacing:0; text-transform:none; }
-  .dh3-cols{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-top:8px; }
+  .dh3-cols{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
   .dh3-col{ display:flex; flex-direction:column; gap:6px; min-width:0; }
   .dh3-ch{ display:flex; align-items:center; gap:4px; width:100%; min-width:0; margin:0; padding:6px 2px; border:0; border-bottom:2px solid var(--tc); border-radius:0; background:none; font:inherit; font-size:14.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--tc); text-align:start; cursor:pointer; }
   .dh3-ch > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -3569,7 +3566,6 @@ input,select,textarea{
   .dh3-bar i{ display:block; height:100%; background:var(--tc); }
   /* Wider screens: roomier boxes (the phone layer doesn't reach here) */
   @media (min-width: 701px){
-    .dh3-k, .dh3-u{ font-size:12.5px; }
     .dh3-cols{ gap:10px; }
     .dh3-col{ gap:8px; }
     .dh3-ch{ font-size:13px; }
@@ -6365,8 +6361,6 @@ const T = {
   set_info: { en: "What these settings do" },
   info_more: { en: "More about this" },
   dash_breakdown: { en: "Breakdown" },
-  dash_all_pct: { en: "all in %" },
-  dash_tap_box: { en: "Each box: + what's left to max (top right), your current value, and / the max. Tap a box, or a troop's name, for the full breakdown." },
   exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
@@ -8191,9 +8185,9 @@ async function renderOverview(opts = {}) {
   // a column per troop (its name on top, tap = its breakdown) with its 4 boxes going
   // down; each box: the stat and "+ left" on top, the current value big, "/ max"
   // under it, a bar along its bottom edge (troop colour = now, amber = what's left).
-  // All in %, said once in the header.
+  // No header row above them (owner, 3 Nov 2026: the "Troops Stats (i) · all in %"
+  // line was "taking space for no use").
   const statsHtml = () => `<div class="dh3">
-    <div class="dh3-k"><span class="has-info">${esc(t("troops_stats_title"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden>${esc(t("dash_tap_box"))}</span></span><span class="dh3-u"><bdi>${esc(t("dash_all_pct"))}</bdi></span></div>
     <div class="dh3-cols">${TROOP_TYPES.map((tt) => `<div class="dh3-col" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
       <button type="button" class="dh3-ch" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}" title="${esc(t("dash_breakdown"))}"><span>${esc(troopDisplayName(tt.key))}</span><span class="dh3-gt" aria-hidden="true">&#8250;</span></button>
       ${STATS.map((st) => {
