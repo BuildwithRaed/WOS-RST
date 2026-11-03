@@ -1824,9 +1824,9 @@ input,select,textarea{
   .gs-opt small{ font-size:10px; }
   .gs-opt:disabled{ opacity:.35; cursor:default; }
   /* Chief Gear pieces (pictures with tier edge, now badge, target chip) */
-  .cg-pic{ position:relative; display:block; width:min(78px, 100%); aspect-ratio:1; border:3px solid var(--edge, var(--line)); border-radius:12px; background:radial-gradient(circle at 50% 40%, rgba(255,255,255,.12), rgba(0,0,0,.15)); }
-  .cg-pic img{ width:100%; height:100%; object-fit:contain; border-radius:9px; display:block; }
-  .cg-pic.sm{ width:46px; flex-shrink:0; border-width:2px; }
+  .cg-pic{ position:relative; display:block; width:min(78px, 100%); aspect-ratio:1; }
+  .cg-pic img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .cg-pic.sm{ width:46px; flex-shrink:0; }
   .cg-badge{ position:absolute; top:-9px; inset-inline-start:-7px; padding:1px 5px; border:1px solid var(--line); border-radius:6px; background:#0f141b; font-size:10px; font-weight:800; white-space:nowrap; }
   .cg-tgt{ position:absolute; bottom:-9px; inset-inline-end:-9px; padding:2px 6px; border-radius:999px; background:#2c5f8f; color:#fff; font-size:10px; font-weight:800; white-space:nowrap; }
   .cg-tgt.up{ background:#8a5a1c; }
@@ -5487,7 +5487,7 @@ const T = {
   gs_done: { en: "Done" },
   cg_pieces_to_go: { en: "pieces to go" },
   cg_at_target: { en: "{n} of {m} at target" },
-  cg_slots_hint: { en: "Edge colour = tier (red Legendary, gold Mythic). Badge top-left = now, blue = target. Tap a piece to change it." },
+  cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
   cg_backpack: { en: "Backpack" },
   cg_trades: { en: "Trades" },
   cg_can_now: { en: "Can do now" },
