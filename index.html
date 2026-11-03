@@ -3456,6 +3456,91 @@ input,select,textarea{
   .pp-del{ width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--danger); font-size:16px; line-height:1; cursor:pointer; }
   .pp-pick{ margin-top:8px; font-size:12px; }
   .pp-clear{ margin-top:10px; }
+
+  /* ---- Experts Level = design H4 (owner, 3 Nov 2026) ---- */
+  .exp-h4b{ display:none; }
+  @media (max-width: 900px){
+    .exp-h4b{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 10px; }
+    .exp-h4 .plx-stats-top:not(.exp-open), .exp-h4 .t12x-amts:not(.exp-open){ display:none !important; }
+    .exp-h4 .plx-stats-top.exp-open, .exp-h4 .t12x-amts.exp-open{ display:block !important; position:fixed !important; left:0; right:0; bottom:0; top:auto; z-index:62; max-height:84vh; overflow:auto; overscroll-behavior:contain; margin:0 !important; border-radius:16px 16px 0 0 !important; padding-top:44px !important; box-shadow:0 -10px 40px rgba(0,0,0,.5); }
+    .exp-h4 .exp-open .exp-wx{ display:flex; }
+  }
+  .exp-x{ display:flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:14px; cursor:pointer; }
+  .exp-wx{ display:none; position:absolute; top:6px; inset-inline-end:8px; z-index:2; }
+  .exp-bd{ z-index:61; }
+  .exp-h4btn{ display:flex; align-items:center; gap:8px; min-height:44px; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--text); font:inherit; font-size:14px; cursor:pointer; text-align:start; }
+  .exp-h4btn .ic{ font-size:18px; }
+  .exp-h4btn b{ flex:1 1 auto; min-width:0; font-weight:700; }
+  .exp-shn{ padding:2px 7px; border-radius:999px; background:rgba(240,90,90,.15); color:var(--danger); font-size:12px; font-weight:700; white-space:nowrap; }
+  .exp-shn.ok{ background:rgba(110,220,150,.12); color:var(--good); }
+  .exp-gt{ color:var(--muted); font-size:18px; line-height:1; }
+  .exp-h4c{ text-align:start; }
+  .exp-hd{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .exp-hd > img{ width:64px; height:64px; flex:0 0 64px; object-fit:contain; border-radius:12px; }
+  .exp-hd-t{ min-width:0; }
+  .exp-hd-t .name{ font-size:17px; font-weight:800; }
+  .exp-hd-t .meta{ font-size:12px; }
+  .exp-stl{ font-size:12.5px; color:var(--muted); margin-top:3px; }
+  .exp-stl b{ color:var(--text); } .exp-stl b.tg{ color:var(--ice); }
+  .exp-tags{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:4px; }
+  .exp-tags > span{ margin-top:0 !important; }
+  .exp-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:3px; margin:0 0 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .exp-tabs button{ display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; padding:4px 6px; border:0; border-radius:9px; background:none; color:var(--muted); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+  .exp-tabs button span{ padding:1px 7px; border-radius:999px; background:rgba(255,255,255,.07); font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .exp-tabs button.on{ background:var(--ice-dim); color:var(--frost); }
+  .exp-sts{ display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:end; gap:8px; }
+  .exp-sts small{ display:block; margin:0 0 4px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .exp-sts > div:last-child small{ text-align:end; }
+  .exp-arr{ padding-bottom:12px; color:var(--ice); }
+  .exp-st{ display:flex; align-items:center; justify-content:space-between; min-height:44px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
+  .exp-st.tgt{ border-color:var(--ice-dim); }
+  .exp-st button{ width:40px; height:42px; border:0; background:none; color:var(--frost); font-size:20px; cursor:pointer; }
+  .exp-st button:disabled{ opacity:.3; cursor:default; }
+  .exp-st-v{ position:relative; flex:1 1 auto; min-width:0; text-align:center; font-size:18px; font-weight:800; }
+  .exp-st.tgt .exp-st-v{ color:var(--ice); }
+  .exp-st-v select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
+  .exp-blks{ display:flex; gap:3px; margin:12px 0 6px; }
+  .exp-blks i{ flex:1 1 0; height:8px; border-radius:2px; background:#3a7bd5; }
+  .exp-blks i.rch{ background:repeating-linear-gradient(45deg, #5fd08a 0 4px, #3ea86a 4px 8px); }
+  .exp-lbar{ position:relative; display:flex; height:8px; margin:12px 0 6px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .exp-lbar i{ background:var(--good); } .exp-lbar b{ background:#3a7bd5; }
+  .exp-lv-l{ display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+  .exp-lv-l .bad{ color:var(--danger); } .exp-lv-l .ok{ color:var(--good); }
+  .exp-nbs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 10px; }
+  .exp-nb{ display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font:inherit; text-align:start; }
+  button.exp-nb{ cursor:pointer; }
+  .exp-nb img{ width:30px; height:30px; flex:0 0 30px; object-fit:contain; }
+  .exp-nb > span{ display:flex; flex-direction:column; min-width:0; }
+  .exp-nb small{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .exp-nb b{ font-size:16px; font-weight:800; }
+  .exp-nb b.bad{ color:var(--danger); } .exp-nb b.ok{ color:var(--good); }
+  .exp-skl-list{ display:flex; flex-direction:column; }
+  .exp-skr{ display:block; width:100%; padding:10px 0; border:0; border-top:1px solid var(--line); background:none; color:var(--text); font:inherit; text-align:start; cursor:pointer; }
+  .exp-skr-h{ display:flex; align-items:center; gap:8px; }
+  .exp-skr-h b{ flex:1 1 auto; min-width:0; font-size:14px; }
+  .exp-chip{ padding:3px 9px; border:1px solid var(--line); border-radius:9px; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .exp-chip i{ font-style:normal; color:var(--ice); }
+  .exp-chip.ok{ border-color:rgba(110,220,150,.45); color:var(--good); }
+  .exp-skr-b{ display:flex; align-items:center; gap:10px; margin-top:7px; }
+  .exp-bar{ position:relative; display:flex; flex:1 1 auto; height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .exp-bar.big{ height:8px; margin:12px 0 4px; }
+  .exp-bar i{ background:var(--good); } .exp-bar b{ background:#3a7bd5; }
+  .exp-rst{ flex:0 0 auto; }
+  .exp-now{ padding:2px 8px; border:1px dashed rgba(110,220,150,.6); border-radius:8px; color:var(--good); font-size:12px; font-weight:700; white-space:nowrap; }
+  .exp-short{ color:var(--danger); font-size:12px; font-weight:700; white-space:nowrap; }
+  .exp-ft{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
+  .btn.ghost.exp-maxe{ min-height:40px; border-color:var(--ice-dim); color:var(--ice); font-weight:700; }
+  .exp-ov{ position:fixed; inset:0; z-index:70; display:flex; align-items:flex-end; justify-content:center; background:rgba(3,7,13,.6); }
+  .exp-sk{ box-sizing:border-box; width:100%; max-width:560px; max-height:88vh; overflow:auto; overscroll-behavior:contain; padding:12px 14px 16px; border-radius:16px 16px 0 0; background:var(--panel); box-shadow:0 -10px 40px rgba(0,0,0,.5); }
+  @media (min-width: 901px){ .exp-ov{ align-items:center; } .exp-sk{ border-radius:16px; } }
+  .exp-sk-h{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .exp-sk-t{ flex:1 1 auto; min-width:0; }
+  .exp-sk-t b{ display:block; font-size:16px; } .exp-sk-t small{ display:block; font-size:12px; color:var(--muted); }
+  .exp-nav{ width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:18px; cursor:pointer; }
+  .exp-nav:disabled{ opacity:.3; }
+  .exp-sk-bonus{ font-size:12.5px; color:var(--muted); margin:0 0 10px; } .exp-sk-bonus b{ color:var(--ice); }
+  .exp-sk-k{ margin:12px 0 6px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .exp-done{ display:block; width:100%; min-height:44px; margin-top:12px; }
 </style>
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller (owner, 3 Nov 2026: "make
@@ -5822,6 +5907,29 @@ const T = {
   marks_pack_gems_short: { en: "Pack gems count as marks" },
   marks_pack_gems_rate: { en: "500 gems = 1 Common Mark" },
   g1_hide: { en: "Hide" },
+  exp_tab_level: { en: "Level" },
+  exp_tab_skills: { en: "Skills" },
+  exp_n_to_go: { en: "{n} to go" },
+  exp_lv_togo: { en: "{n} levels to go" },
+  exp_at_target: { en: "At its target" },
+  exp_at_max: { en: "Max level" },
+  exp_sig_short_s: { en: "Sigils short" },
+  exp_aff_short_s: { en: "Affinity short" },
+  exp_covered: { en: "Backpack covers it" },
+  exp_have_n: { en: "have {n}" },
+  exp_in_bar_n: { en: "in bar {n}" },
+  exp_general_n: { en: "+ {n} general" },
+  exp_sigils_of: { en: "{name} Sigils" },
+  exp_in_bar_title: { en: "Affinity already in {name}'s bar" },
+  exp_max_one: { en: "Max {name}" },
+  exp_skill_n: { en: "skill {i} of {n}" },
+  exp_skill_bonus: { en: "Skill bonus" },
+  exp_still_needed: { en: "Still needed for {a} \u2192 {b}" },
+  exp_done: { en: "Done" },
+  exp_now: { en: "now" },
+  exp_item_short: { en: "{item} short" },
+  exp_stats_btn: { en: "Stats" },
+  exp_n_short: { en: "{n} short" },
   mm_pages_n: { en: "{n} pages" },
   mm_only_you: { en: "only you" },
   g1_show: { en: "Show" },
@@ -6602,7 +6710,7 @@ async function keepPlace(fn) {
 // scrolled under an open pop-up). Any shown overlay locks the page's scroll
 // (html.scroll-lock); scrolling inside a pop-up doesn't run on into the page
 // (overscroll-behavior in the CSS).
-const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov";
+const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov, .exp-ov";
 let SCROLL_LOCK_RAF = 0;
 function syncScrollLock() {
   SCROLL_LOCK_RAF = 0;
@@ -18030,6 +18138,7 @@ document.addEventListener("click", (e) => {
   if (card) { e.preventDefault(); e.stopPropagation(); dashRcSheet(card.dataset.rcopen); }
 }, true);
 let EXP_SIG_OPEN = false; // Experts Level sigils fold, kept for the visit
+let EXP_TAB = "level"; // Experts Level H4: Level | Skills, kept for the visit
 document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("[data-expsig]")) EXP_SIG_OPEN = e.target.open; }, true);
 // Planner pages (Chief Gear pattern, owner 3 Nov 2026): "⇄ Trades ›" and
 // "$ <price> ›" beside the Backpack title open the Trades / Pack cost card as a
@@ -26855,16 +26964,23 @@ async function renderExpertsPage() {
     // 20 Oct 2026), so this page has no Settings card.
     amountsId: "expertsAmounts", needId: "expertsSummary",
     statsHtml: `<div class="t12x-card plx-stats-top">
+      <button type="button" class="exp-x exp-wx" data-expsheetclose aria-label="${esc(t("close_button"))}">&#10005;</button>
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       <div class="desc exp-tabs-d">${EXP_STAT_TABS.map(([, title, desc]) => `<div><b>${esc(t(title))}</b> · ${esc(t(desc))}</div>`).join("")}<div>${esc(t("exp_tabs_note"))}</div></div>
       ${plxStatTabsHtml("experts", EXP_STAT_TABS.map(([key, title, , id]) => ({ key, label: t(title), html: `<div id="${id}"></div>` })))}
     </div>`,
     mainHtml: `
+    <div class="exp-h4b">
+      <button type="button" class="exp-h4btn" data-expsheet="stats"><span class="ic" aria-hidden="true">&#128202;</span><b>${esc(t("exp_stats_btn"))}</b><span class="exp-gt" aria-hidden="true">&#8250;</span></button>
+      <button type="button" class="exp-h4btn" data-expsheet="bp"><span class="ic" aria-hidden="true">&#127890;</span><b>${esc(t("bs_from_backpack"))}</b><span class="exp-shn" id="expBpShort"></span><span class="exp-gt" aria-hidden="true">&#8250;</span></button>
+    </div>
     <div id="expertsSwipeCounter"></div>
-    <div id="expertsReach" data-rchsum data-rchpage="experts"></div>
-    <div id="expertsGrid"></div>`,
+    <div id="expertsGrid"></div>
+    <div class="cg-bd exp-bd" data-expbd hidden></div>`,
   });
-  document.getElementById("expertsAmounts").innerHTML = `<div id="expertsFoot"></div>
+  document.getElementById("expertsAmounts").innerHTML = `<button type="button" class="exp-x exp-wx" data-expsheetclose aria-label="${esc(t("close_button"))}">&#10005;</button>
+    <div id="expertsReach" data-rchsum data-rchpage="experts"></div>
+    <div id="expertsFoot"></div>
     <div id="expertsTime"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
 `;
@@ -26885,6 +27001,24 @@ async function renderExpertsPage() {
     save: () => saveCalcState("experts", saved),
     after: () => render(),
   });
+  // H4 (phones): "Stats ›" and "Backpack ›" open the Troops Stats card and the
+  // Backpack card (Can do now, the boxes, Pack cost) as windows over the page.
+  {
+    const shellEl = content.querySelector(".t12x");
+    shellEl.classList.add("exp-h4");
+    const cards = { stats: shellEl.querySelector(".plx-stats-top"), bp: shellEl.querySelector(".t12x-amts") };
+    const bd = shellEl.querySelector("[data-expbd]");
+    const show = (which) => {
+      Object.entries(cards).forEach(([k, el]) => { if (el) el.classList.toggle("exp-open", k === which); });
+      if (bd) bd.hidden = !which;
+      if (which && cards[which]) cards[which].scrollTop = 0;
+    };
+    shellEl.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-expsheet]");
+      if (b) { show(b.dataset.expsheet); return; }
+      if (ev.target.closest("[data-expsheetclose]") || ev.target.closest("[data-expbd]")) show(null);
+    });
+  }
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
@@ -27064,6 +27198,7 @@ async function renderExpertsPage() {
     ].filter((r) => r.need > 0);
     const amt = (r, v) => (r.fmt ? r.fmt(v) : shortAmount(v));
     const short = rows.filter((r) => r.have < r.need), ready = rows.filter((r) => r.have >= r.need);
+    { const nEl = document.getElementById("expBpShort"); if (nEl) { nEl.textContent = short.length ? t("exp_n_short").replace("{n}", short.length) : "\u2713"; nEl.classList.toggle("ok", !short.length); } }
     // Tiles: Books, speedups (both pools count for the time), the Affinity
     // items together, General Sigils (what the experts' own sigils leave), each expert.
     const timeNeedMin = Math.round(totalTimeHours * 60), timeShortMin = Math.max(0, timeNeedMin - expertSpeedupOwnedFrom(invSaved));
@@ -27141,6 +27276,17 @@ async function renderExpertsPage() {
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
     const sum = document.getElementById("expertsReach");
     if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts");
+    // H4: "✓ 12 now" / "Books short" beside each skill row, the level blocks the Backpack covers
+    gridBox.querySelectorAll("[data-rchst]").forEach((el) => {
+      const tr = tracks.find((x) => x.id === el.dataset.rchst);
+      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
+      const r = plan.lv[tr.id];
+      el.innerHTML = r >= tr.to ? `<span class="exp-now">&#10003; ${esc(t("rch_covers_short"))}</span>` : r > tr.from ? `<span class="exp-now">&#10003; ${r} ${esc(t("exp_now"))}</span>` : `<span class="exp-short">${esc(t("exp_item_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"))}</span>`;
+    });
+    {
+      const shown = EXPERTS_SHOWN[activeExpertIdx], tr = shown && tracks.find((x) => x.id === `exp|${shown.key}`);
+      if (tr) gridBox.querySelectorAll("[data-expblk]").forEach((b) => b.classList.toggle("rch", Number(b.dataset.expblk) < (plan.lv[tr.id] || 0) - tr.from));
+    }
     gridBox.querySelectorAll("[data-rch]").forEach((el) => {
       const tr = tracks.find((x) => x.id === el.dataset.rch);
       if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
@@ -27169,111 +27315,200 @@ async function renderExpertsPage() {
 
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
   let activeExpertIdx = 0;
+  // H4: level positions (every level, plus "N.1" where that level's Advance costs sigils)
+  function expPos(hero) {
+    const out = [];
+    for (let n = 0; n <= heroTopLevel(hero); n++) { out.push(n); if (n > 0 && heroSigilLevel(hero, n)) out.push(n + 0.1); }
+    return out;
+  }
+  let EXP_SKILL_OPEN = null; // the skill whose window is open (this expert)
+  // A skill's window (H1's sheet, owner picked H4 which opens it): ‹ › to the
+  // expert's other skills, its bonus, Now / Target steppers, the Backpack's
+  // "can reach" line (admin), the EXP you have (box + Max) and what's still needed.
+  function skillSheetHtml(e, sk) {
+    const hero = e.key, s = saved[hero], st = s.skills[sk];
+    const max = skillMaxLevel(hero, sk), pick = skillPickMax(hero, sk), cur = Number(st.current) || 0, des = Number(st.desired) || 0;
+    const { exp, book, expNeed } = skillNeed(hero, sk, st);
+    const expHaveVal = skillExpHave(st);
+    const i = e.skills.indexOf(sk), n = e.skills.length;
+    const rows = SKILL_CACHE[`${hero}|${sk}`] || [];
+    const at = (lv) => { let m = null; rows.forEach((r) => { if (r.level <= lv) m = r; }); return m; };
+    const fmt = (r) => (r && r.stat_type ? `${r.stat_type.split(",").map((k) => ({ Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" }[k.trim()] || k.trim())).join(" · ")} +${Number(r.stat_value).toFixed(1)}%` : "");
+    const bonus = rows.some((r) => r.stat_type) ? `<div class="exp-sk-bonus">${esc(t("exp_skill_bonus"))}: ${esc(fmt(at(cur)) || "—")}${des > cur ? ` &rarr; <b>${esc(fmt(at(des)))}</b>` : ""}</div>` : "";
+    const stp = (role, val, sel, minus, plus) => `<div class="exp-st${role === "des" ? " tgt" : ""}">
+          <button type="button" data-expskstep="${role}|-1" ${minus ? "" : "disabled"} aria-label="&minus;">&minus;</button>
+          <span class="exp-st-v">${val}${sel}</span>
+          <button type="button" data-expskstep="${role}|1" ${plus ? "" : "disabled"} aria-label="+">+</button>
+        </div>`;
+    const pct = (v) => (max > 0 ? Math.min(100, (v / max) * 100) : 0);
+    return `<div class="exp-ov" data-expskbd>
+      <div class="exp-sk" role="dialog" aria-label="${esc(dataName(sk))}" data-expsk="${esc(sk)}">
+        <div class="exp-sk-h">
+          <button type="button" class="exp-nav" data-expskgo="${i - 1}" ${i > 0 ? "" : "disabled"} aria-label="&#8249;">&#8249;</button>
+          <div class="exp-sk-t"><b>${esc(dataName(sk))}</b><small>${esc(dataName(hero))} · ${esc(t("exp_skill_n").replace("{i}", i + 1).replace("{n}", n))}</small></div>
+          <button type="button" class="exp-nav" data-expskgo="${i + 1}" ${i < n - 1 ? "" : "disabled"} aria-label="&#8250;">&#8250;</button>
+          <button type="button" class="exp-x" data-expskclose aria-label="${esc(t("close_button"))}">&#10005;</button>
+        </div>
+        ${bonus}
+        <div class="exp-sts">
+          <div><small>${esc(t("t12x_now"))}</small>${stp("cur", cur, `<select data-expskillcur="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("current_label"))}">${levelOpts(pick, Math.min(cur, pick), max)}</select>`, cur > 0, cur < pick)}</div>
+          <span class="exp-arr">&rarr;</span>
+          <div><small>${esc(t("t12x_target"))}</small>${stp("des", des, `<select data-expskilldes="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("target_label"))}">${levelOpts(pick, Math.min(des, pick), max)}</select>`, des > cur, des < pick)}</div>
+        </div>
+        <span class="exp-bar big"><i style="width:${pct(cur)}%"></i><b style="width:${Math.max(0, pct(des) - pct(cur))}%"></b></span>
+        <div class="exp-rch" data-rch="exps|${esc(hero)}|${esc(sk)}"></div>
+        <div class="exp-sk-k">${esc(t("skill_exp_have"))}</div>
+        <div class="exp-xl">
+          <span>EXP</span>
+          <input type="number" min="0" step="1" inputmode="numeric" class="keep-w${expHaveVal > 0 ? " has" : ""}" data-expskillexp="${esc(hero)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" aria-label="${esc(t("skill_exp_have"))}" style="--xw:${Math.max(3, Math.round(expHaveVal || 0).toLocaleString().length)};" />
+          <span>/ ${bidiNum(Math.round(exp).toLocaleString())} EXP</span>
+          <button type="button" class="btn ghost small" data-expskillmax="${esc(hero)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}">${esc(t("max_button"))}</button>
+        </div>
+        ${des > cur ? `<div class="exp-sk-k">${esc(t("exp_still_needed").replace("{a}", cur).replace("{b}", des))}</div>
+        <div class="exp-nbs">
+          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="" /><span><b class="${book > 0 ? "" : "ok"}">${book > 0 ? bidiNum(Math.round(book).toLocaleString()) : "&#10003;"}</b><small>${esc(t("resource_books"))}</small></span></div>
+          <div class="exp-nb"><img src="icons/speedup-expert.png" alt="" /><span><b class="${expNeed > 0 ? "" : "ok"}">${expNeed > 0 ? bidiNum(formatTimeDHM(expNeed / 3600)) : "&#10003;"}</b><small>${esc(t("resource_time"))}</small></span></div>
+        </div>` : ""}
+        <button type="button" class="btn exp-done" data-expskclose>${esc(t("exp_done"))}</button>
+      </div>
+    </div>`;
+  }
   function renderGrid() {
     renderPickStrip(expertsCounterEl, EXPERTS_SHOWN.map((ex) => ({ label: dataName(ex.key), img: ex.img, dim: !isExpertUnlocked(ex.key) })), activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
     const e = EXPERTS_SHOWN[activeExpertIdx];
     const s = saved[e.key];
     const unlocked = isExpertUnlocked(e.key);
+    // Design H4 (owner picked, 3 Nov 2026): portrait, talent and the stat now →
+    // target, a Level | Skills switch, Count and "Max <expert>". Level: Now / Target
+    // steppers (tap the number for the whole list), a block per level to go, the
+    // Affinity and Sigils needed vs had (tap a box to change what you have). Skills:
+    // Books and time needed vs had, one row per skill (tap → its window). The
+    // selects and boxes keep their data attributes, so the handlers are unchanged.
+    const hero = e.key, pos = expPos(hero);
+    const lvLab = (v) => { const n = Number(v) || 0; return n % 1 ? n.toFixed(1) : String(n); };
+    const idxOf = (v) => { const k = pos.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
+    const ci = idxOf(s.current), di = Math.max(ci, idxOf(s.desired)), maxI = pos.length - 1;
+    const statOf = (v) => expertLevelStat(AFFINITY_CACHE[hero] || [], v);
+    const sNow = statOf(s.current), sTgt = statOf(s.desired);
+    const typesOf = (x) => (x && x.row.stat_type ? x.row.stat_type.split(",").map((k) => ({ Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" }[k.trim()] || k.trim())).join(" · ") : "");
+    const statLine = sNow || sTgt ? `${esc(typesOf(sNow || sTgt))} <b>${bidiNum(`+${(sNow ? sNow.v : 0).toFixed(1)}%`)}</b>${di > ci && sTgt ? ` &rarr; <b class="tg">${bidiNum(`+${sTgt.v.toFixed(1)}%`)}</b>` : ""}` : "";
+    const { affinity, sigil } = heroCost(hero, s.current, s.desired);
+    const banked = heroAffinityHave(hero), affNeed = Math.max(0, affinity - Math.min(banked, affinity));
+    const affOwned = affinityOwnedFrom(invSaved), sigOwn = Number(invSaved[`${hero} Sigils`]) || 0, genSig = Number(invSaved["General Sigils"]) || 0;
+    const sigShort = sigil > sigOwn + genSig, affShort = affNeed > affOwned;
+    const steps = di - ci;
+    const skillsToGo = e.skills.filter((sk) => (Number(s.skills[sk].desired) || 0) > (Number(s.skills[sk].current) || 0)).length;
+    const tab = EXP_TAB === "skills" ? "skills" : "level";
+    const stepper = (kind, role, val, sel, minus, plus) => `<div class="exp-st${role === "des" ? " tgt" : ""}">
+          <button type="button" data-${kind}="${role}|-1" ${minus ? "" : "disabled"} aria-label="&minus;">&minus;</button>
+          <span class="exp-st-v">${esc(val)}${sel}</span>
+          <button type="button" data-${kind}="${role}|1" ${plus ? "" : "disabled"} aria-label="+">+</button>
+        </div>`;
+    const blocks = steps > 0 && steps <= 30
+      ? `<div class="exp-blks">${Array.from({ length: steps }, (_, i) => `<i data-expblk="${i}"></i>`).join("")}</div>`
+      : `<div class="exp-lbar"><i style="width:${maxI ? (ci / maxI) * 100 : 0}%"></i><b style="width:${maxI ? ((di - ci) / maxI) * 100 : 0}%"></b></div>`;
+    const levelTab = `
+        <div class="exp-sts">
+          <div><small>${esc(t("t12x_now"))}</small>${stepper("explvstep", "cur", lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, ci > 0, ci < maxI)}</div>
+          <span class="exp-arr">&rarr;</span>
+          <div><small>${esc(t("t12x_target"))}</small>${stepper("explvstep", "des", lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`, di > ci, di < maxI)}</div>
+        </div>
+        ${blocks}
+        <div class="exp-lv-l"><span>${steps > 0 ? esc(t("exp_lv_togo").replace("{n}", steps)) : esc(t(ci >= maxI ? "exp_at_max" : "exp_at_target"))}</span>${steps > 0 ? (sigShort ? `<b class="bad">${esc(t("exp_sig_short_s"))}</b>` : affShort ? `<b class="bad">${esc(t("exp_aff_short_s"))}</b>` : `<b class="ok">&#10003; ${esc(t("exp_covered"))}</b>`) : ""}</div>
+        <div class="exp-nbs">
+          <button type="button" class="exp-nb" data-expbox="aff"><img src="${esc(EXPERT_INVENTORY_ICONS.Affinity)}" alt="" /><span><small>${esc(t("resource_affinity"))}</small><b class="${affNeed > 0 ? (affShort ? "bad" : "") : "ok"}">${affNeed > 0 ? bidiNum(Math.round(affNeed).toLocaleString()) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", shortAmount(affOwned)))}${banked ? ` · ${esc(t("exp_in_bar_n").replace("{n}", shortAmount(banked)))}` : ""}</small></span></button>
+          <button type="button" class="exp-nb" data-expbox="sig"><img src="${esc(EXPERT_INVENTORY_ICONS[`${hero} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><small>${esc(t("exp_sigils_of").replace("{name}", dataName(hero)))}</small><b class="${sigil > 0 ? (sigShort ? "bad" : "") : "ok"}">${sigil > 0 ? bidiNum(Math.round(sigil).toLocaleString()) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", shortAmount(sigOwn)))}${genSig ? ` · ${esc(t("exp_general_n").replace("{n}", shortAmount(genSig)))}` : ""}</small></span></button>
+        </div>`;
+    let bookNeed = 0, expNeedSum = 0;
+    e.skills.forEach((sk) => { const n = skillNeed(hero, sk, s.skills[sk]); bookNeed += n.book; expNeedSum += n.expNeed; });
+    const booksHave = Number(invSaved["Books of Knowledge"]) || 0, timeH = expNeedSum / 3600, timeHaveH = expertSpeedupOwnedFrom(invSaved) / 60;
+    const dhm = (h) => (h >= 240 ? `${Math.round(h / 24).toLocaleString()}d` : formatTimeDHM(h));
+    const skillRow = (sk) => {
+      const st = s.skills[sk], max = skillMaxLevel(hero, sk), cur = Number(st.current) || 0, des = Number(st.desired) || 0;
+      const go = des > cur, done = !go && cur >= max;
+      const pct = (v) => (max > 0 ? Math.min(100, (v / max) * 100) : 0);
+      return `<button type="button" class="exp-skr" data-expskopen="${esc(sk)}">
+          <span class="exp-skr-h"><b>${esc(dataName(sk))}</b>${go ? `<span class="exp-chip">${cur} &rarr; <i>${des}</i></span>` : done ? `<span class="exp-chip ok">${esc(t("charm_lv"))} ${cur} · &#10003; ${esc(t("max_button"))}</span>` : `<span class="exp-chip">${esc(t("charm_lv"))} ${cur}</span>`}<span class="exp-gt" aria-hidden="true">&#8250;</span></span>
+          ${go ? `<span class="exp-skr-b"><span class="exp-bar"><i style="width:${pct(cur)}%"></i><b style="width:${pct(des) - pct(cur)}%"></b></span><span class="exp-rst" data-rchst="exps|${esc(hero)}|${esc(sk)}"></span></span>` : ""}
+        </button>`;
+    };
+    const skillsTab = `
+        <div class="exp-nbs">
+          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="" /><span><small>${esc(t("resource_books"))}</small><b class="${bookNeed > 0 ? (bookNeed > booksHave ? "bad" : "") : "ok"}">${bookNeed > 0 ? bidiNum(Math.round(bookNeed).toLocaleString()) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", shortAmount(booksHave)))}</small></span></div>
+          <div class="exp-nb"><img src="icons/speedup-expert.png" alt="" /><span><small>${esc(t("resource_time"))}</small><b class="${timeH > 0 ? (timeH > timeHaveH ? "bad" : "") : "ok"}">${timeH > 0 ? bidiNum(dhm(timeH)) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", dhm(timeHaveH)))}</small></span></div>
+        </div>
+        <div class="exp-skl-list">${e.skills.map(skillRow).join("")}</div>`;
     gridEl.innerHTML = `
-      <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
-        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:10px;">
-          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expunlock="${esc(e.key)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
-          <div style="text-align:center;">
-            <img src="${esc(e.img)}" alt="${esc(dataName(e.key))}" style="width:72px; height:72px; padding:3px; box-sizing:border-box; object-fit:contain; margin-bottom:6px;" loading="lazy" />
-            <div class="name" style="font-size:16px; font-weight:700;">${esc(dataName(e.key))}</div>
-            ${e.talent ? `<div class="meta" style="font-size:11px; margin-top:2px;">${esc(t("expert_talent"))}: ${esc(dataName(e.talent))}</div>` : ""}
-            ${expertBadgeHtml(e.key)}
-            ${IS_OWNER ? `<div style="margin-top:4px;">${visibilityBtnHtml("experts", e.key)}</div>` : ""}
-          </div>
-          <button class="btn ghost small" data-expmax="${esc(e.key)}" style="width:60px; justify-self:end;">${esc(t("max_button"))}</button>
-        </div>
-        <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 10px; text-align:start;">
-          <div style="flex:1;">
-            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("experts_affinity_have"))}</div>
-            <input type="number" min="0" step="1" inputmode="numeric" class="keep-w" data-expaff="${esc(e.key)}" value="${heroAffinityHave(e.key) || ""}" placeholder="0" style="width:100%; padding:6px 8px; font-size:13px; text-align:center;" />
-          </div>
-          <div style="flex:1;">
-            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("experts_sigils_have"))}</div>
-            <input type="number" min="0" step="1" inputmode="numeric" class="keep-w" data-expsig="${esc(e.key)}" value="${Number(invSaved[`${e.key} Sigils`]) || ""}" placeholder="0" style="width:100%; padding:6px 8px; font-size:13px; text-align:center;" />
-            ${backpackLinkNoteHtml("experts", `${e.key} Sigils`, bpLink)}
+      <div class="panel exp-h4c" style="${unlocked ? "" : "opacity:0.55;"}">
+        <div class="exp-hd">
+          <img src="${esc(e.img)}" alt="${esc(dataName(hero))}" loading="lazy" />
+          <div class="exp-hd-t">
+            <div class="name">${esc(dataName(hero))}</div>
+            ${e.talent ? `<div class="meta">${esc(t("expert_talent"))}: ${esc(dataName(e.talent))}</div>` : ""}
+            ${statLine ? `<div class="exp-stl">${statLine}</div>` : ""}
+            ${expertBadgeHtml(hero) || IS_OWNER ? `<div class="exp-tags">${expertBadgeHtml(hero)}${IS_OWNER ? visibilityBtnHtml("experts", hero) : ""}</div>` : ""}
           </div>
         </div>
-        <div style="display:flex; justify-content:center; gap:10px; width:100%; max-width:320px; margin:0 auto 12px; text-align:start;">
-          <div style="flex:1;">
-            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("current_label"))}</div>
-            <select data-expcur="${esc(e.key)}" style="width:100%;">${heroLevelOpts(e.key, s.current)}</select>
-            ${levelStatLine(e.key, s.current)}
-          </div>
-          <div style="flex:1;">
-            <div class="meta" style="font-size:10px; margin-bottom:2px;">${esc(t("target_label"))}</div>
-            <select data-expdes="${esc(e.key)}" style="width:100%;">${heroLevelOpts(e.key, s.desired)}</select>
-            ${levelStatLine(e.key, s.desired)}
-          </div>
+        <div class="exp-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected="${tab === "level"}" class="${tab === "level" ? "on" : ""}" data-exptab="level">${esc(t("exp_tab_level"))} <span>${steps > 0 ? `${esc(lvLab(s.current))} &rarr; ${esc(lvLab(pos[di]))}` : ci >= maxI ? "&#10003;" : esc(lvLab(s.current))}</span></button>
+          <button type="button" role="tab" aria-selected="${tab === "skills"}" class="${tab === "skills" ? "on" : ""}" data-exptab="skills">${esc(t("exp_tab_skills"))} <span>${skillsToGo ? esc(t("exp_n_to_go").replace("{n}", skillsToGo)) : "&#10003;"}</span></button>
         </div>
-        <div class="exp-rch" data-rch="exp|${esc(e.key)}"></div>
-        <div style="border-top:1px solid var(--line); padding-top:10px; text-align:start;">
-          ${e.skills
-            .map((sk) => {
-              const max = skillMaxLevel(e.key, sk);
-              const st = s.skills[sk];
-              const { exp, book, expNeed } = skillNeed(e.key, sk, st);
-              const expHaveVal = skillExpHave(st);
-              const skillRows = SKILL_CACHE[`${e.key}|${sk}`];
-              let curRow = null, desRow = null;
-              if (skillRows) {
-                skillRows.forEach((r) => {
-                  if (r.level <= st.current) curRow = r;
-                  if (r.level <= st.desired) desRow = r;
-                });
-              }
-              const fmtStat = (r) => (r && r.stat_type ? `+${Number(r.stat_value).toFixed(2)}% ${esc(r.stat_type.split(",").join("/"))}` : null);
-              const SKILL_STAT_WHITELIST = new Set([
-                "Romulus|Last Line", "Romulus|Spirit of Aeetis",
-                "Gareth|Porcupine", "Gareth|Undefeated Will",
-                "Fabian|Heightened Firepower",
-                "Valeria|Battle Concerto",
-              ]);
-              const showSkillStat = SKILL_STAT_WHITELIST.has(`${e.key}|${sk}`);
-              const curStat = showSkillStat ? fmtStat(curRow) : null;
-              const desStat = showSkillStat ? fmtStat(desRow) : null;
-              return `
-          <div style="padding:6px 0;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:nowrap;">
-              <span class="meta" style="font-size:12px; min-width:0; flex-shrink:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(sk))}</span>
-              <div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:nowrap;">
-                <label class="exp-skl"><span>${esc(t("current_label"))}</span><select data-expskillcur="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.current, skillPickMax(e.key, sk)), max)}</select></label>
-                <label class="exp-skl"><span>${esc(t("target_label"))}</span><select data-expskilldes="${esc(e.key)}|${esc(sk)}" style="width:62px; flex-shrink:0;">${levelOpts(skillPickMax(e.key, sk), Math.min(st.desired, skillPickMax(e.key, sk)), max)}</select></label>
-              </div>
-            </div>
-            ${
-              curStat || desStat
-                ? `<div class="meta" style="font-size:10px; text-align:end; margin-top:2px; color:var(--ice);">${curStat || "\u2014"} \u00b7 ${desStat || "\u2014"}</div>`
-                : ""
-            }
-            <div class="exp-rch" data-rch="exps|${esc(e.key)}|${esc(sk)}"></div>
-            ${
-              // EXP line = design B (owner, 19 Oct 2026): "EXP [box] / step EXP [Max]",
-              // then the step's Books still needed. The EXP counts against the whole
-              // current → target step (skillNeed), as before.
-              `<div class="exp-xl">
-              <span>EXP</span>
-              <input type="number" min="0" step="1" inputmode="numeric" class="keep-w${expHaveVal > 0 ? " has" : ""}" data-expskillexp="${esc(e.key)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" aria-label="${esc(t("skill_exp_have"))}" style="--xw:${Math.max(3, Math.round(expHaveVal || 0).toLocaleString().length)};" />
-              <span>/ ${bidiNum(Math.round(exp).toLocaleString())} EXP</span>
-              <button type="button" class="btn ghost small" data-expskillmax="${esc(e.key)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}">${esc(t("max_button"))}</button>
-              ${
-                expNeed <= 0 && book <= 0
-                  ? `<span class="exp-xl-b ok">&#10003; 0 ${esc(t("resource_books"))}</span>`
-                  : `<span class="exp-xl-b" title="${esc(`${Math.round(expNeed).toLocaleString()} EXP · ${Math.round(book).toLocaleString()} ${t("resource_books")}`)}"><img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="${esc(t("resource_books"))}" />${bidiNum(Math.round(book).toLocaleString())}</span>`
-              }
-            </div>`
-            }
-          </div>`;
-            })
-            .join("")}
+        ${tab === "skills" ? skillsTab : levelTab}
+        <div class="exp-ft">
+          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expunlock="${esc(hero)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
+          <button type="button" class="btn ghost exp-maxe" data-expmax="${esc(hero)}">${esc(t("exp_max_one").replace("{name}", dataName(hero)))}</button>
         </div>
-      </div>`;
-    wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
+      </div>
+      ${EXP_SKILL_OPEN && e.skills.includes(EXP_SKILL_OPEN) ? skillSheetHtml(e, EXP_SKILL_OPEN) : ""}`;
+    wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; EXP_SKILL_OPEN = null; renderGrid(); });
     fillExpertsReach();
+    // H4: Level | Skills switch
+    gridEl.querySelectorAll("[data-exptab]").forEach((b) => b.addEventListener("click", () => { EXP_TAB = b.dataset.exptab; renderGrid(); }));
+    // H4: level steppers move along the level list (the target never goes under Now)
+    gridEl.querySelectorAll("[data-explvstep]").forEach((b) => b.addEventListener("click", () => {
+      const [role, d] = b.dataset.explvstep.split("|");
+      const st = saved[hero], ps = expPos(hero);
+      const ix = (v) => { const k = ps.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
+      let a = ix(st.current), z = Math.max(a, ix(st.desired));
+      if (role === "cur") { a = Math.max(0, Math.min(ps.length - 1, a + Number(d))); st.current = ps[a]; if (z < a) st.desired = ps[a]; }
+      else { z = Math.max(a, Math.min(ps.length - 1, z + Number(d))); st.desired = ps[z]; }
+      saveCalcState("experts", saved);
+      renderStatHeader(); renderFoundryHeader(); renderSvsHeader(); renderFrostfireHeader(); renderTundraHeader();
+      renderTotals(); renderGrid();
+    }));
+    // H4: tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
+    gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
+      if (b.dataset.expbox === "aff") {
+        plxAmountModal({ label: t("exp_in_bar_title").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS.Affinity, value: heroAffinityHave(hero) || 0, onSave: (v) => {
+          v = Math.max(0, Math.floor(Number(v) || 0));
+          if (v) saved[hero].affHave = v; else delete saved[hero].affHave;
+          saveCalcState("experts", saved); renderTotals(); renderGrid();
+        } });
+      } else {
+        const key = `${hero} Sigils`;
+        plxAmountModal({ label: t("exp_sigils_of").replace("{name}", dataName(hero)), icon: EXPERT_INVENTORY_ICONS[key] || "icons/item_icon_570000.png", value: Number(invSaved[key]) || 0, onSave: (v) => {
+          invSaved[key] = Math.max(0, Math.floor(Number(v) || 0));
+          if (Object.keys(bpLink.bp).length) setBackpackManual("experts", key, true, bpLink);
+          budgetInvalidate(); saveCalcState("experts_inventory", invSaved); renderTotals(); renderInventory(); renderGrid();
+        } });
+      }
+    }));
+    // H4: a skill's window (open, ‹ ›, close, steppers)
+    gridEl.querySelectorAll("[data-expskopen]").forEach((b) => b.addEventListener("click", () => { EXP_SKILL_OPEN = b.dataset.expskopen; renderGrid(); }));
+    gridEl.querySelectorAll("[data-expskgo]").forEach((b) => b.addEventListener("click", () => { const k = e.skills[Number(b.dataset.expskgo)]; if (k) { EXP_SKILL_OPEN = k; renderGrid(); } }));
+    gridEl.querySelectorAll("[data-expskclose]").forEach((b) => b.addEventListener("click", () => { EXP_SKILL_OPEN = null; renderGrid(); }));
+    const skBd = gridEl.querySelector("[data-expskbd]");
+    if (skBd) skBd.addEventListener("click", (ev) => { if (ev.target === skBd) { EXP_SKILL_OPEN = null; renderGrid(); } });
+    gridEl.querySelectorAll("[data-expskstep]").forEach((b) => b.addEventListener("click", () => {
+      const [role, d] = b.dataset.expskstep.split("|");
+      const sk = EXP_SKILL_OPEN, st = saved[hero].skills[sk], pick = skillPickMax(hero, sk);
+      let a = Number(st.current) || 0, z = Math.max(a, Number(st.desired) || 0);
+      if (role === "cur") { a = Math.max(0, Math.min(pick, a + Number(d))); st.current = a; if (z < a) st.desired = a; }
+      else { z = Math.max(a, Math.min(pick, z + Number(d))); st.desired = z; }
+      saveCalcState("experts", saved);
+      renderStatHeader(); renderFoundryHeader(); renderSvsHeader(); renderFrostfireHeader(); renderTundraHeader();
+      renderTotals(); renderGrid();
+    }));
 
     gridEl.querySelectorAll("select[data-expcur]").forEach((sel) => {
       sel.addEventListener("change", async () => {
