@@ -15,6 +15,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - **Never trim, crop, zoom or edit an image without asking the owner first** (owner, 19 Oct 2026). Show pictures as they are.
 - **When the owner says "wait" (e.g. "wait, I have a job"), stop at once** (owner, 20 Oct 2026): don't finish the current work first; say where it was left and ask what the job is.
 - Explanations should be short and non-technical. Show before/after numbers or pictures when useful.
+- **Phone sizes** (owner, 3 Nov 2026): readable on every size and not too cramped; no need to make one device look like another. Text 11 px or more, buttons about 40 px tall. General design rules (e.g. a skill's "48 px touch targets") are checked against how the page looks on the owner's iPhone 15 (393 px) and Fold before they are applied.
 
 ## Files
 - `index.html`: the whole app, about 31,000 lines. HTML shell, inline `<style>`, then one large inline `<script>`. No framework, no build.
