@@ -3507,6 +3507,7 @@ input,select,textarea{
   .exp-bar.big{ height:8px; margin:12px 0 4px; }
   .exp-bar i{ background:var(--good); } .exp-bar b{ background:#3a7bd5; }
   .exp-rst{ flex:0 0 auto; }
+  .exp-rst.meta{ font-size:12px; white-space:nowrap; }
   .exp-now{ padding:2px 8px; border:1px dashed rgba(110,220,150,.6); border-radius:8px; color:var(--good); font-size:12px; font-weight:700; white-space:nowrap; }
   .exp-short{ color:var(--danger); font-size:12px; font-weight:700; white-space:nowrap; }
   .exp-ft{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
@@ -3548,6 +3549,10 @@ input,select,textarea{
   .pkb-panel .pk-tbl-wrap td[data-pt-total]{ overflow:visible !important; text-overflow:clip !important; }
   .pkb-panel .pk-tbl-wrap tr > :first-child{ position:sticky; inset-inline-start:0; z-index:2; background:var(--bg); box-shadow:4px 0 6px -4px rgba(0,0,0,.6); }
   .pkb-panel .pk-tbl-wrap thead tr > :first-child{ z-index:3; }
+
+  /* Experts Research like Experts Level (owner, 3 Nov 2026) */
+  .exp-nbs.one{ grid-template-columns:1fr; }
+  .er-note{ font-size:12px; margin:0 0 8px; }
 </style>
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller (owner, 3 Nov 2026: "make
@@ -5930,6 +5935,11 @@ const T = {
   marks_pack_gems_rate: { en: "500 gems = 1 Common Mark" },
   g1_hide: { en: "Hide" },
   exp_tab_level: { en: "Level" },
+  er_paths_to_go: { en: "{n} paths to go" },
+  er_path_to_go_1: { en: "1 path to go" },
+  er_next_lv: { en: "Sigils · next level" },
+  er_path_n: { en: "path {i} of {n}" },
+  er_gives: { en: "These levels give" },
   rc_settings: { en: "Roster settings" },
   rc_count_desc: { en: "Adds these 3 heroes' stats to the troop totals" },
   rc_maxgen: { en: "Max uses your highest Gen" },
@@ -18173,6 +18183,30 @@ document.addEventListener("click", (e) => {
 let EXP_SIG_OPEN = false; // Experts Level sigils fold, kept for the visit
 let EXP_TAB = "level"; // Experts Level H4: Level | Skills, kept for the visit
 let ROSTER_SET_OPEN = false; // Dashboard roster settings sheet (C1) is open
+// Experts pages (H4, phones): "Stats ›" / "Backpack ›" open the Troops Stats card
+// and the Backpack card as windows (one listener on the page's shell, new each draw).
+function expWindowBtnsHtml(shortId) {
+  return `<div class="exp-h4b">
+      <button type="button" class="exp-h4btn" data-expsheet="stats"><span class="ic" aria-hidden="true">&#128202;</span><b>${esc(t("exp_stats_btn"))}</b><span class="exp-gt" aria-hidden="true">&#8250;</span></button>
+      <button type="button" class="exp-h4btn" data-expsheet="bp"><span class="ic" aria-hidden="true">&#127890;</span><b>${esc(t("bs_from_backpack"))}</b><span class="exp-shn" id="${shortId}"></span><span class="exp-gt" aria-hidden="true">&#8250;</span></button>
+    </div>`;
+}
+function wireExpWindows(shellEl) {
+  if (!shellEl) return;
+  shellEl.classList.add("exp-h4");
+  const cards = { stats: shellEl.querySelector(".plx-stats-top"), bp: shellEl.querySelector(".t12x-amts") };
+  const bd = shellEl.querySelector("[data-expbd]");
+  const show = (which) => {
+    Object.entries(cards).forEach(([k, el]) => { if (el) el.classList.toggle("exp-open", k === which); });
+    if (bd) bd.hidden = !which;
+    if (which && cards[which]) cards[which].scrollTop = 0;
+  };
+  shellEl.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-expsheet]");
+    if (b) { show(b.dataset.expsheet); return; }
+    if (ev.target.closest("[data-expsheetclose]") || ev.target.closest("[data-expbd]")) show(null);
+  });
+}
 document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("[data-expsig]")) EXP_SIG_OPEN = e.target.open; }, true);
 // Planner pages (Chief Gear pattern, owner 3 Nov 2026): "⇄ Trades ›" and
 // "$ <price> ›" beside the Backpack title open the Trades / Pack cost card as a
@@ -26432,17 +26466,20 @@ async function renderExpertsResearchPage() {
     maxId: "expResearchMaxAllBtn",
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
     statsHtml: `<div class="t12x-card plx-stats-top">
+      <button type="button" class="exp-x exp-wx" data-expsheetclose aria-label="${esc(t("close_button"))}">&#10005;</button>
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
       ${plxStatTabsHtml("experts_research", [{ key: "all", label: t("plx_all_troops"), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t("experts_research_desc"))}</p><div id="expResearchTotals"></div>` }]
         .concat(["Infantry", "Lancer", "Marksman"].map((tr) => ({ key: tr, label: troopDisplayName(tr), color: PLX_TROOP_COLORS[tr], html: `<p class="desc" style="font-size:12px; margin:0 0 8px;" data-ertroopwho="${tr}"></p><div data-ertroop="${tr}"></div>` }))))}
     </div>`,
-    mainHtml: `<div id="expResearchSwipeCounter"></div>
-    <div id="expResearchGrid"></div>`,
+    mainHtml: `${expWindowBtnsHtml("erBpShort")}
+    <div id="expResearchSwipeCounter"></div>
+    <div id="expResearchGrid"></div>
+    <div class="cg-bd exp-bd" data-expbd hidden></div>`,
   });
   // The sigil boxes fold like the other pages' Backpack boxes (owner, 3 Nov 2026),
   // remembered on the account (calc_state bar_hidden, key experts_research).
   const erHidden = () => BAR_SHOW_ALL.experts_research === false;
-  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(erHidden() ? "bs_show_all" : "bs_hide"))}</button>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
+  document.getElementById("expResearchAmounts").innerHTML = `<button type="button" class="exp-x exp-wx" data-expsheetclose aria-label="${esc(t("close_button"))}">&#10005;</button><div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(erHidden() ? "bs_show_all" : "bs_hide"))}</button>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
     <div id="expResearchOwned"${erHidden() ? ' style="display:none;"' : ""}></div>
 `;
   {
@@ -26463,6 +26500,8 @@ async function renderExpertsResearchPage() {
   }
   { const b = document.getElementById("expResearchAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expResearchPacks"></div>`; }
 
+  wireExpWindows(content.querySelector(".t12x"));
+  let ER_SIG = { need: {}, left: {}, general: 0 }; // per expert: sigils needed / own left (for the card)
   const sigilsEl = document.getElementById("expResearchSigils");
   const totalsEl = document.getElementById("expResearchTotals");
   const TROOP_STAT_ORDER = ["Infantry", "Lancer", "Marksman"];
@@ -26529,6 +26568,8 @@ async function renderExpertsResearchPage() {
       sigilShortfall += Math.max(0, (sigilNeededByExpert[expert] || 0) - ownedLeft[expert]);
     });
     const stillSigil = Math.max(0, sigilShortfall - generalLeft);
+    ER_SIG = { need: sigilNeededByExpert, left: ownedLeft, general: generalLeft };
+    { const nEl = document.getElementById("erBpShort"); if (nEl) { const n = EXPERTS_IN_ORDER.filter((ex) => isResearchUnlocked(ex) && (sigilNeededByExpert[ex] || 0) > (ownedLeft[ex] || 0)).length + (stillSigil > 0 && generalLeft < sigilShortfall ? 1 : 0); nEl.textContent = n ? t("exp_n_short").replace("{n}", n) : "\u2713"; nEl.classList.toggle("ok", !n); } }
 
     // Same square as the other planner pages: sigils still short (after
     // Experts Level's share), or a tick when covered.
@@ -26538,8 +26579,8 @@ async function renderExpertsResearchPage() {
       </div></div>` : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`;
     // Each tile's short / ✓ / — line: General Sigils cover what the experts' own leave.
     const tileNeed = { General: { need: sigilShortfall, short: stillSigil } };
-    EXPERTS_IN_ORDER.forEach((ex) => { tileNeed[ex] = { need: isResearchUnlocked(ex) ? Math.max(1, sigilNeededByExpert[ex] || 0) : 0, short: Math.max(0, (sigilNeededByExpert[ex] || 0) - ownedLeft[ex]) }; });
-    document.getElementById("expResearchOwned").innerHTML = `${bsHelpHtml(Object.values(tileNeed).some((n) => !(n.need > 0)), false, false)}${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })), tileNeed)}
+    EXPERTS_IN_ORDER.forEach((ex) => { tileNeed[ex] = { on: isResearchUnlocked(ex), need: isResearchUnlocked(ex) ? sigilNeededByExpert[ex] || 0 : 0, short: Math.max(0, (sigilNeededByExpert[ex] || 0) - ownedLeft[ex]) }; });
+    document.getElementById("expResearchOwned").innerHTML = `${bsHelpHtml(Object.values(tileNeed).some((n) => !(n.need > 0) && !n.on), false, false)}${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })), tileNeed)}
       <div class="bs-help bs-note">${esc(t("experts_sigils_summary_note"))}</div>`;
     const sigilTotals = {};
     EXPERTS_IN_ORDER.forEach((expert) => { const short = Math.max(0, (sigilNeededByExpert[expert] || 0) - ownedLeft[expert]); if (short > 0) sigilTotals[`${expert} Sigils`] = short; });
@@ -26603,71 +26644,94 @@ async function renderExpertsResearchPage() {
     });
     return total;
   }
-  function expertCardHtml(expert, page) {
-    const pathNums = pathNumbersFor(expert);
-    const pages = [];
-    for (let i = 0; i < pathNums.length; i += 3) pages.push(pathNums.slice(i, i + 3));
-    const safePage = Math.min(page || 0, pages.length - 1);
-    const pageEntries = pages[safePage] || [];
-    const unlocked = isResearchUnlocked(expert);
-    const img = EXPERT_RESEARCH_IMG[expert];
-    const mainStatLabel = tStatLabel(EXPERT_RESEARCH_STAT_LABEL[EXPERT_MAIN_STAT[expert]]);
-    const mainStatTotal = mainStatCurrentTotal(expert);
+  // Like Experts Level H4 (owner, 3 Nov 2026: "do experts research like experts
+  // level"): portrait, the main stat now → target, the sigils needed vs had, one
+  // row per path (name, "120 → 200", bar; tap → its window), Count and
+  // "Max <expert>". The selects keep their data attributes (handlers unchanged).
+  let ER_PATH_OPEN = null; // path number whose window is open (this expert)
+  function mainStatAt(expert, key) {
+    if (!EXPERT_MAIN_STAT[expert]) return 0;
+    return pathNumbersFor(expert).reduce((sum, p) => {
+      const lv = Math.max(0, Math.min(200, Number(saved[expert][p][key]) || 0));
+      const rate = expertTroopKey(expert) ? (p <= 3 ? 0.03 : 0.05) : MAIN_STAT_RATE_DEFAULT;
+      return sum + lv * rate;
+    }, 0);
+  }
+  const erPathName = (expert, p) => dataName((PATH_NAMES[expert] || {})[p] || `${t("path_label")} ${p}`);
+  function expertCardHtml(expert) {
+    const unlocked = isResearchUnlocked(expert), img = EXPERT_RESEARCH_IMG[expert];
+    const mainLabel = tStatLabel(EXPERT_RESEARCH_STAT_LABEL[EXPERT_MAIN_STAT[expert]]);
+    const now = mainStatAt(expert, "current"), tgt = mainStatAt(expert, "desired");
+    const paths = pathNumbersFor(expert);
+    const toGo = paths.filter((p) => (Number(saved[expert][p].desired) || 0) > (Number(saved[expert][p].current) || 0)).length;
+    const need = Math.round(ER_SIG.need[expert] || 0), own = Math.round(ER_SIG.left[expert] || 0), gen = Math.round(ER_SIG.general || 0);
+    const pathRow = (p) => {
+      const st = saved[expert][p], cur = Number(st.current) || 0, des = Number(st.desired) || 0, top = pathTop(expert, p);
+      const go = des > cur, done = !go && cur >= top;
+      const pct = (v) => Math.min(100, (v / 200) * 100);
+      return `<button type="button" class="exp-skr" data-eropen="${p}">
+          <span class="exp-skr-h"><b>${esc(erPathName(expert, p))}</b>${go ? `<span class="exp-chip">${cur} &rarr; <i>${des}</i></span>` : done ? `<span class="exp-chip ok">${esc(t("charm_lv"))} ${cur} · &#10003; ${esc(t("max_button"))}</span>` : `<span class="exp-chip">${esc(t("charm_lv"))} ${cur}</span>`}<span class="exp-gt" aria-hidden="true">&#8250;</span></span>
+          ${go ? `<span class="exp-skr-b"><span class="exp-bar"><i style="width:${pct(cur)}%"></i><b style="width:${pct(des) - pct(cur)}%"></b></span><span class="exp-rst meta">${bidiNum(Math.round(pathCost(expert, p, cur, des).sigil).toLocaleString())} ${esc(t("resource_sigils"))}</span></span>` : ""}
+        </button>`;
+    };
     return `
-      <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:center;">
-        <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:4px;">
-          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
-          <div style="min-width:0; text-align:center;">
-            ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" style="width:52px; height:52px; padding:2px; box-sizing:border-box; border-radius:8px; object-fit:contain; margin-bottom:4px;" loading="lazy" />` : ""}
-            <div class="name" style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(dataName(expert))}</div>
-            ${expertBadgeHtml(expert)}
-            <div class="meta" style="font-size:10px; color:var(--frost);">${mainStatLabel} +${mainStatTotal.toFixed(2)}%</div>
-            ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta" style="font-size:9px; color:var(--muted);">${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}</div>` : ""}
-            ${IS_OWNER ? `<div style="margin-top:4px;">${visibilityBtnHtml("experts", expert)}</div>` : ""}
+      <div class="panel exp-h4c" style="${unlocked ? "" : "opacity:0.55;"}">
+        <div class="exp-hd">
+          ${img ? `<img src="${esc(img)}" alt="${esc(dataName(expert))}" loading="lazy" />` : ""}
+          <div class="exp-hd-t">
+            <div class="name">${esc(dataName(expert))}</div>
+            <div class="exp-stl">${esc(mainLabel)} <b>${bidiNum(`+${now.toFixed(2)}%`)}</b>${tgt > now ? ` &rarr; <b class="tg">${bidiNum(`+${tgt.toFixed(2)}%`)}</b>` : ""}${EXPERT_MAIN_STAT_TROOP[expert] ? ` · ${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}` : ""}</div>
+            ${expertBadgeHtml(expert) || IS_OWNER ? `<div class="exp-tags">${expertBadgeHtml(expert)}${IS_OWNER ? visibilityBtnHtml("experts", expert) : ""}</div>` : ""}
           </div>
-          <button class="btn ghost small" data-expresearchmax="${esc(expert)}" style="justify-self:end;">${esc(t("max_button"))}</button>
         </div>
-        ${
-          EXPERT_MAIN_STAT_TROOP[expert]
-            ? `<div class="meta" style="font-size:10px; margin-bottom:8px; color:var(--frost);">${esc(t("max_page_note"))}</div>`
-            : ""
-        }
-        ${
-          pages.length > 1
-            ? `<div id="expResearchPageDots" style="margin-bottom:8px;"></div>`
-            : ""
-        }
-        <div style="text-align:start;" id="expResearchPathsList">
-        ${pageEntries
-          .map((p, idx) => {
-            const st = saved[expert][p];
-            const pathName = (PATH_NAMES[expert] || {})[p] || `${t("path_label")} ${p}`;
-            const { sigil, stats } = pathRotationOnly(expert, p, st.current, st.desired);
-            const perLevel = pathNextLevelSigils((RESEARCH_CACHE[expert] || {})[p] || [], st.current);
-            const statParts = Object.entries(stats)
-              .filter(([, v]) => v > 0)
-              .map(([k, v]) => `+${v.toFixed(1)}% ${tStatLabel(EXPERT_RESEARCH_STAT_LABEL[k])}`)
-              .join(", ");
-            return `
-          <div style="padding:8px 0; ${idx < pageEntries.length - 1 ? "border-bottom:1px solid var(--line);" : ""}">
-            <div class="meta" style="font-size:12px; margin-bottom:4px;">${esc(dataName(pathName))}</div>
-            <div style="display:flex; gap:6px; margin-bottom:4px;">
-              <div style="flex:1;">
-                <div class="meta" style="font-size:10px;">${esc(t("current_label"))}</div>
-                <select data-expresearchcur="${esc(expert)}|${p}" style="width:100%;">${pathLevelOpts(expert, p, st.current)}</select>
-              </div>
-              <div style="flex:1;">
-                <div class="meta" style="font-size:10px;">${esc(t("target_label"))}</div>
-                <select data-expresearchdes="${esc(expert)}|${p}" style="width:100%;">${pathLevelOpts(expert, p, st.desired)}</select>
-              </div>
-            </div>
-            <div class="meta" style="font-size:10px; text-align:end; color:var(--ice);">${Math.round(sigil).toLocaleString()} ${esc(t("resource_sigils"))}${statParts ? " \u00b7 " + statParts : ""}</div>
-            ${perLevel != null ? `<div class="meta" style="font-size:10px; text-align:end;">${esc(t("research_next_level"))} ${Math.round(perLevel).toLocaleString()} ${esc(t("resource_sigils"))}</div>` : ""}
-          </div>`;
-          })
-          .join("")}
+        <div class="exp-nbs one">
+          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><small>${esc(t("exp_sigils_of").replace("{name}", dataName(expert)))}${toGo ? ` · ${esc(toGo === 1 ? t("er_path_to_go_1") : t("er_paths_to_go").replace("{n}", toGo))}` : ""}</small><b class="${need > 0 ? (need > own + gen ? "bad" : "") : "ok"}">${need > 0 ? bidiNum(need.toLocaleString()) : "&#10003;"}</b><small>${esc(t("exp_have_n").replace("{n}", shortAmount(own)))}${gen ? ` · ${esc(t("exp_general_n").replace("{n}", shortAmount(gen)))}` : ""}</small></span></div>
         </div>
-      </div>`;
+        ${EXPERT_MAIN_STAT_TROOP[expert] ? `<div class="meta er-note">${esc(t("max_page_note"))}</div>` : ""}
+        <div class="exp-skl-list">${paths.map(pathRow).join("")}</div>
+        <div class="exp-ft">
+          <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expresearchunlock="${esc(expert)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
+          <button type="button" class="btn ghost exp-maxe" data-expresearchmax="${esc(expert)}">${esc(t("exp_max_one").replace("{name}", dataName(expert)))}</button>
+        </div>
+      </div>
+      ${ER_PATH_OPEN != null && paths.includes(ER_PATH_OPEN) ? pathSheetHtml(expert, ER_PATH_OPEN) : ""}`;
+  }
+  // A path's window: ‹ › to the other paths, Now / Target steppers (the old selects
+  // under the numbers), what the levels give, the sigils it still needs, Done.
+  function pathSheetHtml(expert, p) {
+    const paths = pathNumbersFor(expert), i = paths.indexOf(p), n = paths.length;
+    const st = saved[expert][p], cur = Number(st.current) || 0, des = Number(st.desired) || 0;
+    const { sigil, stats } = pathRotationOnly(expert, p, cur, des);
+    const perLevel = pathNextLevelSigils((RESEARCH_CACHE[expert] || {})[p] || [], cur);
+    const gains = Object.entries(stats).filter(([, v]) => v > 0).map(([k, v]) => `+${v.toFixed(1)}% ${tStatLabel(EXPERT_RESEARCH_STAT_LABEL[k])}`).join(" · ");
+    const stp = (role, val, sel, minus, plus) => `<div class="exp-st${role === "des" ? " tgt" : ""}">
+          <button type="button" data-erstep="${role}|-1" ${minus ? "" : "disabled"} aria-label="&minus;">&minus;</button>
+          <span class="exp-st-v">${val}${sel}</span>
+          <button type="button" data-erstep="${role}|1" ${plus ? "" : "disabled"} aria-label="+">+</button>
+        </div>`;
+    const pct = (v) => Math.min(100, (v / 200) * 100);
+    return `<div class="exp-ov" data-erbd>
+      <div class="exp-sk" role="dialog" aria-label="${esc(erPathName(expert, p))}">
+        <div class="exp-sk-h">
+          <button type="button" class="exp-nav" data-ergo="${i - 1}" ${i > 0 ? "" : "disabled"} aria-label="&#8249;">&#8249;</button>
+          <div class="exp-sk-t"><b>${esc(erPathName(expert, p))}</b><small>${esc(dataName(expert))} · ${esc(t("er_path_n").replace("{i}", i + 1).replace("{n}", n))}</small></div>
+          <button type="button" class="exp-nav" data-ergo="${i + 1}" ${i < n - 1 ? "" : "disabled"} aria-label="&#8250;">&#8250;</button>
+          <button type="button" class="exp-x" data-erclose aria-label="${esc(t("close_button"))}">&#10005;</button>
+        </div>
+        <div class="exp-sts">
+          <div><small>${esc(t("t12x_now"))}</small>${stp("cur", cur, `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`, cur > 0, cur < 200)}</div>
+          <span class="exp-arr">&rarr;</span>
+          <div><small>${esc(t("t12x_target"))}</small>${stp("des", des, `<select data-expresearchdes="${esc(expert)}|${p}" aria-label="${esc(t("target_label"))}">${pathLevelOpts(expert, p, des)}</select>`, des > cur, des < 200)}</div>
+        </div>
+        <span class="exp-bar big"><i style="width:${pct(cur)}%"></i><b style="width:${Math.max(0, pct(des) - pct(cur))}%"></b></span>
+        ${gains ? `<div class="exp-sk-bonus">${esc(t("er_gives"))}: <b>${esc(gains)}</b></div>` : ""}
+        <div class="exp-nbs">
+          <div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><b class="${sigil > 0 ? "" : "ok"}">${sigil > 0 ? bidiNum(Math.round(sigil).toLocaleString()) : "&#10003;"}</b><small>${esc(t("resource_sigils"))}${des > cur ? ` · ${cur} &rarr; ${des}` : ""}</small></span></div>
+          ${perLevel != null && cur < 200 ? `<div class="exp-nb"><img src="${esc(EXPERT_INVENTORY_ICONS[`${expert} Sigils`] || "icons/item_icon_570000.png")}" alt="" /><span><b>${bidiNum(Math.round(perLevel).toLocaleString())}</b><small>${esc(t("er_next_lv"))} · ${cur + 1}</small></span></div>` : ""}
+        </div>
+        <button type="button" class="btn exp-done" data-erclose>${esc(t("exp_done"))}</button>
+      </div>
+    </div>`;
   }
 
   const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
@@ -26680,48 +26744,27 @@ async function renderExpertsResearchPage() {
       renderGrid();
     });
     const expert = EXPERTS_IN_ORDER[activeResearchIdx];
-    gridEl.innerHTML = expertCardHtml(expert, activeResearchPage);
+    gridEl.innerHTML = expertCardHtml(expert);
     wireIndexSwipe(gridEl, EXPERTS_IN_ORDER.length, activeResearchIdx, (next) => {
       activeResearchIdx = next;
-      activeResearchPage = 0;
+      ER_PATH_OPEN = null;
       renderGrid();
     });
-
-    // Inner swipe for path pages (1, 2, ...) within the same expert - scoped
-    // to just the paths list so it doesn't also trigger the outer
-    // expert-to-expert swipe above. stopPropagation prevents both firing
-    // from the same gesture.
-    const pathsListEl = document.getElementById("expResearchPathsList");
-    if (pathsListEl) {
-      const pathNums = pathNumbersFor(expert);
-      const pageCount = Math.ceil(pathNums.length / 3);
-      // Page dots for this expert's paths, tappable/clickable like the rest.
-      const pageDotsEl = document.getElementById("expResearchPageDots");
-      if (pageDotsEl && pageCount > 1) {
-        const pageList = Array.from({ length: pageCount }, (_, i) => i);
-        renderSwipeDots(pageDotsEl, pageList, Math.min(activeResearchPage, pageCount - 1), null, (pg) => {
-          activeResearchPage = pg;
-          renderGrid();
-        });
-      }
-      // Past the first/last page (or with only one page), the swipe moves on
-      // to the previous/next expert instead - stopPropagation means the
-      // outer swipe never sees it, so it has to be handled here.
-      wireSwipeGesture(pathsListEl, (dir) => {
-        const next = activeResearchPage + dir;
-        if (next >= 0 && next < pageCount) {
-          activeResearchPage = next;
-          renderGrid();
-          return;
-        }
-        const nextExpert = activeResearchIdx + dir;
-        if (nextExpert >= 0 && nextExpert < EXPERTS_IN_ORDER.length) {
-          activeResearchIdx = nextExpert;
-          activeResearchPage = 0;
-          renderGrid();
-        }
-      }, { stopPropagation: true });
-    }
+    // a path's window (open, ‹ ›, close, steppers)
+    gridEl.querySelectorAll("[data-eropen]").forEach((b) => b.addEventListener("click", () => { ER_PATH_OPEN = Number(b.dataset.eropen); renderGrid(); }));
+    gridEl.querySelectorAll("[data-ergo]").forEach((b) => b.addEventListener("click", () => { const pn = pathNumbersFor(expert)[Number(b.dataset.ergo)]; if (pn != null) { ER_PATH_OPEN = pn; renderGrid(); } }));
+    gridEl.querySelectorAll("[data-erclose]").forEach((b) => b.addEventListener("click", () => { ER_PATH_OPEN = null; renderGrid(); }));
+    { const bd = gridEl.querySelector("[data-erbd]"); if (bd) bd.addEventListener("click", (ev) => { if (ev.target === bd) { ER_PATH_OPEN = null; renderGrid(); } }); }
+    gridEl.querySelectorAll("[data-erstep]").forEach((b) => b.addEventListener("click", () => {
+      const [role, d] = b.dataset.erstep.split("|");
+      const st = saved[expert][ER_PATH_OPEN];
+      let cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0);
+      if (role === "cur") { cur = Math.max(0, Math.min(200, cur + Number(d))); st.current = cur; if (des < cur) st.desired = cur; }
+      else { des = Math.max(cur, Math.min(200, des + Number(d))); st.desired = des; }
+      saveCalcState("experts_research", saved);
+      renderTotals();
+      renderGrid();
+    }));
 
     const container = gridEl;
     {
@@ -27004,10 +27047,7 @@ async function renderExpertsPage() {
       ${plxStatTabsHtml("experts", EXP_STAT_TABS.map(([key, title, , id]) => ({ key, label: t(title), html: `<div id="${id}"></div>` })))}
     </div>`,
     mainHtml: `
-    <div class="exp-h4b">
-      <button type="button" class="exp-h4btn" data-expsheet="stats"><span class="ic" aria-hidden="true">&#128202;</span><b>${esc(t("exp_stats_btn"))}</b><span class="exp-gt" aria-hidden="true">&#8250;</span></button>
-      <button type="button" class="exp-h4btn" data-expsheet="bp"><span class="ic" aria-hidden="true">&#127890;</span><b>${esc(t("bs_from_backpack"))}</b><span class="exp-shn" id="expBpShort"></span><span class="exp-gt" aria-hidden="true">&#8250;</span></button>
-    </div>
+    ${expWindowBtnsHtml("expBpShort")}
     <div id="expertsSwipeCounter"></div>
     <div id="expertsGrid"></div>
     <div class="cg-bd exp-bd" data-expbd hidden></div>`,
@@ -27037,22 +27077,7 @@ async function renderExpertsPage() {
   });
   // H4 (phones): "Stats ›" and "Backpack ›" open the Troops Stats card and the
   // Backpack card (Can do now, the boxes, Pack cost) as windows over the page.
-  {
-    const shellEl = content.querySelector(".t12x");
-    shellEl.classList.add("exp-h4");
-    const cards = { stats: shellEl.querySelector(".plx-stats-top"), bp: shellEl.querySelector(".t12x-amts") };
-    const bd = shellEl.querySelector("[data-expbd]");
-    const show = (which) => {
-      Object.entries(cards).forEach(([k, el]) => { if (el) el.classList.toggle("exp-open", k === which); });
-      if (bd) bd.hidden = !which;
-      if (which && cards[which]) cards[which].scrollTop = 0;
-    };
-    shellEl.addEventListener("click", (ev) => {
-      const b = ev.target.closest("[data-expsheet]");
-      if (b) { show(b.dataset.expsheet); return; }
-      if (ev.target.closest("[data-expsheetclose]") || ev.target.closest("[data-expbd]")) show(null);
-    });
-  }
+  wireExpWindows(content.querySelector(".t12x"));
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
@@ -27242,7 +27267,7 @@ async function renderExpertsPage() {
       "Expert Speedups (minutes)": { need: timeNeedMin, short: timeShortMin, time: true },
       "Speedups (minutes)": { need: timeNeedMin, short: timeShortMin, time: true },
       "General Sigils": { need: sigilShortfall, short: stillSigil },
-      sigils: Object.fromEntries(EXPERTS_SHOWN.map((e) => [e.key, { need: isExpertUnlocked(e.key) ? Math.max(1, sigilNeededByExpert[e.key] || 0) : 0, short: Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)) }])),
+      sigils: Object.fromEntries(EXPERTS_SHOWN.map((e) => [e.key, { on: isExpertUnlocked(e.key), need: isExpertUnlocked(e.key) ? sigilNeededByExpert[e.key] || 0 : 0, short: Math.max(0, (sigilNeededByExpert[e.key] || 0) - (Number(invSaved[`${e.key} Sigils`]) || 0)) }])),
     };
     Object.keys(AFFINITY_ITEM_VALUE).forEach((n) => { tileNeed[n] = { need: totalAffinity, short: affShort, aff: true }; });
     if (document.getElementById("expertsInventory").firstChild) renderInventory();
@@ -28937,7 +28962,10 @@ function bsHelpHtml(dash, chest, tap = true) {
 // need: { key: { need, short } } adds the short / ✓ / — line.
 function expertSigilTilesHtml(inv, experts, need) {
   return `<div class="bs-tiles plx-sig">${experts.map((e) => {
-    const st = need && need[e.key] ? bsTileStatus(need[e.key].need, need[e.key].short) : null;
+    // A counted expert with nothing to buy shows ✓ (not "need 1 ✓", 3 Nov 2026);
+    // not counted shows "—".
+    const n = need && need[e.key];
+    const st = n ? (n.on && !(n.need > 0) ? { html: `<span class="bs-st"><span style="color:var(--good);">\u2713</span></span>`, off: false } : bsTileStatus(n.need, n.short)) : null;
     return `<div class="bp-tile bs-tile ro${st && st.off ? " off" : ""}" title="${esc(dataName(e.key))}">
       ${e.img ? `<img src="${esc(e.img)}" alt="" loading="lazy" style="border-radius:8px;" />` : ""}
       <span class="bp-qty">${(Number(inv[`${e.key} Sigils`]) || 0).toLocaleString()}</span>
