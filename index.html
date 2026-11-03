@@ -3576,7 +3576,10 @@ input,select,textarea{
 </style>
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller (owner, 3 Nov 2026: "make
-// them smaller by 2 for font and 4 for box"). Built once from the page's own CSS, so
+// them smaller by 2 for font and 4 for box"). Later the same day the owner asked for
+// the text 2 px bigger again on every page but the Dashboard: the smaller text now
+// applies inside the Dashboard (.dash-fit) only, the smaller boxes still everywhere.
+// Built once from the page's own CSS, so
 // every rule follows by itself, also ones added later: on screens up to 700 px each
 // font size set in px is 2 px smaller (not under 10 px; calc / clamp sizes too) and
 // each height / min-height from 24 to 100 px is 4 px smaller (square widths with it),
@@ -3595,6 +3598,21 @@ input,select,textarea{
     };
     const boxOf = (v) => { const n = pxOf(v); return n != null && n >= 24 && n <= 100 ? `${n - BOX}px` : null; };
     const never = (cond) => { const m = /min-width:\s*(\d+)px/.exec(cond || ""); return !!m && Number(m[1]) > 700; };
+    // A selector list, each part scoped to the Dashboard (commas inside (), [] or quotes kept).
+    const DASH = ".dash-fit";
+    const splitSel = (sel) => {
+      const out = []; let depth = 0, q = null, cur = "";
+      for (const ch of sel) {
+        if (q) { if (ch === q) q = null; cur += ch; continue; }
+        if (ch === '"' || ch === "'") { q = ch; cur += ch; continue; }
+        if (ch === "(" || ch === "[") depth++;
+        else if (ch === ")" || ch === "]") depth--;
+        if (ch === "," && depth === 0) { out.push(cur.trim()); cur = ""; } else cur += ch;
+      }
+      if (cur.trim()) out.push(cur.trim());
+      return out;
+    };
+    const onDash = (sel) => splitSel(sel).map((x) => (x.includes(DASH) ? x : /^(html|body|:root)\b/i.test(x) ? null : `${DASH} ${x}`)).filter(Boolean).join(", ");
     const blocks = []; // [{ conds: [..], rules: [..] }] in the original order
     const push = (conds, text) => {
       const last = blocks[blocks.length - 1], key = conds.join("|");
@@ -3606,7 +3624,7 @@ input,select,textarea{
           const st = r.style, d = [];
           const imp = (k) => (st.getPropertyPriority(k) ? " !important" : "");
           const f = fontOf(st.getPropertyValue("font-size"));
-          if (f) d.push(`font-size:${f}${imp("font-size")}`);
+          if (f) { const ds = onDash(r.selectorText); if (ds) push(conds, `${ds}{font-size:${f}${imp("font-size")}}`); }
           if (!NO_BOX.test(r.selectorText)) {
             const hv = st.getPropertyValue("height"), h = boxOf(hv), mh = boxOf(st.getPropertyValue("min-height"));
             if (h) d.push(`height:${h}${imp("height")}`);
@@ -3627,12 +3645,12 @@ input,select,textarea{
     const inl = [];
     for (let n = 12; n <= 28; n += 0.5) {
       const v = String(n);
-      inl.push(`[style*="font-size:${v}px"],[style*="font-size: ${v}px"]{font-size:${Math.max(MIN_FONT, n - FONT)}px !important}`);
+      inl.push(`${DASH} [style*="font-size:${v}px"],${DASH} [style*="font-size: ${v}px"]{font-size:${Math.max(MIN_FONT, n - FONT)}px !important}`);
     }
     const css = blocks.map((b) => b.conds.reduceRight((inner, c) => `${c}{${inner}}`, b.rules.join("\n"))).join("\n") + "\n" + inl.join("\n");
     const el = document.createElement("style");
     el.id = "phoneCompact";
-    el.textContent = `@media (max-width: 700px){\nbody{font-size:14px}\n${css}\n}`;
+    el.textContent = `@media (max-width: 700px){\n${DASH}{font-size:14px}\n${css}\n}`;
     document.head.appendChild(el);
   } catch (e) { /* the page still works at the old sizes */ }
 })();
