@@ -1849,7 +1849,6 @@ input,select,textarea{
   .cg-sh .rch-seg, .cg-sh .cg-pk{ margin-inline-start:auto; }
   .cg-ed{ flex:none; width:32px; height:32px; border:1px solid var(--line); border-radius:9px; background:none; color:var(--muted); font-size:14px; cursor:pointer; }
   .cg-can-l{ display:flex; align-items:center; gap:9px; }
-  .cg-can-l .cg-pic.sm{ width:42px; }
   .cg-can-t{ flex:1; min-width:0; display:flex; flex-direction:column; }
   .cg-can-t b{ font-size:14px; line-height:1.25; }
   .cg-can-t b em{ font-style:normal; color:var(--good); }
@@ -21414,7 +21413,8 @@ async function renderChiefGearCalc() {
     </button>`;
   }
   // "Can do now" (admin, like every "can reach" mark): the first piece the
-  // Backpack takes up, with this week's trades, and what runs out then.
+  // Backpack takes up, with this week's trades, and what runs out then
+  // (no picture: owner, 3 Nov 2026).
   function canHtml(plan, tracks) {
     const todo = tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => plan.lv[tr.id] > tr.from);
     const seg = `<div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="cg-ed" data-rchedit aria-label="${esc(t("rch_edit_order"))}" title="${esc(t("rch_edit_order"))}">&#9998;</button>` : ""}`;
@@ -21422,14 +21422,13 @@ async function renderChiefGearCalc() {
     if (!todo.length) return `${top}<div class="cg-ok">&#10003; ${esc(t("cg_all_at_target"))}</div>`;
     const f = up[0] || todo[0], p = pieceOf(f.id), r = plan.lv[f.id];
     const item = plan.first ? materialDisplayName(itemShortName(plan.first)) : "";
-    const pic = `<span class="cg-pic sm" style="--edge:${cgEdge(rows[f.from])};"><img src="${chiefGearIcon(p.key, f.from)}" alt="" loading="lazy" /></span>`;
     const show = `<button type="button" class="btn small ghost cg-show" data-rchall="chief_gear">${esc(t("cg_show"))} &#8250;</button>`;
     if (!up.length) {
       const left = item ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
-      return `${top}<div class="cg-can-l">${pic}<div class="cg-can-t"><b>${esc(t("cg_none_up"))}</b>${item ? `<small class="am">${esc(t("rch_first").replace("{item}", item).replace("{n}", left.toLocaleString()))}</small>` : ""}</div>${show}</div>`;
+      return `${top}<div class="cg-can-l"><div class="cg-can-t"><b>${esc(t("cg_none_up"))}</b>${item ? `<small class="am">${esc(t("rch_first").replace("{item}", item).replace("{n}", left.toLocaleString()))}</small>` : ""}</div>${show}</div>`;
     }
     const traded = (plan.trades[f.id] || []).length > 0;
-    return `${top}<div class="cg-can-l">${pic}<div class="cg-can-t"><b>${esc(pieceDisplayName(p.name))} ${esc(cgBadge(rows[f.from]))} &rarr; <em>${esc(stepLab(r, f.from))}</em>${up.length > 1 ? ` <span class="meta" title="${esc(up.slice(1).map((x) => pieceDisplayName(pieceOf(x.id).name)).join(" · "))}">+${up.length - 1}</span>` : ""}</b>${traded ? `<small class="ok">&#8644; ${esc(t("cg_with_trades"))}</small>` : ""}${item ? `<small class="am">${esc(t("cg_then_out").replace("{item}", item))}</small>` : ""}</div>${show}</div>`;
+    return `${top}<div class="cg-can-l"><div class="cg-can-t"><b>${esc(pieceDisplayName(p.name))} ${esc(cgBadge(rows[f.from]))} &rarr; <em>${esc(stepLab(r, f.from))}</em>${up.length > 1 ? ` <span class="meta" title="${esc(up.slice(1).map((x) => pieceDisplayName(pieceOf(x.id).name)).join(" · "))}">+${up.length - 1}</span>` : ""}</b>${traded ? `<small class="ok">&#8644; ${esc(t("cg_with_trades"))}</small>` : ""}${item ? `<small class="am">${esc(t("cg_then_out").replace("{item}", item))}</small>` : ""}</div>${show}</div>`;
   }
   // "Can reach" marks (design B, 2 Nov 2026): ✓★1 under each piece's name.
   function fillChiefGearReach() {
