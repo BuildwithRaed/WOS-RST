@@ -1856,7 +1856,7 @@ input,select,textarea{
   .cg-sxc i{ font-style:normal; font-size:11px; color:var(--muted); text-transform:uppercase; }
   .cg-sxc b{ font-size:12px; font-weight:800; color:var(--good); }
   .cg-sxc b.off{ font-size:11px; font-weight:600; color:var(--muted); }
-  .plx-maxbtn.on{ background:rgba(111,211,242,.16); }
+  .plx-maxbtn:disabled{ opacity:.45; cursor:default; }
   .cg-sec{ margin-top:7px; padding-top:6px; border-top:1px solid var(--line); }
   .cg-sec[hidden]{ display:none; }
   .cg-sh{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:6px; }
@@ -5512,7 +5512,10 @@ const T = {
   cg_set6: { en: "6-piece set" },
   cg_set3_short: { en: "3-piece" },
   cg_set6_short: { en: "6-piece" },
-  cg_max_back: { en: "Tap again to go back to the targets you had" },
+  cg_reset: { en: "Reset" },
+  cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
+  cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
+  cg_all_max: { en: "Every piece is at max" },
   cg_set_all_troops: { en: "The set bonus counts for all troops" },
   cg_set_bonus: { en: "Set bonus" },
   bud_not_open: { en: "Includes levels not open in your state yet ({what})" },
@@ -21366,8 +21369,9 @@ function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purp
 function cgStars(r) { return r && r.tier && r.stars != null ? `★${r.stars}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}` : cgBadge(r); }
 async function renderChiefGearCalc() {
   const seq = RENDER_SEQ;
-  const [rows] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder()]);
+  const [rows, , beforeMax] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder(), loadCalcState("chief_gear_before_max")]);
   if (seq !== RENDER_SEQ) return;
+  CG_BEFORE_MAX = beforeMax && beforeMax.from ? beforeMax : null;
   if (!rows.length) {
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_chief_gear_data"))}</div></div></div>`;
     return;
@@ -21399,7 +21403,7 @@ async function renderChiefGearCalc() {
   head.classList.add("cg-head");
   // "Max" instead of "Max everything" (owner, 3 Nov 2026).
   const maxBtn = document.getElementById("gearMaxAllBtn");
-  if (maxBtn) { maxBtn.textContent = t("max_button"); maxBtn.title = t("max_everything"); }
+  if (maxBtn) { maxBtn.textContent = t("max_button"); maxBtn.title = t("cg_max_tip"); }
   head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}"><svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="1.6" r="1.3"/><path d="M3.5 3.9H5.75V8.9H6.6V10H3.4V8.9H4.25V4.8H3.5Z"/></svg></button><span class="cg-tip" role="tooltip" data-cghelp hidden>${esc(t("cg_slots_hint"))}</span>`);
   { // arrow points at the (i)
     const ib = head.querySelector("[data-cginfo]"), h2 = head.querySelector("h2");
@@ -21524,14 +21528,15 @@ async function renderChiefGearCalc() {
     });
     syncMaxBtn();
   }
-  // The Max button looks pressed while a tap would put your own targets back.
+  // Max, or Reset once every piece is at max (greyed when there is nothing
+  // to go back to, e.g. levels set to max by hand).
   function syncMaxBtn() {
     const btn = document.getElementById("gearMaxAllBtn");
     if (!btn) return;
-    const on = !!cgBeforeMax();
-    btn.classList.toggle("on", on);
-    btn.setAttribute("aria-pressed", String(on));
-    btn.title = t(on ? "cg_max_back" : "max_everything");
+    const all = cgAllMax(), back = all && !!CG_BEFORE_MAX;
+    btn.textContent = t(back ? "cg_reset" : "max_button");
+    btn.disabled = all && !back;
+    btn.title = t(back ? "cg_reset_tip" : all ? "cg_all_max" : "cg_max_tip");
   }
   function changed() {
     saveCalcState("chief_gear", CHIEF_GEAR_STATE);
@@ -21636,20 +21641,26 @@ async function renderChiefGearCalc() {
     draw(false);
   }
 
-  // Max: every target to the highest open level; a second tap puts back the
-  // targets you had before (owner, 3 Nov 2026; it used to put them back to
-  // "now", which lost your own targets). Current levels never change.
+  // Max: every piece's current level and target to the highest open level,
+  // remembering the levels you had; Reset (every piece at max) puts them back
+  // (owner, 3 Nov 2026).
   document.getElementById("gearMaxAllBtn").addEventListener("click", () => {
-    const b = cgBeforeMax();
-    if (b) {
-      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], v = b.to[p.key]; st.to = Math.max(st.from, v == null ? st.from : v); });
-      cgSetBeforeMax(null);
+    if (cgAllMax()) {
+      const b = CG_BEFORE_MAX;
+      if (!b) return;
+      CHIEF_GEAR_PIECES.forEach((p) => {
+        const st = CHIEF_GEAR_STATE[p.key], f = b.from[p.key], v = b.to && b.to[p.key];
+        if (f != null) st.from = f;
+        st.to = Math.max(st.from, v == null ? st.from : v);
+      });
+      CG_BEFORE_MAX = null;
+      saveCalcState("chief_gear_before_max", {});
     } else {
-      const cap = chiefGearCapIdx(), to = {}, max = {};
-      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; to[p.key] = st.to == null ? st.from : st.to; max[p.key] = Math.max(cap, st.from); });
-      if (CHIEF_GEAR_PIECES.every((p) => to[p.key] === max[p.key])) return; // already at max
-      cgSetBeforeMax({ uid: USER_ID || "", to, max });
-      CHIEF_GEAR_PIECES.forEach((p) => { CHIEF_GEAR_STATE[p.key].to = max[p.key]; });
+      const cap = chiefGearCapIdx(), from = {}, to = {};
+      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; from[p.key] = st.from; to[p.key] = st.to == null ? st.from : st.to; });
+      CG_BEFORE_MAX = { from, to, at: new Date().toISOString() };
+      saveCalcState("chief_gear_before_max", CG_BEFORE_MAX);
+      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.from = Math.max(cap, st.from); st.to = st.from; });
     }
     changed();
   });
@@ -22280,19 +22291,16 @@ function maxedChiefGearState() {
   return out;
 }
 
-// The targets before Chief Gear's Max was tapped (owner, 3 Nov 2026), kept for
-// the visit and in sessionStorage (a phone may reload the page in the
-// background); only valid while every target still sits where Max put it.
-let CG_BEFORE_MAX;
-function cgSetBeforeMax(v) {
-  CG_BEFORE_MAX = v;
-  try { if (v) sessionStorage.setItem("cg_before_max", JSON.stringify(v)); else sessionStorage.removeItem("cg_before_max"); } catch (e) { /* storage off */ }
-}
-function cgBeforeMax() {
-  let s = CG_BEFORE_MAX;
-  if (s === undefined) { try { s = JSON.parse(sessionStorage.getItem("cg_before_max") || "null"); } catch (e) { s = null; } CG_BEFORE_MAX = s; }
-  if (!s || !s.to || !s.max || s.uid !== (USER_ID || "")) return null;
-  return CHIEF_GEAR_PIECES.every((p) => { const st = CHIEF_GEAR_STATE[p.key]; return st && (st.to == null ? st.from : st.to) === s.max[p.key]; }) ? s : null;
+// Chief Gear's Max / Reset (owner, 3 Nov 2026): Max puts every piece's
+// current level and target on the highest level open in the person's state
+// ("I've maxed the whole page"); with every piece at max the button reads
+// Reset and puts back the current levels and targets from before Max. Since
+// Max changes real current levels, the levels before it are saved on the
+// account: calc_state "chief_gear_before_max" = { from: { piece: idx }, to: { piece: idx }, at } ({} once used).
+let CG_BEFORE_MAX = null;
+function cgAllMax() {
+  const cap = chiefGearCapIdx();
+  return CHIEF_GEAR_PIECES.every((p) => CHIEF_GEAR_STATE[p.key] && CHIEF_GEAR_STATE[p.key].from >= cap);
 }
 
 // Chief Gear's Troops Stats (design G1-B, owner 3 Nov 2026): the 3 troops'
