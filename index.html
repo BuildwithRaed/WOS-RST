@@ -1933,18 +1933,18 @@ input,select,textarea{
   /* The labels on the pieces share one shape too. */
   .cg-pc .cg-tgt, .cg-pc .cg-mk{ border-radius:6px; }
   /* Phones and tablets (owner, 3 Nov 2026, responsive check A–D): buttons
-     44 px tall (A), no text under 11 px (B), the pieces grow with the screen up
+     40 px tall (A; 44 looked heavy on the iPhone, owner), no text under 11 px (B), the pieces grow with the screen up
      to 84 px on tablets / an open Fold (C), and sizes follow the screen's width
      (D: clamp() with vw). PC (> 900 px) is unchanged. */
   @media (max-width: 900px){
     .plx-head.cg-head h2{ font-size:clamp(18px, 4.8vw, 22px); }
-    #gearMaxAllBtn, #cgCan .cg-show, #cgBp .cg-bpbtn, #gearRows .sa-btn{ height:44px; min-height:44px; padding:0 14px; }
-    #cgCan .cg-ed{ width:44px; height:44px; min-height:44px; }
-    #cgCan .rch-seg{ height:44px; }
-    #cgCan .rch-seg button{ height:42px; padding:0 12px; }
-    .cg-i::after{ inset:-13px; }
-    .cg-ans, .cg-pcs{ padding:clamp(10px, 3vw, 14px); }
-    .cg-sh{ min-height:44px; }
+    #gearMaxAllBtn, #cgCan .cg-show, #cgBp .cg-bpbtn, #gearRows .sa-btn{ height:40px; min-height:40px; padding:0 13px; }
+    #cgCan .cg-ed{ width:40px; height:40px; min-height:40px; }
+    #cgCan .rch-seg{ height:40px; }
+    #cgCan .rch-seg button{ height:38px; padding:0 11px; }
+    .cg-i::after{ inset:-11px; }
+    .cg-ans, .cg-pcs{ padding:clamp(11px, 3vw, 14px); }
+    .cg-sh{ min-height:40px; }
     #gearCurrentStats .plx-stats.one{ gap:clamp(5px, 1.6vw, 10px); }
     #gearCurrentStats .plx-stat{ padding:clamp(7px, 2vw, 10px) clamp(6px, 2vw, 10px); }
     #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small{ font-size:11px; }
@@ -1965,6 +1965,15 @@ input,select,textarea{
     .cg1 .cg-grid{ max-width:none; gap:6px 16px; }
     .cg1 .cg-pc .cg-badge{ top:-3px; padding:3px 7px; }
     .cg1 .cg-pc .cg-tgt{ padding:3px 7px; }
+  }
+  /* Narrow phones (under 440 px; owner, 3 Nov 2026: "readable for all sizes
+     and not too cramped", no need to look like another device): text stays
+     11 px or more; the 3-piece / 6-piece chips get their own line, so the title
+     row isn't squeezed. */
+  @media (max-width: 439px){
+    .cg-kr{ row-gap:6px; }
+    #cgSets{ display:grid; grid-template-columns:1fr 1fr; width:100%; margin-inline-start:0; }
+    #cgSets .cg-sxc{ justify-content:center; }
   }
   /* Pack cost sheet on phones: the title, target and plan boxes stay, only the
      pack list scrolls (owner, 3 Nov 2026). */
