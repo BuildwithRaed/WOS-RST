@@ -1875,9 +1875,12 @@ input,select,textarea{
   .cg-bp-tap{ margin-inline-start:auto; font-size:11.5px; text-align:end; }
   .cg-bp #gearOwned_rows_foot, .cg-bp .bs-help{ display:none; }
   .cg-bp .bs-edit{ margin-top:0; }
-  .cg-bp .bs-tiles{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; max-width:460px; }
+  /* 4 boxes across the whole card, like the troop boxes above (owner's Fold 8 /
+     PC screenshots, 3 Nov 2026: a 460 px cap left an empty space on the right). */
+  .cg-bp .bs-tiles{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+  .cg-bp .bs-tile{ aspect-ratio:auto; min-height:86px; }
   .cg-bp .chest-open{ margin-top:6px; }
-  .cg1 .t12x-amts{ display:none !important; }
+  .cg-bp #gearOwned_rows{ display:block !important; }   /* "Hide boxes" is a side-column (PC) choice */
   .cg-ok{ font-size:12.5px; font-weight:700; color:var(--good); }
   .cg-pcs{ padding:8px 11px 8px; }
   .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; }
@@ -1898,6 +1901,7 @@ input,select,textarea{
   .cg-bd[hidden]{ display:none; }
   @media (min-width: 901px){ .cg1 .t12x-buy:has(#gearOwned_rows_trades:empty):has(#gearOwned_rows_packs:empty){ display:none; } }
   @media (max-width: 900px){
+    .cg1 .t12x-amts{ display:none !important; }
     .cg1 .t12x-buy{ display:none; }
     .cg1 .t12x-buy.cg-open{ display:block; position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.55); }
     .cg1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
@@ -21406,11 +21410,21 @@ async function renderChiefGearCalc() {
     head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(4, Math.round(x + ib.offsetWidth / 2 - 5)) + "px");
   }
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
-  // The Backpack boxes sit in the answer card where "Still short" was (owner
-  // picked A, 3 Nov 2026): the bar's own element moves there (its handlers
-  // are on it), the side card stays empty and hidden, no "Hide boxes".
-  document.getElementById("cgBp").appendChild(document.getElementById("gearOwned"));
-  BAR_SHOW_ALL.chief_gear = true;
+  // Phones: the Backpack boxes sit in the answer card where "Still short" was
+  // (owner picked A, 3 Nov 2026); PC: in the side column as before (owner, same
+  // day). The bar's own element moves (its handlers are on it), also when the
+  // screen changes size (a Fold opened, PC mode); onchange, so no stacking.
+  {
+    const own = document.getElementById("gearOwned"), side = content.querySelector(".t12x-amts"), sec = document.getElementById("cgBp");
+    const mq = CG_MQ || (CG_MQ = window.matchMedia("(max-width: 900px)"));
+    const place = () => {
+      if (!sec.isConnected) return; // another page is shown now
+      (mq.matches ? sec : side).appendChild(own);
+      sec.hidden = !mq.matches;
+    };
+    place();
+    mq.onchange = place;
+  }
   buy.innerHTML = `${sheetHead("", " data-cgbuyt")}<div data-buybody></div>`;
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
@@ -22274,6 +22288,7 @@ function maxedChiefGearState() {
 // Max changes real current levels, the levels before it are saved on the
 // account: calc_state "chief_gear_before_max" = { from: { piece: idx }, to: { piece: idx }, at } ({} once used).
 let CG_BEFORE_MAX = null;
+let CG_MQ = null; // Chief Gear: phone layout (Backpack boxes in the card) or PC (side column)
 function cgAllMax() {
   const cap = chiefGearCapIdx();
   return CHIEF_GEAR_PIECES.every((p) => CHIEF_GEAR_STATE[p.key] && CHIEF_GEAR_STATE[p.key].from >= cap);
