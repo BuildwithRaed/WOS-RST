@@ -1913,6 +1913,46 @@ input,select,textarea{
     .cg1 .t12x-buy[data-cgshow="trades"] #gearOwned_rows_packs, .cg1 .t12x-buy[data-cgshow="packs"] #gearOwned_rows_trades{ display:none; }
   }
   .cg-sabox[hidden]{ display:none; }
+  /* One look for the small buttons and chips on Chief Gear (owner, 3 Nov 2026:
+     "different types of small boxes, make them all the same"): 30 px tall,
+     corners 10 px, the same border, background and text; colour only marks
+     meaning (Max and the price in ice blue, the picked My order / Best value). */
+  #gearMaxAllBtn, #cgCan .cg-show, #cgCan .cg-ed, #cgBp .cg-bpbtn, #gearRows .sa-btn, #cgSets .cg-sxc{ box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; gap:5px; height:30px; min-height:30px; padding:0 11px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:12.5px; font-weight:700; line-height:1; white-space:nowrap; }
+  #gearMaxAllBtn{ padding:0 14px; border-color:var(--ice); background:rgba(111,211,242,.10); }
+  #cgCan .cg-ed{ width:30px; padding:0; }
+  #cgBp .cg-bpbtn.ice{ border-color:var(--ice-dim); color:var(--ice); }
+  #cgCan .rch-seg{ box-sizing:border-box; height:30px; border-radius:10px; }
+  #cgCan .rch-seg button{ min-height:0; height:28px; padding:0 11px; font-size:12.5px; font-weight:600; }
+  #cgCan .rch-seg button.on{ font-weight:700; }
+  #cgSets .cg-sxc{ padding:0 9px; cursor:default; }
+  #cgSets .cg-sxc i{ font-size:11px; }
+  #cgSets .cg-sxc b{ font-size:12.5px; }
+  .cg-ph .sa-car{ font-size:10px; }
+  /* The labels on the pieces share one shape too. */
+  .cg-pc .cg-tgt, .cg-pc .cg-mk{ border-radius:6px; }
+  /* Pack cost sheet on phones: the title, target and plan boxes stay, only the
+     pack list scrolls (owner, 3 Nov 2026). */
+  @media (max-width: 900px){
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"]{ display:flex; flex-direction:column; overflow:hidden; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] [data-buybody],
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] #gearOwned_rows_packs,
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card,
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card{ margin-top:0; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card > *:not(.pc-sec), .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec > *:not(.pc-list){ flex:none; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-list{ flex:1 1 auto; min-height:80px; overflow-y:auto; overscroll-behavior:contain; }
+  }
+  /* PC: the pieces use the room (owner, 3 Nov 2026: "gears still tight together"). */
+  @media (min-width: 901px){
+    .cg1 .cg-grid{ max-width:none; gap:6px 16px; margin-top:6px; }
+    .cg1 .cg-th{ font-size:12px; }
+    .cg1 .cg-pc{ padding-top:16px; }
+    .cg1 .cg-pc .cg-pic{ width:104px; }
+    .cg1 .cg-pc .cg-badge{ top:-2px; padding:4px 9px; font-size:12px; }   /* still covers the game's T mark at this size */
+    .cg1 .cg-pc .cg-tgt{ padding:3px 8px; font-size:12px; }
+    .cg1 .cg-pc .cg-nm{ margin-top:16px; font-size:14px; }
+    .cg1 .cg-pc .cg-mk{ font-size:12px; line-height:20px; }
+  }
   .plx-tsw.is-pinned{ position:fixed; top:0; z-index:40; margin:0; border-radius:0 0 14px 14px; }
   /* Phones: the Chief Charm / Chief Gear sheet sits at the bottom. */
   @media (max-width:699px){ .gs-wrap.modal-overlay{ align-items:flex-end; padding:0; } .gs-wrap .gs-box{ max-width:none !important; width:100% !important; max-height:92vh; border-radius:16px 16px 0 0; } }
@@ -5502,7 +5542,6 @@ const T = {
   gs_nothing: { en: "Nothing needed" },
   gs_done: { en: "Done" },
   cg_pieces_to_go: { en: "pieces to go" },
-  cg_at_target: { en: "{n} of {m} at target" },
   cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
   cg_backpack: { en: "Backpack" },
   cg_trades: { en: "Trades" },
@@ -17136,6 +17175,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   }
   const sharedNote = (msg) => `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--line); border-radius:8px;">${esc(msg)}</div>`;
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
+  let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest), owner 3 Nov 2026
   if (shared && shared.combined && shared.included && shared.combined.chosen && shared.sharedWith.length) {
     const cb = shared.combined, p = cb.chosen, mineShare = cb.shares[calcKey] || { total: 0, rows: [] };
     const late = shared.targetDays != null && p.days > shared.targetDays;
@@ -17186,7 +17226,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      ${mineShare.rows.length ? listHtml : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${tradesHtml}`;
+      <div class="pc-list">${mineShare.rows.length ? listHtml : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${tradesHtml}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -17271,6 +17311,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
         };
         const p = pick && pick.plan;
+        if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
         const byPack = [];
         if (p) p.rows.forEach((r) => {
           let g = byPack.find((x) => x.title === r.title);
@@ -17280,7 +17321,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
           <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta">${packFmtLocal(packRowLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
         const planTrades = p && (p.trades || []).length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
-        sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${listHtml}${planTrades}`;
+        sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list">${listHtml}${planTrades}</div>`;
       } else sections = `
         <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
         ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
@@ -17298,12 +17339,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (pageTotalText) known.page = pageTotalText; else pageTotalText = known.page || "";
   PACK_VIEW_TOTALS[calcKey] = known;
   if (stale()) return;
-  packCostShown(calcKey, (usingShared ? sharedTotalText : pageTotalText) || null);
+  packCostShown(calcKey, (usingShared ? sharedTotalText : (pickedTotalText || pageTotalText)) || null);
   if (usingShared) sections = sharedSections;
   const viewSwitch = canShare ? `
     <div class="seg" data-packview style="margin:8px 0 2px; flex-wrap:wrap;">
       <button type="button" data-packviewbtn="shared" class="${usingShared ? "active" : ""}">${esc(t("pack_view_shared"))}${sharedTotalText ? ` · <b>${sharedTotalText}</b>` : ""}</button>
-      <button type="button" data-packviewbtn="page" class="${usingShared ? "" : "active"}">${esc(t("pack_view_page"))}${pageTotalText ? ` · <b>${pageTotalText}</b>` : ""}</button>
+      <button type="button" data-packviewbtn="page" class="${usingShared ? "" : "active"}">${esc(t("pack_view_page"))}${pickedTotalText || pageTotalText ? ` · <b>${pickedTotalText || pageTotalText}</b>` : ""}</button>
     </div>
     <div class="meta" style="font-size:10px; margin-bottom:4px;">${esc(t(usingShared ? "pack_view_shared_desc" : "pack_view_page_desc"))}</div>` : "";
   let fallbackNote = "";
@@ -17323,7 +17364,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       ${fallbackNote}
       ${uncoveredHtml}
       ${freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_free_count").replace("{c}", activeCards.used.length).replace("{t}", traded && traded.trades.length ? traded.trades.length : 0))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : ""}
-      <div>${sections}</div>
+      <div class="pc-sec">${sections}</div>
       ${canShare ? `<div class="pc-view">${viewSwitch.replace(/<div class="meta" style="font-size:10px; margin-bottom:4px;">[\s\S]*?<\/div>\s*$/, "")}</div>` : ""}
     </div>` : `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
@@ -21503,12 +21544,11 @@ async function renderChiefGearCalc() {
   };
   PACK_COST_HOOKS.chief_gear();
   function renderPieces() {
-    const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
     const open = !!SETALL_OPEN.chief;
     rowsEl.innerHTML = `
         <div class="panel cg-pcs">
-          <div class="cg-ph"><b>${esc(t("cg_pieces"))}</b><span class="meta">${esc(t("cg_at_target").replace("{n}", CHIEF_GEAR_PIECES.length - toGo).replace("{m}", CHIEF_GEAR_PIECES.length))}</span>
-            <button type="button" class="sa-btn" data-cgsa aria-expanded="${open}">&#8645; ${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
+          <div class="cg-ph"><b>${esc(t("cg_pieces"))}</b>
+            <button type="button" class="sa-btn" data-cgsa aria-expanded="${open}">${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
           <div class="sa-row cg-sabox"${open ? "" : " hidden"}>
             <select data-cgsetall data-role="from" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${optsHtml()}</select>
             <span class="sa-arrow">&rarr;</span>
