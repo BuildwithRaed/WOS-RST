@@ -1835,7 +1835,8 @@ input,select,textarea{
   .cg-sabox{ margin-top:10px; }
   /* Chief Gear = design G1-B (owner, 3 Nov 2026): answer card, pieces by troop
      column, Backpack / Trades / Pack cost as a sheet from 3 buttons on phones. */
-  .cg-i{ display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; margin-inline-start:6px; vertical-align:middle; border:1px solid var(--line); border-radius:50%; background:none; color:var(--muted); font:italic 700 15px Georgia, "DejaVu Serif", serif; cursor:pointer; }
+  .cg-i{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-inline-start:8px; vertical-align:middle; border:1px solid var(--line); border-radius:6px; background:none; color:var(--muted); font:italic 700 13px Georgia, "DejaVu Serif", serif; cursor:pointer; }
+  .cg-i::after{ content:""; position:absolute; inset:-5px; }
   .cg-i[aria-expanded="true"]{ border-color:var(--ice); color:var(--ice); }
   .plx-head.cg-head{ margin-bottom:8px; }
   .cg-help{ font-size:12px; margin:-2px 0 8px; }
@@ -1876,6 +1877,7 @@ input,select,textarea{
   .cg-th{ padding-bottom:2px; text-align:center; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--tc); }
   .cg-pc{ display:flex; flex-direction:column; align-items:center; min-width:0; padding:11px 0 2px; border:0; background:none; color:var(--frost); font:inherit; cursor:pointer; }
   .cg-pc .cg-pic{ width:58px; }
+  .cg-pc .cg-badge{ top:-6px; }   /* covers the game's own T4 – T6 mark in the picture's corner */
   .cg-pc .cg-nm{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:2px 5px; margin-top:12px; font-size:12.5px; }
   .cg-pc .cg-rch{ display:inline-flex; width:auto; margin:0; }
   .cg-pc .cg-rch:empty{ display:none; }
@@ -15172,7 +15174,7 @@ function stateAgeCardHtml() {
 // Heroes hero) and Admin → Heroes (each hero's Gen). Things already open in
 // the person's state fold into one green row; the next day glows.
 const TL_ICONS = { t11: "icons/item_icon_100081.png", t12: "icons/item_icon_100082.png", "crystal lab": "icons/item_icon_100083.png",
-  "legendary chief gear": "icons/chief-gear-helmet-red.webp", "chief gear t5 t6": "icons/chief-gear-coat-red.webp",
+  "legendary chief gear": "icons/chief-gear/helmet-legendary.webp", "chief gear t5 t6": "icons/chief-gear/jacket-t5.webp",
   "charm 11.1 16": "icons/charms/charm-infantry-12.webp", "charm 16.1 18": "icons/charms/charm-infantry-17.webp" };
 // Where a hero comes from: Admin → Heroes "How to get" (site_config
 // hero_sources = { name: "hall" | "wheel" | "event" | "packs" | "signin" |
@@ -21323,12 +21325,18 @@ const CHIEF_GEAR_ICONS = {
   ring: "icons/chief-gear-ring-gold.webp",
   cane: "icons/chief-gear-cane-gold.webp",
 };
-// Legendary (red) gear has its own pictures, cut from the game's Gear Guide
-// (owner, 19 Oct 2026); every tier before it keeps the orange (gold) ones.
-const CHIEF_GEAR_ICONS_RED = Object.fromEntries(Object.entries(CHIEF_GEAR_ICONS).map(([k, v]) => [k, v.replace("-gold.webp", "-red.webp")]));
+// Each piece shows the game's picture for its tier (owner, 3 Nov 2026, from the
+// owner's Gear Guide screenshots, the guide's dark "not owned" layer and the
+// locks taken off): the look changes at Uncommon (green), Rare, Epic, Mythic,
+// Legendary (red, also T1 – T3), Legendary T4, T5 and T6.
+function chiefGearLook(tier) {
+  const t = String(tier || ""), m = /^legendary(?:\s*t(\d+))?/i.exec(t);
+  if (m) { const n = Number(m[1] || 0); return n >= 6 ? "t6" : n === 5 ? "t5" : n === 4 ? "t4" : "legendary"; }
+  return /^mythic/i.test(t) ? "mythic" : /^epic/i.test(t) ? "epic" : /^rare/i.test(t) ? "rare" : "uncommon";
+}
 function chiefGearIcon(key, rowIdx) {
   const r = (CHIEF_GEAR_ROWS || [])[rowIdx];
-  return r && /^legendary/i.test(String(r.tier || "")) ? CHIEF_GEAR_ICONS_RED[key] : CHIEF_GEAR_ICONS[key];
+  return r ? `icons/chief-gear/${key}-${chiefGearLook(r.tier)}.webp` : CHIEF_GEAR_ICONS[key];
 }
 
 // Chief Gear = "like the game" (owner picked D3, 19 Oct 2026): all 6 pieces
