@@ -3551,9 +3551,6 @@ input,select,textarea{
      off (11.5 px label, 12 px left, 18 px number, 12 px max). */
   .dh3-cols{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
   .dh3-col{ display:flex; flex-direction:column; gap:6px; min-width:0; }
-  .dh3-ch{ display:flex; align-items:center; gap:4px; width:100%; min-width:0; margin:0; padding:6px 2px; border:0; border-bottom:2px solid var(--tc); border-radius:0; background:none; font:inherit; font-size:14.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--tc); text-align:start; cursor:pointer; }
-  .dh3-ch > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .dh3-gt{ margin-inline-start:auto; color:var(--muted); font-weight:600; }
   .dh3-bx{ position:relative; overflow:hidden; display:block; width:100%; min-width:0; margin:0; padding:6px 8px 9px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .dh3-bx > *{ white-space:nowrap; }
   .dh3-top{ display:flex; align-items:baseline; justify-content:space-between; gap:4px; line-height:15px; }
@@ -3568,7 +3565,6 @@ input,select,textarea{
   @media (min-width: 701px){
     .dh3-cols{ gap:10px; }
     .dh3-col{ gap:8px; }
-    .dh3-ch{ font-size:13px; }
     .dh3-bx{ padding:8px 12px 11px; border-radius:12px; }
     .dh3-l, .dh3-top em{ font-size:13px; }
     .dh3-bx b{ margin-top:4px; font-size:22px; line-height:26px; }
@@ -8186,16 +8182,17 @@ async function renderOverview(opts = {}) {
   // down; each box: the stat and "+ left" on top, the current value big, "/ max"
   // under it, a bar along its bottom edge (troop colour = now, amber = what's left).
   // No header row above them (owner, 3 Nov 2026: the "Troops Stats (i) · all in %"
-  // line was "taking space for no use").
+  // line was "taking space for no use") and no troop names over the columns (owner,
+  // same day): the columns sit under their hero cards, in the same order and colours,
+  // and the troop's name is in each box's title.
   const statsHtml = () => `<div class="dh3">
     <div class="dh3-cols">${TROOP_TYPES.map((tt) => `<div class="dh3-col" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
-      <button type="button" class="dh3-ch" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}" title="${esc(t("dash_breakdown"))}"><span>${esc(troopDisplayName(tt.key))}</span><span class="dh3-gt" aria-hidden="true">&#8250;</span></button>
       ${STATS.map((st) => {
         const { total } = statFor(tt.key, st.key);
         const maxTotal = maxStatFor(tt.key, st.key);
         const pct = maxTotal > 0 ? Math.min(100, (total / maxTotal) * 100) : 0;
         const diff = Math.max(0, maxTotal - total);
-        return `<button type="button" class="dh3-bx" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(`${tStatLabel(st.label)}: ${total.toFixed(1)}% / ${maxTotal.toFixed(0)}%`)}">
+        return `<button type="button" class="dh3-bx" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(`${troopDisplayName(tt.key)} · ${tStatLabel(st.label)}: ${total.toFixed(1)}% / ${maxTotal.toFixed(0)}%`)}">
           <span class="dh3-top"><span class="dh3-l">${esc(DASH_SHORT[st.key] || tStatLabel(st.label))}</span>${diff > 0.05 ? `<em>+${bidiNum(diff.toFixed(1))}</em>` : `<em class="ok">&#10003;</em>`}</span>
           <b>${bidiNum(total.toFixed(1))}</b>
           <span class="dh3-max">/ ${bidiNum(maxTotal.toFixed(0))}</span>
