@@ -3259,6 +3259,8 @@ input,select,textarea{
     .dash-fit .rc-card.rc-open{ position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow:auto; overscroll-behavior:contain; padding:16px 14px 14px; border-radius:16px; background:var(--panel); box-shadow:0 12px 40px rgba(0,0,0,.55); opacity:1 !important; }
     .dash-fit .rc-card.rc-open .rc-x{ display:flex; align-items:center; justify-content:center; position:absolute; top:8px; inset-inline-end:8px; width:40px; height:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:15px; cursor:pointer; }
     .dash-fit .rc-card.rc-open .rc-pick{ width:72px; height:72px; }
+    /* small cards: the picture grows into the free space under the stats (fitDashToScreen sets --rcpic) */
+    .dash-fit .rc-card:not(.rc-open) .rc-pick{ width:var(--rcpic, 32px) !important; height:var(--rcpic, 32px) !important; }
     .dash-fit .rc-card.rc-open .rc-name{ font-size:16px; white-space:normal; }
     /* window (owner, 3 Nov 2026): no − / +, big stars so each shard piece is easy to tap */
     .dash-fit .rc-card.rc-open .rc-stars{ gap:8px; margin:12px 0 6px; }
@@ -7257,14 +7259,25 @@ async function openQuickSheet(after) {
   draw();
   modal.style.display = "flex";
 }
+let FIT_DASH_W = 0; // width the Dashboard was last fitted at
 function fitDashToScreen() {
   const el = document.getElementById("troopSections"), box = el && el.closest(".dash-fit");
   if (!el || !box) return;
   el.style.minHeight = ""; box.style.removeProperty("--sx");
-  // The Dashboard may scroll now (owner's design rule 5, 3 Nov 2026) and the H3 troop
-  // boxes have their own sizes, so nothing is stretched to fill the screen any more
-  // (it grew the roster and left an empty space under the stats).
-  if (el.querySelector(".dh3")) return;
+  FIT_DASH_W = innerWidth;
+  // The Dashboard may scroll now (owner's design rule 5, 3 Nov 2026) and the troop boxes
+  // have their own sizes, so the old stretch is gone; only the roster pictures grow into
+  // the space left under the stats on a phone's screen (owner, 3 Nov 2026: "we have a
+  // space in the bottom, increase the size of the hero image only"): 32 px up to 72 px.
+  // Worked out when the Dashboard is drawn and when the width changes, not while
+  // scrolling (the iPhone's toolbars change the height).
+  if (el.querySelector(".dh3")) {
+    box.style.removeProperty("--rcpic");
+    if (innerWidth > 700) return;
+    const extra = Math.floor(innerHeight - 10 - (el.getBoundingClientRect().bottom + scrollY));
+    if (extra > 2) box.style.setProperty("--rcpic", `${Math.min(72, 32 + extra)}px`);
+    return;
+  }
   if (innerWidth > 700) return;
   const room = () => innerHeight - 10 - (el.getBoundingClientRect().bottom + scrollY);
   const extra = room();
@@ -7273,7 +7286,7 @@ function fitDashToScreen() {
   const left = room();
   if (left > 0) el.style.minHeight = `${el.offsetHeight + left}px`;
 }
-window.addEventListener("resize", () => { if (TAB === "overview") fitDashToScreen(); });
+window.addEventListener("resize", () => { if (TAB === "overview" && innerWidth !== FIT_DASH_W) fitDashToScreen(); });
 function dashCached(key, load) {
   if (!DASH_DATA_CACHE[key]) DASH_DATA_CACHE[key] = load().catch((e) => { delete DASH_DATA_CACHE[key]; throw e; });
   return DASH_DATA_CACHE[key];
