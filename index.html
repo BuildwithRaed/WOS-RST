@@ -13,7 +13,25 @@
   // into any box under 16px when it is tapped; maximum-scale stops that, and
   // iOS still lets people pinch. Android keeps no maximum (it would block
   // pinch there and Android doesn't zoom into boxes).
-  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
+  // iPhones (owner, 3 Nov 2026: "font and images look too big on iPhone,
+  // everything is tight"): held upright, an iPhone narrower than 440 px lays
+  // the page out at 440 px and shrinks it to fit, by at most 12 % (iPhone 15 /
+  // 16: 393 px at 89 %, 16 Pro 402 px at 91 %, Plus / Pro Max 430 px at 98 %,
+  // SE / mini 375 px at 88 %). Landscape, iPads and Android as before.
+  (function () {
+    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var meta = document.querySelector('meta[name="viewport"]');
+    var set = function () {
+      var dw = Math.min(screen.width, screen.height);
+      var upright = !window.matchMedia || window.matchMedia("(orientation: portrait)").matches;
+      var phone = ios && !/iPad/.test(navigator.userAgent) && !(navigator.platform === "MacIntel");
+      var w = phone && upright && dw > 0 && dw < 440 ? Math.floor(Math.min(440, dw / 0.88)) : 0;
+      var k = w ? Math.ceil(dw / w * 1000) / 1000 : 1; // rounded up, so the page is never wider than the screen
+      meta.setAttribute("content", (w ? "width=" + w + ", initial-scale=" + k : "width=device-width, initial-scale=1.0") + (ios ? ", maximum-scale=" + k : ""));
+    };
+    set();
+    window.addEventListener("orientationchange", function () { setTimeout(set, 60); });
+  })();
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
