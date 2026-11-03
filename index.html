@@ -598,7 +598,9 @@
   .bud-g-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
   .bud-g{ display:flex; align-items:center; gap:8px; padding:8px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; }
   .bud-g.drag{ border-color:var(--ice); opacity:.85; }
-  .bud-g-h{ cursor:grab; color:var(--muted); touch-action:none; padding:8px 2px; letter-spacing:-3px; user-select:none; -webkit-user-select:none; }
+  .bud-g-h{ display:flex; align-items:center; justify-content:center; align-self:stretch; min-width:30px; min-height:44px; margin:-8px 0 -8px -8px; padding:0 4px 0 8px; cursor:grab; color:var(--muted); font-size:16px; touch-action:none; letter-spacing:-3px; user-select:none; -webkit-user-select:none; border-radius:10px 0 0 10px; }
+  .bud-g-h:active, .bud-g.drag .bud-g-h{ cursor:grabbing; color:var(--ice); background:rgba(111,211,242,.08); }
+  .bud-g-h:focus-visible{ outline:2px solid var(--ice); outline-offset:-2px; }
   .bud-g-n{ width:20px; height:20px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:11px; font-weight:700; display:grid; place-items:center; flex:none; }
   .bud-g > img, .bud-g > i{ width:30px; height:30px; object-fit:contain; flex:none; }
   .bud-g > i{ font-style:normal; display:grid; place-items:center; border-radius:8px; background:var(--panel); }
@@ -1293,7 +1295,7 @@
      one column in that order; PC: total + flags + Settings left, tiles right. */
   .b3-head{ display:flex; align-items:center; gap:8px; margin:0 0 10px; }
   .b3-head h2{ margin:0; flex:1; min-width:0; }
-  .b3-sq{ width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; flex:none; border:1px solid var(--line); border-radius:10px; background:none; color:var(--frost); font-size:16px; cursor:pointer; }
+  .b3-sq{ width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; flex:none; border:1px solid var(--line); border-radius:10px; background:none; color:var(--frost); font-size:16px; cursor:pointer; }
   .b3-cols{ display:flex; flex-direction:column; gap:8px; }
   .b3-left, .b3-right{ display:contents; }
   .b3-hd{ order:1; } .b3-rail{ order:2; } .b3-pg{ order:3; } .b3-np{ order:4; } .b3-lr{ order:5; }
@@ -1366,10 +1368,11 @@
   .b3-np .b3-ics{ display:flex; gap:3px; min-width:0; overflow:hidden; }
   .b3-np .b3-ics img{ width:20px; height:20px; object-fit:contain; opacity:.75; }
   .b3-go{ margin-inline-start:auto; color:var(--ice); font-weight:800; font-size:16px; }
-  .b3-lr{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:8px; }
+  .b3-lr{ display:grid; grid-template-columns:minmax(0, 1fr); gap:8px; }
   .b3-lr .b3-tile{ display:flex; align-items:center; gap:8px; min-height:54px; padding:6px 10px; }
   .b3-lr .b3-tile img{ width:26px; height:26px; object-fit:contain; flex:none; }
   .b3-lr .b3-tile.wk{ border-color:var(--ice-dim); background:rgba(44,85,104,.28); }
+  .b3-head .b3-setb{ display:flex; align-items:center; gap:8px; width:auto; max-width:62%; min-height:42px; padding:3px 12px 3px 10px; flex:0 1 auto; }
   .b3-gear{ flex:none; font-size:19px; }
   .b3-lr-t{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
   .b3-lr-t b{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -5158,6 +5161,7 @@ const T = {
   bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
   goals_desc: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ or use ▲▼." },
+  goals_desc_drag: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ to change the order." },
   goal_main: { en: "main" },
   goal_mini: { en: "mini" },
   goal_lv: { en: "Lv" },
@@ -18373,6 +18377,152 @@ function budgetStatDeltas(calcKey) {
   }
   return out;
 }
+// Budgets: the stat gain of the other pages (owner, 3 Nov 2026: it only showed
+// for Chief Gear, Charms and Heroes Gears). Current level → the page's own
+// target, read the way the Dashboard reads the current levels, so "now →
+// after" matches the Dashboard. Only Budgets asks for it (opts.stats).
+const BUDGET_STAT_MORE = new Set(["t12_research", "t11_helios", "research_center", "pets", "pets_refine", "experts", "experts_research", "hero_shards"]);
+async function budgetStatDeltasMore(calcKey) {
+  const out = [];
+  const RAW = { Attack: "ATT", Defense: "DEF", Lethality: "DMG", Health: "HP" };
+  const TROOPS = ["Infantry", "Lancer", "Marksman"];
+  const add = (tr, stat, delta) => { if (stat && delta > 1e-9) out.push({ troop: tr === "Lancer" ? "Lancers" : tr, stat, delta }); };
+  const addRaw = (tr, sum) => Object.entries(sum).forEach(([raw, v]) => add(tr, RAW[raw], v));
+  try {
+    if (calcKey === "t12_research") {
+      await ensureT12StateData();
+      if (!T12_TARGET) T12_TARGET = (await loadCalcState("t12_research_target")) || {};
+      TROOPS.forEach((tr) => {
+        const st = (T12_STATE && T12_STATE[tr]) || {}, sum = {};
+        T12_ITEM_DEFS.forEach((def) => {
+          if (!def.stat) return;
+          const cur = Number(st[def.key]) || 0, tgt = t12TargetOf(tr, def);
+          if (tgt > cur) sum[def.stat] = (sum[def.stat] || 0) + (tgt - cur) * (def.pct || 1);
+        });
+        addRaw(tr, sum);
+      });
+    } else if (calcKey === "t11_helios") {
+      await ensureT11StateData();
+      TROOPS.forEach((tr) => {
+        const sum = {};
+        Object.entries((T11_NODES_CACHE && T11_NODES_CACHE[tr]) || {}).forEach(([track, levels]) => {
+          const cur = Number(T11_STATE[tr] && T11_STATE[tr][track]) || 0, tgt = t11TargetOf(tr, track, levels.length);
+          levels.forEach((r) => { if (r.stat && r.level > cur && r.level <= tgt) sum[r.stat] = (sum[r.stat] || 0) + (Number(r.stat_pct) || 0); });
+        });
+        addRaw(tr, sum);
+      });
+    } else if (calcKey === "research_center") {
+      await ensureRCData();
+      if (!RC_TARGET) RC_TARGET = (await loadCalcState("research_center_target")) || {};
+      TROOPS.forEach((tr) => {
+        const sum = {};
+        [...(RC_BASE_CATEGORIES.Shared || []), ...(RC_BASE_CATEGORIES[tr] || [])].forEach((base) => RC_TIERS.forEach((tier) => {
+          const track = `${base} ${tier}`, cur = Number(RC_STATE[track]) || 0, tgt = rcTargetOf(track);
+          (RC_NODES_CACHE[track] || []).forEach((r) => { if (r.stat && r.level > cur && r.level <= tgt) sum[r.stat] = (sum[r.stat] || 0) + (Number(r.stat_pct) || 0); });
+        }));
+        addRaw(tr, sum);
+      });
+    } else if (calcKey === "pets") {
+      // One ATK/DEF % per pet, the same for all troops (as on the Dashboard).
+      await ensurePetsData();
+      let gain = 0;
+      Object.keys(PETS_NODES_CACHE || {}).forEach((pet) => {
+        if (!isPetUnlocked(pet)) return;
+        const levels = PETS_NODES_CACHE[pet], s = PETS_STATE && PETS_STATE[pet];
+        const st = s && typeof s === "object" ? s : { from: -1, to: IS_OWNER ? petMaxIdx(pet) : -1 };
+        const pct = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
+        if (st.to > st.from) gain += Math.max(0, pct(st.to) - (st.from >= 0 ? pct(st.from) : 0));
+      });
+      TROOPS.forEach((tr) => { add(tr, "ATT", gain); add(tr, "DEF", gain); });
+    } else if (calcKey === "pets_refine") {
+      // Refine plans every counted pet to its top released stage.
+      await ensurePetsData();
+      const F = { Infantry: ["il", "ih", "infantry_lethality_pct", "infantry_health_pct"], Lancer: ["ll", "lh", "lancer_lethality_pct", "lancer_health_pct"], Marksman: ["ml", "mh", "marksman_lethality_pct", "marksman_health_pct"] };
+      TROOPS.forEach((tr) => {
+        const [lk, hk, lm, hm] = F[tr];
+        let l = 0, h = 0;
+        Object.keys(PET_REFINE_CACHE || {}).forEach((pet) => {
+          if (!isPetUnlocked(pet)) return;
+          const rows = PET_REFINE_CACHE[pet], top = rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))] || {};
+          const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
+          const capL = Math.round((Number(top[lm]) || 0) * 10000) / 100, capH = Math.round((Number(top[hm]) || 0) * 10000) / 100;
+          l += capL - Math.min(Number(s[lk]) || 0, capL);
+          h += capH - Math.min(Number(s[hk]) || 0, capH);
+        });
+        add(tr, "DMG", l); add(tr, "HP", h);
+      });
+    } else if (calcKey === "experts") {
+      // Expert levels (Affinity) and Romulus's / Gareth's troop skills, all troops.
+      await ensureExpertsTroopStatsData();
+      const [saved, un] = await Promise.all([loadCalcState("experts"), loadCalcState("experts_unlocked")]);
+      const st = renameExpertSkills(saved || {}), unl = un || {}, sum = { Attack: 0, Defense: 0, Lethality: 0, Health: 0 };
+      const addRow = (row, sign) => { if (row && row.stat_type) row.stat_type.split(",").forEach((n) => { if (sum[n] != null) sum[n] += sign * (Number(row.stat_value) || 0); }); };
+      EXPERTS_IN_ORDER_GLOBAL.forEach((hero) => {
+        const e = st[hero];
+        if (!e || !unlockedFor("experts", hero, unl[hero])) return;
+        const rows = (EXPERT_AFFINITY_CACHE_GLOBAL && EXPERT_AFFINITY_CACHE_GLOBAL[hero]) || [];
+        const cur = Math.floor(Number(e.current) || 0), tgt = Math.floor(Number(e.desired) || 0);
+        if (tgt > cur) { addRow(rows.find((r) => r.level === tgt), 1); addRow(rows.find((r) => r.level === cur), -1); }
+      });
+      [["Romulus", "Last Line"], ["Romulus", "Spirit of Aeetis"], ["Gareth", "Porcupine"], ["Gareth", "Undefeated Will"]].forEach(([hero, skill]) => {
+        const sk = st[hero] && st[hero].skills && st[hero].skills[skill];
+        if (!sk || !unlockedFor("experts", hero, unl[hero])) return;
+        const rows = (EXPERT_TROOP_SKILL_CACHE_GLOBAL && EXPERT_TROOP_SKILL_CACHE_GLOBAL[`${hero}|${skill}`]) || [];
+        const at = (lv) => { let m = null; rows.forEach((r) => { if (r.level <= lv) m = r; }); return m; };
+        const cur = Number(sk.current) || 0, tgt = Number(sk.desired) || 0;
+        if (tgt > cur) { addRow(at(tgt), 1); addRow(at(cur), -1); }
+      });
+      TROOPS.forEach((tr) => addRaw(tr, sum));
+    } else if (calcKey === "hero_shards") {
+      // The roster heroes (the Dashboard's Set 1): stars → ATK / DEF, widget → LETH / HP.
+      const last = HERO_PLAN_LAST;
+      if (!last || !last.rows) return [];
+      const [starRows, widgetRows] = await Promise.all([
+        dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)),
+        dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)),
+      ]);
+      const star = (gen, step) => (starRows || []).find((r) => Number(r.generation) === Number(gen) && Number(r.step) === step) || {};
+      const wid = (gen, lv) => (widgetRows || []).find((r) => Number(r.generation) === Number(gen) && Number(r.level) === lv) || {};
+      last.rows.forEach((r) => {
+        if (!r || !r.inRoster || !r.troop || !r.hero) return;
+        const e = (last.roster || {})[r.troop];
+        if (e && typeof e === "object" && e.used === false) return;
+        const g = r.hero.generation;
+        if (r.tStep > r.step) {
+          const a = star(g, r.tStep), b = star(g, r.step);
+          add(r.troop, "ATT", (Number(a.atk_pct) || 0) - (Number(b.atk_pct) || 0));
+          add(r.troop, "DEF", (Number(a.def_pct) || 0) - (Number(b.def_pct) || 0));
+        }
+        if (r.hasWidget && r.tW > r.wLevel) {
+          const a = wid(g, r.tW), b = wid(g, r.wLevel);
+          add(r.troop, "DMG", (Number(a.leth_pct) || 0) - (Number(b.leth_pct) || 0));
+          add(r.troop, "HP", (Number(a.hp_pct) || 0) - (Number(b.hp_pct) || 0));
+        }
+      });
+    } else if (calcKey === "experts_research") {
+      await ensureExpertsResearchDataGlobal();
+      const [saved, un] = await Promise.all([loadCalcState("experts_research"), loadCalcState("experts_research_unlocked")]);
+      const st = saved || {}, unl = un || {};
+      TROOPS.forEach((tr) => {
+        const sum = { ATK: 0, DEF: 0, DMG: 0, HP: 0 };
+        const inc = new Set(EXPERTS_IN_ORDER_GLOBAL.filter((e) => !expertTroopKey(e)));
+        expertsForTroop(tr, EXPERTS_IN_ORDER_GLOBAL).forEach((e) => inc.add(e));
+        inc.forEach((expert) => {
+          if (!unlockedFor("experts", expert, unl[expert])) return;
+          expertsResearchPathNumbersGlobal(expert).forEach((p) => {
+            const ps = (st[expert] || {})[p];
+            const cur = Number(ps && ps.current) || 0, tgt = Number(ps && ps.desired) || 0;
+            if (tgt <= cur) return;
+            const g = expertsResearchPathCostGlobal(expert, p, cur, tgt);
+            Object.keys(sum).forEach((k) => { sum[k] += Number(g[k]) || 0; });
+          });
+        });
+        add(tr, "ATT", sum.ATK); add(tr, "DEF", sum.DEF); add(tr, "DMG", sum.DMG); add(tr, "HP", sum.HP);
+      });
+    }
+  } catch (e) { return []; }
+  return out;
+}
 // Budgets: the levels of a page's target that aren't open in the person's
 // state yet (Chief Charm / Chief Gear / Hero Gear), e.g. "Lv 12 – 18".
 function budgetNotOpenText(calcKey) {
@@ -18471,7 +18621,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
       res.chosen = res.byTarget || res.cheapest;
     }
   }
-  res.deltas = budgetStatDeltas(calcKey);
+  res.deltas = BUDGET_STAT_MORE.has(calcKey) ? (opts.stats ? await budgetStatDeltasMore(calcKey) : []) : budgetStatDeltas(calcKey);
   res.lines = budgetPlanLines(calcKey);
   return res;
 }
@@ -19616,18 +19766,11 @@ function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady) 
 function wireBudgetGoals(box) {
   const redraw = () => keepPlace(() => renderBudgetsPage());
   const ids = () => [...box.querySelectorAll("[data-goal]")].map((li) => li.dataset.goal);
-  const saveOrder = (list) => { BUDGET_GOALS.order = list; saveBudgetGoals(); redraw(); };
+  const saveOrder = (list) => { BUDGET_GOALS.order = list; saveBudgetGoals(); return redraw(); };
   box.onclick = (e) => {
     const b = e.target.closest("button");
     if (!b || b.disabled) return;
     if (b.hasAttribute("data-goalsfold")) { BUDGET_GOALS_OPEN = !BUDGET_GOALS_OPEN; redraw(); return; }
-    if (b.dataset.goalmove) {
-      const list = ids(), i = list.indexOf(b.closest("[data-goal]").dataset.goal), j = i + Number(b.dataset.goalmove);
-      if (i < 0 || j < 0 || j >= list.length) return;
-      [list[i], list[j]] = [list[j], list[i]];
-      saveOrder(list);
-      return;
-    }
     if (b.hasAttribute("data-goalrm")) {
       const gid = b.closest("[data-goal]").dataset.goal;
       BUDGET_GOALS.minis = BUDGET_GOALS.minis.filter((m) => "mini:" + m.id !== gid);
@@ -19700,20 +19843,45 @@ function wireBudgetGoals(box) {
   });
   // Drag a row by its ⋮⋮ handle (move / up are followed on the document:
   // moving the row in the list would drop a pointer capture on the handle).
+  // Drag is the only way to move a goal (owner, 3 Nov 2026): near the top or
+  // bottom of the scroll box (the sheet, or the page) it scrolls by itself;
+  // ↑ / ↓ on the focused handle move it too.
   box.querySelectorAll("[data-goaldrag]").forEach((h) => {
+    h.onkeydown = (e) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      e.preventDefault();
+      const gid = h.closest("[data-goal]").dataset.goal, list = ids(), i = list.indexOf(gid), j = i + (e.key === "ArrowUp" ? -1 : 1);
+      if (i < 0 || j < 0 || j >= list.length) return;
+      [list[i], list[j]] = [list[j], list[i]];
+      Promise.resolve(saveOrder(list)).then(() => { const row = [...content.querySelectorAll("[data-goal]")].find((x) => x.dataset.goal === gid), nh = row && row.querySelector("[data-goaldrag]"); if (nh) nh.focus(); });
+    };
     h.onpointerdown = (e) => {
       const li = h.closest("[data-goal]"), list = li.parentElement, before = ids().join("|");
+      const scroller = li.closest(".modal-box");
       e.preventDefault();
       li.classList.add("drag");
-      const move = (ev) => {
-        if (ev.pointerId !== e.pointerId) return;
-        const over = [...list.children].find((x) => { if (x === li) return false; const r = x.getBoundingClientRect(); return ev.clientY >= r.top && ev.clientY <= r.bottom; });
+      let lastY = e.clientY, raf = 0;
+      const place = () => {
+        const over = [...list.children].find((x) => { if (x === li) return false; const r = x.getBoundingClientRect(); return lastY >= r.top && lastY <= r.bottom; });
         if (!over) return;
         const r = over.getBoundingClientRect();
-        list.insertBefore(li, ev.clientY < r.top + r.height / 2 ? over : over.nextSibling);
+        list.insertBefore(li, lastY < r.top + r.height / 2 ? over : over.nextSibling);
+      };
+      const edge = () => {
+        const top = scroller ? scroller.getBoundingClientRect().top : 0, bottom = scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight;
+        const d = lastY < top + 56 ? -Math.ceil((top + 56 - lastY) / 4) : lastY > bottom - 56 ? Math.ceil((lastY - bottom + 56) / 4) : 0;
+        if (d) { if (scroller) scroller.scrollTop += d; else window.scrollBy(0, d); place(); }
+        raf = requestAnimationFrame(edge);
+      };
+      raf = requestAnimationFrame(edge);
+      const move = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        lastY = ev.clientY;
+        place();
       };
       const up = (ev) => {
         if (ev.pointerId !== e.pointerId) return;
+        cancelAnimationFrame(raf);
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", up);
         document.removeEventListener("pointercancel", up);
@@ -19776,7 +19944,7 @@ async function renderBudgetsPage(opts = {}) {
   // Page plans are reused unless the target date changed (it affects the
   // plans) or the data was invalidated.
   const [pages, dashStats] = await Promise.all([
-    (dataReady && BUDGET_DATA.targetDays === targetDays) ? BUDGET_DATA.pages : Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true }))),
+    (dataReady && BUDGET_DATA.targetDays === targetDays) ? BUDGET_DATA.pages : Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true, stats: true }))),
     dashStatsPromise,
   ]);
   if (!budTab()) return;
@@ -20093,17 +20261,13 @@ async function renderBudgetsPage(opts = {}) {
           <div class="meta" style="font-size:10.5px;">${esc(t("goal_by_note"))}</div>
         </div>` : "";
       return `<li class="bud-g" data-goal="${esc(g.id)}">
-        <span class="bud-g-h" data-goaldrag title="${esc(t("goals_desc"))}">&#8942;&#8942;</span>
+        <span class="bud-g-h" data-goaldrag role="button" tabindex="0" aria-label="${esc(t("goals_desc_drag"))}" title="${esc(t("goals_desc_drag"))}">&#8942;&#8942;</span>
         <span class="bud-g-n">${i + 1}</span>
         ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(packPageLabel(g.page).charAt(0))}</i>`}
         <span class="bud-g-t"><span class="bud-g-nm"><b>${esc(nameOf(g))}</b><span class="bud-g-tag${g.mini ? " mini" : g.hero && (HERO_TARGETS && (HERO_TARGETS.heroes[g.hero.id] || {}).push) ? " push" : ""}">${esc(t(g.mini ? "goal_mini" : g.hero && (HERO_TARGETS && (HERO_TARGETS.heroes[g.hero.id] || {}).push) ? "ht_push" : "goal_main"))}</span></span>
           <span class="bud-g-row2"><button type="button" class="bud-g-by${kind}" data-goalby>${esc(byText(myBy, myBy ? dIn : mainDay))} &#9662;</button><small>${status}</small></span>
           <span class="bud-g-bar"><i class="${g.mini ? "mini" : ""}" style="width:${fill.toFixed(1)}%;"></i></span></span>
-        <span class="bud-g-btns">
-          <button type="button" data-goalmove="-1" aria-label="${esc(t("goal_up"))}" ${i === 0 ? "disabled" : ""}>&#9650;</button>
-          <button type="button" data-goalmove="1" aria-label="${esc(t("goal_down"))}" ${i === goals.length - 1 ? "disabled" : ""}>&#9660;</button>
-          ${g.mini ? `<button type="button" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button>` : ""}
-        </span>${picker}</li>`;
+        ${g.mini ? `<span class="bud-g-btns"><button type="button" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>` : ""}${picker}</li>`;
     };
     const miniPages = keys.filter((k) => goalMiniLevels(k).length);
     // Pages that saved their needs before mini targets existed: open them once.
@@ -20167,7 +20331,7 @@ async function renderBudgetsPage(opts = {}) {
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
-      ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc"))}</p>
+      ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc_drag"))}</p>
       <ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
       ${addHtml()}
       ${heroEdHtml()}
@@ -20436,8 +20600,9 @@ async function renderBudgetsPage(opts = {}) {
     return { money: m, n: names.size };
   })();
   const wkTab = IS_OWNER ? "roadmap" : "purchases";
+  // Settings sits beside ↻ at the top (owner, 3 Nov 2026); This week has the bottom row.
+  const setBtnHtml = `<button type="button" class="b3-tile b3-setb" data-b3sheet="settings"><span class="b3-gear">&#9881;</span><span class="b3-lr-t"><b>${esc(t("t12x_settings"))}</b><small>${esc(targetDays != null ? t("b3_set_target").replace("{date}", shortDay(targetDays)) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</small></span></button>`;
   const lrHtml = `<div class="b3-lr">
-      <button type="button" class="b3-tile" data-b3sheet="settings"><span class="b3-gear">&#9881;</span><span class="b3-lr-t"><b>${esc(t("t12x_settings"))}</b><small>${esc(targetDays != null ? t("b3_set_target").replace("{date}", shortDay(targetDays)) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</small></span></button>
       <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
     </div>`;
   // The sheet's content.
@@ -20479,7 +20644,7 @@ async function renderBudgetsPage(opts = {}) {
   if (planPending) holdPageHeight(true);
   keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap b3">
-      <div class="plx-head b3-head"><h2 title="${esc(t("budgets_desc"))}">${esc(t("budgets_title"))}</h2><button type="button" class="b3-sq" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
+      <div class="plx-head b3-head"><h2 title="${esc(t("budgets_desc"))}">${esc(t("budgets_title"))}</h2>${setBtnHtml}<button type="button" class="b3-sq" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
       <div class="b3-cols">
         <div class="b3-left">${totalHtml}${goalFlagsHtml}${lrHtml}</div>
         <div class="b3-right">${tilesHtml}${missHtml}</div>
