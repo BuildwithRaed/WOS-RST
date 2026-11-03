@@ -3420,6 +3420,69 @@ input,select,textarea{
   .pr-gems-t b{ font-size:13px; font-weight:600; color:var(--text); }
   .pr-gems-t small{ font-size:11px; color:var(--muted); }
 </style>
+<script>
+// Phones: text 2 px smaller and small boxes 4 px smaller (owner, 3 Nov 2026: "make
+// them smaller by 2 for font and 4 for box"). Built once from the page's own CSS, so
+// every rule follows by itself, also ones added later: on screens up to 700 px each
+// font size set in px is 2 px smaller (not under 10 px; calc / clamp sizes too) and
+// each height / min-height from 24 to 100 px is 4 px smaller (square widths with it),
+// pictures excepted. The new rules keep the old ones' order and importance, so the
+// same rule still wins. Sizes typed on elements (style="font-size:13px") follow too.
+(function phoneCompact() {
+  try {
+    const FONT = 2, BOX = 4, MIN_FONT = 10;
+    const NO_BOX = /img|svg|icon|(^|[\s.#>~+-])(ic|pic|ring|logo|thumb|avatar|photo|portrait|emoji)([\s.:#>~+,\-\]]|$)|::?(before|after)|scrollbar/i;
+    const pxOf = (v) => { const m = /^(-?\d+(?:\.\d+)?)px$/.exec(String(v || "").trim()); return m ? Number(m[1]) : null; };
+    const fontOf = (v) => {
+      const n = pxOf(v);
+      if (n != null) return n > MIN_FONT ? `${Math.max(MIN_FONT, Math.round((n - FONT) * 100) / 100)}px` : null;
+      if (/px/.test(v) && /^(calc|clamp|max|min)\(/.test(String(v).trim())) return `max(${MIN_FONT}px, calc(${v} - ${FONT}px))`;
+      return null;
+    };
+    const boxOf = (v) => { const n = pxOf(v); return n != null && n >= 24 && n <= 100 ? `${n - BOX}px` : null; };
+    const never = (cond) => { const m = /min-width:\s*(\d+)px/.exec(cond || ""); return !!m && Number(m[1]) > 700; };
+    const blocks = []; // [{ conds: [..], rules: [..] }] in the original order
+    const push = (conds, text) => {
+      const last = blocks[blocks.length - 1], key = conds.join("|");
+      if (last && last.key === key) last.rules.push(text); else blocks.push({ key, conds, rules: [text] });
+    };
+    const walk = (rules, conds) => {
+      for (const r of rules) {
+        if (r.type === 1) {
+          const st = r.style, d = [];
+          const imp = (k) => (st.getPropertyPriority(k) ? " !important" : "");
+          const f = fontOf(st.getPropertyValue("font-size"));
+          if (f) d.push(`font-size:${f}${imp("font-size")}`);
+          if (!NO_BOX.test(r.selectorText)) {
+            const hv = st.getPropertyValue("height"), h = boxOf(hv), mh = boxOf(st.getPropertyValue("min-height"));
+            if (h) d.push(`height:${h}${imp("height")}`);
+            if (mh) d.push(`min-height:${mh}${imp("min-height")}`);
+            if (h && pxOf(st.getPropertyValue("width")) === pxOf(hv)) d.push(`width:${h}${imp("width")}`);
+            if (h && pxOf(st.getPropertyValue("min-width")) === pxOf(hv)) d.push(`min-width:${h}${imp("min-width")}`);
+          }
+          if (d.length) push(conds, `${r.selectorText}{${d.join(";")}}`);
+        } else if (r.type === 4) {
+          if (!never(r.conditionText)) walk(r.cssRules, conds.concat(`@media ${r.conditionText}`));
+        } else if (r.type === 12) {
+          walk(r.cssRules, conds.concat(`@supports ${r.conditionText}`));
+        }
+      }
+    };
+    for (const sh of document.styleSheets) { let rs = null; try { rs = sh.cssRules; } catch (e) { rs = null; } if (rs) walk(rs, []); }
+    // sizes typed on elements
+    const inl = [];
+    for (let n = 12; n <= 28; n += 0.5) {
+      const v = String(n);
+      inl.push(`[style*="font-size:${v}px"],[style*="font-size: ${v}px"]{font-size:${Math.max(MIN_FONT, n - FONT)}px !important}`);
+    }
+    const css = blocks.map((b) => b.conds.reduceRight((inner, c) => `${c}{${inner}}`, b.rules.join("\n"))).join("\n") + "\n" + inl.join("\n");
+    const el = document.createElement("style");
+    el.id = "phoneCompact";
+    el.textContent = `@media (max-width: 700px){\nbody{font-size:14px}\n${css}\n}`;
+    document.head.appendChild(el);
+  } catch (e) { /* the page still works at the old sizes */ }
+})();
+</script>
 </head>
 <body>
 
