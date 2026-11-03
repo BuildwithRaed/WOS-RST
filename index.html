@@ -809,6 +809,25 @@
     .dash-fit{ margin-top:-10px; }
     .dash-fit .rc-card select{ height:22px; }
   }
+  /* Narrow phones (under 440 px, e.g. iPhone 15 at 393; owner, 3 Nov 2026:
+     "readable for all sizes and not too cramped"): each stat's "+N%" gets its
+     own line under the number (it ran into the number and out of the column),
+     and no Dashboard text under 11 px. The page still grows to fill the screen
+     (--sx, fitDashToScreen). */
+  @media (max-width: 439px){
+    .dash-fit .dash-troops.cols .dash-stat{ grid-template-columns:1fr; }
+    .dash-fit .dash-troops.cols .dash-stat-v{ grid-column:1; grid-row:2; }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:1; grid-row:3; text-align:start; }
+    .dash-fit .dash-troops.cols .dash-stat-bar{ grid-row:4; }
+    .dash-fit .dash-troops.cols .dash-stat-gap, .dash-fit .dash-troops.cols .dash-stat-k small{ font-size:11px; letter-spacing:0; }
+    .dash-fit .dash-troops.cols .dash-troop-h{ font-size:max(11px, calc(10px * min(var(--sx), 1.25))); }
+    .dash-fit .dash-troops.cols .dash-stat-k{ font-size:max(11px, calc(10px * min(var(--sx), 1.2))); }
+    .dash-fit .rc-troop, .dash-fit .rc-sh, .dash-fit .rc-pct, .dash-fit .sa-chip{ font-size:11px; }
+    .dash-fit .rc-name .meta, .dash-fit label .meta, .dash-fit label .meta b{ font-size:11px !important; }   /* these carry an inline 10 px */
+    .dash-fit .rc-sh{ white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }   /* "⚙ 95 short · QAR 242" wraps instead of being cut */
+    .dash-fit .rc-step span{ font-size:11px; letter-spacing:0; }
+    .qk-chip span{ font-size:11px; }
+  }
   .rc-pct{ font-size:10.5px; line-height:1.4; color:var(--frost); }
   .rc-card select{ font-size:11px; padding:3px 6px; margin-top:6px; max-width:100%; }
   @media (min-width:1000px){ .rc-pick{ width:72px; height:72px; } .rc-stars > *{ width:24px !important; height:24px !important; } .rc-name{ font-size:14px; } .rc-pct{ font-size:12px; } }
