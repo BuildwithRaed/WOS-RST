@@ -1839,7 +1839,12 @@ input,select,textarea{
   .cg-i::after{ content:""; position:absolute; inset:-5px; }
   .cg-i[aria-expanded="true"]{ border-color:var(--ice); color:var(--ice); }
   .plx-head.cg-head{ margin-bottom:8px; }
-  .cg-help{ font-size:12px; margin:-2px 0 8px; }
+  /* (i) help as a small bubble under the button (owner, 3 Nov 2026): hover on PC, tap on phones. */
+  .plx-head.cg-head h2{ position:relative; }
+  .cg-tip{ position:absolute; top:calc(100% + 8px); inset-inline-start:0; z-index:40; width:max-content; max-width:min(280px, calc(100vw - 32px)); padding:9px 11px; border:1px solid rgba(111,211,242,.45); border-radius:10px; background:#0f1a2a; box-shadow:0 8px 24px rgba(0,0,0,.45); color:var(--text); font-family:inherit; font-size:12.5px; font-weight:400; font-style:normal; line-height:1.45; letter-spacing:0; text-transform:none; white-space:normal; }
+  .cg-tip::before{ content:""; position:absolute; top:-6px; inset-inline-start:var(--cg-tip-x, 20px); width:10px; height:10px; background:#0f1a2a; border-left:1px solid rgba(111,211,242,.45); border-top:1px solid rgba(111,211,242,.45); transform:rotate(45deg); }
+  .cg-tip[hidden]{ display:none; }
+  @media (hover:hover){ .cg-i:hover ~ .cg-tip[hidden]{ display:block; } }
   .cg-ans{ margin-bottom:8px; padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
   .cg-k{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
   .cg-ans > .cg-k{ display:block; margin-bottom:6px; }
@@ -21388,8 +21393,13 @@ async function renderChiefGearCalc() {
   // "Max" instead of "Max everything" (owner, 3 Nov 2026).
   const maxBtn = document.getElementById("gearMaxAllBtn");
   if (maxBtn) { maxBtn.innerHTML = `&#9650; ${esc(t("max_button"))}`; maxBtn.title = t("max_everything"); }
-  head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>`);
-  head.insertAdjacentHTML("afterend", `<p class="meta cg-help" data-cghelp hidden>${esc(t("cg_slots_hint"))}</p>`);
+  head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}">i</button><span class="cg-tip" role="tooltip" data-cghelp hidden>${esc(t("cg_slots_hint"))}</span>`);
+  { // arrow points at the (i)
+    const ib = head.querySelector("[data-cginfo]"), h2 = head.querySelector("h2");
+    const rtl = document.documentElement.dir === "rtl";
+    const x = rtl ? h2.getBoundingClientRect().right - ib.getBoundingClientRect().right : ib.getBoundingClientRect().left - h2.getBoundingClientRect().left;
+    head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(8, Math.round(x + 7)) + "px");
+  }
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
   amts.insertAdjacentHTML("afterbegin", sheetHead(`&#127890; ${esc(t("cg_backpack"))}`));
   buy.innerHTML = `${sheetHead("", " data-cgbuyt")}<div data-buybody></div>`;
@@ -21547,6 +21557,14 @@ async function renderChiefGearCalc() {
     const hp = content.querySelector("[data-cghelp]");
     hp.hidden = !hp.hidden;
     b.setAttribute("aria-expanded", String(!hp.hidden));
+    if (!hp.hidden) {
+      const off = (ev) => {
+        if (ev.type === "keydown" ? ev.key !== "Escape" : ev.target.closest("[data-cginfo]")) return;
+        hp.hidden = true; b.setAttribute("aria-expanded", "false");
+        document.removeEventListener("pointerdown", off, true); document.removeEventListener("keydown", off, true);
+      };
+      document.addEventListener("pointerdown", off, true); document.addEventListener("keydown", off, true);
+    }
   });
 
   // The sheet for one piece: Now and Target lists side by side.
