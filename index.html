@@ -3237,7 +3237,7 @@ input,select,textarea{
   @media (max-width: 900px){ .plx-maxbtn.plx-max{ height:40px; min-height:40px; padding:0 13px; } }
   /* Dashboard B roster (owner, 3 Nov 2026: "too many wrap"): on phones each hero is a
      small card — picture, name, stars, one short line, widget — and tapping it opens
-     the full card (stars − / +, widget, shards, %) as a window over the page. */
+     the full card (big tappable stars, widget, shards, %) as a window over the page. */
   .rc-mini, .rc-x{ display:none; }
   @media (max-width: 700px){
     .dash-fit .rc-card:not(.rc-open){ cursor:pointer; padding:8px 4px; }
@@ -3254,17 +3254,20 @@ input,select,textarea{
     .dash-fit .rc-card:not(.rc-open) .rc-name{ font-size:13.5px; font-weight:700; }
     .rc-mini > div{ font-size:12px; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
     .rc-mini-sh{ color:var(--amber); font-weight:700; }
-    .rc-mini-sh.ok{ color:var(--good); }
     .rc-mini-w{ color:var(--muted); }
     .dash-fit .rc-card.rc-open{ position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow:auto; overscroll-behavior:contain; padding:16px 14px 14px; border-radius:16px; background:var(--panel); box-shadow:0 12px 40px rgba(0,0,0,.55); opacity:1 !important; }
     .dash-fit .rc-card.rc-open .rc-x{ display:flex; align-items:center; justify-content:center; position:absolute; top:8px; inset-inline-end:8px; width:40px; height:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:15px; cursor:pointer; }
     .dash-fit .rc-card.rc-open .rc-pick{ width:72px; height:72px; }
     .dash-fit .rc-card.rc-open .rc-name{ font-size:16px; white-space:normal; }
-    .dash-fit .rc-card.rc-open .rc-stars > *{ width:26px !important; height:26px !important; }
-    .dash-fit .rc-card.rc-open .rc-step{ max-width:200px; }
-    .dash-fit .rc-card.rc-open .rc-pm{ width:40px; height:40px; }
+    /* window (owner, 3 Nov 2026): no − / +, big stars so each shard piece is easy to tap */
+    .dash-fit .rc-card.rc-open .rc-stars{ gap:8px; margin:12px 0 6px; }
+    .dash-fit .rc-card.rc-open .rc-stars > *{ width:min(54px, calc((100vw - 90px) / 5)) !important; height:min(54px, calc((100vw - 90px) / 5)) !important; }
+    .dash-fit .rc-card.rc-open .rc-pm{ display:none; }
+    .dash-fit .rc-card.rc-open .rc-step{ justify-content:center; max-width:none; margin:2px auto 8px; }
+    .dash-fit .rc-card.rc-open .rc-step span{ font-size:15px; }
     .dash-fit .rc-card.rc-open .rc-sh, .dash-fit .rc-card.rc-open .rc-pct{ font-size:13px !important; white-space:normal; }
-    .dash-fit .rc-card.rc-open select{ min-height:40px; font-size:16px; width:100%; max-width:240px; }
+    /* roomier widget dropdown: an explicit height (iOS ignores min-height on a select) */
+    .dash-fit .rc-card.rc-open select{ box-sizing:border-box; height:48px; min-height:48px; padding:0 14px; margin-top:12px; border-radius:12px; font-size:16px; width:100%; max-width:280px; }
     .rc-ph{ pointer-events:none; }
   }
   /* Dashboard B troop cards: label, number, "/ max", bar, "+N%" each on its own line. */
@@ -7636,7 +7639,7 @@ async function renderOverview(opts = {}) {
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>${sh.short && sh.reach > sh.step ? `<div class="rc-sh rc-reach">${esc(shReach.replace("{s}", heroStepText(sh.reach)))}</div>` : ""}` : ""}
               ${sh && sh.hasWidget && sh.wLevel < widgetMaxLevel() ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
-              <div class="rc-mini"><div class="rc-mini-sh${miniShort(sh) ? "" : " ok"}">${esc(miniShort(sh) || "\u2713")}</div><div class="rc-mini-w">${esc(widgetShort)} ${esc(widget ? String(widget) : noneLabel)}</div></div>
+              <div class="rc-mini">${miniShort(sh) ? `<div class="rc-mini-sh">${esc(miniShort(sh))}</div>` : ""}<div class="rc-mini-w">${esc(widgetShort)} ${esc(widget ? String(widget) : noneLabel)}</div></div>
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).map((x) => `<span>${x}</span>`).join("") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
