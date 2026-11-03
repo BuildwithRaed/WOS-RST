@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "{group} 전부 Lv {lv}",
 "t:rlk_or": "또는",
 "t:rlk_wait": "Lv {lv}+는 먼저 {needs} 필요",
-"t:rlk_wait_target": "그 목표를 올리세요"
+"t:rlk_wait_target": "그 목표를 올리세요",
+"t:rch_trades": "이번 주 교환 사용:",
+"t:rch_with_trades": "교환 포함"
 }

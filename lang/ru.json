@@ -2061,5 +2061,7 @@
 "t:rlk_all_at": "все {group} на {lv}",
 "t:rlk_or": "или",
 "t:rlk_wait": "Ур. {lv}+ сначала требует: {needs}",
-"t:rlk_wait_target": "повысьте её цель"
+"t:rlk_wait_target": "повысьте её цель",
+"t:rch_trades": "Использует обмены этой недели:",
+"t:rch_with_trades": "с обменом"
 }

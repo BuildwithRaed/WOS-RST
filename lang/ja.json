@@ -2061,5 +2061,7 @@
 "t:rlk_all_at": "{group}すべてLv{lv}",
 "t:rlk_or": "または",
 "t:rlk_wait": "Lv{lv}以上は先に{needs}が必要",
-"t:rlk_wait_target": "その目標を上げてください"
+"t:rlk_wait_target": "その目標を上げてください",
+"t:rch_trades": "今週の交換を使用:",
+"t:rch_with_trades": "交換あり"
 }

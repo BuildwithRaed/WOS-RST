@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "{group} ทั้งหมดที่ {lv}",
 "t:rlk_or": "หรือ",
 "t:rlk_wait": "Lv. {lv}+ ต้องมี {needs} ก่อน",
-"t:rlk_wait_target": "เพิ่มเป้าหมายของมัน"
+"t:rlk_wait_target": "เพิ่มเป้าหมายของมัน",
+"t:rch_trades": "ใช้การแลกของสัปดาห์นี้:",
+"t:rch_with_trades": "รวมการแลก"
 }

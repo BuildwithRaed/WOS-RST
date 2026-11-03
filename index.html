@@ -489,6 +489,9 @@
   .rlk-x{ min-width:32px; min-height:32px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--frost); }
   .rlk-prev{ margin-top:10px; font-size:12px; padding:8px 10px; border-radius:8px; background:rgba(111,211,242,.08); line-height:1.4; }
   .rlk-err{ color:#ff8a8a; font-size:12px; min-height:4px; margin-top:4px; }
+  .rch-trades{ margin-top:6px; font-size:12px; color:var(--muted); line-height:1.4; }
+  .rch-trades b{ color:var(--frost); font-weight:600; }
+  .rch-trade{ margin-top:3px; font-size:11px; color:#7ee6a8; line-height:1.35; }
   .rch-wait{ margin-top:4px; font-size:11px; color:#f0c674; line-height:1.35; }
   .rch-bar{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--muted); }
   .rch-track{ flex:1; height:4px; border-radius:3px; background:var(--line); overflow:hidden; }
@@ -3848,7 +3851,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 67; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 68; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages (machine-made files, 16 Oct 2026) start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -4200,6 +4203,8 @@ const T = {
   rch_none: { en: "0 of {m} {unit} · {item}" },
   rch_part: { en: "{n} of {m} {unit}" },
   rch_u_levels: { en: "levels" },
+  rch_trades: { en: "Uses this week's trades:" },
+  rch_with_trades: { en: "with trades" },
   rlk_all_at: { en: "all {group} at {lv}" },
   rlk_or: { en: "or" },
   rlk_wait: { en: "Lv {lv}+ needs {needs} first" },
@@ -8032,7 +8037,13 @@ function reachPlan(tracks, have, mode, rows, conv) {
   // page's hidden choice rules [{ from, to, give, get, max }].
   const convTo = {};
   (conv || []).forEach((r) => { if (r && r.from && r.to && r.give > 0 && r.get > 0) (convTo[r.to] = convTo[r.to] || []).push({ ...r, cap: r.max > 0 ? r.max : Infinity }); });
+  // The page's weekly trades (owner, 3 Nov 2026: Chief Gear Design → Amber …)
+  // come in the same list with trade: true and this week's limit as max; the
+  // source that costs the smallest share of what you hold goes first.
+  Object.values(convTo).forEach((list) => list.sort((a, b) => (a.give / a.get) / Math.max(1, Number(have[a.from]) || 0) - (b.give / b.get) / Math.max(1, Number(have[b.from]) || 0)));
   const convUsed = new Map(); // rule -> lots used so far
+  const tradesBy = {}; // track id -> Map(rule -> lots), trades only
+  const noteTrades = (id, st) => st.lots.forEach((n, r) => { if (!r.trade || !(n > 0)) return; const m = tradesBy[id] || (tradesBy[id] = new Map()); m.set(r, (m.get(r) || 0) + n); });
   // What paying `cost` takes from what's left: { draw, lots, extra } or { fail: item }.
   const settle = (cost) => {
     const draw = {}, lots = new Map(), extra = {}, short = {};
@@ -8131,7 +8142,7 @@ function reachPlan(tracks, have, mode, rows, conv) {
     }
     return best;
   };
-  const take = (tr, b) => { Object.keys(b.pre || {}).forEach((id) => { lv[id] = Math.max(lv[id], b.pre[id]); }); lv[tr.id] = b.to; applySettle(b.st); };
+  const take = (tr, b) => { Object.keys(b.pre || {}).forEach((id) => { lv[id] = Math.max(lv[id], b.pre[id]); }); lv[tr.id] = b.to; noteTrades(tr.id, b.st); applySettle(b.st); };
   // Equally good steps (same gain for the same items): the owner's troop
   // order Infantry > Marksman > Lancer, then the lowest level first, so a
   // troop isn't pushed just because its piece comes first in the list.
@@ -8165,7 +8176,9 @@ function reachPlan(tracks, have, mode, rows, conv) {
       if (!pt || rank(tr) < rank(pt) || (rank(tr) === rank(pt) && lv[tr.id] - tr.from < lv[pt.id] - pt.from)) pt = tr;
     });
     if (!pt) break;
-    applySettle(settle(pt.cost(lv[pt.id] + 1) || {}));
+    const st1 = settle(pt.cost(lv[pt.id] + 1) || {});
+    noteTrades(pt.id, st1);
+    applySettle(st1);
     lv[pt.id]++;
   }
   // The item that stops the most tracks first ("runs out first").
@@ -8189,7 +8202,12 @@ function reachPlan(tracks, have, mode, rows, conv) {
     const miss = (reqs || []).find((req) => !req.some((opt) => opt.every(([id, l]) => lv[id] >= l)));
     if (miss) waits[tr.id] = (miss[0] || []).filter(([id, l]) => lv[id] < l);
   });
-  return { lv, left, first: stopItems[0] || null, blocker, waits, reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
+  // Trades used, per track and in all: [{ from, to, give, get }].
+  const tradeList = (m) => [...m.entries()].map(([r, n]) => ({ from: r.from, to: r.to, give: n * r.give, get: n * r.get }));
+  const trades = {};
+  const all = new Map();
+  Object.keys(tradesBy).forEach((id) => { trades[id] = tradeList(tradesBy[id]); tradesBy[id].forEach((n, r) => all.set(r, (all.get(r) || 0) + n)); });
+  return { lv, left, first: stopItems[0] || null, blocker, waits, trades, tradeSum: tradeList(all), reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
 }
 // The one-line summary above a page's pieces, with the order switch.
 function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
@@ -8208,8 +8226,14 @@ function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
       ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="linklike rch-edit" data-rchedit>${esc(t("rch_edit_order"))}</button>` : ""}
       ${allKey ? `<button type="button" class="rch-allbtn" data-rchall="${esc(allKey)}">${esc(t("rch_all_btn"))}</button>` : ""}
     </div>
+    ${(plan.tradeSum || []).length ? `<div class="rch-trades">&#8644; ${esc(t("rch_trades"))} ${reachTradeText(plan.tradeSum)}</div>` : ""}
     <div class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</div>
   </div>`;
+}
+// "1,340 Design → 134 Amber · 20 Polish → 1,000 Alloy" (trades "can reach" used).
+function reachTradeText(list) {
+  const n = (v) => Math.round(v).toLocaleString();
+  return (list || []).map((x) => `<b>${esc(n(x.give))} ${esc(materialDisplayName(itemShortName(x.from)))}</b> &rarr; <b>${esc(n(x.get))} ${esc(materialDisplayName(itemShortName(x.to)))}</b>`).join(" · ");
 }
 // ---- "See all troops ›": a small sheet with every troop at once (design C) ----
 // Pages with troops keep their last plan here: { plan, tracks, unit, go(troop) };
@@ -20923,7 +20947,7 @@ async function renderChiefGearCalc() {
       const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
       if (!el) return;
       const r = plan.lv[tr.id];
-      el.innerHTML = tr.to > tr.from ? `<span class="rch-mini${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(rows[r] && rows[tr.from] && rows[r].tier === rows[tr.from].tier ? cgStars(rows[r]) : cgBadge(rows[r]))}`}</span>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_steps")}` : "";
+      el.innerHTML = tr.to > tr.from ? `<span class="rch-mini${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(rows[r] && rows[tr.from] && rows[r].tier === rows[tr.from].tier ? cgStars(rows[r]) : cgBadge(rows[r]))}`}</span>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_steps")}${(plan.trades[tr.id] || []).length ? `<div class="rch-trade" title="${esc(plan.trades[tr.id].map((x) => `${Math.round(x.give).toLocaleString()} ${materialDisplayName(itemShortName(x.from))} → ${Math.round(x.get).toLocaleString()} ${materialDisplayName(itemShortName(x.to))}`).join(" · "))}">&#8644; ${esc(t("rch_with_trades"))}</div>` : ""}` : "";
     });
     const sum = rowsEl.querySelector("[data-rchsum]");
     if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pieces", "chief_gear");
@@ -21185,7 +21209,11 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const have = { ...calcOwned };
     hiddenTrades.forEach((tr) => { if (!choice.has(tr.from)) have[tr.to] = (have[tr.to] || 0) + tr.getQty; });
     BAR_HAVE[calcKey || "chief_gear"] = have;
-    BAR_CONV[calcKey || "chief_gear"] = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }));
+    // This week's trades with a weekly limit (Chief Gear, Chief Charm …), when
+    // the page's trades are on: used only where they let more steps happen.
+    const weekly = TRADE_APPLY[calcKey || "chief_gear"] === false ? [] : tradeRatesFor(calcKey || "chief_gear").filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));
+    BAR_CONV[calcKey || "chief_gear"] = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }))
+      .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0, trade: true })));
     if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
   };
   reachRefresh();

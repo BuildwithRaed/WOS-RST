@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "tất cả {group} cấp {lv}",
 "t:rlk_or": "hoặc",
 "t:rlk_wait": "Cấp {lv}+ cần {needs} trước",
-"t:rlk_wait_target": "hãy tăng mục tiêu của nó"
+"t:rlk_wait_target": "hãy tăng mục tiêu của nó",
+"t:rch_trades": "Dùng lượt đổi tuần này:",
+"t:rch_with_trades": "có đổi"
 }

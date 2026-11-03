@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "todo {group} no {lv}",
 "t:rlk_or": "ou",
 "t:rlk_wait": "Nv. {lv}+ precisa antes de {needs}",
-"t:rlk_wait_target": "aumente o alvo dela"
+"t:rlk_wait_target": "aumente o alvo dela",
+"t:rch_trades": "Usa as trocas desta semana:",
+"t:rch_with_trades": "com trocas"
 }

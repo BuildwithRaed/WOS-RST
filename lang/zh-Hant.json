@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "{group}全部{lv}級",
 "t:rlk_or": "或",
 "t:rlk_wait": "Lv{lv}+需先完成{needs}",
-"t:rlk_wait_target": "請提高其目標"
+"t:rlk_wait_target": "請提高其目標",
+"t:rch_trades": "使用本週兌換：",
+"t:rch_with_trades": "含兌換"
 }
