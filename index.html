@@ -25984,16 +25984,10 @@ function applyMenuLayout() {
   Object.assign(NAV_GROUP_LABELS, JSON.parse(JSON.stringify(NAV_GROUP_LABELS_DEFAULT)));
   Object.keys(NAV_PAGE_LABELS).forEach((k) => { delete NAV_PAGE_LABELS[k]; });
   Object.assign(NAV_PAGE_LABELS, JSON.parse(JSON.stringify(NAV_PAGE_LABELS_DEFAULT)));
-  // A saved layout can name groups the built-in menu no longer has (the menu went
-  // from 10 groups to 5, 3 Nov 2026): a group with no pages is left out, and when
-  // the saved list doesn't cover today's groups, today's order is used.
-  const defKeys = def.map((g) => g.key);
-  const movedTo = (k) => Object.values(m.pages || {}).some((v) => v && v.group === k);
-  const mg = Array.isArray(m.groups) ? m.groups.filter((g) => g && g.key && g.key !== "Admin" && (defKeys.includes(g.key) || movedTo(g.key) || (Array.isArray(m.groups) && !defKeys.length))) : [];
+  const mg = Array.isArray(m.groups) ? m.groups.filter((g) => g && g.key && g.key !== "Admin") : [];
   mg.forEach((g) => { const l = menuCleanLabel(g.label); if (Object.keys(l).length) NAV_GROUP_LABELS[g.key] = { ...(NAV_GROUP_LABELS[g.key] || { en: g.key }), ...l }; });
   Object.entries(m.pages || {}).forEach(([tab, v]) => { const l = menuCleanLabel(v && v.label); if (Object.keys(l).length) NAV_PAGE_LABELS[tab] = { ...(NAV_PAGE_LABELS[tab] || { en: tab }), ...l }; });
-  const savedKeys = mg.map((g) => g.key);
-  const groupKeys = (defKeys.every((k) => savedKeys.includes(k)) ? [...savedKeys, ...defKeys] : [...defKeys, ...savedKeys]).filter((k, i, a) => a.indexOf(k) === i);
+  const groupKeys = [...mg.map((g) => g.key), ...def.map((g) => g.key)].filter((k, i, a) => a.indexOf(k) === i);
   const allTabs = def.flatMap((g) => g.pages);
   const groupOf = (tab) => { const v = m.pages && m.pages[tab]; return v && v.group && groupKeys.includes(v.group) ? v.group : (def.find((g) => g.pages.includes(tab)) || {}).key; };
   const order = Array.isArray(m.order) ? m.order : [];
