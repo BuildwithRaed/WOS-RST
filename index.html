@@ -1898,14 +1898,15 @@ input,select,textarea{
   .cg-bpb{ display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; margin-inline-start:auto; }
   .cg-bpbtn{ min-height:32px; padding:0 11px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; }
   .cg-bpbtn.ice{ border-color:var(--ice-dim); background:none; color:var(--ice); }
-  .cg-bp #gearOwned_rows_foot, .cg-bp .bs-help{ display:none; }
+  .cg-bp .bs-help{ display:none; }
+  .cg-bp .bs-foot{ margin-bottom:6px; }
+  .cg-bp .bs-foot > span:first-child{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
   .cg-bp .bs-edit{ margin-top:0; }
   /* 4 boxes across the whole card, like the troop boxes above (owner's Fold 8 /
      PC screenshots, 3 Nov 2026: a 460 px cap left an empty space on the right). */
   .cg-bp .bs-tiles{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
   .cg-bp .bs-tile{ aspect-ratio:auto; min-height:86px; }
   .cg-bp .chest-open{ margin-top:6px; }
-  .cg-bp #gearOwned_rows{ display:block !important; }   /* "Hide boxes" is a side-column (PC) choice */
   .cg-ok{ font-size:12.5px; font-weight:700; color:var(--good); }
   .cg-pcs{ padding:8px 11px 8px; }
   .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; }
@@ -3053,7 +3054,7 @@ input,select,textarea{
      beside the Backpack title open the card as a window. */
   .plx-bpb{ display:none; }
   @media (max-width: 900px){
-    .g1:not(.cg1) .plx-bpb{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:8px; width:100%; margin:4px 0 0; }
+    .g1 .plx-bpb{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:8px; width:100%; margin:4px 0 0; }
     .g1:not(.cg1) .plx-bpb .cg-bpbtn{ min-height:40px; border-radius:10px; }
     .g1:not(:has(.t12x-buy [id$="_trades"]:not(:empty))) [data-plxsheet="trades"]{ display:none; }
     .g1 .t12x-buy.cg-open{ display:block; }
@@ -3397,6 +3398,27 @@ input,select,textarea{
     /* Dashboard: troop numbers and hero cards a little smaller */
     .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:13.5px; }
   }
+
+  /* Top box header: title + Hide / Show for everything under the stats (owner, 3 Nov 2026) */
+  .g1-hd{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 8px; }
+  .g1-hd-t{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .g1-fold{ box-sizing:border-box; flex:0 0 auto; height:30px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12px; font-weight:700; line-height:1; white-space:nowrap; cursor:pointer; }
+  .g1-top .g1-st .t12x-title{ display:none; }
+  .g1-folded .g1-can, .g1-folded .g1-bp, .g1-folded #cgCan, .g1-folded #cgBp{ display:none !important; }
+  .cg-kr .g1-fold{ margin-inline-start:auto; }
+  @media (max-width: 440px){ .cg-kr .g1-fold{ order:1; } .cg-kr #cgSets{ order:2; } }
+  /* Pets card header: picture, name (+ Upcoming / visitors under it), Count on the right */
+  .pc-head.pet-head{ justify-content:flex-start; flex-wrap:nowrap; margin-bottom:0; }
+  .pet-head .pet-nm{ flex:1 1 auto; min-width:0; }
+  .pet-head .pet-tags{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:3px; }
+  .pet-head .pet-tags > span{ margin-top:0 !important; }
+  /* Pets Refine setting: label (with the rate under it) and a switch */
+  .t12x-check.pr-gems{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex:1 1 auto; min-width:0; width:auto; cursor:pointer; }
+  .t12x-settings.one-line .t12x-check.pr-gems{ flex:1 1 auto !important; justify-content:space-between !important; gap:12px !important; }
+  .t12x-check.pr-gems input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px; flex:0 0 38px; margin:0; }
+  .pr-gems-t{ display:flex; flex-direction:column; min-width:0; }
+  .pr-gems-t b{ font-size:13px; font-weight:600; color:var(--text); }
+  .pr-gems-t small{ font-size:11px; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -5711,6 +5733,11 @@ const T = {
   marks_before_adjust: { en: "before adjustment" },
   marks_as_advanced: { en: "or Advanced Marks" },
   marks_pack_gems: { en: "Count gems from packs toward marks (500 gems = 1 Common Mark)" },
+  marks_pack_gems_short: { en: "Pack gems count as marks" },
+  marks_pack_gems_rate: { en: "500 gems = 1 Common Mark" },
+  g1_hide: { en: "Hide" },
+  g1_show: { en: "Show" },
+  g1_can_bp: { en: "Can do now · Backpack" },
   marks_per_pet: { en: "Per pet" },
   marks_none: { en: "Every unlocked pet is already maxed." },
   pk_picks: { en: "Pick options from the columns" },
@@ -17792,7 +17819,8 @@ function plxTopBox(root) {
   if (!box) {
     box = document.createElement("div");
     box.className = "panel cg-ans g1-top";
-    box.innerHTML = `<div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
+    // Header with Hide / Show for everything under the stats (owner, 3 Nov 2026).
+    box.innerHTML = `<div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "g1_can_bp" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
     main.insertBefore(box, main.firstChild);
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
@@ -17803,7 +17831,29 @@ function plxTopBox(root) {
   const amts = shell.querySelector(".t12x-amts > [id]");
   put(box.querySelector(".g1-bp"), amts);
   box.querySelector(".g1-can").hidden = !box.querySelector(".g1-can").innerHTML.trim();
+  g1FoldSync(box);
 }
+// Hide / Show in the top box's header (and Chief Gear's answer card): folds
+// everything under the stats (Can do now, Backpack, Pack cost), remembered per
+// page on the account with the "Hide boxes" choices (calc_state "bar_hidden",
+// keys "top:<tab>").
+function g1FoldSync(root) {
+  (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans");
+    if (box) box.classList.toggle("g1-folded", folded);
+    const html = `${esc(t(folded ? "g1_show" : "g1_hide"))} ${folded ? "&#9662;" : "&#9652;"}`;
+    if (b.innerHTML !== html) b.innerHTML = html;
+    b.setAttribute("aria-expanded", String(!folded));
+  });
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest("[data-g1fold]");
+  if (!b) return;
+  const key = b.dataset.g1fold;
+  BAR_SHOW_ALL[key] = BAR_SHOW_ALL[key] === false;
+  saveBarHidden();
+  g1FoldSync();
+});
 TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); });
 {
   let queued = false;
@@ -17878,8 +17928,9 @@ document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.ma
 // window on phones (on PC the card stays in the side column).
 const plxPriceLabel = (calcKey) => `$ ${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
 function plxBuyBtnsHtml(calcKey) {
-  if (calcKey === "chief_gear") return "";
-  return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("trade_title"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+  // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages (owner, 3 Nov 2026)
+  if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>$ ${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
+  return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
   const shell = e.target.closest(".t12x.g1:not(.cg1)");
@@ -22334,10 +22385,10 @@ async function renderChiefGearCalc() {
     maxId: "gearMaxAllBtn",
     amountsId: "gearOwned", needId: "gearNeed",
     statsHtml: `<div class="panel cg-ans">
-        <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span></div>
+        <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span><button type="button" class="g1-fold" data-g1fold="top:chiefgear"></button></div>
         <div id="gearCurrentStats"></div>
         <div class="cg-sec" id="cgCan" data-rchpage="chief_gear" hidden></div>
-        <div class="cg-sec cg-bp" id="cgBp"><div class="cg-sh"><span class="cg-k">${esc(t("cg_backpack"))}</span><span class="cg-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${packsOn ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>$ ${esc(t("pack_cost_title"))} &#8250;</button>` : ""}</span></div></div>
+        <div class="cg-sec cg-bp" id="cgBp"></div>
       </div>`,
     mainHtml: `<div id="gearRows"></div>
       <div class="cg-bd" data-cgbd hidden></div>`,
@@ -22373,6 +22424,8 @@ async function renderChiefGearCalc() {
     mq.onchange = place;
   }
   buy.innerHTML = `${sheetHead("", " data-cgbuyt")}<div data-buybody></div>`;
+  g1FoldSync(content);
+  ensureBarHidden().then(() => { if (seq === RENDER_SEQ) g1FoldSync(content); });
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const rowsEl = document.getElementById("gearRows");
@@ -27360,7 +27413,7 @@ async function renderRefinePage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("pets_refine_title"),
-    settings: `<label class="t12x-check" style="justify-content:flex-start; gap:8px; cursor:pointer;"><input type="checkbox" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /><span>${esc(t("marks_pack_gems"))}</span></label>`,
+    settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_pack_gems"))}"><span class="pr-gems-t"><b>${esc(t("marks_pack_gems_short"))}</b><small>${esc(t("marks_pack_gems_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
     statsHtml: plxTroopSwitchHtml("pets_refine", ""),
@@ -27878,14 +27931,11 @@ async function renderPetsDataPage() {
 
     listEl.innerHTML = `
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
-          <div class="pc-head">
+          <div class="pc-head pet-head">
             ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" />` : ""}
-            <div class="name" style="color:${color};">${esc(dataName(pet))}</div>
-            ${done ? `<span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}
-            ${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
+            <div class="pet-nm"><div class="name" style="color:${color};">${esc(dataName(pet))}${done ? ` <span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}</div>${petIsUpcoming(pet) || IS_OWNER ? `<div class="pet-tags">${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}${IS_OWNER ? visibilityBtnHtml("pets", pet) : ""}</div>` : ""}</div>
             <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           </div>
-          ${IS_OWNER ? `<div style="margin-top:6px;">${visibilityBtnHtml("pets", pet)}</div>` : ""}
           <div class="pc-row">
             <div class="pc-stat">
               <span>${esc(t("troops_stats_title"))}</span>
