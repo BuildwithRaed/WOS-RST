@@ -1835,8 +1835,11 @@ input,select,textarea{
   .cg-sabox{ margin-top:10px; }
   /* Chief Gear = design G1-B (owner, 3 Nov 2026): answer card, pieces by troop
      column, Backpack / Trades / Pack cost as a sheet from 3 buttons on phones. */
-  .cg-i{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-inline-start:8px; vertical-align:middle; border:1px solid var(--line); border-radius:6px; background:none; color:var(--muted); font:italic 700 13px Georgia, "DejaVu Serif", serif; cursor:pointer; }
-  .cg-i::after{ content:""; position:absolute; inset:-5px; }
+  /* (i): an 18 px square with the "i" drawn as a picture, so it sits in the
+     exact centre on every phone font (owner, 3 Nov 2026); 32 px tap area. */
+  .cg-i{ position:relative; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:18px; height:18px; padding:0; margin-inline-start:7px; vertical-align:middle; border:1px solid var(--line); border-radius:5px; background:none; color:var(--muted); line-height:0; cursor:pointer; }
+  .cg-i svg{ display:block; width:9px; height:9px; fill:currentColor; }
+  .cg-i::after{ content:""; position:absolute; inset:-7px; }
   .cg-i[aria-expanded="true"]{ border-color:var(--ice); color:var(--ice); }
   .plx-head.cg-head{ margin-bottom:8px; }
   /* (i) help as a small bubble under the button (owner, 3 Nov 2026): hover on PC, tap on phones. */
@@ -21397,12 +21400,12 @@ async function renderChiefGearCalc() {
   // "Max" instead of "Max everything" (owner, 3 Nov 2026).
   const maxBtn = document.getElementById("gearMaxAllBtn");
   if (maxBtn) { maxBtn.textContent = t("max_button"); maxBtn.title = t("max_everything"); }
-  head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}">i</button><span class="cg-tip" role="tooltip" data-cghelp hidden>${esc(t("cg_slots_hint"))}</span>`);
+  head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}"><svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="1.6" r="1.3"/><path d="M3.5 3.9H5.75V8.9H6.6V10H3.4V8.9H4.25V4.8H3.5Z"/></svg></button><span class="cg-tip" role="tooltip" data-cghelp hidden>${esc(t("cg_slots_hint"))}</span>`);
   { // arrow points at the (i)
     const ib = head.querySelector("[data-cginfo]"), h2 = head.querySelector("h2");
     const rtl = document.documentElement.dir === "rtl";
     const x = rtl ? h2.getBoundingClientRect().right - ib.getBoundingClientRect().right : ib.getBoundingClientRect().left - h2.getBoundingClientRect().left;
-    head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(8, Math.round(x + 7)) + "px");
+    head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(4, Math.round(x + ib.offsetWidth / 2 - 5)) + "px");
   }
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
   amts.insertAdjacentHTML("afterbegin", sheetHead(`&#127890; ${esc(t("cg_backpack"))}`));
