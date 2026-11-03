@@ -3193,6 +3193,28 @@ input,select,textarea{
   .g1-top .g1-bp .bs-foot{ margin-bottom:6px; }
   .g1-top .g1-bp .bs-foot > span:first-child{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
   @media (max-width: 900px){ .g1:has(.g1-top) .t12x-amts{ display:none !important; } }
+  /* Dashboard = design B (owner, 3 Nov 2026): on phones each troop is its own card with
+     ATK / DEF / LETH / HP side by side; the roster stays above. */
+  @media (max-width: 700px){
+    .dash-fit .dash-troops.cols{ grid-template-columns:1fr !important; gap:10px; }
+    .dash-fit .dash-troops.cols .dash-troop{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:0; padding:8px 10px 10px; margin:0; }
+    .dash-fit .dash-troops.cols .dash-troop-h{ grid-column:1 / -1; text-align:start; margin:0 0 6px; }
+    .dash-fit .dash-troops.cols .dash-stat{ grid-template-columns:1fr; border-top:0; border-inline-start:1px solid var(--line); padding:2px 7px; min-width:0; }
+    .dash-fit .dash-troops.cols .dash-stat:first-of-type{ border-inline-start:0; padding-inline-start:0; }
+    .dash-fit .dash-troops.cols .dash-stat-k{ flex-direction:column; align-items:flex-start; gap:0; }
+    .dash-fit .dash-troops.cols .dash-stat-v{ grid-column:1; grid-row:auto; }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ grid-column:1; grid-row:auto; text-align:start; }
+    .dash-fit .dash-troops.cols .dash-stat-bar{ grid-row:auto; }
+    .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:15px; }
+  }
+  /* Pets = design B (owner, 3 Nov 2026): top box + picture strip + a compact pet card
+     (stat on its own line, Now → Target on one row under it). */
+  @media (max-width: 900px){
+    .g1-top #petsTotals .t12x-title{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    #petsList .pc-row{ flex-wrap:wrap; row-gap:8px; }
+    #petsList .pc-stat{ flex:1 1 100%; }
+    #petsList .pc-st{ flex:1 1 0; }
+  }
 </style>
 </head>
 <body>
@@ -17437,7 +17459,7 @@ function infoize(root) {
 // mock-up): on phones one card at the top holds the stats (troop switch), "Can do
 // now" and the Backpack boxes with Trades / Pack cost. The page's own elements move
 // in (their redraws keep working: anything redrawn outside is moved in again).
-const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats" };
+const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
 function plxTopBox(root) {
   if (!(TAB in TOPBOX_TABS) || !TOPBOX_MQ.matches) return;
@@ -17452,7 +17474,7 @@ function plxTopBox(root) {
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
   // Research pages keep their stats where they are (owner, 3 Nov 2026).
-  if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats"));
+  if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
   const sums = [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
   if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
   const amts = shell.querySelector(".t12x-amts > [id]");
