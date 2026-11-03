@@ -3218,6 +3218,10 @@ input,select,textarea{
   /* (i) bubbles always show their text (Chief Gear's box hides .bs-help on the page,
      which emptied the bubble when the help moved into it; owner, 3 Nov 2026). */
   .cg-tip .bs-help, .cg-tip .bs-note, .cg-tip .desc, .cg-tip .meta{ display:block !important; margin:0; }
+  /* Experts Troops Stats: one line per tab in the (i); event tab with its expert not counted */
+  .cg-tip .exp-tabs-d > div + div{ margin-top:5px; }
+  .cg-tip .exp-tabs-d > div:last-child{ color:var(--muted); }
+  .exp-ev-off{ font-size:12px; margin-top:6px; }
   /* Research Settings (owner, 3 Nov 2026: "fix settings for research"): one tidy line —
      ⚙ · Research Speed [box] % on the left, Count ☑ on the right, everything centred. */
   .t12x-settings.one-line.has-rs{ display:flex !important; align-items:center !important; flex-wrap:wrap; gap:8px 12px !important; padding:10px 14px !important; }
@@ -5144,6 +5148,13 @@ const T = {
   data_not_available_troop: { en: "Data not yet available for this troop type." },
   stats_data_not_available: { en: "Stats data not available yet." },
   experts_base_stats_desc: { en: "Base stats for every expert, plus select main-stat skills." },
+  exp_all_d: { en: "every counted expert's level stat, plus Romulus's and Gareth's troop skills. Always on." },
+  exp_svs_d: { en: "only Valeria's Battle Concerto skill and Conqueror's Spirit talent, in the SvS Battle Phase." },
+  exp_foundry_d: { en: "only Fabian's Heightened Firepower skill and Craftsman of War talent, in Foundry Battle." },
+  exp_frost_d: { en: "only Kathy's Child of Frost talent, in Frostfire Mine." },
+  exp_tundra_d: { en: "only Ronne's Trade Dominion talent, on the Tundra Trade Route." },
+  exp_tabs_note: { en: "An event tab shows only that event's extra bonus; it comes on top of All." },
+  exp_ev_off: { en: "{name} isn't counted: tick Count on the expert's card." },
   resources_needed_title: { en: "Resources needed" },
   foundry_title: { en: "Foundry" },
   foundry_desc: { en: "Troop Stats + Fabian's Heightened Firepower, for Foundry Battle." },
@@ -19158,8 +19169,8 @@ async function budgetStatDeltasMore(calcKey) {
         const e = st[hero];
         if (!e || !unlockedFor("experts", hero, unl[hero])) return;
         const rows = (EXPERT_AFFINITY_CACHE_GLOBAL && EXPERT_AFFINITY_CACHE_GLOBAL[hero]) || [];
-        const cur = Math.floor(Number(e.current) || 0), tgt = Math.floor(Number(e.desired) || 0);
-        if (tgt > cur) { addRow(rows.find((r) => r.level === tgt), 1); addRow(rows.find((r) => r.level === cur), -1); }
+        const cur = expertSavedLevel(st, hero, "current"), tgt = expertSavedLevel(st, hero, "desired");
+        if (tgt > cur) { expertAddLevel(sum, rows, tgt); expertAddLevel(sum, rows, cur, false, -1); }
       });
       [["Romulus", "Last Line"], ["Romulus", "Spirit of Aeetis"], ["Gareth", "Porcupine"], ["Gareth", "Undefeated Will"]].forEach(([hero, skill]) => {
         const sk = st[hero] && st[hero].skills && st[hero].skills[skill];
@@ -23792,6 +23803,59 @@ async function ensureExpertsTroopStatsData() {
     EXPERT_TROOP_SKILL_CACHE_GLOBAL[key].push(r);
   });
 }
+// An expert's stats at a level (owner, 3 Nov 2026: "Justus shows 15% max at 100,
+// not 100.1"). The rows at 10, 20 … 100 cost sigils and their stats already hold
+// that Advance's jump, so plain N (affinity full, Advance not paid yet) gets the
+// stat one normal step past N − 1 and only N.1 gets the row's own value. Same for
+// the talent (stat_value2), which stays flat between Advances.
+// Returns { row, v (level stat %), v2 (talent %) } or null when the level has no row.
+const EXP_LV_INDEX = new WeakMap();
+function expertLvRow(rows, lv) {
+  let m = EXP_LV_INDEX.get(rows);
+  if (!m) { m = new Map(); rows.forEach((r) => m.set(Number(r.level), r)); EXP_LV_INDEX.set(rows, m); }
+  return m.get(lv);
+}
+function expertPreAdvance(rows, base, key) {
+  // a straight line through the levels since the last Advance (its row included:
+  // the next levels build on it), one step past the level before
+  const pts = [];
+  for (let lv = base - 1; lv >= 1; lv--) {
+    const r = expertLvRow(rows, lv);
+    if (!r) break;
+    pts.push([lv, Number(r[key]) || 0]);
+    if ((Number(r.sigil_cost) || 0) > 0) break;
+  }
+  if (!pts.length) return 0;
+  if (pts.length === 1) return pts[0][1];
+  const n = pts.length, mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+  const sxx = pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0), sxy = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0);
+  return Math.round((my + (sxx ? sxy / sxx : 0) * (base - mx)) * 100) / 100;
+}
+function expertLevelStat(rows, level) {
+  if (!rows || !rows.length) return null;
+  const n = Number(level) || 0, base = Math.floor(n + 1e-9), row = expertLvRow(rows, base);
+  if (!row) return null;
+  if (n - base >= 0.05 || !((Number(row.sigil_cost) || 0) > 0)) return { row, v: Number(row.stat_value) || 0, v2: Number(row.stat_value2) || 0 };
+  return { row, v: expertPreAdvance(rows, base, "stat_value"), v2: expertPreAdvance(rows, base, "stat_value2") };
+}
+// A saved level as the stats read it: levels saved before the ".1" levels existed
+// already had their Advance paid. The Experts page moves them once
+// (saved.__advLevels); until it has, the Dashboard and Budgets read them the same way.
+function expertSavedLevel(state, hero, key) {
+  const v = Number(state && state[hero] && state[hero][key]) || 0;
+  if ((state && state.__advLevels) || v <= 0 || v !== Math.floor(v)) return v;
+  const rows = (EXPERT_AFFINITY_CACHE_GLOBAL && EXPERT_AFFINITY_CACHE_GLOBAL[hero]) || [];
+  const r = rows.length ? expertLvRow(rows, v) : null;
+  return r && (Number(r.sigil_cost) || 0) > 0 ? v + 0.1 : v;
+}
+// Adds an expert's level stat (and talent when asked) at a level to totals.
+function expertAddLevel(totals, rows, level, talent, sign = 1) {
+  const s = expertLevelStat(rows, level);
+  if (!s) return;
+  const add = (types, v) => { if (types) types.split(",").forEach((k) => { k = k.trim(); if (totals[k] != null) totals[k] += sign * v; }); };
+  add(s.row.stat_type, s.v);
+  if (talent) add(s.row.stat_type2, s.v2);
+}
 // Same logic as the Experts page's computeBaseTroopStats(): all 10 experts'
 // level-based base stats, plus Romulus's Last Line & Spirit of Aeetis and
 // Gareth's Porcupine & Undefeated Will skills. Troop-agnostic (same bonus
@@ -23803,17 +23867,11 @@ function computeExpertsTroopStatsGlobal(useMax) {
     if (!unlockedFor("experts", hero, EXPERTS_UNLOCKED_GLOBAL && EXPERTS_UNLOCKED_GLOBAL[hero])) return;
     const rows = (EXPERT_AFFINITY_CACHE_GLOBAL && EXPERT_AFFINITY_CACHE_GLOBAL[hero]) || [];
     if (!rows.length) return;
-    let row;
     if (useMax) {
-      row = rows[Math.max(0, releasedLastIdx("expert_affinity_nodes", rows))];
+      const row = rows[Math.max(0, releasedLastIdx("expert_affinity_nodes", rows))];
+      if (row && row.stat_type) row.stat_type.split(",").forEach((statName) => { if (totals[statName] != null) totals[statName] += Number(row.stat_value) || 0; });
     } else {
-      const lvl = EXPERTS_STATE_GLOBAL[hero] ? Math.floor(Number(EXPERTS_STATE_GLOBAL[hero].current) || 0) : 0;
-      row = rows.find((r) => r.level === lvl);
-    }
-    if (row && row.stat_type) {
-      row.stat_type.split(",").forEach((statName) => {
-        if (totals[statName] != null) totals[statName] += Number(row.stat_value) || 0;
-      });
+      expertAddLevel(totals, rows, expertSavedLevel(EXPERTS_STATE_GLOBAL, hero, "current"));
     }
   });
   [
@@ -26179,6 +26237,15 @@ async function renderExpertsPage() {
 
   await ensureBarHidden();
   if (seq !== RENDER_SEQ) return;
+  // Short tab names, SvS before Foundry (owner, 20 Oct 2026). The event tabs count
+  // only their own bonus (3 Nov 2026), so each one's text says what it counts.
+  const EXP_STAT_TABS = [
+    ["base", "plx_all", "exp_all_d", "expertsStatHeader"],
+    ["svs", "svs_title", "exp_svs_d", "expertsSvsHeader"],
+    ["foundry", "foundry_title", "exp_foundry_d", "expertsFoundryHeader"],
+    ["frostfire", "frostfire_mine_title", "exp_frost_d", "expertsFrostfireHeader"],
+    ["tundra", "tundra_trade_tab", "exp_tundra_d", "expertsTundraHeader"],
+  ];
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
     // General speedups are a box in "Amounts from your Backpack" now (owner,
@@ -26186,14 +26253,8 @@ async function renderExpertsPage() {
     amountsId: "expertsAmounts", needId: "expertsSummary",
     statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      ${plxStatTabsHtml("experts", [
-        // Short tab names, SvS before Foundry (owner, 20 Oct 2026).
-        ["base", "plx_all", "experts_base_stats_desc", "expertsStatHeader"],
-        ["svs", "svs_title", "svs_desc", "expertsSvsHeader"],
-        ["foundry", "foundry_title", "foundry_desc", "expertsFoundryHeader"],
-        ["frostfire", "frostfire_mine_title", "frostfire_mine_desc", "expertsFrostfireHeader"],
-        ["tundra", "tundra_trade_tab", "tundra_trade_routes_desc", "expertsTundraHeader"],
-      ].map(([key, title, desc, id]) => ({ key, label: t(title), html: `<p class="desc" style="font-size:12px; margin:0 0 8px;">${esc(t(desc))}</p><div id="${id}"></div>` })))}
+      <div class="desc exp-tabs-d">${EXP_STAT_TABS.map(([, title, desc]) => `<div><b>${esc(t(title))}</b> · ${esc(t(desc))}</div>`).join("")}<div>${esc(t("exp_tabs_note"))}</div></div>
+      ${plxStatTabsHtml("experts", EXP_STAT_TABS.map(([key, title, , id]) => ({ key, label: t(title), html: `<div id="${id}"></div>` })))}
     </div>`,
     mainHtml: `
     <div id="expertsSwipeCounter"></div>
@@ -26209,20 +26270,8 @@ async function renderExpertsPage() {
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
-    const rows = AFFINITY_CACHE[hero] || [];
-    const lvl = saved[hero] ? Math.floor(Number(useTarget ? saved[hero].desired : saved[hero].current) || 0) : 0;
-    const row = rows.find((r) => r.level === lvl);
-    if (!row) return;
-    if (row.stat_type) {
-      row.stat_type.split(",").forEach((statName) => {
-        if (totals[statName] != null) totals[statName] += Number(row.stat_value) || 0;
-      });
-    }
-    if (includeTalent && row.stat_type2) {
-      row.stat_type2.split(",").forEach((statName) => {
-        if (totals[statName] != null) totals[statName] += Number(row.stat_value2) || 0;
-      });
-    }
+    // plain 100 = before its Advance, 100.1 = the full value (expertLevelStat)
+    expertAddLevel(totals, AFFINITY_CACHE[hero] || [], saved[hero] ? (useTarget ? saved[hero].desired : saved[hero].current) : 0, includeTalent);
   }
   // Two sides of the same sum: the top figure uses every expert's Current
   // level, the second line the same experts at their Target. Both walk the
@@ -26291,12 +26340,10 @@ async function renderExpertsPage() {
   }
   function addTalentToTotals(totals, hero, useTarget) {
     if (!isExpertUnlocked(hero)) return;
-    const rows = AFFINITY_CACHE[hero] || [];
-    const lvl = saved[hero] ? Math.floor(Number(useTarget ? saved[hero].desired : saved[hero].current) || 0) : 0;
-    const row = rows.find((r) => r.level === lvl);
-    if (row && row.stat_type2) {
-      row.stat_type2.split(",").forEach((statName) => {
-        if (totals[statName] != null) totals[statName] += Number(row.stat_value2) || 0;
+    const s = expertLevelStat(AFFINITY_CACHE[hero] || [], saved[hero] ? (useTarget ? saved[hero].desired : saved[hero].current) : 0);
+    if (s && s.row.stat_type2) {
+      s.row.stat_type2.split(",").forEach((statName) => {
+        if (totals[statName] != null) totals[statName] += s.v2;
       });
     }
   }
@@ -26314,49 +26361,31 @@ async function renderExpertsPage() {
     statHeaderEl.innerHTML = statHeaderHtml(computeBaseTroopStats(), computeBaseTroopStatsMax());
   }
 
+  // Event tabs count only that event's own bonus (owner, 3 Nov 2026: "only count
+  // the specific stats, don't combine it with all stats"): the expert's event skill
+  // and talent, against their own max; stats the event doesn't give are left out.
+  function eventHeader(el, hero, skill) {
+    if (!el) return;
+    const zero = () => ({ Attack: 0, Defense: 0, Lethality: 0, Health: 0 });
+    const totals = zero(), maxTotals = zero(), types = new Set();
+    const rows = AFFINITY_CACHE[hero] || [], sk = skill ? SKILL_CACHE[`${hero}|${skill}`] || [] : [];
+    rows.forEach((r) => { if (r.stat_type2) r.stat_type2.split(",").forEach((k) => types.add(k.trim())); });
+    sk.forEach((r) => { if (r.stat_type) r.stat_type.split(",").forEach((k) => types.add(k.trim())); });
+    if (skill) { addSkillStatsToTotals(totals, hero, skill); addSkillMaxToTotals(maxTotals, hero, skill); }
+    addTalentToTotals(totals, hero);
+    addTalentMaxToTotals(maxTotals, hero);
+    const list = [["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].filter(([, key]) => types.has(key));
+    const off = isExpertUnlocked(hero) ? "" : `<div class="meta exp-ev-off">${esc(t("exp_ev_off").replace("{name}", dataName(hero)))}</div>`;
+    el.innerHTML = list.length ? plxStatBoxesHtml(list.map(([label, key]) => ({ label, val: totals[key], max: maxTotals[key] || null })), true) + off : off;
+  }
   const foundryEl = document.getElementById("expertsFoundryHeader");
-  function renderFoundryHeader() {
-    const totals = computeBaseTroopStats();
-    addSkillStatsToTotals(totals, "Fabian", "Heightened Firepower");
-    addTalentToTotals(totals, "Fabian"); // Craftsman of War talent (Attack/Defense)
-    const maxTotals = computeBaseTroopStatsMax();
-    addSkillMaxToTotals(maxTotals, "Fabian", "Heightened Firepower");
-    addTalentMaxToTotals(maxTotals, "Fabian");
-    foundryEl.innerHTML = statHeaderHtml(totals, maxTotals);
-  }
-
+  function renderFoundryHeader() { eventHeader(foundryEl, "Fabian", "Heightened Firepower"); } // + Craftsman of War talent
   const svsEl = document.getElementById("expertsSvsHeader");
-  function renderSvsHeader() {
-    const totals = computeBaseTroopStats();
-    addSkillStatsToTotals(totals, "Valeria", "Battle Concerto");
-    addTalentToTotals(totals, "Valeria"); // Conqueror's Spirit talent (Attack/Defense)
-    const maxTotals = computeBaseTroopStatsMax();
-    addSkillMaxToTotals(maxTotals, "Valeria", "Battle Concerto");
-    addTalentMaxToTotals(maxTotals, "Valeria");
-    svsEl.innerHTML = statHeaderHtml(totals, maxTotals);
-  }
-
+  function renderSvsHeader() { eventHeader(svsEl, "Valeria", "Battle Concerto"); } // + Conqueror's Spirit talent
   const frostfireEl = document.getElementById("expertsFrostfireHeader");
-  function renderFrostfireHeader() {
-    // Troop Stats already includes Kathy's level-based Lethality/Health;
-    // Child of Frost talent added on top.
-    const totals = computeBaseTroopStats();
-    addTalentToTotals(totals, "Kathy");
-    const maxTotals = computeBaseTroopStatsMax();
-    addTalentMaxToTotals(maxTotals, "Kathy");
-    frostfireEl.innerHTML = statHeaderHtml(totals, maxTotals);
-  }
-
+  function renderFrostfireHeader() { eventHeader(frostfireEl, "Kathy"); } // Child of Frost talent
   const tundraEl = document.getElementById("expertsTundraHeader");
-  function renderTundraHeader() {
-    // Troop Stats already includes Ronne's level-based Attack/Defense;
-    // Trade Dominion talent added on top.
-    const totals = computeBaseTroopStats();
-    addTalentToTotals(totals, "Ronne");
-    const maxTotals = computeBaseTroopStatsMax();
-    addTalentMaxToTotals(maxTotals, "Ronne");
-    tundraEl.innerHTML = statHeaderHtml(totals, maxTotals);
-  }
+  function renderTundraHeader() { eventHeader(tundraEl, "Ronne"); } // Trade Dominion talent
 
   const totalsEl = document.getElementById("expertsSummary");
   const footEl = document.getElementById("expertsFoot");
@@ -26479,7 +26508,7 @@ async function renderExpertsPage() {
       const from = idxOf(hs.current), to = Math.max(from, idxOf(hs.desired)), banked = heroAffinityHave(hero);
       const cum = (i) => { const c = heroCost(hero, pos[from], pos[i]); return { a: Math.max(0, c.affinity - banked), s: c.sigil }; };
       const rows = AFFINITY_CACHE[hero] || [];
-      const statAt = (v) => { const r = rows.find((x) => x.level === heroLevelBase(v)); const o = {}; if (r && r.stat_type) r.stat_type.split(",").forEach((k) => { o[k.trim()] = Number(r.stat_value) || 0; }); return o; };
+      const statAt = (v) => { const x = expertLevelStat(rows, v), o = {}; if (x && x.row.stat_type) x.row.stat_type.split(",").forEach((k) => { o[k.trim()] = x.v; }); return o; };
       tracks.push({ id: `exp|${hero}`, troop: "all", from, to, pos,
         cost: (i) => { const a = cum(i), b = cum(i - 1); return { [AFF]: a.a - b.a, [SIG]: a.s - b.s }; },
         gain: (i) => statAt(pos[i]) });
@@ -26510,14 +26539,14 @@ async function renderExpertsPage() {
   function levelStatLine(hero, level) {
     const rows = AFFINITY_CACHE[hero];
     if (!rows) return "";
-    const row = rows.find((r) => r.level === heroLevelBase(level));
-    if (!row) return "";
+    const x = expertLevelStat(rows, level);
+    if (!x) return "";
     // Only Affinity (stat_type) - this is the always-on hero-level stat.
     // stat_type2 is that expert's Talent, which only applies during their
     // specific event (Foundry/SvS/Frostfire/Tundra), so it's shown only
-    // under those matching headers, not here.
-    if (!row.stat_type) return "";
-    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">+${Number(row.stat_value).toFixed(2)}% ${esc(row.stat_type.split(",").join("/"))}</div>`;
+    // under those matching headers, not here. Plain 100 = before its Advance.
+    if (!x.row.stat_type) return "";
+    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">+${x.v.toFixed(2)}% ${esc(x.row.stat_type.split(",").join("/"))}</div>`;
   }
 
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
