@@ -8343,11 +8343,13 @@ async function loadHeroGearData() {
 async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
   await Promise.all([ensureHeroGearData(), ensureUpgradeOrder()]);
+  await maxBeforeLoad(HERO_GEAR_STORAGE_KEYS[heroGearActiveSet]);
 
   if (seq !== RENDER_SEQ) return;
   PLX_TROOP.hero_gear = heroGearActiveTroop;
   target.innerHTML = plxShellHtml({
     title: navLabel("herogearcalc"),
+    maxId: "heroGearMaxAllBtn",
     settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
         ${HERO_GEAR_SET_NAMES.map((name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`).join("")}
       </div>`,
@@ -8366,6 +8368,16 @@ async function renderGearLevelingGroup(target) {
 
   const activeState = HERO_GEAR_SETS[heroGearActiveSet];
   const activeStorageKey = HERO_GEAR_STORAGE_KEYS[heroGearActiveSet];
+  // Max / Reset (like Chief Gear) for the set shown: every piece's Mastery and Enhance, now and target.
+  wirePageMax({
+    btnId: "heroGearMaxAllBtn", key: activeStorageKey,
+    allMax: () => HERO_GEAR_TROOPS.every((tr) => HERO_GEAR_PIECE_NAMES.every((pc) => GEAR_LEVELING_TABLES.every((tb) => (activeState[tr][pc][tb].from || 0) >= heroTrackCapIdx(tb)))),
+    snap: () => activeState,
+    max: () => HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((pc) => GEAR_LEVELING_TABLES.forEach((tb) => { const st = activeState[tr][pc][tb], v = Math.max(st.from || 0, heroTrackCapIdx(tb)); st.from = v; st.to = v; }))),
+    reset: (kept) => HERO_GEAR_TROOPS.forEach((tr) => HERO_GEAR_PIECE_NAMES.forEach((pc) => GEAR_LEVELING_TABLES.forEach((tb) => { const v = kept && kept[tr] && kept[tr][pc] && kept[tr][pc][tb]; if (v) { activeState[tr][pc][tb].from = v.from; activeState[tr][pc][tb].to = v.to; } }))),
+    save: () => saveCalcState(activeStorageKey, activeState),
+    after: () => render(),
+  });
   const optsByTrack = {};
   GEAR_LEVELING_TABLES.forEach((t) => {
     const open = heroTrackCapIdx(t);
@@ -22144,11 +22156,12 @@ function charmStageBarHtml(ci, ti, pick, groups) {
 const pctShort = (v) => bidiNum(`+${Number((Number(v) || 0).toFixed(1))}%`);
 async function renderCharmsCalc() {
   const seq = RENDER_SEQ;
-  await Promise.all([ensureCharmData(), ensureCharmLevelsData(), ensureUpgradeOrder()]); // levels reload after Upcoming ticks change
+  await Promise.all([ensureCharmData(), ensureCharmLevelsData(), ensureUpgradeOrder(), maxBeforeLoad("charm")]); // levels reload after Upcoming ticks change
 
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: navLabel("charmscalc"),
+    maxId: "charmMaxAllBtn",
     amountsId: "charmOwned", needId: "charmNeed",
     statsHtml: plxTroopSwitchHtml("charm", ""),
     mainHtml: `<div id="charmRows"></div>`,
@@ -22314,6 +22327,16 @@ async function renderCharmsCalc() {
   wirePlxTroopSwitch(content, "charm", () => { renderTroopSections(); updateCharmCurrentStats(); });
   renderTroopSections();
   updateCharmTotals();
+  // Max / Reset (like Chief Gear): every charm's level and target to the highest open level.
+  wirePageMax({
+    btnId: "charmMaxAllBtn", key: "charm",
+    allMax: () => { const cap = charmCapIdx(); return CHARM_PIECES.every((p) => CHARM_CALC_STATE[p.key].every((st) => CHARM_LEVELS.indexOf(String(st.current)) >= cap)); },
+    snap: () => CHARM_CALC_STATE,
+    max: () => { const cap = charmCapIdx(); CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st) => { const v = CHARM_LEVELS.indexOf(String(st.current)) >= cap ? st.current : CHARM_LEVELS[cap]; st.current = v; st.target = v; })); },
+    reset: (kept) => { CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st, i) => { const v = kept && kept[p.key] && kept[p.key][i]; if (v) { st.current = v.current; st.target = v.target; } })); },
+    save: () => saveCalcState("charm", CHARM_CALC_STATE),
+    after: () => { renderTroopSections(); updateCharmTotals(); },
+  });
 }
 // One sheet element for the Chief Charm / Chief Gear pop-ups (closed by render()).
 function gearSheetEl() {
@@ -23419,6 +23442,37 @@ function maxBtnSync(btnId, key, allMax) {
   btn.title = t(back ? "cg_reset_tip" : allMax ? "max_all_done" : "max_all_tip");
 }
 const jsonCopy = (o) => JSON.parse(JSON.stringify(o == null ? null : o));
+// One page's Max / Reset button (owner, 3 Nov 2026: "yes" to Max on Chief Charm,
+// Heroes Gears, Experts Level, Experts Research and Pet Refine): o = { btnId, key,
+// allMax(), snap() -> what to keep, max(), reset(kept), save(), after() }. Any
+// change on the page re-checks the button (one listener pair on the page's shell,
+// which is new on every draw).
+function wirePageMax(o) {
+  const btn = document.getElementById(o.btnId);
+  if (!btn) return null;
+  // a check queued just before the page redrew must not touch the new button
+  const sync = () => { if (btn.isConnected) maxBtnSync(o.btnId, o.key, o.allMax()); };
+  btn.onclick = () => {
+    if (o.allMax()) {
+      const b = MAX_BEFORE[o.key];
+      if (!b) return;
+      o.reset(b.cur);
+      maxBeforeSet(o.key, null);
+    } else {
+      maxBeforeSet(o.key, { cur: jsonCopy(o.snap()), at: new Date().toISOString() });
+      o.max();
+    }
+    o.save();
+    o.after();
+    sync();
+  };
+  const root = btn.closest(".t12x") || content;
+  const later = () => requestAnimationFrame(sync);
+  root.addEventListener("change", later);
+  root.addEventListener("click", later);
+  sync();
+  return sync;
+}
 let CG_MQ = null; // Chief Gear: phone layout (Backpack boxes in the card) or PC (side column)
 function cgAllMax() {
   const cap = chiefGearCapIdx();
@@ -26100,6 +26154,7 @@ async function renderExpertsResearchPage() {
     loadCalcState("experts_inventory"),
     loadCalcState("experts_level_sigil_need"),
     loadExpertNodes("research"),
+    maxBeforeLoad("experts_research"),
   ]);
   const saved = savedLoaded || {};
   const invSaved = { ...(invLoaded || {}) };
@@ -26231,6 +26286,7 @@ async function renderExpertsResearchPage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("experts_research_title"),
+    maxId: "expResearchMaxAllBtn",
     amountsId: "expResearchAmounts", needId: "expResearchSigils",
     statsHtml: `<div class="t12x-card plx-stats-top">
       <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
@@ -26598,6 +26654,16 @@ async function renderExpertsResearchPage() {
 
   renderTotals();
   renderGrid();
+  // Max / Reset (like Chief Gear): every counted expert's research paths, now and target.
+  wirePageMax({
+    btnId: "expResearchMaxAllBtn", key: "experts_research",
+    allMax: () => EXPERTS_IN_ORDER.filter(isResearchUnlocked).every((ex) => pathNumbersFor(ex).every((pn) => (Number(saved[ex][pn].current) || 0) >= pathTop(ex, pn))),
+    snap: () => Object.fromEntries(EXPERTS_IN_ORDER.map((ex) => [ex, saved[ex]])),
+    max: () => EXPERTS_IN_ORDER.filter(isResearchUnlocked).forEach((ex) => pathNumbersFor(ex).forEach((pn) => { const st = saved[ex][pn], v = Math.max(Number(st.current) || 0, pathTop(ex, pn)); st.current = v; st.desired = v; })),
+    reset: (kept) => EXPERTS_IN_ORDER.forEach((ex) => { if (kept && kept[ex]) saved[ex] = kept[ex]; }),
+    save: () => saveCalcState("experts_research", saved),
+    after: () => render(),
+  });
 }
 
 // Last per-expert sigil need saved by Experts Level, so it's only re-saved
@@ -26771,6 +26837,7 @@ async function renderExpertsPage() {
   }
 
   await ensureBarHidden();
+  await maxBeforeLoad("experts");
   if (seq !== RENDER_SEQ) return;
   // Short tab names, SvS before Foundry (owner, 20 Oct 2026). The event tabs count
   // only their own bonus (3 Nov 2026), so each one's text says what it counts.
@@ -26783,6 +26850,7 @@ async function renderExpertsPage() {
   ];
   content.innerHTML = plxShellHtml({
     title: t("expertspage_title"),
+    maxId: "expertsMaxAllBtn",
     // General speedups are a box in "Amounts from your Backpack" now (owner,
     // 20 Oct 2026), so this page has no Settings card.
     amountsId: "expertsAmounts", needId: "expertsSummary",
@@ -26802,6 +26870,21 @@ async function renderExpertsPage() {
 `;
   { const b = document.getElementById("expertsAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expertsPacks"></div>`; }
 
+  // Max / Reset (like Chief Gear): every counted expert's level and skills, now and target.
+  wirePageMax({
+    btnId: "expertsMaxAllBtn", key: "experts",
+    allMax: () => EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).every((e) => (Number(saved[e.key].current) || 0) >= heroMaxLevelValue(e.key) - 0.001 && e.skills.every((sk) => (Number(saved[e.key].skills[sk].current) || 0) >= skillMaxLevel(e.key, sk))),
+    snap: () => Object.fromEntries(EXPERTS_SHOWN.map((e) => [e.key, saved[e.key]])),
+    max: () => EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).forEach((e) => {
+      const hs = saved[e.key], top = heroMaxLevelValue(e.key);
+      const v = (Number(hs.current) || 0) >= top - 0.001 ? hs.current : top;
+      hs.current = v; hs.desired = v;
+      e.skills.forEach((sk) => { const st = hs.skills[sk], m = skillMaxLevel(e.key, sk), w = Math.max(Number(st.current) || 0, m); st.current = w; st.desired = w; });
+    }),
+    reset: (kept) => EXPERTS_SHOWN.forEach((e) => { if (kept && kept[e.key]) saved[e.key] = kept[e.key]; }),
+    save: () => saveCalcState("experts", saved),
+    after: () => render(),
+  });
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
     if (!isExpertUnlocked(hero)) return; // unticked cards don't count anywhere
@@ -27453,6 +27536,7 @@ async function renderExpertsPage() {
 async function renderRefinePage() {
   const seq = RENDER_SEQ;
   await ensurePetsData(); // loads PET_REFINE_CACHE too
+  await maxBeforeLoad("pets_refine");
   const PET_TABLE_ORDER = [
     "Cave Hyena", "Arctic Wolf", "Musk Ox", "Giant Tapir", "Titan Roc",
     "Giant Elk", "Snow Leopard", "Cave Lion", "Snow Ape", "Iron Rhino",
@@ -27515,6 +27599,7 @@ async function renderRefinePage() {
   if (seq !== RENDER_SEQ) return;
   content.innerHTML = plxShellHtml({
     title: t("pets_refine_title"),
+    maxId: "refineMaxAllBtn",
     settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_pack_gems"))}"><span class="pr-gems-t"><b>${esc(t("marks_pack_gems_short"))}</b><small>${esc(t("marks_pack_gems_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
@@ -27856,6 +27941,16 @@ async function renderRefinePage() {
 
   renderTotals();
   renderList();
+  // Max / Reset (like Chief Gear): every counted pet's refine stats to the top released stage.
+  wirePageMax({
+    btnId: "refineMaxAllBtn", key: "pets_refine",
+    allMax: () => petNames.filter((pet) => isPetUnlocked(pet)).every((pet) => { const m = maxRow(pet), st = petState(pet); return STAT_KEYS.every(({ key, maxKey }) => (Number(st[key]) || 0) >= pct1(m[maxKey]) - 0.001); }),
+    snap: () => Object.fromEntries(petNames.map((pet) => [pet, PET_REFINE_TYPED_STATE[pet] == null ? null : PET_REFINE_TYPED_STATE[pet]])),
+    max: () => petNames.filter((pet) => isPetUnlocked(pet)).forEach((pet) => { const m = maxRow(pet), st = petState(pet); STAT_KEYS.forEach(({ key, maxKey }) => { st[key] = Math.max(Number(st[key]) || 0, pct1(m[maxKey])); }); }),
+    reset: (kept) => petNames.forEach((pet) => { if (!kept || !(pet in kept)) return; if (kept[pet] == null) delete PET_REFINE_TYPED_STATE[pet]; else PET_REFINE_TYPED_STATE[pet] = kept[pet]; }),
+    save: () => saveCalcState("pet_refine_typed", PET_REFINE_TYPED_STATE),
+    after: () => render(),
+  });
 }
 
 async function renderPetsDataPage() {
