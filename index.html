@@ -86,7 +86,7 @@
     margin:0;
     overflow-x:hidden;
     background:
-      radial-gradient(circle at 15% 0%, rgba(111,211,242,0.06), transparent 40%),
+      radial-gradient(circle 740px at 15% 0%, rgba(111,211,242,0.06), transparent),
       var(--bg);
     color:var(--frost);
     min-height:100vh;
@@ -1865,7 +1865,7 @@ input,select,textarea{
   .plx-head.cg-head{ margin-bottom:8px; }
   /* (i) help as a small bubble under the button (owner, 3 Nov 2026): hover on PC, tap on phones. */
   .plx-head.cg-head h2{ position:relative; }
-  .cg-tip{ position:absolute; top:calc(100% + 8px); inset-inline-start:0; z-index:40; width:max-content; max-width:min(280px, calc(100vw - 32px)); padding:9px 11px; border:1px solid rgba(111,211,242,.45); border-radius:10px; background:#0f1a2a; box-shadow:0 8px 24px rgba(0,0,0,.45); color:var(--text); font-family:inherit; font-size:12.5px; font-weight:400; font-style:normal; line-height:1.45; letter-spacing:0; text-transform:none; white-space:normal; }
+  .cg-tip{ position:absolute; top:calc(100% + 8px); inset-inline-start:0; z-index:40; width:max-content; max-width:min(280px, calc(100vw - 32px)); padding:9px 11px; border:1px solid rgba(111,211,242,.45); border-radius:10px; background:#0f1a2a; box-shadow:0 8px 24px rgba(0,0,0,.45); color:var(--frost); font-family:inherit; font-size:12.5px; font-weight:400; font-style:normal; line-height:1.45; letter-spacing:0; text-transform:none; white-space:normal; }
   .cg-tip::before{ content:""; position:absolute; top:-6px; inset-inline-start:var(--cg-tip-x, 20px); width:10px; height:10px; background:#0f1a2a; border-left:1px solid rgba(111,211,242,.45); border-top:1px solid rgba(111,211,242,.45); transform:rotate(45deg); }
   .cg-tip[hidden]{ display:none; }
   .cg-ans{ margin-bottom:8px; padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
@@ -3299,7 +3299,7 @@ input,select,textarea{
   .pkb-search{ position:relative; display:block; margin:0; }
   .pkb-search > span{ position:absolute; inset-inline-start:13px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.6; pointer-events:none; }
   .pkb-search input{ width:100%; box-sizing:border-box; height:44px; min-height:44px; margin:0; padding:0 12px; padding-inline-start:38px; border-radius:12px; font-size:16px; }
-  .pkb-dp{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:8px 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-dp{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:8px 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .pkb-dp-ic{ font-size:18px; flex:0 0 auto; }
   .pkb-dp-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
   .pkb-dp-t b{ font-size:14px; }
@@ -3308,7 +3308,7 @@ input,select,textarea{
   .pkb-cats{ display:flex; flex-direction:column; gap:10px; }
   .pkb-cat{ border:1px solid var(--line); border-radius:14px; background:var(--panel); overflow:hidden; }
   .pkb-cat.open{ border-color:rgba(111,211,242,.35); }
-  .pkb-cat-h{ display:flex; align-items:center; gap:12px; width:100%; min-height:58px; padding:9px 12px; margin:0; border:0; border-radius:0; background:none; color:var(--text); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-cat-h{ display:flex; align-items:center; gap:12px; width:100%; min-height:58px; padding:9px 12px; margin:0; border:0; border-radius:0; background:none; color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .pkb-cat.open .pkb-cat-h{ background:rgba(111,211,242,.07); }
   .pkb-n{ flex:0 0 auto; min-width:40px; height:40px; padding:0 4px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--ice); font-weight:800; font-size:15px; }
   .pkb-cat-t{ flex:1 1 auto; min-width:0; }
@@ -3405,6 +3405,10 @@ input,select,textarea{
   .g1-fold{ box-sizing:border-box; flex:0 0 auto; height:30px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12px; font-weight:700; line-height:1; white-space:nowrap; cursor:pointer; }
   .g1-top .g1-st .t12x-title{ display:none; }
   .g1-folded .g1-can, .g1-folded .g1-bp, .g1-folded #cgCan, .g1-folded #cgBp{ display:none !important; }
+  /* Settings at the top of the box, above the stats, with a line under them; they stay when the box is folded */
+  .g1-top .g1-set:empty{ display:none; }
+  .g1-top .g1-set{ margin:0 0 8px; padding:0 0 8px; border-bottom:1px solid var(--line); }
+  .g1-top .g1-set > .t12x-settings.one-line{ margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:none !important; box-shadow:none !important; }
   .cg-kr .g1-fold{ margin-inline-start:auto; }
   @media (max-width: 440px){ .cg-kr .g1-fold{ order:1; } .cg-kr #cgSets{ order:2; } }
   /* Pets card header: picture, name (+ Upcoming / visitors under it), Count on the right */
@@ -3417,7 +3421,7 @@ input,select,textarea{
   .t12x-settings.one-line .t12x-check.pr-gems{ flex:1 1 auto !important; justify-content:space-between !important; gap:12px !important; }
   .t12x-check.pr-gems input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px; flex:0 0 38px; margin:0; }
   .pr-gems-t{ display:flex; flex-direction:column; min-width:0; }
-  .pr-gems-t b{ font-size:13px; font-weight:600; color:var(--text); }
+  .pr-gems-t b{ font-size:13px; font-weight:600; color:var(--frost); }
   .pr-gems-t small{ font-size:11px; color:var(--muted); }
 
 
@@ -3449,7 +3453,7 @@ input,select,textarea{
   .exp-x{ display:flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:14px; cursor:pointer; }
   .exp-wx{ display:none; position:absolute; top:6px; inset-inline-end:8px; z-index:2; }
   .exp-bd{ z-index:61; }
-  .exp-h4btn{ display:flex; align-items:center; gap:8px; min-height:44px; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--text); font:inherit; font-size:14px; cursor:pointer; text-align:start; }
+  .exp-h4btn{ display:flex; align-items:center; gap:8px; min-height:44px; padding:6px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; font-size:14px; cursor:pointer; text-align:start; }
   .exp-h4btn .ic{ font-size:18px; }
   .exp-h4btn b{ flex:1 1 auto; min-width:0; font-weight:700; }
   .exp-shn{ padding:2px 7px; border-radius:999px; background:rgba(240,90,90,.15); color:var(--danger); font-size:12px; font-weight:700; white-space:nowrap; }
@@ -3462,7 +3466,7 @@ input,select,textarea{
   .exp-hd-t .name{ font-size:17px; font-weight:800; }
   .exp-hd-t .meta{ font-size:12px; }
   .exp-stl{ font-size:12.5px; color:var(--muted); margin-top:3px; }
-  .exp-stl b{ color:var(--text); } .exp-stl b.tg{ color:var(--ice); }
+  .exp-stl b{ color:var(--frost); } .exp-stl b.tg{ color:var(--ice); }
   .exp-tags{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:4px; }
   .exp-tags > span{ margin-top:0 !important; }
   .exp-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:3px; margin:0 0 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
@@ -3488,7 +3492,7 @@ input,select,textarea{
   .exp-lv-l{ display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:var(--muted); margin-bottom:10px; }
   .exp-lv-l .bad{ color:var(--danger); } .exp-lv-l .ok{ color:var(--good); }
   .exp-nbs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 10px; }
-  .exp-nb{ display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font:inherit; text-align:start; }
+  .exp-nb{ display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; }
   button.exp-nb{ cursor:pointer; }
   .exp-nb img{ width:30px; height:30px; flex:0 0 30px; object-fit:contain; }
   .exp-nb > span{ display:flex; flex-direction:column; min-width:0; }
@@ -3496,7 +3500,7 @@ input,select,textarea{
   .exp-nb b{ font-size:16px; font-weight:800; }
   .exp-nb b.bad{ color:var(--danger); } .exp-nb b.ok{ color:var(--good); }
   .exp-skl-list{ display:flex; flex-direction:column; }
-  .exp-skr{ display:block; width:100%; padding:10px 0; border:0; border-top:1px solid var(--line); background:none; color:var(--text); font:inherit; text-align:start; cursor:pointer; }
+  .exp-skr{ display:block; width:100%; padding:10px 0; border:0; border-top:1px solid var(--line); background:none; color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .exp-skr-h{ display:flex; align-items:center; gap:8px; }
   .exp-skr-h b{ flex:1 1 auto; min-width:0; font-size:14px; }
   .exp-chip{ padding:3px 9px; border:1px solid var(--line); border-radius:9px; font-size:12.5px; font-weight:700; white-space:nowrap; }
@@ -18070,6 +18074,9 @@ function infoize(root) {
 // in (their redraws keep working: anything redrawn outside is moved in again).
 const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
+// Pages whose Settings line moves into the top box, above the stats (owner,
+// 3 Nov 2026: "for settings in pets and research show it in header above the stats").
+const TOPBOX_SET_TABS = new Set(["refinepage", "t12research", "t11helios", "researchcenter"]);
 function plxTopBox(root) {
   if (!(TAB in TOPBOX_TABS) || !TOPBOX_MQ.matches) return;
   const shell = root.querySelector(".t12x.g1:not(.cg1)"), main = shell && shell.querySelector(".t12x-main");
@@ -18079,10 +18086,12 @@ function plxTopBox(root) {
     box = document.createElement("div");
     box.className = "panel cg-ans g1-top";
     // Header with Hide / Show for everything under the stats (owner, 3 Nov 2026).
-    box.innerHTML = `<div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "g1_can_bp" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
+    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "g1_can_bp" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
     main.insertBefore(box, main.firstChild);
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
+  // The page's Settings card (same element, so its boxes keep their handlers).
+  if (TOPBOX_SET_TABS.has(TAB)) put(box.querySelector(".g1-set"), shell.querySelector(".t12x-side > .t12x-settings"));
   // Research pages keep their stats where they are (owner, 3 Nov 2026).
   if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
   const sums = [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
