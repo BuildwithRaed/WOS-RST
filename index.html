@@ -1823,9 +1823,7 @@ input,select,textarea{
   .gs-opt.up{ color:var(--amber); }
   .gs-opt small{ font-size:10px; }
   .gs-opt:disabled{ opacity:.35; cursor:default; }
-  /* Chief Gear slots (design D3, owner 19 Oct 2026) */
-  .cg-slots{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); grid-template-areas:"helmet . watch" "jacket mid pants" "ring . cane"; gap:14px 6px; max-width:520px; margin:0 auto; padding:14px 8px 10px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.02); }
-  .cg-slot{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; padding:0; border:0; background:none; color:var(--frost); font:inherit; cursor:pointer; }
+  /* Chief Gear pieces (pictures with tier edge, now badge, target chip) */
   .cg-pic{ position:relative; display:block; width:min(78px, 100%); aspect-ratio:1; border:3px solid var(--edge, var(--line)); border-radius:12px; background:radial-gradient(circle at 50% 40%, rgba(255,255,255,.12), rgba(0,0,0,.15)); }
   .cg-pic img{ width:100%; height:100%; object-fit:contain; border-radius:9px; display:block; }
   .cg-pic.sm{ width:46px; flex-shrink:0; border-width:2px; }
@@ -1834,17 +1832,68 @@ input,select,textarea{
   .cg-tgt.up{ background:#8a5a1c; }
   .cg-tgt.ok{ background:#2a6b45; }
   .cg-nm{ margin-top:7px; font-size:11.5px; font-weight:700; text-align:center; line-height:1.25; }
-  .cg-mid{ grid-area:mid; align-self:center; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; border:1px solid var(--line); border-radius:12px; background:var(--panel); text-align:center; font-size:12px; }
-  .cg-mid > b{ font-size:30px; line-height:1; }
-  .cg-mid .meta{ font-size:10.5px; }
-  .cg-mid .sa-btn{ margin-top:6px; }
   .cg-sabox{ margin-top:10px; }
+  /* Chief Gear = design G1-B (owner, 3 Nov 2026): answer card, pieces by troop
+     column, Backpack / Trades / Pack cost as a sheet from 3 buttons on phones. */
+  .cg-i{ display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; margin-inline-start:6px; vertical-align:middle; border:1px solid var(--line); border-radius:50%; background:none; color:var(--muted); font:italic 700 15px Georgia, "DejaVu Serif", serif; cursor:pointer; }
+  .cg-i[aria-expanded="true"]{ border-color:var(--ice); color:var(--ice); }
+  .cg-help{ font-size:12px; margin:-6px 0 10px; }
+  .cg-ans{ margin-bottom:10px; padding:9px 12px 11px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
+  .cg-k{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+  .cg-ans > .cg-k{ display:block; margin-bottom:6px; }
+  .cg-sec{ margin-top:8px; padding-top:7px; border-top:1px solid var(--line); }
+  .cg-sec[hidden]{ display:none; }
+  .cg-sh{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:6px; }
+  .cg-sh .rch-seg, .cg-sh .cg-pk{ margin-inline-start:auto; }
+  .cg-ed{ flex:none; width:32px; height:32px; border:1px solid var(--line); border-radius:9px; background:none; color:var(--muted); font-size:14px; cursor:pointer; }
+  .cg-can-l{ display:flex; align-items:center; gap:9px; }
+  .cg-can-l .cg-pic.sm{ width:42px; }
+  .cg-can-t{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .cg-can-t b{ font-size:14px; line-height:1.25; }
+  .cg-can-t b em{ font-style:normal; color:var(--good); }
+  .cg-can-t small{ font-size:11.5px; line-height:1.35; color:var(--muted); }
+  .cg-can-t small.ok{ color:var(--good); }
+  .cg-can-t small.am{ color:var(--amber); }
+  .cg-show{ flex:none; min-height:34px; }
+  .cg-pk{ display:inline-flex; align-items:center; gap:4px; min-height:32px; padding:0 12px; border:1px solid var(--ice-dim); border-radius:999px; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; }
+  .cg-chips{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+  .cg-chip{ display:inline-flex; align-items:center; justify-content:center; gap:4px; min-width:0; height:30px; padding:0 7px 0 4px; border:1px solid rgba(224,100,95,.45); border-radius:999px; background:rgba(224,100,95,.08); color:#ff8f8a; font-size:12.5px; font-weight:800; white-space:nowrap; }
+  .cg-chip img{ width:21px; height:21px; object-fit:contain; flex:none; }
+  .cg-chip b{ overflow:hidden; text-overflow:ellipsis; }
+  .cg-ok{ font-size:12.5px; font-weight:700; color:var(--good); }
+  .cg-sets{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:5px; margin-top:5px; }
+  .cg-set{ display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; min-height:26px; padding:0 9px 0 8px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.02); }
+  .cg-set > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:11px; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
+  .cg-set b{ font-size:13px; font-weight:800; color:var(--good); white-space:nowrap; }
+  .cg-set b.off{ font-size:11.5px; font-weight:600; color:var(--muted); }
+  .cg-pcs{ padding:9px 11px 12px; }
+  .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:2px; }
+  .cg-ph > b{ font-size:14px; }
+  .cg-ph .meta{ font-size:12px; white-space:nowrap; }
+  .cg-ph .sa-btn{ margin-inline-start:auto; }
+  .cg-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:2px 8px; max-width:520px; margin:6px auto 0; }
+  .cg-th{ padding-bottom:2px; text-align:center; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--tc); }
+  .cg-pc{ display:flex; flex-direction:column; align-items:center; min-width:0; padding:12px 0 4px; border:0; background:none; color:var(--frost); font:inherit; cursor:pointer; }
+  .cg-pc .cg-pic{ width:68px; }
+  .cg-pc .cg-nm{ margin-top:13px; font-size:12.5px; }
+  .cg-pc .cg-rch{ display:flex; justify-content:center; margin-top:4px; }
+  .cg-mk{ padding:0 6px; border:1px solid rgba(91,201,138,.6); border-radius:7px; line-height:20px; font-size:11.5px; }
+  .cg-pills, .cg-sh-h{ display:none; }
+  .cg-bd{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55); }
+  .cg-bd[hidden]{ display:none; }
+  @media (min-width: 901px){ .cg1 .t12x-buy:has(#gearOwned_rows_trades:empty):has(#gearOwned_rows_packs:empty){ display:none; } }
+  @media (max-width: 900px){
+    .cg1 .t12x-amts, .cg1 .t12x-buy{ display:none; }
+    .cg1 .t12x-amts.cg-open, .cg1 .t12x-buy.cg-open{ display:block; position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.55); }
+    .cg1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .cg1 .cg-open .cg-sh-h b{ font-size:15px; }
+    .cg1 .t12x-buy[data-cgshow="trades"] #gearOwned_rows_packs, .cg1 .t12x-buy[data-cgshow="packs"] #gearOwned_rows_trades{ display:none; }
+    .cg-pills{ display:flex; gap:8px; position:fixed; left:0; right:0; bottom:0; z-index:50; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--bg); }
+    .cg-pills button{ flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:0; height:40px; padding:0 6px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; }
+    .cg1 .t12x-main{ padding-bottom:60px; }
+    body:has(.cg1) .site-footer{ padding-bottom:72px; }
+  }
   .cg-sabox[hidden]{ display:none; }
-  .cg-pin-h{ display:flex; align-items:baseline; gap:4px; font-size:14px; margin:0 2px 8px; }
-  .cg-setboxes{ margin-bottom:8px; }
-  .cg-setline{ display:none; font-size:11.5px; margin:0 2px 6px; }
-  .cg-pin.is-pinned .cg-pin-h, .cg-pin.is-pinned .cg-setboxes{ display:none; }
-  .cg-pin.is-pinned .cg-setline{ display:block; }
   .plx-tsw.is-pinned{ position:fixed; top:0; z-index:40; margin:0; border-radius:0 0 14px 14px; }
   /* Phones: the Chief Charm / Chief Gear sheet sits at the bottom. */
   @media (max-width:699px){ .gs-wrap.modal-overlay{ align-items:flex-end; padding:0; } .gs-wrap .gs-box{ max-width:none !important; width:100% !important; max-height:92vh; border-radius:16px 16px 0 0; } }
@@ -5433,6 +5482,21 @@ const T = {
   cg_pieces_to_go: { en: "pieces to go" },
   cg_at_target: { en: "{n} of {m} at target" },
   cg_slots_hint: { en: "Edge colour = tier (red Legendary, gold Mythic). Badge top-left = now, blue = target. Tap a piece to change it." },
+  cg_backpack: { en: "Backpack" },
+  cg_trades: { en: "Trades" },
+  cg_can_now: { en: "Can do now" },
+  cg_still_short: { en: "Still short" },
+  cg_packs: { en: "Packs" },
+  cg_show: { en: "Show" },
+  cg_then_out: { en: "Then {item} runs out" },
+  cg_with_trades: { en: "with this week's trades" },
+  cg_none_up: { en: "Nothing can go up yet" },
+  cg_all_at_target: { en: "All pieces are at their target" },
+  cg_covered: { en: "Your Backpack covers the target" },
+  cg_pieces: { en: "Pieces" },
+  cg_set3: { en: "3-piece set" },
+  cg_set6: { en: "6-piece set" },
+  cg_set_all_troops: { en: "The set bonus counts for all troops" },
   cg_set_bonus: { en: "Set bonus" },
   bud_not_open: { en: "Includes levels not open in your state yet ({what})" },
   sa_by_mon: { en: "Monument" },
@@ -8127,6 +8191,7 @@ function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
 const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
 const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
 const BAR_CONV = {};    // calcKey -> choice chests' rules, opened by reachPlan as needed
+const BAR_EFF = {};     // calcKey -> { have, need } as the Backpack boxes count them
 const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
 // Which troop goes first when two upgrades are equally good (owner, 2 Nov 2026).
 const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
@@ -16896,6 +16961,9 @@ function packPickCheapest(plans) {
 // numbers always agree with the red "still needed" figures above it.
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};
+const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
+const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
+const packCostShown = (calcKey, v) => { if (PACK_COST_SHOWN[calcKey] === v) return; PACK_COST_SHOWN[calcKey] = v; if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey](); };
 const PACK_PLAN_PICK = {}; // card layout: which plan's packs are listed, per page
 const PACK_COST_VIEW = {};
 // Which view the Pack cost box opens on (the switch still changes it):
@@ -16937,6 +17005,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   if (!open) {
+    packCostShown(calcKey, null);
     containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
@@ -17190,6 +17259,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (pageTotalText) known.page = pageTotalText; else pageTotalText = known.page || "";
   PACK_VIEW_TOTALS[calcKey] = known;
   if (stale()) return;
+  packCostShown(calcKey, (usingShared ? sharedTotalText : pageTotalText) || null);
   if (usingShared) sections = sharedSections;
   const viewSwitch = canShare ? `
     <div class="seg" data-packview style="margin:8px 0 2px; flex-wrap:wrap;">
@@ -21246,9 +21316,7 @@ function chiefGearIcon(key, rowIdx) {
 // on one screen, 3 slots left (Helmet, Jacket, Ring) and 3 right (Watch,
 // Pants, Cane) around a plain box with what's left and Set all; each slot has
 // its tier badge (now) and a "→ ★3" target chip. Tap a slot → a sheet with the
-// Now / Target lists side by side and ‹ › to the next piece. The Troops Stats
-// card (set bonus + the 3 troops' ATK & DEF) is pinned while scrolling.
-const CG_SLOT_ORDER = ["helmet", "jacket", "ring", "watch", "pants", "cane"];
+// Now / Target lists side by side and ‹ › to the next piece.
 // Edge colour of a piece by its tier family (Legendary red, Mythic gold …).
 function cgEdge(r) {
   const tier = String((r && r.tier) || "");
@@ -21267,33 +21335,76 @@ async function renderChiefGearCalc() {
     return;
   }
 
+  // Design G1-B (owner picked, 3 Nov 2026): one answer card (the troops' ATK &
+  // DEF boxes with the set bonus as 2 chips, "Can do now" for the admin,
+  // "Still short" + Packs), then the pieces in 3 troop columns. Backpack,
+  // Trades and Pack cost: the side column on PC; on phones 3 buttons at the
+  // bottom open the same cards as a sheet over the page.
+  const packsOn = visitorCan("packcost");
   content.innerHTML = plxShellHtml({
     title: navLabel("chiefgear"),
     maxId: "gearMaxAllBtn",
     amountsId: "gearOwned", needId: "gearNeed",
-    statsHtml: `<div class="plx-tsw cg-pin" data-cgpin><div id="gearCurrentStats"></div></div>`,
-    mainHtml: `<div id="gearRows"></div>`,
+    statsHtml: `<div class="panel cg-ans">
+        <div class="cg-k">${esc(t("troops_stats_title"))} · ATK &amp; DEF</div>
+        <div id="gearCurrentStats"></div>
+        <div class="cg-sec" id="cgCan" data-rchpage="chief_gear" hidden></div>
+        <div class="cg-sec" id="cgShort"></div>
+      </div>`,
+    mainHtml: `<div id="gearRows"></div>
+      <div class="cg-pills"><button type="button" data-cgsheet="bp">&#127890; ${esc(t("cg_backpack"))}</button><button type="button" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))}</button>${packsOn ? `<button type="button" data-cgsheet="packs">$ ${esc(t("pack_cost_title"))}</button>` : ""}</div>
+      <div class="cg-bd" data-cgbd hidden></div>`,
   });
+  const shell = content.querySelector(".t12x"), amts = content.querySelector(".t12x-amts"), buy = content.querySelector(".t12x-buy");
+  shell.classList.add("cg1");
+  const head = content.querySelector(".plx-head");
+  head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>`);
+  head.insertAdjacentHTML("afterend", `<p class="meta cg-help" data-cghelp hidden>${esc(t("cg_slots_hint"))}</p>`);
+  const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
+  amts.insertAdjacentHTML("afterbegin", sheetHead(`&#127890; ${esc(t("cg_backpack"))}`));
+  buy.innerHTML = `${sheetHead("", " data-cgbuyt")}<div data-buybody></div>`;
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
   const rowsEl = document.getElementById("gearRows");
   const optsHtml = () => { const cap = chiefGearCapIdx(); return rows.map((r, i) => `<option value="${i}"${i > cap ? ' class="opt-up"' : ""}>${esc(chiefGearRowLabel(r))}${esc(upcomingTag(i > cap))}</option>`).join(""); };
   const pieceOf = (key) => CHIEF_GEAR_PIECES.find((p) => p.key === key);
+  // The pieces in 3 troop columns, read row by row (also the order of ‹ › in the sheet).
+  const COLS = ["Infantry", "Lancer", "Marksman"];
+  const ORDER = [0, 1].flatMap((i) => COLS.map((tr) => (CHIEF_GEAR_PIECES.filter((p) => p.troop === tr)[i] || {}).key)).filter(Boolean);
+  const stepLab = (i, from) => (rows[i] && rows[from] && rows[i].tier === rows[from].tier ? cgStars(rows[i]) : cgBadge(rows[i]));
 
-  function slotHtml(p) {
+  function pieceHtml(p) {
     const st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
     const from = Math.min(st.from, rows.length - 1), to = Math.min(st.to == null ? from : st.to, rows.length - 1);
     const rf = rows[from], rt = rows[to];
     const chip = to > from
       ? `<span class="cg-tgt${to > cap ? " up" : ""}"${to > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(rt && rf && rt.tier === rf.tier ? cgStars(rt) : cgBadge(rt))}</span>`
       : from >= cap ? `<span class="cg-tgt ok">&#10003; ${esc(t("max_button"))}</span>` : "";
-    return `<button type="button" class="cg-slot" data-cgslot="${p.key}" style="grid-area:${p.key};" aria-label="${esc(pieceDisplayName(p.name))}">
+    return `<button type="button" class="cg-pc" data-cgslot="${p.key}" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
       <span class="cg-pic" style="--edge:${cgEdge(rf)};"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
-      <span class="cg-nm">${esc(pieceDisplayName(p.name))} · <span style="color:${TROOP_COLORS[p.troop]};">${esc(troopDisplayName(p.troop))}</span></span>
+      <span class="cg-nm">${esc(pieceDisplayName(p.name))}</span>
       <span class="cg-rch" data-rch="cg|${p.key}"></span>
     </button>`;
   }
-  // "Can reach" marks (design B, 2 Nov 2026): each piece's star line and bar.
+  // "Can do now" (admin, like every "can reach" mark): the first piece the
+  // Backpack takes up, with this week's trades, and what runs out then.
+  function canHtml(plan, tracks) {
+    const todo = tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => plan.lv[tr.id] > tr.from);
+    const seg = `<div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="cg-ed" data-rchedit aria-label="${esc(t("rch_edit_order"))}" title="${esc(t("rch_edit_order"))}">&#9998;</button>` : ""}`;
+    const top = `<div class="cg-sh"><span class="cg-k">${esc(t("cg_can_now"))}</span>${todo.length ? seg : ""}</div>`;
+    if (!todo.length) return `${top}<div class="cg-ok">&#10003; ${esc(t("cg_all_at_target"))}</div>`;
+    const f = up[0] || todo[0], p = pieceOf(f.id), r = plan.lv[f.id];
+    const item = plan.first ? materialDisplayName(itemShortName(plan.first)) : "";
+    const pic = `<span class="cg-pic sm" style="--edge:${cgEdge(rows[f.from])};"><img src="${chiefGearIcon(p.key, f.from)}" alt="" loading="lazy" /></span>`;
+    const show = `<button type="button" class="btn small ghost cg-show" data-rchall="chief_gear">${esc(t("cg_show"))} &#8250;</button>`;
+    if (!up.length) {
+      const left = item ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
+      return `${top}<div class="cg-can-l">${pic}<div class="cg-can-t"><b>${esc(t("cg_none_up"))}</b>${item ? `<small class="am">${esc(t("rch_first").replace("{item}", item).replace("{n}", left.toLocaleString()))}</small>` : ""}</div>${show}</div>`;
+    }
+    const traded = (plan.trades[f.id] || []).length > 0;
+    return `${top}<div class="cg-can-l">${pic}<div class="cg-can-t"><b>${esc(pieceDisplayName(p.name))} ${esc(cgBadge(rows[f.from]))} &rarr; <em>${esc(stepLab(r, f.from))}</em>${up.length > 1 ? ` <span class="meta" title="${esc(up.slice(1).map((x) => pieceDisplayName(pieceOf(x.id).name)).join(" · "))}">+${up.length - 1}</span>` : ""}</b>${traded ? `<small class="ok">&#8644; ${esc(t("cg_with_trades"))}</small>` : ""}${item ? `<small class="am">${esc(t("cg_then_out").replace("{item}", item))}</small>` : ""}</div>${show}</div>`;
+  }
+  // "Can reach" marks (design B, 2 Nov 2026): ✓★1 under each piece's name.
   function fillChiefGearReach() {
     if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
     const have = BAR_HAVE.chief_gear;
@@ -21311,30 +21422,42 @@ async function renderChiefGearCalc() {
     tracks.forEach((tr) => {
       const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
       if (!el) return;
-      const r = plan.lv[tr.id];
-      el.innerHTML = tr.to > tr.from ? `<span class="rch-mini${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(rows[r] && rows[tr.from] && rows[r].tier === rows[tr.from].tier ? cgStars(rows[r]) : cgBadge(rows[r]))}`}</span>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_steps")}${(plan.trades[tr.id] || []).length ? `<div class="rch-trade" title="${esc(plan.trades[tr.id].map((x) => `${Math.round(x.give).toLocaleString()} ${materialDisplayName(itemShortName(x.from))} → ${Math.round(x.get).toLocaleString()} ${materialDisplayName(itemShortName(x.to))}`).join(" · "))}">&#8644; ${esc(t("rch_with_trades"))}</div>` : ""}` : "";
+      const r = plan.lv[tr.id], tl = plan.trades[tr.id] || [];
+      el.innerHTML = tr.to > tr.from && r > tr.from ? `<span class="rch-mini cg-mk${r >= tr.to ? " full" : ""}" title="${esc(tl.length ? `${t("rch_with_trades")}: ${tl.map((x) => `${Math.round(x.give).toLocaleString()} ${materialDisplayName(itemShortName(x.from))} → ${Math.round(x.get).toLocaleString()} ${materialDisplayName(itemShortName(x.to))}`).join(" · ")}` : t("rch_mark_tip"))}">&#10003;${esc(stepLab(r, tr.from))}${tl.length ? " &#8644;" : ""}</span>` : "";
     });
-    const sum = rowsEl.querySelector("[data-rchsum]");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pieces", "chief_gear");
+    const can = document.getElementById("cgCan");
+    if (can) { can.hidden = false; can.innerHTML = canHtml(plan, tracks); }
   }
-  REACH_HOOKS.chief_gear = fillChiefGearReach;
+  // "Still short": what the Backpack boxes still miss (same numbers as the
+  // boxes), and the Pack cost price once it's been worked out.
+  function fillCgShort() {
+    const el = document.getElementById("cgShort"), eff = BAR_EFF.chief_gear;
+    if (!el || !eff) return;
+    const items = ["Hardened Alloy", "Polishing Solution", "Design Plan", "Amber"].filter((n) => (eff.need[n] || 0) > 0);
+    const short = items.filter((n) => (eff.have[n] || 0) < eff.need[n]);
+    const price = PACK_COST_SHOWN.chief_gear;
+    const chip = (n) => {
+      const src = materialIconSrc(n), v = eff.need[n] - (eff.have[n] || 0);
+      return `<span class="cg-chip" title="${esc(`${materialDisplayName(n)}: ${Math.round(v).toLocaleString()} ${t("bs_short_word")}`)}">${src ? `<img src="${esc(src)}" alt="" />` : ""}<b>${esc(bidiNum(shortAmount(v)))}</b></span>`;
+    };
+    el.innerHTML = `<div class="cg-sh"><span class="cg-k">${esc(t("cg_still_short"))}</span>${packsOn && short.length ? `<button type="button" class="cg-pk" data-cgsheet="packs">${esc(t("cg_packs"))}${price ? ` ${price}` : ""} &#8250;</button>` : ""}</div>
+      ${short.length ? `<div class="cg-chips">${short.map(chip).join("")}</div>` : `<div class="cg-ok">&#10003; ${esc(t(items.length ? "cg_covered" : "cg_all_at_target"))}</div>`}`;
+  }
+  REACH_HOOKS.chief_gear = () => { fillCgShort(); fillChiefGearReach(); };
+  PACK_COST_HOOKS.chief_gear = fillCgShort;
   function renderPieces() {
     const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
     const open = !!SETALL_OPEN.chief;
     rowsEl.innerHTML = `
-        <div class="panel">
-          <div data-rchsum data-rchpage="chief_gear"></div>
-          <div class="cg-slots">
-            ${CG_SLOT_ORDER.map((k) => slotHtml(pieceOf(k))).join("")}
-            <div class="cg-mid"><b>${toGo}</b><span>${esc(t("cg_pieces_to_go"))}</span><span class="meta">${esc(t("cg_at_target").replace("{n}", CHIEF_GEAR_PIECES.length - toGo).replace("{m}", CHIEF_GEAR_PIECES.length))}</span>
-              <button type="button" class="sa-btn" data-cgsa aria-expanded="${open}">&#8645; ${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
-          </div>
+        <div class="panel cg-pcs">
+          <div class="cg-ph"><b>${esc(t("cg_pieces"))}</b><span class="meta">${esc(t("cg_at_target").replace("{n}", CHIEF_GEAR_PIECES.length - toGo).replace("{m}", CHIEF_GEAR_PIECES.length))}</span>
+            <button type="button" class="sa-btn" data-cgsa aria-expanded="${open}">&#8645; ${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
           <div class="sa-row cg-sabox"${open ? "" : " hidden"}>
             <select data-cgsetall data-role="from" aria-label="${esc(t("current_upper"))}"><option value="">${esc(t("current_upper"))}…</option>${optsHtml()}</select>
             <span class="sa-arrow">&rarr;</span>
             <select data-cgsetall data-role="to" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${optsHtml()}</select>
           </div>
-          <p class="meta ch-hint">${esc(t("cg_slots_hint"))}</p>
+          <div class="cg-grid">${COLS.map((tr) => `<div class="cg-th" style="--tc:${TROOP_COLORS[tr]};">${esc(troopDisplayName(tr))}</div>`).join("")}${ORDER.map((k) => pieceHtml(pieceOf(k))).join("")}</div>
         </div>`;
     fillChiefGearReach();
     // "Set all" shows the level when all 6 pieces are on it.
@@ -21365,6 +21488,37 @@ async function renderChiefGearCalc() {
     const slot = e.target.closest("[data-cgslot]");
     if (slot) openGearSheet(slot.dataset.cgslot);
   });
+  // Backpack / Trades / Pack cost: a sheet on phones (the side cards shown
+  // over the page), the side column on PC (scrolled to).
+  const sheetTo = (which) => {
+    amts.classList.toggle("cg-open", which === "bp");
+    buy.classList.toggle("cg-open", which === "trades" || which === "packs");
+    buy.dataset.cgshow = which === "trades" || which === "packs" ? which : "";
+    const tt = buy.querySelector("[data-cgbuyt]");
+    if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `$ ${esc(t("pack_cost_title"))}`;
+    content.querySelector("[data-cgbd]").hidden = !which;
+    const box = which === "bp" ? amts : which ? buy : null;
+    if (box) box.scrollTop = 0;
+  };
+  shell.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-cgsheet]");
+    if (b) {
+      const which = b.dataset.cgsheet;
+      // The Pack cost card starts folded: open it (that works out its plans).
+      if (which === "packs" && PACK_COST_OPEN.chief_gear !== true) { const tg = buy.querySelector("[data-packtoggle]"); if (tg) tg.click(); }
+      if (window.matchMedia("(max-width: 900px)").matches) sheetTo(which);
+      else (which === "bp" ? amts : buy).scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
+    if (e.target.closest("[data-cgclose]") || e.target.closest("[data-cgbd]")) sheetTo(null);
+  });
+  head.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-cginfo]");
+    if (!b) return;
+    const hp = content.querySelector("[data-cghelp]");
+    hp.hidden = !hp.hidden;
+    b.setAttribute("aria-expanded", String(!hp.hidden));
+  });
 
   // The sheet for one piece: Now and Target lists side by side.
   function openGearSheet(key) {
@@ -21382,8 +21536,8 @@ async function renderChiefGearCalc() {
         });
         return `<div class="gs-list" data-gslist="${role}">${out}</div>`;
       };
-      const k = CG_SLOT_ORDER.indexOf(key);
-      const nav = (d) => { const nk = CG_SLOT_ORDER[k + d]; return nk ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(pieceDisplayName(pieceOf(nk).name))}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
+      const k = ORDER.indexOf(key);
+      const nav = (d) => { const nk = ORDER[k + d]; return nk ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(pieceDisplayName(pieceOf(nk).name))}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
       m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
         <div class="gs-head"><span class="cg-pic sm" style="--edge:${cgEdge(rows[from])};"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
           <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div>
@@ -21408,7 +21562,7 @@ async function renderChiefGearCalc() {
         changed(); draw(true); return;
       }
       const nv = ev.target.closest("[data-gsnav]");
-      if (nv) { key = CG_SLOT_ORDER[CG_SLOT_ORDER.indexOf(key) + Number(nv.dataset.gsnav)] || key; draw(false); }
+      if (nv) { key = ORDER[ORDER.indexOf(key) + Number(nv.dataset.gsnav)] || key; draw(false); }
     };
     m.style.display = "flex";
     draw(false);
@@ -21421,8 +21575,6 @@ async function renderChiefGearCalc() {
     CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.to = allMax ? st.from : Math.max(cap, st.from); });
     changed();
   });
-  // The Troops Stats card is pinned at the top while scrolling (slim then).
-  wirePlxPinned(content.querySelector("[data-cgpin]"));
   renderPieces();
   updateChiefGearTotals();
 }
@@ -21579,6 +21731,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const weekly = TRADE_APPLY[calcKey || "chief_gear"] === false ? [] : tradeRatesFor(calcKey || "chief_gear").filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));
     BAR_CONV[calcKey || "chief_gear"] = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }))
       .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0, trade: true })));
+    // What the boxes count against what the page needs (Chief Gear's "Still short").
+    const needAll = {};
+    groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { needAll[n] = (needAll[n] || 0) + (Number(q) || 0); }));
+    BAR_EFF[calcKey || "chief_gear"] = { have: { ...effOwned }, need: needAll };
     if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
   };
   reachRefresh();
@@ -21822,7 +21978,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     ${buyHost ? "" : `<div id="${rowsId}_trades"></div>
     <div id="${rowsId}_packs"></div>`}
   `;
-  if (buyHost) buyHost.innerHTML = `<div id="${rowsId}_trades"></div><div id="${rowsId}_packs"></div>`;
+  if (buyHost) (buyHost.querySelector("[data-buybody]") || buyHost).innerHTML = `<div id="${rowsId}_trades"></div><div id="${rowsId}_packs"></div>`;
   bsFoldMark(el, summaryOn && BAR_SHOW_ALL[calcKey] === false);
   const packBox = document.getElementById(`${rowsId}_packs`);
   const tradeBox = document.getElementById(`${rowsId}_trades`);
@@ -22046,20 +22202,17 @@ function maxedChiefGearState() {
   return out;
 }
 
-// The pinned Troops Stats card: Set bonus (3-piece / 6-piece) as 2 small
-// boxes (a slim line when pinned) over the 3 troops' ATK & DEF in one row.
+// Chief Gear's Troops Stats (design G1-B, owner 3 Nov 2026): the 3 troops'
+// ATK & DEF boxes, the set bonus (3-piece / 6-piece, all troops) as 2 chips under them.
 function updateChiefGearCurrentStats() {
   const el = document.getElementById("gearCurrentStats");
   if (!el || !CHIEF_GEAR_ROWS) return;
   const statByTroop = computeChiefGearRawStat(CHIEF_GEAR_STATE);
   const maxByTroop = computeChiefGearRawStat(maxedChiefGearState());
   const { threeBonus, sixBonus } = computeChiefGearSetBonus(CHIEF_GEAR_STATE);
-  const setBox = (label, v) => `<div class="plx-stat"><span>${esc(label)}</span><b style="color:${v ? "var(--good)" : "var(--muted)"};">${v ? bidiNum(`+${v}%`) : esc(t("not_active"))}</b></div>`;
-  const slim = (v, stat) => (v ? `<b style="color:var(--good);">${bidiNum(`+${v}%`)}</b> ${stat}` : `<span class="meta">${stat} ${esc(t("not_active"))}</span>`);
-  el.innerHTML = `<div class="cg-pin-h"><b>${esc(t("troops_stats_title"))}</b> <span class="meta">· ATK &amp; DEF</span></div>
-    <div class="plx-stats one cg-setboxes" style="--n:2;">${setBox(t("three_piece_def"), threeBonus)}${setBox(t("six_piece_atk"), sixBonus)}</div>
-    <div class="cg-setline">${esc(t("cg_set_bonus"))} ${slim(threeBonus, "DEF")} &middot; ${slim(sixBonus, "ATK")}</div>
-    ${plxStatBoxesHtml(PLX_TROOPS.map((tr) => ({ label: troopDisplayName(tr), val: (statByTroop[tr] || {}).Attack || 0, max: (maxByTroop[tr] || {}).Attack || 0, dp: 2 })), true)}`;
+  const chip = (label, v, stat) => `<span class="cg-set"><span>${esc(label)}</span>${v ? `<b>${bidiNum(`+${v}%`)} ${stat}</b>` : `<b class="off">${esc(t("not_active"))}</b>`}</span>`;
+  el.innerHTML = `${plxStatBoxesHtml(PLX_TROOPS.map((tr) => ({ label: troopDisplayName(tr), val: (statByTroop[tr] || {}).Attack || 0, max: (maxByTroop[tr] || {}).Attack || 0, dp: 2 })), true)}
+    <div class="cg-sets" title="${esc(t("cg_set_all_troops"))}">${chip(t("cg_set3"), threeBonus, "DEF")}${chip(t("cg_set6"), sixBonus, "ATK")}</div>`;
 }
 
 // ============================================================
