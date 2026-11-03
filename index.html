@@ -3182,6 +3182,16 @@ input,select,textarea{
     .dash-fit .rc-sh{ white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }
     .qk-chip{ width:70px; }
   }
+  /* Chief Gear's top box on other planner pages (phones). */
+  .g1-top .g1-st:empty, .g1-top .g1-can[hidden], .g1-top .g1-bp:empty{ display:none; }
+  .g1-top .g1-st .plx-tsw{ margin:0; position:static; border:0; padding:0; background:none; box-shadow:none; }
+  .g1-top .g1-bp .bs-tiles{ grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); }
+  .g1-top .g1-st > .t12x-card, .g1-top #refineStats{ border:0; padding:0; background:none; margin:0; }
+  .g1-top .g1-can{ margin-top:8px; }
+  .g1-top .g1-can .rch-sum{ border:0; background:none; padding:0; margin:0; }
+  .g1-top .g1-bp .bs-foot{ margin-bottom:6px; }
+  .g1-top .g1-bp .bs-foot > span:first-child{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  @media (max-width: 900px){ .g1:has(.g1-top) .t12x-amts{ display:none !important; } }
 </style>
 </head>
 <body>
@@ -17422,9 +17432,35 @@ function infoize(root) {
   root.querySelectorAll(".info-d").forEach((d) => { if (!free(d)) return; const card = d.closest(".panel, .t12x-card"); infoAttach(card && card.querySelector(".info-h"), d); });
   root.querySelectorAll(".pk-zone-note").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".page-head h2"), d); });
 }
+// Chief Gear's top box on the other planner pages (owner, 3 Nov 2026, after the
+// mock-up): on phones one card at the top holds the stats (troop switch), "Can do
+// now" and the Backpack boxes with Trades / Pack cost. The page's own elements move
+// in (their redraws keep working: anything redrawn outside is moved in again).
+const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "" };
+const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
+function plxTopBox(root) {
+  if (!(TAB in TOPBOX_TABS) || !TOPBOX_MQ.matches) return;
+  const shell = root.querySelector(".t12x.g1:not(.cg1)"), main = shell && shell.querySelector(".t12x-main");
+  if (!main) return;
+  let box = main.querySelector(":scope > .g1-top");
+  if (!box) {
+    box = document.createElement("div");
+    box.className = "panel cg-ans g1-top";
+    box.innerHTML = `<div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
+    main.insertBefore(box, main.firstChild);
+  }
+  const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
+  put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats"));
+  const sums = [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
+  if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
+  const amts = shell.querySelector(".t12x-amts > [id]");
+  put(box.querySelector(".g1-bp"), amts);
+  box.querySelector(".g1-can").hidden = !box.querySelector(".g1-can").innerHTML.trim();
+}
+TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); });
 {
   let queued = false;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) infoize(c); };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
