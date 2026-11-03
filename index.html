@@ -1928,10 +1928,11 @@ input,select,textarea{
   @media (max-width: 900px){
     .cg1 .t12x-amts{ display:none !important; }
     .cg1 .t12x-buy{ display:none; }
-    .cg1 .t12x-buy.cg-open{ display:block; position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.55); }
-    .cg1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
-    .cg1 .cg-open .cg-sh-h b{ font-size:15px; }
-    .cg1 .t12x-buy[data-cgshow="trades"] #gearOwned_rows_packs, .cg1 .t12x-buy[data-cgshow="packs"] #gearOwned_rows_trades{ display:none; }
+    .g1 .t12x-buy.cg-open{ display:block; position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.55); }
+    .g1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .g1 .cg-open .cg-sh-h b{ font-size:15px; }
+    .g1 .t12x-buy[data-cgshow="trades"] [id$="_packs"], .g1 .t12x-buy[data-cgshow="packs"] [id$="_trades"]{ display:none; }
+    .g1:not(.cg1) .t12x-buy{ display:none; }
   }
   .cg-sabox[hidden]{ display:none; }
   /* One look for the small buttons and chips on Chief Gear (owner, 3 Nov 2026:
@@ -1975,7 +1976,7 @@ input,select,textarea{
     .cg1 .cg-pc .cg-badge, .cg1 .cg-pc .cg-tgt{ font-size:11px; }
     .cg1 .cg-pc .cg-nm{ font-size:clamp(12px, 3.2vw, 13.5px); }
     /* the Pack cost / Trades window */
-    .cg1 .cg-sh-h .rfa-x{ width:44px; height:44px; }
+    .g1 .cg-sh-h .rfa-x{ width:44px; height:44px; }
     .pca-scope .seg button{ min-height:44px; }
     .pca-tg input[type=date]{ height:44px; }
     .pca-x{ width:44px; height:44px; }
@@ -1997,14 +1998,15 @@ input,select,textarea{
   /* Pack cost sheet on phones: the title, target and plan boxes stay, only the
      pack list scrolls (owner, 3 Nov 2026). */
   @media (max-width: 900px){
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"]{ display:flex; flex-direction:column; overflow:hidden; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] [data-buybody],
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] #gearOwned_rows_packs,
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card,
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card{ margin-top:0; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card > *:not(.pc-sec), .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec > *:not(.pc-list){ flex:none; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-list{ flex:1 1 auto; min-height:80px; overflow-y:auto; overscroll-behavior:contain; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"]{ display:flex; flex-direction:column; overflow:hidden; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] [data-buybody],
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] [id$="_packs"],
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] [id$="Packs"],
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card,
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card{ margin-top:0; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card > *:not(.pc-sec), .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec > *:not(.pc-list){ flex:none; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-list{ flex:1 1 auto; min-height:80px; overflow-y:auto; overscroll-behavior:contain; }
   }
   /* Pack cost design A (owner picked, 3 Nov 2026; PACK_COST_A_KEYS). */
   .pca .pc-plans{ margin:6px 0 8px; }
@@ -2047,10 +2049,10 @@ input,select,textarea{
   /* In Chief Gear's Pack cost window: one title (the window's), no card inside
      the card, and one fixed size whichever plan is picked (owner, 3 Nov 2026). */
   @media (max-width: 900px){
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"]{ height:84vh; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-head{ display:none; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card{ padding:0; border:0; background:none; }
-    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pca .pc-list{ margin:6px -12px 0; padding:0 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"]{ height:84vh; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-head{ display:none; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card{ padding:0; border:0; background:none; }
+    .g1 .t12x-buy.cg-open[data-cgshow="packs"] .pca .pc-list{ margin:6px -12px 0; padding:0 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
   }
   /* PC: the pieces use the room (owner, 3 Nov 2026: "gears still tight together"). */
   @media (min-width: 901px){
@@ -3043,6 +3045,40 @@ input,select,textarea{
     [data-refinerowfor] > input{ grid-column:1; grid-row:2; width:76px !important; }
     [data-refinerowfor] > div{ grid-column:2; grid-row:2; min-width:0 !important; }
   }
+  /* (i) bubbles next to titles (any page). */
+  .has-info{ position:relative; }
+  .has-info > .cg-tip{ text-transform:none; letter-spacing:0; text-align:start; white-space:normal; }
+  .has-info > .cg-tip > *{ margin:0; font-size:inherit; color:inherit; }
+  /* Planner pages = Chief Gear pattern on phones: Trades / Pack cost buttons
+     beside the Backpack title open the card as a window. */
+  .plx-bpb{ display:none; }
+  @media (max-width: 900px){
+    .g1:not(.cg1) .plx-bpb{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:8px; width:100%; margin:4px 0 0; }
+    .g1:not(.cg1) .plx-bpb .cg-bpbtn{ min-height:40px; border-radius:10px; }
+    .g1:not(:has(.t12x-buy [id$="_trades"]:not(:empty))) [data-plxsheet="trades"]{ display:none; }
+    .g1 .t12x-buy.cg-open{ display:block; }
+  }
+  /* "Can do now" on every page (Chief Gear look). */
+  .rch-cg{ padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
+  .rch-cg .cg-sh{ margin-bottom:4px; }
+  .rch-cg .rch-seg{ margin-inline-start:auto; }
+  .rch-cg .rch-key{ margin:0; font-size:12px; color:var(--frost); }
+  .rch-cg .cg-show, .rch-cg .cg-ed, .rch-cg .rch-seg{ box-sizing:border-box; height:32px; border-radius:10px; }
+  .rch-cg .rch-seg button{ min-height:0; height:30px; }
+  @media (max-width: 900px){ .rch-cg .cg-show, .rch-cg .cg-ed, .rch-cg .rch-seg{ height:40px; min-height:40px; } .rch-cg .cg-ed{ width:40px; } .rch-cg .rch-seg button{ height:38px; } }
+  .has-info > .cg-tip > * + *{ margin-top:6px; }
+  .rch-cg .cg-sh{ flex-wrap:wrap; row-gap:6px; }
+  .rch-cg .rch-seg button{ white-space:nowrap; }
+  .exp-sigf{ margin-top:10px; border-top:1px solid var(--line); }
+  .exp-sigf > summary{ display:flex; align-items:center; gap:8px; min-height:40px; list-style:none; cursor:pointer; }
+  .exp-sigf > summary::-webkit-details-marker{ display:none; }
+  .exp-sigf > summary .sh{ font-size:12.5px; font-weight:700; color:var(--danger); }
+  .exp-sigf > summary .ok{ font-size:12.5px; font-weight:700; color:var(--good); }
+  .exp-sigf-c{ margin-inline-start:auto; color:var(--muted); transition:transform .15s; }
+  .exp-sigf:not([open]) .exp-sigf-c{ transform:rotate(-90deg); }
+  .exp-sigf > .bs-tiles{ margin:4px 0 6px; }
+  .rch-cg .rch-ctl{ display:flex; align-items:center; gap:6px; margin-inline-start:auto; }
+  .rch-cg .rch-ctl .rch-seg{ margin:0; }
 </style>
 </head>
 <body>
@@ -5710,6 +5746,8 @@ const T = {
   pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy lets you pick the dates." },
   pur_sug_none: { en: "Nothing else to buy: your plans are covered." },
   set_info: { en: "What these settings do" },
+  info_more: { en: "More about this" },
+  exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
   pur_sug_total: { en: "Suggested total" },
@@ -8675,15 +8713,15 @@ function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
   const first = plan.first ? `${esc(materialDisplayName(itemShortName(plan.first)))}` : "";
   const leftN = plan.first ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
   const fmtN = (n) => (/\(minutes\)$/.test(plan.first || "") ? bsTime(n) : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
-  return `<div class="rch-sum">
-    <div class="rch-sum-t">&#127890; ${esc(tracks.length ? t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)) : t("rch_sum_done"))}${first ? ` · <b class="rch-first">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</b>` : ""}</div>
-    <div class="rch-sum-c">
-      <div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
-      ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="linklike rch-edit" data-rchedit>${esc(t("rch_edit_order"))}</button>` : ""}
-      ${allKey ? `<button type="button" class="rch-allbtn" data-rchall="${esc(allKey)}">${esc(t("rch_all_btn"))}</button>` : ""}
-    </div>
+  // Same look as Chief Gear's "Can do now" (owner, 3 Nov 2026: pages follow Chief Gear).
+  const head = tracks.length ? t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)) : t("rch_sum_done");
+  return `<div class="rch-sum rch-cg">
+    <div class="cg-sh"><span class="cg-k has-info">${esc(t("cg_can_now"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden><span class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</span></span></span>
+      <span class="rch-ctl"><div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+      ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="cg-ed" data-rchedit aria-label="${esc(t("rch_edit_order"))}" title="${esc(t("rch_edit_order"))}">&#9998;</button>` : ""}</span></div>
+    <div class="cg-can-l"><div class="cg-can-t"><b>${esc(head)}</b>${first ? `<small class="am">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</small>` : ""}</div>
+      ${allKey ? `<button type="button" class="btn small ghost cg-show" data-rchall="${esc(allKey)}">${esc(t("cg_show"))} &#8250;</button>` : ""}</div>
     ${(plan.tradeSum || []).length ? `<div class="rch-trades">&#8644; ${esc(t("rch_trades"))} ${reachTradeText(plan.tradeSum)}</div>` : ""}
-    <div class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</div>
   </div>`;
 }
 // "1,340 Design → 134 Amber · 20 Polish → 1,000 Alloy" (trades "can reach" used).
@@ -17241,7 +17279,116 @@ let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole am
 const PACK_COST_OPEN = {};
 const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
 const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
-const packCostShown = (calcKey, v) => { if (PACK_COST_SHOWN[calcKey] === v) return; PACK_COST_SHOWN[calcKey] = v; if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey](); };
+const packCostShown = (calcKey, v) => {
+  if (PACK_COST_SHOWN[calcKey] === v) return;
+  PACK_COST_SHOWN[calcKey] = v;
+  if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey]();
+  document.querySelectorAll(`[data-plxprice="${CSS.escape(calcKey)}"]`).forEach((b) => { b.innerHTML = plxPriceLabel(calcKey); });
+};
+// (i) squares (owner, 3 Nov 2026: "any description for any page or header
+// inside an i square like Chief Gear"): page descriptions, card descriptions
+// and the Backpack colour help move into a bubble behind an (i) next to their
+// title. The text node itself moves (ids and later updates keep working).
+// Tap opens / closes, a tap elsewhere or Esc closes, a mouse shows it on hover.
+const INFO_SVG = '<svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="1.6" r="1.3"/><path d="M3.5 3.9H5.75V8.9H6.6V10H3.4V8.9H4.25V4.8H3.5Z"/></svg>';
+function infoAttach(host, node) {
+  if (!host || !node) return;
+  const had = host.querySelector(":scope > [data-infotip]");
+  if (had) { // a second text for the same title: newer copies replace older ones of the same kind
+    had.querySelectorAll(":scope > *").forEach((x) => { if (x.className === node.className) x.remove(); });
+    had.appendChild(node);
+    return;
+  }
+  host.classList.add("has-info");
+  host.insertAdjacentHTML("beforeend", `<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden></span>`);
+  host.querySelector(":scope > [data-infotip]").appendChild(node);
+}
+function infoize(root) {
+  const free = (d) => !d.closest(".cg-tip");
+  root.querySelectorAll(".page-head p.desc").forEach((d) => { if (!free(d)) return; const ph = d.closest(".page-head"); infoAttach(ph && ph.querySelector("h2"), d); });
+  root.querySelectorAll(".bs-help").forEach((d) => { if (!free(d)) return; const card = d.closest(".t12x-card, .panel, .t12x-amts"); infoAttach(card && card.querySelector(".bs-foot > span:first-child"), d); });
+  root.querySelectorAll(".panel > p.desc, .panel > div.desc, .t12x-card > p.desc, .t12x-card > div.desc").forEach((d) => {
+    if (!free(d)) return;
+    let h = d.previousElementSibling;
+    if (h && !/^H[1-4]$/.test(h.tagName) && !h.matches(".t12x-title, .t12x-k, .cg-k")) h = h.querySelector("h2, h3, .t12x-title");
+    if (h && (/^H[1-4]$/.test(h.tagName) || h.matches(".t12x-title, .t12x-k, .cg-k"))) infoAttach(h, d);
+  });
+  root.querySelectorAll(".t12x-card p.desc, .panel p.desc").forEach((d) => { if (!free(d)) return; const card = d.closest(".t12x-card, .panel"); infoAttach(card.querySelector(".t12x-title, h2, h3"), d); });
+  root.querySelectorAll(".plx-head + p.desc, .plx-head + .desc, .pur-how").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".plx-head h2, .page-head h2"), d); });
+  root.querySelectorAll("details > summary ~ .pur-wc-desc").forEach((d) => { if (!free(d)) return; infoAttach(d.closest("details").querySelector(":scope > summary"), d); });
+  root.querySelectorAll(".pk-zone-note").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".page-head h2"), d); });
+}
+{
+  let queued = false;
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) infoize(c); };
+  const c = document.getElementById("content");
+  if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
+  let pinned = null;
+  const show = (b, on) => {
+    const tip = b.nextElementSibling;
+    if (!tip || !tip.matches("[data-infotip]")) return;
+    tip.hidden = !on; b.setAttribute("aria-expanded", String(on));
+    if (on) {
+      const host = b.parentElement, hb = host.getBoundingClientRect(), bb = b.getBoundingClientRect();
+      const rtl = document.documentElement.dir === "rtl";
+      // keep the bubble on screen: start it at the host, or further in when the (i) is far along
+      const room = window.innerWidth - 16;
+      tip.style.insetInlineStart = "0px";
+      const tb = tip.getBoundingClientRect();
+      let shift = 0;
+      if (!rtl && tb.right > room) shift = room - tb.right;
+      if (rtl && tb.left < 16) shift = tb.left - 16;
+      tip.style.insetInlineStart = `${shift}px`;
+      const x = rtl ? hb.right - bb.right : bb.left - hb.left;
+      tip.style.setProperty("--cg-tip-x", `${Math.max(4, Math.round(x - shift + bb.width / 2 - 5))}px`);
+    }
+  };
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-info]");
+    if (!b) return;
+    e.preventDefault(); // an (i) inside a fold-out heading doesn't open the fold
+    if (pinned && pinned !== b) show(pinned, false);
+    const open = pinned !== b;
+    show(b, open); pinned = open ? b : null;
+  });
+  document.addEventListener("pointerdown", (e) => { if (pinned && !pinned.contains(e.target) && !(pinned.nextElementSibling || {}).contains?.(e.target)) { show(pinned, false); pinned = null; } }, true);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && pinned) { show(pinned, false); pinned = null; } });
+  document.addEventListener("pointerover", (e) => { const b = e.target.closest && e.target.closest("[data-info]"); if (b && e.pointerType === "mouse" && pinned !== b) show(b, true); });
+  document.addEventListener("pointerout", (e) => { const b = e.target.closest && e.target.closest("[data-info]"); if (b && e.pointerType === "mouse" && pinned !== b) show(b, false); });
+}
+let EXP_SIG_OPEN = false; // Experts Level sigils fold, kept for the visit
+document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("[data-expsig]")) EXP_SIG_OPEN = e.target.open; }, true);
+// Planner pages (Chief Gear pattern, owner 3 Nov 2026): "⇄ Trades ›" and
+// "$ <price> ›" beside the Backpack title open the Trades / Pack cost card as a
+// window on phones (on PC the card stays in the side column).
+const plxPriceLabel = (calcKey) => `$ ${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
+function plxBuyBtnsHtml(calcKey) {
+  if (calcKey === "chief_gear") return "";
+  return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("trade_title"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
+}
+document.addEventListener("click", (e) => {
+  const shell = e.target.closest(".t12x.g1:not(.cg1)");
+  if (!shell) return;
+  const buy = shell.querySelector(".t12x-buy"), bd = shell.querySelector("[data-plxbd]");
+  if (!buy) return;
+  const to = (which) => {
+    buy.classList.toggle("cg-open", !!which);
+    buy.dataset.cgshow = which || "";
+    const tt = buy.querySelector("[data-cgbuyt]");
+    if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `$ ${esc(t("pack_cost_title"))}`;
+    if (bd) bd.hidden = !which;
+    if (which) buy.scrollTop = 0;
+  };
+  const b = e.target.closest("[data-plxsheet]");
+  if (b) {
+    const which = b.dataset.plxsheet, pb = shell.querySelector("[data-plxprice]"), key = pb && pb.dataset.plxprice;
+    if (which === "packs" && key && PACK_COST_OPEN[key] !== true) { const tg = buy.querySelector("[data-packtoggle]"); if (tg) tg.click(); }
+    if (window.matchMedia("(max-width: 900px)").matches) to(which);
+    else buy.scrollIntoView({ block: "start", behavior: "smooth" });
+    return;
+  }
+  if (e.target.closest("[data-cgclose]") || e.target.closest("[data-plxbd]")) to(null);
+});
 const PACK_PLAN_PICK = {}; // card layout: which plan's packs are listed, per page
 const PACK_COST_VIEW = {};
 // Which view the Pack cost box opens on (the switch still changes it):
@@ -21968,7 +22115,8 @@ const PACK_COST_CARD_KEYS = new Set(["experts", "experts_research"]);
 // done date, N packs), the target, then each pack with its main item's
 // picture, real name, how often it comes back, what it gives and its price,
 // trades with pictures, and "Only <page> | With my other pages". Chief Gear first.
-const PACK_COST_A_KEYS = new Set(["chief_gear"]);
+// Design A on every page's Pack cost (owner, 3 Nov 2026: pages follow Chief Gear).
+const PACK_COST_A_KEYS = { has: () => true };
 const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center", "chief_gear", "charm", "hero_gear", "pets", "pets_refine"]);
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
@@ -22160,7 +22308,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   };
   // Short summary: items still missing (with how much), ready ones as chips.
   // "Amounts from your Backpack · Show all / edit" line.
-  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
+  const footHtml = () => `<div class="bs-foot"><span>${Object.keys(link.bp).length ? `&#127890; ${esc(t("bs_from_backpack"))}` : `&#127890; ${esc(t("bs_your_amounts"))}`}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL[calcKey] !== false ? "bs_hide" : "bs_show_all"))}</button>${plxBuyBtnsHtml(calcKey)}</div>`;
   const summaryHtml = () => {
     const needOf = (n) => groups.reduce((sum, g) => sum + (Number((g.totals || {})[n]) || 0), 0);
     const amount = (n, v) => (/\(minutes\)$/.test(n) ? t12FormatTime(v / 60) : shortAmount(v));
@@ -25338,10 +25486,10 @@ async function renderExpertsResearchPage() {
     mainHtml: `<div id="expResearchSwipeCounter"></div>
     <div id="expResearchGrid"></div>`,
   });
-  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span></div>
+  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
     <div id="expResearchOwned"></div>
 `;
-  document.getElementById("expResearchAmounts_buy").innerHTML = `<div id="expResearchPacks"></div>`;
+  { const b = document.getElementById("expResearchAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expResearchPacks"></div>`; }
 
   const sigilsEl = document.getElementById("expResearchSigils");
   const totalsEl = document.getElementById("expResearchTotals");
@@ -25420,7 +25568,7 @@ async function renderExpertsResearchPage() {
     const tileNeed = { General: { need: sigilShortfall, short: stillSigil } };
     EXPERTS_IN_ORDER.forEach((ex) => { tileNeed[ex] = { need: isResearchUnlocked(ex) ? Math.max(1, sigilNeededByExpert[ex] || 0) : 0, short: Math.max(0, (sigilNeededByExpert[ex] || 0) - ownedLeft[ex]) }; });
     document.getElementById("expResearchOwned").innerHTML = `${bsHelpHtml(Object.values(tileNeed).some((n) => !(n.need > 0)), false, false)}${expertSigilTilesHtml(invSaved, [{ key: "General", img: "icons/item_icon_570000.png" }].concat(EXPERTS_IN_ORDER.map((ex) => EXPERTS_LIST.find((e) => e.key === ex) || { key: ex })), tileNeed)}
-      <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
+      <div class="bs-help bs-note">${esc(t("experts_sigils_summary_note"))}</div>`;
     const sigilTotals = {};
     EXPERTS_IN_ORDER.forEach((expert) => { const short = Math.max(0, (sigilNeededByExpert[expert] || 0) - ownedLeft[expert]); if (short > 0) sigilTotals[`${expert} Sigils`] = short; });
     const packGroups = [{ label: null, totals: sigilTotals }];
@@ -25876,7 +26024,7 @@ async function renderExpertsPage() {
     <div id="expertsTime"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
 `;
-  document.getElementById("expertsAmounts_buy").innerHTML = `<div id="expertsPacks"></div>`;
+  { const b = document.getElementById("expertsAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expertsPacks"></div>`; }
 
   const statHeaderEl = document.getElementById("expertsStatHeader");
   function addLevelBaseToTotals(totals, hero, includeTalent, useTarget) {
@@ -26103,7 +26251,7 @@ async function renderExpertsPage() {
     Object.keys(AFFINITY_ITEM_VALUE).forEach((n) => { tileNeed[n] = { need: totalAffinity, short: affShort, aff: true }; });
     if (document.getElementById("expertsInventory").firstChild) renderInventory();
     bsFoldMark(footEl, BAR_SHOW_ALL.experts === false);
-    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button></div>`;
+    footEl.innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t(Object.keys(bpLink.bp).length ? "bs_from_backpack" : "bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(BAR_SHOW_ALL.experts !== false ? "bs_hide" : "bs_show_all"))}</button>${plxBuyBtnsHtml("experts").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>`;
     totalsEl.innerHTML = `${rows.length ? "" : `<div class="meta" style="margin-bottom:8px;">${esc(t("bs_nothing"))}</div>`}
       <div class="bs-box"><div class="bs-sq" style="--n:${Math.max(1, Math.min(7, rows.length))};">
       ${short.map((r) => `<div class="bs-row"><img src="${esc(r.icon)}" alt="" /><div class="n">${esc(r.label)}<small>${esc(t("bs_have_of").replace("{have}", amt(r, r.have)).replace("{need}", amt(r, r.need)))}</small></div><b>${bsShortHtml(amt(r, r.need - r.have))}</b></div>`).join("")}
@@ -26487,9 +26635,12 @@ async function renderExpertsPage() {
     };
     const tilesHtml = fields.map((f) => (f === affItems[0] ? affHtml() : affItems.includes(f) ? "" : tile(f))).join("");
     invEl.innerHTML = `${bsHelpHtml(!!tileNeed && fields.some((f) => tileNeed[f] && !(tileNeed[f].need > 0)), false)}<div class="bs-tiles">${tilesHtml}</div>
-      <div class="t12x-k" style="margin:12px 0 6px;">${esc(t("experts_sigils_summary"))}</div>
-      ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}
-      <div class="meta" style="font-size:10px; margin-top:6px;">${esc(t("experts_sigils_summary_note"))}</div>`;
+      ${(() => { // folded (owner, 3 Nov 2026: less on the page); the line says how many are short
+        const sg = (tileNeed && tileNeed.sigils) || {}, sh = Object.values(sg).filter((x) => x && x.short > 0).length;
+        return `<details class="exp-sigf" data-expsig${EXP_SIG_OPEN ? " open" : ""}><summary><span class="t12x-k">${esc(t("experts_sigils_summary"))}</span><span class="${sh ? "sh" : "ok"}">${sh ? esc(t("exp_sig_short").replace("{n}", sh)) : "&#10003;"}</span><span class="exp-sigf-c">&#9662;</span></summary>
+      ${expertSigilTilesHtml(invSaved, EXPERTS_SHOWN, tileNeed && tileNeed.sigils)}</details>`;
+      })()}
+      <div class="bs-help bs-note">${esc(t("experts_sigils_summary_note"))}</div>`;
     invEl.querySelectorAll("[data-expedit]").forEach((btn) => btn.addEventListener("click", () => {
       const f = btn.dataset.expedit;
       const linkable = hasBp && backpackLinks("experts", f);
@@ -27388,7 +27539,9 @@ async function renderResearchCenterPage() {
       ${bases.map((base) => {
         const tracks = tracksOf([base]);
         const pct = pctOf(tracks);
-        const open = rcOpen[base] !== undefined ? rcOpen[base] : pct < 100;
+        // Less to scroll (owner, 3 Nov 2026): only the first unfinished group starts open.
+        const firstOpen = bases.find((b) => pctOf(tracksOf([b])) < 100);
+        const open = rcOpen[base] !== undefined ? rcOpen[base] : base === firstOpen;
         const left = costLine(sumNeed(tracks));
         return plxSectionHtml({ key: base, title: dataName(base), sub: `${t("t12x_nodes").replace("{n}", tracks.length)} · ${pct >= 100 ? t("t12x_all_maxed") : left}`, pct, open, maxKey: base,
           body: tracks.map((tr) => plxNodeHtml({ key: tr, label: tr.slice(base.length + 1), cur: RC_STATE[tr] || 0, max: RC_NODES_CACHE[tr].length, rel: rcLen(tr), target: rcTargetOf(tr), cost: costLine(computeNeeded(tr)) })).join("") });
@@ -27447,11 +27600,11 @@ function plxShellHtml(o) {
       <h2>${esc(o.title)}</h2>
       ${o.maxId ? `<button type="button" class="plx-maxbtn" id="${o.maxId}">&#9650; ${esc(t("max_everything"))}</button>` : ""}
     </div>
-    <div class="t12x">
+    <div class="t12x g1">
       <aside class="t12x-side">
         ${o.settings ? `<div class="t12x-card t12x-settings one-line${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">&#9881;<span class="t12x-kt"> ${esc(t("t12x_settings"))}</span>${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
         <div class="t12x-card t12x-amts"><div id="${o.amountsId}"></div></div>
-        <div class="t12x-card t12x-buy" id="${o.amountsId}_buy"></div>
+        <div class="t12x-card t12x-buy" id="${o.amountsId}_buy"><div class="cg-sh-h"><b data-cgbuyt></b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div><div data-buybody></div></div>
         ${o.sideExtra || ""}
       </aside>
       <div class="t12x-main">
@@ -27466,6 +27619,7 @@ function plxShellHtml(o) {
           ${o.topExtra || ""}
         </div>` : ""}
         ${o.mainHtml || ""}
+        <div class="cg-bd" data-plxbd hidden></div>
       </div>
     </div>`;
 }
