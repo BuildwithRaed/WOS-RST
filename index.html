@@ -3545,6 +3545,37 @@ input,select,textarea{
   /* Experts Research like Experts Level (owner, 3 Nov 2026) */
   .exp-nbs.one{ grid-template-columns:1fr; }
   .er-note{ font-size:12px; margin:0 0 8px; }
+
+  /* Dashboard troop stats = H3 with the owner's change (3 Nov 2026). Phone sizes are
+     written 2 px bigger: the phone layer takes 2 px off (11 px label, 16 px number). */
+  .dh3-k{ display:flex; align-items:center; gap:8px; margin:0 2px; font-size:14px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .dh3-k .has-info{ display:inline-flex; align-items:center; gap:7px; }
+  .dh3-u{ margin-inline-start:auto; font-size:14px; font-weight:600; letter-spacing:0; text-transform:none; }
+  .dh3-ts{ display:grid; grid-template-columns:minmax(0, 1fr); gap:0 16px; }
+  .dh3-th{ display:flex; align-items:center; gap:7px; margin:11px 2px 6px; font-size:14.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--tc); line-height:16px; }
+  .dh3-th::before{ content:""; width:3px; height:14px; border-radius:2px; background:var(--tc); flex:none; }
+  .dh3-bd{ margin-inline-start:auto; padding:12px 0; margin-top:-12px; margin-bottom:-12px; border:0; background:none; font:inherit; font-size:14.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--muted); white-space:nowrap; cursor:pointer; }
+  .dh3-b4{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+  .dh3-bx{ position:relative; overflow:hidden; display:block; width:100%; min-width:0; margin:0; padding:5px 5px 8px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .dh3-bx > *{ white-space:nowrap; }
+  .dh3-top{ display:flex; align-items:baseline; justify-content:space-between; gap:2px; line-height:14px; }
+  .dh3-l{ font-size:13px; font-weight:700; color:var(--muted); }
+  .dh3-top em{ font-size:13px; font-weight:700; font-style:normal; letter-spacing:-.02em; color:var(--amber); }
+  .dh3-top em.ok{ color:var(--good); }
+  .dh3-bx b{ display:block; margin-top:2px; font-size:18px; font-weight:800; line-height:19px; letter-spacing:-.01em; }
+  .dh3-max{ display:block; margin-top:1px; font-size:13.5px; line-height:14px; color:var(--muted); }
+  .dh3-bar{ position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(224,160,48,.55); }
+  .dh3-bar i{ display:block; height:100%; background:var(--tc); }
+  /* Wider screens: roomier boxes (the phone layer doesn't reach here) */
+  @media (min-width: 701px){
+    .dh3-k, .dh3-u{ font-size:12.5px; }
+    .dh3-th, .dh3-bd{ font-size:13px; }
+    .dh3-b4{ gap:8px; }
+    .dh3-bx{ padding:8px 10px 11px; border-radius:12px; }
+    .dh3-l, .dh3-top em{ font-size:13px; }
+    .dh3-bx b{ margin-top:4px; font-size:22px; line-height:26px; }
+    .dh3-max{ margin-top:2px; font-size:13px; }
+  }
 </style>
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller (owner, 3 Nov 2026: "make
@@ -6332,6 +6363,8 @@ const T = {
   set_info: { en: "What these settings do" },
   info_more: { en: "More about this" },
   dash_breakdown: { en: "Breakdown" },
+  dash_all_pct: { en: "all in %" },
+  dash_tap_box: { en: "Each box: + what's left to max (top right), your current value, and / the max. Tap a box for that stat's full breakdown." },
   exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
@@ -7236,6 +7269,10 @@ function fitDashToScreen() {
   const el = document.getElementById("troopSections"), box = el && el.closest(".dash-fit");
   if (!el || !box) return;
   el.style.minHeight = ""; box.style.removeProperty("--sx");
+  // The Dashboard may scroll now (owner's design rule 5, 3 Nov 2026) and the H3 troop
+  // boxes have their own sizes, so nothing is stretched to fill the screen any more
+  // (it grew the roster and left an empty space under the stats).
+  if (el.querySelector(".dh3")) return;
   if (innerWidth > 700) return;
   const room = () => innerHeight - 10 - (el.getBoundingClientRect().bottom + scrollY);
   const extra = room();
@@ -8147,23 +8184,29 @@ async function renderOverview(opts = {}) {
   const DASH_TROOP_COLORS = { Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" };
   // Stats in one row under the roster: three narrow columns (also on phones).
   const DASH_SHORT = { ATT: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
-  const statsHtml = () => `<div class="dash-troops cols">${TROOP_TYPES.map((tt) => `
-    <div class="t12x-card dash-troop" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
-      <div class="dash-troop-h"><span>${esc(troopDisplayName(tt.key))}</span><button type="button" class="dash-bd" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}">${esc(t("dash_breakdown"))} &#8250;</button></div>
-      ${STATS.map((st) => {
+  // Troop stats = H3 with the owner's change (owner, 3 Nov 2026: "4 boxes for each
+  // type of troops horizontal", then "the difference top right, max bottom, the
+  // current"): a row of 4 boxes per troop; each box: the stat and "+ left" on top,
+  // the current value big, "/ max" under it, a bar along its bottom edge (troop
+  // colour = now, amber = what's left). All in %, said once in the header.
+  const statsHtml = () => `<div class="dh3">
+    <div class="dh3-k"><span class="has-info">${esc(t("troops_stats_title"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden>${esc(t("dash_tap_box"))}</span></span><span class="dh3-u"><bdi>${esc(t("dash_all_pct"))}</bdi></span></div>
+    <div class="dh3-ts">${TROOP_TYPES.map((tt) => `<div class="dh3-t" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
+      <div class="dh3-th"><span>${esc(troopDisplayName(tt.key))}</span><button type="button" class="dh3-bd" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}">${esc(t("dash_breakdown"))} &#8250;</button></div>
+      <div class="dh3-b4">${STATS.map((st) => {
         const { total } = statFor(tt.key, st.key);
         const maxTotal = maxStatFor(tt.key, st.key);
         const pct = maxTotal > 0 ? Math.min(100, (total / maxTotal) * 100) : 0;
         const diff = Math.max(0, maxTotal - total);
-        return `<button type="button" class="dash-stat" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(tStatLabel(st.label))}">
-          <span class="dash-stat-k"><span>${esc(DASH_SHORT[st.key] || tStatLabel(st.label))}</span><small>/ ${maxTotal.toFixed(0)}%</small></span>
-          <span class="dash-stat-v"><b>${total.toFixed(1)}%</b></span>
-          <span class="dash-stat-bar"><i style="width:${pct}%;"></i></span>
-          <span class="dash-stat-gap">${diff > 0 ? `+${diff.toFixed(1)}%` : "&#10003;"}</span>
+        return `<button type="button" class="dh3-bx" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(`${tStatLabel(st.label)}: ${total.toFixed(1)}% / ${maxTotal.toFixed(0)}%`)}">
+          <span class="dh3-top"><span class="dh3-l">${esc(DASH_SHORT[st.key] || tStatLabel(st.label))}</span>${diff > 0.05 ? `<em>+${bidiNum(diff.toFixed(1))}</em>` : `<em class="ok">&#10003;</em>`}</span>
+          <b>${bidiNum(total.toFixed(1))}</b>
+          <span class="dh3-max">/ ${bidiNum(maxTotal.toFixed(0))}</span>
+          <span class="dh3-bar"><i style="width:${pct}%;"></i></span>
         </button>`;
-      }).join("")}
+      }).join("")}</div>
     </div>`).join("")}</div>
-    <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("click_full_breakdown"))}</div>`;
+  </div>`;
   sections.innerHTML = statsHtml();
   statPassMemo = null; // first paint done - recompute fresh from here on
   fitDashToScreen();
