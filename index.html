@@ -3546,32 +3546,34 @@ input,select,textarea{
   .exp-nbs.one{ grid-template-columns:1fr; }
   .er-note{ font-size:12px; margin:0 0 8px; }
 
-  /* Dashboard troop stats = H3 with the owner's change (3 Nov 2026). Phone sizes are
-     written 2 px bigger: the phone layer takes 2 px off (11 px label, 16 px number). */
+  /* Dashboard troop stats = boxes, vertical (owner, 3 Nov 2026): a column per troop, its
+     4 boxes going down. Phone sizes are written 2 px bigger: the phone layer takes 2 px
+     off (11.5 px label, 12 px left, 18 px number, 12 px max). */
   .dh3-k{ display:flex; align-items:center; gap:8px; margin:0 2px; font-size:14px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
   .dh3-k .has-info{ display:inline-flex; align-items:center; gap:7px; }
   .dh3-u{ margin-inline-start:auto; font-size:14px; font-weight:600; letter-spacing:0; text-transform:none; }
-  .dh3-ts{ display:grid; grid-template-columns:minmax(0, 1fr); gap:0 16px; }
-  .dh3-th{ display:flex; align-items:center; gap:7px; margin:11px 2px 6px; font-size:14.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--tc); line-height:16px; }
-  .dh3-th::before{ content:""; width:3px; height:14px; border-radius:2px; background:var(--tc); flex:none; }
-  .dh3-bd{ margin-inline-start:auto; padding:12px 0; margin-top:-12px; margin-bottom:-12px; border:0; background:none; font:inherit; font-size:14.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--muted); white-space:nowrap; cursor:pointer; }
-  .dh3-b4{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
-  .dh3-bx{ position:relative; overflow:hidden; display:block; width:100%; min-width:0; margin:0; padding:5px 5px 8px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .dh3-cols{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-top:8px; }
+  .dh3-col{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .dh3-ch{ display:flex; align-items:center; gap:4px; width:100%; min-width:0; margin:0; padding:6px 2px; border:0; border-bottom:2px solid var(--tc); border-radius:0; background:none; font:inherit; font-size:14.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--tc); text-align:start; cursor:pointer; }
+  .dh3-ch > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dh3-gt{ margin-inline-start:auto; color:var(--muted); font-weight:600; }
+  .dh3-bx{ position:relative; overflow:hidden; display:block; width:100%; min-width:0; margin:0; padding:6px 8px 9px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .dh3-bx > *{ white-space:nowrap; }
-  .dh3-top{ display:flex; align-items:baseline; justify-content:space-between; gap:2px; line-height:14px; }
-  .dh3-l{ font-size:13px; font-weight:700; color:var(--muted); }
-  .dh3-top em{ font-size:13px; font-weight:700; font-style:normal; letter-spacing:-.02em; color:var(--amber); }
+  .dh3-top{ display:flex; align-items:baseline; justify-content:space-between; gap:4px; line-height:15px; }
+  .dh3-l{ font-size:13.5px; font-weight:700; color:var(--muted); }
+  .dh3-top em{ font-size:14px; font-weight:700; font-style:normal; letter-spacing:-.02em; color:var(--amber); }
   .dh3-top em.ok{ color:var(--good); }
-  .dh3-bx b{ display:block; margin-top:2px; font-size:18px; font-weight:800; line-height:19px; letter-spacing:-.01em; }
-  .dh3-max{ display:block; margin-top:1px; font-size:13.5px; line-height:14px; color:var(--muted); }
+  .dh3-bx b{ display:block; margin-top:2px; font-size:20px; font-weight:800; line-height:21px; letter-spacing:-.01em; }
+  .dh3-max{ display:block; margin-top:1px; font-size:14px; line-height:15px; color:var(--muted); }
   .dh3-bar{ position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(224,160,48,.55); }
   .dh3-bar i{ display:block; height:100%; background:var(--tc); }
   /* Wider screens: roomier boxes (the phone layer doesn't reach here) */
   @media (min-width: 701px){
     .dh3-k, .dh3-u{ font-size:12.5px; }
-    .dh3-th, .dh3-bd{ font-size:13px; }
-    .dh3-b4{ gap:8px; }
-    .dh3-bx{ padding:8px 10px 11px; border-radius:12px; }
+    .dh3-cols{ gap:10px; }
+    .dh3-col{ gap:8px; }
+    .dh3-ch{ font-size:13px; }
+    .dh3-bx{ padding:8px 12px 11px; border-radius:12px; }
     .dh3-l, .dh3-top em{ font-size:13px; }
     .dh3-bx b{ margin-top:4px; font-size:22px; line-height:26px; }
     .dh3-max{ margin-top:2px; font-size:13px; }
@@ -6364,7 +6366,7 @@ const T = {
   info_more: { en: "More about this" },
   dash_breakdown: { en: "Breakdown" },
   dash_all_pct: { en: "all in %" },
-  dash_tap_box: { en: "Each box: + what's left to max (top right), your current value, and / the max. Tap a box for that stat's full breakdown." },
+  dash_tap_box: { en: "Each box: + what's left to max (top right), your current value, and / the max. Tap a box, or a troop's name, for the full breakdown." },
   exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
@@ -8184,16 +8186,17 @@ async function renderOverview(opts = {}) {
   const DASH_TROOP_COLORS = { Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" };
   // Stats in one row under the roster: three narrow columns (also on phones).
   const DASH_SHORT = { ATT: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
-  // Troop stats = H3 with the owner's change (owner, 3 Nov 2026: "4 boxes for each
-  // type of troops horizontal", then "the difference top right, max bottom, the
-  // current"): a row of 4 boxes per troop; each box: the stat and "+ left" on top,
-  // the current value big, "/ max" under it, a bar along its bottom edge (troop
-  // colour = now, amber = what's left). All in %, said once in the header.
+  // Troop stats = boxes, vertical (owner, 3 Nov 2026: "4 boxes for each type of
+  // troops", "the difference top right, max bottom, the current", then "vertical"):
+  // a column per troop (its name on top, tap = its breakdown) with its 4 boxes going
+  // down; each box: the stat and "+ left" on top, the current value big, "/ max"
+  // under it, a bar along its bottom edge (troop colour = now, amber = what's left).
+  // All in %, said once in the header.
   const statsHtml = () => `<div class="dh3">
     <div class="dh3-k"><span class="has-info">${esc(t("troops_stats_title"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden>${esc(t("dash_tap_box"))}</span></span><span class="dh3-u"><bdi>${esc(t("dash_all_pct"))}</bdi></span></div>
-    <div class="dh3-ts">${TROOP_TYPES.map((tt) => `<div class="dh3-t" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
-      <div class="dh3-th"><span>${esc(troopDisplayName(tt.key))}</span><button type="button" class="dh3-bd" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}">${esc(t("dash_breakdown"))} &#8250;</button></div>
-      <div class="dh3-b4">${STATS.map((st) => {
+    <div class="dh3-cols">${TROOP_TYPES.map((tt) => `<div class="dh3-col" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
+      <button type="button" class="dh3-ch" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}" title="${esc(t("dash_breakdown"))}"><span>${esc(troopDisplayName(tt.key))}</span><span class="dh3-gt" aria-hidden="true">&#8250;</span></button>
+      ${STATS.map((st) => {
         const { total } = statFor(tt.key, st.key);
         const maxTotal = maxStatFor(tt.key, st.key);
         const pct = maxTotal > 0 ? Math.min(100, (total / maxTotal) * 100) : 0;
@@ -8204,7 +8207,7 @@ async function renderOverview(opts = {}) {
           <span class="dh3-max">/ ${bidiNum(maxTotal.toFixed(0))}</span>
           <span class="dh3-bar"><i style="width:${pct}%;"></i></span>
         </button>`;
-      }).join("")}</div>
+      }).join("")}
     </div>`).join("")}</div>
   </div>`;
   sections.innerHTML = statsHtml();
