@@ -3289,6 +3289,76 @@ input,select,textarea{
   /* Dashboard B state card on narrow phones: day · Gen and the next-Gen line only
      (the Lucky Wheel chip ran off the edge; owner, 3 Nov 2026). */
   @media (max-width: 440px){ .dash-fit .sa-chip.sa-wheel{ display:none; } }
+
+  /* ---- Packs design B (owner, 3 Nov 2026): top card (search, Pack dates & prices),
+     a fold per category with slim rows, each pack in a full-screen window ---- */
+  .pkb-hbtns{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .pkb-add{ width:44px; min-width:44px; height:40px; padding:0; font-size:22px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
+  .pkb-top{ display:flex; flex-direction:column; gap:10px; padding:12px; margin:0 0 12px; border-color:rgba(111,211,242,.35); }
+  .pkb-search{ position:relative; display:block; margin:0; }
+  .pkb-search > span{ position:absolute; inset-inline-start:13px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.6; pointer-events:none; }
+  .pkb-search input{ width:100%; box-sizing:border-box; height:44px; min-height:44px; margin:0; padding:0 12px; padding-inline-start:38px; border-radius:12px; font-size:16px; }
+  .pkb-dp{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:8px 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--text); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-dp-ic{ font-size:18px; flex:0 0 auto; }
+  .pkb-dp-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
+  .pkb-dp-t b{ font-size:14px; }
+  .pkb-dp-t .meta{ font-size:12px; margin-inline-start:6px; }
+  .pkb-chev{ flex:0 0 auto; color:var(--muted); font-size:22px; line-height:1; }
+  .pkb-cats{ display:flex; flex-direction:column; gap:10px; }
+  .pkb-cat{ border:1px solid var(--line); border-radius:14px; background:var(--panel); overflow:hidden; }
+  .pkb-cat.open{ border-color:rgba(111,211,242,.35); }
+  .pkb-cat-h{ display:flex; align-items:center; gap:12px; width:100%; min-height:58px; padding:9px 12px; margin:0; border:0; border-radius:0; background:none; color:var(--text); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-cat.open .pkb-cat-h{ background:rgba(111,211,242,.07); }
+  .pkb-n{ flex:0 0 auto; min-width:40px; height:40px; padding:0 4px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--ice); font-weight:800; font-size:15px; }
+  .pkb-cat-t{ flex:1 1 auto; min-width:0; }
+  .pkb-cat-t b{ display:block; font-size:15px; line-height:1.3; }
+  .pkb-cat.open .pkb-cat-t b{ color:var(--ice); }
+  .pkb-cat-t small{ display:block; font-size:12px; color:var(--muted); margin-top:1px; }
+  .pkb-caret{ flex:0 0 auto; color:var(--muted); font-size:13px; }
+  .pkb-note{ padding:8px 12px; font-size:12px; border-top:1px solid var(--line); }
+  .pkb-row{ display:flex; align-items:center; gap:10px; padding:9px 10px 9px 12px; border-top:1px solid var(--line); cursor:pointer; }
+  .pkb-row:hover{ background:rgba(111,211,242,.05); }
+  .pkb-row:focus-visible{ outline:2px solid var(--ice); outline-offset:-2px; }
+  .pkb-ic{ flex:0 0 auto; width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font-size:20px; overflow:hidden; }
+  .pkb-ic img{ width:30px; height:30px; object-fit:contain; }
+  .pkb-ic .pk-ring{ transform:scale(.9); }
+  .pkb-m{ flex:1 1 auto; min-width:0; }
+  .pkb-m b{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.3; }
+  .pkb-m small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  .pkb-m small.pkb-hid{ color:var(--amber); }
+  .pkb-r{ flex:0 0 auto; text-align:end; max-width:44%; }
+  .pkb-r b{ display:block; font-size:13px; line-height:1.3; white-space:nowrap; }
+  .pkb-r small{ display:block; font-size:12px; color:var(--muted); white-space:nowrap; margin-top:2px; }
+  .pkb-r small.on{ color:var(--good); font-weight:700; }
+  .pkb-tk{ flex:0 0 auto; width:40px; height:40px; margin:0 -4px 0 0; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .pkb-tk input{ width:22px; height:22px; margin:0; cursor:pointer; }
+  .pkb-off .pkb-ic, .pkb-off .pkb-m, .pkb-off .pkb-r{ opacity:.45; }
+  .pkb-hidv .pkb-ic{ border-style:dashed; }
+  .pkb-more{ display:block; width:100%; min-height:44px; margin:0; padding:10px; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--ice); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+  .pkb-ov{ position:fixed; inset:0; z-index:70; display:flex; justify-content:center; align-items:stretch; background:rgba(3,7,13,.62); }
+  .pkb-ov[hidden]{ display:none; }
+  .pkb-sheet, .pkb-panel{ box-sizing:border-box; width:100%; max-width:760px; height:100%; margin:0; padding:0; display:flex; flex-direction:column; border:0; border-radius:0; background:var(--bg); box-shadow:none; }
+  .pkb-panel{ content-visibility:visible !important; contain:none !important; }
+  .pkb-panel > .pk-body, .pkb-sh-b{ flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:0 14px 28px; }
+  .pkb-sh-b{ padding-top:12px; }
+  .pkb-sh-h{ flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--line); font-size:17px; }
+  .pkb-panel .pk-ed-bar{ position:sticky; top:0; z-index:6; flex-wrap:wrap; row-gap:2px; margin:0 -14px 12px; padding:10px 14px; background:var(--bg); border-bottom:1px solid var(--line); }
+  .pkb-panel .pk-ed-bar [data-pt-title]{ font-size:17px !important; min-width:0 !important; }
+  .pkb-when{ flex:1 0 100%; padding-inline-start:50px; font-size:12px; color:var(--muted); }
+  .pkb-back{ flex:0 0 auto; width:40px; height:40px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:24px; line-height:1; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+  .pkb-panel .pk-tbl-wrap{ border:1px solid var(--line); border-radius:12px; }
+  .pkb-sec{ margin:12px 0; padding:2px 14px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+  .pkb-budrow{ display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:50px; font-size:14px; cursor:pointer; }
+  .pkb-used{ padding:10px 0 12px; border-top:1px solid var(--line); }
+  .pkb-k{ display:block; margin-bottom:6px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .pkb-panel details[data-packlink]{ margin-top:4px; padding-top:4px; border-top:0; }
+  .pkb-howrow select{ min-height:40px; font-size:14px; }
+  .pks-seg.pkb-hide{ display:none; }
+  .pkb-reset{ flex:0 0 auto; }
+  @media (min-width: 901px){
+    .pkb-ov{ align-items:center; padding:3vh 16px; }
+    .pkb-sheet, .pkb-panel{ height:94vh; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  }
 </style>
 </head>
 <body>
@@ -5825,6 +5895,17 @@ const T = {
   pk_trig_one_day: { en: "1 day" },
   pk_hide_visitors: { en: "Hide this table from visitors" },
   pk_hidden_tag: { en: "Hidden from visitors" },
+  pkb_search: { en: "Search packs or items (e.g. Steel)" },
+  pkb_dates_prices: { en: "Pack dates & prices" },
+  pkb_dated_n: { en: "{n} dated packs" },
+  pkb_on_now: { en: "on now" },
+  pkb_next: { en: "next {date}" },
+  pkb_free: { en: "Free" },
+  pkb_show_more: { en: "Show {n} more" },
+  pkb_counted_all: { en: "all {n} counted in Budgets" },
+  pkb_counted_some: { en: "{n} of {m} counted in Budgets" },
+  pkb_how: { en: "How it's bought" },
+  pkb_no_match: { en: "No packs match your search." },
   pk_active_label: { en: "Reward days left" },
   pk_active_hint: { en: "on cards you already bought" },
   pk_days_unit: { en: "days" },
@@ -6318,8 +6399,8 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
       // pack was closed and the page sat at the top).
       let anchor = null;
       if (TAB === "packs") {
-        const card = [...document.querySelectorAll("[data-packtable][data-pkid]")].find((el) => el.getBoundingClientRect().bottom > 60);
-        if (card) anchor = { id: card.dataset.pkid, off: Math.round(card.getBoundingClientRect().top) };
+        const card = [...document.querySelectorAll("[data-pkrowid]")].find((el) => el.getBoundingClientRect().bottom > 60);
+        if (card) anchor = { id: card.dataset.pkrowid, off: Math.round(card.getBoundingClientRect().top) };
         if (typeof PACKS_OPEN !== "undefined") sessionStorage.setItem("packs_open", JSON.stringify([...PACKS_OPEN]));
       }
       sessionStorage.setItem("scroll_pos", JSON.stringify({ tab: TAB, y: Math.round(window.scrollY), anchor }));
@@ -6339,7 +6420,7 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
   const iv = setInterval(() => {
     if (moved || TAB !== sp.tab || ++tries > 40) { clearInterval(iv); return; }
     if (sp.anchor) {
-      const card = [...document.querySelectorAll("[data-packtable][data-pkid]")].find((el) => el.dataset.pkid === sp.anchor.id);
+      const card = [...document.querySelectorAll("[data-pkrowid]")].find((el) => el.dataset.pkrowid === sp.anchor.id);
       if (card) { clearInterval(iv); window.scrollTo(0, window.scrollY + card.getBoundingClientRect().top - sp.anchor.off); }
       return;
     }
@@ -6368,7 +6449,7 @@ async function keepPlace(fn) {
 // scrolled under an open pop-up). Any shown overlay locks the page's scroll
 // (html.scroll-lock); scrolling inside a pop-up doesn't run on into the page
 // (overscroll-behavior in the CSS).
-const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay";
+const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov";
 let SCROLL_LOCK_RAF = 0;
 function syncScrollLock() {
   SCROLL_LOCK_RAF = 0;
@@ -6449,6 +6530,8 @@ function goToTab(tab, opts = {}) {
 window.addEventListener("popstate", (e) => {
   const tab = e.state && e.state.tab;
   if (!tab) return;
+  // Packs B: Back / Forward close / reopen a pack's window.
+  if (tab === "packs" && TAB === "packs" && PKB_HOOK) { PKB_HOOK.history(e.state.pkb || null); return; }
   // Admin sections: Back / Forward between the Admin home and its sections.
   if (tab === "adminpage" && typeof ADMIN_ACTIVE_TABLE !== "undefined") {
     const adm = e.state.adm || null;
@@ -9559,6 +9642,14 @@ function renderMyPackDates(el, tables) {
 }
 // Packs page: open a pack's settings (its editor is built on first Edit).
 function packOpenSettingsHere(id) {
+  if (PKB_HOOK && TAB === "packs") {
+    // Packs B: open the pack's window, its settings showing
+    const dp = document.getElementById("pkbDpSheet");
+    if (dp) dp.hidden = true;
+    PKB_HOOK.open(id);
+    setTimeout(() => { const box = document.querySelector(".pkb-panel details[data-packlink]"); if (box) { box.open = true; box.scrollIntoView({ behavior: "smooth", block: "start" }); } }, 60);
+    return;
+  }
   const panel = document.querySelector(`[data-packtable][data-pkid="${CSS.escape(String(id))}"]`);
   if (!panel) { toast(t("pk_preview_notshown")); return; }
   if (!PACKS_OPEN.has(String(id))) { const ed = panel.querySelector("[data-pk-toggle]"); if (ed) ed.click(); }
@@ -11478,6 +11569,18 @@ async function renderPackCalendarPage() {
 // Packs B: tables open for editing (kept for the visit). Closed tables show a
 // small summary card only.
 const PACKS_OPEN = new Set((() => { try { const v = JSON.parse(sessionStorage.getItem("packs_open") || "[]"); sessionStorage.removeItem("packs_open"); return Array.isArray(v) ? v.map(String) : []; } catch (e) { return []; } })());
+// Packs B (owner, 3 Nov 2026): the search text and the categories showing all
+// their rows, kept for the visit; PKB_HOOK opens / closes the pack window from
+// outside the page (Back button, ⚙ in Pack dates, My Purchases' weekly cards).
+let PKB_QUERY = "";
+const PKB_MORE = new Set();
+let PKB_HOOK = null;
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || TAB !== "packs" || document.querySelector(".pk-sheet-back")) return;
+  const dp = document.getElementById("pkbDpSheet");
+  if (dp && !dp.hidden) { dp.hidden = true; return; }
+  if (PKB_HOOK && document.querySelector("[data-pkbsheet]")) PKB_HOOK.closeUi();
+});
 // Close any open pack ⋯ menu that a tap landed outside of.
 function pkCloseMenus(target) {
   document.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(target)) m.open = false; });
@@ -11487,40 +11590,103 @@ document.addEventListener("click", (e) => pkCloseMenus(e.target));
 const PK_ARRANGE = new Set();
 async function renderPacksPage() {
   const seq = RENDER_SEQ;
+  if (!(history.state && history.state.tab === "packs" && history.state.pkb)) PACKS_OPEN.clear();
+  let pkbReady = false;
   content.innerHTML = `
     <div class="page-head">
       <div>
         <h2>${esc(t("packs_title"))}</h2>
         <p class="desc">${esc(IS_OWNER ? t("packs_desc") : t("packs_desc_visitor"))}</p>
       </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <div class="pkb-hbtns">
         ${hiddenForVisitor("page", "packcalendar") ? "" : `<button class="btn ghost" id="packsCalendarBtn">📅 ${esc(t("pack_cal_button"))}</button>`}
         ${IS_OWNER ? visibilityBtnHtml("page", "packcalendar") : ""}
-        ${IS_OWNER ? `<button class="btn" id="packsAddTable">${esc(t("add_table_button"))}</button>` : ""}
+        ${IS_OWNER ? `<button class="btn pkb-add" id="packsAddTable" title="${esc(t("add_table_button"))}" aria-label="${esc(t("add_table_button"))}">+</button>` : ""}
       </div>
     </div>
     <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
-    <div id="packsMyDates"></div>
-    <div id="packsPriceStrip"></div>
-    <div id="packsPageTabs" style="margin-bottom:6px;"></div>
+    <div class="panel pkb-top">
+      <label class="pkb-search"><span aria-hidden="true">&#128269;</span><input type="search" id="pkbSearch" placeholder="${esc(t("pkb_search"))}" value="${esc(PKB_QUERY)}" autocomplete="off" enterkeyhint="search" /></label>
+      <button type="button" class="pkb-dp" id="pkbDpBtn"><span class="pkb-dp-ic" aria-hidden="true">&#128467;&#65039;</span><span class="pkb-dp-t"><b>${esc(t("pkb_dates_prices"))}</b><span class="meta" id="pkbDpSub"></span></span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>
+    </div>
+    <div class="pkb-ov" id="pkbDpSheet" hidden>
+      <div class="pkb-sheet" role="dialog" aria-label="${esc(t("pkb_dates_prices"))}">
+        <div class="pkb-sh-h"><button type="button" class="pkb-back" data-pkbdpclose aria-label="${esc(t("close_button"))}">&#8249;</button><b>${esc(t("pkb_dates_prices"))}</b></div>
+        <div class="pkb-sh-b"><div id="packsMyDates"></div><div id="packsPriceStrip"></div></div>
+      </div>
+    </div>
     <div id="packsList"></div>
   `;
 
   const calBtn = document.getElementById("packsCalendarBtn");
   if (calBtn) calBtn.addEventListener("click", () => goToTab("packcalendar"));
+  // Packs B: search (pack names and the items they give) and the
+  // "Pack dates & prices" window.
+  const pkbSearchIn = document.getElementById("pkbSearch");
+  let pkbSearchT = 0;
+  pkbSearchIn.addEventListener("input", () => {
+    clearTimeout(pkbSearchT);
+    pkbSearchT = setTimeout(() => { PKB_QUERY = pkbSearchIn.value; if (pkbReady) renderAll(); }, 150);
+  });
+  const pkbDp = document.getElementById("pkbDpSheet");
+  const pkbDpShow = (on) => {
+    pkbDp.hidden = !on;
+    if (on) { const box = pkbDp.querySelector("details.pkd-box"); if (box && !box.open) box.open = true; }
+  };
+  document.getElementById("pkbDpBtn").addEventListener("click", () => pkbDpShow(true));
+  pkbDp.addEventListener("click", (e) => { if (e.target === pkbDp || e.target.closest("[data-pkbdpclose]")) pkbDpShow(false); });
+  const pkbDpSub = () => {
+    const el = document.getElementById("pkbDpSub");
+    if (!el) return;
+    const n = pkbDp.querySelectorAll(".pkd-row").length;
+    el.textContent = [n ? t("pkb_dated_n").replace("{n}", n) : "", DISPLAY_CURRENCY || "USD"].filter(Boolean).join(" \u00b7 ");
+  };
   wireVisibilityBtns(content, () => keepPlace(() => renderPacksPage()));
   const listEl = document.getElementById("packsList");
   // Tap a summary card's Edit (or its title) to open / close that table.
   // "Budgets" tick on each card: count this pack in Budgets or not.
   listEl.addEventListener("change", (e) => {
-    const cb = e.target.closest("[data-pkbud]");
+    const cb = e.target.closest("[data-pkbud], [data-pkbudrow]");
     if (!cb) return;
-    const id = String(cb.closest("[data-packtable]").dataset.pkid);
+    const id = String(cb.dataset.pkbudrow || cb.closest("[data-packtable]").dataset.pkid);
     if (cb.checked) delete PACK_BUDGET_OFF[id]; else PACK_BUDGET_OFF[id] = true;
-    cb.closest("[data-packtable]").classList.toggle("pk-budoff", !cb.checked);
+    const panel = cb.closest("[data-packtable]");
+    if (panel) panel.classList.toggle("pk-budoff", !cb.checked);
     saveCalcState("pack_budget_off", PACK_BUDGET_OFF);
     PACK_PLAN_CACHE.clear();
     budgetInvalidate();
+    pkbSyncBudget(id);
+  });
+  // Packs B: a category opens (one at a time) or folds, "Show N more", a row
+  // opens its pack's window; the window's ‹ / dim edge closes it.
+  listEl.addEventListener("click", (e) => {
+    if (e.target.closest(".pkb-tk")) return;
+    const fold = e.target.closest("[data-pkbfold]");
+    if (fold) {
+      const k = fold.dataset.pkbfold, wasOpen = fold.closest(".pkb-cat").classList.contains("open"), top0 = fold.getBoundingClientRect().top;
+      packsFilter = wasOpen ? "closed" : (k ? "cat:" + k : "none");
+      try { localStorage.setItem("packs_filter", packsFilter); } catch (err) { /* blocked */ }
+      renderAll();
+      // keep the tapped heading where it was on the screen
+      const again = listEl.querySelector(`[data-pkbfold="${CSS.escape(k)}"]`);
+      if (again) { const d = again.getBoundingClientRect().top - top0; if (Math.abs(d) > 1) window.scrollBy(0, d); }
+      return;
+    }
+    const more = e.target.closest("[data-pkbmore]");
+    if (more) { PKB_MORE.add(more.dataset.pkbmore); renderAll(); return; }
+    if (e.target.closest("[data-pkbclose]") || (e.target.matches && e.target.matches("[data-pkbsheet]"))) { pkbClose(false); return; }
+    const row = e.target.closest("[data-pkrowid]");
+    if (row) pkbOpen(row.dataset.pkrowid);
+  });
+  listEl.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkrowid]")) { e.preventDefault(); pkbOpen(e.target.dataset.pkrowid); }
+  });
+  // "How it's bought" dropdown in the window sets the same radio buttons as before.
+  listEl.addEventListener("change", (e) => {
+    const sel = e.target.closest && e.target.closest("select[data-pkbhow]");
+    if (!sel) return;
+    const panel = sel.closest("[data-packtable]"), radio = panel && panel.querySelector(`input[data-pkhow="${CSS.escape(sel.value)}"]`);
+    if (radio && !radio.checked) { radio.checked = true; radio.dispatchEvent(new Event("change", { bubbles: true })); }
   });
   listEl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-pk-toggle]");
@@ -11868,19 +12034,12 @@ async function renderPacksPage() {
     if (packsFilter === "none") return !categoryOf(tb);
     return packsFilter.startsWith("cat:") && categoryOf(tb) === packsFilter.slice(4);
   }
+  // Packs B (owner, 3 Nov 2026): no category buttons; every category is a fold
+  // and packsFilter says which one is open ("cat:<name>", "none" = Not
+  // assigned, "all" = the first, "closed" = none).
   function renderPageTabs() {
-    const el = document.getElementById("packsPageTabs");
-    if (!el) return;
-    const tabs = categoryTabs();
-    if (!tabs.some((pt) => pt.key === packsFilter)) packsFilter = "all";
-    const countFor = (key) => { const keep = packsFilter; packsFilter = key; const n = tables.filter(tableMatchesFilter).length; packsFilter = keep; return n; };
-    // ☰ list + one row that scrolls sideways (it used to wrap onto 3 lines on phones).
-    const items = tabs.map((pt) => ({ key: pt.key, label: pt.key === "all" ? t("packs_filter_all") : pt.key === "none" ? t("packs_filter_none") : pt.name, count: countFor(pt.key) }));
-    renderCategorySwitcher(el, items, packsFilter, (k) => {
-      packsFilter = k;
-      localStorage.setItem("packs_filter", packsFilter);
-      renderAll();
-    });
+    if (packsFilter === "all" || packsFilter === "closed" || packsFilter === "none") return;
+    if (!categoryTabs().some((pt) => pt.key === packsFilter)) packsFilter = "all";
   }
   // A redraw keeps the page where it was, and the editors' sideways boxes too.
   function renderAll() {
@@ -11972,67 +12131,206 @@ async function renderPacksPage() {
       refreshTotalsIn(panel, tb);
     }
   }
+  // ---- Packs design B (owner, 3 Nov 2026): every category is a fold (how many
+  // packs, how many count in Budgets), one open at a time, with slim rows
+  // (picture, name, how often, price, on now / next date, Count tick): the first
+  // 4, then "Show N more". A row opens the pack in a full-screen window: its
+  // table, then Count in Budgets and its settings as sections (the same editor
+  // as before, built and wired the same way, buildPkBody). Search finds packs
+  // by name or by an item they give.
+  const pkbToday = packStartOfToday();
+  const pkbLoc = LANG === "en" ? undefined : LANG;
+  const pkbFmtD = (days) => { try { return new Date(pkbToday.getTime() + days * 86400000).toLocaleDateString(pkbLoc, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+  const pkbWd = (d) => { try { return d.toLocaleDateString(pkbLoc, { weekday: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
+  function pkbResetText(r) {
+    if (r === "unlimited") return t("pack_reset_unlimited");
+    if (r === "once" || r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
+    if (packStackInfo(r)) return packStackText(r);
+    const preset = PACK_RESET_PRESETS.find((x) => x.days === r);
+    return preset ? t("pack_reset_" + preset.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
+  }
+  // "Every 2 weeks · Sun–Mon", on now / the next date it comes.
+  function pkbWhen(lk) {
+    const r = lk.reset, out = { text: "", on: false, next: "" };
+    if (r == null || r === "") return out;
+    const parts = [pkbResetText(r)];
+    if (typeof r === "number" && r < PACK_ONE_TIME_DAYS && !packStackInfo(r)) {
+      const win = Number(lk.window) || 0;
+      const offs = packResetOffsets(r, lk.resetDay, 400, lk.window);
+      out.on = offs[0] === 0;
+      const nx = offs.find((o) => o > 0);
+      if (nx != null) out.next = pkbFmtD(nx);
+      const a = packParseDay(lk.resetDay);
+      if (a && win > 0 && win < 7 && r % 7 === 0) parts.push(win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`);
+    }
+    out.text = parts.filter(Boolean).join(" · ");
+    return out;
+  }
+  // Price range in the shown currency: "$4.99–99.99", "Free + $9.99".
+  function pkbPrice(tb, lk) {
+    const pc = lk.priceCol || 0, nums = [];
+    let free = false;
+    tb.rows.forEach((r) => {
+      const raw = String(r.cells[pc] ?? "").trim();
+      if (!raw) return;
+      const n = parseNum(raw);
+      if (n > 0) nums.push(n); else if (n === 0 || /free/i.test(raw)) free = true;
+    });
+    if (!nums.length) return free ? t("pkb_free") : "—";
+    const lo = Math.min(...nums), hi = Math.max(...nums), plain = (x) => String(x).replace(/[⁦-⁩]/g, "");
+    let txt = plain(packFmtMoney(lo, lk.currency));
+    if (hi > lo) { const c = packConvert(hi, lk.currency); txt += `–${Number(c.n).toLocaleString(pkbLoc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+    return bidiNum(free ? `${t("pkb_free")} + ${txt}` : txt);
+  }
+  // The row's picture: the first item the pack gives (not its price or Gems).
+  function pkbIcon(tb, lk) {
+    const pc = lk.priceCol || 0, gc = gemsColOf(tb);
+    for (let ci = 0; ci < tb.columns.length; ci++) {
+      if (ci === pc || ci === gc) continue;
+      const n = pkColItem(tb, ci), ic = n ? pkIconHtml(n) : "";
+      if (ic) return ic;
+    }
+    return "";
+  }
+  const pkbMatch = (tb, q) => !q || String(tb.title || "").toLowerCase().includes(q) || tb.columns.some((_, ci) => {
+    const n = pkColItem(tb, ci);
+    return !!n && (n.toLowerCase().includes(q) || String(materialDisplayName(n) || "").toLowerCase().includes(q));
+  });
+  function pkbRowHtml(tb, ti) {
+    const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
+    return `<div class="pkb-row${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
+      <span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
+      <span class="pkb-m"><b>${esc(tb.title)}</b>${w.text ? `<small>${esc(w.text)}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
+      <span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : ""}</span>
+      ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
+    </div>`;
+  }
+  function pkbCatSub(list, key) {
+    if (key === PACK_TEMPLATE_GROUP) return t("mp_template_note");
+    const on = list.filter(({ tb }) => packInBudgets(tb.id)).length;
+    return on === list.length ? t("pkb_counted_all").replace("{n}", list.length) : t("pkb_counted_some").replace("{n}", on).replace("{m}", list.length);
+  }
+  let pkbCats = []; // what the list shows, for pkbSyncBudget
   function renderAllCore() {
     renderPageTabs();
     if (!tables.length) {
       listEl.innerHTML = `<div class="empty"><div class="big">${esc(t("no_tables_yet"))}</div>${esc(t("no_tables_hint"))}</div>`;
       return;
     }
-    // Tables that share a group name sit together under one heading;
-    // ungrouped tables come first, in their own order.
-    const groupOf = (tb) => packLinkFor(tb.id).group;
-    const groupOrder = categoryOrder();
-    const ordered = tables.map((tb, ti) => ({ tb, ti })).filter(({ tb }) => tableMatchesFilter(tb)).sort((a, b) => {
-      const ga = groupOf(a.tb), gb = groupOf(b.tb);
-      const ra = ga ? groupOrder.indexOf(ga) + 1 : 0, rb = gb ? groupOrder.indexOf(gb) + 1 : 0;
-      return ra - rb || a.ti - b.ti;
+    const q = PKB_QUERY.trim().toLowerCase();
+    const order = categoryOrder();
+    const groups = order.map((g) => ({ key: g, label: g, list: [] })), none = { key: "", label: t("packs_filter_none"), list: [] };
+    tables.forEach((tb, ti) => {
+      if (isTpl(tb) && !tplOpen()) return;
+      if (!pkbMatch(tb, q)) return;
+      const g = categoryOf(tb);
+      (g && groups.find((x) => x.key === g) || none).list.push({ tb, ti });
     });
-    let lastGroup = null;
-    listEl.innerHTML = `<div class="pk-grid">` + ordered
-      .map(({ tb: t, ti }) => {
-        const g = groupOf(t);
-        const heading = g !== lastGroup && g ? `<div style="grid-column:1 / -1; margin-top:14px; padding-bottom:4px; border-bottom:2px solid var(--line); font-size:15px; font-weight:800; color:var(--ice); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">${esc(g)}${g === PACK_MINE_GROUP && IS_OWNER ? `<span class="meta" style="font-size:11px; font-weight:500;">${esc(window.t("mp_admin_mine_note"))}</span>` : ""}</div>` : "";
-        lastGroup = g;
-        return heading + (() => {
-        // Auto-computed total row: sums every column's numeric cells across
-        // all data rows (non-numeric cells like "Free" or "2d 20h" just
-        // don't contribute). Display-only - not stored, not editable.
-        const totals = t.columns.map((_, ci) =>
-          t.rows.reduce((sum, r) => sum + (parseNum(r.cells[ci]) || 0), 0)
-        );
-        const lk = packLinkFor(t.id), pkOpen = PACKS_OPEN.has(String(t.id));
-        // Closed card: what the whole table gives, as item pictures with amounts.
-        const giveChips = t.columns.map((c, ci) => {
-          if (ci === (lk.priceCol || 0)) return "";
-          const name = pkColItem(t, ci), label = materialDisplayName(name) || name;
-          if (!label) return "";
-          const ic = pkIconHtml(name), n = totals[ci];
-          return `<span class="pk-chip" title="${esc(label)}${n ? `: ${esc(fmtNum(n))}` : ""}">${ic || `<em>${esc(label)}</em>`}${n ? `<b>${esc(pkShortNum(n))}</b>` : ""}</span>`;
-        }).join("");
-        const usedFor = packUsedForNames(t);
-        return `
-      <div class="panel pk-card${pkOpen ? " pk-open" : ""}${PK_ARRANGE.has(String(t.id)) ? " pk-arrange" : ""}${packInBudgets(t.id) ? "" : " pk-budoff"}" style="min-width:0; ${t.columns.length > 5 ? "--pkwide:1;" : ""} ${IS_OWNER && lk.hideVisitors ? "opacity:0.75; border-style:dashed;" : ""}" data-packtable="${ti}" data-pkid="${esc(String(t.id))}">
-        <div class="pk-sum">
-          <div class="pk-sum-h"><b data-pk-toggle title="${esc(t.title)}">${esc(t.title)}</b></div>
-          <div class="pk-sum-gives pk-chips">${giveChips || "—"}</div>
-          ${lk.template ? "" : `<label class="pk-bud" title="${esc(window.t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbud ${packInBudgets(t.id) ? "checked" : ""} />${esc(window.t("pk_in_budgets"))}</label>`}
-          <div class="pk-sum-f">${lk.template ? `<span class="pk-sum-used">${esc(window.t("mp_template_note"))}</span>` : usedFor.length ? `<details class="pk-sum-used"><summary>${esc(window.t("pack_used_for"))} (${usedFor.length})</summary><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></details>` : `<span class="pk-sum-used">${esc(window.t("pack_used_for"))}: —</span>`}<button type="button" class="btn small ghost" data-pk-toggle>${esc(window.t(pkOpen ? "pk_close" : "pk_edit"))}</button></div>
-        </div>
-        <div class="pk-body"${pkOpen ? "" : " hidden data-pk-lazy"}>${pkOpen ? pkBodyHtml(t, ti) : ""}
-        </div>
-      </div>`;
-        })();
-      })
-      .join("") + `</div><datalist id="packGroupNames">${groupOrder.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>`;
-    // Only the editors drawn open are built; the rest are built on Edit.
-    const builtPanels = [...listEl.querySelectorAll("[data-packtable]")].filter((panel) => !panel.querySelector(".pk-body[data-pk-lazy]"));
-    wireTable(builtPanels);
-    wirePackLinkEditors();
-    if (!IS_OWNER) {
-      applyPacksReadOnly(listEl);
-      builtPanels.forEach((panel) => refreshTotalsIn(panel, tables[Number(panel.dataset.packtable)]));
+    pkbCats = [...groups, none].filter((g) => g.list.length);
+    const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
+    const html = pkbCats.map((g) => {
+      const open = !!q || g.key === openKey;
+      const shown = q || PKB_MORE.has(g.key) ? g.list.length : Math.min(4, g.list.length);
+      return `<section class="pkb-cat${open ? " open" : ""}" data-pkbcat="${esc(g.key)}">
+        <button type="button" class="pkb-cat-h" data-pkbfold="${esc(g.key)}" aria-expanded="${open}">
+          <span class="pkb-n">${g.list.length}</span>
+          <span class="pkb-cat-t"><b>${esc(g.label)}</b><small data-pkbcatsub>${esc(pkbCatSub(g.list, g.key))}</small></span>
+          <span class="pkb-caret" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
+        </button>
+        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${g.list.slice(0, shown).map(({ tb, ti }) => pkbRowHtml(tb, ti)).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
+      </section>`;
+    }).join("");
+    const openId = [...PACKS_OPEN][0];
+    const sheetTi = openId != null ? tables.findIndex((tb) => String(tb.id) === String(openId)) : -1;
+    listEl.innerHTML = `<div class="pkb-cats">${html || `<div class="empty">${esc(t("pkb_no_match"))}</div>`}</div><datalist id="packGroupNames">${order.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>${sheetTi >= 0 ? pkbSheetHtml(sheetTi) : ""}`;
+    if (sheetTi >= 0) pkbBuildSheet(); else if (openId != null) PACKS_OPEN.clear();
+  }
+  // Count in Budgets changed (a row's tick or the window's switch): the other
+  // one, the row's look and the category's "counted" line follow.
+  function pkbSyncBudget(id) {
+    const on = packInBudgets(id);
+    listEl.querySelectorAll(`[data-pkbudrow="${CSS.escape(String(id))}"]`).forEach((cb) => { cb.checked = on; const row = cb.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !on); });
+    listEl.querySelectorAll(`.pkb-panel[data-pkid="${CSS.escape(String(id))}"] [data-pkbud]`).forEach((cb) => { cb.checked = on; });
+    pkbCats.forEach((g) => {
+      const sub = listEl.querySelector(`[data-pkbcat="${CSS.escape(g.key)}"] [data-pkbcatsub]`);
+      if (sub) sub.textContent = pkbCatSub(g.list, g.key);
+    });
+  }
+  function pkbSheetHtml(ti) {
+    const tb = tables[ti];
+    return `<div class="pkb-ov pkb-tov" data-pkbsheet><div class="panel pk-card pk-open pkb-panel${PK_ARRANGE.has(String(tb.id)) ? " pk-arrange" : ""}${packInBudgets(tb.id) ? "" : " pk-budoff"}" role="dialog" aria-label="${esc(tb.title)}" data-packtable="${ti}" data-pkid="${esc(String(tb.id))}"><div class="pk-body" hidden data-pk-lazy></div></div></div>`;
+  }
+  // The window: the editor (title bar, table, settings) with a back button and
+  // the pack's schedule in the bar, Count in Budgets under the table, the
+  // settings open, and "How it's bought" as one dropdown.
+  function pkbBuildSheet() {
+    const panel = listEl.querySelector(".pkb-panel");
+    if (!panel) return;
+    buildPkBody(panel);
+    const body = panel.querySelector(".pk-body");
+    if (!body) return;
+    body.hidden = false;
+    const tb = tables[Number(panel.dataset.packtable)], lk = packLinkFor(tb.id), w = pkbWhen(lk);
+    const bar = body.querySelector(".pk-ed-bar");
+    if (bar) {
+      bar.insertAdjacentHTML("afterbegin", `<button type="button" class="pkb-back" data-pkbclose aria-label="${esc(t("close_button"))}">&#8249;</button>`);
+      const line = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
+      if (line) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}</div>`);
+      const hint = body.querySelector("[data-pack-visitor-hint]");
+      if (hint) bar.after(hint);
+      if (!IS_OWNER) {
+        const edits = packMyEdits()[String(tb.id)];
+        if (edits && Object.keys(edits).length) {
+          const b = document.createElement("button");
+          b.type = "button"; b.className = "btn small ghost pkb-reset"; b.textContent = t("pack_my_edits_reset");
+          b.addEventListener("click", () => {
+            const all = packMyEdits(); delete all[String(tb.id)]; packSaveMyEdits(all);
+            tb.rows = tb._orig.map((r) => ({ ...r, cells: r.cells.slice() }));
+            renderAll();
+          });
+          bar.insertBefore(b, bar.querySelector(".pkb-when"));
+        }
+      }
+    }
+    // The settings are built in full here (on the list they're built on first open)
+    // and shown open, as sections under the table.
+    let settings = body.querySelector("details[data-packlink]");
+    if (settings && settings.hasAttribute("data-packlinklazy")) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = packLinkEditorFullHtml(tb);
+      const full = tmp.querySelector("[data-packlink]");
+      if (full) { settings.replaceWith(full); wirePackLinkEditors([full]); settings = full; }
+    }
+    const usedFor = packUsedForNames(tb);
+    const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
+    if (settings) { settings.insertAdjacentHTML("beforebegin", budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", budHtml);
+    const seg = body.querySelector(".pks-seg");
+    if (seg) {
+      const radios = [...seg.querySelectorAll("input[data-pkhow]")];
+      seg.insertAdjacentHTML("beforebegin", `<div class="bset-row pkb-howrow"><span class="bset-l">${esc(t("pkb_how"))}</span><span class="bset-c"><select data-pkbhow class="keep-w">${radios.map((r) => `<option value="${esc(r.dataset.pkhow)}" ${r.checked ? "selected" : ""}>${esc(r.parentElement.textContent.trim())}</option>`).join("")}</select></span></div>`);
+      seg.classList.add("pkb-hide");
     }
   }
+  function pkbOpen(id) {
+    id = String(id);
+    PACKS_OPEN.clear(); PACKS_OPEN.add(id);
+    if (!(history.state && history.state.tab === "packs" && history.state.pkb === id)) history.pushState({ tab: "packs", pkb: id }, "", location.pathname + location.search);
+    renderAll();
+    const b = listEl.querySelector(".pkb-panel > .pk-body");
+    if (b) b.scrollTop = 0;
+  }
+  // ✕ / ‹ / Esc go back one step in the browser history when the window has
+  // its own entry (so the phone's Back closes it too).
+  function pkbClose(fromHistory) {
+    if (!fromHistory && history.state && history.state.tab === "packs" && history.state.pkb) { history.back(); return; }
+    PACKS_OPEN.clear();
+    renderAll();
+  }
+  PKB_HOOK = {
+    open: pkbOpen,
+    closeUi: () => pkbClose(false),
+    history: (id) => { if (id) { if (![...PACKS_OPEN].includes(String(id))) { PACKS_OPEN.clear(); PACKS_OPEN.add(String(id)); renderAll(); } } else if (PACKS_OPEN.size) pkbClose(true); },
+  };
   // Visitors: the tables are shown exactly as the owner set them, with every
   // editing control removed and the settings ("Used for") hidden.
   function applyPacksReadOnly(root, bodyOnly) {
@@ -12919,7 +13217,7 @@ async function renderPacksPage() {
     // down, then persist that new order for any table already saved (so a
     // reload reflects it immediately, not just after each is re-saved).
     tables.forEach((tb, i) => { tb.sort_order = i; });
-    renderAll();
+    pkbOpen(tables[0].id);
     const updates = tables
       .filter((tb) => !String(tb.id).startsWith("new-"))
       .map((tb) => sb(`pack_tables?id=eq.${tb.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: tb.sort_order }) }).catch(() => null));
@@ -13012,7 +13310,9 @@ async function renderPacksPage() {
   renderPriceStrip();
   // Every dated pack's own date sits here (above Pack prices) for everyone.
   renderMyPackDates(document.getElementById("packsMyDates"), tables);
+  pkbDpSub();
   renderAll();
+  pkbReady = true;
   // Came from ⚙ on My Purchases' Weekly cards: open that pack's settings.
   if (PACK_SETTINGS_FOCUS) { const id = PACK_SETTINGS_FOCUS; PACK_SETTINGS_FOCUS = null; setTimeout(() => packOpenSettingsHere(id), 50); }
 }
