@@ -12500,6 +12500,18 @@ async function renderPacksPage() {
     return on === list.length ? t("pkb_counted_all").replace("{n}", list.length) : t("pkb_counted_some").replace("{n}", on).replace("{m}", list.length);
   }
   let pkbCats = []; // what the list shows, for pkbSyncBudget
+  const PKB_TIER = { classic: 1, sublime: 2, exquisite: 3 };
+  const pkbSplit = (title) => { const s0 = String(title || "").trim(), i = s0.indexOf(":"); return i > 0 ? [s0.slice(0, i).trim(), s0.slice(i + 1).trim()] : [s0, ""]; };
+  const pkbCmp = (a, b) => a.localeCompare(b, pkbLoc, { numeric: true, sensitivity: "base" });
+  function pkbOrder(ta, tb) {
+    const [fa, sa] = pkbSplit(ta), [fb, sb] = pkbSplit(tb);
+    // "Chief Gear" and "Chief Gears" are the same pack family
+    const fam = (x) => x.toLowerCase().replace(/s\b/g, "");
+    const c = pkbCmp(fam(fa), fam(fb));
+    if (c) return c;
+    const ra = PKB_TIER[sa.toLowerCase().split(/\s+/)[0]] || 99, rb = PKB_TIER[sb.toLowerCase().split(/\s+/)[0]] || 99;
+    return ra - rb || pkbCmp(sa, sb);
+  }
   function renderAllCore() {
     renderPageTabs();
     if (!tables.length) {
@@ -12516,6 +12528,12 @@ async function renderPacksPage() {
       (g && groups.find((x) => x.key === g) || none).list.push({ tb, ti });
     });
     pkbCats = [...groups, none].filter((g) => g.list.length);
+    // Related packs sit together, in an order you can follow (owner, 3 Nov 2026:
+    // "very hard to find the pack I want"): A to Z by the name before ":" (all
+    // "Dawn of Wisdom" tables, then all "Artisans Trove …"), inside one name the
+    // game's tiers first (Classic, Sublime, Exquisite), then A to Z with numbers
+    // in number order (Lv 2 before Lv 10).
+    pkbCats.forEach((g) => g.list.sort((a, b) => pkbOrder(a.tb.title, b.tb.title)));
     const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
     const html = pkbCats.map((g) => {
       const open = !!q || g.key === openKey;
