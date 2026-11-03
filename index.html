@@ -21385,6 +21385,9 @@ async function renderChiefGearCalc() {
   shell.classList.add("cg1");
   const head = content.querySelector(".plx-head");
   head.classList.add("cg-head");
+  // "Max" instead of "Max everything" (owner, 3 Nov 2026).
+  const maxBtn = document.getElementById("gearMaxAllBtn");
+  if (maxBtn) { maxBtn.innerHTML = `&#9650; ${esc(t("max_button"))}`; maxBtn.title = t("max_everything"); }
   head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>`);
   head.insertAdjacentHTML("afterend", `<p class="meta cg-help" data-cghelp hidden>${esc(t("cg_slots_hint"))}</p>`);
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
