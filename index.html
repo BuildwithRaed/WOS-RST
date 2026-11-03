@@ -3215,6 +3215,73 @@ input,select,textarea{
     #petsList .pc-stat{ flex:1 1 100%; }
     #petsList .pc-st{ flex:1 1 0; }
   }
+  /* (i) bubbles always show their text (Chief Gear's box hides .bs-help on the page,
+     which emptied the bubble when the help moved into it; owner, 3 Nov 2026). */
+  .cg-tip .bs-help, .cg-tip .bs-note, .cg-tip .desc, .cg-tip .meta{ display:block !important; margin:0; }
+  /* Research Settings (owner, 3 Nov 2026: "fix settings for research"): one tidy line —
+     ⚙ · Research Speed [box] % on the left, Count ☑ on the right, everything centred. */
+  .t12x-settings.one-line.has-rs{ display:flex !important; align-items:center !important; flex-wrap:wrap; gap:8px 12px !important; padding:10px 14px !important; }
+  .t12x-settings.one-line.has-rs > .t12x-k{ margin:0 !important; }
+  .t12x-settings.one-line.has-rs .rs-row{ display:flex !important; align-items:center !important; margin:0 !important; gap:8px !important; flex:0 1 auto; }
+  .t12x-settings.one-line.has-rs .rs-row > div{ display:flex !important; align-items:center !important; gap:6px !important; max-width:none !important; }
+  .t12x-settings.one-line.has-rs .rs-row > div > .meta{ font-size:13px !important; color:var(--frost); white-space:nowrap; }
+  .t12x-settings.one-line.has-rs .rs-row input{ height:36px; min-height:36px; width:72px !important; padding:0 8px !important; font-size:16px; text-align:end; }
+  .t12x-settings.one-line.has-rs .t12x-check{ align-items:center !important; margin-inline-start:auto !important; gap:8px !important; font-size:13px !important; color:var(--frost); }
+  .t12x-settings.one-line.has-rs .t12x-check input{ margin:0; }
+  /* "Max" on every planner page looks like Chief Gear's (owner, 3 Nov 2026). */
+  .plx-maxbtn.plx-max{ box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; height:30px; min-height:30px; padding:0 14px; border:1px solid var(--ice); border-radius:10px; background:rgba(111,211,242,.10); color:var(--frost); font-size:12.5px; font-weight:700; line-height:1; }
+  @media (max-width: 900px){ .plx-maxbtn.plx-max{ height:40px; min-height:40px; padding:0 13px; } }
+  /* Dashboard B roster (owner, 3 Nov 2026: "too many wrap"): on phones each hero is a
+     small card — picture, name, stars, one short line, widget — and tapping it opens
+     the full card (stars − / +, widget, shards, %) as a window over the page. */
+  .rc-mini, .rc-x{ display:none; }
+  @media (max-width: 700px){
+    .dash-fit .rc-card:not(.rc-open){ cursor:pointer; padding:8px 4px; }
+    .dash-fit .rc-card:not(.rc-open) > .rc-troop,
+    .dash-fit .rc-card:not(.rc-open) > .rc-stars,
+    .dash-fit .rc-card:not(.rc-open) > .rc-sh,
+    .dash-fit .rc-card:not(.rc-open) > .rc-pct,
+    .dash-fit .rc-card:not(.rc-open) > select,
+    .dash-fit .rc-card:not(.rc-open) .rc-pm,
+    .dash-fit .rc-card:not(.rc-open) .rc-name .meta{ display:none !important; }
+    .dash-fit .rc-card:not(.rc-open) > .rc-mini{ display:block; }
+    .dash-fit .rc-card:not(.rc-open) .rc-step{ justify-content:center; margin:1px auto 2px; }
+    .dash-fit .rc-card:not(.rc-open) .rc-step span{ font-size:13px; }
+    .dash-fit .rc-card:not(.rc-open) .rc-name{ font-size:13.5px; font-weight:700; }
+    .rc-mini > div{ font-size:12px; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+    .rc-mini-sh{ color:var(--amber); font-weight:700; }
+    .rc-mini-sh.ok{ color:var(--good); }
+    .rc-mini-w{ color:var(--muted); }
+    .dash-fit .rc-card.rc-open{ position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow:auto; overscroll-behavior:contain; padding:16px 14px 14px; border-radius:16px; background:var(--panel); box-shadow:0 12px 40px rgba(0,0,0,.55); opacity:1 !important; }
+    .dash-fit .rc-card.rc-open .rc-x{ display:flex; align-items:center; justify-content:center; position:absolute; top:8px; inset-inline-end:8px; width:40px; height:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:15px; cursor:pointer; }
+    .dash-fit .rc-card.rc-open .rc-pick{ width:72px; height:72px; }
+    .dash-fit .rc-card.rc-open .rc-name{ font-size:16px; white-space:normal; }
+    .dash-fit .rc-card.rc-open .rc-stars > *{ width:26px !important; height:26px !important; }
+    .dash-fit .rc-card.rc-open .rc-step{ max-width:200px; }
+    .dash-fit .rc-card.rc-open .rc-pm{ width:40px; height:40px; }
+    .dash-fit .rc-card.rc-open .rc-sh, .dash-fit .rc-card.rc-open .rc-pct{ font-size:13px !important; white-space:normal; }
+    .dash-fit .rc-card.rc-open select{ min-height:40px; font-size:16px; width:100%; max-width:240px; }
+    .rc-ph{ pointer-events:none; }
+  }
+  /* Dashboard B troop cards: label, number, "/ max", bar, "+N%" each on its own line. */
+  @media (max-width: 700px){
+    .dash-fit .dash-troops.cols .dash-stat-k{ display:contents; }
+    .dash-fit .dash-troops.cols .dash-stat-k > span{ order:1; }
+    .dash-fit .dash-troops.cols .dash-stat-v{ order:2; }
+    .dash-fit .dash-troops.cols .dash-stat-k > small{ order:3; }
+    .dash-fit .dash-troops.cols .dash-stat-bar{ order:4; }
+    .dash-fit .dash-troops.cols .dash-stat-gap{ order:5; }
+    .dash-fit .dash-troops.cols .dash-stat > *{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+    .dash-fit .dash-troops.cols .dash-stat-k > span{ font-size:12px; color:var(--muted); }
+    .dash-fit .dash-troops.cols .dash-stat-k > small{ font-size:12px; color:var(--muted); }
+    .dash-fit .dash-troop-h{ display:flex; align-items:center; justify-content:space-between; }
+    .dash-fit .dash-troop-h .dash-bd{ font-size:12px; font-weight:600; color:var(--muted); text-transform:none; letter-spacing:0; background:none; border:0; padding:4px 0; cursor:pointer; }
+  }
+  .dash-bd{ display:none; }
+  @media (max-width: 700px){ .dash-fit .dash-bd{ display:inline-block; } }
+  /* Dashboard B state card on narrow phones: day · Gen and the next-Gen line only
+     (the Lucky Wheel chip ran off the edge; owner, 3 Nov 2026). */
+  @media (max-width: 440px){ .dash-fit .sa-chip.sa-wheel{ display:none; } }
 </style>
 </head>
 <body>
@@ -5883,6 +5950,7 @@ const T = {
   pur_sug_none: { en: "Nothing else to buy: your plans are covered." },
   set_info: { en: "What these settings do" },
   info_more: { en: "More about this" },
+  dash_breakdown: { en: "Breakdown" },
   exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
@@ -6952,13 +7020,9 @@ async function renderOverview(opts = {}) {
     return { star, sub };
   };
   // Backward compat: entries may be a bare heroId string or { heroId, widget, used }.
-  // The breakdown pop-up's Set 2 / Set 3 tabs use the heroes picked for that
-  // set on the Heroes Gears page (HG_SET_HEROES, owner 1 Nov 2026).
+  // Every set tab of the breakdown pop-up uses the Dashboard roster (owner, 3 Nov
+  // 2026: the Set 2 / Set 3 heroes were removed).
   const rosterEntryFor = (troopKey) => {
-    if (BREAKDOWN_HERO_GEAR_SET !== "Set 1") {
-      const se = (HG_SET_HEROES[BREAKDOWN_HERO_GEAR_SET] || {})[troopKey] || {};
-      return { heroId: se.heroId || "", widget: Number(se.widget) || 0, used: true };
-    }
     const e = ROSTER_STATE[troopKey];
     if (!e) return { heroId: "", widget: 0, used: true };
     if (typeof e === "string") return { heroId: e, widget: 0, used: true };
@@ -7508,6 +7572,16 @@ async function renderOverview(opts = {}) {
       const shardPlan = heroShardPlan({ heroes: heroCatalog, roster, playerHeroes: Object.values(phByHero), starRows: ROSTER_STAR_ROWS, bp: ROSTER_BACKPACK || {} });
       const shShort = t("rc_sh_short"), shEnough = t("rc_sh_enough"), shReach = t("rc_sh_reach");
       const wdTxt = { need: t("bp_sh_need"), own: t("bp_wd_own"), short: t("rc_wd_short"), enough: t("rc_wd_enough") }; // `t` is the troop inside the cards' map
+      // Small card on phones (Dashboard design B, owner 3 Nov 2026): one short line
+      // "⚙ 95 short" / "🧩 300 · ⚙ 245"; the whole card opens as a window on tap.
+      const closeLbl = t("close_button");
+      const miniShort = (r) => {
+        if (!r) return "";
+        const parts = [];
+        if (r.step < 30 && r.short) parts.push(`\u{1F9E9} ${Math.round(r.short).toLocaleString()}`);
+        if (r.hasWidget && r.wLevel < widgetMaxLevel() && r.wShort) parts.push(`\u2699 ${Math.round(r.wShort).toLocaleString()}`);
+        return parts.length === 1 ? `${parts[0]} ${t("bs_short_word")}` : parts.join(" \u00b7 ");
+      };
       const shTitle = (r) => `${t("bp_sh_need")} ${Math.round(r.need).toLocaleString()} · ${t("bp_sh_own")} ${Math.round(r.own).toLocaleString()} · ${t("bp_sh_general")} ${Math.round(r.fromGeneral).toLocaleString()}`;
       rosterEl.innerHTML = `
       <div class="rc-wrap" style="margin-bottom:16px;">
@@ -7540,7 +7614,8 @@ async function renderOverview(opts = {}) {
             const stepTxt = `${Math.floor(step / 6)}★${step < 30 ? ` ${step % 6}/6` : ""}`;
             const sh = hero ? shardPlan.rows.find((r) => r.troop === t.key) : null;
             return `
-            <div class="rc-card roster-row" style="--rc:${{ Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" }[t.key] || "var(--ice)"}; ${hero && !used ? "opacity:0.55;" : ""}">
+            <div class="rc-card roster-row" data-rcopen="${esc(t.key)}" style="--rc:${{ Infantry: "#7ee6a8", Lancers: "var(--ice)", Marksman: "#f0a3c4" }[t.key] || "var(--ice)"}; ${hero && !used ? "opacity:0.55;" : ""}">
+              <button type="button" class="rc-x" data-rcclose aria-label="${esc(closeLbl)}">&#10005;</button>
               <div class="rc-troop">${esc(troopDisplayName(t.key))}</div>
               <div data-rosterpick="${esc(t.key)}" class="roster-pick rc-pick" title="Click to choose hero">
                 ${hero && hero.image_url ? `<img src="${esc(hero.image_url)}" alt="" loading="lazy" />` : `<span class="meta" style="font-size:10px; text-align:center;">${pickHeroPlaceholder}</span>`}
@@ -7550,6 +7625,7 @@ async function renderOverview(opts = {}) {
               <div class="rc-step"><button type="button" class="rc-pm" data-starstep="${esc(hero.id)}|-1" ${step <= 0 ? "disabled" : ""} aria-label="−1">&minus;</button><span>${esc(stepTxt)}</span><button type="button" class="rc-pm plus" data-starstep="${esc(hero.id)}|1" ${step >= 30 ? "disabled" : ""} aria-label="+1">+</button></div>
               ${sh && sh.step < 30 ? `<div class="rc-sh ${sh.short ? "bpsh-short" : "bpsh-ok"}" title="${esc(shTitle(sh))}">${esc(sh.short ? shShort.replace("{n}", Math.round(sh.short).toLocaleString()) : shEnough)}</div>${sh.short && sh.reach > sh.step ? `<div class="rc-sh rc-reach">${esc(shReach.replace("{s}", heroStepText(sh.reach)))}</div>` : ""}` : ""}
               ${sh && sh.hasWidget && sh.wLevel < widgetMaxLevel() ? `<div class="rc-sh ${sh.wShort ? "bpsh-short" : "bpsh-ok"}" title="${esc(`${wdTxt.need} ${sh.wNeed} · ${wdTxt.own} ${sh.wOwn}`)}">${sh.wShort ? wdTxt.short.replace("{n}", sh.wShort.toLocaleString()).split("{cost}").map(esc).join(widgetCostSpan(sh.hero.name, sh.wNeed)) : esc(wdTxt.enough)}</div>` : ""}
+              <div class="rc-mini"><div class="rc-mini-sh${miniShort(sh) ? "" : " ok"}">${esc(miniShort(sh) || "\u2713")}</div><div class="rc-mini-w">${esc(widgetShort)} ${esc(widget ? String(widget) : noneLabel)}</div></div>
               <div class="rc-pct">${[starStatsText(hero), widgetStatsText(hero, widget)].filter(Boolean).map(pct).map((x) => `<span>${x}</span>`).join("") || "&nbsp;"}</div>` : ""}
               <select data-rosterwidget="${esc(t.key)}" title="${esc(widgetLevelLabel)}" aria-label="${esc(widgetLevelLabel)}">
                 <option value="0" ${!widget ? "selected" : ""}>${esc(widgetShort)} ${esc(noneLabel)}</option>
@@ -7681,7 +7757,7 @@ async function renderOverview(opts = {}) {
   const DASH_SHORT = { ATT: "ATK", DEF: "DEF", DMG: "LETH", HP: "HP" };
   const statsHtml = () => `<div class="dash-troops cols">${TROOP_TYPES.map((tt) => `
     <div class="t12x-card dash-troop" style="--tc:${DASH_TROOP_COLORS[tt.key] || "var(--ice)"};">
-      <div class="dash-troop-h">${esc(troopDisplayName(tt.key))}</div>
+      <div class="dash-troop-h"><span>${esc(troopDisplayName(tt.key))}</span><button type="button" class="dash-bd" data-drilldown="${esc(tt.key)}|${esc(STATS[0].key)}">${esc(t("dash_breakdown"))} &#8250;</button></div>
       ${STATS.map((st) => {
         const { total } = statFor(tt.key, st.key);
         const maxTotal = maxStatFor(tt.key, st.key);
@@ -7910,10 +7986,6 @@ let heroGearActiveSet = "Set 1";
 // Sets Budgets plans (owner, 1 Nov 2026: picked in Budgets with tick chips,
 // not the set last opened here). calc_state budget_hg_sets = { sets: [...] }.
 let BUDGET_HG_SETS = ["Set 1"];
-// Heroes wearing Set 2 / Set 3 (Set 1 = the Dashboard roster), for the
-// breakdown pop-up's set tabs. calc_state hero_gear_heroes =
-// { "Set 2": { Infantry: { heroId, widget }, Lancers: …, Marksman: … }, … }.
-let HG_SET_HEROES = {};
 const budgetHgSetStates = () => BUDGET_HG_SETS.map((n) => HERO_GEAR_SETS[n]).filter(Boolean);
 // Anything still to do in a set (a target above its current level)?
 function heroGearSetLeft(name) {
@@ -7993,113 +8065,11 @@ async function loadHeroGearData() {
   }
   const bs = await loadCalcState("budget_hg_sets");
   if (bs && Array.isArray(bs.sets)) BUDGET_HG_SETS = HERO_GEAR_SET_NAMES.filter((n) => bs.sets.includes(n));
-  HG_SET_HEROES = (await loadCalcState("hero_gear_heroes")) || {};
 }
 
 
-// "Heroes wearing Set 2 / Set 3" (owner picked A, 1 Nov 2026): one hero per
-// troop for each extra set, with its widget level; stars are the hero's own
-// (player_heroes, same as the Dashboard roster). Set 1 is the Dashboard
-// roster. Used by the Dashboard breakdown pop-up's set tabs.
-const HG_ROSTER_TROOPS = [["Infantry", "Infantry"], ["Lancers", "Lancer"], ["Marksman", "Marksman"]];
-const hgHeroRows = () => Promise.all([
-  dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)),
-  dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
-]);
-const hgStarsOf = (ph, heroId) => {
-  const v = Number(((ph || []).find((p) => p.hero_id === heroId) || {}).current_stars) || 0;
-  const star = Math.min(5, Math.floor(v));
-  return { star, sub: Math.min(6, Math.round((v - star) * 10)) };
-};
-const hgStarsText = (st) => `${st.star}\u2605${st.sub ? ` ${st.sub}/6` : ""}`;
-async function drawHgSetHeroes(el) {
-  if (!el) return;
-  const setName = heroGearActiveSet;
-  if (setName === "Set 1") {
-    el.innerHTML = `<div class="meta hgh-s1">${esc(t("hg_set1_roster").replace("{set}", gearSetDisplayName(setName)))} <button type="button" class="linklike" data-hgdash>${esc(t("hg_open_dash"))}</button></div>`;
-    el.querySelector("[data-hgdash]").addEventListener("click", () => goToTab("overview"));
-    return;
-  }
-  let heroes = [], ph = [];
-  try { [heroes, ph] = await hgHeroRows(); } catch (e) { return; }
-  if (!el.isConnected || heroGearActiveSet !== setName) return;
-  const mine = HG_SET_HEROES[setName] || {};
-  el.innerHTML = `<div class="hgh-head"><b>${esc(t("hg_set_heroes").replace("{set}", gearSetDisplayName(setName)))}</b><span class="meta">${esc(t("hg_set_tap"))}</span></div>
-    <div class="hgh-cards">${HG_ROSTER_TROOPS.map(([key]) => {
-      const e = mine[key] || {}, h = e.heroId && heroes.find((x) => x.id === e.heroId);
-      return `<button type="button" class="hgh-card" data-hghero="${esc(key)}" style="--tc:${PLX_TROOP_COLORS[key === "Lancers" ? "Lancer" : key] || "var(--ice)"};">
-        <span class="hgh-tr">${esc(troopDisplayName(key))}</span>
-        ${h && h.image_url ? `<img src="${esc(h.image_url)}" alt="" loading="lazy" />` : `<span class="hgh-ph">+</span>`}
-        <b>${h ? esc(dataName(h.name)) : esc(t("hg_pick_hero"))}</b>
-        ${h ? `<span class="hgh-st">${esc(hgStarsText(hgStarsOf(ph, h.id)))} · ${esc(t("widget_short"))} ${Number(e.widget) || 0}</span>` : ""}
-      </button>`;
-    }).join("")}</div>
-    <div class="meta hgh-note">${esc(t("hg_set_note"))}</div>`;
-  el.querySelectorAll("[data-hghero]").forEach((b) => b.addEventListener("click", () => openHgHeroSheet(setName, b.dataset.hghero, () => drawHgSetHeroes(el))));
-}
-// Pick the hero for one troop of a set, its stars and widget level.
-async function openHgHeroSheet(setName, troopKey, after) {
-  let heroes = [], ph = [];
-  try { [heroes, ph] = await hgHeroRows(); } catch (e) { toast("Couldn't load", true); return; }
-  const cls = (HG_ROSTER_TROOPS.find((x) => x[0] === troopKey) || [])[1];
-  const choices = heroes.filter((h) => h.troop_type === cls);
-  let modal = document.getElementById("hgHeroModal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "hgHeroModal";
-    modal.className = "modal-overlay";
-    document.body.appendChild(modal);
-    modal.addEventListener("click", (e) => { if (e.target === modal && modal._close) modal._close(); });
-  }
-  function close() { modal.style.display = "none"; after(); }
-  modal._close = close;
-  const save = () => saveCalcState("hero_gear_heroes", HG_SET_HEROES);
-  const entry = () => ((HG_SET_HEROES[setName] = HG_SET_HEROES[setName] || {})[troopKey] = HG_SET_HEROES[setName][troopKey] || { heroId: "", widget: 0 });
-  const saveStars = async (heroId, step) => {
-    const value = Number((Math.floor(step / 6) + (step % 6) / 10).toFixed(1));
-    if (typeof budgetInvalidate === "function") budgetInvalidate();
-    const existing = ph.find((p) => p.hero_id === heroId);
-    if (existing) {
-      const prev = existing.current_stars;
-      existing.current_stars = value;
-      patchRowQueued("player_heroes", existing.id, { current_stars: value, updated_at: new Date().toISOString() }).catch(() => {
-        if (existing.current_stars === value) { existing.current_stars = prev; draw(); }
-        toast("Couldn't save", true);
-      });
-    } else {
-      const [row] = await sb(`player_heroes`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, hero_id: heroId, current_level: 0, current_stars: value }) });
-      ph.push(row || { hero_id: heroId, current_stars: value });
-    }
-  };
-  const draw = () => {
-    const e = entry(), h = e.heroId && heroes.find((x) => x.id === e.heroId), st = h ? hgStarsOf(ph, h.id) : null;
-    modal.innerHTML = `<div class="modal-box hgh-box">
-      <div class="bd-head"><h2>${esc(gearSetDisplayName(setName))} · ${esc(troopDisplayName(troopKey))}</h2><button type="button" class="bd-x" data-hgx aria-label="Close">&#10005;</button></div>
-      ${h ? `<div class="hgh-ctl">
-        <div class="hgh-row"><span>${esc(t("hg_stars"))}</span><span class="hgh-step"><button type="button" class="btn small ghost" data-hgstar="-1">&minus;</button><b>${esc(hgStarsText(st))}</b><button type="button" class="btn small ghost" data-hgstar="1">+</button></span></div>
-        <div class="hgh-row"><span>${esc(t("widget_level_label"))}</span><select data-hgwidget class="keep-w">${Array.from({ length: widgetMaxLevel() + 1 }, (_, i) => `<option value="${i}"${i === (Number(e.widget) || 0) ? " selected" : ""}>${i}</option>`).join("")}</select></div>
-        <div class="meta" style="font-size:11px;">${esc(t("hg_stars_note"))}</div>
-      </div>` : ""}
-      <div class="hgh-grid">
-        <button type="button" class="hgh-pick${e.heroId ? "" : " on"}" data-hgpick=""><span class="hgh-ph">&mdash;</span><span>${esc(t("hg_no_hero"))}</span></button>
-        ${choices.map((c) => { const notOut = heroGenNotOut(c.generation); return `<button type="button" class="hgh-pick${c.id === e.heroId ? " on" : ""}${notOut ? " out" : ""}" data-hgpick="${esc(c.id)}">${c.image_url ? `<img src="${esc(c.image_url)}" alt="" loading="lazy" />` : `<span class="hgh-ph">${esc(c.name.charAt(0))}</span>`}<span>${esc(dataName(c.name))}</span>${c.generation ? `<small class="meta">${esc(t("gen_prefix"))} ${c.generation}</small>` : ""}</button>`; }).join("")}
-      </div>
-      <div style="text-align:end; margin-top:12px;"><button type="button" class="btn small" data-hgdone>${esc(t("close_button"))}</button></div>
-    </div>`;
-    modal.querySelector("[data-hgx]").addEventListener("click", close);
-    modal.querySelector("[data-hgdone]").addEventListener("click", close);
-    modal.querySelectorAll("[data-hgpick]").forEach((b) => b.addEventListener("click", () => { entry().heroId = b.dataset.hgpick; save(); draw(); }));
-    modal.querySelectorAll("[data-hgstar]").forEach((b) => b.addEventListener("click", async () => {
-      const cur = hgStarsOf(ph, e.heroId), step = Math.max(0, Math.min(30, cur.star * 6 + cur.sub + Number(b.dataset.hgstar)));
-      await saveStars(e.heroId, step);
-      draw();
-    }));
-    const ws = modal.querySelector("[data-hgwidget]");
-    if (ws) ws.addEventListener("change", () => { entry().widget = Number(ws.value) || 0; save(); });
-  };
-  draw();
-  modal.style.display = "flex";
-}
+// "Heroes wearing Set 2 / Set 3" (1 Nov 2026) was removed (owner, 3 Nov 2026): the
+// breakdown pop-up uses the Dashboard roster for every set again.
 
 // Renders the Quick Select + per-piece calculator + totals + stats.
 async function renderGearLevelingGroup(target) {
@@ -8112,7 +8082,7 @@ async function renderGearLevelingGroup(target) {
     title: navLabel("herogearcalc"),
     settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
         ${HERO_GEAR_SET_NAMES.map((name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`).join("")}
-      </div><div id="hgSetHeroes" class="hgh-wrap"></div>`,
+      </div>`,
     amountsId: "heroGearOwned", needId: "heroGearNeed",
     // One pinned troop switch with that troop's stats (owner, 19 Oct 2026).
     statsHtml: plxTroopSwitchHtml("hero_gear", ""),
@@ -8125,7 +8095,6 @@ async function renderGearLevelingGroup(target) {
       renderGearLevelingGroup(target);
     });
   });
-  drawHgSetHeroes(target.querySelector("#hgSetHeroes"));
 
   const activeState = HERO_GEAR_SETS[heroGearActiveSet];
   const activeStorageKey = HERO_GEAR_STORAGE_KEYS[heroGearActiveSet];
@@ -15595,7 +15564,7 @@ function stateAgeCardHtml() {
   return `<div class="sa-card"><div class="sa-ic">🏰</div><div style="min-width:0;">
     <div class="sa-k">${esc(t("sa_card_k"))}</div>
     <div class="sa-v">${d.toLocaleString()} <span class="sa-s">· ${esc(t("sa_gen_heroes").replace("{n}", gen || g.gen))}${ownDaysPlayed() != null ? ` · ${esc(t("sa_own_card").replace("{n}", ownDaysPlayed().toLocaleString()))}` : ""}</span></div>
-    <div class="sa-chips">${next ? `<span class="sa-chip i">⭐ ${esc(t("sa_next_gen").replace("{n}", (gen || g.gen) + 1).replace("{d}", Math.round((next - t0) / 86400000)).replace("{date}", fmt(next)))}</span>` : ""}${wheelTxt ? `<span class="sa-chip">🎡 ${esc(wheelTxt)}</span>` : ""}</div>
+    <div class="sa-chips">${next ? `<span class="sa-chip i">⭐ ${esc(t("sa_next_gen").replace("{n}", (gen || g.gen) + 1).replace("{d}", Math.round((next - t0) / 86400000)).replace("{date}", fmt(next)))}</span>` : ""}${wheelTxt ? `<span class="sa-chip sa-wheel">🎡 ${esc(wheelTxt)}</span>` : ""}</div>
   </div><button type="button" class="btn small ghost sa-edit" data-saopen aria-label="${esc(t("sa_title"))}">&#9998;</button></div>`;
 }
 // ---- State Timeline page (owner picked design A, 20 Oct 2026) ----
@@ -17449,7 +17418,7 @@ function infoize(root) {
     if (h && !/^H[1-4]$/.test(h.tagName) && !h.matches(".t12x-title, .t12x-k, .cg-k")) h = h.querySelector("h2, h3, .t12x-title");
     if (h && (/^H[1-4]$/.test(h.tagName) || h.matches(".t12x-title, .t12x-k, .cg-k"))) infoAttach(h, d);
   });
-  root.querySelectorAll(".t12x-card p.desc, .panel p.desc").forEach((d) => { if (!free(d)) return; const card = d.closest(".t12x-card, .panel"); infoAttach(card.querySelector(".t12x-title, h2, h3"), d); });
+  root.querySelectorAll(".t12x-card p.desc, .panel p.desc").forEach((d) => { if (!free(d) || !d.textContent.trim() || [...d.attributes].some((x) => x.name.startsWith("data-"))) return; const card = d.closest(".t12x-card, .panel"); infoAttach(card.querySelector(".t12x-title, h2, h3"), d); });
   root.querySelectorAll(".plx-head + p.desc, .plx-head + .desc, .pur-how").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".plx-head h2, .page-head h2"), d); });
   root.querySelectorAll("details > summary ~ .pur-wc-desc").forEach((d) => { if (!free(d)) return; infoAttach(d.closest("details").querySelector(":scope > summary"), d); });
   root.querySelectorAll(".info-d").forEach((d) => { if (!free(d)) return; const card = d.closest(".panel, .t12x-card"); infoAttach(card && card.querySelector(".info-h"), d); });
@@ -17484,7 +17453,7 @@ function plxTopBox(root) {
 TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); });
 {
   let queued = false;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); } };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
@@ -17520,6 +17489,34 @@ TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); }
   document.addEventListener("pointerover", (e) => { const b = e.target.closest && e.target.closest("[data-info]"); if (b && e.pointerType === "mouse" && pinned !== b) show(b, true); });
   document.addEventListener("pointerout", (e) => { const b = e.target.closest && e.target.closest("[data-info]"); if (b && e.pointerType === "mouse" && pinned !== b) show(b, false); });
 }
+// Dashboard B roster window (phones): tapping a small hero card opens the full card
+// over the page; it stays open across the roster's redraws until ✕ / outside.
+let DASH_RC_OPEN = null;
+const DASH_RC_MQ = window.matchMedia("(max-width: 700px)");
+function dashRcSheet(key) {
+  DASH_RC_OPEN = key;
+  document.querySelectorAll(".rc-card.rc-open").forEach((c) => c.classList.remove("rc-open"));
+  document.querySelectorAll(".rc-ph, .rc-bd").forEach((x) => x.remove());
+  if (!key) return;
+  const card = document.querySelector(`.rc-card[data-rcopen="${CSS.escape(key)}"]`);
+  if (!card) return;
+  const ph = card.cloneNode(true);
+  ph.classList.add("rc-ph"); ph.removeAttribute("data-rcopen"); ph.setAttribute("aria-hidden", "true");
+  ph.querySelectorAll("[id]").forEach((x) => x.removeAttribute("id"));
+  card.after(ph);
+  card.classList.add("rc-open");
+  const bd = document.createElement("div");
+  bd.className = "cg-bd rc-bd";
+  card.parentElement.appendChild(bd);
+}
+document.addEventListener("click", (e) => {
+  if (TAB !== "overview" || !DASH_RC_MQ.matches) return;
+  if (e.target.closest("[data-rcclose], .rc-bd")) { e.preventDefault(); e.stopPropagation(); dashRcSheet(null); return; }
+  const open = e.target.closest(".rc-card.rc-open");
+  if (open && e.target.closest("[data-rosterpick]")) { dashRcSheet(null); return; } // the hero picker opens over the page
+  const card = !open && e.target.closest(".rc-card[data-rcopen]");
+  if (card) { e.preventDefault(); e.stopPropagation(); dashRcSheet(card.dataset.rcopen); }
+}, true);
 let EXP_SIG_OPEN = false; // Experts Level sigils fold, kept for the visit
 document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.matches("[data-expsig]")) EXP_SIG_OPEN = e.target.open; }, true);
 // Planner pages (Chief Gear pattern, owner 3 Nov 2026): "⇄ Trades ›" and
@@ -25650,9 +25647,28 @@ async function renderExpertsResearchPage() {
     mainHtml: `<div id="expResearchSwipeCounter"></div>
     <div id="expResearchGrid"></div>`,
   });
-  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
-    <div id="expResearchOwned"></div>
+  // The sigil boxes fold like the other pages' Backpack boxes (owner, 3 Nov 2026),
+  // remembered on the account (calc_state bar_hidden, key experts_research).
+  const erHidden = () => BAR_SHOW_ALL.experts_research === false;
+  document.getElementById("expResearchAmounts").innerHTML = `<div class="bs-foot"><span>&#127890; ${esc(t("bs_your_amounts"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(erHidden() ? "bs_show_all" : "bs_hide"))}</button>${plxBuyBtnsHtml("experts_research").replace(/<button[^>]*data-plxsheet="trades"[\s\S]*?<\/button>/, "")}</div>
+    <div id="expResearchOwned"${erHidden() ? ' style="display:none;"' : ""}></div>
 `;
+  {
+    const amts = document.getElementById("expResearchAmounts");
+    const sync = () => {
+      const h = erHidden(), o = document.getElementById("expResearchOwned"), b = amts.querySelector("[data-bstoggle]");
+      if (o) o.style.display = h ? "none" : "";
+      if (b) b.textContent = t(h ? "bs_show_all" : "bs_hide");
+      bsFoldMark(amts, h);
+    };
+    amts.addEventListener("click", (ev) => {
+      if (!ev.target.closest("[data-bstoggle]")) return;
+      BAR_SHOW_ALL.experts_research = erHidden();
+      sync();
+      saveBarHidden();
+    });
+    ensureBarHidden().then(sync);
+  }
   { const b = document.getElementById("expResearchAmounts_buy"); (b.querySelector("[data-buybody]") || b).innerHTML = `<div id="expResearchPacks"></div>`; }
 
   const sigilsEl = document.getElementById("expResearchSigils");
@@ -27762,7 +27778,7 @@ function plxShellHtml(o) {
   return `
     <div class="plx-head">
       <h2>${esc(o.title)}</h2>
-      ${o.maxId ? `<button type="button" class="plx-maxbtn" id="${o.maxId}">&#9650; ${esc(t("max_everything"))}</button>` : ""}
+      ${o.maxId ? `<button type="button" class="plx-maxbtn plx-max" id="${o.maxId}" title="${esc(t("max_everything"))}">${esc(t("max_button"))}</button>` : ""}
     </div>
     <div class="t12x g1">
       <aside class="t12x-side">
