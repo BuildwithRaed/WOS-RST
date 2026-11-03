@@ -241,18 +241,6 @@
   /* Budgets: cards flow into columns (masonry) so a tall card never leaves
      a hole beside it; 1 column on phones, 2 on tablets/laptops, 3 on wide
      monitors. */
-  .bud-page{ border-top:1px solid var(--line); }
-  .bud-page:first-of-type{ border-top:0; }
-  .bud-page.off .bud-row, .bud-page.dim .bud-row{ opacity:.6; }
-  .bud-page.open{ background:rgba(255,255,255,.02); border-radius:10px; }
-  .bud-row{ display:flex; align-items:center; gap:8px; padding:8px 4px; font-size:13.5px; }
-  .bud-row .btn{ flex-shrink:0; }
-  .bud-fold{ width:28px; height:28px; flex-shrink:0; border-radius:8px; border:1px solid var(--line); background:none; color:var(--frost); cursor:pointer; }
-  span.bud-fold{ border:0; }
-  .bud-body{ padding:2px 8px 12px 30px; }
-  .bud-row label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
-  .bud-row label span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .bud-row-v{ white-space:nowrap; font-size:13px; }
   .qk-wrap{ margin:0 0 8px; }
   .qk-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:1px 0; }
   .qk-row::-webkit-scrollbar{ display:none; }
@@ -728,8 +716,6 @@
   .bud-line-v .meta{ display:block; font-size:11px; }
   .bud-line[open] .bud-line-arrow{ display:inline-block; transform:rotate(90deg); }
   .bud-line-body{ padding:0 0 10px 14px; }
-  .bud-mat-btn{ display:inline-flex; align-items:center; gap:8px; }
-  .bud-mat-arrow{ color:var(--ice); }
   .bud-mat{ display:inline-flex; align-items:center; gap:6px; padding:4px 11px 4px 5px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.03); font-size:13px; }
   .bud-mat img{ width:24px; height:24px; object-fit:contain; }
   .bud-mat i{ width:24px; height:24px; display:grid; place-items:center; font-style:normal; font-weight:800; color:var(--muted); }
@@ -1301,9 +1287,111 @@
   .bud-pending{ font-size:15px; font-weight:600; color:var(--ice); animation:budPulse 1.2s ease-in-out infinite; }
   .bud-pending.small{ font-size:12px; }
   @keyframes budPulse{ 50%{ opacity:.45; } }
-  @media (max-width: 560px){ .bud-row{ flex-wrap:wrap; } .bud-row label{ flex:1 1 100%; } .bud-row-v{ margin-inline-start:24px; margin-inline-end:auto; } .bud-body{ padding-left:8px; } }
-  .bud-row .linklike{ text-decoration:none; font-size:14px; }
   .budget-wrap{ max-width:1400px; margin:0 auto; }
+  /* Budgets = design B3 (owner, 3 Nov 2026): total tile, goal flags, page
+     tiles, Settings / This week tiles; the details open in a sheet. Phones:
+     one column in that order; PC: total + flags + Settings left, tiles right. */
+  .b3-head{ display:flex; align-items:center; gap:8px; margin:0 0 10px; }
+  .b3-head h2{ margin:0; flex:1; min-width:0; }
+  .b3-sq{ width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; flex:none; border:1px solid var(--line); border-radius:10px; background:none; color:var(--frost); font-size:16px; cursor:pointer; }
+  .b3-cols{ display:flex; flex-direction:column; gap:8px; }
+  .b3-left, .b3-right{ display:contents; }
+  .b3-hd{ order:1; } .b3-rail{ order:2; } .b3-pg{ order:3; } .b3-np{ order:4; } .b3-lr{ order:5; }
+  @media (min-width:900px){
+    .b3-cols{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:12px; align-items:start; }
+    .b3-left, .b3-right{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  }
+  .b3-tile{ border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--frost); min-width:0; }
+  button.b3-tile{ width:100%; font:inherit; text-align:start; cursor:pointer; }
+  .b3-a{ display:inline-flex; align-items:center; gap:4px; min-height:32px; padding:0; border:0; background:none; color:var(--ice); font:inherit; font-size:12px; font-weight:700; white-space:nowrap; cursor:pointer; }
+  .b3-hd{ padding:4px 12px 8px; border-color:rgba(111,211,242,.55); }
+  .b3-hd-l{ display:flex; align-items:center; flex-wrap:wrap; gap:0 12px; font-size:12px; color:var(--muted); }
+  .b3-hd-l > span{ margin-inline-end:auto; }
+  .b3-hd-t{ display:flex; align-items:flex-end; flex-wrap:wrap; gap:2px 10px; }
+  .b3-hd-t > b{ font-size:32px; font-weight:800; line-height:1.05; letter-spacing:-.01em; }
+  .b3-hd-t > div{ font-size:12.5px; line-height:1.3; padding-bottom:3px; }
+  .b3-hd-t small{ display:block; color:var(--muted); font-size:11.5px; }
+  .b3-hd-t .ok{ color:var(--good); } .b3-hd-t .rd{ color:var(--danger); }
+  .b3-coming{ font-size:11.5px; font-weight:600; }
+  .b3-hd .bud-seg{ margin-top:8px; }
+  .b3-split{ display:flex; gap:2px; height:6px; margin:10px 0 2px; border-radius:4px; overflow:hidden; }
+  .b3-split i{ display:block; height:100%; }
+  .b3-hd .bud-line{ border-top:0; }
+  .b3-hd .bud-line:first-of-type{ margin-top:4px; }
+  .b3-sl > summary{ gap:7px; min-height:32px; padding:3px 0; }
+  .b3-sl .bud-line-bar{ align-self:center; height:16px; }
+  .b3-sl .bud-line-t{ font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b3-sl .bud-line-t b{ font-size:12.5px; font-weight:500; }
+  .b3-sl .bud-line-v{ display:flex; align-items:baseline; gap:6px; }
+  .b3-sl .bud-line-v b{ font-size:13.5px; }
+  .b3-sl .bud-line-v .meta{ display:inline; font-size:11.5px; }
+  .b3-sl .bud-line-body{ padding-block:0 8px; padding-inline:11px 0; }
+  .b3-rail{ padding:2px 8px 8px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+  .b3-rail-l{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 2px; }
+  .b3-lbl{ min-width:0; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b3-rail .bud-pending{ padding:6px 2px 2px; }
+  .b3-stops{ display:flex; overflow-x:auto; scrollbar-width:none; }
+  .b3-stops::-webkit-scrollbar{ display:none; }
+  .b3-stop{ position:relative; flex:1 0 56px; display:flex; flex-direction:column; align-items:center; gap:4px; min-height:52px; padding:2px 2px 0; border:0; background:none; color:inherit; font:inherit; cursor:pointer; }
+  .b3-stop + .b3-stop::before{ content:""; position:absolute; top:16px; inset-inline-start:-50%; width:100%; height:2px; background:var(--line); }
+  .b3-stop .b3-ics{ position:relative; z-index:1; display:flex; align-items:center; height:30px; }
+  .b3-stop .b3-ics img, .b3-stop .b3-ics i{ width:28px; height:28px; border-radius:8px; border:2px solid var(--panel); background:var(--panel-2); object-fit:cover; flex:none; }
+  .b3-stop .b3-ics img + img, .b3-stop .b3-ics i + img, .b3-stop .b3-ics img + i{ margin-inline-start:-9px; }
+  .b3-stop .b3-ics img.ct{ object-fit:contain; padding:2px; }
+  .b3-stop .b3-ics i{ display:grid; place-items:center; font-style:normal; font-size:12px; font-weight:700; }
+  .b3-stop .b3-ics em{ margin-inline-start:2px; font-style:normal; font-size:11px; color:var(--muted); }
+  .b3-stop .b3-ics b{ display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; border:2px dashed var(--amber); background:var(--panel-2); font-size:13px; }
+  .b3-stop small{ font-size:11px; color:var(--muted); white-space:nowrap; }
+  .b3-stop.ok small{ color:var(--good); font-weight:700; }
+  .b3-stop.tg small, .b3-stop.has-tg small{ color:var(--amber); font-weight:700; }
+  .b3-stop.later small{ color:var(--danger); }
+  .b3-pg{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+  .b3-pt{ position:relative; min-height:84px; padding:8px 10px 9px; cursor:pointer; }
+  .b3-pt:focus-visible{ outline:2px solid var(--ice); outline-offset:1px; }
+  .b3-pt.off{ opacity:.72; }
+  .b3-pt-h{ display:flex; align-items:center; gap:7px; }
+  .b3-pt-h img{ width:22px; height:22px; object-fit:contain; flex:none; }
+  .b3-pt-h b{ flex:1; min-width:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b3-tk{ display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; margin-block:-6px; margin-inline:-4px -7px; flex:none; cursor:pointer; }
+  .b3-tk input{ width:20px; height:20px; margin:0; accent-color:var(--ice); cursor:pointer; }
+  .b3-pt-p{ margin-top:2px; padding-inline-end:40px; font-size:19px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b3-pt-p b{ font-weight:800; }
+  .b3-pt-p.nothing{ margin-top:8px; font-size:12.5px; font-weight:700; color:var(--good); }
+  .b3-pt-m{ margin-top:2px; padding-inline-end:40px; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b3-pt-m.ok{ color:var(--good); } .b3-pt-m.rd{ color:var(--danger); } .b3-pt-m.mu{ color:var(--muted); }
+  .b3-ring{ position:absolute; inset-inline-end:9px; bottom:9px; width:34px; height:34px; }
+  .b3-ring svg{ display:block; }
+  .b3-ring b{ position:absolute; inset:0; display:grid; place-items:center; font-size:11px; font-weight:800; }
+  .b3-cols .b3-np{ display:flex; align-items:center; gap:8px; min-height:42px; padding:0 12px; font-size:12.5px; }
+  .b3-np .b3-ics{ display:flex; gap:3px; min-width:0; overflow:hidden; }
+  .b3-np .b3-ics img{ width:20px; height:20px; object-fit:contain; opacity:.75; }
+  .b3-go{ margin-inline-start:auto; color:var(--ice); font-weight:800; font-size:16px; }
+  .b3-lr{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr); gap:8px; }
+  .b3-lr .b3-tile{ display:flex; align-items:center; gap:8px; min-height:54px; padding:6px 10px; }
+  .b3-lr .b3-tile img{ width:26px; height:26px; object-fit:contain; flex:none; }
+  .b3-lr .b3-tile.wk{ border-color:var(--ice-dim); background:rgba(44,85,104,.28); }
+  .b3-gear{ flex:none; font-size:19px; }
+  .b3-lr-t{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
+  .b3-lr-t b{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .b3-lr-t small{ font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .modal-box.b3-sheet{ max-width:620px; }
+  @media (max-width:700px){ .modal-overlay.b3-sheet-wrap{ padding:10px; } .modal-box.b3-sheet{ padding:16px 14px; } }
+  .b3-sheet .bud-g-by{ white-space:normal; text-align:start; max-width:100%; }
+  .b3-sheet .bud-goals.t12x-card{ margin-top:0 !important; padding:0; border:0; background:none; box-shadow:none; }
+  .b3-sheet .bud-g-head{ display:none; }
+  .b3-sheet .bud-mats{ margin-top:2px; }
+  .b3-set{ padding:0; }
+  .b3-set > .bset-row:first-child{ border-top:0; }
+  .b3-mrow{ display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); }
+  .b3-mrow:first-of-type{ border-top:0; }
+  .b3-mrow label{ display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer; }
+  .b3-mrow input{ width:20px; height:20px; margin:0; flex:none; }
+  .b3-mrow img{ width:24px; height:24px; object-fit:contain; flex:none; }
+  .b3-mrow label > span{ display:flex; flex-direction:column; min-width:0; font-size:13px; }
+  .b3-ps-top{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .b3-ps-inc{ display:flex; align-items:center; gap:6px; min-height:32px; font-size:12.5px; cursor:pointer; }
+  .b3-ps-inc input{ width:18px; height:18px; margin:0; }
+  .b3-ps-v{ margin-inline-start:auto; font-size:18px; }
   /* Current -> target level pairs (T11 / T12): side by side on wide
      screens, stacked with small captions on phones so nothing is cut off. */
   .lvl-pair{ display:flex; gap:4px; align-items:center; min-width:0; }
@@ -4764,6 +4852,23 @@ const T = {
   budgets_title: { en: "Budgets" },
   budgets_recalc: { en: "Recalculate" },
   budgets_recalc_hint: { en: "Forget the saved results and work everything out again" },
+  b3_total_ticked: { en: "Total · {n} pages ticked" },
+  b3_materials: { en: "{n} materials" },
+  b3_stat_gain: { en: "Stat gain" },
+  b3_flags: { en: "Goal flags · tap one to see its week" },
+  b3_goals_n: { en: "{n} goals" },
+  b3_target: { en: "Your target date" },
+  b3_by: { en: "by {date}" },
+  b3_after: { en: "after target" },
+  b3_done_on: { en: "done {date}" },
+  b3_not_counted: { en: "not in this budget" },
+  b3_nothing: { en: "nothing planned" },
+  b3_tick: { en: "Count in this budget" },
+  b3_ring_tip: { en: "You already have {p}% of what this page needs (Backpack + trades)" },
+  b3_missing: { en: "{n} pages not in the plan yet" },
+  b3_set_target: { en: "Target {date}" },
+  b3_week: { en: "This week {v}" },
+  b3_week_n: { en: "{n} packs" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get." },
   budgets_working: { en: "Working out the cheapest packs…" },
   budgets_loading: { en: "Adding everything up…" },
@@ -5677,7 +5782,7 @@ function holdPageHeight(on) {
 }
 // Scroll boxes / sideways rows inside `root` (matched by class and order) keep
 // their scroll across `fn` (which rebuilds them).
-const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap";
+const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap, .b3-stops";
 // saveBoxScroll(root) notes them now and returns a function that puts them
 // back (in `root`, or in the box that replaced it).
 function saveBoxScroll(root) {
@@ -5714,6 +5819,9 @@ function keepFolds(root, fn) {
 }
 // Admin tables redrawn after a save keep the page and the table's scroll.
 function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
+// Budgets B3: the sheet open over the page ("mats", "stats", "goals",
+// "settings", "missing", "page:<calcKey>"); kept across redraws, closed on navigation.
+let BUDGET_SHEET = null;
 function goToTab(tab, opts = {}) {
   if (!isValidTab(tab)) tab = "overview";
   // Unsaved Admin table edits: ask before leaving them.
@@ -5726,6 +5834,7 @@ function goToTab(tab, opts = {}) {
   // Leaving Admin: drop data copies kept for the visit so pages show the edits.
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
   if (tab !== "budgets") BUDGET_FOCUS_SPEND = false;
+  BUDGET_SHEET = null;
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
   document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
@@ -19622,8 +19731,6 @@ function goalPageIcon(pg) {
   for (const n of Object.keys((pg && pg.needFull) || {})) { const ic = itemRegIcon(n) || bpIcon({ name: n.replace(/ \(minutes\)$/, "") }); if (ic) return ic; }
   return "";
 }
-const BUDGET_OPEN_PAGES = new Set(); // Budgets: pages whose details are unfolded (kept for the visit)
-let BUDGET_MATS_OPEN = false; // Budgets: "Materials still needed" opened (starts closed, kept for the visit)
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
 // Budgets and the Roadmap page (admin) share one pipeline: the Roadmap is
@@ -19783,23 +19890,14 @@ async function renderBudgetsPage(opts = {}) {
   // Per-page cards.
   let grandTotal = 0, grandCurrency = null, grandDays = 0, anyPlan = false;
   const grandMats = {}, grandDeltas = [];
-  const cards = pages_.map((pg, i) => {
+  // Design B3 (owner, 3 Nov 2026): each page is a tile; its details
+  // (materials, pack cost, stat increase) open in a sheet.
+  const B3_PAGES = [];
+  pages_.forEach((pg, i) => {
     const label = packPageLabel(pg.calcKey);
     const grp = packGroupOf(pg.calcKey);
     const inc = included(pg.calcKey);
-    // One row per page: tick, name, its cost, Open, and ▸ to unfold the
-    // details (materials, pack cost, stat increase) under it.
-    const isOpen = BUDGET_OPEN_PAGES.has(pg.calcKey);
-    const pageRow = (right, body, dim) => `<div class="bud-page${inc ? "" : " off"}${dim ? " dim" : ""}${isOpen ? " open" : ""}" data-budpage="${esc(pg.calcKey)}">
-        <div class="bud-row">
-          <label><input type="checkbox" data-budgetinc="${esc(pg.calcKey)}" ${inc ? "checked" : ""} /><span>${grp && grp.group ? `<span class="meta" style="font-size:11px; font-weight:600;">${esc(packGroupLabel(grp))} · </span>` : ""}${esc(label)}</span></label>
-          <span class="bud-row-v">${right}</span>
-          <button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[i].tab)}">${esc(t("budgets_open_page"))}</button>
-          ${body ? `<button type="button" class="bud-fold" data-budfold="${esc(pg.calcKey)}" aria-label="details">${isOpen ? "&#9662;" : "&#9656;"}</button>` : `<span class="bud-fold"></span>`}
-        </div>
-        ${pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
-        ${body ? `<div class="bud-body"${isOpen ? "" : " hidden"}>${body}</div>` : ""}
-      </div>`;
+    const pageRow = (right, body, dim) => { B3_PAGES.push({ pg, i, inc, label, glabel: grp && grp.group ? packGroupLabel(grp) : "", right, body, dim }); return ""; };
     if (pg.missing) return pageRow(`<span class="meta" style="font-size:11px;">${esc(t(pg.notCounted ? "budgets_not_counted" : pg.stale ? "budgets_open_again" : "budgets_open_once"))}</span>`, "", true);
     const hasNeed = Object.keys(pg.needFull).some((n) => pg.needFull[n] > 0);
     if (!hasNeed) return pageRow(`<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>`, "", true);
@@ -19863,25 +19961,7 @@ async function renderBudgetsPage(opts = {}) {
     grandDays = Math.max(grandDays, combined.chosen.days);
   }
   if (BUDGET_VIEW === "budget" && !(spendBest && spendBest.ok)) anyPlan = false;
-  // Design A: each part of the plan is one line (coloured bar, pages, price,
-  // "N packs ▸"); tapping it opens that part's packs.
-  const lineHtml = (color, title, sub, pl, open) => {
-    const money = packFmtLocal(Math.ceil(packPlanLocal(pl)), pl.rows[0]?.currency, true, pl.rows[0]?.price);
-    const trades = (pl.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${pl.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
-    return `<details class="bud-line"${open ? " open" : ""}><summary><span class="bud-line-bar" style="background:${color};"></span>
-      <span class="bud-line-t">${title}<br><span class="meta">${sub}</span></span>
-      <span class="bud-line-v"><b>${money}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", pl.rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary>
-      <div class="bud-line-body">${packRowsHtml(pl)}${trades}</div></details>`;
-  };
-  const namesOf = (keys) => keys.map((k) => esc(packPageLabel(k))).join(" · ");
   const droppedHtml = combined.dropped.length ? `<div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("combined_dropped"))}: ${combined.dropped.map((k) => esc(packPageLabel(k))).join(", ")}</div>` : "";
-  const splitHtml = () => {
-    const tp = split.target.plan, lp = splitLate.plan;
-    const tDays = tp.days === 0 ? "" : ` <span class="meta" style="font-size:12px;">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>`;
-    return `${lineHtml("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tDays}`, namesOf(split.target.keys), tp)}
-      ${lineHtml("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${namesOf(split.late.keys)} · ${esc(t("bud_line_by").replace("{date}", fmtDate(lp.days)))}`, lp)}
-      ${droppedHtml}`;
-  };
   // "My budget": one line per month (or week): spent of what was there, money
   // kept for the next one, and that period's packs (design C).
   const spendHtml = () => {
@@ -19910,10 +19990,6 @@ async function renderBudgetsPage(opts = {}) {
     const ps = spendBest.periods;
     return ps.slice(0, 8).map(one).join("") + (ps.length > 8 ? `<details class="bud-spend-more"><summary class="meta">${esc(t("spend_show_all").replace("{n}", ps.length))}</summary>${ps.slice(8).map(one).join("")}</details>` : "");
   };
-  const combinedHtml = BUDGET_VIEW === "budget" ? spendHtml() : split && BUDGET_VIEW === "main" ? splitHtml() : combined.inc.length ? `
-      ${combined.chosen ? lineHtml(targetDays != null && combined.chosen.days > targetDays ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, namesOf(combined.inc), combined.chosen)
-        : `<div class="meta" style="font-size:11px; margin-top:10px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`}
-      ${droppedHtml}` : "";
   // The plan cards under the big total.
   const viewCardsHtml = (() => {
     if (!combinedRaw.chosen || viewKeys.length < 2) return "";
@@ -19929,41 +20005,21 @@ async function renderBudgetsPage(opts = {}) {
   })();
   // Items shared by pages from one Backpack amount count it once (see budgetSharedOwnedExtra).
   Object.values(budgetSharedOwnedExtra(pagesRaw.filter((pg) => !pg.missing && included(pg.calcKey)))).forEach((m) => Object.entries(m).forEach(([n, q]) => { grandMats[n] = (grandMats[n] || 0) + q; }));
-  const summary = `
-    <div class="panel" style="border-color:var(--ice);">
-      <div style="display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap;">
-        <div class="meta" style="font-size:12.5px;">${esc(t("budgets_total_title"))}</div>
-
-      </div>
-      <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-top:2px;">
-        <span style="font-size:30px; font-weight:800; letter-spacing:-.3px;">${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</span>
-        ${anyPlan ? `<span class="meta" style="font-size:12px; width:100%;">${esc(t("bud_done_by"))} <span style="color:${targetDays != null && grandDays > targetDays ? "var(--danger)" : "var(--good)"};">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(fmtDate(grandDays))} · ${grandDays} ${esc(t("pack_days_short_long"))}`}</span></span>` : ""}
-      </div>
-      ${(() => {
-        // The total only covers pages with a saved plan: say so when some ticked pages have none yet.
-        const ticked = pagesRaw.filter((pg) => included(pg.calcKey)), noPlan = ticked.filter((pg) => pg.missing).length;
-        return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : "";
-      })()}
-      ${(() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<div class="meta" style="font-size:11.5px; margin-top:6px;"><button type="button" class="btn small ghost" data-gototab="purchases" style="padding:3px 10px;">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button></div>` : ""; })()}
-      ${viewCardsHtml}
-      ${combinedHtml}
-      ${Object.keys(grandMats).length ? `<div style="margin-top:10px;"><button type="button" class="btn small ghost bud-mat-btn" data-budmats aria-expanded="${BUDGET_MATS_OPEN}">&#128230; ${esc(t("budgets_materials_total"))} (${Object.keys(grandMats).length}) <span class="bud-mat-arrow">${BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;"}</span></button><div class="bud-mats"${BUDGET_MATS_OPEN ? "" : " hidden"} style="margin-top:8px;">${Object.keys(grandMats).map((n) => {
-        // Picture + short amount; the name and exact number show on hover / long press.
-        const icon = itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") }));
-        const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
-        const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
-        return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
-      }).join("")}</div></div>` : ""}
-      ${grandDeltas.length ? `<div style="margin-top:10px;"><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("budgets_stat_increase_total"))}</div>${statTableHtml(grandDeltas, "all")}</div>` : ""}
-      ${dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`}
-    </div>`;
+  // "Materials still needed": picture + short amount; the name and exact number show on hover / long press.
+  const grandMatChip = (n) => {
+    const icon = itemRegIcon(n) || (/^Research Speedups/.test(n) ? "icons/speedup-research.png" : bpIcon({ name: n.replace(/ \(minutes\)$/, "") }));
+    const short = /\(minutes\)$/.test(n) ? t12FormatTime(grandMats[n] / 60) : shortAmount(grandMats[n]);
+    const label = `${materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, "")}: ${qty(grandMats[n])}`;
+    return `<span class="bud-mat" title="${esc(label)}" aria-label="${esc(label)}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : `<i>${esc(materialDisplayName(n).charAt(0))}</i>`}${heroItemMark(n)}<b>${esc(short)}</b></span>`;
+  };
 
   // Order of goals (admin): see budgetGoalList / budgetGoalDates.
   let rmPageHtml = null; // the Roadmap page (drawn instead of Budgets on its tab)
   const rmShell = (inner) => `<div class="rm-page">
       <div class="plx-head"><h2>${esc(t("rm_title"))} <span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span></h2><button type="button" class="btn small ghost" data-gototab="budgets">&#8249; ${esc(t("rm_back"))}</button></div>
       <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("rm_page_desc"))}</p>${inner}</div>`;
-  const goalsHtml = (() => {
+  let goalsCardHtml = "", goalFlagsHtml = "", b3Week0 = null;
+  void (() => {
     if (!IS_OWNER) return "";
     const planKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
     // Pages the combined plan had to plan on their own are goals too (their
@@ -19999,6 +20055,9 @@ async function renderBudgetsPage(opts = {}) {
     });
     const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
     const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
+    // B3 goal flags header (the flags follow once the dates are worked out).
+    const railHead = `<div class="b3-rail-l"><span class="b3-lbl">${esc(t("b3_flags"))}</span><button type="button" class="b3-a" data-b3sheet="goals">&#8645; ${esc(t("b3_goals_n").replace("{n}", goals.length))} &#8250;</button></div>`;
+    goalFlagsHtml = `<div class="b3-rail">${railHead}<div class="bud-pending small">${esc(t("budgets_working"))}</div></div>`;
     const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
     const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
     const nameOf = (g) => {
@@ -20118,6 +20177,7 @@ async function renderBudgetsPage(opts = {}) {
 
     // Roadmap: the packs week by week with a flag where each goal is reached,
     // and "Without": the plain plan with the default order and no dates.
+    goalsCardHtml = goalsCard;
     if (planPending || !plan || !dates) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="big"><span class="bud-pending">${esc(t("budgets_working"))}</span></div></div></div>`); return goalsCard; }
     const plainGoals = budgetGoalList(pagesRaw, keys, true);
     const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.indexOf(goals.find((x) => x.id === g.id))])) : null;
@@ -20220,6 +20280,40 @@ async function renderBudgetsPage(opts = {}) {
     const rmLink = `<div class="t12x-card bud-rm-link" style="margin-top:12px;"><span class="bud-rm-ic">&#128506;</span>
       <div class="bud-rm-lt"><b>${esc(t("rm_title"))}</b><small>${esc(t("rm_fold").replace("{v}", money(wk0 ? wk0.money : 0)).replace("{n}", wk0 ? wk0.lines.length : 0))}</small>${nextI >= 0 ? `<small>${esc(t("rm_link_next").replace("{goal}", nameOf(goals[nextI])).replace("{date}", shortD(rmDates[nextI].day)))}</small>` : ""}</div>
       <button type="button" class="btn small" data-gototab="roadmap">${esc(t("rm_open"))} &#8250;</button></div>`;
+    // B3 (owner, 3 Nov 2026): the goals as flags on one line, grouped by the
+    // day they're reached, the target day marked; tap a flag → its week on the Roadmap.
+    b3Week0 = { money: wk0 ? wk0.money : 0, n: wk0 ? wk0.lines.length : 0 };
+    {
+      const stops = new Map();
+      goals.forEach((g, i) => {
+        const dt = dates[i];
+        if (!dt) return;
+        const day = dt.done ? 0 : Math.max(0, dt.day);
+        if (!stops.has(day)) stops.set(day, { day, gs: [] });
+        stops.get(day).gs.push(g);
+      });
+      if (targetDays != null && targetDays > 0) { if (!stops.has(targetDays)) stops.set(targetDays, { day: targetDays, gs: [] }); stops.get(targetDays).tg = true; }
+      const list = [...stops.values()].sort((a, b) => a.day - b.day);
+      const y0 = packStartOfToday().getFullYear();
+      const lbl = (d) => {
+        if (d === 0) return t("goal_now");
+        const x = new Date(packStartOfToday().getTime() + d * 86400000), loc = LANG === "en" ? undefined : LANG;
+        return x.getFullYear() !== y0 ? `${x.toLocaleDateString(loc, { month: "short" })} \u2019${String(x.getFullYear()).slice(2)}` : x.toLocaleDateString(loc, { day: "numeric", month: "short" });
+      };
+      const icOf = (g) => {
+        const hero = g.hero || (g.mini && g.page === "hero_shards" ? (((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).find((r) => r.hero.id === g.opt.grp) || {}).hero : null);
+        const pg = pagesRaw.find((x) => x.calcKey === g.page);
+        if (hero) return { src: hero.image_url || HERO_IMG_BY_NAME[hero.name] || goalPageIcon(pg), face: true };
+        return { src: QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon(pg), face: false };
+      };
+      const stopHtml = (st) => {
+        const w = Math.floor((st.day + dow) / 7), need = allW.filter((x) => x <= w).length;
+        const ics = st.gs.slice(0, 2).map((g) => { const ic = icOf(g); return ic.src ? `<img class="${ic.face ? "" : "ct"}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(nameOf(g).charAt(0))}</i>`; }).join("") + (st.gs.length > 2 ? `<em>+${st.gs.length - 2}</em>` : "");
+        const cls = st.day === 0 ? " ok" : !st.gs.length ? " tg" : targetDays != null && st.day > targetDays ? " later" : "";
+        return `<button type="button" class="b3-stop${cls}${st.tg ? " has-tg" : ""}" data-b3jump="${w}|${need}" title="${esc(st.gs.map(nameOf).join(" \u00b7 ") || t("b3_target"))}"><span class="b3-ics">${st.gs.length ? ics : "<b>&#127919;</b>"}</span><small>${st.day === 0 ? "&#10003; " : st.tg && st.gs.length ? "&#127919; " : ""}${esc(lbl(st.day))}</small></button>`;
+      };
+      goalFlagsHtml = list.length ? `<div class="b3-rail">${railHead}<div class="b3-stops">${list.map(stopHtml).join("")}</div></div>` : "";
+    }
     if (TAB === "roadmap") {
       const lastDay = Math.max(rmPlan.days || 0, ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? rmDates[i].day : 0)));
       const sumHtml2 = `<div class="rm-sum">
@@ -20250,19 +20344,104 @@ async function renderBudgetsPage(opts = {}) {
     return goalsCard + rmLink;
   })();
 
-  // Budgets B: settings + pages on the side, the total and the shopping
-  // list (packs to buy) in the main column, each page's details below it.
-  // While the plan is worked out the page keeps its old height (the short
-  // "Working out…" would pull the scroll up); open folds stay open.
-  if (TAB === "roadmap") { drawRoadmapPage(rmPageHtml); return; }
-  if (planPending) holdPageHeight(true);
-  keepFolds(content, () => { content.innerHTML = `
-    <div class="budget-wrap">
-      <div class="plx-head"><h2>${esc(t("budgets_title"))}</h2><button type="button" class="btn small ghost" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}">&#8635; ${esc(t("budgets_recalc"))}</button></div>
-      <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("budgets_desc"))}</p>
-      <div class="t12x">
-        <aside class="t12x-side">
-          <div class="t12x-card t12x-settings"><div class="t12x-k">${esc(t("t12x_settings"))}</div>
+  // Design B3 (owner picked it, 3 Nov 2026): one screen — the total card, the
+  // goals as flags (admin), the pages as tiles, then Settings and This week.
+  // The details (materials, stat gain, goal order, settings, a page's packs)
+  // open in a sheet over the page (BUDGET_SHEET, kept across redraws).
+  if (BUDGET_FOCUS_SPEND === true && spendFeatureOn()) BUDGET_SHEET = "settings";
+  const ticked = pagesRaw.filter((pg) => included(pg.calcKey));
+  const lateAll = targetDays != null && grandDays > targetDays;
+  const shortDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
+  const b3Money = (v) => packFmtLocal(Math.ceil(v), (combined.chosen && combined.chosen.rows[0] && combined.chosen.rows[0].currency) || grandCurrency, true, combined.chosen && combined.chosen.rows[0] ? combined.chosen.rows[0].price : undefined);
+  // The plan's parts as compact lines (bar, title, price, "N packs ▸"); which
+  // pages are in each part shows on the tiles (and in the line's tooltip).
+  const b3Line = (color, title, names, pl) => {
+    const money = packFmtLocal(Math.ceil(packPlanLocal(pl)), pl.rows[0]?.currency, true, pl.rows[0]?.price);
+    const trades = (pl.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${pl.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
+    return `<details class="bud-line b3-sl"><summary title="${esc(names)}"><span class="bud-line-bar" style="background:${color};"></span><span class="bud-line-t">${title}</span><span class="bud-line-v"><b>${money}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", pl.rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary><div class="bud-line-body">${packRowsHtml(pl)}${trades}</div></details>`;
+  };
+  const plainNames = (keys) => keys.map((k) => packPageLabel(k)).join(" · ");
+  let b3Lines = "", b3Split = "";
+  if (BUDGET_VIEW === "budget") b3Lines = spendHtml();
+  else if (split && BUDGET_VIEW === "main") {
+    const tp = split.target.plan, lp = splitLate.plan, tv = packPlanLocal(tp), tot = tv + packPlanLocal(lp);
+    const gw = tot > 0 ? Math.max(4, Math.min(96, (tv / tot) * 100)) : 50;
+    b3Split = `<div class="b3-split"><i style="width:${gw.toFixed(1)}%; background:var(--good);"></i><i style="flex:1; background:var(--danger);"></i></div>`;
+    b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(split.target.keys), tp)
+      + b3Line("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${plainNames(split.late.keys)} · ${t("bud_line_by").replace("{date}", fmtDate(lp.days))}`, lp) + droppedHtml;
+  } else if (combined.inc.length) {
+    b3Lines = (combined.chosen ? b3Line(lateAll ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, plainNames(combined.inc), combined.chosen)
+      : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`) + droppedHtml;
+  }
+  const matsN = Object.keys(grandMats).length;
+  const partialHtml = (() => { const noPlan = ticked.filter((pg) => pg.missing).length; return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : ""; })();
+  const comingHtml = (() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<button type="button" class="b3-a b3-coming" data-gototab="purchases">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button>` : ""; })();
+  const totalHtml = `<div class="b3-tile b3-hd">
+      <div class="b3-hd-l"><span>${esc(t("b3_total_ticked").replace("{n}", ticked.length))}</span>${matsN ? `<button type="button" class="b3-a" data-b3sheet="mats">${esc(t("b3_materials").replace("{n}", matsN))} &#8250;</button>` : ""}${grandDeltas.length ? `<button type="button" class="b3-a" data-b3sheet="stats">${esc(t("b3_stat_gain"))} &#8250;</button>` : ""}</div>
+      <div class="b3-hd-t"><b>${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</b>${anyPlan && !planPending ? `<div><span class="${lateAll ? "rd" : "ok"}">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(t("bud_done_by"))} ${esc(fmtDate(grandDays))}`}</span>${grandDays ? `<small>${grandDays} ${esc(t("pack_days_short_long"))}</small>` : ""}</div>` : ""}</div>
+      ${partialHtml}${comingHtml}
+      ${viewCardsHtml}
+      ${b3Split}${b3Lines}
+    </div>`;
+  // Each page as a tile: picture, name, tick, its price, when it's done (by
+  // the target / after it) and a ring = how much of what it needs you
+  // already have (Backpack + trades). Tap → its details in a sheet.
+  const pageIcon = (x) => QUICK_ICONS[BUDGET_PAGES[x.i].tab] || goalPageIcon(x.pg);
+  const timing = (x) => {
+    const k = x.pg.calcKey;
+    if (!x.inc) return ["mu", t("b3_not_counted")];
+    if (planPending) return ["mu", "…"];
+    if (split && BUDGET_VIEW === "main") {
+      if (split.target.keys.includes(k)) return ["ok", t("b3_by").replace("{date}", shortDay(targetDays))];
+      if (split.late.keys.includes(k)) return ["rd", t("b3_after")];
+    }
+    const pl = combined.dropped.includes(k) ? x.pg.chosen : combined.inc.includes(k) ? combined.chosen : null;
+    if (!pl) return ["mu", ""];
+    if (targetDays != null) return pl.days <= targetDays ? ["ok", t("b3_by").replace("{date}", shortDay(targetDays))] : ["rd", t("b3_after")];
+    return ["mu", pl.days === 0 ? t("pack_ready_now") : t("b3_done_on").replace("{date}", shortDay(pl.days))];
+  };
+  const covered = (pg) => {
+    const ks = Object.keys(pg.needFull || {}).filter((n) => pg.needFull[n] > 0);
+    if (!ks.length) return 100;
+    return Math.round((ks.reduce((a, n) => a + Math.max(0, Math.min(1, 1 - (pg.needStill[n] || 0) / pg.needFull[n])), 0) / ks.length) * 100);
+  };
+  const ringHtml = (p, ok) => {
+    const sz = 34, r = sz / 2 - 3, c = 2 * Math.PI * r, h = sz / 2;
+    return `<span class="b3-ring" title="${esc(ok ? t("budgets_nothing_planned") : t("b3_ring_tip").replace("{p}", p))}"><svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" aria-hidden="true"><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:rgba(255,255,255,.1)" stroke-width="3.5"/><circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:${ok ? "var(--good)" : "var(--ice)"}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${((c * (ok ? 100 : p)) / 100).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 ${h} ${h})"/></svg><b>${ok ? "&#10003;" : p}</b></span>`;
+  };
+  const isNothing = (x) => !x.pg.missing && !Object.keys(x.pg.needFull || {}).some((n) => x.pg.needFull[n] > 0);
+  const tileHtml = (x) => {
+    const k = x.pg.calcKey, ic = pageIcon(x), nothing = isNothing(x);
+    const [cls, sub] = nothing ? ["mu", k === "hero_gear" ? BUDGET_HG_SETS.map(gearSetDisplayName).join(" · ") : ""] : timing(x);
+    return `<div class="b3-tile b3-pt${x.inc ? "" : " off"}" data-b3page="${esc(k)}" role="button" tabindex="0" aria-label="${esc(x.label)}">
+      <div class="b3-pt-h">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<b>${esc(x.label)}</b><label class="b3-tk" title="${esc(t("b3_tick"))}"><input type="checkbox" data-budgetinc="${esc(k)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" /></label></div>
+      ${nothing ? `<div class="b3-pt-p nothing">&#10003; ${esc(t("b3_nothing"))}</div>` : `<div class="b3-pt-p">${x.right}</div>`}
+      <div class="b3-pt-m ${cls}">${esc(sub)}</div>${nothing ? ringHtml(100, true) : x.inc ? ringHtml(covered(x.pg), false) : ""}</div>`;
+  };
+  const missing = B3_PAGES.filter((x) => x.pg.missing);
+  const tilesHtml = `<div class="b3-pg">${B3_PAGES.filter((x) => !x.pg.missing).map(tileHtml).join("")}</div>`;
+  const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(t("b3_missing").replace("{n}", missing.length))}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
+  // This week (Monday – Sunday): the Roadmap's numbers for the admin, the shown plan's for everyone else.
+  const wkData = b3Week0 || (() => {
+    const pl = combined.chosen;
+    if (planPending) return null;
+    if (!pl || !pl.rows) return { money: 0, n: 0 };
+    const sched = packPlanSchedule(pl.rows), dow = (packStartOfToday().getDay() + 6) % 7, names = new Set();
+    let m = 0;
+    pl.rows.forEach((r, i) => (sched[i] || []).forEach((sl) => {
+      if (Math.floor((sl.off + dow) / 7) !== 0) return;
+      m += r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
+      names.add(purShortName(purPackName(r.title, (r.tables || []).map((id) => ({ id })))));
+    }));
+    return { money: m, n: names.size };
+  })();
+  const wkTab = IS_OWNER ? "roadmap" : "purchases";
+  const lrHtml = `<div class="b3-lr">
+      <button type="button" class="b3-tile" data-b3sheet="settings"><span class="b3-gear">&#9881;</span><span class="b3-lr-t"><b>${esc(t("t12x_settings"))}</b><small>${esc(targetDays != null ? t("b3_set_target").replace("{date}", shortDay(targetDays)) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</small></span></button>
+      <button type="button" class="b3-tile wk" data-gototab="${wkTab}"><img src="${esc(QUICK_ICONS[wkTab])}" alt="" /><span class="b3-lr-t"><b>${esc(t("b3_week").replace("{v}", wkData ? b3Money(wkData.money) : "…"))}</b><small>${esc(t("b3_week_n").replace("{n}", wkData ? wkData.n : "…"))} · ${esc(navLabel(wkTab))}</small></span><span class="b3-go">&#8250;</span></button>
+    </div>`;
+  // The sheet's content.
+  const settingsHtml = `<div class="t12x-settings b3-set">
             <div class="bset-row"><span class="bset-l">${esc(t("pack_target_by"))}${targetDays != null ? `<small style="color:${targetDays < 0 ? "var(--danger)" : "var(--ice)"};">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</small>` : `<small>${esc(t("pack_no_date"))}</small>`}</span>
               <span class="bset-c"><input type="date" data-budgettarget value="${esc(BUDGET_TARGET)}" aria-label="${esc(t("pack_target_by"))}" />${BUDGET_TARGET ? `<button type="button" class="btn small ghost bset-x" data-budgettargetclear title="${esc(t("pack_no_date"))}">&times;</button>` : ""}</span></div>
             <div class="bset-row"><span class="bset-l">${esc(t("show_prices_in"))}</span><span class="bset-c">${currencySelectHtml(`id="budgetsCurrency" aria-label="${esc(t("show_prices_in"))}"`)}</span></div>
@@ -20278,14 +20457,34 @@ async function renderBudgetsPage(opts = {}) {
                 ${adminOnly ? `<div class="meta bset-note">${esc(t("spend_visitors_note"))}</div>` : ""}
               </div>`;
             })() : ""}
-          </div>
-        </aside>
-        <div class="t12x-main">
-          ${summary}
-          ${goalsHtml}
-          <div class="t12x-card" style="margin-top:12px;"><div class="t12x-title">${esc(t("budgets_pages_title"))}</div>${cards.join("")}</div>
-        </div>
+          </div>`;
+  const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.right}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
+  const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
+      ${x.pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
+      ${x.body || ""}`;
+  const sheet = (() => {
+    const sh = BUDGET_SHEET;
+    if (!sh) return null;
+    if (sh === "mats" && matsN) return { title: t("budgets_materials_total"), html: `<div class="bud-mats">${Object.keys(grandMats).map(grandMatChip).join("")}</div>` };
+    if (sh === "stats" && grandDeltas.length) return { title: t("budgets_stat_increase_total"), html: statTableHtml(grandDeltas, "all") + (dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`) };
+    if (sh === "goals" && IS_OWNER && goalsCardHtml) return { title: t("goals_title"), html: goalsCardHtml };
+    if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
+    if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
+    if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
+    return null;
+  })();
+  if (BUDGET_SHEET && !sheet) BUDGET_SHEET = null;
+  const sheetHtml = sheet ? `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-b3bg><div class="modal-box adm-sheet b3-sheet" role="dialog" aria-modal="true" aria-label="${esc(sheet.title)}"><div class="gs-head"><b style="flex:1; font-size:16px;">${esc(sheet.title)}</b><button type="button" class="rfa-x" data-b3close aria-label="${esc(t("close_button"))}">&#10005;</button></div>${sheet.html}</div></div>` : "";
+  if (TAB === "roadmap") { drawRoadmapPage(rmPageHtml); return; }
+  if (planPending) holdPageHeight(true);
+  keepFolds(content, () => { content.innerHTML = `
+    <div class="budget-wrap b3">
+      <div class="plx-head b3-head"><h2 title="${esc(t("budgets_desc"))}">${esc(t("budgets_title"))}</h2><button type="button" class="b3-sq" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
+      <div class="b3-cols">
+        <div class="b3-left">${totalHtml}${goalFlagsHtml}${lrHtml}</div>
+        <div class="b3-right">${tilesHtml}${missHtml}</div>
       </div>
+      ${sheetHtml}
     </div>`; });
   if (!planPending) holdPageHeight(false);
   if (BUDGET_FOCUS_SPEND) {
@@ -20350,27 +20549,28 @@ async function renderBudgetsPage(opts = {}) {
     saveCalcState("pack_target_budgets", { date: "" });
     keepPlace(() => renderBudgetsPage());
   });
-  const matsBtn = content.querySelector("[data-budmats]");
-  if (matsBtn) matsBtn.addEventListener("click", () => {
-    BUDGET_MATS_OPEN = !BUDGET_MATS_OPEN;
-    matsBtn.nextElementSibling.hidden = !BUDGET_MATS_OPEN;
-    matsBtn.setAttribute("aria-expanded", String(BUDGET_MATS_OPEN));
-    matsBtn.querySelector(".bud-mat-arrow").innerHTML = BUDGET_MATS_OPEN ? "&#9662;" : "&#9656;";
-  });
-  content.querySelectorAll("[data-budfold]").forEach((b) => b.addEventListener("click", () => {
-    const k = b.dataset.budfold, box = b.closest("[data-budpage]");
-    const open = !BUDGET_OPEN_PAGES.has(k);
-    if (open) BUDGET_OPEN_PAGES.add(k); else BUDGET_OPEN_PAGES.delete(k);
-    box.classList.toggle("open", open);
-    box.querySelector(".bud-body").hidden = !open;
-    b.innerHTML = open ? "&#9662;" : "&#9656;";
-  }));
   content.querySelectorAll("[data-gototab]").forEach((b) => b.addEventListener("click", () => {
     const btn = document.querySelector(`.topnav-groups [data-tab="${b.dataset.gototab}"]`);
     if (btn) btn.click();
   }));
   const goalsBox = content.querySelector(".bud-goals");
   if (goalsBox) wireBudgetGoals(goalsBox);
+  // B3: sheets, page tiles, goal flags.
+  const b3Redraw = () => keepPlace(() => renderBudgetsPage());
+  content.querySelectorAll("[data-b3sheet]").forEach((b) => b.addEventListener("click", () => { BUDGET_SHEET = b.dataset.b3sheet; b3Redraw(); }));
+  const b3bg = content.querySelector("[data-b3bg]");
+  if (b3bg) b3bg.addEventListener("click", (e) => { if (e.target === b3bg || e.target.closest("[data-b3close]")) { BUDGET_SHEET = null; b3bg.remove(); } });
+  content.querySelectorAll("[data-b3page]").forEach((el) => {
+    const open = (e) => { if (e.target.closest("input, label, button, a")) return; BUDGET_SHEET = "page:" + el.dataset.b3page; b3Redraw(); };
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", (e) => { if (e.target === el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(e); } });
+  });
+  content.querySelectorAll("[data-b3jump]").forEach((b) => b.addEventListener("click", () => {
+    const [w, need] = b.dataset.b3jump.split("|").map(Number);
+    ROADMAP_WEEKS = Math.max(ROADMAP_WEEKS, need + 1);
+    ROADMAP_JUMP = w;
+    goToTab("roadmap");
+  }));
 }
 // The Roadmap page (admin): drawn from Budgets' data by renderBudgetsPage.
 function drawRoadmapPage(html) {
