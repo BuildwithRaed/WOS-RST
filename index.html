@@ -3420,25 +3420,6 @@ input,select,textarea{
   .pr-gems-t b{ font-size:13px; font-weight:600; color:var(--text); }
   .pr-gems-t small{ font-size:11px; color:var(--muted); }
 
-  /* Phone Menu = design D (owner, 3 Nov 2026): groups left, the tapped group's pages right */
-  .mm-d{ display:grid; grid-template-columns:86px minmax(0, 1fr); gap:10px; align-items:start; }
-  .mm-d-rail{ display:flex; flex-direction:column; gap:6px; }
-  .mm-d-g{ position:relative; display:flex; flex-direction:column; align-items:center; gap:4px; min-height:66px; padding:8px 4px; border:1px solid transparent; border-radius:12px; background:none; color:var(--muted); font:inherit; font-size:12px; font-weight:600; line-height:1.15; text-align:center; cursor:pointer; }
-  .mm-d-g.on{ background:var(--panel); border-color:var(--ice); color:var(--ice); }
-  .mm-d-g.here::after{ content:""; position:absolute; top:8px; inset-inline-end:14px; width:7px; height:7px; border-radius:50%; background:var(--ice); }
-  .mm-d-gi{ width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:22px; }
-  .mm-d-gi img{ width:32px; height:32px; object-fit:contain; display:block; }
-  .mm-d-g small{ font-size:10px; font-weight:400; color:var(--muted); }
-  .mm-d-pages{ min-width:0; padding:4px 0; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
-  .mm-d-h{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:8px 14px 10px; border-bottom:1px solid var(--line); }
-  .mm-d-h b{ font-size:16px; color:var(--text); }
-  .mm-d-h small{ font-size:12px; color:var(--muted); }
-  .mm-d-pages > button{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:6px 12px 6px 14px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:none; color:var(--frost); font:inherit; font-size:14px; text-align:start; cursor:pointer; }
-  .mm-d-pages > button:last-child{ border-bottom:0; }
-  .mm-d-pages > button::after{ content:"\203A"; margin-inline-start:auto; color:var(--muted); font-size:18px; }
-  .mm-d-pages > button.active{ color:var(--ice); background:rgba(111,211,242,.08); box-shadow:inset 3px 0 0 var(--ice); }
-  .mm-d-pages > button .ic{ width:30px; height:30px; flex:0 0 30px; display:flex; align-items:center; justify-content:center; font-size:20px; }
-  .mm-d-pages > button .ic img{ width:30px; height:30px; object-fit:contain; display:block; }
 
   /* Pack prices: one row per price point (owner, 3 Nov 2026: "fix the prices table") */
   .pp-box{ padding:12px; margin-bottom:14px; }
@@ -3650,16 +3631,39 @@ input,select,textarea{
           <button data-tab="statetimeline"><span class="ic">&#128197;</span>State Timeline</button>
         </div>
       </div>
-      <!-- Five groups (owner picked Menu D, 3 Nov 2026; were 10): Upgrades = Gears + Experts + Pets,
-           Packs & planning = Packs + Planning, Bonuses = Cosmetics + Extra Bonus. -->
-      <div class="topnav-group" data-group="Upgrades">
-        <button class="topnav-group-btn" type="button">Upgrades <span class="caret">&#9660;</span></button>
+      <div class="topnav-group" data-group="Marketplace">
+        <button class="topnav-group-btn" type="button">Packs <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
-          <button data-tab="chiefgear"><span class="ic">&#128737;</span>Chief Gear</button>
+          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
+          <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="Planning">
+        <button class="topnav-group-btn" type="button">Planning <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
+          <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
+          <button data-tab="roadmap" data-ownertab style="display:none;"><span class="ic">&#128506;</span>Roadmap</button>
+          <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="Gears">
+        <button class="topnav-group-btn" type="button">Gears <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
           <button data-tab="charmscalc"><span class="ic">&#9670;</span>Chief Charm</button>
+          <button data-tab="chiefgear"><span class="ic">&#128737;</span>Chief Gear</button>
           <button data-tab="herogearcalc"><span class="ic">&#9878;</span>Heroes Gears</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="Experts">
+        <button class="topnav-group-btn" type="button">Experts <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
           <button data-tab="expertspage"><span class="ic">&#9670;</span>Experts Level</button>
           <button data-tab="expertsresearchpage"><span class="ic">&#9670;</span>Experts Research</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="Pets">
+        <button class="topnav-group-btn" type="button">Pets <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
           <button data-tab="petsdata"><span class="ic">&#9670;</span>Pets Level</button>
           <button data-tab="refinepage"><span class="ic">&#9670;</span>Pets Refine</button>
         </div>
@@ -3673,21 +3677,16 @@ input,select,textarea{
           <button data-tab="rfclab"><span class="ic">&#9670;</span>Research Lab</button>
         </div>
       </div>
-      <div class="topnav-group" data-group="PacksPlanning">
-        <button class="topnav-group-btn" type="button">Packs &amp; planning <span class="caret">&#9660;</span></button>
-        <div class="topnav-dropdown">
-          <button data-tab="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>Packs</button>
-          <button data-tab="mypacks" data-access="packs" data-ownertab style="display:none;"><span class="ic">&#128230;</span>My packs</button>
-          <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
-          <button data-tab="roadmap" data-ownertab style="display:none;"><span class="ic">&#128506;</span>Roadmap</button>
-          <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
-        </div>
-      </div>
-      <div class="topnav-group" data-group="Bonuses">
-        <button class="topnav-group-btn" type="button">Bonuses <span class="caret">&#9660;</span></button>
+      <div class="topnav-group" data-group="Cosmetics">
+        <button class="topnav-group-btn" type="button">Cosmetics <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="skingallery"><span class="ic">&#9673;</span>Skin Gallery</button>
           <button data-tab="islandgallery"><span class="ic">&#127960;</span>Islands</button>
+        </div>
+      </div>
+      <div class="topnav-group" data-group="Extra Bonus">
+        <button class="topnav-group-btn" type="button">Extra Bonus <span class="caret">&#9660;</span></button>
+        <div class="topnav-dropdown">
           <button data-tab="extrabonus:Vip Tier"><span class="ic">&#9670;</span>VIP</button>
           <button data-tab="extrabonusheroes"><span class="ic">&#9670;</span>Heroes Special Skills</button>
           <button data-tab="facilitypage"><span class="ic">&#9670;</span>Facility</button>
@@ -4924,9 +4923,6 @@ function LP(key, vars, fallback) {
 }
 const NAV_GROUP_LABELS = {
   "Overview": { en: "Overview" },
-  "Upgrades": { en: "Upgrades" },
-  "PacksPlanning": { en: "Packs & planning" },
-  "Bonuses": { en: "Bonuses" },
   "Marketplace": { en: "Packs" },
   "Planning": { en: "Planning" },
   "Gears": { en: "Gears" },
@@ -5960,8 +5956,6 @@ const T = {
   exp_item_short: { en: "{item} short" },
   exp_stats_btn: { en: "Stats" },
   exp_n_short: { en: "{n} short" },
-  mm_pages_n: { en: "{n} pages" },
-  mm_only_you: { en: "only you" },
   g1_show: { en: "Show" },
   g1_can_bp: { en: "Can do now · Backpack" },
   marks_per_pet: { en: "Per pet" },
@@ -6892,42 +6886,28 @@ document.addEventListener("click", (e) => {
 // expanding accordion-style to show its pages. Built from the same
 // #topnavGroups markup so it never drifts out of sync with the real nav
 // (including which groups exist and whether Admin is currently shown).
-// Phone Menu = design D (owner picked D, 3 Nov 2026; was picture tiles under 10
-// headings): the groups down a left column (picture + name), the tapped group's
-// pages as rows on the right. It opens on the group of the page you're on; a blue
-// dot marks that group while another one is shown. Everything fits one screen.
-let MM_GROUP = null;
-const MM_GROUP_ICONS = { Overview: "icons/logo-64.png", Upgrades: "icons/quick/chief-gear.png", Research: "icons/quick/research.png", PacksPlanning: "icons/quick/calculator.png", Bonuses: "icons/quick/vip.png" };
-function renderMobileMenu(keepGroup) {
+function renderMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay");
-  const shown = (b) => b.style.display !== "none";
-  const groups = [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none" && [...g.querySelectorAll(".topnav-dropdown button[data-tab]")].some(shown));
-  const here = groups.find((g) => g.querySelector(`.topnav-dropdown button[data-tab="${CSS.escape(TAB)}"]`));
-  if (!keepGroup || !groups.some((g) => g.dataset.group === MM_GROUP)) MM_GROUP = (here || groups[0] || { dataset: {} }).dataset.group || null;
-  const labelOf = (name) => (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || name;
-  const iconOf = (g) => {
-    const src = MM_GROUP_ICONS[g.dataset.group];
-    if (src) return `<img src="${esc(src)}" alt="" />`;
-    if (g.id === "adminNavGroup") return "&#9881;";
-    const first = [...g.querySelectorAll(".topnav-dropdown button[data-tab]")].find(shown), ic = first && first.querySelector(".ic");
-    return ic ? ic.innerHTML : "&#10052;";
-  };
-  const open = groups.find((g) => g.dataset.group === MM_GROUP);
-  const pages = open ? [...open.querySelectorAll(".topnav-dropdown button[data-tab]")] : [];
+  const groups = [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
-      <button class="mm-close" type="button" id="mmCloseBtn" aria-label="${esc(t("close_button"))}">&#10005;</button>
+      <button class="mm-close" type="button" id="mmCloseBtn">&#10005;</button>
     </div>
-    <div class="mm-d">
-      <div class="mm-d-rail" role="tablist">${groups.map((g) => {
-        const on = g.dataset.group === MM_GROUP;
-        return `<button type="button" role="tab" aria-selected="${on}" class="mm-d-g${on ? " on" : ""}${g === here && !on ? " here" : ""}" data-mmgroup="${esc(g.dataset.group)}"><span class="mm-d-gi">${iconOf(g)}</span><span class="mm-d-gn">${esc(labelOf(g.dataset.group))}</span>${g.id === "adminNavGroup" ? `<small>${esc(t("mm_only_you"))}</small>` : ""}</button>`;
-      }).join("")}</div>
-      <div class="mm-d-pages" role="tabpanel">
-        ${open ? `<div class="mm-d-h"><b>${esc(labelOf(open.dataset.group))}</b><small>${esc(t("mm_pages_n").replace("{n}", pages.filter(shown).length))}</small></div>${pages.map((b) => b.outerHTML).join("")}` : ""}
-      </div>
-    </div>
+    ${groups
+      .map((g) => {
+        const name = g.dataset.group;
+        const label = (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || name;
+        const pagesHtml = g.querySelector(".topnav-dropdown").innerHTML;
+        // Picture tiles (owner picked idea 1, 1 Nov 2026): a heading per
+        // group and its pages as big tiles, 3 a row, like the wiki's home page.
+        return `
+      <div class="mm-tl" data-group="${esc(name)}">
+        <div class="mm-tl-h">&#10052; ${esc(label)}</div>
+        <div class="mm-tl-grid">${pagesHtml}</div>
+      </div>`;
+      })
+      .join("")}
   `;
   overlay.querySelector("#mmCloseBtn").addEventListener("click", closeMobileMenu);
 }
@@ -6943,8 +6923,6 @@ function closeMobileMenu() {
 document.getElementById("mobileMenuBtn").addEventListener("click", openMobileMenu);
 
 document.getElementById("mobileMenuOverlay").addEventListener("click", (e) => {
-  const grp = e.target.closest("[data-mmgroup]");
-  if (grp) { MM_GROUP = grp.dataset.mmgroup; renderMobileMenu(true); return; }
   const pageBtn = e.target.closest("button[data-tab]");
   if (pageBtn) {
     closeMobileMenu();
