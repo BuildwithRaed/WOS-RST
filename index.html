@@ -3161,24 +3161,24 @@ input,select,textarea{
     .bs-row b .bs-sw, .bs-ok span, .bp-link, .scan-ex span,
     .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name,
     .skin-card .sowned, .gallery-divider span, .pack-col-fixed, .acc-or,
-    .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:12px; }
-    .t12x-settings.one-line .exp-spd .meta:first-child, .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ font-size:12px !important; }
+    .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
+    .t12x-settings.one-line .exp-spd .meta:first-child, .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ font-size:11px !important; }
     [style*="font-size:8px"], [style*="font-size: 8px"], [style*="font-size:8.5px"], [style*="font-size: 8.5px"],
     [style*="font-size:9px"], [style*="font-size: 9px"], [style*="font-size:9.5px"], [style*="font-size: 9.5px"],
     [style*="font-size:10px"], [style*="font-size: 10px"], [style*="font-size:10.5px"], [style*="font-size: 10.5px"],
-    [style*="font-size:11px"], [style*="font-size: 11px"], [style*="font-size:11.5px"], [style*="font-size: 11.5px"]{ font-size:12px !important; }
-    .panel, .t12x-card{ margin-bottom:12px; }
+    [style*="font-size:11px"], [style*="font-size: 11px"], [style*="font-size:11.5px"], [style*="font-size: 11.5px"]{ font-size:11px !important; }
+    .panel, .t12x-card{ margin-bottom:10px; }
     /* bigger labels wrap instead of being cut with "…" */
     .bp-chest-note, .b3-lbl, .b3-pt-p, #cgBp .bs-tile .bs-need{ white-space:normal; text-overflow:clip; overflow:visible; }
   }
   /* Dashboard on phones like wostools.net too (owner, 3 Nov 2026): smallest labels
      12 px (they were 10 – 11 px); the page still grows to fill the screen (--sx). */
   @media (max-width: 700px){
-    .dash-fit .dash-troops.cols .dash-troop-h, .dash-fit .dash-troops.cols .dash-stat-k{ font-size:max(12px, calc(10px * min(var(--sx, 1), 1.25))); letter-spacing:0; }
-    .dash-fit .dash-troops.cols .dash-stat-k small, .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:12px; letter-spacing:0; }
-    .dash-fit .rc-troop, .dash-fit .rc-sh, .dash-fit .rc-pct, .dash-fit .rc-pct span, .dash-fit .sa-chip, .dash-fit .sa-v .sa-s, .dash-fit .rc-step, .dash-fit .rc-step span, .dash-fit .rc-card select, .qk-chip, .qk-chip span, .qk-k{ font-size:12px; letter-spacing:0; }
-    .dash-fit .rc-name{ font-size:12.5px; }
-    .dash-fit .rc-name .meta, .dash-fit label .meta, .dash-fit label .meta b, .dash-fit #rosterCollapseBody > label .meta{ font-size:12px !important; }
+    .dash-fit .dash-troops.cols .dash-troop-h, .dash-fit .dash-troops.cols .dash-stat-k{ font-size:max(11px, calc(10px * min(var(--sx, 1), 1.2))); letter-spacing:0; }
+    .dash-fit .dash-troops.cols .dash-stat-k small, .dash-fit .dash-troops.cols .dash-stat-gap{ font-size:11px; letter-spacing:0; }
+    .dash-fit .rc-troop, .dash-fit .rc-sh, .dash-fit .rc-pct, .dash-fit .rc-pct span, .dash-fit .sa-chip, .dash-fit .sa-v .sa-s, .dash-fit .rc-step, .dash-fit .rc-step span, .dash-fit .rc-card select, .qk-chip, .qk-chip span, .qk-k{ font-size:11px; letter-spacing:0; }
+    .dash-fit .rc-name{ font-size:12px; }
+    .dash-fit .rc-name .meta, .dash-fit label .meta, .dash-fit label .meta b, .dash-fit #rosterCollapseBody > label .meta{ font-size:11px !important; }
     .dash-fit .rc-sh{ white-space:normal; overflow:visible; text-overflow:clip; line-height:1.25; }
     .qk-chip{ width:70px; }
   }
@@ -3358,6 +3358,43 @@ input,select,textarea{
   @media (min-width: 901px){
     .pkb-ov{ align-items:center; padding:3vh 16px; }
     .pkb-sheet, .pkb-panel{ height:94vh; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  }
+
+  /* A bit smaller on phones (owner, 3 Nov 2026: "make the font and boxes smaller a
+     bit", after the wostools-sized round): labels 11 px (the 12 px blocks above),
+     page titles and big numbers 1 – 2 px smaller, buttons 36 px (were 40), boxes to
+     type in 32 px, cards and rows a little tighter. PC is unchanged. */
+  @media (max-width: 700px){
+    .page-head h2, .plx-head h2{ font-size:17.5px !important; }
+    .t12x-title, .panel > h2, .panel > h3, .cg-k{ font-size:13px; }
+    .plx-stat b{ font-size:14px; }
+    .plx-stats.one .plx-stat b{ font-size:13.5px; }
+    .panel, .t12x-card{ padding-left:12px; padding-right:12px; }
+    button.btn{ min-height:36px; }
+    button.btn.small{ min-height:32px; }
+    .t12x-maxall, .plx-maxbtn, .sa-btn, .seg button, .pur-seg button{ min-height:32px; }
+    .plx-maxbtn.plx-max{ height:36px; min-height:36px; padding:0 12px; }
+    #gearMaxAllBtn, #cgCan .cg-show, #cgBp .cg-bpbtn, #gearRows .sa-btn{ height:36px; min-height:36px; padding:0 11px; }
+    .g1:not(.cg1) .plx-bpb .cg-bpbtn{ min-height:36px; }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), select{ min-height:32px; }
+    input[type="checkbox"]{ min-width:18px; min-height:18px; }
+    .bs-tile{ min-height:84px; }
+    .bs-tile img, .bp-grid .bp-tile img{ width:32px; height:32px; }
+    /* Packs (design B) */
+    .pkb-search input{ height:40px; min-height:40px; }
+    .pkb-dp{ min-height:44px; }
+    .pkb-cat-h{ min-height:52px; padding:8px 12px; }
+    .pkb-n{ min-width:36px; height:36px; font-size:14px; }
+    .pkb-cat-t b{ font-size:14px; }
+    .pkb-row{ padding:8px 8px 8px 12px; gap:9px; }
+    .pkb-ic{ width:38px; height:38px; }
+    .pkb-ic img{ width:27px; height:27px; }
+    .pkb-m b{ font-size:13.5px; }
+    .pkb-r b{ font-size:12.5px; }
+    .pkb-m small, .pkb-r small, .pkb-cat-t small, .pkb-dp-t .meta{ font-size:11px; }
+    .pkb-more{ min-height:40px; font-size:13px; }
+    /* Dashboard: troop numbers and hero cards a little smaller */
+    .dash-fit .dash-troops.cols .dash-stat-v b{ font-size:13.5px; }
   }
 </style>
 </head>
