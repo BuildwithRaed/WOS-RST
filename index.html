@@ -12,33 +12,10 @@
   // Pinch zoom is on (owner, 18 Oct 2026). iPhones / iPads would also zoom
   // into any box under 16px when it is tapped; maximum-scale stops that, and
   // iOS still lets people pinch. Android keeps no maximum (it would block
-  // pinch there and Android doesn't zoom into boxes).
-  // iPhones (owner, 3 Nov 2026: "font and images look too big on iPhone,
-  // everything is tight"): held upright, an iPhone narrower than 440 px lays
-  // the page out at 440 px and shrinks it to fit, by at most 12 % (iPhone 15 /
-  // 16: 393 px at 89 %, 16 Pro 402 px at 91 %, Plus / Pro Max 430 px at 98 %,
-  // SE / mini 375 px at 88 %). Landscape, iPads and Android as before.
-  // Pages that size themselves to the phone (owner, 3 Nov 2026, responsive
-  // check D; window.WOS_FLUID_PAGES) switch the shrink off: render() calls
-  // wosPhoneFit(false) there and wosPhoneFit(true) on every other page.
-  window.WOS_FLUID_PAGES = ["chiefgear"];
-  (function () {
-    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    var meta = document.querySelector('meta[name="viewport"]');
-    var fit = true;
-    try { if (window.WOS_FLUID_PAGES.indexOf(localStorage.getItem("last_tab")) >= 0) fit = false; } catch (e) { /* storage off */ }
-    var set = function () {
-      var dw = Math.min(screen.width, screen.height);
-      var upright = !window.matchMedia || window.matchMedia("(orientation: portrait)").matches;
-      var phone = ios && !/iPad/.test(navigator.userAgent) && !(navigator.platform === "MacIntel");
-      var w = fit && phone && upright && dw > 0 && dw < 440 ? Math.floor(Math.min(440, dw / 0.88)) : 0;
-      var k = w ? Math.ceil(dw / w * 1000) / 1000 : 1; // rounded up, so the page is never wider than the screen
-      meta.setAttribute("content", (w ? "width=" + w + ", initial-scale=" + k : "width=device-width, initial-scale=1.0" + (ios ? ", minimum-scale=1.0" : "")) + (ios ? ", maximum-scale=" + k : ""));
-    };
-    set();
-    window.addEventListener("orientationchange", function () { setTimeout(set, 60); });
-    window.wosPhoneFit = function (on) { on = !!on; if (on === fit) return; fit = on; set(); };
-  })();
+  // pinch there and Android doesn't zoom into boxes). The iPhone "lay out at
+  // 440 px and shrink" was tried on 3 Nov 2026 and removed the same day (owner):
+  // every page uses the plain device-width line; pages size themselves instead.
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -1958,8 +1935,7 @@ input,select,textarea{
   /* Phones and tablets (owner, 3 Nov 2026, responsive check A–D): buttons
      44 px tall (A), no text under 11 px (B), the pieces grow with the screen up
      to 84 px on tablets / an open Fold (C), and sizes follow the screen's width
-     instead of the iPhone shrink (D: clamp() with vw, this page is in
-     WOS_FLUID_PAGES). PC (> 900 px) is unchanged. */
+     (D: clamp() with vw). PC (> 900 px) is unchanged. */
   @media (max-width: 900px){
     .plx-head.cg-head h2{ font-size:clamp(18px, 4.8vw, 22px); }
     #gearMaxAllBtn, #cgCan .cg-show, #cgBp .cg-bpbtn, #gearRows .sa-btn{ height:44px; min-height:44px; padding:0 14px; }
@@ -6254,8 +6230,6 @@ let RENDER_SEQ = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
   const seq = ++RENDER_SEQ;
-  // iPhones: the 440 px shrink, except on pages that size themselves (head script).
-  if (window.wosPhoneFit) window.wosPhoneFit(!(window.WOS_FLUID_PAGES || []).includes(TAB));
   // Page pop-ups: close them when the page changes.
   ["refineAdvModal", "drilldownModal", "gearSheet"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   // The same page drawn again after a tap: keep its height and scroll place.
