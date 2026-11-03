@@ -1872,7 +1872,11 @@ input,select,textarea{
   .cg-show{ flex:none; min-height:34px; }
   /* Backpack boxes in the answer card (owner picked A, 3 Nov 2026). */
   .cg-bp .cg-sh{ margin-bottom:4px; }
-  .cg-bp-tap{ margin-inline-start:auto; font-size:11.5px; text-align:end; }
+  /* Trades / Pack cost buttons beside the BACKPACK title (owner picked D, 3 Nov 2026; no bottom bar). */
+  .cg-bp .cg-sh{ flex-wrap:wrap; row-gap:4px; }
+  .cg-bpb{ display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; margin-inline-start:auto; }
+  .cg-bpbtn{ min-height:32px; padding:0 11px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; }
+  .cg-bpbtn.ice{ border-color:var(--ice-dim); background:none; color:var(--ice); }
   .cg-bp #gearOwned_rows_foot, .cg-bp .bs-help{ display:none; }
   .cg-bp .bs-edit{ margin-top:0; }
   /* 4 boxes across the whole card, like the troop boxes above (owner's Fold 8 /
@@ -1896,7 +1900,7 @@ input,select,textarea{
   .cg-pc .cg-rch{ display:inline-flex; width:auto; margin:0; }
   .cg-pc .cg-rch:empty{ display:none; }
   .cg-mk{ padding:0 5px; border:1px solid rgba(91,201,138,.6); border-radius:7px; line-height:18px; font-size:11px; }
-  .cg-pills, .cg-sh-h{ display:none; }
+  .cg-sh-h{ display:none; }
   .cg-bd{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55); }
   .cg-bd[hidden]{ display:none; }
   @media (min-width: 901px){ .cg1 .t12x-buy:has(#gearOwned_rows_trades:empty):has(#gearOwned_rows_packs:empty){ display:none; } }
@@ -1907,9 +1911,6 @@ input,select,textarea{
     .cg1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
     .cg1 .cg-open .cg-sh-h b{ font-size:15px; }
     .cg1 .t12x-buy[data-cgshow="trades"] #gearOwned_rows_packs, .cg1 .t12x-buy[data-cgshow="packs"] #gearOwned_rows_trades{ display:none; }
-    .cg-pills{ display:flex; gap:8px; position:fixed; left:0; right:0; bottom:0; z-index:50; padding:6px 12px calc(6px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--bg); }
-    .cg-pills button{ flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:0; height:38px; padding:0 6px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; }
-    body:has(.cg1) .site-footer{ padding-bottom:62px; }
   }
   .cg-sabox[hidden]{ display:none; }
   .plx-tsw.is-pinned{ position:fixed; top:0; z-index:40; margin:0; border-radius:0 0 14px 14px; }
@@ -16999,6 +17000,9 @@ function packPickCheapest(plans) {
 // numbers always agree with the red "still needed" figures above it.
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};
+const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
+const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
+const packCostShown = (calcKey, v) => { if (PACK_COST_SHOWN[calcKey] === v) return; PACK_COST_SHOWN[calcKey] = v; if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey](); };
 const PACK_PLAN_PICK = {}; // card layout: which plan's packs are listed, per page
 const PACK_COST_VIEW = {};
 // Which view the Pack cost box opens on (the switch still changes it):
@@ -17040,6 +17044,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   if (!open) {
+    packCostShown(calcKey, null);
     containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
@@ -17293,6 +17298,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (pageTotalText) known.page = pageTotalText; else pageTotalText = known.page || "";
   PACK_VIEW_TOTALS[calcKey] = known;
   if (stale()) return;
+  packCostShown(calcKey, (usingShared ? sharedTotalText : pageTotalText) || null);
   if (usingShared) sections = sharedSections;
   const viewSwitch = canShare ? `
     <div class="seg" data-packview style="margin:8px 0 2px; flex-wrap:wrap;">
@@ -21389,10 +21395,9 @@ async function renderChiefGearCalc() {
         <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span></div>
         <div id="gearCurrentStats"></div>
         <div class="cg-sec" id="cgCan" data-rchpage="chief_gear" hidden></div>
-        <div class="cg-sec cg-bp" id="cgBp"><div class="cg-sh"><span class="cg-k">${esc(t("cg_backpack"))}</span><span class="meta cg-bp-tap">${esc(t("bs_help_tap").replace(/[.\u3002]\s*$/, ""))}</span></div></div>
+        <div class="cg-sec cg-bp" id="cgBp"><div class="cg-sh"><span class="cg-k">${esc(t("cg_backpack"))}</span><span class="cg-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${packsOn ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>$ ${esc(t("pack_cost_title"))} &#8250;</button>` : ""}</span></div></div>
       </div>`,
     mainHtml: `<div id="gearRows"></div>
-      <div class="cg-pills"><button type="button" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))}</button>${packsOn ? `<button type="button" data-cgsheet="packs">$ ${esc(t("pack_cost_title"))}</button>` : ""}</div>
       <div class="cg-bd" data-cgbd hidden></div>`,
   });
   const shell = content.querySelector(".t12x"), buy = content.querySelector(".t12x-buy");
@@ -21491,6 +21496,12 @@ async function renderChiefGearCalc() {
     if (can) { can.hidden = false; can.innerHTML = canHtml(plan, tracks); }
   }
   REACH_HOOKS.chief_gear = fillChiefGearReach;
+  // The Pack cost button shows the price once the card has worked it out.
+  PACK_COST_HOOKS.chief_gear = () => {
+    const b = content.querySelector("[data-cgprice]");
+    if (b) b.innerHTML = `$ ${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;`;
+  };
+  PACK_COST_HOOKS.chief_gear();
   function renderPieces() {
     const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
     const open = !!SETALL_OPEN.chief;
