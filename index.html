@@ -3188,6 +3188,7 @@ input,select,textarea{
   .g1-top .g1-bp .bs-tiles{ grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); }
   .g1-top .g1-st > .t12x-card, .g1-top #refineStats{ border:0; padding:0; background:none; margin:0; }
   .g1-top .g1-can{ margin-top:8px; }
+  .g1-top .g1-st:empty + .g1-can, .g1-top .g1-st:empty + .g1-can[hidden] + .g1-bp{ margin-top:0; padding-top:0; border-top:0; }
   .g1-top .g1-can .rch-sum{ border:0; background:none; padding:0; margin:0; }
   .g1-top .g1-bp .bs-foot{ margin-bottom:6px; }
   .g1-top .g1-bp .bs-foot > span:first-child{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
@@ -4724,8 +4725,8 @@ const T = {
   bs_ready: { en: "ready" },
   bs_nothing: { en: "Nothing needed yet." },
   bs_have_of: { en: "have {have} of {need}" },
-  bs_your_amounts: { en: "Your amounts" },
-  bs_from_backpack: { en: "Amounts from your Backpack" },
+  bs_your_amounts: { en: "Backpack" },
+  bs_from_backpack: { en: "Backpack" },
   bs_show_all: { en: "Show all / edit" },
   bs_hide: { en: "Hide boxes" },
   bp_link_from: { en: "From Backpack" },
@@ -17436,7 +17437,7 @@ function infoize(root) {
 // mock-up): on phones one card at the top holds the stats (troop switch), "Can do
 // now" and the Backpack boxes with Trades / Pack cost. The page's own elements move
 // in (their redraws keep working: anything redrawn outside is moved in again).
-const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "" };
+const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
 function plxTopBox(root) {
   if (!(TAB in TOPBOX_TABS) || !TOPBOX_MQ.matches) return;
@@ -17450,7 +17451,8 @@ function plxTopBox(root) {
     main.insertBefore(box, main.firstChild);
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
-  put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats"));
+  // Research pages keep their stats where they are (owner, 3 Nov 2026).
+  if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats"));
   const sums = [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
   if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
   const amts = shell.querySelector(".t12x-amts > [id]");
