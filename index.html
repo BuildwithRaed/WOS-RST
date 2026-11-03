@@ -1844,7 +1844,6 @@ input,select,textarea{
   .cg-tip{ position:absolute; top:calc(100% + 8px); inset-inline-start:0; z-index:40; width:max-content; max-width:min(280px, calc(100vw - 32px)); padding:9px 11px; border:1px solid rgba(111,211,242,.45); border-radius:10px; background:#0f1a2a; box-shadow:0 8px 24px rgba(0,0,0,.45); color:var(--text); font-family:inherit; font-size:12.5px; font-weight:400; font-style:normal; line-height:1.45; letter-spacing:0; text-transform:none; white-space:normal; }
   .cg-tip::before{ content:""; position:absolute; top:-6px; inset-inline-start:var(--cg-tip-x, 20px); width:10px; height:10px; background:#0f1a2a; border-left:1px solid rgba(111,211,242,.45); border-top:1px solid rgba(111,211,242,.45); transform:rotate(45deg); }
   .cg-tip[hidden]{ display:none; }
-  @media (hover:hover){ .cg-i:hover ~ .cg-tip[hidden]{ display:block; } }
   .cg-ans{ margin-bottom:8px; padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
   .cg-k{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
   .cg-ans > .cg-k{ display:block; margin-bottom:6px; }
@@ -21551,21 +21550,25 @@ async function renderChiefGearCalc() {
     }
     if (e.target.closest("[data-cgclose]") || e.target.closest("[data-cgbd]")) sheetTo(null);
   });
-  head.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-cginfo]");
-    if (!b) return;
-    const hp = content.querySelector("[data-cghelp]");
-    hp.hidden = !hp.hidden;
-    b.setAttribute("aria-expanded", String(!hp.hidden));
-    if (!hp.hidden) {
-      const off = (ev) => {
-        if (ev.type === "keydown" ? ev.key !== "Escape" : ev.target.closest("[data-cginfo]")) return;
-        hp.hidden = true; b.setAttribute("aria-expanded", "false");
-        document.removeEventListener("pointerdown", off, true); document.removeEventListener("keydown", off, true);
-      };
-      document.addEventListener("pointerdown", off, true); document.addEventListener("keydown", off, true);
-    }
-  });
+  // (i) bubble: tap opens / closes it, a tap anywhere else or Esc closes it;
+  // a mouse shows it while over the (i). No CSS :hover (phones keep a tapped
+  // button "hovered", so the bubble stayed open; owner, 3 Nov 2026).
+  {
+    const b = head.querySelector("[data-cginfo]"), hp = head.querySelector("[data-cghelp]");
+    let pinned = false;
+    const show = (on) => { hp.hidden = !on; b.setAttribute("aria-expanded", String(on)); };
+    const off = (ev) => {
+      if (ev.type === "keydown" ? ev.key !== "Escape" : b.contains(ev.target)) return;
+      pinned = false; show(false); unlisten();
+    };
+    const unlisten = () => { document.removeEventListener("pointerdown", off, true); document.removeEventListener("keydown", off, true); };
+    b.addEventListener("click", () => {
+      pinned = !pinned; show(pinned); unlisten();
+      if (pinned) { document.addEventListener("pointerdown", off, true); document.addEventListener("keydown", off, true); }
+    });
+    b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse" && !pinned) show(true); });
+    b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && !pinned) show(false); });
+  }
 
   // The sheet for one piece: Now and Target lists side by side.
   function openGearSheet(key) {
