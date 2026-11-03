@@ -1860,7 +1860,7 @@ input,select,textarea{
   .cg-sec{ margin-top:7px; padding-top:6px; border-top:1px solid var(--line); }
   .cg-sec[hidden]{ display:none; }
   .cg-sh{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:6px; }
-  .cg-sh .rch-seg, .cg-sh .cg-pk{ margin-inline-start:auto; }
+  .cg-sh .rch-seg{ margin-inline-start:auto; }
   .cg-ed{ flex:none; width:32px; height:32px; border:1px solid var(--line); border-radius:9px; background:none; color:var(--muted); font-size:14px; cursor:pointer; }
   .cg-can-l{ display:flex; align-items:center; gap:9px; }
   .cg-can-t{ flex:1; min-width:0; display:flex; flex-direction:column; }
@@ -1870,11 +1870,14 @@ input,select,textarea{
   .cg-can-t small.ok{ color:var(--good); }
   .cg-can-t small.am{ color:var(--amber); }
   .cg-show{ flex:none; min-height:34px; }
-  .cg-pk{ display:inline-flex; align-items:center; gap:4px; min-height:32px; padding:0 12px; border:1px solid var(--ice-dim); border-radius:999px; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; }
-  .cg-chips{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
-  .cg-chip{ display:inline-flex; align-items:center; justify-content:center; gap:4px; min-width:0; height:30px; padding:0 7px 0 4px; border:1px solid rgba(224,100,95,.45); border-radius:999px; background:rgba(224,100,95,.08); color:#ff8f8a; font-size:12.5px; font-weight:800; white-space:nowrap; }
-  .cg-chip img{ width:21px; height:21px; object-fit:contain; flex:none; }
-  .cg-chip b{ overflow:hidden; text-overflow:ellipsis; }
+  /* Backpack boxes in the answer card (owner picked A, 3 Nov 2026). */
+  .cg-bp .cg-sh{ margin-bottom:4px; }
+  .cg-bp-tap{ margin-inline-start:auto; font-size:11.5px; text-align:end; }
+  .cg-bp #gearOwned_rows_foot, .cg-bp .bs-help{ display:none; }
+  .cg-bp .bs-edit{ margin-top:0; }
+  .cg-bp .bs-tiles{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; max-width:460px; }
+  .cg-bp .chest-open{ margin-top:6px; }
+  .cg1 .t12x-amts{ display:none !important; }
   .cg-ok{ font-size:12.5px; font-weight:700; color:var(--good); }
   .cg-pcs{ padding:8px 11px 8px; }
   .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; }
@@ -1895,8 +1898,8 @@ input,select,textarea{
   .cg-bd[hidden]{ display:none; }
   @media (min-width: 901px){ .cg1 .t12x-buy:has(#gearOwned_rows_trades:empty):has(#gearOwned_rows_packs:empty){ display:none; } }
   @media (max-width: 900px){
-    .cg1 .t12x-amts, .cg1 .t12x-buy{ display:none; }
-    .cg1 .t12x-amts.cg-open, .cg1 .t12x-buy.cg-open{ display:block; position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.55); }
+    .cg1 .t12x-buy{ display:none; }
+    .cg1 .t12x-buy.cg-open{ display:block; position:fixed; left:8px; right:8px; bottom:8px; z-index:61; max-height:84vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.55); }
     .cg1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
     .cg1 .cg-open .cg-sh-h b{ font-size:15px; }
     .cg1 .t12x-buy[data-cgshow="trades"] #gearOwned_rows_packs, .cg1 .t12x-buy[data-cgshow="packs"] #gearOwned_rows_trades{ display:none; }
@@ -5499,14 +5502,11 @@ const T = {
   cg_backpack: { en: "Backpack" },
   cg_trades: { en: "Trades" },
   cg_can_now: { en: "Can do now" },
-  cg_still_short: { en: "Still short" },
-  cg_packs: { en: "Packs" },
   cg_show: { en: "Show" },
   cg_then_out: { en: "Then {item} runs out" },
   cg_with_trades: { en: "with this week's trades" },
   cg_none_up: { en: "Nothing can go up yet" },
   cg_all_at_target: { en: "All pieces are at their target" },
-  cg_covered: { en: "Your Backpack covers the target" },
   cg_pieces: { en: "Pieces" },
   cg_set3: { en: "3-piece set" },
   cg_set6: { en: "6-piece set" },
@@ -8226,7 +8226,6 @@ function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
 const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
 const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
 const BAR_CONV = {};    // calcKey -> choice chests' rules, opened by reachPlan as needed
-const BAR_EFF = {};     // calcKey -> { have, need } as the Backpack boxes count them
 const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
 // Which troop goes first when two upgrades are equally good (owner, 2 Nov 2026).
 const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
@@ -16996,9 +16995,6 @@ function packPickCheapest(plans) {
 // numbers always agree with the red "still needed" figures above it.
 let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole amount
 const PACK_COST_OPEN = {};
-const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
-const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
-const packCostShown = (calcKey, v) => { if (PACK_COST_SHOWN[calcKey] === v) return; PACK_COST_SHOWN[calcKey] = v; if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey](); };
 const PACK_PLAN_PICK = {}; // card layout: which plan's packs are listed, per page
 const PACK_COST_VIEW = {};
 // Which view the Pack cost box opens on (the switch still changes it):
@@ -17040,7 +17036,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     </div>`;
 
   if (!open) {
-    packCostShown(calcKey, null);
     containerEl.style.minHeight = "";
     containerEl.innerHTML = `${wrapOpen}${head}</div>`;
     containerEl.querySelector("[data-packtoggle]").addEventListener("click", () => { PACK_COST_OPEN[calcKey] = true; rerender(); });
@@ -17294,7 +17289,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (pageTotalText) known.page = pageTotalText; else pageTotalText = known.page || "";
   PACK_VIEW_TOTALS[calcKey] = known;
   if (stale()) return;
-  packCostShown(calcKey, (usingShared ? sharedTotalText : pageTotalText) || null);
   if (usingShared) sections = sharedSections;
   const viewSwitch = canShare ? `
     <div class="seg" data-packview style="margin:8px 0 2px; flex-wrap:wrap;">
@@ -21391,13 +21385,13 @@ async function renderChiefGearCalc() {
         <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span></div>
         <div id="gearCurrentStats"></div>
         <div class="cg-sec" id="cgCan" data-rchpage="chief_gear" hidden></div>
-        <div class="cg-sec" id="cgShort"></div>
+        <div class="cg-sec cg-bp" id="cgBp"><div class="cg-sh"><span class="cg-k">${esc(t("cg_backpack"))}</span><span class="meta cg-bp-tap">${esc(t("bs_help_tap").replace(/[.\u3002]\s*$/, ""))}</span></div></div>
       </div>`,
     mainHtml: `<div id="gearRows"></div>
-      <div class="cg-pills"><button type="button" data-cgsheet="bp">&#127890; ${esc(t("cg_backpack"))}</button><button type="button" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))}</button>${packsOn ? `<button type="button" data-cgsheet="packs">$ ${esc(t("pack_cost_title"))}</button>` : ""}</div>
+      <div class="cg-pills"><button type="button" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))}</button>${packsOn ? `<button type="button" data-cgsheet="packs">$ ${esc(t("pack_cost_title"))}</button>` : ""}</div>
       <div class="cg-bd" data-cgbd hidden></div>`,
   });
-  const shell = content.querySelector(".t12x"), amts = content.querySelector(".t12x-amts"), buy = content.querySelector(".t12x-buy");
+  const shell = content.querySelector(".t12x"), buy = content.querySelector(".t12x-buy");
   shell.classList.add("cg1");
   const head = content.querySelector(".plx-head");
   head.classList.add("cg-head");
@@ -21412,7 +21406,11 @@ async function renderChiefGearCalc() {
     head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(4, Math.round(x + ib.offsetWidth / 2 - 5)) + "px");
   }
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
-  amts.insertAdjacentHTML("afterbegin", sheetHead(`&#127890; ${esc(t("cg_backpack"))}`));
+  // The Backpack boxes sit in the answer card where "Still short" was (owner
+  // picked A, 3 Nov 2026): the bar's own element moves there (its handlers
+  // are on it), the side card stays empty and hidden, no "Hide boxes".
+  document.getElementById("cgBp").appendChild(document.getElementById("gearOwned"));
+  BAR_SHOW_ALL.chief_gear = true;
   buy.innerHTML = `${sheetHead("", " data-cgbuyt")}<div data-buybody></div>`;
 
   const TROOP_COLORS = { Lancer: "var(--ice)", Infantry: "#7ee6a8", Marksman: "#f0a3c4" };
@@ -21478,23 +21476,7 @@ async function renderChiefGearCalc() {
     const can = document.getElementById("cgCan");
     if (can) { can.hidden = false; can.innerHTML = canHtml(plan, tracks); }
   }
-  // "Still short": what the Backpack boxes still miss (same numbers as the
-  // boxes), and the Pack cost price once it's been worked out.
-  function fillCgShort() {
-    const el = document.getElementById("cgShort"), eff = BAR_EFF.chief_gear;
-    if (!el || !eff) return;
-    const items = ["Hardened Alloy", "Polishing Solution", "Design Plan", "Amber"].filter((n) => (eff.need[n] || 0) > 0);
-    const short = items.filter((n) => (eff.have[n] || 0) < eff.need[n]);
-    const price = PACK_COST_SHOWN.chief_gear;
-    const chip = (n) => {
-      const src = materialIconSrc(n), v = eff.need[n] - (eff.have[n] || 0);
-      return `<span class="cg-chip" title="${esc(`${materialDisplayName(n)}: ${Math.round(v).toLocaleString()} ${t("bs_short_word")}`)}">${src ? `<img src="${esc(src)}" alt="" />` : ""}<b>${esc(bidiNum(shortAmount(v)))}</b></span>`;
-    };
-    el.innerHTML = `<div class="cg-sh"><span class="cg-k">${esc(t("cg_still_short"))}</span>${packsOn && short.length ? `<button type="button" class="cg-pk" data-cgsheet="packs">${esc(t("cg_packs"))}${price ? ` ${price}` : ""} &#8250;</button>` : ""}</div>
-      ${short.length ? `<div class="cg-chips">${short.map(chip).join("")}</div>` : `<div class="cg-ok">&#10003; ${esc(t(items.length ? "cg_covered" : "cg_all_at_target"))}</div>`}`;
-  }
-  REACH_HOOKS.chief_gear = () => { fillCgShort(); fillChiefGearReach(); };
-  PACK_COST_HOOKS.chief_gear = fillCgShort;
+  REACH_HOOKS.chief_gear = fillChiefGearReach;
   function renderPieces() {
     const toGo = CHIEF_GEAR_PIECES.filter((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) > CHIEF_GEAR_STATE[p.key].from).length;
     const open = !!SETALL_OPEN.chief;
@@ -21549,17 +21531,15 @@ async function renderChiefGearCalc() {
     const slot = e.target.closest("[data-cgslot]");
     if (slot) openGearSheet(slot.dataset.cgslot);
   });
-  // Backpack / Trades / Pack cost: a sheet on phones (the side cards shown
-  // over the page), the side column on PC (scrolled to).
+  // Trades / Pack cost: a sheet on phones (the side card shown over the
+  // page), the side column on PC (scrolled to).
   const sheetTo = (which) => {
-    amts.classList.toggle("cg-open", which === "bp");
-    buy.classList.toggle("cg-open", which === "trades" || which === "packs");
-    buy.dataset.cgshow = which === "trades" || which === "packs" ? which : "";
+    buy.classList.toggle("cg-open", !!which);
+    buy.dataset.cgshow = which || "";
     const tt = buy.querySelector("[data-cgbuyt]");
     if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `$ ${esc(t("pack_cost_title"))}`;
     content.querySelector("[data-cgbd]").hidden = !which;
-    const box = which === "bp" ? amts : which ? buy : null;
-    if (box) box.scrollTop = 0;
+    if (which) buy.scrollTop = 0;
   };
   shell.addEventListener("click", (e) => {
     const b = e.target.closest("[data-cgsheet]");
@@ -21568,7 +21548,7 @@ async function renderChiefGearCalc() {
       // The Pack cost card starts folded: open it (that works out its plans).
       if (which === "packs" && PACK_COST_OPEN.chief_gear !== true) { const tg = buy.querySelector("[data-packtoggle]"); if (tg) tg.click(); }
       if (window.matchMedia("(max-width: 900px)").matches) sheetTo(which);
-      else (which === "bp" ? amts : buy).scrollIntoView({ block: "start", behavior: "smooth" });
+      else buy.scrollIntoView({ block: "start", behavior: "smooth" });
       return;
     }
     if (e.target.closest("[data-cgclose]") || e.target.closest("[data-cgbd]")) sheetTo(null);
@@ -21820,10 +21800,6 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const weekly = TRADE_APPLY[calcKey || "chief_gear"] === false ? [] : tradeRatesFor(calcKey || "chief_gear").filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));
     BAR_CONV[calcKey || "chief_gear"] = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }))
       .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0, trade: true })));
-    // What the boxes count against what the page needs (Chief Gear's "Still short").
-    const needAll = {};
-    groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { needAll[n] = (needAll[n] || 0) + (Number(q) || 0); }));
-    BAR_EFF[calcKey || "chief_gear"] = { have: { ...effOwned }, need: needAll };
     if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
   };
   reachRefresh();
