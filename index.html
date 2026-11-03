@@ -1837,11 +1837,12 @@ input,select,textarea{
      column, Backpack / Trades / Pack cost as a sheet from 3 buttons on phones. */
   .cg-i{ display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; margin-inline-start:6px; vertical-align:middle; border:1px solid var(--line); border-radius:50%; background:none; color:var(--muted); font:italic 700 15px Georgia, "DejaVu Serif", serif; cursor:pointer; }
   .cg-i[aria-expanded="true"]{ border-color:var(--ice); color:var(--ice); }
-  .cg-help{ font-size:12px; margin:-6px 0 10px; }
-  .cg-ans{ margin-bottom:10px; padding:9px 12px 11px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
+  .plx-head.cg-head{ margin-bottom:8px; }
+  .cg-help{ font-size:12px; margin:-2px 0 8px; }
+  .cg-ans{ margin-bottom:8px; padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
   .cg-k{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
   .cg-ans > .cg-k{ display:block; margin-bottom:6px; }
-  .cg-sec{ margin-top:8px; padding-top:7px; border-top:1px solid var(--line); }
+  .cg-sec{ margin-top:7px; padding-top:6px; border-top:1px solid var(--line); }
   .cg-sec[hidden]{ display:none; }
   .cg-sh{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:6px; }
   .cg-sh .rch-seg, .cg-sh .cg-pk{ margin-inline-start:auto; }
@@ -1866,18 +1867,19 @@ input,select,textarea{
   .cg-set > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:11px; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
   .cg-set b{ font-size:13px; font-weight:800; color:var(--good); white-space:nowrap; }
   .cg-set b.off{ font-size:11.5px; font-weight:600; color:var(--muted); }
-  .cg-pcs{ padding:9px 11px 12px; }
-  .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:2px; }
+  .cg-pcs{ padding:8px 11px 8px; }
+  .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; }
   .cg-ph > b{ font-size:14px; }
   .cg-ph .meta{ font-size:12px; white-space:nowrap; }
   .cg-ph .sa-btn{ margin-inline-start:auto; }
-  .cg-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:2px 8px; max-width:520px; margin:6px auto 0; }
+  .cg-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0 8px; max-width:520px; margin:2px auto 0; }
   .cg-th{ padding-bottom:2px; text-align:center; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--tc); }
-  .cg-pc{ display:flex; flex-direction:column; align-items:center; min-width:0; padding:12px 0 4px; border:0; background:none; color:var(--frost); font:inherit; cursor:pointer; }
-  .cg-pc .cg-pic{ width:68px; }
-  .cg-pc .cg-nm{ margin-top:13px; font-size:12.5px; }
-  .cg-pc .cg-rch{ display:flex; justify-content:center; margin-top:4px; }
-  .cg-mk{ padding:0 6px; border:1px solid rgba(91,201,138,.6); border-radius:7px; line-height:20px; font-size:11.5px; }
+  .cg-pc{ display:flex; flex-direction:column; align-items:center; min-width:0; padding:11px 0 2px; border:0; background:none; color:var(--frost); font:inherit; cursor:pointer; }
+  .cg-pc .cg-pic{ width:58px; }
+  .cg-pc .cg-nm{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:2px 5px; margin-top:12px; font-size:12.5px; }
+  .cg-pc .cg-rch{ display:inline-flex; width:auto; margin:0; }
+  .cg-pc .cg-rch:empty{ display:none; }
+  .cg-mk{ padding:0 5px; border:1px solid rgba(91,201,138,.6); border-radius:7px; line-height:18px; font-size:11px; }
   .cg-pills, .cg-sh-h{ display:none; }
   .cg-bd{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55); }
   .cg-bd[hidden]{ display:none; }
@@ -1888,10 +1890,9 @@ input,select,textarea{
     .cg1 .cg-open .cg-sh-h{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
     .cg1 .cg-open .cg-sh-h b{ font-size:15px; }
     .cg1 .t12x-buy[data-cgshow="trades"] #gearOwned_rows_packs, .cg1 .t12x-buy[data-cgshow="packs"] #gearOwned_rows_trades{ display:none; }
-    .cg-pills{ display:flex; gap:8px; position:fixed; left:0; right:0; bottom:0; z-index:50; padding:8px 12px calc(8px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--bg); }
-    .cg-pills button{ flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:0; height:40px; padding:0 6px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; }
-    .cg1 .t12x-main{ padding-bottom:60px; }
-    body:has(.cg1) .site-footer{ padding-bottom:72px; }
+    .cg-pills{ display:flex; gap:8px; position:fixed; left:0; right:0; bottom:0; z-index:50; padding:6px 12px calc(6px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--bg); }
+    .cg-pills button{ flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:0; height:38px; padding:0 6px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; }
+    body:has(.cg1) .site-footer{ padding-bottom:62px; }
   }
   .cg-sabox[hidden]{ display:none; }
   .plx-tsw.is-pinned{ position:fixed; top:0; z-index:40; margin:0; border-radius:0 0 14px 14px; }
@@ -2657,6 +2658,9 @@ input,select,textarea{
     position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100;
     display:flex; align-items:center; justify-content:center; padding:20px;
   }
+  /* An open pop-up keeps the page behind it still (syncScrollLock). */
+  html.scroll-lock, html.scroll-lock body{ overflow:hidden; }
+  .modal-overlay, .modal-box, .pk-sheet-back, .cg-open, #mobileMenuOverlay{ overscroll-behavior:contain; }
   .acc-google{ width:100%; display:flex; align-items:center; justify-content:center; gap:8px; min-height:40px; }
   .acc-or{ display:flex; align-items:center; gap:8px; margin:10px 0; color:var(--muted); font-size:11px; }
   .acc-or::before, .acc-or::after{ content:""; flex:1; height:1px; background:var(--line); }
@@ -5841,6 +5845,21 @@ async function keepPlace(fn) {
     if (TAB === tab) { putBoxes(); window.scrollTo(0, y); }
     if (!content.dataset.holdUntilReady) content.style.minHeight = "";
   }
+}
+// An open pop-up keeps the page behind it still (owner, 3 Nov 2026: the page
+// scrolled under an open pop-up). Any shown overlay locks the page's scroll
+// (html.scroll-lock); scrolling inside a pop-up doesn't run on into the page
+// (overscroll-behavior in the CSS).
+const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay";
+let SCROLL_LOCK_RAF = 0;
+function syncScrollLock() {
+  SCROLL_LOCK_RAF = 0;
+  const on = [...document.querySelectorAll(SCROLL_LOCK_SEL)].some((el) => el.getClientRects().length > 0);
+  document.documentElement.classList.toggle("scroll-lock", on);
+}
+if (typeof MutationObserver !== "undefined") {
+  new MutationObserver(() => { if (!SCROLL_LOCK_RAF) SCROLL_LOCK_RAF = requestAnimationFrame(syncScrollLock); })
+    .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class", "hidden"] });
 }
 // Hold the page's height until a part still being worked out is drawn
 // (Budgets' plan, My Purchases' suggestions); `false` lets it go.
@@ -21358,6 +21377,7 @@ async function renderChiefGearCalc() {
   const shell = content.querySelector(".t12x"), amts = content.querySelector(".t12x-amts"), buy = content.querySelector(".t12x-buy");
   shell.classList.add("cg1");
   const head = content.querySelector(".plx-head");
+  head.classList.add("cg-head");
   head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>`);
   head.insertAdjacentHTML("afterend", `<p class="meta cg-help" data-cghelp hidden>${esc(t("cg_slots_hint"))}</p>`);
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
@@ -21382,8 +21402,7 @@ async function renderChiefGearCalc() {
       : from >= cap ? `<span class="cg-tgt ok">&#10003; ${esc(t("max_button"))}</span>` : "";
     return `<button type="button" class="cg-pc" data-cgslot="${p.key}" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
       <span class="cg-pic" style="--edge:${cgEdge(rf)};"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
-      <span class="cg-nm">${esc(pieceDisplayName(p.name))}</span>
-      <span class="cg-rch" data-rch="cg|${p.key}"></span>
+      <span class="cg-nm">${esc(pieceDisplayName(p.name))}<span class="cg-rch" data-rch="cg|${p.key}"></span></span>
     </button>`;
   }
   // "Can do now" (admin, like every "can reach" mark): the first piece the
