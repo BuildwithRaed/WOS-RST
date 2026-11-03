@@ -18,19 +18,26 @@
   // the page out at 440 px and shrinks it to fit, by at most 12 % (iPhone 15 /
   // 16: 393 px at 89 %, 16 Pro 402 px at 91 %, Plus / Pro Max 430 px at 98 %,
   // SE / mini 375 px at 88 %). Landscape, iPads and Android as before.
+  // Pages that size themselves to the phone (owner, 3 Nov 2026, responsive
+  // check D; window.WOS_FLUID_PAGES) switch the shrink off: render() calls
+  // wosPhoneFit(false) there and wosPhoneFit(true) on every other page.
+  window.WOS_FLUID_PAGES = ["chiefgear"];
   (function () {
     var ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     var meta = document.querySelector('meta[name="viewport"]');
+    var fit = true;
+    try { if (window.WOS_FLUID_PAGES.indexOf(localStorage.getItem("last_tab")) >= 0) fit = false; } catch (e) { /* storage off */ }
     var set = function () {
       var dw = Math.min(screen.width, screen.height);
       var upright = !window.matchMedia || window.matchMedia("(orientation: portrait)").matches;
       var phone = ios && !/iPad/.test(navigator.userAgent) && !(navigator.platform === "MacIntel");
-      var w = phone && upright && dw > 0 && dw < 440 ? Math.floor(Math.min(440, dw / 0.88)) : 0;
+      var w = fit && phone && upright && dw > 0 && dw < 440 ? Math.floor(Math.min(440, dw / 0.88)) : 0;
       var k = w ? Math.ceil(dw / w * 1000) / 1000 : 1; // rounded up, so the page is never wider than the screen
-      meta.setAttribute("content", (w ? "width=" + w + ", initial-scale=" + k : "width=device-width, initial-scale=1.0") + (ios ? ", maximum-scale=" + k : ""));
+      meta.setAttribute("content", (w ? "width=" + w + ", initial-scale=" + k : "width=device-width, initial-scale=1.0" + (ios ? ", minimum-scale=1.0" : "")) + (ios ? ", maximum-scale=" + k : ""));
     };
     set();
     window.addEventListener("orientationchange", function () { setTimeout(set, 60); });
+    window.wosPhoneFit = function (on) { on = !!on; if (on === fit) return; fit = on; set(); };
   })();
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1948,6 +1955,41 @@ input,select,textarea{
   .cg-ph .sa-car{ font-size:10px; }
   /* The labels on the pieces share one shape too. */
   .cg-pc .cg-tgt, .cg-pc .cg-mk{ border-radius:6px; }
+  /* Phones and tablets (owner, 3 Nov 2026, responsive check A–D): buttons
+     44 px tall (A), no text under 11 px (B), the pieces grow with the screen up
+     to 84 px on tablets / an open Fold (C), and sizes follow the screen's width
+     instead of the iPhone shrink (D: clamp() with vw, this page is in
+     WOS_FLUID_PAGES). PC (> 900 px) is unchanged. */
+  @media (max-width: 900px){
+    .plx-head.cg-head h2{ font-size:clamp(18px, 4.8vw, 22px); }
+    #gearMaxAllBtn, #cgCan .cg-show, #cgBp .cg-bpbtn, #gearRows .sa-btn{ height:44px; min-height:44px; padding:0 14px; }
+    #cgCan .cg-ed{ width:44px; height:44px; min-height:44px; }
+    #cgCan .rch-seg{ height:44px; }
+    #cgCan .rch-seg button{ height:42px; padding:0 12px; }
+    .cg-i::after{ inset:-13px; }
+    .cg-ans, .cg-pcs{ padding:clamp(10px, 3vw, 14px); }
+    .cg-sh{ min-height:44px; }
+    #gearCurrentStats .plx-stats.one{ gap:clamp(5px, 1.6vw, 10px); }
+    #gearCurrentStats .plx-stat{ padding:clamp(7px, 2vw, 10px) clamp(6px, 2vw, 10px); }
+    #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small{ font-size:11px; }
+    #gearCurrentStats .plx-stat b{ font-size:clamp(13.5px, 3.7vw, 17px); }
+    #cgSets .cg-sxc{ padding:0 7px; gap:4px; }
+    #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark{ font-size:11px; }
+    #cgBp .bs-tile{ min-height:clamp(84px, 23vw, 100px); }
+    .cg1 .cg-pc .cg-pic{ width:clamp(52px, 14.5vw, 84px); }
+    .cg1 .cg-pc .cg-badge, .cg1 .cg-pc .cg-tgt{ font-size:11px; }
+    .cg1 .cg-pc .cg-nm{ font-size:clamp(12px, 3.2vw, 13.5px); }
+    /* the Pack cost / Trades window */
+    .cg1 .cg-sh-h .rfa-x{ width:44px; height:44px; }
+    .pca-scope .seg button{ min-height:44px; }
+    .pca-tg input[type=date]{ height:44px; }
+    .pca-x{ width:44px; height:44px; }
+  }
+  @media (min-width: 601px) and (max-width: 900px){
+    .cg1 .cg-grid{ max-width:none; gap:6px 16px; }
+    .cg1 .cg-pc .cg-badge{ top:-3px; padding:3px 7px; }
+    .cg1 .cg-pc .cg-tgt{ padding:3px 7px; }
+  }
   /* Pack cost sheet on phones: the title, target and plan boxes stay, only the
      pack list scrolls (owner, 3 Nov 2026). */
   @media (max-width: 900px){
@@ -6212,6 +6254,8 @@ let RENDER_SEQ = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
   const seq = ++RENDER_SEQ;
+  // iPhones: the 440 px shrink, except on pages that size themselves (head script).
+  if (window.wosPhoneFit) window.wosPhoneFit(!(window.WOS_FLUID_PAGES || []).includes(TAB));
   // Page pop-ups: close them when the page changes.
   ["refineAdvModal", "drilldownModal", "gearSheet"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   // The same page drawn again after a tap: keep its height and scroll place.
