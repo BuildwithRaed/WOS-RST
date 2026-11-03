@@ -1846,7 +1846,14 @@ input,select,textarea{
   .cg-tip[hidden]{ display:none; }
   .cg-ans{ margin-bottom:8px; padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
   .cg-k{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
-  .cg-ans > .cg-k{ display:block; margin-bottom:6px; }
+  .cg-kr{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; min-height:22px; margin-bottom:6px; }
+  .cg-sx{ display:flex; flex-wrap:wrap; gap:5px; margin-inline-start:auto; }
+  .cg-sx:empty{ display:none; }
+  .cg-sxc{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 7px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.02); white-space:nowrap; }
+  .cg-sxc i{ font-style:normal; font-size:11px; color:var(--muted); text-transform:uppercase; }
+  .cg-sxc b{ font-size:12px; font-weight:800; color:var(--good); }
+  .cg-sxc b.off{ font-size:11px; font-weight:600; color:var(--muted); }
+  .plx-maxbtn.on{ background:rgba(111,211,242,.16); }
   .cg-sec{ margin-top:7px; padding-top:6px; border-top:1px solid var(--line); }
   .cg-sec[hidden]{ display:none; }
   .cg-sh{ display:flex; align-items:center; gap:8px; min-height:32px; margin-bottom:6px; }
@@ -1866,11 +1873,6 @@ input,select,textarea{
   .cg-chip img{ width:21px; height:21px; object-fit:contain; flex:none; }
   .cg-chip b{ overflow:hidden; text-overflow:ellipsis; }
   .cg-ok{ font-size:12.5px; font-weight:700; color:var(--good); }
-  .cg-sets{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:5px; margin-top:5px; }
-  .cg-set{ display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; min-height:26px; padding:0 9px 0 8px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.02); }
-  .cg-set > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:11px; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
-  .cg-set b{ font-size:13px; font-weight:800; color:var(--good); white-space:nowrap; }
-  .cg-set b.off{ font-size:11.5px; font-weight:600; color:var(--muted); }
   .cg-pcs{ padding:8px 11px 8px; }
   .cg-ph{ display:flex; align-items:center; gap:8px; min-height:32px; }
   .cg-ph > b{ font-size:14px; }
@@ -5505,6 +5507,9 @@ const T = {
   cg_pieces: { en: "Pieces" },
   cg_set3: { en: "3-piece set" },
   cg_set6: { en: "6-piece set" },
+  cg_set3_short: { en: "3-piece" },
+  cg_set6_short: { en: "6-piece" },
+  cg_max_back: { en: "Tap again to go back to the targets you had" },
   cg_set_all_troops: { en: "The set bonus counts for all troops" },
   cg_set_bonus: { en: "Set bonus" },
   bud_not_open: { en: "Includes levels not open in your state yet ({what})" },
@@ -21376,7 +21381,7 @@ async function renderChiefGearCalc() {
     maxId: "gearMaxAllBtn",
     amountsId: "gearOwned", needId: "gearNeed",
     statsHtml: `<div class="panel cg-ans">
-        <div class="cg-k">${esc(t("troops_stats_title"))} · ATK &amp; DEF</div>
+        <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span></div>
         <div id="gearCurrentStats"></div>
         <div class="cg-sec" id="cgCan" data-rchpage="chief_gear" hidden></div>
         <div class="cg-sec" id="cgShort"></div>
@@ -21514,6 +21519,16 @@ async function renderChiefGearCalc() {
         changed();
       });
     });
+    syncMaxBtn();
+  }
+  // The Max button looks pressed while a tap would put your own targets back.
+  function syncMaxBtn() {
+    const btn = document.getElementById("gearMaxAllBtn");
+    if (!btn) return;
+    const on = !!cgBeforeMax();
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-pressed", String(on));
+    btn.title = t(on ? "cg_max_back" : "max_everything");
   }
   function changed() {
     saveCalcState("chief_gear", CHIEF_GEAR_STATE);
@@ -21618,11 +21633,21 @@ async function renderChiefGearCalc() {
     draw(false);
   }
 
-  // Max: every target to the highest open level. It used to put the targets
-  // back to now when they were all at max already, which looked broken (owner, 3 Nov 2026).
+  // Max: every target to the highest open level; a second tap puts back the
+  // targets you had before (owner, 3 Nov 2026; it used to put them back to
+  // "now", which lost your own targets). Current levels never change.
   document.getElementById("gearMaxAllBtn").addEventListener("click", () => {
-    const cap = chiefGearCapIdx();
-    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.to = Math.max(cap, st.from); });
+    const b = cgBeforeMax();
+    if (b) {
+      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key], v = b.to[p.key]; st.to = Math.max(st.from, v == null ? st.from : v); });
+      cgSetBeforeMax(null);
+    } else {
+      const cap = chiefGearCapIdx(), to = {}, max = {};
+      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; to[p.key] = st.to == null ? st.from : st.to; max[p.key] = Math.max(cap, st.from); });
+      if (CHIEF_GEAR_PIECES.every((p) => to[p.key] === max[p.key])) return; // already at max
+      cgSetBeforeMax({ uid: USER_ID || "", to, max });
+      CHIEF_GEAR_PIECES.forEach((p) => { CHIEF_GEAR_STATE[p.key].to = max[p.key]; });
+    }
     changed();
   });
   renderPieces();
@@ -22252,17 +22277,34 @@ function maxedChiefGearState() {
   return out;
 }
 
+// The targets before Chief Gear's Max was tapped (owner, 3 Nov 2026), kept for
+// the visit and in sessionStorage (a phone may reload the page in the
+// background); only valid while every target still sits where Max put it.
+let CG_BEFORE_MAX;
+function cgSetBeforeMax(v) {
+  CG_BEFORE_MAX = v;
+  try { if (v) sessionStorage.setItem("cg_before_max", JSON.stringify(v)); else sessionStorage.removeItem("cg_before_max"); } catch (e) { /* storage off */ }
+}
+function cgBeforeMax() {
+  let s = CG_BEFORE_MAX;
+  if (s === undefined) { try { s = JSON.parse(sessionStorage.getItem("cg_before_max") || "null"); } catch (e) { s = null; } CG_BEFORE_MAX = s; }
+  if (!s || !s.to || !s.max || s.uid !== (USER_ID || "")) return null;
+  return CHIEF_GEAR_PIECES.every((p) => { const st = CHIEF_GEAR_STATE[p.key]; return st && (st.to == null ? st.from : st.to) === s.max[p.key]; }) ? s : null;
+}
+
 // Chief Gear's Troops Stats (design G1-B, owner 3 Nov 2026): the 3 troops'
-// ATK & DEF boxes, the set bonus (3-piece / 6-piece, all troops) as 2 chips under them.
+// ATK & DEF boxes; the set bonus (3-piece / 6-piece, all troops) as 2 small
+// chips on the card's title line (option A's header, owner 3 Nov 2026).
 function updateChiefGearCurrentStats() {
   const el = document.getElementById("gearCurrentStats");
   if (!el || !CHIEF_GEAR_ROWS) return;
   const statByTroop = computeChiefGearRawStat(CHIEF_GEAR_STATE);
   const maxByTroop = computeChiefGearRawStat(maxedChiefGearState());
   const { threeBonus, sixBonus } = computeChiefGearSetBonus(CHIEF_GEAR_STATE);
-  const chip = (label, v, stat) => `<span class="cg-set"><span>${esc(label)}</span>${v ? `<b>${bidiNum(`+${v}%`)} ${stat}</b>` : `<b class="off">${esc(t("not_active"))}</b>`}</span>`;
-  el.innerHTML = `${plxStatBoxesHtml(PLX_TROOPS.map((tr) => ({ label: troopDisplayName(tr), val: (statByTroop[tr] || {}).Attack || 0, max: (maxByTroop[tr] || {}).Attack || 0, dp: 2 })), true)}
-    <div class="cg-sets" title="${esc(t("cg_set_all_troops"))}">${chip(t("cg_set3"), threeBonus, "DEF")}${chip(t("cg_set6"), sixBonus, "ATK")}</div>`;
+  const chip = (label, full, v, stat) => `<span class="cg-sxc" title="${esc(`${full} · ${t("cg_set_all_troops")}`)}"><i>${esc(label)}</i>${v ? `<b>${bidiNum(`+${v}%`)} ${stat}</b>` : `<b class="off">${esc(t("not_active"))}</b>`}</span>`;
+  el.innerHTML = plxStatBoxesHtml(PLX_TROOPS.map((tr) => ({ label: troopDisplayName(tr), val: (statByTroop[tr] || {}).Attack || 0, max: (maxByTroop[tr] || {}).Attack || 0, dp: 2 })), true);
+  const sx = document.getElementById("cgSets");
+  if (sx) sx.innerHTML = chip(t("cg_set3_short"), t("cg_set3"), threeBonus, "DEF") + chip(t("cg_set6_short"), t("cg_set6"), sixBonus, "ATK");
 }
 
 // ============================================================
