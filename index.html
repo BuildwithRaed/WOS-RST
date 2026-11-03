@@ -1942,6 +1942,52 @@ input,select,textarea{
     .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card > *:not(.pc-sec), .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-sec > *:not(.pc-list){ flex:none; }
     .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-list{ flex:1 1 auto; min-height:80px; overflow-y:auto; overscroll-behavior:contain; }
   }
+  /* Pack cost design A (owner picked, 3 Nov 2026; PACK_COST_A_KEYS). */
+  .pca .pc-plans{ margin:6px 0 8px; }
+  .pca-sum{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; border:1px solid rgba(91,201,138,.35); border-radius:12px; background:rgba(91,201,138,.07); }
+  .pca-sum.late{ border-color:rgba(224,100,95,.45); background:rgba(224,100,95,.07); }
+  .pca-big{ display:block; font-size:22px; font-weight:800; line-height:1.2; }
+  .pca-big .cur, .pca-pr .cur{ font-size:11px; font-weight:600; color:var(--muted); }
+  .pca-done{ display:block; font-size:12.5px; font-weight:600; color:var(--good); }
+  .pca-sum.late .pca-done{ color:var(--danger); }
+  .pca-n{ flex:none; box-sizing:border-box; display:inline-flex; align-items:center; height:30px; padding:0 11px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .pca-tg{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:8px 0 2px; font-size:12.5px; color:var(--muted); }
+  .pca-tg input[type=date]{ height:30px; padding:0 6px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; }
+  .pca-tg .left{ color:var(--ice); }
+  .pca-tg .bad{ color:var(--danger); }
+  .pca-x{ margin-inline-start:auto; box-sizing:border-box; width:30px; height:30px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--muted); font:inherit; font-size:15px; cursor:pointer; }
+  .pca-h{ margin:10px 0 2px; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .pca-pk{ border-bottom:1px solid rgba(49,62,79,.6); }
+  .pca-pk summary{ display:flex; align-items:center; gap:10px; padding:8px 0; list-style:none; cursor:pointer; }
+  .pca-pk summary::-webkit-details-marker{ display:none; }
+  .pca-pic{ flex:none; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
+  .pca-pic img{ width:28px; height:28px; object-fit:contain; }
+  .pca-mid{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .pca-nm{ font-size:14px; font-weight:700; }
+  .pca-nm small{ font-size:11.5px; font-weight:600; color:var(--muted); }
+  .pca-sb{ font-size:11.5px; color:var(--muted); }
+  .pca-gv{ display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+  .pca-chip{ display:inline-flex; align-items:center; gap:3px; padding:1px 6px 1px 3px; border:1px solid var(--line); border-radius:6px; background:rgba(91,201,138,.06); color:var(--good); font-size:11px; font-weight:700; white-space:nowrap; }
+  .pca-chip.x{ background:none; color:var(--muted); }
+  .pca-chip img{ width:14px; height:14px; object-fit:contain; }
+  .pca-pr{ flex:none; font-size:14px; font-weight:800; white-space:nowrap; }
+  .pca-pk .pc-lines{ margin:0 0 8px 50px; }
+  .pca-tr{ display:flex; align-items:center; gap:6px; padding:4px 0; font-size:13px; }
+  .pca-tr img{ width:20px; height:20px; object-fit:contain; }
+  .pca-ar{ margin:0 4px; color:var(--good); }
+  .pca-tr .g{ color:var(--good); }
+  .pca .pc-free{ margin-top:8px; }
+  .pca .pc-view{ margin-top:0; padding-top:0; border-top:0; }
+  .pca-scope .seg{ display:grid; grid-template-columns:1fr 1fr; width:100%; margin:8px 0 0; }
+  .pca-scope .seg button{ min-height:32px; }
+  /* In Chief Gear's Pack cost window: one title (the window's), no card inside
+     the card, and one fixed size whichever plan is picked (owner, 3 Nov 2026). */
+  @media (max-width: 900px){
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"]{ height:84vh; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-head{ display:none; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pc-card{ padding:0; border:0; background:none; }
+    .cg1 .t12x-buy.cg-open[data-cgshow="packs"] .pca .pc-list{ margin:6px -12px 0; padding:0 12px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  }
   /* PC: the pieces use the room (owner, 3 Nov 2026: "gears still tight together"). */
   @media (min-width: 901px){
     .cg1 .cg-grid{ max-width:none; gap:6px 16px; margin-top:6px; }
@@ -5557,6 +5603,13 @@ const T = {
   cg_set3_short: { en: "3-piece" },
   cg_set6_short: { en: "6-piece" },
   cg_reset: { en: "Reset" },
+  pca_done: { en: "Done" },
+  pca_in_days: { en: "in {n} days" },
+  pca_packs: { en: "{n} packs" },
+  pca_target: { en: "Target" },
+  pca_buy: { en: "What to buy" },
+  pca_only: { en: "Only {page}" },
+  pca_with_others: { en: "With my other pages" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
   cg_all_max: { en: "Every piece is at max" },
@@ -17073,7 +17126,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   // Card layout (summary pages): plans as cards to pick from, then the
   // picked plan's packs as a short list.
   const cards = BAR_SUMMARY_KEYS.has(calcKey) || PACK_COST_CARD_KEYS.has(calcKey);
-  const wrapOpen = cards ? `<div class="pc-card">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
+  const aLook = cards && PACK_COST_A_KEYS.has(calcKey);
+  let aBuilt = false;
+  const wrapOpen = cards ? `<div class="pc-card${aLook ? " pca" : ""}">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
   const head = cards ? `
     <div class="pc-head">
       <button type="button" data-packtoggle class="pc-title">${esc(t("pc_title"))} ${open ? "&#9662;" : "&#9656;"}</button>
@@ -17174,6 +17229,30 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     if (stale()) return;
   }
   const sharedNote = (msg) => `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--line); border-radius:8px;">${esc(msg)}</div>`;
+  // Design A rows (PACK_COST_A_KEYS): one row per pack with its main item's
+  // picture, real name (the table name, not its option list), how often it
+  // comes back, what it gives (needed items first) and its price; tap = its steps.
+  const pcaIcon = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" loading="lazy" />` : ""; };
+  const pcaCur = (v) => String(v).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small> ');
+  const pcaNeeded = (n) => (Number(need[n]) || 0) > 0;
+  const pcaRows = (byPack, rowsAll, priceOf, noteOf) => {
+    const all = {};
+    rowsAll.forEach((r) => Object.entries(r.gives || {}).forEach(([n, q]) => { all[n] = (all[n] || 0) + (Number(q) || 0) * r.count; }));
+    return byPack.slice().sort((a, b) => b.subtotal - a.subtotal).map((g) => {
+      const gv = {};
+      g.lines.forEach((r) => Object.entries(r.gives || {}).forEach(([n, q]) => { gv[n] = (gv[n] || 0) + (Number(q) || 0) * r.count; }));
+      const share = (n) => gv[n] / (all[n] || 1);
+      const items = Object.keys(gv).filter((n) => gv[n] > 0 && n !== "Gems");
+      const pool = items.filter(pcaNeeded).length ? items.filter(pcaNeeded) : items;
+      const main = pool.slice().sort((a, b) => share(b) - share(a))[0];
+      const chips = items.sort((a, b) => (pcaNeeded(b) - pcaNeeded(a)) || share(b) - share(a)).slice(0, 4);
+      const parts = String(g.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
+      const every = typeof g.reset === "number" && !packStackInfo(g.reset) ? resetText(g.reset, g.resetDay).split(" \u00b7 ")[0] : packStackInfo(g.reset) ? t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7) : "";
+      return `<details class="pca-pk"><summary><span class="pca-pic">${main ? pcaIcon(main) : ""}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&times;${qty(g.count)}</small></span>${every ? `<span class="pca-sb">${esc(every)}</span>` : ""}${chips.length ? `<span class="pca-gv">${chips.map((n) => `<span class="pca-chip${pcaNeeded(n) ? "" : " x"}" title="${esc(materialDisplayName(n))}">${pcaIcon(n)}+${esc(shortAmount(gv[n]))}</span>`).join("")}</span>` : ""}</span><b class="pca-pr">${pcaCur(packFmtLocal(g.subtotal, g.currency, false, g.sample))}</b></summary>
+        <div class="pc-lines">${g.lines.slice().sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${noteOf ? noteOf(r) : ""}</span><span class="meta">${packFmtLocal(priceOf(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`;
+    }).join("");
+  };
+  const pcaTrades = (trades) => (trades || []).length ? `<div class="pca-h">${esc(t("trade_then"))}</div>${trades.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.giveQty)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.getQty)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`).join("")}` : "";
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
   let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest), owner 3 Nov 2026
   if (shared && shared.combined && shared.included && shared.combined.chosen && shared.sharedWith.length) {
@@ -17222,11 +17301,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const needKeys = new Set(Object.keys(need));
     const trades = (p.trades || []).filter((x) => needKeys.has(x.to));
     const tradesHtml = trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
+    const listA = aLook && mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : "";
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${mineShare.rows.length ? listHtml : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${tradesHtml}</div>`;
+      <div class="pc-list">${mineShare.rows.length ? (listA || listHtml) : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${aLook ? pcaTrades(trades) : tradesHtml}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -17322,6 +17402,17 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta">${packFmtLocal(packRowLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
         const planTrades = p && (p.trades || []).length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
         sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list">${listHtml}${planTrades}</div>`;
+        if (aLook && p) {
+          aBuilt = true;
+          const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
+          const late = targetDays != null && p.days > targetDays;
+          const done = p.days === 0 ? t("pack_ready_now") : `${t("pca_done")} ${shortDay(p.days)} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
+          const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
+          const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
+          const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
+          const tradesA = pcaTrades(p.trades);
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${tradesA}@@PCFREE@@</div>`;
+        }
       } else sections = `
         <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
         ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
@@ -17356,16 +17447,17 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     ...activeCards.used.map((u) => `${u.title}${u.until ? ` (${t("pk_active_until")} ${u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })})` : ""}`),
     ...(traded && traded.trades.length ? traded.trades.map((x) => `${qty(x.giveQty)} ${materialDisplayName(x.from)} → ${qty(x.getQty)} ${materialDisplayName(x.to)}`) : []),
   ];
+  const freeHtml = freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_free_count").replace("{c}", activeCards.used.length).replace("{t}", traded && traded.trades.length ? traded.trades.length : 0))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : "";
   containerEl.style.minHeight = "";
   containerEl.innerHTML = cards ? `
-    <div class="pc-card">
+    <div class="pc-card${aLook ? " pca" : ""}">
       ${head}
-      ${usingShared ? "" : targetHtml}
+      ${usingShared || (aBuilt && !usingShared) ? "" : targetHtml}
       ${fallbackNote}
       ${uncoveredHtml}
-      ${freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_free_count").replace("{c}", activeCards.used.length).replace("{t}", traded && traded.trades.length ? traded.trades.length : 0))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : ""}
-      <div class="pc-sec">${sections}</div>
-      ${canShare ? `<div class="pc-view">${viewSwitch.replace(/<div class="meta" style="font-size:10px; margin-bottom:4px;">[\s\S]*?<\/div>\s*$/, "")}</div>` : ""}
+      ${aBuilt && !usingShared ? "" : freeHtml}
+      <div class="pc-sec">${aBuilt && !usingShared ? sections.replace("@@PCFREE@@", freeHtml) : sections}</div>
+      ${canShare ? (aLook ? `<div class="pc-view pca-scope"><div class="seg" data-packview><button type="button" data-packviewbtn="page" class="${usingShared ? "" : "active"}">${esc(t("pca_only").replace("{page}", packPageLabel(calcKey)))}</button><button type="button" data-packviewbtn="shared" class="${usingShared ? "active" : ""}">${esc(t("pca_with_others"))}</button></div></div>` : `<div class="pc-view">${viewSwitch.replace(/<div class="meta" style="font-size:10px; margin-bottom:4px;">[\s\S]*?<\/div>\s*$/, "")}</div>`) : ""}
     </div>` : `
     <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
       ${head}
@@ -21725,6 +21817,11 @@ async function renderChiefGearCalc() {
 // Every planner page with a Backpack bar uses the new layout (plxShellHtml).
 // Pages with their own totals squares (not the shared bar) that still use the Pack Cost card.
 const PACK_COST_CARD_KEYS = new Set(["experts", "experts_research"]);
+// Pack cost design A (owner picked, 3 Nov 2026): plan boxes, a summary (total,
+// done date, N packs), the target, then each pack with its main item's
+// picture, real name, how often it comes back, what it gives and its price,
+// trades with pictures, and "Only <page> | With my other pages". Chief Gear first.
+const PACK_COST_A_KEYS = new Set(["chief_gear"]);
 const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center", "chief_gear", "charm", "hero_gear", "pets", "pets_refine"]);
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
