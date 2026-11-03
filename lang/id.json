@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "semua {group} di {lv}",
 "t:rlk_or": "atau",
 "t:rlk_wait": "Lv. {lv}+ butuh {needs} dulu",
-"t:rlk_wait_target": "naikkan targetnya"
+"t:rlk_wait_target": "naikkan targetnya",
+"t:rch_trades": "Memakai tukar minggu ini:",
+"t:rch_with_trades": "dengan tukar"
 }

@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "tüm {group} {lv} seviyesinde",
 "t:rlk_or": "veya",
 "t:rlk_wait": "Sv. {lv}+ için önce {needs} gerekli",
-"t:rlk_wait_target": "onun hedefini yükselt"
+"t:rlk_wait_target": "onun hedefini yükselt",
+"t:rch_trades": "Bu haftanın takaslarını kullanır:",
+"t:rch_with_trades": "takaslarla"
 }

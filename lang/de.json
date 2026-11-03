@@ -2061,5 +2061,7 @@
 "t:rlk_all_at": "alle {group} auf {lv}",
 "t:rlk_or": "oder",
 "t:rlk_wait": "Lv. {lv}+ braucht zuerst {needs}",
-"t:rlk_wait_target": "dort das Ziel erhöhen"
+"t:rlk_wait_target": "dort das Ziel erhöhen",
+"t:rch_trades": "Nutzt die Tausche dieser Woche:",
+"t:rch_with_trades": "mit Tauschen"
 }

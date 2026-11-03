@@ -2061,5 +2061,7 @@
 "t:rlk_all_at": "tutto {group} a {lv}",
 "t:rlk_or": "o",
 "t:rlk_wait": "Liv. {lv}+ richiede prima {needs}",
-"t:rlk_wait_target": "alza il suo obiettivo"
+"t:rlk_wait_target": "alza il suo obiettivo",
+"t:rch_trades": "Usa gli scambi di questa settimana:",
+"t:rch_with_trades": "con scambi"
 }

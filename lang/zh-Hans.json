@@ -2061,5 +2061,7 @@
 "t:rlk_all_at": "{group}全部{lv}级",
 "t:rlk_or": "或",
 "t:rlk_wait": "Lv{lv}+需先完成{needs}",
-"t:rlk_wait_target": "请提高其目标"
+"t:rlk_wait_target": "请提高其目标",
+"t:rch_trades": "使用本周兑换：",
+"t:rch_with_trades": "含兑换"
 }

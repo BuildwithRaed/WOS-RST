@@ -2060,5 +2060,7 @@
 "t:rlk_all_at": "كل {group} على المستوى {lv}",
 "t:rlk_or": "أو",
 "t:rlk_wait": "المستوى {lv}+ يحتاج أولًا {needs}",
-"t:rlk_wait_target": "ارفع هدفه"
+"t:rlk_wait_target": "ارفع هدفه",
+"t:rch_trades": "يستخدم مبادلات هذا الأسبوع:",
+"t:rch_with_trades": "مع المبادلات"
 }
