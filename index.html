@@ -3079,6 +3079,14 @@ input,select,textarea{
   .exp-sigf > .bs-tiles{ margin:4px 0 6px; }
   .rch-cg .rch-ctl{ display:flex; align-items:center; gap:6px; margin-inline-start:auto; }
   .rch-cg .rch-ctl .rch-seg{ margin:0; }
+  /* Narrow phones: 4 stat boxes (ATK / DEF / LETH / HP) become 2 + 2, so each number
+     has room (owner's rule: at most two things side by side on the iPhone). */
+  @media (max-width: 440px){
+    .plx-stats.one[style*="--n:4"]{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .plx-stats.one[style*="--n:4"] .plx-stat b{ font-size:17px; }
+    .t12x-boxes{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; }
+    .plx-selrow:has(> :nth-child(3)){ grid-auto-flow:row; grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  }
 </style>
 </head>
 <body>
@@ -9140,14 +9148,14 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))}</span></span>
         <span style="display:inline-flex; gap:6px; flex-shrink:0;"><button type="button" class="btn small ghost" data-mpaedit>${esc(t("pk_edit"))}</button><button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}">${esc(t("mp_duplicate"))}</button></span></div>`;
     el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
-      <div style="font-size:14px; font-weight:700;">${esc(t("mp_admin_settings"))}</div>
+      <div class="info-h" style="font-size:14px; font-weight:700;">${esc(t("mp_admin_settings"))}</div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;">${esc(t("mp_limit_label"))} <input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" style="width:64px; font-size:12px; padding:3px 6px;" /></label>
-      <div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_desc"))}</div>
+      <div class="meta info-d">${esc(t("mp_admin_desc"))}</div>
     </div>
     <div class="panel" style="margin:0 0 12px;">
-      <div style="font-size:14px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</div>
+      <div class="info-h" style="font-size:14px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</div>
       ${templates.map(tplRow).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_no_templates"))}</div>`}
-      <div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("mp_template_edit_hint"))}</div>
+      <div class="meta info-d">${esc(t("mp_template_edit_hint"))}</div>
     </div>
     <div class="panel" style="margin:0 0 12px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><span style="font-size:14px; font-weight:700;">${esc(t("mp_your_tables"))} <span class="meta" style="font-size:11px;">(${mine.length})</span></span>
@@ -11082,7 +11090,7 @@ let PACK_CAL_PAGE = 0; // which block of weeks is shown
 function packCalView() {
   let v = null;
   try { v = localStorage.getItem("packcal_view"); } catch (e) {}
-  return v === "list" || v === "month" ? v : (window.innerWidth < 700 ? "list" : "month");
+  return v === "list" || v === "month" ? v : (window.innerWidth < 1000 ? "list" : "month"); // tablets get the list too (day cells too narrow; 3 Nov 2026)
 }
 const PACK_CAL_ROWS = 6; // rows shown per week before "+N more"
 let PACK_CAL_OPEN_WEEKS = new Set();
@@ -17316,6 +17324,7 @@ function infoize(root) {
   root.querySelectorAll(".t12x-card p.desc, .panel p.desc").forEach((d) => { if (!free(d)) return; const card = d.closest(".t12x-card, .panel"); infoAttach(card.querySelector(".t12x-title, h2, h3"), d); });
   root.querySelectorAll(".plx-head + p.desc, .plx-head + .desc, .pur-how").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".plx-head h2, .page-head h2"), d); });
   root.querySelectorAll("details > summary ~ .pur-wc-desc").forEach((d) => { if (!free(d)) return; infoAttach(d.closest("details").querySelector(":scope > summary"), d); });
+  root.querySelectorAll(".info-d").forEach((d) => { if (!free(d)) return; const card = d.closest(".panel, .t12x-card"); infoAttach(card && card.querySelector(".info-h"), d); });
   root.querySelectorAll(".pk-zone-note").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".page-head h2"), d); });
 }
 {
