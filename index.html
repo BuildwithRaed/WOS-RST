@@ -21392,7 +21392,7 @@ async function renderChiefGearCalc() {
   head.classList.add("cg-head");
   // "Max" instead of "Max everything" (owner, 3 Nov 2026).
   const maxBtn = document.getElementById("gearMaxAllBtn");
-  if (maxBtn) { maxBtn.innerHTML = `&#9650; ${esc(t("max_button"))}`; maxBtn.title = t("max_everything"); }
+  if (maxBtn) { maxBtn.textContent = t("max_button"); maxBtn.title = t("max_everything"); }
   head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}">i</button><span class="cg-tip" role="tooltip" data-cghelp hidden>${esc(t("cg_slots_hint"))}</span>`);
   { // arrow points at the (i)
     const ib = head.querySelector("[data-cginfo]"), h2 = head.querySelector("h2");
@@ -21615,11 +21615,11 @@ async function renderChiefGearCalc() {
     draw(false);
   }
 
-  // Max everything: every target to the highest open level (tap again: targets back to now).
+  // Max: every target to the highest open level. It used to put the targets
+  // back to now when they were all at max already, which looked broken (owner, 3 Nov 2026).
   document.getElementById("gearMaxAllBtn").addEventListener("click", () => {
     const cap = chiefGearCapIdx();
-    const allMax = CHIEF_GEAR_PIECES.every((p) => (CHIEF_GEAR_STATE[p.key].to ?? 0) >= Math.max(cap, CHIEF_GEAR_STATE[p.key].from));
-    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.to = allMax ? st.from : Math.max(cap, st.from); });
+    CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.to = Math.max(cap, st.from); });
     changed();
   });
   renderPieces();
