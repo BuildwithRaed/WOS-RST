@@ -3652,6 +3652,44 @@ input,select,textarea{
     el.id = "phoneCompact";
     el.textContent = `@media (max-width: 700px){\n${DASH}{font-size:14px}\n${css}\n}`;
     document.head.appendChild(el);
+
+    // Wider screens (PC, tablets): text 2 px bigger on every page but the Dashboard
+    // (owner, 4 Nov 2026). Every rule that sets a font size gets a copy under
+    // html:not(.on-dash) (render() sets .on-dash on the Dashboard): px sizes + 2,
+    // other values unchanged, so the rules still win in the same order as before.
+    const PC = "html:not(.on-dash)";
+    const phoneOnly = (cond) => { const m = /max-width:\s*(\d+)px/.exec(cond || ""); return !!m && Number(m[1]) <= 700; };
+    const onPc = (sel) => splitSel(sel).map((x) => (/^html\b/i.test(x) ? x.replace(/^html/i, PC) : /^:root\b/.test(x) ? x.replace(/^:root/, PC) : `${PC} ${x}`)).join(", ");
+    const bigOf = (v) => {
+      const n = pxOf(v);
+      if (n != null) return `${Math.round((n + FONT) * 100) / 100}px`;
+      if (/px/.test(v) && /^(calc|clamp|max|min)\(/.test(String(v).trim())) return `calc(${v} + ${FONT}px)`;
+      return v;
+    };
+    const pcBlocks = [];
+    const pcPush = (conds, text) => {
+      const last = pcBlocks[pcBlocks.length - 1], key = conds.join("|");
+      if (last && last.key === key) last.rules.push(text); else pcBlocks.push({ key, conds, rules: [text] });
+    };
+    const pcWalk = (rules, conds) => {
+      for (const r of rules) {
+        if (r.type === 1) {
+          const v = r.style.getPropertyValue("font-size");
+          if (v) pcPush(conds, `${onPc(r.selectorText)}{font-size:${bigOf(v)}${r.style.getPropertyPriority("font-size") ? " !important" : ""}}`);
+        } else if (r.type === 4) {
+          if (!phoneOnly(r.conditionText)) pcWalk(r.cssRules, conds.concat(`@media ${r.conditionText}`));
+        } else if (r.type === 12) {
+          pcWalk(r.cssRules, conds.concat(`@supports ${r.conditionText}`));
+        }
+      }
+    };
+    for (const sh of document.styleSheets) { if (sh.ownerNode === el) continue; let rs = null; try { rs = sh.cssRules; } catch (e) { rs = null; } if (rs) pcWalk(rs, []); }
+    const pcInl = [];
+    for (let n = 9; n <= 28; n += 0.5) pcInl.push(`${PC} [style*="font-size:${n}px"],${PC} [style*="font-size: ${n}px"]{font-size:${n + FONT}px !important}`);
+    const pcEl = document.createElement("style");
+    pcEl.id = "pcBigger";
+    pcEl.textContent = `@media (min-width: 701px){\n${pcBlocks.map((b) => b.conds.reduceRight((inner, c) => `${c}{${inner}}`, b.rules.join("\n"))).join("\n")}\n${pcInl.join("\n")}\n}`;
+    document.head.appendChild(pcEl);
   } catch (e) { /* the page still works at the old sizes */ }
 })();
 </script>
@@ -7014,6 +7052,8 @@ let RENDER_SEQ = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
   const seq = ++RENDER_SEQ;
+  // PC text is 2 px bigger on every page but the Dashboard (pcBigger in the head)
+  document.documentElement.classList.toggle("on-dash", TAB === "overview");
   // Page pop-ups: close them when the page changes.
   ["refineAdvModal", "drilldownModal", "gearSheet"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   // The same page drawn again after a tap: keep its height and scroll place.
