@@ -2756,6 +2756,118 @@ input,select,textarea{
   .gallery-divider span{ font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
   .gallery-zone.uncounted .gallery-card{ opacity:.55; }
   .gallery-zone.uncounted .gallery-card:hover{ opacity:.85; }
+  /* Skin Gallery A + Islands P2 (owner, 4 Nov 2026): answer card with 2 x 2
+     stat boxes, chips, All / Owned / Not owned + search, 4-a-row picture grid,
+     dashed "Not counted in Dashboard" box, Undo note, island level pop-up. */
+  .sg-head{ margin-bottom:10px; }
+  .sg-ans{ margin-bottom:10px; padding:10px 12px 12px; }
+  .sg-k{ display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); min-height:20px; }
+  .sg-kr{ margin-inline-start:auto; font-size:12.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--muted); white-space:nowrap; }
+  .sg-kr b{ color:var(--frost); font-weight:800; }
+  .sg-ans .plx-stat-tabs{ margin-top:8px; }
+  .sg-s2{ display:grid; grid-template-columns:repeat(auto-fit, minmax(132px, 1fr)); gap:6px; margin-top:8px; }
+  .sg-sb{ position:relative; overflow:hidden; min-width:0; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); padding:6px 9px 9px; }
+  .sg-sbt{ display:flex; justify-content:space-between; align-items:baseline; gap:4px; font-size:12px; line-height:15px; }
+  .sg-sbt span{ font-weight:800; letter-spacing:.05em; color:var(--muted); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sg-sbt em{ font-style:normal; font-weight:700; color:var(--amber); white-space:nowrap; }
+  .sg-sbt em.ok{ color:var(--good); }
+  .sg-sb > b{ display:inline-block; font-size:19px; line-height:23px; font-weight:800; margin-top:1px; color:var(--frost); }
+  .sg-sb > small{ font-size:12px; color:var(--muted); margin-inline-start:4px; }
+  .sg-bar{ position:absolute; inset-inline:0; bottom:0; height:4px; background:rgba(232,162,60,.45); }
+  .sg-bar i{ display:block; height:100%; background:var(--ice); }
+  .sg-bar.full i{ background:var(--good); }
+  .sg-rb{ display:flex; align-items:center; gap:10px; width:100%; min-height:52px; padding:6px 10px; margin-top:8px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); text-align:start; cursor:pointer; font:inherit; }
+  .sg-rb:hover{ border-color:var(--ice-dim); }
+  .sg-rb-p{ width:48px; height:40px; flex:none; display:flex; align-items:center; justify-content:center; font-size:24px; }
+  .sg-rb-p img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .sg-rb-tx{ flex:1; min-width:0; }
+  .sg-rb-tx b{ display:block; font-size:14px; line-height:18px; }
+  .sg-rb-tx span{ display:block; font-size:12px; line-height:16px; color:var(--muted); }
+  .sg-rb-ch{ color:var(--muted); font-size:22px; flex:none; }
+  .sg-cats .cat-switcher{ margin-bottom:8px; }
+  .sg-tools{ display:flex; gap:6px; margin-bottom:8px; }
+  .sg-seg{ flex:1; min-width:0; display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); height:40px; }
+  .sg-seg button{ flex:1; min-width:0; border:0; background:none; font:inherit; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; padding:0 4px; white-space:nowrap; }
+  .sg-seg button.on{ background:var(--ice-dim); color:var(--frost); }
+  .sg-ib{ width:40px; height:40px; flex:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--muted); cursor:pointer; padding:0; }
+  .sg-ib.on{ color:var(--ice); border-color:var(--ice-dim); }
+  .sg-ib svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; }
+  .sg-srch{ margin-bottom:8px; }
+  .sg-srch input{ width:100%; height:40px; }
+  .sg-lg{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; font-size:12px; color:var(--muted); margin:0 2px 8px; }
+  .sg-lg b, .sg-lg .g{ color:var(--good); }
+  .sg-mvk{ display:inline-flex; width:18px; height:18px; border:1px solid var(--line); border-radius:5px; align-items:center; justify-content:center; font-size:11px; font-style:normal; font-weight:800; margin-inline-end:4px; vertical-align:-3px; }
+  .sg-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; border-radius:10px; }
+  @media (min-width:701px){ .sg-grid{ grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:8px; } }
+  .sg-grid.drop-over{ outline:2px dashed var(--ice-dim); outline-offset:4px; background:rgba(120,180,255,.06); }
+  .sg-t{ position:relative; min-width:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); padding:4px 4px 5px; display:flex; flex-direction:column; align-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; transition:border-color .15s, box-shadow .2s; }
+  .sg-t:hover{ border-color:var(--ice-dim); }
+  .sg-t:focus-visible{ outline:2px solid var(--ice); outline-offset:1px; }
+  .sg-t.dragging{ opacity:.4; }
+  .sg-pw{ width:100%; aspect-ratio:1.25; display:flex; align-items:center; justify-content:center; padding:9%; }
+  .sg-pw.big{ padding:2%; }
+  .sg-pw img{ width:100%; height:100%; object-fit:contain; }
+  .sg-ph{ font-size:22px; color:var(--muted); font-weight:700; }
+  .sg-nm{ width:100%; font-size:11px; line-height:1.2; height:2.4em; margin-top:3px; font-weight:600; text-align:center; color:#c9d4df; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+  .sg-t.yes, .sg-t.is.mx{ border-color:rgba(91,201,138,.6); background:rgba(91,201,138,.07); }
+  .sg-t.no .sg-pw img, .sg-t.is.l0 .sg-pw img{ opacity:.35; filter:grayscale(.7); }
+  .sg-t.no .sg-nm, .sg-t.is.l0 .sg-nm{ color:var(--muted); }
+  .sg-t.flash{ box-shadow:0 0 0 2px var(--good); }
+  .sg-t.no.flash{ box-shadow:0 0 0 2px var(--amber); }
+  .sg-tick{ position:absolute; top:-1px; inset-inline-end:-1px; z-index:1; width:20px; height:20px; border-start-end-radius:10px; border-end-start-radius:8px; background:var(--good); color:#0f141b; font-size:13px; font-weight:900; display:flex; align-items:center; justify-content:center; }
+  .sg-mv{ position:absolute; top:-1px; inset-inline-start:-1px; z-index:2; width:24px; height:24px; padding:0; border:1px solid var(--line); border-radius:0; border-start-start-radius:10px; border-end-end-radius:8px; background:rgba(19,26,36,.85); color:var(--muted); font-size:13px; font-weight:800; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .sg-mv:hover{ color:var(--frost); border-color:var(--ice-dim); }
+  /* a bigger tap area than the drawn corner (at least 32 px) */
+  .sg-mv::after{ content:""; position:absolute; inset-block:-2px -12px; inset-inline:-2px -12px; }
+  .sg-lvp{ margin-top:4px; height:34px; width:100%; min-width:0; border-radius:8px; border:1px solid var(--line); background:var(--panel); display:flex; align-items:center; justify-content:center; gap:3px; padding:0 2px; font:inherit; font-size:12.5px; font-weight:800; color:var(--ice); cursor:pointer; white-space:nowrap; overflow:hidden; }
+  .sg-lvp small{ font-size:11px; color:var(--muted); font-weight:600; }
+  .sg-t.l0 .sg-lvp{ color:var(--muted); font-weight:700; }
+  .sg-t.mx .sg-lvp{ color:#0f141b; background:var(--good); border-color:var(--good); }
+  .sg-t.sel{ border-color:var(--ice); box-shadow:0 0 0 1px var(--ice); }
+  .sg-t.sel .sg-lvp{ background:var(--ice); color:#0f141b; border-color:var(--ice); }
+  .sg-t.sel .sg-lvp small{ color:#0f141b; }
+  .sg-more{ display:flex; width:100%; align-items:center; justify-content:center; height:40px; margin-top:8px; border:1px dashed var(--line); border-radius:10px; background:none; font:inherit; font-size:13px; font-weight:700; color:var(--ice); cursor:pointer; }
+  .sg-nc{ margin-top:14px; border:1px dashed #44546a; border-radius:14px; padding:10px; background:rgba(28,37,50,.55); }
+  .sg-nc .sg-k{ color:#b4c0ce; }
+  .sg-nc > p{ margin:4px 0 8px; font-size:12px; line-height:16px; color:var(--muted); }
+  .sg-nc .sg-t{ background:rgba(35,46,61,.6); }
+  .sg-empty{ grid-column:1 / -1; border:1px dashed var(--line); border-radius:10px; padding:10px; font-size:12px; color:var(--muted); text-align:center; }
+  .sg-isl{ position:relative; }
+  .sg-pop{ position:absolute; z-index:20; background:#1f3448; border:1px solid var(--ice); border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,.6); padding:10px; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .sg-pop-ar{ position:absolute; top:-8px; width:14px; height:14px; transform:rotate(45deg); background:#1f3448; border-left:1px solid var(--ice); border-top:1px solid var(--ice); }
+  .sg-pop-h{ display:flex; align-items:baseline; gap:6px; font-size:13.5px; }
+  .sg-pop-h b{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sg-pop-h span{ margin-inline-start:auto; font-size:12.5px; color:var(--ice); font-weight:800; text-align:end; }
+  .sg-pop-bt{ display:flex; align-items:center; gap:6px; margin-top:9px; }
+  .sg-pop-bt button{ height:44px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel); font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; }
+  .sg-pop-bt button:disabled{ opacity:.4; cursor:default; }
+  .sg-pop-sm{ width:44px; font-size:12.5px; color:var(--muted); }
+  .sg-pop-pm{ width:48px; font-size:22px; color:var(--ice); }
+  .sg-pop-pm:not(:disabled):active{ background:var(--ice-dim); border-color:var(--ice); }
+  .sg-pop-num{ flex:1; min-width:0; text-align:center; font-size:24px; font-weight:800; line-height:1; color:var(--frost); }
+  .sg-pop-num small{ font-size:12px; color:var(--muted); font-weight:600; }
+  .sg-pop-bt .sg-pop-mx{ width:52px; font-size:12.5px; color:var(--good); border-color:rgba(91,201,138,.55); }
+  .sg-pop-ft{ display:flex; justify-content:space-between; gap:8px; margin-top:7px; font-size:11.5px; color:var(--muted); }
+  .sg-toast{ position:fixed; z-index:300; left:50%; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); width:min(380px, calc(100vw - 24px)); transform:translate(-50%, 20px); opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; display:flex; align-items:center; gap:8px; padding:6px 6px 6px 12px; border-radius:12px; background:#25344a; border:1px solid var(--line); box-shadow:0 10px 30px rgba(0,0,0,.5); font-size:13px; color:var(--frost); }
+  .sg-toast.show{ opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
+  .sg-toast-m{ flex:1; min-width:0; }
+  .sg-toast .ok{ color:var(--good); }
+  .sg-toast .no{ color:var(--amber); }
+  .sg-toast-u{ flex:none; height:40px; padding:0 12px; border:0; border-radius:8px; background:none; color:var(--ice); font:inherit; font-weight:800; cursor:pointer; }
+  .modal-box.sg-gl-box{ max-width:440px; padding:14px 16px 16px; }
+  .sg-gl-h{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .sg-gl-h b{ font-size:16px; }
+  .sg-x{ margin-inline-start:auto; width:40px; height:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--muted); cursor:pointer; font-size:15px; }
+  .sg-glv{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .sg-glv button{ flex:1 1 0; min-width:36px; height:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font:inherit; font-size:14px; font-weight:800; color:var(--muted); cursor:pointer; }
+  .sg-glv button.w{ flex:2.4 1 0; min-width:76px; font-size:12.5px; }
+  .sg-glv button.on{ background:var(--ice-dim); border-color:var(--ice); color:var(--frost); }
+  .sg-gl-box .globe-info{ margin:0; }
+  .sg-gl-done{ width:100%; margin-top:12px; }
+  @media (max-width:700px){
+    .modal-overlay.sg-gl-ov{ align-items:flex-end; padding:0; }
+    .modal-box.sg-gl-box{ max-width:none; border-radius:18px 18px 0 0; max-height:85vh; }
+  }
 
   .cat-switcher{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
   .cat-menu-btn{
@@ -5439,6 +5551,38 @@ const T = {
   drag_here_to_exclude: { en: "Drag skins here (or tap \u2193 on a card) to leave them out of the Dashboard" },
   move_to_uncounted: { en: "Don't count in Dashboard" },
   move_to_counted: { en: "Count in Dashboard" },
+  // Skin Gallery A + Islands P2 (owner, 4 Nov 2026)
+  sg_desc: { en: "Tap a picture to mark it owned or not owned; a wrong tap can be undone from the note at the bottom. \u2193 in a picture's corner moves it to \"Not counted in Dashboard\". The Globe row sets your Globe Level." },
+  isl_desc: { en: "Tap an island (or its level) to set its level: 0 = not built. \u2193 in a picture's corner moves it to \"Not counted in Dashboard\"." },
+  sg_owned_of: { en: "{n} of {total} owned" },
+  sg_built_of: { en: "{n} of {total} built" },
+  sg_left: { en: "left" },
+  sg_globe_title: { en: "Globe Level" },
+  sg_globe_lv: { en: "Globe Level {n}" },
+  sg_globe_none: { en: "Globe Level \u00b7 not set" },
+  sg_globe_pick: { en: "Pick your level: it decides which globe skins count" },
+  sg_search: { en: "Search" },
+  sg_lg_tap: { en: "Tap = own / unown" },
+  sg_lg_owned: { en: "owned" },
+  sg_lg_faded: { en: "faded = not owned" },
+  sg_lg_move: { en: "don't count" },
+  isl_lg_tap: { en: "Tap the level = change it" },
+  isl_lg_faded: { en: "faded = not built" },
+  isl_lg_max: { en: "green = max" },
+  sg_toast_own: { en: "{name} owned" },
+  sg_toast_unown: { en: "{name} not owned" },
+  sg_undo: { en: "Undo" },
+  sg_done: { en: "Done" },
+  sg_show_more: { en: "Show {n} more" },
+  sg_nc_in: { en: "{n} in {cat}" },
+  sg_nc_desc: { en: "These don't add to this page's stats or the Dashboard, not even to the max. Owned still works here. Tap \u2191 to count one again." },
+  isl_nc_desc: { en: "Left out of this page and the Dashboard (current and max). Tap \u2191 to count it again." },
+  sg_nc_empty: { en: "Tap \u2193 on a picture to leave it out of this page and the Dashboard." },
+  sg_not_built: { en: "Not built" },
+  sg_max: { en: "Max" },
+  sg_lv: { en: "Lv {n}" },
+  isl_pop_hold: { en: "Hold + to go faster" },
+  isl_pop_out: { en: "Tap outside to close" },
   prev_label: { en: "Prev" },
   next_label: { en: "Next" },
   swipe_to_browse: { en: "swipe to browse" },
@@ -23797,105 +23941,6 @@ function renderCategorySwitcher(containerEl, categories, current, onSelect, coun
   if (act) { const row = act.parentElement; row.scrollLeft = Math.max(0, act.offsetLeft - row.offsetLeft - 12); }
 }
 
-// Opens the tap-to-edit detail modal for a skin or island card. For plain
-// skins this is just an Owned toggle (+ Count in max, when applicable);
-// for islands (isIsland=true) it's a level dropdown, and owned is derived
-// automatically from level > 0.
-// Opens the tap-to-edit detail modal for a skin or island, as position
-// `index` within `list` (the currently filtered/visible cards). Swiping the
-// card left/right moves to the next/previous item without closing the
-// modal - matching how the in-game gallery browses items.
-function openGalleryDetailModal(list, index, { isIsland = false, onSave }) {
-  const item = list[index];
-  let modal = document.getElementById("galleryDetailModal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "galleryDetailModal";
-    modal.className = "modal-overlay";
-    document.body.appendChild(modal);
-    modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
-  }
-  const maxLvl = item.max_level ?? 10;
-  const lvl = item.current_level ?? 0;
-  const goTo = (newIndex) => {
-    if (newIndex < 0 || newIndex >= list.length) return;
-    openGalleryDetailModal(list, newIndex, { isIsland, onSave });
-  };
-  modal.innerHTML = `
-    <div class="modal-box" id="galleryModalBox" style="max-width:300px; text-align:center; touch-action:pan-y pinch-zoom; padding:18px;">
-      ${!isIsland ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${index + 1} / ${list.length}</div>` : ""}
-      ${isIsland ? "" : `<div class="thumb" style="width:140px; height:140px; margin:0 auto 10px; border-radius:10px; background:var(--panel-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:16%;">
-        ${item.image_url ? `<img src="${esc(item.image_url)}" alt="" style="width:100%; height:100%; object-fit:contain;" />` : `<div class="ph" style="font-size:28px; color:var(--muted); font-weight:600;">${esc(item.name[0])}</div>`}
-      </div>`}
-      <h2 style="margin-bottom:${isIsland ? "14px" : "4px"}; font-size:${isIsland ? "15px" : "16px"};">${esc(item.name)}</h2>
-      ${isIsland ? "" : `<p class="desc" style="margin-bottom:16px;">${esc(item.category || "")}</p>`}
-      ${isIsland
-        ? `<div style="display:flex; align-items:center; gap:10px; text-align:start;">
-             <div style="flex:1;">
-               <label style="font-size:11px; display:block; margin-bottom:4px;">${esc(t("level_label"))}</label>
-               <select id="galleryModalLevel" style="width:100%;">
-                 ${Array.from({ length: maxLvl + 1 }, (_, i) => `<option value="${i}" ${i === lvl ? "selected" : ""}>${i === 0 ? esc(t("not_built")) : `${t("level_prefix")} ${i}`}</option>`).join("")}
-               </select>
-             </div>
-             <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding-top:18px; flex-wrap:nowrap;">
-               <input type="checkbox" id="galleryModalIslandOwned" ${item.owned ? "checked" : ""} />
-               <span class="meta" style="font-size:12px;">${esc(t("owned_checkbox"))}</span>
-             </label>
-           </div>`
-        : `<button class="btn" id="galleryModalOwnedBtn" style="width:100%; margin-bottom:0;">${item.owned ? esc(t("owned_tap_unown")) : esc(t("mark_as_owned"))}</button>
-`
-      }
-      ${isIsland
-        ? `<button class="btn ghost small" id="galleryModalClose" style="width:100%; margin-top:14px;">${esc(t("close_button"))}</button>`
-        : `<div style="display:flex; gap:8px; margin-top:16px;">
-             <button class="btn ghost small" id="galleryModalPrev" style="flex:1;" ${index === 0 ? "disabled" : ""}>&#8592; ${esc(t("prev_label"))}</button>
-             <button class="btn ghost small" id="galleryModalClose" style="flex:1;">${esc(t("close_button"))}</button>
-             <button class="btn ghost small" id="galleryModalNext" style="flex:1;" ${index === list.length - 1 ? "disabled" : ""}>${esc(t("next_label"))} &#8594;</button>
-           </div>`
-      }
-    </div>`;
-  modal.style.display = "flex";
-  document.getElementById("galleryModalClose").addEventListener("click", () => { modal.style.display = "none"; });
-
-  if (!isIsland) {
-    document.getElementById("galleryModalPrev").addEventListener("click", () => goTo(index - 1));
-    document.getElementById("galleryModalNext").addEventListener("click", () => goTo(index + 1));
-
-    // Swipe/drag left/right on the card to move between items (skins only -
-    // islands are edited one at a time with no browsing). Works with touch,
-    // mouse, or pen via wireSwipeGesture; vertical scrolling still works
-    // normally via touch-action:pan-y above.
-    const box = document.getElementById("galleryModalBox");
-    wireSwipeGesture(box, (dir) => goTo(index + dir));
-  }
-
-  if (isIsland) {
-    document.getElementById("galleryModalLevel").addEventListener("change", async (e) => {
-      const newLvl = Number(e.target.value);
-      // Setting a level means you have the island, so tick Owned with it.
-      const patch = { current_level: newLvl };
-      if (newLvl > 0 && !item.owned) patch.owned = true;
-      await onSave(item, patch);
-      item.current_level = newLvl;
-      if (patch.owned) {
-        item.owned = true;
-        const ownedBox = document.getElementById("galleryModalIslandOwned");
-        if (ownedBox) ownedBox.checked = true;
-      }
-    });
-    document.getElementById("galleryModalIslandOwned").addEventListener("change", async (e) => {
-      await onSave(item, { owned: e.target.checked });
-      item.owned = e.target.checked;
-    });
-  } else {
-    document.getElementById("galleryModalOwnedBtn").addEventListener("click", async () => {
-      await onSave(item, { owned: !item.owned });
-      item.owned = !item.owned;
-      goTo(index);
-    });
-  }
-}
-
 // ---- Counted / not-counted split (Skin Gallery + Islands) ----
 // Ids of skins/islands the user moved below the thick line. Stored per user
 // in calc_state (no schema change). Anything in here is skipped by the page
@@ -23912,33 +23957,16 @@ async function setGalleryUncounted(id, uncounted) {
   saveCalcState("gallery_uncounted", { ids: [...GALLERY_UNCOUNTED] });
 }
 
-// Renders "counted grid / thick divider / not-counted grid" into el.
-// cardHtml(item) must return one .gallery-card with a data-gid attribute.
-function renderGallerySplit(el, counted, uncounted, cardHtml) {
-  const withMove = (item, down) => cardHtml(item).replace(
-    /(<div class="gallery-card[^>]*>)/,
-    `$1<button type="button" class="gallery-move" data-move="${esc(item.id)}" data-down="${down ? 1 : 0}" title="${esc(t(down ? "move_to_uncounted" : "move_to_counted"))}">${down ? "&#8595;" : "&#8593;"}</button>`
-  );
-  el.innerHTML = `
-    <div class="gallery-grid gallery-zone counted" data-zone="counted">
-      ${counted.map((i) => withMove(i, true)).join("")}
-    </div>
-    <div class="gallery-divider"><span>${esc(t("not_counted_divider"))} (${uncounted.length})</span></div>
-    <div class="gallery-grid gallery-zone uncounted" data-zone="uncounted">
-      ${uncounted.length ? uncounted.map((i) => withMove(i, false)).join("") : `<div class="zone-empty">${esc(t("drag_here_to_exclude"))}</div>`}
-    </div>`;
-}
-
 // Wires the move buttons + desktop drag-and-drop between the two zones.
-// onMove(id, toUncounted) persists and re-renders.
-function wireGallerySplit(el, onMove) {
+// onMove(id, toUncounted) persists and re-renders. cardSel = the picture tiles.
+function wireGallerySplit(el, onMove, cardSel = ".gallery-card[data-gid]") {
   el.querySelectorAll("[data-move]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       onMove(btn.dataset.move, btn.dataset.down === "1");
     });
   });
-  el.querySelectorAll(".gallery-card[data-gid]").forEach((card) => {
+  el.querySelectorAll(cardSel).forEach((card) => {
     card.setAttribute("draggable", "true");
     card.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", card.dataset.gid);
@@ -23963,6 +23991,109 @@ function wireGallerySplit(el, onMove) {
 }
 
 let SKIN_FILTER = { search: "", category: "all", ownedFilter: "all" };
+
+// ---- Skin Gallery A + Islands P2 (owner, 4 Nov 2026) ----
+// Both pages: title with (i), an answer card (stats as 2 × 2 boxes with "+N left"),
+// category chips with counts, All / Owned / Not owned + search, a 4-a-row picture
+// grid (first GAL_FIRST, then "Show N more") and the dashed "Not counted in
+// Dashboard" box (calc_state "gallery_uncounted", ↓ / ↑ in a picture's corner).
+// Skin Gallery: one tap = owned ↔ not owned, with an Undo note. Islands: tap a
+// picture or its level pill → a small pop-up there with 0 · − level + · Max.
+const GAL_FIRST = 24;
+const GAL_MORE = new Set(); // "<page>|<category>" opened with "Show N more", for the visit
+const GAL_SEARCH_OPEN = {}; // page -> search row open, for the visit
+const GAL_SEARCH_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>';
+function galNum(v) { return String(Math.round(Number(v || 0) * 100) / 100); }
+// "Attack" → ATK, "Infantry Defense" → "Infantry DEF".
+function galStatShort(bt) {
+  const s = String(bt || "");
+  const st = /attack/i.test(s) ? "ATK" : /defen/i.test(s) ? "DEF" : /lethal/i.test(s) ? "LETH" : /health/i.test(s) ? "HP" : tStatLabel(s);
+  const tr = /^infantry/i.test(s) ? "Infantry" : /^lancer/i.test(s) ? "Lancer" : /^marksm/i.test(s) ? "Marksman" : "";
+  return tr ? `${troopDisplayName(tr)} ${st}` : st;
+}
+// Stat boxes of the answer card: label + amber "+N left" (green ✓ at max), the
+// value big, "/ max" small, a bar along the bottom edge. list: [{ label, val, max }]
+function galStatBoxesHtml(list) {
+  return `<div class="sg-s2">${list.map((s) => {
+    const val = Number(s.val || 0), max = s.max == null ? null : Number(s.max), left = max == null ? 0 : Math.max(0, max - val);
+    const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0, done = max > 0 && left < 0.005;
+    return `<div class="sg-sb"><div class="sg-sbt"><span>${esc(s.label)}</span>${max > 0 ? (done ? `<em class="ok">&#10003;</em>` : `<em>${bidiNum(`+${galNum(left)}`)} ${esc(t("sg_left"))}</em>`) : ""}</div><b>${bidiNum(`+${galNum(val)}%`)}</b>${max != null ? `<small>/ ${bidiNum(`${galNum(max)}%`)}</small>` : ""}${max != null ? `<div class="sg-bar${done ? " full" : ""}"><i style="width:${pct}%;"></i></div>` : ""}</div>`;
+  }).join("")}</div>`;
+}
+// All / Owned / Not owned + a search button that opens a search row.
+function galToolsHtml(id, f, placeholder) {
+  const open = !!(GAL_SEARCH_OPEN[id] || f.search);
+  return `<div class="sg-tools"><div class="sg-seg" id="${id}OwnedSeg">${[["all", "all_label"], ["owned", "owned_label"], ["not", "not_owned_label"]].map(([k, l]) => `<button type="button" data-owned="${k}" class="${f.ownedFilter === k ? "on" : ""}" aria-pressed="${f.ownedFilter === k}">${esc(t(l))}</button>`).join("")}</div><button type="button" class="sg-ib${open ? " on" : ""}" id="${id}SearchBtn" aria-label="${esc(t("sg_search"))}" aria-expanded="${open}">${GAL_SEARCH_SVG}</button></div>
+    <div class="sg-srch" id="${id}SearchRow"${open ? "" : " hidden"}><input id="${id}Search" type="search" autocomplete="off" placeholder="${esc(placeholder)}" value="${esc(f.search)}" /></div>`;
+}
+function wireGalTools(id, f, onChange) {
+  const seg = document.getElementById(`${id}OwnedSeg`), btn = document.getElementById(`${id}SearchBtn`);
+  const row = document.getElementById(`${id}SearchRow`), inp = document.getElementById(`${id}Search`);
+  seg.onclick = (e) => {
+    const b = e.target.closest("[data-owned]");
+    if (!b) return;
+    f.ownedFilter = b.dataset.owned;
+    seg.querySelectorAll("[data-owned]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
+    onChange();
+  };
+  btn.onclick = () => {
+    const open = row.hidden;
+    row.hidden = !open;
+    GAL_SEARCH_OPEN[id] = open;
+    btn.classList.toggle("on", open);
+    btn.setAttribute("aria-expanded", String(open));
+    if (open) inp.focus();
+    else if (f.search) { f.search = ""; inp.value = ""; onChange(); }
+  };
+  inp.oninput = () => { f.search = inp.value; onChange(); };
+}
+// One picture tile. o: { id, attr, cls, img, name, big, down, tick, pressed, extra }
+function galTileHtml(o) {
+  return `<div class="sg-t ${o.cls}" ${o.attr}="${esc(o.id)}" data-gid="${esc(o.id)}" role="button" tabindex="0"${o.pressed != null ? ` aria-pressed="${o.pressed}"` : ""} title="${esc(o.name)}">`
+    + `<button type="button" class="sg-mv" data-move="${esc(o.id)}" data-down="${o.down ? 1 : 0}" title="${esc(t(o.down ? "move_to_uncounted" : "move_to_counted"))}" aria-label="${esc(t(o.down ? "move_to_uncounted" : "move_to_counted"))}">${o.down ? "&#8595;" : "&#8593;"}</button>`
+    + (o.tick ? `<span class="sg-tick" aria-hidden="true">&#10003;</span>` : "")
+    + `<span class="sg-pw${o.big ? " big" : ""}">${o.img ? `<img src="${esc(o.img)}" alt="" loading="lazy" draggable="false" />` : `<span class="sg-ph">${esc(String(o.name || "?")[0])}</span>`}</span>`
+    + `<span class="sg-nm">${esc(o.name)}</span>${o.extra || ""}</div>`;
+}
+// Counted grid (first GAL_FIRST unless `all`), "Show N more", then the dashed
+// "Not counted in Dashboard" box. Zones carry data-zone for wireGallerySplit.
+function galGridHtml({ counted, uncounted, all, tile, cat, ncDesc }) {
+  const shown = all ? counted : counted.slice(0, GAL_FIRST), more = counted.length - shown.length;
+  return `<div class="sg-grid" data-zone="counted">${shown.map((s) => tile(s, true)).join("")}</div>`
+    + (more > 0 ? `<button type="button" class="sg-more" data-galmore>${esc(t("sg_show_more").replace("{n}", more))}</button>` : "")
+    + `<div class="sg-nc"><div class="sg-k"><span>${esc(t("not_counted_divider"))}</span><span class="sg-kr">${esc(t("sg_nc_in").replace("{n}", uncounted.length).replace("{cat}", cat || ""))}</span></div>`
+    + `<p>${esc(ncDesc)}</p><div class="sg-grid" data-zone="uncounted">${uncounted.length ? uncounted.map((s) => tile(s, false)).join("") : `<div class="sg-empty">${esc(t("sg_nc_empty"))}</div>`}</div></div>`;
+}
+// A short note at the bottom of the screen with Undo (gone after 5 s).
+let GAL_TOAST_T = 0;
+function galToast(html, onUndo) {
+  let el = document.getElementById("sgToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "sgToast";
+    el.className = "sg-toast";
+    el.setAttribute("role", "status");
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span class="sg-toast-m">${html}</span>${onUndo ? `<button type="button" class="sg-toast-u">${esc(t("sg_undo"))}</button>` : ""}`;
+  el.classList.add("show");
+  clearTimeout(GAL_TOAST_T);
+  const hide = () => { clearTimeout(GAL_TOAST_T); el.classList.remove("show"); };
+  GAL_TOAST_T = setTimeout(hide, 5000);
+  const u = el.querySelector(".sg-toast-u");
+  if (u) u.onclick = () => { hide(); onUndo(); };
+}
+function galToastHide() {
+  const el = document.getElementById("sgToast");
+  if (el) el.classList.remove("show");
+}
+// A short glow on the tile that was just changed.
+function galFlash(root, id) {
+  const el = root && root.querySelector(`.sg-t[data-gid="${CSS.escape(String(id))}"]`);
+  if (!el) return;
+  el.classList.add("flash");
+  setTimeout(() => el.classList.remove("flash"), 700);
+}
 
 // Renders totals-by-bonus-type, filter bar, and the category
 // sections of skin cards (click a card to toggle owned status).
@@ -23990,33 +24121,33 @@ async function renderSkinGallery() {
     return ia - ib;
   });
 
+  const globeLevelSaved = (await loadCalcState("skin_globe_level")) || { level: 0 };
   if (seq !== RENDER_SEQ) return;
+  galToastHide();
   content.innerHTML = `
-    <div class="page-head">
+    <div class="page-head sg-head">
       <div>
         <h2>${esc(t("skin_gallery_title"))}</h2>
-        <div class="sub" id="skinSummaryLine"></div>
+        <p class="desc">${esc(t("sg_desc"))}</p>
       </div>
     </div>
-    <div class="t12x-card" style="margin-bottom:16px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="skinTotals"></div></div>
-    <div id="skinCatSwitcher"></div>
-    <div class="filter-bar" style="margin-bottom:12px;">
-      <input id="skinSearch" placeholder="${esc(t("search_skins_placeholder"))}" style="flex:1; min-width:160px;" />
-      <div class="seg" id="ownedSeg">
-        <button data-owned="all" class="active">${esc(t("all_label"))}</button>
-        <button data-owned="owned">${esc(t("owned_label"))}</button>
-        <button data-owned="not">${esc(t("not_owned_label"))}</button>
-      </div>
+    <div class="panel cg-ans sg-ans">
+      <div class="sg-k"><span>${esc(t("troops_stats_title"))} · ${esc(t("plx_all_troops"))}</span><span class="sg-kr" id="skinSummaryLine"></span></div>
+      <div id="skinTotals"></div>
+      <button type="button" class="sg-rb" id="sgGlobeBtn" aria-haspopup="dialog"></button>
     </div>
-    <div style="display:flex; align-items:center; gap:10px; margin:0 0 16px;">
-      <span class="meta" style="font-size:11px;">${esc(t("globe_level"))}</span>
-      <select id="globeLevelSelect" class="keep-w" style="width:auto; min-width:76px;">
-        <option value="0">${esc(t("no_globe"))}</option>
-        ${GLOBE_LEVELS.map((r) => `<option value="${r.level}">${r.level}</option>`).join("")}
-      </select>
-    </div>
-    <div id="globeInfo" class="globe-info"></div>
+    <div id="skinCatSwitcher" class="sg-cats"></div>
+    ${galToolsHtml("skin", SKIN_FILTER, t("search_skins_placeholder"))}
+    <div class="sg-lg"><span>${esc(t("sg_lg_tap"))}</span><span><b>&#10003;</b> ${esc(t("sg_lg_owned"))}</span><span>${esc(t("sg_lg_faded"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
     <div id="skinSections"></div>
+    <div class="modal-overlay sg-gl-ov" id="sgGlobeSheet" style="display:none;">
+      <div class="modal-box sg-gl-box" role="dialog" aria-label="${esc(t("sg_globe_title"))}">
+        <div class="sg-gl-h"><b>${esc(t("sg_globe_title"))}</b><button type="button" class="sg-x" data-glclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        <div class="sg-glv" id="sgGlobeLv"></div>
+        <div id="globeInfo" class="globe-info"></div>
+        <button type="button" class="btn sg-gl-done" data-glclose>${esc(t("sg_done"))}</button>
+      </div>
+    </div>
   `;
 
   if (SKIN_FILTER.category === "all" || !categories.includes(SKIN_FILTER.category)) {
@@ -24024,15 +24155,9 @@ async function renderSkinGallery() {
   }
   function onSkinCatSelect(cat) {
     SKIN_FILTER.category = cat;
-    renderCategorySwitcher(document.getElementById("skinCatSwitcher"), categories, SKIN_FILTER.category, onSkinCatSelect);
     computeAndRender();
   }
-  renderCategorySwitcher(document.getElementById("skinCatSwitcher"), categories, SKIN_FILTER.category, onSkinCatSelect);
 
-  const globeLevelSaved = (await loadCalcState("skin_globe_level")) || { level: 0 };
-  if (seq !== RENDER_SEQ) return;
-  const globeLevelSelect = document.getElementById("globeLevelSelect");
-  globeLevelSelect.value = globeLevelSaved.level;
   // Each Globe Level's City Skin and extra skins (Admin → Globe Level).
   const namesForGlobeLevel = namesForGlobeLevelGlobal;
   // Every skin tied to the Globe Level selector, across all levels. These are
@@ -24045,8 +24170,12 @@ async function renderSkinGallery() {
   function deriveEffectiveGlobeLevel() {
     return globeHighestOwnedLevel(skins) || globeLevelSaved.level;
   }
-  globeLevelSelect.addEventListener("change", async (e) => {
-    const level = Number(e.target.value);
+  // Every stat a skin gives, from its own bonuses ("+2% ATK").
+  const skinBonusText = (sk, sign = "+") => (sk ? [["bonus_type", "bonus_value"], ["bonus_type2", "bonus_value2"], ["bonus_type3", "bonus_value3"], ["bonus_type4", "bonus_value4"]]
+    .filter(([, v]) => sk[v] != null && Number(sk[v])).map(([k, v]) => `${sign}${galNum(sk[v])}% ${galStatShort(sk[k])}`).join(", ") : "");
+  // The Globe Level picker (in a sheet opened from the answer card's Globe row):
+  // the same rules as the old dropdown.
+  async function setGlobeLevel(level) {
     const prevLevel = globeLevelSaved.level;
     saveCalcState("skin_globe_level", { level });
     globeLevelSaved.level = level;
@@ -24075,15 +24204,25 @@ async function renderSkinGallery() {
       const matchingSkin = skins.find((s) => s.name === name);
       if (matchingSkin && !matchingSkin.owned) setOwned(matchingSkin, name, true, name);
     }
-    if (changed.length) {
-      toast(`Updated: ${changed.join(", ")}`);
-      computeAndRender();
-    } else drawGlobeInfo();
-  });
+    if (changed.length) toast(`Updated: ${changed.join(", ")}`);
+    computeAndRender();
+  }
+  const globeSheet = document.getElementById("sgGlobeSheet");
+  function drawGlobeLevels() {
+    // The level that counts (an owned Frost Sphere above the saved level wins).
+    const cur = Number(deriveEffectiveGlobeLevel()) || 0;
+    document.getElementById("sgGlobeLv").innerHTML = [{ level: 0 }, ...GLOBE_LEVELS].map((r) => `<button type="button" data-sglv="${r.level}" class="${r.level ? "" : "w"}${cur === r.level ? " on" : ""}" aria-pressed="${cur === r.level}">${r.level ? r.level : esc(t("no_globe"))}</button>`).join("");
+  }
+  globeSheet.onclick = (e) => {
+    if (e.target === globeSheet || e.target.closest("[data-glclose]")) { globeSheet.style.display = "none"; return; }
+    const b = e.target.closest("[data-sglv]");
+    if (b) setGlobeLevel(Number(b.dataset.sglv));
+  };
+  document.getElementById("sgGlobeBtn").onclick = () => { drawGlobeLevels(); drawGlobeInfo(); globeSheet.style.display = "flex"; };
 
-  // What the Globe Level gives, in one line under the dropdown (owner picked
-  // the message of mock-up A, 20 Oct 2026); "i" opens every level's skins.
-  let globeInfoOpen = false;
+  // What the Globe Level gives (owner picked the message of mock-up A, 20 Oct
+  // 2026), now inside the Globe Level sheet; "i" folds every level's skins.
+  let globeInfoOpen = true;
   function drawGlobeInfo() {
     const box = document.getElementById("globeInfo");
     if (!box) return;
@@ -24108,8 +24247,42 @@ async function renderSkinGallery() {
     box.innerHTML = `<div class="gi-line"><span>${msg}</span><button type="button" class="gi-i" data-globeinfo aria-expanded="${globeInfoOpen}" aria-label="${esc(t("set_info"))}">i</button></div>${list}`;
     box.querySelector("[data-globeinfo]").onclick = () => { globeInfoOpen = !globeInfoOpen; drawGlobeInfo(); };
   }
+  // The Globe row in the answer card: picture, "Globe Level 3", what it counts.
+  function drawGlobeRow() {
+    const b = document.getElementById("sgGlobeBtn");
+    if (!b) return;
+    const lv = deriveEffectiveGlobeLevel(), row = GLOBE_LEVELS.find((r) => r.level === lv);
+    const picName = row ? row.city : (GLOBE_LEVELS[0] && GLOBE_LEVELS[0].city);
+    const pic = skins.find((x) => x.name === picName);
+    const part = (n) => { const bo = skinBonusText(skins.find((x) => x.name === n)); return bo ? `${n} ${bo}` : n; };
+    b.innerHTML = `<span class="sg-rb-p">${pic && pic.image_url ? `<img src="${esc(pic.image_url)}" alt="" />` : "&#127760;"}</span>`
+      + `<span class="sg-rb-tx"><b>${esc(row ? t("sg_globe_lv").replace("{n}", lv) : t("sg_globe_none"))}</b><span>${esc(row ? [row.city, ...row.extra].map(part).join(" · ") : t("sg_globe_pick"))}</span></span><span class="sg-rb-ch" aria-hidden="true">&#8250;</span>`;
+    if (globeSheet.style.display !== "none") drawGlobeLevels();
+  }
+  // One tap = owned ↔ not owned. Shown at once; put back if the save fails.
+  function setSkinOwned(skin, owned) {
+    skin.owned = owned;
+    computeAndRender();
+    galFlash(document.getElementById("skinSections"), skin.id);
+    patchSkinQueued(skin.id, { owned }).catch(() => {
+      if (skin.owned === owned) { skin.owned = !owned; computeAndRender(); }
+      toast("Couldn't update skin", true);
+    });
+  }
+  function toggleSkin(id) {
+    const skin = skins.find((s) => String(s.id) === String(id));
+    if (!skin) return;
+    const owned = !skin.owned;
+    setSkinOwned(skin, owned);
+    // The bonus in the note only when the skin counts on this page.
+    const counts = !GALLERY_UNCOUNTED.has(String(skin.id)) && !ALL_GLOBE_WIRED_NAMES.has(skin.name);
+    const bo = counts ? skinBonusText(skin, owned ? "+" : "−") : "";
+    galToast(`${owned ? `<b class="ok">&#10003;</b>` : `<b class="no">&#9675;</b>`} ${esc(t(owned ? "sg_toast_own" : "sg_toast_unown").replace("{name}", skin.name))}${bo ? ` · ${esc(bo)}` : ""}`, () => setSkinOwned(skin, !owned));
+  }
   function computeAndRender() {
+    if (!document.getElementById("skinSections")) return;
     drawGlobeInfo();
+    drawGlobeRow();
     const filtered = skins.filter((s) => {
       if (SKIN_FILTER.category !== "all" && s.category !== SKIN_FILTER.category) return false;
       if (SKIN_FILTER.ownedFilter === "owned" && !s.owned) return false;
@@ -24119,8 +24292,12 @@ async function renderSkinGallery() {
     });
 
     const ownedCount = skins.filter((s) => s.owned).length;
-    document.getElementById("skinSummaryLine").textContent =
-      `${ownedCount} / ${skins.length} ${t("skins_owned_summary")}`;
+    document.getElementById("skinSummaryLine").innerHTML = esc(t("sg_owned_of")).replace("{n}", `<b>${ownedCount}</b>`).replace("{total}", skins.length);
+    // Category chips with "owned / all" in each.
+    renderCategorySwitcher(document.getElementById("skinCatSwitcher"), categories.map((c) => {
+      const inCat = skins.filter((s) => s.category === c);
+      return { key: c, label: c, count: `${inCat.filter((s) => s.owned).length}/${inCat.length}` };
+    }), SKIN_FILTER.category, onSkinCatSelect);
 
     // totals by bonus_type: current (owned only) vs max (everything, as if fully owned).
     // Skins sharing a display_group (e.g. Frost Sphere I-VI) are mutually
@@ -24175,78 +24352,68 @@ async function renderSkinGallery() {
       if (ib === -1) return -1;
       return ia - ib;
     });
-    // Same stat boxes as VIP / Tundra Album (one row when they fit).
+    const STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
     document.getElementById("skinTotals").innerHTML = totalEntries.length
-      ? plxStatBoxesHtml(totalEntries.map(([type, maxVal]) => {
+      ? galStatBoxesHtml(totalEntries.map(([type, maxVal]) => {
           const bare = type.replace(/^Troops?\s+/i, "");
-          return { label: STAT_ORDER.includes(bare) ? tStatLabel(bare) : tStatLabel(type), val: totalsByType[type] || 0, max: maxVal };
-        }), totalEntries.length <= 4)
-      : `${plxStatBoxesHtml([{ label: t("total_bonus"), val: 0 }])}<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mark_skins_owned_hint"))}</div>`;
-
+          return { label: STAT_ABBR[bare] || tStatLabel(type), val: totalsByType[type] || 0, max: maxVal };
+        }))
+      : `${galStatBoxesHtml([{ label: t("total_bonus"), val: 0 }])}<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mark_skins_owned_hint"))}</div>`;
 
     const sections = document.getElementById("skinSections");
     // filtered is already scoped to the one selected category (plus search/
-    // owned filters), so this renders a single flat grid - no more
-    // per-category panels stacked on top of each other.
-    const orderSkins = (list) => list;
+    // owned filters), so this renders a single flat grid.
     if (!filtered.length) {
       sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_skins_match_filters"))}</div></div></div>`;
       return;
     }
-    const countedSkins = orderSkins(filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))));
-    const uncountedSkins = orderSkins(filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))));
-    renderGallerySplit(sections, countedSkins, uncountedSkins, (s) => `
-          <div class="gallery-card ${s.owned ? "owned" : ""}" data-skin="${s.id}" data-gid="${s.id}">
-            <div class="thumb gallery-thumb${GALLERY_BIG_THUMB.has(s.category) ? " gallery-thumb-big" : ""}">
-              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" draggable="false" />` : `<div class="ph">${esc(s.name[0])}</div>`}
-            </div>
-            <div class="badge">${esc(s.name)}</div>
-          </div>`);
+    const moreKey = `skin|${SKIN_FILTER.category}`;
+    const tile = (s, down) => galTileHtml({
+      id: s.id, attr: "data-skin", cls: s.owned ? "yes" : "no", img: s.image_url, name: s.name,
+      big: GALLERY_BIG_THUMB.has(s.category), down, tick: !!s.owned, pressed: !!s.owned,
+    });
+    sections.innerHTML = galGridHtml({
+      counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
+      uncounted: filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))),
+      all: GAL_MORE.has(moreKey) || !!SKIN_FILTER.search, tile, cat: SKIN_FILTER.category, ncDesc: t("sg_nc_desc"),
+    });
     wireGallerySplit(sections, async (id, toUncounted) => {
       await setGalleryUncounted(id, toUncounted);
       computeAndRender();
-    });
+    }, ".sg-t[data-gid]");
+    sections.onclick = (e) => {
+      if (e.target.closest("[data-galmore]")) { GAL_MORE.add(moreKey); computeAndRender(); return; }
+      const el = e.target.closest("[data-skin]");
+      if (el && !e.target.closest("[data-move]")) toggleSkin(el.dataset.skin);
+    };
+    sections.onkeydown = (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-skin]")) { e.preventDefault(); toggleSkin(e.target.dataset.skin); }
+    };
+  }
 
-    sections.querySelectorAll("[data-skin]").forEach((el) => {
-      el.addEventListener("click", async () => {
-        const skin = skins.find((s) => s.id === el.dataset.skin);
-        const newOwned = !skin.owned;
-        // Show it at once; undo it if the save fails.
-        skin.owned = newOwned;
-        computeAndRender();
-        patchSkinQueued(skin.id, { owned: newOwned }).catch(() => {
-          if (skin.owned === newOwned) { skin.owned = !newOwned; computeAndRender(); }
-          toast("Couldn't update skin", true);
-        });
-      });
-    });
-    }
-
-  document.getElementById("skinSearch").addEventListener("input", (e) => {
-    SKIN_FILTER.search = e.target.value;
-    computeAndRender();
-  });
-  document.getElementById("ownedSeg").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-owned]");
-    if (!btn) return;
-    SKIN_FILTER.ownedFilter = btn.dataset.owned;
-    document.querySelectorAll("#ownedSeg button").forEach((b) => b.classList.toggle("active", b === btn));
-    computeAndRender();
-  });
-
+  wireGalTools("skin", SKIN_FILTER, computeAndRender);
   computeAndRender();
 }
 
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
+// The open island level pop-up: { id, close(noRedraw), place() } or null.
+let ISL_POP = null;
+document.addEventListener("pointerdown", (e) => {
+  if (ISL_POP && e.target.closest && !e.target.closest(".sg-pop, [data-island]")) ISL_POP.close();
+}, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ISL_POP) ISL_POP.close(); });
+window.addEventListener("resize", () => { if (ISL_POP) ISL_POP.place(); });
 
 async function renderIslandGallery() {
   const seq = RENDER_SEQ;
+  ISL_POP = null;
   // The ordered category list is kept for the visit (dashCached), so a
   // repeat visit only has to load the islands themselves.
   const [islandCats] = await Promise.all([
     dashCached("island_cats", () => sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`)),
     ensureGalleryUncounted(),
   ]);
+  if (seq !== RENDER_SEQ) return;
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
   const islands = await keptRows("skins",
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
@@ -24278,24 +24445,22 @@ async function renderIslandGallery() {
   });
 
   if (seq !== RENDER_SEQ) return;
+  galToastHide();
   content.innerHTML = `
-    <div class="page-head">
+    <div class="page-head sg-head">
       <div>
         <h2>${esc(t("islandgallery_title"))}</h2>
-        <div class="sub" id="islandSummaryLine"></div>
+        <p class="desc">${esc(t("isl_desc"))}</p>
       </div>
     </div>
-    <div class="t12x-card" style="margin-bottom:20px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="islandTroopTotals"></div></div>
-    <div id="islandCatSwitcher"></div>
-    <div class="filter-bar" style="margin-bottom:12px;">
-      <input id="islandSearch" placeholder="${esc(t("search_islands_placeholder"))}" style="flex:1; min-width:160px;" />
-      <div class="seg" id="islandOwnedSeg">
-        <button data-owned="all" class="active">${esc(t("all_label"))}</button>
-        <button data-owned="owned">${esc(t("owned_label"))}</button>
-        <button data-owned="not">${esc(t("not_owned_label"))}</button>
-      </div>
+    <div class="panel cg-ans sg-ans">
+      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span></div>
+      <div id="islandTroopTotals"></div>
     </div>
-    <div id="islandSections"></div>
+    <div id="islandCatSwitcher" class="sg-cats"></div>
+    ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
+    <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
+    <div id="islandSections" class="sg-isl"></div>
   `;
 
   if (ISLAND_FILTER.bonusType === "all" || !bonusTypes.includes(ISLAND_FILTER.bonusType)) {
@@ -24303,32 +24468,39 @@ async function renderIslandGallery() {
   }
   function onIslandCatSelect(cat) {
     ISLAND_FILTER.bonusType = cat;
-    renderCategorySwitcher(document.getElementById("islandCatSwitcher"), bonusTypes, ISLAND_FILTER.bonusType, onIslandCatSelect);
+    if (ISL_POP) ISL_POP.close(true);
     computeAndRender();
   }
-  renderCategorySwitcher(document.getElementById("islandCatSwitcher"), bonusTypes, ISLAND_FILTER.bonusType, onIslandCatSelect);
 
-  function computeAndRender() {
-    const filtered = islands.filter((s) => {
-      const groups = groupsFor(s);
-      if (ISLAND_FILTER.bonusType !== "all" && !groups.includes(ISLAND_FILTER.bonusType)) return false;
-      if (ISLAND_FILTER.ownedFilter === "owned" && !s.owned) return false;
-      if (ISLAND_FILTER.ownedFilter === "not" && s.owned) return false;
-      if (ISLAND_FILTER.search && !s.name.toLowerCase().includes(ISLAND_FILTER.search.toLowerCase())) return false;
-      return true;
-    });
+  // A level shown / set here: not owned counts as 0 (as in the totals).
+  const maxOf = (s) => s.max_level ?? 10;
+  const lvOf = (s) => (s.owned ? (s.current_level ?? 0) : 0);
+  const built = (s) => lvOf(s) > 0;
+  // Each bonus at a level: [{ type, val, max }].
+  const bonusAt = (s, lv) => STAT_SLOTS.filter(([tk, vk]) => s[tk] && s[vk] != null).map(([tk, vk, lk]) => {
+    const full = Number(s[vk]), mx = maxOf(s), unlock = s[lk];
+    const val = !lv || !mx ? 0 : unlock != null ? (lv >= unlock ? full : 0) : (full * lv) / mx;
+    return { type: s[tk], val, max: full };
+  });
+  const bonusText = (s, lv) => bonusAt(s, lv).map((b) => `+${galNum(b.val)}% / ${galNum(b.max)}% ${galStatShort(b.type)}`).join(" · ");
+  const pillHtml = (s) => {
+    const lv = lvOf(s), mx = maxOf(s);
+    if (!lv) return esc(t("sg_not_built"));
+    if (lv >= mx) return esc(t("sg_max"));
+    return `${esc(t("sg_lv").replace("{n}", lv))}<small>/ ${mx}</small>`;
+  };
+  const tileCls = (s) => `is${built(s) ? "" : " l0"}${lvOf(s) >= maxOf(s) ? " mx" : ""}`;
 
-    const ownedCount = islands.filter((s) => s.owned).length;
-    document.getElementById("islandSummaryLine").textContent =
-      `${ownedCount} / ${islands.length} ${t("islands_owned_summary")}`;
-
+  function drawStats() {
+    const builtCount = islands.filter(built).length;
+    document.getElementById("islandSummaryLine").innerHTML = esc(t("sg_built_of")).replace("{n}", `<b>${builtCount}</b>`).replace("{total}", islands.length);
     // Total Attack/Defense/Lethality/Health per troop: raw-stat islands count
     // toward every troop (they buff all troops equally); display_group
     // islands (MVP, Lighthouses) count toward every troop too, since their
     // stats are still real Attack/Defense/Lethality/Health values.
-    // Row 1: general (troop-agnostic) totals from islands with a plain
+    // All troops: general (troop-agnostic) totals from islands with a plain
     // Attack/Defense/Lethality/Health stat (these buff every troop equally).
-    // Row 2: totals from islands whose stat is already troop-specific
+    // Each troop: totals from islands whose stat is already troop-specific
     // (Infantry Attack, Lancers Defense, etc. - the Island Guide buildings).
     const generalTotals = {}; // stat -> {cur, max}
     const specificTotals = {}; // "Troop Stat" -> {cur, max}
@@ -24346,7 +24518,7 @@ async function renderIslandGallery() {
           generalTotals[stat].max += Number(s[valKey]);
           generalTotals[stat].cur += effective;
         } else {
-          const isTroopStat = TROOPS.some((t) => stat.startsWith(t));
+          const isTroopStat = TROOPS.some((tr) => stat.startsWith(tr));
           if (!isTroopStat) return;
           specificTotals[stat] = specificTotals[stat] || { cur: 0, max: 0 };
           specificTotals[stat].max += Number(s[valKey]);
@@ -24355,70 +24527,173 @@ async function renderIslandGallery() {
       });
     }
     const STAT_ABBR2 = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-    // Same stat boxes and troop tabs as Alliance Tech: all troops, then each troop's own.
+    // Troop tabs like Alliance Tech: all troops, then each troop's own.
     const box = (label, tot) => ({ label, val: tot ? tot.cur : 0, max: tot ? tot.max : 0 });
     const troopTab = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
     document.getElementById("islandTroopTotals").innerHTML = plxStatTabsHtml("islands", [
-      { key: "all", label: t("plx_all_troops"), html: plxStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat])), true) },
+      { key: "all", label: t("plx_all_troops"), html: galStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat]))) },
       ...["Infantry", "Lancers", "Marksman"].map((tr) => ({
         key: tr, label: troopDisplayName(troopTab[tr]), color: PLX_TROOP_COLORS[troopTab[tr]],
-        html: plxStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`])), true),
+        html: galStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`]))),
       })),
     ]);
+  }
 
+  // The small level pop-up under an island: 0 · − level + · Max. It stays open
+  // while tapping (holding + / − repeats); a tap outside or Esc closes it.
+  function openPop(id) {
+    if (ISL_POP) ISL_POP.close();
     const sections = document.getElementById("islandSections");
+    const tileEl = sections && sections.querySelector(`[data-island="${CSS.escape(String(id))}"]`);
+    const s = islands.find((x) => String(x.id) === String(id));
+    if (!tileEl || !s) return;
+    const pop = document.createElement("div");
+    pop.className = "sg-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", s.name);
+    pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h"><b>${esc(s.name)}</b><span data-popbn></span></div>
+      <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
+      <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
+    sections.appendChild(pop);
+    tileEl.classList.add("sel");
+    let changed = false, hold = 0, rep = 0;
+    const draw = () => {
+      const lv = lvOf(s), mx = maxOf(s);
+      pop.querySelector("[data-popnum]").innerHTML = `${lv}<small> / ${mx}</small>`;
+      pop.querySelector("[data-popbn]").textContent = bonusText(s, lv);
+      pop.querySelector('[data-ipstep="-1"]').disabled = lv <= 0;
+      pop.querySelector('[data-ipset="0"]').disabled = lv <= 0;
+      pop.querySelector('[data-ipstep="1"]').disabled = lv >= mx;
+      pop.querySelector('[data-ipset="max"]').disabled = lv >= mx;
+    };
+    const place = () => {
+      if (!pop.isConnected || !tileEl.isConnected) return;
+      const sr = sections.getBoundingClientRect(), tr = tileEl.getBoundingClientRect();
+      const w = Math.min(300, sr.width);
+      let left = tr.left - sr.left + tr.width / 2 - w / 2;
+      left = Math.max(0, Math.min(sr.width - w, left));
+      pop.style.width = `${w}px`;
+      pop.style.left = `${left}px`;
+      pop.style.top = `${tr.bottom - sr.top + 8}px`;
+      pop.querySelector(".sg-pop-ar").style.left = `${Math.max(10, Math.min(w - 24, tr.left - sr.left + tr.width / 2 - left - 7))}px`;
+    };
+    // Same save path as before (patchSkinQueued); setting a level means you have
+    // the island, 0 means not built.
+    const setLv = (want) => {
+      const mx = maxOf(s), lv = Math.max(0, Math.min(mx, want));
+      if (lv === lvOf(s)) return false;
+      const patch = { current_level: lv };
+      if (!!s.owned !== lv > 0) patch.owned = lv > 0;
+      const before = Object.fromEntries(Object.keys(patch).map((k) => [k, s[k]]));
+      Object.assign(s, patch);
+      changed = true;
+      patchSkinQueued(s.id, patch).catch(() => {
+        if (Object.keys(patch).every((k) => s[k] === patch[k])) {
+          Object.assign(s, before);
+          if (ISL_POP && ISL_POP.id === String(s.id)) ISL_POP.close();
+          else if (document.getElementById("islandSections")) computeAndRender();
+        }
+        toast("Couldn't update island", true);
+      });
+      tileEl.className = `sg-t ${tileCls(s)} sel`;
+      tileEl.querySelector(".sg-lvp").innerHTML = pillHtml(s);
+      draw();
+      drawStats();
+      return true;
+    };
+    const stop = () => {
+      clearTimeout(hold); clearInterval(rep); hold = rep = 0;
+      document.removeEventListener("pointerup", stop, true);
+      document.removeEventListener("pointercancel", stop, true);
+    };
+    pop.addEventListener("pointerdown", (e) => {
+      const b = e.target.closest("[data-ipstep]");
+      if (!b || b.disabled) return;
+      e.preventDefault();
+      const d = Number(b.dataset.ipstep);
+      stop();
+      setLv(lvOf(s) + d);
+      document.addEventListener("pointerup", stop, true);
+      document.addEventListener("pointercancel", stop, true);
+      hold = setTimeout(() => { rep = setInterval(() => { if (!setLv(lvOf(s) + d)) stop(); }, 110); }, 420);
+    });
+    pop.addEventListener("click", (e) => {
+      const st = e.target.closest("[data-ipstep]");
+      if (st) { if (e.detail === 0) setLv(lvOf(s) + Number(st.dataset.ipstep)); return; } // keyboard
+      const z = e.target.closest("[data-ipset]");
+      if (z) setLv(z.dataset.ipset === "max" ? maxOf(s) : 0);
+    });
+    pop.addEventListener("contextmenu", (e) => e.preventDefault());
+    ISL_POP = {
+      id: String(s.id), place,
+      close: (noRedraw) => {
+        stop();
+        pop.remove();
+        tileEl.classList.remove("sel");
+        if (ISL_POP && ISL_POP.id === String(s.id)) ISL_POP = null;
+        // Chips, filters and the grid follow the new levels once it closes.
+        if (changed && !noRedraw && document.getElementById("islandSections")) computeAndRender();
+      },
+    };
+    draw();
+    place();
+    const r = pop.getBoundingClientRect();
+    if (r.bottom > window.innerHeight - 8) window.scrollBy({ top: r.bottom - window.innerHeight + 16, behavior: "smooth" });
+  }
+
+  function computeAndRender() {
+    const sections = document.getElementById("islandSections");
+    if (!sections) return;
+    const filtered = islands.filter((s) => {
+      const groups = groupsFor(s);
+      if (ISLAND_FILTER.bonusType !== "all" && !groups.includes(ISLAND_FILTER.bonusType)) return false;
+      if (ISLAND_FILTER.ownedFilter === "owned" && !s.owned) return false;
+      if (ISLAND_FILTER.ownedFilter === "not" && s.owned) return false;
+      if (ISLAND_FILTER.search && !s.name.toLowerCase().includes(ISLAND_FILTER.search.toLowerCase())) return false;
+      return true;
+    });
+    drawStats();
+    // Category chips with "built / all" in each.
+    renderCategorySwitcher(document.getElementById("islandCatSwitcher"), bonusTypes.map((c) => {
+      const inCat = islands.filter((s) => groupsFor(s).includes(c));
+      return { key: c, label: c, count: `${inCat.filter(built).length}/${inCat.length}` };
+    }), ISLAND_FILTER.bonusType, onIslandCatSelect);
+
     // filtered is already scoped to the one selected category, so render a
     // single flat grid instead of stacked per-category panels.
     if (!filtered.length) {
       sections.innerHTML = `<div class="panel"><div class="empty"><div class="big">No islands match your filters.</div></div></div>`;
       return;
     }
-    const countedIslands = filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id)));
-    const uncountedIslands = filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id)));
-    renderGallerySplit(sections, countedIslands, uncountedIslands, (s) => `
-          <div class="gallery-card ${s.owned ? "owned" : ""}" data-island="${s.id}" data-gid="${s.id}">
-            <div class="thumb island-thumb">
-              ${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" draggable="false" />` : `<div class="ph">${esc(s.name[0])}</div>`}
-            </div>
-            <div class="badge"><span class="badge-name">${esc(s.name)}</span><span class="badge-lvl">Lv${s.current_level ?? 0}</span></div>
-          </div>`);
+    const moreKey = `island|${ISLAND_FILTER.bonusType}`;
+    const tile = (s, down) => galTileHtml({
+      id: s.id, attr: "data-island", cls: tileCls(s), img: s.image_url, name: s.name, down,
+      extra: `<button type="button" class="sg-lvp" data-islv="${esc(s.id)}" aria-haspopup="dialog">${pillHtml(s)}</button>`,
+    });
+    sections.innerHTML = galGridHtml({
+      counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
+      uncounted: filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))),
+      all: GAL_MORE.has(moreKey) || !!ISLAND_FILTER.search, tile, cat: ISLAND_FILTER.bonusType, ncDesc: t("isl_nc_desc"),
+    });
     wireGallerySplit(sections, async (id, toUncounted) => {
+      if (ISL_POP) ISL_POP.close(true);
       await setGalleryUncounted(id, toUncounted);
       computeAndRender();
-    });
-
-    sections.querySelectorAll("[data-island]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const idx = filtered.findIndex((s) => s.id === el.dataset.island);
-        openGalleryDetailModal(filtered, idx, {
-          isIsland: true,
-          onSave: async (island, patch) => {
-            // Show it at once; undo it if the save fails.
-            const before = Object.fromEntries(Object.keys(patch).map((k) => [k, island[k]]));
-            Object.assign(island, patch);
-            computeAndRender();
-            patchSkinQueued(island.id, patch).catch(() => {
-              if (Object.keys(patch).every((k) => island[k] === patch[k])) { Object.assign(island, before); computeAndRender(); }
-              toast("Couldn't update island", true);
-            });
-          },
-        });
-      });
-    });
+    }, ".sg-t[data-gid]");
+    sections.onclick = (e) => {
+      if (e.target.closest(".sg-pop")) return;
+      if (e.target.closest("[data-galmore]")) { GAL_MORE.add(moreKey); computeAndRender(); return; }
+      const el = e.target.closest("[data-island]");
+      if (!el || e.target.closest("[data-move]")) return;
+      if (ISL_POP && ISL_POP.id === el.dataset.island) ISL_POP.close();
+      else openPop(el.dataset.island);
+    };
+    sections.onkeydown = (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-island]")) { e.preventDefault(); openPop(e.target.dataset.island); }
+    };
   }
 
-  document.getElementById("islandSearch").addEventListener("input", (e) => {
-    ISLAND_FILTER.search = e.target.value;
-    computeAndRender();
-  });
-  document.getElementById("islandOwnedSeg").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-owned]");
-    if (!btn) return;
-    ISLAND_FILTER.ownedFilter = btn.dataset.owned;
-    document.querySelectorAll("#islandOwnedSeg button").forEach((b) => b.classList.toggle("active", b === btn));
-    computeAndRender();
-  });
-
+  wireGalTools("island", ISLAND_FILTER, () => { if (ISL_POP) ISL_POP.close(true); computeAndRender(); });
   computeAndRender();
 }
 
