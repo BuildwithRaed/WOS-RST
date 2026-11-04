@@ -468,6 +468,83 @@
   .lvchip{ font:inherit; font-size:13px; font-weight:700; min-width:64px; max-width:110px; min-height:34px; padding:5px 10px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); cursor:pointer; white-space:nowrap; -webkit-appearance:none; appearance:none; text-align:center; text-align-last:center; }
   .lvchip.tgt{ border-color:rgba(125,200,255,.55); color:var(--ice); }
   .lvchip.up{ border-color:var(--amber); color:var(--amber); }
+  /* Heroes Gears = design B1 (owner, 4 Nov 2026): troop switch + Set row,
+     top card (stats / Can do now / Backpack), Pieces table, sheet per piece. */
+  .plx-tsw.hg-bar{ position:static; display:flex; align-items:stretch; gap:8px; margin:0 0 12px; padding:0; border:0; border-radius:0; background:none; box-shadow:none; }
+  .plx-tsw.hg-bar.is-pinned{ padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line); box-shadow:0 6px 18px rgba(0,0,0,.35); }
+  .hg-bar .plx-tsw-seg{ flex:1 1 auto; min-width:0; padding:4px; border:1px solid var(--line); border-radius:14px; }
+  .hg-bar .plx-tsw-seg button{ min-height:40px; border-radius:10px; }
+  .hg-setw{ position:relative; flex:0 0 auto; display:flex; }
+  .hg-bar select.hg-setsel{ height:auto; min-height:50px; margin:0; padding-block:0; padding-inline:14px 30px; border:1px solid var(--line); border-radius:14px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:14px; font-weight:700; -webkit-appearance:none; appearance:none; cursor:pointer; }
+  .hg-setw::after{ content:"\25BE"; position:absolute; inset-inline-end:12px; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--frost); font-size:12px; }
+  #hgStats .plx-stats.one{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:clamp(5px, 1.6vw, 10px); }
+  #hgStats .plx-stat{ padding:clamp(7px, 2vw, 10px) clamp(6px, 2vw, 10px); }
+  #hgStats .plx-stat b{ font-size:clamp(12.5px, 3.4vw, 18px); letter-spacing:-.02em; white-space:nowrap; }
+  .hg-pcs .sa-head{ margin-bottom:8px; }
+  .hg-pt{ font-size:16px; font-weight:700; }
+  .hg-tbl{ display:grid; grid-template-columns:minmax(50px, auto) repeat(4, minmax(0, 1fr)); gap:6px 4px; align-items:center; }
+  .hg-ph{ display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; padding:0; border:0; background:none; color:var(--frost); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .hg-ph img{ width:clamp(62px, 19vw, 84px); height:clamp(62px, 19vw, 84px); margin:-9px -12px -6px; object-fit:contain; } /* the files carry see-through space */
+  .hg-ph span{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hg-rl{ display:flex; flex-direction:column; min-width:0; font-size:12.5px; line-height:1.25; color:var(--muted); }
+  .hg-rl b{ font-weight:700; }
+  .hg-rl small{ font-size:11px; white-space:nowrap; }
+  .hg-cell{ display:flex; flex-direction:column; justify-content:center; gap:6px; min-width:0; min-height:52px; padding:6px 3px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; cursor:pointer; }
+  .hg-cell.done{ border-color:rgba(91,201,138,.55); background:rgba(91,201,138,.1); }
+  .hg-v{ display:block; direction:ltr; text-align:center; font-size:clamp(12px, 3.3vw, 14px); font-weight:800; white-space:nowrap; letter-spacing:-.03em; overflow:hidden; text-overflow:ellipsis; }
+  .hg-v i{ font-style:normal; color:var(--muted); }
+  .hg-v em{ font-style:normal; color:var(--ice); }
+  .hg-v em.up{ color:var(--amber); }
+  .hg-cell.done .hg-v{ color:var(--good); font-size:14.5px; }
+  .hg-lb{ position:relative; display:block; height:5px; margin:0 5px; border-radius:3px; background:rgba(255,255,255,.08); }
+  .hg-lb i{ position:absolute; top:0; bottom:0; border-radius:3px; }
+  .hg-lb i.n{ inset-inline-start:0; background:var(--good); }
+  .hg-lb i.t{ background:#3a86d4; }
+  .hg-dot{ position:absolute; top:50%; width:9px; height:9px; box-sizing:border-box; border-radius:50%; border:2px solid var(--ice); background:var(--panel-2); transform:translate(-50%, -50%); }
+  [dir="rtl"] .hg-dot{ transform:translate(50%, -50%); }
+  .hg-dot.r{ border-color:var(--good); background:var(--good); }
+  .hg-dot.g{ border-color:#5b6878; }
+  .hg-can{ display:flex; flex-wrap:wrap; justify-content:center; gap:3px; min-width:0; }
+  .hg-rl[hidden], .hg-can[hidden]{ display:none; }
+  .hg-cm{ padding:1px 5px; border:1px solid rgba(91,201,138,.6); border-radius:7px; line-height:18px; white-space:nowrap; }
+  .hg-next{ margin-top:10px; font-size:12.5px; line-height:1.45; color:var(--muted); }
+  .hg-next b{ color:var(--frost); }
+  .hg-sh .hg-sh-pic{ width:64px; height:64px; margin:-8px -6px; flex-shrink:0; object-fit:contain; }
+  .hg-sh .gs-head b{ display:block; }
+  .hg-sh .hgc-stat{ margin:-4px 0 10px; font-size:12.5px; }
+  .hg-sh .ch-sec-h{ align-items:center; }
+  .hg-sh .ch-sec-h .lvarr{ display:none; }
+  .hg-sh .ch-sec-h .rch-mark{ min-height:24px; }
+  .hg-sh .gs-row.hg-srow{ grid-template-columns:62px minmax(0, 1fr); margin-bottom:8px; }
+  .hg-sh .gs-stp{ min-height:46px; }
+  .hg-sh .gs-stp b{ position:relative; justify-content:center; font-size:20px; }
+  .hg-sh .gs-stp b.up{ color:var(--amber); }
+  .hg-sh .gs-stp select.lvchip{ position:absolute; inset:0; width:100%; max-width:none; height:100%; min-height:0; opacity:0; font-size:16px; cursor:pointer; }
+  .hg-sh [data-rchbar]:empty{ display:none; }
+  .hg-sh [data-rchbar]{ margin:-2px 0 8px; }
+  .hg-msr{ display:flex; flex-wrap:wrap; gap:5px; margin:2px 0 8px; }
+  .hg-msc{ padding:3px 8px; border:1px solid var(--line); border-radius:999px; font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .hg-msc.r{ border-color:rgba(91,201,138,.6); color:var(--good); }
+  .hg-msc.t{ border-color:var(--ice-dim); color:var(--ice); }
+  @media (max-width: 900px){
+    .hg1 .hg-stc{ display:none; }
+    .hg1 .g1-top .g1-bp .bs-tiles{ grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+    .hg1 .g1-top .g1-bp .bs-foot{ flex-wrap:nowrap; }
+    .hg1 .g1-top .g1-bp .bs-foot > span:first-child{ margin-inline-end:auto; }
+    .hg1 .g1-top .g1-bp .plx-bpb{ display:flex; width:auto; margin:0; }
+  }
+  @media (max-width: 380px){
+    .hg-tbl{ grid-template-columns:minmax(46px, auto) repeat(4, minmax(0, 1fr)); gap:6px 3px; }
+    .hg-v{ font-size:11.5px; }
+  }
+  @media (min-width: 901px){
+    .hg-tbl{ grid-template-columns:110px repeat(4, minmax(0, 1fr)); gap:8px; }
+    .hg-ph img{ width:110px; height:110px; margin:-12px -14px -8px; }
+    .hg-ph{ font-size:14px; }
+    .hg-cell{ min-height:62px; }
+    .hg-v{ font-size:15.5px; }
+    .hg-stc [data-rchsum]:not(:empty){ margin-top:12px; }
+  }
   .lvarr{ color:var(--muted); font-size:12px; }
   /* "What you can do now" marks (design B, 2 Nov 2026) */
   .rch-slot{ display:contents; }
@@ -6929,6 +7006,16 @@ const T = {
   cg_pieces_to_go: { en: "pieces to go" },
   cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
   cg_backpack: { en: "Backpack" },
+  hg_page_desc: { en: "Each piece has Mastery (0–20) and Enhance (0–200). Mastery multiplies the piece's Enhance stat; Enhance 120 / 160 / 200 add ATK and DEF. Tap a piece to change its levels." },
+  hg_troop_stats: { en: "{troop} stats" },
+  hg_pieces: { en: "Pieces" },
+  hg_mastery: { en: "Mastery" },
+  hg_enhance: { en: "Enhance" },
+  hg_can_do: { en: "Can do" },
+  hg_next_ms: { en: "Next milestone: {piece} gives {gain}." },
+  hg_tap_col: { en: "Tap a piece to change it." },
+  hg_needs_this: { en: "Needs for this piece" },
+  hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
   cg_can_now: { en: "Can do now" },
   cg_show: { en: "Show" },
@@ -9158,31 +9245,37 @@ async function loadHeroGearData() {
 // "Heroes wearing Set 2 / Set 3" (1 Nov 2026) was removed (owner, 3 Nov 2026): the
 // breakdown pop-up uses the Dashboard roster for every set again.
 
-// Renders the Quick Select + per-piece calculator + totals + stats.
+// Heroes Gears = design B1 (owner, 4 Nov 2026): troop switch + Set dropdown on
+// one row, one top card (stats, Can do now, Backpack), then a Pieces table
+// (4 pictures as column heads, a Mastery and an Enhance row, the "can do" marks)
+// and a sheet per piece with Now / Target steppers over the real dropdowns.
+const hgStatsTitle = () => t("hg_troop_stats").replace("{troop}", troopDisplayName(heroGearActiveTroop));
 async function renderGearLevelingGroup(target) {
   const seq = RENDER_SEQ;
   await Promise.all([ensureHeroGearData(), ensureUpgradeOrder()]);
   await maxBeforeLoad(HERO_GEAR_STORAGE_KEYS[heroGearActiveSet]);
 
   if (seq !== RENDER_SEQ) return;
+  if (!HERO_GEAR_TROOPS.includes(heroGearActiveTroop)) heroGearActiveTroop = HERO_GEAR_TROOPS[0];
   PLX_TROOP.hero_gear = heroGearActiveTroop;
+  const troopBtns = PLX_TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === heroGearActiveTroop}" data-tswtroop="${x}" class="${x === heroGearActiveTroop ? "on" : ""}" style="--tc:${PLX_TROOP_COLORS[x]};">${esc(troopDisplayName(x))}</button>`).join("");
   target.innerHTML = plxShellHtml({
     title: navLabel("herogearcalc"),
     maxId: "heroGearMaxAllBtn",
-    settings: `<div class="t12x-check" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
-        ${HERO_GEAR_SET_NAMES.map((name) => `<button class="btn ${name === heroGearActiveSet ? "" : "ghost"} small" data-herogearset="${esc(name)}">${esc(gearSetDisplayName(name))}</button>`).join("")}
-      </div>`,
     amountsId: "heroGearOwned", needId: "heroGearNeed",
-    // One pinned troop switch with that troop's stats (owner, 19 Oct 2026).
-    statsHtml: plxTroopSwitchHtml("hero_gear", ""),
-    mainHtml: `<div id="heroGearTracks" style="touch-action:pan-y pinch-zoom;"></div>`,
+    mainHtml: `<div class="plx-tsw hg-bar" data-tsw="hero_gear"><div class="plx-tsw-seg" role="tablist">${troopBtns}</div>
+        <span class="hg-setw"><select class="hg-setsel" data-hgsetsel aria-label="${esc(t("set_label"))}">${HERO_GEAR_SET_NAMES.map((name) => `<option value="${esc(name)}"${name === heroGearActiveSet ? " selected" : ""}>${esc(gearSetDisplayName(name))}</option>`).join("")}</select></span></div>
+      <div class="t12x-card hg-stc"><div class="t12x-title" data-hgsttl>${esc(hgStatsTitle())}</div><div id="hgStats"></div><div data-rchsum="${esc(heroGearActiveTroop)}" data-rchpage="hero_gear"></div></div>
+      <div class="t12x-card hg-pcs" id="heroGearTracks"></div>`,
   });
+  const shell = target.querySelector(".t12x");
+  if (shell) shell.classList.add("hg1");
+  const head = target.querySelector(".plx-head");
+  if (head) head.insertAdjacentHTML("afterend", `<p class="desc">${esc(t("hg_page_desc"))}</p>`);
 
-  target.querySelectorAll("[data-herogearset]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      heroGearActiveSet = btn.dataset.herogearset;
-      renderGearLevelingGroup(target);
-    });
+  target.querySelector("[data-hgsetsel]").addEventListener("change", (e) => {
+    heroGearActiveSet = e.target.value;
+    renderGearLevelingGroup(target);
   });
 
   const activeState = HERO_GEAR_SETS[heroGearActiveSet];
@@ -9203,153 +9296,199 @@ async function renderGearLevelingGroup(target) {
     optsByTrack[t] = HERO_GEAR_TABLES_CACHE[t].map((r, i) => `<option value="${i}"${i > open ? ' class="opt-up"' : ""}>${esc(rowLabel(r))}${esc(upcomingTag(i > open))}</option>`).join("");
   });
 
-  const tracksEl = document.getElementById("heroGearTracks");
   // One icon per troop type and piece: icons/hero-gear-<troop>-<piece>.png
   const HERO_GEAR_ICONS = { Goggles: "goggles", Gloves: "gloves", Belt: "belt", Boots: "boots" };
   const heroGearIcon = (troop, piece) => `icons/hero-gear-icons/hero-gear-${String(troop).toLowerCase()}-${HERO_GEAR_ICONS[piece] || String(piece).toLowerCase()}.png`;
-  const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target"), maxLbl = t("max_button");
-  // Piece cards = design A compact rows (owner, 19 Oct 2026): picture, name,
-  // stat now → target, Max; one row per track with Now / Target level chips.
-  // The chips are real dropdowns (owner, 19 Oct 2026: "it should be a dropdown"),
-  // styled as chips; the phone opens its own level list.
-  const chipHtml = (troop, piece, t, role) => {
-    const v = activeState[troop][piece][t][role];
-    return `<select class="lvchip${role === "to" ? " tgt" : ""}${v > heroTrackReleasedIdx(t) ? " up" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)} · ${esc(trackDisplayName(t))}">${optsByTrack[t]}</select>`;
+  const nowLbl = t("t12x_now"), tgtLbl = t("t12x_target");
+  const MF = "Hero Gear Mastery Forging", EN = "Enhance Combined";
+  const rowsOf = (tb) => HERO_GEAR_TABLES_CACHE[tb] || [];
+  const lastIdx = (tb) => Math.max(0, rowsOf(tb).length - 1);
+  const lab = (tb, i) => { const r = rowsOf(tb)[i]; return r ? String(rowLabel(r)).replace(/^Lv\.?\s*/, "") : String(i); };
+  // Enhance rows with a milestone (120 / 160 / 200) and what each one gives this piece.
+  const msIdx = rowsOf(EN).map((r, i) => (parseStatPct(r.stat2) != null ? i : -1)).filter((i) => i >= 0);
+  const msGain = (piece, i) => {
+    const a = heroGearMilestones(rowsOf(EN), i, piece), b = heroGearMilestones(rowsOf(EN), i - 1, piece);
+    const atk = a.Attack - b.Attack, def = a.Defense - b.Defense;
+    return bidiNum(`+${Number((atk > 0 ? atk : def).toFixed(1))}% ${atk > 0 ? "ATK" : "DEF"}`);
   };
-  const pieceCard = (troop, piece) => `
-    <div class="t12x-card" style="padding:12px 14px;">
-      <div class="hgc-head">
-        <span class="hgc-pic"><img src="${heroGearIcon(troop, piece)}" alt="${esc(pieceDisplayName(piece))}" loading="lazy" /></span>
-        <div class="hgc-name"><div class="name">${esc(pieceDisplayName(piece))}</div><div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div></div>
-        <button type="button" class="t12x-maxall" data-heropiecemax="${esc(troop)}|${esc(piece)}">${esc(maxLbl)}</button>
-      </div>
-      ${GEAR_LEVELING_TABLES.map((t) => `<div class="hgc-row"><span class="hgc-tr">${esc(trackDisplayName(t))}</span>${chipHtml(troop, piece, t, "from")}<span class="lvarr">&rarr;</span><span class="rch-slot" data-rch="${esc(troop)}|${esc(piece)}|${esc(t)}"></span>${chipHtml(troop, piece, t, "to")}</div><div data-rchbar="${esc(troop)}|${esc(piece)}|${esc(t)}"></div>`).join("")}
-    </div>`;
+  const cur = (troop, piece, tb) => { const st = activeState[troop][piece][tb], from = Number(st.from) || 0; return { from, to: Math.max(from, Number(st.to ?? from) || 0) }; };
+  // The real level dropdowns (same data attributes as before), shown in the sheet.
+  const chipHtml = (troop, piece, t, role) => `<select class="lvchip${role === "to" ? " tgt" : ""}" data-troop="${esc(troop)}" data-piece="${esc(piece)}" data-track="${esc(t)}" data-role="${role}" aria-label="${esc(role === "to" ? tgtLbl : nowLbl)} · ${esc(trackDisplayName(t))}">${optsByTrack[t]}</select>`;
 
-  const HERO_GEAR_TROOP_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  // Performance: these dropdowns pull from tables with ~85-200 levels each
-  // (Mastery Forging, and Enhancement+Empowerment combined), 2 dropdowns x
-  // 2 tracks x 4 pieces = ~2,300 <option> tags rebuilt per troop. Rebuilding
-  // that from scratch on every single swipe is heavy enough to visibly jank.
-  // Each troop's panel is built lazily - only the first time you actually
-  // swipe to it, then cached - so repeat swipes never rebuild it again.
-  const builtPanels = {}; // troop -> its built (and cached) panel element
-  function buildPanel(troop) {
-    if (builtPanels[troop]) return builtPanels[troop];
-    const wrap = document.createElement("div");
-    wrap.dataset.troopanel = troop;
-    wrap.style.display = "none";
-    wrap.innerHTML = `
-      ${setAllWrapHtml("hero", `<div class="name" style="font-size:15px; font-weight:700; color:${HERO_GEAR_TROOP_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</div>`, GEAR_LEVELING_TABLES.map((tb) => `<div class="sa-row">
+  // One cell of the table: "now→target" + a small bar (Enhance: milestone dots).
+  const cellHtml = (troop, piece, tb) => {
+    const { from, to } = cur(troop, piece, tb), last = lastIdx(tb);
+    const done = from >= heroTrackCapIdx(tb) && to <= from;
+    const w = (i) => (last > 0 ? Math.min(100, (i / last) * 100) : 0);
+    const up = to > heroTrackReleasedIdx(tb);
+    const val = done ? `&#10003; ${esc(lab(tb, from))}` : to > from ? `${esc(lab(tb, from))}<i>&rarr;</i><em${up ? ' class="up"' : ""}>${esc(lab(tb, to))}</em>` : esc(lab(tb, from));
+    const dots = tb === EN ? msIdx.map((i) => `<b class="hg-dot ${i <= from ? "r" : i <= to ? "t" : "g"}" style="inset-inline-start:${w(i)}%;"></b>`).join("") : "";
+    return `<button type="button" class="hg-cell${done ? " done" : ""}" data-hgpc="${esc(piece)}" aria-label="${esc(pieceDisplayName(piece))} · ${esc(trackDisplayName(tb))}"><span class="hg-v">${val}</span>${done ? "" : `<span class="hg-lb"><i class="n" style="width:${w(from)}%;"></i><i class="t" style="inset-inline-start:${w(from)}%; width:${Math.max(0, w(to) - w(from))}%;"></i>${dots}</span>`}</button>`;
+  };
+  // "Next milestone: Goggles E 120 gives +20% ATK" (the closest one inside a target).
+  const nextHtml = (troop) => {
+    let best = null;
+    HERO_GEAR_PIECE_NAMES.forEach((pc) => {
+      const { from, to } = cur(troop, pc, EN), i = msIdx.find((k) => k > from && k <= to);
+      if (i != null && (!best || i - from < best.d)) best = { pc, i, d: i - from };
+    });
+    const tap = esc(t("hg_tap_col"));
+    if (!best) return tap;
+    return `${esc(t("hg_next_ms")).replace("{piece}", `<b>${esc(pieceDisplayName(best.pc))} E ${esc(lab(EN, best.i))}</b>`).replace("{gain}", `<b>${msGain(best.pc, best.i)}</b>`)} ${tap}`;
+  };
+
+  const tracksEl = document.getElementById("heroGearTracks");
+  function drawPieces() {
+    if (!tracksEl.isConnected) return;
+    const troop = heroGearActiveTroop, open = !!SETALL_OPEN.hero;
+    const heads = HERO_GEAR_PIECE_NAMES.map((pc) => `<button type="button" class="hg-ph" data-hgpc="${esc(pc)}"><img src="${heroGearIcon(troop, pc)}" alt="" loading="lazy" /><span>${esc(pieceDisplayName(pc))}</span></button>`).join("");
+    const row = (tb, label) => `<div class="hg-rl"><b>${esc(label)}</b><small>${esc(lab(tb, 0))} – ${esc(lab(tb, heroTrackCapIdx(tb)))}</small></div>${HERO_GEAR_PIECE_NAMES.map((pc) => cellHtml(troop, pc, tb)).join("")}`;
+    tracksEl.innerHTML = `<div class="sa-wrap${open ? " open" : ""}" data-sakey="hero">
+        <div class="sa-head"><b class="hg-pt">${esc(t("hg_pieces"))}</b><button type="button" class="sa-btn" data-satoggle aria-expanded="${open}">${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
+        <div class="sa-box">${GEAR_LEVELING_TABLES.map((tb) => `<div class="sa-row">
           <span class="sa-lbl">${esc(trackDisplayName(tb))}</span>
           <select data-hgsetall="${esc(tb)}" data-role="from" aria-label="${esc(nowLbl)}"><option value="">${esc(nowLbl)}…</option>${optsByTrack[tb]}</select>
           <span class="sa-arrow">&rarr;</span>
           <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
-        </div>`).join(""))}
-      <div data-rchsum="${esc(troop)}" data-rchpage="hero_gear"></div>
-      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:12px;">
-        ${HERO_GEAR_PIECE_NAMES.map((piece) => pieceCard(troop, piece)).join("")}
-      </div>`;
-
-    wrap.querySelectorAll("[data-heropiecemax]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const [troop, piece] = btn.dataset.heropiecemax.split("|");
-        const maxIdxByTrack = {};
-        GEAR_LEVELING_TABLES.forEach((t) => {
-          maxIdxByTrack[t] = heroTrackCapIdx(t);
+        </div>`).join("")}</div></div>
+      <div class="hg-tbl"><span></span>${heads}${row(MF, t("hg_mastery"))}${row(EN, t("hg_enhance"))}${IS_OWNER ? `<div class="hg-rl hg-canl" data-hgcanrow hidden><b>${esc(t("hg_can_do"))}</b></div>${HERO_GEAR_PIECE_NAMES.map((pc) => `<span class="hg-can" data-hgcan="${esc(troop)}|${esc(pc)}" data-hgcanrow hidden></span>`).join("")}` : ""}</div>
+      <div class="hg-next">${nextHtml(troop)}</div>`;
+    // "Set all" for this troop: shows the level when all 4 pieces are on it.
+    tracksEl.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
+      const vals = new Set(HERO_GEAR_PIECE_NAMES.map((pc) => String(activeState[troop][pc][sel.dataset.hgsetall][sel.dataset.role])));
+      sel.value = vals.size === 1 ? [...vals][0] : "";
+      if (sel.selectedIndex < 0) sel.value = "";
+      sel.addEventListener("change", () => {
+        if (sel.value === "") return;
+        const track = sel.dataset.hgsetall, role = sel.dataset.role, v = Number(sel.value);
+        HERO_GEAR_PIECE_NAMES.forEach((pc) => {
+          const st = activeState[troop][pc][track];
+          st[role] = v;
+          if (role === "from" && (st.to ?? 0) < v) st.to = v; // the target is never below now
         });
-        const bothMaxed = GEAR_LEVELING_TABLES.every((t) => {
-          const st = activeState[troop][piece][t];
-          return st.from >= maxIdxByTrack[t] && st.to >= maxIdxByTrack[t];
-        });
-        const currentZeroTargetMaxed = GEAR_LEVELING_TABLES.every((t) => {
-          const st = activeState[troop][piece][t];
-          return st.from <= 0 && st.to >= maxIdxByTrack[t];
-        });
-        const bothZero = GEAR_LEVELING_TABLES.every((t) => {
-          const st = activeState[troop][piece][t];
-          return st.from <= 0 && st.to <= 0;
-        });
-        // Cycle: (0,0) -> (max,max) -> (0,max) -> (0,0) -> ...
-        let mode;
-        if (bothZero) mode = "max";
-        else if (bothMaxed) mode = "half";
-        else if (currentZeroTargetMaxed) mode = "zero";
-        else mode = "max";
-        GEAR_LEVELING_TABLES.forEach((t) => {
-          const st = activeState[troop][piece][t];
-          if (mode === "max") {
-            st.from = maxIdxByTrack[t];
-            st.to = maxIdxByTrack[t];
-          } else if (mode === "half") {
-            st.from = 0;
-            st.to = maxIdxByTrack[t];
-          } else {
-            st.from = 0;
-            st.to = 0;
-          }
-        });
-        saveCalcState(activeStorageKey, activeState);
-        // Only this piece's 4 chips change: set them and refresh the totals.
-        syncChips((c) => c.dataset.troop === troop && c.dataset.piece === piece);
-        syncSetAll();
-        updateHeroGearTotals();
+        changed();
       });
     });
+    fillHeroGearReach();
+  }
+  tracksEl.addEventListener("click", (e) => { const b = e.target.closest("[data-hgpc]"); if (b) openHgSheet(b.dataset.hgpc); });
 
-    // Chip text (and the Upcoming colour) from the saved levels.
-    function syncChips(match) {
-      wrap.querySelectorAll("select.lvchip[data-troop]").forEach((c) => {
-        if (match && !match(c)) return;
-        const { troop, piece, track, role } = c.dataset, v = activeState[troop][piece][track][role];
-        c.value = String(v);
-        c.classList.toggle("up", v > heroTrackReleasedIdx(track));
-      });
-    }
-    wrap.querySelectorAll("select.lvchip[data-troop]").forEach((c) => c.addEventListener("change", () => {
-      const { troop, piece, track, role } = c.dataset;
-      activeState[troop][piece][track][role] = Number(c.value);
-      saveCalcState(activeStorageKey, activeState);
-      syncChips((x) => x === c);
-      syncSetAll();
-      updateHeroGearTotals();
-    }));
-    syncChips();
-    // "Set all" for this troop: shows the level when all 4 pieces are on it.
-    function syncSetAll() {
-      wrap.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
-        const vals = new Set(HERO_GEAR_PIECE_NAMES.map((pc) => String(activeState[troop][pc][sel.dataset.hgsetall][sel.dataset.role])));
-        sel.value = vals.size === 1 ? [...vals][0] : "";
-        if (sel.selectedIndex < 0) sel.value = "";
-      });
-    }
-    wrap.querySelectorAll("select[data-hgsetall]").forEach((sel) => sel.addEventListener("change", () => {
-      if (sel.value === "") return;
-      const track = sel.dataset.hgsetall, role = sel.dataset.role;
-      HERO_GEAR_PIECE_NAMES.forEach((pc) => { activeState[troop][pc][track][role] = Number(sel.value); });
-      saveCalcState(activeStorageKey, activeState);
-      syncChips((c) => c.dataset.track === track && c.dataset.role === role);
-      updateHeroGearTotals();
-    }));
-    syncSetAll();
-
-    tracksEl.appendChild(wrap);
-    builtPanels[troop] = wrap;
+  // A level change from the sheet / table: save (not awaited), redraw the table,
+  // the sheet and the totals (the Backpack boxes, stats and "can reach" follow).
+  let sheetPiece = null;
+  function changed() {
+    saveCalcState(activeStorageKey, activeState);
+    drawPieces();
+    if (sheetPiece) drawSheet();
+    updateHeroGearTotals();
+  }
+  const setLv = (troop, piece, tb, role, v) => {
+    const st = activeState[troop][piece][tb];
+    v = Math.max(0, Math.min(lastIdx(tb), v));
+    if (role === "from") { if (v === st.from) return false; st.from = v; if ((st.to ?? 0) < v) st.to = v; }
+    else { v = Math.max(Number(st.from) || 0, v); if (v === st.to) return false; st.to = v; }
+    return true;
+  };
+  // The sheet for one piece: ‹ › next piece, stats now → target, Mastery and
+  // Enhance with Now / Target − / + (hold repeats) over the real dropdowns,
+  // milestone chips, this piece's needs, Max this piece, Done.
+  function drawSheet() {
+    const m = document.getElementById("gearSheet");
+    if (!m || !sheetPiece) return;
+    const troop = heroGearActiveTroop, piece = sheetPiece, k = HERO_GEAR_PIECE_NAMES.indexOf(piece);
+    const nav = (d) => `<button type="button" class="ch-nav" data-gsnav="${d}" ${k + d < 0 || k + d >= HERO_GEAR_PIECE_NAMES.length ? "disabled" : ""} aria-label="${d < 0 ? "‹" : "›"}">${d < 0 ? "&#8249;" : "&#8250;"}</button>`;
+    const stepper = (tb, role) => {
+      const { from, to } = cur(troop, piece, tb), v = role === "to" ? to : from, lo = role === "to" ? from : 0;
+      return `<div class="gs-row hg-srow"><span class="gs-l">${esc(role === "to" ? tgtLbl : nowLbl)}</span><div class="gs-stp${role === "to" ? " tgt" : ""}">
+        <button type="button" data-hgstep="${esc(tb)}|${role}|-1" aria-label="−" ${v <= lo ? "disabled" : ""}>&minus;</button>
+        <b class="${v > heroTrackReleasedIdx(tb) ? "up" : ""}"><span data-hgsv="${esc(tb)}|${role}">${esc(lab(tb, v))}</span>${chipHtml(troop, piece, tb, role)}</b>
+        <button type="button" data-hgstep="${esc(tb)}|${role}|1" aria-label="+" ${v >= lastIdx(tb) ? "disabled" : ""}>+</button></div></div>`;
+    };
+    const sec = (tb) => {
+      const id = `${troop}|${piece}|${tb}`, { from, to } = cur(troop, piece, tb);
+      const chips = tb === EN ? `<div class="hg-msr">${msIdx.map((i) => `<span class="hg-msc ${i <= from ? "r" : i <= to ? "t" : "g"}">${i <= from ? "&#10003; " : ""}E ${esc(lab(EN, i))} · ${msGain(piece, i)}</span>`).join("")}</div>` : "";
+      return `<div class="ch-sec hg-ssec"><div class="ch-sec-h"><b>${esc(trackDisplayName(tb))}</b><span class="rch-slot" data-rch="${esc(id)}"></span></div>${stepper(tb, "from")}${stepper(tb, "to")}<div data-rchbar="${esc(id)}"></div>${chips}</div>`;
+    };
+    const need = {};
+    const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
+    GEAR_LEVELING_TABLES.forEach((tb) => {
+      const { from, to } = cur(troop, piece, tb), rows = rowsOf(tb);
+      for (let i = from + 1; i <= to && i < rows.length; i++) cols.forEach(([col, name]) => { const v = Number(rows[i][col]) || 0; if (v) need[name] = (need[name] || 0) + v; });
+    });
+    const needs = Object.entries(need);
+    const atMax = GEAR_LEVELING_TABLES.every((tb) => cur(troop, piece, tb).to >= Math.max(cur(troop, piece, tb).from, heroTrackCapIdx(tb)));
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet hg-sh" role="dialog" aria-modal="true">
+      <div class="gs-head">${nav(-1)}<img class="hg-sh-pic" src="${heroGearIcon(troop, piece)}" alt="" /><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(piece))} · ${esc(troopDisplayName(troop))}</b></div>
+        ${nav(1)}<button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
+      ${GEAR_LEVELING_TABLES.map(sec).join("")}
+      <div class="gs-needs"><div class="meta">${esc(t("hg_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(Math.round(q).toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
+      <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-hgpmax ${atMax ? "disabled" : ""}>${esc(t("hg_max_piece"))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
+    </div>`;
+    m.querySelectorAll("select.lvchip[data-troop]").forEach((c) => { const v = cur(c.dataset.troop, c.dataset.piece, c.dataset.track); c.value = String(c.dataset.role === "to" ? v.to : v.from); });
+    // − / +: one level a tap; holding moves on by itself (the numbers follow
+    // while held, saved and redrawn when let go).
+    let hold = null;
+    const stepOnce = (tb, role, d) => {
+      const st = activeState[troop][piece][tb];
+      if (!setLv(troop, piece, tb, role, (role === "to" ? Math.max(st.from || 0, st.to ?? 0) : st.from || 0) + d)) return false;
+      const v = cur(troop, piece, tb);
+      m.querySelectorAll(`[data-hgsv^="${CSS.escape(tb)}|"]`).forEach((s) => { s.textContent = lab(tb, s.dataset.hgsv.endsWith("|to") ? v.to : v.from); });
+      return true;
+    };
+    const finish = () => {
+      if (!hold) return;
+      clearTimeout(hold.timer); clearInterval(hold.iv);
+      const did = hold.changed;
+      hold = null;
+      if (did) changed();
+    };
+    m.querySelectorAll("[data-hgstep]").forEach((b) => {
+      const [tb, role, d] = b.dataset.hgstep.split("|");
+      b.onpointerdown = (e) => {
+        if (!e.isPrimary || b.disabled) return;
+        e.preventDefault();
+        finish();
+        hold = { changed: stepOnce(tb, role, Number(d)), timer: 0, iv: 0 };
+        hold.timer = setTimeout(() => { if (hold) hold.iv = setInterval(() => { if (hold && stepOnce(tb, role, Number(d))) hold.changed = true; }, 90); }, 420);
+      };
+      b.onpointerup = finish;
+      b.onpointerleave = finish;
+      b.onpointercancel = finish;
+      b.onclick = (e) => { if (e.detail === 0) { hold = { changed: stepOnce(tb, role, Number(d)) }; finish(); } };
+    });
     fillHeroGearPieceStats();
     fillHeroGearReach();
-    return wrap;
   }
-  function showPanel(troop) {
-    buildPanel(troop);
-    Object.keys(builtPanels).forEach((tr) => {
-      builtPanels[tr].style.display = tr === troop ? "block" : "none";
-    });
+  function openHgSheet(piece) {
+    const m = gearSheetEl();
+    sheetPiece = piece;
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-gsclose]")) { sheetPiece = null; closeGearSheet(); return; }
+      const nv = ev.target.closest("[data-gsnav]");
+      if (nv && !nv.disabled) { const k = HERO_GEAR_PIECE_NAMES.indexOf(sheetPiece) + Number(nv.dataset.gsnav); if (HERO_GEAR_PIECE_NAMES[k]) { sheetPiece = HERO_GEAR_PIECE_NAMES[k]; drawSheet(); } return; }
+      if (ev.target.closest("[data-hgpmax]")) {
+        GEAR_LEVELING_TABLES.forEach((tb) => { const st = activeState[heroGearActiveTroop][sheetPiece][tb]; st.to = Math.max(Number(st.from) || 0, heroTrackCapIdx(tb)); });
+        changed();
+      }
+    };
+    m.onchange = (ev) => {
+      const c = ev.target.closest && ev.target.closest("select.lvchip[data-troop]");
+      if (!c) return;
+      if (setLv(c.dataset.troop, c.dataset.piece, c.dataset.track, c.dataset.role, Number(c.value))) changed();
+      else drawSheet();
+    };
+    drawSheet();
+    m.style.display = "flex";
   }
-  // The pinned troop switch shows that troop's pieces and stats.
-  showPanel(heroGearActiveTroop);
+
+  // The troop switch shows that troop's stats, pieces and "Can do now".
+  drawPieces();
   wirePlxTroopSwitch(target, "hero_gear", (tr) => {
     heroGearActiveTroop = tr;
-    showPanel(tr);
+    document.querySelectorAll("[data-rchsum][data-rchpage='hero_gear']").forEach((x) => { x.dataset.rchsum = tr; });
+    document.querySelectorAll("[data-hgsttl]").forEach((x) => { x.textContent = hgStatsTitle(); });
+    drawPieces();
     updateHeroGearCurrentStats();
   });
 
@@ -10260,11 +10399,26 @@ function fillHeroGearReach() {
   document.querySelectorAll("[data-rchsum][data-rchpage='hero_gear']").forEach((box) => {
     box.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === box.dataset.rchsum), "rch_u_tracks", "hero_gear");
   });
+  // The Pieces table's "Can do" row (design B1): ✓M 20 / ✓E 142 per piece.
+  const cans = document.querySelectorAll("[data-hgcan]");
+  if (cans.length) {
+    let any = false;
+    cans.forEach((c) => {
+      const [troop, piece] = c.dataset.hgcan.split("|");
+      c.innerHTML = GEAR_LEVELING_TABLES.map((tn) => {
+        const id = `${troop}|${piece}|${tn}`, tr = tracks.find((x) => x.id === id), lv = plan.lv[id];
+        if (!tr || !(lv > tr.from)) return "";
+        any = true;
+        return `<span class="rch-mini hg-cm" title="${esc(t("rch_mark_tip"))}">&#10003;${tn === "Hero Gear Mastery Forging" ? "M" : "E"} ${esc(lab(tn)(lv))}</span>`;
+      }).join("");
+    });
+    document.querySelectorAll("[data-hgcanrow]").forEach((x) => { x.hidden = !any; });
+  }
 }
 REACH_HOOKS.hero_gear = fillHeroGearReach;
 function updateHeroGearCurrentStats() {
   fillHeroGearPieceStats();
-  const el = document.querySelector('[data-tsw="hero_gear"] .plx-tsw-stats');
+  const el = document.getElementById("hgStats");
   if (!el || !HERO_GEAR_TABLES_CACHE) return;
   const statsByTroop = computeHeroGearStats(HERO_GEAR_SETS[heroGearActiveSet]);
   const maxByTroop = computeHeroGearStats(maxedHeroGearState());
@@ -10276,7 +10430,9 @@ function updateHeroGearCurrentStats() {
   }
   // The troop picked in the pinned switch (heroGearActiveTroop).
   const troop = HERO_GEAR_TROOPS.includes(heroGearActiveTroop) ? heroGearActiveTroop : HERO_GEAR_TROOPS[0];
-  el.innerHTML = plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: statsByTroop[troop][k], max: maxByTroop[troop][k] })), true);
+  // Whole numbers without ".0" so 4 boxes fit across a phone (design B1).
+  const dp = (v) => (Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1);
+  el.innerHTML = plxStatBoxesHtml([["ATK", "Attack"], ["DEF", "Defense"], ["LETH", "Lethality"], ["HP", "Health"]].map(([label, k]) => ({ label, val: statsByTroop[troop][k], max: maxByTroop[troop][k], dp: dp(statsByTroop[troop][k]) })), true);
 }
 
 
@@ -18788,7 +18944,7 @@ function infoize(root) {
 // mock-up): on phones one card at the top holds the stats (troop switch), "Can do
 // now" and the Backpack boxes with Trades / Pack cost. The page's own elements move
 // in (their redraws keep working: anything redrawn outside is moved in again).
-const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats", expertspage: "experts", expertsresearchpage: "experts" };
+const TOPBOX_TABS = { charmscalc: "LETH & HP", herogearcalc: "hg", refinepage: "", petsdata: "", t12research: "nostats", t11helios: "nostats", researchcenter: "nostats", expertspage: "experts", expertsresearchpage: "experts" };
 const TOPBOX_MQ = window.matchMedia("(max-width: 900px)");
 // Pages whose Settings line moves into the top box, above the stats (owner,
 // 3 Nov 2026: "for settings in pets and research show it in header above the stats").
@@ -18803,7 +18959,9 @@ function plxTopBox(root) {
     box.className = "panel cg-ans g1-top";
     // Header with Hide / Show for everything under the stats (owner, 3 Nov 2026).
     box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "g1_can_bp" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
-    main.insertBefore(box, main.firstChild);
+    // Heroes Gears (B1): the box sits under the troop switch + Set row.
+    const bar = main.querySelector(":scope > .hg-bar");
+    main.insertBefore(box, bar ? bar.nextSibling : main.firstChild);
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
   // The page's Settings card (same element, so its boxes keep their handlers).
@@ -18816,8 +18974,16 @@ function plxTopBox(root) {
     put(box.querySelector(".g1-st"), shell.querySelector(".t12x-main > .plx-stats-top"));
     const ttl = box.querySelector(".g1-st > .plx-stats-top > .t12x-title");
     if (ttl) put(box.querySelector(".g1-hd-t"), ttl);
+  } else if (TOPBOX_TABS[TAB] === "hg") {
+    // Heroes Gears (B1): "<Troop> stats", its 4 boxes and its "Can do now".
+    const ht = box.querySelector(".g1-hd-t"), want = hgStatsTitle();
+    if (ht.textContent !== want) ht.textContent = want;
+    ht.dataset.hgsttl = "";
+    put(box.querySelector(".g1-st"), shell.querySelector("#hgStats"));
+    const s = shell.querySelector("[data-rchsum][data-rchpage='hero_gear']");
+    if (s && s.innerHTML.trim()) put(box.querySelector(".g1-can"), s);
   } else if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
-  const sums = [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
+  const sums = TOPBOX_TABS[TAB] === "hg" ? [] : [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
   if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
   const amts = shell.querySelector(".t12x-amts > [id]");
   put(box.querySelector(".g1-bp"), amts);
