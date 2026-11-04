@@ -707,7 +707,7 @@
   .plx-head.has-cando{ flex-wrap:nowrap; justify-content:flex-start; gap:8px; }
   .plx-head.has-cando h2{ white-space:nowrap; flex:none; }
   .plx-head.has-cando .plx-maxbtn{ flex:none; }
-  .cando-b{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; box-sizing:border-box; height:40px; min-width:0; max-width:270px; flex:0 1 auto; padding:2px 9px 2px 6px; border:1px solid rgba(76,209,138,.5); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .cando-b{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; box-sizing:border-box; height:40px; min-width:0; max-width:270px; flex:0 1 auto; padding-block:2px 2px; padding-inline:6px 9px; border:1px solid rgba(76,209,138,.5); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .cando-b:hover{ border-color:rgba(76,209,138,.8); }
   .cando-ic{ flex:none; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:rgba(76,209,138,.18); color:var(--good); font-size:12px; font-weight:800; }
   .cando-t{ display:flex; flex-direction:column; min-width:0; line-height:1.18; }
@@ -716,7 +716,7 @@
   .cando-t small{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cando-t small.off{ opacity:.8; }
   .cando-car{ flex:none; color:var(--good); font-size:17px; font-weight:700; line-height:1; }
-  @media (max-width:379px){ .cando-l{ display:none; } .cando-ls{ display:inline; } .cando-b{ gap:5px; padding:2px 7px 2px 5px; } }
+  @media (max-width:379px){ .cando-l{ display:none; } .cando-ls{ display:inline; } .cando-b{ gap:5px; padding-block:2px 2px; padding-inline:5px 7px; } }
   .cando-box{ padding:14px 16px 16px; }
   .cando-hd{ display:flex; align-items:center; gap:10px; font-size:17px; }
   .cando-hd > b{ flex:1; display:flex; align-items:center; gap:6px; position:relative; }
@@ -737,7 +737,7 @@
   .cando-oh{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; }
   .cando-oh .cando-k{ margin:0; }
   .cando-ord{ margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-  .cando-ord .rch-ord-row{ min-height:40px; padding:4px 6px 4px 12px; box-sizing:border-box; }
+  .cando-ord .rch-ord-row{ min-height:40px; padding-block:4px 4px; padding-inline:12px 6px; box-sizing:border-box; }
   .cando-ord .rch-ord-row:first-child{ border-top:0; }
   .cando-ord.dim{ opacity:.6; }
   .cando-foot{ display:flex; flex-direction:column; gap:8px; margin-top:16px; }
@@ -1112,7 +1112,7 @@
   .rmr-sbx b.good{ color:var(--good); } .rmr-sbx b.warn{ color:var(--amber); }
   .rmr-sh{ margin:10px 0 6px; display:flex; }
   .rmr-needs{ display:flex; flex-wrap:wrap; gap:6px; }
-  .rmr-need{ position:relative; display:inline-flex; align-items:center; gap:6px; padding:5px 10px 5px 6px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); max-width:100%; }
+  .rmr-need{ position:relative; display:inline-flex; align-items:center; gap:6px; padding-block:5px 5px; padding-inline:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); max-width:100%; }
   .rmr-need img, .rmr-need > i{ width:24px; height:24px; object-fit:contain; flex:none; }
   .rmr-need span{ display:flex; flex-direction:column; min-width:0; }
   .rmr-need b{ font-size:12.5px; color:var(--frost); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -1280,7 +1280,7 @@
   .tl-in{ margin-inline-start:auto; font-size:12px; color:var(--muted); white-space:nowrap; }
   .tl-day.next .tl-in{ color:var(--ice); font-weight:700; }
   .tl-chips{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }
-  .tl-chip{ display:flex; align-items:center; gap:7px; background:var(--panel-2); border-radius:12px; padding:4px 8px 4px 4px; min-width:0; }
+  .tl-chip{ display:flex; align-items:center; gap:7px; background:var(--panel-2); border-radius:12px; padding-block:4px 4px; padding-inline:4px 8px; min-width:0; }
   .tl-pic{ position:relative; width:34px; height:34px; flex:0 0 auto; border-radius:9px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.06); }
   .tl-pic img{ width:34px; height:34px; object-fit:contain; border-radius:9px; display:block; }
   .tl-pic b{ font-size:14px; color:var(--ice); }
@@ -3144,15 +3144,15 @@ input,select,textarea{
   .adm-b table input:not([type=checkbox]), .adm-b table select{ background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:5px 6px; font-size:12.5px; }
   .adm-b table input[type=number]{ text-align:right; font-variant-numeric:tabular-nums; }
   .adm-b .chg{ border-color:var(--amber) !important; color:var(--amber); box-shadow:0 0 0 1px var(--amber) inset; }
-  .adm-b .adm-sortcell{ position:sticky; left:0; z-index:3; width:40px; padding:0 !important; background:var(--panel); }
-  .adm-b.adm-hasdrag td.adm-stick, .adm-b.adm-hasdrag th.adm-stick{ left:40px; }
+  .adm-b .adm-sortcell{ position:sticky; inset-inline-start:0; z-index:3; width:40px; padding:0 !important; background:var(--panel); }
+  .adm-b.adm-hasdrag td.adm-stick, .adm-b.adm-hasdrag th.adm-stick{ inset-inline-start:40px; }
   td.adm-dragcell{ padding:0 !important; width:40px; }
   .adm-b table{ width:auto !important; min-width:100%; }
   .adm-b table td{ padding:3px !important; }
   .adm-b table input[type=number]{ width:74px !important; }
   .adm-b table input[type=text], .adm-b table input:not([type]){ width:118px !important; }
   .adm-b td.adm-stick input, .adm-b td.adm-stick select{ width:var(--stickw, 96px) !important; }
-  .adm-b td.adm-stick, .adm-b th.adm-stick{ position:sticky; left:0; z-index:2; background:var(--panel); box-shadow:2px 0 0 var(--line); }
+  .adm-b td.adm-stick, .adm-b th.adm-stick{ position:sticky; inset-inline-start:0; z-index:2; background:var(--panel); box-shadow:2px 0 0 var(--line); }
   .adm-b td.adm-stick input{ font-weight:700; }
   .panel.adm-addpanel{ padding:10px 12px; }
   .adm-addfold > summary{ list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9px; background:var(--ice); color:#0f141b; font-weight:700; font-size:12.5px; }
@@ -3377,7 +3377,7 @@ input,select,textarea{
   summary.admh-gk::-webkit-details-marker{ display:none; }
   .admh-site[open] summary.admh-gk em{ display:none; }
   .admh-cards{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
-  .admh-c{ position:relative; display:flex; align-items:center; gap:9px; min-height:52px; padding:7px 22px 7px 9px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; min-width:0; }
+  .admh-c{ position:relative; display:flex; align-items:center; gap:9px; min-height:52px; padding-block:7px; padding-inline:9px 22px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; min-width:0; }
   .admh-c:hover{ border-color:var(--ice); }
   .admh-c .admh-dot{ position:absolute; top:8px; inset-inline-end:8px; }
   .admh-pic{ flex:none; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:20px; }
@@ -4553,7 +4553,7 @@ input,select,textarea{
   .mpw-panel .pkc-ic{ display:inline-flex; }
   .pkc-k{ margin:14px 0 8px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .pkc-chips{ display:flex; flex-wrap:wrap; gap:6px; }
-  .pkc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:2px 10px 2px 4px; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; }
+  .pkc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:36px; padding-block:2px 2px; padding-inline:4px 10px; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; }
   .pkc-chip select{ min-height:30px !important; height:30px; border:0; background:none; padding:0 2px; font-size:13px; font-weight:600; max-width:150px; color:var(--frost); }
   .pkc-add{ padding:0 12px; color:var(--ice); font-weight:700; border-style:dashed; cursor:pointer; }
   .pkc-add:disabled{ opacity:.4; cursor:default; }
@@ -4618,7 +4618,7 @@ input,select,textarea{
     .pkb-panel.pkb-steps .pk-tbl-wrap thead tr::before, .pkb-panel.pkb-steps .pk-tbl-wrap tbody::before{ content:attr(data-k); flex:0 0 100%; display:block; margin:2px 0 2px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
     .pkb-panel.pkb-steps .pk-tbl-wrap tbody::before{ margin:14px 0 8px; }
     .pkb-panel.pkb-steps .pk-tbl-wrap tr > :first-child{ position:static !important; box-shadow:none !important; background:none; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap th.pk-th{ display:inline-flex; align-items:center; gap:6px; min-width:0 !important; min-height:36px; padding:2px 10px 2px 3px !important; box-sizing:border-box; border:1px solid var(--line) !important; border-radius:10px; background:var(--panel-2) !important; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap th.pk-th{ display:inline-flex; align-items:center; gap:6px; min-width:0 !important; min-height:36px; padding-block:2px 2px !important; padding-inline:3px 10px !important; box-sizing:border-box; border:1px solid var(--line) !important; border-radius:10px; background:var(--panel-2) !important; }
     .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-price, .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-gems, .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-maxth{ display:none; }
     .pkb-panel.pkb-steps .pk-tbl-wrap th .pk-hdi{ width:30px; height:30px; border:0; background:none; }
     .pkb-panel.pkb-steps .pkc-nm{ display:inline; font-size:13px; font-weight:600; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -5040,6 +5040,41 @@ input,select,textarea{
   } catch (e) { /* the page still works at the old sizes */ }
 })();
 </script>
+<style id="fitFix">
+  /* Fit fixes for every screen (4 Nov 2026, ready-to-ship sweep). This sheet
+     sits after the phoneCompact script on purpose: phoneCompact / pcBigger
+     don't copy it (so these sizes are final), and it comes after their
+     sheets, so it wins at the same specificity. */
+  /* The top menu is the same size on every page (pcBigger made it 2 px bigger
+     off the Dashboard, so it ran onto a second line at 1024 / 1280 px). */
+  @media (min-width:761px){
+    nav.topnav .topnav-group-btn{ font-size:12.5px; }
+  }
+  @media (min-width:761px) and (max-width:1199px){
+    nav.topnav .topnav-group-btn{ padding:8px 6px; gap:4px; font-size:12px; }
+    nav.topnav .brand{ margin-inline-end:6px; }
+  }
+  @media (min-width:761px) and (max-width:1060px){
+    nav.topnav .brand h1{ display:none; }
+  }
+  /* Right-to-left: an English pack name in a calendar bar or the pack window's
+     title box is cut at its end (with "…"), not at its first letters. */
+  html[dir="rtl"] .pcl-bb, html[dir="rtl"] .pk-ed-bar input{ unicode-bidi:plaintext; }
+  /* Calendar bars: a block box, so a long name ends in "…" (a flex box can't show it). */
+  .pcl-bb{ display:block; line-height:24px; }
+  @media (max-width:700px){
+    /* Tap targets at least 32 px (the 4 px phone trim left these at 24 - 29). */
+    .g1-fold, .sa-btn, .btn.small, .btn.ghost, .t12x-maxall, .b3-a, .bp-chests, .pur-seg button, .rl-lnk, .t12x-step select, details > summary.meta{ min-height:32px !important; }
+    .rfa-x{ width:32px; height:32px; }
+    .t12x-step button{ width:32px; height:32px; }
+    .pks-i{ position:relative; }
+    .pks-i::after{ content:""; position:absolute; inset:-9px; }
+    .site-footer a{ display:inline-block; padding:8px 2px; }
+    .pcl-bb{ line-height:20px; }
+    /* Dashboard: no text under 11 px (its own 2 px trim stopped at 10). */
+    .dash-fit .qk-chip span, .dash-fit .sa-s, .dash-fit .sa-chip, .dash-fit .rc-mini-sh, .dash-fit .rc-mini-w, .dash-fit .sa-card .btn.small, .dash-fit .roster-pick .meta{ font-size:11px !important; }
+  }
+</style>
 </head>
 <body>
 
@@ -6267,9 +6302,23 @@ function uiSetText(tn, v) {
   if (pe && pe.tagName === "OPTION" && !pe.hasAttribute("value")) pe.setAttribute("value", pe.textContent);
   tn.nodeValue = v;
 }
+// Right-to-left pages (Arabic): "now → target" arrows point the reading way
+// ("now ← target"). Not inside an LTR isolate (bidiNum) or a [dir=ltr] box,
+// which still read left to right. Only → becomes ←, so running it twice is safe.
+function rtlArrows(s, el) {
+  if (!s || s.indexOf("\u2192") < 0 || document.documentElement.dir !== "rtl" || (el && el.closest && el.closest('[dir="ltr"]'))) return s;
+  let d = 0, o = "";
+  for (const ch of s) {
+    if (ch === "\u2066" || ch === "\u2067" || ch === "\u2068") d++;
+    else if (ch === "\u2069" && d > 0) d--;
+    o += ch === "\u2192" && !d ? "\u2190" : ch;
+  }
+  return o;
+}
+function uiTextNode(tn) { return rtlArrows(uiText(tn.nodeValue), tn.parentElement); }
 function localizeDom(root) {
   if (uiLocOff() || !root) return;
-  if (root.nodeType === 3) { const v = uiText(root.nodeValue); if (v !== root.nodeValue && !(root.parentElement && root.parentElement.closest("[data-noloc],script,style,textarea"))) uiSetText(root, v); return; }
+  if (root.nodeType === 3) { const v = uiTextNode(root); if (v !== root.nodeValue && !(root.parentElement && root.parentElement.closest("[data-noloc],script,style,textarea"))) uiSetText(root, v); return; }
   if (root.nodeType !== 1 || root.closest("[data-noloc]")) return;
   // Speed: checking every text node's ancestors is costly on big pages (Hero
   // Gear has thousands of options). When nothing inside or around this root
@@ -6277,7 +6326,7 @@ function localizeDom(root) {
   const excludedAround = root.closest("script,style,textarea") || root.querySelector("[data-noloc],script,style,textarea");
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, excludedAround ? { acceptNode: (n) => (n.parentElement && n.parentElement.closest("[data-noloc],script,style,textarea") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) } : null);
   const nodes = []; let n; while ((n = walker.nextNode())) nodes.push(n);
-  nodes.forEach((tn) => { const v = uiText(tn.nodeValue); if (v !== tn.nodeValue) uiSetText(tn, v); });
+  nodes.forEach((tn) => { const v = uiTextNode(tn); if (v !== tn.nodeValue) uiSetText(tn, v); });
   const els = root.querySelectorAll ? [root, ...root.querySelectorAll("[title],[placeholder],[aria-label]")] : [];
   els.forEach((el) => ["title", "placeholder", "aria-label"].forEach((a) => { const v0 = el.getAttribute && el.getAttribute(a); if (v0) { const v = uiText(v0); if (v !== v0) el.setAttribute(a, v); } }));
 }
@@ -6285,7 +6334,7 @@ const UI_LOC_OBSERVER = (typeof MutationObserver !== "undefined") ? new Mutation
   if (uiLocOff()) return;
   muts.forEach((mu) => {
     if (mu.type === "childList") mu.addedNodes.forEach((nd) => localizeDom(nd));
-    else if (mu.type === "characterData") { const nd = mu.target; if (nd.parentElement && nd.parentElement.closest("[data-noloc],script,style,textarea")) return; const v = uiText(nd.nodeValue); if (v !== nd.nodeValue) uiSetText(nd, v); }
+    else if (mu.type === "characterData") { const nd = mu.target; if (nd.parentElement && nd.parentElement.closest("[data-noloc],script,style,textarea")) return; const v = uiTextNode(nd); if (v !== nd.nodeValue) uiSetText(nd, v); }
     else if (mu.type === "attributes") { const v0 = mu.target.getAttribute(mu.attributeName); if (v0) { const v = uiText(v0); if (v !== v0) mu.target.setAttribute(mu.attributeName, v); } }
   });
 }) : null;
@@ -10565,9 +10614,9 @@ async function renderOverview(opts = {}) {
         const pct = maxTotal > 0 ? Math.min(100, (total / maxTotal) * 100) : 0;
         const diff = Math.max(0, maxTotal - total);
         return `<button type="button" class="dh3-bx" data-drilldown="${esc(tt.key)}|${esc(st.key)}" title="${esc(`${troopDisplayName(tt.key)} · ${tStatLabel(st.label)}: ${total.toFixed(1)}% / ${maxTotal.toFixed(0)}%`)}">
-          <span class="dh3-top"><span class="dh3-l">${esc(DASH_SHORT[st.key] || tStatLabel(st.label))}</span>${diff > 0.05 ? `<em>+${bidiNum(diff.toFixed(1))}</em>` : `<em class="ok">&#10003;</em>`}</span>
+          <span class="dh3-top"><span class="dh3-l">${esc(DASH_SHORT[st.key] || tStatLabel(st.label))}</span>${diff > 0.05 ? `<em>${bidiNum("+" + diff.toFixed(1))}</em>` : `<em class="ok">&#10003;</em>`}</span>
           <b>${bidiNum(total.toFixed(1))}</b>
-          <span class="dh3-max">/ ${bidiNum(maxTotal.toFixed(0))}</span>
+          <span class="dh3-max">${bidiNum("/ " + maxTotal.toFixed(0))}</span>
           <span class="dh3-bar"><i style="width:${pct}%;"></i></span>
         </button>`;
       }).join("")}
@@ -10695,7 +10744,7 @@ function openDrilldownModal(title, total, maxTotal, sources, recompute) {
         <div><span class="k">${esc(t("max_possible"))}</span><b style="color:var(--ice);">${f1(maxTotal)}</b></div>
         <div><span class="k">${esc(t("difference_label"))}</span><b style="color:#e0a030;">${f1(Math.max(0, maxTotal - total))}</b></div>
         <div class="bd-bar big"><i style="width:${totalPct}%;"></i></div>
-        <div class="meta" style="grid-column:1 / -1; font-size:11px;">${totalPct.toFixed(0)}% ${esc(t("bd_of_max"))}</div>
+        <div class="meta" style="grid-column:1 / -1; font-size:11px;">${bidiNum(totalPct.toFixed(0) + "%")} ${esc(t("bd_of_max"))}</div>
       </div>
       ${!sources.length ? `<div class="meta">${esc(t("no_sources_yet"))}</div>` : ""}
       ${open.length ? `<div class="t12x-k" style="margin:14px 0 6px;">${esc(t("bd_left"))} (${open.length})</div>${open.map(row).join("")}` : ""}
@@ -10969,7 +11018,7 @@ async function renderGearLevelingGroup(target) {
     if (!tracksEl.isConnected) return;
     const troop = heroGearActiveTroop, open = !!SETALL_OPEN.hero;
     const heads = HERO_GEAR_PIECE_NAMES.map((pc) => `<button type="button" class="hg-ph" data-hgpc="${esc(pc)}"><img src="${heroGearIcon(troop, pc)}" alt="" loading="lazy" /><span>${esc(pieceDisplayName(pc))}</span></button>`).join("");
-    const row = (tb, label) => `<div class="hg-rl"><b>${esc(label)}</b><small>${esc(lab(tb, 0))} – ${esc(lab(tb, heroTrackCapIdx(tb)))}</small></div>${HERO_GEAR_PIECE_NAMES.map((pc) => cellHtml(troop, pc, tb)).join("")}`;
+    const row = (tb, label) => `<div class="hg-rl"><b>${esc(label)}</b><small>${bidiNum(`${esc(lab(tb, 0))} – ${esc(lab(tb, heroTrackCapIdx(tb)))}`)}</small></div>${HERO_GEAR_PIECE_NAMES.map((pc) => cellHtml(troop, pc, tb)).join("")}`;
     tracksEl.innerHTML = `<div class="sa-wrap${open ? " open" : ""}" data-sakey="hero">
         <div class="sa-head"><b class="hg-pt">${esc(t("hg_pieces"))}</b><button type="button" class="sa-btn" data-satoggle aria-expanded="${open}">${esc(t("set_all_short"))} <span class="sa-car">${open ? "&#9652;" : "&#9662;"}</span></button></div>
         <div class="sa-box">${GEAR_LEVELING_TABLES.map((tb) => `<div class="sa-row">
@@ -11060,7 +11109,7 @@ async function renderGearLevelingGroup(target) {
       const st = activeState[troop][piece][tb];
       if (!setLv(troop, piece, tb, role, (role === "to" ? Math.max(st.from || 0, st.to ?? 0) : st.from || 0) + d)) return false;
       const v = cur(troop, piece, tb);
-      m.querySelectorAll(`[data-hgsv^="${CSS.escape(tb)}|"]`).forEach((s) => { s.textContent = lab(tb, s.dataset.hgsv.endsWith("|to") ? v.to : v.from); });
+      m.querySelectorAll(`[data-hgsv^="${window.CSS.escape(tb)}|"]`).forEach((s) => { s.textContent = lab(tb, s.dataset.hgsv.endsWith("|to") ? v.to : v.from); });
       return true;
     };
     const finish = () => {
@@ -11819,7 +11868,7 @@ function reachTroopGain(tracks, plan) {
 function reachGainText(g) {
   const ks = ["Attack", "Defense", "Lethality", "Health"].filter((k) => g[k] > 0.005);
   if (!ks.length) return "";
-  const r = (v) => `+${Math.round(v * 10) / 10}%`;
+  const r = (v) => bidiNum(`+${Math.round(v * 10) / 10}%`);
   if (ks.length > 1 && ks.every((k) => Math.abs(g[k] - g[ks[0]]) < 0.05)) return `${r(g[ks[0]])} ${ks.map((k) => REACH_STAT_ABBR[k]).join(" · ")}`;
   return ks.map((k) => `${r(g[k])} ${REACH_STAT_ABBR[k]}`).join(" ");
 }
@@ -12077,7 +12126,7 @@ function fillHeroGearReach() {
   const lab = (tn) => (i) => { const r = rowsOf(tn)[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
   tracks.forEach((tr) => {
     const [, , tn] = tr.id.split("|");
-    const slot = document.querySelector(`[data-rch="${CSS.escape(tr.id)}"]`), bar = document.querySelector(`[data-rchbar="${CSS.escape(tr.id)}"]`);
+    const slot = document.querySelector(`[data-rch="${window.CSS.escape(tr.id)}"]`), bar = document.querySelector(`[data-rchbar="${window.CSS.escape(tr.id)}"]`);
     if (slot) slot.innerHTML = reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab(tn));
     if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
   });
@@ -12353,7 +12402,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     saveCalcState("pack_budget_off", PACK_BUDGET_OFF);
     PACK_PLAN_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
-    el.querySelectorAll(`[data-mpbud="${CSS.escape(id)}"]`).forEach((x) => { x.checked = cb.checked; const row = x.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !cb.checked); });
+    el.querySelectorAll(`[data-mpbud="${window.CSS.escape(id)}"]`).forEach((x) => { x.checked = cb.checked; const row = x.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !cb.checked); });
   }));
   el.querySelectorAll("[data-mprow]").forEach((row) => {
     const go = () => (own ? mpOpenOnPacks(row.dataset.mprow) : mpwOpen(row.dataset.mprow));
@@ -12790,7 +12839,7 @@ function packOpenSettingsHere(id) {
     setTimeout(() => { const box = document.querySelector(".pkb-panel details[data-packlink]"); if (box) { box.open = true; box.scrollIntoView({ behavior: "smooth", block: "start" }); } }, 60);
     return;
   }
-  const panel = document.querySelector(`[data-packtable][data-pkid="${CSS.escape(String(id))}"]`);
+  const panel = document.querySelector(`[data-packtable][data-pkid="${window.CSS.escape(String(id))}"]`);
   if (!panel) { toast(t("pk_preview_notshown")); return; }
   if (!PACKS_OPEN.has(String(id))) { const ed = panel.querySelector("[data-pk-toggle]"); if (ed) ed.click(); }
   const box = panel.querySelector("details[data-packlink]");
@@ -15620,7 +15669,7 @@ async function renderPacksPage() {
       try { localStorage.setItem("packs_filter", packsFilter); } catch (err) { /* blocked */ }
       renderAll();
       // keep the tapped heading where it was on the screen
-      const again = listEl.querySelector(`[data-pkbfold="${CSS.escape(k)}"]`);
+      const again = listEl.querySelector(`[data-pkbfold="${window.CSS.escape(k)}"]`);
       if (again) { const d = again.getBoundingClientRect().top - top0; if (Math.abs(d) > 1) window.scrollBy(0, d); }
       return;
     }
@@ -15637,7 +15686,7 @@ async function renderPacksPage() {
   listEl.addEventListener("change", (e) => {
     const sel = e.target.closest && e.target.closest("select[data-pkbhow]");
     if (!sel) return;
-    const panel = sel.closest("[data-packtable]"), radio = panel && panel.querySelector(`input[data-pkhow="${CSS.escape(sel.value)}"]`);
+    const panel = sel.closest("[data-packtable]"), radio = panel && panel.querySelector(`input[data-pkhow="${window.CSS.escape(sel.value)}"]`);
     if (radio && !radio.checked) { radio.checked = true; radio.dispatchEvent(new Event("change", { bubbles: true })); }
   });
   listEl.addEventListener("click", (e) => {
@@ -15681,7 +15730,7 @@ async function renderPacksPage() {
     const inf = e.target.closest("[data-pksinfo]");
     if (inf) {
       e.preventDefault();
-      const box = inf.closest("[data-packlink]"), txt = box && box.querySelector(`[data-pksinfotext="${CSS.escape(inf.dataset.pksinfo)}"]`);
+      const box = inf.closest("[data-packlink]"), txt = box && box.querySelector(`[data-pksinfotext="${window.CSS.escape(inf.dataset.pksinfo)}"]`);
       if (txt) txt.hidden = !txt.hidden;
       return;
     }
@@ -16222,10 +16271,10 @@ async function renderPacksPage() {
   // one, the row's look and the category's "counted" line follow.
   function pkbSyncBudget(id) {
     const on = packInBudgets(id);
-    listEl.querySelectorAll(`[data-pkbudrow="${CSS.escape(String(id))}"]`).forEach((cb) => { cb.checked = on; const row = cb.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !on); });
-    listEl.querySelectorAll(`.pkb-panel[data-pkid="${CSS.escape(String(id))}"] [data-pkbud]`).forEach((cb) => { cb.checked = on; });
+    listEl.querySelectorAll(`[data-pkbudrow="${window.CSS.escape(String(id))}"]`).forEach((cb) => { cb.checked = on; const row = cb.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !on); });
+    listEl.querySelectorAll(`.pkb-panel[data-pkid="${window.CSS.escape(String(id))}"] [data-pkbud]`).forEach((cb) => { cb.checked = on; });
     pkbCats.forEach((g) => {
-      const sub = listEl.querySelector(`[data-pkbcat="${CSS.escape(g.key)}"] [data-pkbcatsub]`);
+      const sub = listEl.querySelector(`[data-pkbcat="${window.CSS.escape(g.key)}"] [data-pkbcatsub]`);
       if (sub) sub.textContent = pkbCatSub(g.list, g.key);
     });
   }
@@ -18931,7 +18980,7 @@ function openBackpackScan(groups, bp, done, more) {
       const added = [];
       modal.querySelectorAll("[data-scantick]").forEach((tick) => {
         if (!tick.checked) return;
-        const n = tick.dataset.scantick, v = modal.querySelector(`[data-scanval="${CSS.escape(n)}"]`).value.replace(/\D/g, "");
+        const n = tick.dataset.scantick, v = modal.querySelector(`[data-scanval="${window.CSS.escape(n)}"]`).value.replace(/\D/g, "");
         if (v === "") return;
         if (Number(v)) bp[n] = Number(v); else delete bp[n];
         if (addable.has(n) && Number(v)) added.push(n);
@@ -19070,7 +19119,7 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
     </div>
   `;
 
-  const rowsEl = target.querySelector(`#catRows-${CSS.escape(categoryName)}`);
+  const rowsEl = target.querySelector(`#catRows-${window.CSS.escape(categoryName)}`);
   const colIds = cat.columns.map((c) => c.id);
   const rowsHtml = rows
     .map((r) => {
@@ -19110,10 +19159,10 @@ async function renderCategoryInto(target, categoryName, rerenderFn) {
     });
   });
 
-  target.querySelector(`#addRowForm-${CSS.escape(categoryName)}`).addEventListener("submit", async (e) => {
+  target.querySelector(`#addRowForm-${window.CSS.escape(categoryName)}`).addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = e.target;
-    const errEl = target.querySelector(`#addRowErr-${CSS.escape(categoryName)}`);
+    const errEl = target.querySelector(`#addRowErr-${window.CSS.escape(categoryName)}`);
     errEl.textContent = "";
     const name = f.rowName.value.trim();
     if (!name) { errEl.textContent = "Enter a stat line name first"; return; }
@@ -20056,7 +20105,7 @@ async function renderStateTimelinePage() {
   let moreHtml = "";
   if (farDays.length) {
     const gens = farDays.filter(isGenDay).map((d) => genAt.get(d));
-    const genTxt = !gens.length ? "" : t("tl_gen").replace("{g}", gens.length > 1 ? `${gens[0]} – ${gens[gens.length - 1]}` : gens[0]);
+    const genTxt = !gens.length ? "" : t("tl_gen").replace("{g}", gens.length > 1 ? bidiNum(`${gens[0]} – ${gens[gens.length - 1]}`) : gens[0]);
     const big = farDays.flatMap((d) => byDay.get(d)).filter((x) => x.kind === "page" || x.kind === "lab");
     const what = [genTxt, ...big.slice(0, 2).map((x) => x.name)].filter(Boolean).join(" + ");
     const sub = [t(farDays.length === 1 ? "tl_more_1" : "tl_more_n").replace("{n}", farDays.length), what, now != null ? inTxt(farDays[farDays.length - 1]) : ""].filter(Boolean).join(" · ");
@@ -21782,7 +21831,7 @@ const packCostShown = (calcKey, v) => {
   if (PACK_COST_SHOWN[calcKey] === v) return;
   PACK_COST_SHOWN[calcKey] = v;
   if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey]();
-  document.querySelectorAll(`[data-plxprice="${CSS.escape(calcKey)}"]`).forEach((b) => { b.innerHTML = plxPriceLabel(calcKey); });
+  document.querySelectorAll(`[data-plxprice="${window.CSS.escape(calcKey)}"]`).forEach((b) => { b.innerHTML = plxPriceLabel(calcKey); });
 };
 // (i) squares (owner, 3 Nov 2026: "any description for any page or header
 // inside an i square like Chief Gear"): page descriptions, card descriptions
@@ -21992,7 +22041,7 @@ function dashRcSheet(key) {
   document.querySelectorAll(".rc-card.rc-open").forEach((c) => c.classList.remove("rc-open"));
   document.querySelectorAll(".rc-ph, .rc-bd").forEach((x) => x.remove());
   if (!key) return;
-  const card = document.querySelector(`.rc-card[data-rcopen="${CSS.escape(key)}"]`);
+  const card = document.querySelector(`.rc-card[data-rcopen="${window.CSS.escape(key)}"]`);
   if (!card) return;
   const ph = card.cloneNode(true);
   ph.classList.add("rc-ph"); ph.removeAttribute("data-rcopen"); ph.setAttribute("aria-hidden", "true");
@@ -22528,6 +22577,12 @@ function bidiNum(s) {
   if (s == null || s === "" || typeof document === "undefined" || document.documentElement.dir !== "rtl") return s;
   return "\u2066" + s + "\u2069";
 }
+// Every signed number in a ready-made line ("+4 left", "next +2% ATK"), kept in
+// reading order on right-to-left pages.
+function bidiNums(s) {
+  if (s == null || typeof document === "undefined" || document.documentElement.dir !== "rtl") return s;
+  return String(s).replace(/(?<![#\w.,])[+\-\u2212]?\d[\d.,]*%?/g, (m) => bidiNum(m));
+}
 // A planner total that is still short: the amount (no minus sign) with a
 // small "short" under it, in the squares' red. Used by every planner page's
 // "Total resources needed" squares.
@@ -22682,7 +22737,6 @@ const RFC_LAB_TIERS = [
   { tier: 5, cost: 160, returns: [[3, 0.70], [4, 0.12], [5, 0.09], [6, 0.04], [7, 0.015], [8, 0.01], [9, 0.01], [10, 0.005], [11, 0.005], [12, 0.005]] },
 ];
 const RFC_LAB_MAX_PER_TIER = 20;
-const FCS_PER_FC = 1.3; // 1 Fire Crystal -> 1.3 Fire Crystal Shards (T11 / T12)
 const RFC_LAB_DAYS = 7;
 function rfcExpected(t) { return t.returns.reduce((s, [n, p]) => s + n * p, 0); }
 // Cost of `n` attempts of tier `k` in one week when the lower tiers were
@@ -23956,7 +24010,7 @@ function budgetNotOpenText(calcKey) {
     const cap = charmCapIdx();
     let hi = -1;
     CHARM_PIECES.forEach((p) => (CHARM_CALC_STATE[p.key] || []).forEach((sl) => { const c = CHARM_LEVELS.indexOf(String(sl.current)), tg = CHARM_LEVELS.indexOf(String(sl.target)); if (tg > c && tg > cap) hi = Math.max(hi, tg); }));
-    return hi > cap ? `${t("goal_lv")} ${CHARM_LEVELS[cap + 1]} – ${CHARM_LEVELS[hi]}` : "";
+    return hi > cap ? `${t("goal_lv")} ${bidiNum(`${CHARM_LEVELS[cap + 1]} – ${CHARM_LEVELS[hi]}`)}` : "";
   }
   if (calcKey === "chief_gear" && CHIEF_GEAR_ROWS && CHIEF_GEAR_ROWS.length) {
     const cap = chiefGearCapIdx(), last = CHIEF_GEAR_ROWS.length - 1;
@@ -27583,9 +27637,9 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   const ownedChanged = (name) => {
     budgetInvalidate();
     saveCalcState(`material_owned_${calcKey || "chief_gear"}`, owned);
-    const tile = summaryOn && el.querySelector(`[data-bsedit="${CSS.escape(name)}"]`);
+    const tile = summaryOn && el.querySelector(`[data-bsedit="${window.CSS.escape(name)}"]`);
     if (tile) tile.outerHTML = editRowHtml(name);
-    const note = !summaryOn && el.querySelector(`[data-bplinknote="${CSS.escape(name)}"]`);
+    const note = !summaryOn && el.querySelector(`[data-bplinknote="${window.CSS.escape(name)}"]`);
     if (note) note.innerHTML = backpackLinkNoteHtml(calcKey || "chief_gear", name, link);
     // A chest / convertible item changes other materials' status too.
     recomputeEffOwned();
@@ -27594,7 +27648,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
       const needed = Number((g.totals || {})[n]) || 0;
       let { statusColor, statusText } = statusFor(n, needed);
       if (summaryOn && needed === 0 && new Set(hiddenTrades.filter((tr) => tr.from === n).map((tr) => tr.to)).size > 1) { statusColor = "var(--muted)"; statusText = t("bs_used_trades"); }
-      const statusDiv = el.querySelector(`[data-neededstatus="${CSS.escape(n)}|${CSS.escape(g.label || "")}"] span:last-child`);
+      const statusDiv = el.querySelector(`[data-neededstatus="${window.CSS.escape(n)}|${window.CSS.escape(g.label || "")}"] span:last-child`);
       if (statusDiv) {
         statusDiv.style.color = statusColor;
         statusDiv.textContent = statusText;
@@ -27672,7 +27726,7 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     const name = b.dataset.bpuse;
     setBackpackManual(calcKey || "chief_gear", name, false, link);
     owned[name] = backpackAmountFor(name, link.bp);
-    const input = el.querySelector(`[data-ownedmat="${CSS.escape(name)}"]`);
+    const input = el.querySelector(`[data-ownedmat="${window.CSS.escape(name)}"]`);
     if (input) input.value = input.dataset.short && !/\(minutes\)$/.test(name) ? shortAmount(owned[name]) : owned[name];
     ownedChanged(name);
   };
@@ -28082,7 +28136,7 @@ function galToastHide() {
 }
 // A short glow on the tile that was just changed.
 function galFlash(root, id) {
-  const el = root && root.querySelector(`.sg-t[data-gid="${CSS.escape(String(id))}"]`);
+  const el = root && root.querySelector(`.sg-t[data-gid="${window.CSS.escape(String(id))}"]`);
   if (!el) return;
   el.classList.add("flash");
   setTimeout(() => el.classList.remove("flash"), 700);
@@ -28538,7 +28592,7 @@ async function renderIslandGallery() {
   function openPop(id) {
     if (ISL_POP) ISL_POP.close();
     const sections = document.getElementById("islandSections");
-    const tileEl = sections && sections.querySelector(`[data-island="${CSS.escape(String(id))}"]`);
+    const tileEl = sections && sections.querySelector(`[data-island="${window.CSS.escape(String(id))}"]`);
     const s = islands.find((x) => String(x.id) === String(id));
     if (!tileEl || !s) return;
     const pop = document.createElement("div");
@@ -29131,7 +29185,7 @@ function bnFmt(v) { return String(Math.round((Number(v) || 0) * 100) / 100); }
 function bnBoxesHtml(list) {
   return `<div class="bn-s2${list.length >= 4 ? " n4" : ""}">${list.map((s) => {
     const val = Number(s.val) || 0, max = Number(s.max) || 0, left = Math.max(0, max - val), pct = max > 0 ? Math.min(100, (val / max) * 100) : 0;
-    const tag = left > 1e-9 ? `<em>${esc(t("bn_left").replace("{n}", bnFmt(left)))}</em>` : max > 0 ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
+    const tag = left > 1e-9 ? `<em>${bidiNums(esc(t("bn_left").replace("{n}", bnFmt(left))))}</em>` : max > 0 ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
     return `<div class="bn-sb"><div class="bn-sb-t"><span>${esc(s.label)}</span>${tag}</div><b>${bidiNum(`+${bnFmt(val)}%`)}</b><small>${bidiNum(`/ ${bnFmt(max)}%`)}</small><span class="bn-bar${max > 0 ? "" : " z"}"><i style="width:${pct.toFixed(1)}%"></i></span></div>`;
   }).join("")}</div>`;
 }
@@ -29151,7 +29205,7 @@ function bnTitleHtml(title, desc, maxId) {
 function bnLevelRowHtml(o) {
   const vals = o.values, i = vals.findIndex((v) => Number(v) === Number(o.cur)), last = Math.min(vals.length - 1, o.rel);
   const lv = Math.max(0, i);
-  const next = i >= 0 && i < last ? `<em>${esc(t("bn_next").replace("{n}", bnFmt(vals[i + 1] - vals[i])).replace("{s}", bnAbbr(o.stat)))}</em>` : i >= last ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
+  const next = i >= 0 && i < last ? `<em>${bidiNums(esc(t("bn_next").replace("{n}", bnFmt(vals[i + 1] - vals[i])).replace("{s}", bnAbbr(o.stat))))}</em>` : i >= last ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
   return `<div class="bn-lvh"><span><b>${esc(tStatLabel(o.stat))}</b> · ${esc(t("bn_lv_of").replace("{a}", lv).replace("{b}", last))}</span>${next}</div>
     <div class="bn-lc">${vals.map((v, j) => `<button type="button" class="${j === 0 ? "z " : ""}${j === i ? "on" : j < i ? "lo" : ""}${j > last ? " up" : ""}" data-bnlv="${esc(o.stat)}|${v}" aria-pressed="${j === i}"${j > last ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${bnFmt(v)}</button>`).join("")}</div>`;
 }
@@ -29394,7 +29448,7 @@ async function renderExtraBonusHeroes() {
       const m0 = maxes[0] || 0, now = (m0 / 5) * n, left = m0 - now;
       return `<div class="bn-hr">${face}<span class="bn-tx"><b>${esc(dataName(x.name))}</b><span>${esc(x.d.stats.map((r) => bnAbbr(r.stat)).join(" · "))} · ${esc(t("bn_all_troops"))}</span>
         <span class="bn-stars" role="group" aria-label="${esc(`${n} ${t("stars_of_5")}`)}">${[1, 2, 3, 4, 5].map((k) => `<button type="button" data-hsstar="${esc(x.key)}|${k}" aria-label="${k}&#9733;">${heroStarSvg(k <= n ? 6 : 0, { size: 28 })}</button>`).join("")}</span></span>
-        <span class="bn-vv"><b>${bidiNum(`+${bnFmt(now)}%`)}</b><small>${same ? esc(t("hs_each").replace("{n}", bnFmt(m0))) : bidiNum(`/ ${maxes.map(bnFmt).join(" · ")}%`)}</small>${left > 1e-9 ? `<em>${esc(t("bn_left").replace("{n}", bnFmt(left)))}</em>` : `<em class="ok">${esc(t("bn_max"))}</em>`}</span></div>`;
+        <span class="bn-vv"><b>${bidiNum(`+${bnFmt(now)}%`)}</b><small>${same ? bidiNums(esc(t("hs_each").replace("{n}", bnFmt(m0)))) : bidiNum(`/ ${maxes.map(bnFmt).join(" · ")}%`)}</small>${left > 1e-9 ? `<em>${bidiNums(esc(t("bn_left").replace("{n}", bnFmt(left))))}</em>` : `<em class="ok">${esc(t("bn_max"))}</em>`}</span></div>`;
     };
     body.innerHTML = `${ok.length ? `<div class="t12x-card bn-card">${bnHeadHtml(t("bn_stats_all"), bnCountHtml(stars, "bn_of_stars", ok.length * 5))}${bnBoxesHtml(boxes)}</div>` : ""}
       <div class="t12x-card bn-card">${bnHeadHtml(t("hs_heroes"), `<i>${esc(t("hs_tap_star"))}</i>`)}${list.map(row).join("")}</div>`;
@@ -29976,7 +30030,7 @@ async function renderT11HeliosPage() {
     }
     const stats = computeStats(troop);
     const maxStats = computeMaxStats(troop);
-    const box = (k, v, sub) => `<div><div><span>${esc(k)}</span><b>${v}</b><small>${esc(sub)}</small></div></div>`;
+    const box = (k, v, sub) => `<div><div><span>${esc(k)}</span><b>${bidiNum(v)}</b><small>${esc(sub).replace(/[+\-\u2212]?[\d.,]+%/g, (m) => bidiNum(m))}</small></div></div>`;
     const node = (track) => {
       const levels = tracks[track];
       return plxNodeHtml({ key: track, label: dataName(track), cur: T11_STATE[troop][track] || 0, max: levels.length, rel: t11Len(troop, track), target: t11TargetOf(troop, track, levels.length), cost: costLine(computeNeeded(troop, track)) });
@@ -31738,7 +31792,7 @@ async function renderExpertsPage() {
         <div class="exp-xl">
           <span>EXP</span>
           <input type="number" min="0" step="1" inputmode="numeric" class="keep-w${expHaveVal > 0 ? " has" : ""}" data-expskillexp="${esc(hero)}|${esc(sk)}" value="${expHaveVal || ""}" placeholder="0" aria-label="${esc(t("skill_exp_have"))}" style="--xw:${Math.max(3, Math.round(expHaveVal || 0).toLocaleString().length)};" />
-          <span>/ ${bidiNum(Math.round(exp).toLocaleString())} EXP</span>
+          <span>${bidiNum("/ " + Math.round(exp).toLocaleString())} EXP</span>
           <button type="button" class="btn ghost small" data-expskillmax="${esc(hero)}|${esc(sk)}" ${exp <= 0 || expHaveVal >= exp ? "disabled" : ""} title="${esc(t("skill_max_exp_tip"))}">${esc(t("max_button"))}</button>
         </div>
         ${des > cur ? `<div class="exp-sk-k">${esc(t("exp_still_needed").replace("{a}", cur).replace("{b}", des))}</div>
@@ -32242,7 +32296,7 @@ async function renderRefinePage() {
     const f2 = (v) => (Math.round(v * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const box = (name, v, mx) => {
       const left = Math.max(0, mx - v), pc = mx > 0 ? Math.min(100, (v / mx) * 100) : 0;
-      return `<div class="rf-sb"><div class="rf-sbk">${esc(tStatLabel(name))}</div><div class="rf-sbv">${bidiNum(f2(v) + "%")}<small> / ${bidiNum(f2(mx) + "%")}</small></div><div class="rf-bar"><i style="width:${pc.toFixed(1)}%;"></i></div><div class="rf-sbl${left > 0.0001 ? "" : " ok"}">${left > 0.0001 ? esc(t("rf_left").replace("{v}", f2(left))) : "&#10003; " + esc(t("max_label"))}</div></div>`;
+      return `<div class="rf-sb"><div class="rf-sbk">${esc(tStatLabel(name))}</div><div class="rf-sbv">${bidiNum(f2(v) + "%")}<small> ${bidiNum("/ " + f2(mx) + "%")}</small></div><div class="rf-bar"><i style="width:${pc.toFixed(1)}%;"></i></div><div class="rf-sbl${left > 0.0001 ? "" : " ok"}">${left > 0.0001 ? esc(t("rf_left").replace("{v}", f2(left))) : "&#10003; " + esc(t("max_label"))}</div></div>`;
     };
     el.innerHTML = `<div class="rf-sbs">${box("Lethality", grand[l], grandMax[l])}${box("Health", grand[h], grandMax[h])}</div>`;
   }
@@ -32454,7 +32508,7 @@ async function renderRefinePage() {
   // without touching any input elements (avoids stealing focus from a field
   // the user just clicked into while another field's blur was still settling).
   function updateStatRow(pet, statKey) {
-    const row = listEl.querySelector(`[data-refinerowfor="${CSS.escape(pet)}|${CSS.escape(statKey)}"]`);
+    const row = listEl.querySelector(`[data-refinerowfor="${window.CSS.escape(pet)}|${window.CSS.escape(statKey)}"]`);
     if (!row) return;
     const statDef = STAT_KEYS.find((s) => s.key === statKey);
     const s = petState(pet);
@@ -32473,7 +32527,7 @@ async function renderRefinePage() {
     }
     const remainingEl = row.querySelector("[data-refineremaining]");
     if (remainingEl) {
-      remainingEl.textContent = isMaxed ? "" : `-${remaining.toFixed(2)}%`;
+      remainingEl.textContent = isMaxed ? "" : bidiNum(`-${remaining.toFixed(2)}%`);
       remainingEl.style.color = color;
       remainingEl.style.width = isMaxed ? "0" : "";
       remainingEl.style.overflow = isMaxed ? "hidden" : "";
@@ -32518,9 +32572,9 @@ async function renderRefinePage() {
               <div data-refinebar style="flex:1; height:7px; border-radius:4px; background:var(--panel-2); overflow:hidden; min-width:35px;">
                 <div style="width:${pct}%; height:100%; background:${barColor}; border-radius:4px; transition:width 0.2s;"></div>
               </div>
-              <span data-refineremaining class="meta" style="font-size:10px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : `-${remaining.toFixed(2)}%`}</span>
+              <span data-refineremaining class="meta" style="font-size:10px; color:${barColor}; flex-shrink:0; white-space:nowrap; ${isMaxed ? "width:0; overflow:hidden;" : ""}">${isMaxed ? "" : bidiNum(`-${remaining.toFixed(2)}%`)}</span>
             </div>
-            <span class="meta" style="font-size:10px; flex-shrink:0; white-space:nowrap;">${esc(t("of_max_prefix"))} ${maxVal.toFixed(2)}%</span>
+            <span class="meta" style="font-size:10px; flex-shrink:0; white-space:nowrap;">${esc(t("of_max_prefix"))} ${bidiNum(maxVal.toFixed(2) + "%")}</span>
           </div>`;
             }
           ).join("")}
@@ -32563,7 +32617,7 @@ async function renderRefinePage() {
         const allMaxed = STAT_KEYS.every(({ key, maxKey }) => (Number(s[key]) || 0) >= pct1(m[maxKey]) - 0.001);
         STAT_KEYS.forEach(({ key, maxKey }) => {
           s[key] = allMaxed ? 0 : pct1(m[maxKey]);
-          const input = listEl.querySelector(`input[data-refinepet="${CSS.escape(pet)}"][data-refinestat="${CSS.escape(key)}"]`);
+          const input = listEl.querySelector(`input[data-refinepet="${window.CSS.escape(pet)}"][data-refinestat="${window.CSS.escape(key)}"]`);
           if (input) input.value = s[key];
           updateStatRow(pet, key);
         });
@@ -33026,7 +33080,7 @@ async function renderResearchCenterPage() {
     tabsEl.onclick = (e) => { const b = e.target.closest("[data-rctab]"); if (b && b.dataset.rctab !== rcActive) { rcActive = b.dataset.rctab; renderGroups(); } };
     const bases = RC_BASE_CATEGORIES[rcActive] || [];
     const stats = computeStats(bases);
-    const box = (k, v) => `<div><div><span>${esc(k)}</span><b>${v}</b></div></div>`;
+    const box = (k, v) => `<div><div><span>${esc(k)}</span><b>${bidiNum(v)}</b></div></div>`;
     groupsEl.innerHTML = `
       <div class="t12x-boxes">
         ${box("ATK", `+${stats.Attack.toFixed(1)}%`)}${box("DEF", `+${stats.Defense.toFixed(1)}%`)}${box("LETH", `+${stats.Lethality.toFixed(1)}%`)}${box("HP", `+${stats.Health.toFixed(1)}%`)}
@@ -33543,7 +33597,7 @@ async function renderT12ResearchPage() {
     });
     const headHtml = () => {
       const stats = computeT12Stats(T12_STATE[troop]);
-      const box = (k, v, sub, icon) => `<div>${icon ? `<img src="${esc(icon)}" alt="" />` : ""}<div><span>${esc(k)}</span><b>${v}</b><small>${esc(sub)}</small></div></div>`;
+      const box = (k, v, sub, icon) => `<div>${icon ? `<img src="${esc(icon)}" alt="" />` : ""}<div><span>${esc(k)}</span><b>${bidiNum(v)}</b><small>${esc(sub).replace(/[+\-\u2212]?[\d.,]+%/g, (m) => bidiNum(m))}</small></div></div>`;
       return `<div class="t12x-boxes">
         ${box("ATK", `+${stats.Attack}%`, t("t12x_max_pct").replace("{n}", statMax.Attack))}
         ${box("DEF", `+${stats.Defense}%`, t("t12x_max_pct").replace("{n}", statMax.Defense))}
@@ -33608,7 +33662,7 @@ async function renderT12ResearchPage() {
       tabsEl.innerHTML = tabsHtml();
       const nodeEl = troopsEl.querySelector(`[data-t12node="${def.key}"]`);
       if (nodeEl) nodeEl.outerHTML = nodeHtml(def);
-      const gh = troopsEl.querySelector(`[data-t12fold="${CSS.escape(def.group)}"]`);
+      const gh = troopsEl.querySelector(`[data-t12fold="${window.CSS.escape(def.group)}"]`);
       if (gh) gh.innerHTML = groupHeadHtml(def.group);
     };
     const setLevel = (def, v) => {
@@ -33673,7 +33727,7 @@ async function renderT12ResearchPage() {
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.t12_research);
     REACH_LAST.t12_research = { plan, tracks, unit: "rch_u_nodes", go: (troop) => { const b = document.querySelector(`[data-t12tab="${troop}"]`); if (b) b.click(); } };
     tracks.forEach((tr) => {
-      const el = troopsEl.querySelector(`[data-rch="t12|${CSS.escape(tr.id)}"]`);
+      const el = troopsEl.querySelector(`[data-rch="t12|${window.CSS.escape(tr.id)}"]`);
       if (!el) return;
       el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.waits[tr.id] && !plan.blocker[tr.id] ? null : plan.blocker[tr.id], "rch_u_levels")}${reachWaitHtml("t12", lockNodes, tr, plan, tracks)}` : "";
     });
@@ -36559,7 +36613,7 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
       const up = !!(tr.querySelector("[data-up]") || {}).checked;
       return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(admPlLabel(p.lab) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
     };
-    const gLabel = (g) => { const a = admPlLabel(parts(g.rows[0]).lab), b = admPlLabel(parts(g.rows.at(-1)).lab); return g.k === "__new" ? t("admpl_new") : a === b ? a : `${a} – ${b}`; };
+    const gLabel = (g) => { const a = admPlLabel(parts(g.rows[0]).lab), b = admPlLabel(parts(g.rows.at(-1)).lab); return g.k === "__new" ? t("admpl_new") : a === b ? a : bidiNum(`${a} – ${b}`); };
     // Range chips: the folds split into up to 5 runs.
     const big = groups.length > 4;
     const per = Math.ceil(groups.length / 5);
@@ -37896,7 +37950,7 @@ function wireAdminCategoryReorder(container, page, cats, onChange) {
   container.querySelectorAll(".admc-cats [data-catid]").forEach((chip) => dragSort(chip, {
     hold: true, axis: "x", item: (h) => h, row: "[data-catid]",
     done: (r, from, to) => move(from, to),
-    refocus: (r) => { const c = container.querySelector(`.admc-cats [data-catid="${CSS.escape(r.dataset.catid)}"]`); if (c) c.focus(); },
+    refocus: (r) => { const c = container.querySelector(`.admc-cats [data-catid="${window.CSS.escape(r.dataset.catid)}"]`); if (c) c.focus(); },
   }));
   // Rename / delete the chosen category (its items move with a rename).
   container.querySelectorAll("[data-catadd]").forEach((btn) => btn.addEventListener("click", async () => {
