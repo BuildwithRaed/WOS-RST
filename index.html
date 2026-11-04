@@ -1867,7 +1867,7 @@
   .pur-a2-tag.end{ background:rgba(232,162,60,.16); color:#e8a23c; }
   .pur-a2-none{ padding:12px 0; font-size:12.5px; }
   /* O1 (owner, 4 Nov 2026): one switch Next weeks | Coming | Bought, the chosen list on the page */
-  .pur-o1-tabs{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:3px; padding:3px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; }
+  .pur-o1-tabs{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:3px; padding:3px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; }
   .pur-o1-tab{ min-width:0; min-height:44px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; padding:5px 4px; border:0; border-radius:9px; background:none; color:var(--muted); font:inherit; cursor:pointer; }
   .pur-o1-tab b{ font-size:13px; font-weight:700; }
   .pur-o1-tab small{ font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -1875,8 +1875,14 @@
   .pur-o1-tab.on small{ color:#dfe9f5; }
   .pur-o1-hd{ margin:-2px 0 8px; }
   .pur-o1-hd .t12x-title{ margin:0; flex:1 1 auto; }
-  .pur-o1-card.folded .pur-o1-bd{ display:none; }
-  .pur-o1-card.folded .pur-o1-hd{ margin-bottom:-2px; }
+  /* Box 1 (owner picked Option 1, 4 Nov 2026): week strip on top of this week's checklist */
+  .pur-b1{ padding-top:10px; }
+  .pur-b1 .pur-o1-wbs{ margin:0 0 8px; }
+  .pur-b1 .pur-o1-fl{ margin:2px 0 6px; }
+  .pur-b1-chk{ border-top:1px solid var(--line); }
+  .pur-b1-chk[hidden]{ display:none; }
+  .pur-b1 .pur-wk-all{ width:100%; min-height:42px; margin-top:8px; }
+  .pur-b1 #purSuggest .pur-upd{ top:40px; }
   .pur-o1-pane[hidden]{ display:none; }
   .pur-o1-list .pur-bh{ text-transform:uppercase; letter-spacing:.06em; font-size:11.5px; font-weight:700; color:var(--muted); padding:10px 0 2px; }
   .pur-o1-list .pur-bh b{ font-weight:800; }
@@ -13198,7 +13204,9 @@ let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll 
 let PUR_SHEET = null;
 // My Purchases lists = O1 (owner, 4 Nov 2026): one switch Next weeks | Coming | Bought
 // under the checklist, the chosen list on the page (kept in this browser).
-let PUR_TAB = (() => { try { const v = localStorage.getItem("pur_tab"); if (v === "next" || v === "coming" || v === "bought") return v; } catch (e) { /* blocked */ } return "next"; })();
+// Box 1 (owner picked Option 1, 4 Nov 2026): the week strip moved into the This week box,
+// so this switch is Will buy | Bought only ("next" from before reads as Will buy).
+let PUR_TAB = (() => { try { const v = localStorage.getItem("pur_tab"); if (v === "coming" || v === "bought") return v; } catch (e) { /* blocked */ } return "coming"; })();
 const PUR_LIST_ALL = new Set(); // "n" / "c" / "b": that list shows every line (else the first 5), for the visit
 let PUR_GRP_OPEN = null; // the Coming / Bought line whose small sheet is open (group id), kept across redraws
 let PUR_EDIT = null; // My Purchases: the ✎ Edit card open in that sheet (its state), kept across redraws
@@ -13623,14 +13631,9 @@ async function renderPurchasesPage() {
   const tabBtn = (k, title, sub, id) => `<button type="button" role="tab" class="pur-o1-tab${PUR_TAB === k ? " on" : ""}" data-purtab="${k}" aria-selected="${PUR_TAB === k}"><b>${esc(title)}</b><small${id ? ` id="${id}"` : ""}>${esc(sub)}</small></button>`;
   const boughtSub = boughtMonth.length ? packFmtLocal(sumCost(boughtMonth), sample, false) : bought.length ? packFmtLocal(sumCost(bought), sample, false) : t("pur_o1_none");
   const tabsHtml = `<div class="pur-o1-tabs" role="tablist">
-      ${tabBtn("next", t("pur_a2_next"), t("budgets_working"), "purNextSub")}
       ${tabBtn("coming", t("pur_o1_coming"), comingLater.length ? t("pur_o1_n_v").replace("{n}", nPacks(comingLater)).replace("{v}", packFmtLocal(sumCost(comingLater), sample, false)) : t("pur_o1_none"))}
       ${tabBtn("bought", t("pur_bought_list"), boughtSub)}
     </div>`;
-  // The box folds (Hide / Show, owner 4 Nov 2026), kept on the account (calc_state
-  // bar_hidden keeps only false values: false here = hidden). Open by default.
-  const LISTS_KEY = "pur:lists-hidden";
-  const listsHidden = BAR_SHOW_ALL[LISTS_KEY] === false;
   const pane = (k, body) => `<div class="pur-o1-pane" data-purpane="${k}"${PUR_TAB === k ? "" : " hidden"}>${body}</div>`;
 
   content.innerHTML = `
@@ -13642,15 +13645,17 @@ async function renderPurchasesPage() {
         ${wcCard}
       </div>
       <div class="pur-a2-r">
-        <div class="t12x-card pur-chk" id="purChk"></div>
-        <div class="t12x-card pur-o1-card${listsHidden ? " folded" : ""}" data-purlists>
-          <div class="pur-wc-hd pur-o1-hd"><span class="t12x-title">${esc(t("pur_o1_box"))}</span><button type="button" class="g1-fold pur-wc-fold" data-purlistsfold aria-expanded="${!listsHidden}">${wcFoldHtml(listsHidden)}</button></div>
+        <div class="t12x-card pur-chk pur-b1" id="purBox1">
+          <div class="pur-sug-in" id="purSuggest"${sugH ? ` style="min-height:${sugH}px;"` : ""}>${PUR_SUG_KEEP && PUR_SUG_KEEP.html
+            // While it's worked out again, the last strip / list stays (faded) instead of a blank box.
+            ? `<div class="pur-upd bud-pending small">${esc(t("pur_updating"))}</div><div class="pur-stale" aria-hidden="true" inert>${PUR_SUG_KEEP.html}</div>`
+            : PUR_SUG_WEEK !== 0 ? `<div class="bud-pending small">${esc(t("budgets_working"))}</div>` : ""}</div>
+          <div class="pur-b1-chk" id="purChk"${PUR_SUG_WEEK === 0 ? "" : " hidden"}></div>
+        </div>
+        <div class="t12x-card pur-o1-card" data-purlists>
+          <div class="pur-wc-hd pur-o1-hd"><span class="t12x-title">${esc(t("pur_o1_box"))}</span></div>
           <div class="pur-o1-bd">
           ${tabsHtml}
-          ${pane("next", `<div class="pur-sug-in" id="purSuggest"${sugH ? ` style="min-height:${sugH}px;"` : ""}>${PUR_SUG_KEEP && PUR_SUG_KEEP.html
-            // While it's worked out again, the last list stays (faded) instead of a blank box.
-            ? `<div class="pur-upd bud-pending small">${esc(t("pur_updating"))}</div><div class="pur-stale" aria-hidden="true" inert>${PUR_SUG_KEEP.html}</div>`
-            : `<div class="bud-pending small">${esc(t("budgets_working"))}</div>`}</div>`)}
           ${pane("coming", listBody("c", comingLater))}
           ${pane("bought", listBody("b", bought))}
           </div>
@@ -13790,12 +13795,6 @@ async function renderPurchasesPage() {
     chk.innerHTML = all.length ? shown.map(rowHtml).join("") + (extra > 1 ? `<button type="button" class="pur-a2-more" data-pura2more>${esc(PUR_CHK_ALL ? t("pur_a2_less") : t("pur_a2_more").replace("{n}", extra))}</button>` : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
     const moreB = chk.querySelector("[data-pura2more]");
     if (moreB) moreB.addEventListener("click", () => { PUR_CHK_ALL = !PUR_CHK_ALL; drawWeek(P, pending); });
-    // Next weeks: the next two weeks with something to buy.
-    const nextSub = document.getElementById("purNextSub");
-    if (nextSub && P && P.buckets) {
-      const ks = P.keys.filter((k) => k !== 0 && k !== "after" && P.buckets.get(k) && P.buckets.get(k).cost > 0).slice(0, 2);
-      nextSub.textContent = ks.length ? t("pur_o1_next_sub").replace("{v}", fmt(P.buckets.get(ks[0]).cost)) : t("pur_o1_none");
-    } else if (nextSub && !pending) nextSub.textContent = t("pur_o1_none");
     // Taps
     ans.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { if (b.classList.contains("on")) return; try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
     ans.querySelectorAll("[data-purgospend]").forEach((b) => {
@@ -13834,8 +13833,7 @@ async function renderPurchasesPage() {
         // A "will buy" of this week: its sheet (items, dates, ✎ Edit); a plan pack: the Will buy pop-up.
         if (it.coming.length) { openGrp(`c|${bucketFor("c", it.coming[0])}|${purGroupKey(it.coming[0])}`); return; }
         const sg = it.sugg[0];
-        if (sg && sugCtl && sugCtl.open(sg.i)) return;
-        setTab("next", true);
+        if (sg && sugCtl) sugCtl.open(sg.i);
       };
       rw.addEventListener("click", (e) => { if (!e.target.closest("button")) go(); });
       rw.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !e.target.closest("button")) { e.preventDefault(); go(); } });
@@ -13891,7 +13889,13 @@ async function renderPurchasesPage() {
     const nFollow = followRows.length;
     const rows = followRows.concat(otherRows);
     const head = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta" style="font-size:11px; margin:-4px 0 8px;">${esc(t("pur_sug_desc"))}</div>`;
-    if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; sugCtl = null; drawWeek(plan ? { plan, rows: [], sched: [], nFollow: 0 } : null); return; }
+    if (!rows.length) {
+      // Nothing planned: box 1 is just this week's checklist (no week strip).
+      box.innerHTML = plan ? "" : `<div class="meta pur-a2-none">${esc(t("pur_sug_fail"))}</div>`;
+      box.style.minHeight = ""; box.classList.remove("pur-upding"); box.dataset.drawn = "1";
+      const chk0 = document.getElementById("purChk"); if (chk0) chk0.hidden = false;
+      sugCtl = null; drawWeek(plan ? { plan, rows: [], sched: [], nFollow: 0 } : null); return;
+    }
     let total = followRows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
     // Packs come on the calendar, so each suggestion is spread over the days it
     // can actually be bought (Now, then each time the pack comes back).
@@ -13991,9 +13995,9 @@ async function renderPurchasesPage() {
       if (tDay && k === lastWeek && tDay < e) e = tDay;
       return `${short(a)} – ${short(e)}`;
     };
-    if (!keys.includes(PUR_SUG_WEEK)) PUR_SUG_WEEK = keys[0];
-    // O1: this week is the checklist above, so the list starts on the next week with packs.
-    if (PUR_SUG_WEEK === 0 && keys.length > 1) PUR_SUG_WEEK = keys[1];
+    // Box 1 (Option 1, 4 Nov 2026): This week (0) = the ✓ checklist under the strip; kept for the visit.
+    // A week emptied by a pick goes on to the next week with packs (else This week).
+    if (!keys.includes(PUR_SUG_WEEK)) PUR_SUG_WEEK = (typeof PUR_SUG_WEEK === "number" && keys.find((k) => k === "after" || k > PUR_SUG_WEEK)) || keys[0];
     let sugAll = false; // every line drawn (the checklist opening a pack's Will buy pop-up)
     const thisCost = buckets.has(0) ? buckets.get(0).cost : 0;
     const untilCost = keys.filter((k) => k !== "after").reduce((a, k) => a + (buckets.has(k) ? buckets.get(k).cost : 0), 0);
@@ -14122,15 +14126,16 @@ async function renderPurchasesPage() {
           ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
         </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
       };
-      // Week boxes: this week is the checklist above, so it's left out (unless it's all there is).
-      const boxKeys = keys.filter((k) => k !== 0 || PUR_SUG_WEEK === 0 || keys.length === 1);
-      const boxes = `<div class="pur-wbs pur-o1-wbs">${boxKeys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
+      // Week strip (box 1, Option 1): This week · Next week · Week 3 … This week = the ✓ checklist below.
+      const boxes = `<div class="pur-wbs pur-o1-wbs">${keys.map((k) => { const b = buckets.get(k); return `<button type="button" class="pur-wb${k === PUR_SUG_WEEK ? " on" : ""}" data-purwk="${k}"><span>${tOff != null && k === lastWeek ? "&#127919; " : ""}${esc(wkName(k))}</span><b>${b && b.cost ? esc(money(b.cost)) : "—"}</b><small>${esc(wkRange(k))}</small>${cmp ? `<i class="pur-cmp-${otherName}">${esc(t("pur_tag_" + otherName))} ${b && b.alt ? esc(money(b.alt)) : "—"}</i>` : ""}</button>`; }).join("")}</div>`;
       const per = plan.spend ? t(plan.spend.per === "week" ? "spend_week" : "spend_month") : "";
       const followLine = cmp
         ? `<div class="pur-o1-fl"><span class="pur-o1-flt">${esc(t("pur_o1_following"))} <b>${esc(followName)}</b> <span class="meta">· ${esc(t("pur_o1_other_plan").replace("{plan}", t("pur_tag_" + otherName)).replace("{v}", money(sel ? sel.alt || 0 : 0)))}</span></span><button type="button" class="pur-o1-sw" data-purfollow="${otherName}" title="${esc(t("pur_follow_line"))}">&#8644; ${esc(t("pur_o1_switch"))}</button></div>`
         : plan.spend ? `<div class="pur-o1-fl" data-purgospend role="button" tabindex="0"><span class="pur-o1-flt">${esc(t("pur_o1_following"))} <b>${esc(followName)}</b> <span class="meta">(${esc(money(plan.spend.amount))} ${esc(per)})</span></span><span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
       const budLine = bi ? `<div class="pur-o1-bud"><span style="color:${bi.spent > bi.avail + 0.5 ? "var(--danger)" : "var(--good)"};">${bi.spent > bi.avail + 0.5 ? "&#9888;" : "&#10003;"} ${esc(bi.name)}</span> <span class="meta">${esc(money(bi.spent))} / ${esc(money(bi.avail))}</span></div>` : "";
       // First 5 lines, then "Show N more" (the + Will buy button counts every ticked pack).
+      // This week shows the ✓ checklist instead (drawWeek), unless the checklist is opening a pack's pop-up.
+      if (PUR_SUG_WEEK === 0 && !sugAll) return `${boxes}${followLine}${budLine}`;
       const lim = sugAll || PUR_LIST_ALL.has("n") ? list : list.slice(0, 5);
       const moreN = list.length - 5;
       const listPart = list.length
@@ -14140,7 +14145,11 @@ async function renderPurchasesPage() {
       const hint = list.length ? `<div class="meta pur-o1-hint"><span>${esc(t("pur_o1_n_hint"))}</span>${list.some(([i]) => canBuy(i)) ? ` <button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button>` : ""}</div>` : "";
       return `${boxes}${followLine}${budLine}${listPart}${buyBtn}${hint}`;
     };
-    if (PUR_NEW_FOR_ALL || IS_OWNER) box.innerHTML = compactHtml();
+    if (PUR_NEW_FOR_ALL || IS_OWNER) {
+      box.innerHTML = compactHtml();
+      const chkEl = document.getElementById("purChk");
+      if (chkEl) chkEl.hidden = !(PUR_SUG_WEEK === 0 && !sugAll);
+    }
     else box.innerHTML = head + followHtml + splitHtml + chipsHtml + selHead + (list.length ? `<div class="pur-sug-list">` + list.map(([i, xs]) => {
       const r = rows[i], tb = sugTable(r), n = xs.reduce((a, x) => a + x.count, 0);
       const names = tb ? packUsedForNames(tb) : [];
@@ -14517,10 +14526,10 @@ async function renderPurchasesPage() {
     // From the Pack calendar's "+ Will buy": open that pack's Will buy pop-up.
     if (focusI != null) {
       const b = box.querySelector(`[data-pursug="${focusI}"]`);
-      if (b) b.click();
+      if (b) b.click(); else if (PUR_SUG_WEEK === 0 && sugCtl) sugCtl.open(focusI);
     }
   };
-  const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; drawWeek(null); } };
+  const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="meta pur-a2-none">${esc(t("pur_sug_fail"))}</div>`; const chk0 = document.getElementById("purChk"); if (chk0) chk0.hidden = false; drawWeek(null); } };
   const ov = PUR_SUG_OVERLAY;
   if (ov) {
     // Drawn at once from the same plan; the new plan replaces it quietly when ready.
@@ -14968,15 +14977,6 @@ async function renderPurchasesPage() {
     if (box) box.classList.toggle("folded", f);
     b.innerHTML = wcFoldHtml(f);
     b.setAttribute("aria-expanded", String(!f));
-  }));
-  content.querySelectorAll("[data-purlistsfold]").forEach((b) => b.addEventListener("click", () => {
-    const hide = BAR_SHOW_ALL[LISTS_KEY] !== false; // shown now → hide it
-    if (hide) BAR_SHOW_ALL[LISTS_KEY] = false; else delete BAR_SHOW_ALL[LISTS_KEY];
-    saveBarHidden();
-    const box = b.closest("[data-purlists]");
-    if (box) box.classList.toggle("folded", hide);
-    b.innerHTML = wcFoldHtml(hide);
-    b.setAttribute("aria-expanded", String(!hide));
   }));
   // "Gen 15 heroes Dec 21 · change ›": the Packs page's Pack dates & prices window, New heroes.
   content.querySelectorAll("[data-purngopen]").forEach((b) => b.addEventListener("click", () => { PKB_DP_FOCUS = "ng"; goToTab("packs"); }));
