@@ -3609,6 +3609,9 @@ input,select,textarea{
   .bs-tiles.bs-slide{ display:flex !important; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; padding-bottom:2px; }
   .bs-tiles.bs-slide::-webkit-scrollbar{ display:none; }
   .bs-tiles > .bs-sub{ grid-column:1 / -1; }
+  /* Affinity box at one box's width in the sliding row: its 3 items get small */
+  .bs-tiles.bs-slide > .bs-aff{ padding:6px 4px 8px; }
+  .bs-tiles.bs-slide > .bs-aff *{ font-size:11px; }
   /* Expert sigil boxes: smaller in the sliding row, about 4½ on screen (owner, 4 Nov 2026) */
   .bs-tiles.plx-sig.bs-slide > *{ flex:0 0 calc((100% - 3 * 6px) / 4.5); min-height:0; padding-top:6px; padding-bottom:6px; }
   .bs-tiles.plx-sig.bs-slide img{ width:28px; height:28px; }
@@ -21870,9 +21873,10 @@ function bsSlideFit(root) {
     const cols = getComputedStyle(g).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
     const wide = kids.filter((ch) => { const cs = getComputedStyle(ch); return /span|-1/.test(cs.gridColumnEnd + " " + cs.gridColumnStart); });
     const small = kids.filter((ch) => !wide.includes(ch));
-    if (small.length > cols) {
-      if (!wide.length) { g.style.setProperty("--bscols", cols); g.classList.add("bs-slide"); }
-      else {
+    // Wide boxes (Experts' Affinity) slide in the same row at one box's width (owner, 4 Nov 2026).
+    if (kids.length > cols) {
+      g.style.setProperty("--bscols", cols); g.classList.add("bs-slide");
+      if (false) {
         const row = document.createElement("div");
         row.className = "bs-tiles bs-slide bs-sub";
         row.style.setProperty("--bscols", cols);
