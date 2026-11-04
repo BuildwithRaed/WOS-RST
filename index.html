@@ -2120,21 +2120,111 @@ input,select,textarea{
   .plx-piecestat em{ font-style:normal; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
   .plx-piecestat b{ color:var(--good); }
   .plx-piecestat i{ font-style:normal; color:var(--ice); font-weight:600; }
-  /* Research Lab: summary squares and schedule cards */
-  .rfc-sum{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
-  .rfc-sum .plx-stat b{ font-size:20px; }
-  @media (max-width: 600px){ .rfc-sum{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-  .rfc-tier-row{ display:flex; gap:8px; align-items:stretch; margin-bottom:8px; }
-  .rfc-tier-k{ flex:0 0 34px; display:grid; place-items:center; border-radius:10px; background:rgba(255,255,255,.05); font-weight:800; font-size:13px; }
-  .rfc-plans{ flex:1; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
-  .rfc-plan{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:start; padding:8px 10px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.02); color:var(--text); font:inherit; cursor:pointer; min-width:0; }
-  .rfc-plan.on{ border-color:var(--ice); background:rgba(111,211,242,.10); box-shadow:inset 0 0 0 1px var(--ice); }
-  .rfc-plan-h{ font-weight:700; font-size:12.5px; }
-  .rfc-plan-h em{ font-style:normal; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:8px; background:rgba(126,230,168,.15); color:var(--good); white-space:nowrap; }
-  .rfc-plan-h em.fast{ background:rgba(111,211,242,.15); color:var(--ice); }
-  .rfc-plan-k{ font-size:11px; color:var(--muted); }
-  .rfc-plan-k b{ color:var(--good); font-size:14px; }
-  .rfc-plan-w{ font-size:11.5px; font-weight:600; color:var(--frost); }
+  /* Research Lab (owner's design, Nov 2026): Best for you, How fast?, This week, Tiers window */
+  .rl-head{ margin-bottom:10px; }
+  .rl-head .rl-tiers{ margin-inline-start:auto; min-height:36px; padding:0 12px; font-size:13px; font-weight:600; }
+  .rl-grid{ display:grid; grid-template-columns:minmax(0, 1fr); gap:0 14px; }
+  @media (min-width: 901px){ .rl-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  .rl-col{ min-width:0; }
+  .rl-card{ display:block; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px; margin-bottom:10px; color:var(--frost); }
+  .rl-ans{ background:linear-gradient(180deg, rgba(47,94,134,.32), var(--panel)); border-color:rgba(124,196,255,.28); }
+  .rl-k{ display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .rl-r{ margin-inline-start:auto; }
+  .rl-kr{ text-transform:none; letter-spacing:0; font-weight:600; font-size:12px; }
+  .rl-big{ font-size:20px; font-weight:800; line-height:1.2; margin-top:4px; }
+  .rl-sub{ font-size:13px; margin-top:3px; line-height:1.4; }
+  .rl-g{ color:var(--good); } .rl-rd{ color:var(--danger); } .rl-am{ color:var(--amber); } .rl-ice{ color:var(--ice); }
+  .rl-lnk{ background:none; border:0; padding:0; font:inherit; font-size:12px; color:var(--ice); cursor:pointer; text-transform:none; letter-spacing:0; font-weight:600; min-height:28px; }
+  .rl-two{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; margin-top:10px; }
+  .rl-f{ display:block; min-width:0; }
+  .rl-lb{ display:block; font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
+  .rl-inp{ display:flex; align-items:center; gap:6px; height:40px; padding:0 10px; border:1px solid rgba(124,196,255,.3); border-radius:10px; background:rgba(0,0,0,.25); }
+  .rl-inp input{ flex:1 1 auto; min-width:0; width:100%; height:38px; min-height:0; border:0; background:transparent; padding:0; color:var(--frost); font-size:15px; font-weight:700; color-scheme:dark; }
+  .rl-inp input:focus{ outline:none; }
+  .rl-date{ position:relative; font-size:15px; font-weight:700; cursor:pointer; }
+  .rl-dtxt{ flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rl-dd{ color:var(--muted); font-size:12px; }
+  .rl-date input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+  .rl-inp:focus-within{ border-color:var(--ice); }
+  .rl-ic{ width:20px; height:20px; object-fit:contain; vertical-align:-4px; flex:none; }
+  .rl-note{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.4; }
+  .rl-lt{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-top:8px; }
+  .rl-o{ display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; min-height:132px; padding:8px 4px 7px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:center; cursor:pointer; }
+  .rl-o b{ font-size:13px; }
+  .rl-o-sub{ font-size:11.5px; color:var(--muted); }
+  .rl-o-v{ font-size:16px; font-weight:800; margin-top:3px; white-space:nowrap; }
+  .rl-o small{ display:block; font-size:11.5px; color:var(--muted); }
+  .rl-o.late .rl-o-v{ color:var(--danger); }
+  .rl-o.on{ background:var(--ice-dim); border-color:var(--ice); box-shadow:0 0 0 1px rgba(124,196,255,.35); }
+  .rl-o.on small, .rl-o.on .rl-o-sub{ color:#cfe6fb; }
+  .rl-tag{ display:inline-block; margin-top:auto; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:800; max-width:100%; line-height:1.3; }
+  .rl-tag.best{ background:rgba(76,209,138,.2); color:var(--good); }
+  .rl-tag.late{ background:rgba(255,122,122,.15); color:var(--danger); }
+  .rl-tag.ok, .rl-tag.pick{ background:rgba(124,196,255,.14); color:var(--ice); }
+  .rl-also{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .rl-ch{ min-height:36px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12px; font-weight:600; cursor:pointer; text-align:start; }
+  .rl-ch.on{ border-color:var(--ice); background:var(--ice-dim); }
+  .rl-sl-l{ font-size:12px; color:var(--muted); margin-top:10px; }
+  .rl-sld{ display:block; width:100%; height:34px; min-height:0; margin:2px 0 0; padding:0; border:0; background:transparent; accent-color:var(--ice); }
+  .rl-sldl{ display:flex; justify-content:space-between; gap:6px; font-size:11.5px; color:var(--muted); }
+  .rl-sldv{ color:var(--ice); font-weight:700; text-align:center; }
+  .rl-todo{ display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 0; border-top:1px solid rgba(255,255,255,.06); }
+  .rl-k + .rl-todo{ border-top:0; margin-top:4px; }
+  .rl-todo.past{ opacity:.55; }
+  .rl-todo.today{ background:rgba(124,196,255,.08); margin:0 -12px; padding-inline:12px; }
+  .rl-d{ flex:0 0 62px; font-size:12.5px; font-weight:800; white-space:nowrap; }
+  .rl-d small{ display:block; font-size:11px; font-weight:600; color:var(--muted); }
+  .rl-todo.today .rl-d{ color:var(--ice); }
+  .rl-t{ flex:1 1 auto; min-width:0; font-size:13px; }
+  .rl-t small{ display:block; font-size:11.5px; color:var(--muted); }
+  .rl-c{ display:flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .rl-c .rl-ic{ width:16px; height:16px; }
+  .rl-ck{ flex:none; width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--good); font-size:15px; cursor:pointer; }
+  .rl-ck.on{ background:rgba(76,209,138,.18); border-color:rgba(76,209,138,.5); }
+  .rl-lab{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; }
+  .rl-lab-r{ display:flex; align-items:center; gap:10px; white-space:nowrap; }
+  .rl-conv summary{ cursor:pointer; font-weight:700; font-size:13px; min-height:28px; display:flex; align-items:center; }
+  .rl-conv-g{ display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); gap:6px; align-items:end; margin-top:8px; }
+  .rl-conv-g label{ min-width:0; } .rl-conv-g input{ width:100%; font-size:14px; }
+  .rl-conv-x{ font-size:16px; color:var(--muted); padding-bottom:8px; }
+  .rl-sk{ max-width:620px; padding-top:0; }
+  .rl-sh-h{ position:sticky; top:0; z-index:1; display:flex; align-items:center; gap:8px; min-height:52px; margin:0 -14px 2px; padding:0 8px; background:var(--panel); border-bottom:1px solid var(--line); }
+  .rl-sh-h b{ flex:1; font-size:17px; font-weight:800; }
+  .rl-x{ width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); font-size:18px; cursor:pointer; }
+  .rl-ctx{ display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin:9px 0 8px; padding:8px 10px; border-radius:10px; background:rgba(124,196,255,.08); border:1px solid rgba(124,196,255,.18); font-size:13px; }
+  .rl-tb{ border:1px solid var(--line); border-radius:16px; overflow:hidden; background:rgba(255,255,255,.02); }
+  .rl-th, .rl-tr{ display:grid; grid-template-columns:38px minmax(0,1.2fr) minmax(0,.95fr) minmax(0,1fr) minmax(0,.85fr) minmax(0,1.2fr) 12px; gap:3px; align-items:center; padding:0 8px; }
+  .rl-th{ padding-top:8px; padding-bottom:7px; font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; border-bottom:1px solid var(--line); }
+  .rl-th small, .rl-tr small{ display:block; font-size:11px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rl-th small{ white-space:normal; line-height:1.2; }
+  .rl-th > span, .rl-tr > span{ text-align:end; min-width:0; }
+  .rl-th .rl-c0, .rl-tr .rl-c0{ text-align:start; }
+  .rl-tr{ width:100%; min-height:54px; border:0; border-top:1px solid rgba(255,255,255,.06); background:transparent; color:var(--frost); font:inherit; font-size:13.5px; font-weight:700; cursor:pointer; }
+  .rl-th + .rl-tr{ border-top:0; }
+  .rl-tr.on{ background:rgba(47,94,134,.45); box-shadow:inset 3px 0 0 var(--ice); }
+  .rl-tr.op{ background:rgba(124,196,255,.07); }
+  .rl-cv{ color:var(--muted); font-size:12px; }
+  .rl-dn.g, .rl-dn.g small{ color:var(--good); } .rl-dn.rd, .rl-dn.rd small{ color:var(--danger); }
+  .rl-tp{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); }
+  .rl-tp .rl-ic{ width:24px; height:24px; }
+  .rl-tp i{ position:absolute; right:-5px; bottom:-5px; font-style:normal; font-size:11px; font-weight:800; background:var(--ice-dim); color:#fff; border-radius:6px; padding:0 4px; line-height:16px; }
+  .rl-det{ padding:4px 10px 11px; background:rgba(124,196,255,.07); border-top:1px dashed rgba(124,196,255,.2); }
+  .rl-tg{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr); gap:6px; margin-top:8px; }
+  .rl-tg > div{ min-width:0; padding:6px 7px; border-radius:10px; border:1px solid var(--line); background:rgba(0,0,0,.25); }
+  .rl-tg b{ display:block; margin-top:2px; font-size:15px; white-space:nowrap; }
+  .rl-tg b .rl-ic{ width:16px; height:16px; margin-inline-end:3px; vertical-align:-2px; }
+  .rl-tg small{ display:block; font-size:11px; color:var(--muted); line-height:1.3; }
+  .rl-chn{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+  .rl-chn span{ font-size:11px; color:var(--muted); background:var(--panel-2); border-radius:6px; padding:2px 6px; white-space:nowrap; }
+  .rl-chn b{ color:var(--frost); }
+  .rl-tf{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:7px; padding-top:7px; border-top:1px solid rgba(255,255,255,.06); font-size:12px; color:var(--muted); }
+  .rl-tf b{ color:var(--frost); } .rl-tf b.rl-g{ color:var(--good); } .rl-tf b.rl-rd{ color:var(--danger); }
+  .rl-detb{ display:flex; gap:8px; margin-top:10px; }
+  .rl-detb .btn{ min-height:38px; }
+  .rl-detb .rl-use{ flex:1; background:var(--ice-dim); border-color:var(--ice); color:var(--frost); font-weight:700; }
+  .rl-rules{ margin-top:10px; padding:9px 10px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.02); font-size:12px; line-height:1.45; color:var(--muted); }
+  .rl-rules b{ color:var(--frost); }
+  @media (max-width: 380px){ .rl-th, .rl-tr{ grid-template-columns:36px minmax(0,1.25fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,.85fr) minmax(0,1.2fr) 10px; padding:0 6px; } .rl-tr{ font-size:12.5px; } .rl-o-v{ font-size:15px; } }
   /* Level dropdowns side by side (Tundra Album, Collection Gallery) */
   .plx-selrow{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:8px; }
   .plx-sel{ display:flex; flex-direction:column; gap:4px; min-width:0; font-size:12px; color:var(--muted); }
@@ -5992,6 +6082,76 @@ const T = {
   rfc_weekly_cost: { en: "FC / week" },
   rfc_weekly_rfc: { en: "Refined FC / week" },
   rfc_to_target: { en: "To reach need" },
+  rl_desc: { en: "Turn Fire Crystal into Refined Fire Crystal. Set what you need and by when: the page picks the cheapest speed that makes it, and This week shows what to refine each day. Tap another speed or the slider to choose your own." },
+  rl_tiers_btn: { en: "Tiers ›" },
+  rl_best: { en: "Best for you" },
+  rl_your_pick: { en: "Your pick" },
+  rl_use_best: { en: "Use best for you" },
+  rl_daily: { en: "{t} daily" },
+  rl_all_t: { en: "all {t}" },
+  rl_tries_wk: { en: "{t} · {n} tries a week" },
+  rl_title_daily: { en: "Refine {t} once a day" },
+  rl_title_all: { en: "Refine every {t} try ({n} a week)" },
+  rl_title_n: { en: "Refine {t} · {n} tries a week" },
+  rl_by: { en: "by" },
+  rl_a_week: { en: "a week" },
+  rl_misses: { en: "misses {d}" },
+  rl_nothing: { en: "No Refined FC needed now" },
+  rl_need: { en: "Need" },
+  rl_by_lbl: { en: "By" },
+  rl_need_from: { en: "From T12 ({a} needed − {b} owned) · tap to change" },
+  rl_need_own: { en: "Your own number" },
+  rl_use_t12: { en: "Use T12 ({n})" },
+  rl_by_budgets: { en: "By: your Budgets target · tap to change" },
+  rl_by_8wk: { en: "By: 8 weeks from today · tap to change" },
+  rl_by_own: { en: "Your own date" },
+  rl_use_budgets: { en: "Use the Budgets target" },
+  rl_use_8wk: { en: "Use 8 weeks" },
+  rl_how_fast: { en: "How fast?" },
+  rl_cheapest: { en: "Cheapest" },
+  rl_fastest: { en: "Fastest" },
+  rl_cheapest_in_time: { en: "cheapest in time" },
+  rl_in_between: { en: "in between" },
+  rl_best_tag: { en: "Best for you" },
+  rl_your_pick_tag: { en: "Your pick" },
+  rl_too_late: { en: "too late" },
+  rl_wk: { en: "wk" },
+  rl_wks: { en: "wks" },
+  rl_now: { en: "now" },
+  rl_own_weekly: { en: "Or set your own weekly FC" },
+  rl_this_week: { en: "This week" },
+  rl_rest: { en: "Nothing to refine" },
+  rl_half: { en: "half price" },
+  rl_one_a_day_half: { en: "1× {t} a day (half price)" },
+  rl_today: { en: "today" },
+  rl_unlocks: { en: "unlocks {t}" },
+  rl_first_half: { en: "first one half price" },
+  rl_one_enough: { en: "one a day is enough" },
+  rl_resets: { en: "week resets Monday" },
+  rl_done_day: { en: "Done" },
+  rl_rfc_week_rand: { en: "Refined FC a week (random per try)" },
+  rl_day: { en: "day" },
+  rl_open: { en: "open" },
+  rl_off: { en: "off" },
+  rl_always_open: { en: "Always open" },
+  rl_opens_after: { en: "Opens after 20× {t} this week" },
+  rl_week_max: { en: "A week at most: 20 tries." },
+  rl_per_try: { en: "Per try" },
+  rl_first_try: { en: "{n} first try a day" },
+  rl_gives: { en: "Gives" },
+  rl_avg_each: { en: "avg {a} · ≈{b} FC each" },
+  rl_20_tries: { en: "20 tries a week" },
+  rl_chances: { en: "Chances per try" },
+  rl_once_day: { en: "Once a day" },
+  rl_done: { en: "done" },
+  rl_use_daily: { en: "Use {t} daily" },
+  rl_1st_day: { en: "1st/day" },
+  rl_your_plan: { en: "your plan" },
+  rl_a_try: { en: "a try" },
+  rl_avg_try: { en: "avg a try" },
+  rl_week_def: { en: "A week = that tier once a day, with the tiers under it done on Monday to open it. Tap a row for its chances and the 20-tries numbers." },
+  rl_rules_h: { en: "Lab rules" },
+  rl_rfc: { en: "Refined FC" },
   packs_filter_all: { en: "All" },
   packs_filter_none: { en: "Not assigned" },
   pack_no_date: { en: "No target date" },
@@ -18992,167 +19152,380 @@ function rfcAllPlans() {
   for (let top = 1; top <= RFC_LAB_TIERS.length; top++) for (let n = 1; n <= RFC_LAB_MAX_PER_TIER; n++) out.push(rfcPlan(top, n));
   return out;
 }
-let RFC_LAB_STATE = null; // { budget, need, owned }
+let RFC_LAB_STATE = null; // saved calc_state rfc_lab (old fields + myNeed / myBy / pick / ticks)
+// Research Lab page (owner's design, Nov 2026): "Best for you" header with
+// Need / By, How fast? (Cheapest / best in time / Fastest + chips + own
+// weekly FC slider), This week (what to refine each day, ticks), Lab open
+// row; "Tiers ›" opens the tier table (T2) in a window. The plan the page
+// shows is the one T12 / Budgets read (st.top / st.attempts / st.mode /
+// st.budget through rfcLabChosenPlan), as before.
+let RFC_TIERS_OPEN = false; // Tiers window open
+let RFC_TIER_ROW = 0;       // tier whose details are open in the window (0 = none)
+// The daily schedule of a weekly plan (same split as rfcPlan's cost): lower
+// tiers 20 each on Monday (T1's first try half price), extra top-tier tries
+// on Monday at full price, then one half-price top-tier try a day.
+function rfcWeekDays(top, n) {
+  const days = Array.from({ length: RFC_LAB_DAYS }, () => ({ parts: [], fc: 0, rfc: 0, unlock: false }));
+  const add = (d, tier, cnt, half) => {
+    if (cnt <= 0) return;
+    const tr = RFC_LAB_TIERS[tier - 1];
+    const day = days[d], last = day.parts[day.parts.length - 1];
+    if (last && last.tier === tier && !!last.half === !!half) last.cnt += cnt; else day.parts.push({ tier, cnt, half: !!half });
+    day.fc += cnt * (half ? tr.cost / 2 : tr.cost);
+    day.rfc += cnt * rfcExpected(tr);
+  };
+  if (top === 1) {
+    const perDay = Math.min(n, RFC_LAB_DAYS);
+    for (let d = 0; d < perDay; d++) add(d, 1, 1, true);
+    add(RFC_LAB_DAYS - 1, 1, n - perDay, false);
+  } else {
+    const perDay = Math.min(n, RFC_LAB_DAYS - 1);
+    add(0, 1, 1, true); add(0, 1, RFC_LAB_MAX_PER_TIER - 1, false);
+    for (let k = 2; k < top; k++) add(0, k, RFC_LAB_MAX_PER_TIER, false);
+    add(0, top, n - perDay, false);
+    days[0].unlock = true;
+    for (let d = 1; d <= perDay; d++) add(d, top, 1, true);
+  }
+  return days;
+}
+function rfcIsDaily(p) { return p && p.n === (p.top === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1); }
+// The speeds the page offers: each tier once a day, then every T5 try.
+function rfcSpeeds() {
+  const out = RFC_LAB_TIERS.map((_, i) => rfcPlan(i + 1, i === 0 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1));
+  out.push(rfcPlan(RFC_LAB_TIERS.length, RFC_LAB_MAX_PER_TIER));
+  return out;
+}
+function rfcPlanName(p) {
+  if (rfcIsDaily(p)) return t("rl_daily").replace("{t}", "T" + p.top);
+  if (p.top === RFC_LAB_TIERS.length && p.n === RFC_LAB_MAX_PER_TIER) return t("rl_all_t").replace("{t}", "T" + p.top);
+  return t("rl_tries_wk").replace("{t}", "T" + p.top).replace("{n}", p.n);
+}
+function rfcPlanTitle(p) {
+  if (rfcIsDaily(p)) return t("rl_title_daily").replace("{t}", "T" + p.top);
+  if (p.top === RFC_LAB_TIERS.length && p.n === RFC_LAB_MAX_PER_TIER) return t("rl_title_all").replace("{t}", "T" + p.top).replace("{n}", p.n);
+  return t("rl_title_n").replace("{t}", "T" + p.top).replace("{n}", p.n);
+}
 async function renderRfcLabPage() {
   const seq = RENDER_SEQ;
+  if (LAST_RENDER_TAB !== "rfclab") { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; }
   if (!RFC_LAB_STATE) {
     const saved = (await loadCalcState("rfc_lab")) || {};
+    if (seq !== RENDER_SEQ) return;
     RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
     if (saved.labOpen === true || saved.labOpen === false) RFC_LAB_STATE.labOpen = saved.labOpen;
+    // New (Nov 2026): own Need / By, "auto" (Best for you) or "manual"
+    // (Your pick), this week's ticks. Someone who already chose a schedule
+    // on the old page keeps it as their pick, so T12 doesn't change.
+    RFC_LAB_STATE.myNeed = saved.myNeed != null && Number.isFinite(Number(saved.myNeed)) ? Math.max(0, Number(saved.myNeed)) : null;
+    RFC_LAB_STATE.myBy = typeof saved.myBy === "string" && packParseDay(saved.myBy) ? saved.myBy : "";
+    RFC_LAB_STATE.pick = saved.pick === "auto" || saved.pick === "manual" ? saved.pick : (saved.top != null || saved.attempts != null || saved.mode === "budget" ? "manual" : "auto");
+    RFC_LAB_STATE.ticks = saved.ticks && typeof saved.ticks === "object" ? { wk: String(saved.ticks.wk || ""), days: Array.isArray(saved.ticks.days) ? saved.ticks.days.map(Number) : [] } : { wk: "", days: [] };
   }
   rfcLabApplyRate(RFC_LAB_STATE);
-  // Default the need from the T12 page's last totals when nothing typed
-  // (T11 Helios doesn't use Refined FC).
+  // Default the need from the T12 page's last totals (T11 doesn't use Refined FC).
   const snap = await ensureBudgetNeedsSnapshot();
+  if (seq !== RENDER_SEQ) return;
   let pageNeed = 0;
   ["t12_research"].forEach((k) => { (snap[k]?.groups || []).forEach((g) => { pageNeed += Number((g.totals || {})["Refined FC"]) || 0; }); });
-  const st = RFC_LAB_STATE;
   const t12Owned = Number(((await ensureMaterialOwnedCache("t12_research")) || {})["Refined FC"]) || 0;
-  const fmt = (v, d = 0) => Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
-  const plans = rfcAllPlans();
-  const bestByTier = RFC_LAB_TIERS.map((_, i) => ({ min: rfcPlan(i + 1, i === 0 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1), max: rfcPlan(i + 1, RFC_LAB_MAX_PER_TIER) }));
-  // Target: what the T12 Research page still needs (its total minus the
-  // Refined FC in its Backpack row).
-  const need = Math.max(0, pageNeed - t12Owned);
-  const bestValue = plans.slice().sort((a, b) => b.perFc - a.perFc)[0];
-  // Budget mode: the plan that yields the most Refined FC within the weekly FC budget.
-  const inBudget = st.budget > 0 ? plans.filter((p) => p.cost <= st.budget).sort((a, b) => b.rfc - a.rfc || a.cost - b.cost)[0] : null;
-  const chosen = st.mode === "budget" ? (inBudget || rfcPlan(1, 1)) : rfcPlan(st.top, st.attempts);
-  const noBudgetPlan = st.mode === "budget" && !inBudget;
-  const weeksFor = (p) => need > 0 && p.rfc > 0 ? Math.ceil(need / p.rfc) : null;
-  const tierTable = `
-    <div style="overflow-x:auto;"><table style="border-collapse:collapse; font-size:11.5px; width:100%;">
-      <thead><tr>
-        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_tier"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_cost"))}</th>
-        <th style="text-align:start; padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_returns"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_expected"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_per_fc"))}</th>
-        <th style="padding:5px 6px; border-bottom:1px solid var(--line);">${esc(t("rfc_max_weekly"))}</th>
-      </tr></thead>
-      <tbody>${RFC_LAB_TIERS.map((tr) => { const e = rfcExpected(tr); return `<tr>
-        <td style="padding:5px 6px; font-weight:700;">T${tr.tier}</td>
-        <td style="padding:5px 6px; text-align:center;">${tr.cost} FC</td>
-        <td style="padding:5px 6px;">${tr.returns.map(([n, p]) => `<span style="white-space:nowrap;">${n} <span class="meta">(${(p * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%)</span></span>`).join(" &middot; ")}</td>
-        <td style="padding:5px 6px; text-align:center; font-weight:600;">${fmt(e, 3)}</td>
-        <td style="padding:5px 6px; text-align:center;">${fmt(e / tr.cost, 4)}</td>
-        <td style="padding:5px 6px; text-align:center;">${fmt(e * RFC_LAB_MAX_PER_TIER, 1)}</td>
-      </tr>`; }).join("")}</tbody></table></div>`;
   if (seq !== RENDER_SEQ) return;
-  // How long the chosen plan takes, and the FC it uses in total.
-  const weeksExact = !noBudgetPlan && need > 0 && chosen.rfc > 0 ? need / chosen.rfc : null;
-  const totalFc = weeksExact != null ? Math.ceil(weeksExact * chosen.cost) : null;
-  const durText = weeksExact == null ? "—" : (() => { const w = Math.max(1, Math.round(weeksExact)); const m = Math.floor(w / 4), r = w % 4; return [m ? `${m} ${t(m === 1 ? "rfc_month" : "rfc_months")}` : "", r ? `${r} ${t(r === 1 ? "rfc_week" : "rfc_weeks")}` : ""].filter(Boolean).join(" ") || `0 ${t("rfc_weeks")}`; })();
-  const sq = (label, val, sub, color) => `<div class="plx-stat"><span>${esc(label)}</span><b${color ? ` style="color:${color};"` : ""}>${val}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
-  const isOn = (p) => !noBudgetPlan && p.top === chosen.top && p.n === chosen.n;
-  const fastest = bestByTier[bestByTier.length - 1].max;
-  // One tappable card per weekly schedule (replaces the long table).
-  const planCard = (label, p) => `<button type="button" class="rfc-plan${isOn(p) ? " on" : ""}" data-rfcuse="${p.top}|${p.n}">
-      <span class="rfc-plan-h">${esc(label)}${p === bestValue || (p.top === bestValue.top && p.n === bestValue.n) ? ` <em>${esc(t("rfc_badge_value"))}</em>` : ""}${p.top === fastest.top && p.n === fastest.n ? ` <em class="fast">${esc(t("rfc_badge_fast"))}</em>` : ""}</span>
-      <span class="rfc-plan-k"><b>${fmt(p.rfc, 1)}</b> RFC / ${esc(t("rfc_week"))}</span>
-      <span class="rfc-plan-k">${fmt(p.cost)} FC / ${esc(t("rfc_week"))}</span>
-      <span class="rfc-plan-w">${weeksFor(p) != null ? `${weeksFor(p)} ${esc(t("rfc_weeks"))}` : "—"}</span>
-    </button>`;
-  content.innerHTML = `
-    <div class="plx-head"><h2>${esc(t("rfc_title"))}</h2></div>
-    <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("rfc_desc"))}</p>
-    <div class="t12x-card" style="margin-bottom:12px;">
-      <div class="t12x-title">${esc(t("rfc_your_plan"))}: ${noBudgetPlan ? "—" : esc(chosen.text)}</div>
-      <div class="plx-stats rfc-sum">
-        ${sq(t("rfc_step_need"), fmt(need), `${fmt(pageNeed)} ${esc(t("rfc_needed_word"))} − ${fmt(t12Owned)} ${esc(t("rfc_owned_word"))}`, need > 0 ? "var(--danger)" : "var(--good)")}
-        ${sq(t("rfc_rfc_weekly"), noBudgetPlan ? "—" : fmt(chosen.rfc, 1), noBudgetPlan ? "" : `${fmt(chosen.rfc * 4)} / ${esc(t("rfc_month"))}`, "var(--good)")}
-        ${sq(t("rfc_fc_weekly"), noBudgetPlan ? "—" : fmt(chosen.cost), noBudgetPlan ? "" : `${fmt(chosen.cost * 4)} / ${esc(t("rfc_month"))}`)}
-        ${sq(t("rfc_duration"), esc(durText), totalFc != null ? `${fmt(totalFc)} FC ${esc(t("rfc_in_total"))}` : "")}
+  if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); if (seq !== RENDER_SEQ) return; if (BUDGET_TARGET === undefined) BUDGET_TARGET = (sv && sv.date) || ""; }
+  const st = RFC_LAB_STATE;
+  const fmt = (v, d = 0) => Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
+  const DAY = 86400000;
+  const today = packStartOfToday(), todayIdx = (today.getUTCDay() + 6) % 7;
+  const monday = new Date(today.getTime() - todayIdx * DAY), wkKey = packDayKey(monday);
+  const dShort = (d) => {
+    const s = d.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+    return d.getUTCFullYear() !== today.getUTCFullYear() ? `${s} ’${String(d.getUTCFullYear()).slice(2)}` : s;
+  };
+  const dLong = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  // Need: own number, else what T12 still needs. By: own date, else the
+  // Budgets target (when still ahead), else 8 weeks from today.
+  const autoNeed = Math.max(0, pageNeed - t12Owned);
+  const need = st.myNeed != null ? st.myNeed : autoNeed;
+  const budDay = BUDGET_TARGET ? packParseDay(BUDGET_TARGET) : null;
+  const autoBy = budDay && budDay >= today ? budDay : new Date(today.getTime() + 56 * DAY);
+  const autoByFromBudgets = !!(budDay && budDay >= today);
+  const byDay = st.myBy ? packParseDay(st.myBy) : autoBy;
+  // Done day of a plan: day by day from this week's Monday (the plan's
+  // daily Refined FC), never before today. null = more than 5 years.
+  const doneMemo = new Map();
+  const doneFor = (p) => {
+    if (!p) return null;
+    const key = p.top + "|" + p.n;
+    if (doneMemo.has(key)) return doneMemo.get(key);
+    let res = today;
+    if (need > 0) {
+      const days = rfcWeekDays(p.top, p.n);
+      const wk = days.reduce((s, d) => s + d.rfc, 0);
+      res = null;
+      if (wk > 0) {
+        const full = Math.max(0, Math.floor(need / wk) - 1);
+        let cum = full * wk, i = full * RFC_LAB_DAYS;
+        while (i < 5 * 366) { cum += days[i % RFC_LAB_DAYS].rfc; if (cum >= need - 1e-9) break; i++; }
+        if (i < 5 * 366) { res = new Date(monday.getTime() + i * DAY); if (res < today) res = today; }
+      }
+    }
+    doneMemo.set(key, res);
+    return res;
+  };
+  const inTime = (p) => { const d = doneFor(p); return !!d && d <= byDay; };
+  const wksTxt = (d) => { if (!d) return "—"; const w = Math.ceil((d - today) / DAY / 7); return w <= 0 ? t("rl_now") : `${fmt(w)} ${t("rl_wks")}`; };
+  const speeds = rfcSpeeds();
+  const cheapest = speeds[0], fastest = speeds[speeds.length - 1];
+  // Nothing needed: keep the plan as it is (no reason to move T12 / Budgets).
+  const best = need > 0 ? (speeds.find(inTime) || fastest) : (rfcLabChosenPlan(st) || speeds[2]);
+  // Best for you follows Need / By; a pick stays until "Best for you" is tapped.
+  if (st.pick === "auto" && (st.mode !== "schedule" || st.top !== best.top || st.attempts !== best.n)) {
+    st.mode = "schedule"; st.top = best.top; st.attempts = best.n;
+    saveCalcState("rfc_lab", st);
+    rfcLabApplyRate(st);
+  }
+  const plan = rfcLabChosenPlan(st) || rfcPlan(1, 1);
+  const same = (a, b) => a && b && a.top === b.top && a.n === b.n;
+  const isPick = (p) => same(p, plan) && !(st.mode === "budget");
+  const fcI = `<img class="rl-ic" src="${esc(materialIconSrc("Fire Crystal") || "icons/item_icon_100081.png")}" alt="" />`;
+  const rfI = `<img class="rl-ic" src="${esc(materialIconSrc("Refined FC") || "icons/item_icon_100082.png")}" alt="" />`;
+  const planDone = doneFor(plan), planOk = inTime(plan);
+  const lateCls = (p) => (inTime(p) ? "" : " late");
+  // ---- header card
+  const needSub = st.myNeed != null
+    ? `${esc(t("rl_need_own"))} · <button type="button" class="rl-lnk" data-rlneedauto>${esc(t("rl_use_t12").replace("{n}", fmt(autoNeed)))}</button>`
+    : pageNeed ? esc(t("rl_need_from").replace("{a}", fmt(pageNeed)).replace("{b}", fmt(t12Owned))) : esc(t("rfc_open_t12"));
+  const bySub = st.myBy
+    ? `${esc(t("rl_by_own"))} · <button type="button" class="rl-lnk" data-rlbyauto>${esc(autoByFromBudgets ? t("rl_use_budgets") : t("rl_use_8wk"))}</button>`
+    : esc(autoByFromBudgets ? t("rl_by_budgets") : t("rl_by_8wk"));
+  const headLine = need <= 0
+    ? `<div class="rl-sub">${esc(t("rl_nothing"))} · <b>${fmt(plan.cost)} FC</b> ${esc(t("rl_a_week"))}</div>`
+    : `<div class="rl-sub">→ <b>${fmt(need)} ${esc(t("rl_rfc"))}</b> ${esc(t("rl_by"))} <b class="${planOk ? "rl-g" : "rl-rd"}">${planDone ? esc(dShort(planDone)) : "—"}</b> · <b>${fmt(plan.cost)} FC</b> ${esc(t("rl_a_week"))}${planOk ? "" : ` · <span class="rl-rd">${esc(t("rl_misses").replace("{d}", dShort(byDay)))}</span>`}</div>`;
+  const headHtml = `<div class="rl-card rl-ans">
+      <div class="rl-k">${esc(st.pick === "auto" ? t("rl_best") : t("rl_your_pick"))}${st.pick === "manual" ? `<button type="button" class="rl-lnk rl-r" data-rlauto>${esc(t("rl_use_best"))}</button>` : ""}</div>
+      <div class="rl-big">${esc(rfcPlanTitle(plan))}</div>
+      ${headLine}
+      <div class="rl-two">
+        <label class="rl-f"><span class="rl-lb">${esc(t("rl_need"))}</span><span class="rl-inp">${rfI}<input type="text" inputmode="numeric" data-rlneed value="${fmt(need)}" aria-label="${esc(t("rl_need"))}" /></span></label>
+        <label class="rl-f"><span class="rl-lb">${esc(t("rl_by_lbl"))}</span><span class="rl-inp rl-date"><span class="rl-dtxt">${esc(dLong(byDay))}</span><span class="rl-dd">▾</span><input type="date" data-rlby value="${packDayKey(byDay)}" aria-label="${esc(t("rl_by_lbl"))}" /></span></label>
       </div>
-      ${!pageNeed ? `<div class="meta" style="font-size:10.5px; margin-top:8px; color:var(--ice);">${esc(t("rfc_open_t12"))}</div>` : ""}
-    </div>
-    <div class="t12x">
-      <aside class="t12x-side">
-        <div class="t12x-card">
-          <div class="t12x-title">${esc(t("rfc_step_plan"))}</div>
-          <label class="t12x-check" style="margin-bottom:10px;"><span>${esc(t("rfc_lab_open"))}</span><input type="checkbox" data-rfclabopen ${rfcLabOn(st) ? "checked" : ""} /></label>
-          ${rfcLabOn(st) ? "" : `<div class="meta" style="font-size:10.5px; margin:-4px 0 10px; color:var(--amber);">${esc(t("rfc_lab_closed"))}</div>`}
-          <div class="seg" style="display:flex; margin-bottom:10px;">
-            <button type="button" data-rfcmode="schedule" class="${st.mode === "schedule" ? "active" : ""}" style="flex:1;">${esc(t("rfc_mode_schedule"))}</button>
-            <button type="button" data-rfcmode="budget" class="${st.mode === "budget" ? "active" : ""}" style="flex:1;">${esc(t("rfc_mode_budget"))}</button>
-          </div>
-          ${st.mode === "budget" ? `
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="text" inputmode="numeric" data-rfc="budget" value="${st.budget || ""}" placeholder="0" style="width:140px; padding:8px 10px; font-size:14px;" />
-            <span class="meta" style="font-size:11px;">${esc(t("rfc_budget_unit"))}</span>
-          </div>
-          <div class="meta" style="font-size:10.5px; margin-top:6px;">${inBudget ? `${esc(t("rfc_budget_result"))}: <b>${esc(inBudget.text)}</b>` : esc(t("rfc_enter_budget"))}</div>` : `
-          <div class="meta" style="font-size:11px;">${esc(t("rfc_tap_schedule"))}</div>`}
-          <div style="border-top:1px solid var(--line); margin-top:10px; padding-top:8px;">
-            <div class="meta" style="font-size:10.5px;">${esc(t("rfc_best_value"))}</div>
-            <div style="font-size:12px; margin-top:2px;">${esc(bestValue.text)}</div>
-            <div class="meta" style="font-size:10.5px;">${fmt(bestValue.cost)} FC → ${fmt(bestValue.rfc, 1)} RFC · ${fmt(bestValue.perFc, 4)} ${esc(t("rfc_per_fc"))}</div>
-          </div>
-        </div>
-        <div class="t12x-card">
-          <div class="t12x-title">${esc(t("fcs_title"))}</div>
-          <p class="desc" style="font-size:11px; margin:0 0 8px;">${esc(t("fcs_simple_desc"))}</p>
-          <div style="display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:6px; align-items:end;">
-            <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; min-width:0;"><span class="meta">${esc(materialDisplayName("Fire Crystal"))}</span><input type="text" inputmode="numeric" data-fcconv="fc" value="${st.fcHave || ""}" placeholder="0" style="width:100%; padding:7px 9px; font-size:14px;" /></label>
-            <span style="font-size:16px; color:var(--muted); padding-bottom:8px;">⇄</span>
-            <label style="display:flex; flex-direction:column; gap:4px; font-size:11px; min-width:0;"><span class="meta">${esc(materialDisplayName("FC Shard"))}</span><input type="text" inputmode="numeric" data-fcconv="fcs" value="${st.fcHave ? fmt(Math.floor(st.fcHave * FCS_PER_FC)) : ""}" placeholder="0" style="width:100%; padding:7px 9px; font-size:14px;" /></label>
-          </div>
-          <div class="meta" style="font-size:10.5px; margin-top:6px;">1 FC = ${FCS_PER_FC} FCS</div>
-        </div>
-      </aside>
-      <div class="t12x-main">
-        <div class="t12x-card">
-          <div class="t12x-title">${esc(t("rfc_strategies_title"))}</div>
-          <p class="desc" style="font-size:11.5px; margin:0 0 10px;">${esc(t("rfc_strategies_desc"))}</p>
-          ${bestByTier.map((bt, i) => `<div class="rfc-tier-row"><div class="rfc-tier-k">T${i + 1}</div><div class="rfc-plans">${planCard(t("rfc_minimal"), bt.min)}${planCard(t("rfc_maximum"), bt.max)}</div></div>`).join("")}
-          <div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("rfc_month_note"))}</div>
-        </div>
-        <details class="t12x-card" style="margin-top:12px;">
-          <summary style="cursor:pointer; font-weight:700; font-size:14px;">${esc(t("rfc_tiers_title"))}</summary>
-          <div style="margin-top:10px;">${tierTable}</div>
-          <p class="desc" style="font-size:10.5px; margin-top:10px;">${esc(t("rfc_rules"))}</p>
-        </details>
-      </div>
+      <div class="rl-note">${needSub}</div>
+      <div class="rl-note">${bySub}</div>
     </div>`;
+  // ---- How fast?
+  const middle = !same(best, cheapest) && !same(best, fastest) ? best : speeds[2];
+  const extraTag = (p) => { const dfc = p.cost - best.cost; return dfc > 0 ? `+${fmt(dfc)} FC / ${t("rl_wk")}` : ""; };
+  const tagFor = (p) => {
+    if (same(p, best) && st.pick === "auto") return `<span class="rl-tag best">${esc(t("rl_best_tag"))}</span>`;
+    if (isPick(p) && st.pick === "manual") return `<span class="rl-tag pick">${esc(t("rl_your_pick_tag"))}</span>`;
+    if (!inTime(p)) return `<span class="rl-tag late">${esc(t("rl_too_late"))}</span>`;
+    if (same(p, best)) return `<span class="rl-tag best">${esc(t("rl_best_tag"))}</span>`;
+    const x = extraTag(p);
+    return x ? `<span class="rl-tag ok">${esc(x)}</span>` : "";
+  };
+  const opt = (p, name, sub) => { const d = doneFor(p); return `<button type="button" class="rl-o${isPick(p) ? " on" : ""}${lateCls(p)}" data-rluse="${p.top}|${p.n}">
+      <b>${esc(name)}</b><span class="rl-o-sub">${esc(sub)}</span>
+      <span class="rl-o-v">${d ? esc(dShort(d)) : "—"}</span>
+      <small>${esc(wksTxt(d))}</small><small>${fmt(p.cost)} FC / ${esc(t("rl_wk"))}</small>
+      ${tagFor(p)}</button>`; };
+  const cards = [opt(cheapest, t("rl_cheapest"), rfcPlanName(cheapest)),
+    opt(middle, rfcPlanName(middle), same(middle, best) ? t("rl_cheapest_in_time") : t("rl_in_between")),
+    opt(fastest, t("rl_fastest"), rfcPlanName(fastest))];
+  const chips = speeds.filter((p) => !same(p, cheapest) && !same(p, middle) && !same(p, fastest)).map((p) => {
+    const d = doneFor(p), late = !inTime(p), x = !late ? extraTag(p) : "";
+    return `<button type="button" class="rl-ch${isPick(p) ? " on" : ""}" data-rluse="${p.top}|${p.n}">${esc(rfcPlanName(p))} · <b class="${late ? "rl-rd" : ""}">${d ? esc(dShort(d)) : "—"}${late ? ` · ${esc(t("rl_too_late"))}` : ""}</b>${x ? ` · ${esc(x)}` : ""}</button>`;
+  }).join("");
+  const sMin = cheapest.cost, sMax = fastest.cost;
+  const sVal = Math.min(sMax, Math.max(sMin, plan.cost));
+  const fastHtml = `<div class="rl-card">
+      <div class="rl-k">${esc(t("rl_how_fast"))}<span class="rl-r rl-kr">${esc(t("rl_by"))} ${esc(dShort(byDay))}</span></div>
+      <div class="rl-lt">${cards.join("")}</div>
+      ${chips ? `<div class="rl-also">${chips}</div>` : ""}
+      <div class="rl-sl-l">${esc(t("rl_own_weekly"))}</div>
+      <input type="range" class="rl-sld" data-rlslider min="${sMin}" max="${sMax}" step="10" value="${sVal}" aria-label="${esc(t("rl_own_weekly"))}" />
+      <div class="rl-sldl"><span>${fmt(sMin)}</span><span class="rl-sldv" data-rlsldv></span><span>${fmt(sMax)}</span></div>
+    </div>`;
+  // ---- This week
+  const days = rfcWeekDays(plan.top, plan.n);
+  if (st.ticks.wk !== wkKey) st.ticks = { wk: wkKey, days: [] };
+  const dayTxt = (d, group) => {
+    if (!d.parts.length) return esc(t("rl_rest"));
+    if (group && d.parts.length === 1 && d.parts[0].cnt === 1 && d.parts[0].half) return esc(t("rl_one_a_day_half").replace("{t}", "T" + d.parts[0].tier));
+    const per = [];
+    d.parts.forEach((x) => { const p = per.find((y) => y.tier === x.tier); if (p) { p.cnt += x.cnt; p.half = false; } else per.push({ ...x }); });
+    return esc(per.map((x) => `${x.cnt}× T${x.tier}${x.half && x.cnt === 1 ? ` (${t("rl_half")})` : ""}`).join(" + "));
+  };
+  const wkNames = Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" }));
+  const rowsData = [];
+  for (let i = 0; i < RFC_LAB_DAYS; i++) {
+    const d = days[i], sig = d.parts.map((x) => `${x.tier}:${x.cnt}:${x.half}`).join(",");
+    const prev = rowsData[rowsData.length - 1];
+    if (prev && i > todayIdx && i < RFC_LAB_DAYS - 1 && prev.from > todayIdx && prev.to < RFC_LAB_DAYS - 1 && prev.sig === sig && sig && !d.unlock) { prev.to = i; continue; }
+    rowsData.push({ from: i, to: i, sig });
+  }
+  const tickOn = (i) => st.ticks.days.includes(i);
+  const weekRows = rowsData.map((r) => {
+    const d = days[r.from], group = r.to > r.from;
+    const fc = days.slice(r.from, r.to + 1).reduce((s, x) => s + x.fc, 0);
+    const dFrom = new Date(monday.getTime() + r.from * DAY), dTo = new Date(monday.getTime() + r.to * DAY);
+    const nm = group ? `${wkNames[r.from]}–${wkNames[r.to]}` : wkNames[r.from];
+    const isToday = r.from === todayIdx && !group;
+    const dt = isToday ? t("rl_today") : group ? `${dShort(dFrom)}–${dTo.getUTCMonth() === dFrom.getUTCMonth() ? dTo.getUTCDate() : dShort(dTo)}` : dShort(dFrom);
+    const notes = [];
+    if (d.unlock) notes.push(t("rl_unlocks").replace("{t}", "T" + plan.top), t("rl_first_half"));
+    if (isToday && d.parts.length && !d.unlock && d.parts.length === 1 && d.parts[0].cnt === 1) notes.push(t("rl_one_enough"));
+    if (r.from === RFC_LAB_DAYS - 1) notes.push(t("rl_resets"));
+    const on = Array.from({ length: r.to - r.from + 1 }, (_, k) => r.from + k).every(tickOn);
+    return `<div class="rl-todo${r.to < todayIdx ? " past" : ""}${isToday ? " today" : ""}">
+        <div class="rl-d">${esc(nm)}<small>${esc(dt)}</small></div>
+        <div class="rl-t">${dayTxt(d, group)}${notes.length ? `<small>${esc(notes.join(" · "))}</small>` : ""}</div>
+        ${fc > 0 ? `<div class="rl-c">${fcI}${fmt(fc)}</div>` : ""}
+        <button type="button" class="rl-ck${on ? " on" : ""}" data-rltick="${r.from}|${r.to}" aria-pressed="${on}" aria-label="${esc(t("rl_done_day"))}">${on ? "✓" : ""}</button>
+      </div>`;
+  }).join("");
+  const weekHtml = `<div class="rl-card">
+      <div class="rl-k">${esc(t("rl_this_week"))}<span class="rl-r rl-kr">${fmt(plan.cost)} FC · ${esc(rfcPlanName(plan))}</span></div>
+      ${weekRows}
+      <div class="rl-note">≈ ${fmt(plan.rfc, 1)} ${esc(t("rl_rfc_week_rand"))}</div>
+    </div>`;
+  // ---- Lab open row
+  const labDay = stateUnlockDay("lab", "crystal lab"), labOn = rfcLabOn(st);
+  const labHtml = `<label class="rl-card rl-lab">
+      <span>🔒 ${esc(t("rfc_lab_open"))}</span>
+      <span class="rl-lab-r"><span class="${labOn ? "rl-g" : "rl-am"}">${labDay != null ? `${esc(t("rl_day"))} ${fmt(labDay)} · ` : ""}${labOn ? `✓ ${esc(t("rl_open"))}` : esc(t("rl_off"))}</span><input type="checkbox" class="bset-sw" data-rfclabopen ${labOn ? "checked" : ""} /></span>
+    </label>${labOn ? "" : `<div class="rl-note rl-am" style="margin:-4px 2px 10px;">${esc(t("rfc_lab_closed"))}</div>`}`;
+  // FC ⇄ shards converter (kept from the old page, folded).
+  const convHtml = `<details class="rl-card rl-conv">
+      <summary>${esc(t("fcs_title"))}</summary>
+      <p class="rl-note">${esc(t("fcs_simple_desc"))}</p>
+      <div class="rl-conv-g">
+        <label><span class="rl-lb">${esc(materialDisplayName("Fire Crystal"))}</span><input type="text" inputmode="numeric" data-fcconv="fc" value="${st.fcHave || ""}" placeholder="0" /></label>
+        <span class="rl-conv-x">⇄</span>
+        <label><span class="rl-lb">${esc(materialDisplayName("FC Shard"))}</span><input type="text" inputmode="numeric" data-fcconv="fcs" value="${st.fcHave ? fmt(Math.floor(st.fcHave * FCS_PER_FC)) : ""}" placeholder="0" /></label>
+      </div>
+      <div class="rl-note">1 FC = ${FCS_PER_FC} FCS</div>
+    </details>`;
+  // ---- Tiers window (T2 compact table)
+  const tiersHtml = () => {
+    const rows = RFC_LAB_TIERS.map((tr, i) => {
+      const k = i + 1, e = rfcExpected(tr), lo = tr.returns[0][0], hi = tr.returns[tr.returns.length - 1][0];
+      const dp = speeds[i], d = doneFor(dp), late = !inTime(dp), mine = same(dp, plan);
+      const open = RFC_TIER_ROW === k;
+      const w20 = rfcTierCost(k, RFC_LAB_MAX_PER_TIER), r20 = RFC_LAB_MAX_PER_TIER * e;
+      const yr = d && d.getUTCFullYear() !== today.getUTCFullYear();
+      const dTxt = d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }) : "—";
+      const pct = (p) => (p * 100).toLocaleString(undefined, { maximumFractionDigits: 1 });
+      const det = open ? `<div class="rl-det">
+          <div class="rl-note">${esc(k === 1 ? t("rl_always_open") : t("rl_opens_after").replace("{t}", "T" + (k - 1)))}. ${esc(t("rl_week_max"))}</div>
+          <div class="rl-tg">
+            <div><span class="rl-lb">${esc(t("rl_per_try"))}</span><b>${fcI}${fmt(tr.cost)}</b><small>${esc(t("rl_first_try").replace("{n}", fmt(tr.cost / 2, 1)))}</small></div>
+            <div><span class="rl-lb">${esc(t("rl_gives"))}</span><b>${rfI}${lo}–${hi}</b><small>${esc(t("rl_avg_each").replace("{a}", fmt(e, 2)).replace("{b}", fmt(tr.cost / e)))}</small></div>
+            <div><span class="rl-lb">${esc(t("rl_20_tries"))}</span><b>${fcI}${fmt(w20)}</b><small>→ ${fmt(r20, 1)} RFC</small></div>
+          </div>
+          <div class="rl-lb" style="margin-top:9px;">${esc(t("rl_chances"))}</div>
+          <div class="rl-chn">${tr.returns.map(([n, p]) => `<span><b>${n}</b> ${pct(p)}%</span>`).join("")}</div>
+          <div class="rl-tf"><span>${esc(t("rl_once_day"))}: <b>${fmt(dp.cost)}</b> FC → <b>${fmt(dp.rfc, 1)}</b> RFC ${esc(t("rl_a_week"))}</span><span>${esc(t("rl_done"))} <b class="${late ? "rl-rd" : mine ? "rl-g" : ""}">${d ? esc(dShort(d)) : "—"}</b></span></div>
+          <div class="rl-detb"><button type="button" class="btn rl-use" data-rluse="${dp.top}|${dp.n}" data-rlclosetiers>${esc(t("rl_use_daily").replace("{t}", "T" + k))}</button><button type="button" class="btn ghost" data-rltier="${k}">${esc(t("close_button"))}</button></div>
+        </div>` : "";
+      return `<button type="button" class="rl-tr${mine ? " on" : ""}${open ? " op" : ""}" data-rltier="${k}" aria-expanded="${open}">
+          <span class="rl-c0"><span class="rl-tp">${rfI}<i>T${k}</i></span></span>
+          <span>${fmt(tr.cost)}<small>${fmt(tr.cost / 2, 1)} ${esc(t("rl_1st_day"))}</small></span>
+          <span>${fmt(e, 2)}<small>${lo}–${hi}</small></span>
+          <span>${fmt(dp.cost)}</span>
+          <span>${fmt(dp.rfc, 1)}</span>
+          <span class="rl-dn${late ? " rd" : mine ? " g" : ""}">${esc(dTxt)}${yr ? `<small>${d.getUTCFullYear()}</small>` : ""}${late ? `<small>${esc(t("rl_too_late"))}</small>` : mine ? `<small>${esc(t("rl_your_plan"))}</small>` : ""}</span>
+          <span class="rl-cv">${open ? "▴" : "▾"}</span>
+        </button>${det}`;
+    }).join("");
+    return `<div class="exp-ov rl-ov" data-rlbd>
+        <div class="exp-sk rl-sk" role="dialog" aria-modal="true" aria-label="${esc(t("rfc_tiers_title"))}">
+          <div class="rl-sh-h"><button type="button" class="rl-x" data-rlclosetiers aria-label="${esc(t("close_button"))}">‹</button><b>${esc(t("rfc_tiers_title"))}</b><button type="button" class="rl-x" data-rlclosetiers aria-label="${esc(t("close_button"))}">✕</button></div>
+          <div class="rl-ctx">${esc(t("rl_need"))} <b>${fmt(need)}</b> ${rfI} ${esc(t("rl_by"))} <b>${esc(dShort(byDay))}</b> · ${esc(t("rl_your_plan"))} <b class="rl-ice">${esc(rfcPlanName(plan))}</b></div>
+          <div class="rl-tb">
+            <div class="rl-th"><span class="rl-c0">${esc(t("rfc_tier"))}</span><span>FC<small>${esc(t("rl_a_try"))}</small></span><span>RFC<small>${esc(t("rl_avg_try"))}</small></span><span>FC<small>${esc(t("rl_a_week"))}</small></span><span>RFC<small>${esc(t("rl_a_week"))}</small></span><span>${esc(t("rl_done"))}<small>${esc(t("rl_by"))} ${esc(dShort(byDay))}?</small></span><span></span></div>
+            ${rows}
+          </div>
+          <div class="rl-note" style="margin:8px 2px 0;">${esc(t("rl_week_def"))}</div>
+          <div class="rl-rules"><b>${esc(t("rl_rules_h"))}</b> · ${esc(t("rfc_rules"))}</div>
+        </div>
+      </div>`;
+  };
+  if (seq !== RENDER_SEQ) return;
+  content.innerHTML = `<div class="rl">
+    <div class="plx-head rl-head"><h2>${esc(t("rfc_title"))}</h2><button type="button" class="btn rl-tiers" data-rlopentiers>${esc(t("rl_tiers_btn"))}</button></div>
+    <p class="desc">${esc(t("rl_desc"))}</p>
+    <div class="rl-grid">
+      <div class="rl-col">${headHtml}${fastHtml}</div>
+      <div class="rl-col">${weekHtml}${labHtml}${convHtml}</div>
+    </div>
+    ${RFC_TIERS_OPEN ? tiersHtml() : ""}
+  </div>`;
+  const root = content.querySelector(".rl");
+  const redraw = () => keepPlace(() => renderRfcLabPage());
+  const save = () => saveCalcState("rfc_lab", st);
+  const numOf = (el) => Math.max(0, Number(String(el.value).replace(/[^0-9.]/g, "")) || 0);
+  // Slider: the plan with the most Refined FC for that weekly FC (the old
+  // "FC I can spend per week" mode).
+  const sld = root.querySelector("[data-rlslider]"), sldv = root.querySelector("[data-rlsldv]");
+  const allPlans = rfcAllPlans();
+  const forBudget = (v) => allPlans.filter((p) => p.cost <= v).sort((a, b) => b.rfc - a.rfc || a.cost - b.cost)[0] || cheapest;
+  const sldText = () => { const p = forBudget(Number(sld.value)), d = doneFor(p); sldv.textContent = `${fmt(p.cost)} FC ${t("rl_a_week")} · ${t("rl_done")} ${d ? dShort(d) : "—"}`; sld.style.setProperty("--p", `${((Number(sld.value) - sMin) / Math.max(1, sMax - sMin)) * 100}%`); };
+  sldText();
+  sld.addEventListener("input", sldText);
+  sld.addEventListener("change", () => { st.mode = "budget"; st.budget = Number(sld.value); st.pick = "manual"; save(); rfcLabApplyRate(st); redraw(); });
+  root.addEventListener("click", (ev) => {
+    const el = ev.target.closest("button, [data-rlbd]");
+    if (!el || !root.contains(el)) return;
+    if (el.matches("[data-rlbd]")) { if (ev.target === el) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); } return; }
+    if (el.dataset.rluse) {
+      const [top, n] = el.dataset.rluse.split("|").map(Number);
+      st.top = top; st.attempts = n; st.mode = "schedule"; st.pick = "manual";
+      if (el.hasAttribute("data-rlclosetiers")) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; }
+      save(); rfcLabApplyRate(st); redraw(); return;
+    }
+    if (el.hasAttribute("data-rlauto")) { st.pick = "auto"; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlneedauto")) { st.myNeed = null; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlbyauto")) { st.myBy = ""; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlopentiers")) { RFC_TIERS_OPEN = true; RFC_TIER_ROW = 0; redraw(); return; }
+    if (el.hasAttribute("data-rlclosetiers")) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); return; }
+    if (el.dataset.rltier) { const k = Number(el.dataset.rltier); RFC_TIER_ROW = RFC_TIER_ROW === k ? 0 : k; redraw(); return; }
+    if (el.dataset.rltick) {
+      const [a, b] = el.dataset.rltick.split("|").map(Number), list = Array.from({ length: b - a + 1 }, (_, k) => a + k);
+      const on = list.every(tickOn);
+      st.ticks.days = on ? st.ticks.days.filter((x) => !list.includes(x)) : Array.from(new Set(st.ticks.days.concat(list))).sort();
+      save(); redraw();
+    }
+  });
+  root.querySelector("[data-rlneed]").addEventListener("change", (ev) => {
+    const raw = String(ev.target.value).trim();
+    const v = raw === "" ? null : numOf(ev.target);
+    st.myNeed = v == null || v === autoNeed ? null : v;
+    save(); redraw();
+  });
+  root.querySelector("[data-rlby]").addEventListener("click", (ev) => { try { ev.target.showPicker(); } catch (e) { /* older browsers open it themselves */ } });
+  root.querySelector("[data-rlby]").addEventListener("change", (ev) => {
+    const v = ev.target.value;
+    st.myBy = v && packParseDay(v) && v !== packDayKey(autoBy) ? v : "";
+    save(); redraw();
+  });
+  if (RFC_TIERS_OPEN) {
+    const onKey = (ev) => { if (ev.key === "Escape" && RFC_TIERS_OPEN && TAB === "rfclab") { document.removeEventListener("keydown", onKey); RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); } };
+    document.addEventListener("keydown", onKey);
+    const ov = root.querySelector("[data-rlbd]");
+    new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
+  }
   // FC <-> shards: type in either box, the other follows (FC -> shards
   // rounds down; shards -> FC rounds up, since you can't convert a fraction).
-  const fcIn = content.querySelector('[data-fcconv="fc"]'), fcsIn = content.querySelector('[data-fcconv="fcs"]');
-  const numOf = (el) => Math.max(0, Number(String(el.value).replace(/[^0-9.]/g, "")) || 0);
+  const fcIn = root.querySelector('[data-fcconv="fc"]'), fcsIn = root.querySelector('[data-fcconv="fcs"]');
   fcIn.addEventListener("input", () => { const v = numOf(fcIn); fcsIn.value = v ? fmt(Math.floor(v * FCS_PER_FC)) : ""; st.fcHave = v; });
   fcsIn.addEventListener("input", () => { const v = numOf(fcsIn); const fc = v ? Math.ceil(v / FCS_PER_FC) : 0; fcIn.value = fc ? fmt(fc) : ""; st.fcHave = fc; });
-  [fcIn, fcsIn].forEach((el) => el.addEventListener("change", () => saveCalcState("rfc_lab", st)));
-  content.querySelector("[data-rfclabopen]").addEventListener("change", (e) => {
+  [fcIn, fcsIn].forEach((el) => el.addEventListener("change", save));
+  root.querySelector("[data-rfclabopen]").addEventListener("change", (e) => {
     st.labOpen = e.target.checked;
-    saveCalcState("rfc_lab", st);
+    save();
     rfcLabApplyRate(st);
     PACK_PLAN_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
     render();
   });
-  content.querySelectorAll("[data-rfcmode]").forEach((b) => b.addEventListener("click", async () => {
-    st.mode = b.dataset.rfcmode;
-    saveCalcState("rfc_lab", st);
-    keepPlace(() => renderRfcLabPage());
-  }));
-  const schedSel = content.querySelector("[data-rfcschedule]");
-  if (schedSel) schedSel.addEventListener("change", async () => {
-    const [top, n] = schedSel.value.split("|").map(Number);
-    st.top = top; st.attempts = n;
-    saveCalcState("rfc_lab", st);
-    keepPlace(() => renderRfcLabPage());
-  });
-  content.querySelectorAll("[data-rfcuse]").forEach((btn) => btn.addEventListener("click", async () => {
-    const [top, n] = btn.dataset.rfcuse.split("|").map(Number);
-    st.top = top; st.attempts = n; st.mode = "schedule";
-    saveCalcState("rfc_lab", st);
-    keepPlace(() => renderRfcLabPage());
-  }));
-  content.querySelectorAll("[data-rfc]").forEach((inp) => inp.addEventListener("change", async () => {
-    const v = Math.max(0, Number(String(inp.value).replace(/[^0-9.]/g, "")) || 0);
-    st[inp.dataset.rfc] = v;
-    saveCalcState("rfc_lab", st);
-    keepPlace(() => renderRfcLabPage());
-  }));
 }
 
 // ============================================================
