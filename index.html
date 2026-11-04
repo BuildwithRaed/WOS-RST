@@ -342,9 +342,8 @@
   .qk-li:first-child{ border-top:0; }
   .qk-li img, .qk-li .qk-em{ width:28px; height:28px; }
   .qk-n{ flex:1; min-width:0; }
-  .qk-mv{ display:inline-flex; gap:4px; }
-  .qk-mv button, .qk-star{ min-width:34px; min-height:34px; border:1px solid var(--line); border-radius:8px; background:none; color:var(--muted); cursor:pointer; font-size:14px; }
-  .qk-mv button:disabled{ opacity:.3; }
+  .qk-star{ min-width:34px; min-height:34px; border:1px solid var(--line); border-radius:8px; background:none; color:var(--muted); cursor:pointer; font-size:14px; }
+  .qk-li.qk-pinrow{ padding-inline-start:2px; background:var(--panel); }
   .qk-star{ border:0; font-size:20px; }
   .qk-star.on{ color:#f3c64a; }
   .bud-hgsets{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 4px 8px 30px; font-size:12px; }
@@ -451,8 +450,6 @@
   .pk-sheet-h b{ white-space:nowrap; font-size:13px; }
   .pk-sheet-h input{ flex:1 1 auto; min-width:0; font-size:16px; padding:6px 10px; }
   .pk-sheet-x{ background:none; border:0; color:var(--muted); font-size:20px; cursor:pointer; padding:0 4px; }
-  .pk-sheet-mv{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); font-size:12px; flex-wrap:wrap; }
-  .pk-sheet-mv > span:last-child{ display:inline-flex; gap:6px; }
   .pk-sheet-list{ overflow:auto; padding:6px; display:grid; grid-template-columns:1fr 1fr; gap:4px; }
   .pk-sheet-o{ display:flex; align-items:center; gap:8px; min-height:42px; padding:4px 8px; border:1px solid transparent; border-radius:10px; background:none; color:var(--frost); font:inherit; font-size:12.5px; text-align:start; cursor:pointer; }
   .pk-sheet-o:hover{ background:var(--panel-2); }
@@ -703,10 +700,9 @@
   .rcs-foot{ display:flex; justify-content:flex-end; padding-top:10px; border-top:1px solid var(--line); }
   .rch-ord-row{ display:flex; align-items:center; gap:8px; padding:5px 0; border-top:1px solid var(--line); font-size:13.5px; }
   .rch-ord-row b{ width:20px; color:var(--muted); font-size:12px; }
-  .rch-ord-row span:not(.st){ flex:1; font-weight:700; }
+  .rch-ord-row span:not(.st):not(.ds-h){ flex:1; font-weight:700; }
+  .rch-ord-row{ background:var(--panel); }
   .rch-ord-row .st{ width:44px; font-weight:700; }
-  .rch-ord-row button{ width:34px; height:32px; border-radius:8px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); }
-  .rch-ord-row button:disabled{ opacity:.3; }
   @media (max-width:700px){
       }
   /* Pets Level card, design C v2 (19 Oct 2026). */
@@ -1962,6 +1958,20 @@ input,select,textarea{
     pointer-events:none; z-index:50;
   }
   .toast.show{ opacity:1; }
+  /* Drag to sort (dragSort): the ⋮⋮ handle, the lifted row and the blue landing line. */
+  .ds-h{ display:inline-flex; align-items:center; justify-content:center; flex:none; min-width:40px; min-height:48px; box-sizing:border-box; cursor:grab; color:var(--muted); font-size:16px; letter-spacing:-3px; touch-action:none; user-select:none; -webkit-user-select:none; border-radius:9px; }
+  .ds-h:hover{ color:var(--ice); }
+  .ds-h:focus-visible{ outline:2px solid var(--ice); outline-offset:-2px; }
+  .ds-lift{ position:relative; z-index:40; box-shadow:0 10px 26px rgba(0,0,0,.5), 0 0 0 2px var(--ice); background:var(--panel-2); transition:none; }
+  .ds-lift .ds-h{ cursor:grabbing; color:var(--ice); background:rgba(111,211,242,.1); }
+  .ds-on, .ds-on *{ cursor:grabbing !important; user-select:none !important; -webkit-user-select:none !important; }
+  .ds-line{ position:fixed; z-index:2000; height:3px; border-radius:3px; background:var(--ice); box-shadow:0 0 0 1px rgba(15,20,27,.6); pointer-events:none; }
+  .ds-line.x{ width:3px; }
+  tr.ds-lift{ box-shadow:none; }
+  tr.ds-lift > td{ z-index:5; background:var(--panel-2) !important; box-shadow:inset 0 2px 0 var(--ice), inset 0 -2px 0 var(--ice); }
+  tr.ds-lift > td:not(.adm-sortcell):not(.adm-stick){ position:relative; }
+  .ds-line::before{ content:""; position:absolute; left:-4px; top:-3.5px; width:10px; height:10px; border-radius:50%; background:var(--ice); }
+  .ds-line.x::before{ left:-3.5px; top:-4px; }
   .err{ color:var(--danger); font-size:12px; margin-top:6px; }
   .del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:2px 6px; }
   .del:hover{ color:var(--danger); }
@@ -2727,14 +2737,14 @@ input,select,textarea{
   .adm-b table input:not([type=checkbox]), .adm-b table select{ background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:5px 6px; font-size:12.5px; }
   .adm-b table input[type=number]{ text-align:right; font-variant-numeric:tabular-nums; }
   .adm-b .chg{ border-color:var(--amber) !important; color:var(--amber); box-shadow:0 0 0 1px var(--amber) inset; }
-  .adm-b:not(.sorting) .adm-sortcell{ display:none; }
+  .adm-b .adm-sortcell{ position:sticky; left:0; z-index:3; width:40px; padding:0 !important; background:var(--panel); }
+  .adm-b.adm-hasdrag td.adm-stick, .adm-b.adm-hasdrag th.adm-stick{ left:40px; }
+  td.adm-dragcell{ padding:0 !important; width:40px; }
   .adm-b table{ width:auto !important; min-width:100%; }
   .adm-b table td{ padding:3px !important; }
   .adm-b table input[type=number]{ width:74px !important; }
   .adm-b table input[type=text], .adm-b table input:not([type]){ width:118px !important; }
   .adm-b td.adm-stick input, .adm-b td.adm-stick select{ width:var(--stickw, 96px) !important; }
-  .adm-sorttoggle{ margin-bottom:6px; }
-  .adm-sorttoggle.on{ border-color:var(--ice); }
   .adm-b td.adm-stick, .adm-b th.adm-stick{ position:sticky; left:0; z-index:2; background:var(--panel); box-shadow:2px 0 0 var(--line); }
   .adm-b td.adm-stick input{ font-weight:700; }
   .panel.adm-addpanel{ padding:10px 12px; }
@@ -2772,13 +2782,11 @@ input,select,textarea{
   .admc-txt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
   .admc-txt b{ font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .admc-txt small{ font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .admc-edit{ width:34px; height:34px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--frost); cursor:pointer; flex:none; }
-  .admc-sort{ display:none; align-items:center; gap:3px; flex:none; }
-  .admc-list.sorting .admc-sort{ display:inline-flex; }
-  .admc-sort [data-grip]{ cursor:grab; color:var(--muted); padding:0 3px; user-select:none; }
-  .admc-sort button{ width:26px; height:26px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2); color:var(--frost); font-size:11px; cursor:pointer; }
-  .admc-sort button:disabled{ opacity:.35; }
-  [data-admcsort].on{ border-color:var(--ice); }
+  .admc-open{ flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:10px; min-height:46px; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:start; cursor:pointer; }
+  .admc-open:focus-visible{ outline:2px solid var(--ice); outline-offset:2px; border-radius:9px; }
+  .admc-row:has(.ds-h){ padding-inline-end:2px; }
+  .admc-row:hover{ border-color:var(--ice-dim); }
+  .admc-hint{ font-size:11.5px; margin:-4px 0 8px; letter-spacing:0; }
   .adm-sheet-wrap{ align-items:flex-end; }
   .adm-sheet{ width:100%; max-width:560px; max-height:88vh; overflow-y:auto; border-radius:16px 16px 0 0; }
   @media (min-width:700px){ .adm-sheet-wrap{ align-items:center; } .adm-sheet{ border-radius:16px; } }
@@ -2838,6 +2846,7 @@ input,select,textarea{
   .rl-table{ border-collapse:collapse; width:100%; font-size:13px; }
   .rl-table th{ text-align:start; font-size:11px; color:var(--muted); font-weight:600; padding:4px 6px; white-space:nowrap; }
   .rl-table td{ padding:3px 4px; border-top:1px solid var(--line); }
+  .rl-table td.rl-dragcell{ padding:0; width:40px; }
   .rl-table input[type=text], .rl-table input[type=number], .rl-table input[type=date], .rl-table select{ width:100%; min-width:70px; padding:5px 6px; font-size:13px; }
   .rl-rowbtns{ white-space:nowrap; }
   .rl-rowbtns button{ width:26px; height:26px; border:1px solid var(--line); border-radius:7px; background:var(--panel-2); color:var(--frost); cursor:pointer; font-size:11px; }
@@ -2846,7 +2855,7 @@ input,select,textarea{
   .rl-fields label{ display:flex; flex-direction:column; gap:3px; font-size:12.5px; }
   .rl-fields label span{ color:var(--muted); }
   .rl-foot{ display:flex; align-items:center; gap:8px; margin-top:12px; }
-  .ds-row{ display:flex; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--line); }
+  .ds-row{ display:flex; align-items:center; gap:8px; padding:2px 0; border-top:1px solid var(--line); background:var(--panel); }
   .ds-n{ flex:1 1 auto; min-width:0; font-size:13.5px; }
   .ds-n small{ display:block; color:var(--muted); font-size:11.5px; }
   .ds-grid{ border:1px solid var(--line); border-radius:12px; padding:10px; margin:2px 0 8px; background:var(--panel-2); }
@@ -2873,7 +2882,9 @@ input,select,textarea{
   .mn-langs label span, .mn-note label span{ flex:0 0 90px; font-size:11.5px; color:var(--muted); }
   .mn-langs input, .mn-note textarea{ flex:1 1 auto; min-width:0; }
   .mn-note{ margin-top:6px; padding:8px; border:1px dashed var(--line); border-radius:10px; }
-  @media (max-width:600px){ .mn-prow{ flex-wrap:wrap; } .mn-prow input{ flex-basis:100%; } .mn-prow select{ flex:1 1 0; } }
+  @media (max-width:600px){ .mn-prow{ flex-wrap:wrap; } .mn-prow input{ flex-basis:calc(100% - 52px); } .mn-prow select{ flex:1 1 0; margin-inline-start:48px; } }
+  .mn-ghead .ds-h, .mn-prow .ds-h{ margin-inline-start:-8px; }
+  .mn-page{ background:var(--panel); }
   .mn-foot{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .adm[hidden], .adm-it[hidden], .adm-card[hidden], .adm-gk[hidden], .adm-cards[hidden]{ display:none; }
   .adm-crumb{ font-size:12px; color:var(--muted); }
@@ -2888,6 +2899,8 @@ input,select,textarea{
   .adm-chips{ margin-bottom:14px; }
   .adm-chips-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
   .adm-chip{ flex:none; border:1px solid var(--line); border-radius:18px; padding:6px 14px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .admc-catchip{ -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
+  .admc-catchip.ds-lift{ border-color:var(--ice); }
   .adm-chip.on{ background:var(--ice-dim); border-color:var(--ice); }
   @media (max-width:899px){
     .adm-layout{ grid-template-columns:minmax(0,1fr); }
@@ -3751,7 +3764,7 @@ input,select,textarea{
     .plx-piecestat em, .rfc-plan-h em, .rfc-plan-k, .rfc-plan-w,
     .plx-sel span, .pk-sum-gives, .pk-sum-f, .pk-bud,
     .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk,
-    .adm-ext, .admc-txt small, .admc-sort button, .admf,
+    .adm-ext, .admc-txt small, .admc-hint, .admf,
     .bk-row small, .lg-sum span, .tx-en small, .rl-item small,
     .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small,
     .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span,
@@ -4730,13 +4743,166 @@ document.addEventListener("error", (e) => {
 }, true);
 
 // Shows a small bottom-of-screen confirmation/error message.
+let TOAST_ERRS = 0; // error notes shown so far (wireAdminReorder: no "✓ Order saved" after one)
 function toast(msg, isErr) {
+  if (isErr) TOAST_ERRS++;
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.style.borderColor = isErr ? "var(--danger)" : "var(--line)";
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 2200);
 }
+
+// ---- Drag to sort (owner, 4 Nov 2026: "only use drag for anything that
+// has an option to sort order"; no ▲▼ / ◀ ▶ buttons anywhere) ----
+// One pointer drag for every list with an order, touch and mouse alike
+// (modelled on the Budgets goals drag): hold the ⋮⋮ handle, the row lifts
+// and follows the finger, a blue line shows where it will land; near the
+// edge of the scroll box (a pop-up, a sideways table or the page) it scrolls
+// by itself; ↑ / ↓ (← / → for columns) on the focused handle move it one
+// place. Nothing happens when it lands where it was. o: {
+//   row: selector of a row (the handle's closest one, unless o.item),
+//   item(h) → the row, items(row) → that list's rows in order (default:
+//   the row's siblings matching o.row), axis "y" | "x", span(row) → the
+//   element whose size the line takes across (default the row),
+//   place(row, to, from, list) to move it yourself (default: in the DOM),
+//   done(row, from, to) → called after the move (may return a promise) }.
+const DS_HANDLE = "&#8942;&#8942;";
+function dsHandleHtml(attrs = "", label = "") {
+  const l = esc(label || t("drag_to_move"));
+  return `<span class="ds-h" role="button" tabindex="0" ${attrs} aria-label="${l}" title="${l}">${DS_HANDLE}</span>`;
+}
+function dragSort(h, o) {
+  if (!h) return;
+  const X = o.axis === "x";
+  const rowOf = () => (o.item ? o.item(h) : h.closest(o.row));
+  const listOf = (row) => (o.items ? o.items(row) : [...row.parentElement.children].filter((x) => x.matches(o.row)));
+  const finish = (row, from, to) => {
+    if (to === from || to < 0) return null;
+    const list = listOf(row);
+    if (o.place) o.place(row, to, from, list);
+    else {
+      const others = list.filter((x) => x !== row);
+      if (others[to]) others[to].before(row); else if (others.length) others[others.length - 1].after(row);
+    }
+    return Promise.resolve(o.done ? o.done(row, from, to) : null);
+  };
+  if (!o.hold) h.classList.add("ds-h");
+  h.onkeydown = (e) => {
+    const back = X ? (document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft") : "ArrowUp";
+    const fwd = X ? (document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight") : "ArrowDown";
+    if (e.key !== back && e.key !== fwd) return;
+    e.preventDefault();
+    const row = rowOf(); if (!row) return;
+    const list = listOf(row), from = list.indexOf(row), to = from + (e.key === back ? -1 : 1);
+    if (from < 0 || to < 0 || to >= list.length) return;
+    const p = finish(row, from, to);
+    if (p) p.then(() => { if (h.isConnected) h.focus(); else if (o.refocus) o.refocus(row, to); });
+  };
+  // o.hold: the row itself is the handle (category chips): a mouse drags
+  // once it moves 6 px, a finger after holding still for 350 ms (moving
+  // sooner scrolls as usual); a plain tap stays a tap.
+  h.onpointerdown = (e) => {
+    if (e.button > 0) return;
+    if (!o.hold) { e.preventDefault(); start(e, e); return; }
+    const x0 = e.clientX, y0 = e.clientY, mouse = e.pointerType === "mouse";
+    let timer = 0, last = e;
+    const off = () => { clearTimeout(timer); document.removeEventListener("pointermove", pm); document.removeEventListener("pointerup", off); document.removeEventListener("pointercancel", off); };
+    const go = () => {
+      off();
+      if (!start(e, last)) return;
+      // The tap that ends a drag isn't a click; a long press opens no menu.
+      const eat = (ev) => { ev.preventDefault(); ev.stopImmediatePropagation(); };
+      h.addEventListener("click", eat, { capture: true, once: true });
+      setTimeout(() => h.removeEventListener("click", eat, { capture: true }), 600);
+    };
+    const pm = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      last = ev;
+      const far = Math.hypot(ev.clientX - x0, ev.clientY - y0);
+      if (mouse ? far > 6 : far > 8) { if (mouse) go(); else off(); }
+    };
+    document.addEventListener("pointermove", pm);
+    document.addEventListener("pointerup", off);
+    document.addEventListener("pointercancel", off);
+    if (!mouse) timer = setTimeout(go, 350);
+  };
+  if (o.hold) h.addEventListener("contextmenu", (ev) => { if (h.classList.contains("ds-lift") || ev.pointerType !== "mouse") ev.preventDefault(); });
+  function start(e, now) {
+    const row = rowOf(); if (!row) return false;
+    const list = listOf(row), from = list.indexOf(row);
+    const others = list.filter((x) => x !== row);
+    if (from < 0 || !others.length) return false;
+    // The nearest box that scrolls along the drag, else the page.
+    let sc = row.parentElement;
+    while (sc && sc !== document.body && sc !== document.documentElement) {
+      const cs = getComputedStyle(sc), ov = X ? cs.overflowX : cs.overflowY;
+      if (/(auto|scroll)/.test(ov) && (X ? sc.scrollWidth > sc.clientWidth : sc.scrollHeight > sc.clientHeight)) break;
+      sc = sc.parentElement;
+    }
+    if (sc === document.body || sc === document.documentElement) sc = null;
+    const scPos = () => (sc ? (X ? sc.scrollLeft : sc.scrollTop) : (X ? scrollX : scrollY));
+    const p0 = X ? now.clientX : now.clientY, s0 = scPos();
+    let p = p0, to = from, raf = 0;
+    const line = document.createElement("div");
+    line.className = "ds-line" + (X ? " x" : "");
+    document.body.appendChild(line);
+    row.classList.add("ds-lift");
+    document.documentElement.classList.add("ds-on");
+    const draw = () => {
+      row.style.transform = `translate${X ? "X" : "Y"}(${p - p0 + scPos() - s0}px)`;
+      const mid = (r) => (X ? r.left + r.width / 2 : r.top + r.height / 2);
+      const rects = others.map((x) => x.getBoundingClientRect());
+      to = rects.filter((r) => mid(r) < p).length;
+      const sr = (o.span ? o.span(row) : row).getBoundingClientRect();
+      let a = X ? sr.top : sr.left, b = X ? sr.bottom : sr.right;
+      clips.forEach((c) => { const r = c.getBoundingClientRect(); a = Math.max(a, X ? r.top : r.left); b = Math.min(b, X ? r.bottom : r.right); });
+      const at = to < rects.length ? (X ? rects[to].left : rects[to].top) : (X ? rects[rects.length - 1].right : rects[rects.length - 1].bottom);
+      if (X) Object.assign(line.style, { left: at - 1.5 + "px", top: a + "px", height: Math.max(0, b - a) + "px", width: "" });
+      else Object.assign(line.style, { top: at - 1.5 + "px", left: a + "px", width: Math.max(0, b - a) + "px", height: "" });
+    };
+    // Boxes that cut the row off across the drag (a table scrolling sideways):
+    // the line stays inside them.
+    const clips = [];
+    for (let el = row.parentElement; el && el !== document.body; el = el.parentElement) {
+      const ov = getComputedStyle(el)[X ? "overflowY" : "overflowX"];
+      if (ov !== "visible") clips.push(el);
+    }
+    const edge = () => {
+      const r = sc ? sc.getBoundingClientRect() : null;
+      const a = r ? (X ? r.left : r.top) : 0, b = r ? (X ? r.right : r.bottom) : (X ? innerWidth : innerHeight);
+      const d = p < a + 56 ? -Math.ceil((a + 56 - p) / 4) : p > b - 56 ? Math.ceil((p - b + 56) / 4) : 0;
+      if (d) { if (sc) { if (X) sc.scrollLeft += d; else sc.scrollTop += d; } else window.scrollBy(X ? d : 0, X ? 0 : d); }
+      draw();
+      raf = requestAnimationFrame(edge);
+    };
+    draw();
+    raf = requestAnimationFrame(edge);
+    const move = (ev) => { if (ev.pointerId === e.pointerId) p = X ? ev.clientX : ev.clientY; };
+    // While dragging, a finger moves the row, not the page.
+    const noScroll = (ev) => { if (ev.cancelable) ev.preventDefault(); };
+    const end = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      cancelAnimationFrame(raf);
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", end);
+      document.removeEventListener("pointercancel", end);
+      document.removeEventListener("touchmove", noScroll, { passive: false });
+      line.remove();
+      row.classList.remove("ds-lift");
+      row.style.transform = "";
+      document.documentElement.classList.remove("ds-on");
+      if (ev.type === "pointerup") finish(row, from, to);
+    };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", end);
+    document.addEventListener("pointercancel", end);
+    document.addEventListener("touchmove", noScroll, { passive: false });
+    return true;
+  }
+}
+// The short "✓ Order saved" note after an order saves by itself.
+function dsSaved(ok = true) { toast(ok ? "✓ " + t("order_saved") : t("order_not_saved"), !ok); }
 
 // Escapes user-supplied text before injecting into innerHTML.
 function esc(s) {
@@ -4914,7 +5080,6 @@ const DATA_NAME_I18N = {
 // Hard-coded English UI text (labels, buttons, messages, admin pages) with
 // Arabic and Korean versions. localizeDom() swaps exact matches on screen.
 const UI_TEXT_I18N = {
-"These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below. \"Gives\" says what one of the item opens into, in real materials (e.g. Chief Gear Chest → Design Plan: 1, Polishing Solution: 4, Hardened Alloy: 400), so Pack cost can count it; leave it empty for a plain item. Built-in names can't be renamed; ✕ removes a name from the dropdown (built-in ones can be restored from the Removed list below).": {},
 "\"Has count trigger\" shows a \"Count in max\" checkbox on that item's card and moves it below the divider line (used on Frame for unverified items).": {},
 "Path": {},
 "e.g. Hunting Skill": {},
@@ -4995,10 +5160,6 @@ const UI_TEXT_I18N = {
 "T11 Helios": {},
 "AVERAGE": {},
 "Something went wrong loading this tab.": {},
-"Move up": {},
-"Move down": {},
-"Move left": {},
-"Move right": {},
 "Drag to move": {},
 "Use the arrows to reorder.": {},
 "Upload image": {},
@@ -5272,7 +5433,6 @@ const UI_TEXT_I18N = {
 "Open Contact page": {},
 "e.g. hello@wosrst.com": {},
 "Shown on the Contact us page (linked from the footer on every page). Leave the email empty to show \"Contact details will be added soon.\" instead.": {},
-"These are the names offered in the column dropdown on the Packs page. Drag a row (or use ▲▼) to sort the dropdown, then Save all; tick Hide to keep a name out of it, and add your own items below.": {},
 "+ Add resource": {},
 "Gives (per 1)": {},
 "nothing (plain item)": {},
@@ -5795,10 +5955,7 @@ const T = {
   pk_scale: { en: "Fill from Row 1" },
   pk_delete_table: { en: "Delete table" },
   pk_col_item: { en: "Column {n} item" },
-  pk_col_pos: { en: "Position {n} of {m}" },
   pk_search_items: { en: "Search items" },
-  pk_move_left: { en: "Move left" },
-  pk_move_right: { en: "Move right" },
   pk_settings: { en: "Pack settings" },
   pk_none_picked: { en: "none picked" },
   pk_sec_columns: { en: "Columns" },
@@ -6564,7 +6721,14 @@ const T = {
   acc_signed_in: { en: "Signed in" },
   qk_done: { en: "Done" },
   qk_pinned: { en: "Pinned" },
-  qk_hint: { en: "Tap ★ to pin a page to the row on your Dashboard; ▲▼ change the order." },
+  qk_hint: { en: "Tap ★ to pin a page to the row on your Dashboard; drag ⋮⋮ to change the order." },
+  drag_to_move: { en: "Drag to move" },
+  order_saved: { en: "Order saved" },
+  drag_order_hint: { en: "Hold ⋮⋮ and drag to change the order" },
+  admc_sort_hint: { en: "Hold and drag to change the order · tap a row to edit" },
+  admc_edit: { en: "Edit {name}" },
+  cat_drag_hint: { en: "Drag sideways to change the order (on a phone: hold, then drag)" },
+  order_not_saved: { en: "Couldn't save the order. Please try again." },
   qk_none: { en: "Nothing pinned yet: tap ★ next to a page below." },
   hg_stars: { en: "Stars" },
   hg_stars_note: { en: "Stars belong to the hero, so they change on the Dashboard roster too." },
@@ -6954,7 +7118,6 @@ const T = {
   bp_chests_n: { en: "{n} chests to open" },
   bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
-  goals_desc: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ or use ▲▼." },
   goals_desc_drag: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ to change the order." },
   goal_main: { en: "main" },
   goal_mini: { en: "mini" },
@@ -6980,8 +7143,6 @@ const T = {
   goal_hg_enhance: { en: "Enhance" },
   goal_no_levels: { en: "No level between today and the target on these pages." },
   goal_remove: { en: "Remove" },
-  goal_up: { en: "Move up" },
-  goal_down: { en: "Move down" },
   goal_own_plan: { en: "Planned on its own" },
   goal_by_main: { en: "Main target" },
   goal_by_svs: { en: "Next SvS" },
@@ -8376,7 +8537,7 @@ async function drawQuickRow(el) {
   fitDashToScreen();
 }
 // ✎: every page of the menu grouped like the menu, ★ to pin; pinned pages on
-// top with ▲▼ to change their order.
+// top and dragged by ⋮⋮ to change their order.
 async function openQuickSheet(after) {
   await quickPages();
   let pins = QUICK_PAGES.slice();
@@ -8401,14 +8562,14 @@ async function openQuickSheet(after) {
   };
   modal._done = done;
   const star = (tb) => `<button type="button" class="qk-star${pins.includes(tb) ? " on" : ""}" data-qkpin="${esc(tb)}" aria-label="★">${pins.includes(tb) ? "&#9733;" : "&#9734;"}</button>`;
-  const row = (tb, extra) => `<div class="qk-li">${quickIconHtml(tb)}<span class="qk-n">${esc(navLabel(tb))}</span>${extra || ""}${star(tb)}</div>`;
+  const row = (tb, pinned) => `<div class="qk-li${pinned ? " qk-pinrow" : ""}"${pinned ? ` data-qkrow="${esc(tb)}"` : ""}>${pinned ? dsHandleHtml("data-qkdrag") : ""}${quickIconHtml(tb)}<span class="qk-n">${esc(navLabel(tb))}</span>${star(tb)}</div>`;
   const draw = () => {
     pins = pins.filter((tb) => known.has(tb));
     modal.innerHTML = `<div class="modal-box qk-box">
       <div class="bd-head"><h2>${esc(t("qk_edit"))}</h2><button type="button" class="btn small" data-qkdone>${esc(t("qk_done"))}</button></div>
       <div class="meta" style="font-size:11.5px;">${esc(t("qk_hint"))}</div>
       <div class="qk-k">${esc(t("qk_pinned"))} (${pins.length})</div>
-      <div class="qk-list">${pins.length ? pins.map((tb, i) => row(tb, `<span class="qk-mv"><button type="button" data-qkup="${i}"${i ? "" : " disabled"}>&#9650;</button><button type="button" data-qkdn="${i}"${i < pins.length - 1 ? "" : " disabled"}>&#9660;</button></span>`)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
+      <div class="qk-list">${pins.length ? pins.map((tb) => row(tb, true)).join("") : `<div class="meta" style="font-size:12px; padding:8px;">${esc(t("qk_none"))}</div>`}</div>
       ${groups.map((g) => `<div class="qk-k">${esc(g.name)}</div><div class="qk-list">${g.tabs.map((tb) => row(tb)).join("")}</div>`).join("")}
     </div>`;
     modal.querySelector("[data-qkdone]").addEventListener("click", done);
@@ -8419,9 +8580,11 @@ async function openQuickSheet(after) {
       draw();
       modal.querySelector(".qk-box").scrollTop = y;
     }));
-    const move = (i, d) => { const j = i + d; if (j < 0 || j >= pins.length) return; [pins[i], pins[j]] = [pins[j], pins[i]]; draw(); };
-    modal.querySelectorAll("[data-qkup]").forEach((b) => b.addEventListener("click", () => move(Number(b.dataset.qkup), -1)));
-    modal.querySelectorAll("[data-qkdn]").forEach((b) => b.addEventListener("click", () => move(Number(b.dataset.qkdn), 1)));
+    // Drag ⋮⋮ to change the order (saved with Done, like the stars).
+    modal.querySelectorAll("[data-qkdrag]").forEach((h) => dragSort(h, {
+      row: "[data-qkrow]",
+      done: () => { pins = [...modal.querySelectorAll("[data-qkrow]")].map((x) => x.dataset.qkrow); },
+    }));
   };
   draw();
   modal.style.display = "flex";
@@ -10616,7 +10779,7 @@ function reachWaitHtml(pg, nodes, tr, plan, tracks) {
   const low = w.some(([id, l]) => { const x = tracks.find((y) => y.id === id); return x && x.to < l; });
   return `<div class="rch-wait">&#128274; ${esc(t("rlk_wait").replace("{lv}", lvl).replace("{needs}", rules.map((r) => researchNeedsText(pg, nodes, r)).join(" + ")))}${low ? ` <span class="rch-amber">· ${esc(t("rlk_wait_target"))}</span>` : ""}</div>`;
 }
-// Order editor: the 12 rows, ▲▼ and Reset (one order for every page).
+// Order editor: the 12 rows, drag ⋮⋮ and Reset (one order for every page).
 function openUpgradeOrderSheet(after) {
   let m = document.getElementById("rchOrderModal");
   if (!m) { m = document.createElement("div"); m.id = "rchOrderModal"; m.className = "modal-overlay"; document.body.appendChild(m); }
@@ -10627,25 +10790,28 @@ function openUpgradeOrderSheet(after) {
     m.innerHTML = `<div class="modal-box rch-ord" style="max-width:380px;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("rch_order_title"))}</h2>
       <div class="meta" style="font-size:12px; margin-bottom:8px;">${esc(t("rch_order_hint"))}</div>
-      ${rows.map(([troop, stat], i) => `<div class="rch-ord-row"><b>${i + 1}</b><span style="color:${COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>
-        <button type="button" data-rchup="${i}" ${i ? "" : "disabled"} aria-label="▲">&#9650;</button><button type="button" data-rchdn="${i}" ${i < rows.length - 1 ? "" : "disabled"} aria-label="▼">&#9660;</button></div>`).join("")}
+      <div class="rch-ord-list">${rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-rchrow="${i}" data-rchkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>
+        ${dsHandleHtml("data-rchdrag")}</div>`).join("")}</div>
       <div style="display:flex; gap:8px; justify-content:space-between; margin-top:12px;">
         <button type="button" class="btn ghost" data-rchreset>${esc(t("rch_order_reset"))}</button>
         <button type="button" class="btn" data-rchdone>${esc(t("gs_done"))}</button>
       </div></div>`;
+    // Drag ⋮⋮ to change the order (saved with Done); the numbers follow.
+    m.querySelectorAll("[data-rchdrag]").forEach((h) => dragSort(h, {
+      row: "[data-rchrow]",
+      done: () => {
+        const old = UPGRADE_ORDER.rows;
+        UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-rchrow]")].map((x) => old[Number(x.dataset.rchrow)]);
+        draw();
+      },
+      refocus: (row) => { const r2 = [...m.querySelectorAll("[data-rchkey]")].find((x) => x.dataset.rchkey === row.dataset.rchkey), hh = r2 && r2.querySelector("[data-rchdrag]"); if (hh) hh.focus(); },
+    }));
   };
   draw();
   m.style.display = "flex";
   m.onclick = (ev) => {
-    const up = ev.target.closest("[data-rchup]"), dn = ev.target.closest("[data-rchdn]");
     if (ev.target === m || ev.target.closest("[data-rchdone]")) { m.style.display = "none"; saveUpgradeOrder(); if (after) after(); return; }
-    if (ev.target.closest("[data-rchreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); draw(); return; }
-    const i = up ? Number(up.dataset.rchup) : dn ? Number(dn.dataset.rchdn) : -1;
-    if (i < 0) return;
-    const j = up ? i - 1 : i + 1, rows = UPGRADE_ORDER.rows;
-    if (j < 0 || j >= rows.length) return;
-    [rows[i], rows[j]] = [rows[j], rows[i]];
-    draw();
+    if (ev.target.closest("[data-rchreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); draw(); }
   };
 }
 // One click handler for the order switch / edit link on every page.
@@ -13443,7 +13609,7 @@ function pkCloseMenus(target) {
   document.querySelectorAll(".pk-more[open]").forEach((m) => { if (!m.contains(target)) m.open = false; });
 }
 document.addEventListener("click", (e) => pkCloseMenus(e.target));
-// Pack tables in "⇅ Arrange" mode (◀ ▶ under each column), kept for the visit.
+// Pack tables in "⇅ Arrange" mode (a ⋮⋮ under each column to drag it), kept for the visit.
 const PK_ARRANGE = new Set();
 async function renderPacksPage() {
   const seq = RENDER_SEQ;
@@ -13569,8 +13735,8 @@ async function renderPacksPage() {
     sel.innerHTML = packColumnOptionsHtml(tb, Number(sel.dataset.col));
   };
   ["pointerdown", "mousedown", "touchstart", "focusin", "keydown"].forEach((ev) => listEl.addEventListener(ev, fillPackColPick, true));
-  // A1: "⇅ Arrange" shows the ◀ ▶ under each column; a column picture opens
-  // the item list (with search and Move left / right).
+  // A1: "⇅ Arrange" shows a ⋮⋮ under each column to drag it sideways; a column picture opens
+  // the item list (with search).
   listEl.addEventListener("click", (e) => {
     // A tap anywhere else closes an open ⋯ menu.
     pkCloseMenus(e.target);
@@ -13610,7 +13776,6 @@ async function renderPacksPage() {
     if (!sel) return;
     if (sel.hasAttribute("data-pt-lazy")) { sel.removeAttribute("data-pt-lazy"); sel.innerHTML = packColumnOptionsHtml(tb, ci); }
     const opts = [...sel.options].map((o) => ({ v: o.value, txt: o.textContent, on: o.selected }));
-    const left = th.querySelector('[data-pt-colmove="-1"]'), right = th.querySelector('[data-pt-colmove="1"]');
     document.querySelector(".pk-sheet-back")?.remove();
     const back = document.createElement("div");
     back.className = "pk-sheet-back";
@@ -13621,7 +13786,6 @@ async function renderPacksPage() {
     }).join("") || `<div class="meta" style="padding:10px;">—</div>`;
     back.innerHTML = `<div class="pk-sheet" role="dialog">
       <div class="pk-sheet-h"><b>${esc(t("pk_col_item").replace("{n}", ci + 1))}</b><input type="search" data-pksearch placeholder="${esc(t("pk_search_items"))}" /><button type="button" class="pk-sheet-x" data-pkclose aria-label="Close">&times;</button></div>
-      <div class="pk-sheet-mv"><span class="meta">${esc(t("pk_col_pos").replace("{n}", ci + 1).replace("{m}", tb.columns.length))}</span><span><button type="button" class="btn small ghost" data-pkmv="-1" ${!left || left.disabled ? "disabled" : ""}>&#9664; ${esc(t("pk_move_left"))}</button><button type="button" class="btn small ghost" data-pkmv="1" ${!right || right.disabled ? "disabled" : ""}>${esc(t("pk_move_right"))} &#9654;</button></span></div>
       <div class="pk-sheet-list">${listHtml("")}</div></div>`;
     document.body.appendChild(back);
     const close = () => { back.remove(); document.removeEventListener("keydown", onKey); };
@@ -13632,8 +13796,6 @@ async function renderPacksPage() {
     back.querySelector("[data-pksearch]").addEventListener("input", (e) => { list.innerHTML = listHtml(e.target.value.trim().toLowerCase()); });
     back.addEventListener("click", (e) => {
       if (e.target === back || e.target.closest("[data-pkclose]")) { close(); return; }
-      const mv = e.target.closest("[data-pkmv]");
-      if (mv) { close(); (mv.dataset.pkmv === "-1" ? left : right)?.click(); return; }
       const o = e.target.closest("[data-pkopt]");
       if (o) {
         close();
@@ -13938,7 +14100,7 @@ async function renderPacksPage() {
                   .map(
                     (c, ci) => `<th class="pk-th" style="padding:4px 2px; border-bottom:1px solid var(--line); text-align:center;">
                       ${pkHeadHtml(t, ci)}
-                      ${IS_OWNER ? `<div class="pk-arr"><button type="button" class="btn ghost small" data-pt-colmove="-1" data-col="${ci}" ${ci === 0 ? "disabled" : ""} title="Move left" style="padding:0 5px; font-size:9px; line-height:14px;">&#9664;</button><button type="button" class="btn ghost small" data-pt-colmove="1" data-col="${ci}" ${ci === t.columns.length - 1 ? "disabled" : ""} title="Move right" style="padding:0 5px; font-size:9px; line-height:14px;">&#9654;</button></div>` : ""}
+                      ${IS_OWNER ? `<div class="pk-arr">${dsHandleHtml(`data-pt-coldrag data-col="${ci}"`)}</div>` : ""}
                       ${packColMultiplier(packLinkFor(t.id), ci) > 1 ? `<div class="meta" style="font-size:9px; color:var(--ice);">/${esc(dailyDayLbl)} \u00d7${packLinkFor(t.id).daily.days}</div>` : ""}
                       <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
@@ -14896,18 +15058,19 @@ async function renderPacksPage() {
         await persistTable();
       }
       panel.querySelectorAll("[data-pt-gemsdel]").forEach((b) => b.addEventListener("click", () => removeColumn(Number(b.dataset.col))));
-      // Move a column left/right (cells, price/column settings and daily flags follow it).
-      async function moveColumn(ci, dir) {
-        const cj = ci + dir;
-        if (cj < 0 || cj >= t.columns.length) return;
+      // Move column ci to place cj (dragged in "⇅ Arrange"; cells,
+      // price/column settings and daily flags follow it).
+      async function moveColumn(ci, cj) {
+        if (ci === cj || cj < 0 || cj >= t.columns.length) return;
         syncFromDom();
-        const swap = (arr) => { const x = arr[ci]; arr[ci] = arr[cj]; arr[cj] = x; };
-        swap(t.columns);
-        t.rows.forEach((r) => { while (r.cells.length < t.columns.length) r.cells.push(""); swap(r.cells); });
+        const mv = (arr) => { const [x] = arr.splice(ci, 1); arr.splice(cj, 0, x); };
+        mv(t.columns);
+        t.rows.forEach((r) => { while (r.cells.length < t.columns.length) r.cells.push(""); mv(r.cells); });
         await ensurePackLinks();
         const l0 = PACK_LINKS[String(t.id)];
         if (l0) {
-          const remap = (n) => (n === ci ? cj : n === cj ? ci : n);
+          // Each old column number → its new one.
+          const remap = (n) => (n === ci ? cj : ci < cj && n > ci && n <= cj ? n - 1 : cj < ci && n >= cj && n < ci ? n + 1 : n);
           if (typeof l0.priceCol === "number") l0.priceCol = remap(l0.priceCol);
           const cols = {}; Object.entries(l0.cols || {}).forEach(([k, v]) => { cols[remap(Number(k))] = v; }); l0.cols = cols;
           if (l0.daily && Array.isArray(l0.daily.cols)) l0.daily.cols = l0.daily.cols.map(remap);
@@ -14917,7 +15080,14 @@ async function renderPacksPage() {
         renderAll();
         await persistTable();
       }
-      panel.querySelectorAll("[data-pt-colmove]").forEach((b) => b.addEventListener("click", () => moveColumn(Number(b.dataset.col), Number(b.getAttribute("data-pt-colmove")))));
+      panel.querySelectorAll("[data-pt-coldrag]").forEach((h) => dragSort(h, {
+        axis: "x",
+        row: "th.pk-th",
+        items: (th) => [...th.parentElement.querySelectorAll("th.pk-th")],
+        span: (th) => th.closest("table"),
+        place: () => {}, // the table is drawn again in its new order
+        done: (th, from, to) => moveColumn(from, to),
+      }));
       panel.querySelectorAll("[data-pt-colpick]").forEach((sel) => {
         sel.addEventListener("change", async () => {
           const ci = Number(sel.dataset.col);
@@ -22976,7 +23146,7 @@ function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady) 
   }).catch((e) => { if (BUDGET_DEADLINE.running === key) BUDGET_DEADLINE.running = null; if (!(e && e.superseded)) console.error("deadline plan failed", e); });
   return null;
 }
-// The Order of goals card's buttons: fold, ▲▼ / drag ⋮⋮ (saved order),
+// The Order of goals card's buttons: fold, drag ⋮⋮ (saved order),
 // ✕ on a mini, and the "+ Add mini target" form.
 function wireBudgetGoals(box) {
   const redraw = () => keepPlace(() => renderBudgetsPage());
@@ -23056,58 +23226,13 @@ function wireBudgetGoals(box) {
     BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "date:" + dateEl.value };
     BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw();
   });
-  // Drag a row by its ⋮⋮ handle (move / up are followed on the document:
-  // moving the row in the list would drop a pointer capture on the handle).
-  // Drag is the only way to move a goal (owner, 3 Nov 2026): near the top or
-  // bottom of the scroll box (the sheet, or the page) it scrolls by itself;
-  // ↑ / ↓ on the focused handle move it too.
-  box.querySelectorAll("[data-goaldrag]").forEach((h) => {
-    h.onkeydown = (e) => {
-      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-      e.preventDefault();
-      const gid = h.closest("[data-goal]").dataset.goal, list = ids(), i = list.indexOf(gid), j = i + (e.key === "ArrowUp" ? -1 : 1);
-      if (i < 0 || j < 0 || j >= list.length) return;
-      [list[i], list[j]] = [list[j], list[i]];
-      Promise.resolve(saveOrder(list)).then(() => { const row = [...content.querySelectorAll("[data-goal]")].find((x) => x.dataset.goal === gid), nh = row && row.querySelector("[data-goaldrag]"); if (nh) nh.focus(); });
-    };
-    h.onpointerdown = (e) => {
-      const li = h.closest("[data-goal]"), list = li.parentElement, before = ids().join("|");
-      const scroller = li.closest(".modal-box");
-      e.preventDefault();
-      li.classList.add("drag");
-      let lastY = e.clientY, raf = 0;
-      const place = () => {
-        const over = [...list.children].find((x) => { if (x === li) return false; const r = x.getBoundingClientRect(); return lastY >= r.top && lastY <= r.bottom; });
-        if (!over) return;
-        const r = over.getBoundingClientRect();
-        list.insertBefore(li, lastY < r.top + r.height / 2 ? over : over.nextSibling);
-      };
-      const edge = () => {
-        const top = scroller ? scroller.getBoundingClientRect().top : 0, bottom = scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight;
-        const d = lastY < top + 56 ? -Math.ceil((top + 56 - lastY) / 4) : lastY > bottom - 56 ? Math.ceil((lastY - bottom + 56) / 4) : 0;
-        if (d) { if (scroller) scroller.scrollTop += d; else window.scrollBy(0, d); place(); }
-        raf = requestAnimationFrame(edge);
-      };
-      raf = requestAnimationFrame(edge);
-      const move = (ev) => {
-        if (ev.pointerId !== e.pointerId) return;
-        lastY = ev.clientY;
-        place();
-      };
-      const up = (ev) => {
-        if (ev.pointerId !== e.pointerId) return;
-        cancelAnimationFrame(raf);
-        document.removeEventListener("pointermove", move);
-        document.removeEventListener("pointerup", up);
-        document.removeEventListener("pointercancel", up);
-        li.classList.remove("drag");
-        if (ids().join("|") !== before) saveOrder(ids());
-      };
-      document.addEventListener("pointermove", move);
-      document.addEventListener("pointerup", up);
-      document.addEventListener("pointercancel", up);
-    };
-  });
+  // Drag a row by its ⋮⋮ handle (dragSort): the only way to move a goal
+  // (owner, 3 Nov 2026); ↑ / ↓ on the focused handle move it too.
+  box.querySelectorAll("[data-goaldrag]").forEach((h) => dragSort(h, {
+    row: "[data-goal]",
+    done: () => saveOrder(ids()),
+    refocus: (li) => { const gid = li.dataset.goal, row = [...content.querySelectorAll("[data-goal]")].find((x) => x.dataset.goal === gid), nh = row && row.querySelector("[data-goaldrag]"); if (nh) nh.focus(); },
+  }));
 }
 // A picture for a page: its first needed item's.
 function goalPageIcon(pg) {
@@ -25715,7 +25840,7 @@ async function renderSkinGallery() {
     ensureIslandCategories(),
     ensureGalleryUncounted(),
     keptRows("skins", `skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
-    // The order set in Admin → Skins (Move left / right).
+    // The order set in Admin → Skins (drag the category chips).
     dashCached("gallery_cats", () => sb(`skin_page_categories?page=eq.gallery&select=category,sort_order&order=sort_order.asc`)).catch(() => []),
   ]);
   const skins = allSkinsRaw.filter(
@@ -31556,15 +31681,17 @@ async function renderAdminMenu(body) {
       <p class="desc" style="margin:0 0 12px;">Rename menu groups and pages, change their order, move a page to another group, and add a note under a page's title. To hide a page from visitors use <a href="#" data-admingo="visibility">Visibility</a>. Nothing changes until you press Save.</p>
       ${draft.map((g, gi) => `<div class="mn-group">
         <div class="mn-ghead">
+          ${dsHandleHtml(`data-gdrag="${gi}"`)}
           <input type="text" class="mn-gname" data-gname="${gi}" value="${esc(g.label.en || g.key)}" aria-label="Group name" />
-          <span class="mn-btns"><button type="button" data-gmove="${gi}|-1" ${gi === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-gmove="${gi}|1" ${gi === draft.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button>${g.custom && !g.pages.length ? `<button type="button" data-gdel="${gi}" aria-label="delete">&#128465;</button>` : ""}</span>
+          ${g.custom && !g.pages.length ? `<span class="mn-btns"><button type="button" data-gdel="${gi}" aria-label="delete">&#128465;</button></span>` : ""}
         </div>
         <div data-glangs="${gi}">${langInputs(g.label, "data-glang")}</div>
         ${g.pages.length ? g.pages.map((pg, pi) => `<div class="mn-page">
           <div class="mn-prow">
+            ${dsHandleHtml(`data-pdrag="${gi}"`)}
             <input type="text" data-pname="${gi}|${pi}" value="${esc(pg.label.en || pg.tab)}" aria-label="Page name" />
             <select data-pgroup="${gi}|${pi}" aria-label="Group">${draft.map((x, xi) => `<option value="${xi}" ${xi === gi ? "selected" : ""}>${esc(x.label.en || x.key)}</option>`).join("")}</select>
-            <span class="mn-btns"><button type="button" data-pmove="${gi}|${pi}|-1" ${pi === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-pmove="${gi}|${pi}|1" ${pi === g.pages.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-pnote="${esc(pg.tab)}" class="${Object.values(pg.note).some((v) => v) ? "on" : ""}" title="Page note">&#128221;</button></span>
+            <span class="mn-btns"><button type="button" data-pnote="${esc(pg.tab)}" class="${Object.values(pg.note).some((v) => v) ? "on" : ""}" title="Page note">&#128221;</button></span>
           </div>
           <div data-plangs="${gi}|${pi}">${langInputs(pg.label, "data-plang")}</div>
           ${openNote === pg.tab ? `<div class="mn-note">${L.map((k) => `<label><span>Note · ${LN[k]}</span><textarea rows="2" data-pnotetext="${gi}|${pi}|${k}" dir="${langDir(k)}">${esc(pg.note[k] || "")}</textarea></label>`).join("")}<div class="meta" style="font-size:11px;">Shown in a box under the page title. Empty = no note.</div></div>` : ""}
@@ -31583,9 +31710,11 @@ async function renderAdminMenu(body) {
     body.querySelectorAll("[data-pname]").forEach((inp) => inp.addEventListener("input", () => { const [gi, pi] = inp.dataset.pname.split("|").map(Number); draft[gi].pages[pi].label.en = inp.value; dirty = true; }));
     body.querySelectorAll("[data-plangs]").forEach((w) => w.querySelectorAll("[data-plang]").forEach((inp) => inp.addEventListener("input", () => { const [gi, pi] = w.dataset.plangs.split("|").map(Number); draft[gi].pages[pi].label[inp.dataset.plang] = inp.value; dirty = true; })));
     body.querySelectorAll("[data-pnotetext]").forEach((ta) => ta.addEventListener("input", () => { const [gi, pi, k] = ta.dataset.pnotetext.split("|"); draft[+gi].pages[+pi].note[k] = ta.value; dirty = true; }));
-    body.querySelectorAll("[data-gmove]").forEach((b) => b.addEventListener("click", () => { const [gi, d] = b.dataset.gmove.split("|").map(Number); const [x] = draft.splice(gi, 1); draft.splice(gi + d, 0, x); dirty = true; draw(); }));
+    // Drag ⋮⋮ to change the order of groups / of pages in a group (saved with Save).
+    const reorder = (list, from, to) => { const [x] = list.splice(from, 1); list.splice(to, 0, x); dirty = true; draw(); };
+    body.querySelectorAll("[data-gdrag]").forEach((h) => dragSort(h, { row: ".mn-group", done: (r, from, to) => reorder(draft, from, to), refocus: (r, to) => body.querySelectorAll("[data-gdrag]")[to]?.focus() }));
+    body.querySelectorAll("[data-pdrag]").forEach((h) => dragSort(h, { row: ".mn-page", done: (r, from, to) => reorder(draft[+h.dataset.pdrag].pages, from, to), refocus: (r, to) => body.querySelectorAll(`[data-pdrag="${h.dataset.pdrag}"]`)[to]?.focus() }));
     body.querySelectorAll("[data-gdel]").forEach((b) => b.addEventListener("click", () => { draft.splice(+b.dataset.gdel, 1); dirty = true; draw(); }));
-    body.querySelectorAll("[data-pmove]").forEach((b) => b.addEventListener("click", () => { const [gi, pi, d] = b.dataset.pmove.split("|").map(Number); const ps = draft[gi].pages; const [x] = ps.splice(pi, 1); ps.splice(pi + d, 0, x); dirty = true; draw(); }));
     body.querySelectorAll("[data-pgroup]").forEach((sel) => sel.addEventListener("change", () => { const [gi, pi] = sel.dataset.pgroup.split("|").map(Number); const [x] = draft[gi].pages.splice(pi, 1); draft[+sel.value].pages.push(x); dirty = true; draw(); }));
     body.querySelectorAll("[data-pnote]").forEach((b) => b.addEventListener("click", () => { openNote = openNote === b.dataset.pnote ? null : b.dataset.pnote; draw(); }));
     body.querySelector("[data-gadd]").addEventListener("click", () => {
@@ -32159,8 +32288,8 @@ async function renderAdminRules(body) {
         ed.querySelectorAll("[data-rfield]").forEach((inp) => inp.addEventListener("input", () => { val[inp.dataset.rfield] = inp.value === "" ? "" : Number(inp.value); }));
         return;
       }
-      ed.innerHTML = `<div class="rl-table-wrap"><table class="rl-table"><thead><tr>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
-        ${val.map((row, ri) => `<tr>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri, row)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rmove="${ri}|-1" ${ri === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rmove="${ri}|1" ${ri === val.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
+      ed.innerHTML = `<div class="rl-table-wrap"><table class="rl-table"><thead><tr><th></th>${r.cols.map((c) => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead><tbody>
+        ${val.map((row, ri) => `<tr data-rrow="${ri}"><td class="rl-dragcell">${dsHandleHtml("data-rdrag")}</td>${r.cols.map((c) => `<td>${cell(c, row[c.key], ri, row)}</td>`).join("")}<td class="rl-rowbtns"><button type="button" data-rdel="${ri}" aria-label="delete">&#10005;</button></td></tr>`).join("")}
         </tbody></table></div><button type="button" class="btn ghost small" data-radd style="margin-top:8px;">+ Add row</button>`;
       ed.querySelectorAll("[data-rcell]").forEach((inp) => inp.addEventListener(inp.type === "checkbox" || inp.tagName === "SELECT" ? "change" : "input", () => {
         const [ri, k] = inp.dataset.rcell.split("|"); const c = r.cols.find((x) => x.key === k);
@@ -32168,7 +32297,8 @@ async function renderAdminRules(body) {
         if (c.after) c.after(val[+ri]);
         if (c.redraw) drawEditor();
       }));
-      ed.querySelectorAll("[data-rmove]").forEach((b) => b.addEventListener("click", () => { const [ri, d] = b.dataset.rmove.split("|").map(Number); const [x] = val.splice(ri, 1); val.splice(ri + d, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); }));
+      // Drag ⋮⋮ to change the order (saved with Save).
+      ed.querySelectorAll("[data-rdrag]").forEach((h) => dragSort(h, { row: "tr[data-rrow]", refocus: (tr, to) => ed.querySelectorAll("[data-rdrag]")[to]?.focus(), done: (tr, from, to) => { const [x] = val.splice(from, 1); val.splice(to, 0, x); if (r.cols.some((c) => c.type === "auto")) val.forEach((row, i) => { r.cols.filter((c) => c.type === "auto").forEach((c) => { row[c.key] = i + 1; }); }); drawEditor(); } }));
       ed.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", () => { val.splice(+b.dataset.rdel, 1); r.cols.filter((c) => c.type === "auto").forEach((c) => val.forEach((row, i) => { row[c.key] = i + 1; })); drawEditor(); }));
       ed.querySelector("[data-radd]").addEventListener("click", () => {
         const row = {}; r.cols.forEach((c) => { const first = c.type === "select" ? ((typeof c.options === "function" ? c.options(row) : c.options) || [""])[0] : ""; row[c.key] = c.type === "auto" ? val.length + 1 : c.type === "check" ? false : c.type === "select" ? (Array.isArray(first) ? first[0] : first) : ""; });
@@ -33022,18 +33152,25 @@ async function renderAdminDashSources(body) {
   const draw = () => {
     body.innerHTML = `<p class="desc" style="margin:0 0 10px;">The Dashboard adds these up for each troop and stat (top numbers and the breakdown pop-up). Pages count from their own data; special-skill heroes by their stars. When the game adds a new kind of bonus, add it below as a simple bonus source and type its numbers: it counts on everyone's Dashboard.</p>
       <div class="rl-card"><div class="rl-h"><b>Sources, in breakdown order</b></div>
-        <div style="margin-top:6px;">${order.map((k, i) => `<div class="ds-row"><span class="ds-n"><b>${esc(displaySourceName(k))}</b>${displaySourceName(k) !== k ? ` <span class="meta">(${esc(k)})</span>` : ""}<small>${esc(kindOf(k))}</small></span>
-          <span class="rl-rowbtns">${extra.includes(k) ? `<button type="button" data-dsedit="${esc(k)}" title="Numbers" aria-label="numbers">&#9998;</button><button type="button" data-dsoff="${esc(k)}" title="Stop counting" aria-label="stop counting">&#10005;</button>` : ""}<button type="button" data-dsmove="${i}|-1" ${i === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-dsmove="${i}|1" ${i === order.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button></span></div>
+        <div style="margin-top:6px;">${order.map((k) => `<div class="ds-row">${dsHandleHtml("data-dsdrag")}<span class="ds-n"><b>${esc(displaySourceName(k))}</b>${displaySourceName(k) !== k ? ` <span class="meta">(${esc(k)})</span>` : ""}<small>${esc(kindOf(k))}</small></span>
+          <span class="rl-rowbtns">${extra.includes(k) ? `<button type="button" data-dsedit="${esc(k)}" title="Numbers" aria-label="numbers">&#9998;</button><button type="button" data-dsoff="${esc(k)}" title="Stop counting" aria-label="stop counting">&#10005;</button>` : ""}</span></div>
           ${open === k ? numbersHtml(k) : ""}`).join("")}</div>
-        <div class="rl-foot"><button type="button" class="btn ghost small" data-dsreset ${cfg.order.length ? "" : "disabled"}>Built-in order</button><span style="flex:1"></span><button type="button" class="btn small" data-dssave>Save order</button></div>
+        <div class="rl-foot"><span class="meta" style="font-size:11.5px;">${esc(t("drag_order_hint"))}</span><span style="flex:1"></span><button type="button" class="btn ghost small" data-dsreset ${cfg.order.length ? "" : "disabled"}>Built-in order</button></div>
       </div>
       <div class="rl-card" style="margin-top:12px;"><div class="rl-h"><b>Add a simple bonus source</b></div>
         <p class="desc" style="margin:4px 0 8px;">A new bonus with fixed numbers per troop and stat (e.g. a new building or event buff). After adding it, tap &#9998; to type its numbers.</p>
         <div style="display:flex; gap:8px; flex-wrap:wrap;"><input type="text" data-dsname placeholder="Name, e.g. Frost Star" maxlength="40" style="flex:1 1 200px; min-width:0;" /><button type="button" class="btn small" data-dsadd>Add</button></div>
         ${newHeroes.length ? `<p class="meta" style="font-size:11.5px; margin:8px 0 0;">Columns added in Admin count as special-skill heroes (by stars). Tick one to count it as a flat bonus instead: ${newHeroes.map((h) => `<label style="margin-inline-end:8px;"><input type="checkbox" data-dsflat="${esc(h)}" /> ${esc(h)}</label>`).join("")}</p>` : ""}
       </div>`;
-    body.querySelectorAll("[data-dsmove]").forEach((b) => b.addEventListener("click", () => { const [i, d] = b.dataset.dsmove.split("|").map(Number); const [x] = order.splice(i, 1); order.splice(i + d, 0, x); draw(); }));
-    body.querySelector("[data-dssave]").addEventListener("click", async () => { try { await save("Order saved"); cfg.order = order.slice(); draw(); } catch (err) { toast(err.message || "Couldn't save", true); } });
+    // Drag ⋮⋮ to change the order; it saves by itself ("✓ Order saved").
+    body.querySelectorAll("[data-dsdrag]").forEach((h) => dragSort(h, {
+      row: ".ds-row", place: () => {},
+      refocus: (r, to) => body.querySelectorAll("[data-dsdrag]")[to]?.focus(),
+      done: async (r, from, to) => {
+        const [x] = order.splice(from, 1); order.splice(to, 0, x); draw();
+        try { await save("\u2713 " + t("order_saved")); cfg.order = order.slice(); draw(); } catch (err) { toast(err.message || t("order_not_saved"), true); }
+      },
+    }));
     body.querySelector("[data-dsreset]").addEventListener("click", async () => { order = dashSourceOrderBase(heroes, extra); try { await save("Built-in order"); cfg.order = []; draw(); } catch (err) { toast(err.message || "Couldn't save", true); } });
     body.querySelectorAll("[data-dsedit]").forEach((b) => b.addEventListener("click", () => { open = open === b.dataset.dsedit ? null : b.dataset.dsedit; draw(); }));
     body.querySelectorAll("[data-dsoff]").forEach((b) => b.addEventListener("click", async () => {
@@ -33584,7 +33721,7 @@ async function renderAdminPets(body) {
     </div>
     <details class="panel" id="adminPetOrder" style="margin-bottom:16px;"${ADMIN_PET_ORDER_OPEN ? " open" : ""}>
       <summary style="cursor:pointer; font-weight:600;">Pet order on the Pets pages${Array.isArray(siteConfig("pet_order", null)) && siteConfig("pet_order", null).length ? ` <span class="rl-chg">changed</span>` : ""}</summary>
-      <p class="desc" style="margin:6px 0 8px;">The order of the pets on Pets Level and Pet Refine. Tap "&#8645; Sort", then drag or use &#9650;&#9660;. A new pet goes last until you move it.</p>
+      <p class="desc" style="margin:6px 0 8px;">The order of the pets on Pets Level and Pet Refine. Hold &#8942;&#8942; and drag a pet to move it. A new pet goes last until you move it.</p>
       <div id="adminPetOrderList"></div>
       <button type="button" class="btn ghost small" id="adminPetOrderReset" style="margin-top:8px;">Reset to the built-in order</button>
     </details>
@@ -33624,7 +33761,7 @@ async function renderAdminPets(body) {
     host.innerHTML = admListHtml(items, { title: "Pets", attr: "data-petord", sortable: true, add: false, img: (r) => petImage(r.name), name: (r) => r.name, sub: (r) => (petIsUpcoming(r.name) ? "upcoming" : "") });
     wireAdmList(host, { onEdit: (id) => { ADMIN_ACTIVE_PET = id; renderAdminPets(body); } });
     wireAdminReorder(host, "data-petord", async (ids) => {
-      try { await saveSiteConfig("pet_order", ids); PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; dropKeptGameData(); toast("Order saved"); }
+      try { await saveSiteConfig("pet_order", ids); PETS_NODES_CACHE = null; PET_REFINE_CACHE = null; dropKeptGameData(); }
       catch (err) { toast(err.message || "Couldn't save", true); drawPetOrder(); }
     });
   };
@@ -33764,7 +33901,7 @@ async function renderAdminPets(body) {
             .map(
               (r, idx) => `
             <tr data-petrow="${r.id}">
-              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${adminReorderCellHtml(r.id)}
               ${petCols.map((c) => adminColCellHtml(c, r, "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-petrowsave="${r.id}">Save</button>
@@ -33857,85 +33994,39 @@ async function renderAdminPets(body) {
 
 // ---- Generic flat-table editor (small tables, no expert/pet grouping) ----
 // Used for Chief Charm levels, Tundra Album tiers, Collection Gallery tiers.
-// ---- Reorder rows by moving them (drag the grip, or ▲/▼ on touch) ----
+// ---- Reorder rows by moving them (drag the ⋮⋮ handle, dragSort) ----
 // Every admin table with an order uses this instead of a typed number:
 // the row is moved in place, then the caller gets the new id order and
 // writes sort_order = position.
 const ADMIN_TH = `<th style="text-align:start; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600;">`;
-function adminReorderCellHtml(id, idx, n) {
-  const sid = esc(String(id));
-  return `<td style="padding:4px; white-space:nowrap;">
-    <span draggable="true" data-grip="${sid}" title="Drag to move" style="cursor:grab; user-select:none; color:var(--muted); padding:0 4px; font-size:15px; display:inline-block; vertical-align:middle;">&#8942;&#8942;</span>
-    <button type="button" class="btn small ghost" data-rowup="${sid}" ${idx === 0 ? "disabled" : ""} title="Move up" style="padding:2px 6px;">&#9650;</button>
-    <button type="button" class="btn small ghost" data-rowdown="${sid}" ${idx === n - 1 ? "disabled" : ""} title="Move down" style="padding:2px 6px;">&#9660;</button>
-  </td>`;
+function adminReorderCellHtml(id) {
+  return `<td class="adm-dragcell">${dsHandleHtml(`data-grip="${esc(String(id))}"`)}</td>`;
 }
+// Admin design C (owner, 4 Nov 2026): every row with an order has its ⋮⋮
+// handle showing all the time (no "⇅ Sort" mode, no ▲▼); dragging it
+// (dragSort) moves the row, then onReorder gets the new id order and the
+// order saves by itself with a short "✓ Order saved" note.
 function wireAdminReorder(container, rowAttr, onReorder) {
-  let reorderQueue = Promise.resolve();
-  const rowsOf = () => [...container.querySelectorAll(`[${rowAttr}]`)].filter((x) => !x.matches("[data-grip],[data-rowup],[data-rowdown]"));
+  const st = container.__reorder || (container.__reorder = { q: Promise.resolve() });
+  const rowsOf = () => [...container.querySelectorAll(`[${rowAttr}]`)].filter((x) => !x.matches("[data-grip]"));
   const idOf = (tr) => tr.getAttribute(rowAttr);
-  const refreshButtons = () => {
-    const list = rowsOf();
-    list.forEach((tr, i) => {
-      const up = tr.querySelector("[data-rowup]"), down = tr.querySelector("[data-rowdown]");
-      if (up) up.disabled = i === 0;
-      if (down) down.disabled = i === list.length - 1;
-    });
-  };
-  const place = (id, toIdx) => {
-    const list = rowsOf();
-    const tr = list.find((x) => idOf(x) === id);
-    if (!tr) return;
-    const others = list.filter((x) => x !== tr);
-    const ref = others[toIdx] || null;
-    tr.parentNode.insertBefore(tr, ref);
-    const mate = tr.parentNode.querySelector(`tr[data-skinmore="${CSS.escape(id)}"]`); // its "More" row moves with it
-    if (mate) tr.after(mate);
-    refreshButtons();
-    // One save at a time, in click order, so quick moves can't overlap.
-    if (onReorder) { const ids = rowsOf().map(idOf); reorderQueue = reorderQueue.then(() => onReorder(ids)).catch(() => {}); }
-  };
-  // Safe to call again after rows are added: already-wired elements are skipped.
-  const fresh = (sel) => [...container.querySelectorAll(sel)].filter((el) => !el.dataset.rw && (el.dataset.rw = "1"));
-  fresh("[data-rowup]").forEach((b) => b.addEventListener("click", () => {
-    const i = rowsOf().findIndex((tr) => idOf(tr) === b.dataset.rowup);
-    if (i > 0) place(b.dataset.rowup, i - 1);
+  // Safe to call again after rows are added: already-wired handles are skipped.
+  [...container.querySelectorAll("[data-grip]")].filter((el) => !el.dataset.rw && (el.dataset.rw = "1")).forEach((g) => dragSort(g, {
+    item: (h) => h.closest(`[${rowAttr}]`),
+    items: () => rowsOf(),
+    refocus: (tr) => { const g2 = tr.querySelector("[data-grip]"); if (g2) g2.focus(); },
+    done: () => {
+      if (!onReorder) return null;
+      // One save at a time, in drop order, so quick moves can't overlap.
+      const ids = rowsOf().map(idOf);
+      st.q = st.q.then(async () => {
+        const errs = TOAST_ERRS;
+        await onReorder(ids);
+        if (TOAST_ERRS === errs) dsSaved();
+      }).catch(() => dsSaved(false));
+      return st.q;
+    },
   }));
-  fresh("[data-rowdown]").forEach((b) => b.addEventListener("click", () => {
-    const list = rowsOf(); const i = list.findIndex((tr) => idOf(tr) === b.dataset.rowdown);
-    if (i !== -1 && i < list.length - 1) place(b.dataset.rowdown, i + 1);
-  }));
-  const dragId = container.__dragState || (container.__dragState = { id: null });
-  fresh("[data-grip]").forEach((g) => {
-    g.addEventListener("dragstart", (e) => {
-      dragId.id = g.dataset.grip;
-      e.dataTransfer.effectAllowed = "move";
-      try { e.dataTransfer.setData("text/plain", dragId.id); } catch (_) {}
-      g.closest(`[${rowAttr}]`).style.opacity = "0.45";
-    });
-    g.addEventListener("dragend", () => { dragId.id = null; rowsOf().forEach((tr) => { tr.style.opacity = ""; tr.style.boxShadow = ""; }); });
-  });
-  fresh(`[${rowAttr}]`).filter((x) => rowsOf().includes(x)).forEach((tr) => {
-    tr.addEventListener("dragover", (e) => {
-      if (!dragId.id) return;
-      e.preventDefault(); e.dataTransfer.dropEffect = "move";
-      const r = tr.getBoundingClientRect();
-      tr.style.boxShadow = e.clientY > r.top + r.height / 2 ? "inset 0 -2px 0 var(--ice)" : "inset 0 2px 0 var(--ice)";
-    });
-    tr.addEventListener("dragleave", () => { tr.style.boxShadow = ""; });
-    tr.addEventListener("drop", (e) => {
-      if (!dragId.id) return;
-      e.preventDefault();
-      const id = dragId.id; dragId.id = null;
-      rowsOf().forEach((x) => { x.style.opacity = ""; x.style.boxShadow = ""; });
-      const list = rowsOf().filter((x) => idOf(x) !== id);
-      let to = list.indexOf(tr);
-      if (to === -1) return;
-      const r = tr.getBoundingClientRect();
-      if (e.clientY > r.top + r.height / 2) to += 1;
-      place(id, to);
-    });
-  });
 }
 // sort_order = position, written only for rows whose position changed.
 async function saveAdminRowOrder(table, rows, orderedIds) {
@@ -34002,7 +34093,7 @@ async function admNextOrder(path) {
   const r = await sb(`${path}${path.includes("?") ? "&" : "?"}select=sort_order&order=sort_order.desc&limit=1`);
   return r.length ? (r[0].sort_order || 0) + 1 : 0;
 }
-const firstTrSort = (rows) => rows.length && rows[0].tagName === "TR" && rows[0].querySelector("[data-grip],[data-rowup]");
+const firstTrSort = (rows) => rows.length && rows[0].tagName === "TR" && rows[0].querySelector("[data-grip]");
 window.addEventListener("beforeunload", (e) => { if (TAB === "adminpage" && admUnsavedCount()) { e.preventDefault(); e.returnValue = ""; } });
 // Unsaved edits still on screen (a Save bar showing): the count, else 0 (a
 // table redrawn or left keeps no stale count).
@@ -34050,15 +34141,12 @@ function wireAdmEditBar(scope, o) {
   // Compact boxes: "keep-w" opts out of the phone rule that stretches every
   // fixed-width box (the widths come from the .adm-b CSS).
   wrap.querySelectorAll("table input, table select").forEach((el) => el.classList.add("keep-w"));
-  // The ⋮⋮ ▲▼ order column only shows after "⇅ Sort" (like the item lists).
+  // The ⋮⋮ order column shows all the time (design C, 4 Nov 2026) and stays
+  // in view, with the name box beside it, when the table scrolls sideways.
   if (firstTrSort(rows())) {
-    const tr0 = rows()[0], gi = [...tr0.cells].findIndex((td) => td.querySelector("[data-grip],[data-rowup]"));
+    const tr0 = rows()[0], gi = [...tr0.cells].findIndex((td) => td.querySelector("[data-grip]"));
     if (gi >= 0) [...tr0.closest("table").rows].forEach((r) => { const c = r.cells[gi]; if (c) c.classList.add("adm-sortcell"); });
-    if (!wrap.previousElementSibling || !wrap.previousElementSibling.classList.contains("adm-sorttoggle")) {
-      const t = document.createElement("button"); t.type = "button"; t.className = "btn ghost small adm-sorttoggle"; t.innerHTML = "&#8645; Sort";
-      t.addEventListener("click", () => { wrap.classList.toggle("sorting"); t.classList.toggle("on", wrap.classList.contains("sorting")); });
-      wrap.before(t);
-    }
+    wrap.classList.add("adm-hasdrag");
   }
   // Keep the row's first box (its name / level) in view when the table
   // scrolls sideways on a phone.
@@ -34098,7 +34186,7 @@ function wireAdmEditBar(scope, o) {
       [...tr.attributes].forEach((a) => { if (a.name.startsWith("data-")) tr.removeAttribute(a.name); });
       tr.setAttribute("data-newrow", "1");
       [...tr.cells].forEach((td, i, all) => {
-        if (td.querySelector("[data-grip],[data-rowup]")) td.innerHTML = "";
+        if (td.querySelector("[data-grip]")) td.innerHTML = "";
         else if (i === all.length - 1 && td.querySelector("button")) td.innerHTML = `<button type="button" class="btn small ghost" data-ebdrop title="Remove this new row" style="color:var(--danger);">&#10005;</button>`;
       });
       tr.querySelectorAll("[data-up]").forEach((el) => { el.closest("td").innerHTML = ""; });
@@ -34216,7 +34304,7 @@ async function renderAdminFlatLevels(body, cfg) {
               .map(
                 (r, idx) => `
               <tr data-flatrow="${r.id}">
-                ${canReorder ? adminReorderCellHtml(r.id, idx, rows.length) : ""}
+                ${canReorder ? adminReorderCellHtml(r.id) : ""}
                 ${cfg.cols
                   .map((c) => (canReorder ? adminColCellHtml(c, r, "110px") : `<td style="padding:4px;"><input data-f="${c.key}" ${c.type === "number" ? 'type="number" step="any"' : ""} value="${esc(r[c.key] ?? "")}" style="width:110px;" /></td>`))
                   .join("")}
@@ -34377,7 +34465,7 @@ async function renderAdminVip(body) {
                 const cellByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
                 return `
               <tr data-viprow="${r.id}">
-                ${adminReorderCellHtml(r.id, idx, rows.length)}
+                ${adminReorderCellHtml(r.id)}
                 <td style="padding:4px;"><input data-vipname value="${esc(r.name)}" style="width:100px;" /></td>
                 ${STAT_NAMES.map((s) => `<td style="padding:4px;"><input data-vipstat="${esc(s)}" type="number" step="any" value="${cellByCol[colByName[s]] ?? ""}" style="width:90px;" /></td>`).join("")}
                 <td style="padding:4px; white-space:nowrap;">
@@ -34480,19 +34568,18 @@ async function renderAdminVip(body) {
 
 // ---- Facility / Alliance Tech editor (skins table, filtered by category) ----
 // ---- Admin item lists, design A (owner, 16 Oct 2026) ----
-// Each item is one row: picture, name, a short line and ✎; ✎ / "+ Add" open
-// an edit sheet. "⇅ Sort" shows the ⋮⋮ ▲▼ controls (wireAdminReorder).
+// Each item is one row: picture, name and a short line; tapping the row (or
+// "+ Add") opens an edit sheet. Sortable lists (design C, 4 Nov 2026) have a
+// ⋮⋮ handle on every row, always showing: drag it to move (wireAdminReorder).
 function admListHtml(items, o) {
-  return `<div class="admc-bar"><span class="admc-t">${esc(o.title || "")}${o.count !== false ? ` <span class="meta">(${items.length})</span>` : ""}</span>${o.sortable ? `<button type="button" class="btn ghost small" data-admcsort>&#8645; Sort</button>` : ""}${o.add !== false ? `<button type="button" class="btn small admc-add" data-admcadd>+ Add</button>` : ""}</div>
-    <div class="admc-list">${items.map((r, idx) => `<div class="admc-row" ${o.attr}="${esc(String(r.id))}">
-      ${o.sortable ? `<span class="admc-sort"><span draggable="true" data-grip="${esc(String(r.id))}" title="Drag to move">&#8942;&#8942;</span><button type="button" data-rowup="${esc(String(r.id))}" ${idx === 0 ? "disabled" : ""} aria-label="up">&#9650;</button><button type="button" data-rowdown="${esc(String(r.id))}" ${idx === items.length - 1 ? "disabled" : ""} aria-label="down">&#9660;</button></span>` : ""}
-      <span class="admc-pic">${o.img && o.img(r) ? `<img src="${esc(o.img(r))}" alt="" loading="lazy" />` : `<i>${esc(String(o.name(r) || "?").charAt(0))}</i>`}</span>
-      <span class="admc-txt"><b>${esc(o.name(r) || "—")}</b>${o.sub && o.sub(r) ? `<small>${esc(o.sub(r))}</small>` : ""}</span>
-      <button type="button" class="admc-edit" data-admcedit="${esc(String(r.id))}" aria-label="edit">&#9998;</button></div>`).join("") || `<div class="meta" style="padding:8px;">Nothing here yet.</div>`}</div>`;
+  return `<div class="admc-bar"><span class="admc-t">${esc(o.title || "")}${o.count !== false ? ` <span class="meta">(${items.length})</span>` : ""}</span>${o.add !== false ? `<button type="button" class="btn small admc-add" data-admcadd>+ Add</button>` : ""}</div>
+    ${o.sortable && items.length > 1 ? `<div class="admc-hint meta">${DS_HANDLE} ${esc(t("admc_sort_hint"))}</div>` : ""}
+    <div class="admc-list">${items.map((r) => `<div class="admc-row" ${o.attr}="${esc(String(r.id))}">
+      <button type="button" class="admc-open" data-admcedit="${esc(String(r.id))}" aria-label="${esc(t("admc_edit").replace("{name}", o.name(r) || ""))}"><span class="admc-pic">${o.img && o.img(r) ? `<img src="${esc(o.img(r))}" alt="" loading="lazy" />` : `<i>${esc(String(o.name(r) || "?").charAt(0))}</i>`}</span>
+      <span class="admc-txt"><b>${esc(o.name(r) || "—")}</b>${o.sub && o.sub(r) ? `<small>${esc(o.sub(r))}</small>` : ""}</span></button>
+      ${o.sortable ? dsHandleHtml(`data-grip="${esc(String(r.id))}"`) : ""}</div>`).join("") || `<div class="meta" style="padding:8px;">Nothing here yet.</div>`}</div>`;
 }
 function wireAdmList(body, o) {
-  const sortBtn = body.querySelector("[data-admcsort]");
-  if (sortBtn) sortBtn.addEventListener("click", () => { const l = body.querySelector(".admc-list"); l.classList.toggle("sorting"); sortBtn.classList.toggle("on", l.classList.contains("sorting")); });
   const add = body.querySelector("[data-admcadd]");
   if (add && o.onAdd) add.addEventListener("click", o.onAdd);
   body.querySelectorAll("[data-admcedit]").forEach((b) => b.addEventListener("click", () => o.onEdit(b.dataset.admcedit)));
@@ -34702,7 +34789,7 @@ async function renderAdminProgression(body, nameFilter) {
             .map(
               (r, idx) => `
             <tr data-progrow="${r.id}">
-              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${adminReorderCellHtml(r.id)}
               ${cols.map((c) => adminColCellHtml(c, r, c.key === "materials" ? "220px" : "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-progsave="${r.id}">Save</button>
@@ -34930,7 +35017,7 @@ async function renderAdminResearch(body) {
             .map(
               (r, idx) => `
             <tr data-resrow="${r.id}">
-              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${adminReorderCellHtml(r.id)}
               ${cfg.cols.map((c) => adminColCellHtml(c, r, c.key === "buff_text" ? "180px" : "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-ressave="${r.id}">Save</button>
@@ -35225,31 +35312,34 @@ async function renderAdminIslands(body) {
 // "⋯ Category" menu (new, rename, move, delete — wired by
 // wireAdminCategoryReorder). cats = [{ id, category, sort_order }] in order.
 function adminCatHeaderHtml(cats, activeCat, opts = {}) {
-  const idx = cats.findIndex((c) => c.category === activeCat), act = cats[idx];
-  return `<div class="admc-cats"><div class="adm-chips-row">${cats.map((c) => `<button type="button" class="adm-chip${c.category === activeCat ? " on" : ""}" data-catselect="${esc(c.category)}">${esc(c.category)}</button>`).join("")}</div>
+  const act = cats.find((c) => c.category === activeCat);
+  return `<div class="admc-cats"><div class="adm-chips-row">${cats.map((c) => `<button type="button" class="adm-chip admc-catchip${c.category === activeCat ? " on" : ""}" data-catselect="${esc(c.category)}" data-catid="${esc(String(c.id))}" title="${esc(t("cat_drag_hint"))}">${esc(c.category)}</button>`).join("")}</div>
     <details class="admc-catmenu"><summary class="btn ghost small">&#8943; Category</summary><div class="admc-catpop">
       <button type="button" data-catadd>+ New category</button>
       ${act ? `<button type="button" data-catrename="${act.id}">Rename "${esc(act.category)}"</button>
-      <button type="button" data-catmoveup="${act.id}" ${idx === 0 ? "disabled" : ""}>&#8592; Move left</button>
-      <button type="button" data-catmovedown="${act.id}" ${idx === cats.length - 1 ? "disabled" : ""}>Move right &#8594;</button>
       ${opts.big ? `<button type="button" data-catbig="${esc(act.category)}">Big pictures: ${GALLERY_BIG_THUMB.has(act.category) ? "on &#10003;" : "off"}</button>` : ""}
       <button type="button" data-catdelete="${act.id}" style="color:var(--danger);">Delete "${esc(act.category)}"</button>` : ""}
     </div></details></div>`;
 }
 function wireAdminCategoryReorder(container, page, cats, onChange) {
-  // Moves one category and numbers them all 1…n again (two equal numbers
-  // used to make a swap do nothing).
-  const move = async (id, d) => {
-    const list = cats.slice(), idx = list.findIndex((c) => c.id === id);
-    if (idx < 0 || idx + d < 0 || idx + d >= list.length) return;
-    const [x] = list.splice(idx, 1); list.splice(idx + d, 0, x);
+  // Drag a category chip sideways (hold it on a phone) to move it; then
+  // they are all numbered 1…n again (two equal numbers used to make a swap
+  // do nothing). The order saves by itself.
+  const move = async (from, to) => {
+    const list = cats.slice();
+    const [x] = list.splice(from, 1); list.splice(to, 0, x);
+    let ok = true;
     try {
       await Promise.all(list.map((c, k) => (c.sort_order === k + 1 ? null : sb(`skin_page_categories?id=eq.${c.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: k + 1 }) }))).filter(Boolean));
-    } catch (err) { toast(err.message || "Couldn't reorder", true); }
+    } catch (err) { ok = false; toast(err.message || t("order_not_saved"), true); }
+    if (ok) dsSaved();
     onChange();
   };
-  container.querySelectorAll("[data-catmoveup]").forEach((btn) => btn.addEventListener("click", () => move(btn.dataset.catmoveup, -1)));
-  container.querySelectorAll("[data-catmovedown]").forEach((btn) => btn.addEventListener("click", () => move(btn.dataset.catmovedown, 1)));
+  container.querySelectorAll(".admc-cats [data-catid]").forEach((chip) => dragSort(chip, {
+    hold: true, axis: "x", item: (h) => h, row: "[data-catid]",
+    done: (r, from, to) => move(from, to),
+    refocus: (r) => { const c = container.querySelector(`.admc-cats [data-catid="${CSS.escape(r.dataset.catid)}"]`); if (c) c.focus(); },
+  }));
   // Rename / delete the chosen category (its items move with a rename).
   container.querySelectorAll("[data-catadd]").forEach((btn) => btn.addEventListener("click", async () => {
     const name = (prompt("Name of the new category:") || "").trim();
@@ -35665,7 +35755,7 @@ async function renderAdminPetsRefine(body) {
             .map(
               (r, idx) => `
             <tr data-petrefinerow="${r.id}">
-              ${adminReorderCellHtml(r.id, idx, rows.length)}
+              ${adminReorderCellHtml(r.id)}
               ${refineCols.map((c) => adminColCellHtml(c, r, "90px")).join("")}
               <td style="padding:4px; white-space:nowrap;">
                 <button class="btn small ghost" data-petrefinesave="${r.id}">Save</button>
