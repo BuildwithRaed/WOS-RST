@@ -30616,7 +30616,8 @@ async function setHiddenFromVisitors(kind, name, hidden) {
 }
 // Owner-only button on a card: toggles whether visitors can see it.
 function visibilityBtnHtml(kind, name) {
-  if (!IS_OWNER) return "";
+  // Owner (4 Nov 2026): no "Visible to visitors" buttons on the pages; this is set in Admin → Visibility.
+  if (!IS_OWNER || true) return "";
   const hidden = isHiddenFromVisitors(kind, name);
   return `<button type="button" class="btn ghost small" data-vishide="${esc(kind)}|${esc(name)}" title="${esc(t(hidden ? "vis_hidden_hint" : "vis_visible_hint"))}" style="font-size:10px; padding:2px 6px; ${hidden ? "color:var(--amber); border-color:var(--amber);" : ""}">${esc(t(hidden ? "vis_hidden" : "vis_visible"))}</button>`;
 }
@@ -31070,7 +31071,7 @@ async function renderExpertsResearchPage() {
           <div class="exp-hd-t">
             <div class="name">${esc(dataName(expert))}</div>
             <div class="exp-stl">${esc(mainLabel)} <b>${bidiNum(`+${now.toFixed(2)}%`)}</b>${tgt > now ? ` &rarr; <b class="tg">${bidiNum(`+${tgt.toFixed(2)}%`)}</b>` : ""}${EXPERT_MAIN_STAT_TROOP[expert] ? ` · ${esc(troopDisplayName(EXPERT_MAIN_STAT_TROOP[expert]))} ${esc(t("only_suffix"))}` : ""}</div>
-            ${expertBadgeHtml(expert) || IS_OWNER ? `<div class="exp-tags">${expertBadgeHtml(expert)}${IS_OWNER ? visibilityBtnHtml("experts", expert) : ""}</div>` : ""}
+            ${expertBadgeHtml(expert) ? `<div class="exp-tags">${expertBadgeHtml(expert)}</div>` : ""}
           </div>
         </div>
         <div class="exp-nbs one">
@@ -31885,7 +31886,7 @@ async function renderExpertsPage() {
             <div class="name">${esc(dataName(hero))}</div>
             ${e.talent ? `<div class="meta">${esc(t("expert_talent"))}: ${esc(dataName(e.talent))}</div>` : ""}
             ${statLine ? `<div class="exp-stl">${statLine}</div>` : ""}
-            ${expertBadgeHtml(hero) || IS_OWNER ? `<div class="exp-tags">${expertBadgeHtml(hero)}${IS_OWNER ? visibilityBtnHtml("experts", hero) : ""}</div>` : ""}
+            ${expertBadgeHtml(hero) ? `<div class="exp-tags">${expertBadgeHtml(hero)}</div>` : ""}
           </div>
         </div>
         <div class="exp-tabs" role="tablist">
