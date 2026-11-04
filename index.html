@@ -16,6 +16,17 @@
   // 440 px and shrink" was tried on 3 Nov 2026 and removed the same day (owner):
   // every page uses the plain device-width line; pages size themselves instead.
   if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
+  // Menu style (owner, 4 Nov 2026): Hub (default) or Bottom bar, kept on the
+  // account and in this browser so the first paint is already right. The bar
+  // style also lets the page reach under the iPhone's home bar (safe-area
+  // padding keeps the buttons clear of it).
+  window.VIEWPORT_BASE = document.querySelector('meta[name="viewport"]').getAttribute("content");
+  try {
+    if (localStorage.getItem("menu_style") === "bar") {
+      document.documentElement.classList.add("mstyle-bar");
+      document.querySelector('meta[name="viewport"]').setAttribute("content", window.VIEWPORT_BASE + ", viewport-fit=cover");
+    }
+  } catch (e) { /* storage blocked: Hub */ }
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -170,6 +181,57 @@
   .mm-tx i{ display:block; font-style:normal; font-size:11px; line-height:1.25; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
   .mm-hbar{ height:4px; border-radius:9px; background:rgba(255,255,255,.08); margin:8px 2px 0; overflow:hidden; }
   .mm-hbar i{ display:block; height:100%; background:var(--good); border-radius:9px; }
+  /* Menu style switch at the bottom of the Hub (owner, 4 Nov 2026). */
+  .mm-style{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:12px 2px 6px; padding-top:12px; border-top:1px solid var(--line); }
+  .mm-style label{ font-size:13px; color:var(--muted); }
+  .mm-style select{ height:36px; min-width:120px; }
+  .mm-style button{ margin-inline-start:auto; min-height:38px; }
+  /* Menu style cards in the account panel: two cards with a tiny picture each. */
+  .ms-row{ margin:0 0 14px; }
+  .ms-row > b{ display:block; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .ms-cards{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .ms-card{ position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; padding:7px 5px 7px; background:var(--panel-2); border:1px solid var(--line); border-radius:11px; color:var(--frost); font:inherit; cursor:pointer; text-align:center; }
+  .ms-card.on{ border-color:var(--ice); box-shadow:0 0 0 1px var(--ice) inset; }
+  .ms-card.on::after{ content:"\2713"; position:absolute; top:-6px; inset-inline-end:-6px; width:18px; height:18px; border-radius:50%; background:var(--ice); color:#0b1a24; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .ms-card b{ font-size:12.5px; }
+  .ms-card small{ font-size:11px; color:var(--muted); line-height:1.2; }
+  .ms-pv{ width:58px; height:44px; border-radius:6px; background:#0f1620; border:1px solid var(--line); padding:4px; display:flex; flex-direction:column; gap:3px; box-sizing:border-box; }
+  .ms-pv i{ display:block; height:5px; border-radius:2px; background:#2c3b4c; }
+  .ms-pv.hub i:nth-child(odd){ background:#3b5468; width:45%; }
+  .ms-pv.hub i:nth-child(even){ background:linear-gradient(90deg, #2c3b4c 30%, transparent 30% 35%, #2c3b4c 35% 65%, transparent 65% 70%, #2c3b4c 70%); }
+  .ms-pv.bar{ justify-content:flex-start; }
+  .ms-pv.bar i.f{ margin-top:auto; height:6px; background:repeating-linear-gradient(90deg, #4a6a82 0 6px, transparent 6px 10px); }
+  .ms-card.on .ms-pv i.f, .ms-card.on .ms-pv.hub i:nth-child(odd){ background-color:var(--ice-dim, #3b5468); }
+  /* Bottom bar menu style (owner picked N1, 4 Nov 2026): phones only (<= 900 px). */
+  #mBar, #mBarOv{ display:none; }
+  @media (max-width:900px){
+    html.mstyle-bar #mobileMenuBtn{ display:none !important; }
+    html.mstyle-bar #mBar{ display:grid; }
+    html.mstyle-bar main{ padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px)); }
+    html.mstyle-bar .site-footer{ padding-bottom:calc(82px + env(safe-area-inset-bottom, 0px)); }
+    html.mstyle-bar #mBarOv.open{ display:block; }
+    html.mstyle-bar body{ padding-left:env(safe-area-inset-left, 0px); padding-right:env(safe-area-inset-right, 0px); }
+    /* Things fixed to the bottom of the screen sit above the bar. */
+    html.mstyle-bar .adm-ebar{ bottom:calc(74px + env(safe-area-inset-bottom, 0px)); }
+    html.mstyle-bar .sg-toast{ bottom:calc(78px + env(safe-area-inset-bottom, 0px)); }
+  }
+  #mBar{ position:fixed; left:0; right:0; bottom:0; z-index:55; grid-template-columns:repeat(5, minmax(0, 1fr)); min-height:62px; padding:0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); background:#161f2b; border-top:1px solid var(--line); box-shadow:0 -6px 18px rgba(0,0,0,.35); }
+  #mBar button{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:62px; padding:6px 2px 5px; background:none; border:0; color:var(--muted); font:inherit; font-size:12px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  #mBar button .mb-ic{ width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:21px; line-height:1; }
+  #mBar button .mb-ic img{ width:26px; height:26px; object-fit:contain; display:block; }
+  #mBar button span:last-child{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #mBar button.on{ color:var(--ice); }
+  #mBar button.on::before{ content:""; position:absolute; top:0; left:50%; width:34px; height:3px; margin-left:-17px; border-radius:0 0 3px 3px; background:var(--ice); }
+  #mBarOv{ position:fixed; inset:0; z-index:54; background:rgba(0,0,0,.55); overscroll-behavior:contain; }
+  /* The sheet runs down behind the bar (which sits above it); its bottom padding keeps the last row clear. */
+  .mb-sheet{ position:absolute; left:0; right:0; bottom:0; max-height:calc(100% - 56px); overflow-y:auto; overscroll-behavior:contain; background:var(--bg); border-top:1px solid var(--line); border-radius:18px 18px 0 0; padding:8px 12px calc(76px + env(safe-area-inset-bottom, 0px)); box-shadow:0 -10px 30px rgba(0,0,0,.5); }
+  .mb-grab{ width:40px; height:4px; border-radius:9px; background:#3a4656; margin:0 auto 8px; }
+  .mb-shh{ display:flex; align-items:baseline; margin:0 2px 8px; }
+  .mb-shh b{ font-size:17px; }
+  .mb-shh span{ margin-inline-start:auto; font-size:12px; color:var(--muted); }
+  .mb-links{ display:flex; gap:8px; flex-wrap:wrap; margin:4px 2px 2px; }
+  .mb-links button{ min-height:38px; padding:0 12px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; color:var(--frost); font:inherit; font-size:13px; cursor:pointer; }
+  .mb-sheet .ms-row{ margin:12px 2px 4px; padding-top:12px; border-top:1px solid var(--line); }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -4289,6 +4351,7 @@ input,select,textarea{
           <input id="commanderName" type="text" placeholder="Name" style="flex:1 1 0; min-width:0;" />
           <button class="btn small" id="saveCommander" style="flex-shrink:0; white-space:nowrap;">Save</button>
         </div>
+        <div id="accMenuStyle"></div>
         <div id="ownerLogoutArea"></div>
       </div>
     </div>
@@ -4296,6 +4359,9 @@ input,select,textarea{
   </nav>
 
   <div id="mobileMenuOverlay"></div>
+  <!-- Bottom bar menu style (phones; shown only with html.mstyle-bar). -->
+  <div id="mBarOv"></div>
+  <nav id="mBar" aria-label="Menu"></nav>
 
   <main id="content"></main>
   <footer class="site-footer" id="siteFooter"></footer>
@@ -4490,6 +4556,7 @@ function preloadCalcStates() {
         Object.assign(map, CALC_STATE_PENDING);
         CALC_STATE_PENDING = {};
         CALC_STATE_CACHE = map;
+        menuStyleFromSaved();
       })
       .catch(() => {
         // Fall back to per-state requests if the bulk fetch fails.
@@ -5571,6 +5638,22 @@ const T = {
   login_failed: { en: "Login failed" },
   menu_title: { en: "Menu" },
   mm_close: { en: "Close" },
+  mb_home: { en: "Home" },
+  mb_upgrade: { en: "Upgrade" },
+  mb_plan: { en: "Plan" },
+  mb_packs: { en: "Packs" },
+  mb_more: { en: "More" },
+  mb_pages: { en: "{n} pages" },
+  mb_page1: { en: "1 page" },
+  ms_title: { en: "Menu style" },
+  ms_hub: { en: "Hub" },
+  ms_hub_d: { en: "Groups + status" },
+  ms_bar: { en: "Bottom bar" },
+  ms_bar_d: { en: "5 buttons below" },
+  ms_to_bar: { en: "Switch to bottom bar" },
+  ms_to_hub: { en: "Switch to hub" },
+  ms_note: { en: "Saved on your account. You can change it any time, here or at the bottom of the Menu." },
+  ms_pc_note: { en: "On a wide screen the bottom bar shows as the normal top menu." },
   mm_to_go: { en: "{n} to go" },
   mm_at_target: { en: "at target" },
   mm_day_gen: { en: "Day {d} · Gen {g}" },
@@ -7499,7 +7582,7 @@ async function keepPlace(fn) {
 // scrolled under an open pop-up). Any shown overlay locks the page's scroll
 // (html.scroll-lock); scrolling inside a pop-up doesn't run on into the page
 // (overscroll-behavior in the CSS).
-const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov, .exp-ov, .rc-set-ov";
+const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov, .exp-ov, .rc-set-ov, #mBarOv";
 let SCROLL_LOCK_RAF = 0;
 function syncScrollLock() {
   SCROLL_LOCK_RAF = 0;
@@ -7738,43 +7821,208 @@ function mmLiveLine(tab) {
   } catch (e) { /* unknown: no line */ }
   return null;
 }
-function renderMobileMenu() {
-  const overlay = document.getElementById("mobileMenuOverlay");
-  const groups = [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none");
-  const cards = groups.map((g) => {
-    const name = g.dataset.group;
-    // Same name as the PC menu shows (the group button's text; Packs' key is "Marketplace").
-    const label = (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/\u25BC/g, "").trim() || name;
-    const btns = [...g.querySelectorAll(".topnav-dropdown > button[data-tab]")];
-    const n = btns.filter((b) => b.style.display !== "none").length;
-    if (!n) return "";
-    let left = 0, total = 0;
-    const tiles = btns.map((b) => {
-      const tab = b.dataset.tab;
-      const ic = b.querySelector(".ic");
-      const c = b.cloneNode(true); const cic = c.querySelector(".ic"); if (cic) cic.remove();
-      const nm = c.textContent.trim();
-      const live = b.style.display === "none" ? null : mmLiveLine(tab);
-      if (live && live.total) { left += live.left; total += live.total; }
-      // The page's own inline style is kept, so pages hidden for visitors stay hidden.
-      const st = b.getAttribute("style");
-      return `<button type="button" data-tab="${esc(tab)}" class="mm-hp${b.classList.contains("active") ? " active" : ""}"${st ? ` style="${esc(st)}"` : ""} title="${esc(nm)}"><span class="ic">${ic ? ic.innerHTML : ""}</span><span class="mm-tx"><b>${esc(nm)}</b>${live ? `<i class="${live.cls || ""}">${esc(live.text)}</i>` : ""}</span></button>`;
-    }).join("");
-    const right = total ? (left ? t("mm_to_go").replace("{n}", left) : "✓ " + t("mm_at_target")) : "";
-    const bar = total ? `<div class="mm-hbar"><i style="width:${Math.round(((total - left) / total) * 100)}%"></i></div>` : "";
-    return `
+// One hub card: a group's label and its page buttons (the real menu's
+// buttons, so names / pictures / hidden pages follow), tiles with live lines.
+function mmGroupLabel(g) {
+  const name = g.dataset.group;
+  // Same name as the PC menu shows (the group button's text; Packs' key is "Marketplace").
+  return (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/▼/g, "").trim() || name;
+}
+function mmCardHtml(name, label, btns) {
+  const n = btns.filter((b) => b.style.display !== "none").length;
+  if (!n) return "";
+  let left = 0, total = 0;
+  const tiles = btns.map((b) => {
+    const tab = b.dataset.tab;
+    const ic = b.querySelector(".ic");
+    const c = b.cloneNode(true); const cic = c.querySelector(".ic"); if (cic) cic.remove();
+    const nm = c.textContent.trim();
+    const live = b.style.display === "none" ? null : mmLiveLine(tab);
+    if (live && live.total) { left += live.left; total += live.total; }
+    // The page's own inline style is kept, so pages hidden for visitors stay hidden.
+    const st = b.getAttribute("style");
+    return `<button type="button" data-tab="${esc(tab)}" class="mm-hp${b.classList.contains("active") ? " active" : ""}"${st ? ` style="${esc(st)}"` : ""} title="${esc(nm)}"><span class="ic">${ic ? ic.innerHTML : ""}</span><span class="mm-tx"><b>${esc(nm)}</b>${live ? `<i class="${live.cls || ""}">${esc(live.text)}</i>` : ""}</span></button>`;
+  }).join("");
+  const right = total ? (left ? t("mm_to_go").replace("{n}", left) : "✓ " + t("mm_at_target")) : "";
+  const bar = total ? `<div class="mm-hbar"><i style="width:${Math.round(((total - left) / total) * 100)}%"></i></div>` : "";
+  return `
       <div class="mm-hc" data-group="${esc(name)}">
         <div class="mm-hh"><span>${esc(label)}</span>${right ? `<em class="${left ? "a" : "g"}">${esc(right)}</em>` : ""}</div>
         <div class="mm-hrow${n === 1 || n === 2 || n === 4 ? " two" : ""}">${tiles}</div>${bar}
       </div>`;
-  }).join("");
+}
+function mmVisibleGroups() {
+  return [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none");
+}
+function mmGroupBtns(g) {
+  return [...g.querySelectorAll(".topnav-dropdown > button[data-tab]")];
+}
+function renderMobileMenu() {
+  const overlay = document.getElementById("mobileMenuOverlay");
+  const cards = mmVisibleGroups().map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
       <button class="mm-close" type="button" id="mmCloseBtn" aria-label="${esc(t("mm_close"))}" title="${esc(t("mm_close"))}">&#10005;</button>
-    </div>${cards}`;
+    </div>${cards}
+    <div class="mm-style">
+      <label for="mmStyleSel">${esc(t("ms_title"))}</label>
+      <select id="mmStyleSel" class="keep-w"><option value="hub"${MENU_STYLE === "hub" ? " selected" : ""}>${esc(t("ms_hub"))}</option><option value="bar"${MENU_STYLE === "bar" ? " selected" : ""}>${esc(t("ms_bar"))}</option></select>
+      <button type="button" class="btn small" data-mstyle="${MENU_STYLE === "bar" ? "hub" : "bar"}">${esc(t(MENU_STYLE === "bar" ? "ms_to_hub" : "ms_to_bar"))}</button>
+    </div>`;
   overlay.querySelector("#mmCloseBtn").addEventListener("click", closeMobileMenu);
+  overlay.querySelector("#mmStyleSel").addEventListener("change", (e) => setMenuStyle(e.target.value));
 }
+
+// ---- Menu style: Hub (default) or Bottom bar (owner, 4 Nov 2026) ----
+// Saved per account in calc_state `menu_style` = { style: "hub" | "bar" } and
+// in localStorage `menu_style` (read by the head script for the first paint).
+let MENU_STYLE = (() => { try { return localStorage.getItem("menu_style") === "bar" ? "bar" : "hub"; } catch (e) { return "hub"; } })();
+let MENU_STYLE_USER = null; // the account whose saved choice was read
+function menuStyleApply() {
+  const bar = MENU_STYLE === "bar";
+  document.documentElement.classList.toggle("mstyle-bar", bar);
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp && window.VIEWPORT_BASE) vp.setAttribute("content", window.VIEWPORT_BASE + (bar ? ", viewport-fit=cover" : ""));
+  try { localStorage.setItem("menu_style", MENU_STYLE); } catch (e) { /* storage blocked */ }
+  if (!bar) mBarClose();
+  mBarDraw();
+  fillMenuStyleRow();
+}
+// The account's saved choice wins once its saved states are loaded (another
+// phone / PC may have changed it); called after each calc_state preload.
+function menuStyleFromSaved() {
+  if (!CALC_STATE_CACHE || CALC_STATE_CACHE_USER !== USER_ID || MENU_STYLE_USER === USER_ID) return;
+  MENU_STYLE_USER = USER_ID;
+  const v = CALC_STATE_CACHE.menu_style;
+  const s = v && (v.style === "bar" || v.style === "hub") ? v.style : null;
+  if (s && s !== MENU_STYLE) { MENU_STYLE = s; menuStyleApply(); }
+}
+function setMenuStyle(style) {
+  style = style === "bar" ? "bar" : "hub";
+  const changed = style !== MENU_STYLE;
+  MENU_STYLE = style;
+  MENU_STYLE_USER = USER_ID;
+  if (USER_ID) saveCalcState("menu_style", { style });
+  menuStyleApply();
+  const hub = document.getElementById("mobileMenuOverlay");
+  // From the Hub: close it so the new style shows at once.
+  if (changed && hub.classList.contains("open")) closeMobileMenu();
+  if (MB_OPEN) mBarOpen(MB_OPEN);
+}
+function menuStyleCardsHtml() {
+  const card = (s, pv) => `<button type="button" class="ms-card${MENU_STYLE === s ? " on" : ""}" data-mstyle="${s}" aria-pressed="${MENU_STYLE === s}">${pv}<b>${esc(t(s === "bar" ? "ms_bar" : "ms_hub"))}</b><small>${esc(t(s === "bar" ? "ms_bar_d" : "ms_hub_d"))}</small></button>`;
+  return `<div class="ms-row"><b>${esc(t("ms_title"))}</b><div class="ms-cards">${card("hub", `<span class="ms-pv hub"><i></i><i></i><i></i><i></i><i></i></span>`)}${card("bar", `<span class="ms-pv bar"><i></i><i style="width:70%"></i><i style="width:85%"></i><i class="f"></i></span>`)}</div><div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("ms_note"))}</div></div>`;
+}
+function fillMenuStyleRow() {
+  const el = document.getElementById("accMenuStyle");
+  if (el) el.innerHTML = menuStyleCardsHtml();
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-mstyle]");
+  if (!b) return;
+  e.preventDefault();
+  setMenuStyle(b.dataset.mstyle);
+});
+
+// ---- Bottom bar (phones <= 900 px with html.mstyle-bar) ----
+// Sections from the real menu groups (built-in keys, so Admin renames follow;
+// a page moved to another group goes with that group): Upgrade = Gears /
+// Experts / Pets / Research, Plan = Planning + State Timeline, Packs = the
+// Packs group (key Marketplace), More = everything else.
+const MB_UPGRADE_GROUPS = ["Gears", "Experts", "Pets", "Research"];
+const MB_SECS = [
+  { key: "home", label: "mb_home", icon: "icons/logo-64.png" },
+  { key: "upgrade", label: "mb_upgrade", icon: "icons/quick/chief-gear.png" },
+  { key: "plan", label: "mb_plan", icon: "icons/quick/calculator.png" },
+  { key: "packs", label: "mb_packs", icon: "icons/quick/gift.png" },
+  { key: "more", label: "mb_more", sym: "☰" },
+];
+let MB_OPEN = null; // section whose sheet is open
+function mbSecOfGroup(name) {
+  if (MB_UPGRADE_GROUPS.includes(name)) return "upgrade";
+  if (name === "Planning") return "plan";
+  if (name === "Marketplace") return "packs";
+  return "more";
+}
+// { sec: [{ name, label, btns }] } from the menu as it is now.
+function mbSections() {
+  const out = { upgrade: [], plan: [], packs: [], more: [] };
+  let timeline = null;
+  for (const g of mmVisibleGroups()) {
+    let btns = mmGroupBtns(g);
+    const tl = btns.find((b) => b.dataset.tab === "statetimeline");
+    if (tl) timeline = tl;
+    btns = btns.filter((b) => b.dataset.tab !== "overview" && b.dataset.tab !== "statetimeline");
+    if (btns.length) out[mbSecOfGroup(g.dataset.group)].push({ name: g.dataset.group, label: mmGroupLabel(g), btns });
+  }
+  if (timeline) {
+    const plan = out.plan.find((x) => x.name === "Planning");
+    if (plan) plan.btns = plan.btns.concat(timeline);
+    else out.plan.push({ name: "Planning", label: navLabel("statetimeline"), btns: [timeline] });
+  }
+  return out;
+}
+function mbSecOfTab(tab) {
+  if (tab === "overview") return "home";
+  if (tab === "packcalendar") return "packs";
+  if (tab === "aboutpage" || tab === "contactpage") return "more";
+  const secs = mbSections();
+  for (const k of Object.keys(secs)) if (secs[k].some((x) => x.btns.some((b) => b.dataset.tab === tab))) return k;
+  return null;
+}
+function mBarDraw() {
+  const bar = document.getElementById("mBar");
+  if (!bar) return;
+  if (MENU_STYLE !== "bar") { if (bar.innerHTML) bar.innerHTML = ""; return; }
+  const lit = MB_OPEN || mbSecOfTab(TAB);
+  bar.innerHTML = MB_SECS.map((s) => `<button type="button" data-mbsec="${s.key}" class="${s.key === lit ? "on" : ""}"${s.key === "home" ? "" : ` aria-expanded="${MB_OPEN === s.key}"`}><span class="mb-ic">${s.icon ? `<img src="${esc(s.icon)}" alt="" />` : esc(s.sym)}</span><span>${esc(t(s.label))}</span></button>`).join("");
+}
+function mBarSheetHtml(sec) {
+  const groups = mbSections()[sec] || [];
+  const cards = groups.map((x) => mmCardHtml(x.name, x.label, x.btns)).join("");
+  const n = groups.reduce((a, x) => a + x.btns.filter((b) => b.style.display !== "none").length, 0);
+  const title = t((MB_SECS.find((s) => s.key === sec) || {}).label || "mb_more");
+  const extra = sec === "more"
+    ? `<div class="mb-links"><button type="button" data-tab="aboutpage">${esc(t("about_title"))}</button><button type="button" data-tab="contactpage">${esc(t("contact_link"))}</button></div>${menuStyleCardsHtml()}<div class="meta" style="font-size:11px; margin:6px 2px 0;">${esc(t("ms_pc_note"))}</div>`
+    : "";
+  return `<div class="mb-sheet" role="dialog" aria-label="${esc(title)}"><div class="mb-grab"></div><div class="mb-shh"><b>${esc(title)}</b><span>${esc(n === 1 ? t("mb_page1") : t("mb_pages").replace("{n}", n))}</span></div>${cards}${extra}</div>`;
+}
+function mBarOpen(sec) {
+  const ov = document.getElementById("mBarOv");
+  MB_OPEN = sec;
+  ov.innerHTML = mBarSheetHtml(sec);
+  ov.classList.add("open");
+  mBarDraw();
+}
+function mBarClose() {
+  const ov = document.getElementById("mBarOv");
+  if (!ov) return;
+  MB_OPEN = null;
+  ov.classList.remove("open");
+  ov.innerHTML = "";
+}
+document.getElementById("mBar").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-mbsec]");
+  if (!b) return;
+  const sec = b.dataset.mbsec;
+  if (sec === "home") { mBarClose(); if (TAB !== "overview") goToTab("overview"); else mBarDraw(); window.scrollTo(0, 0); return; }
+  // The open section's button again closes its sheet.
+  if (MB_OPEN === sec) { mBarClose(); mBarDraw(); return; }
+  mBarOpen(sec);
+});
+document.getElementById("mBarOv").addEventListener("click", (e) => {
+  const pageBtn = e.target.closest("button[data-tab]");
+  if (pageBtn) { mBarClose(); goToTab(pageBtn.dataset.tab); window.scrollTo(0, 0); return; }
+  if (e.target.closest("[data-mstyle]")) return; // handled by the document listener
+  if (!e.target.closest(".mb-sheet")) { mBarClose(); mBarDraw(); }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && MB_OPEN) { mBarClose(); mBarDraw(); } });
+// A wider screen (Fold opened, PC mode): the top menu is back, so drop the sheet.
+try {
+  const mq = window.matchMedia("(max-width: 900px)");
+  mq.onchange = () => { if (!mq.matches && MB_OPEN) { mBarClose(); mBarDraw(); } };
+} catch (e) { /* old browser */ }
 
 function openMobileMenu() {
   renderMobileMenu();
@@ -7833,6 +8081,9 @@ async function render() {
   const seq = ++RENDER_SEQ;
   // PC text is 2 px bigger on every page but the Dashboard (pcBigger in the head)
   document.documentElement.classList.toggle("on-dash", TAB === "overview");
+  // Bottom bar menu style: light the page's section; a page change closes its sheet.
+  if (MB_OPEN) mBarClose();
+  mBarDraw();
   // Page pop-ups: close them when the page changes.
   ["refineAdvModal", "drilldownModal", "gearSheet"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   // The same page drawn again after a tap: keep its height and scroll place.
@@ -35795,6 +36046,7 @@ function renderAccountButton() {
     btn.title = t("sign_in_or_create");
     if (head) head.innerHTML = "";
   }
+  fillMenuStyleRow();
 }
 
 // Sign in / create account for everyone. Creating an account upgrades the
