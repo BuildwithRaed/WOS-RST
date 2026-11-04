@@ -3615,7 +3615,10 @@ input,select,textarea{
   .bs-tiles.bs-slide::-webkit-scrollbar{ display:none; }
   .bs-tiles > .bs-sub{ grid-column:1 / -1; }
   /* Affinity box at one box's width in the sliding row: its 3 items get small */
-  .bs-tiles.bs-slide > .bs-aff{ padding:6px 4px 8px; }
+  .bs-tiles.bs-slide > .bs-aff{ padding:6px 4px 8px; flex-basis:calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * 1.5 + 3px) !important; }
+  /* One Backpack mark for the Affinity box, not one per item (owner, 4 Nov 2026) */
+  .bs-aff .bs-aff-it .bs-mark{ display:none; }
+  .bs-aff{ position:relative; }
   .bs-tiles.bs-slide > .bs-aff *{ font-size:11px; }
   /* Expert sigil boxes: smaller in the sliding row, about 4½ on screen (owner, 4 Nov 2026) */
   .bs-tiles.plx-sig.bs-slide > *{ flex:0 0 calc((100% - 3 * 6px) / 4.5); min-height:0; padding-top:6px; padding-bottom:6px; }
@@ -4765,6 +4768,7 @@ input,select,textarea{
   .rf-mkb{ flex:0 0 auto; height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--frost); font:inherit; font-size:12.5px; font-weight:600; white-space:nowrap; cursor:pointer; }
   .rf-mkb:hover{ border-color:var(--ice); }
   @media (max-width: 380px){ .rf-mk{ gap:8px; padding:8px; } .rf-mki{ width:28px; height:28px; flex-basis:28px; } .rf-mkb{ padding:0 8px; } .rf-mkv{ white-space:nowrap; } }
+  #refineMk{ display:none !important; }
   .g1-top .g1-mk:empty{ display:none; }
   .g1-top .g1-mk .rf-mk{ margin:10px 0 0; }
   .g1-top.rf-top .g1-hd-t{ font-size:14px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--frost); display:inline-flex; align-items:center; gap:6px; }
@@ -22015,9 +22019,13 @@ document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.ma
 // "$ <price> ›" beside the Backpack title open the Trades / Pack cost card as a
 // window on phones (on PC the card stays in the side column).
 const plxPriceLabel = (calcKey) => `$ ${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
+let REFINE_CALC_OPEN = null; // set by the Pet Refine page: opens its advanced calculator
+document.addEventListener("click", (e) => { if (e.target.closest("[data-rfcalcbtn]") && TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN(); });
 function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages (owner, 3 Nov 2026)
   if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>$ ${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
+  // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages (owner, 4 Nov 2026)
+  if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
 }
 document.addEventListener("click", (e) => {
@@ -32056,7 +32064,8 @@ async function renderExpertsPage() {
       const line = !nd || !(nd.need > 0) ? `<span style="color:var(--muted);">\u2014</span>` : nd.short > 0
         ? `<span style="color:var(--danger);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u00b7 ${bidiNum(shortAmount(nd.short))} ${esc(t("bs_short_word"))}</span>`
         : `<span style="color:var(--good);">${esc(t("resource_affinity"))} ${bidiNum(shortAmount(have))} \u2713</span>`;
-      return `<div class="bp-tile bs-tile bs-aff${nd && !(nd.need > 0) ? " off" : ""}"><div class="bs-aff-items">${affItems.map((f) => {
+      const affBag = affItems.some((f) => hasBp && backpackLinks("experts", f) && backpackLinked("experts", f, bpLink));
+      return `<div class="bp-tile bs-tile bs-aff${nd && !(nd.need > 0) ? " off" : ""}">${affBag ? `<span class="bs-mark">&#127890;</span>` : ""}<div class="bs-aff-items">${affItems.map((f) => {
         const linkable = hasBp && backpackLinks("experts", f), linked = linkable && backpackLinked("experts", f, bpLink);
         return `<button type="button" class="bs-aff-it" data-expedit="${esc(f)}" title="${esc(materialDisplayName(f))} (= ${AFFINITY_ITEM_VALUE[f]} ${esc(t("resource_affinity"))})">
           <span class="bs-mark">${linkable ? (linked ? "&#127890;" : "&#9998;") : ""}</span>
@@ -32354,6 +32363,7 @@ async function renderRefinePage() {
       const d = document.createElement("p"); d.className = "desc"; d.textContent = t("marks_desc");
       infoAttach(mkEl.querySelector(".rf-mkl"), d);
       mkEl.querySelector("[data-rfcalc]").addEventListener("click", () => { refineAdvOpen = true; drawAdv(); });
+      REFINE_CALC_OPEN = () => { refineAdvOpen = true; drawAdv(); };
     }
     document.getElementById("refineTotals").innerHTML = `
       <div class="t12x-card">
