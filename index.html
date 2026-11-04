@@ -4513,6 +4513,34 @@ input,select,textarea{
   .mpw-bar [data-mptitle]{ flex:1 1 90px; min-width:0; font-size:17px !important; font-weight:800; background:none; border:none; padding:0; color:var(--frost); }
   .mpw-tag{ flex:0 0 auto; font-size:11px; padding:2px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:800; }
   .mpw-del{ color:var(--danger); flex:0 0 auto; }
+  /* the visitor window's steps = the Packs window's sideways table (owner, 4 Nov 2026) */
+  .mpt-wrap{ margin:0 0 10px; background:var(--panel); }
+  table.mpt{ border-collapse:separate; border-spacing:0; font-size:13px; }
+  .mpt th, .mpt td{ padding:5px 3px; text-align:center; vertical-align:middle; border-bottom:1px solid var(--line); }
+  .mpt tbody tr:last-child td{ border-bottom:0; }
+  .mpt tbody tr:first-child td{ background:rgba(111,211,242,0.06); }
+  .mpt th{ font-size:12px; font-weight:700; color:var(--muted); vertical-align:top; }
+  .pkb-panel .mpt-wrap tr > .mpt-pr{ min-width:74px; padding-left:8px !important; padding-right:8px !important; text-align:start; white-space:nowrap; }
+  .pkb-panel .mpt-wrap td:not(.mpt-pr){ padding-left:3px !important; padding-right:3px !important; }
+  .pkb-panel .mpt-wrap tbody tr:first-child > .mpt-pr{ background:linear-gradient(rgba(111,211,242,0.06), rgba(111,211,242,0.06)), var(--bg); }
+  .mpt td.mpt-pr b{ font-size:14px; color:var(--frost); }
+  .mpt-hd{ position:relative; display:inline-grid; place-items:center; width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--frost); }
+  .mpt-it .mpt-hd{ cursor:pointer; }
+  .mpt-it .mpt-hd:hover{ border-color:var(--ice); }
+  .mpt-hd img{ width:30px; height:30px; object-fit:contain; }
+  .mpt-hd b{ font-size:12px; }
+  .mpt-cv{ position:absolute; inset-inline-end:-5px; bottom:-5px; width:15px; height:15px; border-radius:50%; background:var(--ice-dim); color:var(--frost); font-size:9px; line-height:15px; text-align:center; pointer-events:none; }
+  .mpt select.mpt-sel{ position:absolute; inset:0; width:100% !important; height:100% !important; min-height:0 !important; max-width:none !important; margin:0; padding:0 !important; opacity:0; cursor:pointer; font-size:16px; }
+  .mpt-nm{ display:block; max-width:70px; margin:3px auto 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:600; }
+  .pkb-panel .mpt-wrap td.mpt-c input{ width:70px !important; max-width:none !important; height:34px !important; min-height:0 !important; box-sizing:border-box; margin:0; padding:0 4px !important; font-size:14px !important; font-weight:700; text-align:center; }
+  .mpt td.mpt-gm{ font-size:13px; color:var(--muted); white-space:nowrap; }
+  .pkb-panel .mpt-wrap td.mpt-mx input{ width:48px !important; min-width:0 !important; height:34px !important; min-height:0 !important; box-sizing:border-box; padding:0 4px !important; text-align:center; font-size:14px !important; }
+  .pkb-panel .mpt-wrap tr > .mpt-mx{ min-width:56px; }
+  .pkb-panel .mpt-wrap tr > .mpt-ad{ min-width:0; }
+  .mpt-adb{ display:inline-flex; gap:6px; padding-top:2px; }
+  @media (min-width: 701px){ .mpt th.mpt-ad{ width:100%; text-align:start; } }
+  .mpt-adb .pkc-chip{ min-height:40px; white-space:nowrap; }
+  .mpt-adb .pkc-chip[data-mpdelcol]{ width:40px; justify-content:center; padding:0; font-size:18px; }
   @media (max-width: 380px){ .pkc-cells{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px){
     .pkb-panel.pkb-steps .pk-tbl-wrap{ overflow:visible !important; border:0 !important; }
@@ -11957,9 +11985,9 @@ async function packSeedTemplates(tables) {
 // Packs B (picture, name, how often · how it's bought, Used for pages, price,
 // Count in Budgets), the kinds of pack to copy (templates) in a closed fold.
 // P2: "+ New pack" is a 3-step sheet (kind, name & pages, items); it makes the same
-// table a template copy made. P3: a pack opens in a window with step cards and no
-// sideways table (visitors' own packs here; the admin's own copies open in the
-// Packs window, which shows the same step cards on phones, `pkb-steps`).
+// table a template copy made. P3: a pack opens in a window with the sideways table
+// (owner, 4 Nov 2026; visitors. own packs here; the admin.s own copies open in the
+// Packs window).
 let MPW_OPEN = null;         // visitor: the my- pack whose window is open
 let MPW_HOOK = null;         // { history(id), close(), closeNew() } of the drawn page
 let MP_NEW = null;           // the "+ New pack" sheet's answers { step, tpl, title, named, groups, items }
@@ -12382,10 +12410,13 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     });
   });
 }
-// P3 (visitors): the pack's window. Items as picture chips (+ Item / − Item), each
-// price step a card (price, Gems, Max, one box per item with its picture), + Step /
-// − Step / Fill from step 1, then Used for chips, Count in Budgets, next date. Every
-// box keeps the old data-mp* attribute, so the save code is the old one.
+// P3 (visitors): the pack's window. The steps are the sideways table the Packs
+// window uses (owner, 4 Nov 2026: every pack keeps the table): one row per price
+// step, one column per item with its picture as the header (tap = the item list,
+// a see-through select over the picture), the price column fixed, + Item / − in
+// the header, + Step / − / Fill from step 1 under it, then Used for chips, Count
+// in Budgets, next date. Every box keeps the old data-mp* attribute, so the save
+// code is the old one.
 function mpWindowHtml(mp) {
   if (!mp) return "";
   const link = mp.link || {};
@@ -12397,25 +12428,40 @@ function mpWindowHtml(mp) {
   const pages = Array.isArray(link.pages) ? link.pages : [];
   const numericReset = typeof link.reset === "number";
   const nameOf = (ci) => packResourceByName(mp.columns[ci]) || String(mp.columns[ci] || "");
-  const chip = (ci) => {
-    const cur = nameOf(ci), known = packResourceChoices(cur);
-    return `<label class="pkc-chip" title="${esc(materialDisplayName(cur))}"><span class="pkc-ic">${mpIconHtml(cur)}</span><select data-mpcol="${ci}" class="pack-col-pick keep-w" aria-label="${esc(materialDisplayName(cur))}">
-      ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
-      ${known.some((n) => n.toLowerCase() === cur.toLowerCase()) || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
-    </select></label>`;
+  const cur = link.currency || "USD";
+  const gemsName = gemsCi >= 0 ? (materialDisplayName(mp.columns[gemsCi]) || "Gems") : "";
+  const money = (r) => packFmtMoney(mpNum(r.cells[priceCol]), cur);
+  const headItem = (ci) => {
+    const nm = nameOf(ci), known = packResourceChoices(nm), lbl = materialDisplayName(nm) || nm || "?";
+    const ic = mpIconHtml(nm);
+    return `<th class="mpt-th mpt-it" title="${esc(lbl)}"><span class="mpt-hd">${ic || `<b>${esc(String(lbl).slice(0, 3))}</b>`}<span class="mpt-cv" aria-hidden="true">&#9662;</span>
+      <select data-mpcol="${ci}" class="pack-col-pick keep-w mpt-sel" aria-label="${esc(lbl)}">
+      ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === nm.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
+      ${known.some((n) => n.toLowerCase() === nm.toLowerCase()) || !nm ? "" : `<option value="${esc(nm)}" selected>${esc(nm)}</option>`}
+    </select></span><span class="mpt-nm">${esc(lbl)}</span></th>`;
   };
-  const step = (r, ri) => `<div class="pkc-step">
-      <div class="pkc-sh"><b>${esc(packFmtMoney(mpNum(r.cells[priceCol]), link.currency || "USD"))}</b>${gemsCi >= 0 ? `<span class="meta">· ${esc(Number(mpNum(r.cells[gemsCi])).toLocaleString())} ${esc(materialDisplayName(mp.columns[gemsCi]) || "Gems")}</span>` : ""}
-        <label class="pkc-max"><span>${esc(t("mp_max"))}</span><input type="number" min="1" step="1" data-mprowmax="${ri}" class="keep-w" value="${esc((link.rowMax || {})[ri] || "")}" placeholder="1" /></label></div>
-      <div class="pkc-cells">${resCols.map((ci) => `<label class="pkc-cell" title="${esc(materialDisplayName(nameOf(ci)))}"><span class="pkc-ic">${mpIconHtml(nameOf(ci))}</span><input inputmode="numeric" class="keep-w" data-mpcell data-row="${ri}" data-col="${ci}" value="${esc(mpNum(r.cells[ci]) ? Number(mpNum(r.cells[ci])).toLocaleString() : "")}" aria-label="${esc(materialDisplayName(nameOf(ci)))}" /></label>`).join("")}</div>
-    </div>`;
+  const row = (r, ri) => `<tr>
+      <td class="mpt-pr"><b>${esc(money(r))}</b></td>
+      ${resCols.map((ci) => `<td class="mpt-c"><input inputmode="numeric" class="keep-w" data-mpcell data-row="${ri}" data-col="${ci}" value="${esc(mpNum(r.cells[ci]) ? Number(mpNum(r.cells[ci])).toLocaleString() : "")}" aria-label="${esc(materialDisplayName(nameOf(ci)))} · ${esc(money(r))}" /></td>`).join("")}
+      ${gemsCi >= 0 ? `<td class="mpt-gm">${esc(mpNum(r.cells[gemsCi]) ? Number(mpNum(r.cells[gemsCi])).toLocaleString() : "")}</td>` : ""}
+      <td class="mpt-mx"><input type="number" min="1" step="1" data-mprowmax="${ri}" class="keep-w" value="${esc((link.rowMax || {})[ri] || "")}" placeholder="1" aria-label="${esc(t("mp_max"))} · ${esc(money(r))}" /></td>
+      <td class="mpt-ad"></td>
+    </tr>`;
+  const table = `<div class="pk-tbl-wrap mpt-wrap"><table class="mpt">
+      <thead><tr>
+        <th class="mpt-th mpt-pr">${esc(cur === "USD" ? "$" : cur)}</th>
+        ${resCols.map(headItem).join("")}
+        ${gemsCi >= 0 ? `<th class="mpt-th mpt-gm" title="${esc(gemsName)}"><span class="mpt-hd">${mpIconHtml(mp.columns[gemsCi]) || esc(gemsName)}</span><span class="mpt-nm">${esc(gemsName)}</span></th>` : ""}
+        <th class="mpt-th mpt-mx">${esc(t("mp_max"))}</th>
+        <th class="mpt-th mpt-ad"><span class="mpt-adb"><button type="button" class="pkc-chip pkc-add" data-mpaddcol>+ ${esc(t("pkc_item"))}</button><button type="button" class="pkc-chip pkc-add" data-mpdelcol ${resCols.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_item"))}" title="${esc(t("pkc_del_item"))}">&minus;</button></span></th>
+      </tr></thead>
+      <tbody>${mp.rows.map(row).join("")}</tbody>
+    </table></div>`;
   const when = [mpWhenText(link), mpKindText(link)].filter(Boolean).join(" · ");
   return `<div class="pkb-ov mpw-ov" data-mpwov><div class="pkb-panel mpw-panel" role="dialog" aria-label="${esc(mp.title)}" data-mpcard="${esc(mp.id)}"><div class="pk-body">
     <div class="pk-ed-bar mpw-bar"><button type="button" class="pkb-back" data-mpwclose aria-label="${esc(t("close_button"))}">&#8249;</button><input data-mptitle value="${esc(mp.title)}" maxlength="60" aria-label="${esc(mp.title)}" /><span class="mpw-tag">${esc(t("mp_tag"))}</span><button type="button" class="btn small ghost mpw-del" data-mpdel="${esc(mp.id)}">${esc(t("mp_delete"))}</button>${when ? `<div class="pkb-when">${esc(when)}</div>` : ""}</div>
-    <div class="pkc-k">${esc(t("pkc_items"))}</div>
-    <div class="pkc-chips">${resCols.map(chip).join("")}<button type="button" class="pkc-chip pkc-add" data-mpaddcol>+ ${esc(t("pkc_item"))}</button><button type="button" class="pkc-chip pkc-add" data-mpdelcol ${resCols.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_item"))}" title="${esc(t("pkc_del_item"))}">&minus;</button></div>
     <div class="pkc-k">${esc(t("pkc_steps"))} · ${esc(mpKindText(link))}</div>
-    ${mp.rows.map(step).join("")}
+    ${table}
     <div class="pkc-acts"><button type="button" class="btn ghost" data-mpaddrow ${canRow ? "" : "disabled"}>+ ${esc(t("pkc_step"))}</button><button type="button" class="btn ghost pkc-sm" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_step"))}" title="${esc(t("pkc_del_step"))}">&minus;</button><button type="button" class="btn ghost" data-mpfill>${esc(t("pkc_fill"))}</button></div>
     ${canRow ? "" : `<div class="meta pkc-note" style="color:var(--danger);">${esc(t("mp_row_top"))}</div>`}
     <div class="meta pkc-note">${esc(t("mp_row_hint"))}</div>
