@@ -9369,7 +9369,7 @@ async function render() {
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
-    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "roadmap" && !visitorCan("goals")) || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "roadmap" && !(visitorCan("goals") && visitorCan("budgets"))) || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -25284,7 +25284,7 @@ let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being wo
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
 // Budgets and the Roadmap page (admin) share one pipeline: the Roadmap is
 // drawn from the same plan, goals and dates as the Budgets page.
-function budTab() { return TAB === "budgets" || (TAB === "roadmap" && visitorCan("goals")); }
+function budTab() { return TAB === "budgets" || (TAB === "roadmap" && visitorCan("goals") && visitorCan("budgets")); }
 let ROADMAP_WEEKS = 6;     // Roadmap page: weeks shown (Load more adds 6)
 let ROADMAP_JUMP = null;   // week to scroll to after a redraw
 async function renderBudgetsPage(opts = {}) {
