@@ -1241,6 +1241,156 @@
   .pc-mark b{ font-weight:700; margin-inline-end:3px; }
   .pc-badge{ font-size:10px; padding:1px 7px; border-radius:999px; background:rgba(108,199,230,.15); color:var(--ice); text-transform:none; letter-spacing:0; font-weight:700; flex-shrink:0; }
   .pc-badge.g{ background:rgba(95,191,127,.15); color:var(--good); }
+  /* Pack calendar C2 "Week strip + bars" (owner, 4 Nov 2026) */
+  .pcl-head{ margin-bottom:10px; }
+  .pcl-fbtn{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:13px; font-weight:600; cursor:pointer; }
+  .pcl-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--ice); color:#0f141b; font-size:11px; font-weight:800; }
+  .pcl-ans, .pcl-wk, .pcl-day{ padding:12px !important; margin-bottom:10px; }
+  .pcl-ans{ background:linear-gradient(180deg, #1f3142, var(--panel)); border-color:#36566b; }
+  .pcl-two{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .pcl-bx{ min-width:0; background:var(--panel-2); border:1px solid var(--line); border-radius:11px; padding:8px 10px; }
+  .pcl-bx .l{ display:block; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .pcl-bx b{ display:block; font-size:17px; line-height:1.25; margin-top:2px; color:var(--frost); }
+  .pcl-bx small{ display:block; font-size:11.5px; color:var(--muted); margin-top:1px; min-height:1em; }
+  .pcl-bx.svs{ background:rgba(255,122,122,.10); border-color:rgba(255,122,122,.35); }
+  .pcl-bx.svs b{ color:#ff8f8f; }
+  .pcl-bx.koi{ background:rgba(169,140,240,.10); border-color:rgba(169,140,240,.35); }
+  .pcl-bx.koi b{ color:#c7b5f7; }
+  .pcl-bx.gen{ background:rgba(224,178,90,.10); border-color:rgba(224,178,90,.35); }
+  .pcl-bx.gen b{ color:#f0c878; }
+  .pcl-wkh{ display:flex; align-items:center; gap:6px; }
+  .pcl-nb{ flex:none; width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:18px; line-height:1; cursor:pointer; }
+  .pcl-wkt{ flex:1; min-width:0; height:36px; border:0; background:none; color:var(--frost); font-size:14.5px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pcl-wkt b{ font-weight:700; }
+  .pcl-today{ flex:none; height:32px; padding:0 10px; border:1px solid #3c7590; border-radius:9px; background:var(--ice-dim); color:#dff5fc; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .pcl-days{ display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; margin-top:8px; }
+  .pcl-dy{ min-width:0; min-height:58px; padding:4px 0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; cursor:pointer; }
+  .pcl-dy .w{ font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; }
+  .pcl-dy b{ font-size:15px; line-height:1.1; }
+  .pcl-dy .tdl{ font-size:11px; font-weight:800; color:var(--ice); line-height:1; }
+  .pcl-dy .ds{ display:flex; gap:2px; height:6px; }
+  .pcl-dy .ds i{ width:5px; height:5px; border-radius:50%; }
+  .pcl-dy.past{ opacity:.45; }
+  .pcl-dy.td{ border-color:#3c7590; }
+  .pcl-dy.sel{ background:var(--ice-dim); border-color:#6fb7d6; box-shadow:0 0 0 2px rgba(111,211,242,.35); opacity:1; }
+  .pcl-dy.sel .w{ color:#dff5fc; }
+  .pcl-gt{ margin-top:8px; }
+  .pcl-dow{ display:grid; grid-template-columns:repeat(7, 1fr); font-size:11px; font-weight:700; color:var(--muted); text-align:center; margin-bottom:4px; }
+  .pcl-dow .on{ color:var(--ice); }
+  .pcl-bars{ position:relative; padding-bottom:2px; }
+  .pcl-colhl{ position:absolute; top:0; bottom:0; background:rgba(111,211,242,.07); border-radius:6px; pointer-events:none; }
+  .pcl-tdl{ position:absolute; top:0; bottom:0; width:2px; margin-inline-start:-1px; background:var(--ice); border-radius:2px; opacity:.75; pointer-events:none; z-index:1; }
+  .pcl-ln{ position:relative; height:26px; margin-bottom:4px; }
+  .pcl-bb{ position:absolute; top:0; height:26px; box-sizing:border-box; border-radius:7px; padding:0 7px; display:flex; align-items:center; font-size:11.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--frost); background:color-mix(in srgb, var(--c) 22%, var(--panel-2)); border:1px solid color-mix(in srgb, var(--c) 45%, transparent); cursor:pointer; z-index:2; }
+  .pcl-bb.ev{ background:color-mix(in srgb, var(--c) 30%, var(--panel-2)); }
+  .pcl-bb.cutl{ border-start-start-radius:0; border-end-start-radius:0; border-inline-start-style:dashed; padding-inline-start:4px; }
+  .pcl-bb.cutr{ border-start-end-radius:0; border-end-end-radius:0; border-inline-end-style:dashed; }
+  .pcl-bb.hot{ outline:2px solid #d9cdfb; outline-offset:1px; }
+  .pcl-gh{ display:flex; align-items:center; gap:6px; margin:8px 0 4px; font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); position:relative; z-index:2; }
+  .pcl-gh i{ width:8px; height:8px; border-radius:50%; }
+  .pcl-gh span{ margin-inline-start:auto; letter-spacing:0; }
+  .pcl-more{ display:flex; align-items:center; justify-content:center; width:100%; height:36px; border:0; background:none; color:var(--ice); font-size:13px; font-weight:600; cursor:pointer; position:relative; z-index:2; }
+  .pcl-hint{ display:flex; align-items:center; gap:6px; width:100%; min-height:32px; margin-top:2px; padding:0 2px; border:0; background:none; color:var(--muted); font-size:12px; cursor:pointer; text-align:start; }
+  .pcl-hint i{ width:7px; height:7px; border-radius:50%; flex:none; }
+  .pcl-empty{ font-size:12.5px; padding:6px 0; position:relative; z-index:2; }
+  .pcl-dh{ display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+  .pcl-dh b{ font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .pcl-dh span{ margin-inline-start:auto; font-size:11.5px; color:var(--muted); }
+  .pcl-evb{ display:flex; align-items:center; gap:6px; margin:6px 0 4px; padding:7px 10px; border-radius:11px; font-size:12.5px; font-weight:700; }
+  .pcl-evb small{ margin-inline-start:auto; font-size:12px; font-weight:500; color:var(--muted); white-space:nowrap; }
+  .pcl-evb.svs{ background:rgba(255,122,122,.13); border:1px solid rgba(255,122,122,.35); }
+  .pcl-evb.koi, .pcl-evb.gen{ background:rgba(169,140,240,.13); border:1px solid rgba(169,140,240,.35); }
+  .pcl-evb.wh{ background:rgba(111,211,242,.10); border:1px solid rgba(111,211,242,.3); }
+  .pcl-evb.ul{ background:rgba(91,201,138,.10); border:1px solid rgba(91,201,138,.35); }
+  .pcl-rw{ display:flex; align-items:center; gap:10px; min-height:44px; padding:7px 0; border-top:1px solid rgba(255,255,255,.06); cursor:pointer; }
+  .pcl-dh + .pcl-rw, .pcl-evb + .pcl-rw{ border-top:0; }
+  .pcl-ic{ flex:none; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .pcl-ic img{ width:34px; height:34px; object-fit:contain; }
+  .pcl-rt{ flex:1; min-width:0; }
+  .pcl-rt > b{ display:block; font-size:13.5px; font-weight:700; color:var(--frost); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pcl-rt > b small{ font-weight:500; color:var(--muted); }
+  .pcl-rt > span{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  .pcl-rp{ flex:none; font-size:12.5px; font-weight:700; color:var(--frost); white-space:nowrap; }
+  .pcl-pill{ display:inline-block; font-size:11px; font-weight:800; border-radius:999px; padding:1px 7px; white-space:nowrap; }
+  .pcl-pill.now{ background:rgba(91,201,138,.16); color:var(--good); }
+  .pcl-pill.end{ background:rgba(232,162,60,.16); color:var(--amber); }
+  .pcl-pill.on{ background:rgba(255,255,255,.07); color:var(--muted); }
+  .pcl-pill.ice{ background:rgba(111,211,242,.14); color:var(--ice); }
+  .pcl-utc{ font-size:11.5px; margin-top:8px; }
+  /* sheets: bottom sheet on phones, centred on PC */
+  .pcl-ov{ position:fixed; inset:0; z-index:90; display:flex; align-items:flex-end; justify-content:center; background:rgba(5,8,15,.6); }
+  .pcl-sheet{ box-sizing:border-box; width:100%; max-width:560px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; padding:8px 14px 16px; border-radius:18px 18px 0 0; background:var(--panel); border-top:1px solid var(--line); box-shadow:0 -10px 30px rgba(0,0,0,.45); color:var(--frost); }
+  .pcl-ov-m{ align-items:center; padding:12px; }
+  .pcl-month{ max-width:420px; border-radius:16px; border:1px solid var(--line); padding:12px; }
+  @media (min-width:701px){ .pcl-ov{ align-items:center; padding:20px; } .pcl-sheet{ border-radius:16px; border:1px solid var(--line); } }
+  .pcl-grab{ width:40px; height:4px; border-radius:4px; background:#3b4a5d; margin:0 auto 8px; }
+  .pcl-sh{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .pcl-sh-ic{ width:40px; height:40px; object-fit:contain; flex:none; }
+  .pcl-sh-t{ flex:1; min-width:0; }
+  .pcl-sh-t b{ display:block; font-size:15.5px; }
+  .pcl-sh-t small{ display:block; font-size:12px; color:var(--muted); margin-top:1px; }
+  .pcl-inl{ display:inline !important; font-weight:500; }
+  .pcl-x{ flex:none; width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:none; color:var(--muted); font-size:20px; cursor:pointer; }
+  .pcl-tabs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin-bottom:8px; }
+  .pcl-tabs button{ flex:none; height:32px; padding:0 11px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--muted); font-size:12.5px; font-weight:600; cursor:pointer; }
+  .pcl-tabs button.on{ background:var(--ice-dim); border-color:#3c7590; color:#dff5fc; }
+  .pcl-dates{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); font-size:13.5px; }
+  .pcl-dates i{ width:8px; height:8px; border-radius:50%; flex:none; }
+  .pcl-dates .pcl-pill{ margin-inline-start:auto; }
+  .pcl-next{ font-size:12px; color:var(--muted); margin:5px 2px 0; }
+  .pcl-k{ display:flex; align-items:center; margin:12px 0 6px; font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .pcl-k span{ margin-inline-start:auto; text-transform:none; letter-spacing:0; font-weight:600; }
+  .pcl-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .pcl-chip{ display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:0 10px; border:1px solid var(--line); border-radius:9px; font-size:12.5px; font-weight:600; color:var(--muted); background:var(--panel-2); max-width:100%; }
+  .pcl-chip span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pcl-chip img{ width:22px; height:22px; object-fit:contain; flex:none; }
+  .pcl-chip.need{ color:var(--frost); border-color:rgba(91,201,138,.55); background:rgba(91,201,138,.08); }
+  .pcl-steps{ border:1px solid var(--line); border-radius:11px; overflow:hidden; }
+  .pcl-step{ display:flex; align-items:center; gap:10px; min-height:38px; padding:0 10px; font-size:13px; border-top:1px solid rgba(255,255,255,.05); }
+  .pcl-step:first-child{ border-top:0; }
+  .pcl-step.on{ background:rgba(232,162,60,.07); }
+  .pcl-st-n{ width:70px; flex:none; font-weight:700; color:var(--muted); }
+  .pcl-step.on .pcl-st-n{ color:var(--amber); }
+  .pcl-st-q{ flex:1; display:flex; align-items:center; gap:6px; color:var(--good); font-weight:700; }
+  .pcl-st-q img{ width:22px; height:22px; object-fit:contain; }
+  .pcl-step b{ white-space:nowrap; }
+  .pcl-planbox{ display:flex; align-items:center; gap:10px; margin-top:10px; padding:9px 12px; border:1px solid rgba(232,162,60,.5); border-radius:12px; background:rgba(232,162,60,.08); }
+  .pcl-planbox > div{ flex:1; min-width:0; }
+  .pcl-planbox b{ display:block; font-size:13px; }
+  .pcl-planbox small{ display:block; font-size:11.5px; color:var(--muted); }
+  .pcl-star{ color:var(--amber); font-size:15px; }
+  .pcl-plan-p{ flex:none; color:var(--amber); font-size:15px !important; }
+  .pcl-btns{ display:flex; gap:8px; margin-top:12px; }
+  .pcl-btns .btn{ flex:1; height:40px; justify-content:center; }
+  .pcl-wb{ background:var(--ice-dim) !important; border-color:#3c7590 !important; color:#dff5fc !important; }
+  .pcl-fchips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .pcl-fchip{ display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px; border:1px solid #3c7590; border-radius:999px; background:var(--ice-dim); color:#dff5fc; font-size:13px; font-weight:600; cursor:pointer; }
+  .pcl-fchip i{ width:8px; height:8px; border-radius:50%; }
+  .pcl-fchip span{ font-size:11.5px; padding:0 6px; border-radius:999px; background:rgba(0,0,0,.2); }
+  .pcl-fchip.off{ background:var(--panel-2); border-color:var(--line); color:var(--muted); text-decoration:line-through; }
+  .pcl-fchip.off i{ opacity:.4; }
+  .pcl-fplan{ display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); cursor:pointer; }
+  .pcl-fplan > span:first-child{ flex:1; min-width:0; }
+  .pcl-fplan b{ display:block; font-size:13.5px; }
+  .pcl-fplan small{ display:block; font-size:12px; color:var(--muted); }
+  .pcl-fnote{ font-size:12px; margin-top:8px; }
+  .pcl-mh{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .pcl-mh b{ flex:1; text-align:center; font-size:15px; }
+  .pcl-mrow{ display:grid; grid-template-columns:72px repeat(7, 1fr); align-items:center; width:100%; min-height:40px; padding:0 4px; border:1px solid transparent; border-radius:10px; background:none; color:var(--frost); cursor:pointer; font:inherit; }
+  .pcl-mrow.on{ background:var(--ice-dim); border-color:#4a8aa8; }
+  .pcl-mrow.ev:not(.on){ border-color:var(--line); }
+  .pcl-mdow{ min-height:24px; cursor:default; color:var(--muted); font-size:11px; font-weight:700; }
+  .pcl-ml{ font-size:11.5px; color:var(--muted); text-align:start; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pcl-mrow.on .pcl-ml{ color:#dff5fc; font-weight:700; }
+  .pcl-mc{ position:relative; text-align:center; font-size:13.5px; font-weight:600; padding:4px 0 7px; }
+  .pcl-mc.out{ opacity:.35; }
+  .pcl-mc.td{ color:var(--ice); font-weight:800; }
+  .pcl-mc u{ position:absolute; left:15%; right:15%; bottom:1px; height:3px; border-radius:3px; }
+  .pcl-mc em{ position:absolute; top:-3px; inset-inline-end:0; font-size:9px; font-style:normal; }
+  .pcl-leg{ display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:8px; font-size:11.5px; color:var(--muted); }
+  .pcl-leg span{ display:inline-flex; align-items:center; gap:5px; }
+  .pcl-leg u{ display:inline-block; width:14px; height:3px; border-radius:3px; }
+  @media (max-width:380px){ .pcl-bx b{ font-size:15.5px; } .pcl-dy b{ font-size:14px; } .pcl-mrow{ grid-template-columns:60px repeat(7, 1fr); } }
   .pur-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
   .pur-f{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; flex:1 1 130px; min-width:0; }
   .pur-f-wide{ flex:2 1 220px; }
@@ -6633,6 +6783,62 @@ const T = {
   pack_cal_state_day: { en: "state day {n}" },
   pack_cal_utc: { en: "Game days (UTC). Tap an item to see every pack in it." },
   pack_cal_today: { en: "today" },
+  pcl_desc: { en: "Packs, events and new heroes, one week at a time. Dots under a day are packs that start that day; a ★ marks packs in your plan. Tap a bar or a pack for its dates, what it gives and its price steps." },
+  pcl_utc: { en: "Game days (UTC)." },
+  pcl_filter: { en: "Filter" },
+  pcl_today: { en: "Today" },
+  pcl_packs_on: { en: "{n} packs on" },
+  pcl_end_today: { en: "{n} end today" },
+  pcl_none_end: { en: "none end today" },
+  pcl_next_event: { en: "Next event" },
+  pcl_ev_ends: { en: "{name} ends {day}" },
+  pcl_ev_ends_today: { en: "{name} ends today" },
+  pcl_ev_in: { en: "{name} in {n} days" },
+  pcl_ev_tomorrow: { en: "{name} tomorrow" },
+  pcl_this_week: { en: "this week" },
+  pcl_next_week: { en: "next week" },
+  pcl_last_week: { en: "last week" },
+  pcl_more_bars: { en: "+ {n} more bars" },
+  pcl_show_less: { en: "Show less" },
+  pcl_on_now: { en: "on now" },
+  pcl_n_packs: { en: "{n} packs" },
+  pcl_more: { en: "+ {n} more" },
+  pcl_in_plan: { en: "in plan" },
+  pcl_starts: { en: "starts" },
+  pcl_ends: { en: "ends" },
+  pcl_on: { en: "on" },
+  pcl_every_day: { en: "every day" },
+  pcl_to: { en: "to {date}" },
+  pcl_back: { en: "back {date}" },
+  pcl_ends_today: { en: "ends today" },
+  pcl_no_packs_day: { en: "No packs on this day." },
+  pcl_unlocks: { en: "Unlocks" },
+  pcl_day_n: { en: "day {n} of {m}" },
+  pcl_last_day: { en: "last day" },
+  pcl_days_left: { en: "{n} days left" },
+  pcl_ends_day: { en: "ends {day} · {n} days" },
+  pcl_starts_in: { en: "starts in {n} days" },
+  pcl_next_copy: { en: "Next: {range}" },
+  pcl_gives: { en: "What it gives" },
+  pcl_steps: { en: "Price steps" },
+  pcl_in_order: { en: "buy in order" },
+  pcl_step: { en: "Step {n}" },
+  pcl_plan_box: { en: "In your plan: {what}" },
+  pcl_plan_steps: { en: "step {a}–{b}" },
+  pcl_open_pack: { en: "Open pack ›" },
+  pcl_one_time: { en: "one time" },
+  pcl_every_n: { en: "Every {n} days" },
+  pcl_f_changes: { en: "changes from the default" },
+  pcl_f_show: { en: "Show on the calendar" },
+  pcl_f_plan: { en: "In my plan only" },
+  pcl_f_plan_d: { en: "Only packs Budgets plans to buy · {n} of {m}" },
+  pcl_f_noplan: { en: "Open Budgets or My Purchases first so your plan is worked out." },
+  pcl_f_note: { en: "Counts = how many this month. Events still show with ★ In my plan only." },
+  pcl_reset: { en: "Reset" },
+  pcl_done: { en: "Done" },
+  pcl_m_next: { en: "next" },
+  pcl_ev_next_week: { en: "{name} starts {day} · next week" },
+  pcl_wb_none: { en: "This pack isn't in your suggested packs right now." },
   pack_buys_per_reset: { en: "Buys per reset" },
   pack_days_short: { en: "d" },
   pack_days_short_long: { en: "days" },
@@ -7821,7 +8027,7 @@ async function keepPlace(fn) {
 // scrolled under an open pop-up). Any shown overlay locks the page's scroll
 // (html.scroll-lock); scrolling inside a pop-up doesn't run on into the page
 // (overscroll-behavior in the CSS).
-const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov, .exp-ov, .rc-set-ov, #mBarOv";
+const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov, .exp-ov, .rc-set-ov, #mBarOv, .pcl-ov";
 let SCROLL_LOCK_RAF = 0;
 function syncScrollLock() {
   SCROLL_LOCK_RAF = 0;
@@ -11808,6 +12014,7 @@ const PUR_SUG_VER = new Set();  // "week|row" using the other plan's version of 
 // { plan, taken: [{ ref: "b:<row>" | "t:<row>", off, count }] }; cleared by budgetInvalidate.
 let PUR_SUG_OVERLAY = null;
 let PUR_SUG_SHOWN = null;   // { plan, taken }: the plan last drawn in the box (kept tappable while a new one is worked out)
+let PUR_FOCUS = null; // Pack calendar "+ Will buy": { table, off, at } - My Purchases opens that pack's Will buy pop-up
 let PUR_SUGGEST_DONE = null; // { p: the PUR_SUGGEST promise, plan } once it has its answer
 let PUR_SUG_TRACK = {};      // { req }: the suggestions' planner request, dropped when a newer one starts
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
@@ -12480,6 +12687,19 @@ async function renderPurchasesPage() {
     });
     const keys = [...buckets.keys()].filter((k) => k !== "after").sort((a, b) => a - b).concat(buckets.has("after") ? ["after"] : []);
     if (!keys.includes(0)) keys.unshift(0);
+    // Pack calendar "+ Will buy" (PUR_FOCUS): the week this pack is next bought
+    // in (nearest the picked day), then its Will buy pop-up (below).
+    let focusI = null;
+    if (PUR_FOCUS && !updating) {
+      const f = PUR_FOCUS; PUR_FOCUS = null;
+      let best = null;
+      if (Date.now() - f.at < 120000) rows.forEach((r, i) => {
+        const tb = sugTable(r);
+        if (!(tb && String(tb.id) === f.table) && !(r.tables || []).map(String).includes(f.table)) return;
+        (sched[i] || []).forEach((x) => { const d = Math.abs(Math.max(0, x.off) - f.off) + (i < nFollow ? 0 : 1000); if (!best || d < best.d) best = { d, i, k: bucketOf(x.off) }; });
+      });
+      if (best && keys.includes(best.k)) { PUR_SUG_WEEK = best.k; focusI = best.i; } else if (Date.now() - f.at < 120000) toast(t("pcl_wb_none"));
+    }
     const money = (v) => packFmtLocal(v, rows[0].currency, true, rows[0].price);
     const wkStart = (w) => new Date(packStartOfToday().getTime() + (w * 7 - monIdx) * 86400000);
     const wkName = (k) => (k === "after" ? t(tOff != null && tOff >= 0 ? "pur_wk_after" : "pur_wk_later") : k === 0 ? t("pur_wk_this") : k === 1 ? t("pur_wk_next") : tOff != null && k === lastWeek ? t("pur_wk_target") : t("pur_wk_n").replace("{n}", k + 1));
@@ -13036,6 +13256,11 @@ async function renderPurchasesPage() {
     const b0 = buckets.get(0);
     drawWeek({ plan, cmp, follow, rows, sched, nFollow, buckets, keys, money, wkName, sugTable, plainPack, sugName, takeAsPlanned,
       planTag: (i) => (cmp ? (b0 && b0.match.has(i) ? "both" : follow) : plan && plan.spend ? "budget" : "target") }, !!updating);
+    // From the Pack calendar's "+ Will buy": open that pack's Will buy pop-up.
+    if (focusI != null) {
+      const b = box.querySelector(`[data-pursug="${focusI}"]`);
+      if (b) b.click();
+    }
   };
   const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; drawWeek(null); } };
   const ov = PUR_SUG_OVERLAY;
@@ -13281,64 +13506,92 @@ document.addEventListener("keydown", (e) => {
 // ============================================================
 // PACK CALENDAR - when each pack comes and how long it stays.
 // Its own page, reached from the Calendar button on the Packs page.
-// Every bar is drawn from data the pack already carries: how often it
-// comes back, its next date, and how many days one appearance lasts.
+// Design C2 "Week strip + bars" (owner, 4 Nov 2026): two answer boxes
+// (today / next event), one week at a time as 7 day tiles over a bar chart
+// (events first, then packs; bars past the week edge are cut ‹ ›), then the
+// picked day's list. A bar or a row opens the pack's sheet (dates, what it
+// gives, price steps with ★ for the steps in the person's plan, + Will buy,
+// Open pack ›); ⚙ Filter (types, ★ In my plan only); the week title opens a
+// month picker. Every item is drawn from data the pack already carries: how
+// often it comes back, its next date and how many days one copy lasts.
 // ============================================================
-let PACK_CAL_RESIZE = null;
-function packCalKind(reset) {
-  if (reset === 1) return "daily";
-  if (reset === 7 || reset === 14) return "weekly";
-  if (reset === 28 || reset === 30) return "monthly";
-  return "other";
-}
-const PACK_CAL_COLORS = {
-  weekly: ["rgba(108,199,230,.16)", "rgba(108,199,230,.55)", "#cfeefb"],
-  monthly: ["rgba(224,162,48,.16)", "rgba(224,162,48,.6)", "#f3dcae"],
-  daily: ["rgba(95,191,127,.16)", "rgba(95,191,127,.55)", "#c8ecd5"],
-  other: ["rgba(167,139,250,.16)", "rgba(167,139,250,.55)", "#ded4fd"],
-  event: ["rgba(240,107,107,.16)", "rgba(240,107,107,.7)", "#f8c9c9"],
-};
-// Chip choices are remembered in this browser. Daily packs would fill every
-// square, and packs that are up the whole week every week say nothing on a
-// grid, so both start switched off.
-const PACK_CAL_OFF_KEY = "packcal_off";
-let PACK_CAL_OFF = (() => {
+let PACK_CAL_KEY = null;
+let PACK_CAL_WEEK = 0;          // weeks from this week
+let PACK_CAL_DAY = null;        // picked day of the shown week (0 = Mon … 6 = Sun), null = today / Monday
+let PACK_CAL_MORE_BARS = false; // "+ N more bars" opened
+let PACK_CAL_DAY_MORE = false;  // the day list's "+ N more" opened
+let PACK_CAL_SHEET = null;      // { type: "pack", g, a, ti } | { type: "filter" } | { type: "month", m }
+// Filter (kept in this browser like the old chips): kinds switched off and
+// "★ In my plan only". Default = everything on, plan-only off.
+const PACK_CAL_KINDS = ["weekly", "monthly", "event", "newheroes", "unlocks"];
+const PACK_CAL_FILTER = (() => {
+  const f = { off: new Set(), plan: false };
   try {
-    const saved = JSON.parse(localStorage.getItem(PACK_CAL_OFF_KEY) || "null");
-    if (Array.isArray(saved)) return new Set(saved);
-  } catch (e) {}
-  return new Set(["daily", "allweek"]);
+    const s = JSON.parse(localStorage.getItem("packcal_filter") || "null");
+    if (s && Array.isArray(s.off)) s.off.forEach((k) => { if (PACK_CAL_KINDS.includes(k)) f.off.add(k); });
+    if (s && s.plan === true) f.plan = true;
+  } catch (e) { /* blocked */ }
+  return f;
 })();
-function packCalSaveChips() {
-  try { localStorage.setItem(PACK_CAL_OFF_KEY, JSON.stringify([...PACK_CAL_OFF])); } catch (e) {}
+function packCalSaveFilter() {
+  try { localStorage.setItem("packcal_filter", JSON.stringify({ off: [...PACK_CAL_FILTER.off], plan: PACK_CAL_FILTER.plan })); } catch (e) { /* blocked */ }
 }
-let PACK_CAL_PAGE = 0; // which block of weeks is shown
-// List (phones) or month grid (PC) unless the person picked one (kept in this browser).
-function packCalView() {
-  let v = null;
-  try { v = localStorage.getItem("packcal_view"); } catch (e) {}
-  return v === "list" || v === "month" ? v : (window.innerWidth < 1000 ? "list" : "month"); // tablets get the list too (day cells too narrow; 3 Nov 2026)
+const PACK_CAL_COL = { weekly: "#6fd3f2", monthly: "#e8a23c", event: "#ff7a7a", koi: "#a98cf0", wheel: "#6fd3f2", newheroes: "#a98cf0", unlocks: "#5bc98a" };
+function packCalKind(reset) {
+  return reset <= 14 ? "weekly" : "monthly";
 }
-const PACK_CAL_ROWS = 6; // rows shown per week before "+N more"
-let PACK_CAL_OPEN_WEEKS = new Set();
+// The plan Budgets / My Purchases already worked out (never started here).
+function packCalPlan() {
+  try {
+    if (PUR_SUGGEST_DONE && PUR_SUGGEST_DONE.p === PUR_SUGGEST && PUR_SUGGEST_DONE.plan) return PUR_SUGGEST_DONE.plan;
+    if (BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending) return budgetSuggestOf(BUDGET_DATA.combined);
+    if (PUR_SUG_SHOWN && PUR_SUG_SHOWN.plan) return PUR_SUG_SHOWN.plan;
+  } catch (e) { /* not ready */ }
+  return null;
+}
+// A table's item columns: [{ ci, name }] (not the price or Gems).
+function packCalCols(tb) {
+  const l = packLinkFor(tb.id), cols = packEffectiveCols(tb), pc = l.priceCol || 0, out = [];
+  (tb.columns || []).forEach((c, ci) => {
+    if (ci === pc) return;
+    const name = cols[ci] || "";
+    if (!name || /gem/i.test(String(c || "")) || /^gems$/i.test(name)) return;
+    out.push({ ci, name });
+  });
+  return out;
+}
+function packCalIconSrc(name) {
+  if (!name) return "";
+  return itemRegIcon(name) || (String(name).toLowerCase() === "gems" ? MATERIAL_ICONS.gems : "") || bpIcon({ name }) || materialIconSrc(name) || "";
+}
+function packCalImg(name, cls) {
+  const s = packCalIconSrc(name);
+  return s ? `<img class="${cls || ""}" src="${esc(s)}" alt="" loading="lazy" />` : "";
+}
 
 async function renderPackCalendarPage() {
   const seq = RENDER_SEQ;
-  const [tablesLoaded] = await Promise.all([
-    packTablesRows().then((rows) => rows.map((tb) => ({ id: tb.id, title: tb.title, sort_order: tb.sort_order }))),
-    ensurePackLinks(),
-  ]);
+  const [tablesLoaded] = await Promise.all([packTablesRows(), ensurePackLinks()]);
   if (seq !== RENDER_SEQ) return;
   const tables = tablesLoaded.filter((tb) => {
     const l = packLinkFor(tb.id);
     return typeof l.reset === "number" && l.reset > 0 && !l.template && (IS_OWNER || !l.hideVisitors);
   });
+  const loc = LANG === "en" ? undefined : LANG;
+  const DAY = 86400000;
+  const t0 = packStartOfToday();
+  const monIdx = (t0.getUTCDay() + 6) % 7;
+  const dateOf = (off) => new Date(t0.getTime() + off * DAY);
+  const offOf = (d) => Math.round((d - t0) / DAY);
+  const fmt = (off, o) => { try { return dateOf(off).toLocaleDateString(loc, { timeZone: "UTC", ...o }); } catch (e) { return ""; } };
+  const md = (off) => fmt(off, { month: "short", day: "numeric" });
+  const wd = (off) => fmt(off, { weekday: "short" });
+  const wdmd = (off) => fmt(off, { weekday: "short", month: "short", day: "numeric" });
 
   // The same pack split over several tables (Charms: Classic / Sublime /
-  // Exquisite) gets one bar. Tables tied together in admin ("Same pack,
+  // Exquisite) is one item. Tables tied together in admin ("Same pack,
   // several tables") always join; otherwise the text before the colon joins
-  // them, but only while they share a rhythm, a date and a window - a table
-  // that moves to another day goes back to a bar of its own.
+  // them, but only while they share a rhythm, a date and a window.
   const groups = (() => {
     const by = new Map();
     tables.forEach((tb) => {
@@ -13347,9 +13600,6 @@ async function renderPackCalendarPage() {
       const colon = title.indexOf(":");
       const stem = colon > 0 ? title.slice(0, colon).trim() : "";
       const rhythm = `${l.reset}|${packPlanAnchor(l) || ""}|${l.window || 0}`;
-      // 1) tables tied together in admin, 2) same name before the colon,
-      // 3) same pack category (Regular Packs and friends) - each only while
-      // they share a rhythm, so a table on another date keeps its own bar.
       const cat = String(l.group || "").trim();
       const key = l.linkSet ? `set:${l.linkSet}`
         : stem ? `stem:${stem.toLowerCase()}|${rhythm}`
@@ -13358,235 +13608,399 @@ async function renderPackCalendarPage() {
       if (!by.has(key)) by.set(key, { key, label: stem || cat || title, link: l, tables: [] });
       by.get(key).tables.push(tb);
     });
-    const out = [];
-    by.forEach((g) => {
-      // A "group" of one keeps the table's own full name.
-      if (g.tables.length === 1) out.push({ ...g, label: g.tables[0].title || g.label });
-      else out.push(g);
-    });
-    return out;
+    return [...by.values()].map((g) => (g.tables.length === 1 ? { ...g, label: g.tables[0].title || g.label } : g));
   })();
+  groups.forEach((gp) => {
+    gp.newGen = packIsNewGen(packLinkForBase(gp.tables[0].id));
+    gp.kind = gp.newGen ? "newheroes" : packCalKind(gp.link.reset);
+    gp.ids = new Set(gp.tables.map((tb) => String(tb.id)));
+    // Picture: the first item it gives; price: the lowest step ("+" when there are more).
+    const c0 = gp.tables.map((tb) => packCalCols(tb)[0]).find(Boolean);
+    gp.icon = c0 ? c0.name : "";
+    const prices = [];
+    gp.tables.forEach((tb) => { const l = packLinkFor(tb.id); (tb.rows || []).forEach((r) => { const n = packParseNum((r.cells || [])[l.priceCol || 0]); if (n > 0) prices.push({ n, cur: l.currency }); }); });
+    prices.sort((a, b) => a.n - b.n);
+    gp.price = prices.length ? packFmtMoney(prices[0].n, prices[0].cur) + (prices.length > 1 ? " +" : "") : "";
+  });
+
+  // The person's plan (already worked out by Budgets / My Purchases).
+  const plan = packCalPlan();
+  const planRows = plan && plan.rows ? plan.rows.filter((r) => r.count > 0) : [];
+  let planSched = [];
+  try { planSched = plan ? (plan.spendSched || packPlanSchedule(planRows)) : []; } catch (e) { planSched = []; }
+  const planOf = (gp) => planRows.map((r, i) => ({ r, i, xs: planSched[i] || [] })).filter((x) => (x.r.tables || []).some((id) => gp.ids.has(String(id))));
+  groups.forEach((gp) => { gp.plan = planOf(gp); });
+  const inPlanAt = (gp, a, b) => gp.plan.some((x) => x.xs.some((s) => Math.max(0, s.off) >= Math.max(0, a) && Math.max(0, s.off) <= b));
+  const planGroups = groups.filter((gp) => gp.plan.length).length;
+
+  // Everything as items ({ a, b } = first / last day, days from today).
+  const collect = (from, to, withPacks) => {
+    const items = [];
+    if (withPacks) groups.forEach((gp, gi) => {
+      const l = gp.link;
+      const appsList = gp.newGen && newGenBaseDay()
+        ? newGenAppearances(gp.tables[0].id, Number(l.window) || 0).map((x) => ({ start: x.start, offset: offOf(x.start), days: x.days }))
+        : packAppearances(l.reset, packPlanAnchor(l), l.window, to + 1);
+      // A daily pack is one bar over the range ("every day"), not a bar a day.
+      if (l.reset === 1 && !gp.newGen) {
+        const live = appsList.filter((app) => app.offset <= to && app.offset >= from - 1);
+        if (live.length) { const a = Math.max(from, live[0].offset); items.push({ kind: gp.kind, gi, a, b: to, days: to - a + 1, daily: true, title: gp.label, count: gp.tables.length }); }
+        return;
+      }
+      appsList.forEach((app) => {
+        const days = gp.newGen ? app.days : (l.window > 0 ? l.window : 1);
+        const a = app.offset, b = a + days - 1;
+        if (b < from || a > to) return;
+        const gen = gp.newGen ? packNewGenLabel(app.start, l.reset, gp.tables[0].id) : "";
+        items.push({ kind: gp.kind, gi, a, b, days, title: gen ? `${gp.label} · ${gen}` : gp.label, count: gp.tables.length });
+      });
+    });
+    const firstDay = dateOf(from), lastDay = dateOf(to);
+    GAME_EVENTS.forEach((ev) => gameEventStarts(ev, firstDay, lastDay).forEach((st) => { const a = offOf(st); items.push({ kind: "event", ev: ev.key, a, b: a + ev.days - 1, days: ev.days, title: ev.name }); }));
+    heroWheels(new Date(firstDay.getTime() - 3 * DAY), lastDay).forEach((w) => { const a = offOf(w.day), d = w.ev.wheelDays || 1; if (a + d - 1 >= from) items.push({ kind: "event", ev: "wheel", a, b: a + d - 1, days: d, title: `🎡 ${t("pack_cal_wheel")}` }); });
+    const gen0 = newGenGen(), base = newGenBaseDay();
+    if (base) newGenStarts(base, 12).forEach((d, i) => {
+      if (d < firstDay || d > lastDay) return;
+      const sd = stateDayOn(d), a = offOf(d);
+      items.push({ kind: "newheroes", milestone: true, a, b: a, days: 1, title: `⭐ ${t("pack_cal_new_heroes")}${gen0 ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}`, tip: sd != null ? t("pack_cal_state_day").replace("{n}", sd.toLocaleString()) : "" });
+    });
+    const sd0 = stateAgeDay();
+    if (sd0 != null) {
+      const byDay = new Map();
+      STATE_UNLOCKS.filter((u) => u.day > sd0).forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
+      byDay.forEach((names, day) => { const d = stateDateOfDay(day); if (d >= firstDay && d <= lastDay) { const a = offOf(d); items.push({ kind: "unlocks", milestone: true, a, b: a, days: 1, title: `🔓 ${names.join(", ")}`, tip: t("pack_cal_state_day").replace("{n}", day.toLocaleString()) }); } });
+    }
+    return items;
+  };
+  const shownItem = (it) => {
+    if (it.kind === "event") return !PACK_CAL_FILTER.off.has("event");
+    if (PACK_CAL_FILTER.off.has(it.kind)) return false;
+    if (PACK_CAL_FILTER.plan && it.gi != null) return groups[it.gi].plan.length > 0;
+    return true;
+  };
+  const evCol = (it) => (it.kind === "event" ? PACK_CAL_COL[it.ev === "koi" ? "koi" : it.ev === "wheel" ? "wheel" : "event"] : PACK_CAL_COL[it.kind] || PACK_CAL_COL.weekly);
+
+  // ---- the pack sheet ----
+  const resetText = (l) => {
+    const r = l.reset;
+    if (r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
+    const preset = PACK_RESET_PRESETS.find((x) => x.days === r);
+    return preset ? t("pack_reset_" + preset.key) : t("pcl_every_n").replace("{n}", r);
+  };
+  const kindName = (k) => t({ weekly: "pack_cal_weekly", monthly: "pack_cal_monthly", event: "pack_cal_events", newheroes: "pack_cal_new_heroes", unlocks: "pcl_unlocks" }[k] || "pack_cal_other");
+  const needMap = plan && plan.need ? plan.need : null;
+  const isNeeded = (k, d = 0) => !!needMap && ((needMap[k] || 0) > 0 || (d < 2 && !!PACK_BUNDLES[k] && Object.keys(PACK_BUNDLES[k]).some((c) => isNeeded(c, d + 1))));
+  const appsOf = (gp, horizon) => {
+    const l = gp.link;
+    return gp.newGen && newGenBaseDay()
+      ? newGenAppearances(gp.tables[0].id, Number(l.window) || 0).map((x) => ({ a: offOf(x.start), b: offOf(x.start) + x.days - 1 })).filter((x) => x.b >= 0)
+      : packAppearances(l.reset, packPlanAnchor(l), l.window, horizon).map((x) => ({ a: x.offset, b: x.offset + (l.window > 0 ? l.window : 1) - 1 }));
+  };
+  const daysLeftPill = (a, b, gp) => {
+    if (gp && gp.link.reset === 1 && !gp.newGen) return `<span class="pcl-pill now">${esc(t("pcl_every_day"))}</span>`;
+    if (a > 0) return `<span class="pcl-pill ice">${esc(t("pcl_starts_in").replace("{n}", a))}</span>`;
+    const left = b + 1;
+    if (left <= 1) return `<span class="pcl-pill end">${esc(t("pcl_last_day"))}</span>`;
+    return `<span class="pcl-pill ${left <= 3 ? "end" : "now"}">${esc(left <= 3 ? t("pcl_ends_day").replace("{day}", wd(b)).replace("{n}", left) : t("pcl_days_left").replace("{n}", left))}</span>`;
+  };
+  function packSheetHtml(st) {
+    const gp = groups[st.g];
+    if (!gp) return "";
+    const ti = Math.min(st.ti || 0, gp.tables.length - 1);
+    const tb = gp.tables[ti], l = packLinkFor(tb.id);
+    const apps = appsOf(gp, 400);
+    const cur = apps.find((x) => x.a <= st.a && x.b >= st.a) || apps.find((x) => x.b >= st.a) || { a: st.a, b: st.a };
+    const next = apps.find((x) => x.a > cur.b);
+    const range = (x) => (x.a === x.b ? wdmd(x.a) : `${md(x.a)} → ${md(x.b)}`);
+    const win = Number(l.window) || 0;
+    const wdays = win > 0 && win < 7 && l.reset % 7 === 0 ? ` · ${wd(cur.a)}–${wd(cur.a + win - 1)}` : "";
+    const sub = gp.newGen
+      ? `${t("pack_cal_new_heroes")}${packNewGenLabel(dateOf(cur.a), l.reset, gp.tables[0].id) ? " · " + packNewGenLabel(dateOf(cur.a), l.reset, gp.tables[0].id) : ""} · ${t("pcl_one_time")}`
+      : [l.reset === 1 ? "" : kindName(gp.kind), resetText(l)].filter((x, i, a) => x && a.indexOf(x) === i).join(" · ") + wdays;
+    const cols = packCalCols(tb);
+    // Main item = the first needed column, else the first one.
+    const main = cols.find((c) => isNeeded(c.name)) || cols[0];
+    const chips = cols.slice().sort((x, y) => (isNeeded(y.name) ? 1 : 0) - (isNeeded(x.name) ? 1 : 0)).map((c) => `<span class="pcl-chip${isNeeded(c.name) ? " need" : ""}" title="${esc(materialDisplayName(c.name) || c.name)}">${packCalImg(c.name)}<span>${esc(materialDisplayName(c.name) || c.name)}</span></span>`).join("");
+    // Steps in the plan (★): plain rows / buy-in-order runs of this table.
+    const mine = gp.plan.filter((x) => (x.r.tables || []).map(String).includes(String(tb.id)));
+    const starred = new Set();
+    mine.forEach((x) => { if (x.r.row == null) return; if (l.sequential) { for (let k = x.r.from || 0; k <= x.r.row; k++) starred.add(k); } else starred.add(x.r.row); });
+    const steps = (tb.rows || []).map((r, ri) => ({ ri, price: packParseNum((r.cells || [])[l.priceCol || 0]), qty: main ? packParseNum((r.cells || [])[main.ci]) : 0 })).filter((s) => s.price > 0);
+    const stepsHtml = steps.map((s, k) => `<div class="pcl-step${starred.has(s.ri) ? " on" : ""}"><span class="pcl-st-n">${starred.has(s.ri) ? "★ " : ""}${esc(t("pcl_step").replace("{n}", k + 1))}</span><span class="pcl-st-q">${main ? packCalImg(main.name) : ""}${s.qty > 0 ? esc(Math.round(s.qty).toLocaleString()) : ""}</span><b>${esc(packFmtMoney(s.price, l.currency))}</b></div>`).join("");
+    // "★ In your plan": which steps, what it costs, on which dates.
+    let planBox = "";
+    if (mine.length) {
+      const idx = [...starred].map((ri) => steps.findIndex((s) => s.ri === ri) + 1).filter((n) => n > 0).sort((a, b) => a - b);
+      const what = idx.length ? (idx.length > 1 && idx[idx.length - 1] - idx[0] === idx.length - 1 ? t("pcl_plan_steps").replace("{a}", idx[0]).replace("{b}", idx[idx.length - 1]) : idx.length === 1 ? t("pcl_step").replace("{n}", idx[0]).toLowerCase() : idx.join(", ")) : String(mine[0].r.label || "").replace(/[⁦-⁩]/g, "");
+      const tot = mine.reduce((s, x) => s + packRowLocal(x.r), 0);
+      const offs = [...new Set(mine.flatMap((x) => x.xs.map((s) => Math.max(0, s.off))))].sort((a, b) => a - b);
+      const cnt = mine.reduce((s, x) => s + x.r.count, 0);
+      const when = offs.length ? (offs.length === 1 ? md(offs[0]) : `${md(offs[0])} → ${md(offs[offs.length - 1])} · ${t("pur_when_dates").replace("{n}", offs.length)}`) : "";
+      planBox = `<div class="pcl-planbox"><span class="pcl-star">★</span><div><b>${esc(t("pcl_plan_box").replace("{what}", what))}</b><small>${cnt > 1 ? `×${cnt} · ` : ""}${esc(when)}</small></div><b class="pcl-plan-p">${esc(packFmtLocal(tot, mine[0].r.currency, false, mine[0].r.price))}</b></div>`;
+    }
+    const canBuy = mine.length && (IS_OWNER || visitorCan("budgets"));
+    return `<div class="pcl-ov" data-pclclose><div class="pcl-sheet" role="dialog" aria-modal="true" aria-label="${esc(gp.label)}">
+      <div class="pcl-grab"></div>
+      <div class="pcl-sh">${packCalImg(gp.icon, "pcl-sh-ic")}<div class="pcl-sh-t"><b>${esc(gp.label)}</b><small>${esc(sub)}</small></div><button type="button" class="pcl-x" data-pclx aria-label="${esc(t("close_button"))}">&times;</button></div>
+      ${gp.tables.length > 1 ? `<div class="pcl-tabs">${gp.tables.map((x, i) => { const nm = String(x.title || ""); const c = nm.indexOf(":"); return `<button type="button" class="${i === ti ? "on" : ""}" data-pclti="${i}">${esc(c > 0 ? nm.slice(c + 1).trim() : nm)}</button>`; }).join("")}</div>` : ""}
+      <div class="pcl-dates"><i style="background:${evCol({ kind: gp.kind })}"></i><b>${esc(range(cur))}</b>${daysLeftPill(cur.a, cur.b, gp)}</div>
+      ${next && !gp.newGen ? `<div class="pcl-next">${esc(t("pcl_next_copy").replace("{range}", next.a === next.b ? wdmd(next.a) : `${wdmd(next.a)} → ${wdmd(next.b)}`))}</div>` : ""}
+      ${chips ? `<div class="pcl-k">${esc(t("pcl_gives"))}</div><div class="pcl-chips">${chips}</div>` : ""}
+      ${stepsHtml ? `<div class="pcl-k">${esc(t("pcl_steps"))}${l.sequential ? `<span>${esc(t("pcl_in_order"))}</span>` : ""}</div><div class="pcl-steps">${stepsHtml}</div>` : ""}
+      ${planBox}
+      <div class="pcl-btns">${canBuy ? `<button type="button" class="btn pcl-wb" data-pclbuy>+ ${esc(t("pur_will_buy"))}</button>` : ""}<button type="button" class="btn ghost" data-pclopen="${esc(String(tb.id))}">${esc(t("pcl_open_pack"))}</button></div>
+    </div></div>`;
+  }
+  function filterSheetHtml() {
+    const ms = new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth(), 1)), me = new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth() + 1, 0));
+    const its = collect(offOf(ms), offOf(me), true);
+    const cnt = (k) => (k === "event" ? its.filter((x) => x.kind === "event" && x.ev !== "wheel").length : new Set(its.filter((x) => x.kind === k).map((x) => (x.gi != null ? "g" + x.gi : x.title))).size);
+    const nCh = PACK_CAL_FILTER.off.size + (PACK_CAL_FILTER.plan ? 1 : 0);
+    const chip = (k) => `<button type="button" class="pcl-fchip${PACK_CAL_FILTER.off.has(k) ? " off" : ""}" data-pclkind="${k}" aria-pressed="${PACK_CAL_FILTER.off.has(k) ? "false" : "true"}"><i style="background:${PACK_CAL_COL[k]}"></i>${esc(kindName(k))}<span>${cnt(k)}</span></button>`;
+    return `<div class="pcl-ov" data-pclclose><div class="pcl-sheet" role="dialog" aria-modal="true" aria-label="${esc(t("pcl_filter"))}">
+      <div class="pcl-grab"></div>
+      <div class="pcl-sh"><div class="pcl-sh-t"><b>${esc(t("pcl_filter"))}${nCh ? ` <span class="pcl-badge">${nCh}</span> <small class="pcl-inl">${esc(t("pcl_f_changes"))}</small>` : ""}</b></div><button type="button" class="pcl-x" data-pclx aria-label="${esc(t("close_button"))}">&times;</button></div>
+      <div class="pcl-k">${esc(t("pcl_f_show"))}</div>
+      <div class="pcl-fchips">${PACK_CAL_KINDS.map(chip).join("")}</div>
+      <label class="pcl-fplan"><span><b>★ ${esc(t("pcl_f_plan"))}</b><small>${esc(plan ? t("pcl_f_plan_d").replace("{n}", planGroups).replace("{m}", groups.length) : t("pcl_f_noplan"))}</small></span><input type="checkbox" class="bset-sw" data-pclplan ${PACK_CAL_FILTER.plan ? "checked" : ""} ${plan ? "" : "disabled"} /></label>
+      <div class="meta pcl-fnote">${esc(t("pcl_f_note"))}</div>
+      <div class="pcl-btns"><button type="button" class="btn ghost" data-pclreset>${esc(t("pcl_reset"))}</button><button type="button" class="btn pcl-wb" data-pclx>${esc(t("pcl_done"))}</button></div>
+    </div></div>`;
+  }
+  function monthSheetHtml(m) {
+    const ms = new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth() + m, 1)), me = new Date(Date.UTC(ms.getUTCFullYear(), ms.getUTCMonth() + 1, 0));
+    const a0 = offOf(ms) - ((ms.getUTCDay() + 6) % 7), b0 = offOf(me) + (6 - (me.getUTCDay() + 6) % 7);
+    const its = collect(a0, b0, false).filter((x) => x.kind === "event" && x.ev !== "wheel" || x.kind === "newheroes");
+    const shownWeek = PACK_CAL_WEEK * 7 - monIdx;
+    const rows = [];
+    for (let w = a0; w <= b0; w += 7) {
+      const wk = Math.round((w + monIdx) / 7);
+      const evs = its.filter((x) => x.kind === "event" && x.b >= w && x.a <= w + 6);
+      const lbl = wk === 0 ? t("pcl_this_week") : wk === 1 ? t("pcl_m_next") : evs.length ? evs.map((x) => x.title).join(" · ") : md(w);
+      const cells = Array.from({ length: 7 }, (_, i) => {
+        const o = w + i, inM = dateOf(o).getUTCMonth() === ms.getUTCMonth();
+        const ev = its.find((x) => x.kind === "event" && x.a <= o && x.b >= o);
+        const star = its.some((x) => x.kind === "newheroes" && x.a === o);
+        return `<span class="pcl-mc${inM ? "" : " out"}${o === 0 ? " td" : ""}">${dateOf(o).getUTCDate()}${star ? "<em>⭐</em>" : ""}${ev ? `<u style="background:${evCol(ev)}"></u>` : ""}</span>`;
+      }).join("");
+      rows.push(`<button type="button" class="pcl-mrow${w === shownWeek ? " on" : ""}${evs.length ? " ev" : ""}" data-pclwk="${wk}"><span class="pcl-ml">${esc(lbl)}</span>${cells}</button>`);
+    }
+    const ng = its.find((x) => x.kind === "newheroes");
+    const title = ms.toLocaleDateString(loc, { month: "long", year: "numeric", timeZone: "UTC" });
+    return `<div class="pcl-ov pcl-ov-m" data-pclclose><div class="pcl-sheet pcl-month" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <div class="pcl-mh"><button type="button" class="pcl-nb" data-pclm="-1" aria-label="previous">&#8249;</button><b>${esc(title)}</b><button type="button" class="pcl-nb" data-pclm="1" aria-label="next">&#8250;</button></div>
+      <div class="pcl-mrow pcl-mdow"><span class="pcl-ml"></span>${Array.from({ length: 7 }, (_, i) => `<span class="pcl-mc">${esc(fmt(i - monIdx, { weekday: "narrow" }))}</span>`).join("")}</div>
+      ${rows.join("")}
+      <div class="pcl-leg"><span><u style="background:${PACK_CAL_COL.event}"></u>SvS</span><span><u style="background:${PACK_CAL_COL.koi}"></u>KOI</span>${ng ? `<span>⭐ ${esc(t("pack_cal_new_heroes"))} ${esc(md(ng.a))}</span>` : ""}</div>
+      <div class="pcl-btns"><button type="button" class="btn ghost" data-pclwk="0">${esc(t("pack_cal_today_btn"))}</button><button type="button" class="btn ghost" data-pclx>${esc(t("close_button"))}</button></div>
+    </div></div>`;
+  }
 
   function draw() {
-    const t0 = packStartOfToday();
-    // One calendar month at a time, plus a week either side so a pack that
-    // runs across the turn of the month is never cut in half.
-    const monthStart = new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth() + PACK_CAL_PAGE, 1));
-    const monthEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 0));
-    const mondayOf = (d) => new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86400000);
-    const first = new Date(mondayOf(monthStart).getTime() - 7 * 86400000);
-    const lastShown = new Date(mondayOf(monthEnd).getTime() + (7 + 6) * 86400000);
-    const weeks = Math.round((lastShown - first) / 86400000 + 1) / 7;
-    const startOff = Math.round((first - t0) / 86400000);
-    const span = weeks * 7;
-
-    // Everything on the calendar first as items ({ a, b } = first / last day
-    // index from `first`), then cut into week bars (month view) or listed (list view).
-    const items = [];
-    const addItem = (a, days, it) => { const b = a + days - 1; if (b < 0 || a >= span) return; items.push({ a, b, days, count: 1, members: it.title, ...it }); };
-    groups.forEach((gp) => {
-      const l = gp.link;
-      const kind = packCalKind(l.reset);
-      if (PACK_CAL_OFF.has(kind)) return;
-      const newGen = packIsNewGen(packLinkForBase(gp.tables[0].id));
-      // New Gen Heroes packs follow the generation starts (SvS / KOI hero wheels) and carry their Gen.
-      const appsList = newGen && newGenBaseDay()
-        ? newGenAppearances(gp.tables[0].id, Number(l.window) || 0).map((x) => ({ start: x.start, offset: Math.round((x.start - t0) / 86400000), days: x.days })).filter((x) => x.offset <= startOff + span && x.offset + x.days - 1 >= startOff)
-        : packAppearances(l.reset, packPlanAnchor(l), l.window, startOff + span);
-      appsList.forEach((app) => {
-        const gen = newGen ? packNewGenLabel(app.start, l.reset, gp.tables[0].id) : "";
-        const width = l.window > 0 ? l.window : 1; // no window set = show the day it arrives
-        addItem(app.offset - startOff, width, { kind, keep: newGen, title: gen ? `${gp.label} · ${gen}` : gp.label, count: gp.tables.length, members: gp.tables.map((x) => x.title || "").join("\n") });
-      });
-    });
-    // Game events (SvS, KOI), their Lucky Wheels, new heroes and what opens in the person's state.
-    if (!PACK_CAL_OFF.has("event")) {
-      const firstDay = new Date(t0.getTime() + startOff * 86400000), lastDay = new Date(firstDay.getTime() + (span - 1) * 86400000);
-      const put = (start, days, title, extra) => addItem(Math.round((start - t0) / 86400000) - startOff, days, { kind: "event", title, ...(extra || {}) });
-      GAME_EVENTS.forEach((ev) => gameEventStarts(ev, firstDay, lastDay).forEach((st) => put(st, ev.days, ev.name)));
-      heroWheels(new Date(firstDay.getTime() - 3 * 86400000), lastDay).forEach((w) => put(w.day, w.ev.wheelDays || 1, `🎡 ${t("pack_cal_wheel")} (${w.ev.name})`));
-      const gen0 = newGenGen(), base = newGenBaseDay();
-      if (base) newGenStarts(base, 12).forEach((d, i) => {
-        if (d < firstDay || d > lastDay) return;
-        const sd = stateDayOn(d);
-        put(d, 1, `⭐ ${t("pack_cal_new_heroes")}${gen0 ? " · " + t("pur_gen").replace("{n}", gen0 + i) : ""}${sd != null ? " · " + t("pack_cal_state_day").replace("{n}", sd.toLocaleString()) : ""}`, { milestone: true });
-      });
-      // State-age unlocks (T11, T12, pets, experts…) falling in this range.
-      const sd0 = stateAgeDay();
-      if (sd0 != null) {
-        const byDay = new Map();
-        STATE_UNLOCKS.filter((u) => u.day > sd0).forEach((u) => { if (!byDay.has(u.day)) byDay.set(u.day, []); byDay.get(u.day).push(dataName(u.label)); });
-        byDay.forEach((names, day) => { const d = stateDateOfDay(day); if (d >= firstDay && d <= lastDay) put(d, 1, `🔓 ${names.join(", ")} · ${t("pack_cal_state_day").replace("{n}", day.toLocaleString())}`, { milestone: true }); });
-      }
-    }
-    const segs = [];
-    items.forEach((it) => {
-      for (let w = 0; w < weeks; w++) {
-        const ws = w * 7, we = ws + 6;
-        if (it.b < ws || it.a > we) continue;
-        segs.push({ week: w, col: Math.max(0, it.a - ws), end: Math.min(it.b, we) - ws, cont: it.a < ws, kind: it.kind, keep: it.keep || it.milestone, title: it.title, days: it.days, count: it.count, members: it.members, milestone: it.milestone });
-      }
-    });
-
-    const hideAllWeek = PACK_CAL_OFF.has("allweek");
-    // New Gen Heroes bars always stay on the grid, even when up all week.
-    const isAllWeek = (x) => x.col === 0 && x.end === 6 && !x.keep;
-    const allWeekNames = new Set(segs.filter(isAllWeek).map((x) => x.title));
-    const dows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const weeksHtml = Array.from({ length: weeks }, (_, w) => {
-      const all = segs.filter((x) => x.week === w);
-      // Only a pack covering the whole week moves to the strip; a pack that is
-      // up for part of the week keeps its bar on the days it's actually up.
-      const allWeek = hideAllWeek ? [] : all.filter(isAllWeek);
-      // Milestones (⭐ new heroes, 🔓 unlocks) get their own strip with the full text.
-      const marks = all.filter((x) => x.milestone);
-      const dayed = all.filter((x) => !isAllWeek(x) && !x.milestone);
-      const rows = []; // greedy stacking so two packs never sit on top of each other
-      dayed.sort((a, b) => a.col - b.col || b.end - a.end).forEach((sg) => {
-        let r = rows.find((row) => row.every((x) => sg.col > x.end || sg.end < x.col));
-        if (!r) { r = []; rows.push(r); }
-        r.push(sg);
-      });
-      const open = PACK_CAL_OPEN_WEEKS.has(w);
-      const todayCol = Math.round((t0 - first) / 86400000) - w * 7;
-      const nums = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(first.getTime() + (w * 7 + i) * 86400000);
-        const isToday = d.getTime() === t0.getTime();
-        const label = d.getUTCDate() === 1 || (w === 0 && i === 0) ? `${d.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" })} ${d.getUTCDate()}` : String(d.getUTCDate());
-        const out = d.getUTCMonth() !== monthStart.getUTCMonth() || d.getUTCFullYear() !== monthStart.getUTCFullYear();
-        return `<div style="font-size:10px; padding:4px 5px; border-inline-end:1px solid rgba(38,48,60,.6); ${isToday ? "color:var(--ice); font-weight:700; background:rgba(108,199,230,.07);" : `color:var(--muted); ${out ? "opacity:.4;" : ""}`}">${esc(label)}${isToday ? " · " + esc(t("pack_cal_today")) : ""}</div>`;
-      }).join("");
-      const chipsShown = open ? allWeek : allWeek.slice(0, 6);
-      const chipsHidden = allWeek.length - chipsShown.length;
-      const stripe = (sg) => (sg.milestone ? "#f0c060" : (PACK_CAL_COLORS[sg.kind] || PACK_CAL_COLORS.other)[1]);
-      const allWeekHtml = allWeek.length
-        ? `<div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center; padding:5px 7px; border-bottom:1px dashed rgba(38,48,60,.9);">
-             <span class="meta" style="font-size:9.5px; letter-spacing:.05em; text-transform:uppercase;">${esc(t("pack_cal_all_week"))}</span>
-             ${chipsShown.map((sg) => {
-               const tip = sg.count > 1 ? `${sg.title}\n${sg.members}` : sg.title;
-               return `<span title="${esc(tip)}" data-caltip="${esc(tip)}" style="font-size:10px; border:1px solid var(--line); border-inline-start:3px solid ${stripe(sg)}; border-radius:999px; padding:1px 9px; color:#dfe8f0; background:rgba(255,255,255,.035); cursor:${sg.count > 1 ? "pointer" : "default"};">${esc(sg.title)}${sg.count > 1 ? ` <span style="opacity:.6; font-size:9px;">×${sg.count}</span>` : ""}</span>`;
-             }).join("")}
-             ${chipsHidden > 0 ? `<button class="btn ghost small" data-calmore="${w}" style="padding:1px 8px; font-size:10px; border-radius:999px;">+${chipsHidden}</button>` : ""}
-           </div>`
-        : "";
-      const shown = open ? rows : rows.slice(0, PACK_CAL_ROWS);
-      const inMonth = (i) => {
-        const d = new Date(first.getTime() + (w * 7 + i) * 86400000);
-        return d.getUTCMonth() === monthStart.getUTCMonth() && d.getUTCFullYear() === monthStart.getUTCFullYear();
-      };
-      const bars = shown.map((row) => row.map((sg) => {
-        const tip = sg.count > 1 ? `${sg.title}\n${sg.members}` : sg.title;
-        // A bar that lies entirely in the neighbouring month is context, not
-        // this month's business, so it fades back.
-        let anyIn = false;
-        for (let i = sg.col; i <= sg.end; i++) if (inMonth(i)) anyIn = true;
-        return `<div title="${esc(tip)}" data-caltip="${esc(tip)}" style="${anyIn ? "" : "opacity:.4;"} grid-column:${sg.col + 1} / span ${sg.end - sg.col + 1}; background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07); border-inline-start:3px solid ${stripe(sg)}; color:#dfe8f0; font-size:10px; padding:1px 7px; line-height:1.6; border-radius:4px; margin:0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:${sg.count > 1 ? "pointer" : "default"}; ${sg.cont ? "border-inline-start-style:dashed;" : ""}">${sg.cont ? "← " : ""}${esc(sg.title)}${sg.count > 1 ? ` <span style="opacity:.6; font-size:9px;">×${sg.count}</span>` : ""}</div>`;
-      }).join("")).join("");
-      const hidden = open ? 0 : Math.max(0, rows.length - PACK_CAL_ROWS);
-      // Today's column keeps a faint tint the whole way down the week.
-      const todayTint = todayCol >= 0 && todayCol < 7
-        ? `<div style="grid-column:${todayCol + 1} / span 1; grid-row:1 / -1; background:rgba(108,199,230,.05); pointer-events:none;"></div>` : "";
-      const dowName = (c) => new Date(first.getTime() + (w * 7 + c) * 86400000).toLocaleDateString(LANG === "en" ? undefined : LANG, { weekday: "short", day: "numeric", timeZone: "UTC" });
-      const marksHtml = marks.length ? `<div class="pc-marks">${marks.map((m) => `<span class="pc-mark" data-caltip="${esc(m.title)}"><b>${esc(dowName(m.col))}</b> ${esc(m.title)}</span>`).join("")}</div>` : "";
-      return `<div style="border-bottom:1px solid var(--line); ${w % 2 ? "background:rgba(255,255,255,.015);" : ""}">
-        <div style="display:grid; grid-template-columns:repeat(7,1fr);">${nums}</div>
-        ${marksHtml}
-        ${allWeekHtml}
-        <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px 0; padding:4px 0 ${hidden ? "2px" : "6px"}; min-height:8px; position:relative;">${todayTint}${bars}</div>
-        ${hidden ? `<button class="btn ghost small" data-calmore="${w}" style="margin:0 0 6px 4px; padding:2px 9px; font-size:10.5px;">+${hidden} ${esc(t("pack_cal_more"))}</button>` : ""}
-      </div>`;
-    }).join("");
-
-    const chip = (kind, label) => `<button type="button" class="pc-chip${PACK_CAL_OFF.has(kind) ? "" : " on"}" data-calchip="${kind}"><i style="background:${kind === "allweek" ? "var(--muted)" : (PACK_CAL_COLORS[kind] || PACK_CAL_COLORS.other)[1]}"></i>${esc(label)}</button>`;
-    const range = monthStart.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "long", year: "numeric", timeZone: "UTC" });
-    const view = packCalView();
-    // List view: the month's items by week (each listed in the week it starts).
-    const fmtD = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" });
-    const dayOf = (i) => new Date(first.getTime() + i * 86400000);
-    const mA = Math.round((monthStart - first) / 86400000), mB = Math.round((monthEnd - first) / 86400000);
-    const todayI = Math.round((t0 - first) / 86400000);
-    const listHtml = () => {
-      const shown = items.filter((it) => it.b >= mA && it.a <= mB && !(hideAllWeek && it.days >= 7 && !it.keep && !it.milestone));
-      const weeksL = [];
-      for (let w = 0; w < weeks; w++) {
-        const ws = w * 7, we = ws + 6;
-        if (we < mA || ws > mB) continue;
-        const its = shown.filter((it) => Math.max(it.a, mA) >= ws && Math.max(it.a, mA) <= we).sort((x, y) => (y.milestone ? 1 : 0) - (x.milestone ? 1 : 0) || x.a - y.a || x.title.localeCompare(y.title));
-        if (!its.length) continue;
-        const thisWeek = todayI >= ws && todayI <= we;
-        weeksL.push(`<div class="pc-week${thisWeek ? " now" : ""}"><div class="pc-week-h">${esc(fmtD(dayOf(Math.max(ws, mA))))} – ${esc(fmtD(dayOf(Math.min(we, mB))))}${thisWeek ? ` <span class="pc-badge">${esc(t("pack_cal_this_week"))}</span>` : ""}</div>
-          ${its.map((it) => {
-            const live = todayI >= it.a && todayI <= it.b;
-            const when = it.days > 1 ? `${fmtD(dayOf(it.a))} – ${fmtD(dayOf(it.b))} · ${t("pack_cal_n_days").replace("{n}", it.days)}` : fmtD(dayOf(it.a));
-            const tip = it.count > 1 ? `${it.title}\n${it.members}` : it.title;
-            return `<div class="pc-item${it.milestone ? " ms" : ""}" data-caltip="${esc(tip)}"><i style="background:${it.milestone ? "#f0c060" : (PACK_CAL_COLORS[it.kind] || PACK_CAL_COLORS.other)[1]}"></i><div class="pc-item-m"><b>${esc(it.title)}${it.count > 1 ? ` <span class="meta">×${it.count}</span>` : ""}</b><span class="meta">${esc(when)}</span></div>${live ? `<span class="pc-badge g">${esc(t("pur_now"))}</span>` : ""}</div>`;
-          }).join("")}</div>`);
-      }
-      return weeksL.join("") || `<div class="meta" style="font-size:12px;">${esc(t("pack_cal_empty"))}</div>`;
+    if (seq !== RENDER_SEQ || TAB !== "packcalendar") return;
+    const mon = PACK_CAL_WEEK * 7 - monIdx, sun = mon + 6;
+    const pick = PACK_CAL_DAY != null ? PACK_CAL_DAY : (PACK_CAL_WEEK === 0 ? monIdx : 0);
+    const dOff = mon + pick;
+    // This week's items (and a few days around it for the day list's "back <date>").
+    const all = collect(mon, sun, true);
+    const items = all.filter(shownItem);
+    // ---- answer boxes (today, whatever the filter) ----
+    const todayAll = collect(0, 0, true);
+    const onToday = todayAll.filter((x) => x.gi != null);
+    const nOn = new Set(onToday.map((x) => x.gi)).size, nEnd = new Set(onToday.filter((x) => x.b === 0 && !x.daily).map((x) => x.gi)).size;
+    const evs = collect(-6, 120, false).filter((x) => x.kind === "event" && x.ev !== "wheel" || (x.kind === "newheroes" && x.milestone)).filter((x) => x.b >= 0).sort((x, y) => x.a - y.a);
+    const evText = (x) => {
+      const nm = x.kind === "event" ? x.title : t("pack_cal_new_heroes");
+      if (x.a <= 0) return x.b === 0 ? t("pcl_ev_ends_today").replace("{name}", nm) : t("pcl_ev_ends").replace("{name}", nm).replace("{day}", wd(x.b));
+      return x.a === 1 ? t("pcl_ev_tomorrow").replace("{name}", nm) : t("pcl_ev_in").replace("{name}", nm).replace("{n}", x.a);
     };
+    const ev1 = evs[0], ev2 = evs[1];
+    const evCls = ev1 ? (ev1.kind === "event" ? (ev1.ev === "koi" ? "koi" : "svs") : "gen") : "";
+    // ---- week strip ----
+    const wkLbl = PACK_CAL_WEEK === 0 ? t("pcl_this_week") : PACK_CAL_WEEK === 1 ? t("pcl_next_week") : PACK_CAL_WEEK === -1 ? t("pcl_last_week") : "";
+    const sameM = dateOf(mon).getUTCMonth() === dateOf(sun).getUTCMonth();
+    const wkRange = `${md(mon)} – ${sameM ? dateOf(sun).getUTCDate() : md(sun)}`;
+    const tiles = Array.from({ length: 7 }, (_, i) => {
+      const o = mon + i;
+      const dots = items.filter((x) => x.a === o && !x.daily && (x.gi != null || x.milestone)).slice(0, 3).map((x) => `<i style="background:${evCol(x)}"></i>`).join("");
+      return `<button type="button" class="pcl-dy${o === 0 ? " td" : ""}${o < 0 ? " past" : ""}${i === pick ? " sel" : ""}" data-pclday="${i}" aria-pressed="${i === pick}"><span class="w">${esc(wd(o))}</span><b>${dateOf(o).getUTCDate()}</b>${o === 0 ? `<span class="tdl">${esc(t("pack_cal_today"))}</span>` : ""}<span class="ds">${dots}</span></button>`;
+    }).join("");
+    // ---- bars: events first, then packs (in plan first), each packed into lines ----
+    const bar = (it) => {
+      const c0 = Math.max(it.a, mon) - mon, c1 = Math.min(it.b, sun) - mon;
+      const cutL = it.a < mon && !it.daily, cutR = it.b > sun && !it.daily;
+      const star = it.gi != null && inPlanAt(groups[it.gi], it.a, it.b);
+      const col = evCol(it);
+      const cnt = it.count > 1 ? ` ×${it.count}` : "";
+      const end = cutR && it.gi != null && it.b - mon > 10 ? ` → ${md(it.b)}` : "";
+      const lbl = `${cutL ? "‹ " : ""}${it.title}${cnt}${star ? " ★" : ""}${it.daily ? " · " + t("pcl_every_day") : ""}${end}${cutR ? " ›" : ""}`;
+      const sel = PACK_CAL_SHEET && PACK_CAL_SHEET.type === "pack" && PACK_CAL_SHEET.g === it.gi && PACK_CAL_SHEET.a >= it.a && PACK_CAL_SHEET.a <= it.b;
+      const tap = it.gi != null ? ` data-pclg="${it.gi}|${Math.max(it.a, mon)}" role="button" tabindex="0"` : ` data-pcltip="${esc([it.title, it.tip].filter(Boolean).join(" · "))}" role="button" tabindex="0"`;
+      return `<span class="pcl-bb${cutL ? " cutl" : ""}${cutR ? " cutr" : ""}${it.kind === "event" ? " ev" : ""}${sel ? " hot" : ""}" style="left:calc(${c0} * 100% / 7); width:calc(${c1 - c0 + 1} * 100% / 7 - 3px); --c:${col}" title="${esc(lbl)}"${tap}>${esc(lbl)}</span>`;
+    };
+    const pack = (list) => {
+      const lines = [];
+      list.forEach((it) => {
+        const c0 = Math.max(it.a, mon), c1 = Math.min(it.b, sun);
+        let ln = lines.find((l) => l.every((x) => c0 > Math.min(x.b, sun) || c1 < Math.max(x.a, mon)));
+        if (!ln) { ln = []; lines.push(ln); }
+        ln.push(it);
+      });
+      return lines;
+    };
+    // Events, milestones, then packs that start / end inside the week (in your
+    // plan first), then the ones up all week (they say least on a week chart).
+    const prio = (it) => (it.kind === "event" ? 0 : it.milestone ? 1 : (it.a <= mon && it.b >= sun ? 2 : 0) + (it.gi != null && inPlanAt(groups[it.gi], it.a, it.b) ? 2 : 3));
+    const ordered = items.slice().sort((x, y) => prio(x) - prio(y) || Math.max(x.a, mon) - Math.max(y.a, mon) || y.b - x.b || x.title.localeCompare(y.title));
+    const lineHtml = (ln) => `<div class="pcl-ln">${ln.map(bar).join("")}</div>`;
+    const MAXL = 6;
+    let barsHtml;
+    if (!items.length) barsHtml = `<div class="meta pcl-empty">${esc(t("pack_cal_empty"))}</div>`;
+    else if (!PACK_CAL_MORE_BARS) {
+      const evLines = pack(ordered.filter((x) => x.kind === "event")), pkLines = pack(ordered.filter((x) => x.kind !== "event"));
+      const lines = evLines.concat(pkLines);
+      const shown = lines.slice(0, MAXL), hid = lines.slice(MAXL).reduce((s, l) => s + l.length, 0);
+      barsHtml = shown.map(lineHtml).join("") + (hid ? `<button type="button" class="pcl-more" data-pclbars="1">${esc(t("pcl_more_bars").replace("{n}", hid))}</button>` : "");
+    } else {
+      barsHtml = ["event", "weekly", "monthly", "newheroes", "unlocks"].map((k) => {
+        const g = ordered.filter((x) => x.kind === k);
+        if (!g.length) return "";
+        return `<div class="pcl-gh"><i style="background:${PACK_CAL_COL[k]}"></i>${esc(kindName(k))}<span>${g.length}</span></div>${pack(g).map(lineHtml).join("")}`;
+      }).join("") + `<button type="button" class="pcl-more" data-pclbars="0">${esc(t("pcl_show_less"))} &#9652;</button>`;
+    }
+    const todayCol = 0 - mon;
+    // An event starting next week is hinted under the bars (tap = next week).
+    const nextEv = collect(sun + 1, sun + 7, false).find((x) => x.kind === "event" && x.ev !== "wheel" && x.a > sun);
+    const hintHtml = nextEv && !items.some((x) => x.kind === "event" && x.ev === nextEv.ev) ? `<button type="button" class="pcl-hint" data-pclweek="1"><i style="background:${evCol(nextEv)}"></i>${esc(t("pcl_ev_next_week").replace("{name}", nextEv.title).replace("{day}", `${wd(nextEv.a)} ${dateOf(nextEv.a).getUTCDate()}`))} &#8250;</button>` : "";
+    const dowHdr = Array.from({ length: 7 }, (_, i) => `<span class="${i === pick ? "on" : ""}">${esc(fmt(mon + i, { weekday: "narrow" }))}</span>`).join("");
+    // ---- the picked day ----
+    const onDay = items.filter((x) => x.a <= dOff && x.b >= dOff);
+    const dayEvs = onDay.filter((x) => x.kind === "event" || x.milestone);
+    const dayPacks = onDay.filter((x) => x.gi != null);
+    const tagOf = (x) => (x.daily ? "on" : x.a === dOff && x.b !== dOff ? "st" : x.b === dOff ? "end" : "on");
+    const dRank = (x) => ({ st: 0, end: 1, on: 2 }[tagOf(x)]) * 2 + (inPlanAt(groups[x.gi], x.a, x.b) ? 0 : 1);
+    dayPacks.sort((x, y) => dRank(x) - dRank(y) || x.title.localeCompare(y.title));
+    const nextAfter = (gp, b) => { const n = appsOf(gp, b + 120).find((x) => x.a > b); return n ? n.a : null; };
+    const rowHtml = (x) => {
+      const gp = groups[x.gi], tg = tagOf(x), star = inPlanAt(gp, x.a, x.b);
+      const bits = [];
+      if (star) bits.push(`★ ${t("pcl_in_plan")}`);
+      if (gp.link.reset === 1) bits.push(t("pcl_every_day"));
+      else if (tg === "end") { if (x.b === 0) bits.push(t("pcl_ends_today")); const n = nextAfter(gp, x.b); if (n != null && !gp.newGen) bits.push(t("pcl_back").replace("{date}", n - x.b <= 7 ? `${wd(n)} ${dateOf(n).getUTCDate()}` : md(n))); }
+      else if (x.b > dOff) bits.push(t("pcl_to").replace("{date}", x.b - dOff <= 6 ? `${wd(x.b)} ${dateOf(x.b).getUTCDate()}` : md(x.b)));
+      if (tg === "st" && !gp.newGen && gp.link.reset > 7) bits.unshift(resetText(gp.link).toLowerCase());
+      const pill = `<span class="pcl-pill ${tg === "st" ? "now" : tg === "end" ? "end" : "on"}">${esc(t(tg === "st" ? "pcl_starts" : tg === "end" ? "pcl_ends" : "pcl_on"))}</span>`;
+      return `<div class="pcl-rw" data-pclg="${x.gi}|${dOff}" role="button" tabindex="0"><span class="pcl-ic">${packCalImg(gp.icon) || "&#127873;"}</span><span class="pcl-rt"><b>${esc(x.title)}${x.count > 1 ? ` <small>×${x.count}</small>` : ""}</b><span>${pill} ${esc(bits.join(" · "))}</span></span><span class="pcl-rp">${esc(gp.price)}</span></div>`;
+    };
+    const evRow = (x) => {
+      const lbl = x.milestone ? (x.tip || "") : x.b === dOff ? t("pcl_last_day") : t("pcl_day_n").replace("{n}", dOff - x.a + 1).replace("{m}", x.days);
+      return `<div class="pcl-evb ${x.kind === "event" ? (x.ev === "koi" ? "koi" : x.ev === "wheel" ? "wh" : "svs") : x.kind === "unlocks" ? "ul" : "gen"}">${x.kind === "event" && x.ev !== "wheel" ? "&#9876; " : ""}${esc(x.title)}<small>${esc(lbl)}</small></div>`;
+    };
+    const DMAX = 4;
+    const listShown = PACK_CAL_DAY_MORE ? dayPacks : dayPacks.slice(0, DMAX);
+    const dayHead = `${wdmd(dOff)}${dOff === 0 ? " · " + t("pcl_on_now") : ""}`;
+    const nCh = PACK_CAL_FILTER.off.size + (PACK_CAL_FILTER.plan ? 1 : 0);
 
-    // A chip / view tap redraws the calendar: the page, the chip row and the
-    // month grid keep their scroll.
-    const y = window.scrollY, putBoxes = saveBoxScroll(content);
+    const y = window.scrollY;
     content.innerHTML = `
-      <div class="plx-head"><h2>${esc(t("pack_cal_title"))}</h2><button class="btn ghost small" id="packCalBack">${esc(t("pack_cal_back"))}</button></div>
-      <div class="panel pc-panel">
-        <div class="pc-top">
-          <div class="pc-nav"><button class="btn ghost small" data-calpage="-1" aria-label="previous">&#8249;</button><b>${esc(range)}</b><button class="btn ghost small" data-calpage="1" aria-label="next">&#8250;</button>${PACK_CAL_PAGE ? `<button class="btn ghost small" data-caltoday>${esc(t("pack_cal_today_btn"))}</button>` : ""}</div>
-          <div class="pur-seg pc-view"><button type="button" data-calview="list" class="${view === "list" ? "on" : ""}">☰ ${esc(t("pack_cal_list"))}</button><button type="button" data-calview="month" class="${view === "month" ? "on" : ""}">▦ ${esc(t("pack_cal_month"))}</button></div>
+      <div class="plx-head pcl-head"><h2>${esc(t("pack_cal_title"))}</h2><button type="button" class="pcl-fbtn" data-pclfilter>&#9881; ${esc(t("pcl_filter"))}${nCh ? `<span class="pcl-badge">${nCh}</span>` : ""}</button></div>
+      <p class="desc">${esc(t("pcl_desc"))}</p>
+      <div class="panel pcl-ans">
+        <div class="pcl-two">
+          <div class="pcl-bx"><span class="l">${esc(t("pcl_today"))}</span><b>${esc(t("pcl_packs_on").replace("{n}", nOn))}</b><small>${esc(nEnd ? t("pcl_end_today").replace("{n}", nEnd) : t("pcl_none_end"))}</small></div>
+          <div class="pcl-bx ${evCls}"><span class="l">${esc(t("pcl_next_event"))}</span><b>${esc(ev1 ? evText(ev1) : "—")}</b><small>${esc(ev2 ? evText(ev2) : "")}</small></div>
         </div>
-        <div class="pc-chips">${chip("weekly", t("pack_cal_weekly"))}${chip("monthly", t("pack_cal_monthly"))}${chip("daily", t("pack_cal_daily"))}${chip("other", t("pack_cal_other"))}${chip("event", t("pack_cal_events"))}${allWeekNames.size ? chip("allweek", `${t("pack_cal_all_week")} (${allWeekNames.size})`) : ""}</div>
-        ${view === "list" ? `<div class="pc-list">${listHtml()}</div>` : `<div class="pc-scroll"><div class="pc-grid">
-          <div style="display:grid; grid-template-columns:repeat(7,1fr); background:rgba(255,255,255,.03); border-bottom:1px solid var(--line);">
-            ${dows.map((d) => `<div style="font-size:10px; color:var(--muted); text-align:center; padding:6px 0; font-weight:600;">${esc(d)}</div>`).join("")}
+      </div>
+      <div class="panel pcl-wk">
+        <div class="pcl-wkh"><button type="button" class="pcl-nb" data-pclweek="-1" aria-label="previous">&#8249;</button><button type="button" class="pcl-wkt" data-pclmonth aria-haspopup="dialog"><b>${esc(wkRange)}${wkLbl ? ` · ${esc(wkLbl)}` : ""}</b> &#9662;</button>${PACK_CAL_WEEK ? `<button type="button" class="pcl-today" data-pcltoday>${esc(t("pack_cal_today_btn"))}</button>` : ""}<button type="button" class="pcl-nb" data-pclweek="1" aria-label="next">&#8250;</button></div>
+        <div class="pcl-days">${tiles}</div>
+        <div class="pcl-gt">
+          <div class="pcl-dow">${dowHdr}</div>
+          <div class="pcl-bars">
+            <span class="pcl-colhl" style="left:calc(${pick} * 100% / 7); width:calc(100% / 7)"></span>
+            ${todayCol >= 0 && todayCol <= 6 ? `<span class="pcl-tdl" style="left:calc(${todayCol + 0.5} * 100% / 7)"></span>` : ""}
+            ${barsHtml}
           </div>
-          ${weeksHtml}
-        </div></div>`}
-        ${hideAllWeek && allWeekNames.size ? `<div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_all_week_hidden").replace("{n}", allWeekNames.size))} · <button class="btn ghost small" data-calchip="allweek" style="padding:1px 8px; font-size:10px; border-radius:999px;">${esc(t("pack_cal_show_them"))}</button></div>` : ""}
-        <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("pack_cal_utc"))}</div>
-      </div>`;
-    putBoxes();
+          ${hintHtml}
+        </div>
+      </div>
+      <div class="panel pcl-day">
+        <div class="pcl-dh"><b>${esc(dayHead)}</b><span>${esc(dayPacks.length === 1 ? t("pur_1_pack") : t("pcl_n_packs").replace("{n}", dayPacks.length))}</span></div>
+        ${dayEvs.map(evRow).join("")}
+        ${listShown.map(rowHtml).join("") || (dayEvs.length ? "" : `<div class="meta pcl-empty">${esc(t("pcl_no_packs_day"))}</div>`)}
+        ${dayPacks.length > DMAX ? `<button type="button" class="pcl-more" data-pcldaymore="${PACK_CAL_DAY_MORE ? 0 : 1}">${esc(PACK_CAL_DAY_MORE ? t("pcl_show_less") + " ▴" : t("pcl_more").replace("{n}", dayPacks.length - DMAX))}</button>` : ""}
+        <div class="meta pcl-utc">${esc(t("pcl_utc"))}</div>
+      </div>
+      <div id="pclSheetHost">${!PACK_CAL_SHEET ? "" : PACK_CAL_SHEET.type === "pack" ? packSheetHtml(PACK_CAL_SHEET) : PACK_CAL_SHEET.type === "filter" ? filterSheetHtml() : monthSheetHtml(PACK_CAL_SHEET.m)}</div>`;
     if (y && Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
-
-    document.getElementById("packCalBack").addEventListener("click", () => goToTab("packs"));
-    content.querySelectorAll("[data-calchip]").forEach((b) => b.addEventListener("click", () => {
-      const k = b.dataset.calchip;
-      if (PACK_CAL_OFF.has(k)) PACK_CAL_OFF.delete(k); else PACK_CAL_OFF.add(k);
-      packCalSaveChips();
-      draw();
-    }));
-    content.querySelectorAll("[data-caltip]").forEach((b) => b.addEventListener("click", () => {
-      const lines = b.dataset.caltip.split("\n");
-      if (lines.length > 1) toast(lines.join(" · "));
-    }));
-    content.querySelectorAll("[data-calmore]").forEach((b) => b.addEventListener("click", () => {
-      PACK_CAL_OPEN_WEEKS.add(Number(b.dataset.calmore));
-      draw();
-    }));
-    content.querySelectorAll("[data-calview]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("packcal_view", b.dataset.calview); } catch (e) {} draw(); }));
-    const todayBtn = content.querySelector("[data-caltoday]");
-    if (todayBtn) todayBtn.addEventListener("click", () => { PACK_CAL_PAGE = 0; PACK_CAL_OPEN_WEEKS = new Set(); draw(); });
-    content.querySelectorAll("[data-calpage]").forEach((b) => b.addEventListener("click", () => {
-      PACK_CAL_PAGE = Math.max(-12, Math.min(24, PACK_CAL_PAGE + Number(b.dataset.calpage)));
-      PACK_CAL_OPEN_WEEKS = new Set();
-      draw();
-    }));
+    wire();
   }
+  const closeSheet = () => { PACK_CAL_SHEET = null; draw(); };
+  function wire() {
+    const q = (s) => content.querySelectorAll(s);
+    q("[data-pclfilter]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_SHEET = { type: "filter" }; draw(); }));
+    q("[data-pclday]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_DAY = Number(b.dataset.pclday); PACK_CAL_DAY_MORE = false; draw(); }));
+    q("[data-pclweek]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_WEEK = Math.max(-8, Math.min(52, PACK_CAL_WEEK + Number(b.dataset.pclweek))); PACK_CAL_DAY = null; PACK_CAL_DAY_MORE = false; PACK_CAL_MORE_BARS = false; draw(); }));
+    q("[data-pcltoday]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_WEEK = 0; PACK_CAL_DAY = null; PACK_CAL_DAY_MORE = false; PACK_CAL_MORE_BARS = false; draw(); }));
+    q("[data-pclmonth]").forEach((b) => b.addEventListener("click", () => {
+      const ms = dateOf(PACK_CAL_WEEK * 7 - monIdx);
+      PACK_CAL_SHEET = { type: "month", m: (ms.getUTCFullYear() - t0.getUTCFullYear()) * 12 + ms.getUTCMonth() - t0.getUTCMonth() };
+      draw();
+    }));
+    q("[data-pclbars]").forEach((b) => b.addEventListener("click", () => {
+      const open = b.dataset.pclbars === "1";
+      const card = content.querySelector(".pcl-wk"), top = card ? card.getBoundingClientRect().top : 0;
+      PACK_CAL_MORE_BARS = open; draw();
+      // "Show less": the week card stays where it was on screen.
+      if (!open) { const c2 = content.querySelector(".pcl-wk"); if (c2) window.scrollBy(0, c2.getBoundingClientRect().top - top); }
+    }));
+    q("[data-pcldaymore]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_DAY_MORE = b.dataset.pcldaymore === "1"; draw(); }));
+    const openPack = (el) => { const [g, a] = el.dataset.pclg.split("|").map(Number); PACK_CAL_SHEET = { type: "pack", g, a, ti: 0 }; draw(); };
+    q("[data-pclg]").forEach((el) => {
+      el.addEventListener("click", () => openPack(el));
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPack(el); } });
+    });
+    q("[data-pcltip]").forEach((el) => el.addEventListener("click", () => toast(el.dataset.pcltip)));
+    // ---- sheets ----
+    const host = document.getElementById("pclSheetHost");
+    if (!host || !PACK_CAL_SHEET) return;
+    const ov = host.querySelector("[data-pclclose]");
+    ov.addEventListener("click", (e) => { if (e.target === ov) closeSheet(); });
+    host.querySelectorAll("[data-pclx]").forEach((b) => b.addEventListener("click", closeSheet));
+    host.querySelectorAll("[data-pclti]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_SHEET = { ...PACK_CAL_SHEET, ti: Number(b.dataset.pclti) }; draw(); }));
+    host.querySelectorAll("[data-pclopen]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_SHEET = null; packOpenOnPacks(b.dataset.pclopen); }));
+    host.querySelectorAll("[data-pclbuy]").forEach((b) => b.addEventListener("click", () => {
+      const st = PACK_CAL_SHEET, gp = groups[st.g];
+      const tb = gp.tables[Math.min(st.ti || 0, gp.tables.length - 1)];
+      const mine = gp.plan.filter((x) => (x.r.tables || []).map(String).includes(String(tb.id)));
+      PUR_FOCUS = { table: String((mine[0] ? tb : gp.tables[0]).id), off: Math.max(0, st.a), at: Date.now() };
+      PACK_CAL_SHEET = null;
+      goToTab("purchases");
+    }));
+    host.querySelectorAll("[data-pclkind]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.pclkind; if (PACK_CAL_FILTER.off.has(k)) PACK_CAL_FILTER.off.delete(k); else PACK_CAL_FILTER.off.add(k); packCalSaveFilter(); draw(); }));
+    host.querySelectorAll("[data-pclplan]").forEach((b) => b.addEventListener("change", () => { PACK_CAL_FILTER.plan = b.checked; packCalSaveFilter(); draw(); }));
+    host.querySelectorAll("[data-pclreset]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_FILTER.off.clear(); PACK_CAL_FILTER.plan = false; packCalSaveFilter(); draw(); }));
+    host.querySelectorAll("[data-pclm]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_SHEET = { type: "month", m: Math.max(-6, Math.min(12, PACK_CAL_SHEET.m + Number(b.dataset.pclm))) }; draw(); }));
+    host.querySelectorAll("[data-pclwk]").forEach((b) => b.addEventListener("click", () => { PACK_CAL_WEEK = Math.max(-8, Math.min(52, Number(b.dataset.pclwk))); PACK_CAL_DAY = null; PACK_CAL_DAY_MORE = false; PACK_CAL_MORE_BARS = false; PACK_CAL_SHEET = null; draw(); }));
+  }
+  PACK_CAL_SHEET = null;
   draw();
-  // Rotating the device changes which layout fits, so draw again - but only
-  // while this page is still the one on screen.
-  // Phones fire "resize" whenever the address bar shows/hides while
-  // scrolling; only a real width change (e.g. rotating) needs a redraw.
-  let calWidth = window.innerWidth;
-  const onResize = () => {
-    if (TAB !== "packcalendar") { window.removeEventListener("resize", onResize); return; }
-    if (window.innerWidth === calWidth) return;
-    calWidth = window.innerWidth;
-    draw();
+  // Esc closes an open sheet (only while this page is drawn).
+  const onKey = (e) => {
+    if (TAB !== "packcalendar") { document.removeEventListener("keydown", onKey); return; }
+    if (e.key === "Escape" && PACK_CAL_SHEET) closeSheet();
   };
-  window.removeEventListener("resize", PACK_CAL_RESIZE);
-  PACK_CAL_RESIZE = onResize;
-  window.addEventListener("resize", onResize);
+  document.removeEventListener("keydown", PACK_CAL_KEY);
+  PACK_CAL_KEY = onKey;
+  document.addEventListener("keydown", onKey);
+}
+// Calendar → "Open pack ›": the Packs page with that pack's window open.
+let PACK_OPEN_FOCUS = null;
+function packOpenOnPacks(id) {
+  PACK_OPEN_FOCUS = String(id);
+  const g = packLinkFor(id).group;
+  try { localStorage.setItem("packs_filter", g ? "cat:" + g : "all"); } catch (e) { /* blocked */ }
+  goToTab("packs");
 }
 
 // Packs B: tables open for editing (kept for the visit). Closed tables show a
@@ -15364,6 +15778,8 @@ async function renderPacksPage() {
   pkbReady = true;
   // Came from ⚙ on My Purchases' Weekly cards: open that pack's settings.
   if (PACK_SETTINGS_FOCUS) { const id = PACK_SETTINGS_FOCUS; PACK_SETTINGS_FOCUS = null; setTimeout(() => packOpenSettingsHere(id), 50); }
+  // Came from "Open pack ›" on the Pack calendar: open that pack's window.
+  if (PACK_OPEN_FOCUS) { const id = PACK_OPEN_FOCUS; PACK_OPEN_FOCUS = null; if (tables.some((tb) => String(tb.id) === id)) setTimeout(() => pkbOpen(id), 50); }
 }
 
 // ============================================================
