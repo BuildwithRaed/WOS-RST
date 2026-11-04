@@ -9471,13 +9471,19 @@ function fitDashToScreen() {
     // below it (owner, 4 Nov 2026: "we still have space … I don't want to see the
     // bottom disclaimer"). Each box takes a quarter of the free room, at most 60 px more.
     const bxs = dh3.querySelectorAll(".dh3-bx");
-    bxs.forEach((b) => { b.style.minHeight = ""; });
+    bxs.forEach((b) => { b.style.minHeight = ""; b.style.paddingTop = b.style.paddingBottom = ""; const n = b.querySelector("b"); if (n) n.style.fontSize = ""; });
     if (innerWidth > 700 || !bxs.length) return;
     const free = innerHeight - 8 - (el.getBoundingClientRect().bottom + scrollY);
     if (free <= 0) return;
-    const add = Math.min(60, Math.floor(free / 4));
-    const hs = [...bxs].map((b) => b.offsetHeight);
-    bxs.forEach((b, i) => { b.style.minHeight = `${hs[i] + add}px`; });
+    // Grow a little (at most 24 px a box) and make the number bigger with it, so the
+    // boxes don't look empty (owner, 4 Nov 2026: "too much space in the box"); the
+    // rest of the room is left under the boxes so the footer still starts below.
+    const add = Math.min(24, Math.floor(free / 4));
+    bxs.forEach((b) => {
+      b.style.minHeight = "";
+      b.style.paddingTop = b.style.paddingBottom = `${6 + Math.round(add / 3)}px`;
+      const n = b.querySelector("b"); if (n) n.style.fontSize = `${Math.round(18 + add / 6)}px`;
+    });
     const left = innerHeight - 8 - (el.getBoundingClientRect().bottom + scrollY);
     if (left > 0) el.style.minHeight = `${el.offsetHeight + left}px`;
     return;
