@@ -5076,7 +5076,7 @@ input,select,textarea{
         <button class="topnav-group-btn" type="button">Planning <span class="caret">&#9660;</span></button>
         <div class="topnav-dropdown">
           <button data-tab="budgets" data-ownertab style="display:none;"><span class="ic">&#128176;</span>Budgets</button>
-          <button data-tab="roadmap" data-ownertab style="display:none;"><span class="ic">&#128506;</span>Roadmap</button>
+          <button data-tab="roadmap" data-access="goals" data-ownertab style="display:none;"><span class="ic">&#128506;</span>Roadmap</button>
           <button data-tab="purchases" data-access="budgets" data-ownertab style="display:none;"><span class="ic">&#128722;</span>My Purchases</button>
         </div>
       </div>
@@ -9369,7 +9369,7 @@ async function render() {
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
-    if (!IS_OWNER && (TAB === "adminpage" || TAB === "roadmap" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "roadmap" && !visitorCan("goals")) || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
@@ -9552,7 +9552,7 @@ function quickIconHtml(tab) {
   return `<span class="qk-em">${esc(QUICK_EMOJI[tab] || (ic ? (ic.dataset.sym != null ? ic.dataset.sym : ic.textContent) : "\u2022"))}</span>`;
 }
 async function drawQuickRow(el) {
-  if (!el || !IS_OWNER) return;
+  if (!el || !visitorCan("quickpages")) return;
   const pages = await quickPages();
   if (!el.isConnected) return;
   el.innerHTML = `<div class="qk-row">${pages.map((tb) => `<button type="button" class="qk-chip" data-quick="${esc(tb)}" title="${esc(navLabel(tb))}">${quickIconHtml(tb)}<span>${esc(quickShortName(tb))}</span></button>`).join("")}<button type="button" class="qk-chip qk-ed" data-quickedit aria-label="${esc(t("qk_edit"))}" title="${esc(t("qk_edit"))}">${pages.length ? "&#9998;" : `&#9998; ${esc(t("qk_edit"))}`}</button></div>`;
@@ -10279,7 +10279,7 @@ async function renderOverview(opts = {}) {
         <h2>${esc(t("stats_dashboard"))}</h2>
       </div>
     </div>
-    ${IS_OWNER ? `<div id="quickRow" class="qk-wrap"></div>` : ""}
+    ${visitorCan("quickpages") ? `<div id="quickRow" class="qk-wrap"></div>` : ""}
     <div id="stateAgeCard" class="dash-sec">${stateAgeCardHtml()}</div>
     <div id="dashboardRoster" class="dash-sec"></div>
     <div id="troopSections" class="dash-sec2"></div>
@@ -10984,7 +10984,7 @@ async function renderGearLevelingGroup(target) {
           <span class="sa-arrow">&rarr;</span>
           <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
         </div>`).join("")}</div></div>
-      <div class="hg-tbl"><span></span>${heads}${row(MF, t("hg_mastery"))}${row(EN, t("hg_enhance"))}${IS_OWNER ? `<div class="hg-rl hg-canl" data-hgcanrow hidden><b>${esc(t("hg_can_do"))}</b></div>${HERO_GEAR_PIECE_NAMES.map((pc) => `<span class="hg-can" data-hgcan="${esc(troop)}|${esc(pc)}" data-hgcanrow hidden></span>`).join("")}` : ""}</div>
+      <div class="hg-tbl"><span></span>${heads}${row(MF, t("hg_mastery"))}${row(EN, t("hg_enhance"))}${visitorCan("cando") ? `<div class="hg-rl hg-canl" data-hgcanrow hidden><b>${esc(t("hg_can_do"))}</b></div>${HERO_GEAR_PIECE_NAMES.map((pc) => `<span class="hg-can" data-hgcan="${esc(troop)}|${esc(pc)}" data-hgcanrow hidden></span>`).join("")}` : ""}</div>
       <div class="hg-next">${nextHtml(troop)}</div>`;
     // "Set all" for this troop: shows the level when all 4 pieces are on it.
     tracksEl.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
@@ -12072,7 +12072,7 @@ function heroGearReachTracks(state) {
   return out;
 }
 function fillHeroGearReach() {
-  if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+  if (!visitorCan("cando")) return; // admin only unless Visitor access "cando" (owner, 4 Nov 2026)
   const state = HERO_GEAR_SETS[heroGearActiveSet], have = BAR_HAVE.hero_gear;
   if (!state || !HERO_GEAR_TABLES_CACHE || !have) return;
   const tracks = heroGearReachTracks(state);
@@ -23597,7 +23597,7 @@ async function heroShardBudget() {
   const vipTier = await loadCalcState("vip_tier").catch(() => null);
   noteHeroImages(heroes);
   // Each hero's own target and extra heroes (admin, Order of goals).
-  const ht = IS_OWNER ? await ensureHeroTargets() : null;
+  const ht = visitorCan("goals") ? await ensureHeroTargets() : null;
   const plan = heroShardPlan({ heroes, roster, playerHeroes, starRows, bp: bp || {}, targets: ht ? ht.heroes : null, extra: ht ? ht.extra : null });
   HERO_PLAN_LAST = { rows: plan.rows, heroes, roster };
   const totals = {}, owned = {}, rules = [];
@@ -24988,7 +24988,7 @@ function budgetGoalList(pages, incKeys, defaultOrder) {
   pages.forEach((pg) => {
     if (!incKeys.includes(pg.calcKey)) return;
     // Hero shards & widgets (admin): one goal per hero, with its own target.
-    if (pg.calcKey === "hero_shards" && IS_OWNER && HERO_PLAN_LAST) {
+    if (pg.calcKey === "hero_shards" && visitorCan("goals") && HERO_PLAN_LAST) {
       const opts = goalMiniLevels("hero_shards");
       HERO_PLAN_LAST.rows.filter((r) => r.need > 0 || r.wNeed > 0).forEach((r) => {
         const gid = "hero:" + r.hero.id;
@@ -25284,7 +25284,7 @@ let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being wo
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
 // Budgets and the Roadmap page (admin) share one pipeline: the Roadmap is
 // drawn from the same plan, goals and dates as the Budgets page.
-function budTab() { return TAB === "budgets" || (TAB === "roadmap" && IS_OWNER); }
+function budTab() { return TAB === "budgets" || (TAB === "roadmap" && visitorCan("goals")); }
 let ROADMAP_WEEKS = 6;     // Roadmap page: weeks shown (Load more adds 6)
 let ROADMAP_JUMP = null;   // week to scroll to after a redraw
 async function renderBudgetsPage(opts = {}) {
@@ -25308,7 +25308,7 @@ async function renderBudgetsPage(opts = {}) {
     BUDGET_TARGET !== undefined ? Promise.resolve({ date: BUDGET_TARGET }) : loadCalcState("pack_target_budgets"),
     dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
     ensureBudgetSpend(),
-    IS_OWNER ? ensureBudgetGoals() : null,
+    visitorCan("goals") ? ensureBudgetGoals() : null,
     TAB === "roadmap" ? ensureBarHidden() : null,
   ]);
   if (!budTab()) return;
@@ -25566,11 +25566,11 @@ async function renderBudgetsPage(opts = {}) {
   // Order of goals (admin): see budgetGoalList / budgetGoalDates.
   let rmPageHtml = null; // the Roadmap page (drawn instead of Budgets on its tab)
   const rmShell = (inner) => `<div class="rm-page">
-      <div class="plx-head"><h2>${esc(t("rm_title"))} <span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span></h2><button type="button" class="btn small ghost" data-gototab="budgets">&#8249; ${esc(t("rm_back"))}</button></div>
+      <div class="plx-head"><h2>${esc(t("rm_title"))}${adminOnlyTagOn("goals") ? ` <span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</h2><button type="button" class="btn small ghost" data-gototab="budgets">&#8249; ${esc(t("rm_back"))}</button></div>
       <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("rm_page_desc"))}</p>${inner}</div>`;
   let goalsCardHtml = "", goalFlagsHtml = "", b3Week0 = null;
   void (() => {
-    if (!IS_OWNER) return "";
+    if (!visitorCan("goals")) return "";
     const planKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
     // Pages the combined plan had to plan on their own are goals too (their
     // own plan's packs join the dates below).
@@ -25712,7 +25712,7 @@ async function renderBudgetsPage(opts = {}) {
       : dlPlan ? `<div class="bud-g-sum${dl.parts.some((x) => !x.ok) ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${dl.parts.some((x) => !x.ok) ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
-      <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span><span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span><span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
+      <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
       ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc_drag"))}</p>
       <ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
       ${addHtml()}
@@ -26157,7 +26157,7 @@ async function renderBudgetsPage(opts = {}) {
     }));
     return { money: m, n: names.size };
   })();
-  const wkTab = IS_OWNER ? "roadmap" : "purchases";
+  const wkTab = visitorCan("goals") ? "roadmap" : "purchases";
   // Settings sits beside ↻ at the top (owner, 3 Nov 2026); This week has the bottom row.
   const setBtnHtml = `<button type="button" class="b3-tile b3-setb" data-b3sheet="settings"><span class="b3-gear">&#9881;</span><span class="b3-lr-t"><b>${esc(t("t12x_settings"))}</b><small>${esc(targetDays != null ? t("b3_set_target").replace("{date}", shortDay(targetDays)) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</small></span></button>`;
   const lrHtml = `<div class="b3-lr">
@@ -26190,7 +26190,7 @@ async function renderBudgetsPage(opts = {}) {
     if (!sh) return null;
     if (sh === "mats" && matsN) return { title: t("budgets_materials_total"), html: `<div class="bud-mats">${Object.keys(grandMats).map(grandMatChip).join("")}</div>` };
     if (sh === "stats" && grandDeltas.length) return { title: t("budgets_stat_increase_total"), html: statTableHtml(grandDeltas, "all") + (dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`) };
-    if (sh === "goals" && IS_OWNER && goalsCardHtml) return { title: t("goals_title"), html: (TAB === "roadmap" ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${BUDGET_RM_WITH ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${BUDGET_RM_WITH ? "" : "on"}">${esc(t("rm_without"))}</button></div><div class="meta rmr-side" style="margin:-2px 0 10px;">${esc(t("rmr_with_note"))}</div>` : "") + goalsCardHtml };
+    if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), html: (TAB === "roadmap" ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${BUDGET_RM_WITH ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${BUDGET_RM_WITH ? "" : "on"}">${esc(t("rm_without"))}</button></div><div class="meta rmr-side" style="margin:-2px 0 10px;">${esc(t("rmr_with_note"))}</div>` : "") + goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
     if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
     if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
@@ -26590,7 +26590,7 @@ async function renderCharmsCalc() {
   }
   // "Can reach" marks (design B, 2 Nov 2026): all 18 charms share the Backpack.
   function fillCharmReach() {
-    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando" (owner, 4 Nov 2026)
     const have = BAR_HAVE.charm;
     if (!have || !rowsEl.isConnected) return;
     const tracks = [];
@@ -26967,7 +26967,7 @@ async function renderChiefGearCalc() {
   }
   // "Can reach" marks (design B, 2 Nov 2026): ✓★1 under each piece's name.
   function fillChiefGearReach() {
-    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando" (owner, 4 Nov 2026)
     const have = BAR_HAVE.chief_gear;
     if (!have || !rowsEl.isConnected) return;
     const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
@@ -30518,9 +30518,15 @@ function upcomingTag(isUp) { return isUp ? ` · ${t("upcoming_tag")}` : ""; }
 // What visitors may open read-only (Admin -> Visibility -> Visitor access).
 function visitorCan(what) {
   if (IS_OWNER) return true;
+  return visitorAccessOn(what);
+}
+// The switch itself (also for the owner): is this opened to visitors?
+function visitorAccessOn(what) {
   const v = siteConfig("visitor_access", null);
   return !!(v && typeof v === "object" && v[what] === true);
 }
+// "Admin only" tag: shown to the owner while visitors don't have it yet.
+function adminOnlyTagOn(what) { return IS_OWNER && !visitorAccessOn(what); }
 // A saved state of the OWNER's (pack settings, trade rates) for visitors,
 // via the read-only policy on those two rows.
 async function loadOwnerState(calcName) {
@@ -31624,7 +31630,7 @@ async function renderExpertsPage() {
   // (Affinity + Sigils) and skills (Books + expert / general speedups) share
   // the amounts in the boxes. General Sigils count for each expert.
   function fillExpertsReach() {
-    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando" (owner, 4 Nov 2026)
     const gridBox = document.getElementById("expertsGrid");
     if (!gridBox) return;
     const TIME = "Expert Speedups (minutes)", AFF = "Affinity", BOOKS = "Books of Knowledge";
@@ -32686,7 +32692,7 @@ async function renderPetsDataPage() {
   // "Can reach" marks (design B, 2 Nov 2026): every counted pet shares the
   // Backpack; the card shows the pet on screen, the line above counts all.
   function fillPetsReach() {
-    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando" (owner, 4 Nov 2026)
     const have = BAR_HAVE.pets;
     if (!have || !listEl.isConnected) return;
     const tracks = petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
@@ -33657,7 +33663,7 @@ async function renderT12ResearchPage() {
   // "Can reach" marks (design B, 2 Nov 2026): every troop's nodes share the
   // Backpack; research time is paid with research + general speedups.
   function fillT12Reach() {
-    if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
+    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando" (owner, 4 Nov 2026)
     const have0 = BAR_HAVE.t12_research, troopsEl = document.getElementById("t12Troops");
     if (!have0 || !troopsEl) return;
     const TIME = "Research Speedups (minutes)";
@@ -35690,6 +35696,9 @@ async function renderAdminVisibility(body) {
       accessRow("budgets", "Budgets page", "their own monthly plan against your packs"),
       accessRow("backpack", "Backpack page", "their own inventory overview"),
       accessRow("spendbudget", "My budget (spending limit)", "the \"My budget\" box and plan on Budgets, and the weekly budget bar on My Purchases"),
+      accessRow("quickpages", "Quick pages row", "the row of page shortcuts on the Dashboard; each visitor pins their own"),
+      accessRow("cando", "Can do now", "the \"Can do now\" button and the green marks of what their Backpack can upgrade (Chief Gear, Chief Charm, Heroes Gears, Pets, T12, Experts)"),
+      accessRow("goals", "Order of goals & Roadmap", "goal flags, Order of goals, hero targets and mini targets on Budgets, and the Roadmap page; saved per visitor"),
     ].join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
     ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""), experts.map((e) => ["experts", e]))}
