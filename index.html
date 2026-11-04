@@ -2715,7 +2715,7 @@ input,select,textarea{
   @media (max-width: 560px){ .bd-box{ padding:14px 13px; } .bd-sum b{ font-size:15px; } }
   /* Stat boxes and stat tabs */
   .adm-top{ display:flex; align-items:center; gap:10px; margin:4px 0 14px; flex-wrap:wrap; }
-  .adm-top h2{ margin:0; font-size:22px; display:flex; flex-direction:column; }
+  .adm-top h2{ margin:0; font-size:22px; display:flex; flex-direction:row; align-items:center; }
   .adm-title-sec{ display:none; }
   .adm-search{ flex:1 1 220px; min-width:0; max-width:520px; margin-inline-start:auto; padding:8px 12px; border-radius:10px; }
   .adm-back{ width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--ice); font-size:22px; line-height:1; cursor:pointer; flex:none; }
@@ -2761,6 +2761,56 @@ input,select,textarea{
   .adm-newrow{ display:block; width:100%; margin-top:8px; padding:8px; border:1px dashed var(--ice); border-radius:10px; background:transparent; color:var(--ice); font-weight:700; font-size:13px; cursor:pointer; }
   .adm-b tr[data-newrow] input:not(.chg){ border-style:dashed; }
   .adm-ebar > span{ flex:1 1 auto; }
+  /* Level tables on phones = design B (owner, 4 Nov 2026): slim rows + a sheet */
+  .admpl[hidden]{ display:none; }
+  @media (max-width:700px){ .adm-b.adm-pl:not(.adm-pl-tbl){ display:none; } }
+  .admpl{ display:flex; flex-direction:column; gap:10px; margin-bottom:8px; }
+  .admpl-sum{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; }
+  .admpl-sum > div{ padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); min-width:0; }
+  .admpl-sum small{ display:block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .admpl-sum b{ display:block; font-size:16px; color:var(--frost); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .admpl-sum .warn b{ color:var(--amber); }
+  .admpl-chips{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .admpl-chip{ flex:none; min-height:36px; padding:0 13px; border:1px solid var(--line); border-radius:18px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .admpl-chip.admpl-ro{ margin-inline-start:auto; color:var(--ice); }
+  .admpl-list{ border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .admpl-h, .admpl-r{ display:grid; grid-template-columns:minmax(52px, 1.1fr) repeat(var(--n, 3), minmax(0, 1fr)) 14px; align-items:center; gap:8px; padding:0 10px; }
+  .admpl-h{ min-height:32px; background:var(--panel-2); font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .admpl-h > *{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admpl-h > span, .admpl-r > span{ text-align:end; }
+  .admpl-r{ width:100%; min-height:40px; border:0; border-top:1px solid var(--line); border-inline-start:3px solid transparent; background:var(--panel); color:var(--frost); font:inherit; font-size:13.5px; text-align:start; cursor:pointer; padding-inline-start:7px; }
+  .admpl-r > b, .admpl-r > span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .admpl-r > i{ font-style:normal; color:var(--muted); }
+  .admpl-r.chg{ border-inline-start-color:var(--amber); background:rgba(245,166,35,.07); }
+  .admpl-r span.chg{ color:var(--amber); font-weight:700; }
+  .admpl-r.up > b{ color:var(--amber); }
+  .admpl-g > summary{ display:flex; align-items:center; gap:8px; min-height:38px; padding:0 10px; border-top:1px solid var(--line); background:rgba(255,255,255,.025); list-style:none; cursor:pointer; font-size:13px; }
+  .admpl-g > summary::-webkit-details-marker{ display:none; }
+  .admpl-g > summary span{ color:var(--muted); font-size:12px; }
+  .admpl-g > summary i{ margin-inline-start:auto; font-style:normal; color:var(--muted); transition:transform .15s; }
+  .admpl-g[open] > summary i{ transform:rotate(180deg); }
+  .admpl-ov .admpl-sh{ max-width:460px; padding:14px 16px 16px; }
+  .admpl-sh-h{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .admpl-sh-h b{ flex:1 1 auto; font-size:17px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admpl-nav{ flex:none; width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--ice); font-size:20px; line-height:1; cursor:pointer; }
+  .admpl-nav:disabled{ opacity:.35; cursor:default; }
+  .admpl-x{ font-size:14px; color:var(--frost); border-radius:50%; }
+  .admpl-fs{ display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; }
+  .admpl-f{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .admpl-f > span{ font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admpl-f input:not([type=checkbox]), .admpl-f select{ width:100%; min-width:0; height:36px; box-sizing:border-box; padding:0 10px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:15px; }
+  .admpl-f input[type=number]{ text-align:end; font-variant-numeric:tabular-nums; }
+  .admpl-f.chg input:not([type=checkbox]), .admpl-f.chg select{ border-color:var(--amber); color:var(--amber); box-shadow:0 0 0 1px var(--amber) inset; }
+  .admpl-f em{ font-style:normal; font-size:11px; color:var(--amber); min-height:0; }
+  .admpl-f em:empty{ display:none; }
+  .admpl-op{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); font-size:13.5px; }
+  .admpl-op > span{ display:flex; flex-direction:column; min-width:0; }
+  .admpl-op small{ font-size:11.5px; color:var(--muted); }
+  .admpl-op .btn{ min-height:36px; }
+  .admpl-ft{ display:flex; gap:10px; margin-top:14px; }
+  .admpl-ft .btn{ flex:1 1 0; min-height:40px; }
+  .admpl-del{ color:var(--danger) !important; }
+  @media (max-width:700px){ .modal-overlay.admpl-ov{ align-items:flex-end; padding:0; } .admpl-ov .admpl-sh{ max-width:none !important; width:100% !important; border-radius:18px 18px 0 0; max-height:85vh; } }
   .admc-cats{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
   .admc-cats .adm-chips-row{ flex:1 1 auto; min-width:0; }
   .admc-catmenu{ position:relative; flex:none; }
@@ -2896,6 +2946,55 @@ input,select,textarea{
   .adm-card b{ font-size:14px; }
   .adm-card span{ font-size:11.5px; color:var(--muted); }
   .adm-home .adm-gk:first-child{ margin-top:0; }
+  /* Admin home A1 (owner, 4 Nov 2026) */
+  .admh{ display:flex; flex-direction:column; gap:12px; }
+  .admh [hidden]{ display:none !important; }
+  .admh-needs{ padding:10px 12px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+  .admh-k{ font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .admh-nr{ display:flex; align-items:center; gap:9px; padding:6px 0; }
+  .admh-nr + .admh-nr{ border-top:1px solid var(--line); }
+  .admh-nt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+  .admh-nt b{ font-size:13.5px; color:var(--frost); }
+  .admh-nt small{ font-size:11.5px; color:var(--muted); }
+  .admh-nb{ flex:none; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .admh-nb.warn{ border-color:var(--ice); color:var(--ice); }
+  .admh-dot{ flex:none; width:8px; height:8px; border-radius:50%; background:var(--good); }
+  .admh-dot.warn{ background:var(--amber); }
+  .admh-sslot:empty{ display:none; }
+  .admh-sslot .adm-search{ display:block; width:100%; max-width:none; margin:0; box-sizing:border-box; min-height:40px; }
+  .admh-g{ display:block; }
+  .admh-gk{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 2px 6px; }
+  .admh-gk span{ font-weight:400; letter-spacing:0; }
+  .admh-gk em{ margin-inline-start:auto; font-style:normal; }
+  summary.admh-gk{ list-style:none; cursor:pointer; min-height:36px; margin-bottom:0; }
+  summary.admh-gk::-webkit-details-marker{ display:none; }
+  .admh-site[open] summary.admh-gk em{ display:none; }
+  .admh-cards{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
+  .admh-c{ position:relative; display:flex; align-items:center; gap:9px; min-height:52px; padding:7px 22px 7px 9px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; min-width:0; }
+  .admh-c:hover{ border-color:var(--ice); }
+  .admh-c .admh-dot{ position:absolute; top:8px; inset-inline-end:8px; }
+  .admh-pic{ flex:none; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .admh-pic img{ width:30px; height:30px; object-fit:contain; }
+  .admh-t{ display:flex; flex-direction:column; min-width:0; }
+  .admh-t b{ font-size:13.5px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+  .admh-t small{ font-size:11.5px; color:var(--muted); line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admh-c.admh-x{ display:none; }
+  .admh.more .admh-c.admh-x, .admh.q .admh-c.admh-x{ display:flex; }
+  .admh.more .admh-more, .admh.q .admh-more{ display:none; }
+  .admh-more{ display:block; margin:8px auto 0; max-width:100%; min-height:36px; padding:6px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .admh-chips{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .admh-chip{ flex:none; display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:18px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .admh-chip img{ width:20px; height:20px; object-fit:contain; }
+  .adm-top > .adm-desc{ display:none; }
+  .adm-visfold > summary{ display:flex; align-items:center; gap:8px; min-height:40px; list-style:none; cursor:pointer; }
+  .adm-visfold > summary::-webkit-details-marker{ display:none; }
+  .adm-visfold > summary h2{ flex:0 1 auto; font-size:16px; }
+  .adm-visfold > summary .adm-viscount{ margin-inline-start:auto; font-size:12px; }
+  .adm-visfold > summary > i{ font-style:normal; color:var(--muted); transition:transform .15s; }
+  .adm-visfold[open] > summary > i{ transform:rotate(180deg); }
+  #adminBody label .bset-sw{ flex:0 0 38px; }
+  @media (max-width:700px){ .rl-item small{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; } .rl-item > span{ min-width:0; } }
+  @media (max-width:899px){ .admh-cards{ grid-template-columns:repeat(2, minmax(0,1fr)); } .adm:not(.adm-open) .adm-top > .adm-search{ order:3; } }
   .adm-chips{ margin-bottom:14px; }
   .adm-chips-row{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
   .adm-chip{ flex:none; border:1px solid var(--line); border-radius:18px; padding:6px 14px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
@@ -6308,6 +6407,45 @@ const T = {
   expert_talent: { en: "Talent" },
   upcoming_col: { en: "Upcoming" },
   adm_unsaved_leave: { en: "You have {n} unsaved changes. Leave without saving?" },
+  admh_desc: { en: "Owner tools. Change the game data, rules, texts and settings the site uses; every change is for everyone. Amber dots mark something to look at (upcoming rows, changed rules, an old backup, texts not translated)." },
+  admh_needs: { en: "Needs you" },
+  admh_need_bk: { en: "Last backup {n} days ago" },
+  admh_need_bk_today: { en: "Backed up today" },
+  admh_need_bk_none: { en: "No backup from this browser yet" },
+  admh_need_bk_sub: { en: "Download a copy before big edits" },
+  admh_backup_btn: { en: "Back up" },
+  admh_need_texts: { en: "{n} texts not translated" },
+  admh_need_texts_sub: { en: "most in {lang} · counted when Languages was last opened" },
+  admh_texts_btn: { en: "Texts" },
+  admh_need_rules: { en: "{n} rules changed from built-in" },
+  admh_need_rules_sub: { en: "all saved" },
+  admh_rules_btn: { en: "Rules" },
+  admh_show_more: { en: "Show {n} more" },
+  admh_show: { en: "Show" },
+  admh_open_page: { en: "Open a page" },
+  admh_n_changed: { en: "{n} changed" },
+  admh_bk_never: { en: "No backup yet" },
+  admh_bk_today: { en: "Backed up today" },
+  admh_bk_days: { en: "Last backup {n} days ago" },
+  admh_n_langs: { en: "{n} languages shown" },
+  admh_n_missing: { en: "{n} not translated" },
+  admh_n_hidden: { en: "{n} hidden" },
+  admh_n_up_pets: { en: "{n} upcoming" },
+  admh_n_up_rows: { en: "{n} upcoming rows" },
+  admpl_levels: { en: "Levels" },
+  admpl_released: { en: "Released to" },
+  admpl_unsaved: { en: "Unsaved" },
+  admpl_rows: { en: "{n} rows" },
+  admpl_reorder: { en: "Reorder" },
+  admpl_list: { en: "List" },
+  admpl_was: { en: "was {v}" },
+  admpl_copy: { en: "Copy numbers from {l}" },
+  admpl_copy_btn: { en: "Copy" },
+  admpl_delete: { en: "Delete row" },
+  admpl_done: { en: "Done" },
+  admpl_up_sub: { en: "Listed, but Max stops before it" },
+  admpl_level: { en: "Level {l}" },
+  admpl_new: { en: "new" },
   pet_advanced: { en: "Advanced" },
   pet_adv_short: { en: "Adv" },
   pet_done: { en: "Done · nothing needed" },
@@ -19848,6 +19986,10 @@ function infoize(root) {
   root.querySelectorAll("details > summary ~ .pur-wc-desc").forEach((d) => { if (!free(d)) return; infoAttach(d.closest("details").querySelector(":scope > summary"), d); });
   root.querySelectorAll(".info-d").forEach((d) => { if (!free(d)) return; const card = d.closest(".panel, .t12x-card"); infoAttach(card && card.querySelector(".info-h"), d); });
   root.querySelectorAll(".pk-zone-note").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".page-head h2"), d); });
+  // Admin (owner, 4 Nov 2026, design A1): the home's and each section's intro
+  // go behind an (i) beside the title; Rules & Timeline's help beside its name.
+  root.querySelectorAll(".adm-top > .adm-desc, #adminBody > p.desc").forEach((d) => { if (!free(d)) return; infoAttach(root.querySelector(".adm-top h2"), d); });
+  root.querySelectorAll(".rl-card > p.desc").forEach((d) => { if (!free(d) || !d.textContent.trim()) return; infoAttach(d.closest(".rl-card").querySelector(".rl-h"), d); });
 }
 // Chief Gear's top box on the other planner pages (owner, 3 Nov 2026, after the
 // mock-up): on phones one card at the top holds the stats (troop switch), "Can do
@@ -31543,6 +31685,90 @@ let ADMIN_ACTIVE_CHIEFGEARS_SUBTAB = "chiefgearprog";
 let ADMIN_ACTIVE_SKINS_SUBTAB = "skingallery";
 let ADMIN_ACTIVE_ALLIANCE_SUBTAB = "facility";
 
+// Admin home = design A1 (owner, 4 Nov 2026): a "Needs you" card (cheap facts
+// only: backup age from this browser, untranslated texts counted the last time
+// Languages & Texts was opened, rules changed from built-in), search, small
+// 2-a-row cards with the page's picture, a short line and a health dot (amber =
+// something to look at), game data first ("Show N more"), Site folded, and the
+// sections that open a page as one chip row.
+const ADMIN_PIC = {
+  experts: "icons/quick/experts.png", pets: "icons/quick/pets.png", chiefgears: "icons/quick/chief-gear.png", charm: "icons/charms/charm-infantry-16.webp",
+  herogearprog: "icons/quick/hero-gear.png", heroes: "icons/quick/heroes.png", herostars: "icons/quick/heroes.png", vip: "icons/quick/vip.png",
+  alliance: "icons/quick/facility.png", centerresearch: "icons/quick/research.png", skins: "icons/quick/castle.png", globe: "icons/quick/decoration.png",
+  dashsources: "icons/logo-64.png", rules: "icons/quick/events.png", reslocks: "icons/quick/microscope.png", packs: "icons/quick/gift.png",
+  budgets: "icons/quick/calculator.png",
+};
+const ADMIN_SHORT = {
+  visibility: "Pages, experts, pets", backup: "Download · restore", languages: "Texts · CSV", menu: "Names · order · notes", contact: "Email · message", currencies: "Rates · store prices",
+  experts: "Roster · skills · research", pets: "Pets · refine · marks", chiefgears: "Tiers · set bonus", charm: "Charm levels", herogearprog: "Mastery · Enhance",
+  heroes: "Gen · shards · stars", herostars: "Skill bonuses", dashsources: "What it adds up", vip: "VIP tiers", alliance: "Facility · tech", centerresearch: "RC · T11 · T12",
+  skins: "Gallery · islands", globe: "Globe skins", rules: "State days · trades", reslocks: "Research needs", packres: "Pack columns", backpackitems: "Backpack list", items: "Pictures · minutes",
+};
+// Sections whose level tables can have "Upcoming" rows (site_config upcoming_levels).
+const ADMIN_UP_MATCH = { charm: /^charm/, pets: /^pet/, experts: /expert/, chiefgears: /chief/, herogearprog: /hero_gear|progression/, vip: /vip/, centerresearch: /research|t11|t12/ };
+const ADMIN_GAME_FIRST = 8;
+let ADMIN_HOME_MORE = false;
+function adminBackupAge() {
+  let last = null; try { last = localStorage.getItem("admin_last_backup"); } catch (e) { /* blocked */ }
+  if (!last) return null;
+  const d = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
+  return isFinite(d) ? Math.max(0, d) : null;
+}
+function adminLangMissing() { try { const o = JSON.parse(localStorage.getItem("admin_lang_missing") || "null"); return o && typeof o.n === "number" ? o : null; } catch (e) { return null; } }
+// Line + dot for one section card (cheap: settings already loaded).
+function adminCardInfo(k) {
+  const up = siteConfig("upcoming_levels", {}) || {};
+  let line = ADMIN_SHORT[k] || ADMIN_TABLES[k].desc, warn = false;
+  if (k === "rules") { const n = Object.keys(gameRulesSaved()).length; if (n) line = t("admh_n_changed").replace("{n}", n); }
+  if (k === "backup") { const d = adminBackupAge(); line = d == null ? t("admh_bk_never") : d === 0 ? t("admh_bk_today") : t("admh_bk_days").replace("{n}", d); warn = d == null || d > 7; }
+  if (k === "languages") { const m = adminLangMissing(); const shown = languageList(true).filter((l) => !l.hidden).length; line = t("admh_n_langs").replace("{n}", shown); if (m && m.n > 0) { line = t("admh_n_missing").replace("{n}", m.n.toLocaleString()); warn = true; } }
+  if (k === "visibility" && typeof UI_HIDDEN === "object" && UI_HIDDEN) { const n = Object.keys(UI_HIDDEN).filter((x) => UI_HIDDEN[x]).length; if (n) line = t("admh_n_hidden").replace("{n}", n); }
+  if (ADMIN_UP_MATCH[k]) {
+    let n = 0; Object.keys(up).forEach((tb) => { if (ADMIN_UP_MATCH[k].test(tb) && Array.isArray(up[tb])) n += up[tb].length; });
+    if (k === "pets") { const p = siteConfig("upcoming_pets", []); if (Array.isArray(p) && p.length) { line = t("admh_n_up_pets").replace("{n}", p.length); warn = true; } }
+    if (n) { line = t("admh_n_up_rows").replace("{n}", n); warn = true; }
+  }
+  return { line, warn };
+}
+function adminHomeHtml() {
+  const pic = (k) => ADMIN_PIC[k] ? `<img src="${ADMIN_PIC[k]}" alt="" loading="lazy" />` : `<span>${ADMIN_TABLES[k].icon}</span>`;
+  const card = (k, extra) => { const e = ADMIN_TABLES[k], i = adminCardInfo(k); return `<button type="button" class="admh-c${extra ? " " + extra : ""}" data-admintable="${k}" title="${esc(e.desc)}"><span class="admh-pic">${pic(k)}</span><span class="admh-t"><b>${esc(e.label)}</b><small>${esc(i.line)}</small></span><i class="admh-dot${i.warn ? " warn" : ""}" aria-hidden="true"></i></button>`; };
+  const keys = (g) => Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].group === g && !ADMIN_TABLES[k].tab);
+  const gl = (g) => (ADMIN_GROUPS.find((x) => x.key === g) || {}).label || g;
+  // Needs you
+  const rows = [];
+  const bk = adminBackupAge();
+  rows.push({ warn: bk == null || bk > 7, b: bk == null ? t("admh_need_bk_none") : bk === 0 ? t("admh_need_bk_today") : t("admh_need_bk").replace("{n}", bk), s: t("admh_need_bk_sub"), go: "backup", btn: t("admh_backup_btn") });
+  const lm = adminLangMissing();
+  if (lm && lm.n > 0) rows.push({ warn: true, b: t("admh_need_texts").replace("{n}", lm.n.toLocaleString()), s: lm.lang ? t("admh_need_texts_sub").replace("{lang}", lm.lang) : "", go: "languages", btn: t("admh_texts_btn") });
+  const rc = Object.keys(gameRulesSaved()).length;
+  if (rc) rows.push({ warn: false, b: t("admh_need_rules").replace("{n}", rc), s: t("admh_need_rules_sub"), go: "rules", btn: t("admh_rules_btn") });
+  const needs = `<div class="admh-needs"><div class="admh-k">${esc(t("admh_needs"))}</div>${rows.map((r) => `<div class="admh-nr"><i class="admh-dot${r.warn ? " warn" : ""}" aria-hidden="true"></i><span class="admh-nt"><b>${esc(r.b)}</b>${r.s ? `<small>${esc(r.s)}</small>` : ""}</span><button type="button" class="admh-nb${r.warn ? " warn" : ""}" data-admintable="${r.go}">${esc(r.btn)} &#8250;</button></div>`).join("")}</div>`;
+  // Main game data first (owner's mock-up), the rest behind "Show N more".
+  const MAIN = ["experts", "pets", "chiefgears", "charm", "herogearprog", "heroes", "centerresearch", "vip"];
+  const game = keys("game").sort((a, b) => (MAIN.indexOf(a) < 0 ? 99 : MAIN.indexOf(a)) - (MAIN.indexOf(b) < 0 ? 99 : MAIN.indexOf(b))), more = game.slice(ADMIN_GAME_FIRST);
+  const grid = (g, list) => `<div class="admh-g" data-admhg="${g}"><div class="admh-gk">${esc(gl(g))} <span>${list.length}</span></div><div class="admh-cards">${list.map((k, i) => card(k, g === "game" && i >= ADMIN_GAME_FIRST ? "admh-x" : "")).join("")}</div>${g === "game" && more.length ? `<button type="button" class="admh-more" data-admhmore>${esc(t("admh_show_more").replace("{n}", more.length))} · ${esc(more.map((k) => ADMIN_TABLES[k].label).join(", "))} &#9662;</button>` : ""}</div>`;
+  const site = keys("site");
+  const pages = Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].tab);
+  return `<div class="admh${ADMIN_HOME_MORE ? " more" : ""}">${needs}<div class="admh-sslot"></div>
+    ${grid("game", game)}${grid("packs", keys("packs"))}${grid("rules", keys("rules"))}
+    <details class="admh-g admh-site" data-admhg="site"><summary class="admh-gk">${esc(gl("site"))} <span>${site.length}</span><em>${esc(t("admh_show"))} &#9662;</em></summary><div class="admh-cards">${site.map((k) => card(k)).join("")}</div></details>
+    <div class="admh-g admh-pages" data-admhg="pages"><div class="admh-gk">${esc(t("admh_open_page"))}</div><div class="admh-chips">${pages.map((k) => `<button type="button" class="admh-chip" data-admintable="${k}">${ADMIN_PIC[k] ? `<img src="${ADMIN_PIC[k]}" alt="" />` : `<span>${ADMIN_TABLES[k].icon}</span>`}${esc(ADMIN_TABLES[k].label)} &#8599;</button>`).join("")}</div></div>
+    <div class="meta admh-none" hidden>No match</div></div>`;
+}
+function adminHomeFilter(root, qq) {
+  const h = root.querySelector(".admh"); if (!h) return;
+  h.classList.toggle("q", !!qq);
+  const site = h.querySelector(".admh-site"); if (site && qq) site.open = true;
+  let any = false;
+  h.querySelectorAll(".admh-g").forEach((g) => { const vis = [...g.querySelectorAll(".admh-cards [data-admintable], .admh-chips [data-admintable]")].some((b) => !b.hidden); g.hidden = !vis; if (vis) any = true; });
+  h.querySelector(".admh-needs").hidden = !!qq;
+  h.querySelector(".admh-none").hidden = any;
+}
+function wireAdminHome(root) {
+  const m = root.querySelector("[data-admhmore]");
+  if (m) m.addEventListener("click", () => { ADMIN_HOME_MORE = true; root.querySelector(".admh").classList.add("more"); });
+}
 async function renderAdminPage() {
   // Admin edits the data other pages keep in memory for the visit.
   dropKeptGameData();
@@ -31551,13 +31777,14 @@ async function renderAdminPage() {
   const match = (k) => { const e = ADMIN_TABLES[k]; return !q || `${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(q); };
   const keysOf = (g) => Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].group === g && match(k));
   const side = ADMIN_GROUPS.map((g) => { const ks = keysOf(g.key); return ks.length ? `<div class="adm-gk">${esc(g.label)}</div>${ks.map((k) => `<button type="button" class="adm-it${k === cur ? " on" : ""}" data-admintable="${k}"><i>${ADMIN_TABLES[k].icon}</i>${esc(ADMIN_TABLES[k].label)}${ADMIN_TABLES[k].tab ? ` <span class="adm-ext">&#8599;</span>` : ""}</button>`).join("")}` : ""; }).join("") || `<div class="meta" style="padding:8px;">No match</div>`;
-  const home = ADMIN_GROUPS.map((g) => { const ks = keysOf(g.key); return ks.length ? `<div class="adm-gk">${esc(g.label)}</div><div class="adm-cards">${ks.map((k) => `<button type="button" class="adm-card" data-admintable="${k}"><i>${ADMIN_TABLES[k].icon}</i><b>${esc(ADMIN_TABLES[k].label)}${ADMIN_TABLES[k].tab ? " &#8599;" : ""}</b><span>${esc(ADMIN_TABLES[k].desc)}</span></button>`).join("")}</div>` : ""; }).join("") || `<div class="meta">No match</div>`;
+  const home = cur ? "" : adminHomeHtml();
   const grp = cur ? ADMIN_GROUPS.find((g) => g.key === ADMIN_TABLES[cur].group) : null;
   content.innerHTML = `
     <div class="adm${cur ? " adm-open" : ""}">
       <div class="adm-top">
         ${cur ? `<button type="button" class="adm-back" data-adminhome aria-label="back">&#8249;</button>` : ""}
         <h2>${cur ? `<span class="adm-title-sec">${esc(ADMIN_TABLES[cur].label)}</span><span class="adm-title-main">&#9881; Admin</span>` : "&#9881; Admin"}</h2>
+        ${cur ? "" : `<p class="desc adm-desc">${esc(t("admh_desc"))}</p>`}
         <input type="search" class="adm-search" data-adminsearch placeholder="Search admin…" value="${esc(ADMIN_SEARCH)}" />
         <button type="button" class="btn ghost small adm-bkbtn" data-admintable="backup">&#8615; Backup</button>
       </div>
@@ -31587,12 +31814,17 @@ async function renderAdminPage() {
     ADMIN_ACTIVE_TABLE = null; renderAdminPage(); window.scrollTo(0, 0);
   });
   const search = content.querySelector("[data-adminsearch]");
+  const sslot = content.querySelector(".admh-sslot");
+  if (sslot) sslot.appendChild(search);
+  wireAdminHome(content);
+  if (!cur && ADMIN_SEARCH.trim()) adminHomeFilter(content, ADMIN_SEARCH.trim().toLowerCase());
   search.addEventListener("input", () => {
     ADMIN_SEARCH = search.value;
     // Redraw only the lists, so typing keeps the focus.
     const qq = ADMIN_SEARCH.trim().toLowerCase();
     content.querySelectorAll(".adm-side [data-admintable], .adm-home [data-admintable]").forEach((b) => { const e = ADMIN_TABLES[b.dataset.admintable]; b.hidden = !!qq && !`${e.label} ${e.desc} ${e.words || ""}`.toLowerCase().includes(qq); });
-    content.querySelectorAll(".adm-gk").forEach((h) => { const next = h.nextElementSibling; const list = next && next.classList.contains("adm-cards") ? [...next.children] : (() => { const a = []; let n = h.nextElementSibling; while (n && !n.classList.contains("adm-gk")) { a.push(n); n = n.nextElementSibling; } return a; })(); h.hidden = list.length > 0 && list.every((x) => x.hidden); });
+    adminHomeFilter(content, qq);
+    content.querySelectorAll(".adm-side .adm-gk").forEach((h) => { const next = h.nextElementSibling; const list = next && next.classList.contains("adm-cards") ? [...next.children] : (() => { const a = []; let n = h.nextElementSibling; while (n && !n.classList.contains("adm-gk")) { a.push(n); n = n.nextElementSibling; } return a; })(); h.hidden = list.length > 0 && list.every((x) => x.hidden); });
     const nm = content.querySelector(".adm-nomatch");
     if (nm) nm.hidden = !qq || [...content.querySelectorAll(".adm-side [data-admintable]")].some((b) => !b.hidden);
   });
@@ -32453,6 +32685,11 @@ async function renderAdminLanguages(body) {
   if (!body.isConnected) return;
   await Promise.all(list.filter((l) => l.code !== "en").map(async (l) => { const e = await loadLangPack(l.code, true); counts[l.code] = { n: en.filter(([k]) => e.pack[k]).length, over: Object.keys(e.over).length }; }));
   const enOver = Object.keys((await langPackFor("en")).over).length;
+  try {
+    const shown = list.filter((l) => l.code !== "en" && !l.hidden && counts[l.code]);
+    const worst = shown.reduce((m, l) => (!m || counts[l.code].n < counts[m.code].n ? l : m), null);
+    localStorage.setItem("admin_lang_missing", JSON.stringify(worst ? { n: total - counts[worst.code].n, lang: worst.name, at: Date.now() } : { n: 0, at: Date.now() }));
+  } catch (e) { /* storage blocked */ }
   body.querySelector(".lg-list").innerHTML = list.map((l) => `<div class="lg-row">
       <div class="lg-name"><b>${esc(l.name)}</b> <span class="meta">${esc(l.code)}${l.dir === "rtl" ? " · right-to-left" : ""}${l.builtin ? "" : " · added by you"}</span><br>
         <span class="meta" style="font-size:11.5px;">${l.code === "en" ? `Base language${enOver ? ` · ${enOver} changed by you` : ""}` : `${counts[l.code].n.toLocaleString()} / ${total.toLocaleString()} texts translated (${Math.floor(counts[l.code].n * 100 / total)}%)${counts[l.code].over ? ` · ${counts[l.code].over} changed by you` : ""}`}</span></div>
@@ -33288,11 +33525,17 @@ async function renderAdminVisibility(body) {
   const pets = [...new Set([...Object.keys(PETS_NODES_CACHE || {}), ...Object.keys(PET_REFINE_CACHE || {})])];
   const row = (kind, name, label, sub) => `
     <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
-      <input type="checkbox" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} style="width:16px; height:16px; flex-shrink:0;" />
       <span style="flex:1 1 0; min-width:0;">${esc(label)}${sub ? ` <span class="meta" style="font-size:11px;">· ${esc(sub)}</span>` : ""}</span>
       <span class="meta" data-visstate style="font-size:11px; color:${isHiddenFromVisitors(kind, name) ? "var(--amber)" : "var(--good)"};">${esc(isHiddenFromVisitors(kind, name) ? t("vis_hidden") : t("vis_visible"))}</span>
+      <input type="checkbox" class="bset-sw" data-visitem="${esc(kind)}|${esc(name)}" ${isHiddenFromVisitors(kind, name) ? "" : "checked"} />
     </label>`;
-  const section = (title, desc, rowsHtml) => `
+  // Big lists fold away (design A1, owner 4 Nov 2026): the heading says how many are hidden.
+  const section = (title, desc, rowsHtml, list) => list ? `
+    <details class="panel adm-visfold" style="margin-bottom:12px;">
+      <summary><h2 style="margin:0;">${esc(title)}</h2><span class="meta adm-viscount">${esc(t("admh_n_hidden").replace("{n}", list.filter(([k, n]) => isHiddenFromVisitors(k, n)).length))} · ${list.length}</span><i aria-hidden="true">&#9662;</i></summary>
+      <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
+      ${rowsHtml || `<div class="meta">—</div>`}
+    </details>` : `
     <div class="panel" style="margin-bottom:16px;">
       <h2 style="margin-bottom:4px;">${esc(title)}</h2>
       <p class="desc" style="margin:0 0 8px;">${esc(desc)}</p>
@@ -33302,8 +33545,8 @@ async function renderAdminVisibility(body) {
   const va = siteConfig("visitor_access", {}) || {};
   const accessRow = (key, label, sub) => `
     <label style="display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; font-size:13px;">
-      <input type="checkbox" data-visaccess="${key}" ${va[key] === true ? "checked" : ""} style="width:16px; height:16px; flex-shrink:0;" />
       <span style="flex:1 1 0; min-width:0;">${esc(label)} <span class="meta" style="font-size:11px;">· ${esc(sub)}</span></span>
+      <input type="checkbox" class="bset-sw" data-visaccess="${key}" ${va[key] === true ? "checked" : ""} />
     </label>`;
   body.innerHTML = `
     <p class="desc" style="margin:0 0 12px;">${esc(t("vis_admin_intro"))}</p>
@@ -33314,9 +33557,9 @@ async function renderAdminVisibility(body) {
       accessRow("backpack", "Backpack page", "their own inventory overview"),
       accessRow("spendbudget", "My budget (spending limit)", "the \"My budget\" box and plan on Budgets, and the weekly budget bar on My Purchases"),
     ].join(""))}
-    ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""))}
-    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""))}
-    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p))).join(""))}`;
+    ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
+    ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""), experts.map((e) => ["experts", e]))}
+    ${section(t("vis_pets"), t("vis_pets_desc"), pets.map((p) => row("pets", p, dataName(p))).join(""), pets.map((p) => ["pets", p]))}`;
   body.querySelectorAll("[data-visaccess]").forEach((cb) => cb.addEventListener("change", async () => {
     cb.disabled = true;
     try {
@@ -33336,6 +33579,8 @@ async function renderAdminVisibility(body) {
       const hidden = !cb.checked;
       st.textContent = hidden ? t("vis_hidden") : t("vis_visible");
       st.style.color = hidden ? "var(--amber)" : "var(--good)";
+      const fold = cb.closest(".adm-visfold"), cnt = fold && fold.querySelector(".adm-viscount");
+      if (cnt) { const all = [...fold.querySelectorAll("[data-visitem]")]; cnt.textContent = `${t("admh_n_hidden").replace("{n}", all.filter((x) => !x.checked).length)} · ${all.length}`; }
       toast(hidden ? t("vis_now_hidden") : t("vis_now_visible"));
       applyPageVisibility();
     } catch (err) { toast(err.message || "Couldn't save", true); cb.checked = !cb.checked; }
@@ -34114,6 +34359,182 @@ document.addEventListener("click", (e) => {
   const chip = e.target.closest && e.target.closest("#adminBody .adm-chip:not(.on)");
   if (chip && !admConfirmLeave()) { e.preventDefault(); e.stopImmediatePropagation(); }
 }, true);
+// Admin level tables on phones = design B (owner, 4 Nov 2026): one slim
+// read-only row per level (its name + 3 main columns), folded by major level,
+// summary boxes on top and range chips to jump; tapping a row opens a sheet
+// with every box of that row. The sheet types into the table's own boxes (and
+// fires their input / change events), so wireAdmEditBar's changed marks, Save
+// bar, Undo and new rows work exactly as on PC. "Reorder" shows the table with
+// its ⋮⋮ handles. PC keeps the table.
+const ADM_PL_MQ = window.matchMedia("(max-width: 700px)");
+function admPlLabel(el) { if (!el) return ""; return el.tagName === "SELECT" ? (el.selectedOptions[0] ? el.selectedOptions[0].text : "") : String(el.value == null ? "" : el.value); }
+function admPlFmt(el) {
+  if (!el) return "";
+  if (el.type === "checkbox") return el.checked ? "✓" : "—";
+  const v = admPlLabel(el);
+  if (el.type === "number" && v !== "" && isFinite(Number(v))) return Number(v).toLocaleString(undefined, { maximumFractionDigits: 3 });
+  return v;
+}
+function admPhoneList(wrap, o, rows, fieldSel, count) {
+  const tr0 = rows()[0];
+  if (!tr0 || tr0.tagName !== "TR") return;
+  const table = tr0.closest("table");
+  let pl = wrap.__pl;
+  if (!pl || !pl.isConnected) { pl = document.createElement("div"); pl.className = "admpl"; wrap.before(pl); wrap.__pl = pl; }
+  wrap.classList.add("adm-pl");
+  const st = wrap.__plSt || (wrap.__plSt = { open: null, tbl: false });
+  const head = (el) => { const td = el.closest("td"), hr = table.tHead && table.tHead.rows[0]; const th = td && hr ? hr.cells[td.cellIndex] : null; return th ? th.textContent.trim() : (el.dataset.f || ""); };
+  const boxes = (tr) => [...tr.querySelectorAll(fieldSel)].filter((el) => el.type !== "hidden" && el.dataset.up == null && el.closest("td"));
+  const parts = (tr) => {
+    const b = boxes(tr), lab = b[0];
+    const main = b.slice(1).filter((el) => el.type !== "checkbox" && el.dataset.f !== "sort_order").slice(0, 3);
+    return { lab, main, all: b };
+  };
+  // Groups: by major level ("4", "4.1" … "4.3"), else by name without its last
+  // number ("Mythic T1 ★0" … "★3"); mostly single rows → blocks of 10.
+  const groupsOf = (list) => {
+    const labs = list.map((tr) => admPlLabel(parts(tr).lab).trim());
+    const num = labs.every((l) => l === "" || /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(l));
+    const keyOf = (l, i) => (num ? (l === "" ? "new" + i : String(parseInt(l.replace(/^\D+/, ""), 10))) : (l.replace(/[\s.]*[★☆]?\s*\d+(?:\.\d+)?$/, "") || "row" + i));
+    const out = [];
+    list.forEach((tr, i) => { const k = tr.hasAttribute("data-newrow") ? "__new" : keyOf(labs[i], i); const g = out.at(-1); if (g && g.k === k) g.rows.push(tr); else out.push({ k, rows: [tr] }); });
+    if (out.length > 12 && list.length / out.length < 1.6) {
+      const blocks = [];
+      list.forEach((tr, i) => { if (i % 10 === 0) blocks.push({ k: "b" + i, rows: [] }); blocks.at(-1).rows.push(tr); });
+      return blocks;
+    }
+    return out;
+  };
+  const draw = () => {
+    if (!pl.isConnected) return;
+    const list = rows();
+    if (!list.length) { pl.innerHTML = ""; return; }
+    const groups = groupsOf(list);
+    if (st.open == null) { const g = groups.find((x) => x.rows.length > 1); st.open = new Set(g ? [g.k] : []); }
+    const p0 = parts(list[0]);
+    const cols = p0.main.map(head);
+    const upEls = list.map((tr) => tr.querySelector("[data-up]"));
+    const hasUp = upEls.some(Boolean);
+    const firstUp = upEls.findIndex((x) => x && x.checked);
+    const relIdx = firstUp < 0 ? list.length - 1 : firstUp - 1;
+    const rel = relIdx >= 0 ? admPlLabel(parts(list[relIdx]).lab) : "—";
+    const nOld = list.filter((tr) => !tr.hasAttribute("data-newrow")).length;
+    const rowHtml = (tr) => {
+      const p = parts(tr), i = list.indexOf(tr);
+      const chg = tr.hasAttribute("data-newrow") || !!tr.querySelector(".chg");
+      const up = !!(tr.querySelector("[data-up]") || {}).checked;
+      return `<button type="button" class="admpl-r${chg ? " chg" : ""}${up ? " up" : ""}" data-plrow="${i}" style="--n:${cols.length}"><b>${esc(admPlLabel(p.lab) || (tr.hasAttribute("data-newrow") ? t("admpl_new") : "—"))}</b>${p.main.map((el) => `<span class="${el.classList.contains("chg") ? "chg" : ""}">${esc(admPlFmt(el))}</span>`).join("")}<i aria-hidden="true">&#8250;</i></button>`;
+    };
+    const gLabel = (g) => { const a = admPlLabel(parts(g.rows[0]).lab), b = admPlLabel(parts(g.rows.at(-1)).lab); return g.k === "__new" ? t("admpl_new") : a === b ? a : `${a} – ${b}`; };
+    // Range chips: the folds split into up to 5 runs.
+    const big = groups.length > 4;
+    const per = Math.ceil(groups.length / 5);
+    const chips = big ? Array.from({ length: Math.ceil(groups.length / per) }, (_, c) => { const gs = groups.slice(c * per, c * per + per); const a = admPlLabel(parts(gs[0].rows[0]).lab), b = admPlLabel(parts(gs.at(-1).rows.at(-1)).lab); return `<button type="button" class="admpl-chip" data-plchip="${c * per}|${gs.length}">${esc(a === b ? a : `${a}–${b}`)}</button>`; }).join("") : "";
+    const drag = wrap.classList.contains("adm-hasdrag");
+    pl.innerHTML = `<div class="admpl-sum"><div><small>${esc(t("admpl_levels"))}</small><b>${nOld}</b></div><div><small>${esc(t("admpl_released"))}</small><b>${esc(hasUp ? rel : admPlLabel(parts(list[list.length - 1]).lab))}</b></div><div class="${count() ? "warn" : ""}"><small>${esc(t("admpl_unsaved"))}</small><b>${count()}</b></div></div>
+      ${chips || drag ? `<div class="admpl-chips">${chips}${drag ? `<button type="button" class="admpl-chip admpl-ro" data-plreorder>${st.tbl ? esc(t("admpl_list")) : "&#8942;&#8942; " + esc(t("admpl_reorder"))}</button>` : ""}</div>` : ""}
+      <div class="admpl-list"><div class="admpl-h" style="--n:${cols.length}"><b>${esc(head(p0.lab))}</b>${cols.map((c) => `<span title="${esc(c)}">${esc(c.replace(/\s*\([^)]*\)/g, "") || c)}</span>`).join("")}<i></i></div>
+      ${groups.map((g, gi) => g.rows.length === 1 && g.k !== "__new" ? rowHtml(g.rows[0]) : `<details class="admpl-g" data-plg="${gi}" ${st.open.has(g.k) || g.k === "__new" ? "open" : ""}><summary><b>${esc(gLabel(g))}</b><span>${esc(t("admpl_rows").replace("{n}", g.rows.length))}</span><i aria-hidden="true">&#9662;</i></summary>${g.rows.map(rowHtml).join("")}</details>`).join("")}</div>`;
+    pl.querySelectorAll("details.admpl-g").forEach((d) => d.addEventListener("toggle", () => { const g = groups[+d.dataset.plg]; if (g) { if (d.open) st.open.add(g.k); else st.open.delete(g.k); } }));
+    pl.__groups = groups;
+  };
+  let q = 0;
+  wrap.__plDraw = () => { if (q) return; q = requestAnimationFrame(() => { q = 0; draw(); }); };
+  const apply = () => { pl.hidden = !ADM_PL_MQ.matches; wrap.classList.toggle("adm-pl-tbl", !!st.tbl); };
+  apply();
+  if (!wrap.__plMq) { wrap.__plMq = () => { if (!wrap.isConnected) { ADM_PL_MQ.removeEventListener("change", wrap.__plMq); return; } apply(); }; ADM_PL_MQ.addEventListener("change", wrap.__plMq); }
+  // Sheet for one row.
+  const openRow = (tr) => {
+    document.querySelectorAll(".admpl-ov").forEach((x) => x.remove());
+    if (!tr || !tr.isConnected) return;
+    const list = rows(), i = list.indexOf(tr), p = parts(tr);
+    const prev = list[i - 1], next = list[i + 1];
+    const up = tr.querySelector("[data-up]");
+    const del = tr.hasAttribute("data-newrow") ? tr.querySelector("[data-ebdrop]") : [...tr.querySelectorAll("button")].find((b) => [...b.attributes].some((a) => /^data-[a-z]*del/.test(a.name)));
+    const ov = document.createElement("div");
+    ov.className = "modal-overlay admpl-ov";
+    const lab0 = admPlLabel(p.lab).trim(), lab = lab0 || t("admpl_new");
+    // "Level 4.1"; a name shared by several rows gets its next box ("Common · Stars 0").
+    const dup = lab0 && list.filter((r) => admPlLabel(parts(r).lab).trim() === lab0).length > 1;
+    const title = /^(?:lv\.?\s*)?-?\d+(?:\.\d+)?$/i.test(lab0) ? t("admpl_level").replace("{l}", lab0) : dup && p.all[1] ? `${lab} · ${head(p.all[1]).replace(/\s*\([^)]*\)/g, "")} ${admPlFmt(p.all[1])}` : lab;
+    const field = (el, k) => {
+      const was = el.classList.contains("chg") ? `<em data-plwas="${k}">${esc(t("admpl_was").replace("{v}", el.dataset.orig === "" ? "—" : el.dataset.orig))}</em>` : `<em data-plwas="${k}"></em>`;
+      const ctl = el.tagName === "SELECT" ? `<select data-plf="${k}">${el.innerHTML}</select>`
+        : el.type === "checkbox" ? `<input type="checkbox" class="bset-sw" data-plf="${k}" ${el.checked ? "checked" : ""} />`
+        : `<input data-plf="${k}" type="${el.type === "number" ? "number" : el.type || "text"}" ${el.type === "number" ? 'step="any" inputmode="decimal"' : ""} value="${esc(el.value)}" />`;
+      return `<label class="admpl-f${el.classList.contains("chg") ? " chg" : ""}${el.type === "checkbox" ? " ck" : ""}"><span>${esc(head(el))}</span>${ctl}${was}</label>`;
+    };
+    ov.innerHTML = `<div class="modal-box admpl-sh" role="dialog" aria-label="${esc(title)}">
+      <div class="admpl-sh-h"><button type="button" class="admpl-nav" data-plgo="-1" ${prev ? "" : "disabled"} aria-label="previous">&#8249;</button><b>${esc(title)}</b><button type="button" class="admpl-nav" data-plgo="1" ${next ? "" : "disabled"} aria-label="next">&#8250;</button><button type="button" class="admpl-nav admpl-x" data-plclose aria-label="close">&#10005;</button></div>
+      <div class="admpl-fs">${p.all.map(field).join("")}</div>
+      ${up ? `<label class="admpl-op"><span><b>${esc(t("upcoming_col"))}</b><small>${esc(t("admpl_up_sub"))}</small></span><input type="checkbox" class="bset-sw" data-plup ${up.checked ? "checked" : ""} /></label>` : ""}
+      ${prev ? `<div class="admpl-op"><span>${esc(t("admpl_copy").replace("{l}", admPlLabel(parts(prev).lab) || "—"))}</span><button type="button" class="btn ghost small" data-plcopy>${esc(t("admpl_copy_btn"))}</button></div>` : ""}
+      <div class="admpl-ft">${del ? `<button type="button" class="btn ghost admpl-del" data-pldel>${esc(t("admpl_delete"))}</button>` : ""}<button type="button" class="btn" data-plclose>${esc(t("admpl_done"))}</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const sync = () => p.all.forEach((el, k) => {
+      const f = ov.querySelector(`[data-plf="${k}"]`), w = ov.querySelector(`[data-plwas="${k}"]`);
+      if (!f) return;
+      if (el.type === "checkbox") f.checked = el.checked; else if (document.activeElement !== f) f.value = el.value;
+      const c = el.classList.contains("chg");
+      f.closest(".admpl-f").classList.toggle("chg", c);
+      if (w) w.textContent = c ? t("admpl_was").replace("{v}", el.dataset.orig === "" ? "—" : el.dataset.orig) : "";
+    });
+    const fire = (el, type) => el.dispatchEvent(new Event(type, { bubbles: true }));
+    ov.addEventListener("input", (e) => {
+      const f = e.target.closest("[data-plf]"); if (!f) return;
+      const el = p.all[+f.dataset.plf]; if (!el) return;
+      if (el.type === "checkbox") { el.checked = f.checked; fire(el, "change"); } else { el.value = f.value; fire(el, el.tagName === "SELECT" ? "change" : "input"); }
+      sync();
+    });
+    ov.addEventListener("change", (e) => {
+      if (e.target.matches("[data-plup]")) { up.checked = e.target.checked; fire(up, "change"); return; }
+      const f = e.target.closest("[data-plf]"); if (!f) return;
+      const el = p.all[+f.dataset.plf]; if (!el) return;
+      if (el.type === "checkbox") el.checked = f.checked; else el.value = f.value;
+      fire(el, "change"); sync();
+    });
+    const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov || e.target.closest("[data-plclose]")) { close(); return; }
+      const go = e.target.closest("[data-plgo]");
+      if (go) { const n = rows()[rows().indexOf(tr) + Number(go.dataset.plgo)]; if (n) { close(); openRow(n); } return; }
+      if (e.target.closest("[data-plcopy]")) {
+        const src = parts(prev).all;
+        p.all.slice(1).forEach((el) => {
+          if (el.dataset.f === "sort_order" || el.type === "checkbox") return;
+          const s = src.find((x) => x.dataset.f && x.dataset.f === el.dataset.f) || src[p.all.indexOf(el)];
+          if (!s || s.tagName !== el.tagName || el.value === s.value) return;
+          el.value = s.value; fire(el, el.tagName === "SELECT" ? "change" : "input");
+        });
+        sync(); return;
+      }
+      if (e.target.closest("[data-pldel]")) { close(); del.click(); }
+    });
+  };
+  wrap.__plOpenRow = (tr) => { if (ADM_PL_MQ.matches && !st.tbl) openRow(tr); };
+  if (!pl.__wired) {
+    pl.__wired = true;
+    pl.addEventListener("click", (e) => {
+      const r = e.target.closest("[data-plrow]");
+      if (r) { openRow(rows()[+r.dataset.plrow]); return; }
+      if (e.target.closest("[data-plreorder]")) { st.tbl = !st.tbl; apply(); draw(); return; }
+      const c = e.target.closest("[data-plchip]");
+      if (c) {
+        const [a, n] = c.dataset.plchip.split("|").map(Number), gs = (pl.__groups || []).slice(a, a + n);
+        gs.forEach((g) => st.open.add(g.k));
+        if (st.tbl) { st.tbl = false; apply(); }
+        draw();
+        const r0 = gs[0] && pl.querySelector(`[data-plrow="${rows().indexOf(gs[0].rows[0])}"]`);
+        const el = r0 && (r0.closest("details") || r0);
+        if (el) window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 70);
+      }
+    });
+  }
+  draw();
+}
 function wireAdmEditBar(scope, o) {
   const first = scope && scope.querySelector(`[${o.rowAttr}]`);
   const wrap = (first && first.closest(".adm-scroll")) || scope;
@@ -34199,6 +34620,7 @@ function wireAdmEditBar(scope, o) {
       });
       src.after(tr);
       refresh();
+      if (wrap.__plOpenRow && ADM_PL_MQ.matches && !wrap.classList.contains("adm-pl-tbl")) { wrap.__plOpenRow(tr); return; }
       const firstBox = tr.querySelector(`${sel}:not([type=hidden])`.split(",").join(":not([type=hidden]),"));
       if (firstBox) { firstBox.focus({ preventScroll: true }); tr.scrollIntoView({ block: "center" }); }
     };
@@ -34208,8 +34630,9 @@ function wireAdmEditBar(scope, o) {
     bar.hidden = !n;
     // Floats at the bottom of the screen over this table's column (the body
     // clips sideways scroll, so a sticky bar would not stick).
-    if (n) { const r = wrap.getBoundingClientRect(); bar.style.left = Math.max(8, r.left) + "px"; bar.style.width = Math.min(r.width, innerWidth - 16) + "px"; }
+    if (n) { const shown = wrap.offsetParent || !wrap.__pl || !wrap.__pl.offsetParent ? wrap : wrap.__pl; const r = shown.getBoundingClientRect(); bar.style.left = Math.max(8, r.left) + "px"; bar.style.width = Math.min(r.width, innerWidth - 16) + "px"; }
     wrap.style.paddingBottom = n ? "64px" : "";
+    if (wrap.__pl) { wrap.__pl.style.paddingBottom = n ? "64px" : ""; if (wrap.__plDraw) wrap.__plDraw(); }
     const nn = newRows().length, nc = n - nn;
     const what = [nc ? `${nc} change${nc === 1 ? "" : "s"}` : "", nn ? `${nn} new row${nn === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
     bar.innerHTML = n ? `<span><b>${what}</b> not saved</span><button type="button" class="btn ghost small" data-ebundo>Undo</button><button type="button" class="btn small" data-ebsave>Save</button>` : "";
@@ -34225,6 +34648,7 @@ function wireAdmEditBar(scope, o) {
     wrap.addEventListener("click", (ev) => { const x = ev.target.closest("[data-ebdrop]"); if (x) { x.closest("tr").remove(); wrap.__ebRefresh(); } });
   }
   wrap.__ebRefresh = refresh;
+  admPhoneList(wrap, o, rows, o.fields || "[data-f]", count);
   bar.onclick = async (ev) => {
     if (ev.target.closest("[data-ebundo]")) {
       newRows().forEach((tr) => tr.remove());
