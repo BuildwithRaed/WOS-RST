@@ -4736,6 +4736,34 @@ input,select,textarea{
   .pr-gems-t{ display:flex; flex-direction:column; min-width:0; }
   .pr-gems-t b{ font-size:13px; font-weight:600; color:var(--frost); }
   .pr-gems-t small{ font-size:11px; color:var(--muted); }
+  /* Pets Refine header = mock-up A (owner, 4 Nov 2026): Lethality / Health boxes and
+     the "Marks to max · all pets" row; the top box title in title case with an (i). */
+  .rf-sbs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .rf-sb{ border:1px solid var(--line); border-radius:12px; padding:8px 10px; background:rgba(255,255,255,.02); min-width:0; }
+  .rf-sbk{ font-size:11.5px; color:var(--muted); }
+  .rf-sbv{ font-size:17px; font-weight:800; color:var(--frost); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rf-sbv small{ font-size:11px; color:var(--muted); font-weight:500; }
+  .rf-bar{ height:5px; border-radius:3px; background:rgba(255,255,255,.08); margin-top:5px; overflow:hidden; }
+  .rf-bar i{ display:block; height:100%; background:var(--good); }
+  .rf-sbl{ font-size:11px; color:#e0b25a; margin-top:3px; }
+  .rf-sbl.ok{ color:var(--good); }
+  .plx-tsw.is-pinned .rf-sb{ padding:5px 9px; }
+  .plx-tsw.is-pinned .rf-sbv{ font-size:15px; }
+  .rf-mk{ display:flex; align-items:center; gap:10px; margin:10px 0 0; padding:8px 10px; border-radius:12px; background:var(--panel2, #222d40); border:1px solid var(--line); }
+  .rf-mk:empty{ display:none; }
+  .rf-mki{ width:34px; height:34px; object-fit:contain; flex:0 0 34px; }
+  .rf-mkt{ flex:1 1 auto; min-width:0; }
+  .rf-mkl{ font-size:11.5px; color:var(--muted); display:flex; gap:6px; align-items:center; }
+  .rf-mkv{ font-size:13px; color:var(--frost); }
+  .rf-mkv b{ font-size:17px; font-weight:800; }
+  .rf-mka{ font-size:11.5px; color:var(--muted); }
+  .rf-mkb{ flex:0 0 auto; height:36px; padding:0 12px; border-radius:10px; border:1px solid var(--line); background:var(--panel); color:var(--frost); font:inherit; font-size:12.5px; font-weight:600; white-space:nowrap; cursor:pointer; }
+  .rf-mkb:hover{ border-color:var(--ice); }
+  @media (max-width: 380px){ .rf-mk{ gap:8px; padding:8px; } .rf-mki{ width:28px; height:28px; flex-basis:28px; } .rf-mkb{ padding:0 8px; } .rf-mkv{ white-space:nowrap; } }
+  .g1-top .g1-mk:empty{ display:none; }
+  .g1-top .g1-mk .rf-mk{ margin:10px 0 0; }
+  .g1-top.rf-top .g1-hd-t{ font-size:14px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--frost); display:inline-flex; align-items:center; gap:6px; }
+  .g1-top.rf-top .g1-bp{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
 
 
   /* Pack prices: one row per price point (owner, 3 Nov 2026: "fix the prices table") */
@@ -7699,6 +7727,12 @@ const T = {
   research_current: { en: "Current level" },
   research_target: { en: "Target level" },
   marks_title: { en: "Marks to refine to max" },
+  rf_mk_title: { en: "Marks to max · all pets" },
+  rf_mk_common: { en: "Common" },
+  rf_mk_or_adv: { en: "or {n} Advanced" },
+  rf_mk_calc: { en: "Calculator" },
+  rf_left: { en: "{v}% left" },
+  rf_stats_info: { en: "Each box is the refine bonus of all your counted pets together for the troop picked above, out of the most they can reach now." },
   marks_desc: { en: "Refining is random, so this is the closest average formula: every missing 1% of a stat costs the Common Marks rate of the stage it's in. Tune the rates or the overall adjustment as your own results come in. These are the fewest marks that reach the target on average; your real count may differ." },
   marks_rates: { en: "Common Marks per 1% (by stage)" },
   marks_rates_note: { en: "Grey/Green/Blue: average over all stats. Purple/Orange: per 1% of one stat. Red uses Orange's rate until you set it." },
@@ -21799,10 +21833,16 @@ function plxTopBox(root) {
     box = document.createElement("div");
     box.className = "panel cg-ans g1-top";
     // Header with Hide / Show for everything under the stats (owner, 3 Nov 2026).
-    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "bs_from_backpack" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
+    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "bs_from_backpack" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="g1-mk"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
     // Heroes Gears (B1): the box sits under the troop switch + Set row.
     const bar = main.querySelector(":scope > .hg-bar");
     main.insertBefore(box, bar ? bar.nextSibling : main.firstChild);
+    // Pets Refine (mock-up A, 4 Nov 2026): "Troops Stats (i)" in title case.
+    if (TAB === "refinepage") {
+      box.classList.add("rf-top");
+      const d = document.createElement("p"); d.className = "desc"; d.textContent = t("rf_stats_info");
+      infoAttach(box.querySelector(".g1-hd-t"), d);
+    }
   }
   const put = (slot, el) => { if (el && !slot.contains(el)) { slot.replaceChildren(el); } };
   // The page's Settings card (same element, so its boxes keep their handlers).
@@ -21826,6 +21866,7 @@ function plxTopBox(root) {
   } else if (TOPBOX_TABS[TAB] !== "nostats") put(box.querySelector(".g1-st"), shell.querySelector(".plx-tsw:not(.g1-top .plx-tsw)") || shell.querySelector("#refineStats") || shell.querySelector("#petsTotals"));
   const sums = TOPBOX_TABS[TAB] === "hg" ? [] : [...shell.querySelectorAll("[data-rchsum]")].filter((x) => !box.contains(x) && x.offsetParent !== null && x.innerHTML.trim());
   if (sums.length) put(box.querySelector(".g1-can"), sums[0]);
+  put(box.querySelector(".g1-mk"), shell.querySelector("#refineMk"));
   const amts = shell.querySelector(".t12x-amts > [id]");
   put(box.querySelector(".g1-bp"), amts);
   box.querySelector(".g1-can").hidden = !box.querySelector(".g1-can").innerHTML.trim();
@@ -32158,7 +32199,9 @@ async function renderRefinePage() {
     settings: `<label class="t12x-check pr-gems" title="${esc(t("marks_pack_gems"))}"><span class="pr-gems-t"><b>${esc(t("marks_pack_gems_short"))}</b><small>${esc(t("marks_pack_gems_rate"))}</small></span><input type="checkbox" class="bset-sw" data-markspackgems ${PET_MARKS_STATE.packGems ? "checked" : ""} /></label>`,
     amountsId: "refineMarksBar", needId: "refineNeed",
     // One pinned troop switch: it picks which troop's LETH / HP boxes show.
-    statsHtml: plxTroopSwitchHtml("pets_refine", ""),
+    // Header (owner picked mock-up A, 4 Nov 2026): the troop switch with its
+    // Lethality / Health boxes, then the "Marks to max" answer row.
+    statsHtml: plxTroopSwitchHtml("pets_refine", "") + `<div class="rf-mk" id="refineMk"></div>`,
     mainHtml: `<div id="refineSwipeCounter"></div>
     <div id="refineList"></div>
     <div id="refineTotals" style="margin-top:12px;"></div>`,
@@ -32178,7 +32221,13 @@ async function renderRefinePage() {
     if (!el || !refineStatsNow) return;
     const [l, h] = { Infantry: ["il", "ih"], Lancer: ["ll", "lh"], Marksman: ["ml", "mh"] }[plxTroopOf("pets_refine")];
     const { grand, grandMax } = refineStatsNow;
-    el.innerHTML = plxStatBoxesHtml([{ label: "LETH", val: grand[l], max: grandMax[l], dp: 2 }, { label: "HP", val: grand[h], max: grandMax[h], dp: 2 }], true);
+    // Mock-up A boxes: full stat name, "now% / max%", bar, amber "N% left" (✓ at max).
+    const f2 = (v) => (Math.round(v * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const box = (name, v, mx) => {
+      const left = Math.max(0, mx - v), pc = mx > 0 ? Math.min(100, (v / mx) * 100) : 0;
+      return `<div class="rf-sb"><div class="rf-sbk">${esc(tStatLabel(name))}</div><div class="rf-sbv">${bidiNum(f2(v) + "%")}<small> / ${bidiNum(f2(mx) + "%")}</small></div><div class="rf-bar"><i style="width:${pc.toFixed(1)}%;"></i></div><div class="rf-sbl${left > 0.0001 ? "" : " ok"}">${left > 0.0001 ? esc(t("rf_left").replace("{v}", f2(left))) : "&#10003; " + esc(t("max_label"))}</div></div>`;
+    };
+    el.innerHTML = `<div class="rf-sbs">${box("Lethality", grand[l], grandMax[l])}${box("Health", grand[h], grandMax[h])}</div>`;
   }
   wirePlxTroopSwitch(content, "pets_refine", drawRefineStats);
   // The highest stage that's out (stages ticked "Upcoming" in Admin after it).
@@ -32286,6 +32335,18 @@ async function renderRefinePage() {
           </div>`}`}`;
     refineStatsNow = { grand, grandMax };
     drawRefineStats();
+    // "Marks to max · all pets" row (same numbers as the card at the bottom).
+    const mkEl = document.getElementById("refineMk");
+    if (mkEl) {
+      mkEl.innerHTML = `<img class="rf-mki" src="${esc(materialIconSrc("Common Marks") || "")}" alt="" />
+        <div class="rf-mkt"><div class="rf-mkl"><span>${esc(t("rf_mk_title"))}</span></div>
+          <div class="rf-mkv"><b>${bidiNum(marksNeeded.toLocaleString())}</b> ${esc(t("rf_mk_common"))}</div>
+          <div class="rf-mka">${esc(t("rf_mk_or_adv").replace("{n}", Math.ceil(marksNeeded / ADVANCED_MARK_VALUE).toLocaleString()))}</div></div>
+        <button type="button" class="rf-mkb" data-rfcalc>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button>`;
+      const d = document.createElement("p"); d.className = "desc"; d.textContent = t("marks_desc");
+      infoAttach(mkEl.querySelector(".rf-mkl"), d);
+      mkEl.querySelector("[data-rfcalc]").addEventListener("click", () => { refineAdvOpen = true; drawAdv(); });
+    }
     document.getElementById("refineTotals").innerHTML = `
       <div class="t12x-card">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
