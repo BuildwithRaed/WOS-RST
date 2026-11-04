@@ -33905,7 +33905,7 @@ const ADMIN_SHORT = {
 // Sections whose level tables can have "Upcoming" rows (site_config upcoming_levels).
 const ADMIN_UP_MATCH = { charm: /^charm/, pets: /^pet/, experts: /expert/, chiefgears: /chief/, herogearprog: /hero_gear|progression/, vip: /vip/, centerresearch: /research|t11|t12/ };
 const ADMIN_GAME_FIRST = 8;
-let ADMIN_HOME_MORE = false;
+let ADMIN_HOME_MORE = true; // owner (4 Nov 2026): always show every section, no "Show more"
 function adminBackupAge() {
   let last = null; try { last = localStorage.getItem("admin_last_backup"); } catch (e) { /* blocked */ }
   if (!last) return null;
@@ -33950,14 +33950,13 @@ function adminHomeHtml() {
   const pages = Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].tab);
   return `<div class="admh${ADMIN_HOME_MORE ? " more" : ""}">${needs}<div class="admh-sslot"></div>
     ${grid("game", game)}${grid("packs", keys("packs"))}${grid("rules", keys("rules"))}
-    <details class="admh-g admh-site" data-admhg="site"><summary class="admh-gk">${esc(gl("site"))} <span>${site.length}</span><em>${esc(t("admh_show"))} &#9662;</em></summary><div class="admh-cards">${site.map((k) => card(k)).join("")}</div></details>
+    <div class="admh-g admh-site" data-admhg="site"><div class="admh-gk">${esc(gl("site"))} <span>${site.length}</span></div><div class="admh-cards">${site.map((k) => card(k)).join("")}</div></div>
     <div class="admh-g admh-pages" data-admhg="pages"><div class="admh-gk">${esc(t("admh_open_page"))}</div><div class="admh-chips">${pages.map((k) => `<button type="button" class="admh-chip" data-admintable="${k}">${ADMIN_PIC[k] ? `<img src="${ADMIN_PIC[k]}" alt="" />` : `<span>${ADMIN_TABLES[k].icon}</span>`}${esc(ADMIN_TABLES[k].label)} &#8599;</button>`).join("")}</div></div>
     <div class="meta admh-none" hidden>No match</div></div>`;
 }
 function adminHomeFilter(root, qq) {
   const h = root.querySelector(".admh"); if (!h) return;
   h.classList.toggle("q", !!qq);
-  const site = h.querySelector(".admh-site"); if (site && qq) site.open = true;
   let any = false;
   h.querySelectorAll(".admh-g").forEach((g) => { const vis = [...g.querySelectorAll(".admh-cards [data-admintable], .admh-chips [data-admintable]")].some((b) => !b.hidden); g.hidden = !vis; if (vis) any = true; });
   h.querySelector(".admh-needs").hidden = !!qq;
