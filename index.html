@@ -4442,6 +4442,19 @@ input,select,textarea{
   .pkb-dp-t b{ font-size:14px; }
   .pkb-dp-t .meta{ font-size:12px; margin-inline-start:6px; }
   .pkb-chev{ flex:0 0 auto; color:var(--muted); font-size:22px; line-height:1; }
+  /* Owner, 4 Nov 2026: three boxes under the search (New heroes, Pack dates,
+     Prices), each opens the window with only its own part */
+  .pkb-tri{ display:flex; gap:8px; }
+  .pkb-tb{ flex:1 1 0; min-width:0; display:flex; align-items:center; gap:8px; min-height:48px; margin:0; padding:7px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-tb[hidden]{ display:none; }
+  .pkb-tb-ic{ flex:0 0 auto; font-size:17px; line-height:1; }
+  .pkb-tb-usd{ font-weight:800; color:var(--good); }
+  .pkb-tb-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; line-height:1.25; }
+  .pkb-tb-t b{ font-size:13px; overflow-wrap:anywhere; }
+  .pkb-tb-t small{ font-size:11.5px; overflow-wrap:anywhere; }
+  #pkbDpSheet [data-pkbpart][hidden]{ display:none; }
+  #pkbDpSheet .pkb-ng-h{ display:none; }
+  @media (max-width: 520px){ .pkb-tri{ gap:6px; } .pkb-tb{ flex-direction:column; align-items:flex-start; justify-content:center; gap:3px; padding:7px 8px; } .pkb-tb-ic{ font-size:15px; } }
   .pkb-cats{ display:flex; flex-direction:column; gap:10px; }
   .pkb-cat{ border:1px solid var(--line); border-radius:14px; background:var(--panel); overflow:hidden; }
   .pkb-cat.open{ border-color:rgba(111,211,242,.35); }
@@ -8123,6 +8136,13 @@ const T = {
   pkb_search: { en: "Search packs or items (e.g. Steel)" },
   pkb_dates_prices: { en: "Pack dates & prices" },
   pkb_dated_n: { en: "{n} dated packs" },
+  pkb_dates_t: { en: "Pack dates" },
+  pkb_prices_t: { en: "Prices" },
+  pkb_dates_n: { en: "{n} packs" },
+  pkb_dates_none: { en: "None yet" },
+  pkb_dates_empty: { en: "No pack here has its own date to set." },
+  pkb_ng_sub: { en: "Gen {gen} · {date}" },
+  pkb_ng_sub_set: { en: "Set the date" },
   pkb_on_now: { en: "on now" },
   pkb_next: { en: "next {date}" },
   pkb_free: { en: "Free" },
@@ -12635,7 +12655,7 @@ function renderMyPackDates(el, tables) {
   if (!el) return;
   const ownerEdit = IS_OWNER;
   const list = tables.filter((tb) => { const l = packLinkForBase(tb.id); return l.visitorDate && typeof l.reset === "number" && !packStackInfo(l.reset) && !packIsNewGen(l) && !l.template; });
-  if (!list.length) { el.innerHTML = ""; return; }
+  if (!list.length) { el.innerHTML = `<p class="meta" style="margin:4px 2px;">${esc(t("pkb_dates_empty"))}</p>`; return; }
   // Pack days run on the game's UTC day (see packStartOfToday), so these
   // dates do too - local dates were a day off near midnight UTC.
   const today = packStartOfToday();
@@ -15463,19 +15483,22 @@ async function renderPacksPage() {
       </div>
       <div class="pkb-hbtns">
         ${hiddenForVisitor("page", "packcalendar") ? "" : `<button class="btn ghost" id="packsCalendarBtn">📅 ${esc(t("pack_cal_button"))}</button>`}
-        ${IS_OWNER ? visibilityBtnHtml("page", "packcalendar") : ""}
         ${IS_OWNER ? `<button class="btn pkb-add" id="packsAddTable" title="${esc(t("add_table_button"))}" aria-label="${esc(t("add_table_button"))}">+</button>` : ""}
       </div>
     </div>
     <div class="pk-zone-note">ℹ️ ${esc(t("pk_zone_note"))}</div>
     <div class="panel pkb-top">
       <label class="pkb-search"><span aria-hidden="true">&#128269;</span><input type="search" id="pkbSearch" placeholder="${esc(t("pkb_search"))}" value="${esc(PKB_QUERY)}" autocomplete="off" enterkeyhint="search" /></label>
-      <button type="button" class="pkb-dp" id="pkbDpBtn"><span class="pkb-dp-ic" aria-hidden="true">&#128467;&#65039;</span><span class="pkb-dp-t"><b>${esc(t("pkb_dates_prices"))}</b><span class="meta" id="pkbDpSub"></span></span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>
+      <div class="pkb-tri">
+        <button type="button" class="pkb-tb" data-pkbdp="ng" hidden><span class="pkb-tb-ic" aria-hidden="true">&#11088;</span><span class="pkb-tb-t"><b>${esc(t("pkb_new_heroes"))}</b><small class="meta" data-pkbdpsub="ng"></small></span></button>
+        <button type="button" class="pkb-tb" data-pkbdp="dates"><span class="pkb-tb-ic" aria-hidden="true">&#128197;</span><span class="pkb-tb-t"><b>${esc(t("pkb_dates_t"))}</b><small class="meta" data-pkbdpsub="dates"></small></span></button>
+        <button type="button" class="pkb-tb" data-pkbdp="prices"><span class="pkb-tb-ic pkb-tb-usd" aria-hidden="true">$</span><span class="pkb-tb-t"><b>${esc(t("pkb_prices_t"))}</b><small class="meta" data-pkbdpsub="prices"></small></span></button>
+      </div>
     </div>
     <div class="pkb-ov" id="pkbDpSheet" hidden>
       <div class="pkb-sheet" role="dialog" aria-label="${esc(t("pkb_dates_prices"))}">
-        <div class="pkb-sh-h"><button type="button" class="pkb-back" data-pkbdpclose aria-label="${esc(t("close_button"))}">&#8249;</button><b>${esc(t("pkb_dates_prices"))}</b></div>
-        <div class="pkb-sh-b"><div id="packsNewHeroes"></div><div id="packsMyDates"></div><div id="packsPriceStrip"></div></div>
+        <div class="pkb-sh-h"><button type="button" class="pkb-back" data-pkbdpclose aria-label="${esc(t("close_button"))}">&#8249;</button><b id="pkbDpTitle">${esc(t("pkb_dates_prices"))}</b></div>
+        <div class="pkb-sh-b"><div id="packsNewHeroes" data-pkbpart="ng"></div><div id="packsMyDates" data-pkbpart="dates"></div><div id="packsPriceStrip" data-pkbpart="prices"></div></div>
       </div>
     </div>
     <div id="packsList"></div>
@@ -15492,19 +15515,39 @@ async function renderPacksPage() {
     pkbSearchT = setTimeout(() => { PKB_QUERY = pkbSearchIn.value; if (pkbReady) renderAll(); }, 150);
   });
   const pkbDp = document.getElementById("pkbDpSheet");
-  const pkbDpShow = (on) => {
+  // Owner, 4 Nov 2026: three boxes (New heroes / Pack dates / Prices), each
+  // opening the same window with only its own part showing.
+  const PKB_DP_TITLES = { ng: "pkb_new_heroes", dates: "pkb_dates_t", prices: "pkb_prices_t" };
+  const pkbDpShow = (on, part) => {
+    if (on) {
+      const pt = PKB_DP_TITLES[part] ? part : "dates";
+      pkbDp.querySelectorAll("[data-pkbpart]").forEach((el) => { el.hidden = el.dataset.pkbpart !== pt; });
+      const ttl = t(PKB_DP_TITLES[pt]);
+      document.getElementById("pkbDpTitle").textContent = ttl;
+      pkbDp.querySelector(".pkb-sheet").setAttribute("aria-label", ttl);
+      const sb = pkbDp.querySelector(".pkb-sh-b"); if (sb) sb.scrollTop = 0;
+      if (pt === "dates") { const box = pkbDp.querySelector("details.pkd-box"); if (box && !box.open) box.open = true; }
+    }
     pkbDp.hidden = !on;
-    if (on) { const box = pkbDp.querySelector("details.pkd-box"); if (box && !box.open) box.open = true; }
   };
-  document.getElementById("pkbDpBtn").addEventListener("click", () => pkbDpShow(true));
+  content.querySelectorAll("[data-pkbdp]").forEach((b) => b.addEventListener("click", () => pkbDpShow(true, b.dataset.pkbdp)));
   pkbDp.addEventListener("click", (e) => { if (e.target === pkbDp || e.target.closest("[data-pkbdpclose]")) pkbDpShow(false); });
+  // The short line under each box.
   const pkbDpSub = () => {
-    const el = document.getElementById("pkbDpSub");
-    if (!el) return;
-    const n = pkbDp.querySelectorAll(".pkd-row").length;
-    el.textContent = [n ? t("pkb_dated_n").replace("{n}", n) : "", DISPLAY_CURRENCY || "USD"].filter(Boolean).join(" \u00b7 ");
+    const sub = (k, txt) => { const el = content.querySelector(`[data-pkbdpsub="${k}"]`); if (el) el.textContent = txt; };
+    const n = pkbDp.querySelectorAll("#packsMyDates .pkd-row").length;
+    sub("dates", n ? t("pkb_dates_n").replace("{n}", n) : t("pkb_dates_none"));
+    sub("prices", DISPLAY_CURRENCY || "USD");
+    const ngBtn = content.querySelector('[data-pkbdp="ng"]');
+    const ngEl = document.getElementById("packsNewHeroes");
+    if (ngBtn) ngBtn.hidden = !(ngEl && ngEl.firstChild);
+    const nx = purNextNewGen();
+    let day = "";
+    if (nx) { try { day = nx.date.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { day = packDayKey(nx.date); } }
+    // Narrow phones: break only between "Gen 15 ·" and the date, never inside the date.
+    day = day.replace(/ /g, " ");
+    sub("ng", !nx ? t("pkb_ng_sub_set") : nx.gen ? t("pkb_ng_sub").replace("{gen}", nx.gen).replace("{date}", day) : day);
   };
-  wireVisibilityBtns(content, () => keepPlace(() => renderPacksPage()));
   const listEl = document.getElementById("packsList");
   // Tap a summary card's Edit (or its title) to open / close that table.
   // "Budgets" tick on each card: count this pack in Budgets or not.
@@ -17223,13 +17266,12 @@ async function renderPacksPage() {
   // (Same tables My Purchases used: the hero packs may be hidden from visitors on this page.)
   const ngFocus = PKB_DP_FOCUS;
   PKB_DP_FOCUS = null;
-  if (ngFocus) pkbDpShow(true);
+  if (ngFocus) pkbDpShow(true, "ng");
   ensurePackTables().then((all) => {
     const ngEl = document.getElementById("packsNewHeroes");
     if (seq !== RENDER_SEQ || !ngEl) return;
-    renderPurNewGen(ngEl, all, () => { if (seq === RENDER_SEQ && pkbReady) renderAll(); });
-    // Came from My Purchases' "change ›": the window opens at New heroes.
-    if (ngFocus && ngEl.firstChild) ngEl.scrollIntoView({ block: "start" });
+    renderPurNewGen(ngEl, all, () => { if (seq !== RENDER_SEQ) return; pkbDpSub(); if (pkbReady) renderAll(); });
+    pkbDpSub();
   }).catch(() => {});
   pkbDpSub();
   renderAll();
