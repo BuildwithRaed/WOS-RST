@@ -592,6 +592,112 @@
   .vip-b-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:13px; }
   .vip-b-t small{ color:var(--good); font-size:11.5px; }
   .vip-bundle .btn{ white-space:nowrap; flex:none; }
+  /* Extra bonus pages = pattern C (owner, 4 Nov 2026): answer card first (2 x 2
+     stat boxes: now, / max, amber "+N left", bar), then simple rows. */
+  .t12x.bn-pg{ display:block; }
+  .bn-pg .plx-head{ margin-bottom:10px; }
+  .bn-card.t12x-card{ padding:12px; margin-bottom:10px; }
+  .bn-k{ display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); min-height:20px; }
+  .bn-k .r{ margin-inline-start:auto; font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--frost); white-space:nowrap; }
+  .bn-k .r i{ font-style:normal; color:var(--muted); font-weight:600; }
+  .bn-s2{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  @media (min-width:701px){ .bn-s2.n4{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+  .bn-sb{ position:relative; overflow:hidden; min-width:0; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); padding:6px 9px 9px; }
+  .bn-sb-t{ display:flex; justify-content:space-between; align-items:baseline; gap:4px; font-size:12px; line-height:15px; }
+  .bn-sb-t span{ font-weight:800; letter-spacing:.05em; color:var(--muted); }
+  .bn-sb-t em{ font-style:normal; font-weight:700; color:var(--amber); white-space:nowrap; }
+  .bn-sb-t em.ok{ color:var(--good); }
+  .bn-sb b{ display:inline-block; font-size:19px; line-height:23px; font-weight:800; margin-top:1px; color:var(--frost); }
+  .bn-sb small{ font-size:12px; color:var(--muted); margin-inline-start:4px; }
+  .bn-bar{ position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(232,162,60,.5); }
+  .bn-bar.z{ background:rgba(255,255,255,.07); }
+  .bn-bar i{ display:block; height:100%; background:var(--ice); }
+  .bn-lbl{ font-size:12.5px; font-weight:700; color:var(--muted); margin-top:10px; }
+  .bn-sep{ height:1px; background:rgba(49,62,79,.6); margin:10px 0 9px; }
+  /* one row: picture, name + line, control on the end */
+  .bn-rw{ display:flex; align-items:center; gap:10px; width:100%; min-height:52px; padding:5px 0; border:0; border-bottom:1px solid rgba(49,62,79,.6); background:none; color:inherit; font:inherit; text-align:start; }
+  .bn-rw:last-child{ border-bottom:0; }
+  button.bn-rw{ cursor:pointer; }
+  .bn-pi{ width:54px; height:40px; flex:none; display:flex; align-items:center; justify-content:center; }
+  .bn-pi img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .bn-rw.no .bn-pi img{ opacity:.45; filter:grayscale(.6); }
+  .bn-tx{ flex:1; min-width:0; }
+  .bn-tx b{ display:block; font-size:13.5px; line-height:17px; font-weight:700; color:var(--frost); }
+  .bn-tx > span{ display:block; font-size:12px; line-height:16px; color:var(--muted); }
+  .bn-tx em{ font-style:normal; color:var(--ice); font-weight:700; }
+  .bn-tx .ok{ color:var(--good); font-weight:700; }
+  .bn-sw{ width:46px; height:28px; border-radius:999px; background:#334154; position:relative; flex:none; transition:background .15s; }
+  .bn-sw::after{ content:""; position:absolute; top:3px; inset-inline-start:3px; width:22px; height:22px; border-radius:50%; background:#a9b6c5; transition:inset-inline-start .15s; }
+  .bn-sw.on{ background:var(--good); }
+  .bn-sw.on::after{ inset-inline-start:21px; background:#fff; }
+  .bn-sbtn{ position:relative; display:inline-flex; align-items:center; justify-content:center; gap:5px; height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:12.5px; font-weight:700; white-space:nowrap; cursor:pointer; }
+  .bn-sbtn select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+  .bn-hd{ display:flex; align-items:center; gap:8px; margin:4px 2px 8px; }
+  .bn-hd h3{ margin:0; font-size:15px; font-weight:800; }
+  .bn-hd > :last-child{ margin-inline-start:auto; }
+  .bn-hint{ font-size:12px; color:var(--muted); line-height:16px; margin:2px 2px 10px; }
+  /* VIP: tier buttons, bundle row, each tier's bonus */
+  .bn-vt{ display:flex; gap:5px; margin-top:8px; }
+  .bn-vt button, .bn-lc button{ flex:1; min-width:0; height:40px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font:inherit; font-size:14px; font-weight:800; color:var(--muted); cursor:pointer; }
+  .bn-vt button.w{ flex:1.5; font-size:12.5px; }
+  .bn-vt button.on, .bn-lc button.on{ background:var(--ice-dim); border-color:var(--ice); color:var(--frost); }
+  .bn-vt button.up, .bn-lc button.up{ border-style:dashed; border-color:rgba(232,162,60,.6); color:var(--amber); }
+  .bn-vt button.up.on, .bn-lc button.up.on{ background:rgba(232,162,60,.16); }
+  .bn-rb{ display:flex; align-items:center; gap:10px; width:100%; min-height:52px; padding:6px 10px; margin-top:8px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:inherit; font:inherit; text-align:start; }
+  button.bn-rb{ cursor:pointer; }
+  .bn-rb img{ width:44px; height:36px; object-fit:contain; flex:none; }
+  .bn-rb .bn-tx > span{ color:var(--good); }
+  .bn-rb .ch{ color:var(--muted); font-size:20px; flex:none; }
+  .bn-tr{ display:flex; align-items:center; gap:10px; min-height:44px; border-bottom:1px solid rgba(49,62,79,.6); font-size:13px; }
+  .bn-tr:last-child{ border-bottom:0; }
+  .bn-k + .bn-tr{ margin-top:6px; }
+  .bn-tr .tn{ width:62px; flex:none; font-weight:800; color:var(--frost); }
+  .bn-tr .tb{ flex:1; min-width:0; color:#c6d2de; line-height:17px; padding:4px 0; }
+  .bn-tr.cur{ margin:0 -12px; padding:0 12px; background:rgba(111,211,242,.08); box-shadow:inset 3px 0 0 var(--ice); }
+  html[dir="rtl"] .bn-tr.cur{ box-shadow:inset -3px 0 0 var(--ice); }
+  .bn-tr.cur .tn{ color:var(--ice); }
+  .bn-tr.up .tn{ color:var(--amber); }
+  .bn-tag{ display:inline-block; font-size:11px; font-weight:800; padding:1px 6px; border-radius:6px; background:var(--ice-dim); color:var(--frost); margin-inline-start:6px; vertical-align:1px; }
+  .bn-tag.nx{ background:rgba(232,162,60,.18); color:var(--amber); }
+  /* Alliance Tech: troop switch, stat folds, − level + */
+  .bn-tsw{ display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; height:40px; margin-top:8px; }
+  .bn-tsw button{ flex:1; min-width:0; border:0; background:var(--panel); font:inherit; font-size:13px; font-weight:700; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; }
+  .bn-tsw button i{ width:8px; height:8px; border-radius:50%; background:var(--tc); flex:none; }
+  .bn-tsw button.on{ background:var(--panel-2); color:var(--frost); box-shadow:inset 0 -3px 0 var(--tc); }
+  .bn-fd{ background:var(--panel); border:1px solid var(--line); border-radius:14px; margin-bottom:8px; overflow:hidden; }
+  .bn-fh{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px; padding:7px 12px; border:0; background:none; color:inherit; font:inherit; text-align:start; cursor:pointer; }
+  .bn-fh .bn-ab{ width:40px; height:36px; flex:none; display:flex; align-items:center; justify-content:center; border-radius:9px; background:var(--panel-2); border:1px solid var(--line); font-weight:800; color:var(--ice); font-size:12px; }
+  .bn-mb{ display:block; height:3px; border-radius:3px; background:#2b3747; margin-top:4px; overflow:hidden; }
+  .bn-mb i{ display:block; height:100%; background:var(--ice); }
+  .bn-fh .ch{ color:var(--muted); font-size:16px; flex:none; width:16px; text-align:center; }
+  .bn-fd.open .bn-fh{ border-bottom:1px solid var(--line); }
+  .bn-fb{ padding:4px 12px 6px; }
+  .bn-stp{ display:flex; align-items:center; gap:4px; flex:none; }
+  .bn-stp button{ width:40px; height:40px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); font:inherit; font-size:18px; font-weight:700; color:var(--ice); cursor:pointer; }
+  .bn-stp button:disabled{ color:#46546a; cursor:default; }
+  .bn-stp b{ min-width:26px; text-align:center; font-size:15px; color:var(--frost); }
+  /* Tundra Album / Collection Gallery: one row of level buttons per stat */
+  .bn-lvh{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; font-size:12.5px; font-weight:700; color:var(--muted); margin:10px 2px 5px; }
+  .bn-lvh b{ color:var(--frost); font-weight:800; }
+  .bn-lvh em{ font-style:normal; color:var(--ice); font-weight:700; white-space:nowrap; }
+  .bn-lvh em.ok{ color:var(--good); }
+  .bn-lc{ display:flex; gap:4px; }
+  .bn-lc button{ font-size:13px; border-radius:9px; }
+  .bn-lc button.lo{ color:#a9c9d6; background:rgba(111,211,242,.07); border-color:rgba(111,211,242,.25); }
+  .bn-lc button.z{ flex:.8; }
+  /* Heroes Special Skills: one row per hero */
+  .bn-hr{ display:flex; align-items:center; gap:10px; min-height:72px; padding:8px 0; border-bottom:1px solid rgba(49,62,79,.6); }
+  .bn-hr:last-child{ border-bottom:0; }
+  .bn-hr .bn-ph{ width:52px; height:52px; border-radius:10px; object-fit:cover; border:1px solid var(--line); flex:none; background:var(--panel-2); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--ice); }
+  .bn-tx > .bn-stars{ display:flex; gap:2px; margin-top:3px; }
+  .bn-stars button{ width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center; border:0; border-radius:8px; background:none; cursor:pointer; }
+  .bn-vv{ flex:none; text-align:end; min-width:62px; }
+  .bn-vv b{ display:block; font-size:17px; line-height:21px; color:var(--frost); }
+  .bn-vv small{ display:block; font-size:12px; color:var(--muted); }
+  .bn-vv em{ display:block; font-style:normal; font-size:12px; font-weight:700; color:var(--amber); }
+  .bn-vv em.ok{ color:var(--good); }
+  @media (max-width:380px){ .bn-stars button{ width:30px; } .bn-stars svg{ width:24px; height:24px; } .bn-tr .tn{ width:54px; } }
+  @media (min-width:901px){ .bn-pg{ max-width:760px; } }
   /* Order of goals (admin, owner 18 Oct 2026). */
   .bud-g-head{ display:flex; align-items:center; gap:8px; width:100%; background:none; border:0; padding:0; color:inherit; font:inherit; cursor:pointer; text-align:start; min-height:32px; }
   .bud-g-arrow{ margin-inline-start:auto; color:var(--ice); }
@@ -1631,6 +1737,15 @@ input,select,textarea{
   .gx-note{ margin-top:6px; font-size:11.5px; color:var(--muted); line-height:1.35; }
   .bp-tile .bp-avg{ font-size:9.5px; line-height:1.15; color:#e0b25a; font-weight:600; text-align:center; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bp-tile.bp-chance .bp-name{ -webkit-line-clamp:1; }
+  /* Backpack: top card (Scan, last updated, chests to open) */
+  .bp-top.t12x-card{ padding:12px; margin:0 0 12px; }
+  .bp-scan-big{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; height:44px; border:0; border-radius:12px; background:#2c5568; color:var(--frost); font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+  .bp-scan-big:hover{ background:#336276; }
+  .bp-top-l{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; margin-top:8px; font-size:12.5px; color:var(--muted); }
+  .bp-top-l b{ color:var(--frost); }
+  .bp-chests{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:0 2px; border:0; background:none; color:#f0c46a; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+  .bp-tile.bp-flash{ animation:bpFlash 1.4s ease 2; }
+  @keyframes bpFlash{ 0%,100%{ box-shadow:none; } 50%{ box-shadow:0 0 0 3px rgba(224,178,90,.8); } }
   .bp-chest-note{ margin-top:8px; padding:4px 8px; border:1px solid rgba(224,178,90,.55); border-radius:10px; background:rgba(224,178,90,.12); color:#f0c46a; font-size:11px; font-weight:500; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bp-chest-note b{ color:#1b1406; background:#e0b25a; border-radius:5px; padding:0 4px; font-size:10px; font-weight:700; }
   .bp-tile .bp-size{ position:absolute; top:4px; inset-inline-start:6px; font-size:9.5px; font-weight:700; color:var(--frost); }
@@ -6155,6 +6270,43 @@ const T = {
   vip_bundle_go: { en: "Budgets \u203a" },
   vip_bundle_30d: { en: "in the next 30 days" },
   vip_bundle_by: { en: "by {date}" },
+  // Extra bonus pages, pattern C (owner, 4 Nov 2026).
+  bn_stats_all: { en: "Troop stats · all troops" },
+  bn_stats: { en: "Troop stats" },
+  bn_left: { en: "+{n} left" },
+  bn_max: { en: "✓ max" },
+  bn_of_owned: { en: "of {n} owned" },
+  bn_of_levels: { en: "of {n} levels" },
+  bn_of_stars: { en: "of {n} stars" },
+  bn_all_troops: { en: "all troops" },
+  bn_owned: { en: "owned" },
+  bn_pct_of: { en: "+{v}% of {m}%" },
+  bn_lv_of: { en: "Lv {a} of {b}" },
+  bn_next: { en: "next +{n}% {s}" },
+  bn_set_all: { en: "Set all" },
+  bn_upcoming_hint: { en: "Upcoming levels (amber, dashed) can be picked but don't count in the max until they're out." },
+  vip_your_tier: { en: "Your VIP tier" },
+  vip_below: { en: "Below {n}" },
+  vip_each_tier: { en: "What each tier gives" },
+  vip_tag_you: { en: "you" },
+  vip_tag_next: { en: "next" },
+  at_levels_researches: { en: "{a} of {b} levels · {n} researches" },
+  fac_desc: { en: "Tap a building to mark it owned or not owned. Max owns them all." },
+  album_lv_title: { en: "Your album level · % shown" },
+  gallery_lv_title: { en: "Your gallery level · % shown" },
+  lvbonus_desc: { en: "Tap your level for each stat. Max puts every stat on its highest level that's out." },
+  hs_heroes: { en: "Heroes" },
+  hs_tap_star: { en: "tap a star" },
+  hs_each: { en: "/ {n}% each" },
+  hs_desc: { en: "Tap a star to set the hero's stars (tap the last lit star to go one down). Each star gives a fifth of the skill's max." },
+  bp_scan_shots: { en: "Scan screenshots" },
+  bp_last_updated: { en: "Last updated {when}" },
+  bp_ago_today: { en: "today" },
+  bp_ago_yesterday: { en: "yesterday" },
+  bp_ago_days: { en: "{n} days ago" },
+  bp_never: { en: "never" },
+  bp_items_n: { en: "{n} items" },
+  bp_chests_n: { en: "{n} chests to open" },
   bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
   goals_desc: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ or use ▲▼." },
@@ -14062,11 +14214,30 @@ async function renderInventory() {
     }).join("");
     document.getElementById("bpGroups").innerHTML = html ? (BP_TAB === speedupsTab && !q ? `<div style="margin-top:12px;">${speedSummary()}</div>` : "") + html : `<div class="empty">${esc(t("backpack_no_match"))}</div>`;
   };
+  // Top card (owner, 4 Nov 2026): when the Backpack was last saved, how many
+  // items have an amount, and the chance chests still to open (tap = show them).
+  const drawTop = () => {
+    const el = document.getElementById("bpTopLine");
+    if (!el) return;
+    const at = CALC_STATE_UPDATED.backpack ? new Date(CALC_STATE_UPDATED.backpack) : null;
+    let when = t("bp_never");
+    if (at && !isNaN(at)) {
+      const now = new Date(), days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(at.getFullYear(), at.getMonth(), at.getDate())) / 86400000);
+      when = days <= 0 ? t("bp_ago_today") : days === 1 ? t("bp_ago_yesterday") : t("bp_ago_days").replace("{n}", days.toLocaleString());
+    }
+    const items = Object.keys(bp).filter((k) => (Number(bp[k]) || 0) > 0).length;
+    const chests = CHANCE_CHESTS.reduce((a, n) => a + (Number(bp[n]) || 0), 0);
+    el.innerHTML = `<span>${esc(t("bp_last_updated")).replace("{when}", `<b>${esc(when)}</b>`)} · ${esc(t("bp_items_n").replace("{n}", items.toLocaleString()))}</span>`
+      + (chests > 0 ? `<button type="button" class="bp-chests" data-bpchests title="${esc(t("chest_open_note").replace("{tag}", t("chest_open_tag")))}">&#127873; ${esc(t("bp_chests_n").replace("{n}", chests.toLocaleString()))}</button>` : "");
+  };
+  const drawAll = () => { drawGroups(); drawTop(); };
   content.innerHTML = `
-    <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div>
-      <button class="btn small" type="button" id="bpScan" style="white-space:nowrap; align-self:center;">&#128247; ${esc(t("backpack_scan"))}</button></div>
-    ${CHANCE_CHESTS.some((n) => (Number(bp[n]) || 0) > 0) ? `<div class="bp-chest-note">&#127873; ${esc(t("chest_open_note")).replace("{tag}", `<b>${esc(t("chest_open_tag"))}</b>`)}</div>` : ""}
-    <div id="bpTabs" style="margin-top:12px;"></div>
+    <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div></div>
+    <div class="t12x-card bp-top">
+      <button class="bp-scan-big" type="button" id="bpScan">&#128247; ${esc(t("bp_scan_shots"))}</button>
+      <div class="bp-top-l" id="bpTopLine"></div>
+    </div>
+    <div id="bpTabs"></div>
     <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
     <div id="bpGroups"></div>`;
   // Item count on each tab, like the Packs page.
@@ -14076,7 +14247,22 @@ async function renderInventory() {
     tabCounts[tb0] = gs.reduce((a, g) => a + g.items.length, 0);
   });
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); }, tabCounts);
-  drawGroups();
+  drawAll();
+  // "N chests to open": show the first chance chest (All tab, no search), flashing.
+  document.getElementById("bpTopLine").addEventListener("click", (e) => {
+    if (!e.target.closest("[data-bpchests]")) return;
+    const find = () => document.querySelector("#bpGroups .bp-chance");
+    if (!find() && (BP_TAB !== tabs[0] || BP_SEARCH)) {
+      BP_SEARCH = "";
+      const si = document.getElementById("bpSearch"); if (si) si.value = "";
+      if (BP_TAB !== tabs[0]) { BP_TAB = tabs[0]; renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); }, tabCounts); }
+      drawGroups();
+    }
+    const tl = find();
+    if (!tl) return;
+    tl.scrollIntoView({ behavior: "smooth", block: "center" });
+    tl.classList.remove("bp-flash"); void tl.offsetWidth; tl.classList.add("bp-flash");
+  });
   // "Track shards": adds that hero's own shards tile to the Backpack.
   // Scan can also put heroes' shards and Gen widget boxes it finds on the list.
   const scanMore = {
@@ -14110,7 +14296,7 @@ async function renderInventory() {
       if (seq === RENDER_SEQ) renderInventory();
     },
   };
-  document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawGroups(); }, scanMore);
+  document.getElementById("bpScan").onclick = () => openBackpackScan(groups, bp, () => { if (seq === RENDER_SEQ) drawAll(); }, scanMore);
   document.getElementById("bpSearch").addEventListener("input", (e) => { BP_SEARCH = e.target.value; drawGroups(); });
   // Tap a tile: a small box to type the amount. Saved at once, in the background.
   const openModal = (html) => {
@@ -14306,7 +14492,7 @@ async function renderInventory() {
       saveCalcState("backpack", bp);
       budgetInvalidate(); // planner pages read these amounts
       close();
-      drawGroups();
+      drawAll();
     };
     modal.querySelector("#bpCancel").onclick = close;
     const rm = modal.querySelector("#bpRemove");
@@ -24849,6 +25035,43 @@ async function ensureVipData() {
   }
 }
 
+// ---- Extra bonus pages = pattern C (owner, 4 Nov 2026) ----
+// Title with (i) (and Max), an answer card first (2 x 2 stat boxes: now,
+// / max, amber "+N left", bar), then simple rows. Used by VIP, Alliance Tech,
+// Facility, Tundra Album, Collection Gallery and Heroes Special Skills.
+const BN_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+const BN_STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
+function bnAbbr(s) { return BN_ABBR[s] || tStatLabel(s || ""); }
+function bnFmt(v) { return String(Math.round((Number(v) || 0) * 100) / 100); }
+// list: [{ label, val, max }]
+function bnBoxesHtml(list) {
+  return `<div class="bn-s2${list.length >= 4 ? " n4" : ""}">${list.map((s) => {
+    const val = Number(s.val) || 0, max = Number(s.max) || 0, left = Math.max(0, max - val), pct = max > 0 ? Math.min(100, (val / max) * 100) : 0;
+    const tag = left > 1e-9 ? `<em>${esc(t("bn_left").replace("{n}", bnFmt(left)))}</em>` : max > 0 ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
+    return `<div class="bn-sb"><div class="bn-sb-t"><span>${esc(s.label)}</span>${tag}</div><b>${bidiNum(`+${bnFmt(val)}%`)}</b><small>${bidiNum(`/ ${bnFmt(max)}%`)}</small><span class="bn-bar${max > 0 ? "" : " z"}"><i style="width:${pct.toFixed(1)}%"></i></span></div>`;
+  }).join("")}</div>`;
+}
+// Card heading (small caps) with an optional right part (already HTML).
+function bnHeadHtml(label, right) {
+  return `<div class="bn-k"><span>${esc(label)}</span>${right ? `<span class="r">${right}</span>` : ""}</div>`;
+}
+function bnCountHtml(a, key, b) {
+  return `${bidiNum(String(a))} <i>${esc(t(key).replace("{n}", b))}</i>`;
+}
+// Title row: page name, its description in the (i), and Max (maxId).
+function bnTitleHtml(title, desc, maxId) {
+  return `<div class="plx-head"><h2>${esc(title)}</h2>${maxId ? `<button type="button" class="plx-maxbtn plx-max" id="${maxId}" title="${esc(t("max_everything"))}">${esc(t("max_button"))}</button>` : ""}</div>${desc ? `<p class="desc">${esc(desc)}</p>` : ""}`;
+}
+// Tundra Album / Collection Gallery: one row of level buttons for a stat.
+// values = [0, …levels]; rel = index of the last released level.
+function bnLevelRowHtml(o) {
+  const vals = o.values, i = vals.findIndex((v) => Number(v) === Number(o.cur)), last = Math.min(vals.length - 1, o.rel);
+  const lv = Math.max(0, i);
+  const next = i >= 0 && i < last ? `<em>${esc(t("bn_next").replace("{n}", bnFmt(vals[i + 1] - vals[i])).replace("{s}", bnAbbr(o.stat)))}</em>` : i >= last ? `<em class="ok">${esc(t("bn_max"))}</em>` : "";
+  return `<div class="bn-lvh"><span><b>${esc(tStatLabel(o.stat))}</b> · ${esc(t("bn_lv_of").replace("{a}", lv).replace("{b}", last))}</span>${next}</div>
+    <div class="bn-lc">${vals.map((v, j) => `<button type="button" class="${j === 0 ? "z " : ""}${j === i ? "on" : j < i ? "lo" : ""}${j > last ? " up" : ""}" data-bnlv="${esc(o.stat)}|${v}" aria-pressed="${j === i}"${j > last ? ` title="${esc(t("upcoming_tag"))}"` : ""}>${bnFmt(v)}</button>`).join("")}</div>`;
+}
+
 async function renderVipTierTable(target) {
   const seq = RENDER_SEQ;
   const vip = await loadVipTable();
@@ -24858,68 +25081,66 @@ async function renderVipTierTable(target) {
     return;
   }
   const { columns, rows } = vip;
-
-  if (seq !== RENDER_SEQ) return;
-  target.innerHTML = `
-    <div class="plx-head"><h2>${esc(navLabel("extrabonus:Vip Tier"))}</h2></div>
-    <div class="t12x-card" style="margin-bottom:12px;">
-      <div class="t12x-title">${esc(t("vip_tier_title"))}</div>
-      <p class="desc" style="font-size:12px; margin:0 0 10px;">${esc(t("vip_tier_desc"))}</p>
-      <select id="vipTierSelect" style="width:160px;">
-        ${rows.map((r, i) => `<option value="${i}"${i > releasedLastIdx("buff_rows", rows) ? ' class="opt-up"' : ""}>${esc(r.name)}${esc(upcomingTag(i > releasedLastIdx("buff_rows", rows)))}</option>`).join("")}
-      </select>
-    </div>
-    <div class="t12x-card" id="vipBundle" style="margin-bottom:12px;"></div>
-    <div class="t12x-card">
-      <div class="t12x-title">${esc(t("troops_stats_title"))}</div>
-      <div id="vipTierStats"></div>
-    </div>
-  `;
-
-  const statsEl = document.getElementById("vipTierStats");
-  // The tier's Daily Free Bundle: Mythic General Hero Shards a day, and what
-  // Budgets counts of them (up to its date, or 30 days).
-  const bundleEl = document.getElementById("vipBundle");
-  const shardIcon = bpIcon({ name: "Mythic General Hero Shard" });
-  function showBundle(idx) {
-    const n = vipShardsFor(rows[idx] && rows[idx].name);
-    if (!n) { bundleEl.innerHTML = `<div class="t12x-title">${esc(t("vip_bundle_title"))}</div><div class="meta" style="font-size:12px;">${esc(t("vip_bundle_none"))}</div>`; return; }
-    const days = budgetFreeDays();
-    const when = BUDGET_TARGET ? t("vip_bundle_budget").replace("{date}", (() => { const d = new Date(packStartOfToday().getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return packDayKey(d); } })()) : t("vip_bundle_budget30");
-    bundleEl.innerHTML = `<div class="t12x-title">${esc(t("vip_bundle_title"))}</div>
-      <div class="vip-bundle"><span class="vip-b-ic">${shardIcon ? `<img src="${esc(shardIcon)}" alt="" />` : ""}<b>&times;${n}</b></span>
-        <span class="vip-b-t"><b>${esc(t("vip_bundle_line").replace("{n}", n))}</b><small>${esc(when.replace("{n}", (n * days).toLocaleString()))}</small></span>
-        <button type="button" class="btn small ghost" data-gototab="budgets">${esc(t("vip_bundle_go"))}</button></div>`;
-    const go = bundleEl.querySelector("[data-gototab]");
-    if (go) go.onclick = () => goToTab("budgets");
-  }
-  function showTier(idx) {
-    const r = rows[idx];
-    const valByCol = Object.fromEntries(r.buff_cells.map((c) => [c.column_id, c.value]));
-    // Of max = the highest tier's value for that stat.
-    const maxOf = (c) => Math.max(0, ...rows.slice(0, releasedLastIdx("buff_rows", rows) + 1).map((row) => Number((row.buff_cells.find((x) => x.column_id === c.id) || {}).value) || 0));
-    statsEl.innerHTML = plxStatBoxesHtml(columns.map((c) => ({ label: c.name, val: Number(valByCol[c.id]) || 0, max: maxOf(c), dp: 0 })), true);
-  }
-  document.getElementById("vipTierSelect").addEventListener("change", async (e) => {
-    const idx = Number(e.target.value);
-    showTier(idx);
-    showBundle(idx);
-    saveCalcState("vip_tier", { index: idx, name: rows[idx].name });
-    budgetInvalidate(); // the free shards change what Budgets plans
-  });
-
   const saved = await loadCalcState("vip_tier");
-  let startIdx = 0; // nothing picked yet = lowest tier
+  if (seq !== RENDER_SEQ) return;
+  let cur = 0; // nothing picked yet = lowest tier
   if (saved) {
     const byName = rows.findIndex((r) => r.name === saved.name);
-    if (byName !== -1) startIdx = byName;
-    else if (typeof saved.index === "number" && saved.index >= 0 && saved.index < rows.length) startIdx = saved.index;
+    if (byName !== -1) cur = byName;
+    else if (typeof saved.index === "number" && saved.index >= 0 && saved.index < rows.length) cur = saved.index;
   }
-  document.getElementById("vipTierSelect").value = String(startIdx);
-  showTier(startIdx);
   // Budgets' date (for "counted until …") when Budgets wasn't opened yet.
   if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); if (seq !== RENDER_SEQ) return; if (BUDGET_TARGET === undefined) BUDGET_TARGET = (sv && sv.date) || ""; }
-  showBundle(startIdx);
+
+  const rel = releasedLastIdx("buff_rows", rows);
+  const cols = columns.slice().sort((a, b) => { const r = (c) => { const i = BN_STAT_ORDER.indexOf(c.name); return i === -1 ? 99 : i; }; return r(a) - r(b); });
+  const valOf = (r, c) => Number(((r && r.buff_cells) || []).find((x) => x.column_id === c.id)?.value) || 0;
+  const maxOf = (c) => Math.max(0, ...rows.slice(0, rel + 1).map((r) => valOf(r, c)));
+  // Buttons: a tier without a number ("None") first, as "Below <lowest>".
+  const nums = rows.map((r) => vipTierNumber(r.name)).filter((n) => n != null);
+  const lowest = nums.length ? Math.min(...nums) : null;
+  const order = rows.map((r, i) => i).sort((a, b) => (vipTierNumber(rows[a].name) == null ? 0 : 1) - (vipTierNumber(rows[b].name) == null ? 0 : 1));
+  const tierLabel = (i) => { const n = vipTierNumber(rows[i].name); return n != null ? String(n) : lowest != null ? t("vip_below").replace("{n}", lowest) : rows[i].name; };
+  const tierName = (i) => (vipTierNumber(rows[i].name) != null ? rows[i].name : tierLabel(i));
+  const gives = (i) => cols.map((c) => [c, valOf(rows[i], c)]).filter(([, v]) => v > 0).map(([c, v]) => `${bnAbbr(c.name)} +${bnFmt(v)}%`).join(" · ");
+  const shardIcon = bpIcon({ name: "Mythic General Hero Shard" });
+
+  const draw = () => {
+    const listed = order.filter((i) => gives(i));
+    const nextIdx = listed[listed.findIndex((i) => order.indexOf(i) > order.indexOf(cur))];
+    const n = vipShardsFor(rows[cur] && rows[cur].name);
+    let bundle;
+    if (!n) bundle = `<div class="bn-rb"><span class="bn-tx"><b>${esc(t("vip_bundle_none"))}</b></span></div>`;
+    else {
+      const days = budgetFreeDays();
+      const when = BUDGET_TARGET ? t("vip_bundle_budget").replace("{date}", (() => { const d = new Date(packStartOfToday().getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return packDayKey(d); } })()) : t("vip_bundle_budget30");
+      bundle = `<button type="button" class="bn-rb" data-gototab="budgets" title="${esc(t("vip_bundle_go"))}">${shardIcon ? `<img src="${esc(shardIcon)}" alt="" />` : ""}<span class="bn-tx"><b>${esc(t("vip_bundle_line").replace("{n}", n))}</b><span>${esc(when.replace("{n}", (n * days).toLocaleString()))}</span></span><span class="ch">&#8250;</span></button>`;
+    }
+    target.innerHTML = `<div class="t12x bn-pg">
+      ${bnTitleHtml(navLabel("extrabonus:Vip Tier"), t("vip_tier_desc"))}
+      <div class="t12x-card bn-card">
+        ${bnHeadHtml(t("bn_stats_all"), esc(tierName(cur)))}
+        ${bnBoxesHtml(cols.map((c) => ({ label: bnAbbr(c.name), val: valOf(rows[cur], c), max: maxOf(c) })))}
+        <div class="bn-lbl">${esc(t("vip_your_tier"))}</div>
+        <div class="bn-vt" role="group" aria-label="${esc(t("vip_your_tier"))}">${order.map((i) => `<button type="button" class="${vipTierNumber(rows[i].name) == null ? "w " : ""}${i === cur ? "on" : ""}${i > rel ? " up" : ""}" data-viptier="${i}" aria-pressed="${i === cur}" title="${esc(rows[i].name + upcomingTag(i > rel))}">${esc(tierLabel(i))}</button>`).join("")}</div>
+      </div>
+      <div class="t12x-card bn-card">${bnHeadHtml(t("vip_bundle_title"))}${bundle}</div>
+      <div class="t12x-card bn-card">${bnHeadHtml(t("vip_each_tier"))}
+        ${listed.map((i) => `<div class="bn-tr${i === cur ? " cur" : ""}${i > rel ? " up" : ""}"><span class="tn">${esc(tierName(i))}</span><span class="tb">${esc(gives(i))}${esc(upcomingTag(i > rel))}${i === cur ? `<span class="bn-tag">${esc(t("vip_tag_you"))}</span>` : i === nextIdx ? `<span class="bn-tag nx">${esc(t("vip_tag_next"))}</span>` : ""}</span></div>`).join("")}
+      </div>
+    </div>`;
+    const go = target.querySelector("[data-gototab]");
+    if (go) go.onclick = () => goToTab("budgets");
+    target.querySelector(".bn-vt").onclick = (e) => {
+      const b = e.target.closest("[data-viptier]");
+      if (!b || Number(b.dataset.viptier) === cur) return;
+      cur = Number(b.dataset.viptier);
+      saveCalcState("vip_tier", { index: cur, name: rows[cur].name });
+      budgetInvalidate(); // the free shards change what Budgets plans
+      keepPlace(draw);
+    };
+  };
+  draw();
 }
 
 // ============================================================
@@ -24941,174 +25162,102 @@ async function renderVipTierTable(target) {
 // persisted via calc_state, separate from the static max reference
 // stored in buff_cells.
 // ============================================================
-async function renderHeroStarSection(heroName, displayName, imageUrl, containerId) {
-  await ensureBuffTable();
-  if (!BUFF_CATEGORIES.some((c) => c.name === heroName)) await loadBuffCategories();
+// One hero's special skill: its stats (one per stat, the same for every troop,
+// max from the buff table) and the saved stars (calc_state hero_stars_<name>).
+async function heroSpecialData(heroName) {
   const cat = BUFF_CATEGORIES.find((c) => c.name === heroName);
-  const el = document.getElementById(containerId);
-  if (!cat) {
-    el.innerHTML = `<div class="panel"><div class="empty">${esc(dataName(displayName))} ${esc(t("category_not_found"))}</div></div>`;
-    return;
-  }
-  // Shared by both hero sections and kept for the visit (see dashCached).
+  if (!cat) return null;
+  // Shared by every hero and kept for the visit (see dashCached).
   const rows = await dashCached("buff_rows_sorted", () => sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,sort_order,buff_cells(value,column_id)&order=sort_order.asc`));
-  if (!el || !el.isConnected) return; // the page changed meanwhile
-  const STAT_LABELS = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
-  const seenStats = new Set();
-  const statRows = rows
+  const STAT_KEYS = { ATT: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
+  const seen = new Set();
+  const stats = (rows || [])
     .map((r) => {
       const cell = r.buff_cells.find((c) => c.column_id === cat.columns[0].id);
-      const statKey = r.name.split(" ").pop(); // ATT/DEF/DMG/HP
-      return { id: r.id, statKey, max: cell && cell.value != null ? Number(cell.value) : null };
+      const key = r.name.split(" ").pop(); // ATT/DEF/DMG/HP
+      return { stat: STAT_KEYS[key] || key, max: cell && cell.value != null ? Number(cell.value) : null };
     })
     .filter((r) => r.max != null)
-    .filter((r) => {
-      // collapse Infantry/Lancers/Marksman duplicates of the same stat into one "Troops X" row
-      if (seenStats.has(r.statKey)) return false;
-      seenStats.add(r.statKey);
-      return true;
-    })
-    .map((r) => ({ id: r.id, name: `${t("troops_prefix")} ${tStatLabel(STAT_LABELS[r.statKey] || r.statKey)}`, max: r.max }));
-
+    // Infantry/Lancers/Marksman rows of the same stat are one "all troops" stat.
+    .filter((r) => { if (seen.has(r.stat)) return false; seen.add(r.stat); return true; });
   const saved = (await loadCalcState(`hero_stars_${heroName.toLowerCase()}`)) || {};
-  const sharedKey = "__shared__";
-  const stars = saved[sharedKey] ?? 0;
-
-  el.innerHTML = `
-    <div class="panel">
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
-        ${imageUrl ? `<img src="${esc(imageUrl)}" alt="" style="width:48px; height:48px; object-fit:cover; border-radius:8px; border:1px solid var(--line);" loading="lazy" />` : ""}
-        <h2 style="margin:0;">${esc(dataName(displayName))}</h2>
-      </div>
-      <p class="desc">${esc(t("click_star_desc"))}</p>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
-        <div id="heroStarRow-${esc(heroName)}" style="display:flex; gap:3px;">
-          ${[1, 2, 3, 4, 5]
-            .map(
-              (n) =>
-                `<span data-starbtn="${n}" style="cursor:pointer;">${heroStarSvg(n <= stars ? 6 : 0, { size: 28 })}</span>`
-            )
-            .join("")}
-        </div>
-        <span class="meta" style="font-size:12px;">${stars} ${esc(t("stars_of_5"))}</span>
-      </div>
-      <div class="stats-row-scroll" id="heroStatCards-${esc(heroName)}"></div>
-    </div>
-  `;
-
-  const starRow = document.getElementById(`heroStarRow-${heroName}`);
-  const cardsEl = document.getElementById(`heroStatCards-${heroName}`);
-
-  function renderCards(curStars) {
-    cardsEl.innerHTML = statRows
-      .map((r) => {
-        const cur = (r.max / 5) * curStars;
-        const needed = r.max - cur;
-        return `<div class="metric"><div class="label">${esc(r.name)}</div><div class="val">+${cur.toFixed(1)}%</div><div class="meta" style="font-size:11px; margin-top:2px;">${needed > 0 ? `+${needed.toFixed(1)}% ${esc(t("needed_for_max"))}` : esc(t("maxed_label"))}</div></div>`;
-      })
-      .join("");
-  }
-  renderCards(stars);
-
-  starRow.querySelectorAll("[data-starbtn]").forEach((star) => {
-    star.addEventListener("click", async () => {
-      const n = Number(star.dataset.starbtn);
-      const current = saved[sharedKey] ?? 0;
-      const newStars = current === n ? n - 1 : n;
-      starRow.querySelectorAll("[data-starbtn]").forEach((s) => {
-        s.innerHTML = heroStarSvg(Number(s.dataset.starbtn) <= newStars ? 6 : 0, { size: 28 });
-      });
-      starRow.nextElementSibling.textContent = `${newStars} ${t("stars_of_5")}`;
-      renderCards(newStars);
-      saved[sharedKey] = newStars;
-      saveCalcState(`hero_stars_${heroName.toLowerCase()}`, saved);
-    });
-  });
+  return { stats, saved };
 }
 
 // ============================================================
 // ALBUM TUNDRA PAGE (under Extra Bonus)
-// Two dropdowns, Attack and Defense, 2%-14% in 2% steps.
+// Attack and Defense levels (2%-14% in 2% steps), one row of buttons each.
 // ============================================================
-async function renderAlbumTundraPage() {
+// Tundra Album and Collection Gallery share one page body: an answer card with
+// the stat boxes and, under them, one row of level buttons per stat; Max puts
+// every stat on its last released level (Reset puts them back).
+async function renderLevelBonusPage(o) {
   const seq = RENDER_SEQ;
-  const rows = await keptRows("tundra_album_levels", `tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`);
-  const OPTIONS_BY_STAT = { Attack: [], Defense: [] }, REL = { Attack: Infinity, Defense: Infinity };
-  rows.forEach((r) => {
-    if (!OPTIONS_BY_STAT[r.stat_type]) return;
-    if (isUpcomingRow("tundra_album_levels", r) && REL[r.stat_type] === Infinity) REL[r.stat_type] = OPTIONS_BY_STAT[r.stat_type].length; // index in [0, ...options]
-    OPTIONS_BY_STAT[r.stat_type].push(Number(r.value_pct));
-  });
-  const saved = (await loadCalcState("album_tundra")) || { Attack: OPTIONS_BY_STAT.Attack[0] || 0, Defense: OPTIONS_BY_STAT.Defense[0] || 0 };
-
+  const [rows] = await Promise.all([keptRows(o.table, `${o.table}?select=${upId(o.table)}stat_type,value_pct&order=sort_order.asc`), maxBeforeLoad(o.state)]);
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="plx-head"><h2>${esc(t("tundra_album_title"))}</h2></div>
-    <div class="t12x-card" style="margin-bottom:12px;">
-      <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
-      <div class="plx-selrow">${["Attack", "Defense"].map((k) => plxSelectHtml(tStatLabel(k), `album:${k}`, [0, ...OPTIONS_BY_STAT[k]], saved[k], REL[k])).join("")}</div>
-    </div>
-    <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="albumTundraTotals"></div></div>
-  `;
-
-  function renderTotals() {
-    const relMax = (k) => { const o = OPTIONS_BY_STAT[k]; return (REL[k] === Infinity ? o[o.length - 1] : [0, ...o][REL[k]]) || 0; };
-    const maxAttack = relMax("Attack");
-    const maxDefense = relMax("Defense");
-    document.getElementById("albumTundraTotals").innerHTML = plxStatBoxesHtml([
-      { label: t("total_attack"), val: saved.Attack, max: maxAttack, dp: 0 },
-      { label: t("total_defense"), val: saved.Defense, max: maxDefense, dp: 0 },
-    ], true);
-  }
-  renderTotals();
-
-  wirePlxSelects(content, (key, v) => {
-    saved[key.split(":")[1]] = v;
-    renderTotals();
-    saveCalcState("album_tundra", saved);
+  const optionsByStat = {}, relByStat = {};
+  rows.forEach((r) => {
+    if (!o.stats.includes(r.stat_type)) return;
+    if (!optionsByStat[r.stat_type]) optionsByStat[r.stat_type] = [];
+    if (isUpcomingRow(o.table, r) && relByStat[r.stat_type] == null) relByStat[r.stat_type] = optionsByStat[r.stat_type].length; // index in [0, ...options]
+    optionsByStat[r.stat_type].push(Number(r.value_pct));
   });
+  const STATS = o.stats.filter((k) => optionsByStat[k]).map((key) => {
+    const values = [0, ...optionsByStat[key]];
+    const rel = relByStat[key] == null ? values.length - 1 : relByStat[key];
+    return { key, values, rel, top: values[rel] || 0 };
+  });
+  const defaults = {};
+  STATS.forEach((s) => (defaults[s.key] = s.values[1] || 0));
+  const saved = (await loadCalcState(o.state)) || defaults;
+  if (seq !== RENDER_SEQ) return;
+  const lvOf = (st) => Math.max(0, st.values.findIndex((v) => Number(v) === Number(saved[st.key])));
+
+  content.innerHTML = `<div class="t12x bn-pg">
+      ${bnTitleHtml(o.title, o.desc, o.maxId)}
+      <div class="t12x-card bn-card" id="bnLvCard"></div>
+    </div>`;
+  const card = document.getElementById("bnLvCard");
+  const draw = () => {
+    const lv = STATS.reduce((a, st) => a + Math.min(lvOf(st), st.rel), 0), all = STATS.reduce((a, st) => a + st.rel, 0);
+    const anyUp = STATS.some((st) => st.rel < st.values.length - 1);
+    card.innerHTML = `${bnHeadHtml(t("bn_stats_all"), bnCountHtml(lv, "bn_of_levels", all))}
+      ${bnBoxesHtml(STATS.map((st) => ({ label: bnAbbr(st.key), val: Number(saved[st.key]) || 0, max: st.top })))}
+      <div class="bn-sep"></div>
+      ${bnHeadHtml(t(o.lvTitle))}
+      ${STATS.map((st) => bnLevelRowHtml({ stat: st.key, values: st.values, cur: Number(saved[st.key]) || 0, rel: st.rel })).join("")}
+      ${anyUp ? `<div class="bn-hint" style="margin:10px 2px 0;">${esc(t("bn_upcoming_hint"))}</div>` : ""}`;
+  };
+  draw();
+  card.onclick = (e) => {
+    const b = e.target.closest("[data-bnlv]");
+    if (!b) return;
+    const [stat, v] = b.dataset.bnlv.split("|");
+    if (Number(saved[stat]) === Number(v)) return;
+    saved[stat] = Number(v);
+    draw();
+    saveCalcState(o.state, saved);
+  };
+  wirePageMax({
+    btnId: o.maxId, key: o.state,
+    allMax: () => STATS.every((st) => (Number(saved[st.key]) || 0) >= st.top),
+    snap: () => saved,
+    max: () => STATS.forEach((st) => { saved[st.key] = Math.max(Number(saved[st.key]) || 0, st.top); }),
+    reset: (kept) => STATS.forEach((st) => { if (kept && kept[st.key] != null) saved[st.key] = Number(kept[st.key]) || 0; }),
+    save: () => saveCalcState(o.state, saved),
+    after: draw,
+  });
+}
+async function renderAlbumTundraPage() {
+  await renderLevelBonusPage({ table: "tundra_album_levels", state: "album_tundra", stats: ["Attack", "Defense"], title: t("tundra_album_title"), desc: t("lvbonus_desc"), lvTitle: "album_lv_title", maxId: "albumMaxAllBtn" });
 }
 
 // ============================================================
 // COLLECTION GALLERY PAGE (under Extra Bonus)
-// Attack/Defense/Lethality dropdowns 2%-6% in 2% steps;
-// Health caps lower, at 2%-4%.
+// Attack/Defense/Lethality 2%-6% in 2% steps; Health caps lower, at 2%-4%.
 // ============================================================
 async function renderCollectionGalleryPage() {
-  const seq = RENDER_SEQ;
-  const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
-  const rows = await keptRows("collection_gallery_levels", `collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`);
-  const optionsByStat = {}, relByStat = {};
-  rows.forEach((r) => {
-    if (!optionsByStat[r.stat_type]) optionsByStat[r.stat_type] = [];
-    if (isUpcomingRow("collection_gallery_levels", r) && relByStat[r.stat_type] == null) relByStat[r.stat_type] = optionsByStat[r.stat_type].length; // index in [0, ...options]
-    optionsByStat[r.stat_type].push(Number(r.value_pct));
-  });
-  const STATS = STAT_ORDER.filter((k) => optionsByStat[k]).map((key) => ({ key, options: optionsByStat[key], rel: relByStat[key] ?? Infinity }));
-  const defaults = {};
-  STATS.forEach((s) => (defaults[s.key] = s.options[0] || 0));
-  const saved = (await loadCalcState("collection_gallery")) || defaults;
-
-  if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="plx-head"><h2>${esc(t("collection_gallery_title"))}</h2></div>
-    <div class="t12x-card" style="margin-bottom:12px;">
-      <div class="t12x-title">${esc(t("plx_your_levels"))}</div>
-      <div class="plx-selrow">${STATS.map((st) => plxSelectHtml(tStatLabel(st.key), `gallery:${st.key}`, [0, ...st.options], saved[st.key], st.rel)).join("")}</div>
-    </div>
-    <div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="collectionGalleryTotals"></div></div>
-  `;
-
-  function renderTotals() {
-    document.getElementById("collectionGalleryTotals").innerHTML = plxStatBoxesHtml(STATS.map((st) => ({ label: tStatLabel(st.key), val: saved[st.key], max: (st.rel === Infinity ? st.options[st.options.length - 1] : [0, ...st.options][st.rel]) || 0, dp: 0 })), true);
-  }
-  renderTotals();
-
-  wirePlxSelects(content, (key, v) => {
-    saved[key.split(":")[1]] = v;
-    renderTotals();
-    saveCalcState("collection_gallery", saved);
-  });
+  await renderLevelBonusPage({ table: "collection_gallery_levels", state: "collection_gallery", stats: ["Attack", "Defense", "Lethality", "Health"], title: t("collection_gallery_title"), desc: t("lvbonus_desc"), lvTitle: "gallery_lv_title", maxId: "galleryMaxAllBtn" });
 }
 
 // The heroes on Heroes Special Skills: every hero column of the buff table
@@ -25119,64 +25268,165 @@ function specialSkillHeroNames(catNames) {
   const extra = new Set(dashSourcesConfig().extra);
   return [...new Set(catNames)].filter((n) => n && !ADMIN_RESERVED_BUFF_CATEGORIES.has(n) && !extra.has(n));
 }
+// Pattern C (owner, 4 Nov 2026): the answer card adds up every hero's skill;
+// one compact row per hero with 5 stars (tap the last lit star to go one down).
 async function renderExtraBonusHeroes() {
   const seq = RENDER_SEQ;
   if (!BUFF_CATEGORIES.length) { await ensureBuffTable(); if (!BUFF_CATEGORIES.length) await loadBuffCategories(); }
   if (seq !== RENDER_SEQ) return;
   const found = specialSkillHeroNames(BUFF_CATEGORIES.map((c) => c.name));
-  const heroes = BUFF_CATEGORIES.length ? found : ["Jero", "Natalia"]; // no table: the old two sections ("not found")
+  const heroes = BUFF_CATEGORIES.length ? found : ["Jero", "Natalia"]; // no table: the old two heroes ("not found")
   // Pictures of heroes added in Admin come from the heroes table (same name).
   if (heroes.some((h) => !SPECIAL_HERO_META[h] && !HERO_IMG_BY_NAME[h])) {
     try { noteHeroImages(await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`))); } catch (e) { /* no picture */ }
     if (seq !== RENDER_SEQ) return;
   }
-  const boxId = (h) => "extraBonusHeroes" + h.replace(/[^A-Za-z0-9_-]/g, "_");
-  content.innerHTML = `
-    <div class="plx-head"><h2>${esc(navLabel("extrabonusheroes"))}</h2></div>
-    <div class="hero-special-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-${heroes.map((h) => `      <div id="${esc(boxId(h))}"></div>\n`).join("")}    </div>
-  ` + (heroes.length ? "" : `<div class="panel"><div class="empty">${esc(t("hs_no_heroes"))}</div></div>`);
-  // The sections load at the same time (they used to load one after the other).
-  await Promise.all(heroes.map((h) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return renderHeroStarSection(h, m.name, m.img, boxId(h)); }));
+  if (heroes.length && !BUFF_TABLE_ID) await ensureBuffTable();
+  const [data] = await Promise.all([Promise.all(heroes.map((h) => heroSpecialData(h).catch(() => null))), maxBeforeLoad("hero_special_skills")]);
+  if (seq !== RENDER_SEQ) return;
+  const list = heroes.map((h, i) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return { key: h, name: m.name, img: m.img, d: data[i] }; });
+  const ok = list.filter((x) => x.d);
+  const starsOf = (x) => Math.max(0, Math.min(5, Number(x.d.saved.__shared__) || 0));
+  const save = (x) => saveCalcState(`hero_stars_${x.key.toLowerCase()}`, x.d.saved);
+
+  content.innerHTML = `<div class="t12x bn-pg">
+      ${bnTitleHtml(navLabel("extrabonusheroes"), t("hs_desc"), ok.length ? "heroSkillsMaxAllBtn" : "")}
+      <div id="hsBody"></div>
+    </div>`;
+  const body = document.getElementById("hsBody");
+  const draw = () => {
+    if (!list.length) { body.innerHTML = `<div class="panel"><div class="empty">${esc(t("hs_no_heroes"))}</div></div>`; return; }
+    const stats = BN_STAT_ORDER.filter((s) => ok.some((x) => x.d.stats.some((r) => r.stat === s))).concat(...ok.map((x) => x.d.stats.map((r) => r.stat).filter((s) => !BN_STAT_ORDER.includes(s))));
+    const boxes = [...new Set(stats)].map((s) => {
+      let val = 0, max = 0;
+      ok.forEach((x) => { const r = x.d.stats.find((y) => y.stat === s); if (r) { max += r.max; val += (r.max / 5) * starsOf(x); } });
+      return { label: bnAbbr(s), val, max };
+    });
+    const stars = ok.reduce((a, x) => a + starsOf(x), 0);
+    const row = (x) => {
+      const face = x.img ? `<img class="bn-ph" src="${esc(x.img)}" alt="" loading="lazy" />` : `<span class="bn-ph">${esc((dataName(x.name) || "?")[0])}</span>`;
+      if (!x.d) return `<div class="bn-hr">${face}<span class="bn-tx"><b>${esc(dataName(x.name))}</b><span>${esc(t("category_not_found"))}</span></span></div>`;
+      const n = starsOf(x), maxes = x.d.stats.map((r) => r.max), same = maxes.every((m) => m === maxes[0]);
+      const m0 = maxes[0] || 0, now = (m0 / 5) * n, left = m0 - now;
+      return `<div class="bn-hr">${face}<span class="bn-tx"><b>${esc(dataName(x.name))}</b><span>${esc(x.d.stats.map((r) => bnAbbr(r.stat)).join(" · "))} · ${esc(t("bn_all_troops"))}</span>
+        <span class="bn-stars" role="group" aria-label="${esc(`${n} ${t("stars_of_5")}`)}">${[1, 2, 3, 4, 5].map((k) => `<button type="button" data-hsstar="${esc(x.key)}|${k}" aria-label="${k}&#9733;">${heroStarSvg(k <= n ? 6 : 0, { size: 28 })}</button>`).join("")}</span></span>
+        <span class="bn-vv"><b>${bidiNum(`+${bnFmt(now)}%`)}</b><small>${same ? esc(t("hs_each").replace("{n}", bnFmt(m0))) : bidiNum(`/ ${maxes.map(bnFmt).join(" · ")}%`)}</small>${left > 1e-9 ? `<em>${esc(t("bn_left").replace("{n}", bnFmt(left)))}</em>` : `<em class="ok">${esc(t("bn_max"))}</em>`}</span></div>`;
+    };
+    body.innerHTML = `${ok.length ? `<div class="t12x-card bn-card">${bnHeadHtml(t("bn_stats_all"), bnCountHtml(stars, "bn_of_stars", ok.length * 5))}${bnBoxesHtml(boxes)}</div>` : ""}
+      <div class="t12x-card bn-card">${bnHeadHtml(t("hs_heroes"), `<i>${esc(t("hs_tap_star"))}</i>`)}${list.map(row).join("")}</div>`;
+  };
+  draw();
+  body.onclick = (e) => {
+    const b = e.target.closest("[data-hsstar]");
+    if (!b) return;
+    const [key, k] = b.dataset.hsstar.split("|");
+    const x = ok.find((y) => y.key === key);
+    if (!x) return;
+    const n = Number(k), cur = starsOf(x);
+    x.d.saved.__shared__ = cur === n ? n - 1 : n;
+    draw();
+    save(x);
+  };
+  if (ok.length) wirePageMax({
+    btnId: "heroSkillsMaxAllBtn", key: "hero_special_skills",
+    allMax: () => ok.every((x) => starsOf(x) >= 5),
+    snap: () => Object.fromEntries(ok.map((x) => [x.key, starsOf(x)])),
+    max: () => ok.forEach((x) => { x.d.saved.__shared__ = 5; }),
+    reset: (kept) => ok.forEach((x) => { if (kept && kept[x.key] != null) x.d.saved.__shared__ = Number(kept[x.key]) || 0; }),
+    save: () => ok.forEach(save),
+    after: draw,
+  });
 }
 
+// ============================================================
+// ALLIANCE TECH PAGE (under Extra Bonus) - pattern C (owner, 4 Nov 2026):
+// answer card with a troop switch ("Troops X" counts for all three), then the
+// 16 researches in 4 stat folds (one open at a time), each row − level +.
+// Levels save through patchSkinQueued (shown at once, put back on failure).
+// ============================================================
+let AT_OPEN = "Attack"; // the open stat fold, kept for the visit
 async function renderAllianceTechPage() {
   const seq = RENDER_SEQ;
-  const items = await keptRows("skins", `skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech&select=id,name,bonus_type,bonus_value,current_level,max_level&order=sort_order.asc`);
-
+  const [items] = await Promise.all([keptRows("skins", `skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech&select=id,name,bonus_type,bonus_value,current_level,max_level&order=sort_order.asc`), maxBeforeLoad("alliance_tech")]);
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("alliance_tech_title"))}</h2>
-        <div class="sub" id="allianceTechSummary"></div>
-      </div>
-    </div>
-    <div id="allianceTechTotals" style="margin-bottom:12px;"></div>
-    <div class="t12x-card">
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-        <div class="t12x-title" style="margin:0;">${esc(t("research_title"))}</div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span class="meta" style="font-size:11px;">${esc(t("set_all_to"))}</span>
-          <select id="allianceTechQuickSelect" style="width:140px;">
-            <option value="">${esc(t("level_ellipsis"))}</option>
-            <option value="0">${esc(t("lv_none"))}</option>
-            <option value="1">Lv. 1</option>
-            <option value="2">Lv. 2</option>
-            <option value="3">Lv. 3</option>
-            <option value="4">Lv. 4</option>
-            <option value="5">Lv. 5</option>
-          </select>
-        </div>
-      </div>
-      <p class="desc" style="font-size:12px; margin:6px 0 10px;">${esc(t("alliance_tech_desc"))}</p>
-      <div id="allianceTechRows"></div>
-    </div>
-  `;
+  const TROOPS = ["Infantry", "Lancer", "Marksman"];
+  const PREFIX = { Infantry: "Infantry", Lancer: "Lancers", Marksman: "Marksman" };
+  const ROW_ORDER = ["Infantry", "Lancers", "Marksman", "Troops"];
+  const lvl = (it) => Number(it.current_level) || 0;
+  const top = (it) => (it.max_level == null ? 5 : Number(it.max_level));
+  const statOf = (it) => it.bonus_type || "Other";
+  const folds = BN_STAT_ORDER.filter((s) => items.some((it) => statOf(it) === s)).concat([...new Set(items.map(statOf))].filter((s) => !BN_STAT_ORDER.includes(s)));
 
+  content.innerHTML = `<div class="t12x bn-pg">
+      ${bnTitleHtml(t("alliance_tech_title"), t("alliance_tech_desc"), "allianceMaxAllBtn")}
+      <div class="t12x-card bn-card" id="atAnswer"></div>
+      <div class="bn-hd"><h3>${esc(t("research_title"))}</h3>
+        <label class="bn-sbtn">${esc(t("bn_set_all"))} &#9662;<select id="allianceTechQuickSelect" aria-label="${esc(t("set_all_to"))}">
+          <option value="">${esc(t("level_ellipsis"))}</option>
+          <option value="0">${esc(t("lv_none"))}</option>
+          ${[1, 2, 3, 4, 5].map((n) => `<option value="${n}">Lv. ${n}</option>`).join("")}
+        </select></label></div>
+      <div id="allianceTechRows"></div>
+    </div>`;
+
+  const answerEl = document.getElementById("atAnswer"), rowsEl = document.getElementById("allianceTechRows");
+  function draw() {
+    const troop = plxTroopOf("alliance_tech");
+    const sumLv = items.reduce((a, it) => a + lvl(it), 0), sumMax = items.reduce((a, it) => a + top(it), 0);
+    // The troop's own research plus the "Troops X" one (for all three troops); 1% a level.
+    answerEl.innerHTML = `${bnHeadHtml(t("bn_stats"), bnCountHtml(sumLv, "bn_of_levels", sumMax))}
+      <div class="bn-tsw" role="tablist">${TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === troop}" class="${x === troop ? "on" : ""}" data-attroop="${x}" style="--tc:${PLX_TROOP_COLORS[x]};"><i></i>${esc(troopDisplayName(x))}</button>`).join("")}</div>
+      ${bnBoxesHtml(BN_STAT_ORDER.map((stat) => {
+        const own = items.find((x) => x.bonus_type === stat && x.name.startsWith(PREFIX[troop] + " "));
+        const all = items.find((x) => x.bonus_type === stat && x.name.startsWith("Troops "));
+        return { label: bnAbbr(stat), val: (own ? lvl(own) : 0) + (all ? lvl(all) : 0), max: (own ? Number(own.bonus_value || 0) : 0) + (all ? Number(all.bonus_value || 0) : 0) };
+      }))}`;
+    const rank = (it) => { const i = ROW_ORDER.findIndex((p) => it.name.startsWith(p + " ")); return i === -1 ? 9 : i; };
+    rowsEl.innerHTML = folds.map((stat) => {
+      const group = items.filter((it) => statOf(it) === stat).sort((a, b) => rank(a) - rank(b));
+      const done = group.reduce((a, it) => a + lvl(it), 0), all = group.reduce((a, it) => a + top(it), 0);
+      const open = AT_OPEN === stat;
+      const rows = open ? group.map((it) => {
+        const v = lvl(it), mx = top(it);
+        return `<div class="bn-rw"><span class="bn-tx"><b>${esc(dataName(it.name))}</b><span>${it.name.startsWith("Troops ") ? `${esc(t("bn_all_troops"))} · ` : ""}<em>${esc(t("bn_pct_of").replace("{v}", bnFmt(v)).replace("{m}", bnFmt(it.bonus_value)))}</em>${v >= mx ? ` · <span class="ok">${esc(t("bn_max"))}</span>` : ""}</span></span>
+          <span class="bn-stp"><button type="button" data-pxdec="${esc(it.id)}" aria-label="&minus;"${v <= 0 ? " disabled" : ""}>&minus;</button><b>${v}</b><button type="button" data-pxinc="${esc(it.id)}" aria-label="+"${v >= mx ? " disabled" : ""}>+</button></span></div>`;
+      }).join("") : "";
+      return `<div class="bn-fd${open ? " open" : ""}"><button type="button" class="bn-fh" data-atfold="${esc(stat)}" aria-expanded="${open}"><span class="bn-ab">${esc(bnAbbr(stat))}</span><span class="bn-tx"><b>${esc(tStatLabel(stat))}</b><span>${esc(t("at_levels_researches").replace("{a}", done).replace("{b}", all).replace("{n}", group.length))}</span><span class="bn-mb"><i style="width:${all ? Math.round((done / all) * 100) : 0}%"></i></span></span><span class="ch">${open ? "&#9662;" : "&#8250;"}</span></button>${open ? `<div class="bn-fb">${rows}</div>` : ""}</div>`;
+    }).join("");
+  }
+  const setLevels = (list) => {
+    list.forEach(([it, val]) => {
+      const old = lvl(it);
+      if (old === val) return;
+      it.current_level = val;
+      patchSkinQueued(it.id, { current_level: val }).catch(() => {
+        it.current_level = old;
+        toast(t("couldnt_update_levels"), true);
+        draw();
+      });
+    });
+    draw();
+  };
+  answerEl.onclick = (e) => {
+    const b = e.target.closest("[data-attroop]");
+    if (!b || b.dataset.attroop === plxTroopOf("alliance_tech")) return;
+    PLX_TROOP.alliance_tech = b.dataset.attroop;
+    draw();
+  };
+  rowsEl.onclick = (e) => {
+    const dec = e.target.closest("[data-pxdec]"), inc = e.target.closest("[data-pxinc]");
+    if (dec || inc) {
+      const it = items.find((x) => x.id === (dec || inc).dataset[dec ? "pxdec" : "pxinc"]);
+      if (it) setLevels([[it, Math.max(0, Math.min(top(it), lvl(it) + (dec ? -1 : 1)))]]);
+      return;
+    }
+    const fold = e.target.closest("[data-atfold]");
+    if (fold) { AT_OPEN = AT_OPEN === fold.dataset.atfold ? "" : fold.dataset.atfold; draw(); }
+  };
   document.getElementById("allianceTechQuickSelect").addEventListener("change", async (e) => {
     if (e.target.value === "") return;
     const val = Number(e.target.value);
+    e.target.value = "";
     try {
       await sb(`skins?user_id=eq.${USER_ID}&category=eq.Alliance Tech`, {
         method: "PATCH",
@@ -25185,93 +25435,21 @@ async function renderAllianceTechPage() {
       dashDataChanged("skins");
       items.forEach((it) => (it.current_level = val));
       toast(t("all_researches_updated"));
-      render();
+      if (seq === RENDER_SEQ) draw();
     } catch (err) {
       toast(t("couldnt_update_levels"), true);
     }
-    e.target.value = "";
   });
-
-  const atOpen = {}; // section folded/open
-  function render() {
-    document.getElementById("allianceTechSummary").textContent = `${items.length} ${t("researches_tracked")}`;
-
-    const STAT_ORDER = ["Attack", "Defense", "Lethality", "Health"];
-    const effective = (it) => {
-      const maxLvl = it.max_level ?? 5;
-      const lvl = it.current_level ?? 0;
-      return { cur: lvl, max: Number(it.bonus_value || 0), maxLvl };
-    };
-
-    // Infantry/Lancers/Marksman rows, each its own row of 4 (Attack/Defense/Lethality/Health).
-    // The general "Troops X" research applies to all three troop types, so its
-    // level is added into each troop's own total, not shown as a separate row.
-    const TROOPS_ONLY = ["Infantry", "Lancers", "Marksman"];
-    const STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-    const TROOP_KEY = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
-    document.getElementById("allianceTechTotals").innerHTML = `<div class="t12x-card"><div class="t12x-title">${esc(t("troops_stats_title"))}</div>${plxStatTabsHtml("alliance_tech", TROOPS_ONLY.map((troop) => ({
-      key: troop, label: troopDisplayName(TROOP_KEY[troop]), color: PLX_TROOP_COLORS[TROOP_KEY[troop]],
-      html: plxStatBoxesHtml(STAT_ORDER.map((stat) => {
-        const ownIt = items.find((x) => x.bonus_type === stat && x.name.startsWith(troop + " "));
-        const troopsIt = items.find((x) => x.bonus_type === stat && x.name.startsWith("Troops "));
-        const own = ownIt ? effective(ownIt) : { cur: 0, max: 0 };
-        const shared = troopsIt ? effective(troopsIt) : { cur: 0, max: 0 };
-        return { label: STAT_ABBR[stat] || stat, val: own.cur + shared.cur, max: own.max + shared.max, dp: 0 };
-      }), true),
-    })))}</div>`;
-
-    const rowsEl = document.getElementById("allianceTechRows");
-    const TROOP_GROUPS = ["Troops", "Infantry", "Lancers", "Marksman"];
-    // Same look as the planner pages: a folding section per group, one level
-    // node per research (NOW − n + / max). Taps show at once and save in the
-    // background; a failed save puts the old level back.
-    rowsEl.innerHTML = TROOP_GROUPS.map((troop) => {
-      const group = items.filter((it) => it.name.startsWith(troop + " "));
-      if (!group.length) return "";
-      const troopLabel = troop === "Troops" ? t("troops_group_label") : troopDisplayName(troop);
-      let cur = 0, max = 0;
-      group.forEach((it) => { cur += it.current_level ?? 0; max += it.max_level ?? 5; });
-      const pct = max ? Math.floor((cur / max) * 100) : 0;
-      return plxSectionHtml({ compact: true, key: troop, title: troopLabel, sub: `+${group.reduce((a2, it) => a2 + (it.current_level ?? 0), 0)}% · ${group.length} ${t("researches_tracked")}`, pct, open: atOpen[troop] !== false, maxKey: troop,
-        body: group.map((it) => plxNodeHtml({ key: it.id, label: tStatLabel(it.bonus_type), cur: it.current_level ?? 0, max: it.max_level ?? 5, target: null, cost: `+${it.current_level ?? 0}%` })).join("") });
-    }).join("");
-
-    const setLevels = (list) => {
-      list.forEach(([it, val]) => {
-        const old = it.current_level ?? 0;
-        if (old === val) return;
-        it.current_level = val;
-        patchSkinQueued(it.id, { current_level: val }).catch(() => {
-          it.current_level = old;
-          toast(t("couldnt_update_levels"), true);
-          render();
-        });
-      });
-      render();
-    };
-    rowsEl.onclick = (e) => {
-      const dec = e.target.closest("[data-pxdec]"), inc = e.target.closest("[data-pxinc]");
-      if (dec || inc) {
-        const it = items.find((x) => x.id === (dec || inc).dataset[dec ? "pxdec" : "pxinc"]);
-        if (it) setLevels([[it, Math.max(0, Math.min(it.max_level ?? 5, (it.current_level ?? 0) + (dec ? -1 : 1)))]]);
-        return;
-      }
-      const mx = e.target.closest("[data-pxmax]");
-      if (mx) {
-        const group = items.filter((it) => it.name.startsWith(mx.dataset.pxmax + " "));
-        const maxed = group.every((it) => (it.current_level ?? 0) >= (it.max_level ?? 5));
-        setLevels(group.map((it) => [it, maxed ? 0 : it.max_level ?? 5]));
-        return;
-      }
-      const fold = e.target.closest("[data-pxfold]");
-      if (fold) {
-        atOpen[fold.dataset.pxfold] = fold.nextElementSibling.style.display === "none";
-        render();
-      }
-    };
-  }
-
-  render();
+  draw();
+  wirePageMax({
+    btnId: "allianceMaxAllBtn", key: "alliance_tech",
+    allMax: () => items.length > 0 && items.every((it) => lvl(it) >= top(it)),
+    snap: () => Object.fromEntries(items.map((it) => [it.id, lvl(it)])),
+    max: () => setLevels(items.map((it) => [it, Math.max(lvl(it), top(it))])),
+    reset: (kept) => setLevels(items.filter((it) => kept && kept[it.id] != null).map((it) => [it, Number(kept[it.id]) || 0])),
+    save: () => {},
+    after: () => {},
+  });
 }
 
 // ============================================================
@@ -28844,14 +29022,6 @@ function plxPieceStatHtml(list) {
   const f = (v) => `+${(Math.round(v * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
   return list.map((x) => `<span><em>${esc(x.label)}</em> <b>${f(x.now)}</b>${x.target > x.now + 1e-9 ? ` <i>&rarr; ${f(x.target)}</i>` : ""}</span>`).join("");
 }
-// One labelled level dropdown (+0% … max); several sit side by side in .plx-selrow.
-// upAfter: options after this index are upcoming (marked).
-function plxSelectHtml(label, key, values, selected, upAfter = Infinity) {
-  return `<label class="plx-sel"><span>${esc(label)}</span><select data-plxsel="${esc(key)}">${values.map((v, i) => `<option value="${v}" ${Number(v) === Number(selected) ? "selected" : ""}${i > upAfter ? ' class="opt-up"' : ""}>+${v}%${esc(upcomingTag(i > upAfter))}</option>`).join("")}</select></label>`;
-}
-function wirePlxSelects(root, onPick) {
-  root.querySelectorAll("select[data-plxsel]").forEach((sel) => sel.addEventListener("change", () => onPick(sel.dataset.plxsel, Number(sel.value))));
-}
 // Stat boxes (label, +value, of max, bar) - one look for every stats card.
 // oneRow: all boxes side by side on one line, even on phones.
 function plxStatBoxesHtml(list, oneRow) {
@@ -29415,78 +29585,69 @@ async function renderT12ResearchPage() {
   renderTroopPanels();
 }
 
+// Pattern C (owner, 4 Nov 2026): answer card with the stats the buildings give,
+// then one card per facility (Weapons / Defense) with a row per building and an
+// Owned switch (one tap). Max owns them all (Reset puts them back).
 async function renderFacilityPage() {
   const seq = RENDER_SEQ;
-  const buildings = await keptRows("skins", `skins?user_id=eq.${USER_ID}&category=eq.Facility&select=id,name,bonus_type,bonus_value,owned,image_url&order=sort_order.asc`);
-
+  const [buildings] = await Promise.all([keptRows("skins", `skins?user_id=eq.${USER_ID}&category=eq.Facility&select=id,name,bonus_type,bonus_value,owned,image_url&order=sort_order.asc`), maxBeforeLoad("facility")]);
   if (seq !== RENDER_SEQ) return;
-  content.innerHTML = `
-    <div class="page-head">
-      <div>
-        <h2>${esc(t("facility_title"))}</h2>
-        <div class="sub" id="facilitySummaryLine"></div>
-      </div>
-    </div>
-    <div class="t12x-card" style="margin-bottom:16px;"><div class="t12x-title">${esc(t("troops_stats_title"))}</div><div id="facilityTotals"></div></div>
-    <div class="panel">
-      <h2>${esc(t("facility_title"))}</h2>
-      <p class="desc">${esc(t("facility_click_desc"))}</p>
-      <div class="stats-row-scroll facility-cards" id="facilityCards" style="align-items:stretch;"></div>
-    </div>
-  `;
+  content.innerHTML = `<div class="t12x bn-pg">
+      ${bnTitleHtml(t("facility_title"), t("fac_desc"), buildings.length ? "facilityMaxAllBtn" : "")}
+      <div id="facilityBody"></div>
+    </div>`;
+  const body = document.getElementById("facilityBody");
+  // "Lv. 4 Weapons Facility" -> "Weapons Facility"
+  const groupOf = (b) => String(b.name || "").replace(/^\s*Lv\.?\s*\d+\s*/i, "").trim() || (b.bonus_type || "");
+  const groups = [];
+  buildings.forEach((b) => { const g = groupOf(b); let e = groups.find((x) => x.name === g); if (!e) groups.push((e = { name: g, list: [] })); e.list.push(b); });
 
-  function render() {
-    const ownedCount = buildings.filter((b) => b.owned).length;
-    document.getElementById("facilitySummaryLine").textContent = `${ownedCount} / ${buildings.length} ${t("buildings_owned_summary")}`;
-
-    const totalsByType = {};
-    const maxByType = {};
+  function draw() {
+    const owned = buildings.filter((b) => b.owned).length;
+    const totals = {}, maxes = {};
     buildings.forEach((b) => {
       if (b.bonus_value == null) return;
-      const key = b.bonus_type || "Other";
-      maxByType[key] = (maxByType[key] || 0) + Number(b.bonus_value);
-      if (b.owned) totalsByType[key] = (totalsByType[key] || 0) + Number(b.bonus_value);
+      const k = b.bonus_type || "Other";
+      maxes[k] = (maxes[k] || 0) + Number(b.bonus_value);
+      if (b.owned) totals[k] = (totals[k] || 0) + Number(b.bonus_value);
     });
-    const facEntries = Object.entries(maxByType);
-    document.getElementById("facilityTotals").innerHTML = facEntries.length
-      ? plxStatBoxesHtml(facEntries.map(([type, maxVal]) => ({ label: tStatLabel(type), val: totalsByType[type] || 0, max: maxVal })), facEntries.length <= 4)
-      : plxStatBoxesHtml([{ label: t("total_bonus"), val: 0 }]);
-
-
-
-    const cardsEl = document.getElementById("facilityCards");
-    cardsEl.innerHTML = buildings
-      .map(
-        (b) => `
-      <div class="skin-card ${b.owned ? "owned" : ""}" data-facility="${b.id}" style="flex:0 0 140px; width:140px;">
-        <div class="thumb island-thumb facility-thumb">
-          ${b.image_url ? `<img src="${esc(b.image_url)}" alt="" loading="lazy" />` : `<div class="ph">${esc(b.name[0])}</div>`}
-        </div>
-        <div class="info">
-          <div class="sname">${esc(b.name)}</div>
-          <div class="sbonus">${b.bonus_value != null ? `+${Number(b.bonus_value)}% ${esc(tStatLabel(b.bonus_type || ""))}` : esc(t("bonus_unknown"))}</div>
-          <div class="sowned">${b.owned ? esc(t("checkmark_owned")) : esc(t("not_owned_label"))}</div>
-        </div>
-      </div>`
-      )
-      .join("");
-
-    cardsEl.querySelectorAll("[data-facility]").forEach((card) => {
-      card.addEventListener("click", async (e) => {
-        const b = buildings.find((x) => x.id === card.dataset.facility);
-        const newOwned = !b.owned;
-        // Show it at once; undo it if the save fails.
-        b.owned = newOwned;
-        render();
-        patchSkinQueued(b.id, { owned: newOwned }).catch(() => {
-          if (b.owned === newOwned) { b.owned = !newOwned; render(); }
-          toast("Couldn't update building", true);
-        });
+    const types = Object.keys(maxes).sort((a, b) => { const r = (x) => { const i = BN_STAT_ORDER.indexOf(x); return i === -1 ? 99 : i; }; return r(a) - r(b); });
+    const row = (b) => `<button type="button" class="bn-rw ${b.owned ? "yes" : "no"}" data-facility="${esc(b.id)}" role="switch" aria-checked="${!!b.owned}">
+        <span class="bn-pi">${b.image_url ? `<img src="${esc(b.image_url)}" alt="" loading="lazy" />` : ""}</span>
+        <span class="bn-tx"><b>${esc(dataName(b.name))}</b><span>${b.bonus_value != null ? `<em>${bidiNum(`+${bnFmt(b.bonus_value)}%`)} ${esc(bnAbbr(b.bonus_type || ""))}</em> · ${esc(t("bn_all_troops"))}` : esc(t("bonus_unknown"))}${b.owned ? ` · <span class="ok">${esc(t("bn_owned"))}</span>` : ""}</span></span>
+        <span class="bn-sw${b.owned ? " on" : ""}"></span></button>`;
+    body.innerHTML = `<div class="t12x-card bn-card">${bnHeadHtml(t("bn_stats_all"), bnCountHtml(owned, "bn_of_owned", buildings.length))}
+        ${types.length ? bnBoxesHtml(types.map((k) => ({ label: bnAbbr(k), val: totals[k] || 0, max: maxes[k] }))) : bnBoxesHtml([{ label: t("total_bonus"), val: 0, max: 0 }])}</div>
+      ${groups.map((g) => { const ts = [...new Set(g.list.map((b) => b.bonus_type).filter(Boolean))]; return `<div class="t12x-card bn-card">${bnHeadHtml(dataName(g.name), ts.length ? `<i>${esc(ts.map(bnAbbr).join(" · "))}</i>` : "")}${g.list.map(row).join("")}</div>`; }).join("")}`;
+  }
+  const setOwned = (list) => {
+    list.forEach(([b, on]) => {
+      if (!!b.owned === on) return;
+      // Show it at once; undo it if the save fails.
+      b.owned = on;
+      patchSkinQueued(b.id, { owned: on }).catch(() => {
+        if (b.owned === on) { b.owned = !on; draw(); }
+        toast("Couldn't update building", true);
       });
     });
-  }
-
-  render();
+    draw();
+  };
+  body.onclick = (e) => {
+    const card = e.target.closest("[data-facility]");
+    if (!card) return;
+    const b = buildings.find((x) => x.id === card.dataset.facility);
+    if (b) setOwned([[b, !b.owned]]);
+  };
+  draw();
+  if (buildings.length) wirePageMax({
+    btnId: "facilityMaxAllBtn", key: "facility",
+    allMax: () => buildings.every((b) => b.owned),
+    snap: () => Object.fromEntries(buildings.map((b) => [b.id, !!b.owned])),
+    max: () => setOwned(buildings.map((b) => [b, true])),
+    reset: (kept) => setOwned(buildings.filter((b) => kept && kept[b.id] != null).map((b) => [b, !!kept[b.id]])),
+    save: () => {},
+    after: () => {},
+  });
 }
 
 // ============================================================
