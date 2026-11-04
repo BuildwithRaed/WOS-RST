@@ -703,6 +703,45 @@
   .rch-ord-row span:not(.st):not(.ds-h){ flex:1; font-weight:700; }
   .rch-ord-row{ background:var(--panel); }
   .rch-ord-row .st{ width:44px; font-weight:700; }
+  /* "Can do now" box in the title row, beside Max (owner, 4 Nov 2026), and its sheet. */
+  .plx-head.has-cando{ flex-wrap:nowrap; justify-content:flex-start; gap:8px; }
+  .plx-head.has-cando h2{ white-space:nowrap; flex:none; }
+  .plx-head.has-cando .plx-maxbtn{ flex:none; }
+  .cando-b{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; box-sizing:border-box; height:40px; min-width:0; max-width:270px; flex:0 1 auto; padding:2px 9px 2px 6px; border:1px solid rgba(76,209,138,.5); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .cando-b:hover{ border-color:rgba(76,209,138,.8); }
+  .cando-ic{ flex:none; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:rgba(76,209,138,.18); color:var(--good); font-size:12px; font-weight:800; }
+  .cando-t{ display:flex; flex-direction:column; min-width:0; line-height:1.18; }
+  .cando-t b{ font-size:13px; font-weight:700; white-space:nowrap; }
+  .cando-ls{ display:none; }
+  .cando-t small{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cando-t small.off{ opacity:.8; }
+  .cando-car{ flex:none; color:var(--good); font-size:17px; font-weight:700; line-height:1; }
+  @media (max-width:379px){ .cando-l{ display:none; } .cando-ls{ display:inline; } .cando-b{ gap:5px; padding:2px 7px 2px 5px; } }
+  .cando-box{ padding:14px 16px 16px; }
+  .cando-hd{ display:flex; align-items:center; gap:10px; font-size:17px; }
+  .cando-hd > b{ flex:1; display:flex; align-items:center; gap:6px; position:relative; }
+  .cando-sub{ font-size:12.5px; margin:2px 0 10px; line-height:1.35; }
+  .cando-green{ display:flex; flex-direction:column; gap:8px; padding:10px 12px; border:1px solid rgba(76,209,138,.5); border-radius:12px; background:rgba(76,209,138,.07); font-size:13.5px; }
+  .cando-up{ display:flex; align-items:center; gap:10px; }
+  .cando-up img{ width:44px; height:44px; border-radius:9px; object-fit:contain; flex:none; }
+  .cando-up .meta{ font-size:12px; margin-top:2px; }
+  .cando-st{ color:var(--good); font-weight:700; }
+  .cando-green .rch-trades{ margin:0; font-size:12.5px; color:#7ee6a8; line-height:1.4; }
+  .cando-out{ color:var(--amber); font-weight:600; font-size:12.5px; }
+  .cando-ok{ color:var(--good); font-weight:700; }
+  .cando-more{ font-size:12px; }
+  .cando-k{ display:block; margin:16px 0 6px; font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .cando-seg{ display:flex; width:100%; box-sizing:border-box; }
+  .cando-seg button{ flex:1; min-height:40px; font-size:14px; }
+  .cando-desc{ font-size:12px; margin-top:6px; line-height:1.35; }
+  .cando-oh{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; }
+  .cando-oh .cando-k{ margin:0; }
+  .cando-ord{ margin-top:8px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .cando-ord .rch-ord-row{ min-height:40px; padding:4px 6px 4px 12px; box-sizing:border-box; }
+  .cando-ord .rch-ord-row:first-child{ border-top:0; }
+  .cando-ord.dim{ opacity:.6; }
+  .cando-foot{ display:flex; flex-direction:column; gap:8px; margin-top:16px; }
+  .cando-foot .btn{ width:100%; min-height:42px; }
   @media (max-width:700px){
       }
   /* Pets Level card, design C v2 (19 Oct 2026). */
@@ -8271,6 +8310,16 @@ const T = {
   cg_then_out: { en: "Then {item} runs out" },
   cg_with_trades: { en: "with this week's trades" },
   cg_none_up: { en: "Nothing can go up yet" },
+  cando_short: { en: "Can do" },
+  cando_at_target: { en: "All at target" },
+  cando_nothing: { en: "Nothing yet" },
+  cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
+  cando_more: { en: "+{n} more" },
+  cando_spend: { en: "How to spend it" },
+  cando_mode_desc: { en: "My order: goes down your list below. Best value: the most stat % per item, any troop." },
+  cando_order: { en: "Your upgrade order" },
+  cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
+  cando_show_all: { en: "Show all troops ›" },
   cg_all_at_target: { en: "All pieces are at their target" },
   cg_pieces: { en: "Pieces" },
   cg_set3: { en: "3-piece set" },
@@ -10771,7 +10820,7 @@ async function renderGearLevelingGroup(target) {
     amountsId: "heroGearOwned", needId: "heroGearNeed",
     mainHtml: `<div class="plx-tsw hg-bar" data-tsw="hero_gear"><div class="plx-tsw-seg" role="tablist">${troopBtns}</div>
         <span class="hg-setw"><select class="hg-setsel" data-hgsetsel aria-label="${esc(t("set_label"))}">${HERO_GEAR_SET_NAMES.map((name) => `<option value="${esc(name)}"${name === heroGearActiveSet ? " selected" : ""}>${esc(gearSetDisplayName(name))}</option>`).join("")}</select></span></div>
-      <div class="t12x-card hg-stc"><div class="t12x-title" data-hgsttl>${esc(hgStatsTitle())}</div><div id="hgStats"></div><div data-rchsum="${esc(heroGearActiveTroop)}" data-rchpage="hero_gear"></div></div>
+      <div class="t12x-card hg-stc"><div class="t12x-title" data-hgsttl>${esc(hgStatsTitle())}</div><div id="hgStats"></div></div>
       <div class="t12x-card hg-pcs" id="heroGearTracks"></div>`,
   });
   const shell = target.querySelector(".t12x");
@@ -11552,31 +11601,130 @@ function reachPlan(tracks, have, mode, rows, conv) {
   Object.keys(tradesBy).forEach((id) => { trades[id] = tradeList(tradesBy[id]); tradesBy[id].forEach((n, r) => all.set(r, (all.get(r) || 0) + n)); });
   return { lv, left, first: stopItems[0] || null, blocker, waits, trades, tradeSum: tradeList(all), reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
 }
-// The one-line summary above a page's pieces, with the order switch.
-function reachSummaryHtml(plan, scopeTracks, unit, allKey) {
-  const tracks = scopeTracks.filter((tr) => tr.to > tr.from);
-  // "See all troops ›" (design C, owner 2 Nov 2026) stays even when the troop
-  // on screen has nothing planned.
-  if (!tracks.length && !(allKey && REACH_LAST[allKey] && REACH_LAST[allKey].tracks.some((tr) => tr.to > tr.from))) return "";
-  const reached = tracks.filter((tr) => plan.lv[tr.id] >= tr.to).length;
-  const first = plan.first ? `${esc(materialDisplayName(itemShortName(plan.first)))}` : "";
-  const leftN = plan.first ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
-  const fmtN = (n) => (/\(minutes\)$/.test(plan.first || "") ? bsTime(n) : n >= 1e6 ? `${Math.round(n / 1e5) / 10}M` : n >= 1e4 ? `${Math.round(n / 100) / 10}K` : n.toLocaleString());
-  // Same look as Chief Gear's "Can do now" (owner, 3 Nov 2026: pages follow Chief Gear).
-  const head = tracks.length ? t("rch_sum").replace("{n}", reached).replace("{m}", tracks.length).replace("{unit}", t(unit)) : t("rch_sum_done");
-  return `<div class="rch-sum rch-cg">
-    <div class="cg-sh"><span class="cg-k has-info">${esc(t("cg_can_now"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden><span class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</span></span></span>
-      <span class="rch-ctl"><div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
-      ${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="cg-ed" data-rchedit aria-label="${esc(t("rch_edit_order"))}" title="${esc(t("rch_edit_order"))}">&#9998;</button>` : ""}</span></div>
-    <div class="cg-can-l"><div class="cg-can-t"><b>${esc(head)}</b>${first ? `<small class="am">${esc(t("rch_first").replace("{item}", "@@").replace("{n}", fmtN(leftN))).replace("@@", first)}</small>` : ""}</div>
-      ${allKey ? `<button type="button" class="btn small ghost cg-show" data-rchall="${esc(allKey)}">${esc(t("cg_show"))} &#8250;</button>` : ""}</div>
-    ${(plan.tradeSum || []).length ? `<div class="rch-trades">&#8644; ${esc(t("rch_trades"))} ${reachTradeText(plan.tradeSum)}</div>` : ""}
-  </div>`;
-}
 // "1,340 Design → 134 Amber · 20 Polish → 1,000 Alloy" (trades "can reach" used).
 function reachTradeText(list) {
   const n = (v) => Math.round(v).toLocaleString();
   return (list || []).map((x) => `<b>${esc(n(x.give))} ${esc(materialDisplayName(itemShortName(x.from)))}</b> &rarr; <b>${esc(n(x.get))} ${esc(materialDisplayName(itemShortName(x.to)))}</b>`).join(" · ");
+}
+// ---- "Can do now" in the title row (owner liked the mock-up, 4 Nov 2026) ----
+// Admin only, like every "can reach" mark. Each page's reach hook calls
+// canDoSet(key, plan, tracks, unit, opts) instead of drawing a summary card:
+// a small green-edged box beside Max shows the first upgrade the Backpack
+// covers; tapping it opens a sheet with the upgrades, this week's trades,
+// what runs out, My order | Best value and the drag-to-sort upgrade order.
+// opts: { all: key for "Show all troops ›", pic(tr, lv), step(tr, lv), first: true =
+// always name the first piece on the button }.
+const CANDO = {};
+const CANDO_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
+function canDoStep(c, tr, lv) { return c.step ? c.step(tr, lv) : `${tr.short ? tr.short + " " : ""}${tr.lab ? tr.lab(tr.from) : tr.from} → ${tr.lab ? tr.lab(lv) : lv}`; }
+function canDoShort(c) {
+  const todo = c.tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => c.plan.lv[tr.id] > tr.from);
+  if (!todo.length) return { txt: t("cando_at_target"), off: true };
+  if (!up.length) return { txt: t("cando_nothing"), off: true };
+  const f = up[0];
+  if ((up.length === 1 || c.first) && f.name) {
+    const step = canDoStep(c, f, c.plan.lv[f.id]), more = up.length > 1 ? ` +${up.length - 1}` : "";
+    // Under 380 px only the level it reaches ("Jacket ★3 +3").
+    return { txt: `${f.name} ${step}${more}`, txtS: `${f.name} ${step.split("→ ").pop()}${more}` };
+  }
+  return { txt: t("rch_all_up").replace("{n}", up.length).replace("{unit}", t(c.unit)) };
+}
+function canDoBtnHtml(key) {
+  const s = canDoShort(CANDO[key]);
+  return `<span class="cando-ic" aria-hidden="true">&#10003;</span><span class="cando-t"><b><span class="cando-l">${esc(t("cg_can_now"))}</span><span class="cando-ls">${esc(t("cando_short"))}</span></b><small${s.off ? ' class="off"' : ""}>${s.txtS ? `<span class="cando-l">${esc(s.txt)}</span><span class="cando-ls">${esc(s.txtS)}</span>` : esc(s.txt)}</small></span><span class="cando-car" aria-hidden="true">&#8250;</span>`;
+}
+function canDoSet(key, plan, tracks, unit, opts) {
+  CANDO[key] = { key, plan, tracks, unit, ...(opts || {}) };
+  const head = content.querySelector(".plx-head");
+  if (head) {
+    let b = head.querySelector(`[data-cando="${key}"]`);
+    if (!b) {
+      b = document.createElement("button");
+      b.type = "button"; b.className = "cando-b"; b.dataset.cando = key;
+      const max = head.querySelector(".plx-maxbtn");
+      if (max) head.insertBefore(b, max); else head.appendChild(b);
+      head.classList.add("has-cando");
+    }
+    const html = canDoBtnHtml(key);
+    if (b.innerHTML !== html) b.innerHTML = html;
+    b.title = `${t("cg_can_now")}: ${canDoShort(CANDO[key]).txt}`;
+  }
+  const m = document.getElementById("candoSheet");
+  if (m && m.style.display !== "none" && m.dataset.key === key) canDoDraw(m);
+}
+document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-cando]"); if (b && CANDO[b.dataset.cando]) openCanDoSheet(b.dataset.cando); });
+function canDoDraw(m) {
+  const c = CANDO[m.dataset.key];
+  if (!c) return;
+  const box0 = m.querySelector(".cando-box"), keepTop = box0 ? box0.scrollTop : 0;
+  const { plan } = c;
+  const todo = c.tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => plan.lv[tr.id] > tr.from);
+  const item = plan.first ? materialDisplayName(itemShortName(plan.first)) : "";
+  const leftN = plan.first ? Math.max(0, plan.left[plan.first] || 0) : 0;
+  const fmtLeft = /\(minutes\)$/.test(plan.first || "") ? bsTime(leftN) : Math.floor(leftN).toLocaleString();
+  const upRow = (tr) => {
+    const lv = plan.lv[tr.id], pic = c.pic ? c.pic(tr, lv) : "";
+    const troop = tr.troop && tr.troop !== "all" ? reachTroopKey(tr.troop) : "";
+    const gain = reachGainText(reachTroopGain([tr], plan));
+    const meta = [troop ? `<span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span>` : "", gain ? esc(gain) : "", lv >= tr.to ? `&#10003; ${esc(t("rch_all_done"))}` : ""].filter(Boolean).join(" · ");
+    return `<div class="cando-up">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div><b>${esc(tr.name || "")}</b> <span class="cando-st">${esc(canDoStep(c, tr, lv))}</span>${meta ? `<div class="meta">${meta}</div>` : ""}</div></div>`;
+  };
+  const outLine = item ? `<div class="cando-out">&#9888; ${esc(t("rch_first").replace("{item}", item).replace("{n}", fmtLeft))}</div>` : "";
+  let green;
+  if (!todo.length) green = `<div class="cando-ok">&#10003; ${esc(t("cando_at_target"))}</div>`;
+  else if (!up.length) green = `<div class="cando-none"><b>${esc(t("cg_none_up"))}</b>${outLine}</div>`;
+  else {
+    green = up.slice(0, 3).map(upRow).join("")
+      + (up.length > 3 ? `<div class="meta cando-more">${esc(t("cando_more").replace("{n}", up.length - 3))}</div>` : "")
+      + ((plan.tradeSum || []).length ? `<div class="rch-trades">&#8644; ${esc(t("rch_trades"))} ${reachTradeText(plan.tradeSum)}</div>` : "")
+      + outLine;
+  }
+  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+  const best = UPGRADE_ORDER.mode === "best";
+  m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cg_can_now"))}">
+    <div class="cando-hd"><b class="has-info">${esc(t("cg_can_now"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden><span class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</span></span></b><button type="button" class="rfa-x" data-cdx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+    <div class="meta cando-sub">${esc(t("cando_sub"))}</div>
+    <div class="cando-green">${green}</div>
+    ${todo.length ? `<div class="cando-k">${esc(t("cando_spend"))}</div>
+    <div class="rch-seg cando-seg"><button type="button" data-cdmode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdmode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+    <div class="meta cando-desc">${esc(t("cando_mode_desc"))}</div>
+    <div class="cando-oh"><span class="cando-k">${esc(t("cando_order"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
+    <div class="meta cando-desc">${esc(t("cando_drag_hint"))}</div>
+    <div class="cando-ord${best ? " dim" : ""}">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>` : ""}
+    <div class="cando-foot">${c.all ? `<button type="button" class="btn ghost cando-all" data-rchall="${esc(c.all)}" data-cdall>${esc(t("cando_show_all"))}</button>` : ""}<button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
+  </div>`;
+  const box = m.querySelector(".cando-box");
+  if (keepTop) box.scrollTop = keepTop;
+  // Drag ⋮⋮ to change the order (saved at once; the page's marks follow).
+  m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
+    row: "[data-cdrow]",
+    done: () => {
+      const old = UPGRADE_ORDER.rows;
+      UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-cdrow]")].map((x) => old[Number(x.dataset.cdrow)]);
+      canDoRerun(m);
+    },
+    refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
+  }));
+}
+// Saves the order and works the page's marks (and this sheet, through canDoSet) out again.
+function canDoRerun(m) {
+  saveUpgradeOrder();
+  const key = m.dataset.key;
+  if (REACH_HOOKS[key]) { try { REACH_HOOKS[key](); } catch (e) { console.warn("reach", e); } }
+  canDoDraw(m);
+}
+function openCanDoSheet(key) {
+  let m = document.getElementById("candoSheet");
+  if (!m) { m = document.createElement("div"); m.id = "candoSheet"; m.className = "modal-overlay adm-sheet-wrap cando-ov"; document.body.appendChild(m); }
+  m.dataset.key = key;
+  canDoDraw(m);
+  m.style.display = "flex";
+  m.onclick = (ev) => {
+    if (ev.target === m || ev.target.closest("[data-cdx]") || ev.target.closest("[data-cdall]")) { m.style.display = "none"; return; }
+    const md = ev.target.closest("[data-cdmode]");
+    if (md) { if (UPGRADE_ORDER.mode !== md.dataset.cdmode) { UPGRADE_ORDER.mode = md.dataset.cdmode; canDoRerun(m); } return; }
+    if (ev.target.closest("[data-cdreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); canDoRerun(m); }
+  };
 }
 // ---- "See all troops ›": a small sheet with every troop at once (design C) ----
 // Pages with troops keep their last plan here: { plan, tracks, unit, go(troop) };
@@ -11685,50 +11833,6 @@ function reachWaitHtml(pg, nodes, tr, plan, tracks) {
   const low = w.some(([id, l]) => { const x = tracks.find((y) => y.id === id); return x && x.to < l; });
   return `<div class="rch-wait">&#128274; ${esc(t("rlk_wait").replace("{lv}", lvl).replace("{needs}", rules.map((r) => researchNeedsText(pg, nodes, r)).join(" + ")))}${low ? ` <span class="rch-amber">· ${esc(t("rlk_wait_target"))}</span>` : ""}</div>`;
 }
-// Order editor: the 12 rows, drag ⋮⋮ and Reset (one order for every page).
-function openUpgradeOrderSheet(after) {
-  let m = document.getElementById("rchOrderModal");
-  if (!m) { m = document.createElement("div"); m.id = "rchOrderModal"; m.className = "modal-overlay"; document.body.appendChild(m); }
-  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-  const COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  const draw = () => {
-    const rows = UPGRADE_ORDER.rows;
-    m.innerHTML = `<div class="modal-box rch-ord" style="max-width:380px;">
-      <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("rch_order_title"))}</h2>
-      <div class="meta" style="font-size:12px; margin-bottom:8px;">${esc(t("rch_order_hint"))}</div>
-      <div class="rch-ord-list">${rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-rchrow="${i}" data-rchkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>
-        ${dsHandleHtml("data-rchdrag")}</div>`).join("")}</div>
-      <div style="display:flex; gap:8px; justify-content:space-between; margin-top:12px;">
-        <button type="button" class="btn ghost" data-rchreset>${esc(t("rch_order_reset"))}</button>
-        <button type="button" class="btn" data-rchdone>${esc(t("gs_done"))}</button>
-      </div></div>`;
-    // Drag ⋮⋮ to change the order (saved with Done); the numbers follow.
-    m.querySelectorAll("[data-rchdrag]").forEach((h) => dragSort(h, {
-      row: "[data-rchrow]",
-      done: () => {
-        const old = UPGRADE_ORDER.rows;
-        UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-rchrow]")].map((x) => old[Number(x.dataset.rchrow)]);
-        draw();
-      },
-      refocus: (row) => { const r2 = [...m.querySelectorAll("[data-rchkey]")].find((x) => x.dataset.rchkey === row.dataset.rchkey), hh = r2 && r2.querySelector("[data-rchdrag]"); if (hh) hh.focus(); },
-    }));
-  };
-  draw();
-  m.style.display = "flex";
-  m.onclick = (ev) => {
-    if (ev.target === m || ev.target.closest("[data-rchdone]")) { m.style.display = "none"; saveUpgradeOrder(); if (after) after(); return; }
-    if (ev.target.closest("[data-rchreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); draw(); }
-  };
-}
-// One click handler for the order switch / edit link on every page.
-document.addEventListener("click", (ev) => {
-  const md = ev.target.closest("[data-rchmode]"), ed = ev.target.closest("[data-rchedit]");
-  if (!md && !ed) return;
-  const box = ev.target.closest("[data-rchpage]"), key = box && box.dataset.rchpage;
-  const redraw = () => { if (key && REACH_HOOKS[key]) REACH_HOOKS[key](); };
-  if (md) { if (UPGRADE_ORDER.mode === md.dataset.rchmode) return; UPGRADE_ORDER.mode = md.dataset.rchmode; saveUpgradeOrder(); redraw(); return; }
-  openUpgradeOrderSheet(redraw);
-});
 
 async function updateHeroGearTotals() {
   if (!HERO_GEAR_TABLES_CACHE) return;
@@ -11905,9 +12009,7 @@ function fillHeroGearReach() {
     if (slot) slot.innerHTML = reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab(tn));
     if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
   });
-  document.querySelectorAll("[data-rchsum][data-rchpage='hero_gear']").forEach((box) => {
-    box.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === box.dataset.rchsum), "rch_u_tracks", "hero_gear");
-  });
+  canDoSet("hero_gear", plan, tracks, "rch_u_tracks", { all: "hero_gear" });
   // The Pieces table's "Can do" row (design B1): ✓M 20 / ✓E 142 per piece.
   const cans = document.querySelectorAll("[data-hgcan]");
   if (cans.length) {
@@ -21646,7 +21748,7 @@ function plxTopBox(root) {
     box = document.createElement("div");
     box.className = "panel cg-ans g1-top";
     // Header with Hide / Show for everything under the stats (owner, 3 Nov 2026).
-    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "g1_can_bp" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
+    box.innerHTML = `<div class="g1-set"></div><div class="g1-hd"><span class="g1-hd-t">${esc(t(TOPBOX_TABS[TAB] === "nostats" ? "bs_from_backpack" : "troops_stats_title"))}</span><button type="button" class="g1-fold" data-g1fold="top:${esc(TAB)}"></button></div><div class="g1-st"></div><div class="cg-sec g1-can"></div><div class="cg-sec cg-bp g1-bp"></div>`;
     // Heroes Gears (B1): the box sits under the troop switch + Set row.
     const bar = main.querySelector(":scope > .hg-bar");
     main.insertBefore(box, bar ? bar.nextSibling : main.firstChild);
@@ -26380,8 +26482,7 @@ async function renderCharmsCalc() {
         : r <= tr.from ? `<span class="rch-mini none">${esc(t("rch_none_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"))}</span>`
         : `<span class="rch-mini">&#10003;${esc(CHARM_LEVELS[r])}</span>`) : "";
     });
-    const troop = plxTroopOf("charm"), sum = rowsEl.querySelector("[data-rchsum]");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === troop), "rch_u_charms", "charm");
+    canDoSet("charm", plan, tracks, "rch_u_charms", { all: "charm", pic: (tr, lv) => charmIconSrc(tr.troop, CHARM_LEVELS[lv]) });
   }
   REACH_HOOKS.charm = fillCharmReach;
   function renderTroopSections() {
@@ -26395,7 +26496,6 @@ async function renderCharmsCalc() {
                 <span class="sa-arrow">&rarr;</span>
                 <select data-troopsetall="${esc(troop)}" data-role="target" aria-label="${esc(t("target_upper"))}"><option value="">${esc(t("target_upper"))}…</option>${levelOptions()}</select>
               </div>`)}
-          <div data-rchsum data-rchpage="charm"></div>
           ${CHARM_PIECES.filter((p) => p.troop === troop).map((p) => {
             const mine = flat.map((c, i) => [c, i]).filter(([c]) => c.piece === p);
             const left = mine.filter(([c]) => { const st = CHARM_CALC_STATE[p.key][c.slot]; return CHARM_LEVELS.indexOf(String(st.target)) > CHARM_LEVELS.indexOf(String(st.current)); }).length;
@@ -26677,7 +26777,6 @@ async function renderChiefGearCalc() {
     statsHtml: `<div class="panel cg-ans">
         <div class="cg-kr"><span class="cg-k" title="${esc(t("troops_stats_title"))} · ATK &amp; DEF">ATK &amp; DEF</span><span class="cg-sx" id="cgSets"></span><button type="button" class="g1-fold" data-g1fold="top:chiefgear"></button></div>
         <div id="gearCurrentStats"></div>
-        <div class="cg-sec" id="cgCan" data-rchpage="chief_gear" hidden></div>
         <div class="cg-sec cg-bp" id="cgBp"></div>
       </div>`,
     mainHtml: `<div id="gearRows"></div>
@@ -26738,24 +26837,6 @@ async function renderChiefGearCalc() {
       <span class="cg-nm">${esc(pieceDisplayName(p.name))}<span class="cg-rch" data-rch="cg|${p.key}"></span></span>
     </button>`;
   }
-  // "Can do now" (admin, like every "can reach" mark): the first piece the
-  // Backpack takes up, with this week's trades, and what runs out then
-  // (no picture: owner, 3 Nov 2026).
-  function canHtml(plan, tracks) {
-    const todo = tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => plan.lv[tr.id] > tr.from);
-    const seg = `<div class="rch-seg"><button type="button" data-rchmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rchmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>${UPGRADE_ORDER.mode !== "best" ? `<button type="button" class="cg-ed" data-rchedit aria-label="${esc(t("rch_edit_order"))}" title="${esc(t("rch_edit_order"))}">&#9998;</button>` : ""}`;
-    const top = `<div class="cg-sh"><span class="cg-k">${esc(t("cg_can_now"))}</span>${todo.length ? seg : ""}</div>`;
-    if (!todo.length) return `${top}<div class="cg-ok">&#10003; ${esc(t("cg_all_at_target"))}</div>`;
-    const f = up[0] || todo[0], p = pieceOf(f.id), r = plan.lv[f.id];
-    const item = plan.first ? materialDisplayName(itemShortName(plan.first)) : "";
-    const show = `<button type="button" class="btn small ghost cg-show" data-rchall="chief_gear">${esc(t("cg_show"))} &#8250;</button>`;
-    if (!up.length) {
-      const left = item ? Math.floor(Math.max(0, plan.left[plan.first] || 0)) : 0;
-      return `${top}<div class="cg-can-l"><div class="cg-can-t"><b>${esc(t("cg_none_up"))}</b>${item ? `<small class="am">${esc(t("rch_first").replace("{item}", item).replace("{n}", left.toLocaleString()))}</small>` : ""}</div>${show}</div>`;
-    }
-    const traded = (plan.trades[f.id] || []).length > 0;
-    return `${top}<div class="cg-can-l"><div class="cg-can-t"><b>${esc(pieceDisplayName(p.name))} ${esc(cgBadge(rows[f.from]))} &rarr; <em>${esc(stepLab(r, f.from))}</em>${up.length > 1 ? ` <span class="meta" title="${esc(up.slice(1).map((x) => pieceDisplayName(pieceOf(x.id).name)).join(" · "))}">+${up.length - 1}</span>` : ""}</b>${traded ? `<small class="ok">&#8644; ${esc(t("cg_with_trades"))}</small>` : ""}${item ? `<small class="am">${esc(t("cg_then_out").replace("{item}", item))}</small>` : ""}</div>${show}</div>`;
-  }
   // "Can reach" marks (design B, 2 Nov 2026): ✓★1 under each piece's name.
   function fillChiefGearReach() {
     if (!IS_OWNER) return; // admin only for now (owner, 2 Nov 2026)
@@ -26777,8 +26858,10 @@ async function renderChiefGearCalc() {
       const r = plan.lv[tr.id], tl = plan.trades[tr.id] || [];
       el.innerHTML = tr.to > tr.from && r > tr.from ? `<span class="rch-mini cg-mk${r >= tr.to ? " full" : ""}" title="${esc(tl.length ? `${t("rch_with_trades")}: ${tl.map((x) => `${Math.round(x.give).toLocaleString()} ${materialDisplayName(itemShortName(x.from))} → ${Math.round(x.get).toLocaleString()} ${materialDisplayName(itemShortName(x.to))}`).join(" · ")}` : t("rch_mark_tip"))}">&#10003;${esc(stepLab(r, tr.from))}${tl.length ? " &#8644;" : ""}</span>` : "";
     });
-    const can = document.getElementById("cgCan");
-    if (can) { can.hidden = false; can.innerHTML = canHtml(plan, tracks); }
+    // "Can do now" box beside Max (owner, 4 Nov 2026; it was a section of the answer card).
+    canDoSet("chief_gear", plan, tracks, "rch_u_pieces", { all: "chief_gear", first: true,
+      pic: (tr) => chiefGearIcon(tr.id, tr.from),
+      step: (tr, lv) => (rows[lv] && rows[tr.from] && rows[lv].tier === rows[tr.from].tier ? `${cgStars(rows[tr.from])} → ${cgStars(rows[lv])}` : `${cgBadge(rows[tr.from])} → ${cgBadge(rows[lv])}`) });
   }
   REACH_HOOKS.chief_gear = fillChiefGearReach;
   // The Pack cost button shows the price once the card has worked it out.
@@ -31166,7 +31249,6 @@ async function renderExpertsPage() {
     <div id="expertsGrid"></div>`,
   });
   document.getElementById("expertsAmounts").innerHTML = `
-    <div id="expertsReach" data-rchsum data-rchpage="experts"></div>
     <div id="expertsFoot"></div>
     <div id="expertsTime"></div>
     <div id="expertsInventory"${BAR_SHOW_ALL.experts !== false ? "" : ` style="display:none;"`}></div>
@@ -31430,7 +31512,7 @@ async function renderExpertsPage() {
       const cum = (i) => { const c = heroCost(hero, pos[from], pos[i]); return { a: Math.max(0, c.affinity - banked), s: c.sigil }; };
       const rows = AFFINITY_CACHE[hero] || [];
       const statAt = (v) => { const x = expertLevelStat(rows, v), o = {}; if (x && x.row.stat_type) x.row.stat_type.split(",").forEach((k) => { o[k.trim()] = x.v; }); return o; };
-      tracks.push({ id: `exp|${hero}`, troop: "all", from, to, pos,
+      tracks.push({ id: `exp|${hero}`, troop: "all", from, to, pos, name: e.name || dataName(hero), img: e.img, lab: (i) => String(pos[i]),
         cost: (i) => { const a = cum(i), b = cum(i - 1); return { [AFF]: a.a - b.a, [SIG]: a.s - b.s }; },
         gain: (i) => statAt(pos[i]) });
       e.skills.forEach((sk) => {
@@ -31442,8 +31524,7 @@ async function renderExpertsPage() {
       });
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
-    const sum = document.getElementById("expertsReach");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts");
+    canDoSet("experts", plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts", { pic: (tr) => tr.img || "" });
     // H4: "✓ 12 now" / "Books short" beside each skill row, the level blocks the Backpack covers
     gridBox.querySelectorAll("[data-rchst]").forEach((el) => {
       const tr = tracks.find((x) => x.id === el.dataset.rchst);
@@ -32368,7 +32449,6 @@ async function renderPetsDataPage() {
     maxId: "petsMaxAllBtn",
     statsHtml: `<div class="t12x-card plx-stats-top" id="petsTotals"></div>`,
     mainHtml: `<div id="petsSwipeCounter"></div>
-    <div id="petsReach" data-rchsum data-rchpage="pets"></div>
     <div id="petsList"></div>`,
   });
 
@@ -32462,13 +32542,12 @@ async function renderPetsDataPage() {
     const tracks = petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
       const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
       const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
-      return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)),
+      return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)), name: dataName(pet), lab: (i) => (i < 0 ? "0" : String((levels[i] || {}).level_label ?? i)),
         cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
         gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.pets);
-    const sum = document.getElementById("petsReach");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks, "rch_u_pets");
+    canDoSet("pets", plan, tracks, "rch_u_pets", { pic: (tr) => petImage(tr.id) });
     listEl.querySelectorAll("[data-rch^='pet|']").forEach((el) => {
       const tr = tracks.find((x) => `pet|${x.id}` === el.dataset.rch);
       if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
@@ -33361,7 +33440,6 @@ async function renderT12ResearchPage() {
     };
     troopsEl.innerHTML = `
       <div data-t12head>${headHtml()}</div>
-      <div data-rchsum data-rchpage="t12_research"></div>
       ${groups.map((group) => {
         const g = groupInfo(group);
         const open = t12Open[group] !== undefined ? t12Open[group] : g.planned;
@@ -33449,8 +33527,7 @@ async function renderT12ResearchPage() {
       if (!el) return;
       el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.waits[tr.id] && !plan.blocker[tr.id] ? null : plan.blocker[tr.id], "rch_u_levels")}${reachWaitHtml("t12", lockNodes, tr, plan, tracks)}` : "";
     });
-    const sum = troopsEl.querySelector("[data-rchsum]");
-    if (sum) sum.innerHTML = reachSummaryHtml(plan, tracks.filter((tr) => tr.troop === t12ActiveTroop), "rch_u_nodes", "t12_research");
+    canDoSet("t12_research", plan, tracks, "rch_u_nodes", { all: "t12_research" });
   }
   REACH_HOOKS.t12_research = fillT12Reach;
 
