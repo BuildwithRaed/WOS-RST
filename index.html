@@ -3608,7 +3608,10 @@ input,select,textarea{
      the next box shows so it's clear the row scrolls. */
   .bs-tiles.bs-slide{ display:flex !important; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; padding-bottom:2px; }
   .bs-tiles.bs-slide::-webkit-scrollbar{ display:none; }
-  .bs-tiles > .bs-sub{ grid-column:1 / -1; }
+  /* Expert sigil boxes: smaller in the sliding row, about 4½ on screen (owner, 4 Nov 2026) */
+  .bs-tiles.plx-sig.bs-slide > *{ flex:0 0 calc((100% - 3 * 6px) / 4.5); min-height:0; padding-top:6px; padding-bottom:6px; }
+  .bs-tiles.plx-sig.bs-slide img{ width:28px; height:28px; }
+  .bs-tiles.bs-slide > [style*="--bsspan"]{ flex:0 0 calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * var(--bsspan, 1) + (var(--bsspan, 1) - 1) * 6px) !important; }
   .bs-tiles.bs-slide > *{ flex:0 0 calc((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)); min-width:0; scroll-snap-align:start; }
   .bs-tile{ gap:1px; padding:5px 3px; }
   .bs-tile img{ width:34px; height:34px; }
@@ -21808,36 +21811,31 @@ TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); }
 // boxes, 4 a row), all the boxes go in one row that scrolls sideways instead, so the card
 // stays compact (owner, 4 Nov 2026). Decided again when the count or the width changes.
 function bsSlideFit(root) {
-  root.querySelectorAll(".bs-tiles:not(.bs-sub)").forEach((g) => {
-    // Put back small boxes moved into a sideways row last time, then decide again.
-    const sub = g.querySelector(":scope > .bs-sub");
-    const n0 = g.children.length + (sub ? sub.children.length - 1 : 0);
-    const key = `${n0}|${g.clientWidth}`;
-    if (g.dataset.bsk === key && innerWidth <= 900 && (g.dataset.bssub !== "1" || sub)) return;
-    if (sub) { [...sub.children].forEach((ch) => g.insertBefore(ch, sub)); sub.remove(); }
-    g.classList.remove("bs-slide"); delete g.dataset.bsk; delete g.dataset.bssub;
+  // Phones: every Backpack box grid that needs more than one row becomes ONE row
+  // that scrolls sideways (owner, 4 Nov 2026: "make all slide", Experts sigils too).
+  // A wide box (Experts' Affinity, 3 items) keeps its width in the row.
+  root.querySelectorAll(".bs-tiles").forEach((g) => {
     const kids = [...g.children];
+    const key = `${kids.length}|${g.clientWidth}`;
+    if (g.dataset.bsk === key && innerWidth <= 900) return;
+    g.classList.remove("bs-slide"); delete g.dataset.bsk;
+    kids.forEach((ch) => ch.style.removeProperty("--bsspan"));
     if (innerWidth > 900 || kids.length < 2) return;
     const cols = getComputedStyle(g).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
-    // Wide boxes (e.g. the 3-wide Affinity box on Experts Level) keep their own row;
-    // only the small boxes after them are counted (owner, 4 Nov 2026).
-    const wide = kids.filter((ch) => { const cs = getComputedStyle(ch); return /span|-1/.test(cs.gridColumnEnd + " " + cs.gridColumnStart); });
-    const small = kids.filter((ch) => !wide.includes(ch));
-    const n = small.length, rest = n % cols;
-    const slide = n > cols && rest > 0 && rest < cols / 2;
-    if (slide && !wide.length) { g.style.setProperty("--bscols", cols); g.classList.add("bs-slide"); }
-    else if (slide) {
-      const row = document.createElement("div");
-      row.className = "bs-tiles bs-slide bs-sub";
-      row.style.setProperty("--bscols", cols);
-      g.insertBefore(row, small[0]);
-      small.forEach((ch) => row.appendChild(ch));
-      g.dataset.bssub = "1";
+    let cells = 0;
+    const spans = kids.map((ch) => { const cs = getComputedStyle(ch); const m = /span\s+(\d+)/.exec(cs.gridColumnEnd + " " + cs.gridColumnStart); const n = m ? Math.min(cols, Number(m[1])) : (/-1/.test(cs.gridColumnEnd) ? cols : 1); cells += n; return n; });
+    if (cells > cols) {
+      g.style.setProperty("--bscols", cols);
+      kids.forEach((ch, i) => { if (spans[i] > 1) ch.style.setProperty("--bsspan", spans[i]); });
+      g.classList.add("bs-slide");
     }
-    g.dataset.bsk = `${n0}|${g.clientWidth}`;
+    g.dataset.bsk = `${kids.length}|${g.clientWidth}`;
   });
 }
 window.addEventListener("resize", () => { const c = document.getElementById("content"); if (c) bsSlideFit(c); });
+// A fold opening (e.g. Experts sigils) shows boxes that had no width before.
+document.addEventListener("toggle", () => { const c = document.getElementById("content"); if (c) requestAnimationFrame(() => bsSlideFit(c)); }, true);
+document.addEventListener("click", () => { const c = document.getElementById("content"); if (c) setTimeout(() => bsSlideFit(c), 60); }, true);
 {
   let queued = false;
   const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
