@@ -3557,7 +3557,7 @@ input,select,textarea{
      off (11.5 px label, 12 px left, 18 px number, 12 px max). */
   .dh3-cols{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
   .dh3-col{ display:flex; flex-direction:column; gap:6px; min-width:0; }
-  .dh3-bx{ position:relative; overflow:hidden; display:block; width:100%; min-width:0; margin:0; padding:6px 8px 9px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .dh3-bx{ position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:center; width:100%; min-width:0; margin:0; padding:6px 8px 9px; border:1px solid var(--line); border-radius:11px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .dh3-bx > *{ white-space:nowrap; }
   .dh3-top{ display:flex; align-items:baseline; justify-content:space-between; gap:4px; line-height:15px; }
   .dh3-l{ font-size:13.5px; font-weight:700; color:var(--muted); }
@@ -7325,9 +7325,23 @@ function fitDashToScreen() {
   const el = document.getElementById("troopSections"), box = el && el.closest(".dash-fit");
   if (!el || !box) return;
   el.style.minHeight = ""; box.style.removeProperty("--sx");
-  // The Dashboard may scroll now (owner's design rule 5, 3 Nov 2026) and the troop boxes
-  // have their own sizes, so nothing is stretched to fill the screen any more.
-  if (el.querySelector(".dh3")) return;
+  const dh3 = el.querySelector(".dh3");
+  if (dh3) {
+    // Phones: the 4 rows of troop boxes grow to fill the screen, so the footer starts
+    // below it (owner, 4 Nov 2026: "we still have space … I don't want to see the
+    // bottom disclaimer"). Each box takes a quarter of the free room, at most 60 px more.
+    const bxs = dh3.querySelectorAll(".dh3-bx");
+    bxs.forEach((b) => { b.style.minHeight = ""; });
+    if (innerWidth > 700 || !bxs.length) return;
+    const free = innerHeight - 8 - (el.getBoundingClientRect().bottom + scrollY);
+    if (free <= 0) return;
+    const add = Math.min(60, Math.floor(free / 4));
+    const hs = [...bxs].map((b) => b.offsetHeight);
+    bxs.forEach((b, i) => { b.style.minHeight = `${hs[i] + add}px`; });
+    const left = innerHeight - 8 - (el.getBoundingClientRect().bottom + scrollY);
+    if (left > 0) el.style.minHeight = `${el.offsetHeight + left}px`;
+    return;
+  }
   if (innerWidth > 700) return;
   const room = () => innerHeight - 10 - (el.getBoundingClientRect().bottom + scrollY);
   const extra = room();
