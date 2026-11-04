@@ -5947,7 +5947,7 @@ const T = {
   sg_globe_pick: { en: "Pick your level: it decides which globe skins count" },
   sg_search: { en: "Search" },
   sg_lg_tap: { en: "Tap = own / unown" },
-  sg_lg_owned: { en: "owned" },
+  sg_lg_owned: { en: "green = owned" },
   sg_lg_faded: { en: "faded = not owned" },
   sg_lg_move: { en: "don't count" },
   isl_lg_tap: { en: "Tap the level = change it" },
@@ -20406,17 +20406,6 @@ async function renderRfcLabPage() {
       <span>🔒 ${esc(t("rfc_lab_open"))}</span>
       <span class="rl-lab-r"><span class="${labOn ? "rl-g" : "rl-am"}">${labDay != null ? `${esc(t("rl_day"))} ${fmt(labDay)} · ` : ""}${labOn ? `✓ ${esc(t("rl_open"))}` : esc(t("rl_off"))}</span><input type="checkbox" class="bset-sw" data-rfclabopen ${labOn ? "checked" : ""} /></span>
     </label>${labOn ? "" : `<div class="rl-note rl-am" style="margin:-4px 2px 10px;">${esc(t("rfc_lab_closed"))}</div>`}`;
-  // FC ⇄ shards converter (kept from the old page, folded).
-  const convHtml = `<details class="rl-card rl-conv">
-      <summary>${esc(t("fcs_title"))}</summary>
-      <p class="rl-note">${esc(t("fcs_simple_desc"))}</p>
-      <div class="rl-conv-g">
-        <label><span class="rl-lb">${esc(materialDisplayName("Fire Crystal"))}</span><input type="text" inputmode="numeric" data-fcconv="fc" value="${st.fcHave || ""}" placeholder="0" /></label>
-        <span class="rl-conv-x">⇄</span>
-        <label><span class="rl-lb">${esc(materialDisplayName("FC Shard"))}</span><input type="text" inputmode="numeric" data-fcconv="fcs" value="${st.fcHave ? fmt(Math.floor(st.fcHave * FCS_PER_FC)) : ""}" placeholder="0" /></label>
-      </div>
-      <div class="rl-note">1 FC = ${FCS_PER_FC} FCS</div>
-    </details>`;
   // ---- Tiers window (T2 compact table)
   const tiersHtml = () => {
     const rows = RFC_LAB_TIERS.map((tr, i) => {
@@ -20468,7 +20457,7 @@ async function renderRfcLabPage() {
     <p class="desc">${esc(t("rl_desc"))}</p>
     <div class="rl-grid">
       <div class="rl-col">${headHtml}${fastHtml}</div>
-      <div class="rl-col">${weekHtml}${labHtml}${convHtml}</div>
+      <div class="rl-col">${weekHtml}${labHtml}</div>
     </div>
     ${RFC_TIERS_OPEN ? tiersHtml() : ""}
   </div>`;
@@ -20526,12 +20515,6 @@ async function renderRfcLabPage() {
     const ov = root.querySelector("[data-rlbd]");
     new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
   }
-  // FC <-> shards: type in either box, the other follows (FC -> shards
-  // rounds down; shards -> FC rounds up, since you can't convert a fraction).
-  const fcIn = root.querySelector('[data-fcconv="fc"]'), fcsIn = root.querySelector('[data-fcconv="fcs"]');
-  fcIn.addEventListener("input", () => { const v = numOf(fcIn); fcsIn.value = v ? fmt(Math.floor(v * FCS_PER_FC)) : ""; st.fcHave = v; });
-  fcsIn.addEventListener("input", () => { const v = numOf(fcsIn); const fc = v ? Math.ceil(v / FCS_PER_FC) : 0; fcIn.value = fc ? fmt(fc) : ""; st.fcHave = fc; });
-  [fcIn, fcsIn].forEach((el) => el.addEventListener("change", save));
   root.querySelector("[data-rfclabopen]").addEventListener("change", (e) => {
     st.labOpen = e.target.checked;
     save();
@@ -25383,7 +25366,7 @@ async function renderSkinGallery() {
     </div>
     <div id="skinCatSwitcher" class="sg-cats"></div>
     ${galToolsHtml("skin", SKIN_FILTER, t("search_skins_placeholder"))}
-    <div class="sg-lg"><span>${esc(t("sg_lg_tap"))}</span><span><b>&#10003;</b> ${esc(t("sg_lg_owned"))}</span><span>${esc(t("sg_lg_faded"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
+    <div class="sg-lg"><span>${esc(t("sg_lg_tap"))}</span><span style="color:var(--good)">${esc(t("sg_lg_owned"))}</span><span>${esc(t("sg_lg_faded"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
     <div id="skinSections"></div>
     <div class="modal-overlay sg-gl-ov" id="sgGlobeSheet" style="display:none;">
       <div class="modal-box sg-gl-box" role="dialog" aria-label="${esc(t("sg_globe_title"))}">
@@ -25615,7 +25598,7 @@ async function renderSkinGallery() {
     const moreKey = `skin|${SKIN_FILTER.category}`;
     const tile = (s, down) => galTileHtml({
       id: s.id, attr: "data-skin", cls: s.owned ? "yes" : "no", img: s.image_url, name: s.name,
-      big: GALLERY_BIG_THUMB.has(s.category), down, tick: !!s.owned, pressed: !!s.owned,
+      big: GALLERY_BIG_THUMB.has(s.category), down, tick: false, pressed: !!s.owned,
     });
     sections.innerHTML = galGridHtml({
       counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
