@@ -3608,6 +3608,7 @@ input,select,textarea{
      the next box shows so it's clear the row scrolls. */
   .bs-tiles.bs-slide{ display:flex !important; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; padding-bottom:2px; }
   .bs-tiles.bs-slide::-webkit-scrollbar{ display:none; }
+  .bs-tiles > .bs-sub{ grid-column:1 / -1; }
   .bs-tiles.bs-slide > *{ flex:0 0 calc((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)); min-width:0; scroll-snap-align:start; }
   .bs-tile{ gap:1px; padding:5px 3px; }
   .bs-tile img{ width:34px; height:34px; }
@@ -21807,18 +21808,33 @@ TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); }
 // boxes, 4 a row), all the boxes go in one row that scrolls sideways instead, so the card
 // stays compact (owner, 4 Nov 2026). Decided again when the count or the width changes.
 function bsSlideFit(root) {
-  root.querySelectorAll(".bs-tiles").forEach((g) => {
-    const n = g.children.length;
-    if (innerWidth > 900 || n < 2) { g.classList.remove("bs-slide"); delete g.dataset.bsk; return; }
-    const key = `${n}|${g.clientWidth}`;
-    if (g.dataset.bsk === key) return;
-    g.classList.remove("bs-slide");
+  root.querySelectorAll(".bs-tiles:not(.bs-sub)").forEach((g) => {
+    // Put back small boxes moved into a sideways row last time, then decide again.
+    const sub = g.querySelector(":scope > .bs-sub");
+    const n0 = g.children.length + (sub ? sub.children.length - 1 : 0);
+    const key = `${n0}|${g.clientWidth}`;
+    if (g.dataset.bsk === key && innerWidth <= 900 && (g.dataset.bssub !== "1" || sub)) return;
+    if (sub) { [...sub.children].forEach((ch) => g.insertBefore(ch, sub)); sub.remove(); }
+    g.classList.remove("bs-slide"); delete g.dataset.bsk; delete g.dataset.bssub;
+    const kids = [...g.children];
+    if (innerWidth > 900 || kids.length < 2) return;
     const cols = getComputedStyle(g).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
-    const wide = [...g.children].some((ch) => /span/.test(getComputedStyle(ch).gridColumnEnd));
-    const rest = n % cols;
-    const slide = !wide && n > cols && rest > 0 && rest < cols / 2;
-    if (slide) { g.style.setProperty("--bscols", cols); g.classList.add("bs-slide"); }
-    g.dataset.bsk = `${n}|${g.clientWidth}`;
+    // Wide boxes (e.g. the 3-wide Affinity box on Experts Level) keep their own row;
+    // only the small boxes after them are counted (owner, 4 Nov 2026).
+    const wide = kids.filter((ch) => { const cs = getComputedStyle(ch); return /span|-1/.test(cs.gridColumnEnd + " " + cs.gridColumnStart); });
+    const small = kids.filter((ch) => !wide.includes(ch));
+    const n = small.length, rest = n % cols;
+    const slide = n > cols && rest > 0 && rest < cols / 2;
+    if (slide && !wide.length) { g.style.setProperty("--bscols", cols); g.classList.add("bs-slide"); }
+    else if (slide) {
+      const row = document.createElement("div");
+      row.className = "bs-tiles bs-slide bs-sub";
+      row.style.setProperty("--bscols", cols);
+      g.insertBefore(row, small[0]);
+      small.forEach((ch) => row.appendChild(ch));
+      g.dataset.bssub = "1";
+    }
+    g.dataset.bsk = `${n0}|${g.clientWidth}`;
   });
 }
 window.addEventListener("resize", () => { const c = document.getElementById("content"); if (c) bsSlideFit(c); });
