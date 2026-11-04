@@ -21874,7 +21874,10 @@ function bsSlideFit(root) {
     const wide = kids.filter((ch) => { const cs = getComputedStyle(ch); return /span|-1/.test(cs.gridColumnEnd + " " + cs.gridColumnStart); });
     const small = kids.filter((ch) => !wide.includes(ch));
     // Wide boxes (Experts' Affinity) slide in the same row at one box's width (owner, 4 Nov 2026).
-    if (kids.length > cols) {
+    // Count grid cells (a wide box takes several), so a Fold / tablet width that
+    // wraps the Affinity box onto two rows slides too.
+    const cells = kids.reduce((n, ch) => { const cs = getComputedStyle(ch); const m = /span\s+(\d+)/.exec(cs.gridColumnEnd + " " + cs.gridColumnStart); return n + (m ? Math.min(cols, Number(m[1])) : 1); }, 0);
+    if (cells > cols) {
       g.style.setProperty("--bscols", cols); g.classList.add("bs-slide");
       if (false) {
         const row = document.createElement("div");
