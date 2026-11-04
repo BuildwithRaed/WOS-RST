@@ -3983,6 +3983,138 @@ input,select,textarea{
     .pkb-ov{ align-items:center; padding:3vh 16px; }
     .pkb-sheet, .pkb-panel{ height:94vh; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
   }
+  /* My packs = P1 + P2 + P3 (owner, 4 Nov 2026) */
+  .mpk-top{ display:flex; flex-direction:column; gap:10px; padding:12px 14px; margin:0 0 14px; border-color:rgba(111,211,242,.35); }
+  .mpk-k{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .mpk-cnt{ font-weight:600; letter-spacing:0; text-transform:none; font-size:13px; }
+  .mpk-cnt b{ font-size:20px; color:var(--frost); }
+  .mpk-bar{ height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
+  .mpk-bar i{ display:block; height:100%; background:var(--ice); border-radius:4px; }
+  .mpk-new{ width:100%; min-height:46px; font-size:15px; font-weight:800; }
+  .mpk-d{ font-size:12px; line-height:1.4; }
+  .mpk-h{ display:flex; justify-content:space-between; gap:10px; margin:0 4px 6px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .mpk-h span:last-child{ letter-spacing:0; text-transform:none; font-weight:600; }
+  .mpk-list .pkb-row:first-child{ border-top:0; }
+  .pkb-m small.mpk-used{ color:var(--ice); }
+  .mpk-tap{ font-size:12px; margin:6px 4px 14px; }
+  .mpk-empty{ margin:0 0 14px; }
+  .mpk-fold{ margin:0 0 12px; }
+  .mpk-fold > summary{ list-style:none; }
+  .mpk-fold > summary::-webkit-details-marker{ display:none; }
+  .mpk-fold[open] .pkb-caret{ transform:rotate(90deg); }
+  .mpk-tpl-r{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-top:1px solid var(--line); }
+  .mpk-tpl-b{ flex:0 0 auto; display:inline-flex; gap:6px; }
+  .mpk-adm{ padding:4px 14px 12px; border-top:1px solid var(--line); font-size:12px; }
+  .mpk-adm input{ width:72px; }
+  .mpk-speed{ padding:10px 12px; border:1px solid rgba(224,178,90,.6); border-radius:12px; color:var(--amber, #e0b25a); font-size:12px; line-height:1.4; }
+  .mpk-pgs{ display:flex; flex-wrap:wrap; gap:6px; }
+  /* P3 step cards: the visitor window (div markup) and the admin's Packs window on
+     phones (the table drawn as cards, .pkb-steps). */
+  .pkc-ic, .pkc-nm, .pkc-cur, .pkc-lb, .pkc-addth{ display:none; }
+  .mpw-panel .pkc-ic{ display:inline-flex; }
+  .pkc-k{ margin:14px 0 8px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .pkc-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .pkc-chip{ display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:2px 10px 2px 4px; box-sizing:border-box; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; }
+  .pkc-chip select{ min-height:30px !important; height:30px; border:0; background:none; padding:0 2px; font-size:13px; font-weight:600; max-width:150px; color:var(--frost); }
+  .pkc-add{ padding:0 12px; color:var(--ice); font-weight:700; border-style:dashed; cursor:pointer; }
+  .pkc-add:disabled{ opacity:.4; cursor:default; }
+  .pkc-ic{ width:26px; height:26px; flex:0 0 26px; align-items:center; justify-content:center; }
+  .pkc-ic img{ width:24px; height:24px; object-fit:contain; }
+  .pkc-step{ margin:0 0 8px; padding:10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
+  .pkc-sh{ display:flex; align-items:center; gap:6px; margin-bottom:8px; min-width:0; }
+  .pkc-sh b{ font-size:15px; white-space:nowrap; }
+  .pkc-sh .meta{ font-size:12px; flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pkc-max{ display:inline-flex; align-items:center; gap:6px; margin-inline-start:auto; font-size:12px; color:var(--muted); }
+  .pkc-max input{ flex:0 0 44px !important; width:44px !important; height:32px; min-height:32px !important; padding:0 4px !important; text-align:center; font-size:14px !important; }
+  .pkc-cells{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
+  .pkc-cell{ display:flex; align-items:center; gap:4px; min-width:0; height:34px; padding:0 6px 0 4px; box-sizing:border-box; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); }
+  .pkc-cell input{ flex:1 1 auto; width:100% !important; min-width:0; height:30px !important; min-height:0 !important; margin:0; padding:0 2px !important; border:0 !important; background:none !important; font-size:14px !important; font-weight:700; text-align:end; }
+  .pkc-acts{ display:grid; grid-template-columns:1fr auto 1fr; gap:8px; margin:4px 0 8px; }
+  .pkb-steps .pkc-acts{ grid-template-columns:1fr 1fr; }
+  .pkc-acts .btn{ min-height:40px; font-weight:700; color:var(--ice); }
+  .pkc-acts .pkc-sm{ width:44px; padding:0; font-size:18px; }
+  .pkc-note{ font-size:12px; line-height:1.4; margin:4px 0; }
+  .pkc-link{ border:0; background:none; color:var(--ice); font:inherit; font-size:14px; font-weight:700; cursor:pointer; padding:8px 0; min-height:40px; }
+  .pkb-budrow span small{ display:block; font-size:12px; }
+  .pkb-budrow input[type=date]{ max-width:160px; }
+  .pkb-budrow + .pkb-budrow{ border-top:1px solid var(--line); }
+  .mpw-panel .pkb-budrow input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px !important; flex:0 0 38px; }
+  .mpw-bar [data-mptitle]{ flex:1 1 90px; min-width:0; font-size:17px !important; font-weight:800; background:none; border:none; padding:0; color:var(--frost); }
+  .mpw-tag{ flex:0 0 auto; font-size:11px; padding:2px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:800; }
+  .mpw-del{ color:var(--danger); flex:0 0 auto; }
+  @media (max-width: 380px){ .pkc-cells{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px){
+    .pkb-panel.pkb-steps .pk-tbl-wrap{ overflow:visible !important; border:0 !important; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap table{ display:block; width:100% !important; min-width:0 !important; table-layout:auto !important; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap thead, .pkb-panel.pkb-steps .pk-tbl-wrap tbody{ display:block; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap thead tr{ display:flex; flex-wrap:wrap; gap:6px; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap thead tr::before, .pkb-panel.pkb-steps .pk-tbl-wrap tbody::before{ content:attr(data-k); flex:0 0 100%; display:block; margin:2px 0 2px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+    .pkb-panel.pkb-steps .pk-tbl-wrap tbody::before{ margin:14px 0 8px; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap tr > :first-child{ position:static !important; box-shadow:none !important; background:none; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap th.pk-th{ display:inline-flex; align-items:center; gap:6px; min-width:0 !important; min-height:36px; padding:2px 10px 2px 3px !important; box-sizing:border-box; border:1px solid var(--line) !important; border-radius:10px; background:var(--panel-2) !important; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-price, .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-gems, .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-maxth{ display:none; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap th .pk-hdi{ width:30px; height:30px; border:0; background:none; }
+    .pkb-panel.pkb-steps .pkc-nm{ display:inline; font-size:13px; font-weight:600; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-addth{ display:inline-flex; padding:0 !important; border:0 !important; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap tbody tr[data-row]{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin:0 0 8px; padding:10px; border:1px solid var(--line); border-radius:12px; background:var(--panel) !important; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap tbody tr:not([data-row]){ display:none; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap tbody td{ display:flex; align-items:center; gap:4px; min-width:0 !important; padding:0 !important; }
+    .pkb-panel.pkb-steps td.pkc-price{ grid-row:1; grid-column:1; }
+    .pkb-panel.pkb-steps td.pkc-gems{ grid-row:1; grid-column:2; opacity:.85; }
+    .pkb-panel.pkb-steps td.pkc-max{ grid-row:1; grid-column:3; justify-content:flex-end; }
+    .pkb-panel.pkb-steps td.pkc-item{ height:34px; padding:0 6px 0 4px !important; box-sizing:border-box; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); }
+    .pkb-panel.pkb-steps .pkc-ic, .pkb-panel.pkb-steps .pkc-cur, .pkb-panel.pkb-steps .pkc-lb{ display:inline-flex; }
+    .pkb-panel.pkb-steps .pkc-cur, .pkb-panel.pkb-steps .pkc-lb{ font-size:12px; color:var(--muted); }
+    .pkb-panel.pkb-steps td.pkc-gems .pkc-ic{ width:20px; flex-basis:20px; }
+    .pkb-panel.pkb-steps td.pkc-gems .pkc-ic img{ width:18px; height:18px; }
+    .pkb-panel.pkb-steps .pk-tbl-wrap td input[data-pt-cell]{ flex:1 1 auto; width:100% !important; min-width:0; max-width:none !important; height:30px !important; min-height:0 !important; margin:0; padding:0 2px !important; font-size:14px !important; }
+    .pkb-panel.pkb-steps td.pkc-item input[data-pt-cell]{ border:0 !important; background:none !important; font-weight:700; text-align:end !important; }
+    .pkb-panel.pkb-steps td.pkc-price input[data-pt-cell]{ font-weight:800; font-size:15px !important; text-align:start !important; }
+    .pkb-panel.pkb-steps td.pkc-max input{ flex:0 0 44px !important; min-width:0 !important; width:44px !important; height:32px; font-size:14px !important; }
+  }
+  /* P2: the "+ New pack" sheet (bottom sheet on phones) */
+  .mpn-ov{ z-index:75; }
+  .modal-box.mpn{ max-width:480px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  .mpn-h{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:14px 14px 8px; }
+  .mpn-h b{ display:block; font-size:17px; }
+  .mpn-h small{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+  .mpn-x{ font-size:22px; }
+  .mpn-prog{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; padding:0 14px 10px; font-size:12px; color:var(--muted); }
+  .mpn-prog i{ display:block; height:4px; border-radius:3px; background:var(--line); margin-bottom:4px; }
+  .mpn-prog .on{ color:var(--frost); font-weight:700; }
+  .mpn-prog .on i{ background:var(--ice); }
+  .mpn-b{ flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; padding:2px 14px 6px; display:flex; flex-direction:column; gap:8px; }
+  .mpn-kind{ display:flex; align-items:flex-start; gap:10px; width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .mpn-kind.on{ border-color:var(--ice); box-shadow:0 0 0 1px var(--ice) inset; }
+  .mpn-kt{ flex:1 1 auto; min-width:0; }
+  .mpn-kt b{ display:block; font-size:15px; }
+  .mpn-kt b u{ text-decoration:none; font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; background:var(--ice-dim); color:var(--frost); margin-inline-start:4px; vertical-align:2px; }
+  .mpn-kt small{ display:block; font-size:12px; color:var(--muted); line-height:1.4; margin-top:2px; }
+  .mpn-ex{ display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-top:6px; }
+  .mpn-ex i{ font-style:normal; font-size:12px; font-weight:700; padding:2px 7px; border:1px solid var(--line); border-radius:6px; background:var(--panel); }
+  .mpn-ex i.b{ background:var(--ice-dim); border-color:transparent; }
+  .mpn-ex em{ font-style:normal; color:var(--muted); font-size:12px; }
+  .mpn-ck{ flex:0 0 24px; width:24px; height:24px; border:1px solid var(--line); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; color:var(--frost); font-size:14px; font-weight:800; }
+  .mpn-kind.on .mpn-ck{ background:var(--ice-dim); border-color:var(--ice); }
+  .mpn-note{ font-size:12px; line-height:1.4; }
+  .mpn-f{ display:block; }
+  .mpn-f input{ width:100%; box-sizing:border-box; min-height:42px; font-size:16px; }
+  .mpn-pg{ min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:999px; background:none; color:var(--frost); font:inherit; font-size:13px; cursor:pointer; }
+  .mpn-pg.on{ background:var(--ice-dim); border-color:var(--ice); font-weight:700; }
+  .mpn-items{ display:flex; flex-direction:column; gap:6px; }
+  .mpn-it{ display:flex; align-items:center; gap:8px; padding:4px 6px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); }
+  .mpn-it .pkc-ic{ display:inline-flex; width:30px; height:30px; flex-basis:30px; }
+  .mpn-it .pkc-ic img{ width:28px; height:28px; }
+  .mpn-it select{ flex:1 1 auto; min-width:0; min-height:36px; font-size:14px; }
+  .mpn-rm{ flex:0 0 36px; width:36px; height:36px; border:1px solid var(--line); border-radius:9px; background:none; color:var(--muted); font-size:18px; cursor:pointer; }
+  .mpn-rm:disabled{ opacity:.35; cursor:default; }
+  .mpn-add{ align-self:flex-start; }
+  .mpn-f2{ display:grid; grid-template-columns:1fr 1.4fr; gap:8px; padding:10px 14px 14px; border-top:1px solid var(--line); }
+  .mpn-f2 .btn{ min-height:44px; font-weight:800; }
+  @media (max-width: 700px){
+    .mpn-ov.modal-overlay{ align-items:flex-end; padding:0; }
+    .modal-box.mpn{ max-width:none; width:100%; max-height:92vh; border-radius:16px 16px 0 0; }
+  }
 
   /* A bit smaller on phones (owner, 3 Nov 2026: "make the font and boxes smaller a
      bit", after the wostools-sized round): labels 11 px (the 12 px blocks above),
@@ -7024,6 +7156,55 @@ const T = {
   mp_edit_in_packs: { en: "Edit in Packs" },
   mp_admin_none: { en: "No copies yet. Press Duplicate on a template." },
   mp_admin_copied: { en: "Copied to My packs — opening it on the Packs page" },
+  // My packs P1 / P2 / P3 (owner, 4 Nov 2026)
+  mpk_desc: { en: "Make pack tables that match your state's offers. They count in Budgets and Pack cost for the pages you tick." },
+  mpk_n_packs: { en: "{n} packs" },
+  mpk_1_pack: { en: "1 pack" },
+  mpk_locked: { en: "$ and Gems, how it's bought and how often it comes back are set by the kind of pack." },
+  mpk_of_used: { en: "of {m} used" },
+  mpk_new: { en: "New pack" },
+  mpk_new_d: { en: "Your packs count in Budgets and Pack cost for the pages you tick." },
+  mpk_your_packs: { en: "Your packs" },
+  mpk_tap: { en: "Tap a pack to edit its items, prices and dates." },
+  mpk_tap_admin: { en: "Tap a pack to edit it (it opens in the Packs window)." },
+  mpk_empty: { en: "No packs yet. Press + New pack to make one." },
+  mpk_kinds: { en: "Kinds of pack to copy" },
+  mpk_kinds_d: { en: "Copy one as it is" },
+  mpk_speed: { en: "Each table makes Budgets a little slower. Untick pages a pack isn't for." },
+  mpk_made: { en: "Pack made" },
+  mpn_step: { en: "Step {n} of 3" },
+  mpn_s1: { en: "How is it bought?" },
+  mpn_s2: { en: "Name and pages" },
+  mpn_s3: { en: "What it gives" },
+  mpn_tab1: { en: "Kind" },
+  mpn_tab2: { en: "Name & pages" },
+  mpn_tab3: { en: "Items" },
+  mpn_ladder: { en: "Ladder" },
+  mpn_ladder_d: { en: "Buy the steps in order. Each step can have a Max." },
+  mpn_most: { en: "most packs" },
+  mpn_wishful: { en: "Wishful" },
+  mpn_wishful_d: { en: "You pick {n} items for each step; prices go in order." },
+  mpn_mix: { en: "Mix & Match" },
+  mpn_mix_d: { en: "Pick {n} items; buy any price, in any order." },
+  mpn_pick: { en: "Pick {n}" },
+  mpn_any: { en: "any price" },
+  mpn_note1: { en: "Prices, Gems and how often it comes back are filled in for you. You can change the items and amounts next." },
+  mpn_name: { en: "Name" },
+  mpn_name_ph: { en: "e.g. Steel Weekly" },
+  mpn_pages_d: { en: "Tick the pages this pack is for. None ticked = all pages." },
+  mpn_items_d: { en: "Pick what the pack gives. You type the amounts in the next window." },
+  mpn_back: { en: "Back" },
+  mpn_next: { en: "Next" },
+  mpn_create: { en: "Create" },
+  pkc_items: { en: "Items in this pack" },
+  pkc_item: { en: "Item" },
+  pkc_del_item: { en: "Remove the last item" },
+  pkc_steps: { en: "Steps" },
+  pkc_step: { en: "Step" },
+  pkc_del_step: { en: "Remove the last step" },
+  pkc_fill: { en: "Fill from step 1" },
+  pkc_next_on: { en: "Next on" },
+  pkc_change: { en: "Change" },
   about_title: { en: "About us" },
   about_desc: { en: "Who we are and what WOS RST is for." },
   about_default_tagline: { en: "A free fan-made planner for Whiteout Survival players." },
@@ -7904,6 +8085,8 @@ window.addEventListener("popstate", (e) => {
   if (!tab) return;
   // Packs B: Back / Forward close / reopen a pack's window.
   if (tab === "packs" && TAB === "packs" && PKB_HOOK) { PKB_HOOK.history(e.state.pkb || null); return; }
+  // My packs: Back / Forward close / reopen a pack's window (visitors).
+  if (tab === "mypacks" && TAB === "mypacks" && MPW_HOOK) { MPW_HOOK.history(e.state.mpw || null); return; }
   // Admin sections: Back / Forward between the Admin home and its sections.
   if (tab === "adminpage" && typeof ADMIN_ACTIVE_TABLE !== "undefined") {
     const adm = e.state.adm || null;
@@ -11074,20 +11257,120 @@ async function packSeedTemplates(tables) {
   if (made) await savePackLinks();
   return made;
 }
+// ---- My packs = P1 + P2 + P3 (owner picked the mock-ups, 4 Nov 2026) ----------
+// P1: answer card (tables used + a big "+ New pack"), your packs as slim rows like
+// Packs B (picture, name, how often · how it's bought, Used for pages, price,
+// Count in Budgets), the kinds of pack to copy (templates) in a closed fold.
+// P2: "+ New pack" is a 3-step sheet (kind, name & pages, items); it makes the same
+// table a template copy made. P3: a pack opens in a window with step cards and no
+// sideways table (visitors' own packs here; the admin's own copies open in the
+// Packs window, which shows the same step cards on phones, `pkb-steps`).
+let MPW_OPEN = null;         // visitor: the my- pack whose window is open
+let MPW_HOOK = null;         // { history(id), close(), closeNew() } of the drawn page
+let MP_NEW = null;           // the "+ New pack" sheet's answers { step, tpl, title, named, groups, items }
+let PKB_OPEN_PENDING = null; // admin: the Packs page opens this pack's window once drawn
+function mpIconHtml(name) {
+  if (!name) return "";
+  const icon = itemRegIcon(name) || (String(name).toLowerCase() === "gems" ? MATERIAL_ICONS.gems : "") || bpIcon({ name }) || materialIconSrc(name) || "";
+  return icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : "";
+}
+function mpRowIcon(names) { for (const n of names) { const h = mpIconHtml(n); if (h) return h; } return "&#127873;"; }
+// The columns that are items (not the price, not Gems).
+function mpItemCols(columns, link) {
+  const pc = typeof link.priceCol === "number" ? link.priceCol : 0;
+  const gc = columns.findIndex((c) => /gem/i.test(String(c || "")));
+  return columns.map((_, ci) => ci).filter((ci) => ci !== pc && ci !== gc);
+}
+function mpWhenText(link) {
+  const r = link.reset;
+  if (r == null || r === "") return "";
+  if (r === "unlimited") return t("pack_reset_unlimited");
+  if (r === "once" || r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
+  if (packStackInfo(r)) return packStackText(r);
+  const p = PACK_RESET_PRESETS.find((x) => x.days === r);
+  return p ? t("pack_reset_" + p.key) : `${t("pack_reset_every")} ${r}${t("pack_days_short")}`;
+}
+// "QAR 18.99–364.99" in the shown currency (like the Packs rows).
+function mpPriceText(rows, link) {
+  const pc = typeof link.priceCol === "number" ? link.priceCol : 0, nums = [];
+  (rows || []).forEach((r) => { const n = mpNum((r.cells || [])[pc]); if (n > 0) nums.push(n); });
+  if (!nums.length) return "—";
+  const lo = Math.min(...nums), hi = Math.max(...nums), plain = (x) => String(x).replace(/[⁦-⁩]/g, "");
+  let txt = plain(packFmtMoney(lo, link.currency));
+  if (hi > lo) { const c = packConvert(hi, link.currency); txt += `–${Number(c.n).toLocaleString(LANG === "en" ? undefined : LANG, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; }
+  return bidiNum(txt);
+}
+function mpKindText(link) { return t("mp_kind_" + packTemplateKind(link)); }
+// Plain names for the kinds (the person never sees the word "template").
+const MP_KIND_KEYS = { regular: ["mpn_ladder", "mpn_ladder_d"], wishful: ["mpn_wishful", "mpn_wishful_d"], mixmatch: ["mpn_mix", "mpn_mix_d"] };
+function mpKindName(link) { return t(MP_KIND_KEYS[packTemplateKind(link)][0]); }
+function mpPagesUsed(link) {
+  const pages = Array.isArray(link.pages) ? link.pages : [];
+  const names = PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => pages.includes(k))).map(packGroupLabel);
+  return names.length ? names : [t("mp_all_pages")];
+}
+function mpRowHtml(o) {
+  return `<div class="pkb-row mpk-row${o.inB ? "" : " pkb-off"}" data-mprow="${esc(o.id)}" role="button" tabindex="0">
+    <span class="pkb-ic">${mpRowIcon(o.names)}</span>
+    <span class="pkb-m"><b>${esc(o.title)}</b><small>${esc([mpWhenText(o.link), mpKindText(o.link)].filter(Boolean).join(" · "))}</small><small class="mpk-used">${esc(o.used.join(" · "))}</small></span>
+    <span class="pkb-r"><b>${esc(o.price)}</b></span>
+    <label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-mpbud="${esc(o.id)}" ${o.inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>
+  </div>`;
+}
+// A copy of a template with the chosen items: the price and Gems columns stay
+// (with every row's price and Gems), the item columns become `items` (amounts
+// kept for an item that stays, empty for a new one).
+function mpBuildFromTemplate(tb, link, items) {
+  const pc = typeof link.priceCol === "number" ? link.priceCol : 0;
+  const gc = tb.columns.findIndex((c) => /gem/i.test(String(c || "")));
+  const itemIdx = tb.columns.map((_, ci) => ci).filter((ci) => ci !== pc && ci !== gc);
+  const at = itemIdx.length ? itemIdx[0] : (gc >= 0 ? gc : tb.columns.length);
+  const out = [];
+  let put = false;
+  const putItems = () => { if (put) return; put = true; items.forEach((it) => out.push({ name: it.name, src: it.from != null && it.from >= 0 ? it.from : -1 })); };
+  tb.columns.forEach((c, ci) => { if (ci === pc || ci === gc) { if (ci >= at) putItems(); out.push({ name: c, src: ci }); } });
+  putItems();
+  const map = {};
+  out.forEach((o, i) => { if (o.src >= 0) map[o.src] = i; });
+  const l = { ...link, priceCol: map[pc] != null ? map[pc] : 0, cols: {} };
+  if (l.daily && Array.isArray(l.daily.cols)) l.daily = { ...l.daily, cols: l.daily.cols.filter((n) => map[n] != null).map((n) => map[n]) };
+  return {
+    columns: out.map((o) => o.name),
+    rows: tb.rows.map((r) => ({ ...r, cells: out.map((o) => (o.src >= 0 ? String((r.cells || [])[o.src] ?? "") : "")) })),
+    link: l,
+  };
+}
+// Admin: a pack of yours opens in the Packs window (its editor lives there).
+// The window takes the Packs page's history entry, so Back returns to My packs.
+function mpOpenOnPacks(id) {
+  PKB_OPEN_PENDING = String(id);
+  const g = packLinkFor(id).group;
+  try { localStorage.setItem("packs_filter", g ? "cat:" + g : "all"); } catch (e) { /* blocked */ }
+  goToTab("packs");
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || TAB !== "mypacks" || !MPW_HOOK) return;
+  if (MP_NEW) MPW_HOOK.closeNew(); else if (MPW_OPEN) MPW_HOOK.close();
+});
 async function renderMyPacksPage() {
+  const seq = RENDER_SEQ;
+  const hs = history.state;
+  MPW_OPEN = hs && hs.tab === "mypacks" && hs.mpw ? String(hs.mpw) : null;
   content.innerHTML = `
-    <div class="page-head"><div><h2>${esc(t("mp_title"))}</h2><p class="desc">${esc(IS_OWNER ? t("mp_page_desc_admin") : t("mp_desc"))}</p></div></div>
+    <div class="page-head"><div><h2>${esc(t("mp_title"))}</h2><p class="desc">${esc(IS_OWNER ? t("mp_page_desc_admin") : t("mpk_desc"))}</p></div></div>
     <div id="myPacksBody"><div class="empty">Loading&hellip;</div></div>`;
   const [loaded] = await Promise.all([
     packTablesRows(),
     ensurePackLinks(),
   ]);
-  if (TAB !== "mypacks") return;
+  if (seq !== RENDER_SEQ || TAB !== "mypacks") return;
   let all = (loaded || []).filter((tb) => IS_OWNER || !packLinkFor(tb.id).hideVisitors);
   let templates = all.filter((tb) => packLinkFor(tb.id).template);
   if (IS_OWNER && !templates.length && !(await calcFlagSet("pack_templates_seeded"))) {
+    if (seq !== RENDER_SEQ) return;
     const made = await packSeedTemplates(all);
     saveCalcState("pack_templates_seeded", { at: Date.now(), made });
+    if (seq !== RENDER_SEQ) return;
     if (made) { toast(`${made} ${t("mp_templates_added")}`); return renderMyPacksPage(); }
   }
   PACK_TABLES_ALL = PACK_TABLES_ALL || all;
@@ -11095,45 +11378,200 @@ async function renderMyPacksPage() {
 }
 function renderMyPacks(el, templates, rerenderPage, allTables) {
   if (!el) return;
+  const own = IS_OWNER;
   const limit = packMyPacksLimit();
-  const kindLabel = (link) => t("mp_kind_" + packTemplateKind(link));
-  if (IS_OWNER) {
-    const mine = (allTables || []).filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP);
-    const tplRow = (tb) => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;">
-        <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))}</span></span>
-        <span style="display:inline-flex; gap:6px; flex-shrink:0;"><button type="button" class="btn small ghost" data-mpaedit>${esc(t("pk_edit"))}</button><button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}">${esc(t("mp_duplicate"))}</button></span></div>`;
-    el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
-      <div class="info-h" style="font-size:14px; font-weight:700;">${esc(t("mp_admin_settings"))}</div>
-      <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;">${esc(t("mp_limit_label"))} <input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" style="width:64px; font-size:12px; padding:3px 6px;" /></label>
-      <div class="meta info-d">${esc(t("mp_admin_desc"))}</div>
+  const mine = own ? (allTables || []).filter((tb) => packLinkForBase(tb.id).group === PACK_MINE_GROUP) : MY_PACKS;
+  const used = mine.length, full = !own && used >= limit;
+  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 100;
+  if (MPW_OPEN && (own || !packMineFind(MPW_OPEN))) MPW_OPEN = null;
+  const rowsHtml = mine.map((tb) => {
+    const link = own ? packLinkForBase(tb.id) : (tb.link || {});
+    const eff = own ? packEffectiveCols(tb) : [];
+    const names = mpItemCols(tb.columns, link).map((ci) => eff[ci] || String(tb.columns[ci] || ""));
+    return mpRowHtml({ id: String(tb.id), title: tb.title, names, link, used: mpPagesUsed(link), price: mpPriceText(tb.rows, link), inB: packInBudgets(tb.id) });
+  }).join("");
+  const tplHtml = templates.map((tb) => {
+    const link = packLinkForBase(tb.id), eff = packEffectiveCols(tb);
+    const names = mpItemCols(tb.columns, link).map((ci) => eff[ci] || String(tb.columns[ci] || ""));
+    return `<div class="mpk-tpl-r"><span class="pkb-ic">${mpRowIcon(names)}</span>
+      <span class="pkb-m"><b>${esc(mpKindName(link))}</b><small>${esc(tb.title)} · ${esc(mpKindText(link))}</small></span>
+      <span class="mpk-tpl-b">${own
+        ? `<button type="button" class="btn small ghost" data-mpaedit>${esc(t("pk_edit"))}</button><button type="button" class="btn small ghost" data-mpadup="${esc(tb.id)}">${esc(t("mp_duplicate"))}</button>`
+        : `<button type="button" class="btn small ghost" data-mpdup="${esc(tb.id)}" ${full ? "disabled" : ""}>${esc(t("mp_duplicate"))}</button>`}</span></div>`;
+  }).join("");
+  const tplOpen = (() => { try { return localStorage.getItem("mpk_tpl_open") === "1"; } catch (e) { return false; } })();
+  el.innerHTML = `<div class="panel mpk-top">
+      <div class="mpk-k"><span>${esc(t("mp_your_tables"))}</span><span class="mpk-cnt">${own || !limit
+        ? esc(used === 1 ? t("mpk_1_pack") : t("mpk_n_packs").replace("{n}", used))
+        : `<b>${used}</b> ${esc(t("mpk_of_used").replace("{m}", limit))}`}</span></div>
+      ${own || !limit ? "" : `<div class="mpk-bar"><i style="width:${pct}%;${full ? " background:var(--danger);" : ""}"></i></div>`}
+      <button type="button" class="btn mpk-new" data-mpnew ${full || !templates.length ? "disabled" : ""}>+ ${esc(t("mpk_new"))}</button>
+      <div class="meta mpk-d"${full ? ` style="color:var(--danger);"` : ""}>${esc(full ? t("mp_full").replace("{n}", limit) : t("mpk_new_d"))}</div>
     </div>
-    <div class="panel" style="margin:0 0 12px;">
-      <div class="info-h" style="font-size:14px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</div>
-      ${templates.map(tplRow).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_no_templates"))}</div>`}
-      <div class="meta info-d">${esc(t("mp_template_edit_hint"))}</div>
-    </div>
-    <div class="panel" style="margin:0 0 12px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><span style="font-size:14px; font-weight:700;">${esc(t("mp_your_tables"))} <span class="meta" style="font-size:11px;">(${mine.length})</span></span>
-      <button type="button" class="btn small" data-mpopenpacks>${esc(t("mp_edit_in_packs"))}</button></div>
-      ${mine.map((tb) => `<div style="padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(packLinkForBase(tb.id)))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => packLinkForBase(tb.id).pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_all_pages"))}</span></div>`).join("") || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_admin_none"))}</div>`}
-    </div>`;
+    <div class="mpk-h"><span>${esc(t("mpk_your_packs"))}</span>${used ? `<span>${esc(t("pk_in_budgets"))}</span>` : ""}</div>
+    ${used ? `<div class="pkb-cat open mpk-list">${rowsHtml}</div><div class="meta mpk-tap">${esc(t(own ? "mpk_tap_admin" : "mpk_tap"))}</div>` : `<div class="empty mpk-empty">${esc(t("mpk_empty"))}</div>`}
+    <details class="pkb-cat mpk-fold" data-mpktpl${tplOpen ? " open" : ""}>
+      <summary class="pkb-cat-h"><span class="pkb-n">${templates.length}</span><span class="pkb-cat-t"><b>${esc(t("mpk_kinds"))}</b><small>${esc(own ? t("mp_template_note") : t("mpk_kinds_d"))}</small></span><span class="pkb-caret" aria-hidden="true">&#9656;</span></summary>
+      ${tplHtml || `<div class="meta pkb-note">${esc(t("mp_no_templates"))}</div>`}
+      ${own ? `<div class="meta pkb-note">${esc(t("mp_template_edit_hint"))}</div>` : ""}
+    </details>
+    ${own ? `<details class="pkb-cat mpk-fold">
+      <summary class="pkb-cat-h"><span class="pkb-n">&#9881;</span><span class="pkb-cat-t"><b>${esc(t("mp_admin_settings"))}</b><small>${esc(t("mp_limit_label"))}: ${limit}</small></span><span class="pkb-caret" aria-hidden="true">&#9656;</span></summary>
+      <div class="mpk-adm"><label class="pkb-budrow"><span>${esc(t("mp_limit_label"))}</span><input type="number" min="0" max="50" step="1" class="keep-w" data-mplimit value="${limit}" /></label><div class="meta">${esc(t("mp_admin_desc"))}</div></div>
+    </details>` : ""}
+    ${used ? `<div class="mpk-speed">&#9201; ${esc(t("mpk_speed"))}</div>` : ""}
+    ${MPW_OPEN ? mpWindowHtml(packMineFind(MPW_OPEN)) : ""}
+    <div id="mpNewHost"></div>`;
+  const redraw = () => {
+    const b = el.querySelector(".mpw-panel > .pk-body"), st = b ? b.scrollTop : 0;
+    keepBoxes(el, () => renderMyPacks(el, templates, rerenderPage, allTables));
+    const b2 = el.querySelector(".mpw-panel > .pk-body");
+    if (b2) b2.scrollTop = st;
+  };
+  const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
+  // The window (visitors) has its own history entry: Back / ‹ / Esc / the dim edge close it.
+  const mpwOpen = (id) => {
+    MPW_OPEN = String(id);
+    if (!(history.state && history.state.tab === "mypacks" && history.state.mpw === MPW_OPEN)) history.pushState({ tab: "mypacks", mpw: MPW_OPEN }, "", location.pathname + location.search);
+    redraw();
+    const b = el.querySelector(".mpw-panel > .pk-body");
+    if (b) b.scrollTop = 0;
+  };
+  const mpwClose = () => {
+    if (history.state && history.state.tab === "mypacks" && history.state.mpw) { history.back(); return; }
+    MPW_OPEN = null;
+    redraw();
+  };
+  MPW_HOOK = {
+    history: (id) => { MPW_OPEN = id && packMineFind(id) ? String(id) : null; redraw(); },
+    close: mpwClose,
+    closeNew: () => { MP_NEW = null; drawNew(); },
+  };
+  const fold = el.querySelector("[data-mpktpl]");
+  if (fold) fold.addEventListener("toggle", () => { try { localStorage.setItem("mpk_tpl_open", fold.open ? "1" : "0"); } catch (e) { /* blocked */ } });
+  // Count in Budgets: the row's tick and the window's switch.
+  el.querySelectorAll("[data-mpbud]").forEach((cb) => cb.addEventListener("change", () => {
+    const id = cb.dataset.mpbud;
+    if (cb.checked) delete PACK_BUDGET_OFF[id]; else PACK_BUDGET_OFF[id] = true;
+    saveCalcState("pack_budget_off", PACK_BUDGET_OFF);
+    PACK_PLAN_CACHE.clear();
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    el.querySelectorAll(`[data-mpbud="${CSS.escape(id)}"]`).forEach((x) => { x.checked = cb.checked; const row = x.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !cb.checked); });
+  }));
+  el.querySelectorAll("[data-mprow]").forEach((row) => {
+    const go = () => (own ? mpOpenOnPacks(row.dataset.mprow) : mpwOpen(row.dataset.mprow));
+    row.addEventListener("click", (e) => { if (e.target.closest(".pkb-tk")) return; go(); });
+    row.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !e.target.closest(".pkb-tk")) { e.preventDefault(); go(); } });
+  });
+  const ov = el.querySelector("[data-mpwov]");
+  if (ov) ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-mpwclose]")) mpwClose(); });
+  // ---- "+ New pack" (P2): kind, name & pages, items ----
+  const host = el.querySelector("#mpNewHost");
+  const tplOf = (id) => templates.find((x) => String(x.id) === String(id));
+  const itemsOf = (tb) => { const link = packLinkForBase(tb.id), eff = packEffectiveCols(tb); return mpItemCols(tb.columns, link).map((ci) => ({ name: eff[ci] || String(tb.columns[ci] || ""), from: ci })); };
+  const defName = (tb) => `${String(tb.title).replace(/\s*type$/i, "")} (${t("mp_mine_suffix")})`;
+  const pickTpl = (tb) => {
+    MP_NEW.tpl = String(tb.id);
+    MP_NEW.items = itemsOf(tb);
+    if (!MP_NEW.named) MP_NEW.title = defName(tb);
+  };
+  function drawNew() {
+    if (!host) return;
+    if (!MP_NEW) { host.innerHTML = ""; return; }
+    host.innerHTML = mpNewHtml(templates);
+    const nm = host.querySelector("[data-mpnname]");
+    if (nm) nm.addEventListener("input", () => { MP_NEW.title = nm.value; MP_NEW.named = true; });
+  }
+  host.onclick = async (e) => {
+    if (!MP_NEW) return;
+    if (e.target.matches("[data-mpnov]") || e.target.closest("[data-mpnclose]")) { MP_NEW = null; drawNew(); return; }
+    const k = e.target.closest("[data-mpnkind]");
+    if (k) { const tb = tplOf(k.dataset.mpnkind); if (tb) { pickTpl(tb); drawNew(); } return; }
+    const pg = e.target.closest("[data-mpnpg]");
+    if (pg) {
+      const key = pg.dataset.mpnpg, i = MP_NEW.groups.indexOf(key);
+      if (i >= 0) MP_NEW.groups.splice(i, 1); else MP_NEW.groups.push(key);
+      pg.classList.toggle("on", i < 0); pg.setAttribute("aria-pressed", String(i < 0));
+      return;
+    }
+    const rm = e.target.closest("[data-mpnrm]");
+    if (rm) { if (MP_NEW.items.length > 1) { MP_NEW.items.splice(Number(rm.dataset.mpnrm), 1); drawNew(); } return; }
+    if (e.target.closest("[data-mpnadd]")) {
+      const have = new Set(MP_NEW.items.map((x) => String(x.name).toLowerCase()));
+      const name = packResourceChoices("").find((n) => !have.has(n.toLowerCase())) || "Item";
+      MP_NEW.items.push({ name, from: -1 });
+      drawNew();
+      return;
+    }
+    if (e.target.closest("[data-mpnback]")) { MP_NEW.step = Math.max(1, MP_NEW.step - 1); drawNew(); return; }
+    if (e.target.closest("[data-mpnnext]")) { MP_NEW.step = Math.min(3, MP_NEW.step + 1); drawNew(); const f = host.querySelector("[data-mpnname]"); if (f && matchMedia("(min-width: 701px)").matches) f.focus(); return; }
+    const mk = e.target.closest("[data-mpnmake]");
+    if (mk) { mk.disabled = true; await mpCreate(); }
+  };
+  host.onchange = (e) => {
+    const sel = e.target.closest("[data-mpnit]");
+    if (!sel || !MP_NEW) return;
+    const it = MP_NEW.items[Number(sel.dataset.mpnit)];
+    if (it && it.name !== sel.value) { it.name = sel.value; it.from = -1; drawNew(); }
+  };
+  async function mpCreate() {
+    const s = MP_NEW, tb = s && tplOf(s.tpl);
+    if (!tb) return;
+    const src = JSON.parse(JSON.stringify((PACK_LINKS || {})[String(tb.id)] || { priceCol: 0, cols: {} }));
+    const built = mpBuildFromTemplate(tb, src, s.items.filter((x) => x && x.name));
+    const pages = [];
+    PACK_PAGE_GROUPS.filter((g) => s.groups.includes(g.key)).forEach((g) => g.pages.forEach((k) => { if (!pages.includes(k)) pages.push(k); }));
+    const title = (String(s.title || "").trim() || defName(tb)).slice(0, 60);
+    if (own) {
+      const payload = { title, columns: built.columns, rows: built.rows, sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
+      try {
+        const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
+        PACK_LINKS[String(saved.id)] = { ...built.link, group: PACK_MINE_GROUP, hideVisitors: true, pages };
+        await savePackLinks();
+        PACK_TABLES_CACHE = null;
+        PACK_PLAN_CACHE.clear();
+        if (typeof budgetInvalidate === "function") budgetInvalidate();
+        MP_NEW = null;
+        toast(t("mpk_made"));
+        mpOpenOnPacks(saved.id);
+      } catch (err) { toast("Couldn't make that pack", true); drawNew(); }
+      return;
+    }
+    if (MY_PACKS.length >= packMyPacksLimit()) { MP_NEW = null; redraw(); return; }
+    const link = built.link;
+    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors;
+    const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title, columns: built.columns, rows: built.rows.map((r) => ({ cells: r.cells })), link: { ...link, pages } };
+    MY_PACKS.push(mp);
+    MP_NEW = null;
+    changed(false);
+    toast(t("mpk_made"));
+    mpwOpen(mp.id);
+  }
+  const newBtn = el.querySelector("[data-mpnew]");
+  if (newBtn) newBtn.addEventListener("click", () => {
+    if (!templates.length || (!own && MY_PACKS.length >= packMyPacksLimit())) return;
+    const first = templates.find((tb) => packTemplateKind(packLinkForBase(tb.id)) === "regular") || templates[0];
+    MP_NEW = { step: 1, tpl: null, title: "", named: false, groups: [], items: [] };
+    pickTpl(first);
+    drawNew();
+  });
+  drawNew();
+  if (own) {
     const inp = el.querySelector("[data-mplimit]");
-    inp.addEventListener("change", async () => {
+    if (inp) inp.addEventListener("change", async () => {
       const n = Math.max(0, Math.min(50, Math.floor(Number(inp.value) || 0)));
       inp.value = n;
       PACK_LINKS.__settings = { ...(PACK_LINKS.__settings || {}), myPacksLimit: n };
       await savePackLinks();
       toast(t("mp_limit_saved"));
     });
-    const openPacks = () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_MINE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); };
-    el.querySelector("[data-mpopenpacks]").addEventListener("click", openPacks);
-    // Templates are no longer listed on the Packs page; Edit opens just them there.
-    el.querySelectorAll("[data-mpaedit]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_TEMPLATE_GROUP); } catch (e) {} const btn = document.querySelector('[data-tab="packs"]'); if (btn) btn.click(); }));
+    // Templates are not listed on the Packs page; Edit opens just them there.
+    el.querySelectorAll("[data-mpaedit]").forEach((b) => b.addEventListener("click", () => { try { localStorage.setItem("packs_filter", "cat:" + PACK_TEMPLATE_GROUP); } catch (e) {} goToTab("packs"); }));
     el.querySelectorAll("[data-mpadup]").forEach((b) => b.addEventListener("click", async () => {
       const tb = templates.find((x) => String(x.id) === b.dataset.mpadup);
       if (!tb) return;
       b.disabled = true;
-      const payload = { title: `${String(tb.title).replace(/\s*type$/i, "")} (${t("mp_mine_suffix")})`, columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ ...r, cells: (r.cells || []).slice() })), sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
+      const payload = { title: defName(tb), columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ ...r, cells: (r.cells || []).slice() })), sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
       try {
         const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
         const src = JSON.parse(JSON.stringify(PACK_LINKS[String(tb.id)] || { priceCol: 0, cols: {} }));
@@ -11141,96 +11579,22 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         await savePackLinks();
         PACK_TABLES_CACHE = null;
         toast(t("mp_admin_copied"));
-        openPacks();
+        mpOpenOnPacks(saved.id);
       } catch (err) { b.disabled = false; toast("Couldn't duplicate table", true); }
     }));
     return;
   }
-  const used = MY_PACKS.length, full = used >= limit;
-  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 100;
-  const tplHtml = templates.map((tb) => {
-    const link = packLinkForBase(tb.id);
-    return `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-top:6px;">
-      <span style="min-width:0;"><b>${esc(tb.title)}</b> <span class="meta" style="font-size:11px;">· ${esc(kindLabel(link))}</span></span>
-      <button type="button" class="btn small ghost" data-mpdup="${esc(tb.id)}" ${full ? "disabled" : ""} style="flex-shrink:0;">${esc(t("mp_duplicate"))}</button>
-    </div>`;
-  }).join("");
-  const cardHtml = (mp) => {
-    const link = mp.link || {};
-    const priceCol = typeof link.priceCol === "number" ? link.priceCol : 0;
-    const gemsCi = mp.columns.findIndex((c) => /gem/i.test(String(c || "")));
-    const top = Math.max(0, ...mp.rows.map((r) => mpNum(r.cells[priceCol])));
-    const canRow = MP_PRICE_STEPS.some((v) => v > top + 0.001);
-    const resCols = mp.columns.map((c, ci) => ci).filter((ci) => ci !== priceCol && ci !== gemsCi);
-    const pages = Array.isArray(link.pages) ? link.pages : [];
-    const numericReset = typeof link.reset === "number";
-    const head = (ci) => {
-      if (ci === priceCol) return `<span class="meta">$ 🔒</span>`;
-      if (ci === gemsCi) return `<span class="meta">${esc(mp.columns[ci])} 🔒</span>`;
-      const cur = packResourceByName(mp.columns[ci]) || String(mp.columns[ci] || "");
-      const known = packResourceChoices(cur);
-      return `<select data-mpcol="${ci}" class="pack-col-pick keep-w" title="${esc(materialDisplayName(cur))}" style="width:72px; max-width:90px; font-size:11px; font-weight:600; padding:3px 2px;">
-        ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
-        ${known.some((n) => n.toLowerCase() === cur.toLowerCase()) || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
-      </select>`;
-    };
-    return `<div class="panel" data-mpcard="${esc(mp.id)}" style="margin-top:12px; min-width:0; ${mp.columns.length > 5 ? "grid-column:1 / -1;" : ""}">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <span style="min-width:0;"><b>${esc(mp.title)}</b> <span style="font-size:10px; padding:1px 7px; border-radius:6px; background:#e0b25a; color:#1a1a1a; font-weight:700;">${esc(t("mp_tag"))}</span>
-          <br><span class="meta" style="font-size:11px;">${esc(kindLabel(link))} · ${esc(t("mp_used_for"))}: ${esc(PACK_PAGE_GROUPS.filter((g) => g.pages.some((k) => pages.includes(k))).map(packGroupLabel).join(", ") || t("mp_all_pages"))}</span></span>
-        <button type="button" class="btn small ghost" data-mpdel="${esc(mp.id)}" style="color:var(--danger); flex-shrink:0;">${esc(t("mp_delete"))}</button>
-      </div>
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
-        <input data-mptitle value="${esc(mp.title)}" maxlength="60" style="flex:1 1 160px; min-width:120px; font-size:13px; font-weight:700;" />
-        <span class="meta" style="font-size:11px;">${esc(t("mp_column"))}</span>
-        <button type="button" class="btn small ghost" data-mpaddcol style="width:26px; padding:3px 0;">+</button>
-        <button type="button" class="btn small ghost" data-mpdelcol ${resCols.length <= 1 ? "disabled" : ""} style="width:26px; padding:3px 0;">&minus;</button>
-        <span class="meta" style="font-size:11px;">${esc(t("mp_row"))}</span>
-        <button type="button" class="btn small ghost" data-mpaddrow ${canRow ? "" : "disabled"} style="width:26px; padding:3px 0;">+</button>
-        <button type="button" class="btn small ghost" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} style="width:26px; padding:3px 0;">&minus;</button>
-      </div>
-      <div class="mp-wrap" style="overflow-x:auto; margin-top:8px;">
-        <table style="border-collapse:collapse; font-size:12px; min-width:100%;">
-          <thead><tr>${mp.columns.map((_, ci) => `<th style="padding:4px; border-bottom:1px solid var(--line); text-align:center; min-width:${ci === priceCol ? 52 : 74}px;">${head(ci)}</th>`).join("")}<th class="meta" style="padding:4px; border-bottom:1px solid var(--line); width:58px;">${esc(t("mp_max"))}</th></tr></thead>
-          <tbody>${mp.rows.map((r, ri) => `<tr>${mp.columns.map((_, ci) => ci === priceCol || ci === gemsCi
-            ? `<td class="meta" style="text-align:center; padding:3px;">${esc(ci === priceCol ? packFmtMoney(mpNum(r.cells[ci]), link.currency || "USD") : Number(mpNum(r.cells[ci])).toLocaleString())}</td>`
-            : `<td style="text-align:center; padding:3px;"><input inputmode="numeric" class="keep-w" data-mpcell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:62px; text-align:center; font-size:13px; padding:3px;" /></td>`).join("")}
-            <td style="text-align:center; padding:3px;"><input type="number" min="1" step="1" data-mprowmax="${ri}" class="keep-w" value="${esc((link.rowMax || {})[ri] || "")}" placeholder="1" style="width:48px; text-align:center; font-size:12px; padding:3px;" /></td></tr>`).join("")}</tbody>
-        </table>
-      </div>
-      ${canRow ? "" : `<div class="meta" style="font-size:11px; margin-top:6px; color:var(--danger);">${esc(t("mp_row_top"))}</div>`}
-      <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t("mp_row_hint"))}</div>
-      <div style="margin-top:10px; font-size:12px;"><b>${esc(t("mp_used_for"))}</b></div>
-      <div style="display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:6px;">
-        ${PACK_PAGE_GROUPS.map((g) => `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px;"><input type="checkbox" data-mppage="${esc(g.key)}" ${g.pages.some((k) => pages.includes(k)) ? "checked" : ""} /><span>${esc(packGroupLabel(g))}</span></label>`).join("")}
-      </div>
-      ${numericReset ? `<label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px;"><span>${esc(t("mp_next_date"))}</span><input type="date" class="keep-w" data-mpdate value="${esc(packValidDay(link.resetDay) || "")}" style="font-size:12px; padding:3px 6px;" /><span class="meta" style="font-size:10.5px;">${esc(t("mp_every_days").replace("{n}", link.reset))}</span></label>` : ""}
-      <div class="meta" style="font-size:10.5px; margin-top:8px;">🔒 ${esc(t("mp_locked"))}</div>
-    </div>`;
-  };
-  el.innerHTML = `<div class="panel" style="margin:0 0 12px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><span style="font-size:14px; font-weight:700; color:var(--ice);">${esc(t("mp_templates_title"))}</span><span class="meta" style="font-size:12px;">${used} ${esc(t("mp_of"))} ${limit} ${esc(t("mp_tables_used"))}</span></div>
-    <div style="height:6px; border-radius:4px; background:var(--line); margin-top:8px; overflow:hidden;"><i style="display:block; height:100%; width:${pct}%; background:${full ? "var(--danger)" : "var(--good)"};"></i></div>
-    ${tplHtml || `<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mp_no_templates"))}</div>`}
-    ${full ? `<div style="font-size:11.5px; margin-top:6px; color:var(--danger);">${esc(t("mp_full").replace("{n}", limit))}</div>` : ""}
-    <div class="meta" style="font-size:11px; margin-top:8px;">${esc(t("mp_where"))}</div>
-  </div>
-  <div style="font-size:15px; font-weight:800; color:var(--ice); margin:18px 0 4px; padding-bottom:4px; border-bottom:2px solid var(--line);">${esc(t("mp_your_tables"))} <span class="meta" style="font-size:11px; font-weight:500;">(${used})</span></div>
-  ${used ? "" : `<div class="empty" style="margin-top:10px;">${esc(t("mp_empty"))}</div>`}
-  <div class="grid g2" style="align-items:start;">${MY_PACKS.map(cardHtml).join("")}</div>
-  ${used ? `<div style="margin-top:12px; padding:8px 10px; border:1px dashed #e0b25a; border-radius:8px; color:#e0b25a; font-size:11.5px;">⏱ ${esc(t("mp_speed_note"))}</div>` : ""}`;
-  const redraw = () => keepBoxes(el, () => renderMyPacks(el, templates, rerenderPage)); // the table keeps its sideways scroll
-  const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
   el.querySelectorAll("[data-mpdup]").forEach((b) => b.addEventListener("click", () => {
     if (MY_PACKS.length >= packMyPacksLimit()) return;
     const tb = templates.find((x) => String(x.id) === b.dataset.mpdup);
     if (!tb) return;
     const src = JSON.parse(JSON.stringify((PACK_LINKS || {})[String(tb.id)] || {}));
     delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors;
-    const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title: `${String(tb.title).replace(/\s*type$/i, "")} (${t("mp_mine_suffix")})`, columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ cells: (r.cells || []).slice() })), link: { ...src, pages: [], cols: {} } };
+    const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title: defName(tb), columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ cells: (r.cells || []).slice() })), link: { ...src, pages: [], cols: {} } };
     MY_PACKS.push(mp);
     MY_PACKS_OPEN.add(mp.id);
-    changed(true);
+    changed(false);
+    mpwOpen(mp.id);
   }));
   el.querySelectorAll("[data-mpcard]").forEach((card) => {
     const mp = packMineFind(card.dataset.mpcard);
@@ -11242,7 +11606,8 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
       e.preventDefault(); e.stopPropagation();
       if (!confirm(t("mp_delete_confirm").replace("{t}", mp.title))) return;
       MY_PACKS = MY_PACKS.filter((x) => x !== mp);
-      changed(true);
+      changed(false);
+      mpwClose();
     });
     const title = card.querySelector("[data-mptitle]");
     title.addEventListener("change", () => { mp.title = title.value.trim().slice(0, 60) || mp.from || "My pack"; changed(true); });
@@ -11307,7 +11672,108 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
       if (link.rowMax) delete link.rowMax[mp.rows.length];
       changed(true);
     });
+    // "Fill from step 1": every later step = step 1 × the price's tier (like Gems:
+    // 4.99 → 9.99 is ×2), the price and Gems stay.
+    card.querySelector("[data-mpfill]").addEventListener("click", () => {
+      const g = gemsCi(), p0 = mpNum((mp.rows[0] || { cells: [] }).cells[priceCol]);
+      if (!p0) return;
+      const res = mp.columns.map((c, ci) => ci).filter((ci) => ci !== priceCol && ci !== g);
+      mp.rows.forEach((r, ri) => {
+        if (!ri) return;
+        const ratio = mpGems(mpNum(r.cells[priceCol])) / mpGems(p0);
+        res.forEach((ci) => { const v = mpNum(mp.rows[0].cells[ci]); r.cells[ci] = v ? String(Math.round(v * ratio)) : ""; });
+      });
+      changed(true);
+    });
   });
+}
+// P3 (visitors): the pack's window. Items as picture chips (+ Item / − Item), each
+// price step a card (price, Gems, Max, one box per item with its picture), + Step /
+// − Step / Fill from step 1, then Used for chips, Count in Budgets, next date. Every
+// box keeps the old data-mp* attribute, so the save code is the old one.
+function mpWindowHtml(mp) {
+  if (!mp) return "";
+  const link = mp.link || {};
+  const priceCol = typeof link.priceCol === "number" ? link.priceCol : 0;
+  const gemsCi = mp.columns.findIndex((c) => /gem/i.test(String(c || "")));
+  const top = Math.max(0, ...mp.rows.map((r) => mpNum(r.cells[priceCol])));
+  const canRow = MP_PRICE_STEPS.some((v) => v > top + 0.001);
+  const resCols = mp.columns.map((c, ci) => ci).filter((ci) => ci !== priceCol && ci !== gemsCi);
+  const pages = Array.isArray(link.pages) ? link.pages : [];
+  const numericReset = typeof link.reset === "number";
+  const nameOf = (ci) => packResourceByName(mp.columns[ci]) || String(mp.columns[ci] || "");
+  const chip = (ci) => {
+    const cur = nameOf(ci), known = packResourceChoices(cur);
+    return `<label class="pkc-chip" title="${esc(materialDisplayName(cur))}"><span class="pkc-ic">${mpIconHtml(cur)}</span><select data-mpcol="${ci}" class="pack-col-pick keep-w" aria-label="${esc(materialDisplayName(cur))}">
+      ${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === cur.toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}
+      ${known.some((n) => n.toLowerCase() === cur.toLowerCase()) || !cur ? "" : `<option value="${esc(cur)}" selected>${esc(cur)}</option>`}
+    </select></label>`;
+  };
+  const step = (r, ri) => `<div class="pkc-step">
+      <div class="pkc-sh"><b>${esc(packFmtMoney(mpNum(r.cells[priceCol]), link.currency || "USD"))}</b>${gemsCi >= 0 ? `<span class="meta">· ${esc(Number(mpNum(r.cells[gemsCi])).toLocaleString())} ${esc(materialDisplayName(mp.columns[gemsCi]) || "Gems")}</span>` : ""}
+        <label class="pkc-max"><span>${esc(t("mp_max"))}</span><input type="number" min="1" step="1" data-mprowmax="${ri}" class="keep-w" value="${esc((link.rowMax || {})[ri] || "")}" placeholder="1" /></label></div>
+      <div class="pkc-cells">${resCols.map((ci) => `<label class="pkc-cell" title="${esc(materialDisplayName(nameOf(ci)))}"><span class="pkc-ic">${mpIconHtml(nameOf(ci))}</span><input inputmode="numeric" class="keep-w" data-mpcell data-row="${ri}" data-col="${ci}" value="${esc(mpNum(r.cells[ci]) ? Number(mpNum(r.cells[ci])).toLocaleString() : "")}" aria-label="${esc(materialDisplayName(nameOf(ci)))}" /></label>`).join("")}</div>
+    </div>`;
+  const when = [mpWhenText(link), mpKindText(link)].filter(Boolean).join(" · ");
+  return `<div class="pkb-ov mpw-ov" data-mpwov><div class="pkb-panel mpw-panel" role="dialog" aria-label="${esc(mp.title)}" data-mpcard="${esc(mp.id)}"><div class="pk-body">
+    <div class="pk-ed-bar mpw-bar"><button type="button" class="pkb-back" data-mpwclose aria-label="${esc(t("close_button"))}">&#8249;</button><input data-mptitle value="${esc(mp.title)}" maxlength="60" aria-label="${esc(mp.title)}" /><span class="mpw-tag">${esc(t("mp_tag"))}</span><button type="button" class="btn small ghost mpw-del" data-mpdel="${esc(mp.id)}">${esc(t("mp_delete"))}</button>${when ? `<div class="pkb-when">${esc(when)}</div>` : ""}</div>
+    <div class="pkc-k">${esc(t("pkc_items"))}</div>
+    <div class="pkc-chips">${resCols.map(chip).join("")}<button type="button" class="pkc-chip pkc-add" data-mpaddcol>+ ${esc(t("pkc_item"))}</button><button type="button" class="pkc-chip pkc-add" data-mpdelcol ${resCols.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_item"))}" title="${esc(t("pkc_del_item"))}">&minus;</button></div>
+    <div class="pkc-k">${esc(t("pkc_steps"))} · ${esc(mpKindText(link))}</div>
+    ${mp.rows.map(step).join("")}
+    <div class="pkc-acts"><button type="button" class="btn ghost" data-mpaddrow ${canRow ? "" : "disabled"}>+ ${esc(t("pkc_step"))}</button><button type="button" class="btn ghost pkc-sm" data-mpdelrow ${mp.rows.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_step"))}" title="${esc(t("pkc_del_step"))}">&minus;</button><button type="button" class="btn ghost" data-mpfill>${esc(t("pkc_fill"))}</button></div>
+    ${canRow ? "" : `<div class="meta pkc-note" style="color:var(--danger);">${esc(t("mp_row_top"))}</div>`}
+    <div class="meta pkc-note">${esc(t("mp_row_hint"))}</div>
+    <div class="pkb-sec">
+      <div class="pkb-used"><span class="pkb-k">${esc(t("mp_used_for"))}</span><div class="mpk-pgs">${PACK_PAGE_GROUPS.map((g) => `<label class="pks-chip"><input type="checkbox" data-mppage="${esc(g.key)}" ${g.pages.some((k) => pages.includes(k)) ? "checked" : ""} /><span>${esc(packGroupLabel(g))}</span></label>`).join("")}</div>${pages.length ? "" : `<div class="meta pkc-note">${esc(t("mp_all_pages"))}</div>`}</div>
+      <label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-mpbud="${esc(mp.id)}" ${packInBudgets(mp.id) ? "checked" : ""} /></label>
+      ${numericReset ? `<label class="pkb-budrow mpk-next"><span>${esc(t("pkc_next_on"))}<small class="meta">${esc(t("mp_every_days").replace("{n}", link.reset))}</small></span><input type="date" class="keep-w" data-mpdate value="${esc(packValidDay(link.resetDay) || "")}" /></label>` : ""}
+    </div>
+    <div class="meta pkc-note">&#128274; ${esc(t("mpk_locked"))}</div>
+  </div></div></div>`;
+}
+// P2: the "+ New pack" sheet.
+function mpNewHtml(templates) {
+  const s = MP_NEW, tb = templates.find((x) => String(x.id) === String(s.tpl));
+  if (!tb) return "";
+  const subs = ["mpn_s1", "mpn_s2", "mpn_s3"], tabs = ["mpn_tab1", "mpn_tab2", "mpn_tab3"];
+  const price2 = (n) => Number(n).toFixed(2);
+  const kindCard = (x) => {
+    const link = packLinkForBase(x.id), kind = packTemplateKind(link), eff = packEffectiveCols(x), pc = link.priceCol || 0;
+    const names = mpItemCols(x.columns, link).map((ci) => eff[ci] || String(x.columns[ci] || ""));
+    const prices = x.rows.map((r) => mpNum((r.cells || [])[pc])).filter((n) => n > 0);
+    const picks = Math.max(1, Number(link.pickCols) || 0);
+    const ex = kind === "regular" ? prices.slice(0, 5).map((n) => `<i>${price2(n)}</i>`).join("")
+      : kind === "wishful" ? `<i class="b">${esc(t("mpn_pick").replace("{n}", picks))}</i><em>&#8594;</em>${prices.slice(0, 3).map((n) => `<i>${price2(n)}</i>`).join("")}${prices.length > 3 ? "<i>&hellip;</i>" : ""}`
+      : `<i class="b">${esc(t("mpn_pick").replace("{n}", picks))}</i><em>&middot;</em><i class="b">${esc(t("mpn_any"))}</i>`;
+    const on = String(x.id) === String(s.tpl);
+    const many = templates.filter((y) => packTemplateKind(packLinkForBase(y.id)) === kind).length > 1;
+    return `<button type="button" class="mpn-kind${on ? " on" : ""}" data-mpnkind="${esc(x.id)}" aria-pressed="${on}">
+      <span class="pkb-ic">${mpRowIcon(names)}</span>
+      <span class="mpn-kt"><b>${esc(t(MP_KIND_KEYS[kind][0]))}${many ? ` · ${esc(x.title)}` : ""}${kind === "regular" ? ` <u>${esc(t("mpn_most"))}</u>` : ""}</b>
+        <small>${esc(t(MP_KIND_KEYS[kind][1]).replace("{n}", picks))}</small>
+        <span class="mpn-ex">${ex}</span></span>
+      <span class="mpn-ck" aria-hidden="true">${on ? "&#10003;" : ""}</span></button>`;
+  };
+  let body = "";
+  const kOrd = { regular: 0, wishful: 1, mixmatch: 2 };
+  if (s.step === 1) body = `${templates.slice().sort((a, b) => kOrd[packTemplateKind(packLinkForBase(a.id))] - kOrd[packTemplateKind(packLinkForBase(b.id))]).map(kindCard).join("")}<div class="meta mpn-note">${esc(t("mpn_note1"))}</div>`;
+  else if (s.step === 2) body = `<label class="mpn-f"><span class="pkb-k">${esc(t("mpn_name"))}</span><input data-mpnname maxlength="60" value="${esc(s.title)}" placeholder="${esc(t("mpn_name_ph"))}" autocomplete="off" /></label>
+      <div class="mpn-f"><span class="pkb-k">${esc(t("mp_used_for"))}</span><div class="mpk-pgs">${PACK_PAGE_GROUPS.map((g) => `<button type="button" class="mpn-pg${s.groups.includes(g.key) ? " on" : ""}" data-mpnpg="${esc(g.key)}" aria-pressed="${s.groups.includes(g.key)}">${esc(packGroupLabel(g))}</button>`).join("")}</div>
+      <div class="meta mpn-note">${esc(t("mpn_pages_d"))}</div></div>`;
+  else body = `<div class="mpn-items">${s.items.map((it, i) => {
+      const known = packResourceChoices(it.name), has = known.some((n) => n.toLowerCase() === String(it.name).toLowerCase());
+      return `<div class="mpn-it"><span class="pkc-ic">${mpIconHtml(it.name)}</span><select data-mpnit="${i}" class="keep-w" aria-label="${esc(materialDisplayName(it.name))}">${known.map((n) => `<option value="${esc(n)}" ${n.toLowerCase() === String(it.name).toLowerCase() ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("")}${has ? "" : `<option value="${esc(it.name)}" selected>${esc(it.name)}</option>`}</select><button type="button" class="mpn-rm" data-mpnrm="${i}" ${s.items.length <= 1 ? "disabled" : ""} aria-label="${esc(t("pkc_del_item"))}">&times;</button></div>`;
+    }).join("")}</div>
+    <button type="button" class="pkc-chip pkc-add mpn-add" data-mpnadd>+ ${esc(t("pkc_item"))}</button>
+    <div class="meta mpn-note">${esc(t("mpn_items_d"))}</div>`;
+  return `<div class="modal-overlay mpn-ov" data-mpnov><div class="modal-box mpn" role="dialog" aria-label="${esc(t("mpk_new"))}">
+    <div class="mpn-h"><div><b>${esc(t("mpk_new"))}</b><small>${esc(t("mpn_step").replace("{n}", s.step))} · ${esc(t(subs[s.step - 1]))}</small></div><button type="button" class="pkb-back mpn-x" data-mpnclose aria-label="${esc(t("close_button"))}">&times;</button></div>
+    <div class="mpn-prog">${tabs.map((k, i) => `<span class="${i < s.step ? "on" : ""}"><i></i>${esc(t(k))}</span>`).join("")}</div>
+    <div class="mpn-b">${body}</div>
+    <div class="mpn-f2">${s.step === 1 ? `<button type="button" class="btn ghost" data-mpnclose>${esc(t("cancel"))}</button>` : `<button type="button" class="btn ghost" data-mpnback>&#8249; ${esc(t("mpn_back"))}</button>`}
+      ${s.step < 3 ? `<button type="button" class="btn" data-mpnnext>${esc(t("mpn_next"))} &#8250;</button>` : `<button type="button" class="btn" data-mpnmake>${esc(t("mpn_create"))}</button>`}</div>
+  </div></div>`;
 }
 // Packs page "Pack dates" (owner picked 1, 19 Oct 2026): every pack whose
 // link lets visitors set their own date, except the stacking weekly /
@@ -14076,6 +14542,12 @@ async function renderPacksPage() {
     );
     const lk = packLinkFor(t.id);
     const groupPh = window.t("pack_group_placeholder"), groupTitle = window.t("pack_group_title");
+    // Step cards (P3, phones): each column's kind and a small picture / label per box;
+    // shown only when the window draws the table as cards (.pkb-steps).
+    const pcI = priceColOf(t), gcI = gemsColOf(t);
+    const pkcCls = (ci) => (ci === pcI ? " pkc-price" : ci === gcI ? " pkc-gems" : " pkc-item");
+    const pkcIcons = t.columns.map((_, ci) => (ci === pcI ? "" : pkIconHtml(pkColItem(t, ci))));
+    const pkcLead = (ci) => (ci === pcI ? `<span class="pkc-cur">${esc(String(t.columns[ci] || "$"))}</span>` : `<span class="pkc-ic">${pkcIcons[ci]}</span>`);
     const rowMaxTitle = window.t("pack_rowmax_title"), rowMaxHead = window.t("pack_rowmax_head"), dupTitle = window.t("pack_duplicate"), restoreTitle = window.t("pack_restore"), dailyDayLbl = window.t("pk_daily_day"), hiddenTag = window.t("pk_hidden_tag");
     return `
         ${IS_OWNER && lk.hideVisitors ? `<div style="font-size:10.5px; font-weight:700; color:var(--danger); margin-bottom:6px;">${esc(hiddenTag)}</div>` : ""}
@@ -14098,15 +14570,16 @@ async function renderPacksPage() {
               <tr>
                 ${t.columns
                   .map(
-                    (c, ci) => `<th class="pk-th" style="padding:4px 2px; border-bottom:1px solid var(--line); text-align:center;">
-                      ${pkHeadHtml(t, ci)}
+                    (c, ci) => `<th class="pk-th${pkcCls(ci)}" style="padding:4px 2px; border-bottom:1px solid var(--line); text-align:center;">
+                      ${pkHeadHtml(t, ci)}<span class="pkc-nm">${esc(materialDisplayName(pkColItem(t, ci)) || pkColItem(t, ci) || "?")}</span>
                       ${IS_OWNER ? `<div class="pk-arr">${dsHandleHtml(`data-pt-coldrag data-col="${ci}"`)}</div>` : ""}
                       ${packColMultiplier(packLinkFor(t.id), ci) > 1 ? `<div class="meta" style="font-size:9px; color:var(--ice);">/${esc(dailyDayLbl)} \u00d7${packLinkFor(t.id).daily.days}</div>` : ""}
                       <input type="hidden" data-pt-colname data-col="${ci}" value="${esc(c)}" />
                     </th>`
                   )
                   .join("")}
-                <th style="width:36px;" class="meta" title="${esc(rowMaxTitle)}">${esc(rowMaxHead)}</th>
+                <th style="width:36px;" class="meta pkc-maxth" title="${esc(rowMaxTitle)}">${esc(rowMaxHead)}</th>
+                ${IS_OWNER ? `<th class="pkc-addth"><button type="button" class="pkc-chip pkc-add" data-pkcadd>+ ${esc(window.t("pkc_item"))}</button></th>` : ""}
               </tr>
             </thead>
             <tbody>
@@ -14115,12 +14588,12 @@ async function renderPacksPage() {
                   (r, ri) => `<tr data-row="${ri}" style="${ri === 0 ? "background:rgba(111,211,242,0.06);" : ""}">
                     ${t.columns
                       .map(
-                        (_, ci) => `<td style="padding:3px; text-align:center;">
+                        (_, ci) => `<td class="${pkcCls(ci).trim()}" style="padding:3px; text-align:center;">${pkcLead(ci)}
                           <input data-pt-cell data-row="${ri}" data-col="${ci}" value="${esc(r.cells[ci] ?? "")}" style="width:100%; max-width:54px; font-size:14px; text-align:center; padding:4px 1px;" />
                         </td>`
                       )
                       .join("")}
-                    <td style="text-align:center; white-space:nowrap;">
+                    <td class="pkc-max" style="text-align:center; white-space:nowrap;"><span class="pkc-lb">${esc(rowMaxHead)}</span>
                       <input type="number" min="1" data-pt-rowmax data-row="${ri}" value="${esc((packLinkFor(t.id).rowMax || {})[ri] || "")}" placeholder="×" title="${esc(rowMaxTitle)}" style="width:34px; font-size:10px; padding:2px 1px; text-align:center;" />
                     </td>
                   </tr>`
@@ -14338,9 +14811,33 @@ async function renderPacksPage() {
       const full = tmp.querySelector("[data-packlink]");
       if (full) { settings.replaceWith(full); wirePackLinkEditors([full]); settings = full; }
     }
+    // P3 (owner, 4 Nov 2026): your own packs (and templates) show their table as
+    // step cards on phones (<= 700 px): items as picture chips, a card per price
+    // step. Same inputs, so every handler above still does the work.
+    const stepCards = IS_OWNER && (lk.group === PACK_MINE_GROUP || lk.template);
+    if (stepCards) {
+      panel.classList.add("pkb-steps");
+      const htr = body.querySelector(".pk-tbl-wrap thead tr"), tbd = body.querySelector(".pk-tbl-wrap tbody");
+      if (htr) htr.dataset.k = t("pkc_items");
+      if (tbd) tbd.dataset.k = `${t("pkc_steps")} · ${t("mp_kind_" + packTemplateKind(lk))}`;
+      const wrap = body.querySelector(".pk-tbl-wrap");
+      if (wrap) wrap.insertAdjacentHTML("afterend", `<div class="pkc-acts"><button type="button" class="btn ghost" data-pkcstep>+ ${esc(t("pkc_step"))}</button><button type="button" class="btn ghost" data-pkcfill>${esc(t("pkc_fill"))}</button></div>`);
+      const click = (sel) => { const b = body.querySelector(sel); if (b) b.click(); };
+      body.querySelectorAll("[data-pkcadd]").forEach((b) => b.addEventListener("click", () => click("[data-pt-addcol]")));
+      body.querySelectorAll("[data-pkcstep]").forEach((b) => b.addEventListener("click", () => click("[data-pt-addrow]")));
+      body.querySelectorAll("[data-pkcfill]").forEach((b) => b.addEventListener("click", () => {
+        applyAmountSequence(panel, tb);
+        applyScale(panel, tb);
+        const c0 = panel.querySelector('[data-pt-cell][data-row="0"]');
+        if (c0) c0.dispatchEvent(new Event("change", { bubbles: true })); // saves the whole table once
+      }));
+    }
     const usedFor = packUsedForNames(tb);
-    const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
+    const nextHtml = stepCards && (w.on || w.next) ? `<div class="pkb-budrow pkc-next"><span>${w.on ? `<b>${esc(t("pkb_on_now"))}</b>` : `${esc(t("pkc_next_on"))} <b>${esc(w.next)}</b>`}</span><button type="button" class="pkc-link" data-pkcnext>${esc(t("pkc_change"))} &#8250;</button></div>` : "";
+    const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${nextHtml}${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
     if (settings) { settings.insertAdjacentHTML("beforebegin", budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", budHtml);
+    const nx = body.querySelector("[data-pkcnext]");
+    if (nx) nx.addEventListener("click", () => { const sc = body.querySelector("[data-packreset]"); if (sc) { sc.scrollIntoView({ behavior: "smooth", block: "center" }); sc.focus({ preventScroll: true }); } });
     const seg = body.querySelector(".pks-seg");
     if (seg) {
       const radios = [...seg.querySelectorAll("input[data-pkhow]")];
@@ -15364,6 +15861,13 @@ async function renderPacksPage() {
   pkbReady = true;
   // Came from ⚙ on My Purchases' Weekly cards: open that pack's settings.
   if (PACK_SETTINGS_FOCUS) { const id = PACK_SETTINGS_FOCUS; PACK_SETTINGS_FOCUS = null; setTimeout(() => packOpenSettingsHere(id), 50); }
+  // Came from a row on My packs (admin): that pack's window opens in place of
+  // this page's history entry, so Back / ‹ return to My packs.
+  if (PKB_OPEN_PENDING) {
+    const id = PKB_OPEN_PENDING;
+    PKB_OPEN_PENDING = null;
+    if (tables.some((tb) => String(tb.id) === id)) { history.replaceState({ tab: "packs", pkb: id }, "", location.pathname + location.search); pkbOpen(id); }
+  }
 }
 
 // ============================================================
