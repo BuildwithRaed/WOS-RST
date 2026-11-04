@@ -2837,13 +2837,28 @@ input,select,textarea{
   .rl-tag.best{ background:rgba(76,209,138,.2); color:var(--good); }
   .rl-tag.late{ background:rgba(255,122,122,.15); color:var(--danger); }
   .rl-tag.ok, .rl-tag.pick{ background:rgba(124,196,255,.14); color:var(--ice); }
-  .rl-also{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .rl-ch{ min-height:36px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12px; font-weight:600; cursor:pointer; text-align:start; }
+  .rl-also{ display:flex; flex-wrap:nowrap; gap:6px; margin-top:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; overscroll-behavior-x:contain; }
+  .rl-also::-webkit-scrollbar{ display:none; }
+  .rl-ch{ flex:none; white-space:nowrap; min-height:36px; padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12px; font-weight:600; cursor:pointer; text-align:start; }
   .rl-ch.on{ border-color:var(--ice); background:var(--ice-dim); }
   .rl-sl-l{ font-size:12px; color:var(--muted); margin-top:10px; }
   .rl-sld{ display:block; width:100%; height:34px; min-height:0; margin:2px 0 0; padding:0; border:0; background:transparent; accent-color:var(--ice); }
   .rl-sldl{ display:flex; justify-content:space-between; gap:6px; font-size:11.5px; color:var(--muted); }
   .rl-sldv{ color:var(--ice); font-weight:700; text-align:center; }
+  .rl-own{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:10px; font-size:12.5px; color:var(--muted); }
+  .rl-own b{ color:var(--frost); }
+  .rl-own .rl-lnk{ min-height:36px; font-weight:700; }
+  .modal-box.rl-own-box{ max-width:440px; padding:14px 16px 16px; }
+  .rl-own-h{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .rl-own-h b{ font-size:16px; flex:1; }
+  .rl-own-box .rl-sld{ height:40px; }
+  .rl-own-box .rl-note{ margin-top:8px; }
+  .rl-own-b{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px; }
+  .rl-own-b .btn{ width:100%; min-height:40px; }
+  @media (max-width:700px){
+    .modal-overlay.rl-own-ov{ align-items:flex-end; padding:0; }
+    .modal-box.rl-own-box{ max-width:none !important; width:100% !important; border-radius:18px 18px 0 0; padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px)); }
+  }
   .rl-todo{ display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 0; border-top:1px solid rgba(255,255,255,.06); }
   .rl-k + .rl-todo{ border-top:0; margin-top:4px; }
   .rl-todo.past{ opacity:.55; }
@@ -3658,17 +3673,21 @@ input,select,textarea{
   .sg-rb-tx span{ display:block; font-size:12px; line-height:16px; color:var(--muted); }
   .sg-rb-ch{ color:var(--muted); font-size:22px; flex:none; }
   .sg-cats .cat-switcher{ margin-bottom:8px; }
-  .sg-tools{ display:flex; gap:6px; margin-bottom:8px; }
-  .sg-seg{ flex:1; min-width:0; display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); height:40px; }
+  .sg-tools{ display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+  .sg-menu{ flex:none; display:flex; }
+  .sg-menu:empty{ display:none; }
+  .sg-menu .cat-menu-btn{ width:38px; height:38px; border-radius:10px; }
+  .sg-seg{ flex:1; min-width:0; display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); height:38px; }
   .sg-seg button{ flex:1; min-width:0; border:0; background:none; font:inherit; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; padding:0 4px; white-space:nowrap; }
   .sg-seg button.on{ background:var(--ice-dim); color:var(--frost); }
-  .sg-ib{ width:40px; height:40px; flex:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--muted); cursor:pointer; padding:0; }
+  .sg-ib{ width:38px; height:38px; flex:none; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--muted); cursor:pointer; padding:0; }
   .sg-ib.on{ color:var(--ice); border-color:var(--ice-dim); }
   .sg-ib svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; }
   .sg-srch{ margin-bottom:8px; }
   .sg-srch input{ width:100%; height:40px; }
   .sg-lg{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; font-size:12px; color:var(--muted); margin:0 2px 8px; }
   .sg-lg b, .sg-lg .g{ color:var(--good); }
+  .cg-tip .sg-lg{ margin:0; color:var(--frost); font-size:inherit; }
   .sg-mvk{ display:inline-flex; width:18px; height:18px; border:1px solid var(--line); border-radius:5px; align-items:center; justify-content:center; font-size:11px; font-style:normal; font-weight:800; margin-inline-end:4px; vertical-align:-3px; }
   .sg-grid{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; border-radius:10px; }
   @media (min-width:701px){ .sg-grid{ grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:8px; } }
@@ -7461,6 +7480,12 @@ const T = {
   rl_wks: { en: "wks" },
   rl_now: { en: "now" },
   rl_own_weekly: { en: "Or set your own weekly FC" },
+  rl_own_line: { en: "Or your own:" },
+  rl_own_set: { en: "Set my own FC" },
+  rl_own_title: { en: "Your own weekly FC" },
+  rl_own_use: { en: "Use {n} FC" },
+  rl_own_need: { en: "Need {n} FC a week to make {d} ({p})." },
+  rl_own_none: { en: "Even the fastest speed misses {d}." },
   rl_this_week: { en: "This week" },
   rl_rest: { en: "Nothing to refine" },
   rl_half: { en: "half price" },
@@ -21085,6 +21110,8 @@ function infoAttach(host, node) {
 }
 function infoize(root) {
   const free = (d) => !d.closest(".cg-tip");
+  // Skin Gallery / Islands legend (owner, 4 Nov 2026): first in the title's bubble.
+  root.querySelectorAll(".page-head .sg-lg").forEach((d) => { if (!free(d)) return; const ph = d.closest(".page-head"); infoAttach(ph && ph.querySelector("h2"), d); });
   root.querySelectorAll(".page-head p.desc").forEach((d) => { if (!free(d)) return; const ph = d.closest(".page-head"); infoAttach(ph && ph.querySelector("h2"), d); });
   root.querySelectorAll(".bs-help").forEach((d) => { if (!free(d)) return; const card = d.closest(".t12x-card, .panel, .t12x-amts"); infoAttach(card && card.querySelector(".bs-foot > span:first-child"), d); });
   root.querySelectorAll(".panel > p.desc, .panel > div.desc, .t12x-card > p.desc, .t12x-card > div.desc").forEach((d) => {
@@ -22149,7 +22176,8 @@ async function renderRfcLabPage() {
   const cards = [opt(cheapest, t("rl_cheapest"), rfcPlanName(cheapest)),
     opt(middle, rfcPlanName(middle), same(middle, best) ? t("rl_cheapest_in_time") : t("rl_in_between")),
     opt(fastest, t("rl_fastest"), rfcPlanName(fastest))];
-  const chips = speeds.filter((p) => !same(p, cheapest) && !same(p, middle) && !same(p, fastest)).map((p) => {
+  // In-between speeds: one sideways row, the picked one first (owner, 4 Nov 2026, option A).
+  const chips = speeds.filter((p) => !same(p, cheapest) && !same(p, middle) && !same(p, fastest)).sort((a, b) => isPick(b) - isPick(a)).map((p) => {
     const d = doneFor(p), late = !inTime(p), x = !late ? extraTag(p) : "";
     return `<button type="button" class="rl-ch${isPick(p) ? " on" : ""}" data-rluse="${p.top}|${p.n}">${esc(rfcPlanName(p))} · <b class="${late ? "rl-rd" : ""}">${d ? esc(dShort(d)) : "—"}${late ? ` · ${esc(t("rl_too_late"))}` : ""}</b>${x ? ` · ${esc(x)}` : ""}</button>`;
   }).join("");
@@ -22159,10 +22187,22 @@ async function renderRfcLabPage() {
       <div class="rl-k">${esc(t("rl_how_fast"))}<span class="rl-r rl-kr">${esc(t("rl_by"))} ${esc(dShort(byDay))}</span></div>
       <div class="rl-lt">${cards.join("")}</div>
       ${chips ? `<div class="rl-also">${chips}</div>` : ""}
-      <div class="rl-sl-l">${esc(t("rl_own_weekly"))}</div>
-      <input type="range" class="rl-sld" data-rlslider min="${sMin}" max="${sMax}" step="10" value="${sVal}" aria-label="${esc(t("rl_own_weekly"))}" />
-      <div class="rl-sldl"><span>${fmt(sMin)}</span><span class="rl-sldv" data-rlsldv></span><span>${fmt(sMax)}</span></div>
+      <div class="rl-own"><span>${esc(t("rl_own_line"))} <b>${fmt(plan.cost)} FC ${esc(t("rl_a_week"))}</b></span><button type="button" class="rl-lnk" data-rlownopen aria-haspopup="dialog">${esc(t("rl_own_set"))} ›</button></div>
     </div>`;
+  // "Set my own FC" sheet: the slider of the old "FC I can spend per week" mode.
+  const ownSheetHtml = () => {
+    const tgt = need > 0 ? speeds.find(inTime) : null;
+    const hint = need <= 0 ? "" : tgt ? t("rl_own_need").replace("{n}", fmt(tgt.cost)).replace("{d}", dShort(byDay)).replace("{p}", rfcPlanName(tgt)) : t("rl_own_none").replace("{d}", dShort(byDay));
+    return `<div class="modal-overlay rl-own-ov" data-rlownbd>
+      <div class="modal-box rl-own-box" role="dialog" aria-modal="true" aria-label="${esc(t("rl_own_title"))}">
+        <div class="rl-own-h"><b>${esc(t("rl_own_title"))}</b><button type="button" class="rl-x" data-rlownclose aria-label="${esc(t("close_button"))}">✕</button></div>
+        <input type="range" class="rl-sld" data-rlslider min="${sMin}" max="${sMax}" step="10" value="${sVal}" aria-label="${esc(t("rl_own_weekly"))}" />
+        <div class="rl-sldl"><span>${fmt(sMin)}</span><span class="rl-sldv" data-rlsldv></span><span>${fmt(sMax)}</span></div>
+        ${hint ? `<div class="rl-note">${esc(hint)}</div>` : ""}
+        <div class="rl-own-b"><button type="button" class="btn ghost" data-rlownclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-rlownuse></button></div>
+      </div>
+    </div>`;
+  };
   // ---- This week
   const days = rfcWeekDays(plan.top, plan.n);
   if (st.ticks.wk !== wkKey) st.ticks = { wk: wkKey, days: [] };
@@ -22271,19 +22311,38 @@ async function renderRfcLabPage() {
   const redraw = () => keepPlace(() => renderRfcLabPage());
   const save = () => saveCalcState("rfc_lab", st);
   const numOf = (el) => Math.max(0, Number(String(el.value).replace(/[^0-9.]/g, "")) || 0);
-  // Slider: the plan with the most Refined FC for that weekly FC (the old
-  // "FC I can spend per week" mode).
-  const sld = root.querySelector("[data-rlslider]"), sldv = root.querySelector("[data-rlsldv]");
+  // Slider (in the "Set my own FC" sheet): the plan with the most Refined FC
+  // for that weekly FC (the old "FC I can spend per week" mode). Saved on "Use".
   const allPlans = rfcAllPlans();
   const forBudget = (v) => allPlans.filter((p) => p.cost <= v).sort((a, b) => b.rfc - a.rfc || a.cost - b.cost)[0] || cheapest;
-  const sldText = () => { const p = forBudget(Number(sld.value)), d = doneFor(p); sldv.textContent = `${fmt(p.cost)} FC ${t("rl_a_week")} · ${t("rl_done")} ${d ? dShort(d) : "—"}`; sld.style.setProperty("--p", `${((Number(sld.value) - sMin) / Math.max(1, sMax - sMin)) * 100}%`); };
-  sldText();
-  sld.addEventListener("input", sldText);
-  sld.addEventListener("change", () => { st.mode = "budget"; st.budget = Number(sld.value); st.pick = "manual"; save(); rfcLabApplyRate(st); redraw(); });
+  const openOwn = () => {
+    if (root.querySelector("[data-rlownbd]")) return;
+    root.insertAdjacentHTML("beforeend", ownSheetHtml());
+    const ov = root.querySelector("[data-rlownbd]");
+    const sld = ov.querySelector("[data-rlslider]"), sldv = ov.querySelector("[data-rlsldv]"), use = ov.querySelector("[data-rlownuse]");
+    const sldText = () => {
+      const p = forBudget(Number(sld.value)), d = doneFor(p);
+      sldv.textContent = `${fmt(p.cost)} FC ${t("rl_a_week")} · ${t("rl_done")} ${d ? dShort(d) : "—"}`;
+      sld.style.setProperty("--p", `${((Number(sld.value) - sMin) / Math.max(1, sMax - sMin)) * 100}%`);
+      use.textContent = t("rl_own_use").replace("{n}", fmt(p.cost));
+    };
+    sldText();
+    sld.addEventListener("input", sldText);
+    const close = () => { document.removeEventListener("keydown", onKey); ov.remove(); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov || e.target.closest("[data-rlownclose]")) { close(); return; }
+      if (e.target.closest("[data-rlownuse]")) { st.mode = "budget"; st.budget = Number(sld.value); st.pick = "manual"; close(); save(); rfcLabApplyRate(st); redraw(); }
+    });
+    new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
+  };
   root.addEventListener("click", (ev) => {
     const el = ev.target.closest("button, [data-rlbd]");
     if (!el || !root.contains(el)) return;
     if (el.matches("[data-rlbd]")) { if (ev.target === el) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); } return; }
+    if (el.hasAttribute("data-rlownopen")) { openOwn(); return; }
+    if (el.closest("[data-rlownbd]")) return;
     if (el.dataset.rluse) {
       const [top, n] = el.dataset.rluse.split("|").map(Number);
       st.top = top; st.attempts = n; st.mode = "schedule"; st.pick = "manual";
@@ -27240,8 +27299,16 @@ function galStatBoxesHtml(list) {
 // All / Owned / Not owned + a search button that opens a search row.
 function galToolsHtml(id, f, placeholder) {
   const open = !!(GAL_SEARCH_OPEN[id] || f.search);
-  return `<div class="sg-tools"><div class="sg-seg" id="${id}OwnedSeg">${[["all", "all_label"], ["owned", "owned_label"], ["not", "not_owned_label"]].map(([k, l]) => `<button type="button" data-owned="${k}" class="${f.ownedFilter === k ? "on" : ""}" aria-pressed="${f.ownedFilter === k}">${esc(t(l))}</button>`).join("")}</div><button type="button" class="sg-ib${open ? " on" : ""}" id="${id}SearchBtn" aria-label="${esc(t("sg_search"))}" aria-expanded="${open}">${GAL_SEARCH_SVG}</button></div>
+  return `<div class="sg-tools"><span class="sg-menu" id="${id}MenuSlot"></span><div class="sg-seg" id="${id}OwnedSeg">${[["all", "all_label"], ["owned", "owned_label"], ["not", "not_owned_label"]].map(([k, l]) => `<button type="button" data-owned="${k}" class="${f.ownedFilter === k ? "on" : ""}" aria-pressed="${f.ownedFilter === k}">${esc(t(l))}</button>`).join("")}</div><button type="button" class="sg-ib${open ? " on" : ""}" id="${id}SearchBtn" aria-label="${esc(t("sg_search"))}" aria-expanded="${open}">${GAL_SEARCH_SVG}</button></div>
     <div class="sg-srch" id="${id}SearchRow"${open ? "" : " hidden"}><input id="${id}Search" type="search" autocomplete="off" placeholder="${esc(placeholder)}" value="${esc(f.search)}" /></div>`;
+}
+// The category switcher's menu button (with its list) sits first on the filter
+// row (owner, 4 Nov 2026: menu, All / Owned / Not owned and search on one row,
+// the category chips scroll sideways under it).
+function galMenuToTools(id, boxId) {
+  const slot = document.getElementById(`${id}MenuSlot`), box = document.getElementById(boxId);
+  const m = box && box.querySelector(".cat-switcher > div:first-child");
+  if (slot && m) slot.replaceChildren(m);
 }
 function wireGalTools(id, f, onChange) {
   const seg = document.getElementById(`${id}OwnedSeg`), btn = document.getElementById(`${id}SearchBtn`);
@@ -27346,6 +27413,7 @@ async function renderSkinGallery() {
       <div>
         <h2>${esc(t("skin_gallery_title"))}</h2>
         <p class="desc">${esc(t("sg_desc"))}</p>
+        <div class="sg-lg"><span>${esc(t("sg_lg_tap"))}</span><span style="color:var(--good)">${esc(t("sg_lg_owned"))}</span><span>${esc(t("sg_lg_faded"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
       </div>
     </div>
     <div class="panel cg-ans sg-ans">
@@ -27353,9 +27421,8 @@ async function renderSkinGallery() {
       <div id="skinTotals"></div>
       <button type="button" class="sg-rb" id="sgGlobeBtn" aria-haspopup="dialog"></button>
     </div>
-    <div id="skinCatSwitcher" class="sg-cats"></div>
     ${galToolsHtml("skin", SKIN_FILTER, t("search_skins_placeholder"))}
-    <div class="sg-lg"><span>${esc(t("sg_lg_tap"))}</span><span style="color:var(--good)">${esc(t("sg_lg_owned"))}</span><span>${esc(t("sg_lg_faded"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
+    <div id="skinCatSwitcher" class="sg-cats"></div>
     <div id="skinSections"></div>
     <div class="modal-overlay sg-gl-ov" id="sgGlobeSheet" style="display:none;">
       <div class="modal-box sg-gl-box" role="dialog" aria-label="${esc(t("sg_globe_title"))}">
@@ -27515,6 +27582,7 @@ async function renderSkinGallery() {
       const inCat = skins.filter((s) => s.category === c);
       return { key: c, label: c, count: `${inCat.filter((s) => s.owned).length}/${inCat.length}` };
     }), SKIN_FILTER.category, onSkinCatSelect);
+    galMenuToTools("skin", "skinCatSwitcher");
 
     // totals by bonus_type: current (owned only) vs max (everything, as if fully owned).
     // Skins sharing a display_group (e.g. Frost Sphere I-VI) are mutually
@@ -27668,15 +27736,15 @@ async function renderIslandGallery() {
       <div>
         <h2>${esc(t("islandgallery_title"))}</h2>
         <p class="desc">${esc(t("isl_desc"))}</p>
+        <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
       </div>
     </div>
     <div class="panel cg-ans sg-ans">
       <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span></div>
       <div id="islandTroopTotals"></div>
     </div>
-    <div id="islandCatSwitcher" class="sg-cats"></div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
-    <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
+    <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
   `;
 
@@ -27875,6 +27943,7 @@ async function renderIslandGallery() {
       const inCat = islands.filter((s) => groupsFor(s).includes(c));
       return { key: c, label: c, count: `${inCat.filter(built).length}/${inCat.length}` };
     }), ISLAND_FILTER.bonusType, onIslandCatSelect);
+    galMenuToTools("island", "islandCatSwitcher");
 
     // filtered is already scoped to the one selected category, so render a
     // single flat grid instead of stacked per-category panels.
