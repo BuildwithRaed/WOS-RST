@@ -1394,6 +1394,79 @@
   .pur-wc-t small i{ display:inline-block; width:7px; height:7px; border-radius:50%; background:currentColor; margin-inline-end:5px; vertical-align:1px; opacity:.85; }
   .pur-wc-in{ flex:0 0 58px; width:58px; text-align:end; font-size:15px; padding:6px 8px; }
   .t12x-main > .pur-wc{ margin-top:12px; }
+  /* My Purchases = design A2 (owner, 4 Nov 2026): this week first, the rest in sheets. */
+  .pur-a2-head{ display:flex; align-items:center; gap:8px; }
+  .pur-a2-head .pur-a2-add{ margin-inline-start:auto; flex:0 0 auto; min-height:40px; padding:0 14px; font-weight:700; }
+  .pur-a2{ display:flex; flex-direction:column; gap:12px; }
+  .pur-a2-l, .pur-a2-r{ display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .pur-a2 .t12x-card{ margin:0; }
+  @media (min-width:900px){ .pur-a2{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.15fr); align-items:start; } }
+  .pur-a2-wk{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .pur-a2-wk > span:first-child{ font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .pur-a2-wk .meta{ font-size:12px; white-space:nowrap; }
+  .pur-a2-big{ display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; margin-top:4px; }
+  .pur-a2-big b{ font-size:30px; font-weight:800; letter-spacing:-.5px; line-height:1.15; }
+  .pur-a2-big .meta{ font-size:13px; }
+  .pur-a2-bar{ display:block; height:6px; border-radius:9px; background:var(--panel-2); overflow:hidden; margin-top:8px; }
+  .pur-a2-bar i{ display:block; height:100%; background:var(--good); border-radius:9px; }
+  .pur-a2-sub{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:3px 10px; font-size:12px; margin-top:5px; }
+  .pur-a2-sub .good{ color:var(--good); }
+  .pur-a2-sw{ display:flex; gap:3px; padding:3px; margin-top:10px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; }
+  .pur-a2-sw button{ flex:1 1 0; min-width:0; min-height:36px; padding:4px 6px; border:0; border-radius:7px; background:none; color:var(--muted); font:inherit; font-size:12.5px; font-weight:600; line-height:1.25; cursor:pointer; }
+  .pur-a2-sw button.on{ background:var(--ice-dim); color:#fff; box-shadow:0 0 0 1px var(--ice) inset; cursor:default; }
+  .pur-ans .pur-following{ margin:10px 0 0; cursor:pointer; }
+  .pur-a2-ng{ display:flex; align-items:center; gap:8px; width:100%; min-height:44px; margin-top:10px; padding:9px 0 0; border:0; border-top:1px solid var(--line); background:none; color:var(--muted); font:inherit; font-size:12.5px; text-align:start; cursor:pointer; }
+  .pur-a2-ngpic{ flex:0 0 28px; width:28px; height:28px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--panel-2); font-size:14px; }
+  .pur-a2-ngpic img{ width:100%; height:100%; object-fit:cover; }
+  .pur-a2-ngt{ flex:1 1 auto; min-width:0; line-height:1.35; }
+  .pur-a2-ngt b{ color:var(--frost); font-weight:600; }
+  .pur-a2-lk{ color:var(--ice); font-weight:600; white-space:nowrap; padding:6px 0; }
+  .pur-wc-hd{ display:flex; align-items:center; gap:6px; min-height:36px; }
+  .pur-wc-hd .t12x-title{ margin:0; white-space:nowrap; }
+  .pur-wc-sum{ margin-inline-start:auto; font-size:12px; text-align:end; min-width:0; }
+  .pur-wc-fold{ height:36px; }
+  .pur-a2-wc .pur-wc-bd{ margin-top:4px; }
+  .pur-a2-wc.folded .pur-wc-bd{ display:none; }
+  .pur-a2-wc .pur-wc-row:first-child{ border-top:0; }
+  .pur-wc-days{ flex:0 0 62px; display:flex; flex-direction:column; align-items:stretch; gap:1px; }
+  .pur-wc-days .pur-wc-in{ flex:none; width:100%; text-align:center; font-weight:800; }
+  .pur-wc-days small{ font-size:11px; color:var(--muted); text-align:center; white-space:nowrap; }
+  .pur-chk{ padding-top:2px; padding-bottom:2px; }
+  .pur-a2-it{ display:flex; align-items:center; gap:10px; min-height:56px; padding:9px 0; border-top:1px solid var(--line); cursor:pointer; }
+  .pur-a2-it:first-child{ border-top:0; }
+  .pur-a2-it .pur-pic{ flex:0 0 40px; width:40px; height:40px; border-radius:10px; }
+  .pur-a2-it .pur-pic img{ width:32px; height:32px; }
+  .pur-a2-tx{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .pur-a2-tx b{ font-size:14px; font-weight:600; line-height:1.3; overflow-wrap:anywhere; }
+  .pur-a2-tx small{ font-size:12px; color:var(--muted); line-height:1.35; }
+  .pur-a2-x{ color:var(--muted); font-weight:600; }
+  .pur-a2-pr{ flex:0 0 auto; font-size:13.5px; white-space:nowrap; }
+  .pur-a2-ck{ flex:0 0 38px; width:38px; height:38px; padding:0; border-radius:50%; border:2px solid #4a5a6e; background:none; color:transparent; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .pur-a2-ck:hover, .pur-a2-ck:focus-visible{ color:#6b7d92; }
+  .pur-a2-ck.on{ background:var(--good); border-color:var(--good); color:#0f141b; cursor:default; }
+  .pur-a2-it.done{ cursor:default; }
+  .pur-a2-it.done .pur-a2-tx b{ color:var(--muted); text-decoration:line-through; }
+  .pur-a2-it.done .pur-a2-pr{ color:var(--muted); }
+  .pur-a2-tag{ display:inline-block; font-size:11px; font-weight:700; padding:1px 6px; border-radius:6px; margin-inline-end:5px; }
+  .pur-a2-tag.today{ background:rgba(111,211,242,.16); color:var(--ice); }
+  .pur-a2-tag.end{ background:rgba(232,162,60,.16); color:#e8a23c; }
+  .pur-a2-none{ padding:12px 0; font-size:12.5px; }
+  .pur-a2-row{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px; padding:8px 14px; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pur-a2-rt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .pur-a2-rt b{ font-size:14px; font-weight:600; }
+  .pur-a2-rt small{ font-size:12px; overflow-wrap:anywhere; }
+  .pur-a2-chev{ color:var(--muted); font-size:20px; }
+  .pur-sheet{ max-width:620px !important; }
+  .pur-sheet .pur-scroll{ max-height:none; }
+  .pur-sheet .pur-form{ margin-top:0; }
+  .pkb-ng{ border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-bottom:12px; background:var(--panel-2); }
+  .pkb-ng-h b{ font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .pkb-ng-d{ font-size:12px; line-height:1.4; margin:4px 0 8px; }
+  .pkb-ngnext{ display:flex; align-items:center; gap:10px; margin-bottom:8px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
+  .pkb-ngpic{ flex:0 0 40px; width:40px; height:40px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .pkb-ngpic img{ width:100%; height:100%; object-fit:cover; }
+  .pkb-ngnext b{ display:block; font-size:14px; }
+  .pkb-ngnext small{ font-size:12px; }
   /* Suggested packs header = design C (owner, 19 Oct 2026). */
   .pur-hc-wk{ margin:8px 0 6px; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .pur-pcs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -7125,6 +7198,41 @@ const T = {
   pur_ng_own: { en: "Know the exact date? Set it yourself" },
   pur_ng_set_state: { en: "Set your state's age" },
   pur_ng_use_state: { en: "Use my state age instead" },
+  // My Purchases design A2 (owner, 4 Nov 2026)
+  pur_a2_add: { en: "Add" },
+  pur_a2_week: { en: "This week · {range}" },
+  pur_a2_days_left: { en: "{n} days left" },
+  pur_a2_day_left: { en: "1 day left" },
+  pur_a2_last_day: { en: "Last day" },
+  pur_a2_bought_of: { en: "{a} of {b} bought · {v}" },
+  pur_a2_done: { en: "All done {date}" },
+  pur_a2_budget_sw: { en: "My budget · {v}" },
+  pur_a2_per_month: { en: "/mo" },
+  pur_a2_per_week: { en: "/wk" },
+  pur_a2_target_sw: { en: "By target · {date}" },
+  pur_a2_gen: { en: "Gen {gen} heroes {date}" },
+  pur_a2_gen_nogen: { en: "New heroes {date}" },
+  pur_a2_gen_moves: { en: "moves hero pack dates" },
+  pur_a2_gen_set: { en: "When do new heroes come?" },
+  pur_a2_change: { en: "change" },
+  pur_a2_days_unit: { en: "days left" },
+  pur_a2_today: { en: "Today" },
+  pur_a2_ends: { en: "Ends {day}" },
+  pur_a2_daily: { en: "one a day to {day}" },
+  pur_a2_bought_today: { en: "Bought today" },
+  pur_a2_bought_on: { en: "Bought {day}" },
+  pur_a2_none: { en: "Nothing to buy this week." },
+  pur_a2_next: { en: "Next weeks" },
+  pur_a2_next_none: { en: "Tap to see every week's packs" },
+  pur_a2_month_sum: { en: "{n} packs this month · {v}" },
+  pur_a2_n_packs_v: { en: "{n} packs · {v}" },
+  pur_a2_mark: { en: "Mark as bought" },
+  pur_a2_bought_mark: { en: "Bought" },
+  pkb_new_heroes: { en: "New heroes" },
+  pkb_ng_next: { en: "Next: Gen {gen} heroes · {date}" },
+  pkb_ng_next_nogen: { en: "Next new heroes · {date}" },
+  pkb_ng_in: { en: "in {n} days" },
+  pkb_ng_hall: { en: "★ {hero} in Hall of Heroes" },
   pur_gen: { en: "Gen {n}" },
   pur_now: { en: "now" },
   pur_budget_line: { en: "My Purchases: {n} coming packs counted" },
@@ -11210,19 +11318,118 @@ let PUR_SUG_TRACK = {};      // { req }: the suggestions' planner request, dropp
 let PUR_SUG_WEEK = 0; // My Purchases: the suggestions' chosen week tab (0 = this week, "after"), kept for the visit
 let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_form") || "null"); if (v && typeof v === "object") return { table: "", row: 0, count: 1, date: "", status: "planned", ...v }; } catch (e) { /* none */ } return { table: "", row: 0, count: 1, date: "", status: "planned" }; })();
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
+// My Purchases (A2): the sheet open over the page ("add" / "next" / "coming" / "bought"), kept across its redraws.
+let PUR_SHEET = null;
+// My Purchases' "change ›" opens the Packs page's Pack dates & prices window at New heroes.
+let PKB_DP_FOCUS = null;
+// The next new heroes (owner, 4 Nov 2026, My Purchases A2): { date, days, gen, hall } or null.
+function purNextNewGen() {
+  const base = newGenBaseDay();
+  if (!base) return null;
+  const cur = newGenGen(), t0 = packStartOfToday();
+  const starts = newGenStarts(base, 6);
+  const i = starts.findIndex((d) => d.getTime() > t0.getTime());
+  if (i < 0) return null;
+  const gen = cur ? cur + i : null;
+  return { date: starts[i], days: Math.round((starts[i] - t0) / 86400000), gen, hall: gen ? HALL_OF_HEROES_HERO[gen] || null : null };
+}
+function purNewGenTables(tables) { return (tables || []).filter((tb) => packIsNewGen(packLinkForBase(tb.id)) && typeof packLinkFor(tb.id).reset === "number"); }
+// New heroes (was the "New Gen Heroes" card on My Purchases; owner, 4 Nov 2026:
+// it moves into the Packs page's "Pack dates & prices" window, top section).
+// Same saves (PACK_PURCHASES.newGen, my_pack_dates) and invalidation as before.
+function renderPurNewGen(el, tables, onChange) {
+  if (!el) return;
+  const ngTables = purNewGenTables(tables);
+  if (!ngTables.length) { el.innerHTML = ""; return; }
+  const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
+  const ng = PACK_PURCHASES.newGen || {};
+  // One line per event (owner, 16 Oct 2026): "Hero Ascension Training" and
+  // its "…: Value Hero Pack" come together, so only the first is listed and
+  // its own date moves every table of that event.
+  const ngBase = (tb) => String(tb.title || "").split(":")[0].trim();
+  const ngShown = ngTables.filter((tb, i) => ngTables.findIndex((x) => ngBase(x) === ngBase(tb)) === i);
+  const ngSame = (id) => { const tb = ngTables.find((x) => String(x.id) === String(id)); return tb ? ngTables.filter((x) => ngBase(x) === ngBase(tb)).map((x) => String(x.id)) : [String(id)]; };
+  const ownWas = !!(el.querySelector(".pur-ng-own") || {}).open;
+  const nx = purNextNewGen();
+  const face = nx && nx.hall ? HERO_IMG_BY_NAME[nx.hall] : "";
+  const nxDay = nx ? fmtDay(packDayKey(nx.date)).replace(/,? \d{4}$/, "") : "";
+  const nextHtml = nx ? `<div class="pkb-ngnext"><span class="pkb-ngpic">${face ? `<img src="${esc(face)}" alt="" loading="lazy" />` : "&#11088;"}</span><span><b>${esc(nx.gen ? t("pkb_ng_next").replace("{gen}", nx.gen).replace("{date}", nxDay) : t("pkb_ng_next_nogen").replace("{date}", nxDay))}</b><small class="meta">${esc([t("pkb_ng_in").replace("{n}", nx.days), nx.hall ? t("pkb_ng_hall").replace("{hero}", nx.hall) : ""].filter(Boolean).join(" · "))}</small></span></div>` : "";
+  el.innerHTML = `<div class="pkb-ng"><div class="pkb-ng-h"><b>${esc(t("pkb_new_heroes"))}</b></div>
+    <p class="meta pkb-ng-d">${esc(t("pur_newgen_desc"))}</p>
+    ${nextHtml}
+    ${(() => {
+      // From the state age (Dashboard) unless the person typed their own date.
+      const sg = stateGenInfo(), own = !!packValidDay(ng.last);
+      const inputs = `<div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
+        <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>`;
+      if (own) return `${inputs}${sg ? `<button type="button" class="linklike pur-ng-link" data-purngstate>${esc(t("pur_ng_use_state"))}</button>` : ""}`;
+      if (sg) return `<div class="pur-ng-sa">🏰 ${t("pur_ng_from_state").replace("{day}", `<b>${stateAgeDay().toLocaleString()}</b>`).replace("{gen}", `<b>${sg.gen}</b>`).replace("{date}", `<b>${esc(fmtDay(sg.start))}</b>`)} <button type="button" class="linklike pur-ng-link" data-purngsa>${esc(t("pur_ng_change"))}</button></div>
+        <details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
+      return `<button type="button" class="btn small" data-purngsa style="margin-bottom:8px;">🏰 ${esc(t("pur_ng_set_state"))}</button><details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
+    })()}
+    ${ngShown.map((tb) => {
+      const l = packLinkFor(tb.id);
+      const t0 = packStartOfToday();
+      const ngApps = newGenAppearances(tb.id, Number(l.window) || 0).filter((x) => x.start.getTime() + (x.days - 1) * 86400000 >= t0.getTime()).map((x) => ({ ...x, offset: Math.round((x.start - t0) / 86400000) }));
+      const apps = (ngApps.length ? ngApps : packAppearances(l.reset, l.resetDay, Number(l.window) || 0, 400)).slice(0, 3);
+      const mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
+      // With a "last new heroes" date the pack follows it; otherwise its own date can be set.
+      const fromLast = !!packNewGenAnchor(tb.id), off = packNewGenOffset(tb.id);
+      return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(ngBase(tb) || tb.title || "")}</b>${!fromLast && mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
+        ${fromLast ? `<div class="meta" style="font-size:11px; margin-top:4px;">${esc(off ? t("pur_newgen_after").replace("{n}", Math.round(off / 7)) : t("pur_newgen_with"))}</div>` : `<label class="pur-f" style="margin-top:6px;"><span class="meta">${esc(t("pur_newgen_start"))}</span><span style="display:flex; gap:6px; align-items:center;"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(apps[0] ? packDayKey(apps[0].start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>`}
+        <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+  if (ownWas) { const own = el.querySelector(".pur-ng-own"); if (own) own.open = true; }
+  const again = () => { renderPurNewGen(el, tables, onChange); if (onChange) onChange(); };
+  el.querySelectorAll("[data-purngsa]").forEach((b) => b.addEventListener("click", () => openStateAgeModal(() => again())));
+  el.querySelectorAll("[data-purngstate]").forEach((b) => b.addEventListener("click", () => {
+    PACK_PURCHASES.newGen = { ...(PACK_PURCHASES.newGen || {}) };
+    delete PACK_PURCHASES.newGen.last; delete PACK_PURCHASES.newGen.gen;
+    PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); again();
+  }));
+  el.querySelectorAll("[data-purng]").forEach((inp) => inp.addEventListener("change", () => {
+    const ng0 = { ...(PACK_PURCHASES.newGen || {}) };
+    if (inp.dataset.purng === "last") { if (packValidDay(inp.value)) ng0.last = inp.value; else delete ng0.last; }
+    else { const n = Math.floor(Number(inp.value) || 0); if (n > 0) ng0.gen = n; else delete ng0.gen; }
+    PACK_PURCHASES.newGen = ng0;
+    if (inp.dataset.purng !== "gen") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); } // the New Gen packs' dates follow these
+    else saveCalcState("pack_purchases", PACK_PURCHASES); // Gen number: labels only
+    setTimeout(again, 0); // not while the input is still handling its change
+  }));
+  const ngSave = () => {
+    PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
+    if (typeof budgetInvalidate === "function") budgetInvalidate();
+    PACK_TABLES_CACHE = null;
+    saveCalcState("my_pack_dates", MY_PACK_DATES);
+    setTimeout(again, 0);
+  };
+  // Each New Gen pack has its own start date (they don't always come together).
+  el.querySelectorAll("[data-purngstart]").forEach((inp) => inp.addEventListener("change", () => {
+    ngSame(inp.dataset.purngstart).forEach((id) => { if (packValidDay(inp.value)) MY_PACK_DATES[id] = inp.value; else delete MY_PACK_DATES[id]; });
+    ngSave();
+  }));
+  el.querySelectorAll("[data-purngreset]").forEach((b) => b.addEventListener("click", () => {
+    ngSame(b.dataset.purngreset).forEach((id) => { delete MY_PACK_DATES[id]; });
+    ngSave();
+  }));
+}
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
   // Redrawn after a tap: the suggestions box keeps its height while it's
   // worked out again, and its rows / list keep their scroll.
   // (Redrawn again before the box was filled: what the last filled one had.)
   const oldSug = document.getElementById("purSuggest"), oldCl = oldSug && oldSug.querySelector(".pur-cl-list");
-  if (!oldSug) PUR_SUG_KEEP = null;
+  if (!oldSug) { PUR_SUG_KEEP = null; PUR_SHEET = null; }
   else if (oldSug.dataset.drawn) PUR_SUG_KEEP = { h: oldSug.offsetHeight, boxes: saveBoxScroll(oldSug), cl: oldCl ? { week: oldCl.dataset.week, top: oldCl.scrollTop } : null, html: oldSug.innerHTML };
   const sugH = PUR_SUG_KEEP ? PUR_SUG_KEEP.h : 0, sugBoxes = PUR_SUG_KEEP ? PUR_SUG_KEEP.boxes : () => {};
   const oldClTop = PUR_SUG_KEEP && PUR_SUG_KEEP.cl;
   // "Loading…" only on the first draw; a redraw keeps the page until it's ready.
   if (!oldSug) content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
   const tables = await ensurePackTables();
+  if (seq !== RENDER_SEQ) return;
+  await ensureBarHidden();
   if (seq !== RENDER_SEQ) return;
   const today = packDayKey(packStartOfToday());
   const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
@@ -11276,9 +11483,7 @@ async function renderPurchasesPage() {
   const packOpts = groups.map(({ g, items }) => `<optgroup label="${esc(g)}">${items.map((tb) => `<option value="${esc(String(tb.id))}" ${String(tb.id) === String(PUR_FORM.table) ? "selected" : ""}>${esc(setLead(tb) ? setName(tb) : (tb.title || ""))}</option>`).join("")}</optgroup>`).join("");
   const tierOpts = formTb ? formOffers.map((o) => `<option value="${o.row}" ${o.row === PUR_FORM.row ? "selected" : ""}>${esc(tierLabel(formTb, o.row))}</option>`).join("") : "";
   const formFor = formTb ? packUsedForNames(formTb) : [];
-  // Add a pack, New Gen Heroes, Coming and Bought fold open and closed (owner, 16 / 17 Oct 2026); kept in this browser.
-  const listOpen = (k) => { try { return localStorage.getItem(`pur_list_${k}`) !== "0"; } catch (e) { return true; } };
-  const addCard = `<details class="t12x-card pur-listbox" data-purlist="a" ${listOpen("a") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_add_title"))}</summary>
+  const addCard = `
     ${buyable.length ? `<div class="pur-form">
       <label class="pur-f pur-f-wide"><span class="meta">${esc(t("pur_pack"))}</span><select data-purf="table">${packOpts}</select></label>
       ${formChoice
@@ -11289,8 +11494,7 @@ async function renderPurchasesPage() {
       <div class="pur-f" style="flex:0 1 auto;"><span class="meta">${esc(t("pur_status"))}</span><div class="pur-seg">${["planned", "bought"].map((s) => `<button type="button" data-purstatus="${s}" class="${PUR_FORM.status === s ? "on" : ""}">${esc(t(s === "planned" ? "pur_will_buy" : "pur_bought"))}</button>`).join("")}</div></div>
       ${formChoice ? "" : `<button type="button" class="btn" data-puradd>${esc(t("pur_add_btn"))}</button>`}
     </div>
-    <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span>${formChoice ? "" : `<button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button>`}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}
-  </details>`;
+    <div class="pur-form-f"><span class="meta" style="font-size:11px;">${esc(t("pack_used_for"))}: ${formFor.length ? esc(formFor.join(" · ")) : esc(t("pur_for_none"))}</span>${formChoice ? "" : `<button type="button" class="btn small ghost" data-purtable>&#128203; ${esc(t("pur_tbl_btn"))}</button>`}</div>` : `<div class="meta">${esc(t("pur_no_tables"))}</div>`}`;
 
   // Bought packs whose copy is over leave the list (purBoughtUntil); their data
   // is erased once their week and month are over too, so My budget's spending
@@ -11420,62 +11624,29 @@ async function renderPurchasesPage() {
       return `<details class="pur-mon" data-purmon="${esc(bk)}" ${on ? "open" : ""}><summary class="pur-bh"><b>${esc(h.name)}</b> <span class="meta">${part.length === 1 ? esc(t("pur_1_pack")) : `${bidiNum(String(part.length))} ${esc(t("pk_preview_packs"))}`}</span><b class="pur-bh-t">${h.tot}</b></summary>${rows}</details>`;
     }).join("")}</div>`;
   };
-  const summary = `<div class="t12x-card pur-sum">
-    <div class="pur-sq"><span class="meta">${esc(t("pur_spend_coming"))}</span><b>${coming.length ? esc(packFmtLocal(sumCost(coming), sample, true)) : "—"}</b><span class="meta">${coming.length} ${esc(t("pk_preview_packs"))}</span></div>
-    <div class="pur-sq"><span class="meta">${esc(t("pur_spend_bought"))}</span><b>${bought.length ? esc(packFmtLocal(sumCost(bought), sample, true)) : "—"}</b><span class="meta">${bought.length} ${esc(t("pk_preview_packs"))}</span></div>
-    <div class="meta pur-how">${esc(t("pur_how"))}</div>
-  </div>`;
-  const listBox = (k, title, arr, inner) => `<details class="t12x-card pur-listbox" data-purlist="${k}" style="margin-top:12px;" ${listOpen(k) ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(title)} <span class="meta">(${arr.length})</span>${arr.length ? `<span class="pur-sum-tot">${esc(packFmtLocal(sumCost(arr), sample, false))}</span>` : ""}</summary>${inner}</details>`;
-  const listsHtml = `
-    ${listBox("c", t("pur_coming"), coming, coming.length ? listHtml("c", coming) : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)}
-    ${listBox("b", t("pur_bought_list"), bought, bought.length ? listHtml("b", bought) : `<div class="meta">${esc(t("pur_none_bought"))}</div>`)}`;
+  // Design A2 (owner, 4 Nov 2026): the page is this week (answer card +
+  // checklist), Weekly cards, then rows that open sheets (Next weeks, Coming,
+  // Bought); "+ Add" opens the Add a pack form in a sheet. The New Gen Heroes
+  // card moved to the Packs page's "Pack dates & prices" window (renderPurNewGen).
+  const listBody = (k, arr) => (k === "c"
+    ? (arr.length ? listHtml("c", arr) : `<div class="meta">${esc(t("pur_none_coming"))}</div>`)
+    : (arr.length ? listHtml("b", arr) : `<div class="meta">${esc(t("pur_none_bought"))}</div>`));
 
-  // New Gen Heroes timing
-  const ng = PACK_PURCHASES.newGen || {};
-  const ngTables = tables.filter((tb) => packIsNewGen(packLinkForBase(tb.id)) && typeof packLinkFor(tb.id).reset === "number");
-  // One line per event (owner, 16 Oct 2026): "Hero Ascension Training" and
-  // its "…: Value Hero Pack" come together, so only the first is listed and
-  // its own date moves every table of that event.
-  const ngBase = (tb) => String(tb.title || "").split(":")[0].trim();
-  const ngShown = ngTables.filter((tb, i) => ngTables.findIndex((x) => ngBase(x) === ngBase(tb)) === i);
-  const ngSame = (id) => { const tb = ngTables.find((x) => String(x.id) === String(id)); return tb ? ngTables.filter((x) => ngBase(x) === ngBase(tb)).map((x) => String(x.id)) : [String(id)]; };
-  const ngCard = ngTables.length ? `<details class="t12x-card pur-listbox" data-purlist="n" ${listOpen("n") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_newgen_title"))}</summary>
-    <div class="meta" style="font-size:11px; margin:4px 0 8px;">${esc(t("pur_newgen_desc"))}</div>
-    ${(() => {
-      // From the state age (Dashboard) unless the person typed their own date.
-      const sg = stateGenInfo(), own = !!packValidDay(ng.last);
-      const inputs = `<div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
-        <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>`;
-      if (own) return `${inputs}${sg ? `<button type="button" class="linklike pur-ng-link" data-purngstate>${esc(t("pur_ng_use_state"))}</button>` : ""}`;
-      if (sg) return `<div class="pur-ng-sa">🏰 ${t("pur_ng_from_state").replace("{day}", `<b>${stateAgeDay().toLocaleString()}</b>`).replace("{gen}", `<b>${sg.gen}</b>`).replace("{date}", `<b>${esc(fmtDay(sg.start))}</b>`)} <button type="button" class="linklike pur-ng-link" data-purngsa>${esc(t("pur_ng_change"))}</button></div>
-        <details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
-      return `<button type="button" class="btn small" data-purngsa style="margin-bottom:8px;">🏰 ${esc(t("pur_ng_set_state"))}</button><details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
-    })()}
-    ${ngShown.map((tb) => {
-      const l = packLinkFor(tb.id);
-      const t0 = packStartOfToday();
-      const ngApps = newGenAppearances(tb.id, Number(l.window) || 0).filter((x) => x.start.getTime() + (x.days - 1) * 86400000 >= t0.getTime()).map((x) => ({ ...x, offset: Math.round((x.start - t0) / 86400000) }));
-      const apps = (ngApps.length ? ngApps : packAppearances(l.reset, l.resetDay, Number(l.window) || 0, 400)).slice(0, 3);
-      const mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
-      // With a "last new heroes" date the pack follows it; otherwise its own date can be set.
-      const fromLast = !!packNewGenAnchor(tb.id), off = packNewGenOffset(tb.id);
-      return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(ngBase(tb) || tb.title || "")}</b>${!fromLast && mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
-        ${fromLast ? `<div class="meta" style="font-size:11px; margin-top:4px;">${esc(off ? t("pur_newgen_after").replace("{n}", Math.round(off / 7)) : t("pur_newgen_with"))}</div>` : `<label class="pur-f" style="margin-top:6px;"><span class="meta">${esc(t("pur_newgen_start"))}</span><span style="display:flex; gap:6px; align-items:center;"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(apps[0] ? packDayKey(apps[0].start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>`}
-        <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
-      </div>`;
-    }).join("")}
-  </details>` : "";
-
-  // Weekly cards (owner picked A, 19 Oct 2026): the stacking weekly / monthly
-  // cards at the top. One box each, "Reward days left" (calc_state
-  // my_cards_active, the same numbers the planner reads in packLinkFor);
-  // the line under the name works out the rest. They start today.
+  // Weekly cards (owner picked A, 19 Oct 2026; A2 box with Hide / Show, 4 Nov
+  // 2026): the stacking weekly / monthly cards. One box each, "Reward days
+  // left" (calc_state my_cards_active, the same numbers the planner reads in
+  // packLinkFor); the line under the name works out the rest. They start today.
   const wcCards = tables.filter((tb) => { const l = packLinkForBase(tb.id); return !!packStackInfo(l.reset) && !l.template && (IS_OWNER || (l.visitorDate && !l.hideVisitors)); });
   const wcFmt = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return packDayKey(d); } };
   const wcRun = wcCards.filter((tb) => packLinkFor(tb.id).activeDaysLeft > 0).length;
-  const wcCard = wcCards.length ? `<details class="t12x-card pur-listbox pur-wc" data-purlist="w" style="margin-top:12px;" ${listOpen("w") ? "open" : ""}><summary class="t12x-title pur-list-sum">${esc(t("pur_wc_title"))}<span class="pur-sum-tot meta">${esc([wcRun ? t("pur_wc_running_n").replace("{n}", wcRun) : "", wcCards.length - wcRun ? t("pur_wc_notbought_n").replace("{n}", wcCards.length - wcRun) : ""].filter(Boolean).join(" · "))}</span></summary>
-    <div class="meta pur-wc-desc">${esc(t("pur_wc_desc"))}</div>
-    <div class="pur-wc-colh meta"${IS_OWNER ? "" : ` style="padding-inline-end:0;"`}>${esc(t("pk_active_label"))}</div>
+  // Hide / Show kept on the account with the other folds (calc_state bar_hidden).
+  const WC_KEY = "top:purchases-weekly";
+  const wcFolded = BAR_SHOW_ALL[WC_KEY] === false;
+  const wcFoldHtml = (f) => `${esc(t(f ? "g1_show" : "g1_hide"))} ${f ? "&#9662;" : "&#9652;"}`;
+  const wcCard = wcCards.length ? `<div class="t12x-card pur-wc pur-a2-wc${wcFolded ? " folded" : ""}" data-purwc>
+    <div class="pur-wc-hd"><span class="t12x-title">${esc(t("pur_wc_title"))}</span><span class="meta pur-wc-sum">${esc([wcRun ? t("pur_wc_running_n").replace("{n}", wcRun) : "", wcCards.length - wcRun ? t("pur_wc_notbought_n").replace("{n}", wcCards.length - wcRun) : ""].filter(Boolean).join(" · "))}</span><button type="button" class="g1-fold pur-wc-fold" data-purwcfold aria-expanded="${!wcFolded}">${wcFoldHtml(wcFolded)}</button></div>
+    <p class="desc">${esc(t("pur_wc_desc"))}</p>
+    <div class="pur-wc-bd">
     ${wcCards.map((tb) => {
       const base = packLinkForBase(tb.id), st = packStackInfo(base.reset), l = packLinkFor(tb.id);
       const offer = packOffersFor(tb, true)[0], ic = offer ? mainIcon(rawOf({ row: offer.row }, tb)) : "";
@@ -11485,32 +11656,224 @@ async function renderPurchasesPage() {
         : t("pur_wc_idle").replace("{n}", st.atOnce);
       return `<div class="pur-wc-row">
         <span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(tb.title || "?").charAt(0))}</i>`}</span>
-        <span class="pur-wc-t"><b>${esc(tb.title || "")}</b><small class="${run ? "on" : ""}"><i aria-hidden="true"></i>${esc(line)}</small></span>
-        <input type="number" min="0" step="1" inputmode="numeric" class="keep-w pur-wc-in" data-wcdays="${esc(String(tb.id))}" value="${packActiveDays(tb.id) || 0}" aria-label="${esc(t("pk_active_label"))}" />
+        <span class="pur-wc-t"><b>${esc(tb.title || "")}</b><small class="${run ? "on" : ""}">${esc(line)}</small></span>
+        <label class="pur-wc-days"><input type="number" min="0" step="1" inputmode="numeric" class="keep-w pur-wc-in" data-wcdays="${esc(String(tb.id))}" value="${packActiveDays(tb.id) || 0}" aria-label="${esc(t("pk_active_label"))}" /><small>${esc(t("pur_a2_days_unit"))}</small></label>
         ${IS_OWNER ? `<button type="button" class="pkd-gear" data-wcopen="${esc(String(tb.id))}" title="${esc(t("pk_preview_open"))}" aria-label="${esc(t("pk_preview_open"))}">&#9881;</button>` : ""}
       </div>`;
     }).join("")}
     <div class="pkd-foot"><span class="meta">${(() => { const st = packStackInfo(packLinkForBase(wcCards[0].id).reset); return esc(t("pur_wc_foot").replace("{d}", st.days).replace("{cap}", st.cap)); })()}</span>${wcCards.some((tb) => MY_CARDS_ACTIVE[String(tb.id)]) ? `<button type="button" class="linklike" data-wcresetall>${esc(t("pk_reset_all_dates"))}</button>` : ""}</div>
-  </details>` : "";
+    </div>
+  </div>` : "";
+
+  // One line about the next new heroes; "change ›" opens the Packs page's
+  // Pack dates & prices window at its New heroes section.
+  const ngLine = (() => {
+    if (!purNewGenTables(tables).length) return "";
+    const nx = purNextNewGen();
+    const face = nx && nx.hall ? HERO_IMG_BY_NAME[nx.hall] : "";
+    const txt = !nx ? t("pur_a2_gen_set") : (nx.gen ? t("pur_a2_gen").replace("{gen}", nx.gen) : t("pur_a2_gen_nogen")).replace("{date}", shortDay(packDayKey(nx.date)));
+    return `<button type="button" class="pur-a2-ng" data-purngopen><span class="pur-a2-ngpic">${face ? `<img src="${esc(face)}" alt="" loading="lazy" />` : "&#11088;"}</span><span class="pur-a2-ngt"><b>${esc(txt)}</b>${nx ? ` <span class="meta">· ${esc(t("pur_a2_gen_moves"))}</span>` : ""}</span><span class="pur-a2-lk">${esc(t("pur_a2_change"))} &#8250;</span></button>`;
+  })();
+
+  // Rows that open sheets (their sub-lines are filled in by drawWeek / here).
+  const monthKey0 = today.slice(0, 7) + "-01";
+  const boughtMonth = bought.filter((p) => p.date >= monthKey0);
+  const nPacks = (arr) => arr.reduce((a, p) => a + cntNow(p), 0);
+  const sheetRow = (k, title, sub, id) => `<button type="button" class="pur-a2-row" data-pursheet="${k}"><span class="pur-a2-rt"><b>${esc(title)}</b><small class="meta"${id ? ` id="${id}"` : ""}>${esc(sub)}</small></span><span class="pur-a2-chev" aria-hidden="true">&#8250;</span></button>`;
+  const sheetHtml = (k, title, body) => `<div class="modal-overlay adm-sheet-wrap gs-wrap pur-shw" data-pursh="${k}"${PUR_SHEET === k ? "" : ` style="display:none;"`}><div class="modal-box adm-sheet gs-box pur-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="gs-head"><b style="flex:1;">${esc(title)}</b><button type="button" class="rfa-x" data-purshx aria-label="${esc(t("close_button"))}">&#10005;</button></div>${body}</div></div>`;
 
   content.innerHTML = `
-    <div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div>
-    <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("pur_desc"))}</p>
-    <div class="t12x">
-      <aside class="t12x-side" style="position:static;">
-        ${ngCard}
-      </aside>
-      <div class="t12x-main">
-        ${summary}
+    <div class="plx-head pur-a2-head"><h2>${esc(t("pur_title"))}</h2><button type="button" class="btn pur-a2-add" data-pursheet="add">+ ${esc(t("pur_a2_add"))}</button></div>
+    <p class="desc">${esc(t("pur_desc"))} ${esc(t("pur_how"))}</p>
+    <div class="pur-a2">
+      <div class="pur-a2-l">
+        <div class="t12x-card pur-ans" id="purAns"><div id="purAnsTop"></div>${ngLine}</div>
         ${wcCard}
-        <div class="t12x-card" id="purSuggest" style="margin-top:12px;${sugH ? ` min-height:${sugH}px;` : ""}">${PUR_SUG_KEEP && PUR_SUG_KEEP.html
-          // While it's worked out again, the last list stays (faded) instead of a blank box.
-          ? `<div class="pur-upd bud-pending small">${esc(t("pur_updating"))}</div><div class="pur-stale" aria-hidden="true" inert>${PUR_SUG_KEEP.html}</div>`
-          : `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div>`}</div>
-        <div style="margin-top:12px;">${addCard}</div>
-        ${listsHtml}
       </div>
-    </div>`;
+      <div class="pur-a2-r">
+        <div class="t12x-card pur-chk" id="purChk"></div>
+        ${sheetRow("next", t("pur_a2_next"), t("budgets_working"), "purNextSub")}
+        ${sheetRow("coming", t("pur_coming"), coming.length ? t("pur_a2_n_packs_v").replace("{n}", nPacks(coming)).replace("{v}", packFmtLocal(sumCost(coming), sample, false)) : t("pur_none_coming"))}
+        ${sheetRow("bought", t("pur_bought_list"), boughtMonth.length ? t("pur_a2_month_sum").replace("{n}", nPacks(boughtMonth)).replace("{v}", packFmtLocal(sumCost(boughtMonth), sample, false)) : bought.length ? t("pur_a2_n_packs_v").replace("{n}", nPacks(bought)).replace("{v}", packFmtLocal(sumCost(bought), sample, false)) : t("pur_none_bought"))}
+      </div>
+    </div>
+    ${sheetHtml("add", t("pur_add_title"), addCard)}
+    ${sheetHtml("next", t("pur_a2_next"), `<div class="pur-sug-in" id="purSuggest"${sugH ? ` style="min-height:${sugH}px;"` : ""}>${PUR_SUG_KEEP && PUR_SUG_KEEP.html
+      // While it's worked out again, the last list stays (faded) instead of a blank box.
+      ? `<div class="pur-upd bud-pending small">${esc(t("pur_updating"))}</div><div class="pur-stale" aria-hidden="true" inert>${PUR_SUG_KEEP.html}</div>`
+      : `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="bud-pending small">${esc(t("budgets_working"))}</div>`}</div>`)}
+    ${sheetHtml("coming", t("pur_coming"), listBody("c", coming))}
+    ${sheetHtml("bought", t("pur_bought_list"), listBody("b", bought))}`;
+
+  // ---- This week (answer card + checklist), drawn from the followed plan ----
+  const t0w = packStartOfToday(), monW = (t0w.getUTCDay() + 6) % 7;
+  const wkMonD = new Date(t0w.getTime() - monW * 86400000), wkSunD = new Date(wkMonD.getTime() + 6 * 86400000);
+  const monKeyW = packDayKey(wkMonD), sunKeyW = packDayKey(wkSunD);
+  const wdName = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { weekday: "short", timeZone: "UTC" }); } catch (e) { return packDayKey(d); } };
+  const offDate = (off) => new Date(t0w.getTime() + off * 86400000);
+  const optOfLabel = (lb) => { const m = /^[^·]*\d[^·]*·\s*([^·]+)$/.exec(String(lb || "")); return m && !/\d/.test(m[1]) ? m[1].trim() : ""; };
+  // The pack's running copy ends this week (before Sunday): "Ends Thu".
+  const endsOf = (reset, resetDay, win) => {
+    if (typeof reset !== "number" || !(win > 0)) return null;
+    let st0 = null;
+    try { st0 = packCurrentCycleStart(reset, resetDay); } catch (e) { st0 = null; }
+    if (!st0) return null;
+    const end = new Date(st0.getTime() + (win - 1) * 86400000);
+    return end >= t0w && end < wkSunD ? end : null;
+  };
+  const whenOf = (offs, ends) => {
+    const o = [...new Set(offs.map((x) => Math.max(0, x)))].sort((a, b) => a - b);
+    if (!o.length) return { tag: "", txt: "" };
+    let tag = "";
+    if (o[0] <= 0) tag = ends ? `<span class="pur-a2-tag end">${esc(t("pur_a2_ends").replace("{day}", wdName(ends)))}</span>` : `<span class="pur-a2-tag today">${esc(t("pur_a2_today"))}</span>`;
+    const run = o.every((x, i) => i === 0 || x === o[i - 1] + 1);
+    let txt = "";
+    if (o.length > 1 && run && o[0] <= 0) txt = t("pur_a2_daily").replace("{day}", wdName(offDate(o[o.length - 1])));
+    else if (o[0] > 0) txt = o.length === 1 ? wdName(offDate(o[0])) : run ? `${wdName(offDate(o[0]))} – ${wdName(offDate(o[o.length - 1]))}` : o.map((x) => wdName(offDate(x))).join(", ");
+    return { tag, txt };
+  };
+  const showSheet = (k) => {
+    PUR_SHEET = k || null;
+    content.querySelectorAll("[data-pursh]").forEach((x) => { x.style.display = x.dataset.pursh === PUR_SHEET ? "" : "none"; });
+    // Next weeks starts on next week (this week is on the page).
+    if (k === "next" && sugCtl && PUR_SUG_WEEK === 0 && sugCtl.keys.includes(1)) { PUR_SUG_WEEK = 1; sugCtl.draw(); }
+  };
+  let sugCtl = null; // { draw, keys, open(i) } from the drawn plan
+  // P = { plan, cmp, follow, rows, sched, nFollow, buckets, keys, money, wkName, sugTable, plainPack, sugName, takeAsPlanned, planTag } or null.
+  const drawWeek = (P, pending) => {
+    const ans = document.getElementById("purAnsTop"), chk = document.getElementById("purChk");
+    if (seq !== RENDER_SEQ || !ans || !chk) return;
+    const cur0 = P && P.rows && P.rows[0] ? P.rows[0].currency : sample, smp = P && P.rows && P.rows[0] ? P.rows[0].price : undefined;
+    const fmt = (v) => packFmtLocal(v, cur0, false, smp);
+    const items = []; // { done, tb, name, pic, n, local, tag, step, when, coming: [p], sugg: [{ i, r, xs }], day }
+    const pLocal = (p) => packConvert(cost(p), packLinkFor(p.table).currency || "USD").n;
+    // Bought this week (Mon – today).
+    const bw = (PACK_PURCHASES.list || []).filter((p) => p.status === "bought" && !p.hidden && byId.has(String(p.table)) && p.date >= monKeyW && p.date <= today);
+    groupBy(bw).forEach((g) => {
+      const tb = g.tb, last = g.items.map((p) => p.date).sort().pop();
+      items.push({ done: true, tb, name: purShortName((g.first.choice && g.first.choice.name) || tb.title || ""), pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last });
+    });
+    // Still to buy: "will buy" dated this week (or passed) and the plan's buys this week.
+    const rest = new Map();
+    const restOf = (key, mk) => { if (!rest.has(key)) rest.set(key, mk()); return rest.get(key); };
+    coming.filter((p) => p.date <= sunKeyW && !purTriggerWaiting(p)).forEach((p) => {
+      const tb = byId.get(String(p.table));
+      const it = restOf(purGroupKey(p), () => ({ done: false, tb, first: p, name: purShortName((p.choice && p.choice.name) || tb.title || ""), pic: mainIcon(rawOf(p, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: link0Seq(tb) ? purTierText(tb, p.row, Number(p.from) || 0, p.choice) : (p.choice ? purTierText(tb, p.row, 0, p.choice) : "") }));
+      it.coming.push(p); it.n += cntNow(p); it.local += pLocal(p); it.offs.push(dOff(p.date));
+    });
+    if (P && P.rows && P.sched) {
+      for (let i = 0; i < P.nFollow; i++) {
+        const xs = (P.sched[i] || []).filter((x) => Math.max(0, x.off) <= 6 - monW);
+        if (!xs.length) continue;
+        const r = P.rows[i], tb = P.sugTable(r);
+        if (!tb) continue;
+        const plain = P.plainPack(tb), key = `${tb.id}~${plain ? (r.row != null ? r.row : 0) : "c:" + r.label}${r.from > 0 ? "f" + r.from : ""}`;
+        const choice = plain ? null : { name: P.sugName(r), label: r.label, price: r.price, gives: r.gives };
+        const it = restOf(key, () => ({ done: false, tb, first: null, name: purShortName(P.sugName(r)) + (optOfLabel(r.label) ? ` · ${optOfLabel(r.label)}` : ""), pic: mainIcon(rawOf({ row: r.row != null ? r.row : 0, from: r.from, ...(choice ? { choice } : {}) }, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: plain ? (link0Seq(tb) ? purTierText(tb, r.row != null ? r.row : 0, r.from || 0, null) : "") : purTierText(tb, r.row != null ? r.row : 0, 0, choice) }));
+        const n = xs.reduce((a, x) => a + x.count, 0);
+        it.sugg.push({ i, r, xs, choice, plain });
+        it.n += n; it.local += packRowLocalUnits(r).reduce((a, x) => a + x, 0) * n;
+        xs.forEach((x) => it.offs.push(x.off));
+        if (!it.endsR) it.endsR = r;
+      }
+    }
+    const restList = [...rest.values()].sort((a, b) => Math.min(...a.offs) - Math.min(...b.offs));
+    restList.forEach((it) => {
+      const l = packLinkFor(it.tb.id), r = it.endsR;
+      const ends = endsOf(r ? r.reset : l.reset, r ? r.resetDay : l.resetDay, Number(r ? r.window : l.window) || 0);
+      const w = whenOf(it.offs, ends);
+      it.tag = w.tag; it.when = w.txt;
+      // The option already in the name ("· all Classic") isn't repeated; "(1 of 5 steps)" loses its brackets.
+      const opt = (/ · ([^·]+)$/.exec(it.name) || [])[1];
+      let st = String(it.step || "");
+      if (opt) st = st.split(" · ").filter((x) => x.trim() !== opt.trim()).join(" · ");
+      it.step = st.replace(/^\((.*)\)/, "$1").trim();
+    });
+    const all = items.concat(restList);
+    const total = all.reduce((a, x) => a + x.local, 0), doneV = items.reduce((a, x) => a + x.local, 0);
+    const nAll = all.length, nDone = items.length;
+    // Answer card
+    const left = 6 - monW;
+    const leftTxt = left <= 0 ? t("pur_a2_last_day") : left === 1 ? t("pur_a2_day_left") : t("pur_a2_days_left").replace("{n}", left);
+    const range = `${shortDay(monKeyW)} – ${shortDay(sunKeyW)}`;
+    const plan = P && P.plan, cmp = P && P.cmp, follow = P ? P.follow : "budget";
+    const pl = plan ? (cmp && follow === "target" ? cmp.targetPlan : plan) : null;
+    const doneDay = pl && pl.days != null && (pl.rows || []).length ? fmtDay(packDayKey(offDate(Math.max(0, pl.days)))) : "";
+    const per = plan && plan.spend ? t(plan.spend.per === "week" ? "pur_a2_per_week" : "pur_a2_per_month") : "";
+    const tDay = packValidDay(BUDGET_TARGET);
+    const sw = cmp ? `<div class="pur-a2-sw" role="group">${["budget", "target"].map((k) => `<button type="button" data-purfollow="${k}" class="${follow === k ? "on" : ""}" aria-pressed="${follow === k}">${esc(k === "budget" ? t("pur_a2_budget_sw").replace("{v}", packFmtLocal(plan.spend.amount, cur0, true, smp) + per) : t("pur_a2_target_sw").replace("{date}", tDay ? shortDay(tDay) : "—"))}</button>`).join("")}</div>`
+      : plan && plan.spend ? `<div class="pur-following" data-purgospend role="button" tabindex="0">${esc(t("pur_following"))} <b>${esc(t("budgets_view_budget"))}</b> <span class="meta">(${esc(packFmtLocal(plan.spend.amount, cur0, true, smp))}${esc(per)})</span> <span class="pur-go">${esc(t("pur_go_spend"))}</span></div>` : "";
+    const pct = nAll ? Math.round((nDone / nAll) * 100) : 0;
+    ans.innerHTML = `<div class="pur-a2-wk"><span>${esc(t("pur_a2_week").replace("{range}", range))}</span><span class="meta">${esc(leftTxt)}</span></div>
+      <div class="pur-a2-big">${pending && !nAll ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>` : `<b>${nAll ? esc(fmt(total)) : "—"}</b><span class="meta">${esc(t("pur_n_packs").replace("{n}", nAll))}</span>`}</div>
+      <span class="pur-a2-bar"><i style="width:${pct}%;"></i></span>
+      <div class="pur-a2-sub">${nDone ? `<span class="good">&#10003; ${esc(t("pur_a2_bought_of").replace("{a}", nDone).replace("{b}", nAll).replace("{v}", fmt(doneV)))}</span>` : nAll ? `<span class="meta">${esc(t("pur_a2_bought_of").replace("{a}", 0).replace("{b}", nAll).replace("{v}", fmt(0)))}</span>` : "<span></span>"}${doneDay ? `<span class="meta">${esc(t("pur_a2_done").replace("{date}", doneDay))}</span>` : pending ? `<span class="meta bud-pending small">${esc(t("budgets_working"))}</span>` : ""}</div>
+      ${sw}`;
+    // Checklist
+    const rowHtml = (it, k) => {
+      const nm = `${esc(it.name)}${it.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + it.n)}</span>` : ""}`;
+      const sub = it.done
+        ? esc(it.day === today ? t("pur_a2_bought_today") : t("pur_a2_bought_on").replace("{day}", wdName(packParseDay(it.day))))
+        : `${it.tag || ""}${[it.step, it.when].filter(Boolean).map(esc).join(" · ")}`;
+      return `<div class="pur-a2-it${it.done ? " done" : ""}" data-pura2="${k}" ${it.done ? "" : `role="button" tabindex="0"`}>
+        <span class="pur-pic">${it.pic ? `<img src="${esc(it.pic)}" alt="" loading="lazy" />` : `<i>${esc(it.name.charAt(0))}</i>`}</span>
+        <span class="pur-a2-tx"><b>${nm}</b><small>${sub}</small></span>
+        <b class="pur-a2-pr">${esc(fmt(it.local))}</b>
+        ${it.done ? `<span class="pur-a2-ck on" aria-label="${esc(t("pur_a2_bought_mark"))}">&#10003;</span>` : `<button type="button" class="pur-a2-ck" data-pura2ck="${k}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>`}
+      </div>`;
+    };
+    chk.innerHTML = all.length ? all.map(rowHtml).join("") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    // Next weeks: the next two weeks with something to buy.
+    const nextSub = document.getElementById("purNextSub");
+    if (nextSub && P && P.buckets) {
+      const ks = P.keys.filter((k) => k !== 0 && k !== "after" && P.buckets.get(k) && P.buckets.get(k).cost > 0).slice(0, 2);
+      nextSub.textContent = ks.length ? ks.map((k) => `${P.wkName(k)} ${fmt(P.buckets.get(k).cost)}`).join(" · ") : t("pur_a2_next_none");
+    } else if (nextSub && !pending) nextSub.textContent = t("pur_a2_next_none");
+    // Taps
+    ans.querySelectorAll("[data-purfollow]").forEach((b) => b.addEventListener("click", () => { if (b.classList.contains("on")) return; try { localStorage.setItem("pur_follow", b.dataset.purfollow); } catch (e) { /* blocked */ } redraw(); }));
+    ans.querySelectorAll("[data-purgospend]").forEach((b) => {
+      const go = () => { BUDGET_FOCUS_SPEND = true; goToTab("budgets"); };
+      b.addEventListener("click", go);
+      b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
+    const markBought = (it) => {
+      const tb = it.tb;
+      const total = it.n;
+      const asPlanned = !it.coming.length;
+      const s0 = it.sugg[0];
+      const base = it.coming[0] || null;
+      const proto = base
+        ? { table: String(tb.id), row: base.row, ...(base.from != null ? { from: base.from } : {}), ...(base.choice ? { choice: base.choice } : {}), ...(base.plan ? { plan: base.plan } : {}) }
+        : { table: String(tb.id), row: s0.r.row != null ? s0.r.row : 0, ...(s0.r.from != null ? { from: s0.r.from } : {}), ...(s0.choice ? { choice: s0.choice } : {}), plan: P ? P.planTag(s0.i) : undefined };
+      const ids = new Set(it.coming.map((p) => p.id));
+      const took = () => it.sugg.flatMap((sg) => sg.xs.map((x) => ({ i: sg.i, off: x.off, count: x.count })));
+      const save = (n, day, whole) => {
+        PACK_PURCHASES.list = (PACK_PURCHASES.list || []).filter((p) => !ids.has(p.id)).concat([{ id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...proto, count: n, date: day, status: "bought" }]);
+        savePackPurchases();
+        if (asPlanned && whole && P) P.takeAsPlanned(took());
+        toast(t("pur_a2_bought_mark") + " ✓");
+        redraw();
+      };
+      // One of a "will buy": the same as ✓ on the Coming row.
+      if (total === 1 && it.coming.length === 1) { PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (p.id === it.coming[0].id ? toBought(p) : p)); savePackPurchases(); redraw(); return; }
+      if (total === 1) { save(1, today, true); return; }
+      // Several: how many did you buy, and when? (the How many sheet)
+      openBoughtSheet({ id: "", ...proto, count: total, date: today, status: "planned" }, (n, day) => save(n, day, n === total));
+    };
+    chk.querySelectorAll("[data-pura2ck]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); markBought(all[Number(b.dataset.pura2ck)]); }));
+    chk.querySelectorAll(".pur-a2-it[role=button]").forEach((rw) => {
+      const go = () => {
+        const it = all[Number(rw.dataset.pura2)];
+        const sg = it.sugg[0];
+        if (sg && sugCtl && sugCtl.open(sg.i)) return;
+        showSheet(it.coming.length ? "coming" : "next");
+      };
+      rw.addEventListener("click", (e) => { if (!e.target.closest("button")) go(); });
+      rw.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && !e.target.closest("button")) { e.preventDefault(); go(); } });
+    });
+  };
+  const link0Seq = (tb) => !!packLinkFor(tb.id).sequential;
+  drawWeek(null, true);
   // Suggested packs: the Budgets plan (it already counts the packs listed
   // here), each with "Add" to put it under Coming.
   const drawPlan = (plan, taken, updating) => {
@@ -11538,7 +11901,7 @@ async function renderPurchasesPage() {
     const nFollow = followRows.length;
     const rows = followRows.concat(otherRows);
     const head = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta" style="font-size:11px; margin:-4px 0 8px;">${esc(t("pur_sug_desc"))}</div>`;
-    if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; return; }
+    if (!rows.length) { box.innerHTML = head + `<div class="meta">${esc(plan ? t("pur_sug_none") : t("pur_sug_fail"))}</div>`; sugCtl = null; drawWeek(plan ? { plan, rows: [], sched: [], nFollow: 0 } : null); return; }
     let total = followRows.reduce((a, r) => a + packConvert(r.subtotal, r.currency || "USD").n, 0);
     // Packs come on the calendar, so each suggestion is spread over the days it
     // can actually be bought (Now, then each time the pack comes back).
@@ -12161,9 +12524,17 @@ async function renderPurchasesPage() {
       box.classList.toggle("pur-upding", !!updating);
       box.dataset.drawn = "1";
     };
+    sugCtl = {
+      draw: drawSug, keys,
+      // The checklist's row: the Will buy pop-up of that pack (this week's dates).
+      open: (i) => { if (PUR_SUG_WEEK !== 0) { PUR_SUG_WEEK = 0; drawSug(); } const b = box.querySelector(`[data-pursug="${i}"]`); if (!b) return false; b.click(); return true; },
+    };
     drawSug();
+    const b0 = buckets.get(0);
+    drawWeek({ plan, cmp, follow, rows, sched, nFollow, buckets, keys, money, wkName, sugTable, plainPack, sugName, takeAsPlanned,
+      planTag: (i) => (cmp ? (b0 && b0.match.has(i) ? "both" : follow) : plan && plan.spend ? "budget" : "target") }, !!updating);
   };
-  const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; } };
+  const sugFail = (e) => { if (e && e.superseded) return; const box = document.getElementById("purSuggest"); if (box && seq === RENDER_SEQ) { box.style.minHeight = ""; box.innerHTML = `<div class="t12x-title">${esc(t("pur_sug_title"))}</div><div class="meta">${esc(t("pur_sug_fail"))}</div>`; drawWeek(null); } };
   const ov = PUR_SUG_OVERLAY;
   if (ov) {
     // Drawn at once from the same plan; the new plan replaces it quietly when ready.
@@ -12178,7 +12549,6 @@ async function renderPurchasesPage() {
   }
 
   const redraw = () => { const y = window.scrollY, put = saveBoxScroll(content); renderPurchasesPage().then(() => { window.scrollTo(0, y); put(content); }); };
-  content.querySelectorAll("[data-purlist]").forEach((d) => d.addEventListener("toggle", () => { try { localStorage.setItem(`pur_list_${d.dataset.purlist}`, d.open ? "1" : "0"); } catch (e) { /* blocked */ } }));
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
     const k = inp.dataset.purf;
     if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
@@ -12201,6 +12571,7 @@ async function renderPurchasesPage() {
     PUR_FORM.count = 1;
     savePackPurchases();
     toast(t("pur_added"));
+    PUR_SHEET = null;
     redraw();
   });
   const tblBtn = content.querySelector("[data-purtable]");
@@ -12218,6 +12589,7 @@ async function renderPurchasesPage() {
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds.map((a, k) => ({ id: "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6), table: String(formTb.id), date, status: PUR_FORM.status, ...a })));
         savePackPurchases();
         toast(t("pur_added"));
+        PUR_SHEET = null;
         redraw();
       },
     });
@@ -12305,7 +12677,7 @@ async function renderPurchasesPage() {
   };
   // ✓ on a "will buy" of several (owner picked 3, 19 Oct 2026): how many did you
   // really buy, and when? Fewer: the rest is dropped and Budgets plans it again.
-  const openBoughtSheet = (p0) => {
+  const openBoughtSheet = (p0, onOk) => {
     const tb = byId.get(String(p0.table));
     if (!tb) return;
     const cur = packLinkFor(tb.id).currency, each = purchasePrice(p0, tb), max = cntNow(p0);
@@ -12335,6 +12707,7 @@ async function renderPurchasesPage() {
       if (st) { n = Math.max(1, Math.min(max, n + Number(st.dataset.bsstep))); sync(); return; }
       if (!ev.target.closest("[data-bsok]")) return;
       const v = m.querySelector("[data-bsday]").value, day = packValidDay(v) && v <= today ? v : (p0.date > today ? today : p0.date);
+      if (onOk) { close(); onOk(n, day); return; }
       PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => { if (p.id !== p0.id) return p; return { ...p, status: "bought", count: n, date: day }; });
       close();
       savePackPurchases();
@@ -12378,38 +12751,29 @@ async function renderPurchasesPage() {
       row0.querySelector("[data-purdel]").addEventListener("click", () => { PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => p.id !== id); savePackPurchases(); redraw(); });
     });
   });
-  content.querySelectorAll("[data-purngsa]").forEach((b) => b.addEventListener("click", () => openStateAgeModal(() => redraw())));
-  content.querySelectorAll("[data-purngstate]").forEach((b) => b.addEventListener("click", () => {
-    PACK_PURCHASES.newGen = { ...(PACK_PURCHASES.newGen || {}) };
-    delete PACK_PURCHASES.newGen.last; delete PACK_PURCHASES.newGen.gen;
-    PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); redraw();
+  // A2: rows / "+ Add" open their sheet; ✕, the dim edge (or Esc) close it.
+  content.querySelectorAll("[data-pursheet]").forEach((b) => b.addEventListener("click", () => showSheet(b.dataset.pursheet)));
+  content.querySelectorAll("[data-pursh]").forEach((ov) => ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-purshx]")) showSheet(null); }));
+  // Weekly cards: Hide / Show (saved on the account, calc_state bar_hidden).
+  content.querySelectorAll("[data-purwcfold]").forEach((b) => b.addEventListener("click", () => {
+    const f = BAR_SHOW_ALL[WC_KEY] !== false;
+    BAR_SHOW_ALL[WC_KEY] = !f;
+    saveBarHidden();
+    const box = b.closest("[data-purwc]");
+    if (box) box.classList.toggle("folded", f);
+    b.innerHTML = wcFoldHtml(f);
+    b.setAttribute("aria-expanded", String(!f));
   }));
-  content.querySelectorAll("[data-purng]").forEach((inp) => inp.addEventListener("change", () => {
-    const ng0 = { ...(PACK_PURCHASES.newGen || {}) };
-    if (inp.dataset.purng === "last") { if (packValidDay(inp.value)) ng0.last = inp.value; else delete ng0.last; }
-    else { const n = Math.floor(Number(inp.value) || 0); if (n > 0) ng0.gen = n; else delete ng0.gen; }
-    PACK_PURCHASES.newGen = ng0;
-    if (inp.dataset.purng !== "gen") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); savePackPurchases(); } // the New Gen packs' dates follow these
-    else saveCalcState("pack_purchases", PACK_PURCHASES); // Gen number: labels only
-    redraw();
-  }));
-  const ngSave = () => {
-    PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
-    if (typeof budgetInvalidate === "function") budgetInvalidate();
-    PACK_TABLES_CACHE = null;
-    saveCalcState("my_pack_dates", MY_PACK_DATES);
-    redraw();
-  };
-  // Each New Gen pack has its own start date (they don't always come together).
-  content.querySelectorAll("[data-purngstart]").forEach((inp) => inp.addEventListener("change", () => {
-    ngSame(inp.dataset.purngstart).forEach((id) => { if (packValidDay(inp.value)) MY_PACK_DATES[id] = inp.value; else delete MY_PACK_DATES[id]; });
-    ngSave();
-  }));
-  content.querySelectorAll("[data-purngreset]").forEach((b) => b.addEventListener("click", () => {
-    ngSame(b.dataset.purngreset).forEach((id) => { delete MY_PACK_DATES[id]; });
-    ngSave();
-  }));
+  // "Gen 15 heroes Dec 21 · change ›": the Packs page's Pack dates & prices window, New heroes.
+  content.querySelectorAll("[data-purngopen]").forEach((b) => b.addEventListener("click", () => { PKB_DP_FOCUS = "ng"; goToTab("packs"); }));
 }
+// Esc closes My Purchases' sheet (not while one of its pop-ups is open over it).
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || TAB !== "purchases" || !PUR_SHEET) return;
+  if ([...document.querySelectorAll("#purSugModal, #purTblModal, #purBsSheet, #purRmSheet")].some((m) => m.style.display === "flex")) return;
+  PUR_SHEET = null;
+  document.querySelectorAll("[data-pursh]").forEach((x) => { x.style.display = "none"; });
+});
 
 // ============================================================
 // PACK CALENDAR - when each pack comes and how long it stays.
@@ -12768,7 +13132,7 @@ async function renderPacksPage() {
     <div class="pkb-ov" id="pkbDpSheet" hidden>
       <div class="pkb-sheet" role="dialog" aria-label="${esc(t("pkb_dates_prices"))}">
         <div class="pkb-sh-h"><button type="button" class="pkb-back" data-pkbdpclose aria-label="${esc(t("close_button"))}">&#8249;</button><b>${esc(t("pkb_dates_prices"))}</b></div>
-        <div class="pkb-sh-b"><div id="packsMyDates"></div><div id="packsPriceStrip"></div></div>
+        <div class="pkb-sh-b"><div id="packsNewHeroes"></div><div id="packsMyDates"></div><div id="packsPriceStrip"></div></div>
       </div>
     </div>
     <div id="packsList"></div>
@@ -14476,6 +14840,18 @@ async function renderPacksPage() {
   renderPriceStrip();
   // Every dated pack's own date sits here (above Pack prices) for everyone.
   renderMyPackDates(document.getElementById("packsMyDates"), tables);
+  // New heroes (moved here from My Purchases, owner 4 Nov 2026): its dates move the hero packs.
+  // (Same tables My Purchases used: the hero packs may be hidden from visitors on this page.)
+  const ngFocus = PKB_DP_FOCUS;
+  PKB_DP_FOCUS = null;
+  if (ngFocus) pkbDpShow(true);
+  ensurePackTables().then((all) => {
+    const ngEl = document.getElementById("packsNewHeroes");
+    if (seq !== RENDER_SEQ || !ngEl) return;
+    renderPurNewGen(ngEl, all, () => { if (seq === RENDER_SEQ && pkbReady) renderAll(); });
+    // Came from My Purchases' "change ›": the window opens at New heroes.
+    if (ngFocus && ngEl.firstChild) ngEl.scrollIntoView({ block: "start" });
+  }).catch(() => {});
   pkbDpSub();
   renderAll();
   pkbReady = true;
