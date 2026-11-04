@@ -8317,6 +8317,7 @@ const T = {
   cando_more: { en: "+{n} more" },
   cando_spend: { en: "How to spend it" },
   cando_mode_desc: { en: "My order: goes down your list below. Best value: the most stat % per item, any troop." },
+  cando_best_note: { en: "Best value doesn't use your order: it picks the upgrades that give the most % for what your Backpack holds, any troop. Switch to My order to use (and change) your order." },
   cando_order: { en: "Your upgrade order" },
   cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
   cando_show_all: { en: "Show all troops ›" },
@@ -11688,9 +11689,9 @@ function canDoDraw(m) {
     ${todo.length ? `<div class="cando-k">${esc(t("cando_spend"))}</div>
     <div class="rch-seg cando-seg"><button type="button" data-cdmode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdmode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
     <div class="meta cando-desc">${esc(t("cando_mode_desc"))}</div>
-    <div class="cando-oh"><span class="cando-k">${esc(t("cando_order"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
+    ${best ? `<div class="meta cando-desc cando-bestnote">${esc(t("cando_best_note"))}</div>` : `<div class="cando-oh"><span class="cando-k">${esc(t("cando_order"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
     <div class="meta cando-desc">${esc(t("cando_drag_hint"))}</div>
-    <div class="cando-ord${best ? " dim" : ""}">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>` : ""}
+    <div class="cando-ord${best ? " dim" : ""}">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>`}` : ""}
     <div class="cando-foot">${c.all ? `<button type="button" class="btn ghost cando-all" data-rchall="${esc(c.all)}" data-cdall>${esc(t("cando_show_all"))}</button>` : ""}<button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
   </div>`;
   const box = m.querySelector(".cando-box");
