@@ -3465,6 +3465,11 @@ input,select,textarea{
     .plx-stats.one .plx-stat small{ font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   }
   .t12x-tabs.plx-stat-tabs{ margin:0 0 10px; max-width:none; }
+  /* Stat tabs (Experts' All / SvS / Foundry …, Islands' troops …) look like the troop
+     switch on the other pages: rounded track, picked one a solid pill (owner, 4 Nov 2026) */
+  .t12x-tabs.plx-stat-tabs{ gap:4px; padding:3px; border-radius:11px; background:rgba(255,255,255,.04); }
+  .t12x-tabs.plx-stat-tabs button{ min-height:34px; border-radius:9px; font-weight:700; font-size:13px; }
+  .t12x-tabs.plx-stat-tabs button.on{ background:var(--tc, var(--ice)); color:#0f141b; box-shadow:none; }
   .plx-stat-tabs{ overflow-x:auto; scrollbar-width:none; }
   .plx-stat-tabs button{ font-size:12.5px; flex:1 0 auto; white-space:nowrap; padding:7px 10px; }
   /* Pet / expert picker strip */
