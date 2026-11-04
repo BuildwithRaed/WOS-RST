@@ -15583,7 +15583,8 @@ async function renderPacksPage() {
     // P3 (owner, 4 Nov 2026): your own packs (and templates) show their table as
     // step cards on phones (<= 700 px): items as picture chips, a card per price
     // step. Same inputs, so every handler above still does the work.
-    const stepCards = IS_OWNER && (lk.group === PACK_MINE_GROUP || lk.template);
+    // Step cards were tried for My packs; the owner kept the sideways table for every pack (4 Nov 2026).
+    const stepCards = false && IS_OWNER && (lk.group === PACK_MINE_GROUP || lk.template);
     if (stepCards) {
       panel.classList.add("pkb-steps");
       const htr = body.querySelector(".pk-tbl-wrap thead tr"), tbd = body.querySelector(".pk-tbl-wrap tbody");
