@@ -1432,6 +1432,7 @@
   .pur-wc-days .pur-wc-in{ flex:none; width:100%; text-align:center; font-weight:800; }
   .pur-wc-days small{ font-size:11px; color:var(--muted); text-align:center; white-space:nowrap; }
   .pur-chk{ padding-top:2px; padding-bottom:2px; }
+  .pur-a2-more{ display:block; width:100%; min-height:40px; margin-top:6px; border:1px dashed var(--line); border-radius:10px; background:none; color:var(--ice); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
   .pur-a2-it{ display:flex; align-items:center; gap:10px; min-height:56px; padding:9px 0; border-top:1px solid var(--line); cursor:pointer; }
   .pur-a2-it:first-child{ border-top:0; }
   .pur-a2-it .pur-pic{ flex:0 0 40px; width:40px; height:40px; border-radius:10px; }
@@ -2972,6 +2973,11 @@ input,select,textarea{
   /* Same size as the Backpack page's tiles; the picture says what it is, so no
      name (owner, 20 Oct 2026). Third line: red short / green ✓ / grey —. */
   .bs-tiles{ display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr)); gap:8px; }
+  /* One sideways row when the last row would be under half full (bsSlideFit); a bit of
+     the next box shows so it's clear the row scrolls. */
+  .bs-tiles.bs-slide{ display:flex !important; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; padding-bottom:2px; }
+  .bs-tiles.bs-slide::-webkit-scrollbar{ display:none; }
+  .bs-tiles.bs-slide > *{ flex:0 0 calc((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)); min-width:0; scroll-snap-align:start; }
   .bs-tile{ gap:1px; padding:5px 3px; }
   .bs-tile img{ width:34px; height:34px; }
   .bp-tile.bs-tile > .bp-name{ display:none; }
@@ -7222,6 +7228,8 @@ const T = {
   pur_a2_bought_today: { en: "Bought today" },
   pur_a2_bought_on: { en: "Bought {day}" },
   pur_a2_none: { en: "Nothing to buy this week." },
+  pur_a2_more: { en: "Show {n} more" },
+  pur_a2_less: { en: "Show less" },
   pur_a2_next: { en: "Next weeks" },
   pur_a2_next_none: { en: "Tap to see every week's packs" },
   pur_a2_month_sum: { en: "{n} packs this month · {v}" },
@@ -11320,6 +11328,7 @@ let PUR_FORM = (() => { try { const v = JSON.parse(sessionStorage.getItem("pur_f
 let PUR_SUG_KEEP = null; // My Purchases: the suggestions box's height / scroll before a redraw
 // My Purchases (A2): the sheet open over the page ("add" / "next" / "coming" / "bought"), kept across its redraws.
 let PUR_SHEET = null;
+let PUR_CHK_ALL = false; // My Purchases: this week's list shows all packs (for the visit)
 // My Purchases' "change ›" opens the Packs page's Pack dates & prices window at New heroes.
 let PKB_DP_FOCUS = null;
 // The next new heroes (owner, 4 Nov 2026, My Purchases A2): { date, days, gen, hall } or null.
@@ -11640,8 +11649,10 @@ async function renderPurchasesPage() {
   const wcFmt = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return packDayKey(d); } };
   const wcRun = wcCards.filter((tb) => packLinkFor(tb.id).activeDaysLeft > 0).length;
   // Hide / Show kept on the account with the other folds (calc_state bar_hidden).
-  const WC_KEY = "top:purchases-weekly";
-  const wcFolded = BAR_SHOW_ALL[WC_KEY] === false;
+  // Starts folded (owner, 4 Nov 2026: the page was a long scroll). bar_hidden only keeps
+  // keys set to false, so this key means "opened": false here = the person opened it.
+  const WC_KEY = "pur:weekly-opened";
+  const wcFolded = BAR_SHOW_ALL[WC_KEY] !== false;
   const wcFoldHtml = (f) => `${esc(t(f ? "g1_show" : "g1_hide"))} ${f ? "&#9662;" : "&#9652;"}`;
   const wcCard = wcCards.length ? `<div class="t12x-card pur-wc pur-a2-wc${wcFolded ? " folded" : ""}" data-purwc>
     <div class="pur-wc-hd"><span class="t12x-title">${esc(t("pur_wc_title"))}</span><span class="meta pur-wc-sum">${esc([wcRun ? t("pur_wc_running_n").replace("{n}", wcRun) : "", wcCards.length - wcRun ? t("pur_wc_notbought_n").replace("{n}", wcCards.length - wcRun) : ""].filter(Boolean).join(" · "))}</span><button type="button" class="g1-fold pur-wc-fold" data-purwcfold aria-expanded="${!wcFolded}">${wcFoldHtml(wcFolded)}</button></div>
@@ -11822,7 +11833,12 @@ async function renderPurchasesPage() {
         ${it.done ? `<span class="pur-a2-ck on" aria-label="${esc(t("pur_a2_bought_mark"))}">&#10003;</span>` : `<button type="button" class="pur-a2-ck" data-pura2ck="${k}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>`}
       </div>`;
     };
-    chk.innerHTML = all.length ? all.map(rowHtml).join("") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    // First 5 packs, then "Show N more" (owner, 4 Nov 2026: the list made a long scroll).
+    const CHK_N = 5, extra = all.length - CHK_N;
+    const shown = PUR_CHK_ALL || extra <= 1 ? all : all.slice(0, CHK_N);
+    chk.innerHTML = all.length ? shown.map(rowHtml).join("") + (extra > 1 ? `<button type="button" class="pur-a2-more" data-pura2more>${esc(PUR_CHK_ALL ? t("pur_a2_less") : t("pur_a2_more").replace("{n}", extra))}</button>` : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    const moreB = chk.querySelector("[data-pura2more]");
+    if (moreB) moreB.addEventListener("click", () => { PUR_CHK_ALL = !PUR_CHK_ALL; drawWeek(P, pending); });
     // Next weeks: the next two weeks with something to buy.
     const nextSub = document.getElementById("purNextSub");
     if (nextSub && P && P.buckets) {
@@ -12756,8 +12772,8 @@ async function renderPurchasesPage() {
   content.querySelectorAll("[data-pursh]").forEach((ov) => ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-purshx]")) showSheet(null); }));
   // Weekly cards: Hide / Show (saved on the account, calc_state bar_hidden).
   content.querySelectorAll("[data-purwcfold]").forEach((b) => b.addEventListener("click", () => {
-    const f = BAR_SHOW_ALL[WC_KEY] !== false;
-    BAR_SHOW_ALL[WC_KEY] = !f;
+    const f = BAR_SHOW_ALL[WC_KEY] === false; // open now → fold it
+    if (f) delete BAR_SHOW_ALL[WC_KEY]; else BAR_SHOW_ALL[WC_KEY] = false;
     saveBarHidden();
     const box = b.closest("[data-purwc]");
     if (box) box.classList.toggle("folded", f);
@@ -19388,9 +19404,28 @@ document.addEventListener("click", (e) => {
   g1FoldSync();
 });
 TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); });
+// Backpack boxes on phones: when the last row would hold less than half a row (e.g. 5
+// boxes, 4 a row), all the boxes go in one row that scrolls sideways instead, so the card
+// stays compact (owner, 4 Nov 2026). Decided again when the count or the width changes.
+function bsSlideFit(root) {
+  root.querySelectorAll(".bs-tiles").forEach((g) => {
+    const n = g.children.length;
+    if (innerWidth > 900 || n < 2) { g.classList.remove("bs-slide"); delete g.dataset.bsk; return; }
+    const key = `${n}|${g.clientWidth}`;
+    if (g.dataset.bsk === key) return;
+    g.classList.remove("bs-slide");
+    const cols = getComputedStyle(g).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
+    const wide = [...g.children].some((ch) => /span/.test(getComputedStyle(ch).gridColumnEnd));
+    const rest = n % cols;
+    const slide = !wide && n > cols && rest > 0 && rest < cols / 2;
+    if (slide) { g.style.setProperty("--bscols", cols); g.classList.add("bs-slide"); }
+    g.dataset.bsk = `${n}|${g.clientWidth}`;
+  });
+}
+window.addEventListener("resize", () => { const c = document.getElementById("content"); if (c) bsSlideFit(c); });
 {
   let queued = false;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
