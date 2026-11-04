@@ -145,13 +145,31 @@
   }
   .mm-pages button.active{ background:rgba(111,211,242,0.1); color:var(--ice); }
   .mm-pages button .ic{ width:20px; text-align:center; flex-shrink:0; font-size:13px; }
-  .mm-tl{ margin:0 0 14px; }
-  .mm-tl-h{ font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:0 2px 7px; }
-  .mm-tl-grid{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
-  .mm-tl-grid button{ display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:6px; min-height:92px; padding:12px 4px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; font-size:13px; line-height:1.2; text-align:center; cursor:pointer; }
-  .mm-tl-grid button.active{ border-color:var(--ice); color:var(--ice); box-shadow:0 0 0 1px var(--ice) inset; }
-  .mm-tl-grid button .ic{ width:100%; height:40px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
-  .mm-tl-grid button .ic img{ width:40px; height:40px; object-fit:contain; display:block; }
+  /* Phone Menu = Home hub (owner picked N2, 4 Nov 2026): a card per group, pages as tiles with a live line. */
+  #mobileMenuOverlay .mm-header{ margin-bottom:10px; }
+  #mobileMenuOverlay .mm-header h2{ font-size:19px; font-weight:800; }
+  .mm-close{ width:40px; height:40px; }
+  .mm-hc{ background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:9px 10px 9px; margin-bottom:9px; }
+  .mm-hh{ display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:0 2px 7px; }
+  .mm-hh > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mm-hh em{ margin-inline-start:auto; font-style:normal; letter-spacing:0; text-transform:none; font-weight:700; font-size:12px; white-space:nowrap; }
+  .mm-hh em.a, .mm-hp i.a{ color:var(--amber, #e8a23c); }
+  .mm-hh em.g, .mm-hp i.g{ color:var(--good); }
+  .mm-hp i.c{ color:var(--ice); }
+  .mm-hrow{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; }
+  .mm-hrow.two{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .mm-hp{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:0; min-height:76px; padding:8px 4px 7px; background:var(--panel-2); border:1px solid var(--line); border-radius:11px; color:var(--frost); font:inherit; text-align:center; cursor:pointer; }
+  .mm-hrow.two .mm-hp{ flex-direction:row; justify-content:flex-start; gap:8px; min-height:52px; padding:6px 8px; text-align:start; }
+  .mm-hp.active{ border-color:var(--ice); box-shadow:0 0 0 1px var(--ice) inset; }
+  .mm-hp.active b{ color:var(--ice); }
+  .mm-hp .ic{ width:32px; height:32px; flex:none; display:flex; align-items:center; justify-content:center; font-size:23px; line-height:1; }
+  .mm-hp .ic img{ width:32px; height:32px; object-fit:contain; display:block; }
+  .mm-tx{ min-width:0; width:100%; }
+  .mm-hrow.two .mm-tx{ width:auto; flex:1 1 auto; }
+  .mm-tx b{ display:block; font-size:12.5px; font-weight:700; line-height:1.2; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+  .mm-tx i{ display:block; font-style:normal; font-size:11px; line-height:1.25; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+  .mm-hbar{ height:4px; border-radius:9px; background:rgba(255,255,255,.08); margin:8px 2px 0; overflow:hidden; }
+  .mm-hbar i{ display:block; height:100%; background:var(--good); border-radius:9px; }
   .topnav-groups{ display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; }
   .topnav-group{ position:relative; }
   .topnav-group-btn{
@@ -5175,6 +5193,14 @@ const T = {
   invalid_login: { en: "Invalid login." },
   login_failed: { en: "Login failed" },
   menu_title: { en: "Menu" },
+  mm_close: { en: "Close" },
+  mm_to_go: { en: "{n} to go" },
+  mm_at_target: { en: "at target" },
+  mm_day_gen: { en: "Day {d} · Gen {g}" },
+  mm_this_week: { en: "{n} this week" },
+  mm_upd_today: { en: "updated today" },
+  mm_upd_1: { en: "updated 1 day ago" },
+  mm_upd_n: { en: "updated {n} days ago" },
   stats_dashboard: { en: "Stats dashboard" },
   total_owner_only: { en: "TOTAL (owner only)" },
   troop_infantry: { en: "Infantry" },
@@ -7130,33 +7156,132 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Phone Menu button: a full-screen overlay listing categories, each
-// expanding accordion-style to show its pages. Built from the same
-// #topnavGroups markup so it never drifts out of sync with the real nav
-// (including which groups exist and whether Admin is currently shown).
+// Phone Menu = Home hub (owner picked N2, 4 Nov 2026; was picture tiles under
+// headings): one card per group of the real menu (#topnavGroups, so Admin
+// renames / moves and pages hidden for visitors follow), its pages as tiles
+// with a short live line under the name when it is already known: only data
+// in memory or the preloaded calc_state; nothing is loaded or worked out for it.
+function mmSaved(name) {
+  return CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID ? CALC_STATE_CACHE[name] : undefined;
+}
+// Budgets' shown total, kept when Budgets draws it (and on the phone for the
+// day), dropped by budgetInvalidate when anything it depends on changes.
+const MM_BUDGET_STORE = "mm_budget_v1";
+let MM_BUDGET = null; // { user, day, text }
+function mmBudgetSet(text) {
+  MM_BUDGET = text ? { user: USER_ID || "", day: packDayKey(packStartOfToday()), text: String(text) } : null;
+  try { if (MM_BUDGET) localStorage.setItem(MM_BUDGET_STORE, JSON.stringify(MM_BUDGET)); else localStorage.removeItem(MM_BUDGET_STORE); } catch (e) { /* storage blocked */ }
+}
+function mmBudgetText() {
+  let v = MM_BUDGET;
+  if (!v) { try { v = JSON.parse(localStorage.getItem(MM_BUDGET_STORE) || "null"); } catch (e) { v = null; } }
+  return v && v.text && v.user === (USER_ID || "") && v.day === packDayKey(packStartOfToday()) ? String(v.text) : null;
+}
+// "N to go": { left, total } pieces below their target, from the saved state
+// (only when every piece has both numbers saved; otherwise unknown).
+function mmToGo(tab) {
+  if (tab === "chiefgear") {
+    const s = mmSaved("chief_gear");
+    if (!s) return null;
+    let left = 0;
+    for (const p of CHIEF_GEAR_PIECES) { const x = s[p.key]; if (!x || typeof x.from !== "number" || typeof x.to !== "number") return null; if (x.to > x.from) left++; }
+    return { left, total: CHIEF_GEAR_PIECES.length };
+  }
+  if (tab === "charmscalc") {
+    const s = mmSaved("charm");
+    if (!s) return null;
+    let left = 0, total = 0;
+    for (const p of CHARM_PIECES) {
+      if (!Array.isArray(s[p.key]) || s[p.key].length < 3) return null;
+      for (const x of s[p.key].slice(0, 3)) { if (!x || x.current == null || x.target == null) return null; total++; if (String(x.current) !== String(x.target)) left++; }
+    }
+    return { left, total };
+  }
+  if (tab === "herogearcalc") {
+    const s = mmSaved(HERO_GEAR_STORAGE_KEYS["Set 1"]);
+    if (!s) return null;
+    let left = 0, total = 0;
+    for (const tr of HERO_GEAR_TROOPS) for (const pc of HERO_GEAR_PIECE_NAMES) {
+      let up = false;
+      for (const tn of GEAR_LEVELING_TABLES) { const x = s?.[tr]?.[pc]?.[tn]; if (!x || typeof x.from !== "number" || typeof x.to !== "number") return null; if (x.to > x.from) up = true; }
+      total++; if (up) left++;
+    }
+    return { left, total };
+  }
+  return null;
+}
+function mmStateDay() {
+  if (STATE_AGE) return stateAgeDay();
+  const v = mmSaved("state_age");
+  if (!v || !(Number(v.day) >= 0) || !packValidDay(v.on)) return null;
+  return Math.floor(Number(v.day)) + Math.max(0, Math.round((packStartOfToday() - packParseDay(v.on)) / 86400000));
+}
+// One tile's live line: { text, cls, left?, total? } or null (unknown).
+function mmLiveLine(tab) {
+  try {
+    const go = mmToGo(tab);
+    if (go) return go.left ? { text: t("mm_to_go").replace("{n}", go.left), cls: "a", ...go } : { text: "✓ " + t("mm_at_target"), cls: "g", ...go };
+    if (tab === "statetimeline") {
+      const d = mmStateDay();
+      if (d == null) return null;
+      let gi = 0; STATE_GEN_DAYS.forEach((gd, i) => { if (gd <= d) gi = i; });
+      return { text: t("mm_day_gen").replace("{d}", d.toLocaleString("en-US")).replace("{g}", gi + 1), cls: "c" };
+    }
+    if (tab === "budgets") { const x = mmBudgetText(); return x ? { text: x, cls: "c" } : null; }
+    if (tab === "purchases") {
+      const s = mmSaved("pack_purchases");
+      if (!s || !Array.isArray(s.list)) return null;
+      const t0 = packStartOfToday(), today = packDayKey(t0);
+      const sun = packDayKey(new Date(t0.getTime() + (6 - ((t0.getUTCDay() + 6) % 7)) * 86400000));
+      const n = s.list.filter((p) => p && p.status === "planned" && packValidDay(p.date) && p.date >= today && p.date <= sun).length;
+      return { text: t("mm_this_week").replace("{n}", n), cls: n ? "a" : "" };
+    }
+    if (tab === "backpack") {
+      const at = CALC_STATE_UPDATED.backpack;
+      if (!at || !mmSaved("backpack")) return null;
+      const d0 = packParseDay(String(at).slice(0, 10));
+      if (!d0) return null;
+      const days = Math.max(0, Math.round((packStartOfToday() - d0) / 86400000));
+      return { text: days === 0 ? t("mm_upd_today") : t(days === 1 ? "mm_upd_1" : "mm_upd_n").replace("{n}", days), cls: days > 7 ? "a" : "" };
+    }
+  } catch (e) { /* unknown: no line */ }
+  return null;
+}
 function renderMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay");
   const groups = [...topnavGroups.querySelectorAll(".topnav-group")].filter((g) => g.style.display !== "none");
+  const cards = groups.map((g) => {
+    const name = g.dataset.group;
+    // Same name as the PC menu shows (the group button's text; Packs' key is "Marketplace").
+    const label = (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || ((g.querySelector(".topnav-group-btn") || {}).textContent || "").replace(/\u25BC/g, "").trim() || name;
+    const btns = [...g.querySelectorAll(".topnav-dropdown > button[data-tab]")];
+    const n = btns.filter((b) => b.style.display !== "none").length;
+    if (!n) return "";
+    let left = 0, total = 0;
+    const tiles = btns.map((b) => {
+      const tab = b.dataset.tab;
+      const ic = b.querySelector(".ic");
+      const c = b.cloneNode(true); const cic = c.querySelector(".ic"); if (cic) cic.remove();
+      const nm = c.textContent.trim();
+      const live = b.style.display === "none" ? null : mmLiveLine(tab);
+      if (live && live.total) { left += live.left; total += live.total; }
+      // The page's own inline style is kept, so pages hidden for visitors stay hidden.
+      const st = b.getAttribute("style");
+      return `<button type="button" data-tab="${esc(tab)}" class="mm-hp${b.classList.contains("active") ? " active" : ""}"${st ? ` style="${esc(st)}"` : ""} title="${esc(nm)}"><span class="ic">${ic ? ic.innerHTML : ""}</span><span class="mm-tx"><b>${esc(nm)}</b>${live ? `<i class="${live.cls || ""}">${esc(live.text)}</i>` : ""}</span></button>`;
+    }).join("");
+    const right = total ? (left ? t("mm_to_go").replace("{n}", left) : "✓ " + t("mm_at_target")) : "";
+    const bar = total ? `<div class="mm-hbar"><i style="width:${Math.round(((total - left) / total) * 100)}%"></i></div>` : "";
+    return `
+      <div class="mm-hc" data-group="${esc(name)}">
+        <div class="mm-hh"><span>${esc(label)}</span>${right ? `<em class="${left ? "a" : "g"}">${esc(right)}</em>` : ""}</div>
+        <div class="mm-hrow${n === 1 || n === 2 || n === 4 ? " two" : ""}">${tiles}</div>${bar}
+      </div>`;
+  }).join("");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
-      <button class="mm-close" type="button" id="mmCloseBtn">&#10005;</button>
-    </div>
-    ${groups
-      .map((g) => {
-        const name = g.dataset.group;
-        const label = (NAV_GROUP_LABELS[name] && (NAV_GROUP_LABELS[name][LANG] || NAV_GROUP_LABELS[name].en)) || name;
-        const pagesHtml = g.querySelector(".topnav-dropdown").innerHTML;
-        // Picture tiles (owner picked idea 1, 1 Nov 2026): a heading per
-        // group and its pages as big tiles, 3 a row, like the wiki's home page.
-        return `
-      <div class="mm-tl" data-group="${esc(name)}">
-        <div class="mm-tl-h">&#10052; ${esc(label)}</div>
-        <div class="mm-tl-grid">${pagesHtml}</div>
-      </div>`;
-      })
-      .join("")}
-  `;
+      <button class="mm-close" type="button" id="mmCloseBtn" aria-label="${esc(t("mm_close"))}" title="${esc(t("mm_close"))}">&#10005;</button>
+    </div>${cards}`;
   overlay.querySelector("#mmCloseBtn").addEventListener("click", closeMobileMenu);
 }
 
@@ -21097,7 +21222,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { mmBudgetSet(null); BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 // ---- My budget: a spending limit (owner, 17 Oct 2026, design C + D) ----
 // calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
 // Only the admin sees it unless Admin → Visibility → Visitor access
@@ -22367,6 +22492,8 @@ async function renderBudgetsPage(opts = {}) {
   // open in a sheet over the page (BUDGET_SHEET, kept across redraws).
   if (BUDGET_FOCUS_SPEND === true && spendFeatureOn()) BUDGET_SHEET = "settings";
   const ticked = pagesRaw.filter((pg) => included(pg.calcKey));
+  // The phone Menu's Budgets tile shows this total (mmBudgetSet; nothing worked out for it).
+  if (!planPending) mmBudgetSet(anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : null);
   const lateAll = targetDays != null && grandDays > targetDays;
   const shortDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
   const b3Money = (v) => packFmtLocal(Math.ceil(v), (combined.chosen && combined.chosen.rows[0] && combined.chosen.rows[0].currency) || grandCurrency, true, combined.chosen && combined.chosen.rows[0] ? combined.chosen.rows[0].price : undefined);
