@@ -2999,18 +2999,27 @@ input,select,textarea{
   .rl-todo.today .rl-d{ color:var(--ice); }
   .rl-t{ flex:1 1 auto; min-width:0; font-size:13px; }
   .rl-t small{ display:block; font-size:11.5px; color:var(--muted); }
-  .rl-c{ display:flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .rl-c{ flex:none; display:flex; align-items:center; justify-content:flex-end; min-width:64px; gap:4px; font-size:12.5px; font-weight:700; white-space:nowrap; }
   .rl-c .rl-ic{ width:16px; height:16px; }
-  .rl-ck{ flex:none; width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--good); font-size:15px; cursor:pointer; }
-  .rl-ck.on{ background:rgba(76,209,138,.18); border-color:rgba(76,209,138,.5); }
-  /* Highest tier row (under the speed cards) */
-  .rl-tier{ margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,255,255,.06); }
-  .rl-tcs{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; margin-top:8px; }
-  .rl-tc{ min-width:0; min-height:40px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+  /* "Your own plan" sheet: By FC amount | By tier */
+  .rl-sw{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:3px; border:1px solid var(--line); border-radius:12px; background:rgba(0,0,0,.22); margin:2px 0 10px; }
+  .rl-sw button{ min-width:0; min-height:36px; border:0; border-radius:9px; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .rl-sw button.on{ background:var(--ice-dim); color:var(--frost); box-shadow:0 0 0 1px rgba(124,196,255,.45); }
+  .rl-lbr{ display:flex; justify-content:space-between; gap:8px; font-size:12px; color:var(--muted); margin-top:4px; }
+  .rl-lbr.gap{ margin-top:12px; }
+  .rl-tcs{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; margin-top:6px; }
+  .rl-tc{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0; min-height:48px; padding:4px 2px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+  .rl-tc small{ font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  .rl-tc small.rl-rd{ color:var(--danger); }
   .rl-tc.on{ background:var(--ice-dim); border-color:var(--ice); box-shadow:0 0 0 1px rgba(124,196,255,.35); }
-  .rl-tl{ margin-top:8px; font-size:13px; line-height:1.45; }
-  .rl-tl .rl-ic{ width:16px; height:16px; vertical-align:-3px; }
-  .rl-tl2{ margin-top:2px; font-size:12px; color:var(--muted); line-height:1.4; }
+  .rl-tc.on small{ color:#cfe6fb; }
+  .rl-tc.on small.rl-rd{ color:#ffb3b3; }
+  .rl-own-box .rl-sw.tries{ margin:6px 0 0; }
+  .rl-res{ margin-top:10px; padding:9px 12px; border-radius:12px; border:1px solid rgba(76,209,138,.4); background:rgba(76,209,138,.08); font-size:12.5px; line-height:1.5; color:var(--muted); }
+  .rl-res.late{ border-color:rgba(255,122,122,.45); background:rgba(255,122,122,.08); }
+  .rl-res.none{ border-color:var(--line); background:rgba(255,255,255,.03); }
+  .rl-res-b{ font-size:15px; font-weight:800; color:var(--frost); }
+  .rl-res-b .rl-ic{ width:18px; height:18px; vertical-align:-3px; }
   /* This week: super refinements line + "Game says" */
   .rl-sup{ margin-top:8px; padding:9px 10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
   .rl-sup.off{ border-color:rgba(255,193,92,.5); background:rgba(255,193,92,.07); }
@@ -3020,7 +3029,6 @@ input,select,textarea{
   .rl-sup-l{ font-size:12px; color:var(--muted); }
   .rl-sup-s{ font-size:12px; color:var(--muted); margin-top:3px; line-height:1.4; }
   .rl-gs{ flex:none; min-height:36px; padding:0 12px; border:1px solid rgba(124,196,255,.4); border-radius:10px; background:var(--ice-dim); color:var(--ice); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
-  .rl-own-box .rl-two{ align-items:end; }
   .rl-gnote{ margin-top:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,193,92,.45); background:rgba(255,193,92,.08); color:var(--amber); font-size:12.5px; line-height:1.45; }
   .rl-gnote .rl-lnk{ font-size:12.5px; font-weight:800; min-height:0; }
   .rl-sup + .rl-todo, .rl-gnote + .rl-todo{ margin-top:4px; }
@@ -7774,7 +7782,7 @@ const T = {
   rl_own_weekly: { en: "Or set your own weekly FC" },
   rl_own_line: { en: "Or your own:" },
   rl_own_set: { en: "Set my own FC" },
-  rl_own_title: { en: "Your own weekly FC" },
+  rl_own_title: { en: "Your own plan" },
   rl_own_use: { en: "Use {n} FC" },
   rl_own_need: { en: "Need {n} FC a week to make {d} ({p})." },
   rl_own_none: { en: "Even the fastest speed misses {d}." },
@@ -7787,7 +7795,6 @@ const T = {
   rl_first_half: { en: "first one half price" },
   rl_one_enough: { en: "one a day is enough" },
   rl_resets: { en: "week resets Monday" },
-  rl_done_day: { en: "Done" },
   rl_rfc_week_rand: { en: "Refined FC a week (random per try)" },
   rl_day: { en: "day" },
   rl_open: { en: "open" },
@@ -7811,9 +7818,20 @@ const T = {
   rl_week_def: { en: "A week = that tier once a day, with the tiers under it done on Monday to open it. Tap a row for its chances and the 20-tries numbers." },
   rl_rules_h: { en: "Lab rules" },
   rl_rfc: { en: "Refined FC" },
-  rl_hi_tier: { en: "Highest tier" },
-  rl_first_try_tag: { en: "first try a day" },
-  rl_hi_tier_tip: { en: "Refine this tier once a day (the tiers under it on Monday to open it)" },
+  rl_by_fc: { en: "By FC amount" },
+  rl_by_tier: { en: "By tier" },
+  rl_tier_use: { en: "Highest tier to use" },
+  rl_done_date: { en: "done date" },
+  rl_top_tries: { en: "Tries of the top tier" },
+  rl_first_try_day: { en: "First try a day" },
+  rl_all_n_wk: { en: "All {n} a week" },
+  rl_tier_note: { en: "First try a day is half price. Lower tiers: {n} each on Monday to unlock." },
+  rl_tier_note1: { en: "First try a day is half price." },
+  rl_rfc_a_week: { en: "≈ {n} Refined FC a week" },
+  rl_before_d: { en: "before {d}" },
+  rl_after_d: { en: "after {d}" },
+  rl_use_daily: { en: "Use {t} daily" },
+  rl_use_all_tries: { en: "Use all {t} tries" },
   rl_super: { en: "Super refinements" },
   rl_plan_lbl: { en: "plan" },
   rl_game_lbl: { en: "game" },
@@ -7821,19 +7839,17 @@ const T = {
   rl_so_far_game: { en: "this week (game)" },
   rl_left_today: { en: "{n} left today" },
   rl_by_sun: { en: "{n} by Sun" },
-  rl_plan_expected: { en: "plan expected {n}" },
+  rl_plan_expected: { en: "plan expected {n} by today" },
   rl_resets_in: { en: "Resets Mon 00:00 UTC · in {n} days" },
   rl_resets_in1: { en: "Resets Mon 00:00 UTC · in 1 day" },
   rl_game_says: { en: "Game says" },
   rl_game_title: { en: "What the game shows" },
   rl_game_weekly: { en: "Weekly super refinements" },
-  rl_game_left: { en: "Remaining today" },
-  rl_game_hint: { en: "Type the two numbers from the game's Research Lab. Only this week's list below changes; your weekly plan stays the same." },
+  rl_game_hint: { en: "Type the weekly number from the game's Research Lab. Only this week's list below changes; your weekly plan stays the same." },
   rl_game_behind: { en: "Game shows {g}, plan expects {p} — plan updated for the rest of the week." },
   rl_game_ahead: { en: "Game shows {g}, plan expects {p} — you're ahead, the rest of the week needs fewer tries." },
   rl_undo: { en: "Undo" },
   rl_done_today: { en: "Done for today" },
-  rl_game_left_today: { en: "game: {n} left today" },
   rl_catch_up: { en: "catches up" },
   rl_half_full: { en: "{h} half price + {f} full" },
   rl_fewer: { en: "fewer tries, you're ahead" },
@@ -22837,10 +22853,10 @@ function rfcAllPlans() {
   for (let top = 1; top <= RFC_LAB_TIERS.length; top++) for (let n = 1; n <= RFC_LAB_MAX_PER_TIER; n++) out.push(rfcPlan(top, n));
   return out;
 }
-let RFC_LAB_STATE = null; // saved calc_state rfc_lab (old fields + myNeed / myBy / pick / ticks)
+let RFC_LAB_STATE = null; // saved calc_state rfc_lab (old fields + myNeed / myBy / pick / game)
 // Research Lab page (owner's design, Nov 2026): "Best for you" header with
 // Need / By, How fast? (Cheapest / best in time / Fastest + chips + own
-// weekly FC slider), This week (what to refine each day, ticks), Lab open
+// weekly FC slider), This week (what to refine each day), Lab open
 // row; "Tiers ›" opens the tier table (T2) in a window. The plan the page
 // shows is the one T12 / Budgets read (st.top / st.attempts / st.mode /
 // st.budget through rfcLabChosenPlan), as before.
@@ -22899,14 +22915,13 @@ async function renderRfcLabPage() {
     RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
     if (saved.labOpen === true || saved.labOpen === false) RFC_LAB_STATE.labOpen = saved.labOpen;
     // New (Nov 2026): own Need / By, "auto" (Best for you) or "manual"
-    // (Your pick), this week's ticks. Someone who already chose a schedule
+    // (Your pick). Old saved day ticks are ignored. Someone who already chose a schedule
     // on the old page keeps it as their pick, so T12 doesn't change.
     RFC_LAB_STATE.myNeed = saved.myNeed != null && Number.isFinite(Number(saved.myNeed)) ? Math.max(0, Number(saved.myNeed)) : null;
     RFC_LAB_STATE.myBy = typeof saved.myBy === "string" && packParseDay(saved.myBy) ? saved.myBy : "";
     RFC_LAB_STATE.pick = saved.pick === "auto" || saved.pick === "manual" ? saved.pick : (saved.top != null || saved.attempts != null || saved.mode === "budget" ? "manual" : "auto");
-    RFC_LAB_STATE.ticks = saved.ticks && typeof saved.ticks === "object" ? { wk: String(saved.ticks.wk || ""), days: Array.isArray(saved.ticks.days) ? saved.ticks.days.map(Number) : [] } : { wk: "", days: [] };
     // What the game's Research Lab shows this week (typed by the person); ignored once the week changes.
-    if (saved.game && typeof saved.game === "object" && typeof saved.game.wk === "string") RFC_LAB_STATE.game = { wk: saved.game.wk, count: Math.max(0, Number(saved.game.count) || 0), left: Math.max(0, Number(saved.game.left) || 0) };
+    if (saved.game && typeof saved.game === "object" && typeof saved.game.wk === "string") RFC_LAB_STATE.game = { wk: saved.game.wk, count: Math.max(0, Number(saved.game.count) || 0) };
   }
   rfcLabApplyRate(RFC_LAB_STATE);
   // Default the need from the T12 page's last totals (T11 doesn't use Refined FC).
@@ -23023,20 +23038,9 @@ async function renderRfcLabPage() {
   }).join("");
   const sMin = cheapest.cost, sMax = fastest.cost;
   const sVal = Math.min(sMax, Math.max(sMin, plan.cost));
-  // Highest tier row (owner picked B, 5 Nov 2026): T1–T5 = that tier once a day.
-  const tierPlans = speeds.slice(0, RFC_LAB_TIERS.length);
-  const tierChips = tierPlans.map((p) => `<button type="button" class="rl-tc${p.top === plan.top ? " on" : ""}" data-rltop="${p.top}" aria-pressed="${p.top === plan.top}" title="${esc(t("rl_hi_tier_tip"))}">T${p.top}</button>`).join("");
-  const tierLine = `<div class="rl-tl"><b>${fmt(plan.cost)} FC</b> ${esc(t("rl_a_week"))} · ≈ ${fmt(plan.rfc, 1)} ${rfI}${need > 0 ? ` · ${esc(t("rl_done"))} <b class="${planOk ? "rl-g" : "rl-rd"}">${planDone ? esc(dShort(planDone)) : "—"}${planOk ? " ✓" : ""}</b>` : ""}</div>`;
-  const tierOthers = need > 0 ? `<div class="rl-tl2">${tierPlans.filter((p) => p.top !== plan.top).map((p) => { const d = doneFor(p), late = !inTime(p); return `T${p.top} <span class="${late ? "rl-rd" : ""}">${late ? esc(t("rl_too_late")) : esc(dShort(d))}</span>`; }).join(" · ")}</div>` : "";
-  const tierHtml = `<div class="rl-tier">
-      <div class="rl-k">${esc(t("rl_hi_tier"))}<span class="rl-r rl-kr">${esc(t("rl_first_try_tag"))}</span></div>
-      <div class="rl-tcs">${tierChips}</div>
-      ${tierLine}${tierOthers}
-    </div>`;
   const fastHtml = `<div class="rl-card">
       <div class="rl-k">${esc(t("rl_how_fast"))}<span class="rl-r rl-kr">${esc(t("rl_by"))} ${esc(dShort(byDay))}</span></div>
       <div class="rl-lt">${cards.join("")}</div>
-      ${tierHtml}
       ${chips ? `<div class="rl-also">${chips}</div>` : ""}
       <div class="rl-own"><span>${esc(t("rl_own_line"))} <b>${fmt(plan.cost)} FC ${esc(t("rl_a_week"))}</b></span><button type="button" class="rl-lnk" data-rlownopen aria-haspopup="dialog">${esc(t("rl_own_set"))} ›</button></div>
     </div>`;
@@ -23047,40 +23051,58 @@ async function renderRfcLabPage() {
     return `<div class="modal-overlay rl-own-ov" data-rlownbd>
       <div class="modal-box rl-own-box" role="dialog" aria-modal="true" aria-label="${esc(t("rl_own_title"))}">
         <div class="rl-own-h"><b>${esc(t("rl_own_title"))}</b><button type="button" class="rl-x" data-rlownclose aria-label="${esc(t("close_button"))}">✕</button></div>
+        <div class="rl-sw"><button type="button" data-rlownmode="fc">${esc(t("rl_by_fc"))}</button><button type="button" data-rlownmode="tier">${esc(t("rl_by_tier"))}</button></div>
+        <div data-rlpane="tier" hidden></div>
+        <div data-rlpane="fc">
         <input type="range" class="rl-sld" data-rlslider min="${sMin}" max="${sMax}" step="10" value="${sVal}" aria-label="${esc(t("rl_own_weekly"))}" />
         <div class="rl-sldl"><span>${fmt(sMin)}</span><span class="rl-sldv" data-rlsldv></span><span>${fmt(sMax)}</span></div>
         ${hint ? `<div class="rl-note">${esc(hint)}</div>` : ""}
+        </div>
         <div class="rl-own-b"><button type="button" class="btn ghost" data-rlownclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-rlownuse></button></div>
       </div>
     </div>`;
   };
   // ---- This week
   const planDays = rfcWeekDays(plan.top, plan.n);
-  if (st.ticks.wk !== wkKey) st.ticks = { wk: wkKey, days: [] };
-  const tickOn = (i) => st.ticks.days.includes(i);
   // Super refinements (owner, 5 Nov 2026): the plan's tries Monday → today,
-  // checked against what the game shows ("Game says"). A difference only
-  // changes this box: today shows the game's remaining tries, the missed
-  // ones go to the rest of the week as full-price tries of the top tier
-  // (or fewer tries when ahead). The weekly plan, T12 and Budgets stay.
+  // checked against the game's weekly count ("Game says"). A = plan tries
+  // Monday → yesterday, B = A + today's. Count between A and B = on track
+  // (today shows B − count still to do); under A = behind (the missed tries
+  // go to the days after today as full-price top-tier tries); over B = ahead
+  // (the later days get fewer tries). Only this box changes; the weekly
+  // plan, T12 and Budgets stay.
   const triesOf = (d) => d.parts.reduce((s, x) => s + x.cnt, 0);
-  const planSoFar = planDays.slice(0, todayIdx + 1).reduce((s, d) => s + triesOf(d), 0);
-  const planWeek = planDays.reduce((s, d) => s + triesOf(d), 0);
+  const planBefore = planDays.slice(0, todayIdx).reduce((s, d) => s + triesOf(d), 0);
   const planToday = triesOf(planDays[todayIdx]);
+  const planSoFar = planBefore + planToday;
+  const planWeek = planDays.reduce((s, d) => s + triesOf(d), 0);
   const game = st.game && st.game.wk === wkKey ? st.game : null;
-  const missed = game ? planSoFar - game.count - game.left : 0;
+  // missed > 0 = behind, < 0 = ahead, 0 = on track.
+  const missed = !game ? 0 : game.count < planBefore ? planBefore - game.count : game.count > planSoFar ? planSoFar - game.count : 0;
+  const leftToday = !game ? planToday : missed > 0 ? planToday : missed < 0 ? 0 : planSoFar - game.count;
   const topTr = RFC_LAB_TIERS[plan.top - 1];
   const days = planDays.map((d) => ({ ...d, parts: d.parts.map((x) => ({ ...x })), extra: 0 }));
   if (game) {
+    // Today: take the tries the game already counts off the front.
     const td = days[todayIdx];
-    td.gameLeft = game.left;
-    if (game.left === 0) { td.parts = []; td.fc = 0; td.rfc = 0; }
+    td.gameLeft = leftToday;
+    let done = planToday - leftToday;
+    for (const x of td.parts) {
+      if (done <= 0) break;
+      const tr = RFC_LAB_TIERS[x.tier - 1], cut = Math.min(x.cnt, done);
+      x.cnt -= cut; done -= cut;
+      td.fc -= cut * (x.half ? tr.cost / 2 : tr.cost); td.rfc -= cut * rfcExpected(tr);
+    }
+    td.parts = td.parts.filter((x) => x.cnt > 0);
+    if (!td.parts.length) { td.fc = 0; td.rfc = 0; }
   }
   let catchFc = 0;
   const later = Array.from({ length: RFC_LAB_DAYS - 1 - todayIdx }, (_, k) => todayIdx + 1 + k);
-  if (game && missed > 0 && later.length) {
-    later.forEach((i, k) => {
-      const add = Math.floor(missed / later.length) + (k < missed % later.length ? 1 : 0);
+  // Sunday: no days left after today, so catching up goes on today.
+  const catchDays = later.length ? later : [todayIdx];
+  if (game && missed > 0) {
+    catchDays.forEach((i, k) => {
+      const add = Math.floor(missed / catchDays.length) + (k < missed % catchDays.length ? 1 : 0);
       if (add <= 0) return;
       const d = days[i];
       d.parts.push({ tier: plan.top, cnt: add, half: false });
@@ -23125,8 +23147,8 @@ async function renderRfcLabPage() {
     const dt = isToday ? t("rl_today") : group ? `${dShort(dFrom)}–${dTo.getUTCMonth() === dFrom.getUTCMonth() ? dTo.getUTCDate() : dShort(dTo)}` : dShort(dFrom);
     const notes = [];
     const gameToday = r.from === todayIdx && d.gameLeft != null;
-    if (d.unlock && !(gameToday && d.gameLeft === 0)) notes.push(t("rl_unlocks").replace("{t}", "T" + plan.top), t("rl_first_half"));
-    if (gameToday) notes.push(t("rl_game_left_today").replace("{n}", fmt(d.gameLeft)));
+    if (d.unlock && !(gameToday && d.gameLeft < planToday)) notes.push(t("rl_unlocks").replace("{t}", "T" + plan.top), t("rl_first_half"));
+    if (gameToday && d.gameLeft > 0 && d.gameLeft < planToday) notes.push(t("rl_left_today").replace("{n}", fmt(d.gameLeft)));
     else if (isToday && d.parts.length && !d.unlock && d.parts.length === 1 && d.parts[0].cnt === 1) notes.push(t("rl_one_enough"));
     const catchUp = d.extra > 0;
     if (catchUp) {
@@ -23134,25 +23156,22 @@ async function renderRfcLabPage() {
       notes.push((half ? t("rl_half_full").replace("{h}", half).replace("{f}", full) + " · " : "") + t("rl_catch_up"));
     } else if (d.extra < 0) notes.push(t("rl_fewer"));
     if (r.from === RFC_LAB_DAYS - 1 && !catchUp) notes.push(t("rl_resets"));
-    const on = Array.from({ length: r.to - r.from + 1 }, (_, k) => r.from + k).every(tickOn);
-    const what = gameToday && d.gameLeft === 0 ? esc(t("rl_done_today"))
+    const what = gameToday && !d.parts.length ? esc(t("rl_done_today"))
       : catchUp ? `${dayTxt(d, false)}${group ? ` ${esc(t("rl_a_day"))}` : ""} <span class="rl-plus">+${fmt(d.extra)}</span>`
       : dayTxt(d, group);
     return `<div class="rl-todo${r.to < todayIdx ? " past" : ""}${isToday ? " today" : ""}${catchUp ? " catch" : ""}">
         <div class="rl-d">${esc(nm)}<small>${esc(dt)}</small></div>
         <div class="rl-t">${what}${notes.length ? `<small>${esc(notes.join(" · "))}</small>` : ""}</div>
         ${fc > 0 || gameToday ? `<div class="rl-c">${fcI}${fmt(fc)}</div>` : ""}
-        <button type="button" class="rl-ck${on ? " on" : ""}" data-rltick="${r.from}|${r.to}" aria-pressed="${on}" aria-label="${esc(t("rl_done_day"))}">${on ? "✓" : ""}</button>
       </div>`;
   }).join("");
   const toReset = RFC_LAB_DAYS - todayIdx;
-  const leftToday = tickOn(todayIdx) ? 0 : planToday;
   const off = !!game && missed !== 0;
   const superHtml = `<div class="rl-sup${off ? " off" : ""}">
       <div class="rl-sup-t"><span>${esc(t("rl_super"))} <b class="rl-sup-n">${fmt(game ? game.count : planSoFar)}</b> <span class="rl-sup-l">${esc(game ? t("rl_game_lbl") : t("rl_plan_lbl"))}</span></span>
         <button type="button" class="rl-gs" data-rlgame aria-haspopup="dialog">${game ? `✎ ${fmt(game.count)}` : `${esc(t("rl_game_says"))} ✎`}</button></div>
       <div class="rl-sup-s">${game
-        ? `${esc(t("rl_so_far_game"))}${off ? ` · ${esc(t("rl_plan_expected").replace("{n}", fmt(planSoFar)))}` : ""} · ${esc(t("rl_left_today").replace("{n}", fmt(game.left)))}`
+        ? `${esc(t("rl_so_far_game"))} · ${esc(t("rl_plan_expected").replace("{n}", fmt(planSoFar)))} · ${esc(t("rl_left_today").replace("{n}", fmt(leftToday)))}`
         : `${esc(t("rl_so_far"))} · ${esc(t("rl_left_today").replace("{n}", fmt(leftToday)))} · ${esc(t("rl_by_sun").replace("{n}", fmt(planWeek)))}`}</div>
       <div class="rl-sup-s">${esc(toReset === 1 ? t("rl_resets_in1") : t("rl_resets_in").replace("{n}", toReset))}</div>
     </div>
@@ -23166,10 +23185,7 @@ async function renderRfcLabPage() {
   const gameSheetHtml = () => `<div class="modal-overlay rl-own-ov" data-rlgamebd>
       <div class="modal-box rl-own-box" role="dialog" aria-modal="true" aria-label="${esc(t("rl_game_title"))}">
         <div class="rl-own-h"><b>${esc(t("rl_game_title"))}</b><button type="button" class="rl-x" data-rlgameclose aria-label="${esc(t("close_button"))}">✕</button></div>
-        <div class="rl-two">
-          <label class="rl-f"><span class="rl-lb">${esc(t("rl_game_weekly"))}</span><span class="rl-inp"><input type="number" inputmode="numeric" min="0" step="1" data-rlgcount value="${game ? game.count : planSoFar}" autocomplete="off" /></span></label>
-          <label class="rl-f"><span class="rl-lb">${esc(t("rl_game_left"))}</span><span class="rl-inp"><input type="number" inputmode="numeric" min="0" step="1" data-rlgleft value="${game ? game.left : leftToday}" autocomplete="off" /></span></label>
-        </div>
+        <label class="rl-f"><span class="rl-lb">${esc(t("rl_game_weekly"))}</span><span class="rl-inp"><input type="number" inputmode="numeric" min="0" step="1" data-rlgcount value="${game ? game.count : planSoFar}" autocomplete="off" /></span></label>
         <div class="rl-note">${esc(t("rl_game_hint"))}</div>
         <div class="rl-own-b"><button type="button" class="btn ghost" data-rlgameclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-rlgamesave>${esc(t("save"))}</button></div>
       </div>
@@ -23254,14 +23270,55 @@ async function renderRfcLabPage() {
       sld.style.setProperty("--p", `${((Number(sld.value) - sMin) / Math.max(1, sMax - sMin)) * 100}%`);
       use.textContent = t("rl_own_use").replace("{n}", fmt(p.cost));
     };
-    sldText();
+    // By tier (owner picked A, 5 Nov 2026): T1–T5 with their done dates,
+    // the top tier's tries (first try a day | all 20), result line.
+    const pane = ov.querySelector('[data-rlpane="tier"]'), fcPane = ov.querySelector('[data-rlpane="fc"]');
+    let mode = st.mode === "schedule" ? "tier" : "fc";
+    let tk = plan.top, all = plan.n === RFC_LAB_MAX_PER_TIER && !rfcIsDaily(plan);
+    const tierPlan = (k) => rfcPlan(k, all ? RFC_LAB_MAX_PER_TIER : (k === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1));
+    const tierText = () => {
+      const chipsH = RFC_LAB_TIERS.map((_, i) => {
+        const k = i + 1, p = tierPlan(k), d = doneFor(p), late = need > 0 && !inTime(p);
+        const sub = need > 0 ? `<small class="${late ? "rl-rd" : ""}">${d ? esc(dShort(d)) : "—"}</small>` : `<small>${fmt(p.cost)}</small>`;
+        return `<button type="button" class="rl-tc${k === tk ? " on" : ""}" data-rlowntier="${k}" aria-pressed="${k === tk}">T${k}${sub}</button>`;
+      }).join("");
+      const p = tierPlan(tk), d = doneFor(p), ok = inTime(p);
+      const head = `<div class="rl-res-b">${rfI} ${esc(t("rl_rfc_a_week").replace("{n}", fmt(p.rfc, 1)))}</div>`;
+      const res = need > 0
+        ? `<div class="rl-res${ok ? "" : " late"}">${head}${fmt(p.cost)} FC ${esc(t("rl_a_week"))} · ${esc(t("rl_done"))} <b class="${ok ? "rl-g" : "rl-rd"}">${d ? esc(dShort(d)) : "—"}${ok ? " ✓" : ""}</b> · ${esc(t(ok ? "rl_before_d" : "rl_after_d").replace("{d}", dShort(byDay)))}</div>`
+        : `<div class="rl-res none">${head}${fmt(p.cost)} FC ${esc(t("rl_a_week"))}</div>`;
+      pane.innerHTML = `<div class="rl-lbr"><span>${esc(t("rl_tier_use"))}</span>${need > 0 ? `<span>${esc(t("rl_done_date"))}</span>` : ""}</div>
+        <div class="rl-tcs">${chipsH}</div>
+        <div class="rl-lbr gap"><span>${esc(t("rl_top_tries"))}</span></div>
+        <div class="rl-sw tries"><button type="button" data-rlowntries="d" class="${all ? "" : "on"}" aria-pressed="${!all}">${esc(t("rl_first_try_day"))}</button><button type="button" data-rlowntries="a" class="${all ? "on" : ""}" aria-pressed="${all}">${esc(t("rl_all_n_wk").replace("{n}", RFC_LAB_MAX_PER_TIER))}</button></div>
+        <div class="rl-note">${esc(tk === 1 ? t("rl_tier_note1") : t("rl_tier_note").replace("{n}", RFC_LAB_MAX_PER_TIER))}</div>
+        ${res}`;
+      use.textContent = t(all ? "rl_use_all_tries" : "rl_use_daily").replace("{t}", "T" + tk);
+    };
+    const setMode = (m) => {
+      mode = m;
+      ov.querySelectorAll("[data-rlownmode]").forEach((b) => { const on = b.dataset.rlownmode === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+      pane.hidden = m !== "tier"; fcPane.hidden = m !== "fc";
+      if (m === "tier") tierText(); else sldText();
+    };
     sld.addEventListener("input", sldText);
+    setMode(mode);
     const close = () => { document.removeEventListener("keydown", onKey); ov.remove(); };
     const onKey = (e) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", onKey);
     ov.addEventListener("click", (e) => {
       if (e.target === ov || e.target.closest("[data-rlownclose]")) { close(); return; }
-      if (e.target.closest("[data-rlownuse]")) { st.mode = "budget"; st.budget = Number(sld.value); st.pick = "manual"; close(); save(); rfcLabApplyRate(st); redraw(); }
+      const mb = e.target.closest("[data-rlownmode]");
+      if (mb) { setMode(mb.dataset.rlownmode); return; }
+      const tb = e.target.closest("[data-rlowntier]");
+      if (tb) { tk = Number(tb.dataset.rlowntier); tierText(); return; }
+      const rb = e.target.closest("[data-rlowntries]");
+      if (rb) { all = rb.dataset.rlowntries === "a"; tierText(); return; }
+      if (e.target.closest("[data-rlownuse]")) {
+        if (mode === "tier") { const p = tierPlan(tk); st.top = p.top; st.attempts = p.n; st.mode = "schedule"; }
+        else { st.mode = "budget"; st.budget = Number(sld.value); }
+        st.pick = "manual"; close(); save(); rfcLabApplyRate(st); redraw();
+      }
     });
     new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
   };
@@ -23276,8 +23333,8 @@ async function renderRfcLabPage() {
     ov.addEventListener("click", (e) => {
       if (e.target === ov || e.target.closest("[data-rlgameclose]")) { close(); return; }
       if (e.target.closest("[data-rlgamesave]")) {
-        const c = Math.round(numOf(ov.querySelector("[data-rlgcount]"))), l = Math.round(numOf(ov.querySelector("[data-rlgleft]")));
-        st.game = { wk: wkKey, count: c, left: l };
+        const c = Math.round(numOf(ov.querySelector("[data-rlgcount]")));
+        st.game = { wk: wkKey, count: c };
         close(); save(); redraw();
       }
     });
@@ -23289,11 +23346,6 @@ async function renderRfcLabPage() {
     if (el.matches("[data-rlbd]")) { if (ev.target === el) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); } return; }
     if (el.hasAttribute("data-rlownopen")) { openOwn(); return; }
     if (el.closest("[data-rlownbd]") || el.closest("[data-rlgamebd]")) return;
-    if (el.dataset.rltop) {
-      const k = Number(el.dataset.rltop);
-      st.top = k; st.attempts = k === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1; st.mode = "schedule"; st.pick = "manual";
-      save(); rfcLabApplyRate(st); redraw(); return;
-    }
     if (el.hasAttribute("data-rlgame")) { openGame(); return; }
     if (el.hasAttribute("data-rlgameundo")) { delete st.game; save(); redraw(); return; }
     if (el.dataset.rluse) {
@@ -23308,12 +23360,6 @@ async function renderRfcLabPage() {
     if (el.hasAttribute("data-rlopentiers")) { RFC_TIERS_OPEN = true; RFC_TIER_ROW = 0; redraw(); return; }
     if (el.hasAttribute("data-rlclosetiers")) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); return; }
     if (el.dataset.rltier) { const k = Number(el.dataset.rltier); RFC_TIER_ROW = RFC_TIER_ROW === k ? 0 : k; redraw(); return; }
-    if (el.dataset.rltick) {
-      const [a, b] = el.dataset.rltick.split("|").map(Number), list = Array.from({ length: b - a + 1 }, (_, k) => a + k);
-      const on = list.every(tickOn);
-      st.ticks.days = on ? st.ticks.days.filter((x) => !list.includes(x)) : Array.from(new Set(st.ticks.days.concat(list))).sort();
-      save(); redraw();
-    }
   });
   root.querySelector("[data-rlneed]").addEventListener("change", (ev) => {
     const raw = String(ev.target.value).trim();
