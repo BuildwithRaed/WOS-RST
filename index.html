@@ -3043,6 +3043,47 @@ input,select,textarea{
   .rl-todo.catch .rl-t{ color:var(--amber); }
   .rl-todo.catch .rl-t small{ color:var(--amber); opacity:.85; }
   .rl-plus{ display:inline-block; padding:0 6px; border-radius:999px; background:rgba(255,193,92,.2); color:var(--amber); font-size:11.5px; font-weight:800; }
+  /* This week closed / opened + tier check (owner's mock-ups, 5 Nov 2026) */
+  .rl-wk[data-rlwktoggle]{ cursor:pointer; }
+  .rl-wk.off{ border-color:rgba(255,193,92,.55); }
+  .rl-wl{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .rl-ws{ flex:1 1 auto; min-width:0; font-size:13px; font-weight:700; line-height:1.35; }
+  .rl-wr{ flex:none; display:flex; align-items:center; gap:3px; font-size:14px; font-weight:800; white-space:nowrap; }
+  .rl-chev{ color:var(--ice); font-size:19px; margin-inline-start:3px; line-height:1; }
+  .rl-ws2{ flex:1 1 auto; min-width:0; font-size:12.5px; color:var(--muted); line-height:1.35; }
+  .rl-ws2 b{ color:var(--frost); font-size:14px; margin:0 1px; }
+  .rl-gs.sm{ min-height:36px; padding:0 10px; font-size:12.5px; white-space:nowrap; }
+  .rl-wt{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:8px; font-size:12.5px; color:var(--muted); line-height:1.45; }
+  .rl-pill{ display:inline-flex; align-items:center; padding:1px 9px; border-radius:999px; border:1px solid rgba(255,193,92,.55); background:rgba(255,193,92,.12); color:var(--amber); font-size:12px; font-weight:700; white-space:nowrap; }
+  .rl-wko{ margin-top:8px; padding:6px 10px; border-radius:10px; background:rgba(124,196,255,.08); border:1px solid rgba(124,196,255,.25); font-size:12.5px; color:var(--frost); line-height:1.4; }
+  .rl-wko .rl-lnk{ font-size:12.5px; font-weight:800; min-height:0; }
+  .rl-wk.open > .rl-k{ display:flex; align-items:center; gap:8px; }
+  .rl-wk.open > .rl-k .rl-kr{ margin-inline-start:auto; }
+  .rl-hide{ flex:none; min-height:36px; padding:0 12px; border:1px solid rgba(124,196,255,.4); border-radius:10px; background:var(--ice-dim); color:var(--ice); font:inherit; font-size:13px; font-weight:700; text-transform:none; letter-spacing:0; cursor:pointer; }
+  .rl-ck{ margin-top:10px; padding:10px 11px; border-radius:12px; border:1px solid; cursor:default; }
+  .rl-ck.ok{ border-color:rgba(76,209,138,.45); background:rgba(76,209,138,.08); }
+  .rl-ck.on{ border-color:rgba(124,196,255,.35); background:rgba(124,196,255,.07); }
+  .rl-ck.bh{ border-color:rgba(255,193,92,.55); background:rgba(255,193,92,.09); }
+  .rl-ck-k{ font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .rl-ck-k .rl-ic{ width:15px; height:15px; vertical-align:-3px; }
+  .rl-ck-h{ font-size:17px; font-weight:800; margin-top:2px; }
+  .rl-ck.ok .rl-ck-h{ color:var(--good); } .rl-ck.on .rl-ck-h{ color:var(--ice); } .rl-ck.bh .rl-ck-h{ color:var(--amber); }
+  .rl-ck-r{ font-size:12.5px; margin-top:5px; line-height:1.45; color:var(--frost); }
+  .rl-mu{ color:var(--muted); } .rl-nw{ white-space:nowrap; }
+  .rl-ck-l{ display:flex; flex-direction:column; gap:5px; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.07); }
+  .rl-ck-l:empty{ display:none; }
+  .rl-ck-row{ display:flex; gap:7px; font-size:12.5px; line-height:1.45; color:var(--frost); }
+  .rl-ck-tg{ flex:none; height:19px; display:inline-flex; align-items:center; margin-top:1px; padding:0 7px; border-radius:999px; background:rgba(255,255,255,.08); color:var(--muted); font-size:11px; font-weight:800; }
+  .rl-ck-tg.mine{ background:var(--ice-dim); color:var(--ice); }
+  .rl-ck-ub{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:9px; font-size:12.5px; }
+  .rl-ck-opt{ font-size:11.5px; color:var(--muted); }
+  .rl-ck-b{ flex:none; min-height:36px; padding:0 12px; border-radius:10px; border:1px solid; font:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .rl-ck-b.ok{ background:rgba(76,209,138,.14); border-color:rgba(76,209,138,.5); color:var(--good); }
+  .rl-ck-b.bh{ background:rgba(255,193,92,.16); border-color:rgba(255,193,92,.6); color:var(--amber); }
+  .rl-ck-ub .rl-lnk{ font-size:12.5px; font-weight:800; }
+  .rl-wk.open .rl-ck{ margin-bottom:2px; }
+  @keyframes rlFlash{ 0%,60%{ box-shadow:0 0 0 3px rgba(124,196,255,.7); } 100%{ box-shadow:none; } }
+  .rl-o.rl-flash{ animation:rlFlash 1.6s ease-out; }
   .rl-lab{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; }
   .rl-lab-r{ display:flex; align-items:center; gap:10px; white-space:nowrap; }
   .rl-conv summary{ cursor:pointer; font-weight:700; font-size:13px; min-height:28px; display:flex; align-items:center; }
@@ -7862,6 +7903,42 @@ const T = {
   rl_a_day: { en: "a day" },
   rl_catch_fc: { en: "+{n} FC this week to catch up" },
   rl_ahead_fc: { en: "{n} FC less this week" },
+  rl_wk_hide: { en: "Hide" },
+  rl_wk_plan_today: { en: "plan {n} by today" },
+  rl_wk_behind: { en: "behind {n}" },
+  rl_wk_ahead: { en: "ahead {n}" },
+  rl_wk_game_n: { en: "Game says {n}" },
+  rl_wk_today: { en: "Today: {x}" },
+  rl_wk_catch: { en: "+{n} to catch up by Sun" },
+  rl_wk_override: { en: "This week: {t} · back to {p} Monday" },
+  rl_check: { en: "Check" },
+  rl_ck_head: { en: "Check · by {d}" },
+  rl_ck_nothing: { en: "Nothing to refine" },
+  rl_ck_nothing_s: { en: "your Backpack covers it" },
+  rl_ck_enough: { en: "{t} is enough this week" },
+  rl_ck_right: { en: "{t} is right" },
+  rl_ck_push: { en: "Push {t} this week" },
+  rl_ck_even: { en: "Even {t} daily ends {d}" },
+  rl_ck_still: { en: "Still needed" },
+  rl_ck_in_bp: { en: "in Backpack" },
+  rl_ck_wks_left: { en: "{n} weeks left" },
+  rl_ck_wk_left: { en: "1 week left" },
+  rl_ck_pick: { en: "Your pick: done" },
+  rl_ck_daily: { en: "daily: done" },
+  rl_ck_early: { en: "{n} weeks early" },
+  rl_ck_early1: { en: "1 week early" },
+  rl_ck_late: { en: "{n} weeks late" },
+  rl_ck_late1: { en: "1 week late" },
+  rl_ck_less: { en: "{n} FC a week less" },
+  rl_ck_more: { en: "+{n} FC a week" },
+  rl_ck_would: { en: "would be" },
+  rl_ck_fastest: { en: "Fastest (every T5 try): done" },
+  rl_ck_see_fast: { en: "See Fastest ›" },
+  rl_ck_use_wk: { en: "Use {t} this week ›" },
+  rl_ck_use: { en: "Use {t} ›" },
+  rl_ck_optional: { en: "Optional · this week only" },
+  rl_ck_using: { en: "✓ Using {t} this week" },
+  rl_ck_never: { en: "in 5+ years" },
   packs_filter_all: { en: "All" },
   packs_filter_none: { en: "Not assigned" },
   pack_no_date: { en: "No target date" },
@@ -22928,6 +23005,9 @@ async function renderRfcLabPage() {
     RFC_LAB_STATE.pick = saved.pick === "auto" || saved.pick === "manual" ? saved.pick : (saved.top != null || saved.attempts != null || saved.mode === "budget" ? "manual" : "auto");
     // What the game's Research Lab shows this week (typed by the person); ignored once the week changes.
     if (saved.game && typeof saved.game === "object" && typeof saved.game.wk === "string") RFC_LAB_STATE.game = { wk: saved.game.wk, count: Math.max(0, Number(saved.game.count) || 0) };
+    // This week box open / closed (closed by default) and a this-week-only tier ("Use T1 this week").
+    RFC_LAB_STATE.weekOpen = saved.weekOpen === true;
+    if (saved.weekPick && typeof saved.weekPick === "object" && typeof saved.weekPick.wk === "string" && Number(saved.weekPick.top) >= 1 && Number(saved.weekPick.top) <= RFC_LAB_TIERS.length) RFC_LAB_STATE.weekPick = { wk: saved.weekPick.wk, top: Number(saved.weekPick.top) };
   }
   rfcLabApplyRate(RFC_LAB_STATE);
   // Default the need from the T12 page's last totals (T11 doesn't use Refined FC).
@@ -23069,7 +23149,11 @@ async function renderRfcLabPage() {
     </div>`;
   };
   // ---- This week
-  const planDays = rfcWeekDays(plan.top, plan.n);
+  // "Use Tk this week" (weekPick): this box follows Tk daily until Sunday;
+  // the person's pick, T12 and Budgets don't change.
+  const wkOver = st.weekPick && st.weekPick.wk === wkKey && st.weekPick.top !== plan.top ? st.weekPick.top : 0;
+  const wkPlan = wkOver ? rfcPlan(wkOver, wkOver === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1) : plan;
+  const planDays = rfcWeekDays(wkPlan.top, wkPlan.n);
   // Super refinements (owner, 5 Nov 2026): the plan's tries Monday → today,
   // checked against the game's weekly count ("Game says"). A = plan tries
   // Monday → yesterday, B = A + today's. Count between A and B = on track
@@ -23086,7 +23170,7 @@ async function renderRfcLabPage() {
   // missed > 0 = behind, < 0 = ahead, 0 = on track.
   const missed = !game ? 0 : game.count < planBefore ? planBefore - game.count : game.count > planSoFar ? planSoFar - game.count : 0;
   const leftToday = !game ? planToday : missed > 0 ? planToday : missed < 0 ? 0 : planSoFar - game.count;
-  const topTr = RFC_LAB_TIERS[plan.top - 1];
+  const topTr = RFC_LAB_TIERS[wkPlan.top - 1];
   const days = planDays.map((d) => ({ ...d, parts: d.parts.map((x) => ({ ...x })), extra: 0 }));
   if (game) {
     // Today: take the tries the game already counts off the front.
@@ -23111,7 +23195,7 @@ async function renderRfcLabPage() {
       const add = Math.floor(missed / catchDays.length) + (k < missed % catchDays.length ? 1 : 0);
       if (add <= 0) return;
       const d = days[i];
-      d.parts.push({ tier: plan.top, cnt: add, half: false });
+      d.parts.push({ tier: wkPlan.top, cnt: add, half: false });
       d.fc += add * topTr.cost; d.rfc += add * rfcExpected(topTr); d.extra = add;
       catchFc += add * topTr.cost;
     });
@@ -23153,7 +23237,7 @@ async function renderRfcLabPage() {
     const dt = isToday ? t("rl_today") : group ? `${dShort(dFrom)}–${dTo.getUTCMonth() === dFrom.getUTCMonth() ? dTo.getUTCDate() : dShort(dTo)}` : dShort(dFrom);
     const notes = [];
     const gameToday = r.from === todayIdx && d.gameLeft != null;
-    if (d.unlock && !(gameToday && d.gameLeft < planToday)) notes.push(t("rl_unlocks").replace("{t}", "T" + plan.top), t("rl_first_half"));
+    if (d.unlock && !(gameToday && d.gameLeft < planToday)) notes.push(t("rl_unlocks").replace("{t}", "T" + wkPlan.top), t("rl_first_half"));
     if (gameToday && d.gameLeft > 0 && d.gameLeft < planToday) notes.push(t("rl_left_today").replace("{n}", fmt(d.gameLeft)));
     else if (isToday && d.parts.length && !d.unlock && d.parts.length === 1 && d.parts[0].cnt === 1) notes.push(t("rl_one_enough"));
     const catchUp = d.extra > 0;
@@ -23182,11 +23266,86 @@ async function renderRfcLabPage() {
       <div class="rl-sup-s">${esc(toReset === 1 ? t("rl_resets_in1") : t("rl_resets_in").replace("{n}", toReset))}</div>
     </div>
     ${off ? `<div class="rl-gnote">${esc(t(missed > 0 ? "rl_game_behind" : "rl_game_ahead").replace("{g}", fmt(game.count)).replace("{p}", fmt(planSoFar)))} <button type="button" class="rl-lnk" data-rlgameundo>${esc(t("rl_undo"))}</button></div>` : ""}`;
-  const weekHtml = `<div class="rl-card">
-      <div class="rl-k">${esc(t("rl_this_week"))}<span class="rl-r rl-kr">${fmt(plan.cost)} FC · ${esc(rfcPlanName(plan))}</span></div>
+  // Closed line (owner's mock-up, 5 Nov 2026): "Mon 20× T1 + 20× T2 · Tue–Sun 1× T3 a day".
+  const wkLine = (() => {
+    const grp = [];
+    planDays.forEach((d, i) => {
+      const per = [];
+      d.parts.forEach((x) => { const q = per.find((y) => y.tier === x.tier); if (q) q.cnt += x.cnt; else per.push({ tier: x.tier, cnt: x.cnt }); });
+      const sig = per.map((x) => x.tier + ":" + x.cnt).join(",");
+      const last = grp[grp.length - 1];
+      if (last && last.sig === sig) last.to = i; else grp.push({ from: i, to: i, sig, per });
+    });
+    return grp.filter((g) => g.sig).map((g) => `${g.to > g.from ? `${wkNames[g.from]}–${wkNames[g.to]}` : wkNames[g.from]} ${g.per.map((x) => `${x.cnt}× T${x.tier}`).join(" + ")}${g.to > g.from ? ` ${t("rl_a_day")}` : ""}`).join(" · ");
+  })();
+  // ---- Tier check (owner's mock-up, 5 Nov 2026): is the person's pick the
+  // right tier for the By date? enough = the cheapest once-a-day tier done
+  // by By. Always compared with the person's own pick; nothing changes
+  // until "Use Tk this week" is tapped (this week only).
+  const daily5 = speeds.slice(0, RFC_LAB_TIERS.length);
+  const ckHtml = (() => {
+    const dTxt = (d) => (d ? esc(dShort(d)) : esc(t("rl_ck_never")));
+    const wkN = (ms) => Math.max(1, Math.round(ms / DAY / 7));
+    const left = byDay ? Math.max(0, Math.ceil((byDay - today) / DAY / 7)) : 0;
+    const fromT12 = st.myNeed == null && t12Owned > 0 && pageNeed > 0;
+    const kTxt = esc(byDay ? t("rl_ck_head").replace("{d}", dShort(byDay)) : t("rl_check"));
+    const stillH = `${esc(t("rl_ck_still"))} <b>${fmt(need)}</b>${fromT12 ? ` <span class="rl-mu">(${fmt(pageNeed)} − ${fmt(t12Owned)} ${esc(t("rl_ck_in_bp"))})</span>` : ""}${byDay ? ` · <span class="rl-nw"><b>${esc(left === 1 ? t("rl_ck_wk_left") : t("rl_ck_wks_left").replace("{n}", fmt(left)))}</b></span>` : ""}`;
+    const head = (cls, h) => `<div class="rl-ck ${cls}"><div class="rl-ck-k">${rfI} ${kTxt}</div><div class="rl-ck-h">${esc(h)}</div>`;
+    const row = (tag, mine, html) => `<div class="rl-ck-row"><span class="rl-ck-tg${mine ? " mine" : ""}">${esc(tag)}</span><span>${html}</span></div>`;
+    const useBtn = (k, cls, txt) => (wkOver === k
+      ? `<div class="rl-ck-ub"><span class="rl-g">${esc(t("rl_ck_using").replace("{t}", "T" + k))}</span><button type="button" class="rl-lnk" data-rlwkundo>${esc(t("rl_undo"))}</button></div>`
+      : `<div class="rl-ck-ub"><span class="rl-ck-opt">${esc(t("rl_ck_optional"))}</span><button type="button" class="rl-ck-b ${cls}" data-rlwkuse="${k}">${esc(txt)}</button></div>`);
+    if (need <= 0) return `<div class="rl-ck ok"><div class="rl-ck-k">${rfI} ${kTxt}</div><div class="rl-ck-h">${esc(t("rl_ck_nothing"))}</div><div class="rl-ck-r">${esc(t("rl_ck_nothing_s"))}</div></div>`;
+    const pickTag = "T" + plan.top;
+    if (!byDay) return `${head("on", t("rl_check"))}<div class="rl-ck-r">${stillH}</div><div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>`)}</div></div>`;
+    const enough = daily5.find(inTime) || null;
+    if (!enough) {
+      const t5 = daily5[daily5.length - 1], d5 = doneFor(t5), dF = doneFor(fastest), fOk = inTime(fastest);
+      const late = planDone ? wkN(planDone - byDay) : 0;
+      return `${head("bh", t("rl_ck_even").replace("{t}", "T" + t5.top).replace("{d}", d5 ? dShort(d5) : t("rl_ck_never")))}<div class="rl-ck-r">${stillH}</div>
+        <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>${planDone ? ` — <span class="rl-am">${esc(late === 1 ? t("rl_ck_late1") : t("rl_ck_late").replace("{n}", fmt(late)))}</span>` : ""}`)}
+        ${row("T" + fastest.top, false, `${esc(t("rl_ck_fastest"))} <b>${dTxt(dF)}</b> ${fOk ? `<span class="rl-g">✓</span>` : `<span class="rl-rd">${esc(t("rl_too_late"))}</span>`}`)}</div>
+        <div class="rl-ck-ub"><span class="rl-ck-opt"></span><button type="button" class="rl-ck-b bh" data-rlseefast>${esc(t("rl_ck_see_fast"))}</button></div></div>`;
+    }
+    const eD = doneFor(enough);
+    if (!planOk) {
+      const late = planDone ? wkN(planDone - byDay) : 0;
+      return `${head("bh", t("rl_ck_push").replace("{t}", "T" + enough.top))}<div class="rl-ck-r">${stillH}</div>
+        <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>${planDone ? ` — <span class="rl-am">${esc(late === 1 ? t("rl_ck_late1") : t("rl_ck_late").replace("{n}", fmt(late)))}</span>` : ""}`)}
+        ${row("T" + enough.top, false, `${esc(t("rl_ck_daily"))} <b>${dTxt(eD)}</b> <span class="rl-g">✓</span>${enough.cost > plan.cost ? `, <span class="rl-am">${esc(t("rl_ck_more").replace("{n}", fmt(enough.cost - plan.cost)))}</span>` : ""}`)}</div>
+        ${useBtn(enough.top, "bh", t("rl_ck_use").replace("{t}", "T" + enough.top))}</div>`;
+    }
+    if (enough.top < plan.top) {
+      const gap = byDay - planDone, early = wkN(gap);
+      return `${head("ok", t("rl_ck_enough").replace("{t}", "T" + enough.top))}<div class="rl-ck-r">${stillH}</div>
+        <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>${gap >= 7 * DAY ? ` — <span class="rl-g">${esc(early === 1 ? t("rl_ck_early1") : t("rl_ck_early").replace("{n}", fmt(early)))}</span>` : ` <span class="rl-g">✓</span>`}`)}
+        ${row("T" + enough.top, false, `${esc(t("rl_ck_daily"))} <b>${dTxt(eD)}</b> <span class="rl-g">✓</span>${plan.cost > enough.cost ? `, <span class="rl-g">${esc(t("rl_ck_less").replace("{n}", fmt(plan.cost - enough.cost)))}</span>` : ""}`)}</div>
+        ${useBtn(enough.top, "ok", t("rl_ck_use_wk").replace("{t}", "T" + enough.top))}</div>`;
+    }
+    const lower = plan.top > 1 ? daily5[plan.top - 2] : null;
+    return `${head("on", t("rl_ck_right").replace("{t}", pickTag))}<div class="rl-ck-r">${stillH}</div>
+      <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b> <span class="rl-g">✓</span>`)}
+      ${lower && !inTime(lower) ? row("T" + lower.top, false, `${esc(t("rl_ck_would"))} <span class="rl-rd">${esc(t("rl_too_late"))}</span> (${dTxt(doneFor(lower))})`) : ""}</div></div>`;
+  })();
+  const overHtml = wkOver ? `<div class="rl-wko">${esc(t("rl_wk_override").replace("{t}", "T" + wkOver).replace("{p}", "T" + plan.top))} · <button type="button" class="rl-lnk" data-rlwkundo>${esc(t("rl_undo"))}</button></div>` : "";
+  const gsBtn = `<button type="button" class="rl-gs sm" data-rlgame aria-haspopup="dialog">${esc(t("rl_game_says"))} ✎${game ? ` ${fmt(game.count)}` : ""}</button>`;
+  const tdRow = days[todayIdx];
+  const todayTxt = tdRow.gameLeft != null && !tdRow.parts.length ? esc(t("rl_done_today")) : dayTxt(tdRow, false);
+  const offLine = off ? `<div class="rl-wt"><span class="rl-pill">${esc(t(missed > 0 ? "rl_wk_behind" : "rl_wk_ahead").replace("{n}", fmt(Math.abs(missed))))} · ${esc(t("rl_wk_game_n").replace("{n}", fmt(game.count)))}</span><span>${esc(t("rl_wk_today").replace("{x}", ""))}${todayTxt}${missed > 0 && later.length ? ` · <span class="rl-am">${esc(t("rl_wk_catch").replace("{n}", fmt(missed)))}</span>` : ""}</span></div>` : "";
+  const weekHtml = st.weekOpen ? `<div class="rl-card rl-wk open">
+      <div class="rl-k">${esc(t("rl_this_week"))}<span class="rl-r rl-kr">${fmt(wkPlan.cost)} FC · ${esc(rfcPlanName(wkPlan))}</span><button type="button" class="rl-hide" data-rlwktoggle aria-expanded="true">${esc(t("rl_wk_hide"))} ▴</button></div>
+      ${overHtml}
+      ${ckHtml}
       ${superHtml}
       ${weekRows}
-      <div class="rl-note">≈ ${fmt(plan.rfc, 1)} ${esc(t("rl_rfc_week_rand"))}${off && catchFc ? ` · <span class="rl-am">${esc(catchFc > 0 ? t("rl_catch_fc").replace("{n}", fmt(catchFc)) : t("rl_ahead_fc").replace("{n}", fmt(-catchFc)))}</span>` : ""}</div>
+      <div class="rl-note">≈ ${fmt(wkPlan.rfc, 1)} ${esc(t("rl_rfc_week_rand"))}${off && catchFc ? ` · <span class="rl-am">${esc(catchFc > 0 ? t("rl_catch_fc").replace("{n}", fmt(catchFc)) : t("rl_ahead_fc").replace("{n}", fmt(-catchFc)))}</span>` : ""}</div>
+    </div>` : `<div class="rl-card rl-wk${off ? " off" : ""}" data-rlwktoggle role="button" tabindex="0" aria-expanded="false">
+      <div class="rl-k">${esc(t("rl_this_week"))}</div>
+      <div class="rl-wl"><span class="rl-ws">${esc(wkLine || t("rl_rest"))}</span><span class="rl-wr">${fmt(wkPlan.cost)} ${fcI}<span class="rl-chev">›</span></span></div>
+      <div class="rl-wl"><span class="rl-ws2">${esc(t("rl_super"))} <b>${game ? fmt(game.count) : "—"}</b> · ${esc(t("rl_wk_plan_today").replace("{n}", fmt(planSoFar)))}</span>${gsBtn}</div>
+      ${offLine}
+      ${overHtml}
+      ${ckHtml}
     </div>`;
   const gameSheetHtml = () => `<div class="modal-overlay rl-own-ov" data-rlgamebd>
       <div class="modal-box rl-own-box" role="dialog" aria-modal="true" aria-label="${esc(t("rl_game_title"))}">
@@ -23345,9 +23504,18 @@ async function renderRfcLabPage() {
     new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
   };
   root.addEventListener("click", (ev) => {
-    const el = ev.target.closest("button, [data-rlbd]");
+    const el = ev.target.closest("button, [data-rlbd], [data-rlwktoggle]");
     if (!el || !root.contains(el)) return;
     if (el.matches("[data-rlbd]")) { if (ev.target === el) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); } return; }
+    // This week: tap the closed card (not its buttons or the check box) to open; "Hide ▴" closes.
+    if (el.hasAttribute("data-rlwktoggle")) { if (el.tagName !== "BUTTON" && ev.target.closest(".rl-ck")) return; st.weekOpen = !st.weekOpen; save(); redraw(); return; }
+    if (el.dataset.rlwkuse) { const k = Number(el.dataset.rlwkuse); if (k === plan.top) delete st.weekPick; else st.weekPick = { wk: wkKey, top: k }; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlwkundo")) { delete st.weekPick; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlseefast")) {
+      const f = root.querySelector(`.rl-lt [data-rluse="${fastest.top}|${fastest.n}"]`);
+      if (f) { f.scrollIntoView({ behavior: "smooth", block: "center" }); f.classList.remove("rl-flash"); void f.offsetWidth; f.classList.add("rl-flash"); }
+      return;
+    }
     if (el.hasAttribute("data-rlownopen")) { openOwn(); return; }
     if (el.closest("[data-rlownbd]") || el.closest("[data-rlgamebd]")) return;
     if (el.hasAttribute("data-rlgame")) { openGame(); return; }
@@ -23365,6 +23533,8 @@ async function renderRfcLabPage() {
     if (el.hasAttribute("data-rlclosetiers")) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); return; }
     if (el.dataset.rltier) { const k = Number(el.dataset.rltier); RFC_TIER_ROW = RFC_TIER_ROW === k ? 0 : k; redraw(); return; }
   });
+  const wkCard = root.querySelector('.rl-wk[data-rlwktoggle]');
+  if (wkCard) wkCard.addEventListener("keydown", (ev) => { if ((ev.key === "Enter" || ev.key === " ") && ev.target === wkCard) { ev.preventDefault(); st.weekOpen = true; save(); redraw(); } });
   root.querySelector("[data-rlneed]").addEventListener("change", (ev) => {
     const raw = String(ev.target.value).trim();
     const v = raw === "" ? null : numOf(ev.target);
