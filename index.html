@@ -707,6 +707,15 @@
   .plx-head.has-cando{ flex-wrap:nowrap; justify-content:flex-start; gap:8px; }
   .plx-head.has-cando h2{ white-space:nowrap; flex:none; }
   .plx-head.has-cando .plx-maxbtn{ flex:none; }
+  /* T12 "Lab ›" box beside Can do now / Max (owner, 5 Nov 2026). */
+  .plx-labbtn{ flex:none; display:flex; align-items:center; gap:4px; box-sizing:border-box; height:30px; padding:0 9px 0 6px; border:1px solid var(--line, rgba(255,255,255,.14)); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .plx-head:not(.has-cando) .plx-labbtn{ margin-inline-start:auto; }
+  .plx-labbtn img{ width:22px; height:22px; object-fit:contain; }
+  .plx-labbtn .plx-labcar{ color:var(--muted); font-size:16px; line-height:1; }
+  .plx-labbtn:hover{ border-color:var(--ice); }
+  .plx-head.has-cando .plx-labbtn{ margin-inline-start:0; }
+  @media (max-width: 900px){ .plx-labbtn{ height:40px; } }
+  @media (max-width: 440px){ .plx-labbtn{ padding:0 8px 0 6px; } .plx-labbtn .plx-labcar{ display:none; } .plx-head:has(.plx-labbtn) .cando-l{ display:none; } .plx-head:has(.plx-labbtn) .cando-ls{ display:inline; } .plx-head:has(.plx-labbtn) .cando-b{ gap:5px; padding-inline:5px 7px; } }
   .cando-b{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; box-sizing:border-box; height:40px; min-width:0; max-width:270px; flex:0 1 auto; padding-block:2px 2px; padding-inline:6px 9px; border:1px solid rgba(76,209,138,.5); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .cando-b:hover{ border-color:rgba(76,209,138,.8); }
   .cando-ic{ flex:none; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:rgba(76,209,138,.18); color:var(--good); font-size:12px; font-weight:800; }
@@ -7178,6 +7187,8 @@ const T = {
   refine_summed_desc: { en: "Summed across all 15 pets, based on what you've typed in." },
   tier_suffix: { en: "tier" },
   max_button: { en: "Max" },
+  rl_lab_btn: { en: "Lab" },
+  rl_lab_go: { en: "Open the Research Lab (Refined FC)" },
   footer_disclaimer: {
     en: "WOS RST is an unofficial fan-made tool and is not affiliated with, endorsed by, or connected to Century Games. Whiteout Survival and all related names, artwork, icons and game data are trademarks and copyrights of Century Games and are used here for informational purposes only. Values are community estimates and may differ from the game.",
   },
@@ -11840,7 +11851,7 @@ function canDoSet(key, plan, tracks, unit, opts) {
     if (!b) {
       b = document.createElement("button");
       b.type = "button"; b.className = "cando-b"; b.dataset.cando = key;
-      const max = head.querySelector(".plx-maxbtn");
+      const max = head.querySelector(".plx-labbtn") || head.querySelector(".plx-maxbtn");
       if (max) head.insertBefore(b, max); else head.appendChild(b);
       head.classList.add("has-cando");
     }
@@ -33367,10 +33378,19 @@ async function renderResearchCenterPage() {
 // pack cost) and the main column (total resources needed, the page title
 // with tabs, then the page's own content). On phones they stack: settings,
 // totals, content, then your amounts.
+// "Lab ›" box in T12's title row (owner, 5 Nov 2026): opens the Research
+// Lab page. Owner always; visitors only when that page is shown to them.
+function plxLabBtnHtml() {
+  if (!IS_OWNER && isHiddenFromVisitors("page", "rfclab")) return "";
+  const src = materialIconSrc("Refined FC") || "icons/item_icon_100082.png";
+  return `<button type="button" class="plx-labbtn" data-golab title="${esc(t("rl_lab_go"))}"><img src="${esc(src)}" alt="" /><span>${esc(t("rl_lab_btn"))}</span><span class="plx-labcar" aria-hidden="true">&#8250;</span></button>`;
+}
+document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-golab]"); if (b) goToTab("rfclab"); });
 function plxShellHtml(o) {
   return `
     <div class="plx-head">
       <h2>${esc(o.title)}</h2>
+      ${o.labBtn ? plxLabBtnHtml() : ""}
       ${o.maxId ? `<button type="button" class="plx-maxbtn plx-max" id="${o.maxId}" title="${esc(t("max_everything"))}">${esc(t("max_button"))}</button>` : ""}
     </div>
     <div class="t12x g1">
@@ -33682,7 +33702,7 @@ async function renderT12ResearchPage() {
     title: t("t12_research_title"),
     settings: `${researchSpeedInputHtml()}
           <label class="t12x-check" title="${esc(t("count_toward_dashboard"))}"><span>${esc(t("set_count"))}</span><input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} /></label>`,
-    amountsId: "t12Totals", needId: "t12Need", needTitle: t("bs_title_t12"), timeId: "t12Hero", tabsId: "t12TroopDots", maxId: "t12MaxAllBtn",
+    amountsId: "t12Totals", needId: "t12Need", needTitle: t("bs_title_t12"), timeId: "t12Hero", tabsId: "t12TroopDots", maxId: "t12MaxAllBtn", labBtn: true,
     mainHtml: `<div id="t12Troops"></div>`,
   });
 
