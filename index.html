@@ -3023,7 +3023,6 @@ input,select,textarea{
   .rl-tc.on{ background:var(--ice-dim); border-color:var(--ice); box-shadow:0 0 0 1px rgba(124,196,255,.35); }
   .rl-tc.on small{ color:#cfe6fb; }
   .rl-tc.on small.rl-rd{ color:#ffb3b3; }
-  .rl-own-box .rl-sw.tries{ margin:6px 0 0; }
   .rl-res{ margin-top:10px; padding:9px 12px; border-radius:12px; border:1px solid rgba(76,209,138,.4); background:rgba(76,209,138,.08); font-size:12.5px; line-height:1.5; color:var(--muted); }
   .rl-res.late{ border-color:rgba(255,122,122,.45); background:rgba(255,122,122,.08); }
   .rl-res.none{ border-color:var(--line); background:rgba(255,255,255,.03); }
@@ -7833,16 +7832,12 @@ const T = {
   rl_by_tier: { en: "By tier" },
   rl_tier_use: { en: "Highest tier to use" },
   rl_done_date: { en: "done date" },
-  rl_top_tries: { en: "Tries of the top tier" },
-  rl_first_try_day: { en: "First try a day" },
-  rl_all_n_wk: { en: "All {n} a week" },
   rl_tier_note: { en: "First try a day is half price. Lower tiers: {n} each on Monday to unlock." },
   rl_tier_note1: { en: "First try a day is half price." },
   rl_rfc_a_week: { en: "≈ {n} Refined FC a week" },
   rl_before_d: { en: "before {d}" },
   rl_after_d: { en: "after {d}" },
   rl_use_daily: { en: "Use {t} daily" },
-  rl_use_all_tries: { en: "Use all {t} tries" },
   rl_super: { en: "Super refinements" },
   rl_plan_lbl: { en: "plan" },
   rl_game_lbl: { en: "game" },
@@ -23285,7 +23280,7 @@ async function renderRfcLabPage() {
     // the top tier's tries (first try a day | all 20), result line.
     const pane = ov.querySelector('[data-rlpane="tier"]'), fcPane = ov.querySelector('[data-rlpane="fc"]');
     let mode = st.mode === "schedule" ? "tier" : "fc";
-    let tk = plan.top, all = plan.n === RFC_LAB_MAX_PER_TIER && !rfcIsDaily(plan);
+    let tk = plan.top; const all = false; // once a day only (owner, 5 Nov 2026: "All 20 a week" removed)
     const tierPlan = (k) => rfcPlan(k, all ? RFC_LAB_MAX_PER_TIER : (k === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1));
     const tierText = () => {
       const chipsH = RFC_LAB_TIERS.map((_, i) => {
@@ -23300,11 +23295,9 @@ async function renderRfcLabPage() {
         : `<div class="rl-res none">${head}${fmt(p.cost)} FC ${esc(t("rl_a_week"))}</div>`;
       pane.innerHTML = `<div class="rl-lbr"><span>${esc(t("rl_tier_use"))}</span>${need > 0 ? `<span>${esc(t("rl_done_date"))}</span>` : ""}</div>
         <div class="rl-tcs">${chipsH}</div>
-        <div class="rl-lbr gap"><span>${esc(t("rl_top_tries"))}</span></div>
-        <div class="rl-sw tries"><button type="button" data-rlowntries="d" class="${all ? "" : "on"}" aria-pressed="${!all}">${esc(t("rl_first_try_day"))}</button><button type="button" data-rlowntries="a" class="${all ? "on" : ""}" aria-pressed="${all}">${esc(t("rl_all_n_wk").replace("{n}", RFC_LAB_MAX_PER_TIER))}</button></div>
         <div class="rl-note">${esc(tk === 1 ? t("rl_tier_note1") : t("rl_tier_note").replace("{n}", RFC_LAB_MAX_PER_TIER))}</div>
         ${res}`;
-      use.textContent = t(all ? "rl_use_all_tries" : "rl_use_daily").replace("{t}", "T" + tk);
+      use.textContent = t("rl_use_daily").replace("{t}", "T" + tk);
     };
     const setMode = (m) => {
       mode = m;
@@ -23324,7 +23317,7 @@ async function renderRfcLabPage() {
       const tb = e.target.closest("[data-rlowntier]");
       if (tb) { tk = Number(tb.dataset.rlowntier); tierText(); return; }
       const rb = e.target.closest("[data-rlowntries]");
-      if (rb) { all = rb.dataset.rlowntries === "a"; tierText(); return; }
+      if (rb) { tierText(); return; }
       if (e.target.closest("[data-rlownuse]")) {
         if (mode === "tier") { const p = tierPlan(tk); st.top = p.top; st.attempts = p.n; st.mode = "schedule"; }
         else { st.mode = "budget"; st.budget = Number(sld.value); }
