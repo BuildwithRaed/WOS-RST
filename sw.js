@@ -4,8 +4,26 @@
 const VERSION = "wosrst-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
+// The app's code and styles live in app.js / app.css, linked as "app.js?v=<hash>":
+// a new version gets a new address, so they are kept cache-first by address and
+// the older copies are dropped once a new one is stored. At install the ones the
+// page links to are cached with it, so the site also opens offline after the
+// first visit (the first page load happens before this worker is in control).
+const VERSIONED = /\/(app|admin)\.(js|css)$/;
+const putVersioned = (req, res) => caches.open(VERSION).then(async (c) => {
+  await c.put(req, res);
+  const url = new URL(req.url);
+  for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) await c.delete(k); }
+});
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(async (c) => {
+    await c.addAll(SHELL);
+    try {
+      const page = await c.match("./index.html");
+      const links = page ? [...new Set((await page.text()).match(/app\.(?:js|css)\?v=[0-9a-f]+/g) || [])] : [];
+      await c.addAll(links.map((l) => "./" + l));
+    } catch (err) { /* fetched again on first use */ }
+  }).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
@@ -29,6 +47,11 @@ self.addEventListener("fetch", (e) => {
   if (req.mode === "navigate" || url.pathname.endsWith("/index.html")) {
     e.respondWith(fetch(req).then((res) => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })
       .catch(() => caches.match(req).then((r) => r || caches.match("./index.html"))));
+    return;
+  }
+  // app.js / app.css / admin.js at one "?v=<hash>": cache first, older versions dropped.
+  if (VERSIONED.test(url.pathname) && url.searchParams.has("v")) {
+    e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) putVersioned(req, res.clone()); return res; })));
     return;
   }
   // Icons and other static files: cache first, fetched once.

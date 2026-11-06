@@ -29,8 +29,10 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
   8. Mock-ups / previews first; if the owner doesn't answer, follow the Chief Gear pattern and UI/UX rules. Translations wait until the redesign ships.
 
 ## Files
-- `index.html`: the whole app, about 40,000 lines. HTML shell, inline `<style>`, then one large inline `<script>`. No framework, no build.
-- `sw.js`: service worker. The page is network-first; icons are cache-first; the pinned supabase-js and HiGHS URLs are cache-first. Only good copies (status 200, not opaque) are kept; an old opaque copy is fetched again and replaced (27 Oct 2026). Cache name `wosrst-v2`; don't bump it without a reason, since that makes every user re-download all icons.
+- `index.html`: the HTML shell (head scripts: viewport, menu style, `phoneCompact`; the `fitFix` style; the page skeleton). No framework, no build.
+- `app.css` / `app.js`: the site's styles and code (moved out of index.html 6 Nov 2026, unchanged; about 5,000 / 35,000 lines), linked as `app.css?v=<hash>` / `app.js?v=<hash>` (plain classic files, same order as before). **After editing app.js / app.css (or admin.js) run `node tools/stamp.js`** (updates the `?v=` hashes; `--check` only reports); a stale hash means phones keep the old copy. `phoneCompact` still reads app.css (render-blocking link before it; its cache key is the versioned link).
+- `tools/stamp.js`: the hash updater above. Not loaded by the site.
+- `sw.js`: service worker. The page is network-first; icons are cache-first; app.js / app.css / admin.js are cache-first by their `?v=` address (older versions dropped when a new one is stored; the ones index.html links to are cached at install, so the site opens offline after the first visit); the pinned supabase-js and HiGHS URLs are cache-first. Only good copies (status 200, not opaque) are kept; an old opaque copy is fetched again and replaced (27 Oct 2026). Cache name `wosrst-v2`; don't bump it without a reason, since that makes every user re-download all icons.
 - `vendor/`: this site's own copies of supabase-js 2.117.3 and tesseract.js 5.1.1 (with their MIT licences), used only when the jsdelivr copy can't load or fails its fingerprint check.
 - `manifest.webmanifest`, `pwa/icons/`: installable app.
 - `icons/`: game images. `icons/skins/opt/` holds optimized copies of the gallery images (see Images).
@@ -96,7 +98,7 @@ Hand jobs to them to run in parallel; they never push or write data.
 
 ## Testing approach used so far
 The cloud environment allows `hzourauekkiorojrhpko.supabase.co` and `www.wosrst.com`. It can't reach `cdn.jsdelivr.net`, so tests serve a local copy of `@supabase/supabase-js@2.117.3`.
-1. Extract the main inline script and run `node --check`. Run ESLint for unused variables and real-bug rules.
+1. Run `node --check` on app.js (and admin.js, sw.js). Run ESLint for unused variables and real-bug rules.
 2. Use Playwright with the preinstalled Chromium (`executablePath: '/opt/pw-browsers/chromium'`), real data, **read-only**: mock `/auth/v1/` to return a session whose token is the public anon key, and block every non-GET request to Supabase.
 3. Compare old (`origin/main`) vs new: page HTML across all tabs at 390 px and 1280 px, plus before/after timings with CPU throttling ×4 and +150 ms per request.
 
