@@ -29163,7 +29163,7 @@ function loadAdminCode() {
         try { again = sessionStorage.getItem("admin_reload_for") === want; if (!again) sessionStorage.setItem("admin_reload_for", want); } catch (e) { again = true; }
         if (!again) {
           // let saves still on their way finish first
-          for (let i = 0; i < 50; i++) { const busy = Object.values(CALC_SAVE_QUEUE).map((q) => q.running).filter(Boolean); if (!busy.length) break; await Promise.all(busy).catch(() => {}); }
+          for (let i = 0; i < 50; i++) { const busy = Object.values(CALC_SAVE_QUEUE).concat(Object.values(ROW_PATCH_QUEUE)).map((q) => q.running).filter(Boolean); if (!busy.length) break; await Promise.all(busy).catch(() => {}); }
           location.reload();
           return;
         }
