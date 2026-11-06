@@ -4613,6 +4613,29 @@ input,select,textarea{
   .pkb-ev-s .on{ color:var(--good); font-weight:700; }
   .pkb-ev .pkb-row{ padding:7px 8px 7px 10px; }
   .pkb-ev .pkb-ic{ width:38px; height:38px; }
+  /* folded event card (A, owner 6 Nov 2026) */
+  .pkb-ev-a{ display:flex; align-items:center; gap:10px; padding:10px 8px 10px 12px; cursor:pointer; }
+  .pkb-ev-a:focus-visible{ outline:2px solid var(--ice); outline-offset:-2px; }
+  .pkb-eva.open .pkb-ev-a{ border-bottom:1px solid var(--line); }
+  .pkb-ev-st{ flex:0 0 auto; width:44px; height:44px; display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:2px; padding:2px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); overflow:hidden; }
+  .pkb-ev-st > span{ display:flex; align-items:center; justify-content:center; min-width:0; min-height:0; font-size:12px; overflow:hidden; }
+  .pkb-ev-st img{ width:17px; height:17px; object-fit:contain; }
+  .pkb-ev-st .pk-ring{ transform:scale(.45); }
+  .pkb-ev-m{ flex:1 1 auto; min-width:0; line-height:1.3; }
+  .pkb-ev-m b{ display:block; font-size:14px; color:var(--ice); }
+  .pkb-ev-m small{ display:block; font-size:12px; color:var(--muted); }
+  .pkb-ev-m small .on{ color:var(--good); font-weight:700; }
+  .pkb-evtk{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px; width:40px; min-height:40px; margin:0; padding:2px 0; border:0; background:none; color:var(--muted); font:inherit; cursor:pointer; }
+  .pkb-evtk-b{ width:22px; height:22px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; line-height:1; }
+  .pkb-evtk.all .pkb-evtk-b{ background:#a9cdf5; color:#16202e; }
+  .pkb-evtk.part .pkb-evtk-b{ background:#2f5e86; color:var(--frost); }
+  .pkb-evtk.none .pkb-evtk-b{ border:2px solid var(--muted); }
+  .pkb-evtk small{ font-size:11px; }
+  .pkb-ev-a .pkb-chev{ flex:0 0 auto; width:16px; text-align:center; color:var(--muted); font-size:20px; line-height:1; }
+  .pkb-eva .pkb-evr{ padding:6px 8px 6px 10px; min-height:0; }
+  .pkb-eva .pkb-evr .pkb-ic{ width:34px; height:34px; }
+  .pkb-eva .pkb-evr .pkb-ic img{ width:24px; height:24px; }
+  .pkb-eva .pkb-evr .pkb-tk input{ width:18px; height:18px; }
   .pkb-evb{ display:flex; align-items:center; gap:10px; width:100%; margin:0 0 12px; padding:9px 12px; border:1px solid rgba(111,211,242,.55); border-radius:12px; background:rgba(111,211,242,.10); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .pkb-evb-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
   .pkb-evb-t b{ display:block; font-size:14px; color:var(--ice); }
@@ -4627,6 +4650,19 @@ input,select,textarea{
   .pkb-evn input{ flex:1 1 auto; min-width:0; width:auto; height:36px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:rgba(0,0,0,.18); color:var(--frost); font:inherit; font-size:14px; }
   .pkb-evn input::placeholder{ color:var(--muted); opacity:.85; }
   .pkb-evl .pkb-evn + .pkb-evl-n{ margin:4px 0 8px; }
+  .pkb-evadd{ width:100%; min-height:40px; margin:8px 0 0; }
+  .pkb-eas{ display:flex; flex-direction:column; max-width:480px; }
+  .pkb-eas-t{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .pkb-eas-t b{ font-size:16px; }
+  .pkb-eas-t small{ font-size:12px; color:var(--muted); }
+  .pkb-eas-list{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+  .pkb-eas-r{ display:flex; align-items:center; gap:10px; min-height:48px; padding:6px 0; border-top:1px solid var(--line); cursor:pointer; }
+  .pkb-eas-r input{ flex:0 0 auto; width:20px; height:20px; margin:0; }
+  .pkb-eas-m{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .pkb-eas-m b{ font-size:14px; color:var(--frost); overflow-wrap:anywhere; }
+  .pkb-eas-m small{ font-size:12px; color:var(--muted); }
+  .pkb-eas-foot{ display:flex; gap:8px; justify-content:flex-end; padding-top:12px; border-top:1px solid var(--line); }
+  .pkb-eas-foot .btn{ min-height:40px; min-width:96px; }
   .pkb-evn-v{ margin:0 0 4px; font-size:14px; font-weight:700; color:var(--ice); }
   .pkb-more{ display:block; width:100%; min-height:44px; margin:0; padding:10px; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--ice); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
   .pkb-ov{ position:fixed; inset:0; z-index:70; display:flex; justify-content:center; align-items:stretch; background:rgba(3,7,13,.62); }
@@ -8473,6 +8509,7 @@ const T = {
   pkb_how: { en: "How it's bought" },
   pkb_no_match: { en: "No packs match your search." },
   pkb_ev_same: { en: "same dates" },
+  pkb_ev_packs: { en: "{n} packs" },
   pkb_tiers: { en: "{n} tiers" },
   pkb_ev_part: { en: "Part of {name}" },
   pkb_ev_from: { en: "Its dates come from that pack" },
@@ -8481,6 +8518,12 @@ const T = {
   pkb_ev_name: { en: "Event name" },
   pkb_ev_name_hint: { en: "Shown on the event card; the packs show the rest of their names." },
   pkb_ev_move: { en: "Change this pack's dates and they move too." },
+  pkb_ev_none: { en: "No other pack comes on these dates yet." },
+  pkb_ev_add: { en: "Add packs to this event" },
+  pkb_ev_add_sub: { en: "Ticked packs come on the same dates as {pack}." },
+  pkb_ev_add_none: { en: "No pack can join this one." },
+  pkb_ev_add_done: { en: "Done" },
+  pkb_ev_follows: { en: "follows {pack} · ticking moves it" },
   pk_active_label: { en: "Reward days left" },
   pk_active_hint: { en: "on cards you already bought" },
   pk_days_unit: { en: "days" },
@@ -15809,6 +15852,8 @@ const PACKS_OPEN = new Set((() => { try { const v = JSON.parse(sessionStorage.ge
 // outside the page (Back button, ⚙ in Pack dates, My Purchases' weekly cards).
 let PKB_QUERY = "";
 const PKB_MORE = new Set();
+// Event cards opened on the Packs page (owner picked A, 6 Nov 2026: events start folded), kept for the visit.
+const PKB_EV_OPEN = new Set();
 let PKB_HOOK = null;
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || TAB !== "packs" || document.querySelector(".pk-sheet-back")) return;
@@ -15919,6 +15964,26 @@ async function renderPacksPage() {
   // opens its pack's window; the window's ‹ / dim edge closes it.
   listEl.addEventListener("click", (e) => {
     if (e.target.closest(".pkb-tk")) return;
+    // the event's one tick: all on, or all off when all are on
+    const evAll = e.target.closest("[data-pkbevall]");
+    if (evAll) {
+      const ids = evAll.dataset.pkbevall.split(",").filter(Boolean), allOn = ids.every((id) => packInBudgets(id));
+      ids.forEach((id) => { if (allOn) PACK_BUDGET_OFF[id] = true; else delete PACK_BUDGET_OFF[id]; });
+      saveCalcState("pack_budget_off", PACK_BUDGET_OFF);
+      PACK_PLAN_CACHE.clear();
+      budgetInvalidate();
+      ids.forEach((id) => pkbSyncBudget(id));
+      return;
+    }
+    const evTap = e.target.closest("[data-pkbevtap]");
+    if (evTap) {
+      const k = evTap.dataset.pkbevtap, top0 = evTap.getBoundingClientRect().top;
+      if (PKB_EV_OPEN.has(k)) PKB_EV_OPEN.delete(k); else PKB_EV_OPEN.add(k);
+      renderAll();
+      const again = listEl.querySelector(`[data-pkbevtap="${window.CSS.escape(k)}"]`);
+      if (again) { const d = again.getBoundingClientRect().top - top0; if (Math.abs(d) > 1) window.scrollBy(0, d); }
+      return;
+    }
     const fold = e.target.closest("[data-pkbfold]");
     if (fold) {
       const k = fold.dataset.pkbfold, wasOpen = fold.closest(".pkb-cat").classList.contains("open"), top0 = fold.getBoundingClientRect().top;
@@ -15940,6 +16005,7 @@ async function renderPacksPage() {
   });
   listEl.addEventListener("keydown", (e) => {
     if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkrowid]")) { e.preventDefault(); pkbOpen(e.target.dataset.pkrowid); }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkbevtap]")) { e.preventDefault(); e.target.click(); }
   });
   // "How it's bought" dropdown in the window sets the same radio buttons as before.
   listEl.addEventListener("change", (e) => {
@@ -16463,15 +16529,42 @@ async function renderPacksPage() {
   // ev: "lead" / "follow" = a slim row inside an event card (B, owner 6 Nov
   // 2026): its dates are said once in the card's header, so the row shows how
   // often (leader) or "same dates" (follower) and its number of tiers.
+  // The event's price range over all its packs, in the shown currency.
+  function pkbEvPrice(list) {
+    let lo = null, hi = null, free = false;
+    list.forEach((tb) => {
+      const lk = packLinkFor(tb.id), pc = lk.priceCol || 0;
+      tb.rows.forEach((r) => {
+        const raw = String(r.cells[pc] ?? "").trim();
+        if (!raw) return;
+        const n = parseNum(raw);
+        if (!(n > 0)) { if (n === 0 || /free/i.test(raw)) free = true; return; }
+        const v = { n, cur: lk.currency, c: Number(packConvert(n, lk.currency).n) || n };
+        if (!lo || v.c < lo.c) lo = v;
+        if (!hi || v.c > hi.c) hi = v;
+      });
+    });
+    if (!lo) return free ? t("pkb_free") : "—";
+    let txt = String(packFmtMoney(lo.n, lo.cur)).replace(/[⁦-⁩]/g, "");
+    if (hi.c > lo.c) txt += `–${hi.c.toLocaleString(pkbLoc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return bidiNum(free ? `${t("pkb_free")} + ${txt}` : txt);
+  }
+  // One tick for the whole event: ✓ all counted, – some, empty none; "2/3" under it.
+  function pkbEvTickHtml(list) {
+    const ids = list.filter((tb) => !packLinkFor(tb.id).template).map((tb) => String(tb.id));
+    if (!ids.length) return "";
+    const on = ids.filter((id) => packInBudgets(id)).length, st = on === ids.length ? "all" : on ? "part" : "none";
+    return `<button type="button" class="pkb-evtk ${st}" data-pkbevall="${esc(ids.join(","))}" title="${esc(t("pk_in_budgets_hint"))}" aria-label="${esc(t("pk_in_budgets"))} ${on}/${ids.length}"><span class="pkb-evtk-b" aria-hidden="true">${st === "all" ? "&#10003;" : st === "part" ? "&#8211;" : ""}</span><small>${on}/${ids.length}</small></button>`;
+  }
   function pkbRowHtml(tb, ti, ev, evNames) {
     const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
     const tiers = ev ? tb.rows.filter((r) => String(r.cells[lk.priceCol || 0] ?? "").trim() !== "").length : 0;
-    const sub = ev === "follow" ? t("pkb_ev_same") : ev === "lead" ? pkbResetText(lk.reset) : w.text;
-    const right = ev ? (tiers > 1 ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    const sub = ev === "in" ? "" : ev === "follow" ? t("pkb_ev_same") : ev === "lead" ? pkbResetText(lk.reset) : w.text;
+    const right = ev ? (tiers > 1 && ev !== "in" ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
     return `<div class="pkb-row${ev ? " pkb-evr" : ""}${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
       <span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
       <span class="pkb-m"><b${ev ? ` title="${esc(tb.title)}"` : ""}>${esc(ev ? packEventShort(tb.title, evNames) : tb.title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
-      <span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>
+      ${ev === "in" ? "" : `<span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>`}
       ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
     </div>`;
   }
@@ -16534,9 +16627,19 @@ async function renderPacksPage() {
       const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id));
       const evName = packEventName(lt, tables), evNames = [evName, packEventDefault(lt, packEventFollowers(lt, tables))];
       const st = w.on ? `<span class="on">&#9679; ${esc(t("pkb_on_now"))}</span>` : w.next ? `<span>${esc(t("pkb_next").replace("{date}", w.next))}</span>` : "";
-      return `<div class="pkb-ev" data-pkbev="${esc(String(lt.id))}">
-        <div class="pkb-ev-h"><span class="pkb-ev-t"><b>&#128279; ${esc(evName)}</b>${w.days || w.text ? `<small> · ${esc(w.days || w.text)}</small>` : ""}</span>${st ? `<span class="pkb-ev-s">${st}</span>` : ""}</div>
-        ${pkbRowHtml(lt, u.lead.ti, "lead", evNames)}${u.fol.map((x) => pkbRowHtml(x.tb, x.ti, "follow", evNames)).join("")}
+      // A (owner, 6 Nov 2026): one folded line — pictures, name, "N packs ·
+      // price range", days and on now / next, one tick for the whole event.
+      const all = [u.lead, ...u.fol], id = String(lt.id), open = !!q || PKB_EV_OPEN.has(id);
+      const pics = all.slice(0, 4).map((x) => `<span>${pkbIcon(x.tb, packLinkFor(x.tb.id)) || "&#127873;"}</span>`).join("");
+      const when = w.days || w.text, line2 = when || st ? `<small>${esc(when)}${when && st ? " · " : ""}${st}</small>` : "";
+      return `<div class="pkb-ev pkb-eva${open ? " open" : ""}" data-pkbev="${esc(id)}">
+        <div class="pkb-ev-a" data-pkbevtap="${esc(id)}" role="button" tabindex="0" aria-expanded="${open}">
+          <span class="pkb-ev-st">${pics}</span>
+          <span class="pkb-ev-m"><b>&#128279; ${esc(evName)}</b><small>${esc(t("pkb_ev_packs").replace("{n}", all.length))} · ${esc(pkbEvPrice(all.map((x) => x.tb)))}</small>${line2}</span>
+          ${pkbEvTickHtml(all.map((x) => x.tb))}
+          <span class="pkb-chev" aria-hidden="true">${open ? "&#8963;" : "&#8250;"}</span>
+        </div>
+        ${open ? all.map((x) => pkbRowHtml(x.tb, x.ti, "in", evNames)).join("") : ""}
       </div>`;
     };
     const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
@@ -16564,6 +16667,13 @@ async function renderPacksPage() {
     const on = packInBudgets(id);
     listEl.querySelectorAll(`[data-pkbudrow="${window.CSS.escape(String(id))}"]`).forEach((cb) => { cb.checked = on; const row = cb.closest(".pkb-row"); if (row) row.classList.toggle("pkb-off", !on); });
     listEl.querySelectorAll(`.pkb-panel[data-pkid="${window.CSS.escape(String(id))}"] [data-pkbud]`).forEach((cb) => { cb.checked = on; });
+    listEl.querySelectorAll("[data-pkbevall]").forEach((b) => {
+      const ids = b.dataset.pkbevall.split(",");
+      if (!ids.includes(String(id))) return;
+      const tmp = document.createElement("div");
+      tmp.innerHTML = pkbEvTickHtml(ids.map((x) => tables.find((tb) => String(tb.id) === x)).filter(Boolean));
+      if (tmp.firstElementChild) b.replaceWith(tmp.firstElementChild);
+    });
     pkbCats.forEach((g) => {
       const sub = listEl.querySelector(`[data-pkbcat="${window.CSS.escape(g.key)}"] [data-pkbcatsub]`);
       if (sub) sub.textContent = pkbCatSub(g.list, g.key);
@@ -16651,8 +16761,12 @@ async function renderPacksPage() {
     const evNameHtml = !fols.length ? "" : IS_OWNER
       ? `<label class="pkb-evn"><span>${esc(t("pkb_ev_name"))}</span><input type="text" class="keep-w" data-pkbevname="${esc(String(tb.id))}" value="${esc(String(((PACK_LINKS || {})[String(tb.id)] || {}).eventName || ""))}" placeholder="${esc(evDef)}" maxlength="80" autocomplete="off" /></label><p class="pkb-evl-n">${esc(t("pkb_ev_name_hint"))}</p>`
       : `<div class="pkb-evn-v">&#128279; ${esc(evName)}</div>`;
-    const evHtml = fols.length ? `<div class="pkb-sec pkb-evl"><span class="pkb-k">${esc(t("pkb_ev_with"))}</span>${evNameHtml}${fols.map((x) => { const xl = packLinkFor(x.id); return `<button type="button" class="pkb-evi" data-pkbgo="${esc(String(x.id))}" title="${esc(x.title)}"><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><b>${esc(packEventShort(x.title, evNames))}</b><span class="pkb-evi-p">${esc(pkbPrice(x, xl))}</span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`; }).join("")}<p class="pkb-evl-n">${esc(t("pkb_ev_move"))}</p></div>` : "";
+    const canLead = IS_OWNER && !lk.dateWith && pkbCanLead(tb);
+    const addBtn = canLead ? `<button type="button" class="btn ghost pkb-evadd" data-pkbevadd="${esc(String(tb.id))}">+ ${esc(t("pkb_ev_add"))}</button>` : "";
+    const evHtml = fols.length || canLead ? `<div class="pkb-sec pkb-evl"><span class="pkb-k">${esc(t("pkb_ev_with"))}</span>${evNameHtml}${fols.map((x) => { const xl = packLinkFor(x.id); return `<button type="button" class="pkb-evi" data-pkbgo="${esc(String(x.id))}" title="${esc(x.title)}"><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><b>${esc(packEventShort(x.title, evNames))}</b><span class="pkb-evi-p">${esc(pkbPrice(x, xl))}</span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`; }).join("")}${fols.length ? `<p class="pkb-evl-n">${esc(t("pkb_ev_move"))}</p>` : `<p class="pkb-evl-n">${esc(t("pkb_ev_none"))}</p>`}${addBtn}</div>` : "";
     if (settings) { settings.insertAdjacentHTML("beforebegin", evHtml + budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", evHtml + budHtml);
+    const evAdd = body.querySelector("[data-pkbevadd]");
+    if (evAdd) evAdd.addEventListener("click", () => pkbEvAddSheet(tb));
     const evIn = body.querySelector("[data-pkbevname]");
     if (evIn) {
       evIn.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); evIn.blur(); } });
@@ -16849,15 +16963,73 @@ async function renderPacksPage() {
   // "Same dates as" (owner only): the leader this pack follows, if it takes effect.
   function packDateLeaderShown(id) { return packLinkForBase(id).dateWith || ""; }
   // Packs this one can follow: other repeating packs (not cards, triggered,
-  // New Gen, templates or "My packs"), and not one that already follows this one.
+  // templates or "My packs"), and not one that already follows this one.
+  // A New Gen pack picks only New Gen packs, a normal pack only normal ones.
   function packDateWithChoices(tb) {
-    const me = String(tb.id);
+    const me = String(tb.id), ng = !!packLinkForBase(me, true).newGen;
     return tables.filter((x) => {
       const id = String(x.id);
       if (id === me || id.startsWith("my-") || id.startsWith("ng-")) return false;
       const l = packLinkForBase(id, true);
-      if (l.template || l.trigger || l.newGen || l.mine || typeof l.reset !== "number" || !(l.reset > 0) || l.reset >= PACK_ONE_TIME_DAYS) return false;
+      if (l.template || l.trigger || l.mine || !!l.newGen !== ng) return false;
+      if (!ng && (typeof l.reset !== "number" || !(l.reset > 0) || l.reset >= PACK_ONE_TIME_DAYS)) return false;
       return packDateLeader(id) !== me;
+    });
+  }
+  // Several packs at once (owner, 6 Nov 2026: "some packs are 2 in 1, some 3
+  // in 1"): a pack that can lead, and the packs that may follow it.
+  function pkbCanLead(tb) {
+    const id = String(tb.id);
+    if (id.startsWith("my-") || id.startsWith("ng-")) return false;
+    const l = packLinkForBase(id, true);
+    if (l.template || l.trigger || l.mine) return false;
+    return !!l.newGen || (typeof l.reset === "number" && l.reset > 0 && l.reset < PACK_ONE_TIME_DAYS);
+  }
+  function pkbEvCands(tb) {
+    const me = String(tb.id);
+    return tables.filter((x) => {
+      const id = String(x.id);
+      if (id === me || id.startsWith("my-") || id.startsWith("ng-")) return false;
+      const xl = packLinkForBase(id, true);
+      if (xl.trigger || xl.template || packStackInfo(xl.reset)) return false; // these have no "Same dates as" / are templates
+      if (!packDateWithChoices(x).some((y) => String(y.id) === me)) return false; // same kind, no loop
+      // not a leader of other packs
+      return !tables.some((y) => String(y.id) !== id && String(((PACK_LINKS || {})[String(y.id)] || {}).dateWith || "") === id);
+    }).sort((a, b) => pkbOrder(a.title, b.title));
+  }
+  function pkbEvAddSheet(tb) {
+    const me = String(tb.id), cands = pkbEvCands(tb);
+    const raw = (id) => String(((PACK_LINKS || {})[String(id)] || {}).dateWith || "");
+    const tick = new Set(cands.filter((x) => raw(x.id) === me).map((x) => String(x.id)));
+    let m = document.getElementById("pkbEvSheet");
+    if (m) m.remove();
+    m = document.createElement("div"); m.id = "pkbEvSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap pkb-eas-ov"; document.body.appendChild(m);
+    const onKey = (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); close(); } };
+    const close = () => { m.remove(); document.removeEventListener("keydown", onKey, true); };
+    document.addEventListener("keydown", onKey, true);
+    const rows = cands.map((x) => {
+      const id = String(x.id), xl = packLinkFor(id), other = raw(id) && raw(id) !== me ? tables.find((y) => String(y.id) === raw(id)) : null;
+      return `<label class="pkb-eas-r"><input type="checkbox" data-pkbeas="${esc(id)}" ${tick.has(id) ? "checked" : ""} /><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><span class="pkb-eas-m"><b>${esc(x.title || "")}</b><small>${esc(other ? t("pkb_ev_follows").replace("{pack}", other.title || "") : pkbResetText(xl.reset) || "")}</small></span></label>`;
+    }).join("");
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box pkb-eas" role="dialog" aria-modal="true" aria-label="${esc(t("pkb_ev_add"))}">
+      <div class="gs-head"><span class="pkb-eas-t"><b>${esc(t("pkb_ev_add"))}</b><small>${esc(t("pkb_ev_add_sub").replace("{pack}", tb.title || ""))}</small></span><button type="button" class="rfa-x" data-pkbeasx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="pkb-eas-list">${rows || `<p class="meta">${esc(t("pkb_ev_add_none"))}</p>`}</div>
+      <div class="pkb-eas-foot"><button type="button" class="btn ghost" data-pkbeasx>${esc(t("cancel"))}</button><button type="button" class="btn" data-pkbeasok>${esc(t("pkb_ev_add_done"))}</button></div>
+    </div>`;
+    m.addEventListener("click", (e) => {
+      if (e.target === m || e.target.closest("[data-pkbeasx]")) { close(); return; }
+      if (!e.target.closest("[data-pkbeasok]")) return;
+      m.querySelectorAll("[data-pkbeas]").forEach((c) => {
+        const id = c.dataset.pkbeas;
+        if (c.checked) { PACK_LINKS[id] = PACK_LINKS[id] || { pages: [], priceCol: 0, cols: {} }; PACK_LINKS[id].dateWith = me; }
+        else if (raw(id) === me) delete PACK_LINKS[id].dateWith;
+      });
+      close();
+      PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+      savePackLinks();
+      renderAll(); // the window (and the list behind it) shows the new event
+      const box = listEl.querySelector(".pkb-panel .pkb-evl");
+      if (box) box.scrollIntoView({ block: "center" });
     });
   }
   function packDateWithRowHtml(tb, preset) {
@@ -16867,7 +17039,10 @@ async function renderPacksPage() {
     const opts = packDateWithChoices(tb).sort((x, y) => (typeof pkbOrder === "function" ? pkbOrder(x.title, y.title) : String(x.title || "").localeCompare(String(y.title || ""), undefined, { numeric: true, sensitivity: "base" })));
     const lead = packDateLeaderShown(tb.id);
     const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
-    const has = opts.some((x) => String(x.id) === raw);
+    // A saved link to a pack of the other kind (New Gen vs normal) is ignored,
+    // so the box says "its own dates" (the next pick replaces it).
+    const otherKind = raw && tables.some((x) => String(x.id) === raw) && packIsNewGen((PACK_LINKS || {})[raw]) !== packIsNewGen((PACK_LINKS || {})[String(tb.id)]);
+    const has = otherKind || opts.some((x) => String(x.id) === raw);
     return `<div class="bset-row pkdw-row"><span class="bset-l">${esc(t("pk_date_with"))}<small>${esc(t("pk_date_with_desc"))}</small></span><span class="bset-c"><select data-pkdatewith class="keep-w pkdw-sel">
         <option value="">${esc(t("pk_date_with_none"))}</option>
         ${raw && !has ? `<option value="${esc(raw)}" selected>${esc(t("pk_date_with_missing"))}</option>` : ""}
@@ -17224,8 +17399,28 @@ async function renderPacksPage() {
       const dwSel = box.querySelector("select[data-pkdatewith]");
       if (dwSel) dwSel.addEventListener("change", async () => {
         const l = current();
-        if (dwSel.value && dwSel.value !== String(id)) l.dateWith = dwSel.value; else delete l.dateWith;
+        if (dwSel.value && dwSel.value !== String(id)) {
+          // Flat data (owner, 6 Nov 2026): follow the chosen pack's own leader,
+          // and this pack's followers move to that leader too.
+          const to = packDateLeader(dwSel.value) || dwSel.value;
+          l.dateWith = to === String(id) ? dwSel.value : to;
+          Object.keys(PACK_LINKS || {}).forEach((k) => {
+            const y = PACK_LINKS[k];
+            if (k !== String(id) && y && String(y.dateWith || "") === String(id)) { if (k === l.dateWith) delete y.dateWith; else y.dateWith = l.dateWith; }
+          });
+        } else delete l.dateWith;
         PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+        // In the pack's window, its event parts (banner / Packs with this event /
+        // Event name) follow at once: the window is drawn again.
+        if (box.closest(".pkb-panel")) {
+          savePackLinks();
+          setTimeout(() => {
+            renderAll();
+            const s = listEl.querySelector(".pkb-panel select[data-pkdatewith]");
+            if (s) s.scrollIntoView({ block: "center" });
+          }, 0);
+          return;
+        }
         const lead = packDateLeaderShown(id);
         const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
         [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
@@ -20688,6 +20883,10 @@ function packIsNewGen(l) { return !!l && (l.newGen === true || (typeof l.group =
 // Purchases): Hero Ascension Training starts the day new heroes come,
 // Exclusive Gear Forge 4 weeks (28 days) later.
 function packNewGenOffset(tableId) {
+  // A New Gen pack that follows another New Gen pack's dates ("Same dates as",
+  // e.g. Value Hero Pack → Hero Ascension Training) takes the leader's timing.
+  const lead = packDateLeader(tableId);
+  if (lead) tableId = lead;
   const tb = (PACK_TABLES_CACHE || PACK_TABLES_ALL || []).find((x) => String(x.id) === String(tableId));
   if (tb) return /forge/i.test(String(tb.title || "")) ? NG_HERO_DAYS : 0;
   // Title not loaded yet: the gap between the admin's own dates for the New Gen tables.
@@ -20965,11 +21164,16 @@ function packLinkSetOf(tableId) {
 function packDateLeader(tableId) {
   const start = String(tableId);
   if (start.startsWith("my-") || start.startsWith("ng-")) return "";
+  // A New Gen pack follows only New Gen packs, a normal pack only normal
+  // packs (owner, 6 Nov 2026): a mixed link is ignored.
+  const kind = packIsNewGen((PACK_LINKS || {})[start]);
   const seen = new Set([start]);
   let id = start;
   for (let i = 0; i < 20; i++) {
     const l = (PACK_LINKS || {})[id];
-    const nx = l && typeof l.dateWith === "string" && l.dateWith ? l.dateWith : "";
+    const nx0 = l && typeof l.dateWith === "string" && l.dateWith ? l.dateWith : "";
+    // a link to the other kind is ignored: the chain ends here
+    const nx = nx0 && packIsNewGen((PACK_LINKS || {})[nx0]) === kind ? nx0 : "";
     if (!nx) return id === start ? "" : id;
     if (seen.has(nx)) return "";
     seen.add(nx);
@@ -21101,6 +21305,20 @@ function packLinkForBase(tableId, own) {
       out.resetDay = ll.resetDay;
       out.resetDayDefault = ll.resetDayDefault;
       out.visitorDate = ll.visitorDate;
+    }
+  }
+  // New Gen packs (owner, 6 Nov 2026: Value Hero Pack → Hero Ascension
+  // Training, Widget Pack → Exclusive Gear Forge): the follower comes with the
+  // leader's New Gen timing (packNewGenOffset follows the leader), keeping its
+  // own window / limits.
+  if (!own && !mine && !trig && !template && out.newGen) {
+    const lead = packDateLeader(tableId);
+    const ll = lead ? packLinkForBase(lead, true) : null;
+    if (ll && ll.newGen && !ll.template && !ll.trigger) {
+      out.dateWith = lead;
+      out.reset = ll.reset;
+      out.resetDay = packNewGenAnchor(tableId) || ll.resetDay;
+      out.resetDayDefault = ll.resetDayDefault;
     }
   }
   return out;
