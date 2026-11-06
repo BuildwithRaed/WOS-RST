@@ -1475,6 +1475,7 @@ const T = {
   hero_suffix: { en: "hero" },
   close_button: { en: "Close" },
   no_connection_retry: { en: "No connection — trying again…" },
+  admin_update_reload: { en: "The site was updated. Reload the page to open Admin." },
   your_backpack: { en: "Your backpack" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have." },
   t12x_settings: { en: "Settings" },
@@ -4017,6 +4018,7 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 // one checks this after loading: if a newer render started meanwhile (the
 // user switched page), the older one stops instead of drawing over it.
 let RENDER_SEQ = 0;
+let RENDER_Y0 = 0;
 // Central router: dispatches TAB to the right page renderer.
 async function render() {
   const seq = ++RENDER_SEQ;
@@ -4029,6 +4031,7 @@ async function render() {
   ["refineAdvModal", "drilldownModal", "gearSheet"].forEach((id) => { const m = document.getElementById(id); if (m) m.style.display = "none"; });
   // The same page drawn again after a tap: keep its height and scroll place.
   const same = LAST_RENDER_TAB === TAB && !!content.firstElementChild, y0 = window.scrollY;
+  RENDER_Y0 = y0; // the place before "Loading…" (Admin keeps it while admin.js loads)
   const putBoxes = same ? saveBoxScroll(content) : null;
   if (same) content.style.minHeight = content.offsetHeight + "px";
   content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
@@ -29143,13 +29146,29 @@ let ADMIN_SKIP_CONFIRM = false;
 // only), so visitors don't download it. What other pages use from Admin (game
 // rules, page visibility, unsaved-edit checks, ADMIN_ACTIVE_TABLE …) stays here.
 // admin.js is a plain script: its functions and variables join the page's own.
-let ADMIN_CODE_P = null;
+// admin.js carries its build id (window.ADMIN_BUILD = the "?v=" below, written by
+// tools/stamp.js). The server ignores "?v=", so a tab left open since before an
+// update gets the new admin.js: then the page reloads once (to the new app.js)
+// instead of running mismatched code; if it still doesn't match, Admin says so.
+let ADMIN_CODE_P = null, ADMIN_CODE_OK = false;
 function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.js?v=553c392376";
-      s.onload = () => resolve();
+      s.src = "admin.js?v=84eec92b91";
+      const want = new URL(s.src, location.href).searchParams.get("v");
+      s.onload = async () => {
+        if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
+        let again = true;
+        try { again = sessionStorage.getItem("admin_reload_for") === want; if (!again) sessionStorage.setItem("admin_reload_for", want); } catch (e) { again = true; }
+        if (!again) {
+          // let saves still on their way finish first
+          for (let i = 0; i < 50; i++) { const busy = Object.values(CALC_SAVE_QUEUE).map((q) => q.running).filter(Boolean); if (!busy.length) break; await Promise.all(busy).catch(() => {}); }
+          location.reload();
+          return;
+        }
+        reject(Object.assign(new Error("admin.js is from another version"), { stale: true }));
+      };
       s.onerror = () => { ADMIN_CODE_P = null; s.remove(); reject(new Error("admin.js didn't load")); };
       document.head.appendChild(s);
     });
@@ -29157,9 +29176,17 @@ function loadAdminCode() {
   return ADMIN_CODE_P;
 }
 async function renderAdminPage() {
-  if (typeof renderAdminPageMain !== "function") {
+  if (!ADMIN_CODE_OK) {
     const seq = RENDER_SEQ;
+    // Keep the scroll place while admin.js loads, as when Admin drew at once
+    // (e.g. State Timeline's "Edit the days in Admin" from far down the page).
+    const y0 = RENDER_Y0, mh = content.style.minHeight;
+    if (y0) content.style.minHeight = `${y0 + window.innerHeight}px`;
+    // (the place comes back once the section is drawn and its (i) bubbles are in)
+    const keep = async () => { try { return await renderAdminPageMain(); } finally { content.style.minHeight = mh; if (y0) setTimeout(() => { if (seq === RENDER_SEQ && !window.scrollY) window.scrollTo(0, y0); }, 0); } };
     try { await loadAdminCode(); } catch (e) {
+      content.style.minHeight = mh;
+      if (e && e.stale) { if (seq === RENDER_SEQ && TAB === "adminpage") { content.innerHTML = `<div class="empty">${esc(t("admin_update_reload"))}</div>`; content.style.minHeight = ""; } return; }
       // No connection: say so and try again, like the visitor pages.
       if (seq !== RENDER_SEQ || TAB !== "adminpage") return;
       content.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`;
@@ -29168,6 +29195,7 @@ async function renderAdminPage() {
       return;
     }
     if (seq !== RENDER_SEQ || TAB !== "adminpage") return;
+    return keep();
   }
   return renderAdminPageMain();
 }

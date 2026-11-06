@@ -10,7 +10,18 @@ const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 // page links to are cached with it, so the site also opens offline after the
 // first visit (the first page load happens before this worker is in control).
 const VERSIONED = /\/(app|admin)\.(js|css)$/;
+// A copy is kept only when it is the version its address names: the server ignores
+// "?v=", so an old address can bring back a newer file. app.js / app.css: "v" = the
+// start of the file's SHA-256 (tools/stamp.js); admin.js carries its id inside.
+const isVersion = async (url, res) => {
+  const u = new URL(url), v = u.searchParams.get("v");
+  if (/\/admin\.js$/.test(u.pathname)) return (await res.clone().text()).includes(`window.ADMIN_BUILD = "${v}";`);
+  if (!self.crypto || !crypto.subtle) return true;
+  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", await res.clone().arrayBuffer()));
+  return [...d.slice(0, 5)].map((b) => b.toString(16).padStart(2, "0")).join("") === v;
+};
 const putVersioned = (req, res) => caches.open(VERSION).then(async (c) => {
+  if (!(await isVersion(typeof req === "string" ? req : req.url, res))) return;
   await c.put(req, res);
   const url = new URL(typeof req === "string" ? req : req.url);
   for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) await c.delete(k); }

@@ -69,7 +69,7 @@
 <script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
 <link rel="stylesheet" href="app.css?v=0661a1d64a" />
 <!-- app.js runs at the end of the page; fetch it now, not after the head is done. -->
-<link rel="preload" href="app.js?v=228dbada52" as="script" />
+<link rel="preload" href="app.js?v=795310ca11" as="script" />
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller. Later the same day the owner asked for
 // the text 2 px bigger again on every page but the Dashboard: the smaller text now
@@ -97,11 +97,16 @@
     try {
       // Only inline sheets, versioned links (app.css?v=…) or ones the walk can't read are cached.
       let src = String(phoneCompact), ok = true;
-      for (const sh of document.styleSheets) {
+      // app.css didn't load (offline, error page): build from what is there but
+      // don't save or reuse, so a later good load isn't given the empty sheets.
+      const goodLink = (sh) => { try { return !!sh.cssRules && sh.cssRules.length >= 500; } catch (e) { return false; } };
+      const appLink = document.querySelector('link[rel="stylesheet"][href*="app.css"]');
+      if (appLink && !(appLink.sheet && goodLink(appLink.sheet))) ok = false;
+      for (const sh of ok ? document.styleSheets : []) {
         const o = sh.ownerNode;
         if (o && o.tagName === "STYLE") { src += "\u0000S" + o.textContent; continue; }
         // app.css?v=<hash>: the link names its contents, so the link is the key.
-        if (o && o.tagName === "LINK" && /[?&]v=[0-9a-f]+/.test(sh.href || "")) { src += "\u0000V" + sh.href; continue; }
+        if (o && o.tagName === "LINK" && /[?&]v=[0-9a-f]+/.test(sh.href || "")) { if (!goodLink(sh)) { ok = false; break; } src += "\u0000V" + sh.href; continue; }
         let readable = false; try { readable = !!sh.cssRules; } catch (e) { readable = false; }
         if (readable) { ok = false; break; }
         src += "\u0000L" + (sh.href || "");
@@ -383,7 +388,7 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="app.js?v=228dbada52"></script>
+<script src="app.js?v=795310ca11"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "32f8c9acc17048f7941762223c2739e3"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
