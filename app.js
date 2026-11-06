@@ -1241,7 +1241,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 70; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 71; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1392,14 +1392,12 @@ const NAV_PAGE_LABELS = {
 };
 // General UI strings (settings panel, owner login, Dashboard chrome).
 const T = {
-  settings_title: { en: "Settings" },
   language: { en: "Language" },
   commander: { en: "Commander" },
   name_placeholder: { en: "Name" },
   save: { en: "Save" },
   account_pitch: { en: "Create a free account to keep your progress on every device." },
   sign_in_or_create: { en: "Sign in / Create account" },
-  signed_in_as: { en: "Signed in as" },
   create_account: { en: "Create account" },
   create_account_desc: { en: "Everything you've entered in this browser is kept and linked to your new account." },
   sign_in_desc: { en: "Sign in to load the progress saved on your account." },
@@ -1453,7 +1451,6 @@ const T = {
   mm_upd_1: { en: "updated 1 day ago" },
   mm_upd_n: { en: "updated {n} days ago" },
   stats_dashboard: { en: "Stats dashboard" },
-  total_owner_only: { en: "TOTAL (owner only)" },
   troop_infantry: { en: "Infantry" },
   troop_lancers: { en: "Lancers" },
   troop_marksman: { en: "Marksman" },
@@ -1461,20 +1458,13 @@ const T = {
   stat_defense: { en: "Defense" },
   stat_lethality: { en: "Lethality" },
   stat_health: { en: "Health" },
-  avg_bonus_suffix: { en: "bonus" },
-  avg_prefix: { en: "AVG" },
-  avg_maxed: { en: "AVG maxed" },
-  stats_tracked: { en: "stats tracked" },
   max_possible: { en: "Max possible" },
-  click_full_breakdown: { en: "Click for full breakdown" },
   current_label: { en: "Current" },
   difference_label: { en: "Difference" },
   max_label: { en: "Max" },
-  diff_label: { en: "Diff" },
   no_sources_yet: { en: "No sources yet" },
   hero_gear_switch_note: { en: "Switches which Hero Gears loadout is counted \u2014 everything else stays the same." },
   roster_heroes_title: { en: "Roster" },
-  roster_max_top_gen: { en: "Max uses your highest Gen for all heroes" },
   count_in_dashboard: { en: "Count in Dashboard" },
   pick_hero_placeholder: { en: "Pick<br>hero" },
   none_label: { en: "None" },
@@ -1487,12 +1477,8 @@ const T = {
   no_connection_retry: { en: "No connection — trying again…" },
   your_backpack: { en: "Your backpack" },
   backpack_desc: { en: "Every item the site uses. Tap an item to type how many you have." },
-  backpack_scan: { en: "Scan screenshot" },
   t12x_settings: { en: "Settings" },
-  t12x_time_left: { en: "Time left · all 3 troops" },
   t12x_covered: { en: "covered by your speedups" },
-  t12x_done_pct: { en: "{n}% of all levels done" },
-  t12x_to_target: { en: "to target" },
   t12x_done: { en: "done" },
   t12x_not_planned: { en: "not planned" },
   t12x_planned: { en: "planned" },
@@ -1500,12 +1486,10 @@ const T = {
   t12x_nodes: { en: "{n} nodes" },
   t12x_sp_cover: { en: "Speedups you own: general {g} · research {r}" },
   t12x_now: { en: "Now" },
-  plx_your_levels: { en: "Your levels" },
   dash_to_go: { en: "to go" },
   bd_left: { en: "Still to gain" },
   bd_maxed: { en: "Already maxed" },
   bd_of_max: { en: "of max" },
-  budgets_pages_title: { en: "Pages in this budget" },
   bpw_desc: { en: "Every hero's widgets in one place. Type how many you have, remove a hero, or add one." },
   bpw_add: { en: "Add a hero's widgets" },
   bpw_gen_in: { en: "✓ Already in the box" },
@@ -1577,8 +1561,6 @@ const T = {
   bs_title_needed: { en: "Total resources needed" },
   bs_used_trades: { en: "used in trades" },
   bs_short_word: { en: "short" },
-  bs_spare_word: { en: "spare" },
-  bs_not_needed: { en: "not needed" },
   bs_help_have: { en: "What you have now." },
   bs_help_red: { en: "Red" },
   bs_help_short: { en: "= still short after using it" },
@@ -1587,8 +1569,6 @@ const T = {
   bs_help_chest: { en: "Dashed boxes are chests (read-only)." },
   bs_help_tap: { en: "Tap a box to change it." },
   bs_aff_short: { en: "Affinity short" },
-  bs_short: { en: "still short" },
-  bs_ready: { en: "ready" },
   bs_nothing: { en: "Nothing needed yet." },
   bs_have_of: { en: "have {have} of {need}" },
   bs_your_amounts: { en: "Backpack" },
@@ -1602,11 +1582,9 @@ const T = {
   chest_open_do: { en: "Open" },
   chest_open_note: { en: "Chests marked {tag} aren't counted until opened." },
   chest_tile_avg: { en: "avg {all}" },
-  rch_sum: { en: "With your Backpack: {n} of {m} {unit} reach target" },
   rch_first: { en: "{item} runs out first · {n} left" },
   rch_my_order: { en: "My order" },
   rch_best: { en: "Best value" },
-  rch_edit_order: { en: "Edit order ›" },
   rch_key_covers: { en: "Backpack covers" },
   rch_key_left: { en: "still to go to target" },
   rch_mark_tip: { en: "How far your Backpack gets you now" },
@@ -1620,13 +1598,10 @@ const T = {
   rlk_or: { en: "or" },
   rlk_wait: { en: "Lv {lv}+ needs {needs} first" },
   rlk_wait_target: { en: "raise its target" },
-  rch_u_steps: { en: "steps" },
   rch_u_pieces: { en: "pieces" },
   rch_u_charms: { en: "charms" },
   rch_u_pets: { en: "pets" },
   rch_u_nodes: { en: "nodes" },
-  rch_all_btn: { en: "See all troops ›" },
-  rch_sum_done: { en: "This troop is at its targets" },
   rch_all_title: { en: "All troops · {n} {unit} go up" },
   rch_all_up: { en: "{n} {unit} go up" },
   rch_all_none: { en: "nothing yet" },
@@ -1637,8 +1612,6 @@ const T = {
   rch_covers_short: { en: "covers it" },
   rch_none_short: { en: "— · {item} short" },
   rch_u_tracks: { en: "tracks" },
-  rch_order_title: { en: "Upgrade order" },
-  rch_order_hint: { en: "Your Backpack goes to these stats in this order (one troop and stat per row), on every page. Each row gets the upgrades that give the most for your items." },
   rch_order_reset: { en: "Reset" },
   gx_title: { en: "Hero gear for XP" },
   gx_desc: { en: "Gear below Mythic you can feed into a mythic piece." },
@@ -1730,27 +1703,11 @@ const T = {
   backpack_speedups: { en: "Speedups" },
   bp_widgets: { en: "Widgets" },
   bp_wd_own: { en: "Own" },
-  bp_wd_maxed: { en: "Maxed (10)" },
-  bp_wd_enough: { en: "Enough for 10" },
-  bp_wd_reach: { en: "You can reach level {n} now" },
-  bp_wd_total: { en: "Widgets short: {n} ≈ {cost}" },
-  bp_wd_note: { en: "Widgets: 5, 10 … 50 per level (275 to reach 10); widget level from the roster. Prices are the cheapest packs, same as Budgets → Hero shards & widgets." },
   rc_wd_short: { en: "⚙ {n} short · {cost}" },
   rc_wd_enough: { en: "⚙ enough for 10" },
-  bp_sh_title: { en: "Roster heroes: shards & widgets needed" },
-  bp_sh_none: { en: "Pick your heroes in the Dashboard roster to see the shards they need." },
   bp_sh_need: { en: "Need" },
   bp_sh_own: { en: "Own shards" },
   bp_sh_general: { en: "General" },
-  bp_sh_track: { en: "Add to Backpack" },
-  bp_sh_short: { en: "{n} short" },
-  bp_sh_total_short: { en: "{n} shards short" },
-  bp_sh_enough: { en: "Enough for 5★" },
-  bp_sh_maxed: { en: "Maxed (5★)" },
-  bp_sh_next: { en: "Next star: {n}" },
-  bp_sh_reach: { en: "You can reach {s} now" },
-  bp_sh_left: { en: "{n} left over" },
-  bp_sh_note: { en: "Shards to reach 5★ from the stars in your Dashboard roster. Each hero's own shards are used first, then general shards (Infantry, Lancers, Marksman in that order)." },
   rc_sh_reach: { en: "can reach {s} now" },
   rc_sh_short: { en: "🧩 {n} short" },
   rc_sh_enough: { en: "🧩 enough for 5★" },
@@ -1763,33 +1720,21 @@ const T = {
   backpack_remove_hero: { en: "Remove" },
   backpack_all_added: { en: "All heroes of this kind are added." },
   backpack_no_match: { en: "No items match your search." },
-  backpack_title: { en: "Backpack" },
   troops_stats_title: { en: "Troops Stats" },
   current_upper: { en: "CURRENT" },
   target_upper: { en: "TARGET" },
   target_label: { en: "Target" },
-  set_all_ellipsis: { en: "Set all\u2026" },
   set_all_short: { en: "Set all" },
   set_all_to: { en: "Set all to:" },
   max_everything: { en: "Max everything" },
   islandgallery_title: { en: "Islands" },
   expertspage_title: { en: "Experts Level" },
   skin_gallery_title: { en: "Skin gallery" },
-  vip_tier_title: { en: "VIP Tier" },
   no_chief_gear_data: { en: "No Chief Gear data loaded yet." },
-  pos_top_left: { en: "Top left" },
-  pos_top_right: { en: "Top right" },
-  pos_middle_left: { en: "Middle left" },
-  pos_middle_right: { en: "Middle right" },
-  pos_bottom_left: { en: "Bottom left" },
-  pos_bottom_right: { en: "Bottom right" },
-  three_piece_def: { en: "3-piece (DEF, all troops)" },
-  six_piece_atk: { en: "6-piece (ATK, all troops)" },
   not_active: { en: "Not active" },
   all_label: { en: "All" },
   owned_label: { en: "Owned" },
   not_owned_label: { en: "Not owned" },
-  globe_level: { en: "GLOBE LEVEL" },
   globe_msg_none: { en: "Pick your Globe Level. It decides which globe skins count: each level adds its Frost Sphere{max} and its extra skins, both to your stats and to the max. Until you pick one, no globe skins count." },
   globe_msg_upto: { en: " (up to {max})" },
   globe_msg_lv: { en: "Your Globe Level {n} counts {city}{extra}, in your stats and in the max." },
@@ -1802,16 +1747,9 @@ const T = {
   no_skins_match_filters: { en: "No skins match your filters." },
   mark_skins_owned_hint: { en: "Mark skins as owned to see totals" },
   search_skins_placeholder: { en: "Search skins..." },
-  skins_owned_summary: { en: "skins owned \u00b7 tap any skin to view details" },
-  islands_owned_summary: { en: "islands owned \u00b7 tap any island to set its level" },
   search_islands_placeholder: { en: "Search islands..." },
   level_label: { en: "Level" },
-  not_built: { en: "0 (not built)" },
-  owned_checkbox: { en: "Owned" },
-  owned_tap_unown: { en: "\u2713 Owned \u2014 tap to unown" },
-  mark_as_owned: { en: "Mark as owned" },
   not_counted_divider: { en: "Not counted in Dashboard" },
-  drag_here_to_exclude: { en: "Drag skins here (or tap \u2193 on a card) to leave them out of the Dashboard" },
   move_to_uncounted: { en: "Don't count in Dashboard" },
   move_to_counted: { en: "Count in Dashboard" },
   sg_desc: { en: "Tap a picture to mark it owned or not owned; a wrong tap can be undone from the note at the bottom. \u2193 in a picture's corner moves it to \"Not counted in Dashboard\". The Globe row sets your Globe Level." },
@@ -1845,23 +1783,14 @@ const T = {
   sg_lv: { en: "Lv {n}" },
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
-  prev_label: { en: "Prev" },
-  next_label: { en: "Next" },
-  swipe_to_browse: { en: "swipe to browse" },
   all_categories: { en: "All categories" },
   tundra_album_title: { en: "Tundra Album" },
-  total_attack: { en: "Total Attack" },
-  total_defense: { en: "Total Defense" },
   of_max_prefix: { en: "of max" },
   collection_gallery_title: { en: "Collection Gallery" },
-  total_prefix: { en: "Total" },
   vip_tier_not_found: { en: "VIP Tier table not found." },
   vip_tier_desc: { en: "Pick your VIP level to see its troop stat bonuses." },
   facility_title: { en: "Facility" },
-  facility_click_desc: { en: "Click a building to mark it owned/not owned." },
-  buildings_owned_summary: { en: "buildings owned" },
   bonus_unknown: { en: "Bonus unknown" },
-  checkmark_owned: { en: "\u2713 Owned" },
   alliance_tech_title: { en: "Alliance Tech" },
   research_title: { en: "Research" },
   level_ellipsis: { en: "Level\u2026" },
@@ -1869,21 +1798,14 @@ const T = {
   alliance_tech_desc: { en: "Set your current level (0\u20135) for each research \u2014 1% per level." },
   all_researches_updated: { en: "All researches updated" },
   couldnt_update_levels: { en: "Couldn't update levels" },
-  researches_tracked: { en: "researches tracked" },
-  troops_group_label: { en: "Troops" },
   none_suffix: { en: " (none)" },
   category_not_found: { en: "category not found." },
-  click_star_desc: { en: "Click a star to set your current level (0\u20135)." },
   stars_of_5: { en: "/ 5 stars" },
   hs_no_heroes: { en: "No heroes here yet." },
-  troops_prefix: { en: "Troops" },
-  needed_for_max: { en: "needed for max" },
-  maxed_label: { en: "Maxed" },
   pets_level_title: { en: "Pets Level" },
   pets_summed_desc: { en: "Summed across all 15 pets, based on current levels." },
   troops_attack: { en: "Troops Attack" },
   troops_defense: { en: "Troops Defense" },
-  backpack_desc_pets: { en: "Enter what you own \u2014 the rest shows what's still needed, across all 15 pets." },
   not_started: { en: "Not started" },
   max_suffix: { en: " (Max)" },
   upcoming_tag: { en: "Upcoming" },
@@ -1904,7 +1826,6 @@ const T = {
   admh_need_rules_sub: { en: "all saved" },
   admh_rules_btn: { en: "Rules" },
   admh_show_more: { en: "Show {n} more" },
-  admh_show: { en: "Show" },
   admh_open_page: { en: "Open a page" },
   admh_n_changed: { en: "{n} changed" },
   admh_bk_never: { en: "No backup yet" },
@@ -1939,8 +1860,6 @@ const T = {
   material_serum: { en: "Serum" },
   troop_lancer_singular: { en: "Lancer" },
   pets_refine_title: { en: "Pets Refine" },
-  total_refine_bonus: { en: "Total refine bonus" },
-  refine_summed_desc: { en: "Summed across all 15 pets, based on what you've typed in." },
   tier_suffix: { en: "tier" },
   max_button: { en: "Max" },
   rl_lab_btn: { en: "Lab" },
@@ -1949,9 +1868,7 @@ const T = {
     en: "WOS RST is an unofficial fan-made tool and is not affiliated with, endorsed by, or connected to Century Games. Whiteout Survival and all related names, artwork, icons and game data are trademarks and copyrights of Century Games and are used here for informational purposes only. Values are community estimates and may differ from the game.",
   },
   research_center_title: { en: "Research Center" },
-  rc_desc: { en: "Across all 102 research tracks, from current levels to max." },
   research_time_label: { en: "Research Time" },
-  max_this_section: { en: "Max this section" },
   shared_label: { en: "Shared" },
   vis_admin_intro: { en: "Untick anything visitors should not see. You always see everything while logged in. Changes apply to everyone immediately." },
   vis_pages: { en: "Pages" },
@@ -1989,18 +1906,15 @@ const T = {
   t12_label_exalted_first_aid: { en: "Exalted First Aid" },
   t12_label_exalted_training: { en: "Exalted Training" },
   t12_label_solar_supremacy: { en: "Solar Supremacy" },
-  t12_3troops_desc: { en: "Across all 3 troop types, from current levels to max." },
   resource_steel: { en: "Steel" },
   resource_refined_fc: { en: "Refined Fire Crystal" },
   resource_fc_shard: { en: "Fire Crystal Shard" },
   resource_meat_wood: { en: "Meat/Wood" },
   resource_coal: { en: "Coal" },
   resource_iron: { en: "Iron" },
-  time_label: { en: "Time" },
   t11_helios_title: { en: "T11 Research" },
   data_not_available_troop: { en: "Data not yet available for this troop type." },
   stats_data_not_available: { en: "Stats data not available yet." },
-  experts_base_stats_desc: { en: "Base stats for every expert, plus select main-stat skills." },
   exp_all_d: { en: "every counted expert's level stat, plus Romulus's and Gareth's troop skills. Always on." },
   exp_svs_d: { en: "only Valeria's Battle Concerto skill and Conqueror's Spirit talent, in the SvS Battle Phase." },
   exp_foundry_d: { en: "only Fabian's Heightened Firepower skill and Craftsman of War talent, in Foundry Battle." },
@@ -2008,40 +1922,27 @@ const T = {
   exp_tundra_d: { en: "only Ronne's Trade Dominion talent, on the Tundra Trade Route." },
   exp_tabs_note: { en: "An event tab shows only that event's extra bonus; it comes on top of All." },
   exp_ev_off: { en: "{name} isn't counted: tick Count on the expert's card." },
-  resources_needed_title: { en: "Resources needed" },
   foundry_title: { en: "Foundry" },
-  foundry_desc: { en: "Troop Stats + Fabian's Heightened Firepower, for Foundry Battle." },
   svs_title: { en: "SvS" },
-  svs_desc: { en: "Troop Stats + Valeria's Battle Concerto, for SvS Battle Phase." },
   frostfire_mine_title: { en: "Frostfire Mine" },
-  frostfire_mine_desc: { en: "Troop Stats + Kathy's Child of Frost talent, for Frostfire Mine." },
-  tundra_trade_routes_title: { en: "Tundra Trade Routes" },
   tundra_trade_tab: { en: "Tundra Trade" },
-  tundra_trade_routes_desc: { en: "Troop Stats + Ronne's Trade Dominion talent, for the Tundra Trade Route." },
   resource_time: { en: "Time" },
   resource_books: { en: "Books" },
   resource_affinity: { en: "Affinity" },
   resource_sigils: { en: "Sigils" },
-  total_sigils: { en: "Total Sigils" },
-  needed_suffix: { en: "needed" },
-  have_enough: { en: "\u2713 Have enough" },
   experts_research_title: { en: "Experts Research" },
   experts_research_desc: { en: "Attack/Defense/Lethality/Health from Expert Research. Troop-specific experts are counted per troop below." },
-  total_sigils_needed: { en: "Total Sigils Needed" },
-  across_unlocked_experts_desc: { en: "Across all unlocked experts' paths, current to target." },
   only_suffix: { en: "only" },
   max_page_note: { en: "Max 6% page 1, max 10% page 2 (per path)" },
   path_label: { en: "Path" },
   research_speed_label: { en: "RESEARCH SPEED" },
   speedups_label: { en: "GENERAL SPEEDUPS" },
   set_speed: { en: "Research Speed" },
-  set_speedups: { en: "Speed Ups" },
   set_count: { en: "Count" },
   tl_title: { en: "State Timeline" },
   tl_desc: { en: "What opens in your state, and when, from your state age." },
   tl_your_state: { en: "Your state" },
   tl_day_gen: { en: "Day {d} · Gen {g}" },
-  tl_next_gen: { en: "Gen {g} starts day {d} · ≈ {date}" },
   tl_next: { en: "Next" },
   tl_in_days: { en: "in {n} days" },
   tl_in_months: { en: "in ~{n} months" },
@@ -2097,18 +1998,13 @@ const T = {
   contact_tip: { en: "Include the page name and a screenshot if you are reporting a number that looks off." },
   contact_soon: { en: "Contact details will be added soon." },
   marks_no_estimate: { en: "No estimate yet for these stages (not counted in the total until a formula close to the real result is confirmed):" },
-  research_next_level: { en: "Next level:" },
   expert_upcoming: { en: "Upcoming" },
-  skill_max_exp: { en: "Max EXP" },
   skill_max_exp_tip: { en: "Fill the EXP box with everything this step needs" },
-  experts_sigils_have: { en: "Sigils you have" },
   experts_sigils_summary: { en: "Expert sigils" },
   experts_sigils_summary_note: { en: "Change these on each expert's card" },
-  experts_affinity_have: { en: "Affinity you have" },
   skill_exp_have: { en: "EXP you have" },
   expert_count_tick: { en: "Count" },
   expert_count_tip: { en: "Ticked: this expert counts in the totals, Dashboard and Budgets." },
-  minutes_short: { en: "min" },
   piece_helmet: { en: "Helmet" },
   piece_watch: { en: "Watch" },
   piece_jacket: { en: "Jacket" },
@@ -2121,7 +2017,6 @@ const T = {
   piece_boots: { en: "Boots" },
   track_mastery_forging: { en: "Mastery Forging" },
   track_enhance: { en: "Enhance (0\u2013200)" },
-  hero_gears_calculator: { en: "Heroes Gears calculator" },
   charm_slot_label: { en: "Charm" },
   set_label: { en: "Set" },
   packs_title: { en: "Packs" },
@@ -2165,7 +2060,6 @@ const T = {
   tier_third: { en: "Third" },
   packs_desc: { en: "Build your own price/reward tables \u2014 add tables, columns, and rows, rename anything, and save." },
   no_tables_hint: { en: "Click \"+ Add table\" to start one." },
-  hero_gear_stats_desc: { en: "Each piece: Enhance Lethality/Health \u00d7 (1 + Mastery Forging %); Mithril milestones boost Attack/Defense." },
   level_prefix: { en: "Lv." },
   pack_used_for: { en: "Used for" },
   pack_used_for_desc: { en: "Pick the pages this table should price. Column names are set in the table header above." },
@@ -2221,40 +2115,22 @@ const T = {
   combined_not_included: { en: "This page is unticked on Budgets, so it's planned on its own and isn't part of the combined plan." },
   combined_no_share: { en: "The combined plan doesn't need any packs for this page (other pages' packs already cover it, or it needs nothing)." },
   combined_cant: { en: "The combined plan can't cover every selected page, so this page is planned on its own." },
-  combined_budget_note: { en: "Packs are planned once across every ticked page, so a pack that helps several pages is paid for once and its limits are shared. Each page shows its share." },
   combined_dropped: { en: "Planned on their own (packs can't cover them together with the rest)" },
-  cap_title: { en: "My max" },
-  cap_charm_label: { en: "Highest charm level I can reach" },
-  cap_chief_gear_label: { en: "Highest chief gear I can reach" },
-  cap_hero_enhance_label: { en: "Highest Enhance level I can reach" },
-  cap_desc: { en: "Current and target can't go above this, and anything above it doesn't count in the Dashboard (including its max)." },
   pack_reset_custom: { en: "Every N days\u2026" },
   pack_lasts_label: { en: "lasts" },
   pack_lasts_days: { en: "days" },
   pack_lasts_hint: { en: "How many days one appearance stays up. Blank = the whole cycle." },
   pack_cal_title: { en: "Pack calendar" },
   pack_cal_button: { en: "Calendar" },
-  pack_cal_back: { en: "Back to packs" },
-  pack_cal_desc: { en: "When each pack comes and how long it stays." },
   pack_cal_weekly: { en: "Weekly" },
   pack_cal_monthly: { en: "Monthly" },
-  pack_cal_daily: { en: "Daily" },
   pack_cal_other: { en: "Other" },
   pack_cal_empty: { en: "No packs land in these weeks." },
-  pack_cal_all_week: { en: "All week" },
-  pack_cal_all_week_hidden: { en: "{n} packs are up all week and are hidden" },
-  pack_cal_show_them: { en: "show them" },
-  pack_cal_more: { en: "more" },
   pack_cal_events: { en: "Events" },
   pack_cal_wheel: { en: "Lucky Wheel" },
   pack_cal_new_heroes: { en: "New heroes" },
-  pack_cal_list: { en: "List" },
-  pack_cal_month: { en: "Month" },
   pack_cal_today_btn: { en: "Today" },
-  pack_cal_this_week: { en: "this week" },
-  pack_cal_n_days: { en: "{n} days" },
   pack_cal_state_day: { en: "state day {n}" },
-  pack_cal_utc: { en: "Game days (UTC). Tap an item to see every pack in it." },
   pack_cal_today: { en: "today" },
   pcl_desc: { en: "Packs, events and new heroes, one week at a time. Dots under a day are packs that start that day; a ★ marks packs in your plan. Tap a bar or a pack for its dates, what it gives and its price steps." },
   pcl_utc: { en: "Game days (UTC)." },
@@ -2375,13 +2251,7 @@ const T = {
   spend_show_all: { en: "Show all ({n})" },
   spend_bar_week: { en: "This week's budget" },
   spend_bar_month: { en: "{month} budget" },
-  budgets_view_shown: { en: "shown" },
-  budgets_view_hint: { en: "Tap a card to show its packs and each page's share below." },
-  budgets_view_sooner: { en: "{n} days sooner" },
-  budgets_view_later: { en: "{n} days later" },
-  budgets_view_same: { en: "same plan" },
   budgets_cant_target: { en: "Can't be done by your target ({date}). Showing the cheapest plan instead." },
-  budgets_total_title: { en: "Total for selected pages" },
   budgets_materials: { en: "Materials" },
   budgets_materials_total: { en: "Materials still needed (all selected)" },
   budgets_stat_increase: { en: "Stat increase from this plan" },
@@ -2389,12 +2259,6 @@ const T = {
   bud_hg_nothing: { en: "nothing left" },
   bud_hg_set1: { en: "{set} (Dashboard)" },
   bud_hg_note: { en: "{sets} gear is planned too, but only Set 1 changes your Dashboard stats." },
-  hg_set_heroes: { en: "Heroes wearing {set}" },
-  hg_set_tap: { en: "tap to change" },
-  hg_set1_roster: { en: "{set} uses your Dashboard roster." },
-  hg_open_dash: { en: "Open Dashboard ›" },
-  hg_pick_hero: { en: "Pick a hero" },
-  hg_no_hero: { en: "No hero" },
   qk_edit: { en: "Choose quick pages" },
   acc_sign_in: { en: "Sign in" },
   acc_signed_in: { en: "Signed in" },
@@ -2409,9 +2273,6 @@ const T = {
   cat_drag_hint: { en: "Drag sideways to change the order (on a phone: hold, then drag)" },
   order_not_saved: { en: "Couldn't save the order. Please try again." },
   qk_none: { en: "Nothing pinned yet: tap ★ next to a page below." },
-  hg_stars: { en: "Stars" },
-  hg_stars_note: { en: "Stars belong to the hero, so they change on the Dashboard roster too." },
-  hg_set_note: { en: "Only Set 1 counts in your Dashboard total. These heroes show in the breakdown pop-up when you pick this set." },
   budgets_stat_increase_total: { en: "Stat increase (all selected)" },
   budgets_open_page: { en: "Open" },
   budgets_not_counted: { en: "Not counted: \"Count toward Dashboard\" is off on this page (from your state age or your own tick)." },
@@ -2456,60 +2317,13 @@ const T = {
   pack_by: { en: "by" },
   pack_presets_added: { en: "tables added" },
   rfc_title: { en: "Research Lab" },
-  rfc_desc: { en: "Turn Fire Crystal into Refined Fire Crystal. Pick the tier you go up to and how many attempts of it per week; the page shows the weekly cost, the Refined FC you get and how long until you have what you need." },
-  rfc_your_plan: { en: "Your plan" },
-  rfc_use: { en: "Use" },
-  fcs_title: { en: "Fire Crystal → Fire Crystal Shards" },
-  fcs_simple_desc: { en: "Type Fire Crystal to see the shards you get, or type the shards you need to see the Fire Crystal to convert (1 FC = 1.3 FCS). Shards are used by T11 Helios and T12; their pack cost counts Fire Crystal packs at this rate." },
-  rfc_trade_for: { en: "Trade FC for RFC" },
-  rfc_total_to_convert: { en: "FC total needed to convert" },
-  rfc_duration: { en: "Convert duration" },
-  rfc_fc_weekly: { en: "FC weekly cost" },
-  rfc_fc_monthly: { en: "FC monthly cost" },
-  rfc_rfc_weekly: { en: "RFC weekly expected" },
-  rfc_rfc_monthly: { en: "RFC monthly expected" },
-  rfc_month: { en: "month" },
-  rfc_months: { en: "months" },
-  rfc_month_note: { en: "a month counts as 4 weeks" },
   rfc_day: { en: "day" },
   rfc_days: { en: "days" },
-  rfc_step_need: { en: "Refined FC still needed" },
-  rfc_step_need_desc: { en: "Taken from the T12 Research page: its Refined FC total minus what's in its Backpack. The plan below works toward this." },
-  rfc_needed_word: { en: "needed" },
-  rfc_owned_word: { en: "owned" },
   rfc_open_t12: { en: "Open the T12 Research page once so its totals are available here." },
-  rfc_step_plan: { en: "How will you convert each week?" },
-  rfc_step_plan_desc: { en: "Either tell it how much FC you can spend per week and it picks the best schedule, or choose one of the weekly schedules yourself." },
-  rfc_mode_budget: { en: "FC I can spend per week" },
-  rfc_mode_schedule: { en: "Choose a weekly schedule" },
-  rfc_budget_unit: { en: "Fire Crystal per week" },
-  rfc_budget_result: { en: "Best schedule for this budget" },
-  rfc_schedule_hint: { en: "The Use buttons in the table below also select a schedule." },
-  rfc_still_needed: { en: "Still needed" },
-  rfc_week: { en: "week" },
   rfc_weeks: { en: "weeks" },
-  rfc_enter_budget: { en: "Enter a weekly Fire Crystal budget to get the best schedule for it." },
-  rfc_best_value: { en: "Best value overall (most Refined FC per Fire Crystal)" },
   rfc_rules: { en: "Rules used: each tier allows 20 attempts a week; the next tier unlocks after 20 attempts of the previous one; the first attempt of each day is half price (one per day). Returns are averages over many attempts." },
   rfc_tiers_title: { en: "Lab tiers" },
   rfc_tier: { en: "Tier" },
-  rfc_cost: { en: "Cost" },
-  rfc_returns: { en: "Refined FC returned (chance)" },
-  rfc_expected: { en: "Average" },
-  rfc_per_fc: { en: "RFC per FC" },
-  rfc_max_weekly: { en: "Max / week (20×)" },
-  rfc_strategies_title: { en: "Weekly schedules by top tier" },
-  rfc_strategies_desc: { en: "Minimal = unlock on day 1, then one discounted attempt of the top tier per day. Maximum = 20 attempts of every tier." },
-  rfc_badge_value: { en: "Best value" },
-  rfc_badge_fast: { en: "Fastest" },
-  rfc_in_total: { en: "in total" },
-  rfc_tap_schedule: { en: "Tap a weekly schedule to use it. Each card shows the Refined FC you get, the Fire Crystal it costs, and how long until you have what you need." },
-  rfc_minimal: { en: "Minimal" },
-  rfc_maximum: { en: "Maximum" },
-  rfc_schedule: { en: "Schedule" },
-  rfc_weekly_cost: { en: "FC / week" },
-  rfc_weekly_rfc: { en: "Refined FC / week" },
-  rfc_to_target: { en: "To reach need" },
   rl_desc: { en: "Turn Fire Crystal into Refined Fire Crystal. Set what you need and by when: the page picks the cheapest speed that makes it, and This week shows what to refine each day. Tap another speed or the slider to choose your own." },
   rl_tiers_btn: { en: "Tiers ›" },
   rl_best: { en: "Best for you" },
@@ -2658,7 +2472,6 @@ const T = {
   rl_ck_optional: { en: "Optional · this week only" },
   rl_ck_using: { en: "✓ Using {t} this week" },
   rl_ck_never: { en: "in 5+ years" },
-  packs_filter_all: { en: "All" },
   packs_filter_none: { en: "Not assigned" },
   pack_no_date: { en: "No target date" },
   research_current: { en: "Current level" },
@@ -2712,9 +2525,7 @@ const T = {
   exp_done: { en: "Done" },
   exp_now: { en: "now" },
   exp_item_short: { en: "{item} short" },
-  exp_n_short: { en: "{n} short" },
   g1_show: { en: "Show" },
-  g1_can_bp: { en: "Can do now · Backpack" },
   marks_per_pet: { en: "Per pet" },
   marks_none: { en: "Every unlocked pet is already maxed." },
   pk_picks: { en: "Pick options from the columns" },
@@ -2724,7 +2535,6 @@ const T = {
   pk_picks_order_desc: { en: "(4.99 first, then 9.99 …)" },
   pk_picks_order_off: { en: "Off = any price on its own (e.g. only 99.99). Each price once per reset." },
   pk_each_step: { en: "each step" },
-  pk_q1: { en: "How is this pack bought?" },
   pk_any: { en: "Any row, whenever you like" },
   pk_any_desc: { en: "Normal shop packs. Each row is a separate pack." },
   pk_tiers: { en: "In steps, cheapest first" },
@@ -2752,13 +2562,9 @@ const T = {
   pk_visitor_start: { en: "Visitors can set when they start buying" },
   pk_visitor_start_desc: { en: "For cards that begin whenever the player first buys them, not on a fixed week." },
   mp_title: { en: "My packs" },
-  mp_of: { en: "of" },
-  mp_desc: { en: "Copy a template to make your own pack table. It's saved to your account and used in Budgets and Pack cost for the pages you tick." },
-  mp_templates_title: { en: "Pack templates" },
   mp_duplicate: { en: "Duplicate" },
   mp_no_templates: { en: "No templates yet." },
   mp_full: { en: "You have {n} tables, the most allowed. Delete one to add another." },
-  mp_speed_note: { en: "Every table you add makes Pack cost and Budgets slower to work out. Untick pages a table isn't for, and delete tables you don't use." },
   mp_kind_wishful: { en: "3 picks · prices in order" },
   mp_kind_mixmatch: { en: "3 picks · any price" },
   mp_kind_regular: { en: "ladder + Max" },
@@ -2772,9 +2578,7 @@ const T = {
   mp_max: { en: "Max" },
   mp_row_top: { en: "Row + is off: this table already reaches 99.99 (the highest price)." },
   mp_row_hint: { en: "Prices and Gems fill in by themselves: 0.99 → 2.99 → 4.99 → 9.99 → 19.99 → 49.99 → 99.99. Max = how many times that row can be bought." },
-  mp_next_date: { en: "Next date" },
   mp_every_days: { en: "comes back every {n} days" },
-  mp_locked: { en: "$ and Gems, how it's bought and how often it comes back come from the template." },
   mp_mine_suffix: { en: "my copy" },
   mp_admin_settings: { en: "admin settings" },
   mp_limit_label: { en: "Tables each visitor can have" },
@@ -2784,13 +2588,8 @@ const T = {
   mp_template_note: { en: "Not used in Budgets or Pack cost · visitors copy these" },
   mp_admin_mine_note: { en: "Your own copies · hidden from visitors" },
   mp_page_desc_admin: { en: "Set how many tables each visitor can have, copy a template for yourself, and see your own copies." },
-  mp_tables_used: { en: "tables used" },
-  mp_where: { en: "A copy appears below under \"Your tables\", where you can edit it." },
   mp_your_tables: { en: "Your tables" },
-  mp_empty: { en: "No tables yet. Press Duplicate on a template above." },
   mp_template_edit_hint: { en: "Edit opens the template on the Packs page (templates aren't listed there otherwise)." },
-  mp_edit_in_packs: { en: "Edit in Packs" },
-  mp_admin_none: { en: "No copies yet. Press Duplicate on a template." },
   mp_admin_copied: { en: "Copied to My packs — opening it on the Packs page" },
   mpk_desc: { en: "Make pack tables that match your state's offers. They count in Budgets and Pack cost for the pages you tick." },
   mpk_n_packs: { en: "{n} packs" },
@@ -2846,14 +2645,7 @@ const T = {
   about_default_story: { en: "WOS RST started as a personal tracker to see real stats and plan upgrades without spreadsheets. It grew into a planner for the whole state: track your gear, charms, experts and research, see what you still need, and find the cheapest way to get there before your target date." },
   about_story_title: { en: "Our story" },
   about_cards_title: { en: "What you can do here" },
-  about_card_stats: { en: "Track stats" },
   about_card_stats_d: { en: "Chief Gear, Charms, Heroes Gears, Pets, Experts, Research and more." },
-  about_card_backpack: { en: "Backpack" },
-  about_card_backpack_d: { en: "Enter what you own; every page counts it." },
-  about_card_budgets: { en: "Pack cost & Budgets" },
-  about_card_budgets_d: { en: "Cheapest, fastest or by-your-target plans in your currency." },
-  about_card_mypacks: { en: "My packs" },
-  about_card_mypacks_d: { en: "Make pack tables that match your state's offers." },
   about_estimates: { en: "Values are community estimates and may differ from the game." },
   about_unofficial: { en: "WOS RST is an unofficial fan-made tool and is not affiliated with Century Games." },
   about_admin_title: { en: "Admin only — edit About us" },
@@ -2863,10 +2655,6 @@ const T = {
   about_saved: { en: "About us saved" },
   about_save_failed: { en: "Couldn't save About us" },
   about_privacy_title: { en: "Your data" },
-  about_privacy_1: { en: "What you enter (backpack, target dates, pack dates, My packs) is saved to your account so it's there next time." },
-  about_privacy_2: { en: "Only you can see your own data; other visitors can't." },
-  about_privacy_3: { en: "No ads, and we never sell or share your data." },
-  about_privacy_4: { en: "Want your data removed? Email us and we'll delete it." },
   about_c_stats: { en: "Track your stats" },
   about_c_backpack: { en: "Count your Backpack" },
   about_c_backpack_d: { en: "Enter or scan what you own; every page counts it." },
@@ -2977,35 +2765,16 @@ const T = {
   rm_title: { en: "Roadmap" },
   rm_with: { en: "With priorities" },
   rm_without: { en: "Without" },
-  rm_goal: { en: "Goal" },
-  rm_deadline: { en: "Deadline" },
-  rm_total: { en: "Total" },
-  rm_same: { en: "Same packs, bought in a different order." },
-  rm_diff: { en: "With your dates some packs are bought earlier, or a different step." },
-  rm_missed: { en: "Goals that miss their date without priorities: {n}." },
-  rm_by_week: { en: "Packs by week" },
-  rm_so_far: { en: "spent so far" },
   rm_this_week: { en: "This week" },
-  rm_more: { en: "{n} more weeks" },
-  rm_more_packs: { en: "{n} more packs" },
   rm_for: { en: "for" },
   rm_fold: { en: "This week {v} \u00b7 {n} packs" },
   rm_page_desc: { en: "Your Budgets plan week by week, with when each goal is reached." },
   rm_next_week: { en: "Next week" },
-  rm_now: { en: "now" },
   rm_n_packs: { en: "{n} packs" },
-  rm_so_far_v: { en: "{v} spent so far" },
-  rm_sum_next: { en: "Next goal" },
-  rm_sum_done: { en: "All done" },
-  rm_goals: { en: "Goals" },
-  rm_tap_goal: { en: "tap a goal to jump to its week" },
-  rm_load_more: { en: "Load more weeks" },
-  rm_gap: { en: "{n} weeks" },
   rm_open: { en: "Open" },
   rm_link_next: { en: "next: {goal} \u00b7 {date}" },
   rm_empty: { en: "No goals yet: tick pages with a target on Budgets." },
   rm_back: { en: "Budgets" },
-  rm_goal_cost: { en: "its packs {v}" },
   rm_goal_nopacks: { en: "Nothing to buy: what you have already covers it." },
   rmr_this_week: { en: "This week" },
   rmr_ev_now: { en: "{ev} now" },
@@ -3090,10 +2859,6 @@ const T = {
   ht_pushgen: { en: "Each new Gen: push 2 heroes first" },
   ht_pushgen_sub: { en: "Pushed heroes get \"Next SvS\" as their date; when a new Gen is out you'll be asked which 2." },
   ht_gen_pick: { en: "Gen {g} is out: pick the 2 heroes to push" },
-  budgets_split_parts: { en: "2 parts: by your target + after it" },
-  budgets_split_late: { en: "Can't make {date}" },
-  budgets_split_after: { en: "after your target" },
-  budgets_split_after_note: { en: "planned after the packs above are bought" },
   marks_use_site: { en: "Use site rates" },
   marks_site_rates_on: { en: "Using the site's rates" },
   marks_use_own: { en: "Use my own rates" },
@@ -3116,7 +2881,6 @@ const T = {
   pk_hidden_tag: { en: "Hidden from visitors" },
   pkb_search: { en: "Search packs or items (e.g. Steel)" },
   pkb_dates_prices: { en: "Pack dates & prices" },
-  pkb_dated_n: { en: "{n} dated packs" },
   pkb_dates_t: { en: "Pack dates" },
   pkb_prices_t: { en: "Prices" },
   pkb_dates_n: { en: "{n} packs" },
@@ -3158,18 +2922,12 @@ const T = {
   pk_own_card_desc: { en: "Visitors don't get these numbers; they still start from today unless they set their own." },
   pk_active_free: { en: "Free from cards you already bought" },
   pk_active_until: { en: "until" },
-  pk_preview_badge: { en: "Visitor preview" },
   pk_preview_packs: { en: "packs" },
-  pk_owner_dates_desc: { en: "Weekly cards: your own dates. Dated packs like the Bazaar: the pack's date, which is also where visitors start until they set their own." },
-  pk_preview_desc: { en: "This is what visitors see. Fields are locked here — you change your own dates in each pack's settings. Only packs with \"Visitors can set their own date\" ticked are listed." },
-  pk_preview_empty: { en: "Visitors don't see this box yet. Tick \"Visitors can set their own date\" in a pack's settings to add it here." },
   pk_preview_open: { en: "Open settings" },
   pk_preview_notshown: { en: "That pack isn't shown with the current filter." },
   pur_sug_pick_all: { en: "Pick all" },
   pur_sug_pick_none: { en: "Clear" },
   pur_sug_n_of: { en: "{n} of {m} dates" },
-  pur_n_dates: { en: "{n} dates" },
-  pur_dates_btn: { en: "Dates" },
   pur_all_bought: { en: "All bought" },
   pur_remove_all_q: { en: "Remove all {n} dates of this pack?" },
   pur_each: { en: "each" },
@@ -3190,7 +2948,6 @@ const T = {
   pur_tbl_hint_pick: { en: "Choose your {n} items in each row." },
   pur_tbl_nothing: { en: "Nothing picked yet" },
   pur_sug_now: { en: "Now" },
-  pur_sug_buy_now: { en: "Buy now" },
   pur_wk_this: { en: "This week" },
   pur_wk_next: { en: "Next week" },
   pur_wk_n: { en: "Week {n}" },
@@ -3226,9 +2983,6 @@ const T = {
   pur_follow_line: { en: "The list follows this plan · tap to switch" },
   pur_following: { en: "Following:" },
   pur_go_spend: { en: "Change ›" },
-  pur_card_following: { en: "following" },
-  pur_card_tap: { en: "tap to follow" },
-  pur_tags_week: { en: "this week's packs" },
   pur_wc_title: { en: "Weekly cards" },
   pur_wc_running_n: { en: "{n} running" },
   pur_wc_notbought_n: { en: "{n} not bought" },
@@ -3245,9 +2999,6 @@ const T = {
   pur_role_needed: { en: "needed" },
   pur_role_extra: { en: "extra" },
   pur_n_packs: { en: "{n} packs" },
-  pur_other_would: { en: "{plan} plan would be {v}" },
-  pur_tick_hint: { en: "Tick what you'll buy" },
-  pur_buy_upto: { en: "Buy up to" },
   pur_ms_order: { en: "Bought in order: ticking a step ticks the ones before it." },
   pur_ms_left: { en: "You unticked step {a}–{b}" },
   pur_ms_added: { en: "You added step {a}–{b}" },
@@ -3280,14 +3031,11 @@ const T = {
   pur_when_dates: { en: "{n} dates" },
   pur_wk_buy_all: { en: "Will buy all of {week}" },
   pur_sug_until: { en: "Until target" },
-  pur_sug_later: { en: "Later (until {date})" },
   pur_added_dates: { en: "Added on {n} dates" },
   pur_sug_title: { en: "Suggested packs (from Budgets)" },
   pur_sug_desc: { en: "The cheapest packs that still cover your plans, after the packs on this page, spread over the days each pack is on sale. Will buy lets you pick the dates." },
-  pur_sug_none: { en: "Nothing else to buy: your plans are covered." },
   set_info: { en: "What these settings do" },
   info_more: { en: "More about this" },
-  dash_breakdown: { en: "Breakdown" },
   exp_sig_short: { en: "{n} short" },
   pur_sug_fail: { en: "Couldn't work out suggestions. Open Budgets once and try again." },
   pur_updating: { en: "Updating…" },
@@ -3298,13 +3046,11 @@ const T = {
   sa_lock_hint_cap: { en: "\"Max\" and \"Max everything\" stop before it for now (from your state age). You can still pick it as a target." },
   sa_title: { en: "Your state's age" },
   sa_desc: { en: "Used for your hero generations, New Gen packs, the calendar and what unlocks next. Saved to your account." },
-  bp_sh_notout: { en: "Left out, not out yet in your state: {names}" },
   hero_not_out: { en: "Not out yet" },
   hero_not_out_day: { en: "Not out yet · ~day {n}" },
   hero_not_out_date: { en: "Not out yet · ~{date}" },
   rfc_lab_open: { en: "Lab open in my state" },
   rfc_lab_closed: { en: "Off: the lab's Refined FC isn't counted on T12 and Budgets." },
-  cg_count_leg: { en: "Count Legendary levels" },
   charm_to_go: { en: "{n} to go" },
   charm_tiles_hint: { en: "Green bar = now, blue = what the target adds. Tap a charm to change it." },
   charm_needs_this: { en: "Needs for this charm" },
@@ -3313,9 +3059,7 @@ const T = {
   charm_target_max: { en: "Target = Max ({lv})" },
   gs_nothing: { en: "Nothing needed" },
   gs_done: { en: "Done" },
-  cg_pieces_to_go: { en: "pieces to go" },
   cg_slots_hint: { en: "Each picture is the game's picture for the piece's tier. Badge top-left = now, blue = target. Tap a piece to change it." },
-  cg_backpack: { en: "Backpack" },
   hg_page_desc: { en: "Each piece has Mastery (0–20) and Enhance (0–200). Mastery multiplies the piece's Enhance stat; Enhance 120 / 160 / 200 add ATK and DEF. Tap a piece to change its levels." },
   hg_troop_stats: { en: "{troop} stats" },
   hg_pieces: { en: "Pieces" },
@@ -3328,9 +3072,6 @@ const T = {
   hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
   cg_can_now: { en: "Can do now" },
-  cg_show: { en: "Show" },
-  cg_then_out: { en: "Then {item} runs out" },
-  cg_with_trades: { en: "with this week's trades" },
   cg_none_up: { en: "Nothing can go up yet" },
   cando_short: { en: "Can do" },
   cando_at_target: { en: "All at target" },
@@ -3343,7 +3084,6 @@ const T = {
   cando_order: { en: "Your upgrade order" },
   cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
   cando_show_all: { en: "Show all troops ›" },
-  cg_all_at_target: { en: "All pieces are at their target" },
   cg_pieces: { en: "Pieces" },
   cg_set3: { en: "3-piece set" },
   cg_set6: { en: "6-piece set" },
@@ -3363,7 +3103,6 @@ const T = {
   max_all_tip: { en: "Max everything: current levels and targets go to the highest level open in your state" },
   max_all_done: { en: "Everything is at max" },
   cg_set_all_troops: { en: "The set bonus counts for all troops" },
-  cg_set_bonus: { en: "Set bonus" },
   bud_not_open: { en: "Includes levels not open in your state yet ({what})" },
   sa_by_mon: { en: "Monument" },
   sa_mon_beast: { en: "Beast Hunting (− 6 days)" },
@@ -3411,7 +3150,6 @@ const T = {
   pur_bought: { en: "Bought" },
   pur_add_btn: { en: "Add" },
   pur_added: { en: "Pack added" },
-  pur_coming: { en: "Will buy" },
   pur_bought_list: { en: "Bought" },
   pur_none_coming: { en: "No packs planned yet." },
   pur_none_bought: { en: "No bought packs yet." },
@@ -3428,13 +3166,10 @@ const T = {
   pur_mark_planned: { en: "Not bought" },
   pur_remove: { en: "Remove" },
   pur_for_none: { en: "no page" },
-  pur_spend_coming: { en: "Will spend" },
-  pur_spend_bought: { en: "Spent" },
   pur_how: { en: "Coming packs add their items to the planner pages and Budgets. Bought packs use up that pack's limit, so Budgets won't suggest it again (their items are already in your Backpack)." },
   pur_past_note: { en: "This date has passed: tap Bought, or remove it." },
   pur_planned_short: { en: "planned" },
   pur_no_tables: { en: "No packs to choose from yet." },
-  pur_newgen_title: { en: "New Gen Heroes" },
   pur_newgen_desc: { en: "These packs come with each new generation of heroes: Hero Ascension Training on the day new heroes come, Exclusive Gear Forge 4 weeks later. Worked out from your state age; the calendar and Budgets follow it." },
   pur_newgen_last: { en: "Last new heroes" },
   pur_newgen_gen: { en: "Their Gen" },
@@ -3471,10 +3206,6 @@ const T = {
   pur_a2_none: { en: "Nothing to buy this week." },
   pur_a2_more: { en: "Show {n} more" },
   pur_a2_less: { en: "Show less" },
-  pur_a2_next: { en: "Next weeks" },
-  pur_a2_next_none: { en: "Tap to see every week's packs" },
-  pur_a2_month_sum: { en: "{n} packs this month · {v}" },
-  pur_a2_n_packs_v: { en: "{n} packs · {v}" },
   pur_a2_mark: { en: "Mark as bought" },
   pur_a2_bought_mark: { en: "Bought" },
   pur_o1_coming: { en: "Will buy" },
@@ -3482,7 +3213,6 @@ const T = {
   pur_o1_none: { en: "none" },
   pur_o1_n_v: { en: "{n} · {v}" },
   pur_o1_none_later: { en: "Nothing planned after this week. This week's packs are in the list above." },
-  pur_o1_next_sub: { en: "{v} next" },
   pur_o1_stays: { en: "stays" },
   pur_o1_gives: { en: "Gives" },
   pur_o1_dates: { en: "Dates" },
@@ -3526,17 +3256,11 @@ const T = {
   pur_gen: { en: "Gen {n}" },
   pur_now: { en: "now" },
   pur_budget_line: { en: "My Purchases: {n} coming packs counted" },
-  pk_my_dates_title: { en: "My pack dates" },
-  pk_my_dates_desc: { en: "Set the dates that match your state. Only you see these; they're saved to your account." },
   pk_arrives_on: { en: "Arrives on" },
-  pk_start_on: { en: "I start on" },
   pk_your_date: { en: "Your date" },
   pk_reset_one: { en: "Reset" },
   pk_reset_all_dates: { en: "Reset all" },
-  pk_default_next: { en: "default next" },
-  pk_default_today: { en: "default: today" },
   pk_every_days: { en: "Every {n} days" },
-  pk_stack_rewards: { en: "7-day rewards · stacks up to {cap} days" },
   pack_next_on: { en: "Next on" },
   pack_resets: { en: "resets" },
 };
@@ -10965,12 +10689,6 @@ async function renderPacksPage() {
   }
   function categoryTabs() {
     return [{ key: "all" }, ...categoryOrder().map((g) => ({ key: "cat:" + g, name: g })), { key: "none" }];
-  }
-  function tableMatchesFilter(tb) {
-    if (isTpl(tb) && !tplOpen()) return false;
-    if (packsFilter === "all") return true;
-    if (packsFilter === "none") return !categoryOf(tb);
-    return packsFilter.startsWith("cat:") && categoryOf(tb) === packsFilter.slice(4);
   }
   // Packs B: no category buttons; every category is a fold
   // and packsFilter says which one is open ("cat:<name>", "none" = Not
@@ -22185,58 +21903,6 @@ function wireTroopSwipe(el, troops, current, onSelect) {
     if (next >= 0 && next < troops.length) onSelect(troops[next]);
   });
 }
-// Shared prev/next arrows used by both the dots and the counter, so every
-// swipeable card can also be changed by clicking - swiping with a mouse is
-// awkward on a PC, and a trackpad drag often scrolls the page instead.
-function swipeArrowsHtml(atStart, atEnd) {
-  return {
-    prev: `<button type="button" class="swipe-arrow" data-swipenav="prev" aria-label="${esc(t("prev_label"))}" ${atStart ? "disabled" : ""}>&#8249;</button>`,
-    next: `<button type="button" class="swipe-arrow" data-swipenav="next" aria-label="${esc(t("next_label"))}" ${atEnd ? "disabled" : ""}>&#8250;</button>`,
-  };
-}
-function wireSwipeNav(containerEl, index, count, onNavigate) {
-  if (!onNavigate) return;
-  containerEl.querySelectorAll("[data-swipenav]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const to = btn.dataset.swipenav === "prev" ? index - 1
-        : btn.dataset.swipenav === "next" ? index + 1
-        : Number(btn.dataset.swipenav);
-      if (to >= 0 && to < count && to !== index) onNavigate(to);
-    });
-  });
-}
-// A dot per item, with arrows either side. Dots are real buttons, so any
-// card can be reached in one tap/click instead of several swipes.
-// onSelect is optional (older callers pass nothing and stay swipe-only).
-function renderSwipeDots(containerEl, items, current, colors, onSelect) {
-  // New planner layout: the same list as tabs (T12 look).
-  if (onSelect && containerEl.classList.contains("t12x-tabs")) {
-    containerEl.innerHTML = plxTabsHtml(items, current, colors || {}, null, "plxtab");
-    containerEl.onclick = (e) => { const b = e.target.closest("[data-plxtab]"); if (b && b.dataset.plxtab !== String(current)) onSelect(items.find((it) => String(it) === b.dataset.plxtab)); };
-    return;
-  }
-  const index = items.indexOf(current);
-  const arrows = swipeArrowsHtml(index <= 0, index >= items.length - 1);
-  containerEl.innerHTML = `
-    <div class="swipe-nav">
-      ${onSelect ? arrows.prev : ""}
-      <div class="swipe-dots">
-        ${items.map((it, i) => {
-          const on = it === current;
-          const color = on ? ((colors && colors[it]) || "var(--ice)") : "var(--line)";
-          // Troop dots are labelled with the troop's name in the chosen
-          // language; numeric page dots just get "1", "2", ...
-          const label = typeof it === "number" ? String(it + 1) : troopDisplayName(it);
-          return onSelect
-            ? `<button type="button" class="swipe-dot" data-swipenav="${i}" title="${esc(String(label))}" aria-label="${esc(String(label))}" aria-current="${on}"><i style="background:${color};"></i></button>`
-            : `<span style="width:7px; height:7px; border-radius:50%; background:${color}; display:inline-block;"></span>`;
-        }).join("")}
-      </div>
-      ${onSelect ? arrows.next : ""}
-    </div>`;
-  if (onSelect) wireSwipeNav(containerEl, index, items.length, (i) => onSelect(items[i]));
-}
 // For longer lists (pets, experts) a "3 / 10" counter reads better than a
 // row of 10 dots. Arrows either side step through them one at a time.
 function wireIndexSwipe(el, count, activeIndex, onNavigate) {
@@ -22636,7 +22302,6 @@ async function renderChiefGearCalc() {
   // "Still short" + Packs), then the pieces in 3 troop columns. Backpack,
   // Trades and Pack cost: the side column on PC; on phones 3 buttons at the
   // bottom open the same cards as a sheet over the page.
-  const packsOn = visitorCan("packcost");
   content.innerHTML = plxShellHtml({
     title: navLabel("chiefgear"),
     maxId: "gearMaxAllBtn",
@@ -26695,22 +26360,6 @@ async function renderExpertsResearchPage() {
   }
 
   const EXPERT_RESEARCH_IMG = Object.fromEntries(EXPERTS_LIST.map((e) => [e.key, e.img]));
-  function mainStatCurrentTotal(expert) {
-    const mainStat = EXPERT_MAIN_STAT[expert];
-    if (!mainStat) return 0;
-    let total = 0;
-    pathNumbersFor(expert).forEach((p) => {
-      const st = saved[expert][p];
-      const levels = Math.max(0, Math.min(200, st.current));
-      let rate = MAIN_STAT_RATE_DEFAULT;
-      // Troop-specific experts use the split path rate
-      if (expertTroopKey(expert)) {
-        rate = p <= 3 ? 0.03 : 0.05;
-      }
-      total += levels * rate;
-    });
-    return total;
-  }
   // Like Experts Level H4: portrait, the main stat now → target, the sigils needed vs had, one
   // row per path (name, "120 → 200", bar; tap → its window), Count and
   // "Max <expert>". The selects keep their data attributes (handlers unchanged).
@@ -26802,11 +26451,9 @@ async function renderExpertsResearchPage() {
 
   const expResearchCounterEl = document.getElementById("expResearchSwipeCounter");
   let activeResearchIdx = 0;
-  let activeResearchPage = 0;
   function renderGrid() {
     renderPickStrip(expResearchCounterEl, EXPERTS_IN_ORDER.map((ex) => ({ label: dataName(ex), img: (EXPERTS_LIST.find((e) => e.key === ex) || {}).img, dim: !isResearchUnlocked(ex) })), activeResearchIdx, (next) => {
       activeResearchIdx = next;
-      activeResearchPage = 0;
       renderGrid();
     });
     const expert = EXPERTS_IN_ORDER[activeResearchIdx];
@@ -27413,18 +27060,6 @@ async function renderExpertsPage() {
     return Array.from({ length: max + 1 }, (_, i) => i)
       .map((n) => `<option value="${n}" ${n === selected ? "selected" : ""}${n > rel ? ' class="opt-up"' : ""}>${n}${esc(upcomingTag(n > rel))}</option>`)
       .join("");
-  }
-  function levelStatLine(hero, level) {
-    const rows = AFFINITY_CACHE[hero];
-    if (!rows) return "";
-    const x = expertLevelStat(rows, level);
-    if (!x) return "";
-    // Only Affinity (stat_type) - this is the always-on hero-level stat.
-    // stat_type2 is that expert's Talent, which only applies during their
-    // specific event (Foundry/SvS/Frostfire/Tundra), so it's shown only
-    // under those matching headers, not here. Plain 100 = before its Advance.
-    if (!x.row.stat_type) return "";
-    return `<div class="meta" style="font-size:10px; margin-top:3px; color:var(--ice);">+${x.v.toFixed(2)}% ${esc(x.row.stat_type.split(",").join("/"))}</div>`;
   }
 
   const expertsCounterEl = document.getElementById("expertsSwipeCounter");
