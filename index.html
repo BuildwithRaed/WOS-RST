@@ -31183,7 +31183,8 @@ async function ensureSiteConfig() {
   if (SITE_CONFIG && !SITE_CONFIG_FAILED) return SITE_CONFIG;
   let rows = null;
   for (let i = 0; i < 3 && !rows; i++) {
-    try { rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en)`); } // other languages load on their own; English changes come with the settings
+    // "languages" is named here too: in LIKE the "_" of lang_* matches any one letter, so it was left out (owner, 6 Nov 2026: a refresh showed every language unticked)
+    try { rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en,key.eq.languages)`); } // other languages load on their own; English changes come with the settings
     catch (err) { if (i < 2) await new Promise((ok) => setTimeout(ok, 800 * (i + 1))); }
   }
   if (rows) {
@@ -34707,7 +34708,8 @@ const ADMIN_TABLES = {
   budgets: { label: "Budgets", group: "packs", icon: "💰", desc: "Opens the page", tab: "budgets", words: "budget" },
   backpack: { label: "Backpack", group: "packs", icon: "🎒", desc: "Opens the page", tab: "backpack", words: "inventory" },
 };
-let ADMIN_ACTIVE_TABLE = null; // null = the Admin home (cards)
+// null = the Admin home (cards); a refresh reopens the section the page was on (its history entry keeps it; owner, 6 Nov 2026)
+let ADMIN_ACTIVE_TABLE = (history.state && history.state.tab === "adminpage" && typeof history.state.adm === "string" && history.state.adm) || null;
 // Each opened Admin section is a step in the browser history, so Back from a
 // section returns to the Admin home instead of the page before Admin (owner,
 // 20 Oct 2026).
