@@ -16863,7 +16863,8 @@ async function renderPacksPage() {
   function packDateWithRowHtml(tb, preset) {
     const raw = ((PACK_LINKS || {})[String(tb.id)] || {}).dateWith || "";
     if (preset === "stack" || preset === "trigger") return raw ? `<input type="hidden" data-pkdatewith value="${esc(raw)}" />` : "";
-    const opts = packDateWithChoices(tb);
+    // A to Z so a pack is easy to find (owner, 6 Nov 2026)
+    const opts = packDateWithChoices(tb).sort((x, y) => (typeof pkbOrder === "function" ? pkbOrder(x.title, y.title) : String(x.title || "").localeCompare(String(y.title || ""), undefined, { numeric: true, sensitivity: "base" })));
     const lead = packDateLeaderShown(tb.id);
     const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
     const has = opts.some((x) => String(x.id) === raw);
