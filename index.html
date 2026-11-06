@@ -4603,6 +4603,25 @@ input,select,textarea{
   .pkb-tk input{ width:22px; height:22px; margin:0; cursor:pointer; }
   .pkb-off .pkb-ic, .pkb-off .pkb-m, .pkb-off .pkb-r{ opacity:.45; }
   .pkb-hidv .pkb-ic{ border-style:dashed; }
+  /* "Same dates as" event card (B) and window links (D), owner 6 Nov 2026 */
+  .pkb-ev{ margin:8px 10px; border:1px solid rgba(111,211,242,.35); border-radius:12px; background:rgba(111,211,242,.05); overflow:hidden; }
+  .pkb-ev-h{ display:flex; align-items:center; gap:8px; padding:8px 12px; }
+  .pkb-ev-t{ flex:1 1 auto; min-width:0; font-size:14px; line-height:1.3; }
+  .pkb-ev-t b{ color:var(--ice); }
+  .pkb-ev-t small{ font-size:12px; color:var(--muted); }
+  .pkb-ev-s{ flex:0 0 auto; font-size:12px; color:var(--muted); white-space:nowrap; }
+  .pkb-ev-s .on{ color:var(--good); font-weight:700; }
+  .pkb-ev .pkb-row{ padding:7px 8px 7px 10px; }
+  .pkb-ev .pkb-ic{ width:38px; height:38px; }
+  .pkb-evb{ display:flex; align-items:center; gap:10px; width:100%; margin:0 0 12px; padding:9px 12px; border:1px solid rgba(111,211,242,.55); border-radius:12px; background:rgba(111,211,242,.10); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-evb-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
+  .pkb-evb-t b{ display:block; font-size:14px; color:var(--ice); }
+  .pkb-evb-t small{ display:block; font-size:12px; color:var(--muted); }
+  .pkb-evl{ padding:10px 14px; }
+  .pkb-evi{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; margin:0; padding:6px 0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-evi b{ flex:1 1 auto; min-width:0; font-size:14px; }
+  .pkb-evi-p{ flex:0 0 auto; font-size:12px; color:var(--muted); white-space:nowrap; }
+  .pkb-evl-n{ margin:6px 0 0; font-size:12px; color:var(--muted); }
   .pkb-more{ display:block; width:100%; min-height:44px; margin:0; padding:10px; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--ice); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
   .pkb-ov{ position:fixed; inset:0; z-index:70; display:flex; justify-content:center; align-items:stretch; background:rgba(3,7,13,.62); }
   .pkb-ov[hidden]{ display:none; }
@@ -8447,6 +8466,14 @@ const T = {
   pkb_counted_some: { en: "{n} of {m} counted in Budgets" },
   pkb_how: { en: "How it's bought" },
   pkb_no_match: { en: "No packs match your search." },
+  pkb_ev_title: { en: "{name} event" },
+  pkb_ev_same: { en: "same dates" },
+  pkb_tiers: { en: "{n} tiers" },
+  pkb_ev_part: { en: "Part of {name}" },
+  pkb_ev_from: { en: "Its dates come from that pack" },
+  pkb_ev_lasts: { en: "Lasts {n} days" },
+  pkb_ev_with: { en: "Packs with this event" },
+  pkb_ev_move: { en: "Change this pack's dates and they move too." },
   pk_active_label: { en: "Reward days left" },
   pk_active_hint: { en: "on cards you already bought" },
   pk_days_unit: { en: "days" },
@@ -15895,6 +15922,8 @@ async function renderPacksPage() {
     const more = e.target.closest("[data-pkbmore]");
     if (more) { PKB_MORE.add(more.dataset.pkbmore); renderAll(); return; }
     if (e.target.closest("[data-pkbclose]") || (e.target.matches && e.target.matches("[data-pkbsheet]"))) { pkbClose(false); return; }
+    const go = e.target.closest("[data-pkbgo]");
+    if (go) { pkbOpen(go.dataset.pkbgo); return; }
     const row = e.target.closest("[data-pkrowid]");
     if (row) pkbOpen(row.dataset.pkrowid);
   });
@@ -16384,7 +16413,7 @@ async function renderPacksPage() {
       const nx = offs.find((o) => o > 0);
       if (nx != null) out.next = pkbFmtD(nx);
       const a = packParseDay(lk.resetDay);
-      if (a && win > 0 && win < 7 && r % 7 === 0) parts.push(win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`);
+      if (a && win > 0 && win < 7 && r % 7 === 0) { out.days = win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`; parts.push(out.days); }
     }
     out.text = parts.filter(Boolean).join(" · ");
     return out;
@@ -16419,12 +16448,19 @@ async function renderPacksPage() {
     const n = pkColItem(tb, ci);
     return !!n && (n.toLowerCase().includes(q) || String(materialDisplayName(n) || "").toLowerCase().includes(q));
   });
-  function pkbRowHtml(tb, ti) {
+  const pkbEvKey = (tb) => `${packLinkFor(tb.id).dateWith || String(tb.id)}|${categoryOf(tb)}`;
+  // ev: "lead" / "follow" = a slim row inside an event card (B, owner 6 Nov
+  // 2026): its dates are said once in the card's header, so the row shows how
+  // often (leader) or "same dates" (follower) and its number of tiers.
+  function pkbRowHtml(tb, ti, ev) {
     const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
-    return `<div class="pkb-row${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
+    const tiers = ev ? tb.rows.filter((r) => String(r.cells[lk.priceCol || 0] ?? "").trim() !== "").length : 0;
+    const sub = ev === "follow" ? t("pkb_ev_same") : ev === "lead" ? pkbResetText(lk.reset) : w.text;
+    const right = ev ? (tiers > 1 ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    return `<div class="pkb-row${ev ? " pkb-evr" : ""}${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
       <span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
-      <span class="pkb-m"><b>${esc(tb.title)}</b>${w.text ? `<small>${esc(w.text)}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
-      <span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : ""}</span>
+      <span class="pkb-m"><b>${esc(tb.title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
+      <span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>
       ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
     </div>`;
   }
@@ -16455,9 +16491,13 @@ async function renderPacksPage() {
     const q = PKB_QUERY.trim().toLowerCase();
     const order = categoryOrder();
     const groups = order.map((g) => ({ key: g, label: g, list: [] })), none = { key: "", label: t("packs_filter_none"), list: [] };
+    // "Same dates as" events: a pack and its followers in the same category
+    // (pkbEvKey). Searching shows the whole event when any of them matches.
+    const evHit = new Set();
+    if (q) tables.forEach((tb) => { if (pkbMatch(tb, q)) evHit.add(pkbEvKey(tb)); });
     tables.forEach((tb, ti) => {
       if (isTpl(tb) && !tplOpen()) return;
-      if (!pkbMatch(tb, q)) return;
+      if (!pkbMatch(tb, q) && !evHit.has(pkbEvKey(tb))) return;
       const g = categoryOf(tb);
       (g && groups.find((x) => x.key === g) || none).list.push({ tb, ti });
     });
@@ -16468,17 +16508,37 @@ async function renderPacksPage() {
     // game's tiers first (Classic, Sublime, Exquisite), then A to Z with numbers
     // in number order (Lv 2 before Lv 10).
     pkbCats.forEach((g) => g.list.sort((a, b) => pkbOrder(a.tb.title, b.tb.title)));
+    // Event cards (B, owner 6 Nov 2026): a leader with followers in the same
+    // fold is one unit where the leader sorts; followers aren't listed apart.
+    pkbCats.forEach((g) => {
+      const ids = new Set(g.list.map((x) => String(x.tb.id))), fol = new Map(), taken = new Set();
+      g.list.forEach((x) => {
+        const lead = packLinkFor(x.tb.id).dateWith;
+        if (lead && ids.has(String(lead))) { if (!fol.has(String(lead))) fol.set(String(lead), []); fol.get(String(lead)).push(x); taken.add(String(x.tb.id)); }
+      });
+      g.units = g.list.filter((x) => !taken.has(String(x.tb.id))).map((x) => ({ lead: x, fol: fol.get(String(x.tb.id)) || [] }));
+    });
+    const unitHtml = (u) => {
+      if (!u.fol.length) return pkbRowHtml(u.lead.tb, u.lead.ti);
+      const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id));
+      const st = w.on ? `<span class="on">&#9679; ${esc(t("pkb_on_now"))}</span>` : w.next ? `<span>${esc(t("pkb_next").replace("{date}", w.next))}</span>` : "";
+      return `<div class="pkb-ev" data-pkbev="${esc(String(lt.id))}">
+        <div class="pkb-ev-h"><span class="pkb-ev-t"><b>&#128279; ${esc(t("pkb_ev_title").replace("{name}", lt.title))}</b>${w.days || w.text ? `<small> · ${esc(w.days || w.text)}</small>` : ""}</span>${st ? `<span class="pkb-ev-s">${st}</span>` : ""}</div>
+        ${pkbRowHtml(lt, u.lead.ti, "lead")}${u.fol.map((x) => pkbRowHtml(x.tb, x.ti, "follow")).join("")}
+      </div>`;
+    };
     const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
     const html = pkbCats.map((g) => {
       const open = !!q || g.key === openKey;
-      const shown = q || PKB_MORE.has(g.key) ? g.list.length : Math.min(4, g.list.length);
+      const shownU = q || PKB_MORE.has(g.key) ? g.units.length : Math.min(4, g.units.length);
+      const shown = g.units.slice(0, shownU).reduce((n, u) => n + 1 + u.fol.length, 0);
       return `<section class="pkb-cat${open ? " open" : ""}" data-pkbcat="${esc(g.key)}">
         <button type="button" class="pkb-cat-h" data-pkbfold="${esc(g.key)}" aria-expanded="${open}">
           <span class="pkb-n">${g.list.length}</span>
           <span class="pkb-cat-t"><b>${esc(g.label)}</b><small data-pkbcatsub>${esc(pkbCatSub(g.list, g.key))}</small></span>
           <span class="pkb-caret" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
         </button>
-        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${g.list.slice(0, shown).map(({ tb, ti }) => pkbRowHtml(tb, ti)).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
+        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${g.units.slice(0, shownU).map(unitHtml).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
       </section>`;
     }).join("");
     const openId = [...PACKS_OPEN][0];
@@ -16519,6 +16579,12 @@ async function renderPacksPage() {
       if (line) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}</div>`);
       const hint = body.querySelector("[data-pack-visitor-hint]");
       if (hint) bar.after(hint);
+      // D (owner, 6 Nov 2026): a follower says which pack its dates come from.
+      const leadTb = lk.dateWith ? tables.find((x) => String(x.id) === String(lk.dateWith)) : null;
+      if (leadTb) {
+        const sub = [t("pkb_ev_from"), lk.window > 0 ? t("pkb_ev_lasts").replace("{n}", lk.window) : ""].filter(Boolean).join(" · ");
+        bar.insertAdjacentHTML("afterend", `<button type="button" class="pkb-evb" data-pkbgo="${esc(String(leadTb.id))}"><span class="pkb-ic">${pkbIcon(leadTb, packLinkFor(leadTb.id)) || "&#127873;"}</span><span class="pkb-evb-t"><b>&#128279; ${esc(t("pkb_ev_part").replace("{name}", leadTb.title))}</b><small>${esc(sub)}</small></span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`);
+      }
       if (!IS_OWNER) {
         const edits = packMyEdits()[String(tb.id)];
         if (edits && Object.keys(edits).length) {
@@ -16567,7 +16633,10 @@ async function renderPacksPage() {
     const usedFor = packUsedForNames(tb);
     const nextHtml = stepCards && (w.on || w.next) ? `<div class="pkb-budrow pkc-next"><span>${w.on ? `<b>${esc(t("pkb_on_now"))}</b>` : `${esc(t("pkc_next_on"))} <b>${esc(w.next)}</b>`}</span><button type="button" class="pkc-link" data-pkcnext>${esc(t("pkc_change"))} &#8250;</button></div>` : "";
     const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${nextHtml}${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
-    if (settings) { settings.insertAdjacentHTML("beforebegin", budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", budHtml);
+    // D: the leader lists the packs whose dates follow it.
+    const fols = lk.dateWith ? [] : tables.filter((x) => String(x.id) !== String(tb.id) && String(packLinkFor(x.id).dateWith || "") === String(tb.id));
+    const evHtml = fols.length ? `<div class="pkb-sec pkb-evl"><span class="pkb-k">${esc(t("pkb_ev_with"))}</span>${fols.map((x) => { const xl = packLinkFor(x.id); return `<button type="button" class="pkb-evi" data-pkbgo="${esc(String(x.id))}"><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><b>${esc(x.title)}</b><span class="pkb-evi-p">${esc(pkbPrice(x, xl))}</span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`; }).join("")}<p class="pkb-evl-n">${esc(t("pkb_ev_move"))}</p></div>` : "";
+    if (settings) { settings.insertAdjacentHTML("beforebegin", evHtml + budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", evHtml + budHtml);
     const nx = body.querySelector("[data-pkcnext]");
     if (nx) nx.addEventListener("click", () => { const sc = body.querySelector("[data-packreset]"); if (sc) { sc.scrollIntoView({ behavior: "smooth", block: "center" }); sc.focus({ preventScroll: true }); } });
     const seg = body.querySelector(".pks-seg");
@@ -17135,9 +17204,7 @@ async function renderPacksPage() {
         const panel = box.closest("[data-packtable]");
         const when = panel && panel.querySelector(".pkb-when");
         if (when) when.textContent = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
-        const row = listEl.querySelector(`[data-pkrowid="${CSS.escape(String(id))}"]`);
-        const tbRow = tables.find((x) => String(x.id) === String(id));
-        if (row && tbRow) row.outerHTML = pkbRowHtml(tbRow, Number(row.dataset.pkrow));
+        // (The list behind the window, with its event cards, is drawn again when the window closes.)
         await savePackLinks();
       });
       const ownStart = box.querySelector("[data-ownstart]"), ownActive = box.querySelector("[data-ownactive]");
