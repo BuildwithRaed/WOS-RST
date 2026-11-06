@@ -5106,6 +5106,38 @@ input,select,textarea{
 // same rule still wins. Sizes typed on elements (style="font-size:13px") follow too.
 (function phoneCompact() {
   try {
+    // The two sheets are kept in this browser, keyed by everything they're made
+    // from (the page's CSS, this script, the browser), so later loads skip the
+    // ~3,900-rule walk (~150 ms on a slow phone). Any change builds them again.
+    const CACHE = "css_compact_v1";
+    const hash = (str) => {
+      let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+      for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+      return (h2 >>> 0).toString(36) + (h1 >>> 0).toString(36);
+    };
+    let key = null, hit = null;
+    try {
+      // Only inline sheets (or ones the walk can't read) are cached: their text is the key.
+      let src = String(phoneCompact), ok = true;
+      for (const sh of document.styleSheets) {
+        const o = sh.ownerNode;
+        if (o && o.tagName === "STYLE") { src += "\u0000S" + o.textContent; continue; }
+        let readable = false; try { readable = !!sh.cssRules; } catch (e) { readable = false; }
+        if (readable) { ok = false; break; }
+        src += "\u0000L" + (sh.href || "");
+      }
+      if (ok) {
+        key = `${navigator.userAgent}|${src.length}|${hash(src)}`;
+        const c = JSON.parse(localStorage.getItem(CACHE) || "null");
+        if (c && c.k === key && typeof c.pc === "string" && typeof c.big === "string") hit = c;
+      }
+    } catch (e) { hit = null; }
+    if (hit) {
+      for (const [id, text] of [["phoneCompact", hit.pc], ["pcBigger", hit.big]]) { const st = document.createElement("style"); st.id = id; st.textContent = text; document.head.appendChild(st); }
+      return;
+    }
     const FONT = 2, BOX = 4, MIN_FONT = 10;
     const NO_BOX = /img|svg|icon|(^|[\s.#>~+-])(ic|pic|ring|logo|thumb|avatar|photo|portrait|emoji)([\s.:#>~+,\-\]]|$)|::?(before|after)|scrollbar/i;
     const pxOf = (v) => { const m = /^(-?\d+(?:\.\d+)?)px$/.exec(String(v || "").trim()); return m ? Number(m[1]) : null; };
@@ -5209,6 +5241,7 @@ input,select,textarea{
     pcEl.id = "pcBigger";
     pcEl.textContent = `@media (min-width: 701px){\n${pcBlocks.map((b) => b.conds.reduceRight((inner, c) => `${c}{${inner}}`, b.rules.join("\n"))).join("\n")}\n${pcInl.join("\n")}\n}`;
     document.head.appendChild(pcEl);
+    if (key) { try { localStorage.setItem(CACHE, JSON.stringify({ k: key, pc: el.textContent, big: pcEl.textContent })); } catch (e) { /* storage full / blocked: built again next time */ } }
   } catch (e) { /* the page still works at the old sizes */ }
 })();
 </script>
