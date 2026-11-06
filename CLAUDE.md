@@ -456,3 +456,5 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - PR #139: Same dates as A–Z, New Gen event cards, Add packs to an event, folded event cards (A), language ticks / Admin refresh / quick row fixes
 - Speed fixes 6–9 (6 Nov 2026): CSS / code moved into app.css / app.js (versioned, cache-first), Admin code in admin.js loaded on demand, 426 unused CSS rules / 276 unused texts (`LANG_FILES_VERSION` 71) / 6 unused functions removed, page shown from the saved copy after 3 s on a slow network
 - PR #141: speed fixes (phone redraw loop, Budgets keeps pack groups after Packs, saved text-size CSS, history comments trimmed, duplicate text key)
+- PR #142: speed fixes 6–9 (app.js / app.css / admin.js, unused CSS and texts removed, 3 s fallback)
+- PR #143: translations for the 5–6 Nov texts (109 keys, all 16 languages, LANG_FILES_VERSION 72)
