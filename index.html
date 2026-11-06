@@ -3786,6 +3786,7 @@ input,select,textarea{
   .scan-step > div{ flex:1; min-width:0; }
   .scan-ex{ flex:0 0 74px; height:92px; padding:0; border-radius:9px; overflow:hidden; border:1px solid var(--line); background:#000; position:relative; cursor:zoom-in; }
   .scan-ex img{ width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+  .scan-ex[data-scanex$="-lab.jpg"] img{ object-position:center 88%; }
   .scan-ex span{ position:absolute; right:3px; bottom:3px; background:rgba(0,0,0,.65); border-radius:6px; font-size:10px; padding:1px 4px; line-height:1.4; }
   .scan-ex-view{ position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px; cursor:zoom-out; }
   .scan-ex-view img{ max-width:100%; max-height:84vh; border-radius:12px; }
@@ -3798,6 +3799,11 @@ input,select,textarea{
   .scan-row .scan-name em{ color:#f5a623; font-style:normal; font-weight:700; }
   .scan-row > input[type=text]{ width:128px; text-align:end; flex:0 0 auto; font-size:14px; }
   .scan-row.unsure > input[type=text]{ border-color:#f5a623; }
+  .scan-lab-h{ margin:10px 0 4px; font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .scan-lab{ border:1px solid rgba(79,170,255,.45); border-radius:12px; padding:4px 6px 8px; background:rgba(79,170,255,.06); }
+  .scan-lab .scan-row{ border-bottom:0; }
+  .scan-lab .scan-row > input[type=text]{ width:84px; }
+  .scan-lab-note{ font-size:12px; padding:2px 6px 0; }
   .scan-learn{ margin-top:14px; padding-top:10px; border-top:2px solid var(--line); }
   .scan-learn > summary{ cursor:pointer; font-size:13.5px; }
   .scan-lrow{ cursor:default; }
@@ -7005,6 +7011,14 @@ const T = {
   scan_tab_other: { en: "Other" },
   scan_tab_speed: { en: "Speedup" },
   scan_tab_gear: { en: "Gear" },
+  scan_tab_lab: { en: "Research Lab" },
+  scan_lab: { en: "Research Lab screen" },
+  scan_lab_hint: { en: "Reads Weekly Super Refinements (and the Refined FC / Fire Crystal at the top)." },
+  scan_lab_title: { en: "Research Lab" },
+  scan_lab_weekly: { en: "Weekly super refinements" },
+  scan_lab_note: { en: "Saved to the Research Lab (\"Game says\" for this week), not to the Backpack." },
+  scan_lab_items: { en: "Items" },
+  scan_lab_unread: { en: "Research Lab screen: couldn't read Weekly Super Refinements. Try a sharper screenshot." },
   scan_rounded: { en: "Summary numbers are rounded by the game." },
   scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead." },
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
@@ -18854,8 +18868,76 @@ function scanGearOverlapTiles(prev, next) {
   return best;
 }
 
+// The game's Research Lab screen (owner, 6 Nov 2026): a dark red / orange
+// machine with two blue "Super Refine" buttons near the bottom. Reads the
+// "Weekly Super Refinements: N" line just above the buttons and, when they read
+// cleanly, the Refined FC / Fire Crystal amounts in the top bar. Returns null
+// when it isn't that screen (only the colours are checked before any reading).
+async function scanLabShot(worker, src) {
+  const k = Math.min(1, 300 / src.width), w = Math.round(src.width * k), h = Math.round(src.height * k);
+  if (w < 50 || h < 50) return null;
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data;
+  let red = 0, run = 0, btnTop = -1;
+  for (let y = 0; y < h; y++) {
+    let nb = 0;
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+      if (r > gr + 25 && r > b + 10 && r > 60) red++;
+      if (b > 200 && r < 140 && gr > 110 && b > r + 80) nb++;
+    }
+    // The button pair: several rows in a row that are a third bright blue, in the lower half.
+    if (y > h * 0.5 && nb > w * 0.3) { run++; if (run === 6 && btnTop < 0) btnTop = y - 5; } else run = 0;
+  }
+  if (red < w * h * 0.25 || btnTop < 0) return null;
+  // The line above the buttons.
+  const s = src.height / h, by = Math.round(btnTop * s), lh = Math.round(src.height * 0.06);
+  const y0 = Math.max(0, by - lh), lc = scanCanvas(src.width, by - y0);
+  lc.getContext("2d").drawImage(src, 0, y0, src.width, by - y0, 0, 0, src.width, by - y0);
+  const text = (await scanRead(worker, lc, { tessedit_pageseg_mode: "6" })).text;
+  if (!/super|weekly|refine/i.test(text)) return null;
+  const m = /refine\w*\s*[:;.,]?\s*(\d{1,3})\b/i.exec(text) || /weekly[^\d]*(\d{1,3})\b/i.exec(text);
+  const items = [];
+  // Top bar: the two white numbers (Refined FC, then Fire Crystal) right of centre.
+  const th = Math.round(src.height * 0.06), tw = src.width, tc = scanCanvas(tw, th), tg = tc.getContext("2d", { willReadFrequently: true });
+  tg.drawImage(src, 0, 0, tw, th, 0, 0, tw, th);
+  const td = tg.getImageData(0, 0, tw, th).data, cols = [];
+  for (let x = 0; x < tw; x++) {
+    let n = 0;
+    for (let y = 0; y < th; y++) { const i = (y * tw + x) * 4; if (Math.min(td[i], td[i + 1], td[i + 2]) > 200 && Math.max(td[i], td[i + 1], td[i + 2]) - Math.min(td[i], td[i + 1], td[i + 2]) < 40) n++; }
+    cols.push(n > 1);
+  }
+  const segs = [], gap = tw * 0.03;
+  cols.forEach((on, x) => {
+    if (!on || x < tw * 0.4) return;
+    const last = segs[segs.length - 1];
+    if (last && x - last[1] <= gap) last[1] = x; else segs.push([x, x]);
+  });
+  const nums = [];
+  for (const [a, b] of segs) {
+    if (b - a < tw * 0.008) continue;
+    const pad = Math.round(th * 0.25), x0 = Math.max(0, a - pad), x1 = Math.min(tw, b + pad + 1);
+    const nc = scanCanvas(x1 - x0, th); nc.getContext("2d").drawImage(tc, x0, 0, x1 - x0, th, 0, 0, x1 - x0, th);
+    const r = await scanRead(worker, nc, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789," });
+    const t = r.text.trim();
+    // Only a clean number ("7", "2,567") with a fair confidence counts; the
+    // Refined FC icon's light parts read as nothing and are passed over.
+    if (/^\d{1,3}(,\d{3})*$/.test(t) && r.conf >= 60) nums.push(Number(t.replace(/,/g, "")));
+    else if (t) nums.push(null);
+  }
+  // Exactly the two numbers, both clean: Refined FC first, then Fire Crystal.
+  if (nums.length === 2 && nums[0] !== null && nums[1] !== null) {
+    items.push({ name: "Refined FC", value: nums[0], sure: false });
+    items.push({ name: "Fire Crystal", value: nums[1], sure: false });
+  }
+  return { kind: "lab", items, lab: m ? Number(m[1]) : null };
+}
+
 async function scanShot(worker, file, marks, refs) {
   const src = await createImageBitmap(file);
+  const lab = await scanLabShot(worker, src);
+  if (lab) return lab;
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const gear = await scanGearTiles(src, tiles, worker);
@@ -18902,6 +18984,9 @@ function openBackpackScan(groups, bp, done, more) {
   const unknownList = []; // tiles Scan didn't know: { td, feat, rarity, after, img, tab, pick, amount }
   // Mythic Gear = boxes (Other tab) + orange hero gear pieces (Gear tab).
   const mgParts = { box: null, gear: null };
+  // Research Lab screen (owner, 6 Nov 2026): the weekly super refinements go to
+  // the Research Lab's "Game says" (calc_state rfc_lab.game), not the Backpack.
+  const lab = { seen: false, count: null, saved: null };
   // Purple hero gear for XP from the Gear tab: { "Gear XP Purple +80": n }, null until read.
   let gearLow = null, gearLowUnread = 0;
   const gearSeqs = []; // the Gear screenshots read so far
@@ -18917,7 +19002,7 @@ function openBackpackScan(groups, bp, done, more) {
     modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
       <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
       <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
-      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"]].map(([ex, head, hint], i) => `
+      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"]].map(([ex, head, hint], i) => `
       <div class="scan-step"><b>${i + 1}</b><div><div>${esc(t(head))}</div><div class="meta">${esc(t(hint))}</div></div>
         <button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button></div>`).join("")}
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
@@ -18985,6 +19070,13 @@ function openBackpackScan(groups, bp, done, more) {
         if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
       }
       if (shot.kind === "speedup") sawSpeed = true;
+      if (shot.kind === "lab") {
+        lab.seen = true;
+        if (shot.lab !== null) lab.count = shot.lab;
+        else if (lab.count === null) notes.add(t("scan_lab_unread"));
+        if (!RFC_LAB_STATE && !lab.saved) { try { lab.saved = (await loadCalcState("rfc_lab")) || {}; } catch (e) { lab.saved = {}; } }
+        if (!live()) return;
+      }
       shot.items.forEach((it) => seen.add(it.name));
       if (shot.unknown) unknownTiles += shot.unknown;
       else if (shot.kind === "unknown") notes.add(t("scan_unknown"));
@@ -19062,7 +19154,21 @@ function openBackpackScan(groups, bp, done, more) {
       const tab = scanItemTab(n), k = scanTabOrder(tab).indexOf(n);
       return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
-    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear"].filter(Boolean).map((k) => t(k));
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab"].filter(Boolean).map((k) => t(k));
+    // Research Lab: this week's count from the game, with the plan beside it.
+    const labSt = () => { const s = lab.saved || {}; return RFC_LAB_STATE || { top: s.top, attempts: s.attempts, budget: Number(s.budget) || 0, mode: s.mode === "budget" ? "budget" : "schedule", labOpen: s.labOpen, game: s.game, weekPick: s.weekPick }; };
+    let labWk = null;
+    if (lab.count !== null) { try { labWk = rfcLabWeek(labSt()); } catch (e) { labWk = null; } }
+    const labHtml = lab.count === null ? "" : `<div class="scan-lab-h">&#128300; ${esc(t("scan_lab_title"))}</div>
+      <div class="scan-lab">
+        <label class="scan-row unsure">
+          <input type="checkbox" data-scanlabtick checked />
+          <img src="${esc(materialIconSrc("Refined FC") || "icons/item_icon_100082.png")}" alt="" />
+          <span class="scan-name"><b>${esc(t("scan_lab_weekly"))}</b><span class="meta"><em>${esc(t("scan_please_check"))}</em>${labWk ? ` · ${esc(t("rl_wk_plan_today").replace("{n}", labWk.planSoFar.toLocaleString()))}` : ""}</span></span>
+          <input type="text" inputmode="numeric" data-scanlab value="${lab.count}" />
+        </label>
+        <div class="meta scan-lab-note">${esc(t("scan_lab_note"))}</div>
+      </div>`;
     const order = (n) => { const k = BP_GAME_ORDER.indexOf(n); return k !== -1 ? k : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
     const zeroNames = Object.keys(bp).filter((n) => Number(bp[n]) > 0 && !seen.has(n) && !results.has(n) && readable(n)).sort((a, b) => order(a) - order(b));
     const zeroRows = zeroNames.map((n) => {
@@ -19118,8 +19224,10 @@ function openBackpackScan(groups, bp, done, more) {
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
-      <p class="desc" style="margin:0 0 8px;">${esc(names.length ? t("scan_check_desc") : t("scan_nothing"))}</p>
+      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
+      ${labHtml}
+      ${labHtml && rows ? `<div class="scan-lab-h">${esc(t("scan_lab_items"))}</div>` : ""}
       <div style="margin-top:6px;">${rows}</div>
       ${gearHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
@@ -19128,7 +19236,7 @@ function openBackpackScan(groups, bp, done, more) {
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
-        ${names.length || zeroRows || unknownList.length || gearLow ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+        ${names.length || zeroRows || unknownList.length || gearLow || labHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
@@ -19155,6 +19263,8 @@ function openBackpackScan(groups, bp, done, more) {
       const a = ev.target.closest("[data-lamt]");
       if (a) { const v = a.value.replace(/\D/g, ""); unknownList[Number(a.dataset.lamt)].amount = v ? Number(v) : null; }
     });
+    const labIn = modal.querySelector("[data-scanlab]");
+    if (labIn) labIn.addEventListener("change", () => { const v = labIn.value.replace(/\D/g, ""); if (v) lab.count = Number(v); });
     // Keep typed fixes if more screenshots are added.
     modal.querySelectorAll("[data-scanval]").forEach((el) => el.addEventListener("change", () => {
       const r = results.get(el.dataset.scanval), v = el.value.replace(/\D/g, "");
@@ -19185,9 +19295,19 @@ function openBackpackScan(groups, bp, done, more) {
       if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }))
         .concat(skippedTiles.map((u) => ({ n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
       saveCalcState("backpack", bp);
+      // Research Lab: only the game's weekly count, for this week (same key as the Lab page).
+      const labTick = modal.querySelector("[data-scanlabtick]"), labV = labIn ? labIn.value.replace(/\D/g, "") : "";
+      const labSave = !!(labTick && labTick.checked && labV !== "");
+      if (labSave) {
+        const game = { wk: rfcLabWeek(labSt()).wkKey, count: Number(labV) };
+        if (RFC_LAB_STATE) { RFC_LAB_STATE.game = game; saveCalcState("rfc_lab", RFC_LAB_STATE); }
+        else { lab.saved = Object.assign({}, lab.saved || {}, { game }); saveCalcState("rfc_lab", lab.saved); }
+      }
       budgetInvalidate(); // planner pages read these amounts
       close();
       if (added.length) more.added(added); else done();
+      // The Backpack's Research Lab row shows the new count.
+      if (labSave && document.getElementById("bpScan")) render();
     };
   };
   showStart();
