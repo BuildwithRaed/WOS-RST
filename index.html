@@ -485,6 +485,9 @@
   .pks .pks-nw .bset-c{ flex-wrap:nowrap; flex:0 0 auto; }
   .pk-tbl-wrap td{ padding-left:1px !important; padding-right:1px !important; }
   .pks-opt:has(.bset-c > input[style*="display: none"]), .pks-opt:has(.bset-c > input[style*="display:none"]){ display:none; }
+  .pks [data-pkresetrow][hidden], .pks [data-pkanchorrow][hidden], .pkdw-note[hidden]{ display:none !important; }
+  .pkdw-sel{ max-width:min(220px, 52vw); }
+  .pkdw-note{ margin:0 0 8px; padding:7px 10px; border-radius:10px; background:rgba(127,200,255,.08); border:1px solid var(--line); color:var(--frost); font-size:12px; line-height:1.35; }
   .pks-more{ border-top:1px solid var(--line); }
   .pks-more > summary{ cursor:pointer; padding:11px 0; font-size:13px; color:var(--frost); }
   .pks-more[open] > summary{ color:var(--ice); }
@@ -8047,6 +8050,11 @@ const T = {
   pack_copy_suffix: { en: "copy" },
   pk_visitor_date: { en: "Visitors can set their own date" },
   pk_visitor_date_desc: { en: "For packs whose date differs by state (e.g. New Gen Heroes). Visitors only change the date; everything else stays yours." },
+  pk_date_with: { en: "Same dates as" },
+  pk_date_with_desc: { en: "Two tables of one event: this pack comes on that pack's days. Only the dates are shared." },
+  pk_date_with_none: { en: "— (its own dates)" },
+  pk_date_with_missing: { en: "(pack not found: own dates)" },
+  pk_date_follows: { en: "Follows {pack}: comes back and next date are set there. \"Lasts\" stays this pack's own." },
   pk_visitor_start: { en: "Visitors can set when they start buying" },
   pk_visitor_start_desc: { en: "For cards that begin whenever the player first buys them, not on a fixed week." },
   mp_title: { en: "My packs" },
@@ -12390,7 +12398,7 @@ async function packSeedTemplates(tables) {
     try {
       const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
       const l = JSON.parse(JSON.stringify(PACK_LINKS[String(from.id)] || { priceCol: 0, cols: {} }));
-      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors;
+      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors; delete l.dateWith;
       PACK_LINKS[String(saved.id)] = { ...l, group: PACK_TEMPLATE_GROUP, pages: [] };
       made++;
     } catch (e) { /* skip this one */ }
@@ -12680,7 +12688,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     }
     if (MY_PACKS.length >= packMyPacksLimit()) { MP_NEW = null; redraw(); return; }
     const link = built.link;
-    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors;
+    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors; delete link.dateWith;
     const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title, columns: built.columns, rows: built.rows.map((r) => ({ cells: r.cells })), link: { ...link, pages } };
     MY_PACKS.push(mp);
     MP_NEW = null;
@@ -12730,7 +12738,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const tb = templates.find((x) => String(x.id) === b.dataset.mpdup);
     if (!tb) return;
     const src = JSON.parse(JSON.stringify((PACK_LINKS || {})[String(tb.id)] || {}));
-    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors;
+    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith;
     const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title: defName(tb), columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ cells: (r.cells || []).slice() })), link: { ...src, pages: [], cols: {} } };
     MY_PACKS.push(mp);
     MY_PACKS_OPEN.add(mp.id);
@@ -12958,14 +12966,27 @@ function renderMyPackDates(el, tables) {
   // Dreamscape Memory) does not (owner, 19 Oct 2026: Fishing Event was hidden
   // inside the Dreamscape Memory row).
   const setKey = (id) => packLinkSetOf(id) || "";
+  // "Same dates as" (owner, 6 Nov 2026): a pack that follows another pack's
+  // dates (e.g. Megeventure Boost → Mergeventure) is one row with the leader,
+  // shown under the leader's name only, one date box (it changes the leader).
+  const dateLead = (id) => packLinkForBase(id).dateWith || String(id);
+  const rowKey = (id) => { const ld = dateLead(id); return setKey(ld) ? "s:" + setKey(ld) : "d:" + ld; };
+  const byId = new Map(tables.map((x) => [String(x.id), x]));
   list.forEach((tb) => {
-    const g = setKey(tb.id);
-    const lead = g ? rows.find((x) => setKey(x.id) === g) : null;
-    if (lead) { together.set(String(lead.id), (together.get(String(lead.id)) || 1) + 1); return; }
-    rows.push(tb);
+    const k = rowKey(tb.id);
+    const at = rows.findIndex((x) => rowKey(x.id) === k);
+    const isSet = k.startsWith("s:") && !!setKey(tb.id) && setKey(tb.id) === k.slice(2);
+    if (at < 0) {
+      // The row stands for the leader (when it is one of the tables).
+      const ld = dateLead(tb.id), lt = byId.get(ld);
+      rows.push(lt && !setKey(ld) ? lt : tb);
+      return;
+    }
+    const lead = rows[at];
+    if (isSet) together.set(String(lead.id), (together.get(String(lead.id)) || 1) + 1);
   });
   const rowTitle = (tb) => { const n = together.get(String(tb.id)); return n ? `<b>${esc(String(tb.title || "").split(":")[0].trim())}</b> <span class="meta">(${esc(t("pk_tables_n").replace("{n}", n))})</span>` : `<b>${esc(tb.title || "")}</b>`; };
-  const anyMine = list.some((tb) => MY_PACK_DATES[String(tb.id)]);
+  const anyMine = list.some((tb) => MY_PACK_DATES[String(tb.id)] || MY_PACK_DATES[dateLead(tb.id)]);
   el.innerHTML = `<details class="panel pkd-box" data-mydatesbox ${MY_DATES_PREVIEW_OPEN ? "open" : ""}>
     <summary class="pkd-sum"><span class="pkd-t"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "&#9662;" : "&#9656;"}</span> ${esc(t("pk_dates_title"))}${!ownerEdit && anyMine ? ` <span class="pkd-mine">${esc(t("pk_your_date"))}</span>` : ""}</span><span class="meta">${rows.length} ${esc(t("pk_preview_packs"))}</span></summary>
     <div class="meta pkd-desc">${esc(t(ownerEdit ? "pk_dates_owner_desc" : "pk_dates_desc"))}</div>
@@ -13001,10 +13022,12 @@ function renderMyPackDates(el, tables) {
     await saveCalcState("my_pack_dates", MY_PACK_DATES);
   };
   // Linked dated packs come together, so a new date moves every table of the set.
-  const partners = (id) => {
+  // A date-joined row changes its leader (the others follow it).
+  const partners = (id0) => {
+    const id = dateLead(id0);
     const g = setKey(id);
     if (!g) return [String(id)];
-    return list.filter((tb) => setKey(tb.id) === g).map((tb) => String(tb.id));
+    return list.filter((tb) => setKey(tb.id) === g && !packLinkForBase(tb.id).dateWith).map((tb) => String(tb.id));
   };
   el.querySelectorAll("[data-mydate]").forEach((inp) => inp.addEventListener("change", () => {
     const id0 = inp.dataset.mydate;
@@ -13022,7 +13045,7 @@ function renderMyPackDates(el, tables) {
   }));
   const all = el.querySelector("[data-mydateresetall]");
   // Only the packs in this box (the weekly cards have their own Reset all).
-  if (all) all.addEventListener("click", () => { list.forEach((tb) => { delete MY_PACK_DATES[String(tb.id)]; }); save(); });
+  if (all) all.addEventListener("click", () => { list.forEach((tb) => { delete MY_PACK_DATES[String(tb.id)]; delete MY_PACK_DATES[dateLead(tb.id)]; }); save(); });
 }
 // Packs page: open a pack's settings (its editor is built on first Edit).
 function packOpenSettingsHere(id) {
@@ -16716,8 +16739,38 @@ async function renderPacksPage() {
         <summary class="pks-sum">${esc(packLinkSummaryText(packGroupsChecked(link.pages)))}</summary>
       </details>`;
   }
+  // "Same dates as" (owner only): the leader this pack follows, if it takes effect.
+  function packDateLeaderShown(id) { return packLinkForBase(id).dateWith || ""; }
+  // Packs this one can follow: other repeating packs (not cards, triggered,
+  // New Gen, templates or "My packs"), and not one that already follows this one.
+  function packDateWithChoices(tb) {
+    const me = String(tb.id);
+    return tables.filter((x) => {
+      const id = String(x.id);
+      if (id === me || id.startsWith("my-") || id.startsWith("ng-")) return false;
+      const l = packLinkForBase(id, true);
+      if (l.template || l.trigger || l.newGen || l.mine || typeof l.reset !== "number" || !(l.reset > 0) || l.reset >= PACK_ONE_TIME_DAYS) return false;
+      return packDateLeader(id) !== me;
+    });
+  }
+  function packDateWithRowHtml(tb, preset) {
+    const raw = ((PACK_LINKS || {})[String(tb.id)] || {}).dateWith || "";
+    if (preset === "stack" || preset === "trigger") return raw ? `<input type="hidden" data-pkdatewith value="${esc(raw)}" />` : "";
+    const opts = packDateWithChoices(tb);
+    const lead = packDateLeaderShown(tb.id);
+    const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
+    const has = opts.some((x) => String(x.id) === raw);
+    return `<div class="bset-row pkdw-row"><span class="bset-l">${esc(t("pk_date_with"))}<small>${esc(t("pk_date_with_desc"))}</small></span><span class="bset-c"><select data-pkdatewith class="keep-w pkdw-sel">
+        <option value="">${esc(t("pk_date_with_none"))}</option>
+        ${raw && !has ? `<option value="${esc(raw)}" selected>${esc(t("pk_date_with_missing"))}</option>` : ""}
+        ${opts.map((x) => `<option value="${esc(String(x.id))}" ${String(x.id) === raw ? "selected" : ""}>${esc(x.title || "")}</option>`).join("")}
+      </select></span></div>
+      <div class="pkdw-note" data-pkdwnote ${lead ? "" : "hidden"}>&#128279; ${esc(t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""))}</div>`;
+  }
   function packLinkEditorFullHtml(tb) {
-    const link = packLinkFor(tb.id);
+    // The pack's own settings (a pack that follows another's dates still
+    // shows and saves its own reset here; see packDateLeader).
+    const link = packLinkFor(tb.id, true);
     const resOpts = (selected) =>
       `<option value="">${esc(t("pack_col_unused"))}</option>` +
       packResourceChoices(selected).map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
@@ -16780,7 +16833,8 @@ async function renderPacksPage() {
           return `
         <div class="bset-sec"><b>${esc(t("pk_sec_schedule"))} ${info("reset")}</b></div>
         ${infoText("reset", esc(t("pack_reset_desc")))}
-        <div class="bset-row"><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
+        ${IS_OWNER ? packDateWithRowHtml(tb, preset) : ""}
+        <div class="bset-row" data-pkresetrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
             <select data-packreset>
               ${preset === "unlimited" ? `<option value="unlimited" selected>${esc(t("pack_reset_unlimited"))}</option>` : ""}
               ${preset === "once" ? `<option value="once" selected>${esc(t("pack_reset_once"))}</option>` : ""}
@@ -16794,7 +16848,7 @@ async function renderPacksPage() {
             <input type="number" min="1" step="1" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
         </span></div>
-        <div class="bset-row pks-opt"><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
+        <div class="bset-row pks-opt" data-pkanchorrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
         <div class="bset-row pks-opt pks-nw"><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
         <label class="bset-row" style="${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
             <span class="bset-l">${esc(t("pack_buys_per_reset"))}</span>
@@ -17058,6 +17112,27 @@ async function renderPacksPage() {
       const windowIn = box.querySelector("[data-packwindow]");
       if (windowIn) windowIn.addEventListener("change", saveReset);
       if (stackCapIn) stackCapIn.addEventListener("change", saveReset);
+      // "Same dates as": dates only (not a linked set), so only this field changes.
+      const dwSel = box.querySelector("select[data-pkdatewith]");
+      if (dwSel) dwSel.addEventListener("change", async () => {
+        const l = current();
+        if (dwSel.value && dwSel.value !== String(id)) l.dateWith = dwSel.value; else delete l.dateWith;
+        PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+        const lead = packDateLeaderShown(id);
+        const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
+        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
+        const note = box.querySelector("[data-pkdwnote]");
+        if (note) { note.hidden = !lead; note.textContent = "\u{1F517} " + t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""); }
+        // The window's "when" line and the list row follow the new dates.
+        const lk = packLinkFor(id), w = pkbWhen(lk);
+        const panel = box.closest("[data-packtable]");
+        const when = panel && panel.querySelector(".pkb-when");
+        if (when) when.textContent = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
+        const row = listEl.querySelector(`[data-pkrowid="${CSS.escape(String(id))}"]`);
+        const tbRow = tables.find((x) => String(x.id) === String(id));
+        if (row && tbRow) row.outerHTML = pkbRowHtml(tbRow, Number(row.dataset.pkrow));
+        await savePackLinks();
+      });
       const ownStart = box.querySelector("[data-ownstart]"), ownActive = box.querySelector("[data-ownactive]");
       const saveOwn = async () => {
         const key = String(id);
@@ -20691,8 +20766,8 @@ function packActiveDays(id) {
   const d = v && typeof v === "object" ? Math.floor(Number(v.d) || 0) : Math.floor(Number(v) || 0) * 7;
   return d > 0 ? d : 0;
 }
-function packLinkFor(tableId) {
-  const out = packLinkForBase(tableId);
+function packLinkFor(tableId, own) {
+  const out = packLinkForBase(tableId, own);
   // Cards still paying out (a visitor's, or the admin's own): the rewards
   // still to come count as owned, new purchases start once they end, and the
   // stack limit counts the days left. A start date in the past counts from
@@ -20775,12 +20850,33 @@ function packLinkSetOf(tableId) {
   const { l } = packLinkRaw(tableId);
   return !packTriggerOf(l) && typeof l.linkSet === "string" && l.linkSet ? l.linkSet : "";
 }
-function packLinkForBase(tableId) {
+// "Same dates as" (owner, 6 Nov 2026): a pack whose link has `dateWith`
+// (another table's id) comes on the same days as that pack: e.g. Mergeventure
+// and Megeventure Boost are two tables of ONE event. Dates only: buy limits,
+// options and "Lasts" stay the pack's own (not a linked set). Follows a chain
+// to its end; a loop or a leader without a repeating date = own dates.
+// Returns the leader's table id, or "".
+function packDateLeader(tableId) {
+  const start = String(tableId);
+  if (start.startsWith("my-") || start.startsWith("ng-")) return "";
+  const seen = new Set([start]);
+  let id = start;
+  for (let i = 0; i < 20; i++) {
+    const l = (PACK_LINKS || {})[id];
+    const nx = l && typeof l.dateWith === "string" && l.dateWith ? l.dateWith : "";
+    if (!nx) return id === start ? "" : id;
+    if (seen.has(nx)) return "";
+    seen.add(nx);
+    id = nx;
+  }
+  return "";
+}
+function packLinkForBase(tableId, own) {
   const { mine, l } = packLinkRaw(tableId);
   // Templates are only there to be copied: never used by Budgets or Pack cost.
   const template = !mine && typeof l.group === "string" && l.group.trim() === PACK_TEMPLATE_GROUP;
   const trig = packTriggerOf(l);
-  return {
+  const out = {
     template,
     // Triggered pack: one purchase per row, only while the expert hasn't gone
     // past that row's level (see packTriggerRowStatus).
@@ -20854,6 +20950,20 @@ function packLinkForBase(tableId) {
     // Admin: table not shown to (or planned for) visitors.
     hideVisitors: l.hideVisitors === true,
   };
+  // "Same dates as": the leader's start day (its own date, or the viewer's
+  // own date for it) and its reset period; this pack keeps its window / limits.
+  if (!own && !mine && !trig && !template && !out.newGen && l.reset !== "stack") {
+    const lead = packDateLeader(tableId);
+    const ll = lead ? packLinkForBase(lead, true) : null;
+    if (ll && !ll.template && !ll.trigger && !ll.newGen && typeof ll.reset === "number" && ll.reset > 0) {
+      out.dateWith = lead;
+      out.reset = ll.reset;
+      out.resetDay = ll.resetDay;
+      out.resetDayDefault = ll.resetDayDefault;
+      out.visitorDate = ll.visitorDate;
+    }
+  }
+  return out;
 }
 // Visitors can change the item amounts of the owner's tables for their own
 // planning. Kept in this browser as { tableId: { "row,col": { v, was } } };
