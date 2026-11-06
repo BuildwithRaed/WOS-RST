@@ -5533,6 +5533,7 @@ input,select,textarea{
 let CALC_STATE_CACHE = null; // { calc_name: state } for CALC_STATE_CACHE_USER
 // When each saved state last changed (from the bulk load, then this visit's saves).
 const CALC_STATE_UPDATED = {};
+let CALC_SAVE_SEQ = 0; // bumped on every saveCalcState (the kept pack tables check it)
 let CALC_STATE_CACHE_USER = null;
 let CALC_STATE_PROMISE = null;
 // Saves made before the bulk fetch above has filled the cache. That fetch
@@ -5639,6 +5640,7 @@ function patchSkinQueued(id, patch) {
 }
 const CALC_SAVE_QUEUE = {}; // calc_name -> { running: Promise|null, next: body|null }
 function saveCalcState(calcName, state) {
+  CALC_SAVE_SEQ++;
   CALC_STATE_UPDATED[calcName] = new Date().toISOString();
   if (CALC_STATE_CACHE && CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_CACHE[calcName] = cloneState(state);
   else if (CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_PENDING[calcName] = cloneState(state);
@@ -12663,7 +12665,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const b2 = el.querySelector(".mpw-panel > .pk-body");
     if (b2) b2.scrollTop = st;
   };
-  const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
+  const changed = (redrawToo) => { mpSaveSoon(); PACK_PLAN_CACHE.clear(); PACK_TABLES_CACHE = PACK_TABLES_STASH = null; if (typeof budgetInvalidate === "function") budgetInvalidate(); if (redrawToo) setTimeout(redraw, 0); };
   // The window (visitors) has its own history entry: Back / ‹ / Esc / the dim edge close it.
   const mpwOpen = (id) => {
     MPW_OPEN = String(id);
@@ -12763,7 +12765,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
         PACK_LINKS[String(saved.id)] = { ...built.link, group: PACK_MINE_GROUP, hideVisitors: true, pages };
         await savePackLinks();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         PACK_PLAN_CACHE.clear();
         if (typeof budgetInvalidate === "function") budgetInvalidate();
         MP_NEW = null;
@@ -12812,7 +12814,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
         const src = JSON.parse(JSON.stringify(PACK_LINKS[String(tb.id)] || { priceCol: 0, cols: {} }));
         PACK_LINKS[String(saved.id)] = { ...src, group: PACK_MINE_GROUP, hideVisitors: true, pages: [] };
         await savePackLinks();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         toast(t("mp_admin_copied"));
         mpOpenOnPacks(saved.id);
       } catch (err) { b.disabled = false; toast("Couldn't duplicate table", true); }
@@ -13107,7 +13109,7 @@ function renderMyPackDates(el, tables) {
     Object.keys(MY_PACK_DATES).forEach((k) => { if (!packValidDay(MY_PACK_DATES[k])) delete MY_PACK_DATES[k]; });
     PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
-    PACK_TABLES_CACHE = null;
+    PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
     setTimeout(() => renderMyPackDates(el, tables), 0); // not while the input is still handling its change/blur
     await saveCalcState("my_pack_dates", MY_PACK_DATES);
   };
@@ -13125,7 +13127,7 @@ function renderMyPackDates(el, tables) {
     if (ownerEdit) {
       if (!packValidDay(inp.value)) return;
       partners(id0).forEach((id) => { PACK_LINKS[id] = PACK_LINKS[id] || { pages: [], priceCol: 0, cols: {} }; PACK_LINKS[id].resetDay = inp.value; });
-      PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+      PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
       savePackLinks();
       setTimeout(() => renderMyPackDates(el, tables), 0);
       return;
@@ -13643,7 +13645,7 @@ function renderPurNewGen(el, tables, onChange) {
   const ngSave = () => {
     PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
-    PACK_TABLES_CACHE = null;
+    PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
     saveCalcState("my_pack_dates", MY_PACK_DATES);
     setTimeout(again, 0);
   };
@@ -14949,7 +14951,7 @@ async function renderPurchasesPage() {
     Object.keys(MY_CARDS_ACTIVE).forEach((k) => { if (!packActiveDays(k)) delete MY_CARDS_ACTIVE[k]; });
     PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear();
     if (typeof budgetInvalidate === "function") budgetInvalidate();
-    PACK_TABLES_CACHE = null;
+    PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
     saveCalcState("my_cards_active", MY_CARDS_ACTIVE);
     setTimeout(redraw, 0); // not while the input is still handling its change
   };
@@ -16129,7 +16131,7 @@ async function renderPacksPage() {
   }
 
   PACK_TABLES_ALL = tables;
-  PACK_TABLES_CACHE = null; // pages re-read them fresh after any edit here
+  packTablesStash(); // pages re-read them fresh after any edit here
   // First visit: the in-game pack tables are created automatically (once
   // per account, so deleting one later doesn't bring it back).
   if (IS_OWNER && !(await calcFlagSet("pack_presets_seeded"))) {
@@ -17027,7 +17029,7 @@ async function renderPacksPage() {
         else if (raw(id) === me) delete PACK_LINKS[id].dateWith;
       });
       close();
-      PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+      PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
       savePackLinks();
       renderAll(); // the window (and the list behind it) shows the new event
       const box = listEl.querySelector(".pkb-panel .pkb-evl");
@@ -17286,7 +17288,7 @@ async function renderPacksPage() {
         const sum = box.querySelector("[data-pkdailywrap] summary");
         if (sum) sum.textContent = t("pk_daily_title") + (cols.length ? ` (${days} ${t("pk_daily_days")})` : "");
         await savePackLinks();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         // Column headers show the "/day ×N" note, so redraw the tables.
         renderAll();
       };
@@ -17411,7 +17413,7 @@ async function renderPacksPage() {
             if (k !== String(id) && y && String(y.dateWith || "") === String(id)) { if (k === l.dateWith) delete y.dateWith; else y.dateWith = l.dateWith; }
           });
         } else delete l.dateWith;
-        PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+        PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         // In the pack's window, its event parts (banner / Packs with this event /
         // Event name) follow at once: the window is drawn again.
         if (box.closest(".pkb-panel")) {
@@ -17462,7 +17464,7 @@ async function renderPacksPage() {
         const l = current();
         if (hideCb.checked) l.hideVisitors = true; else delete l.hideVisitors;
         await savePackLinks();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         renderAll();
       });
       box.querySelectorAll("[data-packcol]").forEach((sel) => {
@@ -17585,7 +17587,7 @@ async function renderPacksPage() {
         const v = Math.round(Number(inp.value) || 0);
         if (v > 0) l.rowMax[inp.dataset.row] = v; else delete l.rowMax[inp.dataset.row];
         await savePackLinks();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
       }));
       const groupInput = panel.querySelector("[data-pt-group]");
       if (groupInput) groupInput.addEventListener("change", async () => {
@@ -17595,7 +17597,7 @@ async function renderPacksPage() {
         const l = (PACK_LINKS[String(t.id)] = PACK_LINKS[String(t.id)] || { pages: [], priceCol: 0, cols: {} });
         l.group = groupInput.value.trim();
         await savePackLinks();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         renderAll();
       });
 
@@ -17613,7 +17615,7 @@ async function renderPacksPage() {
           l.priceCol = ci;
           delete (l.cols || {})[ci];
           await savePackLinks();
-          PACK_TABLES_CACHE = null;
+          PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
           renderAll();
         });
       });
@@ -17653,7 +17655,7 @@ async function renderPacksPage() {
           if (l0.daily && Array.isArray(l0.daily.cols)) l0.daily.cols = l0.daily.cols.map(remap);
           await savePackLinks();
         }
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         renderAll();
         await persistTable();
       }
@@ -17685,7 +17687,7 @@ async function renderPacksPage() {
           // Any earlier manual choice for this column is replaced by the name.
           delete l.cols[ci];
           await savePackLinks();
-          PACK_TABLES_CACHE = null;
+          PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
           renderAll();
         });
       });
@@ -17759,7 +17761,7 @@ async function renderPacksPage() {
         t.rows = preset.rows.map((r) => ({ ...r, cells: r.cells.slice() }));
         t.scale_enabled = false;
         await persistTable();
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         renderAll();
       });
       panel.querySelector("[data-pt-duplicate]").addEventListener("click", async () => {
@@ -17778,7 +17780,7 @@ async function renderPacksPage() {
         await savePackLinks();
         tables.splice(ti + 1, 0, { ...payload, id: saved.id });
         tables.forEach((tb, i) => { tb.sort_order = i; });
-        PACK_TABLES_CACHE = null;
+        PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
         renderAll();
         await Promise.all(tables.filter((tb) => !String(tb.id).startsWith("new-")).map((tb) => sb(`pack_tables?id=eq.${tb.id}`, { method: "PATCH", body: JSON.stringify({ sort_order: tb.sort_order }) }).catch(() => null)));
       });
@@ -20459,6 +20461,11 @@ function packEffectiveCols(table) {
 }
 let PACK_LINKS = null;          // { [tableId]: { pages:[], priceCol:0, cols:{ idx:name } } }
 let PACK_TABLES_CACHE = null;   // pack_tables rows, for the calculator pages
+// The Packs page puts the built copy aside on each visit (packTablesStash) and the
+// next ensurePackTables() takes it back when nothing it was built from changed, so
+// Budgets / My Purchases don't rebuild every pack group after a look at Packs.
+let PACK_TABLES_STASH = null;
+let PACK_GROUPS_GEN = 0; // bumped whenever the built pack groups are dropped on purpose
 async function ensurePackLinks() {
   if (PACK_LINKS) return PACK_LINKS;
   const [links, mine, active, myPacks, purchases, , budgetOff] = await Promise.all([
@@ -21051,7 +21058,7 @@ function packMineFind(id) { return MY_PACKS.find((x) => x.id === String(id)) || 
 function packTemplateKind(link) { return link.pickCols > 0 ? (link.pickOrder ? "wishful" : "mixmatch") : "regular"; }
 async function saveMyPacks() {
   PACK_PLAN_CACHE.clear();
-  PACK_TABLES_CACHE = null;
+  PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   if (typeof budgetInvalidate === "function") budgetInvalidate();
   saveCalcState("my_packs", { tables: MY_PACKS });
 }
@@ -21338,7 +21345,7 @@ function packMyRowMax() {
 function packSaveMyRowMax(all) {
   try { localStorage.setItem("pack_my_rowmax", JSON.stringify(all)); } catch (e) {}
   PACK_PLAN_CACHE.clear();
-  PACK_TABLES_CACHE = null;
+  PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   if (typeof budgetInvalidate === "function") budgetInvalidate();
 }
 function packRowMaxWithMine(tableId, base) {
@@ -21355,7 +21362,7 @@ function packMyEdits() {
 function packSaveMyEdits(all) {
   try { localStorage.setItem("pack_my_edits", JSON.stringify(all)); } catch (e) {}
   PACK_PLAN_CACHE.clear();
-  PACK_TABLES_CACHE = null;
+  PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   if (typeof budgetInvalidate === "function") budgetInvalidate();
 }
 function packApplyMyEdits(tables) {
@@ -21374,19 +21381,43 @@ function packApplyMyEdits(tables) {
 }
 // Callers at the same time (Budgets asks for every page at once) share one load.
 let PACK_TABLES_LOADING = null;
+// What the kept copy was built from: saved states (any save), links, My packs,
+// the visitor's own amounts / Max / prices in this browser, and the kept rows.
+function packTablesInSig() {
+  let ls = "";
+  try { ls = ["pack_my_edits", "pack_my_rowmax", "my_store_prices", "packs_currency", "display_currency"].map((k) => localStorage.getItem(k)).join("|"); } catch (e) { ls = "?" + Math.random(); }
+  return JSON.stringify([CALC_SAVE_SEQ, USER_ID, IS_OWNER, LANG, DISPLAY_CURRENCY, ls, PACK_LINKS || null, MY_PACKS || null]);
+}
+function packTablesRowRefs() { return Object.keys(DASH_DATA_CACHE).filter((k) => k.startsWith("pack_tables:")).sort().map((k) => DASH_DATA_CACHE[k]); }
+function packTablesStash() {
+  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._inSig) PACK_TABLES_STASH = { cache: PACK_TABLES_CACHE, groups: PACK_GROUPS_CACHE.tables === PACK_TABLES_CACHE ? PACK_GROUPS_CACHE : null, gen: PACK_GROUPS_GEN };
+  PACK_TABLES_CACHE = null;
+}
+function packTablesUnstash() {
+  const s = PACK_TABLES_STASH;
+  PACK_TABLES_STASH = null;
+  if (!s || PACK_TABLES_CACHE || PACK_TABLES_LOADING) return;
+  const refs = packTablesRowRefs(), had = s.cache._rows || [];
+  if (s.cache._inSig !== packTablesInSig() || refs.length !== had.length || refs.some((r, i) => r !== had[i])) return;
+  PACK_TABLES_CACHE = s.cache;
+  if (s.groups && s.gen === PACK_GROUPS_GEN) PACK_GROUPS_CACHE = s.groups;
+}
 async function ensurePackTables() {
+  if (!PACK_TABLES_CACHE && PACK_TABLES_STASH) packTablesUnstash();
   // The New Gen hero packs follow the state's Gen dates: rebuild when they move.
-  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== ngHeroSig()) PACK_TABLES_CACHE = null;
+  if (PACK_TABLES_CACHE && PACK_TABLES_CACHE._ngSig !== ngHeroSig()) PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   if (PACK_TABLES_CACHE) return PACK_TABLES_CACHE;
   if (PACK_TABLES_LOADING) return PACK_TABLES_LOADING;
   PACK_TABLES_LOADING = (async () => {
     try {
       await ensurePackLinks();
-      const baseTables = packApplyMyEdits((await packTablesRows()).map((tb) => ({ id: tb.id, title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tb.sort_order })))
+      const inSig = packTablesInSig(), rowsP = packTablesRows(), rowRefs = packTablesRowRefs();
+      const baseTables = packApplyMyEdits((await rowsP).map((tb) => ({ id: tb.id, title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tb.sort_order })))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
         .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
       PACK_TABLES_CACHE = baseTables.concat(await ngHeroTables(baseTables));
       PACK_TABLES_CACHE._ngSig = ngHeroSig();
+      PACK_TABLES_CACHE._inSig = inSig; PACK_TABLES_CACHE._rows = rowRefs;
     } catch (e) {
       PACK_TABLES_CACHE = [];
     }
@@ -23503,7 +23534,7 @@ async function packAddPresets(existingTables) {
     have.add(key); added++;
   }
   await savePackLinks();
-  PACK_TABLES_CACHE = null;
+  PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   return added;
 }
 
@@ -25646,7 +25677,7 @@ function budgetForceRecalc() {
   plannerRestart();
   if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
   if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
-  PACK_TABLES_CACHE = null;
+  PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   TRADE_RATES_CACHE = null;
   BUDGET_NEEDS_SNAPSHOT = null;
   BUDGET_PLAN_RUNNING = null;
@@ -25785,7 +25816,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { mmBudgetSet(null); BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { PACK_GROUPS_GEN++; mmBudgetSet(null); BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 // ---- My budget: a spending limit (owner, 17 Oct 2026, design C + D) ----
 // calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
 // Only the admin sees it unless Admin → Visibility → Visitor access
@@ -35468,7 +35499,7 @@ function afterGameRulesChange() {
   if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
   plannerRestart(); // a fresh worker (requests still waiting are sent to it again)
   if (typeof budgetInvalidate === "function") budgetInvalidate();
-  if (typeof PACK_GROUPS_CACHE !== "undefined") PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() };
+  if (typeof PACK_GROUPS_CACHE !== "undefined") { PACK_GROUPS_GEN++; PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
   dropKeptGameData();
 }
 
@@ -36250,7 +36281,7 @@ async function renderAdminPackResources(body) {
     const gives = {};
     all.filter((x) => x.builtin).forEach((x) => { if (!same(x.contents, PACK_BUNDLES[x.name] || {})) gives[x.name] = x.contents; });
     await saveSiteConfig("pack_resources", { removed, gives, custom: all.filter((x) => !x.builtin).map((x) => ({ name: x.name, icon: (x.icon || "").trim(), contents: x.contents })), hidden: all.filter((x) => x.hidden).map((x) => x.name), order: all.map((x) => x.name) });
-    PACK_TABLES_CACHE = null; if (msg) toast(msg);
+    PACK_TABLES_CACHE = PACK_TABLES_STASH = null; if (msg) toast(msg);
   };
   const draw = () => {
     body.innerHTML = `<p class="desc" style="margin:0 0 8px;">The names offered in the column dropdown on the Packs page, in this order. "Gives" says what one of the item counts as (a chest or bundle).</p>`
@@ -36302,7 +36333,7 @@ async function renderAdminPackResources(body) {
 // "Counts as" is the same setting as Pack Resources "Gives".
 function afterItemRegistryChange() {
   ITEM_REG_MEMO = null;
-  PACK_TABLES_CACHE = null;
+  PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
   afterGameRulesChange();
 }
 async function saveItemRegistry(next) {
