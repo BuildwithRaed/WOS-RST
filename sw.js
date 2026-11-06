@@ -12,16 +12,22 @@ const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 const VERSIONED = /\/(app|admin)\.(js|css)$/;
 const putVersioned = (req, res) => caches.open(VERSION).then(async (c) => {
   await c.put(req, res);
-  const url = new URL(req.url);
+  const url = new URL(typeof req === "string" ? req : req.url);
   for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) await c.delete(k); }
 });
+// Caches the app.js / app.css a copy of the page links to, when not cached yet.
+const keepLinked = async (c, html) => {
+  for (const l of new Set(html.match(/app\.(?:js|css)\?v=[0-9a-f]+/g) || [])) {
+    const u = new URL("./" + l, self.location).href;
+    if (!(await c.match(u))) { const res = await fetch(u); if (res.ok) await putVersioned(u, res); }
+  }
+};
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(VERSION).then(async (c) => {
     await c.addAll(SHELL);
     try {
       const page = await c.match("./index.html");
-      const links = page ? [...new Set((await page.text()).match(/app\.(?:js|css)\?v=[0-9a-f]+/g) || [])] : [];
-      await c.addAll(links.map((l) => "./" + l));
+      if (page) await keepLinked(c, await page.text());
     } catch (err) { /* fetched again on first use */ }
   }).then(() => self.skipWaiting()));
 });
@@ -44,9 +50,27 @@ self.addEventListener("fetch", (e) => {
   }
   if (url.origin !== location.origin) return; // Supabase, other CDNs: straight to network
   // The page itself: network first so updates show up right away, cache if offline.
+  // A slow network (no answer within 3 s) shows the saved copy instead of a white
+  // screen; the network answer still replaces the saved copy for next time.
   if (req.mode === "navigate" || url.pathname.endsWith("/index.html")) {
-    e.respondWith(fetch(req).then((res) => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); } return res; })
-      .catch(() => caches.match(req).then((r) => r || caches.match("./index.html"))));
+    let stored, savedShown = false;
+    e.waitUntil(new Promise((r) => { stored = r; }));
+    const net = fetch(req).then((res) => {
+      if (res.ok) {
+        // When the saved copy was shown, this copy's app.js / app.css weren't
+        // loaded: keep them too, so it also opens offline next time.
+        const copy = res.clone(), text = savedShown ? res.clone().text() : null;
+        caches.open(VERSION).then(async (c) => { await c.put(req, copy); if (text) await keepLinked(c, await text); }).then(stored, stored);
+      } else stored();
+      return res;
+    }, (err) => { stored(); throw err; });
+    const saved = () => caches.match(req).then((r) => r || caches.match("./index.html"));
+    e.respondWith(new Promise((resolve, reject) => {
+      let done = false, timer = 0;
+      const finish = (r) => { if (!done) { done = true; clearTimeout(timer); resolve(r); } };
+      timer = setTimeout(() => saved().then((r) => { if (r && !done) { savedShown = true; finish(r); } }), 3000);
+      net.then(finish, () => saved().then((r) => { if (r) finish(r); else if (!done) { done = true; clearTimeout(timer); reject(new TypeError("offline, no saved copy")); } }));
+    }));
     return;
   }
   // app.js / app.css / admin.js at one "?v=<hash>": cache first, older versions dropped.
