@@ -2914,6 +2914,7 @@ const T = {
   pkb_ev_add_done: { en: "Done" },
   pkb_ev_follows: { en: "follows {pack} · ticking moves it" },
   pkb_ev_swap: { en: "leads {n} packs now · will follow {pack}" },
+  pkb_ev_swap1: { en: "leads 1 pack now · will follow {pack}" },
   pkb_ng_heroes: { en: "{n} heroes" },
   pkb_ng_hero1: { en: "1 hero" },
   pkb_ng_shards: { en: "{n} shards" },
@@ -11408,7 +11409,7 @@ async function renderPacksPage() {
     document.addEventListener("keydown", onKey, true);
     const rows = cands.map((x) => {
       const id = String(x.id), xl = packLinkFor(id), other = raw(id) && raw(id) !== me ? tables.find((y) => String(y.id) === raw(id)) : null, nf = pkbFolCount(id);
-      const line = nf ? t("pkb_ev_swap").replace("{n}", nf).replace("{pack}", tb.title || "") : other ? t("pkb_ev_follows").replace("{pack}", other.title || "") : pkbResetText(xl.reset) || "";
+      const line = nf ? t(nf === 1 ? "pkb_ev_swap1" : "pkb_ev_swap").replace("{n}", nf).replace("{pack}", tb.title || "") : other ? t("pkb_ev_follows").replace("{pack}", other.title || "") : pkbResetText(xl.reset) || "";
       return `<label class="pkb-eas-r"><input type="checkbox" data-pkbeas="${esc(id)}" ${tick.has(id) ? "checked" : ""} /><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><span class="pkb-eas-m"><b>${esc(x.title || "")}</b><small>${esc(line)}</small></span></label>`;
     }).join("");
     m.innerHTML = `<div class="modal-box adm-sheet gs-box pkb-eas" role="dialog" aria-modal="true" aria-label="${esc(t("pkb_ev_add"))}">
