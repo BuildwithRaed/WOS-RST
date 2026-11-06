@@ -138,6 +138,8 @@
   #mobileMenuOverlay.open{ display:block; }
   .mm-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .mm-header h2{ font-size:16px; margin:0; }
+  .mm-adm{ margin-inline-start:auto; margin-inline-end:8px; height:36px; padding:0 12px; border:1px solid var(--ice); border-radius:10px; background:rgba(111,211,242,.10); color:var(--frost); font:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .mm-adm.on{ background:rgba(111,211,242,.24); }
   .mm-close{ background:transparent; border:1px solid var(--line); color:var(--frost); border-radius:8px; width:36px; height:36px; font-size:16px; cursor:pointer; }
   .mm-category{ border-bottom:1px solid var(--line); }
   .mm-category-btn{
@@ -9352,12 +9354,15 @@ function mmGroupBtns(g) {
 }
 function renderMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay");
-  // Admin first (owner, 6 Nov 2026: no scrolling to the bottom to reach it).
-  const groups = mmVisibleGroups().sort((x, y) => (y.dataset.group === "Admin") - (x.dataset.group === "Admin"));
-  const cards = groups.map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
+  // Admin = a "⚙ Admin" button in the Menu header, not a card (owner picked C, 6 Nov 2026).
+  const groups = mmVisibleGroups();
+  const admG = groups.find((g) => g.dataset.group === "Admin");
+  const admBtn = admG && mmGroupBtns(admG).find((b) => b.dataset.tab === "adminpage");
+  const cards = groups.filter((g) => g !== admG || !admBtn).map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
+      ${admBtn ? `<button type="button" class="mm-adm${TAB === "adminpage" ? " on" : ""}" data-mmadmin>&#9881; ${esc(navLabel("adminpage"))}</button>` : ""}
       <button class="mm-close" type="button" id="mmCloseBtn" aria-label="${esc(t("mm_close"))}" title="${esc(t("mm_close"))}">&#10005;</button>
     </div>${cards}
     <div class="mm-style">
@@ -9366,6 +9371,8 @@ function renderMobileMenu() {
       <button type="button" class="btn small" data-mstyle="${MENU_STYLE === "bar" ? "hub" : "bar"}">${esc(t(MENU_STYLE === "bar" ? "ms_to_hub" : "ms_to_bar"))}</button>
     </div>`;
   overlay.querySelector("#mmCloseBtn").addEventListener("click", closeMobileMenu);
+  const admEl = overlay.querySelector("[data-mmadmin]");
+  if (admEl) admEl.addEventListener("click", () => { closeMobileMenu(); goToTab("adminpage"); });
   overlay.querySelector("#mmStyleSel").addEventListener("change", (e) => setMenuStyle(e.target.value));
 }
 
