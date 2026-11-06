@@ -138,6 +138,8 @@
   #mobileMenuOverlay.open{ display:block; }
   .mm-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .mm-header h2{ font-size:16px; margin:0; }
+  .mm-adm{ margin-inline-start:auto; margin-inline-end:8px; height:36px; padding:0 12px; border:1px solid var(--ice); border-radius:10px; background:rgba(111,211,242,.10); color:var(--frost); font:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .mm-adm.on{ background:rgba(111,211,242,.24); }
   .mm-close{ background:transparent; border:1px solid var(--line); color:var(--frost); border-radius:8px; width:36px; height:36px; font-size:16px; cursor:pointer; }
   .mm-category{ border-bottom:1px solid var(--line); }
   .mm-category-btn{
@@ -483,6 +485,9 @@
   .pks .pks-nw .bset-c{ flex-wrap:nowrap; flex:0 0 auto; }
   .pk-tbl-wrap td{ padding-left:1px !important; padding-right:1px !important; }
   .pks-opt:has(.bset-c > input[style*="display: none"]), .pks-opt:has(.bset-c > input[style*="display:none"]){ display:none; }
+  .pks [data-pkresetrow][hidden], .pks [data-pkanchorrow][hidden], .pkdw-note[hidden]{ display:none !important; }
+  .pkdw-sel{ max-width:min(220px, 52vw); }
+  .pkdw-note{ margin:0 0 8px; padding:7px 10px; border-radius:10px; background:rgba(127,200,255,.08); border:1px solid var(--line); color:var(--frost); font-size:12px; line-height:1.35; }
   .pks-more{ border-top:1px solid var(--line); }
   .pks-more > summary{ cursor:pointer; padding:11px 0; font-size:13px; color:var(--frost); }
   .pks-more[open] > summary{ color:var(--ice); }
@@ -707,6 +712,15 @@
   .plx-head.has-cando{ flex-wrap:nowrap; justify-content:flex-start; gap:8px; }
   .plx-head.has-cando h2{ white-space:nowrap; flex:none; }
   .plx-head.has-cando .plx-maxbtn{ flex:none; }
+  /* T12 "Lab ›" box beside Can do now / Max (owner, 5 Nov 2026). */
+  .plx-labbtn{ flex:none; display:flex; align-items:center; gap:4px; box-sizing:border-box; height:30px; padding:0 9px 0 6px; border:1px solid var(--line, rgba(255,255,255,.14)); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .plx-head:not(.has-cando) .plx-labbtn{ margin-inline-start:auto; }
+  .plx-labbtn img{ width:22px; height:22px; object-fit:contain; }
+  .plx-labbtn .plx-labcar{ color:var(--muted); font-size:16px; line-height:1; }
+  .plx-labbtn:hover{ border-color:var(--ice); }
+  .plx-head.has-cando .plx-labbtn{ margin-inline-start:0; }
+  @media (max-width: 900px){ .plx-labbtn{ height:40px; } }
+  @media (max-width: 440px){ .plx-labbtn{ padding:0 8px 0 6px; } .plx-labbtn .plx-labcar{ display:none; } .plx-head:has(.plx-labbtn) .cando-l{ display:none; } .plx-head:has(.plx-labbtn) .cando-ls{ display:inline; } .plx-head:has(.plx-labbtn) .cando-b{ gap:5px; padding-inline:5px 7px; } }
   .cando-b{ margin-inline-start:auto; display:flex; align-items:center; gap:7px; box-sizing:border-box; height:40px; min-width:0; max-width:270px; flex:0 1 auto; padding-block:2px 2px; padding-inline:6px 9px; border:1px solid rgba(76,209,138,.5); border-radius:12px; background:var(--panel); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .cando-b:hover{ border-color:rgba(76,209,138,.8); }
   .cando-ic{ flex:none; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:rgba(76,209,138,.18); color:var(--good); font-size:12px; font-weight:800; }
@@ -2436,6 +2450,13 @@ input,select,textarea{
   .bp-top-l{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; margin-top:8px; font-size:12.5px; color:var(--muted); }
   .bp-top-l b{ color:var(--frost); }
   .bp-chests{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:0 2px; border:0; background:none; color:#f0c46a; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+  .bp-lab{ display:flex; align-items:center; gap:8px; margin-top:10px; padding:6px 6px 6px 10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); font-size:13px; color:var(--frost); min-width:0; }
+  .bp-lab img{ width:26px; height:26px; object-fit:contain; flex:0 0 auto; }
+  .bp-lab-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
+  .bp-lab-t b{ color:var(--ice); font-weight:800; }
+  .bp-lab-m{ color:var(--muted); font-size:12px; white-space:nowrap; }
+  .bp-lab-b{ flex:0 0 auto; min-height:36px; padding:0 12px; border:1px solid var(--ice-dim); border-radius:10px; background:#2c5568; color:var(--frost); font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .bp-lab-b:hover{ background:#336276; }
   .bp-tile.bp-flash{ animation:bpFlash 1.4s ease 2; }
   @keyframes bpFlash{ 0%,100%{ box-shadow:none; } 50%{ box-shadow:0 0 0 3px rgba(224,178,90,.8); } }
   .bp-chest-note{ margin-top:8px; padding:4px 8px; border:1px solid rgba(224,178,90,.55); border-radius:10px; background:rgba(224,178,90,.12); color:#f0c46a; font-size:11px; font-weight:500; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -2999,10 +3020,84 @@ input,select,textarea{
   .rl-todo.today .rl-d{ color:var(--ice); }
   .rl-t{ flex:1 1 auto; min-width:0; font-size:13px; }
   .rl-t small{ display:block; font-size:11.5px; color:var(--muted); }
-  .rl-c{ display:flex; align-items:center; gap:4px; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .rl-c{ flex:none; display:flex; align-items:center; justify-content:flex-end; min-width:64px; gap:4px; font-size:12.5px; font-weight:700; white-space:nowrap; }
   .rl-c .rl-ic{ width:16px; height:16px; }
-  .rl-ck{ flex:none; width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--good); font-size:15px; cursor:pointer; }
-  .rl-ck.on{ background:rgba(76,209,138,.18); border-color:rgba(76,209,138,.5); }
+  /* "Your own plan" sheet: By FC amount | By tier */
+  .rl-sw{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:3px; border:1px solid var(--line); border-radius:12px; background:rgba(0,0,0,.22); margin:2px 0 10px; }
+  .rl-sw button{ min-width:0; min-height:36px; border:0; border-radius:9px; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .rl-sw button.on{ background:var(--ice-dim); color:var(--frost); box-shadow:0 0 0 1px rgba(124,196,255,.45); }
+  .rl-lbr{ display:flex; justify-content:space-between; gap:8px; font-size:12px; color:var(--muted); margin-top:4px; }
+  .rl-lbr.gap{ margin-top:12px; }
+  .rl-tcs{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; margin-top:6px; }
+  .rl-tc{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0; min-height:48px; padding:4px 2px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:14px; font-weight:800; cursor:pointer; }
+  .rl-tc small{ font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  .rl-tc small.rl-rd{ color:var(--danger); }
+  .rl-tc.on{ background:var(--ice-dim); border-color:var(--ice); box-shadow:0 0 0 1px rgba(124,196,255,.35); }
+  .rl-tc.on small{ color:#cfe6fb; }
+  .rl-tc.on small.rl-rd{ color:#ffb3b3; }
+  .rl-res{ margin-top:10px; padding:9px 12px; border-radius:12px; border:1px solid rgba(76,209,138,.4); background:rgba(76,209,138,.08); font-size:12.5px; line-height:1.5; color:var(--muted); }
+  .rl-res.late{ border-color:rgba(255,122,122,.45); background:rgba(255,122,122,.08); }
+  .rl-res.none{ border-color:var(--line); background:rgba(255,255,255,.03); }
+  .rl-res-b{ font-size:15px; font-weight:800; color:var(--frost); }
+  .rl-res-b .rl-ic{ width:18px; height:18px; vertical-align:-3px; }
+  /* This week: super refinements line + "Game says" */
+  .rl-sup{ margin-top:8px; padding:9px 10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.03); }
+  .rl-sup.off{ border-color:rgba(255,193,92,.5); background:rgba(255,193,92,.07); }
+  .rl-sup-t{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:13.5px; }
+  .rl-sup-n{ font-size:18px; font-weight:800; margin-inline-start:4px; }
+  .rl-sup.off .rl-sup-n{ color:var(--amber); }
+  .rl-sup-l{ font-size:12px; color:var(--muted); }
+  .rl-sup-s{ font-size:12px; color:var(--muted); margin-top:3px; line-height:1.4; }
+  .rl-gs{ flex:none; min-height:36px; padding:0 12px; border:1px solid rgba(124,196,255,.4); border-radius:10px; background:var(--ice-dim); color:var(--ice); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+  .rl-sup-as{ margin-top:6px; font-size:12px; color:var(--muted); font-style:italic; line-height:1.4; }
+  .rl-gnote{ margin-top:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,193,92,.45); background:rgba(255,193,92,.08); color:var(--amber); font-size:12.5px; line-height:1.45; }
+  .rl-gnote .rl-lnk{ font-size:12.5px; font-weight:800; min-height:0; }
+  .rl-sup + .rl-todo, .rl-gnote + .rl-todo{ margin-top:4px; }
+  .rl-todo.catch .rl-t{ color:var(--amber); }
+  .rl-todo.catch .rl-t small{ color:var(--amber); opacity:.85; }
+  .rl-plus{ display:inline-block; padding:0 6px; border-radius:999px; background:rgba(255,193,92,.2); color:var(--amber); font-size:11.5px; font-weight:800; }
+  /* This week closed / opened + tier check (owner's mock-ups, 5 Nov 2026) */
+  .rl-wk[data-rlwktoggle]{ cursor:pointer; }
+  .rl-wk.off{ border-color:rgba(255,193,92,.55); }
+  .rl-wl{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .rl-ws{ flex:1 1 auto; min-width:0; font-size:13px; font-weight:700; line-height:1.35; }
+  .rl-wr{ flex:none; display:flex; align-items:center; gap:3px; font-size:14px; font-weight:800; white-space:nowrap; }
+  .rl-chev{ color:var(--ice); font-size:19px; margin-inline-start:3px; line-height:1; }
+  .rl-ws2{ flex:1 1 auto; min-width:0; font-size:12.5px; color:var(--muted); line-height:1.35; }
+  .rl-ws2 b{ color:var(--frost); font-size:14px; margin:0 1px; }
+  .rl-upd{ color:var(--muted); font-size:11.5px; white-space:nowrap; }
+  .rl-gs.sm{ min-height:36px; padding:0 10px; font-size:12.5px; white-space:nowrap; }
+  .rl-wt{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:8px; font-size:12.5px; color:var(--muted); line-height:1.45; }
+  .rl-pill{ display:inline-flex; align-items:center; padding:1px 9px; border-radius:999px; border:1px solid rgba(255,193,92,.55); background:rgba(255,193,92,.12); color:var(--amber); font-size:12px; font-weight:700; white-space:nowrap; }
+  .rl-wko{ margin-top:8px; padding:6px 10px; border-radius:10px; background:rgba(124,196,255,.08); border:1px solid rgba(124,196,255,.25); font-size:12.5px; color:var(--frost); line-height:1.4; }
+  .rl-wko .rl-lnk{ font-size:12.5px; font-weight:800; min-height:0; }
+  .rl-wk.open > .rl-k{ display:flex; align-items:center; gap:8px; }
+  .rl-wk.open > .rl-k .rl-kr{ margin-inline-start:auto; }
+  .rl-hide{ flex:none; min-height:36px; padding:0 12px; border:1px solid rgba(124,196,255,.4); border-radius:10px; background:var(--ice-dim); color:var(--ice); font:inherit; font-size:13px; font-weight:700; text-transform:none; letter-spacing:0; cursor:pointer; }
+  .rl-ck{ margin-top:10px; padding:10px 11px; border-radius:12px; border:1px solid; cursor:default; }
+  .rl-ck.ok{ border-color:rgba(76,209,138,.45); background:rgba(76,209,138,.08); }
+  .rl-ck.on{ border-color:rgba(124,196,255,.35); background:rgba(124,196,255,.07); }
+  .rl-ck.bh{ border-color:rgba(255,193,92,.55); background:rgba(255,193,92,.09); }
+  .rl-ck-k{ font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .rl-ck-k .rl-ic{ width:15px; height:15px; vertical-align:-3px; }
+  .rl-ck-h{ font-size:17px; font-weight:800; margin-top:2px; }
+  .rl-ck.ok .rl-ck-h{ color:var(--good); } .rl-ck.on .rl-ck-h{ color:var(--ice); } .rl-ck.bh .rl-ck-h{ color:var(--amber); }
+  .rl-ck-r{ font-size:12.5px; margin-top:5px; line-height:1.45; color:var(--frost); }
+  .rl-mu{ color:var(--muted); } .rl-nw{ white-space:nowrap; }
+  .rl-ck-l{ display:flex; flex-direction:column; gap:5px; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.07); }
+  .rl-ck-l:empty{ display:none; }
+  .rl-ck-row{ display:flex; gap:7px; font-size:12.5px; line-height:1.45; color:var(--frost); }
+  .rl-ck-tg{ flex:none; height:19px; display:inline-flex; align-items:center; margin-top:1px; padding:0 7px; border-radius:999px; background:rgba(255,255,255,.08); color:var(--muted); font-size:11px; font-weight:800; }
+  .rl-ck-tg.mine{ background:var(--ice-dim); color:var(--ice); }
+  .rl-ck-ub{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:9px; font-size:12.5px; }
+  .rl-ck-opt{ font-size:11.5px; color:var(--muted); }
+  .rl-ck-b{ flex:none; min-height:36px; padding:0 12px; border-radius:10px; border:1px solid; font:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .rl-ck-b.ok{ background:rgba(76,209,138,.14); border-color:rgba(76,209,138,.5); color:var(--good); }
+  .rl-ck-b.bh{ background:rgba(255,193,92,.16); border-color:rgba(255,193,92,.6); color:var(--amber); }
+  .rl-ck-ub .rl-lnk{ font-size:12.5px; font-weight:800; }
+  .rl-wk.open .rl-ck{ margin-bottom:2px; }
+  @keyframes rlFlash{ 0%,60%{ box-shadow:0 0 0 3px rgba(124,196,255,.7); } 100%{ box-shadow:none; } }
+  .rl-o.rl-flash{ animation:rlFlash 1.6s ease-out; }
   .rl-lab{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; }
   .rl-lab-r{ display:flex; align-items:center; gap:10px; white-space:nowrap; }
   .rl-conv summary{ cursor:pointer; font-weight:700; font-size:13px; min-height:28px; display:flex; align-items:center; }
@@ -3699,6 +3794,7 @@ input,select,textarea{
   .scan-step > div{ flex:1; min-width:0; }
   .scan-ex{ flex:0 0 74px; height:92px; padding:0; border-radius:9px; overflow:hidden; border:1px solid var(--line); background:#000; position:relative; cursor:zoom-in; }
   .scan-ex img{ width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+  .scan-ex[data-scanex$="-lab.jpg"] img{ object-position:center 88%; }
   .scan-ex span{ position:absolute; right:3px; bottom:3px; background:rgba(0,0,0,.65); border-radius:6px; font-size:10px; padding:1px 4px; line-height:1.4; }
   .scan-ex-view{ position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,.88); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px; cursor:zoom-out; }
   .scan-ex-view img{ max-width:100%; max-height:84vh; border-radius:12px; }
@@ -3711,6 +3807,11 @@ input,select,textarea{
   .scan-row .scan-name em{ color:#f5a623; font-style:normal; font-weight:700; }
   .scan-row > input[type=text]{ width:128px; text-align:end; flex:0 0 auto; font-size:14px; }
   .scan-row.unsure > input[type=text]{ border-color:#f5a623; }
+  .scan-lab-h{ margin:10px 0 4px; font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .scan-lab{ border:1px solid rgba(79,170,255,.45); border-radius:12px; padding:4px 6px 8px; background:rgba(79,170,255,.06); }
+  .scan-lab .scan-row{ border-bottom:0; }
+  .scan-lab .scan-row > input[type=text]{ width:84px; }
+  .scan-lab-note{ font-size:12px; padding:2px 6px 0; }
   .scan-learn{ margin-top:14px; padding-top:10px; border-top:2px solid var(--line); }
   .scan-learn > summary{ cursor:pointer; font-size:13.5px; }
   .scan-lrow{ cursor:default; }
@@ -4502,6 +4603,31 @@ input,select,textarea{
   .pkb-tk input{ width:22px; height:22px; margin:0; cursor:pointer; }
   .pkb-off .pkb-ic, .pkb-off .pkb-m, .pkb-off .pkb-r{ opacity:.45; }
   .pkb-hidv .pkb-ic{ border-style:dashed; }
+  /* "Same dates as" event card (B) and window links (D), owner 6 Nov 2026 */
+  .pkb-ev{ margin:8px 10px; border:1px solid rgba(111,211,242,.35); border-radius:12px; background:rgba(111,211,242,.05); overflow:hidden; }
+  .pkb-ev-h{ display:flex; align-items:center; gap:8px; padding:8px 12px; }
+  .pkb-ev-t{ flex:1 1 auto; min-width:0; font-size:14px; line-height:1.3; }
+  .pkb-ev-t b{ color:var(--ice); }
+  .pkb-ev-t small{ font-size:12px; color:var(--muted); white-space:nowrap; }
+  .pkb-ev-s{ flex:0 0 auto; font-size:12px; color:var(--muted); white-space:nowrap; }
+  .pkb-ev-s .on{ color:var(--good); font-weight:700; }
+  .pkb-ev .pkb-row{ padding:7px 8px 7px 10px; }
+  .pkb-ev .pkb-ic{ width:38px; height:38px; }
+  .pkb-evb{ display:flex; align-items:center; gap:10px; width:100%; margin:0 0 12px; padding:9px 12px; border:1px solid rgba(111,211,242,.55); border-radius:12px; background:rgba(111,211,242,.10); color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-evb-t{ flex:1 1 auto; min-width:0; line-height:1.3; }
+  .pkb-evb-t b{ display:block; font-size:14px; color:var(--ice); }
+  .pkb-evb-t small{ display:block; font-size:12px; color:var(--muted); }
+  .pkb-evl{ padding:10px 14px; }
+  .pkb-evi{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; margin:0; padding:6px 0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
+  .pkb-evi b{ flex:1 1 auto; min-width:0; font-size:14px; }
+  .pkb-evi-p{ flex:0 0 auto; font-size:12px; color:var(--muted); white-space:nowrap; }
+  .pkb-evl-n{ margin:6px 0 0; font-size:12px; color:var(--muted); }
+  .pkb-evn{ display:flex; align-items:center; gap:10px; margin:2px 0 0; }
+  .pkb-evn span{ flex:0 0 auto; font-size:13px; color:var(--frost); }
+  .pkb-evn input{ flex:1 1 auto; min-width:0; width:auto; height:36px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:rgba(0,0,0,.18); color:var(--frost); font:inherit; font-size:14px; }
+  .pkb-evn input::placeholder{ color:var(--muted); opacity:.85; }
+  .pkb-evl .pkb-evn + .pkb-evl-n{ margin:4px 0 8px; }
+  .pkb-evn-v{ margin:0 0 4px; font-size:14px; font-weight:700; color:var(--ice); }
   .pkb-more{ display:block; width:100%; min-height:44px; margin:0; padding:10px; border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--ice); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
   .pkb-ov{ position:fixed; inset:0; z-index:70; display:flex; justify-content:center; align-items:stretch; background:rgba(3,7,13,.62); }
   .pkb-ov[hidden]{ display:none; }
@@ -6918,6 +7044,14 @@ const T = {
   scan_tab_other: { en: "Other" },
   scan_tab_speed: { en: "Speedup" },
   scan_tab_gear: { en: "Gear" },
+  scan_tab_lab: { en: "Research Lab" },
+  scan_lab: { en: "Research Lab screen" },
+  scan_lab_hint: { en: "Reads Weekly Super Refinements (and the Refined FC / Fire Crystal at the top)." },
+  scan_lab_title: { en: "Research Lab" },
+  scan_lab_weekly: { en: "Weekly super refinements" },
+  scan_lab_note: { en: "Saved to the Research Lab (\"Game says\" for this week), not to the Backpack." },
+  scan_lab_items: { en: "Items" },
+  scan_lab_unread: { en: "Research Lab screen: couldn't read Weekly Super Refinements. Try a sharper screenshot." },
   scan_rounded: { en: "Summary numbers are rounded by the game." },
   scan_speed_summary: { en: "Speedup totals from the Summary aren't used. Add the Backpack Speedup tab instead." },
   scan_other_items: { en: "A Backpack screenshot had no items the page knows yet." },
@@ -7146,6 +7280,8 @@ const T = {
   refine_summed_desc: { en: "Summed across all 15 pets, based on what you've typed in." },
   tier_suffix: { en: "tier" },
   max_button: { en: "Max" },
+  rl_lab_btn: { en: "Lab" },
+  rl_lab_go: { en: "Open the Research Lab (Refined FC)" },
   footer_disclaimer: {
     en: "WOS RST is an unofficial fan-made tool and is not affiliated with, endorsed by, or connected to Century Games. Whiteout Survival and all related names, artwork, icons and game data are trademarks and copyrights of Century Games and are used here for informational purposes only. Values are community estimates and may differ from the game.",
   },
@@ -7750,7 +7886,7 @@ const T = {
   rl_own_weekly: { en: "Or set your own weekly FC" },
   rl_own_line: { en: "Or your own:" },
   rl_own_set: { en: "Set my own FC" },
-  rl_own_title: { en: "Your own weekly FC" },
+  rl_own_title: { en: "Your own plan" },
   rl_own_use: { en: "Use {n} FC" },
   rl_own_need: { en: "Need {n} FC a week to make {d} ({p})." },
   rl_own_none: { en: "Even the fastest speed misses {d}." },
@@ -7763,7 +7899,6 @@ const T = {
   rl_first_half: { en: "first one half price" },
   rl_one_enough: { en: "one a day is enough" },
   rl_resets: { en: "week resets Monday" },
-  rl_done_day: { en: "Done" },
   rl_rfc_week_rand: { en: "Refined FC a week (random per try)" },
   rl_day: { en: "day" },
   rl_open: { en: "open" },
@@ -7787,6 +7922,80 @@ const T = {
   rl_week_def: { en: "A week = that tier once a day, with the tiers under it done on Monday to open it. Tap a row for its chances and the 20-tries numbers." },
   rl_rules_h: { en: "Lab rules" },
   rl_rfc: { en: "Refined FC" },
+  rl_by_fc: { en: "By FC amount" },
+  rl_by_tier: { en: "By tier" },
+  rl_tier_use: { en: "Highest tier to use" },
+  rl_done_date: { en: "done date" },
+  rl_tier_note: { en: "First try a day is half price. Lower tiers: {n} each on Monday to unlock." },
+  rl_tier_note1: { en: "First try a day is half price." },
+  rl_rfc_a_week: { en: "≈ {n} Refined FC a week" },
+  rl_before_d: { en: "before {d}" },
+  rl_after_d: { en: "after {d}" },
+  rl_use_daily: { en: "Use {t} daily" },
+  rl_super: { en: "Super refinements" },
+  rl_plan_lbl: { en: "plan" },
+  rl_game_lbl: { en: "game" },
+  rl_so_far: { en: "this week so far" },
+  rl_so_far_game: { en: "this week (game)" },
+  rl_left_today: { en: "{n} left today" },
+  rl_by_sun: { en: "{n} by Sun" },
+  rl_plan_expected: { en: "plan expected {n} by today" },
+  rl_resets_in: { en: "Resets Mon 00:00 UTC · in {n} days" },
+  rl_resets_in1: { en: "Resets Mon 00:00 UTC · in 1 day" },
+  rl_game_says: { en: "Game says" },
+  rl_game_title: { en: "What the game shows" },
+  rl_game_weekly: { en: "Weekly super refinements" },
+  rl_game_hint: { en: "Type the weekly number from the game's Research Lab. Only this week's list below changes; your weekly plan stays the same." },
+  rl_upd_today: { en: "updated today" },
+  rl_upd_day: { en: "updated {d}" },
+  rl_counted_from: { en: "{g} on {d} + plan" },
+  rl_assumed_note: { en: "Counted from {d}, following your plan. Update it from the game to be exact." },
+  rl_game_behind: { en: "Game shows {g}, plan expects {p} — plan updated for the rest of the week." },
+  rl_game_ahead: { en: "Game shows {g}, plan expects {p} — you're ahead, the rest of the week needs fewer tries." },
+  rl_undo: { en: "Undo" },
+  rl_done_today: { en: "Done for today" },
+  rl_catch_up: { en: "catches up" },
+  rl_half_full: { en: "{h} half price + {f} full" },
+  rl_fewer: { en: "fewer tries, you're ahead" },
+  rl_a_day: { en: "a day" },
+  rl_catch_fc: { en: "+{n} FC this week to catch up" },
+  rl_ahead_fc: { en: "{n} FC less this week" },
+  rl_wk_hide: { en: "Hide" },
+  rl_wk_plan_today: { en: "plan {n} by today" },
+  rl_wk_behind: { en: "behind {n}" },
+  rl_wk_ahead: { en: "ahead {n}" },
+  rl_wk_game_n: { en: "Game says {n}" },
+  rl_wk_today: { en: "Today: {x}" },
+  rl_wk_catch: { en: "+{n} to catch up by Sun" },
+  rl_wk_override: { en: "This week: {t} · back to {p} Monday" },
+  rl_check: { en: "Check" },
+  rl_ck_head: { en: "Check · by {d}" },
+  rl_ck_nothing: { en: "Nothing to refine" },
+  rl_ck_nothing_s: { en: "your Backpack covers it" },
+  rl_ck_enough: { en: "{t} is enough this week" },
+  rl_ck_right: { en: "{t} is right" },
+  rl_ck_push: { en: "Push {t} this week" },
+  rl_ck_even: { en: "Even {t} daily ends {d}" },
+  rl_ck_still: { en: "Still needed" },
+  rl_ck_in_bp: { en: "in Backpack" },
+  rl_ck_wks_left: { en: "{n} weeks left" },
+  rl_ck_wk_left: { en: "1 week left" },
+  rl_ck_pick: { en: "Your pick: done" },
+  rl_ck_daily: { en: "daily: done" },
+  rl_ck_early: { en: "{n} weeks early" },
+  rl_ck_early1: { en: "1 week early" },
+  rl_ck_late: { en: "{n} weeks late" },
+  rl_ck_late1: { en: "1 week late" },
+  rl_ck_less: { en: "{n} FC a week less" },
+  rl_ck_more: { en: "+{n} FC a week" },
+  rl_ck_would: { en: "would be" },
+  rl_ck_fastest: { en: "Fastest (every T5 try): done" },
+  rl_ck_see_fast: { en: "See Fastest ›" },
+  rl_ck_use_wk: { en: "Use {t} this week ›" },
+  rl_ck_use: { en: "Use {t} ›" },
+  rl_ck_optional: { en: "Optional · this week only" },
+  rl_ck_using: { en: "✓ Using {t} this week" },
+  rl_ck_never: { en: "in 5+ years" },
   packs_filter_all: { en: "All" },
   packs_filter_none: { en: "Not assigned" },
   pack_no_date: { en: "No target date" },
@@ -7873,6 +8082,11 @@ const T = {
   pack_copy_suffix: { en: "copy" },
   pk_visitor_date: { en: "Visitors can set their own date" },
   pk_visitor_date_desc: { en: "For packs whose date differs by state (e.g. New Gen Heroes). Visitors only change the date; everything else stays yours." },
+  pk_date_with: { en: "Same dates as" },
+  pk_date_with_desc: { en: "Two tables of one event: this pack comes on that pack's days. Only the dates are shared." },
+  pk_date_with_none: { en: "— (its own dates)" },
+  pk_date_with_missing: { en: "(pack not found: own dates)" },
+  pk_date_follows: { en: "Follows {pack}: comes back and next date are set there. \"Lasts\" stays this pack's own." },
   pk_visitor_start: { en: "Visitors can set when they start buying" },
   pk_visitor_start_desc: { en: "For cards that begin whenever the player first buys them, not on a fixed week." },
   mp_title: { en: "My packs" },
@@ -8051,6 +8265,10 @@ const T = {
   hs_desc: { en: "Tap a star to set the hero's stars (tap the last lit star to go one down). Each star gives a fifth of the skill's max." },
   bp_scan_shots: { en: "Scan screenshots" },
   bp_last_updated: { en: "Last updated {when}" },
+  bp_lab_title: { en: "Research Lab" },
+  bp_lab_week: { en: "this week" },
+  bp_lab_super: { en: "super refinements this week" },
+  bp_lab_edit: { en: "Edit in Lab" },
   bp_ago_today: { en: "today" },
   bp_ago_yesterday: { en: "yesterday" },
   bp_ago_days: { en: "{n} days ago" },
@@ -8254,6 +8472,15 @@ const T = {
   pkb_counted_some: { en: "{n} of {m} counted in Budgets" },
   pkb_how: { en: "How it's bought" },
   pkb_no_match: { en: "No packs match your search." },
+  pkb_ev_same: { en: "same dates" },
+  pkb_tiers: { en: "{n} tiers" },
+  pkb_ev_part: { en: "Part of {name}" },
+  pkb_ev_from: { en: "Its dates come from that pack" },
+  pkb_ev_lasts: { en: "Lasts {n} days" },
+  pkb_ev_with: { en: "Packs with this event" },
+  pkb_ev_name: { en: "Event name" },
+  pkb_ev_name_hint: { en: "Shown on the event card; the packs show the rest of their names." },
+  pkb_ev_move: { en: "Change this pack's dates and they move too." },
   pk_active_label: { en: "Reward days left" },
   pk_active_hint: { en: "on cards you already bought" },
   pk_days_unit: { en: "days" },
@@ -9176,10 +9403,15 @@ function mmGroupBtns(g) {
 }
 function renderMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay");
-  const cards = mmVisibleGroups().map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
+  // Admin = a "⚙ Admin" button in the Menu header, not a card (owner picked C, 6 Nov 2026).
+  const groups = mmVisibleGroups();
+  const admG = groups.find((g) => g.dataset.group === "Admin");
+  const admBtn = admG && mmGroupBtns(admG).find((b) => b.dataset.tab === "adminpage");
+  const cards = groups.filter((g) => g !== admG || !admBtn).map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
+      ${admBtn ? `<button type="button" class="mm-adm${TAB === "adminpage" ? " on" : ""}" data-mmadmin>&#9881; ${esc(navLabel("adminpage"))}</button>` : ""}
       <button class="mm-close" type="button" id="mmCloseBtn" aria-label="${esc(t("mm_close"))}" title="${esc(t("mm_close"))}">&#10005;</button>
     </div>${cards}
     <div class="mm-style">
@@ -9188,6 +9420,8 @@ function renderMobileMenu() {
       <button type="button" class="btn small" data-mstyle="${MENU_STYLE === "bar" ? "hub" : "bar"}">${esc(t(MENU_STYLE === "bar" ? "ms_to_hub" : "ms_to_bar"))}</button>
     </div>`;
   overlay.querySelector("#mmCloseBtn").addEventListener("click", closeMobileMenu);
+  const admEl = overlay.querySelector("[data-mmadmin]");
+  if (admEl) admEl.addEventListener("click", () => { closeMobileMenu(); goToTab("adminpage"); });
   overlay.querySelector("#mmStyleSel").addEventListener("change", (e) => setMenuStyle(e.target.value));
 }
 
@@ -9279,6 +9513,7 @@ function mbSections() {
     if (plan) plan.btns = plan.btns.concat(timeline);
     else out.plan.push({ name: "Planning", label: navLabel("statetimeline"), btns: [timeline] });
   }
+  for (const k of Object.keys(out)) out[k].sort((x, y) => (y.name === "Admin") - (x.name === "Admin")); // Admin first
   return out;
 }
 function mbSecOfTab(tab) {
@@ -11771,7 +12006,7 @@ function canDoSet(key, plan, tracks, unit, opts) {
     if (!b) {
       b = document.createElement("button");
       b.type = "button"; b.className = "cando-b"; b.dataset.cando = key;
-      const max = head.querySelector(".plx-maxbtn");
+      const max = head.querySelector(".plx-labbtn") || head.querySelector(".plx-maxbtn");
       if (max) head.insertBefore(b, max); else head.appendChild(b);
       head.classList.add("has-cando");
     }
@@ -12204,7 +12439,7 @@ async function packSeedTemplates(tables) {
     try {
       const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
       const l = JSON.parse(JSON.stringify(PACK_LINKS[String(from.id)] || { priceCol: 0, cols: {} }));
-      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors;
+      delete l.linkSet; delete l.visitorDate; delete l.hideVisitors; delete l.dateWith; delete l.eventName;
       PACK_LINKS[String(saved.id)] = { ...l, group: PACK_TEMPLATE_GROUP, pages: [] };
       made++;
     } catch (e) { /* skip this one */ }
@@ -12494,7 +12729,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     }
     if (MY_PACKS.length >= packMyPacksLimit()) { MP_NEW = null; redraw(); return; }
     const link = built.link;
-    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors;
+    delete link.group; delete link.linkSet; delete link.visitorDate; delete link.hideVisitors; delete link.dateWith; delete link.eventName;
     const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title, columns: built.columns, rows: built.rows.map((r) => ({ cells: r.cells })), link: { ...link, pages } };
     MY_PACKS.push(mp);
     MP_NEW = null;
@@ -12544,7 +12779,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     const tb = templates.find((x) => String(x.id) === b.dataset.mpdup);
     if (!tb) return;
     const src = JSON.parse(JSON.stringify((PACK_LINKS || {})[String(tb.id)] || {}));
-    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors;
+    delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName;
     const mp = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: tb.title, title: defName(tb), columns: tb.columns.slice(), rows: tb.rows.map((r) => ({ cells: (r.cells || []).slice() })), link: { ...src, pages: [], cols: {} } };
     MY_PACKS.push(mp);
     MY_PACKS_OPEN.add(mp.id);
@@ -12772,14 +13007,31 @@ function renderMyPackDates(el, tables) {
   // Dreamscape Memory) does not (owner, 19 Oct 2026: Fishing Event was hidden
   // inside the Dreamscape Memory row).
   const setKey = (id) => packLinkSetOf(id) || "";
+  // "Same dates as" (owner, 6 Nov 2026): a pack that follows another pack's
+  // dates (e.g. Megeventure Boost → Mergeventure) is one row with the leader,
+  // shown under the leader's name only, one date box (it changes the leader).
+  const dateLead = (id) => packLinkForBase(id).dateWith || String(id);
+  const rowKey = (id) => { const ld = dateLead(id); return setKey(ld) ? "s:" + setKey(ld) : "d:" + ld; };
+  const byId = new Map(tables.map((x) => [String(x.id), x]));
   list.forEach((tb) => {
-    const g = setKey(tb.id);
-    const lead = g ? rows.find((x) => setKey(x.id) === g) : null;
-    if (lead) { together.set(String(lead.id), (together.get(String(lead.id)) || 1) + 1); return; }
-    rows.push(tb);
+    const k = rowKey(tb.id);
+    const at = rows.findIndex((x) => rowKey(x.id) === k);
+    const isSet = k.startsWith("s:") && !!setKey(tb.id) && setKey(tb.id) === k.slice(2);
+    if (at < 0) {
+      // The row stands for the leader (when it is one of the tables).
+      const ld = dateLead(tb.id), lt = byId.get(ld);
+      rows.push(lt && !setKey(ld) ? lt : tb);
+      return;
+    }
+    const lead = rows[at];
+    if (isSet) together.set(String(lead.id), (together.get(String(lead.id)) || 1) + 1);
   });
-  const rowTitle = (tb) => { const n = together.get(String(tb.id)); return n ? `<b>${esc(String(tb.title || "").split(":")[0].trim())}</b> <span class="meta">(${esc(t("pk_tables_n").replace("{n}", n))})</span>` : `<b>${esc(tb.title || "")}</b>`; };
-  const anyMine = list.some((tb) => MY_PACK_DATES[String(tb.id)]);
+  const rowTitle = (tb) => { const n = together.get(String(tb.id));
+    // An event (a pack others follow): its event name, see packEventName.
+    const ld = byId.get(dateLead(tb.id)) || tb;
+    if (packEventFollowers(ld, tables).length) return `<b>&#128279; ${esc(packEventName(ld, tables))}</b>${n ? ` <span class="meta">(${esc(t("pk_tables_n").replace("{n}", n))})</span>` : ""}`;
+    return n ? `<b>${esc(String(tb.title || "").split(":")[0].trim())}</b> <span class="meta">(${esc(t("pk_tables_n").replace("{n}", n))})</span>` : `<b>${esc(tb.title || "")}</b>`; };
+  const anyMine = list.some((tb) => MY_PACK_DATES[String(tb.id)] || MY_PACK_DATES[dateLead(tb.id)]);
   el.innerHTML = `<details class="panel pkd-box" data-mydatesbox ${MY_DATES_PREVIEW_OPEN ? "open" : ""}>
     <summary class="pkd-sum"><span class="pkd-t"><span data-mydatesarrow>${MY_DATES_PREVIEW_OPEN ? "&#9662;" : "&#9656;"}</span> ${esc(t("pk_dates_title"))}${!ownerEdit && anyMine ? ` <span class="pkd-mine">${esc(t("pk_your_date"))}</span>` : ""}</span><span class="meta">${rows.length} ${esc(t("pk_preview_packs"))}</span></summary>
     <div class="meta pkd-desc">${esc(t(ownerEdit ? "pk_dates_owner_desc" : "pk_dates_desc"))}</div>
@@ -12815,10 +13067,12 @@ function renderMyPackDates(el, tables) {
     await saveCalcState("my_pack_dates", MY_PACK_DATES);
   };
   // Linked dated packs come together, so a new date moves every table of the set.
-  const partners = (id) => {
+  // A date-joined row changes its leader (the others follow it).
+  const partners = (id0) => {
+    const id = dateLead(id0);
     const g = setKey(id);
     if (!g) return [String(id)];
-    return list.filter((tb) => setKey(tb.id) === g).map((tb) => String(tb.id));
+    return list.filter((tb) => setKey(tb.id) === g && !packLinkForBase(tb.id).dateWith).map((tb) => String(tb.id));
   };
   el.querySelectorAll("[data-mydate]").forEach((inp) => inp.addEventListener("change", () => {
     const id0 = inp.dataset.mydate;
@@ -12836,7 +13090,7 @@ function renderMyPackDates(el, tables) {
   }));
   const all = el.querySelector("[data-mydateresetall]");
   // Only the packs in this box (the weekly cards have their own Reset all).
-  if (all) all.addEventListener("click", () => { list.forEach((tb) => { delete MY_PACK_DATES[String(tb.id)]; }); save(); });
+  if (all) all.addEventListener("click", () => { list.forEach((tb) => { delete MY_PACK_DATES[String(tb.id)]; delete MY_PACK_DATES[dateLead(tb.id)]; }); save(); });
 }
 // Packs page: open a pack's settings (its editor is built on first Edit).
 function packOpenSettingsHere(id) {
@@ -15679,6 +15933,8 @@ async function renderPacksPage() {
     const more = e.target.closest("[data-pkbmore]");
     if (more) { PKB_MORE.add(more.dataset.pkbmore); renderAll(); return; }
     if (e.target.closest("[data-pkbclose]") || (e.target.matches && e.target.matches("[data-pkbsheet]"))) { pkbClose(false); return; }
+    const go = e.target.closest("[data-pkbgo]");
+    if (go) { pkbOpen(go.dataset.pkbgo); return; }
     const row = e.target.closest("[data-pkrowid]");
     if (row) pkbOpen(row.dataset.pkrowid);
   });
@@ -16168,7 +16424,7 @@ async function renderPacksPage() {
       const nx = offs.find((o) => o > 0);
       if (nx != null) out.next = pkbFmtD(nx);
       const a = packParseDay(lk.resetDay);
-      if (a && win > 0 && win < 7 && r % 7 === 0) parts.push(win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`);
+      if (a && win > 0 && win < 7 && r % 7 === 0) { out.days = win === 1 ? pkbWd(a) : `${pkbWd(a)}–${pkbWd(new Date(a.getTime() + (win - 1) * 86400000))}`; parts.push(out.days); }
     }
     out.text = parts.filter(Boolean).join(" · ");
     return out;
@@ -16203,12 +16459,19 @@ async function renderPacksPage() {
     const n = pkColItem(tb, ci);
     return !!n && (n.toLowerCase().includes(q) || String(materialDisplayName(n) || "").toLowerCase().includes(q));
   });
-  function pkbRowHtml(tb, ti) {
+  const pkbEvKey = (tb) => `${packLinkFor(tb.id).dateWith || String(tb.id)}|${categoryOf(tb)}`;
+  // ev: "lead" / "follow" = a slim row inside an event card (B, owner 6 Nov
+  // 2026): its dates are said once in the card's header, so the row shows how
+  // often (leader) or "same dates" (follower) and its number of tiers.
+  function pkbRowHtml(tb, ti, ev, evNames) {
     const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
-    return `<div class="pkb-row${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
+    const tiers = ev ? tb.rows.filter((r) => String(r.cells[lk.priceCol || 0] ?? "").trim() !== "").length : 0;
+    const sub = ev === "follow" ? t("pkb_ev_same") : ev === "lead" ? pkbResetText(lk.reset) : w.text;
+    const right = ev ? (tiers > 1 ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
+    return `<div class="pkb-row${ev ? " pkb-evr" : ""}${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
       <span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
-      <span class="pkb-m"><b>${esc(tb.title)}</b>${w.text ? `<small>${esc(w.text)}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
-      <span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : ""}</span>
+      <span class="pkb-m"><b${ev ? ` title="${esc(tb.title)}"` : ""}>${esc(ev ? packEventShort(tb.title, evNames) : tb.title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
+      <span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>
       ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
     </div>`;
   }
@@ -16239,9 +16502,13 @@ async function renderPacksPage() {
     const q = PKB_QUERY.trim().toLowerCase();
     const order = categoryOrder();
     const groups = order.map((g) => ({ key: g, label: g, list: [] })), none = { key: "", label: t("packs_filter_none"), list: [] };
+    // "Same dates as" events: a pack and its followers in the same category
+    // (pkbEvKey). Searching shows the whole event when any of them matches.
+    const evHit = new Set();
+    if (q) tables.forEach((tb) => { if (pkbMatch(tb, q)) evHit.add(pkbEvKey(tb)); });
     tables.forEach((tb, ti) => {
       if (isTpl(tb) && !tplOpen()) return;
-      if (!pkbMatch(tb, q)) return;
+      if (!pkbMatch(tb, q) && !evHit.has(pkbEvKey(tb))) return;
       const g = categoryOf(tb);
       (g && groups.find((x) => x.key === g) || none).list.push({ tb, ti });
     });
@@ -16252,17 +16519,38 @@ async function renderPacksPage() {
     // game's tiers first (Classic, Sublime, Exquisite), then A to Z with numbers
     // in number order (Lv 2 before Lv 10).
     pkbCats.forEach((g) => g.list.sort((a, b) => pkbOrder(a.tb.title, b.tb.title)));
+    // Event cards (B, owner 6 Nov 2026): a leader with followers in the same
+    // fold is one unit where the leader sorts; followers aren't listed apart.
+    pkbCats.forEach((g) => {
+      const ids = new Set(g.list.map((x) => String(x.tb.id))), fol = new Map(), taken = new Set();
+      g.list.forEach((x) => {
+        const lead = packLinkFor(x.tb.id).dateWith;
+        if (lead && ids.has(String(lead))) { if (!fol.has(String(lead))) fol.set(String(lead), []); fol.get(String(lead)).push(x); taken.add(String(x.tb.id)); }
+      });
+      g.units = g.list.filter((x) => !taken.has(String(x.tb.id))).map((x) => ({ lead: x, fol: fol.get(String(x.tb.id)) || [] }));
+    });
+    const unitHtml = (u) => {
+      if (!u.fol.length) return pkbRowHtml(u.lead.tb, u.lead.ti);
+      const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id));
+      const evName = packEventName(lt, tables), evNames = [evName, packEventDefault(lt, packEventFollowers(lt, tables))];
+      const st = w.on ? `<span class="on">&#9679; ${esc(t("pkb_on_now"))}</span>` : w.next ? `<span>${esc(t("pkb_next").replace("{date}", w.next))}</span>` : "";
+      return `<div class="pkb-ev" data-pkbev="${esc(String(lt.id))}">
+        <div class="pkb-ev-h"><span class="pkb-ev-t"><b>&#128279; ${esc(evName)}</b>${w.days || w.text ? `<small> · ${esc(w.days || w.text)}</small>` : ""}</span>${st ? `<span class="pkb-ev-s">${st}</span>` : ""}</div>
+        ${pkbRowHtml(lt, u.lead.ti, "lead", evNames)}${u.fol.map((x) => pkbRowHtml(x.tb, x.ti, "follow", evNames)).join("")}
+      </div>`;
+    };
     const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
     const html = pkbCats.map((g) => {
       const open = !!q || g.key === openKey;
-      const shown = q || PKB_MORE.has(g.key) ? g.list.length : Math.min(4, g.list.length);
+      const shownU = q || PKB_MORE.has(g.key) ? g.units.length : Math.min(4, g.units.length);
+      const shown = g.units.slice(0, shownU).reduce((n, u) => n + 1 + u.fol.length, 0);
       return `<section class="pkb-cat${open ? " open" : ""}" data-pkbcat="${esc(g.key)}">
         <button type="button" class="pkb-cat-h" data-pkbfold="${esc(g.key)}" aria-expanded="${open}">
           <span class="pkb-n">${g.list.length}</span>
           <span class="pkb-cat-t"><b>${esc(g.label)}</b><small data-pkbcatsub>${esc(pkbCatSub(g.list, g.key))}</small></span>
           <span class="pkb-caret" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
         </button>
-        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${g.list.slice(0, shown).map(({ tb, ti }) => pkbRowHtml(tb, ti)).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
+        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${g.units.slice(0, shownU).map(unitHtml).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
       </section>`;
     }).join("");
     const openId = [...PACKS_OPEN][0];
@@ -16303,6 +16591,12 @@ async function renderPacksPage() {
       if (line) bar.insertAdjacentHTML("beforeend", `<div class="pkb-when">${esc(line)}</div>`);
       const hint = body.querySelector("[data-pack-visitor-hint]");
       if (hint) bar.after(hint);
+      // D (owner, 6 Nov 2026): a follower says which pack its dates come from.
+      const leadTb = lk.dateWith ? tables.find((x) => String(x.id) === String(lk.dateWith)) : null;
+      if (leadTb) {
+        const sub = [t("pkb_ev_from"), lk.window > 0 ? t("pkb_ev_lasts").replace("{n}", lk.window) : ""].filter(Boolean).join(" · ");
+        bar.insertAdjacentHTML("afterend", `<button type="button" class="pkb-evb" data-pkbgo="${esc(String(leadTb.id))}"><span class="pkb-ic">${pkbIcon(leadTb, packLinkFor(leadTb.id)) || "&#127873;"}</span><span class="pkb-evb-t"><b>&#128279; ${esc(t("pkb_ev_part").replace("{name}", packEventName(leadTb, tables)))}</b><small>${esc(sub)}</small></span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`);
+      }
       if (!IS_OWNER) {
         const edits = packMyEdits()[String(tb.id)];
         if (edits && Object.keys(edits).length) {
@@ -16351,7 +16645,29 @@ async function renderPacksPage() {
     const usedFor = packUsedForNames(tb);
     const nextHtml = stepCards && (w.on || w.next) ? `<div class="pkb-budrow pkc-next"><span>${w.on ? `<b>${esc(t("pkb_on_now"))}</b>` : `${esc(t("pkc_next_on"))} <b>${esc(w.next)}</b>`}</span><button type="button" class="pkc-link" data-pkcnext>${esc(t("pkc_change"))} &#8250;</button></div>` : "";
     const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${nextHtml}${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
-    if (settings) { settings.insertAdjacentHTML("beforebegin", budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", budHtml);
+    // D: the leader lists the packs whose dates follow it.
+    const fols = lk.dateWith ? [] : tables.filter((x) => String(x.id) !== String(tb.id) && String(packLinkFor(x.id).dateWith || "") === String(tb.id)).sort((a, b) => pkbOrder(a.title, b.title));
+    const evDef = fols.length ? packEventDefault(tb, packEventFollowers(tb, tables)) : "", evName = fols.length ? packEventName(tb, tables) : "", evNames = [evName, evDef];
+    const evNameHtml = !fols.length ? "" : IS_OWNER
+      ? `<label class="pkb-evn"><span>${esc(t("pkb_ev_name"))}</span><input type="text" class="keep-w" data-pkbevname="${esc(String(tb.id))}" value="${esc(String(((PACK_LINKS || {})[String(tb.id)] || {}).eventName || ""))}" placeholder="${esc(evDef)}" maxlength="80" autocomplete="off" /></label><p class="pkb-evl-n">${esc(t("pkb_ev_name_hint"))}</p>`
+      : `<div class="pkb-evn-v">&#128279; ${esc(evName)}</div>`;
+    const evHtml = fols.length ? `<div class="pkb-sec pkb-evl"><span class="pkb-k">${esc(t("pkb_ev_with"))}</span>${evNameHtml}${fols.map((x) => { const xl = packLinkFor(x.id); return `<button type="button" class="pkb-evi" data-pkbgo="${esc(String(x.id))}" title="${esc(x.title)}"><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><b>${esc(packEventShort(x.title, evNames))}</b><span class="pkb-evi-p">${esc(pkbPrice(x, xl))}</span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`; }).join("")}<p class="pkb-evl-n">${esc(t("pkb_ev_move"))}</p></div>` : "";
+    if (settings) { settings.insertAdjacentHTML("beforebegin", evHtml + budHtml); settings.open = true; } else body.insertAdjacentHTML("beforeend", evHtml + budHtml);
+    const evIn = body.querySelector("[data-pkbevname]");
+    if (evIn) {
+      evIn.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); evIn.blur(); } });
+      evIn.addEventListener("change", () => {
+        const id = evIn.dataset.pkbevname, v = evIn.value.trim().replace(/\s+/g, " ");
+        PACK_LINKS[id] = PACK_LINKS[id] || { pages: [], priceCol: 0, cols: {} };
+        if (!v || v === evIn.placeholder) delete PACK_LINKS[id].eventName; else PACK_LINKS[id].eventName = v;
+        evIn.value = PACK_LINKS[id].eventName || "";
+        // the rows in this box follow at once; the list behind redraws on close
+        const names = [PACK_LINKS[id].eventName || evIn.placeholder, evIn.placeholder];
+        body.querySelectorAll(".pkb-evi").forEach((b) => { const x = b.querySelector("b"); if (x) x.textContent = packEventShort(b.title, names); });
+        renderMyPackDates(document.getElementById("packsMyDates"), tables);
+        savePackLinks();
+      });
+    }
     const nx = body.querySelector("[data-pkcnext]");
     if (nx) nx.addEventListener("click", () => { const sc = body.querySelector("[data-packreset]"); if (sc) { sc.scrollIntoView({ behavior: "smooth", block: "center" }); sc.focus({ preventScroll: true }); } });
     const seg = body.querySelector(".pks-seg");
@@ -16530,8 +16846,38 @@ async function renderPacksPage() {
         <summary class="pks-sum">${esc(packLinkSummaryText(packGroupsChecked(link.pages)))}</summary>
       </details>`;
   }
+  // "Same dates as" (owner only): the leader this pack follows, if it takes effect.
+  function packDateLeaderShown(id) { return packLinkForBase(id).dateWith || ""; }
+  // Packs this one can follow: other repeating packs (not cards, triggered,
+  // New Gen, templates or "My packs"), and not one that already follows this one.
+  function packDateWithChoices(tb) {
+    const me = String(tb.id);
+    return tables.filter((x) => {
+      const id = String(x.id);
+      if (id === me || id.startsWith("my-") || id.startsWith("ng-")) return false;
+      const l = packLinkForBase(id, true);
+      if (l.template || l.trigger || l.newGen || l.mine || typeof l.reset !== "number" || !(l.reset > 0) || l.reset >= PACK_ONE_TIME_DAYS) return false;
+      return packDateLeader(id) !== me;
+    });
+  }
+  function packDateWithRowHtml(tb, preset) {
+    const raw = ((PACK_LINKS || {})[String(tb.id)] || {}).dateWith || "";
+    if (preset === "stack" || preset === "trigger") return raw ? `<input type="hidden" data-pkdatewith value="${esc(raw)}" />` : "";
+    const opts = packDateWithChoices(tb);
+    const lead = packDateLeaderShown(tb.id);
+    const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
+    const has = opts.some((x) => String(x.id) === raw);
+    return `<div class="bset-row pkdw-row"><span class="bset-l">${esc(t("pk_date_with"))}<small>${esc(t("pk_date_with_desc"))}</small></span><span class="bset-c"><select data-pkdatewith class="keep-w pkdw-sel">
+        <option value="">${esc(t("pk_date_with_none"))}</option>
+        ${raw && !has ? `<option value="${esc(raw)}" selected>${esc(t("pk_date_with_missing"))}</option>` : ""}
+        ${opts.map((x) => `<option value="${esc(String(x.id))}" ${String(x.id) === raw ? "selected" : ""}>${esc(x.title || "")}</option>`).join("")}
+      </select></span></div>
+      <div class="pkdw-note" data-pkdwnote ${lead ? "" : "hidden"}>&#128279; ${esc(t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""))}</div>`;
+  }
   function packLinkEditorFullHtml(tb) {
-    const link = packLinkFor(tb.id);
+    // The pack's own settings (a pack that follows another's dates still
+    // shows and saves its own reset here; see packDateLeader).
+    const link = packLinkFor(tb.id, true);
     const resOpts = (selected) =>
       `<option value="">${esc(t("pack_col_unused"))}</option>` +
       packResourceChoices(selected).map((n) => `<option value="${esc(n)}" ${n === selected ? "selected" : ""}>${esc(materialDisplayName(n))}</option>`).join("");
@@ -16594,7 +16940,8 @@ async function renderPacksPage() {
           return `
         <div class="bset-sec"><b>${esc(t("pk_sec_schedule"))} ${info("reset")}</b></div>
         ${infoText("reset", esc(t("pack_reset_desc")))}
-        <div class="bset-row"><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
+        ${IS_OWNER ? packDateWithRowHtml(tb, preset) : ""}
+        <div class="bset-row" data-pkresetrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l">${esc(t("pack_reset_every"))}</span><span class="bset-c">
             <select data-packreset>
               ${preset === "unlimited" ? `<option value="unlimited" selected>${esc(t("pack_reset_unlimited"))}</option>` : ""}
               ${preset === "once" ? `<option value="once" selected>${esc(t("pack_reset_once"))}</option>` : ""}
@@ -16608,7 +16955,7 @@ async function renderPacksPage() {
             <input type="number" min="1" step="1" data-packresetdays value="${typeof r === "number" ? r : 7}" style="width:56px; font-size:12px; padding:3px 6px; ${preset === "custom" ? "" : "display:none;"}" />
             <span class="meta" data-packresetdayslabel style="font-size:11px; ${preset === "custom" ? "" : "display:none;"}">${esc(t("pack_days_short_long"))}</span>
         </span></div>
-        <div class="bset-row pks-opt"><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
+        <div class="bset-row pks-opt" data-pkanchorrow ${packDateLeaderShown(tb.id) ? "hidden" : ""}><span class="bset-l" data-packanchorlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_next_on"))}</span><span class="bset-c"><input type="date" data-packanchor value="${esc(link.resetDay || "")}" style="${typeof r === "number" ? "" : "display:none;"}" /></span></div>
         <div class="bset-row pks-opt pks-nw"><span class="bset-l" data-packwindowlabel style="${typeof r === "number" ? "" : "display:none;"}">${esc(cap(t("pack_lasts_label")))}<small>${esc(t("pack_lasts_hint"))}</small></span><span class="bset-c"><input type="number" min="0" step="1" class="keep-w" data-packwindow value="${link.window || ""}" placeholder="0" title="${esc(t("pack_lasts_hint"))}" style="width:64px; ${typeof r === "number" ? "" : "display:none;"}" /><span class="meta" data-packwindowlabel2 style="${typeof r === "number" ? "" : "display:none;"}">${esc(t("pack_lasts_days"))}</span></span></div>
         <label class="bset-row" style="${typeof r === "number" && !link.sequential && link.buys > 1 ? "" : "display:none;"}" data-packbuyswrap>
             <span class="bset-l">${esc(t("pack_buys_per_reset"))}</span>
@@ -16872,6 +17219,25 @@ async function renderPacksPage() {
       const windowIn = box.querySelector("[data-packwindow]");
       if (windowIn) windowIn.addEventListener("change", saveReset);
       if (stackCapIn) stackCapIn.addEventListener("change", saveReset);
+      // "Same dates as": dates only (not a linked set), so only this field changes.
+      const dwSel = box.querySelector("select[data-pkdatewith]");
+      if (dwSel) dwSel.addEventListener("change", async () => {
+        const l = current();
+        if (dwSel.value && dwSel.value !== String(id)) l.dateWith = dwSel.value; else delete l.dateWith;
+        PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); PACK_TABLES_CACHE = null;
+        const lead = packDateLeaderShown(id);
+        const leadTb = lead ? tables.find((x) => String(x.id) === lead) : null;
+        [box.querySelector("[data-pkresetrow]"), box.querySelector("[data-pkanchorrow]")].forEach((el) => { if (el) el.hidden = !!lead; });
+        const note = box.querySelector("[data-pkdwnote]");
+        if (note) { note.hidden = !lead; note.textContent = "\u{1F517} " + t("pk_date_follows").replace("{pack}", leadTb ? leadTb.title || "" : ""); }
+        // The window's "when" line and the list row follow the new dates.
+        const lk = packLinkFor(id), w = pkbWhen(lk);
+        const panel = box.closest("[data-packtable]");
+        const when = panel && panel.querySelector(".pkb-when");
+        if (when) when.textContent = [w.text, w.on ? t("pkb_on_now") : w.next ? t("pkb_next").replace("{date}", w.next) : ""].filter(Boolean).join(" · ");
+        // (The list behind the window, with its event cards, is drawn again when the window closes.)
+        await savePackLinks();
+      });
       const ownStart = box.querySelector("[data-ownstart]"), ownActive = box.querySelector("[data-ownactive]");
       const saveOwn = async () => {
         const key = String(id);
@@ -17607,7 +17973,7 @@ let BP_TAB = "All";
 let BP_SEARCH = "";
 async function renderInventory() {
   const seq = RENDER_SEQ;
-  const [, saved, heroes, savedHeroes, rosterSaved, widgetsSaved] = await Promise.all([
+  const [, saved, heroes, savedHeroes, rosterSaved, widgetsSaved, labSaved] = await Promise.all([
     ensureSiteConfig(), loadCalcState("backpack"),
     // Same request (and kept copy) as the Dashboard's hero list.
     dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []),
@@ -17615,6 +17981,7 @@ async function renderInventory() {
     // The roster heroes' Gens are in the Widgets box by default.
     loadCalcState("dashboard_roster").catch(() => null),
     loadCalcState("backpack_widgets").catch(() => null),
+    RFC_LAB_STATE ? null : loadCalcState("rfc_lab").catch(() => null),
   ]);
   if (seq !== RENDER_SEQ) return;
   const bp = saved || {};
@@ -17736,12 +18103,29 @@ async function renderInventory() {
     el.innerHTML = `<span>${esc(t("bp_last_updated")).replace("{when}", `<b>${esc(when)}</b>`)} · ${esc(t("bp_items_n").replace("{n}", items.toLocaleString()))}</span>`
       + (chests > 0 ? `<button type="button" class="bp-chests" data-bpchests title="${esc(t("chest_open_note").replace("{tag}", t("chest_open_tag")))}">&#127873; ${esc(t("bp_chests_n").replace("{n}", chests.toLocaleString()))}</button>` : "");
   };
+  // Research Lab row (owner picked B, 6 Nov 2026): this week's super
+  // refinements — the game's count when typed this week, else the plan's
+  // tries by today — and "Edit in Lab ›", which opens the Research Lab with
+  // its "Game says" window. Only for people who see that page, lab open.
+  const labRowHtml = () => {
+    if (!IS_OWNER && isHiddenFromVisitors("page", "rfclab")) return "";
+    const ls = RFC_LAB_STATE || (labSaved ? { top: labSaved.top, attempts: labSaved.attempts, budget: Number(labSaved.budget) || 0, mode: labSaved.mode === "budget" ? "budget" : "schedule", labOpen: labSaved.labOpen, game: labSaved.game, weekPick: labSaved.weekPick } : {});
+    if (!rfcLabOn(ls)) return "";
+    let w;
+    try { w = rfcLabWeek(ls); } catch (e) { w = null; }
+    const val = !w ? "" : w.game
+      ? `<b>${esc((Number(w.game.count) || 0).toLocaleString())}</b> ${esc(t("bp_lab_week"))}${w.game.fromTxt ? ` <span class="bp-lab-m">${esc(w.game.fromTxt)}</span>` : w.game.updTxt ? ` · <span class="bp-lab-m">${esc(w.game.updTxt)}</span>` : ""}`
+      : esc(t("rl_wk_plan_today").replace("{n}", w.planSoFar.toLocaleString()));
+    const ic = materialIconSrc("Refined FC") || "icons/item_icon_100082.png";
+    return `<div class="bp-lab"><img src="${esc(ic)}" alt="" /><span class="bp-lab-t">${esc(t("bp_lab_title"))}${val ? ` · ${val}` : ` · ${esc(t("bp_lab_super"))}`}</span><button type="button" class="bp-lab-b" data-bplab>${esc(t("bp_lab_edit"))} ›</button></div>`;
+  };
   const drawAll = () => { drawGroups(); drawTop(); };
   content.innerHTML = `
     <div class="page-head"><div><h2>${esc(t("your_backpack"))}</h2><p class="desc">${esc(t("backpack_desc"))}</p></div></div>
     <div class="t12x-card bp-top">
       <button class="bp-scan-big" type="button" id="bpScan">&#128247; ${esc(t("bp_scan_shots"))}</button>
       <div class="bp-top-l" id="bpTopLine"></div>
+      ${labRowHtml()}
     </div>
     <div id="bpTabs"></div>
     <input id="bpSearch" placeholder="${esc(t("backpack_search"))}" value="${esc(BP_SEARCH)}" style="width:100%; margin:4px 0;" />
@@ -17754,6 +18138,8 @@ async function renderInventory() {
   });
   renderCategorySwitcher(document.getElementById("bpTabs"), tabs, BP_TAB, (c) => { BP_TAB = c; renderInventory(); }, tabCounts);
   drawAll();
+  const labBtn = content.querySelector("[data-bplab]");
+  if (labBtn) labBtn.addEventListener("click", () => { RFC_OPEN_GAME = true; goToTab("rfclab"); });
   // "N chests to open": show the first chance chest (All tab, no search), flashing.
   document.getElementById("bpTopLine").addEventListener("click", (e) => {
     if (!e.target.closest("[data-bpchests]")) return;
@@ -18672,8 +19058,76 @@ function scanGearOverlapTiles(prev, next) {
   return best;
 }
 
+// The game's Research Lab screen (owner, 6 Nov 2026): a dark red / orange
+// machine with two blue "Super Refine" buttons near the bottom. Reads the
+// "Weekly Super Refinements: N" line just above the buttons and, when they read
+// cleanly, the Refined FC / Fire Crystal amounts in the top bar. Returns null
+// when it isn't that screen (only the colours are checked before any reading).
+async function scanLabShot(worker, src) {
+  const k = Math.min(1, 300 / src.width), w = Math.round(src.width * k), h = Math.round(src.height * k);
+  if (w < 50 || h < 50) return null;
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data;
+  let red = 0, run = 0, btnTop = -1;
+  for (let y = 0; y < h; y++) {
+    let nb = 0;
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+      if (r > gr + 25 && r > b + 10 && r > 60) red++;
+      if (b > 200 && r < 140 && gr > 110 && b > r + 80) nb++;
+    }
+    // The button pair: several rows in a row that are a third bright blue, in the lower half.
+    if (y > h * 0.5 && nb > w * 0.3) { run++; if (run === 6 && btnTop < 0) btnTop = y - 5; } else run = 0;
+  }
+  if (red < w * h * 0.25 || btnTop < 0) return null;
+  // The line above the buttons.
+  const s = src.height / h, by = Math.round(btnTop * s), lh = Math.round(src.height * 0.06);
+  const y0 = Math.max(0, by - lh), lc = scanCanvas(src.width, by - y0);
+  lc.getContext("2d").drawImage(src, 0, y0, src.width, by - y0, 0, 0, src.width, by - y0);
+  const text = (await scanRead(worker, lc, { tessedit_pageseg_mode: "6" })).text;
+  if (!/super|weekly|refine/i.test(text)) return null;
+  const m = /refine\w*\s*[:;.,]?\s*(\d{1,3})\b/i.exec(text) || /weekly[^\d]*(\d{1,3})\b/i.exec(text);
+  const items = [];
+  // Top bar: the two white numbers (Refined FC, then Fire Crystal) right of centre.
+  const th = Math.round(src.height * 0.06), tw = src.width, tc = scanCanvas(tw, th), tg = tc.getContext("2d", { willReadFrequently: true });
+  tg.drawImage(src, 0, 0, tw, th, 0, 0, tw, th);
+  const td = tg.getImageData(0, 0, tw, th).data, cols = [];
+  for (let x = 0; x < tw; x++) {
+    let n = 0;
+    for (let y = 0; y < th; y++) { const i = (y * tw + x) * 4; if (Math.min(td[i], td[i + 1], td[i + 2]) > 200 && Math.max(td[i], td[i + 1], td[i + 2]) - Math.min(td[i], td[i + 1], td[i + 2]) < 40) n++; }
+    cols.push(n > 1);
+  }
+  const segs = [], gap = tw * 0.03;
+  cols.forEach((on, x) => {
+    if (!on || x < tw * 0.4) return;
+    const last = segs[segs.length - 1];
+    if (last && x - last[1] <= gap) last[1] = x; else segs.push([x, x]);
+  });
+  const nums = [];
+  for (const [a, b] of segs) {
+    if (b - a < tw * 0.008) continue;
+    const pad = Math.round(th * 0.25), x0 = Math.max(0, a - pad), x1 = Math.min(tw, b + pad + 1);
+    const nc = scanCanvas(x1 - x0, th); nc.getContext("2d").drawImage(tc, x0, 0, x1 - x0, th, 0, 0, x1 - x0, th);
+    const r = await scanRead(worker, nc, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789," });
+    const t = r.text.trim();
+    // Only a clean number ("7", "2,567") with a fair confidence counts; the
+    // Refined FC icon's light parts read as nothing and are passed over.
+    if (/^\d{1,3}(,\d{3})*$/.test(t) && r.conf >= 60) nums.push(Number(t.replace(/,/g, "")));
+    else if (t) nums.push(null);
+  }
+  // Exactly the two numbers, both clean: Refined FC first, then Fire Crystal.
+  if (nums.length === 2 && nums[0] !== null && nums[1] !== null) {
+    items.push({ name: "Refined FC", value: nums[0], sure: false });
+    items.push({ name: "Fire Crystal", value: nums[1], sure: false });
+  }
+  return { kind: "lab", items, lab: m ? Number(m[1]) : null };
+}
+
 async function scanShot(worker, file, marks, refs) {
   const src = await createImageBitmap(file);
+  const lab = await scanLabShot(worker, src);
+  if (lab) return lab;
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const gear = await scanGearTiles(src, tiles, worker);
@@ -18720,6 +19174,9 @@ function openBackpackScan(groups, bp, done, more) {
   const unknownList = []; // tiles Scan didn't know: { td, feat, rarity, after, img, tab, pick, amount }
   // Mythic Gear = boxes (Other tab) + orange hero gear pieces (Gear tab).
   const mgParts = { box: null, gear: null };
+  // Research Lab screen (owner, 6 Nov 2026): the weekly super refinements go to
+  // the Research Lab's "Game says" (calc_state rfc_lab.game), not the Backpack.
+  const lab = { seen: false, count: null, saved: null };
   // Purple hero gear for XP from the Gear tab: { "Gear XP Purple +80": n }, null until read.
   let gearLow = null, gearLowUnread = 0;
   const gearSeqs = []; // the Gear screenshots read so far
@@ -18735,7 +19192,7 @@ function openBackpackScan(groups, bp, done, more) {
     modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
       <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
       <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
-      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"]].map(([ex, head, hint], i) => `
+      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"]].map(([ex, head, hint], i) => `
       <div class="scan-step"><b>${i + 1}</b><div><div>${esc(t(head))}</div><div class="meta">${esc(t(hint))}</div></div>
         <button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button></div>`).join("")}
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
@@ -18803,6 +19260,13 @@ function openBackpackScan(groups, bp, done, more) {
         if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
       }
       if (shot.kind === "speedup") sawSpeed = true;
+      if (shot.kind === "lab") {
+        lab.seen = true;
+        if (shot.lab !== null) lab.count = shot.lab;
+        else if (lab.count === null) notes.add(t("scan_lab_unread"));
+        if (!RFC_LAB_STATE && !lab.saved) { try { lab.saved = (await loadCalcState("rfc_lab")) || {}; } catch (e) { lab.saved = {}; } }
+        if (!live()) return;
+      }
       shot.items.forEach((it) => seen.add(it.name));
       if (shot.unknown) unknownTiles += shot.unknown;
       else if (shot.kind === "unknown") notes.add(t("scan_unknown"));
@@ -18880,7 +19344,21 @@ function openBackpackScan(groups, bp, done, more) {
       const tab = scanItemTab(n), k = scanTabOrder(tab).indexOf(n);
       return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
-    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear"].filter(Boolean).map((k) => t(k));
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab"].filter(Boolean).map((k) => t(k));
+    // Research Lab: this week's count from the game, with the plan beside it.
+    const labSt = () => { const s = lab.saved || {}; return RFC_LAB_STATE || { top: s.top, attempts: s.attempts, budget: Number(s.budget) || 0, mode: s.mode === "budget" ? "budget" : "schedule", labOpen: s.labOpen, game: s.game, weekPick: s.weekPick }; };
+    let labWk = null;
+    if (lab.count !== null) { try { labWk = rfcLabWeek(labSt()); } catch (e) { labWk = null; } }
+    const labHtml = lab.count === null ? "" : `<div class="scan-lab-h">&#128300; ${esc(t("scan_lab_title"))}</div>
+      <div class="scan-lab">
+        <label class="scan-row unsure">
+          <input type="checkbox" data-scanlabtick checked />
+          <img src="${esc(materialIconSrc("Refined FC") || "icons/item_icon_100082.png")}" alt="" />
+          <span class="scan-name"><b>${esc(t("scan_lab_weekly"))}</b><span class="meta"><em>${esc(t("scan_please_check"))}</em>${labWk ? ` · ${esc(t("rl_wk_plan_today").replace("{n}", labWk.planSoFar.toLocaleString()))}` : ""}</span></span>
+          <input type="text" inputmode="numeric" data-scanlab value="${lab.count}" />
+        </label>
+        <div class="meta scan-lab-note">${esc(t("scan_lab_note"))}</div>
+      </div>`;
     const order = (n) => { const k = BP_GAME_ORDER.indexOf(n); return k !== -1 ? k : BP_GAME_ORDER.length + Math.max(0, BP_SPEEDUP_ORDER.indexOf(n)); };
     const zeroNames = Object.keys(bp).filter((n) => Number(bp[n]) > 0 && !seen.has(n) && !results.has(n) && readable(n)).sort((a, b) => order(a) - order(b));
     const zeroRows = zeroNames.map((n) => {
@@ -18936,8 +19414,10 @@ function openBackpackScan(groups, bp, done, more) {
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
-      <p class="desc" style="margin:0 0 8px;">${esc(names.length ? t("scan_check_desc") : t("scan_nothing"))}</p>
+      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
+      ${labHtml}
+      ${labHtml && rows ? `<div class="scan-lab-h">${esc(t("scan_lab_items"))}</div>` : ""}
       <div style="margin-top:6px;">${rows}</div>
       ${gearHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
@@ -18946,7 +19426,7 @@ function openBackpackScan(groups, bp, done, more) {
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
-        ${names.length || zeroRows || unknownList.length || gearLow ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+        ${names.length || zeroRows || unknownList.length || gearLow || labHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
@@ -18973,6 +19453,8 @@ function openBackpackScan(groups, bp, done, more) {
       const a = ev.target.closest("[data-lamt]");
       if (a) { const v = a.value.replace(/\D/g, ""); unknownList[Number(a.dataset.lamt)].amount = v ? Number(v) : null; }
     });
+    const labIn = modal.querySelector("[data-scanlab]");
+    if (labIn) labIn.addEventListener("change", () => { const v = labIn.value.replace(/\D/g, ""); if (v) lab.count = Number(v); });
     // Keep typed fixes if more screenshots are added.
     modal.querySelectorAll("[data-scanval]").forEach((el) => el.addEventListener("change", () => {
       const r = results.get(el.dataset.scanval), v = el.value.replace(/\D/g, "");
@@ -19003,9 +19485,19 @@ function openBackpackScan(groups, bp, done, more) {
       if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }))
         .concat(skippedTiles.map((u) => ({ n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
       saveCalcState("backpack", bp);
+      // Research Lab: only the game's weekly count, for this week (same key as the Lab page).
+      const labTick = modal.querySelector("[data-scanlabtick]"), labV = labIn ? labIn.value.replace(/\D/g, "") : "";
+      const labSave = !!(labTick && labTick.checked && labV !== "");
+      if (labSave) {
+        const game = { wk: rfcLabWeek(labSt()).wkKey, count: Number(labV), on: packDayKey(packStartOfToday()) };
+        if (RFC_LAB_STATE) { RFC_LAB_STATE.game = game; saveCalcState("rfc_lab", RFC_LAB_STATE); }
+        else { lab.saved = Object.assign({}, lab.saved || {}, { game }); saveCalcState("rfc_lab", lab.saved); }
+      }
       budgetInvalidate(); // planner pages read these amounts
       close();
       if (added.length) more.added(added); else done();
+      // The Backpack's Research Lab row shows the new count.
+      if (labSave && document.getElementById("bpScan")) render();
     };
   };
   showStart();
@@ -20379,8 +20871,8 @@ function packActiveDays(id) {
   const d = v && typeof v === "object" ? Math.floor(Number(v.d) || 0) : Math.floor(Number(v) || 0) * 7;
   return d > 0 ? d : 0;
 }
-function packLinkFor(tableId) {
-  const out = packLinkForBase(tableId);
+function packLinkFor(tableId, own) {
+  const out = packLinkForBase(tableId, own);
   // Cards still paying out (a visitor's, or the admin's own): the rewards
   // still to come count as owned, new purchases start once they end, and the
   // stack limit counts the days left. A start date in the past counts from
@@ -20463,12 +20955,67 @@ function packLinkSetOf(tableId) {
   const { l } = packLinkRaw(tableId);
   return !packTriggerOf(l) && typeof l.linkSet === "string" && l.linkSet ? l.linkSet : "";
 }
-function packLinkForBase(tableId) {
+// "Same dates as" (owner, 6 Nov 2026): a pack whose link has `dateWith`
+// (another table's id) comes on the same days as that pack: e.g. Mergeventure
+// and Megeventure Boost are two tables of ONE event. Dates only: buy limits,
+// options and "Lasts" stay the pack's own (not a linked set). Follows a chain
+// to its end; a loop or a leader without a repeating date = own dates.
+// Returns the leader's table id, or "".
+function packDateLeader(tableId) {
+  const start = String(tableId);
+  if (start.startsWith("my-") || start.startsWith("ng-")) return "";
+  const seen = new Set([start]);
+  let id = start;
+  for (let i = 0; i < 20; i++) {
+    const l = (PACK_LINKS || {})[id];
+    const nx = l && typeof l.dateWith === "string" && l.dateWith ? l.dateWith : "";
+    if (!nx) return id === start ? "" : id;
+    if (seen.has(nx)) return "";
+    seen.add(nx);
+    id = nx;
+  }
+  return "";
+}
+// Event name (owner, 6 Nov 2026: "rename the group event to something like
+// Artisans Trove Charms and the packs get names Classic, Sublime"): optional
+// `eventName` on the LEADER's link. Empty = the part before ":" that every
+// title of the event shares ("Chief Gear" = "Chief Gears", the leader's
+// spelling), else the leader's title. Display only: titles don't change.
+const packEvFam = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ").replace(/s\b/g, "");
+function packEventDefault(lead, others) {
+  const pre = (x) => { const s = String((x && x.title) || "").trim(), i = s.indexOf(":"); return i > 0 ? s.slice(0, i).trim() : ""; };
+  const p = pre(lead);
+  if (p && others.length && others.every((x) => { const q = pre(x); return !!q && packEvFam(q) === packEvFam(p); })) return p;
+  return String((lead && lead.title) || "").trim();
+}
+// The tables (of `tables`) whose dates follow `lead`.
+function packEventFollowers(lead, tables) {
+  const id = String(lead.id);
+  return (tables || []).filter((x) => String(x.id) !== id && String(packLinkForBase(x.id).dateWith || "") === id);
+}
+function packEventName(lead, tables) {
+  const own = String((((PACK_LINKS || {})[String(lead.id)] || {}).eventName) || "").trim();
+  return own || packEventDefault(lead, packEventFollowers(lead, tables));
+}
+// A pack's name inside its event: the title without the event name (or the
+// default prefix) and its ":" / " - ", e.g. "Classic"; else the whole title.
+function packEventShort(title, names) {
+  const s = String(title || "").trim();
+  for (const n of names || []) {
+    const words = String(n || "").trim().split(/\s+/).filter(Boolean);
+    if (!words.length) continue;
+    const pat = words.map((w) => w.replace(/s$/i, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "s?").join("\\s+");
+    const m = new RegExp("^" + pat + "(?:\\s*:|\\s+[-–—])\\s*(.+)$", "i").exec(s);
+    if (m && m[1].trim()) return m[1].trim();
+  }
+  return s;
+}
+function packLinkForBase(tableId, own) {
   const { mine, l } = packLinkRaw(tableId);
   // Templates are only there to be copied: never used by Budgets or Pack cost.
   const template = !mine && typeof l.group === "string" && l.group.trim() === PACK_TEMPLATE_GROUP;
   const trig = packTriggerOf(l);
-  return {
+  const out = {
     template,
     // Triggered pack: one purchase per row, only while the expert hasn't gone
     // past that row's level (see packTriggerRowStatus).
@@ -20542,6 +21089,20 @@ function packLinkForBase(tableId) {
     // Admin: table not shown to (or planned for) visitors.
     hideVisitors: l.hideVisitors === true,
   };
+  // "Same dates as": the leader's start day (its own date, or the viewer's
+  // own date for it) and its reset period; this pack keeps its window / limits.
+  if (!own && !mine && !trig && !template && !out.newGen && l.reset !== "stack") {
+    const lead = packDateLeader(tableId);
+    const ll = lead ? packLinkForBase(lead, true) : null;
+    if (ll && !ll.template && !ll.trigger && !ll.newGen && typeof ll.reset === "number" && ll.reset > 0) {
+      out.dateWith = lead;
+      out.reset = ll.reset;
+      out.resetDay = ll.resetDay;
+      out.resetDayDefault = ll.resetDayDefault;
+      out.visitorDate = ll.visitorDate;
+    }
+  }
+  return out;
 }
 // Visitors can change the item amounts of the owner's tables for their own
 // planning. Kept in this browser as { tableId: { "row,col": { v, was } } };
@@ -22784,13 +23345,14 @@ function rfcAllPlans() {
   for (let top = 1; top <= RFC_LAB_TIERS.length; top++) for (let n = 1; n <= RFC_LAB_MAX_PER_TIER; n++) out.push(rfcPlan(top, n));
   return out;
 }
-let RFC_LAB_STATE = null; // saved calc_state rfc_lab (old fields + myNeed / myBy / pick / ticks)
+let RFC_LAB_STATE = null; // saved calc_state rfc_lab (old fields + myNeed / myBy / pick / game)
 // Research Lab page (owner's design, Nov 2026): "Best for you" header with
 // Need / By, How fast? (Cheapest / best in time / Fastest + chips + own
-// weekly FC slider), This week (what to refine each day, ticks), Lab open
+// weekly FC slider), This week (what to refine each day), Lab open
 // row; "Tiers ›" opens the tier table (T2) in a window. The plan the page
 // shows is the one T12 / Budgets read (st.top / st.attempts / st.mode /
 // st.budget through rfcLabChosenPlan), as before.
+let RFC_OPEN_GAME = false; // one shot: open the "Game says" window once the page is drawn (Backpack's Research Lab row)
 let RFC_TIERS_OPEN = false; // Tiers window open
 let RFC_TIER_ROW = 0;       // tier whose details are open in the window (0 = none)
 // The daily schedule of a weekly plan (same split as rfcPlan's cost): lower
@@ -22846,12 +23408,16 @@ async function renderRfcLabPage() {
     RFC_LAB_STATE = { top: Math.min(5, Math.max(1, Number(saved.top) || 3)), attempts: Math.min(RFC_LAB_MAX_PER_TIER, Math.max(1, Number(saved.attempts) || 6)), need: Number(saved.need) || 0, owned: Number(saved.owned) || 0, fcsNeed: Number(saved.fcsNeed) || 0, fcsOwned: Number(saved.fcsOwned) || 0, fcHave: Number(saved.fcHave) || 0, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule" };
     if (saved.labOpen === true || saved.labOpen === false) RFC_LAB_STATE.labOpen = saved.labOpen;
     // New (Nov 2026): own Need / By, "auto" (Best for you) or "manual"
-    // (Your pick), this week's ticks. Someone who already chose a schedule
+    // (Your pick). Old saved day ticks are ignored. Someone who already chose a schedule
     // on the old page keeps it as their pick, so T12 doesn't change.
     RFC_LAB_STATE.myNeed = saved.myNeed != null && Number.isFinite(Number(saved.myNeed)) ? Math.max(0, Number(saved.myNeed)) : null;
     RFC_LAB_STATE.myBy = typeof saved.myBy === "string" && packParseDay(saved.myBy) ? saved.myBy : "";
     RFC_LAB_STATE.pick = saved.pick === "auto" || saved.pick === "manual" ? saved.pick : (saved.top != null || saved.attempts != null || saved.mode === "budget" ? "manual" : "auto");
-    RFC_LAB_STATE.ticks = saved.ticks && typeof saved.ticks === "object" ? { wk: String(saved.ticks.wk || ""), days: Array.isArray(saved.ticks.days) ? saved.ticks.days.map(Number) : [] } : { wk: "", days: [] };
+    // What the game's Research Lab shows this week (typed by the person); ignored once the week changes.
+    if (saved.game && typeof saved.game === "object" && typeof saved.game.wk === "string") RFC_LAB_STATE.game = Object.assign({ wk: saved.game.wk, count: Math.max(0, Number(saved.game.count) || 0) }, typeof saved.game.on === "string" && packParseDay(saved.game.on) ? { on: saved.game.on } : {});
+    // This week box open / closed (closed by default) and a this-week-only tier ("Use T1 this week").
+    RFC_LAB_STATE.weekOpen = saved.weekOpen === true;
+    if (saved.weekPick && typeof saved.weekPick === "object" && typeof saved.weekPick.wk === "string" && Number(saved.weekPick.top) >= 1 && Number(saved.weekPick.top) <= RFC_LAB_TIERS.length) RFC_LAB_STATE.weekPick = { wk: saved.weekPick.wk, top: Number(saved.weekPick.top) };
   }
   rfcLabApplyRate(RFC_LAB_STATE);
   // Default the need from the T12 page's last totals (T11 doesn't use Refined FC).
@@ -22981,16 +23547,76 @@ async function renderRfcLabPage() {
     return `<div class="modal-overlay rl-own-ov" data-rlownbd>
       <div class="modal-box rl-own-box" role="dialog" aria-modal="true" aria-label="${esc(t("rl_own_title"))}">
         <div class="rl-own-h"><b>${esc(t("rl_own_title"))}</b><button type="button" class="rl-x" data-rlownclose aria-label="${esc(t("close_button"))}">✕</button></div>
+        <div class="rl-sw"><button type="button" data-rlownmode="fc">${esc(t("rl_by_fc"))}</button><button type="button" data-rlownmode="tier">${esc(t("rl_by_tier"))}</button></div>
+        <div data-rlpane="tier" hidden></div>
+        <div data-rlpane="fc">
         <input type="range" class="rl-sld" data-rlslider min="${sMin}" max="${sMax}" step="10" value="${sVal}" aria-label="${esc(t("rl_own_weekly"))}" />
         <div class="rl-sldl"><span>${fmt(sMin)}</span><span class="rl-sldv" data-rlsldv></span><span>${fmt(sMax)}</span></div>
         ${hint ? `<div class="rl-note">${esc(hint)}</div>` : ""}
+        </div>
         <div class="rl-own-b"><button type="button" class="btn ghost" data-rlownclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-rlownuse></button></div>
       </div>
     </div>`;
   };
   // ---- This week
-  const days = rfcWeekDays(plan.top, plan.n);
-  if (st.ticks.wk !== wkKey) st.ticks = { wk: wkKey, days: [] };
+  // "Use Tk this week" (weekPick): this box follows Tk daily until Sunday;
+  // the person's pick, T12 and Budgets don't change.
+  const { wkOver, wkPlan, planDays, planBefore, planToday, planSoFar, game } = rfcLabWeek(st);
+  // Super refinements (owner, 5 Nov 2026): the plan's tries Monday → today,
+  // checked against the game's weekly count ("Game says"). A = plan tries
+  // Monday → yesterday, B = A + today's. Count between A and B = on track
+  // (today shows B − count still to do); under A = behind (the missed tries
+  // go to the days after today as full-price top-tier tries); over B = ahead
+  // (the later days get fewer tries). Only this box changes; the weekly
+  // plan, T12 and Budgets stay.
+  const triesOf = (d) => d.parts.reduce((s, x) => s + x.cnt, 0);
+  const planWeek = planDays.reduce((s, d) => s + triesOf(d), 0);
+  // missed > 0 = behind, < 0 = ahead, 0 = on track.
+  const missed = !game ? 0 : game.count < planBefore ? planBefore - game.count : game.count > planSoFar ? planSoFar - game.count : 0;
+  const leftToday = !game ? planToday : missed > 0 ? planToday : missed < 0 ? 0 : planSoFar - game.count;
+  const topTr = RFC_LAB_TIERS[wkPlan.top - 1];
+  const days = planDays.map((d) => ({ ...d, parts: d.parts.map((x) => ({ ...x })), extra: 0 }));
+  if (game) {
+    // Today: take the tries the game already counts off the front.
+    const td = days[todayIdx];
+    td.gameLeft = leftToday;
+    let done = planToday - leftToday;
+    for (const x of td.parts) {
+      if (done <= 0) break;
+      const tr = RFC_LAB_TIERS[x.tier - 1], cut = Math.min(x.cnt, done);
+      x.cnt -= cut; done -= cut;
+      td.fc -= cut * (x.half ? tr.cost / 2 : tr.cost); td.rfc -= cut * rfcExpected(tr);
+    }
+    td.parts = td.parts.filter((x) => x.cnt > 0);
+    if (!td.parts.length) { td.fc = 0; td.rfc = 0; }
+  }
+  let catchFc = 0;
+  const later = Array.from({ length: RFC_LAB_DAYS - 1 - todayIdx }, (_, k) => todayIdx + 1 + k);
+  // Sunday: no days left after today, so catching up goes on today.
+  const catchDays = later.length ? later : [todayIdx];
+  if (game && missed > 0) {
+    catchDays.forEach((i, k) => {
+      const add = Math.floor(missed / catchDays.length) + (k < missed % catchDays.length ? 1 : 0);
+      if (add <= 0) return;
+      const d = days[i];
+      d.parts.push({ tier: wkPlan.top, cnt: add, half: false });
+      d.fc += add * topTr.cost; d.rfc += add * rfcExpected(topTr); d.extra = add;
+      catchFc += add * topTr.cost;
+    });
+  } else if (game && missed < 0 && later.length) {
+    // Ahead of the plan: the last days get fewer tries.
+    let left = -missed;
+    for (let j = later.length - 1; j >= 0 && left > 0; j--) {
+      const d = days[later[j]];
+      for (let q = d.parts.length - 1; q >= 0 && left > 0; q--) {
+        const x = d.parts[q], tr = RFC_LAB_TIERS[x.tier - 1], cut = Math.min(x.cnt, left);
+        x.cnt -= cut; left -= cut;
+        const each = x.half ? tr.cost / 2 : tr.cost;
+        d.fc -= cut * each; d.rfc -= cut * rfcExpected(tr); d.extra -= cut; catchFc -= cut * each;
+      }
+      d.parts = d.parts.filter((x) => x.cnt > 0);
+    }
+  }
   const dayTxt = (d, group) => {
     if (!d.parts.length) return esc(t("rl_rest"));
     if (group && d.parts.length === 1 && d.parts[0].cnt === 1 && d.parts[0].half) return esc(t("rl_one_a_day_half").replace("{t}", "T" + d.parts[0].tier));
@@ -23001,12 +23627,11 @@ async function renderRfcLabPage() {
   const wkNames = Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" }));
   const rowsData = [];
   for (let i = 0; i < RFC_LAB_DAYS; i++) {
-    const d = days[i], sig = d.parts.map((x) => `${x.tier}:${x.cnt}:${x.half}`).join(",");
+    const d = days[i], sig = d.parts.map((x) => `${x.tier}:${x.cnt}:${x.half}`).join(",") + (d.extra ? "|x" + d.extra : "");
     const prev = rowsData[rowsData.length - 1];
     if (prev && i > todayIdx && i < RFC_LAB_DAYS - 1 && prev.from > todayIdx && prev.to < RFC_LAB_DAYS - 1 && prev.sig === sig && sig && !d.unlock) { prev.to = i; continue; }
     rowsData.push({ from: i, to: i, sig });
   }
-  const tickOn = (i) => st.ticks.days.includes(i);
   const weekRows = rowsData.map((r) => {
     const d = days[r.from], group = r.to > r.from;
     const fc = days.slice(r.from, r.to + 1).reduce((s, x) => s + x.fc, 0);
@@ -23015,21 +23640,125 @@ async function renderRfcLabPage() {
     const isToday = r.from === todayIdx && !group;
     const dt = isToday ? t("rl_today") : group ? `${dShort(dFrom)}–${dTo.getUTCMonth() === dFrom.getUTCMonth() ? dTo.getUTCDate() : dShort(dTo)}` : dShort(dFrom);
     const notes = [];
-    if (d.unlock) notes.push(t("rl_unlocks").replace("{t}", "T" + plan.top), t("rl_first_half"));
-    if (isToday && d.parts.length && !d.unlock && d.parts.length === 1 && d.parts[0].cnt === 1) notes.push(t("rl_one_enough"));
-    if (r.from === RFC_LAB_DAYS - 1) notes.push(t("rl_resets"));
-    const on = Array.from({ length: r.to - r.from + 1 }, (_, k) => r.from + k).every(tickOn);
-    return `<div class="rl-todo${r.to < todayIdx ? " past" : ""}${isToday ? " today" : ""}">
+    const gameToday = r.from === todayIdx && d.gameLeft != null;
+    if (d.unlock && !(gameToday && d.gameLeft < planToday)) notes.push(t("rl_unlocks").replace("{t}", "T" + wkPlan.top), t("rl_first_half"));
+    if (gameToday && d.gameLeft > 0 && d.gameLeft < planToday) notes.push(t("rl_left_today").replace("{n}", fmt(d.gameLeft)));
+    else if (isToday && d.parts.length && !d.unlock && d.parts.length === 1 && d.parts[0].cnt === 1) notes.push(t("rl_one_enough"));
+    const catchUp = d.extra > 0;
+    if (catchUp) {
+      const half = d.parts.filter((x) => x.half).reduce((s, x) => s + x.cnt, 0), full = d.parts.filter((x) => !x.half).reduce((s, x) => s + x.cnt, 0);
+      notes.push((half ? t("rl_half_full").replace("{h}", half).replace("{f}", full) + " · " : "") + t("rl_catch_up"));
+    } else if (d.extra < 0) notes.push(t("rl_fewer"));
+    if (r.from === RFC_LAB_DAYS - 1 && !catchUp) notes.push(t("rl_resets"));
+    const what = gameToday && !d.parts.length ? esc(t("rl_done_today"))
+      : catchUp ? `${dayTxt(d, false)}${group ? ` ${esc(t("rl_a_day"))}` : ""} <span class="rl-plus">+${fmt(d.extra)}</span>`
+      : dayTxt(d, group);
+    return `<div class="rl-todo${r.to < todayIdx ? " past" : ""}${isToday ? " today" : ""}${catchUp ? " catch" : ""}">
         <div class="rl-d">${esc(nm)}<small>${esc(dt)}</small></div>
-        <div class="rl-t">${dayTxt(d, group)}${notes.length ? `<small>${esc(notes.join(" · "))}</small>` : ""}</div>
-        ${fc > 0 ? `<div class="rl-c">${fcI}${fmt(fc)}</div>` : ""}
-        <button type="button" class="rl-ck${on ? " on" : ""}" data-rltick="${r.from}|${r.to}" aria-pressed="${on}" aria-label="${esc(t("rl_done_day"))}">${on ? "✓" : ""}</button>
+        <div class="rl-t">${what}${notes.length ? `<small>${esc(notes.join(" · "))}</small>` : ""}</div>
+        ${fc > 0 || gameToday ? `<div class="rl-c">${fcI}${fmt(fc)}</div>` : ""}
       </div>`;
   }).join("");
-  const weekHtml = `<div class="rl-card">
-      <div class="rl-k">${esc(t("rl_this_week"))}<span class="rl-r rl-kr">${fmt(plan.cost)} FC · ${esc(rfcPlanName(plan))}</span></div>
+  const toReset = RFC_LAB_DAYS - todayIdx;
+  const off = !!game && missed !== 0;
+  const superHtml = `<div class="rl-sup${off ? " off" : ""}">
+      <div class="rl-sup-t"><span>${esc(t("rl_super"))} <b class="rl-sup-n">${fmt(game ? game.count : planSoFar)}</b> <span class="rl-sup-l">${esc(game ? (game.fromTxt || t("rl_game_lbl")) : t("rl_plan_lbl"))}</span></span>
+        <button type="button" class="rl-gs" data-rlgame aria-haspopup="dialog">${game ? `✎ ${fmt(game.count)}` : `${esc(t("rl_game_says"))} ✎`}</button></div>
+      <div class="rl-sup-s">${game
+        ? `${esc(t("rl_so_far_game"))} · ${esc(t("rl_plan_expected").replace("{n}", fmt(planSoFar)))} · ${esc(t("rl_left_today").replace("{n}", fmt(leftToday)))}${game.updTxt ? ` · ${esc(game.updTxt)}` : ""}`
+        : `${esc(t("rl_so_far"))} · ${esc(t("rl_left_today").replace("{n}", fmt(leftToday)))} · ${esc(t("rl_by_sun").replace("{n}", fmt(planWeek)))}`}</div>
+      <div class="rl-sup-s">${esc(toReset === 1 ? t("rl_resets_in1") : t("rl_resets_in").replace("{n}", toReset))}</div>
+    </div>
+    ${game && game.assumed > 0 ? `<div class="rl-sup-as">${esc(t("rl_assumed_note").replace("{d}", game.onName))}</div>` : ""}
+    ${off ? `<div class="rl-gnote">${esc(t(missed > 0 ? "rl_game_behind" : "rl_game_ahead").replace("{g}", fmt(game.count)).replace("{p}", fmt(planSoFar)))} <button type="button" class="rl-lnk" data-rlgameundo>${esc(t("rl_undo"))}</button></div>` : ""}`;
+  // Closed line (owner's mock-up, 5 Nov 2026): "Mon 20× T1 + 20× T2 · Tue–Sun 1× T3 a day".
+  const wkLine = (() => {
+    const grp = [];
+    planDays.forEach((d, i) => {
+      const per = [];
+      d.parts.forEach((x) => { const q = per.find((y) => y.tier === x.tier); if (q) q.cnt += x.cnt; else per.push({ tier: x.tier, cnt: x.cnt }); });
+      const sig = per.map((x) => x.tier + ":" + x.cnt).join(",");
+      const last = grp[grp.length - 1];
+      if (last && last.sig === sig) last.to = i; else grp.push({ from: i, to: i, sig, per });
+    });
+    return grp.filter((g) => g.sig).map((g) => `${g.to > g.from ? `${wkNames[g.from]}–${wkNames[g.to]}` : wkNames[g.from]} ${g.per.map((x) => `${x.cnt}× T${x.tier}`).join(" + ")}${g.to > g.from ? ` ${t("rl_a_day")}` : ""}`).join(" · ");
+  })();
+  // ---- Tier check (owner's mock-up, 5 Nov 2026): is the person's pick the
+  // right tier for the By date? enough = the cheapest once-a-day tier done
+  // by By. Always compared with the person's own pick; nothing changes
+  // until "Use Tk this week" is tapped (this week only).
+  const daily5 = speeds.slice(0, RFC_LAB_TIERS.length);
+  const ckHtml = (() => {
+    const dTxt = (d) => (d ? esc(dShort(d)) : esc(t("rl_ck_never")));
+    const wkN = (ms) => Math.max(1, Math.round(ms / DAY / 7));
+    const left = byDay ? Math.max(0, Math.ceil((byDay - today) / DAY / 7)) : 0;
+    const fromT12 = st.myNeed == null && t12Owned > 0 && pageNeed > 0;
+    const kTxt = esc(byDay ? t("rl_ck_head").replace("{d}", dShort(byDay)) : t("rl_check"));
+    const stillH = `${esc(t("rl_ck_still"))} <b>${fmt(need)}</b>${fromT12 ? ` <span class="rl-mu">(${fmt(pageNeed)} − ${fmt(t12Owned)} ${esc(t("rl_ck_in_bp"))})</span>` : ""}${byDay ? ` · <span class="rl-nw"><b>${esc(left === 1 ? t("rl_ck_wk_left") : t("rl_ck_wks_left").replace("{n}", fmt(left)))}</b></span>` : ""}`;
+    const head = (cls, h) => `<div class="rl-ck ${cls}"><div class="rl-ck-k">${rfI} ${kTxt}</div><div class="rl-ck-h">${esc(h)}</div>`;
+    const row = (tag, mine, html) => `<div class="rl-ck-row"><span class="rl-ck-tg${mine ? " mine" : ""}">${esc(tag)}</span><span>${html}</span></div>`;
+    const useBtn = (k, cls, txt) => (wkOver === k
+      ? `<div class="rl-ck-ub"><span class="rl-g">${esc(t("rl_ck_using").replace("{t}", "T" + k))}</span><button type="button" class="rl-lnk" data-rlwkundo>${esc(t("rl_undo"))}</button></div>`
+      : `<div class="rl-ck-ub"><span class="rl-ck-opt">${esc(t("rl_ck_optional"))}</span><button type="button" class="rl-ck-b ${cls}" data-rlwkuse="${k}">${esc(txt)}</button></div>`);
+    if (need <= 0) return `<div class="rl-ck ok"><div class="rl-ck-k">${rfI} ${kTxt}</div><div class="rl-ck-h">${esc(t("rl_ck_nothing"))}</div><div class="rl-ck-r">${esc(t("rl_ck_nothing_s"))}</div></div>`;
+    const pickTag = "T" + plan.top;
+    if (!byDay) return `${head("on", t("rl_check"))}<div class="rl-ck-r">${stillH}</div><div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>`)}</div></div>`;
+    const enough = daily5.find(inTime) || null;
+    if (!enough) {
+      const t5 = daily5[daily5.length - 1], d5 = doneFor(t5), dF = doneFor(fastest), fOk = inTime(fastest);
+      const late = planDone ? wkN(planDone - byDay) : 0;
+      return `${head("bh", t("rl_ck_even").replace("{t}", "T" + t5.top).replace("{d}", d5 ? dShort(d5) : t("rl_ck_never")))}<div class="rl-ck-r">${stillH}</div>
+        <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>${planDone ? ` — <span class="rl-am">${esc(late === 1 ? t("rl_ck_late1") : t("rl_ck_late").replace("{n}", fmt(late)))}</span>` : ""}`)}
+        ${row("T" + fastest.top, false, `${esc(t("rl_ck_fastest"))} <b>${dTxt(dF)}</b> ${fOk ? `<span class="rl-g">✓</span>` : `<span class="rl-rd">${esc(t("rl_too_late"))}</span>`}`)}</div>
+        <div class="rl-ck-ub"><span class="rl-ck-opt"></span><button type="button" class="rl-ck-b bh" data-rlseefast>${esc(t("rl_ck_see_fast"))}</button></div></div>`;
+    }
+    const eD = doneFor(enough);
+    if (!planOk) {
+      const late = planDone ? wkN(planDone - byDay) : 0;
+      return `${head("bh", t("rl_ck_push").replace("{t}", "T" + enough.top))}<div class="rl-ck-r">${stillH}</div>
+        <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>${planDone ? ` — <span class="rl-am">${esc(late === 1 ? t("rl_ck_late1") : t("rl_ck_late").replace("{n}", fmt(late)))}</span>` : ""}`)}
+        ${row("T" + enough.top, false, `${esc(t("rl_ck_daily"))} <b>${dTxt(eD)}</b> <span class="rl-g">✓</span>${enough.cost > plan.cost ? `, <span class="rl-am">${esc(t("rl_ck_more").replace("{n}", fmt(enough.cost - plan.cost)))}</span>` : ""}`)}</div>
+        ${useBtn(enough.top, "bh", t("rl_ck_use").replace("{t}", "T" + enough.top))}</div>`;
+    }
+    if (enough.top < plan.top) {
+      const gap = byDay - planDone, early = wkN(gap);
+      return `${head("ok", t("rl_ck_enough").replace("{t}", "T" + enough.top))}<div class="rl-ck-r">${stillH}</div>
+        <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b>${gap >= 7 * DAY ? ` — <span class="rl-g">${esc(early === 1 ? t("rl_ck_early1") : t("rl_ck_early").replace("{n}", fmt(early)))}</span>` : ` <span class="rl-g">✓</span>`}`)}
+        ${row("T" + enough.top, false, `${esc(t("rl_ck_daily"))} <b>${dTxt(eD)}</b> <span class="rl-g">✓</span>${plan.cost > enough.cost ? `, <span class="rl-g">${esc(t("rl_ck_less").replace("{n}", fmt(plan.cost - enough.cost)))}</span>` : ""}`)}</div>
+        ${useBtn(enough.top, "ok", t("rl_ck_use_wk").replace("{t}", "T" + enough.top))}</div>`;
+    }
+    const lower = plan.top > 1 ? daily5[plan.top - 2] : null;
+    return `${head("on", t("rl_ck_right").replace("{t}", pickTag))}<div class="rl-ck-r">${stillH}</div>
+      <div class="rl-ck-l">${row(pickTag, true, `${esc(t("rl_ck_pick"))} <b>${dTxt(planDone)}</b> <span class="rl-g">✓</span>`)}
+      ${lower && !inTime(lower) ? row("T" + lower.top, false, `${esc(t("rl_ck_would"))} <span class="rl-rd">${esc(t("rl_too_late"))}</span> (${dTxt(doneFor(lower))})`) : ""}</div></div>`;
+  })();
+  const overHtml = wkOver ? `<div class="rl-wko">${esc(t("rl_wk_override").replace("{t}", "T" + wkOver).replace("{p}", "T" + plan.top))} · <button type="button" class="rl-lnk" data-rlwkundo>${esc(t("rl_undo"))}</button></div>` : "";
+  const gsBtn = `<button type="button" class="rl-gs sm" data-rlgame aria-haspopup="dialog">${esc(t("rl_game_says"))} ✎${game ? ` ${fmt(game.count)}` : ""}</button>`;
+  const tdRow = days[todayIdx];
+  const todayTxt = tdRow.gameLeft != null && !tdRow.parts.length ? esc(t("rl_done_today")) : dayTxt(tdRow, false);
+  const offLine = off ? `<div class="rl-wt"><span class="rl-pill">${esc(t(missed > 0 ? "rl_wk_behind" : "rl_wk_ahead").replace("{n}", fmt(Math.abs(missed))))} · ${esc(t("rl_wk_game_n").replace("{n}", fmt(game.count)))}</span><span>${esc(t("rl_wk_today").replace("{x}", ""))}${todayTxt}${missed > 0 && later.length ? ` · <span class="rl-am">${esc(t("rl_wk_catch").replace("{n}", fmt(missed)))}</span>` : ""}</span></div>` : "";
+  const weekHtml = st.weekOpen ? `<div class="rl-card rl-wk open">
+      <div class="rl-k">${esc(t("rl_this_week"))}<span class="rl-r rl-kr">${fmt(wkPlan.cost)} FC · ${esc(rfcPlanName(wkPlan))}</span><button type="button" class="rl-hide" data-rlwktoggle aria-expanded="true">${esc(t("rl_wk_hide"))} ▴</button></div>
+      ${overHtml}
+      ${ckHtml}
+      ${superHtml}
       ${weekRows}
-      <div class="rl-note">≈ ${fmt(plan.rfc, 1)} ${esc(t("rl_rfc_week_rand"))}</div>
+      <div class="rl-note">≈ ${fmt(wkPlan.rfc, 1)} ${esc(t("rl_rfc_week_rand"))}${off && catchFc ? ` · <span class="rl-am">${esc(catchFc > 0 ? t("rl_catch_fc").replace("{n}", fmt(catchFc)) : t("rl_ahead_fc").replace("{n}", fmt(-catchFc)))}</span>` : ""}</div>
+    </div>` : `<div class="rl-card rl-wk${off ? " off" : ""}" data-rlwktoggle role="button" tabindex="0" aria-expanded="false">
+      <div class="rl-k">${esc(t("rl_this_week"))}</div>
+      <div class="rl-wl"><span class="rl-ws">${esc(wkLine || t("rl_rest"))}</span><span class="rl-wr">${fmt(wkPlan.cost)} ${fcI}<span class="rl-chev">›</span></span></div>
+      <div class="rl-wl"><span class="rl-ws2">${esc(t("rl_super"))} <b>${game ? fmt(game.count) : "—"}</b>${game && game.fromTxt ? ` <span class="rl-upd">${esc(game.fromTxt)}</span>` : ""} · ${esc(t("rl_wk_plan_today").replace("{n}", fmt(planSoFar)))}${game && game.updTxt && !game.fromTxt ? ` · <span class="rl-upd">${esc(game.updTxt)}</span>` : ""}</span>${gsBtn}</div>
+      ${offLine}
+      ${overHtml}
+      ${ckHtml}
+    </div>`;
+  const gameSheetHtml = () => `<div class="modal-overlay rl-own-ov" data-rlgamebd>
+      <div class="modal-box rl-own-box" role="dialog" aria-modal="true" aria-label="${esc(t("rl_game_title"))}">
+        <div class="rl-own-h"><b>${esc(t("rl_game_title"))}</b><button type="button" class="rl-x" data-rlgameclose aria-label="${esc(t("close_button"))}">✕</button></div>
+        <label class="rl-f"><span class="rl-lb">${esc(t("rl_game_weekly"))}</span><span class="rl-inp"><input type="number" inputmode="numeric" min="0" step="1" data-rlgcount value="${game ? game.count : planSoFar}" autocomplete="off" /></span></label>
+        <div class="rl-note">${esc(t("rl_game_hint"))}</div>
+        <div class="rl-own-b"><button type="button" class="btn ghost" data-rlgameclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-rlgamesave>${esc(t("save"))}</button></div>
+      </div>
     </div>`;
   // ---- Lab open row
   const labDay = stateUnlockDay("lab", "crystal lab"), labOn = rfcLabOn(st);
@@ -23111,23 +23840,91 @@ async function renderRfcLabPage() {
       sld.style.setProperty("--p", `${((Number(sld.value) - sMin) / Math.max(1, sMax - sMin)) * 100}%`);
       use.textContent = t("rl_own_use").replace("{n}", fmt(p.cost));
     };
-    sldText();
+    // By tier (owner picked A, 5 Nov 2026): T1–T5 with their done dates,
+    // the top tier's tries (first try a day | all 20), result line.
+    const pane = ov.querySelector('[data-rlpane="tier"]'), fcPane = ov.querySelector('[data-rlpane="fc"]');
+    let mode = st.mode === "schedule" ? "tier" : "fc";
+    let tk = plan.top; const all = false; // once a day only (owner, 5 Nov 2026: "All 20 a week" removed)
+    const tierPlan = (k) => rfcPlan(k, all ? RFC_LAB_MAX_PER_TIER : (k === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1));
+    const tierText = () => {
+      const chipsH = RFC_LAB_TIERS.map((_, i) => {
+        const k = i + 1, p = tierPlan(k), d = doneFor(p), late = need > 0 && !inTime(p);
+        const sub = need > 0 ? `<small class="${late ? "rl-rd" : ""}">${d ? esc(dShort(d)) : "—"}</small>` : `<small>${fmt(p.cost)}</small>`;
+        return `<button type="button" class="rl-tc${k === tk ? " on" : ""}" data-rlowntier="${k}" aria-pressed="${k === tk}">T${k}${sub}</button>`;
+      }).join("");
+      const p = tierPlan(tk), d = doneFor(p), ok = inTime(p);
+      const head = `<div class="rl-res-b">${rfI} ${esc(t("rl_rfc_a_week").replace("{n}", fmt(p.rfc, 1)))}</div>`;
+      const res = need > 0
+        ? `<div class="rl-res${ok ? "" : " late"}">${head}${fmt(p.cost)} FC ${esc(t("rl_a_week"))} · ${esc(t("rl_done"))} <b class="${ok ? "rl-g" : "rl-rd"}">${d ? esc(dShort(d)) : "—"}${ok ? " ✓" : ""}</b> · ${esc(t(ok ? "rl_before_d" : "rl_after_d").replace("{d}", dShort(byDay)))}</div>`
+        : `<div class="rl-res none">${head}${fmt(p.cost)} FC ${esc(t("rl_a_week"))}</div>`;
+      pane.innerHTML = `<div class="rl-lbr"><span>${esc(t("rl_tier_use"))}</span>${need > 0 ? `<span>${esc(t("rl_done_date"))}</span>` : ""}</div>
+        <div class="rl-tcs">${chipsH}</div>
+        <div class="rl-note">${esc(tk === 1 ? t("rl_tier_note1") : t("rl_tier_note").replace("{n}", RFC_LAB_MAX_PER_TIER))}</div>
+        ${res}`;
+      use.textContent = t("rl_use_daily").replace("{t}", "T" + tk);
+    };
+    const setMode = (m) => {
+      mode = m;
+      ov.querySelectorAll("[data-rlownmode]").forEach((b) => { const on = b.dataset.rlownmode === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+      pane.hidden = m !== "tier"; fcPane.hidden = m !== "fc";
+      if (m === "tier") tierText(); else sldText();
+    };
     sld.addEventListener("input", sldText);
+    setMode(mode);
     const close = () => { document.removeEventListener("keydown", onKey); ov.remove(); };
     const onKey = (e) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", onKey);
     ov.addEventListener("click", (e) => {
       if (e.target === ov || e.target.closest("[data-rlownclose]")) { close(); return; }
-      if (e.target.closest("[data-rlownuse]")) { st.mode = "budget"; st.budget = Number(sld.value); st.pick = "manual"; close(); save(); rfcLabApplyRate(st); redraw(); }
+      const mb = e.target.closest("[data-rlownmode]");
+      if (mb) { setMode(mb.dataset.rlownmode); return; }
+      const tb = e.target.closest("[data-rlowntier]");
+      if (tb) { tk = Number(tb.dataset.rlowntier); tierText(); return; }
+      const rb = e.target.closest("[data-rlowntries]");
+      if (rb) { tierText(); return; }
+      if (e.target.closest("[data-rlownuse]")) {
+        if (mode === "tier") { const p = tierPlan(tk); st.top = p.top; st.attempts = p.n; st.mode = "schedule"; }
+        else { st.mode = "budget"; st.budget = Number(sld.value); }
+        st.pick = "manual"; close(); save(); rfcLabApplyRate(st); redraw();
+      }
+    });
+    new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
+  };
+  // "Game says ✎": the game's weekly count and remaining tries today (this week only).
+  const openGame = () => {
+    if (root.querySelector("[data-rlgamebd]")) return;
+    root.insertAdjacentHTML("beforeend", gameSheetHtml());
+    const ov = root.querySelector("[data-rlgamebd]");
+    const close = () => { document.removeEventListener("keydown", onKey); ov.remove(); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov || e.target.closest("[data-rlgameclose]")) { close(); return; }
+      if (e.target.closest("[data-rlgamesave]")) {
+        const c = Math.round(numOf(ov.querySelector("[data-rlgcount]")));
+        st.game = { wk: wkKey, count: c, on: packDayKey(packStartOfToday()) };
+        close(); save(); redraw();
+      }
     });
     new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
   };
   root.addEventListener("click", (ev) => {
-    const el = ev.target.closest("button, [data-rlbd]");
+    const el = ev.target.closest("button, [data-rlbd], [data-rlwktoggle]");
     if (!el || !root.contains(el)) return;
     if (el.matches("[data-rlbd]")) { if (ev.target === el) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); } return; }
+    // This week: tap the closed card (not its buttons or the check box) to open; "Hide ▴" closes.
+    if (el.hasAttribute("data-rlwktoggle")) { if (el.tagName !== "BUTTON" && ev.target.closest(".rl-ck")) return; st.weekOpen = !st.weekOpen; save(); redraw(); return; }
+    if (el.dataset.rlwkuse) { const k = Number(el.dataset.rlwkuse); if (k === plan.top) delete st.weekPick; else st.weekPick = { wk: wkKey, top: k }; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlwkundo")) { delete st.weekPick; save(); redraw(); return; }
+    if (el.hasAttribute("data-rlseefast")) {
+      const f = root.querySelector(`.rl-lt [data-rluse="${fastest.top}|${fastest.n}"]`);
+      if (f) { f.scrollIntoView({ behavior: "smooth", block: "center" }); f.classList.remove("rl-flash"); void f.offsetWidth; f.classList.add("rl-flash"); }
+      return;
+    }
     if (el.hasAttribute("data-rlownopen")) { openOwn(); return; }
-    if (el.closest("[data-rlownbd]")) return;
+    if (el.closest("[data-rlownbd]") || el.closest("[data-rlgamebd]")) return;
+    if (el.hasAttribute("data-rlgame")) { openGame(); return; }
+    if (el.hasAttribute("data-rlgameundo")) { delete st.game; save(); redraw(); return; }
     if (el.dataset.rluse) {
       const [top, n] = el.dataset.rluse.split("|").map(Number);
       st.top = top; st.attempts = n; st.mode = "schedule"; st.pick = "manual";
@@ -23140,13 +23937,9 @@ async function renderRfcLabPage() {
     if (el.hasAttribute("data-rlopentiers")) { RFC_TIERS_OPEN = true; RFC_TIER_ROW = 0; redraw(); return; }
     if (el.hasAttribute("data-rlclosetiers")) { RFC_TIERS_OPEN = false; RFC_TIER_ROW = 0; redraw(); return; }
     if (el.dataset.rltier) { const k = Number(el.dataset.rltier); RFC_TIER_ROW = RFC_TIER_ROW === k ? 0 : k; redraw(); return; }
-    if (el.dataset.rltick) {
-      const [a, b] = el.dataset.rltick.split("|").map(Number), list = Array.from({ length: b - a + 1 }, (_, k) => a + k);
-      const on = list.every(tickOn);
-      st.ticks.days = on ? st.ticks.days.filter((x) => !list.includes(x)) : Array.from(new Set(st.ticks.days.concat(list))).sort();
-      save(); redraw();
-    }
   });
+  const wkCard = root.querySelector('.rl-wk[data-rlwktoggle]');
+  if (wkCard) wkCard.addEventListener("keydown", (ev) => { if ((ev.key === "Enter" || ev.key === " ") && ev.target === wkCard) { ev.preventDefault(); st.weekOpen = true; save(); redraw(); } });
   root.querySelector("[data-rlneed]").addEventListener("change", (ev) => {
     const raw = String(ev.target.value).trim();
     const v = raw === "" ? null : numOf(ev.target);
@@ -23165,6 +23958,7 @@ async function renderRfcLabPage() {
     const ov = root.querySelector("[data-rlbd]");
     new MutationObserver((_, mo) => { if (!ov.isConnected) { document.removeEventListener("keydown", onKey); mo.disconnect(); } }).observe(content, { childList: true });
   }
+  if (RFC_OPEN_GAME) { RFC_OPEN_GAME = false; openGame(); }
   root.querySelector("[data-rfclabopen]").addEventListener("change", (e) => {
     st.labOpen = e.target.checked;
     save();
@@ -23299,6 +24093,46 @@ function tradeComposeExtra() {
   if (typeof budgetInvalidate === "function") budgetInvalidate();
 }
 let RFC_LAB_RATE_LOADED = false;
+// This week's super refinements (Mon–Sun, same week key as the Research Lab
+// page): the plan's tries Monday → yesterday (planBefore), today's
+// (planToday), the sum (planSoFar) and the game's own count when it was
+// typed this week (game). Used by the Research Lab page and the Backpack row.
+function rfcLabWeek(st) {
+  const DAY = 86400000;
+  const today = packStartOfToday(), todayIdx = (today.getUTCDay() + 6) % 7;
+  const wkKey = packDayKey(new Date(today.getTime() - todayIdx * DAY));
+  const plan = rfcLabChosenPlan(st) || rfcPlan(1, 1);
+  const wkOver = st && st.weekPick && st.weekPick.wk === wkKey && st.weekPick.top !== plan.top ? st.weekPick.top : 0;
+  const wkPlan = wkOver ? rfcPlan(wkOver, wkOver === 1 ? RFC_LAB_DAYS : RFC_LAB_DAYS - 1) : plan;
+  const planDays = rfcWeekDays(wkPlan.top, wkPlan.n);
+  const triesOf = (d) => d.parts.reduce((s, x) => s + x.cnt, 0);
+  const planBefore = planDays.slice(0, todayIdx).reduce((s, d) => s + triesOf(d), 0);
+  const planToday = triesOf(planDays[todayIdx]);
+  // "Game says" (owner, 6 Nov 2026): the count is from the day it was typed
+  // (game.on); the days after that up to yesterday are taken as done like the
+  // plan, so a count typed on Thursday still compares right on Friday.
+  // count = typed + those days' plan tries (typed / onIdx / assumed kept).
+  // No "on" (entries saved before) or a day outside this week = typed today.
+  let game = null;
+  const g0 = st && st.game && st.game.wk === wkKey ? st.game : null;
+  if (g0) {
+    const typed = Math.max(0, Number(g0.count) || 0);
+    const onD = typeof g0.on === "string" ? packParseDay(g0.on) : null;
+    let onIdx = onD ? Math.round((onD.getTime() - (today.getTime() - todayIdx * DAY)) / DAY) : todayIdx;
+    const known = !!onD && onIdx >= 0 && onIdx <= todayIdx;
+    if (!known) onIdx = todayIdx;
+    const assumed = planDays.slice(onIdx + 1, todayIdx).reduce((s, d) => s + triesOf(d), 0);
+    const onName = new Date(Date.UTC(2024, 0, 1 + onIdx)).toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" });
+    // "(45 on Thu + plan)" beside the counted 47 when assumed days are in it
+    const fromTxt = assumed > 0 ? `(${t("rl_counted_from").replace("{g}", typed.toLocaleString()).replace("{d}", onName)})` : "";
+    game = Object.assign({}, g0, {
+      count: typed + assumed, typed, onIdx, onName, assumed, fromTxt,
+      // "updated today" / "updated Thu" (nothing for entries saved before the day was kept)
+      updTxt: !known ? "" : onIdx === todayIdx ? t("rl_upd_today") : t("rl_upd_day").replace("{d}", onName)
+    });
+  }
+  return { wkKey, todayIdx, plan, wkOver, wkPlan, planDays, planBefore, planToday, planSoFar: planBefore + planToday, game };
+}
 function rfcLabChosenPlan(st) {
   if (!st) return null;
   if (st.mode === "budget") {
@@ -33153,10 +33987,19 @@ async function renderResearchCenterPage() {
 // pack cost) and the main column (total resources needed, the page title
 // with tabs, then the page's own content). On phones they stack: settings,
 // totals, content, then your amounts.
+// "Lab ›" box in T12's title row (owner, 5 Nov 2026): opens the Research
+// Lab page. Owner always; visitors only when that page is shown to them.
+function plxLabBtnHtml() {
+  if (!IS_OWNER && isHiddenFromVisitors("page", "rfclab")) return "";
+  const src = materialIconSrc("Refined FC") || "icons/item_icon_100082.png";
+  return `<button type="button" class="plx-labbtn" data-golab title="${esc(t("rl_lab_go"))}"><img src="${esc(src)}" alt="" /><span>${esc(t("rl_lab_btn"))}</span><span class="plx-labcar" aria-hidden="true">&#8250;</span></button>`;
+}
+document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-golab]"); if (b) goToTab("rfclab"); });
 function plxShellHtml(o) {
   return `
     <div class="plx-head">
       <h2>${esc(o.title)}</h2>
+      ${o.labBtn ? plxLabBtnHtml() : ""}
       ${o.maxId ? `<button type="button" class="plx-maxbtn plx-max" id="${o.maxId}" title="${esc(t("max_everything"))}">${esc(t("max_button"))}</button>` : ""}
     </div>
     <div class="t12x g1">
@@ -33468,7 +34311,7 @@ async function renderT12ResearchPage() {
     title: t("t12_research_title"),
     settings: `${researchSpeedInputHtml()}
           <label class="t12x-check" title="${esc(t("count_toward_dashboard"))}"><span>${esc(t("set_count"))}</span><input type="checkbox" id="t12CountedToggle" ${RESEARCH_PAGE_COUNTED.t12 ? "checked" : ""} /></label>`,
-    amountsId: "t12Totals", needId: "t12Need", needTitle: t("bs_title_t12"), timeId: "t12Hero", tabsId: "t12TroopDots", maxId: "t12MaxAllBtn",
+    amountsId: "t12Totals", needId: "t12Need", needTitle: t("bs_title_t12"), timeId: "t12Hero", tabsId: "t12TroopDots", maxId: "t12MaxAllBtn", labBtn: true,
     mainHtml: `<div id="t12Troops"></div>`,
   });
 
