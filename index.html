@@ -22712,7 +22712,8 @@ function plxTopBox(root) {
   put(box.querySelector(".g1-mk"), shell.querySelector("#refineMk"));
   const amts = shell.querySelector(".t12x-amts > [id]");
   put(box.querySelector(".g1-bp"), amts);
-  box.querySelector(".g1-can").hidden = !box.querySelector(".g1-can").innerHTML.trim();
+  const can = box.querySelector(".g1-can"), noCan = !can.innerHTML.trim();
+  if (can.hidden !== noCan) can.hidden = noCan;
   g1FoldSync(box);
 }
 // Hide / Show in the top box's header (and Chief Gear's answer card): folds
@@ -22723,9 +22724,11 @@ function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
     const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans");
     if (box) box.classList.toggle("g1-folded", folded);
-    const html = `${esc(t(folded ? "g1_show" : "g1_hide"))} ${folded ? "&#9662;" : "&#9652;"}`;
-    if (b.innerHTML !== html) b.innerHTML = html;
-    b.setAttribute("aria-expanded", String(!folded));
+    // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
+    // HTML compare rewrote the button every time and the #content observer looped.
+    const txt = `${t(folded ? "g1_show" : "g1_hide")} ${folded ? "\u25BE" : "\u25B4"}`;
+    if (b.textContent !== txt) b.textContent = txt;
+    if (b.getAttribute("aria-expanded") !== String(!folded)) b.setAttribute("aria-expanded", String(!folded));
   });
 }
 document.addEventListener("click", (e) => {
