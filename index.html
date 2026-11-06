@@ -9338,7 +9338,9 @@ function mmGroupBtns(g) {
 }
 function renderMobileMenu() {
   const overlay = document.getElementById("mobileMenuOverlay");
-  const cards = mmVisibleGroups().map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
+  // Admin first (owner, 6 Nov 2026: no scrolling to the bottom to reach it).
+  const groups = mmVisibleGroups().sort((x, y) => (y.dataset.group === "Admin") - (x.dataset.group === "Admin"));
+  const cards = groups.map((g) => mmCardHtml(g.dataset.group, mmGroupLabel(g), mmGroupBtns(g))).join("");
   overlay.innerHTML = `
     <div class="mm-header">
       <h2>${esc(t("menu_title"))}</h2>
@@ -9441,6 +9443,7 @@ function mbSections() {
     if (plan) plan.btns = plan.btns.concat(timeline);
     else out.plan.push({ name: "Planning", label: navLabel("statetimeline"), btns: [timeline] });
   }
+  for (const k of Object.keys(out)) out[k].sort((x, y) => (y.name === "Admin") - (x.name === "Admin")); // Admin first
   return out;
 }
 function mbSecOfTab(tab) {
