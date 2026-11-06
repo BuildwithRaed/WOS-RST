@@ -335,6 +335,8 @@
   /* Emoji / symbol pictures (Backpack 🎒, Admin ⚙) as big as the image pictures: the
      phone label rule ".qk-chip span" (11 px) used to shrink them too (owner, 4 Nov 2026) */
   .qk-chip span.qk-em{ font-size:24px; line-height:26px; }
+  /* emoji pictures as big as the image ones, also where a later rule sets every quick-chip span to 11px (Fold, owner 6 Nov 2026) */
+  .qk-chip span.qk-em, .dash-fit .qk-chip span.qk-em{ font-size:24px !important; line-height:26px !important; }
   .qk-chip.qk-ed{ position:sticky; right:0; width:40px; font-size:16px; color:var(--ice); background:var(--panel-2); box-shadow:-10px 0 10px -4px var(--bg); }
   .topnav-dropdown button .ic img, .mm-pages button .ic img{ width:100%; height:18px; object-fit:contain; vertical-align:middle; display:block; }
   .qk-box{ max-width:520px; max-height:86vh; overflow-y:auto; }
