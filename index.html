@@ -60,20 +60,17 @@
      first requests don't also wait for DNS + TLS set-up. -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="preconnect" href="https://hzourauekkiorojrhpko.supabase.co" crossorigin />
-<!-- Exact version: an exact-version URL never changes, so browsers (and the
-     service worker) can keep it cached instead of re-checking "@2".
-     integrity = the file's fingerprint: a changed copy from the CDN is refused.
-     If it can't load (blocked, or refused), the same file from this site's
-     vendor/ folder is used, so the site still opens. -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
-<script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
 <link rel="stylesheet" href="app.css?v=5f031cb961" />
+<!-- supabase-js runs at the end of the page (see there); fetch it now, as it was
+     when it sat here. Same address, integrity and crossorigin as the script tag,
+     so the browser uses this copy for it. -->
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous" />
 <!-- app.js runs at the end of the page; fetch it now, not after the head is done.
      Once it has arrived, open the database connection again: on a slow phone
      app.js can take more than 10 s, and Chrome closes an unused preconnect
      after 10 s, so the one above is often gone before the first request.
      (crossorigin = the way the site's requests to the database are made.) -->
-<link rel="preload" href="app.js?v=8945411602" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
+<link rel="preload" href="app.js?v=3271652fd3" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller. Later the same day the owner asked for
 // the text 2 px bigger again on every page but the Dashboard: the smaller text now
@@ -267,6 +264,33 @@
     .dash-fit .qk-chip span, .dash-fit .sa-s, .dash-fit .sa-chip, .dash-fit .rc-mini-sh, .dash-fit .rc-mini-w, .dash-fit .sa-card .btn.small, .dash-fit .roster-pick .meta{ font-size:11px !important; }
   }
 </style>
+<style id="bootSkel">
+  /* Loading layout (shown until the first page is drawn). After the
+     phoneCompact script on purpose, so it doesn't change phoneCompact's sheets
+     or their saved copy. Sized like the Dashboard so the first page doesn't jump. */
+  /* The account button is filled by app.js; until then a zero-width letter gives
+     it a text line, so it sits level with the language button (empty, it sat
+     2 px higher and made the top bar 4 px taller, then the page moved up). */
+  #topnavSettingsBtn:empty::before{ content:"\200b"; }
+  .boot-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .boot-ld{ display:flex; flex-direction:column; gap:6px; margin-top:-4px; }
+  .boot-c{ border:1px solid var(--line, #313e4f); border-radius:12px; background:var(--panel, #1c2532); position:relative; overflow:hidden; }
+  .boot-c1{ height:46px; }
+  .boot-c2, .boot-c3{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; border:0; background:none; }
+  .boot-c2{ height:145px; }
+  .boot-c3{ height:358px; }
+  .boot-c i{ display:block; border:1px solid var(--line, #313e4f); border-radius:12px; background:var(--panel, #1c2532); position:relative; overflow:hidden; }
+  .boot-c1::after, .boot-c i::after{ content:""; position:absolute; inset:0; transform:translateX(-100%);
+    background:linear-gradient(90deg, transparent, rgba(111, 211, 242, .08), transparent); animation:bootShine 1.4s ease-in-out infinite; }
+  @keyframes bootShine{ to{ transform:translateX(100%); } }
+  @media (prefers-reduced-motion: reduce){ .boot-c1::after, .boot-c i::after{ display:none; animation:none; } }
+  @media (min-width:701px){
+    .boot-ld{ gap:16px; margin-top:0; padding-top:49px; }
+    .boot-c1{ height:70px; border-radius:16px; }
+    .boot-c2{ height:213px; gap:12px; }
+    .boot-c3{ height:356px; gap:12px; }
+  }
+</style>
 </head>
 <body>
 
@@ -387,12 +411,25 @@
   <div id="mBarOv"></div>
   <nav id="mBar" aria-label="Menu"></nav>
 
-  <main id="content"></main>
+  <!-- Loading layout: shown at once while the scripts download; the first page
+       draw replaces it (render() keeps it instead of "Loading…", pageDrawn()
+       removes anything left). -->
+  <main id="content"><div class="boot-ld" aria-busy="true"><span class="boot-sr">Loading&hellip;</span><div class="boot-c boot-c1"></div><div class="boot-c boot-c2"><i></i><i></i><i></i></div><div class="boot-c boot-c3"><i></i><i></i><i></i></div></div></main>
   <footer class="site-footer" id="siteFooter"></footer>
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="app.js?v=8945411602"></script>
+<!-- The scripts sit at the end of the page, so the top bar and the loading
+     layout above are shown while they download (supabase-js used to hold the
+     whole page back from the head). Same order as before: supabase-js, then app.js.
+     Exact version: an exact-version URL never changes, so browsers (and the
+     service worker) can keep it cached instead of re-checking "@2".
+     integrity = the file's fingerprint: a changed copy from the CDN is refused.
+     If it can't load (blocked, or refused), the same file from this site's
+     vendor/ folder is used, so the site still opens. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
+<script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
+<script src="app.js?v=3271652fd3"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "32f8c9acc17048f7941762223c2739e3"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
