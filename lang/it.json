@@ -2515,5 +2515,16 @@
 "t:pkb_ev_add_sub":"I pacchetti spuntati arrivano nelle stesse date di {pack}.",
 "t:pkb_ev_add_none":"Nessun pacchetto può unirsi a questo.",
 "t:pkb_ev_add_done":"Fatto",
-"t:pkb_ev_follows":"segue {pack} · spuntarlo lo sposta"
+"t:pkb_ev_follows":"segue {pack} · spuntarlo lo sposta",
+"t:pkb_ng_heroes":"{n} eroi",
+"t:pkb_ng_hero1":"1 eroe",
+"t:pkb_ng_shards":"{n} frammenti",
+"t:pkb_ng_widgets":"{n} widget",
+"t:pkb_ng_made":"Creato da solo per ogni nuovo eroe (Gen {gen})",
+"t:pkb_ev_swap":"ora guida {n} pacchetti · seguirà {pack}",
+"t:pkb_ev_swap1":"ora guida 1 pacchetto · seguirà {pack}",
+"t:pkb_arrange":"Ordina",
+"t:pkb_arrange_done":"Fatto",
+"t:pkb_arrange_reset":"Torna ad A–Z",
+"t:pkb_arrange_hint":"Tieni premuto ⋮⋮ e trascina"
 }

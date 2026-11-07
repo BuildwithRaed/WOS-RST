@@ -2515,5 +2515,16 @@
 "t:pkb_ev_add_sub":"Les packs cochés arrivent aux mêmes dates que {pack}.",
 "t:pkb_ev_add_none":"Aucun pack ne peut rejoindre celui-ci.",
 "t:pkb_ev_add_done":"Terminé",
-"t:pkb_ev_follows":"suit {pack} · cocher le déplace"
+"t:pkb_ev_follows":"suit {pack} · cocher le déplace",
+"t:pkb_ng_heroes":"{n} héros",
+"t:pkb_ng_hero1":"1 héros",
+"t:pkb_ng_shards":"{n} fragments",
+"t:pkb_ng_widgets":"{n} widgets",
+"t:pkb_ng_made":"Créé tout seul pour chaque nouveau héros (Gen {gen})",
+"t:pkb_ev_swap":"mène {n} packs · suivra {pack}",
+"t:pkb_ev_swap1":"mène 1 pack · suivra {pack}",
+"t:pkb_arrange":"Organiser",
+"t:pkb_arrange_done":"Terminé",
+"t:pkb_arrange_reset":"Revenir à A–Z",
+"t:pkb_arrange_hint":"Maintenez ⋮⋮ et glissez"
 }

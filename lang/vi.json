@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"Gói được đánh dấu đến cùng ngày với {pack}.",
 "t:pkb_ev_add_none":"Không gói nào có thể tham gia.",
 "t:pkb_ev_add_done":"Xong",
-"t:pkb_ev_follows":"theo {pack} · đánh dấu sẽ chuyển nó"
+"t:pkb_ev_follows":"theo {pack} · đánh dấu sẽ chuyển nó",
+"t:pkb_ng_heroes":"{n} anh hùng",
+"t:pkb_ng_hero1":"1 anh hùng",
+"t:pkb_ng_shards":"{n} mảnh",
+"t:pkb_ng_widgets":"{n} widget",
+"t:pkb_ng_made":"Tự tạo cho mỗi anh hùng mới (Gen {gen})",
+"t:pkb_ev_swap":"đang dẫn {n} gói · sẽ theo {pack}",
+"t:pkb_ev_swap1":"đang dẫn 1 gói · sẽ theo {pack}",
+"t:pkb_arrange":"Sắp xếp",
+"t:pkb_arrange_done":"Xong",
+"t:pkb_arrange_reset":"Về A–Z",
+"t:pkb_arrange_hint":"Giữ ⋮⋮ và kéo"
 }

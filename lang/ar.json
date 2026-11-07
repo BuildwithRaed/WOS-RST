@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"الحزم المحددة تأتي في نفس مواعيد {pack}.",
 "t:pkb_ev_add_none":"لا توجد حزمة يمكنها الانضمام إلى هذه.",
 "t:pkb_ev_add_done":"تم",
-"t:pkb_ev_follows":"تتبع {pack} · التحديد ينقلها"
+"t:pkb_ev_follows":"تتبع {pack} · التحديد ينقلها",
+"t:pkb_ng_heroes":"{n} أبطال",
+"t:pkb_ng_hero1":"بطل واحد",
+"t:pkb_ng_shards":"{n} شظايا",
+"t:pkb_ng_widgets":"{n} أدوات",
+"t:pkb_ng_made":"تُنشأ تلقائيًا لكل بطل جديد (الجيل {gen})",
+"t:pkb_ev_swap":"تقود {n} حزم الآن · ستتبع {pack}",
+"t:pkb_ev_swap1":"تقود حزمة واحدة الآن · ستتبع {pack}",
+"t:pkb_arrange":"ترتيب",
+"t:pkb_arrange_done":"تم",
+"t:pkb_arrange_reset":"إعادة إلى A–Z",
+"t:pkb_arrange_hint":"اضغط مطولًا على ⋮⋮ واسحب"
 }

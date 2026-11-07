@@ -2515,5 +2515,16 @@
 "t:pkb_ev_add_sub":"Zaznaczone paczki przychodzą w te same daty co {pack}.",
 "t:pkb_ev_add_none":"Żadna paczka nie może tu dołączyć.",
 "t:pkb_ev_add_done":"Gotowe",
-"t:pkb_ev_follows":"podąża za {pack} · zaznaczenie ją przeniesie"
+"t:pkb_ev_follows":"podąża za {pack} · zaznaczenie ją przeniesie",
+"t:pkb_ng_heroes":"{n} bohaterów",
+"t:pkb_ng_hero1":"1 bohater",
+"t:pkb_ng_shards":"{n} odłamków",
+"t:pkb_ng_widgets":"{n} widżetów",
+"t:pkb_ng_made":"Tworzona sama dla każdego nowego bohatera (Gen {gen})",
+"t:pkb_ev_swap":"prowadzi teraz {n} paczek · będzie podążać za {pack}",
+"t:pkb_ev_swap1":"prowadzi teraz 1 paczkę · będzie podążać za {pack}",
+"t:pkb_arrange":"Układ",
+"t:pkb_arrange_done":"Gotowe",
+"t:pkb_arrange_reset":"Wróć do A–Z",
+"t:pkb_arrange_hint":"Przytrzymaj ⋮⋮ i przeciągnij"
 }

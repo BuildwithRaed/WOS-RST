@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"勾選的禮包與 {pack} 同日期出現。",
 "t:pkb_ev_add_none":"沒有禮包可以加入。",
 "t:pkb_ev_add_done":"完成",
-"t:pkb_ev_follows":"跟隨 {pack} · 勾選會移動它"
+"t:pkb_ev_follows":"跟隨 {pack} · 勾選會移動它",
+"t:pkb_ng_heroes":"{n} 位英雄",
+"t:pkb_ng_hero1":"1 位英雄",
+"t:pkb_ng_shards":"{n} 個碎片",
+"t:pkb_ng_widgets":"{n} 個零件",
+"t:pkb_ng_made":"每位新英雄自動產生(第 {gen} 代)",
+"t:pkb_ev_swap":"現帶領 {n} 個禮包 · 將跟隨 {pack}",
+"t:pkb_ev_swap1":"現帶領 1 個禮包 · 將跟隨 {pack}",
+"t:pkb_arrange":"排列",
+"t:pkb_arrange_done":"完成",
+"t:pkb_arrange_reset":"恢復 A–Z",
+"t:pkb_arrange_hint":"按住 ⋮⋮ 拖動"
 }

@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"Paket yang dicentang muncul di tanggal yang sama dengan {pack}.",
 "t:pkb_ev_add_none":"Tidak ada paket yang bisa bergabung.",
 "t:pkb_ev_add_done":"Selesai",
-"t:pkb_ev_follows":"mengikuti {pack} · mencentang akan memindahkannya"
+"t:pkb_ev_follows":"mengikuti {pack} · mencentang akan memindahkannya",
+"t:pkb_ng_heroes":"{n} hero",
+"t:pkb_ng_hero1":"1 hero",
+"t:pkb_ng_shards":"{n} shard",
+"t:pkb_ng_widgets":"{n} widget",
+"t:pkb_ng_made":"Dibuat otomatis untuk tiap hero baru (Gen {gen})",
+"t:pkb_ev_swap":"kini memimpin {n} paket · akan mengikuti {pack}",
+"t:pkb_ev_swap1":"kini memimpin 1 paket · akan mengikuti {pack}",
+"t:pkb_arrange":"Atur",
+"t:pkb_arrange_done":"Selesai",
+"t:pkb_arrange_reset":"Kembali ke A–Z",
+"t:pkb_arrange_hint":"Tahan ⋮⋮ lalu seret"
 }

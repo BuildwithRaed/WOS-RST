@@ -2515,5 +2515,16 @@
 "t:pkb_ev_add_sub":"Отмеченные наборы приходят в те же даты, что {pack}.",
 "t:pkb_ev_add_none":"Ни один набор не может присоединиться.",
 "t:pkb_ev_add_done":"Готово",
-"t:pkb_ev_follows":"следует за {pack} · отметка перенесёт его"
+"t:pkb_ev_follows":"следует за {pack} · отметка перенесёт его",
+"t:pkb_ng_heroes":"героев: {n}",
+"t:pkb_ng_hero1":"1 герой",
+"t:pkb_ng_shards":"осколков: {n}",
+"t:pkb_ng_widgets":"виджетов: {n}",
+"t:pkb_ng_made":"Создаётся сам для каждого нового героя (пок. {gen})",
+"t:pkb_ev_swap":"ведёт наборов: {n} · будет следовать за {pack}",
+"t:pkb_ev_swap1":"ведёт 1 набор · будет следовать за {pack}",
+"t:pkb_arrange":"Порядок",
+"t:pkb_arrange_done":"Готово",
+"t:pkb_arrange_reset":"Вернуть A–Z",
+"t:pkb_arrange_hint":"Удерживайте ⋮⋮ и тяните"
 }
