@@ -2951,6 +2951,8 @@ input,select,textarea{
   .admf{ display:flex; flex-direction:column; gap:3px; flex:1 1 100%; min-width:0; font-size:11.5px; color:var(--muted); }
   .admf.half{ flex:1 1 calc(50% - 5px); }
   .admf input, .admf select, .admf textarea{ width:100%; font-size:14px; }
+  .admf .admf-custom{ margin-top:3px; }
+  .admf .admf-custom[hidden]{ display:none; }
   .admf-chk{ flex-direction:row; align-items:center; gap:8px; color:var(--frost); font-size:13px; }
   .admf-chk input{ width:auto; }
   .admf-img{ flex-direction:row; align-items:flex-end; gap:10px; }

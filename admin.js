@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "0c0674ec1e";
+window.ADMIN_BUILD = "126716ffe7";
 
 // ============================================================
 // ADMIN PAGE
@@ -3163,8 +3163,13 @@ function openAdmSheet(o) {
   const f = (x) => {
     const id = `admf_${x.key}`, v = x.value == null ? "" : x.value;
     if (x.type === "check") return `<label class="admf admf-chk${x.half ? " half" : ""}"><input type="checkbox" id="${id}" ${v ? "checked" : ""} /> ${esc(x.label)}</label>`;
+    if (x.type === "pick") {
+      const known = x.options.some((op) => String(Array.isArray(op) ? op[0] : op) === String(v));
+      const custom = !known;
+      return `<label class="admf${x.cls ? " " + x.cls : ""}"><span>${esc(x.label)}</span><select id="${id}" data-admpick>${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${!custom && String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}<option value="${ADM_PICK_CUSTOM}" ${custom ? "selected" : ""}>Custom…</option></select><input type="text" id="${id}_c" class="admf-custom" value="${esc(custom ? String(v) : "")}" placeholder="Type the word" ${custom ? "" : "hidden"} /></label>`;
+    }
     if (x.type === "note") return `<div class="admf meta" style="font-size:11.5px;">${esc(x.label)}</div>`;
-    if (x.type === "select") return `<label class="admf"><span>${esc(x.label)}</span><select id="${id}">${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}</select></label>`;
+    if (x.type === "select") return `<label class="admf${x.cls ? " " + x.cls : ""}"><span>${esc(x.label)}</span><select id="${id}">${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}</select></label>`;
     if (x.type === "img") return `<div class="admf admf-img"><span class="admc-pic big" data-admimgprev>${v ? `<img src="${esc(v)}" alt="" />` : `<i>?</i>`}</span><label class="admf" style="flex:1; min-width:0;"><span>${esc(x.label)}</span><span class="admf-line"><input type="text" id="${id}" value="${esc(v)}" placeholder="link, or upload" />${uploadBtnHtml()}</span></label></div>`;
     if (x.type === "area") return `<label class="admf"><span>${esc(x.label)}</span><textarea id="${id}" rows="3">${esc(v)}</textarea></label>`;
     return `<label class="admf${x.half ? " half" : ""}"><span>${esc(x.label)}</span><input id="${id}" ${x.type === "num" ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} value="${esc(String(v))}" /></label>`;
@@ -3179,7 +3184,8 @@ function openAdmSheet(o) {
   m.onclick = (ev) => { if (ev.target === m || ev.target.closest("[data-admsclose]")) close(); };
   const img = o.fields.find((x) => x.type === "img");
   if (img) { const inp = m.querySelector(`#admf_${img.key}`), prev = m.querySelector("[data-admimgprev]"); inp.addEventListener("input", () => { prev.innerHTML = inp.value.trim() ? `<img src="${esc(inp.value.trim())}" alt="" />` : `<i>?</i>`; }); }
-  const values = () => { const out = {}; o.fields.forEach((x) => { const el = m.querySelector(`#admf_${x.key}`); if (!el) return; if (x.type === "check") out[x.key] = el.checked; else if (x.type === "num") out[x.key] = el.value === "" ? null : Number(el.value); else out[x.key] = el.value.trim() === "" ? null : el.value.trim(); }); return out; };
+  m.querySelectorAll("select[data-admpick]").forEach((sel) => sel.addEventListener("change", () => { const c = m.querySelector(`#${sel.id}_c`); c.hidden = sel.value !== ADM_PICK_CUSTOM; if (!c.hidden) c.focus(); }));
+  const values = () => { const out = {}; o.fields.forEach((x) => { const el = m.querySelector(`#admf_${x.key}`); if (!el) return; if (x.type === "pick") { const raw = el.value === ADM_PICK_CUSTOM ? m.querySelector(`#admf_${x.key}_c`).value : el.value; out[x.key] = raw.trim() === "" ? null : raw.trim(); } else if (x.type === "check") out[x.key] = el.checked; else if (x.type === "num") out[x.key] = el.value === "" ? null : Number(el.value); else out[x.key] = el.value.trim() === "" ? null : el.value.trim(); }); return out; };
   m.querySelector("[data-admssave]").addEventListener("click", async (ev) => {
     const btn = ev.currentTarget; btn.disabled = true;
     try { await o.onSave(values()); close(); } catch (err) { toast(err.message || "Couldn't save", true); }
@@ -3190,7 +3196,23 @@ function openAdmSheet(o) {
   const first = m.querySelector("input[type=text], input[type=number]"); if (first && !o.noFocus) setTimeout(() => first.focus(), 50);
 }
 
-async function renderAdminSkinsCategory(body, category) {
+// Bonus stat words (owner, 7 Nov 2026): the plain "Attack" / "Defense" /
+// "Lethality" / "Health" first (the readers in app.js count "Troops X" and "X"
+// as the same stat, `bonusStatKey`), Islands also the troop-only words its
+// Islands Guide uses, then "Custom…" with a text box for any other word; a
+// saved word not in the list opens as Custom with its text, so an unchanged
+// Save sends the same value.
+const ADM_PICK_CUSTOM = "__custom__";
+const ADM_BONUS_STATS = ["Attack", "Defense", "Lethality", "Health"];
+function admBonusOptions(kind, optional) {
+  const ops = kind === "islands"
+    ? [...ADM_BONUS_STATS.map((st) => [st, `${st} (all troops)`]), ...["Infantry", "Lancers", "Marksman"].flatMap((tr) => ["Attack", "Defense"].map((st) => `${tr} ${st}`))]
+    : ADM_BONUS_STATS;
+  return [["", optional ? "— none —" : "— choose —"], ...ops];
+}
+async function renderAdminSkinsCategory(body, category, kind) {
+  const bKind = kind === "islands" ? "islands" : "plain";
+  const bonusSel = (key, label, value, optional, more) => ({ key, label, type: "pick", options: admBonusOptions(bKind, optional), value: value == null ? "" : value, cls: "half", half: true, more });
   const rows = await sb(
     `skins?user_id=eq.${USER_ID}&category=eq.${encodeURIComponent(category)}&select=id,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,bonus_level1,bonus_level2,bonus_level3,bonus_level4,display_group,current_level,max_level,owned,sort_order,show_count_toggle&order=sort_order.asc`
   );
@@ -3202,15 +3224,15 @@ async function renderAdminSkinsCategory(body, category) {
   });
   wireAdminReorder(body, "data-skinrow", async (orderedIds) => {
     try { await saveAdminRowOrderInPlace(body, "data-skinrow", "skins", rows, orderedIds); dashDataChanged("skins"); }
-    catch (err) { toast("Couldn't reorder", true); renderAdminSkinsCategory(body, category); }
+    catch (err) { toast("Couldn't reorder", true); renderAdminSkinsCategory(body, category, kind); }
   });
   const fields = (r) => [
     { key: "image_url", label: "Picture", type: "img", value: r.image_url },
     { key: "name", label: "Name", value: r.name },
-    { key: "bonus_type", label: "Bonus stat (e.g. Troops Attack)", value: r.bonus_type, half: true },
+    bonusSel("bonus_type", "Bonus stat", r.bonus_type, false),
     { key: "bonus_value", label: "Bonus %", type: "num", value: r.bonus_value, half: true },
     { key: "max_level", label: "Max level", type: "num", value: r.max_level, half: true },
-    ...[2, 3, 4].flatMap((k) => [{ key: "bonus_type" + k, label: `Bonus ${k} stat`, value: r["bonus_type" + k], half: true, more: true }, { key: "bonus_value" + k, label: `Bonus ${k} %`, type: "num", value: r["bonus_value" + k], half: true, more: true }]),
+    ...[2, 3, 4].flatMap((k) => [bonusSel("bonus_type" + k, `Bonus ${k} stat`, r["bonus_type" + k], true, true), { key: "bonus_value" + k, label: `Bonus ${k} %`, type: "num", value: r["bonus_value" + k], half: true, more: true }]),
     ...[1, 2, 3, 4].map((k) => ({ key: "bonus_level" + k, label: `Bonus ${k} from level`, type: "num", value: r["bonus_level" + k], half: true, more: true })),
     { key: "display_group", label: "Group", value: r.display_group, more: true },
     { key: "show_count_toggle", label: "Has count trigger (a \"Count in max\" tick on the card, below the divider)", type: "check", value: r.show_count_toggle, more: true },
@@ -3226,9 +3248,9 @@ async function renderAdminSkinsCategory(body, category) {
           await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) });
           // A Globe Level extra skin keeps its link under the new name.
           if (v.name !== r.name && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(r.name)) await saveGameRule("globeLevels", GLOBE_LEVELS.map((g) => ({ level: g.level, city: g.city === r.name ? v.name : g.city, extra: g.extra.map((x) => (x === r.name ? v.name : x)) })));
-          dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category);
+          dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category, kind);
         },
-        onDelete: async () => { await sb(`skins?id=eq.${r.id}`, { method: "DELETE" }); dashDataChanged("skins"); toast("Deleted"); renderAdminSkinsCategory(body, category); },
+        onDelete: async () => { await sb(`skins?id=eq.${r.id}`, { method: "DELETE" }); dashDataChanged("skins"); toast("Deleted"); renderAdminSkinsCategory(body, category, kind); },
         deleteText: `Delete "${r.name}"?` });
     },
     onAdd: () => openAdmSheet({ title: `Add a ${category} item`, fields: fields({}),
@@ -3236,7 +3258,7 @@ async function renderAdminSkinsCategory(body, category) {
         if (!v.name) throw new Error("Enter a name");
         const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
         await sb(`skins`, { method: "POST", body: JSON.stringify({ ...v, user_id: USER_ID, category, current_level: v.current_level || 0, owned: !!v.owned, sort_order: maxOrder + 1 }) });
-        dashDataChanged("skins"); toast("Item added"); renderAdminSkinsCategory(body, category);
+        dashDataChanged("skins"); toast("Item added"); renderAdminSkinsCategory(body, category, kind);
       } }),
   });
 }
@@ -3877,7 +3899,7 @@ async function renderAdminIslands(body) {
     });
   });
   wireAdminCategoryReorder(body, "islands", cats, () => renderAdminIslands(body));
-  await renderAdminSkinsCategory(document.getElementById("adminIslandsBody"), ADMIN_ACTIVE_ISLAND_CAT);
+  await renderAdminSkinsCategory(document.getElementById("adminIslandsBody"), ADMIN_ACTIVE_ISLAND_CAT, "islands");
 }
 
 // Skin Gallery / Islands categories (design A): one row of chips + a

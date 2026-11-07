@@ -560,6 +560,13 @@ function esc(s) {
 function statLabelKey(label) {
   return { Attack: "stat_attack", Defense: "stat_defense", Lethality: "stat_lethality", Health: "stat_health" }[label] || null;
 }
+// A skin / island / facility / alliance bonus stat word: "Troops Attack" and
+// "Attack" are the same stat (all troops). Other words come back unchanged.
+const BONUS_STAT_WORDS = { attack: "Attack", defense: "Defense", lethality: "Lethality", health: "Health" };
+function bonusStatKey(bt) {
+  const m = /^\s*Troops?\s+(Attack|Defense|Lethality|Health)\s*$/i.exec(bt == null ? "" : String(bt));
+  return m ? BONUS_STAT_WORDS[m[1].toLowerCase()] : bt;
+}
 function tStatLabel(label) {
   const key = statLabelKey(label);
   return key ? t(key) : label;
@@ -4822,7 +4829,8 @@ async function renderOverview(opts = {}) {
       for (const s of allSkins) {
         if (s.category !== "Facility") continue;
         if (!useMax && !s.owned) continue;
-        const matches = s.bonus_type === rawStat || s.bonus_type === `${calcTroop} ${rawStat}` || s.bonus_type === "All" || s.bonus_type === "All Troops";
+        const bt = bonusStatKey(s.bonus_type);
+        const matches = bt === rawStat || bt === `${calcTroop} ${rawStat}` || bt === "All" || bt === "All Troops";
         if (matches && s.bonus_value != null) total += Number(s.bonus_value);
       }
       return total;
@@ -4908,7 +4916,7 @@ async function renderOverview(opts = {}) {
       const rawStat = STAT_KEY_TO_RAW[statKey];
       let total = 0;
       ALLIANCE_TECH_CACHE.forEach((it) => {
-        if (it.bonus_type !== rawStat) return;
+        if (bonusStatKey(it.bonus_type) !== rawStat) return;
         // troop scope lives in the item NAME ("Infantry Attack I", "Troops
         // Attack I"), not bonus_type - every item shares the same generic
         // bonus_type regardless of which troop it actually applies to.
@@ -24101,7 +24109,7 @@ async function renderSkinGallery() {
       const includeInMax = true;
       STAT_SLOTS.forEach(([tk, vk]) => {
         if (s[vk] == null) return;
-        const key = s[tk] || "Other";
+        const key = bonusStatKey(s[tk]) || "Other";
         const val = Number(s[vk]);
         if (includeInMax) {
           if (s.display_group) {
@@ -24288,7 +24296,7 @@ async function renderIslandGallery() {
       const lvl = s.current_level ?? 0;
       const maxLvl = s.max_level ?? 10;
       STAT_SLOTS.forEach(([typeKey, valKey, levelKey]) => {
-        const stat = s[typeKey];
+        const stat = bonusStatKey(s[typeKey]);
         if (s[valKey] == null || !stat) return;
         const unlockLvl = s[levelKey];
         const effective = !s.owned || !lvl || !maxLvl ? 0 : unlockLvl != null ? (lvl >= unlockLvl ? Number(s[valKey]) : 0) : (Number(s[valKey]) * lvl) / maxLvl;
@@ -25224,7 +25232,7 @@ async function renderAllianceTechPage() {
   const ROW_ORDER = ["Infantry", "Lancers", "Marksman", "Troops"];
   const lvl = (it) => Number(it.current_level) || 0;
   const top = (it) => (it.max_level == null ? 5 : Number(it.max_level));
-  const statOf = (it) => it.bonus_type || "Other";
+  const statOf = (it) => bonusStatKey(it.bonus_type) || "Other";
   const folds = BN_STAT_ORDER.filter((s) => items.some((it) => statOf(it) === s)).concat([...new Set(items.map(statOf))].filter((s) => !BN_STAT_ORDER.includes(s)));
 
   content.innerHTML = `<div class="t12x bn-pg">
@@ -25247,8 +25255,8 @@ async function renderAllianceTechPage() {
     answerEl.innerHTML = `${bnHeadHtml(t("bn_stats"), bnCountHtml(sumLv, "bn_of_levels", sumMax))}
       <div class="bn-tsw" role="tablist">${TROOPS.map((x) => `<button type="button" role="tab" aria-selected="${x === troop}" class="${x === troop ? "on" : ""}" data-attroop="${x}" style="--tc:${PLX_TROOP_COLORS[x]};"><i></i>${esc(troopDisplayName(x))}</button>`).join("")}</div>
       ${bnBoxesHtml(BN_STAT_ORDER.map((stat) => {
-        const own = items.find((x) => x.bonus_type === stat && x.name.startsWith(PREFIX[troop] + " "));
-        const all = items.find((x) => x.bonus_type === stat && x.name.startsWith("Troops "));
+        const own = items.find((x) => statOf(x) === stat && x.name.startsWith(PREFIX[troop] + " "));
+        const all = items.find((x) => statOf(x) === stat && x.name.startsWith("Troops "));
         return { label: bnAbbr(stat), val: (own ? lvl(own) : 0) + (all ? lvl(all) : 0), max: (own ? Number(own.bonus_value || 0) : 0) + (all ? Number(all.bonus_value || 0) : 0) };
       }))}`;
     const rank = (it) => { const i = ROW_ORDER.findIndex((p) => it.name.startsWith(p + " ")); return i === -1 ? 9 : i; };
@@ -29509,18 +29517,18 @@ async function renderFacilityPage() {
     const totals = {}, maxes = {};
     buildings.forEach((b) => {
       if (b.bonus_value == null) return;
-      const k = b.bonus_type || "Other";
+      const k = bonusStatKey(b.bonus_type) || "Other";
       maxes[k] = (maxes[k] || 0) + Number(b.bonus_value);
       if (b.owned) totals[k] = (totals[k] || 0) + Number(b.bonus_value);
     });
     const types = Object.keys(maxes).sort((a, b) => { const r = (x) => { const i = BN_STAT_ORDER.indexOf(x); return i === -1 ? 99 : i; }; return r(a) - r(b); });
     const row = (b) => `<button type="button" class="bn-rw ${b.owned ? "yes" : "no"}" data-facility="${esc(b.id)}" role="switch" aria-checked="${!!b.owned}">
         <span class="bn-pi">${b.image_url ? `<img src="${esc(b.image_url)}" alt="" loading="lazy" />` : ""}</span>
-        <span class="bn-tx"><b>${esc(dataName(b.name))}</b><span>${b.bonus_value != null ? `<em>${bidiNum(`+${bnFmt(b.bonus_value)}%`)} ${esc(bnAbbr(b.bonus_type || ""))}</em> · ${esc(t("bn_all_troops"))}` : esc(t("bonus_unknown"))}${b.owned ? ` · <span class="ok">${esc(t("bn_owned"))}</span>` : ""}</span></span>
+        <span class="bn-tx"><b>${esc(dataName(b.name))}</b><span>${b.bonus_value != null ? `<em>${bidiNum(`+${bnFmt(b.bonus_value)}%`)} ${esc(bnAbbr(bonusStatKey(b.bonus_type) || ""))}</em> · ${esc(t("bn_all_troops"))}` : esc(t("bonus_unknown"))}${b.owned ? ` · <span class="ok">${esc(t("bn_owned"))}</span>` : ""}</span></span>
         <span class="bn-sw${b.owned ? " on" : ""}"></span></button>`;
     body.innerHTML = `<div class="t12x-card bn-card">${bnHeadHtml(t("bn_stats_all"), bnCountHtml(owned, "bn_of_owned", buildings.length))}
         ${types.length ? bnBoxesHtml(types.map((k) => ({ label: bnAbbr(k), val: totals[k] || 0, max: maxes[k] }))) : bnBoxesHtml([{ label: t("total_bonus"), val: 0, max: 0 }])}</div>
-      ${groups.map((g) => { const ts = [...new Set(g.list.map((b) => b.bonus_type).filter(Boolean))]; return `<div class="t12x-card bn-card">${bnHeadHtml(dataName(g.name), ts.length ? `<i>${esc(ts.map(bnAbbr).join(" · "))}</i>` : "")}${g.list.map(row).join("")}</div>`; }).join("")}`;
+      ${groups.map((g) => { const ts = [...new Set(g.list.map((b) => bonusStatKey(b.bonus_type)).filter(Boolean))]; return `<div class="t12x-card bn-card">${bnHeadHtml(dataName(g.name), ts.length ? `<i>${esc(ts.map(bnAbbr).join(" · "))}</i>` : "")}${g.list.map(row).join("")}</div>`; }).join("")}`;
   }
   const setOwned = (list) => {
     list.forEach(([b, on]) => {
@@ -29573,7 +29581,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.js?v=0c0674ec1e";
+      s.src = "admin.js?v=126716ffe7";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
