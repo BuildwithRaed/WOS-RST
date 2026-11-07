@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"Os pacotes marcados vêm nas mesmas datas que {pack}.",
 "t:pkb_ev_add_none":"Nenhum pacote pode se juntar a este.",
 "t:pkb_ev_add_done":"Pronto",
-"t:pkb_ev_follows":"segue {pack} · marcar o move"
+"t:pkb_ev_follows":"segue {pack} · marcar o move",
+"t:pkb_ng_heroes":"{n} heróis",
+"t:pkb_ng_hero1":"1 herói",
+"t:pkb_ng_shards":"{n} fragmentos",
+"t:pkb_ng_widgets":"{n} widgets",
+"t:pkb_ng_made":"Criado sozinho para cada herói novo (Gen {gen})",
+"t:pkb_ev_swap":"agora lidera {n} pacotes · vai seguir {pack}",
+"t:pkb_ev_swap1":"agora lidera 1 pacote · vai seguir {pack}",
+"t:pkb_arrange":"Organizar",
+"t:pkb_arrange_done":"Pronto",
+"t:pkb_arrange_reset":"Voltar para A–Z",
+"t:pkb_arrange_hint":"Segure ⋮⋮ e arraste"
 }

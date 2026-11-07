@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"체크한 패키지는 {pack}와(과) 같은 날짜에 나옵니다.",
 "t:pkb_ev_add_none":"여기에 합칠 수 있는 패키지가 없습니다.",
 "t:pkb_ev_add_done":"완료",
-"t:pkb_ev_follows":"{pack}을(를) 따름 · 체크하면 옮겨집니다"
+"t:pkb_ev_follows":"{pack}을(를) 따름 · 체크하면 옮겨집니다",
+"t:pkb_ng_heroes":"영웅 {n}명",
+"t:pkb_ng_hero1":"영웅 1명",
+"t:pkb_ng_shards":"조각 {n}개",
+"t:pkb_ng_widgets":"위젯 {n}개",
+"t:pkb_ng_made":"새 영웅마다 자동으로 만들어집니다 ({gen}세대)",
+"t:pkb_ev_swap":"지금 패키지 {n}개를 이끎 · {pack}을(를) 따르게 됩니다",
+"t:pkb_ev_swap1":"지금 패키지 1개를 이끎 · {pack}을(를) 따르게 됩니다",
+"t:pkb_arrange":"정렬",
+"t:pkb_arrange_done":"완료",
+"t:pkb_arrange_reset":"A–Z 순으로 되돌리기",
+"t:pkb_arrange_hint":"⋮⋮를 길게 눌러 끌기"
 }

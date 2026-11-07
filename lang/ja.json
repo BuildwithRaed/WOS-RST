@@ -2515,5 +2515,16 @@
 "t:pkb_ev_add_sub":"チェックしたパックは{pack}と同じ日程になります。",
 "t:pkb_ev_add_none":"参加できるパックはありません。",
 "t:pkb_ev_add_done":"完了",
-"t:pkb_ev_follows":"{pack}に従う · チェックで移動"
+"t:pkb_ev_follows":"{pack}に従う · チェックで移動",
+"t:pkb_ng_heroes":"英雄{n}人",
+"t:pkb_ng_hero1":"英雄1人",
+"t:pkb_ng_shards":"欠片{n}個",
+"t:pkb_ng_widgets":"ウィジェット{n}個",
+"t:pkb_ng_made":"新英雄ごとに自動で作成(Gen {gen})",
+"t:pkb_ev_swap":"今は{n}パックを率いる · {pack}に従う",
+"t:pkb_ev_swap1":"今は1パックを率いる · {pack}に従う",
+"t:pkb_arrange":"並べ替え",
+"t:pkb_arrange_done":"完了",
+"t:pkb_arrange_reset":"A–Z順に戻す",
+"t:pkb_arrange_hint":"⋮⋮を長押ししてドラッグ"
 }

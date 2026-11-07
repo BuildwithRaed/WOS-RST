@@ -2515,5 +2515,16 @@
 "t:pkb_ev_add_sub":"Angehakte Pakete kommen an denselben Daten wie {pack}.",
 "t:pkb_ev_add_none":"Kein Paket kann sich diesem anschließen.",
 "t:pkb_ev_add_done":"Fertig",
-"t:pkb_ev_follows":"folgt {pack} · Haken verschiebt es"
+"t:pkb_ev_follows":"folgt {pack} · Haken verschiebt es",
+"t:pkb_ng_heroes":"{n} Helden",
+"t:pkb_ng_hero1":"1 Held",
+"t:pkb_ng_shards":"{n} Splitter",
+"t:pkb_ng_widgets":"{n} Widgets",
+"t:pkb_ng_made":"Automatisch für jeden neuen Helden erstellt (Gen {gen})",
+"t:pkb_ev_swap":"führt jetzt {n} Pakete · folgt dann {pack}",
+"t:pkb_ev_swap1":"führt jetzt 1 Paket · folgt dann {pack}",
+"t:pkb_arrange":"Anordnen",
+"t:pkb_arrange_done":"Fertig",
+"t:pkb_arrange_reset":"Zurück auf A–Z",
+"t:pkb_arrange_hint":"⋮⋮ halten und ziehen"
 }

@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"İşaretli paketler {pack} ile aynı tarihlerde gelir.",
 "t:pkb_ev_add_none":"Buna katılabilecek paket yok.",
 "t:pkb_ev_add_done":"Bitti",
-"t:pkb_ev_follows":"{pack} paketini izler · işaretlemek onu taşır"
+"t:pkb_ev_follows":"{pack} paketini izler · işaretlemek onu taşır",
+"t:pkb_ng_heroes":"{n} kahraman",
+"t:pkb_ng_hero1":"1 kahraman",
+"t:pkb_ng_shards":"{n} parça",
+"t:pkb_ng_widgets":"{n} widget",
+"t:pkb_ng_made":"Her yeni kahraman için kendiliğinden oluşur (Gen {gen})",
+"t:pkb_ev_swap":"şu an {n} paketi yönetiyor · {pack} paketini izleyecek",
+"t:pkb_ev_swap1":"şu an 1 paketi yönetiyor · {pack} paketini izleyecek",
+"t:pkb_arrange":"Düzenle",
+"t:pkb_arrange_done":"Bitti",
+"t:pkb_arrange_reset":"A–Z'ye dön",
+"t:pkb_arrange_hint":"⋮⋮'yi basılı tutup sürükle"
 }

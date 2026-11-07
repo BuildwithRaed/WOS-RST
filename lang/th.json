@@ -2514,5 +2514,16 @@
 "t:pkb_ev_add_sub":"แพ็กที่ติ๊กจะมาวันเดียวกับ {pack}",
 "t:pkb_ev_add_none":"ไม่มีแพ็กที่เข้าร่วมได้",
 "t:pkb_ev_add_done":"เสร็จ",
-"t:pkb_ev_follows":"ตาม {pack} · ติ๊กแล้วจะย้ายมา"
+"t:pkb_ev_follows":"ตาม {pack} · ติ๊กแล้วจะย้ายมา",
+"t:pkb_ng_heroes":"ฮีโร่ {n} ตัว",
+"t:pkb_ng_hero1":"ฮีโร่ 1 ตัว",
+"t:pkb_ng_shards":"เศษ {n} ชิ้น",
+"t:pkb_ng_widgets":"วิดเจ็ต {n} ชิ้น",
+"t:pkb_ng_made":"สร้างเองสำหรับฮีโร่ใหม่แต่ละตัว (Gen {gen})",
+"t:pkb_ev_swap":"ตอนนี้นำ {n} แพ็ก · จะตาม {pack}",
+"t:pkb_ev_swap1":"ตอนนี้นำ 1 แพ็ก · จะตาม {pack}",
+"t:pkb_arrange":"จัดเรียง",
+"t:pkb_arrange_done":"เสร็จ",
+"t:pkb_arrange_reset":"กลับเป็น A–Z",
+"t:pkb_arrange_hint":"กด ⋮⋮ ค้างแล้วลาก"
 }
