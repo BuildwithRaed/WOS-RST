@@ -2893,6 +2893,10 @@ const T = {
   pkb_next: { en: "next {date}" },
   pkb_free: { en: "Free" },
   pkb_show_more: { en: "Show {n} more" },
+  pkb_arrange: { en: "Arrange" },
+  pkb_arrange_done: { en: "Done" },
+  pkb_arrange_reset: { en: "Reset to A–Z" },
+  pkb_arrange_hint: { en: "Hold ⋮⋮ and drag" },
   pkb_counted_all: { en: "all {n} counted in Budgets" },
   pkb_counted_some: { en: "{n} of {m} counted in Budgets" },
   pkb_how: { en: "How it's bought" },
@@ -10204,6 +10208,23 @@ let PKB_QUERY = "";
 const PKB_MORE = new Set();
 // Event cards opened on the Packs page (events start folded), kept for the visit.
 const PKB_EV_OPEN = new Set();
+// The owner's "Arrange" fold (its category key, null = none), kept for the visit.
+let PKB_ARRANGE_CAT = null;
+// The owner's own order of rows in a fold / inside an event card, saved for
+// everyone in packs_links.__rowOrder = { "<category>": [ids], "ev:<leaderId>": [ids] }.
+function pkbRowOrder() {
+  const o = PACK_LINKS && PACK_LINKS.__rowOrder;
+  return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+}
+// Puts items in the saved order; items not in it (new packs) follow in the
+// order they came (A to Z), ids no longer there are skipped. No saved list =
+// the same array back.
+function pkbByOrder(list, saved, idOf) {
+  if (!Array.isArray(saved) || !saved.length) return list;
+  const pos = new Map(saved.map((id, i) => [String(id), i]));
+  const known = list.filter((x) => pos.has(String(idOf(x)))).sort((a, b) => pos.get(String(idOf(a))) - pos.get(String(idOf(b))));
+  return known.concat(list.filter((x) => !pos.has(String(idOf(x)))));
+}
 let PKB_HOOK = null;
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || TAB !== "packs" || document.querySelector(".pk-sheet-back")) return;
@@ -10313,7 +10334,16 @@ async function renderPacksPage() {
   // Packs B: a category opens (one at a time) or folds, "Show N more", a row
   // opens its pack's window; the window's ‹ / dim edge closes it.
   listEl.addEventListener("click", (e) => {
-    if (e.target.closest(".pkb-tk")) return;
+    if (e.target.closest(".pkb-tk") || e.target.closest(".pkb-cat .ds-h")) return;
+    const arrB = e.target.closest("[data-pkbarr]");
+    if (arrB) {
+      const k = arrB.dataset.pkbarr;
+      PKB_ARRANGE_CAT = PKB_ARRANGE_CAT === k ? null : k;
+      renderAll();
+      return;
+    }
+    const arrR = e.target.closest("[data-pkbarrreset]");
+    if (arrR) { pkbArrangeReset(arrR.dataset.pkbarrreset); return; }
     // the event's one tick: all on, or all off when all are on
     const evAll = e.target.closest("[data-pkbevall]");
     if (evAll) {
@@ -10337,6 +10367,7 @@ async function renderPacksPage() {
     const fold = e.target.closest("[data-pkbfold]");
     if (fold) {
       const k = fold.dataset.pkbfold, wasOpen = fold.closest(".pkb-cat").classList.contains("open"), top0 = fold.getBoundingClientRect().top;
+      PKB_ARRANGE_CAT = null;
       packsFilter = wasOpen ? "closed" : (k ? "cat:" + k : "none");
       try { localStorage.setItem("packs_filter", packsFilter); } catch (err) { /* blocked */ }
       renderAll();
@@ -10351,10 +10382,10 @@ async function renderPacksPage() {
     const go = e.target.closest("[data-pkbgo]");
     if (go) { pkbOpen(go.dataset.pkbgo); return; }
     const row = e.target.closest("[data-pkrowid]");
-    if (row) pkbOpen(row.dataset.pkrowid);
+    if (row && !row.closest(".pkb-arranging")) pkbOpen(row.dataset.pkrowid);
   });
   listEl.addEventListener("keydown", (e) => {
-    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkrowid]")) { e.preventDefault(); pkbOpen(e.target.dataset.pkrowid); }
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkrowid]")) { e.preventDefault(); if (!e.target.closest(".pkb-arranging")) pkbOpen(e.target.dataset.pkrowid); }
     if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-pkbevtap]")) { e.preventDefault(); e.target.click(); }
   });
   // "How it's bought" dropdown in the window sets the same radio buttons as before.
@@ -10950,14 +10981,14 @@ async function renderPacksPage() {
       });
     });
   }
-  function pkbRowHtml(tb, ti, ev, evNames) {
+  function pkbRowHtml(tb, ti, ev, evNames, arr) {
     const lk = packLinkFor(tb.id), inB = packInBudgets(tb.id), w = pkbWhen(lk), hid = IS_OWNER && lk.hideVisitors;
     const tiers = ev ? tb.rows.filter((r) => String(r.cells[lk.priceCol || 0] ?? "").trim() !== "").length : 0;
     const sub0 = ev === "in" ? "" : ev === "follow" ? t("pkb_ev_same") : ev === "lead" ? pkbResetText(lk.reset) : w.text;
     const ngN = PKB_NG && PKB_NG[String(tb.id)] ? PKB_NG[String(tb.id)].items.length : 0;
     const right = ev ? (tiers > 1 && ev !== "in" ? `<small>${esc(t("pkb_tiers").replace("{n}", tiers))}</small>` : "") : w.on ? `<small class="on">&#9679; ${esc(t("pkb_on_now"))}</small>` : w.next ? `<small>${esc(t("pkb_next").replace("{date}", w.next))}</small>` : "";
     return `<div class="pkb-row${ev ? " pkb-evr" : ""}${inB || lk.template ? "" : " pkb-off"}${hid ? " pkb-hidv" : ""}" data-pkrow="${ti}" data-pkrowid="${esc(String(tb.id))}" role="button" tabindex="0">
-      <span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
+      ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-ic">${pkbIcon(tb, lk) || "&#127873;"}</span>
       <span class="pkb-m"><b${ev ? ` title="${esc(tb.title)}"` : ""}>${esc(ev ? packEventShort(tb.title, evNames) : tb.title)}</b>${sub0 || ngN ? `<small>${esc(sub0)}${ngN ? `<span data-pkbngn>${sub0 ? " · " : ""}${esc(pkbNgCount(ngN))}</span>` : ""}</small>` : ""}${hid ? `<small class="pkb-hid">${esc(t("pk_hidden_tag"))}</small>` : ""}</span>
       ${ev === "in" ? "" : `<span class="pkb-r"><b>${esc(pkbPrice(tb, lk))}</b>${right}</span>`}
       ${lk.template ? "" : `<label class="pkb-tk" title="${esc(t("pk_in_budgets_hint"))}"><input type="checkbox" data-pkbudrow="${esc(String(tb.id))}" ${inB ? "checked" : ""} aria-label="${esc(t("pk_in_budgets"))}" /></label>`}
@@ -11006,6 +11037,9 @@ async function renderPacksPage() {
     // game's tiers first (Classic, Sublime, Exquisite), then A to Z with numbers
     // in number order (Lv 2 before Lv 10).
     pkbCats.forEach((g) => g.list.sort((a, b) => pkbOrder(a.tb.title, b.tb.title)));
+    // The owner's own order (Arrange), when saved for a fold / an event card.
+    const rowOrd = pkbRowOrder();
+    if (q || !IS_OWNER) PKB_ARRANGE_CAT = null;
     // Event cards: a leader with followers in the same
     // fold is one unit where the leader sorts; followers aren't listed apart.
     pkbCats.forEach((g) => {
@@ -11014,46 +11048,93 @@ async function renderPacksPage() {
         const lead = packLinkFor(x.tb.id).dateWith;
         if (lead && ids.has(String(lead))) { if (!fol.has(String(lead))) fol.set(String(lead), []); fol.get(String(lead)).push(x); taken.add(String(x.tb.id)); }
       });
-      g.units = g.list.filter((x) => !taken.has(String(x.tb.id))).map((x) => ({ lead: x, fol: fol.get(String(x.tb.id)) || [] }));
+      g.units = pkbByOrder(g.list.filter((x) => !taken.has(String(x.tb.id))).map((x) => ({ lead: x, fol: fol.get(String(x.tb.id)) || [] })), rowOrd[g.key], (u) => u.lead.tb.id);
     });
-    const unitHtml = (u) => {
-      if (!u.fol.length) return pkbRowHtml(u.lead.tb, u.lead.ti);
+    const unitHtml = (u, arr) => {
+      if (!u.fol.length) return pkbRowHtml(u.lead.tb, u.lead.ti, undefined, undefined, arr);
       const lt = u.lead.tb, w = pkbWhen(packLinkFor(lt.id));
       const evName = packEventName(lt, tables), evNames = [evName, packEventDefault(lt, packEventFollowers(lt, tables))];
       const st = w.on ? `<span class="on">&#9679; ${esc(t("pkb_on_now"))}</span>` : w.next ? `<span>${esc(t("pkb_next").replace("{date}", w.next))}</span>` : "";
       // A: one folded line — pictures, name, "N packs ·
       // price range", days and on now / next, one tick for the whole event.
-      const all = [u.lead, ...u.fol], id = String(lt.id), open = !!q || PKB_EV_OPEN.has(id);
+      const id = String(lt.id), all = pkbByOrder([u.lead, ...u.fol], rowOrd["ev:" + id], (x) => x.tb.id), open = !!q || PKB_EV_OPEN.has(id);
       const pics = all.slice(0, 4).map((x) => `<span>${pkbIcon(x.tb, packLinkFor(x.tb.id)) || "&#127873;"}</span>`).join("");
       const when = w.days || w.text, line2 = when || st ? `<small>${esc(when)}${when && st ? " · " : ""}${st}</small>` : "";
       return `<div class="pkb-ev pkb-eva${open ? " open" : ""}" data-pkbev="${esc(id)}">
         <div class="pkb-ev-a" data-pkbevtap="${esc(id)}" role="button" tabindex="0" aria-expanded="${open}">
-          <span class="pkb-ev-st">${pics}</span>
+          ${arr ? dsHandleHtml("data-pkbdrag") : ""}<span class="pkb-ev-st">${pics}</span>
           <span class="pkb-ev-m"><b>&#128279; ${esc(evName)}</b><small>${esc(t("pkb_ev_packs").replace("{n}", all.length))} · ${esc(pkbEvPrice(all.map((x) => x.tb)))}</small>${line2}</span>
           ${pkbEvTickHtml(all.map((x) => x.tb))}
           <span class="pkb-chev" aria-hidden="true">${open ? "&#8963;" : "&#8250;"}</span>
         </div>
-        ${open ? all.map((x) => pkbRowHtml(x.tb, x.ti, "in", evNames)).join("") : ""}
+        ${open ? all.map((x) => pkbRowHtml(x.tb, x.ti, "in", evNames, arr)).join("") : ""}
       </div>`;
     };
     const openKey = packsFilter === "none" ? "" : packsFilter.startsWith("cat:") ? packsFilter.slice(4) : packsFilter === "closed" ? null : (pkbCats[0] ? pkbCats[0].key : null);
     const html = pkbCats.map((g) => {
       const open = !!q || g.key === openKey;
-      const shownU = q || PKB_MORE.has(g.key) ? g.units.length : Math.min(4, g.units.length);
+      const arr = open && PKB_ARRANGE_CAT === g.key;
+      const shownU = q || arr || PKB_MORE.has(g.key) ? g.units.length : Math.min(4, g.units.length);
       const shown = g.units.slice(0, shownU).reduce((n, u) => n + 1 + u.fol.length, 0);
-      return `<section class="pkb-cat${open ? " open" : ""}" data-pkbcat="${esc(g.key)}">
+      // Owner: "Arrange" on the open fold's heading (not while searching).
+      const arrBtn = open && IS_OWNER && !q ? `<button type="button" class="pkb-arr-btn${arr ? " on" : ""}" data-pkbarr="${esc(g.key)}" aria-pressed="${arr}">${arr ? esc(t("pkb_arrange_done")) : `&#8645; ${esc(t("pkb_arrange"))}`}</button>` : "";
+      const hasSaved = arr && (Array.isArray(rowOrd[g.key]) || g.units.some((u) => u.fol.length && Array.isArray(rowOrd["ev:" + String(u.lead.tb.id)])));
+      const arrBar = arr ? `<div class="pkb-arr-bar"><span>${esc(t("pkb_arrange_hint"))}</span>${hasSaved ? `<button type="button" class="pkb-arr-reset" data-pkbarrreset="${esc(g.key)}">${esc(t("pkb_arrange_reset"))}</button>` : ""}</div>` : "";
+      return `<section class="pkb-cat${open ? " open" : ""}${arrBtn ? ` pkb-own${arr ? " pkb-arranging" : ""}` : ""}" data-pkbcat="${esc(g.key)}">${arrBtn}
         <button type="button" class="pkb-cat-h" data-pkbfold="${esc(g.key)}" aria-expanded="${open}">
           <span class="pkb-n">${g.list.length}</span>
           <span class="pkb-cat-t"><b>${esc(g.label)}</b><small data-pkbcatsub>${esc(pkbCatSub(g.list, g.key))}</small></span>
           <span class="pkb-caret" aria-hidden="true">${open ? "&#9662;" : "&#9656;"}</span>
         </button>
-        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${g.units.slice(0, shownU).map(unitHtml).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
+        ${open ? `${g.key === PACK_MINE_GROUP && IS_OWNER ? `<div class="meta pkb-note">${esc(t("mp_admin_mine_note"))}</div>` : ""}${arrBar}${g.units.slice(0, shownU).map((u) => unitHtml(u, arr)).join("")}${shown < g.list.length ? `<button type="button" class="pkb-more" data-pkbmore="${esc(g.key)}">${esc(t("pkb_show_more").replace("{n}", g.list.length - shown))} &#9662;</button>` : ""}` : ""}
       </section>`;
     }).join("");
     const openId = [...PACKS_OPEN][0];
     const sheetTi = openId != null ? tables.findIndex((tb) => String(tb.id) === String(openId)) : -1;
     listEl.innerHTML = `<div class="pkb-cats">${html || `<div class="empty">${esc(t("pkb_no_match"))}</div>`}</div><datalist id="packGroupNames">${order.map((g) => `<option value="${esc(g)}"></option>`).join("")}</datalist>${sheetTi >= 0 ? pkbSheetHtml(sheetTi) : ""}`;
     if (sheetTi >= 0) pkbBuildSheet(); else if (openId != null) PACKS_OPEN.clear();
+    pkbWireArrange();
+  }
+  // Arrange (owner): each row / event card of the fold has a ⋮⋮ handle; rows
+  // inside an open event card move among themselves. The drop saves the new
+  // order for everyone (packs_links.__rowOrder) and draws the list again.
+  const pkbArrItem = (h) => (h.parentElement && h.parentElement.matches(".pkb-ev-a") ? h.closest(".pkb-ev") : h.closest(".pkb-row"));
+  const pkbArrList = (el) => [...el.parentElement.children].filter((x) => x.matches(".pkb-row, .pkb-ev"));
+  const pkbArrId = (el) => (el.matches(".pkb-ev") ? el.dataset.pkbev : el.dataset.pkrowid);
+  function pkbSaveRowOrder(change) {
+    const o = { ...pkbRowOrder() };
+    change(o);
+    if (Object.keys(o).length) PACK_LINKS.__rowOrder = o; else delete PACK_LINKS.__rowOrder;
+    savePackLinks();
+    renderAll();
+    dsSaved();
+  }
+  function pkbWireArrange() {
+    listEl.querySelectorAll(".pkb-arranging .ds-h[data-pkbdrag]").forEach((h) => dragSort(h, {
+      item: pkbArrItem,
+      items: pkbArrList,
+      place: () => {},
+      done: (el, from, to) => {
+        const ids = pkbArrList(el).map(pkbArrId);
+        const [moved] = ids.splice(from, 1);
+        ids.splice(to, 0, moved);
+        const ev = el.parentElement.closest(".pkb-ev"), sec = el.closest("[data-pkbcat]");
+        if (!ev && !sec) return;
+        const key = ev ? "ev:" + ev.dataset.pkbev : sec.dataset.pkbcat;
+        pkbSaveRowOrder((o) => { o[key] = ids; });
+      },
+      refocus: (el) => {
+        const id = pkbArrId(el), sel = el.matches(".pkb-ev") ? `.pkb-arranging [data-pkbev="${window.CSS.escape(id)}"] > .pkb-ev-a > .ds-h` : `.pkb-arranging [data-pkrowid="${window.CSS.escape(id)}"] > .ds-h`;
+        const nh = listEl.querySelector(sel);
+        if (nh) nh.focus();
+      },
+    }));
+  }
+  // "Reset to A–Z": the fold's own order and its event cards' orders go.
+  function pkbArrangeReset(key) {
+    const sec = listEl.querySelector(`[data-pkbcat="${window.CSS.escape(key)}"]`);
+    const evs = sec ? [...sec.querySelectorAll("[data-pkbev]")].map((x) => "ev:" + x.dataset.pkbev) : [];
+    pkbSaveRowOrder((o) => { delete o[key]; evs.forEach((k) => delete o[k]); });
   }
   // Count in Budgets changed (a row's tick or the window's switch): the other
   // one, the row's look and the category's "counted" line follow.
