@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"每天第一次半价。较低档位：周一各{n}次以解锁。",
 "t:rl_tier_note1":"每天第一次半价。",
 "t:rl_rfc_a_week":"每周 ≈ {n} 精炼火晶",
+"t:rl_rfc_wk_line":"→ 每周 ~{n} 精炼火晶",
 "t:rl_before_d":"{d}之前",
 "t:rl_after_d":"{d}之后",
 "t:rl_super":"超级精炼",

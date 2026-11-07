@@ -2427,6 +2427,7 @@
 "t:rl_tier_note":"Günün ilk denemesi yarı fiyat. Alt kademeler: açmak için pazartesi her birinden {n}.",
 "t:rl_tier_note1":"Günün ilk denemesi yarı fiyat.",
 "t:rl_rfc_a_week":"Haftada ≈ {n} Arıtılmış FC",
+"t:rl_rfc_wk_line":"→ Haftada ~{n} Arıtılmış FC",
 "t:rl_before_d":"{d} öncesi",
 "t:rl_after_d":"{d} sonrası",
 "t:rl_super":"Süper arıtmalar",

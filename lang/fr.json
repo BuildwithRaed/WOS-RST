@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"Le premier essai du jour est à moitié prix. Paliers inférieurs : {n} chacun le lundi pour débloquer.",
 "t:rl_tier_note1":"Le premier essai du jour est à moitié prix.",
 "t:rl_rfc_a_week":"≈ {n} FC raffiné par semaine",
+"t:rl_rfc_wk_line":"→ ~{n} FC raffiné par semaine",
 "t:rl_before_d":"avant le {d}",
 "t:rl_after_d":"après le {d}",
 "t:rl_super":"Super raffinages",

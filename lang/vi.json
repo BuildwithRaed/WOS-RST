@@ -2427,6 +2427,7 @@
 "t:rl_tier_note":"Lần thử đầu mỗi ngày nửa giá. Bậc thấp hơn: mỗi bậc {n} vào thứ Hai để mở.",
 "t:rl_tier_note1":"Lần thử đầu mỗi ngày nửa giá.",
 "t:rl_rfc_a_week":"≈ {n} FC Tinh Luyện mỗi tuần",
+"t:rl_rfc_wk_line":"→ ~{n} FC Tinh Luyện mỗi tuần",
 "t:rl_before_d":"trước {d}",
 "t:rl_after_d":"sau {d}",
 "t:rl_super":"Siêu tinh luyện",

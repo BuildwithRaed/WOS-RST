@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"El primer intento del día cuesta la mitad. Niveles inferiores: {n} cada uno el lunes para desbloquear.",
 "t:rl_tier_note1":"El primer intento del día cuesta la mitad.",
 "t:rl_rfc_a_week":"≈ {n} FC Refinado por semana",
+"t:rl_rfc_wk_line":"→ ~{n} FC Refinado por semana",
 "t:rl_before_d":"antes del {d}",
 "t:rl_after_d":"después del {d}",
 "t:rl_super":"Super refinamientos",

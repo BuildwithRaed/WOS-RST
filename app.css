@@ -2653,6 +2653,11 @@ input,select,textarea{
   .rl-own{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:10px; font-size:12.5px; color:var(--muted); }
   .rl-own b{ color:var(--frost); }
   .rl-own .rl-lnk{ min-height:36px; font-weight:700; }
+  .rl-own-g{ display:block; color:var(--muted); font-weight:600; }
+  .rl-gain{ white-space:nowrap; color:var(--frost); font-weight:700; }
+  .rl-ic.rl-ic-s{ width:15px; height:15px; vertical-align:-3px; }
+  .rl-wr .rl-gain{ font-size:13px; margin-inline-start:4px; }
+  .rl-sldg{ text-align:center; font-size:12.5px; color:var(--muted); font-weight:600; margin-top:4px; }
   .modal-box.rl-own-box{ max-width:440px; padding:14px 16px 16px; }
   .rl-own-h{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .rl-own-h b{ font-size:16px; flex:1; }

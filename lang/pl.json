@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"Pierwsza próba dnia za pół ceny. Niższe poziomy: po {n} w poniedziałek, by odblokować.",
 "t:rl_tier_note1":"Pierwsza próba dnia za pół ceny.",
 "t:rl_rfc_a_week":"≈ {n} Oczyszczonego FC tygodniowo",
+"t:rl_rfc_wk_line":"→ ~{n} Oczyszczonego FC tygodniowo",
 "t:rl_before_d":"przed {d}",
 "t:rl_after_d":"po {d}",
 "t:rl_super":"Super oczyszczenia",

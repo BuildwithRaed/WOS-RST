@@ -2427,6 +2427,7 @@
 "t:rl_tier_note":"하루 첫 시도는 반값. 아래 단계: 해금하려면 월요일에 각각 {n}회.",
 "t:rl_tier_note1":"하루 첫 시도는 반값.",
 "t:rl_rfc_a_week":"주당 정제 결정 ≈ {n}",
+"t:rl_rfc_wk_line":"→ 주당 정제 결정 ~{n}",
 "t:rl_before_d":"{d} 전",
 "t:rl_after_d":"{d} 후",
 "t:rl_super":"슈퍼 정제",

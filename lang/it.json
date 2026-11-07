@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"Il primo tentativo del giorno costa metà. Livelli inferiori: {n} ciascuno il lunedì per sbloccare.",
 "t:rl_tier_note1":"Il primo tentativo del giorno costa metà.",
 "t:rl_rfc_a_week":"≈ {n} FC Raffinato a settimana",
+"t:rl_rfc_wk_line":"→ ~{n} FC Raffinato a settimana",
 "t:rl_before_d":"prima del {d}",
 "t:rl_after_d":"dopo il {d}",
 "t:rl_super":"Super raffinazioni",

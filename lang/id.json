@@ -2427,6 +2427,7 @@
 "t:rl_tier_note":"Percobaan pertama tiap hari setengah harga. Tingkat lebih rendah: masing-masing {n} pada Senin untuk membuka.",
 "t:rl_tier_note1":"Percobaan pertama tiap hari setengah harga.",
 "t:rl_rfc_a_week":"≈ {n} Refined FC per minggu",
+"t:rl_rfc_wk_line":"→ ~{n} Refined FC per minggu",
 "t:rl_before_d":"sebelum {d}",
 "t:rl_after_d":"setelah {d}",
 "t:rl_super":"Super refinement",
