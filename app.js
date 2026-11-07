@@ -3,10 +3,9 @@
   // Every visitor gets their own anonymous session automatically (their
   // calculator progress is private to them, tied to this browser). The
   // owner logs in with a real email/password to unlock Admin - see
-  // ensureAuthSession() below and the OWNER_EMAIL check.
+  // ensureAuthSession() below and the owner account check (by account id).
   const SUPABASE_URL = "https://hzourauekkiorojrhpko.supabase.co";
   const SUPABASE_KEY = "sb_publishable_jYL-ovML6Pq2GqJr-ouaGQ_2-uUMzb7";
-  const OWNER_EMAIL = "BuildwithRaed@outlook.com";
   // progression_tables/progression_rows (Chief Gear & Hero Gear material cost
   // data) is pure shared reference data with a user_id column left over from
   // the single-user era - every visitor reads the owner's copy, regardless
@@ -26,7 +25,7 @@
     if (session) {
       CURRENT_SESSION = session;
       USER_ID = session.user.id;
-      IS_OWNER = (session.user.email || "").toLowerCase() === OWNER_EMAIL.toLowerCase();
+      IS_OWNER = session.user.id === PROGRESSION_OWNER_ID;
     }
   });
 
@@ -66,7 +65,7 @@
       CURRENT_SESSION = data.session;
     }
     USER_ID = CURRENT_SESSION.user.id;
-    IS_OWNER = (CURRENT_SESSION.user.email || "").toLowerCase() === OWNER_EMAIL.toLowerCase();
+    IS_OWNER = CURRENT_SESSION.user.id === PROGRESSION_OWNER_ID;
   }
 
   // Thin wrapper around the Supabase REST (PostgREST) API. Uses the current
