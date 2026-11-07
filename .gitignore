@@ -1,3 +1,6 @@
 # Personal Claude Code notes: kept on your own computer, never uploaded
 # (CLAUDE.md is the shared, published one).
 CLAUDE.local.md
+
+# Maintainer tools (tools/package.json): installed with npm ci, not published
+tools/node_modules/

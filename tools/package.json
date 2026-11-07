@@ -1,0 +1,9 @@
+{
+  "name": "wosrst-tools",
+  "private": true,
+  "description": "Maintainer tools, not loaded by the site. After editing app.js / app.css / admin.js: npm ci (once, in tools/), then node tools/stamp.js",
+  "devDependencies": {
+    "csso": "5.0.5",
+    "terser": "5.51.2"
+  }
+}
