@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "2881afcbee";
+window.ADMIN_BUILD = "06ced057fe";
 
 // ============================================================
 // ADMIN PAGE
@@ -90,8 +90,6 @@ const ADMIN_SHORT = {
 };
 // Sections whose level tables can have "Upcoming" rows (site_config upcoming_levels).
 const ADMIN_UP_MATCH = { charm: /^charm/, pets: /^pet/, experts: /expert/, chiefgears: /chief/, herogearprog: /hero_gear|progression/, vip: /vip/, centerresearch: /research|t11|t12/ };
-const ADMIN_GAME_FIRST = 8;
-let ADMIN_HOME_MORE = true; // owner: always show every section, no "Show more"
 function adminBackupAge() {
   let last = null; try { last = localStorage.getItem("admin_last_backup"); } catch (e) { /* blocked */ }
   if (!last) return null;
@@ -128,13 +126,13 @@ function adminHomeHtml() {
   const rc = Object.keys(gameRulesSaved()).length;
   if (rc) rows.push({ warn: false, b: t("admh_need_rules").replace("{n}", rc), s: t("admh_need_rules_sub"), go: "rules", btn: t("admh_rules_btn") });
   const needs = `<div class="admh-needs"><div class="admh-k">${esc(t("admh_needs"))}</div>${rows.map((r) => `<div class="admh-nr"><i class="admh-dot${r.warn ? " warn" : ""}" aria-hidden="true"></i><span class="admh-nt"><b>${esc(r.b)}</b>${r.s ? `<small>${esc(r.s)}</small>` : ""}</span><button type="button" class="admh-nb${r.warn ? " warn" : ""}" data-admintable="${r.go}">${esc(r.btn)} &#8250;</button></div>`).join("")}</div>`;
-  // Main game data first (owner's mock-up), the rest behind "Show N more".
+  // Main game data first (owner's mock-up); every section is shown.
   const MAIN = ["experts", "pets", "chiefgears", "charm", "herogearprog", "heroes", "centerresearch", "vip"];
-  const game = keys("game").sort((a, b) => (MAIN.indexOf(a) < 0 ? 99 : MAIN.indexOf(a)) - (MAIN.indexOf(b) < 0 ? 99 : MAIN.indexOf(b))), more = game.slice(ADMIN_GAME_FIRST);
-  const grid = (g, list) => `<div class="admh-g" data-admhg="${g}"><div class="admh-gk">${esc(gl(g))} <span>${list.length}</span></div><div class="admh-cards">${list.map((k, i) => card(k, g === "game" && i >= ADMIN_GAME_FIRST ? "admh-x" : "")).join("")}</div>${g === "game" && more.length ? `<button type="button" class="admh-more" data-admhmore>${esc(t("admh_show_more").replace("{n}", more.length))} · ${esc(more.map((k) => ADMIN_TABLES[k].label).join(", "))} &#9662;</button>` : ""}</div>`;
+  const game = keys("game").sort((a, b) => (MAIN.indexOf(a) < 0 ? 99 : MAIN.indexOf(a)) - (MAIN.indexOf(b) < 0 ? 99 : MAIN.indexOf(b)));
+  const grid = (g, list) => `<div class="admh-g" data-admhg="${g}"><div class="admh-gk">${esc(gl(g))} <span>${list.length}</span></div><div class="admh-cards">${list.map((k) => card(k)).join("")}</div></div>`;
   const site = keys("site");
   const pages = Object.keys(ADMIN_TABLES).filter((k) => ADMIN_TABLES[k].tab);
-  return `<div class="admh${ADMIN_HOME_MORE ? " more" : ""}">${needs}<div class="admh-sslot"></div>
+  return `<div class="admh">${needs}<div class="admh-sslot"></div>
     ${grid("game", game)}${grid("packs", keys("packs"))}${grid("rules", keys("rules"))}
     <div class="admh-g admh-site" data-admhg="site"><div class="admh-gk">${esc(gl("site"))} <span>${site.length}</span></div><div class="admh-cards">${site.map((k) => card(k)).join("")}</div></div>
     <div class="admh-g admh-pages" data-admhg="pages"><div class="admh-gk">${esc(t("admh_open_page"))}</div><div class="admh-chips">${pages.map((k) => `<button type="button" class="admh-chip" data-admintable="${k}">${ADMIN_PIC[k] ? `<img src="${ADMIN_PIC[k]}" alt="" />` : `<span>${ADMIN_TABLES[k].icon}</span>`}${esc(ADMIN_TABLES[k].label)} &#8599;</button>`).join("")}</div></div>
@@ -147,10 +145,6 @@ function adminHomeFilter(root, qq) {
   h.querySelectorAll(".admh-g").forEach((g) => { const vis = [...g.querySelectorAll(".admh-cards [data-admintable], .admh-chips [data-admintable]")].some((b) => !b.hidden); g.hidden = !vis; if (vis) any = true; });
   h.querySelector(".admh-needs").hidden = !!qq;
   h.querySelector(".admh-none").hidden = any;
-}
-function wireAdminHome(root) {
-  const m = root.querySelector("[data-admhmore]");
-  if (m) m.addEventListener("click", () => { ADMIN_HOME_MORE = true; root.querySelector(".admh").classList.add("more"); });
 }
 async function renderAdminPageMain() {
   // Admin edits the data other pages keep in memory for the visit.
@@ -199,7 +193,6 @@ async function renderAdminPageMain() {
   const search = content.querySelector("[data-adminsearch]");
   const sslot = content.querySelector(".admh-sslot");
   if (sslot) sslot.appendChild(search);
-  wireAdminHome(content);
   if (!cur && ADMIN_SEARCH.trim()) adminHomeFilter(content, ADMIN_SEARCH.trim().toLowerCase());
   search.addEventListener("input", () => {
     ADMIN_SEARCH = search.value;
