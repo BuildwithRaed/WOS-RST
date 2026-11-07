@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "06ced057fe";
+window.ADMIN_BUILD = "d29a2de080";
 
 // ============================================================
 // ADMIN PAGE
@@ -1991,29 +1991,10 @@ async function renderAdminExpertTable(body, tableKey) {
   const saveExpRow = async (id) => {
     const wrap = document.getElementById("adminRowsWrap");
     const tr = wrap.querySelector(`tr[data-exprow="${id}"]`);
-    const patch = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
-      const c = cfg.cols.find((c) => c.key === el.dataset.f);
-      let v = el.value;
-      if (c.type === "number") v = v === "" ? null : Number(v);
-      else if (v.trim() === "") v = null;
-      patch[el.dataset.f] = v;
-    });
+    const patch = admRowPatch(tr, cfg.cols);
     await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
   };
-  const saveAllRows = async () => {
-    const btn = document.getElementById("adminExpRowsSaveAll");
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await Promise.all(currentRows.map((r) => saveExpRow(r.id)));
-      toast(`Saved ${currentRows.length} row${currentRows.length === 1 ? "" : "s"}`);
-    } catch (err) {
-      toast("Couldn't save all", true);
-    }
-    btn.disabled = false;
-    btn.textContent = "Save all";
-  };
+  const saveAllRows = () => admSaveAllRows(document.getElementById("adminExpRowsSaveAll"), () => currentRows, (r) => saveExpRow(r.id));
 
   async function loadRows() {
     const cols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
@@ -2052,28 +2033,8 @@ async function renderAdminExpertTable(body, tableKey) {
     wireAdmEditBar(wrap, { rowAttr: "data-exprow", table: cfg.table, upTable: cfg.table, saveRow: (id) => saveExpRow(id), after: () => { EXPERTS_RESEARCH_NODES_GLOBAL = null; dropKeptGameData(); }, hide: ["#adminExpRowsSaveAll", "[data-exprowsave]"],
       addForm: "#adminAddRowForm", reload: () => loadRows(),
       create: async (tr) => { await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify({ expert: ADMIN_ACTIVE_EXPERT, ...admNewRowPayload(tr, null) }) }); } });
-    wrap.querySelectorAll("[data-exprowsave]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        try {
-          await saveExpRow(btn.dataset.exprowsave);
-          toast("Saved");
-        } catch (err) {
-          toast("Couldn't save", true);
-        }
-      });
-    });
-    wrap.querySelectorAll("[data-exprowdel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this row?")) return;
-        try {
-          await sb(`${cfg.table}?id=eq.${btn.dataset.exprowdel}`, { method: "DELETE" });
-          toast("Deleted");
-          loadRows();
-        } catch (err) {
-          toast("Couldn't delete", true);
-        }
-      });
-    });
+    admWireRowSave(wrap, "data-exprowsave", saveExpRow);
+    admWireRowDelete(wrap, "data-exprowdel", cfg.table, null, () => loadRows());
   }
 
   document.getElementById("adminAddRowForm").addEventListener("submit", async (e) => {
@@ -2280,13 +2241,7 @@ async function renderAdminPets(body) {
       const wrap = document.getElementById("adminPetRowsWrap");
       await Promise.all(currentPetRows.map(async (r) => {
         const tr = wrap.querySelector(`tr[data-petrow="${r.id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = petCols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          patch[el.dataset.f] = v;
-        });
+        const patch = admRowPatch(tr, petCols, false);
         await sb(`${PET_LEVELS_TABLE}?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
       }));
       PETS_NODES_CACHE = null;
@@ -2329,13 +2284,7 @@ async function renderAdminPets(body) {
 
     const savePetRow = async (id) => {
       const tr = wrap.querySelector(`tr[data-petrow="${id}"]`);
-      const patch = {};
-      tr.querySelectorAll("[data-f]").forEach((el) => {
-        const c = petCols.find((c) => c.key === el.dataset.f);
-        let v = el.value;
-        if (c.type === "number") v = v === "" ? null : Number(v);
-        patch[el.dataset.f] = v;
-      });
+      const patch = admRowPatch(tr, petCols, false);
       await sb(`${PET_LEVELS_TABLE}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
       PETS_NODES_CACHE = null;
     };
@@ -2352,29 +2301,8 @@ async function renderAdminPets(body) {
         payload.sort_order = await admNextOrder(`${PET_LEVELS_TABLE}?pet=eq.${encodeURIComponent(ADMIN_ACTIVE_PET)}`);
         await sb(`${PET_LEVELS_TABLE}`, { method: "POST", body: JSON.stringify(payload) });
       } });
-    wrap.querySelectorAll("[data-petrowsave]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        try {
-          await savePetRow(btn.dataset.petrowsave);
-          toast("Saved");
-        } catch (err) {
-          toast("Couldn't save", true);
-        }
-      });
-    });
-    wrap.querySelectorAll("[data-petrowdel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this row?")) return;
-        try {
-          await sb(`${PET_LEVELS_TABLE}?id=eq.${btn.dataset.petrowdel}`, { method: "DELETE" });
-          PETS_NODES_CACHE = null;
-          toast("Deleted");
-          loadPetRows();
-        } catch (err) {
-          toast("Couldn't delete", true);
-        }
-      });
-    });
+    admWireRowSave(wrap, "data-petrowsave", savePetRow);
+    admWireRowDelete(wrap, "data-petrowdel", PET_LEVELS_TABLE, () => { PETS_NODES_CACHE = null; }, () => loadPetRows());
   }
 
   document.getElementById("adminAddPetRowForm").addEventListener("submit", async (e) => {
@@ -2676,6 +2604,66 @@ function admPhoneList(wrap, o, rows, fieldSel, count) {
   }
   draw();
 }
+// ---- Level tables: the old per-row Save / Delete and "Save all" buttons ----
+// (hidden by wireAdmEditBar once a table has rows; kept working the same way)
+// A row's boxes as a PATCH body: numbers as numbers (empty = null); with
+// blankText, empty text is null too.
+function admRowPatch(tr, cols, blankText = true) {
+  const patch = {};
+  tr.querySelectorAll("[data-f]").forEach((el) => {
+    const c = cols.find((c) => c.key === el.dataset.f);
+    let v = el.value;
+    if (c.type === "number") v = v === "" ? null : Number(v);
+    else if (blankText && v.trim() === "") v = null;
+    patch[el.dataset.f] = v;
+  });
+  return patch;
+}
+// "Save all": every row at once (rows() read when it starts and when it's done), then after().
+async function admSaveAllRows(btn, rows, saveOne, after) {
+  btn.disabled = true;
+  btn.textContent = "Saving\u2026";
+  try {
+    await Promise.all(rows().map((r) => saveOne(r)));
+    if (after) after();
+    toast(`Saved ${rows().length} row${rows().length === 1 ? "" : "s"}`);
+  } catch (err) {
+    toast("Couldn't save all", true);
+  }
+  btn.disabled = false;
+  btn.textContent = "Save all";
+}
+// Each row's Save button (attr holds the row id): saveOne(id), then after().
+function admWireRowSave(root, attr, saveOne, after) {
+  root.querySelectorAll(`[${attr}]`).forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      try {
+        await saveOne(btn.getAttribute(attr));
+        if (after) after();
+        toast("Saved");
+      } catch (err) {
+        toast("Couldn't save", true);
+      }
+    });
+  });
+}
+// Each row's Delete button: asks, deletes the row from table, after(), then reload().
+function admWireRowDelete(root, attr, table, after, reload) {
+  root.querySelectorAll(`[${attr}]`).forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this row?")) return;
+      try {
+        await sb(`${table}?id=eq.${btn.getAttribute(attr)}`, { method: "DELETE" });
+        if (after) after();
+        toast("Deleted");
+        reload();
+      } catch (err) {
+        toast("Couldn't delete", true);
+      }
+    });
+  });
+}
+
 function wireAdmEditBar(scope, o) {
   const first = scope && scope.querySelector(`[${o.rowAttr}]`);
   const wrap = (first && first.closest(".adm-scroll")) || scope;
@@ -2895,42 +2883,12 @@ async function renderAdminFlatLevels(body, cfg) {
     } });
   const saveRow = async (id) => {
     const tr = body.querySelector(`tr[data-flatrow="${id}"]`);
-    const patch = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
-      const c = cfg.cols.find((c) => c.key === el.dataset.f);
-      let v = el.value;
-      if (c.type === "number") v = v === "" ? null : Number(v);
-      patch[el.dataset.f] = v;
-    });
+    const patch = admRowPatch(tr, cfg.cols, false);
     await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
   };
-  body.querySelectorAll("[data-flatsave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await saveRow(btn.dataset.flatsave);
-        if (cfg.onSave) cfg.onSave();
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
-    });
-  });
+  admWireRowSave(body, "data-flatsave", saveRow, () => { if (cfg.onSave) cfg.onSave(); });
   const saveAllBtn = document.getElementById("adminFlatSaveAll");
-  if (saveAllBtn) {
-    saveAllBtn.addEventListener("click", async () => {
-      saveAllBtn.disabled = true;
-      saveAllBtn.textContent = "Saving\u2026";
-      try {
-        await Promise.all(rows.map((r) => saveRow(r.id)));
-        if (cfg.onSave) cfg.onSave();
-        toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
-      } catch (err) {
-        toast("Couldn't save all", true);
-      }
-      saveAllBtn.disabled = false;
-      saveAllBtn.textContent = "Save all";
-    });
-  }
+  if (saveAllBtn) saveAllBtn.addEventListener("click", () => admSaveAllRows(saveAllBtn, () => rows, (r) => saveRow(r.id), () => { if (cfg.onSave) cfg.onSave(); }));
   if (canReorder) {
     wireAdminReorder(body, "data-flatrow", async (orderedIds) => {
       try {
@@ -2942,19 +2900,7 @@ async function renderAdminFlatLevels(body, cfg) {
       }
     });
   }
-  body.querySelectorAll("[data-flatdel]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("Delete this row?")) return;
-      try {
-        await sb(`${cfg.table}?id=eq.${btn.dataset.flatdel}`, { method: "DELETE" });
-        if (cfg.onSave) cfg.onSave();
-        toast("Deleted");
-        renderAdminFlatLevels(body, cfg);
-      } catch (err) {
-        toast("Couldn't delete", true);
-      }
-    });
-  });
+  admWireRowDelete(body, "data-flatdel", cfg.table, () => { if (cfg.onSave) cfg.onSave(); }, () => renderAdminFlatLevels(body, cfg));
 
   document.getElementById("adminFlatAddForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -3075,29 +3021,8 @@ async function renderAdminVip(body) {
       const [created] = await sb(`buff_rows`, { method: "POST", body: JSON.stringify({ table_id: table.id, name, sort_order: maxOrder + 1 }) });
       tr.setAttribute("data-viprow", created.id); await saveVipRow(created.id);
     } });
-  body.querySelectorAll("[data-vipsave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await saveVipRow(btn.dataset.vipsave);
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
-    });
-  });
-  document.getElementById("adminVipSaveAll").addEventListener("click", async () => {
-    const btn = document.getElementById("adminVipSaveAll");
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await Promise.all(rows.map((r) => saveVipRow(r.id)));
-      toast(`Saved ${rows.length} row${rows.length === 1 ? "" : "s"}`);
-    } catch (err) {
-      toast("Couldn't save all", true);
-    }
-    btn.disabled = false;
-    btn.textContent = "Save all";
-  });
+  admWireRowSave(body, "data-vipsave", saveVipRow);
+  document.getElementById("adminVipSaveAll").addEventListener("click", () => admSaveAllRows(document.getElementById("adminVipSaveAll"), () => rows, (r) => saveVipRow(r.id)));
   body.querySelectorAll("[data-vipdel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       if (!confirm("Delete this VIP tier?")) return;
@@ -3334,30 +3259,10 @@ async function renderAdminProgression(body, nameFilter) {
   const saveProgRow = async (id) => {
     const wrap = document.getElementById("adminProgWrap");
     const tr = wrap.querySelector(`tr[data-progrow="${id}"]`);
-    const patch = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
-      const c = cols.find((c) => c.key === el.dataset.f);
-      let v = el.value;
-      if (c.type === "number") v = v === "" ? null : Number(v);
-      else if (v.trim() === "") v = null;
-      patch[el.dataset.f] = v;
-    });
+    const patch = admRowPatch(tr, cols);
     await sb(`progression_rows?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
   };
-  const saveAllProgRows = async () => {
-    const btn = document.getElementById("adminProgSaveAll");
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await Promise.all(currentProgRows.map((r) => saveProgRow(r.id)));
-      invalidateCaches();
-      toast(`Saved ${currentProgRows.length} row${currentProgRows.length === 1 ? "" : "s"}`);
-    } catch (err) {
-      toast("Couldn't save all", true);
-    }
-    btn.disabled = false;
-    btn.textContent = "Save all";
-  };
+  const saveAllProgRows = () => admSaveAllRows(document.getElementById("adminProgSaveAll"), () => currentProgRows, (r) => saveProgRow(r.id), () => { invalidateCaches(); });
 
   async function loadRows() {
     const selectCols = ["id", ...cols.map((c) => c.key)].join(",");
@@ -3400,30 +3305,8 @@ async function renderAdminProgression(body, nameFilter) {
         if (payload.sort_order == null) payload.sort_order = await admNextOrder(`progression_rows?table_id=eq.${ADMIN_ACTIVE_PROGRESSION}`);
         await sb(`progression_rows`, { method: "POST", body: JSON.stringify(payload) });
       } });
-    wrap.querySelectorAll("[data-progsave]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        try {
-          await saveProgRow(btn.dataset.progsave);
-          invalidateCaches();
-          toast("Saved");
-        } catch (err) {
-          toast("Couldn't save", true);
-        }
-      });
-    });
-    wrap.querySelectorAll("[data-progdel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this row?")) return;
-        try {
-          await sb(`progression_rows?id=eq.${btn.dataset.progdel}`, { method: "DELETE" });
-          invalidateCaches();
-          toast("Deleted");
-          loadRows();
-        } catch (err) {
-          toast("Couldn't delete", true);
-        }
-      });
-    });
+    admWireRowSave(wrap, "data-progsave", saveProgRow, () => { invalidateCaches(); });
+    admWireRowDelete(wrap, "data-progdel", "progression_rows", () => { invalidateCaches(); }, () => loadRows());
   }
 
   document.getElementById("adminProgAddForm").addEventListener("submit", async (e) => {
@@ -3562,30 +3445,10 @@ async function renderAdminResearch(body) {
   const saveResRow = async (id) => {
     const wrap = document.getElementById("adminResearchWrap");
     const tr = wrap.querySelector(`tr[data-resrow="${id}"]`);
-    const patch = {};
-    tr.querySelectorAll("[data-f]").forEach((el) => {
-      const c = cfg.cols.find((c) => c.key === el.dataset.f);
-      let v = el.value;
-      if (c.type === "number") v = v === "" ? null : Number(v);
-      else if (v.trim() === "") v = null;
-      patch[el.dataset.f] = v;
-    });
+    const patch = admRowPatch(tr, cfg.cols);
     await sb(`${cfg.table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
   };
-  const saveAllResRows = async () => {
-    const btn = document.getElementById("adminResearchSaveAll");
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await Promise.all(currentResRows.map((r) => saveResRow(r.id)));
-      cfg.invalidate();
-      toast(`Saved ${currentResRows.length} row${currentResRows.length === 1 ? "" : "s"}`);
-    } catch (err) {
-      toast("Couldn't save all", true);
-    }
-    btn.disabled = false;
-    btn.textContent = "Save all";
-  };
+  const saveAllResRows = () => admSaveAllRows(document.getElementById("adminResearchSaveAll"), () => currentResRows, (r) => saveResRow(r.id), () => { cfg.invalidate(); });
 
   async function loadRows() {
     const selectCols = ["id", ...cfg.cols.map((c) => c.key)].join(",");
@@ -3628,30 +3491,8 @@ async function renderAdminResearch(body) {
         if (payload.sort_order == null) payload.sort_order = await admNextOrder(cfg.table);
         await sb(`${cfg.table}`, { method: "POST", body: JSON.stringify(payload) });
       } });
-    wrap.querySelectorAll("[data-ressave]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        try {
-          await saveResRow(btn.dataset.ressave);
-          cfg.invalidate();
-          toast("Saved");
-        } catch (err) {
-          toast("Couldn't save", true);
-        }
-      });
-    });
-    wrap.querySelectorAll("[data-resdel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this row?")) return;
-        try {
-          await sb(`${cfg.table}?id=eq.${btn.dataset.resdel}`, { method: "DELETE" });
-          cfg.invalidate();
-          toast("Deleted");
-          loadRows();
-        } catch (err) {
-          toast("Couldn't delete", true);
-        }
-      });
-    });
+    admWireRowSave(wrap, "data-ressave", saveResRow, () => { cfg.invalidate(); });
+    admWireRowDelete(wrap, "data-resdel", cfg.table, () => { cfg.invalidate(); }, () => loadRows());
   }
 
   document.getElementById("adminResearchAddForm").addEventListener("submit", async (e) => {
@@ -4115,16 +3956,7 @@ async function renderAdminHeroStars(body) {
       await sb(`buff_cells`, { method: "POST", body: JSON.stringify({ row_id: id, column_id: ADMIN_ACTIVE_HERO_STAR_COL, value: Number(value) }) });
     }
   };
-  body.querySelectorAll("[data-herostarsave]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      try {
-        await saveHeroStarRow(btn.dataset.herostarsave);
-        toast("Saved");
-      } catch (err) {
-        toast("Couldn't save", true);
-      }
-    });
-  });
+  admWireRowSave(body, "data-herostarsave", saveHeroStarRow);
   wireAdmEditBar(body, { rowAttr: "data-herostarrow", saveRow: (id) => saveHeroStarRow(id), after: () => { dropKeptGameData(); admRedrawKeep(() => renderAdminHeroStars(body)); }, hide: ["#adminHeroStarSaveAll", "[data-herostarsave]"],
     addForm: "#adminHeroStarAddForm", reload: () => renderAdminHeroStars(body),
     create: async (tr) => {
@@ -4296,14 +4128,7 @@ async function renderAdminPetsRefine(body) {
       const wrap = document.getElementById("adminPetRefineRowsWrap");
       await Promise.all(currentRefineRows.map(async (r) => {
         const tr = wrap.querySelector(`tr[data-petrefinerow="${r.id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = refineCols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          else if (v.trim() === "") v = null;
-          patch[el.dataset.f] = v;
-        });
+        const patch = admRowPatch(tr, refineCols);
         await sb(`pet_refine_nodes?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(patch) });
       }));
       PET_REFINE_CACHE = null;
@@ -4362,14 +4187,7 @@ async function renderAdminPetsRefine(body) {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.petrefinesave;
         const tr = wrap.querySelector(`tr[data-petrefinerow="${id}"]`);
-        const patch = {};
-        tr.querySelectorAll("[data-f]").forEach((el) => {
-          const c = refineCols.find((c) => c.key === el.dataset.f);
-          let v = el.value;
-          if (c.type === "number") v = v === "" ? null : Number(v);
-          else if (v.trim() === "") v = null;
-          patch[el.dataset.f] = v;
-        });
+        const patch = admRowPatch(tr, refineCols);
         try {
           await sb(`pet_refine_nodes?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(patch) });
           PET_REFINE_CACHE = null;
@@ -4379,19 +4197,7 @@ async function renderAdminPetsRefine(body) {
         }
       });
     });
-    wrap.querySelectorAll("[data-petrefinedel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this row?")) return;
-        try {
-          await sb(`pet_refine_nodes?id=eq.${btn.dataset.petrefinedel}`, { method: "DELETE" });
-          PET_REFINE_CACHE = null;
-          toast("Deleted");
-          loadRefineRows();
-        } catch (err) {
-          toast("Couldn't delete", true);
-        }
-      });
-    });
+    admWireRowDelete(wrap, "data-petrefinedel", "pet_refine_nodes", () => { PET_REFINE_CACHE = null; }, () => loadRefineRows());
   }
 
   document.getElementById("adminAddPetRefineRowForm").addEventListener("submit", async (e) => {
