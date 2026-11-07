@@ -13,7 +13,7 @@
     --ice:#6fd3f2;
     --ice-dim:#2c5568;
     --frost:#e8f2f6;
-    --muted:#8694a3;
+    --muted:#8a98a7;
     --amber:#e8a23c;
     --good:#5bc98a;
     --danger:#e0645f;
@@ -221,6 +221,7 @@
   }
   main{ flex:1; padding:24px 28px 60px; max-width:1100px; width:100%; margin:0 auto; }
   .site-footer{ max-width:1100px; width:100%; margin:0 auto; padding:16px 28px 28px; border-top:1px solid var(--line); color:var(--muted); font-size:11.5px; line-height:1.55; text-align:center; }
+  html:not(.page-drawn) .site-footer{ visibility:hidden; }
   .site-footer p{ margin:0 0 6px; }
   .site-footer a{ color:var(--muted); text-decoration:underline; }
   @media (max-width:640px){ .site-footer{ padding:12px 12px 22px; font-size:11px; } }
@@ -589,7 +590,6 @@
   .cando-t b{ font-size:13px; font-weight:700; white-space:nowrap; }
   .cando-ls{ display:none; }
   .cando-t small{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .cando-t small.off{ opacity:.8; }
   .cando-car{ flex:none; color:var(--good); font-size:17px; font-weight:700; line-height:1; }
   @media (max-width:379px){ .cando-l{ display:none; } .cando-ls{ display:inline; } .cando-b{ gap:5px; padding-block:2px 2px; padding-inline:5px 7px; } }
   .cando-box{ padding:14px 16px 16px; }
