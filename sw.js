@@ -5,20 +5,22 @@ const VERSION = "wosrst-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 // The app's code and styles are loaded from the packed copies app.min.js /
-// app.min.css / admin.min.js (made from app.js / app.css / admin.js by
+// app.min.css / admin.min.js / scan.min.js (made from app.js / app.css / admin.js /
+// scan.js by
 // tools/stamp.js), linked as "app.min.js?v=<hash>":
 // a new version gets a new address, so they are kept cache-first by address and
 // the older copies are dropped once a new one is stored. At install the ones the
 // page links to are cached with it, so the site also opens offline after the
 // first visit (the first page load happens before this worker is in control).
-const VERSIONED = /\/(app|admin)(\.min)?\.(js|css)$/;
+const VERSIONED = /\/(app|admin|scan)(\.min)?\.(js|css)$/;
 // A copy is kept only when it is the version its address names: the server ignores
 // "?v=", so an old address can bring back a newer file. app / app.css: "v" = the
-// start of the file's SHA-256 (tools/stamp.js); admin carries its id inside
-// (window.ADMIN_BUILD = "<v>", written without spaces in the packed copy).
+// start of the file's SHA-256 (tools/stamp.js); admin / scan carry their id inside
+// (window.ADMIN_BUILD / window.SCAN_BUILD = "<v>", written without spaces in the packed copy).
 const isVersion = async (url, res) => {
   const u = new URL(url), v = u.searchParams.get("v");
-  if (/\/admin(\.min)?\.js$/.test(u.pathname)) { const text = await res.clone().text(); return text.includes(`window.ADMIN_BUILD="${v}"`) || text.includes(`window.ADMIN_BUILD = "${v}";`); }
+  const build = /\/admin(\.min)?\.js$/.test(u.pathname) ? "ADMIN_BUILD" : /\/scan(\.min)?\.js$/.test(u.pathname) ? "SCAN_BUILD" : null;
+  if (build) { const text = await res.clone().text(); return text.includes(`window.${build}="${v}"`) || text.includes(`window.${build} = "${v}";`); }
   if (!self.crypto || !crypto.subtle) return true;
   const d = new Uint8Array(await crypto.subtle.digest("SHA-256", await res.clone().arrayBuffer()));
   return [...d.slice(0, 5)].map((b) => b.toString(16).padStart(2, "0")).join("") === v;
@@ -92,7 +94,7 @@ self.addEventListener("fetch", (e) => {
     }));
     return;
   }
-  // app / app.css / admin (packed copies) at one "?v=<hash>": cache first, older versions dropped.
+  // app / app.css / admin / scan (packed copies) at one "?v=<hash>": cache first, older versions dropped.
   if (VERSIONED.test(url.pathname) && url.searchParams.has("v")) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) putVersioned(req, res.clone()); return res; })));
     return;

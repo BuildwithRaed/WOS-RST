@@ -1,9 +1,10 @@
 // Makes the packed (minified) copies the site loads and keeps their "?v=<hash>" links
 // in step with them. Not part of the site (nothing loads it); run it with Node after
-// editing app.js / app.css / admin.js:
+// editing app.js / app.css / admin.js / scan.js:
 //   (once) cd tools && npm ci   -> installs the pinned minifiers (terser, csso)
-//   node tools/stamp.js          -> writes admin.min.js, app.min.css, app.min.js and
-//                                   updates the links in admin.js / app.js / index.html
+//   node tools/stamp.js          -> writes admin.min.js, scan.min.js, app.min.css,
+//                                   app.min.js and updates the links in admin.js /
+//                                   scan.js / app.js / index.html
 //   node tools/stamp.js --check  -> only says whether the copies and links are right
 //                                   (exit code 1 if a copy is stale or a link is wrong)
 // The readable files are the source; the .min copies are committed so the site still
@@ -14,10 +15,10 @@
 // inside functions are shortened; comments and spaces go. Function / class names are
 // kept too (keep_fnames), so fn.name stays the same.
 // The hash is the first 10 hex digits of the file's SHA-256 (sw.js checks it before
-// keeping a copy). admin.min.js carries its own build id (window.ADMIN_BUILD): the id
-// is the hash of admin.min.js with that value as "0000000000", written into admin.js
-// too. admin.min.js is done first (app.js links to it), then app.min.js and
-// app.min.css (index.html links to them).
+// keeping a copy). admin.min.js and scan.min.js carry their own build id
+// (window.ADMIN_BUILD / window.SCAN_BUILD): the id is the hash of the packed copy with
+// that value as "0000000000", written into admin.js / scan.js too. They are done first
+// (app.js links to them), then app.min.js and app.min.css (index.html links to them).
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -57,24 +58,30 @@ const put = (f, next, why) => {
 const link = (text, name, h) => text.replace(new RegExp(name.replace(/\./g, "\\.") + "\\?v=[0-9a-f]+", "g"), `${name}?v=${h}`);
 
 (async () => {
-  // 1. admin.js -> admin.min.js with its build id.
-  const ADMIN_ID_RE = /^window\.ADMIN_BUILD = "[0-9a-f]*";$/m;
-  let admin = read("admin.js");
-  if (!ADMIN_ID_RE.test(admin)) { console.log("admin.js: the window.ADMIN_BUILD line is missing"); process.exit(1); }
+  // 1. admin.js -> admin.min.js and scan.js -> scan.min.js, each with its build id.
   const ZERO = "0000000000";
-  const adminZero = await packJs("admin.js", admin.replace(ADMIN_ID_RE, `window.ADMIN_BUILD = "${ZERO}";`));
-  const slot = `window.ADMIN_BUILD="${ZERO}"`;
-  if (adminZero.split(slot).length !== 2) { console.log(`admin.min.js: expected one ${slot} in the packed copy`); process.exit(1); }
-  const id = sha(adminZero);
-  admin = admin.replace(ADMIN_ID_RE, `window.ADMIN_BUILD = "${id}";`);
-  put("admin.js", admin, `window.ADMIN_BUILD should be "${id}"`);
-  put("admin.min.js", adminZero.replace(slot, `window.ADMIN_BUILD="${id}"`), "stale (run node tools/stamp.js)");
+  const ids = {};
+  for (const [name, VAR] of [["admin", "ADMIN_BUILD"], ["scan", "SCAN_BUILD"]]) {
+    const ID_RE = new RegExp(`^window\\.${VAR} = "[0-9a-f]*";$`, "m");
+    let src = read(`${name}.js`);
+    if (!ID_RE.test(src)) { console.log(`${name}.js: the window.${VAR} line is missing`); process.exit(1); }
+    const zero = await packJs(`${name}.js`, src.replace(ID_RE, `window.${VAR} = "${ZERO}";`));
+    const slot = `window.${VAR}="${ZERO}"`;
+    if (zero.split(slot).length !== 2) { console.log(`${name}.min.js: expected one ${slot} in the packed copy`); process.exit(1); }
+    const id = sha(zero);
+    ids[name] = id;
+    src = src.replace(ID_RE, `window.${VAR} = "${id}";`);
+    put(`${name}.js`, src, `window.${VAR} should be "${id}"`);
+    put(`${name}.min.js`, zero.replace(slot, `window.${VAR}="${id}"`), "stale (run node tools/stamp.js)");
+  }
 
-  // 2. app.js links to admin.min.js; then app.js -> app.min.js.
+  // 2. app.js links to admin.min.js and scan.min.js; then app.js -> app.min.js.
   let app = read("app.js");
-  if (!/admin\.min\.js\?v=[0-9a-f]+/.test(app)) { console.log("app.js: the admin.min.js?v= link is missing"); process.exit(1); }
-  app = link(app, "admin.min.js", id);
-  put("app.js", app, `admin.min.js?v= should be ${id}`);
+  for (const name of ["admin", "scan"]) {
+    if (!new RegExp(`${name}\\.min\\.js\\?v=[0-9a-f]+`).test(app)) { console.log(`app.js: the ${name}.min.js?v= link is missing`); process.exit(1); }
+    app = link(app, `${name}.min.js`, ids[name]);
+  }
+  put("app.js", app, `admin.min.js?v= / scan.min.js?v= should be ${ids.admin} / ${ids.scan}`);
   const appMin = await packJs("app.js", app);
   put("app.min.js", appMin, "stale (run node tools/stamp.js)");
 
