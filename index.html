@@ -32,20 +32,20 @@
 <meta name="apple-mobile-web-app-title" content="WOS RST" />
 <meta name="theme-color" content="#131a24" />
 <meta name="description" content="WOS RST — free, unofficial Whiteout Survival planner: track chief gear, charms, hero gear, research, pets and experts, and plan the cheapest packs to reach your target date." />
-<link rel="canonical" href="https://wosrst.com/" />
+<link rel="canonical" href="https://www.wosrst.com/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="WOS RST" />
-<meta property="og:url" content="https://wosrst.com/" />
+<meta property="og:url" content="https://www.wosrst.com/" />
 <meta property="og:title" content="WOS RST — Whiteout Survival Raw Stats Tracker" />
 <meta property="og:description" content="Track your gear, charms, research, pets and experts, see what you still need, and find the cheapest packs to get there by your target date." />
-<meta property="og:image" content="https://wosrst.com/pwa/icons/icon-512.png?v=3" />
+<meta property="og:image" content="https://www.wosrst.com/pwa/icons/icon-512.png?v=3" />
 <meta property="og:image:width" content="512" />
 <meta property="og:image:height" content="512" />
 <meta property="og:image:alt" content="WOS RST logo" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:title" content="WOS RST — Whiteout Survival Raw Stats Tracker" />
 <meta name="twitter:description" content="Track your upgrades and plan the cheapest packs to reach your target date." />
-<meta name="twitter:image" content="https://wosrst.com/pwa/icons/icon-512.png?v=3" />
+<meta name="twitter:image" content="https://www.wosrst.com/pwa/icons/icon-512.png?v=3" />
 <meta name="color-scheme" content="dark" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" type="image/png" sizes="192x192" href="pwa/icons/icon-192.png?v=3" />
@@ -70,7 +70,7 @@
      app.js can take more than 10 s, and Chrome closes an unused preconnect
      after 10 s, so the one above is often gone before the first request.
      (crossorigin = the way the site's requests to the database are made.) -->
-<link rel="preload" href="app.min.js?v=965047ea90" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
+<link rel="preload" href="app.min.js?v=d252c4da6e" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller. Later the same day the owner asked for
 // the text 2 px bigger again on every page but the Dashboard: the smaller text now
@@ -272,6 +272,15 @@
 </style>
 </head>
 <body>
+<!-- Shown only when JavaScript is off (and read by search engines): what the site is. -->
+<noscript>
+  <div style="max-width:760px; margin:0 auto; padding:20px 16px; color:#e8f2f6; background:#131a24; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; line-height:1.6;">
+    <h2 style="margin:0 0 8px;">WOS RST &mdash; Whiteout Survival Planner</h2>
+    <p style="margin:0 0 8px;">WOS RST is a free, unofficial planner for the game Whiteout Survival. It tracks your chief gear, chief charms, hero gear, research (T11, T12, Research Center), pets, experts and heroes, shows what you still need for your targets, and plans the cheapest packs to get there by your target date.</p>
+    <p style="margin:0 0 8px;">Please turn on JavaScript to use the planner.</p>
+    <p style="margin:0;"><a href="privacy.html" style="color:#6fd3f2;">Privacy Policy</a></p>
+  </div>
+</noscript>
 
 <div class="app">
   <nav class="topnav">
@@ -375,7 +384,7 @@
         <div style="display:flex; gap:6px; margin-bottom:14px; align-items:center;">
           <!-- min-width:0 lets the name field shrink; without it the Save
                button was pushed outside the panel in every language. -->
-          <input id="commanderName" type="text" placeholder="Name" style="flex:1 1 0; min-width:0;" />
+          <input id="commanderName" type="text" placeholder="Name" aria-labelledby="commanderLabel" style="flex:1 1 0; min-width:0;" />
           <button class="btn small" id="saveCommander" style="flex-shrink:0; white-space:nowrap;">Save</button>
         </div>
         <div id="accMenuStyle"></div>
@@ -396,7 +405,7 @@
   <main id="content"><div class="empty boot-ld">Loading&hellip;</div></main>
   <footer class="site-footer" id="siteFooter"></footer>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- The scripts sit at the end of the page, so the top bar and the loading
      layout above are shown while they download (supabase-js used to hold the
@@ -408,7 +417,7 @@
      vendor/ folder is used, so the site still opens. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
 <script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
-<script src="app.min.js?v=965047ea90"></script>
+<script src="app.min.js?v=d252c4da6e"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "32f8c9acc17048f7941762223c2739e3"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

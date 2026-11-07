@@ -3626,15 +3626,165 @@ async function keepPlace(fn) {
 // (overscroll-behavior in the CSS).
 const SCROLL_LOCK_SEL = ".modal-overlay, .pk-sheet-back, .cg-bd, .scan-ex-view, #mobileMenuOverlay, .pkb-ov, .exp-ov, .rc-set-ov, #mBarOv, .pcl-ov";
 let SCROLL_LOCK_RAF = 0;
+let A11Y_MUTS = 0; // page changes seen (Esc below: did page code react already?)
 function syncScrollLock() {
   SCROLL_LOCK_RAF = 0;
   const on = [...document.querySelectorAll(SCROLL_LOCK_SEL)].some((el) => el.getClientRects().length > 0);
   document.documentElement.classList.toggle("scroll-lock", on);
+  try { a11ySync(); } catch (e) { /* never in the way of the page */ }
 }
 if (typeof MutationObserver !== "undefined") {
-  new MutationObserver(() => { if (!SCROLL_LOCK_RAF) SCROLL_LOCK_RAF = requestAnimationFrame(syncScrollLock); })
+  new MutationObserver(() => { A11Y_MUTS++; if (!SCROLL_LOCK_RAF) SCROLL_LOCK_RAF = requestAnimationFrame(syncScrollLock); })
     .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class", "hidden"] });
 }
+// Keyboard and screen readers (nothing changes on screen): run with the scroll
+// lock above, once a frame after the page changes.
+// - Every shown pop-up (the overlays in SCROLL_LOCK_SEL) gets role="dialog",
+//   aria-modal and a name (its title) on its box, and focus moves into the box
+//   (tabindex -1, never into a typing box: no phone keyboard pops up); when the
+//   last one closes, focus goes back to what had it before. Attributes added
+//   here are taken off again when the pop-up closes (some boxes, like the
+//   Trades / Pack cost card, are plain cards on PC).
+// - Esc closes the top pop-up by its own ✕ / close / Cancel button (or the dim
+//   edge for the Chief Gear / roster windows and Scan's example picture), only
+//   when no page code reacted to that Esc already (nothing changed on the page),
+//   the pop-up isn't one whose page handles Esc itself (A11Y_ESC_OWN) and
+//   nothing typed in it would be lost.
+// - Clickable headers / cards that aren't buttons (A11Y_KB_SEL) get
+//   tabindex 0 + role="button"; Enter / Space click them.
+let A11Y_OPEN = [];      // dialog boxes open at the last check, bottom → top
+let A11Y_RETURN = null;  // what had focus before the first one opened
+let A11Y_TITLE_N = 0;
+const A11Y_KB = new WeakSet();
+const A11Y_PHONE = window.matchMedia("(max-width: 700px)");
+const A11Y_ESC_OWN = "#mBarOv, .pkb-ov, .pk-sheet-back, #pkbEvSheet, .pur-shw, #purGrpSheet, .pcl-ov, [data-rlownbd], [data-rlgamebd], [data-rlbd], .mpn-ov, #bpScanModal";
+const A11Y_KB_SEL = ".t12x-gh[data-t12fold], .t12x-gh[data-pxfold], .rc-card[data-rcopen]:not(.rc-open):not(.rc-ph)";
+const a11yShown = (el) => el.getClientRects().length > 0;
+function a11yDlgBox(ov) {
+  if (ov.matches(".cg-bd")) { const host = ov.closest(".t12x") || ov.parentElement; return host && host.querySelector(".cg-open, .rc-open"); }
+  return ov.querySelector(':scope > [role="dialog"]') || ov.querySelector(":scope > .modal-box") || (ov.children.length === 1 ? ov.firstElementChild : ov);
+}
+function a11yDialogs() {
+  const out = [];
+  document.querySelectorAll(SCROLL_LOCK_SEL).forEach((ov) => {
+    if (!a11yShown(ov) || ov.closest(".rc-ph")) return;
+    const box = a11yDlgBox(ov);
+    if (box && !out.some((d) => d.box === box)) out.push({ ov, box });
+  });
+  return out;
+}
+// Sets an attribute on a dialog box and remembers the old value (null = none).
+function a11ySetAttr(el, name, val) {
+  if (el.getAttribute(name) === val) return;
+  el.__a11y = el.__a11y || {};
+  if (!(name in el.__a11y)) el.__a11y[name] = el.getAttribute(name);
+  el.setAttribute(name, val);
+}
+function a11yRestore(el) {
+  const saved = el.__a11y;
+  if (!saved) return;
+  el.__a11y = null;
+  Object.keys(saved).forEach((n) => { if (saved[n] == null) el.removeAttribute(n); else el.setAttribute(n, saved[n]); });
+  if (el.__a11yTitle) { const ti = el.__a11yTitle; el.__a11yTitle = null; if (ti.id && ti.id.startsWith("a11y-t")) ti.removeAttribute("id"); }
+}
+function a11yMarkDialog(box) {
+  if (box.getAttribute("role") !== "dialog" && (!box.hasAttribute("role") || A11Y_KB.has(box))) a11ySetAttr(box, "role", "dialog");
+  if (!box.hasAttribute("aria-modal")) a11ySetAttr(box, "aria-modal", "true");
+  if (!box.hasAttribute("aria-label") && !box.hasAttribute("aria-labelledby")) {
+    const ti = [...box.querySelectorAll("h1, h2, h3, h4, .gs-head b, .pk-sheet-h b, .mb-shh b, [class*='-h'] > b, [class*='head'] b")].find((x) => x.textContent.trim());
+    if (ti) {
+      if (!ti.id) { ti.id = "a11y-t" + (++A11Y_TITLE_N); box.__a11yTitle = ti; }
+      a11ySetAttr(box, "aria-labelledby", ti.id);
+    }
+  }
+  if (!box.hasAttribute("tabindex") && !box.matches("button, a[href], input, select, textarea")) a11ySetAttr(box, "tabindex", "-1");
+}
+const a11yTyping = (el) => !!el && (el.isContentEditable || (el.tagName === "INPUT" && !/^(button|submit|reset|checkbox|radio|range|color|file|image|hidden)$/i.test(el.type)) || el.tagName === "TEXTAREA" || el.tagName === "SELECT");
+// A selector that finds the same control again after a redraw: its id or its first data-* attribute.
+function a11ySig(el) {
+  try {
+    if (el.id) return "#" + window.CSS.escape(el.id);
+    const a = [...el.attributes].find((x) => x.name.startsWith("data-"));
+    return a ? `${el.tagName.toLowerCase()}[${a.name}="${window.CSS.escape(a.value)}"]` : null;
+  } catch (e) { return null; }
+}
+function a11yFocus(el) { try { el.focus({ preventScroll: true }); } catch (e) { /* old browser */ } }
+function a11ySync() {
+  const now = a11yDialogs();
+  const boxes = now.map((d) => d.box);
+  A11Y_OPEN.forEach((b) => { if (!boxes.includes(b)) a11yRestore(b); });
+  const act = document.activeElement;
+  const inAny = (el) => !!el && boxes.some((b) => b.contains(el));
+  if (boxes.length && !A11Y_OPEN.length) {
+    // The opener; a page that redraws when a pop-up opens has replaced it by now, so the last control used.
+    if (act && act !== document.body && act.isConnected && !inAny(act)) A11Y_RETURN = { el: act, sel: a11ySig(act) };
+    else A11Y_RETURN = A11Y_LAST && Date.now() - A11Y_LAST.at < 3000 ? A11Y_LAST : null;
+  }
+  boxes.forEach(a11yMarkDialog);
+  const top = boxes[boxes.length - 1];
+  const lost = !act || act === document.body || !act.isConnected || !a11yShown(act) || A11Y_OPEN.some((b) => b.contains(act) && !boxes.includes(b));
+  if (top && !top.contains(act) && (!A11Y_OPEN.includes(top) || lost)) a11yFocus(top);
+  if (!boxes.length && A11Y_OPEN.length) {
+    let back = A11Y_RETURN && A11Y_RETURN.el;
+    // Redrawn since (Budgets, Experts …): the same button in the new page.
+    if (back && !back.isConnected && A11Y_RETURN.sel) { const same = document.querySelectorAll(A11Y_RETURN.sel); back = same.length === 1 ? same[0] : null; }
+    A11Y_RETURN = null;
+    if (back && back.isConnected && a11yShown(back) && !a11yTyping(back) && lost) a11yFocus(back);
+  }
+  A11Y_OPEN = boxes;
+  // Clickable headers / cards that aren't buttons.
+  document.querySelectorAll(A11Y_KB_SEL).forEach((el) => {
+    if (el.matches(".rc-card") && !A11Y_PHONE.matches) return;
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+    if (!el.hasAttribute("role")) el.setAttribute("role", "button");
+    A11Y_KB.add(el);
+    if (el.matches(".t12x-gh")) { const nodes = el.nextElementSibling; const ex = String(!!nodes && nodes.style.display !== "none"); if (el.getAttribute("aria-expanded") !== ex) el.setAttribute("aria-expanded", ex); }
+  });
+}
+// The last control focused or clicked outside a pop-up (with its selector, taken while it was on the page).
+let A11Y_LAST = null;
+function a11yNoteLast(e) {
+  const el = e.target && e.target.closest && e.target.closest("button, a[href], input, select, textarea, [role='button'], [tabindex]");
+  if (!el || el === document.body || A11Y_OPEN.some((b) => b.contains(el))) return;
+  A11Y_LAST = { el, sel: a11ySig(el), at: Date.now() };
+}
+document.addEventListener("focusin", a11yNoteLast, true);
+document.addEventListener("click", a11yNoteLast, true);
+function a11yCloseBtn(box) {
+  const btns = [...box.querySelectorAll("button, [role='button']")].filter(a11yShown);
+  const names = new Set(["Close", t("close_button"), t("mm_close")]);
+  return btns.find((b) => [...b.attributes].some((a) => /^data-[a-z]*close[a-z]*$/.test(a.name)))
+    || btns.find((b) => names.has(b.getAttribute("aria-label")))
+    || btns.find((b) => /^[✕×✖]$/.test(b.textContent.trim()))
+    || btns.find((b) => b.textContent.trim() === t("cancel"));
+}
+// Anything changed in the pop-up and not saved by itself (typed, ticked, picked)?
+function a11yDirty(box) {
+  return [...box.querySelectorAll("input, textarea, select")].some((el) => {
+    if (el.tagName === "SELECT") { const o = [...el.options], d = o.findIndex((x) => x.defaultSelected); return el.selectedIndex !== (d < 0 ? (o.length ? 0 : -1) : d); }
+    if (/^(checkbox|radio)$/i.test(el.type)) return el.checked !== el.defaultChecked;
+    return a11yTyping(el) && el.type !== "search" && el.value !== el.defaultValue;
+  });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
+  const all = a11yDialogs(), top = all[all.length - 1];
+  if (!top || top.ov.matches(A11Y_ESC_OWN)) return;
+  const before = A11Y_MUTS;
+  setTimeout(() => {
+    if (e.defaultPrevented || A11Y_MUTS !== before || !top.ov.isConnected || !a11yShown(top.ov)) return;
+    const still = a11yDialogs();
+    if (!still.length || still[still.length - 1].box !== top.box || a11yDirty(top.box)) return;
+    const btn = a11yCloseBtn(top.box);
+    if (btn) btn.click();
+    else if (top.ov.matches(".cg-bd, .scan-ex-view")) top.ov.click();
+  }, 0);
+}, true);
+document.addEventListener("keydown", (e) => {
+  if ((e.key !== "Enter" && e.key !== " ") || e.defaultPrevented || !A11Y_KB.has(e.target) || !e.target.matches(A11Y_KB_SEL)) return;
+  e.preventDefault();
+  e.target.click();
+});
 // Hold the page's height until a part still being worked out is drawn
 // (Budgets' plan, My Purchases' suggestions); `false` lets it go.
 function holdPageHeight(on) {
@@ -25450,7 +25600,7 @@ function researchSpeedInputHtml() {
     <div class="rs-row" style="display:flex; align-items:center; gap:8px 18px; flex-wrap:wrap; margin-bottom:14px;">
       <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
         <span class="meta" style="font-size:10px;" title="${esc(t("research_speed_label"))}">${esc(t("set_speed"))}</span>
-        <input type="text" inputmode="decimal" id="researchSpeedInput" class="keep-w" value="${RESEARCH_SPEED_PCT}" style="width:58px; flex-shrink:0; padding:4px 6px;" />
+        <input type="text" inputmode="decimal" id="researchSpeedInput" aria-label="${esc(t("set_speed"))}" class="keep-w" value="${RESEARCH_SPEED_PCT}" style="width:58px; flex-shrink:0; padding:4px 6px;" />
         <span class="meta" style="font-size:10px;">%</span>
       </div>
     </div>
