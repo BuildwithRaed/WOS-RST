@@ -454,6 +454,8 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - Earlier: (Issue #13 done 14 Oct 2026: 132 unused Storage files deleted; `skin-images` now holds 90 files: Justus's expert picture, the 88 gallery backup originals, and one unlinked city-skin picture `d248d1b3-….png` kept for the owner to decide.)
 
 ## Open questions for the owner
+- (7 Nov 2026, owner: "remember it for later") The full open list was read out on 7 Nov: gift codes pick (A / B / C / D), Scan pack screenshots, Gen 18 heroes, Max stars field, Cloudflare, New Gen heroes card, Dashboard Stats | Plan tabs, G4 budget card, My Purchases following goal order, Scan pictures still to learn, the "Table name here" pack table, the unlinked city-skin picture in Storage. Bring it up again when the owner is back.
+- Research Lab: the owner's "Game says" was 45, then 53 refinements in a week, but the plan does ~26 a week. Does the game count extra refinements beyond the daily ones?
 - The `heroes` table stops at Gen 17, while the timeline (`HALL_OF_HEROES_HERO`) has Gen 18 (Jordan). Add the Gen 18 heroes?
 - The heroes' "Max stars" field is not used outside Admin. Keep or drop it?
 
