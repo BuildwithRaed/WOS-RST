@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "935dc08046";
+window.ADMIN_BUILD = "0c0674ec1e";
 
 // ============================================================
 // ADMIN PAGE
@@ -1380,6 +1380,7 @@ async function renderAdminBackpackItems(body) {
     };
     // "Forget": drop the pictures Scan was taught on the site for this item.
     const forgetTaught = async (n) => {
+      await ensureSiteConfigKey("scan_learned");
       const cur = ((siteConfig("scan_learned", null) || {}).items) || [];
       await saveSiteConfig("scan_learned", { items: cur.filter((e) => e.n !== n) });
       await scanLearnedLoad().catch(() => []);
