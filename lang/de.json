@@ -520,6 +520,8 @@
  "t:budgets_recalc_hint": "Gespeicherte Ergebnisse verwerfen und alles neu berechnen",
  "t:budgets_desc": "Alle Upgrade-Pläne an einem Ort: noch benötigte Materialien, was die zugewiesenen Pakete kosten und welchen Wertezuwachs du bekommst.",
  "t:budgets_working": "Die günstigsten Pakete werden berechnet…",
+ "t:budgets_plan_failed": "Konnte nicht berechnet werden",
+ "t:save_retry": "Noch nicht gespeichert — wird erneut versucht, sobald du wieder online bist",
  "t:budgets_loading": "Alles wird zusammengerechnet…",
  "t:budgets_view_target": "Nach deinem Ziel",
  "t:budgets_view_fastest": "Am schnellsten",

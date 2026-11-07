@@ -98,20 +98,61 @@
       if (keptTable) keptRowsWritten(keptTable);
     }
   }
-  async function sbRequest(path, opts, _retried) {
+  async function sbFetchOnce(path, opts, method) {
     const token = (CURRENT_SESSION && CURRENT_SESSION.access_token) || SUPABASE_KEY;
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-      ...opts,
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Prefer: opts.prefer || "return=representation",
-        ...(opts.headers || {}),
-      },
-    });
+    const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const outer = opts.signal;
+    let timedOut = false;
+    const timer = ctl ? setTimeout(() => { timedOut = true; ctl.abort(); }, method === "GET" || method === "HEAD" ? SB_TIME_GET : SB_TIME_WRITE) : 0;
+    const stop = () => ctl.abort();
+    if (ctl && outer) { if (outer.aborted) ctl.abort(); else outer.addEventListener("abort", stop, { once: true }); }
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        ...opts,
+        ...(ctl ? { signal: ctl.signal } : {}),
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Prefer: opts.prefer || "return=representation",
+          ...(opts.headers || {}),
+        },
+      });
+      const text = res.ok ? await res.text() : await res.text().catch(() => "");
+      return { res, text };
+    } catch (err) {
+      if (timedOut) { const e = new Error("timeout"); e.timeout = true; throw e; }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+      if (ctl && outer) outer.removeEventListener("abort", stop);
+    }
+  }
+  // Time limits: a request that hasn't finished (body included) by then is
+  // stopped, so a page never waits forever on a weak connection. Generous, so
+  // a big read on a slow phone still gets through.
+  const SB_TIME_GET = 25000, SB_TIME_WRITE = 30000;
+  // A read that timed out or lost the connection is tried once more; so is a
+  // write that is safe to send twice (PATCH / PUT / DELETE, or an upsert with
+  // on_conflict) when it never got through (network error, not a time-out).
+  function sbCanRetry(path, method, err) {
+    if (method === "GET" || method === "HEAD") return true;
+    if (err.timeout) return false;
+    return method === "PATCH" || method === "PUT" || method === "DELETE" || (method === "POST" && /[?&]on_conflict=/.test(path));
+  }
+  async function sbRequest(path, opts, _retried, _again) {
+    const method = (opts.method || "GET").toUpperCase();
+    let res, text;
+    try {
+      ({ res, text } = await sbFetchOnce(path, opts, method));
+    } catch (err) {
+      if (!_again && !(opts.signal && opts.signal.aborted) && sbCanRetry(path, method, err)) {
+        await new Promise((r) => setTimeout(r, 600));
+        return sbRequest(path, opts, _retried, true);
+      }
+      throw err;
+    }
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
       // Covers every JWT-claim rejection PostgREST can return (PGRST303) -
       // expired, issued-at-future (usually device clock drift, or several
       // concurrent refreshes racing each other), not-yet-valid, etc. - not
@@ -126,7 +167,6 @@
       }
       throw new Error(`${res.status} ${text}`);
     }
-    const text = await res.text();
     const data = text ? JSON.parse(text) : null;
     // The API hands back at most 1,000 rows per request. A read that hits
     // that limit (the expert affinity table passed it once Justus was
@@ -271,28 +311,70 @@ function saveCalcState(calcName, state) {
   else if (CALC_STATE_CACHE_USER === USER_ID) CALC_STATE_PENDING[calcName] = cloneState(state);
   // Serialised now: callers keep changing the same object afterwards.
   const body = JSON.stringify({ user_id: USER_ID, calc_name: calcName, state, updated_at: new Date().toISOString() });
-  const q = CALC_SAVE_QUEUE[calcName] || (CALC_SAVE_QUEUE[calcName] = { running: null, next: null });
-  q.next = body;
-  if (!q.running) {
-    q.running = (async () => {
-      while (q.next) {
-        const send = q.next;
-        q.next = null;
-        try {
-          await sb(`calc_state?on_conflict=user_id,calc_name`, {
-            method: "POST",
-            headers: { Prefer: "resolution=merge-duplicates" },
-            body: send,
-          });
-        } catch (err) {
-          // best-effort; a failed save shouldn't block using the calculator
-        }
-      }
-      q.running = null;
-    })();
-  }
+  const q = CALC_SAVE_QUEUE[calcName] || (CALC_SAVE_QUEUE[calcName] = { running: null, next: null, parked: null });
+  q.next = { body, user: USER_ID };
+  q.parked = null; // this newer version replaces one waiting to be sent again
+  if (!q.running) runCalcSave(q);
   return q.running;
 }
+// A save that fails is kept (unless a newer version of that state is already
+// waiting) and sent again after 2 s, 5 s and 15 s; still failing, it waits for
+// the phone to be back online (or the next save that gets through). One small
+// note per run of failures, so using the page is never blocked.
+const SAVE_RETRY_WAITS = [2000, 5000, 15000];
+let SAVE_FAIL_NOTED = false;
+function runCalcSave(q) {
+  q.running = (async () => {
+    let tries = 0;
+    while (q.next) {
+      const send = q.next;
+      q.next = null;
+      if (send.user !== USER_ID) continue; // logged out / another account since
+      try {
+        await sb(`calc_state?on_conflict=user_id,calc_name`, {
+          method: "POST",
+          headers: { Prefer: "resolution=merge-duplicates" },
+          body: send.body,
+        });
+        tries = 0;
+        q.failing = false;
+        calcSaveRecovered();
+      } catch (err) {
+        if (q.next) continue; // a newer version is waiting: send that instead
+        q.failing = true;
+        if (!SAVE_FAIL_NOTED) { SAVE_FAIL_NOTED = true; toast(t("save_retry"), true); }
+        if (tries >= SAVE_RETRY_WAITS.length) { q.parked = send; break; }
+        const wait = SAVE_RETRY_WAITS[tries++];
+        await new Promise((r) => {
+          const done = () => { clearTimeout(tm); window.removeEventListener("online", done); r(); };
+          const tm = setTimeout(done, wait);
+          window.addEventListener("online", done);
+        });
+        if (!q.next) q.next = send;
+      }
+    }
+    q.running = null;
+  })();
+  return q.running;
+}
+// Sends the saves waiting for a connection again.
+function calcSaveRetryParked() {
+  Object.values(CALC_SAVE_QUEUE).forEach((q) => {
+    if (!q.parked || q.running) return;
+    if (!q.next) q.next = q.parked;
+    q.parked = null;
+    runCalcSave(q);
+  });
+}
+// A save got through: the run of failures is over once none is left
+// failing, and saves parked meanwhile go again.
+function calcSaveRecovered() {
+  const queues = Object.values(CALC_SAVE_QUEUE);
+  if (queues.some((q) => q.parked)) calcSaveRetryParked();
+  if (!queues.some((q) => q.failing || q.parked)) SAVE_FAIL_NOTED = false;
+}
+window.addEventListener("online", calcSaveRetryParked);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") calcSaveRetryParked(); });
 
 // Item icons come from an external image host; if one fails to load
 // (seen intermittently on iPhone), retry it once after a short delay.
@@ -1241,7 +1323,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 73; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 74; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2223,6 +2305,8 @@ const T = {
   b3_week_n: { en: "{n} packs" },
   budgets_desc: { en: "Every upgrade plan in one place: materials still needed, what the assigned packs cost, and the stat increase you'd get." },
   budgets_working: { en: "Working out the cheapest packs…" },
+  budgets_plan_failed: { en: "Couldn't work it out" },
+  save_retry: { en: "Not saved yet — will try again when you're back online" },
   budgets_loading: { en: "Adding everything up…" },
   budgets_view_target: { en: "By your target" },
   budgets_view_fastest: { en: "Fastest" },
@@ -3511,9 +3595,9 @@ let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 // (goToTab) still starts fresh.
 let LAST_RENDER_TAB = null;
 async function keepPlace(fn) {
-  const y = window.scrollY, tab = TAB, putBoxes = saveBoxScroll(content);
+  const y = window.scrollY, tab = TAB, putBoxes = saveBoxScroll(content), seq = RENDER_SEQ;
   content.style.minHeight = content.offsetHeight + "px";
-  try { return await fn(); } finally {
+  try { return await fn(); } catch (e) { pageRedrawFailed(e, seq); } finally {
     if (TAB === tab) { putBoxes(); window.scrollTo(0, y); }
     if (!content.dataset.holdUntilReady) content.style.minHeight = "";
   }
@@ -4125,11 +4209,22 @@ async function render() {
     }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
-    pageDrawn();
-    content.style.minHeight = "";
     LAST_RENDER_TAB = TAB;
-    content.innerHTML = `<div class="panel"><div class="empty"><div class="big">Something went wrong loading this tab.</div>${esc(e.message)}</div></div>`;
+    pageErrorPanel(e);
   }
+}
+function pageErrorPanel(e) {
+  pageDrawn();
+  content.style.minHeight = "";
+  content.innerHTML = `<div class="panel"><div class="empty"><div class="big">Something went wrong loading this tab.</div>${esc((e && e.message) || String(e))}</div></div>`;
+}
+// A page redrawn outside render() (after a tap, a finished plan …) that
+// fails shows the same panel as render(), only while that page is still the
+// one on screen (SEQ = RENDER_SEQ when the redraw started).
+function pageRedrawFailed(e, seq) {
+  if (seq !== RENDER_SEQ || (e && e.superseded)) return;
+  console.error(e);
+  pageErrorPanel(e);
 }
 
 // ============================================================
@@ -9252,7 +9347,7 @@ async function renderPurchasesPage() {
     budgetSuggestedPlan().then((p) => drawPlan(p)).catch(sugFail);
   }
 
-  const redraw = () => { const y = window.scrollY, put = saveBoxScroll(content); renderPurchasesPage().then(() => { window.scrollTo(0, y); put(content); }); };
+  const redraw = () => { const y = window.scrollY, put = saveBoxScroll(content), sq = RENDER_SEQ; renderPurchasesPage().then(() => { window.scrollTo(0, y); put(content); }).catch((e) => pageRedrawFailed(e, sq)); };
   content.querySelectorAll("[data-purf]").forEach((inp) => inp.addEventListener("change", () => {
     const k = inp.dataset.purf;
     if (k === "table") { PUR_FORM.table = inp.value; PUR_FORM.row = -1; redraw(); return; }
@@ -20029,6 +20124,7 @@ let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 // worker - nothing is left waiting.
 const PLANNER_WAIT = new Map();
 let PLANNER_QUEUE = [], PLANNER_BUSY = null;
+let PLANNER_SRC = "", PLANNER_SRC_URL = null;
 function plannerWorker() {
   if (PLANNER_WORKER === false) return null;
   if (PLANNER_WORKER) return PLANNER_WORKER;
@@ -20053,7 +20149,13 @@ function plannerWorker() {
       "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
       "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : kind === 'deadline' ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
-    const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    // One address for the worker code while it's unchanged (a restart reuses it).
+    if (src !== PLANNER_SRC) {
+      if (PLANNER_SRC_URL) URL.revokeObjectURL(PLANNER_SRC_URL);
+      PLANNER_SRC_URL = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
+      PLANNER_SRC = src;
+    }
+    const w = new Worker(PLANNER_SRC_URL);
     w.onmessage = (e) => {
       if (w !== PLANNER_WORKER) return; // an answer from a worker that was stopped
       if (PLANNER_BUSY === e.data.id) PLANNER_BUSY = null;
@@ -20171,6 +20273,7 @@ function budgetForceRecalc() {
   TRADE_RATES_CACHE = null;
   BUDGET_NEEDS_SNAPSHOT = null;
   BUDGET_PLAN_RUNNING = null;
+  BUDGET_PLAN_FAILED = null;
   budgetInvalidate();
   dashDataChanged();
 }
@@ -20917,6 +21020,7 @@ function goalPageIcon(pg) {
   return "";
 }
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
+let BUDGET_PLAN_FAILED = null; // the same key when that plan failed (cleared by ↻ Recalculate)
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
 // Budgets and the Roadmap page (admin) share one pipeline: the Roadmap is
 // drawn from the same plan, goals and dates as the Budgets page.
@@ -20974,7 +21078,7 @@ async function renderBudgetsPage(opts = {}) {
   const planKey = `${targetDays}|${selSig}|${wantCands ? 1 : 0}`;
   const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig && (!wantCands || !!BUDGET_DATA.combined.budgetCands);
   const combinedRaw = haveCombined ? BUDGET_DATA.combined : { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
-  if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey) {
+  if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey && BUDGET_PLAN_FAILED !== planKey) {
     BUDGET_PLAN_RUNNING = planKey;
     // A plan for other ticks / another date still being worked out is no
     // longer wanted: it's dropped, so the new one doesn't wait behind it.
@@ -20986,14 +21090,24 @@ async function renderBudgetsPage(opts = {}) {
       // Only if nothing changed meanwhile (date, ticks, data).
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
       BUDGET_DATA.combined = real;
-      if (budTab()) { const y = window.scrollY; renderBudgetsPage().then(() => window.scrollTo(0, y)); }
+      if (budTab()) { const y = window.scrollY, sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
     }).catch((e) => {
       if (e && e.superseded) return; // a newer plan took its place
       if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
       console.error("budget plan failed", e); if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
+      // Not tried again by itself (↻ Recalculate does): the page says so
+      // instead of "Working out…" for ever.
+      BUDGET_PLAN_FAILED = planKey;
+      if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
+      if (budTab()) { const y = window.scrollY, sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((err) => pageRedrawFailed(err, sq)); }
     });
   }
   const planPending = !!combinedRaw.pending;
+  // The plan failed: "Couldn't work it out · ↻ Recalculate" where "Working out…" was.
+  const planFailed = planPending && BUDGET_PLAN_FAILED === planKey;
+  const workHtml = (tag, cls) => planFailed
+    ? `<${tag} class="bud-fail${cls ? " " + cls : ""}">${esc(t("budgets_plan_failed"))} · <button type="button" class="bud-fail-b" data-budgetrecalc>&#8635; ${esc(t("budgets_recalc"))}</button></${tag}>`
+    : `<${tag} class="bud-pending${cls ? " " + cls : ""}">${esc(t("budgets_working"))}</${tag}>`;
   const pagesRaw = pages;
   // Pages the combined plan had to leave out get their own plan.
   combinedRaw.dropped.forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg && !pg.chosen && pg.earliest == null && combinedRaw.droppedPlans && combinedRaw.droppedPlans[k]) Object.assign(pg, combinedRaw.droppedPlans[k]); });
@@ -21106,7 +21220,7 @@ async function renderBudgetsPage(opts = {}) {
         ${sh.rows.length ? `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${sh.rows.length})</summary>
           ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
     }
-    else if (inc && planPending) costHtml = `<div class="bud-pending small">${esc(t("budgets_working"))}</div>`;
+    else if (inc && planPending) costHtml = workHtml("div", "small");
     else if (inc && combined.inc.includes(pg.calcKey)) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;
     else if (!pg.chosen) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${inc ? esc(t("pack_cant_cover")) : "—"}</div>`;
     else {
@@ -21243,7 +21357,7 @@ async function renderBudgetsPage(opts = {}) {
     const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
     // B3 goal flags header (the flags follow once the dates are worked out).
     const railHead = `<div class="b3-rail-l"><span class="b3-lbl">${esc(t("b3_flags"))}</span><button type="button" class="b3-a" data-b3sheet="goals">&#8645; ${esc(t("b3_goals_n").replace("{n}", goals.length))} &#8250;</button></div>`;
-    goalFlagsHtml = `<div class="b3-rail">${railHead}<div class="bud-pending small">${esc(t("budgets_working"))}</div></div>`;
+    goalFlagsHtml = `<div class="b3-rail">${railHead}${workHtml("div", "small")}</div>`;
     const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
     const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
     const nameOf = (g) => {
@@ -21263,7 +21377,7 @@ async function renderBudgetsPage(opts = {}) {
       const own = !planPending && !incKeys.includes(g.page);
       const myBy = by[g.id] || "", d = due[i], dIn = goalDeadlineDay(myBy);
       const late = dt && !dt.done && d != null && dt.day > d;
-      const status = planPending || (dlPending && d != null) ? `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`
+      const status = planPending || (dlPending && d != null) ? (planPending ? workHtml("span", "small") : `<span class="bud-pending small">${esc(t("budgets_working"))}</span>`)
         : own ? esc(t("goal_own_plan"))
         : !dt ? "—"
         : dt.done ? `<span style="color:var(--good);">&#10003; ${esc(t("goal_have"))}</span>`
@@ -21360,7 +21474,7 @@ async function renderBudgetsPage(opts = {}) {
     // Roadmap: the packs week by week with a flag where each goal is reached,
     // and "Without": the plain plan with the default order and no dates.
     goalsCardHtml = goalsCard;
-    if (planPending || !plan || !dates) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="big"><span class="bud-pending">${esc(t("budgets_working"))}</span></div></div></div>`); return goalsCard; }
+    if (planPending || !plan || !dates) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="big">${workHtml("span")}</div></div></div>`); return goalsCard; }
     const plainGoals = budgetGoalList(pagesRaw, keys, true);
     const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.indexOf(goals.find((x) => x.id === g.id))])) : null;
     const plainOf = (g) => { const k = plainGoals.findIndex((x) => x.id === g.id); return plainDates && k >= 0 ? plainDates[k] : null; };
@@ -21736,7 +21850,7 @@ async function renderBudgetsPage(opts = {}) {
   const comingHtml = (() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<button type="button" class="b3-a b3-coming" data-gototab="purchases">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button>` : ""; })();
   const totalHtml = `<div class="b3-tile b3-hd">
       <div class="b3-hd-l"><span>${esc(t("b3_total_ticked").replace("{n}", ticked.length))}</span>${matsN ? `<button type="button" class="b3-a" data-b3sheet="mats">${esc(t("b3_materials").replace("{n}", matsN))} &#8250;</button>` : ""}${grandDeltas.length ? `<button type="button" class="b3-a" data-b3sheet="stats">${esc(t("b3_stat_gain"))} &#8250;</button>` : ""}</div>
-      <div class="b3-hd-t"><b>${planPending ? `<span class="bud-pending">${esc(t("budgets_working"))}</span>` : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</b>${anyPlan && !planPending ? `<div><span class="${lateAll ? "rd" : "ok"}">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(t("bud_done_by"))} ${esc(fmtDate(grandDays))}`}</span>${grandDays ? `<small>${grandDays} ${esc(t("pack_days_short_long"))}</small>` : ""}</div>` : ""}</div>
+      <div class="b3-hd-t"><b>${planPending ? workHtml("span") : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</b>${anyPlan && !planPending ? `<div><span class="${lateAll ? "rd" : "ok"}">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(t("bud_done_by"))} ${esc(fmtDate(grandDays))}`}</span>${grandDays ? `<small>${grandDays} ${esc(t("pack_days_short_long"))}</small>` : ""}</div>` : ""}</div>
       ${partialHtml}${comingHtml}
       ${viewCardsHtml}
       ${b3Split}${b3Lines}
@@ -21860,7 +21974,7 @@ async function renderBudgetsPage(opts = {}) {
   content.querySelectorAll("[data-budgetview]").forEach((b) => b.addEventListener("click", () => {
     BUDGET_VIEW = b.dataset.budgetview;
     const y = window.scrollY;
-    renderBudgetsPage().then(() => window.scrollTo(0, y));
+    { const sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
   }));
   // Heroes Gears sets in Budgets: saved on the account, then the plan is worked out again.
   content.querySelectorAll("[data-budhgset]").forEach((cb) => cb.addEventListener("change", () => {
@@ -21886,7 +22000,7 @@ async function renderBudgetsPage(opts = {}) {
     PUR_SUGGEST = null;
     if (show && spendActive()) BUDGET_VIEW = "budget";
     const y = window.scrollY;
-    renderBudgetsPage().then(() => window.scrollTo(0, y));
+    { const sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
   };
   const amtEl = content.querySelector("[data-spendamt]");
   if (amtEl) amtEl.addEventListener("change", () => { const v = Math.max(0, Number(amtEl.value) || 0); spendSave({ amount: v, cur: DISPLAY_CURRENCY || "USD" }, v > 0); });
@@ -21899,8 +22013,7 @@ async function renderBudgetsPage(opts = {}) {
     saveCalcState("pack_target_budgets", { date: BUDGET_TARGET });
     keepPlace(() => renderBudgetsPage());
   });
-  const recalcEl = content.querySelector("[data-budgetrecalc]");
-  if (recalcEl) recalcEl.addEventListener("click", () => { budgetForceRecalc(); renderBudgetsPage(); });
+  content.querySelectorAll("[data-budgetrecalc]").forEach((el) => el.addEventListener("click", () => { const sq = RENDER_SEQ; budgetForceRecalc(); renderBudgetsPage().catch((e) => pageRedrawFailed(e, sq)); }));
   const clearEl = content.querySelector("[data-budgettargetclear]");
   if (clearEl) clearEl.addEventListener("click", async () => {
     BUDGET_TARGET = "";
@@ -21945,6 +22058,7 @@ function drawRoadmapPage(html, extra) {
   // The Budgets goals sheet (drag order, By, minis) and the goal sheet's By picker.
   wrap.querySelectorAll(".bud-goals").forEach((box) => wireBudgetGoals(box));
   wrap.onclick = (e) => {
+    if (e.target.closest("[data-budgetrecalc]")) { const sq = RENDER_SEQ; budgetForceRecalc(); renderBudgetsPage().catch((err) => pageRedrawFailed(err, sq)); return; }
     const bg = e.target.closest("[data-b3bg], [data-rmbg]");
     if (bg && (e.target === bg || e.target.closest("[data-b3close], [data-rmclose]"))) {
       if (bg.hasAttribute("data-b3bg")) BUDGET_SHEET = null; else RM_SHEET = null;
@@ -23402,6 +23516,7 @@ const jsonCopy = (o) => JSON.parse(JSON.stringify(o == null ? null : o));
 // allMax(), snap() -> what to keep, max(), reset(kept), save(), after() }. Any
 // change on the page re-checks the button (one listener pair on the page's shell,
 // which is new on every draw).
+const PAGE_MAX_WIRED = {}; // btnId -> { root, fn } (wirePageMax's listeners)
 function wirePageMax(o) {
   const btn = document.getElementById(o.btnId);
   if (!btn) return null;
@@ -23423,6 +23538,11 @@ function wirePageMax(o) {
   };
   const root = btn.closest(".t12x") || content;
   const later = () => requestAnimationFrame(sync);
+  // One pair per button: the one from the last draw is taken off first
+  // (the root is often #content itself, which outlives every draw).
+  const prev = PAGE_MAX_WIRED[o.btnId];
+  if (prev) { prev.root.removeEventListener("change", prev.fn); prev.root.removeEventListener("click", prev.fn); }
+  PAGE_MAX_WIRED[o.btnId] = { root, fn: later };
   root.addEventListener("change", later);
   root.addEventListener("click", later);
   sync();
@@ -25530,7 +25650,8 @@ async function renderT11HeliosPage() {
     drawTime();
     document.getElementById("t11GrandTotal").innerHTML = `<div id="t11ResourcesBar"></div>`;
     // Fire Crystal you hold trades into FC Shards (10 → 13), so it gets its own box.
-    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderGrandTotal(); render(); }, "t11_helios").then(drawTime);
+    const barSeq = RENDER_SEQ;
+    renderChiefGearResourcesBar("t11ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderGrandTotal(); render(); }, "t11_helios").then(drawTime).catch((e) => pageRedrawFailed(e, barSeq));
     BAR_AFTER_CHANGE.t11_helios = drawTime;
   }
 
@@ -25837,14 +25958,16 @@ let PETS_UNLOCKED = null; // { "Cave Hyena": true/false, ... } - shared between 
 // the ui_visibility table (public read, owner write) as "<kind>:<name>".
 // Visitors never see a hidden card and it never counts in their totals.
 let UI_HIDDEN = null; // { "experts:Justus": true, ... }
+let UI_HIDDEN_FAILED = false; // the last load failed: the next call loads again
 const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true };
 async function ensureUiVisibility() {
-  if (UI_HIDDEN) return UI_HIDDEN;
+  if (UI_HIDDEN && !UI_HIDDEN_FAILED) return UI_HIDDEN;
   try {
     const rows = await sb(`ui_visibility?select=key,hidden`);
     UI_HIDDEN = {};
     rows.forEach((r) => { UI_HIDDEN[r.key] = !!r.hidden; });
-  } catch (err) { UI_HIDDEN = {}; }
+    UI_HIDDEN_FAILED = false;
+  } catch (err) { UI_HIDDEN = {}; UI_HIDDEN_FAILED = true; }
   // New pages that start hidden from visitors until the admin shows them in
   // Admin → Visibility (State Timeline).
   Object.entries(UI_HIDDEN_DEFAULTS).forEach(([k, v]) => { if (!(k in UI_HIDDEN)) UI_HIDDEN[k] = v; });
@@ -28560,7 +28683,8 @@ async function renderResearchCenterPage() {
     };
     drawTime();
     document.getElementById("rcTotals").innerHTML = `<div id="rcResourcesBar"></div>`;
-    renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center").then(drawTime);
+    const barSeq = RENDER_SEQ;
+    renderChiefGearResourcesBar("rcResourcesBar", matTotals, Object.keys(matTotals), () => { renderTotals(); renderGroups(); }, "research_center").then(drawTime).catch((e) => pageRedrawFailed(e, barSeq));
     BAR_AFTER_CHANGE.research_center = drawTime;
   }
 
@@ -29077,7 +29201,8 @@ async function renderT12ResearchPage() {
     };
     drawTime();
     document.getElementById("t12Totals").innerHTML = `<div id="t12ResourcesBar"></div>`;
-    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research").then(drawTime);
+    const barSeq = RENDER_SEQ;
+    renderChiefGearResourcesBar("t12ResourcesBar", matTotals, ["Steel", "Fire Crystal", ...Object.keys(matTotals).filter((n) => n !== "Steel")], () => { renderTotals(); renderTroopPanels(); }, "t12_research").then(drawTime).catch((e) => pageRedrawFailed(e, barSeq));
     BAR_AFTER_CHANGE.t12_research = drawTime;
   }
 

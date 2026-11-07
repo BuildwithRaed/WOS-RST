@@ -520,6 +520,8 @@
  "t:budgets_recalc_hint": "Dimentica i risultati salvati e ricalcola tutto",
  "t:budgets_desc": "Tutti i piani di miglioramento in un solo posto: materiali ancora necessari, costo dei pacchetti assegnati e l'aumento di statistiche che otterresti.",
  "t:budgets_working": "Calcolo dei pacchetti più economici…",
+ "t:budgets_plan_failed": "Impossibile calcolarlo",
+ "t:save_retry": "Non ancora salvato — riproveremo quando sarai di nuovo online",
  "t:budgets_loading": "Somma di tutto…",
  "t:budgets_view_target": "Per il tuo obiettivo",
  "t:budgets_view_fastest": "Più veloce",

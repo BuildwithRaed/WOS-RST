@@ -519,6 +519,8 @@
 "t:budgets_recalc_hint":"清除已儲存的結果並全部重新計算",
 "t:budgets_desc":"所有升級計畫集中在一處：仍需的材料、指定禮包的費用，以及你將獲得的數據提升。",
 "t:budgets_working":"正在計算最便宜的禮包…",
+"t:budgets_plan_failed":"無法計算",
+"t:save_retry":"尚未儲存 — 恢復連線後會再試",
 "t:budgets_loading":"正在加總…",
 "t:budgets_view_target":"依你的目標",
 "t:budgets_view_fastest":"最快",

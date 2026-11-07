@@ -519,6 +519,8 @@
 "t:budgets_recalc_hint":"저장된 결과를 버리고 모두 다시 계산합니다",
 "t:budgets_desc":"모든 업그레이드 계획을 한곳에서: 남은 재료, 배정된 패키지 비용, 그리고 얻게 될 스탯 증가.",
 "t:budgets_working":"가장 저렴한 팩 계산 중…",
+"t:budgets_plan_failed":"계산하지 못했습니다",
+"t:save_retry":"아직 저장되지 않았습니다 — 다시 연결되면 다시 시도합니다",
 "t:budgets_loading":"계산 중…",
 "t:budgets_view_target":"목표일 기준",
 "t:budgets_view_fastest":"가장 빠름",
