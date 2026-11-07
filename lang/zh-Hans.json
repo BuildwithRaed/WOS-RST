@@ -520,6 +520,8 @@
  "t:budgets_recalc_hint": "清除已保存的结果并全部重新计算",
  "t:budgets_desc": "所有升级计划集中在一处：仍需的材料、所分配礼包的花费，以及你将获得的属性提升。",
  "t:budgets_working": "正在计算最便宜的礼包…",
+ "t:budgets_plan_failed": "无法计算",
+ "t:save_retry": "尚未保存 — 恢复联网后会再试",
  "t:budgets_loading": "正在汇总…",
  "t:budgets_view_target": "按你的目标",
  "t:budgets_view_fastest": "最快",

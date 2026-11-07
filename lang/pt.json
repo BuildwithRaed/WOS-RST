@@ -519,6 +519,8 @@
 "t:budgets_recalc_hint":"Esquecer os resultados salvos e calcular tudo de novo",
 "t:budgets_desc":"Todos os planos de melhoria em um só lugar: materiais que ainda faltam, quanto custam os pacotes atribuídos e o aumento de atributos que você teria.",
 "t:budgets_working":"Calculando os pacotes mais baratos…",
+"t:budgets_plan_failed":"Não foi possível calcular",
+"t:save_retry":"Ainda não salvo — tentaremos de novo quando você voltar a ficar online",
 "t:budgets_loading":"Somando tudo…",
 "t:budgets_view_target":"Pelo seu alvo",
 "t:budgets_view_fastest":"Mais rápido",

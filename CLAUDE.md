@@ -15,6 +15,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - **Never trim, crop, zoom or edit an image without asking the owner first** (owner, 19 Oct 2026). Show pictures as they are.
 - **Previews in two steps** (owner, 6 Nov 2026): the first preview of a build is tested on ONE phone size only (iPhone 15, 393 px) so it can be checked faster; once the owner confirms it, test and send a second preview for all screen sizes (360 / 393 / Fold 585 / PC 1280, owner + visitor), then do the rest (notes, translations, PR).
 - **Previews only when needed** (owner, 7 Nov 2026): changes that don't change the look (speed, fixes, clean-up) get no preview step: test them fully (all sizes, owner + visitor, old vs new), then open the PR. Changes that do change the look get screenshots sent in the chat (the owner may not have the iPhone 15 at hand); the PR description still carries the preview link.
+- **Keep sending PRs without waiting for merges** (owner, 7 Nov 2026): each step gets its own branch `ccr-41bc4d90-fokvur-step<N>` (owner allowed extra branches), built on the step before it, PR into `main`; tell the owner the merge order (oldest step first). After a merge, the later PRs shrink to their own changes by themselves.
 - **Run every job in the background** (owner, 6 Nov 2026) so Claude can still answer while it works.
 - **When the owner says "wait" (e.g. "wait, I have a job"), stop at once** (owner, 20 Oct 2026): don't finish the current work first; say where it was left and ask what the job is.
 - Explanations should be short and non-technical. Show before/after numbers or pictures when useful.
@@ -342,6 +343,15 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - **No page jump on first load**: the footer is hidden (`html:not(.page-drawn) .site-footer{visibility:hidden}`, it keeps its space) until the first page draw; `pageDrawn()` adds `page-drawn` to `<html>` at the end of the first `render()`, in its catch / "No connection" path and in boot's session-error path. Layout shift on a cold phone load 0.13 → ~0 (all sizes). The footer also stays hidden while the first settings load is still retrying (up to ~2.5 s), then shows.
 - **Supabase preconnect renewed**: the app.js `<link rel=preload>` `onload` adds a fresh crossorigin preconnect (Chrome drops an unused one after 10 s on slow loads); not confirmable here, check the next PageSpeed run.
 - **Grey `--muted` #8694a3 → #8a98a7** (app.css + privacy.html; contrast on cards 4.98 → 5.24); `.cando-t small.off` no longer dimmed (it was 3.89:1).
+
+**Speed plan Step 2 (owner approved, 7 Nov 2026; nothing visible changes except notes when something fails):**
+- **Time limits**: `sbRequest` → `sbFetchOnce` with an AbortController, 25 s for reads (`SB_TIME_GET`), 30 s for writes (`SB_TIME_WRITE`), per page of 1,000 rows; a timed-out / dropped read is tried once more; PATCH / PUT / DELETE / upserts only after a network error, plain inserts never (`sbCanRetry`).
+- **Saves never lost**: `saveCalcState` → `runCalcSave(q)`, queue items `{ body, user }` (dropped if the person changed account); a failed save is kept unless a newer one waits, retried after 2 / 5 / 15 s, then parked (`q.parked`) and sent again on `online`, when the tab becomes visible or after any other save gets through (`calcSaveRetryParked`, `calcSaveRecovered`); one toast per failure run (`save_retry`, `SAVE_FAIL_NOTED`).
+- **Budgets plan failure**: `BUDGET_PLAN_FAILED` = plan key; `workHtml(tag, cls)` shows "Couldn't work it out · ↻ Recalculate" (`budgets_plan_failed`, `.bud-fail`) where "Working out…" was; `budgetForceRecalc` clears it.
+- **Redraws outside render()**: `pageErrorPanel(e)` (also render's catch) and `pageRedrawFailed(e, seq)`; `keepPlace` no longer re-throws; `.catch` on My Purchases / Budgets / the planner bars' `.then` redraws.
+- `ensureUiVisibility` retries after a failed load (`UI_HIDDEN_FAILED`).
+- Memory: `wirePageMax` keeps one listener pair per Max button (`PAGE_MAX_WIRED`); the planner worker reuses one Blob URL while its source is the same (`PLANNER_SRC`, `PLANNER_SRC_URL`).
+- Logo = `icons/logo-64.webp` (owner picked the same-quality WebP, 8.0 → 5.5 KB; `icons/logo-64.png` kept in the repo as the backup, no longer linked). `LANG_FILES_VERSION` 74.
 
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).

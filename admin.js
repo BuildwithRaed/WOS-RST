@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "84eec92b91";
+window.ADMIN_BUILD = "935dc08046";
 
 // ============================================================
 // ADMIN PAGE
@@ -79,7 +79,7 @@ const ADMIN_PIC = {
   experts: "icons/quick/experts.png", pets: "icons/quick/pets.png", chiefgears: "icons/quick/chief-gear.png", charm: "icons/charms/charm-infantry-16.webp",
   herogearprog: "icons/quick/hero-gear.png", heroes: "icons/quick/heroes.png", herostars: "icons/quick/heroes.png", vip: "icons/quick/vip.png",
   alliance: "icons/quick/facility.png", centerresearch: "icons/quick/research.png", skins: "icons/quick/castle.png", globe: "icons/quick/decoration.png",
-  dashsources: "icons/logo-64.png", rules: "icons/quick/events.png", reslocks: "icons/quick/microscope.png", packs: "icons/quick/gift.png",
+  dashsources: "icons/logo-64.webp", rules: "icons/quick/events.png", reslocks: "icons/quick/microscope.png", packs: "icons/quick/gift.png",
   budgets: "icons/quick/calculator.png",
 };
 const ADMIN_SHORT = {

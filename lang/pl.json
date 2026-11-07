@@ -520,6 +520,8 @@
  "t:budgets_recalc_hint": "Zapomnij zapisane wyniki i przelicz wszystko od nowa",
  "t:budgets_desc": "Wszystkie plany ulepszeń w jednym miejscu: brakujące materiały, koszt przypisanych paczek i zysk w statystykach.",
  "t:budgets_working": "Obliczam najtańsze paczki…",
+ "t:budgets_plan_failed": "Nie udało się obliczyć",
+ "t:save_retry": "Jeszcze nie zapisano — spróbujemy ponownie, gdy wrócisz do sieci",
  "t:budgets_loading": "Sumuję wszystko…",
  "t:budgets_view_target": "Według celu",
  "t:budgets_view_fastest": "Najszybciej",
