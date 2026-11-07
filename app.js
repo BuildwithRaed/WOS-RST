@@ -4128,7 +4128,12 @@ let RENDER_Y0 = 0;
 // The footer stays invisible until the first page is drawn (app.css
 // html:not(.page-drawn) .site-footer), so it isn't shown at the top and then
 // pushed down when the page arrives (layout shift).
-function pageDrawn() { document.documentElement.classList.add("page-drawn"); }
+// The loading layout from index.html (.boot-ld) stays until then; anything
+// left of it goes here.
+function pageDrawn() {
+  document.documentElement.classList.add("page-drawn");
+  document.querySelectorAll("#content > .boot-ld").forEach((x) => x.remove());
+}
 async function render() {
   const seq = ++RENDER_SEQ;
   // PC text is 2 px bigger on every page but the Dashboard (pcBigger in the head)
@@ -4143,7 +4148,8 @@ async function render() {
   RENDER_Y0 = y0; // the place before "Loading…" (Admin keeps it while admin.js loads)
   const putBoxes = same ? saveBoxScroll(content) : null;
   if (same) content.style.minHeight = content.offsetHeight + "px";
-  content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
+  // The first draw keeps the loading layout instead of "Loading…".
+  if (!content.querySelector(":scope > .boot-ld")) content.innerHTML = `<div class="empty">Loading&hellip;</div>`;
   try {
     // Visitor pages that follow Admin's visitor access: when the settings
     // didn't load (weak connection), stay on the page and try again instead of
