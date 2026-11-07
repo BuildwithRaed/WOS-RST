@@ -338,6 +338,11 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - History-style comments taken out of the code and CSS (kept conservative); the dated stories now live only in this file.
 - Duplicate T key `rl_use_daily` removed (same text).
 
+**Speed plan Step 1 (owner approved, 7 Nov 2026):**
+- **No page jump on first load**: the footer is hidden (`html:not(.page-drawn) .site-footer{visibility:hidden}`, it keeps its space) until the first page draw; `pageDrawn()` adds `page-drawn` to `<html>` at the end of the first `render()`, in its catch / "No connection" path and in boot's session-error path. Layout shift on a cold phone load 0.13 → ~0 (all sizes). The footer also stays hidden while the first settings load is still retrying (up to ~2.5 s), then shows.
+- **Supabase preconnect renewed**: the app.js `<link rel=preload>` `onload` adds a fresh crossorigin preconnect (Chrome drops an unused one after 10 s on slow loads); not confirmable here, check the next PageSpeed run.
+- **Grey `--muted` #8694a3 → #8a98a7** (app.css + privacy.html; contrast on cards 4.98 → 5.24); `.cando-t small.off` no longer dimmed (it was 3.89:1).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit.
