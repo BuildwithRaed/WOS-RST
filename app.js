@@ -4031,6 +4031,10 @@ document.getElementById("saveCommander").addEventListener("click", async () => {
 let RENDER_SEQ = 0;
 let RENDER_Y0 = 0;
 // Central router: dispatches TAB to the right page renderer.
+// The footer stays invisible until the first page is drawn (app.css
+// html:not(.page-drawn) .site-footer), so it isn't shown at the top and then
+// pushed down when the page arrives (layout shift).
+function pageDrawn() { document.documentElement.classList.add("page-drawn"); }
 async function render() {
   const seq = ++RENDER_SEQ;
   // PC text is 2 px bigger on every page but the Dashboard (pcBigger in the head)
@@ -4054,7 +4058,7 @@ async function render() {
       content.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`;
       await ensureSiteConfig();
       if (seq !== RENDER_SEQ) return;
-      if (SITE_CONFIG_FAILED) { content.style.minHeight = ""; setTimeout(() => { if (seq === RENDER_SEQ) render(); }, 5000); return; }
+      if (SITE_CONFIG_FAILED) { content.style.minHeight = ""; pageDrawn(); setTimeout(() => { if (seq === RENDER_SEQ) render(); }, 5000); return; }
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
@@ -4117,9 +4121,11 @@ async function render() {
       if (same) { putBoxes(); window.scrollTo(0, y0); }
       if (!content.dataset.holdUntilReady) content.style.minHeight = "";
       LAST_RENDER_TAB = TAB;
+      pageDrawn();
     }
   } catch (e) {
     if (seq !== RENDER_SEQ) return; // a newer page is showing; don't cover it
+    pageDrawn();
     content.style.minHeight = "";
     LAST_RENDER_TAB = TAB;
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">Something went wrong loading this tab.</div>${esc(e.message)}</div></div>`;
@@ -30000,6 +30006,7 @@ if ("serviceWorker" in navigator) {
     googleReturnCheck();
     syncAccountLang();
   } catch (err) {
+    pageDrawn();
     content.innerHTML = `
       <div class="empty">
         <div class="big">Couldn't start a session</div>
