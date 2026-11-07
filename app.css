@@ -1862,6 +1862,9 @@
   .pur-tag{ font-size:9.5px; padding:1px 6px; border-radius:6px; background:#e0b25a; color:#1a1a1a; }
   .bud-pending{ font-size:15px; font-weight:600; color:var(--ice); animation:budPulse 1.2s ease-in-out infinite; }
   .bud-pending.small{ font-size:12px; }
+  .bud-fail{ font-size:15px; font-weight:600; color:var(--danger); }
+  .bud-fail.small{ font-size:12px; }
+  .bud-fail-b{ background:none; border:0; padding:0; font:inherit; color:var(--ice); text-decoration:underline; cursor:pointer; }
   @keyframes budPulse{ 50%{ opacity:.45; } }
   .budget-wrap{ max-width:1400px; margin:0 auto; }
   /* Budgets = design B3: total tile, goal flags, page

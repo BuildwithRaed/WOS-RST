@@ -343,6 +343,15 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 - **Supabase preconnect renewed**: the app.js `<link rel=preload>` `onload` adds a fresh crossorigin preconnect (Chrome drops an unused one after 10 s on slow loads); not confirmable here, check the next PageSpeed run.
 - **Grey `--muted` #8694a3 → #8a98a7** (app.css + privacy.html; contrast on cards 4.98 → 5.24); `.cando-t small.off` no longer dimmed (it was 3.89:1).
 
+**Speed plan Step 2 (owner approved, 7 Nov 2026; nothing visible changes except notes when something fails):**
+- **Time limits**: `sbRequest` → `sbFetchOnce` with an AbortController, 25 s for reads (`SB_TIME_GET`), 30 s for writes (`SB_TIME_WRITE`), per page of 1,000 rows; a timed-out / dropped read is tried once more; PATCH / PUT / DELETE / upserts only after a network error, plain inserts never (`sbCanRetry`).
+- **Saves never lost**: `saveCalcState` → `runCalcSave(q)`, queue items `{ body, user }` (dropped if the person changed account); a failed save is kept unless a newer one waits, retried after 2 / 5 / 15 s, then parked (`q.parked`) and sent again on `online`, when the tab becomes visible or after any other save gets through (`calcSaveRetryParked`, `calcSaveRecovered`); one toast per failure run (`save_retry`, `SAVE_FAIL_NOTED`).
+- **Budgets plan failure**: `BUDGET_PLAN_FAILED` = plan key; `workHtml(tag, cls)` shows "Couldn't work it out · ↻ Recalculate" (`budgets_plan_failed`, `.bud-fail`) where "Working out…" was; `budgetForceRecalc` clears it.
+- **Redraws outside render()**: `pageErrorPanel(e)` (also render's catch) and `pageRedrawFailed(e, seq)`; `keepPlace` no longer re-throws; `.catch` on My Purchases / Budgets / the planner bars' `.then` redraws.
+- `ensureUiVisibility` retries after a failed load (`UI_HIDDEN_FAILED`).
+- Memory: `wirePageMax` keeps one listener pair per Max button (`PAGE_MAX_WIRED`); the planner worker reuses one Blob URL while its source is the same (`PLANNER_SRC`, `PLANNER_SRC_URL`).
+- Logo = `icons/logo-64.webp` (owner picked the same-quality WebP, 8.0 → 5.5 KB; `icons/logo-64.png` kept in the repo as the backup, no longer linked). `LANG_FILES_VERSION` 74.
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit.

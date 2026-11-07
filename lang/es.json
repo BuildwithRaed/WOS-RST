@@ -520,6 +520,8 @@
  "t:budgets_recalc_hint": "Olvidar los resultados guardados y calcular todo de nuevo",
  "t:budgets_desc": "Todos los planes de mejora en un sitio: materiales que aún faltan, lo que cuestan los paquetes asignados y la mejora de estadísticas que obtendrías.",
  "t:budgets_working": "Calculando los paquetes más baratos…",
+ "t:budgets_plan_failed": "No se pudo calcular",
+ "t:save_retry": "Aún no se ha guardado — se volverá a intentar cuando vuelvas a estar en línea",
  "t:budgets_loading": "Sumando todo…",
  "t:budgets_view_target": "Según tu objetivo",
  "t:budgets_view_fastest": "Más rápido",

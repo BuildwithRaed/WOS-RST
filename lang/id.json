@@ -519,6 +519,8 @@
 "t:budgets_recalc_hint":"Lupakan hasil tersimpan dan hitung semuanya lagi",
 "t:budgets_desc":"Semua rencana upgrade di satu tempat: material yang masih dibutuhkan, biaya paket yang ditetapkan, dan kenaikan statistik yang didapat.",
 "t:budgets_working":"Menghitung paket termurah…",
+"t:budgets_plan_failed":"Tidak bisa dihitung",
+"t:save_retry":"Belum tersimpan — akan dicoba lagi saat kamu kembali online",
 "t:budgets_loading":"Menjumlahkan semuanya…",
 "t:budgets_view_target":"Sesuai targetmu",
 "t:budgets_view_fastest":"Tercepat",
