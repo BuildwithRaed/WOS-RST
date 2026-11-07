@@ -2329,6 +2329,7 @@
 "t:cando_short":"Se puede",
 "t:cando_at_target":"Todo en el objetivo",
 "t:cando_nothing":"Nada aún",
+"t:cando_lab_week":"+{n} FC refinado del laboratorio de esta semana (quedan {m} refinamientos)",
 "t:cando_sub":"Lo que tu Mochila puede mejorar ahora mismo, dentro de tus objetivos.",
 "t:cando_more":"+{n} más",
 "t:cando_spend":"Cómo gastarlo",

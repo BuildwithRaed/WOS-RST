@@ -2328,6 +2328,7 @@
 "t:cando_short":"Şimdi yapılabilir",
 "t:cando_at_target":"Hepsi hedefte",
 "t:cando_nothing":"Henüz yok",
+"t:cando_lab_week":"+{n} Rafine Ateş Kristali bu haftanın Laboratuvarından ({m} arıtma kaldı)",
 "t:cando_sub":"Çantanın şu an hedeflerin içinde yükseltebildikleri.",
 "t:cando_more":"+{n} daha",
 "t:cando_spend":"Nasıl harcanır",

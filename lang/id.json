@@ -2328,6 +2328,7 @@
 "t:cando_short":"Bisa sekarang",
 "t:cando_at_target":"Semua sesuai target",
 "t:cando_nothing":"Belum ada",
+"t:cando_lab_week":"+{n} Kristal Api Murni dari Lab minggu ini (sisa {m} pemurnian)",
 "t:cando_sub":"Yang bisa di-upgrade Ranselmu sekarang, dalam targetmu.",
 "t:cando_more":"+{n} lagi",
 "t:cando_spend":"Cara memakainya",

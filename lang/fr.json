@@ -2329,6 +2329,7 @@
 "t:cando_short":"Possible",
 "t:cando_at_target":"Tout à l'objectif",
 "t:cando_nothing":"Rien pour l'instant",
+"t:cando_lab_week":"+{n} FC raffiné du labo de cette semaine ({m} raffinages restants)",
 "t:cando_sub":"Ce que votre Sac peut améliorer tout de suite, dans vos objectifs.",
 "t:cando_more":"+{n} de plus",
 "t:cando_spend":"Comment le dépenser",

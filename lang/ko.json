@@ -2328,6 +2328,7 @@
 "t:cando_short":"지금 가능",
 "t:cando_at_target":"모두 목표 도달",
 "t:cando_nothing":"아직 없음",
+"t:cando_lab_week":"+{n} 정제된 화염 결정 (이번 주 연구소, 남은 정제 {m}회)",
 "t:cando_sub":"지금 배낭으로 목표 안에서 업그레이드할 수 있는 것.",
 "t:cando_more":"+{n}개 더",
 "t:cando_spend":"쓰는 방법",
