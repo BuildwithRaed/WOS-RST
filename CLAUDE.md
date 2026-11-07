@@ -14,6 +14,7 @@ WOS RST (www.wosrst.com) is a free, unofficial **Whiteout Survival** planner. It
 - **After the owner says "merged", check it really is** (`git fetch origin main` and look for the merge commit). The final "Confirm merge" click has been missed before. Then restart the working branch from the new `main`.
 - **Never trim, crop, zoom or edit an image without asking the owner first** (owner, 19 Oct 2026). Show pictures as they are.
 - **Previews in two steps** (owner, 6 Nov 2026): the first preview of a build is tested on ONE phone size only (iPhone 15, 393 px) so it can be checked faster; once the owner confirms it, test and send a second preview for all screen sizes (360 / 393 / Fold 585 / PC 1280, owner + visitor), then do the rest (notes, translations, PR).
+- **Previews only when needed** (owner, 7 Nov 2026): changes that don't change the look (speed, fixes, clean-up) get no preview step: test them fully (all sizes, owner + visitor, old vs new), then open the PR. Changes that do change the look get screenshots sent in the chat (the owner may not have the iPhone 15 at hand); the PR description still carries the preview link.
 - **Run every job in the background** (owner, 6 Nov 2026) so Claude can still answer while it works.
 - **When the owner says "wait" (e.g. "wait, I have a job"), stop at once** (owner, 20 Oct 2026): don't finish the current work first; say where it was left and ask what the job is.
 - Explanations should be short and non-technical. Show before/after numbers or pictures when useful.
