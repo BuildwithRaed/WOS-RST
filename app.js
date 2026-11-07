@@ -3420,7 +3420,7 @@ async function renderAboutPage() {
     <div class="page-head"><div><h2>${esc(t("about_title"))}</h2><p class="desc">${esc(t("about_desc"))}</p></div></div>
     <div class="ab-wrap">
       <div class="ab-card ab-hero">
-        <img src="icons/logo-64.png?v=3" alt="" width="52" height="52" onerror="this.style.display='none'" />
+        <img src="icons/logo-64.webp" alt="" width="52" height="52" onerror="this.style.display='none'" />
         <div style="min-width:0;"><div class="ab-name">WOS RST</div><div class="ab-tag">${esc(aboutText(cfg, "tagline"))}</div></div>
       </div>
       ${showCards ? `<div class="ab-k">${esc(t("about_cards_title"))}</div>
@@ -3968,7 +3968,7 @@ document.addEventListener("click", (e) => {
 // Packs group (key Marketplace), More = everything else.
 const MB_UPGRADE_GROUPS = ["Gears", "Experts", "Pets", "Research"];
 const MB_SECS = [
-  { key: "home", label: "mb_home", icon: "icons/logo-64.png" },
+  { key: "home", label: "mb_home", icon: "icons/logo-64.webp" },
   { key: "upgrade", label: "mb_upgrade", icon: "icons/quick/chief-gear.png" },
   { key: "plan", label: "mb_plan", icon: "icons/quick/calculator.png" },
   { key: "packs", label: "mb_packs", icon: "icons/quick/gift.png" },
@@ -4297,7 +4297,7 @@ let DASH_DATA_CACHE = {};
 // calc_state quick_pages = { pages: [tabs] }.
 const QUICK_DEFAULT = ["chiefgear", "charmscalc", "herogearcalc", "petsdata", "expertspage", "budgets"];
 const QUICK_ICONS = {
-  overview: "icons/logo-64.png", statetimeline: "icons/quick/events.png", packs: "icons/quick/gift.png", mypacks: "icons/quick/gift.png",
+  overview: "icons/logo-64.webp", statetimeline: "icons/quick/events.png", packs: "icons/quick/gift.png", mypacks: "icons/quick/gift.png",
   budgets: "icons/quick/calculator.png", roadmap: "icons/quick/territory.png", purchases: "icons/quick/froststar.png",
   charmscalc: "icons/charms/charm-infantry-16.webp", chiefgear: "icons/quick/chief-gear.png", herogearcalc: "icons/quick/hero-gear.png",
   expertspage: "icons/quick/experts.png", expertsresearchpage: "icons/quick/experts.png", petsdata: "icons/quick/pets.png", refinepage: "icons/quick/pets.png",
@@ -29451,7 +29451,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.js?v=84eec92b91";
+      s.src = "admin.js?v=935dc08046";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
