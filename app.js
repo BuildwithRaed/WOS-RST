@@ -5273,7 +5273,7 @@ async function renderOverview(opts = {}) {
         </div>
         <div class="rc-set-ov" data-rcsetbd ${ROSTER_SET_OPEN ? "" : "hidden"}>
           <div class="rc-set" role="dialog" aria-label="${esc(t("rc_settings"))}">
-            <div class="rc-set-h"><b>${esc(t("rc_settings"))}</b><button type="button" class="exp-x" data-rcsetclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+            <div class="rc-set-h"><b>${esc(t("rc_settings"))}</b>${closeXHtml("data-rcsetclose", "exp-x")}</div>
             <label class="rc-set-row"><span><b>${esc(t("count_in_dashboard"))}</b><small>${esc(t("rc_count_desc"))}</small></span><input type="checkbox" class="bset-sw" id="rosterUsedAll" ${allUsed ? "checked" : ""} /></label>
             ${topGen != null ? `<label class="rc-set-row"><span><b>${esc(t("rc_maxgen"))}</b><small>${esc(t("rc_maxgen_desc").replace("{gen}", `${genPrefix} ${topGen}`))}</small></span><input type="checkbox" class="bset-sw" id="rosterMaxTopGen" ${roster.maxTopGen ? "checked" : ""} /></label>` : ""}
           </div>
@@ -5932,7 +5932,7 @@ async function renderGearLevelingGroup(target) {
     const atMax = GEAR_LEVELING_TABLES.every((tb) => cur(troop, piece, tb).to >= Math.max(cur(troop, piece, tb).from, heroTrackCapIdx(tb)));
     m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet hg-sh" role="dialog" aria-modal="true">
       <div class="gs-head">${nav(-1)}<img class="hg-sh-pic" src="${heroGearIcon(troop, piece)}" alt="" /><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(piece))} · ${esc(troopDisplayName(troop))}</b></div>
-        ${nav(1)}<button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        ${nav(1)}${closeXHtml("data-gsclose")}</div>
       <div class="plx-piecestat hgc-stat" data-hgstat="${esc(troop)}|${esc(piece)}"></div>
       ${GEAR_LEVELING_TABLES.map(sec).join("")}
       <div class="gs-needs"><div class="meta">${esc(t("hg_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(Math.round(q).toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
@@ -5941,7 +5941,6 @@ async function renderGearLevelingGroup(target) {
     m.querySelectorAll("select.lvchip[data-troop]").forEach((c) => { const v = cur(c.dataset.troop, c.dataset.piece, c.dataset.track); c.value = String(c.dataset.role === "to" ? v.to : v.from); });
     // − / +: one level a tap; holding moves on by itself (the numbers follow
     // while held, saved and redrawn when let go).
-    let hold = null;
     const stepOnce = (tb, role, d) => {
       const st = activeState[troop][piece][tb];
       if (!setLv(troop, piece, tb, role, (role === "to" ? Math.max(st.from || 0, st.to ?? 0) : st.from || 0) + d)) return false;
@@ -5949,27 +5948,7 @@ async function renderGearLevelingGroup(target) {
       m.querySelectorAll(`[data-hgsv^="${window.CSS.escape(tb)}|"]`).forEach((s) => { s.textContent = lab(tb, s.dataset.hgsv.endsWith("|to") ? v.to : v.from); });
       return true;
     };
-    const finish = () => {
-      if (!hold) return;
-      clearTimeout(hold.timer); clearInterval(hold.iv);
-      const did = hold.changed;
-      hold = null;
-      if (did) changed();
-    };
-    m.querySelectorAll("[data-hgstep]").forEach((b) => {
-      const [tb, role, d] = b.dataset.hgstep.split("|");
-      b.onpointerdown = (e) => {
-        if (!e.isPrimary || b.disabled) return;
-        e.preventDefault();
-        finish();
-        hold = { changed: stepOnce(tb, role, Number(d)), timer: 0, iv: 0 };
-        hold.timer = setTimeout(() => { if (hold) hold.iv = setInterval(() => { if (hold && stepOnce(tb, role, Number(d))) hold.changed = true; }, 90); }, 420);
-      };
-      b.onpointerup = finish;
-      b.onpointerleave = finish;
-      b.onpointercancel = finish;
-      b.onclick = (e) => { if (e.detail === 0) { hold = { changed: stepOnce(tb, role, Number(d)) }; finish(); } };
-    });
+    wireHoldStep(m.querySelectorAll("[data-hgstep]"), (b) => { const [tb, role, d] = b.dataset.hgstep.split("|"); return stepOnce(tb, role, Number(d)); }, changed);
     fillHeroGearPieceStats();
     fillHeroGearReach();
   }
@@ -6643,7 +6622,7 @@ function canDoDraw(m) {
   const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
   const best = UPGRADE_ORDER.mode === "best";
   m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cg_can_now"))}">
-    <div class="cando-hd"><b class="has-info">${esc(t("cg_can_now"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden><span class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</span></span></b><button type="button" class="rfa-x" data-cdx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+    <div class="cando-hd"><b class="has-info">${esc(t("cg_can_now"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden><span class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</span></span></b>${closeXHtml("data-cdx")}</div>
     <div class="meta cando-sub">${esc(t("cando_sub"))}</div>
     <div class="cando-green">${green}</div>
     ${todo.length ? `<div class="cando-k">${esc(t("cando_spend"))}</div>
@@ -6739,7 +6718,7 @@ function openReachAllSheet(key) {
       }).join("");
     };
     m.innerHTML = `<div class="modal-box adm-sheet rcs-box" role="dialog" aria-modal="true">
-      <div class="rcs-head"><div><b>${esc(t("rch_all_title").replace("{n}", total).replace("{unit}", t(unit)))}</b>${first ? `<div class="rch-first">${first}</div>` : ""}</div><button type="button" class="rfa-x" data-rcsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="rcs-head"><div><b>${esc(t("rch_all_title").replace("{n}", total).replace("{unit}", t(unit)))}</b>${first ? `<div class="rch-first">${first}</div>` : ""}</div>${closeXHtml("data-rcsx")}</div>
       ${troops.map((x) => {
         const open = REACH_ALL_OPEN === x.troop && x.up.length;
         return `<div class="rcs-tr${open ? " open" : ""}" style="--tc:${COLORS[x.troop]};">
@@ -8206,6 +8185,10 @@ function renderPurNewGen(el, tables, onChange) {
     ngSave();
   }));
 }
+// My Purchases' "Show N more" / "Show less" button under a list (attr = its data-* attribute).
+function purMoreBtnHtml(attr, all, n) {
+  return `<button type="button" class="pur-a2-more" ${attr}>${esc(all ? t("pur_a2_less") : t("pur_a2_more").replace("{n}", n))}</button>`;
+}
 async function renderPurchasesPage() {
   const seq = RENDER_SEQ;
   // Redrawn after a tap: the suggestions box keeps its height while it's
@@ -8408,7 +8391,7 @@ async function renderPurchasesPage() {
       <div class="pur-o1-shh"><span class="pur-pic">${I.ic ? `<img src="${esc(I.ic)}" alt="" />` : `<i>${esc(I.name.charAt(0))}</i>`}</span>
         <span class="pur-o1-sht"><b>${esc(I.name)}${I.n > 1 ? ` <span class="pur-a2-x">${bidiNum("×" + I.n)}</span>` : ""}</b><small>${tagChip(I.tag)}<span class="meta">${esc([packFmtMoney(I.total, I.link.currency), tier].filter(Boolean).join(" · "))}</span></small>${kind === "b" ? untilHtml(g) : ""}</span>
         <button type="button" class="pur-o1-edit" data-puredit="" title="${esc(t("pur_ed_tip"))}">&#9998; ${esc(t("pur_ed_btn"))}</button>
-        <button type="button" class="rfa-x" data-gsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        ${closeXHtml("data-gsx")}</div>
       <div class="pur-ed" data-pureditor hidden></div>
       <div class="pur-o1-lb">${esc(t("pur_o1_gives"))}</div>
       <div class="bud-mats pur-chips">${chipsFor(I.gives, I.n, 8)}</div>
@@ -8459,7 +8442,7 @@ async function renderPurchasesPage() {
       const take = i === 0 && !all ? gs.slice(0, LIST_N) : gs;
       return `<details class="pur-mon" data-purmon="${esc(bk)}" ${on ? "open" : ""}><summary class="pur-bh"><b>${esc(h.name)}</b> <span class="meta">${part.length === 1 ? esc(t("pur_1_pack")) : `${bidiNum(String(part.length))} ${esc(t("pk_preview_packs"))}`}</span><b class="pur-bh-t">${h.tot}</b></summary>${take.map((g) => lineHtml(g, kind, bk)).join("")}</details>`;
     }).join("");
-    const more = over > 0 ? `<button type="button" class="pur-a2-more" data-purlmore="${kind}">${esc(all ? t("pur_a2_less") : t("pur_a2_more").replace("{n}", over))}</button>` : "";
+    const more = over > 0 ? purMoreBtnHtml(`data-purlmore="${kind}"`, all, over) : "";
     return `<div class="pur-o1-list" data-purscroll="${kind}">${html}</div>${more}`;
   };
   const listBody = (k, arr) => (k === "c"
@@ -8527,7 +8510,7 @@ async function renderPurchasesPage() {
     byB.forEach((part, bk) => groupBy(part).forEach((g) => GROUPS.set(`c|${bk}|${g.key}`, { g, kind: "c", bk })));
   }
   const nPacks = (arr) => arr.reduce((a, p) => a + cntNow(p), 0);
-  const sheetHtml = (k, title, body) => `<div class="modal-overlay adm-sheet-wrap gs-wrap pur-shw" data-pursh="${k}"${PUR_SHEET === k ? "" : ` style="display:none;"`}><div class="modal-box adm-sheet gs-box pur-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="gs-head"><b style="flex:1;">${esc(title)}</b><button type="button" class="rfa-x" data-purshx aria-label="${esc(t("close_button"))}">&#10005;</button></div>${body}</div></div>`;
+  const sheetHtml = (k, title, body) => `<div class="modal-overlay adm-sheet-wrap gs-wrap pur-shw" data-pursh="${k}"${PUR_SHEET === k ? "" : ` style="display:none;"`}><div class="modal-box adm-sheet gs-box pur-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="gs-head"><b style="flex:1;">${esc(title)}</b>${closeXHtml("data-purshx")}</div>${body}</div></div>`;
   const tabBtn = (k, title, sub, id) => `<button type="button" role="tab" class="pur-o1-tab${PUR_TAB === k ? " on" : ""}" data-purtab="${k}" aria-selected="${PUR_TAB === k}"><b>${esc(title)}</b><small${id ? ` id="${id}"` : ""}>${esc(sub)}</small></button>`;
   const boughtSub = boughtMonth.length ? packFmtLocal(sumCost(boughtMonth), sample, false) : bought.length ? packFmtLocal(sumCost(bought), sample, false) : t("pur_o1_none");
   const tabsHtml = `<div class="pur-o1-tabs" role="tablist">
@@ -8692,7 +8675,7 @@ async function renderPurchasesPage() {
     // First 5 packs, then "Show N more" (the list made a long scroll).
     const CHK_N = 5, extra = all.length - CHK_N;
     const shown = PUR_CHK_ALL || extra <= 1 ? all : all.slice(0, CHK_N);
-    chk.innerHTML = all.length ? shown.map(rowHtml).join("") + (extra > 1 ? `<button type="button" class="pur-a2-more" data-pura2more>${esc(PUR_CHK_ALL ? t("pur_a2_less") : t("pur_a2_more").replace("{n}", extra))}</button>` : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
+    chk.innerHTML = all.length ? shown.map(rowHtml).join("") + (extra > 1 ? purMoreBtnHtml("data-pura2more", PUR_CHK_ALL, extra) : "") : `<div class="meta pur-a2-none">${pending ? esc(t("budgets_working")) : esc(t("pur_a2_none"))}</div>`;
     const moreB = chk.querySelector("[data-pura2more]");
     if (moreB) moreB.addEventListener("click", () => { PUR_CHK_ALL = !PUR_CHK_ALL; drawWeek(P, pending); });
     // Taps
@@ -9016,7 +8999,7 @@ async function renderPurchasesPage() {
       const lim = sugAll || PUR_LIST_ALL.has("n") ? list : list.slice(0, 5);
       const moreN = list.length - 5;
       const listPart = list.length
-        ? `<div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${lim.map(rowHtml).join("")}</div>${moreN > 0 ? `<button type="button" class="pur-a2-more" data-purlmore="n">${esc(PUR_LIST_ALL.has("n") ? t("pur_a2_less") : t("pur_a2_more").replace("{n}", moreN))}</button>` : ""}`
+        ? `<div class="pur-cl-list" data-week="${esc(String(PUR_SUG_WEEK))}">${lim.map(rowHtml).join("")}</div>${moreN > 0 ? purMoreBtnHtml('data-purlmore="n"', PUR_LIST_ALL.has("n"), moreN) : ""}`
         : `<div class="meta pur-a2-none">${esc(t("pur_wk_none"))}</div>`;
       const buyBtn = list.some(([i]) => canBuy(i)) ? `<button type="button" class="btn pur-wk-all" data-purtickbuy></button>` : "";
       const hint = list.length ? `<div class="meta pur-o1-hint"><span>${esc(t("pur_o1_n_hint"))}</span>${list.some(([i]) => canBuy(i)) ? ` <button type="button" class="linklike" data-purtickall>${esc(t(list.every(([i]) => !canBuy(i) || tickOf(i)) ? "pur_sug_pick_none" : "pur_sug_pick_all"))}</button>` : ""}</div>` : "";
@@ -9259,7 +9242,7 @@ async function renderPurchasesPage() {
       const cntOf = (d) => (cnt[d] != null ? cnt[d] : s0[d].count);
       const cntHtml = (d) => (s0[d].count > 1 ? `<div class="pur-cnt" data-pmcnt="${d}"><span class="pur-cnt-l">${esc(t("pur_cnt_will"))}</span>${purStepHtml("pmstep", cntOf(d), s0[d].count)}<button type="button" class="pur-cnt-max" data-pmcmax${cntOf(d) >= s0[d].count ? " disabled" : ""}>${esc(t("pur_cnt_max").replace("{n}", s0[d].count))}</button><small class="pur-cnt-note">${esc(t("pur_cnt_plan").replace("{n}", s0[d].count))}</small></div>` : "");
       modal.innerHTML = `<div class="modal-box pur-modal">
-        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2><button type="button" class="rfa-x" data-pmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
+        <div class="pur-m-head"><h2>${esc(M ? purShortName(sugName(r)) : sugName(r))}</h2>${closeXHtml("data-pmclose")}</div>${verHtml}${stepsHtml}${noteHtml}${M ? "" : `<div class="meta" style="font-size:11.5px; margin-bottom:10px;">${r.label !== fmtN(1) ? `${esc(r.label)} · ` : ""}${esc(fmtN(1))} ${esc(t("pur_each"))}</div>`}
         ${s0.length > 1 ? `<div class="pur-m-top"><span class="meta">${esc(t("pur_pick_dates"))}</span><button type="button" class="linklike" data-pmall>${esc(t("pur_sug_pick_none"))}</button></div>` : ""}
         <div class="pur-m-list">${s0.map((x, k) => `<label class="pur-m-row${dayCtl(k) ? " has-dsel" : ""}"><input type="checkbox" data-pmday="${k}" ${!daysOn || daysOn.has(k) ? "checked" : ""} /><span>${esc(whenTxt(x.off))}</span>${dayCtl(k)}${dayCtl(k) && x.count === 1 ? "<span></span>" : `<span class="meta" data-pmx>${bidiNum("× " + cntOf(k))}</span>`}<b data-pmpr>${esc(fmtN(cntOf(k), selOf(k)))}</b></label>${cntHtml(k)}${dayMenu(k)}`).join("")}</div>
         <div class="pur-m-foot"><span data-pmsum></span><span style="display:flex; gap:8px;"><button type="button" class="btn ghost small" data-pmclose>${esc(t("close_button"))}</button><button type="button" class="btn small" data-pmadd>+ ${esc(t("pur_will_buy"))}</button></span></div>
@@ -9483,7 +9466,7 @@ async function renderPurchasesPage() {
     if (!m) { m = document.createElement("div"); m.id = "purRmSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
     const yesLine = ends ? t("pur_rm_yes_d").replace("{date}", shortDay(ends)) : t("pur_rm_yes_d_once");
     m.innerHTML = `<div class="modal-box adm-sheet gs-box pur-rm" role="dialog" aria-modal="true">
-      <div class="gs-head"><b style="flex:1;">${esc(t("pur_rm_title"))}</b><button type="button" class="rfa-x" data-rmx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="gs-head"><b style="flex:1;">${esc(t("pur_rm_title"))}</b>${closeXHtml("data-rmx")}</div>
       ${old && addable.length ? `<div class="pur-rm-warn">&#9888; ${esc(bpAt ? t("pur_rm_old").replace("{date}", shortDay(bpAt)) : t("pur_rm_never"))}</div>` : ""}
       <div class="pur-rm-pk"><span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" />` : `<i>${esc(name.charAt(0))}</i>`}</span><span><b>${esc(name)} ${bidiNum("×" + n)}</b><span class="meta">${esc(packFmtMoney(total, packLinkFor(tb.id).currency))} · ${esc(t("pur_rm_bought").replace("{date}", shortDay(lastBuy)))}</span></span></div>
       <div class="bud-mats pur-chips">${chipsFor(gives, 1, 8)}</div>
@@ -9530,7 +9513,7 @@ async function renderPurchasesPage() {
     if (!m) { m = document.createElement("div"); m.id = "purBsSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap"; document.body.appendChild(m); }
     const btnText = () => t("pur_bs_btn").replace("{n}", n).replace("{price}", packFmtMoney(each * n, cur));
     m.innerHTML = `<div class="modal-box adm-sheet gs-box pur-rm" role="dialog" aria-modal="true">
-      <div class="gs-head"><b style="flex:1;">${esc(t("pur_bs_title"))}</b><button type="button" class="rfa-x" data-bsx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="gs-head"><b style="flex:1;">${esc(t("pur_bs_title"))}</b>${closeXHtml("data-bsx")}</div>
       <div class="pur-rm-pk"><span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" />` : `<i>${esc(name.charAt(0))}</i>`}</span><span><b>${esc(name)}</b><span class="meta">${esc(t("pur_bs_planned").replace("{n}", max).replace("{price}", packFmtMoney(each, cur)))}</span></span></div>
       <div class="pur-bs-row"><span>${esc(t("pur_bs_how"))}</span>${purStepHtml("bsstep", n, max)}</div>
       <div class="pur-bs-row"><span>${esc(t("pur_bs_on"))}</span><input type="date" data-bsday value="${esc(p0.date > today ? today : p0.date)}" max="${esc(today)}" /></div>
@@ -11614,7 +11597,7 @@ async function renderPacksPage() {
       return `<label class="pkb-eas-r"><input type="checkbox" data-pkbeas="${esc(id)}" ${tick.has(id) ? "checked" : ""} /><span class="pkb-ic">${pkbIcon(x, xl) || "&#127873;"}</span><span class="pkb-eas-m"><b>${esc(x.title || "")}</b><small>${esc(line)}</small></span></label>`;
     }).join("");
     m.innerHTML = `<div class="modal-box adm-sheet gs-box pkb-eas" role="dialog" aria-modal="true" aria-label="${esc(t("pkb_ev_add"))}">
-      <div class="gs-head"><span class="pkb-eas-t"><b>${esc(t("pkb_ev_add"))}</b><small>${esc(t("pkb_ev_add_sub").replace("{pack}", tb.title || ""))}</small></span><button type="button" class="rfa-x" data-pkbeasx aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+      <div class="gs-head"><span class="pkb-eas-t"><b>${esc(t("pkb_ev_add"))}</b><small>${esc(t("pkb_ev_add_sub").replace("{pack}", tb.title || ""))}</small></span>${closeXHtml("data-pkbeasx")}</div>
       <div class="pkb-eas-list">${rows || `<p class="meta">${esc(t("pkb_ev_add_none"))}</p>`}</div>
       <div class="pkb-eas-foot"><button type="button" class="btn ghost" data-pkbeasx>${esc(t("cancel"))}</button><button type="button" class="btn" data-pkbeasok>${esc(t("pkb_ev_add_done"))}</button></div>
     </div>`;
@@ -13215,6 +13198,38 @@ async function renderInventory() {
     input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
   });
 }
+// The ✕ at the top of a sheet / pop-up (attr: the data-* attribute its handler looks for).
+function closeXHtml(attr, cls = "rfa-x") {
+  return `<button type="button" class="${cls}" ${attr} aria-label="${esc(t("close_button"))}">&#10005;</button>`;
+}
+// − / + buttons that repeat while held (Heroes Gears sheet, Pets Level): one step a
+// tap; holding on after 420 ms repeats every 90 ms. stepOnce(button) moves one step
+// and says whether anything changed; done() runs once when let go, if it did.
+// A keyboard click (no pointer) is one step.
+function wireHoldStep(buttons, stepOnce, done) {
+  let hold = null;
+  const finish = () => {
+    if (!hold) return;
+    clearTimeout(hold.timer); clearInterval(hold.iv);
+    const did = hold.changed;
+    hold = null;
+    if (did) done();
+  };
+  buttons.forEach((b) => {
+    b.onpointerdown = (e) => {
+      if (!e.isPrimary || b.disabled) return;
+      e.preventDefault();
+      finish();
+      hold = { changed: stepOnce(b), timer: 0, iv: 0 };
+      hold.timer = setTimeout(() => { if (hold) hold.iv = setInterval(() => { if (hold && stepOnce(b)) hold.changed = true; }, 90); }, 420);
+    };
+    b.onpointerup = finish;
+    b.onpointerleave = finish;
+    b.onpointercancel = finish;
+    b.onclick = (e) => { if (e.detail === 0) { hold = { changed: stepOnce(b) }; finish(); } };
+  });
+}
+
 // ---- Backpack: read game screenshots ----
 // The Scan code itself is in scan.js, loaded the first time Scan is opened
 // (loadScanCode below), so visitors who never scan don't download it. What other
@@ -16629,12 +16644,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   });
   // Pack cost always prices what's still needed.
   PACK_COST_MODE = "still";
-  // Days until the target date (today counts as day 0).
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  // Days until the target date (today counts as day 0), on the game's (UTC) days.
+  const today = packStartOfToday();
   let targetDays = null;
   if (targetDate) {
-    const d = new Date(targetDate + "T00:00:00");
-    if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000);
+    const d = packParseDay(targetDate);
+    if (d) targetDays = Math.round((d - today) / 86400000);
   }
   // Spare items traded into missing ones first, when trades are switched on
   // (weekly trade limits scale with the weeks left until the target).
@@ -16650,7 +16665,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
 
   const fmtDate = (days) => {
     const d = new Date(today.getTime() + days * 86400000);
-    try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d.toDateString(); }
+    try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return d.toDateString(); }
   };
   const qty = (v) => Math.round(v).toLocaleString();
   const currency = (packGroups[0] && packGroups[0].offers[0].currency) || "USD";
@@ -16728,7 +16743,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const cur = p.rows[0]?.currency || currency, price0 = p.rows[0]?.price;
     const late = shared.targetDays != null && p.days > shared.targetDays;
     const d = new Date(today.getTime() + p.days * 86400000);
-    let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { short = fmtDate(p.days); }
+    let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(p.days); }
     const whenTxt = p.days === 0 ? t("pack_ready_now") : `${short} · ${p.days}d`;
     const big = (n) => String(packFmtLocal(Math.ceil(n), cur, true, price0)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>');
     const byPack = [];
@@ -16794,7 +16809,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
-          let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
+          let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
           return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
         };
         const p = pick && pick.plan;
@@ -16808,7 +16823,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list"></div>`;
         if (p) {
           aBuilt = true;
-          const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
+          const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
           const late = targetDays != null && p.days > targetDays;
           const done = p.days === 0 ? t("pack_ready_now") : `${t("pca_done")} ${shortDay(p.days)} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
           const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
@@ -19347,9 +19362,9 @@ async function budgetCombinedFor(calcKey, groups, opts = {}) {
   if (selected[calcKey] === false) return { notIncluded: true, sharedWith };
   if (opts.infoOnly) return { infoOnly: true, sharedWith };
   if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets"); BUDGET_TARGET = (sv && sv.date) || ""; }
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = packStartOfToday();
   let targetDays = null;
-  if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
+  if (BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) targetDays = Math.round((d - today) / 86400000); }
   await Promise.all([ensureCharmData(), loadChiefGearRows(), ensureHeroGearData()]);
   const pages = await Promise.all(BUDGET_PAGES.map((p) => budgetForPage(p.key, targetDays, { noPlan: true, groups: p.key === calcKey ? groups : undefined })));
   const combined = await budgetCombinedPlanAsync(pages, selected, targetDays);
@@ -19533,9 +19548,9 @@ async function budgetSuggestedPlan() {
     ]);
     BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
     BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today = packStartOfToday();
     let targetDays = null;
-    if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
+    if (BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) targetDays = Math.round((d - today) / 86400000); }
     const pages = await Promise.all(BUDGET_PAGES.map((pg) => budgetForPage(pg.key, targetDays, { noPlan: true })));
     const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track });
     return budgetSuggestOf(combined);
@@ -20011,10 +20026,10 @@ async function renderBudgetsPage(opts = {}) {
   BUDGET_TARGET = BUDGET_TARGET !== undefined ? BUDGET_TARGET : ((savedTarget && savedTarget.date) || "");
   const included = (k) => BUDGET_SELECTED[k] !== false;
 
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const today = packStartOfToday();
   let targetDays = null;
-  if (BUDGET_TARGET) { const d = new Date(BUDGET_TARGET + "T00:00:00"); if (!Number.isNaN(d.getTime())) targetDays = Math.round((d - today) / 86400000); }
-  const fmtDate = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d.toDateString(); } };
+  if (BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) targetDays = Math.round((d - today) / 86400000); }
+  const fmtDate = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return d.toDateString(); } };
   const qty = (v) => Math.round(v).toLocaleString();
   const pct = (v) => `${(Math.round(v * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
 
@@ -20249,7 +20264,7 @@ async function renderBudgetsPage(opts = {}) {
   const viewCardsHtml = (() => {
     if (!combinedRaw.chosen || viewKeys.length < 2) return "";
     const title = (k) => k === "budget" ? t("budgets_view_budget") : k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
-    const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
+    const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getUTCFullYear() !== new Date().getUTCFullYear() ? { month: "short", year: "numeric", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }); };
     const seg = (k) => {
       if (k === "budget" && !(spendBest && spendBest.ok)) return `<button type="button" data-budgetview="budget" class="${k === BUDGET_VIEW ? "on" : ""} late">${esc(title(k))}<b>—</b><span>&nbsp;</span></button>`;
       const v = viewData(k), late = targetDays != null && v.days > targetDays;
@@ -20436,7 +20451,7 @@ async function renderBudgetsPage(opts = {}) {
     const withOn = BUDGET_RM_WITH;
     const rmPlan = withOn ? plan : basePlan;
     const rmDates = withOn ? dates : goals.map((g) => plainOf(g));
-    const dow = (packStartOfToday().getDay() + 6) % 7;
+    const dow = (packStartOfToday().getUTCDay() + 6) % 7;
     // Weeks (Monday to Sunday) with the packs bought in them.
     const sched = packPlanSchedule(rmPlan.rows), t0 = packStartOfToday();
     const weeks = new Map();
@@ -20479,7 +20494,7 @@ async function renderBudgetsPage(opts = {}) {
       gp.m += x.m; gp.lines.push({ w, x });
       goalPacks.set(g.id, gp);
     }));
-    const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" });
+    const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" });
     const allW = [...new Set([...weeks.keys(), ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null)).filter((x) => x != null)])].sort((a, b) => a - b);
     const lineHtml = (x) => {
       const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
@@ -20504,11 +20519,11 @@ async function renderBudgetsPage(opts = {}) {
       });
       if (targetDays != null && targetDays > 0) { if (!stops.has(targetDays)) stops.set(targetDays, { day: targetDays, gs: [] }); stops.get(targetDays).tg = true; }
       const list = [...stops.values()].sort((a, b) => a.day - b.day);
-      const y0 = packStartOfToday().getFullYear();
+      const y0 = packStartOfToday().getUTCFullYear();
       const lbl = (d) => {
         if (d === 0) return t("goal_now");
         const x = new Date(packStartOfToday().getTime() + d * 86400000), loc = LANG === "en" ? undefined : LANG;
-        return x.getFullYear() !== y0 ? `${x.toLocaleDateString(loc, { month: "short" })} \u2019${String(x.getFullYear()).slice(2)}` : x.toLocaleDateString(loc, { day: "numeric", month: "short" });
+        return x.getUTCFullYear() !== y0 ? `${x.toLocaleDateString(loc, { month: "short", timeZone: "UTC" })} \u2019${String(x.getUTCFullYear()).slice(2)}` : x.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
       };
       const icOf = (g) => {
         const hero = g.hero || (g.mini && g.page === "hero_shards" ? (((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).find((r) => r.hero.id === g.opt.grp) || {}).hero : null);
@@ -20539,7 +20554,7 @@ async function renderBudgetsPage(opts = {}) {
       const num = (v) => bidiNum((Math.round(v * 100) / 100).toLocaleString(LANG === "en" ? undefined : LANG, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
       const loc = LANG === "en" ? undefined : LANG;
       const wdTxt = (off) => new Date(t0.getTime() + off * DAY).toLocaleDateString(loc, { weekday: "short", timeZone: "UTC" });
-      const rangeTxt = (w) => { const ws = wkStart(w), we = new Date(ws.getTime() + 6 * DAY); return `${dayTxt(ws)} – ${ws.getMonth() === we.getMonth() ? we.getDate() : dayTxt(we)}`; };
+      const rangeTxt = (w) => { const ws = wkStart(w), we = new Date(ws.getTime() + 6 * DAY); return `${dayTxt(ws)} – ${ws.getUTCMonth() === we.getUTCMonth() ? we.getUTCDate() : dayTxt(we)}`; };
       const pkName = (r) => purShortName(purPackName(r.title, tables));
       const icOfGives = (gives) => { const items = Object.entries(gives || {}).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]); return items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean) || ""; };
       const picHtml = (src, cls) => (src ? `<img class="${cls || ""}" src="${esc(src)}" alt="" loading="lazy" />` : `<i class="${cls || ""}"></i>`);
@@ -20713,7 +20728,7 @@ async function renderBudgetsPage(opts = {}) {
       // Sheets: a goal, or a week.
       const sheetOf = () => {
         if (!RM_SHEET) return "";
-        const wrap = (title, sub, ic, body) => `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-rmbg><div class="modal-box adm-sheet b3-sheet rmr-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="gs-head">${ic != null ? picHtml(ic, "rmr-shi") : ""}<span class="rmr-sht"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span><button type="button" class="rfa-x" data-rmclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>${body}</div></div>`;
+        const wrap = (title, sub, ic, body) => `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-rmbg><div class="modal-box adm-sheet b3-sheet rmr-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="gs-head">${ic != null ? picHtml(ic, "rmr-shi") : ""}<span class="rmr-sht"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>${closeXHtml("data-rmclose")}</div>${body}</div></div>`;
         if (RM_SHEET.startsWith("w:")) {
           const w = Number(RM_SHEET.slice(2)), wk = weeks.get(w) || { lines: [], money: 0 }, rowsW = wkRows(w).filter((x) => canBuy(x.r));
           const lines = wk.lines.slice().sort((p, q) => q.m - p.m).map(lineHtml).join("");
@@ -20773,7 +20788,7 @@ async function renderBudgetsPage(opts = {}) {
   // The phone Menu's Budgets tile shows this total (mmBudgetSet; nothing worked out for it).
   if (!planPending) mmBudgetSet(anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : null);
   const lateAll = targetDays != null && grandDays > targetDays;
-  const shortDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getFullYear() !== new Date().getFullYear() ? { month: "short", year: "numeric" } : { day: "numeric", month: "short" }); };
+  const shortDay = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getUTCFullYear() !== new Date().getUTCFullYear() ? { month: "short", year: "numeric", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }); };
   const b3Money = (v) => packFmtLocal(Math.ceil(v), (combined.chosen && combined.chosen.rows[0] && combined.chosen.rows[0].currency) || grandCurrency, true, combined.chosen && combined.chosen.rows[0] ? combined.chosen.rows[0].price : undefined);
   // The plan's parts as compact lines (bar, title, price, "N packs ▸"); which
   // pages are in each part shows on the tiles (and in the line's tooltip).
@@ -20848,7 +20863,7 @@ async function renderBudgetsPage(opts = {}) {
     const pl = combined.chosen;
     if (planPending) return null;
     if (!pl || !pl.rows) return { money: 0, n: 0 };
-    const sched = packPlanSchedule(pl.rows), dow = (packStartOfToday().getDay() + 6) % 7, names = new Set();
+    const sched = packPlanSchedule(pl.rows), dow = (packStartOfToday().getUTCDay() + 6) % 7, names = new Set();
     let m = 0;
     pl.rows.forEach((r, i) => (sched[i] || []).forEach((sl) => {
       if (Math.floor((sl.off + dow) / 7) !== 0) return;
@@ -20897,7 +20912,7 @@ async function renderBudgetsPage(opts = {}) {
     return null;
   })();
   if (BUDGET_SHEET && !sheet) BUDGET_SHEET = null;
-  const sheetHtml = sheet ? `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-b3bg><div class="modal-box adm-sheet b3-sheet" role="dialog" aria-modal="true" aria-label="${esc(sheet.title)}"><div class="gs-head"><b style="flex:1; font-size:16px;">${esc(sheet.title)}</b><button type="button" class="rfa-x" data-b3close aria-label="${esc(t("close_button"))}">&#10005;</button></div>${sheet.html}</div></div>` : "";
+  const sheetHtml = sheet ? `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-b3bg><div class="modal-box adm-sheet b3-sheet" role="dialog" aria-modal="true" aria-label="${esc(sheet.title)}"><div class="gs-head"><b style="flex:1; font-size:16px;">${esc(sheet.title)}</b>${closeXHtml("data-b3close")}</div>${sheet.html}</div></div>` : "";
   if (TAB === "roadmap") { drawRoadmapPage(rmPageHtml, BUDGET_SHEET === "goals" ? sheetHtml : ""); return; }
   if (planPending) holdPageHeight(true);
   keepFolds(content, () => { content.innerHTML = `
@@ -21326,7 +21341,7 @@ async function renderCharmsCalc() {
       m.innerHTML = `<div class="modal-box adm-sheet gs-box ch-sheet" role="dialog" aria-modal="true">
         <div class="gs-head">${nav(-1)}<div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(c.piece.name))} · ${esc(t("charm_slot_label"))} ${c.slot + 1}</b>
           <div class="meta">${esc(st.current)}${ti > ci ? ` &rarr; ${esc(CHARM_LEVELS[ti])} · <span style="color:var(--good);">${pctShort(charmStatAt(CHARM_LEVELS[ti]) - charmStatAt(st.current))} LETH/HP</span>` : ` · ${pctShort(charmStatAt(st.current))} LETH/HP`}</div></div>
-          ${nav(1)}<button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+          ${nav(1)}${closeXHtml("data-gsclose")}</div>
         ${sec("current", ci)}${sec("target", ti)}
         <div class="gs-needs"><div class="meta">${esc(t("charm_needs_this"))}</div><div class="gs-chips">${needs.length ? needs.map(([nm, q]) => `<span class="gs-chip" title="${esc(materialDisplayName(nm))}"><img src="${esc(materialIconSrc(nm))}" alt="" />${bidiNum(q.toLocaleString())}</span>`).join("") : `<span class="gs-chip ok">&#10003; ${esc(t("gs_nothing"))}</span>`}</div></div>
         <div class="gs-foot ch-foot"><button type="button" class="btn ghost" data-gsmax ${ti === Math.max(ci, cap) ? "disabled" : ""}>${esc(t("charm_target_max").replace("{lv}", CHARM_LEVELS[Math.max(ci, cap)]))}</button><button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button></div>
@@ -21561,7 +21576,7 @@ async function renderChiefGearCalc() {
     const x = rtl ? h2.getBoundingClientRect().right - ib.getBoundingClientRect().right : ib.getBoundingClientRect().left - h2.getBoundingClientRect().left;
     head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(4, Math.round(x + ib.offsetWidth / 2 - 5)) + "px");
   }
-  const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>`;
+  const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b>${closeXHtml("data-cgclose")}</div>`;
   // Phones: the Backpack boxes sit in the answer card where "Still short" was
   // PC: in the side column as before (owner, same
   // day). The bar's own element moves (its handlers are on it), also when the
@@ -21750,7 +21765,7 @@ async function renderChiefGearCalc() {
       m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
         <div class="gs-head"><span class="cg-pic sm"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
           <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div>
-          <button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+          ${closeXHtml("data-gsclose")}</div>
         <div class="gs-lists"><div><div class="gs-l">${esc(t("t12x_now"))}</div>${list("from", from, 0)}</div><div><div class="gs-l">${esc(t("t12x_target"))}</div>${list("to", to, from)}</div></div>
         <div class="gs-foot">${nav(-1)}<button type="button" class="btn" data-gsclose>${esc(t("gs_done"))}</button>${nav(1)}</div>
       </div>`;
@@ -22117,47 +22132,26 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   }
   // Pop-up to type an amount (or go back to the Backpack's).
   function editTileModal(name) {
-    const label = materialDisplayName(itemShortName(name));
-    let modal = document.getElementById("bsEditModal");
-    if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
     const canLink = Object.keys(link.bp).length && backpackLinks(calcKey || "chief_gear", name);
     const linked = canLink && backpackLinked(calcKey || "chief_gear", name, link);
-    modal.innerHTML = `<div class="modal-box" style="max-width:300px; text-align:center;">
-      ${iconFor(name) ? `<img src="${esc(iconFor(name))}" alt="" style="width:56px; height:56px; object-fit:contain;" />` : ""}
-      <h2 style="margin:6px 0 4px; font-size:16px;">${esc(label)}</h2>
-      ${canLink ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
-      ${bsNeedBoxesHtml({ need: needSum(name), have: effOwned[name] || 0, fmt: /\(minutes\)$/.test(name) ? bsTime : bsNbNum, parts: groups.map((g) => [g.label, Number((g.totals || {})[name]) || 0]), from: haveFromHtml(name) })}
-      <input id="bsEditQty" type="text" inputmode="${/\(minutes\)$/.test(name) ? "text" : "decimal"}" autocomplete="off" value="${owned[name] || 0}" style="width:100%; text-align:center; font-size:18px;" />
-      <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(/\(minutes\)$/.test(name) ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
-      <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
-        ${canLink && !linked ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
-        <button class="btn ghost" type="button" id="bsEditCancel">${esc(t("cancel"))}</button>
-        <button class="btn" type="button" id="bsEditSave">${esc(t("save"))}</button>
-      </div></div>`;
-    modal.style.display = "flex";
-    const close = () => { modal.style.display = "none"; };
-    modal.onclick = (ev) => { if (ev.target === modal) close(); };
-    const input = modal.querySelector("#bsEditQty");
-    input.focus(); input.select();
-    const save = () => {
-      let val = /\(minutes\)$/.test(name) ? parseMinutes(input.value) : parseAmount(input.value);
-      if (Number.isNaN(val)) { input.style.borderColor = "var(--danger)"; return; } // not a number: keep the box open
-      if (val < 0) val = 0;
-      owned[name] = val;
-      if (canLink) setBackpackManual(calcKey || "chief_gear", name, true, link);
-      close();
-      ownedChanged(name);
-    };
-    modal.querySelector("#bsEditSave").onclick = save;
-    modal.querySelector("#bsEditCancel").onclick = close;
-    input.onkeydown = (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); };
-    const use = modal.querySelector("#bsEditUse");
-    if (use) use.onclick = () => {
-      setBackpackManual(calcKey || "chief_gear", name, false, link);
-      owned[name] = backpackAmountFor(name, link.bp);
-      close();
-      ownedChanged(name);
-    };
+    plxAmountModal({
+      label: materialDisplayName(itemShortName(name)),
+      icon: iconFor(name),
+      rawValue: owned[name] || 0,
+      minutes: /\(minutes\)$/.test(name),
+      linked: canLink ? !!linked : null,
+      needBox: { need: needSum(name), have: effOwned[name] || 0, fmt: /\(minutes\)$/.test(name) ? bsTime : bsNbNum, parts: groups.map((g) => [g.label, Number((g.totals || {})[name]) || 0]), from: haveFromHtml(name) },
+      onSave: (val) => {
+        owned[name] = val;
+        if (canLink) setBackpackManual(calcKey || "chief_gear", name, true, link);
+        ownedChanged(name);
+      },
+      onUse: () => {
+        setBackpackManual(calcKey || "chief_gear", name, false, link);
+        owned[name] = backpackAmountFor(name, link.bp);
+        ownedChanged(name);
+      },
+    });
   }
 
   function materialCellHtml([name]) {
@@ -22776,7 +22770,7 @@ async function renderSkinGallery() {
     <div id="skinSections"></div>
     <div class="modal-overlay sg-gl-ov" id="sgGlobeSheet" style="display:none;">
       <div class="modal-box sg-gl-box" role="dialog" aria-label="${esc(t("sg_globe_title"))}">
-        <div class="sg-gl-h"><b>${esc(t("sg_globe_title"))}</b><button type="button" class="sg-x" data-glclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
+        <div class="sg-gl-h"><b>${esc(t("sg_globe_title"))}</b>${closeXHtml("data-glclose", "sg-x")}</div>
         <div class="sg-glv" id="sgGlobeLv"></div>
         <div id="globeInfo" class="globe-info"></div>
         <button type="button" class="btn sg-gl-done" data-glclose>${esc(t("sg_done"))}</button>
@@ -23840,7 +23834,7 @@ async function renderVipTierTable(target) {
     if (!n) bundle = `<div class="bn-rb"><span class="bn-tx"><b>${esc(t("vip_bundle_none"))}</b></span></div>`;
     else {
       const days = budgetFreeDays();
-      const when = BUDGET_TARGET ? t("vip_bundle_budget").replace("{date}", (() => { const d = new Date(packStartOfToday().getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return packDayKey(d); } })()) : t("vip_bundle_budget30");
+      const when = BUDGET_TARGET ? t("vip_bundle_budget").replace("{date}", (() => { const d = new Date(packStartOfToday().getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return packDayKey(d); } })()) : t("vip_bundle_budget30");
       bundle = `<button type="button" class="bn-rb" data-gototab="budgets" title="${esc(t("vip_bundle_go"))}">${shardIcon ? `<img src="${esc(shardIcon)}" alt="" />` : ""}<span class="bn-tx"><b>${esc(t("vip_bundle_line").replace("{n}", n))}</b><span>${esc(when.replace("{n}", (n * days).toLocaleString()))}</span></span><span class="ch">&#8250;</span></button>`;
     }
     target.innerHTML = `<div class="t12x bn-pg">
@@ -24339,7 +24333,7 @@ function wireResearchSpeedInput(onChange) {
 // Pack Cost cards: a date in another year gets a short year mark ("Jan 8 ’28"),
 // so plans a year apart don't both read "Jan 8" (fits the narrow cards).
 function packYearMark(d) {
-  return d.getFullYear() !== new Date().getFullYear() ? ` \u2019${String(d.getFullYear()).slice(2)}` : "";
+  return d.getUTCFullYear() !== new Date().getUTCFullYear() ? ` \u2019${String(d.getUTCFullYear()).slice(2)}` : "";
 }
 function t12FormatTime(hours) {
   if (!hours) return "0h";
@@ -25687,7 +25681,7 @@ async function renderExpertsResearchPage() {
           <button type="button" class="exp-nav" data-ergo="${i - 1}" ${i > 0 ? "" : "disabled"} aria-label="&#8249;">&#8249;</button>
           <div class="exp-sk-t"><b>${esc(erPathName(expert, p))}</b><small>${esc(dataName(expert))} · ${esc(t("er_path_n").replace("{i}", i + 1).replace("{n}", n))}</small></div>
           <button type="button" class="exp-nav" data-ergo="${i + 1}" ${i < n - 1 ? "" : "disabled"} aria-label="&#8250;">&#8250;</button>
-          <button type="button" class="exp-x" data-erclose aria-label="${esc(t("close_button"))}">&#10005;</button>
+          ${closeXHtml("data-erclose", "exp-x")}
         </div>
         <div class="exp-sts">
           <div><small>${esc(t("t12x_now"))}</small>${stp("cur", cur, `<select data-expresearchcur="${esc(expert)}|${p}" aria-label="${esc(t("current_label"))}">${pathLevelOpts(expert, p, cur)}</select>`, cur > 0, cur < 200)}</div>
@@ -26351,7 +26345,7 @@ async function renderExpertsPage() {
           <button type="button" class="exp-nav" data-expskgo="${i - 1}" ${i > 0 ? "" : "disabled"} aria-label="&#8249;">&#8249;</button>
           <div class="exp-sk-t"><b>${esc(dataName(sk))}</b><small>${esc(dataName(hero))} · ${esc(t("exp_skill_n").replace("{i}", i + 1).replace("{n}", n))}</small></div>
           <button type="button" class="exp-nav" data-expskgo="${i + 1}" ${i < n - 1 ? "" : "disabled"} aria-label="&#8250;">&#8250;</button>
-          <button type="button" class="exp-x" data-expskclose aria-label="${esc(t("close_button"))}">&#10005;</button>
+          ${closeXHtml("data-expskclose", "exp-x")}
         </div>
         ${bonus}
         <div class="exp-sts">
@@ -27445,7 +27439,6 @@ async function renderPetsDataPage() {
     // − / +: one level a tap; holding moves on by itself (the card text
     // follows while held, saved and redrawn when let go). Now going past the
     // target takes the target with it; the target stops at Now.
-    let hold = null;
     const stepOnce = (role, d) => {
       const s = getState(pet);
       if (role === "from") {
@@ -27466,29 +27459,10 @@ async function renderPetsDataPage() {
       });
       return true;
     };
-    const finish = () => {
-      if (!hold) return;
-      clearTimeout(hold.timer); clearInterval(hold.iv);
-      const changed = hold.changed;
-      hold = null;
-      if (!changed) return;
+    wireHoldStep(listEl.querySelectorAll("[data-petstep]"), (b) => stepOnce(b.dataset.petstep, Number(b.dataset.d)), () => {
       savePetsState();
       renderTotals();
       renderList();
-    };
-    listEl.querySelectorAll("[data-petstep]").forEach((b) => {
-      b.onpointerdown = (e) => {
-        if (!e.isPrimary || b.disabled) return;
-        e.preventDefault();
-        finish();
-        const role = b.dataset.petstep, d = Number(b.dataset.d);
-        hold = { changed: stepOnce(role, d), timer: 0, iv: 0 };
-        hold.timer = setTimeout(() => { if (hold) hold.iv = setInterval(() => { if (hold && stepOnce(role, d)) hold.changed = true; }, 90); }, 420);
-      };
-      b.onpointerup = finish;
-      b.onpointerleave = finish;
-      b.onpointercancel = finish;
-      b.onclick = (e) => { if (e.detail === 0) { hold = { changed: stepOnce(b.dataset.petstep, Number(b.dataset.d)) }; finish(); } };
     });
   }
 
@@ -27732,7 +27706,7 @@ function plxShellHtml(o) {
       <aside class="t12x-side">
         ${o.settings ? `<div class="t12x-card t12x-settings one-line${o.settings.includes("rs-row") ? " has-rs" : ""}"><div class="t12x-k">&#9881;<span class="t12x-kt"> ${esc(t("t12x_settings"))}</span>${o.settings.includes('class="desc"') ? ` <button type="button" class="set-info" data-setinfo aria-label="${esc(t("set_info"))}" title="${esc(t("set_info"))}">i</button>` : ""}</div>${o.settings}</div>` : ""}
         <div class="t12x-card t12x-amts"><div id="${o.amountsId}"></div></div>
-        <div class="t12x-card t12x-buy" id="${o.amountsId}_buy"><div class="cg-sh-h"><b data-cgbuyt></b><button type="button" class="rfa-x" data-cgclose aria-label="${esc(t("close_button"))}">&#10005;</button></div><div data-buybody></div></div>
+        <div class="t12x-card t12x-buy" id="${o.amountsId}_buy"><div class="cg-sh-h"><b data-cgbuyt></b>${closeXHtml("data-cgclose")}</div><div data-buybody></div></div>
         ${o.sideExtra || ""}
       </aside>
       <div class="t12x-main">
@@ -27845,6 +27819,8 @@ document.addEventListener("click", (ev) => {
 });
 // Pop-up to type one amount (same look as the planner tiles' pop-up).
 // o: { label, icon, value, minutes, linked (true/false/null = no Backpack link), needBox (bsNeedBoxesHtml), onSave(v), onUse }
+// (rawValue: put in the box as it is, for the planner tiles' own amounts.)
+// Also the planner tiles' pop-up (renderChiefGearResourcesBar's editTileModal).
 function plxAmountModal(o) {
   let modal = document.getElementById("bsEditModal");
   if (!modal) { modal = document.createElement("div"); modal.id = "bsEditModal"; modal.className = "modal-overlay"; document.body.appendChild(modal); }
@@ -27853,7 +27829,7 @@ function plxAmountModal(o) {
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
-      <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
+      <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
         ${o.linked === false && o.onUse ? `<button class="btn ghost" type="button" id="bsEditUse">&#127890; ${esc(t("bp_link_use"))}</button>` : ""}
