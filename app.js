@@ -21537,9 +21537,8 @@ function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purp
 function cgStars(r) { return r && r.tier && r.stars != null ? `★${r.stars}${r.stage != null && r.stage !== "0" ? "." + r.stage : ""}` : cgBadge(r); }
 async function renderChiefGearCalc() {
   const seq = RENDER_SEQ;
-  const [rows, , beforeMax] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder(), loadCalcState("chief_gear_before_max")]);
+  const [rows] = await Promise.all([loadChiefGearRows(), ensureUpgradeOrder(), maxBeforeLoad("chief_gear", (v) => v.from)]);
   if (seq !== RENDER_SEQ) return;
-  CG_BEFORE_MAX = beforeMax && beforeMax.from ? beforeMax : null;
   if (!rows.length) {
     content.innerHTML = `<div class="panel"><div class="empty"><div class="big">${esc(t("no_chief_gear_data"))}</div></div></div>`;
     return;
@@ -21685,12 +21684,7 @@ async function renderChiefGearCalc() {
   // Max, or Reset once every piece is at max (greyed when there is nothing
   // to go back to, e.g. levels set to max by hand).
   function syncMaxBtn() {
-    const btn = document.getElementById("gearMaxAllBtn");
-    if (!btn) return;
-    const all = cgAllMax(), back = all && !!CG_BEFORE_MAX;
-    btn.textContent = t(back ? "cg_reset" : "max_button");
-    btn.disabled = all && !back;
-    btn.title = t(back ? "cg_reset_tip" : all ? "cg_all_max" : "cg_max_tip");
+    maxBtnSync("gearMaxAllBtn", "chief_gear", cgAllMax(), ["cg_all_max", "cg_max_tip"]);
   }
   function changed() {
     saveCalcState("chief_gear", CHIEF_GEAR_STATE);
@@ -21794,26 +21788,22 @@ async function renderChiefGearCalc() {
 
   // Max: every piece's current level and target to the highest open level,
   // remembering the levels you had; Reset (every piece at max) puts them back
-  document.getElementById("gearMaxAllBtn").addEventListener("click", () => {
-    if (cgAllMax()) {
-      const b = CG_BEFORE_MAX;
-      if (!b) return;
-      CHIEF_GEAR_PIECES.forEach((p) => {
-        const st = CHIEF_GEAR_STATE[p.key], f = b.from[p.key], v = b.to && b.to[p.key];
-        if (f != null) st.from = f;
-        st.to = Math.max(st.from, v == null ? st.from : v);
-      });
-      CG_BEFORE_MAX = null;
-      saveCalcState("chief_gear_before_max", {});
-    } else {
-      const cap = chiefGearCapIdx(), from = {}, to = {};
+  document.getElementById("gearMaxAllBtn").addEventListener("click", pageMaxClick({
+    key: "chief_gear",
+    allMax: cgAllMax,
+    keep: () => {
+      const from = {}, to = {};
       CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; from[p.key] = st.from; to[p.key] = st.to == null ? st.from : st.to; });
-      CG_BEFORE_MAX = { from, to, at: new Date().toISOString() };
-      saveCalcState("chief_gear_before_max", CG_BEFORE_MAX);
-      CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.from = Math.max(cap, st.from); st.to = st.from; });
-    }
-    changed();
-  });
+      return { from, to };
+    },
+    max: () => { const cap = chiefGearCapIdx(); CHIEF_GEAR_PIECES.forEach((p) => { const st = CHIEF_GEAR_STATE[p.key]; st.from = Math.max(cap, st.from); st.to = st.from; }); },
+    reset: (b) => CHIEF_GEAR_PIECES.forEach((p) => {
+      const st = CHIEF_GEAR_STATE[p.key], f = b.from[p.key], v = b.to && b.to[p.key];
+      if (f != null) st.from = f;
+      st.to = Math.max(st.from, v == null ? st.from : v);
+    }),
+    done: changed,
+  }));
   renderPieces();
   updateChiefGearTotals();
 }
@@ -22430,28 +22420,45 @@ function maxedChiefGearState() {
 // Reset and puts back the current levels and targets from before Max. Since
 // Max changes real current levels, the levels before it are saved on the
 // account: calc_state "chief_gear_before_max" = { from: { piece: idx }, to: { piece: idx }, at } ({} once used).
-let CG_BEFORE_MAX = null;
-// The same Max / Reset on T11, T12, Research Center and Pets Level:
+// The same Max / Reset on every planner page (T11, T12, Research Center, Pets
+// Level, and through wirePageMax Chief Charm, Heroes Gears, Experts …):
 // Max remembers the current levels and targets (calc_state "<key>_before_max" =
-// { cur, tgt, at }, {} once used) and puts both on the highest open level; with
-// everything at max the button reads Reset and puts them back; greyed when
-// everything is at max with nothing saved.
+// { cur, tgt, at } on the research pages, { cur, at } elsewhere, {} once used)
+// and puts both on the highest open level; with everything at max the button
+// reads Reset and puts them back; greyed when everything is at max with nothing saved.
 const MAX_BEFORE = {};
-async function maxBeforeLoad(key) {
+// ok(v): what a saved copy must hold to count (Chief Gear's has no "cur").
+async function maxBeforeLoad(key, ok = (v) => v.at) {
   const v = await loadCalcState(`${key}_before_max`);
-  MAX_BEFORE[key] = v && v.at ? v : null;
+  MAX_BEFORE[key] = v && ok(v) ? v : null;
 }
 function maxBeforeSet(key, v) {
   MAX_BEFORE[key] = v;
   saveCalcState(`${key}_before_max`, v || {});
 }
-function maxBtnSync(btnId, key, allMax) {
+function maxBtnSync(btnId, key, allMax, tips = ["max_all_done", "max_all_tip"]) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
   const back = allMax && !!MAX_BEFORE[key];
   btn.textContent = t(back ? "cg_reset" : "max_button");
   btn.disabled = allMax && !back;
-  btn.title = t(back ? "cg_reset_tip" : allMax ? "max_all_done" : "max_all_tip");
+  btn.title = t(back ? "cg_reset_tip" : allMax ? tips[0] : tips[1]);
+}
+// The Max / Reset click itself: o = { key, allMax(), keep() -> what to remember
+// (saved with "at"), max(), reset(saved), done() (save + redraw) }.
+function pageMaxClick(o) {
+  return () => {
+    if (o.allMax()) {
+      const b = MAX_BEFORE[o.key];
+      if (!b) return;
+      o.reset(b);
+      maxBeforeSet(o.key, null);
+    } else {
+      maxBeforeSet(o.key, { ...o.keep(), at: new Date().toISOString() });
+      o.max();
+    }
+    o.done();
+  };
 }
 const jsonCopy = (o) => JSON.parse(JSON.stringify(o == null ? null : o));
 // One page's Max / Reset button: o = { btnId, key,
@@ -22464,20 +22471,7 @@ function wirePageMax(o) {
   if (!btn) return null;
   // a check queued just before the page redrew must not touch the new button
   const sync = () => { if (btn.isConnected) maxBtnSync(o.btnId, o.key, o.allMax()); };
-  btn.onclick = () => {
-    if (o.allMax()) {
-      const b = MAX_BEFORE[o.key];
-      if (!b) return;
-      o.reset(b.cur);
-      maxBeforeSet(o.key, null);
-    } else {
-      maxBeforeSet(o.key, { cur: jsonCopy(o.snap()), at: new Date().toISOString() });
-      o.max();
-    }
-    o.save();
-    o.after();
-    sync();
-  };
+  btn.onclick = pageMaxClick({ key: o.key, allMax: o.allMax, keep: () => ({ cur: jsonCopy(o.snap()) }), max: o.max, reset: (b) => o.reset(b.cur), done: () => { o.save(); o.after(); sync(); } });
   const root = btn.closest(".t12x") || content;
   const later = () => requestAnimationFrame(sync);
   // One pair per button: the one from the last draw is taken off first
@@ -24467,29 +24461,27 @@ async function renderT11HeliosPage() {
     if (!tracks) return true;
     return Object.keys(tracks).every((track) => (T11_STATE[troop][track] || 0) >= t11Len(troop, track));
   });
-  const maxEverything = () => {
-    if (t11AllMax()) {
-      const b = MAX_BEFORE.t11_helios;
-      if (!b) return;
-      T11_TROOPS.forEach((troop) => { T11_STATE[troop] = (b.cur && b.cur[troop]) || {}; T11_TARGET[troop] = (b.tgt && b.tgt[troop]) || {}; });
-      maxBeforeSet("t11_helios", null);
-    } else {
-      maxBeforeSet("t11_helios", { cur: jsonCopy(T11_STATE), tgt: jsonCopy(T11_TARGET), at: new Date().toISOString() });
-      T11_TROOPS.forEach((troop) => {
-        const tracks = T11_NODES_CACHE[troop];
-        if (!tracks) return;
-        Object.keys(tracks).forEach((track) => {
-          const v = Math.max(T11_STATE[troop][track] || 0, t11Len(troop, track));
-          T11_STATE[troop][track] = v;
-          T11_TARGET[troop][track] = v;
-        });
+  const maxEverything = pageMaxClick({
+    key: "t11_helios",
+    allMax: t11AllMax,
+    keep: () => ({ cur: jsonCopy(T11_STATE), tgt: jsonCopy(T11_TARGET) }),
+    max: () => T11_TROOPS.forEach((troop) => {
+      const tracks = T11_NODES_CACHE[troop];
+      if (!tracks) return;
+      Object.keys(tracks).forEach((track) => {
+        const v = Math.max(T11_STATE[troop][track] || 0, t11Len(troop, track));
+        T11_STATE[troop][track] = v;
+        T11_TARGET[troop][track] = v;
       });
-    }
-    saveCalcState("t11_helios", T11_STATE);
-    saveCalcState("t11_helios_target", T11_TARGET);
-    renderGrandTotal();
-    render();
-  };
+    }),
+    reset: (b) => T11_TROOPS.forEach((troop) => { T11_STATE[troop] = (b.cur && b.cur[troop]) || {}; T11_TARGET[troop] = (b.tgt && b.tgt[troop]) || {}; }),
+    done: () => {
+      saveCalcState("t11_helios", T11_STATE);
+      saveCalcState("t11_helios_target", T11_TARGET);
+      renderGrandTotal();
+      render();
+    },
+  });
   wireResearchSpeedInput(() => {
     renderGrandTotal();
     render();
@@ -27467,23 +27459,21 @@ async function renderPetsDataPage() {
   }
 
   // Max / Reset like Chief Gear (maxBeforeLoad / maxBtnSync): every pet's level and target.
-  document.getElementById("petsMaxAllBtn").addEventListener("click", async () => {
-    if (petsAllMax()) {
-      const b = MAX_BEFORE.pets;
-      if (!b) return;
-      petNames.forEach((pet) => { const v = b.cur && b.cur[pet]; if (v == null) delete PETS_STATE[pet]; else PETS_STATE[pet] = v; });
-      maxBeforeSet("pets", null);
-    } else {
-      maxBeforeSet("pets", { cur: jsonCopy(Object.fromEntries(petNames.map((pet) => [pet, PETS_STATE[pet] == null ? null : PETS_STATE[pet]]))), at: new Date().toISOString() });
-      petNames.forEach((pet) => {
-        const v = Math.max(getState(pet).from, petMaxIdx(pet));
-        PETS_STATE[pet] = { from: v, to: v };
-      });
-    }
-    savePetsState();
-    renderTotals();
-    renderList();
-  });
+  document.getElementById("petsMaxAllBtn").addEventListener("click", pageMaxClick({
+    key: "pets",
+    allMax: petsAllMax,
+    keep: () => ({ cur: jsonCopy(Object.fromEntries(petNames.map((pet) => [pet, PETS_STATE[pet] == null ? null : PETS_STATE[pet]]))) }),
+    max: () => petNames.forEach((pet) => {
+      const v = Math.max(getState(pet).from, petMaxIdx(pet));
+      PETS_STATE[pet] = { from: v, to: v };
+    }),
+    reset: (b) => petNames.forEach((pet) => { const v = b.cur && b.cur[pet]; if (v == null) delete PETS_STATE[pet]; else PETS_STATE[pet] = v; }),
+    done: () => {
+      savePetsState();
+      renderTotals();
+      renderList();
+    },
+  }));
 
   renderTotals();
   renderList();
@@ -27514,30 +27504,27 @@ async function renderResearchCenterPage() {
 
   // Max / Reset like Chief Gear (maxBeforeLoad / maxBtnSync): current levels and targets.
   const rcAllMax = () => Object.keys(RC_NODES_CACHE).every((track) => (RC_STATE[track] || 0) >= rcLen(track));
-  const maxEverything = () => {
-    const tracks = Object.keys(RC_NODES_CACHE);
-    if (rcAllMax()) {
-      const b = MAX_BEFORE.research_center;
-      if (!b) return;
-      tracks.forEach((track) => {
-        const c = b.cur && b.cur[track], g = b.tgt && b.tgt[track];
-        if (c == null) delete RC_STATE[track]; else RC_STATE[track] = c;
-        if (g == null) delete RC_TARGET[track]; else RC_TARGET[track] = g;
-      });
-      maxBeforeSet("research_center", null);
-    } else {
-      maxBeforeSet("research_center", { cur: jsonCopy(RC_STATE), tgt: jsonCopy(RC_TARGET), at: new Date().toISOString() });
-      tracks.forEach((track) => {
-        const v = Math.max(RC_STATE[track] || 0, rcLen(track));
-        RC_STATE[track] = v;
-        RC_TARGET[track] = v;
-      });
-    }
-    saveCalcState("research_center", RC_STATE);
-    saveCalcState("research_center_target", RC_TARGET);
-    renderTotals();
-    renderGroups();
-  };
+  const maxEverything = pageMaxClick({
+    key: "research_center",
+    allMax: rcAllMax,
+    keep: () => ({ cur: jsonCopy(RC_STATE), tgt: jsonCopy(RC_TARGET) }),
+    max: () => Object.keys(RC_NODES_CACHE).forEach((track) => {
+      const v = Math.max(RC_STATE[track] || 0, rcLen(track));
+      RC_STATE[track] = v;
+      RC_TARGET[track] = v;
+    }),
+    reset: (b) => Object.keys(RC_NODES_CACHE).forEach((track) => {
+      const c = b.cur && b.cur[track], g = b.tgt && b.tgt[track];
+      if (c == null) delete RC_STATE[track]; else RC_STATE[track] = c;
+      if (g == null) delete RC_TARGET[track]; else RC_TARGET[track] = g;
+    }),
+    done: () => {
+      saveCalcState("research_center", RC_STATE);
+      saveCalcState("research_center_target", RC_TARGET);
+      renderTotals();
+      renderGroups();
+    },
+  });
 
   function computeNeeded(trackName) {
     const levels = RC_NODES_CACHE[trackName] || [];
@@ -28027,28 +28014,26 @@ async function renderT12ResearchPage() {
 
   // Max / Reset like Chief Gear (maxBeforeLoad / maxBtnSync): current levels and targets.
   const t12AllMax = () => T12_TROOPS.every((troop) => T12_ITEM_DEFS.every((def) => (T12_STATE[troop][def.key] || 0) >= t12Rel(def)));
-  const maxEverything = () => {
-    if (t12AllMax()) {
-      const b = MAX_BEFORE.t12_research;
-      if (!b) return;
-      T12_TROOPS.forEach((troop) => { T12_STATE[troop] = (b.cur && b.cur[troop]) || {}; T12_TARGET[troop] = (b.tgt && b.tgt[troop]) || {}; });
-      maxBeforeSet("t12_research", null);
-    } else {
-      maxBeforeSet("t12_research", { cur: jsonCopy(T12_STATE), tgt: jsonCopy(T12_TARGET), at: new Date().toISOString() });
-      T12_TROOPS.forEach((troop) => {
-        if (!T12_TARGET[troop]) T12_TARGET[troop] = {};
-        T12_ITEM_DEFS.forEach((def) => {
-          const v = Math.max(T12_STATE[troop][def.key] || 0, t12Rel(def));
-          T12_STATE[troop][def.key] = v;
-          T12_TARGET[troop][def.key] = v;
-        });
+  const maxEverything = pageMaxClick({
+    key: "t12_research",
+    allMax: t12AllMax,
+    keep: () => ({ cur: jsonCopy(T12_STATE), tgt: jsonCopy(T12_TARGET) }),
+    max: () => T12_TROOPS.forEach((troop) => {
+      if (!T12_TARGET[troop]) T12_TARGET[troop] = {};
+      T12_ITEM_DEFS.forEach((def) => {
+        const v = Math.max(T12_STATE[troop][def.key] || 0, t12Rel(def));
+        T12_STATE[troop][def.key] = v;
+        T12_TARGET[troop][def.key] = v;
       });
-    }
-    saveCalcState("t12_research", T12_STATE);
-    saveCalcState("t12_research_target", T12_TARGET);
-    renderTotals();
-    renderTroopPanels();
-  };
+    }),
+    reset: (b) => T12_TROOPS.forEach((troop) => { T12_STATE[troop] = (b.cur && b.cur[troop]) || {}; T12_TARGET[troop] = (b.tgt && b.tgt[troop]) || {}; }),
+    done: () => {
+      saveCalcState("t12_research", T12_STATE);
+      saveCalcState("t12_research_target", T12_TARGET);
+      renderTotals();
+      renderTroopPanels();
+    },
+  });
   wireResearchSpeedInput(() => {
     renderTotals();
     renderTroopPanels();
@@ -28382,7 +28367,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=06ced057fe";
+      s.src = "admin.min.js?v=d29a2de080";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
