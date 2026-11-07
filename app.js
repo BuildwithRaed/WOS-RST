@@ -1323,7 +1323,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 74; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 75; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3181,6 +3181,7 @@ const T = {
   cando_short: { en: "Can do" },
   cando_at_target: { en: "All at target" },
   cando_nothing: { en: "Nothing yet" },
+  cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
   cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
   cando_more: { en: "+{n} more" },
   cando_spend: { en: "How to spend it" },
@@ -6290,6 +6291,7 @@ async function ensureUpgradeOrder() {
 function saveUpgradeOrder() { saveCalcState("upgrade_order", UPGRADE_ORDER); }
 const BAR_HAVE = {};   // calcKey -> what the Backpack boxes count (after chests / hidden trades)
 const REACH_HOOKS = {}; // calcKey -> redraw the page's "can reach" marks
+const BAR_LAB = {};     // calcKey -> { rfc, left }: Research Lab Refined FC still to come this week ("Can do now")
 const BAR_CONV = {};    // calcKey -> choice chests' rules, opened by reachPlan as needed
 const reachTroopKey = (tr) => (tr === "Lancers" ? "Lancer" : tr);
 // Which troop goes first when two upgrades are equally good.
@@ -6564,6 +6566,8 @@ function canDoDraw(m) {
       + ((plan.tradeSum || []).length ? `<div class="rch-trades">&#8644; ${esc(t("rch_trades"))} ${reachTradeText(plan.tradeSum)}</div>` : "")
       + outLine;
   }
+  const labL = BAR_LAB[c.key];
+  if (labL && todo.length) green += `<div class="rch-trades cando-lab">${esc(t("cando_lab_week").replace("{n}", Math.floor(labL.rfc).toLocaleString()).replace("{m}", Math.round(labL.left).toLocaleString()))}</div>`;
   const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
   const best = UPGRADE_ORDER.mode === "best";
   m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cg_can_now"))}">
@@ -14305,7 +14309,7 @@ function openBackpackScan(groups, bp, done, more) {
       if (labSave) {
         const game = { wk: rfcLabWeek(labSt()).wkKey, count: Number(labV), on: packDayKey(packStartOfToday()) };
         if (RFC_LAB_STATE) { RFC_LAB_STATE.game = game; saveCalcState("rfc_lab", RFC_LAB_STATE); }
-        else { lab.saved = Object.assign({}, lab.saved || {}, { game }); saveCalcState("rfc_lab", lab.saved); }
+        else { lab.saved = Object.assign({}, lab.saved || {}, { game }); saveCalcState("rfc_lab", lab.saved); if (RFC_LAB_RATE_ST) RFC_LAB_RATE_ST.game = game; }
       }
       budgetInvalidate(); // planner pages read these amounts
       close();
@@ -19037,7 +19041,24 @@ function rfcLabOn(st) {
   if (st && (st.labOpen === true || st.labOpen === false)) return st.labOpen;
   return !stateNotYet("lab", "crystal lab");
 }
+// The state the lab trade was last worked out from (for "Can do now").
+let RFC_LAB_RATE_ST = null;
+// "Can do now" on T12 counts only the lab refinements still left this week:
+// the This week box's plan tries Mon–Sun, minus the game's count (or, with no
+// "Game says", the plan's tries before today, as the box assumes).
+// Returns { share: 0..1 of the weekly lab trade, left: tries left }.
+function rfcLabWeekLeft() {
+  const st = RFC_LAB_STATE || RFC_LAB_RATE_ST;
+  if (!st) return { share: 0, left: 0 };
+  const w = rfcLabWeek(st);
+  const planWeek = w.planDays.reduce((s, d) => s + d.parts.reduce((a, x) => a + x.cnt, 0), 0);
+  if (!(planWeek > 0)) return { share: 0, left: 0 };
+  const done = w.game ? w.game.count : w.planBefore;
+  const left = Math.max(0, planWeek - done);
+  return { share: Math.min(1, Math.max(0, left / planWeek)), left };
+}
 function rfcLabApplyRate(st) {
+  RFC_LAB_RATE_ST = st || null;
   const p = rfcLabOn(st) ? rfcLabChosenPlan(st) : null;
   const next = p && p.cost > 0 && p.rfc > 0
     ? { t12_research: [{ from: "Fire Crystal", to: "Refined FC", give: p.cost, get: Math.round(p.rfc * 100) / 100, max: 1, hidden: true, rfcLab: true }] }
@@ -19050,7 +19071,7 @@ async function ensureRfcLabRate() {
   if (RFC_LAB_RATE_LOADED) return;
   RFC_LAB_RATE_LOADED = true;
   const saved = (await loadCalcState("rfc_lab")) || {};
-  rfcLabApplyRate({ top: saved.top, attempts: saved.attempts, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule", labOpen: saved.labOpen });
+  rfcLabApplyRate({ top: saved.top, attempts: saved.attempts, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule", labOpen: saved.labOpen, game: saved.game, weekPick: saved.weekPick });
 }
 let TRADE_RATES_LOADING = null;
 async function ensureTradeRates() {
@@ -23063,8 +23084,19 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
     hiddenRates.forEach((r) => { (outs[r.from] = outs[r.from] || new Set()).add(r.to); });
     const choice = new Set(Object.keys(outs).filter((k) => outs[k].size > 1 && /Chest/.test(k)));
     const have = { ...calcOwned };
-    hiddenTrades.forEach((tr) => { if (!choice.has(tr.from)) have[tr.to] = (have[tr.to] || 0) + tr.getQty; });
+    // The Research Lab's weekly trade: only this week's refinements still left.
+    let lab = null;
+    hiddenTrades.forEach((tr) => {
+      if (choice.has(tr.from)) return;
+      let q = tr.getQty;
+      if (tr.lab) {
+        if (!lab) { try { lab = rfcLabWeekLeft(); } catch (e) { lab = { share: 0, left: 0 }; } lab.rfc = 0; }
+        q *= lab.share; lab.rfc += q;
+      }
+      have[tr.to] = (have[tr.to] || 0) + q;
+    });
     BAR_HAVE[calcKey || "chief_gear"] = have;
+    BAR_LAB[calcKey || "chief_gear"] = lab && lab.rfc > 0 ? { rfc: lab.rfc, left: lab.left } : null;
     // This week's trades with a weekly limit (Chief Gear, Chief Charm …), when
     // the page's trades are on: used only where they let more steps happen.
     const weekly = TRADE_APPLY[calcKey || "chief_gear"] === false ? [] : tradeRatesFor(calcKey || "chief_gear").filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));

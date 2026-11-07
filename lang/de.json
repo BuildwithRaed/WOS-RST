@@ -2329,6 +2329,7 @@
 "t:cando_short":"Jetzt möglich",
 "t:cando_at_target":"Alles am Ziel",
 "t:cando_nothing":"Noch nichts",
+"t:cando_lab_week":"+{n} Veredelter FC aus dem Labor dieser Woche ({m} Veredelungen übrig)",
 "t:cando_sub":"Was dein Rucksack jetzt ausbauen kann, innerhalb deiner Ziele.",
 "t:cando_more":"+{n} weitere",
 "t:cando_spend":"Wie ausgeben",
