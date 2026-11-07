@@ -1342,9 +1342,18 @@ function languageList(all) {
   return all ? list : list.filter((l) => l.code === "en" || !l.hidden || (typeof IS_OWNER !== "undefined" && IS_OWNER));
 }
 function langDir(code) { const l = languageList(true).find((x) => x.code === code); return l && l.dir === "rtl" ? "rtl" : "ltr"; }
-async function loadLangPack(code, fresh) {
-  if (code === "en") return { pack: {}, file: {}, over: {} };
-  if (LANG_PACKS[code] && !fresh) return LANG_PACKS[code];
+// Callers at the same time share one load (boot starts a built-in language's
+// pack right after sign-in, and useLanguage then takes it).
+const LANG_PACK_LOADING = {};
+function loadLangPack(code, fresh) {
+  if (code === "en") return Promise.resolve({ pack: {}, file: {}, over: {} });
+  if (LANG_PACKS[code] && !fresh) return Promise.resolve(LANG_PACKS[code]);
+  if (!fresh && LANG_PACK_LOADING[code]) return LANG_PACK_LOADING[code];
+  const p = loadLangPackNow(code).finally(() => { if (LANG_PACK_LOADING[code] === p) delete LANG_PACK_LOADING[code]; });
+  LANG_PACK_LOADING[code] = p;
+  return p;
+}
+async function loadLangPackNow(code) {
   const l = languageList(true).find((x) => x.code === code) || {};
   const keepKey = `langpack_${code}`;
   const file = l.file ? fetch(`lang/${encodeURIComponent(code)}.json?v=${LANG_FILES_VERSION}`).then((r) => (r.ok ? r.json() : {})).catch(() => null) : Promise.resolve({});
@@ -4510,12 +4519,24 @@ function heroStarSvg(filledSegs, opts = {}) {
 // them in dashCached. Same requests and keys as before.
 function dashFixedReads() {
   return {
+    ...dashPublicReads(),
+    skins: dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`)),
+    player_heroes: dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
+  };
+}
+// The ones that are the same for everyone (public reads): a first visit
+// starts them while its guest sign-in is still on the way.
+function dashPublicReads() {
+  return {
     buff: dashCached("buff", async () => {
       if (!BUFF_TABLE_ID) {
         // One request: the buff table with its columns and rows (was the
         // table lookup, then columns + rows).
-        const [tb] = (await sb(`buff_tables?select=id,buff_columns(id,name,category),buff_rows(id,name,buff_cells(value,column_id))&user_id=eq.${PROGRESSION_OWNER_ID}&name=neq.VIP%20Tier&order=created_at.asc&limit=1`)) || [];
+        // It also brings the columns in menu order ("cs"), which boot's
+        // loadBuffCategories takes instead of reading them again.
+        const [tb] = (await sb(`buff_tables?select=id,buff_columns(id,name,category),buff_rows(id,name,buff_cells(value,column_id)),cs:buff_columns(id,name,category)&cs.order=sort_order.asc&user_id=eq.${PROGRESSION_OWNER_ID}&name=neq.VIP%20Tier&order=created_at.asc&limit=1`)) || [];
         if (tb && !BUFF_TABLE_ID) BUFF_TABLE_ID = tb.id;
+        if (tb) BUFF_SORTED_COLS = { id: tb.id, cols: tb.cs || [] };
         if (tb && tb.id === BUFF_TABLE_ID) return [tb.buff_columns || [], tb.buff_rows || []];
       }
       await ensureBuffTable();
@@ -4524,9 +4545,7 @@ function dashFixedReads() {
         sb(`buff_rows?table_id=eq.${BUFF_TABLE_ID}&select=id,name,buff_cells(value,column_id)`),
       ]);
     }),
-    skins: dashCached("skins", () => sb(`skins?user_id=eq.${USER_ID}&select=id,name,category,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level,count_in_max`)),
-    heroes: dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)),
-    player_heroes: dashCached("player_heroes", () => sb(`player_heroes?select=id,hero_id,current_level,current_stars&user_id=eq.${USER_ID}`)),
+    heroes: ngHeroRows(),
     star_stats: dashCached("star_stats", () => sb(`hero_gen_star_stats?select=generation,step,atk_pct,def_pct,shards&order=generation,step`)),
     widget_stats: dashCached("widget_stats", () => sb(`hero_gen_widget_stats?select=generation,level,leth_pct,hp_pct&order=generation,level`)),
     vip: loadVipTable(),
@@ -4564,8 +4583,9 @@ async function renderOverview(opts = {}) {
     loadCalcState("album_tundra"),
     loadCalcState("backpack").catch(() => null), // roster cards: shards still short
     // Collection Gallery / Tundra Album levels for their "of max" (null = the built-in numbers).
-    dashCached("gallery_levels", () => sb(`collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`)).catch(() => null),
-    dashCached("album_levels", () => sb(`tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`)).catch(() => null),
+    // (same request and kept copy as their own pages)
+    keptRows("collection_gallery_levels", `collection_gallery_levels?select=${upId("collection_gallery_levels")}stat_type,value_pct&order=sort_order.asc`).catch(() => null),
+    keptRows("tundra_album_levels", `tundra_album_levels?select=${upId("tundra_album_levels")}stat_type,value_pct&order=sort_order.asc`).catch(() => null),
   ]);
   // Heroes Special Skills: every hero column in the buff table (Jero, Natalia
   // and any added in Admin) counts by its stars: max = the hero's value in the
@@ -13449,7 +13469,7 @@ const SCAN_SKIP = "__skip__"; // a taught "never ask again" picture
 const scanFeatToB64 = (f) => btoa(String.fromCharCode(...f));
 const scanB64ToFeat = (v) => { try { return Uint8Array.from(atob(v), (c) => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } };
 async function scanLearnedLoad() {
-  await ensureSiteConfig();
+  await ensureSiteConfigKey("scan_learned");
   const all = ((siteConfig("scan_learned", null) || {}).items || []).slice();
   // Items read from the Summary screen (Meat, Wood, Coal, Iron, Gems, Steel, Pet
   // Food, Chief Stamina, Hero XP) are never taught from tiles: a tile of them is
@@ -13459,7 +13479,7 @@ async function scanLearnedLoad() {
 }
 async function scanLearnedSave(entries) {
   if (!IS_OWNER) return;
-  await ensureSiteConfig();
+  await ensureSiteConfigKey("scan_learned");
   await saveSiteConfig("scan_learned", { items: (((siteConfig("scan_learned", null) || {}).items) || []).concat(entries) });
 }
 const scanKnowsName = (n) => n !== SCAN_SKIP && (SCAN_ITEM_NAMES.includes(n) || SCAN_LEARNED.some((e) => e.n === n));
@@ -14339,9 +14359,26 @@ async function ensureBuffTableOnce() {
 // Rebuilds the sidebar's dynamic category buttons from the buff
 // matrix's columns, excluding any pulled into Heroes/Extra Buff/
 // grouped sub-nav so they don't appear twice.
-async function loadBuffCategories() {
-  await ensureBuffTable();
-  const columns = !BUFF_TABLE_ID ? [] : await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category&order=sort_order.asc`);
+// At start (boot) the table and its columns come in one request; when the
+// Dashboard's buff read already ran, its menu-ordered columns are used.
+let BUFF_SORTED_COLS = null; // { id, cols } from dashFixedReads, taken once by boot
+async function loadBuffColumnsAtStart() {
+  if (DASH_DATA_CACHE.buff) await DASH_DATA_CACHE.buff.catch(() => {});
+  const kept = BUFF_SORTED_COLS;
+  BUFF_SORTED_COLS = null;
+  if (kept && kept.id === BUFF_TABLE_ID) return kept.cols;
+  if (BUFF_TABLE_ID || BUFF_TABLE_PROMISE) return null;
+  const [tb] = (await sb(`buff_tables?select=id,cs:buff_columns(id,name,category)&cs.order=sort_order.asc&user_id=eq.${PROGRESSION_OWNER_ID}&name=neq.VIP%20Tier&order=created_at.asc&limit=1`)) || [];
+  if (!tb) return null; // no table yet: the usual lookup (the owner's creates one)
+  if (!BUFF_TABLE_ID) BUFF_TABLE_ID = tb.id;
+  return tb.id === BUFF_TABLE_ID ? tb.cs || [] : null;
+}
+async function loadBuffCategories(atStart) {
+  let columns = atStart ? await loadBuffColumnsAtStart() : null;
+  if (!columns) {
+    await ensureBuffTable();
+    columns = !BUFF_TABLE_ID ? [] : await sb(`buff_columns?table_id=eq.${BUFF_TABLE_ID}&select=id,name,category&order=sort_order.asc`);
+  }
   const grouped = [];
   const seen = new Map();
   for (const c of columns) {
@@ -15059,8 +15096,13 @@ let PACK_TABLES_CACHE = null;   // pack_tables rows, for the calculator pages
 // Budgets / My Purchases don't rebuild every pack group after a look at Packs.
 let PACK_TABLES_STASH = null;
 let PACK_GROUPS_GEN = 0; // bumped whenever the built pack groups are dropped on purpose
-async function ensurePackLinks() {
-  if (PACK_LINKS) return PACK_LINKS;
+let PACK_LINKS_LOADING = null; // callers at the same time share one load
+function ensurePackLinks() {
+  if (PACK_LINKS) return Promise.resolve(PACK_LINKS);
+  if (!PACK_LINKS_LOADING) PACK_LINKS_LOADING = ensurePackLinksNow().finally(() => { PACK_LINKS_LOADING = null; });
+  return PACK_LINKS_LOADING;
+}
+async function ensurePackLinksNow() {
   const [links, mine, active, myPacks, purchases, , budgetOff] = await Promise.all([
     IS_OWNER ? loadCalcState("packs_links") : loadOwnerState("packs_links"),
     loadCalcState("my_pack_dates").catch(() => null),
@@ -15614,10 +15656,12 @@ function ngHeroPattern(tables, colRe) {
     .filter((r) => r[0] > 0 && r[1] > 0).map((r) => [r[0], r[1], r[2] || ngGems(r[0])]);
   return rows.length ? { id: tb.id, rows, sequential: packLinkForBase(tb.id).sequential, window: packLinkForBase(tb.id).window } : null;
 }
+// The heroes table, kept for the visit (same request and key as the Dashboard's).
+function ngHeroRows() { return dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)); }
 async function ngHeroTables(baseTables) {
   const base = newGenBaseDay(), gen0 = newGenGen();
   if (!base || !gen0) return [];
-  const heroes = await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`)).catch(() => []);
+  const heroes = await ngHeroRows().catch(() => []);
   noteHeroImages(heroes);
   const shardPat = ngHeroPattern(baseTables, /^hero shards?$/i), widgetPat = ngHeroPattern(baseTables, /^hero widgets?$/i);
   const t0 = packStartOfToday(), day = 86400000, out = [];
@@ -16001,8 +16045,13 @@ async function ensurePackTables() {
   if (PACK_TABLES_LOADING) return PACK_TABLES_LOADING;
   PACK_TABLES_LOADING = (async () => {
     try {
+      // The rows don't depend on the links: both reads go out together, and the
+      // heroes (new heroes' copies) as soon as the links say they're needed.
+      const rowsP = packTablesRows();
+      rowsP.catch(() => {});
       await ensurePackLinks();
-      const inSig = packTablesInSig(), rowsP = packTablesRows(), rowRefs = packTablesRowRefs();
+      if (newGenBaseDay() && newGenGen()) ngHeroRows().catch(() => {});
+      const inSig = packTablesInSig(), rowRefs = packTablesRowRefs();
       const baseTables = packApplyMyEdits((await rowsP).map((tb) => ({ id: tb.id, title: tb.title, columns: tb.columns, rows: tb.rows, sort_order: tb.sort_order })))
         .filter((tb) => (IS_OWNER || !packLinkFor(tb.id).hideVisitors) && !packLinkFor(tb.id).template)
         .concat(IS_OWNER ? [] : MY_PACKS.map((x, i) => ({ id: x.id, title: x.title, columns: x.columns, rows: x.rows, sort_order: 100000 + i })));
@@ -19003,14 +19052,19 @@ async function ensureRfcLabRate() {
   const saved = (await loadCalcState("rfc_lab")) || {};
   rfcLabApplyRate({ top: saved.top, attempts: saved.attempts, budget: Number(saved.budget) || 0, mode: saved.mode === "budget" ? "budget" : "schedule", labOpen: saved.labOpen });
 }
+let TRADE_RATES_LOADING = null;
 async function ensureTradeRates() {
   await ensureRfcLabRate();
   tradeComposeExtra();
   if (!TRADE_RATES_CACHE) {
     // Visitors use the owner's trade rates and "use spare items" choices.
-    const saved = (IS_OWNER ? await loadCalcState("trade_rates") : await loadOwnerState("trade_rates")) || {};
-    TRADE_RATES_CACHE = { rates: saved.rates || {}, apply: saved.apply || {} };
-    Object.keys(TRADE_RATES_CACHE.apply).forEach((k) => { TRADE_APPLY[k] = TRADE_RATES_CACHE.apply[k] !== false; });
+    // Callers at the same time share one read.
+    if (!TRADE_RATES_LOADING) TRADE_RATES_LOADING = (IS_OWNER ? loadCalcState("trade_rates") : loadOwnerState("trade_rates")).finally(() => { TRADE_RATES_LOADING = null; });
+    const saved = (await TRADE_RATES_LOADING) || {};
+    if (!TRADE_RATES_CACHE) {
+      TRADE_RATES_CACHE = { rates: saved.rates || {}, apply: saved.apply || {} };
+      Object.keys(TRADE_RATES_CACHE.apply).forEach((k) => { TRADE_APPLY[k] = TRADE_RATES_CACHE.apply[k] !== false; });
+    }
   }
   return TRADE_RATES_CACHE;
 }
@@ -24097,7 +24151,7 @@ async function renderIslandGallery() {
   // The ordered category list is kept for the visit (dashCached), so a
   // repeat visit only has to load the islands themselves.
   const [islandCats] = await Promise.all([
-    dashCached("island_cats", () => sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`)),
+    islandCatRows(),
     ensureGalleryUncounted(),
   ]);
   if (seq !== RENDER_SEQ) return;
@@ -24422,9 +24476,12 @@ let ISLAND_CATEGORIES_CACHE = null;
 // Fetched once per session and reused by both the Dashboard and Skin
 // Gallery pages, instead of each page re-fetching this small, rarely-
 // changing table on every visit.
+function islandCatRows() { return dashCached("island_cats", () => sb(`skin_page_categories?page=eq.islands&select=category,sort_order&order=sort_order.asc`)); }
 async function ensureIslandCategories() {
   if (ISLAND_CATEGORIES_CACHE) return ISLAND_CATEGORIES_CACHE;
-  const rows = await sb(`skin_page_categories?page=eq.islands&select=category`);
+  // The same read as the Islands page's ordered list, so a visit there after
+  // the Dashboard only has to load the islands.
+  const rows = await islandCatRows();
   ISLAND_CATEGORIES_CACHE = new Set(rows.length ? rows.map((c) => c.category) : ["Island"]);
   return ISLAND_CATEGORIES_CACHE;
 }
@@ -25053,12 +25110,11 @@ async function renderExtraBonusHeroes() {
   const found = specialSkillHeroNames(BUFF_CATEGORIES.map((c) => c.name));
   const heroes = BUFF_CATEGORIES.length ? found : ["Jero", "Natalia"]; // no table: the old two heroes ("not found")
   // Pictures of heroes added in Admin come from the heroes table (same name).
-  if (heroes.some((h) => !SPECIAL_HERO_META[h] && !HERO_IMG_BY_NAME[h])) {
-    try { noteHeroImages(await dashCached("heroes", () => sb(`heroes?select=id,name,image_url,troop_type,generation,rarity,exp_attack,exp_defense,widget_lethality,widget_health&order=generation.desc.nullslast,name.asc`))); } catch (e) { /* no picture */ }
-    if (seq !== RENDER_SEQ) return;
-  }
+  // (read together with the skills' buff rows below)
+  const pics = heroes.some((h) => !SPECIAL_HERO_META[h] && !HERO_IMG_BY_NAME[h])
+    ? ngHeroRows().then(noteHeroImages).catch(() => { /* no picture */ }) : null;
   if (heroes.length && !BUFF_TABLE_ID) await ensureBuffTable();
-  const [data] = await Promise.all([Promise.all(heroes.map((h) => heroSpecialData(h).catch(() => null))), maxBeforeLoad("hero_special_skills")]);
+  const [data] = await Promise.all([Promise.all(heroes.map((h) => heroSpecialData(h).catch(() => null))), maxBeforeLoad("hero_special_skills"), pics]);
   if (seq !== RENDER_SEQ) return;
   const list = heroes.map((h, i) => { const m = SPECIAL_HERO_META[h] || { name: h, img: HERO_IMG_BY_NAME[h] || "" }; return { key: h, name: m.name, img: m.img, d: data[i] }; });
   const ok = list.filter((x) => x.d);
@@ -25960,8 +26016,13 @@ let PETS_UNLOCKED = null; // { "Cave Hyena": true/false, ... } - shared between 
 let UI_HIDDEN = null; // { "experts:Justus": true, ... }
 let UI_HIDDEN_FAILED = false; // the last load failed: the next call loads again
 const UI_HIDDEN_DEFAULTS = { "page:statetimeline": true };
-async function ensureUiVisibility() {
-  if (UI_HIDDEN && !UI_HIDDEN_FAILED) return UI_HIDDEN;
+let UI_HIDDEN_LOADING = null; // callers at the same time share one load
+function ensureUiVisibility() {
+  if (UI_HIDDEN && !UI_HIDDEN_FAILED) return Promise.resolve(UI_HIDDEN);
+  if (!UI_HIDDEN_LOADING) UI_HIDDEN_LOADING = ensureUiVisibilityNow().finally(() => { UI_HIDDEN_LOADING = null; });
+  return UI_HIDDEN_LOADING;
+}
+async function ensureUiVisibilityNow() {
   try {
     const rows = await sb(`ui_visibility?select=key,hidden`);
     UI_HIDDEN = {};
@@ -25979,16 +26040,27 @@ let SITE_CONFIG = null;
 // A failed load (weak connection) is tried 3 times, then marked so the next
 // call tries again instead of keeping empty settings for the whole visit.
 let SITE_CONFIG_FAILED = false;
-async function ensureSiteConfig() {
-  if (SITE_CONFIG && !SITE_CONFIG_FAILED) return SITE_CONFIG;
+// Big keys only a few places use are left out of the start-up read and
+// loaded when needed (ensureSiteConfigKey): Scan's taught tiles (~180 KB).
+const SITE_CONFIG_LAZY = ["scan_learned"];
+const SITE_CONFIG_LAZY_LOADING = {};
+let SITE_CONFIG_LOADING = null; // callers at the same time share one load
+function ensureSiteConfig() {
+  if (SITE_CONFIG && !SITE_CONFIG_FAILED) return Promise.resolve(SITE_CONFIG);
+  if (!SITE_CONFIG_LOADING) SITE_CONFIG_LOADING = ensureSiteConfigNow().finally(() => { SITE_CONFIG_LOADING = null; });
+  return SITE_CONFIG_LOADING;
+}
+async function ensureSiteConfigNow() {
   let rows = null;
   for (let i = 0; i < 3 && !rows; i++) {
     // "languages" is named here too: in LIKE the "_" of lang_* matches any one letter, so it was left out (a refresh showed every language unticked)
-    try { rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en,key.eq.languages)`); } // other languages load on their own; English changes come with the settings
+    try { rows = await sb(`site_config?select=key,value&or=(key.not.like.lang_*,key.eq.lang_en,key.eq.languages)&key=not.in.(${SITE_CONFIG_LAZY.join(",")})`); } // other languages load on their own; English changes come with the settings
     catch (err) { if (i < 2) await new Promise((ok) => setTimeout(ok, 800 * (i + 1))); }
   }
   if (rows) {
+    const had = SITE_CONFIG || {};
     SITE_CONFIG = {};
+    SITE_CONFIG_LAZY.forEach((k) => { if (k in had) SITE_CONFIG[k] = had[k]; });
     rows.forEach((r) => { SITE_CONFIG[r.key] = r.value; });
     SITE_CONFIG_FAILED = false;
   } else {
@@ -26066,6 +26138,18 @@ function pageNoteFor(tab) {
   const n = (menuLayout().notes || {})[tab];
   if (!n || typeof n !== "object") return "";
   return String(n[LANG] || n.en || "").trim();
+}
+// One of the SITE_CONFIG_LAZY keys, read once (a failed read throws and is
+// tried again next time, so nothing is ever saved over settings not loaded).
+async function ensureSiteConfigKey(key) {
+  await ensureSiteConfig();
+  if (!SITE_CONFIG_LAZY_LOADING[key]) {
+    SITE_CONFIG_LAZY_LOADING[key] = sb(`site_config?key=eq.${encodeURIComponent(key)}&select=value`).then((rows) => {
+      if (!SITE_CONFIG) SITE_CONFIG = {};
+      if (rows && rows[0] && !(key in SITE_CONFIG)) SITE_CONFIG[key] = rows[0].value;
+    }).catch((e) => { delete SITE_CONFIG_LAZY_LOADING[key]; throw e; });
+  }
+  return SITE_CONFIG_LAZY_LOADING[key];
 }
 function siteConfig(key, fallback) { return (SITE_CONFIG && SITE_CONFIG[key] != null) ? SITE_CONFIG[key] : fallback; }
 // Upcoming levels: rows the admin ticks "Upcoming" in a
@@ -29451,7 +29535,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.js?v=935dc08046";
+      s.src = "admin.js?v=0c0674ec1e";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -30125,7 +30209,17 @@ function openNewPasswordModal() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
 }
+function bootLangPack() {
+  if (LANG !== "en" && LANG_BUILTIN.some((l) => l.code === LANG && l.file)) loadLangPack(LANG);
+}
 (async function boot() {
+  // A first visit (no saved login) waits about a second for its guest
+  // sign-in: the reads that are the same for everyone start now. The pages
+  // ask for them again later and share these loads.
+  if (!hasSavedLogin()) {
+    ensureUiVisibility(); ensureSiteConfig(); bootLangPack();
+    if (TAB === "overview") Object.values(dashPublicReads()).forEach((p) => p.catch(() => {}));
+  }
   try {
     await ensureAuthSession();
     googleReturnCheck();
@@ -30144,10 +30238,13 @@ if ("serviceWorker" in navigator) {
   // name and the category list right away - none of them needs the
   // visibility/site settings below, so they don't wait for them.
   preloadCalcStates();
+  // A built-in language's texts load alongside the settings (added languages
+  // need the settings first and load in useLanguage below).
+  bootLangPack();
   // The Dashboard's fixed reference reads start now, alongside the settings.
   if (TAB === "overview") Object.values(dashFixedReads()).forEach((p) => p.catch(() => {}));
   loadCommander();
-  const categoriesLoaded = loadBuffCategories();
+  const categoriesLoaded = loadBuffCategories(true);
   await Promise.all([ensureUiVisibility(), ensureSiteConfig()]);
   applyEnglishOverrides(siteConfig("lang_en", null));
   if (LANG !== "en") LANG = await useLanguage(LANG);
