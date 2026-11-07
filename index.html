@@ -265,31 +265,10 @@
   }
 </style>
 <style id="bootSkel">
-  /* Loading layout (shown until the first page is drawn). After the
-     phoneCompact script on purpose, so it doesn't change phoneCompact's sheets
-     or their saved copy. Sized like the Dashboard so the first page doesn't jump. */
   /* The account button is filled by app.js; until then a zero-width letter gives
      it a text line, so it sits level with the language button (empty, it sat
      2 px higher and made the top bar 4 px taller, then the page moved up). */
   #topnavSettingsBtn:empty::before{ content:"\200b"; }
-  .boot-sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-  .boot-ld{ display:flex; flex-direction:column; gap:6px; margin-top:-4px; }
-  .boot-c{ border:1px solid var(--line, #313e4f); border-radius:12px; background:var(--panel, #1c2532); position:relative; overflow:hidden; }
-  .boot-c1{ height:46px; }
-  .boot-c2, .boot-c3{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; border:0; background:none; }
-  .boot-c2{ height:145px; }
-  .boot-c3{ height:358px; }
-  .boot-c i{ display:block; border:1px solid var(--line, #313e4f); border-radius:12px; background:var(--panel, #1c2532); position:relative; overflow:hidden; }
-  .boot-c1::after, .boot-c i::after{ content:""; position:absolute; inset:0; transform:translateX(-100%);
-    background:linear-gradient(90deg, transparent, rgba(111, 211, 242, .08), transparent); animation:bootShine 1.4s ease-in-out infinite; }
-  @keyframes bootShine{ to{ transform:translateX(100%); } }
-  @media (prefers-reduced-motion: reduce){ .boot-c1::after, .boot-c i::after{ display:none; animation:none; } }
-  @media (min-width:701px){
-    .boot-ld{ gap:16px; margin-top:0; padding-top:49px; }
-    .boot-c1{ height:70px; border-radius:16px; }
-    .boot-c2{ height:213px; gap:12px; }
-    .boot-c3{ height:356px; gap:12px; }
-  }
 </style>
 </head>
 <body>
@@ -414,7 +393,7 @@
   <!-- Loading layout: shown at once while the scripts download; the first page
        draw replaces it (render() keeps it instead of "Loading…", pageDrawn()
        removes anything left). -->
-  <main id="content"><div class="boot-ld" aria-busy="true"><span class="boot-sr">Loading&hellip;</span><div class="boot-c boot-c1"></div><div class="boot-c boot-c2"><i></i><i></i><i></i></div><div class="boot-c boot-c3"><i></i><i></i><i></i></div></div></main>
+  <main id="content"><div class="empty boot-ld">Loading&hellip;</div></main>
   <footer class="site-footer" id="siteFooter"></footer>
 </div>
 <div class="toast" id="toast"></div>
