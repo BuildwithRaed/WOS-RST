@@ -29565,7 +29565,8 @@ let ADMIN_SKIP_CONFIRM = false;
 // rules, page visibility, unsaved-edit checks, ADMIN_ACTIVE_TABLE …) stays here.
 // admin.js is a plain script: its functions and variables join the page's own.
 // admin.js carries its build id (window.ADMIN_BUILD = the "?v=" below, written by
-// tools/stamp.js). The server ignores "?v=", so a tab left open since before an
+// tools/stamp.js, which also makes the packed copy admin.min.js loaded here).
+// The server ignores "?v=", so a tab left open since before an
 // update gets the new admin.js: then the page reloads once (to the new app.js)
 // instead of running mismatched code; if it still doesn't match, Admin says so.
 let ADMIN_CODE_P = null, ADMIN_CODE_OK = false;
@@ -29573,7 +29574,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.js?v=0c0674ec1e";
+      s.src = "admin.min.js?v=a4b8b53e50";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

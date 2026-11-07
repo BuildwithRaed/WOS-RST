@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "0c0674ec1e";
+window.ADMIN_BUILD = "a4b8b53e50";
 
 // ============================================================
 // ADMIN PAGE

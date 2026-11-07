@@ -4,18 +4,21 @@
 const VERSION = "wosrst-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
-// The app's code and styles live in app.js / app.css, linked as "app.js?v=<hash>":
+// The app's code and styles are loaded from the packed copies app.min.js /
+// app.min.css / admin.min.js (made from app.js / app.css / admin.js by
+// tools/stamp.js), linked as "app.min.js?v=<hash>":
 // a new version gets a new address, so they are kept cache-first by address and
 // the older copies are dropped once a new one is stored. At install the ones the
 // page links to are cached with it, so the site also opens offline after the
 // first visit (the first page load happens before this worker is in control).
-const VERSIONED = /\/(app|admin)\.(js|css)$/;
+const VERSIONED = /\/(app|admin)(\.min)?\.(js|css)$/;
 // A copy is kept only when it is the version its address names: the server ignores
-// "?v=", so an old address can bring back a newer file. app.js / app.css: "v" = the
-// start of the file's SHA-256 (tools/stamp.js); admin.js carries its id inside.
+// "?v=", so an old address can bring back a newer file. app / app.css: "v" = the
+// start of the file's SHA-256 (tools/stamp.js); admin carries its id inside
+// (window.ADMIN_BUILD = "<v>", written without spaces in the packed copy).
 const isVersion = async (url, res) => {
   const u = new URL(url), v = u.searchParams.get("v");
-  if (/\/admin\.js$/.test(u.pathname)) return (await res.clone().text()).includes(`window.ADMIN_BUILD = "${v}";`);
+  if (/\/admin(\.min)?\.js$/.test(u.pathname)) { const text = await res.clone().text(); return text.includes(`window.ADMIN_BUILD="${v}"`) || text.includes(`window.ADMIN_BUILD = "${v}";`); }
   if (!self.crypto || !crypto.subtle) return true;
   const d = new Uint8Array(await crypto.subtle.digest("SHA-256", await res.clone().arrayBuffer()));
   return [...d.slice(0, 5)].map((b) => b.toString(16).padStart(2, "0")).join("") === v;
@@ -24,11 +27,13 @@ const putVersioned = (req, res) => caches.open(VERSION).then(async (c) => {
   if (!(await isVersion(typeof req === "string" ? req : req.url, res))) return;
   await c.put(req, res);
   const url = new URL(typeof req === "string" ? req : req.url);
-  for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) await c.delete(k); }
+  // Older versions go, also the unpacked "app.js?v=" copies kept before the packed ones.
+  const base = (p) => p.replace(/\.min\.(js|css)$/, ".$1");
+  for (const k of await c.keys()) { const u = new URL(k.url); if (VERSIONED.test(u.pathname) && base(u.pathname) === base(url.pathname) && u.href !== url.href) await c.delete(k); }
 });
-// Caches the app.js / app.css a copy of the page links to, when not cached yet.
+// Caches the app.min.js / app.min.css a copy of the page links to, when not cached yet.
 const keepLinked = async (c, html) => {
-  for (const l of new Set(html.match(/app\.(?:js|css)\?v=[0-9a-f]+/g) || [])) {
+  for (const l of new Set(html.match(/app(?:\.min)?\.(?:js|css)\?v=[0-9a-f]+/g) || [])) {
     const u = new URL("./" + l, self.location).href;
     if (!(await c.match(u))) { const res = await fetch(u); if (res.ok) await putVersioned(u, res); }
   }
@@ -43,7 +48,10 @@ self.addEventListener("install", (e) => {
   }).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  // The page now loads only the packed copies, so the unpacked app.js / app.css /
+  // admin.js copies kept before them (~2.5 MB) are dropped.
+  const dropUnpacked = () => caches.open(VERSION).then(async (c) => { for (const k of await c.keys()) if (/\/(app|admin)\.(js|css)$/.test(new URL(k.url).pathname)) await c.delete(k); }).catch(() => {});
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(dropUnpacked).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", (e) => {
   const req = e.request;
@@ -84,7 +92,7 @@ self.addEventListener("fetch", (e) => {
     }));
     return;
   }
-  // app.js / app.css / admin.js at one "?v=<hash>": cache first, older versions dropped.
+  // app / app.css / admin (packed copies) at one "?v=<hash>": cache first, older versions dropped.
   if (VERSIONED.test(url.pathname) && url.searchParams.has("v")) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) putVersioned(req, res.clone()); return res; })));
     return;
