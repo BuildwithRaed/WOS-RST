@@ -2427,6 +2427,7 @@
 "t:rl_tier_note":"A primeira tentativa do dia custa metade. Níveis abaixo: {n} cada na segunda para desbloquear.",
 "t:rl_tier_note1":"A primeira tentativa do dia custa metade.",
 "t:rl_rfc_a_week":"≈ {n} FC Refinado por semana",
+"t:rl_rfc_wk_line":"→ ~{n} FC Refinado por semana",
 "t:rl_before_d":"antes de {d}",
 "t:rl_after_d":"depois de {d}",
 "t:rl_super":"Super refinamentos",

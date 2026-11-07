@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"1日の最初の1回は半額。下の段階：解放には月曜に各{n}回。",
 "t:rl_tier_note1":"1日の最初の1回は半額。",
 "t:rl_rfc_a_week":"週 ≈ {n} 精錬火晶",
+"t:rl_rfc_wk_line":"→ 週 ~{n} 精錬火晶",
 "t:rl_before_d":"{d}より前",
 "t:rl_after_d":"{d}より後",
 "t:rl_super":"スーパー精錬",

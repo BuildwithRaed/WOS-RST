@@ -1323,7 +1323,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 75; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 76; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2500,6 +2500,7 @@ const T = {
   rl_tier_note: { en: "First try a day is half price. Lower tiers: {n} each on Monday to unlock." },
   rl_tier_note1: { en: "First try a day is half price." },
   rl_rfc_a_week: { en: "≈ {n} Refined FC a week" },
+  rl_rfc_wk_line: { en: "→ ~{n} Refined FC a week" },
   rl_before_d: { en: "before {d}" },
   rl_after_d: { en: "after {d}" },
   rl_super: { en: "Super refinements" },
@@ -18386,6 +18387,10 @@ async function renderRfcLabPage() {
   const fcI = `<img class="rl-ic" src="${esc(materialIconSrc("Fire Crystal") || "icons/item_icon_100081.png")}" alt="" />`;
   const rfI = `<img class="rl-ic" src="${esc(materialIconSrc("Refined FC") || "icons/item_icon_100082.png")}" alt="" />`;
   const planDone = doneFor(plan), planOk = inTime(plan);
+  // Refined FC a plan gives a week on average (the same number T12 / Budgets use).
+  const rfcN = (v) => (v >= 10 ? fmt(Math.round(v)) : fmt(v, 1));
+  const rfS = `<img class="rl-ic rl-ic-s" src="${esc(materialIconSrc("Refined FC") || "icons/item_icon_100082.png")}" alt="${esc(t("rl_rfc"))}" />`;
+  const rfcGain = (p, arrow) => `<span class="rl-gain" title="${esc(t("rl_rfc_week_rand"))}">${arrow ? "→ " : ""}~${rfcN(p.rfc)} ${rfS}</span>`;
   const lateCls = (p) => (inTime(p) ? "" : " late");
   // ---- header card
   const needSub = st.myNeed != null
@@ -18422,7 +18427,7 @@ async function renderRfcLabPage() {
   const opt = (p, name, sub) => { const d = doneFor(p); return `<button type="button" class="rl-o${isPick(p) ? " on" : ""}${lateCls(p)}" data-rluse="${p.top}|${p.n}">
       <b>${esc(name)}</b><span class="rl-o-sub">${esc(sub)}</span>
       <span class="rl-o-v">${d ? esc(dShort(d)) : "—"}</span>
-      <small>${esc(wksTxt(d))}</small><small>${fmt(p.cost)} FC / ${esc(t("rl_wk"))}</small>
+      <small>${esc(wksTxt(d))}</small><small>${fmt(p.cost)} FC / ${esc(t("rl_wk"))}</small><small>${rfcGain(p, true)} / ${esc(t("rl_wk"))}</small>
       ${tagFor(p)}</button>`; };
   const cards = [opt(cheapest, t("rl_cheapest"), rfcPlanName(cheapest)),
     opt(middle, rfcPlanName(middle), same(middle, best) ? t("rl_cheapest_in_time") : t("rl_in_between")),
@@ -18430,7 +18435,7 @@ async function renderRfcLabPage() {
   // In-between speeds: one sideways row, the picked one first.
   const chips = speeds.filter((p) => !same(p, cheapest) && !same(p, middle) && !same(p, fastest)).sort((a, b) => isPick(b) - isPick(a)).map((p) => {
     const d = doneFor(p), late = !inTime(p), x = !late ? extraTag(p) : "";
-    return `<button type="button" class="rl-ch${isPick(p) ? " on" : ""}" data-rluse="${p.top}|${p.n}">${esc(rfcPlanName(p))} · <b class="${late ? "rl-rd" : ""}">${d ? esc(dShort(d)) : "—"}${late ? ` · ${esc(t("rl_too_late"))}` : ""}</b>${x ? ` · ${esc(x)}` : ""}</button>`;
+    return `<button type="button" class="rl-ch${isPick(p) ? " on" : ""}" data-rluse="${p.top}|${p.n}">${esc(rfcPlanName(p))} · <b class="${late ? "rl-rd" : ""}">${d ? esc(dShort(d)) : "—"}${late ? ` · ${esc(t("rl_too_late"))}` : ""}</b>${x ? ` · ${esc(x)}` : ""} · ${rfcGain(p, false)} / ${esc(t("rl_wk"))}</button>`;
   }).join("");
   const sMin = cheapest.cost, sMax = fastest.cost;
   const sVal = Math.min(sMax, Math.max(sMin, plan.cost));
@@ -18438,7 +18443,7 @@ async function renderRfcLabPage() {
       <div class="rl-k">${esc(t("rl_how_fast"))}<span class="rl-r rl-kr">${esc(t("rl_by"))} ${esc(dShort(byDay))}</span></div>
       <div class="rl-lt">${cards.join("")}</div>
       ${chips ? `<div class="rl-also">${chips}</div>` : ""}
-      <div class="rl-own"><span>${esc(t("rl_own_line"))} <b>${fmt(plan.cost)} FC ${esc(t("rl_a_week"))}</b></span><button type="button" class="rl-lnk" data-rlownopen aria-haspopup="dialog">${esc(t("rl_own_set"))} ›</button></div>
+      <div class="rl-own"><span>${esc(t("rl_own_line"))} <b>${fmt(plan.cost)} FC ${esc(t("rl_a_week"))}</b> <span class="rl-own-g">${esc(t("rl_rfc_wk_line").replace("{n}", rfcN(plan.rfc)))}</span></span><button type="button" class="rl-lnk" data-rlownopen aria-haspopup="dialog">${esc(t("rl_own_set"))} ›</button></div>
     </div>`;
   // "Set my own FC" sheet: the slider of the old "FC I can spend per week" mode.
   const ownSheetHtml = () => {
@@ -18452,6 +18457,7 @@ async function renderRfcLabPage() {
         <div data-rlpane="fc">
         <input type="range" class="rl-sld" data-rlslider min="${sMin}" max="${sMax}" step="10" value="${sVal}" aria-label="${esc(t("rl_own_weekly"))}" />
         <div class="rl-sldl"><span>${fmt(sMin)}</span><span class="rl-sldv" data-rlsldv></span><span>${fmt(sMax)}</span></div>
+        <div class="rl-sldg" data-rlsldg></div>
         ${hint ? `<div class="rl-note">${esc(hint)}</div>` : ""}
         </div>
         <div class="rl-own-b"><button type="button" class="btn ghost" data-rlownclose>${esc(t("cancel"))}</button><button type="button" class="btn" data-rlownuse></button></div>
@@ -18646,7 +18652,7 @@ async function renderRfcLabPage() {
       <div class="rl-note">≈ ${fmt(wkPlan.rfc, 1)} ${esc(t("rl_rfc_week_rand"))}${off && catchFc ? ` · <span class="rl-am">${esc(catchFc > 0 ? t("rl_catch_fc").replace("{n}", fmt(catchFc)) : t("rl_ahead_fc").replace("{n}", fmt(-catchFc)))}</span>` : ""}</div>
     </div>` : `<div class="rl-card rl-wk${off ? " off" : ""}" data-rlwktoggle role="button" tabindex="0" aria-expanded="false">
       <div class="rl-k">${esc(t("rl_this_week"))}</div>
-      <div class="rl-wl"><span class="rl-ws">${esc(wkLine || t("rl_rest"))}</span><span class="rl-wr">${fmt(wkPlan.cost)} ${fcI}<span class="rl-chev">›</span></span></div>
+      <div class="rl-wl"><span class="rl-ws">${esc(wkLine || t("rl_rest"))}</span><span class="rl-wr">${fmt(wkPlan.cost)} ${fcI} ${rfcGain(wkPlan, true)}<span class="rl-chev">›</span></span></div>
       <div class="rl-wl"><span class="rl-ws2">${esc(t("rl_super"))} <b>${game ? fmt(game.count) : "—"}</b>${game && game.fromTxt ? ` <span class="rl-upd">${esc(game.fromTxt)}</span>` : ""} · ${esc(t("rl_wk_plan_today").replace("{n}", fmt(planSoFar)))}${game && game.updTxt && !game.fromTxt ? ` · <span class="rl-upd">${esc(game.updTxt)}</span>` : ""}</span>${gsBtn}</div>
       ${offLine}
       ${overHtml}
@@ -18733,10 +18739,11 @@ async function renderRfcLabPage() {
     if (root.querySelector("[data-rlownbd]")) return;
     root.insertAdjacentHTML("beforeend", ownSheetHtml());
     const ov = root.querySelector("[data-rlownbd]");
-    const sld = ov.querySelector("[data-rlslider]"), sldv = ov.querySelector("[data-rlsldv]"), use = ov.querySelector("[data-rlownuse]");
+    const sld = ov.querySelector("[data-rlslider]"), sldv = ov.querySelector("[data-rlsldv]"), sldg = ov.querySelector("[data-rlsldg]"), use = ov.querySelector("[data-rlownuse]");
     const sldText = () => {
       const p = forBudget(Number(sld.value)), d = doneFor(p);
       sldv.textContent = `${fmt(p.cost)} FC ${t("rl_a_week")} · ${t("rl_done")} ${d ? dShort(d) : "—"}`;
+      if (sldg) sldg.textContent = t("rl_rfc_wk_line").replace("{n}", rfcN(p.rfc));
       sld.style.setProperty("--p", `${((Number(sld.value) - sMin) / Math.max(1, sMax - sMin)) * 100}%`);
       use.textContent = t("rl_own_use").replace("{n}", fmt(p.cost));
     };

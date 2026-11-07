@@ -2428,6 +2428,7 @@
 "t:rl_tier_note":"Der erste Versuch am Tag kostet die Hälfte. Niedrigere Stufen: je {n} am Montag zum Freischalten.",
 "t:rl_tier_note1":"Der erste Versuch am Tag kostet die Hälfte.",
 "t:rl_rfc_a_week":"≈ {n} Veredelter FC pro Woche",
+"t:rl_rfc_wk_line":"→ ~{n} Veredelter FC pro Woche",
 "t:rl_before_d":"vor {d}",
 "t:rl_after_d":"nach {d}",
 "t:rl_super":"Super-Veredelungen",
