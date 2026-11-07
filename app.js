@@ -730,7 +730,6 @@ const DATA_NAME_I18N = {
 // Hard-coded English UI text (labels, buttons, messages, admin pages) with
 // Arabic and Korean versions. localizeDom() swaps exact matches on screen.
 const UI_TEXT_I18N = {
-"\"Has count trigger\" shows a \"Count in max\" checkbox on that item's card and moves it below the divider line (used on Frame for unverified items).": {},
 "Path": {},
 "e.g. Hunting Skill": {},
 "Chief Charm levels": {},
@@ -741,7 +740,6 @@ const UI_TEXT_I18N = {
 "star-level bonuses": {},
 
 "Menu": {},
-"☰ Menu": {},
 "Close": {},
 "Add": {},
 "Save": {},
@@ -761,7 +759,6 @@ const UI_TEXT_I18N = {
 "Name": {},
 "Email": {},
 "Icon": {},
-"Image URL": {},
 "Order": {},
 "Value": {},
 "Level": {},
@@ -811,9 +808,7 @@ const UI_TEXT_I18N = {
 "AVERAGE": {},
 "Something went wrong loading this tab.": {},
 "Drag to move": {},
-"Use the arrows to reorder.": {},
 "Upload image": {},
-"⇧ Upload": {},
 "Image uploaded — remember to Save": {},
 "Green": {},
 "Blue": {},
@@ -829,8 +824,6 @@ const UI_TEXT_I18N = {
 "Infantry only": {},
 "Lancers only": {},
 "Marksman only": {},
-"Attack %": {},
-"Defense %": {},
 "Health %": {},
 "Lethality %": {},
 "Inf. Health %": {},
@@ -847,26 +840,16 @@ const UI_TEXT_I18N = {
 "Max ATK&DEF %": {},
 "DMG, ATK, DEF, HP …": {},
 "Troop": {},
-"Troop restriction": {},
 "Main stat": {},
 "Bonus %": {},
 "Bonus stat": {},
-"Bonus stat (e.g. Attack)": {},
 "Chief Bonus": {},
-"Upgrade calculator": {},
-"Pick your current and target step to see materials, stat gain, and power gain between them.": {},
 "Stat gain": {},
-"Power gain": {},
-"No materials needed for this range.": {},
-"No rows yet.": {},
-"Materials, e.g. 100 XP Component": {},
 "Lv. 1": {},
 "Lv. 2": {},
 "Lv. 3": {},
 "Lv. 4": {},
 "Lv. 5": {},
-"Current lvl": {},
-"Max lvl": {},
 "Max level": {},
 "Max stars": {},
 "Max widget %": {},
@@ -879,8 +862,6 @@ const UI_TEXT_I18N = {
 "Add one below.": {},
 "Stat line added": {},
 "Enter a valid number": {},
-"Inventory updated": {},
-"Couldn't update inventory": {},
 "Couldn't update value": {},
 "Couldn't save": {},
 "Couldn't save all": {},
@@ -891,7 +872,6 @@ const UI_TEXT_I18N = {
 "Couldn't save that change": {},
 "Couldn't duplicate table": {},
 "Couldn't delete table": {},
-"Couldn't delete row": {},
 "Couldn't add preset tables": {},
 "Couldn't create rows": {},
 "Couldn't save stats": {},
@@ -906,7 +886,6 @@ const UI_TEXT_I18N = {
 "Keep at least one row (Row 1 sets the scale)": {},
 "Nothing left to remove between Amount and Gems": {},
 "Row added": {},
-"Row deleted": {},
 "Category added": {},
 "Expert added": {},
 "Hero added": {},
@@ -914,7 +893,6 @@ const UI_TEXT_I18N = {
 "Pet added": {},
 "Tier added": {},
 "Contact details saved": {},
-"Pack resources saved": {},
 "Path rows created": {},
 "Published to visitors": {},
 "Rates reset": {},
@@ -929,8 +907,6 @@ const UI_TEXT_I18N = {
 "Delete this row?": {},
 "Delete this item?": {},
 "Delete this VIP tier?": {},
-"Delete this hero from the catalog?": {},
-"Delete this expert from the roster? Their affinity/skill/research data rows will remain but become orphaned.": {},
 "Give visitors your test rates?": {},
 "Put every rate back to the built-in defaults?": {},
 "Add column": {},
@@ -940,10 +916,8 @@ const UI_TEXT_I18N = {
 "Delete row": {},
 "Delete table": {},
 "Fills the rest of the table from Row 1's ratios. Turn off for tables whose rows don't follow a fixed scale.": {},
-"Include roster heroes' stats in the Dashboard totals": {},
 "Click to choose hero": {},
 "No islands match your filters.": {},
-"No heroes in this generation.": {},
 "Speedups": {},
 "Random Chief Gear Chest": {},
 "Random Charm Chest": {},
@@ -969,12 +943,6 @@ const UI_TEXT_I18N = {
 "Experts Roster": {},
 "Experts Affinity": {},
 "Experts Skills": {},
-"Add a new expert": {},
-"Add expert": {},
-"After adding, go to Expert Affinity / Skills / Research below to add their stat data.": {},
-"Expert name": {},
-"Portrait image URL (optional)": {},
-"Show an Upcoming badge on this expert's cards": {},
 "Skill": {},
 "Pick an expert": {},
 "Pick a hero": {},
@@ -1024,8 +992,6 @@ const UI_TEXT_I18N = {
 "Common Marks per 1%": {},
 "My test rates": {},
 "Visitors (published)": {},
-"Save my test rates": {},
-"Save for visitors": {},
 "Copy my test rates → visitors": {},
 "Copy visitors → my test rates": {},
 "Use my test rates on the site (only me)": {},
@@ -1040,29 +1006,20 @@ const UI_TEXT_I18N = {
 "Add a new hero": {},
 "Add a hero": {},
 "Add hero": {},
-"Edit a hero": {},
 "Hero name": {},
 "Creates a new hero column so you can fill in its star-level bonuses below.": {},
-"Generation": {},
 "Gen": {},
 "Generate from max": {},
 "Fills all 30 shard steps and 10 widget levels from the max values using the standard curve": {},
 "Star shard & widget stats": {},
 "Row names follow the pattern \"N ATT/DEF/DMG/HP\" (star level + stat code). Values are the max % at that star level.": {},
-"Category name": {},
-"Add category": {},
-"Add a category": {},
 "Category (First/N/R/SR/SRR/UR)": {},
-"Most trackers only need \"Island\", but you can add more groupings if needed.": {},
 "Add a VIP tier": {},
 "Add tier": {},
 "Tier name (e.g. VIP 12)": {},
-"Add item": {},
 "Add a Facility item": {},
 "Add a Alliance Tech item": {},
 "Add a currency": {},
-"Code (e.g. PKR)": {},
-"Symbol (e.g. Rs)": {},
 "Per 1 USD": {},
 "By rate": {},
 "Store price": {},
@@ -1083,12 +1040,8 @@ const UI_TEXT_I18N = {
 "Open Contact page": {},
 "e.g. hello@wosrst.com": {},
 "Shown on the Contact us page (linked from the footer on every page). Leave the email empty to show \"Contact details will be added soon.\" instead.": {},
-"+ Add resource": {},
-"Gives (per 1)": {},
-"nothing (plain item)": {},
 "Dropdown text (override)": {},
 "Removed (not in the dropdown)": {},
-"Remove from the dropdown": {},
 "Visitor access (read-only)": {},
 "Owner-only areas visitors may open. They see your pack tables and prices exactly as you set them, with no way to edit, add or delete anything, and no \"Used for\" settings. Their own Backpack amounts and target dates stay private to them.": {},
 "Packs page": {},
@@ -1099,12 +1052,6 @@ const UI_TEXT_I18N = {
 "· their own monthly plan against your packs": {},
 "· their own inventory overview": {},
 "· the collapsible Pack cost under each page's Backpack": {},
-"· Cosmetics": {},
-"· Experts": {},
-"· Extra Bonus": {},
-"· Gears": {},
-"· Pets": {},
-"· Research": {},
 "Guides (step)": {},
 "Designs (step)": {},
 "Secrets (step)": {},
@@ -1112,11 +1059,8 @@ const UI_TEXT_I18N = {
 "Hero Gear Mastery Forging": {},
 "Hero Gear Enhancement": {},
 "Hero Gear Mithril": {},
-"— class —": {},
 "Applies to every hero of this generation:": {},
-"icons/…png": {},
 "tags for a charm/gear level": {},
-"1 FC = 1.3 FCS": {},
 "1.6% chance of 1 Mythic Gear per chest → counted as 0.016 Mythic Gear per chest (average). 63 chests ≈ 1 Mythic Gear.": {},
 "One random Chief Gear material. Alloy: x5000 0.5%, x2500 3%, x1200 15%, x600 31.5%; Polish: x50 0.25%, x25 1.5%, x12 7.5%, x6 15.75%; Design: x50 0.25%, x20 1.5%, x10 7.5%, x5 15.75% → counted as ≈469 Alloy, ≈2.35 Polish and ≈1.96 Design per chest (average).": {},
 "Guides: x15 0.5%, x8 3%, x4 15%, x2 31.5%; Designs: same odds → counted as ≈1.55 Guides and ≈1.55 Designs per chest (average).": {},
@@ -1330,7 +1274,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 76; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 77; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1924,7 +1868,6 @@ const T = {
   admh_need_rules: { en: "{n} rules changed from built-in" },
   admh_need_rules_sub: { en: "all saved" },
   admh_rules_btn: { en: "Rules" },
-  admh_show_more: { en: "Show {n} more" },
   admh_open_page: { en: "Open a page" },
   admh_n_changed: { en: "{n} changed" },
   admh_bk_never: { en: "No backup yet" },
@@ -1978,8 +1921,6 @@ const T = {
   vis_pets_desc: { en: "Hidden pets are left out of visitors' pages, totals and Dashboard." },
   vis_visible: { en: "Visible to visitors" },
   vis_hidden: { en: "Hidden from visitors" },
-  vis_visible_hint: { en: "Visitors can see this card. Click to hide it from them." },
-  vis_hidden_hint: { en: "Only you can see this card. Click to show it to visitors." },
   vis_now_hidden: { en: "Hidden from visitors" },
   vis_now_visible: { en: "Now visible to visitors" },
   pack_reset_daily: { en: "Daily" },
@@ -2199,18 +2140,10 @@ const T = {
   pack_visitor_edit_hint: { en: "You can change the item amounts, and the Max of rows that have one (how many times you can buy it), for your own planning (saved in this browser). The price and Gems columns are fixed." },
   marks_clear: { en: "Clear to 0" },
   pack_calc_wait: { en: "Working out the best packs \u2014 this can take a few seconds, especially with many packs or pages. You can keep using the site meanwhile, even switch pages: if you leave, this calculation stops showing and starts again when you come back (usually faster)." },
-  pack_calc_note: { en: "Plans are worked out in the background and can take a few seconds to update after a change. You can switch pages meanwhile; a bigger calculation still finishing (like Budgets with many pages) can make the next one wait a moment." },
-  pack_view_shared: { en: "Shared with Budgets" },
-  pack_view_page: { en: "This page only" },
-  pack_view_shared_desc: { en: "This page's share of one plan for every ticked Budgets page \u2014 shared packs and ladder steps are counted once." },
-  pack_view_page_desc: { en: "Planned as if this is the only thing you're working on: every pack and ladder step can go to this page." },
-  combined_title: { en: "Shared with the Budgets plan" },
   combined_desc: { en: "Some packs here also help {pages}. They're planned once for all those pages, so each purchase and each ladder step is only counted once. This is this page's share." },
   pc_all_pages: { en: "All pages" },
   combined_share: { en: "This page's share" },
-  combined_whole: { en: "Whole plan (all pages)" },
   combined_part: { en: "part" },
-  combined_date_note: { en: "Uses the Budgets target date" },
   combined_not_included: { en: "This page is unticked on Budgets, so it's planned on its own and isn't part of the combined plan." },
   combined_no_share: { en: "The combined plan doesn't need any packs for this page (other pages' packs already cover it, or it needs nothing)." },
   combined_cant: { en: "The combined plan can't cover every selected page, so this page is planned on its own." },
@@ -2389,16 +2322,10 @@ const T = {
   trade_title: { en: "Trade items" },
   trade_apply: { en: "Use my spare items (trades) in pack cost" },
   trade_rates: { en: "Trade rates" },
-  trade_give: { en: "Give" },
-  trade_get: { en: "Get" },
-  trade_suggest: { en: "Suggested trades from your spare items" },
   trade_none: { en: "No spare items to trade, or nothing missing." },
   trade_after: { en: "Still short after trades:" },
-  trade_after_short: { en: "after trades" },
   trade_max_week: { en: "Max / week" },
-  trade_trades: { en: "trades" },
   trade_capped: { en: "weekly limit reached" },
-  trade_this_week: { en: "within this week's limits; pack cost and Budgets count the weeks until the target date" },
   trade_free: { en: "Free from your spare items (trade, no purchase)" },
   trade_then: { en: "Then trade" },
   trade_via_packs: { en: "Bought as packs then traded" },
@@ -2413,7 +2340,6 @@ const T = {
   pack_cant_cover_combo: { en: "the options can't all be bought enough times together." },
   pack_cant_cover_hint: { en: "Check each table's availability on the Packs page (\"Once only\" allows a single purchase / one ladder run; set it to Weekly, Monthly… if the pack comes back) and the per-row Max." },
   pack_limited_tables: { en: "Limited tables" },
-  pack_same_as: { en: "Same plan as" },
   pack_all_option: { en: "all" },
   pack_by: { en: "by" },
   pack_presets_added: { en: "tables added" },
@@ -2732,7 +2658,6 @@ const T = {
   mpn_back: { en: "Back" },
   mpn_next: { en: "Next" },
   mpn_create: { en: "Create" },
-  pkc_items: { en: "Items in this pack" },
   pkc_item: { en: "Item" },
   pkc_del_item: { en: "Remove the last item" },
   pkc_steps: { en: "Steps" },
@@ -2740,7 +2665,6 @@ const T = {
   pkc_del_step: { en: "Remove the last step" },
   pkc_fill: { en: "Fill from step 1" },
   pkc_next_on: { en: "Next on" },
-  pkc_change: { en: "Change" },
   about_title: { en: "About us" },
   about_desc: { en: "Who we are and what WOS RST is for." },
   about_default_tagline: { en: "A free fan-made planner for Whiteout Survival players." },
@@ -2869,12 +2793,9 @@ const T = {
   rm_without: { en: "Without" },
   rm_this_week: { en: "This week" },
   rm_for: { en: "for" },
-  rm_fold: { en: "This week {v} \u00b7 {n} packs" },
   rm_page_desc: { en: "Your Budgets plan week by week, with when each goal is reached." },
   rm_next_week: { en: "Next week" },
   rm_n_packs: { en: "{n} packs" },
-  rm_open: { en: "Open" },
-  rm_link_next: { en: "next: {goal} \u00b7 {date}" },
   rm_empty: { en: "No goals yet: tick pages with a target on Budgets." },
   rm_back: { en: "Budgets" },
   rm_goal_nopacks: { en: "Nothing to buy: what you have already covers it." },
@@ -3030,10 +2951,8 @@ const T = {
   pk_days_unit: { en: "days" },
   pk_active_note: { en: "{left} days of rewards still coming (until {date}) are counted free. New purchases start {next}. Up to {more} more can be stacked." },
   pk_active_done: { en: "These cards have already finished paying out (from that start date) — nothing extra is counted." },
-  pk_active_left: { en: "{n} days left" },
   pk_own_card_title: { en: "My own card (only for your plans)" },
   pk_own_card_desc: { en: "Visitors don't get these numbers; they still start from today unless they set their own." },
-  pk_active_free: { en: "Free from cards you already bought" },
   pk_active_until: { en: "until" },
   pk_preview_packs: { en: "packs" },
   pk_preview_open: { en: "Open settings" },
@@ -11044,8 +10963,8 @@ async function renderPacksPage() {
     );
     const lk = packLinkFor(t.id);
     const groupPh = window.t("pack_group_placeholder"), groupTitle = window.t("pack_group_title");
-    // Step cards (P3, phones): each column's kind and a small picture / label per box;
-    // shown only when the window draws the table as cards (.pkb-steps).
+    // Each column's kind and a small picture / label per box (hidden: the step
+    // cards that showed them were dropped; the classes still style the table).
     const pcI = priceColOf(t), gcI = gemsColOf(t);
     const pkcCls = (ci) => (ci === pcI ? " pkc-price" : ci === gcI ? " pkc-gems" : " pkc-item");
     const pkcIcons = t.columns.map((_, ci) => (ci === pcI ? "" : pkIconHtml(pkColItem(t, ci))));
@@ -11495,31 +11414,8 @@ async function renderPacksPage() {
       const full = tmp.querySelector("[data-packlink]");
       if (full) { settings.replaceWith(full); wirePackLinkEditors([full]); settings = full; }
     }
-    // P3: your own packs (and templates) show their table as
-    // step cards on phones (<= 700 px): items as picture chips, a card per price
-    // step. Same inputs, so every handler above still does the work.
-    // Step cards were tried for My packs; the owner kept the sideways table for every pack.
-    const stepCards = false && IS_OWNER && (lk.group === PACK_MINE_GROUP || lk.template);
-    if (stepCards) {
-      panel.classList.add("pkb-steps");
-      const htr = body.querySelector(".pk-tbl-wrap thead tr"), tbd = body.querySelector(".pk-tbl-wrap tbody");
-      if (htr) htr.dataset.k = t("pkc_items");
-      if (tbd) tbd.dataset.k = `${t("pkc_steps")} · ${t("mp_kind_" + packTemplateKind(lk))}`;
-      const wrap = body.querySelector(".pk-tbl-wrap");
-      if (wrap) wrap.insertAdjacentHTML("afterend", `<div class="pkc-acts"><button type="button" class="btn ghost" data-pkcstep>+ ${esc(t("pkc_step"))}</button><button type="button" class="btn ghost" data-pkcfill>${esc(t("pkc_fill"))}</button></div>`);
-      const click = (sel) => { const b = body.querySelector(sel); if (b) b.click(); };
-      body.querySelectorAll("[data-pkcadd]").forEach((b) => b.addEventListener("click", () => click("[data-pt-addcol]")));
-      body.querySelectorAll("[data-pkcstep]").forEach((b) => b.addEventListener("click", () => click("[data-pt-addrow]")));
-      body.querySelectorAll("[data-pkcfill]").forEach((b) => b.addEventListener("click", () => {
-        applyAmountSequence(panel, tb);
-        applyScale(panel, tb);
-        const c0 = panel.querySelector('[data-pt-cell][data-row="0"]');
-        if (c0) c0.dispatchEvent(new Event("change", { bubbles: true })); // saves the whole table once
-      }));
-    }
     const usedFor = packUsedForNames(tb);
-    const nextHtml = stepCards && (w.on || w.next) ? `<div class="pkb-budrow pkc-next"><span>${w.on ? `<b>${esc(t("pkb_on_now"))}</b>` : `${esc(t("pkc_next_on"))} <b>${esc(w.next)}</b>`}</span><button type="button" class="pkc-link" data-pkcnext>${esc(t("pkc_change"))} &#8250;</button></div>` : "";
-    const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${nextHtml}${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
+    const budHtml = lk.template ? "" : `<div class="pkb-sec"><label class="pkb-budrow"><span>${esc(t("pk_in_budgets"))}</span><input type="checkbox" class="bset-sw" data-pkbud ${packInBudgets(tb.id) ? "checked" : ""} /></label>${!IS_OWNER && usedFor.length ? `<div class="pkb-used"><span class="pkb-k">${esc(t("pack_used_for"))} · ${usedFor.length}</span><div class="pk-used-list">${usedFor.map((n) => `<span>${esc(n)}</span>`).join("")}</div></div>` : ""}</div>`;
     // D: the leader lists the packs whose dates follow it.
     const fols = lk.dateWith ? [] : tables.filter((x) => String(x.id) !== String(tb.id) && String(packLinkFor(x.id).dateWith || "") === String(tb.id)).sort((a, b) => pkbOrder(a.title, b.title));
     const evDef = fols.length ? packEventDefault(tb, packEventFollowers(tb, tables)) : "", evName = fols.length ? packEventName(tb, tables) : "", evNames = [evName, evDef];
@@ -11549,8 +11445,6 @@ async function renderPacksPage() {
         savePackLinks();
       });
     }
-    const nx = body.querySelector("[data-pkcnext]");
-    if (nx) nx.addEventListener("click", () => { const sc = body.querySelector("[data-packreset]"); if (sc) { sc.scrollIntoView({ behavior: "smooth", block: "center" }); sc.focus({ preventScroll: true }); } });
     const seg = body.querySelector(".pks-seg");
     if (seg) {
       const radios = [...seg.querySelectorAll("input[data-pkhow]")];
@@ -17582,34 +17476,20 @@ TOPBOX_MQ.addEventListener("change", () => { if (TAB in TOPBOX_TABS) render(); }
 function bsSlideFit(root) {
   // Phones: every Backpack box grid that needs more than one row becomes ONE row
   // that scrolls sideways.
-  // A wide box (Experts' Affinity) keeps its own full row; the boxes after it slide
-  // in a row of their own under it (owner: "affinity in one row, the rest slide").
-  root.querySelectorAll(".bs-tiles:not(.bs-sub)").forEach((g) => {
-    const sub = g.querySelector(":scope > .bs-sub");
-    const n0 = g.children.length + (sub ? sub.children.length - 1 : 0);
+  root.querySelectorAll(".bs-tiles").forEach((g) => {
+    const n0 = g.children.length;
     const key = `${n0}|${g.clientWidth}`;
-    if (g.dataset.bsk === key && innerWidth <= 900 && (g.dataset.bssub !== "1" || sub)) return;
-    if (sub) { [...sub.children].forEach((ch) => g.insertBefore(ch, sub)); sub.remove(); }
-    g.classList.remove("bs-slide"); delete g.dataset.bsk; delete g.dataset.bssub;
+    if (g.dataset.bsk === key && innerWidth <= 900) return;
+    g.classList.remove("bs-slide"); delete g.dataset.bsk;
     const kids = [...g.children];
     if (innerWidth > 900 || kids.length < 2) return;
     const cols = getComputedStyle(g).gridTemplateColumns.split(" ").filter(Boolean).length || 1;
-    const wide = kids.filter((ch) => { const cs = getComputedStyle(ch); return /span|-1/.test(cs.gridColumnEnd + " " + cs.gridColumnStart); });
-    const small = kids.filter((ch) => !wide.includes(ch));
     // Wide boxes (Experts' Affinity) slide in the same row at one box's width.
     // Count grid cells (a wide box takes several), so a Fold / tablet width that
     // wraps the Affinity box onto two rows slides too.
     const cells = kids.reduce((n, ch) => { const cs = getComputedStyle(ch); const m = /span\s+(\d+)/.exec(cs.gridColumnEnd + " " + cs.gridColumnStart); return n + (m ? Math.min(cols, Number(m[1])) : 1); }, 0);
     if (cells > cols) {
       g.style.setProperty("--bscols", cols); g.classList.add("bs-slide");
-      if (false) {
-        const row = document.createElement("div");
-        row.className = "bs-tiles bs-slide bs-sub";
-        row.style.setProperty("--bscols", cols);
-        g.insertBefore(row, small[0]);
-        small.forEach((ch) => row.appendChild(ch));
-        g.dataset.bssub = "1";
-      }
     }
     g.dataset.bsk = `${n0}|${g.clientWidth}`;
   });
@@ -17752,18 +17632,13 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const open = PACK_COST_OPEN[calcKey] === true;
 
   const rerender = () => renderPackCostBlock(containerEl, calcKey, groups, ownedOrig);
-  // Card layout (summary pages): plans as cards to pick from, then the
-  // picked plan's packs as a short list.
-  const cards = BAR_SUMMARY_KEYS.has(calcKey) || PACK_COST_CARD_KEYS.has(calcKey);
-  const aLook = cards && PACK_COST_A_KEYS.has(calcKey);
+  // Card layout (design A, every page): plans as cards to pick from, then
+  // the picked plan's packs as a short list.
   let aBuilt = false;
-  const wrapOpen = cards ? `<div class="pc-card${aLook ? " pca" : ""}">` : `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">`;
-  const head = cards ? `
+  const wrapOpen = `<div class="pc-card pca">`;
+  const head = `
     <div class="pc-head">
       <button type="button" data-packtoggle class="pc-title">${esc(t("pc_title"))} ${open ? "&#9662;" : "&#9656;"}</button>
-    </div>` : `
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-      <button type="button" data-packtoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("pack_cost_title"))}</button>
     </div>`;
 
   if (!open) {
@@ -17829,7 +17704,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   };
 
   const targetHtml = `
-    <div class="${cards ? "pc-target" : ""}" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0;">
+    <div class="pc-target" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:8px 0;">
       <span class="meta" style="font-size:11px; font-weight:600;">${esc(t("pack_target_by"))}</span>
       <input type="date" data-packtarget value="${esc(targetDate)}" style="font-size:12px; padding:4px 6px;" />
       ${targetDate ? `<button type="button" class="btn small ghost" data-packtargetclear title="${esc(t("pack_no_date"))}" style="padding:2px 8px;">&times;</button>` : `<span class="meta" style="font-size:10.5px;">${esc(t("pack_no_date"))}</span>`}
@@ -17857,7 +17732,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     if (stale()) return;
   }
   const sharedNote = (msg) => `<div class="meta" style="font-size:10.5px; margin:6px 0; padding:6px 8px; border:1px solid var(--line); border-radius:8px;">${esc(msg)}</div>`;
-  // Design A rows (PACK_COST_A_KEYS): one row per pack with its main item's
+  // Design A rows: one row per pack with its main item's
   // picture, real name (the table name, not its option list), how often it
   // comes back, what it gives (needed items first) and its price; tap = its steps.
   const pcaIcon = (n) => { const src = materialIconSrc(n); return src ? `<img src="${esc(src)}" alt="" loading="lazy" />` : ""; };
@@ -17883,35 +17758,12 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   const pcaTrades = (trades) => (trades || []).length ? `<div class="pca-h">${esc(t("trade_then"))}</div>${trades.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.giveQty)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.getQty)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`).join("")}` : "";
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
   let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest)
+  // The shared view looks like "This page only": plan cards on top (this
+  // page's share, and the whole plan → Budgets), then one folding row per
+  // pack with this page's part of its price.
   if (shared && shared.combined && shared.included && shared.combined.chosen && shared.sharedWith.length) {
     const cb = shared.combined, p = cb.chosen, mineShare = cb.shares[calcKey] || { total: 0, rows: [] };
-    const late = shared.targetDays != null && p.days > shared.targetDays;
-    const when = p.days === 0 ? t("pack_ready_now") : `${fmtDate(p.days)} · ${p.days} ${t("pack_days_short_long")}`;
-    const shareRows = mineShare.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;">
-        <span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span>
-        <span style="min-width:0;"><b style="font-size:11px;">${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span>
-        <span style="margin-inline-start:auto; font-weight:600; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("");
     sharedTotalText = packFmtLocal(Math.ceil(packSharesLocal(mineShare)), p.rows[0]?.currency || currency, true, p.rows[0]?.price);
-    sharedSections = `
-      <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}</div>
-      <div class="panel" style="padding:10px; border-color:var(--ice);">
-        <div style="font-size:12px; font-weight:700;">${esc(t("combined_title"))}</div>
-        <p class="desc" style="font-size:10.5px; margin:4px 0 6px;">${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}</p>
-        <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin:4px 0 6px;">
-          <span class="meta" style="font-size:11px;">${esc(t("combined_share"))}</span>
-          <span style="font-size:18px; font-weight:700;">${packFmtLocal(Math.ceil(packSharesLocal(mineShare)), p.rows[0]?.currency || currency, true, p.rows[0]?.price)}</span>
-          <span class="meta" style="font-size:10.5px; color:${late ? "var(--danger)" : "var(--good)"};">${esc(when)}</span>
-        </div>
-        ${mineShare.rows.length ? shareRows : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}
-        <div class="meta" style="font-size:10.5px; margin-top:8px;">${esc(t("combined_whole"))}: <b>${packFmtLocal(Math.ceil(packPlanLocal(p)), p.rows[0]?.currency || currency, true, p.rows[0]?.price)}</b> · ${esc(t("combined_date_note"))}${BUDGET_TARGET ? ` (${esc(fmtDate(shared.targetDays))})` : ` (${esc(t("pack_no_date"))})`}</div>
-        <button type="button" class="btn small ghost" data-gotobudgets style="margin-top:8px;">${esc(t("budgets_title"))} &rarr;</button>
-      </div>`;
-  }
-  // Card layout (planner pages): the shared view looks like "This page only":
-  // plan cards on top (this page's share, and the whole plan → Budgets), then
-  // one folding row per pack with this page's part of its price.
-  if (sharedSections && cards) {
-    const cb = shared.combined, p = cb.chosen, mineShare = cb.shares[calcKey] || { total: 0, rows: [] };
     const cur = p.rows[0]?.currency || currency, price0 = p.rows[0]?.price;
     const late = shared.targetDays != null && p.days > shared.targetDays;
     const d = new Date(today.getTime() + p.days * 86400000);
@@ -17924,17 +17776,13 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, lines: [] }; byPack.push(g); }
       g.count += r.count; g.subtotal += packShareLocal(r); g.sample = g.sample || r.price; g.lines.push(r);
     });
-    const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
-      <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""}</span><span class="meta">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
     const needKeys = new Set(Object.keys(need));
     const trades = (p.trades || []).filter((x) => needKeys.has(x.to));
-    const tradesHtml = trades.length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
-    const listA = aLook && mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : "";
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${mineShare.rows.length ? (listA || listHtml) : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${aLook ? pcaTrades(trades) : tradesHtml}</div>`;
+      <div class="pc-list">${mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -17976,37 +17824,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       // date when set and reachable, otherwise the cheapest plan.
       const pageBest = (plans.find((c) => c.key === "target" && c.plan) || plans.find((c) => c.key === "cheapest")).plan;
       if (pageBest) pageTotalText = packFmtLocal(Math.ceil(packPlanLocal(pageBest)), currency, true, pageBest.rows[0]?.price);
-      const cardHtml = (c) => {
-        // Same plan as an earlier card: just say so.
-        const twin = plans.find((x) => x !== c && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days && plans.indexOf(x) < plans.indexOf(c));
-        if (twin) {
-          return `<div class="panel" style="padding:10px; min-width:0; opacity:0.8;">
-            <div style="font-size:12px; font-weight:700;">${esc(c.title)}</div>
-            <div class="meta" style="font-size:11px; margin-top:4px;">${esc(t("pack_same_as"))} <b>${esc(twin.title)}</b> — ${packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)} · ${esc(c.plan.days === 0 ? t("pack_ready_now") : fmtDate(c.plan.days))}</div>
-          </div>`;
-        }
-        if (!c.plan) {
-          return `<div class="panel" style="padding:10px; min-width:0;">
-            <div style="font-size:12px; font-weight:700; margin-bottom:6px;">${esc(c.title)}</div>
-            <div class="meta" style="font-size:11px; color:var(--danger);">${esc(c.key === "target" && targetDays != null && targetDays < 0 ? t("pack_overdue") : t("pack_not_reachable"))} ${esc(t("pack_earliest"))} ${esc(fmtDate(earliest))} (${earliest} ${esc(t("pack_days_short_long"))})</div>
-          </div>`;
-        }
-        const p = c.plan;
-        const rows = packPlanRowsHtml(p, resetText);
-        const tradesHtml = (p.trades || []).length ? `<div class="meta" style="font-size:10px; margin-top:4px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
-        const when = p.days === 0 ? t("pack_ready_now") : `${fmtDate(p.days)} · ${p.days} ${t("pack_days_short_long")}`;
-        const late = targetDays != null && p.days > targetDays;
-        return `<div class="panel" style="padding:10px; min-width:0; ${c.key === "target" ? "border-color:var(--ice);" : ""}">
-          <div style="font-size:12px; font-weight:700;">${esc(c.title)}</div>
-          <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin:4px 0 6px;">
-            <span style="font-size:18px; font-weight:700;">${packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price)}</span>
-            <span class="meta" style="font-size:10.5px; color:${late ? "var(--danger)" : "var(--good)"};">${esc(when)}</span>
-          </div>
-          ${rows}
-          ${tradesHtml}
-        </div>`;
-      };
-      if (cards) {
+      {
         // Pick a plan (same plan twice is shown once), then its packs.
         const shown = plans.filter((c) => !plans.some((x) => plans.indexOf(x) < plans.indexOf(c) && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days));
         let pick = shown.find((c) => c.key === PACK_PLAN_PICK[calcKey] && c.plan) || shown.find((c) => c.key === "target" && c.plan) || shown.find((c) => c.plan);
@@ -18026,11 +17844,8 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           if (!g) { g = { title: r.title, count: 0, subtotal: 0, currency: r.currency, reset: r.reset, resetDay: r.resetDay, cycles: r.cycles, lines: [] }; byPack.push(g); }
           g.count += r.count; g.subtotal += packRowLocal(r); g.sample = g.sample || r.price; g.cycles = Math.max(g.cycles, r.cycles); g.lines.push(r);
         });
-        const listHtml = byPack.sort((a, b) => b.subtotal - a.subtotal).map((g) => `<details class="pc-pack"><summary><span class="n">${esc(g.title.split(" · ").pop())}<small>&times;${qty(g.count)}${typeof g.reset === "number" && !packStackInfo(g.reset) ? ` · ${esc(resetText(g.reset, g.resetDay).split(" · ")[0])}` : packStackInfo(g.reset) ? ` · ${esc(t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7))}` : ""}</small></span><b>${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</b></summary>
-          <div class="pc-lines">${g.lines.sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}</span><span class="meta">${packFmtLocal(packRowLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`).join("");
-        const planTrades = p && (p.trades || []).length ? `<div class="meta" style="font-size:10.5px; margin-top:6px; color:var(--ice);">${esc(t("trade_then"))}: ${p.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : "";
-        sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list">${listHtml}${planTrades}</div>`;
-        if (aLook && p) {
+        sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div><div class="pc-list"></div>`;
+        if (p) {
           aBuilt = true;
           const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
           const late = targetDays != null && p.days > targetDays;
@@ -18041,10 +17856,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           const tradesA = pcaTrades(p.trades);
           sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${tradesA}@@PCFREE@@</div>`;
         }
-      } else sections = `
-        <div class="meta" style="font-size:10px; margin:6px 0;">${Object.keys(need).map((n) => `${esc(materialDisplayName(n))} ${qty(need[n])}`).join(" &middot; ")}${traded && traded.trades.length ? ` <span style="color:var(--ice);">(${esc(t("trade_after_short"))})</span>` : ""}</div>
-        ${traded && traded.trades.length ? `<div class="meta" style="font-size:10px; margin:0 0 6px; color:var(--good);">${esc(t("trade_free"))}: ${traded.trades.map((x) => `${qty(x.giveQty)} ${esc(materialDisplayName(x.from))} → ${qty(x.getQty)} ${esc(materialDisplayName(x.to))}${x.lab ? ` (${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})` : ""}`).join(" &middot; ")}</div>` : ""}
-        <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-top:6px;">${plans.map(cardHtml).join("")}</div>`;
+      }
     }
   }
 
@@ -18060,12 +17872,6 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   if (stale()) return;
   packCostShown(calcKey, (usingShared ? sharedTotalText : (pickedTotalText || pageTotalText)) || null);
   if (usingShared) sections = sharedSections;
-  const viewSwitch = canShare ? `
-    <div class="seg" data-packview style="margin:8px 0 2px; flex-wrap:wrap;">
-      <button type="button" data-packviewbtn="shared" class="${usingShared ? "active" : ""}">${esc(t("pack_view_shared"))}${sharedTotalText ? ` · <b>${sharedTotalText}</b>` : ""}</button>
-      <button type="button" data-packviewbtn="page" class="${usingShared ? "" : "active"}">${esc(t("pack_view_page"))}${pickedTotalText || pageTotalText ? ` · <b>${pickedTotalText || pageTotalText}</b>` : ""}</button>
-    </div>
-    <div class="meta" style="font-size:10px; margin-bottom:4px;">${esc(t(usingShared ? "pack_view_shared_desc" : "pack_view_page_desc"))}</div>` : "";
   let fallbackNote = "";
   if (shared && !canShare && !shared.lazyShare && PACK_COST_MODE === "still") {
     if (shared.notIncluded) fallbackNote = sharedNote(t("combined_not_included"));
@@ -18077,25 +17883,15 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
   ];
   const freeHtml = freeBits.length ? `<details class="pc-free"><summary>&#10003; ${esc(t("pc_free_count").replace("{c}", activeCards.used.length).replace("{t}", traded && traded.trades.length ? traded.trades.length : 0))}</summary><div>${freeBits.map((b) => `<div>${esc(b)}</div>`).join("")}</div></details>` : "";
   containerEl.style.minHeight = "";
-  containerEl.innerHTML = cards ? `
-    <div class="pc-card${aLook ? " pca" : ""}">
+  containerEl.innerHTML = `
+    <div class="pc-card pca">
       ${head}
       ${usingShared || (aBuilt && !usingShared) ? "" : targetHtml}
       ${fallbackNote}
       ${uncoveredHtml}
       ${aBuilt && !usingShared ? "" : freeHtml}
       <div class="pc-sec">${aBuilt && !usingShared ? sections.replace("@@PCFREE@@", freeHtml) : sections}</div>
-      ${canShare ? (aLook ? `<div class="pc-view pca-scope"><div class="seg" data-packview><button type="button" data-packviewbtn="page" class="${usingShared ? "" : "active"}">${esc(t("pca_only").replace("{page}", packPageLabel(calcKey)))}</button><button type="button" data-packviewbtn="shared" class="${usingShared ? "active" : ""}">${esc(t("pca_with_others"))}</button></div></div>` : `<div class="pc-view">${viewSwitch.replace(/<div class="meta" style="font-size:10px; margin-bottom:4px;">[\s\S]*?<\/div>\s*$/, "")}</div>`) : ""}
-    </div>` : `
-    <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
-      ${head}
-      <div class="meta" style="font-size:10px; margin-top:4px; opacity:0.85;">&#9202; ${esc(t("pack_calc_note"))}</div>
-      ${viewSwitch}
-      ${usingShared ? "" : targetHtml}
-      ${fallbackNote}
-      ${uncoveredHtml}
-      ${activeCards.used.length ? `<div class="meta" style="font-size:10.5px; margin:4px 0; color:var(--good);">${esc(t("pk_active_free"))}: ${activeCards.used.map((u) => `${esc(u.title)}${u.until ? ` (${esc(t("pk_active_left").replace("{n}", u.left))}, ${esc(t("pk_active_until"))} ${esc(u.until.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }))})` : ""}`).join(" &middot; ")}</div>` : ""}
-      <div style="max-height:min(60vh, 520px); overflow-y:auto; overscroll-behavior:contain; padding-inline-end:6px;">${sections}</div>
+      ${canShare ? `<div class="pc-view pca-scope"><div class="seg" data-packview><button type="button" data-packviewbtn="page" class="${usingShared ? "" : "active"}">${esc(t("pca_only").replace("{page}", packPageLabel(calcKey)))}</button><button type="button" data-packviewbtn="shared" class="${usingShared ? "active" : ""}">${esc(t("pca_with_others"))}</button></div></div>` : ""}
     </div>`;
   containerEl.querySelectorAll("[data-packviewbtn]").forEach((b) => b.addEventListener("click", () => { PACK_COST_VIEW[calcKey] = b.dataset.packviewbtn; rerender(); }));
   containerEl.querySelectorAll("[data-packpick]").forEach((b) => b.addEventListener("click", () => { PACK_PLAN_PICK[calcKey] = b.dataset.packpick; rerender(); }));
@@ -19402,14 +19198,8 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
   if (!rates.length) { containerEl.innerHTML = ""; return; }
   const open = TRADE_OPEN[calcKey] === true;
   const rerender = () => renderTradeBlock(containerEl, calcKey, groups, owned, onChange);
-  const cards = BAR_SUMMARY_KEYS.has(calcKey);
   // Card layout: short Fire Crystal names (FC, FCS, RFC).
-  const shortNm = (n) => (cards && { "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || materialDisplayName(n);
-  const head = `
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-      <button type="button" data-tradetoggle class="btn small ghost" style="padding:4px 8px; font-weight:600;">${open ? "▾" : "▸"} ${esc(t("trade_title"))}</button>
-      ${IS_OWNER ? `<label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;"><input type="checkbox" data-tradeapply ${TRADE_APPLY[calcKey] !== false ? "checked" : ""} /><span>${esc(t("trade_apply"))}</span></label>` : ""}
-    </div>`;
+  const shortNm = (n) => ({ "Fire Crystal": "FC", "FC Shard": "FCS", "Refined FC": "RFC" }[n]) || materialDisplayName(n);
   const wire = () => {
     containerEl.querySelector("[data-tradetoggle]").addEventListener("click", () => { TRADE_OPEN[calcKey] = !open; rerender(); });
     const applyCb = containerEl.querySelector("[data-tradeapply]");
@@ -19419,14 +19209,8 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       if (onChange) onChange();
     });
   };
-  if (!open && !cards) {
-    containerEl.innerHTML = `<div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">${head}</div>`;
-    wire();
-    return;
-  }
   const need = {};
   groups.forEach((g) => Object.entries(g.totals || {}).forEach(([n, q]) => { need[n] = (need[n] || 0) + (Number(q) || 0); }));
-  const res = applyTrades(rates, need, owned, 1);
   const qty = (v) => Math.round(v).toLocaleString();
   // Card layout: this week's suggested trades up front (with pictures),
   // what's still short as chips, rates and the calculator behind a link.
@@ -19453,25 +19237,12 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       ${chips.length ? `<div class="pc-k">${esc(t("trade_after"))}</div><div class="pc-chips">${chips.join("")}</div>` : ""}
       <button type="button" class="linklike" data-tradetoggle style="margin-top:10px;">${esc(t("trade_calc"))} ${open ? "&#9662;" : "&#9656;"}</button>`;
   };
-  if (cards && !open) {
+  if (!open) {
     containerEl.innerHTML = `<div class="pc-card">${cardHead}${cardBody()}</div>`;
     wire();
     return;
   }
   const names = [...new Set(rates.flatMap((r) => [r.from, r.to]))];
-  const suggestHtml = res.trades.length
-    ? res.trades.map((tr) => `<div style="font-size:11.5px; padding:3px 0; border-top:1px solid var(--line);">${esc(t("trade_give"))} <b>${qty(tr.giveQty)}</b> ${esc(materialDisplayName(tr.from))} → ${esc(t("trade_get"))} <b style="color:var(--good);">${qty(tr.getQty)}</b> ${esc(materialDisplayName(tr.to))} <span class="meta" style="font-size:10px;">(${qty(tr.lots)} ${esc(t("trade_trades"))}${tr.capped ? ` · ${esc(t("trade_capped"))}` : ""})</span></div>`).join("")
-      + `<div class="meta" style="font-size:10.5px; margin-top:6px;">${esc(t("trade_after"))} ${Object.keys(need).filter((n) => need[n] > 0).map((n) => `${esc(materialDisplayName(n))} <span style="color:${(res.after[n] || 0) > 0 ? "var(--danger)" : "var(--good)"};">${(res.after[n] || 0) > 0 ? qty(res.after[n]) : "✓"}</span>`).join(" &middot; ")}</div>`
-    : `<div class="meta" style="font-size:11px;">${esc(t("trade_none"))}</div>`;
-  const ratesHtml = `
-    <table style="border-collapse:collapse; font-size:11px; width:100%;">
-      <thead><tr><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_give"))}</th><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_get"))}</th><th style="text-align:start; padding:3px 4px; border-bottom:1px solid var(--line);">${esc(t("trade_max_week"))}</th></tr></thead>
-      <tbody>${rates.map((r, i) => `<tr>
-        <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="1" data-traterate="${i}" data-field="give" value="${r.give}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${qty(r.give)}</b>`} ${esc(materialDisplayName(r.from))}</td>
-        <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="1" data-traterate="${i}" data-field="get" value="${r.get}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${qty(r.get)}</b>`} ${esc(materialDisplayName(r.to))}</td>
-        <td style="padding:3px 4px; white-space:nowrap;">${IS_OWNER ? `<input type="number" min="0" data-traterate="${i}" data-field="max" value="${r.max || 0}" style="width:64px; font-size:11px; padding:2px 4px;" />` : `<b>${r.max ? qty(r.max) : "∞"}</b>`}</td>
-      </tr>`).join("")}</tbody>
-    </table>`;
   const calcHtml = `
     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px;">
       <input type="number" min="0" data-tradeqty value="" placeholder="0" style="width:80px; font-size:12px; padding:4px 6px;" />
@@ -19480,31 +19251,11 @@ async function renderTradeBlock(containerEl, calcKey, groups, owned, onChange) {
       <select data-tradeto style="font-size:12px;"></select>
       <span data-traderesult style="font-weight:700; color:var(--good);"></span>
     </div>`;
-  containerEl.innerHTML = cards ? `
+  containerEl.innerHTML = `
     <div class="pc-card">${cardHead}${cardBody()}
       <div style="margin-top:8px;">${calcHtml}</div>
-    </div>` : `
-    <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:10px;">
-      ${head}
-      <div class="grid" style="grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px; margin-top:8px;">
-        <div><div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_rates"))}</div>${ratesHtml}</div>
-        <div>
-          <div class="meta" style="font-size:10.5px; font-weight:600; margin-bottom:4px;">${esc(t("trade_suggest"))} <span style="font-weight:400;">(${esc(t("trade_this_week"))})</span></div>${suggestHtml}
-          <div class="meta" style="font-size:10.5px; font-weight:600; margin:12px 0 4px;">${esc(t("trade_calc"))}</div>${calcHtml}
-        </div>
-      </div>
     </div>`;
   wire();
-  // Rate edits (owner only).
-  containerEl.querySelectorAll("[data-traterate]").forEach((inp) => inp.addEventListener("change", async () => {
-    const i = Number(inp.dataset.traterate);
-    const edited = rates.map((r) => ({ ...r }));
-    edited[i][inp.dataset.field] = inp.dataset.field === "max" ? Math.max(0, Math.round(Number(inp.value) || 0)) : Math.max(1, Math.round(Number(inp.value) || 1));
-    TRADE_RATES_CACHE.rates[calcKey] = edited;
-    await saveTradeSettings();
-    rerender();
-    if (onChange) onChange();
-  }));
   // Manual converter.
   const qtyEl = containerEl.querySelector("[data-tradeqty]");
   const fromEl = containerEl.querySelector("[data-tradefrom]");
@@ -21781,11 +21532,6 @@ async function renderBudgetsPage(opts = {}) {
     };
     const wkStart = (w) => new Date(t0.getTime() + (w * 7 - dow) * 86400000);
     const wk0 = weeks.get(0);
-    const nextI = goals.findIndex((g, i) => rmDates[i] && !rmDates[i].done);
-    // Budgets keeps one line for the Roadmap; the page itself has the rest.
-    const rmLink = `<div class="t12x-card bud-rm-link" style="margin-top:12px;"><span class="bud-rm-ic">&#128506;</span>
-      <div class="bud-rm-lt"><b>${esc(t("rm_title"))}</b><small>${esc(t("rm_fold").replace("{v}", money(wk0 ? wk0.money : 0)).replace("{n}", wk0 ? wk0.lines.length : 0))}</small>${nextI >= 0 ? `<small>${esc(t("rm_link_next").replace("{goal}", nameOf(goals[nextI])).replace("{date}", shortD(rmDates[nextI].day)))}</small>` : ""}</div>
-      <button type="button" class="btn small" data-gototab="roadmap">${esc(t("rm_open"))} &#8250;</button></div>`;
     // B3: the goals as flags on one line, grouped by the
     // day they're reached, the target day marked; tap a flag → its week on the Roadmap.
     b3Week0 = { money: wk0 ? wk0.money : 0, n: wk0 ? wk0.lines.length : 0 };
@@ -22057,7 +21803,7 @@ async function renderBudgetsPage(opts = {}) {
       if (RM_SHEET && !rmPageHtml.includes("data-rmbg")) RM_SHEET = null;
       RM_DATA = { goalIds: goals.map((g) => g.id), plan: rmPlan, sched, tableOf, canBuy, dayKey, wkRows, tag: BUDGET_VIEW === "budget" && spendActive() ? "budget" : "target" };
     }
-    return goalsCard + rmLink;
+    return goalsCard;
   })();
 
   // Design B3: one screen — the total card, the
@@ -22812,11 +22558,6 @@ function chiefGearIcon(key, rowIdx) {
 // Pants, Cane) around a plain box with what's left and Set all; each slot has
 // its tier badge (now) and a "→ ★3" target chip. Tap a slot → a sheet with the
 // Now / Target lists side by side and ‹ › to the next piece.
-// Edge colour of a piece by its tier family (Legendary red, Mythic gold …).
-function cgEdge(r) {
-  const tier = String((r && r.tier) || "");
-  return /^legendary/i.test(tier) ? "#e0645f" : /^mythic/i.test(tier) ? "#e8a23c" : /^epic/i.test(tier) ? "#b98ae0" : /^rare/i.test(tier) ? "#6fb4f2" : "#5bc98a";
-}
 // Short tier label for the badge: "T6 ★0" ("Red T6 ★0" without the colour).
 function cgBadge(r) { return r ? chiefGearRowLabel(r).replace(/^(Green|Blue|Purple|Gold|Red) (?=T\d)/, "") : ""; }
 // Just the stars part when the tier doesn't change ("★3" / "★3.2").
@@ -22899,7 +22640,7 @@ async function renderChiefGearCalc() {
       ? `<span class="cg-tgt${to > cap ? " up" : ""}"${to > cap ? ` title="${esc(t("upcoming_tag"))}"` : ""}>&rarr; ${esc(rt && rf && rt.tier === rf.tier ? cgStars(rt) : cgBadge(rt))}</span>`
       : from >= cap ? `<span class="cg-tgt ok">&#10003; ${esc(t("max_button"))}</span>` : "";
     return `<button type="button" class="cg-pc" data-cgslot="${p.key}" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
-      <span class="cg-pic" style="--edge:${cgEdge(rf)};"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
+      <span class="cg-pic"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
       <span class="cg-nm">${esc(pieceDisplayName(p.name))}<span class="cg-rch" data-rch="cg|${p.key}"></span></span>
     </button>`;
   }
@@ -23049,7 +22790,7 @@ async function renderChiefGearCalc() {
       const k = ORDER.indexOf(key);
       const nav = (d) => { const nk = ORDER[k + d]; return nk ? `<button type="button" class="btn ghost" data-gsnav="${d}">${d < 0 ? "&#8249; " : ""}${esc(pieceDisplayName(pieceOf(nk).name))}${d > 0 ? " &#8250;" : ""}</button>` : `<span></span>`; };
       m.innerHTML = `<div class="modal-box adm-sheet gs-box" role="dialog" aria-modal="true">
-        <div class="gs-head"><span class="cg-pic sm" style="--edge:${cgEdge(rows[from])};"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
+        <div class="gs-head"><span class="cg-pic sm"><img src="${chiefGearIcon(p.key, from)}" alt="" /></span><div style="flex:1; min-width:0;"><b>${esc(pieceDisplayName(p.name))} · ${esc(troopDisplayName(p.troop))}</b>
           <div class="meta">ATK &amp; DEF <span style="color:var(--good);">${pctShort(pct(from))}</span>${to > from ? ` &rarr; <span style="color:var(--ice);">${pctShort(pct(to))}</span>` : ""}</div></div>
           <button type="button" class="rfa-x" data-gsclose aria-label="${esc(t("close_button"))}">&#10005;</button></div>
         <div class="gs-lists"><div><div class="gs-l">${esc(t("t12x_now"))}</div>${list("from", from, 0)}</div><div><div class="gs-l">${esc(t("t12x_target"))}</div>${list("to", to, from)}</div></div>
@@ -23114,14 +22855,6 @@ async function renderChiefGearCalc() {
 // Pages whose Backpack shows the short summary (what's still missing, ready
 // items as chips) with the boxes behind "Show all / edit".
 // Every planner page with a Backpack bar uses the new layout (plxShellHtml).
-// Pages with their own totals squares (not the shared bar) that still use the Pack Cost card.
-const PACK_COST_CARD_KEYS = new Set(["experts", "experts_research"]);
-// Pack cost design A: plan boxes, a summary (total,
-// done date, N packs), the target, then each pack with its main item's
-// picture, real name, how often it comes back, what it gives and its price,
-// trades with pictures, and "Only <page> | With my other pages". Chief Gear first.
-// Design A on every page's Pack cost (pages follow Chief Gear).
-const PACK_COST_A_KEYS = { has: () => true };
 const BAR_SUMMARY_KEYS = new Set(["t12_research", "t11_helios", "research_center", "chief_gear", "charm", "hero_gear", "pets", "pets_refine"]);
 // Research pages show research speedups in their time box, not as a square.
 const BAR_TIME_KEYS = new Set(["t12_research", "t11_helios", "research_center"]);
@@ -25559,11 +25292,7 @@ async function loadGeneralSpeedupMinutes() {
   GENERAL_SPEEDUP_LINK = link;
   if (backpackLinked("experts", GENERAL_SPEEDUP_KEY, link)) return backpackAmountFor(GENERAL_SPEEDUP_KEY, link.bp);
   if (typeof inv[GENERAL_SPEEDUP_KEY] === "number") return inv[GENERAL_SPEEDUP_KEY];
-  // One-time carry-over from the old research-only box.
-  const legacy = await loadCalcState("research_speedup_minutes");
-  const minutes = (legacy && typeof legacy.minutes === "number") ? legacy.minutes : 0;
-  if (minutes > 0) { inv[GENERAL_SPEEDUP_KEY] = minutes; saveCalcState("experts_inventory", inv); }
-  return minutes;
+  return 0;
 }
 async function saveGeneralSpeedupMinutes(minutes) {
   const inv = (await loadCalcState("experts_inventory")) || {};
@@ -26540,21 +26269,6 @@ async function setHiddenFromVisitors(kind, name, hidden) {
   if (!UI_HIDDEN) UI_HIDDEN = {};
   UI_HIDDEN[`${kind}:${name}`] = !!hidden;
 }
-// Owner-only button on a card: toggles whether visitors can see it.
-function visibilityBtnHtml(kind, name) {
-  // Owner: no "Visible to visitors" buttons on the pages; this is set in Admin → Visibility.
-  if (!IS_OWNER || true) return "";
-  const hidden = isHiddenFromVisitors(kind, name);
-  return `<button type="button" class="btn ghost small" data-vishide="${esc(kind)}|${esc(name)}" title="${esc(t(hidden ? "vis_hidden_hint" : "vis_visible_hint"))}" style="font-size:10px; padding:2px 6px; ${hidden ? "color:var(--amber); border-color:var(--amber);" : ""}">${esc(t(hidden ? "vis_hidden" : "vis_visible"))}</button>`;
-}
-function wireVisibilityBtns(rootEl, onChange) {
-  rootEl.querySelectorAll("[data-vishide]").forEach((b) => b.addEventListener("click", async () => {
-    const [kind, name] = b.dataset.vishide.split("|");
-    await setHiddenFromVisitors(kind, name, !isHiddenFromVisitors(kind, name));
-    toast(isHiddenFromVisitors(kind, name) ? t("vis_now_hidden") : t("vis_now_visible"));
-    if (onChange) onChange();
-  }));
-}
 // The lock/unlock checkmark on cards is owner-only: a visitor's cards are
 // always unlocked (except hidden ones), whatever was saved earlier.
 // A whole pet the admin marked "Upcoming" (site_config "upcoming_pets").
@@ -27065,7 +26779,6 @@ async function renderExpertsResearchPage() {
 
     const container = gridEl;
     {
-      wireVisibilityBtns(container, () => { renderTotals(); renderGrid(); });
       container.querySelectorAll("input[data-expresearchunlock]").forEach((cb) => {
         cb.addEventListener("change", async () => {
           const expert = cb.dataset.expresearchunlock;
@@ -27864,7 +27577,6 @@ async function renderExpertsPage() {
         renderGrid();
       });
     });
-    wireVisibilityBtns(gridEl, () => { renderTotals(); renderGrid(); });
     gridEl.querySelectorAll("input[data-expunlock]").forEach((cb) => {
       cb.addEventListener("change", async () => {
         const expert = cb.dataset.expunlock;
@@ -28455,7 +28167,6 @@ async function renderRefinePage() {
               ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0;" />` : ""}
               <div class="name" style="font-size:12.5px; font-weight:700; color:${color}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(dataName(pet))}</div>${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}
             </label>
-            ${visibilityBtnHtml("pets", pet)}
             <button class="btn ghost small" data-refinemaxpet="${esc(pet)}" style="flex-shrink:0; margin-left:auto;">${esc(t("max_button"))}</button>
           </div>
           ${STAT_KEYS.map(
@@ -28483,7 +28194,6 @@ async function renderRefinePage() {
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activeRefineIdx, (next) => { activeRefineIdx = next; renderList(); });
 
-    wireVisibilityBtns(listEl, () => { renderTotals(); renderList(); });
     listEl.querySelectorAll("input[data-petunlockrefine]").forEach((cb) => {
       cb.addEventListener("change", async () => {
         const pet = cb.dataset.petunlockrefine;
@@ -28718,7 +28428,7 @@ async function renderPetsDataPage() {
         <div class="panel" style="${unlocked ? "" : "opacity:0.5;"} text-align:start;">
           <div class="pc-head pet-head">
             ${petImage(pet) ? `<img src="${esc(petImage(pet))}" alt="" />` : ""}
-            <div class="pet-nm"><div class="name" style="color:${color};">${esc(dataName(pet))}${done ? ` <span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}</div>${petIsUpcoming(pet) || IS_OWNER ? `<div class="pet-tags">${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}${IS_OWNER ? visibilityBtnHtml("pets", pet) : ""}</div>` : ""}</div>
+            <div class="pet-nm"><div class="name" style="color:${color};">${esc(dataName(pet))}${done ? ` <span class="pc-done-ic" title="${esc(t("pet_done"))}">&#10003;</span>` : ""}</div>${petIsUpcoming(pet) || IS_OWNER ? `<div class="pet-tags">${petIsUpcoming(pet) ? upcomingBadgeHtml() : ""}</div>` : ""}</div>
             <label class="exp-count" title="${esc(t("pet_count_tip"))}"><input type="checkbox" data-petunlock="${esc(pet)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           </div>
           <div class="pc-row">
@@ -28742,7 +28452,6 @@ async function renderPetsDataPage() {
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
     fillPetsReach();
 
-    wireVisibilityBtns(listEl, () => { renderTotals(); renderList(); });
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
       cb.addEventListener("change", async () => {
         const pet = cb.dataset.petunlock;
@@ -29739,7 +29448,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=2881afcbee";
+      s.src = "admin.min.js?v=06ced057fe";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

@@ -617,8 +617,6 @@
   .cando-ord.dim{ opacity:.6; }
   .cando-foot{ display:flex; flex-direction:column; gap:8px; margin-top:16px; }
   .cando-foot .btn{ width:100%; min-height:42px; }
-  @media (max-width:700px){
-      }
   .pc-head{ display:flex; align-items:center; gap:10px; }
   .pc-head img{ width:48px; height:48px; border-radius:12px; object-fit:cover; flex-shrink:0; }
   .pc-head .name{ font-size:16px; font-weight:700; min-width:0; }
@@ -832,10 +830,6 @@
   .bud-rm-l > summary b{ white-space:nowrap; }
   .bud-rm-items{ display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 8px; }
   .bud-rm-for{ flex:1 1 100%; font-size:11px; color:var(--amber); }
-  .bud-rm-link{ display:flex; align-items:center; gap:10px; }
-  .bud-rm-ic{ font-size:22px; flex:none; }
-  .bud-rm-lt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
-  .bud-rm-lt small{ font-size:11.5px; color:var(--muted); }
   .rm-cols{ display:grid; gap:12px; grid-template-columns:minmax(0, 1fr); }
   .rm-cols > div{ min-width:0; }
   @media (min-width:900px){ .rm-cols{ grid-template-columns:minmax(300px, 420px) minmax(0, 1fr); align-items:start; } }
@@ -3089,10 +3083,6 @@ input,select,textarea{
   .admh-t{ display:flex; flex-direction:column; min-width:0; }
   .admh-t b{ font-size:13.5px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
   .admh-t small{ font-size:11.5px; color:var(--muted); line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .admh-c.admh-x{ display:none; }
-  .admh.more .admh-c.admh-x, .admh.q .admh-c.admh-x{ display:flex; }
-  .admh.more .admh-more, .admh.q .admh-more{ display:none; }
-  .admh-more{ display:block; margin:8px auto 0; max-width:100%; min-height:36px; padding:6px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .admh-chips{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
   .admh-chip{ flex:none; display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:0 12px; border:1px solid var(--line); border-radius:18px; background:var(--panel-2); color:var(--frost); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
   .admh-chip img{ width:20px; height:20px; object-fit:contain; }
@@ -3298,12 +3288,6 @@ input,select,textarea{
   .pc-view{ margin-top:10px; border-top:1px solid var(--line); padding-top:8px; }
   .pc-view .seg{ display:flex; }
   .pc-view .seg button{ flex:1; font-size:11.5px; }
-  .pc-pack{ border-top:1px solid var(--line); }
-  .pc-pack summary{ display:flex; align-items:center; gap:8px; padding:8px 0; cursor:pointer; list-style:none; }
-  .pc-pack summary::-webkit-details-marker{ display:none; }
-  .pc-pack .n{ flex:1; min-width:0; font-weight:600; font-size:13px; }
-  .pc-pack .n small{ display:block; font-weight:400; font-size:10.5px; color:var(--muted); }
-  .pc-pack summary b{ white-space:nowrap; }
   .pc-lines{ padding:0 0 8px 10px; font-size:10.5px; line-height:1.6; }
   .pc-lines > div{ display:flex; gap:6px; }
   .pc-lines > div > span:first-child{ color:var(--ice); min-width:30px; text-align:end; }
@@ -3317,7 +3301,6 @@ input,select,textarea{
      the next box shows so it's clear the row scrolls. */
   .bs-tiles.bs-slide{ display:flex !important; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; padding-bottom:2px; }
   .bs-tiles.bs-slide::-webkit-scrollbar{ display:none; }
-  .bs-tiles > .bs-sub{ grid-column:1 / -1; }
   /* Affinity box at one box's width in the sliding row: its 3 items get small */
   .bs-tiles.bs-slide > .bs-aff{ padding:6px 4px 8px; flex-basis:calc(((100% - (var(--bscols, 4) - 1) * 6px) / (var(--bscols, 4) + .35)) * 1.5 + 3px) !important; }
   /* One Backpack mark for the Affinity box, not one per item */
@@ -3724,33 +3707,7 @@ input,select,textarea{
     /* Page descriptions under the title had no size of their own (16 px). */
     .page-head .desc{ font-size:13px; line-height:1.45; margin:4px 0 0; color:var(--muted); }
     /* No text under 11 px (these rules set 8 - 10.5 px above). */
-    .hgh-card .hgh-tr, .hgh-st, .hgh-note, .bset-tag,
-    .bset-note, .pk-hdi b, .pk-tm, .pk-chip .pk-tm,
-    .exp-skl > span, .rch-key, .cg-rch .rch-bar, .ch-rch .rch-mini,
-    .pc-stat span, .pc-stat small, .pc-st > span, .bud-g-tag,
-    .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small,
-    .bud-rm-t th, .rm-sum small, .rm-now, .tl-src,
-    .pc-mark, .pc-badge, .gl-cpic, .gl-tile em,
-    .pur-wk-chip small, .pur-wk-now, .pur-cmp, .pur-cmp-note,
-    .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-differ, .pur-slot small,
-    .pur-dmenu label .meta, .pur-m-ver button span, .pkd-mine, .pur-cl-more,
-    .pur-tagc small, .pur-cl-n i, .pur-legend, #purSugModal .pur-dsel,
-    .pur-sug-more, .pur-t th, .pur-tag, .lvl-cap,
-    .bp-tile .bp-open, .bp-tile .bp-gx, .bp-tile .bp-avg, .bp-chest-note b,
-    .bp-tile .bp-size, .bp-size.bp-wid, .bp-speedsum-cell .meta, .bpw-name .meta,
-    .t12x-settings.one-line .exp-spd #expertsGeneralSpeedupNote, .ch-pic i, .ch-stg.pick em, .ch-lvp small,
-    .gs-stp b small, .gs-grp, .gs-opt small, .cg-badge,
-    .cg-tgt, .plx-piecestat em, .rfc-plan-h em, .pk-chip,
-    .pk-sum-f, .bd-sum .k, .adm-gk, .tx-en small,
-    .rl-chg, .rfa-note, .plx-stat span, .plx-stat small,
-    .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span,
-    .t12x-boxes small, .t12x-ring span, .t12x-nm .meta, .t12x-done,
-    .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-trade small,
-    .pc-k, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small,
-    .pc-pack .n small, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st,
-    .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-row b .bs-sw,
-    .bp-link, .scan-ex span, .scan-lg, .bp-tile .bp-name,
-    .gallery-card .badge, .badge-lvl{ font-size:11px; }
+    .hgh-card .hgh-tr, .hgh-st, .hgh-note, .bset-tag, .bset-note, .pk-hdi b, .pk-tm, .pk-chip .pk-tm, .exp-skl > span, .rch-key, .cg-rch .rch-bar, .ch-rch .rch-mini, .pc-stat span, .pc-stat small, .pc-st > span, .bud-g-tag, .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-rm-t th, .rm-sum small, .rm-now, .tl-src, .pc-mark, .pc-badge, .gl-cpic, .gl-tile em, .pur-wk-chip small, .pur-wk-now, .pur-cmp, .pur-cmp-note, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-differ, .pur-slot small, .pur-dmenu label .meta, .pur-m-ver button span, .pkd-mine, .pur-cl-more, .pur-tagc small, .pur-cl-n i, .pur-legend, #purSugModal .pur-dsel, .pur-sug-more, .pur-t th, .pur-tag, .lvl-cap, .bp-tile .bp-open, .bp-tile .bp-gx, .bp-tile .bp-avg, .bp-chest-note b, .bp-tile .bp-size, .bp-size.bp-wid, .bp-speedsum-cell .meta, .bpw-name .meta, .t12x-settings.one-line .exp-spd #expertsGeneralSpeedupNote, .ch-pic i, .ch-stg.pick em, .ch-lvp small, .gs-stp b small, .gs-grp, .gs-opt small, .cg-badge, .cg-tgt, .plx-piecestat em, .rfc-plan-h em, .pk-chip, .pk-sum-f, .bd-sum .k, .adm-gk, .tx-en small, .rl-chg, .rfa-note, .plx-stat span, .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span, .t12x-boxes small, .t12x-ring span, .t12x-nm .meta, .t12x-done, .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-trade small, .pc-k, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st, .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-row b .bs-sw, .bp-link, .scan-ex span, .scan-lg, .bp-tile .bp-name, .gallery-card .badge, .badge-lvl{ font-size:11px; }
     .t12x-settings.one-line .exp-spd .meta:first-child, .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ font-size:11px !important; }
     /* ... and sizes typed on the element itself. */
     [style*="font-size:8px"], [style*="font-size: 8px"], [style*="font-size:8.5px"], [style*="font-size: 8.5px"],
@@ -3829,77 +3786,7 @@ input,select,textarea{
   /* Text sizes like wostools.net on phones: its smallest labels are about 12 px, so ours are 12 px too (badges on
      pictures and the tuned Chief Gear labels keep 11 px; the Dashboard has its own block). */
   @media (max-width: 700px){
-    .tn-lang-list button small, .acc-head .meta, .site-footer, .hgh-head .meta,
-    .hgh-card .hgh-tr, .hgh-st, .hgh-note, .hgh-pick,
-    .bud-hgnote, .bud-seg button, .bset-l small, .bset-sec b,
-    .bset-note, .pk-hdi b, .pk-chip, .pks-note,
-    .pks-info, .bud-spend-per button, .bud-spend-more > summary, .exp-count,
-    .exp-skl > span, .exp-xl, .exp-xl .btn, .plx-piecestat.hgc-stat,
-    .rlk-pill, .rlk-chip, .rlk-lab, .rch-trade,
-    .rch-wait, .rch-bar, .rch-key, .rch-mini,
-    .cg-rch .rch-bar, .ch-rch .rch-mini, .rcs-car, .rcs-row span i,
-    .pc-stat span, .pc-stat small, .pc-st > span, .bud-partial,
-    .bud-vip, .vip-b-ic b, .vip-b-t small, .bud-g-desc,
-    .bud-g-n, .bud-g-tag, .bud-g-t small, .bud-g-btns button,
-    .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-ht-c,
-    .bud-rm-t, .bud-rm-t th, .bud-rm-note, .bud-rm-for,
-    .bud-rm-lt small, .rm-sum small, .rm-ws, .rm-now,
-    .rm-gap, .rm-gl > .meta:first-child, .bud-line-t .meta, .bud-line-v .meta,
-    .pur-ng-own, .tl-k, .tl-nxk, .tl-gen,
-    .tl-src, .sa-k, .sa-chip, .sa-preview,
-    .sa-num, .pc-chip, .pc-week-h, .pc-item-m .meta,
-    .pc-mark, .pur-f, .gi-note, .gl-cpic,
-    .gl-note, .gl-miss, .gl-tile, .gl-tile em,
-    .pur-cnt-l small, .pur-cnt-note, .pur-bh.wait .meta, .pur-bh .meta,
-    .pur-row-t small, .pur-item-f, .pur-sq, .pur-how,
-    .pur-ng-next, .pur-wk-chip, .pur-wk-chip small, .pur-wk-now,
-    .pur-sug-split > div, .pur-for, .pur-cmp, .pur-cmp-note,
-    .pur-ms-vers .pur-vb-k, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-g,
-    .pur-ms-head, .pur-ms-differ, .pur-ms-pickn, .pur-ms-plpick,
-    .pur-slot i, .pur-slot small, .pur-dsel, .pur-dmenu label .meta,
-    .pur-ms-note, .pur-m-steps button, .pur-m-ver button span, .pkd-mine,
-    .pkd-n .meta, .pur-wc-colh, .pur-wc-t small, .pur-hc-wk,
-    .pur-pc-s, .pur-hc-tw, .pur-wb small, .pur-wb i,
-    .pur-tagc small, .pur-cl-n i, .pur-cl-ex, .pur-cl-top,
-    .pur-legend, #purSugModal .pur-dsel, .pur-m-top, .pur-m-top .linklike,
-    .pur-sug-more, .pur-t th, .pur-t-miss, .pur-t-sel,
-    .pur-tag, .b3-hd-t small, .b3-coming, .b3-sl .bud-line-v .meta,
-    .b3-lbl, .b3-stop .b3-ics em, .b3-stop small, .b3-pt-m,
-    .b3-ring b, .b3-lr-t small, .lvl-cap, .page-head .sub,
-    table, .stat-card .label, .pill, .bp-head .meta,
-    .bp-tile .bp-gx, .gx-head .meta, .gx-tot, .gx-note,
-    .bp-tile .bp-avg, .bp-chest-note, .bp-chest-note b, .bp-tile .bp-shield,
-    .bpsh-name .meta, .bpsh-nums, .bpsh-nums .linklike, .bpsh-sub,
-    .bpsh-wid, .bp-speedsum-cell .meta, .bpw-head .desc, .bpw-name .meta,
-    .t12x-k, .t12x-settings.one-line #researchSpeedupNote, .t12x-settings.one-line .exp-spd #expertsGeneralSpeedupNote, .exp-spd .meta,
-    #expertsGeneralSpeedupNote, .ch-t-v .ch-tc, .ch-stg.pick em, .ch-lvp b,
-    .ch-lvp small, .ch-hint, .gs-l, .gs-stp b small,
-    .gs-grp, .gs-opt small, .cg-nm, .cg-k,
-    .cg-can-t small, .cg-th, .cg-mk, #gearCurrentStats .plx-stat span,
-    #gearCurrentStats .plx-stat small, #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark,
-    .pca-big .cur, .pca-pr .cur, .pca-h, .pca-nm small,
-    .pca-sb, .pca-chip, .t12x-good, .t12x-row,
-    .plx-piecestat em, .rfc-plan-h em, .rfc-plan-k, .rfc-plan-w,
-    .plx-sel span, .pk-sum-gives, .pk-sum-f, .pk-bud,
-    .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk,
-    .adm-ext, .admc-txt small, .admc-hint, .admf,
-    .bk-row small, .lg-sum span, .tx-en small, .rl-item small,
-    .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small,
-    .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span,
-    .adm-card span, .rfa-name small, .rfa-note, .plx-stat span,
-    .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small,
-    .t12x-boxes span, .t12x-boxes small, .t12x-gt small, .t12x-ring span,
-    .t12x-maxall, .t12x-nm .meta, .t12x-done, .t12x-lbl,
-    .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-switch, .pc-trade small,
-    .pc-sub, .pc-k, .pc-chips span, .pc-plan .pc-k,
-    .pc-plan b .cur, .pc-plan small, .pc-free, .pc-view .seg button,
-    .pc-pack .n small, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st,
-    .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-nb-parts,
-    .bs-nb-from, .bs-sum > div, .bs-row .n small, .bs-title,
-    .bs-row b .bs-sw, .bs-ok span, .bp-link, .scan-ex span,
-    .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name,
-    .skin-card .sowned, .gallery-divider span, .pack-col-fixed, .acc-or,
-    .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
+    .tn-lang-list button small, .acc-head .meta, .site-footer, .hgh-head .meta, .hgh-card .hgh-tr, .hgh-st, .hgh-note, .hgh-pick, .bud-hgnote, .bud-seg button, .bset-l small, .bset-sec b, .bset-note, .pk-hdi b, .pk-chip, .pks-note, .pks-info, .bud-spend-per button, .bud-spend-more > summary, .exp-count, .exp-skl > span, .exp-xl, .exp-xl .btn, .plx-piecestat.hgc-stat, .rlk-pill, .rlk-chip, .rlk-lab, .rch-trade, .rch-wait, .rch-bar, .rch-key, .rch-mini, .cg-rch .rch-bar, .ch-rch .rch-mini, .rcs-car, .rcs-row span i, .pc-stat span, .pc-stat small, .pc-st > span, .bud-partial, .bud-vip, .vip-b-ic b, .vip-b-t small, .bud-g-desc, .bud-g-n, .bud-g-tag, .bud-g-t small, .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-ht-c, .bud-rm-t, .bud-rm-t th, .bud-rm-note, .bud-rm-for, .rm-sum small, .rm-ws, .rm-now, .rm-gap, .rm-gl > .meta:first-child, .bud-line-t .meta, .bud-line-v .meta, .pur-ng-own, .tl-k, .tl-nxk, .tl-gen, .tl-src, .sa-k, .sa-chip, .sa-preview, .sa-num, .pc-chip, .pc-week-h, .pc-item-m .meta, .pc-mark, .pur-f, .gi-note, .gl-cpic, .gl-note, .gl-miss, .gl-tile, .gl-tile em, .pur-cnt-l small, .pur-cnt-note, .pur-bh.wait .meta, .pur-bh .meta, .pur-row-t small, .pur-item-f, .pur-sq, .pur-how, .pur-ng-next, .pur-wk-chip, .pur-wk-chip small, .pur-wk-now, .pur-sug-split > div, .pur-for, .pur-cmp, .pur-cmp-note, .pur-ms-vers .pur-vb-k, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-g, .pur-ms-head, .pur-ms-differ, .pur-ms-pickn, .pur-ms-plpick, .pur-slot i, .pur-slot small, .pur-dsel, .pur-dmenu label .meta, .pur-ms-note, .pur-m-steps button, .pur-m-ver button span, .pkd-mine, .pkd-n .meta, .pur-wc-colh, .pur-wc-t small, .pur-hc-wk, .pur-pc-s, .pur-hc-tw, .pur-wb small, .pur-wb i, .pur-tagc small, .pur-cl-n i, .pur-cl-ex, .pur-cl-top, .pur-legend, #purSugModal .pur-dsel, .pur-m-top, .pur-m-top .linklike, .pur-sug-more, .pur-t th, .pur-t-miss, .pur-t-sel, .pur-tag, .b3-hd-t small, .b3-coming, .b3-sl .bud-line-v .meta, .b3-lbl, .b3-stop .b3-ics em, .b3-stop small, .b3-pt-m, .b3-ring b, .b3-lr-t small, .lvl-cap, .page-head .sub, table, .stat-card .label, .pill, .bp-head .meta, .bp-tile .bp-gx, .gx-head .meta, .gx-tot, .gx-note, .bp-tile .bp-avg, .bp-chest-note, .bp-chest-note b, .bp-tile .bp-shield, .bpsh-name .meta, .bpsh-nums, .bpsh-nums .linklike, .bpsh-sub, .bpsh-wid, .bp-speedsum-cell .meta, .bpw-head .desc, .bpw-name .meta, .t12x-k, .t12x-settings.one-line #researchSpeedupNote, .t12x-settings.one-line .exp-spd #expertsGeneralSpeedupNote, .exp-spd .meta, #expertsGeneralSpeedupNote, .ch-t-v .ch-tc, .ch-stg.pick em, .ch-lvp b, .ch-lvp small, .ch-hint, .gs-l, .gs-stp b small, .gs-grp, .gs-opt small, .cg-nm, .cg-k, .cg-can-t small, .cg-th, .cg-mk, #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small, #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark, .pca-big .cur, .pca-pr .cur, .pca-h, .pca-nm small, .pca-sb, .pca-chip, .t12x-good, .t12x-row, .plx-piecestat em, .rfc-plan-h em, .rfc-plan-k, .rfc-plan-w, .plx-sel span, .pk-sum-gives, .pk-sum-f, .pk-bud, .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk, .adm-ext, .admc-txt small, .admc-hint, .admf, .bk-row small, .lg-sum span, .tx-en small, .rl-item small, .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small, .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span, .adm-card span, .rfa-name small, .rfa-note, .plx-stat span, .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span, .t12x-boxes small, .t12x-gt small, .t12x-ring span, .t12x-maxall, .t12x-nm .meta, .t12x-done, .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-switch, .pc-trade small, .pc-sub, .pc-k, .pc-chips span, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small, .pc-free, .pc-view .seg button, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st, .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-nb-parts, .bs-nb-from, .bs-sum > div, .bs-row .n small, .bs-title, .bs-row b .bs-sw, .bs-ok span, .bp-link, .scan-ex span, .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name, .skin-card .sowned, .gallery-divider span, .pack-col-fixed, .acc-or, .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
     .t12x-settings.one-line .exp-spd .meta:first-child, .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ font-size:11px !important; }
     [style*="font-size:8px"], [style*="font-size: 8px"], [style*="font-size:8.5px"], [style*="font-size: 8.5px"],
     [style*="font-size:9px"], [style*="font-size: 9px"], [style*="font-size:9.5px"], [style*="font-size: 9.5px"],
@@ -4181,8 +4068,7 @@ input,select,textarea{
   .mpk-adm input{ width:72px; }
   .mpk-speed{ padding:10px 12px; border:1px solid rgba(224,178,90,.6); border-radius:12px; color:var(--amber, #e0b25a); font-size:12px; line-height:1.4; }
   .mpk-pgs{ display:flex; flex-wrap:wrap; gap:6px; }
-  /* P3 step cards: the visitor window (div markup) and the admin's Packs window on
-     phones (the table drawn as cards, .pkb-steps). */
+  /* P3: the visitor window's pieces; in the Packs window's table these labels stay hidden. */
   .pkc-ic, .pkc-nm, .pkc-cur, .pkc-lb, .pkc-addth{ display:none; }
   .mpw-panel .pkc-ic{ display:inline-flex; }
   .pkc-k{ margin:14px 0 8px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
@@ -4195,11 +4081,9 @@ input,select,textarea{
   .pkc-max{ display:inline-flex; align-items:center; gap:6px; margin-inline-start:auto; font-size:12px; color:var(--muted); }
   .pkc-max input{ flex:0 0 44px !important; width:44px !important; height:32px; min-height:32px !important; padding:0 4px !important; text-align:center; font-size:14px !important; }
   .pkc-acts{ display:grid; grid-template-columns:1fr auto 1fr; gap:8px; margin:4px 0 8px; }
-  .pkb-steps .pkc-acts{ grid-template-columns:1fr 1fr; }
   .pkc-acts .btn{ min-height:40px; font-weight:700; color:var(--ice); }
   .pkc-acts .pkc-sm{ width:44px; padding:0; font-size:18px; }
   .pkc-note{ font-size:12px; line-height:1.4; margin:4px 0; }
-  .pkc-link{ border:0; background:none; color:var(--ice); font:inherit; font-size:14px; font-weight:700; cursor:pointer; padding:8px 0; min-height:40px; }
   .pkb-budrow span small{ display:block; font-size:12px; }
   .pkb-budrow input[type=date]{ max-width:160px; }
   .pkb-budrow + .pkb-budrow{ border-top:1px solid var(--line); }
@@ -4235,35 +4119,6 @@ input,select,textarea{
   @media (min-width: 701px){ .mpt th.mpt-ad{ width:100%; text-align:start; } }
   .mpt-adb .pkc-chip{ min-height:40px; white-space:nowrap; }
   .mpt-adb .pkc-chip[data-mpdelcol]{ width:40px; justify-content:center; padding:0; font-size:18px; }
-  @media (max-width: 700px){
-    .pkb-panel.pkb-steps .pk-tbl-wrap{ overflow:visible !important; border:0 !important; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap table{ display:block; width:100% !important; min-width:0 !important; table-layout:auto !important; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap thead, .pkb-panel.pkb-steps .pk-tbl-wrap tbody{ display:block; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap thead tr{ display:flex; flex-wrap:wrap; gap:6px; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap thead tr::before, .pkb-panel.pkb-steps .pk-tbl-wrap tbody::before{ content:attr(data-k); flex:0 0 100%; display:block; margin:2px 0 2px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-    .pkb-panel.pkb-steps .pk-tbl-wrap tbody::before{ margin:14px 0 8px; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap tr > :first-child{ position:static !important; box-shadow:none !important; background:none; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap th.pk-th{ display:inline-flex; align-items:center; gap:6px; min-width:0 !important; min-height:36px; padding-block:2px 2px !important; padding-inline:3px 10px !important; box-sizing:border-box; border:1px solid var(--line) !important; border-radius:10px; background:var(--panel-2) !important; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-price, .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-gems, .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-maxth{ display:none; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap th .pk-hdi{ width:30px; height:30px; border:0; background:none; }
-    .pkb-panel.pkb-steps .pkc-nm{ display:inline; font-size:13px; font-weight:600; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap th.pkc-addth{ display:inline-flex; padding:0 !important; border:0 !important; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap tbody tr[data-row]{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin:0 0 8px; padding:10px; border:1px solid var(--line); border-radius:12px; background:var(--panel) !important; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap tbody tr:not([data-row]){ display:none; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap tbody td{ display:flex; align-items:center; gap:4px; min-width:0 !important; padding:0 !important; }
-    .pkb-panel.pkb-steps td.pkc-price{ grid-row:1; grid-column:1; }
-    .pkb-panel.pkb-steps td.pkc-gems{ grid-row:1; grid-column:2; opacity:.85; }
-    .pkb-panel.pkb-steps td.pkc-max{ grid-row:1; grid-column:3; justify-content:flex-end; }
-    .pkb-panel.pkb-steps td.pkc-item{ height:34px; padding:0 6px 0 4px !important; box-sizing:border-box; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); }
-    .pkb-panel.pkb-steps .pkc-ic, .pkb-panel.pkb-steps .pkc-cur, .pkb-panel.pkb-steps .pkc-lb{ display:inline-flex; }
-    .pkb-panel.pkb-steps .pkc-cur, .pkb-panel.pkb-steps .pkc-lb{ font-size:12px; color:var(--muted); }
-    .pkb-panel.pkb-steps td.pkc-gems .pkc-ic{ width:20px; flex-basis:20px; }
-    .pkb-panel.pkb-steps td.pkc-gems .pkc-ic img{ width:18px; height:18px; }
-    .pkb-panel.pkb-steps .pk-tbl-wrap td input[data-pt-cell]{ flex:1 1 auto; width:100% !important; min-width:0; max-width:none !important; height:30px !important; min-height:0 !important; margin:0; padding:0 2px !important; font-size:14px !important; }
-    .pkb-panel.pkb-steps td.pkc-item input[data-pt-cell]{ border:0 !important; background:none !important; font-weight:700; text-align:end !important; }
-    .pkb-panel.pkb-steps td.pkc-price input[data-pt-cell]{ font-weight:800; font-size:15px !important; text-align:start !important; }
-    .pkb-panel.pkb-steps td.pkc-max input{ flex:0 0 44px !important; min-width:0 !important; width:44px !important; height:32px; font-size:14px !important; }
-  }
   /* P2: the "+ New pack" sheet (bottom sheet on phones) */
   .mpn-ov{ z-index:75; }
   .modal-box.mpn{ max-width:480px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
