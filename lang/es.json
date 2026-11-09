@@ -2264,6 +2264,7 @@
 "t:pur_a2_less":"Ver menos",
 "t:pur_a2_mark":"Marcar como comprado",
 "t:pur_a2_bought_mark":"Comprado",
+"t:pur_a2_unmark":"Comprado · toca para deshacer",
 "t:pur_o1_coming":"Compraré",
 "t:pur_o1_box":"Tus paquetes",
 "t:pur_o1_none":"ninguno",

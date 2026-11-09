@@ -2263,6 +2263,7 @@
 "t:pur_a2_less":"Thu gọn",
 "t:pur_a2_mark":"Đánh dấu đã mua",
 "t:pur_a2_bought_mark":"Đã mua",
+"t:pur_a2_unmark":"Đã mua · chạm để hoàn tác",
 "t:pur_o1_coming":"Sẽ mua",
 "t:pur_o1_box":"Gói của bạn",
 "t:pur_o1_none":"không có",
