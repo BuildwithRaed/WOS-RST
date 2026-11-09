@@ -12873,9 +12873,9 @@ function backpackItems() {
   return groups;
 }
 const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
-// Islands: the Mark of Revival Shop's currency (bought with packs), always in the Backpack.
-const BP_ISLAND_ITEMS = ["Mark of Revival"];
-const BP_EXTRA_ICONS = { "Mark of Revival": "icons/mark-of-revival.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
+// Islands: Life Essence, Mythic Island Shards and the Mark of Revival Shop's currency, always in the Backpack.
+const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "Mark of Revival"];
+const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "Mark of Revival": "icons/mark-of-revival.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -23186,7 +23186,7 @@ const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
 // calc_state "island_shards" = { targets: { skinId: level }, allPick, allView (plan over every category), essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
 const islDefault = () => ({ targets: {}, essence: 0, shards: 0, tree: 10, camp1: 10, camp2: 10, ally: 3, evPer: {}, store: {}, hidden: false });
-function islSave() { saveCalcState("island_shards", ISL_SHARDS); }
+function islSave() { const { essence, shards, ...rest } = ISL_SHARDS; saveCalcState("island_shards", rest); }
 // Mythic = max level 10 or more (missing = 10); purple / blue ones stop at Lv 5.
 const islIsMythic = (s) => Number(s.max_level ?? 10) >= 10;
 // How a building is got, set by the owner for everyone: site_config island_sources =
@@ -23392,6 +23392,7 @@ async function renderIslandGallery() {
     ensureGalleryUncounted(),
     loadCalcState("island_shards"),
     loadCalcState("backpack").catch(() => null),
+    ensureBarHidden(),
   ]);
   if (seq !== RENDER_SEQ) return;
   let islBp = islBp0;
@@ -23407,6 +23408,17 @@ async function renderIslandGallery() {
   if (!ISL_SHARDS.targets || typeof ISL_SHARDS.targets !== "object") ISL_SHARDS.targets = {};
   if (!ISL_SHARDS.store || typeof ISL_SHARDS.store !== "object") ISL_SHARDS.store = {};
   ["every", "shop", "mill", "workers"].forEach((k) => { delete ISL_SHARDS[k]; }); // settings no longer used
+  // Life Essence and Mythic Island Shards live in the Backpack (shared with the Backpack
+  // page); amounts typed here before are moved there once.
+  {
+    const bp = { ...(islBp || {}) }, old = islSaved && typeof islSaved === "object" ? islSaved : {};
+    let moved = false;
+    [["essence", "Life Essence"], ["shards", "Mythic Island Shards"]].forEach(([k, n]) => {
+      if (!(n in bp) && Number(old[k]) > 0) { bp[n] = Math.floor(Number(old[k])); moved = true; }
+      ISL_SHARDS[k] = Number(bp[n]) || 0;
+    });
+    if (moved) { islBp = bp; saveCalcState("backpack", bp); islSave(); }
+  }
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
   const islands = await keptRows("skins",
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
@@ -23452,7 +23464,7 @@ async function renderIslandGallery() {
       <div id="islandTroopTotals"></div>
       <div id="islandShardPlan"></div>
     </div>
-    <div class="panel isl-pcw" id="islMkPacks" hidden></div>
+    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>$ ${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div></div><div class="cg-bd" data-islbd hidden></div></div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
     <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
@@ -23623,7 +23635,6 @@ async function renderIslandGallery() {
     if (!list.length) { host.innerHTML = ""; return; }
     const view = allLocked() ? `<div class="isl-seg isl-view"><button type="button" class="on" disabled>${esc(t("isl_view_all"))}</button></div>`
       : `<div class="isl-seg isl-view"><button type="button" data-islview="cat" class="${ISL_SHARDS.allView ? "" : "on"}">${esc(t("isl_view_cat").replace("{name}", ISLAND_FILTER.bonusType))}</button><button type="button" data-islview="all" class="${ISL_SHARDS.allView ? "on" : ""}">${esc(t("isl_view_all"))}</button></div>`;
-    const cats = new Set(list.map((s) => s.category)).size;
     const st = ISL_SHARDS;
     const P = planTotals(list), left = P.left, short = P.short;
     const tm = P.days != null ? { weeks: P.weeks, at: P.at } : null;
@@ -23648,20 +23659,21 @@ async function renderIslandGallery() {
     // Backpack boxes like the planner pages: Life Essence and Mythic Island Shards, each with
     // what you have, "need N" for the shown plan and short / ✓; tap = type the amount.
     const essNeed = Math.max(0, left - (st.shards || 0) * ePS()), shNeed = P.sh;
-    const tile = (k, icon, label, have, need, sh) => { const ts = bsTileStatus(need, sh); return `<button type="button" class="bp-tile bs-tile${ts.off ? " off" : ""}" data-islhave="${k}" title="${esc(label)}"><span class="bs-mark">&#9998;</span><img src="${icon}" alt="" /><span class="bp-qty">${bidiNum(shortAmount(have))}</span><span class="bp-name">${esc(label)}</span>${ts.html}</button>`; };
+    const tile = (k, icon, label, have, need, sh) => { const ts = bsTileStatus(need, sh); return `<button type="button" class="bp-tile bs-tile${ts.off ? " off" : ""}" data-islhave="${k}" title="${esc(label)}"><span class="bs-mark">&#127890;</span><img src="${icon}" alt="" /><span class="bp-qty">${bidiNum(shortAmount(have))}</span><span class="bp-name">${esc(label)}</span>${ts.html}</button>`; };
     const tiles = [tile("essence", "icons/life-essence.png", t("isl_essence"), st.essence || 0, essNeed, short),
       tile("shards", "icons/island-shard.png", t("isl_shards"), st.shards || 0, shNeed, Math.max(0, shNeed - (st.shards || 0)))];
     // Mark of Revival (bought with packs, after the free shards): need = what the plan
     // buys with Marks, or with no Budgets target the optional amount.
     const mk = list.reduce((a, s) => a + marksOf(s), 0), mkOpt = mk ? 0 : list.reduce((a, s) => a + marksOpt(s), 0);
     if (mk > 0 || mkOpt > 0) tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk || mkOpt, Math.max(0, (mk || mkOpt) - markHave())));
-    let res = `<div class="bs-tiles isl-bst">${tiles.join("")}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
+    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal();
+    const priceBtn = mkTotal > 0 && visitorCan("packcost") ? `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn ice" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button></span>` : "";
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button>${priceBtn}</div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
       ${view}
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
-      ${allOn() ? `<div class="isl-allnote">${esc(t("isl_view_sets").replace("{n}", list.length).replace("{c}", cats))}</div>` : ""}
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
     bsSlideFit(host);
@@ -23683,9 +23695,11 @@ async function renderIslandGallery() {
           return;
         }
         const P2 = planTotals(planList()), nd = k === "essence" ? Math.max(0, P2.left - (ISL_SHARDS.shards || 0) * ePS()) : P2.sh;
-        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { ISL_SHARDS[k] = Math.floor(v); islSave(); drawPlan(); } });
+        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
         return;
       }
+      if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
+      if (e.target.closest("[data-islpc]")) { islOpenPacks(); return; }
       if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
     };
     host.onchange = (e) => {
@@ -23706,15 +23720,35 @@ async function renderIslandGallery() {
   const markSheetTotal = () => markNeedAll() || islands.filter(usesMarks).reduce((a, s) => a + marksOpt(s), 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
   let mkSig = null;
-  PACK_COST_HOOKS.islands = () => document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.textContent = PACK_COST_SHOWN.islands || t("pc_title"); });
+  PACK_COST_HOOKS.islands = () => document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
+  // The Pack cost window, like the planner pages: on phones it opens over the page from
+  // the "$ <price> ›" button on the Backpack line; on PC the card sits under the stats card.
+  function islPacksTo(open) {
+    const buy = document.getElementById("islMkBuy"), bd = document.querySelector("[data-islbd]");
+    if (!buy) return;
+    buy.classList.toggle("cg-open", !!open);
+    buy.dataset.cgshow = open ? "packs" : "";
+    if (bd) bd.hidden = !open;
+    if (open) buy.scrollTop = 0;
+  }
+  function islOpenPacks() {
+    if (ISL_POP) ISL_POP.close();
+    if (window.matchMedia("(max-width: 900px)").matches) islPacksTo(true);
+    else { const c = document.getElementById("islMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  }
+  {
+    const w = document.getElementById("islMkWrap");
+    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-islbd]")) islPacksTo(false); };
+  }
   // The Pack cost card (design A, like every planner page) for the Marks, its own card
   // under the Troops Stats card; shown when Marks are needed (or optional with no target).
   function islMarkCard() {
     const host = document.getElementById("islMkPacks");
     if (!host) return;
     const total = markSheetTotal(), sig = `${total}|${markHave()}`;
-    if (!total) { mkSig = sig; host.hidden = true; host.innerHTML = ""; packCostShown("islands", null); return; }
-    host.hidden = false;
+    const wrap = document.getElementById("islMkWrap");
+    if (!total) { mkSig = sig; if (wrap) wrap.hidden = true; host.innerHTML = ""; islPacksTo(false); packCostShown("islands", null); return; }
+    if (wrap) wrap.hidden = false;
     if (sig === mkSig && host.innerHTML) return;
     mkSig = sig;
     PACK_COST_OPEN.islands = true;
@@ -23937,7 +23971,7 @@ async function renderIslandGallery() {
       if (st) { if (e.detail === 0) setLv(lvOf(s) + Number(st.dataset.ipstep)); return; } // keyboard
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
-      if (e.target.closest("[data-islmkopen]")) { const c = document.getElementById("islMkPacks"); if (ISL_POP) ISL_POP.close(); if (c && !c.hidden) c.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+      if (e.target.closest("[data-islmkopen]")) { islOpenPacks(); return; }
       const stb = e.target.closest("[data-ipst]");
       if (stb && !stb.disabled) {
         ISL_SHARDS.store = { ...(ISL_SHARDS.store || {}), [s.id]: Math.max(0, storeOf(s) + Number(stb.dataset.ipst)) };
