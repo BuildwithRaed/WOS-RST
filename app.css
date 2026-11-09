@@ -3405,6 +3405,80 @@ input,select,textarea{
   .sg-pop-num small{ font-size:12px; color:var(--muted); font-weight:600; }
   .sg-pop-bt .sg-pop-mx{ width:52px; font-size:12.5px; color:var(--good); border-color:rgba(91,201,138,.55); }
   .sg-pop-ft{ display:flex; justify-content:space-between; gap:8px; margin-top:7px; font-size:11.5px; color:var(--muted); }
+  /* Islands: Mythic shards plan (Attack). */
+  .isl-tbg{ position:absolute; top:3px; inset-inline-end:3px; z-index:3; font-size:11px; font-weight:800; line-height:1; padding:3px 4px; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(124,196,255,.55); color:#7cc4ff; white-space:nowrap; pointer-events:none; }
+  .isl-tsh{ margin-top:4px; font-size:11.5px; font-weight:800; color:#e0b25a; line-height:1.2; text-align:center; white-space:nowrap; }
+  .isl-tsh i{ font-style:normal; }
+  .isl-tbg[hidden], .isl-tsh[hidden]{ display:none; }
+  .isl-pl{ margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
+  .isl-pl-h{ padding-top:8px; }
+  .isl-hd{ display:flex; align-items:center; gap:8px; }
+  .isl-hd .t{ font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .isl-hd .g1-fold{ margin-inline-start:auto; }
+  .isl-hs{ margin-inline-start:auto; font-size:12.5px; color:var(--frost); font-weight:700; white-space:nowrap; }
+  .isl-hs + .g1-fold{ margin-inline-start:0; }
+  .isl-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; font-size:13.5px; color:var(--frost); }
+  .isl-row .isl-sel{ height:34px; min-width:96px; width:auto; padding:0 8px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-weight:700; font-size:13.5px; }
+  .isl-hl{ margin-top:10px; font-size:12px; color:var(--muted); font-weight:700; }
+  .isl-hl span{ font-weight:600; }
+  .isl-have{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+  .isl-hb{ min-width:0; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); padding:7px 9px; display:flex; gap:8px; align-items:center; text-align:start; font:inherit; color:inherit; cursor:pointer; }
+  .isl-ic{ width:30px; height:30px; flex:0 0 30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:17px; }
+  .isl-ic.e{ background:rgba(76,209,138,.15); }
+  .isl-ic.s{ background:rgba(224,178,90,.15); color:#e0b25a; }
+  .isl-hb > span:last-child{ min-width:0; }
+  .isl-hb small{ display:block; font-size:11px; color:var(--muted); font-weight:600; line-height:1.2; }
+  .isl-hb b{ display:block; font-size:15px; color:var(--frost); line-height:1.25; }
+  .isl-res{ margin-top:10px; padding:9px 10px; border-radius:10px; background:rgba(224,178,90,.08); border:1px solid rgba(224,178,90,.35); font-size:13px; line-height:1.45; color:var(--frost); }
+  .isl-res b{ color:#e0b25a; }
+  .isl-res .g{ color:var(--muted); font-size:12px; }
+  .isl-inc{ margin-top:8px; width:100%; display:flex; align-items:center; gap:8px; text-align:start; min-height:36px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:#93a1b5; font:inherit; font-size:12px; line-height:1.35; cursor:pointer; }
+  .isl-inc b{ color:var(--frost); }
+  .isl-inc .go{ margin-inline-start:auto; color:var(--ice); font-size:16px; }
+  .isl-tg{ display:flex; align-items:center; gap:6px; margin-top:8px; }
+  .isl-tg .l{ width:48px; font-size:11.5px; font-weight:800; color:#7cc4ff; text-transform:uppercase; letter-spacing:.04em; }
+  .isl-tg button{ height:40px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel); font:inherit; font-weight:800; cursor:pointer; touch-action:manipulation; }
+  .isl-tg button:disabled{ opacity:.4; cursor:default; }
+  .isl-tg .sg-pop-mx{ width:52px; font-size:12.5px; color:var(--good); border-color:rgba(91,201,138,.55); }
+  .isl-tg .n{ flex:1; text-align:center; font-size:22px; font-weight:800; color:#7cc4ff; }
+  .isl-need{ margin-top:8px; font-size:12.5px; color:var(--frost); line-height:1.4; }
+  .isl-need b{ color:#e0b25a; }
+  .isl-need .g{ color:var(--muted); font-size:11.5px; }
+  .isl-need:empty{ display:none; }
+  .isl-get{ margin-top:8px; padding:7px 9px; border-radius:9px; background:rgba(124,196,255,.08); border:1px solid rgba(124,196,255,.3); font-size:12.5px; color:var(--frost); }
+  .isl-get[hidden]{ display:none; }
+  .isl-sh .r{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px; color:var(--frost); }
+  .isl-sh .r small{ display:block; font-size:11.5px; color:var(--muted); }
+  .isl-st{ display:flex; align-items:center; gap:6px; }
+  .isl-st button{ width:36px; height:36px; padding:0; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--ice); font:inherit; font-size:19px; font-weight:800; cursor:pointer; }
+  .isl-st button:disabled{ opacity:.4; cursor:default; }
+  .isl-st > span{ min-width:34px; text-align:center; font-weight:800; font-size:15px; }
+  .isl-gs{ font-size:10.5px; font-weight:800; color:#1a1405; background:#e0b25a; border-radius:5px; padding:1px 5px; margin-inline-start:6px; vertical-align:2px; }
+  .isl-tb{ width:100%; border-collapse:collapse; margin-top:12px; font-size:13px; }
+  .isl-tb th{ font-size:11.5px; color:var(--muted); font-weight:700; text-align:end; padding:5px 4px; }
+  .isl-tb th:first-child, .isl-tb td:first-child{ text-align:start; }
+  .isl-tb td{ padding:7px 4px; text-align:end; border-top:1px solid var(--line); color:var(--frost); font-weight:700; }
+  .isl-tb td:first-child{ color:var(--muted); font-weight:600; }
+  .isl-shop{ margin-top:12px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font-size:13px; color:var(--frost); }
+  .isl-shop-r{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .isl-shop input{ width:64px; height:32px; text-align:center; font-size:16px; }
+  .isl-shop .bar{ height:6px; border-radius:4px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden; }
+  .isl-shop .bar i{ display:block; height:100%; background:#7cc4ff; }
+  .isl-shop small{ display:block; margin-top:5px; color:var(--muted); font-size:11.5px; }
+  .isl-done{ width:100%; margin-top:12px; }
+  .isl-tsh.tag{ color:#c9b6ff; font-weight:700; font-size:11px; }
+  .isl-msg{ padding:7px 9px; border-radius:9px; background:rgba(201,182,255,.08); border:1px solid rgba(201,182,255,.3); font-size:12.5px; color:var(--frost); line-height:1.4; }
+  .isl-nc{ margin-top:4px; font-size:12px; color:var(--muted); }
+  .isl-src{ display:flex; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line); }
+  .isl-src label{ display:flex; flex-direction:column; gap:3px; min-width:0; font-size:11px; color:var(--muted); font-weight:700; }
+  .isl-src label:first-child{ flex:1 1 auto; }
+  .isl-src label[hidden]{ display:none; }
+  .isl-src select{ height:36px; width:100%; padding:0 8px; line-height:normal; font-size:13px; }
+  .isl-src{ flex-wrap:wrap; }
+  .isl-src input{ width:70px; height:34px; text-align:center; font-size:16px; }
+  .isl-src label.w input{ width:110px; }
+  .isl-ev{ margin-top:5px; line-height:1.9; }
+  .isl-ev select{ height:32px; min-width:52px; width:auto; padding:0 6px; font-size:14px; font-weight:800; }
   .sg-toast{ position:fixed; z-index:300; left:50%; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); width:min(380px, calc(100vw - 24px)); transform:translate(-50%, 20px); opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; display:flex; align-items:center; gap:8px; padding:6px 6px 6px 12px; border-radius:12px; background:#25344a; border:1px solid var(--line); box-shadow:0 10px 30px rgba(0,0,0,.5); font-size:13px; color:var(--frost); }
   .sg-toast.show{ opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
   .sg-toast-m{ flex:1; min-width:0; }

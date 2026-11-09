@@ -1826,6 +1826,61 @@ const T = {
   sg_lv: { en: "Lv {n}" },
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
+  isl_plan: { en: "Shards plan" },
+  isl_hide: { en: "\u25be Hide" },
+  isl_show: { en: "\u25b8 Show" },
+  isl_target_all: { en: "Target all buildings" },
+  isl_mixed: { en: "Mixed" },
+  isl_you_have: { en: "You have" },
+  isl_tap_type: { en: "(tap to type)" },
+  isl_essence: { en: "Life Essence" },
+  isl_shards: { en: "Mythic Island Shards" },
+  isl_left: { en: "Left: {n} shards" },
+  isl_have_short: { en: "({have} have \u2192 {short} short)" },
+  isl_have_ok: { en: "({have} have) \u00b7 \u2713 you have enough" },
+  isl_done_in: { en: "All done ~{w} weeks \u00b7 {date}" },
+  isl_no_income: { en: "Set your Life Essence income to see when it's done." },
+  isl_all_target: { en: "\u2713 Every building is at its target." },
+  isl_inc_line: { en: "Tree Lv {tree} \u00b7 Timbermill Lv {mill} ({w} workers) \u00b7 ally {a}\u00d7{each}" },
+  isl_inc_sum: { en: "= {e} essence a day = {s} shards" },
+  isl_short_line: { en: "{n} short \u00b7 ~{w} wk" },
+  isl_target: { en: "Target" },
+  isl_needs: { en: "Needs {n} shards" },
+  isl_needs_w: { en: "~{w} weeks" },
+  isl_needs_ok: { en: "you have enough" },
+  isl_if_all: { en: "if all shards go to it" },
+  isl_get_first: { en: "Not owned yet. Get it from an event or pack (Lv 1). Shards count from Lv 1." },
+  isl_inc_title: { en: "Life Essence a day" },
+  isl_tree: { en: "Tree of Life level" },
+  isl_mill: { en: "Timbermill level" },
+  isl_workers: { en: "Workers" },
+  isl_guess: { en: "guess" },
+  isl_workers_d: { en: "Check in the game" },
+  isl_ally: { en: "Ally help a day" },
+  isl_ally_d: { en: "{n} essence each" },
+  isl_day: { en: "Day" },
+  isl_week: { en: "Week" },
+  isl_month: { en: "Month" },
+  isl_island_shards: { en: "Island Shards" },
+  isl_shop: { en: "Shop this week" },
+  isl_shop_bought: { en: "bought (type it)" },
+  isl_shop_rule: { en: "{e} Life Essence = {n} shards \u00b7 up to {max} a week" },
+  isl_done: { en: "Done" },
+  isl_src: { en: "How to get" },
+  isl_src_shop: { en: "Mythic shards" },
+  isl_src_event: { en: "Playable event" },
+  isl_src_ranked: { en: "Ranked event or purchase" },
+  isl_src_every: { en: "Every (days)" },
+  isl_src_choices: { en: "Copies a cycle (e.g. 1,3,5)" },
+  isl_tag_ranked: { en: "\ud83c\udfc6 Ranked" },
+  isl_tag_wk: { en: "\ud83c\udfaa {n} wk" },
+  isl_tag_mo: { en: "\ud83c\udfaa {n} mo" },
+  isl_msg_event: { en: "Mythic shards can't be used \u00b7 from the event" },
+  isl_ev_get: { en: "You get {sel} a cycle (every {d} days)" },
+  isl_ev_need: { en: "needs {c} copies \u00b7 ~{n} cycles \u00b7 ~{date}" },
+  isl_ev_done: { en: "Event buildings done ~{date}" },
+  isl_msg_ranked: { en: "Mythic shards can't be used. Win a ranked event or buy it in a pack." },
+  isl_not_counted: { en: "{n} buildings not counted (event / ranked)" },
   all_categories: { en: "All categories" },
   tundra_album_title: { en: "Tundra Album" },
   of_max_prefix: { en: "of max" },
@@ -23042,16 +23097,144 @@ document.addEventListener("pointerdown", (e) => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ISL_POP) ISL_POP.close(); });
 window.addEventListener("resize", () => { if (ISL_POP) ISL_POP.place(); });
 
+// Mythic island shards (Islands page, Attack buildings for now): each person
+// sets a target level per building; the "Shards plan" in the stats card adds
+// up the shards to reach them and how long the Life Essence income takes.
+// Copies to reach each level (index = level; Lv 1 is bought / won, so 0),
+// shards per copy, essence for 10 shards, shop limit and income rates are
+// game rules (Admin → Rules & Timeline → Islands).
+const ISL_SHARD_CATS = ["Attack"];
+const ISL_COPIES = [0, 0, 2, 3, 4, 5, 6, 7, 8, 10, 12];
+const ISL_TREE = [0, 120, 150, 180, 210, 240, 270, 300, 330, 360, 420]; // Tree of Life essence an hour by level
+const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, workerHour: 40, allyEach: 200, allyMax: 3 };
+// calc_state "island_shards" = { targets: { skinId: level }, essence, shards, tree, mill, workers, ally, shop: { wk, n }, hidden }
+let ISL_SHARDS = null;
+const islDefault = () => ({ targets: {}, essence: 0, shards: 0, tree: 10, mill: 10, workers: 5, ally: 3, shop: { wk: "", n: 0 }, hidden: false });
+function islSave() { saveCalcState("island_shards", ISL_SHARDS); }
+// This game week (Monday, UTC) as yyyy-mm-dd.
+function islWeekKey() {
+  const d = packStartOfToday();
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+const islIsMythic = (s) => ISL_SHARD_CATS.includes(s.category) && Number(s.bonus_value) >= 10;
+// How a building is got, set by the owner for everyone: site_config island_sources =
+// { "<building name>": { kind: "shop" | "event" | "ranked", every, choices } } (missing =
+// shop: Mythic shards work on it). Only "shop" buildings count in the shards plan.
+// "event": a repeating event (every N days) gives one of `choices` copies a cycle; each
+// person picks theirs (island_shards.evPer). "ranked": won or bought, no time.
+const ISL_EV_CHOICES = [1, 2, 3, 4, 5];
+function islChoices(v) {
+  const a = (Array.isArray(v) ? v : String(v || "").split(/[^0-9]+/)).map(Number).filter((n) => n > 0 && n < 1000);
+  return a.length ? [...new Set(a)].sort((x, y) => x - y) : ISL_EV_CHOICES.slice();
+}
+function islSource(name) {
+  const v = ((typeof siteConfig === "function" ? siteConfig("island_sources", {}) : {}) || {})[name];
+  const kind = v && (v.kind === "event" || v.kind === "ranked") ? v.kind : "shop";
+  return kind === "event" ? { kind, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices) } : { kind };
+}
+// Copies from level `from` to `to` for a building got from an event: the first copy is Lv 1.
+function islCopiesBetween(from, to) {
+  let c = from < 1 && to >= 1 ? 1 : 0;
+  for (let l = Math.max(2, from + 1); l <= to; l++) c += Number(ISL_COPIES[l]) || 0;
+  return c;
+}
+async function islSaveSource(name, src) {
+  const cur = { ...(siteConfig("island_sources", {}) || {}) };
+  if (!src || src.kind === "shop") delete cur[name];
+  else cur[name] = src.kind === "event" ? { kind: "event", every: Number(src.every) > 0 ? Number(src.every) : 30, choices: islChoices(src.choices) } : { kind: "ranked" };
+  if (JSON.stringify(cur) !== JSON.stringify(siteConfig("island_sources", {}) || {})) await saveSiteConfig("island_sources", cur);
+}
+// Shards from level `from` to `to` (Lv 1 costs nothing).
+function islShardsBetween(from, to) {
+  let c = 0;
+  for (let l = Math.max(1, from + 1); l <= to; l++) c += Number(ISL_COPIES[l]) || 0;
+  return c * (Number(ISL_RULES.perCopy) || 0);
+}
+const islEssencePerShard = () => (Number(ISL_RULES.essence10) || 60000) / 10;
+function islEssenceDay(st) {
+  const tree = Number(ISL_TREE[Math.max(0, Math.min(ISL_TREE.length - 1, st.tree || 0))]) || 0;
+  const ally = Math.max(0, Math.min(Number(ISL_RULES.allyMax) || 0, st.ally || 0));
+  return tree * 24 + (st.mill > 0 ? (st.workers || 0) * (Number(ISL_RULES.workerHour) || 0) * 24 : 0) + ally * (Number(ISL_RULES.allyEach) || 0);
+}
+// Shards a day the income buys, held to the shop's weekly limit.
+function islShardsDay(st) {
+  const lim = Number(ISL_RULES.shopWeek) || 0;
+  const d = islEssenceDay(st) / islEssencePerShard();
+  return lim > 0 ? Math.min(d, lim / 7) : d;
+}
+const islHave = (st) => (st.shards || 0) + (st.essence || 0) / islEssencePerShard();
+const islNum = (v) => Math.floor(v + 1e-9).toLocaleString();
+const islOne = (v) => (v >= 10 ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toLocaleString());
+// Days to gather `short` shards: { days, weeks, date } or null without income.
+function islTime(short, st) {
+  if (!(short > 0)) return { days: 0, weeks: 0, date: "" };
+  const r = islShardsDay(st);
+  if (!(r > 0)) return null;
+  const days = Math.ceil(short / r);
+  const d = packStartOfToday();
+  d.setUTCDate(d.getUTCDate() + days);
+  return { days, weeks: Math.ceil(days / 7), date: d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) };
+}
+function islIncomeSheet(onChange) {
+  const st = ISL_SHARDS;
+  let m = document.getElementById("islIncSheet");
+  if (!m) { m = document.createElement("div"); m.id = "islIncSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
+  const lv = (ISL_TREE.length - 1);
+  const rows = [
+    ["tree", t("isl_tree"), "", 1, lv],
+    ["mill", t("isl_mill"), "", 1, 10],
+    ["workers", `${esc(t("isl_workers"))}<span class="isl-gs">${esc(t("isl_guess"))}</span>`, t("isl_workers_d"), 0, 20, true],
+    ["ally", t("isl_ally"), t("isl_ally_d").replace("{n}", (Number(ISL_RULES.allyEach) || 0).toLocaleString()), 0, Number(ISL_RULES.allyMax) || 0],
+  ];
+  const draw = () => {
+    const e = islEssenceDay(st), sd = islShardsDay(st), wk = islWeekKey();
+    const bought = st.shop && st.shop.wk === wk ? Number(st.shop.n) || 0 : 0;
+    const lim = Number(ISL_RULES.shopWeek) || 0;
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box isl-sh" role="dialog" aria-modal="true" aria-label="${esc(t("isl_inc_title"))}"><div class="gs-head"><b style="flex:1;">${esc(t("isl_inc_title"))}</b>${closeXHtml("data-islx")}</div>
+      ${rows.map(([k, label, sub, lo, hi, raw]) => `<div class="r"><span>${raw ? label : esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</span><span class="isl-st"><button type="button" data-islst="${k}|-1" ${st[k] <= lo ? "disabled" : ""} aria-label="&#8722;">&#8722;</button><span>${st[k]}</span><button type="button" data-islst="${k}|1" ${st[k] >= hi ? "disabled" : ""} aria-label="+">+</button></span></div>`).join("")}
+      <table class="isl-tb"><tr><th></th><th>${esc(t("isl_day"))}</th><th>${esc(t("isl_week"))}</th><th>${esc(t("isl_month"))}</th></tr>
+      <tr><td>${esc(t("isl_essence"))}</td><td>${bidiNum(Math.round(e).toLocaleString())}</td><td>${bidiNum(Math.round(e * 7).toLocaleString())}</td><td>${bidiNum(Math.round(e * 30).toLocaleString())}</td></tr>
+      <tr><td>${esc(t("isl_island_shards"))}</td><td>${bidiNum(islOne(sd))}</td><td>${bidiNum(islOne(sd * 7))}</td><td>${bidiNum(islOne(sd * 30))}</td></tr></table>
+      <div class="isl-shop"><div class="isl-shop-r"><span>${esc(t("isl_shop"))}</span><span><input type="number" inputmode="numeric" min="0" max="${lim}" value="${bought}" data-islshop aria-label="${esc(t("isl_shop_bought"))}" /> <b>/ ${lim.toLocaleString()}</b></span></div><div class="bar"><i style="width:${lim > 0 ? Math.min(100, (bought / lim) * 100) : 0}%;"></i></div><small>${esc(t("isl_shop_rule").replace("{e}", (Number(ISL_RULES.essence10) || 0).toLocaleString()).replace("{n}", "10").replace("{max}", lim.toLocaleString()))}</small></div>
+      <button type="button" class="btn isl-done" data-islx>${esc(t("isl_done"))}</button></div>`;
+  };
+  const close = () => { m.style.display = "none"; onChange(); };
+  m.onclick = (ev) => {
+    if (ev.target === m || ev.target.closest("[data-islx]")) { close(); return; }
+    const b = ev.target.closest("[data-islst]");
+    if (!b || b.disabled) return;
+    const [k, d] = b.dataset.islst.split("|");
+    st[k] = Math.max(0, (Number(st[k]) || 0) + Number(d));
+    islSave();
+    draw();
+  };
+  m.onchange = (ev) => {
+    const i = ev.target.closest("[data-islshop]");
+    if (!i) return;
+    const lim = Number(ISL_RULES.shopWeek) || 0;
+    st.shop = { wk: islWeekKey(), n: Math.max(0, Math.min(lim || Infinity, Math.floor(Number(i.value) || 0))) };
+    islSave();
+    draw();
+  };
+  m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
+  draw();
+  m.style.display = "flex";
+}
+
 async function renderIslandGallery() {
   const seq = RENDER_SEQ;
   ISL_POP = null;
   // The ordered category list is kept for the visit (dashCached), so a
   // repeat visit only has to load the islands themselves.
-  const [islandCats] = await Promise.all([
+  const [islandCats, , islSaved] = await Promise.all([
     islandCatRows(),
     ensureGalleryUncounted(),
+    loadCalcState("island_shards"),
   ]);
   if (seq !== RENDER_SEQ) return;
+  ISL_SHARDS = { ...islDefault(), ...(islSaved && typeof islSaved === "object" ? islSaved : {}) };
+  if (!ISL_SHARDS.targets || typeof ISL_SHARDS.targets !== "object") ISL_SHARDS.targets = {};
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
   const islands = await keptRows("skins",
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
@@ -23095,6 +23278,7 @@ async function renderIslandGallery() {
     <div class="panel cg-ans sg-ans">
       <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span></div>
       <div id="islandTroopTotals"></div>
+      <div id="islandShardPlan"></div>
     </div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
     <div id="islandCatSwitcher" class="sg-cats"></div>
@@ -23128,6 +23312,99 @@ async function renderIslandGallery() {
     return `${esc(t("sg_lv").replace("{n}", lv))}<small>/ ${mx}</small>`;
   };
   const tileCls = (s) => `is${built(s) ? "" : " l0"}${lvOf(s) >= maxOf(s) ? " mx" : ""}`;
+  // Shards plan: target per Mythic building (missing = max, never below now / Lv 1).
+  const tracked = (s) => islIsMythic(s);
+  const tgtOf = (s) => {
+    const mx = maxOf(s), lo = Math.max(1, lvOf(s));
+    const v = Number(ISL_SHARDS.targets[s.id]);
+    return Math.max(lo, Math.min(mx, Number.isFinite(v) && v > 0 ? v : mx));
+  };
+  const setTgt = (s, v) => { ISL_SHARDS.targets[s.id] = Math.max(Math.max(1, lvOf(s)), Math.min(maxOf(s), v)); };
+  const usesShards = (s) => tracked(s) && islSource(s.name).kind === "shop";
+  const needOf = (s) => (usesShards(s) ? islShardsBetween(lvOf(s), tgtOf(s)) : 0);
+  // Event buildings: copies to the target ÷ the person's copies a cycle → cycles → time.
+  const evPerOf = (s, src) => { const v = Number((ISL_SHARDS.evPer || {})[s.id]); return src.choices.includes(v) ? v : src.choices[src.choices.length - 1]; };
+  const evPlan = (s) => {
+    const src = islSource(s.name);
+    if (src.kind !== "event") return null;
+    const per = evPerOf(s, src), copies = islCopiesBetween(lvOf(s), tgtOf(s));
+    const cycles = copies > 0 ? Math.ceil(copies / per) : 0, days = cycles * src.every;
+    const d = packStartOfToday(); d.setUTCDate(d.getUTCDate() + days);
+    return { src, per, copies, cycles, days, at: d, date: d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }) };
+  };
+  const evShort = (days) => (days < 60 ? t("isl_tag_wk").replace("{n}", Math.max(1, Math.ceil(days / 7))) : t("isl_tag_mo").replace("{n}", Math.round(days / 30)));
+  // Option C: "→10" badge on the picture and the shards in gold under the pill.
+  const tileBits = (s) => {
+    if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
+    const kind = islSource(s.name).kind;
+    const line = kind === "shop" ? `<span class="isl-tsh">${bidiNum(needOf(s).toLocaleString())} <i aria-hidden="true">&#11042;</i></span>` : `<span class="isl-tsh tag">${esc(kind === "event" ? evShort(evPlan(s).days) : t("isl_tag_ranked"))}</span>`;
+    return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
+  };
+  const planList = () => islands.filter((s) => tracked(s) && groupsFor(s).includes(ISLAND_FILTER.bonusType));
+  function drawPlan() {
+    const host = document.getElementById("islandShardPlan");
+    if (!host) return;
+    const list = planList();
+    if (!ISL_SHARD_CATS.includes(ISLAND_FILTER.bonusType) || !list.length) { host.innerHTML = ""; return; }
+    const st = ISL_SHARDS;
+    const left = list.reduce((a, s) => a + needOf(s), 0);
+    const have = islHave(st), short = Math.max(0, left - have);
+    const tm = islTime(short, st);
+    const weeksTxt = tm ? String(tm.weeks) : "?";
+    const fold = `<button type="button" class="g1-fold" data-islfold aria-expanded="${!st.hidden}">${esc(t(st.hidden ? "isl_show" : "isl_hide"))}</button>`;
+    if (st.hidden) {
+      host.innerHTML = `<div class="isl-pl isl-pl-h"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span><span class="isl-hs">${short > 0 ? esc(t("isl_short_line").replace("{n}", islNum(short)).replace("{w}", weeksTxt)) : left > 0 ? "&#10003;" : ""}</span>${fold}</div></div>`;
+      return;
+    }
+    const tg = list.map(tgtOf), same = tg.every((v) => v === tg[0]) ? tg[0] : 0;
+    const mxAll = Math.max(...list.map(maxOf));
+    const opts = [];
+    for (let l = 1; l <= mxAll; l++) opts.push(`<option value="${l}"${same === l ? " selected" : ""}>${esc(t("sg_lv").replace("{n}", l))}</option>`);
+    const b = (v) => `<b>${bidiNum(v)}</b>`;
+    let res;
+    if (!left) res = list.some((s) => tgtOf(s) > lvOf(s)) ? esc(t("isl_left").replace("{n}", "0")) : esc(t("isl_all_target"));
+    else {
+      res = `${esc(t("isl_left")).replace("{n}", b(islNum(left)))} <span class="g">${esc(t(short > 0 ? "isl_have_short" : "isl_have_ok")).replace("{have}", bidiNum(islNum(have))).replace("{short}", bidiNum(islNum(short)))}</span>`;
+      if (short > 0) res += `<br>${tm ? esc(t("isl_done_in")).replace("{w}", b(tm.weeks)).replace("{date}", esc(tm.date)) : esc(t("isl_no_income"))}`;
+    }
+    const nc = list.filter((s) => !usesShards(s) && tgtOf(s) > lvOf(s)).length;
+    if (nc) res += `<div class="isl-nc">${esc(t("isl_not_counted").replace("{n}", nc))}</div>`;
+    const evs = list.filter((s) => tgtOf(s) > lvOf(s)).map(evPlan).filter(Boolean);
+    if (evs.length) { const last = evs.reduce((a, x) => (x.at > a.at ? x : a)); res += `<div class="isl-nc">${esc(t("isl_ev_done").replace("{date}", last.date))}</div>`; }
+    const e = islEssenceDay(st), sd = islShardsDay(st);
+    const incLine = `${esc(t("isl_inc_line").replace("{tree}", st.tree).replace("{mill}", st.mill).replace("{w}", st.workers).replace("{a}", st.ally).replace("{each}", (Number(ISL_RULES.allyEach) || 0).toLocaleString()))} <b>${esc(t("isl_inc_sum").replace("{e}", Math.round(e).toLocaleString()).replace("{s}", islOne(sd)))}</b>`;
+    host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
+      <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
+      <div class="isl-hl">${esc(t("isl_you_have"))} <span>${esc(t("isl_tap_type"))}</span></div>
+      <div class="isl-have">
+        <button type="button" class="isl-hb" data-islhave="essence"><span class="isl-ic e" aria-hidden="true">&#127807;</span><span><small>${esc(t("isl_essence"))}</small><b>${bidiNum((st.essence || 0).toLocaleString())}</b></span></button>
+        <button type="button" class="isl-hb" data-islhave="shards"><span class="isl-ic s" aria-hidden="true">&#11042;</span><span><small>${esc(t("isl_shards"))}</small><b>${bidiNum((st.shards || 0).toLocaleString())}</b></span></button>
+      </div>
+      <div class="isl-res">${res}</div>
+      <button type="button" class="isl-inc" data-islinc><span>${incLine}</span><span class="go" aria-hidden="true">&#8250;</span></button></div>`;
+  }
+  function wirePlan() {
+    const host = document.getElementById("islandShardPlan");
+    if (!host) return;
+    host.onclick = (e) => {
+      if (e.target.closest("[data-islfold]")) { ISL_SHARDS.hidden = !ISL_SHARDS.hidden; islSave(); drawPlan(); return; }
+      const hv = e.target.closest("[data-islhave]");
+      if (hv) {
+        const k = hv.dataset.islhave;
+        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), value: ISL_SHARDS[k] || 0, onSave: (v) => { ISL_SHARDS[k] = Math.floor(v); islSave(); drawPlan(); } });
+        return;
+      }
+      if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
+    };
+    host.onchange = (e) => {
+      const sel = e.target.closest("[data-isltall]");
+      if (!sel || !sel.value) return;
+      if (ISL_POP) ISL_POP.close(true);
+      planList().forEach((s) => setTgt(s, Number(sel.value)));
+      islSave();
+      keepPlace(() => computeAndRender());
+    };
+  }
 
   function drawStats() {
     const builtCount = islands.filter(built).length;
@@ -23191,6 +23468,7 @@ async function renderIslandGallery() {
     pop.setAttribute("aria-label", s.name);
     pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h"><b>${esc(s.name)}</b><span data-popbn></span></div>
       <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
+      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER ? `<div class="isl-src"><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrcev hidden><span>${esc(t("isl_src_every"))}</span><input type="number" inputmode="numeric" min="1" max="999" data-ipsrcevery /></label><label data-ipsrcev hidden class="w"><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
     sections.appendChild(pop);
     tileEl.classList.add("sel");
@@ -23203,6 +23481,35 @@ async function renderIslandGallery() {
       pop.querySelector('[data-ipset="0"]').disabled = lv <= 0;
       pop.querySelector('[data-ipstep="1"]').disabled = lv >= mx;
       pop.querySelector('[data-ipset="max"]').disabled = lv >= mx;
+      if (tracked(s)) {
+        const tg = tgtOf(s), lo = Math.max(1, lv), need = needOf(s);
+        pop.querySelector("[data-poptg]").textContent = tg;
+        pop.querySelector('[data-iptg="-1"]').disabled = tg <= lo;
+        pop.querySelector('[data-iptg="1"]').disabled = tg >= mx;
+        pop.querySelector('[data-iptg="max"]').disabled = tg >= mx;
+        const src = islSource(s.name);
+        pop.querySelector("[data-popget]").hidden = lv > 0 || src.kind !== "shop";
+        const short = Math.max(0, need - islHave(ISL_SHARDS)), tm = islTime(short, ISL_SHARDS);
+        const ev = evPlan(s);
+        pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-msg">${esc(t("isl_msg_event"))}<div class="isl-ev">${esc(t("isl_ev_get").replace("{d}", ev.src.every)).replace("{sel}", `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`)}${ev.copies ? ` &rarr; ${esc(t("isl_ev_need").replace("{c}", ev.copies).replace("{n}", ev.cycles).replace("{date}", ev.date))}` : ""}</div></div>`
+          : src.kind === "ranked" ? `<div class="isl-msg">${esc(t("isl_msg_ranked"))}</div>`
+          : !need ? "" : `${esc(t("isl_needs")).replace("{n}", `<b>${bidiNum(need.toLocaleString())}</b>`)} &middot; ${short > 0 ? (tm ? esc(t("isl_needs_w").replace("{w}", tm.weeks)) : "?") : esc(t("isl_needs_ok"))}<br><span class="g">${esc(t("isl_if_all"))}</span>`;
+        const sel = pop.querySelector("[data-ipsrc]");
+        if (sel) {
+          if (document.activeElement !== sel) sel.value = src.kind;
+          pop.querySelectorAll("[data-ipsrcev]").forEach((w) => { w.hidden = src.kind !== "event"; });
+          const ei = pop.querySelector("[data-ipsrcevery]"), ci = pop.querySelector("[data-ipsrcch]");
+          if (document.activeElement !== ei) ei.value = src.every || 30;
+          if (document.activeElement !== ci) ci.value = (src.choices || ISL_EV_CHOICES).join(",");
+        }
+        const bits = tileBits(s);
+        const bg = tileEl.querySelector(".isl-tbg"), ln = tileEl.querySelector(".isl-tsh");
+        if (bg) bg.outerHTML = bits.badge || "<span class=\"isl-tbg\" hidden></span>";
+        else if (bits.badge) tileEl.insertAdjacentHTML("beforeend", bits.badge);
+        if (ln) ln.outerHTML = bits.line || "<span class=\"isl-tsh\" hidden></span>";
+        else if (bits.line) tileEl.insertAdjacentHTML("beforeend", bits.line);
+        drawPlan();
+      }
     };
     const place = () => {
       if (!pop.isConnected || !tileEl.isConnected) return;
@@ -23225,6 +23532,8 @@ async function renderIslandGallery() {
       const before = Object.fromEntries(Object.keys(patch).map((k) => [k, s[k]]));
       Object.assign(s, patch);
       changed = true;
+      // Raising the level past its target takes the target along.
+      if (tracked(s) && ISL_SHARDS.targets[s.id] != null && Number(ISL_SHARDS.targets[s.id]) < lv) { setTgt(s, lv); islSave(); }
       patchSkinQueued(s.id, patch).catch(() => {
         if (Object.keys(patch).every((k) => s[k] === patch[k])) {
           Object.assign(s, before);
@@ -23259,9 +23568,29 @@ async function renderIslandGallery() {
       const st = e.target.closest("[data-ipstep]");
       if (st) { if (e.detail === 0) setLv(lvOf(s) + Number(st.dataset.ipstep)); return; } // keyboard
       const z = e.target.closest("[data-ipset]");
-      if (z) setLv(z.dataset.ipset === "max" ? maxOf(s) : 0);
+      if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
+      const tgb = e.target.closest("[data-iptg]");
+      if (tgb && !tgb.disabled) {
+        setTgt(s, tgb.dataset.iptg === "max" ? maxOf(s) : tgtOf(s) + Number(tgb.dataset.iptg));
+        islSave();
+        changed = true;
+        draw();
+      }
     });
     pop.addEventListener("contextmenu", (e) => e.preventDefault());
+    // Owner: how this building is got (saved for everyone right away).
+    pop.addEventListener("change", (e) => {
+      if (e.target.matches("[data-ipevn]")) {
+        ISL_SHARDS.evPer = { ...(ISL_SHARDS.evPer || {}), [s.id]: Number(e.target.value) };
+        islSave(); changed = true; draw();
+        return;
+      }
+      const sel = pop.querySelector("[data-ipsrc]");
+      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcevery], [data-ipsrcch]"))) return;
+      const kind = sel.value, every = Number(pop.querySelector("[data-ipsrcevery]").value) || 30, choices = pop.querySelector("[data-ipsrcch]").value;
+      changed = true;
+      islSaveSource(s.name, { kind, every, choices }).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+    });
     ISL_POP = {
       id: String(s.id), place,
       close: (noRedraw) => {
@@ -23296,6 +23625,7 @@ async function renderIslandGallery() {
       const inCat = islands.filter((s) => groupsFor(s).includes(c));
       return { key: c, label: c, count: `${inCat.filter(built).length}/${inCat.length}` };
     }), ISLAND_FILTER.bonusType, onIslandCatSelect);
+    drawPlan();
     galMenuToTools("island", "islandCatSwitcher");
 
     // filtered is already scoped to the one selected category, so render a
@@ -23307,7 +23637,7 @@ async function renderIslandGallery() {
     const moreKey = `island|${ISLAND_FILTER.bonusType}`;
     const tile = (s, down) => galTileHtml({
       id: s.id, attr: "data-island", cls: tileCls(s), img: s.image_url, name: s.name, down,
-      extra: `<button type="button" class="sg-lvp" data-islv="${esc(s.id)}" aria-haspopup="dialog">${pillHtml(s)}</button>`,
+      extra: (() => { const b = tileBits(s); return `<button type="button" class="sg-lvp" data-islv="${esc(s.id)}" aria-haspopup="dialog">${pillHtml(s)}</button>${b.line}${b.badge}`; })(),
     });
     sections.innerHTML = galGridHtml({
       counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
@@ -23333,6 +23663,7 @@ async function renderIslandGallery() {
   }
 
   wireGalTools("island", ISLAND_FILTER, () => { if (ISL_POP) ISL_POP.close(true); computeAndRender(); });
+  wirePlan();
   computeAndRender();
 }
 
@@ -28382,7 +28713,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=d29a2de080";
+      s.src = "admin.min.js?v=51a6a9b7e5";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -28596,6 +28927,17 @@ function gameRules() {
     { key: "ngForge", group: "heroes", label: "New heroes packs timing", type: "fields", help: "Days from the new heroes (Hero Ascension Training) to the Exclusive Gear Forge; also how long each runs when its table on the Packs page has no window.",
       fields: [num("days", "Forge starts after (days)")],
       get: () => ({ days: NG_HERO_DAYS }), set: (v) => { NG_HERO_DAYS = Number(v.days) > 0 ? Number(v.days) : 28; } },
+    { key: "islCopies", group: "islands", label: "Island building copies per level", help: "Copies of a Mythic building needed to reach each level (Lv 1 = getting the building from an event or pack, 0). The Islands page's Shards plan counts these × shards per copy.",
+      cols: [{ key: "level", label: "Level", type: "auto" }, { key: "copies", label: "Copies", type: "num" }],
+      get: () => ISL_COPIES.slice(1).map((c, i) => ({ level: i + 1, copies: c })),
+      set: (rows) => ruleSetArray(ISL_COPIES, [0, ...rows.map((r) => Number(r.copies) || 0)]) },
+    { key: "islTree", group: "islands", label: "Tree of Life essence an hour", help: "Life Essence the Tree of Life makes an hour at each level (Islands page, income).",
+      cols: [{ key: "level", label: "Level", type: "auto" }, { key: "perHour", label: "Essence an hour", type: "num" }],
+      get: () => ISL_TREE.slice(1).map((v, i) => ({ level: i + 1, perHour: v })),
+      set: (rows) => ruleSetArray(ISL_TREE, [0, ...rows.map((r) => Number(r.perHour) || 0)]) },
+    { key: "islShop", group: "islands", label: "Island shards shop & income", type: "fields", help: "Mythic Island Shards: shards per building copy, Life Essence for 10 shards, the shop's weekly limit, Timbermill essence an hour per worker and ally help.",
+      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("workerHour", "Timbermill essence an hour per worker"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day")],
+      get: () => ({ ...ISL_RULES }), set: (v) => { Object.keys(ISL_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) ISL_RULES[k] = Number(v[k]); }); } },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
