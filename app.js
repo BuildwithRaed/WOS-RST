@@ -23176,6 +23176,7 @@ function islChoices(v, def = ISL_EV_CHOICES) {
   const a = (Array.isArray(v) ? v : String(v == null ? "" : v).split(/[^0-9]+/)).map(Number).filter((n) => n > 0 && n <= 5);
   return a.length ? [...new Set(a)].sort((x, y) => x - y) : def.slice();
 }
+const ISL_SHOP_CAT = "Islands Guide"; // the only category the Life Essence shop sells
 function islSource(name, mythic = true) {
   const v = ((typeof siteConfig === "function" ? siteConfig("island_sources", {}) : {}) || {})[name] || {};
   const price = Number(v.price) > 0 ? Number(v.price) : 0;
@@ -23445,7 +23446,8 @@ async function renderIslandGallery() {
   // now / Lv 1). Buildings with a shop price are bought in Life Essence; other Mythic
   // "shop" buildings with shards; event / ranked from their events.
   const tracked = (s) => islCatTracked(s.category) && !ISL_SKIP_NAMES.includes(s.name);
-  const srcOf = (s) => islSource(s.name, islIsMythic(s));
+  // The Life Essence shop sells only Islands Guide buildings (owner, 9 Nov 2026).
+  const srcOf = (s) => { const src = islSource(s.name, islIsMythic(s)); return s.category === ISL_SHOP_CAT || !src.price ? src : { ...src, price: 0 }; };
   const tgtOf = (s) => {
     const mx = maxOf(s), lo = Math.max(1, lvOf(s));
     const v = Number(ISL_SHARDS.targets[s.id]);
@@ -23701,7 +23703,7 @@ async function renderIslandGallery() {
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
           if (document.activeElement !== pi) pi.value = src.price || "";
-          pop.querySelector("[data-ippricew]").hidden = src.kind === "event" || src.kind === "ranked";
+          pop.querySelector("[data-ippricew]").hidden = src.kind === "event" || src.kind === "ranked" || s.category !== ISL_SHOP_CAT;
         }
         const sel = pop.querySelector("[data-ipsrc]");
         if (sel) {
@@ -28988,7 +28990,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=0e40d2a5ea";
+      s.src = "admin.min.js?v=00fcd56918";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
