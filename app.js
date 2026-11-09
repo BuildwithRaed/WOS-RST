@@ -1842,6 +1842,26 @@ const T = {
   isl_if_all: { en: "if all shards go to it" },
   isl_get_first: { en: "Not owned yet. Get it from an event or pack (Lv 1). Shards count from Lv 1." },
   isl_inc_title: { en: "Life Essence a day" },
+  isl_ev_get: { en: "You get {sel} each time" },
+  isl_ev_need: { en: "needs {c} copies \u00b7 ~{n} events \u00b7 done ~{date}" },
+  isl_ev_next: { en: "Next event {date} (every {d} days)" },
+  isl_ev_every: { en: "Every {d} days" },
+  isl_inc_day: { en: "+{s} shards a day" },
+  isl_inc_ess: { en: "{e} Life Essence a day" },
+  isl_inc_edit: { en: "\u270e Edit income" },
+  isl_sec_shards: { en: "Upgrade with shards" },
+  isl_sec_left: { en: "{n} left" },
+  isl_sec_other: { en: "Event & ranked" },
+  isl_sec_n: { en: "{n} buildings" },
+  isl_sec_other_d: { en: "Mythic shards can't be used \u00b7 copies come from the event / ranking" },
+  isl_dates_from: { en: "Dates come from" },
+  isl_dates_pack: { en: "From a pack" },
+  isl_dates_own: { en: "Own dates" },
+  isl_dates_next: { en: "Next event" },
+  isl_dates_pick: { en: "Pack" },
+  isl_dates_choose: { en: "\u2014 choose \u2014" },
+  isl_dates_follows: { en: "Follows that pack's dates on the Packs page: next {date} \u00b7 every {d} days" },
+  isl_dates_nopack: { en: "Pick a pack with dates." },
   isl_box_left: { en: "Shards left" },
   isl_box_have: { en: "have {n}" },
   isl_box_short: { en: "Short" },
@@ -1858,11 +1878,8 @@ const T = {
   isl_mo: { en: "{n} mo" },
   isl_msg_event: { en: "Mythic shards can't be used \u00b7 from the event" },
   isl_msg_ranked: { en: "Mythic shards can't be used \u00b7 from a ranked event or packs" },
-  isl_ev_get: { en: "You get {sel} every {d} days" },
-  isl_ev_need: { en: "needs {c} copies \u00b7 ~{n} cycles \u00b7 ~{date}" },
   isl_not_counted: { en: "{n} buildings not counted (event / ranked)" },
   isl_not_counted_done: { en: "{n} buildings not counted (event / ranked) \u00b7 done ~{date}" },
-  isl_inc_short: { en: "+{s} shards a day \u00b7 {e} Life Essence" },
   isl_tip_12h: { en: "Collect every 12 hours so the Tree and Timbermill never fill up." },
   isl_src_shop: { en: "Shards" },
   isl_src_event: { en: "Playable event" },
@@ -23146,7 +23163,9 @@ function islSource(name, mythic = true) {
   let kind = v.kind === "event" || v.kind === "ranked" || v.kind === "shop" ? v.kind : (mythic ? "shop" : "ranked");
   if (kind === "shop" && !mythic) kind = "ranked";
   const each = Number(v.each) > 0 ? Number(v.each) : 0;
-  return kind === "shop" ? { kind, each } : { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES) };
+  if (kind === "shop") return { kind, each };
+  const dates = v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
+  return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
 }
 const islCopiesAt = (l, each) => (each > 0 ? each : Number(ISL_COPIES[l]) || 0);
 // Copies from level `from` to `to`; with lv1 the first copy (Lv 1) counts too (event buildings).
@@ -23163,11 +23182,50 @@ async function islSaveSource(name, src, mythic = true) {
   const kind = !src ? "" : src.kind === "event" || src.kind === "ranked" ? src.kind : mythic ? "shop" : "ranked";
   const e = !src ? null : kind === "shop" ? { kind } : { kind, every: Number(src.every) > 0 ? Number(src.every) : 30, choices: islChoices(src.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES) };
   if (e && each) e.each = each;
-  const plain = e && !each && (kind === "shop" || (kind === "ranked" && !mythic && e.every === 30 && JSON.stringify(e.choices) === JSON.stringify(ISL_RK_CHOICES)));
+  // Event dates: from a Packs-page pack or the owner's own next date.
+  if (e && kind !== "shop") {
+    if (src.dates === "pack") { e.dates = "pack"; e.pack = String(src.pack || ""); }
+    else if (src.dates === "own") { e.dates = "own"; e.next = packValidDay(src.next) || packDayKey(packStartOfToday()); }
+  }
+  const plain = e && !each && !e.dates && (kind === "shop" || (kind === "ranked" && !mythic && e.every === 30 && JSON.stringify(e.choices) === JSON.stringify(ISL_RK_CHOICES)));
   if (!e || plain) delete cur[name];
   else cur[name] = e;
   if (JSON.stringify(cur) !== JSON.stringify(siteConfig("island_sources", {}) || {})) await saveSiteConfig("island_sources", cur);
 }
+// Dated packs on the Packs page (event leaders first), loaded only when needed:
+// [{ id, name }]. ISL_PACK_TABLES = the pack_tables rows (packLinkFor needs the links).
+let ISL_PACKS = null, ISL_PACK_TABLES = null, ISL_PACKS_LOADING = null;
+function islLoadPacks() {
+  if (ISL_PACKS) return Promise.resolve(ISL_PACKS);
+  if (!ISL_PACKS_LOADING) {
+    ISL_PACKS_LOADING = Promise.all([packTablesRows(), ensurePackLinks()]).then(([tables]) => {
+      ISL_PACK_TABLES = tables || [];
+      const list = ISL_PACK_TABLES.filter((tb) => { const l = packLinkForBase(tb.id); return typeof l.reset === "number" && packValidDay(l.resetDay) && !l.dateWith && !packStackInfo(l.reset) && !packIsNewGen(l) && !l.template; })
+        .map((tb) => { const lead = packEventFollowers(tb, ISL_PACK_TABLES).length > 0; return { id: String(tb.id), lead, name: lead ? packEventName(tb, ISL_PACK_TABLES) : String(tb.title || "") }; });
+      list.sort((x, y) => (y.lead - x.lead) || x.name.localeCompare(y.name));
+      ISL_PACKS = list;
+      return list;
+    }).catch(() => { ISL_PACKS_LOADING = null; return []; });
+  }
+  return ISL_PACKS_LOADING;
+}
+const islDay = (off) => { const d = packStartOfToday(); d.setUTCDate(d.getUTCDate() + off); return d; };
+// Next event of an event / ranked building: { off (days from today), every, known }.
+// No dates set = every N days from today (the first copies after one cycle).
+function islNextEvent(src) {
+  if (src.dates === "pack" && src.pack && ISL_PACKS && ISL_PACK_TABLES && ISL_PACK_TABLES.some((tb) => String(tb.id) === src.pack)) {
+    const l = packLinkFor(src.pack);
+    const offs = typeof l.reset === "number" ? packResetOffsets(l.reset, l.resetDay, 800, l.window) : [];
+    const off = offs.find((o) => o >= 0);
+    if (off != null) return { off, every: l.reset, known: true };
+  }
+  if (src.dates === "own" && src.next) {
+    const a = packParseDay(src.next), today = packStartOfToday(), every = src.every || 30;
+    if (a) { let off = Math.round((a - today) / 86400000); if (off < 0) off += Math.ceil(-off / every) * every; return { off, every, known: true }; }
+  }
+  return { off: src.every || 30, every: src.every || 30, known: false };
+}
+const islDateShort = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", day: "numeric", timeZone: "UTC" });
 const islEssencePerShard = () => (Number(ISL_RULES.essence10) || 60000) / 10;
 // Timbermill workers: both Lumber Camps at the top level, else 0 (not built yet).
 function islMillWorkers(st) {
@@ -23259,7 +23317,13 @@ async function renderIslandGallery() {
   ]);
   if (seq !== RENDER_SEQ) return;
   ISL_SHARDS = { ...islDefault(), ...(islSaved && typeof islSaved === "object" ? islSaved : {}) };
+  // Event dates from a Packs-page pack: the pack list loads in the background
+  // (always for the owner, who picks packs), then the page redraws with the dates.
+  if (!ISL_PACKS && (IS_OWNER || Object.values(siteConfig("island_sources", {}) || {}).some((v) => v && v.dates === "pack" && v.pack))) {
+    islLoadPacks().then(() => { if (seq === RENDER_SEQ && document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender()); });
+  }
   if (!ISL_SHARDS.targets || typeof ISL_SHARDS.targets !== "object") ISL_SHARDS.targets = {};
+  ["every", "shop", "mill", "workers"].forEach((k) => { delete ISL_SHARDS[k]; }); // settings no longer used
   const catList = islandCats.length ? islandCats.map((c) => c.category) : ["Island"];
   const islands = await keptRows("skins",
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
@@ -23355,16 +23419,19 @@ async function renderIslandGallery() {
     const src = srcOf(s);
     if (src.kind === "shop") return null;
     const per = evPerOf(s, src), copies = islCopiesBetween(lvOf(s), tgtOf(s), src.each);
-    const cycles = copies > 0 ? Math.ceil(copies / per) : 0, days = cycles * src.every;
+    // Counted from the next event: its copies, then one more event every cycle.
+    const nx = islNextEvent(src);
+    const cycles = copies > 0 ? Math.ceil(copies / per) : 0, days = cycles > 0 ? nx.off + (cycles - 1) * nx.every : 0;
     const d = packStartOfToday(); d.setUTCDate(d.getUTCDate() + days);
-    return { src, per, copies, cycles, days, at: d, date: d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }) };
+    return { src, per, copies, cycles, days, nx, at: d, date: d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }) };
   };
-  const evShort = (days) => (days < 60 ? t("isl_wk").replace("{n}", Math.max(1, Math.ceil(days / 7))) : t("isl_mo").replace("{n}", Math.round(days / 30)));
+  const evShort = (days) => (days < 56 ? t("isl_wk").replace("{n}", Math.max(1, Math.ceil(days / 7))) : t("isl_mo").replace("{n}", Math.round(days / 30)));
   // Option C: "→10" badge on the picture and the shards in gold under the pill.
   const tileBits = (s) => {
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
     const kind = srcOf(s).kind;
-    const line = kind === "shop" ? `<span class="isl-tsh">${bidiNum(needOf(s).toLocaleString())} <i aria-hidden="true">&#11042;</i></span>` : `<span class="isl-tsh tag">${esc(t(kind === "event" ? "isl_tag_ev" : "isl_tag_rk").replace("{t}", evShort(evPlan(s).days)))}</span>`;
+    const tm = kind === "shop" ? islTime(Math.max(0, needOf(s) - islHave(ISL_SHARDS)), ISL_SHARDS) : null;
+    const line = kind === "shop" ? `<span class="isl-tsh">${bidiNum(needOf(s).toLocaleString())} <i aria-hidden="true">&#11042;</i>${tm && tm.days ? ` &middot; ${esc(evShort(tm.days))}` : ""}</span>` : `<span class="isl-tsh tag">${esc(t(kind === "event" ? "isl_tag_ev" : "isl_tag_rk").replace("{t}", evShort(evPlan(s).days)))}</span>`;
     return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
   };
   const planList = () => islands.filter((s) => tracked(s) && groupsFor(s).includes(ISLAND_FILTER.bonusType));
@@ -23402,7 +23469,7 @@ async function renderIslandGallery() {
       res += `<div class="isl-nc">${esc(last && last.days ? t("isl_not_counted_done").replace("{n}", nc.length).replace("{date}", last.date) : t("isl_not_counted").replace("{n}", nc.length))}</div>`;
     }
     const inc = islIncome(st), sd = islShardsDay(st);
-    const incLine = esc(t("isl_inc_short").replace("{s}", islOne(sd)).replace("{e}", Math.round(inc.total).toLocaleString()));
+    const incLine = `<span class="isl-ic e" aria-hidden="true">&#127807;</span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
       <div class="isl-hl">${esc(t("isl_you_have"))} <span>${esc(t("isl_tap_type"))}</span></div>
@@ -23411,7 +23478,7 @@ async function renderIslandGallery() {
         <button type="button" class="isl-hb" data-islhave="shards"><span class="isl-ic s" aria-hidden="true">&#11042;</span><span><small>${esc(t("isl_shards"))}</small><b>${bidiNum((st.shards || 0).toLocaleString())}</b></span></button>
       </div>
       ${res}
-      <button type="button" class="isl-inc" data-islinc><span>${incLine}</span><span class="go" aria-hidden="true">&#8250;</span></button></div>`;
+      <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
   }
   function wirePlan() {
     const host = document.getElementById("islandShardPlan");
@@ -23499,7 +23566,9 @@ async function renderIslandGallery() {
     pop.setAttribute("aria-label", s.name);
     pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h"><b>${esc(s.name)}</b><span data-popbn></span></div>
       <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
-      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div><div class="isl-srct" data-popsrct></div>${IS_OWNER ? `<div class="isl-src"><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc>${islIsMythic(s) ? `<option value="shop">${esc(t("isl_src_shop"))}</option>` : ""}<option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrcev hidden><span>${esc(t("isl_src_every"))}</span><input type="number" inputmode="numeric" min="1" max="999" data-ipsrcevery /></label><label data-ipsrcev hidden class="w"><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label><label class="w2"><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label></div>` : ""}` : ""}
+      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div><div class="isl-srct" data-popsrct></div>${IS_OWNER ? `<div class="isl-src"><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc>${islIsMythic(s) ? `<option value="shop">${esc(t("isl_src_shop"))}</option>` : ""}<option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
+        <div class="isl-dpk" data-ipdpk hidden><div class="isl-dl">${esc(t("isl_dates_pick"))}</div><select class="keep-w" data-ippack></select><div class="isl-dsm" data-ippacknote></div></div>
+        <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label><label data-ipdevery><span>${esc(t("isl_src_every"))}</span><input type="number" inputmode="numeric" min="1" max="999" data-ipsrcevery /></label></div></div><label data-ipsrcev hidden class="w"><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label><label class="w2"><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label></div>` : ""}` : ""}
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
     const pageEnd = document.documentElement.scrollHeight;
     pop.style.top = "0px";
@@ -23524,7 +23593,7 @@ async function renderIslandGallery() {
         pop.querySelector("[data-popget]").hidden = lv > 0 || src.kind !== "shop";
         const short = Math.max(0, need - islHave(ISL_SHARDS)), tm = islTime(short, ISL_SHARDS);
         const ev = evPlan(s);
-        pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-msg">${esc(t(src.kind === "event" ? "isl_msg_event" : "isl_msg_ranked"))}<div class="isl-ev">${esc(t("isl_ev_get").replace("{d}", ev.src.every)).replace("{sel}", `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`)}${ev.copies ? ` &rarr; ${esc(t("isl_ev_need").replace("{c}", ev.copies).replace("{n}", ev.cycles).replace("{date}", ev.date))}` : ""}</div></div>`
+        pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-msg"><div class="isl-msg-t">${src.kind === "event" ? "&#127914;" : "&#127942;"} ${esc(t(src.kind === "event" ? "isl_msg_event" : "isl_msg_ranked"))}</div><div class="isl-ev-n">${ev.nx.known ? esc(t("isl_ev_next").replace("{d}", ev.nx.every)).replace("{date}", `<b>${esc(islDateShort(islDay(ev.nx.off)))}</b>`) : esc(t("isl_ev_every").replace("{d}", ev.nx.every))}</div><div class="isl-ev">${esc(t("isl_ev_get")).replace("{sel}", `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`)}${ev.copies ? ` &rarr; ${esc(t("isl_ev_need").replace("{c}", ev.copies).replace("{n}", ev.cycles).replace("{date}", ev.date))}` : ""}</div></div>`
           : !need ? "" : `${esc(t("isl_needs")).replace("{n}", `<b>${bidiNum(need.toLocaleString())}</b>`)} &middot; ${short > 0 ? (tm ? esc(t("isl_needs_w").replace("{w}", tm.weeks)) : "?") : esc(t("isl_needs_ok"))}<br><span class="g">${esc(t("isl_if_all"))}</span>`;
         // Visitors see how it's got as text; the owner changes it below.
         const kindName = t(src.kind === "shop" ? "isl_src_shop" : src.kind === "event" ? "isl_src_event" : "isl_src_ranked");
@@ -23533,6 +23602,18 @@ async function renderIslandGallery() {
         if (sel) {
           if (document.activeElement !== sel) sel.value = src.kind;
           pop.querySelectorAll("[data-ipsrcev]").forEach((w) => { w.hidden = src.kind === "shop"; });
+          pop.querySelectorAll("[data-ipdates]").forEach((b) => b.classList.toggle("on", b.dataset.ipdates === src.dates));
+          pop.querySelector("[data-ipdpk]").hidden = src.dates !== "pack";
+          pop.querySelector("[data-ipdown]").hidden = src.dates !== "own";
+          pop.querySelector("[data-ipdevery]").hidden = src.dates === "pack";
+          const nxi = pop.querySelector("[data-ipnext]");
+          if (src.dates === "own" && document.activeElement !== nxi) nxi.value = packDayKey(islDay(islNextEvent(src).off));
+          if (src.dates === "pack") {
+            const ps = pop.querySelector("[data-ippack]");
+            if (document.activeElement !== ps) ps.innerHTML = `<option value="">${esc(t("isl_dates_choose"))}</option>${(ISL_PACKS || []).map((x) => `<option value="${esc(x.id)}"${x.id === src.pack ? " selected" : ""}>${x.lead ? "&#128279; " : ""}${esc(x.name)}</option>`).join("")}`;
+            const nx = islNextEvent(src);
+            pop.querySelector("[data-ippacknote]").textContent = nx.known ? t("isl_dates_follows").replace("{date}", islDateShort(islDay(nx.off))).replace("{d}", nx.every) : t("isl_dates_nopack");
+          }
           const ei = pop.querySelector("[data-ipsrcevery]"), ci = pop.querySelector("[data-ipsrcch]");
           if (document.activeElement !== ei) ei.value = src.every || 30;
           if (document.activeElement !== ci) ci.value = (src.choices || ISL_EV_CHOICES).join(",");
@@ -23615,6 +23696,16 @@ async function renderIslandGallery() {
       if (st) { if (e.detail === 0) setLv(lvOf(s) + Number(st.dataset.ipstep)); return; } // keyboard
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
+      const dtb = e.target.closest("[data-ipdates]");
+      if (dtb && IS_OWNER) {
+        const cur = srcOf(s), dates = dtb.dataset.ipdates;
+        if (cur.dates === dates) return;
+        const next = cur.next || packDayKey(islDay(islNextEvent(cur).off));
+        changed = true;
+        Promise.all([dates === "pack" ? islLoadPacks() : null, islSaveSource(s.name, { ...cur, dates, next }, islIsMythic(s))])
+          .then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+        return;
+      }
       const tgb = e.target.closest("[data-iptg]");
       if (tgb && !tgb.disabled) {
         setTgt(s, tgb.dataset.iptg === "max" ? maxOf(s) : tgtOf(s) + Number(tgb.dataset.iptg));
@@ -23632,14 +23723,17 @@ async function renderIslandGallery() {
         return;
       }
       const sel = pop.querySelector("[data-ipsrc]");
-      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcevery], [data-ipsrcch], [data-ipsrceach], [data-ipsrceachn]"))) return;
+      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcevery], [data-ipsrcch], [data-ipsrceach], [data-ipsrceachn], [data-ippack], [data-ipnext]"))) return;
       // A new kind starts from its own defaults (event 1–5, ranked 1, every 30 days).
       const kindChanged = e.target === sel;
       const kind = sel.value, every = kindChanged ? 30 : Number(pop.querySelector("[data-ipsrcevery]").value) || 30, choices = kindChanged ? null : pop.querySelector("[data-ipsrcch]").value;
       const same = pop.querySelector("[data-ipsrceach]").value === "1";
       const each = same ? Math.max(1, Number(pop.querySelector("[data-ipsrceachn]").value) || 1) : 0;
       changed = true;
-      islSaveSource(s.name, { kind, every, choices, each }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+      const cur = srcOf(s);
+      const dates = kindChanged ? "" : cur.dates;
+      const pack = pop.querySelector("[data-ippack]").value || cur.pack, next = pop.querySelector("[data-ipnext]").value || cur.next;
+      islSaveSource(s.name, { kind, every, choices, each, dates, pack, next }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
     });
     ISL_POP = {
       id: String(s.id), place,
@@ -23690,11 +23784,22 @@ async function renderIslandGallery() {
       id: s.id, attr: "data-island", cls: tileCls(s), img: s.image_url, name: s.name, down,
       extra: (() => { const b = tileBits(s); return `<button type="button" class="sg-lvp" data-islv="${esc(s.id)}" aria-haspopup="dialog">${pillHtml(s)}</button>${b.line}${b.badge}`; })(),
     });
-    sections.innerHTML = galGridHtml({
-      counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
+    const counted = filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id)));
+    // Shards categories: two sections, shard buildings first, then event / ranked ones.
+    const split = ISL_SHARD_CATS.includes(ISLAND_FILTER.bonusType) && counted.some(tracked);
+    const shardList = split ? counted.filter((s) => srcOf(s).kind === "shop") : counted;
+    const otherList = split ? counted.filter((s) => srcOf(s).kind !== "shop") : [];
+    let html = galGridHtml({
+      counted: shardList,
       uncounted: filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))),
-      all: GAL_MORE.has(moreKey) || !!ISLAND_FILTER.search, tile, cat: ISLAND_FILTER.bonusType, ncDesc: t("isl_nc_desc"),
+      all: split || GAL_MORE.has(moreKey) || !!ISLAND_FILTER.search, tile, cat: ISLAND_FILTER.bonusType, ncDesc: t("isl_nc_desc"),
     });
+    if (split) {
+      const left = shardList.reduce((a, s) => a + needOf(s), 0);
+      html = `<div class="isl-sh2"><span>${esc(t("isl_sec_shards"))}</span><span class="n">${esc(t("isl_sec_left")).replace("{n}", `<i>${bidiNum(left.toLocaleString())} &#11042;</i>`)}</span></div>`
+        + html.replace('<div class="sg-nc">', `${otherList.length ? `<div class="isl-sh2 two"><span>${esc(t("isl_sec_other"))}</span><span class="n">${esc(t("isl_sec_n").replace("{n}", otherList.length))}</span></div><div class="isl-shs">${esc(t("isl_sec_other_d"))}</div><div class="sg-grid" data-zone="counted">${otherList.map((s) => tile(s, true)).join("")}</div>` : ""}<div class="sg-nc">`);
+    }
+    sections.innerHTML = html;
     wireGallerySplit(sections, async (id, toUncounted) => {
       if (ISL_POP) ISL_POP.close(true);
       await setGalleryUncounted(id, toUncounted);
