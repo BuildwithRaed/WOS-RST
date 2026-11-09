@@ -436,6 +436,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Monthly packs counted once a month (owner, 9 Nov 2026: Intel Monthly Card showed "×2" on This week):** `packCurrentCycleStart` returned null for reset 30 (calendar months), so a pack bought / planned in the running month wasn't counted as that copy's buy (`usedNow` 0) and the plan suggested it again; the "will buy" and the plan's suggestion then merged into one "×2" line. Now reset 30 with an anchor gives the anchor's day of this month (or last month; day clamped to the month's length). Checked in the page: Intel Monthly Card (reset 30, Nov 1) planned today → usedNow 1 (was 0).
 
+**Packs window fixes (owner, 9 Nov 2026):** (1) a new table (`new-…` id) gets its real id on its first save; `pkbRenamed(oldId, newId)` moves the open window, its history entry ({ tab: "packs", pkb }) and Arrange mode to the real id, so the next Column / Row + or − no longer closes the window (it used to find no table with the old id). (2) `renderAll` keeps the open window's own scroll and the table's sideways scroll when it redraws the same pack, and keeps the control just used at the same place on screen (Hide from visitors adds / removes the red line at the top; the scroll moves by it). Hide from visitors, Group, Row +, Restore, Duplicate, moving a column and the column item pick used to jump the window to the top. Nothing on screen changes otherwise.
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -575,3 +577,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - PR #142: speed fixes 6–9 (app.js / app.css / admin.js, unused CSS and texts removed, 3 s fallback)
 - PR #143: translations for the 5–6 Nov texts (109 keys, all 16 languages, LANG_FILES_VERSION 72)
 - PR #144: Packs: new heroes listed under their packs, leader swap in Add packs, Arrange (drag order, `__rowOrder`), translations (LANG_FILES_VERSION 73)
+- Packs window fixes: stays open on a new table after its first save, keeps its place on redraws
