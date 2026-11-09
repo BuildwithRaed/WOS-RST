@@ -3454,6 +3454,10 @@ input,select,textarea{
   .isl-tb td{ padding:7px 4px; text-align:end; border-top:1px solid var(--line); color:var(--frost); font-weight:700; }
   .isl-tb td:first-child{ color:var(--muted); font-weight:600; }
   .isl-done{ width:100%; margin-top:12px; }
+  .isl-view{ margin-top:10px; }
+  .isl-view button{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 6px; }
+  .isl-allnote{ margin-top:4px; font-size:12px; color:#7cc4ff; }
+  .isl-hall{ font-size:11px; letter-spacing:0; text-transform:none; color:#7cc4ff; margin-inline-start:4px; }
   .isl-tsh.two{ white-space:normal; overflow:visible; line-height:1.25; }
   .isl-tsh .nw{ white-space:nowrap; }
   .sg-pop-h .isl-pic{ width:30px; height:28px; flex:0 0 auto; object-fit:contain; align-self:center; }
