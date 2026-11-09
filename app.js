@@ -1938,17 +1938,11 @@ const T = {
   isl_sc_name: { en: "Shining City" },
   isl_wb_title: { en: "Where to buy copies" },
   isl_wb_mark: { en: "Mark of Revival shop" },
-  isl_wb_set_date: { en: "set your state's date" },
   isl_wb_note: { en: "Your picks start as the site's picks \u00b7 change them to match your state" },
   isl_wb_note_owner: { en: "Your picks are everyone's first choice" },
   isl_sc_chip: { en: "Shining City" },
   isl_sc_next: { en: "Next event" },
   isl_sc_days: { en: "{n} days" },
-  isl_sc_my_date: { en: "my state's date" },
-  isl_sc_use_cal: { en: "Use the calendar" },
-  isl_sc_start: { en: "Event starts" },
-  isl_sc_pick_ev: { en: "pick the event" },
-  isl_sc_cal_link: { en: "Calendar (everyone)" },
   isl_tm_name: { en: "Glorious Tome" },
   isl_tm_after: { en: "{m} Tomes by your target" },
   all_categories: { en: "All categories" },
@@ -23358,7 +23352,7 @@ async function islSaveSource(name, src, mythic = true) {
 }
 // Island shops (owner, 9 Nov 2026): the Mark of Revival shop and the Shining City shop each
 // sell copies of some Mythic shard buildings. site_config island_shops =
-// { mark: [names], shining: [names], allow: { mark, shining }, shiningEv: { dates: "cal" | "pack", ev, pack } }
+// { mark: [names], shining: [names], allow: { mark, shining } }
 // = the owner's default for everyone (`allow`: which buildings get the pop-up switch, missing =
 // every pickable one). Each person can keep their own lists in calc_state island_shards.shops
 // (kept when the owner changes the default); no own list = the default. Missing mark default =
@@ -23387,7 +23381,6 @@ function islInShop(name, k) { return islShopList(k).includes(name); }
 // one first), src: "own" | "cal" | "pack", name }. Nothing known = { known: false } (never made up).
 function islShiningStarts(n = 40) {
   const today = packStartOfToday(), dur = Math.max(1, Number(ISL_RULES.shiningDays) || 5), DAY = 86400000;
-  const own = ISL_SHARDS && packValidDay(ISL_SHARDS.shiningDate);
   const monthly = (a) => {
     const out = [];
     for (let m = -2; out.length < n && m < n + 24; m++) {
@@ -23397,14 +23390,13 @@ function islShiningStarts(n = 40) {
     }
     return out;
   };
-  if (own) return { known: true, starts: monthly(packParseDay(own)), src: "own" };
-  const c = islShopsCfg().shiningEv || {};
-  if (c.dates === "cal") {
-    const g = islFindEvent(c.ev);
-    if (g && packParseDay(gameEventAnchor(g))) return { known: true, starts: gameEventStarts(g, today, new Date(today.getTime() + (g.every * n + 7) * DAY)).slice(0, n), src: "cal", name: g.name };
-  }
-  if (c.dates === "pack" && c.pack && ISL_PACK_TABLES && ISL_PACK_TABLES.some((tb) => String(tb.id) === String(c.pack))) {
-    const l = packLinkFor(c.pack), tb = ISL_PACK_TABLES.find((x) => String(x.id) === String(c.pack));
+  // Dates follow the Shining City Pack on the Packs page (owner, 9 Nov 2026): the table
+  // titled "Shining City…", else one with a Glorious Tome / Lucky Glorious Tome Chest column.
+  const tbs = ISL_PACK_TABLES || [];
+  const tomeCol = (tb) => Object.values(packLinkFor(tb.id).cols || {}).some((c) => /glorious tome/i.test(String(c)));
+  const tb = tbs.find((x) => /shining city/i.test(String(x.title || ""))) || tbs.find(tomeCol);
+  if (tb) {
+    const l = packLinkFor(tb.id);
     if (l.reset === 30 && packParseDay(l.resetDay)) return { known: true, starts: monthly(packParseDay(l.resetDay)), src: "pack", name: String(tb.title || "") };
     const offs = typeof l.reset === "number" ? packResetOffsets(l.reset, l.resetDay, 800, l.window || dur) : [];
     if (offs.length) return { known: true, starts: offs.slice(0, n).map((o) => islDay(o)), src: "pack", name: String(tb.title || "") };
@@ -23571,7 +23563,7 @@ async function renderIslandGallery() {
   const islTgt = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? "" : BUDGET_TARGET);
   // Event dates from a Packs-page pack: the pack list loads in the background
   // (always for the owner, who picks packs), then the page redraws with the dates.
-  if (!ISL_PACKS && (IS_OWNER || (islShopsCfg().shiningEv || {}).dates === "pack" || Object.values(siteConfig("island_sources", {}) || {}).some((v) => v && v.dates === "pack" && v.pack))) {
+  if (!ISL_PACKS) { // also gives the Shining City Pack's dates (islShiningStarts)
     islLoadPacks().then(() => { if (seq === RENDER_SEQ && document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender()); });
   }
   if (!ISL_SHARDS.targets || typeof ISL_SHARDS.targets !== "object") ISL_SHARDS.targets = {};
@@ -24168,24 +24160,13 @@ async function renderIslandGallery() {
     // Where to buy copies: one switch per shop this building can be in (owner: the default
     // list for everyone, site_config island_shops; others: their own list, calc_state
     // island_shards.shops). Shining City also shows its next event date.
-    let scEdit = false;
     const shopKs = () => (tracked(s) && islShopPickable(s) ? ISL_SHOPS.filter((k) => { const al = islShopAllow(k); return !al || al.includes(s.name); }) : []);
     const drawShops = () => {
       const host = pop.querySelector("[data-popwb]"), ks = shopKs();
       host.hidden = !ks.length;
       if (!ks.length) { host.innerHTML = ""; return; }
-      if (host.contains(document.activeElement) && document.activeElement.matches("input[type=date], select")) return;
       const row = (k) => `<label class="bset-row isl-wbr"><span class="l"><img src="${ISL_SHOP_ICON[k]}" alt="" aria-hidden="true" /><span>${esc(t(k === "mark" ? "isl_wb_mark" : "isl_sc_name"))}</span></span><input type="checkbox" class="bset-sw" data-ipshop="${k}"${islInShop(s.name, k) ? " checked" : ""} /></label>`;
-      let dateHtml = "";
-      if (ks.includes("shining") && islInShop(s.name, "shining")) {
-        const sc = islShiningStarts(2), own = packValidDay(ISL_SHARDS.shiningDate), cfgEv = islShopsCfg().shiningEv || {};
-        const nx = sc.known && sc.starts[0] ? esc(islDateShort(sc.starts[0])) : "&mdash;";
-        dateHtml = `<div class="isl-wbd"><div>${esc(t("isl_sc_next"))} <b>${nx}</b> &middot; ${esc(t("isl_every_mo"))} &middot; ${esc(t("isl_sc_days").replace("{n}", Number(ISL_RULES.shiningDays) || 5))}${sc.known ? "" : ` &middot; ${esc(t(cfgEv.dates && !IS_OWNER ? "isl_sc_pick_ev" : "isl_wb_set_date"))}`}</div>
-          <div class="isl-shdr">${own || scEdit ? "" : `<button type="button" class="linklike" data-ipscdate>&#9998; ${esc(t("isl_sc_my_date"))}</button>`}${own ? `<button type="button" class="linklike" data-ipscclr>${esc(t("isl_sc_use_cal"))}</button>` : ""}</div>
-          ${scEdit || own ? `<label class="isl-shdi"><span>${esc(t("isl_sc_start"))}</span><input type="date" class="keep-w" data-ipscdatein value="${esc(own || "")}" /></label>` : ""}
-          ${IS_OWNER ? `<label class="isl-shdi"><span>${esc(t("isl_sc_cal_link"))}</span><select class="keep-w" data-ipscev><option value="">${esc(t("isl_dates_choose"))}</option><optgroup label="${esc(t("isl_dates_events"))}">${GAME_EVENTS.map((g) => `<option value="ev:${esc(g.key)}"${cfgEv.dates === "cal" && islFindEvent(cfgEv.ev) === g ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</optgroup>${(ISL_PACKS || []).length ? `<optgroup label="${esc(t("isl_dates_packs"))}">${ISL_PACKS.map((x) => `<option value="${esc(x.id)}"${cfgEv.dates === "pack" && String(cfgEv.pack) === x.id ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</optgroup>` : ""}</select></label>` : ""}</div>`;
-      }
-      host.innerHTML = `<div class="isl-wbt">${esc(t("isl_wb_title"))}</div>${ks.map((k) => row(k) + (k === "shining" ? dateHtml : "")).join("")}<div class="isl-wbn">${esc(t(IS_OWNER ? "isl_wb_note_owner" : "isl_wb_note"))}</div>`;
+      host.innerHTML = `<div class="isl-wbt">${esc(t("isl_wb_title"))}</div>${ks.map(row).join("")}<div class="isl-wbn">${esc(t(IS_OWNER ? "isl_wb_note_owner" : "isl_wb_note"))}</div>`;
     };
     // Same save as the old ⚙ Shops sheet: the page's building order, and buildings outside
     // the allowed list kept as they were.
@@ -24266,8 +24247,6 @@ async function renderIslandGallery() {
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
       if (e.target.closest("[data-islmkopen]")) { islOpenPacks(); return; }
-      if (e.target.closest("[data-ipscdate]")) { scEdit = true; drawShops(); const i = pop.querySelector("[data-ipscdatein]"); if (i) i.focus(); return; }
-      if (e.target.closest("[data-ipscclr]")) { delete ISL_SHARDS.shiningDate; islSave(); budgetInvalidate(); scEdit = false; changed = true; drawShops(); draw(); return; }
       if (e.target.closest("[data-islmkoptopen]")) { islMkOptOpen(); return; }
       const stb = e.target.closest("[data-ipst]");
       if (stb && !stb.disabled) {
@@ -24298,18 +24277,6 @@ async function renderIslandGallery() {
     // Owner: how this building is got (saved for everyone right away).
     pop.addEventListener("change", (e) => {
       if (e.target.matches("[data-ipshop]")) { saveShop(e.target.dataset.ipshop, e.target.checked); return; }
-      if (e.target.matches("[data-ipscdatein]")) {
-        const v = packValidDay(e.target.value); if (v) ISL_SHARDS.shiningDate = v; else delete ISL_SHARDS.shiningDate;
-        islSave(); budgetInvalidate(); changed = true; e.target.blur(); drawShops(); draw();
-        return;
-      }
-      if (e.target.matches("[data-ipscev]") && IS_OWNER) {
-        const v = e.target.value, ev = !v ? null : v.startsWith("ev:") ? { dates: "cal", ev: v.slice(3) } : { dates: "pack", pack: v };
-        const c = { ...islShopsCfg() }; if (ev) c.shiningEv = ev; else delete c.shiningEv;
-        changed = true; e.target.blur();
-        saveSiteConfig("island_shops", c).then(() => { budgetInvalidate(); if (ISL_POP && ISL_POP.id === String(s.id)) { drawShops(); draw(); } }).catch(() => toast("Couldn't save", true));
-        return;
-      }
       if (e.target.matches("[data-ipprice]") && IS_OWNER) {
         changed = true;
         islSaveSource(s.name, { ...srcOf(s), price: Math.max(0, Number(e.target.value) || 0) }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
