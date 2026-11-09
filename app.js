@@ -1830,9 +1830,6 @@ const T = {
   isl_hide: { en: "\u25be Hide" },
   isl_show: { en: "\u25b8 Show" },
   isl_target_all: { en: "Target all buildings" },
-  isl_view_cat: { en: "This category ({name})" },
-  isl_view_all: { en: "All buildings" },
-  isl_view_sets: { en: "Sets all {n} buildings in {c} categories" },
   isl_mixed: { en: "Mixed" },
   isl_you_have: { en: "You have" },
   isl_tap_type: { en: "(tap to type)" },
@@ -23179,7 +23176,7 @@ const ISL_CAMP = [null,
   { workers: 2, wood: 14, load: 7560 }, { workers: 2, wood: 15, load: 9000 }];
 const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3 };
 const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
-// calc_state "island_shards" = { targets: { skinId: level }, allPick, allView (plan over every category), essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
+// calc_state "island_shards" = { targets: { skinId: level }, allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
 const islDefault = () => ({ targets: {}, essence: 0, shards: 0, tree: 10, camp1: 10, camp2: 10, ally: 3, evPer: {}, store: {}, hidden: false });
 function islSave() { const { essence, shards, ...rest } = ISL_SHARDS; saveCalcState("island_shards", rest); }
@@ -23602,11 +23599,8 @@ async function renderIslandGallery() {
       : `<span class="isl-tsh tag${st ? " two" : ""}">${st}${esc(t(kind === "event" ? "isl_tag_ev" : "isl_tag_rk").replace("{t}", evShort(evPlan(s).days)))}</span>`;
     return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
   };
-  // This category, or every tracked building of every category (island_shards.allView).
-  // A category without a plan of its own (Lighthouse) shows the plan locked to All buildings.
-  const allLocked = () => !islCatTracked(ISLAND_FILTER.bonusType);
-  const allOn = () => !!ISL_SHARDS.allView || allLocked();
-  const planList = () => islands.filter((s) => tracked(s) && (allOn() || groupsFor(s).includes(ISLAND_FILTER.bonusType)));
+  // The plan counts only this category's tracked buildings (owner, 9 Nov 2026: no All-buildings view).
+  const planList = () => islands.filter((s) => tracked(s) && groupsFor(s).includes(ISLAND_FILTER.bonusType));
   // The category's plan in Life Essence: shop copies + shards × essence a shard.
   const planTotals = (list) => {
     const st = ISL_SHARDS, sh = list.reduce((a, s) => a + needOf(s), 0), ess = list.reduce((a, s) => a + essOf(s), 0);
@@ -23630,15 +23624,13 @@ async function renderIslandGallery() {
     if (!host) return;
     const list = planList();
     if (!list.length) { host.innerHTML = ""; return; }
-    const view = allLocked() ? `<div class="isl-seg isl-view"><button type="button" class="on" disabled>${esc(t("isl_view_all"))}</button></div>`
-      : `<div class="isl-seg isl-view"><button type="button" data-islview="cat" class="${ISL_SHARDS.allView ? "" : "on"}">${esc(t("isl_view_cat").replace("{name}", ISLAND_FILTER.bonusType))}</button><button type="button" data-islview="all" class="${ISL_SHARDS.allView ? "on" : ""}">${esc(t("isl_view_all"))}</button></div>`;
     const st = ISL_SHARDS;
     const P = planTotals(list), left = P.left, short = P.short;
     const tm = P.days != null ? { weeks: P.weeks, at: P.at } : null;
     const weeksTxt = tm ? String(tm.weeks) : "?";
     const fold = `<button type="button" class="g1-fold" data-islfold aria-expanded="${!st.hidden}">${esc(t(st.hidden ? "isl_show" : "isl_hide"))}</button>`;
     if (st.hidden) {
-      host.innerHTML = `<div class="isl-pl isl-pl-h"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}${allOn() ? ` <small class="isl-hall">${esc(t("isl_view_all"))}</small>` : ""}</span><span class="isl-hs">${short > 0 ? esc(t("isl_short_line").replace("{n}", shortAmount(short)).replace("{w}", weeksTxt)) : left > 0 ? "&#10003;" : ""}</span>${fold}</div></div>`;
+      host.innerHTML = `<div class="isl-pl isl-pl-h"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span><span class="isl-hs">${short > 0 ? esc(t("isl_short_line").replace("{n}", shortAmount(short)).replace("{w}", weeksTxt)) : left > 0 ? "&#10003;" : ""}</span>${fold}</div></div>`;
       return;
     }
     // The level last picked shows while every building still follows it (each one
@@ -23669,7 +23661,6 @@ async function renderIslandGallery() {
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
-      ${view}
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
@@ -23681,8 +23672,6 @@ async function renderIslandGallery() {
     if (!host) return;
     host.onclick = (e) => {
       if (e.target.closest("[data-islfold]")) { ISL_SHARDS.hidden = !ISL_SHARDS.hidden; islSave(); drawPlan(); return; }
-      const vb = e.target.closest("[data-islview]");
-      if (vb) { const all = vb.dataset.islview === "all"; if (!!ISL_SHARDS.allView !== all) { ISL_SHARDS.allView = all; islSave(); drawPlan(); } return; }
       const hv = e.target.closest("[data-islhave]");
       if (hv) {
         const k = hv.dataset.islhave;
@@ -23710,11 +23699,11 @@ async function renderIslandGallery() {
     };
   }
 
-  // Mark of Revival: every tracked category's Mark-shop buildings together (saved as the
+  // Mark of Revival for Budgets: every tracked category's Mark-shop buildings together (the
   // Budgets "Islands" page's need); what the Backpack holds counts as had.
   const markNeedAll = () => islands.filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
-  // The Pack cost sheet: the Marks actually needed, else (no target) the optional amount.
-  const markSheetTotal = () => markNeedAll() || islands.filter(usesMarks).reduce((a, s) => a + marksOpt(s), 0);
+  // The Pack cost card: this category's Marks actually needed, else (no target) the optional amount.
+  const markSheetTotal = () => { const l = planList().filter(usesMarks); return l.reduce((a, s) => a + marksOf(s), 0) || l.reduce((a, s) => a + marksOpt(s), 0); };
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
