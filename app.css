@@ -3468,8 +3468,6 @@ input,select,textarea{
   .isl-chip[hidden]{ display:none; }
   .isl-chip.ev{ background:rgba(201,182,255,.16); color:#c9b6ff; }
   .isl-chip.rk{ background:rgba(124,196,255,.16); color:#7cc4ff; }
-  .isl-chip.mk{ display:inline-flex; align-items:center; gap:3px; background:rgba(224,178,90,.16); color:#e0b25a; padding:3px 6px 3px 4px; }
-  .isl-chip.mk img{ width:14px; height:14px; object-fit:contain; }
   .sg-pw.has-x{ position:relative; }
   .isl-mkc{ position:absolute; inset-inline-start:2px; bottom:2px; z-index:2; width:20px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(224,178,90,.7); pointer-events:none; }
   .isl-mkc img, .sg-t .sg-pw .isl-mkc img, .sg-t.no .sg-pw .isl-mkc img, .sg-t.is.l0 .sg-pw .isl-mkc img{ width:15px; height:15px; object-fit:contain; opacity:1; filter:none; }
@@ -3577,23 +3575,25 @@ input,select,textarea{
   .isl-mkck{ display:flex; align-items:center; gap:8px; flex:1 1 100%; font-size:13px; font-weight:700; color:var(--frost); cursor:pointer; }
   .isl-mkck[hidden]{ display:none; }
   .isl-mkck input{ width:18px; height:18px; margin:0; }
-  /* Islands ⚙ Shops (Mark of Revival / Shining City) */
+  /* Islands: where to buy copies (Mark of Revival / Shining City switches in the building pop-up) */
   .isl-head > div{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; flex:1 1 auto; width:100%; }
   .isl-head > div > h2{ flex:1 1 auto; min-width:0; }
-  .isl-shopsb{ flex:0 0 auto; margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px; height:32px; border-radius:10px; }
   .isl-mkc.tm{ border-color:rgba(185,166,255,.75); }
   .isl-mkc.tm.two{ inset-inline-start:24px; }
-  .isl-shc{ display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 6px; }
-  .isl-shc[hidden]{ display:none; }
-  .isl-shc .isl-chip{ border:0; font-family:inherit; cursor:pointer; padding:5px 8px 5px 5px; }
-  .isl-chip.mk.tm{ background:rgba(185,166,255,.16); color:#c9b6ff; }
-  .isl-shops .isl-shmode{ margin:4px 0 10px; }
-  .isl-shk{ display:flex; align-items:center; gap:8px; padding:4px 0 10px; font-size:13.5px; font-weight:700; color:var(--frost); }
-  .isl-shk img{ width:30px; height:30px; object-fit:contain; flex:0 0 30px; }
-  .isl-shk select{ flex:1 1 auto; min-width:0; }
-  .isl-shdate{ margin:0 0 10px; padding:2px 10px 8px; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
-  .isl-shdate .r{ border-bottom:0; padding:7px 0 4px; }
-  .isl-shdate .r b{ font-size:15px; color:var(--frost); white-space:nowrap; }
+  .isl-wb{ margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+  .isl-wb[hidden]{ display:none; }
+  .isl-wbt{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+  .isl-wbr{ min-height:44px; cursor:pointer; }
+  .isl-wbr .l{ display:flex; align-items:center; gap:8px; min-width:0; font-size:13.5px; font-weight:700; color:var(--frost); }
+  .isl-wbr .l img{ width:22px; height:22px; object-fit:contain; flex:0 0 22px; }
+  .isl-wbr input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px !important; flex:0 0 38px; padding:0; }
+  .isl-wbd{ margin:-2px 0 6px; padding-inline-start:30px; font-size:12px; color:var(--muted); line-height:1.45; }
+  .isl-wbd b{ color:var(--frost); }
+  .isl-wbd .isl-shdi{ margin-top:6px; font-size:12px; }
+  .isl-wbd .isl-shdr{ margin-top:2px; }
+  .isl-pop .isl-wbd button.linklike{ background:none; border:0; padding:4px 0; min-height:0; height:auto; width:auto; color:var(--ice); font:inherit; font-weight:700; cursor:pointer; }
+  .isl-wbd select, .isl-wbd input[type=date]{ height:34px; font-size:13px; padding:0 8px; }
+  .isl-wbn{ margin-top:4px; font-size:12px; color:var(--muted); line-height:1.4; }
   .isl-shdr{ display:flex; flex-wrap:wrap; gap:14px; font-size:12.5px; }
   .isl-shdi{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; font-size:12.5px; color:var(--muted); }
   .isl-shdi input, .isl-shdi select{ max-width:62%; }
