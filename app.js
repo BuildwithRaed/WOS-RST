@@ -11007,11 +11007,42 @@ async function renderPacksPage() {
     if (!categoryTabs().some((pt) => pt.key === packsFilter)) packsFilter = "all";
   }
   // A redraw keeps the page where it was, and the editors' sideways boxes too.
+  // The pack window keeps its own scroll place too when it's drawn again for
+  // the same pack (a new table that just got its real id counts as the same).
   function renderAll() {
     const y = window.scrollY, putBoxes = saveBoxScroll(listEl);
+    const ob = listEl.querySelector(".pkb-panel > .pk-body"), oPanel = ob && ob.closest(".pkb-panel");
+    const oId = oPanel ? oPanel.dataset.pkid : null, oTop = ob ? ob.scrollTop : 0, oLeft = ob ? [...ob.querySelectorAll(".pk-tbl-wrap")].map((w) => w.scrollLeft) : [];
+    // The control just used (focused) stays where it was on screen, even when a
+    // line above it comes or goes (e.g. "Hidden from visitors").
+    const act = document.activeElement, actAt = ob && act && ob.contains(act) ? [...act.attributes].find((a) => a.name.startsWith("data-")) : null;
+    const actKey = actAt ? `[${actAt.name}="${window.CSS.escape(actAt.value)}"]` : "", actOff = actKey ? act.getBoundingClientRect().top - ob.getBoundingClientRect().top : 0;
     renderAllCore();
     putBoxes();
+    if (oId != null) {
+      const nb = listEl.querySelector(".pkb-panel > .pk-body"), nPanel = nb && nb.closest(".pkb-panel");
+      if (nPanel && (nPanel.dataset.pkid === oId || PKB_RENAMED[oId] === nPanel.dataset.pkid)) {
+        nb.scrollTop = oTop;
+        nb.querySelectorAll(".pk-tbl-wrap").forEach((w, i) => { if (oLeft[i]) w.scrollLeft = oLeft[i]; });
+        const nAct = actKey ? nb.querySelector(actKey) : null;
+        if (nAct) {
+          nb.scrollTop += nAct.getBoundingClientRect().top - nb.getBoundingClientRect().top - actOff;
+          try { nAct.focus({ preventScroll: true }); } catch (e) {}
+        }
+      }
+    }
     if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+  }
+  // A new table gets its real id on its first save: the open window (and its
+  // history entry, Arrange mode) follow the new id, so the next redraw keeps it open.
+  const PKB_RENAMED = {};
+  function pkbRenamed(oldId, newId) {
+    oldId = String(oldId); newId = String(newId);
+    PKB_RENAMED[oldId] = newId;
+    if (PACKS_OPEN.has(oldId)) { PACKS_OPEN.delete(oldId); PACKS_OPEN.add(newId); }
+    if (PK_ARRANGE.has(oldId)) { PK_ARRANGE.delete(oldId); PK_ARRANGE.add(newId); }
+    if (history.state && history.state.tab === "packs" && String(history.state.pkb) === oldId) history.replaceState({ ...history.state, pkb: newId }, "", location.pathname + location.search);
+    listEl.querySelectorAll(`[data-pkid="${window.CSS.escape(oldId)}"]`).forEach((el) => { el.dataset.pkid = newId; });
   }
   // Speed (Packs B): a table's editor is built the first time it's opened
   // (Edit), or when it's drawn open (PACKS_OPEN); closed cards only carry an
@@ -12258,7 +12289,7 @@ async function renderPacksPage() {
           if (t._creating) await t._creating;
           const payload = { title: t.title.trim() || "Table name here", columns: t.columns, rows: t.rows, sort_order: ti, scale_enabled: t.scale_enabled !== false, updated_at: new Date().toISOString() };
           if (String(t.id).startsWith("new-")) {
-            t._creating = sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) }).then(([saved]) => { t.id = saved.id; });
+            t._creating = sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) }).then(([saved]) => { const was = t.id; t.id = saved.id; pkbRenamed(was, saved.id); });
             try { await t._creating; } finally { t._creating = null; }
           } else {
             await sb(`pack_tables?id=eq.${t.id}`, { method: "PATCH", body: JSON.stringify(payload) });
