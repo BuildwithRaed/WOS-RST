@@ -436,6 +436,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Monthly packs counted once a month (owner, 9 Nov 2026: Intel Monthly Card showed "×2" on This week):** `packCurrentCycleStart` returned null for reset 30 (calendar months), so a pack bought / planned in the running month wasn't counted as that copy's buy (`usedNow` 0) and the plan suggested it again; the "will buy" and the plan's suggestion then merged into one "×2" line. Now reset 30 with an anchor gives the anchor's day of this month (or last month; day clamped to the month's length). Checked in the page: Intel Monthly Card (reset 30, Nov 1) planned today → usedNow 1 (was 0).
 
+**Every game event has its own colour (owner, 9 Nov 2026: the new "Tyrant Battle" event looked like SvS):** `gameEventColor(key)` = SvS red / KOI purple as before, other `GAME_EVENTS` rows the next colour of `GAME_EVENT_PALETTE` by their place in the list (added in Admin → Rules & Timeline → Events, no code); `gameEventTint(key)` gives the tinted box. Used by the Pack calendar (week bars, day tiles, picked-day event row, "Next event" box, month picker marks) and the Roadmap event chips (`rmr-ev`); the month picker legend lists every event by name. SvS / KOI look exactly as before.
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -575,3 +577,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - PR #142: speed fixes 6–9 (app.js / app.css / admin.js, unused CSS and texts removed, 3 s fallback)
 - PR #143: translations for the 5–6 Nov texts (109 keys, all 16 languages, LANG_FILES_VERSION 72)
 - PR #144: Packs: new heroes listed under their packs, leader swap in Add packs, Arrange (drag order, `__rowOrder`), translations (LANG_FILES_VERSION 73)
+- PR #?: Pack calendar: own colour and legend for every game event (Tyrant Battle …)

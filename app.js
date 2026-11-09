@@ -9875,6 +9875,21 @@ function packCalSaveFilter() {
   try { localStorage.setItem("packcal_filter", JSON.stringify({ off: [...PACK_CAL_FILTER.off], plan: PACK_CAL_FILTER.plan })); } catch (e) { /* blocked */ }
 }
 const PACK_CAL_COL = { weekly: "#6fd3f2", monthly: "#e8a23c", event: "#ff7a7a", koi: "#a98cf0", wheel: "#6fd3f2", newheroes: "#a98cf0", unlocks: "#5bc98a" };
+// Each game event (Admin → Rules & Timeline → Events) has its own colour: SvS red and
+// KOI purple as before, others the next palette colour by their place in GAME_EVENTS.
+const GAME_EVENT_PALETTE = ["#f472b6", "#2dd4bf", "#a3e635", "#818cf8", "#facc15", "#fb7185", "#38bdf8", "#fdba74"];
+function gameEventColor(key) {
+  if (key === "svs") return PACK_CAL_COL.event;
+  if (key === "koi") return PACK_CAL_COL.koi;
+  const others = GAME_EVENTS.filter((e) => e.key !== "svs" && e.key !== "koi");
+  const i = others.findIndex((e) => e.key === key);
+  return GAME_EVENT_PALETTE[(i < 0 ? 0 : i) % GAME_EVENT_PALETTE.length];
+}
+// A tinted box in an event's colour (background / border alpha).
+function gameEventTint(key, bg = 0.13, bd = 0.35) {
+  const h = gameEventColor(key).slice(1), r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return `background:rgba(${r},${g},${b},${bg});border-color:rgba(${r},${g},${b},${bd});`;
+}
 function packCalKind(reset) {
   return reset <= 14 ? "weekly" : "monthly";
 }
@@ -10016,7 +10031,7 @@ async function renderPackCalendarPage() {
     if (PACK_CAL_FILTER.plan && it.gi != null) return groups[it.gi].plan.length > 0;
     return true;
   };
-  const evCol = (it) => (it.kind === "event" ? PACK_CAL_COL[it.ev === "koi" ? "koi" : it.ev === "wheel" ? "wheel" : "event"] : PACK_CAL_COL[it.kind] || PACK_CAL_COL.weekly);
+  const evCol = (it) => (it.kind === "event" ? (it.ev === "wheel" ? PACK_CAL_COL.wheel : gameEventColor(it.ev)) : PACK_CAL_COL[it.kind] || PACK_CAL_COL.weekly);
 
   // ---- the pack sheet ----
   const resetText = (l) => {
@@ -10129,7 +10144,7 @@ async function renderPackCalendarPage() {
       <div class="pcl-mh"><button type="button" class="pcl-nb" data-pclm="-1" aria-label="previous">&#8249;</button><b>${esc(title)}</b><button type="button" class="pcl-nb" data-pclm="1" aria-label="next">&#8250;</button></div>
       <div class="pcl-mrow pcl-mdow"><span class="pcl-ml"></span>${Array.from({ length: 7 }, (_, i) => `<span class="pcl-mc">${esc(fmt(i - monIdx, { weekday: "narrow" }))}</span>`).join("")}</div>
       ${rows.join("")}
-      <div class="pcl-leg"><span><u style="background:${PACK_CAL_COL.event}"></u>SvS</span><span><u style="background:${PACK_CAL_COL.koi}"></u>KOI</span>${ng ? `<span>⭐ ${esc(t("pack_cal_new_heroes"))} ${esc(md(ng.a))}</span>` : ""}</div>
+      <div class="pcl-leg">${GAME_EVENTS.map((e) => `<span><u style="background:${gameEventColor(e.key)}"></u>${esc(e.name)}</span>`).join("")}${ng ? `<span>⭐ ${esc(t("pack_cal_new_heroes"))} ${esc(md(ng.a))}</span>` : ""}</div>
       <div class="pcl-btns"><button type="button" class="btn ghost" data-pclwk="0">${esc(t("pack_cal_today_btn"))}</button><button type="button" class="btn ghost" data-pclx>${esc(t("close_button"))}</button></div>
     </div></div>`;
   }
@@ -10154,6 +10169,7 @@ async function renderPackCalendarPage() {
     };
     const ev1 = evs[0], ev2 = evs[1];
     const evCls = ev1 ? (ev1.kind === "event" ? (ev1.ev === "koi" ? "koi" : "svs") : "gen") : "";
+    const evSty = ev1 && ev1.kind === "event" && ev1.ev !== "svs" && ev1.ev !== "koi" ? ` style="${gameEventTint(ev1.ev, 0.10)}--evc:${gameEventColor(ev1.ev)}"` : "";
     // ---- week strip ----
     const wkLbl = PACK_CAL_WEEK === 0 ? t("pcl_this_week") : PACK_CAL_WEEK === 1 ? t("pcl_next_week") : PACK_CAL_WEEK === -1 ? t("pcl_last_week") : "";
     const sameM = dateOf(mon).getUTCMonth() === dateOf(sun).getUTCMonth();
@@ -10232,7 +10248,7 @@ async function renderPackCalendarPage() {
     };
     const evRow = (x) => {
       const lbl = x.milestone ? (x.tip || "") : x.b === dOff ? t("pcl_last_day") : t("pcl_day_n").replace("{n}", dOff - x.a + 1).replace("{m}", x.days);
-      return `<div class="pcl-evb ${x.kind === "event" ? (x.ev === "koi" ? "koi" : x.ev === "wheel" ? "wh" : "svs") : x.kind === "unlocks" ? "ul" : "gen"}">${x.kind === "event" && x.ev !== "wheel" ? "&#9876; " : ""}${esc(x.title)}<small>${esc(lbl)}</small></div>`;
+      return `<div class="pcl-evb ${x.kind === "event" ? (x.ev === "koi" ? "koi" : x.ev === "wheel" ? "wh" : "svs") : x.kind === "unlocks" ? "ul" : "gen"}"${x.kind === "event" && x.ev !== "wheel" && x.ev !== "svs" && x.ev !== "koi" ? ` style="${gameEventTint(x.ev)}"` : ""}>${x.kind === "event" && x.ev !== "wheel" ? "&#9876; " : ""}${esc(x.title)}<small>${esc(lbl)}</small></div>`;
     };
     const DMAX = 4;
     const listShown = PACK_CAL_DAY_MORE ? dayPacks : dayPacks.slice(0, DMAX);
@@ -10246,7 +10262,7 @@ async function renderPackCalendarPage() {
       <div class="panel pcl-ans">
         <div class="pcl-two">
           <div class="pcl-bx"><span class="l">${esc(t("pcl_today"))}</span><b>${esc(t("pcl_packs_on").replace("{n}", nOn))}</b><small>${esc(nEnd ? t("pcl_end_today").replace("{n}", nEnd) : t("pcl_none_end"))}</small></div>
-          <div class="pcl-bx ${evCls}"><span class="l">${esc(t("pcl_next_event"))}</span><b>${esc(ev1 ? evText(ev1) : "—")}</b><small>${esc(ev2 ? evText(ev2) : "")}</small></div>
+          <div class="pcl-bx ${evCls}"${evSty}><span class="l">${esc(t("pcl_next_event"))}</span><b>${esc(ev1 ? evText(ev1) : "—")}</b><small>${esc(ev2 ? evText(ev2) : "")}</small></div>
         </div>
       </div>
       <div class="panel pcl-wk">
@@ -20686,7 +20702,7 @@ async function renderBudgetsPage(opts = {}) {
           <div class="rmr-gl">${gShown.map((g) => goalRow(g, goals.indexOf(g))).join("")}</div>
           ${goals.length > 3 ? `<button type="button" class="rmr-more" data-rmgall>${esc(RM_GOALS_ALL ? t("rmr_fewer") : t("rmr_more_goals").replace("{n}", goals.length - 3))}</button>` : ""}`;
       const topCard = `<div class="t12x-card rmr-top" id="rmw-0">
-        <div class="rmr-tw"><span class="rmr-lbl">${esc(t("rmr_this_week"))} · ${esc(rangeTxt(0))}</span>${evNow.map((ev) => `<span class="rmr-ev now ${esc(ev.key)}">&#9876; ${esc(t("rmr_ev_now").replace("{ev}", ev.name))}</span>`).join("")}</div>
+        <div class="rmr-tw"><span class="rmr-lbl">${esc(t("rmr_this_week"))} · ${esc(rangeTxt(0))}</span>${evNow.map((ev) => `<span class="rmr-ev now ${esc(ev.key)}"${ev.key !== "svs" && ev.key !== "koi" ? ` style="${gameEventTint(ev.key, 0.14)}color:${gameEventColor(ev.key)}"` : ""}>&#9876; ${esc(t("rmr_ev_now").replace("{ev}", ev.name))}</span>`).join("")}</div>
         <div class="rmr-big"><b>${esc(packFmtLocal(wTotal, cur, false, smp))}</b><span>${esc(t("rmr_packs_bought").replace("{n}", nAll).replace("{b}", bought.length))}</span></div>
         <div class="rmr-bar big"><i style="width:${wTotal > 0 ? ((mBought / wTotal) * 100).toFixed(1) : 0}%;"></i></div>
         ${nextI >= 0 ? `<div class="rmr-next">${esc(t("rmr_next_goal")).replace("{goal}", `<b>${esc(nameOf(goals[nextI]))}</b>`).replace("{d}", `<b class="good">${esc(shortDay(rmDates[nextI].day))}</b>`)}</div>` : `<div class="rmr-next good">&#10003; ${esc(t("rmr_all_ready"))}</div>`}
@@ -20717,7 +20733,7 @@ async function renderBudgetsPage(opts = {}) {
       const genBase = newGenBaseDay(), genNow = newGenGen(), genStarts = genBase ? newGenStarts(genBase, 8) : [];
       const evChips = (w) => {
         const ws = wkStart(w), we = new Date(ws.getTime() + 6 * DAY + DAY - 1), out = [];
-        GAME_EVENTS.forEach((ev) => gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).forEach(() => out.push(`<span class="rmr-ev ${esc(ev.key)}">${esc(ev.name)}</span>`)));
+        GAME_EVENTS.forEach((ev) => gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).forEach(() => out.push(`<span class="rmr-ev ${esc(ev.key)}"${ev.key !== "svs" && ev.key !== "koi" ? ` style="${gameEventTint(ev.key, 0.14)}color:${gameEventColor(ev.key)}"` : ""}>${esc(ev.name)}</span>`)));
         genStarts.forEach((d, k) => { if (k > 0 && d >= ws && d <= we) out.push(`<span class="rmr-ev gen">&#11088; ${esc(genNow ? t("rmr_gen_heroes").replace("{n}", genNow + k) : t("rmr_new_heroes"))}</span>`); });
         flagsIn(w).forEach((x) => out.push(`<span class="rmr-ev flag" title="${esc(nameOf(x.g))}">&#127937; ${esc(nameOf(x.g))}</span>`));
         return out.join("");

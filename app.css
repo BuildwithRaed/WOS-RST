@@ -1163,6 +1163,7 @@
   .pcl-bx small{ display:block; font-size:11.5px; color:var(--muted); margin-top:1px; min-height:1em; }
   .pcl-bx.svs{ background:rgba(255,122,122,.10); border-color:rgba(255,122,122,.35); }
   .pcl-bx.svs b{ color:#ff8f8f; }
+  .pcl-bx[style*="--evc"] b{ color:var(--evc); }
   .pcl-bx.koi{ background:rgba(169,140,240,.10); border-color:rgba(169,140,240,.35); }
   .pcl-bx.koi b{ color:#c7b5f7; }
   .pcl-bx.gen{ background:rgba(224,178,90,.10); border-color:rgba(224,178,90,.35); }
