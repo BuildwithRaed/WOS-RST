@@ -2431,7 +2431,18 @@
 "t:pkb_arrange_reset":"Kembali ke A–Z",
 "t:pkb_arrange_hint":"Tahan ⋮⋮ lalu seret",
 "t:isl_target_all":"Target semua",
-"t:isl_pc_none":"$ — tidak ada yang dibeli",
+"t:isl_pc_none":"Tidak ada yang dibeli",
+"t:isl_wb_title":"Tempat membeli salinan",
+"t:isl_wb_mark":"Toko Tanda Kebangkitan",
+"t:isl_wb_note":"Pilihanmu dimulai dari pilihan situs · ubah sesuai state-mu",
+"t:isl_wb_note_owner":"Pilihanmu jadi pilihan pertama semua orang",
+"t:isl_sc_name":"Kota Bersinar",
+"t:isl_sc_chip":"Kota Bersinar",
+"t:isl_sc_next":"Event berikutnya",
+"t:isl_sc_days":"{n} hari",
+"t:isl_tm_name":"Buku Agung",
+"t:isl_tm_after":"{m} buku sampai targetmu",
+"t:isl_tm_or":"atau {m} buku",
 "t:isl_mixed":"Campur",
 "t:isl_you_have":"Kamu punya",
 "t:isl_tap_type":"(ketuk untuk mengetik)",
@@ -2538,5 +2549,5 @@
 "t:isl_island_shards":"Pecahan pulau",
 "t:isl_done":"Selesai",
 "t:isl_src":"Cara mendapatkan",
-"t:isl_src_choices":"Salinan per siklus, maks 5 (mis. 1,3,5)"
+"t:isl_src_choices":"Salinan per siklus, maks 6 (mis. 1,3,6)"
 }

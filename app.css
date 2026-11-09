@@ -3413,7 +3413,7 @@ input,select,textarea{
   .sg-pop-ft{ display:flex; justify-content:space-between; gap:8px; margin-top:7px; font-size:11.5px; color:var(--muted); }
   /* Islands: Mythic shards plan (Attack). */
   .isl-tbg{ position:absolute; top:3px; inset-inline-end:3px; z-index:3; font-size:11px; font-weight:800; line-height:1; padding:3px 4px; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(124,196,255,.55); color:#7cc4ff; white-space:nowrap; pointer-events:none; }
-  .isl-tsh{ margin-top:4px; font-size:11px; letter-spacing:-.2px; max-width:100%; overflow:hidden; text-overflow:ellipsis; font-weight:800; color:#e0b25a; line-height:1.2; text-align:center; white-space:nowrap; }
+  .isl-tsh{ margin-top:4px; font-size:11px; letter-spacing:-.2px; max-width:100%; font-weight:800; color:#e0b25a; line-height:1.25; text-align:center; white-space:normal; overflow-wrap:anywhere; }
   .isl-tsh i{ font-style:normal; }
   .isl-im{ height:1.15em; width:auto; vertical-align:-.2em; }
   .isl-ic .isl-im{ height:22px; vertical-align:0; }
@@ -3468,8 +3468,6 @@ input,select,textarea{
   .isl-chip[hidden]{ display:none; }
   .isl-chip.ev{ background:rgba(201,182,255,.16); color:#c9b6ff; }
   .isl-chip.rk{ background:rgba(124,196,255,.16); color:#7cc4ff; }
-  .isl-chip.mk{ display:inline-flex; align-items:center; gap:3px; background:rgba(224,178,90,.16); color:#e0b25a; padding:3px 6px 3px 4px; }
-  .isl-chip.mk img{ width:14px; height:14px; object-fit:contain; }
   .sg-pw.has-x{ position:relative; }
   .isl-mkc{ position:absolute; inset-inline-start:2px; bottom:2px; z-index:2; width:20px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(224,178,90,.7); pointer-events:none; }
   .isl-mkc img, .sg-t .sg-pw .isl-mkc img, .sg-t.no .sg-pw .isl-mkc img, .sg-t.is.l0 .sg-pw .isl-mkc img{ width:15px; height:15px; object-fit:contain; opacity:1; filter:none; }
@@ -3530,6 +3528,7 @@ input,select,textarea{
   div.isl-done.am{ color:var(--amber); }
   div.isl-done.am b{ color:var(--amber); }
   div.isl-done.bad{ color:var(--bad, #ef7a7a); }
+  .isl-why div.isl-done:first-child{ margin-top:0; }
   div.isl-done .isl-mkb{ display:inline; margin:0; font-size:inherit; }
   .isl-tr{ gap:8px; }
   .isl-tr .isl-tl{ display:flex; align-items:center; gap:8px; min-width:0; flex:1 1 auto; font-size:13.5px; color:var(--frost); }
@@ -3576,6 +3575,40 @@ input,select,textarea{
   .isl-mkck{ display:flex; align-items:center; gap:8px; flex:1 1 100%; font-size:13px; font-weight:700; color:var(--frost); cursor:pointer; }
   .isl-mkck[hidden]{ display:none; }
   .isl-mkck input{ width:18px; height:18px; margin:0; }
+  /* Islands: where to buy copies (Mark of Revival / Shining City switches in the building pop-up) */
+  .isl-head > div{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; flex:1 1 auto; width:100%; }
+  .isl-head > div > h2{ flex:1 1 auto; min-width:0; }
+  .isl-mkc.tm{ border-color:rgba(185,166,255,.75); }
+  .isl-mkc.tm.two{ inset-inline-start:24px; }
+  .isl-wb{ margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+  .isl-wb[hidden]{ display:none; }
+  .isl-wbt{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+  .isl-wbr{ min-height:44px; cursor:pointer; }
+  .isl-wbr .l{ display:flex; align-items:center; gap:8px; min-width:0; font-size:13.5px; font-weight:700; color:var(--frost); }
+  .isl-wbr .l img{ width:22px; height:22px; object-fit:contain; flex:0 0 22px; }
+  .isl-wbr input.bset-sw{ width:38px !important; height:22px !important; min-width:38px; min-height:22px !important; flex:0 0 38px; padding:0; }
+  .isl-wbd{ margin:-2px 0 6px; padding-inline-start:30px; font-size:12px; color:var(--muted); line-height:1.45; }
+  .isl-wbd b{ color:var(--frost); }
+  .isl-wbd .isl-shdi{ margin-top:6px; font-size:12px; }
+  .isl-wbd .isl-shdr{ margin-top:2px; }
+  .isl-pop .isl-wbd button.linklike{ background:none; border:0; padding:4px 0; min-height:0; height:auto; width:auto; color:var(--ice); font:inherit; font-weight:700; cursor:pointer; }
+  .isl-wbd select, .isl-wbd input[type=date]{ height:34px; font-size:13px; padding:0 8px; }
+  .isl-wbn{ margin-top:4px; font-size:12px; color:var(--muted); line-height:1.4; }
+  .isl-shdr{ display:flex; flex-wrap:wrap; gap:14px; font-size:12.5px; }
+  .isl-shdi{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; font-size:12.5px; color:var(--muted); }
+  .isl-shdi input, .isl-shdi select{ max-width:62%; }
+  .isl-shg{ display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; max-height:46vh; overflow-y:auto; overscroll-behavior:contain; }
+  .isl-sht{ position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 3px 6px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--muted); font:inherit; cursor:pointer; opacity:.62; }
+  .isl-sht.on{ border-color:var(--ice); color:var(--frost); opacity:1; background:rgba(124,196,255,.08); }
+  .isl-sht img{ width:100%; aspect-ratio:1; object-fit:contain; }
+  .isl-sht .nm{ font-size:11px; line-height:13px; text-align:center; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
+  .isl-sht .ck{ position:absolute; top:3px; inset-inline-end:3px; width:18px; height:18px; border-radius:50%; border:1px solid var(--line); background:var(--panel); color:#fff; font-size:11px; line-height:16px; text-align:center; font-weight:800; }
+  .isl-sht.on .ck{ background:var(--ice-dim); border-color:var(--ice); }
+  .isl-shn{ margin:10px 0 2px; font-size:12.5px; color:var(--muted); }
+  .isl-shb{ display:flex; gap:8px; margin-top:10px; }
+  .isl-shb .btn{ flex:1 1 0; }
+  /* Admin → Islands: which buildings each shop may offer */
+  .adm-islshops .isl-shg{ max-height:none; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); }
   .isl-mkx{ margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--frost); line-height:1.35; }
   .isl-mkx small{ color:var(--muted); font-size:11.5px; }
   .isl-mkrow.opt .tx small{ color:var(--muted); }
@@ -4452,3 +4485,13 @@ input,select,textarea{
   .isl-pop .isl-mkck .bset-sw{ width:38px; height:22px; flex:0 0 38px; }
   .sg-ans.g1-folded #islandShardPlan, .sg-ans.g1-folded ~ #islMkWrap{ display:none; }
   .sg-k .isl-fold{ margin-inline-start:8px; letter-spacing:0; text-transform:none; }
+
+  .adm-odds{ display:block; }
+  .adm-odds-h, .adm-odds-r{ display:grid; grid-template-columns:1fr 1fr 56px 32px; gap:6px; align-items:center; }
+  .adm-odds-h{ font-size:11.5px; color:var(--muted); margin:6px 0 4px; }
+  .adm-odds-r{ margin-bottom:6px; }
+  .adm-odds-r input{ width:100%; min-width:0; }
+  .adm-odds-r .g{ color:var(--muted); font-size:12.5px; text-align:end; }
+  .adm-odds-avg{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:13px; }
+  .adm-odds-avg .ok{ color:var(--good); font-weight:700; }
+  .adm-odds-avg .bad{ color:var(--danger); font-weight:700; }

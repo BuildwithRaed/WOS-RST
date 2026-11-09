@@ -2432,7 +2432,18 @@
 "t:pkb_arrange_reset":"Torna ad A–Z",
 "t:pkb_arrange_hint":"Tieni premuto ⋮⋮ e trascina",
 "t:isl_target_all":"Obiettivo per tutti",
-"t:isl_pc_none":"$ — niente da comprare",
+"t:isl_pc_none":"Niente da comprare",
+"t:isl_wb_title":"Dove comprare copie",
+"t:isl_wb_mark":"Negozio dei Marchi della Rinascita",
+"t:isl_wb_note":"Le tue scelte partono da quelle del sito · cambiale per il tuo stato",
+"t:isl_wb_note_owner":"Le tue scelte sono la prima scelta di tutti",
+"t:isl_sc_name":"Città Splendente",
+"t:isl_sc_chip":"Città Splendente",
+"t:isl_sc_next":"Prossimo evento",
+"t:isl_sc_days":"{n} giorni",
+"t:isl_tm_name":"Tomo Glorioso",
+"t:isl_tm_after":"{m} tomi entro l'obiettivo",
+"t:isl_tm_or":"o {m} tomi",
 "t:isl_mixed":"Misto",
 "t:isl_you_have":"Hai",
 "t:isl_tap_type":"(tocca per scrivere)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"Frammenti isola",
 "t:isl_done":"Fatto",
 "t:isl_src":"Come ottenerlo",
-"t:isl_src_choices":"Copie per ciclo, fino a 5 (es. 1,3,5)"
+"t:isl_src_choices":"Copie per ciclo, fino a 6 (es. 1,3,6)"
 }

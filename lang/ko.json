@@ -2431,7 +2431,18 @@
 "t:pkb_arrange_reset":"A–Z 순으로 되돌리기",
 "t:pkb_arrange_hint":"⋮⋮를 길게 눌러 끌기",
 "t:isl_target_all":"전체 목표",
-"t:isl_pc_none":"$ — 구매할 것 없음",
+"t:isl_pc_none":"구매할 것 없음",
+"t:isl_wb_title":"사본 구매처",
+"t:isl_wb_mark":"부활의 증표 상점",
+"t:isl_wb_note":"사이트 선택으로 시작 · 내 서버에 맞게 바꾸세요",
+"t:isl_wb_note_owner":"내 선택이 모두의 기본 선택이 됩니다",
+"t:isl_sc_name":"빛나는 도시",
+"t:isl_sc_chip":"빛나는 도시",
+"t:isl_sc_next":"다음 이벤트",
+"t:isl_sc_days":"{n}일",
+"t:isl_tm_name":"영광의 서",
+"t:isl_tm_after":"목표일까지 영광의 서 {m}개",
+"t:isl_tm_or":"또는 영광의 서 {m}개",
 "t:isl_mixed":"혼합",
 "t:isl_you_have":"보유",
 "t:isl_tap_type":"(눌러서 입력)",
@@ -2538,5 +2549,5 @@
 "t:isl_island_shards":"섬 조각",
 "t:isl_done":"완료",
 "t:isl_src":"획득 방법",
-"t:isl_src_choices":"회차당 사본, 최대 5 (예: 1,3,5)"
+"t:isl_src_choices":"회차당 사본, 최대 6 (예: 1,3,6)"
 }

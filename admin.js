@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "1fcf53ab45";
+window.ADMIN_BUILD = "a2c0b0cde2";
 
 // ============================================================
 // ADMIN PAGE
@@ -1274,6 +1274,7 @@ async function renderAdminItems(body) {
         const sigils = / Sigils$/.test(box);
         const cfg = packResourceConfig(), custom = packCustomResource(name);
         const givesNow = custom ? (custom.contents || {}) : (cfg.gives[name] || PACK_BUNDLES[name] || {});
+        const odds = chestOddsOf(name);
         const fields = [
           { key: "icon", label: "Picture (empty = the site's own)", type: "img", value: cur.icon || "" },
           { key: "short", label: `Short name on planner tiles (empty = ${MATERIAL_NAME_SHORT[box] || "full name"})`, value: cur.short || "", half: true },
@@ -1284,7 +1285,8 @@ async function renderAdminItems(body) {
           ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "ch_" + k, label: l, type: "check", half: true, more: true, value: (maps.chests[k] || []).includes(box) })),
           { key: "ctnote", type: "note", label: "…and counted as its contents (below) on:", more: true },
           ...ITEM_PAGE_KEYS.map(([k, l]) => ({ key: "ct_" + k, label: l, type: "check", half: true, more: true, value: (maps.fixed[k] || []).includes(box) })),
-          { key: "gives", label: "Counts as, per 1 (e.g. Design Plan: 1, Polishing Solution: 4) — same as Pack Resources \"Gives\"", value: contentsText(givesNow), more: true },
+          ...(odds ? [] : [{ key: "gives", label: "Counts as, per 1 (e.g. Design Plan: 1, Polishing Solution: 4) — same as Pack Resources \"Gives\"", value: contentsText(givesNow), more: true }]),
+          ...(odds ? [{ key: "odds", type: "odds", item: odds.item, label: `Counts as: by chance (${odds.item}). The chances must add up to 100%; planners count the average.`, value: odds.rows }] : []),
         ];
         openAdmSheet({ title: `Item · ${name}`, fields, noFocus: true, deleteLabel: "Reset to built-in",
           deleteText: `Put "${name}" back to the site's own picture, short name, pages and minutes? ("Counts as" stays.)`,
@@ -1301,8 +1303,17 @@ async function renderAdminItems(body) {
             });
             const reg = { ...itemRegistry() };
             if (Object.keys(e).length) reg[name] = e; else delete reg[name];
+            // "By chance": the odds stay with the item, its average goes to "Counts as".
+            let g;
+            if (odds) {
+              const rows = v.odds || [], sum = rows.reduce((s2, [, p]) => s2 + p, 0);
+              if (!rows.length || Math.abs(sum - 100) >= 0.01) throw new Error("The chances must add up to 100%");
+              const builtin = CHEST_ODDS[name];
+              if (builtin && JSON.stringify(builtin.rows) === JSON.stringify(rows)) delete e.odds; else e.odds = { item: odds.item, rows };
+              g = { [odds.item]: Math.round(chestOddsAvg(rows) * 1000) / 1000 };
+              if (builtin && !e.odds) g = PACK_BUNDLES[name] || g;
+            } else g = parseContents(v.gives);
             // "Counts as" lives in Pack Resources (one setting for packs and pages).
-            const g = parseContents(v.gives);
             if (JSON.stringify(g) !== JSON.stringify(givesNow)) {
               const c = { ...(siteConfig("pack_resources", {}) || {}) };
               if (custom) c.custom = (c.custom || []).map((x) => (String(x.name).toLowerCase() === name.toLowerCase() ? { ...x, contents: g } : x));
@@ -3075,7 +3086,15 @@ function wireAdmList(body, o) {
   if (add && o.onAdd) add.addEventListener("click", o.onAdd);
   body.querySelectorAll("[data-admcedit]").forEach((b) => b.addEventListener("click", () => o.onEdit(b.dataset.admcedit)));
 }
-// The edit sheet. fields: [{ key, label, type: text|num|check|img|select|area, value, options, more }]
+// "By chance" odds table in the Items sheet: amount, chance %, what it adds to the average.
+function admOddsRow([n, p]) { return `<div class="adm-odds-r"><input type="number" step="any" inputmode="decimal" data-on value="${esc(String(n))}" /><input type="number" step="any" inputmode="decimal" data-op value="${esc(String(p))}" /><span class="g" data-og></span><button type="button" class="rfa-x" data-oddsdel aria-label="remove">&#10005;</button></div>`; }
+function admOddsRead(box) { return [...box.querySelectorAll(".adm-odds-r")].map((r) => [Number(r.querySelector("[data-on]").value), Number(r.querySelector("[data-op]").value)]).filter(([n, p]) => n > 0 && p > 0); }
+function admOddsAvg(box) {
+  box.querySelectorAll(".adm-odds-r").forEach((r) => { const n = Number(r.querySelector("[data-on]").value) || 0, p = Number(r.querySelector("[data-op]").value) || 0; r.querySelector("[data-og]").textContent = n && p ? (n * p / 100).toFixed(1) : ""; });
+  const rows = admOddsRead(box), sum = rows.reduce((a, [, p]) => a + p, 0), ok = Math.abs(sum - 100) < 0.01;
+  box.querySelector("[data-oddsavg]").innerHTML = `<span>&asymp; <b>${(Math.round(chestOddsAvg(rows) * 10) / 10).toLocaleString()}</b> ${esc(box.dataset.oddsitem)} on average</span><span class="${ok ? "ok" : "bad"}">${Math.round(sum * 100) / 100}%${ok ? " &#10003;" : " (must be 100%)"}</span>`;
+}
+// The edit sheet. fields: [{ key, label, type: text|num|check|img|select|area|odds, value, options, more }]
 function openAdmSheet(o) {
   let m = document.getElementById("admSheet");
   if (!m) { m = document.createElement("div"); m.id = "admSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
@@ -3090,6 +3109,7 @@ function openAdmSheet(o) {
     if (x.type === "note") return `<div class="admf meta" style="font-size:11.5px;">${esc(x.label)}</div>`;
     if (x.type === "select") return `<label class="admf${x.cls ? " " + x.cls : ""}"><span>${esc(x.label)}</span><select id="${id}">${x.options.map((op) => { const [val, lab] = Array.isArray(op) ? op : [op, op || "—"]; return `<option value="${esc(String(val))}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`; }).join("")}</select></label>`;
     if (x.type === "img") return `<div class="admf admf-img"><span class="admc-pic big" data-admimgprev>${v ? `<img src="${esc(v)}" alt="" />` : `<i>?</i>`}</span><label class="admf" style="flex:1; min-width:0;"><span>${esc(x.label)}</span><span class="admf-line"><input type="text" id="${id}" value="${esc(v)}" placeholder="link, or upload" />${uploadBtnHtml()}</span></label></div>`;
+    if (x.type === "odds") return `<div class="admf adm-odds" id="${id}" data-oddsitem="${esc(x.item)}"><span>${esc(x.label)}</span><div class="adm-odds-h"><span>Amount</span><span>Chance %</span><span>gives</span><span></span></div><div data-oddsrows>${(x.value || []).map(admOddsRow).join("")}</div><button type="button" class="btn ghost small" data-oddsadd>+ Add a row</button><div class="adm-odds-avg" data-oddsavg></div></div>`;
     if (x.type === "area") return `<label class="admf"><span>${esc(x.label)}</span><textarea id="${id}" rows="3">${esc(v)}</textarea></label>`;
     return `<label class="admf${x.half ? " half" : ""}"><span>${esc(x.label)}</span><input id="${id}" ${x.type === "num" ? 'type="number" step="any" inputmode="decimal"' : 'type="text"'} value="${esc(String(v))}" /></label>`;
   };
@@ -3104,7 +3124,16 @@ function openAdmSheet(o) {
   const img = o.fields.find((x) => x.type === "img");
   if (img) { const inp = m.querySelector(`#admf_${img.key}`), prev = m.querySelector("[data-admimgprev]"); inp.addEventListener("input", () => { prev.innerHTML = inp.value.trim() ? `<img src="${esc(inp.value.trim())}" alt="" />` : `<i>?</i>`; }); }
   m.querySelectorAll("select[data-admpick]").forEach((sel) => sel.addEventListener("change", () => { const c = m.querySelector(`#${sel.id}_c`); c.hidden = sel.value !== ADM_PICK_CUSTOM; if (!c.hidden) c.focus(); }));
-  const values = () => { const out = {}; o.fields.forEach((x) => { const el = m.querySelector(`#admf_${x.key}`); if (!el) return; if (x.type === "pick") { const raw = el.value === ADM_PICK_CUSTOM ? m.querySelector(`#admf_${x.key}_c`).value : el.value; out[x.key] = raw.trim() === "" ? null : raw.trim(); } else if (x.type === "check") out[x.key] = el.checked; else if (x.type === "num") out[x.key] = el.value === "" ? null : Number(el.value); else out[x.key] = el.value.trim() === "" ? null : el.value.trim(); }); return out; };
+  m.querySelectorAll(".adm-odds").forEach((box) => {
+    const upd = () => admOddsAvg(box);
+    box.addEventListener("input", upd);
+    box.addEventListener("click", (ev) => {
+      if (ev.target.closest("[data-oddsadd]")) { box.querySelector("[data-oddsrows]").insertAdjacentHTML("beforeend", admOddsRow(["", ""])); upd(); }
+      const x = ev.target.closest("[data-oddsdel]"); if (x) { x.closest(".adm-odds-r").remove(); upd(); }
+    });
+    upd();
+  });
+  const values = () => { const out = {}; o.fields.forEach((x) => { const el = m.querySelector(`#admf_${x.key}`); if (!el) return; if (x.type === "odds") { out[x.key] = admOddsRead(el); return; } if (x.type === "pick") { const raw = el.value === ADM_PICK_CUSTOM ? m.querySelector(`#admf_${x.key}_c`).value : el.value; out[x.key] = raw.trim() === "" ? null : raw.trim(); } else if (x.type === "check") out[x.key] = el.checked; else if (x.type === "num") out[x.key] = el.value === "" ? null : Number(el.value); else out[x.key] = el.value.trim() === "" ? null : el.value.trim(); }); return out; };
   m.querySelector("[data-admssave]").addEventListener("click", async (ev) => {
     const btn = ev.currentTarget; btn.disabled = true;
     try { await o.onSave(values()); close(); } catch (err) { toast(err.message || "Couldn't save", true); }
@@ -3164,10 +3193,9 @@ async function renderAdminSkinsCategory(body, category, kind) {
     ...(kind === "islands" && (!r.name || islIsMythic(r)) ? [
       { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Shop / shards (Mythic only)"], ["event", "Playable event"], ["ranked", "Ranked event"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
       { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
-      { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 5 (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
-      { key: "isl_src_mk", label: "Also in the Mark of Revival shop (shard buildings; free shards first)", type: "check", value: r.name ? !!islSource(r.name, islIsMythic(r)).marks : false },
-      { key: "isl_src_mkp", label: "Mark of Revival price (empty = rule, " + (Number(ISL_RULES.markPrice) || 250) + ")", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).ownPrice || null) : null, half: true },
-      { key: "isl_src_mkl", label: "Mark of Revival shop: limit (total)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).markLimit || null) : null, half: true },
+      { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 6 (e.g. 1,3,6)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
+      { key: "isl_src_mkp", label: "Mark of Revival shop: price in Marks (empty = rule, " + (Number(ISL_RULES.markPrice) || 250) + ")", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).ownPrice || null) : null, half: true },
+      { key: "isl_src_mkl", label: "Mark of Revival shop: limit (total, empty = " + ISL_MARK_LIMIT + ")", type: "num", value: r.name ? (Number(((siteConfig("island_sources", {}) || {})[r.name] || {}).markLimit) || null) : null, half: true },
     ] : []),
   ];
   // Splits the How to get fields off the row and saves them into island_sources
@@ -3745,6 +3773,39 @@ async function renderAdminHeroes(body) {
 }
 
 
+// Admin → Islands → Shops: per shop, the buildings that get a shop switch in the Islands building pop-up
+// (site_config island_shops.allow = { mark: [names], shining: [names] }; missing = every
+// building that can be in a shop, `islShopPickable`). Buildings taken out also leave the
+// shop's lists (they are filtered when read, nothing else is changed).
+let ADMIN_ISL_SHOPS_OPEN = false, ADMIN_ISL_SHOP_K = "mark";
+async function renderAdminIslandShops(host, catNames) {
+  if (!host) return;
+  host.innerHTML = `<div class="muted" style="padding:8px 0;">Loading…</div>`;
+  const rows = await sb(`skins?user_id=eq.${USER_ID}&category=in.(${catNames.map((c) => encodeURIComponent(c)).join(",")})&select=id,name,category,image_url,max_level&order=sort_order.asc`);
+  const pick = rows.filter((r) => islShopPickable(r));
+  const draw = () => {
+    const k = ADMIN_ISL_SHOP_K, al = islShopAllow(k), on = new Set(al || pick.map((r) => r.name));
+    host.innerHTML = `<p class="muted" style="font-size:12.5px;margin:6px 0 10px;">Tick the buildings each shop can sell. Only these get the shop's switch in the Islands building pop-up (for everyone). Never offered: event / ranked buildings, Lighthouse, Islands Guide, Tree of Life and buildings below Mythic.</p>
+      <div class="isl-seg" style="margin-bottom:10px;"><button type="button" data-aishk="mark" class="${k === "mark" ? "on" : ""}">Mark of Revival</button><button type="button" data-aishk="shining" class="${k === "shining" ? "on" : ""}">Shining City</button></div>
+      <div class="isl-shg">${pick.map((r) => `<button type="button" class="isl-sht${on.has(r.name) ? " on" : ""}" data-aishpick="${esc(r.name)}" aria-pressed="${on.has(r.name)}" title="${esc(r.name)} · ${esc(r.category)}">${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(r.name)}</span><span class="ck" aria-hidden="true">${on.has(r.name) ? "&#10003;" : ""}</span></button>`).join("")}</div>
+      <div class="isl-shn"><span data-aishn>${pick.filter((r) => on.has(r.name)).length}</span> of ${pick.length} can be picked${al ? "" : " · all (default)"}</div>
+      <div class="isl-shb"><button type="button" class="btn" data-aishall>Allow all</button><button type="button" class="btn primary" data-aishsave>Save</button></div>`;
+    host.onclick = async (e) => {
+      const kb = e.target.closest("[data-aishk]");
+      if (kb) { ADMIN_ISL_SHOP_K = kb.dataset.aishk; draw(); return; }
+      const pb = e.target.closest("[data-aishpick]");
+      if (pb) { const v = !pb.classList.contains("on"); pb.classList.toggle("on", v); pb.setAttribute("aria-pressed", String(v)); pb.querySelector(".ck").innerHTML = v ? "&#10003;" : ""; host.querySelector("[data-aishn]").textContent = host.querySelectorAll(".isl-sht.on").length; return; }
+      const all = e.target.closest("[data-aishall]"), sv = e.target.closest("[data-aishsave]");
+      if (!all && !sv) return;
+      const cfg = { ...islShopsCfg() }, allow = { ...(cfg.allow || {}) };
+      if (all) delete allow[k]; else allow[k] = [...host.querySelectorAll(".isl-sht.on")].map((b) => b.dataset.aishpick);
+      if (Object.keys(allow).length) cfg.allow = allow; else delete cfg.allow;
+      try { await saveSiteConfig("island_shops", cfg); toast("Saved"); draw(); } catch (err) { toast("Couldn't save", true); }
+    };
+  };
+  draw();
+}
+
 // ---- Skin Gallery editor (multi-category, uses renderAdminSkinsCategory per category) ----
 let ADMIN_ACTIVE_SKIN_CAT = null;
 let ADMIN_ACTIVE_ISLAND_CAT = null;
@@ -3754,9 +3815,13 @@ async function renderAdminIslands(body) {
   if (!ADMIN_ACTIVE_ISLAND_CAT || !catNames.includes(ADMIN_ACTIVE_ISLAND_CAT)) ADMIN_ACTIVE_ISLAND_CAT = catNames[0];
 
   body.innerHTML = `
+    <details class="panel adm-islshops" id="admIslShops"${ADMIN_ISL_SHOPS_OPEN ? " open" : ""}><summary><b>Shops: which buildings can be picked</b> <span class="muted" style="font-size:12px;">(Mark of Revival · Shining City)</span></summary><div id="admIslShopsBody"></div></details>
     ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_ISLAND_CAT)}
     <div id="adminIslandsBody"></div>
   `;
+  const shopsEl = document.getElementById("admIslShops");
+  shopsEl.addEventListener("toggle", () => { ADMIN_ISL_SHOPS_OPEN = shopsEl.open; if (shopsEl.open) renderAdminIslandShops(document.getElementById("admIslShopsBody"), catNames); });
+  if (ADMIN_ISL_SHOPS_OPEN) renderAdminIslandShops(document.getElementById("admIslShopsBody"), catNames);
 
   body.querySelectorAll("[data-catselect]").forEach((btn) => {
     btn.addEventListener("click", () => {

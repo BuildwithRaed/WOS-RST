@@ -2432,7 +2432,18 @@
 "t:pkb_arrange_reset":"A–Z順に戻す",
 "t:pkb_arrange_hint":"⋮⋮を長押ししてドラッグ",
 "t:isl_target_all":"すべての目標",
-"t:isl_pc_none":"$ — 購入不要",
+"t:isl_pc_none":"購入不要",
+"t:isl_wb_title":"コピーの購入先",
+"t:isl_wb_mark":"復活の証ショップ",
+"t:isl_wb_note":"サイトの選択から始まります · 自分の州に合わせて変更",
+"t:isl_wb_note_owner":"あなたの選択が全員の最初の選択になります",
+"t:isl_sc_name":"輝く都市",
+"t:isl_sc_chip":"輝く都市",
+"t:isl_sc_next":"次のイベント",
+"t:isl_sc_days":"{n}日",
+"t:isl_tm_name":"栄光の書",
+"t:isl_tm_after":"目標日までに書 {m}",
+"t:isl_tm_or":"または書 {m}",
 "t:isl_mixed":"混在",
 "t:isl_you_have":"所持",
 "t:isl_tap_type":"(タップして入力)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"島の欠片",
 "t:isl_done":"完了",
 "t:isl_src":"入手方法",
-"t:isl_src_choices":"1回あたりのコピー、最大5 (例 1,3,5)"
+"t:isl_src_choices":"1回あたりのコピー、最大6 (例 1,3,6)"
 }

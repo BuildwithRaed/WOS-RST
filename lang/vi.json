@@ -2431,7 +2431,18 @@
 "t:pkb_arrange_reset":"Về A–Z",
 "t:pkb_arrange_hint":"Giữ ⋮⋮ và kéo",
 "t:isl_target_all":"Mục tiêu tất cả",
-"t:isl_pc_none":"$ — không cần mua",
+"t:isl_pc_none":"Không cần mua",
+"t:isl_wb_title":"Nơi mua bản sao",
+"t:isl_wb_mark":"Cửa hàng Dấu Hồi Sinh",
+"t:isl_wb_note":"Lựa chọn của bạn bắt đầu từ lựa chọn của trang · đổi cho hợp bang của bạn",
+"t:isl_wb_note_owner":"Lựa chọn của bạn là lựa chọn đầu tiên của mọi người",
+"t:isl_sc_name":"Thành Phố Rực Sáng",
+"t:isl_sc_chip":"Thành Phố Rực Sáng",
+"t:isl_sc_next":"Sự kiện tiếp theo",
+"t:isl_sc_days":"{n} ngày",
+"t:isl_tm_name":"Sách Vinh Quang",
+"t:isl_tm_after":"{m} sách trước mục tiêu",
+"t:isl_tm_or":"hoặc {m} sách",
 "t:isl_mixed":"Hỗn hợp",
 "t:isl_you_have":"Bạn có",
 "t:isl_tap_type":"(chạm để nhập)",
@@ -2538,5 +2549,5 @@
 "t:isl_island_shards":"Mảnh đảo",
 "t:isl_done":"Xong",
 "t:isl_src":"Cách nhận",
-"t:isl_src_choices":"Bản sao mỗi chu kỳ, tối đa 5 (vd. 1,3,5)"
+"t:isl_src_choices":"Bản sao mỗi chu kỳ, tối đa 6 (vd. 1,3,6)"
 }

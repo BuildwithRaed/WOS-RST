@@ -2432,7 +2432,18 @@
 "t:pkb_arrange_reset":"Wróć do A–Z",
 "t:pkb_arrange_hint":"Przytrzymaj ⋮⋮ i przeciągnij",
 "t:isl_target_all":"Cel dla wszystkich",
-"t:isl_pc_none":"$ — nic do kupienia",
+"t:isl_pc_none":"Nic do kupienia",
+"t:isl_wb_title":"Gdzie kupić kopie",
+"t:isl_wb_mark":"Sklep Znaków Odrodzenia",
+"t:isl_wb_note":"Twoje wybory startują od wyborów strony · dopasuj je do swojego stanu",
+"t:isl_wb_note_owner":"Twoje wybory są pierwszym wyborem dla wszystkich",
+"t:isl_sc_name":"Lśniące Miasto",
+"t:isl_sc_chip":"Lśniące Miasto",
+"t:isl_sc_next":"Następne wydarzenie",
+"t:isl_sc_days":"{n} dni",
+"t:isl_tm_name":"Chwalebny Tom",
+"t:isl_tm_after":"{m} tomów do celu",
+"t:isl_tm_or":"lub {m} tomów",
 "t:isl_mixed":"Mieszane",
 "t:isl_you_have":"Masz",
 "t:isl_tap_type":"(dotknij, aby wpisać)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"Odłamki wysp",
 "t:isl_done":"Gotowe",
 "t:isl_src":"Jak zdobyć",
-"t:isl_src_choices":"Kopie na cykl, do 5 (np. 1,3,5)"
+"t:isl_src_choices":"Kopie na cykl, do 6 (np. 1,3,6)"
 }
