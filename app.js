@@ -1862,12 +1862,15 @@ const T = {
   isl_sec_n: { en: "{n} buildings" },
   isl_sec_other_d: { en: "Mythic shards can't be used \u00b7 copies come from the event / ranking" },
   isl_dates_from: { en: "Dates come from" },
-  isl_dates_pack: { en: "From a pack" },
+  isl_dates_pack: { en: "From the calendar" },
   isl_dates_own: { en: "Own dates" },
   isl_dates_next: { en: "Next event" },
-  isl_dates_pick: { en: "Pack" },
+  isl_dates_pick: { en: "Event or pack" },
   isl_dates_choose: { en: "\u2014 choose \u2014" },
-  isl_dates_follows: { en: "Follows that pack's dates on the Packs page: next {date} \u00b7 every {d} days" },
+  isl_dates_follows: { en: "Follows {name} in the calendar: next {date} \u00b7 every {d} days" },
+  isl_dates_follows_ev: { en: "Follows the calendar: next {name} {date} \u00b7 every 4 weeks" },
+  isl_dates_events: { en: "Game events" },
+  isl_dates_packs: { en: "Packs & events" },
   isl_dates_nopack: { en: "Pick a pack with dates." },
   isl_box_left: { en: "Shards left" },
   isl_box_have: { en: "have {n}" },
@@ -23167,8 +23170,9 @@ function islSource(name, mythic = true) {
   const kind = v.kind === "event" || v.kind === "ranked" ? v.kind : "shop";
   const each = Number(v.each) > 0 ? Number(v.each) : 0;
   if (kind === "shop" || kind === "none") return { kind, each };
-  const dates = v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
-  return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
+  // "cal": a game event of the calendar (SvS / KOI, GAME_EVENTS); "pack": a Packs-page pack.
+  const dates = v.dates === "cal" && GAME_EVENTS.some((g) => g.key === v.ev) ? "cal" : v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
+  return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, ev: dates === "cal" ? v.ev : "", pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
 }
 const islCopiesAt = (l, each) => (each > 0 ? each : Number(ISL_COPIES[l]) || 0);
 // Copies from level `from` to `to`; with lv1 the first copy (Lv 1) counts too (event buildings).
@@ -23187,7 +23191,8 @@ async function islSaveSource(name, src, mythic = true) {
   if (e && each) e.each = each;
   // Event dates: from a Packs-page pack or the owner's own next date.
   if (e && (kind === "event" || kind === "ranked")) {
-    if (src.dates === "pack") { e.dates = "pack"; e.pack = String(src.pack || ""); }
+    if (src.dates === "cal" && GAME_EVENTS.some((g) => g.key === src.ev)) { e.dates = "cal"; e.ev = src.ev; }
+    else if (src.dates === "pack") { e.dates = "pack"; e.pack = String(src.pack || ""); }
     else if (src.dates === "own") { e.dates = "own"; e.next = packValidDay(src.next) || packDayKey(packStartOfToday()); delete e.every; }
   }
   const plain = e && ((kind === "shop" && !each) || kind === "none");
@@ -23217,6 +23222,15 @@ const ISL_EV_WEEKS4 = 28; // own dates repeat every 4 weeks; also the no-dates f
 // Next event of an event / ranked building: { off (days from today), every, known }.
 // No dates set = every N days from today (the first copies after one cycle).
 function islNextEvent(src) {
+  // A game event: its real starts, as on the Pack calendar and the Dashboard.
+  if (src.dates === "cal") {
+    const g = GAME_EVENTS.find((x) => x.key === src.ev);
+    if (g && packParseDay(gameEventAnchor(g))) {
+      const today = packStartOfToday();
+      const st = gameEventStarts(g, today, new Date(today.getTime() + (g.every * 2 + 7) * 86400000)).find((d) => d >= today);
+      if (st) return { off: Math.round((st - today) / 86400000), every: g.every, known: true, weeks4: g.every === 28, evName: g.name };
+    }
+  }
   if (src.dates === "pack" && src.pack && ISL_PACKS && ISL_PACK_TABLES && ISL_PACK_TABLES.some((tb) => String(tb.id) === src.pack)) {
     const l = packLinkFor(src.pack);
     const offs = typeof l.reset === "number" ? packResetOffsets(l.reset, l.resetDay, 800, l.window) : [];
@@ -23624,16 +23638,17 @@ async function renderIslandGallery() {
           if (document.activeElement !== sel) sel.value = src.kind;
           pop.querySelectorAll("[data-ipsrcev]").forEach((w) => { w.hidden = src.kind !== "event" && src.kind !== "ranked"; });
           pop.querySelector("[data-ipsrceachw]").hidden = src.kind === "none";
-          pop.querySelectorAll("[data-ipdates]").forEach((b) => b.classList.toggle("on", b.dataset.ipdates === src.dates));
-          pop.querySelector("[data-ipdpk]").hidden = src.dates !== "pack";
+          const grp = src.dates === "cal" ? "pack" : src.dates;
+          pop.querySelectorAll("[data-ipdates]").forEach((b) => b.classList.toggle("on", b.dataset.ipdates === grp));
+          pop.querySelector("[data-ipdpk]").hidden = grp !== "pack";
           pop.querySelector("[data-ipdown]").hidden = src.dates !== "own";
           const nxi = pop.querySelector("[data-ipnext]");
           if (src.dates === "own" && document.activeElement !== nxi) nxi.value = packDayKey(islDay(islNextEvent(src).off));
-          if (src.dates === "pack") {
+          if (grp === "pack") {
             const ps = pop.querySelector("[data-ippack]");
-            if (document.activeElement !== ps) ps.innerHTML = `<option value="">${esc(t("isl_dates_choose"))}</option>${(ISL_PACKS || []).map((x) => `<option value="${esc(x.id)}"${x.id === src.pack ? " selected" : ""}>${x.lead ? "&#128279; " : ""}${esc(x.name)}</option>`).join("")}`;
-            const nx = islNextEvent(src);
-            pop.querySelector("[data-ippacknote]").textContent = nx.known ? t("isl_dates_follows").replace("{date}", islDateShort(islDay(nx.off))).replace("{d}", nx.every) : t("isl_dates_nopack");
+            if (document.activeElement !== ps) ps.innerHTML = `<option value="">${esc(t("isl_dates_choose"))}</option><optgroup label="${esc(t("isl_dates_events"))}">${GAME_EVENTS.map((g) => `<option value="ev:${esc(g.key)}"${src.dates === "cal" && src.ev === g.key ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</optgroup>${(ISL_PACKS || []).length ? `<optgroup label="${esc(t("isl_dates_packs"))}">${ISL_PACKS.map((x) => `<option value="${esc(x.id)}"${src.dates === "pack" && x.id === src.pack ? " selected" : ""}>${x.lead ? "&#128279; " : ""}${esc(x.name)}</option>`).join("")}</optgroup>` : ""}`;
+            const nx = islNextEvent(src), pk = src.dates === "pack" ? (ISL_PACKS || []).find((x) => x.id === src.pack) : null;
+            pop.querySelector("[data-ippacknote]").textContent = !nx.known ? t("isl_dates_nopack") : src.dates === "cal" ? t("isl_dates_follows_ev").replace("{name}", nx.evName).replace("{date}", islDateShort(islDay(nx.off))) : t("isl_dates_follows").replace("{name}", pk ? pk.name : "").replace("{date}", islDateShort(islDay(nx.off))).replace("{d}", nx.every);
           }
           const ci = pop.querySelector("[data-ipsrcch]");
           if (document.activeElement !== ci) ci.value = (src.choices || ISL_EV_CHOICES).join(",");
@@ -23726,7 +23741,7 @@ async function renderIslandGallery() {
       const dtb = e.target.closest("[data-ipdates]");
       if (dtb && IS_OWNER) {
         const cur = srcOf(s), dates = dtb.dataset.ipdates;
-        if (cur.dates === dates) return;
+        if (cur.dates === dates || (dates === "pack" && cur.dates === "cal")) return;
         const next = cur.next || packDayKey(islDay(islNextEvent(cur).off));
         changed = true;
         Promise.all([dates === "pack" ? islLoadPacks() : null, islSaveSource(s.name, { ...cur, dates, next }, islIsMythic(s))])
@@ -23758,9 +23773,12 @@ async function renderIslandGallery() {
       const each = same ? Math.max(1, Number(pop.querySelector("[data-ipsrceachn]").value) || 1) : 0;
       changed = true;
       const cur = srcOf(s);
-      const dates = kindChanged ? "" : cur.dates;
-      const pack = pop.querySelector("[data-ippack]").value || cur.pack, next = pop.querySelector("[data-ipnext]").value || cur.next;
-      islSaveSource(s.name, { kind, every, choices, each, dates, pack, next }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+      let dates = kindChanged ? "" : cur.dates, ev = cur.ev, pack = cur.pack;
+      const pv = pop.querySelector("[data-ippack]").value, next = pop.querySelector("[data-ipnext]").value || cur.next;
+      if (!kindChanged && e.target.matches("[data-ippack]") && pv) {
+        if (pv.startsWith("ev:")) { dates = "cal"; ev = pv.slice(3); } else { dates = "pack"; pack = pv; }
+      }
+      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
     });
     ISL_POP = {
       id: String(s.id), place,
