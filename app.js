@@ -23789,7 +23789,8 @@ async function renderIslandGallery() {
     // Shards categories: two sections, shard buildings first, then event / ranked ones.
     const split = ISL_SHARD_CATS.includes(ISLAND_FILTER.bonusType) && counted.some(tracked);
     const shardList = split ? counted.filter((s) => srcOf(s).kind !== "event" && srcOf(s).kind !== "ranked") : counted;
-    const otherList = split ? counted.filter((s) => srcOf(s).kind === "event" || srcOf(s).kind === "ranked") : [];
+    // Playable event buildings first, then ranked ones (page order kept within each).
+    const otherList = split ? [...counted.filter((s) => srcOf(s).kind === "event"), ...counted.filter((s) => srcOf(s).kind === "ranked")] : [];
     let html = galGridHtml({
       counted: shardList,
       uncounted: filtered.filter((s) => GALLERY_UNCOUNTED.has(String(s.id))),
