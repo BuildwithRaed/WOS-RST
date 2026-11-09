@@ -23558,7 +23558,7 @@ async function renderIslandGallery() {
     const amt = n * src.markPrice;
     const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
     const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : mk ? ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; ` : " &middot; ";
-    return `${lead}<b class="mk">${esc(txt)}</b> &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${esc(PACK_COST_SHOWN.islands || t("pc_title"))}</span> &#8250;</button>${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
+    return `${lead}<b class="mk">${esc(txt)}</b> &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
