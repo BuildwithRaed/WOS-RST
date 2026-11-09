@@ -23592,7 +23592,10 @@ async function renderIslandGallery() {
     return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
   };
   // This category, or every tracked building of every category (island_shards.allView).
-  const planList = () => islands.filter((s) => tracked(s) && (ISL_SHARDS.allView || groupsFor(s).includes(ISLAND_FILTER.bonusType)));
+  // A category without a plan of its own (Lighthouse) shows the plan locked to All buildings.
+  const allLocked = () => !islCatTracked(ISLAND_FILTER.bonusType);
+  const allOn = () => !!ISL_SHARDS.allView || allLocked();
+  const planList = () => islands.filter((s) => tracked(s) && (allOn() || groupsFor(s).includes(ISLAND_FILTER.bonusType)));
   // The category's plan in Life Essence: shop copies + shards × essence a shard.
   const planTotals = (list) => {
     const st = ISL_SHARDS, sh = list.reduce((a, s) => a + needOf(s), 0), ess = list.reduce((a, s) => a + essOf(s), 0);
@@ -23615,8 +23618,9 @@ async function renderIslandGallery() {
     const host = document.getElementById("islandShardPlan");
     if (!host) return;
     const list = planList();
-    if (!islCatTracked(ISLAND_FILTER.bonusType) || !list.length) { host.innerHTML = ""; return; }
-    const view = `<div class="isl-seg isl-view"><button type="button" data-islview="cat" class="${ISL_SHARDS.allView ? "" : "on"}">${esc(t("isl_view_cat").replace("{name}", ISLAND_FILTER.bonusType))}</button><button type="button" data-islview="all" class="${ISL_SHARDS.allView ? "on" : ""}">${esc(t("isl_view_all"))}</button></div>`;
+    if (!list.length) { host.innerHTML = ""; return; }
+    const view = allLocked() ? `<div class="isl-seg isl-view"><button type="button" class="on" disabled>${esc(t("isl_view_all"))}</button></div>`
+      : `<div class="isl-seg isl-view"><button type="button" data-islview="cat" class="${ISL_SHARDS.allView ? "" : "on"}">${esc(t("isl_view_cat").replace("{name}", ISLAND_FILTER.bonusType))}</button><button type="button" data-islview="all" class="${ISL_SHARDS.allView ? "on" : ""}">${esc(t("isl_view_all"))}</button></div>`;
     const cats = new Set(list.map((s) => s.category)).size;
     const st = ISL_SHARDS;
     const P = planTotals(list), left = P.left, short = P.short;
@@ -23624,7 +23628,7 @@ async function renderIslandGallery() {
     const weeksTxt = tm ? String(tm.weeks) : "?";
     const fold = `<button type="button" class="g1-fold" data-islfold aria-expanded="${!st.hidden}">${esc(t(st.hidden ? "isl_show" : "isl_hide"))}</button>`;
     if (st.hidden) {
-      host.innerHTML = `<div class="isl-pl isl-pl-h"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}${st.allView ? ` <small class="isl-hall">${esc(t("isl_view_all"))}</small>` : ""}</span><span class="isl-hs">${short > 0 ? esc(t("isl_short_line").replace("{n}", shortAmount(short)).replace("{w}", weeksTxt)) : left > 0 ? "&#10003;" : ""}</span>${fold}</div></div>`;
+      host.innerHTML = `<div class="isl-pl isl-pl-h"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}${allOn() ? ` <small class="isl-hall">${esc(t("isl_view_all"))}</small>` : ""}</span><span class="isl-hs">${short > 0 ? esc(t("isl_short_line").replace("{n}", shortAmount(short)).replace("{w}", weeksTxt)) : left > 0 ? "&#10003;" : ""}</span>${fold}</div></div>`;
       return;
     }
     // The level last picked shows while every building still follows it (each one
@@ -23653,7 +23657,7 @@ async function renderIslandGallery() {
     host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
       ${view}
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
-      ${st.allView ? `<div class="isl-allnote">${esc(t("isl_view_sets").replace("{n}", list.length).replace("{c}", cats))}</div>` : ""}
+      ${allOn() ? `<div class="isl-allnote">${esc(t("isl_view_sets").replace("{n}", list.length).replace("{c}", cats))}</div>` : ""}
       <div class="isl-hl">${esc(t("isl_you_have"))} <span>${esc(t("isl_tap_type"))}</span></div>
       <div class="isl-have">
         <button type="button" class="isl-hb" data-islhave="essence"><span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span><small>${esc(t("isl_essence"))}</small><b>${bidiNum((st.essence || 0).toLocaleString())}</b></span></button>
