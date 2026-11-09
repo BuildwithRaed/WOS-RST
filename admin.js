@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "bf4d7d1cd1";
+window.ADMIN_BUILD = "c1d65865ed";
 
 // ============================================================
 // ADMIN PAGE
@@ -3161,10 +3161,10 @@ async function renderAdminSkinsCategory(body, category, kind) {
     // only "Mythic shards" buildings count in the Islands Shards plan).
     ...(kind === "islands" ? [
       // Shards never apply to a non-Mythic building (bonus under 10%).
-      { key: "isl_src", label: "How to get", type: "select", options: [...(islIsMythic(r) || !r.name ? [["shop", "Mythic shards (Mythic only)"]] : []), ["event", "Playable event"], ["ranked", "Ranked event or purchase"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
+      { key: "isl_src", label: "How to get", type: "select", options: [...(islIsMythic(r) || !r.name ? [["shop", "Shards (Mythic only)"]] : []), ["event", "Playable event"], ["ranked", "Ranked event"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
       { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
-      { key: "isl_src_every", label: "Event: every (days)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).every || 30) : 30, half: true },
-      { key: "isl_src_choices", label: "Event: copies a cycle (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
+      { key: "isl_src_every", label: "Event / ranked: every (days)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).every || 30) : 30, half: true },
+      { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 5 (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
     ] : []),
   ];
   // Splits the How to get fields off the row and saves them into island_sources

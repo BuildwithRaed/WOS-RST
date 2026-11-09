@@ -3429,9 +3429,6 @@ input,select,textarea{
   .isl-hb > span:last-child{ min-width:0; }
   .isl-hb small{ display:block; font-size:11px; color:var(--muted); font-weight:600; line-height:1.2; }
   .isl-hb b{ display:block; font-size:15px; color:var(--frost); line-height:1.25; }
-  .isl-res{ margin-top:10px; padding:9px 10px; border-radius:10px; background:rgba(224,178,90,.08); border:1px solid rgba(224,178,90,.35); font-size:13px; line-height:1.45; color:var(--frost); }
-  .isl-res b{ color:#e0b25a; }
-  .isl-res .g{ color:var(--muted); font-size:12px; }
   .isl-inc{ margin-top:8px; width:100%; display:flex; align-items:center; gap:8px; text-align:start; min-height:36px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:#93a1b5; font:inherit; font-size:12px; line-height:1.35; cursor:pointer; }
   .isl-inc b{ color:var(--frost); }
   .isl-inc .go{ margin-inline-start:auto; color:var(--ice); font-size:16px; }
@@ -3460,6 +3457,15 @@ input,select,textarea{
   .isl-tb td{ padding:7px 4px; text-align:end; border-top:1px solid var(--line); color:var(--frost); font-weight:700; }
   .isl-tb td:first-child{ color:var(--muted); font-weight:600; }
   .isl-done{ width:100%; margin-top:12px; }
+  .sg-pop.up .sg-pop-ar{ top:auto; bottom:-8px; transform:rotate(225deg); }
+  .isl-s3{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin-top:10px; }
+  .isl-bx > b{ display:block; font-size:18px; line-height:22px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .isl-bx > small{ display:block; margin:1px 0 0; font-size:11.5px; line-height:1.3; }
+  .isl-bx.bad > b{ color:var(--amber); }
+  .isl-bx.ok > b{ color:var(--good); }
+  .isl-pl .isl-nc{ margin-top:6px; }
+  .isl-srct{ margin-top:8px; font-size:12px; color:var(--muted); line-height:1.45; }
+  .isl-srct:empty{ display:none; }
   .isl-ssel{ height:36px; min-width:84px; width:auto; padding:0 8px; font-size:14px; font-weight:700; }
   .isl-mw{ font-size:14px; color:var(--frost); white-space:nowrap; }
   .isl-split{ margin-top:8px; font-size:12px; color:var(--muted); }
