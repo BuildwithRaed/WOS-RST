@@ -3510,6 +3510,10 @@ input,select,textarea{
   .isl-bx > small{ display:block; margin:1px 0 0; font-size:11.5px; line-height:1.3; }
   .isl-bx.bad > b{ color:var(--amber); }
   .isl-bx.ok > b{ color:var(--good); }
+  .isl-bst{ margin-top:10px; }
+  .isl-done{ margin-top:8px; font-size:12.5px; color:var(--muted); }
+  .isl-done b{ color:var(--frost); }
+  .isl-done.ok b{ color:var(--good); }
   @media (max-width:380px){ .isl-bx .sg-sbt span{ white-space:normal; overflow:visible; } .isl-bx > b{ font-size:15px; } }
   .isl-pl .isl-nc{ margin-top:6px; }
   .isl-ssel{ height:36px; min-width:84px; width:auto; padding:0 8px; font-size:14px; font-weight:700; }

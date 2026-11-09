@@ -23643,12 +23643,13 @@ async function renderIslandGallery() {
     const box = (label, big, small, cls = "", em = "") => `<div class="sg-sb isl-bx${cls}"><div class="sg-sbt"><span>${esc(label)}</span>${em}</div><b>${big}</b><small>${small}</small></div>`;
     const doneBig = !left || !short ? "&#10003;" : tm ? esc(tm.at.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" })) : "?";
     const doneSmall = !left ? esc(t("isl_box_none")) : !short ? esc(t("isl_box_ok")) : tm ? esc(t("isl_box_weeks").replace("{n}", tm.weeks)) : esc(t("isl_box_noinc"));
-    let res = `<div class="isl-s3">${box(t("isl_box_left"), bidiNum(shortAmount(left)), esc(t("isl_box_have").replace("{e}", shortAmount(st.essence || 0)).replace("{s}", islNum(st.shards || 0))))}${box(t("isl_box_short"), short > 0 ? bidiNum(shortAmount(short)) : "&#10003;", esc(t(short > 0 ? "isl_box_after" : "isl_box_ok")), short > 0 ? " bad" : " ok")}${box(t("isl_box_done"), doneBig, doneSmall, short > 0 || !left ? "" : " ok")}</div>`;
-    const nc = list.filter((s) => (srcOf(s).kind === "event" || srcOf(s).kind === "ranked") && tgtOf(s) > lvOf(s));
-    if (nc.length) {
-      const evs = nc.map(evPlan).filter(Boolean), last = evs.length ? evs.reduce((a, x) => (x.at > a.at ? x : a)) : null;
-      res += `<div class="isl-nc">${esc(last && last.days ? t("isl_not_counted_done").replace("{n}", nc.length).replace("{date}", last.date) : t("isl_not_counted").replace("{n}", nc.length))}</div>`;
-    }
+    // Backpack boxes like the planner pages: Life Essence and Mythic Island Shards, each with
+    // what you have, "need N" for the shown plan and short / ✓; tap = type the amount.
+    const essNeed = Math.max(0, left - (st.shards || 0) * ePS()), shNeed = P.sh;
+    const tile = (k, icon, label, have, need, sh) => { const ts = bsTileStatus(need, sh); return `<button type="button" class="bp-tile bs-tile${ts.off ? " off" : ""}" data-islhave="${k}" title="${esc(label)}"><span class="bs-mark">&#9998;</span><img src="${icon}" alt="" /><span class="bp-qty">${bidiNum(shortAmount(have))}</span><span class="bp-name">${esc(label)}</span>${ts.html}</button>`; };
+    const tiles = [tile("essence", "icons/life-essence.png", t("isl_essence"), st.essence || 0, essNeed, short),
+      tile("shards", "icons/island-shard.png", t("isl_shards"), st.shards || 0, shNeed, Math.max(0, shNeed - (st.shards || 0)))];
+    let res = `<div class="bs-tiles isl-bst">${tiles.join("")}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
     // Mark of Revival Shop buildings: Marks come from packs (Budgets' Islands page).
     const mk = list.reduce((a, s) => a + marksOf(s), 0), mkOpt = mk ? 0 : list.reduce((a, s) => a + marksOpt(s), 0);
     if (mk > 0 || mkOpt > 0) res += `<button type="button" class="isl-mkrow${mk ? "" : " opt"}" data-islmkopen><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /><span class="tx"><b>${esc(t("isl_mk_name"))}</b><small>${esc((mk ? t("isl_mk_need") : t("isl_mk_need_opt")).replace("{n}", (mk || mkOpt).toLocaleString()).replace("{h}", markHave().toLocaleString()))}</small></span><span class="pr" data-islmkprice>${esc(PACK_COST_SHOWN.islands || t("pc_title"))}</span><span class="go" aria-hidden="true">&#8250;</span></button>`;
@@ -23658,13 +23659,9 @@ async function renderIslandGallery() {
       ${view}
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
       ${allOn() ? `<div class="isl-allnote">${esc(t("isl_view_sets").replace("{n}", list.length).replace("{c}", cats))}</div>` : ""}
-      <div class="isl-hl">${esc(t("isl_you_have"))} <span>${esc(t("isl_tap_type"))}</span></div>
-      <div class="isl-have">
-        <button type="button" class="isl-hb" data-islhave="essence"><span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span><small>${esc(t("isl_essence"))}</small><b>${bidiNum((st.essence || 0).toLocaleString())}</b></span></button>
-        <button type="button" class="isl-hb" data-islhave="shards"><span class="isl-ic s" aria-hidden="true"><img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></span><span><small>${esc(t("isl_shards"))}</small><b>${bidiNum((st.shards || 0).toLocaleString())}</b></span></button>
-      </div>
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
+    bsSlideFit(host);
   }
   function wirePlan() {
     const host = document.getElementById("islandShardPlan");
@@ -23676,7 +23673,8 @@ async function renderIslandGallery() {
       const hv = e.target.closest("[data-islhave]");
       if (hv) {
         const k = hv.dataset.islhave;
-        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), value: ISL_SHARDS[k] || 0, onSave: (v) => { ISL_SHARDS[k] = Math.floor(v); islSave(); drawPlan(); } });
+        const P2 = planTotals(planList()), nd = k === "essence" ? Math.max(0, P2.left - (ISL_SHARDS.shards || 0) * ePS()) : P2.sh;
+        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { ISL_SHARDS[k] = Math.floor(v); islSave(); drawPlan(); } });
         return;
       }
       if (e.target.closest("[data-islmkopen]")) { islMarkSheet(true); return; }
