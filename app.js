@@ -1826,7 +1826,8 @@ const T = {
   sg_lv: { en: "Lv {n}" },
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
-  isl_target_all: { en: "Target all buildings" },
+  isl_target_all: { en: "Target all" },
+  isl_pc_none: { en: "$ \u2014 nothing to buy" },
   isl_mixed: { en: "Mixed" },
   isl_you_have: { en: "You have" },
   isl_tap_type: { en: "(tap to type)" },
@@ -23655,13 +23656,16 @@ async function renderIslandGallery() {
     // Mark of Revival (bought with packs, after the free shards): need = what the plan
     // buys with Marks, or with no Budgets target the optional amount.
     const mk = list.reduce((a, s) => a + marksOf(s), 0), mkOpt = mk ? 0 : list.reduce((a, s) => a + marksOpt(s), 0);
-    if (mk > 0 || mkOpt > 0) tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk || mkOpt, Math.max(0, (mk || mkOpt) - markHave())));
+    // Always three slots so the card keeps one height on every category (faded "—" when not needed).
+    tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk || mkOpt, Math.max(0, (mk || mkOpt) - markHave())));
     const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal();
-    const priceBtn = mkTotal > 0 && visitorCan("packcost") ? `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn ice" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button></span>` : "";
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button>${priceBtn}</div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
+    // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
+    const canBuy = mkTotal > 0 && visitorCan("packcost");
+    const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
-    host.innerHTML = `<div class="isl-pl"><label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
+    host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
     bsSlideFit(host);

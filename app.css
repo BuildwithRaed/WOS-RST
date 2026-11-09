@@ -3518,11 +3518,17 @@ input,select,textarea{
   .isl-bx.ok > b{ color:var(--good); }
   .isl-bp{ margin-top:10px; }
   .isl-bp .bs-tiles.isl-bst{ grid-template-columns:repeat(var(--n, 3), minmax(0, 1fr)); }
+  .isl-bp .bs-tiles.isl-bst .bs-tile{ height:5.5625rem; min-height:0; }
   .isl-bp.bs-folded .bs-foot{ margin-bottom:0; }
   @media (min-width:901px){ .isl-bp .bs-tiles.isl-bst{ max-width:340px; } }
   .isl-g1[hidden]{ display:none; }
   .isl-g1{ margin-bottom:10px; }
-  .isl-done{ margin-top:8px; font-size:12.5px; color:var(--muted); }
+  .isl-done{ margin-top:8px; font-size:12.5px; line-height:18px; height:18px; overflow:hidden; color:var(--muted); }
+  .isl-tr{ gap:8px; }
+  .isl-tr .isl-tl{ display:flex; align-items:center; gap:8px; min-width:0; flex:1 1 auto; font-size:13.5px; color:var(--frost); }
+  .isl-tr .isl-tl > span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .isl-tr .isl-pcb{ flex:0 0 auto; height:34px; min-height:34px; border-radius:10px; }
+  .isl-tr .isl-pcb.off{ color:var(--muted); opacity:.6; cursor:default; }
   .isl-done b{ color:var(--frost); }
   .isl-done.ok b{ color:var(--good); }
   @media (max-width:380px){ .isl-bx .sg-sbt span{ white-space:normal; overflow:visible; } .isl-bx > b{ font-size:15px; } }
