@@ -1826,7 +1826,6 @@ const T = {
   sg_lv: { en: "Lv {n}" },
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
-  isl_plan: { en: "Shards plan" },
   isl_target_all: { en: "Target all buildings" },
   isl_mixed: { en: "Mixed" },
   isl_you_have: { en: "You have" },
@@ -23513,11 +23512,10 @@ async function renderIslandGallery() {
   const copiesOf = (s) => { const src = srcOf(s); return islCopiesBetween(lvOf(s), tgtOf(s), src.each, !(src.kind === "shop" && !src.price)); };
   const copiesLeft = (s) => Math.max(0, copiesOf(s) - storeOf(s));
   const perCopy = () => Number(ISL_RULES.perCopy) || 0;
-  // Free first, then the cheapest buy (owner): by the Budgets target date, free Life Essence /
-  // shards (what you have + income) pay the Life Essence shop copies and the shard-only
-  // buildings first, then the Mark shop buildings in page order; their copies the free
-  // shards can't bring by the target go to Marks (at most the shop's limit). No target =
-  // all on shards, and Marks show only as an optional, faster way.
+  // Free first, then the cheapest buy (owner): by the Budgets target date, free shards (what
+  // you have + income) pay the Mark shop buildings' copies in page order; the copies they
+  // can't bring by the target go to Marks (at most the shop's limit). No target = all on
+  // shards, and Marks show only as an optional, faster way.
   let mkAllocSig = null, mkAllocMap = new Map();
   const mkAlloc = () => {
     const tDay = BUDGET_TARGET ? packParseDay(packValidDay(BUDGET_TARGET)) : null;
@@ -23527,11 +23525,10 @@ async function renderIslandGallery() {
     mkAllocSig = sig; mkAllocMap = new Map();
     if (days == null) return mkAllocMap;
     const pc = perCopy(), all = islands.filter(tracked);
-    // Free shards by the target, after the Life Essence shop copies and the shard-only buildings.
-    let pot = islHave(ISL_SHARDS) + islShardsDay(ISL_SHARDS) * days;
-    pot -= all.filter(usesEssence).reduce((a, s) => a + copiesLeft(s) * srcOf(s).price, 0) / islEssencePerShard();
-    pot -= all.filter((s) => usesShards(s) && !usesMarks(s)).reduce((a, s) => a + copiesLeft(s) * pc, 0);
-    pot = Math.max(0, pot);
+    // Free shards by the target go to the Mark shop buildings first: they are the only copies
+    // money could buy, so every free shard spent there saves Marks (shard-only and Life Essence
+    // shop buildings have no paid way, they just take longer).
+    let pot = Math.max(0, islHave(ISL_SHARDS) + islShardsDay(ISL_SHARDS) * days);
     all.filter(usesMarks).forEach((s) => {
       const left = copiesLeft(s), free = pc > 0 ? Math.min(left, Math.floor(pot / pc + 1e-9)) : left;
       pot -= free * pc;
@@ -23654,8 +23651,7 @@ async function renderIslandGallery() {
     let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button>${priceBtn}</div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
-    host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span></div>
-      <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
+    host.innerHTML = `<div class="isl-pl"><label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
     bsSlideFit(host);
