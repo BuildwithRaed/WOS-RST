@@ -1546,7 +1546,7 @@
   .pur-a2-pr{ flex:0 0 auto; font-size:13.5px; white-space:nowrap; }
   .pur-a2-ck{ flex:0 0 38px; width:38px; height:38px; padding:0; border-radius:50%; border:2px solid #4a5a6e; background:none; color:transparent; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .pur-a2-ck:hover, .pur-a2-ck:focus-visible{ color:#6b7d92; }
-  .pur-a2-ck.on{ background:var(--good); border-color:var(--good); color:#0f141b; cursor:default; }
+  .pur-a2-ck.on{ background:var(--good); border-color:var(--good); color:#0f141b; }
   .pur-a2-it.done{ cursor:default; }
   .pur-a2-it.done .pur-a2-tx b{ color:var(--muted); text-decoration:line-through; }
   .pur-a2-it.done .pur-a2-pr{ color:var(--muted); }
