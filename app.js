@@ -23117,7 +23117,7 @@ async function renderSkinGallery() {
       ? galStatBoxesHtml(totalEntries.map(([type, maxVal]) => {
           const bare = type.replace(/^Troops?\s+/i, "");
           return { label: STAT_ABBR[bare] || tStatLabel(type), val: totalsByType[type] || 0, max: maxVal };
-        }))
+        }), { noLeft: true })
       : `${galStatBoxesHtml([{ label: t("total_bonus"), val: 0 }])}<div class="meta" style="font-size:11px; margin-top:6px;">${esc(t("mark_skins_owned_hint"))}</div>`;
 
     const sections = document.getElementById("skinSections");
