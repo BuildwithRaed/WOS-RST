@@ -1849,8 +1849,6 @@ const T = {
   isl_inc_day: { en: "+{s} shards a day" },
   isl_inc_ess: { en: "{e} Life Essence a day" },
   isl_inc_edit: { en: "\u270e Edit income" },
-  isl_sec_shards: { en: "Upgrade with shards" },
-  isl_sec_left: { en: "{n} left" },
   isl_sec_other: { en: "Event & ranked" },
   isl_sec_n: { en: "{n} buildings" },
   isl_sec_other_d: { en: "Mythic shards can't be used \u00b7 copies come from the event / ranking" },
@@ -1885,7 +1883,7 @@ const T = {
   isl_src_event: { en: "Playable event" },
   isl_src_ranked: { en: "Ranked event" },
   isl_src_txt: { en: "How to get: {k}" },
-  isl_src_txt_ev: { en: "How to get: {k} \u00b7 every {d} days \u00b7 {c} a cycle" },
+  isl_src_txt_ev: { en: "How to get: {k} \u00b7 {c} each time" },
   isl_each_txt: { en: "Copies per level: {v}" },
   isl_tree_d: { en: "holds {n}" },
   isl_camp1: { en: "Lumber Camp 1" },
@@ -23795,9 +23793,7 @@ async function renderIslandGallery() {
       all: split || GAL_MORE.has(moreKey) || !!ISLAND_FILTER.search, tile, cat: ISLAND_FILTER.bonusType, ncDesc: t("isl_nc_desc"),
     });
     if (split) {
-      const left = shardList.reduce((a, s) => a + needOf(s), 0);
-      html = `<div class="isl-sh2"><span>${esc(t("isl_sec_shards"))}</span><span class="n">${esc(t("isl_sec_left")).replace("{n}", `<i>${bidiNum(left.toLocaleString())} &#11042;</i>`)}</span></div>`
-        + html.replace('<div class="sg-nc">', `${otherList.length ? `<div class="isl-sh2 two"><span>${esc(t("isl_sec_other"))}</span><span class="n">${esc(t("isl_sec_n").replace("{n}", otherList.length))}</span></div><div class="isl-shs">${esc(t("isl_sec_other_d"))}</div><div class="sg-grid" data-zone="counted">${otherList.map((s) => tile(s, true)).join("")}</div>` : ""}<div class="sg-nc">`);
+      html = html.replace('<div class="sg-nc">', `${otherList.length ? `<div class="isl-sh2 two"><span>${esc(t("isl_sec_other"))}</span><span class="n">${esc(t("isl_sec_n").replace("{n}", otherList.length))}</span></div><div class="isl-shs">${esc(t("isl_sec_other_d"))}</div><div class="sg-grid" data-zone="counted">${otherList.map((s) => tile(s, true)).join("")}</div>` : ""}<div class="sg-nc">`);
     }
     sections.innerHTML = html;
     wireGallerySplit(sections, async (id, toUncounted) => {
