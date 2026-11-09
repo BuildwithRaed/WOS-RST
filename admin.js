@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "c099a62f32";
+window.ADMIN_BUILD = "82da32809f";
 
 // ============================================================
 // ADMIN PAGE
@@ -3160,7 +3160,7 @@ async function renderAdminSkinsCategory(body, category, kind) {
     // Islands: how the building is got (site_config island_sources, for everyone).
     // The Life Essence shop price is for every building; the rest only for Mythic ones
     // (max level 10+): others without a price are levels only.
-    ...(kind === "islands" ? [{ key: "isl_src_price", label: "Shop price (Life Essence, empty = not sold)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).price || null) : null, half: true }] : []),
+    ...(kind === "islands" && category === ISL_SHOP_CAT ? [{ key: "isl_src_price", label: "Shop price (Life Essence, empty = not sold)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).price || null) : null, half: true }] : []),
     ...(kind === "islands" && (!r.name || islIsMythic(r)) ? [
       { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Shop / shards (Mythic only)"], ["event", "Playable event"], ["ranked", "Ranked event"], ["marks", "Mark of Revival Shop"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
       { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
