@@ -1856,9 +1856,8 @@ const T = {
   isl_pb_copies: { en: "{n} copies" },
   isl_nb_copies: { en: "{n} copies" },
   isl_nb_store: { en: "{n} in Storehouse" },
-  isl_nb_left: { en: "{n} left" },
-  isl_nb_ess: { en: "{n} Life Essence" },
   isl_src_price: { en: "Shop price (Life Essence, 0 = not sold)" },
+  isl_src_price_s: { en: "Shop price (Essence, 0 = none)" },
   isl_owner_set: { en: "Owner settings" },
   isl_inc_day: { en: "+{s} shards a day" },
   isl_inc_ess: { en: "{e} Life Essence a day" },
@@ -1898,18 +1897,15 @@ const T = {
   isl_src_event: { en: "Playable event" },
   isl_src_ranked: { en: "Ranked event" },
   isl_mk_also: { en: "Also in the Mark of Revival shop" },
-  isl_mk_after: { en: "{n} copies after your Budgets target → {n} × {p} = {m} Marks" },
-  isl_mk_or: { en: "or {n} × {p} = {m} Marks" },
-  isl_mk_opt: { en: "optional, faster" },
+  isl_mk_after: { en: "{m} Marks (after your target)" },
+  isl_mk_or: { en: "or {m} Marks" },
   isl_mk_need_opt: { en: "optional, faster · {n} Marks · have {h}" },
-  isl_mk_price: { en: "Mark of Revival price" },
+  isl_mk_price: { en: "Price (Marks)" },
   isl_mk_limit: { en: "Shop limit (total)" },
   isl_mk_name: { en: "Mark of Revival" },
   isl_mk_packs: { en: "Packs" },
   isl_mk_need: { en: "need {n} · have {h}" },
   isl_mk_need_all: { en: "All Mark shop buildings: need {n} · have {h} (Backpack)" },
-  isl_mk_bought: { en: "Bought with packs" },
-  isl_mk_plan: { en: "Plan" },
   isl_mk_over: { en: "The shop sells only {n} copies" },
   isl_mk_budgets: { en: "Open Budgets" },
   isl_nb_marks: { en: "{n} Marks" },
@@ -1921,7 +1917,7 @@ const T = {
   isl_mill_none: { en: "Build it when both Lumber Camps reach Lv {n}" },
   isl_workers_n: { en: "{n} workers" },
   isl_src_each: { en: "Copies per level" },
-  isl_src_table: { en: "Normal table (2, 3, 4 \u2026 12)" },
+  isl_src_table: { en: "Normal (2, 3 \u2026 12)" },
   isl_src_same: { en: "Same each level" },
   isl_tree: { en: "Tree of Life level" },
   isl_ally: { en: "Ally help a day" },
@@ -22763,11 +22759,11 @@ function galStatShort(bt) {
 }
 // Stat boxes of the answer card: label + amber "+N left" (green ✓ at max), the
 // value big, "/ max" small, a bar along the bottom edge. list: [{ label, val, max }]
-function galStatBoxesHtml(list) {
-  return `<div class="sg-s2">${list.map((s) => {
+function galStatBoxesHtml(list, opts = {}) {
+  return `<div class="sg-s2${list.length === 4 ? " n4" : ""}">${list.map((s) => {
     const val = Number(s.val || 0), max = s.max == null ? null : Number(s.max), left = max == null ? 0 : Math.max(0, max - val);
     const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0, done = max > 0 && left < 0.005;
-    return `<div class="sg-sb"><div class="sg-sbt"><span>${esc(s.label)}</span>${max > 0 ? (done ? `<em class="ok">&#10003;</em>` : `<em>${bidiNum(`+${galNum(left)}`)} ${esc(t("sg_left"))}</em>`) : ""}</div><b>${bidiNum(`+${galNum(val)}%`)}</b>${max != null ? `<small>/ ${bidiNum(`${galNum(max)}%`)}</small>` : ""}${max != null ? `<div class="sg-bar${done ? " full" : ""}"><i style="width:${pct}%;"></i></div>` : ""}</div>`;
+    return `<div class="sg-sb"><div class="sg-sbt"><span>${esc(s.label)}</span>${max > 0 && !opts.noLeft ? (done ? `<em class="ok">&#10003;</em>` : `<em>${bidiNum(`+${galNum(left)}`)} ${esc(t("sg_left"))}</em>`) : ""}</div><b>${bidiNum(`+${galNum(val)}%`)}</b>${max != null ? `<small>/ ${bidiNum(`${galNum(max)}%`)}</small>` : ""}${max != null ? `<div class="sg-bar${done ? " full" : ""}"><i style="width:${pct}%;"></i></div>` : ""}</div>`;
   }).join("")}</div>`;
 }
 // All / Owned / Not owned + a search button that opens a search row.
@@ -23560,8 +23556,9 @@ async function renderIslandGallery() {
     const src = srcOf(s), mk = mkCopies(s), opt = mkOptCopies(s), n = mk || opt;
     if (!n) return "";
     const amt = n * src.markPrice;
-    const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace(/\{n\}/g, n).replace("{p}", src.markPrice.toLocaleString()).replace("{m}", amt.toLocaleString());
-    return `<div class="isl-mkx">${esc(txt)}${!mk ? ` <small>${esc(t("isl_mk_opt"))}</small>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}<button type="button" class="isl-mkb" data-islmkopen>${esc(t("isl_mk_bought"))} &middot; <span data-islmkprice>${esc(PACK_COST_SHOWN.islands || t("pc_title"))}</span> &middot; ${esc(t("isl_mk_plan"))} &#8250;</button></div>`;
+    const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
+    const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : ` &middot; ${mk && mk !== copiesLeft(s) ? `${mk} &rarr; ` : ""}`;
+    return `${lead}<b class="mk">${esc(txt)}</b> &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${esc(PACK_COST_SHOWN.islands || t("pc_title"))}</span> &#8250;</button>${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
@@ -23796,10 +23793,10 @@ async function renderIslandGallery() {
     const box = (label, tot) => ({ label, val: tot ? tot.cur : 0, max: tot ? tot.max : 0 });
     const troopTab = { Infantry: "Infantry", Lancers: "Lancer", Marksman: "Marksman" };
     document.getElementById("islandTroopTotals").innerHTML = plxStatTabsHtml("islands", [
-      { key: "all", label: t("plx_all_troops"), html: galStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat]))) },
+      { key: "all", label: t("plx_all_troops"), html: galStatBoxesHtml(RAW_STATS.map((stat) => box(STAT_ABBR2[stat] || stat, generalTotals[stat])), { noLeft: true }) },
       ...["Infantry", "Lancers", "Marksman"].map((tr) => ({
         key: tr, label: troopDisplayName(troopTab[tr]), color: PLX_TROOP_COLORS[troopTab[tr]],
-        html: galStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`]))),
+        html: galStatBoxesHtml(["Attack", "Defense"].map((stat) => box(STAT_ABBR2[stat], specificTotals[`${tr} ${stat}`])), { noLeft: true }),
       })),
     ]);
   }
@@ -23813,14 +23810,14 @@ async function renderIslandGallery() {
     const s = islands.find((x) => String(x.id) === String(id));
     if (!tileEl || !s) return;
     const pop = document.createElement("div");
-    pop.className = "sg-pop";
+    pop.className = "sg-pop isl-pop";
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-label", s.name);
     pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h">${s.image_url ? `<img class="isl-pic" src="${esc(s.image_url)}" alt="" />` : ""}<b>${esc(s.name)}</b><span class="isl-chip" data-popchip hidden></span><span data-popbn></span></div>
       <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
-      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label class="w2" data-ippricew><span>${esc(t("isl_src_price"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label class="w2" data-ippricew><span>${esc(t("isl_src_price"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label class="isl-mkck" data-ipmkcw hidden><input type="checkbox" data-ipmkc /> <span>${esc(t("isl_mk_also"))}</span></label><div class="isl-mkset" data-ipmkw hidden><label><span>${esc(t("isl_mk_price"))}</span><input type="number" inputmode="numeric" min="1" step="10" data-ipmkp /></label><label><span>${esc(t("isl_mk_limit"))}</span><input type="number" inputmode="numeric" min="1" step="1" data-ipmkl /></label></div><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
+      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><label class="isl-mkck" data-ipmkcw hidden><span>${esc(t("isl_mk_also"))}</span><input type="checkbox" class="bset-sw" data-ipmkc /></label><div class="isl-mkset" data-ipmkw hidden><label><span>${esc(t("isl_mk_price"))}</span><input type="number" inputmode="numeric" min="1" step="10" data-ipmkp /></label><label><span>${esc(t("isl_mk_limit"))}</span><input type="number" inputmode="numeric" min="1" step="1" data-ipmkl /></label></div><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
         <div class="isl-dpk" data-ipdpk hidden><div class="isl-dl">${esc(t("isl_dates_pick"))}</div><select class="keep-w" data-ippack></select><div class="isl-dsm" data-ippacknote></div></div>
-        <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden class="w"><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label><label class="w2" data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label></div>` : ""}` : ""}
+        <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
     const pageEnd = document.documentElement.scrollHeight;
     pop.style.top = "0px";
@@ -23857,7 +23854,7 @@ async function renderIslandGallery() {
         const all = copiesOf(s), store = storeOf(s), left = copiesLeft(s);
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
         pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.weeks4 ? t("isl_pb_month") : t("isl_pb_every").replace("{d}", ev.nx.every)))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
-          : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""} &times; ${bidiNum(src.price.toLocaleString())}<br>= <b class="gd">${esc(t("isl_nb_ess").replace("{n}", ess.toLocaleString()))}</b>${ess > (ISL_SHARDS.essence || 0) || d ? ` &middot; ${d != null ? (d ? `~${esc(evShort(d))}` : esc(t("isl_needs_ok"))) : "?"}` : ess ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""}${need || !mkCopies(s) ? `<br>= <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>` : ""}${short > 0 ? ` &middot; ${tm ? `~${esc(evShort(tm.days))}` : "?"}` : need ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}${mkLine(s)}</div>`;
+          : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess > (ISL_SHARDS.essence || 0) || d ? ` &middot; ${d != null ? (d ? `~${esc(evShort(d))}` : esc(t("isl_needs_ok"))) : "?"}` : ess ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !mkCopies(s) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${short > 0 ? ` &middot; ${tm ? `~${esc(evShort(tm.days))}` : "?"}` : need ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}` : ""}${mkLine(s)}</div>`;
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
           if (document.activeElement !== pi) pi.value = src.price || "";

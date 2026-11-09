@@ -3326,6 +3326,11 @@ input,select,textarea{
   .sg-sbt em.ok{ color:var(--good); }
   .sg-sb > b{ display:inline-block; font-size:19px; line-height:23px; font-weight:800; margin-top:1px; color:var(--frost); }
   .sg-sb > small{ font-size:12px; color:var(--muted); margin-inline-start:4px; }
+  .sg-s2.n4{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  .sg-s2.n4 .sg-sbt{ flex-direction:column; align-items:flex-start; gap:0; }
+  .sg-s2.n4 .sg-sb > b{ display:block; white-space:nowrap; }
+  .sg-s2.n4 .sg-sb > small{ display:block; margin:0; white-space:nowrap; }
+  @media (max-width:700px){ .sg-s2.n4 .sg-sb{ padding:6px 7px 9px; } .sg-s2.n4 .sg-sb > b{ font-size:clamp(14px, 4.2vw, 19px); } }
   .sg-bar{ position:absolute; inset-inline:0; bottom:0; height:4px; background:rgba(232,162,60,.45); }
   .sg-bar i{ display:block; height:100%; background:var(--ice); }
   .sg-bar.full i{ background:var(--good); }
@@ -4403,3 +4408,31 @@ input,select,textarea{
     .dh3-bx b{ margin-top:4px; font-size:22px; line-height:26px; }
     .dh3-max{ margin-top:2px; font-size:13px; }
   }
+
+  /* Islands building pop-up: compact (owner, 9 Nov 2026). */
+  .isl-pop .sg-pop-bt{ margin-top:7px; gap:6px; }
+  .isl-pop .sg-pop-bt button, .isl-pop .isl-tg button{ height:34px; }
+  .isl-pop .sg-pop-sm{ width:38px; }
+  .isl-pop .sg-pop-pm{ width:42px; font-size:20px; }
+  .isl-pop .sg-pop-num{ font-size:22px; }
+  .isl-pop .isl-tg{ margin-top:5px; }
+  .isl-pop .isl-tg .n{ font-size:20px; }
+  .isl-pop .isl-store .l2{ font-size:12px; }
+  .isl-pop .isl-need{ margin-top:6px; }
+  .isl-pop .isl-nbox{ padding:6px 9px; line-height:1.45; }
+  .isl-pop .isl-nbox b.mk{ color:#c9e2a0; }
+  .isl-pop .isl-mkb{ display:inline; margin:0; font-size:12.5px; }
+  .isl-pop .isl-src{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:6px 8px; margin-top:7px; padding-top:7px; }
+  .isl-pop .isl-src > .isl-osl, .isl-pop .isl-src > .isl-mkck, .isl-pop .isl-src > .isl-mkset, .isl-pop .isl-src > .isl-dt{ grid-column:1 / -1; }
+  .isl-pop .isl-src label{ font-size:11px; }
+  .isl-pop .isl-src select{ height:34px; font-size:12.5px; }
+  .isl-pop .isl-src input:not(.bset-sw){ width:100%; height:32px; font-size:14px; }
+  .isl-pop .isl-src [data-ipprice]{ width:100%; }
+  .isl-pop .isl-eachr input{ width:56px !important; flex:0 0 56px; }
+  .isl-pop .isl-mkck{ flex-direction:row; justify-content:space-between; align-items:center; gap:8px; font-size:12.5px; color:var(--frost); padding:4px 0; }
+  .isl-pop .isl-mkck[hidden]{ display:none; }
+  .isl-pop .isl-mkset{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:8px; }
+  .isl-pop .isl-mkset[hidden]{ display:none; }
+  .isl-pop .isl-mkset input{ width:100%; }
+  .isl-pop .sg-pop-ft{ margin-top:6px; }
+  .isl-pop .isl-mkck .bset-sw{ width:38px; height:22px; flex:0 0 38px; }
