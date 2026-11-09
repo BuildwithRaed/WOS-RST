@@ -2433,6 +2433,17 @@
 "t:pkb_arrange_hint":"⋮⋮ halten und ziehen",
 "t:isl_target_all":"Ziel für alle",
 "t:isl_pc_none":"Nichts zu kaufen",
+"t:isl_wb_title":"Wo Kopien kaufen",
+"t:isl_wb_mark":"Shop für Zeichen der Wiedergeburt",
+"t:isl_wb_note":"Deine Auswahl startet mit der der Seite · passe sie an deinen Staat an",
+"t:isl_wb_note_owner":"Deine Auswahl ist die erste Wahl für alle",
+"t:isl_sc_name":"Leuchtende Stadt",
+"t:isl_sc_chip":"Leuchtende Stadt",
+"t:isl_sc_next":"Nächstes Event",
+"t:isl_sc_days":"{n} Tage",
+"t:isl_tm_name":"Ruhmreicher Foliant",
+"t:isl_tm_after":"{m} Folianten bis zu deinem Ziel",
+"t:isl_tm_or":"oder {m} Folianten",
 "t:isl_mixed":"Gemischt",
 "t:isl_you_have":"Du hast",
 "t:isl_tap_type":"(tippen zum Eingeben)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"Inselsplitter",
 "t:isl_done":"Fertig",
 "t:isl_src":"So bekommst du es",
-"t:isl_src_choices":"Kopien pro Zyklus, bis 5 (z. B. 1,3,5)"
+"t:isl_src_choices":"Kopien pro Zyklus, bis 6 (z. B. 1,3,6)"
 }

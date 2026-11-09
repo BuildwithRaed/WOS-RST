@@ -2433,6 +2433,17 @@
 "t:pkb_arrange_hint":"按住 ⋮⋮ 拖动",
 "t:isl_target_all":"全部目标",
 "t:isl_pc_none":"无需购买",
+"t:isl_wb_title":"在哪里购买副本",
+"t:isl_wb_mark":"复苏印记商店",
+"t:isl_wb_note":"你的选择以网站的选择为起点 · 按你的州调整",
+"t:isl_wb_note_owner":"你的选择是所有人的默认选择",
+"t:isl_sc_name":"闪耀之城",
+"t:isl_sc_chip":"闪耀之城",
+"t:isl_sc_next":"下次活动",
+"t:isl_sc_days":"{n} 天",
+"t:isl_tm_name":"荣耀之书",
+"t:isl_tm_after":"目标日前需 {m} 本书",
+"t:isl_tm_or":"或 {m} 本书",
 "t:isl_mixed":"混合",
 "t:isl_you_have":"已有",
 "t:isl_tap_type":"(点击输入)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"岛屿碎片",
 "t:isl_done":"完成",
 "t:isl_src":"获取方式",
-"t:isl_src_choices":"每轮副本数，最多5 (如 1,3,5)"
+"t:isl_src_choices":"每轮副本数，最多6 (如 1,3,6)"
 }

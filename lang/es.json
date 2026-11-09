@@ -2433,6 +2433,17 @@
 "t:pkb_arrange_hint":"Mantén ⋮⋮ y arrastra",
 "t:isl_target_all":"Objetivo para todos",
 "t:isl_pc_none":"Nada que comprar",
+"t:isl_wb_title":"Dónde comprar copias",
+"t:isl_wb_mark":"Tienda de Marcas de Renacimiento",
+"t:isl_wb_note":"Tus elecciones empiezan como las del sitio · cámbialas según tu estado",
+"t:isl_wb_note_owner":"Tus elecciones son la primera opción de todos",
+"t:isl_sc_name":"Ciudad Radiante",
+"t:isl_sc_chip":"Ciudad Radiante",
+"t:isl_sc_next":"Próximo evento",
+"t:isl_sc_days":"{n} días",
+"t:isl_tm_name":"Tomo Glorioso",
+"t:isl_tm_after":"{m} tomos para tu objetivo",
+"t:isl_tm_or":"o {m} tomos",
 "t:isl_mixed":"Mixto",
 "t:isl_you_have":"Tienes",
 "t:isl_tap_type":"(toca para escribir)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"Fragmentos de isla",
 "t:isl_done":"Listo",
 "t:isl_src":"Cómo conseguirlo",
-"t:isl_src_choices":"Copias por ciclo, hasta 5 (p. ej. 1,3,5)"
+"t:isl_src_choices":"Copias por ciclo, hasta 6 (p. ej. 1,3,6)"
 }

@@ -2432,6 +2432,17 @@
 "t:pkb_arrange_hint":"اضغط مطولًا على ⋮⋮ واسحب",
 "t:isl_target_all":"استهداف الكل",
 "t:isl_pc_none":"لا شيء للشراء",
+"t:isl_wb_title":"أين تشتري النسخ",
+"t:isl_wb_mark":"متجر علامة الإحياء",
+"t:isl_wb_note":"اختياراتك تبدأ باختيارات الموقع · غيّرها لتطابق ولايتك",
+"t:isl_wb_note_owner":"اختياراتك هي الخيار الأول للجميع",
+"t:isl_sc_name":"المدينة المشرقة",
+"t:isl_sc_chip":"المدينة المشرقة",
+"t:isl_sc_next":"الحدث القادم",
+"t:isl_sc_days":"{n} أيام",
+"t:isl_tm_name":"الكتاب المجيد",
+"t:isl_tm_after":"{m} كتاب بحلول هدفك",
+"t:isl_tm_or":"أو {m} كتاب",
 "t:isl_mixed":"مختلط",
 "t:isl_you_have":"لديك",
 "t:isl_tap_type":"(اضغط للكتابة)",
@@ -2538,5 +2549,5 @@
 "t:isl_island_shards":"شظايا الجزر",
 "t:isl_done":"تم",
 "t:isl_src":"طريقة الحصول",
-"t:isl_src_choices":"النسخ في كل دورة، حتى 5 (مثل 1,3,5)"
+"t:isl_src_choices":"النسخ في كل دورة، حتى 6 (مثل 1,3,6)"
 }

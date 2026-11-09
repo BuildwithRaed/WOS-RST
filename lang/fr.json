@@ -2433,6 +2433,17 @@
 "t:pkb_arrange_hint":"Maintenez ⋮⋮ et glissez",
 "t:isl_target_all":"Objectif pour tous",
 "t:isl_pc_none":"Rien à acheter",
+"t:isl_wb_title":"Où acheter des copies",
+"t:isl_wb_mark":"Boutique des Marques de Renaissance",
+"t:isl_wb_note":"Vos choix partent de ceux du site · adaptez-les à votre état",
+"t:isl_wb_note_owner":"Vos choix sont le premier choix de tous",
+"t:isl_sc_name":"Cité Radieuse",
+"t:isl_sc_chip":"Cité Radieuse",
+"t:isl_sc_next":"Prochain événement",
+"t:isl_sc_days":"{n} jours",
+"t:isl_tm_name":"Tome Glorieux",
+"t:isl_tm_after":"{m} tomes d'ici votre objectif",
+"t:isl_tm_or":"ou {m} tomes",
 "t:isl_mixed":"Mixte",
 "t:isl_you_have":"Vous avez",
 "t:isl_tap_type":"(touchez pour saisir)",
@@ -2539,5 +2550,5 @@
 "t:isl_island_shards":"Fragments d'île",
 "t:isl_done":"Terminé",
 "t:isl_src":"Comment l'obtenir",
-"t:isl_src_choices":"Copies par cycle, jusqu'à 5 (ex. 1,3,5)"
+"t:isl_src_choices":"Copies par cycle, jusqu'à 6 (ex. 1,3,6)"
 }
