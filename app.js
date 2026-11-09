@@ -23611,7 +23611,7 @@ async function renderIslandGallery() {
     const amt = n * src.markPrice;
     const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
     const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : mk ? ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; ` : " &middot; ";
-    return `${lead}<b class="mk">${esc(txt)}</b> &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
+    return `${lead}<b class="mk">${esc(txt)}</b>${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
@@ -23711,9 +23711,9 @@ async function renderIslandGallery() {
       tile("shards", "icons/island-shard.png", t("isl_shards"), st.shards || 0, shNeed, Math.max(0, shNeed - (st.shards || 0)))];
     // Mark of Revival (bought with packs, after the free shards): need = what the plan
     // buys with Marks, or with no Budgets target the optional amount.
-    const mk = list.reduce((a, s) => a + marksOf(s), 0), mkOpt = mk ? 0 : list.reduce((a, s) => a + marksOpt(s), 0);
+    const mk = list.reduce((a, s) => a + marksOf(s), 0);
     // Always three slots so the card keeps one height on every category (faded "—" when not needed).
-    tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk || mkOpt, Math.max(0, (mk || mkOpt) - markHave())));
+    tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk, Math.max(0, mk - markHave())));
     const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal();
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
@@ -23735,7 +23735,7 @@ async function renderIslandGallery() {
       if (hv) {
         const k = hv.dataset.islhave;
         if (k === "marks") {
-          const nd = planList().reduce((a, s) => a + (marksOf(s) || marksOpt(s)), 0);
+          const nd = planList().reduce((a, s) => a + marksOf(s), 0);
           plxAmountModal({ label: t("isl_mk_name"), icon: "icons/mark-of-revival.png", value: markHave(), needBox: nd > 0 ? { need: nd, have: markHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), "Mark of Revival": Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); drawPlan(); }); } });
           return;
         }
@@ -23762,7 +23762,7 @@ async function renderIslandGallery() {
   // Budgets "Islands" page's need); what the Backpack holds counts as had.
   const markNeedAll = () => islands.filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
   // The Pack cost card: this category's Marks actually needed, else (no target) the optional amount.
-  const markSheetTotal = () => { const l = planList().filter(usesMarks); return l.reduce((a, s) => a + marksOf(s), 0) || l.reduce((a, s) => a + marksOpt(s), 0); };
+  const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
