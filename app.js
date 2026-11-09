@@ -1891,7 +1891,6 @@ const T = {
   isl_src_ranked: { en: "Ranked event" },
   isl_mk_also: { en: "Also in the Mark of Revival shop" },
   isl_mk_chip: { en: "Mark shop" },
-  isl_mk_legend: { en: "= also in the Mark of Revival shop" },
   isl_mk_after: { en: "{m} Marks by your target" },
   isl_mk_or: { en: "or {m} Marks" },
   isl_mk_need_opt: { en: "optional, faster · {n} Marks · have {h}" },
@@ -24087,7 +24086,6 @@ async function renderIslandGallery() {
     if (split) {
       html = html.replace('<div class="sg-nc">', `${otherList.length ? `<div class="isl-sh2 two"><span>${esc(t("isl_sec_other"))}</span><span class="n">${esc(t("isl_sec_n").replace("{n}", otherList.length))}</span></div><div class="isl-shs">${esc(t("isl_sec_other_d"))}</div><div class="sg-grid" data-zone="counted">${otherList.map((s) => tile(s, true)).join("")}</div>` : ""}<div class="sg-nc">`);
     }
-    if (counted.some((s) => coinHtml(s))) html = `<div class="isl-mkl"><span class="isl-mkc">${MK_COIN}</span>${esc(t("isl_mk_legend"))}</div>` + html;
     sections.innerHTML = html;
     wireGallerySplit(sections, async (id, toUncounted) => {
       if (ISL_POP) ISL_POP.close(true);
