@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "d29a2de080";
+window.ADMIN_BUILD = "1fcf53ab45";
 
 // ============================================================
 // ADMIN PAGE
@@ -367,6 +367,7 @@ const GAME_RULE_GROUPS = [
   { key: "packs", label: "Packs & lab" },
   { key: "research", label: "Research trees" },
   { key: "pages", label: "Pages" },
+  { key: "islands", label: "Islands" },
 ];
 // Saves one rule from another Admin screen (same as its Save in Rules & Timeline).
 async function saveGameRule(key, value) {
@@ -3156,14 +3157,43 @@ async function renderAdminSkinsCategory(body, category, kind) {
     { key: "show_count_toggle", label: "Has count trigger (a \"Count in max\" tick on the card, below the divider)", type: "check", value: r.show_count_toggle, more: true },
     { key: "current_level", label: "My current level", type: "num", value: r.current_level, half: true, more: true },
     { key: "owned", label: "I own it", type: "check", value: r.owned, more: true },
+    // Islands: how the building is got (site_config island_sources, for everyone).
+    // The Life Essence shop price is for every building; the rest only for Mythic ones
+    // (max level 10+): others without a price are levels only.
+    ...(kind === "islands" && category === ISL_SHOP_CAT ? [{ key: "isl_src_price", label: "Shop price (Life Essence, empty = not sold)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).price || null) : null, half: true }] : []),
+    ...(kind === "islands" && (!r.name || islIsMythic(r)) ? [
+      { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Shop / shards (Mythic only)"], ["event", "Playable event"], ["ranked", "Ranked event"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
+      { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
+      { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 5 (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
+      { key: "isl_src_mk", label: "Also in the Mark of Revival shop (shard buildings; free shards first)", type: "check", value: r.name ? !!islSource(r.name, islIsMythic(r)).marks : false },
+      { key: "isl_src_mkp", label: "Mark of Revival price (empty = rule, " + (Number(ISL_RULES.markPrice) || 250) + ")", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).ownPrice || null) : null, half: true },
+      { key: "isl_src_mkl", label: "Mark of Revival shop: limit (total)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).markLimit || null) : null, half: true },
+    ] : []),
   ];
+  // Splits the How to get fields off the row and saves them into island_sources
+  // (a renamed building keeps its entry).
+  const takeSrc = (v) => { const src = { kind: v.isl_src, choices: v.isl_src_choices, each: v.isl_src_each, price: v.isl_src_price, marks: v.isl_src_mk === undefined ? undefined : !!v.isl_src_mk, ownPrice: v.isl_src_mkp || 0, markLimit: v.isl_src_mkl || undefined }; delete v.isl_src_mk; delete v.isl_src_mkl; delete v.isl_src_mkp; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; delete v.isl_src_each; delete v.isl_src_price; return src; };
+  const saveSrc = async (name, src, oldName, mythic) => {
+    if (kind !== "islands") return;
+    // Keeps what this sheet doesn't show (event dates …) from the saved entry.
+    const base = islSource(oldName || name, mythic);
+    src = { ...base, ...Object.fromEntries(Object.entries(src).filter(([, x]) => x !== undefined)), each: src.each || 0, price: src.price || 0 };
+    if (src.kind !== base.kind) { delete src.dates; delete src.choices; }
+    if (oldName && oldName !== name) {
+      const cur = { ...(siteConfig("island_sources", {}) || {}) };
+      if (cur[oldName]) { delete cur[oldName]; await saveSiteConfig("island_sources", cur); }
+    }
+    await islSaveSource(name, src, mythic);
+  };
   wireAdmList(body, {
     onEdit: (id) => {
       const r = rows.find((x) => String(x.id) === id);
       openAdmSheet({ title: `Edit · ${r.name}`, fields: fields(r),
         onSave: async (v) => {
           if (!v.name) throw new Error("Enter a name");
+          const src = takeSrc(v);
           await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) });
+          await saveSrc(v.name, src, r.name, islIsMythic({ max_level: v.max_level }));
           // A Globe Level extra skin keeps its link under the new name.
           if (v.name !== r.name && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(r.name)) await saveGameRule("globeLevels", GLOBE_LEVELS.map((g) => ({ level: g.level, city: g.city === r.name ? v.name : g.city, extra: g.extra.map((x) => (x === r.name ? v.name : x)) })));
           dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category, kind);
@@ -3175,7 +3205,9 @@ async function renderAdminSkinsCategory(body, category, kind) {
       onSave: async (v) => {
         if (!v.name) throw new Error("Enter a name");
         const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
+        const src = takeSrc(v);
         await sb(`skins`, { method: "POST", body: JSON.stringify({ ...v, user_id: USER_ID, category, current_level: v.current_level || 0, owned: !!v.owned, sort_order: maxOrder + 1 }) });
+        await saveSrc(v.name, src, null, islIsMythic({ max_level: v.max_level }));
         dashDataChanged("skins"); toast("Item added"); renderAdminSkinsCategory(body, category, kind);
       } }),
   });
