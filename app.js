@@ -23899,12 +23899,17 @@ async function renderIslandGallery() {
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div>${resultLine()}`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
-      ${res}
-      <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
+      ${res}</div>`;
+    // The plan's details sit behind an (i) beside the Backpack title (amber when copies
+    // can't be reached by the date); the income is in the shard box's pop-up (owner, 9 Nov 2026).
+    const why = document.createElement("div"); why.className = "isl-why"; why.innerHTML = resultLine();
+    infoAttach(host.querySelector(".isl-bp .bs-foot > span:first-child"), why);
+    const ib = host.querySelector(".isl-bp .bs-foot .cg-i");
+    if (ib && why.querySelector(".isl-done.bad, .isl-done.am")) ib.classList.add("isl-iwarn");
     bsSlideFit(host);
     islMarkCard();
   }
@@ -23926,7 +23931,10 @@ async function renderIslandGallery() {
           return;
         }
         const P2 = planTotals(planList()), nd = k === "essence" ? Math.max(0, P2.left - (ISL_SHARDS.shards || 0) * ePS()) : P2.sh;
-        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
+        const incN = islIncome(ISL_SHARDS), incHtml = `<button type="button" class="isl-inc isl-inc-m" data-islincm><span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(islShardsDay(ISL_SHARDS))))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(incN.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span></button>`;
+        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, extraHtml: incHtml, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
+        const mib = document.querySelector("#bsEditModal [data-islincm]");
+        if (mib) mib.onclick = () => { const m = document.getElementById("bsEditModal"); if (m) m.style.display = "none"; islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) drawPlan(); }); };
         return;
       }
       if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
@@ -28982,6 +28990,7 @@ function plxAmountModal(o) {
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
+      ${o.extraHtml || ""}
       <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
