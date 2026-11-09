@@ -1934,7 +1934,36 @@ const T = {
   isl_island_shards: { en: "Island Shards" },
   isl_done: { en: "Done" },
   isl_src: { en: "How to get" },
-  isl_src_choices: { en: "Copies a cycle, up to 5 (e.g. 1,3,5)" },
+  isl_src_choices: { en: "Copies a cycle, up to 6 (e.g. 1,3,6)" },
+  isl_shops_btn: { en: "Shops" },
+  isl_shops_title: { en: "Shops" },
+  isl_shops_shop: { en: "Shop" },
+  isl_shops_mode_def: { en: "Default for everyone" },
+  isl_shops_mode_own: { en: "My own" },
+  isl_shops_n: { en: "{n} picked" },
+  isl_shops_def: { en: "owner's default" },
+  isl_shops_def_all: { en: "default for everyone" },
+  isl_shops_yours: { en: "your state" },
+  isl_shops_reset: { en: "Reset to default" },
+  isl_shops_save: { en: "Save" },
+  isl_shops_save_all: { en: "Save for everyone" },
+  isl_shops_saved: { en: "Saved for your state" },
+  isl_shops_saved_all: { en: "Saved for everyone" },
+  isl_shops_none: { en: "No buildings can be picked for this shop." },
+  isl_sc_name: { en: "Shining City" },
+  isl_sc_chip: { en: "Shining City" },
+  isl_sc_next: { en: "Next event" },
+  isl_sc_days: { en: "{n} days" },
+  isl_sc_my_date: { en: "my state's date" },
+  isl_sc_use_cal: { en: "Use the calendar" },
+  isl_sc_start: { en: "Event starts" },
+  isl_sc_from_own: { en: "your state's date" },
+  isl_sc_from_cal: { en: "from the calendar ({name})" },
+  isl_sc_pick_ev: { en: "pick the event" },
+  isl_sc_no_date: { en: "no date yet: set your state's date" },
+  isl_sc_cal_link: { en: "Calendar (everyone)" },
+  isl_tm_name: { en: "Glorious Tome" },
+  isl_tm_after: { en: "{m} Tomes by your target" },
   all_categories: { en: "All categories" },
   tundra_album_title: { en: "Tundra Album" },
   of_max_prefix: { en: "of max" },
@@ -12923,8 +12952,8 @@ function backpackItems() {
 }
 const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
 // Islands: Life Essence, Mythic Island Shards and the Mark of Revival Shop's currency, always in the Backpack.
-const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "Mark of Revival"];
-const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "Mark of Revival": "icons/mark-of-revival.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
+const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
+const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -14125,7 +14154,7 @@ const PACK_RESOURCE_NAMES = [
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
-  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival",
+  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
@@ -14166,6 +14195,10 @@ const PACK_BUNDLES = {
   //                      and the same table for Designs
   //                      -> 1.545 Guides and 1.545 Designs per chest
   "Lucky Gear Chest": { "Mythic Gear": 0.016 },
+  //  Lucky Glorious Tome Chest (Islands, Shining City): 5 / 10 / 20 / 30 / 40 / 60 / 100 tomes at
+  //  30 / 25 / 18 / 12 / 7 / 5 / 3% -> 20 a chest. Counted at that average (owner, 9 Nov 2026), not
+  //  a CHANCE_CHESTS one; Admin → Items "Counts as" can change it.
+  "Lucky Glorious Tome Chest": { "Glorious Tome": 5 * 0.3 + 10 * 0.25 + 20 * 0.18 + 30 * 0.12 + 40 * 0.07 + 60 * 0.05 + 100 * 0.03 },
   //  Random Chief Gear Chest (one of the three, average per chest):
   //    Alloy x5000 0.5% / x2500 3% / x1200 15% / x600 31.5%  -> 469
   //    Polish x50 0.25% / x25 1.5% / x12 7.5% / x6 15.75%   -> 2.345
@@ -18539,7 +18572,7 @@ async function heroShardBudget() {
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
   if (calcKey === "hero_shards") return (await heroShardBudget()).owned;
-  if (calcKey === "islands") { const bp = (await loadCalcState("backpack").catch(() => null)) || {}; return { "Mark of Revival": Number(bp["Mark of Revival"]) || 0 }; }
+  if (calcKey === "islands") { const bp = (await loadCalcState("backpack").catch(() => null)) || {}; return { "Mark of Revival": Number(bp["Mark of Revival"]) || 0, "Glorious Tome": (Number(bp["Glorious Tome"]) || 0) + (Number(bp["Lucky Glorious Tome Chest"]) || 0) * (Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 0) }; }
   if (calcKey === "experts" || calcKey === "experts_research") {
     const inv = { ...((await loadCalcState("experts_inventory")) || {}) };
     await expertsInventoryWithBackpack(inv);
@@ -23231,7 +23264,7 @@ const ISL_CAMP = [null,
   { workers: 1, wood: 6, load: 360 }, { workers: 1, wood: 7, load: 840 }, { workers: 1, wood: 8, load: 1440 }, { workers: 2, wood: 9, load: 2160 },
   { workers: 2, wood: 10, load: 3000 }, { workers: 2, wood: 11, load: 3960 }, { workers: 2, wood: 12, load: 5040 }, { workers: 2, wood: 13, load: 6240 },
   { workers: 2, wood: 14, load: 7560 }, { workers: 2, wood: 15, load: 9000 }];
-const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250 };
+const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250, tomePrice: 600, tomeMax: 3, shiningDays: 5, tomeFreeDay: 80 };
 const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
 // calc_state "island_shards" = { targets: { skinId: level }, allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
@@ -23246,7 +23279,7 @@ const islIsMythic = (s) => Number(s.max_level ?? 10) >= 10;
 // apply to a non-Mythic building. "event": a repeating event (every N days) gives one of
 // `choices` copies a cycle; each person picks theirs (island_shards.evPer). "ranked":
 // won or bought, also every N days with its own choices (default 30 days, [1]).
-// `each`: the same copies for every level (missing = the table). At most 5 copies a cycle.
+// `each`: the same copies for every level (missing = the table). At most 6 copies a cycle.
 // `price`: Life Essence for one Lv 1 copy in the Life Essence shop (owner; 0 / missing =
 // not sold). A building with a price is planned in Life Essence (copies × price, at most
 // copyLimit a week); a non-Mythic one with a price gets the plan too, without = levels only.
@@ -23254,10 +23287,10 @@ const islIsMythic = (s) => Number(s.max_level ?? 10) >= 10;
 // `markPrice` / `markLimit` = Marks for one Lv 1 copy and the shop's total purchase limit
 // (game screenshot: 250 Marks, limit 58). It is an extra: free shards come first.
 const ISL_MARK_PRICE = 250, ISL_MARK_LIMIT = 58;
-const ISL_EV_CHOICES = [1, 2, 3, 4, 5];
+const ISL_EV_CHOICES = [1, 2, 3, 4, 5, 6];
 const ISL_RK_CHOICES = [1];
 function islChoices(v, def = ISL_EV_CHOICES) {
-  const a = (Array.isArray(v) ? v : String(v == null ? "" : v).split(/[^0-9]+/)).map(Number).filter((n) => n > 0 && n <= 5);
+  const a = (Array.isArray(v) ? v : String(v == null ? "" : v).split(/[^0-9]+/)).map(Number).filter((n) => n > 0 && n <= 6);
   return a.length ? [...new Set(a)].sort((x, y) => x - y) : def.slice();
 }
 const ISL_SHOP_CAT = "Islands Guide"; // the only category the Life Essence shop sells
@@ -23286,7 +23319,7 @@ function islSource(name, mythic = true) {
   // An old "marks" kind (Mark of Revival Shop) reads as a shard building that is also in the Mark shop.
   const kind = v.kind === "event" || v.kind === "ranked" ? v.kind : "shop";
   const each = Number(v.each) > 0 ? Number(v.each) : 0;
-  if (kind === "shop") return { kind, each, price, marks: !!(v.marks || v.kind === "marks"), markPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), ownPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : 0, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
+  if (kind === "shop") return { kind, each, price, marks: islInShop(name, "mark"), shining: islInShop(name, "shining"), markPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), ownPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : 0, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
   // "cal": a game event of the calendar (SvS / KOI, GAME_EVENTS); "pack": a Packs-page pack.
   const evHit = v.dates === "cal" ? islFindEvent(v.ev) : null;
   const dates = v.dates === "cal" ? "cal" : v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
@@ -23310,8 +23343,13 @@ async function islSaveSource(name, src, mythic = true) {
     return;
   }
   const kind = !src ? "" : src.kind === "event" || src.kind === "ranked" ? src.kind : mythic ? "shop" : "none";
-  const e = !src ? null : kind === "shop" && src.marks ? { kind, marks: true, ...(Number(src.ownPrice) > 0 ? { markPrice: Math.round(Number(src.ownPrice)) } : {}), markLimit: Number(src.markLimit) > 0 ? Math.round(Number(src.markLimit)) : ISL_MARK_LIMIT }
-    : kind === "shop" || kind === "none" ? { kind }
+  // Mark price / shop limit are kept for every shard building (Admin → Islands); which
+  // buildings are in the shops is site_config island_shops. An old `marks` flag stays
+  // (it is the Mark shop default until island_shops is saved).
+  const old = (siteConfig("island_sources", {}) || {})[name] || {};
+  const legacyMk = !Array.isArray(islShopsCfg().mark) && !!(old.marks || old.kind === "marks");
+  const e = !src ? null : kind === "shop" ? { kind, ...(legacyMk ? { marks: true } : {}), ...(Number(src.ownPrice) > 0 ? { markPrice: Math.round(Number(src.ownPrice)) } : {}), ...(Number(src.markLimit) > 0 && Math.round(Number(src.markLimit)) !== ISL_MARK_LIMIT ? { markLimit: Math.round(Number(src.markLimit)) } : {}) }
+    : kind === "none" ? { kind }
     : { kind, every: Number(src.every) > 0 ? Number(src.every) : 30, choices: islChoices(src.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES) };
   if (e && each) e.each = each;
   // Event dates: from a Packs-page pack or the owner's own next date.
@@ -23321,10 +23359,87 @@ async function islSaveSource(name, src, mythic = true) {
     else if (src.dates === "own") { e.dates = "own"; e.next = packValidDay(src.next) || packDayKey(packStartOfToday()); delete e.every; }
   }
   if (e && kind === "shop" && price) e.price = price;
-  const plain = e && ((kind === "shop" && !each && !price && !e.marks) || kind === "none");
+  const plain = e && ((kind === "shop" && !each && !price && !e.marks && !e.markPrice && !e.markLimit) || kind === "none");
   if (!e || plain) delete cur[name];
   else cur[name] = e;
   if (JSON.stringify(cur) !== JSON.stringify(siteConfig("island_sources", {}) || {})) await saveSiteConfig("island_sources", cur);
+}
+// Island shops (owner, 9 Nov 2026): the Mark of Revival shop and the Shining City shop each
+// sell copies of some Mythic shard buildings. site_config island_shops =
+// { mark: [names], shining: [names], allow: { mark, shining }, shiningEv: { dates: "cal" | "pack", ev, pack } }
+// = the owner's default for everyone (`allow`: which buildings the Shops grid offers, missing =
+// every pickable one). Each person can keep their own lists in calc_state island_shards.shops
+// (kept when the owner changes the default); no own list = the default. Missing mark default =
+// the buildings with the old "Also in the Mark of Revival shop" switch on in island_sources.
+const ISL_SHOPS = ["mark", "shining"];
+const ISL_SHOP_ICON = { mark: "icons/mark-of-revival.png", shining: "icons/glorious-tome.png" };
+function islShopsCfg() { const c = typeof siteConfig === "function" ? siteConfig("island_shops", null) : null; return c && typeof c === "object" ? c : {}; }
+// Never in a shop: event / ranked buildings, Lighthouse, the Islands Guide, Tree of Life, non-Mythic.
+function islShopPickable(s) {
+  if (!s || !islIsMythic(s) || ISL_SKIP_CATS.includes(s.category) || ISL_SKIP_NAMES.includes(s.name) || s.category === ISL_SHOP_CAT) return false;
+  const v = ((typeof siteConfig === "function" ? siteConfig("island_sources", {}) : {}) || {})[s.name] || {};
+  return v.kind !== "event" && v.kind !== "ranked";
+}
+function islShopDefault(k) {
+  const c = islShopsCfg();
+  if (Array.isArray(c[k])) return c[k].slice();
+  if (k === "mark") return Object.entries((typeof siteConfig === "function" ? siteConfig("island_sources", {}) : {}) || {}).filter(([, v]) => v && (v.marks || v.kind === "marks")).map(([n]) => n);
+  return [];
+}
+function islShopAllow(k) { const a = (islShopsCfg().allow || {})[k]; return Array.isArray(a) ? a : null; }
+function islShopOwn(k) { const o = ISL_SHARDS && ISL_SHARDS.shops; return o && Array.isArray(o[k]) ? o[k] : null; }
+function islShopList(k) { const own = islShopOwn(k), list = own || islShopDefault(k), al = islShopAllow(k); return al ? list.filter((n) => al.includes(n)) : list; }
+function islInShop(name, k) { return islShopList(k).includes(name); }
+// Shining City Pack event starts (every month, `shiningDays` long): the person's own date for
+// their state first, else the owner's calendar event / pack. { known, starts: [Date] (running
+// one first), src: "own" | "cal" | "pack", name }. Nothing known = { known: false } (never made up).
+function islShiningStarts(n = 40) {
+  const today = packStartOfToday(), dur = Math.max(1, Number(ISL_RULES.shiningDays) || 5), DAY = 86400000;
+  const own = ISL_SHARDS && packValidDay(ISL_SHARDS.shiningDate);
+  const monthly = (a) => {
+    const out = [];
+    for (let m = -2; out.length < n && m < n + 24; m++) {
+      const y = a.getUTCFullYear(), mo = a.getUTCMonth() + m, last = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+      const d = new Date(Date.UTC(y, mo, Math.min(a.getUTCDate(), last)));
+      if (d.getTime() + (dur - 1) * DAY >= today.getTime()) out.push(d);
+    }
+    return out;
+  };
+  if (own) return { known: true, starts: monthly(packParseDay(own)), src: "own" };
+  const c = islShopsCfg().shiningEv || {};
+  if (c.dates === "cal") {
+    const g = islFindEvent(c.ev);
+    if (g && packParseDay(gameEventAnchor(g))) return { known: true, starts: gameEventStarts(g, today, new Date(today.getTime() + (g.every * n + 7) * DAY)).slice(0, n), src: "cal", name: g.name };
+  }
+  if (c.dates === "pack" && c.pack && ISL_PACK_TABLES && ISL_PACK_TABLES.some((tb) => String(tb.id) === String(c.pack))) {
+    const l = packLinkFor(c.pack), tb = ISL_PACK_TABLES.find((x) => String(x.id) === String(c.pack));
+    if (l.reset === 30 && packParseDay(l.resetDay)) return { known: true, starts: monthly(packParseDay(l.resetDay)), src: "pack", name: String(tb.title || "") };
+    const offs = typeof l.reset === "number" ? packResetOffsets(l.reset, l.resetDay, 800, l.window || dur) : [];
+    if (offs.length) return { known: true, starts: offs.slice(0, n).map((o) => islDay(o)), src: "pack", name: String(tb.title || "") };
+  }
+  return { known: false, starts: [], src: "" };
+}
+// Cheapest store price of one Mark of Revival / one Glorious Tome in the packs used for
+// Islands ({ mark, tome }, null = no pack sells it), to pick the cheaper shop per copy.
+let ISL_UNIT = null, ISL_UNIT_LOADING = null;
+function islUnitPrices() {
+  if (ISL_UNIT && ISL_UNIT._t === PACK_TABLES_CACHE && ISL_UNIT._c === DISPLAY_CURRENCY) return Promise.resolve(ISL_UNIT);
+  if (!ISL_UNIT_LOADING) {
+    ISL_UNIT_LOADING = ensurePackTables().then((tables) => {
+      const best = { mark: null, tome: null }, items = { mark: "Mark of Revival", tome: "Glorious Tome" };
+      (tables || []).filter((tb) => packTableServesPage(tb, "islands")).forEach((tb) => {
+        const link = packLinkFor(tb.id);
+        packOffersFor(tb).forEach((o) => {
+          const p = packConvert(o.price, link.currency).n;
+          Object.entries(items).forEach(([k, n]) => { const q = Number(o.gives[n]) || 0; if (q > 0 && p > 0 && (best[k] == null || p / q < best[k])) best[k] = p / q; });
+        });
+      });
+      best._t = tables; best._c = DISPLAY_CURRENCY;
+      ISL_UNIT = best;
+      return best;
+    }).catch(() => ({ mark: null, tome: null })).finally(() => { ISL_UNIT_LOADING = null; });
+  }
+  return ISL_UNIT_LOADING;
 }
 // Dated packs on the Packs page (event leaders first), loaded only when needed:
 // [{ id, name }]. ISL_PACK_TABLES = the pack_tables rows (packLinkFor needs the links).
@@ -23453,6 +23568,8 @@ async function renderIslandGallery() {
   ]);
   if (seq !== RENDER_SEQ) return;
   let islBp = islBp0;
+  // Glorious Tomes in the Backpack + Lucky Glorious Tome Chests at their average (owner: counted).
+  const tomeHave = () => { const b = islBp || {}; return (Number(b["Glorious Tome"]) || 0) + (Number(b["Lucky Glorious Tome Chest"]) || 0) * (Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 0); };
   ISL_SHARDS = { ...islDefault(), ...(islSaved && typeof islSaved === "object" ? islSaved : {}) };
   // The Budgets target date: Mark shop buildings use free shards first and Marks only for
   // the copies the shards can't bring by that date.
@@ -23462,7 +23579,7 @@ async function renderIslandGallery() {
   const islTgt = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? "" : BUDGET_TARGET);
   // Event dates from a Packs-page pack: the pack list loads in the background
   // (always for the owner, who picks packs), then the page redraws with the dates.
-  if (!ISL_PACKS && (IS_OWNER || Object.values(siteConfig("island_sources", {}) || {}).some((v) => v && v.dates === "pack" && v.pack))) {
+  if (!ISL_PACKS && (IS_OWNER || (islShopsCfg().shiningEv || {}).dates === "pack" || Object.values(siteConfig("island_sources", {}) || {}).some((v) => v && v.dates === "pack" && v.pack))) {
     islLoadPacks().then(() => { if (seq === RENDER_SEQ && document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender()); });
   }
   if (!ISL_SHARDS.targets || typeof ISL_SHARDS.targets !== "object") ISL_SHARDS.targets = {};
@@ -23512,9 +23629,9 @@ async function renderIslandGallery() {
   if (seq !== RENDER_SEQ) return;
   galToastHide();
   content.innerHTML = `
-    <div class="page-head sg-head">
+    <div class="page-head sg-head isl-head">
       <div>
-        <h2>${esc(t("islandgallery_title"))}</h2>
+        <h2>${esc(t("islandgallery_title"))}</h2><button type="button" class="cg-bpbtn isl-shopsb" data-islshops>&#9881; ${esc(t("isl_shops_btn"))} &#8250;</button>
         <p class="desc">${esc(t("isl_desc"))}</p>
         <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
       </div>
@@ -23576,10 +23693,13 @@ async function renderIslandGallery() {
   const usesEssence = (s) => tracked(s) && srcOf(s).kind === "shop" && srcOf(s).price > 0;
   const usesShards = (s) => tracked(s) && srcOf(s).kind === "shop" && !srcOf(s).price;
   // Also in the Mark of Revival shop (an extra way to buy copies; free shards first).
-  const usesMarks = (s) => usesShards(s) && !!srcOf(s).marks;
-  // A coin on the picture of buildings also sold in the Mark of Revival shop.
+  const usesMarks = (s) => usesShards(s) && islShopPickable(s) && !!srcOf(s).marks;
+  // Also in the Shining City shop (Glorious Tomes, monthly Shining City Pack event).
+  const usesTomes = (s) => usesShards(s) && islShopPickable(s) && !!srcOf(s).shining;
+  // A coin / tome on the picture of buildings sold in the Mark of Revival / Shining City shop.
   const MK_COIN = '<img src="icons/mark-of-revival.png" alt="" aria-hidden="true">';
-  const coinHtml = (s) => (tracked(s) && usesMarks(s) ? `<span class="isl-mkc" title="${esc(t("isl_mk_also"))}">${MK_COIN}</span>` : "");
+  const TM_ICON = '<img src="icons/glorious-tome.png" alt="" aria-hidden="true">';
+  const coinHtml = (s) => (!tracked(s) ? "" : (usesMarks(s) ? `<span class="isl-mkc" title="${esc(t("isl_mk_chip"))}">${MK_COIN}</span>` : "") + (usesTomes(s) ? `<span class="isl-mkc tm${usesMarks(s) ? " two" : ""}" title="${esc(t("isl_sc_chip"))}">${TM_ICON}</span>` : ""));
   // Storehouse: spare Lv 1 copies the person already has, 1 copy each toward that building.
   const hasPlan = (s) => tracked(s) && srcOf(s).kind !== "none";
   const storeOf = (s) => Math.max(0, Math.floor(Number((ISL_SHARDS.store || {})[s.id]) || 0));
@@ -23598,7 +23718,7 @@ async function renderIslandGallery() {
   const sharedPlan = () => {
     const tg = islTgt(), tDay = tg ? packParseDay(packValidDay(tg)) : null;
     const days = tDay ? Math.max(0, Math.round((tDay - packStartOfToday()) / 86400000)) : null;
-    const sig = `${days}|${JSON.stringify(ISL_SHARDS)}|${JSON.stringify(siteConfig("island_sources", {}) || {})}|${islands.map((x) => `${x.id}:${lvOf(x)}:${x.owned ? 1 : 0}`).join(",")}`;
+    const sig = `${days}|${JSON.stringify(ISL_SHARDS)}|${JSON.stringify(siteConfig("island_sources", {}) || {})}|${JSON.stringify(islShopsCfg())}|${tomeHave()}|${ISL_UNIT ? `${ISL_UNIT.mark}/${ISL_UNIT.tome}` : ""}|${(islShiningStarts(2).starts[0] || "").toString()}|${islands.map((x) => `${x.id}:${lvOf(x)}:${x.owned ? 1 : 0}`).join(",")}`;
     if (sig === spSig && SP) return SP;
     spSig = sig;
     const pc = perCopy(), eps = ePS(), rate = islShardsDay(ISL_SHARDS), have = islHave(ISL_SHARDS);
@@ -23616,40 +23736,67 @@ async function renderIslandGallery() {
       cum += left * per;
       fin.set(x.id, finDay(cum));
     });
-    // 2) Mark of Revival shop buildings: free shards that are left, then Marks.
-    all.filter(usesMarks).forEach((x) => {
+    // 2) Shop buildings (Mark of Revival / Shining City): free shards that are left, then the
+    // cheaper shop per copy (store price of a Mark / a Tome from the Islands packs), each up to
+    // its limit: Marks = the shop's total limit, Tomes = `tomeMax` copies an event that starts
+    // by the target date (no known event date = none).
+    const unit = ISL_UNIT || {}, tp = Number(ISL_RULES.tomePrice) || 600, tMax = Number(ISL_RULES.tomeMax) || 3;
+    const sc = tDay ? islShiningStarts() : { known: false, starts: [] };
+    const nEv = sc.known ? sc.starts.filter((d) => d <= tDay).length : 0;
+    const cost = (k, x) => (k === "mk" ? srcOf(x).markPrice * (unit.mark != null ? unit.mark : Infinity) : tp * (unit.tome != null ? unit.tome : Infinity));
+    const tm = new Map();
+    let evUsed = 0;
+    all.filter((x) => usesMarks(x) || usesTomes(x)).forEach((x) => {
       const left = copiesLeft(x);
       if (!left) return;
       const room = Math.max(0, pot - cum), free = days == null ? left : pc > 0 ? Math.min(left, Math.floor(room / pc + 1e-9)) : left;
-      const m = Math.min(left - free, srcOf(x).markLimit), over = left - free - m;
-      if (m > 0) mk.set(x.id, m);
-      cant += over;
-      cum += (free + over) * pc;
-      fin.set(x.id, free + over ? finDay(cum) : 0);
+      let rest = left - free;
+      const opts = [];
+      if (usesMarks(x)) opts.push(["mk", srcOf(x).markLimit]);
+      if (usesTomes(x)) opts.push(["tm", nEv * tMax]);
+      opts.sort((a, b) => { const ca = cost(a[0], x), cb = cost(b[0], x); return ca === cb ? (a[0] === "mk" ? -1 : 1) : ca - cb; });
+      opts.forEach(([k, cap]) => { const n = Math.max(0, Math.min(rest, cap)); if (n > 0) (k === "mk" ? mk : tm).set(x.id, n); rest -= n; });
+      if (tm.get(x.id)) evUsed = Math.max(evUsed, Math.ceil(tm.get(x.id) / tMax));
+      cant += rest;
+      cum += (free + rest) * pc;
+      fin.set(x.id, free + rest ? finDay(cum) : 0);
     });
     const marks = [...mk].reduce((a, [id, n]) => { const x = all.find((y) => String(y.id) === String(id)); return a + n * (x ? srcOf(x).markPrice : 0); }, 0);
     const mkCopiesAll = [...mk.values()].reduce((a, n) => a + n, 0);
-    SP = { days, tDay, pot, need: cum, fin, mk, marks, mkCopiesAll, cant, done: finDay(cum), cantDone: finDay(cum) };
+    // Tomes: +tomeFreeDay free on each event day a pack is bought (counted only for the events
+    // the plan buys Tomes in, and only when the Backpack doesn't already cover them).
+    const tmCopiesAll = [...tm.values()].reduce((a, n) => a + n, 0), tomesGross = tmCopiesAll * tp;
+    const tomeFree = Math.min(Math.max(0, tomesGross - tomeHave()), evUsed * (Number(ISL_RULES.shiningDays) || 5) * (Number(ISL_RULES.tomeFreeDay) || 0));
+    const tomes = Math.max(0, tomesGross - tomeFree);
+    SP = { days, tDay, pot, need: cum, fin, mk, marks, mkCopiesAll, tm, tmCopiesAll, tomes, tomeFree, evUsed, nEv, sc, cant, done: finDay(cum), cantDone: finDay(cum) };
     return SP;
   };
   const mkAlloc = () => sharedPlan().mk;
   const mkCopies = (s) => (usesMarks(s) ? mkAlloc().get(s.id) || 0 : 0);
   const marksOf = (s) => mkCopies(s) * (usesMarks(s) ? srcOf(s).markPrice : 0);
+  const tmCopies = (s) => (usesTomes(s) ? sharedPlan().tm.get(s.id) || 0 : 0);
+  const tomesOf = (s) => tmCopies(s) * (Number(ISL_RULES.tomePrice) || 600);
   // No target: what buying the copies with Marks would take (optional, faster).
   const mkOptCopies = (s) => (usesMarks(s) && !islTgt() ? Math.min(copiesLeft(s), srcOf(s).markLimit) : 0);
   const marksOpt = (s) => mkOptCopies(s) * (usesMarks(s) ? srcOf(s).markPrice : 0);
-  const needOf = (s) => (usesShards(s) ? Math.max(0, copiesLeft(s) - mkCopies(s)) * perCopy() : 0);
+  const needOf = (s) => (usesShards(s) ? Math.max(0, copiesLeft(s) - mkCopies(s) - tmCopies(s)) * perCopy() : 0);
   // Pop-up line under the shards: the copies Marks pay for (after the free shards), or with
   // no Budgets target the optional, faster way.
-  const mkLine = (s) => {
-    if (!usesMarks(s)) return "";
-    const src = srcOf(s), mk = mkCopies(s), opt = mkOptCopies(s), n = mk || opt;
+  const tmLine = (s) => {
+    const n = tmCopies(s);
     if (!n) return "";
+    const lead = n === copiesLeft(s) && !mkCopies(s) ? " &rarr; " : ` + ${esc(t("isl_nb_copies").replace("{n}", n))} &rarr; `;
+    return `${lead}<b class="mk">${esc(t("isl_tm_after").replace("{m}", tomesOf(s).toLocaleString()))}</b>`;
+  };
+  const mkLine = (s) => {
+    if (!usesMarks(s)) return tmLine(s);
+    const src = srcOf(s), mk = mkCopies(s), opt = mkOptCopies(s), n = mk || opt;
+    if (!n) return tmLine(s);
     const amt = n * src.markPrice;
     const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
     const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : mk ? ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; ` : " &middot; ";
     const optBtn = !mk && opt ? ` <button type="button" class="isl-mkb" data-islmkoptopen>&asymp; <span data-islmkopt>${ISL_MK_OPT && ISL_MK_OPT.id === String(s.id) && ISL_MK_OPT.price ? esc(ISL_MK_OPT.price) : "&hellip;"}</span> &#8250;</button>` : "";
-    return `${lead}<b class="mk">${esc(txt)}</b>${optBtn}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
+    return `${lead}<b class="mk">${esc(txt)}</b>${tmLine(s)}${optBtn}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
@@ -23679,7 +23826,7 @@ async function renderIslandGallery() {
     const st = storeOf(s) ? `<span class="nw">&#128230;${storeOf(s)} &middot;</span> ` : "";
     const tail = d ? ` &middot; ${esc(finLabel(d))}` : "";
     const line = kind === "none" ? ""
-      : usesMarks(s) && marksOf(s) ? `<span class="isl-tsh mk two">${needOf(s) ? `<span class="nw">${st}${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail} +</span>` : st}<span class="nw"> <img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(marksOf(s) >= 10000 ? islK(marksOf(s)) : marksOf(s).toLocaleString())}</span></span>`
+      : marksOf(s) || tomesOf(s) ? `<span class="isl-tsh mk two">${needOf(s) ? `<span class="nw">${st}${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail} +</span>` : st}${[marksOf(s) ? `<span class="nw"> <img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(marksOf(s) >= 10000 ? islK(marksOf(s)) : marksOf(s).toLocaleString())}</span>` : "", tomesOf(s) ? `<span class="nw"> <img class="isl-mki" src="icons/glorious-tome.png" alt="" /> ${bidiNum(tomesOf(s) >= 10000 ? islK(tomesOf(s)) : tomesOf(s).toLocaleString())}</span>` : ""].filter(Boolean).join(" +")}</span>`
       : usesEssence(s) ? `<span class="isl-tsh ess${st ? " two" : ""}">${st}<span class="nw">${bidiNum(shortAmount(essOf(s)))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${tail}</span></span>`
       : kind === "shop" ? `<span class="isl-tsh${st ? " two" : ""}">${st}<span class="nw">${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail}</span></span>`
       : `<span class="isl-tsh tag${st ? " two" : ""}">${st}${esc(t(kind === "event" ? "isl_tag_ev" : "isl_tag_rk").replace("{t}", evShort(evPlan(s).days)))}</span>`;
@@ -23714,7 +23861,7 @@ async function renderIslandGallery() {
     if (P.days == null) return `<div class="isl-done">${P.done == null ? esc(t("isl_box_noinc")) : `${esc(t("isl_rs_done_c"))} <b>~${day(P.done)}</b> &middot; ${esc(t("isl_box_weeks").replace("{n}", Math.max(1, Math.ceil(P.done / 7))))}`}</div>`;
     const by = esc(islDateShort(P.tDay));
     const lines = [];
-    if (P.marks > 0) lines.push(`<div class="isl-done am">${esc(t("isl_rs_by").replace("{d}", by))}: <b>${bidiNum((P.mkCopiesAll * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; <b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
+    if (P.marks > 0 || P.tomes > 0) lines.push(`<div class="isl-done am">${esc(t("isl_rs_by").replace("{d}", by))}: <b>${bidiNum(((P.mkCopiesAll + P.tmCopiesAll) * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; ${[P.marks > 0 ? `<b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))}` : "", P.tomes > 0 ? `<b>${bidiNum(P.tomes.toLocaleString())}</b> ${esc(t("isl_tm_name"))}` : ""].filter(Boolean).join(" + ")} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
     if (P.cant > 0) lines.push(`<div class="isl-done bad">${esc(t("isl_rs_cant").replace("{n}", P.cant).replace("{d}", by))} &middot; ${esc(t("isl_rs_done"))} ~${P.done == null ? "?" : day(P.done)}</div>`);
     if (!lines.length) lines.push(`<div class="isl-done ok">&#10003; ${esc(t("isl_rs_by").replace("{d}", by))}: ${esc(t("isl_rs_all"))}</div>`);
     return lines.join("");
@@ -23745,7 +23892,10 @@ async function renderIslandGallery() {
     const mk = list.reduce((a, s) => a + marksOf(s), 0);
     // Always three slots so the card keeps one height on every category (faded "—" when not needed).
     tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk, Math.max(0, mk - markHave())));
-    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal();
+    // Glorious Tomes (Shining City shop): what the Backpack holds counts its Lucky Glorious Tome Chests at their average.
+    const tmN = sharedPlan().tomes || 0;
+    tiles.push(tile("tomes", "icons/glorious-tome.png", t("isl_tm_name"), tomeHave(), Math.max(0, tmN), Math.max(0, tmN - tomeHave())));
+    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0);
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
@@ -23765,6 +23915,11 @@ async function renderIslandGallery() {
       const hv = e.target.closest("[data-islhave]");
       if (hv) {
         const k = hv.dataset.islhave;
+        if (k === "tomes") {
+          const nd = sharedPlan().tomes || 0, cur = Number((islBp || {})["Glorious Tome"]) || 0;
+          plxAmountModal({ label: t("isl_tm_name"), icon: "icons/glorious-tome.png", value: cur, needBox: nd > 0 ? { need: nd, have: tomeHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), "Glorious Tome": Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); spSig = null; keepPlace(() => computeAndRender()); }); } });
+          return;
+        }
         if (k === "marks") {
           const nd = planList().reduce((a, s) => a + marksOf(s), 0);
           plxAmountModal({ label: t("isl_mk_name"), icon: "icons/mark-of-revival.png", value: markHave(), needBox: nd > 0 ? { need: nd, have: markHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), "Mark of Revival": Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); drawPlan(); }); } });
@@ -23789,12 +23944,108 @@ async function renderIslandGallery() {
     };
   }
 
+  // ⚙ Shops: which buildings each shop (Mark of Revival / Shining City) sells. Everyone keeps
+  // their own list (calc_state island_shards.shops); the owner also sets the default for everyone
+  // (site_config island_shops). Shining City also has the next event date (own date for the
+  // person's state, else the owner's calendar link).
+  function openShops(k0) {
+    let k = ISL_SHOPS.includes(k0) ? k0 : "mark";
+    let m = document.getElementById("islShopsSheet");
+    if (!m) { m = document.createElement("div"); m.id = "islShopsSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
+    const cands = () => { const al = islShopAllow(k); return islands.filter((x) => islShopPickable(x) && (!al || al.includes(x.name))); };
+    let mode = "own", draft = null, editDate = false, dirty = false;
+    const start = () => {
+      mode = IS_OWNER && !islShopOwn(k) ? "def" : "own";
+      draft = new Set(mode === "def" ? islShopDefault(k) : islShopList(k));
+      editDate = false; dirty = false;
+    };
+    const drawSheet = () => {
+      const list = cands(), n = list.filter((x) => draft.has(x.name)).length;
+      const whose = mode === "def" ? t("isl_shops_def_all") : islShopOwn(k) ? t("isl_shops_yours") : t("isl_shops_def");
+      let dateRow = "";
+      if (k === "shining") {
+        const sc = islShiningStarts(2), own = packValidDay(ISL_SHARDS.shiningDate);
+        const cfgEv = islShopsCfg().shiningEv || {};
+        const nx = sc.known && sc.starts[0] ? esc(islDateShort(sc.starts[0])) : "&mdash;";
+        const from = !sc.known ? t(cfgEv.dates ? "isl_sc_pick_ev" : "isl_sc_no_date") : sc.src === "own" ? t("isl_sc_from_own") : t("isl_sc_from_cal").replace("{name}", sc.name || "");
+        dateRow = `<div class="isl-shdate"><div class="r"><span>${esc(t("isl_sc_next"))}<small>${esc(from)} &middot; ${esc(t("isl_every_mo"))} &middot; ${esc(t("isl_sc_days").replace("{n}", Number(ISL_RULES.shiningDays) || 5))}</small></span><b>${nx}</b></div>
+          <div class="isl-shdr">${own || editDate ? "" : `<button type="button" class="linklike" data-shdate>&#9998; ${esc(t("isl_sc_my_date"))}</button>`}${own ? `<button type="button" class="linklike" data-shdateclr>${esc(t("isl_sc_use_cal"))}</button>` : ""}</div>
+          ${editDate || own ? `<label class="isl-shdi"><span>${esc(t("isl_sc_start"))}</span><input type="date" class="keep-w" data-shdatein value="${esc(own || "")}" /></label>` : ""}
+          ${IS_OWNER && mode === "def" ? `<label class="isl-shdi"><span>${esc(t("isl_sc_cal_link"))}</span><select class="keep-w" data-shev><option value="">${esc(t("isl_dates_choose"))}</option><optgroup label="${esc(t("isl_dates_events"))}">${GAME_EVENTS.map((g) => `<option value="ev:${esc(g.key)}"${cfgEv.dates === "cal" && islFindEvent(cfgEv.ev) === g ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</optgroup>${(ISL_PACKS || []).length ? `<optgroup label="${esc(t("isl_dates_packs"))}">${ISL_PACKS.map((x) => `<option value="${esc(x.id)}"${cfgEv.dates === "pack" && String(cfgEv.pack) === x.id ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</optgroup>` : ""}</select></label>` : ""}</div>`;
+      }
+      m.innerHTML = `<div class="modal-box adm-sheet gs-box isl-sh isl-shops" role="dialog" aria-modal="true" aria-label="${esc(t("isl_shops_title"))}"><div class="gs-head"><b style="flex:1;">&#9881; ${esc(t("isl_shops_title"))}</b>${closeXHtml("data-shx")}</div>
+        ${IS_OWNER ? `<div class="isl-seg isl-shmode"><button type="button" data-shmode="def" class="${mode === "def" ? "on" : ""}">${esc(t("isl_shops_mode_def"))}</button><button type="button" data-shmode="own" class="${mode === "own" ? "on" : ""}">${esc(t("isl_shops_mode_own"))}</button></div>` : ""}
+        <label class="isl-shk"><img src="${k === "shining" ? "icons/shining-city-pack.png" : ISL_SHOP_ICON.mark}" alt="" /><span>${esc(t("isl_shops_shop"))}</span><select class="keep-w" data-shk><option value="mark"${k === "mark" ? " selected" : ""}>${esc(t("isl_mk_name"))}</option><option value="shining"${k === "shining" ? " selected" : ""}>${esc(t("isl_sc_name"))}</option></select></label>
+        ${dateRow}
+        <div class="isl-shg">${list.length ? list.map((x) => `<button type="button" class="isl-sht${draft.has(x.name) ? " on" : ""}" data-shpick="${esc(x.name)}" aria-pressed="${draft.has(x.name)}" title="${esc(x.name)}">${x.image_url ? `<img src="${esc(x.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(x.name)}</span><span class="ck" aria-hidden="true">${draft.has(x.name) ? "&#10003;" : ""}</span></button>`).join("") : `<div class="isl-split">${esc(t("isl_shops_none"))}</div>`}</div>
+        <div class="isl-shn">${esc(t("isl_shops_n").replace("{n}", n))} &middot; ${esc(whose)}</div>
+        <div class="isl-shb"><button type="button" class="btn" data-shreset>${esc(t("isl_shops_reset"))}</button><button type="button" class="btn primary" data-shsave>${esc(t(mode === "def" ? "isl_shops_save_all" : "isl_shops_save"))}</button></div></div>`;
+    };
+    const close = () => { m.style.display = "none"; spSig = null; if (document.getElementById("islandSections")) keepPlace(() => computeAndRender()); };
+    const saveCfg = (patch) => saveSiteConfig("island_shops", { ...islShopsCfg(), ...patch });
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-shx]")) { close(); return; }
+      const pk = ev.target.closest("[data-shpick]");
+      if (pk) { const nm = pk.dataset.shpick; if (draft.has(nm)) draft.delete(nm); else draft.add(nm); dirty = true; drawSheet(); return; }
+      const md = ev.target.closest("[data-shmode]");
+      if (md && md.dataset.shmode !== mode) { mode = md.dataset.shmode; draft = new Set(mode === "def" ? islShopDefault(k) : islShopList(k)); dirty = false; drawSheet(); return; }
+      if (ev.target.closest("[data-shdate]")) { editDate = true; drawSheet(); const i = m.querySelector("[data-shdatein]"); if (i) i.focus(); return; }
+      if (ev.target.closest("[data-shdateclr]")) { delete ISL_SHARDS.shiningDate; islSave(); editDate = false; drawSheet(); return; }
+      if (ev.target.closest("[data-shreset]")) {
+        if (mode === "def") {
+          const c = { ...islShopsCfg() }; delete c[k];
+          saveSiteConfig("island_shops", c).then(() => { draft = new Set(islShopDefault(k)); dirty = false; drawSheet(); }).catch(() => toast("Couldn't save", true));
+        } else {
+          const sh = { ...(ISL_SHARDS.shops || {}) }; delete sh[k];
+          if (Object.keys(sh).length) ISL_SHARDS.shops = sh; else delete ISL_SHARDS.shops;
+          islSave(); budgetInvalidate();
+          draft = new Set(islShopList(k)); dirty = false; drawSheet();
+        }
+        return;
+      }
+      if (ev.target.closest("[data-shsave]")) {
+        // Kept in the page's own order; buildings outside the grid (not allowed now) stay as they were.
+        const kept = (mode === "def" ? islShopDefault(k) : islShopOwn(k) || islShopDefault(k)).filter((x) => !cands().some((c) => c.name === x));
+        const out = [...new Set([...cands().filter((x) => draft.has(x.name)).map((x) => x.name), ...kept])];
+        if (mode === "def") {
+          saveCfg({ [k]: out }).then(() => { toast(t("isl_shops_saved_all")); budgetInvalidate(); close(); }).catch(() => toast("Couldn't save", true));
+        } else {
+          ISL_SHARDS.shops = { ...(ISL_SHARDS.shops || {}), [k]: out };
+          islSave(); budgetInvalidate(); toast(t("isl_shops_saved")); close();
+        }
+      }
+    };
+    m.onchange = (ev) => {
+      const sk = ev.target.closest("[data-shk]");
+      if (sk) { k = sk.value; start(); if (k === "shining" && !ISL_PACKS && IS_OWNER) islLoadPacks().then(() => { if (m.style.display !== "none") drawSheet(); }); drawSheet(); return; }
+      const di = ev.target.closest("[data-shdatein]");
+      if (di) { const v = packValidDay(di.value); if (v) ISL_SHARDS.shiningDate = v; else delete ISL_SHARDS.shiningDate; islSave(); budgetInvalidate(); drawSheet(); return; }
+      const se = ev.target.closest("[data-shev]");
+      if (se && IS_OWNER) {
+        const v = se.value, e = !v ? null : v.startsWith("ev:") ? { dates: "cal", ev: v.slice(3) } : { dates: "pack", pack: v };
+        const c = { ...islShopsCfg() }; if (e) c.shiningEv = e; else delete c.shiningEv;
+        saveSiteConfig("island_shops", c).then(() => { budgetInvalidate(); drawSheet(); }).catch(() => toast("Couldn't save", true));
+      }
+    };
+    m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
+    start();
+    drawSheet();
+    m.style.display = "flex";
+    if (!ISL_PACKS && (IS_OWNER || (islShopsCfg().shiningEv || {}).dates === "pack")) islLoadPacks().then(() => { if (m.style.display !== "none") drawSheet(); });
+  }
+  {
+    const hb = content.querySelector("[data-islshops]");
+    if (hb) hb.onclick = () => { if (ISL_POP) ISL_POP.close(true); openShops("mark"); };
+  }
+
   // Mark of Revival for Budgets: every tracked category's Mark-shop buildings together (the
   // Budgets "Islands" page's need); what the Backpack holds counts as had.
   const markNeedAll = () => islands.filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
   // The Pack cost card: this category's Marks actually needed, else (no target) the optional amount.
   const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
+  const buyTotals = () => { const o = {}, mk = markSheetTotal(), tm = sharedPlan().tomes || 0; if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; return o; };
+  const buyOwned = () => ({ "Mark of Revival": markHave(), "Glorious Tome": tomeHave() });
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => {
     if (ISL_MK_OPT) {
@@ -23831,7 +24082,7 @@ async function renderIslandGallery() {
     opt.hidden = true; if (main) main.hidden = false;
     const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
     if (tt) tt.textContent = `$ ${t("pack_cost_title")}`;
-    if (wrap && !markSheetTotal()) wrap.hidden = true;
+    if (wrap && !markSheetTotal() && !(sharedPlan().tomes > 0)) wrap.hidden = true;
   }
   // The Pack cost window, like the planner pages: on phones it opens over the page from
   // the "$ <price> ›" button on the Backpack line; on PC the card sits under the stats card.
@@ -23857,7 +24108,7 @@ async function renderIslandGallery() {
   function islMarkCard() {
     const host = document.getElementById("islMkPacks");
     if (!host) return;
-    const total = markSheetTotal(), sig = `${total}|${markHave()}`;
+    const bt = buyTotals(), total = Object.values(bt).reduce((a, n) => a + n, 0), sig = `${JSON.stringify(bt)}|${markHave()}|${tomeHave()}`;
     const wrap = document.getElementById("islMkWrap");
     if (!total) { mkSig = sig; host.innerHTML = ""; if (!ISL_MK_OPT) { if (wrap) wrap.hidden = true; islPacksTo(false); packCostShown("islands", null); } return; }
     if (ISL_MK_OPT) { ISL_MK_OPT = null; islMkOptClose(); mkSig = null; }
@@ -23865,7 +24116,7 @@ async function renderIslandGallery() {
     if (sig === mkSig && host.innerHTML) return;
     mkSig = sig;
     PACK_COST_OPEN.islands = true;
-    renderPackCostBlock(host, "islands", [{ label: null, totals: { "Mark of Revival": total } }], { "Mark of Revival": markHave() });
+    renderPackCostBlock(host, "islands", [{ label: null, totals: bt }], buyOwned());
   }
 
 
@@ -23929,9 +24180,9 @@ async function renderIslandGallery() {
     pop.className = "sg-pop isl-pop";
     pop.setAttribute("role", "dialog");
     pop.setAttribute("aria-label", s.name);
-    pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h">${s.image_url ? `<img class="isl-pic" src="${esc(s.image_url)}" alt="" />` : ""}<b>${esc(s.name)}</b><span class="isl-chip" data-popchip hidden></span><span data-popbn></span></div>
+    pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h">${s.image_url ? `<img class="isl-pic" src="${esc(s.image_url)}" alt="" />` : ""}<b>${esc(s.name)}</b><span class="isl-chip" data-popchip hidden></span><span data-popbn></span></div><div class="isl-shc" data-popshops hidden></div>
       <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
-      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) && s.category === ISL_SHOP_CAT ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><label class="isl-mkck" data-ipmkcw hidden><span>${esc(t("isl_mk_also"))}</span><input type="checkbox" class="bset-sw" data-ipmkc /></label><div class="isl-mkset" data-ipmkw hidden><label><span>${esc(t("isl_mk_price"))}</span><input type="number" inputmode="numeric" min="1" step="1" data-ipmkp /></label><label><span>${esc(t("isl_mk_limit"))}</span><input type="number" inputmode="numeric" min="1" step="1" data-ipmkl /></label></div><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
+      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) && s.category === ISL_SHOP_CAT ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
         <div class="isl-dpk" data-ipdpk hidden><div class="isl-dl">${esc(t("isl_dates_pick"))}</div><select class="keep-w" data-ippack></select><div class="isl-dsm" data-ippacknote></div></div>
         <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
@@ -23945,10 +24196,13 @@ async function renderIslandGallery() {
       pop.querySelector("[data-popnum]").innerHTML = `${lv}<small> / ${mx}</small>`;
       // Event / ranked: a chip beside the name, and the bonus without its max so both fit.
       const kd = tracked(s) ? srcOf(s).kind : "none", chip = pop.querySelector("[data-popchip]");
-      const mkc = tracked(s) && usesMarks(s);
-      chip.hidden = kd !== "event" && kd !== "ranked" && !mkc;
-      chip.className = `isl-chip ${kd === "ranked" ? "rk" : mkc ? "mk" : "ev"}`;
-      chip.innerHTML = kd === "event" ? esc(t("isl_chip_ev")) : kd === "ranked" ? esc(t("isl_chip_rk")) : mkc ? `${MK_COIN}${esc(t("isl_mk_chip"))}` : "";
+      chip.hidden = kd !== "event" && kd !== "ranked";
+      chip.className = `isl-chip ${kd === "ranked" ? "rk" : "ev"}`;
+      chip.innerHTML = kd === "event" ? esc(t("isl_chip_ev")) : kd === "ranked" ? esc(t("isl_chip_rk")) : "";
+      // The shops this building is in: tap opens ⚙ Shops (everyone can change their own list).
+      const shc = pop.querySelector("[data-popshops]"), inMk = tracked(s) && usesMarks(s), inTm = tracked(s) && usesTomes(s);
+      shc.hidden = !inMk && !inTm;
+      shc.innerHTML = `${inMk ? `<button type="button" class="isl-chip mk" data-islshopchip="mark">${MK_COIN}${esc(t("isl_mk_chip"))} &#8250;</button>` : ""}${inTm ? `<button type="button" class="isl-chip mk tm" data-islshopchip="shining">${TM_ICON}${esc(t("isl_sc_chip"))} &#8250;</button>` : ""}`;
       pop.querySelector("[data-popbn]").textContent = chip.hidden ? bonusText(s, lv) : bonusAt(s, lv).map((b) => `+${galNum(b.val)}% ${galStatShort(b.type)}`).join(" · ");
       pop.querySelector('[data-ipstep="-1"]').disabled = lv <= 0;
       pop.querySelector('[data-ipset="0"]').disabled = lv <= 0;
@@ -23970,7 +24224,7 @@ async function renderIslandGallery() {
         const all = copiesOf(s), store = storeOf(s), left = copiesLeft(s);
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
         pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.known ? islEveryText(ev.nx.every, ev.nx.monthly) : t(ev.src.dates === "cal" ? "isl_pick_event" : "isl_no_dates")))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
-          : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess ? ` &middot; ${d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", need && mkCopies(s) ? left - mkCopies(s) : all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !mkCopies(s) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${need ? ` &middot; ${(() => { const d = bTime(s); return d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok")); })()}` : ""}` : ""}${mkLine(s)}</div>`;
+          : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess ? ` &middot; ${d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", need && (mkCopies(s) || tmCopies(s)) ? left - mkCopies(s) - tmCopies(s) : all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !(mkCopies(s) || tmCopies(s)) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${need ? ` &middot; ${(() => { const d = bTime(s); return d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok")); })()}` : ""}` : ""}${mkLine(s)}</div>`;
         if (!islTgt() && marksOpt(s)) islMkOptRender(s);
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
@@ -23982,18 +24236,6 @@ async function renderIslandGallery() {
           if (document.activeElement !== sel) sel.value = src.kind;
           pop.querySelectorAll("[data-ipsrcev]").forEach((w) => { w.hidden = src.kind !== "event" && src.kind !== "ranked"; });
           pop.querySelector("[data-ipsrceachw]").hidden = src.kind === "none";
-          const mkw = pop.querySelector("[data-ipmkw]");
-          if (mkw) {
-            const ckw = pop.querySelector("[data-ipmkcw]"), ck = pop.querySelector("[data-ipmkc]");
-            ckw.hidden = src.kind !== "shop" || !!src.price;
-            ck.checked = !!src.marks;
-            mkw.hidden = ckw.hidden || !src.marks;
-            const ml = pop.querySelector("[data-ipmkl]");
-            if (document.activeElement !== ml) ml.value = src.markLimit || ISL_MARK_LIMIT;
-            const mp = pop.querySelector("[data-ipmkp]");
-            mp.placeholder = String(Number(ISL_RULES.markPrice) || ISL_MARK_PRICE);
-            if (document.activeElement !== mp) mp.value = src.ownPrice || "";
-          }
           const grp = src.dates === "cal" ? "pack" : src.dates;
           pop.querySelectorAll("[data-ipdates]").forEach((b) => b.classList.toggle("on", b.dataset.ipdates === grp));
           pop.querySelector("[data-ipdpk]").hidden = grp !== "pack";
@@ -24090,6 +24332,8 @@ async function renderIslandGallery() {
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
       if (e.target.closest("[data-islmkopen]")) { islOpenPacks(); return; }
+      const shb = e.target.closest("[data-islshopchip]");
+      if (shb) { const k = shb.dataset.islshopchip; if (ISL_POP) ISL_POP.close(true); openShops(k); return; }
       if (e.target.closest("[data-islmkoptopen]")) { islMkOptOpen(); return; }
       const stb = e.target.closest("[data-ipst]");
       if (stb && !stb.disabled) {
@@ -24130,7 +24374,7 @@ async function renderIslandGallery() {
         return;
       }
       const sel = pop.querySelector("[data-ipsrc]");
-      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcch], [data-ipsrceach], [data-ipsrceachn], [data-ippack], [data-ipnext], [data-ipmkl], [data-ipmkc], [data-ipmkp]"))) return;
+      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcch], [data-ipsrceach], [data-ipsrceachn], [data-ippack], [data-ipnext]"))) return;
       // A new kind starts from its own defaults (event 1–5, ranked 1, every 30 days).
       const kindChanged = e.target === sel;
       const kind = sel.value, every = 30, choices = kindChanged ? null : pop.querySelector("[data-ipsrcch]").value;
@@ -24143,10 +24387,8 @@ async function renderIslandGallery() {
       if (!kindChanged && e.target.matches("[data-ippack]") && pv) {
         if (pv.startsWith("ev:")) { dates = "cal"; ev = pv.slice(3); } else { dates = "pack"; pack = pv; }
       }
-      const markLimit = Number(pop.querySelector("[data-ipmkl]").value) || cur.markLimit;
-      const ownPrice = Math.max(0, Math.round(Number(pop.querySelector("[data-ipmkp]").value) || 0)); // empty = the rule
-      const marks = kind === "shop" && !!pop.querySelector("[data-ipmkc]").checked;
-      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next, price: cur.price, marks, ownPrice, markLimit }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+      // Mark price / limit are set in Admin → Islands; kept as they are.
+      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next, price: cur.price, ownPrice: cur.ownPrice, markLimit: cur.markLimit }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
     });
     ISL_POP = {
       id: String(s.id), place,
@@ -24185,8 +24427,8 @@ async function renderIslandGallery() {
     }), ISLAND_FILTER.bonusType, onIslandCatSelect);
     drawPlan();
     // Budgets' Islands page: the Marks every Mark-shop building still needs (only saved when it changed).
-    const mkAll = markNeedAll();
-    recordBudgetNeeds("islands", [{ label: null, totals: mkAll ? { "Mark of Revival": mkAll } : {} }]);
+    const mkAll = markNeedAll(), tmAll = sharedPlan().tomes || 0;
+    recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}) } }]);
     islMarkCard();
     galMenuToTools("island", "islandCatSwitcher");
 
@@ -24237,6 +24479,12 @@ async function renderIslandGallery() {
   wireGalTools("island", ISLAND_FILTER, () => { if (ISL_POP) ISL_POP.close(true); computeAndRender(); });
   wirePlan();
   computeAndRender();
+  // With buildings in both shops the cheaper one per copy needs the packs' prices: loaded
+  // in the background, then the plan is worked out again.
+  if (islands.some((x) => usesTomes(x) && usesMarks(x))) {
+    const before = ISL_UNIT;
+    islUnitPrices().then((u) => { if (seq === RENDER_SEQ && u !== before && document.getElementById("islandSections") && !ISL_POP) { spSig = null; keepPlace(() => computeAndRender()); } });
+  }
 }
 
 // VIP 9-12 tier selector + full ATTACK/DEFENSE/LETHALITY/HEALTH
@@ -29285,7 +29533,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=1fcf53ab45";
+      s.src = "admin.min.js?v=9fe1c0c10e";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -29508,7 +29756,7 @@ function gameRules() {
       get: () => ISL_TREE.slice(1).map((v, i) => ({ level: i + 1, perHour: v })),
       set: (rows) => ruleSetArray(ISL_TREE, [0, ...rows.map((r) => Number(r.perHour) || 0)]) },
     { key: "islShop", group: "islands", label: "Island shards shop & income", type: "fields", help: "Mythic Island Shards: shards per building copy, Life Essence for 10 shards, the shop's weekly limit (shards, and building copies per building — each building's price is set on the building); what the Tree of Life and the Timbermill hold (they stop making essence when full), the Timbermill's essence an hour per worker, wood for 1 Life Essence and ally help.",
-      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy")],
+      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy"), num("tomePrice", "Shining City: Glorious Tomes for 1 copy"), num("tomeMax", "Shining City: copies per building an event"), num("shiningDays", "Shining City Pack event: days"), num("tomeFreeDay", "Shining City: free tomes a day a pack is bought")],
       get: () => ({ ...ISL_RULES }), set: (v) => { Object.keys(ISL_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) ISL_RULES[k] = Number(v[k]); }); } },
     { key: "islCamp", group: "islands", label: "Lumber Camp by level", help: "Workers, wood a second per worker and load at each Lumber Camp level. The Timbermill is built when both camps are at the top level; its workers = both camps' workers.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "workers", label: "Workers", type: "num" }, { key: "wood", label: "Wood / s per worker", type: "num" }, { key: "load", label: "Load", type: "num" }],

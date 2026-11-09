@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "1fcf53ab45";
+window.ADMIN_BUILD = "9fe1c0c10e";
 
 // ============================================================
 // ADMIN PAGE
@@ -3164,10 +3164,9 @@ async function renderAdminSkinsCategory(body, category, kind) {
     ...(kind === "islands" && (!r.name || islIsMythic(r)) ? [
       { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Shop / shards (Mythic only)"], ["event", "Playable event"], ["ranked", "Ranked event"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
       { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
-      { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 5 (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
-      { key: "isl_src_mk", label: "Also in the Mark of Revival shop (shard buildings; free shards first)", type: "check", value: r.name ? !!islSource(r.name, islIsMythic(r)).marks : false },
-      { key: "isl_src_mkp", label: "Mark of Revival price (empty = rule, " + (Number(ISL_RULES.markPrice) || 250) + ")", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).ownPrice || null) : null, half: true },
-      { key: "isl_src_mkl", label: "Mark of Revival shop: limit (total)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).markLimit || null) : null, half: true },
+      { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 6 (e.g. 1,3,6)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
+      { key: "isl_src_mkp", label: "Mark of Revival shop: price in Marks (empty = rule, " + (Number(ISL_RULES.markPrice) || 250) + ")", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).ownPrice || null) : null, half: true },
+      { key: "isl_src_mkl", label: "Mark of Revival shop: limit (total, empty = " + ISL_MARK_LIMIT + ")", type: "num", value: r.name ? (Number(((siteConfig("island_sources", {}) || {})[r.name] || {}).markLimit) || null) : null, half: true },
     ] : []),
   ];
   // Splits the How to get fields off the row and saves them into island_sources
@@ -3745,6 +3744,39 @@ async function renderAdminHeroes(body) {
 }
 
 
+// Admin → Islands → Shops: per shop, the buildings the Islands page's ⚙ Shops grid offers
+// (site_config island_shops.allow = { mark: [names], shining: [names] }; missing = every
+// building that can be in a shop, `islShopPickable`). Buildings taken out also leave the
+// shop's lists (they are filtered when read, nothing else is changed).
+let ADMIN_ISL_SHOPS_OPEN = false, ADMIN_ISL_SHOP_K = "mark";
+async function renderAdminIslandShops(host, catNames) {
+  if (!host) return;
+  host.innerHTML = `<div class="muted" style="padding:8px 0;">Loading…</div>`;
+  const rows = await sb(`skins?user_id=eq.${USER_ID}&category=in.(${catNames.map((c) => encodeURIComponent(c)).join(",")})&select=id,name,category,image_url,max_level&order=sort_order.asc`);
+  const pick = rows.filter((r) => islShopPickable(r));
+  const draw = () => {
+    const k = ADMIN_ISL_SHOP_K, al = islShopAllow(k), on = new Set(al || pick.map((r) => r.name));
+    host.innerHTML = `<p class="muted" style="font-size:12.5px;margin:6px 0 10px;">Tick the buildings each shop can sell. Only these show in the Islands page's ⚙ Shops grid (for everyone). Never offered: event / ranked buildings, Lighthouse, Islands Guide, Tree of Life and buildings below Mythic.</p>
+      <div class="isl-seg" style="margin-bottom:10px;"><button type="button" data-aishk="mark" class="${k === "mark" ? "on" : ""}">Mark of Revival</button><button type="button" data-aishk="shining" class="${k === "shining" ? "on" : ""}">Shining City</button></div>
+      <div class="isl-shg">${pick.map((r) => `<button type="button" class="isl-sht${on.has(r.name) ? " on" : ""}" data-aishpick="${esc(r.name)}" aria-pressed="${on.has(r.name)}" title="${esc(r.name)} · ${esc(r.category)}">${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(r.name)}</span><span class="ck" aria-hidden="true">${on.has(r.name) ? "&#10003;" : ""}</span></button>`).join("")}</div>
+      <div class="isl-shn"><span data-aishn>${pick.filter((r) => on.has(r.name)).length}</span> of ${pick.length} can be picked${al ? "" : " · all (default)"}</div>
+      <div class="isl-shb"><button type="button" class="btn" data-aishall>Allow all</button><button type="button" class="btn primary" data-aishsave>Save</button></div>`;
+    host.onclick = async (e) => {
+      const kb = e.target.closest("[data-aishk]");
+      if (kb) { ADMIN_ISL_SHOP_K = kb.dataset.aishk; draw(); return; }
+      const pb = e.target.closest("[data-aishpick]");
+      if (pb) { const v = !pb.classList.contains("on"); pb.classList.toggle("on", v); pb.setAttribute("aria-pressed", String(v)); pb.querySelector(".ck").innerHTML = v ? "&#10003;" : ""; host.querySelector("[data-aishn]").textContent = host.querySelectorAll(".isl-sht.on").length; return; }
+      const all = e.target.closest("[data-aishall]"), sv = e.target.closest("[data-aishsave]");
+      if (!all && !sv) return;
+      const cfg = { ...islShopsCfg() }, allow = { ...(cfg.allow || {}) };
+      if (all) delete allow[k]; else allow[k] = [...host.querySelectorAll(".isl-sht.on")].map((b) => b.dataset.aishpick);
+      if (Object.keys(allow).length) cfg.allow = allow; else delete cfg.allow;
+      try { await saveSiteConfig("island_shops", cfg); toast("Saved"); draw(); } catch (err) { toast("Couldn't save", true); }
+    };
+  };
+  draw();
+}
+
 // ---- Skin Gallery editor (multi-category, uses renderAdminSkinsCategory per category) ----
 let ADMIN_ACTIVE_SKIN_CAT = null;
 let ADMIN_ACTIVE_ISLAND_CAT = null;
@@ -3754,9 +3786,13 @@ async function renderAdminIslands(body) {
   if (!ADMIN_ACTIVE_ISLAND_CAT || !catNames.includes(ADMIN_ACTIVE_ISLAND_CAT)) ADMIN_ACTIVE_ISLAND_CAT = catNames[0];
 
   body.innerHTML = `
+    <details class="panel adm-islshops" id="admIslShops"${ADMIN_ISL_SHOPS_OPEN ? " open" : ""}><summary><b>Shops: which buildings can be picked</b> <span class="muted" style="font-size:12px;">(Mark of Revival · Shining City)</span></summary><div id="admIslShopsBody"></div></details>
     ${adminCatHeaderHtml(cats, ADMIN_ACTIVE_ISLAND_CAT)}
     <div id="adminIslandsBody"></div>
   `;
+  const shopsEl = document.getElementById("admIslShops");
+  shopsEl.addEventListener("toggle", () => { ADMIN_ISL_SHOPS_OPEN = shopsEl.open; if (shopsEl.open) renderAdminIslandShops(document.getElementById("admIslShopsBody"), catNames); });
+  if (ADMIN_ISL_SHOPS_OPEN) renderAdminIslandShops(document.getElementById("admIslShopsBody"), catNames);
 
   body.querySelectorAll("[data-catselect]").forEach((btn) => {
     btn.addEventListener("click", () => {
