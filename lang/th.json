@@ -2431,7 +2431,7 @@
 "t:pkb_arrange_reset":"กลับเป็น A–Z",
 "t:pkb_arrange_hint":"กด ⋮⋮ ค้างแล้วลาก",
 "t:isl_target_all":"เป้าหมายทั้งหมด",
-"t:isl_pc_none":"$ — ไม่ต้องซื้อ",
+"t:isl_pc_none":"ไม่ต้องซื้อ",
 "t:isl_mixed":"ผสม",
 "t:isl_you_have":"คุณมี",
 "t:isl_tap_type":"(แตะเพื่อพิมพ์)",

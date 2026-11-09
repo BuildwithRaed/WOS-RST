@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 81; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 82; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -1827,7 +1827,7 @@ const T = {
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
   isl_target_all: { en: "Target all" },
-  isl_pc_none: { en: "$ \u2014 nothing to buy" },
+  isl_pc_none: { en: "Nothing to buy" },
   isl_mixed: { en: "Mixed" },
   isl_you_have: { en: "You have" },
   isl_tap_type: { en: "(tap to type)" },
@@ -16764,12 +16764,12 @@ document.addEventListener("toggle", (e) => { if (e.target.matches && e.target.ma
 // Planner pages: "⇄ Trades ›" and
 // "$ <price> ›" beside the Backpack title open the Trades / Pack cost card as a
 // window on phones (on PC the card stays in the side column).
-const plxPriceLabel = (calcKey) => `$ ${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
+const plxPriceLabel = (calcKey) => `${esc(PACK_COST_SHOWN[calcKey] || t("pack_cost_title"))} &#8250;`;
 let REFINE_CALC_OPEN = null; // set by the Pet Refine page: opens its advanced calculator
 document.addEventListener("click", (e) => { if (e.target.closest("[data-rfcalcbtn]") && TAB === "refinepage" && REFINE_CALC_OPEN) REFINE_CALC_OPEN(); });
 function plxBuyBtnsHtml(calcKey) {
   // Chief Gear: its own sheet buttons (data-cgsheet), under its 🎒 Backpack line like the other pages
-  if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>$ ${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
+  if (calcKey === "chief_gear") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-cgsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button>${visitorCan("packcost") ? `<button type="button" class="cg-bpbtn ice" data-cgsheet="packs" data-cgprice>${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;</button>` : ""}</span>`;
   // Pet Refine: the advanced calculator beside Pack cost, where Trades sits on other pages
   if (calcKey === "pets_refine") return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn rf-calcbtn" data-rfcalcbtn>&#9881; ${esc(t("rf_mk_calc"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
   return `<span class="cg-bpb plx-bpb"><button type="button" class="cg-bpbtn" data-plxsheet="trades">&#8644; ${esc(t("cg_trades"))} &#8250;</button><button type="button" class="cg-bpbtn ice" data-plxsheet="packs" data-plxprice="${esc(calcKey)}">${plxPriceLabel(calcKey)}</button></span>`;
@@ -16783,7 +16783,7 @@ document.addEventListener("click", (e) => {
     buy.classList.toggle("cg-open", !!which);
     buy.dataset.cgshow = which || "";
     const tt = buy.querySelector("[data-cgbuyt]");
-    if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `$ ${esc(t("pack_cost_title"))}`;
+    if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `${esc(t("pack_cost_title"))}`;
     if (bd) bd.hidden = !which;
     if (which) buy.scrollTop = 0;
   };
@@ -21866,7 +21866,7 @@ async function renderChiefGearCalc() {
   // The Pack cost button shows the price once the card has worked it out.
   PACK_COST_HOOKS.chief_gear = () => {
     const b = content.querySelector("[data-cgprice]");
-    if (b) b.innerHTML = `$ ${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;`;
+    if (b) b.innerHTML = `${esc(PACK_COST_SHOWN.chief_gear || t("pack_cost_title"))} &#8250;`;
   };
   PACK_COST_HOOKS.chief_gear();
   function renderPieces() {
@@ -21923,7 +21923,7 @@ async function renderChiefGearCalc() {
     buy.classList.toggle("cg-open", !!which);
     buy.dataset.cgshow = which || "";
     const tt = buy.querySelector("[data-cgbuyt]");
-    if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `$ ${esc(t("pack_cost_title"))}`;
+    if (tt) tt.innerHTML = which === "trades" ? `&#8644; ${esc(t("trade_title"))}` : `${esc(t("pack_cost_title"))}`;
     content.querySelector("[data-cgbd]").hidden = !which;
     if (which) buy.scrollTop = 0;
   };
@@ -23643,7 +23643,7 @@ async function renderIslandGallery() {
       <div id="islandTroopTotals"></div>
       <div id="islandShardPlan"></div>
     </div>
-    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>$ ${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div><div data-buybody id="islMkOpt" hidden></div></div><div class="cg-bd" data-islbd hidden></div></div>
+    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div><div data-buybody id="islMkOpt" hidden></div></div><div class="cg-bd" data-islbd hidden></div></div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
     <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
@@ -24077,7 +24077,7 @@ async function renderIslandGallery() {
     if (!wrap || !opt) return;
     wrap.hidden = false; opt.hidden = false; if (main) main.hidden = true;
     const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
-    if (tt) tt.textContent = `$ ${t("pack_cost_title")} \u00b7 ${t("isl_mk_optional")}`;
+    if (tt) tt.textContent = `${t("pack_cost_title")} \u00b7 ${t("isl_mk_optional")}`;
     islOpenPacks();
   }
   function islMkOptClose() {
@@ -24085,7 +24085,7 @@ async function renderIslandGallery() {
     if (!opt || opt.hidden) return;
     opt.hidden = true; if (main) main.hidden = false;
     const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
-    if (tt) tt.textContent = `$ ${t("pack_cost_title")}`;
+    if (tt) tt.textContent = `${t("pack_cost_title")}`;
     if (wrap && !markSheetTotal() && !(sharedPlan().tomes > 0)) wrap.hidden = true;
   }
   // The Pack cost window, like the planner pages: on phones it opens over the page from
