@@ -434,6 +434,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Undo a bought tick (owner, 9 Nov 2026):** on My Purchases' This week checklist the green ✓ of a bought line is now a button (`data-pura2un`, label `pur_a2_unmark` "Bought · tap to undo"): tapping it puts that line's purchases back to "will buy" (status planned, same as ↺ in the Bought list), so the line shows its empty circle again. `LANG_FILES_VERSION` 80 (this branch is stacked on the weekly-cards one).
 
+**Monthly packs counted once a month (owner, 9 Nov 2026: Intel Monthly Card showed "×2" on This week):** `packCurrentCycleStart` returned null for reset 30 (calendar months), so a pack bought / planned in the running month wasn't counted as that copy's buy (`usedNow` 0) and the plan suggested it again; the "will buy" and the plan's suggestion then merged into one "×2" line. Now reset 30 with an anchor gives the anchor's day of this month (or last month; day clamped to the month's length). Checked in the page: Intel Monthly Card (reset 30, Nov 1) planned today → usedNow 1 (was 0).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
