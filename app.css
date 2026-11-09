@@ -3523,7 +3523,13 @@ input,select,textarea{
   @media (min-width:901px){ .isl-bp .bs-tiles.isl-bst{ max-width:340px; } }
   .isl-g1[hidden]{ display:none; }
   .isl-g1{ margin-bottom:10px; }
-  .isl-done{ margin-top:8px; font-size:12.5px; line-height:18px; height:18px; overflow:hidden; color:var(--muted); }
+  div.isl-done{ margin-top:8px; font-size:12.5px; line-height:18px; min-height:18px; color:var(--muted); }
+  div.isl-done + div.isl-done{ margin-top:2px; }
+  div.isl-done.ok{ color:var(--good); }
+  div.isl-done.am{ color:var(--amber); }
+  div.isl-done.am b{ color:var(--amber); }
+  div.isl-done.bad{ color:var(--bad, #ef7a7a); }
+  div.isl-done .isl-mkb{ display:inline; margin:0; font-size:inherit; }
   .isl-tr{ gap:8px; }
   .isl-tr .isl-tl{ display:flex; align-items:center; gap:8px; min-width:0; flex:1 1 auto; font-size:13.5px; color:var(--frost); }
   .isl-tr .isl-tl > span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
