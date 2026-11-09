@@ -3531,7 +3531,6 @@ input,select,textarea{
   div.isl-done.am b{ color:var(--amber); }
   div.isl-done.bad{ color:var(--bad, #ef7a7a); }
   .isl-why div.isl-done:first-child{ margin-top:0; }
-  .isl-bp .cg-i.isl-iwarn{ color:var(--amber); border-color:var(--amber); }
   .isl-inc.isl-inc-m{ margin:4px 0 10px; text-align:start; }
   div.isl-done .isl-mkb{ display:inline; margin:0; font-size:inherit; }
   .isl-tr{ gap:8px; }

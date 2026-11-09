@@ -23904,12 +23904,9 @@ async function renderIslandGallery() {
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
       ${res}</div>`;
-    // The plan's details sit behind an (i) beside the Backpack title (amber when copies
-    // can't be reached by the date); the income is in the shard box's pop-up (owner, 9 Nov 2026).
+    // The plan's details sit behind an (i) beside the Backpack title; the income is in the shard box's pop-up (owner, 9 Nov 2026).
     const why = document.createElement("div"); why.className = "isl-why"; why.innerHTML = resultLine();
     infoAttach(host.querySelector(".isl-bp .bs-foot > span:first-child"), why);
-    const ib = host.querySelector(".isl-bp .bs-foot .cg-i");
-    if (ib && why.querySelector(".isl-done.bad, .isl-done.am")) ib.classList.add("isl-iwarn");
     bsSlideFit(host);
     islMarkCard();
   }
