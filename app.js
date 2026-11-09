@@ -1945,6 +1945,7 @@ const T = {
   isl_sc_days: { en: "{n} days" },
   isl_tm_name: { en: "Glorious Tome" },
   isl_tm_after: { en: "{m} Tomes by your target" },
+  isl_tm_or: { en: "or {m} Tomes" },
   all_categories: { en: "All categories" },
   tundra_album_title: { en: "Tundra Album" },
   of_max_prefix: { en: "of max" },
@@ -23225,7 +23226,8 @@ async function renderSkinGallery() {
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 // The open island level pop-up: { id, close(noRedraw), place() } or null.
 let ISL_POP = null;
-let ISL_MK_OPT = null; // { id, sig, price }: the optional Marks price of one building (no Budgets target)
+let ISL_MK_OPT = null; // { id, kind, sig, price }: the optional Marks / Tomes price of one building (no Budgets target)
+const ISL_OPT_PRICE = {}; // "<id>|mark" / "<id>|shining" → the last worked-out optional price
 document.addEventListener("pointerdown", (e) => {
   if (ISL_POP && e.target.closest && !e.target.closest(".sg-pop, [data-island]")) ISL_POP.close();
 }, true);
@@ -23763,12 +23765,17 @@ async function renderIslandGallery() {
   // No target: what buying the copies with Marks would take (optional, faster).
   const mkOptCopies = (s) => (usesMarks(s) && !islTgt() ? Math.min(copiesLeft(s), srcOf(s).markLimit) : 0);
   const marksOpt = (s) => mkOptCopies(s) * (usesMarks(s) ? srcOf(s).markPrice : 0);
+  // The same for Shining City: every copy left with Glorious Tomes (up to 3 a building each event).
+  const tmOptCopies = (s) => (usesTomes(s) && !islTgt() ? copiesLeft(s) : 0);
+  const tomesOpt = (s) => tmOptCopies(s) * (Number(ISL_RULES.tomePrice) || 600);
+  const optAmt = (s, k) => (k === "mark" ? marksOpt(s) : tomesOpt(s));
+  const optBtnHtml = (s, k) => { const p = ISL_OPT_PRICE[`${s.id}|${k}`]; return ` <button type="button" class="isl-mkb" data-islmkoptopen="${k}">&asymp; <span data-islmkopt="${s.id}|${k}">${p ? esc(p) : "&hellip;"}</span> &#8250;</button>`; };
   const needOf = (s) => (usesShards(s) ? Math.max(0, copiesLeft(s) - mkCopies(s) - tmCopies(s)) * perCopy() : 0);
   // Pop-up line under the shards: the copies Marks pay for (after the free shards), or with
   // no Budgets target the optional, faster way.
   const tmLine = (s) => {
     const n = tmCopies(s);
-    if (!n) return "";
+    if (!n) { const o = tomesOpt(s); return o ? ` &middot; <b class="mk">${esc(t("isl_tm_or").replace("{m}", o.toLocaleString()))}</b>${optBtnHtml(s, "shining")}` : ""; }
     const lead = n === copiesLeft(s) && !mkCopies(s) ? " &rarr; " : ` + ${esc(t("isl_nb_copies").replace("{n}", n))} &rarr; `;
     return `${lead}<b class="mk">${esc(t("isl_tm_after").replace("{m}", tomesOf(s).toLocaleString()))}</b>`;
   };
@@ -23779,8 +23786,8 @@ async function renderIslandGallery() {
     const amt = n * src.markPrice;
     const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
     const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : mk ? ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; ` : " &middot; ";
-    const optBtn = !mk && opt ? ` <button type="button" class="isl-mkb" data-islmkoptopen>&asymp; <span data-islmkopt>${ISL_MK_OPT && ISL_MK_OPT.id === String(s.id) && ISL_MK_OPT.price ? esc(ISL_MK_OPT.price) : "&hellip;"}</span> &#8250;</button>` : "";
-    return `${lead}<b class="mk">${esc(txt)}</b>${tmLine(s)}${optBtn}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
+    const optBtn = !mk && opt ? optBtnHtml(s, "mark") : "";
+    return `${lead}<b class="mk">${esc(txt)}</b>${optBtn}${tmLine(s)}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
@@ -23944,25 +23951,29 @@ async function renderIslandGallery() {
   PACK_COST_HOOKS.islands = () => {
     if (ISL_MK_OPT) {
       // The optional, per-building price (no Budgets target): only its own spans.
-      if (PACK_COST_SHOWN.islands) ISL_MK_OPT.price = PACK_COST_SHOWN.islands;
-      document.querySelectorAll(`[data-islmkopt]`).forEach((el) => { el.textContent = ISL_MK_OPT.price || "\u2026"; });
+      if (PACK_COST_SHOWN.islands) { ISL_MK_OPT.price = PACK_COST_SHOWN.islands; ISL_OPT_PRICE[`${ISL_MK_OPT.id}|${ISL_MK_OPT.kind}`] = ISL_MK_OPT.price; }
+      document.querySelectorAll(`[data-islmkopt="${ISL_MK_OPT.id}|${ISL_MK_OPT.kind}"]`).forEach((el) => { el.textContent = ISL_MK_OPT.price || "\u2026"; });
+      // Both shops: once the Marks price is in, work out the Tomes one too (one Pack cost at a time).
+      if (ISL_MK_OPT.price && ISL_MK_OPT.next) { const nx = ISL_MK_OPT.next; ISL_MK_OPT.next = null; setTimeout(() => islMkOptRender(nx.s, nx.k), 0); }
       return;
     }
     document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
   };
   // No Budgets target: price the optional Marks of one building alone (read only, nothing
   // goes to Budgets), in its own body of the Pack cost window.
-  function islMkOptRender(s) {
-    const n = marksOpt(s), host = document.getElementById("islMkOpt");
-    if (!host || !n) return;
-    const sig = `${s.id}|${n}|${markHave()}`;
-    if (ISL_MK_OPT && ISL_MK_OPT.sig === sig) return;
-    ISL_MK_OPT = { id: String(s.id), sig, price: "" };
+  function islMkOptRender(s, k, then) {
+    const n = optAmt(s, k), host = document.getElementById("islMkOpt");
+    if (!host || !n) { if (then) islMkOptRender(then.s, then.k); return; }
+    const item = k === "mark" ? "Mark of Revival" : "Glorious Tome", have = k === "mark" ? markHave() : tomeHave();
+    const sig = `${s.id}|${k}|${n}|${have}`;
+    if (ISL_MK_OPT && ISL_MK_OPT.sig === sig) { if (then && ISL_MK_OPT.price) islMkOptRender(then.s, then.k); return; }
+    ISL_MK_OPT = { id: String(s.id), kind: k, sig, price: "", next: then || null };
     packCostShown("islands", null);
     PACK_COST_OPEN.islands = true;
-    renderPackCostBlock(host, "islands", [{ label: null, totals: { "Mark of Revival": n } }], { "Mark of Revival": markHave() });
+    renderPackCostBlock(host, "islands", [{ label: null, totals: { [item]: n } }], { [item]: have });
   }
-  function islMkOptOpen() {
+  function islMkOptOpen(s, k) {
+    if (s && k && !(ISL_MK_OPT && ISL_MK_OPT.id === String(s.id) && ISL_MK_OPT.kind === k)) islMkOptRender(s, k);
     const wrap = document.getElementById("islMkWrap"), opt = document.getElementById("islMkOpt"), main = document.getElementById("islMkPacks");
     if (!wrap || !opt) return;
     wrap.hidden = false; opt.hidden = false; if (main) main.hidden = true;
@@ -24116,7 +24127,10 @@ async function renderIslandGallery() {
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
         pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.known ? islEveryText(ev.nx.every, ev.nx.monthly) : t(ev.src.dates === "cal" ? "isl_pick_event" : "isl_no_dates")))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
           : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess ? ` &middot; ${d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", need && (mkCopies(s) || tmCopies(s)) ? left - mkCopies(s) - tmCopies(s) : all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !(mkCopies(s) || tmCopies(s)) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${need ? ` &middot; ${(() => { const d = bTime(s); return d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok")); })()}` : ""}` : ""}${mkLine(s)}</div>`;
-        if (!islTgt() && marksOpt(s)) islMkOptRender(s);
+        if (!islTgt() && (marksOpt(s) || tomesOpt(s))) {
+          if (marksOpt(s) && tomesOpt(s)) islMkOptRender(s, "mark", { s, k: "shining" });
+          else islMkOptRender(s, marksOpt(s) ? "mark" : "shining");
+        }
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
           if (document.activeElement !== pi) pi.value = src.price || "";
@@ -24248,7 +24262,8 @@ async function renderIslandGallery() {
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
       if (e.target.closest("[data-islmkopen]")) { islOpenPacks(); return; }
-      if (e.target.closest("[data-islmkoptopen]")) { islMkOptOpen(); return; }
+      const ob = e.target.closest("[data-islmkoptopen]");
+      if (ob) { islMkOptOpen(s, ob.dataset.islmkoptopen || "mark"); return; }
       const stb = e.target.closest("[data-ipst]");
       if (stb && !stb.disabled) {
         ISL_SHARDS.store = { ...(ISL_SHARDS.store || {}), [s.id]: Math.max(0, storeOf(s) + Number(stb.dataset.ipst)) };
