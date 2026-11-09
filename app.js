@@ -3016,6 +3016,8 @@ const T = {
   pur_wc_desc: { en: "Type the reward days you still have on cards you already bought." },
   pur_wc_running: { en: "Running until {date} · next buy {next} · {more} more can stack" },
   pur_wc_idle: { en: "Not running · can buy today · {n} can stack" },
+  pur_wc_running_d: { en: "Running until {date} · next buy {next} · can stack {more} more days" },
+  pur_wc_idle_d: { en: "Not running · can buy today · stacks up to {n} days" },
   pur_wc_foot: { en: "Each card: {d} days · stacks up to {cap} days" },
   pk_dates_title: { en: "Pack dates" },
   pk_dates_desc: { en: "When each pack comes to your state. Change a date if your state gets it on another day." },
@@ -8470,8 +8472,8 @@ async function renderPurchasesPage() {
       const offer = packOffersFor(tb, true)[0], ic = offer ? mainIcon(rawOf({ row: offer.row }, tb)) : "";
       const run = l.activeDaysLeft > 0;
       const line = run
-        ? t("pur_wc_running").replace("{date}", wcFmt(l.activeUntil)).replace("{next}", wcFmt(new Date(l.activeUntil.getTime() + 86400000))).replace("{more}", Math.max(0, Math.floor((st.cap - l.activeDaysLeft) / st.days)))
-        : t("pur_wc_idle").replace("{n}", st.atOnce);
+        ? t("pur_wc_running_d").replace("{date}", wcFmt(l.activeUntil)).replace("{next}", wcFmt(new Date(l.activeUntil.getTime() + 86400000))).replace("{more}", Math.max(0, Math.floor((st.cap - l.activeDaysLeft) / st.days)) * st.days)
+        : t("pur_wc_idle_d").replace("{n}", st.atOnce * st.days);
       return `<div class="pur-wc-row">
         <span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(tb.title || "?").charAt(0))}</i>`}</span>
         <span class="pur-wc-t"><b>${esc(tb.title || "")}</b><small class="${run ? "on" : ""}">${esc(line)}</small></span>
