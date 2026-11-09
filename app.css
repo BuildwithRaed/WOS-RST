@@ -3411,6 +3411,7 @@ input,select,textarea{
   .isl-tsh i{ font-style:normal; }
   .isl-im{ height:1.15em; width:auto; vertical-align:-.2em; }
   .isl-ic .isl-im{ height:22px; vertical-align:0; }
+  @media (max-width:380px){ .isl-tsh .isl-im{ height:1em; } .isl-tsh{ letter-spacing:-.4px; } }
   .isl-tbg[hidden], .isl-tsh[hidden]{ display:none; }
   .isl-pl{ margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
   .isl-pl-h{ padding-top:8px; }
