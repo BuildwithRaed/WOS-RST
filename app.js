@@ -1938,15 +1938,12 @@ const T = {
   isl_shops_btn: { en: "Shops" },
   isl_shops_title: { en: "Shops" },
   isl_shops_shop: { en: "Shop" },
-  isl_shops_mode_def: { en: "Default for everyone" },
-  isl_shops_mode_own: { en: "My own" },
   isl_shops_n: { en: "{n} picked" },
-  isl_shops_def: { en: "owner's default" },
-  isl_shops_def_all: { en: "default for everyone" },
-  isl_shops_yours: { en: "your state" },
+  isl_shops_def: { en: "the site's picks: change them to match your state" },
+  isl_shops_def_owner: { en: "your picks: everyone starts with these (their own saved picks stay)" },
+  isl_shops_yours: { en: "your own picks" },
   isl_shops_reset: { en: "Reset to default" },
   isl_shops_save: { en: "Save" },
-  isl_shops_save_all: { en: "Save for everyone" },
   isl_shops_saved: { en: "Saved for your state" },
   isl_shops_saved_all: { en: "Saved for everyone" },
   isl_shops_none: { en: "No buildings can be picked for this shop." },
@@ -14212,6 +14209,11 @@ const PACK_BUNDLES = {
   // Weekly-card crate: smaller odds -> 7.18 average.
   "FC Crate": { "Fire Crystal": 100 * 0.004 + 60 * 0.008 + 40 * 0.016 + 20 * 0.025 + 10 * 0.085 + 5 * 0.862 },
 };
+// Chests that give a random amount (Admin → Items "By chance"): the built-in odds table;
+// the planners count the average (PACK_BUNDLES above, or the saved "Counts as").
+const CHEST_ODDS = { "Lucky Glorious Tome Chest": { item: "Glorious Tome", rows: [[5, 30], [10, 25], [20, 18], [30, 12], [40, 7], [60, 5], [100, 3]] } };
+function chestOddsOf(name) { const r = itemReg(name); return (r && r.odds && Array.isArray(r.odds.rows) && r.odds.rows.length ? r.odds : null) || CHEST_ODDS[name] || null; }
+const chestOddsAvg = (rows) => rows.reduce((a, [n, p]) => a + (Number(n) || 0) * (Number(p) || 0) / 100, 0);
 // Shown on the Packs page for chance-based chests, so the numbers are
 // understood as averages over many chests, not guaranteed drops.
 const PACK_BUNDLE_NOTES = {
@@ -23387,7 +23389,7 @@ function islShopDefault(k) {
   return [];
 }
 function islShopAllow(k) { const a = (islShopsCfg().allow || {})[k]; return Array.isArray(a) ? a : null; }
-function islShopOwn(k) { const o = ISL_SHARDS && ISL_SHARDS.shops; return o && Array.isArray(o[k]) ? o[k] : null; }
+function islShopOwn(k) { if (IS_OWNER) return null; const o = ISL_SHARDS && ISL_SHARDS.shops; return o && Array.isArray(o[k]) ? o[k] : null; }
 function islShopList(k) { const own = islShopOwn(k), list = own || islShopDefault(k), al = islShopAllow(k); return al ? list.filter((n) => al.includes(n)) : list; }
 function islInShop(name, k) { return islShopList(k).includes(name); }
 // Shining City Pack event starts (every month, `shiningDays` long): the person's own date for
@@ -23903,8 +23905,9 @@ async function renderIslandGallery() {
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
-      ${res}</div>`;
-    // The plan's details sit behind an (i) beside the Backpack title; the income is in the shard box's pop-up (owner, 9 Nov 2026).
+      ${res}
+      <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
+    // The plan's details sit behind an (i) beside the Backpack title (owner, 9 Nov 2026); the income bar stays under the boxes.
     const why = document.createElement("div"); why.className = "isl-why"; why.innerHTML = resultLine();
     infoAttach(host.querySelector(".isl-bp .bs-foot > span:first-child"), why);
     bsSlideFit(host);
@@ -23928,10 +23931,7 @@ async function renderIslandGallery() {
           return;
         }
         const P2 = planTotals(planList()), nd = k === "essence" ? Math.max(0, P2.left - (ISL_SHARDS.shards || 0) * ePS()) : P2.sh;
-        const incN = islIncome(ISL_SHARDS), incHtml = `<button type="button" class="isl-inc isl-inc-m" data-islincm><span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(islShardsDay(ISL_SHARDS))))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(incN.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span></button>`;
-        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, extraHtml: incHtml, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
-        const mib = document.querySelector("#bsEditModal [data-islincm]");
-        if (mib) mib.onclick = () => { const m = document.getElementById("bsEditModal"); if (m) m.style.display = "none"; islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) drawPlan(); }); };
+        plxAmountModal({ label: t(k === "essence" ? "isl_essence" : "isl_shards"), icon: k === "essence" ? "icons/life-essence.png" : "icons/island-shard.png", value: ISL_SHARDS[k] || 0, needBox: nd > 0 ? { need: nd, have: ISL_SHARDS[k] || 0 } : null, onSave: (v) => { const n = k === "essence" ? "Life Essence" : "Mythic Island Shards", q = Math.floor(v); ISL_SHARDS[k] = q; loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), [n]: q }; saveCalcState("backpack", islBp); budgetInvalidate(); }); keepPlace(() => computeAndRender()); } });
         return;
       }
       if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
@@ -23960,13 +23960,13 @@ async function renderIslandGallery() {
     const cands = () => { const al = islShopAllow(k); return islands.filter((x) => islShopPickable(x) && (!al || al.includes(x.name))); };
     let mode = "own", draft = null, editDate = false, dirty = false;
     const start = () => {
-      mode = IS_OWNER && !islShopOwn(k) ? "def" : "own";
+      mode = IS_OWNER ? "def" : "own"; // the owner's picks are everyone's first choice (owner, 9 Nov 2026)
       draft = new Set(mode === "def" ? islShopDefault(k) : islShopList(k));
       editDate = false; dirty = false;
     };
     const drawSheet = () => {
       const list = cands(), n = list.filter((x) => draft.has(x.name)).length;
-      const whose = mode === "def" ? t("isl_shops_def_all") : islShopOwn(k) ? t("isl_shops_yours") : t("isl_shops_def");
+      const whose = mode === "def" ? t("isl_shops_def_owner") : islShopOwn(k) ? t("isl_shops_yours") : t("isl_shops_def");
       let dateRow = "";
       if (k === "shining") {
         const sc = islShiningStarts(2), own = packValidDay(ISL_SHARDS.shiningDate);
@@ -23979,12 +23979,11 @@ async function renderIslandGallery() {
           ${IS_OWNER && mode === "def" ? `<label class="isl-shdi"><span>${esc(t("isl_sc_cal_link"))}</span><select class="keep-w" data-shev><option value="">${esc(t("isl_dates_choose"))}</option><optgroup label="${esc(t("isl_dates_events"))}">${GAME_EVENTS.map((g) => `<option value="ev:${esc(g.key)}"${cfgEv.dates === "cal" && islFindEvent(cfgEv.ev) === g ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</optgroup>${(ISL_PACKS || []).length ? `<optgroup label="${esc(t("isl_dates_packs"))}">${ISL_PACKS.map((x) => `<option value="${esc(x.id)}"${cfgEv.dates === "pack" && String(cfgEv.pack) === x.id ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</optgroup>` : ""}</select></label>` : ""}</div>`;
       }
       m.innerHTML = `<div class="modal-box adm-sheet gs-box isl-sh isl-shops" role="dialog" aria-modal="true" aria-label="${esc(t("isl_shops_title"))}"><div class="gs-head"><b style="flex:1;">&#9881; ${esc(t("isl_shops_title"))}</b>${closeXHtml("data-shx")}</div>
-        ${IS_OWNER ? `<div class="isl-seg isl-shmode"><button type="button" data-shmode="def" class="${mode === "def" ? "on" : ""}">${esc(t("isl_shops_mode_def"))}</button><button type="button" data-shmode="own" class="${mode === "own" ? "on" : ""}">${esc(t("isl_shops_mode_own"))}</button></div>` : ""}
         <label class="isl-shk"><img src="${k === "shining" ? "icons/shining-city-pack-sm.png" : ISL_SHOP_ICON.mark}" alt="" /><span>${esc(t("isl_shops_shop"))}</span><select class="keep-w" data-shk><option value="mark"${k === "mark" ? " selected" : ""}>${esc(t("isl_mk_name"))}</option><option value="shining"${k === "shining" ? " selected" : ""}>${esc(t("isl_sc_name"))}</option></select></label>
         ${dateRow}
         <div class="isl-shg">${list.length ? list.map((x) => `<button type="button" class="isl-sht${draft.has(x.name) ? " on" : ""}" data-shpick="${esc(x.name)}" aria-pressed="${draft.has(x.name)}" title="${esc(x.name)}">${x.image_url ? `<img src="${esc(x.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(x.name)}</span><span class="ck" aria-hidden="true">${draft.has(x.name) ? "&#10003;" : ""}</span></button>`).join("") : `<div class="isl-split">${esc(t("isl_shops_none"))}</div>`}</div>
         <div class="isl-shn">${esc(t("isl_shops_n").replace("{n}", n))} &middot; ${esc(whose)}</div>
-        <div class="isl-shb"><button type="button" class="btn" data-shreset>${esc(t("isl_shops_reset"))}</button><button type="button" class="btn primary" data-shsave>${esc(t(mode === "def" ? "isl_shops_save_all" : "isl_shops_save"))}</button></div></div>`;
+        <div class="isl-shb"><button type="button" class="btn" data-shreset>${esc(t("isl_shops_reset"))}</button><button type="button" class="btn primary" data-shsave>${esc(t("isl_shops_save"))}</button></div></div>`;
     };
     const close = () => { m.style.display = "none"; spSig = null; if (document.getElementById("islandSections")) keepPlace(() => computeAndRender()); };
     const saveCfg = (patch) => saveSiteConfig("island_shops", { ...islShopsCfg(), ...patch });
@@ -28987,7 +28986,6 @@ function plxAmountModal(o) {
       <h2 style="margin:6px 0 4px; font-size:16px;">${esc(o.label)}</h2>
       ${o.linked != null ? `<div class="meta" style="font-size:11px; margin-bottom:8px;">${o.linked ? `&#127890; ${esc(t("bp_link_from"))}` : `&#9998; ${esc(t("bp_link_typed"))}`}</div>` : ""}
       ${o.needBox ? bsNeedBoxesHtml(o.needBox) : ""}
-      ${o.extraHtml || ""}
       <input id="bsEditQty" type="text" inputmode="${o.minutes ? "text" : "decimal"}" autocomplete="off" value="${"rawValue" in o ? o.rawValue : Number(o.value) || 0}" style="width:100%; text-align:center; font-size:18px;" />
       <div class="meta" style="font-size:10.5px; margin-top:4px;">${esc(t(o.minutes ? "bs_edit_hint_min" : "bs_edit_hint"))}</div>
       <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
@@ -29539,7 +29537,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=9fe1c0c10e";
+      s.src = "admin.min.js?v=194ea289e0";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
