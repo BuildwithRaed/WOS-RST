@@ -23208,7 +23208,7 @@ function islSource(name, mythic = true) {
   // An old "marks" kind (Mark of Revival Shop) reads as a shard building that is also in the Mark shop.
   const kind = v.kind === "event" || v.kind === "ranked" ? v.kind : "shop";
   const each = Number(v.each) > 0 ? Number(v.each) : 0;
-  if (kind === "shop") return { kind, each, price, marks: !!(v.marks || v.kind === "marks"), markPrice: Number(ISL_RULES.markPrice) || ISL_MARK_PRICE, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
+  if (kind === "shop") return { kind, each, price, marks: !!(v.marks || v.kind === "marks"), markPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), ownPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : 0, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
   // "cal": a game event of the calendar (SvS / KOI, GAME_EVENTS); "pack": a Packs-page pack.
   const dates = v.dates === "cal" && GAME_EVENTS.some((g) => g.key === v.ev) ? "cal" : v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
   return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, ev: dates === "cal" ? v.ev : "", pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
@@ -23231,7 +23231,7 @@ async function islSaveSource(name, src, mythic = true) {
     return;
   }
   const kind = !src ? "" : src.kind === "event" || src.kind === "ranked" ? src.kind : mythic ? "shop" : "none";
-  const e = !src ? null : kind === "shop" && src.marks ? { kind, marks: true, markLimit: Number(src.markLimit) > 0 ? Math.round(Number(src.markLimit)) : ISL_MARK_LIMIT }
+  const e = !src ? null : kind === "shop" && src.marks ? { kind, marks: true, ...(Number(src.ownPrice) > 0 ? { markPrice: Math.round(Number(src.ownPrice)) } : {}), markLimit: Number(src.markLimit) > 0 ? Math.round(Number(src.markLimit)) : ISL_MARK_LIMIT }
     : kind === "shop" || kind === "none" ? { kind }
     : { kind, every: Number(src.every) > 0 ? Number(src.every) : 30, choices: islChoices(src.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES) };
   if (e && each) e.each = each;
@@ -24004,7 +24004,7 @@ async function renderIslandGallery() {
       }
       const markLimit = Number(pop.querySelector("[data-ipmkl]").value) || cur.markLimit;
       const marks = kind === "shop" && !!pop.querySelector("[data-ipmkc]").checked;
-      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next, price: cur.price, marks, markLimit }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next, price: cur.price, marks, ownPrice: cur.ownPrice, markLimit }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
     });
     ISL_POP = {
       id: String(s.id), place,
@@ -29143,7 +29143,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=84c948029e";
+      s.src = "admin.min.js?v=1fcf53ab45";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

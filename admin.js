@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "84c948029e";
+window.ADMIN_BUILD = "1fcf53ab45";
 
 // ============================================================
 // ADMIN PAGE
@@ -3166,12 +3166,13 @@ async function renderAdminSkinsCategory(body, category, kind) {
       { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
       { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 5 (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
       { key: "isl_src_mk", label: "Also in the Mark of Revival shop (shard buildings; free shards first)", type: "check", value: r.name ? !!islSource(r.name, islIsMythic(r)).marks : false },
+      { key: "isl_src_mkp", label: "Mark of Revival price (empty = rule, " + (Number(ISL_RULES.markPrice) || 250) + ")", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).ownPrice || null) : null, half: true },
       { key: "isl_src_mkl", label: "Mark of Revival shop: limit (total)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).markLimit || null) : null, half: true },
     ] : []),
   ];
   // Splits the How to get fields off the row and saves them into island_sources
   // (a renamed building keeps its entry).
-  const takeSrc = (v) => { const src = { kind: v.isl_src, choices: v.isl_src_choices, each: v.isl_src_each, price: v.isl_src_price, marks: v.isl_src_mk === undefined ? undefined : !!v.isl_src_mk, markLimit: v.isl_src_mkl || undefined }; delete v.isl_src_mk; delete v.isl_src_mkl; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; delete v.isl_src_each; delete v.isl_src_price; return src; };
+  const takeSrc = (v) => { const src = { kind: v.isl_src, choices: v.isl_src_choices, each: v.isl_src_each, price: v.isl_src_price, marks: v.isl_src_mk === undefined ? undefined : !!v.isl_src_mk, ownPrice: v.isl_src_mkp || 0, markLimit: v.isl_src_mkl || undefined }; delete v.isl_src_mk; delete v.isl_src_mkl; delete v.isl_src_mkp; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; delete v.isl_src_each; delete v.isl_src_price; return src; };
   const saveSrc = async (name, src, oldName, mythic) => {
     if (kind !== "islands") return;
     // Keeps what this sheet doesn't show (event dates …) from the saved entry.
