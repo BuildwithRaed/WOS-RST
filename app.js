@@ -1904,6 +1904,7 @@ const T = {
   isl_mk_chip: { en: "Mark shop" },
   isl_mk_after: { en: "{m} Marks by your target" },
   isl_mk_or: { en: "or {m} Marks" },
+  isl_mk_optional: { en: "optional" },
   isl_mk_need_opt: { en: "optional, faster · {n} Marks · have {h}" },
   isl_mk_limit: { en: "Shop limit (total)" },
   isl_mk_price: { en: "Price (Marks)" },
@@ -23158,6 +23159,7 @@ async function renderSkinGallery() {
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 // The open island level pop-up: { id, close(noRedraw), place() } or null.
 let ISL_POP = null;
+let ISL_MK_OPT = null; // { id, sig, price }: the optional Marks price of one building (no Budgets target)
 document.addEventListener("pointerdown", (e) => {
   if (ISL_POP && e.target.closest && !e.target.closest(".sg-pop, [data-island]")) ISL_POP.close();
 }, true);
@@ -23486,7 +23488,7 @@ async function renderIslandGallery() {
       <div id="islandTroopTotals"></div>
       <div id="islandShardPlan"></div>
     </div>
-    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>$ ${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div></div><div class="cg-bd" data-islbd hidden></div></div>
+    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>$ ${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div><div data-buybody id="islMkOpt" hidden></div></div><div class="cg-bd" data-islbd hidden></div></div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
     <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
@@ -23611,7 +23613,8 @@ async function renderIslandGallery() {
     const amt = n * src.markPrice;
     const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
     const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : mk ? ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; ` : " &middot; ";
-    return `${lead}<b class="mk">${esc(txt)}</b>${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
+    const optBtn = !mk && opt ? ` <button type="button" class="isl-mkb" data-islmkoptopen>&asymp; <span data-islmkopt>${ISL_MK_OPT && ISL_MK_OPT.id === String(s.id) && ISL_MK_OPT.price ? esc(ISL_MK_OPT.price) : "&hellip;"}</span> &#8250;</button>` : "";
+    return `${lead}<b class="mk">${esc(txt)}</b>${optBtn}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
@@ -23765,7 +23768,43 @@ async function renderIslandGallery() {
   const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
   let mkSig = null;
-  PACK_COST_HOOKS.islands = () => document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
+  PACK_COST_HOOKS.islands = () => {
+    if (ISL_MK_OPT) {
+      // The optional, per-building price (no Budgets target): only its own spans.
+      if (PACK_COST_SHOWN.islands) ISL_MK_OPT.price = PACK_COST_SHOWN.islands;
+      document.querySelectorAll(`[data-islmkopt]`).forEach((el) => { el.textContent = ISL_MK_OPT.price || "\u2026"; });
+      return;
+    }
+    document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
+  };
+  // No Budgets target: price the optional Marks of one building alone (read only, nothing
+  // goes to Budgets), in its own body of the Pack cost window.
+  function islMkOptRender(s) {
+    const n = marksOpt(s), host = document.getElementById("islMkOpt");
+    if (!host || !n) return;
+    const sig = `${s.id}|${n}|${markHave()}`;
+    if (ISL_MK_OPT && ISL_MK_OPT.sig === sig) return;
+    ISL_MK_OPT = { id: String(s.id), sig, price: "" };
+    packCostShown("islands", null);
+    PACK_COST_OPEN.islands = true;
+    renderPackCostBlock(host, "islands", [{ label: null, totals: { "Mark of Revival": n } }], { "Mark of Revival": markHave() });
+  }
+  function islMkOptOpen() {
+    const wrap = document.getElementById("islMkWrap"), opt = document.getElementById("islMkOpt"), main = document.getElementById("islMkPacks");
+    if (!wrap || !opt) return;
+    wrap.hidden = false; opt.hidden = false; if (main) main.hidden = true;
+    const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
+    if (tt) tt.textContent = `$ ${t("pack_cost_title")} \u00b7 ${t("isl_mk_optional")}`;
+    islOpenPacks();
+  }
+  function islMkOptClose() {
+    const opt = document.getElementById("islMkOpt"), main = document.getElementById("islMkPacks"), wrap = document.getElementById("islMkWrap");
+    if (!opt || opt.hidden) return;
+    opt.hidden = true; if (main) main.hidden = false;
+    const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
+    if (tt) tt.textContent = `$ ${t("pack_cost_title")}`;
+    if (wrap && !markSheetTotal()) wrap.hidden = true;
+  }
   // The Pack cost window, like the planner pages: on phones it opens over the page from
   // the "$ <price> ›" button on the Backpack line; on PC the card sits under the stats card.
   function islPacksTo(open) {
@@ -23783,7 +23822,7 @@ async function renderIslandGallery() {
   }
   {
     const w = document.getElementById("islMkWrap");
-    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-islbd]")) islPacksTo(false); };
+    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-islbd]")) { islPacksTo(false); islMkOptClose(); } };
   }
   // The Pack cost card (design A, like every planner page) for the Marks, its own card
   // under the Troops Stats card; shown when Marks are needed (or optional with no target).
@@ -23792,7 +23831,8 @@ async function renderIslandGallery() {
     if (!host) return;
     const total = markSheetTotal(), sig = `${total}|${markHave()}`;
     const wrap = document.getElementById("islMkWrap");
-    if (!total) { mkSig = sig; if (wrap) wrap.hidden = true; host.innerHTML = ""; islPacksTo(false); packCostShown("islands", null); return; }
+    if (!total) { mkSig = sig; host.innerHTML = ""; if (!ISL_MK_OPT) { if (wrap) wrap.hidden = true; islPacksTo(false); packCostShown("islands", null); } return; }
+    if (ISL_MK_OPT) { ISL_MK_OPT = null; islMkOptClose(); mkSig = null; }
     if (wrap) wrap.hidden = false;
     if (sig === mkSig && host.innerHTML) return;
     mkSig = sig;
@@ -23903,6 +23943,7 @@ async function renderIslandGallery() {
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
         pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.known ? islEveryText(ev.nx.every, ev.nx.monthly) : t(ev.src.dates === "cal" ? "isl_pick_event" : "isl_no_dates")))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
           : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess ? ` &middot; ${d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", need && mkCopies(s) ? left - mkCopies(s) : all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !mkCopies(s) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${need ? ` &middot; ${(() => { const d = bTime(s); return d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok")); })()}` : ""}` : ""}${mkLine(s)}</div>`;
+        if (!islTgt() && marksOpt(s)) islMkOptRender(s);
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
           if (document.activeElement !== pi) pi.value = src.price || "";
@@ -24021,6 +24062,7 @@ async function renderIslandGallery() {
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
       if (e.target.closest("[data-islmkopen]")) { islOpenPacks(); return; }
+      if (e.target.closest("[data-islmkoptopen]")) { islMkOptOpen(); return; }
       const stb = e.target.closest("[data-ipst]");
       if (stb && !stb.disabled) {
         ISL_SHARDS.store = { ...(ISL_SHARDS.store || {}), [s.id]: Math.max(0, storeOf(s) + Number(stb.dataset.ipst)) };
