@@ -3419,12 +3419,9 @@ input,select,textarea{
   @media (max-width:380px){ .isl-tsh .isl-im{ height:1em; } .isl-tsh{ letter-spacing:-.4px; } }
   .isl-tbg[hidden], .isl-tsh[hidden]{ display:none; }
   .isl-pl{ margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
-  .isl-pl-h{ padding-top:8px; }
   .isl-hd{ display:flex; align-items:center; gap:8px; }
   .isl-hd .t{ font-size:12px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
   .isl-hd .g1-fold{ margin-inline-start:auto; }
-  .isl-hs{ margin-inline-start:auto; font-size:12.5px; color:var(--frost); font-weight:700; white-space:nowrap; }
-  .isl-hs + .g1-fold{ margin-inline-start:0; }
   .isl-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; font-size:13.5px; color:var(--frost); }
   .isl-row .isl-sel{ height:34px; min-width:96px; width:auto; padding:0 8px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font:inherit; font-weight:700; font-size:13.5px; }
   .isl-hl{ margin-top:10px; font-size:12px; color:var(--muted); font-weight:700; }
@@ -4433,3 +4430,5 @@ input,select,textarea{
   .isl-pop .isl-mkset input{ width:100%; }
   .isl-pop .sg-pop-ft{ margin-top:6px; }
   .isl-pop .isl-mkck .bset-sw{ width:38px; height:22px; flex:0 0 38px; }
+  .sg-ans.g1-folded #islandShardPlan, .sg-ans.g1-folded ~ #islMkWrap{ display:none; }
+  .sg-k .isl-fold{ margin-inline-start:8px; letter-spacing:0; text-transform:none; }

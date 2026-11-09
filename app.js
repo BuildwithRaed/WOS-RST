@@ -1827,8 +1827,6 @@ const T = {
   isl_pop_hold: { en: "Hold + to go faster" },
   isl_pop_out: { en: "Tap outside to close" },
   isl_plan: { en: "Shards plan" },
-  isl_hide: { en: "\u25be Hide" },
-  isl_show: { en: "\u25b8 Show" },
   isl_target_all: { en: "Target all buildings" },
   isl_mixed: { en: "Mixed" },
   isl_you_have: { en: "You have" },
@@ -1882,7 +1880,6 @@ const T = {
   isl_box_weeks: { en: "~{n} weeks" },
   isl_box_noinc: { en: "set your income" },
   isl_box_none: { en: "nothing to do" },
-  isl_short_line: { en: "{n} \ud83c\udf3f short \u00b7 ~{w} wk" },
   isl_tag_ev: { en: "\ud83c\udfaa {t}" },
   isl_tag_rk: { en: "\ud83c\udfc6 {t}" },
   isl_wk: { en: "{n} wk" },
@@ -23453,7 +23450,7 @@ async function renderIslandGallery() {
       </div>
     </div>
     <div class="panel cg-ans sg-ans">
-      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span></div>
+      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span><button type="button" class="g1-fold isl-fold" data-g1fold="top:islandgallery" aria-expanded="true"></button></div>
       <div id="islandTroopTotals"></div>
       <div id="islandShardPlan"></div>
     </div>
@@ -23462,6 +23459,10 @@ async function renderIslandGallery() {
     <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
   `;
+  // One Hide in the Troops Stats header (like Heroes Gears' top card) folds the
+  // Shards plan and its Backpack; remembered in calc_state bar_hidden ("top:islandgallery").
+  g1FoldSync(content);
+  ensureBarHidden().then(() => { if (seq === RENDER_SEQ) g1FoldSync(content); });
 
   if (ISLAND_FILTER.bonusType === "all" || !bonusTypes.includes(ISLAND_FILTER.bonusType)) {
     ISLAND_FILTER.bonusType = bonusTypes[0] || "all";
@@ -23627,12 +23628,6 @@ async function renderIslandGallery() {
     const st = ISL_SHARDS;
     const P = planTotals(list), left = P.left, short = P.short;
     const tm = P.days != null ? { weeks: P.weeks, at: P.at } : null;
-    const weeksTxt = tm ? String(tm.weeks) : "?";
-    const fold = `<button type="button" class="g1-fold" data-islfold aria-expanded="${!st.hidden}">${esc(t(st.hidden ? "isl_show" : "isl_hide"))}</button>`;
-    if (st.hidden) {
-      host.innerHTML = `<div class="isl-pl isl-pl-h"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span><span class="isl-hs">${short > 0 ? esc(t("isl_short_line").replace("{n}", shortAmount(short)).replace("{w}", weeksTxt)) : left > 0 ? "&#10003;" : ""}</span>${fold}</div></div>`;
-      return;
-    }
     // The level last picked shows while every building still follows it (each one
     // capped at its own max and never below its level); else the shared target or Mixed.
     const follows = (v) => list.every((s) => tgtOf(s) === Math.max(Math.max(1, lvOf(s)), Math.min(maxOf(s), v)));
@@ -23660,7 +23655,7 @@ async function renderIslandGallery() {
     let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button>${priceBtn}</div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div><div class="isl-done${short > 0 || !left ? "" : " ok"}">${esc(t("isl_box_done"))}: <b>${doneBig}</b> &middot; ${doneSmall}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
-    host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
+    host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span></div>
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
@@ -23671,7 +23666,6 @@ async function renderIslandGallery() {
     const host = document.getElementById("islandShardPlan");
     if (!host) return;
     host.onclick = (e) => {
-      if (e.target.closest("[data-islfold]")) { ISL_SHARDS.hidden = !ISL_SHARDS.hidden; islSave(); drawPlan(); return; }
       const hv = e.target.closest("[data-islhave]");
       if (hv) {
         const k = hv.dataset.islhave;
