@@ -3545,6 +3545,12 @@ input,select,textarea{
   .isl-mkrow .go{ color:var(--muted); font-size:18px; }
   .isl-mkb{ display:block; margin-top:6px; padding:0; border:0; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; text-align:start; }
   .isl-mklim{ color:var(--amber); font-size:12px; }
+  .isl-mkck{ display:flex; align-items:center; gap:8px; flex:1 1 100%; font-size:13px; font-weight:700; color:var(--frost); cursor:pointer; }
+  .isl-mkck[hidden]{ display:none; }
+  .isl-mkck input{ width:18px; height:18px; margin:0; }
+  .isl-mkx{ margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--frost); line-height:1.35; }
+  .isl-mkx small{ color:var(--muted); font-size:11.5px; }
+  .isl-mkrow.opt .tx small{ color:var(--muted); }
   .isl-mksh .gs-head .isl-mki{ width:24px; height:24px; }
   .isl-mkl{ font-size:12.5px; color:var(--muted); margin:2px 0 6px; }
   .sg-toast{ position:fixed; z-index:300; left:50%; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); width:min(380px, calc(100vw - 24px)); transform:translate(-50%, 20px); opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; display:flex; align-items:center; gap:8px; padding:6px 6px 6px 12px; border-radius:12px; background:#25344a; border:1px solid var(--line); box-shadow:0 10px 30px rgba(0,0,0,.5); font-size:13px; color:var(--frost); }
