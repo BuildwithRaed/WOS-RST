@@ -4486,10 +4486,7 @@ input,select,textarea{
   .sg-ans.g1-folded #islandShardPlan, .sg-ans.g1-folded ~ #islMkWrap{ display:none; }
   .sg-k .isl-fold{ margin-inline-start:8px; letter-spacing:0; text-transform:none; }
   /* Skin Gallery: Shining City skins (under the Globe Level row; folds with Hide) */
-  .sg-ans.g1-folded .sg-fb, .sg-ans.g1-folded ~ #shMkWrap{ display:none; }
-  .shl{ display:flex; align-items:center; gap:6px; min-height:30px; margin:10px 2px 0; font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#e0b25a; }
-  .shl img{ width:14px; height:14px; object-fit:contain; flex:none; }
-  .shl .shl-a{ margin-inline-start:auto; padding:6px 0 6px 8px; border:0; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; letter-spacing:0; text-transform:none; cursor:pointer; }
+  .sg-ans.g1-folded #shSkins, .sg-ans.g1-folded ~ #shMkWrap{ display:none; }
   .shr{ display:flex; align-items:center; gap:9px; width:100%; min-height:44px; padding:5px 8px 5px 10px; margin-top:5px; border:1px solid rgba(224,178,90,.45); border-radius:12px; background:var(--panel-2); color:var(--frost); box-sizing:border-box; font:inherit; text-align:start; }
   button.shr{ cursor:pointer; }
   .shr .p{ width:46px; height:38px; flex:none; display:flex; align-items:center; justify-content:center; position:relative; }
@@ -4499,12 +4496,25 @@ input,select,textarea{
   .shr .tx b{ flex:1; min-width:0; font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .shr .tx em{ font-style:normal; color:#e0b25a; font-size:12.5px; font-weight:700; white-space:nowrap; }
   .shr .ch{ color:var(--muted); font-size:20px; flex:none; }
-  .shtot{ display:flex; align-items:center; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:13px; color:var(--frost); }
-  .shtot .t{ flex:1; min-width:0; line-height:1.3; }
-  .shtot .t small{ display:block; color:var(--muted); font-size:11.5px; }
-  .shb{ display:inline-flex; align-items:center; height:32px; padding:0 10px; border:1px solid var(--ice-dim); border-radius:10px; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:700; white-space:nowrap; flex:none; cursor:pointer; }
-  .shb.ok{ border-color:rgba(76,209,138,.45); color:var(--good); cursor:default; }
   .sh-g1{ margin-top:-2px; }
+  /* Layout S1b: one gold-edged row (tap = pick sheet), picture stack + price on the right */
+  .s1b{ display:flex; align-items:center; gap:8px; margin-top:8px; min-height:52px; padding:6px 8px 6px 12px; border:1px solid rgba(224,178,90,.45); border-radius:12px; background:var(--panel-2); color:var(--frost); cursor:pointer; box-sizing:border-box; }
+  .s1b.slim{ min-height:40px; }
+  .s1b .tx{ flex:1; min-width:0; line-height:1.25; }
+  .s1b .tx b{ display:block; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .s1b .tx small{ display:block; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .s1b .tx em{ font-style:normal; color:#e0b25a; font-weight:700; }
+  .s1b .tx em.pk{ color:var(--ice); }
+  .s1b .rt{ display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex:none; }
+  .s1b .pr{ padding:2px 0; border:0; background:none; color:var(--ice); font:inherit; font-size:12.5px; font-weight:800; white-space:nowrap; cursor:pointer; }
+  .s1b .pr.ok{ color:var(--good); cursor:inherit; }
+  .s1b .ch{ color:var(--muted); font-size:20px; flex:none; }
+  .s1b .stk{ display:flex; flex:none; padding-inline-start:3px; }
+  .s1b .stk > span{ position:relative; width:34px; height:32px; margin-inline-start:-15px; border-radius:8px; }
+  .s1b .stk > span:first-child{ margin-inline-start:0; }
+  .s1b .stk img.sk{ width:34px; height:32px; object-fit:contain; filter:drop-shadow(0 0 2px rgba(0,0,0,.8)); }
+  .s1b .stk img.tm{ position:absolute; left:-3px; bottom:-3px; width:14px; height:14px; object-fit:contain; }
+  .s1b .stk > span.more{ display:flex; align-items:center; justify-content:center; width:30px; height:30px; margin-top:1px; background:#2a3446; border:1px solid rgba(224,178,90,.6); color:#e0b25a; font-size:12px; font-weight:800; box-sizing:border-box; }
   .sh-pick-d{ margin:-4px 0 10px; font-size:12.5px; line-height:1.4; }
   /* Budgets: the Shining City page sheet's skins */
   .sh-bud{ margin-top:10px; }

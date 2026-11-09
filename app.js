@@ -1939,8 +1939,8 @@ const T = {
   sh_title: { en: "Shining City skins" },
   sh_pick: { en: "+ pick skins" },
   sh_tomes: { en: "{n} Tomes" },
-  sh_total: { en: "{n} skins \u00b7 {m} Tomes" },
-  sh_total1: { en: "1 skin \u00b7 {m} Tomes" },
+  sh_n: { en: "{n} skins" },
+  sh_n1: { en: "1 skin" },
   sh_when: { en: "{every} \u00b7 {d} days" },
   sh_next: { en: "next {date}" },
   sh_on_now: { en: "on now" },
@@ -22962,8 +22962,10 @@ function shiningSkinsDefault() { const v = siteConfig("shining_skins", null); re
 // The list in use: the owner's own view is the default; others their own list, else the default.
 function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault(); return saved && Array.isArray(saved.list) ? saved.list.map(String) : shiningSkinsDefault(); }
 // The picked skins (rows), in pick order.
+// Globe Level skins (Frost Spheres and each level's extra skins) are never Shining City skins.
+const shiningGlobeSkin = (n) => !!(typeof ALL_GLOBE_WIRED_NAMES_GLOBAL !== "undefined" && ALL_GLOBE_WIRED_NAMES_GLOBAL && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(n));
 function shiningPicked(list, skins) {
-  return list.map((n) => skins.find((s) => s.name === n && s.category === SHINING_SKIN_CAT) || skins.find((s) => s.name === n)).filter(Boolean);
+  return list.filter((n) => !shiningGlobeSkin(n)).map((n) => skins.find((s) => s.name === n && s.category === SHINING_SKIN_CAT) || skins.find((s) => s.name === n)).filter(Boolean);
 }
 // "every month · 5 days · next Dec 12" (or "on now"), from the Shining City Pack's dates.
 function shiningWhenText() {
@@ -22975,6 +22977,16 @@ function shiningWhenText() {
   const run = sc.starts.find((d) => d <= today && d.getTime() + (dur - 1) * DAY >= today.getTime());
   const nx = sc.starts.find((d) => d > today);
   return [base, run ? t("sh_on_now") : "", nx ? t("sh_next").replace("{date}", fmt(nx)) : ""].filter(Boolean).join(" \u00b7 ");
+}
+// Short form for the Skin Gallery row: "on now" when an event runs, else "next Dec 12" ("" = no date).
+function shiningNextText() {
+  const sc = islShiningStarts(3), dur = Math.max(1, Number(ISL_RULES.shiningDays) || 5);
+  if (!sc.known) return "";
+  const today = packStartOfToday(), DAY = 86400000;
+  if (sc.starts.some((d) => d <= today && d.getTime() + (dur - 1) * DAY >= today.getTime())) return t("sh_on_now");
+  const nx = sc.starts.find((d) => d > today);
+  if (!nx) return "";
+  try { return t("sh_next").replace("{date}", nx.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })); } catch (e) { return ""; }
 }
 // Budgets: { groups, rows: [{ name, img }], img, tomes }.
 async function shiningSkinsNeed() {
@@ -23056,7 +23068,7 @@ async function renderSkinGallery() {
     </div>
   `;
 
-  // One Hide in the Troops Stats header (like Islands) folds the Globe Level and the
+  // One Hide in the Troops Stats header (like Islands) folds only the
   // Shining City part; remembered in calc_state bar_hidden ("top:skingallery").
   g1FoldSync(content);
 
@@ -23096,20 +23108,26 @@ async function renderSkinGallery() {
     const box = document.getElementById("shSkins");
     if (!box) return;
     const rows = shRows(), per = shiningTomesPer(), need = rows.length * per;
-    const head = `<div class="shl"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /><span>${esc(t("sh_title"))}</span><button type="button" class="shl-a" data-shpick>${esc(t("sh_pick"))}</button></div>`;
-    if (!rows.length) { box.innerHTML = head; shPackCard(); return; }
+    // Layout S1b (owner, 9 Nov 2026): one gold-edged row; tap = pick sheet, price = Pack cost.
+    if (!rows.length) { box.innerHTML = `<div class="s1b slim" role="button" tabindex="0" data-shpick><span class="tx"><b>${esc(t("isl_sc_name"))} \u00b7 <em class="pk">${esc(t("sh_pick"))}</em></b></span><span class="ch" aria-hidden="true">&#8250;</span></div>`; shPackCard(); return; }
     const have = shTomeHave();
-    const btn = have >= need ? `<span class="shb ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="shb" data-shpc data-shprice>${shPriceLabel()}</button>`;
-    box.innerHTML = head + rows.map((s) => shiningRowHtml({ name: s.name, img: s.image_url }, "data-shpick")).join("")
-      + `<div class="shtot"><span class="t"><b>${esc((rows.length === 1 ? t("sh_total1") : t("sh_total").replace("{n}", rows.length)).replace("{m}", need.toLocaleString()))}</b><small>${esc(shiningWhenText())}</small></span>${btn}</div>`;
+    const pic = (s) => `<span title="${esc(s.name)}">${s.image_url ? `<img class="sk" src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<img class="tm" src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>`;
+    const stack = `<span class="stk">${rows.slice(0, 4).map(pic).join("")}${rows.length > 4 ? `<span class="more">+${rows.length - 4}</span>` : ""}</span>`;
+    const price = have >= need ? `<span class="pr ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="pr" data-shpc data-shprice>${shPriceLabel()}</button>`;
+    const when = shiningNextText();
+    box.innerHTML = `<div class="s1b" role="button" tabindex="0" data-shpick aria-label="${esc(t("sh_title"))}"><span class="tx"><b>${esc(t("isl_sc_name"))} \u00b7 ${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</b><small><em>${esc(t("sh_tomes").replace("{n}", need.toLocaleString()))}</em>${when ? ` \u00b7 ${esc(when)}` : ""}</small></span><span class="rt">${stack}${price}</span><span class="ch" aria-hidden="true">&#8250;</span></div>`;
     shPackCard();
   }
   document.getElementById("shSkins").onclick = (e) => {
-    if (e.target.closest("[data-shpick]")) { shPickSheet(); return; }
     if (e.target.closest("[data-shpc]")) {
       if (window.matchMedia("(max-width: 900px)").matches) shPacksTo(true);
       else { const c = document.getElementById("shMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      return;
     }
+    if (e.target.closest("[data-shpick]")) shPickSheet();
+  };
+  document.getElementById("shSkins").onkeydown = (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-shpick]")) { e.preventDefault(); shPickSheet(); }
   };
   // The Shining City Pack's dates come with the pack list (loaded once, then redrawn).
   if (!ISL_PACKS) islLoadPacks().then(() => { if (seq === RENDER_SEQ) drawShining(); });
@@ -23118,7 +23136,7 @@ async function renderSkinGallery() {
     let m = document.getElementById("shPickSheet");
     if (!m) { m = document.createElement("div"); m.id = "shPickSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
     const draft = new Set(shList);
-    const city = skins.filter((s) => s.category === SHINING_SKIN_CAT);
+    const city = skins.filter((s) => s.category === SHINING_SKIN_CAT && !shiningGlobeSkin(s.name));
     const tile = (s) => `<button type="button" class="isl-sht${draft.has(s.name) ? " on" : ""}" data-shtick="${esc(s.name)}" aria-pressed="${draft.has(s.name)}" title="${esc(s.name)}">${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(s.name)}</span><span class="ck" aria-hidden="true">${draft.has(s.name) ? "&#10003;" : ""}</span></button>`;
     m.innerHTML = `<div class="modal-box adm-sheet gs-box sh-pick" role="dialog" aria-modal="true" aria-label="${esc(t("sh_pick_title"))}"><div class="gs-head"><b style="flex:1;">${esc(t("sh_pick_title"))}</b>${closeXHtml("data-shx")}</div>
       <div class="meta sh-pick-d">${esc(t("sh_pick_desc").replace("10,000", shiningTomesPer().toLocaleString()))}</div>
@@ -23138,7 +23156,7 @@ async function renderSkinGallery() {
       }
       if (ev.target.closest("[data-shsave]")) {
         // Kept in pick order; names outside the City Skins (renamed / other states) stay.
-        const out = [...shList.filter((n) => draft.has(n)), ...city.map((s) => s.name).filter((n) => draft.has(n) && !shList.includes(n))];
+        const out = [...shList.filter((n) => draft.has(n) && !shiningGlobeSkin(n)), ...city.map((s) => s.name).filter((n) => draft.has(n) && !shList.includes(n))];
         close();
         if (JSON.stringify(out) === JSON.stringify(shList)) return;
         const prev = shList;
