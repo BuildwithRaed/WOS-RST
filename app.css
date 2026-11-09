@@ -3330,7 +3330,7 @@ input,select,textarea{
   .sg-s2.n4 .sg-sbt{ flex-direction:column; align-items:flex-start; gap:0; }
   .sg-s2.n4 .sg-sb > b{ display:block; white-space:nowrap; }
   .sg-s2.n4 .sg-sb > small{ display:block; margin:0; white-space:nowrap; }
-  @media (max-width:700px){ .sg-s2.n4 .sg-sb{ padding:6px 7px 9px; } .sg-s2.n4 .sg-sb > b{ font-size:clamp(14px, 4.2vw, 19px); } }
+  @media (max-width:700px){ .sg-s2.n4 .sg-sb{ padding:6px 7px 9px; } .sg-s2.n4 .sg-sb > b{ font-size:clamp(13px, 3.8vw, 19px); letter-spacing:-.3px; } }
   .sg-bar{ position:absolute; inset-inline:0; bottom:0; height:4px; background:rgba(232,162,60,.45); }
   .sg-bar i{ display:block; height:100%; background:var(--ice); }
   .sg-bar.full i{ background:var(--good); }

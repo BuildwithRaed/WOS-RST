@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 80; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 81; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -23189,7 +23189,7 @@ const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
 // calc_state "island_shards" = { targets: { skinId: level }, allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
 const islDefault = () => ({ targets: {}, essence: 0, shards: 0, tree: 10, camp1: 10, camp2: 10, ally: 3, evPer: {}, store: {}, hidden: false });
-function islSave() { const { essence, shards, ...rest } = ISL_SHARDS; saveCalcState("island_shards", rest); }
+function islSave() { const rest = { ...ISL_SHARDS }; delete rest.essence; delete rest.shards; saveCalcState("island_shards", rest); }
 // Mythic = max level 10 or more (missing = 10); purple / blue ones stop at Lv 5.
 const islIsMythic = (s) => Number(s.max_level ?? 10) >= 10;
 // How a building is got, set by the owner for everyone: site_config island_sources =
@@ -23349,18 +23349,7 @@ function islShardsDay(st) {
   return lim > 0 ? Math.min(d, lim / 7) : d;
 }
 const islHave = (st) => (st.shards || 0) + (st.essence || 0) / islEssencePerShard();
-const islNum = (v) => Math.floor(v + 1e-9).toLocaleString();
 const islOne = (v) => (v >= 10 ? Math.round(v).toLocaleString() : (Math.round(v * 10) / 10).toLocaleString());
-// Days to gather `short` shards: { days, weeks, date } or null without income.
-function islTime(short, st) {
-  if (!(short > 0)) return { days: 0, weeks: 0, date: "" };
-  const r = islShardsDay(st);
-  if (!(r > 0)) return null;
-  const days = Math.ceil(short / r);
-  const d = packStartOfToday();
-  d.setUTCDate(d.getUTCDate() + days);
-  return { days, weeks: Math.ceil(days / 7), at: d, date: d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) };
-}
 function islIncomeSheet(onChange) {
   const st = ISL_SHARDS;
   let m = document.getElementById("islIncSheet");
@@ -23570,7 +23559,7 @@ async function renderIslandGallery() {
     const finDay = (c) => (c <= have + 1e-9 ? 0 : rate > 0 ? Math.ceil((c - have) / rate) : null);
     const all = islands.filter(tracked);
     const fin = new Map(), mk = new Map();
-    let cum = 0, cant = 0, cantCum = 0;
+    let cum = 0, cant = 0;
     // 1) Buildings nothing can buy: Life Essence shop copies (price ÷ essence a shard) and shards-only.
     all.filter((x) => usesEssence(x) || (usesShards(x) && !usesMarks(x))).forEach((x) => {
       const left = copiesLeft(x), per = usesEssence(x) ? srcOf(x).price / eps : pc;
@@ -23580,7 +23569,6 @@ async function renderIslandGallery() {
       cum += left * per;
       fin.set(x.id, finDay(cum));
     });
-    cantCum = cum;
     // 2) Mark of Revival shop buildings: free shards that are left, then Marks.
     all.filter(usesMarks).forEach((x) => {
       const left = copiesLeft(x);
@@ -23618,13 +23606,6 @@ async function renderIslandGallery() {
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
-  // Days to buy `copies` shop copies costing `ess` (essence on hand first; at most copyLimit a week).
-  const essDays = (copies, ess, have) => {
-    const day = islEssenceDay(ISL_SHARDS), lim = Number(ISL_RULES.copyLimit) || 0;
-    const short = Math.max(0, ess - have);
-    if (short > 0 && !(day > 0)) return null;
-    return Math.max(short > 0 ? Math.ceil(short / day) : 0, lim > 0 && copies > 0 ? (Math.ceil(copies / lim) - 1) * 7 : 0);
-  };
   // Event / ranked buildings: copies to the target ÷ the person's copies a cycle → cycles → time.
   const evPerOf = (s, src) => { const v = Number((ISL_SHARDS.evPer || {})[s.id]); return src.choices.includes(v) ? v : src.choices[src.choices.length - 1]; };
   const evPlan = (s) => {
