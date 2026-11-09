@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "0e40d2a5ea";
+window.ADMIN_BUILD = "c099a62f32";
 
 // ============================================================
 // ADMIN PAGE
@@ -3162,14 +3162,16 @@ async function renderAdminSkinsCategory(body, category, kind) {
     // (max level 10+): others without a price are levels only.
     ...(kind === "islands" ? [{ key: "isl_src_price", label: "Shop price (Life Essence, empty = not sold)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).price || null) : null, half: true }] : []),
     ...(kind === "islands" && (!r.name || islIsMythic(r)) ? [
-      { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Shop / shards (Mythic only)"], ["event", "Playable event"], ["ranked", "Ranked event"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
+      { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Shop / shards (Mythic only)"], ["event", "Playable event"], ["ranked", "Ranked event"], ["marks", "Mark of Revival Shop"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
       { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
       { key: "isl_src_choices", label: "Event / ranked: copies a cycle, up to 5 (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
+      { key: "isl_src_mkp", label: "Mark of Revival Shop: Marks a copy", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).markPrice || null) : null, half: true },
+      { key: "isl_src_mkl", label: "Mark of Revival Shop: limit (total)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).markLimit || null) : null, half: true },
     ] : []),
   ];
   // Splits the How to get fields off the row and saves them into island_sources
   // (a renamed building keeps its entry).
-  const takeSrc = (v) => { const src = { kind: v.isl_src, choices: v.isl_src_choices, each: v.isl_src_each, price: v.isl_src_price }; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; delete v.isl_src_each; delete v.isl_src_price; return src; };
+  const takeSrc = (v) => { const src = { kind: v.isl_src, choices: v.isl_src_choices, each: v.isl_src_each, price: v.isl_src_price, markPrice: v.isl_src_mkp || undefined, markLimit: v.isl_src_mkl || undefined }; delete v.isl_src_mkp; delete v.isl_src_mkl; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; delete v.isl_src_each; delete v.isl_src_price; return src; };
   const saveSrc = async (name, src, oldName, mythic) => {
     if (kind !== "islands") return;
     // Keeps what this sheet doesn't show (event dates …) from the saved entry.
