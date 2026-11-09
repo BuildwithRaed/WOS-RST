@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 78; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 79; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3014,8 +3014,8 @@ const T = {
   pur_wc_running_n: { en: "{n} running" },
   pur_wc_notbought_n: { en: "{n} not bought" },
   pur_wc_desc: { en: "Type the reward days you still have on cards you already bought." },
-  pur_wc_running: { en: "Running until {date} · next buy {next} · {more} more can stack" },
-  pur_wc_idle: { en: "Not running · can buy today · {n} can stack" },
+  pur_wc_running: { en: "Running until {date} · next buy {next} · can stack {more} more days" },
+  pur_wc_idle: { en: "Not running · can buy today · stacks up to {n} days" },
   pur_wc_foot: { en: "Each card: {d} days · stacks up to {cap} days" },
   pk_dates_title: { en: "Pack dates" },
   pk_dates_desc: { en: "When each pack comes to your state. Change a date if your state gets it on another day." },
@@ -8470,8 +8470,8 @@ async function renderPurchasesPage() {
       const offer = packOffersFor(tb, true)[0], ic = offer ? mainIcon(rawOf({ row: offer.row }, tb)) : "";
       const run = l.activeDaysLeft > 0;
       const line = run
-        ? t("pur_wc_running").replace("{date}", wcFmt(l.activeUntil)).replace("{next}", wcFmt(new Date(l.activeUntil.getTime() + 86400000))).replace("{more}", Math.max(0, Math.floor((st.cap - l.activeDaysLeft) / st.days)))
-        : t("pur_wc_idle").replace("{n}", st.atOnce);
+        ? t("pur_wc_running").replace("{date}", wcFmt(l.activeUntil)).replace("{next}", wcFmt(new Date(l.activeUntil.getTime() + 86400000))).replace("{more}", Math.max(0, st.cap - l.activeDaysLeft))
+        : t("pur_wc_idle").replace("{n}", st.cap);
       return `<div class="pur-wc-row">
         <span class="pur-pic">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(tb.title || "?").charAt(0))}</i>`}</span>
         <span class="pur-wc-t"><b>${esc(tb.title || "")}</b><small class="${run ? "on" : ""}">${esc(line)}</small></span>
@@ -15163,7 +15163,7 @@ function packStackInfo(reset) {
   const m = /^stack:(\d+):(\d+)$/.exec(String(reset || ""));
   if (!m) return null;
   const days = Math.max(1, Number(m[1])), cap = Math.max(days, Number(m[2]));
-  return { days, cap, atOnce: Math.max(1, Math.floor(cap / days)) };
+  return { days, cap, atOnce: Math.max(1, Math.ceil(cap / days)) };
 }
 function packStackText(reset) {
   const st = packStackInfo(reset);
