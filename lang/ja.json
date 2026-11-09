@@ -2264,6 +2264,7 @@
 "t:pur_a2_less":"少なく表示",
 "t:pur_a2_mark":"購入済みにする",
 "t:pur_a2_bought_mark":"購入済み",
+"t:pur_a2_unmark":"購入済み · タップで取り消し",
 "t:pur_o1_coming":"購入予定",
 "t:pur_o1_box":"あなたのパック",
 "t:pur_o1_none":"なし",

@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 79; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 80; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -3228,6 +3228,7 @@ const T = {
   pur_a2_less: { en: "Show less" },
   pur_a2_mark: { en: "Mark as bought" },
   pur_a2_bought_mark: { en: "Bought" },
+  pur_a2_unmark: { en: "Bought · tap to undo" },
   pur_o1_coming: { en: "Will buy" },
   pur_o1_box: { en: "Your packs" },
   pur_o1_none: { en: "none" },
@@ -8600,7 +8601,7 @@ async function renderPurchasesPage() {
     const bw = (PACK_PURCHASES.list || []).filter((p) => p.status === "bought" && !p.hidden && byId.has(String(p.table)) && p.date >= monKeyW && p.date <= today);
     groupBy(bw).forEach((g) => {
       const tb = g.tb, last = g.items.map((p) => p.date).sort().pop();
-      items.push({ done: true, tb, name: purShortName((g.first.choice && g.first.choice.name) || tb.title || ""), pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last });
+      items.push({ done: true, ids: g.items.map((p) => p.id), tb, name: purShortName((g.first.choice && g.first.choice.name) || tb.title || ""), pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last });
     });
     // Still to buy: "will buy" dated this week (or passed) and the plan's buys this week.
     const rest = new Map();
@@ -8668,7 +8669,7 @@ async function renderPurchasesPage() {
         <span class="pur-pic">${it.pic ? `<img src="${esc(it.pic)}" alt="" loading="lazy" />` : `<i>${esc(it.name.charAt(0))}</i>`}</span>
         <span class="pur-a2-tx"><b>${nm}</b><small>${sub}</small></span>
         <b class="pur-a2-pr">${esc(fmt(it.local))}</b>
-        ${it.done ? `<span class="pur-a2-ck on" aria-label="${esc(t("pur_a2_bought_mark"))}">&#10003;</span>` : `<button type="button" class="pur-a2-ck" data-pura2ck="${k}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>`}
+        ${it.done ? `<button type="button" class="pur-a2-ck on" data-pura2un="${k}" title="${esc(t("pur_a2_unmark"))}" aria-label="${esc(t("pur_a2_unmark"))}">&#10003;</button>` : `<button type="button" class="pur-a2-ck" data-pura2ck="${k}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>`}
       </div>`;
     };
     // First 5 packs, then "Show N more" (the list made a long scroll).
@@ -8708,6 +8709,13 @@ async function renderPurchasesPage() {
       // Several: how many did you buy, and when? (the How many sheet)
       openBoughtSheet({ id: "", ...proto, count: total, date: today, status: "planned" }, (n, day) => save(n, day, n === total));
     };
+    // ✓ on a bought line: back to "will buy" (same as ↺ in the Bought list).
+    chk.querySelectorAll("[data-pura2un]").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const ids = new Set(all[Number(b.dataset.pura2un)].ids || []);
+      PACK_PURCHASES.list = (PACK_PURCHASES.list || []).map((p) => (ids.has(p.id) ? { ...p, status: "planned" } : p));
+      savePackPurchases(); redraw();
+    }));
     chk.querySelectorAll("[data-pura2ck]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); markBought(all[Number(b.dataset.pura2ck)]); }));
     chk.querySelectorAll(".pur-a2-it[role=button]").forEach((rw) => {
       const go = () => {

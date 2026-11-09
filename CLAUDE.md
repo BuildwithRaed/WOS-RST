@@ -432,6 +432,8 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Weekly cards stack in days (owner, 9 Nov 2026):** My Purchases' Weekly cards say "can stack {more} more days" (cap − days left, e.g. 370 − 28 = 342) and "stacks up to {n} days" (the cap, 370) instead of a card count (`pur_wc_running` / `pur_wc_idle`, new wording in every lang file, `LANG_FILES_VERSION` 79). `packStackInfo().atOnce` is now `ceil(cap / days)` (owner: 370 = 53 cards of 7 days; was floor, 52), so the planner can hold one more card at once. A "same date every month" reset option was built and dropped the same day (owner); a pack on the 1st of each month can use Comes back = Custom 30 days + Next on the 1st (30 is read as calendar months).
 
+**Undo a bought tick (owner, 9 Nov 2026):** on My Purchases' This week checklist the green ✓ of a bought line is now a button (`data-pura2un`, label `pur_a2_unmark` "Bought · tap to undo"): tapping it puts that line's purchases back to "will buy" (status planned, same as ↺ in the Bought list), so the line shows its empty circle again. `LANG_FILES_VERSION` 80 (this branch is stacked on the weekly-cards one).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
