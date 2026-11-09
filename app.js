@@ -23359,7 +23359,7 @@ async function islSaveSource(name, src, mythic = true) {
 // Island shops (owner, 9 Nov 2026): the Mark of Revival shop and the Shining City shop each
 // sell copies of some Mythic shard buildings. site_config island_shops =
 // { mark: [names], shining: [names], allow: { mark, shining }, shiningEv: { dates: "cal" | "pack", ev, pack } }
-// = the owner's default for everyone (`allow`: which buildings the Shops grid offers, missing =
+// = the owner's default for everyone (`allow`: which buildings get the pop-up switch, missing =
 // every pickable one). Each person can keep their own lists in calc_state island_shards.shops
 // (kept when the owner changes the default); no own list = the default. Missing mark default =
 // the buildings with the old "Also in the Mark of Revival shop" switch on in island_sources.
@@ -29482,7 +29482,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=194ea289e0";
+      s.src = "admin.min.js?v=a2c0b0cde2";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }

@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "194ea289e0";
+window.ADMIN_BUILD = "a2c0b0cde2";
 
 // ============================================================
 // ADMIN PAGE
@@ -3773,7 +3773,7 @@ async function renderAdminHeroes(body) {
 }
 
 
-// Admin → Islands → Shops: per shop, the buildings the Islands page's ⚙ Shops grid offers
+// Admin → Islands → Shops: per shop, the buildings that get a shop switch in the Islands building pop-up
 // (site_config island_shops.allow = { mark: [names], shining: [names] }; missing = every
 // building that can be in a shop, `islShopPickable`). Buildings taken out also leave the
 // shop's lists (they are filtered when read, nothing else is changed).
@@ -3785,7 +3785,7 @@ async function renderAdminIslandShops(host, catNames) {
   const pick = rows.filter((r) => islShopPickable(r));
   const draw = () => {
     const k = ADMIN_ISL_SHOP_K, al = islShopAllow(k), on = new Set(al || pick.map((r) => r.name));
-    host.innerHTML = `<p class="muted" style="font-size:12.5px;margin:6px 0 10px;">Tick the buildings each shop can sell. Only these show in the Islands page's ⚙ Shops grid (for everyone). Never offered: event / ranked buildings, Lighthouse, Islands Guide, Tree of Life and buildings below Mythic.</p>
+    host.innerHTML = `<p class="muted" style="font-size:12.5px;margin:6px 0 10px;">Tick the buildings each shop can sell. Only these get the shop's switch in the Islands building pop-up (for everyone). Never offered: event / ranked buildings, Lighthouse, Islands Guide, Tree of Life and buildings below Mythic.</p>
       <div class="isl-seg" style="margin-bottom:10px;"><button type="button" data-aishk="mark" class="${k === "mark" ? "on" : ""}">Mark of Revival</button><button type="button" data-aishk="shining" class="${k === "shining" ? "on" : ""}">Shining City</button></div>
       <div class="isl-shg">${pick.map((r) => `<button type="button" class="isl-sht${on.has(r.name) ? " on" : ""}" data-aishpick="${esc(r.name)}" aria-pressed="${on.has(r.name)}" title="${esc(r.name)} · ${esc(r.category)}">${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(r.name)}</span><span class="ck" aria-hidden="true">${on.has(r.name) ? "&#10003;" : ""}</span></button>`).join("")}</div>
       <div class="isl-shn"><span data-aishn>${pick.filter((r) => on.has(r.name)).length}</span> of ${pick.length} can be picked${al ? "" : " · all (default)"}</div>
