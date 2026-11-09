@@ -22734,7 +22734,7 @@ function galStatShort(bt) {
 // Stat boxes of the answer card: label + amber "+N left" (green ✓ at max), the
 // value big, "/ max" small, a bar along the bottom edge. list: [{ label, val, max }]
 function galStatBoxesHtml(list) {
-  return `<div class="sg-s2">${list.map((s) => {
+  return `<div class="sg-s2${list.length === 4 ? " n4" : ""}">${list.map((s) => {
     const val = Number(s.val || 0), max = s.max == null ? null : Number(s.max), left = max == null ? 0 : Math.max(0, max - val);
     const pct = max > 0 ? Math.min(100, (val / max) * 100) : 0, done = max > 0 && left < 0.005;
     return `<div class="sg-sb"><div class="sg-sbt"><span>${esc(s.label)}</span>${max > 0 ? (done ? `<em class="ok">&#10003;</em>` : `<em>${bidiNum(`+${galNum(left)}`)} ${esc(t("sg_left"))}</em>`) : ""}</div><b>${bidiNum(`+${galNum(val)}%`)}</b>${max != null ? `<small>/ ${bidiNum(`${galNum(max)}%`)}</small>` : ""}${max != null ? `<div class="sg-bar${done ? " full" : ""}"><i style="width:${pct}%;"></i></div>` : ""}</div>`;

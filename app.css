@@ -3326,6 +3326,11 @@ input,select,textarea{
   .sg-sbt em.ok{ color:var(--good); }
   .sg-sb > b{ display:inline-block; font-size:19px; line-height:23px; font-weight:800; margin-top:1px; color:var(--frost); }
   .sg-sb > small{ font-size:12px; color:var(--muted); margin-inline-start:4px; }
+  .sg-s2.n4{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  .sg-s2.n4 .sg-sbt{ flex-direction:column; align-items:flex-start; gap:0; }
+  .sg-s2.n4 .sg-sb > b{ display:block; white-space:nowrap; }
+  .sg-s2.n4 .sg-sb > small{ display:block; margin:0; white-space:nowrap; }
+  @media (max-width:700px){ .sg-s2.n4 .sg-sb{ padding:6px 7px 9px; } .sg-s2.n4 .sg-sb > b{ font-size:clamp(14px, 4.2vw, 19px); } }
   .sg-bar{ position:absolute; inset-inline:0; bottom:0; height:4px; background:rgba(232,162,60,.45); }
   .sg-bar i{ display:block; height:100%; background:var(--ice); }
   .sg-bar.full i{ background:var(--good); }
