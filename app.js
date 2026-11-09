@@ -23813,10 +23813,9 @@ async function renderIslandGallery() {
   // Option C: "→10" badge on the picture and the cost under the pill.
   const tileBits = (s) => {
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
-    const kind = srcOf(s).kind, d = bTime(s);
+    const kind = srcOf(s).kind;
     const st = storeOf(s) ? `<span class="nw">&#128230;${storeOf(s)} &middot;</span> ` : "";
-    // The date is its own piece so a long line wraps before it instead of running out of the card.
-    const tail = d ? `</span> <span class="nw">&middot; ${esc(finLabel(d))}` : "";
+    const tail = ""; // no finish date on the cards (owner, 9 Nov 2026); the pop-up still has it
     const line = kind === "none" ? ""
       : marksOf(s) || tomesOf(s) ? `<span class="isl-tsh mk two">${needOf(s) ? `<span class="nw">${st}${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail} +</span>` : st}${[marksOf(s) ? ` <span class="nw"><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(marksOf(s) >= 10000 ? islK(marksOf(s)) : marksOf(s).toLocaleString())}</span>` : "", tomesOf(s) ? ` <span class="nw"><img class="isl-mki" src="icons/glorious-tome.png" alt="" /> ${bidiNum(tomesOf(s) >= 10000 ? islK(tomesOf(s)) : tomesOf(s).toLocaleString())}</span>` : ""].filter(Boolean).join(" +")}</span>`
       : usesEssence(s) ? `<span class="isl-tsh ess${st ? " two" : ""}">${st}<span class="nw">${bidiNum(shortAmount(essOf(s)))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${tail}</span></span>`
