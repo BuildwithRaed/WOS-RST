@@ -1890,6 +1890,8 @@ const T = {
   isl_src_event: { en: "Playable event" },
   isl_src_ranked: { en: "Ranked event" },
   isl_mk_also: { en: "Also in the Mark of Revival shop" },
+  isl_mk_chip: { en: "Mark shop" },
+  isl_mk_legend: { en: "= also in the Mark of Revival shop" },
   isl_mk_after: { en: "{m} Marks by your target" },
   isl_mk_or: { en: "or {m} Marks" },
   isl_mk_need_opt: { en: "optional, faster · {n} Marks · have {h}" },
@@ -22799,7 +22801,7 @@ function galTileHtml(o) {
   return `<div class="sg-t ${o.cls}" ${o.attr}="${esc(o.id)}" data-gid="${esc(o.id)}" role="button" tabindex="0"${o.pressed != null ? ` aria-pressed="${o.pressed}"` : ""} title="${esc(o.name)}">`
     + `<button type="button" class="sg-mv" data-move="${esc(o.id)}" data-down="${o.down ? 1 : 0}" title="${esc(t(o.down ? "move_to_uncounted" : "move_to_counted"))}" aria-label="${esc(t(o.down ? "move_to_uncounted" : "move_to_counted"))}">${o.down ? "&#8595;" : "&#8593;"}</button>`
     + (o.tick ? `<span class="sg-tick" aria-hidden="true">&#10003;</span>` : "")
-    + `<span class="sg-pw${o.big ? " big" : ""}">${o.img ? `<img src="${esc(o.img)}" alt="" loading="lazy" draggable="false" />` : `<span class="sg-ph">${esc(String(o.name || "?")[0])}</span>`}</span>`
+    + `<span class="sg-pw${o.big ? " big" : ""}${o.pwExtra ? " has-x" : ""}">${o.img ? `<img src="${esc(o.img)}" alt="" loading="lazy" draggable="false" />` : `<span class="sg-ph">${esc(String(o.name || "?")[0])}</span>`}${o.pwExtra || ""}</span>`
     + `<span class="sg-nm">${esc(o.name)}</span>${o.extra || ""}</div>`;
 }
 // Counted grid (first GAL_FIRST unless `all`), "Show N more", then the dashed
@@ -23511,6 +23513,9 @@ async function renderIslandGallery() {
   const usesShards = (s) => tracked(s) && srcOf(s).kind === "shop" && !srcOf(s).price;
   // Also in the Mark of Revival shop (an extra way to buy copies; free shards first).
   const usesMarks = (s) => usesShards(s) && !!srcOf(s).marks;
+  // A coin on the picture of buildings also sold in the Mark of Revival shop.
+  const MK_COIN = '<img src="icons/mark-of-revival.png" alt="" aria-hidden="true">';
+  const coinHtml = (s) => (tracked(s) && usesMarks(s) ? `<span class="isl-mkc" title="${esc(t("isl_mk_also"))}">${MK_COIN}</span>` : "");
   // Storehouse: spare Lv 1 copies the person already has, 1 copy each toward that building.
   const hasPlan = (s) => tracked(s) && srcOf(s).kind !== "none";
   const storeOf = (s) => Math.max(0, Math.floor(Number((ISL_SHARDS.store || {})[s.id]) || 0));
@@ -23813,9 +23818,10 @@ async function renderIslandGallery() {
       pop.querySelector("[data-popnum]").innerHTML = `${lv}<small> / ${mx}</small>`;
       // Event / ranked: a chip beside the name, and the bonus without its max so both fit.
       const kd = tracked(s) ? srcOf(s).kind : "none", chip = pop.querySelector("[data-popchip]");
-      chip.hidden = kd !== "event" && kd !== "ranked";
-      chip.className = `isl-chip ${kd === "ranked" ? "rk" : "ev"}`;
-      chip.textContent = kd === "event" ? t("isl_chip_ev") : kd === "ranked" ? t("isl_chip_rk") : "";
+      const mkc = tracked(s) && usesMarks(s);
+      chip.hidden = kd !== "event" && kd !== "ranked" && !mkc;
+      chip.className = `isl-chip ${kd === "ranked" ? "rk" : mkc ? "mk" : "ev"}`;
+      chip.innerHTML = kd === "event" ? esc(t("isl_chip_ev")) : kd === "ranked" ? esc(t("isl_chip_rk")) : mkc ? `${MK_COIN}${esc(t("isl_mk_chip"))}` : "";
       pop.querySelector("[data-popbn]").textContent = chip.hidden ? bonusText(s, lv) : bonusAt(s, lv).map((b) => `+${galNum(b.val)}% ${galStatShort(b.type)}`).join(" · ");
       pop.querySelector('[data-ipstep="-1"]').disabled = lv <= 0;
       pop.querySelector('[data-ipset="0"]').disabled = lv <= 0;
@@ -23886,6 +23892,8 @@ async function renderIslandGallery() {
         else if (bits.badge) tileEl.insertAdjacentHTML("beforeend", bits.badge);
         if (ln) ln.outerHTML = bits.line || "<span class=\"isl-tsh\" hidden></span>";
         else if (bits.line) tileEl.insertAdjacentHTML("beforeend", bits.line);
+        const pw = tileEl.querySelector(".sg-pw"), coin = coinHtml(s), oc = pw && pw.querySelector(".isl-mkc");
+        if (pw && !!oc !== !!coin) { if (oc) oc.remove(); else pw.insertAdjacentHTML("beforeend", coin); pw.classList.toggle("has-x", !!coin); }
         drawPlan();
         requestAnimationFrame(() => place());
       }
@@ -24062,7 +24070,7 @@ async function renderIslandGallery() {
     }
     const moreKey = `island|${ISLAND_FILTER.bonusType}`;
     const tile = (s, down) => galTileHtml({
-      id: s.id, attr: "data-island", cls: tileCls(s), img: s.image_url, name: s.name, down,
+      id: s.id, attr: "data-island", cls: tileCls(s), img: s.image_url, name: s.name, down, pwExtra: coinHtml(s),
       extra: (() => { const b = tileBits(s); return `<button type="button" class="sg-lvp" data-islv="${esc(s.id)}" aria-haspopup="dialog">${pillHtml(s)}</button>${b.line}${b.badge}`; })(),
     });
     const counted = filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id)));
@@ -24079,6 +24087,7 @@ async function renderIslandGallery() {
     if (split) {
       html = html.replace('<div class="sg-nc">', `${otherList.length ? `<div class="isl-sh2 two"><span>${esc(t("isl_sec_other"))}</span><span class="n">${esc(t("isl_sec_n").replace("{n}", otherList.length))}</span></div><div class="isl-shs">${esc(t("isl_sec_other_d"))}</div><div class="sg-grid" data-zone="counted">${otherList.map((s) => tile(s, true)).join("")}</div>` : ""}<div class="sg-nc">`);
     }
+    if (counted.some((s) => coinHtml(s))) html = `<div class="isl-mkl"><span class="isl-mkc">${MK_COIN}</span>${esc(t("isl_mk_legend"))}</div>` + html;
     sections.innerHTML = html;
     wireGallerySplit(sections, async (id, toUncounted) => {
       if (ISL_POP) ISL_POP.close(true);

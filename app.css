@@ -3467,6 +3467,13 @@ input,select,textarea{
   .isl-chip[hidden]{ display:none; }
   .isl-chip.ev{ background:rgba(201,182,255,.16); color:#c9b6ff; }
   .isl-chip.rk{ background:rgba(124,196,255,.16); color:#7cc4ff; }
+  .isl-chip.mk{ display:inline-flex; align-items:center; gap:3px; background:rgba(224,178,90,.16); color:#e0b25a; padding:3px 6px 3px 4px; }
+  .isl-chip.mk img{ width:14px; height:14px; object-fit:contain; }
+  .sg-pw.has-x{ position:relative; }
+  .isl-mkc{ position:absolute; inset-inline-start:2px; bottom:2px; z-index:2; width:20px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(224,178,90,.7); pointer-events:none; }
+  .isl-mkc img, .sg-t .sg-pw .isl-mkc img, .sg-t.no .sg-pw .isl-mkc img, .sg-t.is.l0 .sg-pw .isl-mkc img{ width:15px; height:15px; object-fit:contain; opacity:1; filter:none; }
+  .isl-mkl{ display:flex; align-items:center; gap:6px; margin:0 2px 8px; font-size:12px; color:var(--muted); }
+  .isl-mkl .isl-mkc{ position:static; flex:0 0 auto; }
   .isl-store .l2{ flex:1; min-width:0; font-size:12.5px; font-weight:800; color:#e0b25a; line-height:1.2; }
   .isl-store .l2 small{ display:block; font-size:11px; font-weight:600; color:var(--muted); }
   .isl-store[hidden]{ display:none; }
