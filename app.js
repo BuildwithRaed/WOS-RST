@@ -1894,7 +1894,6 @@ const T = {
   isl_mk_after: { en: "{m} Marks (after your target)" },
   isl_mk_or: { en: "or {m} Marks" },
   isl_mk_need_opt: { en: "optional, faster · {n} Marks · have {h}" },
-  isl_mk_price: { en: "Price (Marks)" },
   isl_mk_limit: { en: "Shop limit (total)" },
   isl_mk_name: { en: "Mark of Revival" },
   isl_mk_packs: { en: "Packs" },
@@ -23171,7 +23170,7 @@ const ISL_CAMP = [null,
   { workers: 1, wood: 6, load: 360 }, { workers: 1, wood: 7, load: 840 }, { workers: 1, wood: 8, load: 1440 }, { workers: 2, wood: 9, load: 2160 },
   { workers: 2, wood: 10, load: 3000 }, { workers: 2, wood: 11, load: 3960 }, { workers: 2, wood: 12, load: 5040 }, { workers: 2, wood: 13, load: 6240 },
   { workers: 2, wood: 14, load: 7560 }, { workers: 2, wood: 15, load: 9000 }];
-const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3 };
+const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250 };
 const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
 // calc_state "island_shards" = { targets: { skinId: level }, allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
@@ -23209,7 +23208,7 @@ function islSource(name, mythic = true) {
   // An old "marks" kind (Mark of Revival Shop) reads as a shard building that is also in the Mark shop.
   const kind = v.kind === "event" || v.kind === "ranked" ? v.kind : "shop";
   const each = Number(v.each) > 0 ? Number(v.each) : 0;
-  if (kind === "shop") return { kind, each, price, marks: !!(v.marks || v.kind === "marks"), markPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : ISL_MARK_PRICE, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
+  if (kind === "shop") return { kind, each, price, marks: !!(v.marks || v.kind === "marks"), markPrice: Number(ISL_RULES.markPrice) || ISL_MARK_PRICE, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
   // "cal": a game event of the calendar (SvS / KOI, GAME_EVENTS); "pack": a Packs-page pack.
   const dates = v.dates === "cal" && GAME_EVENTS.some((g) => g.key === v.ev) ? "cal" : v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
   return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, ev: dates === "cal" ? v.ev : "", pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
@@ -23232,7 +23231,7 @@ async function islSaveSource(name, src, mythic = true) {
     return;
   }
   const kind = !src ? "" : src.kind === "event" || src.kind === "ranked" ? src.kind : mythic ? "shop" : "none";
-  const e = !src ? null : kind === "shop" && src.marks ? { kind, marks: true, markPrice: Number(src.markPrice) > 0 ? Math.round(Number(src.markPrice)) : ISL_MARK_PRICE, markLimit: Number(src.markLimit) > 0 ? Math.round(Number(src.markLimit)) : ISL_MARK_LIMIT }
+  const e = !src ? null : kind === "shop" && src.marks ? { kind, marks: true, markLimit: Number(src.markLimit) > 0 ? Math.round(Number(src.markLimit)) : ISL_MARK_LIMIT }
     : kind === "shop" || kind === "none" ? { kind }
     : { kind, every: Number(src.every) > 0 ? Number(src.every) : 30, choices: islChoices(src.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES) };
   if (e && each) e.each = each;
@@ -23798,7 +23797,7 @@ async function renderIslandGallery() {
     pop.setAttribute("aria-label", s.name);
     pop.innerHTML = `<span class="sg-pop-ar"></span><div class="sg-pop-h">${s.image_url ? `<img class="isl-pic" src="${esc(s.image_url)}" alt="" />` : ""}<b>${esc(s.name)}</b><span class="isl-chip" data-popchip hidden></span><span data-popbn></span></div>
       <div class="sg-pop-bt"><button type="button" class="sg-pop-sm" data-ipset="0" aria-label="${esc(t("sg_not_built"))}">0</button><button type="button" class="sg-pop-pm" data-ipstep="-1" aria-label="&#8722;">&#8722;</button><span class="sg-pop-num" data-popnum aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipstep="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-ipset="max">${esc(t("sg_max"))}</button></div>
-      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><label class="isl-mkck" data-ipmkcw hidden><span>${esc(t("isl_mk_also"))}</span><input type="checkbox" class="bset-sw" data-ipmkc /></label><div class="isl-mkset" data-ipmkw hidden><label><span>${esc(t("isl_mk_price"))}</span><input type="number" inputmode="numeric" min="1" step="10" data-ipmkp /></label><label><span>${esc(t("isl_mk_limit"))}</span><input type="number" inputmode="numeric" min="1" step="1" data-ipmkl /></label></div><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
+      ${tracked(s) ? `<div class="isl-tg"><span class="l">${esc(t("isl_target"))}</span><button type="button" class="sg-pop-pm" data-iptg="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-poptg aria-live="polite"></span><button type="button" class="sg-pop-pm" data-iptg="1" aria-label="+">+</button><button type="button" class="sg-pop-mx" data-iptg="max">${esc(t("sg_max"))}</button></div><div class="isl-tg isl-store" data-popstw hidden><span class="l2">&#128230; ${esc(t("isl_store"))}<small>${esc(t("isl_store_d"))}</small></span><button type="button" class="sg-pop-pm" data-ipst="-1" aria-label="&#8722;">&#8722;</button><span class="n" data-popst aria-live="polite"></span><button type="button" class="sg-pop-pm" data-ipst="1" aria-label="+">+</button></div><div class="isl-get" data-popget hidden>${esc(t("isl_get_first"))}</div><div class="isl-need" data-popneed></div>${IS_OWNER && !islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label></div>` : ""}${IS_OWNER && islIsMythic(s) ? `<div class="isl-src"><div class="isl-osl">${esc(t("isl_owner_set"))}</div><label><span>${esc(t("isl_src"))}</span><select class="keep-w" data-ipsrc><option value="shop">${esc(t("isl_src_shop"))}</option><option value="event">${esc(t("isl_src_event"))}</option><option value="ranked">${esc(t("isl_src_ranked"))}</option></select></label><label data-ipsrceachw><span>${esc(t("isl_src_each"))}</span><span class="isl-eachr"><select class="keep-w" data-ipsrceach><option value="0">${esc(t("isl_src_table"))}</option><option value="1">${esc(t("isl_src_same"))}</option></select><input type="number" inputmode="numeric" min="1" max="99" data-ipsrceachn hidden /></span></label><label data-ippricew><span>${esc(t("isl_src_price_s"))}</span><input type="number" inputmode="numeric" min="0" step="500" data-ipprice /></label><label class="isl-mkck" data-ipmkcw hidden><span>${esc(t("isl_mk_also"))}</span><input type="checkbox" class="bset-sw" data-ipmkc /></label><div class="isl-mkset" data-ipmkw hidden><label><span>${esc(t("isl_mk_limit"))}</span><input type="number" inputmode="numeric" min="1" step="1" data-ipmkl /></label></div><div class="isl-dt" data-ipsrcev hidden><div class="isl-dl">${esc(t("isl_dates_from"))}</div><div class="isl-seg"><button type="button" data-ipdates="pack">${esc(t("isl_dates_pack"))}</button><button type="button" data-ipdates="own">${esc(t("isl_dates_own"))}</button></div>
         <div class="isl-dpk" data-ipdpk hidden><div class="isl-dl">${esc(t("isl_dates_pick"))}</div><select class="keep-w" data-ippack></select><div class="isl-dsm" data-ippacknote></div></div>
         <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
@@ -23854,8 +23853,7 @@ async function renderIslandGallery() {
             ckw.hidden = src.kind !== "shop" || !!src.price;
             ck.checked = !!src.marks;
             mkw.hidden = ckw.hidden || !src.marks;
-            const mp = pop.querySelector("[data-ipmkp]"), ml = pop.querySelector("[data-ipmkl]");
-            if (document.activeElement !== mp) mp.value = src.markPrice || ISL_MARK_PRICE;
+            const ml = pop.querySelector("[data-ipmkl]");
             if (document.activeElement !== ml) ml.value = src.markLimit || ISL_MARK_LIMIT;
           }
           const grp = src.dates === "cal" ? "pack" : src.dates;
@@ -23991,7 +23989,7 @@ async function renderIslandGallery() {
         return;
       }
       const sel = pop.querySelector("[data-ipsrc]");
-      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcch], [data-ipsrceach], [data-ipsrceachn], [data-ippack], [data-ipnext], [data-ipmkp], [data-ipmkl], [data-ipmkc]"))) return;
+      if (!sel || !(e.target === sel || e.target.matches("[data-ipsrcch], [data-ipsrceach], [data-ipsrceachn], [data-ippack], [data-ipnext], [data-ipmkl], [data-ipmkc]"))) return;
       // A new kind starts from its own defaults (event 1–5, ranked 1, every 30 days).
       const kindChanged = e.target === sel;
       const kind = sel.value, every = 30, choices = kindChanged ? null : pop.querySelector("[data-ipsrcch]").value;
@@ -24004,9 +24002,9 @@ async function renderIslandGallery() {
       if (!kindChanged && e.target.matches("[data-ippack]") && pv) {
         if (pv.startsWith("ev:")) { dates = "cal"; ev = pv.slice(3); } else { dates = "pack"; pack = pv; }
       }
-      const markPrice = Number(pop.querySelector("[data-ipmkp]").value) || cur.markPrice, markLimit = Number(pop.querySelector("[data-ipmkl]").value) || cur.markLimit;
+      const markLimit = Number(pop.querySelector("[data-ipmkl]").value) || cur.markLimit;
       const marks = kind === "shop" && !!pop.querySelector("[data-ipmkc]").checked;
-      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next, price: cur.price, marks, markPrice, markLimit }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
+      islSaveSource(s.name, { kind, every, choices, each, dates, ev, pack, next, price: cur.price, marks, markLimit }, islIsMythic(s)).then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) draw(); else drawPlan(); }).catch(() => toast("Couldn't save", true));
     });
     ISL_POP = {
       id: String(s.id), place,
@@ -29145,7 +29143,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=ebdd2d55cf";
+      s.src = "admin.min.js?v=84c948029e";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
@@ -29368,7 +29366,7 @@ function gameRules() {
       get: () => ISL_TREE.slice(1).map((v, i) => ({ level: i + 1, perHour: v })),
       set: (rows) => ruleSetArray(ISL_TREE, [0, ...rows.map((r) => Number(r.perHour) || 0)]) },
     { key: "islShop", group: "islands", label: "Island shards shop & income", type: "fields", help: "Mythic Island Shards: shards per building copy, Life Essence for 10 shards, the shop's weekly limit (shards, and building copies per building — each building's price is set on the building); what the Tree of Life and the Timbermill hold (they stop making essence when full), the Timbermill's essence an hour per worker, wood for 1 Life Essence and ally help.",
-      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day")],
+      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy")],
       get: () => ({ ...ISL_RULES }), set: (v) => { Object.keys(ISL_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) ISL_RULES[k] = Number(v[k]); }); } },
     { key: "islCamp", group: "islands", label: "Lumber Camp by level", help: "Workers, wood a second per worker and load at each Lumber Camp level. The Timbermill is built when both camps are at the top level; its workers = both camps' workers.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "workers", label: "Workers", type: "num" }, { key: "wood", label: "Wood / s per worker", type: "num" }, { key: "load", label: "Load", type: "num" }],
