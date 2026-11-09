@@ -23227,7 +23227,6 @@ function islCopiesBetween(from, to, each = 0, lv1 = true) {
   return c;
 }
 // Shards from level `from` to `to` (Lv 1 is bought / won, so it costs none).
-const islShardsBetween = (from, to, each = 0) => islCopiesBetween(from, to, each, false) * (Number(ISL_RULES.perCopy) || 0);
 async function islSaveSource(name, src, mythic = true) {
   const cur = { ...(siteConfig("island_sources", {}) || {}) };
   const each = Number(src && src.each) > 0 ? Number(src.each) : 0;
@@ -23537,8 +23536,8 @@ async function renderIslandGallery() {
     const tail = d ? ` &middot; ${esc(evShort(d))}` : "";
     const line = kind === "none" ? ""
       : kind === "marks" ? `<span class="isl-tsh mk${st ? " two" : ""}">${st}<span class="nw">${bidiNum(marksOf(s).toLocaleString())} <img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> &middot; ${esc(t("isl_mk_packs"))}</span></span>`
-      : usesEssence(s) ? `<span class="isl-tsh ess${st ? " two" : ""}">${st}<span class="nw">${bidiNum(shortAmount(essOf(s)))} <i aria-hidden="true">&#127807;</i>${tail}</span></span>`
-      : kind === "shop" ? `<span class="isl-tsh${st ? " two" : ""}">${st}<span class="nw">${bidiNum(needOf(s).toLocaleString())} <i aria-hidden="true">&#11042;</i>${tail}</span></span>`
+      : usesEssence(s) ? `<span class="isl-tsh ess${st ? " two" : ""}">${st}<span class="nw">${bidiNum(shortAmount(essOf(s)))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${tail}</span></span>`
+      : kind === "shop" ? `<span class="isl-tsh${st ? " two" : ""}">${st}<span class="nw">${bidiNum(needOf(s).toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true">${tail}</span></span>`
       : `<span class="isl-tsh tag${st ? " two" : ""}">${st}${esc(t(kind === "event" ? "isl_tag_ev" : "isl_tag_rk").replace("{t}", evShort(evPlan(s).days)))}</span>`;
     return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
   };
@@ -23600,15 +23599,15 @@ async function renderIslandGallery() {
     const mk = list.reduce((a, s) => a + marksOf(s), 0);
     if (mk > 0) res += `<button type="button" class="isl-mkrow" data-islmkopen><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /><span class="tx"><b>${esc(t("isl_mk_name"))}</b><small>${esc(t("isl_mk_need").replace("{n}", mk.toLocaleString()).replace("{h}", markHave().toLocaleString()))}</small></span><span class="pr" data-islmkprice>${esc(PACK_COST_SHOWN.islands || t("pc_title"))}</span><span class="go" aria-hidden="true">&#8250;</span></button>`;
     const inc = islIncome(st), sd = islShardsDay(st);
-    const incLine = `<span class="isl-ic e" aria-hidden="true">&#127807;</span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
+    const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-hd"><span class="t">${esc(t("isl_plan"))}</span>${fold}</div>
       ${view}
       <label class="isl-row"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>
       ${st.allView ? `<div class="isl-allnote">${esc(t("isl_view_sets").replace("{n}", list.length).replace("{c}", cats))}</div>` : ""}
       <div class="isl-hl">${esc(t("isl_you_have"))} <span>${esc(t("isl_tap_type"))}</span></div>
       <div class="isl-have">
-        <button type="button" class="isl-hb" data-islhave="essence"><span class="isl-ic e" aria-hidden="true">&#127807;</span><span><small>${esc(t("isl_essence"))}</small><b>${bidiNum((st.essence || 0).toLocaleString())}</b></span></button>
-        <button type="button" class="isl-hb" data-islhave="shards"><span class="isl-ic s" aria-hidden="true">&#11042;</span><span><small>${esc(t("isl_shards"))}</small><b>${bidiNum((st.shards || 0).toLocaleString())}</b></span></button>
+        <button type="button" class="isl-hb" data-islhave="essence"><span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span><small>${esc(t("isl_essence"))}</small><b>${bidiNum((st.essence || 0).toLocaleString())}</b></span></button>
+        <button type="button" class="isl-hb" data-islhave="shards"><span class="isl-ic s" aria-hidden="true"><img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></span><span><small>${esc(t("isl_shards"))}</small><b>${bidiNum((st.shards || 0).toLocaleString())}</b></span></button>
       </div>
       ${res}
       <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
@@ -23777,7 +23776,7 @@ async function renderIslandGallery() {
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
         pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.weeks4 ? t("isl_pb_month") : t("isl_pb_every").replace("{d}", ev.nx.every)))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
           : usesMarks(s) ? (!all ? "" : `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""} &times; ${bidiNum(src.markPrice.toLocaleString())}<br>= <b class="gd">${esc(t("isl_nb_marks").replace("{n}", marksOf(s).toLocaleString()))}</b>${left > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}${marksOf(s) ? `<button type="button" class="isl-mkb" data-islmkopen>${esc(t("isl_mk_bought"))} &middot; <span data-islmkprice>${esc(PACK_COST_SHOWN.islands || t("pc_title"))}</span> &middot; ${esc(t("isl_mk_plan"))} &#8250;</button>` : ""}</div>`)
-          : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""} &times; ${bidiNum(src.price.toLocaleString())}<br>= <b class="gd">${esc(t("isl_nb_ess").replace("{n}", ess.toLocaleString()))}</b>${ess > (ISL_SHARDS.essence || 0) || d ? ` &middot; ${d != null ? (d ? `~${esc(evShort(d))}` : esc(t("isl_needs_ok"))) : "?"}` : ess ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""}<br>= <b class="gd">${bidiNum(need.toLocaleString())} <i aria-hidden="true">&#11042;</i></b>${short > 0 ? ` &middot; ${tm ? `~${esc(evShort(tm.days))}` : "?"}` : need ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`;
+          : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""} &times; ${bidiNum(src.price.toLocaleString())}<br>= <b class="gd">${esc(t("isl_nb_ess").replace("{n}", ess.toLocaleString()))}</b>${ess > (ISL_SHARDS.essence || 0) || d ? ` &middot; ${d != null ? (d ? `~${esc(evShort(d))}` : esc(t("isl_needs_ok"))) : "?"}` : ess ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox"><b>${esc(t("isl_nb_copies").replace("{n}", all))}</b>${store ? ` &middot; <span class="g">${esc(t("isl_nb_store").replace("{n}", store))}</span> &rarr; <b>${esc(t("isl_nb_left").replace("{n}", left))}</b>` : ""}<br>= <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${short > 0 ? ` &middot; ${tm ? `~${esc(evShort(tm.days))}` : "?"}` : need ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`;
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
           if (document.activeElement !== pi) pi.value = src.price || "";
