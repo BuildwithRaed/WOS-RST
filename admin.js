@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "51a6a9b7e5";
+window.ADMIN_BUILD = "bf4d7d1cd1";
 
 // ============================================================
 // ADMIN PAGE
@@ -3160,21 +3160,23 @@ async function renderAdminSkinsCategory(body, category, kind) {
     // Islands: how the building is got (site_config island_sources, for everyone;
     // only "Mythic shards" buildings count in the Islands Shards plan).
     ...(kind === "islands" ? [
-      { key: "isl_src", label: "How to get", type: "select", options: [["shop", "Mythic shards"], ["event", "Playable event"], ["ranked", "Ranked event or purchase"]], value: r.name ? islSource(r.name).kind : "shop", half: true },
-      { key: "isl_src_every", label: "Event: every (days)", type: "num", value: r.name ? (islSource(r.name).every || 30) : 30, half: true },
-      { key: "isl_src_choices", label: "Event: copies a cycle (e.g. 1,3,5)", value: (r.name && islSource(r.name).choices || ISL_EV_CHOICES).join(","), half: true },
+      // Shards never apply to a non-Mythic building (bonus under 10%).
+      { key: "isl_src", label: "How to get", type: "select", options: [...(islIsMythic(r) || !r.name ? [["shop", "Mythic shards (Mythic only)"]] : []), ["event", "Playable event"], ["ranked", "Ranked event or purchase"]], value: r.name ? islSource(r.name, islIsMythic(r)).kind : "shop", half: true },
+      { key: "isl_src_each", label: "Copies per level (empty = normal table 2, 3 … 12)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).each || null) : null, half: true },
+      { key: "isl_src_every", label: "Event: every (days)", type: "num", value: r.name ? (islSource(r.name, islIsMythic(r)).every || 30) : 30, half: true },
+      { key: "isl_src_choices", label: "Event: copies a cycle (e.g. 1,3,5)", value: (r.name && islSource(r.name, islIsMythic(r)).choices || ISL_EV_CHOICES).join(","), half: true },
     ] : []),
   ];
   // Splits the How to get fields off the row and saves them into island_sources
   // (a renamed building keeps its entry).
-  const takeSrc = (v) => { const src = { kind: v.isl_src, every: v.isl_src_every, choices: v.isl_src_choices }; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; return src; };
-  const saveSrc = async (name, src, oldName) => {
+  const takeSrc = (v) => { const src = { kind: v.isl_src, every: v.isl_src_every, choices: v.isl_src_choices, each: v.isl_src_each }; delete v.isl_src; delete v.isl_src_every; delete v.isl_src_choices; delete v.isl_src_each; return src; };
+  const saveSrc = async (name, src, oldName, mythic) => {
     if (kind !== "islands" || !src.kind) return;
     if (oldName && oldName !== name) {
       const cur = { ...(siteConfig("island_sources", {}) || {}) };
       if (cur[oldName]) { delete cur[oldName]; await saveSiteConfig("island_sources", cur); }
     }
-    await islSaveSource(name, src);
+    await islSaveSource(name, src, mythic);
   };
   wireAdmList(body, {
     onEdit: (id) => {
@@ -3184,7 +3186,7 @@ async function renderAdminSkinsCategory(body, category, kind) {
           if (!v.name) throw new Error("Enter a name");
           const src = takeSrc(v);
           await sb(`skins?id=eq.${r.id}`, { method: "PATCH", body: JSON.stringify(v) });
-          await saveSrc(v.name, src, r.name);
+          await saveSrc(v.name, src, r.name, islIsMythic({ bonus_value: v.bonus_value }));
           // A Globe Level extra skin keeps its link under the new name.
           if (v.name !== r.name && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(r.name)) await saveGameRule("globeLevels", GLOBE_LEVELS.map((g) => ({ level: g.level, city: g.city === r.name ? v.name : g.city, extra: g.extra.map((x) => (x === r.name ? v.name : x)) })));
           dashDataChanged("skins"); toast("Saved"); renderAdminSkinsCategory(body, category, kind);
@@ -3198,7 +3200,7 @@ async function renderAdminSkinsCategory(body, category, kind) {
         const maxOrder = rows.reduce((m, r) => Math.max(m, r.sort_order || 0), 0);
         const src = takeSrc(v);
         await sb(`skins`, { method: "POST", body: JSON.stringify({ ...v, user_id: USER_ID, category, current_level: v.current_level || 0, owned: !!v.owned, sort_order: maxOrder + 1 }) });
-        await saveSrc(v.name, src);
+        await saveSrc(v.name, src, null, islIsMythic({ bonus_value: v.bonus_value }));
         dashDataChanged("skins"); toast("Item added"); renderAdminSkinsCategory(body, category, kind);
       } }),
   });

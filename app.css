@@ -3459,13 +3459,14 @@ input,select,textarea{
   .isl-tb th:first-child, .isl-tb td:first-child{ text-align:start; }
   .isl-tb td{ padding:7px 4px; text-align:end; border-top:1px solid var(--line); color:var(--frost); font-weight:700; }
   .isl-tb td:first-child{ color:var(--muted); font-weight:600; }
-  .isl-shop{ margin-top:12px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); font-size:13px; color:var(--frost); }
-  .isl-shop-r{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .isl-shop input{ width:64px; height:32px; text-align:center; font-size:16px; }
-  .isl-shop .bar{ height:6px; border-radius:4px; background:rgba(255,255,255,.08); margin-top:6px; overflow:hidden; }
-  .isl-shop .bar i{ display:block; height:100%; background:#7cc4ff; }
-  .isl-shop small{ display:block; margin-top:5px; color:var(--muted); font-size:11.5px; }
   .isl-done{ width:100%; margin-top:12px; }
+  .isl-ssel{ height:36px; min-width:84px; width:auto; padding:0 8px; font-size:14px; font-weight:700; }
+  .isl-mw{ font-size:14px; color:var(--frost); white-space:nowrap; }
+  .isl-split{ margin-top:8px; font-size:12px; color:var(--muted); }
+  .isl-src label.w2{ flex:1 1 100%; }
+  .isl-eachr{ display:flex; gap:8px; align-items:center; }
+  .isl-eachr select{ flex:1 1 auto; min-width:0; }
+  .isl-eachr input[hidden]{ display:none; }
   .isl-tsh.tag{ color:#c9b6ff; font-weight:700; font-size:11px; }
   .isl-msg{ padding:7px 9px; border-radius:9px; background:rgba(201,182,255,.08); border:1px solid rgba(201,182,255,.3); font-size:12.5px; color:var(--frost); line-height:1.4; }
   .isl-nc{ margin-top:4px; font-size:12px; color:var(--muted); }
