@@ -1842,9 +1842,13 @@ const T = {
   isl_store: { en: "In Storehouse" },
   isl_store_d: { en: "spare Lv. 1 copies" },
   isl_pb_next: { en: "Next event" },
-  isl_pb_every: { en: "every {d} d" },
+  isl_pb_every: { en: "every {d} days" },
+  isl_every_w: { en: "every {n} weeks" },
+  isl_every_1w: { en: "every week" },
+  isl_every_mo: { en: "every month" },
+  isl_no_dates: { en: "no dates set" },
+  isl_pick_event: { en: "pick the event" },
   isl_pb_get: { en: "You get" },
-  isl_pb_month: { en: "every 4 weeks" },
   isl_pb_each: { en: "each time" },
   isl_pb_done: { en: "Done" },
   isl_pb_left: { en: "{n} copies left" },
@@ -1866,8 +1870,8 @@ const T = {
   isl_dates_next: { en: "Next event" },
   isl_dates_pick: { en: "Event or pack" },
   isl_dates_choose: { en: "\u2014 choose \u2014" },
-  isl_dates_follows: { en: "Follows {name} in the calendar: next {date} \u00b7 every {d} days" },
-  isl_dates_follows_ev: { en: "Follows the calendar: next {name} {date} \u00b7 every 4 weeks" },
+  isl_dates_follows: { en: "Follows {name} in the calendar: next {date} \u00b7 {every}" },
+  isl_dates_follows_ev: { en: "Follows the calendar: next {name} {date} \u00b7 {every}" },
   isl_dates_events: { en: "Game events" },
   isl_dates_packs: { en: "Packs & events" },
   isl_dates_nopack: { en: "Pick a pack with dates." },
@@ -23204,6 +23208,21 @@ function islChoices(v, def = ISL_EV_CHOICES) {
 const ISL_SHOP_CAT = "Islands Guide"; // the only category the Life Essence shop sells
 // 6500 → "6.5K", 12000 → "12K" (Islands tile lines).
 const islK = (n) => (n >= 1000 ? `${Math.round(n / 100) / 10}K` : String(n));
+// A calendar game event by its saved key; survives a rename in Admin → Rules
+// ("tyrant" still finds "Tyrant Battle" = key "tyrantbattle").
+function islFindEvent(key) {
+  const k = String(key || "");
+  if (!k) return null;
+  return GAME_EVENTS.find((g) => g.key === k) || GAME_EVENTS.find((g) => g.key.startsWith(k) || k.startsWith(g.key)) || GAME_EVENTS.find((g) => g.key.includes(k) || k.includes(g.key)) || null;
+}
+// "every 4 weeks" / "every week" / "every month" (packs that reset 30 = calendar months) / "every 9 days".
+function islEveryText(days, monthly) {
+  const d = Number(days) || 0;
+  if (monthly || d === 30) return t("isl_every_mo");
+  if (d === 7) return t("isl_every_1w");
+  if (d > 0 && d % 7 === 0) return t("isl_every_w").replace("{n}", d / 7);
+  return t("isl_pb_every").replace("{d}", d);
+}
 function islSource(name, mythic = true) {
   const v = ((typeof siteConfig === "function" ? siteConfig("island_sources", {}) : {}) || {})[name] || {};
   const price = Number(v.price) > 0 ? Number(v.price) : 0;
@@ -23214,8 +23233,9 @@ function islSource(name, mythic = true) {
   const each = Number(v.each) > 0 ? Number(v.each) : 0;
   if (kind === "shop") return { kind, each, price, marks: !!(v.marks || v.kind === "marks"), markPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : (Number(ISL_RULES.markPrice) || ISL_MARK_PRICE), ownPrice: Number(v.markPrice) > 0 ? Number(v.markPrice) : 0, markLimit: Number(v.markLimit) > 0 ? Number(v.markLimit) : ISL_MARK_LIMIT };
   // "cal": a game event of the calendar (SvS / KOI, GAME_EVENTS); "pack": a Packs-page pack.
-  const dates = v.dates === "cal" && GAME_EVENTS.some((g) => g.key === v.ev) ? "cal" : v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
-  return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, ev: dates === "cal" ? v.ev : "", pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
+  const evHit = v.dates === "cal" ? islFindEvent(v.ev) : null;
+  const dates = v.dates === "cal" ? "cal" : v.dates === "pack" ? "pack" : v.dates === "own" && packValidDay(v.next) ? "own" : "";
+  return { kind, each, every: Number(v.every) > 0 ? Number(v.every) : 30, choices: islChoices(v.choices, kind === "event" ? ISL_EV_CHOICES : ISL_RK_CHOICES), dates, ev: evHit ? evHit.key : "", pack: dates === "pack" ? String(v.pack || "") : "", next: dates === "own" ? v.next : "" };
 }
 const islCopiesAt = (l, each) => (each > 0 ? each : Number(ISL_COPIES[l]) || 0);
 // Copies from level `from` to `to`; with lv1 the first copy (Lv 1) counts too (event buildings).
@@ -23241,7 +23261,7 @@ async function islSaveSource(name, src, mythic = true) {
   if (e && each) e.each = each;
   // Event dates: from a Packs-page pack or the owner's own next date.
   if (e && (kind === "event" || kind === "ranked")) {
-    if (src.dates === "cal" && GAME_EVENTS.some((g) => g.key === src.ev)) { e.dates = "cal"; e.ev = src.ev; }
+    if (src.dates === "cal" && islFindEvent(src.ev)) { e.dates = "cal"; e.ev = islFindEvent(src.ev).key; }
     else if (src.dates === "pack") { e.dates = "pack"; e.pack = String(src.pack || ""); }
     else if (src.dates === "own") { e.dates = "own"; e.next = packValidDay(src.next) || packDayKey(packStartOfToday()); delete e.every; }
   }
@@ -23275,7 +23295,7 @@ const ISL_EV_WEEKS4 = 28; // own dates repeat every 4 weeks; also the no-dates f
 function islNextEvent(src) {
   // A game event: its real starts, as on the Pack calendar and the Dashboard.
   if (src.dates === "cal") {
-    const g = GAME_EVENTS.find((x) => x.key === src.ev);
+    const g = islFindEvent(src.ev);
     if (g && packParseDay(gameEventAnchor(g))) {
       const today = packStartOfToday();
       const st = gameEventStarts(g, today, new Date(today.getTime() + (g.every * 2 + 7) * 86400000)).find((d) => d >= today);
@@ -23286,7 +23306,7 @@ function islNextEvent(src) {
     const l = packLinkFor(src.pack);
     const offs = typeof l.reset === "number" ? packResetOffsets(l.reset, l.resetDay, 800, l.window) : [];
     const off = offs.find((o) => o >= 0);
-    if (off != null) return { off, every: l.reset, known: true };
+    if (off != null) return { off, every: l.reset, known: true, monthly: l.reset === 30 };
   }
   // Own dates: the picked day, then every 4 weeks (like SvS on the calendar).
   if (src.dates === "own" && src.next) {
@@ -23846,7 +23866,7 @@ async function renderIslandGallery() {
         pop.querySelector('[data-ipst="-1"]').disabled = storeOf(s) <= 0;
         const all = copiesOf(s), store = storeOf(s), left = copiesLeft(s);
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
-        pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.weeks4 ? t("isl_pb_month") : t("isl_pb_every").replace("{d}", ev.nx.every)))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
+        pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.known ? islEveryText(ev.nx.every, ev.nx.monthly) : t(ev.src.dates === "cal" ? "isl_pick_event" : "isl_no_dates")))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
           : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess > (ISL_SHARDS.essence || 0) || d ? ` &middot; ${d != null ? (d ? `~${esc(evShort(d))}` : esc(t("isl_needs_ok"))) : "?"}` : ess ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", need && mkCopies(s) ? left - mkCopies(s) : all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !mkCopies(s) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${short > 0 ? ` &middot; ${tm ? `~${esc(evShort(tm.days))}` : "?"}` : need ? ` &middot; ${esc(t("isl_needs_ok"))}` : ""}` : ""}${mkLine(s)}</div>`;
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
@@ -23880,7 +23900,7 @@ async function renderIslandGallery() {
             const ps = pop.querySelector("[data-ippack]");
             if (document.activeElement !== ps) ps.innerHTML = `<option value="">${esc(t("isl_dates_choose"))}</option><optgroup label="${esc(t("isl_dates_events"))}">${GAME_EVENTS.map((g) => `<option value="ev:${esc(g.key)}"${src.dates === "cal" && src.ev === g.key ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</optgroup>${(ISL_PACKS || []).length ? `<optgroup label="${esc(t("isl_dates_packs"))}">${ISL_PACKS.map((x) => `<option value="${esc(x.id)}"${src.dates === "pack" && x.id === src.pack ? " selected" : ""}>${x.lead ? "&#128279; " : ""}${esc(x.name)}</option>`).join("")}</optgroup>` : ""}`;
             const nx = islNextEvent(src), pk = src.dates === "pack" ? (ISL_PACKS || []).find((x) => x.id === src.pack) : null;
-            pop.querySelector("[data-ippacknote]").textContent = !nx.known ? t("isl_dates_nopack") : src.dates === "cal" ? t("isl_dates_follows_ev").replace("{name}", nx.evName).replace("{date}", islDateShort(islDay(nx.off))) : t("isl_dates_follows").replace("{name}", pk ? pk.name : "").replace("{date}", islDateShort(islDay(nx.off))).replace("{d}", nx.every);
+            pop.querySelector("[data-ippacknote]").textContent = !nx.known ? t(src.dates === "cal" ? "isl_pick_event" : "isl_dates_nopack") : src.dates === "cal" ? t("isl_dates_follows_ev").replace("{name}", nx.evName).replace("{date}", islDateShort(islDay(nx.off))).replace("{every}", islEveryText(nx.every)) : t("isl_dates_follows").replace("{name}", pk ? pk.name : "").replace("{date}", islDateShort(islDay(nx.off))).replace("{every}", islEveryText(nx.every, nx.monthly));
           }
           const ci = pop.querySelector("[data-ipsrcch]");
           if (document.activeElement !== ci) ci.value = (src.choices || ISL_EV_CHOICES).join(",");
