@@ -3517,6 +3517,8 @@ input,select,textarea{
   .isl-src label{ display:flex; flex-direction:column; gap:3px; min-width:0; font-size:11px; color:var(--muted); font-weight:700; }
   .isl-src label:first-child{ flex:1 1 auto; }
   .isl-src label[hidden]{ display:none; }
+  .isl-src [data-ipprice]{ width:130px; }
+  .isl-tsh.ess{ color:#7ee0a6; }
   .isl-src select{ height:36px; width:100%; padding:0 8px; line-height:normal; font-size:13px; }
   .isl-src{ flex-wrap:wrap; }
   .isl-src input{ width:70px; height:34px; text-align:center; font-size:16px; }
