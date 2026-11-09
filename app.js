@@ -7796,8 +7796,16 @@ function purBoughtUntil(p) {
   return { until: packDayKey(new Date(start.getTime() + (win - 1) * DAY)) };
 }
 function packCurrentCycleStart(reset, resetDay) {
-  if (typeof reset !== "number" || !(reset > 0) || reset === 30) return null;
+  if (typeof reset !== "number" || !(reset > 0)) return null;
   const today = packStartOfToday(), anchor = packParseDay(resetDay);
+  // 30 = calendar months: the copy started on the anchor's day of this month (or last month).
+  if (reset === 30) {
+    if (!anchor) return null;
+    const dom = anchor.getUTCDate();
+    const at = (k) => { const y = today.getUTCFullYear(), m = today.getUTCMonth() + k; return new Date(Date.UTC(y, m, Math.min(dom, new Date(Date.UTC(y, m + 1, 0)).getUTCDate()))); };
+    const st = at(0);
+    return st > today ? at(-1) : st;
+  }
   let since;
   if (anchor) { const first = Math.round((anchor - today) / 86400000); since = first > 0 ? (reset - (first % reset)) % reset : (-first) % reset; }
   else if (reset === 7 || reset === 14) since = (packStartOfToday().getUTCDay() + 6) % 7;
