@@ -1936,6 +1936,22 @@ const T = {
   isl_src: { en: "How to get" },
   isl_src_choices: { en: "Copies a cycle, up to 6 (e.g. 1,3,6)" },
   isl_sc_name: { en: "Shining City" },
+  sh_title: { en: "Shining City skins" },
+  sh_pick: { en: "+ pick skins" },
+  sh_tomes: { en: "{n} Tomes" },
+  sh_total: { en: "{n} skins \u00b7 {m} Tomes" },
+  sh_total1: { en: "1 skin \u00b7 {m} Tomes" },
+  sh_when: { en: "{every} \u00b7 {d} days" },
+  sh_next: { en: "next {date}" },
+  sh_on_now: { en: "on now" },
+  sh_no_date: { en: "set the Shining City Pack's date on the Packs page" },
+  sh_have: { en: "\u2713 in your Backpack" },
+  sh_pick_title: { en: "Shining City skins" },
+  sh_pick_desc: { en: "Tick the City Skins your state's Shining City event sells (10,000 Glorious Tomes each)." },
+  sh_save: { en: "Save" },
+  sh_cancel: { en: "Cancel" },
+  sh_skins_n: { en: "Skins ({n})" },
+  sh_none: { en: "No skins picked \u00b7 tap \u201c+ pick skins\u201d on the Skin Gallery page" },
   isl_wb_title: { en: "Where to buy copies" },
   isl_wb_mark: { en: "Mark of Revival shop" },
   isl_wb_note: { en: "Your picks start as the site's picks \u00b7 change them to match your state" },
@@ -14076,6 +14092,8 @@ function packGroupLabel(g) {
 // A table ticked for a group (e.g. "Pets") counts for every page in that
 // group, even if it was ticked before a page joined the group.
 function packTableServesPage(tb, calcKey) {
+  // Shining City skins: the packs used for Islands that give Glorious Tomes (Shining City Pack).
+  if (calcKey === "shining_skins") return packTableServesPage(tb, "islands") && Object.values(packEffectiveCols(tb)).some((c) => /glorious tome/i.test(String(c)));
   // "My packs" with no "Used for" ticked count for every page (the planner
   // only buys them where their items are needed).
   const own = packLinkFor(tb.id);
@@ -14119,6 +14137,7 @@ function packGroupOf(pageKey) {
 function packPageLabel(key) {
   if (key === "hero_shards") return t("hs_page");
   if (key === "islands") { const e = NAV_PAGE_LABELS.islandgallery; return e ? (e[LANG] || e.en) : "Islands"; }
+  if (key === "shining_skins") return t("isl_sc_name");
   const entry = NAV_PAGE_LABELS[{ chief_gear: "chiefgear", charm: "charmscalc", hero_gear: "herogearcalc", research_center: "researchcenter", t11_helios: "t11helios", t12_research: "t12research", pets: "petsdata", pets_refine: "refinepage", experts: "expertspage", experts_research: "expertsresearchpage" }[key]];
   return entry ? (entry[LANG] || entry.en) : key;
 }
@@ -18478,6 +18497,8 @@ const BUDGET_PAGES = [
   { key: "hero_shards", tab: "backpack" },
   // Islands: Mark of Revival for the Mark-shop buildings' targets (saved by the Islands page).
   { key: "islands", tab: "islandgallery" },
+  // Shining City: Glorious Tomes for the City Skins picked on the Skin Gallery page.
+  { key: "shining_skins", tab: "skingallery" },
 ];
 // Hero targets: calc_state "hero_targets" =
 // { heroes: { heroId: { push, stars, widget, later, wNow } }, extra: [heroId], pushGen }.
@@ -18559,7 +18580,8 @@ async function heroShardBudget() {
 // Pages whose owned amounts live somewhere other than material_owned_<key>.
 async function budgetOwnedFor(calcKey) {
   if (calcKey === "hero_shards") return (await heroShardBudget()).owned;
-  if (calcKey === "islands") { const bp = (await loadCalcState("backpack").catch(() => null)) || {}; return { "Mark of Revival": Number(bp["Mark of Revival"]) || 0, "Glorious Tome": (Number(bp["Glorious Tome"]) || 0) + (Number(bp["Lucky Glorious Tome Chest"]) || 0) * (Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 0) }; }
+  if (calcKey === "islands") { const bp = (await loadCalcState("backpack").catch(() => null)) || {}; return { "Mark of Revival": Number(bp["Mark of Revival"]) || 0, "Glorious Tome": shiningTomesIn(bp) }; }
+  if (calcKey === "shining_skins") return { "Glorious Tome": shiningTomesIn((await loadCalcState("backpack").catch(() => null)) || {}) };
   if (calcKey === "experts" || calcKey === "experts_research") {
     const inv = { ...((await loadCalcState("experts_inventory")) || {}) };
     await expertsInventoryWithBackpack(inv);
@@ -18913,12 +18935,13 @@ function budgetPlanLines(calcKey) {
 async function budgetForPage(calcKey, targetDays, opts = {}) {
   await ensurePackLinks();
   const tables = (await ensurePackTables()).filter((tb) => packTableServesPage(tb, calcKey) && packInBudgets(tb.id));
-  let groups, live = true, vipNote = null;
+  let groups, live = true, vipNote = null, shInfo = null;
   if (opts.groups) groups = opts.groups;
   else if (calcKey === "chief_gear") groups = computeChiefGearNeeds();
   else if (calcKey === "charm") groups = computeCharmNeeds();
   else if (calcKey === "hero_gear") groups = computeHeroGearNeeds();
   else if (calcKey === "hero_shards") { const hb = await heroShardBudget(); groups = hb.groups; vipNote = hb.vip; }
+  else if (calcKey === "shining_skins") { shInfo = await shiningSkinsNeed(); groups = shInfo.groups; }
   else {
     // T11 / T12 not counted (their page tick, which follows the state age): nothing to plan.
     if (calcKey === "t11_helios" || calcKey === "t12_research") {
@@ -18946,7 +18969,7 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
   const viaTrades = packNeedViaTrades(calcKey, needStill, supplied, targetDays);
   packSplitUncoverable(packGroups, viaTrades, calcKey);
   const need = viaTrades.need;
-  const res = { calcKey, tables, live, groups, owned, vip: vipNote, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
+  const res = { calcKey, tables, live, groups, owned, vip: vipNote, sh: shInfo, needFull, needStill, need, packGroups, supplied, trades: traded ? traded.trades : [], viaTrades, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!opts.noPlan && packGroups.length && Object.keys(need).length) {
     res.earliest = packEarliestDays(packGroups, need, calcKey);
     if (res.earliest != null) {
@@ -21028,7 +21051,7 @@ async function renderBudgetsPage(opts = {}) {
   // Each page as a tile: picture, name, tick, its price, when it's done (by
   // the target / after it) and a ring = how much of what it needs you
   // already have (Backpack + trades). Tap → its details in a sheet.
-  const pageIcon = (x) => QUICK_ICONS[BUDGET_PAGES[x.i].tab] || goalPageIcon(x.pg);
+  const pageIcon = (x) => (x.pg.sh && x.pg.sh.img) || QUICK_ICONS[BUDGET_PAGES[x.i].tab] || goalPageIcon(x.pg);
   const timing = (x) => {
     const k = x.pg.calcKey;
     if (!x.inc) return ["mu", t("b3_not_counted")];
@@ -21104,6 +21127,7 @@ async function renderBudgetsPage(opts = {}) {
   const missRow = (x) => { const ic = pageIcon(x); return `<div class="b3-mrow"><label><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} aria-label="${esc(t("b3_tick"))}" />${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}<span><b>${esc(x.label)}</b>${x.right}</span></label><button type="button" class="btn small ghost" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))}</button></div>`; };
   const pageSheet = (x) => `<div class="b3-ps-top"><label class="b3-ps-inc"><input type="checkbox" data-budgetinc="${esc(x.pg.calcKey)}" ${x.inc ? "checked" : ""} /> ${esc(t("b3_tick"))}</label><span class="b3-ps-v">${isNothing(x) ? `<span style="color:var(--good); font-size:12px;">&#10003; ${esc(t("budgets_nothing_planned"))}</span>` : x.right || ""}</span><button type="button" class="btn small" data-gototab="${esc(BUDGET_PAGES[x.i].tab)}">${esc(t("budgets_open_page"))} &#8250;</button></div>
       ${x.pg.calcKey === "hero_gear" ? hgSetsHtml() : ""}
+      ${x.pg.sh ? shiningSkinsSheetHtml(x.pg.sh) : ""}
       ${x.body || ""}`;
   const sheet = (() => {
     const sh = BUDGET_SHEET;
@@ -21113,7 +21137,7 @@ async function renderBudgetsPage(opts = {}) {
     if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), html: (TAB === "roadmap" ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${BUDGET_RM_WITH ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${BUDGET_RM_WITH ? "" : "on"}">${esc(t("rm_without"))}</button></div><div class="meta rmr-side" style="margin:-2px 0 10px;">${esc(t("rmr_with_note"))}</div>` : "") + goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
     if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
-    if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
+    if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: x.pg.calcKey === "shining_skins" ? t("sh_title") : (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
     return null;
   })();
   if (BUDGET_SHEET && !sheet) BUDGET_SHEET = null;
@@ -22922,18 +22946,69 @@ function galFlash(root, id) {
   setTimeout(() => el.classList.remove("flash"), 700);
 }
 
+// Shining City skins (owner, 9 Nov 2026): in the monthly Shining City event (dates from the
+// Shining City Pack on the Packs page) some City Skins are sold for Glorious Tomes
+// (ISL_RULES.skinTomes each); which ones differs by state. site_config shining_skins =
+// [skin names] = the owner's picks, everyone's default; calc_state shining_skins =
+// { list } = a person's own picks (the owner always edits the default). The picked skins
+// not owned yet are the Budgets page "Shining City" (need = Glorious Tomes).
+const SHINING_SKIN_CAT = "City Skin";
+const SKIN_GALLERY_SELECT = "id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle";
+const skinGalleryPath = () => `skins?user_id=eq.${USER_ID}&select=${SKIN_GALLERY_SELECT}&order=sort_order.asc`;
+const shiningTomesPer = () => Number(ISL_RULES.skinTomes) || 10000;
+// Glorious Tomes in a Backpack + Lucky Glorious Tome Chests at their average.
+const shiningTomesIn = (bp) => (Number((bp || {})["Glorious Tome"]) || 0) + (Number((bp || {})["Lucky Glorious Tome Chest"]) || 0) * (Number(chestGives("Lucky Glorious Tome Chest")["Glorious Tome"]) || 0);
+function shiningSkinsDefault() { const v = siteConfig("shining_skins", null); return Array.isArray(v) ? v.map(String) : []; }
+// The list in use: the owner's own view is the default; others their own list, else the default.
+function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault(); return saved && Array.isArray(saved.list) ? saved.list.map(String) : shiningSkinsDefault(); }
+// The picked skins (rows), in pick order.
+function shiningPicked(list, skins) {
+  return list.map((n) => skins.find((s) => s.name === n && s.category === SHINING_SKIN_CAT) || skins.find((s) => s.name === n)).filter(Boolean);
+}
+// "every month · 5 days · next Dec 12" (or "on now"), from the Shining City Pack's dates.
+function shiningWhenText() {
+  const sc = islShiningStarts(3), dur = Math.max(1, Number(ISL_RULES.shiningDays) || 5);
+  const base = t("sh_when").replace("{every}", islEveryText(sc.every || 30, (sc.every || 30) === 30)).replace("{d}", dur);
+  if (!sc.known) return `${base} \u00b7 ${t("sh_no_date")}`;
+  const today = packStartOfToday(), DAY = 86400000;
+  const fmt = (d) => { try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return packDayKey(d); } };
+  const run = sc.starts.find((d) => d <= today && d.getTime() + (dur - 1) * DAY >= today.getTime());
+  const nx = sc.starts.find((d) => d > today);
+  return [base, run ? t("sh_on_now") : "", nx ? t("sh_next").replace("{date}", fmt(nx)) : ""].filter(Boolean).join(" \u00b7 ");
+}
+// Budgets: { groups, rows: [{ name, img }], img, tomes }.
+async function shiningSkinsNeed() {
+  const [saved, skins] = await Promise.all([
+    IS_OWNER ? null : loadCalcState("shining_skins").catch(() => null),
+    keptRows("skins", skinGalleryPath()).catch(() => []),
+    islLoadPacks().catch(() => null),
+  ]);
+  const rows = shiningPicked(shiningSkinsListOf(saved), skins || []).filter((s) => !s.owned);
+  const tomes = rows.length * shiningTomesPer();
+  return { groups: [{ label: null, totals: tomes ? { "Glorious Tome": tomes } : {} }], rows: rows.map((s) => ({ name: s.name, img: s.image_url || "" })), img: rows[0] ? rows[0].image_url || "" : "", tomes };
+}
+const shiningRowHtml = (r, attr) => `<${attr ? `button type="button" ${attr}` : "div"} class="shr"><span class="p">${r.img ? `<img class="sk" src="${esc(r.img)}" alt="" loading="lazy" />` : ""}<img class="tm" src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span><span class="tx"><b>${esc(r.name)}</b><em>${esc(t("sh_tomes").replace("{n}", shiningTomesPer().toLocaleString()))}</em></span>${attr ? `<span class="ch" aria-hidden="true">&#8250;</span>` : ""}</${attr ? "button" : "div"}>`;
+// The Budgets page sheet's skin list.
+function shiningSkinsSheetHtml(sh) {
+  if (!sh.rows.length) return `<div class="meta sh-bud-none">${esc(t("sh_none"))}</div>`;
+  return `<div class="sh-bud"><div class="meta sh-bud-h">${esc(t("sh_skins_n").replace("{n}", sh.rows.length))} \u00b7 ${esc(shiningWhenText())}</div>${sh.rows.map((r) => shiningRowHtml(r)).join("")}</div>`;
+}
+
 // Renders totals-by-bonus-type, filter bar, and the category
 // sections of skin cards (click a card to toggle owned status).
 // Cosmetics categories whose pictures are shown bigger (less space around them).
 const GALLERY_BIG_THUMB = new Set(["City Skin", "Teleport Skin", "Private Chat", "Rally"]);
 async function renderSkinGallery() {
   const seq = RENDER_SEQ;
-  const [ISLAND_CATEGORIES, , allSkinsRaw, galleryCats] = await Promise.all([
+  const [ISLAND_CATEGORIES, , allSkinsRaw, galleryCats, shSaved, shBp] = await Promise.all([
     ensureIslandCategories(),
     ensureGalleryUncounted(),
-    keptRows("skins", `skins?user_id=eq.${USER_ID}&select=id,category,name,image_url,bonus_type,bonus_value,bonus_type2,bonus_value2,bonus_type3,bonus_value3,bonus_type4,bonus_value4,owned,display_group,count_in_max,show_count_toggle&order=sort_order.asc`),
+    keptRows("skins", skinGalleryPath()),
     // The order set in Admin → Skins (drag the category chips).
     dashCached("gallery_cats", () => sb(`skin_page_categories?page=eq.gallery&select=category,sort_order&order=sort_order.asc`)).catch(() => []),
+    IS_OWNER ? null : loadCalcState("shining_skins").catch(() => null),
+    loadCalcState("backpack").catch(() => null),
+    ensureBarHidden(),
   ]);
   const skins = allSkinsRaw.filter(
     (s) => !ISLAND_CATEGORIES.has(s.category) && s.category !== "Facility" && s.category !== "Alliance Tech"
@@ -22960,10 +23035,14 @@ async function renderSkinGallery() {
       </div>
     </div>
     <div class="panel cg-ans sg-ans">
-      <div class="sg-k"><span>${esc(t("troops_stats_title"))} · ${esc(t("plx_all_troops"))}</span><span class="sg-kr" id="skinSummaryLine"></span></div>
+      <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="skinSummaryLine"></span><button type="button" class="g1-fold isl-fold" data-g1fold="top:skingallery" aria-expanded="true"></button></div>
       <div id="skinTotals"></div>
-      <button type="button" class="sg-rb" id="sgGlobeBtn" aria-haspopup="dialog"></button>
+      <div class="sg-fb">
+        <button type="button" class="sg-rb" id="sgGlobeBtn" aria-haspopup="dialog"></button>
+        <div class="shx" id="shSkins"></div>
+      </div>
     </div>
+    <div class="g1 isl-g1 sh-g1" id="shMkWrap" hidden><div class="t12x-card t12x-buy" id="shMkBuy"><div class="cg-sh-h"><b>${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="shMkPacks"></div></div><div class="cg-bd" data-shbd hidden></div></div>
     ${galToolsHtml("skin", SKIN_FILTER, t("search_skins_placeholder"))}
     <div id="skinCatSwitcher" class="sg-cats"></div>
     <div id="skinSections"></div>
@@ -22976,6 +23055,107 @@ async function renderSkinGallery() {
       </div>
     </div>
   `;
+
+  // One Hide in the Troops Stats header (like Islands) folds the Globe Level and the
+  // Shining City part; remembered in calc_state bar_hidden ("top:skingallery").
+  g1FoldSync(content);
+
+  // ---- Shining City skins: picked City Skins not owned yet, their Tomes and price ----
+  let shList = shiningSkinsListOf(shSaved);
+  const shTomeHave = () => shiningTomesIn(shBp);
+  const shRows = () => shiningPicked(shList, skins).filter((s) => !s.owned);
+  const shPriceLabel = () => (PACK_COST_SHOWN.shining_skins ? `\u2248 ${esc(PACK_COST_SHOWN.shining_skins)} &#8250;` : `${esc(t("pack_cost_title"))} &#8250;`);
+  PACK_COST_HOOKS.shining_skins = () => document.querySelectorAll("[data-shprice]").forEach((el) => { el.innerHTML = shPriceLabel(); });
+  let shSig = null;
+  // The Pack cost card (design A) for the Tomes: worked out in the background so the
+  // price shows on the total line; on phones it opens as a window from that button.
+  function shPackCard() {
+    const host = document.getElementById("shMkPacks"), wrap = document.getElementById("shMkWrap");
+    if (!host) return;
+    const need = shRows().length * shiningTomesPer(), have = shTomeHave(), sig = `${need}|${have}`;
+    if (!need) { shSig = sig; host.innerHTML = ""; if (wrap) wrap.hidden = true; shPacksTo(false); packCostShown("shining_skins", null); return; }
+    if (wrap) wrap.hidden = false;
+    if (sig === shSig && host.innerHTML) return;
+    shSig = sig;
+    PACK_COST_OPEN.shining_skins = true;
+    renderPackCostBlock(host, "shining_skins", [{ label: null, totals: { "Glorious Tome": need } }], { "Glorious Tome": have });
+  }
+  function shPacksTo(open) {
+    const buy = document.getElementById("shMkBuy"), bd = document.querySelector("[data-shbd]");
+    if (!buy) return;
+    buy.classList.toggle("cg-open", !!open);
+    buy.dataset.cgshow = open ? "packs" : "";
+    if (bd) bd.hidden = !open;
+    if (open) buy.scrollTop = 0;
+  }
+  {
+    const w = document.getElementById("shMkWrap");
+    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-shbd]")) shPacksTo(false); };
+  }
+  function drawShining() {
+    const box = document.getElementById("shSkins");
+    if (!box) return;
+    const rows = shRows(), per = shiningTomesPer(), need = rows.length * per;
+    const head = `<div class="shl"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /><span>${esc(t("sh_title"))}</span><button type="button" class="shl-a" data-shpick>${esc(t("sh_pick"))}</button></div>`;
+    if (!rows.length) { box.innerHTML = head; shPackCard(); return; }
+    const have = shTomeHave();
+    const btn = have >= need ? `<span class="shb ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="shb" data-shpc data-shprice>${shPriceLabel()}</button>`;
+    box.innerHTML = head + rows.map((s) => shiningRowHtml({ name: s.name, img: s.image_url }, "data-shpick")).join("")
+      + `<div class="shtot"><span class="t"><b>${esc((rows.length === 1 ? t("sh_total1") : t("sh_total").replace("{n}", rows.length)).replace("{m}", need.toLocaleString()))}</b><small>${esc(shiningWhenText())}</small></span>${btn}</div>`;
+    shPackCard();
+  }
+  document.getElementById("shSkins").onclick = (e) => {
+    if (e.target.closest("[data-shpick]")) { shPickSheet(); return; }
+    if (e.target.closest("[data-shpc]")) {
+      if (window.matchMedia("(max-width: 900px)").matches) shPacksTo(true);
+      else { const c = document.getElementById("shMkBuy"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    }
+  };
+  // The Shining City Pack's dates come with the pack list (loaded once, then redrawn).
+  if (!ISL_PACKS) islLoadPacks().then(() => { if (seq === RENDER_SEQ) drawShining(); });
+  // Pick sheet: every City Skin as a tick tile; the owner's picks are everyone's first choice.
+  function shPickSheet() {
+    let m = document.getElementById("shPickSheet");
+    if (!m) { m = document.createElement("div"); m.id = "shPickSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
+    const draft = new Set(shList);
+    const city = skins.filter((s) => s.category === SHINING_SKIN_CAT);
+    const tile = (s) => `<button type="button" class="isl-sht${draft.has(s.name) ? " on" : ""}" data-shtick="${esc(s.name)}" aria-pressed="${draft.has(s.name)}" title="${esc(s.name)}">${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(s.name)}</span><span class="ck" aria-hidden="true">${draft.has(s.name) ? "&#10003;" : ""}</span></button>`;
+    m.innerHTML = `<div class="modal-box adm-sheet gs-box sh-pick" role="dialog" aria-modal="true" aria-label="${esc(t("sh_pick_title"))}"><div class="gs-head"><b style="flex:1;">${esc(t("sh_pick_title"))}</b>${closeXHtml("data-shx")}</div>
+      <div class="meta sh-pick-d">${esc(t("sh_pick_desc").replace("10,000", shiningTomesPer().toLocaleString()))}</div>
+      <div class="isl-shg">${city.map(tile).join("")}</div>
+      <div class="isl-shn">${esc(t(IS_OWNER ? "isl_wb_note_owner" : "isl_wb_note"))}</div>
+      <div class="isl-shb"><button type="button" class="btn ghost" data-shx>${esc(t("sh_cancel"))}</button><button type="button" class="btn" data-shsave>${esc(t("sh_save"))}</button></div></div>`;
+    const close = () => { m.style.display = "none"; };
+    m.onclick = (ev) => {
+      if (ev.target === m || ev.target.closest("[data-shx]")) { close(); return; }
+      const tk = ev.target.closest("[data-shtick]");
+      if (tk) {
+        const n = tk.dataset.shtick, on = !draft.has(n);
+        if (on) draft.add(n); else draft.delete(n);
+        tk.classList.toggle("on", on); tk.setAttribute("aria-pressed", String(on));
+        tk.querySelector(".ck").innerHTML = on ? "&#10003;" : "";
+        return;
+      }
+      if (ev.target.closest("[data-shsave]")) {
+        // Kept in pick order; names outside the City Skins (renamed / other states) stay.
+        const out = [...shList.filter((n) => draft.has(n)), ...city.map((s) => s.name).filter((n) => draft.has(n) && !shList.includes(n))];
+        close();
+        if (JSON.stringify(out) === JSON.stringify(shList)) return;
+        const prev = shList;
+        shList = out;
+        budgetInvalidate();
+        computeAndRender();
+        if (IS_OWNER) {
+          if (!SITE_CONFIG) SITE_CONFIG = {};
+          SITE_CONFIG.shining_skins = out; // shown at once (Budgets reads it too)
+          saveSiteConfig("shining_skins", out).catch(() => { shList = prev; SITE_CONFIG.shining_skins = prev; budgetInvalidate(); toast("Couldn't save", true); if (document.getElementById("shSkins")) computeAndRender(); });
+        }
+        else saveCalcState("shining_skins", { list: out });
+      }
+    };
+    m.onkeydown = (ev) => { if (ev.key === "Escape") { ev.stopPropagation(); close(); } };
+    m.style.display = "flex";
+  }
 
   if (SKIN_FILTER.category === "all" || !categories.includes(SKIN_FILTER.category)) {
     SKIN_FILTER.category = categories[0] || "all";
@@ -23089,6 +23269,7 @@ async function renderSkinGallery() {
   // One tap = owned ↔ not owned. Shown at once; put back if the save fails.
   function setSkinOwned(skin, owned) {
     skin.owned = owned;
+    if (shList.includes(skin.name)) budgetInvalidate();
     computeAndRender();
     galFlash(document.getElementById("skinSections"), skin.id);
     patchSkinQueued(skin.id, { owned }).catch(() => {
@@ -23110,6 +23291,7 @@ async function renderSkinGallery() {
     if (!document.getElementById("skinSections")) return;
     drawGlobeInfo();
     drawGlobeRow();
+    drawShining();
     const filtered = skins.filter((s) => {
       if (SKIN_FILTER.category !== "all" && s.category !== SKIN_FILTER.category) return false;
       if (SKIN_FILTER.ownedFilter === "owned" && !s.owned) return false;
@@ -23196,9 +23378,12 @@ async function renderSkinGallery() {
       return;
     }
     const moreKey = `skin|${SKIN_FILTER.category}`;
+    const shPickedIds = new Set(shiningPicked(shList, skins).map((x) => String(x.id)));
     const tile = (s, down) => galTileHtml({
       id: s.id, attr: "data-skin", cls: s.owned ? "yes" : "no", img: s.image_url, name: s.name,
       big: GALLERY_BIG_THUMB.has(s.category), down, tick: false, pressed: !!s.owned,
+      // Picked for the Shining City event: a small tome on the picture.
+      pwExtra: shPickedIds.has(String(s.id)) ? `<span class="isl-mkc" title="${esc(t("sh_title"))}"><img src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>` : "",
     });
     sections.innerHTML = galGridHtml({
       counted: filtered.filter((s) => !GALLERY_UNCOUNTED.has(String(s.id))),
@@ -23252,7 +23437,7 @@ const ISL_CAMP = [null,
   { workers: 1, wood: 6, load: 360 }, { workers: 1, wood: 7, load: 840 }, { workers: 1, wood: 8, load: 1440 }, { workers: 2, wood: 9, load: 2160 },
   { workers: 2, wood: 10, load: 3000 }, { workers: 2, wood: 11, load: 3960 }, { workers: 2, wood: 12, load: 5040 }, { workers: 2, wood: 13, load: 6240 },
   { workers: 2, wood: 14, load: 7560 }, { workers: 2, wood: 15, load: 9000 }];
-const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250, tomePrice: 600, tomeMax: 3, shiningDays: 5, tomeFreeDay: 80 };
+const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250, tomePrice: 600, tomeMax: 3, shiningDays: 5, tomeFreeDay: 80, skinTomes: 10000 };
 const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
 // calc_state "island_shards" = { targets: { skinId: level }, allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
@@ -23399,9 +23584,9 @@ function islShiningStarts(n = 40) {
   const tb = tbs.find((x) => /shining city/i.test(String(x.title || ""))) || tbs.find(tomeCol);
   if (tb) {
     const l = packLinkFor(tb.id);
-    if (l.reset === 30 && packParseDay(l.resetDay)) return { known: true, starts: monthly(packParseDay(l.resetDay)), src: "pack", name: String(tb.title || "") };
+    if (l.reset === 30 && packParseDay(l.resetDay)) return { known: true, starts: monthly(packParseDay(l.resetDay)), src: "pack", name: String(tb.title || ""), every: 30 };
     const offs = typeof l.reset === "number" ? packResetOffsets(l.reset, l.resetDay, 800, l.window || dur) : [];
-    if (offs.length) return { known: true, starts: offs.slice(0, n).map((o) => islDay(o)), src: "pack", name: String(tb.title || "") };
+    if (offs.length) return { known: true, starts: offs.slice(0, n).map((o) => islDay(o)), src: "pack", name: String(tb.title || ""), every: l.reset };
   }
   return { known: false, starts: [], src: "" };
 }
@@ -29687,7 +29872,7 @@ function gameRules() {
       get: () => ISL_TREE.slice(1).map((v, i) => ({ level: i + 1, perHour: v })),
       set: (rows) => ruleSetArray(ISL_TREE, [0, ...rows.map((r) => Number(r.perHour) || 0)]) },
     { key: "islShop", group: "islands", label: "Island shards shop & income", type: "fields", help: "Mythic Island Shards: shards per building copy, Life Essence for 10 shards, the shop's weekly limit (shards, and building copies per building — each building's price is set on the building); what the Tree of Life and the Timbermill hold (they stop making essence when full), the Timbermill's essence an hour per worker, wood for 1 Life Essence and ally help.",
-      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy"), num("tomePrice", "Shining City: Glorious Tomes for 1 copy"), num("tomeMax", "Shining City: copies per building an event"), num("shiningDays", "Shining City Pack event: days"), num("tomeFreeDay", "Shining City: free tomes a day a pack is bought")],
+      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy"), num("tomePrice", "Shining City: Glorious Tomes for 1 copy"), num("tomeMax", "Shining City: copies per building an event"), num("shiningDays", "Shining City Pack event: days"), num("tomeFreeDay", "Shining City: free tomes a day a pack is bought"), num("skinTomes", "Shining City: Glorious Tomes for 1 city skin")],
       get: () => ({ ...ISL_RULES }), set: (v) => { Object.keys(ISL_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) ISL_RULES[k] = Number(v[k]); }); } },
     { key: "islCamp", group: "islands", label: "Lumber Camp by level", help: "Workers, wood a second per worker and load at each Lumber Camp level. The Timbermill is built when both camps are at the top level; its workers = both camps' workers.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "workers", label: "Workers", type: "num" }, { key: "wood", label: "Wood / s per worker", type: "num" }, { key: "load", label: "Load", type: "num" }],
