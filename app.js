@@ -22130,15 +22130,18 @@ async function renderBudgetsPage(opts = {}) {
     // longer wanted: it's dropped, so the new one doesn't wait behind it.
     budgetTrackDrop(BUDGET_PLAN_TRACK);
     const track = (BUDGET_PLAN_TRACK = {});
-    // A redraw as the plan's parts come in: open lines stay open, and when the
-    // total card (which grows as it fills in) ends in the top half of the screen
-    // or above it, the page tile on screen below it stays where it is.
+    // A redraw as the plan's parts come in: open lines stay open, an open window
+    // (and every scroll box) keeps its scroll, and when the total card (which
+    // grows as it fills in) ends in the top half of the screen or above it, the
+    // page tile on screen below it stays where it is.
     const partRedraw = () => {
       const y = window.scrollY, sq = RENDER_SEQ, hd = content.querySelector(".b3-hd");
       const below = !!hd && hd.getBoundingClientRect().bottom < window.innerHeight / 2;
       const tile = below ? [...content.querySelectorAll("[data-b3page]")].find((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }) : null;
       const key = tile ? tile.dataset.b3page : null, top0 = tile ? tile.getBoundingClientRect().top : 0, h0 = hd ? hd.offsetHeight : 0;
+      const putBoxes = saveBoxScroll(content); // an open window stays scrolled where it was
       keepFolds(content, () => renderBudgetsPage()).then(() => {
+        putBoxes();
         const t2 = key ? [...content.querySelectorAll("[data-b3page]")].find((el) => el.dataset.b3page === key) : null, h2 = content.querySelector(".b3-hd");
         window.scrollTo(0, y);
         if (t2) window.scrollTo(0, y + (t2.getBoundingClientRect().top - top0));
@@ -22163,7 +22166,7 @@ async function renderBudgetsPage(opts = {}) {
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
       const hadPart = !!(BUDGET_DATA.combined && BUDGET_DATA.combined.partKey === planKey);
       BUDGET_DATA.combined = real;
-      if (budTab()) { if (hadPart) partRedraw(); else { const y = window.scrollY, sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); } }
+      if (budTab()) { if (hadPart) partRedraw(); else { const y = window.scrollY, sq = RENDER_SEQ, putBoxes = saveBoxScroll(content); renderBudgetsPage().then(() => { putBoxes(); window.scrollTo(0, y); }).catch((e) => pageRedrawFailed(e, sq)); } }
     }).catch((e) => {
       if (e && e.superseded) return; // a newer plan took its place
       if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
@@ -22418,9 +22421,11 @@ async function renderBudgetsPage(opts = {}) {
     const dropPlans = droppedKeys.map((k) => pagesRaw.find((x) => x.calcKey === k)).filter(Boolean).map((pg) => pickDropped(pg, BUDGET_VIEW === "budget" ? "main" : BUDGET_VIEW)).filter(Boolean);
     const basePlan = !dropPlans.length ? basePlan0 : [basePlan0, ...dropPlans].filter(Boolean).reduce((a, pl) => ({ rows: a.rows.concat(pl.rows || []), total: a.total + (pl.total || 0), days: Math.max(a.days, pl.days || 0), trades: a.trades.concat(pl.trades || []) }), { rows: [], total: 0, days: 0, trades: [] });
     const by = BUDGET_GOALS.by || {}, due = budgetGoalDue(goals);
-    // Goals with their own dates: the plan bought for those dates (background planner).
+    // Goals with their own dates: the plan bought for those dates (background
+    // planner), asked for once the whole plan is in (the planner is busy with
+    // the rest of it until then, and the pages' order can still change).
     const mainDay = targetDays != null ? targetDays : basePlan ? basePlan.days || 0 : null;
-    const dl = !planPending && basePlan && due.some((d) => d != null)
+    const dl = !planPending && !pendingAll && basePlan && due.some((d) => d != null)
       ? budgetDeadlineFor(pagesRaw, BUDGET_SELECTED, goals, due, mainDay, incKeys, () => { if (budTab()) keepPlace(() => renderBudgetsPage()); })
       : null;
     const dlPending = !planPending && basePlan && due.some((d) => d != null) && !dl;
