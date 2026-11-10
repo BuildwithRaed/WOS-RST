@@ -619,4 +619,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - PR #168: Pack calendar: own colour and legend for every game event (Tyrant Battle …)
 - Packs window fixes: stays open on a new table after its first save, keeps its place on redraws
 - PR #171: Shining City skins on the Skin Gallery (picker, allow list, Budgets page) and the +80 first-buy Tome bonus in the packs planner
-- PR #NNN: Pack calendar = G4 (game-like week grid: pinned day row, Events / In your plan bands, other packs folded, names beside short bars)
+- PR #173: Pack calendar = G4 (game-like week grid: pinned day row, Events / In your plan bands, other packs folded, names beside short bars)
