@@ -384,10 +384,6 @@
   .exp-count{ display:flex; align-items:center; gap:6px; justify-self:start; min-height:32px; font-size:11px; color:var(--muted); cursor:pointer; }
   .exp-count input{ width:16px; height:16px; margin:0; cursor:pointer; }
   /* Experts skill "EXP you have" = one compact line. */
-  .exp-xl{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; margin-top:4px; font-size:11px; color:var(--muted); }
-  .exp-xl input{ width:calc(var(--xw, 4) * 1ch + 22px); min-width:58px; max-width:130px; flex:none; padding:4px 8px; font-size:12.5px; font-weight:700; text-align:center; border-radius:8px; }
-  .exp-xl input.has{ border-color:var(--ice); }
-  .exp-xl .btn{ padding:3px 9px; font-size:11px; min-height:28px; flex:none; }
   /* The picture files have see-through space around the tile: the box is
      bigger and pulled out by that space, so the tile itself lines up with the
      card's left edge and is as tall as the name + stat lines beside it. */
@@ -530,10 +526,6 @@
   .ch-rch{ display:block; min-height:14px; margin-top:2px; line-height:1.15; }
   .ch-rch:empty, .cg-rch:empty{ display:none; }
   .ch-rch .rch-mini{ font-size:10.5px; }
-  .exp-rch:empty{ display:none; }
-  .exp-rch{ margin:4px 0 6px; text-align:start; }
-  .exp-rch .rch-line{ font-size:12px; color:var(--muted); }
-  .exp-rch .rch-mark{ min-height:24px; min-width:38px; }
   .t12-rch:empty{ display:none; }
   .t12-rch{ margin-top:6px; }
   .t12-rch .rch-mark{ min-height:26px; }
@@ -3867,7 +3859,7 @@ input,select,textarea{
   /* Text sizes like wostools.net on phones: its smallest labels are about 12 px, so ours are 12 px too (badges on
      pictures and the tuned Chief Gear labels keep 11 px; the Dashboard has its own block). */
   @media (max-width: 700px){
-    .tn-lang-list button small, .acc-head .meta, .site-footer, .bud-hgnote, .bud-seg button, .bset-l small, .bset-sec b, .bset-note, .pk-hdi b, .pks-note, .pks-info, .bud-spend-per button, .bud-spend-more > summary, .exp-count, .exp-xl, .exp-xl .btn, .plx-piecestat.hgc-stat, .rlk-pill, .rlk-chip, .rlk-lab, .rch-wait, .rch-bar, .rch-key, .rch-mini, .cg-rch .rch-bar, .ch-rch .rch-mini, .rcs-car, .rcs-row span i, .pc-stat span, .pc-stat small, .pc-st > span, .bud-partial, .bud-vip, .bud-g-desc, .bud-g-n, .bud-g-tag, .bud-g-t small, .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-ht-c, .bud-rm-for, .bud-line-t .meta, .bud-line-v .meta, .pur-ng-own, .tl-k, .tl-nxk, .tl-gen, .tl-src, .sa-k, .sa-chip, .sa-preview, .sa-num, .pc-chip, .pur-f, .gi-note, .gl-cpic, .gl-note, .gl-miss, .gl-tile, .gl-tile em, .pur-cnt-l small, .pur-cnt-note, .pur-bh.wait .meta, .pur-bh .meta, .pur-how, .pur-ng-next, .pur-cmp, .pur-cmp-note, .pur-ms-vers .pur-vb-k, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-g, .pur-ms-head, .pur-ms-differ, .pur-ms-pickn, .pur-ms-plpick, .pur-slot i, .pur-slot small, .pur-dsel, .pur-dmenu label .meta, .pur-ms-note, .pkd-mine, .pkd-n .meta, .pur-wc-t small, .pur-wb small, .pur-wb i, .pur-tagc small, .pur-cl-n i, .pur-cl-ex, #purSugModal .pur-dsel, .pur-m-top, .pur-m-top .linklike, .pur-t th, .pur-t-miss, .pur-t-sel, .pur-tag, .b3-hd-t small, .b3-coming, .b3-sl .bud-line-v .meta, .b3-lbl, .b3-stop .b3-ics em, .b3-stop small, .b3-pt-m, .b3-ring b, .b3-lr-t small, .page-head .sub, table, .pill, .bp-head .meta, .bp-tile .bp-gx, .gx-head .meta, .gx-tot, .gx-note, .bp-tile .bp-avg, .bp-tile .bp-shield, .bp-speedsum-cell .meta, .bpw-head .desc, .bpw-name .meta, .t12x-k, .t12x-settings.one-line #researchSpeedupNote, #expertsGeneralSpeedupNote, .ch-t-v .ch-tc, .ch-stg.pick em, .ch-lvp b, .ch-lvp small, .ch-hint, .gs-l, .gs-stp b small, .gs-grp, .gs-opt small, .cg-nm, .cg-k, .cg-th, .cg-mk, #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small, #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark, .pca-big .cur, .pca-pr .cur, .pca-h, .pca-nm small, .pca-sb, .pca-chip, .t12x-good, .t12x-row, .plx-piecestat em, .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk, .adm-ext, .admc-txt small, .admc-hint, .admf, .bk-row small, .lg-sum span, .tx-en small, .rl-item small, .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small, .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span, .rfa-name small, .rfa-note, .plx-stat span, .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span, .t12x-boxes small, .t12x-gt small, .t12x-ring span, .t12x-maxall, .t12x-nm .meta, .t12x-done, .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-switch, .pc-trade small, .pc-sub, .pc-k, .pc-chips span, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small, .pc-free, .pc-view .seg button, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st, .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-nb-parts, .bs-nb-from, .bs-row .n small, .bs-title, .bs-row b .bs-sw, .bp-link, .scan-ex span, .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name, .pack-col-fixed, .acc-or, .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
+    .tn-lang-list button small, .acc-head .meta, .site-footer, .bud-hgnote, .bud-seg button, .bset-l small, .bset-sec b, .bset-note, .pk-hdi b, .pks-note, .pks-info, .bud-spend-per button, .bud-spend-more > summary, .exp-count, .plx-piecestat.hgc-stat, .rlk-pill, .rlk-chip, .rlk-lab, .rch-wait, .rch-bar, .rch-key, .rch-mini, .cg-rch .rch-bar, .ch-rch .rch-mini, .rcs-car, .rcs-row span i, .pc-stat span, .pc-stat small, .pc-st > span, .bud-partial, .bud-vip, .bud-g-desc, .bud-g-n, .bud-g-tag, .bud-g-t small, .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-ht-c, .bud-rm-for, .bud-line-t .meta, .bud-line-v .meta, .pur-ng-own, .tl-k, .tl-nxk, .tl-gen, .tl-src, .sa-k, .sa-chip, .sa-preview, .sa-num, .pc-chip, .pur-f, .gi-note, .gl-cpic, .gl-note, .gl-miss, .gl-tile, .gl-tile em, .pur-cnt-l small, .pur-cnt-note, .pur-bh.wait .meta, .pur-bh .meta, .pur-how, .pur-ng-next, .pur-cmp, .pur-cmp-note, .pur-ms-vers .pur-vb-k, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-g, .pur-ms-head, .pur-ms-differ, .pur-ms-pickn, .pur-ms-plpick, .pur-slot i, .pur-slot small, .pur-dsel, .pur-dmenu label .meta, .pur-ms-note, .pkd-mine, .pkd-n .meta, .pur-wc-t small, .pur-wb small, .pur-wb i, .pur-tagc small, .pur-cl-n i, .pur-cl-ex, #purSugModal .pur-dsel, .pur-m-top, .pur-m-top .linklike, .pur-t th, .pur-t-miss, .pur-t-sel, .pur-tag, .b3-hd-t small, .b3-coming, .b3-sl .bud-line-v .meta, .b3-lbl, .b3-stop .b3-ics em, .b3-stop small, .b3-pt-m, .b3-ring b, .b3-lr-t small, .page-head .sub, table, .pill, .bp-head .meta, .bp-tile .bp-gx, .gx-head .meta, .gx-tot, .gx-note, .bp-tile .bp-avg, .bp-tile .bp-shield, .bp-speedsum-cell .meta, .bpw-head .desc, .bpw-name .meta, .t12x-k, .t12x-settings.one-line #researchSpeedupNote, #expertsGeneralSpeedupNote, .ch-t-v .ch-tc, .ch-stg.pick em, .ch-lvp b, .ch-lvp small, .ch-hint, .gs-l, .gs-stp b small, .gs-grp, .gs-opt small, .cg-nm, .cg-k, .cg-th, .cg-mk, #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small, #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark, .pca-big .cur, .pca-pr .cur, .pca-h, .pca-nm small, .pca-sb, .pca-chip, .t12x-good, .t12x-row, .plx-piecestat em, .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk, .adm-ext, .admc-txt small, .admc-hint, .admf, .bk-row small, .lg-sum span, .tx-en small, .rl-item small, .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small, .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span, .rfa-name small, .rfa-note, .plx-stat span, .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span, .t12x-boxes small, .t12x-gt small, .t12x-ring span, .t12x-maxall, .t12x-nm .meta, .t12x-done, .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-switch, .pc-trade small, .pc-sub, .pc-k, .pc-chips span, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small, .pc-free, .pc-view .seg button, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st, .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-nb-parts, .bs-nb-from, .bs-row .n small, .bs-title, .bs-row b .bs-sw, .bp-link, .scan-ex span, .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name, .pack-col-fixed, .acc-or, .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
     .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ font-size:11px !important; }
     [style*="font-size:8px"], [style*="font-size: 8px"], [style*="font-size:8.5px"], [style*="font-size: 8.5px"],
     [style*="font-size:9px"], [style*="font-size: 9px"], [style*="font-size:9.5px"], [style*="font-size: 9.5px"],
@@ -4363,10 +4355,6 @@ input,select,textarea{
   .exp-stl b{ color:var(--frost); } .exp-stl b.tg{ color:var(--ice); }
   .exp-tags{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:4px; }
   .exp-tags > span{ margin-top:0 !important; }
-  .exp-tabs{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:3px; margin:0 0 12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); }
-  .exp-tabs button{ display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; padding:4px 6px; border:0; border-radius:9px; background:none; color:var(--muted); font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
-  .exp-tabs button span{ padding:1px 7px; border-radius:999px; background:rgba(255,255,255,.07); font-size:11.5px; font-weight:600; white-space:nowrap; }
-  .exp-tabs button.on{ background:var(--ice-dim); color:var(--frost); }
   .exp-sts{ display:grid; grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr); align-items:end; gap:8px; }
   .exp-sts small{ display:block; margin:0 0 4px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .exp-sts > div:last-child small{ text-align:end; }
@@ -4378,13 +4366,6 @@ input,select,textarea{
   .exp-st-v{ position:relative; flex:1 1 auto; min-width:0; text-align:center; font-size:18px; font-weight:800; }
   .exp-st.tgt .exp-st-v{ color:var(--ice); }
   .exp-st-v select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; }
-  .exp-blks{ display:flex; gap:3px; margin:12px 0 6px; }
-  .exp-blks i{ flex:1 1 0; height:8px; border-radius:2px; background:#3a7bd5; }
-  .exp-blks i.rch{ background:repeating-linear-gradient(45deg, #5fd08a 0 4px, #3ea86a 4px 8px); }
-  .exp-lbar{ position:relative; display:flex; height:8px; margin:12px 0 6px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden; }
-  .exp-lbar i{ background:var(--good); } .exp-lbar b{ background:#3a7bd5; }
-  .exp-lv-l{ display:flex; justify-content:space-between; gap:8px; font-size:12.5px; color:var(--muted); margin-bottom:10px; }
-  .exp-lv-l .bad{ color:var(--danger); } .exp-lv-l .ok{ color:var(--good); }
   .exp-nbs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 10px; }
   .exp-nb{ display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; }
   button.exp-nb{ cursor:pointer; }
@@ -4406,8 +4387,6 @@ input,select,textarea{
   .exp-bar i{ background:var(--good); } .exp-bar b{ background:#3a7bd5; }
   .exp-rst{ flex:0 0 auto; }
   .exp-rst.meta{ font-size:12px; white-space:nowrap; }
-  .exp-now{ padding:2px 8px; border:1px dashed rgba(110,220,150,.6); border-radius:8px; color:var(--good); font-size:12px; font-weight:700; white-space:nowrap; }
-  .exp-short{ color:var(--danger); font-size:12px; font-weight:700; white-space:nowrap; }
   .exp-ft{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
   .btn.ghost.exp-maxe{ min-height:40px; border-color:var(--ice-dim); color:var(--ice); font-weight:700; }
   .exp-ov{ position:fixed; inset:0; z-index:70; display:flex; align-items:flex-end; justify-content:center; background:rgba(3,7,13,.6); }
@@ -4419,7 +4398,6 @@ input,select,textarea{
   .exp-nav{ width:36px; height:36px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); color:var(--frost); font-size:18px; cursor:pointer; }
   .exp-nav:disabled{ opacity:.3; }
   .exp-sk-bonus{ font-size:12.5px; color:var(--muted); margin:0 0 10px; } .exp-sk-bonus b{ color:var(--ice); }
-  .exp-sk-k{ margin:12px 0 6px; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
   .exp-done{ display:block; width:100%; min-height:44px; margin-top:12px; }
 
   /* Dashboard roster: ⚙ settings sheet */
@@ -4450,6 +4428,50 @@ input,select,textarea{
 
   /* Experts Research like Experts Level */
   .exp-nbs.one{ grid-template-columns:1fr; }
+  .exk-hd{ display:flex; align-items:flex-start; gap:12px; margin-bottom:6px; }
+  .exk-hd > img{ width:56px; height:calc(56px); flex:0 0 56px; object-fit:contain; border-radius:12px; }
+  .exk-hd-t{ flex:1 1 auto; min-width:0; }
+  .exk-hd-t .nm{ font-size:17px; font-weight:800; }
+  .exk-hd-t .mt{ font-size:12.5px; color:var(--muted); }
+  .exk-tr{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex:none; }
+  .exk-tr .btn.ghost.exp-maxe{ min-height:calc(32px); height:calc(32px); padding:2px 14px; font-size:13px; }
+  .exk-tr .exp-count{ justify-self:auto; min-height:calc(24px); font-size:12.5px; }
+  .exk-tr .exp-count input{ width:18px; height:calc(18px); }
+  .exk-r{ padding:10px 0; border-top:1px solid var(--line); }
+  .exk-lvr{ padding-top:12px; }
+  .exk-b{ height:calc(60px); box-sizing:border-box; display:flex; align-items:center; gap:8px; min-width:0; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--panel-2); color:var(--frost); font:inherit; text-align:start; }
+  button.exk-b{ cursor:pointer; }
+  .exk-b img{ width:28px; height:calc(28px); flex:0 0 28px; object-fit:contain; }
+  .exk-b > span{ display:flex; flex-direction:column; min-width:0; line-height:1.25; }
+  .exk-b > span.exk-v{ flex-direction:row; align-items:center; }
+  .exk-b b{ font-size:15px; font-weight:800; color:var(--frost); white-space:nowrap; }
+  .exk-b b.ok, .exk-b em.ok{ color:var(--good); }
+  .exk-b em{ font-style:normal; font-size:12px; font-weight:700; color:var(--danger); white-space:nowrap; }
+  .exk-lv{ justify-content:space-between; padding:8px 10px 8px 14px; }
+  .exk-lv small{ font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .exk-lv .exk-n{ height:calc(38px); min-width:52px; font-size:16px; }
+  .exk-g2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .exk-v{ display:inline-flex; align-items:center; gap:5px; flex:none; }
+  .exk-v .a{ color:var(--muted); font-size:13px; }
+  .exk-n{ position:relative; min-width:40px; height:calc(32px); box-sizing:border-box; padding:0 9px; border:1px solid var(--line); border-radius:9px; background:var(--panel-2); font-size:14.5px; font-weight:800; color:var(--frost); display:inline-flex; align-items:center; justify-content:center; }
+  .exk-n.t{ border-color:var(--ice-dim); color:var(--ice); }
+  .exk-n select, .exk-mx select{ position:absolute; inset:0; width:100%; height:100%; min-height:0; opacity:0; cursor:pointer; font-size:16px; }
+  .exk-l1{ display:flex; align-items:center; gap:8px; }
+  .exk-nm{ flex:1 1 auto; min-width:0; }
+  .exk-nm > b{ font-size:14.5px; font-weight:800; }
+  .exk-bn{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .exk-bn b{ color:var(--ice); font-weight:700; }
+  .exk-m{ font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
+  .exk-m img{ width:18px; height:calc(18px); object-fit:contain; vertical-align:-4px; margin-inline-end:3px; }
+  .exk-m b{ color:var(--frost); font-weight:700; }
+  .exk-m .bad{ color:var(--danger); font-weight:700; }
+  .exk-m .ok{ color:var(--good); font-weight:700; }
+  .exk-ex{ padding:0 0 1px; border:0; border-bottom:1px dashed rgba(124,196,255,.6); background:none; color:var(--ice); font:inherit; font-weight:700; cursor:pointer; }
+  .exk-ex.e{ color:var(--muted); font-weight:600; }
+  .exk-sl{ display:flex; align-items:center; gap:8px; padding:9px 0; border-top:1px solid var(--line); font-size:13.5px; }
+  .exk-sl b{ flex:1 1 auto; min-width:0; font-weight:700; }
+  .exk-mx{ position:relative; color:var(--good); font-weight:800; font-size:13px; white-space:nowrap; }
+  .exk > .exk-r:last-child, .exk > .exk-sl:last-child{ padding-bottom:2px; }
   .er-note{ font-size:12px; margin:0 0 8px; }
 
   /* Dashboard troop stats = boxes, vertical: a column per troop, its
