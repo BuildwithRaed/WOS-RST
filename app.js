@@ -1405,7 +1405,6 @@ const NAV_GROUP_LABELS = {
 const NAV_PAGE_LABELS = {
   "overview": { en: "Dashboard" },
   "budgets": { en: "Budgets" },
-  "cando": { en: "Can do now" },
   "backpack": { en: "Backpack" },
   "statetimeline": { en: "State Timeline" },
   "packs": { en: "Packs" },
@@ -3197,6 +3196,22 @@ const T = {
   cdp_details: { en: "Details" },
   cdp_fold: { en: "Fold" },
   cdp_trades_used: { en: "Trades used:" },
+  cdb_free: { en: "Free now" },
+  cdb_ups: { en: "{n} upgrades" },
+  cdb_working: { en: "working out…" },
+  cdb_sub: { en: "from your Backpack · {n} pages · no packs" },
+  cdb_sub_wait: { en: "from your Backpack · no packs" },
+  cdb_goals_up: { en: "{n} of {m} goals can go up now" },
+  cdb_sheet_title: { en: "Free now · from your Backpack" },
+  cdb_your_goals: { en: "Your goals" },
+  cdb_n_can: { en: "{n} of {m} can go up" },
+  cdb_goal_line: { en: "goal {x} · now {now}" },
+  cdb_else: { en: "Everything else" },
+  cdb_can_now: { en: "can do now · {x}" },
+  cdb_part_now: { en: "part now: {a} → {b}" },
+  cdb_not_yet: { en: "not yet" },
+  cdb_short: { en: "{item} short" },
+  cdb_items: { en: "items" },
   cda_desc: { en: "Works out every ticked page from your Backpack, sharing it: an item one page uses isn't counted again for another. Tick pages and single upgrades to choose where it goes." },
   cda_edit_order: { en: "Edit order" },
   cda_packs: { en: "Include this week's packs" },
@@ -3604,7 +3619,7 @@ async function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "statetimeline", "budgets", "cando", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
+  "overview", "statetimeline", "budgets", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -3613,8 +3628,8 @@ const KNOWN_TABS = new Set([
 function isValidTab(t) {
   return KNOWN_TABS.has(t) || (typeof t === "string" && (t.startsWith("extrabonus:") || t.startsWith("buffcat:")));
 }
-// A saved "roadmap" (the old Roadmap page) opens Budgets.
-const SAVED_TAB = localStorage.getItem("last_tab") === "roadmap" ? "budgets" : localStorage.getItem("last_tab");
+// A saved "roadmap" / "cando" (the old Roadmap / Can do pages) opens Budgets.
+const SAVED_TAB = ["roadmap", "cando"].includes(localStorage.getItem("last_tab")) ? "budgets" : localStorage.getItem("last_tab");
 let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 // Phones may reload a page left in the background (switching apps). The page
 // is reopened on the same tab (last_tab); this also keeps where it was
@@ -3886,8 +3901,10 @@ function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
 // Budgets B3: the sheet open over the page ("mats", "stats", "goals",
 // "settings", "missing", "page:<calcKey>"); kept across redraws, closed on navigation.
 let BUDGET_SHEET = null;
+let CDA_BUILD_P = null; // the "Free now" (Can do) build of this Budgets visit (shared, cleared by goToTab)
 function goToTab(tab, opts = {}) {
-  if (tab === "roadmap") tab = "budgets"; // the old Roadmap page (Back / Forward to it)
+  if (tab === "roadmap" || tab === "cando") tab = "budgets"; // the old Roadmap / Can do pages (Back / Forward to them)
+  CDA_BUILD_P = null; // "Free now" is worked out again on the next Budgets visit
   if (!isValidTab(tab)) tab = "overview";
   // Unsaved Admin table edits: ask before leaving them.
   if (TAB === "adminpage" && typeof admConfirmLeave === "function" && !admConfirmLeave()) {
@@ -4371,10 +4388,9 @@ async function render() {
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
-    if (!IS_OWNER && (TAB === "adminpage" || TAB === "cando" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets") await renderBudgetsPage();
-    else if (TAB === "cando") await renderCanDoPage();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "statetimeline") await renderStateTimelinePage();
     else if (TAB === "packs") await renderPacksPage();
@@ -4533,7 +4549,7 @@ const QUICK_ICONS = {
   albumtundrapage: "icons/quick/tundra.png", collectiongallerypage: "icons/quick/collection.png",
 };
 // Pages shown with a symbol instead of a picture (others use the Menu's own).
-const QUICK_EMOJI = { backpack: "\u{1F392}", cando: "\u2705" };
+const QUICK_EMOJI = { backpack: "\u{1F392}" };
 // Short names for the row's tiles, English only;
 // other languages, and pages renamed in Admin, keep the Menu name.
 const QUICK_SHORT = {
@@ -7140,25 +7156,123 @@ function cdaCardHtml(pg, info, P) {
       ${!open && moreN > 0 ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_more").replace("{n}", moreN))} &#9662;</button>` : !open ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_details"))} &#9662;</button>` : ""}
     </div><button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
 }
-async function renderCanDoPage() {
-  const seq = RENDER_SEQ;
+// Budgets' "Free now" tile and sheet (owner only): every page worked out once per
+// Budgets visit (CDA_BUILD_P, shared), after the page is drawn.
+function cdaReady() { return !!(CDA_BUILD_P && CDA_BUILT && CDA_LOADED >= CDA_PAGES.length && CDA_BUILD_P.done); }
+async function cdaEnsure() {
   if (!IS_OWNER) return;
   await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
-  if (seq !== RENDER_SEQ) return;
+  if (CDA_BUILD_P) return CDA_BUILD_P;
   CDA_BUILT = {}; CDA_LOADED = 0; CDA_PLAN_MEMO = null; CDA_NOTE = null;
-  drawCanDoPage();
-  const t0 = performance.now();
-  const jobs = CDA_PAGES.map((pg) => cdaBuildPage(pg).catch((e) => { console.warn("cando", pg.key, e); return { err: true }; }).then((r) => {
-    if (seq !== RENDER_SEQ) return;
-    CDA_BUILT[pg.key] = r; CDA_LOADED++;
-    cdaDrawBar();
-  }));
-  const packs = CDA_SET.packs ? cdaWeekPacks().catch(() => null) : null;
-  await Promise.all(jobs);
-  if (packs) CDA_PACKS = await packs;
-  if (seq !== RENDER_SEQ) return;
-  window.CDA_LOAD_MS = Math.round(performance.now() - t0);
-  drawCanDoPage();
+  let p = null;
+  p = CDA_BUILD_P = (async () => {
+    const t0 = performance.now();
+    const jobs = CDA_PAGES.map((pg) => cdaBuildPage(pg).catch((e) => { console.warn("cando", pg.key, e); return { err: true }; }).then((r) => {
+      if (CDA_BUILD_P !== p) return;
+      CDA_BUILT[pg.key] = r; CDA_LOADED++;
+      cdaDrawBar();
+    }));
+    const packs = CDA_SET.packs ? cdaWeekPacks().catch(() => null) : null;
+    await Promise.all(jobs);
+    if (packs) { const wp = await packs; if (CDA_BUILD_P === p) CDA_PACKS = wp; }
+    if (CDA_BUILD_P !== p) return;
+    window.CDA_LOAD_MS = Math.round(performance.now() - t0);
+    p.done = true;
+  })();
+  return p;
+}
+// Called after each Budgets draw: starts the build once, then fills the tile, the sheet and the goal chips.
+function cdaBudgetsAfterDraw() {
+  if (!IS_OWNER || TAB !== "budgets") return;
+  if (cdaReady()) { cdaFillBudgets(); return; }
+  const seq = RENDER_SEQ;
+  // A moment later, so the page shows first.
+  setTimeout(() => {
+    if (seq !== RENDER_SEQ || TAB !== "budgets") return;
+    cdaEnsure().then(() => { if (seq === RENDER_SEQ && TAB === "budgets" && cdaReady()) cdaFillBudgets(); }).catch((e) => console.warn("cando", e));
+  }, 60);
+}
+function cdaFillBudgets() {
+  const tile = document.querySelector("[data-cdatile]");
+  if (tile) tile.innerHTML = cdaTileInner();
+  const sh = document.querySelector("[data-cdasheet]");
+  if (sh) cdaDrawSheet(sh);
+  cdaPatchGoals(document.querySelector(".bud-goals"));
+}
+// The picked upgrade goals (Order of goals, U2) with what the Backpack does for them now.
+function cdaGoalStates(P) {
+  const out = [];
+  ((BUDGET_GOALS && BUDGET_GOALS.goals) || []).forEach((e) => {
+    if (!e || !e.page) return;
+    const u = goalUpgrades(e.page).find((x) => x.id === `${e.page}|${e.key}`);
+    if (!u) return;
+    const li = goalUpLevelIdx(u, e.level);
+    if (li < 0) return;
+    const goalLabel = u.levels[li] ? u.levels[li].label : "";
+    const b = CDA_BUILT[e.page], tr = b && b.tracks && b.tracks.find((x) => x.id === `${e.page}::${e.key}`);
+    if (!tr || P.plan.lv[tr.id] == null) { out.push({ id: "up:" + e.id, u, e, goalLabel, k: "?" }); return; }
+    const lab = (i) => (tr.lab ? tr.lab(i) : String(i)), lv = P.plan.lv[tr.id];
+    let gi = -1;
+    for (let i = tr.from; i <= tr.to; i++) if (lab(i) === goalLabel) gi = i;
+    const blk = P.plan.blocker[tr.id];
+    out.push({ id: "up:" + e.id, u, e, goalLabel, k: gi >= 0 && lv >= gi ? "full" : lv > tr.from ? "part" : "none", from: lab(tr.from), now: lab(lv), blk: blk ? cdaItemName(blk, tr) : "", blkIc: blk ? cdaItemIcon(blk, tr) : "" });
+  });
+  return out;
+}
+function cdaGoalChipHtml(s) {
+  if (!s || s.k === "?") return "";
+  if (s.k === "full") return `<span class="gu-cd full">&#10003; ${esc(t("cdb_can_now").replace("{x}", s.goalLabel))}</span>`;
+  if (s.k === "part") return `<span class="gu-cd part">${esc(t("cdb_part_now").replace("{a}", s.from).replace("{b}", s.now))}</span>`;
+  return `<span class="gu-cd none">${esc(t("cdb_not_yet"))} · ${s.blkIc ? `<img src="${esc(s.blkIc)}" alt="" />` : ""}${esc(t("cdb_short").replace("{item}", s.blk || t("cdb_items")))}</span>`;
+}
+function cdaPatchGoals(box) {
+  if (!box || !cdaReady()) return;
+  const map = {};
+  cdaGoalStates(cdaPlan()).forEach((s) => { map[s.id] = s; });
+  box.querySelectorAll(".bud-g.gu").forEach((li) => {
+    li.querySelectorAll(".gu-cd").forEach((x) => x.remove());
+    const h = cdaGoalChipHtml(map[li.dataset.goal]), lv = li.querySelector(".gu-lv");
+    if (h && lv) lv.insertAdjacentHTML("afterend", h);
+  });
+}
+// The tile under the Budgets total.
+function cdaCounts(P) {
+  let ups = 0, pages = 0;
+  P.pages.forEach((pg) => { const i = cdaPageInfo(pg, P); ups += i.up.length; if (i.up.length) pages++; });
+  return { ups, pages };
+}
+function cdaTileHtml() {
+  return IS_OWNER ? `<button type="button" class="b3-tile b3-free" data-cdatile data-b3sheet="cando">${cdaTileInner()}</button>` : "";
+}
+function cdaTileInner() {
+  const ready = cdaReady(), P = ready ? cdaPlan() : null, c = P ? cdaCounts(P) : null;
+  const gs = P ? cdaGoalStates(P).filter((s) => s.k !== "?") : [];
+  const gl = gs.length ? `<small class="gl">${esc(t("cdb_goals_up").replace("{n}", gs.filter((s) => s.k !== "none").length).replace("{m}", gs.length))}</small>` : "";
+  return `<span class="fz-ic">&#10003;</span><span class="b3-lr-t"><b>${esc(t("cdb_free"))} · <em>${c ? esc(t("cdb_ups").replace("{n}", c.ups.toLocaleString())) : esc(t("cdb_working"))}</em></b><small>${c ? esc(t("cdb_sub").replace("{n}", c.pages)) : esc(t("cdb_sub_wait"))}</small>${gl}</span><span class="b3-go">&#8250;</span>`;
+}
+// The sheet: the Can do settings and answer, the goals in order, then everything else.
+function cdaSheetInner() {
+  const ready = cdaReady(), P = ready ? cdaPlan() : null;
+  let goals = "";
+  if (P) {
+    const gs = cdaGoalStates(P).filter((s) => s.k !== "?");
+    if (gs.length) {
+      const can = gs.filter((s) => s.k !== "none").length;
+      goals = `<div class="fz-hd"><span>${esc(t("cdb_your_goals"))}</span><em>${esc(t("cdb_n_can").replace("{n}", can).replace("{m}", gs.length))}</em></div><div class="fz-goals">${gs.map((s, i) => {
+        const pg = CDA_PAGES.find((x) => x.key === s.e.page);
+        return `<div class="fz-g"><span class="fz-num">${i + 1}</span>${s.u.img ? `<img class="${s.u.face ? "face" : ""}" src="${esc(s.u.img)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)}</b><small>${esc(t("cdb_goal_line").replace("{x}", s.goalLabel).replace("{now}", s.u.now))}</small>${cdaGoalChipHtml(s)}</span>${pg ? `<button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button>` : ""}</div>`;
+      }).join("")}</div><div class="fz-hd"><span>${esc(t("cdb_else"))}</span><em class="mu">${esc(t("cdb_ups").replace("{n}", cdaCounts(P).ups.toLocaleString()))}</em></div>`;
+    }
+  }
+  return cdaBodyHtml(goals);
+}
+function cdaDrawSheet(host) {
+  const keepX = (host.querySelector(".cda-chips") || {}).scrollLeft || 0;
+  host.innerHTML = cdaSheetInner();
+  const chips = host.querySelector(".cda-chips");
+  if (chips && keepX) chips.scrollLeft = keepX;
+  if (!cdaReady()) cdaDrawBar();
+  cdaWire(host);
 }
 function cdaDrawBar() {
   const el = document.getElementById("cdaBar");
@@ -7166,8 +7280,9 @@ function cdaDrawBar() {
   const n = CDA_PAGES.length;
   el.innerHTML = `<span>${esc(t("cda_working").replace("{n}", n))}</span><span class="cda-bar"><i style="width:${Math.round((CDA_LOADED / n) * 100)}%;"></i></span><span>${CDA_LOADED}/${n}</span>`;
 }
-function drawCanDoPage() {
-  const ready = CDA_BUILT && CDA_LOADED >= CDA_PAGES.length;
+// The Can do content (settings, answer boxes, page chips, page cards); `mid` goes before the chips.
+function cdaBodyHtml(mid) {
+  const ready = cdaReady();
   const best = UPGRADE_ORDER.mode === "best";
   const P = ready ? cdaPlan() : null;
   const infos = {};
@@ -7192,9 +7307,7 @@ function drawCanDoPage() {
       ${doneP.length ? `<div>${esc(t("cda_at_target_l"))} ${esc(doneP.join(", "))}</div>` : ""}
       ${naP.length ? `<div>${esc(t("cda_not_avail"))} ${esc(naP.join(", "))}</div>` : ""}
     </div>`;
-  const keepX = (content.querySelector(".cda-chips") || {}).scrollLeft || 0;
-  content.innerHTML = `<div class="cdp cda">
-    <div class="page-head"><div><h2>${esc(t("cg_can_now"))}</h2><p class="desc">${esc(t("cda_desc"))}</p></div></div>
+  return `<div class="cdp cda">
     <div class="panel cda-top">
       <div class="rch-seg cdp-seg"><button type="button" data-cdamode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdamode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
       ${best ? "" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}
@@ -7203,27 +7316,33 @@ function drawCanDoPage() {
         <div class="cdp-box"><div class="k">${esc(t("cda_upgrades"))}</div><div class="v">${P ? esc(upgrades.toLocaleString()) : "…"}</div></div></div>
     </div>
     ${ready ? "" : `<div class="cda-ld" id="cdaBar"></div>`}
+    ${mid || ""}
     <div class="cda-chhd"><span>${esc(t("cda_pages_ticked").replace("{n}", ticked.length).replace("{m}", CDA_PAGES.length))}</span><button type="button" class="cda-gm" data-cdaall>${esc(t(ticked.length === CDA_PAGES.length ? "cda_none" : "cda_all"))} &#8250;</button></div>
     <div class="cda-chips">${CDA_PAGES.map(chip).join("")}</div>
     ${cards}${foot}
   </div>`;
-  const chips = content.querySelector(".cda-chips");
-  if (chips && keepX) chips.scrollLeft = keepX;
-  if (!ready) cdaDrawBar();
-  content.querySelector(".cda").onclick = cdaClick;
-  const sw = content.querySelector("[data-cdapacks]");
+}
+function cdaWire(host) {
+  const box = host.querySelector(".cda");
+  if (!box) return;
+  box.onclick = cdaClick;
+  const sw = box.querySelector("[data-cdapacks]");
   if (sw) sw.onchange = async () => {
     CDA_SET.packs = sw.checked; cdaSaveSettings();
     if (CDA_SET.packs && !CDA_PACKS) CDA_PACKS = await cdaWeekPacks().catch(() => ({ items: {}, bought: 0, planned: 0 }));
-    if (TAB === "cando") cdaRedraw();
+    cdaRedraw();
   };
 }
-// Redraws after a change: the page dims at once, the new plan is worked out a moment later.
+// Redraws after a change: the sheet dims at once, the new plan is worked out a moment later.
 function cdaRedraw(after) {
-  const el = content.querySelector(".cda");
+  const el = document.querySelector("[data-cdasheet] .cda");
   if (el) el.classList.add("busy");
   const seq = RENDER_SEQ;
-  setTimeout(() => { if (seq !== RENDER_SEQ || TAB !== "cando") return; if (after) after(); keepPlace(() => drawCanDoPage()); }, 30);
+  setTimeout(() => {
+    if (seq !== RENDER_SEQ || TAB !== "budgets" || !cdaReady()) return;
+    if (after) after();
+    cdaFillBudgets();
+  }, 30);
 }
 function cdaClick(ev) {
   const go = ev.target.closest("[data-cdago]");
@@ -7233,6 +7352,7 @@ function cdaClick(ev) {
   const md = ev.target.closest("[data-cdamode]");
   if (md) { if (UPGRADE_ORDER.mode !== md.dataset.cdamode) { UPGRADE_ORDER.mode = md.dataset.cdamode; saveUpgradeOrder(); CDA_NOTE = null; cdaRedraw(); } return; }
   if (ev.target.closest("[data-cdaorder]")) { cdaOrderSheet(); return; }
+  if (!cdaReady()) return;
   const pgb = ev.target.closest("[data-cdapage]");
   if (pgb) { const k = pgb.dataset.cdapage; if (CDA_SET.off.has(k)) CDA_SET.off.delete(k); else CDA_SET.off.add(k); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
   if (ev.target.closest("[data-cdaall]")) { const all = CDA_SET.off.size === 0; CDA_SET.off = new Set(all ? CDA_PAGES.map((p) => p.key) : []); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
@@ -7241,7 +7361,7 @@ function cdaClick(ev) {
   if (cb) { ev.preventDefault(); cdaToggleSkip(cb.dataset.cdaskip); return; }
   if (ev.target.closest(".cda-li")) return;
   const op = ev.target.closest("[data-cdaopen]");
-  if (op) { const k = op.dataset.cdaopen; if (CDA_OPEN.has(k)) CDA_OPEN.delete(k); else CDA_OPEN.add(k); keepPlace(() => drawCanDoPage()); }
+  if (op) { const k = op.dataset.cdaopen; if (CDA_OPEN.has(k)) CDA_OPEN.delete(k); else CDA_OPEN.add(k); const h = document.querySelector("[data-cdasheet]"); if (h) cdaDrawSheet(h); }
 }
 // Leaving one upgrade out (or back in): the rest is planned again; the note says where its items went.
 function cdaToggleSkip(id) {
@@ -7293,7 +7413,7 @@ function cdaOrderSheet() {
       refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
     }));
   };
-  const changed = () => { saveUpgradeOrder(); CDA_NOTE = null; draw(); if (TAB === "cando" && CDA_BUILT) cdaRedraw(); };
+  const changed = () => { saveUpgradeOrder(); CDA_NOTE = null; draw(); if (cdaReady()) cdaRedraw(); };
   m.onclick = (ev) => {
     if (ev.target === m || ev.target.closest("[data-cdx]")) { m.style.display = "none"; return; }
     if (ev.target.closest("[data-cdreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); changed(); }
@@ -21709,6 +21829,7 @@ async function renderBudgetsPage(opts = {}) {
     if (sh === "stats" && grandDeltas.length) return { title: t("budgets_stat_increase_total"), html: statTableHtml(grandDeltas, "all") + (dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`) };
     if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), html: goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
+    if (sh === "cando" && IS_OWNER) return { title: t("cdb_sheet_title"), html: `<div data-cdasheet>${cdaSheetInner()}</div>` };
     if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
     if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: x.pg.calcKey === "shining_skins" ? t("sh_title") : (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
     return null;
@@ -21720,7 +21841,7 @@ async function renderBudgetsPage(opts = {}) {
     <div class="budget-wrap b3">
       <div class="plx-head b3-head"><h2 title="${esc(t("budgets_desc"))}">${esc(t("budgets_title"))}</h2>${setBtnHtml}<button type="button" class="b3-sq" data-budgetrecalc title="${esc(t("budgets_recalc_hint"))}" aria-label="${esc(t("budgets_recalc"))}">&#8635;</button></div>
       <div class="b3-cols">
-        <div class="b3-left">${totalHtml}${goalFlagsHtml}${lrHtml}</div>
+        <div class="b3-left">${totalHtml}${cdaTileHtml()}${goalFlagsHtml}${lrHtml}</div>
         <div class="b3-right">${tilesHtml}${missHtml}</div>
       </div>
       ${sheetHtml}
@@ -21802,6 +21923,10 @@ async function renderBudgetsPage(opts = {}) {
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => { if (e.target === el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(e); } });
   });
+  // "Free now" (owner): wire the sheet, then work the pages out after the draw.
+  const cdaHost = content.querySelector("[data-cdasheet]");
+  if (cdaHost) { cdaWire(cdaHost); if (!cdaReady()) cdaDrawBar(); }
+  cdaBudgetsAfterDraw();
 }
 
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
