@@ -593,7 +593,18 @@
   .cdp-box .v.g{ color:var(--good); }
   .cdp-note{ font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.35; }
   .cdp-pg{ display:flex; gap:10px; align-items:center; }
-  .cdp-pg.dim{ opacity:.6; }
+  .cdp-card.dim{ opacity:.6; }
+  .cdp-card.can{ cursor:pointer; }
+  .cdp-more{ display:inline-flex; align-items:center; gap:3px; min-height:26px; padding:0; border:0; background:none; color:var(--ice); font:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+  .cdp-ul{ margin-top:9px; border-top:1px solid var(--line); padding-top:6px; cursor:default; }
+  .cdp-li{ display:flex; align-items:center; gap:8px; padding:4px 0; font-size:12.5px; line-height:1.3; }
+  .cdp-li img{ width:26px; height:26px; object-fit:contain; flex:none; }
+  .cdp-ck{ width:26px; flex:none; text-align:center; color:var(--good); font-weight:800; }
+  .cdp-lt{ flex:1; min-width:0; overflow-wrap:anywhere; }
+  .cdp-lg{ flex:none; max-width:45%; text-align:end; color:var(--muted); font-size:11.5px; }
+  .cdp-tl{ font-size:11.5px; color:var(--good); background:rgba(91,201,138,.08); border-radius:8px; padding:6px 8px; margin-top:6px; line-height:1.4; }
+  .cdp-ol{ font-size:11.5px; color:var(--amber); margin-top:6px; }
+  .cdp-fold{ color:var(--muted); margin-top:4px; }
   .cdp-pic{ width:42px; height:42px; object-fit:contain; flex:none; }
   .cdp-m{ flex:1; min-width:0; }
   .cdp-n{ display:flex; justify-content:space-between; gap:8px; font-size:12px; color:var(--muted); }

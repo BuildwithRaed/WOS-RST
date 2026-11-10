@@ -3242,6 +3242,10 @@ const T = {
   cdp_min: { en: "{n} min ago" },
   cdp_h: { en: "{n} h ago" },
   cdp_d: { en: "{n} d ago" },
+  cdp_more: { en: "+{n} more" },
+  cdp_details: { en: "Details" },
+  cdp_fold: { en: "Fold" },
+  cdp_trades_used: { en: "Trades used:" },
   cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
   cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
   cando_more: { en: "+{n} more" },
@@ -6836,8 +6840,18 @@ function canDoSummary(c) {
     txt: s.txt, st: !todo.length ? "done" : !up.length ? "none" : "up",
     trades: (c.plan.tradeSum || []).length > 0, first: c.plan.first || null,
     steps: up.length,
+    // Every upgrade the Backpack covers, written the way the page's sheet writes it.
+    list: up.map((tr) => {
+      const lv = c.plan.lv[tr.id];
+      let pic = "";
+      try { pic = c.pic ? c.pic(tr, lv) || "" : ""; } catch (e) { pic = ""; }
+      return { n: tr.name || "", st: canDoStep(c, tr, lv), pic, troop: tr.troop && tr.troop !== "all" ? reachTroopKey(tr.troop) : "", gain: reachGainText(reachTroopGain([tr], c.plan)), done: lv >= tr.to };
+    }),
+    tradeSum: (c.plan.tradeSum || []).map((x) => ({ from: x.from, to: x.to, give: x.give, get: x.get })),
+    left: c.plan.first ? Math.max(0, Number(c.plan.left[c.plan.first]) || 0) : 0,
   };
 }
+const CANDO_PAGE_OPEN = new Set(); // cards opened on the Can do now page (for the visit)
 // Called by canDoSet (a moment later, so quick changes save once).
 function canDoRemember(key) {
   if (!CANDO_PAGES.some(([k]) => k === key)) return;
@@ -6889,10 +6903,22 @@ function drawCanDoPage() {
       if (s.first) { const ic = canDoItemIcon(s.first); sub = `<span class="cdp-nw cdp-amb">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}${esc(t("cdp_short").replace("{item}", materialDisplayName(itemShortName(s.first))))}</span>`; }
     } else main = `<span class="g">&#10003;</span> ${esc(t("cando_at_target"))}`;
     const dim = !s || s.st === "none";
-    return `<div class="panel cdp-pg${dim ? " dim" : ""}">${pic ? `<img class="cdp-pic" src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div class="cdp-m">
+    const list = s && s.st === "up" && Array.isArray(s.list) ? s.list : null;
+    const can = !!(list && (list.length > 1 || (s.tradeSum || []).length || s.first));
+    const open = can && CANDO_PAGE_OPEN.has(c.key);
+    if (can && !open) sub += `<button type="button" class="cdp-more" data-cdpopen="${esc(c.key)}" aria-expanded="false">${esc(list.length > 1 ? t("cdp_more").replace("{n}", list.length - 1) : t("cdp_details"))} &#9662;</button>`;
+    let body = "";
+    if (open) {
+      const leftTxt = /\(minutes\)$/.test(s.first || "") ? bsTime(s.left || 0) : Math.floor(s.left || 0).toLocaleString();
+      body = `<div class="cdp-ul">${list.map((x) => `<div class="cdp-li">${x.pic ? `<img src="${esc(x.pic)}" alt="" loading="lazy" />` : `<span class="cdp-ck">&#10003;</span>`}<span class="cdp-lt"><b>${esc(x.n)}</b> ${esc(x.st)}</span><span class="cdp-lg">${x.troop ? `<span style="color:${CANDO_COLORS[x.troop] || "inherit"};">${esc(troopDisplayName(x.troop))}</span>` : ""}${x.troop && x.gain ? " · " : ""}${esc(x.gain || "")}${x.done ? ` &#10003;` : ""}</span></div>`).join("")}
+        ${(s.tradeSum || []).length ? `<div class="cdp-tl">&#8644; ${esc(t("cdp_trades_used"))} ${reachTradeText(s.tradeSum)}</div>` : ""}
+        ${s.first ? `<div class="cdp-ol">&#9888; ${esc(t("rch_first").replace("{item}", materialDisplayName(itemShortName(s.first))).replace("{n}", leftTxt))}</div>` : ""}
+        <button type="button" class="cdp-more cdp-fold" data-cdpopen="${esc(c.key)}" aria-expanded="true">${esc(t("cdp_fold"))} &#9652;</button></div>`;
+    }
+    return `<div class="panel cdp-card${dim ? " dim" : ""}${can ? " can" : ""}"${can ? ` data-cdpcard="${esc(c.key)}"` : ""}><div class="cdp-pg">${pic ? `<img class="cdp-pic" src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div class="cdp-m">
       <div class="cdp-n"><span>${esc(navLabel(c.tab))}</span>${c.p ? `<span class="cdp-at" title="${esc(new Date(c.p.at).toLocaleString())}">${esc(canDoAgo(c.p.at))}</span>` : ""}</div>
       <div class="cdp-u">${main}</div>${sub ? `<div class="cdp-s">${sub}</div>` : ""}</div>
-      <button type="button" class="cdp-go" data-cdpgo="${esc(c.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>`;
+      <button type="button" class="cdp-go" data-cdpgo="${esc(c.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
   };
   content.innerHTML = `<div class="cdp">
     <div class="page-head"><div><h2>${esc(t("cg_can_now"))}</h2><p class="desc">${esc(t("cdp_desc"))}</p></div></div>
@@ -6907,6 +6933,13 @@ function drawCanDoPage() {
   content.querySelector(".cdp").onclick = (ev) => {
     const go = ev.target.closest("[data-cdpgo]");
     if (go) { goToTab(go.dataset.cdpgo); return; }
+    const op = ev.target.closest("[data-cdpopen]") || (!ev.target.closest(".cdp-ul") && ev.target.closest("[data-cdpcard]"));
+    if (op) {
+      const k = op.dataset.cdpopen || op.dataset.cdpcard;
+      if (CANDO_PAGE_OPEN.has(k)) CANDO_PAGE_OPEN.delete(k); else CANDO_PAGE_OPEN.add(k);
+      keepPlace(() => drawCanDoPage());
+      return;
+    }
     const md = ev.target.closest("[data-cdpmode]");
     if (md && UPGRADE_ORDER.mode !== md.dataset.cdpmode) { UPGRADE_ORDER.mode = md.dataset.cdpmode; saveUpgradeOrder(); drawCanDoPage(); }
   };
