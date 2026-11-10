@@ -4497,6 +4497,8 @@ input,select,textarea{
   .shr .tx em{ font-style:normal; color:#e0b25a; font-size:12.5px; font-weight:700; white-space:nowrap; }
   .shr .ch{ color:var(--muted); font-size:20px; flex:none; }
   .sh-g1{ margin-top:-2px; }
+  .pca-bonus{ display:flex; align-items:center; gap:6px; margin-top:6px; font-size:12px; color:var(--good); }
+  .pca-bonus img{ width:18px; height:18px; object-fit:contain; }
   /* Layout S1b: one gold-edged row (tap = pick sheet), picture stack + price on the right */
   .s1b{ display:flex; align-items:center; gap:8px; margin-top:8px; min-height:52px; padding:6px 8px 6px 12px; border:1px solid rgba(224,178,90,.45); border-radius:12px; background:var(--panel-2); color:var(--frost); cursor:pointer; box-sizing:border-box; }
   .s1b.slim{ min-height:40px; }

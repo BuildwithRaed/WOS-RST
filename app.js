@@ -1937,6 +1937,7 @@ const T = {
   isl_src_choices: { en: "Copies a cycle, up to 6 (e.g. 1,3,6)" },
   isl_sc_name: { en: "Shining City" },
   sh_title: { en: "Shining City skins" },
+  pca_day_bonus: { en: "+{q} Tomes a day from the first buy \u00b7 +{n} in this plan" },
   sh_pick: { en: "+ pick skins" },
   sh_tomes: { en: "{n} Tomes" },
   sh_n: { en: "{n} skins" },
@@ -15822,6 +15823,19 @@ function packGroupsForBuild(tables, stripGems) {
   if (stripGems) out = out.map((g) => ({ ...g, offers: g.offers.map((o) => { if (!o.gives || o.gives.Gems == null) return o; let s = PACK_GEM_FREE.get(o); if (!s) { const gv = { ...o.gives }; delete gv.Gems; s = { ...o, gives: gv }; PACK_GEM_FREE.set(o, s); } return s; }) }));
   return out.filter((g) => g.offers.some((o) => Object.keys(o.gives).length)).map((g) => ({ ...g, offers: g.offers.filter((o) => Object.keys(o.gives).length || g.ladder) }));
 }
+// The Shining City Pack (the same table islShiningStarts finds: titled "Shining City…",
+// else one with a Glorious Tome / Lucky Glorious Tome Chest column): during its event the
+// first purchase of each day (any row, any price) gives ISL_RULES.tomeFreeDay Glorious
+// Tomes; more buys that day give nothing extra. { key, item, qty, days } or null.
+function packShiningBonusOf(tb, link) {
+  const qty = Number(ISL_RULES.tomeFreeDay) || 0;
+  if (!(qty > 0) || link.colOptions || link.option || link.pickCols > 0) return null;
+  const tomeCol = (x) => Object.values(packEffectiveCols(x)).some((c) => /glorious tome/i.test(String(c)));
+  const all = PACK_TABLES_CACHE || PACK_TABLES_ALL || [];
+  const titled = (x) => /shining city/i.test(String(x.title || ""));
+  if (!(titled(tb) || (!all.some(titled) && tomeCol(tb)))) return null;
+  return { key: String(tb.id), item: "Glorious Tome", qty, days: Math.max(1, Number(link.window) || Number(ISL_RULES.shiningDays) || 5) };
+}
 // One table's offer groups. Budgets builds groups for ~10 pages that share
 // most tables, so each table is built once and reused (kept with the other
 // built groups in PACK_GROUPS_CACHE; the key covers labels, currency and day).
@@ -15830,8 +15844,10 @@ function packTableGroups(tb) {
   const per = PACK_GROUPS_CACHE.perTable;
   if (per && per.has(cacheKey)) return per.get(cacheKey);
   const groups = [];
-  const done = () => { if (per) per.set(cacheKey, groups); return groups; };
   const link = packLinkFor(tb.id);
+  // Shining City Pack: the first buy of each event day also gives free Glorious Tomes.
+  const bonus = packShiningBonusOf(tb, link);
+  const done = () => { if (bonus) groups.forEach((g) => { g.dayBonus = bonus; }); if (per) per.set(cacheKey, groups); return groups; };
   if (link.pickCols > 0) { packPickGroups(tb, link).forEach((g) => groups.push(g)); return done(); }
   if (link.colOptions) { const g = packColumnOptionGroup(tb); if (g) { g.tables = [String(tb.id)]; groups.push(g); } return done(); }
   const offers = packOffersFor(tb, link.sequential).map((o) => ({ ...o, tableTitle: link.group && link.group !== (tb.title || "") ? link.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")), currency: link.currency }));
@@ -15877,6 +15893,31 @@ function packGroupsForRaw(tables) {
   });
   return groups;
 }
+// Day bonuses (Shining City Pack): per pack, at most `days` bonus days an event, so the
+// bonus = qty × min(event days × events within `days` − buys already used, buys of that
+// pack). Spreading the buys over the event days is always possible, so this total is exact.
+function packDayBonusList(groups, days) {
+  const by = new Map();
+  groups.forEach((g, gi) => {
+    const b = g.dayBonus;
+    if (!b || !(b.qty > 0)) return;
+    let e = by.get(b.key);
+    if (!e) { e = { key: b.key, item: b.item, qty: b.qty, cap: packCyclesWithin(g.reset, g.resetDay, days, g.window) * Math.max(1, b.days || 1), usedN: 0, gis: [] }; by.set(b.key, e); }
+    e.usedN += g.used || 0;
+    e.gis.push(gi);
+  });
+  return [...by.values()].map((e) => ({ ...e, cap: Math.max(0, Number.isFinite(e.cap) ? e.cap - e.usedN : 1e6) }));
+}
+function packDayBonusGives(list, picks) {
+  const out = {};
+  (list || []).forEach((e) => {
+    let n = 0;
+    picks.forEach((p) => { if (p.count > 0 && e.gis.includes(p.gi)) n += p.count; });
+    const k = Math.min(e.cap, n);
+    if (k > 0) out[e.item] = (out[e.item] || 0) + k * e.qty;
+  });
+  return out;
+}
 // The most of each resource the packs can give within `days`. Buying the
 // full ladder / every row at its limit is the best case for every resource
 // at once, so a per-resource check is exact.
@@ -15893,6 +15934,7 @@ function packMaxSupply(groups, days) {
     const top = g.ladder ? g.offers[g.offers.length - 1] : g.offers[0];
     Object.keys(top.gives).forEach((n) => { supply[n] = (supply[n] || 0) + cap * top.gives[n]; });
   });
+  packDayBonusList(groups, days).forEach((e) => { if (Number.isFinite(e.cap)) supply[e.item] = (supply[e.item] || 0) + e.cap * e.qty; });
   return supply;
 }
 // ---- Trades inside the planner ----
@@ -16081,7 +16123,7 @@ function packArcSteps(list, rowItem) {
 // The plan split into parts that share no item, trade or pack limit (e.g.
 // Experts, Hero shards, Chief Gear + Charm): each part is its own smaller
 // problem, solved on its own; together they are the same plan.
-function packExactPicks(groups, need, caps, ctx, timeLimit) {
+function packExactPicks(groups, need, caps, ctx, timeLimit, bonus) {
   if (!PLAN_SOLVER) return null;
   const rates = ctx ? ctx.rates : [];
   const par = new Map();
@@ -16094,25 +16136,26 @@ function packExactPicks(groups, need, caps, ctx, timeLimit) {
     if (!(caps[gi] > 0)) return null;
     const its = new Set();
     g.offers.forEach((o) => Object.keys(o.gives).forEach((n) => { if (o.gives[n] > 0 && used(n)) its.add(n); }));
+    if (g.dayBonus && used(g.dayBonus.item)) its.add(g.dayBonus.item);
     const list = [...its]; list.slice(1).forEach((n) => join(list[0], n));
     return list.length ? list : null;
   });
   const parts = new Map();
   Object.keys(need).forEach((n) => { if (need[n] > 0) { const k = find(n); if (!parts.has(k)) parts.set(k, true); } });
-  if (parts.size <= 1) return packExactPicksPart(groups, need, caps, ctx, timeLimit);
+  if (parts.size <= 1) return packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus);
   const picks = [], lots = rates.map(() => 0);
   for (const k of parts.keys()) {
     const subCaps = caps.map((c, gi) => (gItems[gi] && find(gItems[gi][0]) === k ? c : 0));
     const subNeed = {}; Object.keys(need).forEach((n) => { if (need[n] > 0 && find(n) === k) subNeed[n] = need[n]; });
     const idx = []; rates.forEach((r, i) => { if (find(r.from) === k) idx.push(i); });
-    const res = packExactPicksPart(groups, subNeed, subCaps, ctx ? { ...ctx, rates: idx.map((i) => rates[i]) } : null, timeLimit);
+    const res = packExactPicksPart(groups, subNeed, subCaps, ctx ? { ...ctx, rates: idx.map((i) => rates[i]) } : null, timeLimit, bonus);
     if (!res) return null;
     res.picks.forEach((p) => picks.push(p));
     res.lots.forEach((n, j) => { lots[idx[j]] = n; });
   }
   return picks.length ? { picks, lots } : null;
 }
-function packExactPicksPart(groups, need, caps, ctx, timeLimit) {
+function packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus) {
   if (!PLAN_SOLVER) return null;
   try {
     const num = (v) => { const r = Math.round(v * 1e6) / 1e6; return Math.abs(r) < 1e-9 ? "0" : String(r); };
@@ -16136,6 +16179,16 @@ function packExactPicksPart(groups, need, caps, ctx, timeLimit) {
     const sv = (a, k, j) => `s${a}_${k}_${j}`;
     arcs.forEach((a, ai) => a.tiers.forEach((opts, k) => opts.forEach((s, j) => Object.keys(s.gives).forEach((n) => term(n, s.gives[n], sv(ai, k, j))))));
     rates.forEach((r, k) => { term(r.to, r.get, `y${k}`); term(r.from, -r.give, `y${k}`); });
+    // Day bonuses: b ≤ bonus days left, b ≤ that pack's buys; each gives qty of its item, free.
+    const bons = [];
+    (bonus || []).forEach((e) => {
+      if (!(e.cap > 0) || !rowItem(e.item)) return;
+      const js = []; xs.forEach((x, j) => { if (e.gis.includes(x.gi)) js.push(j); });
+      if (!js.length) return;
+      const v = `b${bons.length}`;
+      bons.push({ v, js, cap: e.cap });
+      term(e.item, e.qty, v);
+    });
     const lines = (terms) => { const out = []; for (let i = 0; i < terms.length; i += 8) out.push(" " + terms.slice(i, i + 8).join(" ")); return out.join("\n"); };
     const cons = [];
     rows.forEach((terms, n) => {
@@ -16146,6 +16199,7 @@ function packExactPicksPart(groups, need, caps, ctx, timeLimit) {
     const byGroup = new Map();
     xs.forEach((x, j) => { if (!byGroup.has(x.gi)) byGroup.set(x.gi, []); byGroup.get(x.gi).push(`+ 1 x${j}`); });
     byGroup.forEach((terms, gi) => { if (Number.isFinite(caps[gi])) cons.push(` g${gi}:\n${lines(terms)} <= ${num(caps[gi])}`); });
+    bons.forEach((b) => cons.push(` k${b.v}:\n${lines([`+ 1 ${b.v}`].concat(b.js.map((j) => `- 1 x${j}`)))} <= 0`));
     // Step k of an option pack can only be bought as often as step k-1.
     const arcVars = [], arcCost = [];
     arcs.forEach((a, ai) => a.tiers.forEach((opts, k) => {
@@ -16155,7 +16209,8 @@ function packExactPicksPart(groups, need, caps, ctx, timeLimit) {
     }));
     const bounds = [];
     rates.forEach((r, k) => { if (r.max > 0) bounds.push(` y${k} <= ${num(r.max * ctx.weeks)}`); });
-    const vars = xs.map((_, j) => `x${j}`).concat(arcVars, rates.map((_, k) => `y${k}`));
+    bons.forEach((b) => bounds.push(` ${b.v} <= ${num(b.cap)}`));
+    const vars = xs.map((_, j) => `x${j}`).concat(arcVars, rates.map((_, k) => `y${k}`), bons.map((b) => b.v));
     // A tiny cost per trade keeps the solver from making trades nobody needs.
     const lp = ["Minimize", " obj:", lines(xs.map((x, j) => `+ ${num(x.o.price)} x${j}`).concat(arcCost, rates.map((_, k) => `+ 0.000001 y${k}`))), "Subject To", ...cons, "Bounds", ...vars.map((v) => ` ${v} >= 0`), ...bounds, "Generals", lines(vars), "End"].join("\n");
     const res = PLAN_SOLVER.solve(lp, { time_limit: timeLimit, output_flag: false, mip_rel_gap: 1e-4 });
@@ -16193,7 +16248,7 @@ const PACK_PLAN_CACHE = new Map();
 // display (labels are in the display currency and language), so a cached
 // plan must not be reused after any of them changes.
 function packPlanCacheKey(groups, need, days, calcKey, quick) {
-  const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.window || 0}|${g.perCycle}|${g.used || 0}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",") + "~" + (o.label || "") + "~" + (o.tableTitle || "") + "~" + (o.currency || "")).join(";")).join("#");
+  const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.window || 0}|${g.perCycle}|${g.used || 0}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}${g.dayBonus ? `b${g.dayBonus.key}:${g.dayBonus.qty}:${g.dayBonus.days}` : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",") + "~" + (o.label || "") + "~" + (o.tableTitle || "") + "~" + (o.currency || "")).join(";")).join("#");
   let h = 0; for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
   return `${h}|${sig.length}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
 }
@@ -16270,6 +16325,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   // `used` = buys another page already took from this pack in a shared plan.
   const caps = groups.map((g) => Math.max(0, packCyclesWithin(g.reset, g.resetDay, days, g.window) * g.perCycle - (g.used || 0)));
   if (!packCoveredBy(packMaxSupply(groups, days), need, ctx)) return null;
+  const bonus = packDayBonusList(groups, days);
   const worthOf = (n) => (ctx && ctx.worth[n]) || 1;
   // Items that appear in any trade (as what's given or what's got).
   const tradeTouched = new Set();
@@ -16278,6 +16334,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   const remainingOf = (ps) => {
     const rem = {}; wanted.forEach((n) => { rem[n] = need[n]; });
     ps.forEach((p) => { if (p.count > 0) Object.entries(groups[p.gi].offers[p.oi].gives).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - p.count * v; }); });
+    if (bonus.length) Object.entries(packDayBonusGives(bonus, ps)).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v; });
     return rem;
   };
   const shortValue = (rem) => { const s = packShortAfterTrades(rem, ctx).short; return Object.keys(s).reduce((a, n) => a + s[n] * worthOf(n), 0); };
@@ -16430,7 +16487,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   // choosing between greedy tries); with it, the slow greedy tries below are skipped.
   // Its trades are the solver's own (the step-by-step trade check above can
   // miss a mix of trades the solver found, and would buy extra packs).
-  const ex = packExactPicks(groups, need, caps, ctx, quick ? 1 : 3);
+  const ex = packExactPicks(groups, need, caps, ctx, quick ? 1 : 3, bonus);
   let exact = null;
   if (ex) {
     const rates = ctx ? ctx.rates : [];
@@ -16494,6 +16551,8 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   }
   if (!best) return null;
   const perGroup = best.perGroup;
+  // Free items from day bonuses (not a pack row): shown as a note on the Pack cost card.
+  if (bonus.length) { const bg = packDayBonusGives(bonus, best.picks); if (Object.keys(bg).length) best.bonus = bg; }
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
@@ -17051,7 +17110,9 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
           const tradesA = pcaTrades(p.trades);
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${tradesA}@@PCFREE@@</div>`;
+          // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
+          const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}@@PCFREE@@</div>`;
         }
       }
     }
@@ -19315,7 +19376,7 @@ function plannerPagePlans(payload) {
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
 const PLAN_SOLVER_SRI = { "highs.js": "sha384-8VF/84lUdwWTmd6C4TlyNI0GCoMmX0iTMuYiSgqm4Q+A36WnVSQAAHMvAGdx71U1", "highs.wasm": "sha384-MAiNyO4ydZtZMzFnxQmbxtpRfMmzGm/wbmtOYrOuns7GS6PMI/RukPAEV9MJjvCB" };
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
 // gets one request at a time (PLANNER_QUEUE holds the rest, PLANNER_BUSY is
@@ -19504,13 +19565,15 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (res.groups.some((g, gi) => perGroup[gi] > packCyclesWithin(g.reset, g.resetDay, days, g.window) * g.perCycle - (g.used || 0))) return null;
     const rem = {}; Object.entries(res.need).forEach(([n, q]) => { rem[n] = q; });
     picks.forEach((pk) => Object.entries(res.groups[pk.gi].offers[pk.oi].gives).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v * pk.count; }));
+    const bonusGot = packDayBonusGives(packDayBonusList(res.groups, days), picks);
+    Object.entries(bonusGot).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v; });
     const tr = packShortAfterTrades(rem, ctx);
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
       return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
-    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks };
+    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
   };
   return packPickCheapest([tryWith((e) => e.max), tryWith((e) => e.sum)]);
 }
@@ -22964,8 +23027,12 @@ function shiningSkinsListOf(saved) { if (IS_OWNER) return shiningSkinsDefault();
 // The picked skins (rows), in pick order.
 // Globe Level skins (Frost Spheres and each level's extra skins) are never Shining City skins.
 const shiningGlobeSkin = (n) => !!(typeof ALL_GLOBE_WIRED_NAMES_GLOBAL !== "undefined" && ALL_GLOBE_WIRED_NAMES_GLOBAL && ALL_GLOBE_WIRED_NAMES_GLOBAL.has(n));
+// Admin → Skins → City Skin: which skins the picker offers (site_config shining_skins_allow =
+// [names]; missing = every non-globe City Skin). Saved picks outside it are ignored.
+function shiningSkinsAllow() { const v = siteConfig("shining_skins_allow", null); return Array.isArray(v) ? v.map(String) : null; }
+function shiningPickable(n) { if (shiningGlobeSkin(n)) return false; const al = shiningSkinsAllow(); return !al || al.includes(n); }
 function shiningPicked(list, skins) {
-  return list.filter((n) => !shiningGlobeSkin(n)).map((n) => skins.find((s) => s.name === n && s.category === SHINING_SKIN_CAT) || skins.find((s) => s.name === n)).filter(Boolean);
+  return list.filter((n) => shiningPickable(n)).map((n) => skins.find((s) => s.name === n && s.category === SHINING_SKIN_CAT) || skins.find((s) => s.name === n)).filter(Boolean);
 }
 // "every month · 5 days · next Dec 12" (or "on now"), from the Shining City Pack's dates.
 function shiningWhenText() {
@@ -23136,7 +23203,7 @@ async function renderSkinGallery() {
     let m = document.getElementById("shPickSheet");
     if (!m) { m = document.createElement("div"); m.id = "shPickSheet"; m.className = "modal-overlay adm-sheet-wrap gs-wrap isl-ov"; document.body.appendChild(m); }
     const draft = new Set(shList);
-    const city = skins.filter((s) => s.category === SHINING_SKIN_CAT && !shiningGlobeSkin(s.name));
+    const city = skins.filter((s) => s.category === SHINING_SKIN_CAT && shiningPickable(s.name));
     const tile = (s) => `<button type="button" class="isl-sht${draft.has(s.name) ? " on" : ""}" data-shtick="${esc(s.name)}" aria-pressed="${draft.has(s.name)}" title="${esc(s.name)}">${s.image_url ? `<img src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(s.name)}</span><span class="ck" aria-hidden="true">${draft.has(s.name) ? "&#10003;" : ""}</span></button>`;
     m.innerHTML = `<div class="modal-box adm-sheet gs-box sh-pick" role="dialog" aria-modal="true" aria-label="${esc(t("sh_pick_title"))}"><div class="gs-head"><b style="flex:1;">${esc(t("sh_pick_title"))}</b>${closeXHtml("data-shx")}</div>
       <div class="meta sh-pick-d">${esc(t("sh_pick_desc").replace("10,000", shiningTomesPer().toLocaleString()))}</div>
@@ -23156,7 +23223,7 @@ async function renderSkinGallery() {
       }
       if (ev.target.closest("[data-shsave]")) {
         // Kept in pick order; names outside the City Skins (renamed / other states) stay.
-        const out = [...shList.filter((n) => draft.has(n) && !shiningGlobeSkin(n)), ...city.map((s) => s.name).filter((n) => draft.has(n) && !shList.includes(n))];
+        const out = [...shList.filter((n) => draft.has(n) && shiningPickable(n)), ...city.map((s) => s.name).filter((n) => draft.has(n) && !shList.includes(n))];
         close();
         if (JSON.stringify(out) === JSON.stringify(shList)) return;
         const prev = shList;
@@ -23952,12 +24019,11 @@ async function renderIslandGallery() {
     });
     const marks = [...mk].reduce((a, [id, n]) => { const x = all.find((y) => String(y.id) === String(id)); return a + n * (x ? srcOf(x).markPrice : 0); }, 0);
     const mkCopiesAll = [...mk.values()].reduce((a, n) => a + n, 0);
-    // Tomes: +tomeFreeDay free on each event day a pack is bought (counted only for the events
-    // the plan buys Tomes in, and only when the Backpack doesn't already cover them).
-    const tmCopiesAll = [...tm.values()].reduce((a, n) => a + n, 0), tomesGross = tmCopiesAll * tp;
-    const tomeFree = Math.min(Math.max(0, tomesGross - tomeHave()), evUsed * (Number(ISL_RULES.shiningDays) || 5) * (Number(ISL_RULES.tomeFreeDay) || 0));
-    const tomes = Math.max(0, tomesGross - tomeFree);
-    SP = { days, tDay, pot, need: cum, fin, mk, marks, mkCopiesAll, tm, tmCopiesAll, tomes, tomeFree, evUsed, nEv, sc, cant, done: finDay(cum), cantDone: finDay(cum) };
+    // Tomes: the free +tomeFreeDay of each event day's first buy is counted by the packs
+    // planner (Pack cost / Budgets, packDayBonusList), not here.
+    const tmCopiesAll = [...tm.values()].reduce((a, n) => a + n, 0);
+    const tomes = tmCopiesAll * tp;
+    SP = { days, tDay, pot, need: cum, fin, mk, marks, mkCopiesAll, tm, tmCopiesAll, tomes, evUsed, nEv, sc, cant, done: finDay(cum), cantDone: finDay(cum) };
     return SP;
   };
   const mkAlloc = () => sharedPlan().mk;
@@ -29667,7 +29733,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=a2c0b0cde2";
+      s.src = "admin.min.js?v=6ec4dc7f8a";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
