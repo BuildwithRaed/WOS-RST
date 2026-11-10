@@ -3900,7 +3900,7 @@ function holdPageHeight(on) {
 }
 // Scroll boxes / sideways rows inside `root` (matched by class and order) keep
 // their scroll across `fn` (which rebuilds them).
-const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap, .b3-stops";
+const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap, .b3-stops, .gbp-l";
 // saveBoxScroll(root) notes them now and returns a function that puts them
 // back (in `root`, or in the box that replaced it).
 function saveBoxScroll(root) {
@@ -17643,8 +17643,9 @@ function packPickCheapest(plans) {
 // kept 8 px inside the visible area left and right. It is drawn position:fixed,
 // so a sheet's or card's scroll box can't cut it off, and it follows its button
 // when the page / sheet scrolls or the screen changes size (when the button
-// scrolls out of sight it hides, or closes with opts.away). Its look stays the
-// same: the size it would have had, its own margins / gap to the button.
+// scrolls out of sight it hides, or closes with opts.away once it has been in
+// sight). Its look stays the same: the size it would have had, its own margins /
+// gap to the button.
 // opts: margin (8), gap (px between button and pop; default its natural gap),
 // align "center" (centre on the button), away() (button out of sight),
 // onPlace({ up, left, top, width, height, a }) (arrows etc.).
@@ -17761,8 +17762,13 @@ function placePop(pop, anchor, opts) {
     PP_ACTIVE.set(pop, e);
   }
   e.anchor = anchor; e.opts = opts;
+  if (inSight) e.seen = true;
   if (opts.onPlace) opts.onPlace({ up, left, top, width: w, height: shown, a });
-  if (!inSight && opts.away) { const f = opts.away; popForget(pop); f(); }
+  // Out of sight: closed with away(), but only once it has been in sight. A pop
+  // drawn with a page that is still putting its scroll places back (keepPlace)
+  // comes into sight a moment later; until then it stays hidden, and that
+  // scroll places it again.
+  if (!inSight && opts.away && e.seen) { const f = opts.away; popForget(pop); f(); }
 }
 let PP_QUEUED = false;
 function ppQueue() {
