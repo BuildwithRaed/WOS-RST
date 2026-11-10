@@ -749,6 +749,30 @@
   .bud-g-arrow{ margin-inline-start:auto; color:var(--ice); }
   .bud-g-desc{ font-size:11.5px; margin:6px 0 8px; }
   .bud-g-fold{ font-size:12px; margin-top:6px; }
+  /* Order of goals: Goal dates (with the order / without it). */
+  .gd-card{ background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px 8px; margin:4px 0 12px; }
+  .gd-h{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .gd-h b{ font-size:13px; color:var(--frost); letter-spacing:.04em; text-transform:uppercase; }
+  .gd-h small{ font-size:11px; color:var(--muted); }
+  .gd-t{ display:grid; grid-template-columns:22px minmax(0, 1fr) auto auto 22px; font-size:12px; }
+  .gd-r{ display:contents; }
+  .gd-r > span{ display:flex; align-items:center; padding:6px 0; padding-inline-start:6px; border-top:1px solid var(--line); }
+  .gd-r > span:first-child{ padding-inline-start:0; }
+  .gd-r > span.gd-d{ justify-content:flex-end; }
+  .gd-r > span.gd-m{ justify-content:center; }
+  .gd-r.hd > span{ border-top:0; padding-top:0; padding-bottom:4px; color:var(--muted); font-size:11px; font-weight:400; white-space:nowrap; }
+  .gd-p img, .gd-p > i{ width:22px; height:22px; object-fit:contain; border-radius:5px; }
+  .gd-p img.face{ object-fit:cover; border-radius:50%; }
+  .gd-p > i{ display:flex; align-items:center; justify-content:center; background:var(--panel); font-style:normal; color:var(--muted); }
+  .gd-n{ color:var(--frost); font-weight:600; line-height:1.25; overflow-wrap:anywhere; }
+  .gd-d{ white-space:nowrap; text-align:end; color:var(--frost); font-variant-numeric:tabular-nums; line-height:1.2; }
+  .gd-d.w{ color:var(--muted); }
+  .gd-d.diff{ color:var(--ice); font-weight:700; }
+  .gd-m{ text-align:center; font-weight:700; }
+  .gd-m.ok{ color:var(--good); }
+  .gd-m.late{ color:var(--amber); }
+  .gd-f{ display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:6px; font-size:11px; color:var(--muted); }
+  .gd-f i{ font-style:normal; color:var(--ice); font-weight:700; }
   .bud-g-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
   .bud-g{ display:flex; align-items:center; gap:8px; padding:8px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; }
   .bud-g.drag{ border-color:var(--ice); opacity:.85; }
@@ -806,137 +830,9 @@
   .bud-ht-add{ padding:8px 0; border-top:1px solid var(--line); }
   .bud-ht-add select{ width:100%; }
   @media (max-width:700px){ .bud-ht-ctl select{ font-size:16px; } }
-  .bud-rm-seg{ margin:8px 0; }
 
-  .bud-rm-l{ margin:3px 0; border:1px solid var(--line); border-radius:8px; background:var(--panel-2); }
-  .bud-rm-l > summary{ list-style:none; display:flex; align-items:center; gap:8px; padding:6px 8px; cursor:pointer; font-size:12px; }
-  .bud-rm-l > summary::-webkit-details-marker{ display:none; }
-  .bud-rm-l > summary img, .bud-rm-l > summary i{ width:22px; height:22px; object-fit:contain; flex:none; }
-  .bud-rm-l > summary span{ flex:1 1 auto; min-width:0; }
-  .bud-rm-l > summary b{ white-space:nowrap; }
-  .bud-rm-items{ display:flex; flex-wrap:wrap; gap:6px; padding:0 8px 8px; }
-  .bud-rm-for{ flex:1 1 100%; font-size:11px; color:var(--amber); }
-  .rm-cols{ display:grid; gap:12px; grid-template-columns:minmax(0, 1fr); }
-  .rm-cols > div{ min-width:0; }
-  @media (min-width:900px){ .rm-cols{ grid-template-columns:minmax(300px, 420px) minmax(0, 1fr); align-items:start; } }
-  .bud-rm-l.rm-hot{ border-color:var(--ice); box-shadow:inset 3px 0 0 var(--ice); }
   /* Roadmap R2: top card with goals, Buy this week, Next weeks, sheets. */
-  .rmr-cols .rm-left, .rmr-cols .rm-right{ display:flex; flex-direction:column; gap:12px; }
-  .rmr-cols .t12x-card{ margin:0; }
-  .rmr-lbl{ font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-  .rmr-top{ background:linear-gradient(180deg, rgba(125,211,252,.10), rgba(125,211,252,.02)); }
-  .rmr-tw{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
-  .rmr-ev{ display:inline-block; padding:2px 8px; line-height:1.35; border-radius:999px; font-size:11.5px; font-weight:700; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; border:1px solid transparent; }
-  .rmr-ev.svs{ color:#fca5a5; background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.35); }
-  .rmr-ev.koi{ color:#c4b5fd; background:rgba(167,139,250,.14); border-color:rgba(167,139,250,.35); }
-  .rmr-ev.gen{ color:#fcd34d; background:rgba(232,162,60,.14); border-color:rgba(232,162,60,.35); }
-  .rmr-ev.flag{ color:var(--good); background:rgba(74,222,128,.10); border-color:rgba(74,222,128,.35); max-width:150px; }
-  .rmr-big{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-top:4px; }
-  .rmr-big b{ font-size:24px; color:var(--frost); }
-  .rmr-big span{ font-size:13px; color:var(--muted); }
-  .rmr-bar{ display:block; height:5px; border-radius:99px; background:rgba(148,163,184,.18); overflow:hidden; margin-top:5px; }
-  .rmr-bar i{ display:block; height:100%; border-radius:99px; background:var(--good); }
-  .rmr-bar.big{ height:6px; margin:8px 0 10px; }
-  .rmr-next{ font-size:13.5px; color:var(--frost); }
-  .rmr-next b.good, .rmr-next.good{ color:var(--good); }
-  .rmr-all{ font-size:12px; margin-top:2px; }
-  .rmr-miss{ margin-top:10px; border:1px solid rgba(232,162,60,.55); border-radius:12px; background:rgba(232,162,60,.08); padding:8px 12px; }
-  .rmr-miss-h{ font-size:12.5px; font-weight:700; color:var(--amber); margin-bottom:4px; }
-  .rmr-miss-r{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:13px; color:var(--frost); }
-  .rmr-miss-r img, .rmr-miss-r > i{ width:22px; height:22px; object-fit:contain; flex:none; }
-  .rmr-miss-r span{ flex:1 1 auto; min-width:0; }
-  .rmr-miss-r small{ color:var(--muted); font-size:12px; }
-  .rmr-miss-r em{ font-style:normal; font-weight:700; color:var(--amber); font-size:12.5px; white-space:nowrap; }
-  .rmr-goals{ margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
-  .rmr-gh{ display:flex; align-items:center; gap:8px; }
-  .rmr-gh .rmr-lbl{ flex:1 1 auto; min-width:0; }
-  .rmr-a{ background:none; border:0; color:var(--ice); font-size:13px; font-weight:600; padding:6px 4px; min-height:36px; cursor:pointer; }
-  .rmr-fb{ min-height:36px; white-space:nowrap; }
-  .rmr-gfold{ gap:10px; }
-  .rmr-gics{ display:flex; flex:none; }
-  .rmr-gics img, .rmr-gics i{ width:26px; height:26px; border-radius:6px; object-fit:cover; margin-inline-end:-6px; border:1px solid var(--line); background:var(--panel-2); }
-  .rmr-gfl{ flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:0 4px; font-size:13px; color:var(--frost); margin-inline-start:6px; }
-  .rmr-gfl em{ font-style:normal; color:var(--amber); }
-  .rmr-gfl small{ flex:1 1 100%; color:var(--muted); font-size:12px; }
-  .rmr-gl{ display:flex; flex-direction:column; }
-  .rmr-g{ display:flex; align-items:center; gap:8px; width:100%; padding:8px 0; background:none; border:0; border-bottom:1px solid var(--line); color:var(--frost); text-align:start; cursor:pointer; font:inherit; }
-  .rmr-gn{ width:16px; flex:none; color:var(--muted); font-size:12.5px; text-align:center; }
-  .rmr-gi{ width:38px; height:38px; flex:none; border-radius:9px; object-fit:contain; }
-  i.rmr-gi{ background:var(--panel-2); }
-  .rmr-gt{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
-  .rmr-gt b{ font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .rmr-g.late .rmr-bar i{ background:var(--amber); }
-  .rmr-gd{ flex:none; display:flex; flex-direction:column; align-items:flex-end; text-align:end; max-width:44%; }
-  .rmr-gd b{ font-size:13.5px; color:var(--good); white-space:nowrap; }
-  .rmr-g.late .rmr-gd b{ color:var(--amber); }
-  .rmr-gd small{ font-size:11.5px; color:var(--muted); }
-  .rmr-g.late .rmr-gd small{ color:var(--amber); }
-  .rmr-chev{ flex:none; color:var(--muted); font-size:18px; }
-  .rmr-fix{ margin:8px 0; border:1px solid rgba(232,162,60,.55); border-radius:12px; background:rgba(232,162,60,.07); padding:8px 12px; font-size:13px; color:var(--frost); }
-  .rmr-fix b{ color:var(--amber); }
-  .rmr-mv{ margin-top:8px; width:100%; min-height:38px; }
-  .rmr-side{ font-size:12px; margin-top:6px; }
-  .rmr-more{ display:block; width:100%; background:none; border:0; color:var(--ice); font-size:13.5px; font-weight:600; padding:10px 0 2px; min-height:38px; cursor:pointer; }
-  .rmr-ch{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:4px; }
-  .rmr-ch small{ font-size:12px; text-align:end; }
-  .rmr-br{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
-  .rmr-br > img, .rmr-br > i{ width:30px; height:30px; object-fit:contain; flex:none; }
-  .rmr-bn{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
-  .rmr-bn b{ font-size:13.5px; color:var(--frost); }
-  .rmr-bn small{ font-size:12px; color:var(--muted); }
-  .rmr-bp{ font-weight:700; font-size:13.5px; color:var(--frost); white-space:nowrap; }
-  .rmr-br.done .rmr-bn b, .rmr-br.done .rmr-bp{ text-decoration:line-through; color:var(--muted); }
-  .rmr-tk{ flex:none; width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--muted); font-size:15px; cursor:pointer; }
-  .rmr-tk.on{ background:rgba(74,222,128,.16); border-color:rgba(74,222,128,.6); color:var(--good); }
-  .rmr-tk:disabled:not(.on){ opacity:.35; cursor:default; }
-  .rmr-tk.on:disabled{ cursor:default; }
-  .rmr-empty{ padding:8px 0; font-size:13px; }
-  .rmr-wr{ display:grid; grid-template-columns:minmax(78px, auto) minmax(0, 1fr) auto; align-items:center; gap:10px; width:100%; padding:10px 0; background:none; border:0; border-bottom:1px solid var(--line); color:var(--frost); text-align:start; font:inherit; cursor:pointer; scroll-margin-top:80px; }
-  .rmr-wd, .rmr-wv{ display:flex; flex-direction:column; min-width:0; }
-  .rmr-wd b{ font-size:13.5px; white-space:nowrap; }
-  .rmr-wd small, .rmr-wm small{ font-size:12px; color:var(--muted); }
-  .rmr-wm{ display:flex; flex-direction:column; gap:5px; min-width:0; }
-  .rmr-evs{ display:flex; flex-wrap:wrap; gap:4px; min-width:0; }
-  .rmr-wv{ align-items:flex-end; text-align:end; }
-  .rmr-wv b{ font-size:13.5px; white-space:nowrap; }
-  .rmr-wv small{ font-size:12px; white-space:nowrap; }
-  .rmr-wv small.ok{ color:var(--good); } .rmr-wv small.over{ color:var(--danger); }
-  .rmr-wbar{ position:relative; display:flex; height:5px; border-radius:99px; background:rgba(148,163,184,.18); }
-  .rmr-wbar i.ok{ background:var(--good); border-radius:99px 0 0 99px; }
-  .rmr-wbar i.over{ background:var(--danger); }
-  .rmr-wbar b{ position:absolute; top:-3px; width:2px; height:11px; background:var(--frost); opacity:.8; }
-  .rmr-legend{ display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12px; padding-top:8px; }
-  .rmr-legend span{ display:inline-flex; align-items:center; gap:4px; }
-  .rmr-legend i{ width:12px; height:5px; border-radius:99px; } .rmr-legend i.ok{ background:var(--good); } .rmr-legend i.over{ background:var(--danger); }
-  .rmr-legend b{ width:2px; height:11px; background:var(--frost); opacity:.8; }
-  .rmr-flash{ animation:rmrFlash 1.6s ease; }
   @keyframes rmrFlash{ 0%, 60%{ background:rgba(125,211,252,.16); } 100%{ background:transparent; } }
-  .rmr-sheet .gs-head{ align-items:center; }
-  .rmr-shi{ width:44px; height:44px; border-radius:10px; object-fit:contain; flex:none; }
-  .rmr-sht{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
-  .rmr-sht b{ font-size:16px; color:var(--frost); }
-  .rmr-sht small{ font-size:12.5px; color:var(--muted); }
-  .rmr-sbx{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-bottom:10px; }
-  .rmr-sbx > div{ border:1px solid var(--line); border-radius:10px; padding:8px; background:var(--panel-2); display:flex; flex-direction:column; min-width:0; }
-  .rmr-sbx small{ font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .rmr-sbx b{ font-size:16px; color:var(--frost); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rmr-sbx b.good{ color:var(--good); } .rmr-sbx b.warn{ color:var(--amber); }
-  .rmr-sh{ margin:10px 0 6px; display:flex; }
-  .rmr-needs{ display:flex; flex-wrap:wrap; gap:6px; }
-  .rmr-need{ position:relative; display:inline-flex; align-items:center; gap:6px; padding-block:5px 5px; padding-inline:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel-2); max-width:100%; }
-  .rmr-need img, .rmr-need > i{ width:24px; height:24px; object-fit:contain; flex:none; }
-  .rmr-need span{ display:flex; flex-direction:column; min-width:0; }
-  .rmr-need b{ font-size:12.5px; color:var(--frost); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .rmr-need small{ font-size:11.5px; color:var(--good); }
-  .rmr-need.short small{ color:var(--danger); font-weight:700; }
-  .rmr-gp{ display:flex; align-items:baseline; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px; color:var(--frost); }
-  .rmr-gpw{ flex:none; width:96px; font-size:12.5px; }
-  .rmr-gpn{ flex:1 1 auto; min-width:0; }
-  .rmr-gby{ margin-top:12px; }
-  .rmr-sbtn{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .rmr-sbtn .btn{ min-height:40px; }
-  .rmr-wb{ width:100%; margin-top:12px; min-height:40px; }
-  @media (min-width:900px){ .rmr-cols{ grid-template-columns:minmax(340px, 460px) minmax(0, 1fr); } }
   .bud-g-sum{ margin-top:10px; padding:8px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--good); font-size:12px; }
   .bud-line-bar{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
   .bud-line-t{ flex:1 1 auto; min-width:0; }
@@ -1556,6 +1452,11 @@
   .pur-a2-tx{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
   .pur-a2-tx b{ font-size:14px; font-weight:600; line-height:1.3; overflow-wrap:anywhere; }
   .pur-a2-tx small{ font-size:12px; color:var(--muted); line-height:1.35; }
+  /* My Purchases: "for: <goal>" (the goal a pack is bought for). */
+  .pur-for{ display:inline-flex; align-items:center; gap:4px; align-self:flex-start; max-width:100%; margin-top:2px; padding:2px 8px 2px 3px; border-radius:999px; background:rgba(125,211,252,.12); border:1px solid rgba(125,211,252,.28); color:var(--ice); font-size:11px; font-weight:600; line-height:16px; white-space:nowrap; overflow:hidden; }
+  .pur-for img{ width:16px; height:16px; flex:none; object-fit:contain; border-radius:4px; }
+  .pur-for img.face{ object-fit:cover; border-radius:50%; }
+  .pur-for span{ overflow:hidden; text-overflow:ellipsis; }
   .pur-a2-x{ color:var(--muted); font-weight:600; }
   .pur-a2-pr{ flex:0 0 auto; font-size:13.5px; white-space:nowrap; }
   .pur-a2-ck{ flex:0 0 38px; width:38px; height:38px; padding:0; border-radius:50%; border:2px solid #4a5a6e; background:none; color:transparent; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; }
@@ -3859,7 +3760,7 @@ input,select,textarea{
   /* Text sizes like wostools.net on phones: its smallest labels are about 12 px, so ours are 12 px too (badges on
      pictures and the tuned Chief Gear labels keep 11 px; the Dashboard has its own block). */
   @media (max-width: 700px){
-    .tn-lang-list button small, .acc-head .meta, .site-footer, .bud-hgnote, .bud-seg button, .bset-l small, .bset-sec b, .bset-note, .pk-hdi b, .pks-note, .pks-info, .bud-spend-per button, .bud-spend-more > summary, .exp-count, .plx-piecestat.hgc-stat, .rlk-pill, .rlk-chip, .rlk-lab, .rch-wait, .rch-bar, .rch-key, .rch-mini, .cg-rch .rch-bar, .ch-rch .rch-mini, .rcs-car, .rcs-row span i, .pc-stat span, .pc-stat small, .pc-st > span, .bud-partial, .bud-vip, .bud-g-desc, .bud-g-n, .bud-g-tag, .bud-g-t small, .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-ht-c, .bud-rm-for, .bud-line-t .meta, .bud-line-v .meta, .pur-ng-own, .tl-k, .tl-nxk, .tl-gen, .tl-src, .sa-k, .sa-chip, .sa-preview, .sa-num, .pc-chip, .pur-f, .gi-note, .gl-cpic, .gl-note, .gl-miss, .gl-tile, .gl-tile em, .pur-cnt-l small, .pur-cnt-note, .pur-bh.wait .meta, .pur-bh .meta, .pur-how, .pur-ng-next, .pur-cmp, .pur-cmp-note, .pur-ms-vers .pur-vb-k, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-g, .pur-ms-head, .pur-ms-differ, .pur-ms-pickn, .pur-ms-plpick, .pur-slot i, .pur-slot small, .pur-dsel, .pur-dmenu label .meta, .pur-ms-note, .pkd-mine, .pkd-n .meta, .pur-wc-t small, .pur-wb small, .pur-wb i, .pur-tagc small, .pur-cl-n i, .pur-cl-ex, #purSugModal .pur-dsel, .pur-m-top, .pur-m-top .linklike, .pur-t th, .pur-t-miss, .pur-t-sel, .pur-tag, .b3-hd-t small, .b3-coming, .b3-sl .bud-line-v .meta, .b3-lbl, .b3-stop .b3-ics em, .b3-stop small, .b3-pt-m, .b3-ring b, .b3-lr-t small, .page-head .sub, table, .pill, .bp-head .meta, .bp-tile .bp-gx, .gx-head .meta, .gx-tot, .gx-note, .bp-tile .bp-avg, .bp-tile .bp-shield, .bp-speedsum-cell .meta, .bpw-head .desc, .bpw-name .meta, .t12x-k, .t12x-settings.one-line #researchSpeedupNote, #expertsGeneralSpeedupNote, .ch-t-v .ch-tc, .ch-stg.pick em, .ch-lvp b, .ch-lvp small, .ch-hint, .gs-l, .gs-stp b small, .gs-grp, .gs-opt small, .cg-nm, .cg-k, .cg-th, .cg-mk, #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small, #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark, .pca-big .cur, .pca-pr .cur, .pca-h, .pca-nm small, .pca-sb, .pca-chip, .t12x-good, .t12x-row, .plx-piecestat em, .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk, .adm-ext, .admc-txt small, .admc-hint, .admf, .bk-row small, .lg-sum span, .tx-en small, .rl-item small, .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small, .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span, .rfa-name small, .rfa-note, .plx-stat span, .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span, .t12x-boxes small, .t12x-gt small, .t12x-ring span, .t12x-maxall, .t12x-nm .meta, .t12x-done, .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-switch, .pc-trade small, .pc-sub, .pc-k, .pc-chips span, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small, .pc-free, .pc-view .seg button, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st, .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-nb-parts, .bs-nb-from, .bs-row .n small, .bs-title, .bs-row b .bs-sw, .bp-link, .scan-ex span, .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name, .pack-col-fixed, .acc-or, .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
+    .tn-lang-list button small, .acc-head .meta, .site-footer, .bud-hgnote, .bud-seg button, .bset-l small, .bset-sec b, .bset-note, .pk-hdi b, .pks-note, .pks-info, .bud-spend-per button, .bud-spend-more > summary, .exp-count, .plx-piecestat.hgc-stat, .rlk-pill, .rlk-chip, .rlk-lab, .rch-wait, .rch-bar, .rch-key, .rch-mini, .cg-rch .rch-bar, .ch-rch .rch-mini, .rcs-car, .rcs-row span i, .pc-stat span, .pc-stat small, .pc-st > span, .bud-partial, .bud-vip, .bud-g-desc, .bud-g-n, .bud-g-tag, .bud-g-t small, .bud-g-btns button, .bud-g-note, .bud-g-by, .bud-ht-n small, .bud-ht-c, .bud-line-t .meta, .bud-line-v .meta, .pur-ng-own, .tl-k, .tl-nxk, .tl-gen, .tl-src, .sa-k, .sa-chip, .sa-preview, .sa-num, .pc-chip, .pur-f, .gi-note, .gl-cpic, .gl-note, .gl-miss, .gl-tile, .gl-tile em, .pur-cnt-l small, .pur-cnt-note, .pur-bh.wait .meta, .pur-bh .meta, .pur-how, .pur-ng-next, .pur-cmp, .pur-cmp-note, .pur-ms-vers .pur-vb-k, .pur-ms-vers .pur-vb-s, .pur-ms-sw button, .pur-ms-g, .pur-ms-head, .pur-ms-differ, .pur-ms-pickn, .pur-ms-plpick, .pur-slot i, .pur-slot small, .pur-dsel, .pur-dmenu label .meta, .pur-ms-note, .pkd-mine, .pkd-n .meta, .pur-wc-t small, .pur-wb small, .pur-wb i, .pur-tagc small, .pur-cl-n i, .pur-cl-ex, #purSugModal .pur-dsel, .pur-m-top, .pur-m-top .linklike, .pur-t th, .pur-t-miss, .pur-t-sel, .pur-tag, .b3-hd-t small, .b3-coming, .b3-sl .bud-line-v .meta, .b3-lbl, .b3-stop .b3-ics em, .b3-stop small, .b3-pt-m, .b3-ring b, .b3-lr-t small, .page-head .sub, table, .pill, .bp-head .meta, .bp-tile .bp-gx, .gx-head .meta, .gx-tot, .gx-note, .bp-tile .bp-avg, .bp-tile .bp-shield, .bp-speedsum-cell .meta, .bpw-head .desc, .bpw-name .meta, .t12x-k, .t12x-settings.one-line #researchSpeedupNote, #expertsGeneralSpeedupNote, .ch-t-v .ch-tc, .ch-stg.pick em, .ch-lvp b, .ch-lvp small, .ch-hint, .gs-l, .gs-stp b small, .gs-grp, .gs-opt small, .cg-nm, .cg-k, .cg-th, .cg-mk, #gearCurrentStats .plx-stat span, #gearCurrentStats .plx-stat small, #cgBp .bs-tile .bs-need, #cgBp .bs-tile .bs-st, #cgBp .bs-tile .bs-mark, .pca-big .cur, .pca-pr .cur, .pca-h, .pca-nm small, .pca-sb, .pca-chip, .t12x-good, .t12x-row, .plx-piecestat em, .pk-used-list span, .bd-sum .k, .bd-left, .adm-gk, .adm-ext, .admc-txt small, .admc-hint, .admf, .bk-row small, .lg-sum span, .tx-en small, .rl-item small, .rl-chg, .rl-table th, .rl-rowbtns button, .ds-n small, .mn-langs, .adm-cur-add label span, .mn-langs label span, .mn-note label span, .rfa-name small, .rfa-note, .plx-stat span, .plx-stat small, .plx-stats.one .plx-stat small, .plx-pick button, .t12x-tabs button small, .t12x-boxes span, .t12x-boxes small, .t12x-gt small, .t12x-ring span, .t12x-maxall, .t12x-nm .meta, .t12x-done, .t12x-lbl, .t12x-side .t12x-settings #researchSpeedupNote, .t12x-settings.has-rs .t12x-check, .pc-switch, .pc-trade small, .pc-sub, .pc-k, .pc-chips span, .pc-plan .pc-k, .pc-plan b .cur, .pc-plan small, .pc-free, .pc-view .seg button, .pc-lines, .bs-tile .bp-name, .bs-tile .bs-st, .bs-tile .bs-mark, .bs-tile .bs-need, .bs-nbx small, .bs-nb-parts, .bs-nb-from, .bs-row .n small, .bs-title, .bs-row b .bs-sw, .bp-link, .scan-ex span, .scan-row .scan-name .meta, .scan-lg, .scan-zero-head .meta, .bp-tile .bp-name, .pack-col-fixed, .acc-or, .plx-stats.one.bud-st .plx-stat span, .plx-stats.one.bud-st .plx-stat small{ font-size:11px; }
     .t12x-side .t12x-settings .rs-row > div > .meta:first-child{ font-size:11px !important; }
     [style*="font-size:8px"], [style*="font-size: 8px"], [style*="font-size:8.5px"], [style*="font-size: 8.5px"],
     [style*="font-size:9px"], [style*="font-size: 9px"], [style*="font-size:9.5px"], [style*="font-size: 9.5px"],

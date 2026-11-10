@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 88; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 89; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1405,7 +1405,6 @@ const NAV_GROUP_LABELS = {
 const NAV_PAGE_LABELS = {
   "overview": { en: "Dashboard" },
   "budgets": { en: "Budgets" },
-  "roadmap": { en: "Roadmap" },
   "backpack": { en: "Backpack" },
   "statetimeline": { en: "State Timeline" },
   "packs": { en: "Packs" },
@@ -2879,6 +2878,19 @@ const T = {
   bp_chests_n: { en: "{n} chests to open" },
   bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
+  gd_title: { en: "Goal dates" },
+  gd_legend: { en: "⚠ = after its date (target {date})" },
+  gd_legend_nt: { en: "⚠ = after its date" },
+  gd_goal: { en: "Goal" },
+  gd_with: { en: "Your order" },
+  gd_without: { en: "Without" },
+  gd_blue: { en: "blue" },
+  gd_blue_note: { en: "= your order changes the date" },
+  gd_same: { en: "Same packs either way, only the order moves" },
+  gd_ok: { en: "Ready by its date" },
+  gd_late: { en: "After its date" },
+  gd_own: { en: "own plan" },
+  pur_for: { en: "for: {goal}" },
   goals_desc_drag: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ to change the order." },
   goal_main: { en: "main" },
   goal_mini: { en: "mini" },
@@ -2916,89 +2928,6 @@ const T = {
   goal_late: { en: "By {by}: {p}% \u00b7 fully done {date}" },
   goal_with_dates: { en: "With your dates: total {v} ({d}) \u00b7 without them {w}" },
   goal_dates_cant: { en: "Some dates can't be met: those goals are planned for their earliest day." },
-  rm_title: { en: "Roadmap" },
-  rm_with: { en: "With priorities" },
-  rm_without: { en: "Without" },
-  rm_this_week: { en: "This week" },
-  rm_for: { en: "for" },
-  rm_page_desc: { en: "Your Budgets plan week by week, with when each goal is reached." },
-  rm_next_week: { en: "Next week" },
-  rm_n_packs: { en: "{n} packs" },
-  rm_empty: { en: "No goals yet: tick pages with a target on Budgets." },
-  rm_back: { en: "Budgets" },
-  rm_goal_nopacks: { en: "Nothing to buy: what you have already covers it." },
-  rmr_this_week: { en: "This week" },
-  rmr_ev_now: { en: "{ev} now" },
-  rmr_packs_bought: { en: "{n} packs · {b} bought" },
-  rmr_next_goal: { en: "Next goal: {goal} on {d}" },
-  rmr_all_ready: { en: "Every goal is covered already" },
-  rmr_all_done: { en: "All goals done {d} · {v} in total" },
-  rmr_dont_miss: { en: "Don't miss · sale ends soon" },
-  rmr_ends_today: { en: "today" },
-  rmr_ends_tomorrow: { en: "ends tomorrow" },
-  rmr_ends_on: { en: "ends {d}" },
-  rmr_to_date: { en: "to {d}" },
-  rmr_from: { en: "from {d}" },
-  rmr_for: { en: "for {goal}" },
-  rmr_goals_order: { en: "Goals in order · {n}" },
-  rmr_reorder: { en: "Reorder" },
-  rmr_n_goals: { en: "{n} goals" },
-  rmr_n_risk: { en: "{n} at risk" },
-  rmr_goals_hidden: { en: "Goals in order are hidden" },
-  rmr_more_goals: { en: "+ {n} goals" },
-  rmr_fewer: { en: "Show fewer" },
-  rmr_by_pct: { en: "By {by} {p}%" },
-  rmr_by_ok: { en: "By {by}" },
-  rmr_target_ok: { en: "target {d}" },
-  rmr_misses_h: { en: "{goal} misses {by} ({d})." },
-  rmr_way: { en: "A way to make it:" },
-  rmr_way_sooner: { en: "Moving it up brings it closer, still late:" },
-  rmr_way_none: { en: "Moving it up doesn't bring it sooner: no packs on offer reach it in time." },
-  rmr_misses_hd: { en: "{goal} misses {d}." },
-  rmr_no_way: { en: "It's first already and the plan buys for its date: no packs on offer make it in time." },
-  rmr_move_1st: { en: "Move {goal} to 1st" },
-  rmr_move_ok: { en: "If moved up: done {d} ✓" },
-  rmr_move_late: { en: "If moved up: done {d}, still late" },
-  rmr_move_prev: { en: "{goal} done {d}" },
-  rmr_still_by: { en: "still by {by}" },
-  rmr_misses: { en: "misses {by}" },
-  rmr_buy_week: { en: "Buy this week" },
-  rmr_tick_when: { en: "tick when bought" },
-  rmr_tick: { en: "Bought" },
-  rmr_bought_on: { en: "bought {d}" },
-  rmr_planned_on: { en: "will buy · {d}" },
-  rmr_nothing_week: { en: "Nothing to buy this week." },
-  rmr_n_more: { en: "+ {n} more" },
-  rmr_marked_bought: { en: "Marked as bought (My Purchases)" },
-  rmr_next_weeks: { en: "Next weeks" },
-  rmr_budget_week: { en: "My budget {v} a week" },
-  rmr_budget_week_approx: { en: "My budget ≈ {v} a week" },
-  rmr_left: { en: "{v} left" },
-  rmr_over: { en: "{v} over" },
-  rmr_quiet: { en: "quiet week" },
-  rmr_gen_heroes: { en: "Gen {n} heroes" },
-  rmr_new_heroes: { en: "New heroes" },
-  rmr_in_budget: { en: "in budget" },
-  rmr_over_l: { en: "over" },
-  rmr_your_limit: { en: "your limit" },
-  rmr_all_weeks: { en: "Show all {n} weeks" },
-  rmr_will_buy_all: { en: "Will buy all" },
-  rmr_will_buy_note: { en: "Adds this week's packs to My Purchases (Coming) on their dates." },
-  rmr_goal_k: { en: "Goal {k} of {n}" },
-  rmr_by: { en: "By" },
-  rmr_now: { en: "now" },
-  rmr_ready: { en: "Ready" },
-  rmr_done: { en: "Done" },
-  rmr_in_days: { en: "in {n} days" },
-  rmr_its_packs: { en: "Its packs" },
-  rmr_still_needs: { en: "Still needs" },
-  rmr_short: { en: "{v} short" },
-  rmr_covered: { en: "covered" },
-  rmr_packs_by_week: { en: "Its packs by week" },
-  rmr_more_weeks_to: { en: "+ {n} more weeks · to {d}" },
-  rmr_by_btn: { en: "By: {by}" },
-  rmr_open_page: { en: "Open page" },
-  rmr_with_note: { en: "With priorities: your order and dates. Without: the plain plan, goals in the built-in order." },
   ht_title: { en: "Hero targets" },
   ht_desc: { en: "Each hero's own target. Push = straight to the top of your goals; Later = not planned for now." },
   ht_push: { en: "push" },
@@ -3593,7 +3522,7 @@ async function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "statetimeline", "budgets", "roadmap", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
+  "overview", "statetimeline", "budgets", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -3602,7 +3531,8 @@ const KNOWN_TABS = new Set([
 function isValidTab(t) {
   return KNOWN_TABS.has(t) || (typeof t === "string" && (t.startsWith("extrabonus:") || t.startsWith("buffcat:")));
 }
-const SAVED_TAB = localStorage.getItem("last_tab");
+// A saved "roadmap" (the old Roadmap page) opens Budgets.
+const SAVED_TAB = localStorage.getItem("last_tab") === "roadmap" ? "budgets" : localStorage.getItem("last_tab");
 let TAB = isValidTab(SAVED_TAB) ? SAVED_TAB : "overview";
 // Phones may reload a page left in the background (switching apps). The page
 // is reopened on the same tab (last_tab); this also keeps where it was
@@ -3874,9 +3804,8 @@ function admRedrawKeep(fn) { return keepPlace(() => keepBoxes(content, fn)); }
 // Budgets B3: the sheet open over the page ("mats", "stats", "goals",
 // "settings", "missing", "page:<calcKey>"); kept across redraws, closed on navigation.
 let BUDGET_SHEET = null;
-// Roadmap (admin): the sheet open over it ("g:<goal id>" / "w:<week>") and its "show all" folds.
-let RM_SHEET = null, RM_GOALS_ALL = false, RM_BUY_ALL = false, RM_WEEKS_ALL = false, RM_DATA = null;
 function goToTab(tab, opts = {}) {
+  if (tab === "roadmap") tab = "budgets"; // the old Roadmap page (Back / Forward to it)
   if (!isValidTab(tab)) tab = "overview";
   // Unsaved Admin table edits: ask before leaving them.
   if (TAB === "adminpage" && typeof admConfirmLeave === "function" && !admConfirmLeave()) {
@@ -3889,7 +3818,6 @@ function goToTab(tab, opts = {}) {
   if (TAB === "adminpage" && tab !== "adminpage" && typeof dropKeptGameData === "function") dropKeptGameData();
   if (tab !== "budgets") BUDGET_FOCUS_SPEND = false;
   BUDGET_SHEET = null;
-  RM_SHEET = null;
   TAB = tab;
   localStorage.setItem("last_tab", TAB);
   document.querySelectorAll("button[data-tab]").forEach((x) => x.classList.toggle("active", x.dataset.tab === TAB));
@@ -4361,9 +4289,9 @@ async function render() {
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
-    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "roadmap" && !(visitorCan("goals") && visitorCan("budgets"))) || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
-    else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
+    else if (TAB === "budgets") await renderBudgetsPage();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "statetimeline") await renderStateTimelinePage();
     else if (TAB === "packs") await renderPacksPage();
@@ -4513,7 +4441,7 @@ let DASH_DATA_CACHE = {};
 const QUICK_DEFAULT = ["chiefgear", "charmscalc", "herogearcalc", "petsdata", "expertspage", "budgets"];
 const QUICK_ICONS = {
   overview: "icons/logo-64.webp", statetimeline: "icons/quick/events.png", packs: "icons/quick/gift.png", mypacks: "icons/quick/gift.png",
-  budgets: "icons/quick/calculator.png", roadmap: "icons/quick/territory.png", purchases: "icons/quick/froststar.png",
+  budgets: "icons/quick/calculator.png", purchases: "icons/quick/froststar.png",
   charmscalc: "icons/charms/charm-infantry-16.webp", chiefgear: "icons/quick/chief-gear.png", herogearcalc: "icons/quick/hero-gear.png",
   expertspage: "icons/quick/experts.png", expertsresearchpage: "icons/quick/experts.png", petsdata: "icons/quick/pets.png", refinepage: "icons/quick/pets.png",
   researchcenter: "icons/quick/research.png", t11helios: "icons/quick/microscope.png", t12research: "icons/quick/microscope.png", rfclab: "icons/quick/microscope.png",
@@ -8351,7 +8279,7 @@ async function renderPurchasesPage() {
   if (!oldSug) content.innerHTML = `<div class="plx-head"><h2>${esc(t("pur_title"))}</h2></div><div class="meta">${esc(t("pur_loading"))}</div>`;
   const tables = await ensurePackTables();
   if (seq !== RENDER_SEQ) return;
-  await ensureBarHidden();
+  await Promise.all([ensureBarHidden(), visitorCan("goals") ? ensureBudgetGoals() : null]);
   if (seq !== RENDER_SEQ) return;
   const today = packDayKey(packStartOfToday());
   const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
@@ -8745,11 +8673,16 @@ async function renderPurchasesPage() {
     const fmt = (v) => packFmtLocal(v, cur0, false, smp);
     const items = []; // { done, tb, name, pic, n, local, tag, step, when, coming: [p], sugg: [{ i, r, xs }], day }
     const pLocal = (p) => packConvert(cost(p), packLinkFor(p.table).currency || "USD").n;
+    // "for: <goal>" (owner): what each line gives, matched to the Order of goals.
+    const gm = purGoalMatch();
+    const addGv = (it, gives, n) => { if (!gm) return; it.gv = it.gv || {}; Object.entries(gives || {}).forEach(([k, v]) => { it.gv[k] = (it.gv[k] || 0) + (Number(v) || 0) * (n || 1); }); };
     // Bought this week (Mon – today).
     const bw = (PACK_PURCHASES.list || []).filter((p) => p.status === "bought" && !p.hidden && byId.has(String(p.table)) && p.date >= monKeyW && p.date <= today);
     groupBy(bw).forEach((g) => {
       const tb = g.tb, last = g.items.map((p) => p.date).sort().pop();
-      items.push({ done: true, ids: g.items.map((p) => p.id), tb, name: purShortName((g.first.choice && g.first.choice.name) || tb.title || ""), pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last });
+      const it = { done: true, ids: g.items.map((p) => p.id), tb, name: purShortName((g.first.choice && g.first.choice.name) || tb.title || ""), pic: mainIcon(rawOf(g.first, tb)), n: nPacks(g.items), local: g.items.reduce((a, p) => a + pLocal(p), 0), day: last };
+      g.items.forEach((p) => addGv(it, purchaseGives(p, tb), cntNow(p)));
+      items.push(it);
     });
     // Still to buy: "will buy" dated this week (or passed) and the plan's buys this week.
     const rest = new Map();
@@ -8758,6 +8691,7 @@ async function renderPurchasesPage() {
       const tb = byId.get(String(p.table));
       const it = restOf(purGroupKey(p), () => ({ done: false, tb, first: p, name: purShortName((p.choice && p.choice.name) || tb.title || ""), pic: mainIcon(rawOf(p, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: link0Seq(tb) ? purTierText(tb, p.row, Number(p.from) || 0, p.choice) : (p.choice ? purTierText(tb, p.row, 0, p.choice) : "") }));
       it.coming.push(p); it.n += cntNow(p); it.local += pLocal(p); it.offs.push(dOff(p.date));
+      addGv(it, purchaseGives(p, tb), cntNow(p));
     });
     if (P && P.rows && P.sched) {
       for (let i = 0; i < P.nFollow; i++) {
@@ -8770,6 +8704,7 @@ async function renderPurchasesPage() {
         const it = restOf(key, () => ({ done: false, tb, first: null, name: purShortName(P.sugName(r)) + (optOfLabel(r.label) ? ` · ${optOfLabel(r.label)}` : ""), pic: mainIcon(rawOf({ row: r.row != null ? r.row : 0, from: r.from, ...(choice ? { choice } : {}) }, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: plain ? (link0Seq(tb) ? purTierText(tb, r.row != null ? r.row : 0, r.from || 0, null) : "") : purTierText(tb, r.row != null ? r.row : 0, 0, choice) }));
         const n = xs.reduce((a, x) => a + x.count, 0);
         it.sugg.push({ i, r, xs, choice, plain });
+        addGv(it, r.gives, xs.reduce((a, x) => a + x.count, 0));
         it.n += n; it.local += packRowLocalUnits(r).reduce((a, x) => a + x, 0) * n;
         xs.forEach((x) => it.offs.push(x.off));
         if (!it.endsR) it.endsR = r;
@@ -8815,7 +8750,7 @@ async function renderPurchasesPage() {
         : `${it.tag || ""}${[it.step, it.when].filter(Boolean).map(esc).join(" · ")}`;
       return `<div class="pur-a2-it${it.done ? " done" : ""}" data-pura2="${k}" ${it.done ? "" : `role="button" tabindex="0"`}>
         <span class="pur-pic">${it.pic ? `<img src="${esc(it.pic)}" alt="" loading="lazy" />` : `<i>${esc(it.name.charAt(0))}</i>`}</span>
-        <span class="pur-a2-tx"><b>${nm}</b><small>${sub}</small></span>
+        <span class="pur-a2-tx"><b>${nm}</b><small>${sub}</small>${purGoalTagHtml(gm, it.gv, 0)}</span>
         <b class="pur-a2-pr">${esc(fmt(it.local))}</b>
         ${it.done ? `<button type="button" class="pur-a2-ck on" data-pura2un="${k}" title="${esc(t("pur_a2_unmark"))}" aria-label="${esc(t("pur_a2_unmark"))}">&#10003;</button>` : `<button type="button" class="pur-a2-ck" data-pura2ck="${k}" title="${esc(t("pur_a2_mark"))}" aria-label="${esc(t("pur_a2_mark"))}">&#10003;</button>`}
       </div>`;
@@ -9083,6 +9018,7 @@ async function renderPurchasesPage() {
       })();
       const followName = cmp || plan.spend ? t(follow === "target" ? "budgets_view_target" : "budgets_view_budget") : "";
       const canBuy = (i) => { const tb = sugTable(rows[i]); return !!tb && (rows[i].row != null || !plainPack(tb)); };
+      const gm = purGoalMatch(), dowG = (packStartOfToday().getUTCDay() + 6) % 7;
       // O1: a line's picture is its main item, the one
       // this pack covers the biggest share of (of everything the plan buys);
       // "+N" = the other items it gives.
@@ -9136,7 +9072,7 @@ async function renderPurchasesPage() {
         return `<div class="pur-cl-row pur-o1-sr${open ? " open" : ""}${tk ? " on" : ""}" data-purrow="${i}">
           ${canBuy(i) ? `<input type="checkbox" class="pur-cl-tick" data-purtick="${i}" ${tk ? "checked" : ""} aria-label="${esc(t("pur_will_buy"))}" />` : `<span class="pur-cl-tick"></span>`}
           <span class="pur-cl-ic" title="${first ? esc(materialDisplayName(first.replace(/ \(minutes\)$/, ""))) : ""}">${icon ? `<img src="${esc(icon)}" alt="" loading="lazy" />` : ""}${more ? `<u class="pur-cl-more">+${more}</u>` : ""}</span>
-          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span> ` : ""}${esc(whenShort(vr.xs))}</small></span>
+          <span class="pur-cl-n"><b>${esc(purShortName(sugName(r)))}${optOf(r) ? ` · ${esc(optOf(r))}` : ""} <span class="pur-a2-x">${bidiNum("×" + n)}</span></b><small>${kind ? `<span class="pur-cmp pur-cmp-${kind}">${esc(t("pur_tag_" + kind))}${star}</span> ` : ""}${esc(whenShort(vr.xs))}</small>${gm ? purGoalTagHtml(gm, r.gives, Math.floor((Math.max(0, Math.min(...xs.map((x) => x.off))) + dowG) / 7)) : ""}</span>
           <span class="pur-cl-p" data-purprice="${i}">${esc(packFmtLocal(packRowLocalUnits(vr.r).reduce((a, x) => a + x, 0) * vr.n, vr.r.currency, false, vr.r.price))}</span>
           ${canBuy(i) ? `<button type="button" class="pur-cl-add" data-pursug="${i}" aria-label="${esc(t("pur_will_buy"))}">+</button>` : `<span class="pur-cl-add off"></span>`}
         </div>${open ? `<div class="pur-cl-ex">${chips ? `<div class="bud-mats pur-chips">${chips}</div>` : ""}<div>${esc(whenShort(vr.xs))} · ${esc(vr.r.label)}</div>${cmp ? `<div>${tagHtml(i, n)}</div>` : ""}</div>` : ""}`;
@@ -19712,7 +19648,7 @@ let BUDGET_VIEW = "main";      // which plan card is shown: "main" | "fastest" |
 // the page redraws instantly instead of re-adding everything up. Cleared
 // when a calculator's Backpack row records new needs or packs change.
 let BUDGET_DATA = null; // { dashStats, pages, targetDays }
-function budgetInvalidate() { PACK_GROUPS_GEN++; mmBudgetSet(null); BUDGET_DATA = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
+function budgetInvalidate() { PACK_GROUPS_GEN++; mmBudgetSet(null); BUDGET_DATA = null; BUDGET_GOAL_MATCH = null; PUR_GOAL_SRC = null; NEW_GEN_BASE_MEMO = null; PUR_SUGGEST = null; PUR_SUGGEST_DONE = null; PUR_SUG_OVERLAY = null; if (typeof HERO_WCOST !== "undefined") HERO_WCOST.clear(); PACK_GROUPS_CACHE = { tables: null, map: new Map(), perTable: new Map() }; }
 // ---- My budget: a spending limit ----
 // calc_state "budget_spend" = { amount, cur, per: "week" | "month", carry }.
 // Only the admin sees it unless Admin → Visibility → Visitor access
@@ -19886,6 +19822,7 @@ async function budgetSuggestedPlan() {
     if (BUDGET_TARGET) { const d = packParseDay(BUDGET_TARGET); if (d) targetDays = Math.round((d - today) / 86400000); }
     const pages = await Promise.all(BUDGET_PAGES.map((pg) => budgetForPage(pg.key, targetDays, { noPlan: true })));
     const combined = await budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track });
+    PUR_GOAL_SRC = { pages, combined };
     return budgetSuggestOf(combined);
   })();
   const p = PUR_SUGGEST;
@@ -19902,7 +19839,6 @@ let BUDGET_GOALS = null;
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
 let BUDGET_GOAL_BY_OPEN = null; // goal id whose "By" picker is open
-let BUDGET_RM_WITH = true;      // Roadmap: with priorities / without
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
 // Pages whose levels Budgets works out live (the others come from the pages' saved minis).
 const GOAL_MINI_LIVE = ["charm", "chief_gear", "hero_gear", "hero_shards"];
@@ -20192,6 +20128,92 @@ function goalByName(by) {
   if (by === "gen") return t("goal_by_gen");
   return by && String(by).startsWith("date:") ? "" : t("goal_by_main");
 }
+// A goal's name ("Elif 5★ + widgets 10", "Chief Gear → T6 ★3"), short name
+// (a hero's goal: "Elif 5★") and picture (hero face, else the page's picture).
+function budgetGoalHero(g) {
+  return g.hero || (g.mini && g.page === "hero_shards" ? (((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).find((r) => r.hero.id === g.opt.grp) || {}).hero : null);
+}
+function budgetGoalName(g) {
+  if (g.hero) {
+    const r = g.hrow, st = Math.floor(r.tStep / 6), sub = r.tStep % 6;
+    return `${g.hero.name} ${st}★${sub ? ` ${sub}/6` : ""}${r.hasWidget && r.wNeed > 0 ? ` + ${t("ht_widgets")} ${r.tW}` : ""}`;
+  }
+  const lbl = packPageLabel(g.page);
+  if (g.mini) return g.page === "hero_shards" ? `${g.opt.grpLabel} ${g.opt.label}` : `${lbl} → ${g.opt.grpLabel ? g.opt.grpLabel + " " : ""}${g.opt.label}`;
+  const tg = goalTargetLabel(g.page);
+  return tg ? `${lbl} → ${tg}` : lbl;
+}
+function budgetGoalShort(g) {
+  if (g.hero) { const r = g.hrow, st = Math.floor(r.tStep / 6), sub = r.tStep % 6; return `${g.hero.name} ${st}★${sub ? ` ${sub}/6` : ""}`; }
+  // A page's goal: its name and the target's last word ("Chief Gear ★3", "Chief Charm 16.8").
+  const tg = g.mini ? String(g.opt.label || "") : goalTargetLabel(g.page) || "", last = tg.trim().split(/\s+/).pop() || "";
+  if (g.mini && g.page === "hero_shards") return budgetGoalName(g);
+  return last ? `${g.mini && g.opt.grpLabel ? g.opt.grpLabel : packPageLabel(g.page)} ${last}` : packPageLabel(g.page);
+}
+function budgetGoalIcon(g, pages) {
+  const hero = budgetGoalHero(g), pg = (pages || []).find((x) => x.calcKey === g.page);
+  if (hero) return { src: hero.image_url || HERO_IMG_BY_NAME[hero.name] || goalPageIcon(pg), face: true };
+  return { src: QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon(pg), face: false };
+}
+// Which goal a pack is bought for: the first goal in order that needs what
+// it gives (or what trades into it: Mystery Points → widgets, General shards
+// → a hero's shards …) and isn't reached before that week (w = weeks from
+// this Monday). Returns (gives, w) → { id, name, short, ic } | null.
+function budgetGoalMatcher(goals, dates, pages, plan) {
+  const segs = budgetGoalSegs(goals, pages);
+  const dow = (packStartOfToday().getUTCDay() + 6) % 7;
+  const allTrades = BUDGET_PAGES.flatMap((pg) => { try { return tradeRatesFor(pg.key); } catch (e) { return []; } }).concat((plan && plan.trades) || []);
+  const gItems = new Map();
+  const itemsOf = (g) => {
+    if (!gItems.has(g.id)) {
+      const sg = segs.get(g.id) || {}, set = new Set(Object.keys(sg).filter((n) => sg[n] > 0));
+      for (let grew = true; grew;) { grew = false; allTrades.forEach((r) => { if (set.has(r.to) && !set.has(r.from)) { set.add(r.from); grew = true; } }); }
+      gItems.set(g.id, set);
+    }
+    return gItems.get(g.id);
+  };
+  const gWeek = (i) => (dates[i] && !dates[i].done ? Math.floor((dates[i].day + dow) / 7) : null);
+  const memo = new Map();
+  return (gives, w) => {
+    const items = Object.keys(gives || {}).filter((n) => n !== "Gems" && gives[n] > 0);
+    const g = goals.find((x, i) => gWeek(i) != null && gWeek(i) >= w && items.some((n) => itemsOf(x).has(n)));
+    if (!g) return null;
+    if (!memo.has(g.id)) memo.set(g.id, { id: g.id, name: budgetGoalName(g), short: budgetGoalShort(g), ic: budgetGoalIcon(g, pages) });
+    return memo.get(g.id);
+  };
+}
+// The same, worked out from a combined plan (My Purchases opened before Budgets drew its goals).
+function budgetGoalMatchFrom(pages, combined) {
+  if (!combined || combined.pending || !combined.chosen || !pages) return null;
+  const sp = combined.split && combined.split.target && combined.split.late ? combined.split : null;
+  const inc = sp ? sp.target.keys.concat(sp.late.keys) : (combined.inc || []);
+  const keys = inc.concat((combined.dropped || []).filter((k) => (!BUDGET_SELECTED || BUDGET_SELECTED[k] !== false) && !inc.includes(k)));
+  const goals = budgetGoalList(pages, keys);
+  if (!goals.length) return null;
+  const dates = budgetGoalDates(goals, pages, combined.chosen, "__budget:" + keys.join(","), budgetGoalDue(goals));
+  return budgetGoalMatcher(goals, dates, pages, combined.chosen);
+}
+let BUDGET_GOAL_MATCH = null; // set by the Budgets page from its goals and dates
+let PUR_GOAL_SRC = null;      // { pages, combined } of My Purchases' own plan
+const GOAL_MATCH_MEMO = new WeakMap();
+// My Purchases: the matcher for its "for: <goal>" tags (goals are the owner's; null for others).
+function purGoalMatch() {
+  if (!visitorCan("goals") || !BUDGET_GOALS) return null;
+  if (BUDGET_GOAL_MATCH) return BUDGET_GOAL_MATCH;
+  const src = BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending ? BUDGET_DATA : PUR_GOAL_SRC;
+  if (!src || !src.combined) return null;
+  if (!GOAL_MATCH_MEMO.has(src.combined)) {
+    let m = null;
+    try { m = budgetGoalMatchFrom(src.pages, src.combined); } catch (e) { console.error("goal tags failed", e); }
+    GOAL_MATCH_MEMO.set(src.combined, m);
+  }
+  return GOAL_MATCH_MEMO.get(src.combined);
+}
+function purGoalTagHtml(gm, gives, w) {
+  const g = gm && gm(gives, w);
+  if (!g) return "";
+  return `<span class="pur-for" title="${esc(t("pur_for").replace("{goal}", g.name))}">${g.ic.src ? `<img class="${g.ic.face ? "face" : ""}" src="${esc(g.ic.src)}" alt="" loading="lazy" />` : ""}<span>${esc(t("pur_for").replace("{goal}", g.short))}</span></span>`;
+}
 // Each goal's deadline: its own, or an earlier one set on a later goal of the
 // same page (a mini must be ready before its target).
 function budgetGoalDue(goals) {
@@ -20325,17 +20347,13 @@ function goalPageIcon(pg) {
 let BUDGET_PLAN_RUNNING = null; // "targetDays|ticks" of the packs plan being worked out in the background
 let BUDGET_PLAN_FAILED = null; // the same key when that plan failed (cleared by ↻ Recalculate)
 let BUDGET_PLAN_TRACK = {}; // { req }: that plan's planner request, dropped when a newer plan starts
-// Budgets and the Roadmap page (admin) share one pipeline: the Roadmap is
-// drawn from the same plan, goals and dates as the Budgets page.
-function budTab() { return TAB === "budgets" || (TAB === "roadmap" && visitorCan("goals") && visitorCan("budgets")); }
-let ROADMAP_WEEKS = 6;     // Roadmap page: weeks shown (Load more adds 6)
-let ROADMAP_JUMP = null;   // week to scroll to after a redraw
+function budTab() { return TAB === "budgets"; }
 async function renderBudgetsPage(opts = {}) {
   const dataReady = BUDGET_DATA && !opts.reload;
   if (!dataReady) {
     plannerWarm();
     content.innerHTML = `
-      <div class="page-head"><div><h2>${esc(t(TAB === "roadmap" ? "rm_title" : "budgets_title"))}</h2><p class="desc">${esc(t(TAB === "roadmap" ? "rm_page_desc" : "budgets_desc"))}</p></div></div>
+      <div class="page-head"><div><h2>${esc(t("budgets_title"))}</h2><p class="desc">${esc(t("budgets_desc"))}</p></div></div>
       <div class="panel" style="margin-top:12px;"><div class="empty"><div class="big">${esc(t("budgets_loading"))}</div><div class="meta" style="font-size:11.5px; margin-top:6px;">${esc(t("pack_calc_wait"))}</div></div></div>`;
   }
   // Load every calculator's saved plan plus the dashboard's current totals
@@ -20352,7 +20370,6 @@ async function renderBudgetsPage(opts = {}) {
     dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
     ensureBudgetSpend(),
     visitorCan("goals") ? ensureBudgetGoals() : null,
-    TAB === "roadmap" ? ensureBarHidden() : null,
   ]);
   if (!budTab()) return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
@@ -20617,11 +20634,8 @@ async function renderBudgetsPage(opts = {}) {
   };
 
   // Order of goals (admin): see budgetGoalList / budgetGoalDates.
-  let rmPageHtml = null; // the Roadmap page (drawn instead of Budgets on its tab)
-  const rmShell = (inner) => `<div class="rm-page">
-      <div class="plx-head"><h2>${esc(t("rm_title"))}${adminOnlyTagOn("goals") ? ` <span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}</h2><button type="button" class="btn small ghost" data-gototab="budgets">&#8249; ${esc(t("rm_back"))}</button></div>
-      <p class="desc" style="font-size:12.5px; margin:-6px 0 12px;">${esc(t("rm_page_desc"))}</p>${inner}</div>`;
-  let goalsCardHtml = "", goalFlagsHtml = "", b3Week0 = null;
+  let goalsCardHtml = "", goalFlagsHtml = "";
+  BUDGET_GOAL_MATCH = null;
   void (() => {
     if (!visitorCan("goals")) return "";
     const planKeys = split ? split.target.keys.concat(split.late.keys) : (combinedRaw.inc || []);
@@ -20631,7 +20645,7 @@ async function renderBudgetsPage(opts = {}) {
     const incKeys = planKeys.concat(droppedKeys);
     const keys = planPending ? pagesRaw.filter((pg) => included(pg.calcKey) && !pg.missing && Object.keys(pg.need || {}).length).map((pg) => pg.calcKey) : incKeys;
     const goals = budgetGoalList(pagesRaw, keys);
-    if (!goals.length) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="meta">${esc(t("rm_empty"))}</div></div></div>`); return ""; }
+    if (!goals.length) return "";
     const ck = "__budget:" + incKeys.join(",");
     const basePlan0 = BUDGET_VIEW === "budget" ? (splitMain ? splitMain.plan : combinedRaw.chosen) : combined.chosen;
     const dropPlans = droppedKeys.map((k) => pagesRaw.find((x) => x.calcKey === k)).filter(Boolean).map((pg) => pickDropped(pg, BUDGET_VIEW === "budget" ? "main" : BUDGET_VIEW)).filter(Boolean);
@@ -20663,16 +20677,7 @@ async function renderBudgetsPage(opts = {}) {
     goalFlagsHtml = `<div class="b3-rail">${railHead}${workHtml("div", "small")}</div>`;
     const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
     const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
-    const nameOf = (g) => {
-      if (g.hero) {
-        const r = g.hrow, st = Math.floor(r.tStep / 6), sub = r.tStep % 6;
-        return `${g.hero.name} ${st}\u2605${sub ? ` ${sub}/6` : ""}${r.hasWidget && r.wNeed > 0 ? ` + ${t("ht_widgets")} ${r.tW}` : ""}`;
-      }
-      const lbl = packPageLabel(g.page);
-      if (g.mini) return g.page === "hero_shards" ? `${g.opt.grpLabel} ${g.opt.label}` : `${lbl} → ${g.opt.grpLabel ? g.opt.grpLabel + " " : ""}${g.opt.label}`;
-      const tg = goalTargetLabel(g.page);
-      return tg ? `${lbl} → ${tg}` : lbl;
-    };
+    const nameOf = budgetGoalName;
     const byText = (b, d) => { const nm = goalByName(b); return `${goalByIcon(b)} ${nm}${nm && d != null ? " · " : ""}${d != null ? fmtDate(d) : ""}`; };
     const rowHtml = (g, i) => {
       const hero = g.hero || (g.mini && g.page === "hero_shards" ? (((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).find((r) => r.hero.id === g.opt.grp) || {}).hero : null);
@@ -20764,83 +20769,51 @@ async function renderBudgetsPage(opts = {}) {
     const sumHtml = !plan || planPending ? ""
       : dlPlan ? `<div class="bud-g-sum${dl.parts.some((x) => !x.ok) ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${dl.parts.some((x) => !x.ok) ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
+    // Goal dates: each goal's date with the order above and without it (the
+    // default order, same packs), ✓ / ⚠ against its own date or the target.
+    let datesCard = "";
+    if (!planPending && plan && dates) {
+      const plainGoals = budgetGoalList(pagesRaw, keys, true);
+      const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.findIndex((x) => x.id === g.id)])) : null;
+      const y0 = packStartOfToday().getUTCFullYear(), loc = LANG === "en" ? undefined : LANG;
+      const gdTxt = (dt) => {
+        if (!dt) return "\u2014";
+        if (dt.done || dt.day <= 0) return t("goal_now");
+        const x = new Date(packStartOfToday().getTime() + dt.day * 86400000), s0 = x.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
+        return (dt.approx ? "~" : "") + (x.getUTCFullYear() !== y0 ? `${s0} \u2019${String(x.getUTCFullYear()).slice(2)}` : s0);
+      };
+      const sameD = (a, b) => (a.done || a.day <= 0) ? (b.done || b.day <= 0) : !(b.done || b.day <= 0) && a.day === b.day;
+      const rowsH = goals.map((g, i) => {
+        const own = !incKeys.includes(g.page), dt = own ? null : dates[i];
+        const k = plainGoals.findIndex((x) => x.id === g.id), pd = own || !plainDates || k < 0 ? null : plainDates[k];
+        const lim = due[i] != null ? due[i] : targetDays;
+        const ok = dt && (dt.done || (lim != null && dt.day <= lim));
+        const mark = !dt || (lim == null && !dt.done) ? "" : ok ? `<span class="gd-m ok" title="${esc(t("gd_ok"))}">&#10003;</span>` : `<span class="gd-m late" title="${esc(t("gd_late"))}">&#9888;</span>`;
+        const ic = budgetGoalIcon(g, pagesRaw), nm = nameOf(g);
+        return `<div class="gd-r"><span class="gd-p">${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}</span><span class="gd-n">${i + 1}. ${esc(nm)}</span><span class="gd-d${dt && pd && !sameD(dt, pd) ? " diff" : ""}">${own ? esc(t("gd_own")) : esc(gdTxt(dt))}</span><span class="gd-d w">${own ? "" : esc(gdTxt(pd))}</span>${mark || "<span></span>"}</div>`;
+      }).join("");
+      datesCard = `<div class="gd-card">
+        <div class="gd-h"><b>${esc(t("gd_title"))}</b><small>${esc(targetDays != null ? t("gd_legend").replace("{date}", gdTxt({ day: targetDays })) : t("gd_legend_nt"))}</small></div>
+        <div class="gd-t"><div class="gd-r hd"><span></span><span>${esc(t("gd_goal"))}</span><span class="gd-d">${esc(t("gd_with"))}</span><span class="gd-d">${esc(t("gd_without"))}</span><span></span></div>${rowsH}</div>
+        <div class="gd-f"><span><i>${esc(t("gd_blue"))}</i> ${esc(t("gd_blue_note"))}</span><span>${esc(t("gd_same"))}</span></div>
+      </div>`;
+    }
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
       ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("goals_desc_drag"))}</p>
-      <ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
+      ${datesCard}<ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>
       ${addHtml()}
       ${heroEdHtml()}
       ${sumHtml}`
       : `<div class="meta bud-g-fold">${esc(foldLine)}</div>`}
     </div>`;
 
-    // Roadmap: the packs week by week with a flag where each goal is reached,
-    // and "Without": the plain plan with the default order and no dates.
     goalsCardHtml = goalsCard;
-    if (planPending || !plan || !dates) { rmPageHtml = rmShell(`<div class="panel"><div class="empty"><div class="big">${workHtml("span")}</div></div></div>`); return goalsCard; }
-    const plainGoals = budgetGoalList(pagesRaw, keys, true);
-    const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck, plainGoals.map((g) => due[goals.indexOf(goals.find((x) => x.id === g.id))])) : null;
-    const plainOf = (g) => { const k = plainGoals.findIndex((x) => x.id === g.id); return plainDates && k >= 0 ? plainDates[k] : null; };
-    const withOn = BUDGET_RM_WITH;
-    const rmPlan = withOn ? plan : basePlan;
-    const rmDates = withOn ? dates : goals.map((g) => plainOf(g));
-    const dow = (packStartOfToday().getUTCDay() + 6) % 7;
-    // Weeks (Monday to Sunday) with the packs bought in them.
-    const sched = packPlanSchedule(rmPlan.rows), t0 = packStartOfToday();
-    const weeks = new Map();
-    rmPlan.rows.forEach((r, i) => sched[i].forEach((sl) => {
-      const w = Math.floor((sl.off + dow) / 7), wk = weeks.get(w) || { lines: [], money: 0 };
-      const m = r.count ? (packRowLocal(r) / r.count) * sl.count : 0;
-      // One line per pack (its steps / options added up), short name.
-      const nm = purShortName(purPackName(r.title, (r.tables || []).map((id) => ({ id }))));
-      let ex = wk.lines.find((x) => x.nm === nm);
-      if (!ex) { ex = { nm, n: 0, m: 0, gives: {} }; wk.lines.push(ex); }
-      ex.n += sl.count; ex.m += m;
-      Object.entries(r.gives || {}).forEach(([n, v]) => { ex.gives[n] = (ex.gives[n] || 0) + v * sl.count; });
-      wk.money += m; weeks.set(w, wk);
-    }));
-    const segs = budgetGoalSegs(goals, pagesRaw);
-    const forGoal = (x) => { const items = Object.keys(x.gives || {}); return goals.find((g, i) => rmDates[i] && !rmDates[i].done && items.some((n) => (segs.get(g.id) || {})[n] > 0)); };
-    const flagsIn = (w) => goals.map((g, i) => ({ g, d: rmDates[i] })).filter((x) => x.d && !x.d.done && Math.floor((x.d.day + dow) / 7) === w);
-    // Each week's pack goes to the first goal (in order) that needs what it
-    // gives and isn't reached before that week; a goal's own packs and price
-    // are those, up to the week it's reached.
-    const gWeek = (i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null);
-    // A goal's items plus what trades into them (Mystery Points → widgets, General shards → a hero's shards …).
-    const allTrades = BUDGET_PAGES.flatMap((pg) => { try { return tradeRatesFor(pg.key); } catch (e) { return []; } }).concat(rmPlan.trades || []);
-    const gItems = new Map();
-    const itemsOf = (g) => {
-      if (!gItems.has(g.id)) {
-        const set = new Set(Object.keys(segs.get(g.id) || {}).filter((n) => segs.get(g.id)[n] > 0));
-        for (let grew = true; grew;) { grew = false; allTrades.forEach((r) => { if (set.has(r.to) && !set.has(r.from)) { set.add(r.from); grew = true; } }); }
-        gItems.set(g.id, set);
-      }
-      return gItems.get(g.id);
-    };
-    const forGoalAt = (x, w) => { const items = Object.keys(x.gives || {}).filter((n) => n !== "Gems"); return goals.find((g, i) => gWeek(i) != null && gWeek(i) >= w && items.some((n) => itemsOf(g).has(n))) || null; };
-    const goalPacks = new Map();
-    [...weeks.keys()].sort((a, b) => a - b).forEach((w) => weeks.get(w).lines.forEach((x) => {
-      const g = forGoalAt(x, w);
-      x.goal = g;
-      if (!g) return;
-      const gp = goalPacks.get(g.id) || { m: 0, lines: [] };
-      gp.m += x.m; gp.lines.push({ w, x });
-      goalPacks.set(g.id, gp);
-    }));
-    const dayTxt = (d) => d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" });
-    const allW = [...new Set([...weeks.keys(), ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? Math.floor((rmDates[i].day + dow) / 7) : null)).filter((x) => x != null)])].sort((a, b) => a - b);
-    const lineHtml = (x) => {
-      const items = Object.entries(x.gives).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]);
-      const icn = items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean);
-      const fg = x.goal !== undefined ? x.goal : forGoal(x);
-      return `<details class="bud-rm-l${x.hot ? " rm-hot" : ""}"><summary>${icn ? `<img src="${esc(icn)}" alt="" loading="lazy" />` : "<i></i>"}<span>${esc(x.nm)}${x.n > 1 ? ` <span class="meta">×${x.n}</span>` : ""}</span><b>${esc(money(x.m))}</b></summary>
-        <div class="bud-rm-items">${items.map(([n, v]) => { const ii = itemRegIcon(n) || bpIcon({ name: n }); return `<span class="bud-mat">${ii ? `<img src="${esc(ii)}" alt="" loading="lazy" />` : ""}${heroItemMark(n)}<b>${esc(shortAmount(v))}</b><span class="meta" style="font-size:11px;">${esc(materialDisplayName(n))}</span></span>`; }).join("")}${fg ? `<span class="bud-rm-for">${esc(t("rm_for"))}: ${fg.mini ? "&#128681;" : "&#9733;"} ${esc(nameOf(fg))}</span>` : ""}</div></details>`;
-    };
-    const wkStart = (w) => new Date(t0.getTime() + (w * 7 - dow) * 86400000);
-    const wk0 = weeks.get(0);
-    // B3: the goals as flags on one line, grouped by the
-    // day they're reached, the target day marked; tap a flag → its week on the Roadmap.
-    b3Week0 = { money: wk0 ? wk0.money : 0, n: wk0 ? wk0.lines.length : 0 };
+    if (planPending || !plan || !dates) return goalsCard;
+    // My Purchases tags its lines with the goal each pack is bought for.
+    BUDGET_GOAL_MATCH = budgetGoalMatcher(goals, dates, pagesRaw, plan);
+    // B3: the goals as flags on one line, grouped by the day they're reached,
+    // the target day marked; tap a flag → the Order of goals sheet.
     {
       const stops = new Map();
       goals.forEach((g, i) => {
@@ -20858,256 +20831,12 @@ async function renderBudgetsPage(opts = {}) {
         const x = new Date(packStartOfToday().getTime() + d * 86400000), loc = LANG === "en" ? undefined : LANG;
         return x.getUTCFullYear() !== y0 ? `${x.toLocaleDateString(loc, { month: "short", timeZone: "UTC" })} \u2019${String(x.getUTCFullYear()).slice(2)}` : x.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
       };
-      const icOf = (g) => {
-        const hero = g.hero || (g.mini && g.page === "hero_shards" ? (((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).find((r) => r.hero.id === g.opt.grp) || {}).hero : null);
-        const pg = pagesRaw.find((x) => x.calcKey === g.page);
-        if (hero) return { src: hero.image_url || HERO_IMG_BY_NAME[hero.name] || goalPageIcon(pg), face: true };
-        return { src: QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon(pg), face: false };
-      };
       const stopHtml = (st) => {
-        const w = Math.floor((st.day + dow) / 7), need = allW.filter((x) => x <= w).length;
-        const ics = st.gs.slice(0, 2).map((g) => { const ic = icOf(g); return ic.src ? `<img class="${ic.face ? "" : "ct"}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(nameOf(g).charAt(0))}</i>`; }).join("") + (st.gs.length > 2 ? `<em>+${st.gs.length - 2}</em>` : "");
+        const ics = st.gs.slice(0, 2).map((g) => { const ic = budgetGoalIcon(g, pagesRaw); return ic.src ? `<img class="${ic.face ? "" : "ct"}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(nameOf(g).charAt(0))}</i>`; }).join("") + (st.gs.length > 2 ? `<em>+${st.gs.length - 2}</em>` : "");
         const cls = st.day === 0 ? " ok" : !st.gs.length ? " tg" : targetDays != null && st.day > targetDays ? " later" : "";
-        return `<button type="button" class="b3-stop${cls}${st.tg ? " has-tg" : ""}" data-b3jump="${w}|${need}" title="${esc(st.gs.map(nameOf).join(" \u00b7 ") || t("b3_target"))}"><span class="b3-ics">${st.gs.length ? ics : "<b>&#127919;</b>"}</span><small>${st.day === 0 ? "&#10003; " : st.tg && st.gs.length ? "&#127919; " : ""}${esc(lbl(st.day))}</small></button>`;
+        return `<button type="button" class="b3-stop${cls}${st.tg ? " has-tg" : ""}" data-b3sheet="goals" title="${esc(st.gs.map(nameOf).join(" \u00b7 ") || t("b3_target"))}"><span class="b3-ics">${st.gs.length ? ics : "<b>&#127919;</b>"}</span><small>${st.day === 0 ? "&#10003; " : st.tg && st.gs.length ? "&#127919; " : ""}${esc(lbl(st.day))}</small></button>`;
       };
       goalFlagsHtml = list.length ? `<div class="b3-rail">${railHead}<div class="b3-stops">${list.map(stopHtml).join("")}</div></div>` : "";
-    }
-    if (TAB === "roadmap") {
-      // Roadmap R2: one top card (this week, next goal,
-      // Don't miss, goals in order with Hide / Show), Buy this week ticks,
-      // Next weeks rows; a goal or a week opens a sheet (RM_SHEET).
-      const DAY = 86400000, tables = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : [];
-      const tbById = new Map(tables.map((tb) => [String(tb.id), tb]));
-      const titleOf = (tb) => { const l = packLinkFor(tb.id); return l.group && l.group !== (tb.title || "") ? l.group + " · " + (tb.title || t("packs_title")) : (tb.title || t("packs_title")); };
-      const tbByTitle = new Map(tables.map((tb) => [titleOf(tb), tb]));
-      const tableOf = (r) => (r.tables && r.tables.length ? tbById.get(String(r.tables[0])) : null) || tbByTitle.get(r.title) || null;
-      const plainPack = (tb) => { const l = packLinkFor(tb.id); return !l.option && !(l.pickCols > 0) && !l.colOptions; };
-      const canBuy = (r) => { const tb = tableOf(r); return !!tb && (r.row != null || !plainPack(tb)); };
-      const dayKey = (off) => packDayKey(new Date(t0.getTime() + off * DAY));
-      const num = (v) => bidiNum((Math.round(v * 100) / 100).toLocaleString(LANG === "en" ? undefined : LANG, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-      const loc = LANG === "en" ? undefined : LANG;
-      const wdTxt = (off) => new Date(t0.getTime() + off * DAY).toLocaleDateString(loc, { weekday: "short", timeZone: "UTC" });
-      const rangeTxt = (w) => { const ws = wkStart(w), we = new Date(ws.getTime() + 6 * DAY); return `${dayTxt(ws)} – ${ws.getUTCMonth() === we.getUTCMonth() ? we.getUTCDate() : dayTxt(we)}`; };
-      const pkName = (r) => purShortName(purPackName(r.title, tables));
-      const icOfGives = (gives) => { const items = Object.entries(gives || {}).filter(([n, v]) => n !== "Gems" && v > 0).sort((p, q) => q[1] - p[1]); return items.map(([n]) => itemRegIcon(n) || bpIcon({ name: n })).find(Boolean) || ""; };
-      const picHtml = (src, cls) => (src ? `<img class="${cls || ""}" src="${esc(src)}" alt="" loading="lazy" />` : `<i class="${cls || ""}"></i>`);
-      const goalIc = (g) => {
-        const hero = g.hero || (g.mini && g.page === "hero_shards" ? (((HERO_PLAN_LAST && HERO_PLAN_LAST.rows) || []).find((r) => r.hero.id === g.opt.grp) || {}).hero : null);
-        const pg = pagesRaw.find((x) => x.calcKey === g.page);
-        if (hero) return hero.image_url || HERO_IMG_BY_NAME[hero.name] || goalPageIcon(pg);
-        return QUICK_ICONS[(BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab] || goalPageIcon(pg);
-      };
-      // The last day of the pack's copy on sale at day `off` (null = no end known).
-      const endOf = (r, off) => { const tb = tableOf(r); if (!tb) return null; const u = purBoughtUntil({ table: String(tb.id), date: dayKey(off), row: r.row }); const d = u && packParseDay(u.until); return d ? Math.round((d - t0) / DAY) : null; };
-      const endTxt = (e) => (e == null ? "" : e <= 0 ? t("rmr_ends_today") : e === 1 ? t("rmr_ends_tomorrow") : e <= 6 - dow ? t("rmr_ends_on").replace("{d}", wdTxt(e)) : t("rmr_to_date").replace("{d}", dayTxt(new Date(t0.getTime() + e * DAY))));
-      // This week's plan rows (week 0 of the shown plan), with the day they're bought on.
-      const wkRows = (w) => {
-        const out = [];
-        rmPlan.rows.forEach((r, i) => {
-          const sl = sched[i].filter((s) => Math.floor((s.off + dow) / 7) === w);
-          if (!sl.length) return;
-          const count = sl.reduce((a, s) => a + s.count, 0), off = Math.max(0, sl[0].off);
-          out.push({ r, i, sl, count, off, m: r.count ? (packRowLocal(r) / r.count) * count : 0, end: endOf(r, off) });
-        });
-        return out;
-      };
-      const w0Rows = wkRows(0);
-      // My Purchases this week: planned ones still to buy, bought ones done.
-      const wsKey = dayKey(-dow), weKey = dayKey(6 - dow), todayKey = dayKey(0);
-      const purThis = (PACK_PURCHASES.list || []).filter((p) => !p.hidden && p.date >= wsKey && p.date <= weKey && (p.status === "bought" || p.status === "planned"));
-      const purMoney = (p) => { const tb = tbById.get(String(p.table)); return tb ? packConvert(purchasePrice(p, tb), packLinkFor(tb.id).currency).n * Math.max(1, Number(p.count) || 1) : 0; };
-      const purName = (p) => { const tb = tbById.get(String(p.table)); return purShortName((p.choice && p.choice.name) || (tb ? purPackName(titleOf(tb), tables) : "")); };
-      const purIc = (p) => { const tb = tbById.get(String(p.table)); return icOfGives(tb ? purchaseGives(p, tb) : (p.choice && p.choice.gives)); };
-      const bought = purThis.filter((p) => p.status === "bought"), planned = purThis.filter((p) => p.status === "planned");
-      const mBought = bought.reduce((a, p) => a + purMoney(p), 0), mPlanned = planned.reduce((a, p) => a + purMoney(p), 0);
-      const mPlan = w0Rows.reduce((a, x) => a + x.m, 0);
-      const wTotal = mBought + mPlanned + mPlan, nAll = bought.length + planned.length + w0Rows.length;
-      const lastDay = Math.max(rmPlan.days || 0, ...goals.map((g, i) => (rmDates[i] && !rmDates[i].done ? rmDates[i].day : 0)));
-      const nextI = goals.findIndex((g, i) => rmDates[i] && !rmDates[i].done);
-      const evNow = GAME_EVENTS.filter((ev) => gameEventStarts(ev, t0, t0).some((d) => d <= t0));
-      const shortDay = (d) => { if (d === 0) return t("goal_now"); const x = new Date(t0.getTime() + d * DAY); return x.getUTCFullYear() !== t0.getUTCFullYear() ? x.toLocaleDateString(loc, { day: "numeric", month: "short", year: "2-digit", timeZone: "UTC" }) : dayTxt(x); };
-      const byLabel = (b, d) => (b && !String(b).startsWith("date:") && goalByName(b)) || (d != null ? shortDay(d) : "");
-      const skipMiss = (r) => packStackInfo(r.reset);
-      const miss = w0Rows.filter((x) => x.end != null && x.end <= 1 && x.off <= x.end && !skipMiss(x.r)).sort((a, b) => a.end - b.end).slice(0, 3);
-      const missHtml = miss.length ? `<div class="rmr-miss"><div class="rmr-miss-h">&#9200; ${esc(t("rmr_dont_miss"))}</div>${miss.map((x) => `<div class="rmr-miss-r">${picHtml(icOfGives(x.r.gives))}<span><b>${esc(pkName(x.r))}</b>${x.count > 1 ? ` ×${x.count}` : ""} <small>${esc(num(x.m))}</small></span><em>${esc(endTxt(x.end))}</em></div>`).join("")}</div>` : "";
-      // Goals: status, fill, and the "Move to 1st" fix for a goal that misses its date.
-      const goalStat = (g, i) => {
-        const dt = rmDates[i], d = due[i], myBy = by[g.id] || "";
-        const own = !incKeys.includes(g.page);
-        const late = !!(dt && !dt.done && d != null && dt.day > d && !dlPending);
-        const byNm = byLabel(myBy, d);
-        let date = "—", sub = "";
-        if (own) { sub = t("goal_own_plan"); }
-        else if (dlPending && d != null) { sub = t("budgets_working"); if (dt && !dt.done) date = `${dt.approx ? "~" : ""}${esc(shortDay(dt.day))}`; }
-        else if (dt && dt.done) { date = "&#10003;"; sub = t("goal_have"); }
-        else if (dt) {
-          date = `${dt.approx ? "~" : ""}${esc(shortDay(dt.day))}`;
-          if (late) sub = `&#9888; ${esc(t("rmr_by_pct").replace("{by}", byNm).replace("{p}", Math.floor((dt.pctDue || 0) * 100)))}`;
-          else if (d != null) sub = `${esc(t("rmr_by_ok").replace("{by}", byNm))} &#10003;`;
-          else if (targetDays != null) sub = `${esc(t("rmr_target_ok").replace("{d}", shortDay(targetDays)))}${dt.day <= targetDays ? " &#10003;" : ""}`;
-          return { late, date, sub, own };
-        }
-        return { late, date, sub: esc(sub), own };
-      };
-      // Share of what the goal needs that's there already (1 when done).
-      const fillOf = (g, i) => {
-        const dt = rmDates[i];
-        if (dt && dt.done) return 1;
-        const seg = segs.get(g.id) || {}, pg = pagesRaw.find((x) => x.calcKey === g.page) || {}, full = pg.needFull || {};
-        const ks = Object.keys(seg).filter((n) => full[n] > 0);
-        if (!ks.length) return 0;
-        return ks.reduce((a, n) => a + Math.max(0, Math.min(1, 1 - seg[n] / full[n])), 0) / ks.length;
-      };
-      // "Move to 1st": the same plan with the goals in the new order.
-      const fixMemo = new Map();
-      const moveFix = (g, i) => {
-        if (fixMemo.has(g.id)) return fixMemo.get(g.id);
-        const st = goalStat(g, i);
-        if (!st.late || st.own) return "";
-        const byNm = byLabel(by[g.id], due[i]), dTxt = shortDay(due[i]);
-        let side = "", meOk = false, helps = false;
-        if (i > 0) {
-          const keep = BUDGET_GOALS.order;
-          BUDGET_GOALS.order = [g.id, ...goals.map((x) => x.id).filter((x) => x !== g.id)];
-          let g2 = null;
-          try { g2 = budgetGoalList(pagesRaw, keys); } finally { BUDGET_GOALS.order = keep; }
-          const due2 = budgetGoalDue(g2), d2 = budgetGoalDates(g2, pagesRaw, rmPlan, ck, due2);
-          const k = g2.findIndex((x) => x.id === g.id), me = d2[k];
-          const prev = goals[0], pk = g2.findIndex((x) => x.id === prev.id), pd = pk >= 0 ? d2[pk] : null;
-          meOk = !!(me && (me.done || me.day <= due[i]));
-          helps = !!(me && (me.done || me.day < rmDates[i].day));
-          side = meOk ? t("rmr_move_ok").replace("{d}", me.done ? t("goal_now") : shortDay(me.day)) : t("rmr_move_late").replace("{d}", me ? shortDay(me.day) : "\u2014");
-          if (pd && prev.id !== g.id) {
-            const pOk = due2[pk] == null || pd.done || pd.day <= due2[pk];
-            side += " \u00b7 " + t("rmr_move_prev").replace("{goal}", nameOf(prev)).replace("{d}", pd.done ? t("goal_now") : shortDay(pd.day)) + (due2[pk] != null ? (pOk ? ` ${t("rmr_still_by").replace("{by}", byLabel(by[prev.id], due2[pk]))} \u2713` : ` \u26A0 ${t("rmr_misses").replace("{by}", byLabel(by[prev.id], due2[pk]))}`) : "");
-          }
-        }
-        const head = (byNm === dTxt ? t("rmr_misses_hd") : t("rmr_misses_h")).replace("{goal}", nameOf(g)).replace("{by}", byNm).replace("{d}", dTxt);
-        const how = i === 0 ? "rmr_no_way" : meOk ? "rmr_way" : helps ? "rmr_way_sooner" : "rmr_way_none";
-        const out = `<div class="rmr-fix"><div><b>${esc(head)}</b> ${esc(t(how))}</div>
-          ${i > 0 && (meOk || helps) ? `<button type="button" class="btn small ghost rmr-mv" data-rmmove="${esc(g.id)}">&#9650; ${esc(t("rmr_move_1st").replace("{goal}", nameOf(g)))}</button>` : ""}${i > 0 ? `<div class="meta rmr-side">${esc(side)}</div>` : ""}</div>`;
-        fixMemo.set(g.id, out);
-        return out;
-      };
-      const foldKey = "top:roadmap-goals", folded = BAR_SHOW_ALL[foldKey] === false;
-      const atRisk = goals.filter((g, i) => goalStat(g, i).late).length;
-      const goalRow = (g, i) => {
-        const st = goalStat(g, i), f = fillOf(g, i);
-        return `<button type="button" class="rmr-g${st.late ? " late" : ""}" data-rmgoal="${esc(g.id)}"><span class="rmr-gn">${i + 1}</span>${picHtml(goalIc(g), "rmr-gi")}
-          <span class="rmr-gt"><b>${esc(nameOf(g))}</b><span class="rmr-bar"><i style="width:${(f * 100).toFixed(1)}%;"></i></span></span>
-          <span class="rmr-gd"><b>${st.date}</b><small>${st.sub}</small></span><span class="rmr-chev">&#8250;</span></button>${moveFix(g, i)}`;
-      };
-      const gShown = RM_GOALS_ALL ? goals : goals.slice(0, 3);
-      const goalsPart = folded
-        ? `<div class="rmr-gh rmr-gfold"><span class="rmr-gics">${goals.slice(0, 3).map((g) => picHtml(goalIc(g))).join("")}</span><span class="rmr-gfl"><b>${esc(t("rmr_n_goals").replace("{n}", goals.length))}</b>${atRisk ? ` · <em>&#9888; ${esc(t("rmr_n_risk").replace("{n}", atRisk))}</em>` : ""}<small>${esc(t("rmr_goals_hidden"))}</small></span><button type="button" class="btn small ghost rmr-fb" data-rmfold aria-expanded="false">${esc(t("g1_show"))} &#9662;</button></div>`
-        : `<div class="rmr-gh"><span class="rmr-lbl">${esc(t("rmr_goals_order").replace("{n}", goals.length))}</span><button type="button" class="rmr-a" data-rmreorder>${esc(t("rmr_reorder"))} &#8250;</button><button type="button" class="btn small ghost rmr-fb" data-rmfold aria-expanded="true">${esc(t("g1_hide"))} &#9652;</button></div>
-          <div class="rmr-gl">${gShown.map((g) => goalRow(g, goals.indexOf(g))).join("")}</div>
-          ${goals.length > 3 ? `<button type="button" class="rmr-more" data-rmgall>${esc(RM_GOALS_ALL ? t("rmr_fewer") : t("rmr_more_goals").replace("{n}", goals.length - 3))}</button>` : ""}`;
-      const topCard = `<div class="t12x-card rmr-top" id="rmw-0">
-        <div class="rmr-tw"><span class="rmr-lbl">${esc(t("rmr_this_week"))} · ${esc(rangeTxt(0))}</span>${evNow.map((ev) => `<span class="rmr-ev now ${esc(ev.key)}"${ev.key !== "svs" && ev.key !== "koi" ? ` style="${gameEventTint(ev.key, 0.14)}color:${gameEventColor(ev.key)}"` : ""}>&#9876; ${esc(t("rmr_ev_now").replace("{ev}", ev.name))}</span>`).join("")}</div>
-        <div class="rmr-big"><b>${esc(packFmtLocal(wTotal, cur, false, smp))}</b><span>${esc(t("rmr_packs_bought").replace("{n}", nAll).replace("{b}", bought.length))}</span></div>
-        <div class="rmr-bar big"><i style="width:${wTotal > 0 ? ((mBought / wTotal) * 100).toFixed(1) : 0}%;"></i></div>
-        ${nextI >= 0 ? `<div class="rmr-next">${esc(t("rmr_next_goal")).replace("{goal}", `<b>${esc(nameOf(goals[nextI]))}</b>`).replace("{d}", `<b class="good">${esc(shortDay(rmDates[nextI].day))}</b>`)}</div>` : `<div class="rmr-next good">&#10003; ${esc(t("rmr_all_ready"))}</div>`}
-        <div class="meta rmr-all">${esc(t("rmr_all_done").replace("{d}", fmtDate(lastDay)).replace("{v}", money(withOn ? total : baseTotal)))}</div>
-        ${missHtml}
-        <div class="rmr-goals">${goalsPart}</div>
-      </div>`;
-      // Buy this week: tick when bought (My Purchases' purchases).
-      const tickBtn = (attr, on, dis) => `<button type="button" class="rmr-tk${on ? " on" : ""}" ${attr} aria-label="${esc(t("rmr_tick"))}" title="${esc(t("rmr_tick"))}"${dis ? " disabled" : ""}>&#10003;</button>`;
-      const buyLines = [
-        ...bought.map((p) => ({ k: 0, m: purMoney(p), html: `<div class="rmr-br done">${picHtml(purIc(p))}<span class="rmr-bn"><b>${esc(purName(p))}${Number(p.count) > 1 ? ` ×${p.count}` : ""}</b><small>${esc(t("rmr_bought_on").replace("{d}", dayTxt(packParseDay(p.date))))}</small></span><span class="rmr-bp">${esc(num(purMoney(p)))}</span>${tickBtn(p.via === "roadmap" ? `data-rmub="${esc(p.id)}"` : "", true, p.via !== "roadmap")}</div>` })),
-        ...planned.map((p) => ({ k: 1, m: purMoney(p), html: `<div class="rmr-br">${picHtml(purIc(p))}<span class="rmr-bn"><b>${esc(purName(p))}${Number(p.count) > 1 ? ` ×${p.count}` : ""}</b><small>${esc(t("rmr_planned_on").replace("{d}", p.date === todayKey ? t("goal_now") : dayTxt(packParseDay(p.date))))}</small></span><span class="rmr-bp">${esc(num(purMoney(p)))}</span>${tickBtn(`data-rmpb="${esc(p.id)}"`, false)}</div>` })),
-        ...w0Rows.slice().sort((a, b) => (a.end == null ? 999 : a.end) - (b.end == null ? 999 : b.end)).map((x) => {
-          const fg = forGoalAt({ gives: x.r.gives }, 0);
-          const sub = [fg ? t("rmr_for").replace("{goal}", nameOf(fg)) : "", x.off > 0 ? t("rmr_from").replace("{d}", wdTxt(x.off)) : "", endTxt(x.end)].filter(Boolean).join(" · ");
-          return { k: 2, m: x.m, html: `<div class="rmr-br">${picHtml(icOfGives(x.r.gives))}<span class="rmr-bn"><b>${esc(pkName(x.r))}${x.count > 1 ? ` ×${x.count}` : ""}</b><small>${esc(sub)}</small></span><span class="rmr-bp">${esc(num(x.m))}</span>${tickBtn(`data-rmbuy="${x.i}"`, false, !canBuy(x.r))}</div>` };
-        }),
-      ];
-      const buyShown = RM_BUY_ALL ? buyLines : buyLines.slice(0, 4), buyRest = buyLines.slice(buyShown.length);
-      const buyCard = `<div class="t12x-card rmr-buy"><div class="rmr-ch"><span class="rmr-lbl">${esc(t("rmr_buy_week"))}</span><small class="meta">${esc(t("rmr_tick_when"))}</small></div>
-        ${buyLines.length ? buyShown.map((x) => x.html).join("") : `<div class="meta rmr-empty">${esc(t("rmr_nothing_week"))}</div>`}
-        ${buyRest.length ? `<button type="button" class="rmr-more" data-rmbuyall>${esc(t("rmr_n_more").replace("{n}", buyRest.length))}${wTotal > 0 ? ` · ${esc(packFmtLocal(buyRest.reduce((a, x) => a + (x.m || 0), 0), cur, false, smp))}` : ""}</button>` : RM_BUY_ALL && buyLines.length > 4 ? `<button type="button" class="rmr-more" data-rmbuyall>${esc(t("rmr_fewer"))}</button>` : ""}</div>`;
-      // Next weeks: dates, packs, goal flags, SvS / KOI / new heroes, price, budget bar.
-      const sp = spendActive() ? spendSettings() : null;
-      const wkLimit = sp ? (sp.per === "week" ? sp.amount : (sp.amount * 12) / 52) : 0;
-      const lastW = Math.max(1, ...allW);
-      const wList = []; for (let w = 1; w <= lastW; w++) wList.push(w);
-      const genBase = newGenBaseDay(), genNow = newGenGen(), genStarts = genBase ? newGenStarts(genBase, 8) : [];
-      const evChips = (w) => {
-        const ws = wkStart(w), we = new Date(ws.getTime() + 6 * DAY + DAY - 1), out = [];
-        GAME_EVENTS.forEach((ev) => gameEventStarts(ev, ws, we).filter((d) => d >= ws && d <= we).forEach(() => out.push(`<span class="rmr-ev ${esc(ev.key)}"${ev.key !== "svs" && ev.key !== "koi" ? ` style="${gameEventTint(ev.key, 0.14)}color:${gameEventColor(ev.key)}"` : ""}>${esc(ev.name)}</span>`)));
-        genStarts.forEach((d, k) => { if (k > 0 && d >= ws && d <= we) out.push(`<span class="rmr-ev gen">&#11088; ${esc(genNow ? t("rmr_gen_heroes").replace("{n}", genNow + k) : t("rmr_new_heroes"))}</span>`); });
-        flagsIn(w).forEach((x) => out.push(`<span class="rmr-ev flag" title="${esc(nameOf(x.g))}">&#127937; ${esc(nameOf(x.g))}</span>`));
-        return out.join("");
-      };
-      const budBar = (m) => {
-        if (!sp) return "";
-        const scale = Math.max(m, wkLimit) * 1.08 || 1;
-        return `<span class="rmr-wbar"><i class="ok" style="width:${((Math.min(m, wkLimit) / scale) * 100).toFixed(1)}%;"></i><i class="over" style="width:${((Math.max(0, m - wkLimit) / scale) * 100).toFixed(1)}%;"></i><b style="inset-inline-start:${((wkLimit / scale) * 100).toFixed(1)}%;"></b></span>`;
-      };
-      const showAllW = RM_WEEKS_ALL || (ROADMAP_JUMP != null && Number(ROADMAP_JUMP) > 5);
-      const wShown = showAllW ? wList : wList.slice(0, 5);
-      const weekRow = (w) => {
-        const wk = weeks.get(w) || { lines: [], money: 0 }, chips = evChips(w), n = wk.lines.length;
-        const left = wkLimit - wk.money;
-        return `<button type="button" class="rmr-wr" id="rmw-${w}" data-rmweek="${w}"><span class="rmr-wd"><b>${esc(rangeTxt(w))}</b><small>${esc(w === 1 ? t("rm_next_week").toLowerCase() : t("rm_n_packs").replace("{n}", n))}</small></span>
-          <span class="rmr-wm">${chips ? `<span class="rmr-evs">${chips}</span>` : `<small class="meta">${esc(n ? (w === 1 ? t("rm_n_packs").replace("{n}", n) : "") : t("rmr_quiet"))}</small>`}${budBar(wk.money)}</span>
-          <span class="rmr-wv"><b>${esc(money(wk.money))}</b>${sp ? `<small class="${left < 0 ? "over" : "ok"}">${esc((left < 0 ? t("rmr_over") : t("rmr_left")).replace("{v}", num(Math.abs(left))))}</small>` : ""}</span></button>`;
-      };
-      const weeksCard = wList.length ? `<div class="t12x-card rmr-weeks"><div class="rmr-ch"><span class="rmr-lbl">${esc(t("rmr_next_weeks"))}</span>${sp ? `<small class="meta">${esc(t(sp.per === "week" ? "rmr_budget_week" : "rmr_budget_week_approx").replace("{v}", packFmtLocal(wkLimit, cur, true, smp)))}</small>` : ""}</div>
-        ${wShown.map(weekRow).join("")}
-        ${sp ? `<div class="meta rmr-legend"><span><i class="ok"></i>${esc(t("rmr_in_budget"))}</span><span><i class="over"></i>${esc(t("rmr_over_l"))}</span><span><b></b> = ${esc(t("rmr_your_limit"))}</span></div>` : ""}
-        ${wList.length > 5 ? `<button type="button" class="rmr-more" data-rmwall>${esc(showAllW ? t("rmr_fewer") : t("rmr_all_weeks").replace("{n}", wList.length))}</button>` : ""}</div>` : "";
-      // Sheets: a goal, or a week.
-      const sheetOf = () => {
-        if (!RM_SHEET) return "";
-        const wrap = (title, sub, ic, body) => `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-rmbg><div class="modal-box adm-sheet b3-sheet rmr-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="gs-head">${ic != null ? picHtml(ic, "rmr-shi") : ""}<span class="rmr-sht"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>${closeXHtml("data-rmclose")}</div>${body}</div></div>`;
-        if (RM_SHEET.startsWith("w:")) {
-          const w = Number(RM_SHEET.slice(2)), wk = weeks.get(w) || { lines: [], money: 0 }, rowsW = wkRows(w).filter((x) => canBuy(x.r));
-          const lines = wk.lines.slice().sort((p, q) => q.m - p.m).map(lineHtml).join("");
-          return wrap(`${w === 0 ? t("rm_this_week") : rangeTxt(w)} · ${money(wk.money)}`, t("rm_n_packs").replace("{n}", wk.lines.length), null,
-            `${evChips(w) ? `<div class="rmr-evs" style="margin-bottom:8px;">${evChips(w)}</div>` : ""}${lines || `<div class="meta">${esc(t("rmr_quiet"))}</div>`}
-            ${rowsW.length ? `<button type="button" class="btn rmr-wb" data-rmwillbuy="${w}">+ ${esc(t("rmr_will_buy_all"))}</button><div class="meta rmr-side">${esc(t("rmr_will_buy_note"))}</div>` : ""}`);
-        }
-        if (RM_SHEET.startsWith("g:")) {
-          const gid = RM_SHEET.slice(2), i = goals.findIndex((g) => g.id === gid);
-          if (i < 0) return "";
-          const g = goals[i], dt = rmDates[i], d = due[i], st = goalStat(g, i), gp = goalPacks.get(g.id), myBy = by[g.id] || "";
-          const pg = pagesRaw.find((x) => x.calcKey === g.page) || {}, seg = segs.get(g.id) || {};
-          const names = g.items ? g.items.slice() : g.mini ? Object.keys(seg) : Object.keys(pg.needFull || pg.need || {});
-          const chip = (n) => { const s = seg[n] || 0, ic = itemRegIcon(n) || bpIcon({ name: n.replace(/ \(minutes\)$/, "") }), isT = /\(minutes\)$/.test(n); const v = isT ? t12FormatTime(s / 60) : shortAmount(s);
-            return `<span class="rmr-need${s > 1e-6 ? " short" : ""}">${picHtml(ic)}${heroItemMark(n)}<span><b>${esc(materialDisplayName(n).replace(/\s*\((minutes|min)\)$/, ""))}</b><small>${s > 1e-6 ? esc(t("rmr_short").replace("{v}", v)) : `&#10003; ${esc(t("rmr_covered"))}`}</small></span></span>`; };
-          const pct = dt && dt.done ? 100 : d != null && dt ? Math.floor((dt.pctDue || 0) * 100) : Math.floor(fillOf(g, i) * 100);
-          const tab = (BUDGET_PAGES.find((x) => x.key === g.page) || {}).tab;
-          const byOpen = BUDGET_GOAL_BY_OPEN === g.id ? `<div class="bud-g-by-box">
-              <div class="meta" style="font-weight:600;">${esc(t("goal_by_title"))}</div>
-              ${["", "svs", "koi", "gen"].map((b) => { const dd = b ? goalDeadlineDay(b) : mainDay; return `<button type="button" data-goalbyset="${b}" class="${myBy === b ? "on" : ""}"><span>${goalByIcon(b)} ${esc(goalByName(b))}</span><small>${dd != null ? esc(fmtDate(dd)) : "—"}</small></button>`; }).join("")}
-              <label class="bud-g-by-date"><span>&#128197; ${esc(t("goal_by_date"))}</span><input type="date" data-goalbydate value="${myBy.startsWith("date:") ? esc(myBy.slice(5)) : ""}" /></label>
-              <div class="meta" style="font-size:11px;">${esc(t("goal_by_note"))}</div></div>` : "";
-          const gl = gp ? gp.lines : [];
-          const packsHtml = gl.length ? gl.slice(0, 5).map(({ w, x }) => `<div class="rmr-gp"><span class="rmr-gpw"><b>${esc(w === 0 ? t("rm_this_week") : rangeTxt(w))}</b></span><span class="rmr-gpn">${esc(x.nm)}${x.n > 1 ? ` ×${x.n}` : ""}</span><b>${esc(num(x.m))}</b></div>`).join("")
-            + (gl.length > 5 ? `<div class="meta rmr-side">${esc(t("rmr_more_weeks_to").replace("{n}", new Set(gl.slice(5).map((y) => y.w)).size).replace("{d}", dt && !dt.done ? shortDay(dt.day) : ""))}</div>` : "")
-            : `<div class="meta">${esc(t("rm_goal_nopacks"))}</div>`;
-          const sub = `${t("rmr_goal_k").replace("{k}", i + 1).replace("{n}", goals.length)}${d != null ? ` · ${t("rmr_by")} ${byLabel(myBy, d)}${myBy && !myBy.startsWith("date:") ? ` (${shortDay(d)})` : ""}` : ""}`;
-          return wrap(nameOf(g), sub, goalIc(g), `
-            <div class="rmr-sbx">
-              <div><small>${esc(t("rmr_ready"))}</small><b class="${st.late ? "warn" : "good"}">${pct != null ? `${pct}%` : "—"}</b><small>${esc(d != null ? t("rmr_by").toLowerCase() + " " + byLabel(myBy, d) : t("rmr_now"))}</small></div>
-              <div><small>${esc(t("rmr_done"))}</small><b>${st.date}</b><small>${dt && !dt.done && dt.day > 0 ? esc(t("rmr_in_days").replace("{n}", dt.day)) : ""}</small></div>
-              <div><small>${esc(t("rmr_its_packs"))}</small><b>${esc(money(gp ? gp.m : 0))}</b><small>${esc(t("rm_n_packs").replace("{n}", gl.length))}</small></div>
-            </div>
-            ${names.length ? `<div class="rmr-lbl rmr-sh">${esc(t("rmr_still_needs"))}</div><div class="rmr-needs">${names.slice(0, 12).map(chip).join("")}</div>` : ""}
-            <div class="rmr-ch rmr-sh"><span class="rmr-lbl">${esc(t("rmr_packs_by_week"))}</span><small class="meta">${esc(t("rm_n_packs").replace("{n}", gl.length))}</small></div>${packsHtml}
-            ${moveFix(g, i)}
-            <div class="bud-goals rmr-gby"><div data-goal="${esc(g.id)}"><div class="rmr-sbtn"><button type="button" class="btn ghost" data-goalby>${esc(t("rmr_by_btn").replace("{by}", byLabel(myBy, d) || t("goal_by_main")))} &#9662;</button>${tab ? `<button type="button" class="btn" data-gototab="${esc(tab)}">${esc(t("rmr_open_page"))} &#8250;</button>` : ""}</div>${byOpen}</div></div>`);
-        }
-        return "";
-      };
-      rmPageHtml = rmShell(`<div class="rm-cols rmr-cols">
-        <div class="rm-left">${topCard}</div>
-        <div class="rm-right">${buyCard}${weeksCard}</div>
-      </div>`) + sheetOf();
-      if (RM_SHEET && !rmPageHtml.includes("data-rmbg")) RM_SHEET = null;
-      RM_DATA = { goalIds: goals.map((g) => g.id), plan: rmPlan, sched, tableOf, canBuy, dayKey, wkRows, tag: BUDGET_VIEW === "budget" && spendActive() ? "budget" : "target" };
     }
     return goalsCard;
   })();
@@ -21191,8 +20920,8 @@ async function renderBudgetsPage(opts = {}) {
   const missing = B3_PAGES.filter((x) => x.pg.missing);
   const tilesHtml = `<div class="b3-pg">${B3_PAGES.filter((x) => !x.pg.missing).map(tileHtml).join("")}</div>`;
   const missHtml = missing.length ? `<button type="button" class="b3-tile b3-np" data-b3sheet="missing"><span>${esc(t("b3_missing").replace("{n}", missing.length))}</span><span class="b3-ics">${missing.slice(0, 6).map((x) => { const ic = pageIcon(x); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""; }).join("")}</span><span class="b3-go">&#8250;</span></button>` : "";
-  // This week (Monday – Sunday): the Roadmap's numbers for the admin, the shown plan's for everyone else.
-  const wkData = b3Week0 || (() => {
+  // This week (Monday – Sunday): the shown plan's packs; opens My Purchases.
+  const wkData = (() => {
     const pl = combined.chosen;
     if (planPending) return null;
     if (!pl || !pl.rows) return { money: 0, n: 0 };
@@ -21205,7 +20934,7 @@ async function renderBudgetsPage(opts = {}) {
     }));
     return { money: m, n: names.size };
   })();
-  const wkTab = visitorCan("goals") ? "roadmap" : "purchases";
+  const wkTab = "purchases";
   // Settings sits beside ↻ at the top; This week has the bottom row.
   const setBtnHtml = `<button type="button" class="b3-tile b3-setb" data-b3sheet="settings"><span class="b3-gear">&#9881;</span><span class="b3-lr-t"><b>${esc(t("t12x_settings"))}</b><small>${esc(targetDays != null ? t("b3_set_target").replace("{date}", shortDay(targetDays)) : t("pack_no_date"))} · ${esc(DISPLAY_CURRENCY || "USD")}</small></span></button>`;
   const lrHtml = `<div class="b3-lr">
@@ -21239,7 +20968,7 @@ async function renderBudgetsPage(opts = {}) {
     if (!sh) return null;
     if (sh === "mats" && matsN) return { title: t("budgets_materials_total"), html: `<div class="bud-mats">${Object.keys(grandMats).map(grandMatChip).join("")}</div>` };
     if (sh === "stats" && grandDeltas.length) return { title: t("budgets_stat_increase_total"), html: statTableHtml(grandDeltas, "all") + (dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`) };
-    if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), html: (TAB === "roadmap" ? `<div class="bud-seg bud-rm-seg"><button type="button" data-rmwith="1" class="${BUDGET_RM_WITH ? "on" : ""}">${esc(t("rm_with"))}</button><button type="button" data-rmwith="0" class="${BUDGET_RM_WITH ? "" : "on"}">${esc(t("rm_without"))}</button></div><div class="meta rmr-side" style="margin:-2px 0 10px;">${esc(t("rmr_with_note"))}</div>` : "") + goalsCardHtml };
+    if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), html: goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
     if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
     if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: x.pg.calcKey === "shining_skins" ? t("sh_title") : (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
@@ -21247,7 +20976,6 @@ async function renderBudgetsPage(opts = {}) {
   })();
   if (BUDGET_SHEET && !sheet) BUDGET_SHEET = null;
   const sheetHtml = sheet ? `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-b3bg><div class="modal-box adm-sheet b3-sheet" role="dialog" aria-modal="true" aria-label="${esc(sheet.title)}"><div class="gs-head"><b style="flex:1; font-size:16px;">${esc(sheet.title)}</b>${closeXHtml("data-b3close")}</div>${sheet.html}</div></div>` : "";
-  if (TAB === "roadmap") { drawRoadmapPage(rmPageHtml, BUDGET_SHEET === "goals" ? sheetHtml : ""); return; }
   if (planPending) holdPageHeight(true);
   keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap b3">
@@ -21335,93 +21063,7 @@ async function renderBudgetsPage(opts = {}) {
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => { if (e.target === el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(e); } });
   });
-  content.querySelectorAll("[data-b3jump]").forEach((b) => b.addEventListener("click", () => {
-    const [w, need] = b.dataset.b3jump.split("|").map(Number);
-    ROADMAP_WEEKS = Math.max(ROADMAP_WEEKS, need + 1);
-    ROADMAP_JUMP = w;
-    goToTab("roadmap");
-  }));
 }
-// The Roadmap page (admin): drawn from Budgets' data by renderBudgetsPage.
-// `extra` = the Budgets goals sheet (Reorder ›) when it's open.
-function drawRoadmapPage(html, extra) {
-  keepFolds(content, () => { content.innerHTML = `<div class="rmr-wrap">${html || rmEmptyHtml()}${extra || ""}</div>`; });
-  if (ROADMAP_JUMP != null) {
-    const el = document.getElementById("rmw-" + ROADMAP_JUMP);
-    ROADMAP_JUMP = null;
-    if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("rmr-flash"); setTimeout(() => el.classList.remove("rmr-flash"), 1600); }
-  }
-  const wrap = content.querySelector(".rmr-wrap");
-  if (!wrap) return;
-  const redraw = () => keepPlace(() => renderBudgetsPage());
-  // The Budgets goals sheet (drag order, By, minis) and the goal sheet's By picker.
-  wrap.querySelectorAll(".bud-goals").forEach((box) => wireBudgetGoals(box));
-  wrap.onclick = (e) => {
-    if (e.target.closest("[data-budgetrecalc]")) { const sq = RENDER_SEQ; budgetForceRecalc(); renderBudgetsPage().catch((err) => pageRedrawFailed(err, sq)); return; }
-    const bg = e.target.closest("[data-b3bg], [data-rmbg]");
-    if (bg && (e.target === bg || e.target.closest("[data-b3close], [data-rmclose]"))) {
-      if (bg.hasAttribute("data-b3bg")) BUDGET_SHEET = null; else RM_SHEET = null;
-      BUDGET_GOAL_BY_OPEN = null;
-      bg.remove();
-      return;
-    }
-    const b = e.target.closest("button, [data-gototab]");
-    if (!b || b.disabled) return;
-    const d = b.dataset;
-    if (d.gototab) { goToTab(d.gototab); return; }
-    if (d.rmwith != null) { BUDGET_RM_WITH = d.rmwith === "1"; redraw(); return; }
-    if (b.hasAttribute("data-rmfold")) { const k = "top:roadmap-goals"; BAR_SHOW_ALL[k] = BAR_SHOW_ALL[k] === false; saveBarHidden(); redraw(); return; }
-    if (b.hasAttribute("data-rmreorder")) { BUDGET_SHEET = "goals"; BUDGET_GOALS_OPEN = true; BUDGET_GOAL_BY_OPEN = null; redraw(); return; }
-    if (d.rmgoal || d.rmweek) BUDGET_GOAL_BY_OPEN = null;
-    if (b.hasAttribute("data-rmgall")) { RM_GOALS_ALL = !RM_GOALS_ALL; redraw(); return; }
-    if (b.hasAttribute("data-rmbuyall")) { RM_BUY_ALL = !RM_BUY_ALL; redraw(); return; }
-    if (b.hasAttribute("data-rmwall")) { RM_WEEKS_ALL = !RM_WEEKS_ALL; redraw(); return; }
-    if (d.rmgoal) { RM_SHEET = "g:" + d.rmgoal; redraw(); return; }
-    if (d.rmweek) { RM_SHEET = "w:" + d.rmweek; redraw(); return; }
-    if (d.rmmove) {
-      // The same saved order Budgets' drag writes, with this goal first.
-      const ids = [...wrap.querySelectorAll(".rmr-top [data-rmgoal]")].map((x) => x.dataset.rmgoal);
-      const all = (RM_DATA && RM_DATA.goalIds) || ids;
-      BUDGET_GOALS.order = [d.rmmove, ...all.filter((x) => x !== d.rmmove)];
-      saveBudgetGoals(); redraw(); return;
-    }
-    const R = RM_DATA;
-    const addPur = (list) => { PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(list); savePackPurchases(); };
-    const newId = (k) => "p" + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 6);
-    const purOf = (r, i, k, count, date, status) => {
-      const tb = R.tableOf(r), l = packLinkFor(tb.id), plain = !l.option && !(l.pickCols > 0) && !l.colOptions;
-      return { id: newId(i + "_" + k), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count, date, status, plan: R.tag,
-        ...(plain ? {} : { choice: { name: purPackName(r.title, PACK_TABLES_CACHE || []), label: r.label, price: r.price, gives: r.gives } }) };
-    };
-    // Buy this week: ✓ = bought today (My Purchases → Bought); ✓ again undoes a tick made here.
-    if (d.rmbuy != null && R) {
-      const i = Number(d.rmbuy), r = R.plan.rows[i], x = R.wkRows(0).find((y) => y.i === i);
-      if (!r || !x || !R.canBuy(r)) return;
-      // Only what's on sale up to today (a daily pack: today's one; the later days stay in the plan).
-      const now = x.sl.filter((s) => s.off <= 0).reduce((a, s) => a + s.count, 0) || x.sl[0].count;
-      addPur([{ ...purOf(r, i, 0, now, R.dayKey(0), "bought"), via: "roadmap" }]);
-      toast(t("rmr_marked_bought"));
-      redraw(); return;
-    }
-    if (d.rmpb) {
-      const today = packDayKey(packStartOfToday());
-      PACK_PURCHASES.list = PACK_PURCHASES.list.map((p) => (p.id === d.rmpb ? { ...p, status: "bought", date: p.date > today ? today : p.date } : p));
-      savePackPurchases(); redraw(); return;
-    }
-    if (d.rmub) { PACK_PURCHASES.list = PACK_PURCHASES.list.filter((p) => !(p.id === d.rmub && p.via === "roadmap")); savePackPurchases(); redraw(); return; }
-    // A week's sheet: every pack of that week as "will buy" on its dates (like My Purchases).
-    if (d.rmwillbuy != null && R) {
-      const adds = [];
-      R.wkRows(Number(d.rmwillbuy)).filter((x) => R.canBuy(x.r)).forEach((x) => x.sl.forEach((s, k) => adds.push(purOf(x.r, x.i, k, s.count, R.dayKey(Math.max(0, s.off)), "planned"))));
-      if (!adds.length) return;
-      addPur(adds);
-      RM_SHEET = null;
-      toast(t("pur_added_dates").replace("{n}", adds.length));
-      redraw();
-    }
-  };
-}
-function rmEmptyHtml() { return `<div class="panel"><div class="empty"><div class="meta">${esc(t("rm_empty"))}</div></div></div>`; }
 
 // Wires horizontal drag/swipe detection to `el` using the Pointer Events API,
 // which unifies touch, mouse, and pen into one event model. Calls onSwipe(-1)
@@ -29666,7 +29308,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=6ec4dc7f8a";
+      s.src = "admin.min.js?v=da139423fe";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
