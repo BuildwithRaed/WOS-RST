@@ -3888,7 +3888,7 @@ function holdPageHeight(on) {
 }
 // Scroll boxes / sideways rows inside `root` (matched by class and order) keep
 // their scroll across `fn` (which rebuilds them).
-const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap, .b3-stops";
+const KEEP_BOX_SEL = ".pur-scroll, .pur-wk-chips, .pur-wbs, .pur-sug-list, .pur-t-wrap, .pc-chips, .pc-scroll, .adm-scroll, .adm-chips, .adm-chips-row, .plx-stat-tabs, .sa-chips, .pk-cat-row, .mp-wrap, .modal-box, .pk-ed-scroll, .pk-tbl-wrap, .b3-stops, .gbp-l";
 // saveBoxScroll(root) notes them now and returns a function that puts them
 // back (in `root`, or in the box that replaced it).
 function saveBoxScroll(root) {
