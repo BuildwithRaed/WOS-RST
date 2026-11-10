@@ -3228,7 +3228,6 @@ const T = {
   cando_short: { en: "Can do" },
   cando_at_target: { en: "All at target" },
   cando_nothing: { en: "Nothing yet" },
-<<<<<<< HEAD
   cdp_desc: { en: "Each page uses your whole Backpack. Doing one page uses items another page counts on." },
   cdp_pages_up: { en: "Pages that can go up" },
   cdp_of: { en: "{n} of {m}" },
@@ -3247,10 +3246,8 @@ const T = {
   cdp_details: { en: "Details" },
   cdp_fold: { en: "Fold" },
   cdp_trades_used: { en: "Trades used:" },
-=======
   exp_cd_now: { en: "{n} now" },
   exp_cd_short: { en: "{item} short" },
->>>>>>> origin/ccr-41bc4d90-fokvur-expcando
   cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
   cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
   cando_more: { en: "+{n} more" },
@@ -27835,11 +27832,8 @@ async function renderExpertsPage() {
       });
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
-<<<<<<< HEAD
-    canDoSet("experts", plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts", { pic: (tr) => tr.img || "", have, allTracks: tracks });
-=======
     // Levels and skills both count (a skill the Backpack can raise is "Can do now" too).
-    canDoSet("experts", plan, tracks, "rch_u_experts", { first: true, pic: (tr) => tr.img || "" });
+    canDoSet("experts", plan, tracks, "rch_u_experts", { first: true, pic: (tr) => tr.img || "", have, allTracks: tracks });
     // C1 chips on the card: the level / skill level the Backpack reaches now, or what stops it.
     gridBox.querySelectorAll("[data-expcd]").forEach((el) => {
       const tr = tracks.find((x) => x.id === el.dataset.expcd);
@@ -27848,7 +27842,6 @@ async function renderExpertsPage() {
       if (r > tr.from) { el.className = "exk-cd ok"; el.innerHTML = `&#10003; ${esc(t("exp_cd_now").replace("{n}", lab(r)))}`; }
       else { el.className = "exk-cd short"; el.textContent = t("exp_cd_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"); }
     });
->>>>>>> origin/ccr-41bc4d90-fokvur-expcando
   }
   REACH_HOOKS.experts = fillExpertsReach;
   function levelOpts(max, selected, rel = max) {
