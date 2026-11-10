@@ -23046,14 +23046,14 @@ function shiningWhenText() {
   return [base, run ? t("sh_on_now") : "", nx ? t("sh_next").replace("{date}", fmt(nx)) : ""].filter(Boolean).join(" \u00b7 ");
 }
 // Short form for the Skin Gallery row: "on now" when an event runs, else "next Dec 12" ("" = no date).
-function shiningNextText() {
+function shiningNextText(bare) {
   const sc = islShiningStarts(3), dur = Math.max(1, Number(ISL_RULES.shiningDays) || 5);
   if (!sc.known) return "";
   const today = packStartOfToday(), DAY = 86400000;
   if (sc.starts.some((d) => d <= today && d.getTime() + (dur - 1) * DAY >= today.getTime())) return t("sh_on_now");
   const nx = sc.starts.find((d) => d > today);
   if (!nx) return "";
-  try { return t("sh_next").replace("{date}", nx.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" })); } catch (e) { return ""; }
+  try { const ds = nx.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); return bare ? ds : t("sh_next").replace("{date}", ds); } catch (e) { return ""; }
 }
 // Budgets: { groups, rows: [{ name, img }], img, tomes }.
 async function shiningSkinsNeed() {
@@ -23175,14 +23175,15 @@ async function renderSkinGallery() {
     const box = document.getElementById("shSkins");
     if (!box) return;
     const rows = shRows(), per = shiningTomesPer(), need = rows.length * per;
-    // Layout S1b (owner, 9 Nov 2026): one gold-edged row; tap = pick sheet, price = Pack cost.
+    // One gold-edged row; tap = pick sheet, price = Pack cost. Nothing picked: a slim row.
     if (!rows.length) { box.innerHTML = `<div class="s1b slim" role="button" tabindex="0" data-shpick><span class="tx"><b>${esc(t("isl_sc_name"))} \u00b7 <em class="pk">${esc(t("sh_pick"))}</em></b></span><span class="ch" aria-hidden="true">&#8250;</span></div>`; shPackCard(); return; }
     const have = shTomeHave();
     const pic = (s) => `<span title="${esc(s.name)}">${s.image_url ? `<img class="sk" src="${esc(s.image_url)}" alt="" loading="lazy" />` : ""}<img class="tm" src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span>`;
     const stack = `<span class="stk">${rows.slice(0, 4).map(pic).join("")}${rows.length > 4 ? `<span class="more">+${rows.length - 4}</span>` : ""}</span>`;
-    const price = have >= need ? `<span class="pr ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="pr" data-shpc data-shprice>${shPriceLabel()}</button>`;
-    const when = shiningNextText();
-    box.innerHTML = `<div class="s1b" role="button" tabindex="0" data-shpick aria-label="${esc(t("sh_title"))}"><span class="tx"><b>${esc(t("isl_sc_name"))} \u00b7 ${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</b><small><em>${esc(t("sh_tomes").replace("{n}", need.toLocaleString()))}</em>${when ? ` \u00b7 ${esc(when)}` : ""}</small></span><span class="rt">${stack}${price}</span><span class="ch" aria-hidden="true">&#8250;</span></div>`;
+    const price = have >= need ? `<span class="shb ok">${esc(t("sh_have"))}</span>` : `<button type="button" class="shb" data-shpc data-shprice>${shPriceLabel()}</button>`;
+    const when = shiningNextText(true);
+    // Layout S1 (owner, 10 Nov 2026): picture stack left, "N skins · date" / "X Tomes", price right.
+    box.innerHTML = `<div class="s1" role="button" tabindex="0" data-shpick aria-label="${esc(t("sh_title"))}">${stack}<span class="tx"><b><span>${esc(t(rows.length === 1 ? "sh_n1" : "sh_n").replace("{n}", rows.length))}</span>${when ? `<span class="d">\u00b7 ${esc(when)}</span>` : ""}</b><em>${esc(t("sh_tomes").replace("{n}", need.toLocaleString()))}</em></span>${price}</div>`;
     shPackCard();
   }
   document.getElementById("shSkins").onclick = (e) => {
