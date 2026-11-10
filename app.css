@@ -4373,6 +4373,17 @@ input,select,textarea{
   .exp-nb b{ font-size:16px; font-weight:800; }
   .exp-nb b.bad{ color:var(--danger); } .exp-nb b.ok{ color:var(--good); }
   .exp-skl-list{ display:flex; flex-direction:column; }
+  .exp-skw{ border-top:1px solid var(--line); }
+  .exp-skw > .exp-skr{ border-top:0; }
+  .exp-skx{ display:flex; align-items:center; gap:8px; margin:-2px 0 10px; font-size:12px; color:var(--muted); }
+  .exp-skx img{ width:18px; height:18px; flex:0 0 18px; object-fit:contain; }
+  .exp-skx-b{ flex:1 1 auto; min-width:0; }
+  .exp-skx-b b{ color:var(--frost); font-weight:700; }
+  .exp-skx .bad{ color:var(--danger); font-weight:800; } .exp-skx .ok{ color:var(--good); font-weight:800; }
+  .exp-skx-e{ display:flex; align-items:center; gap:5px; flex:none; }
+  .exp-skx-e input{ width:74px; min-width:0; height:30px; min-height:30px; padding:3px 6px; font-size:12.5px; font-weight:700; text-align:center; border-radius:8px; }
+  .exp-skx-e input.has{ border-color:var(--ice); }
+  .exp-skx-e small{ font-size:11px; color:var(--muted); white-space:nowrap; }
   .exp-skr{ display:block; width:100%; padding:10px 0; border:0; border-top:1px solid var(--line); background:none; color:var(--frost); font:inherit; text-align:start; cursor:pointer; }
   .exp-skr-h{ display:flex; align-items:center; gap:8px; }
   .exp-skr-h b{ flex:1 1 auto; min-width:0; font-size:14px; }

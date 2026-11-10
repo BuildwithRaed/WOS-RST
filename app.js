@@ -2668,6 +2668,7 @@ const T = {
   rc_maxgen_desc: { en: "{gen} for all heroes when working out the max" },
   exp_tab_skills: { en: "Skills" },
   exp_n_to_go: { en: "{n} to go" },
+  exp_sk_left: { en: "left" },
   exp_lv_togo: { en: "{n} levels to go" },
   exp_at_target: { en: "At its target" },
   exp_at_max: { en: "Max level" },
@@ -27780,14 +27781,32 @@ async function renderExpertsPage() {
     e.skills.forEach((sk) => { const n = skillNeed(hero, sk, s.skills[sk]); bookNeed += n.book; expNeedSum += n.expNeed; });
     const booksHave = Number(invSaved["Books of Knowledge"]) || 0, timeH = expNeedSum / 3600, timeHaveH = expertSpeedupOwnedFrom(invSaved) / 60;
     const dhm = (h) => (h >= 240 ? `${Math.round(h / 24).toLocaleString()}d` : formatTimeDHM(h));
+    // Books left per skill: the Backpack's Books go to the skills in list order,
+    // so the "left" amounts add up to what the Books box above is short.
+    let booksPool = booksHave;
+    const skLeft = {};
+    e.skills.forEach((sk) => { const st = s.skills[sk]; if (!((Number(st.desired) || 0) > (Number(st.current) || 0))) return; const b = skillNeed(hero, sk, st).book; skLeft[sk] = Math.max(0, b - booksPool); booksPool = Math.max(0, booksPool - b); });
+    // One line under an unfinished skill: Books need · left, and the EXP already in it
+    // (same box / save as the skill window's "EXP you have") out of the next level's EXP.
+    const skillLine = (sk, st, cur) => {
+      const book = skillNeed(hero, sk, st).book, left = skLeft[sk] || 0, v = skillExpHave(st);
+      // EXP of the next level that costs any (Lv 1 is the free unlock).
+      const nextRow = (SKILL_CACHE[`${hero}|${sk}`] || []).filter((r) => r.level > cur && (Number(r.exp_cost) || 0) > 0).sort((a, b) => a.level - b.level)[0];
+      const nextExp = nextRow ? Number(nextRow.exp_cost) || 0 : 0;
+      return `<div class="exp-skx">
+          <img src="${esc(EXPERT_INVENTORY_ICONS["Books of Knowledge"])}" alt="" title="${esc(t("resource_books"))}" />
+          <span class="exp-skx-b"><b>${bidiNum(Math.round(book).toLocaleString())}</b> · ${left > 0 ? `${esc(t("exp_sk_left"))} <span class="bad">${bidiNum(Math.round(left).toLocaleString())}</span>` : `<span class="ok">&#10003;</span>`}</span>
+          <span class="exp-skx-e"><small>EXP</small><input type="number" min="0" step="1" inputmode="numeric" class="keep-w${v > 0 ? " has" : ""}" data-expskillexp="${esc(hero)}|${esc(sk)}" value="${v || ""}" placeholder="0" aria-label="${esc(t("skill_exp_have"))} · ${esc(dataName(sk))}" /><small>${bidiNum("/ " + Math.round(nextExp).toLocaleString())}</small></span>
+        </div>`;
+    };
     const skillRow = (sk) => {
       const st = s.skills[sk], max = skillMaxLevel(hero, sk), cur = Number(st.current) || 0, des = Number(st.desired) || 0;
       const go = des > cur, done = !go && cur >= max;
       const pct = (v) => (max > 0 ? Math.min(100, (v / max) * 100) : 0);
-      return `<button type="button" class="exp-skr" data-expskopen="${esc(sk)}">
+      return `<div class="exp-skw"><button type="button" class="exp-skr" data-expskopen="${esc(sk)}">
           <span class="exp-skr-h"><b>${esc(dataName(sk))}</b>${go ? `<span class="exp-chip">${cur} &rarr; <i>${des}</i></span>` : done ? `<span class="exp-chip ok">${esc(t("charm_lv"))} ${cur} · &#10003; ${esc(t("max_button"))}</span>` : `<span class="exp-chip">${esc(t("charm_lv"))} ${cur}</span>`}<span class="exp-gt" aria-hidden="true">&#8250;</span></span>
           ${go ? `<span class="exp-skr-b"><span class="exp-bar"><i style="width:${pct(cur)}%"></i><b style="width:${pct(des) - pct(cur)}%"></b></span><span class="exp-rst" data-rchst="exps|${esc(hero)}|${esc(sk)}"></span></span>` : ""}
-        </button>`;
+        </button>${go ? skillLine(sk, st, cur) : ""}</div>`;
     };
     const skillsTab = `
         <div class="exp-nbs">
