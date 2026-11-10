@@ -22144,7 +22144,11 @@ async function renderBudgetsPage(opts = {}) {
       if (BUDGET_PLAN_TRACK !== track || BUDGET_PLAN_RUNNING !== planKey) return;
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
       BUDGET_DATA.combined = { ...part, partKey: planKey };
-      if (budTab()) partRedraw();
+      // (Not while a row is being dragged, or a box is being typed in / picked from:
+      // a redraw would cut that short. The next part or the finished plan shows it.)
+      const ae = document.activeElement;
+      const busy = !!document.querySelector(".ds-lift") || (!!ae && content.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.type !== "checkbox");
+      if (budTab() && !busy) partRedraw();
     };
     budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track, onPart }).then((real) => {
       if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
