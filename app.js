@@ -20621,7 +20621,7 @@ function goalMiniTotals(page, level) {
 // levels between now and the page's target and what each level takes.
 // Pages Budgets works out live (Chief Gear, Charms, Heroes Gears, hero shards) list them here; the others save them with their
 // needs (setPageUpgrades → budget_needs[calcKey].ups) when opened.
-const GOAL_UP_SAVED = ["t12_research", "t11_helios", "research_center", "pets", "pets_refine", "experts", "experts_research"];
+const GOAL_UP_SAVED = ["t12_research", "t11_helios", "research_center", "pets", "pets_refine", "experts", "experts_research", "islands"];
 const PAGE_UPS = {};
 // list: [{ k, n, img, a (now), lv: [{ label, totals, lk }], w (lock text) }].
 // Long ladders keep 30 levels (evenly, the target always); totals are stored
@@ -20695,6 +20695,10 @@ function goalUpgrades(page) {
         add({ key: `${id}|w`, name: `${nm} · ${t("ht_widgets")}`, img, face: true, now: String(r.wLevel), ladder: Array.from({ length: widgetMaxLevel() + 1 }, (_, i) => String(i)), nowAt: r.wLevel, levels: w });
       }
     });
+  } else if (page === "shining_skins") {
+    // Each picked Shining City skin not owned yet: one step, its Glorious Tomes.
+    const per = shiningTomesPer(), own = t("cda_owned");
+    (SHINING_GOAL_ROWS || []).forEach((r) => add({ key: r.id, name: r.name, img: r.img, now: "\u2014", ladder: ["\u2014", own], nowAt: 0, levels: [{ label: own, totals: { "Glorious Tome": per } }] }));
   } else {
     const sv = BUDGET_NEEDS_SNAPSHOT && BUDGET_NEEDS_SNAPSHOT[page], ups = sv && sv.ups;
     if (ups && Array.isArray(ups.u)) {
@@ -23553,6 +23557,8 @@ function shiningNextText(bare) {
   if (!nx) return "";
   try { const ds = nx.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); return bare ? ds : t("sh_next").replace("{date}", ds); } catch (e) { return ""; }
 }
+// The picked skins not owned yet, as the last Budgets read found them (Order of goals: one goal each).
+let SHINING_GOAL_ROWS = null;
 // Budgets: { groups, rows: [{ name, img }], img, tomes }.
 async function shiningSkinsNeed() {
   const [saved, skins] = await Promise.all([
@@ -23562,6 +23568,7 @@ async function shiningSkinsNeed() {
   ]);
   const rows = shiningPicked(shiningSkinsListOf(saved), skins || []).filter((s) => !s.owned);
   const tomes = rows.length * shiningTomesPer();
+  SHINING_GOAL_ROWS = rows.map((s) => ({ id: String(s.id), name: dataName(s.name), img: s.image_url || "" }));
   return { groups: [{ label: null, totals: tomes ? { "Glorious Tome": tomes } : {} }], rows: rows.map((s) => ({ name: s.name, img: s.image_url || "" })), img: rows[0] ? rows[0].image_url || "" : "", tomes };
 }
 const shiningRowHtml = (r, attr) => `<${attr ? `button type="button" ${attr}` : "div"} class="shr"><span class="p">${r.img ? `<img class="sk" src="${esc(r.img)}" alt="" loading="lazy" />` : ""}<img class="tm" src="icons/glorious-tome.png" alt="" aria-hidden="true" /></span><span class="tx"><b>${esc(r.name)}</b><em>${esc(t("sh_tomes").replace("{n}", shiningTomesPer().toLocaleString()))}</em></span>${attr ? `<span class="ch" aria-hidden="true">&#8250;</span>` : ""}</${attr ? "button" : "div"}>`;
@@ -25127,6 +25134,23 @@ async function renderIslandGallery() {
     drawPlan();
     // Budgets' Islands page: the Marks every Mark-shop building still needs (only saved when it changed).
     const mkAll = markNeedAll(), tmAll = sharedPlan().tomes || 0;
+    // Goals per upgrade: each Mark / Shining City shop building with copies to buy, one
+    // level at a time; the free copies come first, the bought ones (Marks, then Tomes) last.
+    {
+      const SPg = sharedPlan(), tp = Number(ISL_RULES.tomePrice) || 600;
+      setPageUpgrades("islands", islands.filter((s) => usesMarks(s) || usesTomes(s)).map((s) => {
+        const mkN = SPg.mk.get(s.id) || 0, tmN = SPg.tm.get(s.id) || 0, now = lvOf(s), to = tgtOf(s);
+        if (to <= now || !(mkN + tmN)) return null;
+        const src = srcOf(s), lv1 = !(src.kind === "shop" && !src.price), store = storeOf(s), mp = src.markPrice || 0;
+        const free = Math.max(0, copiesLeft(s) - mkN - tmN), lv = [];
+        for (let L = now + 1; L <= to; L++) {
+          const b = Math.max(0, Math.max(0, islCopiesBetween(now, L, src.each, lv1) - store) - free);
+          const m = Math.min(b, mkN), tm = Math.min(Math.max(0, b - mkN), tmN);
+          lv.push({ label: String(L), totals: { ...(m ? { "Mark of Revival": m * mp } : {}), ...(tm ? { "Glorious Tome": tm * tp } : {}) } });
+        }
+        return { k: String(s.id), n: s.name, img: s.image_url || "", a: String(now), lv };
+      }).filter(Boolean));
+    }
     recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}) } }]);
     islMarkCard();
     galMenuToTools("island", "islandCatSwitcher");
