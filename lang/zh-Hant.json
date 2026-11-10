@@ -2212,6 +2212,8 @@
 "t:cando_short":"現在可做",
 "t:cando_at_target":"全部已達目標",
 "t:cando_nothing":"暫無",
+"t:exp_cd_now":"現在 {n}",
+"t:exp_cd_short":"{item}不足",
 "t:cando_lab_week":"+{n} 精煉火晶（本週實驗室，剩餘 {m} 次精煉）",
 "t:cando_sub":"背包現在能在目標範圍內升級的內容。",
 "t:cando_more":"+ 另外 {n} 個",

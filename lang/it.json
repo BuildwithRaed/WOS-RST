@@ -2213,6 +2213,8 @@
 "t:cando_short":"Fattibile",
 "t:cando_at_target":"Tutto all'obiettivo",
 "t:cando_nothing":"Ancora niente",
+"t:exp_cd_now":"{n} ora",
+"t:exp_cd_short":"{item} mancante",
 "t:cando_lab_week":"+{n} FC raffinato dal laboratorio di questa settimana ({m} raffinazioni rimaste)",
 "t:cando_sub":"Cosa può migliorare il tuo Zaino adesso, dentro i tuoi obiettivi.",
 "t:cando_more":"+ altri {n}",

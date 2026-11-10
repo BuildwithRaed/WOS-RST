@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 87; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 88; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -3227,6 +3227,8 @@ const T = {
   cando_short: { en: "Can do" },
   cando_at_target: { en: "All at target" },
   cando_nothing: { en: "Nothing yet" },
+  exp_cd_now: { en: "{n} now" },
+  exp_cd_short: { en: "{item} short" },
   cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
   cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
   cando_more: { en: "+{n} more" },
@@ -27678,13 +27680,22 @@ async function renderExpertsPage() {
       e.skills.forEach((sk) => {
         const st = hs.skills[sk], sr = SKILL_CACHE[`${hero}|${sk}`] || [], bankedExp = skillExpHave(st);
         const cumS = (lv) => { const c = skillCost(hero, sk, st.current, lv); return { b: c.book, t: Math.max(0, c.exp - bankedExp) / 60 }; };
-        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
+        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, name: dataName(sk), img: e.img, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
           cost: (lv) => { const a = cumS(lv), b = cumS(lv - 1); return { [BOOKS]: a.b - b.b, [TIME]: a.t - b.t }; },
           gain: () => ({}) });
       });
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
-    canDoSet("experts", plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts", { pic: (tr) => tr.img || "" });
+    // Levels and skills both count (a skill the Backpack can raise is "Can do now" too).
+    canDoSet("experts", plan, tracks, "rch_u_experts", { first: true, pic: (tr) => tr.img || "" });
+    // C1 chips on the card: the level / skill level the Backpack reaches now, or what stops it.
+    gridBox.querySelectorAll("[data-expcd]").forEach((el) => {
+      const tr = tracks.find((x) => x.id === el.dataset.expcd);
+      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; el.className = "exk-cd"; return; }
+      const r = plan.lv[tr.id] || tr.from, lab = tr.lab || String;
+      if (r > tr.from) { el.className = "exk-cd ok"; el.innerHTML = `&#10003; ${esc(t("exp_cd_now").replace("{n}", lab(r)))}`; }
+      else { el.className = "exk-cd short"; el.textContent = t("exp_cd_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"); }
+    });
   }
   REACH_HOOKS.experts = fillExpertsReach;
   function levelOpts(max, selected, rel = max) {
@@ -27744,8 +27755,10 @@ async function renderExpertsPage() {
     const lvFold = lvShow && !EXP_MAX_OPEN[`${hero}|level`], skFold = skShow && !EXP_MAX_OPEN[`${hero}|skills`];
     const m3Line = (key, main, sub) => `<button type="button" class="exk-m3${EXP_MAX_OPEN[key] ? " open" : ""}" data-expmaxopen="${esc(key)}" aria-expanded="${EXP_MAX_OPEN[key] ? "true" : "false"}"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${main}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="exk-m3-go" aria-hidden="true">&rsaquo;</span></button>`;
     const noNeed = affNeed <= 0 && sigil <= 0;
+    // C1 (owner, 10 Nov 2026): "✓ 13 now" / "Books short" chips from the Can do now plan (owner only, filled by fillExpertsReach).
+    const cdOn = IS_OWNER;
     const levelHtml = lvFold ? "" : `<div class="exk-r exk-lvr">
-        <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
+        <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${cdOn && di > ci ? `<span class="exk-cd" data-expcd="exp|${esc(hero)}"></span>` : ""}${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
         ${noNeed ? (lvShow ? "" : `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>`) : `<div class="exk-g2">
           ${needBox("aff", EXPERT_INVENTORY_ICONS.Affinity, t("resource_affinity"), affNeed, affShort)}
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
@@ -27777,6 +27790,7 @@ async function renderExpertsPage() {
       } else line = `<div class="exk-m">${esc(t("exp_no_target"))}</div>`;
       return `<div class="exk-r">
           <div class="exk-l1"><div class="exk-nm"><b>${esc(dataName(sk))}</b>${stat}</div>${vals(String(cur), curSel, String(des), `<select data-expskilldes="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("target_label"))}">${levelOpts(pick, Math.min(des, pick), max)}</select>`)}</div>
+          ${cdOn && des > cur ? `<div class="exk-cdr"><span class="exk-cd" data-expcd="exps|${esc(hero)}|${esc(sk)}"></span></div>` : ""}
           ${line}
         </div>`;
     };
