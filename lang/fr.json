@@ -2552,5 +2552,14 @@
 "t:sh_save":"Enregistrer",
 "t:sh_cancel":"Annuler",
 "t:sh_skins_n":"Skins ({n})",
-"t:sh_none":"Aucun skin choisi · touchez « + choisir des skins » sur la page Galerie de skins"
+"t:sh_none":"Aucun skin choisi · touchez « + choisir des skins » sur la page Galerie de skins",
+"t:exp_level_word":"Niveau",
+"t:exp_n_left":"{n} restants",
+"t:exp_learn_xp":"EXP d'apprentissage",
+"t:exp_no_target":"Aucun objectif",
+"t:exp_done_word":"fait",
+"t:exp_lv_max":"Niveau {n} · max",
+"t:exp_lv_max_short":"Niv. {n} · Max",
+"t:exp_nothing_needed":"Affinité et Sceaux : rien à prévoir",
+"t:exp_all_skills_max":"Toutes les compétences au max"
 }

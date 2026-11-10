@@ -2552,5 +2552,14 @@
 "t:sh_save":"Guardar",
 "t:sh_cancel":"Cancelar",
 "t:sh_skins_n":"Aspectos ({n})",
-"t:sh_none":"Ningún aspecto elegido · toca “+ elegir aspectos” en la Galería de aspectos"
+"t:sh_none":"Ningún aspecto elegido · toca “+ elegir aspectos” en la Galería de aspectos",
+"t:exp_level_word":"Nivel",
+"t:exp_n_left":"faltan {n}",
+"t:exp_learn_xp":"EXP de aprendizaje",
+"t:exp_no_target":"Sin objetivo",
+"t:exp_done_word":"hecho",
+"t:exp_lv_max":"Nivel {n} · máx.",
+"t:exp_lv_max_short":"Nv. {n} · Máx.",
+"t:exp_nothing_needed":"Afinidad y Sellos: nada necesario",
+"t:exp_all_skills_max":"Todas las habilidades al máx."
 }

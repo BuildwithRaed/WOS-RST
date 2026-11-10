@@ -2551,5 +2551,14 @@
 "t:sh_save":"Lưu",
 "t:sh_cancel":"Hủy",
 "t:sh_skins_n":"Giao diện ({n})",
-"t:sh_none":"Chưa chọn giao diện · chạm “+ chọn giao diện” ở trang Bộ sưu tập giao diện"
+"t:sh_none":"Chưa chọn giao diện · chạm “+ chọn giao diện” ở trang Bộ sưu tập giao diện",
+"t:exp_level_word":"Cấp",
+"t:exp_n_left":"còn {n}",
+"t:exp_learn_xp":"EXP học tập",
+"t:exp_no_target":"Chưa đặt mục tiêu",
+"t:exp_done_word":"xong",
+"t:exp_lv_max":"Cấp {n} · tối đa",
+"t:exp_lv_max_short":"Cấp {n} · Tối đa",
+"t:exp_nothing_needed":"Thân thiết và Ấn: không cần gì",
+"t:exp_all_skills_max":"Mọi kỹ năng tối đa"
 }

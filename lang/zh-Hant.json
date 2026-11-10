@@ -2551,5 +2551,14 @@
 "t:sh_save":"儲存",
 "t:sh_cancel":"取消",
 "t:sh_skins_n":"造型（{n}）",
-"t:sh_none":"未選擇造型 · 在造型圖鑑頁面點擊「+ 選擇造型」"
+"t:sh_none":"未選擇造型 · 在造型圖鑑頁面點擊「+ 選擇造型」",
+"t:exp_level_word":"等級",
+"t:exp_n_left":"還差 {n}",
+"t:exp_learn_xp":"學習經驗",
+"t:exp_no_target":"未設目標",
+"t:exp_done_word":"完成",
+"t:exp_lv_max":"等級 {n} · 最大",
+"t:exp_lv_max_short":"Lv {n} · 最大",
+"t:exp_nothing_needed":"好感度和徽記：無需",
+"t:exp_all_skills_max":"全部技能最大"
 }

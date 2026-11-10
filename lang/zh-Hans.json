@@ -2552,5 +2552,14 @@
 "t:sh_save":"保存",
 "t:sh_cancel":"取消",
 "t:sh_skins_n":"皮肤（{n}）",
-"t:sh_none":"未选择皮肤 · 在皮肤图鉴页面点击“+ 选择皮肤”"
+"t:sh_none":"未选择皮肤 · 在皮肤图鉴页面点击“+ 选择皮肤”",
+"t:exp_level_word":"等级",
+"t:exp_n_left":"还差 {n}",
+"t:exp_learn_xp":"学习经验",
+"t:exp_no_target":"未设目标",
+"t:exp_done_word":"完成",
+"t:exp_lv_max":"等级 {n} · 满级",
+"t:exp_lv_max_short":"Lv {n} · 满级",
+"t:exp_nothing_needed":"好感度和徽记：无需",
+"t:exp_all_skills_max":"全部技能满级"
 }

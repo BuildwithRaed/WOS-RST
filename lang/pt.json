@@ -2551,5 +2551,14 @@
 "t:sh_save":"Salvar",
 "t:sh_cancel":"Cancelar",
 "t:sh_skins_n":"Visuais ({n})",
-"t:sh_none":"Nenhum visual escolhido · toque em “+ escolher visuais” na Galeria de visuais"
+"t:sh_none":"Nenhum visual escolhido · toque em “+ escolher visuais” na Galeria de visuais",
+"t:exp_level_word":"Nível",
+"t:exp_n_left":"faltam {n}",
+"t:exp_learn_xp":"EXP de aprendizado",
+"t:exp_no_target":"Sem meta",
+"t:exp_done_word":"feito",
+"t:exp_lv_max":"Nível {n} · máx.",
+"t:exp_lv_max_short":"Nv. {n} · Máx.",
+"t:exp_nothing_needed":"Afinidade e Sigilos: nada necessário",
+"t:exp_all_skills_max":"Todas as habilidades no máx."
 }

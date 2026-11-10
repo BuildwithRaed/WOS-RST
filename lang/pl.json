@@ -2552,5 +2552,14 @@
 "t:sh_save":"Zapisz",
 "t:sh_cancel":"Anuluj",
 "t:sh_skins_n":"Skórki ({n})",
-"t:sh_none":"Nie wybrano skórek · stuknij „+ wybierz skórki” na stronie Galeria skórek"
+"t:sh_none":"Nie wybrano skórek · stuknij „+ wybierz skórki” na stronie Galeria skórek",
+"t:exp_level_word":"Poziom",
+"t:exp_n_left":"brakuje {n}",
+"t:exp_learn_xp":"PD nauki",
+"t:exp_no_target":"Brak celu",
+"t:exp_done_word":"gotowe",
+"t:exp_lv_max":"Poziom {n} · maks.",
+"t:exp_lv_max_short":"Poz. {n} · Maks.",
+"t:exp_nothing_needed":"Sympatia i Pieczęcie: nic nie trzeba",
+"t:exp_all_skills_max":"Wszystkie umiejętności maks."
 }

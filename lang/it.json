@@ -2552,5 +2552,14 @@
 "t:sh_save":"Salva",
 "t:sh_cancel":"Annulla",
 "t:sh_skins_n":"Skin ({n})",
-"t:sh_none":"Nessuna skin scelta · tocca “+ scegli skin” nella pagina Galleria skin"
+"t:sh_none":"Nessuna skin scelta · tocca “+ scegli skin” nella pagina Galleria skin",
+"t:exp_level_word":"Livello",
+"t:exp_n_left":"mancano {n}",
+"t:exp_learn_xp":"EXP di apprendimento",
+"t:exp_no_target":"Nessun obiettivo",
+"t:exp_done_word":"fatto",
+"t:exp_lv_max":"Livello {n} · max",
+"t:exp_lv_max_short":"Liv. {n} · Max",
+"t:exp_nothing_needed":"Affinità e Sigilli: niente da fare",
+"t:exp_all_skills_max":"Tutte le abilità al max"
 }

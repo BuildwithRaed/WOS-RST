@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 86; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 87; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -27746,7 +27746,7 @@ async function renderExpertsPage() {
     const noNeed = affNeed <= 0 && sigil <= 0;
     const levelHtml = lvFold ? "" : `<div class="exk-r exk-lvr">
         <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
-        ${noNeed ? `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>` : `<div class="exk-g2">
+        ${noNeed ? (lvShow ? "" : `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>`) : `<div class="exk-g2">
           ${needBox("aff", EXPERT_INVENTORY_ICONS.Affinity, t("resource_affinity"), affNeed, affShort)}
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
         </div>`}

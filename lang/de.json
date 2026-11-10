@@ -2552,5 +2552,14 @@
 "t:sh_save":"Speichern",
 "t:sh_cancel":"Abbrechen",
 "t:sh_skins_n":"Skins ({n})",
-"t:sh_none":"Keine Skins gewählt · tippe „+ Skins wählen“ auf der Skin-Galerie-Seite"
+"t:sh_none":"Keine Skins gewählt · tippe „+ Skins wählen“ auf der Skin-Galerie-Seite",
+"t:exp_level_word":"Stufe",
+"t:exp_n_left":"noch {n}",
+"t:exp_learn_xp":"Lern-EP",
+"t:exp_no_target":"Kein Ziel gesetzt",
+"t:exp_done_word":"erledigt",
+"t:exp_lv_max":"Stufe {n} · max",
+"t:exp_lv_max_short":"Lv. {n} · Max",
+"t:exp_nothing_needed":"Affinität und Siegel: nichts nötig",
+"t:exp_all_skills_max":"Alle Fähigkeiten max"
 }

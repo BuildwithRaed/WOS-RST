@@ -2551,5 +2551,14 @@
 "t:sh_save":"Simpan",
 "t:sh_cancel":"Batal",
 "t:sh_skins_n":"Skin ({n})",
-"t:sh_none":"Belum ada skin dipilih · ketuk “+ pilih skin” di halaman Galeri Skin"
+"t:sh_none":"Belum ada skin dipilih · ketuk “+ pilih skin” di halaman Galeri Skin",
+"t:exp_level_word":"Level",
+"t:exp_n_left":"kurang {n}",
+"t:exp_learn_xp":"EXP Belajar",
+"t:exp_no_target":"Belum ada target",
+"t:exp_done_word":"selesai",
+"t:exp_lv_max":"Level {n} · maks",
+"t:exp_lv_max_short":"Lv. {n} · Maks",
+"t:exp_nothing_needed":"Afinitas dan Sigil: tidak perlu apa-apa",
+"t:exp_all_skills_max":"Semua skill maks"
 }

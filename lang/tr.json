@@ -2551,5 +2551,14 @@
 "t:sh_save":"Kaydet",
 "t:sh_cancel":"İptal",
 "t:sh_skins_n":"Görünümler ({n})",
-"t:sh_none":"Görünüm seçilmedi · Görünüm Galerisi sayfasında “+ görünüm seç”e dokun"
+"t:sh_none":"Görünüm seçilmedi · Görünüm Galerisi sayfasında “+ görünüm seç”e dokun",
+"t:exp_level_word":"Seviye",
+"t:exp_n_left":"{n} kaldı",
+"t:exp_learn_xp":"Öğrenme TP",
+"t:exp_no_target":"Hedef yok",
+"t:exp_done_word":"tamam",
+"t:exp_lv_max":"Seviye {n} · maks",
+"t:exp_lv_max_short":"Sv. {n} · Maks",
+"t:exp_nothing_needed":"Yakınlık ve Mühürler: gerek yok",
+"t:exp_all_skills_max":"Tüm beceriler maks"
 }
