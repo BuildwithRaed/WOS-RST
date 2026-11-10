@@ -8087,6 +8087,12 @@ function purShortName(name) {
     .replace(/^Exclusive Gear Pack(?= ·|$)/i, "Exclusive Weapon");
   return n;
 }
+// Budgets plan lines: the pack's own name only (no category, no option list); full title in the tooltip.
+function budPackNameHtml(title) {
+  const full = String(title || "");
+  const n = purShortName(purPackName(full, PACK_TABLES_CACHE)) || full;
+  return n === full ? esc(full) : `<span title="${esc(full)}">${esc(n)}</span>`;
+}
 function purPackName(title, tables) {
   const cats = [...new Set((tables || []).map((tb) => String(packLinkFor(tb.id).group || "").trim()).filter(Boolean))];
   const c = cats.find((g) => String(title || "").startsWith(g + " · "));
@@ -16618,7 +16624,7 @@ function packPlanRowsHtml(plan, resetText) {
   return byPack.map((g) => `
     <div style="padding:6px 0; border-top:1px solid var(--line);">
       <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-        <span style="font-size:11.5px; font-weight:700;">${esc(g.title)}</span>
+        <span style="font-size:11.5px; font-weight:700;">${budPackNameHtml(g.title)}</span>
         <span style="font-size:11px; color:var(--ice);">&times; ${qty(g.count)}</span>
         ${packStackInfo(g.reset) ? `<span class="meta" style="font-size:10px;">${esc(packStackText(g.reset))}${g.count > packStackInfo(g.reset).atOnce * g.perCycle ? ` · ${esc(t("pack_stack_later").replace("{n}", packStackInfo(g.reset).atOnce * g.perCycle))}` : ""}</span>` : typeof g.reset === "number" ? `<span class="meta" style="font-size:10px;">${esc(resetText(g.reset, g.resetDay))}${g.reset >= PACK_ONE_TIME_DAYS ? "" : ` · ${g.cycles} ${esc(t("pack_resets"))}`}</span>` : ""}
         <span style="margin-inline-start:auto; font-size:12px; font-weight:700;">${packFmtLocal(g.subtotal, g.currency, false, g.sample)}</span>
@@ -20522,7 +20528,7 @@ async function renderBudgetsPage(opts = {}) {
           <span class="meta" style="font-size:11px;">${esc(t("combined_share"))}</span>
         </div>
         ${sh.rows.length ? `<details style="margin-top:4px;"><summary class="meta" style="cursor:pointer; font-size:11px;">${esc(t("budgets_packs_detail"))} (${sh.rows.length})</summary>
-          ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${esc(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
+          ${sh.rows.map((r) => `<div style="display:flex; gap:6px; align-items:baseline; padding:3px 0; border-top:1px solid var(--line); font-size:11px;"><span style="color:var(--ice); min-width:34px; text-align:end;">${qty(r.count)}&times;</span><span style="min-width:0;"><b>${budPackNameHtml(r.title)}</b><br><span class="meta" style="font-size:10.5px;">${esc(r.label)}</span>${r.share < 0.995 ? ` <span class="meta" style="font-size:10px;">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</span>` : ""}</span><span style="margin-inline-start:auto; white-space:nowrap;">${packFmtLocal(packShareLocal(r), r.currency, false, r.price)}</span></div>`).join("")}</details>` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}`;
     }
     else if (inc && planPending) costHtml = workHtml("div", "small");
     else if (inc && combined.inc.includes(pg.calcKey)) costHtml = `<div class="meta" style="font-size:11px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`;

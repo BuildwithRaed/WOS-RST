@@ -70,7 +70,7 @@
      app.js can take more than 10 s, and Chrome closes an unused preconnect
      after 10 s, so the one above is often gone before the first request.
      (crossorigin = the way the site's requests to the database are made.) -->
-<link rel="preload" href="app.min.js?v=baa5664ad3" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
+<link rel="preload" href="app.min.js?v=9f94c09301" as="script" onload="var l=document.createElement('link');l.rel='preconnect';l.href='https://hzourauekkiorojrhpko.supabase.co';l.crossOrigin='anonymous';document.head.appendChild(l)" />
 <script>
 // Phones: text 2 px smaller and small boxes 4 px smaller. Later the same day the owner asked for
 // the text 2 px bigger again on every page but the Dashboard: the smaller text now
@@ -248,7 +248,9 @@
   }
   /* Right-to-left: an English pack name in a calendar bar or the pack window's
      title box is cut at its end (with "…"), not at its first letters. */
-  html[dir="rtl"] .pcg-bar .nm, html[dir="rtl"] .pcg-side, html[dir="rtl"] .pk-ed-bar input{ unicode-bidi:plaintext; }
+  html[dir="rtl"] .pcl-bb, html[dir="rtl"] .pk-ed-bar input{ unicode-bidi:plaintext; }
+  /* Calendar bars: a block box, so a long name ends in "…" (a flex box can't show it). */
+  .pcl-bb{ display:block; line-height:24px; }
   @media (max-width:700px){
     /* Tap targets at least 32 px (the 4 px phone trim left these at 24 - 29). */
     .g1-fold, .sa-btn, .btn.small, .btn.ghost, .t12x-maxall, .b3-a, .bp-chests, .pur-seg button, .rl-lnk, .t12x-step select, details > summary.meta{ min-height:32px !important; }
@@ -257,6 +259,7 @@
     .pks-i{ position:relative; }
     .pks-i::after{ content:""; position:absolute; inset:-9px; }
     .site-footer a{ display:inline-block; padding:8px 2px; }
+    .pcl-bb{ line-height:20px; }
     /* Dashboard: no text under 11 px (its own 2 px trim stopped at 10). */
     .dash-fit .qk-chip span, .dash-fit .sa-s, .dash-fit .sa-chip, .dash-fit .rc-mini-sh, .dash-fit .rc-mini-w, .dash-fit .sa-card .btn.small, .dash-fit .roster-pick .meta{ font-size:11px !important; }
   }
@@ -414,7 +417,7 @@
      vendor/ folder is used, so the site still opens. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
 <script>if (!window.supabase) document.write('<script src="vendor/supabase-js-2.117.3.js"><\/script>');</script>
-<script src="app.min.js?v=baa5664ad3"></script>
+<script src="app.min.js?v=9f94c09301"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "32f8c9acc17048f7941762223c2739e3"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
