@@ -16056,15 +16056,17 @@ function packCoveredBy(supply, need, ctx) {
 }
 // Earliest day everything can be covered, or null if it never can be.
 const PACK_EARLIEST_CACHE = new Map();
-function packEarliestDays(groups, need, calcKey) {
+// `hint` (optional) = a day the answer is likely at, e.g. the slowest page's own
+// earliest day in a combined plan: only where the search starts, never the answer.
+function packEarliestDays(groups, need, calcKey, hint) {
   const key = packPlanCacheKey(groups, need, "earliest", calcKey, false);
   if (PACK_EARLIEST_CACHE.has(key)) return PACK_EARLIEST_CACHE.get(key);
-  const v = packEarliestDaysCompute(groups, need, calcKey);
+  const v = packEarliestDaysCompute(groups, need, calcKey, hint);
   if (PACK_EARLIEST_CACHE.size > 200) PACK_EARLIEST_CACHE.clear();
   PACK_EARLIEST_CACHE.set(key, v);
   return v;
 }
-function packEarliestDaysCompute(groups, need, calcKey) {
+function packEarliestDaysCompute(groups, need, calcKey, hint) {
   const ctx = (d) => packTradeCtx(calcKey, d);
   // The supply check is an upper bound (a "choose one option" pack can't
   // give every option at once), so a day only counts when a real plan
@@ -16073,8 +16075,9 @@ function packEarliestDaysCompute(groups, need, calcKey) {
   // greedy plan already covers day d the solver step is skipped (a greedy
   // plan that covers always means a plan exists). Those quick "yes" answers
   // are not cached; every full answer is cached as before.
+  const supplyOk = (d) => packCoveredBy(packMaxSupply(groups, d), need, ctx(d));
   const feasible = (d) => {
-    if (!packCoveredBy(packMaxSupply(groups, d), need, ctx(d))) return false;
+    if (!supplyOk(d)) return false;
     const key = packPlanCacheKey(groups, need, d, calcKey, true);
     if (PACK_PLAN_CACHE.has(key)) return !!PACK_PLAN_CACHE.get(key);
     const r = packCheapestPlanCompute(groups, need, d, calcKey, true, true);
@@ -16090,6 +16093,33 @@ function packEarliestDaysCompute(groups, need, calcKey) {
   if (ctx(0)) for (let w = 1; w * 7 <= PACK_HORIZON_DAYS; w++) steps.add(w * 7); // weekly trade limits open up week by week
   const sorted = [...steps].sort((a, b) => a - b).filter((d) => d > 0);
   let lo = 0, hi = sorted.length - 1, ans = -1;
+  if (PLAN_SOLVER) {
+    // With the solver a yes / no is exact and quick, so the search starts at
+    // the best guess and looks around it (1 step away, then 2, 4 ...) instead
+    // of halving the whole list: the guess is `hint` when given, else the
+    // first day the packs' limits allow at all (a cheap check).
+    let a = 0, b = sorted.length - 1, first = -1;
+    while (a <= b) { const mid = (a + b) >> 1; if (supplyOk(sorted[mid])) { first = mid; b = mid - 1; } else a = mid + 1; }
+    if (first === -1) return null;
+    let cur = first;
+    if (hint > sorted[first]) { cur = sorted.length - 1; for (let i = first; i < sorted.length; i++) if (sorted[i] >= hint) { cur = i; break; } }
+    let step = 1, bad = first - 1; // bad = the latest step known to have no plan
+    if (feasible(sorted[cur])) {
+      ans = cur;
+      while (ans > bad + 1) {
+        const probe = Math.max(bad + 1, ans - step);
+        if (feasible(sorted[probe])) { ans = probe; step *= 2; } else { bad = probe; break; }
+      }
+    } else {
+      bad = cur;
+      while (bad < sorted.length - 1) {
+        cur = Math.min(sorted.length - 1, bad + step); step *= 2;
+        if (feasible(sorted[cur])) { ans = cur; break; }
+        bad = cur;
+      }
+    }
+    lo = bad + 1; hi = ans - 1;
+  }
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
     if (feasible(sorted[mid])) { ans = mid; hi = mid - 1; } else lo = mid + 1;
@@ -16099,9 +16129,10 @@ function packEarliestDaysCompute(groups, need, calcKey) {
   // the few steps just before it.
   // (Big plans use the quick search here too - three full searches of every
   // pack at once took several seconds each.)
+  // (Not with the solver: its yes / no is exact already.)
   const bigPlan = groups.reduce((a, g) => a + g.offers.length, 0) > 500 || String(calcKey).startsWith("__budget:");
-  for (let i = Math.max(0, ans - 3); i < ans; i++) {
-    if (packCoveredBy(packMaxSupply(groups, sorted[i]), need, ctx(sorted[i])) && packCheapestPlan(groups, need, sorted[i], calcKey, bigPlan)) return sorted[i];
+  for (let i = Math.max(0, ans - 3); i < ans && !PLAN_SOLVER; i++) {
+    if (supplyOk(sorted[i]) && packCheapestPlan(groups, need, sorted[i], calcKey, bigPlan)) return sorted[i];
   }
   return sorted[ans];
 }
@@ -16166,7 +16197,9 @@ function packArcSteps(list, rowItem) {
 // The plan split into parts that share no item, trade or pack limit (e.g.
 // Experts, Hero shards, Chief Gear + Charm): each part is its own smaller
 // problem, solved on its own; together they are the same plan.
-function packExactPicks(groups, need, caps, ctx, timeLimit, bonus) {
+// `feas` = only "is there any plan?" (the earliest-day search): no prices, the
+// solver stops at the first plan it finds; { infeasible: true } = proved none exists.
+function packExactPicks(groups, need, caps, ctx, timeLimit, bonus, feas) {
   if (!PLAN_SOLVER) return null;
   const rates = ctx ? ctx.rates : [];
   const par = new Map();
@@ -16185,23 +16218,29 @@ function packExactPicks(groups, need, caps, ctx, timeLimit, bonus) {
   });
   const parts = new Map();
   Object.keys(need).forEach((n) => { if (need[n] > 0) { const k = find(n); if (!parts.has(k)) parts.set(k, true); } });
-  if (parts.size <= 1) return packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus);
+  if (parts.size <= 1) return packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus, feas);
   const picks = [], lots = rates.map(() => 0);
+  let unknown = false;
   for (const k of parts.keys()) {
     const subCaps = caps.map((c, gi) => (gItems[gi] && find(gItems[gi][0]) === k ? c : 0));
     const subNeed = {}; Object.keys(need).forEach((n) => { if (need[n] > 0 && find(n) === k) subNeed[n] = need[n]; });
     const idx = []; rates.forEach((r, i) => { if (find(r.from) === k) idx.push(i); });
-    const res = packExactPicksPart(groups, subNeed, subCaps, ctx ? { ...ctx, rates: idx.map((i) => rates[i]) } : null, timeLimit, bonus);
-    if (!res) return null;
+    const res = packExactPicksPart(groups, subNeed, subCaps, ctx ? { ...ctx, rates: idx.map((i) => rates[i]) } : null, timeLimit, bonus, feas);
+    if (feas && res && res.infeasible) return res; // one part can't be covered: no plan
+    if (!res) { if (!feas) return null; unknown = true; continue; } // (yes / no: another part may still prove "no")
     res.picks.forEach((p) => picks.push(p));
     res.lots.forEach((n, j) => { lots[idx[j]] = n; });
   }
-  return picks.length ? { picks, lots } : null;
+  return !unknown && picks.length ? { picks, lots } : null;
 }
-function packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus) {
+function packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus, feas) {
   if (!PLAN_SOLVER) return null;
   try {
     const num = (v) => { const r = Math.round(v * 1e6) / 1e6; return Math.abs(r) < 1e-9 ? "0" : String(r); };
+    // Yes / no mode rounds every number the generous way (what packs give up,
+    // what is needed or traded away down), so a "no" is never down to rounding.
+    const numUp = feas ? (v) => { const r = Math.ceil(v * 1e6 - 1e-6) / 1e6; return Math.abs(r) < 1e-9 ? "0" : String(r); } : num;
+    const numDown = feas ? (v) => { const r = Math.floor(v * 1e6 + 1e-6) / 1e6; return Math.abs(r) < 1e-9 ? "0" : String(r); } : num;
     const rates = ctx ? ctx.rates : [];
     // Items that get a row: needed, or traded into something.
     const fromItems = new Set(rates.map((r) => r.from));
@@ -16211,13 +16250,22 @@ function packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus) {
       if (!(caps[gi] > 0)) return;
       const list = [];
       g.offers.forEach((o, oi) => { if (Object.keys(o.gives).some((n) => o.gives[n] > 0)) list.push({ o, oi }); });
-      const arc = g.optionPack && list.length >= 12 ? packArcSteps(list, rowItem) : null;
+      let arc = null;
+      if (g.optionPack && list.length >= 12) {
+        // (The same pack is asked about for many days: its steps are worked out once.)
+        let arcsOf = PACK_PLAN_CACHE.get("__arc");
+        if (!arcsOf) { arcsOf = new WeakMap(); PACK_PLAN_CACHE.set("__arc", arcsOf); }
+        const rk = [...new Set(list.flatMap(({ o }) => Object.keys(o.gives)))].filter(rowItem).sort().join("|");
+        const hit = arcsOf.get(g);
+        if (hit && hit.rk === rk) arc = hit.arc;
+        else { arc = packArcSteps(list, rowItem); arcsOf.set(g, { rk, arc }); }
+      }
       if (arc) arcs.push({ gi, ...arc });
       else list.forEach(({ o, oi }) => xs.push({ gi, oi, o }));
     });
     if (!xs.length && !arcs.length) return null;
     const rows = new Map(); // item -> terms
-    const term = (n, coef, v) => { if (!rows.has(n)) rows.set(n, []); rows.get(n).push(`${coef >= 0 ? "+" : "-"} ${num(Math.abs(coef))} ${v}`); };
+    const term = (n, coef, v) => { if (!rows.has(n)) rows.set(n, []); rows.get(n).push(coef >= 0 ? `+ ${numUp(coef)} ${v}` : `- ${numDown(-coef)} ${v}`); };
     xs.forEach((x, j) => Object.keys(x.o.gives).forEach((n) => { if (x.o.gives[n]) term(n, x.o.gives[n], `x${j}`); }));
     const sv = (a, k, j) => `s${a}_${k}_${j}`;
     arcs.forEach((a, ai) => a.tiers.forEach((opts, k) => opts.forEach((s, j) => Object.keys(s.gives).forEach((n) => term(n, s.gives[n], sv(ai, k, j))))));
@@ -16237,26 +16285,27 @@ function packExactPicksPart(groups, need, caps, ctx, timeLimit, bonus) {
     rows.forEach((terms, n) => {
       const lo = need[n] > 0 ? need[n] : 0;
       if (lo <= 0 && !rates.some((r) => r.from === n)) return; // nothing to keep in balance
-      cons.push(` r${cons.length}:\n${lines(terms)} >= ${num(lo)}`);
+      cons.push(` r${cons.length}:\n${lines(terms)} >= ${numDown(lo)}`);
     });
     const byGroup = new Map();
     xs.forEach((x, j) => { if (!byGroup.has(x.gi)) byGroup.set(x.gi, []); byGroup.get(x.gi).push(`+ 1 x${j}`); });
-    byGroup.forEach((terms, gi) => { if (Number.isFinite(caps[gi])) cons.push(` g${gi}:\n${lines(terms)} <= ${num(caps[gi])}`); });
+    byGroup.forEach((terms, gi) => { if (Number.isFinite(caps[gi])) cons.push(` g${gi}:\n${lines(terms)} <= ${numUp(caps[gi])}`); });
     bons.forEach((b) => cons.push(` k${b.v}:\n${lines([`+ 1 ${b.v}`].concat(b.js.map((j) => `- 1 x${j}`)))} <= 0`));
     // Step k of an option pack can only be bought as often as step k-1.
     const arcVars = [], arcCost = [];
     arcs.forEach((a, ai) => a.tiers.forEach((opts, k) => {
       const here = opts.map((s, j) => { arcVars.push(sv(ai, k, j)); arcCost.push(`+ ${num(s.price)} ${sv(ai, k, j)}`); return `+ 1 ${sv(ai, k, j)}`; });
-      if (k === 0) { if (Number.isFinite(caps[a.gi])) cons.push(` a${ai}_0:\n${lines(here)} <= ${num(caps[a.gi])}`); }
+      if (k === 0) { if (Number.isFinite(caps[a.gi])) cons.push(` a${ai}_0:\n${lines(here)} <= ${numUp(caps[a.gi])}`); }
       else cons.push(` a${ai}_${k}:\n${lines(here.concat(a.tiers[k - 1].map((_, j) => `- 1 ${sv(ai, k - 1, j)}`)))} <= 0`);
     }));
     const bounds = [];
-    rates.forEach((r, k) => { if (r.max > 0) bounds.push(` y${k} <= ${num(r.max * ctx.weeks)}`); });
-    bons.forEach((b) => bounds.push(` ${b.v} <= ${num(b.cap)}`));
+    rates.forEach((r, k) => { if (r.max > 0) bounds.push(` y${k} <= ${numUp(r.max * ctx.weeks)}`); });
+    bons.forEach((b) => bounds.push(` ${b.v} <= ${numUp(b.cap)}`));
     const vars = xs.map((_, j) => `x${j}`).concat(arcVars, rates.map((_, k) => `y${k}`), bons.map((b) => b.v));
     // A tiny cost per trade keeps the solver from making trades nobody needs.
-    const lp = ["Minimize", " obj:", lines(xs.map((x, j) => `+ ${num(x.o.price)} x${j}`).concat(arcCost, rates.map((_, k) => `+ 0.000001 y${k}`))), "Subject To", ...cons, "Bounds", ...vars.map((v) => ` ${v} >= 0`), ...bounds, "Generals", lines(vars), "End"].join("\n");
+    const lp = ["Minimize", " obj:", feas ? ` + 0 ${vars[0]}` : lines(xs.map((x, j) => `+ ${num(x.o.price)} x${j}`).concat(arcCost, rates.map((_, k) => `+ 0.000001 y${k}`))), "Subject To", ...cons, "Bounds", ...vars.map((v) => ` ${v} >= 0`), ...bounds, "Generals", lines(vars), "End"].join("\n");
     const res = PLAN_SOLVER.solve(lp, { time_limit: timeLimit, output_flag: false, mip_rel_gap: 1e-4 });
+    if (feas && res && /infeasible/i.test(String(res.Status))) return { infeasible: true };
     if (!res || !res.Columns || !/Optimal|Time limit/i.test(String(res.Status))) return null;
     const picks = [];
     for (let j = 0; j < xs.length; j++) {
@@ -16291,9 +16340,17 @@ const PACK_PLAN_CACHE = new Map();
 // display (labels are in the display currency and language), so a cached
 // plan must not be reused after any of them changes.
 function packPlanCacheKey(groups, need, days, calcKey, quick) {
+  // (The packs' part of the key is long: worked out once per pack list.)
+  let sigs = PACK_PLAN_CACHE.get("__sig");
+  if (!sigs) { sigs = new WeakMap(); PACK_PLAN_CACHE.set("__sig", sigs); }
+  let gk = sigs.get(groups);
+  if (gk === undefined) { gk = packGroupsSig(groups); sigs.set(groups, gk); }
+  return `${gk}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
+}
+function packGroupsSig(groups) {
   const sig = groups.map((g) => `${g.reset}|${g.resetDay}|${g.window || 0}|${g.perCycle}|${g.used || 0}|${g.ladder ? 1 : 0}${g.choice ? "c" : ""}${g.dayBonus ? `b${g.dayBonus.key}:${g.dayBonus.qty}:${g.dayBonus.days}` : ""}|` + g.offers.map((o) => o.price + ":" + Object.entries(o.gives).map(([n, v]) => n + "=" + v).join(",") + "~" + (o.label || "") + "~" + (o.tableTitle || "") + "~" + (o.currency || "")).join(";")).join("#");
   let h = 0; for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
-  return `${h}|${sig.length}|${JSON.stringify(need)}|${days}|${calcKey}|${quick ? 1 : 0}|${TRADE_RATES_CACHE ? JSON.stringify(budgetKeysOf(calcKey).map((k) => TRADE_RATES_CACHE.rates[k] || null)) : ""}|${JSON.stringify(budgetKeysOf(calcKey).map((k) => (TRADE_EXTRA_RATES || {})[k] || null))}`;
+  return `${h}|${sig.length}`;
 }
 function packCheapestPlan(groups, need, days, calcKey, quick) {
   const key = packPlanCacheKey(groups, need, days, calcKey, quick);
@@ -16343,8 +16400,20 @@ function packPruneOffersFor(groups, need, ctx) {
     return offers.length ? { ...g, offers } : { ...g, offers: g.offers.slice(0, 1) };
   });
 }
-function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly) {
-  let ctx = packTradeCtx(calcKey, days);
+// The part of a plan's set-up that is the same for every day: free trades
+// folded into what the packs give, and the offers that can never help dropped.
+// The earliest-day search asks about the same packs and needs for many days,
+// so it is kept per pack list (inside PACK_PLAN_CACHE: whatever clears the
+// plans clears this too). Returns { groups, rest (trades left after folding,
+// or null when nothing was folded), worth }.
+function packPlanPrep(groupsIn, need, calcKey, ctx) {
+  const sig = `${JSON.stringify(need)}|${calcKey}|${ctx ? ctx.rates.map((r) => `${r.from}>${r.to}:${r.give}:${r.get}:${r.max || 0}`).join(",") : ""}`;
+  let store = PACK_PLAN_CACHE.get("__prep");
+  if (!store) { store = new WeakMap(); PACK_PLAN_CACHE.set("__prep", store); }
+  const hit = store.get(groupsIn);
+  if (hit && hit.sig === sig) return hit;
+  const out = { sig, groups: null, rest: null, worth: null };
+  let folded = groupsIn;
   // Free, unlimited 1-for-N conversions (Sail of Conquest -> 1,000 Affinity,
   // Expert Speedups -> Speedups) are folded straight into what the packs
   // give, so the planner doesn't simulate them thousands of times. Same
@@ -16353,17 +16422,26 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
     const fold = ctx.rates.filter((r) => !(r.max > 0) && r.give === 1 && !(need[r.from] > 0) && ctx.rates.filter((x) => x.from === r.from).length === 1);
     if (fold.length) {
       const conv = new Map(fold.map((r) => [r.from, r]));
-      groupsIn = groupsIn.map((g) => ({ ...g, offers: g.offers.map((o) => {
+      folded = groupsIn.map((g) => ({ ...g, offers: g.offers.map((o) => {
         if (!Object.keys(o.gives).some((n) => conv.has(n))) return o;
         const gv = {};
         Object.entries(o.gives).forEach(([n, v]) => { const r = conv.get(n); if (r) gv[r.to] = (gv[r.to] || 0) + v * r.get; else gv[n] = (gv[n] || 0) + v; });
         return { ...o, gives: gv };
       }) }));
-      const rest = ctx.rates.filter((r) => !conv.has(r.from));
-      ctx = rest.length ? { ...ctx, rates: rest, worth: tradeWorth(rest), _routes: undefined, _src: undefined } : null;
+      out.rest = ctx.rates.filter((r) => !conv.has(r.from));
+      out.worth = out.rest.length ? tradeWorth(out.rest) : null;
+      ctx = out.rest.length ? { ...ctx, rates: out.rest, worth: out.worth, _routes: undefined, _src: undefined } : null;
     }
   }
-  const groups = packPruneOffersFor(groupsIn, need, ctx);
+  out.groups = packPruneOffersFor(folded, need, ctx);
+  store.set(groupsIn, out);
+  return out;
+}
+function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly) {
+  let ctx = packTradeCtx(calcKey, days);
+  const prep = packPlanPrep(groupsIn, need, calcKey, ctx);
+  if (ctx && prep.rest) ctx = prep.rest.length ? { ...ctx, rates: prep.rest, worth: prep.worth, _routes: undefined, _src: undefined } : null;
+  const groups = prep.groups;
   const wanted = Object.keys(need).filter((n) => need[n] > 0);
   // `used` = buys another page already took from this pack in a shared plan.
   const caps = groups.map((g) => Math.max(0, packCyclesWithin(g.reset, g.resetDay, days, g.window) * g.perCycle - (g.used || 0)));
@@ -16380,6 +16458,20 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
     if (bonus.length) Object.entries(packDayBonusGives(bonus, ps)).forEach(([n, v]) => { rem[n] = (rem[n] || 0) - v; });
     return rem;
   };
+  // Yes / no only (the earliest-day search) with the solver loaded: ask it
+  // straight away. Without prices it stops at the first plan it finds, or proves
+  // there is none. Only when it can't say in time do the steps below decide.
+  if (feasOnly && PLAN_SOLVER) {
+    const fx = packExactPicks(groups, need, caps, ctx, 1, bonus, true);
+    if (fx && fx.infeasible) return null;
+    if (fx) {
+      const rates = ctx ? ctx.rates : [];
+      const rem = remainingOf(fx.picks);
+      fx.lots.forEach((n, k) => { if (n > 0) { rem[rates[k].to] = (rem[rates[k].to] || 0) - n * rates[k].get; rem[rates[k].from] = (rem[rates[k].from] || 0) + n * rates[k].give; } });
+      // Counted again here in full: everything needed is covered, nothing traded away that wasn't there.
+      if (Object.keys(rem).every((n) => !(rem[n] > 1e-6))) return true;
+    }
+  }
   const shortValue = (rem) => { const s = packShortAfterTrades(rem, ctx).short; return Object.keys(s).reduce((a, n) => a + s[n] * worthOf(n), 0); };
   const covered = (ps) => !Object.keys(packShortAfterTrades(remainingOf(ps), ctx).short).length;
   const totalOf = (ps) => ps.reduce((s, p) => s + p.count * groups[p.gi].offers[p.oi].price, 0);
@@ -16523,7 +16615,10 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   const betterPlan = (a, b) => !b || a.total < b.total * 0.98 || (a.total <= b.total * 1.02 && a.days < b.days) || (a.total < b.total && a.days <= b.days);
   let best = null;
   const consider = (r) => { if (r) { finish(r); if (betterPlan(r, best)) best = r; } };
-  consider(run(null));
+  // Big plans with the solver loaded: the step-by-step run takes seconds there
+  // and the solver's plan is the one kept, so it only runs when the solver found nothing.
+  const solverFirst = !!PLAN_SOLVER && !feasOnly && groups.reduce((a, g) => a + g.offers.length, 0) > 500;
+  if (!solverFirst) consider(run(null));
   if (feasOnly && best) return true; // packEarliestDays only asks "is there a plan?"
   // The exact plan (when the solver is loaded): kept when it beats the greedy ones.
   // A cheaper exact plan always wins (the 2% "sooner" rule is only for
@@ -16552,6 +16647,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
     }
     if (exact && (!best || exact.total < best.total - 0.005 || betterPlan(exact, best))) best = exact;
   }
+  if (solverFirst && !exact) consider(run(null));
   // Also try leading with each offer (bought as much as it's worth) - it
   // catches cases where the greedy first step is a poor start.
   if (!quick && !exact) {
@@ -19091,10 +19187,10 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
 // made over all their packs, so a pack that helps several pages (or a
 // ladder whose steps go to different pages) is bought once and its limits
 // are used once. Each page then gets its share of every purchase.
-function budgetPlanSet(groups, need, calcKey, targetDays) {
+function budgetPlanSet(groups, need, calcKey, targetDays, hint) {
   const out = { earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!groups.length || !Object.keys(need).length) return out;
-  out.earliest = packEarliestDays(groups, need, calcKey);
+  out.earliest = packEarliestDays(groups, need, calcKey, hint);
   if (out.earliest == null) return out;
   // One full plan: by the target date when there is one (and it's reachable),
   // otherwise the cheapest within a year of the earliest date.
@@ -19129,6 +19225,9 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
     const groups = allGroups.filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
     return { keys, calcKey, need, groups, earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   };
+  // Where the combined plan's earliest-day search starts (solver only): the
+  // slowest page's own earliest day - the pages together are never sooner.
+  const ownHint = (list) => (PLAN_SOLVER && list.length > 1 ? Math.max(0, ...list.map((pg) => (pg.packGroups.length ? packEarliestDays(pg.packGroups, pg.need, pg.calcKey) : null) || 0)) : 0);
   let res = setup();
   // Fast path: every page's own plan put together. When the packs' limits
   // allow that, it's the starting answer and only a quick combined search
@@ -19147,7 +19246,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
     res.merged = best === merged;
     if (reachable && best.days <= targetDays) res.byTarget = best; else res.cheapest = best;
   } else {
-    Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays));
+    Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays, ownHint(inc)));
     // A page the packs can't cover at all would sink the whole plan: plan it
     // on its own instead and keep the rest together.
     if (res.earliest == null && inc.length > 1) {
@@ -19158,7 +19257,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (dropped.length) {
         res = setup();
         const m2 = !PLAN_SOLVER && res.groups.length && Object.keys(res.need).length ? budgetMergedPlan(res, inc, targetDays) : null;
-        Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays));
+        Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays, ownHint(inc)));
         if (m2 && res.chosen) { const best = packPickCheapest([res.chosen, m2]); if (best === m2) { res.chosen = m2; res.merged = true; } }
         else if (m2) { res.chosen = m2; res.merged = true; }
       }
@@ -19224,7 +19323,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
           const lateGroups = allGroups.map((g, gi) => ({ ...g, used: (g.used || 0) + used[gi] })).filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
           const lateNeed = {}; late.forEach((pg) => Object.entries(pg.need).forEach(([n, q]) => { lateNeed[n] = (lateNeed[n] || 0) + q; }));
           const lateKey = "__budget:" + late.map((pg) => pg.calcKey).join(",");
-          const e2 = lateGroups.length ? packEarliestDays(lateGroups, lateNeed, lateKey) : null;
+          const e2 = lateGroups.length ? packEarliestDays(lateGroups, lateNeed, lateKey, ownHint(late)) : null;
           if (e2 != null) {
             const fast = packCheapestPlan(lateGroups, lateNeed, e2, lateKey);
             const big = lateGroups.reduce((n, g) => n + g.offers.length, 0) > 500;
@@ -19418,7 +19517,7 @@ function plannerPagePlans(payload) {
 const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(BUDGET_RESEARCH_KEYS)}; const BUDGET_EXPERT_KEYS = ${JSON.stringify(BUDGET_EXPERT_KEYS)};`;
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
 const PLAN_SOLVER_SRI = { "highs.js": "sha384-8VF/84lUdwWTmd6C4TlyNI0GCoMmX0iTMuYiSgqm4Q+A36WnVSQAAHMvAGdx71U1", "highs.wasm": "sha384-MAiNyO4ydZtZMzFnxQmbxtpRfMmzGm/wbmtOYrOuns7GS6PMI/RukPAEV9MJjvCB" };
-const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packPlanCacheKey", "packCheapestPlan", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
+const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packGroupsSig", "packPlanCacheKey", "packCheapestPlan", "packPlanPrep", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
 let PLANNER_WORKER = null, PLANNER_SEQ = 0;
 // Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
 // gets one request at a time (PLANNER_QUEUE holds the rest, PLANNER_BUSY is
