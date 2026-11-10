@@ -2944,6 +2944,16 @@ const T = {
   gu_rest_done: { en: "Rest of the plan: done {date}" },
   gu_rest_target: { en: " · target {date}" },
   gu_by_gen_s: { en: "New Gen" },
+  gbp_upcoming: { en: "Upcoming · tap one" },
+  gbp_targets: { en: "Targets" },
+  gbp_your_date: { en: "Your date" },
+  gbp_pick_date: { en: "Pick another date…" },
+  gbp_back: { en: "Back to events" },
+  gbp_today: { en: "Today {d}" },
+  gbp_in_days: { en: "in {n} days" },
+  gbp_tap_day: { en: "Tap a day" },
+  gbp_use: { en: "Use {d}" },
+  gbp_use_x: { en: "Use" },
   gu_by_tg_s: { en: "Target" },
   gu_info_date: { en: "Each goal's date is when the plan's packs reach its level; ⚠ amber = after its By date (or the target). Tap the By chip to change it." },
   gu_page_target: { en: "page target {x}" },
@@ -20528,6 +20538,71 @@ let BUDGET_GOALS = null;
 let BUDGET_GOALS_OPEN = true; // the card's fold (kept for the visit)
 let BUDGET_GOAL_ADD = null;   // { page } while "+ Add mini target" is open
 let BUDGET_GOAL_BY_OPEN = null; // goal id whose "By" picker is open
+let BUDGET_BY_CAL = null;       // its month view: { m: "yyyy-mm", sel: "yyyy-mm-dd" | null }, null = the event list
+// The By pop-over closes on a tap outside it or Esc (no redraw needed: it is only taken out).
+document.addEventListener("pointerdown", (e) => {
+  if (!BUDGET_GOAL_BY_OPEN || !e.target.closest) return;
+  if (e.target.closest(".gbp") || e.target.closest("[data-goalby]")) return;
+  goalByPopClose();
+}, true);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && BUDGET_GOAL_BY_OPEN && document.querySelector(".gbp")) { e.stopImmediatePropagation(); goalByPopClose(); } }, true);
+function goalByPopClose() {
+  BUDGET_GOAL_BY_OPEN = null; BUDGET_BY_CAL = null;
+  document.querySelectorAll(".gbp").forEach((x) => x.remove());
+  document.querySelectorAll("[data-goalby].open").forEach((x) => { x.classList.remove("open"); x.setAttribute("aria-expanded", "false"); x.innerHTML = x.innerHTML.replace("\u25B4", "\u25BE"); });
+}
+// Upcoming dates a goal can be "By" (about 6 months): game events (SvS, KOI, the admin's),
+// Lucky Wheels (day 2–4 of each) and new heroes; { v (saved value), kind, a, b (Dates), name, col }.
+function goalByEvents() {
+  const t0 = packStartOfToday(), end = new Date(t0.getTime() + 183 * 86400000), DAY = 86400000, out = [];
+  GAME_EVENTS.forEach((ev) => gameEventStarts(ev, t0, end).filter((d) => d > t0 && d <= end).forEach((d) => out.push({ v: `ev:${ev.key}:${packDayKey(d)}`, kind: ev.key, a: d, b: new Date(d.getTime() + (ev.days - 1) * DAY), name: ev.name, col: gameEventColor(ev.key) })));
+  heroWheels(new Date(t0.getTime() + DAY), end).filter((w) => Number(w.ev.wheelDay) > 0).forEach((w) => out.push({ v: `ev:wheel:${packDayKey(w.day)}`, kind: "wheel", a: w.day, b: new Date(w.day.getTime() + Math.max(0, (w.ev.wheelDays || 1) - 1) * DAY), name: `${t("pack_cal_wheel")} \u00b7 ${w.ev.name}`, col: PACK_CAL_COL.wheel }));
+  newGenStarts(newGenBaseDay(), 6).filter((d) => d > t0 && d <= end).forEach((d) => out.push({ v: `ev:gen:${packDayKey(d)}`, kind: "gen", a: d, b: d, name: t("pack_cal_new_heroes"), col: "#facc15", star: true }));
+  return out.sort((x, y) => x.a - y.a || x.name.localeCompare(y.name));
+}
+// K4: the small pop-over under a goal's By chip: the event list, or a month to pick any day.
+function goalByPopHtml(myBy, mainDay) {
+  const t0 = packStartOfToday(), DAY = 86400000, loc = LANG === "en" ? undefined : LANG;
+  const md = (d) => d.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
+  const rng = (a, b) => (b.getTime() === a.getTime() ? md(a) : a.getUTCMonth() === b.getUTCMonth() ? `${md(a)} \u2013 ${b.getUTCDate()}` : `${md(a)} \u2013 ${md(b)}`);
+  const evs = goalByEvents(), myD = goalDeadlineDay(myBy), myK = goalByKind(myBy);
+  // Old values ("svs", "koi", "gen") light the next one of their kind.
+  const lit = (e) => e.v === myBy || (!String(myBy).startsWith("ev:") && myK === e.kind && myD != null && Math.round((e.a - t0) / DAY) === myD);
+  const tgt = mainDay != null ? new Date(t0.getTime() + mainDay * DAY) : null;
+  if (BUDGET_BY_CAL) {
+    const C = BUDGET_BY_CAL, [y, m] = C.m.split("-").map(Number), first = new Date(Date.UTC(y, m - 1, 1));
+    const start = new Date(first.getTime() - ((first.getUTCDay() + 6) % 7) * DAY), cells = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start.getTime() + i * DAY), key = packDayKey(d);
+      if (i >= 35 && d.getUTCMonth() !== m - 1) break;
+      const dots = evs.filter((e) => d >= e.a && d <= e.b).slice(0, 3).map((e) => `<i style="background:${e.col}"></i>`).join("");
+      const cls = [d.getUTCMonth() !== m - 1 ? "out" : "", d.getTime() === t0.getTime() ? "today" : "", tgt && d.getTime() === tgt.getTime() ? "tg" : "", C.sel === key ? "on" : ""].filter(Boolean).join(" ");
+      cells.push(`<button type="button" class="${cls}" data-gbpday="${key}" ${d < t0 ? "disabled" : ""}><b>${d.getUTCDate()}</b><span>${dots}</span></button>`);
+    }
+    const sd = C.sel ? packParseDay(C.sel) : null, n = sd ? Math.round((sd - t0) / DAY) : 0;
+    const mon = first.toLocaleDateString(loc, { month: "long", year: "numeric", timeZone: "UTC" });
+    const canPrev = first > new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth(), 1));
+    const wk = [0, 1, 2, 3, 4, 5, 6].map((i) => new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(loc, { weekday: "narrow", timeZone: "UTC" }));
+    return `<div class="gbp cal" role="dialog" aria-label="${esc(t("gbp_pick_date"))}">
+      <div class="gbp-ch"><button type="button" class="gbp-back" data-gbpback>&#8249; ${esc(t("gbp_back"))}</button><small>${esc(t("gbp_today").replace("{d}", md(t0)))}</small></div>
+      <div class="gbp-mh"><button type="button" data-gbpmon="-1" ${canPrev ? "" : "disabled"} aria-label="&#8249;">&#8249;</button><b>${esc(mon)}</b><button type="button" data-gbpmon="1" aria-label="&#8250;">&#8250;</button></div>
+      <div class="gbp-grid">${wk.map((w) => `<em>${esc(w)}</em>`).join("")}${cells.join("")}</div>
+      <div class="gbp-leg"><span><i style="background:${gameEventColor("svs")}"></i>SvS</span><span><i style="background:${gameEventColor("koi")}"></i>KOI</span><span><i style="background:${PACK_CAL_COL.wheel}"></i>${esc(t("pack_cal_wheel"))}</span><span><i style="background:#facc15"></i>${esc(t("gu_by_gen_s"))}</span>${GAME_EVENTS.filter((e) => e.key !== "svs" && e.key !== "koi").map((e) => `<span><i style="background:${gameEventColor(e.key)}"></i>${esc(e.name)}</span>`).join("")}<span>&#9733; ${esc(t("gu_by_tg_s"))}</span></div>
+      <div class="gbp-use"><span>${sd ? `<b>${esc(md(sd))}</b> \u00b7 ${esc(t("gbp_in_days").replace("{n}", n))}` : esc(t("gbp_tap_day"))}</span><button type="button" class="btn small" data-gbpuse ${sd ? "" : "disabled"}>${esc(sd ? t("gbp_use").replace("{d}", md(sd)) : t("gbp_use_x"))}</button></div>
+    </div>`;
+  }
+  const row = (v, dot, name, when, on) => `<button type="button" class="gbp-r${on ? " on" : ""}" data-goalbyset="${esc(v)}">${dot}<span class="gbp-n">${esc(name)}</span><span class="gbp-w">${esc(when)}</span>${on ? '<span class="gbp-ok">&#10003;</span>' : ""}</button>`;
+  let h = "";
+  if (myK === "date" && myD != null) h += row(myBy, '<span class="gbp-ic">&#128197;</span>', t("gbp_your_date"), md(new Date(t0.getTime() + myD * DAY)), true);
+  h += `<div class="gbp-hd">${esc(t("gbp_targets"))}</div>` + row("", '<span class="gbp-ic st">&#9733;</span>', t("goal_by_main"), tgt ? md(tgt) : "\u2014", !myBy);
+  let mon = "";
+  evs.forEach((e) => {
+    const mm = e.a.toLocaleDateString(loc, { month: "long", ...(e.a.getUTCFullYear() !== t0.getUTCFullYear() ? { year: "numeric" } : {}), timeZone: "UTC" });
+    if (mm !== mon) { mon = mm; h += `<div class="gbp-hd">${esc(mm)}</div>`; }
+    h += row(e.v, e.star ? '<span class="gbp-ic st">&#11088;</span>' : `<i class="gbp-dot" style="background:${e.col}"></i>`, e.name, rng(e.a, e.b), lit(e));
+  });
+  return `<div class="gbp" role="dialog" aria-label="${esc(t("goal_by_title"))}"><div class="gbp-t">${esc(t("gbp_upcoming"))}</div><div class="gbp-l">${h}</div><button type="button" class="gbp-pick" data-gbpcal>&#128197; ${esc(t("gbp_pick_date"))}</button></div>`;
+}
 let BUDGET_HT_OPEN = false;     // Hero targets fold (for the visit)
 async function ensureBudgetGoals() {
   if (!BUDGET_GOALS) {
@@ -20933,10 +21008,33 @@ function goalDeadlineDay(by) {
   }
   if (by === "gen") { const n = newGenStarts(newGenBaseDay(), 3).find((d) => d > t0); return n ? off(n) : null; }
   if (typeof by === "string" && by.startsWith("date:")) { const d = packParseDay(by.slice(5)); return d ? Math.max(0, off(d)) : null; }
+  // "ev:<event key | wheel | gen>:yyyy-mm-dd" = that very event (picked in the By pop-over).
+  if (typeof by === "string" && by.startsWith("ev:")) { const d = packParseDay(by.split(":")[2] || ""); return d ? Math.max(0, off(d)) : null; }
   return null;
 }
-function goalByIcon(by) { return by === "svs" || by === "koi" ? "\u2694" : by === "gen" ? "\u2B50" : by && String(by).startsWith("date:") ? "\uD83D\uDCC5" : "\u2605"; }
+// The kind of a "By" value: "svs" / "koi" / another event key / "wheel" / "gen" / "date" / "" (main target).
+function goalByKind(by) {
+  if (!by) return "";
+  const b = String(by);
+  if (b.startsWith("ev:")) return b.split(":")[1] || "";
+  if (b.startsWith("date:")) return "date";
+  return b;
+}
+// Short name for the By chip: "SvS", "KOI", "Lucky Wheel", "New Gen", the event's name, "Target", "" for a date.
+function goalByShort(by) {
+  const k = goalByKind(by);
+  if (!k) return t("gu_by_tg_s");
+  if (k === "date") return "";
+  if (k === "svs") return "SvS";
+  if (k === "koi") return "KOI";
+  if (k === "gen") return t("gu_by_gen_s");
+  if (k === "wheel") return t("pack_cal_wheel");
+  const ev = GAME_EVENTS.find((e) => e.key === k);
+  return ev ? ev.name : k;
+}
+function goalByIcon(by) { const k = goalByKind(by); return !k ? "\u2605" : k === "date" ? "\uD83D\uDCC5" : k === "gen" ? "\u2B50" : k === "wheel" ? "\uD83C\uDFA1" : "\u2694"; }
 function goalByName(by) {
+  if (by && String(by).startsWith("ev:")) return goalByShort(by);
   if (by === "svs") return t("goal_by_svs");
   if (by === "koi") return t("goal_by_koi");
   if (by === "gen") return t("goal_by_gen");
@@ -21127,12 +21225,22 @@ function wireBudgetGoals(box) {
       saveBudgetGoals(); redraw();
       return;
     }
-    if (b.hasAttribute("data-goalby")) { const gid = b.closest("[data-goal]").dataset.goal; BUDGET_GOAL_BY_OPEN = BUDGET_GOAL_BY_OPEN === gid ? null : gid; redraw(); return; }
+    if (b.hasAttribute("data-goalby")) { const gid = b.closest("[data-goal]").dataset.goal; BUDGET_GOAL_BY_OPEN = BUDGET_GOAL_BY_OPEN === gid ? null : gid; BUDGET_BY_CAL = null; redraw(); return; }
+    // By pop-over: month view, its arrows, a day, Use.
+    if (b.hasAttribute("data-gbpcal")) { const t0 = packStartOfToday(), my = (BUDGET_GOALS.by || {})[b.closest("[data-goal]").dataset.goal] || ""; const sel = my.startsWith("date:") ? my.slice(5) : null; BUDGET_BY_CAL = { m: (sel || packDayKey(t0)).slice(0, 7), sel }; redraw(); return; }
+    if (b.hasAttribute("data-gbpback")) { BUDGET_BY_CAL = null; redraw(); return; }
+    if (b.dataset.gbpmon) { const [y, m] = BUDGET_BY_CAL.m.split("-").map(Number), d = new Date(Date.UTC(y, m - 1 + Number(b.dataset.gbpmon), 1)); BUDGET_BY_CAL = { ...BUDGET_BY_CAL, m: packDayKey(d).slice(0, 7) }; redraw(); return; }
+    if (b.dataset.gbpday) { BUDGET_BY_CAL = { ...BUDGET_BY_CAL, sel: b.dataset.gbpday }; redraw(); return; }
+    if (b.hasAttribute("data-gbpuse") && BUDGET_BY_CAL && BUDGET_BY_CAL.sel) {
+      const gid = b.closest("[data-goal]").dataset.goal;
+      BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "date:" + BUDGET_BY_CAL.sel };
+      BUDGET_GOAL_BY_OPEN = null; BUDGET_BY_CAL = null; saveBudgetGoals(); redraw(); return;
+    }
     if (b.dataset.goalbyset != null) {
       const gid = b.closest("[data-goal]").dataset.goal;
       BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}) };
       if (b.dataset.goalbyset) BUDGET_GOALS.by[gid] = b.dataset.goalbyset; else delete BUDGET_GOALS.by[gid];
-      BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw(); return;
+      BUDGET_GOAL_BY_OPEN = null; BUDGET_BY_CAL = null; saveBudgetGoals(); redraw(); return;
     }
     if (b.hasAttribute("data-goaladd")) { BUDGET_GOAL_ADD = {}; redraw(); return; }
     if (b.hasAttribute("data-goalcancel")) { BUDGET_GOAL_ADD = null; redraw(); return; }
@@ -21573,25 +21681,20 @@ async function renderBudgetsPage(opts = {}) {
       const own = !planPending && !incKeys.includes(g.page), lim = d != null ? d : targetDays, last = u.levels.length - 1;
       const pending = planPending || (dlPending && d != null);
       const dTxt = pending ? workHtml("span", "small") : own ? esc(t("gd_own")) : esc(gdTxt(dt));
-      const kind = myBy === "svs" || myBy === "koi" || myBy === "gen" ? " ev" : myBy ? " date" : "";
+      const kind = goalByKind(myBy) === "date" ? " date" : myBy ? " ev" : "";
       const lock = u.lockAt >= 0 && g.li >= u.lockAt ? `<small class="gu-lk">&#9888; ${esc(t("gu_lock").replace("{x}", u.lockTxt))}</small>` : "";
-      const picker = BUDGET_GOAL_BY_OPEN === g.id ? `<div class="bud-g-by-box">
-          <div class="meta" style="font-weight:600;">${esc(t("goal_by_title"))}</div>
-          ${["", "svs", "koi", "gen"].map((b) => { const dd = b ? goalDeadlineDay(b) : mainDay; return `<button type="button" data-goalbyset="${b}" class="${myBy === b ? "on" : ""}"><span>${goalByIcon(b)} ${esc(goalByName(b))}</span><small>${dd != null ? esc(fmtDate(dd)) : "—"}</small></button>`; }).join("")}
-          <label class="bud-g-by-date"><span>&#128197; ${esc(t("goal_by_date"))}</span><input type="date" data-goalbydate value="${myBy.startsWith("date:") ? esc(myBy.slice(5)) : ""}" /></label>
-          <div class="meta" style="font-size:11px;">${esc(t("goal_by_note"))}</div>
-        </div>` : "";
+      const picker = BUDGET_GOAL_BY_OPEN === g.id ? goalByPopHtml(myBy, mainDay) : "";
       const ic = budgetGoalIcon(g, pagesRaw);
       // C3: two lines. 1: ⋮⋮, number, picture, name, − level +, date (amber ⚠ after its By / the target).
       // 2: can do chip (cdaPatchGoals puts it first), short By chip, ✕.
       const isLate = !pending && !own && dt && !dt.done && lim != null && dt.day > lim;
       const byD = myBy ? dIn : mainDay;
-      const byShort = `${goalByIcon(myBy)} ${myBy === "svs" ? "SvS" : myBy === "koi" ? "KOI" : myBy === "gen" ? t("gu_by_gen_s") : myBy ? "" : t("gu_by_tg_s")}${byD != null ? `${myBy && myBy.startsWith("date:") ? "" : " "}${gdTxt({ day: byD })}` : ""}`;
+      const bs = goalByShort(myBy), byShort = `${goalByIcon(myBy)} ${bs}${byD != null ? `${bs ? " " : ""}${gdTxt({ day: byD })}` : ""}`;
       return `<li class="bud-g gu c3" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag role="button" tabindex="0" aria-label="${esc(t("goals_desc_drag"))}" title="${esc(t("goals_desc_drag"))}">&#8942;&#8942;</span>
         <span class="c3-b">
           <span class="c3-l1"><span class="c3-no">${i + 1}</span>${ic.src ? `<img class="c3-pic${ic.face ? " face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i class="c3-pic">${esc(u.name.charAt(0))}</i>`}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${g.lv.label}`)}">${esc(u.name)}</b><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(g.lv.label)}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dTxt}</span></span>
-          <span class="c3-l2 gu-r2"><button type="button" class="bud-g-by${kind}" data-goalby title="${esc(byText(myBy, byD))}">${esc(byShort)} &#9662;</button><button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
+          <span class="c3-l2 gu-r2"><button type="button" class="bud-g-by${kind}${BUDGET_GOAL_BY_OPEN === g.id ? " open" : ""}" data-goalby aria-expanded="${BUDGET_GOAL_BY_OPEN === g.id}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${BUDGET_GOAL_BY_OPEN === g.id ? "&#9652;" : "&#9662;"}</button><button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
           ${lock}
         </span>
         ${picker}</li>`;
