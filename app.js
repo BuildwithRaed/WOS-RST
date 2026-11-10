@@ -1274,6 +1274,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
 const LANG_FILES_VERSION = 86; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2674,6 +2675,11 @@ const T = {
   exp_n_left: { en: "{n} left" },
   exp_learn_xp: { en: "Learning XP" },
   exp_no_target: { en: "No target set" },
+  exp_done_word: { en: "done" },
+  exp_lv_max: { en: "Level {n} · max" },
+  exp_lv_max_short: { en: "Lv {n} · Max" },
+  exp_nothing_needed: { en: "Affinity and Sigils: nothing needed" },
+  exp_all_skills_max: { en: "All skills max" },
   exp_done: { en: "Done" },
   g1_show: { en: "Show" },
   marks_per_pet: { en: "Per pet" },
@@ -27727,15 +27733,25 @@ async function renderExpertsPage() {
     const vals = (a, selA, b, selB) => `<span class="exk-v">${val(a, selA)}<span class="a" aria-hidden="true">&rarr;</span>${val(b, selB, true)}</span>`;
     const needBox = (kind, img, alt, need, short) => `<button type="button" class="exk-b" data-expbox="${kind}" title="${esc(alt)}"><img src="${esc(img)}" alt="${esc(alt)}" /><span>${need > 0
       ? `<b>${num(need)}</b>${short > 0 ? `<em>${num(short)} ${esc(t("bs_short_word"))}</em>` : `<em class="ok">&#10003;</em>`}`
-      : `<b class="ok">&#10003;</b>`}</span></button>`;
+      : `<small>${esc(alt)}</small><i>&#10003; ${esc(t("exp_done_word"))}</i>`}</span></button>`.replace('class="exk-b"', `class="exk-b${need > 0 ? "" : " done"}"`);
     const sigImg = EXPERT_INVENTORY_ICONS[`${hero} Sigils`] || "icons/item_icon_570000.png";
-    const levelHtml = `<div class="exk-r exk-lvr">
+    // M3 (owner, 10 Nov 2026): a maxed level (at its released max, no higher target) is one green
+    // line; a fully maxed expert also folds its skills into one line. Tap = the normal rows (kept for the visit).
+    const lvMax = di === ci && (Number(s.current) || 0) >= heroMaxLevelValue(hero) - 0.05;
+    const skMax = (sk) => { const st = s.skills[sk], c = Number(st.current) || 0; return Math.max(c, Number(st.desired) || 0) <= c && c >= skillMaxLevel(hero, sk); };
+    const allSkMax = e.skills.every(skMax);
+    const lvFold = lvMax && !EXP_MAX_OPEN[`${hero}|level`], skFold = lvMax && allSkMax && !EXP_MAX_OPEN[`${hero}|skills`];
+    const m3Line = (key, main, sub) => `<button type="button" class="exk-m3" data-expmaxopen="${esc(key)}"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${main}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="exk-m3-go" aria-hidden="true">&rsaquo;</span></button>`;
+    const noNeed = affNeed <= 0 && sigil <= 0;
+    const levelHtml = lvFold ? "" : `<div class="exk-r exk-lvr">
         <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
-        <div class="exk-g2">
+        ${noNeed ? `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>` : `<div class="exk-g2">
           ${needBox("aff", EXPERT_INVENTORY_ICONS.Affinity, t("resource_affinity"), affNeed, affShort)}
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
-        </div>
+        </div>`}
       </div>`;
+    const lvLine = lvFold ? `<div class="exk-m3box">${m3Line(`${hero}|level`, esc(t("exp_lv_max").replace("{n}", lvLab(s.current))), noNeed ? esc(t("exp_nothing_needed")) : "")}</div>` : "";
+    const skLine = skFold ? `<div class="exk-m3box">${m3Line(`${hero}|skills`, esc(t("exp_all_skills_max")), e.skills.map((sk) => `<span class="nw">${esc(dataName(sk))} ${Number(s.skills[sk].current) || 0}</span>`).join(" · "))}</div>` : "";
     // Books: the Backpack's Books go to the skills in listed order.
     let booksLeft = Number(invSaved["Books of Knowledge"]) || 0;
     const skillRow = (sk) => {
@@ -27743,7 +27759,7 @@ async function renderExpertsPage() {
       const cur = Number(st.current) || 0, des = Math.max(cur, Number(st.desired) || 0);
       const curSel = `<select data-expskillcur="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("current_label"))}">${levelOpts(pick, Math.min(cur, pick), max)}</select>`;
       if (des <= cur && cur >= max) {
-        return `<div class="exk-sl"><b>${esc(dataName(sk))}</b><span class="exk-mx">${esc(t("charm_lv"))} ${cur} &#10003; ${esc(t("max_button"))}${curSel}</span></div>`;
+        return `<div class="exk-sl"><span class="exk-ck" aria-hidden="true">&#10003;</span><b>${esc(dataName(sk))}</b><span class="exk-mx">${esc(t("exp_lv_max_short").replace("{n}", cur))}${curSel}</span></div>`;
       }
       const rows = SKILL_CACHE[`${hero}|${sk}`] || [];
       const typed = rows.find((r) => r.stat_type);
@@ -27778,11 +27794,12 @@ async function renderExpertsPage() {
             <label class="exp-count" title="${esc(t("expert_count_tip"))}"><input type="checkbox" data-expunlock="${esc(hero)}" ${unlocked ? "checked" : ""} /><span>${esc(t("expert_count_tick"))}</span></label>
           </div>
         </div>
-        ${levelHtml}
-        ${e.skills.map(skillRow).join("")}
+        ${lvLine}${levelHtml}
+        ${skFold ? skLine : e.skills.map(skillRow).join("")}
       </div>`;
     wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
     fillExpertsReach();
+    gridEl.querySelectorAll("[data-expmaxopen]").forEach((b) => b.addEventListener("click", () => { EXP_MAX_OPEN[b.dataset.expmaxopen] = true; renderGrid(); }));
     // tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
     gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.expbox === "aff") {
