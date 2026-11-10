@@ -3246,6 +3246,47 @@ const T = {
   cdp_details: { en: "Details" },
   cdp_fold: { en: "Fold" },
   cdp_trades_used: { en: "Trades used:" },
+  cda_desc: { en: "Works out every ticked page from your Backpack, sharing it: an item one page uses isn't counted again for another. Tick pages and single upgrades to choose where it goes." },
+  cda_edit_order: { en: "Edit order" },
+  cda_packs: { en: "Include this week's packs" },
+  cda_packs_d: { en: "From My Purchases: bought / will buy this week" },
+  cda_packs_n: { en: "{b} bought + {p} will buy (My Purchases)" },
+  cda_upgrades: { en: "Upgrades" },
+  cda_pages_ticked: { en: "Pages · {n} of {m} ticked" },
+  cda_all: { en: "All" },
+  cda_none: { en: "None" },
+  cda_working: { en: "Working out {n} pages…" },
+  cda_get_more: { en: "Get more" },
+  cda_with_packs: { en: "with this week's packs" },
+  cda_n_up_out: { en: "{n} {unit} go up · {m} left out" },
+  cda_left_out: { en: "left out" },
+  cda_went_to: { en: "{name} left out → its items went to" },
+  cda_went_none: { en: "{name} left out → nothing else could use its items" },
+  cda_and: { en: "and" },
+  cda_not_ticked: { en: "Not ticked:" },
+  cda_tick: { en: "Tick" },
+  cda_nothing_yet: { en: "Nothing yet:" },
+  cda_at_target_l: { en: "At target:" },
+  cda_not_avail: { en: "No data:" },
+  cda_u_stats: { en: "stats" },
+  cda_u_paths: { en: "paths" },
+  cda_u_buildings: { en: "buildings" },
+  cda_u_skins: { en: "skins" },
+  cda_path: { en: "Path {n}" },
+  cda_owned: { en: "owned" },
+  cda_buy_skin: { en: "buy with Glorious Tomes" },
+  cda_s_chief_gear: { en: "Chief Gear" },
+  cda_s_charm: { en: "Charm" },
+  cda_s_hero_gear: { en: "Heroes Gears" },
+  cda_s_pets: { en: "Pets" },
+  cda_s_t12_research: { en: "T12" },
+  cda_s_t11_helios: { en: "T11" },
+  cda_s_research_center: { en: "Research Ctr" },
+  cda_s_pets_refine: { en: "Pet Refine" },
+  cda_s_experts: { en: "Experts" },
+  cda_s_experts_research: { en: "Exp. Research" },
+  cda_s_islands: { en: "Islands" },
+  cda_s_shining_skins: { en: "Skins" },
   exp_cd_now: { en: "{n} now" },
   exp_cd_short: { en: "{item} short" },
   cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
@@ -6018,7 +6059,7 @@ async function renderGearLevelingGroup(target) {
           <span class="sa-arrow">&rarr;</span>
           <select data-hgsetall="${esc(tb)}" data-role="to" aria-label="${esc(tgtLbl)}"><option value="">${esc(tgtLbl)}…</option>${optsByTrack[tb]}</select>
         </div>`).join("")}</div></div>
-      <div class="hg-tbl"><span></span>${heads}${row(MF, t("hg_mastery"))}${row(EN, t("hg_enhance"))}${visitorCan("cando") ? `<div class="hg-rl hg-canl" data-hgcanrow hidden><b>${esc(t("hg_can_do"))}</b></div>${HERO_GEAR_PIECE_NAMES.map((pc) => `<span class="hg-can" data-hgcan="${esc(troop)}|${esc(pc)}" data-hgcanrow hidden></span>`).join("")}` : ""}</div>
+      <div class="hg-tbl"><span></span>${heads}${row(MF, t("hg_mastery"))}${row(EN, t("hg_enhance"))}</div>
       <div class="hg-next">${nextHtml(troop)}</div>`;
     // "Set all" for this troop: shows the level when all 4 pieces are on it.
     tracksEl.querySelectorAll("select[data-hgsetall]").forEach((sel) => {
@@ -6036,7 +6077,6 @@ async function renderGearLevelingGroup(target) {
         changed();
       });
     });
-    fillHeroGearReach();
   }
   tracksEl.addEventListener("click", (e) => { const b = e.target.closest("[data-hgpc]"); if (b) openHgSheet(b.dataset.hgpc); });
 
@@ -6074,7 +6114,7 @@ async function renderGearLevelingGroup(target) {
     const sec = (tb) => {
       const id = `${troop}|${piece}|${tb}`, { from, to } = cur(troop, piece, tb);
       const chips = tb === EN ? `<div class="hg-msr">${msIdx.map((i) => `<span class="hg-msc ${i <= from ? "r" : i <= to ? "t" : "g"}">${i <= from ? "&#10003; " : ""}E ${esc(lab(EN, i))} · ${msGain(piece, i)}</span>`).join("")}</div>` : "";
-      return `<div class="ch-sec hg-ssec"><div class="ch-sec-h"><b>${esc(trackDisplayName(tb))}</b><span class="rch-slot" data-rch="${esc(id)}"></span></div>${stepper(tb, "from")}${stepper(tb, "to")}<div data-rchbar="${esc(id)}"></div>${chips}</div>`;
+      return `<div class="ch-sec hg-ssec"><div class="ch-sec-h"><b>${esc(trackDisplayName(tb))}</b></div>${stepper(tb, "from")}${stepper(tb, "to")}${chips}</div>`;
     };
     const need = {};
     const cols = [["mithril", "Mithril"], ["mythic_gear", "Mythic Gear"], ["xp_component", "XP Component"], ["essence_stones", "Essence Stones"]];
@@ -6104,7 +6144,6 @@ async function renderGearLevelingGroup(target) {
     };
     wireHoldStep(m.querySelectorAll("[data-hgstep]"), (b) => { const [tb, role, d] = b.dataset.hgstep.split("|"); return stepOnce(tb, role, Number(d)); }, changed);
     fillHeroGearPieceStats();
-    fillHeroGearReach();
   }
   function openHgSheet(piece) {
     const m = gearSheetEl();
@@ -6504,14 +6543,18 @@ const REACH_TROOP_RANK = { Infantry: 0, Marksman: 1, Lancer: 2 };
 // tracks: [{ id, troop ("Infantry" / "Lancer" / "Marksman" / "all" / null), from, to,
 //   cost(i) = items to go from level i-1 to i, gain(i, lv) = { stat: value } at level i
 //   (lv = every track's planned level, for stats that depend on another track) }]
-function reachPlan(tracks, have, mode, rows, conv) {
+// opts.wbase = { item: amount } used in place of have[item] when a step's
+// share of the Backpack is weighed (items mostly paid through a conversion,
+// e.g. research time paid with general speedups).
+function reachPlan(tracks, have, mode, rows, conv, opts) {
+  const wbase = (opts && opts.wbase) || null;
   const left = {};
   Object.keys(have || {}).forEach((k) => { left[k] = Math.max(0, Number(have[k]) || 0); });
   const lv = {};
   tracks.forEach((tr) => { lv[tr.id] = tr.from; });
   const weight = (cost) => {
     let w = 0;
-    Object.keys(cost).forEach((k) => { const q = cost[k]; if (q > 0) { const h = Number(have[k]) || 0; w += h > 0 ? q / h : 1e9; } });
+    Object.keys(cost).forEach((k) => { const q = cost[k]; if (q > 0) { const h = Number(wbase && wbase[k] != null ? wbase[k] : have[k]) || 0; w += h > 0 ? q / h : 1e9; } });
     return w;
   };
   // Choice chests (a Pet Chest opens into 7 Manual, 2
@@ -6571,13 +6614,15 @@ function reachPlan(tracks, have, mode, rows, conv) {
     const reqs = tr.needs ? tr.needs(k) : null;
     return !reqs || reqs.every((req) => req.some((opt) => opt.every(([id, l]) => lvOf(id) >= l)));
   };
+  let chunkTouch = null, chunkDeps = null; // …and the tracks whose levels it read (unlock rules) // items the last chunk() looked at (its cost items and their conversion sources)
   const chunk = (tr, stat) => {
     const cur = lv[tr.id];
     let cum = {}, tmp = new Map(), st = null;
     let best = null;
-    const lvOf = (id) => (tmp.has(id) ? tmp.get(id) : lv[id] != null ? lv[id] : (byId.get(id) || {}).from || 0);
+    const touched = chunkTouch = new Set(), deps = chunkDeps = new Set();
+    const lvOf = (id) => { deps.add(id); return tmp.has(id) ? tmp.get(id) : lv[id] != null ? lv[id] : (byId.get(id) || {}).from || 0; };
     const pay = (c) => {
-      Object.keys(c || {}).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) cum[k] = (cum[k] || 0) + q; });
+      Object.keys(c || {}).forEach((k) => { const q = Number(c[k]) || 0; if (q > 0) { cum[k] = (cum[k] || 0) + q; if (!touched.has(k)) { touched.add(k); (convTo[k] || []).forEach((r) => touched.add(r.from)); } } });
       st = settle(cum);
       return !st.fail;
     };
@@ -6621,7 +6666,7 @@ function reachPlan(tracks, have, mode, rows, conv) {
       tmp.forEach((l, id) => { if (id === tr.id) return; const t2 = byId.get(id); gain += statGain(t2.gain(l, lv) || {}, t2.gain(lv[id], lv) || {}); });
       if (gain > 1e-9) {
         const r = gain / Math.max(weight(st.draw), 1e-12);
-        if (!best || r > best.r) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, st, pre }; }
+        if (!best || r > best.r || (tr.bulk && r >= best.r * (1 - 1e-9))) { const pre = {}; tmp.forEach((l, id) => { if (id !== tr.id) pre[id] = l; }); best = { to: j, r, st, pre }; }
       }
     }
     return best;
@@ -6638,12 +6683,29 @@ function reachPlan(tracks, have, mode, rows, conv) {
     if (rank(tr) !== rank(pt)) return rank(tr) < rank(pt);
     return lv[tr.id] < lv[pt.id];
   };
+  // Each track's best run is kept until something it depends on changes: an item it
+  // pays with (or a source that converts into one), its own level, research of the same
+  // page (unlock rules) or a track of the same piece (grp: stats that depend on each other).
   const run = (list, stat) => {
+    const memo = new Map();
     for (let guard = 0; guard < 20000; guard++) {
       let pick = null, pt = null;
-      list.forEach((tr) => { if (lv[tr.id] >= tr.to) return; const b = chunk(tr, stat); if (b && better(b, tr, pick, pt)) { pick = b; pt = tr; } });
+      list.forEach((tr) => {
+        if (lv[tr.id] >= tr.to) return;
+        let m = memo.get(tr);
+        if (!m) { const b = chunk(tr, stat); m = { b, touch: chunkTouch, deps: chunkDeps }; memo.set(tr, m); }
+        if (m.b && better(m.b, tr, pick, pt)) { pick = m.b; pt = tr; }
+      });
       if (!pick) return;
       take(pt, pick);
+      const items = new Set(), moved = [pt, ...Object.keys(pick.pre || {}).map((id) => byId.get(id)).filter(Boolean)];
+      Object.keys(pick.st.draw).forEach((k) => { if (pick.st.draw[k] > 0) items.add(k); });
+      Object.keys(pick.st.extra).forEach((k) => items.add(k));
+      pick.st.lots.forEach((n, r) => { items.add(r.from); items.add(r.to); });
+      const ids = moved.map((x) => x.id), grps = new Set(moved.map((x) => x.grp).filter(Boolean));
+      memo.forEach((m, tr) => {
+        if (moved.includes(tr) || ids.some((id) => m.deps.has(id)) || (tr.grp && grps.has(tr.grp)) || [...m.touch].some((k) => items.has(k))) memo.delete(tr);
+      });
     }
   };
   const open = tracks.filter((tr) => tr.to > tr.from);
@@ -6698,253 +6760,596 @@ function reachTradeText(list) {
   const n = (v) => Math.round(v).toLocaleString();
   return (list || []).map((x) => `<b>${esc(n(x.give))} ${esc(materialDisplayName(itemShortName(x.from)))}</b> &rarr; <b>${esc(n(x.get))} ${esc(materialDisplayName(itemShortName(x.to)))}</b>`).join(" · ");
 }
-// ---- "Can do now" in the title row ----
-// Admin only, like every "can reach" mark. Each page's reach hook calls
-// canDoSet(key, plan, tracks, unit, opts) instead of drawing a summary card:
-// a small green-edged box beside Max shows the first upgrade the Backpack
-// covers; tapping it opens a sheet with the upgrades, this week's trades,
-// what runs out, My order | Best value and the drag-to-sort upgrade order.
-// opts: { all: key for "Show all troops ›", pic(tr, lv), step(tr, lv), first: true =
-// always name the first piece on the button }.
-const CANDO = {};
 const CANDO_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-function canDoStep(c, tr, lv) { return c.step ? c.step(tr, lv) : `${tr.short ? tr.short + " " : ""}${tr.lab ? tr.lab(tr.from) : tr.from} → ${tr.lab ? tr.lab(lv) : lv}`; }
-function canDoShort(c) {
-  const todo = c.tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => c.plan.lv[tr.id] > tr.from);
-  if (!todo.length) return { txt: t("cando_at_target"), off: true };
-  if (!up.length) return { txt: t("cando_nothing"), off: true };
-  const f = up[0];
-  if ((up.length === 1 || c.first) && f.name) {
-    const step = canDoStep(c, f, c.plan.lv[f.id]), more = up.length > 1 ? ` +${up.length - 1}` : "";
-    // Under 380 px only the level it reaches ("Jacket ★3 +3").
-    return { txt: `${f.name} ${step}${more}`, txtS: `${f.name} ${step.split("→ ").pop()}${more}` };
-  }
-  return { txt: t("rch_all_up").replace("{n}", up.length).replace("{unit}", t(c.unit)) };
-}
-function canDoBtnHtml(key) {
-  const s = canDoShort(CANDO[key]);
-  return `<span class="cando-ic" aria-hidden="true">&#10003;</span><span class="cando-t"><b><span class="cando-l">${esc(t("cg_can_now"))}</span><span class="cando-ls">${esc(t("cando_short"))}</span></b><small${s.off ? ' class="off"' : ""}>${s.txtS ? `<span class="cando-l">${esc(s.txt)}</span><span class="cando-ls">${esc(s.txtS)}</span>` : esc(s.txt)}</small></span><span class="cando-car" aria-hidden="true">&#8250;</span>`;
-}
-function canDoSet(key, plan, tracks, unit, opts) {
-  CANDO[key] = { key, plan, tracks, unit, ...(opts || {}) };
-  const head = content.querySelector(".plx-head");
-  if (head) {
-    let b = head.querySelector(`[data-cando="${key}"]`);
-    if (!b) {
-      b = document.createElement("button");
-      b.type = "button"; b.className = "cando-b"; b.dataset.cando = key;
-      const max = head.querySelector(".plx-labbtn") || head.querySelector(".plx-maxbtn");
-      if (max) head.insertBefore(b, max); else head.appendChild(b);
-      head.classList.add("has-cando");
-    }
-    const html = canDoBtnHtml(key);
-    if (b.innerHTML !== html) b.innerHTML = html;
-    b.title = `${t("cg_can_now")}: ${canDoShort(CANDO[key]).txt}`;
-  }
-  const m = document.getElementById("candoSheet");
-  if (m && m.style.display !== "none" && m.dataset.key === key) canDoDraw(m);
-  canDoRemember(key);
-}
-document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-cando]"); if (b && CANDO[b.dataset.cando]) openCanDoSheet(b.dataset.cando); });
-function canDoDraw(m) {
-  const c = CANDO[m.dataset.key];
-  if (!c) return;
-  const box0 = m.querySelector(".cando-box"), keepTop = box0 ? box0.scrollTop : 0;
-  const { plan } = c;
-  const todo = c.tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => plan.lv[tr.id] > tr.from);
-  const item = plan.first ? materialDisplayName(itemShortName(plan.first)) : "";
-  const leftN = plan.first ? Math.max(0, plan.left[plan.first] || 0) : 0;
-  const fmtLeft = /\(minutes\)$/.test(plan.first || "") ? bsTime(leftN) : Math.floor(leftN).toLocaleString();
-  const upRow = (tr) => {
-    const lv = plan.lv[tr.id], pic = c.pic ? c.pic(tr, lv) : "";
-    const troop = tr.troop && tr.troop !== "all" ? reachTroopKey(tr.troop) : "";
-    const gain = reachGainText(reachTroopGain([tr], plan));
-    const meta = [troop ? `<span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span>` : "", gain ? esc(gain) : "", lv >= tr.to ? `&#10003; ${esc(t("rch_all_done"))}` : ""].filter(Boolean).join(" · ");
-    return `<div class="cando-up">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div><b>${esc(tr.name || "")}</b> <span class="cando-st">${esc(canDoStep(c, tr, lv))}</span>${meta ? `<div class="meta">${meta}</div>` : ""}</div></div>`;
-  };
-  const outLine = item ? `<div class="cando-out">&#9888; ${esc(t("rch_first").replace("{item}", item).replace("{n}", fmtLeft))}</div>` : "";
-  let green;
-  if (!todo.length) green = `<div class="cando-ok">&#10003; ${esc(t("cando_at_target"))}</div>`;
-  else if (!up.length) green = `<div class="cando-none"><b>${esc(t("cg_none_up"))}</b>${outLine}</div>`;
-  else {
-    green = up.slice(0, 3).map(upRow).join("")
-      + (up.length > 3 ? `<div class="meta cando-more">${esc(t("cando_more").replace("{n}", up.length - 3))}</div>` : "")
-      + ((plan.tradeSum || []).length ? `<div class="rch-trades">&#8644; ${esc(t("rch_trades"))} ${reachTradeText(plan.tradeSum)}</div>` : "")
-      + outLine;
-  }
-  const labL = BAR_LAB[c.key];
-  if (labL && todo.length) green += `<div class="rch-trades cando-lab">${esc(t("cando_lab_week").replace("{n}", Math.floor(labL.rfc).toLocaleString()).replace("{m}", Math.round(labL.left).toLocaleString()))}</div>`;
-  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
-  const best = UPGRADE_ORDER.mode === "best";
-  m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cg_can_now"))}">
-    <div class="cando-hd"><b class="has-info">${esc(t("cg_can_now"))}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden><span class="rch-key"><i class="g"></i>${esc(t("rch_key_covers"))}<i class="r"></i>${esc(t("rch_key_left"))}</span></span></b>${closeXHtml("data-cdx")}</div>
-    <div class="meta cando-sub">${esc(t("cando_sub"))}</div>
-    <div class="cando-green">${green}</div>
-    ${todo.length ? `<div class="cando-k">${esc(t("cando_spend"))}</div>
-    <div class="rch-seg cando-seg"><button type="button" data-cdmode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdmode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
-    <div class="meta cando-desc">${esc(t("cando_mode_desc"))}</div>
-    ${best ? `<div class="meta cando-desc cando-bestnote">${esc(t("cando_best_note"))}</div>` : `<div class="cando-oh"><span class="cando-k">${esc(t("cando_order"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
-    <div class="meta cando-desc">${esc(t("cando_drag_hint"))}</div>
-    <div class="cando-ord${best ? " dim" : ""}">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>`}` : ""}
-    <div class="cando-foot">${c.all ? `<button type="button" class="btn ghost cando-all" data-rchall="${esc(c.all)}" data-cdall>${esc(t("cando_show_all"))}</button>` : ""}<button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
-  </div>`;
-  const box = m.querySelector(".cando-box");
-  if (keepTop) box.scrollTop = keepTop;
-  // Drag ⋮⋮ to change the order (saved at once; the page's marks follow).
-  m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
-    row: "[data-cdrow]",
-    done: () => {
-      const old = UPGRADE_ORDER.rows;
-      UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-cdrow]")].map((x) => old[Number(x.dataset.cdrow)]);
-      canDoRerun(m);
-    },
-    refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
-  }));
-}
-// Saves the order and works the page's marks (and this sheet, through canDoSet) out again.
-function canDoRerun(m) {
-  saveUpgradeOrder();
-  const key = m.dataset.key;
-  if (REACH_HOOKS[key]) { try { REACH_HOOKS[key](); } catch (e) { console.warn("reach", e); } }
-  canDoDraw(m);
-}
-function openCanDoSheet(key) {
-  let m = document.getElementById("candoSheet");
-  if (!m) { m = document.createElement("div"); m.id = "candoSheet"; m.className = "modal-overlay adm-sheet-wrap cando-ov"; document.body.appendChild(m); }
-  m.dataset.key = key;
-  canDoDraw(m);
-  m.style.display = "flex";
-  m.onclick = (ev) => {
-    if (ev.target === m || ev.target.closest("[data-cdx]") || ev.target.closest("[data-cdall]")) { m.style.display = "none"; return; }
-    const md = ev.target.closest("[data-cdmode]");
-    if (md) { if (UPGRADE_ORDER.mode !== md.dataset.cdmode) { UPGRADE_ORDER.mode = md.dataset.cdmode; canDoRerun(m); } return; }
-    if (ev.target.closest("[data-cdreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); canDoRerun(m); }
-  };
-}
 // ---- "Can do now" page (owner only: render() sends visitors to the Dashboard) ----
-// One card per planner page with its "Can do now" answer. Each page's plan
-// needs the page's own data, targets and Backpack boxes, so it is worked out
-// when the page is drawn; canDoSet keeps a short copy of it (both My order
-// and Best value) in this browser (localStorage cando_last_v1, per account),
-// and this page shows those copies with the time they were made.
-const CANDO_PAGES = [["chief_gear", "chiefgear"], ["charm", "charmscalc"], ["hero_gear", "herogearcalc"], ["pets", "petsdata"], ["t12_research", "t12research"], ["experts", "expertspage"]];
-const CANDO_LAST_KEY = "cando_last_v1";
-const CANDO_REMEMBER_T = {};
-function canDoLastLoad() {
-  try {
-    const v = JSON.parse(localStorage.getItem(CANDO_LAST_KEY) || "null");
-    return v && v.user === USER_ID && v.pages && typeof v.pages === "object" ? v.pages : {};
-  } catch (e) { return {}; }
+// Design N2 (owner, 10 Nov 2026). The page works every planner page out itself, fresh,
+// without the person opening them: each page's builder loads its data through the
+// page's own loaders and returns its tracks (a piece / node / level from Now to the
+// Target) and what its Backpack boxes count (cdaBarHave: the same amounts, chests and
+// trades as the page's "Backpack" card). Then ONE plan runs over the ticked pages'
+// tracks with one shared Backpack (an item is never spent twice), in My order or Best
+// value (UPGRADE_ORDER). Pages can be ticked off and single upgrades left out (calc_state
+// "cando_pages" = { off: [page keys], skip: [track ids] }); "Include this week's packs"
+// adds the items of this week's bought / will-buy packs (My Purchases).
+const CDA_RT = "Research Speedups (minutes)", CDA_ET = "Expert Speedups (minutes)";
+// Sums each track's steps from Now to the Target (the page's "still needed").
+function cdaNeed(tracks) {
+  const need = {};
+  tracks.forEach((tr) => { for (let i = tr.from + 1; i <= tr.to; i++) Object.entries(tr.cost(i) || {}).forEach(([k, v]) => { if (v > 0) need[k] = (need[k] || 0) + v; }); });
+  return need;
 }
-function canDoSummary(c) {
-  const s = canDoShort(c), todo = c.tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => c.plan.lv[tr.id] > tr.from);
-  return {
-    txt: s.txt, st: !todo.length ? "done" : !up.length ? "none" : "up",
-    trades: (c.plan.tradeSum || []).length > 0, first: c.plan.first || null,
-    steps: up.length,
-    // Every upgrade the Backpack covers, written the way the page's sheet writes it.
-    list: up.map((tr) => {
-      const lv = c.plan.lv[tr.id];
-      let pic = "";
-      try { pic = c.pic ? c.pic(tr, lv) || "" : ""; } catch (e) { pic = ""; }
-      return { n: tr.name || "", st: canDoStep(c, tr, lv), pic, troop: tr.troop && tr.troop !== "all" ? reachTroopKey(tr.troop) : "", gain: reachGainText(reachTroopGain([tr], c.plan)), done: lv >= tr.to };
-    }),
-    tradeSum: (c.plan.tradeSum || []).map((x) => ({ from: x.from, to: x.to, give: x.give, get: x.get })),
-    left: c.plan.first ? Math.max(0, Number(c.plan.left[c.plan.first]) || 0) : 0,
-  };
+// What a page's Backpack boxes count, worked out the way its bar does (renderChiefGearResourcesBar).
+async function cdaBarHave(calcKey, need) {
+  const [owned0, link] = await Promise.all([ensureMaterialOwnedCache(calcKey), backpackLinkState(), ensureTradeRates()]);
+  const owned = { ...owned0 };
+  backpackShownChests(calcKey, link).forEach((n) => { if (owned[n] == null) owned[n] = backpackAmountFor(n, link.bp); });
+  const hiddenRates = tradeRatesFor(calcKey).filter((r) => r.hidden || ((!(r.max > 0) || r.from === "Fire Crystal") && TRADE_APPLY[calcKey] !== false));
+  hiddenRates.__calcKey = calcKey;
+  const calcOwned = ownedWithChests(calcKey, owned, link);
+  const hiddenTrades = hiddenRates.length ? applyTrades(hiddenRates, need || {}, calcOwned, 1).trades : [];
+  return reachHaveConv(calcKey, calcOwned, hiddenRates, hiddenTrades);
 }
-const CANDO_PAGE_OPEN = new Set(); // cards opened on the Can do now page (for the visit)
-// Called by canDoSet (a moment later, so quick changes save once).
-function canDoRemember(key) {
-  if (!CANDO_PAGES.some(([k]) => k === key)) return;
-  clearTimeout(CANDO_REMEMBER_T[key]);
-  CANDO_REMEMBER_T[key] = setTimeout(() => {
-    const c = CANDO[key];
-    if (!c || !c.have || !USER_ID) return;
-    const mode = UPGRADE_ORDER.mode === "best" ? "best" : "order", other = mode === "best" ? "order" : "best";
-    const rec = { at: Date.now(), [mode]: canDoSummary(c) };
-    try { rec[other] = canDoSummary({ ...c, plan: reachPlan(c.allTracks || c.tracks, c.have, other, UPGRADE_ORDER.rows, c.conv) }); } catch (e) { console.warn("cando", e); }
-    const pages = canDoLastLoad();
-    pages[key] = rec;
-    try { localStorage.setItem(CANDO_LAST_KEY, JSON.stringify({ user: USER_ID, pages })); } catch (e) { /* storage full / blocked: the page shows "not worked out" */ }
-  }, 500);
+// Track ids made unique per page; gain / needs keep reading their own ids.
+function cdaPrefix(tracks, p) {
+  const views = new WeakMap();
+  const view = (lv) => { let v = views.get(lv); if (!v) { v = new Proxy({}, { get: (_, k) => lv[p + String(k)] }); views.set(lv, v); } return v; };
+  // Steps' costs, unlock needs and (for tracks whose stats don't read other tracks) gains
+  // are worked out once: the plan asks for the same step many times.
+  return tracks.map((tr) => {
+    const cc = new Map(), gc = new Map(), nc = new Map();
+    return { ...tr, raw: tr.id, id: p + tr.id, page: p.slice(0, -2),
+      cost: (i) => { let v = cc.get(i); if (v === undefined) { v = tr.cost(i) || {}; cc.set(i, v); } return v; },
+      gain: tr.grp ? (i, lv) => tr.gain(i, lv ? view(lv) : lv) : (i) => { let v = gc.get(i); if (v === undefined) { v = tr.gain(i, {}) || {}; gc.set(i, v); } return v; },
+      needs: tr.needs ? (lv) => { if (nc.has(lv)) return nc.get(lv); const r = tr.needs(lv), v = r ? r.map((req) => req.map((opt) => opt.map(([id, l]) => [p + id, l]))) : r; nc.set(lv, v); return v; } : undefined };
+  });
 }
-function canDoAgo(at) {
-  const m = Math.floor((Date.now() - (Number(at) || 0)) / 60000);
-  if (m < 1) return t("cdp_now");
-  if (m < 60) return t("cdp_min").replace("{n}", m);
-  if (m < 48 * 60) return t("cdp_h").replace("{n}", Math.floor(m / 60));
-  return t("cdp_d").replace("{n}", Math.floor(m / 1440));
+// Islands / Skin Gallery: a bonus type ("Infantry Attack", "Troops Attack", "Attack") as troop + stat.
+function cdaBonusStat(type) {
+  const m = /^\s*(Infantry|Lancers?|Marksman)\s+(Attack|Defense|Lethality|Health)\s*$/i.exec(String(type || ""));
+  if (m) return { troop: reachTroopKey(m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()), stat: m[2][0].toUpperCase() + m[2].slice(1).toLowerCase() };
+  const k = bonusStatKey(type);
+  return /^(Attack|Defense|Lethality|Health)$/.test(k) ? { troop: "all", stat: k } : null;
 }
-function canDoItemIcon(n) {
-  try { return materialIconSrc(n) || bpIcon({ name: n }) || ""; } catch (e) { return ""; }
+// ---- Track builders (one per page) ----
+// Chief Gear: the 6 pieces, ATK & DEF per piece (set bonus not counted).
+function chiefGearReachTracks(rows) {
+  const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
+  return CHIEF_GEAR_PIECES.map((p) => {
+    const st = CHIEF_GEAR_STATE[p.key], from = Math.min(st.from, rows.length - 1);
+    return { id: p.key, troop: p.troop, from, to: Math.max(from, Math.min(st.to == null ? from : st.to, rows.length - 1)),
+      name: pieceDisplayName(p.name), lab: (i) => cgBadge(rows[i]),
+      cost: (i) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(rows[i] && rows[i][col]) || 0; if (v) c[lab] = v; }); return c; },
+      gain: (i) => { const v = parseStatPct(rows[i] && rows[i].stat) || 0; return { Attack: v, Defense: v }; } };
+  });
+}
+// Chief Charm: all 18 charms, LETH & HP.
+function charmReachTracks() {
+  const tracks = [];
+  CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st, slot) => {
+    const from = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), to = Math.max(from, CHARM_LEVELS.indexOf(String(st.target)));
+    tracks.push({ id: `${p.key}|${slot}`, troop: p.troop, from, to, name: `${pieceDisplayName(p.name)} ${slot + 1}`, lab: (i) => String(CHARM_LEVELS[i]),
+      cost: (i) => { const c = CHARM_STEP_COST[CHARM_LEVELS[i]] || [0, 0, 0]; return { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }; },
+      gain: (i) => { const v = charmStatAt(CHARM_LEVELS[i]); return { Lethality: v, Health: v }; } });
+  }));
+  return tracks;
+}
+const CDA_PAGES = [
+  { key: "chief_gear", tab: "chiefgear", unit: "rch_u_pieces", async build() {
+    const rows = await loadChiefGearRows();
+    if (!rows.length) return null;
+    const tracks = chiefGearReachTracks(rows);
+    return { tracks, bar: "chief_gear", pic: (tr) => chiefGearIcon(tr.raw, tr.from),
+      step: (tr, lv) => (rows[lv] && rows[tr.from] && rows[lv].tier === rows[tr.from].tier ? `${cgStars(rows[tr.from])} → ${cgStars(rows[lv])}` : `${cgBadge(rows[tr.from])} → ${cgBadge(rows[lv])}`) };
+  } },
+  { key: "charm", tab: "charmscalc", unit: "rch_u_charms", async build() {
+    await Promise.all([ensureCharmData(), ensureCharmLevelsData()]);
+    return { tracks: charmReachTracks(), bar: "charm", pic: (tr, lv) => charmIconSrc(tr.troop, CHARM_LEVELS[lv]) };
+  } },
+  { key: "hero_gear", tab: "herogearcalc", unit: "rch_u_tracks", async build() {
+    await ensureHeroGearData();
+    if (!HERO_GEAR_TABLES_CACHE) return null;
+    const tracks = heroGearReachTracks(HERO_GEAR_SETS["Set 1"]);
+    return tracks.length ? { tracks, bar: "hero_gear" } : null;
+  } },
+  { key: "pets", tab: "petsdata", unit: "rch_u_pets", async build() {
+    await ensurePetsData();
+    const tracks = Object.keys(PETS_NODES_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet) && isPetUnlocked(pet)).map((pet) => {
+      const levels = PETS_NODES_CACHE[pet] || [], s = PETS_STATE && PETS_STATE[pet];
+      const { from, to } = s && typeof s === "object" ? s : { from: -1, to: IS_OWNER ? petMaxIdx(pet) : -1 };
+      const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
+      const lab = (i) => { if (i < 0 || !levels[i]) return "0"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
+      return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)), name: dataName(pet), lab,
+        cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
+        gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
+    });
+    return { tracks, bar: "pets", pic: (tr) => petImage(tr.raw) };
+  } },
+  { key: "t12_research", tab: "t12research", unit: "rch_u_nodes", async build() {
+    await Promise.all([ensureT12NodesData(), ensureT12StateData(), ensureResearchSpeedData(), ensureRfcLabRate().catch(() => {})]);
+    if (!T12_TARGET) T12_TARGET = (await loadCalcState("t12_research_target")) || {};
+    const tracks = [], lockNodes = researchLockNodes("t12");
+    T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.forEach((def) => {
+      const from = T12_STATE[troop][def.key] || 0, tierRows = T12_NODES_CACHE[def.tier] || {};
+      tracks.push({ id: `${troop}|${def.key}`, troop, key: def.key, from, to: Math.max(from, t12TargetOf(troop, def)), name: def.group === def.label ? tT12Group(def.group) : `${tT12Group(def.group)} · ${tT12Label(def.label)}`, lab: (i) => String(i),
+        needs: (lv) => researchNeedsOf("t12", lockNodes, def.key, lv, (k) => `${troop}|${k}`),
+        cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [CDA_RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+        gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
+    }));
+    return { tracks, bar: "t12_research", general: CDA_RT };
+  } },
+  { key: "t11_helios", tab: "t11helios", unit: "rch_u_nodes", async build() {
+    await Promise.all([ensureT11StateData(), ensureResearchSpeedData()]);
+    const tracks = [], lockNodes = researchLockNodes("t11");
+    T11_TROOPS.forEach((troop) => Object.entries((T11_NODES_CACHE && T11_NODES_CACHE[troop]) || {}).forEach(([track, rows0]) => {
+      const rows = rows0.slice().sort((a, b) => Number(a.level) - Number(b.level)), at = new Map(rows.map((r) => [Number(r.level), r]));
+      const cum = [{}];
+      for (let lv = 1; lv <= rows.length; lv++) { const o = { ...cum[lv - 1] }, r = at.get(lv); if (r && r.stat) o[r.stat] = (o[r.stat] || 0) + (Number(r.stat_pct) || 0); cum.push(o); }
+      const from = Number(T11_STATE[troop] && T11_STATE[troop][track]) || 0, key = track.split(troop).join("{troop}");
+      tracks.push({ id: `${troop}|${track}`, troop, key, from, to: Math.max(from, t11TargetOf(troop, track, rows.length)), name: dataName(track), lab: (i) => String(i),
+        needs: (lv) => researchNeedsOf("t11", lockNodes, key, lv, (k) => `${troop}|${k.split("{troop}").join(troop)}`),
+        cost: (lv) => { const r = at.get(lv) || {}; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: Number(r.meat) || 0, Wood: Number(r.wood) || 0, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [CDA_RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+        gain: (lv) => cum[Math.max(0, Math.min(lv, cum.length - 1))] });
+    }));
+    return { tracks, bar: "t11_helios", general: CDA_RT };
+  } },
+  { key: "research_center", tab: "researchcenter", unit: "rch_u_nodes", async build() {
+    await Promise.all([ensureRCData(), ensureResearchSpeedData()]);
+    if (!RC_TARGET) RC_TARGET = (await loadCalcState("research_center_target")) || {};
+    const troopOf = {};
+    Object.entries(RC_BASE_CATEGORIES).forEach(([cat, list]) => list.forEach((b) => { troopOf[b] = cat === "Shared" ? "all" : cat; }));
+    const tracks = [], lockNodes = researchLockNodes("rc");
+    RC_TIERS.forEach((tier) => Object.values(RC_BASE_CATEGORIES).forEach((list) => list.forEach((base) => {
+      const track = `${base} ${tier}`, rows = (RC_NODES_CACHE[track] || []).slice().sort((a, b) => Number(a.level) - Number(b.level));
+      if (!rows.length || tracks.some((x) => x.id === track)) return;
+      const at = new Map(rows.map((r) => [Number(r.level), r])), cum = [{}];
+      for (let lv = 1; lv <= rows.length; lv++) { const o = { ...cum[lv - 1] }, r = at.get(lv); if (r && r.stat) o[r.stat] = (o[r.stat] || 0) + (Number(r.stat_pct) || 0); cum.push(o); }
+      const from = Number(RC_STATE[track]) || 0;
+      tracks.push({ id: track, troop: troopOf[base] || "all", key: track, from, to: Math.max(from, rcTargetOf(track)), name: `${dataName(base)} ${tier}`, lab: (i) => String(i),
+        needs: (lv) => researchNeedsOf("rc", lockNodes, track, lv, (k) => k),
+        cost: (lv) => { const r = at.get(lv) || {}; return { Meat: Number(r.meat) || 0, Wood: Number(r.wood) || 0, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, Steel: Number(r.steel) || 0, [CDA_RT]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
+        gain: (lv) => cum[Math.max(0, Math.min(lv, cum.length - 1))] });
+    })));
+    return { tracks, bar: "research_center", general: CDA_RT };
+  } },
+  { key: "pets_refine", tab: "refinepage", unit: "cda_u_stats", async build() {
+    // Small steps of 0.5% per pet and stat, each priced in Common Marks at its stage's rate
+    // (with the page's adjustment), the way the page counts marks.
+    await Promise.all([ensurePetsData(), ensurePetMarksState()]);
+    const rates = PET_MARKS_STATE.rates, adj = 1 + (PET_MARKS_STATE.adjust || 0) / 100;
+    const pct1 = (raw) => Math.round(Number(raw) * 10000) / 100;
+    const KEYS = [["il", "infantry_lethality_pct", "Infantry", "Lethality"], ["ih", "infantry_health_pct", "Infantry", "Health"], ["ll", "lancer_lethality_pct", "Lancer", "Lethality"], ["lh", "lancer_health_pct", "Lancer", "Health"], ["ml", "marksman_lethality_pct", "Marksman", "Lethality"], ["mh", "marksman_health_pct", "Marksman", "Health"]];
+    const STEP = 0.5, tracks = [];
+    Object.keys(PET_REFINE_CACHE || {}).filter((pet) => !hiddenForVisitor("pets", pet) && isPetUnlocked(pet)).forEach((pet) => {
+      const rows = PET_REFINE_CACHE[pet] || [], top = rows[Math.max(0, releasedLastIdx("pet_refine_nodes", rows))] || {};
+      const s = (PET_REFINE_TYPED_STATE && PET_REFINE_TYPED_STATE[pet]) || {};
+      KEYS.forEach(([k, maxKey, troop, stat]) => {
+        const cap = pct1(top[maxKey]), cur = Math.min(Number(s[k]) || 0, cap);
+        const n = Math.max(0, Math.ceil((cap - cur) / STEP - 1e-6));
+        if (!n) return;
+        const val = (i) => Math.min(cap, cur + i * STEP);
+        const marks = (lo, hi) => { let m = 0, prev = 0; rows.forEach((r) => { const sm = pct1(r[maxKey]), a = Math.max(prev, lo), b = Math.min(sm, hi); if (b > a) m += (b - a) * (Number(rates[r.stage]) || 0); prev = Math.max(prev, sm); }); return m * adj; };
+        tracks.push({ id: `${pet}|${k}`, troop, bulk: true, from: 0, to: n, name: `${dataName(pet)} · ${troopDisplayName(troop)} ${tStatLabel(stat)}`, lab: (i) => `${Number(val(i).toFixed(2))}%`,
+          cost: (i) => ({ "Common Marks": marks(val(i - 1), val(i)) }), gain: (i) => ({ [stat]: val(i) }) });
+      });
+    });
+    return { tracks, bar: "pets_refine", pic: (tr) => petImage(tr.raw.split("|")[0]), step: (tr, lv) => `${tr.lab(tr.from)} → ${tr.lab(lv)}` };
+  } },
+  { key: "experts", tab: "expertspage", unit: "rch_u_experts", async build() {
+    // Levels (Affinity + the expert's Sigils, General Sigils for any expert) and skills
+    // (Books + expert speedups, general speedups too). Banked EXP / Affinity come off first.
+    const [, , loaded, unl, inv0, skillRows, affinityRows] = await Promise.all([ensureExpertsRosterGlobal(), ensureUiVisibility(), loadCalcState("experts"), loadCalcState("experts_unlocked"), loadCalcState("experts_inventory"), loadExpertNodes("skill"), loadExpertNodes("affinity")]);
+    const inv = { ...(inv0 || {}) };
+    await expertsInventoryWithBackpack(inv);
+    const saved = JSON.parse(JSON.stringify(renameExpertSkills(loaded || {})));
+    const kit = expertKit(skillRows, affinityRows, saved), unlocked = unl || {};
+    const shown = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
+    shown.forEach((e) => {
+      if (!saved[e.key]) saved[e.key] = { current: 0, desired: IS_OWNER ? kit.heroMaxLevelValue(e.key) : 0, skills: {} };
+      e.skills.forEach((sk) => { if (!saved[e.key].skills[sk]) saved[e.key].skills[sk] = { current: 0, desired: IS_OWNER ? kit.skillMaxLevel(e.key, sk) : 0 }; });
+    });
+    if (!saved.__advLevels) shown.forEach((e) => ["current", "desired"].forEach((k) => { const v = Number(saved[e.key][k]) || 0; if (v > 0 && v === Math.floor(v) && kit.heroSigilLevel(e.key, v)) saved[e.key][k] = v + 0.1; }));
+    const AFF = "Affinity", BOOKS = "Books of Knowledge";
+    const have = { [AFF]: affinityOwnedFrom(inv), [BOOKS]: Number(inv[BOOKS]) || 0, [CDA_ET]: Number(inv[CDA_ET]) || 0, [GENERAL_SPEEDUP_KEY]: Number(inv[GENERAL_SPEEDUP_KEY]) || 0, "General Sigils": Number(inv["General Sigils"]) || 0 };
+    const conv = [{ from: GENERAL_SPEEDUP_KEY, to: CDA_ET, give: 1, get: 1, max: 0 }];
+    const tracks = [];
+    shown.filter((e) => unlockedFor("experts", e.key, unlocked[e.key])).forEach((e) => {
+      const hs = saved[e.key], hero = e.key, SIG = `${hero} Sigils`;
+      have[SIG] = Number(inv[SIG]) || 0;
+      conv.push({ from: "General Sigils", to: SIG, give: 1, get: 1, max: 0 });
+      const pos = [];
+      for (let n = 0; n <= kit.heroTopLevel(hero); n++) { pos.push(n); if (n > 0 && kit.heroSigilLevel(hero, n)) pos.push(n + 0.1); }
+      const idxOf = (v) => { const k = pos.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
+      const from = idxOf(hs.current), to = Math.max(from, idxOf(hs.desired)), banked = kit.heroAffinityHave(hero);
+      const cum = (i) => { const c = kit.heroCost(hero, pos[from], pos[i]); return { a: Math.max(0, c.affinity - banked), s: c.sigil }; };
+      const rows = kit.AFFINITY_CACHE[hero] || [];
+      const statAt = (v) => { const x = expertLevelStat(rows, v), o = {}; if (x && x.row.stat_type) x.row.stat_type.split(",").forEach((k) => { o[k.trim()] = x.v; }); return o; };
+      const lvLab = (v) => { const n = Number(v) || 0; return n % 1 ? n.toFixed(1) : String(n); };
+      tracks.push({ id: `exp|${hero}`, troop: "all", from, to, name: e.name || dataName(hero), img: e.img, lab: (i) => lvLab(pos[i]),
+        cost: (i) => { const a = cum(i), b = cum(i - 1); return { [AFF]: a.a - b.a, [SIG]: a.s - b.s }; },
+        gain: (i) => statAt(pos[i]) });
+      e.skills.forEach((sk) => {
+        const st = hs.skills[sk], sr = kit.SKILL_CACHE[`${hero}|${sk}`] || [], bankedExp = kit.skillExpHave(st);
+        const cumS = (lv) => { const c = kit.skillCost(hero, sk, st.current, lv); return { b: c.book, t: Math.max(0, c.exp - bankedExp) / 60 }; };
+        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, name: `${e.name || dataName(hero)} · ${dataName(sk)}`, img: e.img, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
+          cost: (lv) => { const a = cumS(lv), b = cumS(lv - 1); return { [BOOKS]: a.b - b.b, [CDA_ET]: a.t - b.t }; },
+          gain: () => ({}) });
+      });
+    });
+    return { tracks, have, conv, pic: (tr) => tr.img || "" };
+  } },
+  { key: "experts_research", tab: "expertsresearchpage", unit: "cda_u_paths", async build() {
+    // Every counted expert's paths; sigils shared with Experts Level, General Sigils for any.
+    const [, , st0, un0, inv0] = await Promise.all([ensureExpertsResearchDataGlobal(), ensureUiVisibility(), loadCalcState("experts_research"), loadCalcState("experts_research_unlocked"), loadCalcState("experts_inventory")]);
+    const inv = { ...(inv0 || {}) };
+    await expertsInventoryWithBackpack(inv);
+    const saved = st0 || {}, unl = un0 || {}, have = { "General Sigils": Number(inv["General Sigils"]) || 0 }, conv = [], tracks = [];
+    const RAW = { ATK: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
+    const imgOf = (k) => (EXPERTS_LIST.find((e) => e.key === k) || {}).img || "";
+    EXPERTS_IN_ORDER_GLOBAL.filter((e) => !hiddenForVisitor("experts", e) && unlockedFor("experts", e, unl[e])).forEach((expert) => {
+      const SIG = `${expert} Sigils`, troop = expertTroopKey(expert);
+      have[SIG] = Number(inv[SIG]) || 0;
+      conv.push({ from: "General Sigils", to: SIG, give: 1, get: 1, max: 0 });
+      expertsResearchPathNumbersGlobal(expert).forEach((p) => {
+        const prow = ((EXPERTS_RESEARCH_NODES_GLOBAL[expert] || {})[p] || []).slice().sort((a, b) => Number(a.level) - Number(b.level));
+        const ri = releasedLastIdx("expert_research_nodes", prow), top = ri >= prow.length - 1 ? 200 : ri < 0 ? 0 : Number(prow[ri].level) || 0;
+        const s = (saved[expert] || {})[p] || { current: 0, desired: 0 }, from = Math.max(0, Number(s.current) || 0);
+        const to = Math.max(from, Math.min(Number(s.desired) || 0, top));
+        if (!(to > from)) return;
+        const cost = [0], gains = [];
+        for (let lv = 1; lv <= to; lv++) cost.push(lv > from ? expertPathSigils(prow, lv - 1, lv) : 0);
+        const gainAt = (lv) => { if (gains[lv]) return gains[lv]; const g = {}; Object.entries(expertsResearchPathCostGlobal(expert, p, 0, lv)).forEach(([k, v]) => { if (RAW[k] && v) g[RAW[k]] = v; }); return (gains[lv] = g); };
+        const pname = (prow.find((r) => r.path_name) || {}).path_name;
+        tracks.push({ id: `${expert}|${p}`, troop: troop ? reachTroopKey(troop) : "all", from, to, name: `${dataName(expert)} · ${pname ? dataName(pname) : t("cda_path").replace("{n}", p)}`, img: imgOf(expert), lab: (i) => String(i),
+          cost: (lv) => ({ [SIG]: cost[lv] || 0 }), gain: gainAt });
+      });
+    });
+    return { tracks, have, conv, pic: (tr) => tr.img || "" };
+  } },
+  { key: "islands", tab: "islandgallery", unit: "cda_u_buildings", async build() {
+    // Backpack only: Mythic Island Shards, Life Essence (60,000 = 10 shards), Mark of Revival and
+    // Glorious Tomes for the buildings in those shops, Life Essence for the Islands Guide shop;
+    // Storehouse copies count. No daily income, no event / ranked buildings.
+    const [cats, isl0, bp0] = await Promise.all([islandCatRows(), loadCalcState("island_shards").catch(() => null), loadCalcState("backpack").catch(() => null), islLoadPacks().catch(() => null)]);
+    const catList = cats.length ? cats.map((c) => c.category) : ["Island"];
+    const rows = await keptRows("skins", `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`);
+    const isl = { ...islDefault(), ...(isl0 && typeof isl0 === "object" ? isl0 : {}) }, bp = bp0 || {};
+    const have = { "Mythic Island Shards": Number(bp["Mythic Island Shards"]) || 0, "Life Essence": Number(bp["Life Essence"]) || 0, "Mark of Revival": Number(bp["Mark of Revival"]) || 0, "Glorious Tome": shiningTomesIn(bp) };
+    const pc = Number(ISL_RULES.perCopy) || 10, eps = islEssencePerShard(), conv = [], tracks = [];
+    const SLOTS = [["bonus_type", "bonus_value", "bonus_level1"], ["bonus_type2", "bonus_value2", "bonus_level2"], ["bonus_type3", "bonus_value3", "bonus_level3"], ["bonus_type4", "bonus_value4", "bonus_level4"]];
+    rows.forEach((s) => {
+      if (!islCatTracked(s.category) || ISL_SKIP_NAMES.includes(s.name)) return;
+      const src0 = islSource(s.name, islIsMythic(s)), src = s.category === ISL_SHOP_CAT || !src0.price ? src0 : { ...src0, price: 0 };
+      if (src.kind !== "shop") return;
+      const mx = s.max_level ?? 10, from = s.owned ? Number(s.current_level) || 0 : 0;
+      const v = Number((isl.targets || {})[s.id]), to = Math.max(Math.max(1, from), Math.min(mx, Number.isFinite(v) && v > 0 ? v : mx));
+      const ess = src.price > 0, shards = !ess;
+      if (shards && from < 1) return; // Lv 1 of a shard building comes from elsewhere
+      if (!(to > from)) return;
+      const CP = `isl:${s.id}`;
+      have[CP] = Math.max(0, Math.floor(Number((isl.store || {})[s.id]) || 0));
+      if (ess) conv.push({ from: "Life Essence", to: CP, give: src.price, get: 1, max: Number(ISL_RULES.copyLimit) || 0 });
+      else {
+        conv.push({ from: "Mythic Island Shards", to: CP, give: pc, get: 1, max: 0 }, { from: "Life Essence", to: CP, give: pc * eps, get: 1, max: 0 });
+        if (islShopPickable(s) && src.marks) conv.push({ from: "Mark of Revival", to: CP, give: src.markPrice, get: 1, max: src.markLimit });
+        if (islShopPickable(s) && src.shining) conv.push({ from: "Glorious Tome", to: CP, give: Number(ISL_RULES.tomePrice) || 600, get: 1, max: Number(ISL_RULES.tomeMax) || 0 });
+      }
+      const sts = SLOTS.filter(([tk, vk]) => s[tk] && s[vk] != null).map(([tk, vk, lk]) => ({ bs: cdaBonusStat(s[tk]), full: Number(s[vk]), unlock: s[lk] })).filter((x) => x.bs);
+      const troops = [...new Set(sts.map((x) => x.bs.troop))];
+      tracks.push({ id: String(s.id), troop: troops.length === 1 ? troops[0] : "all", from, to, name: dataName(s.name), img: s.image_url || "", lab: (i) => String(i), alias: ess ? "Life Essence" : "Mythic Island Shards",
+        cost: (l) => ({ [CP]: l === 1 ? (ess ? 1 : 0) : islCopiesAt(l, src.each) }),
+        gain: (l) => { const o = {}; sts.forEach((x) => { const val = !l || !mx ? 0 : x.unlock != null ? (l >= x.unlock ? x.full : 0) : (x.full * l) / mx; o[x.bs.stat] = (o[x.bs.stat] || 0) + val; }); return o; } });
+    });
+    return { tracks, have, conv, pic: (tr) => tr.img };
+  } },
+  { key: "shining_skins", tab: "skingallery", unit: "cda_u_skins", async build() {
+    // The picked Shining City skins not owned yet, 10,000 Glorious Tomes each (Lucky Glorious
+    // Tome Chests at their average); shares the tomes with the Islands' Shining City shop.
+    const [saved, skins, bp] = await Promise.all([IS_OWNER ? null : loadCalcState("shining_skins").catch(() => null), keptRows("skins", skinGalleryPath()).catch(() => []), loadCalcState("backpack").catch(() => null)]);
+    const per = shiningTomesPer();
+    const tracks = shiningPicked(shiningSkinsListOf(saved), skins || []).filter((s) => !s.owned).map((s) => {
+      const g = {};
+      [["bonus_type", "bonus_value"], ["bonus_type2", "bonus_value2"], ["bonus_type3", "bonus_value3"], ["bonus_type4", "bonus_value4"]].forEach(([tk, vk]) => { const bs = cdaBonusStat(s[tk]); if (bs && s[vk] != null) g[bs.stat] = (g[bs.stat] || 0) + (Number(s[vk]) || 0); });
+      return { id: String(s.id), troop: "all", from: 0, to: 1, name: dataName(s.name), img: s.image_url || "", lab: (i) => (i ? t("cda_owned") : "—"),
+        cost: () => ({ "Glorious Tome": per }), gain: (i) => (i ? g : {}) };
+    });
+    return { tracks, have: { "Glorious Tome": shiningTomesIn(bp || {}) }, conv: [], pic: (tr) => tr.img, step: () => t("cda_buy_skin") };
+  } },
+];
+// Builds one page: its tracks (ids "<page>::<id>") and Backpack (have / conv).
+async function cdaBuildPage(pg) {
+  const r = await pg.build();
+  if (!r) return { none: true };
+  const tracks = cdaPrefix(r.tracks || [], `${pg.key}::`);
+  let have = r.have, conv = r.conv || [];
+  if (r.bar) {
+    const b = await cdaBarHave(r.bar, cdaNeed(r.tracks || []));
+    have = b.have; conv = b.conv;
+    if (r.general) {
+      // Research time is paid with research speedups first, then the shared general speedups.
+      have = { ...have, [GENERAL_SPEEDUP_KEY]: Number(RESEARCH_SPEEDUP_MINUTES) || 0 };
+      conv = conv.concat([{ from: GENERAL_SPEEDUP_KEY, to: r.general, give: 1, get: 1, max: 0 }]);
+    }
+  }
+  return { tracks, have: have || {}, conv, pic: r.pic, step: r.step };
+}
+let CDA_BUILT = null;   // { key: { tracks, have, conv, pic, step } | { none } | { err } } for this visit of the page
+let CDA_LOADED = 0;
+let CDA_SET = null;     // { off: Set, skip: Set, packs }
+const CDA_OPEN = new Set(); // cards opened (for the visit)
+let CDA_NOTE = null;    // { page, html }: where the items of an upgrade left out went
+let CDA_PLAN_MEMO = null;
+async function cdaLoadSettings() {
+  if (CDA_SET) return CDA_SET;
+  const v = (await loadCalcState("cando_pages").catch(() => null)) || {};
+  CDA_SET = { off: new Set(Array.isArray(v.off) ? v.off : []), skip: new Set(Array.isArray(v.skip) ? v.skip : []), packs: v.packs === true };
+  return CDA_SET;
+}
+function cdaSaveSettings() {
+  CDA_PLAN_MEMO = null;
+  saveCalcState("cando_pages", { off: [...CDA_SET.off], skip: [...CDA_SET.skip], packs: CDA_SET.packs });
+}
+// This week's packs (My Purchases): bought or will buy, dated Monday – Sunday of the game week.
+async function cdaWeekPacks() {
+  await ensurePackLinks();
+  const tables = await ensurePackTables().catch(() => null);
+  const list = (tables && tables.tables) || tables || [];
+  const today = packStartOfToday(), mon = new Date(today.getTime() - ((today.getUTCDay() + 6) % 7) * 86400000), sun = new Date(mon.getTime() + 6 * 86400000);
+  const lo = packDayKey(mon), hi = packDayKey(sun), items = {};
+  let bought = 0, planned = 0;
+  (PACK_PURCHASES.list || []).forEach((p) => {
+    if (!p || !packValidDay(p.date) || p.date < lo || p.date > hi || (p.status !== "bought" && p.status !== "planned")) return;
+    const tb = Array.isArray(list) ? list.find((x) => String(x.id) === String(p.table)) : null;
+    if (!tb && !(p.choice && p.choice.gives)) return;
+    let g = {};
+    try { g = purchaseGives(p, tb) || {}; } catch (e) { g = {}; }
+    const n = Math.max(1, Number(p.count) || 1);
+    Object.entries(g).forEach(([k, v]) => { if (Number(v) > 0) items[k] = (items[k] || 0) + Number(v) * n; });
+    if (p.status === "bought") bought++; else planned++;
+  });
+  return { items, bought, planned };
+}
+let CDA_PACKS = null;
+// One plan over the ticked pages' tracks with one shared Backpack.
+function cdaRun(opts) {
+  const o = opts || {}, skip = o.skip || CDA_SET.skip, withPacks = o.packs != null ? o.packs : CDA_SET.packs;
+  const pages = CDA_PAGES.filter((pg) => !CDA_SET.off.has(pg.key) && CDA_BUILT[pg.key] && CDA_BUILT[pg.key].tracks);
+  const tracks = [], have = {}, conv = [], seen = new Set();
+  pages.forEach((pg) => {
+    const b = CDA_BUILT[pg.key];
+    b.tracks.forEach((tr) => tracks.push(skip.has(tr.id) ? { ...tr, to: tr.from } : tr));
+    Object.entries(b.have || {}).forEach(([k, v]) => { have[k] = Math.max(have[k] || 0, Number(v) || 0); });
+    (b.conv || []).forEach((r) => { const key = `${r.from}|${r.to}|${r.give}|${r.get}|${r.max}|${r.trade ? 1 : 0}`; if (!seen.has(key)) { seen.add(key); conv.push(r); } });
+  });
+  if (withPacks && CDA_PACKS) Object.entries(CDA_PACKS.items).forEach(([k, v]) => { have[k] = (have[k] || 0) + v; });
+  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, conv);
+  return { plan, tracks, have, pages };
+}
+function cdaPlan() {
+  const sig = `${UPGRADE_ORDER.mode}|${JSON.stringify(UPGRADE_ORDER.rows)}|${[...CDA_SET.off].join(",")}|${[...CDA_SET.skip].join(",")}|${CDA_SET.packs}|${CDA_LOADED}`;
+  if (CDA_PLAN_MEMO && CDA_PLAN_MEMO.sig === sig) return CDA_PLAN_MEMO;
+  const main = cdaRun();
+  // With the packs on, the plan without them shows which pages the packs help.
+  const base = CDA_SET.packs && CDA_PACKS ? cdaRun({ packs: false }) : null;
+  CDA_PLAN_MEMO = { sig, ...main, base };
+  return CDA_PLAN_MEMO;
+}
+// How an item reads on the page (an island building's copies read as what buys them).
+function cdaItemName(n, tr) { return /^isl:/.test(n) ? materialDisplayName((tr && tr.alias) || "Mythic Island Shards") : materialDisplayName(itemShortName(n)); }
+function cdaItemIcon(n, tr) { const k = /^isl:/.test(n) ? (tr && tr.alias) || "Mythic Island Shards" : n; try { return materialIconSrc(k) || bpIcon({ name: k }) || BP_EXTRA_ICONS[k] || ""; } catch (e) { return ""; } }
+function cdaStep(b, tr, lv) { return b.step ? b.step(tr, lv) : `${tr.short ? tr.short + " " : ""}${tr.lab ? tr.lab(tr.from) : tr.from} → ${tr.lab ? tr.lab(lv) : lv}`; }
+// One page's answer from the shared plan.
+function cdaPageInfo(pg, P) {
+  const b = CDA_BUILT[pg.key], plan = P.plan;
+  const all = b.tracks, todo = all.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => !CDA_SET.skip.has(tr.id) && plan.lv[tr.id] > tr.from);
+  const left = todo.filter((tr) => CDA_SET.skip.has(tr.id));
+  const stop = {};
+  todo.forEach((tr) => { const f = plan.blocker[tr.id]; if (f && !CDA_SET.skip.has(tr.id)) stop[f] = (stop[f] || 0) + 1; });
+  const firstItem = Object.keys(stop).sort((x, y) => stop[y] - stop[x])[0] || null;
+  const firstTr = firstItem ? todo.find((tr) => plan.blocker[tr.id] === firstItem) : null;
+  const trades = up.some((tr) => (plan.trades[tr.id] || []).length);
+  const packs = !!(P.base && todo.some((tr) => (P.base.plan.lv[tr.id] ?? tr.from) !== plan.lv[tr.id]));
+  return { b, todo, up, left, firstItem, firstTr, trades, packs, st: !todo.length ? "done" : up.length ? "up" : "none" };
+}
+function cdaPageName(pg) { return navLabel(pg.tab); }
+function cdaPagePic(pg) { return QUICK_ICONS[pg.tab] || ""; }
+function cdaUpRow(pg, info, tr, plan) {
+  const lv = plan.lv[tr.id], off = CDA_SET.skip.has(tr.id);
+  let pic = "";
+  try { pic = info.b.pic ? info.b.pic(tr, off ? tr.from : lv) || "" : ""; } catch (e) { pic = ""; }
+  const troop = tr.troop && tr.troop !== "all" ? reachTroopKey(tr.troop) : "";
+  const gain = off ? "" : reachGainText(reachTroopGain([tr], plan));
+  const meta = off ? esc(t("cda_left_out")) : [troop ? `<span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span>` : "", gain ? esc(gain) : "", lv >= tr.to ? "&#10003;" : ""].filter(Boolean).join(" · ");
+  const step = off ? cdaStep(info.b, tr, tr.to) : cdaStep(info.b, tr, lv);
+  return `<label class="cda-li${off ? " x" : ""}"><input type="checkbox" class="cda-cb" data-cdaskip="${esc(tr.id)}"${off ? "" : " checked"} /><span class="cda-box" aria-hidden="true">&#10003;</span>${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" />` : ""}<span class="cda-lt"><b>${esc(tr.name || "")}</b> ${esc(step)}</span><span class="cda-st">${meta}</span></label>`;
+}
+function cdaGetMoreHtml(pg) { return `<button type="button" class="cda-gm" data-cdagm="${esc(pg.key)}">${esc(t("cda_get_more"))} &#8250;</button>`; }
+function cdaCardHtml(pg, info, P) {
+  const plan = P.plan, pic = cdaPagePic(pg), open = CDA_OPEN.has(pg.key);
+  const it = info.firstItem, ic = it ? cdaItemIcon(it, info.firstTr) : "";
+  let main;
+  if (info.left.length) main = `<span class="g">&#10003;</span> ${esc(t("cda_n_up_out").replace("{n}", info.up.length).replace("{unit}", t(pg.unit)).replace("{m}", info.left.length))}`;
+  else if (info.up.length === 1 || !open) { const f = info.up[0]; main = `<span class="g">&#10003;</span> <b>${esc(f.name || "")}</b> ${esc(cdaStep(info.b, f, plan.lv[f.id]))}`; }
+  else main = `<span class="g">&#10003;</span> ${esc(t("rch_all_up").replace("{n}", info.up.length).replace("{unit}", t(pg.unit)))}`;
+  const tags = `${info.trades ? `<span class="cda-tr">&#8644; ${esc(t("rch_with_trades"))}</span>` : ""}${info.packs ? `<span class="cda-wp">&#128722; ${esc(t("cda_with_packs"))}</span>` : ""}`;
+  const runs = it ? `<span class="cda-nw">${esc(t("cdp_runs_out"))} ${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}${esc(cdaItemName(it, info.firstTr))}</span> ${cdaGetMoreHtml(pg)}` : "";
+  const moreN = info.up.length - 1 + info.left.length;
+  let body = "";
+  if (open) {
+    const rows = info.todo.filter((tr) => CDA_SET.skip.has(tr.id) || plan.lv[tr.id] > tr.from);
+    const note = CDA_NOTE && CDA_NOTE.page === pg.key ? `<div class="cda-re">${CDA_NOTE.html}</div>` : "";
+    const leftN = it ? Math.max(0, Number(plan.left[it]) || 0) : 0;
+    const leftTxt = /\(minutes\)$/.test(it || "") ? bsTime(leftN) : Math.floor(leftN).toLocaleString();
+    body = `<div class="cda-ul">${rows.map((tr) => cdaUpRow(pg, info, tr, plan)).join("")}${note}
+      ${it ? `<div class="cda-ol">&#9888; ${esc(t("rch_first").replace("{item}", cdaItemName(it, info.firstTr)).replace("{n}", /^isl:/.test(it) ? "0" : leftTxt))} · ${cdaGetMoreHtml(pg)}</div>` : ""}
+      <button type="button" class="cda-more cda-fold" data-cdaopen="${esc(pg.key)}" aria-expanded="true">${esc(t("cdp_fold"))} &#9652;</button></div>`;
+  }
+  return `<div class="panel cda-card" data-cdacard="${esc(pg.key)}"><div class="cda-pg">${pic ? `<img class="cda-pic" src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div class="cda-m">
+      <div class="cda-n">${esc(cdaPageName(pg))}</div>
+      <div class="cda-u">${main}</div>
+      ${tags || (!open && runs) ? `<div class="cda-s">${tags}${!open ? runs : ""}</div>` : ""}
+      ${!open && moreN > 0 ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_more").replace("{n}", moreN))} &#9662;</button>` : !open ? `<button type="button" class="cda-more" data-cdaopen="${esc(pg.key)}" aria-expanded="false">${esc(t("cdp_details"))} &#9662;</button>` : ""}
+    </div><button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
 }
 async function renderCanDoPage() {
   const seq = RENDER_SEQ;
-  await ensureUpgradeOrder();
+  if (!IS_OWNER) return;
+  await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
   if (seq !== RENDER_SEQ) return;
+  CDA_BUILT = {}; CDA_LOADED = 0; CDA_PLAN_MEMO = null; CDA_NOTE = null;
+  drawCanDoPage();
+  const t0 = performance.now();
+  const jobs = CDA_PAGES.map((pg) => cdaBuildPage(pg).catch((e) => { console.warn("cando", pg.key, e); return { err: true }; }).then((r) => {
+    if (seq !== RENDER_SEQ) return;
+    CDA_BUILT[pg.key] = r; CDA_LOADED++;
+    cdaDrawBar();
+  }));
+  const packs = CDA_SET.packs ? cdaWeekPacks().catch(() => null) : null;
+  await Promise.all(jobs);
+  if (packs) CDA_PACKS = await packs;
+  if (seq !== RENDER_SEQ) return;
+  window.CDA_LOAD_MS = Math.round(performance.now() - t0);
   drawCanDoPage();
 }
+function cdaDrawBar() {
+  const el = document.getElementById("cdaBar");
+  if (!el) return;
+  const n = CDA_PAGES.length;
+  el.innerHTML = `<span>${esc(t("cda_working").replace("{n}", n))}</span><span class="cda-bar"><i style="width:${Math.round((CDA_LOADED / n) * 100)}%;"></i></span><span>${CDA_LOADED}/${n}</span>`;
+}
 function drawCanDoPage() {
-  const last = canDoLastLoad(), mode = UPGRADE_ORDER.mode === "best" ? "best" : "order";
-  const rank = (c) => (!c.s ? 3 : c.s.st === "up" ? 0 : c.s.st === "none" ? 1 : 2);
-  const cards = CANDO_PAGES.map(([key, tab], i) => ({ key, tab, i, p: last[key], s: last[key] && last[key][mode] }))
-    .sort((a, b) => rank(a) - rank(b) || a.i - b.i);
-  const upN = cards.filter((c) => c.s && c.s.st === "up").length;
-  const steps = cards.reduce((a, c) => a + (c.s && c.s.st === "up" ? c.s.steps || 0 : 0), 0);
-  const itemHtml = (n) => { const ic = canDoItemIcon(n); return `${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}${esc(materialDisplayName(itemShortName(n)))}`; };
-  const cardHtml = (c) => {
-    const pic = QUICK_ICONS[c.tab] || "", s = c.s;
-    let main, sub = "";
-    if (!s) { main = esc(t("cdp_not_yet")); sub = esc(t("cdp_not_yet_d")); }
-    else if (s.st === "up") {
-      main = `<span class="g">&#10003;</span> ${esc(s.txt)}`;
-      sub = `${s.trades ? `<span class="cdp-tr">&#8644; ${esc(t("rch_with_trades"))}</span>` : ""}${s.first ? `<span class="cdp-nw">${esc(t("cdp_runs_out"))} ${itemHtml(s.first)}</span>` : ""}`;
-    } else if (s.st === "none") {
-      main = esc(t("cando_nothing"));
-      if (s.first) { const ic = canDoItemIcon(s.first); sub = `<span class="cdp-nw cdp-amb">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}${esc(t("cdp_short").replace("{item}", materialDisplayName(itemShortName(s.first))))}</span>`; }
-    } else main = `<span class="g">&#10003;</span> ${esc(t("cando_at_target"))}`;
-    const dim = !s || s.st === "none";
-    const list = s && s.st === "up" && Array.isArray(s.list) ? s.list : null;
-    const can = !!(list && (list.length > 1 || (s.tradeSum || []).length || s.first));
-    const open = can && CANDO_PAGE_OPEN.has(c.key);
-    if (can && !open) sub += `<button type="button" class="cdp-more" data-cdpopen="${esc(c.key)}" aria-expanded="false">${esc(list.length > 1 ? t("cdp_more").replace("{n}", list.length - 1) : t("cdp_details"))} &#9662;</button>`;
-    let body = "";
-    if (open) {
-      const leftTxt = /\(minutes\)$/.test(s.first || "") ? bsTime(s.left || 0) : Math.floor(s.left || 0).toLocaleString();
-      body = `<div class="cdp-ul">${list.map((x) => `<div class="cdp-li">${x.pic ? `<img src="${esc(x.pic)}" alt="" loading="lazy" />` : `<span class="cdp-ck">&#10003;</span>`}<span class="cdp-lt"><b>${esc(x.n)}</b> ${esc(x.st)}</span><span class="cdp-lg">${x.troop ? `<span style="color:${CANDO_COLORS[x.troop] || "inherit"};">${esc(troopDisplayName(x.troop))}</span>` : ""}${x.troop && x.gain ? " · " : ""}${esc(x.gain || "")}${x.done ? ` &#10003;` : ""}</span></div>`).join("")}
-        ${(s.tradeSum || []).length ? `<div class="cdp-tl">&#8644; ${esc(t("cdp_trades_used"))} ${reachTradeText(s.tradeSum)}</div>` : ""}
-        ${s.first ? `<div class="cdp-ol">&#9888; ${esc(t("rch_first").replace("{item}", materialDisplayName(itemShortName(s.first))).replace("{n}", leftTxt))}</div>` : ""}
-        <button type="button" class="cdp-more cdp-fold" data-cdpopen="${esc(c.key)}" aria-expanded="true">${esc(t("cdp_fold"))} &#9652;</button></div>`;
-    }
-    return `<div class="panel cdp-card${dim ? " dim" : ""}${can ? " can" : ""}"${can ? ` data-cdpcard="${esc(c.key)}"` : ""}><div class="cdp-pg">${pic ? `<img class="cdp-pic" src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div class="cdp-m">
-      <div class="cdp-n"><span>${esc(navLabel(c.tab))}</span>${c.p ? `<span class="cdp-at" title="${esc(new Date(c.p.at).toLocaleString())}">${esc(canDoAgo(c.p.at))}</span>` : ""}</div>
-      <div class="cdp-u">${main}</div>${sub ? `<div class="cdp-s">${sub}</div>` : ""}</div>
-      <button type="button" class="cdp-go" data-cdpgo="${esc(c.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>${body}</div>`;
+  const ready = CDA_BUILT && CDA_LOADED >= CDA_PAGES.length;
+  const best = UPGRADE_ORDER.mode === "best";
+  const P = ready ? cdaPlan() : null;
+  const infos = {};
+  if (P) P.pages.forEach((pg) => { infos[pg.key] = cdaPageInfo(pg, P); });
+  const ticked = CDA_PAGES.filter((pg) => !CDA_SET.off.has(pg.key));
+  const avail = (pg) => CDA_BUILT && CDA_BUILT[pg.key] && CDA_BUILT[pg.key].tracks;
+  const upPages = Object.values(infos).filter((x) => x.st === "up").length;
+  const upgrades = Object.values(infos).reduce((a, x) => a + x.up.length, 0);
+  const wp = CDA_PACKS;
+  const chip = (pg) => {
+    const on = !CDA_SET.off.has(pg.key), info = infos[pg.key], pic = cdaPagePic(pg);
+    return `<button type="button" class="cda-ch${on ? " on" : " off"}" data-cdapage="${esc(pg.key)}" aria-pressed="${on}">${pic ? `<img src="${esc(pic)}" alt="" />` : ""}${esc(t(`cda_s_${pg.key}`))}${on && info && info.up.length ? `<span class="c">${info.up.length}</span>` : ""}</button>`;
   };
-  content.innerHTML = `<div class="cdp">
-    <div class="page-head"><div><h2>${esc(t("cg_can_now"))}</h2><p class="desc">${esc(t("cdp_desc"))}</p></div></div>
-    <div class="panel cdp-top">
-      <div class="rch-seg cdp-seg"><button type="button" data-cdpmode="order" class="${mode === "order" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-cdpmode="best" class="${mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
-      <div class="cdp-ans"><div class="cdp-box"><div class="k">${esc(t("cdp_pages_up"))}</div><div class="v${upN ? " g" : ""}">${esc(t("cdp_of").replace("{n}", upN).replace("{m}", cards.length))}</div></div>
-        <div class="cdp-box"><div class="k">${esc(t("cdp_steps"))}</div><div class="v">${esc(steps.toLocaleString())}</div></div></div>
-      <div class="meta cdp-note">${esc(t("cdp_saved_note"))}</div>
+  const cards = P ? P.pages.filter((pg) => infos[pg.key].st === "up").map((pg) => cdaCardHtml(pg, infos[pg.key], P)).join("") : "";
+  const offNames = CDA_PAGES.filter((pg) => CDA_SET.off.has(pg.key)).map(cdaPageName);
+  const noneP = P ? P.pages.filter((pg) => infos[pg.key].st === "none") : [];
+  const doneP = P ? P.pages.filter((pg) => infos[pg.key].st === "done").map(cdaPageName) : [];
+  const naP = ready ? ticked.filter((pg) => !avail(pg)).map(cdaPageName) : [];
+  const foot = !P ? "" : `<div class="cda-off">
+      ${offNames.length ? `<div>${esc(t("cda_not_ticked"))} ${esc(offNames.join(", "))} · <button type="button" class="cda-gm" data-cdatickall>${esc(t("cda_tick"))} &#8250;</button></div>` : ""}
+      ${noneP.length ? `<div>${esc(t("cda_nothing_yet"))} ${noneP.map((pg) => { const i = infos[pg.key]; return `${esc(cdaPageName(pg))}${i.firstItem ? ` (${esc(t("cdp_short").replace("{item}", cdaItemName(i.firstItem, i.firstTr)))} · ${cdaGetMoreHtml(pg)})` : ""}`; }).join(", ")}</div>` : ""}
+      ${doneP.length ? `<div>${esc(t("cda_at_target_l"))} ${esc(doneP.join(", "))}</div>` : ""}
+      ${naP.length ? `<div>${esc(t("cda_not_avail"))} ${esc(naP.join(", "))}</div>` : ""}
+    </div>`;
+  const keepX = (content.querySelector(".cda-chips") || {}).scrollLeft || 0;
+  content.innerHTML = `<div class="cdp cda">
+    <div class="page-head"><div><h2>${esc(t("cg_can_now"))}</h2><p class="desc">${esc(t("cda_desc"))}</p></div></div>
+    <div class="panel cda-top">
+      <div class="rch-seg cdp-seg"><button type="button" data-cdamode="order" class="${best ? "" : "on"}">${esc(t("rch_my_order"))}</button><button type="button" data-cdamode="best" class="${best ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+      ${best ? "" : `<button type="button" class="cda-ord" data-cdaorder>${esc(t("cda_edit_order"))} &#8250;</button>`}
+      <label class="cda-sw"><input type="checkbox" class="bset-sw" data-cdapacks${CDA_SET.packs ? " checked" : ""} /><span><b>${esc(t("cda_packs"))}</b><small>${esc(CDA_SET.packs && wp ? t("cda_packs_n").replace("{b}", wp.bought).replace("{p}", wp.planned) : t("cda_packs_d"))}</small></span></label>
+      <div class="cdp-ans"><div class="cdp-box"><div class="k">${esc(t("cdp_pages_up"))}</div><div class="v${upPages ? " g" : ""}">${P ? esc(t("cdp_of").replace("{n}", upPages).replace("{m}", P.pages.length)) : "…"}</div></div>
+        <div class="cdp-box"><div class="k">${esc(t("cda_upgrades"))}</div><div class="v">${P ? esc(upgrades.toLocaleString()) : "…"}</div></div></div>
     </div>
-    ${cards.map(cardHtml).join("")}
+    ${ready ? "" : `<div class="cda-ld" id="cdaBar"></div>`}
+    <div class="cda-chhd"><span>${esc(t("cda_pages_ticked").replace("{n}", ticked.length).replace("{m}", CDA_PAGES.length))}</span><button type="button" class="cda-gm" data-cdaall>${esc(t(ticked.length === CDA_PAGES.length ? "cda_none" : "cda_all"))} &#8250;</button></div>
+    <div class="cda-chips">${CDA_PAGES.map(chip).join("")}</div>
+    ${cards}${foot}
   </div>`;
-  content.querySelector(".cdp").onclick = (ev) => {
-    const go = ev.target.closest("[data-cdpgo]");
-    if (go) { goToTab(go.dataset.cdpgo); return; }
-    const op = ev.target.closest("[data-cdpopen]") || (!ev.target.closest(".cdp-ul") && ev.target.closest("[data-cdpcard]"));
-    if (op) {
-      const k = op.dataset.cdpopen || op.dataset.cdpcard;
-      if (CANDO_PAGE_OPEN.has(k)) CANDO_PAGE_OPEN.delete(k); else CANDO_PAGE_OPEN.add(k);
-      keepPlace(() => drawCanDoPage());
-      return;
-    }
-    const md = ev.target.closest("[data-cdpmode]");
-    if (md && UPGRADE_ORDER.mode !== md.dataset.cdpmode) { UPGRADE_ORDER.mode = md.dataset.cdpmode; saveUpgradeOrder(); drawCanDoPage(); }
+  const chips = content.querySelector(".cda-chips");
+  if (chips && keepX) chips.scrollLeft = keepX;
+  if (!ready) cdaDrawBar();
+  content.querySelector(".cda").onclick = cdaClick;
+  const sw = content.querySelector("[data-cdapacks]");
+  if (sw) sw.onchange = async () => {
+    CDA_SET.packs = sw.checked; cdaSaveSettings();
+    if (CDA_SET.packs && !CDA_PACKS) CDA_PACKS = await cdaWeekPacks().catch(() => ({ items: {}, bought: 0, planned: 0 }));
+    if (TAB === "cando") cdaRedraw();
   };
+}
+// Redraws after a change: the page dims at once, the new plan is worked out a moment later.
+function cdaRedraw(after) {
+  const el = content.querySelector(".cda");
+  if (el) el.classList.add("busy");
+  const seq = RENDER_SEQ;
+  setTimeout(() => { if (seq !== RENDER_SEQ || TAB !== "cando") return; if (after) after(); keepPlace(() => drawCanDoPage()); }, 30);
+}
+function cdaClick(ev) {
+  const go = ev.target.closest("[data-cdago]");
+  if (go) { goToTab(go.dataset.cdago); return; }
+  const gm = ev.target.closest("[data-cdagm]");
+  if (gm) { cdaGetMore(gm.dataset.cdagm); return; }
+  const md = ev.target.closest("[data-cdamode]");
+  if (md) { if (UPGRADE_ORDER.mode !== md.dataset.cdamode) { UPGRADE_ORDER.mode = md.dataset.cdamode; saveUpgradeOrder(); CDA_NOTE = null; cdaRedraw(); } return; }
+  if (ev.target.closest("[data-cdaorder]")) { cdaOrderSheet(); return; }
+  const pgb = ev.target.closest("[data-cdapage]");
+  if (pgb) { const k = pgb.dataset.cdapage; if (CDA_SET.off.has(k)) CDA_SET.off.delete(k); else CDA_SET.off.add(k); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
+  if (ev.target.closest("[data-cdaall]")) { const all = CDA_SET.off.size === 0; CDA_SET.off = new Set(all ? CDA_PAGES.map((p) => p.key) : []); CDA_NOTE = null; cdaSaveSettings(); cdaRedraw(); return; }
+  if (ev.target.closest("[data-cdatickall]")) { CDA_SET.off = new Set(); cdaSaveSettings(); cdaRedraw(); return; }
+  const cb = ev.target.closest("[data-cdaskip]");
+  if (cb) { ev.preventDefault(); cdaToggleSkip(cb.dataset.cdaskip); return; }
+  if (ev.target.closest(".cda-li")) return;
+  const op = ev.target.closest("[data-cdaopen]");
+  if (op) { const k = op.dataset.cdaopen; if (CDA_OPEN.has(k)) CDA_OPEN.delete(k); else CDA_OPEN.add(k); keepPlace(() => drawCanDoPage()); }
+}
+// Leaving one upgrade out (or back in): the rest is planned again; the note says where its items went.
+function cdaToggleSkip(id) {
+  const before = cdaPlan();
+  const was = CDA_SET.skip.has(id);
+  if (was) CDA_SET.skip.delete(id); else CDA_SET.skip.add(id);
+  cdaSaveSettings();
+  CDA_NOTE = null;
+  cdaRedraw(() => {
+    const after = cdaPlan();
+    const pgKey = id.split("::")[0], tr = before.tracks.find((x) => x.id === id);
+    if (was || !tr) return;
+    const gained = after.tracks.filter((x) => x.id !== id && (after.plan.lv[x.id] || 0) > (before.plan.lv[x.id] || 0));
+    const desc = (x) => { const b = CDA_BUILT[x.page]; return `<b>${esc(x.page !== pgKey ? `${t(`cda_s_${x.page}`)} ` : "")}${esc(x.name || "")} ${esc(cdaStep(b, { ...x, from: before.plan.lv[x.id] }, after.plan.lv[x.id]))}</b>`; };
+    CDA_NOTE = { page: pgKey, html: gained.length
+      ? esc(t("cda_went_to").replace("{name}", tr.name || "")) + " " + gained.slice(0, 3).map(desc).join(` ${esc(t("cda_and"))} `) + (gained.length > 3 ? ` ${esc(t("cdp_more").replace("{n}", gained.length - 3))}` : "")
+      : esc(t("cda_went_none").replace("{name}", tr.name || "")) };
+  });
+}
+// "Get more ›": the page, with its Pack cost opened.
+function cdaGetMore(key) {
+  const pg = CDA_PAGES.find((p) => p.key === key);
+  if (!pg) return;
+  goToTab(pg.tab);
+  const seq = RENDER_SEQ, t0 = Date.now();
+  const tryOpen = () => {
+    if (seq !== RENDER_SEQ || TAB !== pg.tab) return;
+    const b = content.querySelector('[data-cgsheet="packs"], [data-plxsheet="packs"], [data-islpc]');
+    if (b && !b.disabled) { b.click(); return; }
+    if (Date.now() - t0 < 12000) setTimeout(tryOpen, 250);
+  };
+  setTimeout(tryOpen, 250);
+}
+// The upgrade order (My order): drag ⋮⋮ to move a row; Reset.
+function cdaOrderSheet() {
+  let m = document.getElementById("candoSheet");
+  if (!m) { m = document.createElement("div"); m.id = "candoSheet"; m.className = "modal-overlay adm-sheet-wrap cando-ov"; document.body.appendChild(m); }
+  const ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
+  const draw = () => {
+    m.innerHTML = `<div class="modal-box adm-sheet cando-box" role="dialog" aria-modal="true" aria-label="${esc(t("cando_order"))}">
+      <div class="cando-hd"><b>${esc(t("cando_order"))}</b>${closeXHtml("data-cdx")}</div>
+      <div class="cando-oh"><span class="meta cando-desc">${esc(t("cando_drag_hint"))}</span><button type="button" class="btn ghost small" data-cdreset>${esc(t("rch_order_reset"))}</button></div>
+      <div class="cando-ord">${UPGRADE_ORDER.rows.map(([troop, stat], i) => `<div class="rch-ord-row" data-cdrow="${i}" data-cdkey="${esc(troop + "|" + stat)}"><b>${i + 1}</b><span style="color:${CANDO_COLORS[troop] || "inherit"};">${esc(troopDisplayName(troop))}</span><span class="st">${esc(ABBR[stat] || stat)}</span>${dsHandleHtml("data-cddrag")}</div>`).join("")}</div>
+      <div class="cando-foot"><button type="button" class="btn cando-done" data-cdx>${esc(t("gs_done"))}</button></div>
+    </div>`;
+    m.querySelectorAll("[data-cddrag]").forEach((h) => dragSort(h, {
+      row: "[data-cdrow]",
+      done: () => { const old = UPGRADE_ORDER.rows; UPGRADE_ORDER.rows = [...m.querySelectorAll("[data-cdrow]")].map((x) => old[Number(x.dataset.cdrow)]); changed(); },
+      refocus: (row) => { const r2 = [...m.querySelectorAll("[data-cdkey]")].find((x) => x.dataset.cdkey === row.dataset.cdkey), hh = r2 && r2.querySelector("[data-cddrag]"); if (hh) hh.focus(); },
+    }));
+  };
+  const changed = () => { saveUpgradeOrder(); CDA_NOTE = null; draw(); if (TAB === "cando" && CDA_BUILT) cdaRedraw(); };
+  m.onclick = (ev) => {
+    if (ev.target === m || ev.target.closest("[data-cdx]")) { m.style.display = "none"; return; }
+    if (ev.target.closest("[data-cdreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); changed(); }
+  };
+  draw();
+  m.style.display = "flex";
 }
 // ---- "See all troops ›": a small sheet with every troop at once (design C) ----
 // Pages with troops keep their last plan here: { plan, tracks, unit, go(troop) };
@@ -7213,40 +7618,6 @@ function heroGearReachTracks(state) {
   }));
   return out;
 }
-function fillHeroGearReach() {
-  if (!visitorCan("cando")) return; // admin only unless Visitor access "cando"
-  const state = HERO_GEAR_SETS[heroGearActiveSet], have = BAR_HAVE.hero_gear;
-  if (!state || !HERO_GEAR_TABLES_CACHE || !have) return;
-  const tracks = heroGearReachTracks(state);
-  if (!tracks.length) return;
-  const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.hero_gear);
-  REACH_LAST.hero_gear = { plan, tracks, unit: "rch_u_tracks", go: reachGoTroop("hero_gear") };
-  const rowsOf = (tn) => HERO_GEAR_TABLES_CACHE[tn] || [];
-  const lab = (tn) => (i) => { const r = rowsOf(tn)[i]; return r ? String(rowLabel(r)).replace(/^Lv\./, "") : String(i); };
-  tracks.forEach((tr) => {
-    const [, , tn] = tr.id.split("|");
-    const slot = document.querySelector(`[data-rch="${window.CSS.escape(tr.id)}"]`), bar = document.querySelector(`[data-rchbar="${window.CSS.escape(tr.id)}"]`);
-    if (slot) slot.innerHTML = reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab(tn));
-    if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
-  });
-  canDoSet("hero_gear", plan, tracks, "rch_u_tracks", { all: "hero_gear", have, conv: BAR_CONV.hero_gear });
-  // The Pieces table's "Can do" row (design B1): ✓M 20 / ✓E 142 per piece.
-  const cans = document.querySelectorAll("[data-hgcan]");
-  if (cans.length) {
-    let any = false;
-    cans.forEach((c) => {
-      const [troop, piece] = c.dataset.hgcan.split("|");
-      c.innerHTML = GEAR_LEVELING_TABLES.map((tn) => {
-        const id = `${troop}|${piece}|${tn}`, tr = tracks.find((x) => x.id === id), lv = plan.lv[id];
-        if (!tr || !(lv > tr.from)) return "";
-        any = true;
-        return `<span class="rch-mini hg-cm" title="${esc(t("rch_mark_tip"))}">&#10003;${tn === "Hero Gear Mastery Forging" ? "M" : "E"} ${esc(lab(tn)(lv))}</span>`;
-      }).join("");
-    });
-    document.querySelectorAll("[data-hgcanrow]").forEach((x) => { x.hidden = !any; });
-  }
-}
-REACH_HOOKS.hero_gear = fillHeroGearReach;
 function updateHeroGearCurrentStats() {
   fillHeroGearPieceStats();
   const el = document.getElementById("hgStats");
@@ -21725,34 +22096,8 @@ async function renderCharmsCalc() {
       <span class="ch-t-v">${esc(t("charm_lv"))} ${charmMajor(st.current)}${chip}</span>
       ${charmStageBarHtml(ci, Math.max(ci, ti))}
       <span class="ch-t-g">${foot}</span>
-      <span class="ch-rch" data-rch="ch|${c.piece.key}|${c.slot}"></span>
     </button>`;
   }
-  // "Can reach" marks: all 18 charms share the Backpack.
-  function fillCharmReach() {
-    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando"
-    const have = BAR_HAVE.charm;
-    if (!have || !rowsEl.isConnected) return;
-    const tracks = [];
-    CHARM_PIECES.forEach((p) => CHARM_CALC_STATE[p.key].forEach((st, slot) => {
-      const from = Math.max(0, CHARM_LEVELS.indexOf(String(st.current))), to = Math.max(from, CHARM_LEVELS.indexOf(String(st.target)));
-      tracks.push({ id: `${p.key}|${slot}`, troop: p.troop, from, to, name: pieceDisplayName(p.name), lab: (i) => String(CHARM_LEVELS[i]),
-        cost: (i) => { const c = CHARM_STEP_COST[CHARM_LEVELS[i]] || [0, 0, 0]; return { "Charm Guides": c[0], "Charm Designs": c[1], "Jewel Secrets": c[2] }; },
-        gain: (i) => { const v = charmStatAt(CHARM_LEVELS[i]); return { Lethality: v, Health: v }; } });
-    }));
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.charm);
-    REACH_LAST.charm = { plan, tracks, unit: "rch_u_charms", go: reachGoTroop("charm") };
-    tracks.forEach((tr) => {
-      const el = rowsEl.querySelector(`[data-rch="ch|${tr.id}"]`);
-      if (!el) return;
-      const r = plan.lv[tr.id];
-      el.innerHTML = tr.to > tr.from ? (r >= tr.to ? `<span class="rch-mini full">&#10003; ${esc(t("rch_covers_short"))}</span>`
-        : r <= tr.from ? `<span class="rch-mini none">${esc(t("rch_none_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"))}</span>`
-        : `<span class="rch-mini">&#10003;${esc(CHARM_LEVELS[r])}</span>`) : "";
-    });
-    canDoSet("charm", plan, tracks, "rch_u_charms", { all: "charm", have, conv: BAR_CONV.charm, pic: (tr, lv) => charmIconSrc(tr.troop, CHARM_LEVELS[lv]) });
-  }
-  REACH_HOOKS.charm = fillCharmReach;
   function renderTroopSections() {
     const troop = plxTroopOf("charm");
     const flat = charmFlat(troop), cap = charmCapIdx();
@@ -21789,7 +22134,6 @@ async function renderCharmsCalc() {
       });
     });
     rowsEl.querySelectorAll("[data-chtile]").forEach((b) => b.addEventListener("click", () => openCharmSheet(Number(b.dataset.chtile))));
-    fillCharmReach();
   }
 
   // The sheet for one charm (bottom sheet on phones, small window on PC).
@@ -22093,36 +22437,9 @@ async function renderChiefGearCalc() {
       : from >= cap ? `<span class="cg-tgt ok">&#10003; ${esc(t("max_button"))}</span>` : "";
     return `<button type="button" class="cg-pc" data-cgslot="${p.key}" aria-label="${esc(`${pieceDisplayName(p.name)} · ${troopDisplayName(p.troop)}`)}">
       <span class="cg-pic"><img src="${chiefGearIcon(p.key, from)}" alt="" loading="lazy" /><span class="cg-badge">${esc(cgBadge(rf))}</span>${chip}</span>
-      <span class="cg-nm">${esc(pieceDisplayName(p.name))}<span class="cg-rch" data-rch="cg|${p.key}"></span></span>
+      <span class="cg-nm">${esc(pieceDisplayName(p.name))}</span>
     </button>`;
   }
-  // "Can reach" marks: ✓★1 under each piece's name.
-  function fillChiefGearReach() {
-    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando"
-    const have = BAR_HAVE.chief_gear;
-    if (!have || !rowsEl.isConnected) return;
-    const cols = [["hardened_alloy", "Hardened Alloy"], ["polishing_solution", "Polishing Solution"], ["design_plan", "Design Plan"], ["amber", "Amber"]];
-    const tracks = CHIEF_GEAR_PIECES.map((p) => {
-      const st = CHIEF_GEAR_STATE[p.key], from = Math.min(st.from, rows.length - 1);
-      return { id: p.key, troop: p.troop, from, to: Math.max(from, Math.min(st.to == null ? from : st.to, rows.length - 1)),
-        name: pieceDisplayName(p.name), lab: (i) => cgBadge(rows[i]),
-        cost: (i) => { const c = {}; cols.forEach(([col, lab]) => { const v = Number(rows[i] && rows[i][col]) || 0; if (v) c[lab] = v; }); return c; },
-        gain: (i) => { const v = parseStatPct(rows[i] && rows[i].stat) || 0; return { Attack: v, Defense: v }; } };
-    });
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.chief_gear);
-    REACH_LAST.chief_gear = { plan, tracks, unit: "rch_u_pieces", go: null };
-    tracks.forEach((tr) => {
-      const el = rowsEl.querySelector(`[data-rch="cg|${tr.id}"]`);
-      if (!el) return;
-      const r = plan.lv[tr.id], tl = plan.trades[tr.id] || [];
-      el.innerHTML = tr.to > tr.from && r > tr.from ? `<span class="rch-mini cg-mk${r >= tr.to ? " full" : ""}" title="${esc(tl.length ? `${t("rch_with_trades")}: ${tl.map((x) => `${Math.round(x.give).toLocaleString()} ${materialDisplayName(itemShortName(x.from))} → ${Math.round(x.get).toLocaleString()} ${materialDisplayName(itemShortName(x.to))}`).join(" · ")}` : t("rch_mark_tip"))}">&#10003;${esc(stepLab(r, tr.from))}${tl.length ? " &#8644;" : ""}</span>` : "";
-    });
-    // "Can do now" box beside Max (it was a section of the answer card).
-    canDoSet("chief_gear", plan, tracks, "rch_u_pieces", { all: "chief_gear", first: true, have, conv: BAR_CONV.chief_gear,
-      pic: (tr) => chiefGearIcon(tr.id, tr.from),
-      step: (tr, lv) => (rows[lv] && rows[tr.from] && rows[lv].tier === rows[tr.from].tier ? `${cgStars(rows[tr.from])} → ${cgStars(rows[lv])}` : `${cgBadge(rows[tr.from])} → ${cgBadge(rows[lv])}`) });
-  }
-  REACH_HOOKS.chief_gear = fillChiefGearReach;
   // The Pack cost button shows the price once the card has worked it out.
   PACK_COST_HOOKS.chief_gear = () => {
     const b = content.querySelector("[data-cgprice]");
@@ -22142,7 +22459,6 @@ async function renderChiefGearCalc() {
           </div>
           <div class="cg-grid">${COLS.map((tr) => `<div class="cg-th" style="--tc:${TROOP_COLORS[tr]};">${esc(troopDisplayName(tr))}</div>`).join("")}${ORDER.map((k) => pieceHtml(pieceOf(k))).join("")}</div>
         </div>`;
-    fillChiefGearReach();
     // "Set all" shows the level when all 6 pieces are on it.
     rowsEl.querySelectorAll("[data-cgsetall]").forEach((sel) => {
       const vals = new Set(CHIEF_GEAR_PIECES.map((p) => String(CHIEF_GEAR_STATE[p.key][sel.dataset.role])));
@@ -22372,6 +22688,31 @@ const MATERIAL_NAME_SHORT = {
   "Custom Resource Chest Lv.2": "Res. Chest Lv.2",
   "Custom Resource Chest Lv.3": "Res. Chest Lv.3",
 };
+// What "can do now" may spend for one page (the Can do now page): the Backpack boxes'
+// amounts with fixed-content chests and one-way hidden trades counted (the Research Lab's
+// weekly trade only for this week's refinements still left), and the choice chests
+// (Pet Chest, Custom Resource Chests) and this week's weekly trades kept as rules that
+// reachPlan opens / makes only where a step is short.
+function reachHaveConv(calcKey, calcOwned, hiddenRates, hiddenTrades) {
+  const outs = {};
+  hiddenRates.forEach((r) => { (outs[r.from] = outs[r.from] || new Set()).add(r.to); });
+  const choice = new Set(Object.keys(outs).filter((k) => outs[k].size > 1 && /Chest/.test(k)));
+  const have = { ...calcOwned };
+  let lab = null;
+  hiddenTrades.forEach((tr) => {
+    if (choice.has(tr.from)) return;
+    let q = tr.getQty;
+    if (tr.lab) {
+      if (!lab) { try { lab = rfcLabWeekLeft(); } catch (e) { lab = { share: 0, left: 0 }; } lab.rfc = 0; }
+      q *= lab.share; lab.rfc += q;
+    }
+    have[tr.to] = (have[tr.to] || 0) + q;
+  });
+  const weekly = TRADE_APPLY[calcKey] === false ? [] : tradeRatesFor(calcKey).filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));
+  const conv = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }))
+    .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0, trade: true })));
+  return { have, lab: lab && lab.rfc > 0 ? { rfc: lab.rfc, left: lab.left } : null, conv };
+}
 async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNames, refreshFn, calcKey) {
   if (!document.getElementById(containerId)) return;
   await ensureBarHidden();
@@ -22425,30 +22766,10 @@ async function renderChiefGearResourcesBar(containerId, matTotals, allMaterialNa
   // What the page's "can reach" marks spend; redrawn
   // when a box amount changes too.
   const reachRefresh = () => {
-    // Choice chests (one source, several things to open into) stay closed
-    // here: "can reach" opens them into what each step is short of.
-    const outs = {};
-    hiddenRates.forEach((r) => { (outs[r.from] = outs[r.from] || new Set()).add(r.to); });
-    const choice = new Set(Object.keys(outs).filter((k) => outs[k].size > 1 && /Chest/.test(k)));
-    const have = { ...calcOwned };
-    // The Research Lab's weekly trade: only this week's refinements still left.
-    let lab = null;
-    hiddenTrades.forEach((tr) => {
-      if (choice.has(tr.from)) return;
-      let q = tr.getQty;
-      if (tr.lab) {
-        if (!lab) { try { lab = rfcLabWeekLeft(); } catch (e) { lab = { share: 0, left: 0 }; } lab.rfc = 0; }
-        q *= lab.share; lab.rfc += q;
-      }
-      have[tr.to] = (have[tr.to] || 0) + q;
-    });
-    BAR_HAVE[calcKey || "chief_gear"] = have;
-    BAR_LAB[calcKey || "chief_gear"] = lab && lab.rfc > 0 ? { rfc: lab.rfc, left: lab.left } : null;
-    // This week's trades with a weekly limit (Chief Gear, Chief Charm …), when
-    // the page's trades are on: used only where they let more steps happen.
-    const weekly = TRADE_APPLY[calcKey || "chief_gear"] === false ? [] : tradeRatesFor(calcKey || "chief_gear").filter((r) => !r.hidden && !r.silent && Number(r.max) > 0 && !hiddenRates.includes(r));
-    BAR_CONV[calcKey || "chief_gear"] = hiddenRates.filter((r) => choice.has(r.from)).map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0 }))
-      .concat(weekly.map((r) => ({ from: r.from, to: r.to, give: Number(r.give) || 0, get: Number(r.get) || 0, max: Number(r.max) || 0, trade: true })));
+    const r = reachHaveConv(calcKey || "chief_gear", calcOwned, hiddenRates, hiddenTrades);
+    BAR_HAVE[calcKey || "chief_gear"] = r.have;
+    BAR_LAB[calcKey || "chief_gear"] = r.lab;
+    BAR_CONV[calcKey || "chief_gear"] = r.conv;
     if (REACH_HOOKS[calcKey || "chief_gear"]) { try { REACH_HOOKS[calcKey || "chief_gear"](); } catch (e) { console.warn("reach", e); } }
   };
   reachRefresh();
@@ -26850,6 +27171,23 @@ const EXPERT_INVENTORY_ICONS = {
 };
 
 const EXPERT_RESEARCH_STAT_LABEL = { ATK: "Attack", DEF: "Defense", DMG: "Lethality", HP: "Health" };
+// Sigils between two levels of an Experts Research path (shared with the Can do now page).
+function expertPathSigils(pathRows, fromLevel, toLevel) {
+  const rows = pathRows.slice().sort((a, b) => Number(a.level) - Number(b.level));
+  let sigil = 0, prev = 0;
+  rows.forEach((r) => {
+    const lvl = Number(r.level) || 0;
+    const per = r.sigil_per_level == null || r.sigil_per_level === "" ? null : Number(r.sigil_per_level);
+    if (per != null && !Number.isNaN(per)) {
+      const lo = Math.max(prev, fromLevel), hi = Math.min(lvl, toLevel);
+      if (hi > lo) sigil += (hi - lo) * per;
+    } else if (lvl > fromLevel && lvl <= toLevel) {
+      sigil += Number(r.sigil_cost) || 0;
+    }
+    prev = lvl;
+  });
+  return sigil;
+}
 async function renderExpertsResearchPage() {
   const seq = RENDER_SEQ;
   // Everything this page needs is loaded together (it used to be one
@@ -26925,22 +27263,7 @@ async function renderExpertsResearchPage() {
   // Sigils between two levels. A row with "sigils per level" set charges that
   // for EVERY level in its block (after the previous row's level, up to its
   // own); rows without it keep the old behaviour: one lump at that level.
-  function pathSigils(pathRows, fromLevel, toLevel) {
-    const rows = pathRows.slice().sort((a, b) => Number(a.level) - Number(b.level));
-    let sigil = 0, prev = 0;
-    rows.forEach((r) => {
-      const lvl = Number(r.level) || 0;
-      const per = r.sigil_per_level == null || r.sigil_per_level === "" ? null : Number(r.sigil_per_level);
-      if (per != null && !Number.isNaN(per)) {
-        const lo = Math.max(prev, fromLevel), hi = Math.min(lvl, toLevel);
-        if (hi > lo) sigil += (hi - lo) * per;
-      } else if (lvl > fromLevel && lvl <= toLevel) {
-        sigil += Number(r.sigil_cost) || 0;
-      }
-      prev = lvl;
-    });
-    return sigil;
-  }
+  const pathSigils = expertPathSigils;
   // What the NEXT level after `level` costs on this path (for the card line).
   function pathNextLevelSigils(pathRows, level) {
     if (level >= 200) return null;
@@ -27364,31 +27687,9 @@ async function renderExpertsResearchPage() {
 // Last per-expert sigil need saved by Experts Level, so it's only re-saved
 // when it changes.
 let EXPERTS_LEVEL_SIGIL_NEED_SIG = null;
-async function renderExpertsPage() {
-  const seq = RENDER_SEQ;
-  // Experts hidden from visitors (Admin → Visibility / the eye on a card)
-  // stay out of everything on this page for them: cards, totals, backpack.
-  // Everything this page needs is loaded together (it used to be one
-  // request after another), and the expert tables are kept for the visit.
-  const [, , loadedExperts, unlockedLoaded, invLoaded, skillRows, affinityRows] = await Promise.all([
-    ensureExpertsRosterGlobal(),
-    ensureUiVisibility(),
-    loadCalcState("experts"),
-    loadCalcState("experts_unlocked"),
-    loadCalcState("experts_inventory"),
-    loadExpertNodes("skill"),
-    loadExpertNodes("affinity"),
-    ensureUpgradeOrder(),
-  ]);
-  const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
-  const saved = renameExpertSkills(loadedExperts || {});
-  const unlockedState = unlockedLoaded || {};
-  function isExpertUnlocked(expert) {
-    return unlockedFor("experts", expert, unlockedState[expert]);
-  }
-  const invSaved = invLoaded || {};
-  const bpLink = await expertsInventoryWithBackpack(invSaved);
-  if (seq !== RENDER_SEQ) return;
+// The Experts Level maths (skills, affinity, sigils, ".1" Advances), shared by the
+// Experts Level page and the Can do now page. saved = calc_state "experts".
+function expertKit(skillRows, affinityRows, saved) {
   const SKILL_CACHE = {}; // { "Cyrille|Entrapment": [ {level,exp_cost,book_cost}, ... ] }
   skillRows.forEach((r) => {
     const key = `${r.expert}|${r.skill}`;
@@ -27487,6 +27788,34 @@ async function renderExpertsPage() {
     });
     return { affinity, sigil };
   }
+  return { SKILL_CACHE, AFFINITY_CACHE, skillMaxLevel, skillPickMax, skillCost, skillExpHave, heroAffinityHave, skillNeed, heroSigilLevel, heroTopLevel, heroReleasedTop, heroMaxLevelValue, heroCost };
+}
+async function renderExpertsPage() {
+  const seq = RENDER_SEQ;
+  // Experts hidden from visitors (Admin → Visibility / the eye on a card)
+  // stay out of everything on this page for them: cards, totals, backpack.
+  // Everything this page needs is loaded together (it used to be one
+  // request after another), and the expert tables are kept for the visit.
+  const [, , loadedExperts, unlockedLoaded, invLoaded, skillRows, affinityRows] = await Promise.all([
+    ensureExpertsRosterGlobal(),
+    ensureUiVisibility(),
+    loadCalcState("experts"),
+    loadCalcState("experts_unlocked"),
+    loadCalcState("experts_inventory"),
+    loadExpertNodes("skill"),
+    loadExpertNodes("affinity"),
+    ensureUpgradeOrder(),
+  ]);
+  const EXPERTS_SHOWN = EXPERTS_LIST.filter((e) => !hiddenForVisitor("experts", e.key));
+  const saved = renameExpertSkills(loadedExperts || {});
+  const unlockedState = unlockedLoaded || {};
+  function isExpertUnlocked(expert) {
+    return unlockedFor("experts", expert, unlockedState[expert]);
+  }
+  const invSaved = invLoaded || {};
+  const bpLink = await expertsInventoryWithBackpack(invSaved);
+  if (seq !== RENDER_SEQ) return;
+  const { SKILL_CACHE, AFFINITY_CACHE, skillMaxLevel, skillPickMax, skillCost, skillExpHave, heroAffinityHave, skillNeed, heroSigilLevel, heroTopLevel, heroReleasedTop, heroMaxLevelValue, heroCost } = expertKit(skillRows, affinityRows, saved);
   // Level dropdown for one hero: every level, plus a ".1" entry right after
   // each level that costs sigils (that entry means its Advance is paid).
   function heroLevelOpts(hero, selected) {
@@ -27796,54 +28125,9 @@ async function renderExpertsPage() {
       return out;
     }), {});
     recordBudgetNeeds("experts", packGroups);
-    fillExpertsReach();
   }
 
   const gridEl = document.getElementById("expertsGrid");
-  // "Can reach" marks: every counted expert's level
-  // (Affinity + Sigils) and skills (Books + expert / general speedups) share
-  // the amounts in the boxes. General Sigils count for each expert.
-  function fillExpertsReach() {
-    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando"
-    const gridBox = document.getElementById("expertsGrid");
-    if (!gridBox) return;
-    const TIME = "Expert Speedups (minutes)", AFF = "Affinity", BOOKS = "Books of Knowledge";
-    const have = { [AFF]: affinityOwnedFrom(invSaved), [BOOKS]: Number(invSaved[BOOKS]) || 0, [TIME]: expertSpeedupOwnedFrom(invSaved) };
-    const tracks = [];
-    EXPERTS_SHOWN.filter((e) => isExpertUnlocked(e.key)).forEach((e) => {
-      const hs = saved[e.key], hero = e.key, SIG = `${hero} Sigils`;
-      have[SIG] = (Number(invSaved[SIG]) || 0) + (Number(invSaved["General Sigils"]) || 0);
-      const pos = [];
-      for (let n = 0; n <= heroTopLevel(hero); n++) { pos.push(n); if (n > 0 && heroSigilLevel(hero, n)) pos.push(n + 0.1); }
-      const idxOf = (v) => { const k = pos.findIndex((x) => Math.abs(x - (Number(v) || 0)) < 0.05); return k < 0 ? 0 : k; };
-      const from = idxOf(hs.current), to = Math.max(from, idxOf(hs.desired)), banked = heroAffinityHave(hero);
-      const cum = (i) => { const c = heroCost(hero, pos[from], pos[i]); return { a: Math.max(0, c.affinity - banked), s: c.sigil }; };
-      const rows = AFFINITY_CACHE[hero] || [];
-      const statAt = (v) => { const x = expertLevelStat(rows, v), o = {}; if (x && x.row.stat_type) x.row.stat_type.split(",").forEach((k) => { o[k.trim()] = x.v; }); return o; };
-      tracks.push({ id: `exp|${hero}`, troop: "all", from, to, pos, name: e.name || dataName(hero), img: e.img, lab: (i) => String(pos[i]),
-        cost: (i) => { const a = cum(i), b = cum(i - 1); return { [AFF]: a.a - b.a, [SIG]: a.s - b.s }; },
-        gain: (i) => statAt(pos[i]) });
-      e.skills.forEach((sk) => {
-        const st = hs.skills[sk], sr = SKILL_CACHE[`${hero}|${sk}`] || [], bankedExp = skillExpHave(st);
-        const cumS = (lv) => { const c = skillCost(hero, sk, st.current, lv); return { b: c.book, t: Math.max(0, c.exp - bankedExp) / 60 }; };
-        tracks.push({ id: `exps|${hero}|${sk}`, troop: null, name: dataName(sk), img: e.img, from: Number(st.current) || 0, to: Math.max(Number(st.current) || 0, Math.min(Number(st.desired) || 0, sr.length ? Math.max(...sr.map((r) => r.level)) : 0)),
-          cost: (lv) => { const a = cumS(lv), b = cumS(lv - 1); return { [BOOKS]: a.b - b.b, [TIME]: a.t - b.t }; },
-          gain: () => ({}) });
-      });
-    });
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
-    // Levels and skills both count (a skill the Backpack can raise is "Can do now" too).
-    canDoSet("experts", plan, tracks, "rch_u_experts", { first: true, pic: (tr) => tr.img || "", have, allTracks: tracks });
-    // C1 chips on the card: the level / skill level the Backpack reaches now, or what stops it.
-    gridBox.querySelectorAll("[data-expcd]").forEach((el) => {
-      const tr = tracks.find((x) => x.id === el.dataset.expcd);
-      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; el.className = "exk-cd"; return; }
-      const r = plan.lv[tr.id] || tr.from, lab = tr.lab || String;
-      if (r > tr.from) { el.className = "exk-cd ok"; el.innerHTML = `&#10003; ${esc(t("exp_cd_now").replace("{n}", lab(r)))}`; }
-      else { el.className = "exk-cd short"; el.textContent = t("exp_cd_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"); }
-    });
-  }
-  REACH_HOOKS.experts = fillExpertsReach;
   function levelOpts(max, selected, rel = max) {
     return Array.from({ length: max + 1 }, (_, i) => i)
       .map((n) => `<option value="${n}" ${n === selected ? "selected" : ""}${n > rel ? ' class="opt-up"' : ""}>${n}${esc(upcomingTag(n > rel))}</option>`)
@@ -27901,10 +28185,8 @@ async function renderExpertsPage() {
     const lvFold = lvShow && !EXP_MAX_OPEN[`${hero}|level`], skFold = skShow && !EXP_MAX_OPEN[`${hero}|skills`];
     const m3Line = (key, main, sub) => `<button type="button" class="exk-m3${EXP_MAX_OPEN[key] ? " open" : ""}" data-expmaxopen="${esc(key)}" aria-expanded="${EXP_MAX_OPEN[key] ? "true" : "false"}"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${main}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="exk-m3-go" aria-hidden="true">&rsaquo;</span></button>`;
     const noNeed = affNeed <= 0 && sigil <= 0;
-    // C1 (owner, 10 Nov 2026): "✓ 13 now" / "Books short" chips from the Can do now plan (owner only, filled by fillExpertsReach).
-    const cdOn = IS_OWNER;
     const levelHtml = lvFold ? "" : `<div class="exk-r exk-lvr">
-        <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${cdOn && di > ci ? `<span class="exk-cd" data-expcd="exp|${esc(hero)}"></span>` : ""}${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
+        <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
         ${noNeed ? (lvShow ? "" : `<div class="exk-nn">${esc(t("exp_nothing_needed"))}</div>`) : `<div class="exk-g2">
           ${needBox("aff", EXPERT_INVENTORY_ICONS.Affinity, t("resource_affinity"), affNeed, affShort)}
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
@@ -27936,7 +28218,6 @@ async function renderExpertsPage() {
       } else line = `<div class="exk-m">${esc(t("exp_no_target"))}</div>`;
       return `<div class="exk-r">
           <div class="exk-l1"><div class="exk-nm"><b>${esc(dataName(sk))}</b>${stat}</div>${vals(String(cur), curSel, String(des), `<select data-expskilldes="${esc(hero)}|${esc(sk)}" aria-label="${esc(t("target_label"))}">${levelOpts(pick, Math.min(des, pick), max)}</select>`)}</div>
-          ${cdOn && des > cur ? `<div class="exk-cdr"><span class="exk-cd" data-expcd="exps|${esc(hero)}|${esc(sk)}"></span></div>` : ""}
           ${line}
         </div>`;
     };
@@ -27959,7 +28240,6 @@ async function renderExpertsPage() {
         ${skLine}${skFold ? "" : e.skills.map(skillRow).join("")}
       </div>`;
     wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
-    fillExpertsReach();
     gridEl.querySelectorAll("[data-expmaxopen]").forEach((b) => b.addEventListener("click", () => { EXP_MAX_OPEN[b.dataset.expmaxopen] = !EXP_MAX_OPEN[b.dataset.expmaxopen]; renderGrid(); }));
     // tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
     gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
@@ -28738,30 +29018,6 @@ async function renderPetsDataPage() {
 
   const listEl = document.getElementById("petsList");
   const petsCounterEl = document.getElementById("petsSwipeCounter");
-  // "Can reach" marks: every counted pet shares the
-  // Backpack; the card shows the pet on screen, the line above counts all.
-  function fillPetsReach() {
-    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando"
-    const have = BAR_HAVE.pets;
-    if (!have || !listEl.isConnected) return;
-    const tracks = petNames.filter((pet) => isPetUnlocked(pet)).map((pet) => {
-      const levels = PETS_NODES_CACHE[pet] || [], { from, to } = getState(pet);
-      const statAt = (i) => { for (let k = Math.min(i, levels.length - 1); k >= 0; k--) if (levels[k].atk_def_pct != null) return Number(levels[k].atk_def_pct) * 100; return 0; };
-      return { id: pet, troop: "all", from, to: Math.max(from, Math.min(to, levels.length - 1)), name: dataName(pet), lab: (i) => (i < 0 ? "0" : String((levels[i] || {}).level_label ?? i)),
-        cost: (i) => { const r = levels[i] || {}; return { Food: Number(r.food) || 0, Manual: Number(r.manual) || 0, Potion: Number(r.potion) || 0, Serum: Number(r.serum) || 0 }; },
-        gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
-    });
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.pets);
-    canDoSet("pets", plan, tracks, "rch_u_pets", { pic: (tr) => petImage(tr.id), have, conv: BAR_CONV.pets });
-    listEl.querySelectorAll("[data-rch^='pet|']").forEach((el) => {
-      const tr = tracks.find((x) => `pet|${x.id}` === el.dataset.rch);
-      if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
-      const levels = PETS_NODES_CACHE[tr.id] || [], r = plan.lv[tr.id];
-      const lab = (i) => { if (i < 0 || !levels[i]) return "—"; const l = String(levels[i].level_label), n = parseInt(l, 10) || 0; return /\.1$/.test(l) ? `${n} ${t("pet_adv_short")}` : String(n); };
-      el.innerHTML = `<div class="rch-line">${esc(lab(tr.from))} <span class="lvarr">&rarr;</span> <span class="rch-mark${r >= tr.to ? " full" : r <= tr.from ? " none" : ""}">${r <= tr.from ? "—" : `&#10003;${esc(lab(r))}`}</span> <span class="lvarr">&rarr;</span> ${esc(lab(tr.to))}</div>${reachBarHtml(tr.from, r, tr.to, plan.blocker[tr.id], "rch_u_levels")}`;
-    });
-  }
-  REACH_HOOKS.pets = fillPetsReach;
   let activePetIdx = 0;
   function renderList() {
     renderPickStrip(petsCounterEl, petNames.map((pt, i) => ({ label: dataName(pt), img: petImage(pt), color: PET_TROOP_COLORS_CYCLE[i % PET_TROOP_COLORS_CYCLE.length], dim: !isPetUnlocked(pt) })), activePetIdx, (next) => { activePetIdx = next; renderList(); });
@@ -28830,7 +29086,6 @@ async function renderPetsDataPage() {
             ${step("from", from, -1, lastIdx, fromOpts)}
             ${step("to", to, Math.max(0, from), lastIdx, levelOpts(to))}
           </div>
-          <div class="pc-rch" data-rch="pet|${esc(pet)}"></div>
           ${done ? `<div class="pc-done">&#10003; ${esc(t("pet_done"))}</div>` : `<div class="pc-chips">
             ${chip(PET_MATERIAL_ICONS.food, t("material_food"), needed.food)}
             ${chip(PET_MATERIAL_ICONS.manual, t("material_manual"), needed.manual)}
@@ -28839,7 +29094,6 @@ async function renderPetsDataPage() {
           </div>`}
         </div>`;
     wireIndexSwipe(listEl, petNames.length, activePetIdx, (next) => { activePetIdx = next; renderList(); });
-    fillPetsReach();
 
     listEl.querySelectorAll("input[data-petunlock]").forEach((cb) => {
       cb.addEventListener("change", async () => {
@@ -29410,16 +29664,19 @@ function plxTabsHtml(list, active, colors, sub, attr) {
   return list.map((k) => `<button type="button" class="${k === active ? "on" : ""}" data-${attr}="${esc(k)}" style="--tc:${colors[k] || "var(--ice)"};">${esc(troopDisplayName(k))}${sub ? `<small>${esc(sub(k))}</small>` : ""}</button>`).join("");
 }
 
+async function ensureT12NodesData() {
+  if (T12_NODES_CACHE) return;
+  const rows = await sb(`t12_nodes?select=${upId("t12_nodes")}tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
+  const c = {};
+  rows.forEach((r) => {
+    if (!c[r.tier]) c[r.tier] = {};
+    c[r.tier][r.level] = r;
+  });
+  T12_NODES_CACHE = c;
+}
 async function renderT12ResearchPage() {
   const seq = RENDER_SEQ;
-  if (!T12_NODES_CACHE) {
-    const rows = await sb(`t12_nodes?select=${upId("t12_nodes")}tier,level,steel,refined_fc,fc_shard,meat_wood,coal,iron,time_hours&order=tier,level`);
-    T12_NODES_CACHE = {};
-    rows.forEach((r) => {
-      if (!T12_NODES_CACHE[r.tier]) T12_NODES_CACHE[r.tier] = {};
-      T12_NODES_CACHE[r.tier][r.level] = r;
-    });
-  }
+  await ensureT12NodesData();
   if (!T12_STATE) {
     const saved = await loadCalcState("t12_research");
     T12_STATE = saved || {};
@@ -29609,7 +29866,6 @@ async function renderT12ResearchPage() {
           <span class="meta" style="white-space:nowrap;">/ ${rel}</span></span>
         </div>
         <div class="t12x-bar"><i style="width:${rel ? (Math.min(cur, rel) / rel) * 100 : 0}%;${cur >= rel ? " background:var(--good);" : ""}"></i></div>
-        <div class="t12-rch" data-rch="t12|${esc(troop)}|${def.key}"></div>
       </div>`;
     };
     const groupInfo = (group) => {
@@ -29692,34 +29948,7 @@ async function renderT12ResearchPage() {
       renderTotals();
       refresh(T12_ITEM_DEFS.find((d) => d.key === sel.dataset.t12target));
     };
-    fillT12Reach();
   }
-  // "Can reach" marks: every troop's nodes share the
-  // Backpack; research time is paid with research + general speedups.
-  function fillT12Reach() {
-    if (!visitorCan("cando")) return; // admin only unless Visitor access "cando"
-    const have0 = BAR_HAVE.t12_research, troopsEl = document.getElementById("t12Troops");
-    if (!have0 || !troopsEl) return;
-    const TIME = "Research Speedups (minutes)";
-    const have = { ...have0, [TIME]: (Number(have0[TIME]) || 0) + (Number(RESEARCH_SPEEDUP_MINUTES) || 0) };
-    const tracks = [], lockNodes = researchLockNodes("t12");
-    T12_TROOPS.forEach((troop) => T12_ITEM_DEFS.forEach((def) => {
-      const from = T12_STATE[troop][def.key] || 0, tierRows = T12_NODES_CACHE[def.tier] || {};
-      tracks.push({ id: `${troop}|${def.key}`, troop, key: def.key, from, to: Math.max(from, t12TargetOf(troop, def)), name: def.group === def.label ? tT12Group(def.group) : `${tT12Group(def.group)} · ${tT12Label(def.label)}`, lab: (i) => String(i),
-        needs: (lv) => researchNeedsOf("t12", lockNodes, def.key, lv, (k) => `${troop}|${k}`),
-        cost: (lv) => { const r = tierRows[lv] || {}; const mw = Number(r.meat_wood) || 0; return { Steel: Number(r.steel) || 0, "Refined FC": Number(r.refined_fc) || 0, "FC Shard": Number(r.fc_shard) || 0, Meat: mw, Wood: mw, Coal: Number(r.coal) || 0, Iron: Number(r.iron) || 0, [TIME]: applyResearchPct(Number(r.time_hours) || 0) * 60 }; },
-        gain: (lv) => (def.stat ? { [def.stat]: lv * (def.pct || 1) } : {}) });
-    }));
-    const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.t12_research);
-    REACH_LAST.t12_research = { plan, tracks, unit: "rch_u_nodes", go: (troop) => { const b = document.querySelector(`[data-t12tab="${troop}"]`); if (b) b.click(); } };
-    tracks.forEach((tr) => {
-      const el = troopsEl.querySelector(`[data-rch="t12|${window.CSS.escape(tr.id)}"]`);
-      if (!el) return;
-      el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.waits[tr.id] && !plan.blocker[tr.id] ? null : plan.blocker[tr.id], "rch_u_levels")}${reachWaitHtml("t12", lockNodes, tr, plan, tracks)}` : "";
-    });
-    canDoSet("t12_research", plan, tracks, "rch_u_nodes", { all: "t12_research", have, conv: BAR_CONV.t12_research });
-  }
-  REACH_HOOKS.t12_research = fillT12Reach;
 
   renderTotals();
   renderTroopPanels();
