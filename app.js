@@ -8360,8 +8360,8 @@ function renderPurNewGen(el, tables, onChange) {
     ngHeroRows().then((rows) => { noteHeroImages(rows); if (el.isConnected) renderPurNewGen(el, tables, onChange); }).catch(() => {});
   }
   el.querySelectorAll("[data-ngset]").forEach((b) => b.addEventListener("click", () => {
-    NG_SET_OPEN = !setOpen;
     const box = el.querySelector(".ng-set");
+    NG_SET_OPEN = box ? box.hidden : !NG_SET_OPEN;
     if (box) box.hidden = !NG_SET_OPEN;
     b.classList.toggle("on", NG_SET_OPEN);
     b.setAttribute("aria-expanded", String(NG_SET_OPEN));
