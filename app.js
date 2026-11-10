@@ -27740,8 +27740,9 @@ async function renderExpertsPage() {
     const lvMax = di === ci && (Number(s.current) || 0) >= heroMaxLevelValue(hero) - 0.05;
     const skMax = (sk) => { const st = s.skills[sk], c = Number(st.current) || 0; return Math.max(c, Number(st.desired) || 0) <= c && c >= skillMaxLevel(hero, sk); };
     const allSkMax = e.skills.every(skMax);
-    const lvFold = lvMax && !EXP_MAX_OPEN[`${hero}|level`], skFold = lvMax && allSkMax && !EXP_MAX_OPEN[`${hero}|skills`];
-    const m3Line = (key, main, sub) => `<button type="button" class="exk-m3" data-expmaxopen="${esc(key)}"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${main}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="exk-m3-go" aria-hidden="true">&rsaquo;</span></button>`;
+    const lvShow = lvMax, skShow = lvMax && allSkMax;
+    const lvFold = lvShow && !EXP_MAX_OPEN[`${hero}|level`], skFold = skShow && !EXP_MAX_OPEN[`${hero}|skills`];
+    const m3Line = (key, main, sub) => `<button type="button" class="exk-m3${EXP_MAX_OPEN[key] ? " open" : ""}" data-expmaxopen="${esc(key)}" aria-expanded="${EXP_MAX_OPEN[key] ? "true" : "false"}"><span class="exk-ck" aria-hidden="true">&#10003;</span><span class="exk-m3-t"><b>${main}</b>${sub ? `<small>${sub}</small>` : ""}</span><span class="exk-m3-go" aria-hidden="true">&rsaquo;</span></button>`;
     const noNeed = affNeed <= 0 && sigil <= 0;
     const levelHtml = lvFold ? "" : `<div class="exk-r exk-lvr">
         <div class="exk-b exk-lv"><small>${esc(t("exp_level_word"))}</small>${vals(lvLab(s.current), `<select data-expcur="${esc(hero)}" aria-label="${esc(t("current_label"))}">${heroLevelOpts(hero, s.current)}</select>`, lvLab(pos[di]), `<select data-expdes="${esc(hero)}" aria-label="${esc(t("target_label"))}">${heroLevelOpts(hero, s.desired)}</select>`)}</div>
@@ -27750,8 +27751,8 @@ async function renderExpertsPage() {
           ${needBox("sig", sigImg, t("exp_sigils_of").replace("{name}", dataName(hero)), sigil, sigShort)}
         </div>`}
       </div>`;
-    const lvLine = lvFold ? `<div class="exk-m3box">${m3Line(`${hero}|level`, esc(t("exp_lv_max").replace("{n}", lvLab(s.current))), noNeed ? esc(t("exp_nothing_needed")) : "")}</div>` : "";
-    const skLine = skFold ? `<div class="exk-m3box">${m3Line(`${hero}|skills`, esc(t("exp_all_skills_max")), e.skills.map((sk) => `<span class="nw">${esc(dataName(sk))} ${Number(s.skills[sk].current) || 0}</span>`).join(" · "))}</div>` : "";
+    const lvLine = lvShow ? `<div class="exk-m3box">${m3Line(`${hero}|level`, esc(t("exp_lv_max").replace("{n}", lvLab(s.current))), noNeed ? esc(t("exp_nothing_needed")) : "")}</div>` : "";
+    const skLine = skShow ? `<div class="exk-m3box">${m3Line(`${hero}|skills`, esc(t("exp_all_skills_max")), e.skills.map((sk) => `<span class="nw">${esc(dataName(sk))} ${Number(s.skills[sk].current) || 0}</span>`).join(" · "))}</div>` : "";
     // Books: the Backpack's Books go to the skills in listed order.
     let booksLeft = Number(invSaved["Books of Knowledge"]) || 0;
     const skillRow = (sk) => {
@@ -27795,11 +27796,11 @@ async function renderExpertsPage() {
           </div>
         </div>
         ${lvLine}${levelHtml}
-        ${skFold ? skLine : e.skills.map(skillRow).join("")}
+        ${skLine}${skFold ? "" : e.skills.map(skillRow).join("")}
       </div>`;
     wireIndexSwipe(gridEl, EXPERTS_SHOWN.length, activeExpertIdx, (next) => { activeExpertIdx = next; renderGrid(); });
     fillExpertsReach();
-    gridEl.querySelectorAll("[data-expmaxopen]").forEach((b) => b.addEventListener("click", () => { EXP_MAX_OPEN[b.dataset.expmaxopen] = true; renderGrid(); }));
+    gridEl.querySelectorAll("[data-expmaxopen]").forEach((b) => b.addEventListener("click", () => { EXP_MAX_OPEN[b.dataset.expmaxopen] = !EXP_MAX_OPEN[b.dataset.expmaxopen]; renderGrid(); }));
     // tap a need box to change what you have (Affinity already in the bar / the expert's Sigils)
     gridEl.querySelectorAll("[data-expbox]").forEach((b) => b.addEventListener("click", () => {
       if (b.dataset.expbox === "aff") {

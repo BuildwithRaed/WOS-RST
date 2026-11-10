@@ -4483,6 +4483,8 @@ input,select,textarea{
   .exk-m3-t .nw{ white-space:nowrap; }
   .exk-m3-go{ flex:none; color:var(--muted); font-size:20px; }
   .exk-m3box + .exk-m3box{ border-top:0; padding-top:0; }
+  .exk-m3.open .exk-m3-go{ transform:rotate(90deg); }
+  .exk-m3box + .exk-r{ border-top:0; }
   .exk > .exk-r:last-child, .exk > .exk-sl:last-child{ padding-bottom:2px; }
   .er-note{ font-size:12px; margin:0 0 8px; }
 
