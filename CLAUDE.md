@@ -623,3 +623,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - PR #171: Shining City skins on the Skin Gallery (picker, allow list, Budgets page) and the +80 first-buy Tome bonus in the packs planner
 - Budgets: pack lines show only the pack name (no category / option list)
 - PR #173: Pack calendar = G4 (game-like week grid: pinned day row, Events / In your plan bands, other packs folded, names beside short bars)
+- PR #174: Experts Level = one card (W1 + M3: Level box with Compass / Sigil boxes, skill rows with Books left and Learning XP, maxed lines that fold), Level | Skills switch and skill window removed
