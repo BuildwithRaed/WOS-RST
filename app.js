@@ -3460,6 +3460,18 @@ const T = {
   pkb_ng_next: { en: "Next: Gen {gen} heroes · {date}" },
   pkb_ng_next_nogen: { en: "Next new heroes · {date}" },
   pkb_ng_in: { en: "in {n} days" },
+  ng_next_lbl: { en: "Next new heroes" },
+  ng_in_hall: { en: "in Hall of Heroes" },
+  ng_src_state: { en: "From state age day {day}" },
+  ng_src_own: { en: "From your date {date}" },
+  ng_src_none: { en: "No date yet" },
+  ng_src_site: { en: "Usual dates (no state age)" },
+  ng_set_date: { en: "Set date" },
+  ng_change_state: { en: "Change state age" },
+  ng_by_gen: { en: "Packs by Gen" },
+  ng_with_heroes: { en: "Heroes + {name}" },
+  ng_on_now: { en: "on now" },
+  ng_next_in: { en: "next · {n} days" },
   pkb_ng_hall: { en: "★ {hero} in Hall of Heroes" },
   pur_gen: { en: "Gen {n}" },
   pur_now: { en: "now" },
@@ -9043,54 +9055,107 @@ function purNextNewGen() {
   return { date: starts[i], days: Math.round((starts[i] - t0) / 86400000), gen, hall: gen ? HALL_OF_HEROES_HERO[gen] || null : null };
 }
 function purNewGenTables(tables) { return (tables || []).filter((tb) => packIsNewGen(packLinkForBase(tb.id)) && typeof packLinkFor(tb.id).reset === "number"); }
-// New heroes.
-// Same saves (PACK_PURCHASES.newGen, my_pack_dates) and invalidation as before.
+// New heroes = design N1: answer card (next Gen, its Hall of Heroes hero),
+// where the date comes from + ✎ Set date (the same controls and saves as
+// before: PACK_PURCHASES.newGen, my_pack_dates), then "Packs by Gen": the
+// current Gen and the next ones with each New Gen pack event's dates. Tables
+// of one event (Same dates as) are one chip.
+let NG_SET_OPEN = false; // ✎ Set date panel open (for the visit)
+let NG_FACES_ASKED = false; // the heroes table was asked for the Hall faces once
 function renderPurNewGen(el, tables, onChange) {
   if (!el) return;
   const ngTables = purNewGenTables(tables);
   if (!ngTables.length) { el.innerHTML = ""; return; }
-  const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
+  const loc = LANG === "en" ? undefined : LANG;
+  const fmtDay = (k) => { const d = packParseDay(k); if (!d) return k || ""; try { return d.toLocaleDateString(loc, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); } catch (e) { return k; } };
+  const fmtShort = (d) => { try { return d.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return packDayKey(d); } };
   const ng = PACK_PURCHASES.newGen || {};
-  // One line per event: "Hero Ascension Training" and
-  // its "…: Value Hero Pack" come together, so only the first is listed and
-  // its own date moves every table of that event.
+  // One event per leader ("Same dates as"); tables sharing the name before ":"
+  // (Hero Ascension Training + "…: Value Hero Pack") also count as one.
   const ngBase = (tb) => String(tb.title || "").split(":")[0].trim();
-  const ngShown = ngTables.filter((tb, i) => ngTables.findIndex((x) => ngBase(x) === ngBase(tb)) === i);
-  const ngSame = (id) => { const tb = ngTables.find((x) => String(x.id) === String(id)); return tb ? ngTables.filter((x) => ngBase(x) === ngBase(tb)).map((x) => String(x.id)) : [String(id)]; };
-  const ownWas = !!(el.querySelector(".pur-ng-own") || {}).open;
+  const events = [];
+  ngTables.forEach((tb) => {
+    const leadId = packDateLeader(tb.id) || String(tb.id);
+    const lead = ngTables.find((x) => String(x.id) === leadId) || tb;
+    let ev = events.find((e) => e.id === String(lead.id) || ngBase(e.lead) === ngBase(lead));
+    if (!ev) { ev = { id: String(lead.id), lead, tables: [] }; events.push(ev); }
+    ev.tables.push(tb);
+  });
+  events.forEach((ev) => {
+    const l = packLinkFor(ev.lead.id);
+    ev.name = packEventName(ev.lead, ngTables) || ngBase(ev.lead) || ev.lead.title || "";
+    ev.win = Number(l.window) || 0;
+    ev.off = packNewGenOffset(ev.lead.id);
+    const cols = ev.tables.flatMap((tb) => (tb.columns || []).concat(Object.values(packLinkFor(tb.id).cols || {}))).map((c) => String(c || ""));
+    ev.icon = cols.some((n) => /widget/i.test(n)) && !cols.some((n) => /shard/i.test(n)) ? "icons/hero-widgets.png" : BP_SHARD_ICONS["Mythic General Hero Shard"];
+  });
+  events.sort((a, b) => a.off - b.off);
+  const ids = (ev) => ev.tables.map((x) => String(x.id));
+  const t0 = packStartOfToday(), DAY = 86400000;
+  const base = newGenBaseDay(), cur = newGenGen();
+  const starts = base ? newGenStarts(base, 12) : [];
+  const fromLast = !!base && events.some((ev) => packNewGenAnchor(ev.lead.id));
+  const sg = stateGenInfo(), own = !!packValidDay(ng.last);
+  const faceOf = (gen) => { const h = gen ? HALL_OF_HEROES_HERO[gen] : null; return h ? HERO_IMG_BY_NAME[h] || "" : ""; };
+  const faceHtml = (gen, cls) => { const f = faceOf(gen); return `<span class="${cls}">${f ? `<img src="${esc(f)}" alt="" loading="lazy" />` : "&#11088;"}</span>`; };
+  // Answer card.
   const nx = purNextNewGen();
-  const face = nx && nx.hall ? HERO_IMG_BY_NAME[nx.hall] : "";
-  const nxDay = nx ? fmtDay(packDayKey(nx.date)).replace(/,? \d{4}$/, "") : "";
-  const nextHtml = nx ? `<div class="pkb-ngnext"><span class="pkb-ngpic">${face ? `<img src="${esc(face)}" alt="" loading="lazy" />` : "&#11088;"}</span><span><b>${esc(nx.gen ? t("pkb_ng_next").replace("{gen}", nx.gen).replace("{date}", nxDay) : t("pkb_ng_next_nogen").replace("{date}", nxDay))}</b><small class="meta">${esc([t("pkb_ng_in").replace("{n}", nx.days), nx.hall ? t("pkb_ng_hall").replace("{hero}", nx.hall) : ""].filter(Boolean).join(" · "))}</small></span></div>` : "";
-  el.innerHTML = `<div class="pkb-ng"><div class="pkb-ng-h"><b>${esc(t("pkb_new_heroes"))}</b></div>
-    <p class="meta pkb-ng-d">${esc(t("pur_newgen_desc"))}</p>
-    ${nextHtml}
-    ${(() => {
-      // From the state age (Dashboard) unless the person typed their own date.
-      const sg = stateGenInfo(), own = !!packValidDay(ng.last);
-      const inputs = `<div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
-        <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>`;
-      if (own) return `${inputs}${sg ? `<button type="button" class="linklike pur-ng-link" data-purngstate>${esc(t("pur_ng_use_state"))}</button>` : ""}`;
-      if (sg) return `<div class="pur-ng-sa">🏰 ${t("pur_ng_from_state").replace("{day}", `<b>${stateAgeDay().toLocaleString()}</b>`).replace("{gen}", `<b>${sg.gen}</b>`).replace("{date}", `<b>${esc(fmtDay(sg.start))}</b>`)} <button type="button" class="linklike pur-ng-link" data-purngsa>${esc(t("pur_ng_change"))}</button></div>
-        <details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
-      return `<button type="button" class="btn small" data-purngsa style="margin-bottom:8px;">🏰 ${esc(t("pur_ng_set_state"))}</button><details class="pur-ng-own"><summary class="meta">${esc(t("pur_ng_own"))}</summary>${inputs}</details>`;
-    })()}
-    ${ngShown.map((tb) => {
-      const l = packLinkFor(tb.id);
-      const t0 = packStartOfToday();
-      const ngApps = newGenAppearances(tb.id, Number(l.window) || 0).filter((x) => x.start.getTime() + (x.days - 1) * 86400000 >= t0.getTime()).map((x) => ({ ...x, offset: Math.round((x.start - t0) / 86400000) }));
-      const apps = (ngApps.length ? ngApps : packAppearances(l.reset, l.resetDay, Number(l.window) || 0, 400)).slice(0, 3);
-      const mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
-      // With a "last new heroes" date the pack follows it; otherwise its own date can be set.
-      const fromLast = !!packNewGenAnchor(tb.id), off = packNewGenOffset(tb.id);
-      return `<div class="pur-ng-pack"><b style="font-size:12.5px;">${esc(ngBase(tb) || tb.title || "")}</b>${!fromLast && mine ? ` <span class="pur-tag">${esc(t("pk_your_date"))}</span>` : ""}
-        ${fromLast ? `<div class="meta" style="font-size:11px; margin-top:4px;">${esc(off ? t("pur_newgen_after").replace("{n}", Math.round(off / 7)) : t("pur_newgen_with"))}</div>` : `<label class="pur-f" style="margin-top:6px;"><span class="meta">${esc(t("pur_newgen_start"))}</span><span style="display:flex; gap:6px; align-items:center;"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(apps[0] ? packDayKey(apps[0].start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}" style="padding:2px 8px;">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>`}
-        <div class="pur-ng-next">${apps.map((a) => { const g = packNewGenLabel(a.start, l.reset, tb.id); return `<span>${g ? `<b>${esc(g)}</b> ` : ""}${esc(fmtDay(packDayKey(a.start)))}${a.offset <= 0 ? ` <span style="color:var(--good);">· ${esc(t("pur_now"))}</span>` : ""}</span>`; }).join("")}</div>
-      </div>`;
-    }).join("")}
+  const nxDay = nx ? fmtShort(nx.date) : "";
+  const ansTop = nx ? `<div class="ng-ans">${faceHtml(nx.gen, "ng-face")}<div class="ng-ans-t"><div class="ng-lbl">${esc(t("ng_next_lbl"))}</div>
+      <div class="ng-big">${nx.gen ? `${esc(t("pur_gen").replace("{n}", nx.gen))} · ` : ""}<b>${esc(nxDay)}</b></div>
+      <div class="ng-sub">${esc(t("pkb_ng_in").replace("{n}", nx.days))}${nx.hall ? ` · <span class="ng-gold">★ ${esc(nx.hall)}</span> ${esc(t("ng_in_hall"))}` : ""}</div></div></div>` : `<div class="ng-sub">${esc(t("pkb_ng_sub_set"))}</div>`;
+  const srcTxt = own ? t("ng_src_own").replace("{date}", `<b>${esc(fmtDay(ng.last))}</b>`) : sg ? t("ng_src_state").replace("{day}", `<b>${stateAgeDay().toLocaleString()}</b>`) : esc(t(base ? "ng_src_site" : "ng_src_none"));
+  const setOpen = NG_SET_OPEN || !base;
+  // ✎ Set date: the same controls as before.
+  const inputs = `<div class="pur-ng-row"><label class="pur-f"><span class="meta">${esc(t("pur_newgen_last"))}</span><input type="date" data-purng="last" value="${esc(packValidDay(ng.last) || "")}" /></label>
+    <label class="pur-f pur-f-sm"><span class="meta">${esc(t("pur_newgen_gen"))}</span><input type="number" min="1" max="30" step="1" data-purng="gen" value="${ng.gen ? Math.floor(Number(ng.gen)) : ""}" placeholder="Gen" /></label></div>`;
+  const packStarts = fromLast ? "" : events.map((ev) => {
+    const tb = ev.lead, l = packLinkFor(tb.id), mine = packValidDay(MY_PACK_DATES[String(tb.id)]);
+    const a = packAppearances(l.reset, l.resetDay, ev.win, 400)[0];
+    return `<label class="pur-f ng-ps"><span class="meta">${esc(ev.name)} · ${esc(t("pur_newgen_start"))}</span><span class="ng-ps-r"><input type="date" data-purngstart="${esc(String(tb.id))}" value="${esc(a ? packDayKey(a.start) : (mine || ""))}" />${mine ? `<button type="button" class="btn small ghost" data-purngreset="${esc(String(tb.id))}">${esc(t("pk_reset_one"))}</button>` : ""}</span></label>`;
+  }).join("");
+  const setHtml = `<div class="ng-set"${setOpen ? "" : " hidden"}>${inputs}
+    ${own && sg ? `<button type="button" class="linklike pur-ng-link" data-purngstate>&#8634; ${esc(t("pur_ng_use_state"))}</button>` : ""}
+    ${!own ? `<button type="button" class="btn small ghost ng-sa" data-purngsa>🏰 ${esc(sg ? t("ng_change_state") : t("pur_ng_set_state"))}</button>` : ""}
+    ${packStarts}</div>`;
+  // Packs by Gen: the Gen running now, then the next ones (4 in all).
+  let ci = -1;
+  starts.forEach((d, i) => { if (d.getTime() <= t0.getTime()) ci = i; });
+  const first = Math.max(0, ci), nextI = ci + 1;
+  const gens = fromLast ? starts.slice(first, first + 4).map((d, k) => first + k) : [];
+  const tlHtml = gens.map((i) => {
+    const gen = cur ? cur + i : null;
+    let onNow = false;
+    const rows = events.map((ev) => {
+      const a = newGenAppearances(ev.lead.id, ev.win).find((x) => x.gen === i);
+      if (!a) return "";
+      const st = a.start.getTime(), run = st <= t0.getTime() && st + a.days * DAY > t0.getTime();
+      if (run) onNow = true;
+      const label = ev.off ? ev.name : t("ng_with_heroes").replace("{name}", ev.name);
+      return `<div class="ng-sl" data-ngev="${esc(ev.id)}"><span class="ng-d${run ? " now" : ""}">${esc(fmtDay(packDayKey(a.start)))}</span><span class="ng-chip"><img src="${esc(ev.icon)}" alt="" loading="lazy" />${esc(label)}</span></div>`;
+    }).join("");
+    const days = Math.round((starts[i] - t0) / DAY);
+    const pill = onNow ? `<span class="ng-pill g">${esc(t("ng_on_now"))}</span>` : i === nextI ? `<span class="ng-pill i">${esc(t("ng_next_in").replace("{n}", days))}</span>` : "";
+    const cls = i <= ci ? " done" : i === nextI ? " next" : "";
+    return `<div class="ng-st${cls}"><span class="ng-dot" aria-hidden="true"></span><div class="ng-sh">${faceHtml(gen, "ng-sf")}<b>${gen ? esc(t("pur_gen").replace("{n}", gen)) : esc(fmtShort(starts[i]))}</b>${pill}</div>${rows}</div>`;
+  }).join("");
+  el.innerHTML = `<div class="ng-n1">
+    <div class="panel ng-card">${ansTop}<div class="ng-src"><span>${srcTxt}</span><button type="button" class="btn small ghost ng-setbtn${setOpen ? " on" : ""}" data-ngset aria-expanded="${setOpen}">&#9998; ${esc(t("ng_set_date"))}</button></div>${setHtml}</div>
+    ${tlHtml ? `<div class="panel ng-card"><div class="ng-ct">${esc(t("ng_by_gen"))}</div><div class="ng-tl">${tlHtml}</div></div>` : ""}
   </div>`;
-  if (ownWas) { const own = el.querySelector(".pur-ng-own"); if (own) own.open = true; }
   const again = () => { renderPurNewGen(el, tables, onChange); if (onChange) onChange(); };
+  // Hall faces: the heroes table (the Dashboard's same read) when not loaded yet.
+  if (!NG_FACES_ASKED && [nx && nx.gen, ...gens.map((i) => (cur ? cur + i : null))].some((g) => g && HALL_OF_HEROES_HERO[g] && !HERO_IMG_BY_NAME[HALL_OF_HEROES_HERO[g]])) {
+    NG_FACES_ASKED = true;
+    ngHeroRows().then((rows) => { noteHeroImages(rows); if (el.isConnected) renderPurNewGen(el, tables, onChange); }).catch(() => {});
+  }
+  el.querySelectorAll("[data-ngset]").forEach((b) => b.addEventListener("click", () => {
+    const box = el.querySelector(".ng-set");
+    NG_SET_OPEN = box ? box.hidden : !NG_SET_OPEN;
+    if (box) box.hidden = !NG_SET_OPEN;
+    b.classList.toggle("on", NG_SET_OPEN);
+    b.setAttribute("aria-expanded", String(NG_SET_OPEN));
+  }));
   el.querySelectorAll("[data-purngsa]").forEach((b) => b.addEventListener("click", () => openStateAgeModal(() => again())));
   el.querySelectorAll("[data-purngstate]").forEach((b) => b.addEventListener("click", () => {
     PACK_PURCHASES.newGen = { ...(PACK_PURCHASES.newGen || {}) };
@@ -9113,15 +9178,52 @@ function renderPurNewGen(el, tables, onChange) {
     saveCalcState("my_pack_dates", MY_PACK_DATES);
     setTimeout(again, 0);
   };
-  // Each New Gen pack has its own start date (they don't always come together).
+  // Each event has its own start date (they don't always come together); it moves every table of that event.
+  const evIds = (id) => { const ev = events.find((e) => e.id === String(id)); return ev ? ids(ev) : [String(id)]; };
   el.querySelectorAll("[data-purngstart]").forEach((inp) => inp.addEventListener("change", () => {
-    ngSame(inp.dataset.purngstart).forEach((id) => { if (packValidDay(inp.value)) MY_PACK_DATES[id] = inp.value; else delete MY_PACK_DATES[id]; });
+    evIds(inp.dataset.purngstart).forEach((id) => { if (packValidDay(inp.value)) MY_PACK_DATES[id] = inp.value; else delete MY_PACK_DATES[id]; });
     ngSave();
   }));
   el.querySelectorAll("[data-purngreset]").forEach((b) => b.addEventListener("click", () => {
-    ngSame(b.dataset.purngreset).forEach((id) => { delete MY_PACK_DATES[id]; });
+    evIds(b.dataset.purngreset).forEach((id) => { delete MY_PACK_DATES[id]; });
     ngSave();
   }));
+}
+// The New heroes window's title gets an (i) with the description.
+function ngTitleInfo(titleEl) {
+  if (!titleEl || titleEl.querySelector("[data-info]")) return;
+  const d = document.createElement("p");
+  d.className = "desc";
+  d.textContent = t("pur_newgen_desc");
+  infoAttach(titleEl, d);
+}
+// My Purchases' "change ›": the same New heroes window over My Purchases
+// (no page change); closing it leaves the page where it was. `onClose(changed)`.
+function openNewHeroesWindow(onClose) {
+  document.getElementById("purNgSheet")?.remove();
+  const ov = document.createElement("div");
+  ov.className = "pkb-ov";
+  ov.id = "purNgSheet";
+  ov.innerHTML = `<div class="pkb-sheet" role="dialog" aria-label="${esc(t("pkb_new_heroes"))}"><div class="pkb-sh-h"><button type="button" class="pkb-back" data-ngclose aria-label="${esc(t("close_button"))}">&#8249;</button><b class="ng-wt">${esc(t("pkb_new_heroes"))}</b></div><div class="pkb-sh-b"><div class="ng-body"><div class="empty">${esc(t("pur_loading"))}</div></div></div></div>`;
+  document.body.appendChild(ov);
+  ngTitleInfo(ov.querySelector(".ng-wt"));
+  let changed = false;
+  const tab = TAB;
+  const close = () => {
+    if (!ov.isConnected) return;
+    ov.remove();
+    document.removeEventListener("keydown", onKey);
+    if (onClose && TAB === tab) onClose(changed);
+  };
+  const onKey = (e) => { if (e.key === "Escape" && !document.querySelector(".modal-overlay[style*='flex']")) { e.preventDefault(); close(); } };
+  document.addEventListener("keydown", onKey);
+  ov.addEventListener("click", (e) => { if (e.target === ov || e.target.closest("[data-ngclose]")) close(); });
+  ensurePackTables().then((all) => {
+    const body = ov.querySelector(".ng-body");
+    if (!body || !ov.isConnected) return;
+    renderPurNewGen(body, all, () => { changed = true; });
+  }).catch(() => { const body = ov.querySelector(".ng-body"); if (body) body.innerHTML = `<div class="empty">${esc(t("no_connection_retry"))}</div>`; });
+  return close;
 }
 // My Purchases' "Show N more" / "Show less" button under a list (attr = its data-* attribute).
 function purMoreBtnHtml(attr, all, n) {
@@ -10762,8 +10864,8 @@ async function renderPurchasesPage() {
     b.innerHTML = wcFoldHtml(f);
     b.setAttribute("aria-expanded", String(!f));
   }));
-  // "Gen 15 heroes Dec 21 · change ›": the Packs page's Pack dates & prices window, New heroes.
-  content.querySelectorAll("[data-purngopen]").forEach((b) => b.addEventListener("click", () => { PKB_DP_FOCUS = "ng"; goToTab("packs"); }));
+  // "Gen 15 heroes Dec 21 · change ›": the New heroes window over this page (Packs page's same content).
+  content.querySelectorAll("[data-purngopen]").forEach((b) => b.addEventListener("click", () => openNewHeroesWindow((changed) => { if (changed) redraw(); })));
 }
 // Esc closes My Purchases' sheet (not while one of its pop-ups is open over it).
 document.addEventListener("keydown", (e) => {
@@ -11428,7 +11530,10 @@ async function renderPacksPage() {
       const pt = PKB_DP_TITLES[part] ? part : "dates";
       pkbDp.querySelectorAll("[data-pkbpart]").forEach((el) => { el.hidden = el.dataset.pkbpart !== pt; });
       const ttl = t(PKB_DP_TITLES[pt]);
-      document.getElementById("pkbDpTitle").textContent = ttl;
+      const ttlEl = document.getElementById("pkbDpTitle");
+      ttlEl.textContent = ttl;
+      ttlEl.classList.remove("has-info");
+      if (pt === "ng") ngTitleInfo(ttlEl);
       pkbDp.querySelector(".pkb-sheet").setAttribute("aria-label", ttl);
       const sb = pkbDp.querySelector(".pkb-sh-b"); if (sb) sb.scrollTop = 0;
       if (pt === "dates") { const box = pkbDp.querySelector("details.pkd-box"); if (box && !box.open) box.open = true; }
