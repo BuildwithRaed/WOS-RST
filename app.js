@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 84; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 85; // bump when a lang/*.json file changes (the offline cache keeps old links)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
 const LANG_BUILTIN = [
@@ -2301,7 +2301,7 @@ const T = {
   pack_cal_today_btn: { en: "Today" },
   pack_cal_state_day: { en: "state day {n}" },
   pack_cal_today: { en: "today" },
-  pcl_desc: { en: "Packs, events and new heroes, one week at a time. Dots under a day are packs that start that day; a ★ marks packs in your plan. Tap a bar or a pack for its dates, what it gives and its price steps." },
+  pcl_desc: { en: "Packs, events and new heroes, one week at a time, like the game's calendar: one bar per pack over its days, today in gold, a ★ for packs in your plan. Tap a day for its list, a bar or a pack for its dates, what it gives and its price steps." },
   pcl_utc: { en: "Game days (UTC)." },
   pcl_filter: { en: "Filter" },
   pcl_today: { en: "Today" },
@@ -2316,7 +2316,10 @@ const T = {
   pcl_this_week: { en: "this week" },
   pcl_next_week: { en: "next week" },
   pcl_last_week: { en: "last week" },
-  pcl_more_bars: { en: "+ {n} more bars" },
+  pcl_g_plan: { en: "In your plan" },
+  pcl_g_other: { en: "Other packs" },
+  pcl_g_more: { en: "{n} more packs" },
+  pcl_g_packs: { en: "{n} packs" },
   pcl_show_less: { en: "Show less" },
   pcl_on_now: { en: "on now" },
   pcl_n_packs: { en: "{n} packs" },
@@ -10064,6 +10067,54 @@ function packCalImg(name, cls) {
   const s = packCalIconSrc(name);
   return s ? `<img class="${cls || ""}" src="${esc(s)}" alt="" loading="lazy" />` : "";
 }
+// A bar's name that doesn't fit inside it goes beside it, on the side with the
+// most room (two lines there when needed); with no room on either side it
+// wraps to two lines inside the bar.
+function packCalFit(root) {
+  (root || document).querySelectorAll(".pcg-bar").forEach((b) => {
+    const row = b.parentElement;
+    row.querySelectorAll(".pcg-side").forEach((x) => x.remove());
+    b.classList.remove("out", "two");
+    const nm = b.querySelector(".nm");
+    if (!nm || nm.scrollWidth <= nm.clientWidth + 1) return;
+    const need = nm.scrollWidth + 2;
+    const a = Number(b.style.getPropertyValue("--a")) || 0, w = Number(b.style.getPropertyValue("--w")) || 1;
+    const colW = row.clientWidth / 7;
+    const rRoom = (7 - a - w) * colW - 8, lRoom = a * colW - 8;
+    const side = rRoom >= lRoom ? "r" : "l", room = Math.max(rRoom, lRoom);
+    if (room >= need || (room >= 56 && room * 1.9 >= need)) {
+      const o = document.createElement("span");
+      o.className = `pcg-side ${side}${room >= need ? "" : " two"}`;
+      o.textContent = nm.textContent;
+      o.style.setProperty("--a", a); o.style.setProperty("--w", w);
+      o.style.maxWidth = `${Math.floor(room)}px`;
+      o.addEventListener("click", () => b.click());
+      row.appendChild(o);
+      b.classList.add("out");
+    } else b.classList.add("two");
+  });
+}
+// The day row stays at the top of the screen while the grid scrolls past
+// (CSS sticky can't work: the body is the scroll box, see wirePlxPinned).
+let PACK_CAL_PINF = null;
+function packCalPin(root) {
+  if (PACK_CAL_PINF) { window.removeEventListener("scroll", PACK_CAL_PINF); window.removeEventListener("resize", PACK_CAL_PINF); PACK_CAL_PINF = null; }
+  const ph = root.querySelector(".pcg-dh-ph"), el = ph && ph.firstElementChild, grid = root.querySelector(".pcg");
+  if (!el || !grid) return;
+  let lastW = innerWidth;
+  const f = () => {
+    if (!el.isConnected) { window.removeEventListener("scroll", f); window.removeEventListener("resize", f); if (PACK_CAL_PINF === f) PACK_CAL_PINF = null; return; }
+    if (innerWidth !== lastW) { lastW = innerWidth; packCalFit(root); }
+    const r = ph.getBoundingClientRect(), gb = grid.getBoundingClientRect().bottom;
+    const pin = r.top < 0 && gb > el.offsetHeight + 40;
+    if (pin !== el.classList.contains("is-pinned")) { ph.style.height = pin ? `${ph.offsetHeight}px` : ""; el.classList.toggle("is-pinned", pin); }
+    if (pin) { el.style.left = `${r.left}px`; el.style.width = `${r.width}px`; } else { el.style.left = ""; el.style.width = ""; }
+  };
+  PACK_CAL_PINF = f;
+  window.addEventListener("scroll", f, { passive: true });
+  window.addEventListener("resize", f);
+  f();
+}
 
 async function renderPackCalendarPage() {
   const seq = RENDER_SEQ;
@@ -10317,59 +10368,49 @@ async function renderPackCalendarPage() {
     const wkLbl = PACK_CAL_WEEK === 0 ? t("pcl_this_week") : PACK_CAL_WEEK === 1 ? t("pcl_next_week") : PACK_CAL_WEEK === -1 ? t("pcl_last_week") : "";
     const sameM = dateOf(mon).getUTCMonth() === dateOf(sun).getUTCMonth();
     const wkRange = `${md(mon)} – ${sameM ? dateOf(sun).getUTCDate() : md(sun)}`;
-    const tiles = Array.from({ length: 7 }, (_, i) => {
+    // ---- the game-style grid: a day row, then one bar per row (Events, ★ In
+    // your plan, other packs folded), today's column gold, the picked one shaded ----
+    const picked = PACK_CAL_DAY != null;
+    const dayRow = Array.from({ length: 7 }, (_, i) => {
       const o = mon + i;
-      const dots = items.filter((x) => x.a === o && !x.daily && (x.gi != null || x.milestone)).slice(0, 3).map((x) => `<i style="background:${evCol(x)}"></i>`).join("");
-      return `<button type="button" class="pcl-dy${o === 0 ? " td" : ""}${o < 0 ? " past" : ""}${i === pick ? " sel" : ""}" data-pclday="${i}" aria-pressed="${i === pick}"><span class="w">${esc(wd(o))}</span><b>${dateOf(o).getUTCDate()}</b>${o === 0 ? `<span class="tdl">${esc(t("pack_cal_today"))}</span>` : ""}<span class="ds">${dots}</span></button>`;
+      return `<button type="button" class="pcg-d${o === 0 ? " td" : ""}${o < 0 ? " past" : ""}${picked && i === pick ? " sel" : ""}" data-pclday="${i}" aria-pressed="${i === pick}"><span class="w">${esc(wd(o))}</span><b>${dateOf(o).getUTCDate()}</b></button>`;
     }).join("");
-    // ---- bars: events first, then packs (in plan first), each packed into lines ----
+    const starOf = (it) => it.gi != null && inPlanAt(groups[it.gi], it.a, it.b);
     const bar = (it) => {
       const c0 = Math.max(it.a, mon) - mon, c1 = Math.min(it.b, sun) - mon;
       const cutL = it.a < mon && !it.daily, cutR = it.b > sun && !it.daily;
-      const star = it.gi != null && inPlanAt(groups[it.gi], it.a, it.b);
-      const col = evCol(it);
-      const cnt = it.count > 1 ? ` ×${it.count}` : "";
-      const end = cutR && it.gi != null && it.b - mon > 10 ? ` → ${md(it.b)}` : "";
-      const lbl = `${cutL ? "‹ " : ""}${it.title}${cnt}${star ? " ★" : ""}${it.daily ? " · " + t("pcl_every_day") : ""}${end}${cutR ? " ›" : ""}`;
+      const star = starOf(it);
+      const nm = `${it.title}${it.count > 1 ? ` ×${it.count}` : ""}${it.daily ? " · " + t("pcl_every_day") : ""}`;
       const sel = PACK_CAL_SHEET && PACK_CAL_SHEET.type === "pack" && PACK_CAL_SHEET.g === it.gi && PACK_CAL_SHEET.a >= it.a && PACK_CAL_SHEET.a <= it.b;
-      const tap = it.gi != null ? ` data-pclg="${it.gi}|${Math.max(it.a, mon)}" role="button" tabindex="0"` : ` data-pcltip="${esc([it.title, it.tip].filter(Boolean).join(" · "))}" role="button" tabindex="0"`;
-      return `<span class="pcl-bb${cutL ? " cutl" : ""}${cutR ? " cutr" : ""}${it.kind === "event" ? " ev" : ""}${sel ? " hot" : ""}" style="left:calc(${c0} * 100% / 7); width:calc(${c1 - c0 + 1} * 100% / 7 - 3px); --c:${col}" title="${esc(lbl)}"${tap}>${esc(lbl)}</span>`;
+      const tap = it.gi != null ? ` data-pclg="${it.gi}|${Math.max(it.a, mon)}"` : ` data-pcltip="${esc([it.title, it.tip].filter(Boolean).join(" · "))}"`;
+      const pic = it.gi != null ? (packCalImg(groups[it.gi].icon) || "<em>&#127873;</em>") : it.kind === "event" && it.ev !== "wheel" ? "<em>&#9876;</em>" : "";
+      return `<div class="pcg-row"><span class="pcg-bar${cutL ? " cl" : ""}${cutR ? " cr" : ""}${it.kind === "event" || it.milestone ? " ev" : ""}${sel ? " hot" : ""}" style="--a:${c0};--w:${c1 - c0 + 1};--c:${evCol(it)}" title="${esc(nm + (star ? " ★" : ""))}" role="button" tabindex="0"${tap}>${pic}<span class="nm">${esc(nm)}</span>${star ? `<i class="st">&#9733;</i>` : ""}</span></div>`;
     };
-    const pack = (list) => {
-      const lines = [];
-      list.forEach((it) => {
-        const c0 = Math.max(it.a, mon), c1 = Math.min(it.b, sun);
-        let ln = lines.find((l) => l.every((x) => c0 > Math.min(x.b, sun) || c1 < Math.max(x.a, mon)));
-        if (!ln) { ln = []; lines.push(ln); }
-        ln.push(it);
-      });
-      return lines;
-    };
-    // Events, milestones, then packs that start / end inside the week (in your
-    // plan first), then the ones up all week (they say least on a week chart).
-    const prio = (it) => (it.kind === "event" ? 0 : it.milestone ? 1 : (it.a <= mon && it.b >= sun ? 2 : 0) + (it.gi != null && inPlanAt(groups[it.gi], it.a, it.b) ? 2 : 3));
-    const ordered = items.slice().sort((x, y) => prio(x) - prio(y) || Math.max(x.a, mon) - Math.max(y.a, mon) || y.b - x.b || x.title.localeCompare(y.title));
-    const lineHtml = (ln) => `<div class="pcl-ln">${ln.map(bar).join("")}</div>`;
-    const MAXL = 6;
-    let barsHtml;
-    if (!items.length) barsHtml = `<div class="meta pcl-empty">${esc(t("pack_cal_empty"))}</div>`;
-    else if (!PACK_CAL_MORE_BARS) {
-      const evLines = pack(ordered.filter((x) => x.kind === "event")), pkLines = pack(ordered.filter((x) => x.kind !== "event"));
-      const lines = evLines.concat(pkLines);
-      const shown = lines.slice(0, MAXL), hid = lines.slice(MAXL).reduce((s, l) => s + l.length, 0);
-      barsHtml = shown.map(lineHtml).join("") + (hid ? `<button type="button" class="pcl-more" data-pclbars="1">${esc(t("pcl_more_bars").replace("{n}", hid))}</button>` : "");
-    } else {
-      barsHtml = ["event", "weekly", "monthly", "newheroes", "unlocks"].map((k) => {
-        const g = ordered.filter((x) => x.kind === k);
-        if (!g.length) return "";
-        return `<div class="pcl-gh"><i style="background:${PACK_CAL_COL[k]}"></i>${esc(kindName(k))}<span>${g.length}</span></div>${pack(g).map(lineHtml).join("")}`;
-      }).join("") + `<button type="button" class="pcl-more" data-pclbars="0">${esc(t("pcl_show_less"))} &#9652;</button>`;
+    const ordered = items.slice().sort((x, y) => Math.max(x.a, mon) - Math.max(y.a, mon) || y.b - x.b || x.title.localeCompare(y.title));
+    const evItems = ordered.filter((x) => x.gi == null);
+    const planItems = ordered.filter((x) => x.gi != null && starOf(x));
+    const otherItems = ordered.filter((x) => x.gi != null && !starOf(x));
+    const nPk = (l) => new Set(l.map((x) => x.gi)).size;
+    const band = (cls, label, n) => `<div class="pcg-band ${cls}"><span>${esc(label)}</span><small>${n}</small></div>`;
+    let gridBody = "";
+    if (!items.length) gridBody = `<div class="meta pcl-empty">${esc(t("pack_cal_empty"))}</div>`;
+    else {
+      if (evItems.length) gridBody += band("ev", t("pack_cal_events"), evItems.length) + evItems.map(bar).join("");
+      if (planItems.length) gridBody += band("plan", "★ " + t("pcl_g_plan"), nPk(planItems)) + planItems.map(bar).join("");
+      if (otherItems.length) {
+        const n = nPk(otherItems);
+        if (PACK_CAL_MORE_BARS) {
+          gridBody += band("oth", t("pcl_g_other"), n) + otherItems.map(bar).join("") + `<button type="button" class="pcl-more pcg-less" data-pclbars="0">${esc(t("pcl_show_less"))} &#9652;</button>`;
+        } else {
+          const ics = [...new Set(otherItems.map((x) => groups[x.gi].icon).filter(Boolean))].map((nm) => packCalImg(nm)).filter(Boolean).slice(0, 5).join("");
+          gridBody += `<button type="button" class="pcg-more" data-pclbars="1">${ics ? `<span class="pcg-stk">${ics}</span>` : ""}${esc(t(planItems.length ? "pcl_g_more" : "pcl_g_packs").replace("{n}", n))} &#9662;</button>`;
+        }
+      }
     }
     const todayCol = 0 - mon;
     // An event starting next week is hinted under the bars (tap = next week).
     const nextEv = collect(sun + 1, sun + 7, false).find((x) => x.kind === "event" && x.ev !== "wheel" && x.a > sun);
     const hintHtml = nextEv && !items.some((x) => x.kind === "event" && x.ev === nextEv.ev) ? `<button type="button" class="pcl-hint" data-pclweek="1"><i style="background:${evCol(nextEv)}"></i>${esc(t("pcl_ev_next_week").replace("{name}", nextEv.title).replace("{day}", `${wd(nextEv.a)} ${dateOf(nextEv.a).getUTCDate()}`))} &#8250;</button>` : "";
-    const dowHdr = Array.from({ length: 7 }, (_, i) => `<span class="${i === pick ? "on" : ""}">${esc(fmt(mon + i, { weekday: "narrow" }))}</span>`).join("");
     // ---- the picked day ----
     const onDay = items.filter((x) => x.a <= dOff && x.b >= dOff);
     const dayEvs = onDay.filter((x) => x.kind === "event" || x.milestone);
@@ -10410,16 +10451,16 @@ async function renderPackCalendarPage() {
       </div>
       <div class="panel pcl-wk">
         <div class="pcl-wkh"><button type="button" class="pcl-nb" data-pclweek="-1" aria-label="previous">&#8249;</button><button type="button" class="pcl-wkt" data-pclmonth aria-haspopup="dialog"><b>${esc(wkRange)}${wkLbl ? ` · ${esc(wkLbl)}` : ""}</b> &#9662;</button>${PACK_CAL_WEEK ? `<button type="button" class="pcl-today" data-pcltoday>${esc(t("pack_cal_today_btn"))}</button>` : ""}<button type="button" class="pcl-nb" data-pclweek="1" aria-label="next">&#8250;</button></div>
-        <div class="pcl-days">${tiles}</div>
-        <div class="pcl-gt">
-          <div class="pcl-dow">${dowHdr}</div>
-          <div class="pcl-bars">
-            <span class="pcl-colhl" style="left:calc(${pick} * 100% / 7); width:calc(100% / 7)"></span>
-            ${todayCol >= 0 && todayCol <= 6 ? `<span class="pcl-tdl" style="left:calc(${todayCol + 0.5} * 100% / 7)"></span>` : ""}
-            ${barsHtml}
+        <div class="pcg">
+          <div class="pcg-dh-ph"><div class="pcg-dh">${dayRow}</div></div>
+          <div class="pcg-body">
+            ${[1, 2, 3, 4, 5, 6].map((i) => `<span class="pcg-col" style="--a:${i}"></span>`).join("")}
+            ${todayCol >= 0 && todayCol <= 6 ? `<span class="pcg-tdcol" style="--a:${todayCol}"></span>` : ""}
+            ${picked && pick !== todayCol ? `<span class="pcg-selcol" style="--a:${pick}"></span>` : ""}
+            ${gridBody}
           </div>
-          ${hintHtml}
         </div>
+        ${hintHtml}
       </div>
       <div class="panel pcl-day">
         <div class="pcl-dh"><b>${esc(dayHead)}</b><span>${esc(dayPacks.length === 1 ? t("pur_1_pack") : t("pcl_n_packs").replace("{n}", dayPacks.length))}</span></div>
@@ -10430,6 +10471,8 @@ async function renderPackCalendarPage() {
       </div>
       <div id="pclSheetHost">${!PACK_CAL_SHEET ? "" : PACK_CAL_SHEET.type === "pack" ? packSheetHtml(PACK_CAL_SHEET) : PACK_CAL_SHEET.type === "filter" ? filterSheetHtml() : monthSheetHtml(PACK_CAL_SHEET.m)}</div>`;
     if (y && Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+    packCalFit(content);
+    packCalPin(content);
     wire();
   }
   const closeSheet = () => { PACK_CAL_SHEET = null; draw(); };
