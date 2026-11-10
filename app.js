@@ -3237,6 +3237,19 @@ const T = {
   cda_none: { en: "None" },
   cda_working: { en: "Working out {n} pages…" },
   cda_get_more: { en: "Get more" },
+  mk_now: { en: "now" },
+  mk_tip_short: { en: "What your Backpack can do here now" },
+  mk_takes: { en: "Backpack can take it" },
+  mk_target: { en: "target {x}" },
+  mk_stops: { en: "Stops: {item} short" },
+  mk_this_page: { en: "This page only — all pages together:" },
+  mk_budgets_link: { en: "Budgets → Free now ›" },
+  mk_i_green: { en: "Green ✓" },
+  mk_i_green_d: { en: "= your Backpack reaches this level now." },
+  mk_i_blue: { en: "Blue “now 16.1”" },
+  mk_i_blue_d: { en: "= it gets part of the way." },
+  mk_i_whole: { en: "Each page uses your whole Backpack, so two pages can both show ✓ with the same items." },
+  mk_i_all: { en: "All pages together:" },
   cda_with_packs: { en: "with this week's packs" },
   cda_n_up_out: { en: "{n} {unit} go up · {m} left out" },
   cda_left_out: { en: "left out" },
@@ -7423,6 +7436,160 @@ function cdaGetMore(key) {
   setTimeout(tryOpen, 250);
 }
 // The upgrade order (My order): drag ⋮⋮ to move a row; Reset.
+// Per-upgrade "can do" marks on the planner pages (owner only): this page alone with
+// the whole Backpack (not the shared Free now plan), the same tracks, Backpack and
+// trades as Free now, in the order / packs choice saved for it. Green "✓ 16.8" = the
+// Backpack reaches the target; blue "◑ now 16.1" = part of the way; nothing when it
+// can't go up. Tap a mark: how far it goes and what stops it (placePop).
+const MK_HALF = '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 1a5 5 0 0 1 0 10z" fill="currentColor"/></svg>';
+let MK = null; // { tab, by: Map(slot el -> html) built from { pg, b, plan } }
+let MK_SEQ = 0, MK_T = null;
+const mkQ = (s) => document.querySelector(`#content ${s}`);
+const mkE = (v) => window.CSS.escape(String(v));
+// Where each page's mark goes: the element the mark is put in (and before what).
+const MK_SLOTS = {
+  chiefgear: (tr) => ({ in: mkQ(`.cg-pc[data-cgslot="${mkE(tr.raw)}"] .cg-nm`) }),
+  charmscalc: (tr) => {
+    const [, slot] = String(tr.raw).split("|"), nm = tr.name.replace(/\s+\d+$/, "");
+    const pc = [...document.querySelectorAll("#content .ch-piece")].find((p) => (p.querySelector(".ch-p-h b") || {}).textContent === nm);
+    const tile = pc && pc.querySelectorAll("[data-chtile]")[Number(slot)];
+    return { in: tile && tile.querySelector(".ch-t-v") };
+  },
+  herogearcalc: (tr) => {
+    const [troop, piece, tb] = String(tr.raw).split("|");
+    if (troop !== heroGearActiveTroop) return {};
+    const cells = [...document.querySelectorAll(`#heroGearTracks .hg-cell[data-hgpc="${mkE(piece)}"]`)];
+    return { in: cells[GEAR_LEVELING_TABLES.indexOf(tb)] };
+  },
+  petsdata: (tr) => { const s = mkQ(`[data-petfrom="${mkE(tr.raw)}"]`); return { in: s && s.closest(".pc-st") }; },
+  t12research: (tr) => {
+    const [troop, key] = String(tr.raw).split("|"), on = mkQ("[data-t12tab].on");
+    if (!on || on.dataset.t12tab !== troop) return {};
+    const n = mkQ(`.t12x-node[data-t12node="${mkE(key)}"]`);
+    return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {};
+  },
+  t11helios: (tr) => {
+    const i = String(tr.raw).indexOf("|"), troop = String(tr.raw).slice(0, i), track = String(tr.raw).slice(i + 1), on = mkQ("[data-t11tab].on");
+    if (!on || on.dataset.t11tab !== troop) return {};
+    const n = mkQ(`.t12x-node[data-pxnode="${mkE(track)}"]`);
+    return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {};
+  },
+  researchcenter: (tr) => { const n = mkQ(`.t12x-node[data-pxnode="${mkE(tr.raw)}"]`); return n ? { in: n.querySelector(".t12x-nm"), before: n.querySelector(".t12x-nm > .meta") } : {}; },
+  refinepage: (tr) => { const r = mkQ(`[data-refinerowfor="${mkE(tr.raw)}"]`); return r ? { in: r, before: r.querySelector("[data-refinepet]") && r.querySelector("[data-refinepet]").nextElementSibling } : {}; },
+  expertspage: (tr) => {
+    const p = String(tr.raw).split("|");
+    const s = p[0] === "exp" ? mkQ(`[data-expcur="${mkE(p[1])}"]`) : mkQ(`[data-expskillcur="${mkE(`${p[1]}|${p.slice(2).join("|")}`)}"]`);
+    const v = s && s.closest(".exk-v");
+    return v ? { in: v, before: v.querySelector(".a") } : {};
+  },
+  expertsresearchpage: (tr) => {
+    const i = String(tr.raw).lastIndexOf("|"), ex = String(tr.raw).slice(0, i), path = String(tr.raw).slice(i + 1);
+    const mx = mkQ(`[data-expresearchmax="${mkE(ex)}"]`), card = mx && mx.closest(".exp-h4c");
+    const r = card && card.querySelector(`.exp-skr[data-eropen="${mkE(path)}"] .exp-skr-h`);
+    return r ? { in: r, before: r.querySelector(".exp-gt") } : {};
+  },
+  islandgallery: (tr) => { const tl = mkQ(`.sg-t.is[data-island="${mkE(tr.raw)}"]`); return tl ? { in: tl, before: tl.querySelector(".isl-tsh") } : {}; },
+  skingallery: (tr) => ({ in: mkQ(`.sg-t[data-skin="${mkE(tr.raw)}"]`) }),
+};
+function mkLab(tr, i) { try { return tr.lab ? String(tr.lab(i)) : String(i); } catch (e) { return String(i); } }
+function mkHtml(tr, plan, k) {
+  const r = plan.lv[tr.id];
+  if (!(tr.to > tr.from) || !(r > tr.from)) return "";
+  const full = r >= tr.to;
+  return `<span class="mk ${full ? "full" : "part"}" role="button" tabindex="0" data-mk="${k}" title="${esc(t("mk_tip_short"))}">${full ? `&#10003; ${esc(mkLab(tr, r))}` : `${MK_HALF}<small>${esc(t("mk_now"))}</small> ${esc(mkLab(tr, r))}`}</span>`;
+}
+// Puts the worked-out marks into the page (again after a part of it redraws).
+function mkApply() {
+  if (!MK || MK.tab !== TAB || !IS_OWNER) return;
+  const slot = MK_SLOTS[TAB];
+  MK.list.forEach((x, k) => {
+    let s = {};
+    try { s = slot(x.tr) || {}; } catch (e) { s = {}; }
+    if (!s.in) return;
+    const had = s.in.querySelector(`:scope > .mk[data-mk="${k}"]`);
+    if (had) return;
+    s.in.querySelectorAll(":scope > .mk").forEach((m) => m.remove());
+    const tmp = document.createElement("span");
+    tmp.innerHTML = x.html;
+    const m = tmp.firstElementChild;
+    if (!m) return;
+    if (s.before && s.before.parentElement === s.in) s.in.insertBefore(m, s.before); else s.in.appendChild(m);
+  });
+}
+async function mkCompute() {
+  const seq = ++MK_SEQ, tab = TAB;
+  if (!IS_OWNER || !MK_SLOTS[tab]) { MK = null; return; }
+  const pg = CDA_PAGES.find((p) => p.tab === tab);
+  if (!pg) return;
+  try {
+    await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
+    let b;
+    if (pg.key === "hero_gear" && heroGearActiveSet !== "Set 1") {
+      // Heroes Gears: the set shown on the page.
+      await ensureHeroGearData();
+      b = await cdaBuildPage({ ...pg, build: async () => { const tracks = heroGearReachTracks(HERO_GEAR_SETS[heroGearActiveSet]); return tracks.length ? { tracks, bar: "hero_gear" } : null; } });
+    } else b = await cdaBuildPage(pg);
+    if (seq !== MK_SEQ || TAB !== tab) return;
+    if (!b || !b.tracks) { MK = null; return; }
+    const have = { ...(b.have || {}) };
+    if (CDA_SET.packs) {
+      if (!CDA_PACKS) CDA_PACKS = await cdaWeekPacks().catch(() => null);
+      if (CDA_PACKS) Object.entries(CDA_PACKS.items).forEach(([k, v]) => { have[k] = (have[k] || 0) + v; });
+    }
+    if (seq !== MK_SEQ || TAB !== tab) return;
+    const plan = reachPlan(b.tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, b.conv || []);
+    const list = b.tracks.map((tr, k) => ({ tr, html: mkHtml(tr, plan, k) }));
+    MK = { tab, list, plan };
+    document.querySelectorAll("#content .mk").forEach((m) => m.remove());
+    mkApply();
+  } catch (e) { console.warn("marks", e); }
+}
+// Worked out after the page draws and again after a change on it.
+function mkSoon(ms) { if (!IS_OWNER) return; clearTimeout(MK_T); MK_T = setTimeout(mkCompute, ms == null ? 450 : ms); }
+["change", "click"].forEach((ev) => document.addEventListener(ev, (e) => {
+  if (!IS_OWNER || !MK_SLOTS[TAB] || !e.target.closest || e.target.closest("[data-mk], .mk-pop")) return;
+  if (e.target.closest("#content, .modal-overlay, .gs-wrap, #gearSheet")) mkSoon();
+}, true));
+function mkPopClose() { document.querySelectorAll(".mk-pop").forEach((p) => { popForget(p); p.remove(); }); }
+function mkPopOpen(m) {
+  mkPopClose();
+  const x = MK && MK.list[Number(m.dataset.mk)];
+  if (!x) return;
+  const tr = x.tr, r = MK.plan.lv[tr.id], f = MK.plan.blocker && MK.plan.blocker[tr.id];
+  const pop = document.createElement("div");
+  pop.className = "mk-pop";
+  pop.setAttribute("role", "dialog");
+  pop.innerHTML = `<b class="t">${esc(tr.name || "")}</b>${esc(t("mk_takes"))} <b>${esc(mkLab(tr, tr.from))} &rarr; ${esc(mkLab(tr, r))}</b> <span class="mk-tg">(${esc(t("mk_target").replace("{x}", mkLab(tr, tr.to)))})</span>`
+    + (r < tr.to && f ? `<div class="mk-st">${esc(t("mk_stops").replace("{item}", cdaItemName(f, tr)))}</div>` : "")
+    + `<div class="mk-ft">${esc(t("mk_this_page"))} <a href="#" data-mkbud>${esc(t("mk_budgets_link"))}</a></div>`;
+  document.body.appendChild(pop);
+  placePop(pop, m, { gap: 8, onPlace: tipArrow(pop, m), away: mkPopClose });
+}
+function mkOpenBudgets() { mkPopClose(); goToTab("budgets"); BUDGET_SHEET = "cando"; }
+["pointerdown", "click"].forEach((ev) => document.addEventListener(ev, (e) => {
+  const m = e.target.closest && e.target.closest("[data-mk]");
+  const a = e.target.closest && e.target.closest("[data-mkbud]");
+  if (a) { e.preventDefault(); e.stopImmediatePropagation(); if (ev === "click") mkOpenBudgets(); return; }
+  if (m) { e.preventDefault(); e.stopImmediatePropagation(); if (ev === "click") { if (document.querySelector(".mk-pop") && MK_POP_FOR === m) { mkPopClose(); MK_POP_FOR = null; } else { mkPopOpen(m); MK_POP_FOR = m; } } return; }
+  if (ev === "pointerdown" && !(e.target.closest && e.target.closest(".mk-pop"))) { mkPopClose(); MK_POP_FOR = null; }
+}, true));
+let MK_POP_FOR = null;
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.querySelector(".mk-pop")) { e.stopImmediatePropagation(); mkPopClose(); MK_POP_FOR = null; }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-mk]")) { e.preventDefault(); mkPopOpen(e.target); MK_POP_FOR = e.target; }
+}, true);
+// The page's (i): what the marks mean (owner only), in its title's bubble.
+function mkInfo(root) {
+  if (!IS_OWNER || !MK_SLOTS[TAB]) return;
+  const h = root.querySelector(".plx-head h2, .page-head h2");
+  if (!h || h.querySelector("[data-mkinfo]")) return;
+  const d = document.createElement("div");
+  d.className = "mk-info"; d.setAttribute("data-mkinfo", "");
+  d.innerHTML = `<p><b class="mk-g">${esc(t("mk_i_green"))}</b> ${esc(t("mk_i_green_d"))}</p><p><b class="mk-b">${esc(t("mk_i_blue"))}</b> ${esc(t("mk_i_blue_d"))}</p><p>${esc(t("mk_i_whole"))}</p><p class="mk-ft">${esc(t("mk_i_all"))} <a href="#" data-mkbud>${esc(t("mk_budgets_link"))}</a></p>`;
+  // Chief Gear has its own (i) bubble beside the title: the text goes in there.
+  const cg = h.querySelector("[data-cghelp]");
+  if (cg) cg.appendChild(d); else infoAttach(h, d);
+}
 function cdaOrderSheet() {
   let m = document.getElementById("candoSheet");
   if (!m) { m = document.createElement("div"); m.id = "candoSheet"; m.className = "modal-overlay adm-sheet-wrap cando-ov"; document.body.appendChild(m); }
@@ -17596,7 +17763,8 @@ document.addEventListener("toggle", () => { const c = document.getElementById("c
 document.addEventListener("click", () => { const c = document.getElementById("content"); if (c) setTimeout(() => bsSlideFit(c), 60); }, true);
 {
   let queued = false;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
+  let mkSeen = -1;
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (IS_OWNER) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
