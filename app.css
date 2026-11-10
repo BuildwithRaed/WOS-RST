@@ -2256,6 +2256,7 @@ input,select,textarea{
   .cg-tip{ position:absolute; top:calc(100% + 8px); inset-inline-start:0; z-index:40; width:max-content; max-width:min(280px, calc(100vw - 32px)); padding:9px 11px; border:1px solid rgba(111,211,242,.45); border-radius:10px; background:#0f1a2a; box-shadow:0 8px 24px rgba(0,0,0,.45); color:var(--frost); font-family:inherit; font-size:12.5px; font-weight:400; font-style:normal; line-height:1.45; letter-spacing:0; text-transform:none; white-space:normal; }
   .cg-tip::before{ content:""; position:absolute; top:-6px; inset-inline-start:var(--cg-tip-x, 20px); width:10px; height:10px; background:#0f1a2a; border-left:1px solid rgba(111,211,242,.45); border-top:1px solid rgba(111,211,242,.45); transform:rotate(45deg); }
   .cg-tip[hidden]{ display:none; }
+  .cg-tip.pp-up::before{ top:auto; bottom:-6px; transform:rotate(225deg); }
   .cg-ans{ margin-bottom:8px; padding:8px 12px 10px; border-color:rgba(111,211,242,.5); background:linear-gradient(180deg, rgba(111,211,242,.075), rgba(111,211,242,0) 75%), var(--panel); }
   .cg-k{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
   .cg-kr{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; min-height:22px; margin-bottom:6px; }
