@@ -2213,6 +2213,8 @@
 "t:cando_short":"今できる",
 "t:cando_at_target":"すべて目標到達",
 "t:cando_nothing":"まだなし",
+"t:exp_cd_now":"今 {n}",
+"t:exp_cd_short":"{item} 不足",
 "t:cando_lab_week":"+{n} 精錬火晶（今週の研究所から・残り{m}回の精錬）",
 "t:cando_sub":"今のバッグで目標の範囲内で強化できるもの。",
 "t:cando_more":"+ 他{n}",

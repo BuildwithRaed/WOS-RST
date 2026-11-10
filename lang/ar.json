@@ -2212,6 +2212,8 @@
 "t:cando_short":"ممكن الآن",
 "t:cando_at_target":"الكل عند الهدف",
 "t:cando_nothing":"لا شيء بعد",
+"t:exp_cd_now":"{n} الآن",
+"t:exp_cd_short":"{item} ناقص",
 "t:cando_lab_week":"+{n} بلورة نار مكرَّرة من مختبر هذا الأسبوع (متبقٍّ {m} تكريرات)",
 "t:cando_sub":"ما تستطيع حقيبتك ترقيته الآن، ضمن أهدافك.",
 "t:cando_more":"+{n} أخرى",

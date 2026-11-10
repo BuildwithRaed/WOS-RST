@@ -2212,6 +2212,8 @@
 "t:cando_short":"Dá para fazer",
 "t:cando_at_target":"Tudo na meta",
 "t:cando_nothing":"Nada ainda",
+"t:exp_cd_now":"{n} agora",
+"t:exp_cd_short":"Falta {item}",
 "t:cando_lab_week":"+{n} Cristal de Fogo Refinado do laboratório desta semana ({m} refinamentos restantes)",
 "t:cando_sub":"O que sua Mochila pode melhorar agora, dentro das suas metas.",
 "t:cando_more":"+{n}",
