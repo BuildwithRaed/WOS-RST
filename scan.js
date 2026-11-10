@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "7dc4520a98";
+window.SCAN_BUILD = "fbc3b6c82f";
 
 
 // ---- Backpack: read game screenshots ----
@@ -500,6 +500,25 @@ function scanLightPanel(src) {
 // A purple / blue / green / grey gear tile's "+N" (top right; none = +0).
 // Hero gear below Mythic counts as XP Component.
 async function scanGearLevel(worker, td) {
+  // The green "can upgrade" arrow at the top-right corner sits right after
+  // the number ("+51" read as "+5") and with no number its light rim read as
+  // "+4": its own pixels (and a 1 px rim) are blanked first; next to an arrow
+  // only a number with its "+" counts, and it is marked "please check".
+  const isArrow = (i) => td[i + 1] > 140 && td[i + 1] - td[i] > 50 && td[i + 1] - td[i + 2] > 50;
+  const hit = [];
+  for (let y = 0; y < 50; y++) for (let x = 95; x < 140; x++) if (isArrow((y * 140 + x) * 4)) hit.push(y * 140 + x);
+  const arrow = hit.length >= 25;
+  if (arrow) {
+    td = new Uint8ClampedArray(td);
+    hit.forEach((p) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const q = p + dy * 140 + dx; if (q >= 0 && q < 140 * 140) td[q * 4] = td[q * 4 + 1] = td[q * 4 + 2] = 0; } });
+  }
+  const lv = await scanGearLevelRead(worker, td);
+  // Next to the arrow a number counts when all its digit shapes were read and
+  // it has two digits or its "+" (a lone shape is the arrow's rim).
+  if (arrow && lv.lvl !== null) return lv.lvl && lv.whole && (lv.plus || String(lv.lvl).length >= 2) ? { lvl: lv.lvl, sure: false } : { lvl: 0, sure: true };
+  return { lvl: lv.lvl, sure: lv.sure };
+}
+async function scanGearLevelRead(worker, td) {
   const num = scanTextMask(td, 60, 2, 138, 50, true);
   if (!num) return { lvl: 0, sure: true };
   const r = await scanRead(worker, num, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "+0123456789" });
@@ -507,7 +526,13 @@ async function scanGearLevel(worker, td) {
   // The "+" read as a digit ("480", "180"): drop it.
   if (d.length === 3 && Number(d) > 80) d = d.slice(1);
   const plus = r.text.includes("+");
-  if (d && (r.conf >= 50 || plus) && Number(d) <= 80) return { lvl: Number(d), sure: r.conf >= 70 || plus };
+  // A thin "1" lost beside the wide digits ("+51" read as "5"): put it back
+  // at its shape, as the item amounts do.
+  let fixed = false;
+  if (num.thin && num.thin.some(Boolean) && d.length === num.thin.filter((x) => !x).length && d.length < num.count) {
+    let k = 0; d = num.thin.map((x) => (x ? "1" : d[k++])).join(""); fixed = true;
+  }
+  if (d && (r.conf >= 50 || plus) && Number(d) <= 80) return { lvl: Number(d), sure: !fixed && (r.conf >= 70 || plus), plus, whole: d.length >= num.count };
   // One light shape read as nothing (or a stray digit): a bit of the gear's
   // picture in that corner, not a number (owner's screenshots: plain tiles).
   if (num.count <= 1) return { lvl: 0, sure: true };
@@ -536,10 +561,23 @@ async function scanGearTiles(src, tiles, worker) {
     // telling the Gear tab apart, but on the Gear tab it is a blue piece.
     const lightBlue = g > r + 30 && b > r + 60;
     if (!lightBlue) badged++;
-    all.push({ td, r, g, b, lightBlue });
+    all.push({ td, r, g, b, lightBlue, box });
   }
   if (!(badged >= 3 && badged >= tiles.length * 0.6)) return null;
-  for (const { td, r, g, b, lightBlue } of all) {
+  // To find the same tile again in a scrolled screenshot, a second picture
+  // (f2) is taken from one square size for every tile, anchored at the tile's
+  // bottom-right corner and big enough to take in the troop badge at its
+  // top-left: tile boxes sometimes take in that badge and sometimes not, and
+  // then the same tile looked different (two screenshots' rows counted twice).
+  const sides = all.map((a) => Math.max(a.box.w, a.box.h)).sort((x, y) => x - y);
+  const side = Math.min(sides[sides.length - 1], sides[Math.floor(sides.length / 2)] * 1.15);
+  const ft = scanCanvas(140, 140), fg = ft.getContext("2d", { willReadFrequently: true });
+  const featOf = (box) => {
+    fg.fillStyle = "#000"; fg.fillRect(0, 0, 140, 140);
+    fg.drawImage(src, box.x + box.w - side, box.y + box.h - side, side, side, 0, 0, 140, 140);
+    return scanTileFeature(fg.getImageData(0, 0, 140, 140).data);
+  };
+  for (const { td, r, g, b, lightBlue, box } of all) {
     const isOrange = !lightBlue && r > g + 25 && g > b + 25;
     if (isOrange) orange++;
     const colour = isOrange ? null : lightBlue ? "Blue"
@@ -559,7 +597,7 @@ async function scanGearTiles(src, tiles, worker) {
       lo = { colour, lvl: lv.lvl, sure, n: cnt };
       low.push(lo);
     }
-    seq.push({ f: scanTileFeature(td), o: isOrange, lo });
+    seq.push({ f: scanTileFeature(td), f2: featOf(box), o: isOrange, lo });
   }
   return { orange, seq, low };
 }
@@ -567,11 +605,12 @@ async function scanGearTiles(src, tiles, worker) {
 // pieces of the new one were already counted (the longest run of tiles at the
 // end of one screenshot that matches the start of the other; a whole row at least).
 function scanGearOverlap(prev, next) {
-  const same = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length < 8; };
+  const near = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length < 8; };
+  const same = (a, b) => near(a.f, b.f) || (!!a.f2 && !!b.f2 && near(a.f2, b.f2));
   const run = (a, b) => {
     for (let k = Math.min(a.length, b.length); k >= 4; k--) {
       let ok = true;
-      for (let i = 0; i < k && ok; i++) ok = same(a[a.length - k + i].f, b[i].f);
+      for (let i = 0; i < k && ok; i++) ok = same(a[a.length - k + i], b[i]);
       if (ok) return k;
     }
     return 0;
@@ -587,11 +626,12 @@ function scanGearOverlap(prev, next) {
 // The tiles of a Gear screenshot that an earlier one already showed (the
 // longest matching run, as in scanGearOverlap), to count purple pieces once.
 function scanGearOverlapTiles(prev, next) {
-  const same = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length < 8; };
+  const near = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]); return d / a.length < 8; };
+  const same = (a, b) => near(a.f, b.f) || (!!a.f2 && !!b.f2 && near(a.f2, b.f2));
   const run = (a, b) => {
     for (let k = Math.min(a.length, b.length); k >= 4; k--) {
       let ok = true;
-      for (let i = 0; i < k && ok; i++) ok = same(a[a.length - k + i].f, b[i].f);
+      for (let i = 0; i < k && ok; i++) ok = same(a[a.length - k + i], b[i]);
       if (ok) return k;
     }
     return 0;
@@ -738,7 +778,6 @@ async function scanIslandShot(worker, src) {
     }
     ng.putImageData(out, 0, 0);
     const t = (await scanRead(worker, nc, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789," })).text.replace(/\s/g, "");
-    window.__islDbg = { t, url: nc.toDataURL(), x0, x1, ty0: cy0, ty1: cy0 + ch };
     if (/^\d{1,3}(,\d{3})*$/.test(t) || /^\d+$/.test(t)) value = Number(t.replace(/,/g, ""));
   }
   return { kind: "island", items: [{ name: "Life Essence", value, sure: false }] };
