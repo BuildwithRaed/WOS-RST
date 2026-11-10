@@ -1676,8 +1676,8 @@ const T = {
   gx_tile: { en: "+ {n} XP" },
   bs_nb_xp_items: { en: "{n} from XP items" },
   bs_nb_gear: { en: "{n} from {p} hero gear pieces" },
-  scan_gx_unread: { en: "{n} purple pieces whose \"+\" couldn't be read — add them in XP 10." },
-  scan_gx_hint: { en: "Purple gear, read by its \"+\" number. Saving replaces your hero gear for XP." },
+  scan_gx_unread: { en: "{n} pieces whose \"+\" couldn't be read — add them in XP 10." },
+  scan_gx_hint: { en: "Purple, blue, green and grey gear, read by its colour and \"+\" number. Saving replaces your hero gear for XP." },
   chest_open_tag: { en: "Open in game" },
   bp_chest_fixed_note: { en: "Counted, assuming 1 chest = 400 Alloy, 4 Polish, 1 Design" },
   bp_link_use: { en: "Use Backpack" },
@@ -1725,6 +1725,7 @@ const T = {
   scan_tab_speed: { en: "Speedup" },
   scan_tab_gear: { en: "Gear" },
   scan_tab_lab: { en: "Research Lab" },
+  scan_tab_island: { en: "My Island" },
   scan_lab: { en: "Research Lab screen" },
   scan_lab_hint: { en: "Reads Weekly Super Refinements (and the Refined FC / Fire Crystal at the top)." },
   scan_lab_title: { en: "Research Lab" },
@@ -13525,7 +13526,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=1f20cd0ec0";
+      s.src = "scan.min.js?v=7dc4520a98";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }

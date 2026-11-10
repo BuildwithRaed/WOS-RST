@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "1f20cd0ec0";
+window.SCAN_BUILD = "7dc4520a98";
 
 
 // ---- Backpack: read game screenshots ----
@@ -497,9 +497,8 @@ function scanLightPanel(src) {
 // its top-left corner. Orange (Mythic) pieces count as 1 Mythic Gear each;
 // red (worn / upgraded) and purple ones don't.
 // Returns the number of orange pieces, or null when this isn't the Gear tab.
-// A purple gear tile's "+N" (top right; none = +0). Hero gear below Mythic
-// counts as XP Component. Only purple is read for now: no
-// blue / green / grey tile has been seen in a screenshot yet.
+// A purple / blue / green / grey gear tile's "+N" (top right; none = +0).
+// Hero gear below Mythic counts as XP Component.
 async function scanGearLevel(worker, td) {
   const num = scanTextMask(td, 60, 2, 138, 50, true);
   if (!num) return { lvl: 0, sure: true };
@@ -517,8 +516,9 @@ async function scanGearLevel(worker, td) {
 async function scanGearTiles(src, tiles, worker) {
   const t = scanCanvas(140, 140), tg = t.getContext("2d", { willReadFrequently: true });
   let badged = 0, orange = 0;
-  const low = []; // purple pieces: { colour, lvl, sure }
+  const low = []; // pieces below Mythic: { colour, lvl, sure, n }
   const seq = []; // each gear tile's picture grid + orange, in reading order (to spot overlapping screenshots)
+  const all = [];
   for (const box of tiles) {
     tg.clearRect(0, 0, 140, 140);
     tg.drawImage(src, box.x, box.y, box.w, box.h, 0, 0, 140, 140);
@@ -531,21 +531,37 @@ async function scanGearTiles(src, tiles, worker) {
     // Tile colour on the right edge, between the "+19" and the "Lv.10".
     for (let y = 50; y < 90; y++) for (let x = 120; x < 131; x++) { const i = (y * 140 + x) * 4; r += td[i]; g += td[i + 1]; b += td[i + 2]; n++; }
     r /= n; g /= n; b /= n;
-    // A light-blue tile (an item, not gear) also lights up that corner.
-    if (badge < 150 || (g > r + 30 && b > r + 60)) continue;
-    badged++;
-    const isOrange = r > g + 25 && g > b + 25;
+    if (badge < 150) continue;
+    // A light-blue tile is an item on the other tabs: it doesn't count towards
+    // telling the Gear tab apart, but on the Gear tab it is a blue piece.
+    const lightBlue = g > r + 30 && b > r + 60;
+    if (!lightBlue) badged++;
+    all.push({ td, r, g, b, lightBlue });
+  }
+  if (!(badged >= 3 && badged >= tiles.length * 0.6)) return null;
+  for (const { td, r, g, b, lightBlue } of all) {
+    const isOrange = !lightBlue && r > g + 25 && g > b + 25;
     if (isOrange) orange++;
-    const purple = !isOrange && b > g + 40 && r > g + 15;
+    const colour = isOrange ? null : lightBlue ? "Blue"
+      : b > g + 40 && r > g + 15 ? "Purple"
+      : g > r + 30 && g > b + 20 ? "Green"
+      : Math.max(r, g, b) - Math.min(r, g, b) < 25 ? "Grey" : null;
     let lo = null;
-    if (purple && worker) {
+    if (colour && worker) {
       const lv = await scanGearLevel(worker, td);
-      lo = { colour: "Purple", lvl: lv.lvl, sure: lv.sure };
+      // Several pieces of one kind share a tile with their count bottom right ("2").
+      let cnt = 1, sure = lv.sure;
+      if (colour !== "Purple" && scanTextMask(td, 21, 87, 136, 136, true)) {
+        const a = await scanTileAmount(worker, td);
+        if (a.value > 1 && a.value < 1000) cnt = a.value;
+        if (!a.sure) sure = false;
+      }
+      lo = { colour, lvl: lv.lvl, sure, n: cnt };
       low.push(lo);
     }
     seq.push({ f: scanTileFeature(td), o: isOrange, lo });
   }
-  return badged >= 3 && badged >= tiles.length * 0.6 ? { orange, seq, low } : null;
+  return { orange, seq, low };
 }
 // Two Gear screenshots scrolled with some rows in both: how many orange
 // pieces of the new one were already counted (the longest run of tiles at the
@@ -655,10 +671,85 @@ async function scanLabShot(worker, src) {
   return { kind: "lab", items, lab: m ? Number(m[1]) : null };
 }
 
+// The game's "My Island" screen: a green Life Essence crystal at the top right
+// with the amount beside it (then a green "+"), and "My Island" at the top left.
+// The island coins (gold hexagon) are not tracked. Returns null when it isn't
+// that screen (the green crystal is looked for before any reading).
+async function scanIslandShot(worker, src) {
+  const W = src.width, H = src.height, bh = Math.round(H * 0.08);
+  if (W < 100 || bh < 20) return null;
+  const c = scanCanvas(W, bh), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, W, bh, 0, 0, W, bh);
+  const d = g.getImageData(0, 0, W, bh).data;
+  const green = (i) => d[i + 1] > 120 && d[i + 1] - d[i] > 70 && d[i + 1] - d[i + 2] > 50;
+  // Green clusters across the right half of the top band.
+  const cols = [];
+  for (let x = 0; x < W; x++) {
+    let n = 0;
+    if (x >= W * 0.5) for (let y = 0; y < bh; y++) if (green((y * W + x) * 4)) n++;
+    cols.push(n);
+  }
+  const segs = [], gap = Math.max(2, Math.round(W * 0.01));
+  cols.forEach((n, x) => {
+    if (n < 2) return;
+    const last = segs[segs.length - 1];
+    if (last && x - last.b <= gap) { last.b = x; last.n += n; } else segs.push({ a: x, b: x, n });
+  });
+  const crys = segs.find((sg) => sg.b - sg.a >= W * 0.015 && sg.n >= W * 0.015 * bh * 0.15);
+  if (!crys) return null;
+  // The crystal's rows: the longest run of rows with green in its columns
+  // (bushes lower down the band are another run).
+  let y0 = 0, y1 = -1, ra = -1;
+  const need = Math.max(2, Math.round((crys.b - crys.a + 1) * 0.1));
+  for (let y = 0; y <= bh; y++) {
+    let n = 0;
+    if (y < bh) for (let x = crys.a; x <= crys.b; x++) if (green((y * W + x) * 4)) n++;
+    if (n >= need) { if (ra < 0) ra = y; }
+    else if (ra >= 0) { if (y - 1 - ra > y1 - y0) { y0 = ra; y1 = y - 1; } ra = -1; }
+  }
+  if (y1 - y0 < bh * 0.15) return null;
+  const pad = Math.round((y1 - y0) * 0.3), ty0 = Math.max(0, y0 - pad), ty1 = Math.min(bh, y1 + pad + 1), th = ty1 - ty0;
+  // The title on the left of the same row.
+  const tc = scanCanvas(Math.round(W * 0.5), th);
+  tc.getContext("2d").drawImage(c, 0, ty0, tc.width, th, 0, 0, tc.width, th);
+  const title = (await scanRead(worker, tc, { tessedit_pageseg_mode: "6" })).text;
+  if (!/island/i.test(title)) return null;
+  // The amount: the white digits between the crystal and the next green (the "+").
+  // (small green specks between them, e.g. the digits' edges, are passed over)
+  const nxt = segs.find((sg) => sg.a > crys.b + gap && sg.n >= crys.n * 0.25);
+  const x0 = crys.b + 1, x1 = nxt ? nxt.a : W, nw = x1 - x0;
+  let value = null;
+  if (nw > 4) {
+    const white = (i) => { const mn = Math.min(d[i], d[i + 1], d[i + 2]), mx = Math.max(d[i], d[i + 1], d[i + 2]); return mn > 170 && mx - mn < 60; };
+    const rowOn = (y) => { let n = 0; for (let x = x0; x < x1; x++) if (white((y * W + x) * 4)) n++; return n >= 2; };
+    // The digits' own rows: from the crystal's middle up and down while rows hold white.
+    let ra = Math.round((y0 + y1) / 2), rb = ra;
+    while (ra > 0 && (rowOn(ra - 1) || (ra > 1 && rowOn(ra - 2)))) ra--;
+    while (rb < bh - 1 && (rowOn(rb + 1) || (rb < bh - 2 && rowOn(rb + 2)))) rb++;
+    const p2 = 3, cy0 = Math.max(0, ra - p2), ch = Math.min(bh, rb + p2 + 1) - cy0, k = 3;
+    const nc = scanCanvas(nw * k + 30, ch * k + 30), ng = nc.getContext("2d", { willReadFrequently: true });
+    ng.fillStyle = "#000"; ng.fillRect(0, 0, nc.width, nc.height);
+    ng.imageSmoothingEnabled = true;
+    ng.drawImage(c, x0, cy0, nw, ch, 15, 15, nw * k, ch * k);
+    const out = ng.getImageData(0, 0, nc.width, nc.height), o = out.data;
+    for (let i = 0; i < o.length; i += 4) {
+      const mn = Math.min(o[i], o[i + 1], o[i + 2]), mx = Math.max(o[i], o[i + 1], o[i + 2]);
+      o[i] = o[i + 1] = o[i + 2] = mn > 150 && mx - mn < 70 ? 0 : 255;
+    }
+    ng.putImageData(out, 0, 0);
+    const t = (await scanRead(worker, nc, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789," })).text.replace(/\s/g, "");
+    window.__islDbg = { t, url: nc.toDataURL(), x0, x1, ty0: cy0, ty1: cy0 + ch };
+    if (/^\d{1,3}(,\d{3})*$/.test(t) || /^\d+$/.test(t)) value = Number(t.replace(/,/g, ""));
+  }
+  return { kind: "island", items: [{ name: "Life Essence", value, sure: false }] };
+}
+
 async function scanShot(worker, file, marks, refs) {
   const src = await createImageBitmap(file);
   const lab = await scanLabShot(worker, src);
   if (lab) return lab;
+  const island = await scanIslandShot(worker, src);
+  if (island) return island;
   const tiles = scanFindTiles(src);
   if (tiles.length) {
     const gear = await scanGearTiles(src, tiles, worker);
@@ -700,7 +791,7 @@ function openBackpackScanMain(groups, bp, done, more) {
   // items with an amount that weren't seen (opened chests, used items) are
   // offered as "set to 0".
   const seen = new Set();
-  let sawItems = false, sawSpeed = false;
+  let sawItems = false, sawSpeed = false, sawIsland = false;
   let unknownTiles = 0;
   const unknownList = []; // tiles Scan didn't know: { td, feat, rarity, after, img, tab, pick, amount }
   // Mythic Gear = boxes (Other tab) + orange hero gear pieces (Gear tab).
@@ -791,6 +882,7 @@ function openBackpackScanMain(groups, bp, done, more) {
         if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
       }
       if (shot.kind === "speedup") sawSpeed = true;
+      if (shot.kind === "island") sawIsland = true;
       if (shot.kind === "lab") {
         lab.seen = true;
         if (shot.lab !== null) lab.count = shot.lab;
@@ -811,8 +903,8 @@ function openBackpackScanMain(groups, bp, done, more) {
             mgParts.gear = (mgParts.gear || 0) + it.value - scanGearOverlap(gearSeqs, it.seq || []); gearSeqs.push(it.seq || []);
             gearLow = gearLow || {};
             const addLow = (lo, d) => { if (lo.lvl === null) gearLowUnread += d; else { const k = gearXpKey(lo.colour, lo.lvl); gearLow[k] = (gearLow[k] || 0) + d; if (!gearLow[k]) delete gearLow[k]; } };
-            (it.low || []).forEach((lo) => addLow(lo, 1));
-            dup.forEach((x) => { if (x.lo) addLow(x.lo, -1); });
+            (it.low || []).forEach((lo) => addLow(lo, lo.n || 1));
+            dup.forEach((x) => { if (x.lo) addLow(x.lo, -(x.lo.n || 1)); });
           }
           else if (it.value !== null) mgParts.box = it.value;
           it.value = mgParts.box === null && mgParts.gear === null ? null : (mgParts.box || 0) + (mgParts.gear || 0);
@@ -875,7 +967,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       const tab = scanItemTab(n), k = scanTabOrder(tab).indexOf(n);
       return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
-    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab"].filter(Boolean).map((k) => t(k));
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab", sawIsland && "scan_tab_island"].filter(Boolean).map((k) => t(k));
     // Research Lab: this week's count from the game, with the plan beside it.
     const labSt = () => { const s = lab.saved || {}; return RFC_LAB_STATE || { top: s.top, attempts: s.attempts, budget: Number(s.budget) || 0, mode: s.mode === "budget" ? "budget" : "schedule", labOpen: s.labOpen, game: s.game, weekPick: s.weekPick }; };
     let labWk = null;
@@ -932,8 +1024,9 @@ function openBackpackScanMain(groups, bp, done, more) {
         ${u.skip ? `<button type="button" class="btn ghost small" data-lskip="${i}">${esc(t("scan_learn_undo"))}</button>`
           : `<button type="button" class="btn ghost small" data-lopen="${i}">${u.pick ? "&#9998;" : esc(t("scan_learn_choose"))}</button>${u.pick ? "" : `<button type="button" class="btn ghost small" data-lskip="${i}" title="${esc(t("scan_learn_skip"))}">${esc(t("scan_learn_skip_short"))}</button>`}`}
       </div>${u.open && !u.skip ? learnPicker(u, i) : ""}`).join("")}</details>`;
-    // Purple hero gear for XP read from the Gear tab.
-    const gxRows = gearLow ? gearXpOf(gearLow).rows.sort((a, b) => b.lvl - a.lvl) : [];
+    // Hero gear below Mythic for XP read from the Gear tab (purple first, then blue, green, grey).
+    const gxRank = (c) => GEAR_XP_COLOURS.findIndex((x) => x.key === c);
+    const gxRows = gearLow ? gearXpOf(gearLow).rows.sort((a, b) => gxRank(a.colour) - gxRank(b.colour) || b.lvl - a.lvl) : [];
     const gearHtml = gearLow === null ? "" : `<div class="scan-row unsure" style="display:block;">
       <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" data-scangxtick checked /><b>${esc(t("gx_title"))}</b><em class="meta" style="font-size:11.5px;">${esc(t("scan_please_check"))}</em></label>
       <div class="meta" style="font-size:11.5px; margin:2px 0 4px;">${esc(t("scan_gx_hint"))}</div>
