@@ -2549,5 +2549,22 @@
 "t:isl_island_shards":"섬 조각",
 "t:isl_done":"완료",
 "t:isl_src":"획득 방법",
-"t:isl_src_choices":"회차당 사본, 최대 6 (예: 1,3,6)"
+"t:isl_src_choices":"회차당 사본, 최대 6 (예: 1,3,6)",
+"t:sh_title":"빛나는 도시 스킨",
+"t:pca_day_bonus":"첫 구매 시 하루 +{q} 영광의 서 · 이 플랜에서 +{n}",
+"t:sh_pick":"+ 스킨 고르기",
+"t:sh_tomes":"영광의 서 {n}개",
+"t:sh_n":"스킨 {n}개",
+"t:sh_n1":"스킨 1개",
+"t:sh_when":"{every} · {d}일",
+"t:sh_next":"다음 {date}",
+"t:sh_on_now":"진행 중",
+"t:sh_no_date":"팩 페이지에서 빛나는 도시 팩 날짜를 정하세요",
+"t:sh_have":"✓ 배낭에 있음",
+"t:sh_pick_title":"빛나는 도시 스킨",
+"t:sh_pick_desc":"내 서버의 빛나는 도시 이벤트에서 파는 도시 스킨을 체크하세요 (스킨당 영광의 서 10,000개).",
+"t:sh_save":"저장",
+"t:sh_cancel":"취소",
+"t:sh_skins_n":"스킨 ({n})",
+"t:sh_none":"고른 스킨이 없습니다 · 스킨 갤러리 페이지에서 “+ 스킨 고르기”를 누르세요"
 }

@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "a2c0b0cde2";
+window.ADMIN_BUILD = "6ec4dc7f8a";
 
 // ============================================================
 // ADMIN PAGE
@@ -3170,6 +3170,7 @@ async function renderAdminSkinsCategory(body, category, kind) {
     img: (r) => r.image_url, name: (r) => r.name,
     sub: (r) => [r.bonus_type ? `${pct(r.bonus_value)} ${r.bonus_type}` : "", r.bonus_type2 ? `${pct(r.bonus_value2)} ${r.bonus_type2}` : "", r.max_level ? `max ${r.max_level}` : ""].filter(Boolean).join(" · "),
   });
+  if (category === SHINING_SKIN_CAT && kind !== "islands") renderAdminShiningAllow(body, rows);
   wireAdminReorder(body, "data-skinrow", async (orderedIds) => {
     try { await saveAdminRowOrderInPlace(body, "data-skinrow", "skins", rows, orderedIds); dashDataChanged("skins"); }
     catch (err) { toast("Couldn't reorder", true); renderAdminSkinsCategory(body, category, kind); }
@@ -3804,6 +3805,36 @@ async function renderAdminIslandShops(host, catNames) {
     };
   };
   draw();
+}
+
+// Admin → Skins → City Skin: which City Skins the Shining City picker on the Skin Gallery
+// offers (site_config shining_skins_allow = [names]; missing = all; Globe Level skins never).
+let ADMIN_SH_ALLOW_OPEN = false;
+function renderAdminShiningAllow(body, rows) {
+  const pick = rows.filter((r) => !shiningGlobeSkin(r.name));
+  body.insertAdjacentHTML("afterbegin", `<details class="panel adm-islshops" id="admShAllow"${ADMIN_SH_ALLOW_OPEN ? " open" : ""}><summary><b>Shining City: which skins can be picked</b></summary><div id="admShAllowBody"></div></details>`);
+  const el = body.querySelector("#admShAllow"), host = body.querySelector("#admShAllowBody");
+  const draw = () => {
+    const al = shiningSkinsAllow(), on = new Set(al || pick.map((r) => r.name));
+    host.innerHTML = `<p class="muted" style="font-size:12.5px;margin:6px 0 10px;">Tick the City Skins the Shining City picker on the Skin Gallery page offers (for everyone). Globe Level skins are never offered.</p>
+      <div class="isl-shg">${pick.map((r) => `<button type="button" class="isl-sht${on.has(r.name) ? " on" : ""}" data-ashpick="${esc(r.name)}" aria-pressed="${on.has(r.name)}" title="${esc(r.name)}">${r.image_url ? `<img src="${esc(r.image_url)}" alt="" loading="lazy" />` : ""}<span class="nm">${esc(r.name)}</span><span class="ck" aria-hidden="true">${on.has(r.name) ? "&#10003;" : ""}</span></button>`).join("")}</div>
+      <div class="isl-shn"><span data-ashn>${pick.filter((r) => on.has(r.name)).length}</span> of ${pick.length} can be picked${al ? "" : " · all (default)"}</div>
+      <div class="isl-shb"><button type="button" class="btn" data-ashall>Allow all</button><button type="button" class="btn primary" data-ashsave>Save</button></div>`;
+  };
+  el.addEventListener("toggle", () => { ADMIN_SH_ALLOW_OPEN = el.open; if (el.open) draw(); });
+  if (ADMIN_SH_ALLOW_OPEN) draw();
+  host.onclick = async (e) => {
+    const pb = e.target.closest("[data-ashpick]");
+    if (pb) { const v = !pb.classList.contains("on"); pb.classList.toggle("on", v); pb.setAttribute("aria-pressed", String(v)); pb.querySelector(".ck").innerHTML = v ? "&#10003;" : ""; host.querySelector("[data-ashn]").textContent = host.querySelectorAll(".isl-sht.on").length; return; }
+    const all = e.target.closest("[data-ashall]"), sv = e.target.closest("[data-ashsave]");
+    if (!all && !sv) return;
+    const val = all ? null : [...host.querySelectorAll(".isl-sht.on")].map((b) => b.dataset.ashpick);
+    try {
+      if (all) { await sb(`site_config?key=eq.shining_skins_allow`, { method: "DELETE" }); if (SITE_CONFIG) delete SITE_CONFIG.shining_skins_allow; }
+      else await saveSiteConfig("shining_skins_allow", val);
+      budgetInvalidate(); toast("Saved"); draw();
+    } catch (err) { toast("Couldn't save", true); }
+  };
 }
 
 // ---- Skin Gallery editor (multi-category, uses renderAdminSkinsCategory per category) ----

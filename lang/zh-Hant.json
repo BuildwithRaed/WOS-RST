@@ -2549,5 +2549,22 @@
 "t:isl_island_shards":"島嶼碎片",
 "t:isl_done":"完成",
 "t:isl_src":"取得方式",
-"t:isl_src_choices":"每輪副本數，最多6 (如 1,3,6)"
+"t:isl_src_choices":"每輪副本數，最多6 (如 1,3,6)",
+"t:sh_title":"閃耀之城造型",
+"t:pca_day_bonus":"每天首次購買 +{q} 本書 · 本計畫共 +{n}",
+"t:sh_pick":"+ 選擇造型",
+"t:sh_tomes":"{n} 本書",
+"t:sh_n":"{n} 個造型",
+"t:sh_n1":"1 個造型",
+"t:sh_when":"{every} · {d} 天",
+"t:sh_next":"下次 {date}",
+"t:sh_on_now":"進行中",
+"t:sh_no_date":"請在禮包頁面設定閃耀之城禮包的日期",
+"t:sh_have":"✓ 在背包中",
+"t:sh_pick_title":"閃耀之城造型",
+"t:sh_pick_desc":"勾選你所在州的閃耀之城活動出售的城市造型（每個 10,000 本榮耀之書）。",
+"t:sh_save":"儲存",
+"t:sh_cancel":"取消",
+"t:sh_skins_n":"造型（{n}）",
+"t:sh_none":"未選擇造型 · 在造型圖鑑頁面點擊「+ 選擇造型」"
 }

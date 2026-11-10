@@ -2550,5 +2550,22 @@
 "t:isl_island_shards":"Frammenti isola",
 "t:isl_done":"Fatto",
 "t:isl_src":"Come ottenerlo",
-"t:isl_src_choices":"Copie per ciclo, fino a 6 (es. 1,3,6)"
+"t:isl_src_choices":"Copie per ciclo, fino a 6 (es. 1,3,6)",
+"t:sh_title":"Skin della Città Splendente",
+"t:pca_day_bonus":"+{q} tomi al giorno dal primo acquisto · +{n} in questo piano",
+"t:sh_pick":"+ scegli skin",
+"t:sh_tomes":"{n} tomi",
+"t:sh_n":"{n} skin",
+"t:sh_n1":"1 skin",
+"t:sh_when":"{every} · {d} giorni",
+"t:sh_next":"prossimo {date}",
+"t:sh_on_now":"in corso",
+"t:sh_no_date":"imposta la data del pacchetto Città Splendente nella pagina Pacchetti",
+"t:sh_have":"✓ nel tuo zaino",
+"t:sh_pick_title":"Skin della Città Splendente",
+"t:sh_pick_desc":"Spunta le skin città vendute dall'evento Città Splendente del tuo stato (10.000 Tomi Gloriosi ciascuna).",
+"t:sh_save":"Salva",
+"t:sh_cancel":"Annulla",
+"t:sh_skins_n":"Skin ({n})",
+"t:sh_none":"Nessuna skin scelta · tocca “+ scegli skin” nella pagina Galleria skin"
 }

@@ -2550,5 +2550,22 @@
 "t:isl_island_shards":"Fragments d'île",
 "t:isl_done":"Terminé",
 "t:isl_src":"Comment l'obtenir",
-"t:isl_src_choices":"Copies par cycle, jusqu'à 6 (ex. 1,3,6)"
+"t:isl_src_choices":"Copies par cycle, jusqu'à 6 (ex. 1,3,6)",
+"t:sh_title":"Skins de la Cité Radieuse",
+"t:pca_day_bonus":"+{q} tomes par jour au premier achat · +{n} dans ce plan",
+"t:sh_pick":"+ choisir des skins",
+"t:sh_tomes":"{n} tomes",
+"t:sh_n":"{n} skins",
+"t:sh_n1":"1 skin",
+"t:sh_when":"{every} · {d} jours",
+"t:sh_next":"prochain {date}",
+"t:sh_on_now":"en cours",
+"t:sh_no_date":"indiquez la date du pack Cité Radieuse sur la page Packs",
+"t:sh_have":"✓ dans votre sac",
+"t:sh_pick_title":"Skins de la Cité Radieuse",
+"t:sh_pick_desc":"Cochez les skins de ville vendus par l'événement Cité Radieuse de votre État (10 000 Tomes Glorieux chacun).",
+"t:sh_save":"Enregistrer",
+"t:sh_cancel":"Annuler",
+"t:sh_skins_n":"Skins ({n})",
+"t:sh_none":"Aucun skin choisi · touchez « + choisir des skins » sur la page Galerie de skins"
 }
