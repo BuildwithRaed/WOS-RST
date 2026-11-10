@@ -19228,6 +19228,11 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
   // Where the combined plan's earliest-day search starts (solver only): the
   // slowest page's own earliest day - the pages together are never sooner.
   const ownHint = (list) => (PLAN_SOLVER && list.length > 1 ? Math.max(0, ...list.map((pg) => (pg.packGroups.length ? packEarliestDays(pg.packGroups, pg.need, pg.calcKey) : null) || 0)) : 0);
+  // opts.splitOnly (the second planner, solver only): just the split around the
+  // target is wanted, and whether there is one only needs the plan's earliest day.
+  const planSet = (r) => (opts.splitOnly
+    ? { earliest: r.groups.length && Object.keys(r.need).length ? packEarliestDays(r.groups, r.need, r.calcKey, ownHint(inc)) : null }
+    : budgetPlanSet(r.groups, r.need, r.calcKey, targetDays, ownHint(inc)));
   let res = setup();
   // Fast path: every page's own plan put together. When the packs' limits
   // allow that, it's the starting answer and only a quick combined search
@@ -19246,7 +19251,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
     res.merged = best === merged;
     if (reachable && best.days <= targetDays) res.byTarget = best; else res.cheapest = best;
   } else {
-    Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays, ownHint(inc)));
+    Object.assign(res, planSet(res));
     // A page the packs can't cover at all would sink the whole plan: plan it
     // on its own instead and keep the rest together.
     if (res.earliest == null && inc.length > 1) {
@@ -19257,7 +19262,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (dropped.length) {
         res = setup();
         const m2 = !PLAN_SOLVER && res.groups.length && Object.keys(res.need).length ? budgetMergedPlan(res, inc, targetDays) : null;
-        Object.assign(res, budgetPlanSet(res.groups, res.need, res.calcKey, targetDays, ownHint(inc)));
+        Object.assign(res, planSet(res));
         if (m2 && res.chosen) { const best = packPickCheapest([res.chosen, m2]); if (best === m2) { res.chosen = m2; res.merged = true; } }
         else if (m2) { res.chosen = m2; res.merged = true; }
       }
@@ -19310,13 +19315,22 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
   // Target not reachable with every page ticked: keep a by-target plan for the
   // pages that can make it, and plan the rest after them (their own Fastest /
   // Cheapest), so one slow page doesn't hide the others' target plan.
-  if (!opts.noSplit && targetDays != null && !res.byTarget && res.chosen && inc.length > 1) {
+  // (Split only: the main plan isn't worked out here; the target is out of reach
+  // exactly when it is sooner than the earliest day. The page drops a split the
+  // main plan turns out not to want.)
+  const trySplit = opts.splitOnly
+    ? targetDays != null && res.earliest != null && targetDays < res.earliest && inc.length > 1
+    : !opts.noSplit && targetDays != null && !res.byTarget && res.chosen && inc.length > 1;
+  if (trySplit) {
     try {
       const reach = inc.filter((pg) => { const e = pg.packGroups.length ? packEarliestDays(pg.packGroups, pg.need, pg.calcKey) : null; return e != null && e <= targetDays; });
       const late = inc.filter((pg) => !reach.includes(pg));
       if (reach.length && late.length) {
         const sub = budgetCombinedCore(reach, {}, targetDays, allGroups, { noSplit: true, noViews: true });
         if (sub.byTarget && sub.chosen && Array.isArray(sub.chosen.picks) && !(sub.dropped || []).length) {
+          const tShares = budgetShares(sub.chosen, reach);
+          // The by-target part is ready: handed over now, the pages after the target follow.
+          if (opts.onPart) opts.onPart({ split: { target: { keys: reach.map((pg) => pg.calcKey), plan: sub.chosen, shares: tShares } } });
           const used = allGroups.map(() => 0);
           sub.chosen.picks.forEach((pk) => { const gi = allGroups.indexOf(sub.groups[pk.gi]); if (gi >= 0) used[gi] += pk.count; });
           const ids = new Set(); late.forEach((pg) => (pg.tableIds || []).forEach((id) => ids.add(String(id))));
@@ -19331,7 +19345,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
             const cheap = packPickCheapest(far.concat([fast]).filter(Boolean));
             if (fast && cheap) {
               res.split = {
-                target: { keys: reach.map((pg) => pg.calcKey), plan: sub.chosen, shares: budgetShares(sub.chosen, reach) },
+                target: { keys: reach.map((pg) => pg.calcKey), plan: sub.chosen, shares: tShares },
                 late: { keys: late.map((pg) => pg.calcKey), earliest: e2, fastest: { plan: fast, shares: budgetShares(fast, late) }, cheapest: { plan: cheap, shares: budgetShares(cheap, late) } },
               };
             }
@@ -19340,8 +19354,12 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       }
     } catch (e) { res.split = null; }
   }
+  if (opts.splitOnly) return { split: res.split || null, inc: res.inc, dropped: res.dropped };
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
   if (opts.noViews) return res;
+  // The plan itself is ready; the Cheapest card below still needs a solve of
+  // its own when the target is within reach: handed over now.
+  if (opts.onPart && res.byTarget) opts.onPart({ main: res, step: "set" });
   // The other two cards on Budgets: the fastest plan, and the cheapest one
   // within a year of that (each with its own page shares).
   if (res.chosen && res.groups && res.groups.length && Object.keys(res.need || {}).length) {
@@ -19363,6 +19381,8 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       // cheapest; the page then checks which one fits the spending limit and
       // finishes soonest (budgetSpendBest), so changing the amount needs no new plans.
       if (opts.spendCands) {
+        // Everything but "My budget" is ready: handed over before its plans are worked out.
+        if (opts.onPart) opts.onPart({ main: res, step: "views" });
         const seen = new Set(), cands = [];
         const add = (pl) => { if (!pl) return; const k = Math.round(pl.total * 100) + "|" + pl.days; if (seen.has(k)) return; seen.add(k); cands.push({ plan: pl, shares: pl === res.chosen ? res.shares : budgetShares(pl, inc) }); };
         add(fastest); add(res.chosen); add(cheapest);
@@ -19436,14 +19456,27 @@ function plannerPayloadDecode(p) {
   return out;
 }
 // Runs the combined plan (and the own plans of pages it had to leave out).
-function plannerCombinedLocal(payload) {
+// payload.splitOnly: only the split around the target (asked of the second
+// planner; { skipped: true } without the solver). payload.par: that split comes
+// from the second planner, so it is left out here (solver only; the answer then
+// says splitElsewhere). onPart(part): parts ready before the whole answer -
+// { main, step: "set" | "views" } (the plan so far) and { split: { target } }.
+function plannerCombinedLocal(payload, onPart) {
   payload = plannerPayloadDecode(payload);
   const pages = payload.pages.map((pg) => ({ ...pg, supplied: new Set(pg.supplied || []) }));
-  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands });
-  res.droppedPlans = {};
-  (res.dropped || []).forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg) res.droppedPlans[k] = budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, payload.targetDays); });
-  delete res.groups;
-  return res;
+  if (payload.splitOnly) return PLAN_SOLVER ? budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { splitOnly: true, onPart }) : { skipped: true };
+  // The answer as the page gets it: the left-out pages' own plans added, the pack lists dropped.
+  const done = (res) => {
+    const out = { ...res, droppedPlans: {} };
+    (res.dropped || []).forEach((k) => { const pg = pages.find((x) => x.calcKey === k); if (pg) out.droppedPlans[k] = budgetPlanSet(pg.packGroups, pg.need, pg.calcKey, payload.targetDays); });
+    delete out.groups;
+    return out;
+  };
+  const par = !!payload.par && !!PLAN_SOLVER;
+  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands, noSplit: par, onPart: onPart ? (p) => onPart(p.main ? { main: done(p.main), step: p.step } : p) : null });
+  const out = done(res);
+  if (par) out.splitElsewhere = true;
+  return out;
 }
 // Goals with their own "By" dates: plan the parts in
 // date order, each by its date with what the parts before it left of every
@@ -19518,19 +19551,29 @@ const PLANNER_CONST_SRC = () => `const BUDGET_RESEARCH_KEYS = ${JSON.stringify(B
 const PLAN_SOLVER_URL = "https://cdn.jsdelivr.net/npm/highs@1.15.3/build/";
 const PLAN_SOLVER_SRI = { "highs.js": "sha384-8VF/84lUdwWTmd6C4TlyNI0GCoMmX0iTMuYiSgqm4Q+A36WnVSQAAHMvAGdx71U1", "highs.wasm": "sha384-MAiNyO4ydZtZMzFnxQmbxtpRfMmzGm/wbmtOYrOuns7GS6PMI/RukPAEV9MJjvCB" };
 const PLANNER_FN_NAMES = ["packStackInfo", "packStartOfToday", "packParseDay", "packDayKey", "packImplicitAnchor", "packStepFrom", "packAppearances", "packResetOffsets", "packCyclesWithin", "packDaysForCycles", "tradeWeeksFor", "tradeWorth", "budgetKeysOf", "tradeRatesFor", "packTradeCtx", "packShortAfterTrades", "packCoveredBy", "packDayBonusList", "packDayBonusGives", "packMaxSupply", "packPruneOffersFor", "packArcSteps", "packExactPicks", "packExactPicksPart", "packGroupsSig", "packPlanCacheKey", "packCheapestPlan", "packPlanPrep", "packCheapestPlanCompute", "packEarliestDays", "packEarliestDaysCompute", "packPickCheapest", "budgetPlanSet", "budgetMergedPlan", "budgetShares", "budgetCombinedCore", "plannerPayloadDecode", "plannerCombinedLocal", "plannerPagePlans", "plannerDeadlineLocal"];
-let PLANNER_WORKER = null, PLANNER_SEQ = 0;
-// Requests waiting for an answer: id -> { resolve, reject, msg }. The worker
-// gets one request at a time (PLANNER_QUEUE holds the rest, PLANNER_BUSY is
-// the one it's on), so a plan nobody wants any more (Budgets' ticks or date
-// changed meanwhile) can be dropped before it starts, or stopped while it
-// runs (plannerSupersede), and the other requests are sent again to a fresh
-// worker - nothing is left waiting.
+let PLANNER_SEQ = 0;
+// Requests waiting for an answer: id -> { resolve, reject, msg, lane, onPart }.
+// There are two planners ("lanes"), each its own worker with its own line:
+// lane 0 gets every kind of request, one at a time (the rest wait in its
+// queue; busy = the one it's on), so a plan nobody wants any more (Budgets'
+// ticks or date changed meanwhile) can be dropped before it starts, or stopped
+// while it runs (plannerSupersede), and the other requests are sent again to a
+// fresh worker - nothing is left waiting. Lane 1 only works the Budgets plan's
+// target split out, side by side with lane 0 (plannerLanes says if it's used).
 const PLANNER_WAIT = new Map();
-let PLANNER_QUEUE = [], PLANNER_BUSY = null;
+const PLANNER_LANES = [{ w: null, queue: [], busy: null, dead: false }, { w: null, queue: [], busy: null, dead: false }];
+let PLANNER_OFF = false; // the background planner can't start: plans are worked out on the page
 let PLANNER_SRC = "", PLANNER_SRC_URL = null;
-function plannerWorker() {
-  if (PLANNER_WORKER === false) return null;
-  if (PLANNER_WORKER) return PLANNER_WORKER;
+// How many planners can work side by side: two when the device has the cores
+// for it (the second one failing, or a phone with 2 cores: one, as before).
+function plannerLanes() {
+  return typeof Worker !== "undefined" && !PLANNER_OFF && !PLANNER_LANES[1].dead && ((typeof navigator !== "undefined" && navigator.hardwareConcurrency) || 4) >= 4 ? 2 : 1;
+}
+function plannerWorker(li) {
+  li = li === 1 ? 1 : 0;
+  const lane = PLANNER_LANES[li];
+  if (PLANNER_OFF || lane.dead) return null;
+  if (lane.w) return lane.w;
   try {
     const fns = PLANNER_FN_NAMES.map((n) => { const f = window[n]; if (typeof f !== "function") throw new Error("missing " + n); return f.toString(); });
     const src = [
@@ -19550,7 +19593,8 @@ function plannerWorker() {
       ...fns,
       "plannerSolver();", // start loading the solver as soon as the worker starts
       "self.onmessage = async (e) => { await plannerSolver(); const { id, kind, payload, trade, extra } = e.data; const sig = JSON.stringify([trade || null, extra || null]); if (sig !== LAST_TRADE) { LAST_TRADE = sig; PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); } TRADE_RATES_CACHE = trade || null; TRADE_EXTRA_RATES = extra || {};",
-      "  try { const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : kind === 'deadline' ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
+      // (A combined plan can hand over the parts that are ready before the whole answer: { id, part }.)
+      "  try { const part = (p) => { try { self.postMessage({ id, part: p }); } catch (err) { /* a part that can't be sent is simply not shown early */ } }; const result = kind === 'solver' ? !!PLAN_SOLVER : kind === 'page' ? plannerPagePlans(payload) : kind === 'deadline' ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload, part); self.postMessage({ id, ok: true, result }); } catch (err) { self.postMessage({ id, ok: false, error: String((err && err.stack) || err) }); } };",
     ].join("\n");
     // One address for the worker code while it's unchanged (a restart reuses it).
     if (src !== PLANNER_SRC) {
@@ -19560,32 +19604,52 @@ function plannerWorker() {
     }
     const w = new Worker(PLANNER_SRC_URL);
     w.onmessage = (e) => {
-      if (w !== PLANNER_WORKER) return; // an answer from a worker that was stopped
-      if (PLANNER_BUSY === e.data.id) PLANNER_BUSY = null;
+      if (w !== lane.w) return; // an answer from a worker that was stopped
       const cb = PLANNER_WAIT.get(e.data.id);
+      // A part of the answer that is ready early (the rest follows).
+      if (e.data.part) { if (cb && cb.onPart) { try { cb.onPart(e.data.part); } catch (err) { console.warn("planner part", err); } } return; }
+      if (lane.busy === e.data.id) lane.busy = null;
       if (cb) { PLANNER_WAIT.delete(e.data.id); if (e.data.ok) cb.resolve(e.data.result); else cb.reject(new Error(e.data.error)); }
       plannerPump();
     };
-    w.onerror = () => { if (w !== PLANNER_WORKER) return; PLANNER_WORKER = false; PLANNER_BUSY = null; PLANNER_QUEUE = []; PLANNER_WAIT.forEach((cb) => cb.reject(new Error("planner worker failed"))); PLANNER_WAIT.clear(); };
-    PLANNER_WORKER = w;
+    w.onerror = () => {
+      if (w !== lane.w) return;
+      const failed = [];
+      if (li === 0) {
+        // The main planner can't run: everything is planned on the page instead.
+        PLANNER_OFF = true;
+        PLANNER_LANES.forEach((l) => { if (l.w && l.w !== w && l.w.terminate) l.w.terminate(); l.w = null; l.busy = null; l.queue = []; });
+        PLANNER_WAIT.forEach((cb) => failed.push(cb)); PLANNER_WAIT.clear();
+      } else {
+        // Only the second planner: its requests fail (their callers carry on with the first one).
+        lane.dead = true; lane.w = null; lane.busy = null; lane.queue = [];
+        PLANNER_WAIT.forEach((cb, id) => { if (cb.lane === li) { failed.push(cb); PLANNER_WAIT.delete(id); } });
+      }
+      failed.forEach((cb) => cb.reject(new Error("planner worker failed")));
+    };
+    lane.w = w;
   } catch (e) {
     console.warn("Background planner unavailable, planning on the page instead", e);
-    PLANNER_WORKER = false;
+    if (li === 0) PLANNER_OFF = true; else lane.dead = true;
   }
-  return PLANNER_WORKER || null;
+  return lane.w || null;
 }
-function plannerRun(kind, payload) {
+// opts: { lane: 1 } = the second planner (when plannerLanes() says there is
+// one); { onPart } = called with each part a combined plan hands over early.
+function plannerRun(kind, payload, opts) {
   const local = () => (kind === "solver" ? !!PLAN_SOLVER : kind === "page" ? plannerPagePlans(payload) : kind === "deadline" ? plannerDeadlineLocal(payload) : plannerCombinedLocal(payload));
-  const w = plannerWorker();
+  const li = opts && opts.lane === 1 && plannerLanes() > 1 ? 1 : 0;
+  const lane = PLANNER_LANES[li];
+  const w = plannerWorker(li);
   if (!w) return Promise.resolve().then(local);
   const id = ++PLANNER_SEQ;
   const p = new Promise((resolve, reject) => {
     // Sent at once when the worker is free (copied then, as before); a request
     // that has to wait is copied now, so later changes on the page can't reach it.
     const msg = { id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES };
-    const idle = !PLANNER_BUSY && !PLANNER_QUEUE.length;
-    PLANNER_WAIT.set(id, { resolve, reject, msg: idle ? msg : structuredClone(msg) });
-    PLANNER_QUEUE.push(id);
+    const idle = !lane.busy && !lane.queue.length;
+    PLANNER_WAIT.set(id, { resolve, reject, msg: idle ? msg : structuredClone(msg), lane: li, onPart: (opts && opts.onPart) || null });
+    lane.queue.push(id);
     plannerPump();
   }).catch((err) => {
     if (err && err.superseded) throw err; // dropped on purpose: no plan on the page either
@@ -19594,29 +19658,37 @@ function plannerRun(kind, payload) {
   p.plannerId = id;
   return p;
 }
-// Sends the next waiting request when the worker is free.
+// Sends each lane's next waiting request when its worker is free.
 function plannerPump() {
-  while (!PLANNER_BUSY && PLANNER_QUEUE.length) {
-    const id = PLANNER_QUEUE.shift(), cb = PLANNER_WAIT.get(id);
-    if (!cb) continue;
-    const w = plannerWorker();
-    if (!w) { PLANNER_WAIT.delete(id); cb.reject(new Error("planner worker failed")); continue; }
-    PLANNER_BUSY = id;
-    // (once sent, the copy is the worker's; keep the message only to send it again after a restart)
-    w.postMessage(cb.msg);
-  }
+  PLANNER_LANES.forEach((lane, li) => {
+    while (!lane.busy && lane.queue.length) {
+      const id = lane.queue.shift(), cb = PLANNER_WAIT.get(id);
+      if (!cb) continue;
+      const w = plannerWorker(li);
+      if (!w) { PLANNER_WAIT.delete(id); cb.reject(new Error("planner worker failed")); continue; }
+      lane.busy = id;
+      // (once sent, the copy is the worker's; keep the message only to send it again after a restart)
+      w.postMessage(cb.msg);
+    }
+  });
 }
-// Stops the worker and starts a fresh one; every request still waiting
-// (the one it was on first) is sent again, except those in `drop`.
+// Stops one lane's worker; the request it was on goes back to the front of
+// its line (unless it's in `drop`) for the fresh worker plannerPump starts.
+function plannerRestartLane(li, drop) {
+  const lane = PLANNER_LANES[li], busy = lane.busy;
+  if (lane.w && lane.w.terminate) lane.w.terminate();
+  lane.w = null; lane.busy = null;
+  if (busy != null && !(drop && drop.has(busy)) && PLANNER_WAIT.has(busy)) lane.queue.unshift(busy);
+}
+// Stops the workers and starts fresh ones; every request still waiting
+// (the one a worker was on first) is sent again, except those in `drop`.
 function plannerRestart(drop) {
-  const busy = PLANNER_BUSY;
-  if (PLANNER_WORKER && PLANNER_WORKER.terminate) PLANNER_WORKER.terminate();
-  PLANNER_WORKER = null; PLANNER_BUSY = null;
-  if (busy != null && !(drop && drop.has(busy)) && PLANNER_WAIT.has(busy)) PLANNER_QUEUE.unshift(busy);
+  PLANNER_OFF = false;
+  PLANNER_LANES.forEach((lane, li) => { lane.dead = false; plannerRestartLane(li, drop); });
   plannerPump();
 }
 // A request whose answer nobody wants any more (`p` = what plannerRun
-// returned). Waiting: taken out of the line. Running: the worker is stopped
+// returned). Waiting: taken out of the line. Running: its worker is stopped
 // (its answer would take as long as a new plan) and the others go on in a
 // fresh one. Its promise rejects with err.superseded.
 function plannerSupersede(p) {
@@ -19624,18 +19696,29 @@ function plannerSupersede(p) {
   const cb = id != null && PLANNER_WAIT.get(id);
   if (!cb) return;
   PLANNER_WAIT.delete(id);
-  PLANNER_QUEUE = PLANNER_QUEUE.filter((x) => x !== id);
-  if (PLANNER_BUSY === id) plannerRestart(new Set([id]));
+  const lane = PLANNER_LANES[cb.lane || 0];
+  lane.queue = lane.queue.filter((x) => x !== id);
+  if (lane.busy === id) { plannerRestartLane(cb.lane || 0, new Set([id])); plannerPump(); }
   const err = new Error("plan no longer needed"); err.superseded = true;
   cb.reject(err);
 }
-// Starts the worker (and the solver download) early, while a page that will
+// Starts the workers (and the solver download) early, while a page that will
 // need a plan is still loading its data.
-function plannerWarm() { if (PLANNER_WORKER === null && typeof Worker !== "undefined") plannerWorker(); }
-// The last packs plan is kept on the phone with a fingerprint of everything
-// the planner was given (pages' needs and packs, ticks, target, trades, game
-// rules, the day), so a page refresh with nothing changed shows it at once.
+function plannerWarm() {
+  if (PLANNER_OFF || typeof Worker === "undefined") return;
+  plannerWorker(0);
+  if (plannerLanes() > 1) plannerWorker(1);
+}
+// The last few packs plans are kept on the phone, each with a fingerprint of
+// everything the planner was given (pages' needs and packs, ticks, target,
+// trades, game rules, the day), so a page refresh with nothing changed - or
+// going back to ticks / a date already worked out today - shows it at once.
+// "budget_plans_v2" = { list: [{ key, day }] } (newest first, BUDGET_PLANS_KEPT
+// at most); each plan itself is in "budget_plan_v2:<key>". The single plan the
+// site kept before ("budget_plan_v1" = { key, res }) is still read.
 const BUDGET_PLAN_STORE = "budget_plan_v1";
+const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2:";
+const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
   const str = JSON.stringify({ v: 3, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
@@ -19645,6 +19728,67 @@ function budgetPlanFingerprint(payload) {
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return `${str.length}:${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
 }
+function budgetPlansIndex() {
+  try { const x = JSON.parse(localStorage.getItem(BUDGET_PLANS_INDEX) || "null"); return x && Array.isArray(x.list) ? x.list.filter((e) => e && e.key) : []; } catch (e) { return []; }
+}
+// The kept plan with this fingerprint, or null.
+function budgetPlanKept(key) {
+  try {
+    const list = budgetPlansIndex(), at = list.findIndex((e) => e.key === key);
+    if (at >= 0) {
+      const res = JSON.parse(localStorage.getItem(BUDGET_PLAN_ITEM + key) || "null");
+      if (res) {
+        // (read = used: it moves to the front, so the plans gone back to are the ones kept)
+        if (at > 0) { try { localStorage.setItem(BUDGET_PLANS_INDEX, JSON.stringify({ list: [list[at]].concat(list.filter((_, i) => i !== at)) })); } catch (e) { /* storage full: order unchanged */ } }
+        return res;
+      }
+    }
+    const old = JSON.parse(localStorage.getItem(BUDGET_PLAN_STORE) || "null");
+    return old && old.key === key && old.res ? old.res : null;
+  } catch (e) { return null; }
+}
+// Keeps a plan: newest first, other days' plans and the oldest ones dropped;
+// when the phone's storage is full, older plans go until it fits (or it isn't kept).
+function budgetPlanKeep(key, res) {
+  try {
+    const day = packDayKey(packStartOfToday());
+    const before = budgetPlansIndex();
+    let list = [{ key, day }].concat(before.filter((e) => e.key !== key && e.day === day)).slice(0, BUDGET_PLANS_KEPT);
+    const drop = (keys) => keys.forEach((k) => { try { localStorage.removeItem(BUDGET_PLAN_ITEM + k); } catch (e) { /* storage blocked */ } });
+    drop(before.filter((e) => !list.some((x) => x.key === e.key)).map((e) => e.key));
+    // (also any plan left without its list entry, e.g. after a save the storage cut short)
+    for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(BUDGET_PLAN_ITEM) && !list.some((x) => BUDGET_PLAN_ITEM + x.key === k)) localStorage.removeItem(k); }
+    localStorage.removeItem(BUDGET_PLAN_STORE); // (the single plan kept before: its room is needed)
+    const body = JSON.stringify(res);
+    for (;;) {
+      try { localStorage.setItem(BUDGET_PLAN_ITEM + key, body); break; } catch (e) {
+        if (list.length <= 1) { list = []; break; } // doesn't fit even alone: not kept
+        drop([list.pop().key]);
+      }
+    }
+    localStorage.setItem(BUDGET_PLANS_INDEX, JSON.stringify({ list }));
+  } catch (e) { /* storage blocked: not kept */ }
+}
+function budgetPlansForget() {
+  try {
+    budgetPlansIndex().forEach((e) => localStorage.removeItem(BUDGET_PLAN_ITEM + e.key));
+    // (also any plan left without its list entry)
+    for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(BUDGET_PLAN_ITEM)) localStorage.removeItem(k); }
+    localStorage.removeItem(BUDGET_PLANS_INDEX);
+    localStorage.removeItem(BUDGET_PLAN_STORE);
+  } catch (e) { /* storage blocked */ }
+}
+// Drops a combined plan's requests (both planners') that nobody wants any more.
+function budgetTrackDrop(track) {
+  if (!track) return;
+  if (track.req) plannerSupersede(track.req);
+  if (track.req2) plannerSupersede(track.req2);
+}
+// more: { spendCands, track, onPart }. onPart(partial) gets the plan as far as
+// it is worked out each time a part comes in: the same shape as the final
+// answer with pending: true and have = { set (the plan itself), views (the
+// Fastest / Cheapest cards), split (true, or "target" while only the by-target
+// part of the split is in) }.
 async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   const inp = budgetCombinedInput(pages, selected);
   const payload = plannerPayloadEncode({ ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) });
@@ -19654,21 +19798,63 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   let key = null;
   try {
     key = budgetPlanFingerprint(payload);
-    const kept = JSON.parse(localStorage.getItem(BUDGET_PLAN_STORE) || "null");
-    if (kept && kept.key === key && kept.res) return withCands(kept.res);
+    const kept = budgetPlanKept(key);
+    if (kept) return withCands(kept);
   } catch (e) { /* storage blocked: work it out */ }
-  const req = plannerRun("combined", payload);
-  if (more && more.track) more.track.req = req;
-  const res = await req;
-  try { if (key) localStorage.setItem(BUDGET_PLAN_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked: not kept */ }
+  // Two planners side by side when the device can: the first works the whole
+  // plan out (Fastest, Cheapest, My budget), the second the split around the
+  // target (by target + after it). A split needs a target and two pages or more.
+  const nPlanned = inp.pages.filter((pg) => !pg.missing && (selected || {})[pg.calcKey] !== false && Object.keys(pg.need || {}).length).length;
+  const two = targetDays != null && nPlanned > 1 && plannerLanes() > 1;
+  const wantsSplit = (a) => targetDays != null && !a.byTarget && !!a.chosen && (a.inc || []).length > 1;
+  const acc = { main: null, step: null, target: null, splitDone: !two, split: null };
+  const tell = () => {
+    if (!(more && more.onPart)) return;
+    const m = acc.main;
+    // (A split that is in before the plan itself is passed on as it is; the plan then says if it's wanted.)
+    const split = !two ? ((m && m.split) || (acc.target ? { target: acc.target } : null)) : acc.splitDone ? (!m || wantsSplit(m) ? acc.split : null) : acc.target ? { target: acc.target } : null;
+    more.onPart({ chosen: null, shares: {}, dropped: [], inc: [], views: {}, byTarget: null, ...(m || {}), split, pending: true,
+      have: { set: !!m, views: acc.step === "views" || acc.step === "done", split: two ? (acc.splitDone ? true : acc.target ? "target" : false) : (m ? true : acc.target ? "target" : false) } });
+  };
+  const reqA = plannerRun("combined", two ? { ...payload, par: true } : payload, { onPart: (p) => {
+    if (p && p.main) { acc.main = p.main; acc.step = p.step; tell(); }
+    else if (p && p.split && p.split.target && !two) { acc.target = p.split.target; tell(); } // (one planner: the split's by-target part)
+  } });
+  const reqB = two ? plannerRun("combined", { ...payload, splitOnly: true }, { lane: 1, onPart: (p) => { if (p && p.split && p.split.target && !acc.splitDone) { acc.target = p.split.target; tell(); } } }) : null;
+  if (more && more.track) { more.track.req = reqA; more.track.req2 = reqB; }
+  let res;
+  if (!reqB) res = await reqA;
+  else {
+    // The split's answer (null when that planner failed); whichever planner is done first is shown.
+    const pb = reqB.then((b) => b, (e) => { if (!(e && e.superseded)) console.warn("split plan failed", e); return null; });
+    pb.then((b) => { if (b && !b.skipped && !acc.splitDone) { acc.split = b.split || null; acc.splitDone = true; tell(); } });
+    const a = await reqA;
+    if (!a.splitElsewhere) {
+      // (The first planner had no solver: it worked the split out itself, the old way.)
+      plannerSupersede(reqB);
+      res = a;
+    } else {
+      if (!acc.splitDone) { acc.main = a; acc.step = "done"; tell(); }
+      let b = await pb;
+      // The second planner couldn't (no solver there, or it failed): the first one works the split out too.
+      if (!b || b.skipped) {
+        const again = plannerRun("combined", { ...payload, splitOnly: true });
+        if (more && more.track) more.track.req2 = again;
+        b = await again;
+      }
+      res = { ...a, split: wantsSplit(a) && b && b.split ? b.split : null };
+      delete res.splitElsewhere;
+    }
+  }
+  if (key) budgetPlanKeep(key, res);
   return withCands(res);
 }
 // "Recalculate": forget every kept copy and work everything out again.
 function budgetForceRecalc() {
-  try { localStorage.removeItem(BUDGET_PLAN_STORE); } catch (e) { /* storage blocked */ }
+  budgetPlansForget();
   // The Budgets plan being worked out is dropped (a new one starts); other
   // requests (Pack cost, widget prices, My Purchases) go on in the fresh worker.
-  if (BUDGET_PLAN_TRACK.req) { plannerSupersede(BUDGET_PLAN_TRACK.req); BUDGET_PLAN_TRACK = {}; }
+  if (BUDGET_PLAN_TRACK.req) { budgetTrackDrop(BUDGET_PLAN_TRACK); BUDGET_PLAN_TRACK = {}; }
   plannerRestart();
   if (typeof PACK_PLAN_CACHE !== "undefined") { PACK_PLAN_CACHE.clear(); PACK_EARLIEST_CACHE.clear(); }
   if (typeof TRADE_EXTRA_SIG !== "undefined") TRADE_EXTRA_SIG = "";
@@ -19969,7 +20155,7 @@ async function budgetSuggestedPlan() {
   if (PUR_SUGGEST) return PUR_SUGGEST;
   plannerWarm();
   // A plan for older picks still being worked out is no longer wanted.
-  if (PUR_SUG_TRACK.req) plannerSupersede(PUR_SUG_TRACK.req);
+  budgetTrackDrop(PUR_SUG_TRACK);
   const track = (PUR_SUG_TRACK = {});
   PUR_SUGGEST = (async () => {
     const [, , , , savedSel, savedTarget] = await Promise.all([
@@ -20479,20 +20665,45 @@ async function renderBudgetsPage(opts = {}) {
   const wantCands = spendActive();
   const planKey = `${targetDays}|${selSig}|${wantCands ? 1 : 0}`;
   const haveCombined = dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending && BUDGET_DATA.selSig === selSig && (!wantCands || !!BUDGET_DATA.combined.budgetCands);
-  const combinedRaw = haveCombined ? BUDGET_DATA.combined : { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
+  // The parts of the plan that are in while the rest is still being worked out (budgetCombinedPlanAsync's onPart).
+  const partPlan = !haveCombined && dataReady && BUDGET_DATA.targetDays === targetDays && BUDGET_DATA.selSig === selSig && BUDGET_DATA.combined && BUDGET_DATA.combined.pending && BUDGET_DATA.combined.partKey === planKey ? BUDGET_DATA.combined : null;
+  const combinedRaw = haveCombined ? BUDGET_DATA.combined : partPlan || { pending: true, chosen: null, shares: {}, dropped: [], inc: [], views: {}, split: null, byTarget: null };
   if (!haveCombined && BUDGET_PLAN_RUNNING !== planKey && BUDGET_PLAN_FAILED !== planKey) {
     BUDGET_PLAN_RUNNING = planKey;
     // A plan for other ticks / another date still being worked out is no
     // longer wanted: it's dropped, so the new one doesn't wait behind it.
-    if (BUDGET_PLAN_TRACK.req) plannerSupersede(BUDGET_PLAN_TRACK.req);
+    budgetTrackDrop(BUDGET_PLAN_TRACK);
     const track = (BUDGET_PLAN_TRACK = {});
-    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track }).then((real) => {
+    // A redraw as the plan's parts come in: open lines stay open, and when the
+    // total card (which grows as it fills in) ends in the top half of the screen
+    // or above it, the page tile on screen below it stays where it is.
+    const partRedraw = () => {
+      const y = window.scrollY, sq = RENDER_SEQ, hd = content.querySelector(".b3-hd");
+      const below = !!hd && hd.getBoundingClientRect().bottom < window.innerHeight / 2;
+      const tile = below ? [...content.querySelectorAll("[data-b3page]")].find((el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; }) : null;
+      const key = tile ? tile.dataset.b3page : null, top0 = tile ? tile.getBoundingClientRect().top : 0, h0 = hd ? hd.offsetHeight : 0;
+      keepFolds(content, () => renderBudgetsPage()).then(() => {
+        const t2 = key ? [...content.querySelectorAll("[data-b3page]")].find((el) => el.dataset.b3page === key) : null, h2 = content.querySelector(".b3-hd");
+        window.scrollTo(0, y);
+        if (t2) window.scrollTo(0, y + (t2.getBoundingClientRect().top - top0));
+        else if (below && h2) window.scrollTo(0, y + (h2.offsetHeight - h0));
+      }).catch((e) => pageRedrawFailed(e, sq));
+    };
+    // A part of the plan is in: shown at once, the rest follows.
+    const onPart = (part) => {
+      if (BUDGET_PLAN_TRACK !== track || BUDGET_PLAN_RUNNING !== planKey) return;
+      if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
+      BUDGET_DATA.combined = { ...part, partKey: planKey };
+      if (budTab()) partRedraw();
+    };
+    budgetCombinedPlanAsync(pages, BUDGET_SELECTED, targetDays, { spendCands: wantCands, track, onPart }).then((real) => {
       if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
       if (BUDGET_PLAN_RUNNING === planKey) BUDGET_PLAN_RUNNING = null;
       // Only if nothing changed meanwhile (date, ticks, data).
       if (!BUDGET_DATA || BUDGET_DATA.targetDays !== targetDays || BUDGET_DATA.selSig !== selSig || BUDGET_DATA.pages !== pages) return;
+      const hadPart = !!(BUDGET_DATA.combined && BUDGET_DATA.combined.partKey === planKey);
       BUDGET_DATA.combined = real;
-      if (budTab()) { const y = window.scrollY, sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); }
+      if (budTab()) { if (hadPart) partRedraw(); else { const y = window.scrollY, sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((e) => pageRedrawFailed(e, sq)); } }
     }).catch((e) => {
       if (e && e.superseded) return; // a newer plan took its place
       if (BUDGET_PLAN_TRACK === track) BUDGET_PLAN_TRACK = {};
@@ -20504,9 +20715,14 @@ async function renderBudgetsPage(opts = {}) {
       if (budTab()) { const y = window.scrollY, sq = RENDER_SEQ; renderBudgetsPage().then(() => window.scrollTo(0, y)).catch((err) => pageRedrawFailed(err, sq)); }
     });
   }
-  const planPending = !!combinedRaw.pending;
+  // While the plan is being worked out its parts come in one by one (`have`,
+  // null once everything is in): the plan itself, the Fastest / Cheapest cards,
+  // the split around the target. Each view is shown as soon as its own parts
+  // are in; planPending (set below) is about the view on screen.
+  const pendingAll = !!combinedRaw.pending;
+  const have = pendingAll ? (combinedRaw.have || {}) : null;
   // The plan failed: "Couldn't work it out · ↻ Recalculate" where "Working out…" was.
-  const planFailed = planPending && BUDGET_PLAN_FAILED === planKey;
+  const planFailed = pendingAll && BUDGET_PLAN_FAILED === planKey;
   const workHtml = (tag, cls) => planFailed
     ? `<${tag} class="bud-fail${cls ? " " + cls : ""}">${esc(t("budgets_plan_failed"))} · <button type="button" class="bud-fail-b" data-budgetrecalc>&#8635; ${esc(t("budgets_recalc"))}</button></${tag}>`
     : `<${tag} class="bud-pending${cls ? " " + cls : ""}">${esc(t("budgets_working"))}</${tag}>`;
@@ -20523,12 +20739,18 @@ async function renderBudgetsPage(opts = {}) {
     plan: { rows: split.target.plan.rows.concat(splitLate.plan.rows), total: split.target.plan.total + splitLate.plan.total, days: Math.max(split.target.plan.days || 0, splitLate.plan.days || 0), trades: (split.target.plan.trades || []).concat(splitLate.plan.trades || []), split: true },
     shares: { ...split.target.shares, ...splitLate.shares },
   } : null;
-  const reachable = targetDays != null && (!!combinedRaw.byTarget || !!split);
+  // The plan is in but the target is out of every page's reach: the "by target"
+  // view waits for the split (the second planner is still on it).
+  const splitWait = !!have && !!have.set && have.split !== true && targetDays != null && !combinedRaw.byTarget && !!combinedRaw.chosen && (combinedRaw.inc || []).length > 1;
+  const viewsWait = !!have && !!have.set && !have.views; // the Fastest / Cheapest cards are still coming
+  const viewReady = (k) => !have || (k === "main" ? !!have.set && !splitWait : k === "budget" ? false : !!have.views);
+  const reachable = targetDays != null && (!!combinedRaw.byTarget || !!split || splitWait);
   const views = combinedRaw.views || {};
-  const spendBest = wantCands ? budgetSpendBest(combinedRaw) : null;
-  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
+  const spendBest = wantCands && !have ? budgetSpendBest(combinedRaw) : null;
+  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : viewsWait || !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
   // (kept on "My budget" while its plans are still being worked out)
-  if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && planPending)) BUDGET_VIEW = "main";
+  if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && pendingAll)) BUDGET_VIEW = "main";
+  const planPending = pendingAll && !viewReady(BUDGET_VIEW);
   const pickDropped = (pg, k) => k === "fastest" ? (pg.fastest || pg.chosen) : k === "cheapest" ? (pg.cheapest || pg.chosen) : pg.chosen;
   const viewData = (k) => {
     const v = k === "main" ? (splitMain || { plan: combinedRaw.chosen, shares: combinedRaw.shares }) : k === "budget" ? (spendBest && spendBest.ok ? { plan: spendBest.plan, shares: spendBest.shares } : null) : views[k];
@@ -20537,7 +20759,9 @@ async function renderBudgetsPage(opts = {}) {
     return { plan: v && v.plan, shares: (v && v.shares) || {}, total: plans.reduce((a, pl) => a + packPlanLocal(pl), 0), days: Math.max(0, ...plans.map((pl) => pl.days || 0)), sample: plans[0] && plans[0].rows[0] };
   };
   const shownView = viewData(BUDGET_VIEW);
-  const combined = { ...combinedRaw, chosen: shownView.plan || combinedRaw.chosen, shares: shownView.shares };
+  // (While the view on screen is still being worked out, everything below sees
+  // "no plan yet", as before; only the plan cards and the split's lines show the parts that are in.)
+  const combined = planPending ? { ...combinedRaw, chosen: null, shares: {}, inc: [], dropped: [] } : { ...combinedRaw, chosen: shownView.plan || combinedRaw.chosen, shares: shownView.shares };
   const pages_ = pagesRaw.map((pg) => combinedRaw.dropped.includes(pg.calcKey) && BUDGET_VIEW !== "main" ? { ...pg, chosen: pickDropped(pg, BUDGET_VIEW) } : pg);
   const curStat = (troop, stat) => { const x = (dashStats || []).find((s) => s.troop === troop && s.stat === stat); return x ? x.total : null; };
   const STAT_KEYS = ["ATT", "DEF", "DMG", "HP"];
@@ -20698,6 +20922,7 @@ async function renderBudgetsPage(opts = {}) {
     const title = (k) => k === "budget" ? t("budgets_view_budget") : k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
     const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getUTCFullYear() !== new Date().getUTCFullYear() ? { month: "short", year: "numeric", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }); };
     const seg = (k) => {
+      if (!viewReady(k)) return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}" title="${esc(`${title(k)} · ${t("budgets_working")}`)}">${esc(title(k))}<b class="bud-pending small">&hellip;</b><span>&nbsp;</span></button>`;
       if (k === "budget" && !(spendBest && spendBest.ok)) return `<button type="button" data-budgetview="budget" class="${k === BUDGET_VIEW ? "on" : ""} late">${esc(title(k))}<b>—</b><span>&nbsp;</span></button>`;
       const v = viewData(k), late = targetDays != null && v.days > targetDays;
       return `<button type="button" data-budgetview="${k}" class="${k === BUDGET_VIEW ? "on" : ""}${late ? " late" : ""}" title="${esc(`${title(k)} · ${fmtDate(v.days)}`)}">${esc(title(k))}<b>${packFmtLocal(Math.ceil(v.total), v.sample?.currency, true, v.sample?.price)}</b><span>${v.days === 0 ? esc(t("pack_ready_now")) : esc(shortDate(v.days))}</span></button>`;
@@ -21238,6 +21463,11 @@ async function renderBudgetsPage(opts = {}) {
     b3Split = `<div class="b3-split"><i style="width:${gw.toFixed(1)}%; background:var(--good);"></i><i style="flex:1; background:var(--danger);"></i></div>`;
     b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(split.target.keys), tp)
       + b3Line("var(--danger)", `<b>${esc(t("bud_line_after"))}</b>`, `${plainNames(split.late.keys)} · ${t("bud_line_by").replace("{date}", fmtDate(lp.days))}`, lp) + droppedHtml;
+  } else if (planPending && BUDGET_VIEW === "main" && combinedRaw.split && combinedRaw.split.target && combinedRaw.split.target.plan) {
+    // Only the by-target part of the split is in: its line now; the pages after the target are still being worked out.
+    const tg = combinedRaw.split.target, tp = tg.plan;
+    b3Lines = b3Line("var(--good)", `<b>${esc(t("bud_line_by").replace("{date}", fmtDate(targetDays)))}</b>${tp.days ? ` <span class="meta">· ${tp.days} ${esc(t("pack_days_short_long"))}</span>` : ""}`, plainNames(tg.keys || []), tp)
+      + `<details class="bud-line b3-sl"><summary style="cursor:default;" title="${esc(t("budgets_working"))}"><span class="bud-line-bar" style="background:var(--danger);"></span><span class="bud-line-t"><b>${esc(t("bud_line_after"))}</b></span><span class="bud-line-v"><span class="bud-pending small">&hellip;</span></span></summary></details>`;
   } else if (combined.inc.length) {
     b3Lines = (combined.chosen ? b3Line(lateAll ? "var(--danger)" : "var(--good)", `<b>${esc(t("bud_line_all"))}</b>`, plainNames(combined.inc), combined.chosen)
       : `<div class="meta" style="font-size:11px; margin-top:8px; color:var(--danger);">${esc(t("pack_cant_cover"))}</div>`) + droppedHtml;
