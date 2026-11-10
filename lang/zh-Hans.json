@@ -2213,6 +2213,8 @@
 "t:cando_short":"现在可做",
 "t:cando_at_target":"全部已达目标",
 "t:cando_nothing":"暂无",
+"t:exp_cd_now":"现在 {n}",
+"t:exp_cd_short":"{item}不足",
 "t:cando_lab_week":"+{n} 精炼火晶（本周实验室，剩余 {m} 次精炼）",
 "t:cando_sub":"背包现在能在目标范围内升级的内容。",
 "t:cando_more":"+ 另外 {n} 个",

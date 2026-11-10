@@ -2212,6 +2212,8 @@
 "t:cando_short":"Làm được ngay",
 "t:cando_at_target":"Tất cả đạt mục tiêu",
 "t:cando_nothing":"Chưa có",
+"t:exp_cd_now":"{n} ngay",
+"t:exp_cd_short":"Thiếu {item}",
 "t:cando_lab_week":"+{n} Tinh Thể Lửa Tinh Luyện từ Phòng Nghiên Cứu tuần này (còn {m} lần tinh luyện)",
 "t:cando_sub":"Những gì Túi đồ có thể nâng cấp ngay, trong mục tiêu của bạn.",
 "t:cando_more":"+ thêm {n}",

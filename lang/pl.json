@@ -2213,6 +2213,8 @@
 "t:cando_short":"Można teraz",
 "t:cando_at_target":"Wszystko przy celu",
 "t:cando_nothing":"Jeszcze nic",
+"t:exp_cd_now":"{n} teraz",
+"t:exp_cd_short":"Brak: {item}",
 "t:cando_lab_week":"+{n} Rafinowanego FC z laboratorium w tym tygodniu (zostało {m} rafinacji)",
 "t:cando_sub":"Co twój Plecak może ulepszyć teraz, w ramach twoich celów.",
 "t:cando_more":"+ jeszcze {n}",
