@@ -3974,8 +3974,8 @@ let BUFF_CATEGORIES = []; // [{name, columns:[{id,name}]}]
 const topnavGroups = document.getElementById("topnavGroups");
 
 function closeAllTopnavDropdowns() {
-  document.querySelectorAll(".topnav-group.open").forEach((g) => g.classList.remove("open"));
-  document.querySelectorAll(".topnav-settings.open").forEach((x) => x.classList.remove("open"));
+  document.querySelectorAll(".topnav-group.open").forEach((g) => { g.classList.remove("open"); popForget(g.querySelector(".topnav-dropdown")); });
+  document.querySelectorAll(".topnav-settings.open").forEach((x) => { x.classList.remove("open"); popForget(x.querySelector(".topnav-settings-panel")); });
 }
 
 topnavGroups.addEventListener("click", (e) => {
@@ -3990,7 +3990,7 @@ topnavGroups.addEventListener("click", (e) => {
     const group = groupBtn.closest(".topnav-group");
     const wasOpen = group.classList.contains("open");
     closeAllTopnavDropdowns();
-    if (!wasOpen) group.classList.add("open");
+    if (!wasOpen) { group.classList.add("open"); placePop(group.querySelector(".topnav-dropdown"), groupBtn); }
   }
 });
 
@@ -3999,7 +3999,7 @@ topnavGroups.addEventListener("click", (e) => {
   const box = e.currentTarget.closest(".topnav-settings");
   const wasOpen = box.classList.contains("open");
   closeAllTopnavDropdowns();
-  if (!wasOpen) box.classList.add("open");
+  if (!wasOpen) { box.classList.add("open"); placePop(box.querySelector(".topnav-settings-panel"), e.currentTarget); }
 }));
 
 // Click anywhere outside an open dropdown/settings panel closes it.
@@ -17260,6 +17260,173 @@ function packPickCheapest(plans) {
   });
   return best;
 }
+// placePop(pop, anchor, opts): keeps a small pop-over (bubble, dropdown, menu)
+// fully on screen. It opens where its CSS puts it (below its button) when that
+// fits, else above, else on the side with more room with a scroll inside; it is
+// kept 8 px inside the visible area left and right. It is drawn position:fixed,
+// so a sheet's or card's scroll box can't cut it off, and it follows its button
+// when the page / sheet scrolls or the screen changes size (when the button
+// scrolls out of sight it hides, or closes with opts.away). Its look stays the
+// same: the size it would have had, its own margins / gap to the button.
+// opts: margin (8), gap (px between button and pop; default its natural gap),
+// align "center" (centre on the button), away() (button out of sight),
+// onPlace({ up, left, top, width, height, a }) (arrows etc.).
+// The pop gets the class pp-up while it opens above. popForget(pop) puts it back.
+const PP_ACTIVE = new Map();
+const PP_PROPS = ["position", "top", "left", "right", "bottom", "max-height", "max-width", "overflow-y", "visibility", "box-sizing"];
+function ppClips(el, stopFixed) {
+  const out = [];
+  for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+    const cs = getComputedStyle(p);
+    if (cs.overflowX !== "visible" || cs.overflowY !== "visible") out.push(p.getBoundingClientRect());
+    if (stopFixed && cs.position === "fixed") break;
+  }
+  return out;
+}
+// The element a position:fixed pop is placed in (a transformed / contained ancestor), if any.
+function ppFixedHost(el) {
+  for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+    const cs = getComputedStyle(p);
+    if (cs.transform !== "none" || cs.filter !== "none" || cs.perspective !== "none" || (cs.backdropFilter && cs.backdropFilter !== "none")
+      || /paint|layout|strict|content/.test(cs.contain || "") || /transform|filter|perspective/.test(cs.willChange || "") || cs.contentVisibility === "auto"
+      || (cs.containerType && cs.containerType !== "normal")) return p;
+  }
+  return null;
+}
+function ppInFixed(el) {
+  for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) if (getComputedStyle(p).position === "fixed") return true;
+  return false;
+}
+function ppCut(r, c) { return { top: Math.max(r.top, c.top), left: Math.max(r.left, c.left), right: Math.min(r.right, c.right), bottom: Math.min(r.bottom, c.bottom) }; }
+function popForget(pop) {
+  const e = PP_ACTIVE.get(pop);
+  if (!e) return;
+  PP_ACTIVE.delete(pop);
+  if (e.ro) e.ro.disconnect();
+  PP_PROPS.forEach((p) => pop.style.removeProperty(p));
+  if (e.ownW) pop.style.removeProperty("width");
+  pop.classList.remove("pp-up");
+}
+function placePop(pop, anchor, opts) {
+  if (!pop || !anchor) return;
+  opts = opts || {};
+  const had = PP_ACTIVE.get(pop);
+  const ownW = had ? had.ownW : !pop.style.width;
+  // back to where its CSS puts it, to measure its natural size and place
+  PP_PROPS.forEach((p) => pop.style.removeProperty(p));
+  if (ownW) pop.style.removeProperty("width");
+  pop.classList.remove("pp-up");
+  if (!pop.isConnected || !anchor.isConnected || pop.hidden || getComputedStyle(pop).display === "none") { if (had) popForget(pop); return; }
+  const vv = window.visualViewport;
+  const vw = vv ? vv.width : document.documentElement.clientWidth || window.innerWidth, vh = vv ? vv.height : window.innerHeight;
+  const ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
+  const M = opts.margin == null ? 8 : opts.margin;
+  const a = anchor.getBoundingClientRect(), r0 = pop.getBoundingClientRect();
+  // Is the button itself in sight (inside every box that scrolls it)?
+  let seen = { top: oy, left: ox, right: ox + vw, bottom: oy + vh };
+  ppClips(anchor, false).forEach((c) => { seen = ppCut(seen, c); });
+  const inSight = a.bottom > seen.top + 2 && a.top < seen.bottom - 2 && a.right > seen.left && a.left < seen.right && a.width + a.height > 0;
+  // The area the pop may use: the screen, less the sticky top menu / bottom bar
+  // for pops on the page, and any box that still cuts a fixed pop.
+  let area = { top: oy + M, left: ox + M, right: ox + vw - M, bottom: oy + vh - M };
+  if (!ppInFixed(pop)) {
+    const nav = document.querySelector("nav.topnav");
+    if (nav && !nav.contains(pop)) { const nb = nav.getBoundingClientRect(); if (nb.bottom > 0 && nb.top <= 0.5) area.top = Math.max(area.top, nb.bottom + M); }
+    const bar = document.getElementById("mBar");
+    if (bar && bar.offsetHeight) area.bottom = Math.min(area.bottom, bar.getBoundingClientRect().top - M);
+  }
+  const host = ppFixedHost(pop);
+  if (host) {
+    const hc = getComputedStyle(host);
+    if (hc.overflowX !== "visible" || hc.overflowY !== "visible") area = ppCut(area, host.getBoundingClientRect());
+    ppClips(host, true).forEach((c) => { area = ppCut(area, c); });
+  }
+  let w = r0.width;
+  const h = r0.height;
+  // the gap it has below / above its button now (its own margin), kept
+  let gap = opts.gap;
+  if (gap == null) gap = r0.top >= a.bottom - 1 ? r0.top - a.bottom : r0.bottom <= a.top + 1 ? a.top - r0.bottom : 6;
+  gap = Math.max(0, Math.min(16, gap));
+  const below = area.bottom - (a.bottom + gap), above = a.top - gap - area.top;
+  let up = false, maxH = null;
+  const wantUp = opts.prefer === "up";
+  if (wantUp ? h <= above : h <= below) up = wantUp;
+  else if (wantUp ? h <= below : h <= above) up = !wantUp;
+  else { up = above > below; maxH = Math.max(80, Math.floor(up ? above : below)); }
+  const shown = maxH == null ? h : Math.min(h, maxH);
+  const aw = area.right - area.left;
+  if (w > aw) w = aw;
+  let left = opts.align === "center" ? a.left + a.width / 2 - w / 2 : r0.left;
+  left = Math.max(area.left, Math.min(area.right - w, left));
+  const top = up ? a.top - gap - shown : a.bottom + gap;
+  const st = pop.style;
+  st.setProperty("position", "fixed", "important");
+  st.setProperty("box-sizing", "border-box");
+  if (ownW || w < r0.width) st.setProperty("width", `${w}px`);
+  if (w < r0.width) st.setProperty("max-width", `${w}px`);
+  st.setProperty("right", "auto"); st.setProperty("bottom", "auto");
+  st.setProperty("left", "0px"); st.setProperty("top", "0px");
+  if (maxH != null) { st.setProperty("max-height", `${maxH}px`); st.setProperty("overflow-y", "auto"); }
+  // where (0, 0) ends up (a transformed parent, the pop's own margin) is taken off
+  const z = pop.getBoundingClientRect();
+  st.setProperty("left", `${Math.round(left - z.left)}px`);
+  st.setProperty("top", `${Math.round(top - z.top)}px`);
+  pop.classList.toggle("pp-up", up);
+  if (!inSight) st.setProperty("visibility", "hidden");
+  let e = had;
+  if (!e) {
+    e = { ownW };
+    if (window.ResizeObserver) {
+      let last = "";
+      e.ro = new ResizeObserver(() => { const k = `${pop.offsetWidth}x${pop.offsetHeight}|${anchor.offsetWidth}x${anchor.offsetHeight}`; if (k !== last) { last = k; ppQueue(); } });
+      e.ro.observe(pop); e.ro.observe(anchor);
+    }
+    PP_ACTIVE.set(pop, e);
+  }
+  e.anchor = anchor; e.opts = opts;
+  if (opts.onPlace) opts.onPlace({ up, left, top, width: w, height: shown, a });
+  if (!inSight && opts.away) { const f = opts.away; popForget(pop); f(); }
+}
+let PP_QUEUED = false;
+function ppQueue() {
+  if (PP_QUEUED || !PP_ACTIVE.size) return;
+  PP_QUEUED = true;
+  requestAnimationFrame(() => {
+    PP_QUEUED = false;
+    [...PP_ACTIVE].forEach(([pop, e]) => {
+      if (!pop.isConnected || !e.anchor.isConnected || pop.hidden || getComputedStyle(pop).display === "none") popForget(pop);
+      else placePop(pop, e.anchor, e.opts);
+    });
+  });
+}
+window.addEventListener("scroll", ppQueue, { capture: true, passive: true });
+window.addEventListener("resize", ppQueue);
+if (window.visualViewport) { window.visualViewport.addEventListener("resize", ppQueue); window.visualViewport.addEventListener("scroll", ppQueue); }
+// Pops drawn as part of a page's HTML (e.g. a picker under a chip that is open
+// while the list redraws): placePopAuto(selector, pop => its button, opts) places
+// each one as soon as it is on the page (before it is painted).
+const PP_AUTO = [];
+let PP_AUTO_MO = null;
+function ppAutoRun() {
+  PP_ACTIVE.forEach((e, pop) => { if (!pop.isConnected) popForget(pop); });
+  PP_AUTO.forEach(([sel, anchorOf, opts]) => document.querySelectorAll(sel).forEach((p) => { if (PP_ACTIVE.has(p)) return; const a = anchorOf(p); if (a) placePop(p, a, opts); }));
+}
+function placePopAuto(sel, anchorOf, opts) {
+  PP_AUTO.push([sel, anchorOf, opts]);
+  if (!PP_AUTO_MO) { PP_AUTO_MO = new MutationObserver(ppAutoRun); PP_AUTO_MO.observe(document.documentElement, { childList: true, subtree: true }); }
+  ppAutoRun();
+}
+// <details> menus (Packs "⋯", Admin "⋯ Category"): placed when they open.
+const PP_DETAILS = [["details.pk-more", ".pk-menu"], ["details.admc-catmenu", ".admc-catpop"]];
+document.addEventListener("toggle", (ev) => {
+  const d = ev.target;
+  if (!d || !d.matches) return;
+  const m = PP_DETAILS.find(([s]) => d.matches(s));
+  if (!m) return;
+  const pop = d.querySelector(`:scope > ${m[1]}`), sum = d.querySelector(":scope > summary");
+  if (!pop || !sum) return;
+  if (d.open) placePop(pop, sum); else popForget(pop);
+}, true);
 // Draws the "what packs would this cost" block under a page's Backpack row.
 // `groups` and `owned` are the same ones the Backpack row itself uses, so the
 // numbers always agree with the red "still needed" figures above it.
@@ -17273,6 +17440,14 @@ const packCostShown = (calcKey, v) => {
   if (PACK_COST_HOOKS[calcKey]) PACK_COST_HOOKS[calcKey]();
   document.querySelectorAll(`[data-plxprice="${window.CSS.escape(calcKey)}"]`).forEach((b) => { b.innerHTML = plxPriceLabel(calcKey); });
 };
+// The (i) bubbles' arrow points at their (i), above or below the bubble.
+function tipArrow(tip, b) {
+  return ({ left, width }) => {
+    const bb = b.getBoundingClientRect(), mid = bb.left + bb.width / 2;
+    const x = document.documentElement.dir === "rtl" ? left + width - mid : mid - left;
+    tip.style.setProperty("--cg-tip-x", `${Math.max(4, Math.min(width - 14, Math.round(x - 5)))}px`);
+  };
+}
 // (i) squares: page descriptions, card descriptions
 // and the Backpack colour help move into a bubble behind an (i) next to their
 // title. The text node itself moves (ids and later updates keep working).
@@ -17429,20 +17604,8 @@ document.addEventListener("click", () => { const c = document.getElementById("co
     const tip = b.nextElementSibling;
     if (!tip || !tip.matches("[data-infotip]")) return;
     tip.hidden = !on; b.setAttribute("aria-expanded", String(on));
-    if (on) {
-      const host = b.parentElement, hb = host.getBoundingClientRect(), bb = b.getBoundingClientRect();
-      const rtl = document.documentElement.dir === "rtl";
-      // keep the bubble on screen: start it at the host, or further in when the (i) is far along
-      const room = window.innerWidth - 16;
-      tip.style.insetInlineStart = "0px";
-      const tb = tip.getBoundingClientRect();
-      let shift = 0;
-      if (!rtl && tb.right > room) shift = room - tb.right;
-      if (rtl && tb.left < 16) shift = tb.left - 16;
-      tip.style.insetInlineStart = `${shift}px`;
-      const x = rtl ? hb.right - bb.right : bb.left - hb.left;
-      tip.style.setProperty("--cg-tip-x", `${Math.max(4, Math.round(x - shift + bb.width / 2 - 5))}px`);
-    }
+    if (on) placePop(tip, b, { onPlace: tipArrow(tip, b) });
+    else popForget(tip);
   };
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-info]");
@@ -20546,6 +20709,8 @@ document.addEventListener("pointerdown", (e) => {
   goalByPopClose();
 }, true);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && BUDGET_GOAL_BY_OPEN && document.querySelector(".gbp")) { e.stopImmediatePropagation(); goalByPopClose(); } }, true);
+// The By pop-over sits under its chip, or above it near the bottom of the window (placePop).
+placePopAuto(".gbp", (p) => { const li = p.closest("[data-goal]"); return li && li.querySelector("[data-goalby]"); }, { away: () => goalByPopClose() });
 function goalByPopClose() {
   BUDGET_GOAL_BY_OPEN = null; BUDGET_BY_CAL = null;
   document.querySelectorAll(".gbp").forEach((x) => x.remove());
@@ -22495,12 +22660,6 @@ async function renderChiefGearCalc() {
   const maxBtn = document.getElementById("gearMaxAllBtn");
   if (maxBtn) { maxBtn.textContent = t("max_button"); maxBtn.title = t("cg_max_tip"); }
   head.querySelector("h2").insertAdjacentHTML("beforeend", ` <button type="button" class="cg-i" data-cginfo aria-expanded="false" aria-label="${esc(t("set_info"))}"><svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="1.6" r="1.3"/><path d="M3.5 3.9H5.75V8.9H6.6V10H3.4V8.9H4.25V4.8H3.5Z"/></svg></button><span class="cg-tip" role="tooltip" data-cghelp hidden>${esc(t("cg_slots_hint"))}</span>`);
-  { // arrow points at the (i)
-    const ib = head.querySelector("[data-cginfo]"), h2 = head.querySelector("h2");
-    const rtl = document.documentElement.dir === "rtl";
-    const x = rtl ? h2.getBoundingClientRect().right - ib.getBoundingClientRect().right : ib.getBoundingClientRect().left - h2.getBoundingClientRect().left;
-    head.querySelector("[data-cghelp]").style.setProperty("--cg-tip-x", Math.max(4, Math.round(x + ib.offsetWidth / 2 - 5)) + "px");
-  }
   const sheetHead = (title, attr) => `<div class="cg-sh-h"><b${attr || ""}>${title}</b>${closeXHtml("data-cgclose")}</div>`;
   // Phones: the Backpack boxes sit in the answer card where "Still short" was
   // PC: in the side column as before (owner, same
@@ -22622,7 +22781,7 @@ async function renderChiefGearCalc() {
   {
     const b = head.querySelector("[data-cginfo]"), hp = head.querySelector("[data-cghelp]");
     let pinned = false;
-    const show = (on) => { hp.hidden = !on; b.setAttribute("aria-expanded", String(on)); };
+    const show = (on) => { hp.hidden = !on; b.setAttribute("aria-expanded", String(on)); if (on) placePop(hp, b, { onPlace: tipArrow(hp, b) }); else popForget(hp); };
     const off = (ev) => {
       if (ev.type === "keydown" ? ev.key !== "Escape" : b.contains(ev.target)) return;
       pinned = false; show(false); unlisten();
@@ -23445,7 +23604,8 @@ function renderCategorySwitcher(containerEl, categories, current, onSelect, coun
     e.stopPropagation();
     // Close on the next click anywhere else - armed each time it opens, so
     // it still works after the first time.
-    if (menuPanel.classList.toggle("open")) document.addEventListener("click", () => menuPanel.classList.remove("open"), { once: true });
+    if (menuPanel.classList.toggle("open")) { placePop(menuPanel, menuBtn); document.addEventListener("click", () => { menuPanel.classList.remove("open"); popForget(menuPanel); }, { once: true }); }
+    else popForget(menuPanel);
   });
   containerEl.querySelectorAll("button[data-cat]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -24975,8 +25135,6 @@ async function renderIslandGallery() {
         <div class="isl-dow"><label data-ipdown hidden><span>${esc(t("isl_dates_next"))}</span><input type="date" class="keep-w" data-ipnext /></label></div></div><label data-ipsrcev hidden><span>${esc(t("isl_src_choices"))}</span><input type="text" inputmode="numeric" autocomplete="off" data-ipsrcch /></label></div>` : ""}` : ""}
       <div class="isl-wb" data-popwb hidden></div>
       <div class="sg-pop-ft"><span>${esc(t("isl_pop_hold"))}</span><span>${esc(t("isl_pop_out"))}</span></div>`;
-    const pageEnd = document.documentElement.scrollHeight;
-    pop.style.top = "0px";
     sections.appendChild(pop);
     tileEl.classList.add("sel");
     let changed = false, hold = 0, rep = 0;
@@ -25080,22 +25238,16 @@ async function renderIslandGallery() {
       if (IS_OWNER) saveSiteConfig("island_shops", { ...islShopsCfg(), [k]: out }).then(after).catch(() => { toast("Couldn't save", true); drawShops(); });
       else { ISL_SHARDS.shops = { ...(ISL_SHARDS.shops || {}), [k]: out }; islSave(); after(); }
     };
-    // Opens under the tile; when there's no room for it below (it would make the
-    // page longer, or run off the screen with room above), it opens above instead.
+    // Opens under the tile, or above it when there's no room below (placePop).
     const place = () => {
       if (!pop.isConnected || !tileEl.isConnected) return;
-      const sr = sections.getBoundingClientRect(), tr = tileEl.getBoundingClientRect();
-      const w = Math.min(tracked(s) ? 360 : 300, sr.width);
-      let left = tr.left - sr.left + tr.width / 2 - w / 2;
-      left = Math.max(0, Math.min(sr.width - w, left));
+      const w = Math.min(tracked(s) ? 360 : 300, sections.getBoundingClientRect().width);
       pop.style.width = `${w}px`;
-      pop.style.left = `${left}px`;
-      const h = pop.offsetHeight;
-      const belowEnd = tr.bottom + window.scrollY + 8 + h;
-      const up = tr.top - 8 - h >= -window.scrollY && (belowEnd > pageEnd || (tr.bottom + 8 + h > window.innerHeight && tr.top - 8 - h >= 0));
-      pop.classList.toggle("up", up);
-      pop.style.top = `${up ? tr.top - sr.top - 8 - h : tr.bottom - sr.top + 8}px`;
-      pop.querySelector(".sg-pop-ar").style.left = `${Math.max(10, Math.min(w - 24, tr.left - sr.left + tr.width / 2 - left - 7))}px`;
+      placePop(pop, tileEl, { align: "center", gap: 8, onPlace: ({ up, left, width }) => {
+        pop.classList.toggle("up", up);
+        const tr = tileEl.getBoundingClientRect();
+        pop.querySelector(".sg-pop-ar").style.left = `${Math.max(10, Math.min(width - 24, tr.left + tr.width / 2 - left - 7))}px`;
+      } });
     };
     // Same save path as before (patchSkinQueued); setting a level means you have
     // the island, 0 means not built.
@@ -25207,6 +25359,7 @@ async function renderIslandGallery() {
       id: String(s.id), place,
       close: (noRedraw) => {
         stop();
+        popForget(pop);
         pop.remove();
         tileEl.classList.remove("sel");
         if (ISL_POP && ISL_POP.id === String(s.id)) ISL_POP = null;
@@ -25218,9 +25371,6 @@ async function renderIslandGallery() {
     draw();
     place();
     if (!ISL_PACKS && IS_OWNER && shopKs().includes("shining")) islLoadPacks().then(() => { if (ISL_POP && ISL_POP.id === String(s.id)) { drawShops(); place(); } });
-    const r = pop.getBoundingClientRect();
-    if (pop.classList.contains("up")) { if (r.top < 8) window.scrollBy({ top: r.top - 16, behavior: "smooth" }); }
-    else if (r.bottom > window.innerHeight - 8) window.scrollBy({ top: r.bottom - window.innerHeight + 16, behavior: "smooth" });
   }
 
   function computeAndRender() {
