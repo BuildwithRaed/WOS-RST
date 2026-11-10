@@ -2942,6 +2942,10 @@ const T = {
   gu_rest_name: { en: "Rest of the plan" },
   gu_blue_note: { en: "= being a goal moves its date (Without = when its whole page is done)" },
   gu_rest_done: { en: "Rest of the plan: done {date}" },
+  gu_rest_target: { en: " · target {date}" },
+  gu_by_gen_s: { en: "New Gen" },
+  gu_by_tg_s: { en: "Target" },
+  gu_info_date: { en: "Each goal's date is when the plan's packs reach its level; ⚠ amber = after its By date (or the target). Tap the By chip to change it." },
   gu_page_target: { en: "page target {x}" },
   gu_ready: { en: "ready" },
   gu_late: { en: "late" },
@@ -7199,6 +7203,15 @@ function cdaFillBudgets() {
   if (sh) cdaDrawSheet(sh);
   cdaPatchGoals(document.querySelector(".bud-goals"));
 }
+// A goal's upgrade key → the Can do track's key on that page (Experts name theirs differently).
+function cdaGoalTrackKey(page, key) {
+  if (page === "experts") {
+    const k = String(key), m = k.match(/^(.*)\|sk\|(.*)$/);
+    if (m) return `exps|${m[1]}|${m[2]}`;
+    if (/\|lv$/.test(k)) return `exp|${k.slice(0, -3)}`;
+  }
+  return key;
+}
 // The picked upgrade goals (Order of goals, U2) with what the Backpack does for them now.
 function cdaGoalStates(P) {
   const out = [];
@@ -7209,11 +7222,13 @@ function cdaGoalStates(P) {
     const li = goalUpLevelIdx(u, e.level);
     if (li < 0) return;
     const goalLabel = u.levels[li] ? u.levels[li].label : "";
-    const b = CDA_BUILT[e.page], tr = b && b.tracks && b.tracks.find((x) => x.id === `${e.page}::${e.key}`);
+    const b = CDA_BUILT[e.page], tid = `${e.page}::${cdaGoalTrackKey(e.page, e.key)}`, tr = b && b.tracks && b.tracks.find((x) => x.id === tid);
     if (!tr || P.plan.lv[tr.id] == null) { out.push({ id: "up:" + e.id, u, e, goalLabel, k: "?" }); return; }
     const lab = (i) => (tr.lab ? tr.lab(i) : String(i)), lv = P.plan.lv[tr.id];
     let gi = -1;
     for (let i = tr.from; i <= tr.to; i++) if (lab(i) === goalLabel) gi = i;
+    // Labels written differently (Pet Refine "Stage 3 23.5%" vs "23.5%"): the first step at or past the goal's number.
+    if (gi < 0) { const m = String(goalLabel).match(/(-?\d+(?:\.\d+)?)\s*%\s*$/), v = m ? parseFloat(m[1]) : NaN; if (!isNaN(v)) for (let i = tr.from; i <= tr.to; i++) { if (parseFloat(lab(i)) >= v - 1e-9) { gi = i; break; } } }
     const blk = P.plan.blocker[tr.id];
     out.push({ id: "up:" + e.id, u, e, goalLabel, k: gi >= 0 && lv >= gi ? "full" : lv > tr.from ? "part" : "none", from: lab(tr.from), now: lab(lv), blk: blk ? cdaItemName(blk, tr) : "", blkIc: blk ? cdaItemIcon(blk, tr) : "" });
   });
@@ -7231,8 +7246,9 @@ function cdaPatchGoals(box) {
   cdaGoalStates(cdaPlan()).forEach((s) => { map[s.id] = s; });
   box.querySelectorAll(".bud-g.gu").forEach((li) => {
     li.querySelectorAll(".gu-cd").forEach((x) => x.remove());
-    const h = cdaGoalChipHtml(map[li.dataset.goal]), lv = li.querySelector(".gu-lv");
-    if (h && lv) lv.insertAdjacentHTML("afterend", h);
+    const h = cdaGoalChipHtml(map[li.dataset.goal]), r2 = li.querySelector(".gu-r2"), lv = li.querySelector(".gu-lv");
+    if (h && r2) r2.insertAdjacentHTML("afterbegin", h);
+    else if (h && lv) lv.insertAdjacentHTML("afterend", h);
   });
 }
 // The tile under the Budgets total.
@@ -7260,7 +7276,8 @@ function cdaSheetInner() {
       const can = gs.filter((s) => s.k !== "none").length;
       goals = `<div class="fz-hd"><span>${esc(t("cdb_your_goals"))}</span><em>${esc(t("cdb_n_can").replace("{n}", can).replace("{m}", gs.length))}</em></div><div class="fz-goals">${gs.map((s, i) => {
         const pg = CDA_PAGES.find((x) => x.key === s.e.page);
-        return `<div class="fz-g"><span class="fz-num">${i + 1}</span>${s.u.img ? `<img class="${s.u.face ? "face" : ""}" src="${esc(s.u.img)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)}</b><small>${esc(t("cdb_goal_line").replace("{x}", s.goalLabel).replace("{now}", s.u.now))}</small>${cdaGoalChipHtml(s)}</span>${pg ? `<button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button>` : ""}</div>`;
+        const ic = budgetGoalIcon({ up: s.u, page: s.e.page });
+        return `<div class="fz-g"><span class="fz-num">${i + 1}</span>${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : ""}<span class="fz-n"><b>${esc(s.u.name)}</b><small>${esc(t("cdb_goal_line").replace("{x}", s.goalLabel).replace("{now}", s.u.now))}</small>${cdaGoalChipHtml(s)}</span>${pg ? `<button type="button" class="cda-go" data-cdago="${esc(pg.tab)}">${esc(t("cdp_open"))} &#8250;</button>` : ""}</div>`;
       }).join("")}</div><div class="fz-hd"><span>${esc(t("cdb_else"))}</span><em class="mu">${esc(t("cdb_ups").replace("{n}", cdaCounts(P).ups.toLocaleString()))}</em></div>`;
     }
   }
@@ -19311,6 +19328,12 @@ function setPageMinis(calcKey, cands, full) {
 }
 // Called by every page's Backpack row so the Budgets page can total pages
 // it can't compute on its own. Only writes when the numbers changed.
+// JSON with object keys sorted (same text whatever order the keys come in).
+function stableJson(v) {
+  if (Array.isArray(v)) return `[${v.map(stableJson).join(",")}]`;
+  if (v && typeof v === "object") return `{${Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => `${JSON.stringify(k)}:${stableJson(v[k])}`).join(",")}}`;
+  return JSON.stringify(v === undefined ? null : v);
+}
 async function recordBudgetNeeds(calcKey, groups) {
   try {
     const snap = await ensureBudgetNeedsSnapshot();
@@ -19323,13 +19346,19 @@ async function recordBudgetNeeds(calcKey, groups) {
     const sig = (gs) => JSON.stringify((gs || []).map((g) => [g.label || null, Object.keys(g.totals || {}).filter((k) => Number(g.totals[k])).sort().map((k) => [k, Math.round(Number(g.totals[k]) * 1000) / 1000])]));
     const ticks = budgetStateSig(calcKey);
     const minis = PAGE_MINIS[calcKey] || null, ups = PAGE_UPS[calcKey] || null;
-    if (prev && sig(prev.groups) === sig(clean) && (prev.ticks || null) === ticks && JSON.stringify(prev.minis || null) === JSON.stringify(minis) && (!GOAL_UP_SAVED.includes(calcKey) || (prev.ups !== undefined && JSON.stringify(prev.ups || null) === JSON.stringify(ups)))) return;
-    snap[calcKey] = { groups: clean, at: Date.now() };
+    // minis / ups hold objects: the saved copy (jsonb) brings their keys back in another order.
+    const same = (a, b) => stableJson(a == null || (Array.isArray(a) && !a.length) ? null : a) === stableJson(b == null || (Array.isArray(b) && !b.length) ? null : b);
+    const needsSame = prev && sig(prev.groups) === sig(clean) && (prev.ticks || null) === ticks;
+    const extrasSame = prev && same(prev.minis, minis) && (!GOAL_UP_SAVED.includes(calcKey) || (prev.ups !== undefined && same(prev.ups, ups)));
+    if (needsSame && extrasSame) return;
+    snap[calcKey] = { groups: clean, at: needsSame ? prev.at || Date.now() : Date.now() };
     if (ticks) snap[calcKey].ticks = ticks;
     if (minis && minis.length) snap[calcKey].minis = minis;
     if (GOAL_UP_SAVED.includes(calcKey)) snap[calcKey].ups = ups;
-    budgetInvalidate();
     saveCalcState("budget_needs", snap);
+    // Only the goal lists changed: prices and plans stay; the goals sheet redraws if it is open.
+    if (needsSame) { if (TAB === "budgets" && BUDGET_SHEET === "goals") keepPlace(() => renderBudgetsPage()); return; }
+    budgetInvalidate();
   } catch (e) { /* purely a convenience cache */ }
 }
 // Which of a page's state-age unlocks (pets / experts) were open when its needs
@@ -21483,7 +21512,7 @@ async function renderBudgetsPage(opts = {}) {
   };
 
   // Order of goals (admin): see budgetGoalList / budgetGoalDates.
-  let goalsCardHtml = "", goalFlagsHtml = "";
+  let goalsCardHtml = "", goalFlagsHtml = "", goalsInfoHtml = "";
   BUDGET_GOAL_MATCH = null;
   void (() => {
     if (!visitorCan("goals")) return "";
@@ -21544,33 +21573,34 @@ async function renderBudgetsPage(opts = {}) {
       const own = !planPending && !incKeys.includes(g.page), lim = d != null ? d : targetDays, last = u.levels.length - 1;
       const pending = planPending || (dlPending && d != null);
       const dTxt = pending ? workHtml("span", "small") : own ? esc(t("gd_own")) : esc(gdTxt(dt));
-      const st = pending || own || !dt ? "" : dt.done ? `<span class="ok">&#10003; ${esc(t("gu_have"))}</span>` : lim == null ? "" : dt.day <= lim ? `<span class="ok">&#10003; ${esc(t("gu_ready"))}</span>` : `<span class="late">&#9888; ${esc(t("gu_late"))}</span>`;
-      const fill = dt && total > 0 ? Math.min(100, (dt.done ? 0 : dt.spent / total) * 100) : 0;
       const kind = myBy === "svs" || myBy === "koi" || myBy === "gen" ? " ev" : myBy ? " date" : "";
-      const late = dt && !dt.done && d != null && dt.day > d && dt.pctDue != null ? `<small class="gu-pct">${esc(t("goal_late").replace("{by}", goalByName(myBy) || fmtDate(d)).replace("{p}", Math.floor((dt.pctDue || 0) * 100)).replace("{date}", fmtDate(dt.day)))}</small>` : "";
       const lock = u.lockAt >= 0 && g.li >= u.lockAt ? `<small class="gu-lk">&#9888; ${esc(t("gu_lock").replace("{x}", u.lockTxt))}</small>` : "";
       const picker = BUDGET_GOAL_BY_OPEN === g.id ? `<div class="bud-g-by-box">
           <div class="meta" style="font-weight:600;">${esc(t("goal_by_title"))}</div>
           ${["", "svs", "koi", "gen"].map((b) => { const dd = b ? goalDeadlineDay(b) : mainDay; return `<button type="button" data-goalbyset="${b}" class="${myBy === b ? "on" : ""}"><span>${goalByIcon(b)} ${esc(goalByName(b))}</span><small>${dd != null ? esc(fmtDate(dd)) : "—"}</small></button>`; }).join("")}
           <label class="bud-g-by-date"><span>&#128197; ${esc(t("goal_by_date"))}</span><input type="date" data-goalbydate value="${myBy.startsWith("date:") ? esc(myBy.slice(5)) : ""}" /></label>
-          <div class="meta" style="font-size:10.5px;">${esc(t("goal_by_note"))}</div>
+          <div class="meta" style="font-size:11px;">${esc(t("goal_by_note"))}</div>
         </div>` : "";
       const ic = budgetGoalIcon(g, pagesRaw);
-      return `<li class="bud-g gu" data-goal="${esc(g.id)}">
+      // C3: two lines. 1: ⋮⋮, number, picture, name, − level +, date (amber ⚠ after its By / the target).
+      // 2: can do chip (cdaPatchGoals puts it first), short By chip, ✕.
+      const isLate = !pending && !own && dt && !dt.done && lim != null && dt.day > lim;
+      const byD = myBy ? dIn : mainDay;
+      const byShort = `${goalByIcon(myBy)} ${myBy === "svs" ? "SvS" : myBy === "koi" ? "KOI" : myBy === "gen" ? t("gu_by_gen_s") : myBy ? "" : t("gu_by_tg_s")}${byD != null ? `${myBy && myBy.startsWith("date:") ? "" : " "}${gdTxt({ day: byD })}` : ""}`;
+      return `<li class="bud-g gu c3" data-goal="${esc(g.id)}">
         <span class="bud-g-h" data-goaldrag role="button" tabindex="0" aria-label="${esc(t("goals_desc_drag"))}" title="${esc(t("goals_desc_drag"))}">&#8942;&#8942;</span>
-        <span class="gu-pic">${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(u.name.charAt(0))}</i>`}<span class="bud-g-n">${i + 1}</span></span>
-        <span class="bud-g-t"><span class="gu-top"><span class="gu-nm"><b>${esc(u.name)}</b> <span class="gu-pg">${esc(packPageLabel(g.page))}</span></span><span class="gu-dt">${dTxt}${st ? `<br>${st}` : ""}</span></span>
-          <span class="gu-lv"><span class="gu-now">${esc(u.now)} &rarr;</span><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(g.lv.label)}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><small>${esc(t("gu_page_target").replace("{x}", u.levels[last].label))}</small></span>
-          <span class="bud-g-row2"><button type="button" class="bud-g-by${kind}" data-goalby>${esc(byText(myBy, myBy ? dIn : null))} &#9662;</button><button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
-          ${lock}${late}
-          <span class="bud-g-bar"><i style="width:${fill.toFixed(1)}%;"></i></span></span>
+        <span class="c3-b">
+          <span class="c3-l1"><span class="c3-no">${i + 1}</span>${ic.src ? `<img class="c3-pic${ic.face ? " face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i class="c3-pic">${esc(u.name.charAt(0))}</i>`}<b class="c3-nm" title="${esc(`${u.name} · ${packPageLabel(g.page)} · ${u.now} → ${g.lv.label}`)}">${esc(u.name)}</b><span class="gu-st"><button type="button" data-gustep="-1" ${g.li <= 0 ? "disabled" : ""} aria-label="&minus;">&minus;</button><b>${esc(g.lv.label)}</b><button type="button" data-gustep="1" ${g.li >= last ? "disabled" : ""} aria-label="+">+</button></span><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : dTxt}</span></span>
+          <span class="c3-l2 gu-r2"><button type="button" class="bud-g-by${kind}" data-goalby title="${esc(byText(myBy, byD))}">${esc(byShort)} &#9662;</button><button type="button" class="gu-rm" data-goalrm aria-label="${esc(t("goal_remove"))}" title="${esc(t("goal_remove"))}">&times;</button></span>
+          ${lock}
+        </span>
         ${picker}</li>`;
     };
     // "Rest of the plan": every upgrade not picked, after the goals.
     const restHtml = () => {
       const dt = restG && dates ? dates[restIdx] : null;
-      const dTxt = planPending ? workHtml("span", "small") : esc(gdTxt(dt));
-      return `<div class="gu-rest"><span>${esc(t("gu_rest").replace("{n}", restG ? restG.n : 0))}</span><span class="gu-rd">${dTxt}</span></div>`;
+      const dTxt = planPending ? workHtml("span", "small") : `<b>${esc(gdTxt(dt))}</b>`;
+      return `<div class="gu-rest c3"><span>${esc(t("gu_rest_done").split("{date}")[0])}${dTxt}${targetDays != null ? esc(t("gu_rest_target").replace("{date}", gdTxt({ day: targetDays }))) : ""}</span></div>`;
     };
     const missing = goalUpMissing(keys);
     const missingHtml = missing.length ? `<div class="meta bud-g-note">${esc(t("gu_open").replace("{p}", missing.map((k) => packPageLabel(k)).join(", ")))}</div>` : "";
@@ -21636,42 +21666,18 @@ async function renderBudgetsPage(opts = {}) {
     const sumHtml = !plan || planPending ? ""
       : dlPlan ? `<div class="bud-g-sum${dl.parts.some((x) => !x.ok) ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${dl.parts.some((x) => !x.ok) ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
-    // Goal dates: each goal's date with the order above and without it (the
-    // default order, same packs), ✓ / ⚠ against its own date or the target.
-    let datesCard = "";
-    if (!planPending && plan && dates && goals.length > 1) {
-      const plainGoals = budgetGoalList(pagesRaw, keys, true);
-      const plainDates = basePlan ? budgetGoalDates(plainGoals, pagesRaw, basePlan, ck) : null;
-      const sameD = (a, b) => (a.done || a.day <= 0) ? (b.done || b.day <= 0) : !(b.done || b.day <= 0) && a.day === b.day;
-      const rowsH = goals.map((g, i) => {
-        if (g.rest) return "";
-        const own = !incKeys.includes(g.page), dt = own ? null : dates[i];
-        const k = plainGoals.findIndex((x) => x.page === g.page), pd = own || !plainDates || k < 0 ? null : plainDates[k];
-        const lim = due[i] != null ? due[i] : targetDays;
-        const ok = dt && (dt.done || (lim != null && dt.day <= lim));
-        const mark = !dt || (lim == null && !dt.done) ? "" : ok ? `<span class="gd-m ok" title="${esc(t("gd_ok"))}">&#10003;</span>` : `<span class="gd-m late" title="${esc(t("gd_late"))}">&#9888;</span>`;
-        const ic = budgetGoalIcon(g, pagesRaw), nm = nameOf(g);
-        return `<div class="gd-r"><span class="gd-p">${ic.src ? `<img class="${ic.face ? "face" : ""}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(nm.charAt(0))}</i>`}</span><span class="gd-n">${i + 1}. ${esc(nm)}</span><span class="gd-d${dt && pd && !sameD(dt, pd) ? " diff" : ""}">${own ? esc(t("gd_own")) : esc(gdTxt(dt))}</span><span class="gd-d w">${own ? "" : esc(gdTxt(pd))}</span>${mark || "<span></span>"}</div>`;
-      }).join("");
-      datesCard = `<div class="gd-card">
-        <div class="gd-h"><b>${esc(t("gd_title"))}</b><small>${esc(targetDays != null ? t("gd_legend").replace("{date}", gdTxt({ day: targetDays })) : t("gd_legend_nt"))}</small></div>
-        <div class="gd-t"><div class="gd-r hd"><span></span><span>${esc(t("gd_goal"))}</span><span class="gd-d">${esc(t("gd_with"))}</span><span class="gd-d">${esc(t("gd_without"))}</span><span></span></div>${rowsH}</div>
-        ${restG ? `<div class="gd-rest">${esc(t("gu_rest_done").replace("{date}", gdTxt(dates[restIdx])))}</div>` : ""}
-        <div class="gd-f"><span><i>${esc(t("gd_blue"))}</i> ${esc(t("gu_blue_note"))}</span><span>${esc(t("gd_same"))}</span></div>
-      </div>`;
-    }
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
-      ${BUDGET_GOALS_OPEN ? `<p class="meta bud-g-desc">${esc(t("gu_desc"))}</p>
-      ${datesCard}${goals.length > 1 ? `<ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
+      ${BUDGET_GOALS_OPEN ? `${goals.length > 1 ? `<ol class="bud-g-list">${goals.map(rowHtml).join("")}</ol>` : `<div class="meta gu-empty">${esc(t("gu_empty"))}</div>`}
       ${restHtml()}
       ${addHtml()}
-      ${heroEdHtml()}
-      ${sumHtml}`
+      ${heroEdHtml()}`
       : `<div class="meta bud-g-fold">${esc(foldLine)}</div>`}
     </div>`;
 
     goalsCardHtml = goalsCard;
+    // The explanations sit behind the (i) beside the sheet's title (C3).
+    goalsInfoHtml = `<p>${esc(t("gu_desc"))}</p><p>${esc(t("gu_info_date"))}</p>${sumHtml}`;
     if (planPending || !plan || !dates) return goalsCard;
     // My Purchases tags its lines with the goal each pack is bought for.
     BUDGET_GOAL_MATCH = budgetGoalMatcher(goals, dates, pagesRaw, plan);
@@ -21831,7 +21837,7 @@ async function renderBudgetsPage(opts = {}) {
     if (!sh) return null;
     if (sh === "mats" && matsN) return { title: t("budgets_materials_total"), html: `<div class="bud-mats">${Object.keys(grandMats).map(grandMatChip).join("")}</div>` };
     if (sh === "stats" && grandDeltas.length) return { title: t("budgets_stat_increase_total"), html: statTableHtml(grandDeltas, "all") + (dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`) };
-    if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), html: goalsCardHtml };
+    if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), info: goalsInfoHtml, html: goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
     if (sh === "cando" && IS_OWNER) return { title: t("cdb_sheet_title"), html: `<div data-cdasheet>${cdaSheetInner()}</div>` };
     if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
@@ -21839,7 +21845,7 @@ async function renderBudgetsPage(opts = {}) {
     return null;
   })();
   if (BUDGET_SHEET && !sheet) BUDGET_SHEET = null;
-  const sheetHtml = sheet ? `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-b3bg><div class="modal-box adm-sheet b3-sheet" role="dialog" aria-modal="true" aria-label="${esc(sheet.title)}"><div class="gs-head"><b style="flex:1; font-size:16px;">${esc(sheet.title)}</b>${closeXHtml("data-b3close")}</div>${sheet.html}</div></div>` : "";
+  const sheetHtml = sheet ? `<div class="modal-overlay adm-sheet-wrap b3-sheet-wrap" data-b3bg><div class="modal-box adm-sheet b3-sheet" role="dialog" aria-modal="true" aria-label="${esc(sheet.title)}"><div class="gs-head"><b style="flex:1; font-size:16px;">${sheet.info ? `<span class="has-info">${esc(sheet.title)}<button type="button" class="cg-i" data-info aria-expanded="false" aria-label="${esc(t("info_more"))}">${INFO_SVG}</button><span class="cg-tip" role="tooltip" data-infotip hidden>${sheet.info}</span></span>` : esc(sheet.title)}</b>${closeXHtml("data-b3close")}</div>${sheet.html}</div></div>` : "";
   if (planPending) holdPageHeight(true);
   keepFolds(content, () => { content.innerHTML = `
     <div class="budget-wrap b3">
