@@ -2550,5 +2550,22 @@
 "t:isl_island_shards":"島の欠片",
 "t:isl_done":"完了",
 "t:isl_src":"入手方法",
-"t:isl_src_choices":"1回あたりのコピー、最大6 (例 1,3,6)"
+"t:isl_src_choices":"1回あたりのコピー、最大6 (例 1,3,6)",
+"t:sh_title":"輝く都市スキン",
+"t:pca_day_bonus":"初回購入で1日 +{q} 冊 · このプランで +{n}",
+"t:sh_pick":"+ スキンを選ぶ",
+"t:sh_tomes":"{n} 冊",
+"t:sh_n":"{n} スキン",
+"t:sh_n1":"1 スキン",
+"t:sh_when":"{every} · {d}日間",
+"t:sh_next":"次回 {date}",
+"t:sh_on_now":"開催中",
+"t:sh_no_date":"パックページで輝く都市パックの日付を設定してください",
+"t:sh_have":"✓ バックパックにあり",
+"t:sh_pick_title":"輝く都市スキン",
+"t:sh_pick_desc":"あなたのステートの輝く都市イベントで売られる都市スキンにチェック（各 栄光の書 10,000冊）。",
+"t:sh_save":"保存",
+"t:sh_cancel":"キャンセル",
+"t:sh_skins_n":"スキン ({n})",
+"t:sh_none":"スキンが未選択 · スキンギャラリーで「+ スキンを選ぶ」をタップ"
 }

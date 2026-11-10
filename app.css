@@ -4518,6 +4518,7 @@ input,select,textarea{
   .s1 .stk img.sk{ width:34px; height:32px; object-fit:contain; filter:drop-shadow(0 0 2px rgba(0,0,0,.8)); }
   .s1 .stk img.tm{ position:absolute; left:-3px; bottom:-3px; width:14px; height:14px; object-fit:contain; }
   .s1 .stk > span.more{ display:flex; align-items:center; justify-content:center; width:30px; height:30px; margin-top:1px; background:#2a3446; border:1px solid rgba(224,178,90,.6); color:#e0b25a; font-size:12px; font-weight:800; box-sizing:border-box; }
+  @media (max-width:380px){ .s1{ gap:6px; padding-inline-start:8px; } .s1 .stk > span{ width:30px; margin-inline-start:-20px; } .s1 .stk img.sk{ width:30px; height:28px; } .s1 .stk > span.more{ width:28px; height:28px; } }
   .sh-pick-d{ margin:-4px 0 10px; font-size:12.5px; line-height:1.4; }
   /* Budgets: the Shining City page sheet's skins */
   .sh-bud{ margin-top:10px; }
