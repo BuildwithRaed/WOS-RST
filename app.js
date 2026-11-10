@@ -1406,6 +1406,7 @@ const NAV_PAGE_LABELS = {
   "overview": { en: "Dashboard" },
   "budgets": { en: "Budgets" },
   "roadmap": { en: "Roadmap" },
+  "cando": { en: "Can do now" },
   "backpack": { en: "Backpack" },
   "statetimeline": { en: "State Timeline" },
   "packs": { en: "Packs" },
@@ -3227,6 +3228,20 @@ const T = {
   cando_short: { en: "Can do" },
   cando_at_target: { en: "All at target" },
   cando_nothing: { en: "Nothing yet" },
+  cdp_desc: { en: "Each page uses your whole Backpack. Doing one page uses items another page counts on." },
+  cdp_pages_up: { en: "Pages that can go up" },
+  cdp_of: { en: "{n} of {m}" },
+  cdp_steps: { en: "Upgrades in all" },
+  cdp_runs_out: { en: "runs out first:" },
+  cdp_short: { en: "{item} short" },
+  cdp_open: { en: "Open" },
+  cdp_not_yet: { en: "Not worked out yet" },
+  cdp_not_yet_d: { en: "Open the page once to see it here" },
+  cdp_saved_note: { en: "Worked out when you last opened each page. Open a page to refresh it." },
+  cdp_now: { en: "just now" },
+  cdp_min: { en: "{n} min ago" },
+  cdp_h: { en: "{n} h ago" },
+  cdp_d: { en: "{n} d ago" },
   cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
   cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
   cando_more: { en: "+{n} more" },
@@ -3591,7 +3606,7 @@ async function setLanguage(lang) {
 }
 
 const KNOWN_TABS = new Set([
-  "overview", "statetimeline", "budgets", "roadmap", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
+  "overview", "statetimeline", "budgets", "roadmap", "cando", "backpack", "packs", "mypacks", "purchases", "packcalendar", "charmscalc", "chiefgear",
   "herogearcalc", "skingallery", "islandgallery", "facilitypage", "t12research",
   "t11helios", "researchcenter", "rfclab", "petsdata", "refinepage", "expertspage",
   "expertsresearchpage", "adminpage", "alliancetechpage", "albumtundrapage",
@@ -4359,9 +4374,10 @@ async function render() {
     }
     // (Admin is for the owner only.) Sent to the Dashboard: the saved last page
     // stays, so a page the person can't open now isn't forgotten.
-    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "roadmap" && !(visitorCan("goals") && visitorCan("budgets"))) || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
+    if (!IS_OWNER && (TAB === "adminpage" || (TAB === "roadmap" && !(visitorCan("goals") && visitorCan("budgets"))) || TAB === "cando" || (TAB === "packcalendar" ? (!visitorCan("packs") || isHiddenFromVisitors("page", "packcalendar")) : (TAB === "budgets" || TAB === "backpack" || TAB === "packs" || TAB === "mypacks" || TAB === "purchases") ? !visitorCan(TAB === "mypacks" ? "packs" : TAB === "purchases" ? "budgets" : TAB) : isHiddenFromVisitors("page", TAB)))) { TAB = "overview"; history.replaceState({ tab: TAB }, "", location.pathname + location.search); }
     if (TAB === "overview") await renderOverview();
     else if (TAB === "budgets" || TAB === "roadmap") await renderBudgetsPage();
+    else if (TAB === "cando") await renderCanDoPage();
     else if (TAB === "backpack") await renderInventory();
     else if (TAB === "statetimeline") await renderStateTimelinePage();
     else if (TAB === "packs") await renderPacksPage();
@@ -4520,7 +4536,7 @@ const QUICK_ICONS = {
   albumtundrapage: "icons/quick/tundra.png", collectiongallerypage: "icons/quick/collection.png",
 };
 // Pages shown with a symbol instead of a picture (others use the Menu's own).
-const QUICK_EMOJI = { backpack: "\u{1F392}" };
+const QUICK_EMOJI = { backpack: "\u{1F392}", cando: "\u2705" };
 // Short names for the row's tiles, English only;
 // other languages, and pages renamed in Admin, keep the Menu name.
 const QUICK_SHORT = {
@@ -6721,6 +6737,7 @@ function canDoSet(key, plan, tracks, unit, opts) {
   }
   const m = document.getElementById("candoSheet");
   if (m && m.style.display !== "none" && m.dataset.key === key) canDoDraw(m);
+  canDoRemember(key);
 }
 document.addEventListener("click", (ev) => { const b = ev.target.closest && ev.target.closest("[data-cando]"); if (b && CANDO[b.dataset.cando]) openCanDoSheet(b.dataset.cando); });
 function canDoDraw(m) {
@@ -6796,6 +6813,102 @@ function openCanDoSheet(key) {
     const md = ev.target.closest("[data-cdmode]");
     if (md) { if (UPGRADE_ORDER.mode !== md.dataset.cdmode) { UPGRADE_ORDER.mode = md.dataset.cdmode; canDoRerun(m); } return; }
     if (ev.target.closest("[data-cdreset]")) { UPGRADE_ORDER.rows = UPGRADE_ORDER_DEFAULT.map((r) => r.slice()); canDoRerun(m); }
+  };
+}
+// ---- "Can do now" page (owner only: render() sends visitors to the Dashboard) ----
+// One card per planner page with its "Can do now" answer. Each page's plan
+// needs the page's own data, targets and Backpack boxes, so it is worked out
+// when the page is drawn; canDoSet keeps a short copy of it (both My order
+// and Best value) in this browser (localStorage cando_last_v1, per account),
+// and this page shows those copies with the time they were made.
+const CANDO_PAGES = [["chief_gear", "chiefgear"], ["charm", "charmscalc"], ["hero_gear", "herogearcalc"], ["pets", "petsdata"], ["t12_research", "t12research"], ["experts", "expertspage"]];
+const CANDO_LAST_KEY = "cando_last_v1";
+const CANDO_REMEMBER_T = {};
+function canDoLastLoad() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CANDO_LAST_KEY) || "null");
+    return v && v.user === USER_ID && v.pages && typeof v.pages === "object" ? v.pages : {};
+  } catch (e) { return {}; }
+}
+function canDoSummary(c) {
+  const s = canDoShort(c), todo = c.tracks.filter((tr) => tr.to > tr.from), up = todo.filter((tr) => c.plan.lv[tr.id] > tr.from);
+  return {
+    txt: s.txt, st: !todo.length ? "done" : !up.length ? "none" : "up",
+    trades: (c.plan.tradeSum || []).length > 0, first: c.plan.first || null,
+    steps: up.length,
+  };
+}
+// Called by canDoSet (a moment later, so quick changes save once).
+function canDoRemember(key) {
+  if (!CANDO_PAGES.some(([k]) => k === key)) return;
+  clearTimeout(CANDO_REMEMBER_T[key]);
+  CANDO_REMEMBER_T[key] = setTimeout(() => {
+    const c = CANDO[key];
+    if (!c || !c.have || !USER_ID) return;
+    const mode = UPGRADE_ORDER.mode === "best" ? "best" : "order", other = mode === "best" ? "order" : "best";
+    const rec = { at: Date.now(), [mode]: canDoSummary(c) };
+    try { rec[other] = canDoSummary({ ...c, plan: reachPlan(c.allTracks || c.tracks, c.have, other, UPGRADE_ORDER.rows, c.conv) }); } catch (e) { console.warn("cando", e); }
+    const pages = canDoLastLoad();
+    pages[key] = rec;
+    try { localStorage.setItem(CANDO_LAST_KEY, JSON.stringify({ user: USER_ID, pages })); } catch (e) { /* storage full / blocked: the page shows "not worked out" */ }
+  }, 500);
+}
+function canDoAgo(at) {
+  const m = Math.floor((Date.now() - (Number(at) || 0)) / 60000);
+  if (m < 1) return t("cdp_now");
+  if (m < 60) return t("cdp_min").replace("{n}", m);
+  if (m < 48 * 60) return t("cdp_h").replace("{n}", Math.floor(m / 60));
+  return t("cdp_d").replace("{n}", Math.floor(m / 1440));
+}
+function canDoItemIcon(n) {
+  try { return materialIconSrc(n) || bpIcon({ name: n }) || ""; } catch (e) { return ""; }
+}
+async function renderCanDoPage() {
+  const seq = RENDER_SEQ;
+  await ensureUpgradeOrder();
+  if (seq !== RENDER_SEQ) return;
+  drawCanDoPage();
+}
+function drawCanDoPage() {
+  const last = canDoLastLoad(), mode = UPGRADE_ORDER.mode === "best" ? "best" : "order";
+  const rank = (c) => (!c.s ? 3 : c.s.st === "up" ? 0 : c.s.st === "none" ? 1 : 2);
+  const cards = CANDO_PAGES.map(([key, tab], i) => ({ key, tab, i, p: last[key], s: last[key] && last[key][mode] }))
+    .sort((a, b) => rank(a) - rank(b) || a.i - b.i);
+  const upN = cards.filter((c) => c.s && c.s.st === "up").length;
+  const steps = cards.reduce((a, c) => a + (c.s && c.s.st === "up" ? c.s.steps || 0 : 0), 0);
+  const itemHtml = (n) => { const ic = canDoItemIcon(n); return `${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}${esc(materialDisplayName(itemShortName(n)))}`; };
+  const cardHtml = (c) => {
+    const pic = QUICK_ICONS[c.tab] || "", s = c.s;
+    let main, sub = "";
+    if (!s) { main = esc(t("cdp_not_yet")); sub = esc(t("cdp_not_yet_d")); }
+    else if (s.st === "up") {
+      main = `<span class="g">&#10003;</span> ${esc(s.txt)}`;
+      sub = `${s.trades ? `<span class="cdp-tr">&#8644; ${esc(t("rch_with_trades"))}</span>` : ""}${s.first ? `<span class="cdp-nw">${esc(t("cdp_runs_out"))} ${itemHtml(s.first)}</span>` : ""}`;
+    } else if (s.st === "none") {
+      main = esc(t("cando_nothing"));
+      if (s.first) { const ic = canDoItemIcon(s.first); sub = `<span class="cdp-nw cdp-amb">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : ""}${esc(t("cdp_short").replace("{item}", materialDisplayName(itemShortName(s.first))))}</span>`; }
+    } else main = `<span class="g">&#10003;</span> ${esc(t("cando_at_target"))}`;
+    const dim = !s || s.st === "none";
+    return `<div class="panel cdp-pg${dim ? " dim" : ""}">${pic ? `<img class="cdp-pic" src="${esc(pic)}" alt="" loading="lazy" />` : ""}<div class="cdp-m">
+      <div class="cdp-n"><span>${esc(navLabel(c.tab))}</span>${c.p ? `<span class="cdp-at" title="${esc(new Date(c.p.at).toLocaleString())}">${esc(canDoAgo(c.p.at))}</span>` : ""}</div>
+      <div class="cdp-u">${main}</div>${sub ? `<div class="cdp-s">${sub}</div>` : ""}</div>
+      <button type="button" class="cdp-go" data-cdpgo="${esc(c.tab)}">${esc(t("cdp_open"))} &#8250;</button></div>`;
+  };
+  content.innerHTML = `<div class="cdp">
+    <div class="page-head"><div><h2>${esc(t("cg_can_now"))}</h2><p class="desc">${esc(t("cdp_desc"))}</p></div></div>
+    <div class="panel cdp-top">
+      <div class="rch-seg cdp-seg"><button type="button" data-cdpmode="order" class="${mode === "order" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-cdpmode="best" class="${mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div>
+      <div class="cdp-ans"><div class="cdp-box"><div class="k">${esc(t("cdp_pages_up"))}</div><div class="v${upN ? " g" : ""}">${esc(t("cdp_of").replace("{n}", upN).replace("{m}", cards.length))}</div></div>
+        <div class="cdp-box"><div class="k">${esc(t("cdp_steps"))}</div><div class="v">${esc(steps.toLocaleString())}</div></div></div>
+      <div class="meta cdp-note">${esc(t("cdp_saved_note"))}</div>
+    </div>
+    ${cards.map(cardHtml).join("")}
+  </div>`;
+  content.querySelector(".cdp").onclick = (ev) => {
+    const go = ev.target.closest("[data-cdpgo]");
+    if (go) { goToTab(go.dataset.cdpgo); return; }
+    const md = ev.target.closest("[data-cdpmode]");
+    if (md && UPGRADE_ORDER.mode !== md.dataset.cdpmode) { UPGRADE_ORDER.mode = md.dataset.cdpmode; saveUpgradeOrder(); drawCanDoPage(); }
   };
 }
 // ---- "See all troops ›": a small sheet with every troop at once (design C) ----
@@ -7081,7 +7194,7 @@ function fillHeroGearReach() {
     if (slot) slot.innerHTML = reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, lab(tn));
     if (bar) bar.innerHTML = reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.blocker[tr.id], "rch_u_levels");
   });
-  canDoSet("hero_gear", plan, tracks, "rch_u_tracks", { all: "hero_gear" });
+  canDoSet("hero_gear", plan, tracks, "rch_u_tracks", { all: "hero_gear", have, conv: BAR_CONV.hero_gear });
   // The Pieces table's "Can do" row (design B1): ✓M 20 / ✓E 142 per piece.
   const cans = document.querySelectorAll("[data-hgcan]");
   if (cans.length) {
@@ -21602,7 +21715,7 @@ async function renderCharmsCalc() {
         : r <= tr.from ? `<span class="rch-mini none">${esc(t("rch_none_short").replace("{item}", plan.blocker[tr.id] ? materialDisplayName(itemShortName(plan.blocker[tr.id])) : "—"))}</span>`
         : `<span class="rch-mini">&#10003;${esc(CHARM_LEVELS[r])}</span>`) : "";
     });
-    canDoSet("charm", plan, tracks, "rch_u_charms", { all: "charm", pic: (tr, lv) => charmIconSrc(tr.troop, CHARM_LEVELS[lv]) });
+    canDoSet("charm", plan, tracks, "rch_u_charms", { all: "charm", have, conv: BAR_CONV.charm, pic: (tr, lv) => charmIconSrc(tr.troop, CHARM_LEVELS[lv]) });
   }
   REACH_HOOKS.charm = fillCharmReach;
   function renderTroopSections() {
@@ -21970,7 +22083,7 @@ async function renderChiefGearCalc() {
       el.innerHTML = tr.to > tr.from && r > tr.from ? `<span class="rch-mini cg-mk${r >= tr.to ? " full" : ""}" title="${esc(tl.length ? `${t("rch_with_trades")}: ${tl.map((x) => `${Math.round(x.give).toLocaleString()} ${materialDisplayName(itemShortName(x.from))} → ${Math.round(x.get).toLocaleString()} ${materialDisplayName(itemShortName(x.to))}`).join(" · ")}` : t("rch_mark_tip"))}">&#10003;${esc(stepLab(r, tr.from))}${tl.length ? " &#8644;" : ""}</span>` : "";
     });
     // "Can do now" box beside Max (it was a section of the answer card).
-    canDoSet("chief_gear", plan, tracks, "rch_u_pieces", { all: "chief_gear", first: true,
+    canDoSet("chief_gear", plan, tracks, "rch_u_pieces", { all: "chief_gear", first: true, have, conv: BAR_CONV.chief_gear,
       pic: (tr) => chiefGearIcon(tr.id, tr.from),
       step: (tr, lv) => (rows[lv] && rows[tr.from] && rows[lv].tier === rows[tr.from].tier ? `${cgStars(rows[tr.from])} → ${cgStars(rows[lv])}` : `${cgBadge(rows[tr.from])} → ${cgBadge(rows[lv])}`) });
   }
@@ -27684,7 +27797,7 @@ async function renderExpertsPage() {
       });
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows);
-    canDoSet("experts", plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts", { pic: (tr) => tr.img || "" });
+    canDoSet("experts", plan, tracks.filter((tr) => tr.id.startsWith("exp|")), "rch_u_experts", { pic: (tr) => tr.img || "", have, allTracks: tracks });
   }
   REACH_HOOKS.experts = fillExpertsReach;
   function levelOpts(max, selected, rel = max) {
@@ -28592,7 +28705,7 @@ async function renderPetsDataPage() {
         gain: (i) => { const v = statAt(i); return { Attack: v, Defense: v }; } };
     });
     const plan = reachPlan(tracks, have, UPGRADE_ORDER.mode, UPGRADE_ORDER.rows, BAR_CONV.pets);
-    canDoSet("pets", plan, tracks, "rch_u_pets", { pic: (tr) => petImage(tr.id) });
+    canDoSet("pets", plan, tracks, "rch_u_pets", { pic: (tr) => petImage(tr.id), have, conv: BAR_CONV.pets });
     listEl.querySelectorAll("[data-rch^='pet|']").forEach((el) => {
       const tr = tracks.find((x) => `pet|${x.id}` === el.dataset.rch);
       if (!tr || !(tr.to > tr.from)) { el.innerHTML = ""; return; }
@@ -29557,7 +29670,7 @@ async function renderT12ResearchPage() {
       if (!el) return;
       el.innerHTML = tr.to > tr.from ? `<div class="rch-line">${tr.from} <span class="lvarr">&rarr;</span> ${reachMarkHtml(tr.from, plan.lv[tr.id], tr.to, (i) => String(i))} ${tr.to}</div>${reachBarHtml(tr.from, plan.lv[tr.id], tr.to, plan.waits[tr.id] && !plan.blocker[tr.id] ? null : plan.blocker[tr.id], "rch_u_levels")}${reachWaitHtml("t12", lockNodes, tr, plan, tracks)}` : "";
     });
-    canDoSet("t12_research", plan, tracks, "rch_u_nodes", { all: "t12_research" });
+    canDoSet("t12_research", plan, tracks, "rch_u_nodes", { all: "t12_research", have, conv: BAR_CONV.t12_research });
   }
   REACH_HOOKS.t12_research = fillT12Reach;
 
