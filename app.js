@@ -6841,7 +6841,15 @@ const CDA_PAGES = [
   { key: "hero_gear", tab: "herogearcalc", unit: "rch_u_tracks", async build() {
     await ensureHeroGearData();
     if (!HERO_GEAR_TABLES_CACHE) return null;
-    const tracks = heroGearReachTracks(HERO_GEAR_SETS["Set 1"]);
+    // The sets ticked in Budgets ("Sets in budget"); Set 1 keeps its plain ids.
+    const sets = BUDGET_HG_SETS.filter((n) => HERO_GEAR_SETS[n]);
+    const tracks = sets.flatMap((n) => {
+      if (n === "Set 1") return heroGearReachTracks(HERO_GEAR_SETS[n]);
+      // Other sets: ids carry the set, so a piece's Mastery / Enhance read their own set's levels.
+      const views = new WeakMap(), view = (lv) => { let v = views.get(lv); if (!v) { v = new Proxy({}, { get: (_, k) => lv[`${n}|${String(k)}`] }); views.set(lv, v); } return v; };
+      return heroGearReachTracks(HERO_GEAR_SETS[n]).map((tr) => ({ ...tr, id: `${n}|${tr.id}`, ...(tr.grp != null ? { grp: `${n}|${tr.grp}` } : {}), name: `${tr.name} · ${gearSetDisplayName(n)}`,
+        gain: (i, lv) => tr.gain(i, lv ? view(lv) : lv) }));
+    });
     return tracks.length ? { tracks, bar: "hero_gear" } : null;
   } },
   { key: "pets", tab: "petsdata", unit: "rch_u_pets", async build() {
@@ -7233,6 +7241,7 @@ function cdaGoalTrackKey(page, key) {
     if (m) return `exps|${m[1]}|${m[2]}`;
     if (/\|lv$/.test(k)) return `exp|${k.slice(0, -3)}`;
   }
+  if (page === "hero_gear") return String(key).replace(/^Set 1\|/, "");
   return key;
 }
 // The picked upgrade goals (Order of goals, U2) with what the Backpack does for them now.
@@ -7524,7 +7533,7 @@ async function mkCompute() {
   try {
     await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
     let b;
-    if (pg.key === "hero_gear" && heroGearActiveSet !== "Set 1") {
+    if (pg.key === "hero_gear") {
       // Heroes Gears: the set shown on the page.
       await ensureHeroGearData();
       b = await cdaBuildPage({ ...pg, build: async () => { const tracks = heroGearReachTracks(HERO_GEAR_SETS[heroGearActiveSet]); return tracks.length ? { tracks, bar: "hero_gear" } : null; } });
@@ -22315,6 +22324,7 @@ async function renderBudgetsPage(opts = {}) {
     if (cb.checked) on.add(cb.dataset.budhgset); else on.delete(cb.dataset.budhgset);
     BUDGET_HG_SETS = HERO_GEAR_SET_NAMES.filter((n) => on.has(n));
     saveCalcState("budget_hg_sets", { sets: BUDGET_HG_SETS });
+    CDA_BUILD_P = null; // Free now follows the ticked sets
     budgetInvalidate();
     keepPlace(() => renderBudgetsPage());
   }));
