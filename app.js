@@ -2928,7 +2928,7 @@ const T = {
   goal_late: { en: "By {by}: {p}% \u00b7 fully done {date}" },
   goal_with_dates: { en: "With your dates: total {v} ({d}) \u00b7 without them {w}" },
   goal_dates_cant: { en: "Some dates can't be met: those goals are planned for their earliest day." },
-  gu_desc: { en: "Only the upgrades you pick are goals, each with its own goal level. The top goal gets what the packs give first; everything else is the rest of the plan. Drag ⋮⋮ to change the order." },
+  gu_desc: { en: "Only the upgrades you pick are goals, each with its own goal level. The top goal gets what the packs give first (with different By dates, the earlier date first); everything else is the rest of the plan, page by page. Drag ⋮⋮ to change the order." },
   gu_add: { en: "+ Add goal" },
   gu_add_title: { en: "Add goals · {n} upgrades on your pages" },
   gu_search: { en: "Search: marksman, ring, Dominic…" },
