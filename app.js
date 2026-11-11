@@ -22033,7 +22033,18 @@ function budgetGoalDue(goals) {
 }
 // The plan with the goals' own dates (worked out in the background planner,
 // kept like the Budgets plan: in memory and on the phone by fingerprint).
-const BUDGET_DEADLINE_STORE = "budget_deadline_v2"; // (v1: its parts had no packs of their own)
+const BUDGET_DEADLINE_STORE = "budget_deadline_v2"; // (v1: one plan, its parts without packs of their own)
+// The last few dated plans kept on the phone, newest first: [{ key, res }]
+// (going back to dates or purchases you had a moment ago shows at once).
+const BUDGET_DEADLINE_KEEP = 3;
+function budgetDeadlineKept() {
+  try { localStorage.removeItem("budget_deadline_v1"); const k = JSON.parse(localStorage.getItem(BUDGET_DEADLINE_STORE) || "null"); return k && Array.isArray(k.list) ? k.list.filter((x) => x && x.key && x.res) : []; } catch (e) { return []; /* storage blocked */ }
+}
+function budgetDeadlineKeep(key, res) {
+  const list = [{ key, res }].concat(budgetDeadlineKept().filter((x) => x.key !== key)).slice(0, BUDGET_DEADLINE_KEEP);
+  try { localStorage.setItem(BUDGET_DEADLINE_STORE, JSON.stringify({ list })); }
+  catch (e) { try { localStorage.setItem(BUDGET_DEADLINE_STORE, JSON.stringify({ list: list.slice(0, 1) })); } catch (e2) { /* too big or blocked */ } }
+}
 let BUDGET_DEADLINE = { key: null, res: null, running: null, req: null, onReady: null };
 // A dated plan still being worked out that nobody waits for any more (a new
 // plan started, other goals or dates): dropped, so it doesn't hold a planner.
@@ -22065,7 +22076,7 @@ function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady, 
   if (BUDGET_DEADLINE.key === key) return BUDGET_DEADLINE.res;
   // (Being worked out for someone else: this caller is told too when it is in.)
   if (BUDGET_DEADLINE.running === key) { if (onReady) BUDGET_DEADLINE.onReady = onReady; return null; }
-  const kept = () => { try { localStorage.removeItem("budget_deadline_v1"); const k = JSON.parse(localStorage.getItem(BUDGET_DEADLINE_STORE) || "null"); return k && k.key === key ? k.res : null; } catch (e) { return null; /* storage blocked */ } };
+  const kept = () => { const e = budgetDeadlineKept().find((x) => x.key === key); return e ? e.res : null; };
   if (peek) { const res = kept(); if (res && !BUDGET_DEADLINE.running) BUDGET_DEADLINE = { key, res, running: null, req: null, onReady: null }; return res; }
   budgetDeadlineDrop(); // one for other goals / dates is no longer wanted
   const res0 = kept();
@@ -22077,7 +22088,7 @@ function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady, 
     if (BUDGET_DEADLINE.running !== key) return;
     const cb = BUDGET_DEADLINE.onReady;
     BUDGET_DEADLINE = { key, res, running: null, req: null, onReady: null };
-    try { localStorage.setItem(BUDGET_DEADLINE_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked */ }
+    if (res && !res.failed) budgetDeadlineKeep(key, res);
     if (cb) cb();
   }).catch((e) => { if (BUDGET_DEADLINE.running === key) BUDGET_DEADLINE = { key: null, res: null, running: null, req: null, onReady: null }; if (!(e && e.superseded)) console.error("deadline plan failed", e); });
   return null;
