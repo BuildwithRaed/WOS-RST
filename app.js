@@ -22593,13 +22593,14 @@ async function renderBudgetsPage(opts = {}) {
     const railHead = `<div class="b3-rail-l"><span class="b3-lbl">${esc(t("b3_flags"))}</span><button type="button" class="b3-a" data-b3sheet="goals">&#8645; ${esc(t("b3_goals_n").replace("{n}", nGoals))} &#8250;</button></div>`;
     goalFlagsHtml = `<div class="b3-rail">${railHead}${workHtml("div", "small")}</div>`;
     const total = plan ? packPlanLocal(plan) : 0, baseTotal = basePlan ? packPlanLocal(basePlan) : 0;
-    const shortD = (d) => (d === 0 ? t("goal_now") : fmtDate(d));
+    const shortD = (d) => (d === 0 ? t("pcl_today") : fmtDate(d));
     const nameOf = budgetGoalName;
     const byText = (b, d) => { const nm = goalByName(b); return `${goalByIcon(b)} ${nm}${nm && d != null ? " · " : ""}${d != null ? fmtDate(d) : ""}`; };
     const y0g = packStartOfToday().getUTCFullYear(), locG = LANG === "en" ? undefined : LANG;
     const gdTxt = (dt) => {
       if (!dt) return "—";
-      if (dt.done || dt.day <= 0) return t("goal_now");
+      if (dt.done) return t("goal_now");
+      if (dt.day <= 0) return t("pcl_today"); // (today's packs reach it: not "Now", it still has to be bought)
       const x = new Date(packStartOfToday().getTime() + dt.day * 86400000), s0 = x.toLocaleDateString(locG, { day: "numeric", month: "short", timeZone: "UTC" });
       return (dt.approx ? "~" : "") + (x.getUTCFullYear() !== y0g ? `${s0} ’${String(x.getUTCFullYear()).slice(2)}` : s0);
     };
@@ -22749,7 +22750,7 @@ async function renderBudgetsPage(opts = {}) {
       goals.forEach((g, i) => {
         const dt = dates[i];
         if (!dt || (g.rest && dt.done)) return; // (a page with nothing left after its goals is no flag)
-        const day = dt.done ? 0 : Math.max(0, dt.day);
+        const day = dt.done ? -1 : Math.max(0, dt.day); // (-1 = nothing left to buy: "✓ Now"; 0 = with today's packs)
         if (!stops.has(day)) stops.set(day, { day, gs: [] });
         stops.get(day).gs.push(g);
       });
@@ -22757,14 +22758,14 @@ async function renderBudgetsPage(opts = {}) {
       const list = [...stops.values()].sort((a, b) => a.day - b.day);
       const y0 = packStartOfToday().getUTCFullYear();
       const lbl = (d) => {
-        if (d === 0) return t("goal_now");
+        if (d <= 0) return d < 0 ? t("goal_now") : t("pcl_today");
         const x = new Date(packStartOfToday().getTime() + d * 86400000), loc = LANG === "en" ? undefined : LANG;
         return x.getUTCFullYear() !== y0 ? `${x.toLocaleDateString(loc, { month: "short", timeZone: "UTC" })} \u2019${String(x.getUTCFullYear()).slice(2)}` : x.toLocaleDateString(loc, { day: "numeric", month: "short", timeZone: "UTC" });
       };
       const stopHtml = (st) => {
         const ics = st.gs.slice(0, 2).map((g) => { const ic = budgetGoalIcon(g, pagesRaw); return ic.src ? `<img class="${ic.face ? "" : "ct"}" src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i>${esc(nameOf(g).charAt(0))}</i>`; }).join("") + (st.gs.length > 2 ? `<em>+${st.gs.length - 2}</em>` : "");
-        const cls = st.day === 0 ? " ok" : !st.gs.length ? " tg" : targetDays != null && st.day > targetDays ? " later" : "";
-        return `<button type="button" class="b3-stop${cls}${st.tg ? " has-tg" : ""}" data-b3sheet="goals" title="${esc(st.gs.map(nameOf).join(" \u00b7 ") || t("b3_target"))}"><span class="b3-ics">${st.gs.length ? ics : "<b>&#127919;</b>"}</span><small>${st.day === 0 ? "&#10003; " : st.tg && st.gs.length ? "&#127919; " : ""}${esc(lbl(st.day))}</small></button>`;
+        const cls = st.day < 0 ? " ok" : !st.gs.length ? " tg" : targetDays != null && st.day > targetDays ? " later" : "";
+        return `<button type="button" class="b3-stop${cls}${st.tg ? " has-tg" : ""}" data-b3sheet="goals" title="${esc(st.gs.map(nameOf).join(" \u00b7 ") || t("b3_target"))}"><span class="b3-ics">${st.gs.length ? ics : "<b>&#127919;</b>"}</span><small>${st.day < 0 ? "&#10003; " : st.tg && st.gs.length ? "&#127919; " : ""}${esc(lbl(st.day))}</small></button>`;
       };
       goalFlagsHtml = list.length ? `<div class="b3-rail">${railHead}<div class="b3-stops">${list.map(stopHtml).join("")}</div></div>` : "";
     }
