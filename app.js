@@ -2944,6 +2944,7 @@ const T = {
   gu_rest_sub: { en: "What is left of each page after the goals above. Tap a date to change it." },
   gu_rest_cant: { en: "Can\u2019t make {date}: bought the cheapest way after it." },
   gu_rest_cant_own: { en: "Can\u2019t make {date}: bought as fast as possible." },
+  gu_rest_goal_later: { en: "A goal above on this page has a later date." },
   gu_sum_with: { en: "With these dates: {v}" },
   gu_sum_less: { en: "{d} less than the total above ({w}), because packs can wait for cheaper weeks." },
   gu_sum_more: { en: "{d} more than the total above ({w}): some dates need dearer packs sooner." },
@@ -22041,6 +22042,12 @@ async function renderBudgetsPage(opts = {}) {
       if (part.ok) dates[i] = { ...dates[i], day: Math.min(dates[i].day, sd, part.done != null ? part.done : sd), approx: false, pctDue: 1 };
       else if (part.earliest != null) dates[i] = { ...dates[i], day: part.earliest, approx: false };
     });
+    // A page isn't finished before its own goals: its rest is done no sooner than they are.
+    if (dates) goals.forEach((g, i) => {
+      if (!g.rest || !dates[i] || dates[i].done) return;
+      const last = Math.max(-1, ...goals.map((h, j) => (h.up && h.page === g.page && dates[j] && !dates[j].done ? dates[j].day : -1)));
+      if (last > dates[i].day) dates[i] = { ...dates[i], day: last, afterGoal: true };
+    });
     const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
     const money = (v) => packFmtLocal(Math.ceil(v), cur, true, smp);
     // B3 goal flags header (the flags follow once the dates are worked out).
@@ -22105,9 +22112,9 @@ async function renderBudgetsPage(opts = {}) {
         const ic = budgetGoalIcon(g, pagesRaw), open = BUDGET_GOAL_BY_OPEN === g.id;
         // Why it is late, only where the plan says so itself: a page that can't make
         // the target is bought the cheapest way after it; a part that can't make
-        // its day is bought as fast as possible.
+        // its day is bought as fast as possible; a goal of the page has a later date.
         const afterTarget = d == null && lateKeys.includes(g.page) && (!!dlPlan || splitPlan), part = partOf(g, i);
-        const note = !isLate ? "" : (afterTarget ? t("gu_rest_cant") : part && !part.ok ? t("gu_rest_cant_own") : "").replace("{date}", gdTxt({ day: lim }));
+        const note = !isLate ? "" : (afterTarget ? t("gu_rest_cant") : part && !part.ok ? t("gu_rest_cant_own") : dt.afterGoal ? t("gu_rest_goal_later") : "").replace("{date}", gdTxt({ day: lim }));
         return `<div class="gu-rr" data-goal="${esc(g.id)}">${ic.src ? `<img src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i></i>`}<span class="gu-rr-n">${esc(packPageLabel(g.page))}</span><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : own ? esc(t("gd_own")) : esc(gdTxt(dt))}</span><span class="c3-l2"><button type="button" class="bud-g-by${kind}${open ? " open" : ""}" data-goalby aria-expanded="${open}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${open ? "&#9652;" : "&#9662;"}</button></span>${open ? goalByPopHtml(myBy, mainDay) : ""}</div>${note ? `<div class="gu-rr-note">${esc(note)}</div>` : ""}`;
       };
       const diff = total - baseTotal;
@@ -22176,8 +22183,10 @@ async function renderBudgetsPage(opts = {}) {
     };
     const next = dates ? goals.findIndex((g, i) => dates[i] && !dates[i].done) : -1;
     const foldLine = next >= 0 ? t("goal_next").replace("{n}", nGoals).replace("{goal}", nameOf(goals[next])).replace("{date}", shortD(dates[next].day)) : t("goal_count").replace("{n}", nGoals);
+    // (The part bought after the target has no date of its own to miss.)
+    const cantMeet = !!dlPlan && dl.parts.some((x) => !x.ok && !x.late);
     const sumHtml = !plan || planPending ? ""
-      : dlPlan ? `<div class="bud-g-sum${dl.parts.some((x) => !x.ok) ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${dl.parts.some((x) => !x.ok) ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
+      : dlPlan ? `<div class="bud-g-sum${cantMeet ? " warn" : ""}">${esc(t("goal_with_dates").replace("{v}", money(total)).replace("{d}", (total - baseTotal >= 0.5 ? "+" : "") + money(total - baseTotal)).replace("{w}", money(baseTotal)))}${cantMeet ? `<br>${esc(t("goal_dates_cant"))}` : ""}</div>`
       : `<div class="bud-g-sum">${esc(t("goal_same_path").replace("{v}", money(total)).replace("{date}", fmtDate(plan.days || 0)))}</div>`;
     const goalsCard = `<div class="t12x-card bud-goals" style="margin-top:12px;">
       <button type="button" class="bud-g-head" data-goalsfold aria-expanded="${BUDGET_GOALS_OPEN}"><span class="t12x-title" style="margin:0;">${esc(t("goals_title"))}</span>${adminOnlyTagOn("goals") ? `<span class="bset-tag">&#128274; ${esc(t("spend_admin_tag"))}</span>` : ""}<span class="bud-g-arrow">${BUDGET_GOALS_OPEN ? "&#9662;" : "&#9656;"}</span></button>
@@ -22200,7 +22209,7 @@ async function renderBudgetsPage(opts = {}) {
       const stops = new Map();
       goals.forEach((g, i) => {
         const dt = dates[i];
-        if (!dt) return;
+        if (!dt || (g.rest && dt.done)) return; // (a page with nothing left after its goals is no flag)
         const day = dt.done ? 0 : Math.max(0, dt.day);
         if (!stops.has(day)) stops.set(day, { day, gs: [] });
         stops.get(day).gs.push(g);
