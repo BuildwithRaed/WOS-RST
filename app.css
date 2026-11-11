@@ -1867,6 +1867,9 @@
   .b3-hd .bud-seg{ margin-top:8px; }
   .b3-split{ display:flex; gap:2px; height:6px; margin:10px 0 2px; border-radius:4px; overflow:hidden; }
   .b3-split i{ display:block; height:100%; }
+  /* Under the lines: the plain plan beside the dated one ("Everything by Dec 5 instead: …"). */
+  .b3-vs{ margin-top:8px; font-size:11.5px; line-height:1.4; }
+  .b3-vs b{ color:var(--frost); font-weight:600; }
   .b3-hd .bud-line{ border-top:0; }
   .b3-hd .bud-line:first-of-type{ margin-top:4px; }
   .b3-sl > summary{ gap:7px; min-height:32px; padding:3px 0; }
