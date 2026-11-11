@@ -21306,7 +21306,9 @@ function budgetGoalSegs(goals, pages) {
 }
 // `due` (optional): each goal's own deadline day (null = none); the answer
 // then also says how much of the goal is there by that day (`pctDue`, 0..1).
-function budgetGoalDates(goals, pages, plan, calcKey, due) {
+// `order` (optional): the goals' places (indexes) in the order they take what
+// arrives, when that isn't their order on the list; the answer keeps the list's order.
+function budgetGoalDates(goals, pages, plan, calcKey, due, order) {
   const segs = budgetGoalSegs(goals, pages);
   const rows = (plan && plan.rows) || [];
   const sched = rows.length ? packPlanSchedule(rows) : [];
@@ -21330,8 +21332,8 @@ function budgetGoalDates(goals, pages, plan, calcKey, due) {
   if (end > (days.length ? days[days.length - 1] : -1)) days.push(end);
   const at = days.map((d) => { let k = -1; while (k + 1 < offs.length && offs[k + 1] <= d) k++; return k; });
   const planTrades = (plan && plan.trades) || [], totalGot = arrive.length ? arrive[arrive.length - 1] : {};
-  const cum = {};
-  return goals.map((g) => {
+  const cum = {}, out = new Array(goals.length);
+  const one = (g, gi) => {
     const seg = segs.get(g.id) || {};
     Object.entries(seg).forEach(([n, v]) => { cum[n] = (cum[n] || 0) + v; });
     const mine = Object.keys(seg);
@@ -21351,7 +21353,7 @@ function budgetGoalDates(goals, pages, plan, calcKey, due) {
     const covered = (j) => { const left = shortAt(j); return !mine.some((n) => left[n] > 1e-6); };
     // How much of the goal is there by its own deadline (each item's share, averaged).
     let pctDue = null;
-    const dd = due ? due[goals.indexOf(g)] : null;
+    const dd = due ? due[gi] : null;
     if (dd != null) {
       let j = -1; while (j + 1 < days.length && days[j + 1] <= dd) j++;
       const left = shortAt(j);
@@ -21361,7 +21363,9 @@ function budgetGoalDates(goals, pages, plan, calcKey, due) {
     let lo = 0, hi = days.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (covered(mid)) hi = mid; else lo = mid + 1; }
     return { day: days[lo], spent: at[lo] >= 0 ? spent[at[lo]] : 0, pctDue };
-  });
+  };
+  (order || goals.map((g, i) => i)).forEach((gi) => { out[gi] = one(goals[gi], gi); });
+  return out;
 }
 // A goal's "By" choice (BUDGET_GOALS.by[goal id]): "svs" / "koi" (the next
 // one's first day), "gen" (the next new heroes day), "date:yyyy-mm-dd", or
@@ -22022,26 +22026,49 @@ async function renderBudgetsPage(opts = {}) {
     const dlPending = !planPending && basePlan && due.some((d) => d != null) && !dl;
     const dlPlan = dl && !dl.failed ? dl.plan : null;
     const plan = dlPlan || basePlan;
-    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due) : null;
     // The day a goal is bought for: its own date, else the main target; null =
     // on a page that can't make the target (bought after it, no day of its own).
     const stageDay = (g, i) => (due[i] != null ? due[i] : g.page && lateKeys.includes(g.page) ? null : mainDay);
     const partOf = (g, i) => { const sd = stageDay(g, i); return dlPlan && sd != null ? dl.parts.find((x) => !x.late && x.day === sd) : null; };
     // The plain plan with a part after the target: its other pages are bought by the target.
     const splitPlan = !!splitMain && basePlan0 === splitMain.plan;
+    // With a dated plan the goals take what the packs give in the order of
+    // their days, as the plan was bought (same day: their order on the list;
+    // the pages that can't make the target last).
+    const takeOrder = dlPlan ? goals.map((g, i) => i).sort((a, b) => { const da = stageDay(goals[a], a), db = stageDay(goals[b], b); return (da == null ? Infinity : da) - (db == null ? Infinity : db) || a - b; }) : null;
+    const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due, takeOrder) : null;
     // The planner's own answer wins over the dates worked out from the buying
-    // days: a goal's part of the dated plan was planned for its day (or, when
-    // it can't make it, for its earliest day); without a dated plan, a page
-    // the plan buys by the target is done by it.
-    if (dates) goals.forEach((g, i) => {
-      const sd = stageDay(g, i);
-      if (sd == null || !dates[i] || dates[i].done) return;
-      if (!dlPlan) { if (splitPlan && due[i] == null && targetDays != null && dates[i].day > targetDays) dates[i] = { ...dates[i], day: targetDays, approx: false }; return; }
-      const part = partOf(g, i);
-      if (!part) return;
-      if (part.ok) dates[i] = { ...dates[i], day: Math.min(dates[i].day, sd, part.done != null ? part.done : sd), approx: false, pctDue: 1 };
-      else if (part.earliest != null) dates[i] = { ...dates[i], day: part.earliest, approx: false };
+    // days (those are a close guess: trades are spread over the whole plan).
+    // Without a dated plan, a page the plan buys by the target is done by it.
+    if (dates && !dlPlan) goals.forEach((g, i) => {
+      if (stageDay(g, i) == null || !dates[i] || dates[i].done) return;
+      if (splitPlan && due[i] == null && targetDays != null && dates[i].day > targetDays) dates[i] = { ...dates[i], day: targetDays, approx: false };
     });
+    // With one, each goal belongs to a part planned for its day (or, when it
+    // can't make it, for its earliest day; the pages that can't make the target
+    // come last). A goal has what it needs once its part is bought - and the
+    // parts of the goals before it (see takeOrder) that need the same items.
+    if (dates && dlPlan) {
+      const segsD = budgetGoalSegs(goals, pagesRaw), latePart = dl.parts.find((x) => x.late);
+      const boughtBy = goals.map((g, i) => {
+        if (stageDay(g, i) == null) return latePart && latePart.done != null ? latePart.done : null;
+        const part = partOf(g, i);
+        return !part ? null : part.ok ? (part.done != null ? part.done : part.day) : part.earliest;
+      });
+      takeOrder.forEach((i, pos) => {
+        if (!dates[i] || dates[i].done || boughtBy[i] == null) return;
+        const mine = Object.keys(segsD.get(goals[i].id) || {});
+        let by = boughtBy[i];
+        for (let q = 0; q < pos && by != null; q++) {
+          const j = takeOrder[q], sj = segsD.get(goals[j].id) || {};
+          if (mine.some((n) => sj[n] > 1e-9)) by = boughtBy[j] == null ? null : Math.max(by, boughtBy[j]);
+        }
+        if (by == null) return;
+        const part = partOf(goals[i], i), cant = !!part && !part.ok;
+        const day = cant ? by : Math.min(dates[i].day, by);
+        dates[i] = { ...dates[i], day, approx: cant || day < dates[i].day ? false : dates[i].approx };
+      });
+    }
     // A page isn't finished before its own goals: its rest is done no sooner than they are.
     if (dates) goals.forEach((g, i) => {
       if (!g.rest || !dates[i] || dates[i].done) return;
