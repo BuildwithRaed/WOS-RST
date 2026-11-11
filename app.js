@@ -19187,7 +19187,12 @@ async function budgetForPage(calcKey, targetDays, opts = {}) {
 // made over all their packs, so a pack that helps several pages (or a
 // ladder whose steps go to different pages) is bought once and its limits
 // are used once. Each page then gets its share of every purchase.
-function budgetPlanSet(groups, need, calcKey, targetDays, hint) {
+// early(part) (the combined plan, with the solver): the plan Budgets shows first
+// is handed over the moment it is worked out - the by-target plan before the
+// fastest one (which only decides the 2% "sooner" pick below), or the fastest
+// one when the target is out of reach. The same plans as without it; only the
+// order they are worked out in differs.
+function budgetPlanSet(groups, need, calcKey, targetDays, hint, early) {
   const out = { earliest: null, fastest: null, byTarget: null, cheapest: null, chosen: null };
   if (!groups.length || !Object.keys(need).length) return out;
   out.earliest = packEarliestDays(groups, need, calcKey, hint);
@@ -19195,8 +19200,12 @@ function budgetPlanSet(groups, need, calcKey, targetDays, hint) {
   // One full plan: by the target date when there is one (and it's reachable),
   // otherwise the cheapest within a year of the earliest date.
   const bigPlan = !PLAN_SOLVER && groups.reduce((a, g) => a + g.offers.length, 0) > 500;
+  const reach = targetDays != null && targetDays >= out.earliest;
+  const first = early && reach ? packCheapestPlan(groups, need, targetDays, calcKey) : null;
+  if (first) early({ earliest: out.earliest, byTarget: first });
   out.fastest = packCheapestPlan(groups, need, out.earliest, calcKey, bigPlan);
-  if (targetDays != null && targetDays >= out.earliest) out.byTarget = packPickCheapest([packCheapestPlan(groups, need, targetDays, calcKey), out.fastest]);
+  if (early && !reach && out.fastest) early({ earliest: out.earliest, fastest: out.fastest });
+  if (reach) out.byTarget = packPickCheapest([first || packCheapestPlan(groups, need, targetDays, calcKey), out.fastest]);
   else out.cheapest = packPickCheapest([bigPlan ? packCheapestPlan(groups, need, out.earliest + 365, calcKey) : packCheapestPlan(groups, need, out.earliest + 365, calcKey), out.fastest]);
   out.chosen = out.byTarget || out.cheapest;
   return out;
@@ -19230,10 +19239,23 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
   const ownHint = (list) => (PLAN_SOLVER && list.length > 1 ? Math.max(0, ...list.map((pg) => (pg.packGroups.length ? packEarliestDays(pg.packGroups, pg.need, pg.calcKey) : null) || 0)) : 0);
   // opts.splitOnly (the second planner, solver only): just the split around the
   // target is wanted, and whether there is one only needs the plan's earliest day.
-  const planSet = (r) => (opts.splitOnly
+  const planSet = (r, early) => (opts.splitOnly
     ? { earliest: r.groups.length && Object.keys(r.need).length ? packEarliestDays(r.groups, r.need, r.calcKey, ownHint(inc)) : null }
-    : budgetPlanSet(r.groups, r.need, r.calcKey, targetDays, ownHint(inc)));
+    : budgetPlanSet(r.groups, r.need, r.calcKey, targetDays, ownHint(inc), early));
   let res = setup();
+  // The first plan worked out is handed over at once (solver only, see
+  // budgetPlanSet): the by-target plan as the plan itself (the fastest one,
+  // which may still win the 2% "sooner" pick, follows), or - the target out of
+  // reach - the fastest plan with which pages are planned (noTarget: the split
+  // around the target is the plan to show). opts.earlyPlan: the same for the
+  // split's by-target part.
+  const early0 = !PLAN_SOLVER || dropped.length ? null
+    : opts.earlyPlan ? (e) => { if (e.byTarget) opts.earlyPlan(e.byTarget, res); }
+    : opts.onPart && !opts.splitOnly && !opts.noViews ? (e) => {
+      const keys = inc.map((pg) => pg.calcKey);
+      if (e.byTarget) opts.onPart({ main: { ...res, earliest: e.earliest, byTarget: e.byTarget, chosen: e.byTarget, shares: budgetShares(e.byTarget, inc), inc: keys, dropped: [] }, step: "set", early: true });
+      else opts.onPart({ main: { ...res, earliest: e.earliest, shares: {}, inc: keys, dropped: [], noTarget: targetDays != null && inc.length > 1, views: { fastest: { plan: e.fastest, shares: budgetShares(e.fastest, inc) }, cheapest: null } }, step: "fast" });
+    } : null;
   // Fast path: every page's own plan put together. When the packs' limits
   // allow that, it's the starting answer and only a quick combined search
   // is run to see if buying shared packs once does better. (The full
@@ -19251,7 +19273,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
     res.merged = best === merged;
     if (reachable && best.days <= targetDays) res.byTarget = best; else res.cheapest = best;
   } else {
-    Object.assign(res, planSet(res));
+    Object.assign(res, planSet(res, early0));
     // A page the packs can't cover at all would sink the whole plan: plan it
     // on its own instead and keep the rest together.
     if (res.earliest == null && inc.length > 1) {
@@ -19326,29 +19348,47 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       const reach = inc.filter((pg) => { const e = pg.packGroups.length ? packEarliestDays(pg.packGroups, pg.need, pg.calcKey) : null; return e != null && e <= targetDays; });
       const late = inc.filter((pg) => !reach.includes(pg));
       if (reach.length && late.length) {
-        const sub = budgetCombinedCore(reach, {}, targetDays, allGroups, { noSplit: true, noViews: true });
-        if (sub.byTarget && sub.chosen && Array.isArray(sub.chosen.picks) && !(sub.dropped || []).length) {
-          const tShares = budgetShares(sub.chosen, reach);
-          // The by-target part is ready: handed over now, the pages after the target follow.
-          if (opts.onPart) opts.onPart({ split: { target: { keys: reach.map((pg) => pg.calcKey), plan: sub.chosen, shares: tShares } } });
+        const tKeys = reach.map((pg) => pg.calcKey);
+        // The pages after the target, planned with what a by-target plan left of every pack's limits.
+        const lateFor = (plan, subGroups, tShares) => {
           const used = allGroups.map(() => 0);
-          sub.chosen.picks.forEach((pk) => { const gi = allGroups.indexOf(sub.groups[pk.gi]); if (gi >= 0) used[gi] += pk.count; });
+          plan.picks.forEach((pk) => { const gi = allGroups.indexOf(subGroups[pk.gi]); if (gi >= 0) used[gi] += pk.count; });
           const ids = new Set(); late.forEach((pg) => (pg.tableIds || []).forEach((id) => ids.add(String(id))));
           const lateGroups = allGroups.map((g, gi) => ({ ...g, used: (g.used || 0) + used[gi] })).filter((g) => (g.tables || []).some((id) => ids.has(String(id))));
           const lateNeed = {}; late.forEach((pg) => Object.entries(pg.need).forEach(([n, q]) => { lateNeed[n] = (lateNeed[n] || 0) + q; }));
           const lateKey = "__budget:" + late.map((pg) => pg.calcKey).join(",");
           const e2 = lateGroups.length ? packEarliestDays(lateGroups, lateNeed, lateKey, ownHint(late)) : null;
-          if (e2 != null) {
-            const fast = packCheapestPlan(lateGroups, lateNeed, e2, lateKey);
-            const big = lateGroups.reduce((n, g) => n + g.offers.length, 0) > 500;
-            const far = [packCheapestPlan(lateGroups, lateNeed, e2 + 365, lateKey, true), big ? null : packCheapestPlan(lateGroups, lateNeed, e2 + 365, lateKey)];
-            const cheap = packPickCheapest(far.concat([fast]).filter(Boolean));
-            if (fast && cheap) {
-              res.split = {
-                target: { keys: reach.map((pg) => pg.calcKey), plan: sub.chosen, shares: tShares },
-                late: { keys: late.map((pg) => pg.calcKey), earliest: e2, fastest: { plan: fast, shares: budgetShares(fast, late) }, cheapest: { plan: cheap, shares: budgetShares(cheap, late) } },
-              };
-            }
+          if (e2 == null) return null;
+          const fast = packCheapestPlan(lateGroups, lateNeed, e2, lateKey);
+          const big = lateGroups.reduce((n, g) => n + g.offers.length, 0) > 500;
+          const far = [packCheapestPlan(lateGroups, lateNeed, e2 + 365, lateKey, true), big ? null : packCheapestPlan(lateGroups, lateNeed, e2 + 365, lateKey)];
+          const cheap = packPickCheapest(far.concat([fast]).filter(Boolean));
+          if (!fast || !cheap) return null;
+          return {
+            target: { keys: tKeys, plan, shares: tShares },
+            late: { keys: late.map((pg) => pg.calcKey), earliest: e2, fastest: { plan: fast, shares: budgetShares(fast, late) }, cheapest: { plan: cheap, shares: budgetShares(cheap, late) } },
+          };
+        };
+        // Solver: the by-target plan is in before the fastest one (which only
+        // decides the 2% "sooner" pick): handed over, and the pages after the
+        // target planned from it, straight away. It nearly always stays the
+        // pick; when it doesn't, the split is worked out again from the pick.
+        let first = null;
+        const sub = budgetCombinedCore(reach, {}, targetDays, allGroups, { noSplit: true, noViews: true, earlyPlan: opts.onPart ? (plan, r) => {
+          if (!Array.isArray(plan.picks)) return;
+          const tShares = budgetShares(plan, reach);
+          opts.onPart({ split: { target: { keys: tKeys, plan, shares: tShares } } });
+          first = { plan, split: lateFor(plan, r.groups, tShares) };
+          if (first.split) opts.onPart({ split: first.split, early: true });
+        } : null });
+        if (sub.byTarget && sub.chosen && Array.isArray(sub.chosen.picks) && !(sub.dropped || []).length) {
+          if (first && first.plan === sub.chosen) { if (first.split) res.split = first.split; }
+          else {
+            const tShares = budgetShares(sub.chosen, reach);
+            // The by-target part is ready: handed over now, the pages after the target follow.
+            if (opts.onPart) opts.onPart({ split: { target: { keys: tKeys, plan: sub.chosen, shares: tShares } } });
+            const sp = lateFor(sub.chosen, sub.groups, tShares);
+            if (sp) res.split = sp;
           }
         }
       }
@@ -19358,8 +19398,11 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
   res.shares = res.chosen ? budgetShares(res.chosen, inc) : {};
   if (opts.noViews) return res;
   // The plan itself is ready; the Cheapest card below still needs a solve of
-  // its own when the target is within reach: handed over now.
-  if (opts.onPart && res.byTarget) opts.onPart({ main: res, step: "set" });
+  // its own when the target is within reach: handed over now (with the solver a
+  // little further down, together with the Fastest card: that one was worked
+  // out with the plan).
+  let setTold = !(opts.onPart && res.byTarget);
+  if (!setTold && !PLAN_SOLVER) { opts.onPart({ main: res, step: "set" }); setTold = true; }
   // The other two cards on Budgets: the fastest plan, and the cheapest one
   // within a year of that (each with its own page shares).
   if (res.chosen && res.groups && res.groups.length && Object.keys(res.need || {}).length) {
@@ -19371,6 +19414,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       const big = res.groups.reduce((n, g) => n + g.offers.length, 0) > 500;
       const cheapestBy = (d) => { const q = PLAN_SOLVER ? null : packCheapestPlan(res.groups, res.need, d, res.calcKey, true); const f = big && !PLAN_SOLVER ? null : packCheapestPlan(res.groups, res.need, d, res.calcKey); return [q, f].filter(Boolean).sort((x, y) => x.total - y.total)[0] || null; };
       const fastest = [cheapestBy(earliest), res.chosen.days <= earliest ? res.chosen : null].filter(Boolean).sort((x, y) => x.total - y.total)[0] || null;
+      if (!setTold) { setTold = true; opts.onPart({ main: { ...res, views: { fastest: fastest ? { plan: fastest, shares: budgetShares(fastest, inc) } : null, cheapest: null } }, step: "set" }); }
       const cheapest = packPickCheapest([cheapestBy(earliest + 365), fastest, res.chosen]);
       res.earliestAll = earliest;
       res.views = {
@@ -19391,6 +19435,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       }
     }
   }
+  if (!setTold) opts.onPart({ main: res, step: "set" });
   return res;
 }
 // Pages that use the same item from the same Backpack amount (Experts Level +
@@ -19473,7 +19518,7 @@ function plannerCombinedLocal(payload, onPart) {
     return out;
   };
   const par = !!payload.par && !!PLAN_SOLVER;
-  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands, noSplit: par, onPart: onPart ? (p) => onPart(p.main ? { main: done(p.main), step: p.step } : p) : null });
+  const res = budgetCombinedCore(pages, payload.selected, payload.targetDays, payload.allGroups, { spendCands: !!payload.spendCands, noSplit: par, onPart: onPart ? (p) => onPart(p.main ? { main: done(p.main), step: p.step, early: !!p.early } : p) : null });
   const out = done(res);
   if (par) out.splitElsewhere = true;
   return out;
@@ -19786,9 +19831,11 @@ function budgetTrackDrop(track) {
 }
 // more: { spendCands, track, onPart }. onPart(partial) gets the plan as far as
 // it is worked out each time a part comes in: the same shape as the final
-// answer with pending: true and have = { set (the plan itself), views (the
-// Fastest / Cheapest cards), split (true, or "target" while only the by-target
-// part of the split is in) }.
+// answer with pending: true and have = { set (the plan itself), fast (the
+// Fastest card), views (the Fastest / Cheapest cards), split (true, or "target"
+// while only the by-target part of the split is in) }. With the target out of
+// every page's reach the Fastest card comes first (noTarget on the partial,
+// with the pages planned): the split is then the plan to show, as soon as it is in.
 async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   const inp = budgetCombinedInput(pages, selected);
   const payload = plannerPayloadEncode({ ...inp, targetDays, ...(more && more.spendCands ? { spendCands: true } : {}) });
@@ -19806,35 +19853,44 @@ async function budgetCombinedPlanAsync(pages, selected, targetDays, more) {
   // target (by target + after it). A split needs a target and two pages or more.
   const nPlanned = inp.pages.filter((pg) => !pg.missing && (selected || {})[pg.calcKey] !== false && Object.keys(pg.need || {}).length).length;
   const two = targetDays != null && nPlanned > 1 && plannerLanes() > 1;
-  const wantsSplit = (a) => targetDays != null && !a.byTarget && !!a.chosen && (a.inc || []).length > 1;
-  const acc = { main: null, step: null, target: null, splitDone: !two, split: null };
+  const wantsSplit = (a) => targetDays != null && !a.byTarget && (!!a.chosen || !!a.noTarget) && (a.inc || []).length > 1;
+  // main: the plan as far as it is in (early: handed over before the 2% "sooner"
+  // pick, and - one planner - before the split is looked at); fast: only the
+  // Fastest card so far; target / split (+ splitEarly: handed over before that pick).
+  const acc = { main: null, step: null, early: false, fast: null, target: null, splitDone: !two, splitEarly: false, split: null };
+  const sameSplit = (x, y) => !!x && !!y && x.target.plan.total === y.target.plan.total && x.target.plan.days === y.target.plan.days && x.target.plan.rows.length === y.target.plan.rows.length
+    && x.late.earliest === y.late.earliest && x.late.cheapest.plan.total === y.late.cheapest.plan.total && x.late.cheapest.plan.days === y.late.cheapest.plan.days && x.late.fastest.plan.total === y.late.fastest.plan.total;
   const tell = () => {
     if (!(more && more.onPart)) return;
-    const m = acc.main;
+    const m = acc.main || acc.fast;
+    const splitIn = acc.splitDone || acc.splitEarly;
     // (A split that is in before the plan itself is passed on as it is; the plan then says if it's wanted.)
-    const split = !two ? ((m && m.split) || (acc.target ? { target: acc.target } : null)) : acc.splitDone ? (!m || wantsSplit(m) ? acc.split : null) : acc.target ? { target: acc.target } : null;
+    const split = !two ? ((acc.main && acc.main.split) || (acc.splitEarly ? acc.split : acc.target ? { target: acc.target } : null)) : splitIn ? (!m || wantsSplit(m) ? acc.split : null) : acc.target ? { target: acc.target } : null;
     more.onPart({ chosen: null, shares: {}, dropped: [], inc: [], views: {}, byTarget: null, ...(m || {}), split, pending: true,
-      have: { set: !!m, views: acc.step === "views" || acc.step === "done", split: two ? (acc.splitDone ? true : acc.target ? "target" : false) : (m ? true : acc.target ? "target" : false) } });
+      have: { set: !!acc.main, fast: !!(m && m.views && m.views.fastest && m.views.fastest.plan), views: acc.step === "views" || acc.step === "done",
+        split: two ? (splitIn ? true : acc.target ? "target" : false) : ((acc.main && !acc.early) || acc.splitEarly ? true : acc.target ? "target" : false) } });
   };
+  // A part of the split: its by-target part, or the whole of it handed over early.
+  const splitPart = (p) => { if (p.split.late) { acc.split = p.split; acc.splitEarly = true; } else if (p.split.target) acc.target = p.split.target; else return; tell(); };
   const reqA = plannerRun("combined", two ? { ...payload, par: true } : payload, { onPart: (p) => {
-    if (p && p.main) { acc.main = p.main; acc.step = p.step; tell(); }
-    else if (p && p.split && p.split.target && !two) { acc.target = p.split.target; tell(); } // (one planner: the split's by-target part)
+    if (p && p.main) { if (p.step === "fast") acc.fast = p.main; else { acc.main = p.main; acc.step = p.step; acc.early = !!p.early; } tell(); }
+    else if (p && p.split && !two) splitPart(p); // (one planner: the split's parts)
   } });
-  const reqB = two ? plannerRun("combined", { ...payload, splitOnly: true }, { lane: 1, onPart: (p) => { if (p && p.split && p.split.target && !acc.splitDone) { acc.target = p.split.target; tell(); } } }) : null;
+  const reqB = two ? plannerRun("combined", { ...payload, splitOnly: true }, { lane: 1, onPart: (p) => { if (p && p.split && !acc.splitDone) splitPart(p); } }) : null;
   if (more && more.track) { more.track.req = reqA; more.track.req2 = reqB; }
   let res;
   if (!reqB) res = await reqA;
   else {
     // The split's answer (null when that planner failed); whichever planner is done first is shown.
     const pb = reqB.then((b) => b, (e) => { if (!(e && e.superseded)) console.warn("split plan failed", e); return null; });
-    pb.then((b) => { if (b && !b.skipped && !acc.splitDone) { acc.split = b.split || null; acc.splitDone = true; tell(); } });
+    pb.then((b) => { if (b && !b.skipped && !acc.splitDone) { const same = acc.splitEarly && sameSplit(acc.split, b.split); acc.split = b.split || null; acc.splitDone = true; if (!same) tell(); } });
     const a = await reqA;
     if (!a.splitElsewhere) {
       // (The first planner had no solver: it worked the split out itself, the old way.)
       plannerSupersede(reqB);
       res = a;
     } else {
-      if (!acc.splitDone) { acc.main = a; acc.step = "done"; tell(); }
+      if (!acc.splitDone) { acc.main = a; acc.step = "done"; acc.early = false; tell(); }
       let b = await pb;
       // The second planner couldn't (no solver there, or it failed): the first one works the split out too.
       if (!b || b.skipped) {
@@ -20489,7 +20545,15 @@ function budgetGoalDue(goals) {
 // The plan with the goals' own dates (worked out in the background planner,
 // kept like the Budgets plan: in memory and on the phone by fingerprint).
 const BUDGET_DEADLINE_STORE = "budget_deadline_v1";
-let BUDGET_DEADLINE = { key: null, res: null, running: null };
+let BUDGET_DEADLINE = { key: null, res: null, running: null, req: null };
+// A dated plan still being worked out that nobody waits for any more (a new
+// plan started, other goals or dates): dropped, so it doesn't hold a planner.
+function budgetDeadlineDrop() {
+  if (!BUDGET_DEADLINE.running) return;
+  const req = BUDGET_DEADLINE.req;
+  BUDGET_DEADLINE = { key: null, res: null, running: null, req: null };
+  if (req) plannerSupersede(req);
+}
 function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady) {
   const segs = budgetGoalSegs(goals, pages), byDay = new Map();
   goals.forEach((g, i) => {
@@ -20503,15 +20567,18 @@ function budgetDeadlineFor(pages, selected, goals, due, mainDay, keys, onReady) 
   const payload = plannerPayloadEncode({ pages: [], selected: {}, allGroups: inp.allGroups, stages, calcKey: "__budget:" + keys.join(",") });
   const key = budgetPlanFingerprint({ deadline: 1, payload });
   if (BUDGET_DEADLINE.key === key) return BUDGET_DEADLINE.res;
-  try { const kept = JSON.parse(localStorage.getItem(BUDGET_DEADLINE_STORE) || "null"); if (kept && kept.key === key) { BUDGET_DEADLINE = { key, res: kept.res, running: null }; return kept.res; } } catch (e) { /* storage blocked */ }
   if (BUDGET_DEADLINE.running === key) return null;
-  BUDGET_DEADLINE = { key: null, res: null, running: key };
-  plannerRun("deadline", payload).then((res) => {
+  budgetDeadlineDrop(); // one for other goals / dates is no longer wanted
+  try { const kept = JSON.parse(localStorage.getItem(BUDGET_DEADLINE_STORE) || "null"); if (kept && kept.key === key) { BUDGET_DEADLINE = { key, res: kept.res, running: null, req: null }; return kept.res; } } catch (e) { /* storage blocked */ }
+  // (On the second planner when there are two: the first is still on the rest of the plan.)
+  const req = plannerRun("deadline", payload, { lane: 1 });
+  BUDGET_DEADLINE = { key: null, res: null, running: key, req };
+  req.then((res) => {
     if (BUDGET_DEADLINE.running !== key) return;
-    BUDGET_DEADLINE = { key, res, running: null };
+    BUDGET_DEADLINE = { key, res, running: null, req: null };
     try { localStorage.setItem(BUDGET_DEADLINE_STORE, JSON.stringify({ key, res })); } catch (e) { /* too big or blocked */ }
     if (onReady) onReady();
-  }).catch((e) => { if (BUDGET_DEADLINE.running === key) BUDGET_DEADLINE.running = null; if (!(e && e.superseded)) console.error("deadline plan failed", e); });
+  }).catch((e) => { if (BUDGET_DEADLINE.running === key) BUDGET_DEADLINE = { key: null, res: null, running: null, req: null }; if (!(e && e.superseded)) console.error("deadline plan failed", e); });
   return null;
 }
 // The Order of goals card's buttons: fold, drag ⋮⋮ (saved order),
@@ -20673,6 +20740,7 @@ async function renderBudgetsPage(opts = {}) {
     // A plan for other ticks / another date still being worked out is no
     // longer wanted: it's dropped, so the new one doesn't wait behind it.
     budgetTrackDrop(BUDGET_PLAN_TRACK);
+    budgetDeadlineDrop(); // (the goals' dated plan for those ticks / that date too)
     const track = (BUDGET_PLAN_TRACK = {});
     // A redraw as the plan's parts come in: open lines stay open, an open window
     // (and every scroll box) keeps its scroll, and when the total card (which
@@ -20746,15 +20814,19 @@ async function renderBudgetsPage(opts = {}) {
     plan: { rows: split.target.plan.rows.concat(splitLate.plan.rows), total: split.target.plan.total + splitLate.plan.total, days: Math.max(split.target.plan.days || 0, splitLate.plan.days || 0), trades: (split.target.plan.trades || []).concat(splitLate.plan.trades || []), split: true },
     shares: { ...split.target.shares, ...splitLate.shares },
   } : null;
+  // The target is out of every page's reach and only the Fastest card is in so
+  // far (the plan itself, the Cheapest card, is still being worked out): the
+  // split around the target is the plan to show, as soon as it is in.
+  const startOnly = !!have && !have.set && !!combinedRaw.noTarget && (combinedRaw.inc || []).length > 1 && !(combinedRaw.dropped || []).length;
   // The plan is in but the target is out of every page's reach: the "by target"
   // view waits for the split (the second planner is still on it).
-  const splitWait = !!have && !!have.set && have.split !== true && targetDays != null && !combinedRaw.byTarget && !!combinedRaw.chosen && (combinedRaw.inc || []).length > 1;
-  const viewsWait = !!have && !!have.set && !have.views; // the Fastest / Cheapest cards are still coming
-  const viewReady = (k) => !have || (k === "main" ? !!have.set && !splitWait : k === "budget" ? false : !!have.views);
+  const splitWait = !!have && have.split !== true && targetDays != null && !combinedRaw.byTarget && (combinedRaw.inc || []).length > 1 && (have.set ? !!combinedRaw.chosen : startOnly);
+  const viewsWait = !!have && (!!have.set || !!have.fast) && !have.views; // the Fastest / Cheapest cards are still coming
+  const viewReady = (k) => !have || (k === "main" ? (have.set ? !splitWait : startOnly && have.split === true && !!split) : k === "budget" ? false : k === "fastest" ? !!have.views || !!have.fast : !!have.views);
   const reachable = targetDays != null && (!!combinedRaw.byTarget || !!split || splitWait);
   const views = combinedRaw.views || {};
   const spendBest = wantCands && !have ? budgetSpendBest(combinedRaw) : null;
-  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen : viewsWait || !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
+  const viewKeys = ["fastest", "main"].concat(reachable ? ["cheapest"] : []).filter((k) => k === "main" ? !!combinedRaw.chosen || startOnly : viewsWait || !!(views[k] && views[k].plan)).concat(spendBest ? ["budget"] : []);
   // (kept on "My budget" while its plans are still being worked out)
   if (!viewKeys.includes(BUDGET_VIEW) && !(BUDGET_VIEW === "budget" && wantCands && pendingAll)) BUDGET_VIEW = "main";
   const planPending = pendingAll && !viewReady(BUDGET_VIEW);
@@ -20925,7 +20997,7 @@ async function renderBudgetsPage(opts = {}) {
   };
   // The plan cards under the big total.
   const viewCardsHtml = (() => {
-    if (!combinedRaw.chosen || viewKeys.length < 2) return "";
+    if ((!combinedRaw.chosen && !startOnly) || viewKeys.length < 2) return "";
     const title = (k) => k === "budget" ? t("budgets_view_budget") : k === "fastest" ? t("budgets_view_fastest") : k === "cheapest" ? t("budgets_view_cheapest") : (reachable ? t("budgets_view_target") : t("budgets_view_cheapest"));
     const shortDate = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000); return x.toLocaleDateString(LANG === "en" ? undefined : LANG, x.getUTCFullYear() !== new Date().getUTCFullYear() ? { month: "short", year: "numeric", timeZone: "UTC" } : { day: "numeric", month: "short", timeZone: "UTC" }); };
     const seg = (k) => {
@@ -20969,10 +21041,12 @@ async function renderBudgetsPage(opts = {}) {
     const basePlan = !dropPlans.length ? basePlan0 : [basePlan0, ...dropPlans].filter(Boolean).reduce((a, pl) => ({ rows: a.rows.concat(pl.rows || []), total: a.total + (pl.total || 0), days: Math.max(a.days, pl.days || 0), trades: a.trades.concat(pl.trades || []) }), { rows: [], total: 0, days: 0, trades: [] });
     const by = BUDGET_GOALS.by || {}, due = budgetGoalDue(goals);
     // Goals with their own dates: the plan bought for those dates (background
-    // planner), asked for once the whole plan is in (the planner is busy with
-    // the rest of it until then, and the pages' order can still change).
+    // planner). Asked for once what it is made from is settled: the whole plan,
+    // or - with a target - the plan on screen and the split (the pages' order
+    // in its request comes from them); the second planner works it out while
+    // the first finishes the rest.
     const mainDay = targetDays != null ? targetDays : basePlan ? basePlan.days || 0 : null;
-    const dl = !planPending && !pendingAll && basePlan && due.some((d) => d != null)
+    const dl = !planPending && (!pendingAll || (targetDays != null && have.split === true)) && basePlan && due.some((d) => d != null)
       ? budgetDeadlineFor(pagesRaw, BUDGET_SELECTED, goals, due, mainDay, incKeys, () => { if (budTab()) keepPlace(() => renderBudgetsPage()); })
       : null;
     const dlPending = !planPending && basePlan && due.some((d) => d != null) && !dl;
