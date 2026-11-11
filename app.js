@@ -17974,7 +17974,7 @@ function plxTopBox(root) {
 // keys "top:<tab>").
 function g1FoldSync(root) {
   (root || document).querySelectorAll("[data-g1fold]").forEach((b) => {
-    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans");
+    const folded = BAR_SHOW_ALL[b.dataset.g1fold] === false, box = b.closest(".g1-top, .cg-ans, .b3-hd");
     if (box) box.classList.toggle("g1-folded", folded);
     // Compared as text: innerHTML gives back the real arrow, not "&#9662;", so an
     // HTML compare rewrote the button every time and the #content observer looped.
@@ -22329,6 +22329,7 @@ async function renderBudgetsPage(opts = {}) {
     dataReady ? null : ensurePackTables(), dataReady ? null : ensureTradeRates(), dataReady ? null : ensurePetMarksState(), dataReady ? null : ensureBudgetNeedsSnapshot(),
     ensureBudgetSpend(),
     visitorCan("goals") ? ensureBudgetGoals() : null,
+    ensureBarHidden(),
   ]);
   if (!budTab()) return;
   BUDGET_SELECTED = BUDGET_SELECTED || savedSel || {};
@@ -22944,7 +22945,7 @@ async function renderBudgetsPage(opts = {}) {
     return `<details class="bud-line b3-sl"><summary title="${esc(names)}"><span class="bud-line-bar" style="background:${color};"></span><span class="bud-line-t">${title}</span><span class="bud-line-v"><b>${money}</b><span class="meta">${esc(t("bud_line_packs").replace("{n}", pl.rows.length))} <span class="bud-line-arrow">&#9656;</span></span></span></summary><div class="bud-line-body">${packRowsHtml(pl)}${trades}</div></details>`;
   };
   const plainNames = (keys) => keys.map((k) => packPageLabel(k)).join(" · ");
-  let b3Lines = "", b3Split = "";
+  let b3Lines = "", b3Split = "", datesFold = false; // datesFold: the dates list has its Hide / Show button
   // A short date for the lines and tiles: "Nov 30", with the year when it isn't this one ("Mar 27 ’27").
   const dShort = (d) => { const x = new Date(packStartOfToday().getTime() + d * 86400000), s0 = x.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); return x.getUTCFullYear() !== packStartOfToday().getUTCFullYear() ? `${s0} \u2019${String(x.getUTCFullYear()).slice(2)}` : s0; };
   // The plain plan beside the dated one: "Everything by Dec 5 instead: QAR 40,246 · QAR 4,470 more".
@@ -22976,7 +22977,12 @@ async function renderBudgetsPage(opts = {}) {
     const whole = info.map((x) => Math.floor(x.v));
     let spare = Math.ceil(tot - 1e-6) - whole.reduce((a, v) => a + v, 0);
     info.map((x, i) => [x.v - Math.floor(x.v), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (spare > 0) { whole[i]++; spare--; } });
-    b3Split = info.length > 1 ? `<div class="b3-split">${info.map((x, i) => `<i style="${i === info.length - 1 ? "flex:1" : `width:${Math.max(3, tot > 0 ? (x.v / tot) * 100 : 0).toFixed(1)}%`}; background:${x.color};"></i>`).join("")}</div>` : "";
+    // Hide / Show for the list of dates (owner, 11 Nov 2026): the site's usual
+    // button at the end of the bar; hidden, the bar and the line under the list
+    // stay. Remembered with the other Hide choices (calc_state "bar_hidden", key "bud:dates").
+    datesFold = info.length > 1;
+    const hid = BAR_SHOW_ALL["bud:dates"] === false;
+    b3Split = datesFold ? `<div class="b3-splitrow"><div class="b3-split">${info.map((x, i) => `<i style="${i === info.length - 1 ? "flex:1" : `width:${Math.max(3, tot > 0 ? (x.v / tot) * 100 : 0).toFixed(1)}%`}; background:${x.color};"></i>`).join("")}</div><button type="button" class="g1-fold" data-g1fold="bud:dates" aria-expanded="${!hid}">${esc(t(hid ? "g1_show" : "g1_hide"))} ${hid ? "&#9662;" : "&#9652;"}</button></div>` : "";
     b3Lines = info.map((x, i) => b3Line(x.color, x.title, x.names, { rows: x.p.rows, trades: x.p.trades || [] }, whole[i])).join("") + datedVsHtml();
   } else if (split && BUDGET_VIEW === "main") {
     const tp = split.target.plan, lp = splitLate.plan, tv = packPlanLocal(tp), tot = tv + packPlanLocal(lp);
@@ -22996,7 +23002,7 @@ async function renderBudgetsPage(opts = {}) {
   const matsN = Object.keys(grandMats).length;
   const partialHtml = (() => { const noPlan = ticked.filter((pg) => pg.missing).length; return noPlan && !planPending ? `<div class="meta bud-partial">${esc(t("budgets_total_partial").replace("{n}", ticked.length - noPlan).replace("{m}", ticked.length))}</div>` : ""; })();
   const comingHtml = (() => { const n = (PACK_PURCHASES.list || []).filter(purPlannedCounts).length; return n ? `<button type="button" class="b3-a b3-coming" data-gototab="purchases">&#128722; ${esc(t("pur_budget_line").replace("{n}", n))}</button>` : ""; })();
-  const totalHtml = `<div class="b3-tile b3-hd">
+  const totalHtml = `<div class="b3-tile b3-hd${datesFold && BAR_SHOW_ALL["bud:dates"] === false ? " g1-folded" : ""}">
       <div class="b3-hd-l"><span>${esc(t("b3_total_ticked").replace("{n}", ticked.length))}</span>${matsN ? `<button type="button" class="b3-a" data-b3sheet="mats">${esc(t("b3_materials").replace("{n}", matsN))} &#8250;</button>` : ""}${grandDeltas.length ? `<button type="button" class="b3-a" data-b3sheet="stats">${esc(t("b3_stat_gain"))} &#8250;</button>` : ""}</div>
       <div class="b3-hd-t"><b>${planPending ? workHtml("span") : anyPlan ? packFmtLocal(Math.ceil(grandTotal), grandCurrency, true) : "—"}</b>${anyPlan && !planPending ? `<div><span class="${lateAll ? "rd" : "ok"}">${grandDays === 0 ? esc(t("pack_ready_now")) : `${esc(t("bud_done_by"))} ${esc(fmtDate(grandDays))}`}</span>${grandDays ? `<small>${grandDays} ${esc(t("pack_days_short_long"))}</small>` : ""}</div>` : ""}</div>
       ${partialHtml}${comingHtml}
