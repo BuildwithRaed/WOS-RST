@@ -22022,14 +22022,23 @@ async function renderBudgetsPage(opts = {}) {
     const dlPlan = dl && !dl.failed ? dl.plan : null;
     const plan = dlPlan || basePlan;
     const dates = !planPending && plan ? budgetGoalDates(goals, pagesRaw, plan, ck, due) : null;
-    // A goal with its own date (before or after the main target): the planner
-    // planned its part for that date (or, when it can't make it, for its
-    // earliest day), so that answer wins.
-    if (dates && dlPlan) goals.forEach((g, i) => {
-      if (due[i] == null || !dates[i] || dates[i].done) return;
-      const part = dl.parts.find((x) => !x.late && x.day === due[i]);
+    // The day a goal is bought for: its own date, else the main target; null =
+    // on a page that can't make the target (bought after it, no day of its own).
+    const stageDay = (g, i) => (due[i] != null ? due[i] : g.page && lateKeys.includes(g.page) ? null : mainDay);
+    const partOf = (g, i) => { const sd = stageDay(g, i); return dlPlan && sd != null ? dl.parts.find((x) => !x.late && x.day === sd) : null; };
+    // The plain plan with a part after the target: its other pages are bought by the target.
+    const splitPlan = !!splitMain && basePlan0 === splitMain.plan;
+    // The planner's own answer wins over the dates worked out from the buying
+    // days: a goal's part of the dated plan was planned for its day (or, when
+    // it can't make it, for its earliest day); without a dated plan, a page
+    // the plan buys by the target is done by it.
+    if (dates) goals.forEach((g, i) => {
+      const sd = stageDay(g, i);
+      if (sd == null || !dates[i] || dates[i].done) return;
+      if (!dlPlan) { if (splitPlan && due[i] == null && targetDays != null && dates[i].day > targetDays) dates[i] = { ...dates[i], day: targetDays, approx: false }; return; }
+      const part = partOf(g, i);
       if (!part) return;
-      if (part.ok) dates[i] = { ...dates[i], day: Math.min(dates[i].day, due[i], part.done != null ? part.done : due[i]), approx: false, pctDue: 1 };
+      if (part.ok) dates[i] = { ...dates[i], day: Math.min(dates[i].day, sd, part.done != null ? part.done : sd), approx: false, pctDue: 1 };
       else if (part.earliest != null) dates[i] = { ...dates[i], day: part.earliest, approx: false };
     });
     const cur = plan && plan.rows[0] ? plan.rows[0].currency : grandCurrency, smp = plan && plan.rows[0] ? plan.rows[0].price : undefined;
@@ -22094,7 +22103,11 @@ async function renderBudgetsPage(opts = {}) {
         const byD = myBy ? dIn : mainDay;
         const bs = goalByShort(myBy), byShort = `${goalByIcon(myBy)} ${bs}${byD != null ? `${bs ? " " : ""}${gdTxt({ day: byD })}` : ""}`;
         const ic = budgetGoalIcon(g, pagesRaw), open = BUDGET_GOAL_BY_OPEN === g.id;
-        const note = isLate ? (d != null ? t("gu_rest_cant_own") : t("gu_rest_cant")).replace("{date}", gdTxt({ day: lim })) : "";
+        // Why it is late, only where the plan says so itself: a page that can't make
+        // the target is bought the cheapest way after it; a part that can't make
+        // its day is bought as fast as possible.
+        const afterTarget = d == null && lateKeys.includes(g.page) && (!!dlPlan || splitPlan), part = partOf(g, i);
+        const note = !isLate ? "" : (afterTarget ? t("gu_rest_cant") : part && !part.ok ? t("gu_rest_cant_own") : "").replace("{date}", gdTxt({ day: lim }));
         return `<div class="gu-rr" data-goal="${esc(g.id)}">${ic.src ? `<img src="${esc(ic.src)}" alt="" loading="lazy" />` : `<i></i>`}<span class="gu-rr-n">${esc(packPageLabel(g.page))}</span><span class="c3-dt${isLate ? " late" : ""}${pending ? " wk" : ""}" title="${pending ? esc(t("budgets_working")) : ""}">${isLate ? "&#9888; " : ""}${pending ? "&hellip;" : own ? esc(t("gd_own")) : esc(gdTxt(dt))}</span><span class="c3-l2"><button type="button" class="bud-g-by${kind}${open ? " open" : ""}" data-goalby aria-expanded="${open}" title="${esc(byText(myBy, byD))}">${esc(byShort)} ${open ? "&#9652;" : "&#9662;"}</button></span>${open ? goalByPopHtml(myBy, mainDay) : ""}</div>${note ? `<div class="gu-rr-note">${esc(note)}</div>` : ""}`;
       };
       const diff = total - baseTotal;
