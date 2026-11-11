@@ -10322,7 +10322,7 @@ async function renderPurchasesPage() {
       if (differ) notes.push(t(isPick ? "pur_ms_dates_differ_p" : "pur_ms_dates_differ"));
       const noteHtml = notes.length ? `<div class="pur-ms-note">${esc(notes.join(" · "))}. ${esc(t("pur_ms_replan"))}</div>` : "";
       // My budget / By your target: two boxes, price and steps only.
-      const verHtml = vers.length > 1 ? `<div class="pur-ms-vers">${vers.map((v, k) => { const vm = stepModel(v.r, sugTable(v.r) || tb), vLocal = vm && vm.kind === "plain" ? vm.steps.slice(0, vm.planK).reduce((a, st) => a + packConvert(st.price, v.r.currency).n, 0) : packRowLocalUnits(v.r).reduce((a, x) => a + x, 0); return `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}"><span class="pur-vb-k">${esc(t(v.key === "target" ? "budgets_view_target" : "budgets_view_budget"))}</span><b>${esc(packFmtLocal(vLocal, v.r.currency, false, v.r.price))}</b><span class="pur-vb-s">${vm && vm.kind !== "card" && vm.kind !== "pick" ? esc(nSteps(vm.planK)) : ""}${v.s0.length ? `${vm && vm.kind !== "card" && vm.kind !== "pick" ? " · " : ""}×${v.s0.reduce((a, x) => a + x.count, 0)}` : ""}</span></button>`; }).join("")}</div>` : "";
+      const verHtml = vers.length > 1 ? `<div class="pur-ms-vers">${vers.map((v, k) => { const vm = stepModel(v.r, sugTable(v.r) || tb), vLocal = vm && vm.kind === "plain" ? vm.steps.slice(0, vm.planK).reduce((a, st) => a + packConvert(st.price, v.r.currency).n, 0) : packRowLocalUnits(v.r).reduce((a, x) => a + x, 0); return `<button type="button" data-pmver="${k}" class="${k === vi ? "on" : ""}"><span class="pur-vb-k">${esc(t(v.key === "target" ? (datedT ? "budgets_view_dates" : "budgets_view_target") : "budgets_view_budget"))}</span><b>${esc(packFmtLocal(vLocal, v.r.currency, false, v.r.price))}</b><span class="pur-vb-s">${vm && vm.kind !== "card" && vm.kind !== "pick" ? esc(nSteps(vm.planK)) : ""}${v.s0.length ? `${vm && vm.kind !== "card" && vm.kind !== "pick" ? " · " : ""}×${v.s0.reduce((a, x) => a + x.count, 0)}` : ""}</span></button>`; }).join("")}</div>` : "";
       // The button on each date: "up to N" (in order) or the prices it buys.
       const priceShort2 = (loc) => fmtL(loc).replace(/[^\d.,]/g, "");
       const priceShort = (usd) => priceShort2(local(usd));
@@ -23018,9 +23018,10 @@ async function renderBudgetsPage(opts = {}) {
       const mine = datedSetup.goals.map((g, i) => ({ g, d: datedDay(g, i) })).filter((y) => y.g.page === k && Object.keys(datedSegs.get(y.g.id) || {}).length);
       if (mine.length) {
         if (mine.some((y) => y.d == null)) return ["rd", t("b3_after")];
-        const bad = mine.map((y) => dl.parts.find((p) => !p.late && p.day === y.d)).filter((p) => p && !p.ok);
-        if (bad.length) return ["rd", "\u26A0 " + dShort(Math.max(...bad.map((p) => (p.earliest != null ? p.earliest : p.done || 0))))];
-        return ["ok", t("b3_by").replace("{date}", dShort(Math.max(...mine.map((y) => y.d))))];
+        // (the page's last day: a part that can't make its date counts with the day it is done)
+        const days = mine.map((y) => { const p = dl.parts.find((q) => !q.late && q.day === y.d); return p && !p.ok ? { d: p.earliest != null ? p.earliest : p.done || y.d, bad: true } : { d: y.d, bad: false }; });
+        const last = Math.max(...days.map((z) => z.d));
+        return days.some((z) => z.bad) ? ["rd", "\u26A0 " + dShort(last)] : ["ok", t("b3_by").replace("{date}", dShort(last))];
       }
     }
     if (split && BUDGET_VIEW === "main") {
