@@ -649,4 +649,4 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - PR #178: New heroes window N1 (Packs box, opened over My Purchases)
 - PR #179: per-upgrade goals (U2, card C, By when? pop-over, a By for each page's rest), Free now inside Budgets, marks on the planner pages; Roadmap and Can do pages removed
 - PR #180: Budgets and My Purchases follow the dated plan ("By your dates"), Hide / Show for the dates list
-- PR #?? (step 19): clean-up, translations, notes
+- PR #181 (step 19): clean-up, translations, notes
