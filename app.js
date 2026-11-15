@@ -5300,6 +5300,7 @@ async function renderOverview(opts = {}) {
     </div>
     ${visitorCan("quickpages") ? `<div id="quickRow" class="qk-wrap"></div>` : ""}
     <div id="stateAgeCard" class="dash-sec">${stateAgeCardHtml()}</div>
+    ${dashTodayOn() ? `<div id="dashToday" class="dash-sec"></div>` : ""}
     <div id="dashboardRoster" class="dash-sec"></div>
     <div id="troopSections" class="dash-sec2"></div>
   </div>`;
@@ -5307,6 +5308,7 @@ async function renderOverview(opts = {}) {
   drawQuickRow(content.querySelector("#quickRow"));
   // State age card: ✎ / Set opens the pop-up; saving redraws the Dashboard.
   content.querySelector("#stateAgeCard").addEventListener("click", (e) => { if (e.target.closest("[data-saopen]")) openStateAgeModal(() => keepPlace(() => renderOverview())); });
+  drawDashToday(content.querySelector("#dashToday"), seq);
 
 
   // ---- Roster heroes: the 3 heroes affecting Infantry / Lancers / Marksman ----
@@ -10875,10 +10877,38 @@ function packCalPin(root) {
   f();
 }
 
-async function renderPackCalendarPage() {
-  const seq = RENDER_SEQ;
-  const [tablesLoaded] = await Promise.all([packTablesRows(), ensurePackLinks()]);
-  if (seq !== RENDER_SEQ) return;
+// ---- Dashboard "Today" line (owner picked D, 15 Nov 2026) ----
+// Under the state card: the packs on sale today and the next event, the same numbers the
+// Pack calendar shows; tap = the calendar on today. Drawn at once with the events (they need no
+// data), the pack count follows when the pack tables are in (kept for the visit).
+function dashTodayOn() { return IS_OWNER || (visitorCan("packs") && !isHiddenFromVisitors("page", "packcalendar")); }
+function dashTodayHtml(m, withPacks) {
+  const bits = [];
+  if (withPacks) {
+    const nOn = new Set(m.collect(0, 0, true).filter((x) => x.gi != null).map((x) => x.gi)).size;
+    bits.push(`<span>${esc(t("pcl_packs_on").replace("{n}", nOn))}</span>`);
+  }
+  const ev = m.collect(-6, 120, false).filter((x) => (x.kind === "event" || (x.kind === "newheroes" && x.milestone)) && x.b >= 0).sort((x, y) => x.a - y.a)[0];
+  if (ev) {
+    const nm = ev.kind === "event" ? ev.title : "\u2B50 " + t("pack_cal_new_heroes");
+    const txt = ev.a <= 0 ? (ev.b === 0 ? t("pcl_ev_ends_today").replace("{name}", nm) : t("pcl_ev_ends").replace("{name}", nm).replace("{day}", m.wd(ev.b)))
+      : ev.a === 1 ? t("pcl_ev_tomorrow").replace("{name}", nm) : t("pcl_ev_in").replace("{name}", nm).replace("{n}", ev.a);
+    bits.push(`<span class="dt-ev">${esc(txt)}</span>`);
+  }
+  return `<button type="button" class="dash-today" data-dashtoday aria-label="${esc(t("pack_cal_title"))}"><span class="dt-ic" aria-hidden="true">&#128197;</span><span class="dt-tx"><b>${esc(t("pcl_today"))}</b>${bits.map((x) => " · " + x).join("")}</span><span class="dt-go" aria-hidden="true">&#8250;</span></button>`;
+}
+function drawDashToday(el, seq) {
+  if (!el) return;
+  el.innerHTML = dashTodayHtml(packCalModel([]), false);
+  el.addEventListener("click", (e) => { if (e.target.closest("[data-dashtoday]")) { PACK_CAL_WEEK = 0; PACK_CAL_DAY = null; PACK_CAL_DAY_MORE = false; goToTab("packcalendar"); } });
+  Promise.all([packTablesRows(), ensurePackLinks()]).then(([rows]) => {
+    if (seq !== RENDER_SEQ || !el.isConnected) return;
+    el.innerHTML = dashTodayHtml(packCalModel(rows), true);
+  }).catch(() => {});
+}
+// The calendar's packs (grouped like on the calendar), the person's plan and collect(from, to, withPacks)
+// = every item between two days (days from today). Used by the Pack calendar page and the Dashboard's Today line.
+function packCalModel(tablesLoaded) {
   const tables = tablesLoaded.filter((tb) => {
     const l = packLinkFor(tb.id);
     return typeof l.reset === "number" && l.reset > 0 && !l.template && (IS_OWNER || !l.hideVisitors);
@@ -10978,6 +11008,13 @@ async function renderPackCalendarPage() {
     }
     return items;
   };
+  return { tables, loc, t0, monIdx, dateOf, offOf, fmt, md, wd, wdmd, groups, plan, inPlanAt, planGroups, collect };
+}
+async function renderPackCalendarPage() {
+  const seq = RENDER_SEQ;
+  const [tablesLoaded] = await Promise.all([packTablesRows(), ensurePackLinks()]);
+  if (seq !== RENDER_SEQ) return;
+  const { loc, t0, monIdx, dateOf, offOf, fmt, md, wd, wdmd, groups, plan, inPlanAt, planGroups, collect } = packCalModel(tablesLoaded);
   const shownItem = (it) => {
     if (it.kind === "event") return !PACK_CAL_FILTER.off.has("event");
     if (PACK_CAL_FILTER.off.has(it.kind)) return false;
