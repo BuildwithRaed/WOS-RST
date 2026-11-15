@@ -4649,3 +4649,4 @@ span.mk.mk svg{flex:none}
   .dash-today .dt-tx b{ color:var(--frost); }
   .dash-today .dt-ev{ color:var(--ice); }
   .dash-today .dt-go{ flex:none; color:var(--muted); font-size:18px; line-height:1; }
+  [dir="rtl"] .dash-today .dt-go{ transform:scaleX(-1); }
