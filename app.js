@@ -7141,7 +7141,7 @@ function cdaCardHtml(pg, info, P) {
 // Budgets visit (CDA_BUILD_P, shared), after the page is drawn.
 function cdaReady() { return !!(CDA_BUILD_P && CDA_BUILT && CDA_LOADED >= CDA_PAGES.length && CDA_BUILD_P.done); }
 async function cdaEnsure() {
-  if (!IS_OWNER) return;
+  if (!visitorCan("cando")) return;
   await Promise.all([ensureUpgradeOrder(), cdaLoadSettings()]);
   if (CDA_BUILD_P) return CDA_BUILD_P;
   CDA_BUILT = {}; CDA_LOADED = 0; CDA_PLAN_MEMO = null; CDA_NOTE = null;
@@ -7164,7 +7164,7 @@ async function cdaEnsure() {
 }
 // Called after each Budgets draw: starts the build once, then fills the tile, the sheet and the goal chips.
 function cdaBudgetsAfterDraw() {
-  if (!IS_OWNER || TAB !== "budgets") return;
+  if (!visitorCan("cando") || TAB !== "budgets") return;
   if (cdaReady()) { cdaFillBudgets(); return; }
   const seq = RENDER_SEQ;
   // A moment later, so the page shows first.
@@ -7238,7 +7238,7 @@ function cdaCounts(P) {
   return { ups, pages };
 }
 function cdaTileHtml() {
-  return IS_OWNER ? `<button type="button" class="b3-tile b3-free" data-cdatile data-b3sheet="cando">${cdaTileInner()}</button>` : "";
+  return visitorCan("cando") ? `<button type="button" class="b3-tile b3-free" data-cdatile data-b3sheet="cando">${cdaTileInner()}</button>` : "";
 }
 function cdaTileInner() {
   const ready = cdaReady(), P = ready ? cdaPlan() : null, c = P ? cdaCounts(P) : null;
@@ -7457,7 +7457,7 @@ function mkHtml(tr, plan, k) {
 }
 // Puts the worked-out marks into the page (again after a part of it redraws).
 function mkApply() {
-  if (!MK || MK.tab !== TAB || !IS_OWNER) return;
+  if (!MK || MK.tab !== TAB || !visitorCan("cando")) return;
   const slot = MK_SLOTS[TAB];
   MK.list.forEach((x, k) => {
     let s = {};
@@ -7475,7 +7475,7 @@ function mkApply() {
 }
 async function mkCompute() {
   const seq = ++MK_SEQ, tab = TAB;
-  if (!IS_OWNER || !MK_SLOTS[tab]) { MK = null; return; }
+  if (!visitorCan("cando") || !MK_SLOTS[tab]) { MK = null; return; }
   const pg = CDA_PAGES.find((p) => p.tab === tab);
   if (!pg) return;
   try {
@@ -7502,9 +7502,9 @@ async function mkCompute() {
   } catch (e) { console.warn("marks", e); }
 }
 // Worked out after the page draws and again after a change on it.
-function mkSoon(ms) { if (!IS_OWNER) return; clearTimeout(MK_T); MK_T = setTimeout(mkCompute, ms == null ? 450 : ms); }
+function mkSoon(ms) { if (!visitorCan("cando")) return; clearTimeout(MK_T); MK_T = setTimeout(mkCompute, ms == null ? 450 : ms); }
 ["change", "click"].forEach((ev) => document.addEventListener(ev, (e) => {
-  if (!IS_OWNER || !MK_SLOTS[TAB] || !e.target.closest || e.target.closest("[data-mk], .mk-pop")) return;
+  if (!visitorCan("cando") || !MK_SLOTS[TAB] || !e.target.closest || e.target.closest("[data-mk], .mk-pop")) return;
   if (e.target.closest("#content, .modal-overlay, .gs-wrap, #gearSheet")) mkSoon();
 }, true));
 function mkPopClose() { document.querySelectorAll(".mk-pop").forEach((p) => { popForget(p); p.remove(); }); }
@@ -7537,7 +7537,7 @@ document.addEventListener("keydown", (e) => {
 }, true);
 // The page's (i): what the marks mean (owner only), in its title's bubble.
 function mkInfo(root) {
-  if (!IS_OWNER || !MK_SLOTS[TAB]) return;
+  if (!visitorCan("cando") || !MK_SLOTS[TAB]) return;
   const h = root.querySelector(".plx-head h2, .page-head h2");
   if (!h || h.querySelector("[data-mkinfo]")) return;
   const d = document.createElement("div");
@@ -17882,7 +17882,7 @@ document.addEventListener("click", () => { const c = document.getElementById("co
 {
   let queued = false;
   let mkSeen = -1;
-  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (IS_OWNER) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
+  const run = () => { queued = false; const c = document.getElementById("content"); if (c) { if (visitorCan("cando")) { if (mkSeen !== RENDER_SEQ) { mkSeen = RENDER_SEQ; if (!MK || MK.tab !== TAB) MK = null; mkSoon(500); } mkInfo(c); mkApply(); } infoize(c); plxTopBox(c); bsSlideFit(c); if (DASH_RC_OPEN) { if (TAB !== "overview" || !DASH_RC_MQ.matches) dashRcSheet(null); else if (!document.querySelector(".rc-card.rc-open")) dashRcSheet(DASH_RC_OPEN); } } };
   const c = document.getElementById("content");
   if (c) new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(run); } }).observe(c, { childList: true, subtree: true });
   let pinned = null;
@@ -22962,7 +22962,7 @@ async function renderBudgetsPage(opts = {}) {
     if (sh === "stats" && grandDeltas.length) return { title: t("budgets_stat_increase_total"), html: statTableHtml(grandDeltas, "all") + (dashStats ? "" : `<div class="meta" style="font-size:10px; margin-top:6px; color:var(--danger);">${esc(t("budgets_stats_unavailable"))}</div>`) };
     if (sh === "goals" && visitorCan("goals") && goalsCardHtml) return { title: t("goals_title"), info: goalsInfoHtml, html: goalsCardHtml };
     if (sh === "settings") return { title: t("t12x_settings"), html: settingsHtml };
-    if (sh === "cando" && IS_OWNER) return { title: t("cdb_sheet_title"), html: `<div data-cdasheet>${cdaSheetInner()}</div>` };
+    if (sh === "cando" && visitorCan("cando")) return { title: t("cdb_sheet_title"), html: `<div data-cdasheet>${cdaSheetInner()}</div>` };
     if (sh === "missing" && missing.length) return { title: t("b3_missing").replace("{n}", missing.length), html: missing.map(missRow).join("") };
     if (sh.startsWith("page:")) { const x = B3_PAGES.find((y) => "page:" + y.pg.calcKey === sh); if (x) return { title: x.pg.calcKey === "shining_skins" ? t("sh_title") : (x.glabel ? `${x.glabel} · ` : "") + x.label, html: pageSheet(x) }; }
     return null;
@@ -31270,7 +31270,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=da139423fe";
+      s.src = "admin.min.js?v=9d5acba729";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
