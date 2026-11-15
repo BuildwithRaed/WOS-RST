@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "6ec4dc7f8a";
+window.ADMIN_BUILD = "da139423fe";
 
 // ============================================================
 // ADMIN PAGE
@@ -1748,7 +1748,7 @@ async function renderAdminVisibility(body) {
       accessRow("spendbudget", "My budget (spending limit)", "the \"My budget\" box and plan on Budgets, and the weekly budget bar on My Purchases"),
       accessRow("quickpages", "Quick pages row", "the row of page shortcuts on the Dashboard; each visitor pins their own"),
       accessRow("cando", "Can do now", "the \"Can do now\" button and the green marks of what their Backpack can upgrade (Chief Gear, Chief Charm, Heroes Gears, Pets, T12, Experts)"),
-      accessRow("goals", "Order of goals & Roadmap", "goal flags, Order of goals, hero targets and mini targets on Budgets, and the Roadmap page; saved per visitor"),
+      accessRow("goals", "Order of goals", "goal flags, Order of goals, hero targets and mini targets on Budgets, and the goal tags on My Purchases; saved per visitor"),
     ].join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
     ${section(t("vis_experts"), t("vis_experts_desc"), experts.map((e) => row("experts", e, dataName(e))).join(""), experts.map((e) => ["experts", e]))}
