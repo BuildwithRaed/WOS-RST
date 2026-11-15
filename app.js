@@ -1628,31 +1628,15 @@ const T = {
   rch_first: { en: "{item} runs out first · {n} left" },
   rch_my_order: { en: "My order" },
   rch_best: { en: "Best value" },
-  rch_key_covers: { en: "Backpack covers" },
-  rch_key_left: { en: "still to go to target" },
-  rch_mark_tip: { en: "How far your Backpack gets you now" },
-  rch_covers: { en: "Backpack covers it" },
-  rch_none: { en: "0 of {m} {unit} · {item}" },
-  rch_part: { en: "{n} of {m} {unit}" },
-  rch_u_levels: { en: "levels" },
-  rch_trades: { en: "Uses this week's trades:" },
   rch_with_trades: { en: "with trades" },
   rlk_all_at: { en: "all {group} at {lv}" },
   rlk_or: { en: "or" },
-  rlk_wait: { en: "Lv {lv}+ needs {needs} first" },
-  rlk_wait_target: { en: "raise its target" },
   rch_u_pieces: { en: "pieces" },
   rch_u_charms: { en: "charms" },
   rch_u_pets: { en: "pets" },
   rch_u_nodes: { en: "nodes" },
-  rch_all_title: { en: "All troops · {n} {unit} go up" },
   rch_all_up: { en: "{n} {unit} go up" },
-  rch_all_none: { en: "nothing yet" },
-  rch_all_done: { en: "at target" },
-  rch_all_go: { en: "Go to {troop} ›" },
   rch_u_experts: { en: "experts" },
-  rch_covers_short: { en: "covers it" },
-  rch_none_short: { en: "— · {item} short" },
   rch_u_tracks: { en: "tracks" },
   rch_order_reset: { en: "Reset" },
   gx_title: { en: "Hero gear for XP" },
@@ -2886,54 +2870,26 @@ const T = {
   bp_chests_n: { en: "{n} chests to open" },
   bud_vip_note: { en: "{tier} daily bundle: +{n} free Mythic General Hero Shards {when} ({d} a day)" },
   goals_title: { en: "Order of goals" },
-  gd_title: { en: "Goal dates" },
-  gd_legend: { en: "⚠ = after its date (target {date})" },
-  gd_legend_nt: { en: "⚠ = after its date" },
-  gd_goal: { en: "Goal" },
-  gd_with: { en: "Your order" },
-  gd_without: { en: "Without" },
-  gd_blue: { en: "blue" },
-  gd_blue_note: { en: "= your order changes the date" },
-  gd_same: { en: "Same packs either way, only the order moves" },
-  gd_ok: { en: "Ready by its date" },
-  gd_late: { en: "After its date" },
   gd_own: { en: "own plan" },
   pur_for: { en: "for: {goal}" },
   goals_desc_drag: { en: "Your targets from each ticked page, plus mini targets on the way. The top goal gets what the packs give first. Drag ⋮⋮ to change the order." },
-  goal_main: { en: "main" },
-  goal_mini: { en: "mini" },
   goal_lv: { en: "Lv" },
-  goal_add: { en: "+ Add mini target" },
-  goal_page: { en: "Page" },
-  goal_level: { en: "Level to reach first" },
-  goal_add_btn: { en: "Add" },
-  goal_cancel: { en: "Cancel" },
-  goal_so_far: { en: "{v} so far" },
-  goal_have: { en: "Already there" },
   goal_now: { en: "Now" },
   goal_same_path: { en: "Same packs as your plan, only the order changes · total {v} · done {date}" },
   goal_next: { en: "{n} goals · next: {goal} · {date}" },
   goal_count: { en: "{n} goals" },
-  goal_mini_note: { en: "A mini target is a level on the way to a page's target: a pet, an expert, a section, a hero's stars…" },
-  goal_open_pages: { en: "Open these pages once to get their levels here: {p}" },
   goal_upto: { en: "Up to {x}" },
   goal_all_lv: { en: "All tracks to Lv {n}" },
   goal_tier: { en: "Tier {t}" },
   goal_paths_lv: { en: "All paths to Lv {n}" },
   goal_hg_mastery: { en: "Mastery" },
   goal_hg_enhance: { en: "Enhance" },
-  goal_no_levels: { en: "No level between today and the target on these pages." },
   goal_remove: { en: "Remove" },
-  goal_own_plan: { en: "Planned on its own" },
   goal_by_main: { en: "Main target" },
   goal_by_svs: { en: "Next SvS" },
   goal_by_koi: { en: "Next KOI" },
   goal_by_gen: { en: "Next new Gen" },
-  goal_by_date: { en: "Pick a date" },
   goal_by_title: { en: "By when?" },
-  goal_by_note: { en: "Can't make it? You'll see how far you get by then and when it's fully done." },
-  goal_ready: { en: "ready {date}" },
-  goal_late: { en: "By {by}: {p}% \u00b7 fully done {date}" },
   goal_with_dates: { en: "With your dates: total {v} ({d}) \u00b7 without them {w}" },
   goal_dates_cant: { en: "Some dates can't be met: those goals are planned for their earliest day." },
   gu_desc: { en: "Only the upgrades you pick are goals, each with its own goal level. The top goal gets what the packs give first (with different By dates, the earlier date first); everything else is the rest of the plan, page by page. Drag ⋮⋮ to change the order." },
@@ -2946,7 +2902,6 @@ const T = {
   gu_none: { en: "Nothing to add: every upgrade on your ticked pages is a goal already." },
   gu_open: { en: "Open these pages once to pick their upgrades here: {p}" },
   gu_empty: { en: "No goals yet. Tap \"+ Add goal\" to pick the upgrades that come first." },
-  gu_rest: { en: "Rest of the plan · {n} upgrades · after your goals" },
   gu_rest_name: { en: "Rest of the plan" },
   gu_rest_of: { en: "{p} \u00b7 rest" },
   gu_rest_sub: { en: "What is left of each page after the goals above. Tap a date to change it." },
@@ -2959,9 +2914,6 @@ const T = {
   gu_sum_same: { en: "the same as {what} ({w})." },
   gu_sum_what: { en: "everything by {date}" },
   gu_sum_what_none: { en: "the plan without your dates" },
-  gu_blue_note: { en: "= being a goal moves its date (Without = when its whole page is done)" },
-  gu_rest_done: { en: "Rest of the plan: done {date}" },
-  gu_rest_target: { en: " · target {date}" },
   gu_by_gen_s: { en: "New Gen" },
   gbp_upcoming: { en: "Upcoming · tap one" },
   gbp_targets: { en: "Targets" },
@@ -2975,10 +2927,6 @@ const T = {
   gbp_use_x: { en: "Use" },
   gu_by_tg_s: { en: "Target" },
   gu_info_date: { en: "Each goal's date is when the plan's packs reach its level; ⚠ amber = after its By date (or the target). Tap the By chip to change it." },
-  gu_page_target: { en: "page target {x}" },
-  gu_ready: { en: "ready" },
-  gu_late: { en: "late" },
-  gu_have: { en: "ready now" },
   gu_lock: { en: "Needs {x} first: that research is counted with the rest of the plan, not this goal." },
   gu_charm: { en: "charm {n}" },
   gu_stars: { en: "Stars" },
@@ -3200,35 +3148,19 @@ const T = {
   hg_pieces: { en: "Pieces" },
   hg_mastery: { en: "Mastery" },
   hg_enhance: { en: "Enhance" },
-  hg_can_do: { en: "Can do" },
   hg_next_ms: { en: "Next milestone: {piece} gives {gain}." },
   hg_tap_col: { en: "Tap a piece to change it." },
   hg_needs_this: { en: "Needs for this piece" },
   hg_max_piece: { en: "Max this piece" },
   cg_trades: { en: "Trades" },
-  cg_can_now: { en: "Can do now" },
-  cg_none_up: { en: "Nothing can go up yet" },
-  cando_short: { en: "Can do" },
-  cando_at_target: { en: "All at target" },
-  cando_nothing: { en: "Nothing yet" },
-  cdp_desc: { en: "Each page uses your whole Backpack. Doing one page uses items another page counts on." },
   cdp_pages_up: { en: "Pages that can go up" },
   cdp_of: { en: "{n} of {m}" },
-  cdp_steps: { en: "Upgrades in all" },
   cdp_runs_out: { en: "runs out first:" },
   cdp_short: { en: "{item} short" },
   cdp_open: { en: "Open" },
-  cdp_not_yet: { en: "Not worked out yet" },
-  cdp_not_yet_d: { en: "Open the page once to see it here" },
-  cdp_saved_note: { en: "Worked out when you last opened each page. Open a page to refresh it." },
-  cdp_now: { en: "just now" },
-  cdp_min: { en: "{n} min ago" },
-  cdp_h: { en: "{n} h ago" },
-  cdp_d: { en: "{n} d ago" },
   cdp_more: { en: "+{n} more" },
   cdp_details: { en: "Details" },
   cdp_fold: { en: "Fold" },
-  cdp_trades_used: { en: "Trades used:" },
   cdb_free: { en: "Free now" },
   cdb_ups: { en: "{n} upgrades" },
   cdb_working: { en: "working out…" },
@@ -3245,7 +3177,6 @@ const T = {
   cdb_not_yet: { en: "not yet" },
   cdb_short: { en: "{item} short" },
   cdb_items: { en: "items" },
-  cda_desc: { en: "Works out every ticked page from your Backpack, sharing it: an item one page uses isn't counted again for another. Tick pages and single upgrades to choose where it goes." },
   cda_edit_order: { en: "Edit order" },
   cda_packs: { en: "Include this week's packs" },
   cda_packs_d: { en: "From My Purchases: bought / will buy this week" },
@@ -3299,17 +3230,8 @@ const T = {
   cda_s_experts_research: { en: "Exp. Research" },
   cda_s_islands: { en: "Islands" },
   cda_s_shining_skins: { en: "Skins" },
-  exp_cd_now: { en: "{n} now" },
-  exp_cd_short: { en: "{item} short" },
-  cando_lab_week: { en: "+{n} Refined FC from this week's Lab ({m} refinements left)" },
-  cando_sub: { en: "What your Backpack can upgrade right now, inside your targets." },
-  cando_more: { en: "+{n} more" },
-  cando_spend: { en: "How to spend it" },
-  cando_mode_desc: { en: "My order: goes down your list below. Best value: the most stat % per item, any troop." },
-  cando_best_note: { en: "Best value doesn't use your order: it picks the upgrades that give the most % for what your Backpack holds, any troop. Switch to My order to use (and change) your order." },
   cando_order: { en: "Your upgrade order" },
   cando_drag_hint: { en: "Drag ⋮⋮ to move a row. Same order on every page." },
-  cando_show_all: { en: "Show all troops ›" },
   cg_pieces: { en: "Pieces" },
   cg_set3: { en: "3-piece set" },
   cg_set6: { en: "6-piece set" },
@@ -3400,11 +3322,6 @@ const T = {
   pur_newgen_last: { en: "Last new heroes" },
   pur_newgen_gen: { en: "Their Gen" },
   pur_newgen_start: { en: "Pack starts" },
-  pur_newgen_with: { en: "Comes with the new heroes." },
-  pur_newgen_after: { en: "Comes {n} weeks after the new heroes." },
-  pur_ng_from_state: { en: "From your state age (day {day}): Gen {gen} heroes came on {date}." },
-  pur_ng_change: { en: "change" },
-  pur_ng_own: { en: "Know the exact date? Set it yourself" },
   pur_ng_set_state: { en: "Set your state's age" },
   pur_ng_use_state: { en: "Use my state age instead" },
   pur_a2_add: { en: "Add" },
@@ -3480,8 +3397,6 @@ const T = {
   pur_ed_save: { en: "Save" },
   pur_ed_saved: { en: "Saved ✓" },
   pkb_new_heroes: { en: "New heroes" },
-  pkb_ng_next: { en: "Next: Gen {gen} heroes · {date}" },
-  pkb_ng_next_nogen: { en: "Next new heroes · {date}" },
   pkb_ng_in: { en: "in {n} days" },
   ng_next_lbl: { en: "Next new heroes" },
   ng_in_hall: { en: "in Hall of Heroes" },
@@ -3495,7 +3410,6 @@ const T = {
   ng_with_heroes: { en: "Heroes + {name}" },
   ng_on_now: { en: "on now" },
   ng_next_in: { en: "next · {n} days" },
-  pkb_ng_hall: { en: "★ {hero} in Hall of Heroes" },
   pur_gen: { en: "Gen {n}" },
   pur_now: { en: "now" },
   pur_budget_line: { en: "My Purchases: {n} coming packs counted" },
@@ -6140,7 +6054,7 @@ async function renderGearLevelingGroup(target) {
         <button type="button" data-hgstep="${esc(tb)}|${role}|1" aria-label="+" ${v >= lastIdx(tb) ? "disabled" : ""}>+</button></div></div>`;
     };
     const sec = (tb) => {
-      const id = `${troop}|${piece}|${tb}`, { from, to } = cur(troop, piece, tb);
+      const { from, to } = cur(troop, piece, tb);
       const chips = tb === EN ? `<div class="hg-msr">${msIdx.map((i) => `<span class="hg-msc ${i <= from ? "r" : i <= to ? "t" : "g"}">${i <= from ? "&#10003; " : ""}E ${esc(lab(EN, i))} · ${msGain(piece, i)}</span>`).join("")}</div>` : "";
       return `<div class="ch-sec hg-ssec"><div class="ch-sec-h"><b>${esc(trackDisplayName(tb))}</b></div>${stepper(tb, "from")}${stepper(tb, "to")}${chips}</div>`;
     };
@@ -6782,11 +6696,6 @@ function reachPlan(tracks, have, mode, rows, conv, opts) {
   const all = new Map();
   Object.keys(tradesBy).forEach((id) => { trades[id] = tradeList(tradesBy[id]); tradesBy[id].forEach((n, r) => all.set(r, (all.get(r) || 0) + n)); });
   return { lv, left, first: stopItems[0] || null, blocker, waits, trades, tradeSum: tradeList(all), reached: open.filter((tr) => lv[tr.id] >= tr.to).length, total: open.length };
-}
-// "1,340 Design → 134 Amber · 20 Polish → 1,000 Alloy" (trades "can reach" used).
-function reachTradeText(list) {
-  const n = (v) => Math.round(v).toLocaleString();
-  return (list || []).map((x) => `<b>${esc(n(x.give))} ${esc(materialDisplayName(itemShortName(x.from)))}</b> &rarr; <b>${esc(n(x.get))} ${esc(materialDisplayName(itemShortName(x.to)))}</b>`).join(" · ");
 }
 const CANDO_COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
 // ---- "Can do now" page (owner only: render() sends visitors to the Dashboard) ----
@@ -7661,13 +7570,8 @@ function cdaOrderSheet() {
   draw();
   m.style.display = "flex";
 }
-// ---- "See all troops ›": a small sheet with every troop at once (design C) ----
-// Pages with troops keep their last plan here: { plan, tracks, unit, go(troop) };
-// tracks carry name (piece), short (track letter), lab(i) (level label) and grp
-// (tracks of one piece share their stats, counted once).
-const REACH_LAST = {};
-const reachGoTroop = (key) => (troop) => { const b = document.querySelector(`[data-tsw="${key}"] [data-tswtroop="${troop}"]`); if (b) b.click(); };
-let REACH_ALL_OPEN = null; // troop open in the sheet
+// What a plan adds to the stats of some tracks ("+6% LETH · HP"); tracks of one piece (grp)
+// share their stats and count once.
 const REACH_STAT_ABBR = { Attack: "ATK", Defense: "DEF", Lethality: "LETH", Health: "HP" };
 function reachTroopGain(tracks, plan) {
   const before = {}, out = {}, seen = new Set();
@@ -7685,88 +7589,6 @@ function reachGainText(g) {
   const r = (v) => bidiNum(`+${Math.round(v * 10) / 10}%`);
   if (ks.length > 1 && ks.every((k) => Math.abs(g[k] - g[ks[0]]) < 0.05)) return `${r(g[ks[0]])} ${ks.map((k) => REACH_STAT_ABBR[k]).join(" · ")}`;
   return ks.map((k) => `${r(g[k])} ${REACH_STAT_ABBR[k]}`).join(" ");
-}
-function openReachAllSheet(key) {
-  const last = REACH_LAST[key];
-  if (!last) return;
-  let m = document.getElementById("rchAllSheet");
-  if (!m) { m = document.createElement("div"); m.id = "rchAllSheet"; m.className = "modal-overlay adm-sheet-wrap"; document.body.appendChild(m); }
-  const COLORS = { Infantry: "#7ee6a8", Lancer: "var(--ice)", Marksman: "#f0a3c4" };
-  const draw = () => {
-    const { plan, tracks, unit } = REACH_LAST[key];
-    const troops = ["Infantry", "Marksman", "Lancer"].map((troop) => {
-      const mine = tracks.filter((tr) => reachTroopKey(tr.troop) === troop && tr.to > tr.from);
-      const up = mine.filter((tr) => plan.lv[tr.id] > tr.from);
-      return { troop, mine, up, gain: reachGainText(reachTroopGain(mine, plan)) };
-    });
-    const total = troops.reduce((n, x) => n + x.up.length, 0);
-    if (!REACH_ALL_OPEN || !troops.some((x) => x.troop === REACH_ALL_OPEN && x.up.length)) REACH_ALL_OPEN = (troops.find((x) => x.up.length) || {}).troop || null;
-    const first = plan.first ? esc(t("rch_first").replace("{item}", "@@").replace("{n}", /\(minutes\)$/.test(plan.first) ? bsTime(Math.max(0, plan.left[plan.first] || 0)) : Math.floor(Math.max(0, plan.left[plan.first] || 0)).toLocaleString())).replace("@@", esc(materialDisplayName(itemShortName(plan.first)))) : "";
-    const rowsOf = (x) => {
-      const byName = new Map();
-      x.up.forEach((tr) => { if (!byName.has(tr.name)) byName.set(tr.name, []); byName.get(tr.name).push(tr); });
-      return [...byName.entries()].map(([name, list]) => {
-        const parts = list.map((tr) => `${tr.short ? `<i>${esc(tr.short)}</i> ` : ""}${esc(tr.lab(tr.from))}&rarr;<em>${esc(tr.lab(plan.lv[tr.id]))}</em>`);
-        // The same step on every charm of a piece shows once ("Jacket ×3 16.8→17").
-        const shown = parts.every((x) => x === parts[0]) ? [parts[0]] : parts;
-        return `<div class="rcs-row"><b>${esc(name)}${list.length > 1 && !list[0].short ? ` <span class="meta">×${list.length}</span>` : ""}</b><span>${shown.join(" · ")}</span></div>`;
-      }).join("");
-    };
-    m.innerHTML = `<div class="modal-box adm-sheet rcs-box" role="dialog" aria-modal="true">
-      <div class="rcs-head"><div><b>${esc(t("rch_all_title").replace("{n}", total).replace("{unit}", t(unit)))}</b>${first ? `<div class="rch-first">${first}</div>` : ""}</div>${closeXHtml("data-rcsx")}</div>
-      ${troops.map((x) => {
-        const open = REACH_ALL_OPEN === x.troop && x.up.length;
-        return `<div class="rcs-tr${open ? " open" : ""}" style="--tc:${COLORS[x.troop]};">
-          <button type="button" class="rcs-line" data-rcstr="${x.troop}" ${x.up.length ? "" : "disabled"}><i></i><b>${esc(troopDisplayName(x.troop))}</b><span class="meta">${x.up.length ? esc(t("rch_all_up").replace("{n}", x.up.length).replace("{unit}", t(unit))) : esc(t(x.mine.length ? "rch_all_none" : "rch_all_done"))}</span><span class="rcs-g">${esc(x.gain)}</span>${x.up.length ? `<span class="rcs-car">${open ? "&#9652;" : "&#9662;"}</span>` : ""}</button>
-          ${open ? `<div class="rcs-body">${rowsOf(x)}${last.go ? `<button type="button" class="btn ghost small rcs-go" data-rcsgo="${x.troop}">${esc(t("rch_all_go").replace("{troop}", troopDisplayName(x.troop)))}</button>` : ""}</div>` : ""}
-        </div>`;
-      }).join("")}
-      <div class="rcs-foot"><div class="rch-seg"><button type="button" data-rcsmode="order" class="${UPGRADE_ORDER.mode !== "best" ? "on" : ""}">${esc(t("rch_my_order"))}</button><button type="button" data-rcsmode="best" class="${UPGRADE_ORDER.mode === "best" ? "on" : ""}">${esc(t("rch_best"))}</button></div></div>
-    </div>`;
-  };
-  draw();
-  m.style.display = "flex";
-  m.onclick = (ev) => {
-    if (ev.target === m || ev.target.closest("[data-rcsx]")) { m.style.display = "none"; return; }
-    const tr = ev.target.closest("[data-rcstr]"), go = ev.target.closest("[data-rcsgo]"), md = ev.target.closest("[data-rcsmode]");
-    if (tr) { REACH_ALL_OPEN = REACH_ALL_OPEN === tr.dataset.rcstr ? "" : tr.dataset.rcstr; draw(); return; }
-    if (md) { if (UPGRADE_ORDER.mode !== md.dataset.rcsmode) { UPGRADE_ORDER.mode = md.dataset.rcsmode; saveUpgradeOrder(); if (REACH_HOOKS[key]) REACH_HOOKS[key](); draw(); } return; }
-    if (go) {
-      m.style.display = "none";
-      const l = REACH_LAST[key];
-      if (l && l.go) l.go(go.dataset.rcsgo);
-      // Then scroll to the first piece the Backpack takes up.
-      setTimeout(() => { const el = [...document.querySelectorAll(".rch-mark:not(.none), .rch-mini:not(.none)")].find((x) => x.offsetParent); if (el) el.scrollIntoView({ block: "center", behavior: "smooth" }); }, 350);
-    }
-  };
-}
-document.addEventListener("click", (ev) => { const b = ev.target.closest("[data-rchall]"); if (b) openReachAllSheet(b.dataset.rchall); });
-// "✓178" between Now and Target, and the bar + "6 of 28 levels" under it.
-function reachMarkHtml(from, reach, to, label) {
-  if (!(to > from)) return "";
-  const done = reach >= to, none = reach <= from;
-  return `<span class="rch-mark${done ? " full" : none ? " none" : ""}" title="${esc(t("rch_mark_tip"))}">${none ? "—" : `&#10003;${esc(label(reach))}`}</span><span class="lvarr">&rarr;</span>`;
-}
-function reachBarHtml(from, reach, to, blockItem, unitKey) {
-  if (!(to > from)) return "";
-  const pct = Math.max(0, Math.min(100, ((reach - from) / (to - from)) * 100));
-  const done = reach >= to;
-  const txt = done ? `${esc(t("rch_covers"))} &#10003;` : reach <= from && !blockItem ? esc(t("rch_part").replace("{n}", 0).replace("{m}", to - from).replace("{unit}", t(unitKey))) : reach <= from
-    ? `<span class="rch-amber">${esc(t("rch_none").replace("{m}", to - from).replace("{unit}", t(unitKey)).replace("{item}", blockItem ? materialDisplayName(itemShortName(blockItem)) : "—"))}</span>`
-    : esc(t("rch_part").replace("{n}", reach - from).replace("{m}", to - from).replace("{unit}", t(unitKey)));
-  return `<div class="rch-bar"><div class="rch-track"><i style="width:${pct}%;"></i></div><span>${txt}</span></div>`;
-}
-// A node the planner stopped because research before it isn't done:
-// "🔒 Lv 15+ needs Troop Skill 2 first" (+ "raise its target" when that
-// research's own target is lower).
-function reachWaitHtml(pg, nodes, tr, plan, tracks) {
-  const w = plan.waits && plan.waits[tr.id];
-  if (!w || !w.length) return "";
-  const lvl = plan.lv[tr.id] + 1;
-  const rules = researchLockRulesAt(pg, nodes, tr.key, lvl);
-  if (!rules.length) return "";
-  const low = w.some(([id, l]) => { const x = tracks.find((y) => y.id === id); return x && x.to < l; });
-  return `<div class="rch-wait">&#128274; ${esc(t("rlk_wait").replace("{lv}", lvl).replace("{needs}", rules.map((r) => researchNeedsText(pg, nodes, r)).join(" + ")))}${low ? ` <span class="rch-amber">· ${esc(t("rlk_wait_target"))}</span>` : ""}</div>`;
 }
 
 async function updateHeroGearTotals() {
@@ -22283,13 +22105,6 @@ function wireBudgetGoals(box) {
     HERO_TARGETS.extra = HERO_TARGETS.extra.filter((x) => x !== id);
     htSave();
   }));
-  const dateEl = box.querySelector("[data-goalbydate]");
-  if (dateEl) dateEl.addEventListener("change", () => {
-    if (!packValidDay(dateEl.value)) return;
-    const gid = dateEl.closest("[data-goal]").dataset.goal;
-    BUDGET_GOALS.by = { ...(BUDGET_GOALS.by || {}), [gid]: "date:" + dateEl.value };
-    BUDGET_GOAL_BY_OPEN = null; saveBudgetGoals(); redraw();
-  });
   // Drag a row by its ⋮⋮ handle (dragSort): the only way to move a goal
   // ↑ / ↓ on the focused handle move it too.
   box.querySelectorAll("[data-goaldrag]").forEach((h) => dragSort(h, {
@@ -23691,7 +23506,6 @@ async function renderChiefGearCalc() {
   // The pieces in 3 troop columns, read row by row (also the order of ‹ › in the sheet).
   const COLS = ["Infantry", "Lancer", "Marksman"];
   const ORDER = [0, 1].flatMap((i) => COLS.map((tr) => (CHIEF_GEAR_PIECES.filter((p) => p.troop === tr)[i] || {}).key)).filter(Boolean);
-  const stepLab = (i, from) => (rows[i] && rows[from] && rows[i].tier === rows[from].tier ? cgStars(rows[i]) : cgBadge(rows[i]));
 
   function pieceHtml(p) {
     const st = CHIEF_GEAR_STATE[p.key], cap = chiefGearCapIdx();
