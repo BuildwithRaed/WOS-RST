@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "a4bc50e221";
+window.SCAN_BUILD = "38a1edd2ea";
 
 
 // ---- Backpack: read game screenshots ----
@@ -2722,15 +2722,12 @@ function openPackScanMain(opts) {
       <label class="pks-sw">${esc(t(c.scale ? "pks_on" : "pks_off"))} <input type="checkbox" class="bset-sw" data-pksscale="${ci}" ${c.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></label></div>`;
     if (!c.ladOpen) return line;
     const rows = rowsOf(c);
-    // Each box: its price (tap = the screenshot is this price) and, on a worked-out
-    // step, its multiplier to tap and type (×2.5); a saved step keeps its saved numbers.
+    // Each box: its price (tap = the screenshot is this price) and its multiplier;
+    // amounts are changed in the table below (owner, 16 Nov 2026), not here.
     const box = ([p, mm], i) => {
       const r = rows.find((x) => x.usd != null && Math.abs(x.usd - p) < 0.005);
-      const canMul = i > k && c.scale && r && !r.kept && !r.savedEdit;
-      const typed = canMul && c.mult && c.mult[p] > 0, id = `${ci}|${p}`;
-      const mul = !canMul ? `<small>&times;${i < k ? Math.round(mm / SCAN_PK_LADDER[k][1] * 100) / 100 || "" : mx(p, mm)}</small>`
-        : c.mulEdit === id ? `<input type="text" inputmode="decimal" class="pks-in pks-min" data-pksmulv="${id}" value="${mx(p, mm)}" aria-label="${esc(t("pks_mult"))} $${p}" autocomplete="off" />`
-        : `<button type="button" class="pks-lbm${typed ? " typed" : ""}" data-pksmul="${id}" aria-label="${esc(t("pks_mult"))} $${p}: ${esc(t("pks_edit"))}">&times;${mx(p, mm)} <i aria-hidden="true">&#9998;</i></button>`;
+      const id = `${ci}|${p}`, typed = false;
+      const mul = `<small>&times;${i < k ? Math.round(mm / SCAN_PK_LADDER[k][1] * 100) / 100 || "" : mx(p, mm)}</small>`;
       return `<div class="pks-lb ${i === k ? "on" : i < k || !c.scale ? "pre" : ""}"><button type="button" class="pks-lbp" data-pksstep="${id}" aria-pressed="${i === k ? "true" : "false"}"><b>$${p}</b></button>${i === k ? `<small>&times;1</small><small class="pks-sct">${esc(t("pks_screenshot_tag"))}</small>` : mul}${typed ? `<small class="pks-tyt">${esc(t("pks_typed"))}</small>` : ""}</div>`;
     };
     const hasSaved = rows.some((r) => r.kept || r.savedEdit);
@@ -2985,17 +2982,10 @@ function openPackScanMain(opts) {
       const go = (now) => { if (done) return; done = true; fn(el.value); if (now === true) draw(); else setTimeout(draw, 0); };
       el.addEventListener("change", go);
       el.addEventListener("blur", go);
-      el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(true); } else if (e.key === "Escape") { e.stopPropagation(); done = true; const cc = st.cards[Number(el.getAttribute(el.hasAttribute("data-pksmulv") ? "data-pksmulv" : "data-pkscellv").split("|")[0])]; cc.mulEdit = cc.cellEdit = null; draw(); } });
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(true); } else if (e.key === "Escape") { e.stopPropagation(); done = true; const cc = st.cards[Number(el.dataset.pkscellv.split("|")[0])]; cc.cellEdit = null; draw(); } });
     };
     const focusIn = (sel) => { const el = modal.querySelector(sel); if (el) { try { el.focus({ preventScroll: true }); el.select(); } catch (e) {} } };
-    on("data-pksmul", (v) => { const c = st.cards[Number(v.split("|")[0])]; c.cellEdit = null; c.mulEdit = v; draw(); focusIn(`[data-pksmulv="${window.CSS.escape(v)}"]`); });
-    modal.querySelectorAll("[data-pksmulv]").forEach((el) => commit(el, (val) => {
-      const [ci, p] = el.dataset.pksmulv.split("|"), c = st.cards[Number(ci)], x = num(val);
-      c.mult = c.mult || {};
-      if (x > 0) c.mult[Number(p)] = x; else delete c.mult[Number(p)];
-      c.mulEdit = null;
-    }));
-    on("data-pkscell", (v) => { const c = st.cards[Number(v.split("|")[0])]; c.mulEdit = null; c.cellEdit = v; draw(); focusIn(`[data-pkscellv="${window.CSS.escape(v)}"]`); });
+    on("data-pkscell", (v) => { const c = st.cards[Number(v.split("|")[0])]; c.cellEdit = v; draw(); focusIn(`[data-pkscellv="${window.CSS.escape(v)}"]`); });
     modal.querySelectorAll("[data-pkscellv]").forEach((el) => commit(el, (val) => {
       const [ci, p, ...rest] = el.dataset.pkscellv.split("|"), n = rest.join("|"), c = st.cards[Number(ci)], x = num(val), pk = Number(p);
       c.cells = c.cells || {};
@@ -3011,7 +3001,7 @@ function openPackScanMain(opts) {
       if (!el.checked) { c.unlock = {}; const m = cmpOf(c), saved = m && Array.isArray(m.saved) ? m.saved : []; Object.keys(c.cells || {}).forEach((p) => { if (saved.some((s) => s.usd != null && Math.abs(s.usd - Number(p)) < 0.005)) delete c.cells[p]; }); }
       draw();
     });
-    on("data-pkstypedreset", (v) => { const c = st.cards[Number(v)]; c.mult = {}; c.cells = {}; c.unlock = {}; c.mulEdit = c.cellEdit = null; draw(); });
+    on("data-pkstypedreset", (v) => { const c = st.cards[Number(v)]; c.mult = {}; c.cells = {}; c.unlock = {}; c.cellEdit = null; draw(); });
     on("data-pkslad", (v) => { const c = st.cards[Number(v)]; c.ladOpen = !c.ladOpen; draw(); });
     on("data-pksscale", (v, el) => { const c = st.cards[Number(v)]; c.scale = el.checked; c.scaleTouched = true; draw(); });
     on("data-pksstep", (v) => {

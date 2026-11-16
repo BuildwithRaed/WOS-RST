@@ -1819,8 +1819,7 @@ const T = {
   pks_kept_tag: { en: "saved" },
   pks_typed: { en: "typed" },
   pks_change: { en: "change" },
-  pks_mult: { en: "Times the screenshot's amounts" },
-  pks_rows_type: { en: "Tap a × or a number to type your own." },
+  pks_rows_type: { en: "Tap a number to type your own." },
   pks_edit_saved: { en: "Edit saved rows too" },
   pks_typed_reset: { en: "Back to worked-out numbers" },
   pk_scanned_tip_undo: { en: "Undo in the pack window" },
@@ -14810,7 +14809,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=a4bc50e221";
+      s.src = "scan.min.js?v=38a1edd2ea";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }

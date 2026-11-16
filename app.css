@@ -4796,12 +4796,10 @@ span.mk.mk svg{flex:none}
   .pks-lb.pre{ opacity:.5; }
   .pks-lb small{ color:var(--ice); font-size:11px; }
   .pks-lbp{ background:none; border:0; padding:2px 0 0; width:100%; color:var(--frost); font:inherit; font-size:12px; cursor:pointer; }
-  .pks-lbm{ background:none; border:0; padding:0 2px; color:var(--ice); font:inherit; font-size:11px; cursor:pointer; min-height:22px; white-space:nowrap; }
-  .pks-lbm i, .pks-cellb i{ font-style:normal; color:var(--muted); font-size:10px; }
-  .pks-lbm.typed, .pks-cellb.typed b{ color:var(--amber, #e8a23c); }
+  .pks-cellb i{ font-style:normal; color:var(--muted); font-size:10px; }
+  .pks-cellb.typed b{ color:var(--amber, #e8a23c); }
   .pks-lb small.pks-sct{ font-size:10px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pks-lb small.pks-tyt{ color:var(--amber, #e8a23c); font-size:10px; }
-  .pks-in.pks-min{ width:56px; min-height:26px; font-size:16px; text-align:center; padding:0 2px; }
   .pks-cellb{ background:none; border:0; padding:0; color:inherit; font:inherit; cursor:pointer; text-align:end; white-space:nowrap; }
   .pks-cellb b{ font-weight:inherit; }
   .pks-cellb small{ display:block; font-size:10px; color:var(--amber, #e8a23c); font-weight:600; line-height:1.1; }
