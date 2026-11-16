@@ -1740,41 +1740,19 @@ const T = {
   pks_title: { en: "Scan a pack" },
   pks_intro: { en: "Read on your phone — the picture is never uploaded." },
   pks_s1: { en: "Screenshot the pack in the game" },
-  pks_s1_hint: { en: "Whole pack: every item with its number and the price button. A row that scrolls sideways can take 2 screenshots." },
+  pks_s1_hint: { en: "Its name, price and items showing. Several packs in one picture is fine." },
   pks_choose: { en: "Choose screenshot" },
   pks_new: { en: "New pack" },
   pks_name: { en: "Name" },
   pks_name_ph: { en: "from the screenshot title" },
   pks_cat: { en: "Category" },
   pks_scale: { en: "Scale to the next prices" },
-  pks_scale_d: { en: "The screenshot fills the first row; the others are worked out." },
-  pks_scale_note: { en: "Regular Packs ladder. Off = only the screenshot's row." },
   pks_reading: { en: "Reading screenshot {n} of {m}…" },
-  pks_reading_items: { en: "Reading… {n} of {m} tiles" },
-  pks_check: { en: "Check before saving" },
-  pks_to: { en: "To:" },
-  pks_n_check: { en: "{n} to check" },
   pks_nothing: { en: "Nothing was read in this screenshot. Try one that shows the whole pack and its price button." },
-  pks_which_one: { en: "Which pack? · tap one — only that one is saved" },
-  pks_saved_mark: { en: "saved" },
-  pks_from_saved: { en: "named from the saved pack · please check" },
-  pks_pack_n: { en: "Pack {n}" },
-  pks_n_items: { en: "{n} items" },
-  pks_all_rows: { en: "All as price rows" },
-  pks_all_rows_d: { en: "{n} prices → {n} rows" },
-  pks_items: { en: "Items in the screenshot" },
-  pks_no_items: { en: "No items read." },
-  pks_use: { en: "Use this item" },
   pks_item: { en: "Item" },
-  pks_pick_item: { en: "— pick item —" },
   pks_amount: { en: "Amount" },
-  pks_unknown: { en: "pick the item" },
-  pks_not_listed: { en: "not in the Packs item list · skipped" },
-  pks_label: { en: "size label {n}" },
-  pks_price: { en: "Price (US $)" },
   pks_store: { en: "store {p}" },
   pks_price_none: { en: "no price read — type the US $ price" },
-  pks_gems_guess: { en: "from the price, please check" },
   pks_skipped: { en: "{n} tiles without a number (empty slots, hidden behind a button) were skipped." },
   pks_learn: { en: "Remember the pictures I picked" },
   pks_learn_d: { en: "Scan pack knows them next time (for everyone)." },
@@ -1782,31 +1760,96 @@ const T = {
   pks_rows: { en: "These rows will be filled" },
   pks_rows_note: { en: "Blue = from the screenshot, the others × 2 / × 4 / × 10 / × 20. You can change any box in the pack after saving." },
   pks_rows_note1: { en: "Blue = from the screenshot. You can change any box in the pack after saving." },
-  pks_other: { en: "Other screenshot" },
-  pks_save: { en: "Save to pack" },
-  pks_saved: { en: "Pack filled from the screenshot" },
   pks_full: { en: "You have used all your packs. Delete one first." },
-  pks_dup: { en: "This pack is already on the Packs page: {name}" },
-  pks_dup_d: { en: "Saving updates its amounts. Check what changes below." },
-  pks_dup_mine: { en: "Saving changes your own copy of its amounts (only you see it)." },
   pks_saved_see: { en: "See saved pack ▾" },
   pks_saved_hide: { en: "Hide saved pack ▴" },
   pks_saved_pack: { en: "Saved pack" },
   pks_saved_empty: { en: "No rows saved yet." },
   pks_as_new: { en: "Save as a new pack instead" },
-  pks_as_match: { en: "Update {name} instead" },
-  pks_diff: { en: "Differences from the saved pack" },
   pks_diff_saved: { en: "Saved" },
-  pks_diff_scan: { en: "Scan" },
-  pks_diff_none: { en: "No differences — same as saved" },
-  pks_diff_new: { en: "new" },
+  pks_diff_scan: { en: "Screenshot" },
   pks_diff_notin: { en: "not in scan · kept" },
   pks_diff_newprice: { en: "new price" },
   pks_diff_newprice_mine: { en: "price not in this pack · left out" },
-  pks_diff_same: { en: "{n} the same" },
-  pks_diff_kept: { en: "{n} other price rows stay as saved" },
-  pks_diff_gone_mine: { en: "{n} saved price rows aren't in the scan · yours stay as they are" },
-  pks_diff_mine_note: { en: "Your copy only changes amounts the pack already has; new items or prices are left out." },
+  pks_no_number: { en: "No number read — type it" },
+  pks_saved_q: { en: "No number read. The saved pack says {n}. Is it right?" },
+  pks_not_table: { en: "Not this table? Change ›" },
+  pks_long: { en: "A long pack? Pick all its screenshots together." },
+  pks_reading_pct: { en: "Reading… {n}%" },
+  pks_reading_sub: { en: "Finding packs · reading numbers" },
+  pks_st_saved: { en: "Saved ✓" },
+  pks_st_skipped: { en: "Skipped" },
+  pks_st_check: { en: "{n} to check" },
+  pks_st_new: { en: "New" },
+  pks_st_change1: { en: "1 change" },
+  pks_st_changes: { en: "{n} changes" },
+  pks_st_ready: { en: "Ready ✓" },
+  pks_st_same: { en: "Same as saved ✓" },
+  pks_check_first1: { en: "Check 1 item first" },
+  pks_check_first: { en: "Check {n} items first" },
+  pks_save_new: { en: "Save as new pack" },
+  pks_save_mine: { en: "Save to my copy" },
+  pks_save_upd1: { en: "Save · update 1 item" },
+  pks_save_upd: { en: "Save · update {n} items" },
+  pks_save_same: { en: "Save · same as saved" },
+  pks_n_prices: { en: "{n} prices" },
+  pks_price_none_s: { en: "no price read" },
+  pks_more_items: { en: "All items" },
+  pks_read_q: { en: "Read {n}. Is it right?" },
+  pks_yes: { en: "Yes" },
+  pks_edit: { en: "Edit" },
+  pks_leave_out: { en: "Leave out" },
+  pks_done: { en: "Done" },
+  pks_what: { en: "What is this?" },
+  pks_unknown_t: { en: "Unknown" },
+  pks_left_out: { en: "Left out · use" },
+  pks_items_h: { en: "Items" },
+  pks_missing: { en: "An item is missing" },
+  pks_price_q: { en: "Read {p} = {usd}. Is it right?" },
+  pks_price_h: { en: "Price" },
+  pks_kept_tag: { en: "saved" },
+  pks_on: { en: "On" },
+  pks_off: { en: "Off" },
+  pks_screenshot_tag: { en: "screenshot" },
+  pks_rows_kept: { en: "Blue = from the screenshot. Prices the pack already has keep their saved numbers; only missing prices are worked out." },
+  pks_in_mine: { en: "in My packs" },
+  pks_on_page: { en: "on your Packs page" },
+  pks_on_page_v: { en: "on the Packs page" },
+  pks_not_this: { en: "Not this pack? Change ›" },
+  pks_not_on_page: { en: "Not on your Packs page" },
+  pks_not_on_page_v: { en: "Not on the Packs page" },
+  pks_one_of_mine: { en: "It's one of mine ›" },
+  pks_n_shots: { en: "{n} screenshots" },
+  pks_undo: { en: "Undo" },
+  pks_dropped1: { en: "1 other tile left out (not a Backpack item)" },
+  pks_dropped: { en: "{n} other tiles left out (not Backpack items)" },
+  pks_add_shot: { en: "Add screenshot" },
+  pks_skip: { en: "Skip" },
+  pks_saved_n1: { en: "1 pack saved" },
+  pks_saved_n: { en: "{n} packs saved" },
+  pks_open_packs: { en: "Open Packs ›" },
+  pks_save_other: { en: "Save the other {n}" },
+  pks_save_one: { en: "Save" },
+  pks_save_all: { en: "Save all {n}" },
+  pks_none_found: { en: "No pack found" },
+  pks_sub_saved_all1: { en: "1 pack saved" },
+  pks_sub_saved_all: { en: "{n} packs saved" },
+  pks_found1: { en: "1 pack found" },
+  pks_found: { en: "{n} packs found" },
+  pks_sub_saved: { en: "{n} saved" },
+  pks_sub_check: { en: "{n} to check" },
+  pks_sub_change1: { en: "1 change" },
+  pks_sub_changes: { en: "{n} changes" },
+  pks_sub_new: { en: "not on your Packs page" },
+  pks_sub_ready: { en: "ready" },
+  pks_which: { en: "Which pack is this?" },
+  pks_which_d: { en: "Packs on your Packs page" },
+  pks_which_dv: { en: "Packs on the Packs page and your own packs" },
+  pks_now_matched: { en: "now matched" },
+  pks_which_none: { en: "No pack with that name." },
+  pks_as_new_d: { en: "Keeps the shared packs as they are" },
+  pks_as_new_dv: { en: "Goes to My packs" },
+  pks_visitor_note: { en: "Saves into your own copy — the shared pack isn't changed" },
   pk_scanned: { en: "Scanned {date}" },
   pk_scanned_tip: { en: "Amounts scanned from a game screenshot on {date}" },
   scan_lab_title: { en: "Research Lab" },
@@ -3817,7 +3860,7 @@ let A11Y_RETURN = null;  // what had focus before the first one opened
 let A11Y_TITLE_N = 0;
 const A11Y_KB = new WeakSet();
 const A11Y_PHONE = window.matchMedia("(max-width: 700px)");
-const A11Y_ESC_OWN = "#mBarOv, .pkb-ov, .pk-sheet-back, #pkbEvSheet, .pur-shw, #purGrpSheet, .pcl-ov, [data-rlownbd], [data-rlgamebd], [data-rlbd], .mpn-ov, #bpScanModal";
+const A11Y_ESC_OWN = "#pkScanModal, #mBarOv, .pkb-ov, .pk-sheet-back, #pkbEvSheet, .pur-shw, #purGrpSheet, .pcl-ov, [data-rlownbd], [data-rlgamebd], [data-rlbd], .mpn-ov, #bpScanModal";
 const A11Y_KB_SEL = ".t12x-gh[data-t12fold], .t12x-gh[data-pxfold], .rc-card[data-rcopen]:not(.rc-open):not(.rc-ph)";
 const a11yShown = (el) => el.getClientRects().length > 0;
 function a11yDlgBox(ov) {
@@ -8221,54 +8264,64 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
     delete src.group; delete src.linkSet; delete src.visitorDate; delete src.hideVisitors; delete src.dateWith; delete src.eventName; delete src.rowMax; delete src.daily; delete src.template; delete src.scanned;
     return { ...src, priceCol: 0, cols: {}, pages: [] };
   };
+  // Returns { undo } (what was there before goes back).
   async function mpScanSave(res, mp) {
     const nameOf = (cols) => (ci) => packResourceByName(cols[ci]) || String(cols[ci] || "");
+    const scanMark = (id) => { const v = packMyScanned()[String(id)]; return () => { try { const sc = packMyScanned(); if (v) sc[String(id)] = v; else delete sc[String(id)]; localStorage.setItem("pack_my_scanned", JSON.stringify(sc)); } catch (e) {} }; };
     if (res.to === "match") {
-      const tb = packApplyMyEdits((allTables || []).filter((x) => String(x.id) === String(res.id)))[0];
-      if (!tb) throw new Error("Couldn't open the pack");
-      packScanSaveMine(tb, res);
-      toast(t("pks_saved"));
-      return;
+      const own0 = packMineFind(res.id);
+      if (own0) mp = own0; // one of the visitor's own packs, picked in "Which pack is this?"
+      else {
+        const tb = packApplyMyEdits((allTables || []).filter((x) => String(x.id) === String(res.id)))[0];
+        if (!tb) throw new Error("Couldn't open the pack");
+        const sid = String(tb.id), was = packMyEdits()[sid], back = scanMark(sid);
+        packScanSaveMine(tb, res);
+        changed(true);
+        return { undo: async () => { const all = packMyEdits(); if (was) all[sid] = was; else delete all[sid]; packSaveMyEdits(all); back(); changed(true); } };
+      }
     }
-    if (res.to === "this" && mp) {
+    if ((res.to === "this" || res.to === "match") && mp) {
       const pc = typeof (mp.link || {}).priceCol === "number" ? mp.link.priceCol : 0;
+      const snap = JSON.parse(JSON.stringify({ columns: mp.columns, rows: mp.rows })), back = scanMark(mp.id);
       const got = packScanApply(mp.columns, pc, res, nameOf(mp.columns), mp.rows);
       mp.columns = got.columns;
       mp.rows = got.rows.map((r) => ({ cells: r.cells }));
       packMarkScanned(mp.id);
       changed(true);
-      toast(t("pks_saved"));
-      return;
+      return { undo: async () => { mp.columns = snap.columns; mp.rows = snap.rows; back(); changed(true); } };
     }
     const got = packScanApply(["$"], 0, res, () => "");
     const title = (String(res.title || "").trim() || "My pack").slice(0, 60);
     if (own) {
       const payload = { title, columns: got.columns, rows: got.rows, sort_order: (allTables || []).length, scale_enabled: false, updated_at: new Date().toISOString() };
       const [saved] = await sb(`pack_tables`, { method: "POST", body: JSON.stringify({ user_id: USER_ID, ...payload }) });
-      PACK_LINKS[String(saved.id)] = { ...scanBase(), group: PACK_MINE_GROUP, hideVisitors: true, scanned: packDayKey(packStartOfToday()) };
+      const sid = String(saved.id);
+      PACK_LINKS[sid] = { ...scanBase(), group: PACK_MINE_GROUP, hideVisitors: true, scanned: packDayKey(packStartOfToday()) };
       await savePackLinks();
-      PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
-      PACK_PLAN_CACHE.clear();
-      if (typeof budgetInvalidate === "function") budgetInvalidate();
-      toast(t("pks_saved"));
-      mpOpenOnPacks(saved.id);
-      return;
+      const fresh = () => { PACK_TABLES_CACHE = PACK_TABLES_STASH = null; PACK_PLAN_CACHE.clear(); if (typeof budgetInvalidate === "function") budgetInvalidate(); };
+      fresh();
+      return { undo: async () => { await sb(`pack_tables?id=eq.${sid}`, { method: "DELETE" }); delete PACK_LINKS[sid]; await savePackLinks(); fresh(); redraw(); } };
     }
     if (MY_PACKS.length >= packMyPacksLimit()) throw new Error(t("pks_full"));
     const np = { id: "my-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: title, title, columns: got.columns, rows: got.rows.map((r) => ({ cells: r.cells })), link: scanBase() };
     MY_PACKS.push(np);
     packMarkScanned(np.id);
-    changed(false);
-    toast(t("pks_saved"));
-    mpwOpen(np.id);
+    changed(true);
+    return { undo: async () => { const k = MY_PACKS.indexOf(np); if (k >= 0) MY_PACKS.splice(k, 1); try { const sc = packMyScanned(); delete sc[np.id]; localStorage.setItem("pack_my_scanned", JSON.stringify(sc)); } catch (e) {} changed(true); } };
   }
   // A visitor's scan whose name is a Packs-page pack can go into their copy of it.
-  const scanMatch = (title) => {
-    const m = packScanFind(title, (allTables || []).filter((x) => { const l = packLinkFor(x.id); return !l.template && !l.hideVisitors; }));
-    if (!m) return null;
-    return { id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), when: mpWhenText(packLinkFor(m.id)), group: packLinkFor(m.id).group || "", onPage: true, mine: true };
-  };
-  const scanOpts = (mp) => ({ target: mp ? { id: mp.id, title: mp.title, saved: packScanSavedRows(mp) } : null, canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [], match: own || mp ? null : scanMatch, onSave: (res) => mpScanSave(res, mp) });
+  const scanPagePacks = () => (allTables || []).filter((x) => { const l = packLinkFor(x.id); return !l.template && !l.hideVisitors; });
+  const scanTarget = (m) => ({ id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), when: mpWhenText(packLinkFor(m.id)), group: packLinkFor(m.id).group || "", onPage: true, mine: true });
+  const scanMatch = (title) => { const m = packScanFind(title, scanPagePacks()); return m ? scanTarget(m) : null; };
+  const mineTarget = (mp) => ({ id: mp.id, title: mp.title, saved: packScanSavedRows(mp), when: mpWhenText(mp.link || {}), myPack: true });
+  const scanOpts = (mp) => ({
+    target: mp ? mineTarget(mp) : null,
+    canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [],
+    match: own || mp ? null : (title) => { const k = packScanFind(title, MY_PACKS); return k ? mineTarget(k) : scanMatch(title); },
+    packs: own ? undefined : () => scanPagePacks().map(scanTarget).concat(MY_PACKS.map(mineTarget)),
+    openPacks: own ? () => goToTab("packs") : null,
+    onSave: (res) => mpScanSave(res, mp),
+  });
   const scanBtn = el.querySelector("[data-mpscan]");
   if (scanBtn) scanBtn.addEventListener("click", () => openPackScan(scanOpts(null), scanBtn));
   el.querySelectorAll("[data-mpscanfill]").forEach((b) => b.addEventListener("click", () => { const mp = packMineFind(b.dataset.mpscanfill); if (mp) openPackScan(scanOpts(mp), b); }));
@@ -11603,38 +11656,79 @@ async function renderPacksPage() {
   // filled from one (its window's "Fill from screenshot"). The table is changed
   // through its editor (pkscanfill in wireTable), so it saves like any edit.
   const pkbScanTarget = (tb) => ({ id: tb.id, title: tb.title, saved: packScanSavedRows(tb), when: pkbWhen(packLinkFor(tb.id)).text, group: categoryOf(tb), onPage: true, mine: !IS_OWNER });
+  const pkbScanList = () => tables.filter((x) => !packLinkFor(x.id).template && !String(x.id).startsWith("new-"));
   const pkbScanOpts = (tb) => ({
     target: tb ? pkbScanTarget(tb) : null,
     canNew: IS_OWNER,
     categories: IS_OWNER ? categoryOrder().filter((c) => c !== PACK_TEMPLATE_GROUP) : [],
     category: tb ? categoryOf(tb) : (String(packsFilter).startsWith("cat:") ? String(packsFilter).slice(4) : ""),
-    match: tb ? null : (title) => { const m = packScanFind(title, tables.filter((x) => !packLinkFor(x.id).template)); return m ? pkbScanTarget(m) : null; },
+    match: tb ? null : (title) => { const m = packScanFind(title, pkbScanList()); return m ? pkbScanTarget(m) : null; },
+    packs: () => pkbScanList().map(pkbScanTarget),
+    openPacks: () => { if (TAB !== "packs") goToTab("packs"); },
     onSave: (res) => pkbScanSave(res, tb),
   });
+  // One scanned pack into its table (through its editor, pkscanfill), then the
+  // window goes back to how it was. Returns { undo }: the rows, columns, name and
+  // settings from before (a new pack: deleted again).
   async function pkbScanSave(res, tb) {
     if (res.to === "match") tb = tables.find((x) => String(x.id) === String(res.id)) || null;
     // Visitors: their own copy of the pack's amounts.
     if (!IS_OWNER) {
       if (!tb) throw new Error("Couldn't open the pack");
+      const sid = String(tb.id), was = packMyEdits()[sid], wasScan = packMyScanned()[sid];
       packScanSaveMine(tb, res);
       tb.rows = packApplyMyEdits([{ ...tb, rows: tb._orig || tb.rows }])[0].rows;
       renderAll();
-      toast(t("pks_saved"));
-      return;
+      return { undo: async () => {
+        const all = packMyEdits();
+        if (was) all[sid] = was; else delete all[sid];
+        packSaveMyEdits(all);
+        try { const sc = packMyScanned(); if (wasScan) sc[sid] = wasScan; else delete sc[sid]; localStorage.setItem("pack_my_scanned", JSON.stringify(sc)); } catch (e) {}
+        tb.rows = packApplyMyEdits([{ ...tb, rows: tb._orig || tb.rows }])[0].rows;
+        renderAll();
+      } };
     }
-    let id = tb ? String(tb.id) : null;
-    if (res.to === "new" || !tb) {
+    await ensurePackLinks();
+    const isNew = res.to === "new" || !tb;
+    let snap = null;
+    if (isNew) {
       // last in the order (its category lists it by name), so no other table moves
       tables.push({ id: `new-${Date.now()}`, title: res.title || "Table name here", columns: ["$", "Gems"], rows: [blankRow(2)], sort_order: tables.length, scale_enabled: false });
-      id = String(tables[tables.length - 1].id);
-      pkbOpen(id);
-    } else if (![...PACKS_OPEN].includes(id)) pkbOpen(id);
-    const panel = listEl.querySelector(`.pkb-panel[data-pkid="${window.CSS.escape(id)}"]`);
+      tb = tables[tables.length - 1];
+    } else {
+      const lk = PACK_LINKS[String(tb.id)];
+      snap = { title: tb.title, columns: JSON.parse(JSON.stringify(tb.columns)), rows: JSON.parse(JSON.stringify(tb.rows)), scale_enabled: tb.scale_enabled, link: lk ? JSON.parse(JSON.stringify(lk)) : null };
+    }
+    // the pack's editor does the work: open it for the save (no history step),
+    // then put the window back as it was
+    const wasOpen = [...PACKS_OPEN];
+    const id0 = String(tb.id);
+    if (!PACKS_OPEN.has(id0)) { PACKS_OPEN.clear(); PACKS_OPEN.add(id0); renderAll(); }
+    const panel = listEl.querySelector(`.pkb-panel[data-pkid="${window.CSS.escape(id0)}"]`);
     if (!panel) throw new Error("Couldn't open the pack");
-    const ev = new CustomEvent("pkscanfill", { detail: { ...res, group: res.to === "new" ? res.category : null } });
+    const ev = new CustomEvent("pkscanfill", { detail: { ...res, group: isNew ? res.category : null } });
     panel.dispatchEvent(ev);
-    await ev.detail.done;
-    toast(t("pks_saved"));
+    try { await ev.detail.done; } finally {
+      if (!wasOpen.includes(id0)) { PACKS_OPEN.clear(); wasOpen.forEach((x) => PACKS_OPEN.add(PKB_RENAMED[x] || x)); renderAll(); }
+    }
+    return { undo: async () => {
+      const id = String(tb.id);
+      if (isNew) {
+        if (!id.startsWith("new-")) await sb(`pack_tables?id=eq.${id}`, { method: "DELETE" });
+        const k = tables.indexOf(tb);
+        if (k >= 0) tables.splice(k, 1);
+        if (PACK_LINKS[id]) { delete PACK_LINKS[id]; await savePackLinks(); }
+        PACKS_OPEN.delete(id);
+      } else {
+        Object.assign(tb, { title: snap.title, columns: snap.columns, rows: snap.rows, scale_enabled: snap.scale_enabled });
+        await sb(`pack_tables?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ title: snap.title, columns: snap.columns, rows: snap.rows, scale_enabled: snap.scale_enabled !== false, updated_at: new Date().toISOString() }) });
+        if (snap.link) PACK_LINKS[id] = snap.link; else delete PACK_LINKS[id];
+        await savePackLinks();
+      }
+      PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+      if (typeof budgetInvalidate === "function") budgetInvalidate();
+      renderAll();
+    } };
   }
   const pkbScanBtn = document.getElementById("pkbScanBtn");
   if (pkbScanBtn) pkbScanBtn.addEventListener("click", () => openPackScan(pkbScanOpts(null), pkbScanBtn));
@@ -14627,7 +14721,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=f8f904cc83";
+      s.src = "scan.min.js?v=fff9346477";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }

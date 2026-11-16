@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "f8f904cc83";
+window.SCAN_BUILD = "fff9346477";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1825,7 +1825,16 @@ async function scanPkTile(worker, img, box, ctx) {
   const out = { feat, img: pic.toDataURL("image/jpeg", 0.85), name: null, value: null, sure: false };
   const amount = await scanPkAmount(worker, td);
   out.value = amount.value; out.amount0 = amount.value;
-  if (!amount.value) { out.skip = "noamount"; return out; }
+  if (!amount.value) {
+    // no number read (a busy picture behind it): still named when the picture is
+    // a close match, so a saved pack can give its amount to check
+    out.skip = "noamount";
+    const m0 = scanPkMatchRefs(feat, ctx.refs);
+    if (m0.dist <= 15 && m0.next > m0.dist * 1.5 && m0.name !== SCAN_SKIP) out.name = m0.name;
+    else if (ctx.icons) { const im = scanPkMatchIcons(td, ctx.icons); if (im.name && im.dist < 17 && im.next - im.dist > 4) out.name = im.name; }
+    if (out.name) { out.noAmt = true; out.value = null; }
+    return out;
+  }
   // white digits across the top centre: a size label ("10K", "100"), even when
   // the reader didn't make it out (a tile half under the buy button)
   out.top = scanTopLabel(td) || scanPkTopText(td);
@@ -1942,16 +1951,17 @@ async function scanPackShot(worker, file, ctx) {
   if (!groups.length) groups.push({ price: null, items: [], top: img.h, bottom: 0 });
   const useNames = named.filter((n) => n.name || n.raw).length >= 2;
   const skipped = { noamount: 0, unknown: 0, notlisted: [] };
+  const lost = [];
   if (useNames) {
     named.forEach((n) => { const g = groups.length === 1 && !groups[0].price ? groups[0] : home(n.cy) || groups[0]; g.items.push(n); g.top = Math.min(g.top, n.y); });
   }
   read.forEach((r) => {
-    if (r.skip) { if (r.skip === "noamount") skipped.noamount++; return; }
+    if (r.skip && !r.noAmt) { if (r.skip === "noamount") skipped.noamount++; return; }
     const cy = r.box.y + r.box.h / 2;
     // with names, the small pictures at the start of each named line are those items
     if (useNames && named.some((n) => Math.abs(n.cy - cy) < r.box.h * 0.7)) return;
     const g = groups.length === 1 && !groups[0].price ? groups[0] : home(cy);
-    if (!g) { skipped.unknown++; return; }
+    if (!g) { skipped.unknown++; lost.push(r); return; }
     g.items.push(r); g.top = Math.min(g.top, r.box.y);
   });
   groups.forEach((g) => { g.bottom = Math.max(g.bottom, ...g.items.map((it) => (it.box ? it.box.y + it.box.h : it.y + 20))); });
@@ -1969,6 +1979,24 @@ async function scanPackShot(worker, file, ctx) {
     g.items = g.items.filter((it) => keep.has(it));
     g.top = Math.min(g.price.y, ...g.items.map((it) => (it.box ? it.box.y : it.y)));
   });
+  // Myriad Bazaar: under the paid step's shelf come shelves with "Claim For Free"
+  // that go with it; their tiles join its price row (the game's table keeps a step's
+  // free rewards on the same row). A shelf with no Claim button under it (the next
+  // paid step, cut off) is left out.
+  const claims = all.filter((l) => /claim\s*for\s*fr/i.test(l.text)).map((l) => ({ cy: l.y + l.h / 2, claim: true }));
+  if (claims.length && groups.some((g) => g.price)) {
+    const marks = claims.concat(groups.filter((g) => g.price).map((g) => ({ cy: g.price.cy, claim: false })));
+    lost.forEach((r) => {
+      const cy = r.box.y + r.box.h / 2;
+      const next = marks.filter((x) => x.cy > cy && x.cy - cy < unitH * 2.6).sort((a, b) => a.cy - b.cy)[0];
+      if (!next || !next.claim) return;
+      const g = groups.filter((x) => x.price && x.price.cy < cy).sort((a, b) => b.price.cy - a.price.cy)[0];
+      if (!g) return;
+      g.items.push(r); g.free = (g.free || 0) + 1; g.bazaar = true;
+      g.bottom = Math.max(g.bottom, r.box.y + r.box.h);
+      skipped.unknown--;
+    });
+  }
   const usedGems = new Set();
   groups.forEach((g, gi) => {
     const above = gi > 0 ? groups[gi - 1].bottom : 0;
@@ -1993,30 +2021,33 @@ async function scanPackShot(worker, file, ctx) {
   return { title: big ? tidy(big.text) : "", groups: out, skipped, tiles: tiles.length, names: useNames };
 }
 
-// ---- Scan pack: the sheet ----
-// opts: { target: { title, id, saved, onPage, mine } | null (a pack window's "Fill from screenshot"),
-//   canNew, categories: [names], category, match(title) → same shape as target | null, onSave(result) }.
-// saved = the pack's rows as they are ([{ usd, gems, items }]) for the differences;
-// onPage = a Packs-page pack; mine = a visitor's own copy of its amounts.
+// ---- Scan pack: the sheet (design B+D, owner 16 Nov 2026) ----
+// One card per pack found. A card matched to a saved pack compares Item |
+// Saved | Screenshot; a new pack gets a name, category and its items.
+// opts: { target: { id, title, saved, when, group, onPage, mine, myPack } | null (a pack's own
+//   window: only that pack's card), canNew, categories: [names], category,
+//   match(title) → same shape as target | null, packs() → [same shape] (the "Which pack is
+//   this?" list), onSave(result) → { undo } | undefined }.
+// saved = the pack's rows ([{ usd, gems, items }]); onPage = a Packs-page pack;
+// mine = a visitor's own copy of its amounts; myPack = a visitor's own pack (My packs).
 // result = { to: "this" | "new" | "match", id, title, category, rows: [{ usd, gems, items: { name: amount } }], learn: [entries] }.
-// Nothing is saved here; onSave (app.js) writes the pack the way its editor does.
+// Nothing is saved here; onSave (app.js) writes the pack the way its editor does,
+// and its undo puts back what was there before.
 const SCAN_PK_LADDER = [[4.99, 1], [9.99, 2], [19.99, 4], [49.99, 10], [99.99, 20]];
 const SCAN_PK_BUNDLE = /^(Meat|Wood|Coal|Iron|Steel|Gems|Food)$/;
-// Which read tiles the check screen lists (owner, 16 Nov 2026: Meat / Wood "10K"
-// bundles and the VIP points hexagon were listed as "pick the item"). Speedups (a
-// time label) always stay; a named tile (a close picture match) stays when its item
-// is allowed. A tile with no name is left out when its nearest picture (among every
-// pack item, however far) is a resource, when a size label was read on it, or when
-// white text sits across its top ("10 K", "100": resource bundles, VIP points, even
-// half under the buy button); otherwise it stays when that nearest picture is an
-// allowed item, so it can be picked.
+// Which read tiles a card lists (owner, 16 Nov 2026). Speedups (a time label)
+// always stay; a named tile stays when its item is a Backpack item. A tile with
+// no name is offered ("What is this?") only when its nearest picture is a
+// Backpack item and close (SCAN_PK_GUESS_MAX); resource bundles, VIP points,
+// chests that aren't Backpack items … are left out and counted on the card.
 const SCAN_PK_RES_GUESS = /^(Meat|Wood|Coal|Iron|Meat\/Wood|VIP.*)$/i;
+const SCAN_PK_GUESS_MAX = 16;
 function scanPkKeep(it, ok) {
   if (it.why === "speedup") return true;
   if (it.name) return ok.has(it.name);
   if (it.why === "name") return false;
   if (it.mult || it.top || (it.guess && SCAN_PK_RES_GUESS.test(it.guess))) return false;
-  return !!it.guess && ok.has(it.guess);
+  return !!it.guess && ok.has(it.guess) && Number(it.gdist) <= SCAN_PK_GUESS_MAX;
 }
 function openPackScanMain(opts) {
   opts = opts || {};
@@ -2026,60 +2057,84 @@ function openPackScanMain(opts) {
   const run = {};
   modal._scanRun = run;
   const live = () => modal._scanRun === run && modal.style.display !== "none";
-  const close = () => { modal.style.display = "none"; modal.innerHTML = ""; };
+  const onKey = (e) => {
+    if (e.key !== "Escape" || !live()) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (st.sheet) { st.sheet = null; draw(); } else close();
+  };
+  const close = () => { modal.style.display = "none"; modal.innerHTML = ""; window.removeEventListener("keydown", onKey, true); if (modal._scanRun === run) modal._scanRun = null; };
+  window.addEventListener("keydown", onKey, true);
   modal.onclick = (ev) => { if (ev.target === modal) close(); };
   const st = {
-    to: opts.target ? "this" : "new",
-    title: "", titleTyped: false,
-    category: opts.category || (opts.categories || [])[0] || "",
-    scale: true, scaleTouched: false,
-    groups: [], pick: 0, done: new Set(), targetUsed: false, // which pack / price of the screenshot (or "rows" for all prices as rows)
-    skipped: { noamount: 0, unknown: 0 },
+    cards: [], files: 0, noamount: 0, learn: true,
+    phase: "start", // start | read | cards
+    sheet: null, // the "Which pack is this?" sheet: { ci, q }
+    addTo: null, // the card whose "+ Add screenshot" was tapped
   };
   const names = () => scanPkAllowed().concat(["Gems"]).filter((n, i, a) => a.indexOf(n) === i);
   const disp = (n) => (/^Speedup /.test(n) ? n.replace(/^Speedup/, "General Speedup") : materialDisplayName(n) || n);
+  const shortName = (n) => (/^Speedup /.test(n) ? n : typeof itemShortName === "function" && itemShortName(n) !== n ? itemShortName(n) : disp(n));
   const iconOf = (n) => scanPkIconSrc(n);
   const money = (v, cur) => (typeof packFmtMoney === "function" ? packFmtMoney(v, cur || "USD") : `$${v}`);
-  const exampleSvg = `<svg viewBox="0 0 74 92" width="74" height="92" aria-hidden="true"><rect width="74" height="92" fill="#4b2a6e"/><rect x="5" y="6" width="64" height="14" rx="3" fill="#f0c46a"/><text x="37" y="16" font-size="7" text-anchor="middle" fill="#3a1d00" font-weight="700">Charm Craftsman</text>
-    <rect x="6" y="44" width="18" height="18" rx="3" fill="#a65fe0"/><rect x="28" y="44" width="18" height="18" rx="3" fill="#a65fe0"/><rect x="50" y="44" width="18" height="18" rx="3" fill="#4d9de0"/>
-    <text x="22" y="60" font-size="5" text-anchor="end" fill="#fff">18</text><text x="44" y="60" font-size="5" text-anchor="end" fill="#fff">6</text><text x="66" y="60" font-size="5" text-anchor="end" fill="#fff">2500</text>
-    <rect x="14" y="70" width="46" height="12" rx="6" fill="#44c06a"/><text x="37" y="79" font-size="7" text-anchor="middle" fill="#fff" font-weight="700">$4.99</text></svg>`;
+  const amt = (v) => (v >= 1e5 && typeof shortAmount === "function" ? shortAmount(v) : Math.round(v).toLocaleString());
+  const key = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const num = (v) => { const n = parseFloat(String(v).replace(/,/g, "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
+  const closeX = `<button type="button" class="pks-x" data-pksclose aria-label="${esc(t("close_button"))}">&times;</button>`;
   const ladderOf = (usd) => {
     const i = SCAN_PK_LADDER.findIndex(([p]) => Math.abs(p - usd) < 0.005);
     return i < 0 ? null : SCAN_PK_LADDER.slice(i).map(([p, m]) => [p, m / SCAN_PK_LADDER[i][1]]);
   };
-  // The first window asks only for the screenshot; where it saves and the
-  // price ladder are set on the check screen (owner, 16 Nov 2026).
+  const exampleSvg = `<svg viewBox="0 0 74 92" width="74" height="92" aria-hidden="true"><rect width="74" height="92" fill="#4b2a6e"/><rect x="5" y="6" width="64" height="14" rx="3" fill="#f0c46a"/><text x="37" y="16" font-size="7" text-anchor="middle" fill="#3a1d00" font-weight="700">Charm Craftsman</text>
+    <rect x="6" y="44" width="18" height="18" rx="3" fill="#a65fe0"/><rect x="28" y="44" width="18" height="18" rx="3" fill="#a65fe0"/><rect x="50" y="44" width="18" height="18" rx="3" fill="#4d9de0"/>
+    <text x="22" y="60" font-size="5" text-anchor="end" fill="#fff">18</text><text x="44" y="60" font-size="5" text-anchor="end" fill="#fff">6</text><text x="66" y="60" font-size="5" text-anchor="end" fill="#fff">2500</text>
+    <rect x="14" y="70" width="46" height="12" rx="6" fill="#44c06a"/><text x="37" y="79" font-size="7" text-anchor="middle" fill="#fff" font-weight="700">$4.99</text></svg>`;
+
+  // ---- first window: the screenshot only ----
   const showStart = () => {
+    st.phase = "start";
     modal.innerHTML = `<div class="modal-box pks-box" role="dialog" aria-label="${esc(t("pks_title"))}">
-      <div class="pks-h"><h2>&#128247; ${esc(t("pks_title"))}</h2><button type="button" class="pks-x" data-pksclose aria-label="${esc(t("close_button"))}">&times;</button></div>
-      <p class="desc pks-d">${esc(t("pks_intro"))}</p>
-      <div class="scan-step"><b>1</b><div><div>${esc(t("pks_s1"))}</div><div class="meta">${esc(t("pks_s1_hint"))}</div>
-        <button class="btn pks-choose" type="button" data-pkspick>&#128444; ${esc(t("pks_choose"))}</button></div>
+      <div class="pks-h"><div><h2>${esc(t("pks_title"))}</h2><div class="pks-sub">${esc(t("pks_intro"))}</div></div>${closeX}</div>
+      <div class="pks-st1"><div class="pks-st1-t"><b>${esc(t("pks_s1"))}</b><small>${esc(t("pks_s1_hint"))}</small></div>
         <span class="scan-ex pks-ex" aria-hidden="true">${exampleSvg}</span></div>
-      <div class="pks-foot"><button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button></div>
+      <button class="btn pks-big" type="button" data-pkspick>${esc(t("pks_choose"))}</button>
+      <div class="pks-tip">${esc(t("pks_long"))}</div>
     </div>`;
-    wireStart();
+    modal.querySelector("[data-pksclose]").onclick = close;
+    modal.querySelector("[data-pkspick]").onclick = () => picker(null);
   };
-  const wireStart = () => {
-    modal.querySelectorAll("[data-pksclose]").forEach((b) => b.onclick = close);
-    modal.querySelector("[data-pkspick]").onclick = picker;
-  };
-  const picker = () => {
+  const picker = (ci) => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
-    input.onchange = () => { if (input.files.length) readAll([...input.files]); };
+    input.onchange = () => { if (input.files.length) { st.addTo = ci; readAll([...input.files]); } };
     input.click();
   };
-  const progress = (msg, sub) => {
+
+  // ---- reading: thumbnail, bar, Cancel ----
+  let thumbUrl = "";
+  const showRead = (pct, sub) => {
     if (!live()) return;
-    modal.innerHTML = `<div class="modal-box" style="max-width:360px; text-align:center;"><div class="scan-spin"></div><div>${esc(msg)}</div><div class="meta" data-scanpct>${esc(sub || "")}</div>
-      <div style="margin-top:12px;"><button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button></div></div>`;
+    const bar = modal.querySelector("[data-pksbar]");
+    if (bar) { bar.style.width = `${pct}%`; modal.querySelector("[data-pkspct]").textContent = t("pks_reading_pct").replace("{n}", Math.round(pct)); if (sub != null) modal.querySelector("[data-pksrsub]").textContent = sub; return; }
+    modal.innerHTML = `<div class="modal-box pks-box" role="dialog" aria-label="${esc(t("pks_title"))}">
+      <div class="pks-h"><div><h2>${esc(t("pks_title"))}</h2><div class="pks-sub">${esc(t("pks_intro"))}</div></div>${closeX}</div>
+      <div class="pks-rd">${thumbUrl ? `<img src="${esc(thumbUrl)}" alt="" />` : ""}<div class="pks-rd-t"><b data-pkspct>${esc(t("pks_reading_pct").replace("{n}", Math.round(pct)))}</b>
+        <div class="pks-prog"><i data-pksbar style="width:${pct}%"></i></div><small data-pksrsub>${esc(sub || t("pks_reading_sub"))}</small></div></div>
+      <div class="pks-sk" aria-hidden="true"><i></i><i></i><i></i></div>
+      <button class="btn ghost pks-big" type="button" data-pkscancel>${esc(t("cancel"))}</button>
+    </div>`;
     modal.querySelector("[data-pksclose]").onclick = close;
+    // Cancel: back to the cards when there are some, else close
+    modal.querySelector("[data-pkscancel]").onclick = () => { run.cancel = (run.cancel || 0) + 1; if (st.cards.length) draw(); else close(); };
   };
+  let shotNo = 0;
   const readAll = async (files) => {
-    progress(t("scan_loading"));
-    SCAN_PROGRESS = (m) => { const el = live() && modal.querySelector("[data-scanpct]"); if (el && m && typeof m.progress === "number") el.textContent = `${m.status || ""} ${Math.round(m.progress * 100)}%`; };
+    const cancelAt = run.cancel || 0;
+    const cancelled = () => !live() || (run.cancel || 0) !== cancelAt;
+    thumbUrl = "";
+    try { const bm = await createImageBitmap(files[0]), k = 124 / bm.width, c = scanCanvas(124, Math.max(1, Math.min(240, Math.round(bm.height * k)))); c.getContext("2d").drawImage(bm, 0, 0, 124, Math.round(bm.height * k)); thumbUrl = c.toDataURL("image/jpeg", 0.7); } catch (e) { thumbUrl = ""; }
+    st.phase = "read";
+    showRead(2, t("scan_loading"));
+    SCAN_PROGRESS = (m) => { if (!cancelled() && m && typeof m.progress === "number") showRead(2 + m.progress * 8, `${m.status || ""}`); };
     let ctx;
     try {
       const [worker, marks, refs, icons] = await Promise.all([scanWorker(), scanMarkData(), scanItemData(), scanPkIcons(), scanLearnedLoad().catch(() => []), scanPkLearnedLoad()]);
@@ -2087,89 +2142,137 @@ function openPackScanMain(opts) {
     } catch (e) {
       SCAN_PROGRESS = null;
       if (!live()) return;
-      modal.innerHTML = `<div class="modal-box" style="max-width:360px;"><p>${esc(t("scan_failed"))}</p><div style="text-align:end;"><button class="btn" type="button" data-pksclose>${esc(t("close_button"))}</button></div></div>`;
+      if (st.cards.length) { toast(t("scan_failed"), true); draw(); return; }
+      modal.innerHTML = `<div class="modal-box pks-box"><p>${esc(t("scan_failed"))}</p><div style="text-align:end;"><button class="btn" type="button" data-pksclose>${esc(t("close_button"))}</button></div></div>`;
       modal.querySelector("[data-pksclose]").onclick = close;
       return;
     }
     SCAN_PROGRESS = null;
     const shots = [];
     for (let i = 0; i < files.length; i++) {
-      if (!live()) return;
-      progress(t("pks_reading").replace("{n}", i + 1).replace("{m}", files.length));
-      ctx.progress = (k, n) => { const el = live() && modal.querySelector("[data-scanpct]"); if (el) el.textContent = t("pks_reading_items").replace("{n}", k).replace("{m}", n); };
-      try { shots.push(await scanPackShot(ctx.worker, files[i], ctx)); } catch (e) { shots.push({ groups: [], skipped: { noamount: 0, unknown: 0 }, title: "" }); }
+      if (cancelled()) return;
+      const base = 10 + (90 * i) / files.length, span = 90 / files.length;
+      showRead(base, files.length > 1 ? t("pks_reading").replace("{n}", i + 1).replace("{m}", files.length) : t("pks_reading_sub"));
+      ctx.progress = (k, n) => { if (!cancelled()) showRead(base + span * (0.25 + 0.75 * k / n)); };
+      let s;
+      try { s = await scanPackShot(ctx.worker, files[i], ctx); } catch (e) { s = { groups: [], skipped: { noamount: 0, unknown: 0 }, title: "" }; }
+      shots.push(s);
     }
-    if (!live()) return;
-    merge(shots);
-    showCheck();
+    if (cancelled()) return;
+    const add = st.addTo;
+    st.addTo = null;
+    shots.forEach((s) => ingest(s, ++shotNo));
+    st.files += files.length;
+    // the pack window: only its own pack
+    if (opts.target && st.cards.length > 1 && !add) {
+      const want = key(opts.target.title).slice(0, 12);
+      const k = want ? st.cards.findIndex((c) => key(c.title).includes(want)) : -1;
+      st.cards = [st.cards[k >= 0 ? k : 0]];
+    }
+    if (opts.target && st.cards[0]) st.cards[0].m = opts.target;
+    st.cards.forEach(prep);
+    draw();
   };
-  // Several screenshots of one pack (a row that scrolls) add up: same price →
-  // one pack, items it didn't have yet are added.
-  const merge = (shots) => {
-    const groups = [];
-    shots.forEach((s) => {
-      st.skipped.noamount += s.skipped.noamount || 0; st.skipped.unknown += s.skipped.unknown || 0;
-      s.groups.forEach((g) => {
-        const ok = new Set(names());
-        // not a Backpack item (resources, VIP points, …): left out, not shown
-        g.items = g.items.filter((it) => scanPkKeep(it, ok)).map((it) => ({ ...it, auto: it.name, tick: true }));
-        const same = groups.find((x) => (x.price && g.price ? Math.abs(x.price.value - g.price.value) < 0.01 && (!x.title || !g.title || x.title === g.title) : !x.price && !g.price));
-        if (same && shots.length > 1) {
-          // the same tile in both screenshots (they overlap) counts once
-          const near = (a, b) => { if (!a.feat || !b.feat) return false; let d = 0; for (let i = 0; i < a.feat.length; i++) d += Math.abs(a.feat[i] - b.feat[i]); return d / a.feat.length < 12; };
-          g.items.forEach((it) => { if (!same.items.some((o) => o.value === it.value && ((o.name && o.name === it.name) || near(o, it)))) same.items.push(it); });
-          if (!same.gems && g.gems) same.gems = g.gems;
-        } else groups.push(g);
-      });
-      if (!st.titleTyped && !st.title && s.title) st.title = s.title;
+
+  // ---- screenshots → cards ----
+  // Several screenshots of one pack (a row that scrolls) add up: same price and
+  // name → one pack, a tile in both counts once. Another price of a pack already
+  // found (same name) is another row of it.
+  const samePrice = (a, b) => (a.price && b.price ? Math.abs(a.price.value - b.price.value) < 0.01 : !a.price && !b.price);
+  const titleOk = (a, b) => !key(a) || !key(b) || key(a) === key(b);
+  const near = (a, b) => { if (!a.feat || !b.feat) return false; let d = 0; for (let i = 0; i < a.feat.length; i++) d += Math.abs(a.feat[i] - b.feat[i]); return d / a.feat.length < 12; };
+  const mergeInto = (c, x, g, si) => {
+    g.items.forEach((it) => { if (!x.items.some((o) => o.value === it.value && ((o.name && o.name === it.name) || near(o, it)))) x.items.push(it); });
+    g.dropped.forEach((it) => { if (!x.dropped.some((o) => o.value === it.value && near(o, it))) x.dropped.push(it); });
+    if (!x.gems && g.gems) { x.gems = g.gems; x.gemsSure = g.gemsSure; }
+    if (!x.title && g.title) x.title = g.title;
+    if (!c.title && g.title) c.title = g.title;
+    x.shots.add(si); c.shots.add(si);
+  };
+  const ingest = (s, si) => {
+    st.noamount += (s.skipped && s.skipped.noamount) || 0;
+    const ok = new Set(names());
+    (s.groups || []).forEach((g) => {
+      const kept = [], dropped = [];
+      g.items.forEach((it) => (scanPkKeep(it, ok) ? kept : dropped).push(it));
+      g.items = kept.map((it) => ({ ...it, auto: it.name, tick: true }));
+      g.dropped = dropped;
+      g.shots = new Set([si]);
+      if (!g.title && s.groups.length === 1 && s.title) g.title = s.title;
+      const pool = g.bazaar ? [] : st.addTo != null && st.cards[st.addTo] ? [st.cards[st.addTo]] : st.cards.filter((c) => !c.bazaar);
+      // same price (another screenshot of it)
+      for (const c of pool) for (const x of c.groups) if (!x.shots.has(si) && samePrice(x, g) && titleOk(x.title || c.title, g.title)) { mergeInto(c, x, g, si); c.changed = true; return; }
+      // another price of a pack already found (same name, or the card it was added to)
+      const c2 = pool.find((c) => !c.groups.some((x) => samePrice(x, g)) && g.price && c.groups.every((x) => x.price) && (pool.length === 1 && st.addTo != null ? true : key(c.title) && key(c.title) === key(g.title)));
+      if (c2) { c2.groups.push(g); c2.shots.add(si); c2.changed = true; c2.groups.sort((a, b) => (a.price.usd || a.price.value) - (b.price.usd || b.price.value)); return; }
+      if (opts.target && st.cards.length && st.files > 0) return; // a pack window only keeps its own pack
+      st.cards.push({ groups: [g], bazaar: !!g.bazaar, shots: new Set([si]), title: g.title || "", titleTyped: false, category: opts.category || (opts.categories || [])[0] || "", fresh: true, open: false, status: "", m: null, asNew: false });
     });
-    st.groups = groups;
-    // the pack window's own pack first, else the first one
-    const want = String((opts.target && opts.target.title) || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const k = want ? groups.findIndex((g) => String(g.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").includes(want.slice(0, 12))) : -1;
-    const titled = new Set(groups.map((g) => g.title || ""));
-    st.pick = k >= 0 ? k : groups.length > 1 && titled.size === 1 && groups.every((g) => g.price) ? "rows" : 0;
-    const g0 = groups[typeof st.pick === "number" ? st.pick : 0];
-    if (!st.titleTyped && g0 && g0.title) st.title = g0.title;
-    rematch();
   };
-  // A pack already on the Packs page with the scanned name (opts.match): Save
-  // updates it unless "Save as a new pack instead" was tapped.
-  const rematch = () => {
-    if (st.to !== "this" && typeof opts.match === "function") {
-      const cands = [st.title].concat(chosen().map((g) => g.title)).filter(Boolean);
-      let m = null;
-      for (const c of cands) { m = opts.match(c); if (m) break; }
-      st.matched = m;
-      if (m && !st.matchOff) st.to = "match"; else if (st.to === "match") st.to = "new";
+  const cmpOf = (c) => (c.asNew ? null : c.m);
+  const prep = (c) => {
+    if (c.fresh) {
+      if (!opts.target && c.bazaar) c.m = bazaarMatch(c);
+      if (!opts.target && !c.m && typeof opts.match === "function" && c.title) c.m = opts.match(c.title);
+      c.fresh = false;
+      fillFromSaved(c); scaleDefault(c);
+      c.open = needsLook(c);
+      return;
     }
-    fillFromSaved();
-    scaleDefault();
+    if (c.changed) { c.changed = false; fillFromSaved(c); scaleDefault(c); if (needsLook(c)) c.open = true; }
   };
-  // "Scale to the next prices" starts on unless the pack it saves into is
-  // known not to be a Regular Packs ladder (owner, 16 Nov 2026: three Regular
-  // Packs in one screenshot came up with it off, and Save would have dropped
-  // their other prices). All prices as rows: no ladder. A tap on the switch wins.
-  const scaleDefault = () => {
-    if (st.pick === "rows") { st.scale = false; return; }
-    if (st.scaleTouched) return;
-    const m = cmpOf(), g = chosen()[0];
+  // Myriad Bazaar: the option table whose row at this price has the most of these items.
+  const BAZ = /baz+a+r/i;
+  const bazaarMatch = (c) => {
+    if (typeof opts.packs !== "function") return null;
+    const g = c.groups[0], usd = g.price && g.price.usd;
+    const mine = new Set(g.items.filter((it) => it.tick && it.name).map((it) => it.name.toLowerCase()));
+    let best = null, bs = 0;
+    (opts.packs() || []).filter((p) => BAZ.test(p.title || "")).forEach((p) => {
+      const rows = (p.saved || []).filter((r) => !usd || (r.usd != null && Math.abs(r.usd - usd) < 0.005));
+      const have = new Set(rows.flatMap((r) => Object.keys(r.items || {}).map((n) => n.toLowerCase())));
+      const sc = [...mine].filter((n) => have.has(n)).length;
+      if (sc > bs) { bs = sc; best = p; }
+    });
+    return best;
+  };
+  // "Scale to the next prices" (the price steps) starts on unless the pack it
+  // saves into is known not to be a Regular Packs ladder. A tap on the switch wins.
+  const scaleDefault = (c) => {
+    if (c.groups.length > 1 || c.bazaar) { c.scale = false; return; }
+    if (c.scaleTouched) return;
+    const m = cmpOf(c), g = c.groups[0];
     const lad = (v) => v != null && SCAN_PK_LADDER.some(([p]) => Math.abs(p - v) < 0.005);
     const saved = m && Array.isArray(m.saved) ? m.saved.filter((r) => r.usd != null) : [];
-    if (!saved.length) { st.scale = true; return; }
+    if (!saved.length) { c.scale = true; return; }
     const usd = g && g.price && g.price.usd;
-    st.scale = saved.filter((r) => lad(r.usd)).length >= 2 || (/regular/i.test(m.group || "") && usd != null && Math.abs(usd - 4.99) < 0.005);
+    c.scale = saved.filter((r) => lad(r.usd)).length >= 2 || (/regular/i.test(m.group || "") && usd != null && Math.abs(usd - 4.99) < 0.005);
   };
   // A pack already saved: a tile Scan couldn't name gets the saved item the scan
   // is missing, when that tile has the saved amount for this price or its nearest
   // picture is that item (owner, 16 Nov 2026: the pet food bag of "Pet Food Pack").
-  // Marked "please check"; another pack picked puts it back.
-  const fillFromSaved = () => {
-    st.groups.forEach((g) => g.items.forEach((it) => { if (it.fill) { it.name = null; it.fill = false; it.sure = false; } }));
-    const m = cmpOf();
+  // Also a left-out tile with exactly that amount. Marked "please check".
+  const fillFromSaved = (c) => {
+    c.groups.forEach((g) => {
+      g.items.forEach((it) => { if (it.fill) { it.name = null; it.fill = false; it.sure = false; it.ok = false; } });
+      const back = g.items.filter((it) => it.fromDrop && !it.name);
+      g.items = g.items.filter((it) => !back.includes(it));
+      back.forEach((it) => { it.fromDrop = false; g.dropped.push(it); });
+    });
+    const m = cmpOf(c);
+    c.groups.forEach((g) => g.items.forEach((it) => { if (it.bySaved) { it.bySaved = false; it.sure = false; } if (it.fillAmt) { it.fillAmt = false; it.value = null; it.ok = false; } }));
     if (!m || !Array.isArray(m.saved) || !m.saved.length) return;
     const allowed = new Map(names().map((n) => [n.toLowerCase(), n]));
-    chosen().forEach((g) => {
+    // an item read by its picture with the saved pack's amount for this price is taken as right
+    c.groups.forEach((g) => {
+      const usd = g.price && g.price.usd, row = usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005);
+      if (!row) return;
+      const b = lc(row.items), tot = totOf(g);
+      // a tile with no number read: the saved amount, to check
+      g.items.forEach((it) => { const v = it.name && b[it.name.toLowerCase()]; if (v && it.noAmt && it.value == null && !it.typed) { it.value = Math.round(v.v - (tot[it.name.toLowerCase()] || 0)); if (it.value > 0) it.fillAmt = true; else it.value = null; } });
+      g.items.forEach((it) => { const v = it.name && b[it.name.toLowerCase()]; if (v && !it.sure && !it.ok && !it.fill && !it.fillAmt && it.value != null && Math.round(v.v) === Math.round(tot[it.name.toLowerCase()] || 0)) { it.sure = true; it.bySaved = true; } });
+    });
+    c.groups.forEach((g) => {
       const usd = g.price && g.price.usd;
       const row = (usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005)) || (m.saved.length === 1 ? m.saved[0] : null);
       if (!row) return;
@@ -2178,286 +2281,439 @@ function openPackScanMain(opts) {
       const open = g.items.filter((it) => it.tick && !it.name && it.why !== "name");
       const claimed = new Set();
       missing.forEach(([n, v]) => {
-        const c = open.filter((it) => !claimed.has(it) && ((Number(it.value) > 0 && Math.round(it.value) === Math.round(v)) || String(it.guess || "").toLowerCase() === n.toLowerCase()));
-        if (c.length !== 1) return;
-        claimed.add(c[0]);
-        Object.assign(c[0], { name: allowed.get(n.toLowerCase()), fill: true, sure: false });
+        const sameV = (it) => Number(it.value) > 0 && Math.round(it.value) === Math.round(v);
+        let cand = open.filter((it) => !claimed.has(it) && (sameV(it) || String(it.guess || "").toLowerCase() === n.toLowerCase()));
+        let fromDrop = false;
+        if (!cand.length) { cand = g.dropped.filter((it) => !it.name && !it.skip && sameV(it)); fromDrop = true; }
+        if (cand.length !== 1) return;
+        claimed.add(cand[0]);
+        Object.assign(cand[0], { name: allowed.get(n.toLowerCase()), fill: true, sure: false, ok: false, tick: true });
+        if (fromDrop) { g.dropped = g.dropped.filter((x) => x !== cand[0]); cand[0].fromDrop = true; g.items.push(cand[0]); }
       });
     });
   };
-  const cmpOf = () => (st.to === "this" ? opts.target : st.to === "match" ? st.matched : null);
-  // Another pack of the screenshot: its own name, match, differences and ladder.
-  const pickGroup = (v) => {
-    st.pick = v;
-    const g = st.groups[typeof v === "number" ? v : 0];
-    if (st.done.size) { st.titleTyped = false; st.matchOff = false; st.savedOpen = false; st.scaleTouched = false; if (st.to === "match") st.to = "new"; }
-    if (!st.titleTyped && g && g.title) st.title = g.title;
-    rematch();
-  };
-  const chosen = () => (st.pick === "rows" ? st.groups : st.groups[st.pick] ? [st.groups[st.pick]] : []);
-  // The rows Save will fill: [{ usd, gems, items: { name: amount }, fromShot }].
-  const buildRows = () => {
-    const gs = chosen();
-    const rows = gs.map((g) => {
+
+  // ---- what a card would save ----
+  const unsureIt = (it) => it.tick && (!it.name || (!it.sure && !it.ok));
+  const priceUnsure = (g) => !g.price || !(g.price.usd > 0) || (!g.price.sure && !g.priceOk);
+  const toCheck = (c) => c.groups.reduce((a, g) => a + g.items.filter(unsureIt).length + (priceUnsure(g) ? 1 : 0), 0);
+  // rows: [{ usd, gems, items, fromShot, kept, was }] — kept = a worked-out price step the saved
+  // pack already has: its saved numbers stay (owner, 16 Nov 2026), shown as "saved".
+  const rowsOf = (c) => {
+    const rows = c.groups.map((g) => {
       const items = {};
       let gems = Number(g.gems) || 0;
-      // a Gems tile in the pack adds to the pack's gems
       g.items.forEach((it) => { if (!it.tick || !it.name || !(Number(it.value) > 0)) return; if (it.name === "Gems") gems += Number(it.value); else items[it.name] = (items[it.name] || 0) + Number(it.value); });
       return { usd: g.price && g.price.usd ? g.price.usd : null, gems, items, fromShot: true };
     });
-    if (rows.length === 1 && st.scale && rows[0].usd) {
-      const lad = ladderOf(rows[0].usd);
-      if (lad) lad.slice(1).forEach(([p, m]) => {
+    if (rows.length === 1 && c.scale && rows[0].usd) {
+      const lad = ladderOf(rows[0].usd), m = cmpOf(c);
+      const saved = m && Array.isArray(m.saved) ? m.saved : [];
+      if (lad) lad.slice(1).forEach(([p, k]) => {
+        const was = saved.find((s) => s.usd != null && Math.abs(s.usd - p) < 0.005);
+        if (was) { rows.push({ usd: p, gems: was.gems, items: { ...was.items }, kept: true }); return; }
         const items = {};
-        Object.entries(rows[0].items).forEach(([n, v]) => { items[n] = Math.round(v * m); });
-        rows.push({ usd: p, gems: typeof mpGems === "function" ? mpGems(p) : Math.round(rows[0].gems * m), items, fromShot: false });
+        Object.entries(rows[0].items).forEach(([n, v]) => { items[n] = Math.round(v * k); });
+        rows.push({ usd: p, gems: typeof mpGems === "function" ? mpGems(p) : Math.round(rows[0].gems * k), items, fromShot: false });
       });
     }
     return rows;
   };
-  const toCheck = () => chosen().reduce((a, g) => a + g.items.filter((it) => it.tick && (!it.name || !it.sure)).length + (g.price && !g.price.sure ? 1 : 0), 0);
-  const canSave = () => !(st.to === "new" && opts.canNew === false) && chosen().length && chosen().every((g) => g.items.every((it) => !it.tick || it.name) && g.price && g.price.usd > 0) && chosen().some((g) => g.items.some((it) => it.tick && it.name));
-  const itemRow = (it, gi, ii) => {
-    const ic = it.img || (it.name && iconOf(it.name));
-    const unknown = !it.name;
-    const off = !it.tick;
-    const note = it.why === "name" && !it.auto ? t("pks_not_listed") : unknown ? t("pks_unknown") : it.fill ? t("pks_from_saved") : !it.sure ? t("scan_please_check") : "";
-    const opts2 = names().map((n) => `<option value="${esc(n)}" ${n === it.name ? "selected" : ""}>${esc(disp(n))}</option>`).join("");
-    return `<div class="scan-row pks-row${unknown || !it.sure ? " unsure" : ""}${off ? " off" : ""}" data-pksrow="${gi}|${ii}">
-      <input type="checkbox" data-pkstick ${it.tick ? "checked" : ""} aria-label="${esc(t("pks_use"))}" />
-      ${ic ? `<img src="${esc(ic)}" alt="" class="${it.img ? "pks-tile" : ""}" />` : `<span class="scan-img"></span>`}
-      <span class="scan-name"><select data-pksitem class="keep-w" aria-label="${esc(t("pks_item"))}"><option value="">${esc(t("pks_pick_item"))}</option>${opts2}</select>
-        <span class="meta">${it.raw && !it.auto ? esc(it.raw) + " · " : ""}${note ? `<em>${esc(note)}</em>` : "&#10003;"}${it.mult && !SCAN_PK_BUNDLE.test(it.name || "") ? ` · ${esc(t("pks_label").replace("{n}", Number(it.mult).toLocaleString()))}` : ""}</span></span>
-      <input type="text" inputmode="numeric" data-pksval value="${it.value == null ? "" : Number(it.value).toLocaleString("en-US")}" aria-label="${esc(t("pks_amount"))}" />
-    </div>`;
+  // a group's ticked, named amounts by item (the same item twice, e.g. a Bazaar step's paid and free shelves, adds up)
+  const totOf = (g) => { const o = {}; g.items.forEach((it) => { if (it.tick && it.name && Number(it.value) > 0) { const k = it.name.toLowerCase(); o[k] = (o[k] || 0) + Number(it.value); } }); return o; };
+  const lc = (o) => { const out = {}; Object.entries(o || {}).forEach(([n, v]) => { const k = String(n).toLowerCase(); if (!out[k]) out[k] = { n, v: 0 }; out[k].v += Number(v) || 0; }); return out; };
+  // What saving changes in the saved pack: changed / new amounts (a visitor's copy
+  // only changes amounts the pack already has).
+  const changesOf = (c) => {
+    const m = cmpOf(c);
+    if (!m || !Array.isArray(m.saved)) return 0;
+    let n = 0;
+    rowsOf(c).forEach((r) => {
+      if (r.kept) return;
+      const s = r.usd ? m.saved.find((x) => x.usd != null && Math.abs(x.usd - r.usd) < 0.005) : null;
+      if (!s) { if (!m.mine) n += Object.keys(r.items).length; return; }
+      const a = lc(r.items), b = lc(s.items);
+      Object.keys(a).forEach((k) => { if (!b[k]) { if (!m.mine) n++; } else if (Math.round(b[k].v) !== Math.round(a[k].v)) n++; });
+      if (!m.mine && Math.round(s.gems || 0) !== Math.round(r.gems || 0) && r.gems) n++;
+    });
+    return n;
   };
+  const isNew = (c) => !cmpOf(c);
+  const canNew = () => opts.canNew !== false;
+  const canSave = (c) => !(isNew(c) && !canNew()) && c.groups.length && toCheck(c) === 0 && c.groups.every((g) => g.price && g.price.usd > 0) && c.groups.some((g) => g.items.some((it) => it.tick && it.name && it.name !== "Gems"));
+  const needsLook = (c) => toCheck(c) > 0 || isNew(c) || changesOf(c) > 0;
+  const shotGroup = (c) => c.groups[0];
+  const titleOf = (c) => (cmpOf(c) ? cmpOf(c).title : c.title) || t("pks_new");
+  const toOwnCopy = (c) => { const m = cmpOf(c); return !!(m && m.mine); };
+  const status = (c) => {
+    if (c.status === "saved") return ["done", t("pks_st_saved")];
+    if (c.status === "skipped") return ["done", t("pks_st_skipped")];
+    const n = toCheck(c);
+    if (n) return ["amb", t("pks_st_check").replace("{n}", n)];
+    if (isNew(c)) return ["ice", t("pks_st_new")];
+    const ch = changesOf(c);
+    if (ch) return ["ice", t(ch === 1 ? "pks_st_change1" : "pks_st_changes").replace("{n}", ch)];
+    if (c.hadCheck) return ["good", t("pks_st_ready")];
+    return ["good", t("pks_st_same")];
+  };
+  const saveText = (c) => {
+    const n = toCheck(c);
+    if (n) return t(n === 1 ? "pks_check_first1" : "pks_check_first").replace("{n}", n);
+    if (isNew(c)) return t("pks_save_new");
+    if (toOwnCopy(c)) return t("pks_save_mine");
+    const ch = changesOf(c);
+    return ch ? t(ch === 1 ? "pks_save_upd1" : "pks_save_upd").replace("{n}", ch) : t("pks_save_same");
+  };
+
+  // ---- drawing ----
+  const ringOf = (n) => { const m = /speedup\s*(\d+)\s*(m|h)\b/i.exec(String(n || "")); if (!m) return ""; const tm = m[1] + m[2].toLowerCase(), c = ((typeof SCAN_SIZE_COLORS !== "undefined" ? SCAN_SIZE_COLORS : []).find(([z]) => z === tm) || [null, [155, 161, 164]])[1]; return ` style="--ring:rgb(${c.join(",")})" data-tm="${tm}"`; };
+  const icHtml = (n, cls) => { const ic = n && iconOf(n), rg = n ? ringOf(n) : ""; return ic ? `<span class="pks-ic ${rg ? "ring " : ""}${cls || ""}"${rg}><img src="${esc(ic)}" alt="" />${rg ? `<i class="pks-tm">${esc(/data-tm="([^"]+)"/.exec(rg)[1])}</i>` : ""}</span>` : `<span class="pks-ic pks-q ${cls || ""}">?</span>`; };
+  const tileIc = (it, cls) => (it.name ? icHtml(it.name, cls) : it.img ? `<span class="pks-ic pks-tile ${cls || ""}"><img src="${esc(it.img)}" alt="" /></span>` : icHtml(null, cls));
+  const gemsIc = () => (iconOf("Gems") ? `<img class="pks-gi" src="${esc(iconOf("Gems"))}" alt="Gems" />` : "Gems");
+  const headSub = (c) => {
+    const g = shotGroup(c);
+    if (c.groups.length > 1) return esc(t("pks_n_prices").replace("{n}", c.groups.length));
+    return `${g.price ? esc(money(g.price.value, g.price.cur)) : esc(t("pks_price_none_s"))}${g.gems ? ` · ${gemsIc()} ${Math.round(g.gems).toLocaleString()}` : ""}`;
+  };
+  const stripHtml = (c) => {
+    const its = [];
+    c.groups.forEach((g) => g.items.forEach((it) => { if (it.tick && it.name && it.name !== "Gems") its.push(it); }));
+    return its.length ? `<div class="pks-strip">${its.slice(0, 8).map((it) => `<span title="${esc(disp(it.name))}">${tileIc(it, "sm")}<b>${esc(amt(Number(it.value) || 0))}</b></span>`).join("")}${its.length > 8 ? `<span class="meta">+${its.length - 8}</span>` : ""}</div>` : "";
+  };
+  // The picture picker: the likely items first, "…" opens every Backpack item.
+  const pickerHtml = (c, ci, it, ik) => {
+    const m = cmpOf(c), sug = [];
+    const put = (n) => { if (n && !sug.includes(n) && names().includes(n)) sug.push(n); };
+    put(it.name);
+    if (m && Array.isArray(m.saved)) m.saved.forEach((r) => Object.keys(r.items || {}).forEach(put));
+    put(it.guess);
+    c.groups.forEach((g) => g.items.forEach((x) => put(x.name)));
+    const all = c.pickAll === ik;
+    const list = all ? sug.concat(names().filter((n) => !sug.includes(n))) : sug.slice(0, 5);
+    return `<div class="pks-pick${all ? " all" : ""}">${list.map((n) => `<button type="button" class="pks-pk${n === it.name ? " on" : ""}" data-pkspk="${ci}|${ik}|${esc(n)}" title="${esc(disp(n))}" aria-label="${esc(disp(n))}">${iconOf(n) ? `<img src="${esc(iconOf(n))}" alt="" />` : `<small>${esc(disp(n).slice(0, 8))}</small>`}</button>`).join("")}${all ? "" : `<button type="button" class="pks-pk more" data-pksall="${ci}|${ik}" aria-label="${esc(t("pks_more_items"))}">&hellip;</button>`}</div>`;
+  };
+  const askHtml = (ci, ik, it) => `<div class="pks-ask"><span>${esc(it.value == null ? t("pks_no_number") : it.fillAmt ? t("pks_saved_q").replace("{n}", Number(it.value).toLocaleString()) : t("pks_read_q").replace("{n}", Number(it.value || 0).toLocaleString()))}</span>${it.value == null ? "" : `<button type="button" class="cg-bpbtn pks-yes" data-pksyes="${ci}|${ik}">&#10003; ${esc(t("pks_yes"))}</button>`}<button type="button" class="cg-bpbtn" data-pksedit="${ci}|${ik}">&#9998; ${esc(t("pks_edit"))}</button></div>`;
+  const editHtml = (c, ci, ik, it) => `<div class="pks-ed">
+      <label class="pks-edr"><span class="pks-edl">${esc(t("pks_amount"))}</span><input type="text" inputmode="numeric" class="pks-in" data-pksv="${ci}|${ik}" value="${it.value == null ? "" : Number(it.value).toLocaleString("en-US")}" aria-label="${esc(t("pks_amount"))}" autocomplete="off" /></label>
+      <div class="pks-edr"><span class="pks-edl">${esc(t("pks_item"))}</span>${pickerHtml(c, ci, it, ik)}</div>
+      <div class="pks-edr end"><span class="pks-sel">${it.name ? `${esc(disp(it.name))} &#10003;` : ""}</span><button type="button" class="cg-bpbtn" data-pksout="${ci}|${ik}">${esc(t("pks_leave_out"))}</button><button type="button" class="cg-bpbtn pks-yes" data-pksdone="${ci}|${ik}" ${it.name ? "" : "disabled"}>${esc(t("pks_done"))}</button></div></div>`;
+  const unknownHtml = (c, ci, ik, it) => `<div class="pks-ask"><span>${esc(t("pks_what"))}</span></div>${pickerHtml(c, ci, it, ik)}<div class="pks-ask"><button type="button" class="cg-bpbtn" data-pksout="${ci}|${ik}">${esc(t("pks_leave_out"))}</button></div>`;
+  const nameCell = (inner, n) => `<td><span class="pks-tn">${inner}<span>${esc(n)}</span></span></td>`;
+  // A card matched to a saved pack: Item | Saved | Screenshot, per price.
+  const compareHtml = (c, ci) => {
+    const m = cmpOf(c);
+    let body = "";
+    c.groups.forEach((g, gi) => {
+      const usd = g.price && g.price.usd;
+      const s = (usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005)) || null;
+      const b = s ? lc(s.items) : {}, tot = totOf(g);
+      const cnt = {}, last = {};
+      g.items.forEach((it, ii) => { if (it.tick && it.name) { const k = it.name.toLowerCase(); cnt[k] = (cnt[k] || 0) + 1; last[k] = ii; } });
+      const seen = new Set();
+      if (c.groups.length > 1 || !s) body += `<tr class="pks-pr"><td colspan="3">${usd ? "$" + usd : "?"}${g.price ? ` · ${esc(money(g.price.value, g.price.cur))}` : ""}${s ? "" : ` · <em>${esc(t(m.mine ? "pks_diff_newprice_mine" : "pks_diff_newprice"))}</em>`}</td></tr>`;
+      g.items.forEach((it, ii) => {
+        const ik = `${gi}|${ii}`;
+        const k = it.name ? it.name.toLowerCase() : null;
+        const again = k && seen.has(k) && it.tick;
+        if (k) seen.add(k);
+        const sv = k && b[k] && !again ? b[k].v : null;
+        if (!it.tick) { body += `<tr class="pks-off">${nameCell(tileIc(it, "xs"), it.name ? disp(it.name) : t("pks_unknown_t"))}<td>${sv != null ? amt(sv) : "—"}</td><td><button type="button" class="cg-bpbtn" data-pksuse="${ci}|${ik}">${esc(t("pks_left_out"))}</button></td></tr>`; return; }
+        if (!it.name) { body += `<tr class="pks-unk">${nameCell(tileIc(it, "xs"), t("pks_unknown_t"))}<td>—</td><td>&times;${esc(amt(Number(it.value) || 0))}</td></tr><tr class="pks-unk2"><td colspan="3">${unknownHtml(c, ci, ik, it)}</td></tr>`; return; }
+        const editing = c.edit === ik, unsure = unsureIt(it), sk = b[k] ? b[k].v : null, diff = sk != null ? Math.round(sk) !== Math.round(tot[k] || 0) : !m.mine;
+        const sum = cnt[k] > 1 && last[k] === ii ? ` <small class="pks-sum">= ${esc(amt(tot[k] || 0))}</small>` : "";
+        const cls = editing || unsure ? "pks-q" : diff ? "pks-chg" : "";
+        body += `<tr class="${cls}">${nameCell(tileIc(it, "xs"), shortName(it.name))}<td>${sv != null ? amt(sv) : again ? "" : "—"}</td><td>${editing ? "&#9998;" : `<b>${it.value == null ? "?" : esc(amt(Number(it.value) || 0)) + (unsure ? " ?" : "")}</b>${sum}`}${!editing && !unsure ? ` <button type="button" class="pks-pen" data-pksedit="${ci}|${ik}" aria-label="${esc(t("pks_edit"))}">&#9998;</button>` : ""}</td></tr>`;
+        if (editing) body += `<tr class="pks-q2"><td colspan="3">${editHtml(c, ci, ik, it)}</td></tr>`;
+        else if (unsure) body += `<tr class="pks-q2"><td colspan="3">${askHtml(ci, ik, it)}</td></tr>`;
+      });
+      if (s) Object.keys(b).forEach((k) => { if (!seen.has(k)) body += `<tr class="pks-miss">${nameCell(icHtml(b[k].n, "xs"), shortName(b[k].n))}<td>${amt(b[k].v)}</td><td><small>${esc(t("pks_diff_notin"))}</small></td></tr>`; });
+      const g0 = s ? Math.round(s.gems || 0) : null, g1 = Math.round(g.gems || 0);
+      body += `<tr class="${s && g0 !== g1 && !m.mine ? "pks-chg" : ""}">${nameCell(`<span class="pks-ic xs">${gemsIc()}</span>`, "Gems")}<td>${g0 != null ? (g0 ? g0.toLocaleString() : "—") : "—"}</td><td><b>${g1 ? g1.toLocaleString() : "—"}</b></td></tr>`;
+    });
+    return `<table class="pks-tb"><thead><tr><th>${esc(t("pks_item"))}</th><th>${esc(t("pks_diff_saved"))}</th><th>${esc(t("pks_diff_scan"))}</th></tr></thead><tbody>${body}</tbody></table>`;
+  };
+  // A new pack: name, category, its items (picture, name, amount).
+  const newHtml = (c, ci) => {
+    const cats = (opts.categories || []).filter(Boolean);
+    let rows = "";
+    c.groups.forEach((g, gi) => {
+      if (c.groups.length > 1) rows += `<div class="pks-nh">${g.price && g.price.usd ? "$" + g.price.usd : "?"}${g.price ? ` · ${esc(money(g.price.value, g.price.cur))}` : ""}</div>`;
+      g.items.forEach((it, ii) => {
+        const ik = `${gi}|${ii}`;
+        if (!it.tick) { rows += `<div class="pks-nr off">${tileIc(it, "sm")}<span class="pks-nn">${esc(it.name ? disp(it.name) : t("pks_unknown_t"))}</span><button type="button" class="cg-bpbtn" data-pksuse="${ci}|${ik}">${esc(t("pks_left_out"))}</button></div>`; return; }
+        const open = c.edit === ik || !it.name;
+        rows += `<div class="pks-nr${unsureIt(it) ? " q" : ""}">${tileIc(it, "sm")}<button type="button" class="pks-nn" data-pksedit="${ci}|${ik}" aria-expanded="${open ? "true" : "false"}">${esc(it.name ? shortName(it.name) : t("pks_unknown_t"))} <small>&#9662;</small></button>
+          <input type="text" inputmode="numeric" class="pks-in" data-pksv="${ci}|${ik}" value="${it.value == null ? "" : Number(it.value).toLocaleString("en-US")}" aria-label="${esc(t("pks_amount"))}" autocomplete="off" /></div>`;
+        if (open) rows += `<div class="pks-nrp">${!it.name ? `<div class="pks-ask"><span>${esc(t("pks_what"))}</span></div>` : ""}${pickerHtml(c, ci, it, ik)}<div class="pks-ask end"><button type="button" class="cg-bpbtn" data-pksout="${ci}|${ik}">${esc(t("pks_leave_out"))}</button>${it.name ? `<button type="button" class="cg-bpbtn pks-yes" data-pksdone="${ci}|${ik}">${esc(t("pks_done"))}</button>` : ""}</div></div>`;
+        else if (unsureIt(it)) rows += askHtml(ci, ik, it);
+      });
+    });
+    return `<div class="pks-new">
+      <label class="pks-lab" for="pksName${ci}">${esc(t("pks_name"))}</label><input type="text" id="pksName${ci}" class="pks-name" data-pksname="${ci}" maxlength="60" value="${esc(c.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" />
+      ${cats.length ? `<label class="pks-lab" for="pksCat${ci}">${esc(t("pks_cat"))}</label><select id="pksCat${ci}" class="pks-name keep-w" data-pkscat="${ci}">${cats.map((x) => `<option value="${esc(x)}" ${x === c.category ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>` : ""}
+      <div class="pks-lab">${esc(t("pks_items_h"))}</div>${rows}
+      <button type="button" class="pks-addit" data-pksadd="${ci}">+ ${esc(t("pks_missing"))}</button></div>`;
+  };
+  // The price: asked when not sure, typed when not read.
+  const priceAskHtml = (c, ci) => c.groups.map((g, gi) => {
+    if (!priceUnsure(g) && !(c.priceEdit === gi)) return "";
+    const read = g.price && g.price.value && !c.priceEdit && c.priceEdit !== gi && g.price.usd > 0;
+    return `<div class="pks-pq">${read ? `<div class="pks-ask"><span>${esc(t("pks_price_q").replace("{p}", money(g.price.value, g.price.cur)).replace("{usd}", "$" + g.price.usd))}</span><button type="button" class="cg-bpbtn pks-yes" data-pkspyes="${ci}|${gi}">&#10003; ${esc(t("pks_yes"))}</button><button type="button" class="cg-bpbtn" data-pkspedit="${ci}|${gi}">&#9998; ${esc(t("pks_edit"))}</button></div>`
+      : `<label class="pks-edr"><span>${esc(g.price && g.price.value ? t("pks_store").replace("{p}", money(g.price.value, g.price.cur)) : t("pks_price_none"))}</span><span class="pks-usd">US $<input type="text" inputmode="decimal" class="pks-in" data-pksusd="${ci}|${gi}" value="${g.price && g.price.usd ? g.price.usd : ""}" placeholder="4.99" aria-label="US $" autocomplete="off" /></span></label>`}</div>`;
+  }).join("");
   // One row per price: price, every item (picture + amount), Gems.
-  const rowsTableHtml = (rows) => {
+  const rowsTableHtml = (rows, savedTag) => {
     const cols = [];
     rows.forEach((r) => Object.keys(r.items).forEach((n) => { if (!cols.includes(n)) cols.push(n); }));
-    return `<div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>$</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${iconOf("Gems") ? `<img src="${esc(iconOf("Gems"))}" alt="Gems" />` : "Gems"}</th></tr></thead>
-      <tbody>${rows.map((r) => `<tr class="${r.fromShot ? "shot" : ""}"><td><b>${r.usd ? r.usd : "?"}</b></td>${cols.map((n) => `<td>${r.items[n] ? (typeof shortAmount === "function" && r.items[n] >= 1e5 ? shortAmount(r.items[n]) : Math.round(r.items[n]).toLocaleString()) : "—"}</td>`).join("")}<td>${r.gems ? Math.round(r.gems).toLocaleString() : "—"}</td></tr>`).join("")}</tbody></table></div>`;
+    return `<div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>${esc(t("pks_price_h"))}</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${gemsIc()}</th></tr></thead>
+      <tbody>${rows.map((r) => `<tr class="${r.fromShot ? "shot" : r.kept ? "kept" : ""}"><td><b>${r.usd ? "$" + r.usd : "?"}</b>${savedTag && r.kept ? ` <small>${esc(t("pks_kept_tag"))}</small>` : ""}</td>${cols.map((n) => `<td>${r.items[n] ? esc(amt(r.items[n])) : "—"}</td>`).join("")}<td>${r.gems ? Math.round(r.gems).toLocaleString() : "—"}</td></tr>`).join("")}</tbody></table></div>`;
   };
-  const previewHtml = () => {
-    const rows = buildRows();
-    if (!rows.length) return "";
-    return `<div class="scan-lab-h">${esc(t("pks_rows"))}</div>
-      ${rowsTableHtml(rows)}
-      <div class="meta pks-pv-n">${esc(t(st.scale && rows.length > 1 && chosen().length === 1 ? "pks_rows_note" : "pks_rows_note1"))}</div>`;
+  // The price steps: one line with the switch; tapped, the 5 prices and the rows it fills.
+  const ladderHtml = (c, ci) => {
+    if (c.groups.length !== 1 || c.bazaar) return "";
+    const usd = c.groups[0].price && c.groups[0].price.usd, k = SCAN_PK_LADDER.findIndex(([p]) => usd && Math.abs(p - usd) < 0.005);
+    if (k < 0) return "";
+    const last = SCAN_PK_LADDER[SCAN_PK_LADDER.length - 1];
+    const line = `<div class="pks-ll"><button type="button" class="pks-llb" data-pkslad="${ci}" aria-expanded="${c.ladOpen ? "true" : "false"}">$${usd} &times;1 &rarr; $${last[0]} &times;${Math.round(last[1] / SCAN_PK_LADDER[k][1])} <small>${c.ladOpen ? "&#9652;" : "&#9662;"}</small></button>
+      <label class="pks-sw">${esc(t(c.scale ? "pks_on" : "pks_off"))} <input type="checkbox" class="bset-sw" data-pksscale="${ci}" ${c.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></label></div>`;
+    if (!c.ladOpen) return line;
+    const rows = rowsOf(c);
+    return `${line}<div class="pks-lad">${SCAN_PK_LADDER.map(([p, mm], i) => `<button type="button" data-pksstep="${ci}|${p}" class="${i === k ? "on" : i < k || !c.scale ? "pre" : ""}" aria-pressed="${i === k ? "true" : "false"}"><b>$${p}</b><small>&times;${Math.round(mm / SCAN_PK_LADDER[k][1] * 100) / 100 || ""}</small>${i === k ? `<small>${esc(t("pks_screenshot_tag"))}</small>` : ""}</button>`).join("")}</div>
+      <div class="pks-lab">${esc(t("pks_rows"))}</div>${rowsTableHtml(rows, true)}
+      <div class="meta pks-pv-n">${esc(t(rows.some((r) => r.kept) ? "pks_rows_kept" : c.scale && rows.length > 1 ? "pks_rows_note" : "pks_rows_note1"))}</div>`;
   };
-  // The pack already on the Packs page, read-only (its saved rows: a visitor's
-  // own edited amounts, the same ones the differences compare with).
-  const savedHtml = () => {
-    const m = cmpOf();
-    if (!m || !st.savedOpen || !Array.isArray(m.saved)) return "";
-    return `<div class="pks-sv"><div class="scan-lab-h">${esc(t("pks_saved_pack"))}</div>
-      <div class="pks-sv-n"><b>${esc(m.title || "")}</b>${m.when ? ` <span class="meta">· ${esc(m.when)}</span>` : ""}</div>
-      ${m.saved.length ? rowsTableHtml(m.saved) : `<div class="meta">${esc(t("pks_saved_empty"))}</div>`}</div>`;
+  const savedHtml = (c) => {
+    const m = cmpOf(c);
+    if (!m || !c.savedOpen || !Array.isArray(m.saved)) return "";
+    return `<div class="pks-lab">${esc(t("pks_saved_pack"))}${m.group ? ` · ${esc(m.group)}` : ""}</div>${m.saved.length ? rowsTableHtml(m.saved) : `<div class="meta">${esc(t("pks_saved_empty"))}</div>`}`;
   };
-  const savedBtnText = () => t(st.savedOpen ? "pks_saved_hide" : "pks_saved_see");
-  // Saved pack vs scan, for the price rows Save fills: only what differs.
-  const amt = (v) => (v >= 1e5 && typeof shortAmount === "function" ? shortAmount(v) : Math.round(v).toLocaleString());
-  const noticeHtml = () => {
-    const m = cmpOf();
-    if (m && m.onPage) return `<div class="pks-opt on pks-dup"><span><b>${esc(t("pks_dup").replace("{name}", m.title || ""))}</b><small class="meta">${esc(t(m.mine ? "pks_dup_mine" : "pks_dup_d"))}</small><span class="pks-dup-b">${st.to === "match" && opts.canNew !== false ? `<button type="button" class="btn small ghost" data-pksasnew>${esc(t("pks_as_new"))}</button>` : ""}${Array.isArray(m.saved) ? `<button type="button" class="btn small ghost" data-pkssaved aria-expanded="${st.savedOpen ? "true" : "false"}">${esc(savedBtnText())}</button>` : ""}</span></span></div><div id="pksSaved">${savedHtml()}</div>`;
-    if (m && opts.canNew !== false) return `<div class="meta pks-to"><button type="button" class="btn small ghost" data-pksasnew>${esc(t("pks_as_new"))}</button></div>`;
-    return "";
+  const matchLine = (c, ci) => `<div class="pks-ml">${matchText(c, ci)} · <button type="button" class="pks-lk" data-pksaddshot="${ci}">+ ${esc(t("pks_add_shot"))}</button></div>`;
+  const matchText = (c, ci) => {
+    const m = cmpOf(c), canPick = typeof opts.packs === "function";
+    if (m) return `${esc(t(m.myPack ? "pks_in_mine" : m.mine ? "pks_on_page_v" : "pks_on_page"))}${canPick ? ` · <button type="button" class="pks-lk" data-pkschange="${ci}">${esc(t(c.bazaar ? "pks_not_table" : "pks_not_this"))}</button>` : ""}${Array.isArray(m.saved) ? ` · <button type="button" class="pks-lk" data-pkssaved="${ci}" aria-expanded="${c.savedOpen ? "true" : "false"}">${esc(t(c.savedOpen ? "pks_saved_hide" : "pks_saved_see"))}</button>` : ""}`;
+    return `${esc(t(canNew() ? "pks_not_on_page" : "pks_not_on_page_v"))}${canPick ? ` · <button type="button" class="pks-lk" data-pkschange="${ci}">${esc(t("pks_one_of_mine"))}</button>` : ""}`;
   };
-  // Save to a new pack: its name (from the screenshot) and category.
-  const newHtml = () => {
-    if (st.to !== "new" || opts.canNew === false) return "";
-    const cats = (opts.categories || []).filter(Boolean);
-    const back = opts.target || st.matched;
-    return `<div class="pks-opt on pks-new"><span><b>${esc(t("pks_new"))}</b>
-      <label class="pks-f"><span class="meta">${esc(t("pks_name"))}</span><input type="text" data-pksname2 maxlength="60" value="${esc(st.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" /></label>
-      ${cats.length ? `<label class="pks-f"><span class="meta">${esc(t("pks_cat"))}</span><select data-pkscat class="keep-w">${cats.map((c) => `<option value="${esc(c)}" ${c === st.category ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : ""}
-      ${back ? `<span class="pks-dup-b"><button type="button" class="btn small ghost" data-pksasmatch>${esc(t("pks_as_match").replace("{name}", back.title || ""))}</button></span>` : ""}</span></div>`;
+  const cardHtml = (c, ci) => {
+    const [sk, sl] = status(c), done = c.status === "saved" || c.status === "skipped";
+    const open = c.open && !done;
+    const head = `<div class="pks-ch"><button type="button" class="pks-cht" data-pkstoggle="${ci}" aria-expanded="${open ? "true" : "false"}"><b>${esc(titleOf(c))}</b><small>${headSub(c)}${c.shots.size > 1 ? ` · ${esc(t("pks_n_shots").replace("{n}", c.shots.size))}` : ""}</small></button>
+      <span class="pks-st ${sk}">${esc(sl)}</span>${done && (c.status === "skipped" || c.undo) ? `<button type="button" class="pks-lk pks-undo" data-pksundo="${ci}">${esc(t("pks_undo"))}</button>` : `<button type="button" class="pks-car" data-pkstoggle="${ci}" aria-label="${esc(titleOf(c))}">${open ? "&#9652;" : "&#9662;"}</button>`}</div>`;
+    if (!open) return `<div class="pks-card${done ? " done" : ""}" data-pkscard="${ci}">${head}${stripHtml(c)}</div>`;
+    const drop = c.groups.reduce((a, g) => a + g.dropped.length, 0);
+    const learnable = IS_OWNER && c.groups.some((g) => g.items.some((it) => it.feat && it.tick && it.ok && it.name && it.name !== it.auto));
+    const sv = canSave(c);
+    return `<div class="pks-card open${toCheck(c) ? " amb" : ""}" data-pkscard="${ci}">${head}
+      ${matchLine(c, ci)}
+      ${savedHtml(c)}
+      ${priceAskHtml(c, ci)}
+      ${isNew(c) ? newHtml(c, ci) : compareHtml(c, ci)}
+      ${drop ? `<div class="meta pks-drop">${esc(t(drop === 1 ? "pks_dropped1" : "pks_dropped").replace("{n}", drop))}</div>` : ""}
+      ${ladderHtml(c, ci)}
+      ${learnable ? `<label class="pks-learn"><input type="checkbox" data-pkslearn ${st.learn ? "checked" : ""} /><span>${esc(t("pks_learn"))}<small class="meta">${esc(t("pks_learn_d"))}</small></span></label>` : ""}
+      <div class="pks-cf"><span></span><button type="button" class="cg-bpbtn" data-pksskip="${ci}">${esc(t("pks_skip"))}</button><button type="button" class="cg-bpbtn pks-save" data-pkssave="${ci}" ${sv && c.status !== "saving" ? "" : "disabled"}>${esc(saveText(c))}</button></div>
+    </div>`;
   };
-  // Scale to the next prices: the switch and the Regular Packs ladder, the
-  // screenshot's price lit (a tap on another price sets the price row to it).
-  const scaleHtml = () => {
-    const gs = chosen();
-    if (gs.length !== 1) return "";
-    const usd = gs[0].price && gs[0].price.usd, k = SCAN_PK_LADDER.findIndex(([p]) => usd && Math.abs(p - usd) < 0.005);
-    return `<div class="pks-sc"><div class="pks-scl"><span>${esc(t("pks_scale"))}</span><input type="checkbox" class="bset-sw" data-pksscale ${st.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></div>
-      <div class="meta">${esc(t("pks_scale_d"))}</div>
-      <div class="pks-lad">${SCAN_PK_LADDER.map(([p, m], i) => `<button type="button" data-pkslad="${p}" class="${i === k ? "on" : k < 0 || i < k || !st.scale ? "pre" : ""}" aria-pressed="${i === k ? "true" : "false"}"><b>$${p}</b><small>&times;${m}</small></button>`).join("")}</div>
-      <div class="meta">${esc(t("pks_scale_note"))}</div></div>`;
+  const pending = () => st.cards.filter((c) => c.status !== "saved" && c.status !== "skipped");
+  const savedN = () => st.cards.filter((c) => c.status === "saved").length;
+  const barHtml = () => {
+    const left = pending(), ready = left.filter(canSave), chk = left.reduce((a, c) => a + toCheck(c), 0);
+    const addBtn = `<button class="btn ghost" type="button" data-pksaddshot="">+ ${esc(t("pks_add_shot"))}</button>`;
+    if (!left.length && st.cards.length) {
+      const n = savedN();
+      return `${n ? `<div class="pks-toast"><span>&#10003; ${esc(t(n === 1 ? "pks_saved_n1" : "pks_saved_n").replace("{n}", n))}</span>${opts.openPacks ? `<button type="button" class="pks-lk" data-pksopen>${esc(t("pks_open_packs"))}</button>` : ""}</div>` : ""}
+        <div class="pks-bar2">${addBtn}<button class="btn pks-p" type="button" data-pksclose>${esc(t("pks_done"))}</button></div>`;
+    }
+    let txt;
+    if (chk) txt = t(chk === 1 ? "pks_check_first1" : "pks_check_first").replace("{n}", chk);
+    else if (!IS_OWNER && ready.length && ready.every(toOwnCopy)) txt = t("pks_save_mine");
+    else if (savedN()) txt = t("pks_save_other").replace("{n}", ready.length);
+    else txt = t(ready.length === 1 ? "pks_save_one" : "pks_save_all").replace("{n}", ready.length);
+    return `<div class="pks-bar2">${addBtn}<button class="btn pks-p" type="button" data-pkssaveall ${chk || !ready.length || st.saving ? "disabled" : ""}>${esc(txt)}</button></div>`;
   };
-  const diffHtml = () => {
-    const m = cmpOf();
-    if (!m || !Array.isArray(m.saved)) return "";
-    const rows = buildRows(), saved = m.saved, used = new Set();
-    const lc = (o) => { const out = {}; Object.entries(o || {}).forEach(([n, v]) => { const k = String(n).toLowerCase(); if (!out[k]) out[k] = { n, v: 0 }; out[k].v += Number(v) || 0; }); return out; };
-    const nameCell = (n) => { const ic = iconOf(n); return `<td class="pks-dn">${ic ? `<img src="${esc(ic)}" alt="" />` : ""}<span>${esc(disp(n))}</span></td>`; };
-    let body = "", same = 0;
-    rows.forEach((r) => {
-      const k = r.usd ? saved.findIndex((s, i) => !used.has(i) && s.usd != null && Math.abs(s.usd - r.usd) < 0.005) : -1;
-      if (k >= 0) used.add(k);
-      const s = k >= 0 ? saved[k] : null;
-      const a = lc(r.items), b = s ? lc(s.items) : {};
-      let lines = "";
-      Object.keys(a).forEach((key) => {
-        const x = a[key], y = b[key];
-        if (y && Math.round(y.v) === Math.round(x.v)) { same++; return; }
-        lines += `<tr class="chg">${nameCell(x.n)}<td>${y ? amt(y.v) : "—"}</td><td><b>${amt(x.v)}</b>${y ? "" : ` <em>${esc(t("pks_diff_new"))}</em>`}</td></tr>`;
-      });
-      if (s) Object.keys(b).forEach((key) => { if (!a[key]) lines += `<tr>${nameCell(b[key].n)}<td>${amt(b[key].v)}</td><td><em>${esc(t("pks_diff_notin"))}</em></td></tr>`; });
-      const g0 = s ? Math.round(s.gems || 0) : 0, g1 = Math.round(r.gems || 0);
-      if (s && g0 !== g1) lines += `<tr class="chg">${nameCell("Gems")}<td>${g0 ? g0.toLocaleString() : "—"}</td><td><b>${g1 ? g1.toLocaleString() : "—"}</b></td></tr>`;
-      else if (s && g1) same++;
-      if (!s || lines) body += `<tr class="shot"><td colspan="3">${r.usd ? "$" + r.usd : "?"}${s ? "" : ` · <em>${esc(t(m.mine ? "pks_diff_newprice_mine" : "pks_diff_newprice"))}</em>`}</td></tr>${lines}`;
-    });
-    const gone = saved.filter((x, i) => !used.has(i) && x.usd != null).length;
-    const none = !body && !gone;
-    return `<div class="scan-lab-h">${esc(t("pks_diff"))}</div>
-      ${none ? `<div class="scan-row pks-row"><span class="scan-name"><b>&#10003; ${esc(t("pks_diff_none"))}</b></span></div>` : `${body ? `<div class="pks-pv-wrap"><table class="pks-pv pks-diff"><thead><tr><th></th><th>${esc(t("pks_diff_saved"))}</th><th>${esc(t("pks_diff_scan"))}</th></tr></thead><tbody>${body}</tbody></table></div>` : ""}
-      <div class="meta pks-pv-n">${[same ? t("pks_diff_same").replace("{n}", same) : "", gone ? t(m.mine ? "pks_diff_gone_mine" : "pks_diff_kept").replace("{n}", gone) : "", m.mine ? t("pks_diff_mine_note") : ""].filter(Boolean).map(esc).join(" · ")}</div>`}`;
+  const subLine = () => {
+    const n = st.cards.length, left = pending();
+    if (!n) return t("pks_none_found");
+    if (!left.length && savedN()) return t(savedN() === 1 ? "pks_sub_saved_all1" : "pks_sub_saved_all").replace("{n}", savedN());
+    const parts = [t(n === 1 ? "pks_found1" : "pks_found").replace("{n}", n)];
+    const chk = left.reduce((a, c) => a + toCheck(c), 0), ch = left.reduce((a, c) => a + changesOf(c), 0);
+    if (opts.target && cmpOf(st.cards[0]) === opts.target && n === 1 && !chk) parts[0] = opts.target.title;
+    if (savedN()) parts.push(t("pks_sub_saved").replace("{n}", savedN()));
+    else if (chk) parts.push(t("pks_sub_check").replace("{n}", chk));
+    else if (ch) parts.push(t(ch === 1 ? "pks_sub_change1" : "pks_sub_changes").replace("{n}", ch));
+    else if (st.cards.length === 1 && isNew(st.cards[0])) parts.push(t("pks_sub_new"));
+    else parts.push(t("pks_sub_ready"));
+    return parts.join(" · ");
   };
-  const showCheck = () => {
+  const sheetHtml = () => {
+    const sh = st.sheet;
+    if (!sh) return "";
+    const c = st.cards[sh.ci];
+    const cur = cmpOf(c);
+    const q = key(sh.q);
+    const all = (opts.packs() || []).filter((p) => p && p.title);
+    const first = (p) => (cur && String(p.id) === String(cur.id) ? 0 : c.bazaar && BAZ.test(p.title) ? 1 : 2);
+    const list = all.filter((p) => !q || key(p.title).includes(q)).sort((a, b) => first(a) - first(b) || String(a.title).localeCompare(String(b.title))).slice(0, 40);
+    const firstIc = (p) => { const r = (p.saved || [])[0]; const n = r && Object.keys(r.items || {})[0]; return icHtml(n || null, "pk"); };
+    return `<div class="pks-shov" data-pksshbd><div class="pks-sh" role="dialog" aria-label="${esc(t("pks_which"))}">
+      <div class="pks-h"><div><h2>${esc(t("pks_which"))}</h2><div class="pks-sub">${esc(t(IS_OWNER ? "pks_which_d" : "pks_which_dv"))}</div></div><button type="button" class="pks-x" data-pksshclose aria-label="${esc(t("close_button"))}">&times;</button></div>
+      <label class="pks-srch"><span aria-hidden="true">&#128269;</span><input type="search" data-pksq value="${esc(sh.q)}" placeholder="${esc(t("pkb_search"))}" autocomplete="off" /></label>
+      <div class="pks-li-w">${list.map((p) => { const on = cur && String(p.id) === String(cur.id); return `<button type="button" class="pks-li${on ? " on" : ""}" data-pkspack="${esc(String(p.id))}">${firstIc(p)}<span><b>${esc(p.title)}</b><small>${esc([p.myPack ? t("pks_in_mine") : p.group, on ? t("pks_now_matched") : p.when].filter(Boolean).join(" · "))}</small></span>${on ? "<em>&#10003;</em>" : "<em class=\"g\">&rsaquo;</em>"}</button>`; }).join("") || `<div class="meta">${esc(t("pks_which_none"))}</div>`}</div>
+      ${canNew() ? `<button type="button" class="pks-li pks-li-new" data-pksasnew><span class="pks-plus">+</span><span><b>${esc(t("pks_as_new"))}</b><small>${esc(t(IS_OWNER ? "pks_as_new_d" : "pks_as_new_dv"))}</small></span></button>` : ""}
+    </div></div>`;
+  };
+  const draw = () => {
     if (!live()) return;
-    const gs = chosen();
-    const any = st.groups.length;
-    const n = toCheck();
-    const many = st.groups.length > 1;
-    const learnable = IS_OWNER && gs.some((g) => g.items.some((it) => it.feat && it.tick && it.name && it.name !== it.auto));
-    const where = st.to === "this" && opts.target ? opts.target.title : st.to === "match" && st.matched ? st.matched.title : (st.title || t("pks_new"));
-    modal.innerHTML = `<div class="modal-box pks-box" role="dialog" aria-label="${esc(t("pks_check"))}">
-      <div class="pks-h"><h2>${esc(t("pks_check"))}</h2><button type="button" class="pks-x" data-pksclose aria-label="${esc(t("close_button"))}">&times;</button></div>
-      <div class="meta pks-to">${esc(t("pks_to"))} <b>${esc(where)}</b>${n ? ` · ${esc(t("pks_n_check").replace("{n}", n))}` : ""}</div>
-      ${!any ? `<p class="desc">${esc(t("pks_nothing"))}</p>` : ""}
-      ${noticeHtml()}
-      ${newHtml()}
-      ${many ? `<div class="scan-lab-h">${esc(t("pks_which_one"))}</div><div class="pks-groups">${st.groups.map((g, i) => `<button type="button" class="pks-g${st.pick === i ? " on" : ""}${st.done.has(i) ? " done" : ""}" data-pksgroup="${i}" aria-pressed="${st.pick === i ? "true" : "false"}"><b>${esc(g.title || t("pks_pack_n").replace("{n}", i + 1))}</b><small>${st.done.has(i) ? `<em>&#10003; ${esc(t("pks_saved_mark"))}</em> · ` : ""}${g.price ? esc(money(g.price.value, g.price.cur)) : "?"} · ${esc(t("pks_n_items").replace("{n}", g.items.length))}</small></button>`).join("")}
-        ${st.groups.every((g) => g.price) && !st.done.size ? `<button type="button" class="pks-g${st.pick === "rows" ? " on" : ""}" data-pksgroup="rows"><b>${esc(t("pks_all_rows"))}</b><small>${esc(t("pks_all_rows_d").replace(/\{n\}/g, st.groups.length))}</small></button>` : ""}</div>` : ""}
-      ${gs.map((g, gi0) => { const gi = st.pick === "rows" ? gi0 : st.pick; return `
-        ${gs.length > 1 ? `<div class="scan-lab-h">${esc(g.title || t("pks_pack_n").replace("{n}", gi + 1))}</div>` : `<div class="scan-lab-h">${esc(t("pks_items"))}</div>`}
-        ${g.items.map((it, ii) => itemRow(it, gi, ii)).join("") || `<div class="meta">${esc(t("pks_no_items"))}</div>`}
-        <div class="scan-row pks-row pks-price${g.price && g.price.sure ? "" : " unsure"}" data-pksprice="${gi}">
-          <span class="pks-cur">$</span>
-          <span class="scan-name"><b>${esc(t("pks_price"))}</b><span class="meta">${g.price ? esc(t("pks_store").replace("{p}", money(g.price.value, g.price.cur))) : esc(t("pks_price_none"))}${g.price && g.price.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
-          <input type="text" inputmode="decimal" data-pksusd value="${g.price && g.price.usd ? g.price.usd : ""}" placeholder="4.99" aria-label="US $" />
-        </div>
-        <div class="scan-row pks-row${g.gemsSure === false ? " unsure" : ""}" data-pksgems="${gi}">
-          ${iconOf("Gems") ? `<img src="${esc(iconOf("Gems"))}" alt="" />` : `<span class="scan-img"></span>`}
-          <span class="scan-name"><b>Gems</b><span class="meta">${g.gemsSure === false ? `<em>${esc(t("pks_gems_guess"))}</em>` : "&#10003;"}</span></span>
-          <input type="text" inputmode="numeric" data-pksgemsv value="${g.gems ? Number(g.gems).toLocaleString("en-US") : ""}" aria-label="Gems" />
-        </div>`; }).join("")}
-      ${st.skipped.noamount || st.skipped.unknown ? `<div class="meta pks-skip">&#9888; ${esc(t("pks_skipped").replace("{n}", st.skipped.noamount + st.skipped.unknown))}</div>` : ""}
-      ${learnable ? `<label class="pks-learn"><input type="checkbox" data-pkslearn ${st.learn !== false ? "checked" : ""} /><span>${esc(t("pks_learn"))}<small class="meta">${esc(t("pks_learn_d"))}</small></span></label>` : ""}
-      <div id="pksDiff">${diffHtml()}</div>
-      <div id="pksScale">${scaleHtml()}</div>
-      <div id="pksPreview">${previewHtml()}</div>
-      <div class="pks-foot">
-        <button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button>
-        <button class="btn ghost" type="button" data-pksback>${esc(t("pks_other"))}</button>
-        <button class="btn" type="button" data-pkssave ${canSave() ? "" : "disabled"}>${esc(t("pks_save"))}</button>
-      </div></div>`;
-    wireCheck();
-    // the picked pack's chip in sight (the row scrolls sideways)
-    const on = modal.querySelector(".pks-g.on"), row = on && on.parentElement;
-    if (row) { const a = on.getBoundingClientRect(), b = row.getBoundingClientRect(); if (a.left < b.left || a.right > b.right) row.scrollLeft += a.left - b.left - 8; }
+    st.phase = "cards";
+    const box0 = modal.querySelector(".pks-box"), y = box0 ? box0.scrollTop : 0;
+    const act = document.activeElement, actKey = act && modal.contains(act) ? [...act.attributes].find((a) => a.name.startsWith("data-pks")) : null;
+    const sel = actKey ? `[${actKey.name}="${window.CSS.escape(actKey.value)}"]` : "";
+    const caret = act && typeof act.selectionStart === "number" ? act.selectionStart : null;
+    const visitorNote = !IS_OWNER && st.cards.some((c) => toOwnCopy(c) && c.status !== "saved") ? `<div class="pks-vn">${esc(t("pks_visitor_note"))}</div>` : "";
+    modal.innerHTML = `<div class="modal-box pks-box pks-cards" role="dialog" aria-label="${esc(t("pks_title"))}">
+      <div class="pks-h"><div><h2>${esc(t("pks_title"))}</h2><div class="pks-sub">${esc(subLine())}</div></div>${closeX}</div>
+      ${visitorNote}
+      ${st.cards.length ? st.cards.map(cardHtml).join("") : `<p class="desc">${esc(t("pks_nothing"))}</p>`}
+      ${st.noamount ? `<div class="meta pks-skip">${esc(t("pks_skipped").replace("{n}", st.noamount))}</div>` : ""}
+      <div class="pks-bar">${barHtml()}</div>
+    </div>${sheetHtml()}`;
+    const box = modal.querySelector(".pks-box");
+    box.scrollTop = y;
+    if (sel) { const el = modal.querySelector(sel); if (el) { try { el.focus({ preventScroll: true }); if (caret != null && el.setSelectionRange) el.setSelectionRange(caret, caret); } catch (e) {} } }
+    wire();
   };
-  const refresh = () => {
-    const pv = modal.querySelector("#pksPreview");
-    if (pv) pv.innerHTML = previewHtml();
-    const df = modal.querySelector("#pksDiff");
-    if (df) df.innerHTML = diffHtml();
-    const sv = modal.querySelector("[data-pkssave]");
-    if (sv) sv.disabled = !canSave();
+  // Typing: the state follows at once; the chip, Save buttons and line above follow without a redraw.
+  const light = (ci) => {
+    const c = st.cards[ci], el = modal.querySelector(`[data-pkscard="${ci}"]`);
+    if (el) {
+      const [sk, sl] = status(c), chip = el.querySelector(".pks-st");
+      if (chip) { chip.className = `pks-st ${sk}`; chip.textContent = sl; }
+      const sb = el.querySelector("[data-pkssave]");
+      if (sb) { sb.textContent = saveText(c); sb.disabled = !canSave(c); }
+    }
+    const bar = modal.querySelector(".pks-bar");
+    if (bar) { bar.innerHTML = barHtml(); wireBar(); }
+    const sub = modal.querySelector(".pks-h .pks-sub");
+    if (sub) sub.textContent = subLine();
   };
-  const num = (v) => { const n = parseFloat(String(v).replace(/,/g, "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
-  const wireScale = () => {
-    const box = modal.querySelector("#pksScale");
-    if (!box) return;
-    const redraw = () => { box.innerHTML = scaleHtml(); wireScale(); refresh(); };
-    const sc = box.querySelector("[data-pksscale]");
-    if (sc) sc.onchange = () => { st.scale = sc.checked; st.scaleTouched = true; redraw(); };
-    box.querySelectorAll("[data-pkslad]").forEach((b) => b.onclick = () => {
-      const gs = chosen();
-      if (gs.length !== 1) return;
-      const g = gs[0], gi = st.pick === "rows" ? 0 : st.pick, usd = Number(b.dataset.pkslad);
-      g.price = g.price || { cur: "USD", value: null };
-      g.price.usd = usd; g.price.sure = true;
-      const pin = modal.querySelector(`[data-pksprice="${gi}"] [data-pksusd]`);
-      if (pin) { pin.value = usd; pin.closest(".pks-price").classList.remove("unsure"); }
-      if (!g.gemsTyped && typeof mpGems === "function") { g.gems = mpGems(usd); const gin = modal.querySelector(`[data-pksgems="${gi}"] input`); if (gin) gin.value = g.gems.toLocaleString("en-US"); }
-      redraw();
-    });
+  const itemAt = (s) => { const [ci, gi, ii] = s.split("|").map(Number); const c = st.cards[ci]; return { c, ci, g: c.groups[gi], it: c.groups[gi].items[ii], ik: `${gi}|${ii}` }; };
+  const markCheck = (c) => { if (toCheck(c)) c.hadCheck = true; };
+
+  // ---- saving ----
+  const learnOf = (c) => (IS_OWNER && st.learn ? c.groups.flatMap((g) => g.items.filter((it) => it.feat && it.tick && it.ok && it.name && it.name !== it.auto).map((it) => ({ k: "pack", n: it.name, f: scanFeatToB64(it.feat) }))) : []);
+  const saveCard = async (c) => {
+    if (!canSave(c) || c.status === "saving") return false;
+    const m = cmpOf(c);
+    const to = !m ? "new" : m === opts.target ? "this" : "match";
+    const learn = learnOf(c);
+    const res = { to, id: m ? m.id : null, title: (to === "new" ? c.title : m.title || c.title || "").trim(), category: c.category, rows: rowsOf(c).filter((r) => !r.kept).map(({ usd, gems, items }) => ({ usd, gems, items })), learn };
+    c.status = "saving";
+    try {
+      const out = await opts.onSave(res);
+      c.status = "saved"; c.open = false;
+      c.undo = out && typeof out.undo === "function" ? out.undo : null;
+      if (learn.length) { try { await scanLearnedSave(learn); await scanPkLearnedLoad(); } catch (err) { toast(t("pks_learn_failed"), true); } }
+      return true;
+    } catch (err) { c.status = ""; toast((err && err.message) || "Couldn't save", true); return false; }
   };
-  const wireCheck = () => {
-    modal.querySelectorAll("[data-pksclose]").forEach((b) => b.onclick = close);
-    modal.querySelector("[data-pksback]").onclick = () => { if (st.to === "match") st.to = "new"; st.matched = null; st.groups = []; st.skipped = { noamount: 0, unknown: 0 }; showStart(); };
-    modal.querySelectorAll("[data-pksgroup]").forEach((b) => b.onclick = () => {
-      const v = b.dataset.pksgroup;
-      pickGroup(v === "rows" ? "rows" : Number(v));
-      showCheck();
-    });
-    const asNew = modal.querySelector("[data-pksasnew]");
-    if (asNew) asNew.onclick = () => { st.matchOff = true; st.to = "new"; rematch(); showCheck(); };
-    const ct = modal.querySelector("[data-pkscat]");
-    if (ct) ct.onchange = () => { st.category = ct.value; };
-    wireScale();
-    const svBtn = modal.querySelector("[data-pkssaved]");
-    if (svBtn) svBtn.onclick = () => {
-      st.savedOpen = !st.savedOpen;
-      svBtn.textContent = savedBtnText();
-      svBtn.setAttribute("aria-expanded", st.savedOpen ? "true" : "false");
-      const box = modal.querySelector("#pksSaved");
-      if (box) box.innerHTML = savedHtml();
+  const wireBar = () => {
+    modal.querySelectorAll(".pks-bar [data-pksclose]").forEach((b) => b.onclick = close);
+    modal.querySelectorAll(".pks-bar [data-pksaddshot]").forEach((b) => b.onclick = () => picker(null));
+    const op = modal.querySelector("[data-pksopen]");
+    if (op) op.onclick = () => { close(); opts.openPacks(); };
+    const all = modal.querySelector("[data-pkssaveall]");
+    if (all) all.onclick = async () => {
+      if (st.saving) return;
+      st.saving = true; all.disabled = true;
+      for (const c of pending().filter(canSave)) { if (!live()) break; await saveCard(c); }
+      st.saving = false;
+      draw();
     };
-    const asMatch = modal.querySelector("[data-pksasmatch]");
-    if (asMatch) asMatch.onclick = () => { st.matchOff = false; st.to = opts.target && !st.targetUsed ? "this" : "match"; rematch(); showCheck(); };
-    const nm = modal.querySelector("[data-pksname2]");
-    if (nm) nm.oninput = () => { st.title = nm.value; st.titleTyped = true; };
-    const rowOf = (el) => { const [gi, ii] = el.closest("[data-pksrow]").dataset.pksrow.split("|").map(Number); return st.groups[gi].items[ii]; };
-    modal.querySelectorAll("[data-pksrow]").forEach((row) => {
-      row.querySelector("[data-pkstick]").onchange = (e) => { rowOf(row).tick = e.target.checked; row.classList.toggle("off", !e.target.checked); refresh(); };
-      row.querySelector("[data-pksitem]").onchange = (e) => {
-        const it = rowOf(row);
-        it.name = e.target.value || null; it.sure = !!it.name; it.tick = true; it.fill = false;
-        // a bundle tile (10 K Meat): the label times the number on the tile
-        if (it.mult && it.name && SCAN_PK_BUNDLE.test(it.name) && !it.typed) it.value = it.amount0 != null ? it.amount0 * it.mult : it.value * it.mult;
-        showCheck();
-      };
-      row.querySelector("[data-pksval]").oninput = (e) => { const it = rowOf(row); it.value = num(e.target.value); it.typed = true; it.sure = true; refresh(); };
+  };
+  const wire = () => {
+    modal.querySelector(".pks-h [data-pksclose]").onclick = close;
+    wireBar();
+    const on = (attr, fn) => modal.querySelectorAll(`[${attr}]`).forEach((b) => b.addEventListener(b.tagName === "INPUT" || b.tagName === "SELECT" ? (b.type === "checkbox" || b.tagName === "SELECT" ? "change" : "input") : "click", (e) => fn(b.getAttribute(attr), b, e)));
+    on("data-pkstoggle", (v) => { const c = st.cards[Number(v)]; if (c.status === "saved" || c.status === "skipped") return; c.open = !c.open; draw(); });
+    on("data-pksyes", (v) => { const { c, it } = itemAt(v); markCheck(c); it.ok = true; it.sure = true; c.edit = null; draw(); });
+    on("data-pksedit", (v) => { const { c, ik } = itemAt(v); markCheck(c); c.edit = c.edit === ik ? null : ik; draw(); });
+    on("data-pksdone", (v) => { const { c, it } = itemAt(v); it.ok = true; it.sure = true; c.edit = null; draw(); });
+    on("data-pksout", (v) => { const { c, g, it } = itemAt(v); markCheck(c); if (it.added && !it.name) g.items.splice(g.items.indexOf(it), 1); else it.tick = false; c.edit = null; draw(); });
+    on("data-pksuse", (v) => { const { c, it } = itemAt(v); it.tick = true; c.edit = it.name ? null : c.edit; draw(); });
+    on("data-pksall", (v) => { const [ci, gi, ii] = v.split("|"); st.cards[Number(ci)].pickAll = `${gi}|${ii}`; draw(); });
+    on("data-pkspk", (v) => {
+      const [ci, gi, ii, ...rest] = v.split("|");
+      const { c, it } = itemAt(`${ci}|${gi}|${ii}`), n = rest.join("|");
+      markCheck(c);
+      it.name = n; it.tick = true; it.fill = false; it.ok = true; it.sure = true;
+      // a bundle tile (10 K Meat): the label times the number on the tile
+      if (it.mult && SCAN_PK_BUNDLE.test(n) && !it.typed) it.value = it.amount0 != null ? it.amount0 * it.mult : it.value * it.mult;
+      c.pickAll = null;
+      if (isNew(c) || c.edit !== `${gi}|${ii}`) c.edit = null;
+      draw();
     });
-    modal.querySelectorAll("[data-pksprice]").forEach((row) => row.querySelector("[data-pksusd]").oninput = (e) => {
-      const g = st.groups[Number(row.dataset.pksprice)];
+    on("data-pksv", (v, el) => { const { c, ci, it } = itemAt(v); markCheck(c); it.value = num(el.value); it.typed = true; if (it.name) { it.sure = true; it.ok = true; } light(ci); });
+    on("data-pksname", (v, el) => { const c = st.cards[Number(v)]; c.title = el.value; c.titleTyped = true; light(Number(v)); });
+    on("data-pkscat", (v, el) => { st.cards[Number(v)].category = el.value; });
+    on("data-pksadd", (v) => { const c = st.cards[Number(v)], g = c.groups[0]; g.items.push({ name: null, value: null, tick: true, sure: false, added: true }); c.edit = `0|${g.items.length - 1}`; draw(); });
+    on("data-pkspyes", (v) => { const [ci, gi] = v.split("|").map(Number), c = st.cards[ci]; markCheck(c); c.groups[gi].priceOk = true; c.priceEdit = null; draw(); });
+    on("data-pkspedit", (v) => { const [ci, gi] = v.split("|").map(Number); st.cards[ci].priceEdit = gi; draw(); });
+    on("data-pksusd", (v, el) => {
+      const [ci, gi] = v.split("|").map(Number), c = st.cards[ci], g = c.groups[gi];
+      markCheck(c);
       g.price = g.price || { cur: "USD", value: null };
-      g.price.usd = num(e.target.value); g.price.sure = true;
-      if (!g.gemsTyped && typeof mpGems === "function" && g.price.usd) { g.gems = mpGems(g.price.usd); const gi = modal.querySelector(`[data-pksgems="${row.dataset.pksprice}"] input`); if (gi) gi.value = g.gems.toLocaleString("en-US"); }
-      const sb = modal.querySelector("#pksScale");
-      if (sb) { sb.innerHTML = scaleHtml(); wireScale(); }
-      refresh();
+      g.price.usd = num(el.value); g.priceOk = g.price.usd > 0;
+      if (!g.gemsTyped && typeof mpGems === "function" && g.price.usd) g.gems = mpGems(g.price.usd);
+      light(ci);
     });
-    modal.querySelectorAll("[data-pksgems]").forEach((row) => row.querySelector("input").oninput = (e) => { const g = st.groups[Number(row.dataset.pksgems)]; g.gems = num(e.target.value); g.gemsTyped = true; g.gemsSure = true; refresh(); });
-    const ln = modal.querySelector("[data-pkslearn]");
-    if (ln) ln.onchange = () => { st.learn = ln.checked; };
-    modal.querySelector("[data-pkssave]").onclick = async (e) => {
-      if (!canSave()) return;
-      e.target.disabled = true;
-      const learn = IS_OWNER && st.learn !== false ? chosen().flatMap((g) => g.items.filter((it) => it.feat && it.tick && it.name && it.name !== it.auto).map((it) => ({ k: "pack", n: it.name, f: scanFeatToB64(it.feat) }))) : [];
-      const res = { to: st.to, id: st.to === "match" && st.matched ? st.matched.id : st.to === "this" && opts.target ? opts.target.id : null, title: (st.title || "").trim(), category: st.category, rows: buildRows().map(({ usd, gems, items }) => ({ usd, gems, items })), learn };
-      try {
-        await opts.onSave(res);
-        if (learn.length) { try { await scanLearnedSave(learn); await scanPkLearnedLoad(); } catch (err) { toast(t("pks_learn_failed"), true); } }
-        // Several packs in the screenshot: stay on the next one not saved yet
-        // (its chip says so), until every pack is saved or Cancel.
-        if (typeof st.pick === "number" && st.groups.length > 1) {
-          st.done.add(st.pick);
-          const n = st.groups.length, next = [...Array(n).keys()].map((k) => (st.pick + 1 + k) % n).find((k) => !st.done.has(k));
-          if (next != null && live()) {
-            if (st.to === "this") st.targetUsed = true;
-            st.to = "new";
-            pickGroup(next);
-            showCheck();
-            return;
-          }
+    on("data-pkslad", (v) => { const c = st.cards[Number(v)]; c.ladOpen = !c.ladOpen; draw(); });
+    on("data-pksscale", (v, el) => { const c = st.cards[Number(v)]; c.scale = el.checked; c.scaleTouched = true; draw(); });
+    on("data-pksstep", (v) => {
+      const [ci, p] = v.split("|"), c = st.cards[Number(ci)], g = c.groups[0], usd = Number(p);
+      g.price = g.price || { cur: "USD", value: null };
+      g.price.usd = usd; g.priceOk = true;
+      if (!g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(usd);
+      fillFromSaved(c);
+      draw();
+    });
+    on("data-pkssaved", (v) => { const c = st.cards[Number(v)]; c.savedOpen = !c.savedOpen; draw(); });
+    on("data-pkschange", (v) => { st.sheet = { ci: Number(v), q: "" }; draw(); const q = modal.querySelector("[data-pksq]"); if (q && matchMedia("(hover:hover)").matches) q.focus(); });
+    on("data-pkslearn", (v, el) => { st.learn = el.checked; });
+    on("data-pksaddshot", (v) => picker(v === "" ? null : Number(v)));
+    on("data-pksskip", (v) => { const c = st.cards[Number(v)]; c.status = "skipped"; c.open = false; draw(); });
+    on("data-pkssave", async (v, el) => { const c = st.cards[Number(v)]; el.disabled = true; await saveCard(c); draw(); });
+    on("data-pksundo", async (v, el) => {
+      const c = st.cards[Number(v)];
+      if (c.status === "skipped") { c.status = ""; c.open = true; draw(); return; }
+      if (!c.undo) return;
+      el.disabled = true;
+      try { await c.undo(); c.status = ""; c.undo = null; c.open = true; } catch (err) { toast((err && err.message) || "Couldn't undo", true); }
+      draw();
+    });
+    // the "Which pack is this?" sheet
+    const shbd = modal.querySelector("[data-pksshbd]");
+    if (shbd) {
+      shbd.onclick = (e) => { if (e.target === shbd || e.target.closest("[data-pksshclose]")) { st.sheet = null; draw(); } };
+      const q = shbd.querySelector("[data-pksq]");
+      q.oninput = () => { st.sheet.q = q.value; const pos = q.selectionStart; draw(); const q2 = modal.querySelector("[data-pksq]"); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (e) {} } };
+      shbd.querySelectorAll("[data-pkspack]").forEach((b) => b.onclick = () => {
+        const c = st.cards[st.sheet.ci];
+        const p = (opts.packs() || []).find((x) => String(x.id) === b.dataset.pkspack);
+        if (p) {
+          c.m = opts.target && String(opts.target.id) === String(p.id) ? opts.target : p;
+          c.asNew = false; c.scaleTouched = false; c.savedOpen = false; c.edit = null;
+          fillFromSaved(c); scaleDefault(c);
         }
-        close();
-      } catch (err) { e.target.disabled = false; toast((err && err.message) || "Couldn't save", true); }
-    };
+        st.sheet = null; draw();
+      });
+      const asNew = shbd.querySelector("[data-pksasnew]");
+      if (asNew) asNew.onclick = () => {
+        const c = st.cards[st.sheet.ci];
+        c.asNew = true; c.scaleTouched = false; c.edit = null;
+        if (!c.titleTyped && !c.title && c.m) c.title = c.m.title;
+        fillFromSaved(c); scaleDefault(c);
+        st.sheet = null; draw();
+      };
+    }
   };
   showStart();
 }
