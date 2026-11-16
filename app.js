@@ -3287,6 +3287,15 @@ const T = {
   pca_buy: { en: "What to buy" },
   pca_only: { en: "Only {page}" },
   pca_with_others: { en: "With my other pages" },
+  pca_not_cheaper: { en: "Checked, not cheaper" },
+  pca_steps: { en: "{n} steps" },
+  pca_shard_note: { en: "Counts for Islands only when it's the cheapest · {a} a copy vs {b} with Marks" },
+  pca_in_plan: { en: "Already in your plan" },
+  pca_free: { en: "free" },
+  pca_for_isl: { en: "+{n} for Islands" },
+  pca_bought_for: { en: "Bought for {p}" },
+  pca_free_shards: { en: "+{n} shards counted free ({c} copies)" },
+  pca_then_buy: { en: "Then buy" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
   cg_all_max: { en: "Every piece is at max" },
@@ -18176,6 +18185,50 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     }).join("");
   };
   const pcaTrades = (trades) => (trades || []).length ? `<div class="pca-h">${esc(t("trade_then"))}</div>${trades.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.giveQty)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.getQty)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`).join("")}` : "";
+  // Islands: packs that give Mythic Island Shards (Myriad Bazaar steps) can
+  // stand in for Marks / Tomes (hidden trades, islShardTradesNow). Listed
+  // greyed when the plan doesn't use them ("Checked, not cheaper", their real
+  // price with every earlier step), and free when another page buys them.
+  const islShardOn = calcKey === "islands" && tradeRatesFor("islands").some((r) => r.islFree);
+  const SHI = typeof ISL_SHARD_ITEM !== "undefined" ? ISL_SHARD_ITEM : "Mythic Island Shards";
+  const islPc = Number(ISL_RULES.perCopy) || 10;
+  const shardsOf = (r) => (Number((r.gives || {})[SHI]) || 0) * (r.count || 1);
+  // What one copy costs with Marks (or Tomes) in a plan: its Mark / Tome rows' price per copy.
+  const islCopyCost = (rows) => {
+    const by = (item, per) => { let cost = 0, q = 0; (rows || []).forEach((r) => { const g = Number((r.gives || {})[item]) || 0; if (g > 0) { cost += packRowLocal(r); q += g * r.count; } }); return q > 0 ? cost / (q / per) : null; };
+    const mk = by("Mark of Revival", Number(ISL_RULES.markPrice) || 250);
+    if (mk != null) return mk;
+    const u = typeof ISL_UNIT !== "undefined" && ISL_UNIT ? ISL_UNIT : {};
+    return u.mark != null ? u.mark * (Number(ISL_RULES.markPrice) || 250) : null;
+  };
+  // Each shard pack's cheapest stop per copy: in-order packs count every earlier step.
+  const islShardPacks = () => tables.map((tb) => {
+    const link = packLinkFor(tb.id), offs = packOffersFor(tb, true).slice().sort((a, b) => a.row - b.row);
+    let best = null, cum = 0, sh = 0, gv = {}, n = 0;
+    offs.forEach((o) => {
+      const loc = packConvert(o.price, link.currency).n;
+      if (link.sequential) { cum += loc; n += 1; Object.entries(o.gives).forEach(([k, v]) => { gv[k] = (gv[k] || 0) + v; }); sh = gv[SHI] || 0; }
+      else { cum = loc; n = 1; gv = { ...o.gives }; sh = Number(o.gives[SHI]) || 0; }
+      if (!(Number(o.gives[SHI]) > 0) || !(sh > 0)) return;
+      const per = cum / (sh / islPc);
+      if (!best || per < best.per) best = { tb, link, price: cum, sample: o.price, shards: sh, gives: { ...gv }, steps: n, per };
+    });
+    return best;
+  }).filter(Boolean);
+  const islCheckedHtml = (rows) => {
+    // Only when copies are being bought (Marks / Tomes needed) and no shard pack is in the plan.
+    if (!islShardOn || !((Number(need["Mark of Revival"]) || 0) + (Number(need["Glorious Tome"]) || 0) > 0) || (rows || []).some((r) => shardsOf(r) > 0)) return "";
+    const list = islShardPacks();
+    if (!list.length) return "";
+    const mk = islCopyCost(rows), cheapest = list.slice().sort((a, b) => a.per - b.per)[0];
+    const fmt = (v, x) => packFmtLocal(Math.round(v), x.link.currency, true, x.sample);
+    const rowsH = list.sort((a, b) => a.per - b.per).map((x) => {
+      const items = Object.keys(x.gives).filter((k) => x.gives[k] > 0 && k !== "Gems").sort((a, b) => (b === SHI) - (a === SHI) || (pcaNeeded(b) - pcaNeeded(a))).slice(0, 4);
+      return `<div class="pca-pk pca-off"><div class="pca-row"><span class="pca-pic">${pcaIcon(SHI)}</span><span class="pca-mid"><span class="pca-nm">${esc(x.tb.title || "")}${x.steps > 1 ? ` <small>&middot; ${esc(t("pca_steps").replace("{n}", x.steps))}</small>` : ""}</span><span class="pca-gv">${items.map((k) => `<span class="pca-chip${k === SHI ? "" : " x"}" title="${esc(materialDisplayName(k))}">${pcaIcon(k)}+${esc(shortAmount(x.gives[k]))}</span>`).join("")}</span></span><b class="pca-pr">${pcaCur(fmt(x.price, x))}</b></div></div>`;
+    }).join("");
+    const note = mk != null ? `<div class="pca-note">${esc(t("pca_shard_note").replace("{a}", fmt(cheapest.per, cheapest)).replace("{b}", fmt(mk, cheapest)))}</div>` : "";
+    return `<div class="pca-h">${esc(t("pca_not_cheaper"))}</div>${rowsH}${note}`;
+  };
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
   let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest)
   // The shared view looks like "This page only": plan cards on top (this
@@ -18198,11 +18251,28 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     });
     const needKeys = new Set(Object.keys(need));
     const trades = (p.trades || []).filter((x) => needKeys.has(x.to));
+    // Islands: shard steps the plan buys for other pages pay copies for free.
+    let inPlanHtml = "";
+    if (islShardOn) {
+      let left = trades.filter((x) => x.from === SHI).reduce((a, x) => a + x.giveQty, 0);
+      const mineKeys = new Set(mineShare.rows.map((r) => `${r.title}|${r.label}`));
+      const free = left > 0 ? p.rows.filter((r) => shardsOf(r) > 0 && !mineKeys.has(`${r.title}|${r.label}`)) : [];
+      let got = 0;
+      const lines = free.map((r) => {
+        const n = Math.min(left, shardsOf(r));
+        if (!(n > 0)) return "";
+        left -= n; got += n;
+        const pages = Object.keys(cb.shares || {}).filter((k) => k !== calcKey && (cb.shares[k].rows || []).some((x) => x.title === r.title && x.label === r.label)).map(packPageLabel);
+        const parts = String(r.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
+        return `<div class="pca-pk"><div class="pca-row"><span class="pca-pic">${pcaIcon(SHI)}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&middot; ${esc(r.label)}</small></span>${pages.length ? `<span class="pca-sb">${esc(t("pca_bought_for").replace("{p}", pages.join(", ")))}</span>` : ""}<span class="pca-gv"><span class="pca-chip">${pcaIcon(SHI)}${esc(t("pca_for_isl").replace("{n}", qty(n)))}</span></span></span><b class="pca-pr pca-fr">${esc(t("pca_free"))}</b></div></div>`;
+      }).join("");
+      if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
+    }
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}</div>`;
+      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -18276,7 +18346,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           const tradesA = pcaTrades(p.trades);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}@@PCFREE@@</div>`;
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
         }
       }
     }
@@ -19363,10 +19433,43 @@ function budgetFreeDays() {
 const HERO_RULES = { marksPerGeneral: 12, marksGeneralWeekly: 100, hallMarksPerShard: 10, hallWeekly: 370, widgetChestGives: 1, mysteryGive: 800, mysteryGet: 2, mysteryDaily: 200 };
 // The one hero of each Gen sold in Hall of Heroes; the Gen's other two heroes aren't.
 const HALL_OF_HEROES_HERO = { 2: "Alonso", 3: "Logan", 4: "Reina", 5: "Gwen", 6: "Wu Ming", 7: "Gordon", 8: "Hendrik", 9: "Magnus", 10: "Freya", 11: "Rufus", 12: "Hervor", 13: "Flora", 14: "Cara", 15: "Hank", 16: "Ursar", 17: "Eleanor", 18: "Jordan" };
+// Islands: packs that give Mythic Island Shards (Myriad Bazaar steps) can pay
+// for building copies the Mark of Revival / Shining City shops would sell:
+// shards per copy -> one copy's Marks / Tomes (hidden, no weekly limit). Only
+// when a pack used for Islands gives shards, so without one nothing changes.
+// `islFree`: Budgets' shares don't charge Islands for a step another page
+// needs (its shards come free); only steps bought for Islands alone.
+let ISL_SHARD_TRADES = [];
+const ISL_SHARD_ITEM = "Mythic Island Shards";
+function islShardTradesNow() {
+  const tabs = typeof PACK_TABLES_CACHE !== "undefined" && Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : null;
+  if (!tabs) return ISL_SHARD_TRADES;
+  let has = false;
+  try { has = tabs.some((tb) => packTableServesPage(tb, "islands") && packOffersFor(tb).some((o) => (Number(o.gives[ISL_SHARD_ITEM]) || 0) > 0)); } catch (e) { has = false; }
+  const pc = Number(ISL_RULES.perCopy) || 10;
+  ISL_SHARD_TRADES = has ? [
+    { from: ISL_SHARD_ITEM, to: "Mark of Revival", give: pc, get: Number(ISL_RULES.markPrice) || ISL_MARK_PRICE, max: 0, hidden: true, islFree: true },
+    { from: ISL_SHARD_ITEM, to: "Glorious Tome", give: pc, get: Number(ISL_RULES.tomePrice) || 600, max: 0, hidden: true, islFree: true },
+  ] : [];
+  return ISL_SHARD_TRADES;
+}
+function tradeExtraNext() {
+  const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
+  const isl = islShardTradesNow();
+  return { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules, hero_shards: HERO_SHARD_TRADES, ...(isl.length ? { islands: isl } : {}) };
+}
+// The Islands shard trades follow the pack tables, which can load after the
+// trades were put together: brought up to date (without redrawing Budgets)
+// right before a plan is asked for or fingerprinted.
+function tradeExtraSync() {
+  const next = tradeExtraNext(), sig = JSON.stringify(next);
+  if (sig === TRADE_EXTRA_SIG) return;
+  TRADE_EXTRA_RATES = next;
+  TRADE_EXTRA_SIG = sig;
+}
 // General Sigils can be spent on any expert (1:1): a rule, not a trade.
 function tradeComposeExtra() {
-  const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
-  const next = { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules, hero_shards: HERO_SHARD_TRADES };
+  const next = tradeExtraNext();
   const sig = JSON.stringify(next);
   if (sig === TRADE_EXTRA_SIG) return;
   TRADE_EXTRA_RATES = next;
@@ -20761,6 +20864,7 @@ function plannerRun(kind, payload, opts) {
   const p = new Promise((resolve, reject) => {
     // Sent at once when the worker is free (copied then, as before); a request
     // that has to wait is copied now, so later changes on the page can't reach it.
+    tradeExtraSync();
     const msg = { id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES };
     const idle = !lane.busy && !lane.queue.length;
     PLANNER_WAIT.set(id, { resolve, reject, msg: idle ? msg : structuredClone(msg), lane: li, onPart: (opts && opts.onPart) || null });
@@ -20835,6 +20939,7 @@ const BUDGET_PLAN_STORE = "budget_plan_v1";
 const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2:";
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
+  tradeExtraSync();
   const str = JSON.stringify({ v: 3, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
@@ -21060,7 +21165,7 @@ function budgetShares(plan, inc) {
           // own trades (general Speedups -> Research Speedups, Fire Crystal ->
           // FC Shard), so a page that trades for it gets its fair part too.
           rates.forEach((rt) => {
-            if (rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0)) return;
+            if (rt.islFree || rt.from !== n || !(pg.need[rt.to] > 0) || !(total[rt.to] > 0)) return;
             x += Math.min(1, (u.gives[n] * (rt.get / rt.give) * r.count) / total[rt.to]) * (pg.need[rt.to] / total[rt.to]);
           });
         });

@@ -4494,6 +4494,11 @@ input,select,textarea{
   .sh-g1{ margin-top:-2px; }
   .pca-bonus{ display:flex; align-items:center; gap:6px; margin-top:6px; font-size:12px; color:var(--good); }
   .pca-bonus img{ width:18px; height:18px; object-fit:contain; }
+  .pca-row{ display:flex; align-items:center; gap:10px; padding:8px 0; }
+  .pca-off{ opacity:.55; }
+  .pca-note{ margin:6px 0 2px; font-size:12px; line-height:1.4; color:var(--amber); }
+  .pca-note.ok{ color:var(--good); }
+  .pca-pr.pca-fr{ color:var(--good); }
   /* Shining City row (layout S1): picture stack left, "N skins · date" / Tomes, price right; tap = pick sheet */
   .s1, .s1b{ display:flex; align-items:center; gap:8px; margin-top:8px; min-height:48px; padding:5px 8px 5px 10px; border:1px solid rgba(224,178,90,.45); border-radius:12px; background:var(--panel-2); color:var(--frost); cursor:pointer; box-sizing:border-box; }
   .s1b.slim{ min-height:40px; gap:8px; padding-inline-start:12px; }
