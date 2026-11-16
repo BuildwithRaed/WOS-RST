@@ -1761,8 +1761,6 @@ const T = {
   pks_rows_note: { en: "Blue = from the screenshot, the others × 2 / × 4 / × 10 / × 20. You can change any box in the pack after saving." },
   pks_rows_note1: { en: "Blue = from the screenshot. You can change any box in the pack after saving." },
   pks_full: { en: "You have used all your packs. Delete one first." },
-  pks_saved_see: { en: "See saved pack ▾" },
-  pks_saved_hide: { en: "Hide saved pack ▴" },
   pks_saved_pack: { en: "Saved pack" },
   pks_saved_empty: { en: "No rows saved yet." },
   pks_as_new: { en: "Save as a new pack instead" },
@@ -1773,7 +1771,6 @@ const T = {
   pks_diff_newprice_mine: { en: "price not in this pack · left out" },
   pks_no_number: { en: "No number read — type it" },
   pks_saved_q: { en: "No number read. The saved pack says {n}. Is it right?" },
-  pks_not_table: { en: "Not this table? Change ›" },
   pks_step: { en: "step {k} of {n}" },
   pks_step_n: { en: "Step {k}" },
   pks_step_q: { en: "Same price, which step?" },
@@ -1825,12 +1822,15 @@ const T = {
   pks_screenshot_tag: { en: "screenshot" },
   pks_rows_kept: { en: "Blue = from the screenshot. Prices the pack already has keep their saved numbers; only missing prices are worked out." },
   pks_in_mine: { en: "in My packs" },
-  pks_on_page: { en: "on your Packs page" },
-  pks_on_page_v: { en: "on the Packs page" },
-  pks_not_this: { en: "Not this pack? Change ›" },
-  pks_not_on_page: { en: "Not on your Packs page" },
-  pks_not_on_page_v: { en: "Not on the Packs page" },
-  pks_one_of_mine: { en: "It's one of mine ›" },
+  pks_tag_page: { en: "on Packs page" },
+  pks_tag_mine: { en: "in My packs" },
+  pks_btn_change: { en: "Change pack" },
+  pks_btn_change_tb: { en: "Change table" },
+  pks_btn_change_s: { en: "Change" },
+  pks_btn_saved: { en: "Saved pack" },
+  pks_btn_saved_s: { en: "Saved" },
+  pks_btn_shot: { en: "Screenshot" },
+  pks_btn_shot_s: { en: "Shot" },
   pks_n_shots: { en: "{n} screenshots" },
   pks_undo: { en: "Undo" },
   pks_dropped1: { en: "1 other tile left out (not a Backpack item)" },
@@ -14733,7 +14733,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=56ca67d6f4";
+      s.src = "scan.min.js?v=ecc3dda9be";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }

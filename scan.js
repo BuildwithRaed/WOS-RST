@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "56ca67d6f4";
+window.SCAN_BUILD = "ecc3dda9be";
 
 
 // ---- Backpack: read game screenshots ----
@@ -2707,11 +2707,15 @@ function openPackScanMain(opts) {
     });
     return `<div class="pks-lab">${esc(t("pks_saved_pack"))}${m.group ? ` · ${esc(m.group)}` : ""}</div>${m.saved.length ? rowsTableHtml(m.saved, false, hi) : `<div class="meta">${esc(t("pks_saved_empty"))}</div>`}`;
   };
-  const matchLine = (c, ci) => `<div class="pks-ml">${matchText(c, ci)} · <button type="button" class="pks-lk" data-pksaddshot="${ci}">+ ${esc(t("pks_add_shot"))}</button></div>`;
-  const matchText = (c, ci) => {
-    const m = cmpOf(c), canPick = typeof opts.packs === "function";
-    if (m) return `${esc(t(m.myPack ? "pks_in_mine" : m.mine ? "pks_on_page_v" : "pks_on_page"))}${canPick ? ` · <button type="button" class="pks-lk" data-pkschange="${ci}">${esc(t(c.bazaar ? "pks_not_table" : "pks_not_this"))}</button>` : ""}${Array.isArray(m.saved) ? ` · <button type="button" class="pks-lk" data-pkssaved="${ci}" aria-expanded="${c.savedOpen ? "true" : "false"}">${esc(t(c.savedOpen ? "pks_saved_hide" : "pks_saved_see"))}</button>` : ""}`;
-    return `${esc(t(canNew() ? "pks_not_on_page" : "pks_not_on_page_v"))}${canPick ? ` · <button type="button" class="pks-lk" data-pkschange="${ci}">${esc(t("pks_one_of_mine"))}</button>` : ""}`;
+  // One row of three equal small buttons under the price line (owner picked B, 16 Nov 2026).
+  const matchLine = (c, ci) => {
+    const m = cmpOf(c), canPick = typeof opts.packs === "function", hasSaved = !!m && Array.isArray(m.saved);
+    const b = (attr, ic, long, short, extra) => `<button type="button" class="cg-bpbtn${extra || ""}" ${attr}><i aria-hidden="true">${ic}</i><span class="pks-ob-l">${esc(long)}</span><span class="pks-ob-s">${esc(short)}</span></button>`;
+    return `<div class="pks-ob">${canPick ? b(`data-pkschange="${ci}"`, "&#8644;", t(c.bazaar ? "pks_btn_change_tb" : "pks_btn_change"), t("pks_btn_change_s"), "") : ""}${hasSaved ? b(`data-pkssaved="${ci}" aria-expanded="${c.savedOpen ? "true" : "false"}"`, "&#9636;", `${t("pks_btn_saved")} ${c.savedOpen ? "\u25B4" : "\u25BE"}`, `${t("pks_btn_saved_s")} ${c.savedOpen ? "\u25B4" : "\u25BE"}`, c.savedOpen ? " on" : "") : ""}${b(`data-pksaddshot="${ci}"`, "&#65291;", t("pks_btn_shot"), t("pks_btn_shot_s"), "")}</div>`;
+  };
+  const matchTag = (c) => {
+    const m = cmpOf(c);
+    return m ? `<span class="pks-ontag">&#10003; ${esc(t(m.myPack ? "pks_tag_mine" : "pks_tag_page"))}</span>` : "";
   };
   const cardHtml = (c, ci) => {
     const [sk, sl] = status(c), done = c.status === "saved" || c.status === "skipped";
@@ -2721,7 +2725,7 @@ function openPackScanMain(opts) {
     if (!open) return `<div class="pks-card${done ? " done" : ""}" data-pkscard="${ci}">${head}${stripHtml(c)}</div>`;
     // Open: the price line sits under the title with a ✎, so the price can always be changed (owner, 16 Nov 2026).
     const pen = c.groups.length === 1 && !priceUnsure(c.groups[0]) && c.priceEdit !== 0 ? ` <button type="button" class="pks-pen" data-pkspedit="${ci}|0" aria-label="${esc(t("pks_price_h"))}: ${esc(t("pks_edit"))}">&#9998;</button>` : "";
-    const headO = head.replace(/<small>[\s\S]*?<\/small><\/button>/, "</button>") + `<div class="pks-chs"><small>${headSub(c)}${c.shots.size > 1 ? ` · ${esc(t("pks_n_shots").replace("{n}", c.shots.size))}` : ""}</small>${pen}</div>`;
+    const headO = head.replace(/<small>[\s\S]*?<\/small><\/button>/, "</button>") + `<div class="pks-chs"><small>${headSub(c)}${c.shots.size > 1 ? ` · ${esc(t("pks_n_shots").replace("{n}", c.shots.size))}` : ""}</small>${pen}${matchTag(c)}</div>`;
     const drop = c.groups.reduce((a, g) => a + g.dropped.length, 0);
     const learnable = IS_OWNER && c.groups.some((g) => g.items.some((it) => it.feat && it.tick && it.ok && it.name && it.name !== it.auto));
     const sv = canSave(c);
