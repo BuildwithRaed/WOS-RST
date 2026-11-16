@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 96; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 97; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -3476,6 +3476,11 @@ const T = {
   pk_reset_one: { en: "Reset" },
   pk_reset_all_dates: { en: "Reset all" },
   pk_every_days: { en: "Every {n} days" },
+  pk_every_week: { en: "Every week" },
+  pk_every_weeks: { en: "Every {n} weeks" },
+  pk_every_month_date: { en: "Same date every month" },
+  pk_every_month_on: { en: "Every month on the {d}" },
+  pk_dates_then: { en: "then {date}" },
   pack_next_on: { en: "Next on" },
   pack_resets: { en: "resets" },
 };
@@ -4602,7 +4607,7 @@ function applyMenuIcons() {
   document.querySelectorAll("#topnavGroups [data-tab] .ic").forEach((ic) => {
     const tab = ic.closest("[data-tab]").dataset.tab;
     if (ic.dataset.sym == null) ic.dataset.sym = ic.textContent;
-    if (QUICK_ICONS[tab]) ic.innerHTML = `<img src="${esc(QUICK_ICONS[tab])}" alt="" loading="lazy" />`;
+    if (QUICK_ICONS[tab]) { if (!ic.querySelector("img")) ic.innerHTML = `<img src="${esc(QUICK_ICONS[tab])}" alt="" decoding="async" />`; }
     else ic.textContent = QUICK_EMOJI[tab] || ic.dataset.sym;
   });
 }
@@ -8457,7 +8462,8 @@ function renderMyPackDates(el, tables) {
       const l = packLinkFor(tb.id);
       const offs = packResetOffsets(l.reset, l.resetDay, 400, l.window);
       const next = offs.find((o) => o > 0);
-      const sub = `${t("pk_every_days").replace("{n}", l.reset)}${offs[0] === 0 ? ` · ${t("pur_now")}` : ""}${next != null ? ` · ${t("pk_dates_next").replace("{date}", fmt(next))}` : ""}`;
+      const then = next != null ? offs.find((o) => o > next) : null;
+      const sub = `${packEveryText(l.reset, l.resetDay)}${offs[0] === 0 ? ` · ${t("pur_now")}` : ""}${next != null ? ` · ${t("pk_dates_next").replace("{date}", fmt(next))}` : ""}${then != null ? ` · ${t("pk_dates_then").replace("{date}", fmt(then))}` : ""}`;
       const value = next != null ? packDayKey(new Date(today.getTime() + next * 86400000)) : (packValidDay(l.resetDay) || "");
       return `<div class="pkd-row">
         <div class="pkd-n">${rowTitle(tb)}<div class="meta">${esc(sub)}</div></div>
@@ -11170,7 +11176,7 @@ async function renderPackCalendarPage() {
     const r = l.reset;
     if (r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
     const preset = PACK_RESET_PRESETS.find((x) => x.days === r);
-    return preset ? t("pack_reset_" + preset.key) : t("pcl_every_n").replace("{n}", r);
+    return preset ? t("pack_reset_" + preset.key) : packEveryText(r, l.resetDay);
   };
   const kindName = (k) => t({ weekly: "pack_cal_weekly", monthly: "pack_cal_monthly", event: "pack_cal_events", newheroes: "pack_cal_new_heroes", unlocks: "pcl_unlocks" }[k] || "pack_cal_other");
   const needMap = plan && plan.need ? plan.need : null;
@@ -12164,6 +12170,7 @@ async function renderPacksPage() {
   const pkbFmtD = (days) => { try { return new Date(pkbToday.getTime() + days * 86400000).toLocaleDateString(pkbLoc, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
   const pkbWd = (d) => { try { return d.toLocaleDateString(pkbLoc, { weekday: "short", timeZone: "UTC" }); } catch (e) { return ""; } };
   function pkbResetText(r) {
+    if (Number(r) % 7 === 0 && !PACK_RESET_PRESETS.find((x) => x.days === r) && r < PACK_ONE_TIME_DAYS) return packEveryText(r);
     if (r === "unlimited") return t("pack_reset_unlimited");
     if (r === "once" || r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
     if (packStackInfo(r)) return packStackText(r);
@@ -12174,7 +12181,7 @@ async function renderPacksPage() {
   function pkbWhen(lk) {
     const r = lk.reset, out = { text: "", on: false, next: "" };
     if (r == null || r === "") return out;
-    const parts = [pkbResetText(r)];
+    const parts = [Number(r) === 30 ? packEveryText(30, lk.resetDay) : pkbResetText(r)];
     if (typeof r === "number" && r < PACK_ONE_TIME_DAYS && !packStackInfo(r)) {
       const win = Number(lk.window) || 0;
       const offs = packResetOffsets(r, lk.resetDay, 400, lk.window);
@@ -16369,6 +16376,14 @@ function packOffersFor(table, keepEmpty) {
 //          number      - resets every N days; `buys` per row per reset
 //                        (a ladder can be run once per reset)
 // ------------------------------------------------------------
+// "Every 4 weeks" rather than "Every 28 days" (owner, 16 Nov 2026: events cycle in weeks).
+function packEveryText(r, day) {
+  const n = Number(r);
+  if (n === 30) { const d = packParseDay(packValidDay(day)); if (!d) return t("pk_every_month_date"); const n2 = d.getUTCDate(), ord = LANG === "en" ? n2 + ([11, 12, 13].includes(n2 % 100) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n2 % 10] || "th")) : String(n2); return t("pk_every_month_on").replace("{d}", ord); }
+  if (n === 7) return t("pk_every_week");
+  if (n > 0 && n % 7 === 0) return t("pk_every_weeks").replace("{n}", n / 7);
+  return t("pk_every_days").replace("{n}", n);
+}
 const PACK_RESET_PRESETS = [
   // "Monthly" packs come back every 4 weeks (28 days) in game.
   { key: "daily", days: 1 }, { key: "weekly", days: 7 }, { key: "biweekly", days: 14 }, { key: "monthly", days: 28 },
@@ -32636,6 +32651,9 @@ function bootLangPack() {
   if (LANG !== "en" && LANG_BUILTIN.some((l) => l.code === LANG && l.file)) loadLangPack(LANG);
 }
 (async function boot() {
+  // The Menu's pictures are fixed files: put them in at once, so a Menu opened
+  // while the settings still load doesn't show the plain symbols (owner, 16 Nov 2026).
+  try { applyMenuIcons(); } catch (e) {}
   // A first visit (no saved login) waits about a second for its guest
   // sign-in: the reads that are the same for everyone start now. The pages
   // ask for them again later and share these loads.
