@@ -1755,7 +1755,9 @@ const T = {
   pks_to: { en: "To:" },
   pks_n_check: { en: "{n} to check" },
   pks_nothing: { en: "Nothing was read in this screenshot. Try one that shows the whole pack and its price button." },
-  pks_which: { en: "Which pack?" },
+  pks_which_one: { en: "Which pack? · tap one — only that one is saved" },
+  pks_saved_mark: { en: "saved" },
+  pks_from_saved: { en: "named from the saved pack · please check" },
   pks_pack_n: { en: "Pack {n}" },
   pks_n_items: { en: "{n} items" },
   pks_all_rows: { en: "All as price rows" },
@@ -1802,7 +1804,7 @@ const T = {
   pks_diff_newprice: { en: "new price" },
   pks_diff_newprice_mine: { en: "price not in this pack · left out" },
   pks_diff_same: { en: "{n} the same" },
-  pks_diff_gone: { en: "{n} saved price rows aren't in the scan and will be removed" },
+  pks_diff_kept: { en: "{n} other price rows stay as saved" },
   pks_diff_gone_mine: { en: "{n} saved price rows aren't in the scan · yours stay as they are" },
   pks_diff_mine_note: { en: "Your copy only changes amounts the pack already has; new items or prices are left out." },
   pk_scanned: { en: "Scanned {date}" },
@@ -8264,7 +8266,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
   const scanMatch = (title) => {
     const m = packScanFind(title, (allTables || []).filter((x) => { const l = packLinkFor(x.id); return !l.template && !l.hideVisitors; }));
     if (!m) return null;
-    return { id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), when: mpWhenText(packLinkFor(m.id)), onPage: true, mine: true };
+    return { id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), when: mpWhenText(packLinkFor(m.id)), group: packLinkFor(m.id).group || "", onPage: true, mine: true };
   };
   const scanOpts = (mp) => ({ target: mp ? { id: mp.id, title: mp.title, saved: packScanSavedRows(mp) } : null, canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [], match: own || mp ? null : scanMatch, onSave: (res) => mpScanSave(res, mp) });
   const scanBtn = el.querySelector("[data-mpscan]");
@@ -11600,7 +11602,7 @@ async function renderPacksPage() {
   // Scan pack: a new pack from a screenshot (the top card), or the open pack
   // filled from one (its window's "Fill from screenshot"). The table is changed
   // through its editor (pkscanfill in wireTable), so it saves like any edit.
-  const pkbScanTarget = (tb) => ({ id: tb.id, title: tb.title, saved: packScanSavedRows(tb), when: pkbWhen(packLinkFor(tb.id)).text, onPage: true, mine: !IS_OWNER });
+  const pkbScanTarget = (tb) => ({ id: tb.id, title: tb.title, saved: packScanSavedRows(tb), when: pkbWhen(packLinkFor(tb.id)).text, group: categoryOf(tb), onPage: true, mine: !IS_OWNER });
   const pkbScanOpts = (tb) => ({
     target: tb ? pkbScanTarget(tb) : null,
     canNew: IS_OWNER,
@@ -14625,7 +14627,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=1d06681554";
+      s.src = "scan.min.js?v=f8f904cc83";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -14692,18 +14694,22 @@ async function openPackScan(opts, btn) {
 function packScanApply(columns, priceCol, res, colName, oldRows) {
   const oldCols = columns;
   columns = columns.slice();
+  // src[ci] = the column's place before (−1: added now)
+  const src = columns.map((c, ci) => ci);
   const names = columns.map((c, ci) => String((ci === priceCol ? "" : colName(ci)) || "").toLowerCase());
   const gemsAt = () => columns.findIndex((c) => /gem/i.test(String(c || "")));
   const colOf = (n) => names.indexOf(String(n).toLowerCase());
-  if (gemsAt() < 0) { columns.push("Gems"); names.push("gems"); }
+  if (gemsAt() < 0) { columns.push("Gems"); names.push("gems"); src.push(-1); }
   const added = [];
   res.rows.forEach((r) => Object.keys(r.items).forEach((n) => {
     if (colOf(n) >= 0) return;
     const at = gemsAt();
-    columns.splice(at, 0, n); names.splice(at, 0, n.toLowerCase());
+    columns.splice(at, 0, n); names.splice(at, 0, n.toLowerCase()); src.splice(at, 0, -1);
     added.push(at);
   }));
   const gi = gemsAt();
+  const usdOf = (o) => parseFloat(String(((o && o.cells) || [])[priceCol] ?? "").replace(/[^0-9.]/g, "")) || 0;
+  const moved = (o) => columns.map((c, ci) => (src[ci] >= 0 ? String((o.cells || [])[src[ci]] ?? "") : ""));
   const out = res.rows.map((r) => {
     const cells = columns.map(() => "");
     cells[priceCol] = r.usd ? String(r.usd) : "";
@@ -14711,15 +14717,29 @@ function packScanApply(columns, priceCol, res, colName, oldRows) {
     Object.entries(r.items).forEach(([n, v]) => { const ci = colOf(n); if (ci >= 0) cells[ci] = Math.round(v).toLocaleString("en-US"); });
     // Items the screenshot didn't show (a tile hidden behind the buy button)
     // keep the numbers the same price row had.
-    const was = (oldRows || []).find((o) => r.usd && Math.abs((parseFloat(String((o.cells || [])[priceCol]).replace(/[^0-9.]/g, "")) || 0) - r.usd) < 0.005);
-    if (was) oldCols.forEach((c, oi) => {
-      if (oi === priceCol || /gem/i.test(String(c || ""))) return;
-      const ni = columns.indexOf(c, oi);
-      if (ni >= 0 && cells[ni] === "" && String(was.cells[oi] ?? "") !== "") cells[ni] = String(was.cells[oi]);
-    });
-    return { cells, is_total: false };
+    const was = (oldRows || []).find((o) => r.usd && !o.is_total && Math.abs(usdOf(o) - r.usd) < 0.005);
+    if (was) {
+      const w = moved(was);
+      columns.forEach((c, ci) => { if (ci !== priceCol && ci !== gi && src[ci] >= 0 && cells[ci] === "" && w[ci] !== "") cells[ci] = w[ci]; });
+    }
+    return { cells, is_total: false, usd: r.usd };
   });
-  return { columns, rows: out, added };
+  // Saved price rows the scan doesn't fill stay as they are (owner, 16 Nov 2026:
+  // a scan of the $4.99 row must never delete the other prices); a scanned price
+  // the pack didn't have goes in price order. Empty rows (a new table's blank row) go.
+  const rows = (oldRows || []).filter((o) => o && (o.is_total || (o.cells || []).some((v) => String(v ?? "").trim() !== "")))
+    .map((o) => ({ o, usd: usdOf(o) }));
+  const final = rows.map(({ o, usd }) => {
+    const k = o.is_total ? -1 : out.findIndex((x) => !x.used && x.usd && Math.abs(x.usd - usd) < 0.005);
+    if (k < 0) return { cells: moved(o), is_total: !!o.is_total };
+    out[k].used = true;
+    return out[k];
+  });
+  out.filter((x) => !x.used).forEach((x) => {
+    const at = final.findIndex((y) => !y.is_total && x.usd && usdOf(y) > x.usd);
+    if (at < 0) { const tot = final.findIndex((y) => y.is_total); final.splice(tot < 0 ? final.length : tot, 0, x); } else final.splice(at, 0, x);
+  });
+  return { columns, rows: final.map((x) => ({ cells: x.cells, is_total: !!x.is_total })), added };
 }
 
 // ============================================================

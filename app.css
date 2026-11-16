@@ -4708,6 +4708,8 @@ span.mk.mk svg{flex:none}
   .pks-g b{ max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pks-g small{ color:var(--muted); font-size:11.5px; }
   .pks-g.on{ border-color:var(--ice); background:rgba(79,170,255,.1); }
+  .pks-g.done:not(.on){ border-color:rgba(70,200,120,.55); }
+  .pks-g small em{ color:#5fd08a; font-style:normal; font-weight:700; }
   .pks-row{ cursor:default; }
   .pks-row.off > *:not(input[type=checkbox]){ opacity:.45; }
   .pks-row .scan-name select{ max-width:100%; font-size:13.5px; font-weight:600; padding:3px 6px; }

@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "1d06681554";
+window.SCAN_BUILD = "f8f904cc83";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1758,6 +1758,24 @@ function scanPkMatchIcons(td, icons) {
   const first = scores[0] || [null, Infinity, false], second = scores[1] || [null, Infinity];
   return { name: first[0], dist: first[1], next: second[1], shared: first[2] };
 }
+// White text across a pack tile's top (a size label: "10 K", "100", "5 min"),
+// found by its shapes, so a label the reader misses still counts: two or more
+// letter-sized white shapes standing on one line in the top quarter.
+function scanPkTopText(td) {
+  const x0 = 8, y0 = 1, w = 124, h = 38, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = ((y0 + y) * 140 + x0 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2];
+    mask[y * w + x] = Math.min(r, g, b) > 200 && Math.max(r, g, b) - Math.min(r, g, b) < 45 ? 1 : 0;
+  }
+  const blobs = scanBlobs(mask, w, h, false).filter((b) => b.h >= 9 && b.h <= 30 && b.w <= 30 && b.n >= 14 && b.y + b.h <= 36);
+  if (blobs.length < 2) return false;
+  const bot = blobs.map((b) => b.y + b.h).sort((a, z) => a - z);
+  const mid = bot[Math.floor(bot.length / 2)];
+  const line = blobs.filter((b) => Math.abs(b.y + b.h - mid) <= 4 && b.h >= 0.6 * Math.max(...blobs.map((z) => z.h)));
+  if (line.length < 2) return false;
+  const span = Math.max(...line.map((b) => b.x + b.w)) - Math.min(...line.map((b) => b.x));
+  return span >= 18 && span <= 110;
+}
 // The size label on top of a tile ("1 hr(s)", "5 min", "10 K", "100"):
 // { unit: "h" | "m", n } for speedups, { mult } for bundles, or null.
 function scanPkParseLabel(lt) {
@@ -1808,6 +1826,9 @@ async function scanPkTile(worker, img, box, ctx) {
   const amount = await scanPkAmount(worker, td);
   out.value = amount.value; out.amount0 = amount.value;
   if (!amount.value) { out.skip = "noamount"; return out; }
+  // white digits across the top centre: a size label ("10K", "100"), even when
+  // the reader didn't make it out (a tile half under the buy button)
+  out.top = scanTopLabel(td) || scanPkTopText(td);
   // the label: as the whole-screen read saw it, else read on the tile
   const label = scanPkParseLabel(box.label) || (box.label ? null : await scanPkTopLabel(worker, td));
   out.label = label ? label.text : "";
@@ -1982,17 +2003,20 @@ async function scanPackShot(worker, file, ctx) {
 const SCAN_PK_LADDER = [[4.99, 1], [9.99, 2], [19.99, 4], [49.99, 10], [99.99, 20]];
 const SCAN_PK_BUNDLE = /^(Meat|Wood|Coal|Iron|Steel|Gems|Food)$/;
 // Which read tiles the check screen lists (owner, 16 Nov 2026: Meat / Wood "10K"
-// bundles and the VIP points hexagon were listed as "pick the item"). A named tile
-// stays when its item is allowed; a tile with no name stays only when its nearest
-// picture is an allowed item, so it can be picked. A tile with a size label on top
-// ("10K", "100": resource bundles, VIP points, Hero XP …) and no name is never a
-// Backpack item. Speedups (a time label) always stay.
+// bundles and the VIP points hexagon were listed as "pick the item"). Speedups (a
+// time label) always stay; a named tile (a close picture match) stays when its item
+// is allowed. A tile with no name is left out when its nearest picture (among every
+// pack item, however far) is a resource, when a size label was read on it, or when
+// white text sits across its top ("10 K", "100": resource bundles, VIP points, even
+// half under the buy button); otherwise it stays when that nearest picture is an
+// allowed item, so it can be picked.
+const SCAN_PK_RES_GUESS = /^(Meat|Wood|Coal|Iron|Meat\/Wood|VIP.*)$/i;
 function scanPkKeep(it, ok) {
+  if (it.why === "speedup") return true;
   if (it.name) return ok.has(it.name);
   if (it.why === "name") return false;
-  if (it.why === "speedup") return true;
-  const g = !!it.guess && ok.has(it.guess);
-  return g && !it.mult;
+  if (it.mult || it.top || (it.guess && SCAN_PK_RES_GUESS.test(it.guess))) return false;
+  return !!it.guess && ok.has(it.guess);
 }
 function openPackScanMain(opts) {
   opts = opts || {};
@@ -2008,8 +2032,8 @@ function openPackScanMain(opts) {
     to: opts.target ? "this" : "new",
     title: "", titleTyped: false,
     category: opts.category || (opts.categories || [])[0] || "",
-    scale: true,
-    groups: [], pick: 0, // which pack / price of the screenshot (or "rows" for all prices as rows)
+    scale: true, scaleTouched: false,
+    groups: [], pick: 0, done: new Set(), targetUsed: false, // which pack / price of the screenshot (or "rows" for all prices as rows)
     skipped: { noamount: 0, unknown: 0 },
   };
   const names = () => scanPkAllowed().concat(["Gems"]).filter((n, i, a) => a.indexOf(n) === i);
@@ -2107,21 +2131,69 @@ function openPackScanMain(opts) {
     st.pick = k >= 0 ? k : groups.length > 1 && titled.size === 1 && groups.every((g) => g.price) ? "rows" : 0;
     const g0 = groups[typeof st.pick === "number" ? st.pick : 0];
     if (!st.titleTyped && g0 && g0.title) st.title = g0.title;
-    // more than one price on screen: each is its own row, no ladder
-    if (st.pick === "rows") st.scale = false;
     rematch();
   };
   // A pack already on the Packs page with the scanned name (opts.match): Save
   // updates it unless "Save as a new pack instead" was tapped.
   const rematch = () => {
-    if (st.to === "this" || typeof opts.match !== "function") return;
-    const cands = [st.title].concat(chosen().map((g) => g.title)).filter(Boolean);
-    let m = null;
-    for (const c of cands) { m = opts.match(c); if (m) break; }
-    st.matched = m;
-    if (m && !st.matchOff) st.to = "match"; else if (st.to === "match") st.to = "new";
+    if (st.to !== "this" && typeof opts.match === "function") {
+      const cands = [st.title].concat(chosen().map((g) => g.title)).filter(Boolean);
+      let m = null;
+      for (const c of cands) { m = opts.match(c); if (m) break; }
+      st.matched = m;
+      if (m && !st.matchOff) st.to = "match"; else if (st.to === "match") st.to = "new";
+    }
+    fillFromSaved();
+    scaleDefault();
+  };
+  // "Scale to the next prices" starts on unless the pack it saves into is
+  // known not to be a Regular Packs ladder (owner, 16 Nov 2026: three Regular
+  // Packs in one screenshot came up with it off, and Save would have dropped
+  // their other prices). All prices as rows: no ladder. A tap on the switch wins.
+  const scaleDefault = () => {
+    if (st.pick === "rows") { st.scale = false; return; }
+    if (st.scaleTouched) return;
+    const m = cmpOf(), g = chosen()[0];
+    const lad = (v) => v != null && SCAN_PK_LADDER.some(([p]) => Math.abs(p - v) < 0.005);
+    const saved = m && Array.isArray(m.saved) ? m.saved.filter((r) => r.usd != null) : [];
+    if (!saved.length) { st.scale = true; return; }
+    const usd = g && g.price && g.price.usd;
+    st.scale = saved.filter((r) => lad(r.usd)).length >= 2 || (/regular/i.test(m.group || "") && usd != null && Math.abs(usd - 4.99) < 0.005);
+  };
+  // A pack already saved: a tile Scan couldn't name gets the saved item the scan
+  // is missing, when that tile has the saved amount for this price or its nearest
+  // picture is that item (owner, 16 Nov 2026: the pet food bag of "Pet Food Pack").
+  // Marked "please check"; another pack picked puts it back.
+  const fillFromSaved = () => {
+    st.groups.forEach((g) => g.items.forEach((it) => { if (it.fill) { it.name = null; it.fill = false; it.sure = false; } }));
+    const m = cmpOf();
+    if (!m || !Array.isArray(m.saved) || !m.saved.length) return;
+    const allowed = new Map(names().map((n) => [n.toLowerCase(), n]));
+    chosen().forEach((g) => {
+      const usd = g.price && g.price.usd;
+      const row = (usd && m.saved.find((r) => r.usd != null && Math.abs(r.usd - usd) < 0.005)) || (m.saved.length === 1 ? m.saved[0] : null);
+      if (!row) return;
+      const have = new Set(g.items.filter((it) => it.name).map((it) => it.name.toLowerCase()));
+      const missing = Object.entries(row.items || {}).filter(([n]) => !have.has(n.toLowerCase()) && allowed.has(n.toLowerCase()));
+      const open = g.items.filter((it) => it.tick && !it.name && it.why !== "name");
+      const claimed = new Set();
+      missing.forEach(([n, v]) => {
+        const c = open.filter((it) => !claimed.has(it) && ((Number(it.value) > 0 && Math.round(it.value) === Math.round(v)) || String(it.guess || "").toLowerCase() === n.toLowerCase()));
+        if (c.length !== 1) return;
+        claimed.add(c[0]);
+        Object.assign(c[0], { name: allowed.get(n.toLowerCase()), fill: true, sure: false });
+      });
+    });
   };
   const cmpOf = () => (st.to === "this" ? opts.target : st.to === "match" ? st.matched : null);
+  // Another pack of the screenshot: its own name, match, differences and ladder.
+  const pickGroup = (v) => {
+    st.pick = v;
+    const g = st.groups[typeof v === "number" ? v : 0];
+    if (st.done.size) { st.titleTyped = false; st.matchOff = false; st.savedOpen = false; st.scaleTouched = false; if (st.to === "match") st.to = "new"; }
+    if (!st.titleTyped && g && g.title) st.title = g.title;
+    rematch();
+  };
   const chosen = () => (st.pick === "rows" ? st.groups : st.groups[st.pick] ? [st.groups[st.pick]] : []);
   // The rows Save will fill: [{ usd, gems, items: { name: amount }, fromShot }].
   const buildRows = () => {
@@ -2149,7 +2221,7 @@ function openPackScanMain(opts) {
     const ic = it.img || (it.name && iconOf(it.name));
     const unknown = !it.name;
     const off = !it.tick;
-    const note = it.why === "name" && !it.auto ? t("pks_not_listed") : unknown ? t("pks_unknown") : !it.sure ? t("scan_please_check") : "";
+    const note = it.why === "name" && !it.auto ? t("pks_not_listed") : unknown ? t("pks_unknown") : it.fill ? t("pks_from_saved") : !it.sure ? t("scan_please_check") : "";
     const opts2 = names().map((n) => `<option value="${esc(n)}" ${n === it.name ? "selected" : ""}>${esc(disp(n))}</option>`).join("");
     return `<div class="scan-row pks-row${unknown || !it.sure ? " unsure" : ""}${off ? " off" : ""}" data-pksrow="${gi}|${ii}">
       <input type="checkbox" data-pkstick ${it.tick ? "checked" : ""} aria-label="${esc(t("pks_use"))}" />
@@ -2240,7 +2312,7 @@ function openPackScanMain(opts) {
     const none = !body && !gone;
     return `<div class="scan-lab-h">${esc(t("pks_diff"))}</div>
       ${none ? `<div class="scan-row pks-row"><span class="scan-name"><b>&#10003; ${esc(t("pks_diff_none"))}</b></span></div>` : `${body ? `<div class="pks-pv-wrap"><table class="pks-pv pks-diff"><thead><tr><th></th><th>${esc(t("pks_diff_saved"))}</th><th>${esc(t("pks_diff_scan"))}</th></tr></thead><tbody>${body}</tbody></table></div>` : ""}
-      <div class="meta pks-pv-n">${[same ? t("pks_diff_same").replace("{n}", same) : "", gone ? t(m.mine ? "pks_diff_gone_mine" : "pks_diff_gone").replace("{n}", gone) : "", m.mine ? t("pks_diff_mine_note") : ""].filter(Boolean).map(esc).join(" · ")}</div>`}`;
+      <div class="meta pks-pv-n">${[same ? t("pks_diff_same").replace("{n}", same) : "", gone ? t(m.mine ? "pks_diff_gone_mine" : "pks_diff_kept").replace("{n}", gone) : "", m.mine ? t("pks_diff_mine_note") : ""].filter(Boolean).map(esc).join(" · ")}</div>`}`;
   };
   const showCheck = () => {
     if (!live()) return;
@@ -2256,8 +2328,8 @@ function openPackScanMain(opts) {
       ${!any ? `<p class="desc">${esc(t("pks_nothing"))}</p>` : ""}
       ${noticeHtml()}
       ${newHtml()}
-      ${many ? `<div class="scan-lab-h">${esc(t("pks_which"))}</div><div class="pks-groups">${st.groups.map((g, i) => `<button type="button" class="pks-g${st.pick === i ? " on" : ""}" data-pksgroup="${i}"><b>${esc(g.title || t("pks_pack_n").replace("{n}", i + 1))}</b><small>${g.price ? esc(money(g.price.value, g.price.cur)) : "?"} · ${esc(t("pks_n_items").replace("{n}", g.items.length))}</small></button>`).join("")}
-        ${st.groups.every((g) => g.price) ? `<button type="button" class="pks-g${st.pick === "rows" ? " on" : ""}" data-pksgroup="rows"><b>${esc(t("pks_all_rows"))}</b><small>${esc(t("pks_all_rows_d").replace(/\{n\}/g, st.groups.length))}</small></button>` : ""}</div>` : ""}
+      ${many ? `<div class="scan-lab-h">${esc(t("pks_which_one"))}</div><div class="pks-groups">${st.groups.map((g, i) => `<button type="button" class="pks-g${st.pick === i ? " on" : ""}${st.done.has(i) ? " done" : ""}" data-pksgroup="${i}" aria-pressed="${st.pick === i ? "true" : "false"}"><b>${esc(g.title || t("pks_pack_n").replace("{n}", i + 1))}</b><small>${st.done.has(i) ? `<em>&#10003; ${esc(t("pks_saved_mark"))}</em> · ` : ""}${g.price ? esc(money(g.price.value, g.price.cur)) : "?"} · ${esc(t("pks_n_items").replace("{n}", g.items.length))}</small></button>`).join("")}
+        ${st.groups.every((g) => g.price) && !st.done.size ? `<button type="button" class="pks-g${st.pick === "rows" ? " on" : ""}" data-pksgroup="rows"><b>${esc(t("pks_all_rows"))}</b><small>${esc(t("pks_all_rows_d").replace(/\{n\}/g, st.groups.length))}</small></button>` : ""}</div>` : ""}
       ${gs.map((g, gi0) => { const gi = st.pick === "rows" ? gi0 : st.pick; return `
         ${gs.length > 1 ? `<div class="scan-lab-h">${esc(g.title || t("pks_pack_n").replace("{n}", gi + 1))}</div>` : `<div class="scan-lab-h">${esc(t("pks_items"))}</div>`}
         ${g.items.map((it, ii) => itemRow(it, gi, ii)).join("") || `<div class="meta">${esc(t("pks_no_items"))}</div>`}
@@ -2282,6 +2354,9 @@ function openPackScanMain(opts) {
         <button class="btn" type="button" data-pkssave ${canSave() ? "" : "disabled"}>${esc(t("pks_save"))}</button>
       </div></div>`;
     wireCheck();
+    // the picked pack's chip in sight (the row scrolls sideways)
+    const on = modal.querySelector(".pks-g.on"), row = on && on.parentElement;
+    if (row) { const a = on.getBoundingClientRect(), b = row.getBoundingClientRect(); if (a.left < b.left || a.right > b.right) row.scrollLeft += a.left - b.left - 8; }
   };
   const refresh = () => {
     const pv = modal.querySelector("#pksPreview");
@@ -2297,7 +2372,7 @@ function openPackScanMain(opts) {
     if (!box) return;
     const redraw = () => { box.innerHTML = scaleHtml(); wireScale(); refresh(); };
     const sc = box.querySelector("[data-pksscale]");
-    if (sc) sc.onchange = () => { st.scale = sc.checked; redraw(); };
+    if (sc) sc.onchange = () => { st.scale = sc.checked; st.scaleTouched = true; redraw(); };
     box.querySelectorAll("[data-pkslad]").forEach((b) => b.onclick = () => {
       const gs = chosen();
       if (gs.length !== 1) return;
@@ -2315,15 +2390,11 @@ function openPackScanMain(opts) {
     modal.querySelector("[data-pksback]").onclick = () => { if (st.to === "match") st.to = "new"; st.matched = null; st.groups = []; st.skipped = { noamount: 0, unknown: 0 }; showStart(); };
     modal.querySelectorAll("[data-pksgroup]").forEach((b) => b.onclick = () => {
       const v = b.dataset.pksgroup;
-      st.pick = v === "rows" ? "rows" : Number(v);
-      if (st.pick === "rows") st.scale = false;
-      const g = st.groups[typeof st.pick === "number" ? st.pick : 0];
-      if (!st.titleTyped && g && g.title) st.title = g.title;
-      rematch();
+      pickGroup(v === "rows" ? "rows" : Number(v));
       showCheck();
     });
     const asNew = modal.querySelector("[data-pksasnew]");
-    if (asNew) asNew.onclick = () => { st.matchOff = true; st.to = "new"; showCheck(); };
+    if (asNew) asNew.onclick = () => { st.matchOff = true; st.to = "new"; rematch(); showCheck(); };
     const ct = modal.querySelector("[data-pkscat]");
     if (ct) ct.onchange = () => { st.category = ct.value; };
     wireScale();
@@ -2336,7 +2407,7 @@ function openPackScanMain(opts) {
       if (box) box.innerHTML = savedHtml();
     };
     const asMatch = modal.querySelector("[data-pksasmatch]");
-    if (asMatch) asMatch.onclick = () => { st.matchOff = false; st.to = opts.target ? "this" : "match"; showCheck(); };
+    if (asMatch) asMatch.onclick = () => { st.matchOff = false; st.to = opts.target && !st.targetUsed ? "this" : "match"; rematch(); showCheck(); };
     const nm = modal.querySelector("[data-pksname2]");
     if (nm) nm.oninput = () => { st.title = nm.value; st.titleTyped = true; };
     const rowOf = (el) => { const [gi, ii] = el.closest("[data-pksrow]").dataset.pksrow.split("|").map(Number); return st.groups[gi].items[ii]; };
@@ -2344,7 +2415,7 @@ function openPackScanMain(opts) {
       row.querySelector("[data-pkstick]").onchange = (e) => { rowOf(row).tick = e.target.checked; row.classList.toggle("off", !e.target.checked); refresh(); };
       row.querySelector("[data-pksitem]").onchange = (e) => {
         const it = rowOf(row);
-        it.name = e.target.value || null; it.sure = !!it.name; it.tick = true;
+        it.name = e.target.value || null; it.sure = !!it.name; it.tick = true; it.fill = false;
         // a bundle tile (10 K Meat): the label times the number on the tile
         if (it.mult && it.name && SCAN_PK_BUNDLE.test(it.name) && !it.typed) it.value = it.amount0 != null ? it.amount0 * it.mult : it.value * it.mult;
         showCheck();
@@ -2371,6 +2442,19 @@ function openPackScanMain(opts) {
       try {
         await opts.onSave(res);
         if (learn.length) { try { await scanLearnedSave(learn); await scanPkLearnedLoad(); } catch (err) { toast(t("pks_learn_failed"), true); } }
+        // Several packs in the screenshot: stay on the next one not saved yet
+        // (its chip says so), until every pack is saved or Cancel.
+        if (typeof st.pick === "number" && st.groups.length > 1) {
+          st.done.add(st.pick);
+          const n = st.groups.length, next = [...Array(n).keys()].map((k) => (st.pick + 1 + k) % n).find((k) => !st.done.has(k));
+          if (next != null && live()) {
+            if (st.to === "this") st.targetUsed = true;
+            st.to = "new";
+            pickGroup(next);
+            showCheck();
+            return;
+          }
+        }
         close();
       } catch (err) { e.target.disabled = false; toast((err && err.message) || "Couldn't save", true); }
     };
