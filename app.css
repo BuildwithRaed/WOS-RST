@@ -3455,6 +3455,12 @@ input,select,textarea{
   .isl-bp .bs-tiles.isl-bst{ grid-template-columns:repeat(var(--n, 3), minmax(0, 1fr)); }
   .isl-bp .bs-tiles.isl-bst .bs-tile{ height:5.5625rem; min-height:0; }
   .isl-bp.bs-folded .bs-foot{ margin-bottom:0; }
+  .isl-bp .bs-foot{ flex-wrap:nowrap; gap:6px; }
+  .page-head.isl-head{ flex-wrap:nowrap; }
+  .isl-head > div:first-child{ flex:1 1 auto; min-width:0; }
+  .isl-head .isl-scant{ margin-inline-start:auto; flex:none; align-self:center; height:36px; min-height:36px; padding:0 11px; border-radius:10px; }
+  .isl-scanb .isl-scann{ display:none; }
+  @media (max-width:385px){ .isl-scanb .isl-scanw{ display:none; } .isl-scanb .isl-scann{ display:inline; } }
   @media (min-width:901px){ .isl-bp .bs-tiles.isl-bst{ max-width:340px; } }
   .isl-g1[hidden]{ display:none; }
   .isl-g1{ margin-bottom:10px; }

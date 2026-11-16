@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "7cb2b87b76";
+window.SCAN_BUILD = "9b3aee4dbc";
 
 
 // ---- Backpack: read game screenshots ----
@@ -745,12 +745,17 @@ const scanIslTileFeature = (src, box) => scanTileFeature(scanIslSquare(src, box,
 // ones (trees, roads, lamps, ponds) are left out without a word.
 async function scanIslStoreShot(worker, src) {
   const tiles = scanFindWideTiles(src);
-  if (!tiles.length) return null;
-  // The title / tabs above the tiles say it is the Storehouse.
-  const y1 = Math.max(10, Math.round(tiles[0].y)), hc = scanCanvas(src.width, y1);
+  // The title / tabs above the tiles say it is the Storehouse (no tiles: the Accessory
+  // tab's lighthouse cards, so the top fifth of the screen).
+  const y1 = Math.max(10, Math.round(tiles.length ? tiles[0].y : src.height * 0.2)), hc = scanCanvas(src.width, y1);
   hc.getContext("2d").drawImage(src, 0, 0, src.width, y1, 0, 0, src.width, y1);
   const head = (await scanRead(worker, hc, { tessedit_pageseg_mode: "6" })).text;
   if (!/storehouse|decoration|ingredient|accessory/i.test(head)) return null;
+  // No tiles: the Accessory tab (its picture cards aren't plain tiles).
+  if (!tiles.length) {
+    const lights = await scanIslLightShot(worker, src, y1);
+    return lights.length ? { kind: "islacc", items: [], lights } : null;
+  }
   const items = [], isl = [], unk = [];
   let unknown = 0;
   for (const box of tiles) {
@@ -772,6 +777,44 @@ async function scanIslStoreShot(worker, src) {
     else items.push({ name: m.key, value: amount.value, sure });
   }
   return { kind: "islstore", items, isl, unknown, unk };
+}
+// Storehouse Accessory tab: the lighthouses as big picture cards, "Starry Lighthouse Lv. 7"
+// written in white along each card's bottom. Only the near-white letters are kept
+// (black on white) and read line by line; [{ name: text read, value: level }].
+async function scanIslLightShot(worker, src, top) {
+  const W = src.width, H = src.height - top, k = Math.min(1, 900 / W), w = Math.round(W * k), h = Math.round(H * k);
+  if (h < 20) return [];
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, top, W, H, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, out = scanCanvas(w, h), og = out.getContext("2d");
+  og.fillStyle = "#fff"; og.fillRect(0, 0, w, h); og.fillStyle = "#000";
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+    if (Math.min(r, gr, b) > 200 && Math.max(r, gr, b) - Math.min(r, gr, b) < 40) og.fillRect(x, y, 1, 1);
+  }
+  const text = (await scanRead(worker, out, { tessedit_pageseg_mode: "11" })).text.replace(/\n+/g, "\n");
+  // One card a line: "<name> Lv. 7" (the "L" sometimes reads lower-case).
+  return text.split("\n").map((ln) => /([A-Za-z][A-Za-z' ]{3,}?)\s*[Ll][vVy][.,:]?\s*(\d{1,2})\b/.exec(ln))
+    .filter(Boolean).map((m) => ({ name: m[1].trim(), value: Number(m[2]) }));
+}
+// A name read from the screen to a building of the list: the closest by letters
+// (Levenshtein over lower-case letters only), at most a third of the name off.
+function scanIslNameMatch(txt, list) {
+  const norm = (x) => String(x).toLowerCase().replace(/[^a-z]/g, "");
+  const a = norm(txt);
+  let best = null, bd = Infinity;
+  list.forEach((s) => {
+    const b = norm(s.name), m = a.length, n = b.length, row = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      let prev = row[0]; row[0] = i;
+      for (let j = 1; j <= n; j++) { const tmp = row[j]; row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = tmp; }
+    }
+    // The text before the name (bits of the picture) may add letters in front: compare the end too.
+    let dd = row[n];
+    if (m > n) { const tail = a.slice(m - n); let e = 0; for (let i = 0; i < n; i++) if (tail[i] !== b[i]) e++; dd = Math.min(dd, e); }
+    if (dd < bd) { bd = dd; best = s; }
+  });
+  return best && bd <= Math.max(2, Math.floor(norm(best.name).length / 3)) ? best : null;
 }
 // My Island: the Life Essence amount beside the green leaf at the top right
 // (the gold coins on the left are not read).
@@ -818,23 +861,34 @@ async function scanIslBuildings() {
     `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
   );
   const list = rows.filter((s) => islCatTracked(s.category) && !ISL_SKIP_NAMES.includes(s.name) && islIsMythic(s));
-  return { cats: catList.filter((c) => list.some((s) => s.category === c)), list };
+  return { cats: catList.filter((c) => list.some((s) => s.category === c)), list, lights: rows.filter((s) => s.category === "Lighthouse") };
 }
 // Storehouse copies read or typed on the check screen: { skinId: copies } replaces those
 // buildings' "In Storehouse" (calc_state island_shards.store, the Islands page's box).
-async function scanIslStoreSave(set) {
+// light: { lighthouse skinId: level } from the Accessory tab → island_shards.light =
+// { skinId: { now, to } } (the target kept, else the level read).
+async function scanIslStoreSave(set, light) {
   const saved = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
   const st = { ...islDefault(), ...(saved && typeof saved === "object" ? saved : {}) };
   const store = { ...(st.store && typeof st.store === "object" ? st.store : {}) };
   Object.entries(set).forEach(([id, v]) => { if (Number(v) > 0) store[id] = Math.floor(Number(v)); else delete store[id]; });
   st.store = store;
   if (ISL_SHARDS) ISL_SHARDS.store = store;
+  if (light && Object.keys(light).length) {
+    const lt = { ...(st.light && typeof st.light === "object" ? st.light : {}) };
+    Object.entries(light).forEach(([id, v]) => { const had = lt[id] && typeof lt[id] === "object" ? lt[id] : {}; lt[id] = { ...had, now: Math.floor(Number(v)), to: had.to != null ? had.to : Math.floor(Number(v)) }; });
+    st.light = lt;
+    if (ISL_SHARDS) ISL_SHARDS.light = lt;
+  }
   delete st.essence; delete st.shards;
   saveCalcState("island_shards", st);
 }
 
-async function scanShot(worker, file, marks, refs) {
+// mode "island" (the Islands page's Scan): only the island screens are read; the
+// Backpack's Scan finds an island screen but leaves it (kind "islelse").
+async function scanShot(worker, file, marks, refs, mode) {
   const src = await createImageBitmap(file);
+  if (mode === "island") return (await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src)) || { kind: "notisl", items: [] };
   const lab = await scanLabShot(worker, src);
   if (lab) return lab;
   const tiles = scanFindTiles(src);
@@ -848,8 +902,7 @@ async function scanShot(worker, file, marks, refs) {
     if (items.length) return { kind: "speedup", items };
   }
   // Island screens: the Island Storehouse (tiles about 4 : 3, never square) and My Island.
-  const isl = (await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src));
-  if (isl) return isl;
+  if ((await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src))) return { kind: "islelse", items: [] };
   // Text reads best on the light Summary panel alone, about 720 px wide.
   const p = scanLightPanel(src), s = 720 / p.w, c = scanCanvas(720, Math.round(p.h * s));
   c.getContext("2d").drawImage(src, p.x, p.y, p.w, p.h, 0, 0, c.width, c.height);
@@ -862,7 +915,9 @@ async function scanShot(worker, file, marks, refs) {
 
 // more.canAdd(name): a hero's shards or a Gen's widgets that aren't on the
 // person's list yet ({ label, icon } or null); more.added(names) puts them on it.
+// more.island: the Islands page's Scan (island screens only).
 function openBackpackScanMain(groups, bp, done, more) {
+  const islMode = !!(more && more.island);
   const known = new Map(groups.flatMap((g) => g.items).map((it) => [it.name, it]));
   const addable = new Map();
   let modal = document.getElementById("bpScanModal");
@@ -897,7 +952,15 @@ function openBackpackScanMain(groups, bp, done, more) {
   // Island screens: Storehouse building copies by building id ({ name, value, sure }),
   // the Mythic buildings (for names, pictures and the teach picker) and the saved Storehouse.
   const islRes = new Map();
-  const isl = { life: false, store: false, bld: null, now: {} };
+  const isl = { life: false, store: false, acc: false, bld: null, now: {}, light: {}, elsewhere: false };
+  const islLight = new Map(); // lighthouse skin id -> { name, img, value } (Accessory tab)
+  const islLoad = async () => {
+    if (isl.bld) return;
+    try { isl.bld = await scanIslBuildings(); } catch (e) { isl.bld = { cats: [], list: [], lights: [] }; }
+    const st = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
+    isl.now = (st && st.store) || {};
+    isl.light = (st && st.light) || {};
+  };
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -906,9 +969,10 @@ function openBackpackScanMain(groups, bp, done, more) {
   };
   const showStart = () => {
     modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
-      <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
-      <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
-      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"], ["", "scan_isl", "scan_isl_hint"]].map(([ex, head, hint], i) => `
+      <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t(islMode ? "scan_isl_title" : "scan_title"))}</h2>
+      <p class="desc" style="margin:0 0 12px;">${esc(t(islMode ? "scan_isl_intro" : "scan_intro"))}</p>
+      ${(islMode ? [["", "scan_tab_isl", "scan_isl_life_hint"], ["", "scan_isl_ing", "scan_isl_ing_hint"], ["", "scan_isl_dec", "scan_isl_dec_hint"], ["", "scan_isl_acc", "scan_isl_acc_hint"]]
+    : [["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"]]).map(([ex, head, hint], i) => `
       <div class="scan-step"><b>${i + 1}</b><div><div>${esc(t(head))}</div><div class="meta">${esc(t(hint))}</div></div>
         ${ex ? `<button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button>` : ""}</div>`).join("")}
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
@@ -953,7 +1017,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       if (!live()) return;
       progress(t("scan_reading").replace("{n}", i + 1).replace("{m}", files.length));
       let shot;
-      try { shot = await scanShot(worker, files[i], marks, refs); } catch (e) { shot = { kind: "unknown", items: [] }; }
+      try { shot = await scanShot(worker, files[i], marks, refs, islMode ? "island" : ""); } catch (e) { shot = { kind: "unknown", items: [] }; }
       if (!live()) return;
       if (shot.kind === "speedsummary") notes.add(t("scan_speed_summary"));
       else if (shot.kind === "other") notes.add(t("scan_other_items"));
@@ -977,12 +1041,22 @@ function openBackpackScanMain(groups, bp, done, more) {
       }
       if (shot.kind === "speedup") sawSpeed = true;
       if (shot.kind === "island") isl.life = true;
+      if (shot.kind === "islelse") isl.elsewhere = true;
+      if (shot.kind === "notisl") notes.add(t("scan_not_isl"));
+      if (shot.kind === "islacc") {
+        isl.acc = true;
+        await islLoad();
+        if (!live()) return;
+        shot.lights.forEach((l) => {
+          const s = scanIslNameMatch(l.name, isl.bld.lights || []);
+          if (s) islLight.set(String(s.id), { name: s.name, img: s.image_url || "", value: l.value });
+        });
+        if (shot.lights.length > islLight.size) notes.add(t("scan_isl_acc_unread"));
+      }
       if (shot.kind === "islstore") {
         isl.store = true;
         if (!isl.bld) {
-          try { isl.bld = await scanIslBuildings(); } catch (e) { isl.bld = { cats: [], list: [] }; }
-          const st = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
-          isl.now = (st && st.store) || {};
+          await islLoad();
           if (!live()) return;
         }
         (shot.isl || []).forEach((b) => {
@@ -1077,8 +1151,15 @@ function openBackpackScanMain(groups, bp, done, more) {
       const tab = scanItemTab(n), k = scanTabOrder(tab).indexOf(n);
       return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
-    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab", isl.life && "scan_tab_isl", isl.store && "scan_tab_islstore"].filter(Boolean).map((k) => t(k));
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab", isl.life && "scan_tab_isl", isl.store && "scan_tab_islstore", isl.acc && "scan_isl_acc"].filter(Boolean).map((k) => t(k));
     // Island Storehouse: spare copies of each Mythic building read (Islands "In Storehouse").
+    // Storehouse Accessory tab: each lighthouse's level (Islands page's Lighthouse plan).
+    const lightHtml = !islLight.size ? "" : `<div class="scan-lab-h">&#128680; ${esc(t("scan_isl_acc_h"))}</div>${[...islLight.entries()].map(([id, r]) => `<label class="scan-row unsure">
+        <input type="checkbox" data-scanlighttick="${esc(id)}" checked />
+        ${r.img ? `<img src="${esc(r.img)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(dataName(r.name))}</b><span class="meta">${esc(t("scan_isl_acc_now").replace("{n}", r.value))}${isl.light[id] && isl.light[id].now != null && Number(isl.light[id].now) !== r.value ? ` · ${esc(t("scan_isl_acc_was").replace("{n}", isl.light[id].now))}` : ""} · <em>${esc(t("scan_please_check"))}</em></span></span>
+        <input type="text" inputmode="numeric" data-scanlight="${esc(id)}" value="${r.value}" />
+      </label>`).join("")}`;
     const islHtml = !islRes.size ? "" : `<div class="scan-lab-h">&#127965; ${esc(t("scan_isl_store_h"))}</div>${[...islRes.entries()].map(([id, r]) => `<label class="scan-row${r.sure ? "" : " unsure"}">
         <input type="checkbox" data-scanisltick="${esc(id)}" checked />
         ${r.img ? `<img src="${esc(r.img)}" alt="" />` : `<span class="scan-img"></span>`}
@@ -1159,12 +1240,14 @@ function openBackpackScanMain(groups, bp, done, more) {
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
-      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml || islHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
+      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml || islHtml || lightHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
+      ${isl.elsewhere ? `<div class="meta scan-islgo" style="font-size:12px; margin-bottom:6px;">&#127965; ${esc(t("scan_isl_elsewhere"))} <button type="button" class="linklike" data-scangoisl>${esc(t("scan_isl_open"))}</button></div>` : ""}
       ${labHtml}
       ${labHtml && rows ? `<div class="scan-lab-h">${esc(t("scan_lab_items"))}</div>` : ""}
       <div style="margin-top:6px;">${rows}</div>
       ${islHtml}
+      ${lightHtml}
       ${gearHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
       ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
@@ -1172,10 +1255,12 @@ function openBackpackScanMain(groups, bp, done, more) {
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
-        ${names.length || zeroRows || unknownList.length || gearLow || labHtml || islHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+        ${names.length || zeroRows || unknownList.length || gearLow || labHtml || islHtml || lightHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
+    const goIsl = modal.querySelector("[data-scangoisl]");
+    if (goIsl) goIsl.onclick = () => { close(); goToTab("islandgallery"); };
     const learnBox = modal.querySelector("#scanLearn");
     const redrawLearn = () => { const d = learnBox.querySelector("details"); learnBox.innerHTML = learnHtml(!d || d.open); };
     learnBox.onclick = async (ev) => {
@@ -1247,7 +1332,12 @@ function openBackpackScanMain(groups, bp, done, more) {
       const lesson = (u) => { const b = bldOf(u); return b ? { n: b.name, kind: "island", id: b.id, f: scanFeatToB64(u.feat), tab: "island" } : u.isl ? { n: u.pick, kind: "island", f: scanFeatToB64(u.feat), tab: "island" } : { n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }; };
       if (taught.length || skippedTiles.length) scanLearnedSave(taught.map(lesson)
         .concat(skippedTiles.map((u) => (u.isl ? { n: SCAN_SKIP, kind: "island", f: scanFeatToB64(u.feat), tab: "island" } : { n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
-      if (Object.keys(islSet).length) scanIslStoreSave(islSet);
+      const lightSet = {};
+      modal.querySelectorAll("[data-scanlighttick]").forEach((tick) => {
+        const v = modal.querySelector(`[data-scanlight="${window.CSS.escape(tick.dataset.scanlighttick)}"]`).value.replace(/\D/g, "");
+        if (tick.checked && v !== "") lightSet[tick.dataset.scanlighttick] = Number(v);
+      });
+      if (Object.keys(islSet).length || Object.keys(lightSet).length) scanIslStoreSave(islSet, lightSet);
       saveCalcState("backpack", bp);
       // Research Lab: only the game's weekly count, for this week (same key as the Lab page).
       const labTick = modal.querySelector("[data-scanlabtick]"), labV = labIn ? labIn.value.replace(/\D/g, "") : "";

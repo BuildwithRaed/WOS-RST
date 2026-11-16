@@ -1710,8 +1710,24 @@ const T = {
   scan_tab_lab: { en: "Research Lab" },
   scan_tab_isl: { en: "My Island" },
   scan_tab_islstore: { en: "Island Storehouse" },
-  scan_isl: { en: "Island screens" },
-  scan_isl_hint: { en: "My Island reads your Life Essence. Island Storehouse: Ingredients = Mythic Island Shards and Construction Contracts; Decoration = spare copies of Mythic buildings (orange tiles)." },
+  scan_isl_btn: { en: "Scan Storehouse" },
+  scan_short: { en: "Scan" },
+  scan_isl_title: { en: "Scan island screens" },
+  scan_isl_intro: { en: "Add any of these island screenshots from the game. They are read on your phone and never uploaded." },
+  scan_isl_life_hint: { en: "Reads your Life Essence (top right)." },
+  scan_isl_ing: { en: "Island Storehouse · Ingredients" },
+  scan_isl_ing_hint: { en: "Mythic Island Shards and General Accessory Construction Contracts." },
+  scan_isl_dec: { en: "Island Storehouse · Decoration" },
+  scan_isl_dec_hint: { en: "Spare copies of Mythic buildings (orange tiles), for “In Storehouse”." },
+  scan_isl_acc: { en: "Island Storehouse · Accessory" },
+  scan_isl_acc_hint: { en: "Your lighthouses' levels." },
+  scan_isl_acc_h: { en: "Lighthouses · level" },
+  scan_isl_acc_now: { en: "now Lv {n}" },
+  scan_isl_acc_was: { en: "was Lv {n}" },
+  scan_isl_acc_unread: { en: "A lighthouse's name wasn't read." },
+  scan_not_isl: { en: "A screenshot isn't an island screen (Backpack screens are scanned on the Backpack page)." },
+  scan_isl_elsewhere: { en: "Island screens are scanned on the Islands page." },
+  scan_isl_open: { en: "Open Islands ›" },
   scan_isl_store_h: { en: "Island Storehouse · building copies" },
   scan_isl_store_now: { en: "In Storehouse · now {n}" },
   scan_learn_buildings: { en: "Island buildings" },
@@ -14388,7 +14404,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=7cb2b87b76";
+      s.src = "scan.min.js?v=9b3aee4dbc";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -14424,6 +14440,14 @@ async function openBackpackScan(groups, bp, done, more) {
     if (btn && !btn.isConnected) return;
   }
   return openBackpackScanMain(groups, bp, done, more);
+}
+// The Islands page's "Scan Storehouse": the same Scan, island screens only; Save
+// redraws the Islands page in place.
+async function openIslandScan() {
+  const bp = { ...((await loadCalcState("backpack").catch(() => null)) || {}) };
+  // Redrawn once the Scan window has closed (and the page's scroll lock is off).
+  const done = () => requestAnimationFrame(() => requestAnimationFrame(() => { if (TAB === "islandgallery") keepPlace(() => render()); }));
+  return openBackpackScan(backpackItems(), bp, done, { island: true, heroes: [], canAdd: () => null, added: done });
 }
 
 // ============================================================
@@ -25589,6 +25613,7 @@ async function renderIslandGallery() {
         <p class="desc">${esc(t("isl_desc"))}</p>
         <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
       </div>
+      <button type="button" class="cg-bpbtn isl-scanb isl-scant" data-islscan title="${esc(t("scan_isl_btn"))}">&#128247; <span class="isl-scanw">${esc(t("scan_isl_btn"))}</span><span class="isl-scann">${esc(t("scan_short"))}</span></button>
     </div>
     <div class="panel cg-ans sg-ans">
       <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span><button type="button" class="g1-fold isl-fold" data-g1fold="top:islandgallery" aria-expanded="true"></button></div>
@@ -25600,6 +25625,7 @@ async function renderIslandGallery() {
     <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
   `;
+  { const sb = content.querySelector(".isl-head [data-islscan]"); if (sb) sb.onclick = () => openIslandScan(); }
   // One Hide in the Troops Stats header (like Heroes Gears' top card) folds the
   // Shards plan and its Backpack; remembered in calc_state bar_hidden ("top:islandgallery").
   g1FoldSync(content);
@@ -25947,6 +25973,7 @@ async function renderIslandGallery() {
       }
       if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
       if (e.target.closest("[data-islpc]")) { islOpenPacks(); return; }
+      if (e.target.closest("[data-islscan]")) { openIslandScan(); return; }
       if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
     };
     host.onchange = (e) => {
