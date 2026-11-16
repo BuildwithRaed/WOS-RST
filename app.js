@@ -21605,6 +21605,31 @@ function budgetSpendSimulate(plan, sp) {
     });
   });
   if (left.some((n) => n > 0)) return { ok: false };
+  // Daily-reward packs (Shining City): one buy a day for the pack as a whole,
+  // the rest on the run's last day, like the other plan views. Kept only when
+  // no week / month goes over the limit with the buys moved.
+  if (rows.some((r) => packRowDayReward(r))) {
+    const moved = sched.map((l) => l.map((x) => ({ ...x })));
+    packDayRewardPool(rows, moved);
+    const sp2 = new Map(fixedP), b2 = new Map();
+    let last2 = 0;
+    moved.forEach((l, i) => l.forEach((x) => {
+      const p = spendPeriodOf(x.off, per);
+      sp2.set(p, (sp2.get(p) || 0) + x.count * unit[i]);
+      if (!b2.has(p)) b2.set(p, []);
+      const b = b2.get(p).find((y) => y.i === i);
+      if (b) b.count += x.count; else b2.get(p).push({ i, count: x.count });
+      last2 = Math.max(last2, x.off);
+    }));
+    const upTo2 = (p) => { let s = 0; sp2.forEach((v, k) => { if (k <= p) s += v; }); return s; };
+    const fits = [...sp2.keys()].every((p) => (fixedP.get(p) || 0) >= (sp2.get(p) || 0) - 0.005 || (sp.carry ? upTo2(p) <= amount * (p + 1) + 0.005 : sp2.get(p) <= amount + 0.005));
+    if (fits) {
+      moved.forEach((l, i) => { sched[i] = l; });
+      spent.clear(); sp2.forEach((v, k) => spent.set(k, v));
+      bought.clear(); b2.forEach((v, k) => bought.set(k, v));
+      last = Math.max(last2, 0);
+    }
+  }
   const finish = Math.max(last, plan.days || 0);
   const lastP = spendPeriodOf(last, per);
   const periods = [];
