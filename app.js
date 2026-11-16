@@ -16764,20 +16764,34 @@ function packRowSlots(r) {
     const usedAt = r.usedAt || { 0: r.usedNow || 0 };
     const per = r.perCycle || 1, win = Number(r.window) || 0;
     // A pack bought once a day while it runs (Hall of Heroes: 3 buys over 3
-    // days) gets one date per day instead of all on its first day.
-    // Only packs limited per run by "buys" (Hall of Heroes); a row with its own
-    // Max (Daybreak, Shining City) can be bought several times the same day.
+    // days, limited by "buys", no row Max) gets one date per day instead of
+    // all on its first day. So do packs with a reward per day: "Daily rewards"
+    // in the pack's settings, or a gift on the first buy of each day (Shining
+    // City Pack: free Glorious Tomes); their buys go one a day, any left over
+    // on the last day. Other rows with their own Max (Daybreak) can all be
+    // bought the same day.
     const lk = Array.isArray(r.tables) && r.tables.length ? packLinkFor(r.tables[0]) : null;
     const rowMaxed = !!(lk && lk.rowMax && Object.keys(lk.rowMax).some((k) => Number(lk.rowMax[k]) > 0));
-    const daily = win > 1 && per > 1 && per <= win && !rowMaxed;
+    let reward = !!(lk && lk.daily);
+    if (lk && !reward) {
+      const tb = (PACK_TABLES_CACHE || []).find((x) => String(x.id) === String(r.tables[0]));
+      try { reward = !!(tb && packShiningBonusOf(tb, lk)); } catch (e) { reward = false; }
+    }
+    const daily = win > 1 && per > 1 && (reward || (per <= win && !rowMaxed));
     return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).flatMap((off) => {
       const cap = Math.max(0, per - (usedAt[off] || 0));
       if (!daily) return [{ off, cap }];
       // The running copy only has the days it has left.
-      let left = per;
-      if (off === 0) { const st0 = packCurrentCycleStart(r.reset, r.resetDay); if (st0) left = Math.max(0, Math.min(per, win - Math.round((packStartOfToday() - st0) / 86400000))); }
-      const n = Math.min(left, cap);
-      return Array.from({ length: n }, (_, k) => ({ off: off + (left - n) + k, cap: 1 }));
+      let days = Math.min(per, win);
+      if (reward) days = win;
+      if (off === 0) { const st0 = packCurrentCycleStart(r.reset, r.resetDay); if (st0) days = Math.max(0, Math.min(days, win - Math.round((packStartOfToday() - st0) / 86400000))); }
+      if (!reward) {
+        const n = Math.min(days, cap);
+        return Array.from({ length: n }, (_, k) => ({ off: off + (days - n) + k, cap: 1 }));
+      }
+      if (!days || !cap) return [];
+      const n = Math.min(days, cap);
+      return Array.from({ length: n }, (_, k) => ({ off: off + k, cap: k === n - 1 ? cap - (n - 1) : 1 }));
     });
 }
 function packPlanSchedule(rows) {
