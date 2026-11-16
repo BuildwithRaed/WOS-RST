@@ -1710,8 +1710,24 @@ const T = {
   scan_tab_lab: { en: "Research Lab" },
   scan_tab_isl: { en: "My Island" },
   scan_tab_islstore: { en: "Island Storehouse" },
-  scan_isl: { en: "Island screens" },
-  scan_isl_hint: { en: "My Island reads your Life Essence. Island Storehouse: Ingredients = Mythic Island Shards and Construction Contracts; Decoration = spare copies of Mythic buildings (orange tiles)." },
+  scan_isl_btn: { en: "Scan Storehouse" },
+  scan_short: { en: "Scan" },
+  scan_isl_title: { en: "Scan island screens" },
+  scan_isl_intro: { en: "Add any of these island screenshots from the game. They are read on your phone and never uploaded." },
+  scan_isl_life_hint: { en: "Reads your Life Essence (top right)." },
+  scan_isl_ing: { en: "Island Storehouse · Ingredients" },
+  scan_isl_ing_hint: { en: "Mythic Island Shards and General Accessory Construction Contracts." },
+  scan_isl_dec: { en: "Island Storehouse · Decoration" },
+  scan_isl_dec_hint: { en: "Spare copies of Mythic buildings (orange tiles), for “In Storehouse”." },
+  scan_isl_acc: { en: "Island Storehouse · Accessory" },
+  scan_isl_acc_hint: { en: "Your lighthouses' levels." },
+  scan_isl_acc_h: { en: "Lighthouses · level" },
+  scan_isl_acc_now: { en: "now Lv {n}" },
+  scan_isl_acc_was: { en: "was Lv {n}" },
+  scan_isl_acc_unread: { en: "A lighthouse's name wasn't read." },
+  scan_not_isl: { en: "A screenshot isn't an island screen (Backpack screens are scanned on the Backpack page)." },
+  scan_isl_elsewhere: { en: "Island screens are scanned on the Islands page." },
+  scan_isl_open: { en: "Open Islands ›" },
   scan_isl_store_h: { en: "Island Storehouse · building copies" },
   scan_isl_store_now: { en: "In Storehouse · now {n}" },
   scan_learn_buildings: { en: "Island buildings" },
@@ -14382,7 +14398,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=7cb2b87b76";
+      s.src = "scan.min.js?v=9b3aee4dbc";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -14418,6 +14434,14 @@ async function openBackpackScan(groups, bp, done, more) {
     if (btn && !btn.isConnected) return;
   }
   return openBackpackScanMain(groups, bp, done, more);
+}
+// The Islands page's "Scan Storehouse": the same Scan, island screens only; Save
+// redraws the Islands page in place.
+async function openIslandScan() {
+  const bp = { ...((await loadCalcState("backpack").catch(() => null)) || {}) };
+  // Redrawn once the Scan window has closed (and the page's scroll lock is off).
+  const done = () => requestAnimationFrame(() => requestAnimationFrame(() => { if (TAB === "islandgallery") keepPlace(() => render()); }));
+  return openBackpackScan(backpackItems(), bp, done, { island: true, heroes: [], canAdd: () => null, added: done });
 }
 
 // ============================================================
@@ -25799,7 +25823,7 @@ async function renderIslandGallery() {
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
-    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div>`;
+    let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="cg-bpbtn isl-scanb" data-islscan title="${esc(t("scan_isl_btn"))}">&#128247; <span class="isl-scanw">${esc(t("scan_isl_btn"))}</span><span class="isl-scann">${esc(t("scan_short"))}</span></button><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.max(3, tiles.length)};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
@@ -25834,6 +25858,7 @@ async function renderIslandGallery() {
       }
       if (e.target.closest("[data-bstoggle]")) { BAR_SHOW_ALL.islands = BAR_SHOW_ALL.islands === false; saveBarHidden(); drawPlan(); return; }
       if (e.target.closest("[data-islpc]")) { islOpenPacks(); return; }
+      if (e.target.closest("[data-islscan]")) { openIslandScan(); return; }
       if (e.target.closest("[data-islinc]")) islIncomeSheet(() => { if (document.getElementById("islandShardPlan")) { drawPlan(); } });
     };
     host.onchange = (e) => {
