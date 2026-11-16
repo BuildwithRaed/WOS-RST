@@ -3422,6 +3422,9 @@ input,select,textarea{
   .isl-pb .isl-bx > b{ font-size:14px; line-height:24px; text-overflow:clip; }
   .isl-pb select{ height:26px; min-width:46px; width:auto; padding:0 4px; font-size:14px; font-weight:800; }
   .isl-osl{ flex:1 1 100%; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#e0b25a; }
+  .isl-ctl{ margin-top:8px; display:flex; align-items:center; gap:10px; padding:6px 10px; border:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(255,255,255,.03); color:var(--frost); }
+  .isl-ctl .tx{ display:flex; flex-direction:column; min-width:0; }
+  .isl-ctl small{ color:var(--muted); }
   .isl-inc{ margin-top:10px; width:100%; display:flex; align-items:center; gap:10px; text-align:start; min-height:48px; padding:7px 8px 7px 10px; border:1px solid rgba(124,196,255,.45); border-radius:12px; background:rgba(47,94,134,.25); color:var(--frost); font:inherit; cursor:pointer; }
   .isl-inc .tx{ flex:1; min-width:0; }
   .isl-inc .tx b{ display:block; font-size:14px; line-height:1.3; }

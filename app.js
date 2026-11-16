@@ -1875,6 +1875,12 @@ const T = {
   isl_inc_day: { en: "+{s} shards a day" },
   isl_inc_ess: { en: "{e} Life Essence a day" },
   isl_inc_edit: { en: "\u270e Edit income" },
+  isl_ct_rate: { en: "+{w} Contract a week \u00b7 +{e} each KOI / SvS" },
+  isl_ct_short: { en: "Free by {d}: {f} \u00b7 still {n} short \u2192 pack" },
+  isl_ct_free_ok: { en: "Free by {d}: {f} \u00b7 enough \u2713" },
+  isl_ct_done: { en: "Done ~{d} with free Contracts only" },
+  isl_ct_never: { en: "No free Contracts set" },
+  isl_ct_years: { en: "Free Contracts alone: ~{y} years \u00b7 the pack is faster" },
   isl_sec_other: { en: "Event & ranked" },
   isl_sec_n: { en: "{n} buildings" },
   isl_sec_other_d: { en: "Mythic shards can't be used \u00b7 copies come from the event / ranking" },
@@ -25234,7 +25240,7 @@ const ISL_CAMP = [null,
   { workers: 1, wood: 6, load: 360 }, { workers: 1, wood: 7, load: 840 }, { workers: 1, wood: 8, load: 1440 }, { workers: 2, wood: 9, load: 2160 },
   { workers: 2, wood: 10, load: 3000 }, { workers: 2, wood: 11, load: 3960 }, { workers: 2, wood: 12, load: 5040 }, { workers: 2, wood: 13, load: 6240 },
   { workers: 2, wood: 14, load: 7560 }, { workers: 2, wood: 15, load: 9000 }];
-const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250, tomePrice: 600, tomeMax: 3, shiningDays: 5, tomeFreeDay: 80, skinTomes: 10000 };
+const ISL_RULES = { perCopy: 10, essence10: 60000, shopWeek: 300, copyLimit: 15, treeCap: 5000, millHour: 40, millCap: 2000, woodPerEssence: 720, allyEach: 200, allyMax: 3, markPrice: 250, tomePrice: 600, tomeMax: 3, shiningDays: 5, tomeFreeDay: 80, skinTomes: 10000, ctWeek: 1, ctEvent: 5 };
 const ISL_COLLECT_H = 12; // income counts collecting every 12 hours
 // calc_state "island_shards" = { targets: { skinId: level }, light: { skinId: { now, to } } (lighthouses), allPick, essence, shards, tree, camp1, camp2, ally, evPer: { skinId: n }, store: { skinId: spare Lv 1 copies }, hidden }
 let ISL_SHARDS = null;
@@ -25472,6 +25478,21 @@ function islIncome(st) {
   return { h, tree, mill, ally, workers: w, total: tree + mill + ally };
 }
 const islEssenceDay = (st) => islIncome(st).total;
+// Free General Accessory Construction Contracts (owner, 16 Nov 2026): ISL_RULES.ctWeek a week, and
+// ISL_RULES.ctEvent from each KOI and SvS (the minimum rewards) whose start falls within the days.
+function islFreeContracts(days) {
+  if (!(days > 0)) return 0;
+  const today = packStartOfToday(), end = new Date(today.getTime() + days * 86400000);
+  let ev = 0;
+  (GAME_EVENTS || []).filter((g) => g.key === "svs" || g.key === "koi").forEach((g) => { try { ev += gameEventStarts(g, new Date(today.getTime() + 86400000), end).length; } catch (e) {} });
+  return Math.floor(days / 7) * (Number(ISL_RULES.ctWeek) || 0) + ev * (Number(ISL_RULES.ctEvent) || 0);
+}
+// Days until free contracts alone cover n (null past 3 years or with no free income).
+function islFreeContractsDays(n) {
+  if (!(n > 0)) return 0;
+  for (let d = 7; d <= 1095; d += 7) if (islFreeContracts(d) >= n) { for (let e = d - 6; e <= d; e++) if (islFreeContracts(e) >= n) return e; return d; }
+  return null;
+}
 // Shards a day the income buys, held to the shop's weekly limit.
 function islShardsDay(st) {
   const lim = Number(ISL_RULES.shopWeek) || 0;
@@ -25767,7 +25788,7 @@ async function renderIslandGallery() {
   const contractHave = () => Number((islBp || {})[ISL_CONTRACT]) || 0;
   let lpSig = null, LP = null;
   const lightPlan = () => {
-    const P = sharedPlan(), list = islands.filter(islIsLight), have = contractHave();
+    const P = sharedPlan(), list = islands.filter(islIsLight), free = P.days != null ? islFreeContracts(P.days) : 0, have = contractHave() + free;
     const sig = `${spSig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
     if (sig === lpSig && LP) return LP;
     lpSig = sig;
@@ -25783,12 +25804,12 @@ async function renderIslandGallery() {
       bp += c.bp; ct += c.ct; ess += c.ess;
       per.set(x.id, { ...c, short: Math.max(0, ct - have) - before });
     });
-    LP = { per, bp, ct, ess, have, short: Math.max(0, ct - have) };
+    LP = { per, bp, ct, ess, have, free, short: Math.max(0, ct - have) };
     return LP;
   };
   const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
   // Contracts to buy (Pack cost): the shortfall, unless Islands is unticked in Budgets.
-  const lightBuy = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? 0 : lightPlan().ct);
+  const lightBuy = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? 0 : Math.max(0, lightPlan().ct - lightPlan().free));
   const CT_ICON = BP_EXTRA_ICONS[ISL_CONTRACT];
   const ctImg = `<img class="isl-im sq" src="${CT_ICON}" alt="" aria-hidden="true">`, bpImg = '<img class="isl-im sq" src="icons/lighthouse-blueprint.png" alt="" aria-hidden="true">';
   const mkCopies = (s) => (usesMarks(s) ? mkAlloc().get(s.id) || 0 : 0);
@@ -25929,17 +25950,34 @@ async function renderIslandGallery() {
     const tmN = sharedPlan().tomes || 0;
     tiles.push(tile("tomes", "icons/glorious-tome.png", t("isl_tm_name"), tomeHave(), Math.max(0, tmN), Math.max(0, tmN - tomeHave())));
     // Lighthouse Blueprints as General Accessory Construction Contracts (owner, 16 Nov 2026).
-    tiles.push(tile("contracts", CT_ICON, t("isl_lh_ct"), LPn.have, LPn.ct, LPn.short));
-    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + Math.max(0, lightBuy() - LPn.have);
+    tiles.push(tile("contracts", CT_ICON, t("isl_lh_ct"), contractHave(), LPn.ct, LPn.short));
+    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + Math.max(0, lightBuy() - contractHave());
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
     let res = `<div class="g1 cg-bp isl-bp${boxesOn ? "" : " bs-folded"}"><div class="bs-foot"><span>&#127890; ${esc(t("bs_from_backpack"))}</span><button type="button" class="linklike" data-bstoggle>${esc(t(boxesOn ? "bs_hide" : "bs_show_all"))}</button></div>${boxesOn ? `<div class="bs-tiles isl-bst" style="--n:${Math.min(4, Math.max(3, tiles.length))};">${tiles.join("")}</div>` : ""}</div>`;
     const inc = islIncome(st), sd = islShardsDay(st);
+    // Free Construction Contracts (owner, 16 Nov 2026): weekly + each KOI / SvS, counted before the pack.
+    let ctLine = "";
+    if (LPn.ct > 0) {
+      const day = (d) => islDay(d).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }), P0 = sharedPlan(), ctImg = `<img class="isl-im" src="${CT_ICON}" alt="" aria-hidden="true">`;
+      const rate = esc(t("isl_ct_rate").replace("{w}", ISL_RULES.ctWeek).replace("{e}", ISL_RULES.ctEvent));
+      const left = Math.max(0, LPn.ct - contractHave());
+      let msg;
+      if (!left) msg = esc(t("isl_needs_ok"));
+      else if (P0.days != null) {
+        const dt = day(P0.days);
+        msg = LPn.short > 0 ? esc(t("isl_ct_short").replace("{d}", dt).replace("{f}", LPn.free.toLocaleString()).replace("{n}", LPn.short.toLocaleString())) : esc(t("isl_ct_free_ok").replace("{d}", dt).replace("{f}", LPn.free.toLocaleString()));
+      } else {
+        const dd = islFreeContractsDays(left);
+        const yr = islFreeContracts(364); msg = dd == null ? esc(yr > 0 ? t("isl_ct_years").replace("{y}", Math.ceil(left / yr)) : t("isl_ct_never")) : esc(t("isl_ct_done").replace("{d}", day(dd)));
+      }
+      ctLine = `<div class="isl-ctl"><span class="isl-ic" aria-hidden="true">${ctImg}</span><span class="tx"><b>${rate}</b><small>${msg}</small></span></div>`;
+    }
     const incLine = `<span class="isl-ic e" aria-hidden="true"><img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></span><span class="tx"><b>${esc(t("isl_inc_day").replace("{s}", islOne(sd)))}</b><small>${esc(t("isl_inc_ess").replace("{e}", Math.round(inc.total).toLocaleString()))}</small></span><span class="ed">${esc(t("isl_inc_edit"))}</span>`;
     host.innerHTML = `<div class="isl-pl"><div class="isl-row isl-tr"><label class="isl-tl"><span>${esc(t("isl_target_all"))}</span><select class="isl-sel keep-w" data-isltall>${same ? "" : `<option value="" selected>${esc(t("isl_mixed"))}</option>`}${opts.join("")}</select></label>${priceBtn}</div>
       ${res}
-      <button type="button" class="isl-inc" data-islinc>${incLine}</button></div>`;
+      <button type="button" class="isl-inc" data-islinc>${incLine}</button>${ctLine}</div>`;
     // The plan's details sit behind an (i) beside the Backpack title (owner, 9 Nov 2026); the income bar stays under the boxes.
     const why = document.createElement("div"); why.className = "isl-why"; why.innerHTML = resultLine();
     infoAttach(host.querySelector(".isl-bp .bs-foot > span:first-child"), why);
@@ -26441,7 +26479,7 @@ async function renderIslandGallery() {
         return { k: String(s.id), n: s.name, img: s.image_url || "", a: String(now), lv };
       }).filter(Boolean)));
     }
-    const ctAll = lightPlan().ct;
+    const ctAll = Math.max(0, lightPlan().ct - lightPlan().free);
     recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}), ...(ctAll ? { [ISL_CONTRACT]: ctAll } : {}) } }]);
     islMarkCard();
     galMenuToTools("island", "islandCatSwitcher");
@@ -31670,7 +31708,7 @@ function gameRules() {
       get: () => ISL_TREE.slice(1).map((v, i) => ({ level: i + 1, perHour: v })),
       set: (rows) => ruleSetArray(ISL_TREE, [0, ...rows.map((r) => Number(r.perHour) || 0)]) },
     { key: "islShop", group: "islands", label: "Island shards shop & income", type: "fields", help: "Mythic Island Shards: shards per building copy, Life Essence for 10 shards, the shop's weekly limit (shards, and building copies per building — each building's price is set on the building); what the Tree of Life and the Timbermill hold (they stop making essence when full), the Timbermill's essence an hour per worker, wood for 1 Life Essence and ally help.",
-      fields: [num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy"), num("tomePrice", "Shining City: Glorious Tomes for 1 copy"), num("tomeMax", "Shining City: copies per building an event"), num("shiningDays", "Shining City Pack event: days"), num("tomeFreeDay", "Shining City: free tomes a day a pack is bought"), num("skinTomes", "Shining City: Glorious Tomes for 1 city skin")],
+      fields: [num("ctWeek", "Free Construction Contracts a week"), num("ctEvent", "Free Construction Contracts each KOI / SvS"), num("perCopy", "Shards for 1 copy"), num("essence10", "Life Essence for 10 shards"), num("shopWeek", "Shop limit a week (shards)"), num("copyLimit", "Shop limit a week per building (copies)"), num("treeCap", "Tree of Life holds"), num("millHour", "Timbermill essence an hour per worker"), num("millCap", "Timbermill holds"), num("woodPerEssence", "Wood for 1 Life Essence"), num("allyEach", "Essence per ally help"), num("allyMax", "Ally helps a day"), num("markPrice", "Mark of Revival: Marks for 1 copy"), num("tomePrice", "Shining City: Glorious Tomes for 1 copy"), num("tomeMax", "Shining City: copies per building an event"), num("shiningDays", "Shining City Pack event: days"), num("tomeFreeDay", "Shining City: free tomes a day a pack is bought"), num("skinTomes", "Shining City: Glorious Tomes for 1 city skin")],
       get: () => ({ ...ISL_RULES }), set: (v) => { Object.keys(ISL_RULES).forEach((k) => { if (Number.isFinite(Number(v[k]))) ISL_RULES[k] = Number(v[k]); }); } },
     { key: "islCamp", group: "islands", label: "Lumber Camp by level", help: "Workers, wood a second per worker and load at each Lumber Camp level. The Timbermill is built when both camps are at the top level; its workers = both camps' workers.",
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "workers", label: "Workers", type: "num" }, { key: "wood", label: "Wood / s per worker", type: "num" }, { key: "load", label: "Load", type: "num" }],
