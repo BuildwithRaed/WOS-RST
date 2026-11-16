@@ -16772,11 +16772,7 @@ function packRowSlots(r) {
     // bought the same day.
     const lk = Array.isArray(r.tables) && r.tables.length ? packLinkFor(r.tables[0]) : null;
     const rowMaxed = !!(lk && lk.rowMax && Object.keys(lk.rowMax).some((k) => Number(lk.rowMax[k]) > 0));
-    let reward = !!(lk && lk.daily);
-    if (lk && !reward) {
-      const tb = (PACK_TABLES_CACHE || []).find((x) => String(x.id) === String(r.tables[0]));
-      try { reward = !!(tb && packShiningBonusOf(tb, lk)); } catch (e) { reward = false; }
-    }
+    const reward = packRowDayReward(r);
     const daily = win > 1 && per > 1 && (reward || (per <= win && !rowMaxed));
     return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).flatMap((off) => {
       const cap = Math.max(0, per - (usedAt[off] || 0));
@@ -16793,6 +16789,56 @@ function packRowSlots(r) {
       const n = Math.min(days, cap);
       return Array.from({ length: n }, (_, k) => ({ off: off + k, cap: k === n - 1 ? cap - (n - 1) : 1 }));
     });
+}
+// A pack with a reward for each day it's bought on: "Daily rewards" in its
+// settings, or a gift on the first buy of each day (Shining City Pack).
+function packRowDayReward(r) {
+  const lk = r && Array.isArray(r.tables) && r.tables.length ? packLinkFor(r.tables[0]) : null;
+  if (!lk) return false;
+  if (lk.daily) return true;
+  const tb = (PACK_TABLES_CACHE || []).find((x) => String(x.id) === String(r.tables[0]));
+  try { return !!(tb && packShiningBonusOf(tb, lk)); } catch (e) { return false; }
+}
+// Daily-reward packs: within each run, one buy a day for the pack as a whole
+// (any row collects that day's reward; cheapest rows first), the rest of that
+// run's buys on its last day. Changes `out` (per row [{ off, count }]) in place.
+function packDayRewardPool(rows, out) {
+  const byTb = new Map();
+  rows.forEach((r, i) => { if (!(r.count > 0) || !packRowDayReward(r)) return; const k = String(r.tables[0]); if (!byTb.has(k)) byTb.set(k, []); byTb.get(k).push(i); });
+  byTb.forEach((idx) => {
+    const offs = [...new Set(idx.flatMap((i) => packRowSlots(rows[i]).map((x) => x.off)))].sort((a, b) => a - b);
+    const runs = [];
+    offs.forEach((o) => { const last = runs[runs.length - 1]; if (last && o === last[last.length - 1] + 1) last.push(o); else runs.push([o]); });
+    const runAt = (off) => runs.findIndex((rn) => off >= rn[0] && off <= rn[rn.length - 1]);
+    const byPrice = idx.slice().sort((a, b) => (Number(rows[a].price) || 0) - (Number(rows[b].price) || 0) || a - b);
+    const per = new Map();
+    idx.forEach((i) => {
+      out[i] = out[i].filter((x) => {
+        const k = x.over ? -1 : runAt(x.off);
+        if (k < 0) return true;
+        if (!per.has(k)) per.set(k, new Map());
+        per.get(k).set(i, (per.get(k).get(i) || 0) + x.count);
+        return false;
+      });
+    });
+    per.forEach((cnt, k) => {
+      const days = runs[k];
+      let total = 0;
+      cnt.forEach((n) => { total += n; });
+      const add = (i, off, n) => { const prev = out[i].find((x) => x.off === off && !x.over); if (prev) prev.count += n; else out[i].push({ off, count: n }); };
+      for (let d = 0; d < days.length && total > 0; d++) {
+        if (d < days.length - 1) {
+          const i = byPrice.find((j) => (cnt.get(j) || 0) > 0);
+          cnt.set(i, cnt.get(i) - 1); total--;
+          add(i, days[d], 1);
+        } else {
+          byPrice.forEach((j) => { const n = cnt.get(j) || 0; if (n > 0) { add(j, days[d], n); cnt.set(j, 0); } });
+          total = 0;
+        }
+      }
+    });
+    idx.forEach((i) => out[i].sort((a, b) => a.off - b.off || (a.over ? 1 : 0) - (b.over ? 1 : 0)));
+  });
 }
 function packPlanSchedule(rows) {
   const slotsFor = packRowSlots;
@@ -16821,6 +16867,7 @@ function packPlanSchedule(rows) {
       if (left > 0) out[i].push({ off: out[i].length ? out[i][out[i].length - 1].off : 0, count: left, over: true });
     });
   });
+  packDayRewardPool(rows, out);
   return out;
 }
 function packGroupsFor(tables, calcKey) {
