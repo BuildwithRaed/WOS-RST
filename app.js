@@ -1817,6 +1817,19 @@ const T = {
   pks_price_off_q: { en: "Price read as {p} — not a price in this pack. Closest step: {s} ({usd})?" },
   pks_price_h: { en: "Price" },
   pks_kept_tag: { en: "saved" },
+  pks_typed: { en: "typed" },
+  pks_change: { en: "change" },
+  pks_mult: { en: "Times the screenshot's amounts" },
+  pks_rows_type: { en: "Tap a × or a number to type your own." },
+  pks_edit_saved: { en: "Edit saved rows too" },
+  pks_typed_reset: { en: "Back to worked-out numbers" },
+  pk_scanned_tip_undo: { en: "Undo in the pack window" },
+  pk_scan_undo: { en: "Undo scan from {date}" },
+  pk_scan_undo_q: { en: "Put this pack back as it was before the scan of {date}? This changes it for everyone." },
+  pk_scan_undone: { en: "Pack put back as before the scan" },
+  pk_scan_reset: { en: "Use the shared amounts again" },
+  pk_scan_reset_q: { en: "Drop your scanned amounts for this pack and use the shared ones again?" },
+  pk_scan_reset_done: { en: "Using the shared amounts again" },
   pks_on: { en: "On" },
   pks_off: { en: "Off" },
   pks_screenshot_tag: { en: "screenshot" },
@@ -11723,7 +11736,16 @@ async function renderPacksPage() {
     try { await ev.detail.done; } finally {
       if (!wasOpen.includes(id0)) { PACKS_OPEN.clear(); wasOpen.forEach((x) => PACKS_OPEN.add(PKB_RENAMED[x] || x)); renderAll(); }
     }
+    // the pack from before this scan, for "↺ Undo scan" in its window later
+    let undoKey = null, undoPrev = null;
+    if (snap) {
+      const u = await packScanUndoLoad();
+      undoKey = String(tb.id); undoPrev = u[undoKey] || null;
+      u[undoKey] = { ...snap, at: packDayKey(packStartOfToday()) };
+      packScanUndoSave();
+    }
     return { undo: async () => {
+      if (undoKey) { const u = await packScanUndoLoad(); if (undoPrev) u[undoKey] = undoPrev; else delete u[undoKey]; packScanUndoSave(); }
       const id = String(tb.id);
       if (isNew) {
         if (!id.startsWith("new-")) await sb(`pack_tables?id=eq.${id}`, { method: "DELETE" });
@@ -12682,7 +12704,62 @@ async function renderPacksPage() {
         const sub = [t("pkb_ev_from"), lk.window > 0 ? t("pkb_ev_lasts").replace("{n}", lk.window) : ""].filter(Boolean).join(" · ");
         bar.insertAdjacentHTML("afterend", `<button type="button" class="pkb-evb" data-pkbgo="${esc(String(leadTb.id))}"><span class="pkb-ic">${pkbIcon(leadTb, packLinkFor(leadTb.id)) || "&#127873;"}</span><span class="pkb-evb-t"><b>&#128279; ${esc(t("pkb_ev_part").replace("{name}", packEventName(leadTb, tables)))}</b><small>${esc(sub)}</small></span><span class="pkb-chev" aria-hidden="true">&#8250;</span></button>`);
       }
-      if (!IS_OWNER) {
+      // Undo a scan: the owner's shared pack back to before its last scan; a visitor's
+      // own copy back to the shared amounts (owner, 16 Nov 2026).
+      if (IS_OWNER && !lk.template && !String(tb.id).startsWith("new-")) {
+        packScanUndoLoad().then((u) => {
+          const e0 = u[String(tb.id)];
+          if (!e0 || !bar.isConnected || bar.querySelector("[data-pkbscanundo]")) return;
+          let lbl = e0.at || "";
+          try { lbl = packParseDay(e0.at).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", day: "numeric", timeZone: "UTC" }); } catch (e) {}
+          const b = document.createElement("button");
+          b.type = "button"; b.className = "btn small ghost pkb-reset"; b.dataset.pkbscanundo = "";
+          b.textContent = `\u21BA ${t("pk_scan_undo").replace("{date}", lbl)}`;
+          b.addEventListener("click", async () => {
+            const e1 = (PACK_SCAN_UNDO || {})[String(tb.id)];
+            if (!e1 || !confirm(t("pk_scan_undo_q").replace("{date}", lbl))) return;
+            b.disabled = true;
+            try {
+              const id = String(tb.id);
+              Object.assign(tb, { title: e1.title, columns: e1.columns, rows: e1.rows, scale_enabled: e1.scale_enabled });
+              await sb(`pack_tables?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ title: e1.title, columns: e1.columns, rows: e1.rows, scale_enabled: e1.scale_enabled !== false, updated_at: new Date().toISOString() }) });
+              // only what a scan changes in the pack's settings goes back: columns' items, price column, daily columns, category, the scanned mark
+              await ensurePackLinks();
+              const was = e1.link || {}, l = PACK_LINKS[id];
+              if (l) {
+                ["priceCol", "cols", "group", "scanned"].forEach((k) => { if (was[k] !== undefined) l[k] = JSON.parse(JSON.stringify(was[k])); else delete l[k]; });
+                if (l.daily && was.daily && Array.isArray(was.daily.cols)) l.daily.cols = was.daily.cols.slice();
+              } else if (e1.link) PACK_LINKS[id] = JSON.parse(JSON.stringify(e1.link));
+              await savePackLinks();
+              delete PACK_SCAN_UNDO[id];
+              packScanUndoSave();
+              PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+              if (typeof budgetInvalidate === "function") budgetInvalidate();
+              toast(t("pk_scan_undone"));
+              renderAll();
+            } catch (err) { b.disabled = false; toast((err && err.message) || "Couldn't undo", true); }
+          });
+          bar.insertBefore(b, bar.querySelector(".pkb-when"));
+          const scn = bar.querySelector(".pk-scn");
+          if (scn && !scn.title.includes(t("pk_scanned_tip_undo"))) scn.title += ` · ${t("pk_scanned_tip_undo")}`;
+        });
+      }
+      if (!IS_OWNER && packScanOn() && packMyScanned()[String(tb.id)]) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "btn small ghost pkb-reset"; b.dataset.pkbscanreset = "";
+        b.textContent = `\u21BA ${t("pk_scan_reset")}`;
+        b.addEventListener("click", () => {
+          if (!confirm(t("pk_scan_reset_q"))) return;
+          const id = String(tb.id), all = packMyEdits(); delete all[id]; packSaveMyEdits(all);
+          try { const sc = packMyScanned(); delete sc[id]; localStorage.setItem("pack_my_scanned", JSON.stringify(sc)); } catch (e) {}
+          tb.rows = (tb._orig || tb.rows).map((r) => ({ ...r, cells: (r.cells || []).slice() }));
+          PACK_TABLES_CACHE = PACK_TABLES_STASH = null;
+          if (typeof budgetInvalidate === "function") budgetInvalidate();
+          toast(t("pk_scan_reset_done"));
+          renderAll();
+        });
+        bar.insertBefore(b, bar.querySelector(".pkb-when"));
+      } else if (!IS_OWNER) {
         const edits = packMyEdits()[String(tb.id)];
         if (edits && Object.keys(edits).length) {
           const b = document.createElement("button");
@@ -14733,7 +14810,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=ecc3dda9be";
+      s.src = "scan.min.js?v=a4bc50e221";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -16647,6 +16724,18 @@ function packMarkScanned(id) {
   }
   try { const all = packMyScanned(); all[String(id)] = day; localStorage.setItem("pack_my_scanned", JSON.stringify(all)); } catch (e) {}
 }
+// Owner: each shared pack as it was before its last scan (calc_state pack_scan_undo =
+// { tableId: { title, columns, rows, scale_enabled, link, at } }, latest only per table),
+// so the pack window can offer "↺ Undo scan" after the scan window is closed.
+let PACK_SCAN_UNDO = null;
+async function packScanUndoLoad() {
+  if (PACK_SCAN_UNDO) return PACK_SCAN_UNDO;
+  let v = null;
+  try { v = await loadCalcState("pack_scan_undo"); } catch (e) { return {}; }
+  PACK_SCAN_UNDO = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  return PACK_SCAN_UNDO;
+}
+function packScanUndoSave() { saveCalcState("pack_scan_undo", PACK_SCAN_UNDO || {}); }
 // "📷 Scanned Nov 16" ("" without a mark); `tag` wraps it (a row's small line, a span).
 function packScannedHtml(id, tag) {
   if (!packScanOn()) return "";
@@ -16655,7 +16744,9 @@ function packScannedHtml(id, tag) {
   let lbl = day;
   try { lbl = packParseDay(day).toLocaleDateString(LANG === "en" ? undefined : LANG, { month: "short", day: "numeric", timeZone: "UTC" }); } catch (e) {}
   const el = tag || "small";
-  return `<${el} class="mpk-used pk-scn" title="${esc(t("pk_scanned_tip").replace("{date}", lbl))}">&#128247; ${esc(t("pk_scanned").replace("{date}", lbl))}</${el}>`;
+  const undo = IS_OWNER ? !!(PACK_SCAN_UNDO && PACK_SCAN_UNDO[String(id)]) : !!packMyScanned()[String(id)];
+  const tip = t("pk_scanned_tip").replace("{date}", lbl) + (undo ? ` · ${t("pk_scanned_tip_undo")}` : "");
+  return `<${el} class="mpk-used pk-scn" title="${esc(tip)}">&#128247; ${esc(t("pk_scanned").replace("{date}", lbl))}</${el}>`;
 }
 // Callers at the same time (Budgets asks for every page at once) share one load.
 let PACK_TABLES_LOADING = null;

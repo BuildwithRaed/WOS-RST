@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "ecc3dda9be";
+window.SCAN_BUILD = "a4bc50e221";
 
 
 // ---- Backpack: read game screenshots ----
@@ -2480,6 +2480,9 @@ function openPackScanMain(opts) {
   const toCheck = (c) => c.groups.reduce((a, g) => a + g.items.filter(unsureIt).length + (priceUnsure(g) ? 1 : 0), needTable(c) ? 1 : 0);
   // rows: [{ usd, gems, items, fromShot, kept, was }] — kept = a worked-out price step the saved
   // pack already has: its saved numbers stay (owner, 16 Nov 2026), shown as "saved".
+  const canEditSaved = (c) => IS_OWNER && !!c.editSaved;
+  // the step multiplier each worked-out ladder price uses (k0 = ×2 / ×4 …, or the one typed)
+  const multOf = (c, p, k0) => (c.mult && c.mult[p] > 0 ? c.mult[p] : k0);
   const rowsOf = (c) => {
     const rows = c.groups.map((g, gi) => {
       const items = {};
@@ -2495,12 +2498,24 @@ function openPackScanMain(opts) {
     if (rows.length === 1 && c.scale && rows[0].usd) {
       const lad = ladderOf(rows[0].usd), m = cmpOf(c);
       const saved = m && Array.isArray(m.saved) ? m.saved : [];
-      if (lad) lad.slice(1).forEach(([p, k]) => {
+      // A step's own multiplier (c.mult, typed on its ladder box) and typed amounts
+      // (c.cells[price][item | "__gems"]) win over the worked-out ones (owner, 16 Nov 2026:
+      // rare packs don't go ×2 / ×4 / ×10 / ×20). A saved row stays as saved unless the
+      // owner unlocked it ("Edit saved rows too") and typed in it.
+      if (lad) lad.slice(1).forEach(([p, k0]) => {
         const was = saved.find((s) => s.usd != null && Math.abs(s.usd - p) < 0.005);
-        if (was) { rows.push({ usd: p, gems: was.gems, items: { ...was.items }, kept: true }); return; }
-        const items = {};
-        Object.entries(rows[0].items).forEach(([n, v]) => { items[n] = Math.round(v * k); });
-        rows.push({ usd: p, gems: typeof mpGems === "function" ? mpGems(p) : Math.round(rows[0].gems * k), items, fromShot: false });
+        const ov = (c.cells && c.cells[p]) || {}, km = c.mult && c.mult[p] > 0 ? c.mult[p] : null;
+        const edited = Object.keys(ov).length > 0;
+        if (was && !(canEditSaved(c) && edited)) { rows.push({ usd: p, gems: was.gems, items: { ...was.items }, kept: true, ri: was.ri }); return; }
+        let items = {}, gems;
+        if (was) { items = { ...was.items }; gems = was.gems; } else {
+          const k = km || k0;
+          Object.entries(rows[0].items).forEach(([n, v]) => { items[n] = Math.round(v * k); });
+          gems = typeof mpGems === "function" ? mpGems(p) : Math.round(rows[0].gems * k);
+        }
+        Object.entries(ov).forEach(([n, v]) => { if (n === "__gems") gems = v; else items[n] = v; });
+        Object.keys(items).forEach((n) => { if (!(items[n] > 0)) delete items[n]; });
+        rows.push({ usd: p, gems, items, fromShot: false, typed: new Set(Object.keys(ov)), savedEdit: !!was, saved: was || null, ri: was ? was.ri : null });
       });
     }
     return rows;
@@ -2673,10 +2688,28 @@ function openPackScanMain(opts) {
   }).join("");
   // One row per price: price, every item (picture + amount), Gems.
   // hi = { row index: { cells: Set of item names that differ, gems: true } }: the rows this card is matched to.
-  const rowsTableHtml = (rows, savedTag, hi) => {
+  // ed = { c, ci }: the ladder's table, where worked-out amounts can be typed (✎, like the
+  // compare table's); a saved row only once the owner unlocked it (✎ change).
+  const rowsTableHtml = (rows, savedTag, hi, ed) => {
     const cols = colsOf(rows);
+    const cellHtml = (r, n, v) => {
+      const c = ed && ed.c, open = c && !r.fromShot && r.usd && (!r.kept || (canEditSaved(c) && c.unlock && c.unlock[r.usd]));
+      const txt = v ? (n === "__gems" ? Math.round(v).toLocaleString() : esc(amt(v))) : "—";
+      if (!open) return txt;
+      const id = `${ed.ci}|${r.usd}|${n}`, typed = r.typed && r.typed.has(n);
+      if (c.cellEdit === id) return `<input type="text" inputmode="numeric" class="pks-in pks-cin" data-pkscellv="${esc(id)}" value="${v ? Math.round(v) : ""}" aria-label="${esc(t("pks_amount"))}" autocomplete="off" />`;
+      return `<button type="button" class="pks-cellb${typed ? " typed" : ""}" data-pkscell="${esc(id)}" aria-label="${esc(t("pks_edit"))} ${esc(n === "__gems" ? "Gems" : disp(n))}"><b>${txt}</b> <i aria-hidden="true">&#9998;</i>${typed ? `<small>${esc(t("pks_typed"))}</small>` : ""}</button>`;
+    };
+    const tagOf = (r) => {
+      if (!savedTag) return "";
+      const c = ed && ed.c;
+      if (r.savedEdit) return ` <small>${esc(t("pks_kept_tag"))} &#9998;</small>`;
+      if (!r.kept) return "";
+      const lock = c && canEditSaved(c) && !(c.unlock && c.unlock[r.usd]) ? ` <button type="button" class="pks-pen pks-unl" data-pksunlock="${ed.ci}|${r.usd}">&#9998; ${esc(t("pks_change"))}</button>` : "";
+      return ` <small>${esc(t("pks_kept_tag"))}</small>${lock}`;
+    };
     return `<div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>${esc(t("pks_price_h"))}</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${gemsIc()}</th></tr></thead>
-      <tbody>${rows.map((r, ri) => { const h = hi && hi[ri]; const dc = (on) => (h && on ? ` class="chg"` : ""); return `<tr class="${h ? "pick" : r.fromShot ? "shot" : r.kept ? "kept" : ""}"${h ? ` aria-current="true"` : ""}><td><b>${r.usd ? "$" + r.usd : "?"}</b>${savedTag && r.kept ? ` <small>${esc(t("pks_kept_tag"))}</small>` : ""}</td>${cols.map((n) => `<td${dc(h && h.cells.has(n))}>${r.items[n] ? esc(amt(r.items[n])) : "—"}</td>`).join("")}<td${dc(h && h.gems)}>${r.gems ? Math.round(r.gems).toLocaleString() : "—"}</td></tr>`; }).join("")}</tbody></table></div>`;
+      <tbody>${rows.map((r, ri) => { const h = hi && hi[ri]; const dc = (on) => (h && on ? ` class="chg"` : ""); return `<tr class="${h ? "pick" : r.fromShot ? "shot" : r.kept ? "kept" : r.savedEdit ? "kept sed" : ""}"${h ? ` aria-current="true"` : ""}><td><b>${r.usd ? "$" + r.usd : "?"}</b>${tagOf(r)}</td>${cols.map((n) => `<td${dc(h && h.cells.has(n))}>${cellHtml(r, n, r.items[n])}</td>`).join("")}<td${dc(h && h.gems)}>${cellHtml(r, "__gems", r.gems)}</td></tr>`; }).join("")}</tbody></table></div>`;
   };
   // The price steps: one line with the switch; tapped, the 5 prices and the rows it fills.
   const ladderHtml = (c, ci) => {
@@ -2684,13 +2717,29 @@ function openPackScanMain(opts) {
     const usd = c.groups[0].price && c.groups[0].price.usd, k = SCAN_PK_LADDER.findIndex(([p]) => usd && Math.abs(p - usd) < 0.005);
     if (k < 0) return "";
     const last = SCAN_PK_LADDER[SCAN_PK_LADDER.length - 1];
-    const line = `<div class="pks-ll"><button type="button" class="pks-llb" data-pkslad="${ci}" aria-expanded="${c.ladOpen ? "true" : "false"}">$${usd} &times;1 &rarr; $${last[0]} &times;${Math.round(last[1] / SCAN_PK_LADDER[k][1])} <small>${c.ladOpen ? "&#9652;" : "&#9662;"}</small></button>
+    const mx = (p, mm) => Math.round(multOf(c, p, mm / SCAN_PK_LADDER[k][1]) * 100) / 100;
+    const line = `<div class="pks-ll"><button type="button" class="pks-llb" data-pkslad="${ci}" aria-expanded="${c.ladOpen ? "true" : "false"}">$${usd} &times;1 &rarr; $${last[0]} &times;${mx(last[0], last[1])} <small>${c.ladOpen ? "&#9652;" : "&#9662;"}</small></button>
       <label class="pks-sw">${esc(t(c.scale ? "pks_on" : "pks_off"))} <input type="checkbox" class="bset-sw" data-pksscale="${ci}" ${c.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></label></div>`;
     if (!c.ladOpen) return line;
     const rows = rowsOf(c);
-    return `${line}<div class="pks-lad">${SCAN_PK_LADDER.map(([p, mm], i) => `<button type="button" data-pksstep="${ci}|${p}" class="${i === k ? "on" : i < k || !c.scale ? "pre" : ""}" aria-pressed="${i === k ? "true" : "false"}"><b>$${p}</b><small>&times;${Math.round(mm / SCAN_PK_LADDER[k][1] * 100) / 100 || ""}</small>${i === k ? `<small>${esc(t("pks_screenshot_tag"))}</small>` : ""}</button>`).join("")}</div>
-      <div class="pks-lab">${esc(t("pks_rows"))}</div>${rowsTableHtml(rows, true)}
-      <div class="meta pks-pv-n">${esc(t(rows.some((r) => r.kept) ? "pks_rows_kept" : c.scale && rows.length > 1 ? "pks_rows_note" : "pks_rows_note1"))}</div>`;
+    // Each box: its price (tap = the screenshot is this price) and, on a worked-out
+    // step, its multiplier to tap and type (×2.5); a saved step keeps its saved numbers.
+    const box = ([p, mm], i) => {
+      const r = rows.find((x) => x.usd != null && Math.abs(x.usd - p) < 0.005);
+      const canMul = i > k && c.scale && r && !r.kept && !r.savedEdit;
+      const typed = canMul && c.mult && c.mult[p] > 0, id = `${ci}|${p}`;
+      const mul = !canMul ? `<small>&times;${i < k ? Math.round(mm / SCAN_PK_LADDER[k][1] * 100) / 100 || "" : mx(p, mm)}</small>`
+        : c.mulEdit === id ? `<input type="text" inputmode="decimal" class="pks-in pks-min" data-pksmulv="${id}" value="${mx(p, mm)}" aria-label="${esc(t("pks_mult"))} $${p}" autocomplete="off" />`
+        : `<button type="button" class="pks-lbm${typed ? " typed" : ""}" data-pksmul="${id}" aria-label="${esc(t("pks_mult"))} $${p}: ${esc(t("pks_edit"))}">&times;${mx(p, mm)} <i aria-hidden="true">&#9998;</i></button>`;
+      return `<div class="pks-lb ${i === k ? "on" : i < k || !c.scale ? "pre" : ""}"><button type="button" class="pks-lbp" data-pksstep="${id}" aria-pressed="${i === k ? "true" : "false"}"><b>$${p}</b></button>${i === k ? `<small>&times;1</small><small class="pks-sct">${esc(t("pks_screenshot_tag"))}</small>` : mul}${typed ? `<small class="pks-tyt">${esc(t("pks_typed"))}</small>` : ""}</div>`;
+    };
+    const hasSaved = rows.some((r) => r.kept || r.savedEdit);
+    const anyTyped = rows.some((r) => r.typed && r.typed.size) || Object.keys(c.mult || {}).length > 0;
+    return `${line}<div class="pks-lad">${SCAN_PK_LADDER.map(box).join("")}</div>
+      <div class="pks-lab">${esc(t("pks_rows"))}</div>${rowsTableHtml(rows, true, null, { c, ci })}
+      <div class="meta pks-pv-n">${esc(t(hasSaved ? "pks_rows_kept" : c.scale && rows.length > 1 ? "pks_rows_note" : "pks_rows_note1"))}${c.scale && rows.length > 1 ? ` ${esc(t("pks_rows_type"))}` : ""}</div>
+      ${IS_OWNER && hasSaved ? `<label class="pks-sw pks-esv"><span>${esc(t("pks_edit_saved"))}</span> <input type="checkbox" class="bset-sw" data-pkseditsaved="${ci}" ${c.editSaved ? "checked" : ""} /></label>` : ""}
+      ${anyTyped ? `<div class="pks-ask end"><button type="button" class="cg-bpbtn" data-pkstypedreset="${ci}">&#8634; ${esc(t("pks_typed_reset"))}</button></div>` : ""}`;
   };
   const savedHtml = (c) => {
     const m = cmpOf(c);
@@ -2715,7 +2764,7 @@ function openPackScanMain(opts) {
   };
   const matchTag = (c) => {
     const m = cmpOf(c);
-    return m ? `<span class="pks-ontag">&#10003; ${esc(t(m.myPack ? "pks_tag_mine" : "pks_tag_page"))}</span>` : "";
+    return m ? `<small class="pks-ont"> · ${esc(t(m.myPack ? "pks_tag_mine" : "pks_tag_page"))}</small>` : "";
   };
   const cardHtml = (c, ci) => {
     const [sk, sl] = status(c), done = c.status === "saved" || c.status === "skipped";
@@ -2929,6 +2978,40 @@ function openPackScanMain(opts) {
     };
     on("data-pkspsel", (v, el) => { const [ci, gi] = v.split("|").map(Number); setUsd(ci, gi, Number(el.value)); });
     on("data-pkspuse", (v) => { const [ci, gi] = v.split("|").map(Number), el = modal.querySelector(`[data-pkspsel="${v}"]`); if (el) setUsd(ci, gi, Number(el.value)); });
+    // ladder multipliers and typed amounts: typed on a tap, kept on Enter / leaving the box
+    const commit = (el, fn) => {
+      let done = false;
+      // drawn a moment later, so a tap on another box or button still lands
+      const go = (now) => { if (done) return; done = true; fn(el.value); if (now === true) draw(); else setTimeout(draw, 0); };
+      el.addEventListener("change", go);
+      el.addEventListener("blur", go);
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); go(true); } else if (e.key === "Escape") { e.stopPropagation(); done = true; const cc = st.cards[Number(el.getAttribute(el.hasAttribute("data-pksmulv") ? "data-pksmulv" : "data-pkscellv").split("|")[0])]; cc.mulEdit = cc.cellEdit = null; draw(); } });
+    };
+    const focusIn = (sel) => { const el = modal.querySelector(sel); if (el) { try { el.focus({ preventScroll: true }); el.select(); } catch (e) {} } };
+    on("data-pksmul", (v) => { const c = st.cards[Number(v.split("|")[0])]; c.cellEdit = null; c.mulEdit = v; draw(); focusIn(`[data-pksmulv="${window.CSS.escape(v)}"]`); });
+    modal.querySelectorAll("[data-pksmulv]").forEach((el) => commit(el, (val) => {
+      const [ci, p] = el.dataset.pksmulv.split("|"), c = st.cards[Number(ci)], x = num(val);
+      c.mult = c.mult || {};
+      if (x > 0) c.mult[Number(p)] = x; else delete c.mult[Number(p)];
+      c.mulEdit = null;
+    }));
+    on("data-pkscell", (v) => { const c = st.cards[Number(v.split("|")[0])]; c.mulEdit = null; c.cellEdit = v; draw(); focusIn(`[data-pkscellv="${window.CSS.escape(v)}"]`); });
+    modal.querySelectorAll("[data-pkscellv]").forEach((el) => commit(el, (val) => {
+      const [ci, p, ...rest] = el.dataset.pkscellv.split("|"), n = rest.join("|"), c = st.cards[Number(ci)], x = num(val), pk = Number(p);
+      c.cells = c.cells || {};
+      const row = (c.cells[pk] = c.cells[pk] || {});
+      if (x != null && String(val).trim() !== "") row[n] = Math.round(x); else delete row[n];
+      if (!Object.keys(row).length) delete c.cells[pk];
+      c.cellEdit = null;
+    }));
+    on("data-pksunlock", (v) => { const [ci, p] = v.split("|"), c = st.cards[Number(ci)]; c.unlock = c.unlock || {}; c.unlock[Number(p)] = true; draw(); });
+    on("data-pkseditsaved", (v, el) => {
+      const c = st.cards[Number(v)];
+      c.editSaved = el.checked;
+      if (!el.checked) { c.unlock = {}; const m = cmpOf(c), saved = m && Array.isArray(m.saved) ? m.saved : []; Object.keys(c.cells || {}).forEach((p) => { if (saved.some((s) => s.usd != null && Math.abs(s.usd - Number(p)) < 0.005)) delete c.cells[p]; }); }
+      draw();
+    });
+    on("data-pkstypedreset", (v) => { const c = st.cards[Number(v)]; c.mult = {}; c.cells = {}; c.unlock = {}; c.mulEdit = c.cellEdit = null; draw(); });
     on("data-pkslad", (v) => { const c = st.cards[Number(v)]; c.ladOpen = !c.ladOpen; draw(); });
     on("data-pksscale", (v, el) => { const c = st.cards[Number(v)]; c.scale = el.checked; c.scaleTouched = true; draw(); });
     on("data-pksstep", (v) => {
