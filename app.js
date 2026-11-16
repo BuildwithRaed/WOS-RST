@@ -1708,6 +1708,14 @@ const T = {
   scan_tab_speed: { en: "Speedup" },
   scan_tab_gear: { en: "Gear" },
   scan_tab_lab: { en: "Research Lab" },
+  scan_tab_isl: { en: "My Island" },
+  scan_tab_islstore: { en: "Island Storehouse" },
+  scan_isl: { en: "Island screens" },
+  scan_isl_hint: { en: "My Island reads your Life Essence. Island Storehouse: Ingredients = Mythic Island Shards and Construction Contracts; Decoration = spare copies of Mythic buildings (orange tiles)." },
+  scan_isl_store_h: { en: "Island Storehouse · building copies" },
+  scan_isl_store_now: { en: "In Storehouse · now {n}" },
+  scan_learn_buildings: { en: "Island buildings" },
+  scan_learn_islitems: { en: "Island items" },
   scan_lab: { en: "Research Lab screen" },
   scan_lab_hint: { en: "Reads Weekly Super Refinements (and the Refined FC / Fire Crystal at the top)." },
   scan_lab_title: { en: "Research Lab" },
@@ -13798,9 +13806,10 @@ function backpackItems() {
   return groups;
 }
 const BP_HERO_CURRENCIES = ["Marks of Valor", "Mystery Points"];
-// Islands: Life Essence, Mythic Island Shards and the Mark of Revival Shop's currency, always in the Backpack.
-const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
-const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
+// Islands: Life Essence, Mythic Island Shards, the Mark of Revival Shop's currency and the Storehouse's
+// General Accessory Construction Contracts (scrolls for the Lighthouse), always in the Backpack.
+const BP_ISLAND_ITEMS = ["Life Essence", "Mythic Island Shards", "General Accessory Construction Contract", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest"];
+const BP_EXTRA_ICONS = { "Life Essence": "icons/life-essence.png", "Mythic Island Shards": "icons/island-shard.png", "General Accessory Construction Contract": "icons/construction-contract.svg", "Mark of Revival": "icons/mark-of-revival.png", "Glorious Tome": "icons/glorious-tome.png", "Lucky Glorious Tome Chest": "icons/lucky-glorious-tome-chest.png", "Marks of Valor": "icons/hall-marks.png", "Mystery Points": "icons/mystery-pts.png", "Widget Chest": "icons/hero-widgets.png", "Mythic General Hero Lucky Box": "icons/mythic-hero-lucky-box.png" };
 function bpIcon(item) {
   if (item.icon) return item.icon;
   const name = item.name;
@@ -13897,7 +13906,7 @@ async function renderInventory() {
     // The Lv badge and the shield already show the level and "protected", so
     // the name under the picture leaves them out and fits in 2 lines
     // ("Custom Resource Chest"); the full name stays in the title.
-    const tileName = !it.hero && /Lv\.\d/.test(it.name) ? label.replace(/\s*Lv\.\d+/, "").replace(/\s*\(protected\)$/i, "") : label;
+    const tileName = BP_ISLAND_ITEMS.includes(it.name) ? materialDisplayName(itemShortName(it.name)) : !it.hero && /Lv\.\d/.test(it.name) ? label.replace(/\s*Lv\.\d+/, "").replace(/\s*\(protected\)$/i, "") : label;
     const chance = CHANCE_CHESTS.includes(it.name) && v > 0;
     return `<button type="button" class="bp-tile${chance ? " bp-chance" : ""}${it.hero ? ` bp-hero bp-${esc(it.rarity.toLowerCase())}` : ""}" data-bpitem="${esc(it.name)}" title="${esc(it.hero ? `${it.hero} — ${t(it.widget ? "bp_widgets" : "backpack_hero_shards")}` : label)}">
       ${it.hero && it.face ? `<span class="bp-heroic"><img class="bp-item" src="${esc(ic)}" alt="" loading="lazy" /><img class="bp-face" src="${esc(it.face)}" alt="" loading="lazy" /></span>` : ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<span class="bp-ph">${esc(label[0] || "?")}</span>`}
@@ -14373,7 +14382,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=1f20cd0ec0";
+      s.src = "scan.min.js?v=7cb2b87b76";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -23797,6 +23806,7 @@ function shortAmount(v) {
   return a >= 1e9 ? `${cut(n / 1e9, 2)}B` : a >= 1e6 ? `${cut(n / 1e6, 2)}M` : a >= 1e4 ? `${cut(n / 1e3, 1)}K` : Math.round(n).toLocaleString();
 }
 const MATERIAL_NAME_SHORT = {
+  "General Accessory Construction Contract": "Construction Contract",
   "Hardened Alloy": "Alloy",
   "Polishing Solution": "Polish",
   "Design Plan": "Design",

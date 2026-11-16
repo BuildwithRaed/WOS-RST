@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "1f20cd0ec0";
+window.SCAN_BUILD = "7cb2b87b76";
 
 
 // ---- Backpack: read game screenshots ----
@@ -249,6 +249,7 @@ function scanMatchItem(feat, refs) {
     if (!best.has(name) || d < best.get(name)) best.set(name, d);
   });
   SCAN_LEARNED.forEach((e) => {
+    if (e.kind === "island") return; // Island Storehouse tiles (scanIslMatch)
     let sum = 0;
     for (let i = 0; i < n; i++) sum += Math.abs(feat[i] - e.g[i]);
     const d = sum / n;
@@ -655,6 +656,183 @@ async function scanLabShot(worker, src) {
   return { kind: "lab", items, lab: m ? Number(m[1]) : null };
 }
 
+// ---- Islands: My Island (Life Essence) and the Island Storehouse ----
+// Ingredients tab items known from the start (picture grids, scanIslTileFeature,
+// from the owner's Storehouse screenshot). Mythic buildings are taught on the
+// site by the owner (site_config scan_learned entries with kind "island").
+const SCAN_ISL_BUILTIN = [
+  ["Mythic Island Shards", "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"],
+  ["General Accessory Construction Contract", "sWQqsWUrsWUssWYssmYssmctsmcts2cus2gus2gus2gvs2gvtGkvtGkvtGkwtGkwtGkvtGkvmVsoTTopV1haaGpocnNqeXlxbmFOllgnsWYssWUrsGUrsGUrsmYssmYssmcts2cts2gutGkvtGkvtWowtWoxtWoxtmsxtmsytmsztmsytmsytmsztmszsWkyRzUoWVlfZ2pugoaBl5uToqWbgIR8VT4nsmcusmctsmYssWYssmcts2gutGkvtGkvtWowtWoytmsytmwzt2w0t2w1t2w1t202t202t242t202t202t203iFUsloh12cept6mPgYJ6qa6km6CXcXVxUD8ssWcvs2gus2gusmcttGkvtGkwtWoxtmsytmwzt2w1tm01t202t243t244uG84uG84uXA5uHA5uHA5uHA5iFQri3tk2cmq4tSx6Nm1zLuZf3xzfYJ+YmdnUDsns2oytWoxtGkwtGgvtWoxtmsyt2w0tm01t242t243uG84uXA5uXE5uXI6unI6u3M7u3M7tnE7qWo3l18yeWpU1sWn39Cs5Nay5NWx38+qq5h8XWJgW15jU0Q3smo0tmwztmsytWoxt2wztm01t243uG84uXA5unE6unM7u3M9vHU9vHU9vHY/vXc+ll8yaVA4c2FKdWNLzrmV28qk4dKr4NGq3Mql1sKdxa6MYFhNUVFTUzgitm44t242tm00tmszt242uG44uXA5uXI6unM8u3Q9vHY/vXdAvXhAvXlBvnlDnmY5RTcsdmVbjHhntJ6AvKJ7z7eL2cWc2MOb0ruTxK2HnohsMSwlPzAgp2c3uXE6uHA4t243t202uG84unE6u3M8vHU9vXc+vnhBvnlCvnpDvntFv3xGv31Ib0oqUERCWEhEXkxEd2NWrZR1tJZuwaZ6x62EvaR+lX1gWkQxb1k/hHFTd0wou3U+unM7uXE6uG84unI6u3Q9vXY+vXhAvnlCvntEv3xHwH5IwX9Jwn9KwYBLYkMoeWpdsJp8rJRxe2VPZllRoJmHmJWHl4dwf2ZLX0kzX0o0cFw/Y0svj1sxvXhAvHY+u3Q9unI6vHU9vXc/vnlCvntEv3xHwH5JwYBKw4FLxIJMwoJNfVUzkoFl2MSd18GVw6l9kXhXYWJlfoF5f4B3X2FehHJagW5QbkorlGI4r3JCvHpFvnpEvXlBvXc/u3U9vXhAvnpDvnxGwH5IwYBKw4FMxINNxYRPwoNQimI+nI503Mul4dGo38yi0riKh29Ub3V8ZWple354ZmtoRjwujV85vH5LwoFMw4FLwn9KwH5IvntFvnlCvXhAvnpDv3xHwX9Kw4FLxINNxoVPxoZRvIBQdFg6t6iM3s2p5NSs5dat3s6j0rmPe2RKTEpKY2dneX56c3RuSzgniF05x4dTxoZRxYRPxINNwoFLwX9Jv3xGvnpDv31HwX9Kw4JMxYROxoZQt35NYUkzW0s7vKmN28qm4dKt5dWu4NCl2cWcxKyFg2pQMiUeU1FOWlNLcFlKcFdDUz4qrXdKyIlVx4dSxYZQxINOw4FMwX9Jvn1GwYBKw4JMxYRPxoZSxIZTb1A4TVFZYGd1q6KN1cOe4NGu38+p28mi1L6XqpJxWkMxYEw5OCkgW0QylXlbTDosdl1KclU7yItYyYpWyIlUxoZRxYROw4JMwX9Jw4JMxoVPx4dTyIlVkWRAVV1qdn6Hg4eFc3t9vrinz7uY2sih1b+ZvaKAZk05bldCXkwzdFQ3Tzwrs5ZzTD0yZlhPXFtWeVQ0zI1ZyoxXyIlUx4dSxYROw4JMxIVPx4hSyYpVy4xYonJLVFRaZnmUmKChu76ygoeEpZ6NybOPwauGdFxDYEk0gXFYjGhExZFiUD8xj4p7XFlPPkFBQTsypnZMzpBdzI5by4xXyYpVx4dRxYRPx4hTyYtWy41ZzY9cn3JMMzM2OUNVUl5ylZuZmp6WXWJifnJkdV1IVj8to45xZVE4yZVmz5ppT0Y/XGFmUFJTWEEppHdOzpRg0JRgz5JezY9cy41YyYpVxodR"]];
+const scanIslRefs = () => SCAN_ISL_BUILTIN.map(([n, f]) => ({ n, g: scanB64ToFeat(f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3)
+  .concat(SCAN_LEARNED.filter((e) => e.kind === "island"));
+// Key of a reference: a building lesson by its building ("isl:<id>"), else the item name.
+const scanIslKey = (e) => (e.id != null && e.n !== SCAN_SKIP ? `isl:${e.id}` : e.n);
+function scanIslMatch(feat) {
+  const n = feat.length, best = new Map();
+  scanIslRefs().forEach((e) => {
+    let sum = 0;
+    for (let i = 0; i < n; i++) sum += Math.abs(feat[i] - e.g[i]);
+    const d = sum / n, k = scanIslKey(e);
+    if (!best.has(k) || d < best.get(k).d) best.set(k, { d, e });
+  });
+  const [first, second] = [...best.values()].sort((a, b) => a.d - b.d);
+  return first ? { key: scanIslKey(first.e), e: first.e, dist: first.d, next: second ? second.d : Infinity } : { key: null, dist: Infinity, next: Infinity };
+}
+// The Storehouse's tiles: wide blocks (about 4 : 3) in a grid of 3 on the dark blue panel.
+function scanFindWideTiles(src) {
+  const s = Math.min(1, 480 / src.width), w = Math.round(src.width * s), h = Math.round(src.height * s);
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const r = d[i * 4], gr = d[i * 4 + 1], b = d[i * 4 + 2], lum = (r + gr + b) / 3;
+    mask[i] = (b - r > 50 && lum < 110) || lum < 45 ? 0 : 1;
+  }
+  const boxes = scanBlobs(mask, w, h).filter((b) => b.w >= w * 0.15 && b.w <= w * 0.4 && b.w / b.h > 1.25 && b.w / b.h < 1.6 && b.n > b.w * b.h * 0.85);
+  if (!boxes.length) return [];
+  const sizes = boxes.map((b) => b.w).sort((a, b) => a - b), mid = sizes[Math.floor(sizes.length / 2)];
+  const tiles = boxes.filter((b) => Math.abs(b.w - mid) < mid * 0.08 && Math.abs(b.h - mid / 1.37) < mid * 0.1)
+    .map((b) => ({ x: b.x / s, y: b.y / s, w: b.w / s, h: b.h / s }));
+  tiles.sort((a, b) => (Math.abs(a.y - b.y) < a.h / 2 ? a.x - b.x : a.y - b.y));
+  return tiles;
+}
+// A square of the tile (left / centre / right) as a 140 x 140 picture's pixels.
+function scanIslSquare(src, box, where) {
+  const c = scanCanvas(140, 140), g = c.getContext("2d", { willReadFrequently: true });
+  const sx = box.x + (where === "right" ? box.w - box.h : (box.w - box.h) / 2);
+  g.drawImage(src, sx, box.y, box.h, box.h, 0, 0, 140, 140);
+  return { c, td: g.getImageData(0, 0, 140, 140).data };
+}
+// The tile's colour (left edge, under the "Lv. 1"): orange = Mythic, green / grey = decorations.
+function scanIslColour(src, box) {
+  const c = scanCanvas(40, 40), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, box.x + box.w * 0.02, box.y + box.h * 0.45, box.w * 0.05, box.h * 0.2, 0, 0, 40, 40);
+  const d = g.getImageData(0, 0, 40, 40).data;
+  let r = 0, gr = 0, b = 0;
+  for (let i = 0; i < d.length; i += 4) { r += d[i]; gr += d[i + 1]; b += d[i + 2]; }
+  r /= 1600; gr /= 1600; b /= 1600;
+  return r > gr + 40 && gr > b + 25 ? "orange" : gr > r + 40 && gr > b + 40 ? "green" : "grey";
+}
+// The count at a Storehouse tile's bottom right sits on a dark box; everything around
+// that box (snow on the building's picture) is painted over, so the Backpack tiles'
+// number reader (scanTileAmount) can read it.
+function scanIslAmountTd(src, box) {
+  const { c, td } = scanIslSquare(src, box, "right");
+  const lum = (x, y) => { const i = (y * 140 + x) * 4; return (td[i] + td[i + 1] + td[i + 2]) / 3; };
+  const white = (x, y) => { const i = (y * 140 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2]; return (r + g + b) / 3 > 175 && Math.max(r, g, b) - Math.min(r, g, b) < 55; };
+  const on = (x, y) => lum(x, y) < 140 || white(x, y);
+  const colOn = (x) => { let n = 0; for (let y = 100; y <= 128; y++) if (on(x, y)) n++; return n >= 29 * 0.7; };
+  // The box = the widest run of such columns on the right (a thin dark line at the
+  // tile's edge is not it).
+  let left = 137, right = 137;
+  for (let x = 137, run = -1; x >= 20; x--) {
+    if (colOn(x)) { if (run < 0) run = x; if (run - x > right - left) { left = x; right = run; } }
+    else { if (run >= 0 && x < 70) break; run = -1; }
+  }
+  const rowOn = (y) => { let n = 0; for (let x = left; x <= right; x++) if (on(x, y)) n++; return n >= (right - left + 1) * 0.7; };
+  let top = 114, bot = 114;
+  while (top > 80 && rowOn(top - 1)) top--;
+  while (bot < 139 && rowOn(bot + 1)) bot++;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.fillStyle = "#2a1e14";
+  g.fillRect(0, 0, 140, top); g.fillRect(0, bot + 1, 140, 140 - bot - 1);
+  g.fillRect(0, top, left, bot - top + 1); g.fillRect(right + 1, top, 140 - right - 1, bot - top + 1);
+  return g.getImageData(0, 0, 140, 140).data;
+}
+const scanIslTileFeature = (src, box) => scanTileFeature(scanIslSquare(src, box, "centre").td);
+// Island Storehouse (Decoration / Accessory / Ingredients tabs). Orange tiles: Mythic
+// buildings (copies kept in the Storehouse) and the Ingredients items; green and grey
+// ones (trees, roads, lamps, ponds) are left out without a word.
+async function scanIslStoreShot(worker, src) {
+  const tiles = scanFindWideTiles(src);
+  if (!tiles.length) return null;
+  // The title / tabs above the tiles say it is the Storehouse.
+  const y1 = Math.max(10, Math.round(tiles[0].y)), hc = scanCanvas(src.width, y1);
+  hc.getContext("2d").drawImage(src, 0, 0, src.width, y1, 0, 0, src.width, y1);
+  const head = (await scanRead(worker, hc, { tessedit_pageseg_mode: "6" })).text;
+  if (!/storehouse|decoration|ingredient|accessory/i.test(head)) return null;
+  const items = [], isl = [], unk = [];
+  let unknown = 0;
+  for (const box of tiles) {
+    if (scanIslColour(src, box) !== "orange") continue;
+    const feat = scanIslTileFeature(src, box), m = scanIslMatch(feat), td = scanIslAmountTd(src, box);
+    // Every tile is orange, so different buildings can be only ~20 apart: a closer
+    // match than the Backpack's (the same picture reads about 0–8 apart).
+    if (m.key === SCAN_SKIP && m.dist <= 14) { unknown++; continue; }
+    if (m.dist > 14) {
+      unknown++;
+      const sq = scanIslSquare(src, box, "centre").c, pic = scanCanvas(96, 96);
+      pic.getContext("2d").drawImage(sq, 0, 0, 96, 96);
+      unk.push({ td: new Uint8ClampedArray(td), feat, isl: true, rarity: null, after: null, gap: null, img: pic.toDataURL("image/jpeg", 0.85) });
+      continue;
+    }
+    const amount = await scanTileAmount(worker, td);
+    const sure = m.dist <= 9 && m.next > m.dist * 1.4 && amount.sure;
+    if (/^isl:/.test(m.key)) isl.push({ id: String(m.e.id), name: m.e.n, value: amount.value, sure });
+    else items.push({ name: m.key, value: amount.value, sure });
+  }
+  return { kind: "islstore", items, isl, unknown, unk };
+}
+// My Island: the Life Essence amount beside the green leaf at the top right
+// (the gold coins on the left are not read).
+async function scanIslLifeShot(worker, src) {
+  const W = src.width, H = src.height, k = Math.min(1, 400 / W), w = Math.round(W * k), h = Math.max(8, Math.round(H * 0.07 * k));
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, W, H * 0.07, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = Math.round(w * 0.55); x < w; x++) {
+    const i = (y * w + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+    mask[y * w + x] = gr > 140 && gr > r + 80 && gr > b + 40 ? 1 : 0;
+  }
+  const blobs = scanBlobs(mask, w, h).filter((b) => b.n >= 6).sort((a, b) => a.x - b.x);
+  const leaf = blobs.filter((b) => b.h >= h * 0.25 && b.n >= 40).sort((a, b) => b.n - a.n)[0];
+  if (!leaf) return null;
+  const plus = blobs.find((b) => b.x > leaf.x + leaf.w + w * 0.05);
+  // The title (top left) says "My Island" (the "I" often reads as "l").
+  const tc = scanCanvas(Math.round(W * 0.55), Math.round(H * 0.05));
+  tc.getContext("2d").drawImage(src, 0, 0, tc.width, tc.height, 0, 0, tc.width, tc.height);
+  if (!/s\s?[il1|]and/i.test((await scanRead(worker, tc, { tessedit_pageseg_mode: "7" })).text)) return null; // "Island" (read as "lsland" too)
+  // The white number between the leaf and the green "+".
+  const x0 = Math.round((leaf.x + leaf.w) / k + W * 0.005), x1 = Math.round(plus ? plus.x / k - W * 0.005 : W * 0.97);
+  const y0 = Math.max(0, Math.round(leaf.y / k - H * 0.003)), y1 = Math.min(H, Math.round((leaf.y + leaf.h) / k + H * 0.003));
+  if (x1 - x0 < 10 || y1 - y0 < 6) return null;
+  const nc = scanCanvas(x1 - x0, y1 - y0), ng = nc.getContext("2d", { willReadFrequently: true });
+  ng.drawImage(src, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+  const nd = ng.getImageData(0, 0, nc.width, nc.height).data, pad = 16, out = scanCanvas(nc.width + pad * 2, nc.height + pad * 2), og = out.getContext("2d");
+  og.fillStyle = "#fff"; og.fillRect(0, 0, out.width, out.height); og.fillStyle = "#000";
+  for (let y = 0; y < nc.height; y++) for (let x = 0; x < nc.width; x++) {
+    const i = (y * nc.width + x) * 4, r = nd[i], gr = nd[i + 1], b = nd[i + 2];
+    if ((r + gr + b) / 3 > 185 && Math.max(r, gr, b) - Math.min(r, gr, b) < 45) og.fillRect(pad + x, pad + y, 1, 1);
+  }
+  const r = await scanRead(worker, out, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,.KM" });
+  const txt = r.text.replace(/\s/g, ""), unit = /[KM]$/.exec(txt);
+  const num = Number(txt.replace(/[KM]$/, "").replace(/,/g, ""));
+  const value = Number.isFinite(num) && txt && /\d/.test(txt) ? Math.round(num * (unit ? (unit[0] === "K" ? 1e3 : 1e6) : 1)) : null;
+  return { kind: "island", items: [{ name: "Life Essence", value, sure: false }] };
+}
+// Mythic island buildings the Islands page plans (same list and request as that page),
+// by category in the Islands order.
+async function scanIslBuildings() {
+  const cats = await islandCatRows(), catList = cats.length ? cats.map((c) => c.category) : ["Island"];
+  const rows = await keptRows("skins",
+    `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
+  );
+  const list = rows.filter((s) => islCatTracked(s.category) && !ISL_SKIP_NAMES.includes(s.name) && islIsMythic(s));
+  return { cats: catList.filter((c) => list.some((s) => s.category === c)), list };
+}
+// Storehouse copies read or typed on the check screen: { skinId: copies } replaces those
+// buildings' "In Storehouse" (calc_state island_shards.store, the Islands page's box).
+async function scanIslStoreSave(set) {
+  const saved = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
+  const st = { ...islDefault(), ...(saved && typeof saved === "object" ? saved : {}) };
+  const store = { ...(st.store && typeof st.store === "object" ? st.store : {}) };
+  Object.entries(set).forEach(([id, v]) => { if (Number(v) > 0) store[id] = Math.floor(Number(v)); else delete store[id]; });
+  st.store = store;
+  if (ISL_SHARDS) ISL_SHARDS.store = store;
+  delete st.essence; delete st.shards;
+  saveCalcState("island_shards", st);
+}
+
 async function scanShot(worker, file, marks, refs) {
   const src = await createImageBitmap(file);
   const lab = await scanLabShot(worker, src);
@@ -669,6 +847,9 @@ async function scanShot(worker, file, marks, refs) {
     const items = await scanSpeedTiles(worker, src, tiles, marks);
     if (items.length) return { kind: "speedup", items };
   }
+  // Island screens: the Island Storehouse (tiles about 4 : 3, never square) and My Island.
+  const isl = (await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src));
+  if (isl) return isl;
   // Text reads best on the light Summary panel alone, about 720 px wide.
   const p = scanLightPanel(src), s = 720 / p.w, c = scanCanvas(720, Math.round(p.h * s));
   c.getContext("2d").drawImage(src, p.x, p.y, p.w, p.h, 0, 0, c.width, c.height);
@@ -713,6 +894,10 @@ function openBackpackScanMain(groups, bp, done, more) {
   const gearSeqs = []; // the Gear screenshots read so far
   const shotSpans = []; // per item screenshot: { tab: { min, max } } in game order
   const shotSeqs = []; // per item screenshot: item names tile by tile (null = not read)
+  // Island screens: Storehouse building copies by building id ({ name, value, sure }),
+  // the Mythic buildings (for names, pictures and the teach picker) and the saved Storehouse.
+  const islRes = new Map();
+  const isl = { life: false, store: false, bld: null, now: {} };
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -723,9 +908,9 @@ function openBackpackScanMain(groups, bp, done, more) {
     modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
       <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
       <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
-      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"]].map(([ex, head, hint], i) => `
+      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"], ["", "scan_isl", "scan_isl_hint"]].map(([ex, head, hint], i) => `
       <div class="scan-step"><b>${i + 1}</b><div><div>${esc(t(head))}</div><div class="meta">${esc(t(hint))}</div></div>
-        <button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button></div>`).join("")}
+        ${ex ? `<button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button>` : ""}</div>`).join("")}
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn" type="button" data-scanpick>${esc(t("scan_choose"))}</button>
@@ -791,6 +976,23 @@ function openBackpackScanMain(groups, bp, done, more) {
         if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
       }
       if (shot.kind === "speedup") sawSpeed = true;
+      if (shot.kind === "island") isl.life = true;
+      if (shot.kind === "islstore") {
+        isl.store = true;
+        if (!isl.bld) {
+          try { isl.bld = await scanIslBuildings(); } catch (e) { isl.bld = { cats: [], list: [] }; }
+          const st = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
+          isl.now = (st && st.store) || {};
+          if (!live()) return;
+        }
+        (shot.isl || []).forEach((b) => {
+          const s = isl.bld.list.find((x) => String(x.id) === b.id) || isl.bld.list.find((x) => x.name === b.name);
+          if (!s) return; // a building no longer in the Islands list
+          const id = String(s.id), had = islRes.get(id);
+          if (!had || b.value !== null) islRes.set(id, { name: s.name, img: s.image_url || "", value: b.value, sure: b.sure && (!had || had.value === b.value) });
+        });
+        if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = "island"; unknownList.push(u); });
+      }
       if (shot.kind === "lab") {
         lab.seen = true;
         if (shot.lab !== null) lab.count = shot.lab;
@@ -875,7 +1077,14 @@ function openBackpackScanMain(groups, bp, done, more) {
       const tab = scanItemTab(n), k = scanTabOrder(tab).indexOf(n);
       return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
-    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab"].filter(Boolean).map((k) => t(k));
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab", isl.life && "scan_tab_isl", isl.store && "scan_tab_islstore"].filter(Boolean).map((k) => t(k));
+    // Island Storehouse: spare copies of each Mythic building read (Islands "In Storehouse").
+    const islHtml = !islRes.size ? "" : `<div class="scan-lab-h">&#127965; ${esc(t("scan_isl_store_h"))}</div>${[...islRes.entries()].map(([id, r]) => `<label class="scan-row${r.sure ? "" : " unsure"}">
+        <input type="checkbox" data-scanisltick="${esc(id)}" checked />
+        ${r.img ? `<img src="${esc(r.img)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(dataName(r.name))}</b><span class="meta">${esc(t("scan_isl_store_now").replace("{n}", (Math.floor(Number(isl.now[id]) || 0)).toLocaleString()))}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
+        <input type="text" inputmode="numeric" data-scanisl="${esc(id)}" value="${r.value === null ? "" : r.value.toLocaleString("en-US")}" />
+      </label>`).join("")}`;
     // Research Lab: this week's count from the game, with the plan beside it.
     const labSt = () => { const s = lab.saved || {}; return RFC_LAB_STATE || { top: s.top, attempts: s.attempts, budget: Number(s.budget) || 0, mode: s.mode === "budget" ? "budget" : "schedule", labOpen: s.labOpen, game: s.game, weekPick: s.weekPick }; };
     let labWk = null;
@@ -905,20 +1114,25 @@ function openBackpackScanMain(groups, bp, done, more) {
     // a hero's shards / widgets); Scan remembers it for everyone.
     const heroList = (more && more.heroes) || [];
     const labelFor = (n) => {
+      if (/^isl:/.test(n)) { const b = ((isl.bld && isl.bld.list) || []).find((x) => `isl:${x.id}` === n); return b ? `${dataName(b.name)} — ${t("scan_tab_islstore")}` : n; }
       if (known.has(n)) return materialDisplayName(known.get(n).name);
       const m = / (Shards|Widgets)$/.exec(n), hero = n.replace(/ (Shards|Widgets)$/, "");
       return m ? `${dataName(hero)} — ${t(m[1] === "Shards" ? "backpack_hero_shards" : "scan_learn_widgets")}` : n;
     };
     const learnModes = ["shards", "widgets", "items"];
+    const islCells = (u) => u.mode === "islitems"
+      ? BP_ISLAND_ITEMS.filter((n) => known.has(n)).map((n) => [n, bpIcon(known.get(n)), materialDisplayName(itemShortName(n))])
+      : ((isl.bld && isl.bld.cats) || []).flatMap((c) => [[null, null, dataName(c)]].concat(isl.bld.list.filter((b) => b.category === c).map((b) => [`isl:${b.id}`, b.image_url || "", dataName(b.name)])));
     const learnPicker = (u, i) => {
       const r = u.mode === "widgets" ? "Legendary" : u.all ? null : u.rarity;
-      const cells = u.mode === "items"
+      const modes = u.isl ? ["buildings", "islitems"] : learnModes;
+      const cells = u.isl ? islCells(u) : u.mode === "items"
         ? [...known.values()].filter((it) => !/speedup/i.test(it.name) && scanItemTab(it.name) === u.tab && !SCAN_SUMMARY_ROWS.some(([, n]) => n === it.name)).map((it) => [it.name, bpIcon(it), materialDisplayName(itemShortName(it.name))])
         : heroList.filter((h) => !r || h.rarity === r).sort((a, b) => (Number(b.generation) || 0) - (Number(a.generation) || 0) || String(a.name).localeCompare(String(b.name)))
           .map((h) => [`${h.name} ${u.mode === "widgets" ? "Widgets" : "Shards"}`, h.image_url || "", dataName(h.name)]);
       return `<div class="scan-lpick">
-        ${learnModes.length > 1 ? `<div class="scan-lchips">${learnModes.map((m) => `<button type="button" class="scan-lchip${u.mode === m ? " on" : ""}" data-lmode="${i}|${m}">${esc(t("scan_learn_" + m))}</button>`).join("")}</div>` : ""}
-        <div class="scan-lgrid">${cells.map(([n, ic, lab]) => `<button type="button" class="scan-lg${u.pick === n ? " on" : ""}" data-lpick="${i}|${esc(n)}" title="${esc(lab)}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(lab).charAt(0))}</i>`}<span>${esc(lab)}</span></button>`).join("") || `<div class="meta">—</div>`}</div>
+        ${modes.length > 1 ? `<div class="scan-lchips">${modes.map((m) => `<button type="button" class="scan-lchip${u.mode === m ? " on" : ""}" data-lmode="${i}|${m}">${esc(t("scan_learn_" + m))}</button>`).join("")}</div>` : ""}
+        <div class="scan-lgrid">${cells.map(([n, ic, lab]) => n === null ? `<div class="scan-lgh">${esc(lab)}</div>` : `<button type="button" class="scan-lg${u.pick === n ? " on" : ""}" data-lpick="${i}|${esc(n)}" title="${esc(lab)}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(lab).charAt(0))}</i>`}<span>${esc(lab)}</span></button>`).join("") || `<div class="meta">—</div>`}</div>
         ${u.mode === "shards" && u.rarity && !u.all ? `<button type="button" class="linklike" data-lall="${i}" style="font-size:11.5px;">${esc(t("scan_learn_all"))}</button>` : ""}
       </div>`;
     };
@@ -945,11 +1159,12 @@ function openBackpackScanMain(groups, bp, done, more) {
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
-      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
+      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml || islHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
       ${labHtml}
       ${labHtml && rows ? `<div class="scan-lab-h">${esc(t("scan_lab_items"))}</div>` : ""}
       <div style="margin-top:6px;">${rows}</div>
+      ${islHtml}
       ${gearHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
       ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
@@ -957,7 +1172,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
-        ${names.length || zeroRows || unknownList.length || gearLow || labHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+        ${names.length || zeroRows || unknownList.length || gearLow || labHtml || islHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
@@ -968,7 +1183,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       const sk = ev.target.closest("[data-lskip]");
       if (sk) { const u = unknownList[Number(sk.dataset.lskip)]; u.skip = !u.skip; u.open = false; redrawLearn(); return; }
       if (ev.target.closest("[data-lskipall]")) { unknownList.forEach((u) => { if (!u.pick) { u.skip = true; u.open = false; } }); redrawLearn(); return; }
-      if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.rarity ? "shards" : "items"; redrawLearn(); return; }
+      if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.isl ? "buildings" : u.rarity ? "shards" : "items"; redrawLearn(); return; }
       if (md) { const [i, m] = md.dataset.lmode.split("|"); unknownList[Number(i)].mode = m; redrawLearn(); return; }
       if (al) { unknownList[Number(al.dataset.lall)].all = true; redrawLearn(); return; }
       if (!pk) return;
@@ -987,6 +1202,10 @@ function openBackpackScanMain(groups, bp, done, more) {
     const labIn = modal.querySelector("[data-scanlab]");
     if (labIn) labIn.addEventListener("change", () => { const v = labIn.value.replace(/\D/g, ""); if (v) lab.count = Number(v); });
     // Keep typed fixes if more screenshots are added.
+    modal.querySelectorAll("[data-scanisl]").forEach((el) => el.addEventListener("change", () => {
+      const r = islRes.get(el.dataset.scanisl), v = el.value.replace(/\D/g, "");
+      r.value = v ? Number(v) : null; r.sure = true;
+    }));
     modal.querySelectorAll("[data-scanval]").forEach((el) => el.addEventListener("change", () => {
       const r = results.get(el.dataset.scanval), v = el.value.replace(/\D/g, "");
       r.value = v ? Number(v) : null; r.sure = true;
@@ -1010,11 +1229,25 @@ function openBackpackScanMain(groups, bp, done, more) {
       // Not seen in the screenshots and left ticked: opened or used, now 0.
       modal.querySelectorAll("[data-scanzero]").forEach((tick) => { if (tick.checked) delete bp[tick.dataset.scanzero]; });
       // Taught tiles: their amounts, and Scan remembers their pictures.
+      // Island Storehouse copies (ticked rows, then taught buildings) replace those buildings' "In Storehouse".
+      const islSet = {};
+      modal.querySelectorAll("[data-scanisltick]").forEach((tick) => {
+        if (!tick.checked) return;
+        const v = modal.querySelector(`[data-scanisl="${window.CSS.escape(tick.dataset.scanisltick)}"]`).value.replace(/\D/g, "");
+        if (v !== "") islSet[tick.dataset.scanisltick] = Number(v);
+      });
       const taught = unknownList.filter((u) => u.pick && !u.skip);
-      taught.forEach((u) => { if (Number(u.amount) > 0) { bp[u.pick] = Number(u.amount); if (!known.has(u.pick) && !added.includes(u.pick)) added.push(u.pick); } });
+      const bldOf = (u) => (/^isl:/.test(u.pick) ? ((isl.bld && isl.bld.list) || []).find((b) => `isl:${b.id}` === u.pick) : null);
+      taught.forEach((u) => {
+        const b = bldOf(u);
+        if (b) { if (u.amount != null) islSet[String(b.id)] = Number(u.amount); return; }
+        if (Number(u.amount) > 0) { bp[u.pick] = Number(u.amount); if (!known.has(u.pick) && !added.includes(u.pick)) added.push(u.pick); }
+      });
       const skippedTiles = unknownList.filter((u) => u.skip);
-      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }))
-        .concat(skippedTiles.map((u) => ({ n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
+      const lesson = (u) => { const b = bldOf(u); return b ? { n: b.name, kind: "island", id: b.id, f: scanFeatToB64(u.feat), tab: "island" } : u.isl ? { n: u.pick, kind: "island", f: scanFeatToB64(u.feat), tab: "island" } : { n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }; };
+      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map(lesson)
+        .concat(skippedTiles.map((u) => (u.isl ? { n: SCAN_SKIP, kind: "island", f: scanFeatToB64(u.feat), tab: "island" } : { n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
+      if (Object.keys(islSet).length) scanIslStoreSave(islSet);
       saveCalcState("backpack", bp);
       // Research Lab: only the game's weekly count, for this week (same key as the Lab page).
       const labTick = modal.querySelector("[data-scanlabtick]"), labV = labIn ? labIn.value.replace(/\D/g, "") : "";
