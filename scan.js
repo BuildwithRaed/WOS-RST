@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "13e308b535";
+window.SCAN_BUILD = "f9e319eb10";
 
 
 // ---- Backpack: read game screenshots ----
@@ -970,6 +970,25 @@ function openBackpackScanMain(groups, bp, done, more) {
   const run = {};
   modal._scanRun = run;
   const live = () => modal._scanRun === run && modal.style.display !== "none";
+  // Esc = its Cancel / Close button (the same click). Not while reading (no
+  // Cancel there) and not when the check screen has changes (typed, ticked or
+  // a tile taught / skipped): those stay, like the site's other pop-ups.
+  modal._scanEsc = (e) => {
+    const btn = modal.querySelector("[data-scanclose]"), box = modal.querySelector(".modal-box");
+    if (!btn || !box || a11yDirty(box) || unknownList.some((u) => u.pick || u.skip)) return;
+    e.preventDefault();
+    btn.click();
+  };
+  if (!window.SCAN_ESC_WIRED) {
+    window.SCAN_ESC_WIRED = true;
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || e.defaultPrevented || e.isComposing) return;
+      const m = document.getElementById("bpScanModal");
+      // An open example picture is closed first by the site's own Esc.
+      if (!m || m.style.display === "none" || !m._scanEsc || m.querySelector(".scan-ex-view")) return;
+      m._scanEsc(e);
+    });
+  }
   const results = new Map(); // name -> { value, sure }
   const notes = new Set();
   const skipped = new Set();
