@@ -3351,6 +3351,9 @@ input,select,textarea{
   .isl-tbg{ position:absolute; top:3px; inset-inline-end:3px; z-index:3; font-size:11px; font-weight:800; line-height:1; padding:3px 4px; border-radius:6px; background:rgba(5,8,15,.82); border:1px solid rgba(124,196,255,.55); color:#7cc4ff; white-space:nowrap; pointer-events:none; }
   .isl-tsh{ margin-top:4px; font-size:11px; letter-spacing:-.2px; max-width:100%; font-weight:800; color:#e0b25a; line-height:1.25; text-align:center; white-space:normal; overflow-wrap:anywhere; }
   .isl-tsh i{ font-style:normal; }
+  .isl-tsh .isl-free{ display:block; margin-top:1px; color:#7cc4ff; font-weight:700; }
+  .isl-freebox{ margin-top:8px; padding:7px 10px; border-radius:10px; border:1px solid rgba(80,200,120,.35); background:rgba(80,200,120,.08); color:var(--frost); font-size:12.5px; line-height:1.45; }
+  .isl-freebox b{ color:#7ee2a0; margin-inline-end:4px; }
   .isl-im{ height:1.15em; width:auto; vertical-align:-.2em; }
   .isl-ic .isl-im{ height:22px; vertical-align:0; }
   @media (max-width:380px){ .isl-tsh .isl-im{ height:1em; } .isl-tsh{ letter-spacing:-.4px; } }

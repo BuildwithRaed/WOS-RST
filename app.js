@@ -1875,6 +1875,11 @@ const T = {
   isl_inc_day: { en: "+{s} shards a day" },
   isl_inc_ess: { en: "{e} Life Essence a day" },
   isl_inc_edit: { en: "\u270e Edit income" },
+  isl_free_card: { en: "free ~{d}" },
+  isl_free_now: { en: "now" },
+  isl_free_never: { en: "20+ yr" },
+  isl_free_title: { en: "Without spending:" },
+  isl_free_lv: { en: "Lv {n} ~{d}" },
   isl_ct_rate: { en: "+{w} Contract a week \u00b7 +{e} each KOI / SvS" },
   isl_ct_short: { en: "Free by {d}: {f} \u00b7 still {n} short \u2192 pack" },
   isl_ct_free_ok: { en: "Free by {d}: {f} \u00b7 enough \u2713" },
@@ -25488,9 +25493,9 @@ function islFreeContracts(days) {
   return Math.floor(days / 7) * (Number(ISL_RULES.ctWeek) || 0) + ev * (Number(ISL_RULES.ctEvent) || 0);
 }
 // Days until free contracts alone cover n (null past 3 years or with no free income).
-function islFreeContractsDays(n) {
+function islFreeContractsDays(n, max = 1095) {
   if (!(n > 0)) return 0;
-  for (let d = 7; d <= 1095; d += 7) if (islFreeContracts(d) >= n) { for (let e = d - 6; e <= d; e++) if (islFreeContracts(e) >= n) return e; return d; }
+  for (let d = 7; d <= max; d += 7) if (islFreeContracts(d) >= n) { for (let e = d - 6; e <= d; e++) if (islFreeContracts(e) >= n) return e; return d; }
   return null;
 }
 // Shards a day the income buys, held to the shop's weekly limit.
@@ -25808,6 +25813,26 @@ async function renderIslandGallery() {
     return LP;
   };
   const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
+  // Option C (owner, 16 Nov 2026): when each lighthouse level comes with free Contracts only
+  // (no spending). Levels are done cheapest first over all lighthouses, paid from the Backpack's
+  // Contracts, then from the weekly / KOI / SvS ones. { id: [{ lv, day | null }] } (null = over 20 years).
+  let lfSig = null, LF = null;
+  const lightFree = () => {
+    const sig = `${lightPlan() && lpSig}|${contractHave()}|${ISL_RULES.ctWeek}|${ISL_RULES.ctEvent}`;
+    if (sig === lfSig && LF) return LF;
+    lfSig = sig;
+    const steps = [];
+    islands.filter(islIsLight).forEach((x) => { for (let L = lvOf(x) + 1; L <= tgtOf(x); L++) steps.push({ id: x.id, lv: L, ct: islLightCost(L - 1, L).ct }); });
+    steps.sort((a, b) => a.ct - b.ct || a.lv - b.lv);
+    const out = new Map(), have = contractHave();
+    let cum = 0;
+    steps.forEach((st) => { cum += st.ct; const d = islFreeContractsDays(cum - have, 7300); if (!out.has(st.id)) out.set(st.id, []); out.get(st.id).push({ lv: st.lv, day: d }); });
+    out.forEach((a) => a.sort((p, q) => p.lv - q.lv));
+    LF = out;
+    return LF;
+  };
+  const freeMon = (d) => (d == null ? t("isl_free_never") : islDay(d).toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }));
+  const freeLast = (s) => { const a = lightFree().get(s.id); return a && a.length ? a[a.length - 1].day : 0; };
   // Contracts to buy (Pack cost): the shortfall, unless Islands is unticked in Budgets.
   const lightBuy = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? 0 : Math.max(0, lightPlan().ct - lightPlan().free));
   const CT_ICON = BP_EXTRA_ICONS[ISL_CONTRACT];
@@ -25870,7 +25895,8 @@ async function renderIslandGallery() {
       if (lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
       const c = lightOf(s), ct = c.ct ? `<span class="nw">${bidiNum(c.bp.toLocaleString())} ${bpImg}</span> <span class="nw">${bidiNum(c.ct.toLocaleString())} ${ctImg}</span>` : "";
       const tip = esc(t("isl_lh_tip").replace("{b}", c.bp.toLocaleString()).replace("{c}", c.ct.toLocaleString()));
-      const line = `<span class="isl-tsh lh two" title="${tip}">${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}</span>`;
+      const fl = freeLast(s), free = `<span class="isl-free">${esc(t("isl_free_card").replace("{d}", fl ? freeMon(fl) : t("isl_free_now")))}</span>`;
+      const line = `<span class="isl-tsh lh two" title="${tip}">${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}${c.ct ? free : ""}</span>`;
       return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
     }
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
@@ -26262,7 +26288,7 @@ async function renderIslandGallery() {
         pop.querySelector('[data-iptg="-1"]').disabled = tg <= lo;
         pop.querySelector('[data-iptg="1"]').disabled = tg >= mx;
         pop.querySelector('[data-iptg="max"]').disabled = tg >= mx;
-        pop.querySelector("[data-popneed]").innerHTML = tg <= lv ? "" : `<div class="isl-nbox">${c.bp ? esc(t("isl_lh_need")).replace("{b}", `<b class="gd">${bidiNum(c.bp.toLocaleString())} ${bpImg}</b>`).replace("{c}", `<b class="gd">${bidiNum(c.ct.toLocaleString())} ${ctImg}</b>`) : ""}${c.bp ? ` &middot; ${c.short ? `<span class="bs-sw">${esc(t("isl_lh_short").replace("{n}", c.short.toLocaleString()))}</span>` : esc(t("isl_needs_ok"))}` : ""}${c.ess ? `${c.bp ? "<br>" : ""}${esc(t("isl_lh_ess").replace("{e}", c.ess.toLocaleString()))}` : ""}<br><small class="isl-lhn">${esc(t("isl_lh_note"))}</small></div>`;
+        pop.querySelector("[data-popneed]").innerHTML = tg <= lv ? "" : `<div class="isl-nbox">${c.bp ? esc(t("isl_lh_need")).replace("{b}", `<b class="gd">${bidiNum(c.bp.toLocaleString())} ${bpImg}</b>`).replace("{c}", `<b class="gd">${bidiNum(c.ct.toLocaleString())} ${ctImg}</b>`) : ""}${c.bp ? ` &middot; ${c.short ? `<span class="bs-sw">${esc(t("isl_lh_short").replace("{n}", c.short.toLocaleString()))}</span>` : esc(t("isl_needs_ok"))}` : ""}${c.ess ? `${c.bp ? "<br>" : ""}${esc(t("isl_lh_ess").replace("{e}", c.ess.toLocaleString()))}` : ""}<br><small class="isl-lhn">${esc(t("isl_lh_note"))}</small></div>${c.ct ? (() => { const a = (lightFree().get(s.id) || []); return a.length ? `<div class="isl-freebox"><b>${esc(t("isl_free_title"))}</b> ${a.map((x, i) => `<span class="nw">${esc(t("isl_free_lv").replace("{n}", x.lv).replace("{d}", x.day ? freeMon(x.day) : t("isl_free_now")))}${i === a.length - 1 ? " &#10003;" : ""}</span>`).join(" &middot; ")}</div>` : ""; })() : ""}`;
         const bits = tileBits(s);
         const bg = tileEl.querySelector(".isl-tbg"), ln = tileEl.querySelector(".isl-tsh");
         if (bg) bg.outerHTML = bits.badge || "<span class=\"isl-tbg\" hidden></span>";
