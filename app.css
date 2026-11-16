@@ -3464,7 +3464,9 @@ input,select,textarea{
   .isl-head .isl-scant{ margin-inline-start:auto; flex:none; align-self:center; height:36px; min-height:36px; padding:0 11px; border-radius:10px; }
   .isl-scanb .isl-scann{ display:none; }
   @media (max-width:385px){ .isl-scanb .isl-scanw{ display:none; } .isl-scanb .isl-scann{ display:inline; } }
-  @media (min-width:901px){ .isl-bp .bs-tiles.isl-bst{ max-width:340px; } }
+  @media (min-width:901px){ .isl-bp .bs-tiles.isl-bst{ max-width:calc(var(--n, 4) * 96px); } }
+  @media (max-width:900px){ .isl-bp .bs-tiles.isl-bst{ grid-template-columns:repeat(var(--nm, 3), minmax(0, 1fr)); } }
+  .isl-bp .bs-tiles.isl-bst.bs-slide > *{ flex:0 0 calc((100% - 3 * 6px) / 3.6); }
   .isl-g1[hidden]{ display:none; }
   .isl-g1{ margin-bottom:10px; }
   div.isl-done{ margin-top:8px; font-size:12.5px; line-height:18px; min-height:18px; color:var(--muted); }
