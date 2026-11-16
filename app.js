@@ -8553,21 +8553,30 @@ function packActiveNoteText(tableId) {
 // A purchase of a pack where you choose what you get (Benefit Card, Mix &
 // Match, Myriad Bazaar...) remembers that choice: its label, price and items
 // are saved on the purchase line (choice: { label, price, gives }).
-function purchaseGives(p, tb) { return p.choice && p.choice.gives ? p.choice.gives : packPurchaseGives(tb, p.row, p.from); }
-function purchasePrice(p, tb) { return p.choice && Number.isFinite(Number(p.choice.price)) ? Number(p.choice.price) : packPurchasePrice(tb, p.row, p.from); }
+function purchaseGives(p, tb) { return p.choice && p.choice.gives ? p.choice.gives : packPurchaseGives(tb, p.row, p.from, p.extra); }
+function purchasePrice(p, tb) { return p.choice && Number.isFinite(Number(p.choice.price)) ? Number(p.choice.price) : packPurchasePrice(tb, p.row, p.from, p.extra); }
 // `from`: a buy-in-order pack bought from that step on (the rest of a ladder
 // already partly bought); missing = from the first step.
-function packPurchaseGives(tb, row, from) {
+// `extra`: a ladder whose last step can be bought more times (row Max on
+// its last row): how many more times that step was bought.
+function packPurchaseExtra(link, offers, row, extra) {
+  const k = Math.floor(Number(extra) || 0), last = offers[offers.length - 1];
+  return link.sequential && k > 0 && last && last.row === row ? { k, last } : null;
+}
+function packPurchaseGives(tb, row, from, extra) {
   const link = packLinkFor(tb.id);
   const offers = packOffersFor(tb, true);
   const out = {};
   const lo = Number(from) || 0;
   offers.filter((o) => (link.sequential ? o.row >= lo && o.row <= row : o.row === row)).forEach((o) => Object.entries(o.gives).forEach(([n, v]) => { out[n] = (out[n] || 0) + v; }));
+  const x = packPurchaseExtra(link, offers, row, extra);
+  if (x) Object.entries(x.last.gives).forEach(([n, v]) => { out[n] = (out[n] || 0) + x.k * v; });
   return out;
 }
-function packPurchasePrice(tb, row, from) {
-  const link = packLinkFor(tb.id), lo = Number(from) || 0;
-  return packOffersFor(tb, true).filter((o) => (link.sequential ? o.row >= lo && o.row <= row : o.row === row)).reduce((a, o) => a + o.price, 0);
+function packPurchasePrice(tb, row, from, extra) {
+  const link = packLinkFor(tb.id), lo = Number(from) || 0, offers = packOffersFor(tb, true);
+  const x = packPurchaseExtra(link, offers, row, extra);
+  return offers.filter((o) => (link.sequential ? o.row >= lo && o.row <= row : o.row === row)).reduce((a, o) => a + o.price, 0) + (x ? x.k * x.last.price : 0);
 }
 // Planned packs (today or later) count as coming items; a pack bought within
 // its current reset (or a one-time pack) uses up that buy. Bought items are
@@ -8649,6 +8658,7 @@ function packCurrentCycleStart(reset, resetDay) {
   }
   let since;
   if (anchor) { const first = Math.round((anchor - today) / 86400000); since = first > 0 ? (reset - (first % reset)) % reset : (-first) % reset; }
+  else if (reset === 1) since = 0;
   else if (reset === 7 || reset === 14) since = (packStartOfToday().getUTCDay() + 6) % 7;
   else return null;
   return new Date(today.getTime() - since * 86400000);
@@ -8661,12 +8671,21 @@ function packPurchaseUse(groups) {
   const out = groups.map((g) => {
     let add = 0, now = 0;
     const usedAt = { ...(g.usedAt || {}) };
-    // Buy-in-order packs: the highest step bought in each run of the pack.
+    const repeating = typeof g.reset === "number" && g.reset > 0 && g.reset < PACK_ONE_TIME_DAYS;
+    // Buy-in-order packs: how far each run of the pack was bought: the highest
+    // step, and how many times its last step was bought ("Last step ×N" packs).
+    // Option ladders (Myriad Bazaar, Dawn of Wisdom, ordered Mix & Match,
+    // column-option packs: each step from one of the options) the same way.
     const top = {}, optTop = {};
-    const noteTop = (k, p) => {
-      // Option ladders (Myriad Bazaar: each step from one of the set's tables): the steps bought in that run.
-      if (g.ladder && g.optionPack && !g.choice) { optTop[k] = Math.max(optTop[k] == null ? -1 : optTop[k], Number(p.row) || 0); return; }
-      if (g.ladder && !g.optionPack && !g.choice && !p.choice && (g.tables || []).length === 1) top[k] = Math.max(top[k] == null ? -1 : top[k], Number(p.row) || 0);
+    const isOpt = !!(g.ladder && g.optionPack && !g.choice);
+    const isPlain = !!(g.ladder && !g.optionPack && !g.choice && (g.tables || []).length === 1);
+    const lastRow = (isOpt || isPlain) && g.offers.length ? Math.max(...g.offers.map((o) => Number(o.row) || 0)) : null;
+    const noteTop = (k, p, n) => {
+      if (!isOpt && !(isPlain && !p.choice)) return;
+      const m = isOpt ? optTop : top, row = Number(p.row) || 0;
+      const e = m[k] || (m[k] = { row: -1, units: 0 });
+      e.row = Math.max(e.row, row);
+      if (row === lastRow) e.units += n * (((Number(p.from) || 0) <= lastRow ? 1 : 0) + Math.max(0, Math.floor(Number(p.extra) || 0)));
     };
     const start = packCurrentCycleStart(g.reset, g.resetDay), startKey = start ? packDayKey(start) : null;
     const t0 = packStartOfToday();
@@ -8679,65 +8698,96 @@ function packPurchaseUse(groups) {
       if (!(g.tables || []).includes(String(p.table))) return;
       const n = Math.max(1, Math.floor(Number(p.count) || 1));
       if (!(g.ladder || rows.has(undefined) || rows.has(p.row))) return;
+      // Bought in an earlier copy of a repeating pack (a weekly pack bought on
+      // Sunday, today Monday): that copy is over, its buys don't count now.
+      if (p.status === "bought" && repeating && startKey && p.date < startKey) return;
       add += n;
       // Bought (or planned for today) in the running copy: that copy's buys are taken.
-      if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; noteTop(0, p); return; }
+      if (startKey && p.date >= startKey && p.date <= todayKey) { now += n; usedAt[0] = (usedAt[0] || 0) + n; noteTop(0, p, n); return; }
       // Planned for a later appearance: that appearance's buys are taken.
       const d = packParseDay(p.date);
-      if (!d || p.date <= todayKey || !offs.length) { noteTop("x", p); return; }
+      if (!d || p.date <= todayKey || !offs.length) { noteTop("x", p, n); return; }
       const dd = Math.round((d - t0) / 86400000);
       const at = offs.filter((o) => o <= dd).pop();
-      if (at != null) { usedAt[at] = (usedAt[at] || 0) + n; noteTop(at, p); } else noteTop("x", p);
+      if (at != null) { usedAt[at] = (usedAt[at] || 0) + n; noteTop(at, p, n); } else noteTop("x", p, n);
     });
+    // The run a leftover belongs to, as a one-off group for that run. A
+    // purchase whose run can't be told ("x") of a repeating pack gets none.
+    const runOf = (k) => {
+      if (!(typeof g.reset === "number" && g.reset > 0) || k === "x") return k === "x" && repeating ? null : { reset: g.reset, resetDay: g.resetDay };
+      const resetDay = k === "0" ? startKey : packDayKey(new Date(t0.getTime() + Number(k) * 86400000));
+      return resetDay ? { reset: Math.max(PACK_ONE_TIME_DAYS, 3000), resetDay } : null;
+    };
     // A ladder bought only part way: the steps after it are still on sale in
     // that run (Elif's Forge pack planned up to $9.99
-    // left its $19.99 step out). They become a one-off group for that run,
-    // priced from the step after the one bought.
-    Object.entries(top).forEach(([k, row]) => {
-      const bi = g.offers.findIndex((o) => o.row === row);
+    // left its $19.99 step out); so are the last step's repeats left (Expert
+    // Gift Set: all 5 steps + 2 more leaves 7 more). They become a one-off
+    // group for that run, priced from what was bought.
+    Object.entries(top).forEach(([k, b]) => {
+      const run = runOf(k);
+      if (!run) return;
+      const E = b.row === lastRow ? Math.max(0, b.units - 1) : 0;
+      const bi = g.offers.findIndex((o) => o.row === b.row && (Number(o.extra) || 0) === E);
       if (bi < 0) return;
-      const base = g.offers[bi], rest = g.offers.slice(bi + 1).filter((o) => o.row > row);
+      const base = g.offers[bi], rest = g.offers.slice(bi + 1).filter((o) => o.row > b.row || (o.row === lastRow && (Number(o.extra) || 0) > E));
       if (!rest.length) return;
-      const from = Math.min(...rest.map((o) => o.row));
+      const steps = rest.filter((o) => o.row > b.row);
+      const from = steps.length ? Math.min(...steps.map((o) => o.row)) : lastRow;
       const offers = rest.map((o) => {
         const gives = {};
         Object.keys(o.gives).forEach((n) => { const v = o.gives[n] - (base.gives[n] || 0); if (v > 0) gives[n] = v; });
-        return { ...o, price: Math.round((o.price - base.price) * 100) / 100, gives, from };
+        const price = Math.round((o.price - base.price) * 100) / 100;
+        if (b.row < lastRow) return { ...o, price, gives, from };
+        // Only the last step again: saved as that step (from = row) + its repeats after it.
+        const units = (Number(o.extra) || 0) - E, unit = Math.round((price / units) * 100) / 100;
+        const o1 = { ...o };
+        delete o1.extra;
+        return { ...o1, price, gives, from, ...(units > 1 ? { extra: units - 1 } : {}), label: `${units}× ${packFmtMoney(unit, o.currency)}` };
       }).filter((o) => o.price > 0 && Object.keys(o.gives).length);
       if (!offers.length) return;
-      let reset = g.reset, resetDay = g.resetDay;
-      if (typeof g.reset === "number" && g.reset > 0 && k !== "x") {
-        reset = Math.max(PACK_ONE_TIME_DAYS, 3000);
-        resetDay = k === "0" ? startKey : packDayKey(new Date(t0.getTime() + Number(k) * 86400000));
-        if (!resetDay) return;
-      }
-      extra.push({ ...g, reset, resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true });
+      extra.push({ ...g, reset: run.reset, resetDay: run.resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true });
     });
     // The same for option ladders bought part way (Myriad Bazaar steps 1–4): the steps after
-    // them stay on sale in that run, each from either table, as a one-off group for that run.
-    Object.entries(optTop).forEach(([k, row]) => {
+    // them stay on sale in that run, each from any option, as a one-off group for that run.
+    Object.entries(optTop).forEach(([k, b0]) => {
+      const run = runOf(k);
+      if (!run) return;
+      const row = b0.row, E = row === lastRow ? Math.max(0, b0.units - 1) : 0;
       const b = row + 1, seen = new Set(), offers = [];
       g.offers.forEach((o) => {
-        if (!Array.isArray(o.steps) || o.steps.length !== o.tiers || o.steps.length <= b) return;
-        const tail = o.steps.slice(b), key = JSON.stringify(tail.map((st) => [st.price, st.gives]));
+        const ox = Number(o.extra) || 0;
+        if (!Array.isArray(o.steps) || o.steps.length !== o.tiers + (ox > 0 ? 1 : 0)) return;
+        let tail, from, ex = 0, tag;
+        if (row < lastRow) {
+          if (o.tiers <= b) return;
+          tail = o.steps.slice(b); from = b; ex = ox;
+          const parts = String(o.label || "").split(" · ");
+          tag = parts.length === o.tiers ? parts.slice(b).join(" · ") : parts[parts.length - 1];
+          tag = `${t("pack_steps_range").replace("{a}", b + 1).replace("{b}", o.tiers)} · ${tag}`;
+        } else {
+          // Full ladder bought: only the last step's repeats are left.
+          if (!(ox > E) || o.row !== lastRow) return;
+          const st = o.steps[o.steps.length - 1], units = ox - E, per = st.k > 0 ? units / st.k : 0;
+          if (!(per > 0)) return;
+          const unitPrice = st.unitPrice || st.price / st.k;
+          tail = [{ price: Math.round(units * unitPrice * 100) / 100, unitPrice, k: units, gives: Object.fromEntries(Object.entries(st.gives).map(([r, v]) => [r, v * per])) }];
+          from = lastRow; ex = units - 1;
+          const m = /\+ \d+× (.+)$/.exec(String(o.label || ""));
+          tag = `${units}× ${m ? m[1] : ""}`.trim();
+        }
+        const key = JSON.stringify(tail.map((st) => [st.price, st.gives]));
         if (seen.has(key)) return;
         seen.add(key);
         let price = 0;
         const gives = {};
         tail.forEach((st) => { price += st.price; Object.keys(st.gives).forEach((n) => { gives[n] = (gives[n] || 0) + st.gives[n]; }); });
         if (!(price > 0) || !Object.keys(gives).length) return;
-        const parts = String(o.label || "").split(" \u00b7 ");
-        const tag = parts.length === o.tiers ? parts.slice(b).join(" \u00b7 ") : parts[parts.length - 1];
-        offers.push({ ...o, price: Math.round(price * 100) / 100, gives, steps: tail, tiers: tail.length, from: b, lead: false, label: `${t("pack_steps_range").replace("{a}", b + 1).replace("{b}", o.tiers)} \u00b7 ${tag}` });
+        const o1 = { ...o };
+        delete o1.extra;
+        offers.push({ ...o1, price: Math.round(price * 100) / 100, gives, steps: tail, tiers: tail.length, from, ...(ex > 0 ? { extra: ex } : {}), lead: false, label: tag });
       });
       if (!offers.length) return;
-      let reset = g.reset, resetDay = g.resetDay;
-      if (typeof g.reset === "number" && g.reset > 0 && k !== "x") {
-        reset = Math.max(PACK_ONE_TIME_DAYS, 3000);
-        resetDay = k === "0" ? startKey : packDayKey(new Date(t0.getTime() + Number(k) * 86400000));
-        if (!resetDay) return;
-      }
-      extra.push({ ...g, reset, resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true, optionPack: true });
+      extra.push({ ...g, reset: run.reset, resetDay: run.resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true, optionPack: true });
     });
     return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now, usedAt } : g;
   });
@@ -9214,7 +9264,7 @@ async function renderPurchasesPage() {
   };
   // The same without money:
   // "Tiers 1–3", "Tier 4", or the choice's label without its price.
-  const purTierText = (tb, row, from, choice) => {
+  const purTierText = (tb, row, from, choice, extra) => {
     if (choice) {
       const s = String(choice.label || "").replace(/[⁦-⁩]/g, "")
         .replace(/(?:[A-Z]{3}|[$€£¥₩₹])\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:[A-Z]{3}|[$€£¥₩₹])/g, "")
@@ -9222,8 +9272,10 @@ async function renderPurchasesPage() {
       return s || (choice.name ? purShortName(choice.name) : "");
     }
     const link = packLinkFor(tb.id);
-    if (link.sequential && from > 0) return `${t("pur_tier")} ${from === row ? row + 1 : `${from + 1}–${row + 1}`}`;
-    return link.sequential && row > 0 ? t("pur_tiers_upto").replace("{tier}", row + 1) : `${t("pur_tier")} ${row + 1}`;
+    // The last step bought more times ("Last step ×N" packs): "+ 2×".
+    const more = Number(extra) > 0 ? ` + ${Math.floor(Number(extra))}\u00d7` : "";
+    if (link.sequential && from > 0) return `${t("pur_tier")} ${from === row ? row + 1 : `${from + 1}–${row + 1}`}${more}`;
+    return (link.sequential && row > 0 ? t("pur_tiers_upto").replace("{tier}", row + 1) : `${t("pur_tier")} ${row + 1}`) + more;
   };
 
   // Pack picker grouped like the Packs page.
@@ -9273,7 +9325,7 @@ async function renderPurchasesPage() {
   // (picture, name × count, date, price, ✓), tap it for its items, Used for and
   // dates; Coming grouped by week, Bought by month (older months folded); each
   // list scrolls inside its own box.
-  const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}${p.from > 0 ? "f" + p.from : ""}`;
+  const purGroupKey = (p) => `${p.table}~${p.choice ? "c:" + p.choice.label : p.row}${p.from > 0 ? "f" + p.from : ""}${!p.choice && p.extra > 0 ? "x" + p.extra : ""}`;
   const monIdx = (packStartOfToday().getUTCDay() + 6) % 7;
   const dOff = (k) => { const d = packParseDay(k); return d ? Math.round((d - packStartOfToday()) / 86400000) : 0; };
   const bucketOf = (kind, k) => (kind === "c" ? "w" + (dOff(k) < 0 ? -1 : Math.floor((dOff(k) + monIdx) / 7)) : "m" + String(k || "").slice(0, 7));
@@ -9292,6 +9344,8 @@ async function renderPurchasesPage() {
     if (p.choice && p.choice.gives) return { ...p.choice.gives };
     const link = packLinkFor(tb.id), cols = packEffectiveCols(tb), out = {};
     const rows = link.sequential ? (tb.rows || []).map((_, i) => i).filter((i) => i >= (Number(p.from) || 0) && i <= (Number(p.row) || 0)) : [Number(p.row) || 0];
+    // The last step bought more times: that row again.
+    if (link.sequential && Number(p.extra) > 0) { const last = packOffersFor(tb, true).pop(); if (last && last.row === (Number(p.row) || 0)) for (let k = 0; k < Math.floor(Number(p.extra)); k++) rows.push(last.row); }
     rows.forEach((ri) => {
       const cells = ((tb.rows || [])[ri] || {}).cells || [];
       Object.keys(cols).forEach((ci) => { if (!cols[ci]) return; const q = packParseNum(cells[ci]) * packColMultiplier(link, ci); if (q > 0) out[cols[ci]] = (out[cols[ci]] || 0) + q; });
@@ -9340,7 +9394,7 @@ async function renderPurchasesPage() {
   const lineHtml = (g, kind, bk) => {
     const id = `${kind}|${bk}|${g.key}`;
     const I = grpInfo(g, kind);
-    const tier = kind === "b" ? purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice) : "";
+    const tier = kind === "b" ? purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice, g.first.extra) : "";
     const sub = kind === "c"
       ? `${tagChip(I.tag)}${esc(I.when)}${I.late ? ` <span class="pur-late">&#9888;</span>` : ""}`
       : `${tagChip(I.tag)}${esc([t("pur_a2_bought_on").replace("{day}", I.when), tier].filter(Boolean).join(" · "))}`;
@@ -9358,7 +9412,7 @@ async function renderPurchasesPage() {
     if (!G) return "";
     const { g, kind } = G, I = grpInfo(g, kind);
     const names = packUsedForNames(I.tb);
-    const tier = purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice);
+    const tier = purTierText(I.tb, g.row, Number(g.first.from) || 0, g.first.choice, g.first.extra);
     const dateRow = (p) => `<div class="pur-o1-dt" data-purid="${esc(p.id)}"><span class="pur-o1-dtt"><b>${esc(shortDay(p.date))}${p.date < today && kind === "c" && !purTriggerWaiting(p) ? " &#9888;" : ""}</b><small class="meta">${bidiNum("× " + cntNow(p))} · ${esc(packFmtMoney(cost(p), I.link.currency))}</small></span><button type="button" class="pur-o1-b ed" data-puredit="${esc(p.id)}" title="${esc(t("pur_ed_date_tip"))}" aria-label="${esc(t("pur_ed_date_tip"))}">&#9998;</button>${kind === "c"
       ? `<button type="button" class="pur-o1-b ok" data-purmove="bought" title="${esc(t("pur_mark_bought"))}" aria-label="${esc(t("pur_mark_bought"))}">&#10003;</button>`
       : `<button type="button" class="pur-o1-b" data-purmove="planned" title="${esc(t("pur_mark_planned"))}" aria-label="${esc(t("pur_mark_planned"))}">&#8634;</button>`}<button type="button" class="pur-o1-b" data-purdel title="${esc(t("pur_remove"))}" aria-label="${esc(t("pur_remove"))}">&times;</button></div>`;
@@ -9588,7 +9642,7 @@ async function renderPurchasesPage() {
     const restOf = (key, mk) => { if (!rest.has(key)) rest.set(key, mk()); return rest.get(key); };
     coming.filter((p) => p.date <= sunKeyW && !purTriggerWaiting(p)).forEach((p) => {
       const tb = byId.get(String(p.table));
-      const it = restOf(purGroupKey(p), () => ({ done: false, tb, first: p, name: purShortName((p.choice && p.choice.name) || tb.title || ""), pic: mainIcon(rawOf(p, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: link0Seq(tb) ? purTierText(tb, p.row, Number(p.from) || 0, p.choice) : (p.choice ? purTierText(tb, p.row, 0, p.choice) : "") }));
+      const it = restOf(purGroupKey(p), () => ({ done: false, tb, first: p, name: purShortName((p.choice && p.choice.name) || tb.title || ""), pic: mainIcon(rawOf(p, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: link0Seq(tb) ? purTierText(tb, p.row, Number(p.from) || 0, p.choice, p.extra) : (p.choice ? purTierText(tb, p.row, 0, p.choice) : "") }));
       it.coming.push(p); it.n += cntNow(p); it.local += pLocal(p); it.offs.push(dOff(p.date));
       addGv(it, purchaseGives(p, tb), cntNow(p));
     });
@@ -9598,9 +9652,9 @@ async function renderPurchasesPage() {
         if (!xs.length) continue;
         const r = P.rows[i], tb = P.sugTable(r);
         if (!tb) continue;
-        const plain = P.plainPack(tb), key = `${tb.id}~${plain ? (r.row != null ? r.row : 0) : "c:" + r.label}${r.from > 0 ? "f" + r.from : ""}`;
+        const plain = P.plainPack(tb), key = `${tb.id}~${plain ? (r.row != null ? r.row : 0) : "c:" + r.label}${r.from > 0 ? "f" + r.from : ""}${plain && r.extra > 0 ? "x" + r.extra : ""}`;
         const choice = plain ? null : { name: P.sugName(r), label: r.label, price: r.price, gives: r.gives };
-        const it = restOf(key, () => ({ done: false, tb, first: null, name: purShortName(P.sugName(r)) + (optOfLabel(r.label) ? ` · ${optOfLabel(r.label)}` : ""), pic: mainIcon(rawOf({ row: r.row != null ? r.row : 0, from: r.from, ...(choice ? { choice } : {}) }, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: plain ? (link0Seq(tb) ? purTierText(tb, r.row != null ? r.row : 0, r.from || 0, null) : "") : purTierText(tb, r.row != null ? r.row : 0, 0, choice) }));
+        const it = restOf(key, () => ({ done: false, tb, first: null, name: purShortName(P.sugName(r)) + (optOfLabel(r.label) ? ` · ${optOfLabel(r.label)}` : ""), pic: mainIcon(rawOf({ row: r.row != null ? r.row : 0, from: r.from, extra: r.extra, ...(choice ? { choice } : {}) }, tb)), n: 0, local: 0, offs: [], coming: [], sugg: [], step: plain ? (link0Seq(tb) ? purTierText(tb, r.row != null ? r.row : 0, r.from || 0, null, r.extra) : "") : purTierText(tb, r.row != null ? r.row : 0, 0, choice) }));
         const n = xs.reduce((a, x) => a + x.count, 0);
         it.sugg.push({ i, r, xs, choice, plain });
         addGv(it, r.gives, xs.reduce((a, x) => a + x.count, 0));
@@ -9674,8 +9728,8 @@ async function renderPurchasesPage() {
       const s0 = it.sugg[0];
       const base = it.coming[0] || null;
       const proto = base
-        ? { table: String(tb.id), row: base.row, ...(base.from != null ? { from: base.from } : {}), ...(base.choice ? { choice: base.choice } : {}), ...(base.plan ? { plan: base.plan } : {}) }
-        : { table: String(tb.id), row: s0.r.row != null ? s0.r.row : 0, ...(s0.r.from != null ? { from: s0.r.from } : {}), ...(s0.choice ? { choice: s0.choice } : {}), plan: P ? P.planTag(s0.i) : undefined };
+        ? { table: String(tb.id), row: base.row, ...(base.from != null ? { from: base.from } : {}), ...(base.extra > 0 ? { extra: base.extra } : {}), ...(base.choice ? { choice: base.choice } : {}), ...(base.plan ? { plan: base.plan } : {}) }
+        : { table: String(tb.id), row: s0.r.row != null ? s0.r.row : 0, ...(s0.r.from != null ? { from: s0.r.from } : {}), ...(s0.r.extra > 0 ? { extra: s0.r.extra } : {}), ...(s0.choice ? { choice: s0.choice } : {}), plan: P ? P.planTag(s0.i) : undefined };
       const ids = new Set(it.coming.map((p) => p.id));
       const took = () => it.sugg.flatMap((sg) => sg.xs.map((x) => ({ i: sg.i, off: x.off, count: x.count })));
       const save = (n, day, whole) => {
@@ -10063,7 +10117,7 @@ async function renderPurchasesPage() {
         if (!tb) return;
         if (r !== rows[i] || i >= nFollow) asPlanned = false;
         xs.forEach((x) => took.push({ i, off: x.off, count: x.count }));
-        xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", plan: r !== rows[i] ? otherName : planTag(i), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
+        xs.forEach((x, k) => adds.push({ id: "p" + Date.now().toString(36) + i + "_" + k + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: r.row != null ? r.row : 0, ...(r.from != null ? { from: r.from } : {}), ...(r.extra > 0 ? { extra: r.extra } : {}), count: x.count, date: dayOf(Math.max(0, x.off)), status: "planned", plan: r !== rows[i] ? otherName : planTag(i), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: r.label, price: r.price, gives: r.gives } }) }));
       });
       if (!adds.length) return;
       PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
@@ -10181,7 +10235,7 @@ async function renderPurchasesPage() {
       const pickText = (k) => { const cnt = {}; pp[k].forEach((j) => { const nm = M.steps[k].opts[j].tag; cnt[nm] = (cnt[nm] || 0) + 1; }); return Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([nm, c]) => `${c}× ${nm}`).join(" + "); };
       // What one date buys: [{ row, label, price (pack currency), local, gives }].
       const partsOf = (sel) => {
-        if (!M) return [{ row: r.row != null ? r.row : 0, label: r.label, price: r.price, local: packRowLocalUnits(r).reduce((a, x) => a + x, 0), gives: r.gives, plain: true }];
+        if (!M) return [{ row: r.row != null ? r.row : 0, label: r.label, price: r.price, local: packRowLocalUnits(r).reduce((a, x) => a + x, 0), gives: r.gives, plain: true, ...(r.extra > 0 ? { extra: r.extra } : {}) }];
         if (isPick) return sel.map((on, k) => (on ? k : -1)).filter((k) => k >= 0).map((k) => {
           const st = M.steps[k], g = {};
           pp[k].forEach((j) => Object.entries(st.opts[j].gives).forEach(([n, v]) => { g[n] = (g[n] || 0) + v; }));
@@ -10293,7 +10347,7 @@ async function renderPurchasesPage() {
         // steps: an option pack saves its steps as the choice; a plain ladder
         // saves the last step bought (from where its run starts).
         const adds = [];
-        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), count: cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
+        ix.forEach((d) => partsOf(selOf(d)).forEach((p) => adds.push({ id: "p" + Date.now().toString(36) + d + "_" + adds.length + Math.random().toString(36).slice(2, 6), table: String(tb.id), row: p.row, ...(r.from != null ? { from: r.from } : {}), ...(p.extra > 0 ? { extra: p.extra } : {}), count: cntOf(d), date: dayOf(Math.max(0, s0[d].off)), status: "planned", plan: vers.length > 1 ? vers[vi].key : planTag(i0), ...(plainPack(tb) ? {} : { choice: { name: sugName(r), label: p.label, price: p.price, gives: p.gives } }) })));
         if (!adds.length) return;
         PACK_PURCHASES.list = (PACK_PURCHASES.list || []).concat(adds);
         savePackPurchases();
@@ -10684,9 +10738,9 @@ async function renderPurchasesPage() {
     const max = Math.max(...target.map(cntNow), Number(lk0.buys) > 0 ? Number(lk0.buys) : 1);
     E.count = Math.max(1, Math.min(max, E.count));
     const buys = editBuys(E, tb);
-    const unit = purchasePrice({ row: buys.row, from: E.p.from, ...(buys.choice ? { choice: buys.choice } : {}) }, tb);
-    const oldV = target.reduce((a, p) => a + cost(p), 0), newV = unit * E.count * target.length;
     const stepChanged = !!M && (E.k !== E.k0 || E.pick.join() !== E.pick0 || E.pp.join() !== E.pp0 || E.card !== E.card0);
+    const unit = purchasePrice({ row: buys.row, from: E.p.from, ...(!stepChanged && E.p.extra > 0 ? { extra: E.p.extra } : {}), ...(buys.choice ? { choice: buys.choice } : {}) }, tb);
+    const oldV = target.reduce((a, p) => a + cost(p), 0), newV = unit * E.count * target.length;
     const changed = stepChanged || target.some((p) => cntNow(p) !== E.count) || (E.scope === "one" && E.date !== E.p.date);
     const row = (label, ctl, cls) => `<div class="pur-ed-r${cls ? " " + cls : ""}"><span class="pur-ed-l">${esc(label)}</span><span class="pur-ed-c">${ctl}</span></div>`;
     const picOf = (o) => { const ic = itemIc(o.name || "") || itemIc(Object.keys(o.gives || {})[0] || ""); return ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(o.tag || "").slice(0, 2))}</i>`; };
@@ -10743,7 +10797,7 @@ async function renderPurchasesPage() {
           const q = { ...p, count: E.count, status: E.status };
           if (E.scope === "one") q.date = packValidDay(E.date) || p.date;
           if (q.status === "bought" && q.date > today) q.date = today;
-          if (stepChanged) { q.row = bu.row; if (bu.choice) q.choice = bu.choice; else delete q.choice; }
+          if (stepChanged) { q.row = bu.row; delete q.extra; if (bu.choice) q.choice = bu.choice; else delete q.choice; }
           return q;
         });
         PUR_EDIT = null;
@@ -16670,7 +16724,7 @@ function packBuildOptionLadder(title, lead, perTable, tags, lastMax) {
       // plan can hand each step to the page it's for.
       const steps = seq.map((j, k) => ({ price: tierOpts[k][j].price, gives: tierOpts[k][j].gives }));
       if (extraLast) { const o = tierOpts[tiers - 1][extraLast.j]; steps.push({ price: extraLast.k * o.price, unitPrice: o.price, k: extraLast.k, gives: Object.fromEntries(Object.entries(o.gives).map(([r, v]) => [r, v * extraLast.k])) }); }
-      offers.push({ price, gives, steps, label, tableTitle: title, currency: lead.currency, tiers: seq.length, row: seq.length - 1, lead: seq.length === tiers && !extraLast && seq.every((j) => j === seq[0]) });
+      offers.push({ price, gives, steps, label, tableTitle: title, currency: lead.currency, tiers: seq.length, row: seq.length - 1, ...(extraLast ? { extra: extraLast.k } : {}), lead: seq.length === tiers && !extraLast && seq.every((j) => j === seq[0]) });
     };
     seqs.forEach((seq) => build(seq, null));
     // Last tier repeatable (row Max on the last row of any option table):
@@ -16709,7 +16763,11 @@ function packRowSlots(r) {
     const per = r.perCycle || 1, win = Number(r.window) || 0;
     // A pack bought once a day while it runs (Hall of Heroes: 3 buys over 3
     // days) gets one date per day instead of all on its first day.
-    const daily = win > 1 && per > 1 && per <= win;
+    // Only packs limited per run by "buys" (Hall of Heroes); a row with its own
+    // Max (Daybreak, Shining City) can be bought several times the same day.
+    const lk = Array.isArray(r.tables) && r.tables.length ? packLinkFor(r.tables[0]) : null;
+    const rowMaxed = !!(lk && lk.rowMax && Object.keys(lk.rowMax).some((k) => Number(lk.rowMax[k]) > 0));
+    const daily = win > 1 && per > 1 && per <= win && !rowMaxed;
     return packResetOffsets(r.reset, r.resetDay, PACK_HORIZON_DAYS, r.window).flatMap((off) => {
       const cap = Math.max(0, per - (usedAt[off] || 0));
       if (!daily) return [{ off, cap }];
@@ -16810,7 +16868,7 @@ function packTableGroups(tb) {
     const last = offers[offers.length - 1], full = prefixes[prefixes.length - 1], lastMax = rowMaxOf(last);
     if (lastMax && lastMax > 1) for (let k = 1; k < lastMax; k++) {
       const g2 = { ...full.gives }; Object.keys(last.gives).forEach((n) => { g2[n] = (g2[n] || 0) + k * last.gives[n]; });
-      prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, label: `${offers.length > 1 ? t("pack_all_steps").replace("{n}", offers.length) : last.label} + ${k}× ${last.label}` });
+      prefixes.push({ ...full, price: full.price + k * last.price, gives: g2, tiers: full.tiers, extra: k, label: `${offers.length > 1 ? t("pack_all_steps").replace("{n}", offers.length) : last.label} + ${k}× ${last.label}` });
     }
     groups.push({ reset: link.reset, resetDay: packPlanAnchor(link), window: link.window, perCycle: 1, offers: prefixes, ladder: true, tables: [String(tb.id)] });
   } else if (link.choice) {
@@ -17595,7 +17653,7 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
   best.rows = best.picks.map((p) => {
     const g = groups[p.gi], o = g.offers[p.oi];
     const cycles = Math.ceil(perGroup[p.gi] / g.perCycle);
-    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+    return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: p.count, subtotal: p.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles, perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
   }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   return best;
 }
@@ -20580,7 +20638,7 @@ function budgetCombinedCore(pages, selected, targetDays, allGroups, opts) {
       if (!picks.length) return;
       const rows = picks.map((pk) => {
         const g = res.groups[pk.gi], o = g.offers[pk.oi];
-        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+        return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(used[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
       }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
       const cand = { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades, picks, sequential: true };
       if (res.byTarget && cand.days > targetDays) return;
@@ -20841,7 +20899,7 @@ function plannerDeadlineLocal(payload) {
     pks.forEach((pk) => { perGroup[pk.gi] += pk.count; });
     return pks.map((pk) => {
       const g = base[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
   };
   // (Each part's own rows: the packs bought for that date.)
@@ -21231,7 +21289,7 @@ function budgetMergedPlan(res, inc, targetDays) {
     if (Object.keys(tr.short).length) return null;
     const rows = picks.map((pk) => {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
-      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
+      return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
     return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
   };
