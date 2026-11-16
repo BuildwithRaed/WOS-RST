@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "bc19bcf795";
+window.SCAN_BUILD = "56ca67d6f4";
 
 
 // ---- Backpack: read game screenshots ----
@@ -2409,7 +2409,7 @@ function openPackScanMain(opts) {
     const opt = (x) => `<option value="${x.usd}"${pick === x ? " selected" : ""}>${esc(cur !== "USD" && x.value ? `${money(x.value, cur)} ($${x.usd})` : "$" + x.usd)}</option>`;
     const rv = g.price && g.price.readValue > 0 ? g.price.readValue : read;
     const lbl = rv ? t("pks_price_read_as").replace("{p}", money(rv, cur)) : t("pks_price_none");
-    return `<div class="pks-ask"><span>${esc(lbl)}</span><select class="keep-w" data-pkspsel="${ci}|${gi}" aria-label="${esc(t("pks_price_h"))}">${pick ? "" : `<option value="" selected>${esc(t("pks_price_pick"))}</option>`}${own.length ? `<optgroup label="${esc(t("pks_price_this"))}">${own.map(opt).join("")}</optgroup><optgroup label="${esc(t("pks_price_all"))}">${rest.map(opt).join("")}</optgroup>` : all.map(opt).join("")}</select>${pick && !g.priceOk ? `<button type="button" class="cg-bpbtn pks-yes" data-pkspuse="${ci}|${gi}">&#10003; ${esc(t("pks_price_use"))}</button>` : ""}</div>
+    return `<div class="pks-ask"><span>${esc(lbl)}</span><select class="keep-w" data-pkspsel="${ci}|${gi}" aria-label="${esc(t("pks_price_h"))}">${pick ? "" : `<option value="" selected>${esc(t("pks_price_pick"))}</option>`}${own.length ? `<optgroup label="${esc(t("pks_price_this"))}">${own.map(opt).join("")}</optgroup><optgroup label="${esc(t("pks_price_all"))}">${rest.map(opt).join("")}</optgroup>` : all.map(opt).join("")}</select>${pick && (!g.priceOk || c.pricePen === gi) ? `<button type="button" class="cg-bpbtn pks-yes" data-pkspuse="${ci}|${gi}">&#10003; ${esc(t("pks_price_use"))}</button>` : ""}</div>
       <div class="pks-ask end">${g.priceOk ? priceResHtml(c, g) : ""}</div>`;
   };
   const needTable = (c) => c.bazaar && !c.m && !c.asNew;
@@ -2586,12 +2586,21 @@ function openPackScanMain(opts) {
       <div class="pks-edr"><span class="pks-edl">${esc(t("pks_item"))}</span>${pickerHtml(c, ci, it, ik)}</div>
       <div class="pks-edr end"><span class="pks-sel">${it.name ? `${esc(disp(it.name))} &#10003;` : ""}</span><button type="button" class="cg-bpbtn" data-pksout="${ci}|${ik}">${esc(t("pks_leave_out"))}</button><button type="button" class="cg-bpbtn pks-yes" data-pksdone="${ci}|${ik}" ${it.name ? "" : "disabled"}>${esc(t("pks_done"))}</button></div></div>`;
   const unknownHtml = (c, ci, ik, it) => `<div class="pks-ask"><span>${esc(t("pks_what"))}</span></div>${pickerHtml(c, ci, it, ik)}<div class="pks-ask"><button type="button" class="cg-bpbtn" data-pksout="${ci}|${ik}">${esc(t("pks_leave_out"))}</button></div>`;
+  // The saved table's item columns, left to right (first row each item shows up in).
+  const colsOf = (rows) => { const cols = []; (rows || []).forEach((r) => Object.keys(r.items || {}).forEach((n) => { if (!cols.includes(n)) cols.push(n); })); return cols; };
   const nameCell = (inner, n) => `<td><span class="pks-tn">${inner}<span>${esc(n)}</span></span></td>`;
   // A card matched to a saved pack: Item | Saved | Screenshot, per price.
   const compareHtml = (c, ci) => {
     const m = cmpOf(c);
     let body = "";
+    // Item rows in the saved table's column order (owner, 16 Nov 2026); items the saved pack hasn't come after, in screenshot order.
+    const colAt = {};
+    colsOf(m.saved).forEach((n, i) => { const k = n.toLowerCase(); if (colAt[k] == null) colAt[k] = i; });
+    const nCols = Object.keys(colAt).length;
     c.groups.forEach((g, gi) => {
+      const parts = [];
+      let html = "";
+      const put = (k, ii) => { parts.push({ pos: k != null && colAt[k] != null ? colAt[k] : nCols + ii, ii, html }); html = ""; };
       const usd = g.price && g.price.usd;
       const s = (usd && savedRow(c, g)) || null;
       const step = stepText(c, g), at = rowsAtPrice(m, g);
@@ -2599,7 +2608,7 @@ function openPackScanMain(opts) {
       const cnt = {}, last = {};
       g.items.forEach((it, ii) => { if (it.tick && it.name) { const k = it.name.toLowerCase(); cnt[k] = (cnt[k] || 0) + 1; last[k] = ii; } });
       const seen = new Set();
-      if (c.groups.length > 1 || !s || step) body += `<tr class="pks-pr"><td colspan="3">${usd ? "$" + usd : "?"}${step ? ` · ${esc(step)}` : g.price ? ` · ${esc(money(g.price.value, g.price.cur))}` : ""}${s ? "" : ` · <em>${esc(t(m.mine ? "pks_diff_newprice_mine" : "pks_diff_newprice"))}</em>`}</td></tr>`;
+      if (c.groups.length > 1 || !s || step) body += `<tr class="pks-pr"><td colspan="3">${usd ? "$" + usd : "?"}${step ? ` · ${esc(step)}` : g.price ? ` · ${esc(money(g.price.value, g.price.cur))}` : ""}${s ? "" : ` · <em>${esc(t(m.mine ? "pks_diff_newprice_mine" : "pks_diff_newprice"))}</em>`}${c.groups.length > 1 && !priceUnsure(g) && c.priceEdit !== gi ? ` <button type="button" class="pks-pen" data-pkspedit="${ci}|${gi}" aria-label="${esc(t("pks_price_h"))}: ${esc(t("pks_edit"))}">&#9998;</button>` : ""}</td></tr>`;
       if (at.length > 1) body += `<tr class="pks-rp"><td colspan="3"><div class="pks-ask"><span>${esc(t("pks_step_q"))}</span>${at.map((i) => `<button type="button" class="cg-bpbtn${i === rowIdx(c, g) ? " pks-yes" : ""}" data-pksrow="${ci}|${gi}|${i}" aria-pressed="${i === rowIdx(c, g) ? "true" : "false"}">${esc(t("pks_step_n").replace("{k}", i + 1))}</button>`).join("")}</div></td></tr>`;
       g.items.forEach((it, ii) => {
         const ik = `${gi}|${ii}`;
@@ -2607,17 +2616,20 @@ function openPackScanMain(opts) {
         const again = k && seen.has(k) && it.tick;
         if (k) seen.add(k);
         const sv = k && b[k] && !again ? b[k].v : null;
-        if (!it.tick) { body += `<tr class="pks-off">${nameCell(tileIc(it, "xs"), it.name ? disp(it.name) : t("pks_unknown_t"))}<td>${sv != null ? amt(sv) : "—"}</td><td><button type="button" class="cg-bpbtn" data-pksuse="${ci}|${ik}">${esc(t("pks_left_out"))}</button></td></tr>`; return; }
-        if (!it.name) { body += `<tr class="pks-unk">${nameCell(tileIc(it, "xs"), t("pks_unknown_t"))}<td>—</td><td>&times;${esc(amt(Number(it.value) || 0))}</td></tr><tr class="pks-unk2"><td colspan="3">${unknownHtml(c, ci, ik, it)}</td></tr>`; return; }
+        if (!it.tick) { html += `<tr class="pks-off">${nameCell(tileIc(it, "xs"), it.name ? disp(it.name) : t("pks_unknown_t"))}<td>${sv != null ? amt(sv) : "—"}</td><td><button type="button" class="cg-bpbtn" data-pksuse="${ci}|${ik}">${esc(t("pks_left_out"))}</button></td></tr>`; put(k, ii); return; }
+        if (!it.name) { html += `<tr class="pks-unk">${nameCell(tileIc(it, "xs"), t("pks_unknown_t"))}<td>—</td><td>&times;${esc(amt(Number(it.value) || 0))}</td></tr><tr class="pks-unk2"><td colspan="3">${unknownHtml(c, ci, ik, it)}</td></tr>`; put(null, ii); return; }
         const editing = c.edit === ik, unsure = unsureIt(it), sk = b[k] ? b[k].v : null, diff = sk != null ? Math.round(sk) !== Math.round(tot[k] || 0) : !m.mine;
         if (k === "gems" && !editing && !unsure) return; // in the Gems line below
         const sum = cnt[k] > 1 && last[k] === ii ? ` <small class="pks-sum">= ${esc(amt(tot[k] || 0))}</small>` : "";
         const cls = editing || unsure ? "pks-q" : diff ? "pks-chg" : "";
-        body += `<tr class="${cls}">${nameCell(tileIc(it, "xs"), shortName(it.name))}<td>${sv != null ? amt(sv) : again ? "" : "—"}</td><td>${editing ? "&#9998;" : `<b>${it.value == null ? "?" : esc(amt(Number(it.value) || 0)) + (unsure ? " ?" : "")}</b>${sum}`}${!editing && !unsure ? ` <button type="button" class="pks-pen" data-pksedit="${ci}|${ik}" aria-label="${esc(t("pks_edit"))}">&#9998;</button>` : ""}</td></tr>`;
-        if (editing) body += `<tr class="pks-q2"><td colspan="3">${editHtml(c, ci, ik, it)}</td></tr>`;
-        else if (unsure) body += `<tr class="pks-q2"><td colspan="3">${askHtml(ci, ik, it)}</td></tr>`;
+        html += `<tr class="${cls}">${nameCell(tileIc(it, "xs"), shortName(it.name))}<td>${sv != null ? amt(sv) : again ? "" : "—"}</td><td>${editing ? "&#9998;" : `<b>${it.value == null ? "?" : esc(amt(Number(it.value) || 0)) + (unsure ? " ?" : "")}</b>${sum}`}${!editing && !unsure ? ` <button type="button" class="pks-pen" data-pksedit="${ci}|${ik}" aria-label="${esc(t("pks_edit"))}">&#9998;</button>` : ""}</td></tr>`;
+        if (editing) html += `<tr class="pks-q2"><td colspan="3">${editHtml(c, ci, ik, it)}</td></tr>`;
+        else if (unsure) html += `<tr class="pks-q2"><td colspan="3">${askHtml(ci, ik, it)}</td></tr>`;
+        put(k === "gems" ? null : k, k === "gems" ? ii + 1e6 : ii);
       });
-      if (s) Object.keys(b).forEach((k) => { if (!seen.has(k)) body += `<tr class="pks-miss">${nameCell(icHtml(b[k].n, "xs"), shortName(b[k].n))}<td>${amt(b[k].v)}</td><td><small>${esc(t("pks_diff_notin"))}</small></td></tr>`; });
+      if (s) Object.keys(b).forEach((k) => { if (!seen.has(k)) { html += `<tr class="pks-miss">${nameCell(icHtml(b[k].n, "xs"), shortName(b[k].n))}<td>${amt(b[k].v)}</td><td><small>${esc(t("pks_diff_notin"))}</small></td></tr>`; put(k, -1); } });
+      parts.sort((x, y) => x.pos - y.pos || x.ii - y.ii);
+      body += parts.map((x) => x.html).join("");
       const g0 = s ? Math.round(s.gems || 0) : null, g1 = Math.round((rowsOf(c)[gi] || {}).gems || 0);
       body += `<tr class="${s && g0 !== g1 && !m.mine ? "pks-chg" : ""}">${nameCell(`<span class="pks-ic xs">${gemsIc()}</span>`, "Gems")}<td>${g0 != null ? (g0 ? g0.toLocaleString() : "—") : "—"}</td><td><b>${g1 ? g1.toLocaleString() : "—"}</b></td></tr>`;
     });
@@ -2660,11 +2672,11 @@ function openPackScanMain(opts) {
       : priceEditHtml(c, ci, g, gi)}</div>`;
   }).join("");
   // One row per price: price, every item (picture + amount), Gems.
-  const rowsTableHtml = (rows, savedTag) => {
-    const cols = [];
-    rows.forEach((r) => Object.keys(r.items).forEach((n) => { if (!cols.includes(n)) cols.push(n); }));
+  // hi = { row index: { cells: Set of item names that differ, gems: true } }: the rows this card is matched to.
+  const rowsTableHtml = (rows, savedTag, hi) => {
+    const cols = colsOf(rows);
     return `<div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>${esc(t("pks_price_h"))}</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${gemsIc()}</th></tr></thead>
-      <tbody>${rows.map((r) => `<tr class="${r.fromShot ? "shot" : r.kept ? "kept" : ""}"><td><b>${r.usd ? "$" + r.usd : "?"}</b>${savedTag && r.kept ? ` <small>${esc(t("pks_kept_tag"))}</small>` : ""}</td>${cols.map((n) => `<td>${r.items[n] ? esc(amt(r.items[n])) : "—"}</td>`).join("")}<td>${r.gems ? Math.round(r.gems).toLocaleString() : "—"}</td></tr>`).join("")}</tbody></table></div>`;
+      <tbody>${rows.map((r, ri) => { const h = hi && hi[ri]; const dc = (on) => (h && on ? ` class="chg"` : ""); return `<tr class="${h ? "pick" : r.fromShot ? "shot" : r.kept ? "kept" : ""}"${h ? ` aria-current="true"` : ""}><td><b>${r.usd ? "$" + r.usd : "?"}</b>${savedTag && r.kept ? ` <small>${esc(t("pks_kept_tag"))}</small>` : ""}</td>${cols.map((n) => `<td${dc(h && h.cells.has(n))}>${r.items[n] ? esc(amt(r.items[n])) : "—"}</td>`).join("")}<td${dc(h && h.gems)}>${r.gems ? Math.round(r.gems).toLocaleString() : "—"}</td></tr>`; }).join("")}</tbody></table></div>`;
   };
   // The price steps: one line with the switch; tapped, the 5 prices and the rows it fills.
   const ladderHtml = (c, ci) => {
@@ -2683,7 +2695,17 @@ function openPackScanMain(opts) {
   const savedHtml = (c) => {
     const m = cmpOf(c);
     if (!m || !c.savedOpen || !Array.isArray(m.saved)) return "";
-    return `<div class="pks-lab">${esc(t("pks_saved_pack"))}${m.group ? ` · ${esc(m.group)}` : ""}</div>${m.saved.length ? rowsTableHtml(m.saved) : `<div class="meta">${esc(t("pks_saved_empty"))}</div>`}`;
+    // The row (step) each price of this card is matched to, its cells that differ from the screenshot in amber.
+    const hi = {};
+    c.groups.forEach((g, gi) => {
+      const i = g.price && g.price.usd ? rowIdx(c, g) : -1;
+      if (i < 0 || hi[i]) return;
+      const r = m.saved[i], tot = totOf(g), seen = new Set(), cells = new Set();
+      g.items.forEach((it) => { if (it.tick && it.name) seen.add(it.name.toLowerCase()); });
+      colsOf(m.saved).forEach((n) => { const k = n.toLowerCase(); if (k !== "gems" && seen.has(k) && Math.round(Number((r.items || {})[n]) || 0) !== Math.round(tot[k] || 0)) cells.add(n); });
+      hi[i] = { cells, gems: !m.mine && Math.round(r.gems || 0) !== Math.round((rowsOf(c)[gi] || {}).gems || 0) };
+    });
+    return `<div class="pks-lab">${esc(t("pks_saved_pack"))}${m.group ? ` · ${esc(m.group)}` : ""}</div>${m.saved.length ? rowsTableHtml(m.saved, false, hi) : `<div class="meta">${esc(t("pks_saved_empty"))}</div>`}`;
   };
   const matchLine = (c, ci) => `<div class="pks-ml">${matchText(c, ci)} · <button type="button" class="pks-lk" data-pksaddshot="${ci}">+ ${esc(t("pks_add_shot"))}</button></div>`;
   const matchText = (c, ci) => {
@@ -2697,10 +2719,13 @@ function openPackScanMain(opts) {
     const head = `<div class="pks-ch"><button type="button" class="pks-cht" data-pkstoggle="${ci}" aria-expanded="${open ? "true" : "false"}"><b>${esc(titleOf(c))}</b><small>${headSub(c)}${c.shots.size > 1 ? ` · ${esc(t("pks_n_shots").replace("{n}", c.shots.size))}` : ""}</small></button>
       <span class="pks-st ${sk}">${esc(sl)}</span>${done && (c.status === "skipped" || c.undo) ? `<button type="button" class="pks-lk pks-undo" data-pksundo="${ci}">${esc(t("pks_undo"))}</button>` : `<button type="button" class="pks-car" data-pkstoggle="${ci}" aria-label="${esc(titleOf(c))}">${open ? "&#9652;" : "&#9662;"}</button>`}</div>`;
     if (!open) return `<div class="pks-card${done ? " done" : ""}" data-pkscard="${ci}">${head}${stripHtml(c)}</div>`;
+    // Open: the price line sits under the title with a ✎, so the price can always be changed (owner, 16 Nov 2026).
+    const pen = c.groups.length === 1 && !priceUnsure(c.groups[0]) && c.priceEdit !== 0 ? ` <button type="button" class="pks-pen" data-pkspedit="${ci}|0" aria-label="${esc(t("pks_price_h"))}: ${esc(t("pks_edit"))}">&#9998;</button>` : "";
+    const headO = head.replace(/<small>[\s\S]*?<\/small><\/button>/, "</button>") + `<div class="pks-chs"><small>${headSub(c)}${c.shots.size > 1 ? ` · ${esc(t("pks_n_shots").replace("{n}", c.shots.size))}` : ""}</small>${pen}</div>`;
     const drop = c.groups.reduce((a, g) => a + g.dropped.length, 0);
     const learnable = IS_OWNER && c.groups.some((g) => g.items.some((it) => it.feat && it.tick && it.ok && it.name && it.name !== it.auto));
     const sv = canSave(c);
-    return `<div class="pks-card open${toCheck(c) ? " amb" : ""}" data-pkscard="${ci}">${head}
+    return `<div class="pks-card open${toCheck(c) ? " amb" : ""}" data-pkscard="${ci}">${headO}
       ${matchLine(c, ci)}
       ${savedHtml(c)}
       ${priceAskHtml(c, ci)}
@@ -2884,7 +2909,7 @@ function openPackScanMain(opts) {
       } else { g.priceOk = true; c.priceEdit = null; }
       draw();
     });
-    on("data-pkspedit", (v) => { const [ci, gi] = v.split("|").map(Number); st.cards[ci].priceEdit = gi; draw(); });
+    on("data-pkspedit", (v) => { const [ci, gi] = v.split("|").map(Number); st.cards[ci].priceEdit = gi; st.cards[ci].pricePen = gi; draw(); });
     const setUsd = (ci, gi, usd) => {
       const c = st.cards[ci], g = c.groups[gi], cur = editCur(g);
       if (!(usd > 0)) return;
@@ -2895,6 +2920,7 @@ function openPackScanMain(opts) {
       if (!g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(usd);
       fillFromSaved(c);
       c.priceEdit = rowIdx(c, g) >= 0 || !cmpOf(c) ? null : gi;
+      c.pricePen = null;
       draw();
     };
     on("data-pkspsel", (v, el) => { const [ci, gi] = v.split("|").map(Number); setUsd(ci, gi, Number(el.value)); });
