@@ -15055,7 +15055,7 @@ const PACK_RESOURCE_NAMES = [
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
-  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest", "General Accessory Construction Contract",
+  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest", "General Accessory Construction Contract", "Mythic Island Shards",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
