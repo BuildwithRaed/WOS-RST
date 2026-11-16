@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 94; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 95; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -14416,7 +14416,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=13e308b535";
+      s.src = "scan.min.js?v=f9e319eb10";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
