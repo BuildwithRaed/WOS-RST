@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "ba2ec9ebca";
+window.SCAN_BUILD = "13e308b535";
 
 
 // ---- Backpack: read game screenshots ----
@@ -943,7 +943,7 @@ async function scanShot(worker, file, marks, refs, mode) {
     if (items.length) return { kind: "speedup", items };
   }
   // Island screens: the Island Storehouse (tiles about 4 : 3, never square) and My Island.
-  if ((await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src))) return { kind: "islelse", items: [] };
+  if (visitorCan("islandscan") && ((await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src)))) return { kind: "islelse", items: [] };
   // Text reads best on the light Summary panel alone, about 720 px wide.
   const p = scanLightPanel(src), s = 720 / p.w, c = scanCanvas(720, Math.round(p.h * s));
   c.getContext("2d").drawImage(src, p.x, p.y, p.w, p.h, 0, 0, c.width, c.height);

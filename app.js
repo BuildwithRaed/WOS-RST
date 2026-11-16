@@ -14405,7 +14405,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=ba2ec9ebca";
+      s.src = "scan.min.js?v=13e308b535";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -25614,7 +25614,7 @@ async function renderIslandGallery() {
         <p class="desc">${esc(t("isl_desc"))}</p>
         <div class="sg-lg"><span>${esc(t("isl_lg_tap"))}</span><span>${esc(t("isl_lg_faded"))}</span><span class="g">${esc(t("isl_lg_max"))}</span><span><i class="sg-mvk">&#8595;</i>${esc(t("sg_lg_move"))}</span></div>
       </div>
-      <button type="button" class="cg-bpbtn isl-scanb isl-scant" data-islscan title="${esc(t("scan_isl_btn"))}">&#128247; <span class="isl-scanw">${esc(t("scan_isl_btn"))}</span><span class="isl-scann">${esc(t("scan_short"))}</span></button>
+      ${visitorCan("islandscan") ? `<button type="button" class="cg-bpbtn isl-scanb isl-scant" data-islscan title="${esc(t("scan_isl_btn"))}">&#128247; <span class="isl-scanw">${esc(t("scan_isl_btn"))}</span><span class="isl-scann">${esc(t("scan_short"))}</span></button>` : ""}
     </div>
     <div class="panel cg-ans sg-ans">
       <div class="sg-k"><span>${esc(t("troops_stats_title"))}</span><span class="sg-kr" id="islandSummaryLine"></span><button type="button" class="g1-fold isl-fold" data-g1fold="top:islandgallery" aria-expanded="true"></button></div>
@@ -31447,7 +31447,7 @@ function loadAdminCode() {
   if (!ADMIN_CODE_P) {
     ADMIN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "admin.min.js?v=621408021d";
+      s.src = "admin.min.js?v=05035033f2";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.ADMIN_BUILD === want) { ADMIN_CODE_OK = true; resolve(); return; }
