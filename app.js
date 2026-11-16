@@ -17815,6 +17815,12 @@ const PACK_COST_OPEN = {};
 const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
 const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
 const PACK_TARGET_HOOKS = {}; // calcKey -> called when the Pack cost window's target date changes (pages whose needs follow it)
+// Pages whose needs depend on the date (Islands: free income up to then): calcKey -> (days) =>
+// { totals, ok }. Pack cost's Cheapest then tries later dates with their own (smaller) needs.
+const PACK_NEED_BY_DATE = {};
+// calcKey -> (days | null): told which plan date is picked (null = Fastest / as soon as possible).
+const PACK_PICK_HOOKS = {};
+let ISL_VIEW_DAYS = null;
 const packCostShown = (calcKey, v) => {
   if (PACK_COST_SHOWN[calcKey] === v) return;
   PACK_COST_SHOWN[calcKey] = v;
@@ -18335,6 +18341,28 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const pp = await plannerRun("page", { groups: packGroups, need, calcKey, targetDays });
     if (stale()) return;
     const earliest = pp.earliest;
+    // Pages whose needs shrink with time (free income up to the date): Cheapest tries later
+    // dates, each with the need left by then, and keeps the cheapest plan that makes its date.
+    let cheapAt = null;
+    const byDate = PACK_NEED_BY_DATE[calcKey];
+    if (byDate && earliest != null && targetDays == null) {
+      // (Like every page's Cheapest: at most a year after the fastest date.)
+      const cands = [...new Set([earliest, earliest + 28, 91, 182, 273, 365, earliest + 365].filter((d) => d >= earliest && d <= Math.min(PACK_HORIZON_DAYS, earliest + 365)))].sort((a, b) => a - b);
+      for (const d of cands) {
+        const r = byDate(d);
+        if (!r || !r.ok) continue;
+        const st = {};
+        Object.keys(r.totals).forEach((n) => { const v = Math.max(0, r.totals[n] - (Number((owned || {})[n]) || 0)); if (v > 0) st[n] = v; });
+        const nd = packNeedViaTrades(calcKey, st, supplied, d).need;
+        let plan = null;
+        if (!Object.keys(nd).length) plan = { rows: [], total: 0, days: 0, trades: [] };
+        else { const q = await plannerRun("page", { groups: packGroups, need: nd, calcKey, targetDays: d }); if (stale()) return; plan = q.byTarget || null; }
+        // Done on that date (free income brings the rest by then), not when the last pack is bought.
+        if (plan && plan.days <= d && (!cheapAt || packPlanLocal(plan) < packPlanLocal(cheapAt.plan) - 0.005)) cheapAt = { plan: { ...plan, days: d }, d };
+      }
+      if (cheapAt && pp.cheapest && packPlanLocal(cheapAt.plan) >= packPlanLocal(pp.cheapest)) cheapAt = null;
+      if (cheapAt) pp.cheapest = cheapAt.plan;
+    }
     const plans = [];
     if (earliest == null) {
       // Explain what's short and how much the packs could give at most,
@@ -18375,6 +18403,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         };
         const p = pick && pick.plan;
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
+        if (PACK_PICK_HOOKS[calcKey]) { const hk = PACK_PICK_HOOKS[calcKey], dd = pick && pick.key === "cheapest" && cheapAt && p === cheapAt.plan ? cheapAt.d : null; setTimeout(() => hk(dd), 0); }
         const byPack = [];
         if (p) p.rows.forEach((r) => {
           let g = byPack.find((x) => x.title === r.title);
@@ -25943,14 +25972,20 @@ async function renderIslandGallery() {
   const freeShards = (days) => (days != null && islShardPacksOn() ? Math.max(0, Math.floor(Number((ISL_FREE_SHARDS || {}).n) || 0)) : 0);
   const SPC = {};
   let spSig = null;
-  // forBud: by the Budgets target (Budgets' need); else by the page's own target date.
+  // forBud: true = by the Budgets target (Budgets' need); a number = by that many days from
+  // today (Pack cost's Cheapest tries dates); else by the page's own target date, or (no date)
+  // by the date of the Pack cost plan picked on screen (ISL_VIEW_DAYS), or as soon as packs allow.
+  const modeKey = (m) => (m === true ? "b" : typeof m === "number" ? `d${m}` : "p");
   const sharedPlan = (withFree, forBud) => {
-    const tg = islTgt(forBud), tDay0 = tg ? packParseDay(packValidDay(tg)) : null, tDay = tDay0 || packStartOfToday();
+    if (forBud === undefined && withFree === true && !PACK_TARGET_CACHE.islands && ISL_VIEW_DAYS != null) forBud = ISL_VIEW_DAYS;
+    const num = typeof forBud === "number";
+    const tg = num ? "" : islTgt(forBud), tDay0 = num ? islDay(forBud) : tg ? packParseDay(packValidDay(tg)) : null, tDay = tDay0 || packStartOfToday();
     const days = Math.max(0, Math.round((tDay - packStartOfToday()) / 86400000));
     // What packs / events can bring: by the date, or with no date within the planner's horizon.
     const capDays = tDay0 ? days : PACK_HORIZON_DAYS, capDay = tDay0 ? tDay : islDay(PACK_HORIZON_DAYS);
-    const F = withFree && !forBud ? freeShards(days) : 0, shOn = islShardPacksOn();
-    const slot = SPC[`${F > 0 ? 1 : 0}${forBud ? "b" : "p"}`] || (SPC[`${F > 0 ? 1 : 0}${forBud ? "b" : "p"}`] = { sig: null, P: null });
+    const F = withFree && forBud !== true ? freeShards(days) : 0, shOn = islShardPacksOn();
+    const sk = `${F > 0 ? 1 : 0}${modeKey(forBud)}`;
+    const slot = SPC[sk] || (SPC[sk] = { sig: null, P: null });
     const sig = `${F}|${shOn ? islShardSupplyMax() : "-"}|${days}|${tDay0 ? 1 : 0}|${JSON.stringify(ISL_SHARDS)}|${JSON.stringify(siteConfig("island_sources", {}) || {})}|${JSON.stringify(islShopsCfg())}|${tomeHave()}|${ISL_UNIT ? `${ISL_UNIT.mark}/${ISL_UNIT.tome}` : ""}|${(islShiningStarts(2).starts[0] || "").toString()}|${islands.map((x) => `${x.id}:${lvOf(x)}:${x.owned ? 1 : 0}`).join(",")}`;
     if (spSig === null) Object.values(SPC).forEach((x) => { x.P = null; });
     spSig = "set";
@@ -26029,9 +26064,9 @@ async function renderIslandGallery() {
   const LPC = {};
   const lightPlan = (forBud) => {
     const P = sharedPlan(false, forBud), list = islands.filter(islIsLight), free = P.days != null ? islFreeContracts(P.days) : 0, have = contractHave() + free;
-    const c = LPC[forBud ? "b" : "p"] || (LPC[forBud ? "b" : "p"] = { sig: null, P: null });
-    const sig = `${SPC[forBud ? "0b" : "0p"].sig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
-    if (sig === c.sig && c.P) { if (!forBud) lpSig = sig; return c.P; }
+    const c = LPC[modeKey(forBud)] || (LPC[modeKey(forBud)] = { sig: null, P: null });
+    const sig = `${SPC[`0${modeKey(forBud)}`].sig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
+    if (sig === c.sig && c.P) { if (forBud === undefined || forBud === false) lpSig = sig; return c.P; }
     c.sig = sig;
     let spare = Math.max(0, ((P.days == null ? islHave(ISL_SHARDS) : P.pot) - P.need) * ePS());
     const per = new Map();
@@ -26046,7 +26081,7 @@ async function renderIslandGallery() {
       per.set(x.id, { ...c, short: Math.max(0, ct - have) - before });
     });
     c.P = { per, bp, ct, ess, have, free, short: Math.max(0, ct - have) };
-    if (!forBud) lpSig = sig;
+    if (forBud === undefined || forBud === false) lpSig = sig;
     return c.P;
   };
   const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
@@ -26167,7 +26202,7 @@ async function renderIslandGallery() {
     if (!(P.need > 0)) return `<div class="isl-done ok">&#10003; ${esc(t("isl_box_none"))}</div>`;
     if (P.days == null) return `<div class="isl-done">${P.done == null ? esc(t("isl_box_noinc")) : `${esc(t("isl_rs_done_c"))} <b>~${day(P.done)}</b> &middot; ${esc(t("isl_box_weeks").replace("{n}", Math.max(1, Math.ceil(P.done / 7))))}`}</div>`;
     // With no date the plan is "every target as soon as packs allow" (within the horizon).
-    const by = esc(islDateShort(P.tDay)), lead = (x) => (P.noDate ? esc(t("isl_rs_asap")) : esc(t("isl_rs_by").replace("{d}", x)));
+    const by = esc(islDateShort(P.tDay) + (P.days > 300 ? ` ${P.tDay.getUTCFullYear()}` : "")), lead = (x) => (P.noDate ? esc(t("isl_rs_asap")) : esc(t("isl_rs_by").replace("{d}", x)));
     const capTxt = P.noDate ? day(P.capDays) : by;
     const lines = [];
     if (P.marks > 0 || P.tomes > 0) lines.push(`<div class="isl-done am">${lead(by)}: <b>${bidiNum(((P.mkCopiesAll + P.tmCopiesAll) * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; ${[P.marks > 0 ? `<b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))}` : "", P.tomes > 0 ? `<b>${bidiNum(P.tomes.toLocaleString())}</b> ${esc(t("isl_tm_name"))}` : ""].filter(Boolean).join(" + ")} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
@@ -26303,6 +26338,24 @@ async function renderIslandGallery() {
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => {
     document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
+  };
+  // Pack cost's Cheapest: what Islands still has to buy if every target only has to be
+  // reached by `d` days from now (free income up to then first). `uncovered` = copies no
+  // pack covers (a date is only good when it leaves no more of them than "as soon as possible").
+  PACK_NEED_BY_DATE.islands = (d) => {
+    const P = sharedPlan(false, d), L = lightPlan(d), o = {};
+    const mk = planList().filter(usesMarks).reduce((a, s) => a + (P.mk.get(s.id) || 0) * srcOf(s).markPrice, 0), tm = P.tomes || 0, ct = Math.max(0, L.ct - L.free), sh = P.shNeed || 0;
+    if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh;
+    const B = sharedPlan(false);
+    const unc = (x) => Math.max(0, x.cant - Math.round((x.shNeed || 0) / (perCopy() || 1)));
+    return { totals: o, ok: unc(P) <= unc(B) };
+  };
+  // The plan picked in Pack cost: the page's boxes and lines follow its date (Cheapest at a later date).
+  PACK_PICK_HOOKS.islands = (days) => {
+    const v = days == null ? null : days;
+    if (v === ISL_VIEW_DAYS) return;
+    ISL_VIEW_DAYS = v;
+    if (document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender());
   };
   // A new date in the Pack cost window's target row: the page's plan follows it (free income
   // up to that day first), like the cost.
