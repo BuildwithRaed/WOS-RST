@@ -3301,6 +3301,7 @@ const T = {
   pca_for_isl: { en: "+{n} for Islands" },
   pca_bought_for: { en: "paid by {p}" },
   pca_free_shards: { en: "+{n} shards from packs your other pages buy ({c} copies)" },
+  pca_isl_copies: { en: "+{n} shards → {c} building copies (instead of buying them with Marks / Tomes)" },
   pca_then_buy: { en: "Then buy" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
@@ -16944,7 +16945,7 @@ function packShortAfterTrades(remaining, ctx) {
       if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
       spare[r.from] -= lots * r.give;
       short[to] = Math.max(0, short[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
     }
     if (short[to] <= 1e-9) delete short[to];
   }
@@ -17506,7 +17507,8 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
     const perGroup = groups.map(() => 0);
     r.picks.forEach((p) => { perGroup[p.gi] += p.count; });
     const tr = packShortAfterTrades(remainingOf(r.picks), ctx);
-    r.trades = tr.trades.filter((x) => !x.silent);
+    r.trades = tr.trades.filter((x) => !x.silent && !x.isl);
+    r.islShards = tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
     r.perGroup = perGroup;
     r.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle), g.window) : 0));
     return r;
@@ -17539,7 +17541,9 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
       exact.picks.forEach((p) => { perGroup[p.gi] += p.count; });
       let weeksNeeded = 0;
       ex.lots.forEach((n, k) => { if (n > 0 && rates[k].max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil(n / rates[k].max)); });
-      exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab } : null)).filter((x) => x && !x.silent);
+      exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab, isl: !!rates[k].islFree } : null)).filter((x) => x && !x.silent);
+      exact.islShards = exact.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
+      exact.trades = exact.trades.filter((x) => !x.isl);
       exact.perGroup = perGroup;
       exact.days = Math.max(0, weeksNeeded > 1 ? (weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle), g.window) : 0));
     } else {
@@ -18283,6 +18287,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const note = mk != null ? `<div class="pca-note">${esc(t("pca_shard_note").replace("{a}", fmt(cheapest.per, cheapest)).replace("{b}", fmt(mk, cheapest)))}</div>` : "";
     return `<div class="pca-h">${esc(t("pca_not_cheaper"))}</div>${rowsH}${note}`;
   };
+  // Islands: shards that pay building copies directly (not a trade in the game).
+  const islCopiesLine = (pl) => {
+    const n = calcKey === "islands" && pl ? Math.round(Number(pl.islShards) || 0) : 0;
+    return n > 0 ? `<div class="pca-bonus">${pcaIcon(SHI)}<span>${esc(t("pca_isl_copies").replace("{n}", qty(n)).replace("{c}", qty(Math.floor(n / islPc))))}</span></div>` : "";
+  };
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
   let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest)
   // The shared view looks like "This page only": plan cards on top (this
@@ -18308,7 +18317,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     // Islands: shard steps the plan buys for other pages pay copies for free.
     let inPlanHtml = "";
     if (islShardOn) {
-      let left = trades.filter((x) => x.from === SHI).reduce((a, x) => a + x.giveQty, 0) + (Number(need[SHI]) || 0);
+      let left = (Number(p.islShards) || 0) + (Number(need[SHI]) || 0);
       const mineKeys = new Set(mineShare.rows.map((r) => `${r.title}|${r.label}`));
       const free = left > 0 ? p.rows.filter((r) => shardsOf(r) > 0 && !mineKeys.has(`${r.title}|${r.label}`)) : [];
       let got = 0;
@@ -18326,7 +18335,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}</div>`;
+      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}${islCopiesLine(p)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -18423,7 +18432,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
-          const tradesA = pcaTrades(p.trades);
+          const tradesA = pcaTrades(p.trades) + islCopiesLine(p);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
           sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
@@ -19786,7 +19795,7 @@ function applyTrades(rates, need, owned, weeks) {
       usedLots.set(r, (usedLots.get(r) || 0) + lots);
       spare[r.from] -= lots * r.give;
       after[to] = Math.max(0, after[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
     }
   });
   Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
@@ -19804,7 +19813,7 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
-  return { still, trades: res.trades.filter((x) => !x.silent), weeks: res.weeks };
+  return { still, trades: res.trades.filter((x) => !x.silent && !x.isl), weeks: res.weeks };
 }
 // When a needed item isn't sold by any assigned pack but can be traded
 // for from something that is, the need is converted into the source item
@@ -21266,7 +21275,7 @@ function budgetMergedPlan(res, inc, targetDays) {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
       return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
-    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
+    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent && !x.isl), islShards: tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
   };
   return packPickCheapest([tryWith((e) => e.max), tryWith((e) => e.sum)]);
 }
