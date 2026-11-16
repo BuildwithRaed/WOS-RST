@@ -3463,6 +3463,7 @@ const T = {
   pk_every_week: { en: "Every week" },
   pk_every_weeks: { en: "Every {n} weeks" },
   pk_every_month_date: { en: "Same date every month" },
+  pk_every_month_on: { en: "Every month on the {d}" },
   pk_dates_then: { en: "then {date}" },
   pack_next_on: { en: "Next on" },
   pack_resets: { en: "resets" },
@@ -8446,7 +8447,7 @@ function renderMyPackDates(el, tables) {
       const offs = packResetOffsets(l.reset, l.resetDay, 400, l.window);
       const next = offs.find((o) => o > 0);
       const then = next != null ? offs.find((o) => o > next) : null;
-      const sub = `${packEveryText(l.reset)}${offs[0] === 0 ? ` · ${t("pur_now")}` : ""}${next != null ? ` · ${t("pk_dates_next").replace("{date}", fmt(next))}` : ""}${then != null ? ` · ${t("pk_dates_then").replace("{date}", fmt(then))}` : ""}`;
+      const sub = `${packEveryText(l.reset, l.resetDay)}${offs[0] === 0 ? ` · ${t("pur_now")}` : ""}${next != null ? ` · ${t("pk_dates_next").replace("{date}", fmt(next))}` : ""}${then != null ? ` · ${t("pk_dates_then").replace("{date}", fmt(then))}` : ""}`;
       const value = next != null ? packDayKey(new Date(today.getTime() + next * 86400000)) : (packValidDay(l.resetDay) || "");
       return `<div class="pkd-row">
         <div class="pkd-n">${rowTitle(tb)}<div class="meta">${esc(sub)}</div></div>
@@ -11075,7 +11076,7 @@ async function renderPackCalendarPage() {
     const r = l.reset;
     if (r >= PACK_ONE_TIME_DAYS) return t("pack_reset_once");
     const preset = PACK_RESET_PRESETS.find((x) => x.days === r);
-    return preset ? t("pack_reset_" + preset.key) : packEveryText(r);
+    return preset ? t("pack_reset_" + preset.key) : packEveryText(r, l.resetDay);
   };
   const kindName = (k) => t({ weekly: "pack_cal_weekly", monthly: "pack_cal_monthly", event: "pack_cal_events", newheroes: "pack_cal_new_heroes", unlocks: "pcl_unlocks" }[k] || "pack_cal_other");
   const needMap = plan && plan.need ? plan.need : null;
@@ -12080,7 +12081,7 @@ async function renderPacksPage() {
   function pkbWhen(lk) {
     const r = lk.reset, out = { text: "", on: false, next: "" };
     if (r == null || r === "") return out;
-    const parts = [pkbResetText(r)];
+    const parts = [Number(r) === 30 ? packEveryText(30, lk.resetDay) : pkbResetText(r)];
     if (typeof r === "number" && r < PACK_ONE_TIME_DAYS && !packStackInfo(r)) {
       const win = Number(lk.window) || 0;
       const offs = packResetOffsets(r, lk.resetDay, 400, lk.window);
@@ -16276,9 +16277,9 @@ function packOffersFor(table, keepEmpty) {
 //                        (a ladder can be run once per reset)
 // ------------------------------------------------------------
 // "Every 4 weeks" rather than "Every 28 days" (owner, 16 Nov 2026: events cycle in weeks).
-function packEveryText(r) {
+function packEveryText(r, day) {
   const n = Number(r);
-  if (n === 30) return t("pk_every_month_date");
+  if (n === 30) { const d = packParseDay(packValidDay(day)); if (!d) return t("pk_every_month_date"); const n2 = d.getUTCDate(), ord = LANG === "en" ? n2 + ([11, 12, 13].includes(n2 % 100) ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n2 % 10] || "th")) : String(n2); return t("pk_every_month_on").replace("{d}", ord); }
   if (n === 7) return t("pk_every_week");
   if (n > 0 && n % 7 === 0) return t("pk_every_weeks").replace("{n}", n / 7);
   return t("pk_every_days").replace("{n}", n);
