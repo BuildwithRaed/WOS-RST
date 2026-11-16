@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "63b88e6d67";
+window.SCAN_BUILD = "bc19bcf795";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1654,6 +1654,15 @@ function scanPkUsd(value, cur) {
   if (rate > 0) { const u = value / rate; return { usd: Math.max(0.99, Math.round(u) - 0.01), sure: false }; }
   return { usd: null, sure: false };
 }
+// A US $ step's price in a store currency: the person's own store prices first,
+// then the site's store prices, then the exchange rate. null when unknown.
+function scanPkStore(usd, cur) {
+  if (!(usd > 0)) return null;
+  if (!cur || cur === "USD") return usd;
+  const mine = typeof myStorePrices === "function" ? (myStorePrices()[cur] || {}) : {};
+  const rate = typeof currencyRates === "function" ? Number(currencyRates()[cur]) || 0 : 0;
+  return Number(mine[Number(usd).toFixed(2)]) || (typeof currencySlotPrice === "function" ? currencySlotPrice(usd, cur) : null) || (rate > 0 ? Math.round(usd * rate * 100) / 100 : null);
+}
 // A game name ("Charm Guide", "100K Meat", "Fire Crystal Chest") as a Packs
 // item, with the bundle size it carries ({ name, mult }) or null.
 function scanPkNameItem(raw) {
@@ -2236,7 +2245,7 @@ function openPackScanMain(opts) {
       const c2 = pool.find((c) => !c.groups.some((x) => samePrice(x, g)) && g.price && c.groups.every((x) => x.price) && (pool.length === 1 && st.addTo != null ? true : key(c.title) && key(c.title) === key(g.title)));
       if (c2) { c2.groups.push(g); c2.shots.add(si); c2.changed = true; c2.groups.sort((a, b) => (a.price.usd || a.price.value) - (b.price.usd || b.price.value)); return; }
       if (opts.target && st.cards.length && st.files > 0) return; // a pack window only keeps its own pack
-      st.cards.push({ groups: [g], bazaar: !!g.bazaar, shots: new Set([si]), title: g.title || "", titleTyped: false, category: opts.category || (opts.categories || [])[0] || "", fresh: true, open: false, status: "", m: null, asNew: false });
+      st.cards.push({ seq: (st.seqN = (st.seqN || 0) + 1), groups: [g], bazaar: !!g.bazaar, shots: new Set([si]), title: g.title || "", titleTyped: false, category: opts.category || (opts.categories || [])[0] || "", fresh: true, open: false, status: "", m: null, asNew: false });
     });
   };
   const cmpOf = (c) => (c.asNew ? null : c.m);
@@ -2247,11 +2256,11 @@ function openPackScanMain(opts) {
       // one): no table decided by its items → the card asks "Which table?"
       if (!opts.target && !c.m && !c.bazaar && typeof opts.match === "function" && c.title) c.m = opts.match(c.title);
       c.fresh = false;
-      fillFromSaved(c); scaleDefault(c);
+      fillFromSaved(c); if (priceByItems(c)) fillFromSaved(c); scaleDefault(c);
       c.open = needsLook(c);
       return;
     }
-    if (c.changed) { c.changed = false; fillFromSaved(c); scaleDefault(c); if (needsLook(c)) c.open = true; }
+    if (c.changed) { c.changed = false; fillFromSaved(c); if (priceByItems(c)) fillFromSaved(c); scaleDefault(c); if (needsLook(c)) c.open = true; }
   };
   // How far a screenshot's step is from a saved row: over every item either has
   // (Gems left out), 1 for an item only one of them has, else the share the amounts
@@ -2333,6 +2342,75 @@ function openPackScanMain(opts) {
     g.priceOk = false;
     if (!g.gemsSure && !g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(best.r.usd);
     return best.p;
+  };
+  // A price read wrong (QAR 369.99 read as 269.99): when every item read matches one
+  // saved row of the pack exactly, that row's price is taken (shown in the store's
+  // money) and not asked (owner, 16 Nov 2026). Only a read price not yet confirmed.
+  const priceByItems = (c) => {
+    const m = cmpOf(c);
+    if (!m || !Array.isArray(m.saved) || !m.saved.length) return false;
+    let moved = false;
+    c.groups.forEach((g) => {
+      if (!g.price || !(g.price.value > 0) || g.priceOk || g.price.sure) return;
+      const ticked = g.items.filter((it) => it.tick && it.name !== "Gems");
+      if (!ticked.length || ticked.some((it) => !it.name || it.fill || it.fillAmt || it.noAmt || !(Number(it.value) > 0))) return;
+      const usds = new Set();
+      m.saved.forEach((r) => { if (r && r.usd > 0) { const x = rowDist(g, r); if (x.shared && x.d < 1e-9) usds.add(Number(r.usd).toFixed(2)); } });
+      if (usds.size !== 1) return;
+      const usd = Number([...usds][0]), store = scanPkStore(usd, g.price.cur);
+      g.price = { ...g.price, readValue: g.price.readValue != null ? g.price.readValue : g.price.value, value: store || g.price.value, usd, sure: true };
+      g.priceByItems = true;
+      if (!g.gemsSure && !g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(usd);
+      moved = true;
+    });
+    return moved;
+  };
+  // A read store price that isn't the price of any of the pack's rows: the step to
+  // offer instead ({ usd, value } in the store's money), else null. The step the
+  // items already picked (Myriad Bazaar) when it is one of the pack's, else the
+  // nearest store price.
+  // The pack's own prices in a store currency: [{ usd, value }], cheapest first.
+  const packSteps = (c, cur) => {
+    const m = cmpOf(c), steps = [];
+    if (!m || !Array.isArray(m.saved)) return steps;
+    m.saved.forEach((r) => { if (r && r.usd > 0 && !steps.some((x) => Math.abs(x.usd - r.usd) < 0.005)) { const v = scanPkStore(r.usd, cur); if (v) steps.push({ usd: Number(r.usd), value: v }); } });
+    return steps.sort((a, b) => a.usd - b.usd);
+  };
+  const priceNear = (c, g) => {
+    if (!cmpOf(c) || !g.price || !(g.price.value > 0)) return null;
+    const steps = packSteps(c, g.price.cur);
+    if (!steps.length) return null;
+    const read = g.price.value;
+    if (steps.some((x) => Math.abs(x.value - read) / read < 0.03)) return null;
+    const usd = g.price.usd;
+    return steps.find((x) => usd > 0 && Math.abs(x.usd - usd) < 0.005) || steps.slice().sort((a, b) => Math.abs(a.value - read) - Math.abs(b.value - read))[0];
+  };
+  // The card's store currency (the one its header shows).
+  const editCur = (g) => (g.price && g.price.cur) || (typeof DISPLAY_CURRENCY !== "undefined" && DISPLAY_CURRENCY) || "USD";
+  // "= $99.99 · step 8 of 9", or "not a price in this pack" (amber) when the pack has rows.
+  const priceResHtml = (c, g) => {
+    const usd = g.price && g.price.usd;
+    if (!(usd > 0)) return "";
+    const m = cmpOf(c), saved = m && Array.isArray(m.saved) ? m.saved : [];
+    const i = saved.length ? rowIdx(c, g) : -1;
+    if (saved.length && i < 0) return `= $${usd} · <span style="color:var(--amber)">${esc(t("pks_price_not_pack"))}</span>`;
+    return `= $${usd}${i >= 0 && saved.length > 1 ? ` · ${esc(t("pks_step").replace("{k}", i + 1).replace("{n}", saved.length))}` : ""}`;
+  };
+  // The price fix is a dropdown of the store's price list (Packs > Prices): this
+  // pack's own prices first, then every other price point (owner, 16 Nov 2026).
+  const priceEditHtml = (c, ci, g, gi) => {
+    const cur = editCur(g), own = packSteps(c, cur);
+    const slots = (typeof currencyPriceSlots === "function" ? currencyPriceSlots() : ["0.99", "1.99", "2.99", "4.99", "9.99", "19.99", "49.99", "99.99"]).map(Number).filter((u) => u > 0 && !own.some((x) => Math.abs(x.usd - u) < 0.005));
+    const rest = slots.map((u) => ({ usd: u, value: cur === "USD" ? u : scanPkStore(u, cur) }));
+    const all = own.concat(rest);
+    const read = g.price && g.price.value > 0 ? g.price.value : null;
+    let pick = g.price && g.price.usd > 0 ? all.find((x) => Math.abs(x.usd - g.price.usd) < 0.005) : null;
+    if (!pick && read) pick = all.filter((x) => x.value).sort((p, q) => Math.abs(p.value - read) - Math.abs(q.value - read))[0];
+    const opt = (x) => `<option value="${x.usd}"${pick === x ? " selected" : ""}>${esc(cur !== "USD" && x.value ? `${money(x.value, cur)} ($${x.usd})` : "$" + x.usd)}</option>`;
+    const rv = g.price && g.price.readValue > 0 ? g.price.readValue : read;
+    const lbl = rv ? t("pks_price_read_as").replace("{p}", money(rv, cur)) : t("pks_price_none");
+    return `<div class="pks-ask"><span>${esc(lbl)}</span><select class="keep-w" data-pkspsel="${ci}|${gi}" aria-label="${esc(t("pks_price_h"))}">${pick ? "" : `<option value="" selected>${esc(t("pks_price_pick"))}</option>`}${own.length ? `<optgroup label="${esc(t("pks_price_this"))}">${own.map(opt).join("")}</optgroup><optgroup label="${esc(t("pks_price_all"))}">${rest.map(opt).join("")}</optgroup>` : all.map(opt).join("")}</select>${pick && !g.priceOk ? `<button type="button" class="cg-bpbtn pks-yes" data-pkspuse="${ci}|${gi}">&#10003; ${esc(t("pks_price_use"))}</button>` : ""}</div>
+      <div class="pks-ask end">${g.priceOk ? priceResHtml(c, g) : ""}</div>`;
   };
   const needTable = (c) => c.bazaar && !c.m && !c.asNew;
   // "Scale to the next prices" (the price steps) starts on unless the pack it
@@ -2576,8 +2654,10 @@ function openPackScanMain(opts) {
   const priceAskHtml = (c, ci) => c.groups.map((g, gi) => {
     if (!priceUnsure(g) && !(c.priceEdit === gi)) return "";
     const read = g.price && g.price.value && !c.priceEdit && c.priceEdit !== gi && g.price.usd > 0;
+    const near = g.price && g.price.value && c.priceEdit !== gi ? priceNear(c, g) : null;
+    if (near) return `<div class="pks-pq"><div class="pks-ask"><span>${esc(t("pks_price_off_q").replace("{p}", money(g.price.value, g.price.cur)).replace("{s}", money(near.value, g.price.cur)).replace("{usd}", "$" + near.usd))}</span><button type="button" class="cg-bpbtn pks-yes" data-pkspyes="${ci}|${gi}">&#10003; ${esc(t("pks_yes"))}</button><button type="button" class="cg-bpbtn" data-pkspedit="${ci}|${gi}">&#9998; ${esc(t("pks_edit"))}</button></div></div>`;
     return `<div class="pks-pq">${read ? `<div class="pks-ask"><span>${esc(t("pks_price_q").replace("{p}", money(g.price.value, g.price.cur)).replace("{usd}", "$" + g.price.usd))}</span><button type="button" class="cg-bpbtn pks-yes" data-pkspyes="${ci}|${gi}">&#10003; ${esc(t("pks_yes"))}</button><button type="button" class="cg-bpbtn" data-pkspedit="${ci}|${gi}">&#9998; ${esc(t("pks_edit"))}</button></div>`
-      : `<label class="pks-edr"><span>${esc(g.price && g.price.value ? t("pks_store").replace("{p}", money(g.price.value, g.price.cur)) : t("pks_price_none"))}</span><span class="pks-usd">US $<input type="text" inputmode="decimal" class="pks-in" data-pksusd="${ci}|${gi}" value="${g.price && g.price.usd ? g.price.usd : ""}" placeholder="4.99" aria-label="US $" autocomplete="off" /></span></label>`}</div>`;
+      : priceEditHtml(c, ci, g, gi)}</div>`;
   }).join("");
   // One row per price: price, every item (picture + amount), Gems.
   const rowsTableHtml = (rows, savedTag) => {
@@ -2679,12 +2759,32 @@ function openPackScanMain(opts) {
       ${canNew() ? `<button type="button" class="pks-li pks-li-new" data-pksasnew><span class="pks-plus">+</span><span><b>${esc(t("pks_as_new"))}</b><small>${esc(t(IS_OWNER ? "pks_as_new_d" : "pks_as_new_dv"))}</small></span></button>` : ""}
     </div></div>`;
   };
+  // Cards in price order whatever order the screenshots were picked in (owner,
+  // 16 Nov 2026): each pack's cards together (packs in the order first seen), then
+  // price, then the step among rows sharing a price (table order). Returns the old
+  // index of each card, so a focused box can follow its card.
+  const sortCards = () => {
+    const packKey = (c) => { const m = cmpOf(c); return m ? "id:" + m.id : c.bazaar ? "baz" : key(c.title) ? "t:" + key(c.title) : "c:" + c.seq; };
+    const rank = {};
+    st.cards.forEach((c) => { const k = packKey(c); if (rank[k] == null || c.seq < rank[k]) rank[k] = c.seq || 0; });
+    const priceOf = (c) => { const g = c.groups[0], p = g && g.price; return p && p.usd > 0 ? p.usd : p && p.value > 0 ? p.value : Infinity; };
+    const stepOf = (c) => { const g = c.groups[0]; const i = g && cmpOf(c) ? rowIdx(c, g) : -1; return i >= 0 ? i : 1e6; };
+    const old = st.cards.slice();
+    const keyed = st.cards.map((c) => ({ c, r: rank[packKey(c)], p: priceOf(c), s: stepOf(c), q: c.seq || 0 }));
+    keyed.sort((a, b) => a.r - b.r || a.p - b.p || a.s - b.s || a.q - b.q);
+    st.cards = keyed.map((x) => x.c);
+    return st.cards.map((c) => old.indexOf(c));
+  };
   const draw = () => {
     if (!live()) return;
     st.phase = "cards";
     const box0 = modal.querySelector(".pks-box"), y = box0 ? box0.scrollTop : 0;
     const act = document.activeElement, actKey = act && modal.contains(act) ? [...act.attributes].find((a) => a.name.startsWith("data-pks")) : null;
-    const sel = actKey ? `[${actKey.name}="${window.CSS.escape(actKey.value)}"]` : "";
+    const was = sortCards();
+    let actVal = actKey ? actKey.value : "";
+    const am = /^(\d+)(\|.*)?$/.exec(actVal);
+    if (am && was.indexOf(Number(am[1])) >= 0) actVal = was.indexOf(Number(am[1])) + (am[2] || "");
+    const sel = actKey ? `[${actKey.name}="${window.CSS.escape(actVal)}"]` : "";
     const caret = act && typeof act.selectionStart === "number" ? act.selectionStart : null;
     const visitorNote = !IS_OWNER && st.cards.some((c) => toOwnCopy(c) && c.status !== "saved") ? `<div class="pks-vn">${esc(t("pks_visitor_note"))}</div>` : "";
     modal.innerHTML = `<div class="modal-box pks-box pks-cards" role="dialog" aria-label="${esc(t("pks_title"))}">
@@ -2773,16 +2873,32 @@ function openPackScanMain(opts) {
     on("data-pksname", (v, el) => { const c = st.cards[Number(v)]; c.title = el.value; c.titleTyped = true; light(Number(v)); });
     on("data-pkscat", (v, el) => { st.cards[Number(v)].category = el.value; });
     on("data-pksadd", (v) => { const c = st.cards[Number(v)], g = c.groups[0]; g.items.push({ name: null, value: null, tick: true, sure: false, added: true }); c.edit = `0|${g.items.length - 1}`; draw(); });
-    on("data-pkspyes", (v) => { const [ci, gi] = v.split("|").map(Number), c = st.cards[ci]; markCheck(c); c.groups[gi].priceOk = true; c.priceEdit = null; draw(); });
-    on("data-pkspedit", (v) => { const [ci, gi] = v.split("|").map(Number); st.cards[ci].priceEdit = gi; draw(); });
-    on("data-pksusd", (v, el) => {
+    on("data-pkspyes", (v) => {
       const [ci, gi] = v.split("|").map(Number), c = st.cards[ci], g = c.groups[gi];
       markCheck(c);
-      g.price = g.price || { cur: "USD", value: null };
-      g.price.usd = num(el.value); g.priceOk = g.price.usd > 0;
-      if (!g.gemsTyped && typeof mpGems === "function" && g.price.usd) g.gems = mpGems(g.price.usd);
-      light(ci);
+      const near = priceNear(c, g);
+      if (near) {
+        g.price = { ...g.price, readValue: g.price.readValue != null ? g.price.readValue : g.price.value, value: near.value, usd: near.usd };
+        if (!g.gemsSure && !g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(near.usd);
+        g.priceOk = true; c.priceEdit = null; fillFromSaved(c);
+      } else { g.priceOk = true; c.priceEdit = null; }
+      draw();
     });
+    on("data-pkspedit", (v) => { const [ci, gi] = v.split("|").map(Number); st.cards[ci].priceEdit = gi; draw(); });
+    const setUsd = (ci, gi, usd) => {
+      const c = st.cards[ci], g = c.groups[gi], cur = editCur(g);
+      if (!(usd > 0)) return;
+      markCheck(c);
+      const keep = g.price && g.price.readValue != null ? g.price.readValue : g.price && g.price.value > 0 ? g.price.value : null;
+      g.price = { ...(g.price || {}), readValue: keep, cur, value: scanPkStore(usd, cur) || usd, usd };
+      g.priceOk = true; g.rowPick = null;
+      if (!g.gemsTyped && typeof mpGems === "function") g.gems = mpGems(usd);
+      fillFromSaved(c);
+      c.priceEdit = rowIdx(c, g) >= 0 || !cmpOf(c) ? null : gi;
+      draw();
+    };
+    on("data-pkspsel", (v, el) => { const [ci, gi] = v.split("|").map(Number); setUsd(ci, gi, Number(el.value)); });
+    on("data-pkspuse", (v) => { const [ci, gi] = v.split("|").map(Number), el = modal.querySelector(`[data-pkspsel="${v}"]`); if (el) setUsd(ci, gi, Number(el.value)); });
     on("data-pkslad", (v) => { const c = st.cards[Number(v)]; c.ladOpen = !c.ladOpen; draw(); });
     on("data-pksscale", (v, el) => { const c = st.cards[Number(v)]; c.scale = el.checked; c.scaleTouched = true; draw(); });
     on("data-pksstep", (v) => {

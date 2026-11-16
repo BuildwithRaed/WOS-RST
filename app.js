@@ -1811,6 +1811,13 @@ const T = {
   pks_items_h: { en: "Items" },
   pks_missing: { en: "An item is missing" },
   pks_price_q: { en: "Read {p} = {usd}. Is it right?" },
+  pks_price_not_pack: { en: "not a price in this pack" },
+  pks_price_read_as: { en: "read as {p}" },
+  pks_price_pick: { en: "— choose a price —" },
+  pks_price_this: { en: "This pack" },
+  pks_price_all: { en: "All prices" },
+  pks_price_use: { en: "Use this price" },
+  pks_price_off_q: { en: "Price read as {p} — not a price in this pack. Closest step: {s} ({usd})?" },
   pks_price_h: { en: "Price" },
   pks_kept_tag: { en: "saved" },
   pks_on: { en: "On" },
@@ -14726,7 +14733,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=63b88e6d67";
+      s.src = "scan.min.js?v=bc19bcf795";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
