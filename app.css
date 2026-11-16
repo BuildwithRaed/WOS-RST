@@ -4123,7 +4123,6 @@ input,select,textarea{
   .pkd-dly{ margin-top:6px; padding-top:5px; border-top:1px solid var(--line); }
   .pkd-dly small, .pkd-note{ display:block; font-size:11.5px; color:var(--muted); }
   .pkd-note{ margin-top:4px; }
-  .pkd-tot{ margin-top:2px; }
   .pkd-rad{ display:inline-block; width:15px; height:15px; border:2px solid var(--ice); border-radius:50%; }
   .pkd-or{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
   .pkd-or::before, .pkd-or::after{ content:""; flex:1 1 auto; border-top:1px dashed var(--line); }

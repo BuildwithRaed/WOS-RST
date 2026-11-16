@@ -1286,7 +1286,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 97; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 98; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -3044,9 +3044,7 @@ const T = {
   pkb_counted_some: { en: "{n} of {m} counted in Budgets" },
   pkb_how: { en: "How it's bought" },
   pkb_no_match: { en: "No packs match your search." },
-  pkb_ev_same: { en: "same dates" },
   pkb_ev_packs: { en: "{n} packs" },
-  pkb_tiers: { en: "{n} tiers" },
   pkb_ev_part: { en: "Part of {name}" },
   pkb_ev_from: { en: "Its dates come from that pack" },
   pkb_ev_lasts: { en: "Lasts {n} days" },
@@ -3062,8 +3060,6 @@ const T = {
   pkb_ev_follows: { en: "follows {pack} · ticking moves it" },
   pkb_ev_swap: { en: "leads {n} packs now · will follow {pack}" },
   pkb_ev_swap1: { en: "leads 1 pack now · will follow {pack}" },
-  pkb_ng_heroes: { en: "{n} heroes" },
-  pkb_ng_hero1: { en: "1 hero" },
   pkb_ng_shards: { en: "{n} shards" },
   pkb_ng_widgets: { en: "{n} widgets" },
   pkb_ng_made: { en: "Made by itself for each new hero (Gen {gen})" },
@@ -3132,7 +3128,6 @@ const T = {
   pkd_at_lv: { en: "at Lv {n}" },
   pkd_lv_done: { en: "✓ passed" },
   pkd_lv_now: { en: "on now" },
-  pkd_lv_coming: { en: "coming" },
   pkd_trig_note: { en: "Appears when {e} reaches {list}" },
   pkd_trig_lv: { en: "Lv {n} (step {s})" },
   pkd_and: { en: "and" },
@@ -3145,7 +3140,7 @@ const T = {
   pkd_sh_a_day: { en: "{n} a day" },
   pkd_sh_more_day: { en: "{n} more a day" },
   pkd_sh_first_note: { en: "Only the first buy of each day" },
-  pkd_sh_total: { en: "up to {list} in the {d}" },
+  pkd_sh_per_day: { en: "per day: {list} (first one with the extra)" },
   pkd_tomes: { en: "+{n} Glorious Tomes for the first buy each day" },
   pkd_options: { en: "{n} options" },
   pkd_sides: { en: "2 sides" },
@@ -12574,8 +12569,8 @@ async function renderPacksPage() {
         const strike = {}; tb.columns.forEach((_, ci) => { strike[ci] = pkbVal(tb.rows[p.n], ci); });
         return pkbStep(lab, pkbPriceTag(tb, lk, p.f), pkbChips(tb, lk, p.f, null, strike), { cap: esc(t("pkd_sh_a_day").replace("{n}", Math.round(p.cf / sh.N))), foot: `<small class="pkd-note">${esc(t("pkd_sh_first_note"))}</small>` });
       }).join("");
-      const tot = sh.pairs.map((p) => p.cf + p.cn).join(" / ");
-      return { lab: t("pkd_l_times"), seg, html: html + `<small class="pkd-note pkd-tot">${esc(t("pkd_sh_total").replace("{list}", tot).replace("{d}", pkbDur(sh.N)))}</small>`, buys: `${t("pkd_any_order")} · ${t("pkd_up_to").replace("{list}", tot)}` };
+      const perDay = sh.pairs.map((p) => Math.round((p.cf + p.cn) / sh.N)).join(" / ");
+      return { lab: t("pkd_l_times"), seg, html, buys: t("pkd_sh_per_day").replace("{list}", perDay) };
     }
     const free0 = rows.length > 1 && !(parseNum(String(rows[0].r.cells[lk.priceCol || 0])) > 0);
     const lab = lk.pickCols > 0 ? t(lk.sequential || lk.pickOrder ? "pkd_l_pick" : "pkd_l_pick_any").replace("{n}", lk.pickCols)
