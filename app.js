@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 95; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 96; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -1912,9 +1912,15 @@ const T = {
   isl_rs_done: { en: "done" },
   isl_rs_done_c: { en: "Done" },
   isl_rs_by: { en: "By {d}" },
+  isl_rs_asap: { en: "Every target as soon as packs allow" },
   isl_rs_short: { en: "shards short" },
   isl_rs_all: { en: "all buildings at target" },
   isl_rs_cant: { en: "{n} copies can't be reached by {d} (shards only)" },
+  isl_rs_free: { en: "+{n} shards from packs you already buy for other pages ({c} copies)" },
+  isl_rs_sh_buy: { en: "{n} copies (shards only) → {s} shards from packs" },
+  isl_rs_sh_none: { en: "No shard pack can be bought by {d} for the shards-only copies" },
+  isl_rs_sh_more: { en: "Shard packs give only {s} shards by {d}" },
+  isl_rs_sh_next: { en: "next shards from a pack: {d}" },
   isl_tag_ev: { en: "\ud83c\udfaa {t}" },
   isl_tag_rk: { en: "\ud83c\udfc6 {t}" },
   isl_wk: { en: "{n} wk" },
@@ -1928,8 +1934,6 @@ const T = {
   isl_mk_also: { en: "Also in the Mark of Revival shop" },
   isl_mk_chip: { en: "Mark shop" },
   isl_mk_after: { en: "{m} Marks by your target" },
-  isl_mk_or: { en: "or {m} Marks" },
-  isl_mk_optional: { en: "optional" },
   isl_mk_need_opt: { en: "optional, faster · {n} Marks · have {h}" },
   isl_mk_limit: { en: "Shop limit (total)" },
   isl_mk_price: { en: "Price (Marks)" },
@@ -1987,7 +1991,6 @@ const T = {
   isl_sc_days: { en: "{n} days" },
   isl_tm_name: { en: "Glorious Tome" },
   isl_tm_after: { en: "{m} Tomes by your target" },
-  isl_tm_or: { en: "or {m} Tomes" },
   all_categories: { en: "All categories" },
   tundra_album_title: { en: "Tundra Album" },
   of_max_prefix: { en: "of max" },
@@ -2280,6 +2283,9 @@ const T = {
   pack_currency: { en: "Currency" },
   pack_all_steps: { en: "all {n} steps" },
   pack_steps_of: { en: "{k} of {n} steps" },
+  pack_steps_range: { en: "steps {a}–{b}" },
+  pca_ends: { en: "ends {d}" },
+  pca_next: { en: "next {d}" },
   pack_up_to: { en: "up to" },
   pack_reset_every: { en: "Comes back" },
   pack_reset_desc: { en: "How often this pack can be bought again, and the next date it appears. Used to work out how long it takes to reach a target." },
@@ -3281,12 +3287,22 @@ const T = {
   cg_set6_short: { en: "6-piece" },
   cg_reset: { en: "Reset" },
   pca_done: { en: "Done" },
+  pca_packs_by: { en: "Packs bought by {d}" },
   pca_in_days: { en: "in {n} days" },
   pca_packs: { en: "{n} packs" },
   pca_target: { en: "Target" },
   pca_buy: { en: "What to buy" },
   pca_only: { en: "Only {page}" },
   pca_with_others: { en: "With my other pages" },
+  pca_not_cheaper: { en: "Checked, not cheaper" },
+  pca_steps: { en: "{n} steps" },
+  pca_shard_note: { en: "Counts for Islands only when it's the cheapest · {a} a copy vs {b} with Marks" },
+  pca_in_plan: { en: "Already in your plan" },
+  pca_for_isl: { en: "+{n} for Islands" },
+  pca_bought_for: { en: "paid by {p}" },
+  pca_free_shards: { en: "+{n} shards from packs your other pages buy ({c} copies)" },
+  pca_isl_copies: { en: "+{n} shards → {c} building copies (instead of buying them with Marks / Tomes)" },
+  pca_then_buy: { en: "Then buy" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
   cg_all_max: { en: "Every piece is at max" },
@@ -8648,8 +8664,12 @@ function packPurchaseUse(groups) {
     let add = 0, now = 0;
     const usedAt = { ...(g.usedAt || {}) };
     // Buy-in-order packs: the highest step bought in each run of the pack.
-    const top = {};
-    const noteTop = (k, p) => { if (g.ladder && !g.optionPack && !g.choice && !p.choice && (g.tables || []).length === 1) top[k] = Math.max(top[k] == null ? -1 : top[k], Number(p.row) || 0); };
+    const top = {}, optTop = {};
+    const noteTop = (k, p) => {
+      // Option ladders (Myriad Bazaar: each step from one of the set's tables): the steps bought in that run.
+      if (g.ladder && g.optionPack && !g.choice) { optTop[k] = Math.max(optTop[k] == null ? -1 : optTop[k], Number(p.row) || 0); return; }
+      if (g.ladder && !g.optionPack && !g.choice && !p.choice && (g.tables || []).length === 1) top[k] = Math.max(top[k] == null ? -1 : top[k], Number(p.row) || 0);
+    };
     const start = packCurrentCycleStart(g.reset, g.resetDay), startKey = start ? packDayKey(start) : null;
     const t0 = packStartOfToday();
     const offs = typeof g.reset === "number" && g.reset > 0 ? packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window) : [];
@@ -8694,6 +8714,32 @@ function packPurchaseUse(groups) {
         if (!resetDay) return;
       }
       extra.push({ ...g, reset, resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true });
+    });
+    // The same for option ladders bought part way (Myriad Bazaar steps 1–4): the steps after
+    // them stay on sale in that run, each from either table, as a one-off group for that run.
+    Object.entries(optTop).forEach(([k, row]) => {
+      const b = row + 1, seen = new Set(), offers = [];
+      g.offers.forEach((o) => {
+        if (!Array.isArray(o.steps) || o.steps.length !== o.tiers || o.steps.length <= b) return;
+        const tail = o.steps.slice(b), key = JSON.stringify(tail.map((st) => [st.price, st.gives]));
+        if (seen.has(key)) return;
+        seen.add(key);
+        let price = 0;
+        const gives = {};
+        tail.forEach((st) => { price += st.price; Object.keys(st.gives).forEach((n) => { gives[n] = (gives[n] || 0) + st.gives[n]; }); });
+        if (!(price > 0) || !Object.keys(gives).length) return;
+        const parts = String(o.label || "").split(" \u00b7 ");
+        const tag = parts.length === o.tiers ? parts.slice(b).join(" \u00b7 ") : parts[parts.length - 1];
+        offers.push({ ...o, price: Math.round(price * 100) / 100, gives, steps: tail, tiers: tail.length, from: b, lead: false, label: `${t("pack_steps_range").replace("{a}", b + 1).replace("{b}", o.tiers)} \u00b7 ${tag}` });
+      });
+      if (!offers.length) return;
+      let reset = g.reset, resetDay = g.resetDay;
+      if (typeof g.reset === "number" && g.reset > 0 && k !== "x") {
+        reset = Math.max(PACK_ONE_TIME_DAYS, 3000);
+        resetDay = k === "0" ? startKey : packDayKey(new Date(t0.getTime() + Number(k) * 86400000));
+        if (!resetDay) return;
+      }
+      extra.push({ ...g, reset, resetDay, perCycle: 1, used: 0, usedNow: 0, usedAt: null, offers, ladder: true, optionPack: true });
     });
     return add ? { ...g, used: (g.used || 0) + add, usedNow: (g.usedNow || 0) + now, usedAt } : g;
   });
@@ -16899,7 +16945,7 @@ function packShortAfterTrades(remaining, ctx) {
       if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
       spare[r.from] -= lots * r.give;
       short[to] = Math.max(0, short[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
     }
     if (short[to] <= 1e-9) delete short[to];
   }
@@ -17461,7 +17507,8 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
     const perGroup = groups.map(() => 0);
     r.picks.forEach((p) => { perGroup[p.gi] += p.count; });
     const tr = packShortAfterTrades(remainingOf(r.picks), ctx);
-    r.trades = tr.trades.filter((x) => !x.silent);
+    r.trades = tr.trades.filter((x) => !x.silent && !x.isl);
+    r.islShards = tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
     r.perGroup = perGroup;
     r.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle), g.window) : 0));
     return r;
@@ -17494,7 +17541,9 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
       exact.picks.forEach((p) => { perGroup[p.gi] += p.count; });
       let weeksNeeded = 0;
       ex.lots.forEach((n, k) => { if (n > 0 && rates[k].max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil(n / rates[k].max)); });
-      exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab } : null)).filter((x) => x && !x.silent);
+      exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab, isl: !!rates[k].islFree } : null)).filter((x) => x && !x.silent);
+      exact.islShards = exact.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
+      exact.trades = exact.trades.filter((x) => !x.isl);
       exact.perGroup = perGroup;
       exact.days = Math.max(0, weeksNeeded > 1 ? (weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle), g.window) : 0));
     } else {
@@ -17770,6 +17819,13 @@ let PACK_COST_MODE = "still"; // "still" = after what you own, "full" = whole am
 const PACK_COST_OPEN = {};
 const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
 const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
+const PACK_TARGET_HOOKS = {}; // calcKey -> called when the Pack cost window's target date changes (pages whose needs follow it)
+// Pages whose needs depend on the date (Islands: free income up to then): calcKey -> (days) =>
+// { totals, ok }. Pack cost's Cheapest then tries later dates with their own (smaller) needs.
+const PACK_NEED_BY_DATE = {};
+// calcKey -> (days | null): told which plan date is picked (null = Fastest / as soon as possible).
+const PACK_PICK_HOOKS = {};
+let ISL_VIEW_DAYS = null;
 const packCostShown = (calcKey, v) => {
   if (PACK_COST_SHOWN[calcKey] === v) return;
   PACK_COST_SHOWN[calcKey] = v;
@@ -18170,12 +18226,72 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
       const main = pool.slice().sort((a, b) => share(b) - share(a))[0];
       const chips = items.sort((a, b) => (pcaNeeded(b) - pcaNeeded(a)) || share(b) - share(a)).slice(0, 4);
       const parts = String(g.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
+      // (A run's left-over steps are a one-off group: say how often the pack itself comes back.)
+      const rr = g.lines.find((r) => typeof r.reset === "number" && r.reset < PACK_ONE_TIME_DAYS);
+      if (rr && typeof g.reset === "number" && g.reset >= PACK_ONE_TIME_DAYS) { g = { ...g, reset: rr.reset, resetDay: rr.resetDay }; }
       const every = typeof g.reset === "number" && !packStackInfo(g.reset) ? resetText(g.reset, g.resetDay).split(" \u00b7 ")[0] : packStackInfo(g.reset) ? t("pc_card_days").replace("{n}", packStackInfo(g.reset).days || 7) : "";
       return `<details class="pca-pk"><summary><span class="pca-pic">${main ? pcaIcon(main) : ""}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&times;${qty(g.count)}</small></span>${every ? `<span class="pca-sb">${esc(every)}</span>` : ""}${chips.length ? `<span class="pca-gv">${chips.map((n) => `<span class="pca-chip${pcaNeeded(n) ? "" : " x"}" title="${esc(materialDisplayName(n))}">${pcaIcon(n)}+${esc(shortAmount(gv[n]))}</span>`).join("")}</span>` : ""}</span><b class="pca-pr">${pcaCur(packFmtLocal(g.subtotal, g.currency, false, g.sample))}</b></summary>
         <div class="pc-lines">${g.lines.slice().sort((a, b) => b.count - a.count).map((r) => `<div><span>${qty(r.count)}&times;</span><span>${esc(r.label)}${noteOf ? noteOf(r) : ""}</span><span class="meta">${packFmtLocal(priceOf(r), r.currency, false, r.price)}</span></div>`).join("")}</div></details>`;
     }).join("");
   };
   const pcaTrades = (trades) => (trades || []).length ? `<div class="pca-h">${esc(t("trade_then"))}</div>${trades.map((x) => `<div class="pca-tr" title="${esc(`${materialDisplayName(x.from)} \u2192 ${materialDisplayName(x.to)}`)}">${pcaIcon(x.from)}<b>${qty(x.giveQty)}</b><span class="pca-ar">&rarr;</span>${pcaIcon(x.to)}<b class="g">${qty(x.getQty)}</b>${x.lab ? ` <small class="meta">(${esc(t("rfc_title"))}, ${x.lots} ${esc(t("rfc_weeks"))})</small>` : ""}</div>`).join("")}` : "";
+  // Islands: packs that give Mythic Island Shards (Myriad Bazaar steps) can
+  // stand in for Marks / Tomes (hidden trades, islShardTradesNow). Listed
+  // greyed when the plan doesn't use them ("Checked, not cheaper", their real
+  // price with every earlier step), and free when another page buys them.
+  const islShardOn = calcKey === "islands" && tradeRatesFor("islands").some((r) => r.islFree);
+  const SHI = typeof ISL_SHARD_ITEM !== "undefined" ? ISL_SHARD_ITEM : "Mythic Island Shards";
+  const islPc = Number(ISL_RULES.perCopy) || 10;
+  const shardsOf = (r) => (Number((r.gives || {})[SHI]) || 0) * (r.count || 1);
+  // What one copy costs with Marks (or Tomes) in a plan: its Mark / Tome rows' price per copy.
+  const islCopyCost = (rows) => {
+    const by = (item, per) => { let cost = 0, q = 0; (rows || []).forEach((r) => { const g = Number((r.gives || {})[item]) || 0; if (g > 0) { cost += packRowLocal(r); q += g * r.count; } }); return q > 0 ? cost / (q / per) : null; };
+    const mk = by("Mark of Revival", Number(ISL_RULES.markPrice) || 250);
+    if (mk != null) return mk;
+    const u = typeof ISL_UNIT !== "undefined" && ISL_UNIT ? ISL_UNIT : {};
+    return u.mark != null ? u.mark * (Number(ISL_RULES.markPrice) || 250) : null;
+  };
+  // Each shard pack's cheapest buy per copy, from the planner's own pack groups (so a
+  // run bought part way offers only its later steps, and a used-up run its next one).
+  const islShardPacks = () => {
+    const out = new Map();
+    packGroups.forEach((g) => {
+      const offs = typeof g.reset === "number" && g.reset > 0 ? packResetOffsets(g.reset, g.resetDay, PACK_HORIZON_DAYS, g.window) : [0];
+      const firstFree = offs.find((o) => !(o === 0 && (g.usedNow || 0) >= (g.perCycle || 1)));
+      if (firstFree == null) return;
+      g.offers.forEach((o) => {
+        const sh = Number(o.gives[SHI]) || 0;
+        if (!(sh > 0)) return;
+        const loc = packConvert(o.price, o.currency).n, per = loc / (sh / islPc);
+        const key = o.tableTitle || "";
+        const cur = out.get(key);
+        if (!cur || per < cur.per) out.set(key, { title: o.tableTitle || "", label: o.label || "", o, g, price: loc, sample: o.price, currency: o.currency, shards: sh, gives: { ...o.gives }, per, off: firstFree, window: Number(g.window) || 0, part: o.from != null });
+      });
+    });
+    return [...out.values()];
+  };
+  const islCheckedHtml = (rows) => {
+    // Only when copies are being bought (Marks / Tomes needed) and no shard pack is in the plan.
+    if (!islShardOn || !((Number(need["Mark of Revival"]) || 0) + (Number(need["Glorious Tome"]) || 0) > 0) || (rows || []).some((r) => shardsOf(r) > 0)) return "";
+    const list = islShardPacks();
+    if (!list.length) return "";
+    const mk = islCopyCost(rows), cheapest = list.slice().sort((a, b) => a.per - b.per)[0];
+    const fmt = (v, x) => packFmtLocal(Math.round(v), x.currency, true, x.sample);
+    const dayTxt = (off) => { const d = new Date(today.getTime() + off * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }); } catch (e) { return fmtDate(off); } };
+    const when = (x) => (x.off === 0 ? t("pca_ends").replace("{d}", dayTxt(Math.max(0, (x.window || 1) - 1))) : t("pca_next").replace("{d}", dayTxt(x.off)));
+    const rowsH = list.sort((a, b) => a.per - b.per).map((x) => {
+      const items = Object.keys(x.gives).filter((k) => x.gives[k] > 0 && k !== "Gems").sort((a, b) => (b === SHI) - (a === SHI) || (pcaNeeded(b) - pcaNeeded(a))).slice(0, 4);
+      const parts = String(x.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
+      return `<div class="pca-pk pca-off"><div class="pca-row"><span class="pca-pic">${pcaIcon(SHI)}</span><span class="pca-mid"><span class="pca-nm">${esc(name)}</span><span class="pca-sb">${esc(x.label.length > 60 ? t("pca_steps").replace("{n}", x.o.tiers || 1) : x.label)} &middot; ${esc(when(x))}</span><span class="pca-gv">${items.map((k) => `<span class="pca-chip${k === SHI ? "" : " x"}" title="${esc(materialDisplayName(k))}">${pcaIcon(k)}+${esc(shortAmount(x.gives[k]))}</span>`).join("")}</span></span><b class="pca-pr">${pcaCur(fmt(x.price, x))}</b></div></div>`;
+    }).join("");
+    const note = mk != null ? `<div class="pca-note">${esc(t("pca_shard_note").replace("{a}", fmt(cheapest.per, cheapest)).replace("{b}", fmt(mk, cheapest)))}</div>` : "";
+    return `<div class="pca-h">${esc(t("pca_not_cheaper"))}</div>${rowsH}${note}`;
+  };
+  // Islands: shards that pay building copies directly (not a trade in the game).
+  const islCopiesLine = (pl) => {
+    const n = calcKey === "islands" && pl ? Math.round(Number(pl.islShards) || 0) : 0;
+    return n > 0 ? `<div class="pca-bonus">${pcaIcon(SHI)}<span>${esc(t("pca_isl_copies").replace("{n}", qty(n)).replace("{c}", qty(Math.floor(n / islPc))))}</span></div>` : "";
+  };
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
   let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest)
   // The shared view looks like "This page only": plan cards on top (this
@@ -18198,11 +18314,28 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     });
     const needKeys = new Set(Object.keys(need));
     const trades = (p.trades || []).filter((x) => needKeys.has(x.to));
+    // Islands: shard steps the plan buys for other pages pay copies for free.
+    let inPlanHtml = "";
+    if (islShardOn) {
+      let left = (Number(p.islShards) || 0) + (Number(need[SHI]) || 0);
+      const mineKeys = new Set(mineShare.rows.map((r) => `${r.title}|${r.label}`));
+      const free = left > 0 ? p.rows.filter((r) => shardsOf(r) > 0 && !mineKeys.has(`${r.title}|${r.label}`)) : [];
+      let got = 0;
+      const lines = free.map((r) => {
+        const n = Math.min(left, shardsOf(r));
+        if (!(n > 0)) return "";
+        left -= n; got += n;
+        const pages = Object.keys(cb.shares || {}).filter((k) => k !== calcKey && (cb.shares[k].rows || []).some((x) => x.title === r.title && x.label === r.label)).map(packPageLabel);
+        const parts = String(r.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
+        return `<div class="pca-pk"><div class="pca-row"><span class="pca-pic">${pcaIcon(SHI)}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&middot; ${esc(String(r.label).length > 40 ? t("pca_steps").replace("{n}", String(r.label).split(" \u00b7 ").length) : r.label)}</small></span><span class="pca-sb">${pcaCur(packFmtLocal(packRowLocal(r), r.currency, false, r.price))}${pages.length ? ` &middot; ${esc(t("pca_bought_for").replace("{p}", pages.join(", ")))}` : ""}</span><span class="pca-gv"><span class="pca-chip">${pcaIcon(SHI)}${esc(t("pca_for_isl").replace("{n}", qty(n)))}</span></span></span></div></div>`;
+      }).join("");
+      if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
+    }
     sharedSections = `<div class="pc-plans">
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${mineShare.rows.length ? `<div class="pca-h">${esc(t("pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}</div>`;
+      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}${islCopiesLine(p)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -18218,6 +18351,28 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const pp = await plannerRun("page", { groups: packGroups, need, calcKey, targetDays });
     if (stale()) return;
     const earliest = pp.earliest;
+    // Pages whose needs shrink with time (free income up to the date): Cheapest tries later
+    // dates, each with the need left by then, and keeps the cheapest plan that makes its date.
+    let cheapAt = null;
+    const byDate = PACK_NEED_BY_DATE[calcKey];
+    if (byDate && earliest != null && targetDays == null) {
+      // (Like every page's Cheapest: at most a year after the fastest date.)
+      const cands = [...new Set([earliest, earliest + 28, 91, 182, 273, 365, earliest + 365].filter((d) => d >= earliest && d <= Math.min(PACK_HORIZON_DAYS, earliest + 365)))].sort((a, b) => a - b);
+      for (const d of cands) {
+        const r = byDate(d);
+        if (!r || !r.ok) continue;
+        const st = {};
+        Object.keys(r.totals).forEach((n) => { const v = Math.max(0, r.totals[n] - (Number((owned || {})[n]) || 0)); if (v > 0) st[n] = v; });
+        const nd = packNeedViaTrades(calcKey, st, supplied, d).need;
+        let plan = null;
+        if (!Object.keys(nd).length) plan = { rows: [], total: 0, days: 0, trades: [] };
+        else { const q = await plannerRun("page", { groups: packGroups, need: nd, calcKey, targetDays: d }); if (stale()) return; plan = q.byTarget || null; }
+        // Done on that date (free income brings the rest by then), not when the last pack is bought.
+        if (plan && plan.days <= d && (!cheapAt || packPlanLocal(plan) < packPlanLocal(cheapAt.plan) - 0.005)) cheapAt = { plan: { ...plan, days: d }, d };
+      }
+      if (cheapAt && pp.cheapest && packPlanLocal(cheapAt.plan) >= packPlanLocal(pp.cheapest)) cheapAt = null;
+      if (cheapAt) pp.cheapest = cheapAt.plan;
+    }
     const plans = [];
     if (earliest == null) {
       // Explain what's short and how much the packs could give at most,
@@ -18249,15 +18404,19 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         const shown = plans.filter((c) => !plans.some((x) => plans.indexOf(x) < plans.indexOf(c) && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days));
         let pick = shown.find((c) => c.key === PACK_PLAN_PICK[calcKey] && c.plan) || shown.find((c) => c.key === "target" && c.plan) || shown.find((c) => c.plan);
         const label = (c) => t(c.key === "fastest" ? "pc_fastest" : c.key === "target" ? "pc_by_target" : "pc_cheapest");
+        const packsByDate = (c) => calcKey === "islands" && c && c.key === "fastest";
         const planCard = (c) => {
           if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
+          // Islands' Fastest date is when its packs are bought (free income does the rest later).
+          const when = c.plan.days === 0 ? t("pack_ready_now") : packsByDate(c) ? t("pca_packs_by").replace("{d}", short) : `${short} · ${c.plan.days}d`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small></button>`;
         };
         const p = pick && pick.plan;
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
+        if (PACK_PICK_HOOKS[calcKey]) { const hk = PACK_PICK_HOOKS[calcKey], dd = pick && pick.key === "cheapest" && cheapAt && p === cheapAt.plan ? cheapAt.d : null; setTimeout(() => hk(dd), 0); }
         const byPack = [];
         if (p) p.rows.forEach((r) => {
           let g = byPack.find((x) => x.title === r.title);
@@ -18269,14 +18428,14 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           aBuilt = true;
           const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
           const late = targetDays != null && p.days > targetDays;
-          const done = p.days === 0 ? t("pack_ready_now") : `${t("pca_done")} ${shortDay(p.days)} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
+          const done = p.days === 0 ? t("pack_ready_now") : `${packsByDate(pick) ? t("pca_packs_by").replace("{d}", shortDay(p.days)) : `${t("pca_done")} ${shortDay(p.days)}`} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
           const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
-          const tradesA = pcaTrades(p.trades);
+          const tradesA = pcaTrades(p.trades) + islCopiesLine(p);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
-          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}@@PCFREE@@</div>`;
+          sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
         }
       }
     }
@@ -18325,12 +18484,14 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     PACK_TARGET_CACHE[calcKey] = dateEl.value || "";
     saveCalcState(`pack_target_${calcKey}`, { date: PACK_TARGET_CACHE[calcKey] });
     rerender();
+    if (PACK_TARGET_HOOKS[calcKey]) PACK_TARGET_HOOKS[calcKey]();
   });
   const clearEl = containerEl.querySelector("[data-packtargetclear]");
   if (clearEl) clearEl.addEventListener("click", async () => {
     PACK_TARGET_CACHE[calcKey] = "";
     saveCalcState(`pack_target_${calcKey}`, { date: "" });
     rerender();
+    if (PACK_TARGET_HOOKS[calcKey]) PACK_TARGET_HOOKS[calcKey]();
   });
 }
 // ---- Currency conversion ----
@@ -19363,10 +19524,92 @@ function budgetFreeDays() {
 const HERO_RULES = { marksPerGeneral: 12, marksGeneralWeekly: 100, hallMarksPerShard: 10, hallWeekly: 370, widgetChestGives: 1, mysteryGive: 800, mysteryGet: 2, mysteryDaily: 200 };
 // The one hero of each Gen sold in Hall of Heroes; the Gen's other two heroes aren't.
 const HALL_OF_HEROES_HERO = { 2: "Alonso", 3: "Logan", 4: "Reina", 5: "Gwen", 6: "Wu Ming", 7: "Gordon", 8: "Hendrik", 9: "Magnus", 10: "Freya", 11: "Rufus", 12: "Hervor", 13: "Flora", 14: "Cara", 15: "Hank", 16: "Ursar", 17: "Eleanor", 18: "Jordan" };
+// Islands: packs that give Mythic Island Shards (Myriad Bazaar steps) can pay
+// for building copies the Mark of Revival / Shining City shops would sell:
+// shards per copy -> one copy's Marks / Tomes (hidden, no weekly limit). Only
+// when a pack used for Islands gives shards, so without one nothing changes.
+// (`islFree` only marks them as the Islands shard trades.)
+let ISL_SHARD_TRADES = [];
+const ISL_SHARD_ITEM = "Mythic Island Shards";
+function islShardTradesNow() {
+  const tabs = typeof PACK_TABLES_CACHE !== "undefined" && Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : null;
+  if (!tabs) return ISL_SHARD_TRADES;
+  let has = false;
+  try { has = tabs.some((tb) => packTableServesPage(tb, "islands") && packOffersFor(tb).some((o) => (Number(o.gives[ISL_SHARD_ITEM]) || 0) > 0)); } catch (e) { has = false; }
+  const pc = Number(ISL_RULES.perCopy) || 10;
+  ISL_SHARD_TRADES = has ? [
+    { from: ISL_SHARD_ITEM, to: "Mark of Revival", give: pc, get: Number(ISL_RULES.markPrice) || ISL_MARK_PRICE, max: 0, hidden: true, islFree: true },
+    { from: ISL_SHARD_ITEM, to: "Glorious Tome", give: pc, get: Number(ISL_RULES.tomePrice) || 600, max: 0, hidden: true, islFree: true },
+  ] : [];
+  return ISL_SHARD_TRADES;
+}
+// A pack used for Islands gives Mythic Island Shards (the trades above exist).
+function islShardPacksOn() { return islShardTradesNow().length > 0; }
+// The most shards the packs used for Islands can give by a day (days from today;
+// default the planner's 3-year horizon): shards-only copies past that by the
+// target date stay "can't be reached".
+let ISL_SH_MAX = null;
+function islShardSupplyMax(days) {
+  const tabs = Array.isArray(PACK_TABLES_CACHE) ? PACK_TABLES_CACHE : null;
+  if (!tabs) return 0;
+  const d = Math.max(1, Number.isFinite(days) ? days : PACK_HORIZON_DAYS);
+  if (!ISL_SH_MAX || ISL_SH_MAX.t !== tabs || ISL_SH_MAX.g !== PACK_GROUPS_GEN) {
+    let groups = null;
+    try { groups = packGroupsFor(tabs.filter((tb) => packTableServesPage(tb, "islands")), "islands"); } catch (e) { groups = null; }
+    ISL_SH_MAX = { t: tabs, g: PACK_GROUPS_GEN, groups, by: {} };
+  }
+  if (ISL_SH_MAX.by[d] == null) { let n = 0; try { n = ISL_SH_MAX.groups ? Math.floor(Number(packMaxSupply(ISL_SH_MAX.groups, d)[ISL_SHARD_ITEM]) || 0) : 0; } catch (e) { n = 0; } ISL_SH_MAX.by[d] = n; }
+  return ISL_SH_MAX.by[d];
+}
+// Free pack shards for Islands: shards in the Budgets plan's purchases that another
+// page pays for (Islands' share of them is 0). { n, sig } from the last plan seen.
+let ISL_FREE_SHARDS = null, ISL_FREE_LOADING = null;
+function islFreeShardsOf(c) {
+  if (!c || !c.chosen || !c.shares) return 0;
+  const mine = (c.shares.islands && c.shares.islands.rows) || [];
+  return (c.chosen.rows || []).reduce((a, r) => {
+    const q = (Number((r.gives || {})[ISL_SHARD_ITEM]) || 0) * (r.count || 1);
+    if (!(q > 0)) return a;
+    const m = mine.find((x) => x.title === r.title && x.label === r.label);
+    return a + (m ? 0 : q); // a step Islands pays part of is its own buy, not free
+  }, 0);
+}
+// Reads the Budgets plan (the one on screen, else the suggestions' copy, worked out
+// in the background when needed); calls `changed` once the number moves.
+function islFreeShardsRefresh(changed) {
+  const sel = BUDGET_SELECTED || {};
+  if (!islShardPacksOn() || sel.islands === false || !BUDGET_TARGET) { if (ISL_FREE_SHARDS && ISL_FREE_SHARDS.n) { ISL_FREE_SHARDS = null; if (changed) changed(); } return; }
+  const take = (c) => { const n = Math.floor(islFreeShardsOf(c)); const was = ISL_FREE_SHARDS ? ISL_FREE_SHARDS.n : 0; ISL_FREE_SHARDS = { n }; if (n !== was && changed) changed(); };
+  const ready = BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending ? BUDGET_DATA.combined : PUR_GOAL_SRC && PUR_GOAL_SRC.combined;
+  if (ready) { take(ready); return; }
+  if (ISL_FREE_LOADING) return;
+  ISL_FREE_LOADING = budgetSuggestedPlan().then(() => { const c = BUDGET_DATA && BUDGET_DATA.combined && !BUDGET_DATA.combined.pending ? BUDGET_DATA.combined : PUR_GOAL_SRC && PUR_GOAL_SRC.combined; if (c) take(c); }).catch(() => {}).finally(() => { ISL_FREE_LOADING = null; });
+}
+// The first day after `days` on which the shard packs give more shards (null = not within the horizon).
+function islShardNextDay(days) {
+  const base = islShardSupplyMax(days);
+  let lo = Math.max(1, (Number(days) || 0) + 1), hi = PACK_HORIZON_DAYS;
+  if (islShardSupplyMax(hi) <= base) return null;
+  while (lo < hi) { const mid = Math.floor((lo + hi) / 2); if (islShardSupplyMax(mid) > base) hi = mid; else lo = mid + 1; }
+  return lo;
+}
+function tradeExtraNext() {
+  const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
+  const isl = islShardTradesNow();
+  return { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules, hero_shards: HERO_SHARD_TRADES, ...(isl.length ? { islands: isl } : {}) };
+}
+// The Islands shard trades follow the pack tables, which can load after the
+// trades were put together: brought up to date (without redrawing Budgets)
+// right before a plan is asked for or fingerprinted.
+function tradeExtraSync() {
+  const next = tradeExtraNext(), sig = JSON.stringify(next);
+  if (sig === TRADE_EXTRA_SIG) return;
+  TRADE_EXTRA_RATES = next;
+  TRADE_EXTRA_SIG = sig;
+}
 // General Sigils can be spent on any expert (1:1): a rule, not a trade.
 function tradeComposeExtra() {
-  const rules = expertKeysAll().map((k) => ({ from: "General Sigils", to: `${k} Sigils`, give: 1, get: 1, max: 0, hidden: true, silent: true }));
-  const next = { ...TRADE_EXTRA_RFC, experts: rules, experts_research: rules, hero_shards: HERO_SHARD_TRADES };
+  const next = tradeExtraNext();
   const sig = JSON.stringify(next);
   if (sig === TRADE_EXTRA_SIG) return;
   TRADE_EXTRA_RATES = next;
@@ -19552,7 +19795,7 @@ function applyTrades(rates, need, owned, weeks) {
       usedLots.set(r, (usedLots.get(r) || 0) + lots);
       spare[r.from] -= lots * r.give;
       after[to] = Math.max(0, after[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
     }
   });
   Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
@@ -19570,7 +19813,7 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
-  return { still, trades: res.trades.filter((x) => !x.silent), weeks: res.weeks };
+  return { still, trades: res.trades.filter((x) => !x.silent && !x.isl), weeks: res.weeks };
 }
 // When a needed item isn't sold by any assigned pack but can be traded
 // for from something that is, the need is converted into the source item
@@ -20761,6 +21004,7 @@ function plannerRun(kind, payload, opts) {
   const p = new Promise((resolve, reject) => {
     // Sent at once when the worker is free (copied then, as before); a request
     // that has to wait is copied now, so later changes on the page can't reach it.
+    tradeExtraSync();
     const msg = { id, kind, payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES };
     const idle = !lane.busy && !lane.queue.length;
     PLANNER_WAIT.set(id, { resolve, reject, msg: idle ? msg : structuredClone(msg), lane: li, onPart: (opts && opts.onPart) || null });
@@ -20835,6 +21079,7 @@ const BUDGET_PLAN_STORE = "budget_plan_v1";
 const BUDGET_PLANS_INDEX = "budget_plans_v2", BUDGET_PLAN_ITEM = "budget_plan_v2:";
 const BUDGET_PLANS_KEPT = 5;
 function budgetPlanFingerprint(payload) {
+  tradeExtraSync();
   const str = JSON.stringify({ v: 3, user: USER_ID || "", day: packDayKey(packStartOfToday()), payload, trade: TRADE_RATES_CACHE, extra: TRADE_EXTRA_RATES, rules: siteConfig("game_rules", null) });
   // cyrb53: a quick 53-bit hash of the text, plus its length.
   let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
@@ -21030,7 +21275,7 @@ function budgetMergedPlan(res, inc, targetDays) {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
       return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
-    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
+    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent && !x.isl), islShards: tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
   };
   return packPickCheapest([tryWith((e) => e.max), tryWith((e) => e.sum)]);
 }
@@ -25198,8 +25443,6 @@ async function renderSkinGallery() {
 let ISLAND_FILTER = { search: "", bonusType: "all", ownedFilter: "all" };
 // The open island level pop-up: { id, close(noRedraw), place() } or null.
 let ISL_POP = null;
-let ISL_MK_OPT = null; // { id, kind, sig, price }: the optional Marks / Tomes price of one building (no Budgets target)
-const ISL_OPT_PRICE = {}; // "<id>|mark" / "<id>|shining" → the last worked-out optional price
 document.addEventListener("pointerdown", (e) => {
   if (ISL_POP && e.target.closest && !e.target.closest(".sg-pop, [data-island]")) ISL_POP.close();
 }, true);
@@ -25225,6 +25468,11 @@ const ISL_LIGHT_CAT = "Lighthouse";
 const ISL_CONTRACT = "General Accessory Construction Contract";
 const ISL_LIGHT = [1, 2, 4, 6, 8, 10, 12, 12, 12, 16].map((bp, i) => ({ bp, ct: bp * 10, ess: i ? 0 : 50000 }));
 const islIsLight = (s) => !!s && s.category === ISL_LIGHT_CAT;
+// How each lighthouse is unlocked (Lv 1), by name: Marks of Revival from the Mark of Revival shop
+// (its first blueprint, bought once; owner, 16 Nov 2026), else the free unlock (Life Essence when
+// spare, else Contracts). Rule islLightUnlock.
+const ISL_LIGHT_UNLOCK = { "Celestial Journey": 2000, "Harbor of Hope": 2000 };
+const islLightUnlockMarks = (s) => Math.max(0, Number(ISL_LIGHT_UNLOCK[s && s.name]) || 0);
 // Each lighthouse's levels, shared with Scan (Storehouse → Accessory): calc_state island_shards.light =
 // { skinId: { now: 0..10 (0 = not unlocked), to: 0..10 } }. "now" is also written to the skin's level.
 const islLightRec = (id) => { const l = ISL_SHARDS && ISL_SHARDS.light; const r = l && typeof l === "object" ? l[id] : null; return r && typeof r === "object" ? r : null; };
@@ -25568,9 +25816,14 @@ async function renderIslandGallery() {
   // The Budgets target date: Mark shop buildings use free shards first and Marks only for
   // the copies the shards can't bring by that date.
   if (BUDGET_TARGET === undefined) { const sv = await loadCalcState("pack_target_budgets").catch(() => null); if (seq !== RENDER_SEQ) return; if (BUDGET_TARGET === undefined) BUDGET_TARGET = (sv && sv.date) || ""; }
-  // Islands unticked on Budgets: plan as if there were no target (all on free shards, Marks optional).
   if (!BUDGET_SELECTED) { const ss = await loadCalcState("budget_selected").catch(() => null); if (seq !== RENDER_SEQ) return; if (!BUDGET_SELECTED) BUDGET_SELECTED = ss || {}; }
-  const islTgt = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? "" : BUDGET_TARGET);
+  // Like every planner page: the page (and its Pack cost) plans by the Pack cost window's own
+  // target row; Budgets' need by the Budgets target. The Budgets tick only decides whether
+  // Islands counts in Budgets. No date = every target as soon as packs allow: only what you
+  // have now is free, the rest is bought (shop copies, Tomes over the coming events, shards
+  // from shard packs over the planner's horizon).
+  if (PACK_TARGET_CACHE.islands === undefined) { const pt = await loadCalcState("pack_target_islands").catch(() => null); if (seq !== RENDER_SEQ) return; if (PACK_TARGET_CACHE.islands === undefined) PACK_TARGET_CACHE.islands = (pt && typeof pt.date === "string") ? pt.date : ""; }
+  const islTgt = (forBud) => (forBud ? BUDGET_TARGET : PACK_TARGET_CACHE.islands) || "";
   // Event dates from a Packs-page pack: the pack list loads in the background
   // (always for the owner, who picks packs), then the page redraws with the dates.
   if (!ISL_PACKS) { // also gives the Shining City Pack's dates (islShiningStarts)
@@ -25647,7 +25900,7 @@ async function renderIslandGallery() {
       <div id="islandTroopTotals"></div>
       <div id="islandShardPlan"></div>
     </div>
-    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div><div data-buybody id="islMkOpt" hidden></div></div><div class="cg-bd" data-islbd hidden></div></div>
+    <div class="g1 isl-g1" id="islMkWrap" hidden><div class="t12x-card t12x-buy" id="islMkBuy"><div class="cg-sh-h"><b data-cgbuyt>${esc(t("pack_cost_title"))}</b>${closeXHtml("data-cgclose")}</div><div data-buybody id="islMkPacks"></div></div><div class="cg-bd" data-islbd hidden></div></div>
     ${galToolsHtml("island", ISLAND_FILTER, t("search_islands_placeholder"))}
     <div id="islandCatSwitcher" class="sg-cats"></div>
     <div id="islandSections" class="sg-isl"></div>
@@ -25728,14 +25981,41 @@ async function renderIslandGallery() {
   // Revival shop buildings; their copies still missing by the date become Marks (at most the
   // shop's limit). Whatever is left beyond the pot can't be reached by the date. No target
   // (or Islands unticked in Budgets) = everything on free shards, Marks only optional.
-  let spSig = null, SP = null;
-  const sharedPlan = () => {
-    const tg = islTgt(), tDay = tg ? packParseDay(packValidDay(tg)) : null;
-    const days = tDay ? Math.max(0, Math.round((tDay - packStartOfToday()) / 86400000)) : null;
-    const sig = `${days}|${JSON.stringify(ISL_SHARDS)}|${JSON.stringify(siteConfig("island_sources", {}) || {})}|${JSON.stringify(islShopsCfg())}|${tomeHave()}|${ISL_UNIT ? `${ISL_UNIT.mark}/${ISL_UNIT.tome}` : ""}|${(islShiningStarts(2).starts[0] || "").toString()}|${islands.map((x) => `${x.id}:${lvOf(x)}:${x.owned ? 1 : 0}`).join(",")}`;
-    if (sig === spSig && SP) return SP;
-    spSig = sig;
+  // Shards from packs (Myriad Bazaar steps) the Budgets plan already buys for other
+  // pages: free, added to the pot by the target date (only with Islands ticked in
+  // Budgets, a pack used for Islands giving shards and that plan worked out).
+  // sharedPlan(true) = with them (what the page shows); sharedPlan() / (false) =
+  // without (the needs sent to Pack cost / Budgets: the planner itself spends those
+  // free shards first, so the two agree).
+  const freeShards = (days) => (days != null && islShardPacksOn() ? Math.max(0, Math.floor(Number((ISL_FREE_SHARDS || {}).n) || 0)) : 0);
+  const SPC = {};
+  let spSig = null;
+  // forBud: true = by the Budgets target (Budgets' need); a number = by that many days from
+  // today (Pack cost's Cheapest tries dates); else by the page's own target date, or (no date)
+  // by the date of the Pack cost plan picked on screen (ISL_VIEW_DAYS), or as soon as packs allow.
+  const modeKey = (m) => (m === true ? "b" : typeof m === "number" ? `d${m}` : "p");
+  const sharedPlan = (withFree, forBud) => {
+    if (forBud === undefined && withFree === true && !PACK_TARGET_CACHE.islands && ISL_VIEW_DAYS != null) forBud = ISL_VIEW_DAYS;
+    const num = typeof forBud === "number";
+    const tg = num ? "" : islTgt(forBud), tDay0 = num ? islDay(forBud) : tg ? packParseDay(packValidDay(tg)) : null, tDay = tDay0 || packStartOfToday();
+    const days = Math.max(0, Math.round((tDay - packStartOfToday()) / 86400000));
+    // What packs / events can bring: by the date, or with no date within the planner's horizon.
+    const capDays = tDay0 ? days : PACK_HORIZON_DAYS, capDay = tDay0 ? tDay : islDay(PACK_HORIZON_DAYS);
+    const F = withFree && forBud !== true ? freeShards(days) : 0, shOn = islShardPacksOn();
+    const sk = `${F > 0 ? 1 : 0}${modeKey(forBud)}`;
+    const slot = SPC[sk] || (SPC[sk] = { sig: null, P: null });
+    const sig = `${F}|${shOn ? islShardSupplyMax() : "-"}|${days}|${tDay0 ? 1 : 0}|${JSON.stringify(ISL_SHARDS)}|${JSON.stringify(siteConfig("island_sources", {}) || {})}|${JSON.stringify(islShopsCfg())}|${tomeHave()}|${ISL_UNIT ? `${ISL_UNIT.mark}/${ISL_UNIT.tome}` : ""}|${(islShiningStarts(2).starts[0] || "").toString()}|${islands.map((x) => `${x.id}:${lvOf(x)}:${x.owned ? 1 : 0}`).join(",")}`;
+    if (spSig === null) Object.values(SPC).forEach((x) => { x.P = null; });
+    spSig = "set";
+    if (sig === slot.sig && slot.P) return slot.P;
+    slot.sig = sig;
     const pc = perCopy(), eps = ePS(), rate = islShardsDay(ISL_SHARDS), have = islHave(ISL_SHARDS);
+    // Free pack shards pay copies first (shards-only buildings, then the shop ones).
+    let fLeft = F;
+    const fromFree = new Map();
+    const takeFree = (x, left) => { if (!(fLeft > 0) || !(pc > 0) || !left) return 0; const n = Math.min(left, Math.floor(fLeft / pc + 1e-9)); if (n > 0) { fLeft -= n * pc; fromFree.set(x.id, n); } return n; };
+    const shOnly = (x) => usesShards(x) && !usesMarks(x) && !usesTomes(x);
+    let cantSh = 0;
     const pot = days == null ? Infinity : have + rate * days;
     const finDay = (c) => (c <= have + 1e-9 ? 0 : rate > 0 ? Math.ceil((c - have) / rate) : null);
     const all = islands.filter(tracked);
@@ -25743,10 +26023,12 @@ async function renderIslandGallery() {
     let cum = 0, cant = 0;
     // 1) Buildings nothing can buy: Life Essence shop copies (price ÷ essence a shard) and shards-only.
     all.filter((x) => usesEssence(x) || (usesShards(x) && !usesMarks(x))).forEach((x) => {
-      const left = copiesLeft(x), per = usesEssence(x) ? srcOf(x).price / eps : pc;
-      if (!left) return;
+      const left0 = copiesLeft(x), per = usesEssence(x) ? srcOf(x).price / eps : pc;
+      if (!left0) return;
+      const left = left0 - (days != null && shOnly(x) ? takeFree(x, left0) : 0);
       const room = Math.max(0, pot - cum), ok = per > 0 ? Math.min(left, Math.floor(room / per + 1e-9)) : left;
       cant += left - ok;
+      if (shOnly(x)) cantSh += left - ok;
       cum += left * per;
       fin.set(x.id, finDay(cum));
     });
@@ -25755,14 +26037,15 @@ async function renderIslandGallery() {
     // its limit: Marks = the shop's total limit, Tomes = `tomeMax` copies an event that starts
     // by the target date (no known event date = none).
     const unit = ISL_UNIT || {}, tp = Number(ISL_RULES.tomePrice) || 600, tMax = Number(ISL_RULES.tomeMax) || 3;
-    const sc = tDay ? islShiningStarts() : { known: false, starts: [] };
-    const nEv = sc.known ? sc.starts.filter((d) => d <= tDay).length : 0;
+    const sc = islShiningStarts();
+    const nEv = sc.known ? sc.starts.filter((d) => d <= capDay).length : 0;
     const cost = (k, x) => (k === "mk" ? srcOf(x).markPrice * (unit.mark != null ? unit.mark : Infinity) : tp * (unit.tome != null ? unit.tome : Infinity));
     const tm = new Map();
     let evUsed = 0;
     all.filter((x) => usesMarks(x) || usesTomes(x)).forEach((x) => {
-      const left = copiesLeft(x);
-      if (!left) return;
+      const left0 = copiesLeft(x);
+      if (!left0) return;
+      const left = left0 - (days != null ? takeFree(x, left0) : 0);
       const room = Math.max(0, pot - cum), free = days == null ? left : pc > 0 ? Math.min(left, Math.floor(room / pc + 1e-9)) : left;
       let rest = left - free;
       const opts = [];
@@ -25781,38 +26064,47 @@ async function renderIslandGallery() {
     // planner (Pack cost / Budgets, packDayBonusList), not here.
     const tmCopiesAll = [...tm.values()].reduce((a, n) => a + n, 0);
     const tomes = tmCopiesAll * tp;
-    SP = { days, tDay, pot, need: cum, fin, mk, marks, mkCopiesAll, tm, tmCopiesAll, tomes, evUsed, nEv, sc, cant, done: finDay(cum), cantDone: finDay(cum) };
-    return SP;
+    // Shards-only copies still short by the date: a shards need for the packs (only when a
+    // pack used for Islands gives shards; else they stay "can't be reached").
+    const shNeed = shOn && days != null && pc > 0 ? Math.min(cantSh, Math.floor(Math.max(0, islShardSupplyMax(capDays) - F) / pc)) * pc : 0;
+    const P = { days, tDay, noDate: !tDay0, capDays, capDay, pot, need: cum, fin, mk, marks, mkCopiesAll, tm, tmCopiesAll, tomes, evUsed, nEv, sc, cant, done: finDay(cum), cantDone: finDay(cum), cantSh, shNeed, free: F - fLeft, fromFree };
+    slot.P = P;
+    return P;
   };
-  const mkAlloc = () => sharedPlan().mk;
+  const mkAlloc = () => sharedPlan(true).mk;
   // Lighthouses (outside the shards plan): Blueprints → General Accessory Construction Contracts,
   // the Backpack's Contracts shared over them in page order. Unlocking (Lv 1) is paid with Life
   // Essence only when the free Life Essence left after every other building's plan covers it
   // (free first: in hand, plus the income up to the target date when there is one), else with
   // its Contracts like the other levels.
   const contractHave = () => Number((islBp || {})[ISL_CONTRACT]) || 0;
-  let lpSig = null, LP = null;
-  const lightPlan = () => {
-    const P = sharedPlan(), list = islands.filter(islIsLight), free = P.days != null ? islFreeContracts(P.days) : 0, have = contractHave() + free;
-    const sig = `${spSig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
-    if (sig === lpSig && LP) return LP;
-    lpSig = sig;
+  let lpSig = null;
+  const LPC = {};
+  const lightPlan = (forBud) => {
+    const P = sharedPlan(false, forBud), list = islands.filter(islIsLight), free = P.days != null ? islFreeContracts(P.days) : 0, have = contractHave() + free;
+    const c = LPC[modeKey(forBud)] || (LPC[modeKey(forBud)] = { sig: null, P: null });
+    const sig = `${SPC[`0${modeKey(forBud)}`].sig}|${JSON.stringify(ISL_LIGHT)}|${JSON.stringify(ISL_LIGHT_UNLOCK)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
+    if (sig === c.sig && c.P) { if (forBud === undefined || forBud === false) lpSig = sig; return c.P; }
+    c.sig = sig;
     let spare = Math.max(0, ((P.days == null ? islHave(ISL_SHARDS) : P.pot) - P.need) * ePS());
     const per = new Map();
-    let bp = 0, ct = 0, ess = 0;
+    let bp = 0, ct = 0, ess = 0, mkAll = 0;
     list.forEach((x) => {
       const from = lvOf(x), to = tgtOf(x), u = Number((ISL_LIGHT[0] || {}).ess) || 0;
-      const useEss = from < 1 && to >= 1 && u > 0 && spare >= u;
+      // Unlocked with Marks (Mark of Revival shop): Lv 1 costs only those Marks.
+      const mku = from < 1 && to >= 1 ? islLightUnlockMarks(x) : 0;
+      const useEss = !mku && from < 1 && to >= 1 && u > 0 && spare >= u;
       if (useEss) spare -= u;
-      const c = islLightCost(from, to, useEss);
+      const c = islLightCost(mku ? 1 : from, to, useEss);
       const before = Math.max(0, ct - have);
-      bp += c.bp; ct += c.ct; ess += c.ess;
-      per.set(x.id, { ...c, short: Math.max(0, ct - have) - before });
+      bp += c.bp; ct += c.ct; ess += c.ess; mkAll += mku;
+      per.set(x.id, { ...c, mk: mku, short: Math.max(0, ct - have) - before });
     });
-    LP = { per, bp, ct, ess, have, free, short: Math.max(0, ct - have) };
-    return LP;
+    c.P = { per, bp, ct, ess, mk: mkAll, have, free, short: Math.max(0, ct - have) };
+    if (forBud === undefined || forBud === false) lpSig = sig;
+    return c.P;
   };
-  const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
+  const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, mk: 0, short: 0 };
   // Option C (owner, 16 Nov 2026): when each lighthouse level comes with free Contracts only
   // (no spending). Levels are done cheapest first over all lighthouses, paid from the Backpack's
   // Contracts, then from the weekly / KOI / SvS ones. { id: [{ lv, day | null }] } (null = over 20 years).
@@ -25822,7 +26114,7 @@ async function renderIslandGallery() {
     if (sig === lfSig && LF) return LF;
     lfSig = sig;
     const steps = [];
-    islands.filter(islIsLight).forEach((x) => { for (let L = lvOf(x) + 1; L <= tgtOf(x); L++) steps.push({ id: x.id, lv: L, ct: islLightCost(L - 1, L).ct }); });
+    islands.filter(islIsLight).forEach((x) => { for (let L = lvOf(x) + 1; L <= tgtOf(x); L++) { if (L === 1 && islLightUnlockMarks(x)) continue; steps.push({ id: x.id, lv: L, ct: islLightCost(L - 1, L).ct }); } });
     steps.sort((a, b) => a.ct - b.ct || a.lv - b.lv);
     const out = new Map(), have = contractHave();
     let cum = 0;
@@ -25834,39 +26126,29 @@ async function renderIslandGallery() {
   const freeMon = (d) => (d == null ? t("isl_free_never") : islDay(d).toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }));
   const freeLast = (s) => { const a = lightFree().get(s.id); return a && a.length ? a[a.length - 1].day : 0; };
   // Contracts to buy (Pack cost): the shortfall, unless Islands is unticked in Budgets.
-  const lightBuy = () => (BUDGET_SELECTED && BUDGET_SELECTED.islands === false ? 0 : Math.max(0, lightPlan().ct - lightPlan().free));
+  const lightBuy = () => Math.max(0, lightPlan().ct - lightPlan().free);
   const CT_ICON = BP_EXTRA_ICONS[ISL_CONTRACT];
   const ctImg = `<img class="isl-im sq" src="${CT_ICON}" alt="" aria-hidden="true">`, bpImg = '<img class="isl-im sq" src="icons/lighthouse-blueprint.png" alt="" aria-hidden="true">';
   const mkCopies = (s) => (usesMarks(s) ? mkAlloc().get(s.id) || 0 : 0);
   const marksOf = (s) => mkCopies(s) * (usesMarks(s) ? srcOf(s).markPrice : 0);
-  const tmCopies = (s) => (usesTomes(s) ? sharedPlan().tm.get(s.id) || 0 : 0);
+  const tmCopies = (s) => (usesTomes(s) ? sharedPlan(true).tm.get(s.id) || 0 : 0);
   const tomesOf = (s) => tmCopies(s) * (Number(ISL_RULES.tomePrice) || 600);
-  // No target: what buying the copies with Marks would take (optional, faster).
-  const mkOptCopies = (s) => (usesMarks(s) && !islTgt() ? Math.min(copiesLeft(s), srcOf(s).markLimit) : 0);
-  const marksOpt = (s) => mkOptCopies(s) * (usesMarks(s) ? srcOf(s).markPrice : 0);
-  // The same for Shining City: every copy left with Glorious Tomes (up to 3 a building each event).
-  const tmOptCopies = (s) => (usesTomes(s) && !islTgt() ? copiesLeft(s) : 0);
-  const tomesOpt = (s) => tmOptCopies(s) * (Number(ISL_RULES.tomePrice) || 600);
-  const optAmt = (s, k) => (k === "mark" ? marksOpt(s) : tomesOpt(s));
-  const optBtnHtml = (s, k) => { const p = ISL_OPT_PRICE[`${s.id}|${k}`]; return ` <button type="button" class="isl-mkb" data-islmkoptopen="${k}">&asymp; <span data-islmkopt="${s.id}|${k}">${p ? esc(p) : "&hellip;"}</span> &#8250;</button>`; };
-  const needOf = (s) => (usesShards(s) ? Math.max(0, copiesLeft(s) - mkCopies(s) - tmCopies(s)) * perCopy() : 0);
-  // Pop-up line under the shards: the copies Marks pay for (after the free shards), or with
-  // no Budgets target the optional, faster way.
+  const needOf = (s) => (usesShards(s) ? Math.max(0, copiesLeft(s) - mkCopies(s) - tmCopies(s) - (sharedPlan(true).fromFree.get(s.id) || 0)) * perCopy() : 0);
+  // Pop-up line under the shards: the copies Marks / Tomes pay for (after the free shards).
   const tmLine = (s) => {
     const n = tmCopies(s);
-    if (!n) { const o = tomesOpt(s); return o ? ` &middot; <b class="mk">${esc(t("isl_tm_or").replace("{m}", o.toLocaleString()))}</b>${optBtnHtml(s, "shining")}` : ""; }
+    if (!n) return "";
     const lead = n === copiesLeft(s) && !mkCopies(s) ? " &rarr; " : ` + ${esc(t("isl_nb_copies").replace("{n}", n))} &rarr; `;
     return `${lead}<b class="mk">${esc(t("isl_tm_after").replace("{m}", tomesOf(s).toLocaleString()))}</b>`;
   };
   const mkLine = (s) => {
     if (!usesMarks(s)) return tmLine(s);
-    const src = srcOf(s), mk = mkCopies(s), opt = mkOptCopies(s), n = mk || opt;
-    if (!n) return tmLine(s);
-    const amt = n * src.markPrice;
-    const txt = (mk ? t("isl_mk_after") : t("isl_mk_or")).replace("{m}", amt.toLocaleString());
-    const lead = mk && mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : mk ? ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; ` : " &middot; ";
-    const optBtn = !mk && opt ? optBtnHtml(s, "mark") : "";
-    return `${lead}<b class="mk">${esc(txt)}</b>${optBtn}${tmLine(s)}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
+    const src = srcOf(s), mk = mkCopies(s);
+    if (!mk) return tmLine(s);
+    const amt = mk * src.markPrice;
+    const txt = t("isl_mk_after").replace("{m}", amt.toLocaleString());
+    const lead = mk === copiesLeft(s) && !needOf(s) ? " &rarr; " : ` + ${esc(t("isl_nb_copies").replace("{n}", mk))} &rarr; `;
+    return `${lead}<b class="mk">${esc(txt)}</b>${tmLine(s)}${mk ? ` &middot; <button type="button" class="isl-mkb" data-islmkopen><span data-islmkprice>${plxPriceLabel("islands")}</span></button>` : ""}${copiesLeft(s) > src.markLimit ? `<br><span class="isl-mklim">${esc(t("isl_mk_over").replace("{n}", src.markLimit))}</span>` : ""}`;
   };
   const essOf = (s) => (usesEssence(s) ? copiesLeft(s) * srcOf(s).price : 0);
   const ePS = () => islEssencePerShard();
@@ -25886,7 +26168,7 @@ async function renderIslandGallery() {
   const evShort = (days) => (days < 56 ? t("isl_wk").replace("{n}", Math.max(1, Math.ceil(days / 7))) : t("isl_mo").replace("{n}", Math.round(days / 30)));
   // Time for one building as if everything went to it: { days } or null without income.
   // When the building reaches its target in the shared plan (days from today), or null.
-  const bTime = (s) => (usesShards(s) || usesEssence(s) ? (sharedPlan().fin.has(s.id) ? sharedPlan().fin.get(s.id) : 0) : null);
+  const bTime = (s) => (usesShards(s) || usesEssence(s) ? (sharedPlan(true).fin.has(s.id) ? sharedPlan(true).fin.get(s.id) : 0) : null);
   // "Feb" within the next 11 months, else "Feb ’28".
   const finLabel = (d) => { const at = islDay(d); return at.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" }) + (d > 330 ? ` \u2019${String(at.getUTCFullYear()).slice(2)}` : ""); };
   // Option C: "→10" badge on the picture and the cost under the pill.
@@ -25896,7 +26178,8 @@ async function renderIslandGallery() {
       const c = lightOf(s), ct = c.ct ? `<span class="nw">${bidiNum(c.bp.toLocaleString())} ${bpImg}</span> <span class="nw">${bidiNum(c.ct.toLocaleString())} ${ctImg}</span>` : "";
       const tip = esc(t("isl_lh_tip").replace("{b}", c.bp.toLocaleString()).replace("{c}", c.ct.toLocaleString()));
       const fl = freeLast(s), free = `<span class="isl-free">${esc(t("isl_free_card").replace("{d}", fl ? freeMon(fl) : t("isl_free_now")))}</span>`;
-      const line = `<span class="isl-tsh lh two" title="${tip}">${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}${c.ct ? free : ""}</span>`;
+      const mkU = c.mk ? `<span class="nw"><img class="isl-mki" src="icons/mark-of-revival.png" alt="" /> ${bidiNum(c.mk.toLocaleString())}${c.ct ? " +" : ""}</span> ` : "";
+      const line = `<span class="isl-tsh lh two" title="${tip}">${mkU}${c.ess ? `<span class="nw">${bidiNum(shortAmount(c.ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true">${c.ct ? " +" : ""}</span> ` : ""}${ct}${c.ct ? free : ""}</span>`;
       return { badge: `<span class="isl-tbg">&#8594;${tgtOf(s)}</span>`, line };
     }
     if (!tracked(s) || lvOf(s) >= maxOf(s) || tgtOf(s) <= lvOf(s)) return { badge: "", line: "" };
@@ -25935,15 +26218,28 @@ async function renderIslandGallery() {
   // One result line instead of "Done by" (owner, 9 Nov 2026): by the target date, all at
   // target ✓ / shards short → Marks · price / copies that can't be reached (shards only).
   const resultLine = () => {
-    const P = sharedPlan(), pc = perCopy();
+    const P = sharedPlan(true), pc = perCopy();
     const day = (d) => esc(islDay(d).toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" }));
     if (!(P.need > 0)) return `<div class="isl-done ok">&#10003; ${esc(t("isl_box_none"))}</div>`;
     if (P.days == null) return `<div class="isl-done">${P.done == null ? esc(t("isl_box_noinc")) : `${esc(t("isl_rs_done_c"))} <b>~${day(P.done)}</b> &middot; ${esc(t("isl_box_weeks").replace("{n}", Math.max(1, Math.ceil(P.done / 7))))}`}</div>`;
-    const by = esc(islDateShort(P.tDay));
+    // With no date the plan is "every target as soon as packs allow" (within the horizon).
+    const by = esc(islDateShort(P.tDay) + (P.days > 300 ? ` ${P.tDay.getUTCFullYear()}` : "")), lead = (x) => (P.noDate ? esc(t("isl_rs_asap")) : esc(t("isl_rs_by").replace("{d}", x)));
+    const capTxt = P.noDate ? day(P.capDays) : by;
     const lines = [];
-    if (P.marks > 0 || P.tomes > 0) lines.push(`<div class="isl-done am">${esc(t("isl_rs_by").replace("{d}", by))}: <b>${bidiNum(((P.mkCopiesAll + P.tmCopiesAll) * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; ${[P.marks > 0 ? `<b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))}` : "", P.tomes > 0 ? `<b>${bidiNum(P.tomes.toLocaleString())}</b> ${esc(t("isl_tm_name"))}` : ""].filter(Boolean).join(" + ")} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
-    if (P.cant > 0) lines.push(`<div class="isl-done bad">${esc(t("isl_rs_cant").replace("{n}", P.cant).replace("{d}", by))} &middot; ${esc(t("isl_rs_done"))} ~${P.done == null ? "?" : day(P.done)}</div>`);
-    if (!lines.length) lines.push(`<div class="isl-done ok">&#10003; ${esc(t("isl_rs_by").replace("{d}", by))}: ${esc(t("isl_rs_all"))}</div>`);
+    if (P.marks > 0 || P.tomes > 0) lines.push(`<div class="isl-done am">${lead(by)}: <b>${bidiNum(((P.mkCopiesAll + P.tmCopiesAll) * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; ${[P.marks > 0 ? `<b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))}` : "", P.tomes > 0 ? `<b>${bidiNum(P.tomes.toLocaleString())}</b> ${esc(t("isl_tm_name"))}` : ""].filter(Boolean).join(" + ")} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
+    // Shards-only copies a shard pack can cover (a pack used for Islands gives shards).
+    const buySh = P.shNeed > 0 ? Math.round(P.shNeed / pc) : 0;
+    if (buySh > 0) lines.push(`<div class="isl-done am">${lead(by)}: ${esc(t("isl_rs_sh_buy").replace("{n}", buySh.toLocaleString()).replace("{s}", P.shNeed.toLocaleString()))} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
+    // Shards-only copies the shard packs can't cover by the date: say why (none on sale by
+    // then, e.g. this run is already bought, or they give too few) and when more come.
+    if (islShardPacksOn() && P.cantSh > buySh) {
+      const sup = Math.max(0, islShardSupplyMax(P.capDays) - (P.free || 0)), nx = P.noDate ? null : islShardNextDay(P.days);
+      const nd = nx != null ? ` &middot; ${esc(t("isl_rs_sh_next").replace("{d}", islDateShort(islDay(nx))))}` : "";
+      lines.push(`<div class="isl-done am">${esc(sup > 0 ? t("isl_rs_sh_more").replace("{s}", sup.toLocaleString()).replace("{d}", P.noDate ? capTxt : islDateShort(P.tDay)) : t("isl_rs_sh_none").replace("{d}", P.noDate ? capTxt : islDateShort(P.tDay)))}${nd}</div>`);
+    }
+    if (P.cant - buySh > 0) lines.push(`<div class="isl-done bad">${esc(t("isl_rs_cant").replace("{n}", P.cant - buySh).replace("{d}", capTxt))} &middot; ${esc(t("isl_rs_done"))} ~${P.done == null ? "?" : day(P.done)}</div>`);
+    if (!lines.length) lines.push(`<div class="isl-done ok">&#10003; ${lead(by)}: ${esc(t("isl_rs_all"))}</div>`);
+    if (P.free > 0) lines.unshift(`<div class="isl-done ok">&#10003; ${esc(t("isl_rs_free").replace("{n}", P.free.toLocaleString()).replace("{c}", Math.floor(P.free / pc).toLocaleString()))}</div>`);
     return lines.join("");
   };
   function drawPlan() {
@@ -25969,15 +26265,15 @@ async function renderIslandGallery() {
       tile("shards", "icons/island-shard.png", t("isl_shards"), st.shards || 0, shNeed, Math.max(0, shNeed - (st.shards || 0)))];
     // Mark of Revival (bought with packs, after the free shards): need = what the plan
     // buys with Marks, or with no Budgets target the optional amount.
-    const mk = list.reduce((a, s) => a + marksOf(s), 0);
+    const mk = list.reduce((a, s) => a + marksOf(s), 0) + (lightPlan().mk || 0);
     // Always three slots so the card keeps one height on every category (faded "—" when not needed).
     tiles.push(tile("marks", "icons/mark-of-revival.png", t("isl_mk_name"), markHave(), mk, Math.max(0, mk - markHave())));
     // Glorious Tomes (Shining City shop): what the Backpack holds counts its Lucky Glorious Tome Chests at their average.
-    const tmN = sharedPlan().tomes || 0;
+    const tmN = sharedPlan(true).tomes || 0;
     tiles.push(tile("tomes", "icons/glorious-tome.png", t("isl_tm_name"), tomeHave(), Math.max(0, tmN), Math.max(0, tmN - tomeHave())));
     // Lighthouse Blueprints as General Accessory Construction Contracts (owner, 16 Nov 2026).
     tiles.push(tile("contracts", CT_ICON, t("isl_lh_ct"), contractHave(), LPn.ct, LPn.short));
-    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + Math.max(0, lightBuy() - contractHave());
+    const boxesOn = BAR_SHOW_ALL.islands !== false, mkTotal = markSheetTotal() + (sharedPlan().tomes || 0) + (sharedPlan().shNeed || 0) + Math.max(0, lightBuy() - contractHave());
     // The Pack cost button sits on the Target row, always there (greyed when nothing to buy).
     const canBuy = mkTotal > 0 && visitorCan("packcost");
     const priceBtn = canBuy ? `<button type="button" class="cg-bpbtn ice isl-pcb" data-islpc data-islmkprice>${plxPriceLabel("islands")}</button>` : `<button type="button" class="cg-bpbtn isl-pcb off" disabled>${esc(t("isl_pc_none"))}</button>`;
@@ -26018,7 +26314,7 @@ async function renderIslandGallery() {
       if (hv) {
         const k = hv.dataset.islhave;
         if (k === "tomes") {
-          const nd = sharedPlan().tomes || 0, cur = Number((islBp || {})["Glorious Tome"]) || 0;
+          const nd = sharedPlan(true).tomes || 0, cur = Number((islBp || {})["Glorious Tome"]) || 0;
           plxAmountModal({ label: t("isl_tm_name"), icon: "icons/glorious-tome.png", value: cur, needBox: nd > 0 ? { need: nd, have: tomeHave() } : null, onSave: (v) => { loadCalcState("backpack").catch(() => null).then((b) => { islBp = { ...(b || islBp || {}), "Glorious Tome": Math.floor(v) }; saveCalcState("backpack", islBp); budgetInvalidate(); spSig = null; keepPlace(() => computeAndRender()); }); } });
           return;
         }
@@ -26054,54 +26350,37 @@ async function renderIslandGallery() {
 
   // Mark of Revival for Budgets: every tracked category's Mark-shop buildings together (the
   // Budgets "Islands" page's need); what the Backpack holds counts as had.
-  const markNeedAll = () => islands.filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
+  const markNeedAll = () => islands.filter(usesMarks).reduce((a, s) => a + (sharedPlan(false, true).mk.get(s.id) || 0) * srcOf(s).markPrice, 0);
   // The Pack cost card: this category's Marks actually needed, else (no target) the optional amount.
-  const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + marksOf(s), 0);
+  const markSheetTotal = () => planList().filter(usesMarks).reduce((a, s) => a + (sharedPlan().mk.get(s.id) || 0) * srcOf(s).markPrice, 0);
   const markHave = () => Number((islBp || {})["Mark of Revival"]) || 0;
-  const buyTotals = () => { const o = {}, mk = markSheetTotal(), tm = sharedPlan().tomes || 0, ct = lightBuy(); if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; return o; };
+  const buyTotals = () => { const o = {}, mk = markSheetTotal() + (lightPlan().mk || 0), tm = sharedPlan().tomes || 0, ct = lightBuy(), sh = sharedPlan().shNeed || 0; if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh; return o; };
   const buyOwned = () => ({ "Mark of Revival": markHave(), "Glorious Tome": tomeHave(), [ISL_CONTRACT]: contractHave() });
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => {
-    if (ISL_MK_OPT) {
-      // The optional, per-building price (no Budgets target): only its own spans.
-      if (PACK_COST_SHOWN.islands) { ISL_MK_OPT.price = PACK_COST_SHOWN.islands; ISL_OPT_PRICE[`${ISL_MK_OPT.id}|${ISL_MK_OPT.kind}`] = ISL_MK_OPT.price; }
-      document.querySelectorAll(`[data-islmkopt="${ISL_MK_OPT.id}|${ISL_MK_OPT.kind}"]`).forEach((el) => { el.textContent = ISL_MK_OPT.price || "\u2026"; });
-      // Both shops: once the Marks price is in, work out the Tomes one too (one Pack cost at a time).
-      if (ISL_MK_OPT.price && ISL_MK_OPT.next) { const nx = ISL_MK_OPT.next; ISL_MK_OPT.next = null; setTimeout(() => islMkOptRender(nx.s, nx.k), 0); }
-      return;
-    }
     document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
   };
-  // No Budgets target: price the optional Marks of one building alone (read only, nothing
-  // goes to Budgets), in its own body of the Pack cost window.
-  function islMkOptRender(s, k, then) {
-    const n = optAmt(s, k), host = document.getElementById("islMkOpt");
-    if (!host || !n) { if (then) islMkOptRender(then.s, then.k); return; }
-    const item = k === "mark" ? "Mark of Revival" : "Glorious Tome", have = k === "mark" ? markHave() : tomeHave();
-    const sig = `${s.id}|${k}|${n}|${have}`;
-    if (ISL_MK_OPT && ISL_MK_OPT.sig === sig) { if (then && ISL_MK_OPT.price) islMkOptRender(then.s, then.k); return; }
-    ISL_MK_OPT = { id: String(s.id), kind: k, sig, price: "", next: then || null };
-    packCostShown("islands", null);
-    PACK_COST_OPEN.islands = true;
-    renderPackCostBlock(host, "islands", [{ label: null, totals: { [item]: n } }], { [item]: have });
-  }
-  function islMkOptOpen(s, k) {
-    if (s && k && !(ISL_MK_OPT && ISL_MK_OPT.id === String(s.id) && ISL_MK_OPT.kind === k)) islMkOptRender(s, k);
-    const wrap = document.getElementById("islMkWrap"), opt = document.getElementById("islMkOpt"), main = document.getElementById("islMkPacks");
-    if (!wrap || !opt) return;
-    wrap.hidden = false; opt.hidden = false; if (main) main.hidden = true;
-    const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
-    if (tt) tt.textContent = `${t("pack_cost_title")} \u00b7 ${t("isl_mk_optional")}`;
-    islOpenPacks();
-  }
-  function islMkOptClose() {
-    const opt = document.getElementById("islMkOpt"), main = document.getElementById("islMkPacks"), wrap = document.getElementById("islMkWrap");
-    if (!opt || opt.hidden) return;
-    opt.hidden = true; if (main) main.hidden = false;
-    const tt = document.querySelector("#islMkBuy [data-cgbuyt]");
-    if (tt) tt.textContent = `${t("pack_cost_title")}`;
-    if (wrap && !markSheetTotal() && !(sharedPlan().tomes > 0) && !(lightBuy() > contractHave())) wrap.hidden = true;
-  }
+  // Pack cost's Cheapest: what Islands still has to buy if every target only has to be
+  // reached by `d` days from now (free income up to then first). `uncovered` = copies no
+  // pack covers (a date is only good when it leaves no more of them than "as soon as possible").
+  PACK_NEED_BY_DATE.islands = (d) => {
+    const P = sharedPlan(false, d), L = lightPlan(d), o = {};
+    const mk = planList().filter(usesMarks).reduce((a, s) => a + (P.mk.get(s.id) || 0) * srcOf(s).markPrice, 0) + (L.mk || 0), tm = P.tomes || 0, ct = Math.max(0, L.ct - L.free), sh = P.shNeed || 0;
+    if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh;
+    const B = sharedPlan(false);
+    const unc = (x) => Math.max(0, x.cant - Math.round((x.shNeed || 0) / (perCopy() || 1)));
+    return { totals: o, ok: unc(P) <= unc(B) };
+  };
+  // The plan picked in Pack cost: the page's boxes and lines follow its date (Cheapest at a later date).
+  PACK_PICK_HOOKS.islands = (days) => {
+    const v = days == null ? null : days;
+    if (v === ISL_VIEW_DAYS) return;
+    ISL_VIEW_DAYS = v;
+    if (document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender());
+  };
+  // A new date in the Pack cost window's target row: the page's plan follows it (free income
+  // up to that day first), like the cost.
+  PACK_TARGET_HOOKS.islands = () => { if (document.getElementById("islandSections")) { spSig = null; mkSig = null; keepPlace(() => computeAndRender()); } };
   // The Pack cost window, like the planner pages: on phones it opens over the page from
   // the "$ <price> ›" button on the Backpack line; on PC the card sits under the stats card.
   function islPacksTo(open) {
@@ -26119,7 +26398,7 @@ async function renderIslandGallery() {
   }
   {
     const w = document.getElementById("islMkWrap");
-    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-islbd]")) { islPacksTo(false); islMkOptClose(); } };
+    if (w) w.onclick = (e) => { if (e.target.closest("[data-cgclose]") || e.target.closest("[data-islbd]")) islPacksTo(false); };
   }
   // The Pack cost card (design A, like every planner page) for the Marks, its own card
   // under the Troops Stats card; shown when Marks are needed (or optional with no target).
@@ -26128,8 +26407,7 @@ async function renderIslandGallery() {
     if (!host) return;
     const bt = buyTotals(), total = Object.values(bt).reduce((a, n) => a + n, 0), sig = `${JSON.stringify(bt)}|${markHave()}|${tomeHave()}|${contractHave()}`;
     const wrap = document.getElementById("islMkWrap");
-    if (!total) { mkSig = sig; host.innerHTML = ""; if (!ISL_MK_OPT) { if (wrap) wrap.hidden = true; islPacksTo(false); packCostShown("islands", null); } return; }
-    if (ISL_MK_OPT) { ISL_MK_OPT = null; islMkOptClose(); mkSig = null; }
+    if (!total) { mkSig = sig; host.innerHTML = ""; if (wrap) wrap.hidden = true; islPacksTo(false); packCostShown("islands", null); return; }
     if (wrap) wrap.hidden = false;
     if (sig === mkSig && host.innerHTML) return;
     mkSig = sig;
@@ -26238,10 +26516,6 @@ async function renderIslandGallery() {
         const box = (label, big, small) => `<div class="sg-sb isl-bx"><div class="sg-sbt"><span>${esc(label)}</span></div><b>${big}</b><small>${small}</small></div>`;
         pop.querySelector("[data-popneed]").innerHTML = ev ? `<div class="isl-s3 isl-pb">${box(t("isl_pb_next"), ev.nx.known ? esc(islDateShort(islDay(ev.nx.off))) : "&mdash;", esc(ev.nx.known ? islEveryText(ev.nx.every, ev.nx.monthly) : t(ev.src.dates === "cal" ? "isl_pick_event" : "isl_no_dates")))}${box(t("isl_pb_get"), `<select class="keep-w" data-ipevn>${ev.src.choices.map((n) => `<option value="${n}"${n === ev.per ? " selected" : ""}>${n}</option>`).join("")}</select>`, esc(t("isl_pb_each")))}${box(t("isl_pb_done"), left ? `<span class="gd">~${esc(ev.date)}</span>` : "&#10003;", esc(left ? t(store ? "isl_pb_left" : "isl_pb_copies").replace("{n}", left) : t("isl_box_none")))}</div>`
           : !all || src.kind !== "shop" ? "" : usesEssence(s) ? (() => { const d = bTime(s), ess = essOf(s); return `<div class="isl-nbox">${left}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""} &times; ${bidiNum(src.price.toLocaleString())} = <b class="gd">${bidiNum(shortAmount(ess))} <img class="isl-im" src="icons/life-essence.png" alt="" aria-hidden="true"></b>${ess ? ` &middot; ${d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok"))}` : ""}</div>`; })() : `<div class="isl-nbox">${esc(t("isl_nb_copies").replace("{n}", need && (mkCopies(s) || tmCopies(s)) ? left - mkCopies(s) - tmCopies(s) : all))}${store ? ` <span class="g">(${esc(t("isl_nb_store").replace("{n}", store))})</span>` : ""}${need || !(mkCopies(s) || tmCopies(s)) ? ` = <b class="gd">${bidiNum(need.toLocaleString())} <img class="isl-im" src="icons/island-shard.png" alt="" aria-hidden="true"></b>${need ? ` &middot; ${(() => { const d = bTime(s); return d == null ? "?" : d ? `~${esc(finLabel(d))}` : esc(t("isl_needs_ok")); })()}` : ""}` : ""}${mkLine(s)}</div>`;
-        if (!islTgt() && (marksOpt(s) || tomesOpt(s))) {
-          if (marksOpt(s) && tomesOpt(s)) islMkOptRender(s, "mark", { s, k: "shining" });
-          else islMkOptRender(s, marksOpt(s) ? "mark" : "shining");
-        }
         const pi = pop.querySelector("[data-ipprice]");
         if (pi) {
           if (document.activeElement !== pi) pi.value = src.price || "";
@@ -26385,8 +26659,6 @@ async function renderIslandGallery() {
       const z = e.target.closest("[data-ipset]");
       if (z) { setLv(z.dataset.ipset === "max" ? maxOf(s) : 0); return; }
       if (e.target.closest("[data-islmkopen]")) { islOpenPacks(); return; }
-      const ob = e.target.closest("[data-islmkoptopen]");
-      if (ob) { islMkOptOpen(s, ob.dataset.islmkoptopen || "mark"); return; }
       const stb = e.target.closest("[data-ipst]");
       if (stb && !stb.disabled) {
         ISL_SHARDS.store = { ...(ISL_SHARDS.store || {}), [s.id]: Math.max(0, storeOf(s) + Number(stb.dataset.ipst)) };
@@ -26480,11 +26752,11 @@ async function renderIslandGallery() {
     }), ISLAND_FILTER.bonusType, onIslandCatSelect);
     drawPlan();
     // Budgets' Islands page: the Marks every Mark-shop building still needs (only saved when it changed).
-    const mkAll = markNeedAll(), tmAll = sharedPlan().tomes || 0;
+    const mkAll = markNeedAll() + (lightPlan(true).mk || 0), tmAll = sharedPlan(false, true).tomes || 0;
     // Goals per upgrade: each Mark / Shining City shop building with copies to buy, one
     // level at a time; the free copies come first, the bought ones (Marks, then Tomes) last.
     {
-      const SPg = sharedPlan(), tp = Number(ISL_RULES.tomePrice) || 600;
+      const SPg = sharedPlan(false, true), tp = Number(ISL_RULES.tomePrice) || 600;
       setPageUpgrades("islands", islands.filter((s) => usesMarks(s) || usesTomes(s)).map((s) => {
         const mkN = SPg.mk.get(s.id) || 0, tmN = SPg.tm.get(s.id) || 0, now = lvOf(s), to = tgtOf(s);
         if (to <= now || !(mkN + tmN)) return null;
@@ -26499,14 +26771,16 @@ async function renderIslandGallery() {
       }).filter(Boolean).concat(islands.filter(islIsLight).map((s) => {
         // Lighthouses: the Contracts to each level (an unlock paid in Life Essence costs none).
         const now = lvOf(s), to = tgtOf(s), c = lightOf(s);
-        if (to <= now || !c.ct) return null;
+        if (to <= now || !(c.ct || c.mk)) return null;
         const lv = [];
-        for (let L = now + 1; L <= to; L++) { const n = islLightCost(now, L, c.ess > 0).ct; lv.push({ label: String(L), totals: n ? { [ISL_CONTRACT]: n } : {} }); }
+        for (let L = now + 1; L <= to; L++) { const n = islLightCost(c.mk ? 1 : now, L, c.ess > 0).ct; lv.push({ label: String(L), totals: { ...(n ? { [ISL_CONTRACT]: n } : {}), ...(c.mk ? { "Mark of Revival": c.mk } : {}) } }); }
         return { k: String(s.id), n: s.name, img: s.image_url || "", a: String(now), lv };
       }).filter(Boolean)));
     }
-    const ctAll = Math.max(0, lightPlan().ct - lightPlan().free);
-    recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}), ...(ctAll ? { [ISL_CONTRACT]: ctAll } : {}) } }]);
+    const ctAll = Math.max(0, lightPlan(true).ct - lightPlan(true).free);
+    const shAll = sharedPlan(false, true).shNeed || 0;
+    recordBudgetNeeds("islands", [{ label: null, totals: { ...(mkAll ? { "Mark of Revival": mkAll } : {}), ...(tmAll ? { "Glorious Tome": tmAll } : {}), ...(ctAll ? { [ISL_CONTRACT]: ctAll } : {}), ...(shAll ? { [ISL_SHARD_ITEM]: shAll } : {}) } }]);
+    islFreeShardsRefresh(() => { if (document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender()); });
     islMarkCard();
     galMenuToTools("island", "islandCatSwitcher");
 
@@ -26562,6 +26836,12 @@ async function renderIslandGallery() {
   if (islands.some((x) => usesTomes(x) && usesMarks(x))) {
     const before = ISL_UNIT;
     islUnitPrices().then((u) => { if (seq === RENDER_SEQ && u !== before && document.getElementById("islandSections") && !ISL_POP) { spSig = null; keepPlace(() => computeAndRender()); } });
+  }
+  // Whether a pack used for Islands gives shards (and how many it can) needs the pack
+  // tables: drawn again once they are in when that changes the plan.
+  {
+    const shBefore = `${islShardPacksOn()}|${islShardSupplyMax()}`;
+    ensurePackTables().then(() => { if (seq === RENDER_SEQ && `${islShardPacksOn()}|${islShardSupplyMax()}` !== shBefore && document.getElementById("islandSections") && !ISL_POP) { spSig = null; keepPlace(() => computeAndRender()); } }).catch(() => {});
   }
 }
 
@@ -31744,6 +32024,10 @@ function gameRules() {
       cols: [{ key: "level", label: "Level", type: "auto" }, { key: "blueprints", label: "Blueprints", type: "num" }, { key: "contracts", label: "Contracts", type: "num" }, { key: "essence", label: "Or Life Essence", type: "num" }],
       get: () => ISL_LIGHT.map((r, i) => ({ level: i + 1, blueprints: r.bp, contracts: r.ct, essence: r.ess || "" })),
       set: (rows) => ruleSetArray(ISL_LIGHT, rows.map((r) => { const bp = Number(r.blueprints) || 0, ct = r.contracts === "" || r.contracts == null ? bp * 10 : Number(r.contracts) || 0; return { bp, ct, ess: Number(r.essence) || 0 }; })) },
+    { key: "islLightUnlock", group: "islands", label: "Lighthouse unlock (Lv 1)", help: "How each lighthouse is unlocked. Unlock Marks = Mark of Revival for its first blueprint in the Mark of Revival shop (bought once); empty or 0 = the free unlock (Life Essence when spare, else Contracts, as in the table above).",
+      cols: [{ key: "name", label: "Lighthouse", type: "text" }, { key: "marks", label: "Unlock Marks (0 = free)", type: "num" }],
+      get: () => Object.entries(ISL_LIGHT_UNLOCK).map(([name, marks]) => ({ name, marks })),
+      set: (rows) => ruleSetObject(ISL_LIGHT_UNLOCK, Object.fromEntries(rows.filter((r) => r.name && Number(r.marks) > 0).map((r) => [String(r.name).trim(), Number(r.marks)]))) },
   ];
   // The built-in values, kept for "Reset" and to show what changed.
   GAME_RULES.forEach((r) => { r.def = JSON.parse(JSON.stringify(r.get())); });
