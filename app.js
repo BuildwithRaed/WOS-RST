@@ -1915,7 +1915,7 @@ const T = {
   isl_rs_short: { en: "shards short" },
   isl_rs_all: { en: "all buildings at target" },
   isl_rs_cant: { en: "{n} copies can't be reached by {d} (shards only)" },
-  isl_rs_free: { en: "+{n} free shards from packs you already buy for other pages ({c} copies)" },
+  isl_rs_free: { en: "+{n} shards from packs you already buy for other pages ({c} copies)" },
   isl_rs_sh_buy: { en: "{n} copies (shards only) → {s} shards from packs" },
   isl_tag_ev: { en: "\ud83c\udfaa {t}" },
   isl_tag_rk: { en: "\ud83c\udfc6 {t}" },
@@ -3293,10 +3293,9 @@ const T = {
   pca_steps: { en: "{n} steps" },
   pca_shard_note: { en: "Counts for Islands only when it's the cheapest · {a} a copy vs {b} with Marks" },
   pca_in_plan: { en: "Already in your plan" },
-  pca_free: { en: "free" },
   pca_for_isl: { en: "+{n} for Islands" },
-  pca_bought_for: { en: "Bought for {p}" },
-  pca_free_shards: { en: "+{n} shards counted free ({c} copies)" },
+  pca_bought_for: { en: "paid by {p}" },
+  pca_free_shards: { en: "+{n} shards from packs your other pages buy ({c} copies)" },
   pca_then_buy: { en: "Then buy" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
@@ -18266,7 +18265,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         left -= n; got += n;
         const pages = Object.keys(cb.shares || {}).filter((k) => k !== calcKey && (cb.shares[k].rows || []).some((x) => x.title === r.title && x.label === r.label)).map(packPageLabel);
         const parts = String(r.title).split(" \u00b7 "), name = parts.length >= 2 ? parts[1] : parts[0];
-        return `<div class="pca-pk"><div class="pca-row"><span class="pca-pic">${pcaIcon(SHI)}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&middot; ${esc(String(r.label).length > 40 ? t("pca_steps").replace("{n}", String(r.label).split(" \u00b7 ").length) : r.label)}</small></span>${pages.length ? `<span class="pca-sb">${esc(t("pca_bought_for").replace("{p}", pages.join(", ")))}</span>` : ""}<span class="pca-gv"><span class="pca-chip">${pcaIcon(SHI)}${esc(t("pca_for_isl").replace("{n}", qty(n)))}</span></span></span><b class="pca-pr pca-fr">${esc(t("pca_free"))}</b></div></div>`;
+        return `<div class="pca-pk"><div class="pca-row"><span class="pca-pic">${pcaIcon(SHI)}</span><span class="pca-mid"><span class="pca-nm">${esc(name)} <small>&middot; ${esc(String(r.label).length > 40 ? t("pca_steps").replace("{n}", String(r.label).split(" \u00b7 ").length) : r.label)}</small></span><span class="pca-sb">${pcaCur(packFmtLocal(packRowLocal(r), r.currency, false, r.price))}${pages.length ? ` &middot; ${esc(t("pca_bought_for").replace("{p}", pages.join(", ")))}` : ""}</span><span class="pca-gv"><span class="pca-chip">${pcaIcon(SHI)}${esc(t("pca_for_isl").replace("{n}", qty(n)))}</span></span></span></div></div>`;
       }).join("");
       if (got > 0) inPlanHtml = `<div class="pca-h">${esc(t("pca_in_plan"))}</div>${lines}<div class="pca-note ok">&#10003; ${esc(t("pca_free_shards").replace("{n}", qty(got)).replace("{c}", qty(Math.floor(got / islPc))))}</div>`;
     }
