@@ -1273,7 +1273,7 @@ let LANG = localStorage.getItem("lang") || "en";
 // "ui:<text>", "w:<word>", "p:<pattern>") plus the admin's changes in
 // site_config "lang_<code>" (Admin → Languages & Texts). Missing texts show
 // in English.
-const LANG_FILES_VERSION = 94; // bump when a lang/*.json file changes (the offline cache keeps old links)
+const LANG_FILES_VERSION = 95; // bump when a lang/*.json file changes (the offline cache keeps old links)
 const EXP_MAX_OPEN = {}; // Experts Level: "<expert>|level" / "<expert>|skills" maxed lines opened (for the visit)
 // The game's other languages start hidden;
 // the admin shows each one in Admin → Languages & Texts once checked.
@@ -14721,7 +14721,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=fff9346477";
+      s.src = "scan.min.js?v=f40dc0339c";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }
@@ -15429,7 +15429,7 @@ const PACK_RESOURCE_NAMES = [
   "Lucky Gear Chest", "Random Chief Gear Chest", "Random Charm Chest",
   "Fire Crystal", "FC Chest", "FC Crate", "Pet Chest", "Common Marks", "Advanced Marks", "Gems",
   "Mythic General Hero Shard", "Epic General Hero Shard", "Rare General Hero Shard", "Mythic General Hero Lucky Box",
-  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest", "General Accessory Construction Contract",
+  "Marks of Valor", "Widget Chest", "Mystery Points", "Mark of Revival", "Glorious Tome", "Lucky Glorious Tome Chest", "General Accessory Construction Contract", "Mythic Island Shards",
   "Research Speedups (minutes)", "Troop Speedups (minutes)", "Construction Speedups (minutes)", "Expert Speedups (minutes)",
   "Expert Speedup 1m", "Expert Speedup 5m", "Expert Speedup 1h", "Expert Speedup 3h", "Expert Speedup 8h",
   "Research Speedup 1m", "Research Speedup 5m", "Research Speedup 1h", "Research Speedup 3h", "Research Speedup 8h",
