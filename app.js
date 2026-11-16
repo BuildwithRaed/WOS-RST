@@ -25187,7 +25187,7 @@ const islCatTracked = (cat) => !!cat && cat !== "all" && !ISL_SKIP_CATS.includes
 // which can also be paid with Life Essence). Index = level - 1.
 const ISL_LIGHT_CAT = "Lighthouse";
 const ISL_CONTRACT = "General Accessory Construction Contract";
-const ISL_LIGHT = [1, 2, 4, 6, 8, 10, 12, 12, 16, 18].map((bp, i) => ({ bp, ct: bp * 10, ess: i ? 0 : 50000 }));
+const ISL_LIGHT = [1, 2, 4, 6, 8, 10, 12, 12, 12, 16].map((bp, i) => ({ bp, ct: bp * 10, ess: i ? 0 : 50000 }));
 const islIsLight = (s) => !!s && s.category === ISL_LIGHT_CAT;
 // Each lighthouse's levels, shared with Scan (Storehouse → Accessory): calc_state island_shards.light =
 // { skinId: { now: 0..10 (0 = not unlocked), to: 0..10 } }. "now" is also written to the skin's level.
