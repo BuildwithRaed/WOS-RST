@@ -1742,9 +1742,6 @@ const T = {
   pks_s1: { en: "Screenshot the pack in the game" },
   pks_s1_hint: { en: "Whole pack: every item with its number and the price button. A row that scrolls sideways can take 2 screenshots." },
   pks_choose: { en: "Choose screenshot" },
-  pks_s2: { en: "Save it to" },
-  pks_this: { en: "This pack: {name}" },
-  pks_this_d: { en: "Its numbers are replaced after you check them; items the screenshot doesn't show keep theirs." },
   pks_new: { en: "New pack" },
   pks_name: { en: "Name" },
   pks_name_ph: { en: "from the screenshot title" },
@@ -1790,6 +1787,10 @@ const T = {
   pks_dup: { en: "This pack is already on the Packs page: {name}" },
   pks_dup_d: { en: "Saving updates its amounts. Check what changes below." },
   pks_dup_mine: { en: "Saving changes your own copy of its amounts (only you see it)." },
+  pks_saved_see: { en: "See saved pack ▾" },
+  pks_saved_hide: { en: "Hide saved pack ▴" },
+  pks_saved_pack: { en: "Saved pack" },
+  pks_saved_empty: { en: "No rows saved yet." },
   pks_as_new: { en: "Save as a new pack instead" },
   pks_as_match: { en: "Update {name} instead" },
   pks_diff: { en: "Differences from the saved pack" },
@@ -8263,7 +8264,7 @@ function renderMyPacks(el, templates, rerenderPage, allTables) {
   const scanMatch = (title) => {
     const m = packScanFind(title, (allTables || []).filter((x) => { const l = packLinkFor(x.id); return !l.template && !l.hideVisitors; }));
     if (!m) return null;
-    return { id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), onPage: true, mine: true };
+    return { id: m.id, title: m.title, saved: packScanSavedRows(packApplyMyEdits([m])[0]), when: mpWhenText(packLinkFor(m.id)), onPage: true, mine: true };
   };
   const scanOpts = (mp) => ({ target: mp ? { id: mp.id, title: mp.title, saved: packScanSavedRows(mp) } : null, canNew: own || MY_PACKS.length < packMyPacksLimit(), categories: [], match: own || mp ? null : scanMatch, onSave: (res) => mpScanSave(res, mp) });
   const scanBtn = el.querySelector("[data-mpscan]");
@@ -11599,7 +11600,7 @@ async function renderPacksPage() {
   // Scan pack: a new pack from a screenshot (the top card), or the open pack
   // filled from one (its window's "Fill from screenshot"). The table is changed
   // through its editor (pkscanfill in wireTable), so it saves like any edit.
-  const pkbScanTarget = (tb) => ({ id: tb.id, title: tb.title, saved: packScanSavedRows(tb), onPage: true, mine: !IS_OWNER });
+  const pkbScanTarget = (tb) => ({ id: tb.id, title: tb.title, saved: packScanSavedRows(tb), when: pkbWhen(packLinkFor(tb.id)).text, onPage: true, mine: !IS_OWNER });
   const pkbScanOpts = (tb) => ({
     target: tb ? pkbScanTarget(tb) : null,
     canNew: IS_OWNER,
@@ -14624,7 +14625,7 @@ function loadScanCode() {
   if (!SCAN_CODE_P) {
     SCAN_CODE_P = new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "scan.min.js?v=0bf6d7e099";
+      s.src = "scan.min.js?v=1d06681554";
       const want = new URL(s.src, location.href).searchParams.get("v");
       s.onload = async () => {
         if (window.SCAN_BUILD === want) { SCAN_CODE_OK = true; resolve(); return; }

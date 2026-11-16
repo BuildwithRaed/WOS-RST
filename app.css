@@ -4692,11 +4692,14 @@ span.mk.mk svg{flex:none}
   .pks-f{ display:flex; align-items:center; gap:8px; }
   .pks-f > .meta{ flex:0 0 64px; font-size:12px; }
   .pks-f input, .pks-f select{ flex:1 1 auto; min-width:0; }
-  .pks-f2{ margin:8px 0 4px; }
   .pks-scl{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:14px; font-weight:600; }
   .pks-lad{ display:flex; gap:4px; margin:6px 0 4px; }
-  .pks-lad span{ flex:1 1 0; min-width:44px; display:flex; flex-direction:column; align-items:center; padding:5px 2px; border:1px solid var(--line); border-radius:9px; font-size:12.5px; }
-  .pks-lad span:first-child{ border-color:var(--ice); }
+  .pks-lad button{ flex:1 1 0; min-width:44px; display:flex; flex-direction:column; align-items:center; padding:5px 2px; border:1px solid var(--line); border-radius:9px; font-size:12.5px; background:none; color:var(--frost); font-family:inherit; cursor:pointer; }
+  .pks-lad button.on{ border-color:var(--ice); background:rgba(79,170,255,.1); }
+  .pks-lad button.pre{ opacity:.5; }
+  .pks-sc{ margin-top:12px; padding:9px 10px; border:1px solid var(--line); border-radius:12px; }
+  .pks-sc > .meta{ font-size:12px; }
+  .pks-new .pks-f{ font-weight:400; }
   .pks-lad small{ color:var(--muted); font-size:11px; }
   .pks-foot{ display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px; }
   .pks-to{ margin:4px 0 6px; font-size:12.5px; }
@@ -4726,6 +4729,9 @@ span.mk.mk svg{flex:none}
   .pks-pv-n{ font-size:11.5px; margin-top:4px; }
   .pks-dup{ cursor:default; }
   .pks-dup .btn{ align-self:flex-start; }
+  .pks-dup-b{ display:flex; flex-wrap:wrap; gap:6px; }
+  .pks-sv{ margin:2px 0 8px; }
+  .pks-sv-n{ font-size:13px; margin:0 0 6px; overflow-wrap:anywhere; }
   .pks-diff td{ font-variant-numeric:tabular-nums; }
   .pks-diff tr.shot td{ text-align:start; }
   .pks-diff tr.chg td{ background:rgba(245,166,35,.13); }

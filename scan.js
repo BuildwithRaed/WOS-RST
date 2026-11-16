@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "0bf6d7e099";
+window.SCAN_BUILD = "1d06681554";
 
 
 // ---- Backpack: read game screenshots ----
@@ -1981,6 +1981,19 @@ async function scanPackShot(worker, file, ctx) {
 // Nothing is saved here; onSave (app.js) writes the pack the way its editor does.
 const SCAN_PK_LADDER = [[4.99, 1], [9.99, 2], [19.99, 4], [49.99, 10], [99.99, 20]];
 const SCAN_PK_BUNDLE = /^(Meat|Wood|Coal|Iron|Steel|Gems|Food)$/;
+// Which read tiles the check screen lists (owner, 16 Nov 2026: Meat / Wood "10K"
+// bundles and the VIP points hexagon were listed as "pick the item"). A named tile
+// stays when its item is allowed; a tile with no name stays only when its nearest
+// picture is an allowed item, so it can be picked. A tile with a size label on top
+// ("10K", "100": resource bundles, VIP points, Hero XP …) and no name is never a
+// Backpack item. Speedups (a time label) always stay.
+function scanPkKeep(it, ok) {
+  if (it.name) return ok.has(it.name);
+  if (it.why === "name") return false;
+  if (it.why === "speedup") return true;
+  const g = !!it.guess && ok.has(it.guess);
+  return g && !it.mult;
+}
 function openPackScanMain(opts) {
   opts = opts || {};
   let modal = document.getElementById("pkScanModal");
@@ -2011,26 +2024,15 @@ function openPackScanMain(opts) {
     const i = SCAN_PK_LADDER.findIndex(([p]) => Math.abs(p - usd) < 0.005);
     return i < 0 ? null : SCAN_PK_LADDER.slice(i).map(([p, m]) => [p, m / SCAN_PK_LADDER[i][1]]);
   };
+  // The first window asks only for the screenshot; where it saves and the
+  // price ladder are set on the check screen (owner, 16 Nov 2026).
   const showStart = () => {
-    const cats = (opts.categories || []).filter(Boolean);
-    const p0 = st.groups.length ? st.groups[0] : null, base = p0 && p0.price && p0.price.usd ? p0.price.usd : 4.99;
-    const lad = ladderOf(base) || ladderOf(4.99);
     modal.innerHTML = `<div class="modal-box pks-box" role="dialog" aria-label="${esc(t("pks_title"))}">
       <div class="pks-h"><h2>&#128247; ${esc(t("pks_title"))}</h2><button type="button" class="pks-x" data-pksclose aria-label="${esc(t("close_button"))}">&times;</button></div>
       <p class="desc pks-d">${esc(t("pks_intro"))}</p>
       <div class="scan-step"><b>1</b><div><div>${esc(t("pks_s1"))}</div><div class="meta">${esc(t("pks_s1_hint"))}</div>
         <button class="btn pks-choose" type="button" data-pkspick>&#128444; ${esc(t("pks_choose"))}</button></div>
         <span class="scan-ex pks-ex" aria-hidden="true">${exampleSvg}</span></div>
-      <div class="scan-step"><b>2</b><div><div>${esc(t("pks_s2"))}</div>
-        ${opts.target ? `<label class="pks-opt${st.to === "this" ? " on" : ""}"><input type="radio" name="pksto" value="this" ${st.to === "this" ? "checked" : ""} /><span><b>${esc(t("pks_this").replace("{name}", opts.target.title || ""))}</b><small class="meta">${esc(t("pks_this_d"))}</small></span></label>` : ""}
-        ${opts.canNew !== false ? `<label class="pks-opt${st.to === "new" ? " on" : ""}"><input type="radio" name="pksto" value="new" ${st.to === "new" ? "checked" : ""} /><span><b>${esc(t("pks_new"))}</b>
-          <span class="pks-f"><span class="meta">${esc(t("pks_name"))}</span><input type="text" data-pksname maxlength="60" value="${esc(st.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" /></span>
-          ${cats.length ? `<span class="pks-f"><span class="meta">${esc(t("pks_cat"))}</span><select data-pkscat class="keep-w">${cats.map((c) => `<option value="${esc(c)}" ${c === st.category ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></span>` : ""}</span></label>` : ""}
-      </div></div>
-      <div class="scan-step"><b>3</b><div><div class="pks-scl"><span>${esc(t("pks_scale"))}</span><input type="checkbox" class="bset-sw" data-pksscale ${st.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></div>
-        <div class="meta">${esc(t("pks_scale_d"))}</div>
-        <div class="pks-lad">${lad.map(([p, m]) => `<span><b>$${p}</b><small>&times;${m}</small></span>`).join("")}</div>
-        <div class="meta">${esc(t("pks_scale_note"))}</div></div></div>
       <div class="pks-foot"><button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button></div>
     </div>`;
     wireStart();
@@ -2038,13 +2040,6 @@ function openPackScanMain(opts) {
   const wireStart = () => {
     modal.querySelectorAll("[data-pksclose]").forEach((b) => b.onclick = close);
     modal.querySelector("[data-pkspick]").onclick = picker;
-    modal.querySelectorAll("input[name=pksto]").forEach((r) => r.onchange = () => { st.to = r.value; modal.querySelectorAll(".pks-opt").forEach((l) => l.classList.toggle("on", l.querySelector("input").checked)); });
-    const nm = modal.querySelector("[data-pksname]");
-    if (nm) nm.oninput = () => { st.title = nm.value; st.titleTyped = true; };
-    const ct = modal.querySelector("[data-pkscat]");
-    if (ct) ct.onchange = () => { st.category = ct.value; };
-    const sc = modal.querySelector("[data-pksscale]");
-    if (sc) sc.onchange = () => { st.scale = sc.checked; };
   };
   const picker = () => {
     const input = document.createElement("input");
@@ -2093,7 +2088,7 @@ function openPackScanMain(opts) {
       s.groups.forEach((g) => {
         const ok = new Set(names());
         // not a Backpack item (resources, VIP points, …): left out, not shown
-        g.items = g.items.filter((it) => (it.name ? ok.has(it.name) : it.why !== "name")).map((it) => ({ ...it, auto: it.name, tick: true }));
+        g.items = g.items.filter((it) => scanPkKeep(it, ok)).map((it) => ({ ...it, auto: it.name, tick: true }));
         const same = groups.find((x) => (x.price && g.price ? Math.abs(x.price.value - g.price.value) < 0.01 && (!x.title || !g.title || x.title === g.title) : !x.price && !g.price));
         if (same && shots.length > 1) {
           // the same tile in both screenshots (they overlap) counts once
@@ -2164,23 +2159,58 @@ function openPackScanMain(opts) {
       <input type="text" inputmode="numeric" data-pksval value="${it.value == null ? "" : Number(it.value).toLocaleString("en-US")}" aria-label="${esc(t("pks_amount"))}" />
     </div>`;
   };
+  // One row per price: price, every item (picture + amount), Gems.
+  const rowsTableHtml = (rows) => {
+    const cols = [];
+    rows.forEach((r) => Object.keys(r.items).forEach((n) => { if (!cols.includes(n)) cols.push(n); }));
+    return `<div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>$</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${iconOf("Gems") ? `<img src="${esc(iconOf("Gems"))}" alt="Gems" />` : "Gems"}</th></tr></thead>
+      <tbody>${rows.map((r) => `<tr class="${r.fromShot ? "shot" : ""}"><td><b>${r.usd ? r.usd : "?"}</b></td>${cols.map((n) => `<td>${r.items[n] ? (typeof shortAmount === "function" && r.items[n] >= 1e5 ? shortAmount(r.items[n]) : Math.round(r.items[n]).toLocaleString()) : "—"}</td>`).join("")}<td>${r.gems ? Math.round(r.gems).toLocaleString() : "—"}</td></tr>`).join("")}</tbody></table></div>`;
+  };
   const previewHtml = () => {
     const rows = buildRows();
     if (!rows.length) return "";
-    const cols = [];
-    rows.forEach((r) => Object.keys(r.items).forEach((n) => { if (!cols.includes(n)) cols.push(n); }));
     return `<div class="scan-lab-h">${esc(t("pks_rows"))}</div>
-      <div class="pks-pv-wrap"><table class="pks-pv"><thead><tr><th>$</th>${cols.map((n) => { const ic = iconOf(n); return `<th title="${esc(disp(n))}">${ic ? `<img src="${esc(ic)}" alt="${esc(disp(n))}" />` : esc(disp(n).slice(0, 4))}</th>`; }).join("")}<th title="Gems">${iconOf("Gems") ? `<img src="${esc(iconOf("Gems"))}" alt="Gems" />` : "Gems"}</th></tr></thead>
-      <tbody>${rows.map((r) => `<tr class="${r.fromShot ? "shot" : ""}"><td><b>${r.usd ? r.usd : "?"}</b></td>${cols.map((n) => `<td>${r.items[n] ? (typeof shortAmount === "function" && r.items[n] >= 1e5 ? shortAmount(r.items[n]) : r.items[n].toLocaleString()) : "—"}</td>`).join("")}<td>${r.gems ? r.gems.toLocaleString() : "—"}</td></tr>`).join("")}</tbody></table></div>
+      ${rowsTableHtml(rows)}
       <div class="meta pks-pv-n">${esc(t(st.scale && rows.length > 1 && chosen().length === 1 ? "pks_rows_note" : "pks_rows_note1"))}</div>`;
   };
+  // The pack already on the Packs page, read-only (its saved rows: a visitor's
+  // own edited amounts, the same ones the differences compare with).
+  const savedHtml = () => {
+    const m = cmpOf();
+    if (!m || !st.savedOpen || !Array.isArray(m.saved)) return "";
+    return `<div class="pks-sv"><div class="scan-lab-h">${esc(t("pks_saved_pack"))}</div>
+      <div class="pks-sv-n"><b>${esc(m.title || "")}</b>${m.when ? ` <span class="meta">· ${esc(m.when)}</span>` : ""}</div>
+      ${m.saved.length ? rowsTableHtml(m.saved) : `<div class="meta">${esc(t("pks_saved_empty"))}</div>`}</div>`;
+  };
+  const savedBtnText = () => t(st.savedOpen ? "pks_saved_hide" : "pks_saved_see");
   // Saved pack vs scan, for the price rows Save fills: only what differs.
   const amt = (v) => (v >= 1e5 && typeof shortAmount === "function" ? shortAmount(v) : Math.round(v).toLocaleString());
   const noticeHtml = () => {
     const m = cmpOf();
-    if (m && m.onPage) return `<div class="pks-opt on pks-dup"><span><b>${esc(t("pks_dup").replace("{name}", m.title || ""))}</b><small class="meta">${esc(t(m.mine ? "pks_dup_mine" : "pks_dup_d"))}</small>${st.to === "match" && opts.canNew !== false ? `<button type="button" class="btn small ghost" data-pksasnew>${esc(t("pks_as_new"))}</button>` : ""}</span></div>`;
-    if (st.to === "new" && st.matched) return `<div class="meta pks-to"><button type="button" class="btn small ghost" data-pksasmatch>${esc(t("pks_as_match").replace("{name}", st.matched.title || ""))}</button></div>`;
+    if (m && m.onPage) return `<div class="pks-opt on pks-dup"><span><b>${esc(t("pks_dup").replace("{name}", m.title || ""))}</b><small class="meta">${esc(t(m.mine ? "pks_dup_mine" : "pks_dup_d"))}</small><span class="pks-dup-b">${st.to === "match" && opts.canNew !== false ? `<button type="button" class="btn small ghost" data-pksasnew>${esc(t("pks_as_new"))}</button>` : ""}${Array.isArray(m.saved) ? `<button type="button" class="btn small ghost" data-pkssaved aria-expanded="${st.savedOpen ? "true" : "false"}">${esc(savedBtnText())}</button>` : ""}</span></span></div><div id="pksSaved">${savedHtml()}</div>`;
+    if (m && opts.canNew !== false) return `<div class="meta pks-to"><button type="button" class="btn small ghost" data-pksasnew>${esc(t("pks_as_new"))}</button></div>`;
     return "";
+  };
+  // Save to a new pack: its name (from the screenshot) and category.
+  const newHtml = () => {
+    if (st.to !== "new" || opts.canNew === false) return "";
+    const cats = (opts.categories || []).filter(Boolean);
+    const back = opts.target || st.matched;
+    return `<div class="pks-opt on pks-new"><span><b>${esc(t("pks_new"))}</b>
+      <label class="pks-f"><span class="meta">${esc(t("pks_name"))}</span><input type="text" data-pksname2 maxlength="60" value="${esc(st.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" /></label>
+      ${cats.length ? `<label class="pks-f"><span class="meta">${esc(t("pks_cat"))}</span><select data-pkscat class="keep-w">${cats.map((c) => `<option value="${esc(c)}" ${c === st.category ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : ""}
+      ${back ? `<span class="pks-dup-b"><button type="button" class="btn small ghost" data-pksasmatch>${esc(t("pks_as_match").replace("{name}", back.title || ""))}</button></span>` : ""}</span></div>`;
+  };
+  // Scale to the next prices: the switch and the Regular Packs ladder, the
+  // screenshot's price lit (a tap on another price sets the price row to it).
+  const scaleHtml = () => {
+    const gs = chosen();
+    if (gs.length !== 1) return "";
+    const usd = gs[0].price && gs[0].price.usd, k = SCAN_PK_LADDER.findIndex(([p]) => usd && Math.abs(p - usd) < 0.005);
+    return `<div class="pks-sc"><div class="pks-scl"><span>${esc(t("pks_scale"))}</span><input type="checkbox" class="bset-sw" data-pksscale ${st.scale ? "checked" : ""} aria-label="${esc(t("pks_scale"))}" /></div>
+      <div class="meta">${esc(t("pks_scale_d"))}</div>
+      <div class="pks-lad">${SCAN_PK_LADDER.map(([p, m], i) => `<button type="button" data-pkslad="${p}" class="${i === k ? "on" : k < 0 || i < k || !st.scale ? "pre" : ""}" aria-pressed="${i === k ? "true" : "false"}"><b>$${p}</b><small>&times;${m}</small></button>`).join("")}</div>
+      <div class="meta">${esc(t("pks_scale_note"))}</div></div>`;
   };
   const diffHtml = () => {
     const m = cmpOf();
@@ -2225,9 +2255,9 @@ function openPackScanMain(opts) {
       <div class="meta pks-to">${esc(t("pks_to"))} <b>${esc(where)}</b>${n ? ` · ${esc(t("pks_n_check").replace("{n}", n))}` : ""}</div>
       ${!any ? `<p class="desc">${esc(t("pks_nothing"))}</p>` : ""}
       ${noticeHtml()}
+      ${newHtml()}
       ${many ? `<div class="scan-lab-h">${esc(t("pks_which"))}</div><div class="pks-groups">${st.groups.map((g, i) => `<button type="button" class="pks-g${st.pick === i ? " on" : ""}" data-pksgroup="${i}"><b>${esc(g.title || t("pks_pack_n").replace("{n}", i + 1))}</b><small>${g.price ? esc(money(g.price.value, g.price.cur)) : "?"} · ${esc(t("pks_n_items").replace("{n}", g.items.length))}</small></button>`).join("")}
         ${st.groups.every((g) => g.price) ? `<button type="button" class="pks-g${st.pick === "rows" ? " on" : ""}" data-pksgroup="rows"><b>${esc(t("pks_all_rows"))}</b><small>${esc(t("pks_all_rows_d").replace(/\{n\}/g, st.groups.length))}</small></button>` : ""}</div>` : ""}
-      ${st.to === "new" ? `<label class="pks-f pks-f2"><span class="meta">${esc(t("pks_name"))}</span><input type="text" data-pksname2 maxlength="60" value="${esc(st.title)}" placeholder="${esc(t("pks_name_ph"))}" autocomplete="off" /></label>` : ""}
       ${gs.map((g, gi0) => { const gi = st.pick === "rows" ? gi0 : st.pick; return `
         ${gs.length > 1 ? `<div class="scan-lab-h">${esc(g.title || t("pks_pack_n").replace("{n}", gi + 1))}</div>` : `<div class="scan-lab-h">${esc(t("pks_items"))}</div>`}
         ${g.items.map((it, ii) => itemRow(it, gi, ii)).join("") || `<div class="meta">${esc(t("pks_no_items"))}</div>`}
@@ -2244,6 +2274,7 @@ function openPackScanMain(opts) {
       ${st.skipped.noamount || st.skipped.unknown ? `<div class="meta pks-skip">&#9888; ${esc(t("pks_skipped").replace("{n}", st.skipped.noamount + st.skipped.unknown))}</div>` : ""}
       ${learnable ? `<label class="pks-learn"><input type="checkbox" data-pkslearn ${st.learn !== false ? "checked" : ""} /><span>${esc(t("pks_learn"))}<small class="meta">${esc(t("pks_learn_d"))}</small></span></label>` : ""}
       <div id="pksDiff">${diffHtml()}</div>
+      <div id="pksScale">${scaleHtml()}</div>
       <div id="pksPreview">${previewHtml()}</div>
       <div class="pks-foot">
         <button class="btn ghost" type="button" data-pksclose>${esc(t("cancel"))}</button>
@@ -2261,6 +2292,24 @@ function openPackScanMain(opts) {
     if (sv) sv.disabled = !canSave();
   };
   const num = (v) => { const n = parseFloat(String(v).replace(/,/g, "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? n : null; };
+  const wireScale = () => {
+    const box = modal.querySelector("#pksScale");
+    if (!box) return;
+    const redraw = () => { box.innerHTML = scaleHtml(); wireScale(); refresh(); };
+    const sc = box.querySelector("[data-pksscale]");
+    if (sc) sc.onchange = () => { st.scale = sc.checked; redraw(); };
+    box.querySelectorAll("[data-pkslad]").forEach((b) => b.onclick = () => {
+      const gs = chosen();
+      if (gs.length !== 1) return;
+      const g = gs[0], gi = st.pick === "rows" ? 0 : st.pick, usd = Number(b.dataset.pkslad);
+      g.price = g.price || { cur: "USD", value: null };
+      g.price.usd = usd; g.price.sure = true;
+      const pin = modal.querySelector(`[data-pksprice="${gi}"] [data-pksusd]`);
+      if (pin) { pin.value = usd; pin.closest(".pks-price").classList.remove("unsure"); }
+      if (!g.gemsTyped && typeof mpGems === "function") { g.gems = mpGems(usd); const gin = modal.querySelector(`[data-pksgems="${gi}"] input`); if (gin) gin.value = g.gems.toLocaleString("en-US"); }
+      redraw();
+    });
+  };
   const wireCheck = () => {
     modal.querySelectorAll("[data-pksclose]").forEach((b) => b.onclick = close);
     modal.querySelector("[data-pksback]").onclick = () => { if (st.to === "match") st.to = "new"; st.matched = null; st.groups = []; st.skipped = { noamount: 0, unknown: 0 }; showStart(); };
@@ -2275,8 +2324,19 @@ function openPackScanMain(opts) {
     });
     const asNew = modal.querySelector("[data-pksasnew]");
     if (asNew) asNew.onclick = () => { st.matchOff = true; st.to = "new"; showCheck(); };
+    const ct = modal.querySelector("[data-pkscat]");
+    if (ct) ct.onchange = () => { st.category = ct.value; };
+    wireScale();
+    const svBtn = modal.querySelector("[data-pkssaved]");
+    if (svBtn) svBtn.onclick = () => {
+      st.savedOpen = !st.savedOpen;
+      svBtn.textContent = savedBtnText();
+      svBtn.setAttribute("aria-expanded", st.savedOpen ? "true" : "false");
+      const box = modal.querySelector("#pksSaved");
+      if (box) box.innerHTML = savedHtml();
+    };
     const asMatch = modal.querySelector("[data-pksasmatch]");
-    if (asMatch) asMatch.onclick = () => { st.matchOff = false; st.to = "match"; showCheck(); };
+    if (asMatch) asMatch.onclick = () => { st.matchOff = false; st.to = opts.target ? "this" : "match"; showCheck(); };
     const nm = modal.querySelector("[data-pksname2]");
     if (nm) nm.oninput = () => { st.title = nm.value; st.titleTyped = true; };
     const rowOf = (el) => { const [gi, ii] = el.closest("[data-pksrow]").dataset.pksrow.split("|").map(Number); return st.groups[gi].items[ii]; };
@@ -2296,6 +2356,8 @@ function openPackScanMain(opts) {
       g.price = g.price || { cur: "USD", value: null };
       g.price.usd = num(e.target.value); g.price.sure = true;
       if (!g.gemsTyped && typeof mpGems === "function" && g.price.usd) { g.gems = mpGems(g.price.usd); const gi = modal.querySelector(`[data-pksgems="${row.dataset.pksprice}"] input`); if (gi) gi.value = g.gems.toLocaleString("en-US"); }
+      const sb = modal.querySelector("#pksScale");
+      if (sb) { sb.innerHTML = scaleHtml(); wireScale(); }
       refresh();
     });
     modal.querySelectorAll("[data-pksgems]").forEach((row) => row.querySelector("input").oninput = (e) => { const g = st.groups[Number(row.dataset.pksgems)]; g.gems = num(e.target.value); g.gemsTyped = true; g.gemsSure = true; refresh(); });
