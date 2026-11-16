@@ -3287,6 +3287,7 @@ const T = {
   cg_set6_short: { en: "6-piece" },
   cg_reset: { en: "Reset" },
   pca_done: { en: "Done" },
+  pca_packs_by: { en: "Packs bought by {d}" },
   pca_in_days: { en: "in {n} days" },
   pca_packs: { en: "{n} packs" },
   pca_target: { en: "Target" },
@@ -3300,6 +3301,7 @@ const T = {
   pca_for_isl: { en: "+{n} for Islands" },
   pca_bought_for: { en: "paid by {p}" },
   pca_free_shards: { en: "+{n} shards from packs your other pages buy ({c} copies)" },
+  pca_isl_copies: { en: "+{n} shards → {c} building copies (instead of buying them with Marks / Tomes)" },
   pca_then_buy: { en: "Then buy" },
   cg_reset_tip: { en: "Put back the current levels and targets you had before Max" },
   cg_max_tip: { en: "Max every piece: current levels and targets go to the highest level open in your state" },
@@ -17001,7 +17003,7 @@ function packShortAfterTrades(remaining, ctx) {
       if (r.max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil((used.get(r) || 0) / r.max));
       spare[r.from] -= lots * r.give;
       short[to] = Math.max(0, short[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
     }
     if (short[to] <= 1e-9) delete short[to];
   }
@@ -17563,7 +17565,8 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
     const perGroup = groups.map(() => 0);
     r.picks.forEach((p) => { perGroup[p.gi] += p.count; });
     const tr = packShortAfterTrades(remainingOf(r.picks), ctx);
-    r.trades = tr.trades.filter((x) => !x.silent);
+    r.trades = tr.trades.filter((x) => !x.silent && !x.isl);
+    r.islShards = tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
     r.perGroup = perGroup;
     r.days = Math.max(0, tr.weeksNeeded > 1 ? (tr.weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle), g.window) : 0));
     return r;
@@ -17596,7 +17599,9 @@ function packCheapestPlanCompute(groupsIn, need, days, calcKey, quick, feasOnly)
       exact.picks.forEach((p) => { perGroup[p.gi] += p.count; });
       let weeksNeeded = 0;
       ex.lots.forEach((n, k) => { if (n > 0 && rates[k].max > 0) weeksNeeded = Math.max(weeksNeeded, Math.ceil(n / rates[k].max)); });
-      exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab } : null)).filter((x) => x && !x.silent);
+      exact.trades = ex.lots.map((n, k) => (n > 0 ? { from: rates[k].from, to: rates[k].to, giveQty: n * rates[k].give, getQty: n * rates[k].get, lots: n, silent: !!rates[k].silent, lab: !!rates[k].rfcLab, isl: !!rates[k].islFree } : null)).filter((x) => x && !x.silent);
+      exact.islShards = exact.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0);
+      exact.trades = exact.trades.filter((x) => !x.isl);
       exact.perGroup = perGroup;
       exact.days = Math.max(0, weeksNeeded > 1 ? (weeksNeeded - 1) * 7 : 0, ...groups.map((g, gi) => perGroup[gi] ? packDaysForCycles(g.reset, g.resetDay, Math.ceil(((g.used || 0) + perGroup[gi]) / g.perCycle), g.window) : 0));
     } else {
@@ -17873,6 +17878,12 @@ const PACK_COST_OPEN = {};
 const PACK_COST_SHOWN = {}; // calcKey -> the price the Pack cost card shows (null while folded)
 const PACK_COST_HOOKS = {}; // calcKey -> called when that price changes
 const PACK_TARGET_HOOKS = {}; // calcKey -> called when the Pack cost window's target date changes (pages whose needs follow it)
+// Pages whose needs depend on the date (Islands: free income up to then): calcKey -> (days) =>
+// { totals, ok }. Pack cost's Cheapest then tries later dates with their own (smaller) needs.
+const PACK_NEED_BY_DATE = {};
+// calcKey -> (days | null): told which plan date is picked (null = Fastest / as soon as possible).
+const PACK_PICK_HOOKS = {};
+let ISL_VIEW_DAYS = null;
 const packCostShown = (calcKey, v) => {
   if (PACK_COST_SHOWN[calcKey] === v) return;
   PACK_COST_SHOWN[calcKey] = v;
@@ -18334,6 +18345,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const note = mk != null ? `<div class="pca-note">${esc(t("pca_shard_note").replace("{a}", fmt(cheapest.per, cheapest)).replace("{b}", fmt(mk, cheapest)))}</div>` : "";
     return `<div class="pca-h">${esc(t("pca_not_cheaper"))}</div>${rowsH}${note}`;
   };
+  // Islands: shards that pay building copies directly (not a trade in the game).
+  const islCopiesLine = (pl) => {
+    const n = calcKey === "islands" && pl ? Math.round(Number(pl.islShards) || 0) : 0;
+    return n > 0 ? `<div class="pca-bonus">${pcaIcon(SHI)}<span>${esc(t("pca_isl_copies").replace("{n}", qty(n)).replace("{c}", qty(Math.floor(n / islPc))))}</span></div>` : "";
+  };
   let sharedSections = null, sharedTotalText = "", pageTotalText = "";
   let pickedTotalText = ""; // the picked plan's total (Fastest / By target / Cheapest)
   // The shared view looks like "This page only": plan cards on top (this
@@ -18359,7 +18375,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     // Islands: shard steps the plan buys for other pages pay copies for free.
     let inPlanHtml = "";
     if (islShardOn) {
-      let left = trades.filter((x) => x.from === SHI).reduce((a, x) => a + x.giveQty, 0) + (Number(need[SHI]) || 0);
+      let left = (Number(p.islShards) || 0) + (Number(need[SHI]) || 0);
       const mineKeys = new Set(mineShare.rows.map((r) => `${r.title}|${r.label}`));
       const free = left > 0 ? p.rows.filter((r) => shardsOf(r) > 0 && !mineKeys.has(`${r.title}|${r.label}`)) : [];
       let got = 0;
@@ -18377,7 +18393,7 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         <div class="pc-plan on" style="cursor:default;"><div class="pc-k">${esc(t("combined_share"))}</div><b>${big(packSharesLocal(mineShare))}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(whenTxt)}</small></div>
         <button type="button" class="pc-plan" data-gotobudgets title="${esc(t("combined_desc").replace("{pages}", shared.sharedWith.map(packPageLabel).join(", ")))}"><div class="pc-k">${esc(t("pc_all_pages"))}</div><b>${big(packPlanLocal(p))}</b><small>${esc(t("budgets_title"))} &rarr;</small></button>
       </div>
-      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}</div>`;
+      <div class="pc-list">${inPlanHtml}${mineShare.rows.length ? `<div class="pca-h">${esc(t(inPlanHtml ? "pca_then_buy" : "pca_buy"))}</div>${pcaRows(byPack, mineShare.rows, packShareLocal, (r) => (r.share < 0.995 ? ` <small class="meta">(${esc(t("combined_part"))} ${Math.round(r.share * 100)}%)</small>` : ""))}` : `<div class="meta" style="font-size:11px;">${esc(t("combined_no_share"))}</div>`}${pcaTrades(trades)}${islCopiesLine(p)}</div>`;
   }
   const viewSig = `${JSON.stringify(need)}|${targetDate}|${BUDGET_TARGET || ""}|${JSON.stringify(BUDGET_SELECTED || {})}`;
   const skipPagePlan = !!sharedSections;
@@ -18393,6 +18409,28 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
     const pp = await plannerRun("page", { groups: packGroups, need, calcKey, targetDays });
     if (stale()) return;
     const earliest = pp.earliest;
+    // Pages whose needs shrink with time (free income up to the date): Cheapest tries later
+    // dates, each with the need left by then, and keeps the cheapest plan that makes its date.
+    let cheapAt = null;
+    const byDate = PACK_NEED_BY_DATE[calcKey];
+    if (byDate && earliest != null && targetDays == null) {
+      // (Like every page's Cheapest: at most a year after the fastest date.)
+      const cands = [...new Set([earliest, earliest + 28, 91, 182, 273, 365, earliest + 365].filter((d) => d >= earliest && d <= Math.min(PACK_HORIZON_DAYS, earliest + 365)))].sort((a, b) => a - b);
+      for (const d of cands) {
+        const r = byDate(d);
+        if (!r || !r.ok) continue;
+        const st = {};
+        Object.keys(r.totals).forEach((n) => { const v = Math.max(0, r.totals[n] - (Number((owned || {})[n]) || 0)); if (v > 0) st[n] = v; });
+        const nd = packNeedViaTrades(calcKey, st, supplied, d).need;
+        let plan = null;
+        if (!Object.keys(nd).length) plan = { rows: [], total: 0, days: 0, trades: [] };
+        else { const q = await plannerRun("page", { groups: packGroups, need: nd, calcKey, targetDays: d }); if (stale()) return; plan = q.byTarget || null; }
+        // Done on that date (free income brings the rest by then), not when the last pack is bought.
+        if (plan && plan.days <= d && (!cheapAt || packPlanLocal(plan) < packPlanLocal(cheapAt.plan) - 0.005)) cheapAt = { plan: { ...plan, days: d }, d };
+      }
+      if (cheapAt && pp.cheapest && packPlanLocal(cheapAt.plan) >= packPlanLocal(pp.cheapest)) cheapAt = null;
+      if (cheapAt) pp.cheapest = cheapAt.plan;
+    }
     const plans = [];
     if (earliest == null) {
       // Explain what's short and how much the packs could give at most,
@@ -18424,15 +18462,19 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
         const shown = plans.filter((c) => !plans.some((x) => plans.indexOf(x) < plans.indexOf(c) && x.plan && c.plan && x.plan.total === c.plan.total && x.plan.days === c.plan.days));
         let pick = shown.find((c) => c.key === PACK_PLAN_PICK[calcKey] && c.plan) || shown.find((c) => c.key === "target" && c.plan) || shown.find((c) => c.plan);
         const label = (c) => t(c.key === "fastest" ? "pc_fastest" : c.key === "target" ? "pc_by_target" : "pc_cheapest");
+        const packsByDate = (c) => calcKey === "islands" && c && c.key === "fastest";
         const planCard = (c) => {
           if (!c.plan) return `<div class="pc-plan off"><div class="pc-k">${esc(label(c))}</div><small style="color:var(--danger);">${esc(t("pack_not_reachable"))}</small></div>`;
           const late = targetDays != null && c.plan.days > targetDays;
           const d = new Date(today.getTime() + c.plan.days * 86400000);
           let short; try { short = d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { short = fmtDate(c.plan.days); }
-          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(c.plan.days === 0 ? t("pack_ready_now") : `${short} · ${c.plan.days}d`)}</small></button>`;
+          // Islands' Fastest date is when its packs are bought (free income does the rest later).
+          const when = c.plan.days === 0 ? t("pack_ready_now") : packsByDate(c) ? t("pca_packs_by").replace("{d}", short) : `${short} · ${c.plan.days}d`;
+          return `<button type="button" class="pc-plan${c === pick ? " on" : ""}" data-packpick="${c.key}"><div class="pc-k">${esc(label(c))}</div><b>${String(packFmtLocal(Math.ceil(packPlanLocal(c.plan)), currency, true, c.plan.rows[0]?.price)).replace(/^([\u2066\u200e\u200f]*)([^\d\s\-\u2066-\u2069\u200e\u200f]+)\s?/, '$1<small class="cur">$2</small>')}</b><small style="${late ? "color:var(--danger);" : ""}">${esc(when)}</small></button>`;
         };
         const p = pick && pick.plan;
         if (p) pickedTotalText = packFmtLocal(Math.ceil(packPlanLocal(p)), currency, true, p.rows[0]?.price);
+        if (PACK_PICK_HOOKS[calcKey]) { const hk = PACK_PICK_HOOKS[calcKey], dd = pick && pick.key === "cheapest" && cheapAt && p === cheapAt.plan ? cheapAt.d : null; setTimeout(() => hk(dd), 0); }
         const byPack = [];
         if (p) p.rows.forEach((r) => {
           let g = byPack.find((x) => x.title === r.title);
@@ -18444,11 +18486,11 @@ async function renderPackCostBlock(containerEl, calcKey, groups, owned) {
           aBuilt = true;
           const shortDay = (days) => { const d = new Date(today.getTime() + days * 86400000); try { return d.toLocaleDateString(LANG === "en" ? undefined : LANG, { day: "numeric", month: "short", timeZone: "UTC" }) + packYearMark(d); } catch (e) { return fmtDate(days); } };
           const late = targetDays != null && p.days > targetDays;
-          const done = p.days === 0 ? t("pack_ready_now") : `${t("pca_done")} ${shortDay(p.days)} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
+          const done = p.days === 0 ? t("pack_ready_now") : `${packsByDate(pick) ? t("pca_packs_by").replace("{d}", shortDay(p.days)) : `${t("pca_done")} ${shortDay(p.days)}`} \u00b7 ${t("pca_in_days").replace("{n}", p.days)}`;
           const sumA = `<div class="pca-sum${late ? " late" : ""}"><div><b class="pca-big">${pcaCur(pickedTotalText)}</b><span class="pca-done">${esc(done)}</span></div><span class="pca-n">${esc(t("pca_packs").replace("{n}", byPack.length))}</span></div>`;
           const targetA = `<div class="pca-tg"><span aria-hidden="true">&#127919;</span><span>${esc(t("pca_target"))}</span><input type="date" data-packtarget value="${esc(targetDate)}" aria-label="${esc(t("pack_target_by"))}" />${targetDays != null ? `<span class="${targetDays < 0 ? "bad" : "left"}">${targetDays < 0 ? esc(t("pack_overdue")) : `${targetDays} ${esc(t("pack_days_left"))}`}</span>` : `<span>${esc(t("pack_no_date"))}</span>`}${targetDate ? `<button type="button" class="pca-x" data-packtargetclear title="${esc(t("pack_no_date"))}" aria-label="${esc(t("pack_no_date"))}">&times;</button>` : ""}</div>`;
           const rowsA = pcaRows(byPack, p.rows, packRowLocal, null);
-          const tradesA = pcaTrades(p.trades);
+          const tradesA = pcaTrades(p.trades) + islCopiesLine(p);
           // Free day bonus (Shining City Pack's first buy of each event day): not a pack row.
           const bonusA = Object.entries(p.bonus || {}).map(([n, v]) => `<div class="pca-bonus">${pcaIcon(n)}<span>${esc(t("pca_day_bonus").replace("{q}", (Number(ISL_RULES.tomeFreeDay) || 0).toLocaleString()).replace("{n}", qty(v)))}</span></div>`).join("");
           sections = `<div class="pc-plans">${shown.map(planCard).join("")}</div>${sumA}${targetA}<div class="pc-list"><div class="pca-h">${esc(t("pca_buy"))}</div>${rowsA}${bonusA}${tradesA}${islCheckedHtml(p.rows)}@@PCFREE@@</div>`;
@@ -19811,7 +19853,7 @@ function applyTrades(rates, need, owned, weeks) {
       usedLots.set(r, (usedLots.get(r) || 0) + lots);
       spare[r.from] -= lots * r.give;
       after[to] = Math.max(0, after[to] - lots * r.get);
-      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab });
+      trades.push({ from: r.from, to, giveQty: lots * r.give, getQty: lots * r.get, lots, capped: r.max > 0 && lots >= capLeft, silent: !!r.silent, lab: !!r.rfcLab, isl: !!r.islFree });
     }
   });
   Object.keys(after).forEach((n) => { if (!(n in need) && after[n] === 0) delete after[n]; });
@@ -19829,7 +19871,7 @@ function tradeAdjustedStill(calcKey, needFull, owned, targetDays) {
   const res = applyTrades(rates, needFull, owned, tradeWeeksFor(targetDays));
   const still = {};
   Object.keys(needFull).forEach((n) => { still[n] = res.after[n] || 0; });
-  return { still, trades: res.trades.filter((x) => !x.silent), weeks: res.weeks };
+  return { still, trades: res.trades.filter((x) => !x.silent && !x.isl), weeks: res.weeks };
 }
 // When a needed item isn't sold by any assigned pack but can be traded
 // for from something that is, the need is converted into the source item
@@ -21291,7 +21333,7 @@ function budgetMergedPlan(res, inc, targetDays) {
       const g = res.groups[pk.gi], o = g.offers[pk.oi];
       return { title: o.tableTitle, label: o.label, price: o.price, currency: o.currency, count: pk.count, subtotal: pk.count * o.price, reset: g.reset, resetDay: g.resetDay, cycles: Math.ceil(perGroup[pk.gi] / g.perCycle), perCycle: g.perCycle, gives: o.gives, steps: o.steps, row: o.row, from: o.from, extra: o.extra, window: g.window, tables: g.tables, usedNow: g.usedNow || 0, usedAt: g.usedAt || null };
     }).sort((a, b) => a.title.localeCompare(b.title) || a.price - b.price);
-    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
+    return { rows, total: rows.reduce((a, r) => a + r.subtotal, 0), days, trades: tr.trades.filter((x) => !x.silent && !x.isl), islShards: tr.trades.reduce((a, x) => a + (x.isl ? x.giveQty : 0), 0), picks, ...(Object.keys(bonusGot).length ? { bonus: bonusGot } : {}) };
   };
   return packPickCheapest([tryWith((e) => e.max), tryWith((e) => e.sum)]);
 }
@@ -26001,14 +26043,20 @@ async function renderIslandGallery() {
   const freeShards = (days) => (days != null && islShardPacksOn() ? Math.max(0, Math.floor(Number((ISL_FREE_SHARDS || {}).n) || 0)) : 0);
   const SPC = {};
   let spSig = null;
-  // forBud: by the Budgets target (Budgets' need); else by the page's own target date.
+  // forBud: true = by the Budgets target (Budgets' need); a number = by that many days from
+  // today (Pack cost's Cheapest tries dates); else by the page's own target date, or (no date)
+  // by the date of the Pack cost plan picked on screen (ISL_VIEW_DAYS), or as soon as packs allow.
+  const modeKey = (m) => (m === true ? "b" : typeof m === "number" ? `d${m}` : "p");
   const sharedPlan = (withFree, forBud) => {
-    const tg = islTgt(forBud), tDay0 = tg ? packParseDay(packValidDay(tg)) : null, tDay = tDay0 || packStartOfToday();
+    if (forBud === undefined && withFree === true && !PACK_TARGET_CACHE.islands && ISL_VIEW_DAYS != null) forBud = ISL_VIEW_DAYS;
+    const num = typeof forBud === "number";
+    const tg = num ? "" : islTgt(forBud), tDay0 = num ? islDay(forBud) : tg ? packParseDay(packValidDay(tg)) : null, tDay = tDay0 || packStartOfToday();
     const days = Math.max(0, Math.round((tDay - packStartOfToday()) / 86400000));
     // What packs / events can bring: by the date, or with no date within the planner's horizon.
     const capDays = tDay0 ? days : PACK_HORIZON_DAYS, capDay = tDay0 ? tDay : islDay(PACK_HORIZON_DAYS);
-    const F = withFree && !forBud ? freeShards(days) : 0, shOn = islShardPacksOn();
-    const slot = SPC[`${F > 0 ? 1 : 0}${forBud ? "b" : "p"}`] || (SPC[`${F > 0 ? 1 : 0}${forBud ? "b" : "p"}`] = { sig: null, P: null });
+    const F = withFree && forBud !== true ? freeShards(days) : 0, shOn = islShardPacksOn();
+    const sk = `${F > 0 ? 1 : 0}${modeKey(forBud)}`;
+    const slot = SPC[sk] || (SPC[sk] = { sig: null, P: null });
     const sig = `${F}|${shOn ? islShardSupplyMax() : "-"}|${days}|${tDay0 ? 1 : 0}|${JSON.stringify(ISL_SHARDS)}|${JSON.stringify(siteConfig("island_sources", {}) || {})}|${JSON.stringify(islShopsCfg())}|${tomeHave()}|${ISL_UNIT ? `${ISL_UNIT.mark}/${ISL_UNIT.tome}` : ""}|${(islShiningStarts(2).starts[0] || "").toString()}|${islands.map((x) => `${x.id}:${lvOf(x)}:${x.owned ? 1 : 0}`).join(",")}`;
     if (spSig === null) Object.values(SPC).forEach((x) => { x.P = null; });
     spSig = "set";
@@ -26087,9 +26135,9 @@ async function renderIslandGallery() {
   const LPC = {};
   const lightPlan = (forBud) => {
     const P = sharedPlan(false, forBud), list = islands.filter(islIsLight), free = P.days != null ? islFreeContracts(P.days) : 0, have = contractHave() + free;
-    const c = LPC[forBud ? "b" : "p"] || (LPC[forBud ? "b" : "p"] = { sig: null, P: null });
-    const sig = `${SPC[forBud ? "0b" : "0p"].sig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
-    if (sig === c.sig && c.P) { if (!forBud) lpSig = sig; return c.P; }
+    const c = LPC[modeKey(forBud)] || (LPC[modeKey(forBud)] = { sig: null, P: null });
+    const sig = `${SPC[`0${modeKey(forBud)}`].sig}|${JSON.stringify(ISL_LIGHT)}|${have}|${list.map((x) => `${x.id}:${lvOf(x)}:${tgtOf(x)}`).join(",")}`;
+    if (sig === c.sig && c.P) { if (forBud === undefined || forBud === false) lpSig = sig; return c.P; }
     c.sig = sig;
     let spare = Math.max(0, ((P.days == null ? islHave(ISL_SHARDS) : P.pot) - P.need) * ePS());
     const per = new Map();
@@ -26104,7 +26152,7 @@ async function renderIslandGallery() {
       per.set(x.id, { ...c, short: Math.max(0, ct - have) - before });
     });
     c.P = { per, bp, ct, ess, have, free, short: Math.max(0, ct - have) };
-    if (!forBud) lpSig = sig;
+    if (forBud === undefined || forBud === false) lpSig = sig;
     return c.P;
   };
   const lightOf = (s) => lightPlan().per.get(s.id) || { bp: 0, ct: 0, ess: 0, short: 0 };
@@ -26225,7 +26273,7 @@ async function renderIslandGallery() {
     if (!(P.need > 0)) return `<div class="isl-done ok">&#10003; ${esc(t("isl_box_none"))}</div>`;
     if (P.days == null) return `<div class="isl-done">${P.done == null ? esc(t("isl_box_noinc")) : `${esc(t("isl_rs_done_c"))} <b>~${day(P.done)}</b> &middot; ${esc(t("isl_box_weeks").replace("{n}", Math.max(1, Math.ceil(P.done / 7))))}`}</div>`;
     // With no date the plan is "every target as soon as packs allow" (within the horizon).
-    const by = esc(islDateShort(P.tDay)), lead = (x) => (P.noDate ? esc(t("isl_rs_asap")) : esc(t("isl_rs_by").replace("{d}", x)));
+    const by = esc(islDateShort(P.tDay) + (P.days > 300 ? ` ${P.tDay.getUTCFullYear()}` : "")), lead = (x) => (P.noDate ? esc(t("isl_rs_asap")) : esc(t("isl_rs_by").replace("{d}", x)));
     const capTxt = P.noDate ? day(P.capDays) : by;
     const lines = [];
     if (P.marks > 0 || P.tomes > 0) lines.push(`<div class="isl-done am">${lead(by)}: <b>${bidiNum(((P.mkCopiesAll + P.tmCopiesAll) * pc).toLocaleString())}</b> ${esc(t("isl_rs_short"))} &rarr; ${[P.marks > 0 ? `<b>${bidiNum(P.marks.toLocaleString())}</b> ${esc(t("isl_mk_name"))}` : "", P.tomes > 0 ? `<b>${bidiNum(P.tomes.toLocaleString())}</b> ${esc(t("isl_tm_name"))}` : ""].filter(Boolean).join(" + ")} &middot; <button type="button" class="isl-mkb" data-islpc><span data-islmkprice>${plxPriceLabel("islands")}</span></button></div>`);
@@ -26361,6 +26409,24 @@ async function renderIslandGallery() {
   let mkSig = null;
   PACK_COST_HOOKS.islands = () => {
     document.querySelectorAll("[data-islmkprice]").forEach((el) => { el.innerHTML = plxPriceLabel("islands"); });
+  };
+  // Pack cost's Cheapest: what Islands still has to buy if every target only has to be
+  // reached by `d` days from now (free income up to then first). `uncovered` = copies no
+  // pack covers (a date is only good when it leaves no more of them than "as soon as possible").
+  PACK_NEED_BY_DATE.islands = (d) => {
+    const P = sharedPlan(false, d), L = lightPlan(d), o = {};
+    const mk = planList().filter(usesMarks).reduce((a, s) => a + (P.mk.get(s.id) || 0) * srcOf(s).markPrice, 0), tm = P.tomes || 0, ct = Math.max(0, L.ct - L.free), sh = P.shNeed || 0;
+    if (mk) o["Mark of Revival"] = mk; if (tm) o["Glorious Tome"] = tm; if (ct > contractHave()) o[ISL_CONTRACT] = ct; if (sh) o[ISL_SHARD_ITEM] = sh;
+    const B = sharedPlan(false);
+    const unc = (x) => Math.max(0, x.cant - Math.round((x.shNeed || 0) / (perCopy() || 1)));
+    return { totals: o, ok: unc(P) <= unc(B) };
+  };
+  // The plan picked in Pack cost: the page's boxes and lines follow its date (Cheapest at a later date).
+  PACK_PICK_HOOKS.islands = (days) => {
+    const v = days == null ? null : days;
+    if (v === ISL_VIEW_DAYS) return;
+    ISL_VIEW_DAYS = v;
+    if (document.getElementById("islandSections") && !ISL_POP) keepPlace(() => computeAndRender());
   };
   // A new date in the Pack cost window's target row: the page's plan follows it (free income
   // up to that day first), like the cost.
