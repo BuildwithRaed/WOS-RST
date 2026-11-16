@@ -5,7 +5,7 @@
 // openBackpackScanMain()). Keep it that way: anything another page uses belongs in
 // app.js (SCAN_SIZE_COLORS, bpItemTab, SCAN_LEARNED, scanLearnedLoad …).
 // Build id: checked by loadScanCode() (written by tools/stamp.js, don't edit).
-window.SCAN_BUILD = "1f20cd0ec0";
+window.SCAN_BUILD = "13e308b535";
 
 
 // ---- Backpack: read game screenshots ----
@@ -249,6 +249,7 @@ function scanMatchItem(feat, refs) {
     if (!best.has(name) || d < best.get(name)) best.set(name, d);
   });
   SCAN_LEARNED.forEach((e) => {
+    if (e.kind === "island") return; // Island Storehouse tiles (scanIslMatch)
     let sum = 0;
     for (let i = 0; i < n; i++) sum += Math.abs(feat[i] - e.g[i]);
     const d = sum / n;
@@ -655,8 +656,280 @@ async function scanLabShot(worker, src) {
   return { kind: "lab", items, lab: m ? Number(m[1]) : null };
 }
 
-async function scanShot(worker, file, marks, refs) {
+// ---- Islands: My Island (Life Essence) and the Island Storehouse ----
+// Ingredients tab items known from the start (picture grids, scanIslTileFeature,
+// from the owner's Storehouse screenshot). Mythic buildings are taught on the
+// site by the owner (site_config scan_learned entries with kind "island").
+const SCAN_ISL_BUILTIN = [
+  ["Mythic Island Shards", "sWQrsWQrsWUrsWYssWYssmcssmctsmcts2gus2gul1klvJlO7cZuy65pooFHimArhU8enFwormYus2gus2gus2gus2ctsmctsmctsmYssWYssWUrsWUrsGUrsmUssmYssmcts2gus2gutGkutGkvtGkwtWoxsGgxhlwm9MZq+M+C9Mp99cl78sFm46pCsHgVh1cQfkwVjFEgpmEssmkwtGkvs2kvtGgus2ctsmctsmYssWUssmcts2gutGkvtGkvtWowtWoxtmsytmsztmw0g04g1qA+9sNp+9WL+9aN+9WM+Ml56apM3JEX3pAM4ZIJzoMJq2oHjVQMgkoXklUkq2UvtGkwtGgvs2gusmcttGkvtGkwtWoxtmsytmwztmw0tm01t202qGYzmmcZ97Ez+8hp+8+C+9OJ+s+E9sFv56VE2pQg1I4Mz4cEyX4AzX4C14AE2oIGv28Fh0kHnV0qtWoxtGkwtGkvtWoxtmsytmw0t201tm42t243uG84uXA5mFwts2sR23oL35c197Zf+MN2+MJ28LNf3JYs0owQzokGzYMCyYAAxn0Aw3sAwHEA4YAD0oMZeEcbtmw0tmsytWoxtmwzt201t242uG84uXA5uXE5unI7u3M8tHA7c0QbXjQNt3Qa5ZIu6aVS665g3p9H2qpb2a9owYEOxX8ExnoAw3gAwXcAznYB5IYLm2QZmFwtt243tm01tmwzt202uG84uXA5unE6unM7u3U9vHY+vXc+vXhAtXM/fkwb3oMP3ZpS7seX+uXA+OzN6t3A+fDS0axuv4Igu3cIv3QAv3AA4oEF1YEbe0obtW86uXA5t283tm02uG84uXE6unM7vHU9vXY/vXhAnWMznmU2vntFll8zq2EI0XIH1bJ4xal5v6Jyw6d3y6lxzKdv+OKq8dulq2sTvXABzXQC5H8MjFATkVsvu3Q+unM8uXE5uG84uXI6u3Q9vHY+vXhAvnlDq28+kk4JkFolilcum1UK2nUGvWcCuXsx89ui+t+i+d2f/d+fz6Zm6s2P4sKCsWsKvGwB4IEG3XkOqGIIj1UJpGc2vXc+u3Q8unI7vHU9vXc/vnlBvntEvXtGeEYa2HUF2n4UvWYF0GoDu2UAt2UF6b+C/duQuo1Hr3Ic3Ll0+NaOwZdV+duUtHonuW0CxXED2H8EzncD24sRgVInvnlCvXc/vHU9vXhAvnpDv3tGwH1InGU3sF8Gx2cCvmECuWEAt2YAuGYAxoM6/NiJ99F+tHkku3MW882F/NaDuIg7t4c+qWgHvHYBvXwAvX8Ayn8E5ZscgVgmvntGvnpDvXhAvnpDv3xGwX5Ju3xJiE8P2HUEtmUAtWUAtWcAt2cAt2YAtGkOwpVE7cRt+9F39ct4/dJ36sFpqGYHu3MAwnMBx3sBv4AAvoEA4pcO3q4sgFkpwH5Jv3xGvnpDwH1HwX5Jw4FMi1gtwmkH1G0CvmUAtWQAtWcAtmcAtWYAtmcAt2kBrGQGuoIr269V98truogyunMBvnEA5I8K55YM0YgG1pQM6rUvt6BCnms9w4JMwX9Kv3xHwYBKw4JMxYROmWU7ekAatmIe1XEN23UEyWoBt2YAtWcAtWcAt2kAuGsAuW0As2sDqGwOr2sCu3IA1X8F458Zsn4W5qQW6sFS2Mt9f18ywIJPxYROw4JMwYBKxIJNxYVPx4dSw4VTmmpCbEYpc0MimVEg0W4N03AAtWcAtWgAtmgAtmsAt20AuG4AuHAAunMAwHEC5JQOzawxXUIeqY9Fxrx6d2A4uH9QyIlVxodSxYVPw4JMxYVPx4dSyYpVy4xYyoxZxIpZkWU+fUUI1nAFwmcAtWcAumYA13YD03QCw20AuW0AuHEAuXEA2YII5a4ngmsmuYZZj2dAjWY9vYVVy41ay4xYyYpVx4dSxYVPx4hSyYpVy41YzY9czpJe0JRghVQn23UFul8AtGcAtWYAz3AD0WQEyF8N2HUM338G0ngCx3MC5JMOxagxkmtD0ZhlzpVjzZNg0JRgz5FezY9by41Yx4pWw4ZS"],
+  ["General Accessory Construction Contract", "sWQqsWUrsWUssWYssmYssmctsmcts2cus2gus2gus2gvs2gvtGkvtGkvtGkwtGkwtGkvtGkvmVsoTTopV1haaGpocnNqeXlxbmFOllgnsWYssWUrsGUrsGUrsmYssmYssmcts2cts2gutGkvtGkvtWowtWoxtWoxtmsxtmsytmsztmsytmsytmsztmszsWkyRzUoWVlfZ2pugoaBl5uToqWbgIR8VT4nsmcusmctsmYssWYssmcts2gutGkvtGkvtWowtWoytmsytmwzt2w0t2w1t2w1t202t202t242t202t202t203iFUsloh12cept6mPgYJ6qa6km6CXcXVxUD8ssWcvs2gus2gusmcttGkvtGkwtWoxtmsytmwzt2w1tm01t202t243t244uG84uG84uXA5uHA5uHA5uHA5iFQri3tk2cmq4tSx6Nm1zLuZf3xzfYJ+YmdnUDsns2oytWoxtGkwtGgvtWoxtmsyt2w0tm01t242t243uG84uXA5uXE5uXI6unI6u3M7u3M7tnE7qWo3l18yeWpU1sWn39Cs5Nay5NWx38+qq5h8XWJgW15jU0Q3smo0tmwztmsytWoxt2wztm01t243uG84uXA5unE6unM7u3M9vHU9vHU9vHY/vXc+ll8yaVA4c2FKdWNLzrmV28qk4dKr4NGq3Mql1sKdxa6MYFhNUVFTUzgitm44t242tm00tmszt242uG44uXA5uXI6unM8u3Q9vHY/vXdAvXhAvXlBvnlDnmY5RTcsdmVbjHhntJ6AvKJ7z7eL2cWc2MOb0ruTxK2HnohsMSwlPzAgp2c3uXE6uHA4t243t202uG84unE6u3M8vHU9vXc+vnhBvnlCvnpDvntFv3xGv31Ib0oqUERCWEhEXkxEd2NWrZR1tJZuwaZ6x62EvaR+lX1gWkQxb1k/hHFTd0wou3U+unM7uXE6uG84unI6u3Q9vXY+vXhAvnlCvntEv3xHwH5IwX9Jwn9KwYBLYkMoeWpdsJp8rJRxe2VPZllRoJmHmJWHl4dwf2ZLX0kzX0o0cFw/Y0svj1sxvXhAvHY+u3Q9unI6vHU9vXc/vnlCvntEv3xHwH5JwYBKw4FLxIJMwoJNfVUzkoFl2MSd18GVw6l9kXhXYWJlfoF5f4B3X2FehHJagW5QbkorlGI4r3JCvHpFvnpEvXlBvXc/u3U9vXhAvnpDvnxGwH5IwYBKw4FMxINNxYRPwoNQimI+nI503Mul4dGo38yi0riKh29Ub3V8ZWple354ZmtoRjwujV85vH5LwoFMw4FLwn9KwH5IvntFvnlCvXhAvnpDv3xHwX9Kw4FLxINNxoVPxoZRvIBQdFg6t6iM3s2p5NSs5dat3s6j0rmPe2RKTEpKY2dneX56c3RuSzgniF05x4dTxoZRxYRPxINNwoFLwX9Jv3xGvnpDv31HwX9Kw4JMxYROxoZQt35NYUkzW0s7vKmN28qm4dKt5dWu4NCl2cWcxKyFg2pQMiUeU1FOWlNLcFlKcFdDUz4qrXdKyIlVx4dSxYZQxINOw4FMwX9Jvn1GwYBKw4JMxYRPxoZSxIZTb1A4TVFZYGd1q6KN1cOe4NGu38+p28mi1L6XqpJxWkMxYEw5OCkgW0QylXlbTDosdl1KclU7yItYyYpWyIlUxoZRxYROw4JMwX9Jw4JMxoVPx4dTyIlVkWRAVV1qdn6Hg4eFc3t9vrinz7uY2sih1b+ZvaKAZk05bldCXkwzdFQ3Tzwrs5ZzTD0yZlhPXFtWeVQ0zI1ZyoxXyIlUx4dSxYROw4JMxIVPx4hSyYpVy4xYonJLVFRaZnmUmKChu76ygoeEpZ6NybOPwauGdFxDYEk0gXFYjGhExZFiUD8xj4p7XFlPPkFBQTsypnZMzpBdzI5by4xXyYpVx4dRxYRPx4hTyYtWy41ZzY9cn3JMMzM2OUNVUl5ylZuZmp6WXWJifnJkdV1IVj8to45xZVE4yZVmz5ppT0Y/XGFmUFJTWEEppHdOzpRg0JRgz5JezY9cy41YyYpVxodR"]];
+// Mythic buildings known from the start (owner confirmed the names on 16 Nov 2026, from
+// the owner's Storehouse screenshot; Lv 1 look as the Storehouse shows it). Matched to the
+// Islands buildings by name when a Storehouse screenshot is read.
+const SCAN_ISL_BLD_BUILTIN = [
+  ["Tundra Truck", "i3Vhk3dgkm5QsWYsjWhJp5qJq2Qusmcus2gus2gus2gutGkvtGkvtGkvtGkvtGkvr2cve00qS0NFeUsps2gvs2gus2cusmctsmctsmYssWUssWUrsWQrsWUroFwppWArp2Ers2gtpGArmVops2kvtGkwtWoxtmsytmsytmsytmszt2wztmszomEwX0k8SEZSP0FSVDostWoxtWoxtWowtGkvtGkvs2gvs2cusmctsmYssmYssmcts2gutGkvtGkvtWowtmsxtmsytmwztmw0t201t201t202t202s2w2fFM2TkhQT0dSRzg/WkZLZEtMilQvs2s0tmwztmsytmsxtWoxtGkwtGgvs2gus2cttGkvtGkwtWoxtmsytmw0tmw1tm02tm43t243uG84k1w0e1M4jlgyW0hCVEtVTD5CQjI2Z0tLeGdygGZsYktOcUQmtm43t202tWw1tmw0tmsytWoxtWowtGkvtWoxtmsytmw0tm01t243t284uW84sWw4ZEArYkAtXk5Ia2lzUVRiUEJGRTc6XEdKgVtVfVVNc1JNZ05RblBQdlZTcEgyiFYyUkA3n2Awtm01tmw0tmsytWoxtmwzt202t242uG84uXA5unI6unM7lV0zJiMtMyo2ZFVXcF5fbmhwX2Fxi4yfoZepiGJefFpbbE5QeVpbhmFgf2BialtmNDlIRjEnuHA6uG84t243tm01tmwzt202uG84uXA5unE6u3M8vHU+vHY/s3I9NScjIRgZWj4sWkdGeGJfcWhscXWFbnCCZ0xPbE9RfWRsfWhwdl5kUE9eJCk1OTg/Sz04klw0uXI6uXA5uG84t242uG84uXE6unM7vHU9vXc/vnhBvnlCvntEWDspJxwaXD8qUT07ZE1IeF5YdWFhYlhiT01haVRfeFldaVtpNjhKGxsmXVhacGlsS0tULCoxoWU3unM8uXE5uG84unI7u3Q9vXY+vXhAvnpDvntEv31HwH5Ig1o7XWNyNzVDST1FUD5ANyw2PjM6LSgyLDNJODlOP0BSJCY0GRghR0JGeG9vTUpRGRghISEsckorvXc/u3Q9unI6vHU9vXc/vnlCvntFv31HwX5JuXpIo25DYmRrbnqPUk5cMy48UExaNy0ySzg1Ih4mHCAyISY4Hh4qHRojGhYXaWBebWVmICAtGhslJyQriVo1vnlCvnc/vHU9vXhAvnpDv3xGwH5IwoBKoWxDWEpGNjI1a3WFc4CVb3yRXmV1UEtXRkZTUk5ZKBskNiwwFxYeJx8giF08YUUvXFNSWE9RPispZEtJUEBCqnBCv3xFvnpDvXhAvnpDv3xHwX9Kw4FLvH9MaFdNa2ZpICAnQENJaGt3bHSEeIOXcn2RbXuSQ05fExcfJiElLS88JicvoG9Ip3RJNSwoVEZEd1pbg2RifFxaaEg1v39Kv3xHvnpEv31HwX9Kw4JMxYNOiGA/eHByS0dPKi42en+IRklVZW9wYGZsYWd1TltuGSMxCgsSZV1cQ0NNHB4rb1A6voRVZ1NQXU9Na1dTb09MX0JAOyglvn9MwYBKv3xHwYBKw4JMxYRPw4ZSalZJb2doJiUtTllXUV1aWmlmXnJuWWtoR1FWLjhAERgnIB0db2dnHyIyHiAsdlU9d1RAin2IfWlwd2NnOywxNicqNSUkwYNPw4JMwYBKw4JMxoVPx4dSvoNSUkhESkVIGRgeSEo8OT42bmVhX2dlPVBSX29uLzM/VlJZTEpPSUdMGRsoIB4moXZRTDEqclJOeWNqWUdMMScqc1I7o3FHxohSxoVPw4JMxYVPx4hSyYpVyoxZd1Y8OS0mh2FCo3lPX0w0gHBWXFZQU2FXPUdLb2hsZF9lKi49ICY3HyAsbVI8x5NkWEM+fVxTZUxHNy41oHJNzY9cy41YyYtVx4hSxYVPx4hSyYtVy45ZzY9cz5NezZRh0Zdk0plm05potIVbcFU+Sk48SUpGeXFyNDRBERYkHyU2iWZH1J1r05xqoHhTj3JYbF5Wb1ZG0JVhz5NfzZBcy41YyYtVx4hS"],
+  ["Fantasy Aquarium", "h2tUmYRwk2hGsWYsl3lfoI57sGcus2cus2gus2gus2gvs2kvr2Yvmlophk0khk0knFsqr2cvs2kvs2gvs2gus2gus2gtsmctsmctsmYssmYssWUrsWUrsGUro14ppF8rqGErsmctoV4rnFwqtGkvtWowtWoxtWoxl10xdVE+flBCe05Ff05EhVRIiVlOhlZHc08+ml4ytWoxtWoxtWowtGkvtGkvs2gus2cus2ctsmYssWYssmcts2gutGkvtGkwtWowtmsytmsytmwztmw0q2YzeV1ZVmJ6GRUYDw8SDxYdDxceFRQWPCsreXmNdldPrGczt2w0t2wztmsytmsxtWowtGkvtGgvs2gusmcttGkvtGowtWoxtmsytmwzt201t242t242t243hVI1aUdIMjk/KFFrJFBuIEtpIk5sKlZzJEhfbFVPlGhcglAytm44tW03t202tmw0tmwztmsytWoxtGkwtGkvtWoxtmsytmw0tm01t242t243uG84uXA5tG86gFRHTVhlYZCmO3iXaajFTYurL157J1ZzLHucXG+CUFJdg19LinREcFYuiVgtrWk1t243tm01tmwztmsytWoxt2wztm01t243uG84uXA5unI6unM7u3Q9tXE8glVKUnSPRZKyOZ3HYbvfUqjUY6PARXyWO5W0Vn2WWXqNfldJi4ZRj5dalZZal2EwuXA5uG84t242t201t2w0t242uG84uXA5unI6u3M8vHU+vHY/vXhAvXhBg11MfnWAOZm/QKfRYbnebqfMecTmMXyhNI+vQHKMfmx0blBCimk2j7xSVE8knGY1u3M8uXE6uXA5uG83t202uG84unE6u3M8vHU9vXc/vXhBt3ZBg2A2vHtGfHRvgn+Qa4WlU6/RiMrngsrqTMPpLIKlQICadIuqX2qESFBQZFUxXp5kQFg4o2s6vXc/vHU+unM7uXE6uG84unI7u3Q9vXY/vXhBu3lDrHE/nWs8fHBDq3NDg3p4ZYymfmlvmn9+lIqOjZifhZqli36EgGhrWVJha4inUFRXP001VYJbQEUpfV4zvXpDvXhBvXY/u3Q9unI6vHU9vXdAvnlCvntFsXRDbmZBclMsgJ5QVk83hoKSUoqmZHuGbcvjmLBxk5lQlptkd6O3o8ngW215YG6CcYOUaIKXUF1qTWpBaGQyunpGvntFvnlCvXc/vHU9vXhAvnpDvn1GwX5JwIBLgHdCXVs2YXdgh4eVZnSIc6K1Zm1udb6+q6pJpK5Lnqh7aqC5qrbGd2Nkl6qyd5upZ4WbRVt3LkNQhV09woBKwH5Iv3xGvnpDvXhAvXpDv3xHwX9Kw4JMjmg+a25EZXFcaFtWXGh/lXmAmJOafHJrfrrOt8zHssWphrXFUJOyYJixbWhpm7a2RVNnQFpzQld0V2eFS09irnZJw4FMwX9Jv31GvnpDv31HwYBKw4JMxYROvIFOhG5DoKKbgnp4eX6RjF9ajIGGa3lzh8TQfLXFhbrLfq2+o6GpirO+bHJwRVpxLyo5OlNnZZuKaYODiZWskWlJxYNOw4JMwX9Jv31GwYBKxINNxYVPx4dSyIlUuIBSu7q9q6qvioydeGx7lmtrd25ygqOrapaef6i1kLC9kaWueoKIbWRwTj1PUEhSapSHZ7KegqK2i4mOuoBRxodSxYRPw4JMwX9JxINNxoVPx4hTyYpVy4xYzI5am35mr6yxkY+ecnOJoHFqqWVXoWpjnXt6kHh8hnB5hGNpfEtMYjo8Z1tihoqemaemZXdZnnRSxIlZyoxXyIpUx4dSxYVPw4JMxYVQx4hTyYtWy41ZzY9czpFezpNgpoFgi4OBv8TRwcDLnYeNnG1pkllQjnyAiX2Cemt1fWtxenOAoKa2pKOpr4Jc0JZk0JRfzpFdzI5by41YyYpVx4dSxYVPx4hTyYtWy41azZBcz5Nf0ZVi0phk05lnz5hor4Vfn4t6ycjPuLnBl5ijmp2npaSqk5OfubCvaG+GmpuisYdh05to0pll0pdj0JVhz5JezY9cy41YyYpVxodR"],
+  ["Mushroom Domain", "g2JIn459kmE7sGYtnYZvnYRssmcusmcus2gus2gugFo1SJavS7XmPqjkRa3pTqbnd63paJ7lRZLiNYLZLEqEhlUxsmcts2ctsmctsmYssWUssGUrsWUrsGQqpl8qo18rqmIrsmcunl0qn10qtGkvtWowtWoxoWIxS5quU77rTa7oT67qUq3rXqjoi7Doa5/jRpDgLnrWEEy3K2OjflQ2s2kvtGkvs2gus2ctsmctsmYssWUssmcts2gutGkvtGkvtWowtmsytmsztmwztWw1XHNrVcTnUbfqTa7oTqjnZaroeajmh67oZqDkPo7fIm/PDUu5Gl7DMHGzaVZHtGoytWowtGkvtGkvs2gusmcttGkvtWowtWoxtmsytmwztm00tm02t243tW44U4qOV8brTrbnTrHnW6voi7frnbnpdqjmVp7kNozdJHzWFVrDFVvEL3zSNYW0ll0yt2wztmsytWoxtGkws2gutWoxtmsytmw0t202t244uG84uG85uXA5uXE6gWNDT6a4WcnrULjnXrHndbbpm73rcKvmRp/kPJjhL47dJHfUJ3jTNI7aQazfd1U4t242t201tmwztmsytWoxtmw0t201t243uG85uXA6unI6unM8u3Q9vHU+vHY+mWg/XaOzUb7nSrTmUK/mdbPnbq/mTaXlP6DjOZ3iN5XfOZTfPZ/iPpnLglY0uXA5uG84t243t200t2wzt243uG84uXA5unI6u3Q8vHU+vXY/vXhAvXlBvXlCcGZRSKG+cNDuTb7oU7XmcrnoZrPnV6/mQajjRLLoPrHoRqvmRarlNoW0m2U6unM8unE6uXA5t284tm01uHA5uXE6u3Q8vHU+vXc/vnlBvXlDvntFv3xGhWdHPKTEXrvbfr3NVMTnY8PqZsLqWL/obsXsSLroa8vuT8ntTMHrN53SWVRQvXhBvXc+u3U9u3M7uXE6uG84unM8u3U9vXc/vnhBvnpDtXdEY2lqeV9MwX9KcWFLZZmqr6ymfl9Tg353X5WoX73bPZS/fs7rRrXePZG7Ra7TLnqbXVVOuXlGvntFvXlCvXhAvHY+u3Q8unI6vHY+vnhAvXpCvntFwH1IhWVKW6feMG+qb1ZHb1VBmoyBrpOEbE9JmWxOZUg/g4KAW1NVM01dI0pxGEuUFUyjJUN8dltPwH9LwX5Jv3xHvntEvXlBvXc/vHU9vXhBvnpDv3xHwH5JuHtIT3qEXbfpPJ3bUou6hYeSuqWUeVxPgVtEpHJTWT01XUdDVUA/MTQ8OYS7JGjHLGzQImjSI1y5c1xNv4BLwoBKwH5IvnxFvnlCvXc/vntFv31HwX9Kw4JMrHdJVqGylNjyZsTlU5CqcnJ7waiSpXlZsIFdZEY6Tzcwe1dMblRMTEFBbbHJZK3naajpQJHiImzTLGatUkE2kGE7woFLwX5Jv3xGvnpDwH5IwYBKw4JMxYRPnG5KoaOucH6EVVhcICo5NEFTwKWJn3VXmnBRYkk8ODE0WEpGWElEPjIxWYiQmNfyeL/uUKXoL4DYNH7FJDNMSTw4vX9Mw4FMwX9Jv3xGwYFKxINNxYVPxYZSiHRnpKWvhYGHjIF6XFhVIThRlnditYtqe2BPnIp4eHBodGZcaFlOQD5DX1JHkaGZcrrRaMHpVK7dLWCKJDFIN0tqmWpExYRPw4JMwX9JxINNxYZQx4hTxYdUkH1xsLC8kY+VjIuRhHpxW1pdm3dgqYNnrpeCz7yoy7ihxLCYp5aCVE5MinNhgWhUPUNPKk9wNFByTm2ZU3KcTE1Wt35PxodSxYRPwoJMxYZQx4lTyYtWzI1ay45dmnhfcmpre3qElpOap456kXZlgGRYe3Z10MCr1se11ca2yrilpJ6VYVdPSkhLb3J8S1htNkNaPU9mgWtbxIlayoxYyYpVxodSxIROx4lTyYxXzI5azpBcz5Ng0ZZivIpen52ktLK9pn9nj3VndV1ST1BYnZiPtqiVyrmkq8fGX8XmNW6UT1RhbG57j5OilJiqmXZZz5Vgz5JdzY9by41YyIpVxodR"],
+  ["War Chariot", "nZCAj3JZlGxMsGUrj25RuK2eqWMtsmctsmctsmcus2gus2gus2gus2gus2gvs2gvs2gus2gus2gus2gusmctsmctsmctsmYtsmYssWYssGUrsGUrsGQqsGQqjFgvkVoxk1kusmctlFsviV06sWcvtGkvtGkwtWoxtWoxtWoxtmsxtmsxtmsytmsytWsxtmsxtWoxtWoxtWowtGkvtGkvtGkvs2gus2gts2ctsmYssmYssWUrsmYss2cts2gutGkutGkvtWowtWoxtmsyt2wytmwzt2w0tmw1t201t201t202m2A0jl06tmw2t2w0tmwztmwztmsztmsytWoytWowtGkwtGkvs2gus2ctsmcts2gutGkutWowtmoxtmsytmwztmw1tm01tm02t242t243uG84uG84uG85lF42f3Fkd3iBeVpIt244t243t242t242tm01t201t2wztmsytWsytWowtGkvs2gutWowtWsxtmsztmw0t202t243uG43uG84uXA5uHE6rGw6s3A8unI7uXM7i2pNjXRdcGRbSkhSo2Y3uXE6uXE5uXA5uG84uG84t243t202t2w0tmwytmoytWowtmsyt2w1t202t243uG84uXA5uXE6unI7u3Q8oGU4gnRrYllXalBCfVg+bl5Uf4WTeICWjJu1bXOIelM6unQ9u3Q8unM7uXE6uXA5uG85uG44t202t2w0tmsyt201t243uG84uXE6unI6u3Q9vHU+vHY/nmQ4a1VJrJF5nZGMtKaVmJ+tYnmkboClgZGylZCTe4ihS1hyjFs0rG48vXY+vHU+u3Q8unI6uXE5uG84t243tm01uG44uXA5unI7u3Q8vHY+vXdAvXhAqG09aWFnZnOSTGOMRVuCiHRnjHpqcoKgUGSKN0BWWlRcQ0tnUGSGZXGGdXiEmmhAvnlBvXc/vHU+u3Q8unI7uXA5uG84uXE6unM8vHU+vXc/vnlBvnpDvXpFjV46amVrW1RdQUJPJiY3WT8wsYxVzrOAOk50M0ZvOUltQlN4ZG+MNT5dV1VhWUY+s3VDvnpEvnlBvXc/vHU9u3M8uXE5u3Q8vXY+vXhBvXpDvnxFwH1IjWpPj4qIYF9kg19Ad2FRg29nZFhY26lWnZSMGyhPFSVJGCNGVDtAXTc4U1BZd3NxeHZ2enFtmmc/v3xGvnpEvXhBvXY+u3Q9vXc/vnlBvntFwH1IwX9KwoFLhWNJn5mYe3V7aWdwXlVVoWw9j3FV0at6MkBjHCxSJ0Z7IDFYOxweOSo3WVxnfXp6g35/eHuGd2hkwX5KwH1IvntFvnlCvXc/vnlCv3xFwH5IwYBKxIJMxYROvIBOlHxqkY6Rj42PX1xgX1ZWjGE8dWluFB06IC1QHixPGyhFGSY+UVdocHB2iYWGfX6HpKWsmndexIJNwoBLwH5Iv3xGvnpCvnxFwH5Iw4FLxINNxoVQx4dSyIlUxohWnXRTnJaRko6NcGhmc2toTk9dFRsyOVeNJjxiLjxTW2BtenqAg4KIhYCClHJYrXhMxYdSxYVPxINNwoFLwH9Jv3xGwH9Jw4JLxINOxoZRx4hTyYpVyoxYzI1azY5cqHtXvLi2pZ+dgXt4XltfKyk3Vm2aVFhleHV2iYmLcnN5cl1QtIBWzI1ay4xYyYpVyIhTxoZQxYNOw4FLwX9Jw4FLxYROxoZRyIlUyotXy41ZzY9bzpBdz5Jf0JNgq39bs6mj19bZqqWkn5qai4iQf3x9iYiMZWt/emRYzZJgz5JfzpBdzY9cy41ZyotWyIlUxodRxYROw4FLxYROxodRyIlUyotYzI5bzZBdz5Jf0JRh0ZZk0Zhl05hmxZBhpINntrGys7CznpuaXmRygYmclX5sz5dm0pdl0ZZj0ZVhz5NfzpBczI5byoxXyIlUxodRxIROxodRyIpVyoxYzI9bzpFd0JRg0ZZj0phl05lm1Jpo1Zxp1Z1r1Z1svI1ho4Jnd2tmcGJep4Rk0Ztp1Jxq1Jto05pm0phl0Zdi0JRgzpFdzI5byoxXyYpUxodR"],
+  ["Dream Nest", "k4JwmX9plGZDsGUsn4Rrrp6MrmYusmctsmctsmctoV4pll4vo18qsmgvsmgvsmgvs2gus2gus2gus2gusmcusmctsmctsmYtsWYssWYssWUrsGUrsGQqsGQqkVgtj1s0llorsWctklwzi104s2gvtGkwtGkwtGowl2Y12ptXXTgfRjlASTU4YkM1hFgxlVcos2oytGoxr2gyrWcwtGkvs2gus2gus2cts2ctsmYtsmYssWUrsmYssmcts2gutGkutGkwtWowtWoxtmsytmsztmw0kV40r3ZJilxDoXRzqXBiw4dT45xaqHRRf1ZMflI6t4pOlWo2pmIutWoxtWowtGkvs2gus2gusmctsmcts2gutGkvtWowtmoxtmsytmwztm00tm01t243qGY1bVNIpoqB2Z1pwY1yyZBzyo1f87Rg25tnvoJp2Zdk1X9MrHU+nV0ttm00tmwztmsytWoxtGowtGkvs2gutWowtmsytmsztmw0t202t243uG84uG84g1k9aWVuu7vD5Nvd561l5a5wsHtx5a5n8bpe2ZZb35pi5qpc4KNWglMyrmo3uG84t242t202tmw0tmwztWoytWkwtmsztmw0t202t243uG84uXA5uXI6uXI8ZV1htrrD4OTn6uft1qBv6qxi04tR46dg6a5d77Je6qtc8rle77ded0s0qmk3uXE6uXA5uG84t243t201t2w0tmsyt201t243uG84uXE6unI7u3Q9vHU/tnM+X1lfv8fS4eXo3+Lo5d3hy4lky3Y8zo5bxYZO67Jk6a1gwIVK3aBgglQ5n2Q1vHU+u3Q8unI7uXA6uW85t242t201uG84uXA5unI7u3Q8vHY+t3VAoWY3hlcxXElHiI6g09rh4ufp4uXt5eLt4LWU3JJM66ZV5qNQ56NV66xc0JJXZ0EvhVUvs3I+vXc/vHY+u3Q8unI6uXA5t283uXE6u3M8vHU9vHc/ilk5j2FLgmRWYUpFjlo5h1lDg3l8vcXS3+Pn4uTs4Me27aNfw4hk6tPF162P2pdKunU+ZUhCXUlDd04unmY4vXhBvXc/vHU9unM7uXE5u3Q9vXY/vXlBrnA/jGJVr4Fno35xdE1FvX1clm1ji19JdV9Ym6Ky09nh29jbyH5rx6Oe6N/gxrGz44dRmWNDWFVhg2dBalQ5bVZEj143vnpDvnhAvXY+u3Q8vXc/vnlCvntFsnVDhV1Lt49dj2tiuYJd1Jlk1K6Uo393hVhKZUEvcXSGamp8b25+fXiFv7e7lpWhl3x8XV5vZVBFk3A7f2RAfGFNcVU+q3BBvntEvnlBvXc+vnpCv3xGwH5IwoBLmXhE5chxuItfi11Ou4Vm5uDnpIB6f1JKgFlNbEM0dDMUeDocPignR0JNQEhhSkFGVz84Vz84V0Q/aVpdZEo4ZUgxjl85wH5IvntFvnlCv3xGwX5Jw4FLxINOtXpIoHhEdk0zmGhVzpJw07OitZmWnX+Chmxyf2VnjXNzn4WEQDE7NzpgXGyeqIJCdlc2TTk2Pywrb1VIr3hJtnxLwYFNw4FLwX5JvntFwX9Jw4JMxYROxoZRyIhUyopWv4RTqnVLi11GtHpgrndjkGVPsJOExq6so4N+nH59VlV3cmiErX9a0alXYUcmaUgws31QyItYyYpVx4hTxoVQxIROw4JMwH9Jw4JMxYROxodRyIlUyotXy41ZzY9czpBdyY9eelE4m2xW0pVg3J1VwotnyKaMwZV7omtOz4pRtnZOZ0IwmGxHzpJezpBdzY9by41ZyotWyIlUxoZRxIROwoFLxIROxodSyIlUyoxYzI5bzpBdz5Jf0JVh0ZZjz5dlrHtTjF9Jt3xctHJOy4lLxYVRqmpNkV5GaUc0xI9g0phl0ZZj0JRgz5JezZBczI1ayoxXyIlUxoZRxIROxodSyIpVy41YzY9cz5Fe0JRg0Zdj0phm05ln1Jtp1ZtquYlfjV5SroN1coOkn8/mg5WoTGBwxJJm1Jxp1Jto05pn0phk0ZZi0JRgzpFdzI9byoxYyIpUxodR"],
+  ["Icefire Way", "i3Vgn4l0lGA4sGUsqJN+qJJ8sWYusmctsmcts2gusmgum1sramx5aXeQfoicaHiWQFWBaUo8rmYus2gusmcusmctsmctsmYtsWYtsGUssGUrsGUrsGQqsGQqk1ksjVw2mloqsmctjl02jlw1s2gvtGkwtGkwtWowl1wvYmBqfISSkpqlYml3cn2POUhqSV6FhlUztWowtWkwtGkvtGkvs2kus2gus2ctsmctsmYssWUssWUrsmYtsmcts2gus2gutGkvtWowtWoxtmsytmszllsvSkRGZ3aXWmd3fIeXh5CciZCejJauSWKOWlltqGQytmwztmsztmsytWoxtWowtGkvs2gus2gusmctsmcts2gutGkvtWowtmoytmsytmw0t200tm02tm43hGpcXWR1h5CkfYaWY3KRVFxseH6JQEhYY3uiP05ynGAzt243t202t201t2w0t2w0tmsytWoxtWkwtGkvs2gutWowtmsytmwztmw1t202t242uG84uG84uHA6inRsl52uf4eciZGgXGd5cXeBQURMP0dTcXyOTVpzcUgvtXA6uXA5uG84t244t243tm01tmw1tmsztWoxtGkwt2w0tm00t202t243uG84uXA5uXI7unM7u3Q8nWU6hoKIdYGhf4eaiZOijpalgI+qg4+scX+WS1pzFyM5Uj86pWg5unM7uXE6uXA5uG84t243t201t2w0tmsytm02t243uG84uXE6unI7u3Q9vHU+vHc/vXdAu3dBd2ZehI6jg5Cqc32TUVlwR1FuSVRwMkFZGCY9DRkxTllteXZ9pGg4vHU+u3Q8unI7uXA5uG84t242tm01uG85uXE5unI7u3Q9vHY+vXdAvnlBvnpCvnpEvntGh14/fX+LioKvg4Oqdn2XTFJvRkxeOD9VMTxVX2mBbn6fTVh4hlg5vXhBvXc/vHU+u3Q9unI6uHA5t244uXE6unM7vHY+vXhAvXlBvnpEvntGv31HtXdGkWREiW5eg4aYSEllWFt8coCgY2uJg4eWkZirkpu0Y26IM0FlNDpVkmA8vntFvnpDvXhBvXc+vHU9unM8uXA6u3U9vXc+vXlBvXpDv3xGwH1Iq3JFlXBXn5qgj9Pqa9HwdoWbLC1IIilMVGKFV2OFjpSnl5ytf4mgMT9hKjdac1E/wYBKwX9JwH1IvntFvXpDvXhAvHY+u3Q8vHg/vnpCvnxFwH1IwYBJqHBFmJusWafrc9P4SN38UKXXb3aJKSxIISdLJjBWcoGiaW2DjpOnhZCwJzRXMjRKnWtFxYROxINNwoBLwX5Jv31HvntEvnlCvXc+vnpDv3xGwH5JwoBLxINNn3BMobPXJpDtOa34K7DyQpu9aG2CKCxHICNAJCdGaHiaYmJ3hYaYUVx6Iy9SNS87uH5Px4ZSxoVQxYROw4JMwoBKv35IvntFvnlCv31GwX9Jw4FMxINOxYVQnYR5u8XnOW7YHmvcMqb3Q8XzT3CRKyxIISI/JCVBX22PYmR6e4CWRE5uGydHHihIQzVCn25Jv4NRxoZSxoVPxIJNwoBLv35IvnxGwX9Jw4JMxYROxoZRwYRRi3Vsxs7mgrfqRJrnM43vKKj4YoeuLSpFJCE6QThLWmSFX2Fyd3uMVl96P05xFiFAMzZXUUZiaT5BhmBIxIZSxYVQxINNwoFLv35Jw4JMxYRPxodSyIlVlm9PiYyWo6Szt8LaxM/ojK7ncqvorrPKOTNIWk1Zfm1yWFh0WVZlc3aHXVdkbXeYHSlKWEBNUUJPS0NjMT1kjGVKx4lTxYZQxINNwoFLxYRPx4dSyYpVyoxYlnFVjI2blpagn6Crqau8pae6n6GzsrPLhoOMiH+Ej4GDnX5JbFpNam+FYFdtbltrQk1xbD0/aE5aYklaQk1yiWpXyotXyIlUxoZQxINNx4hTyIpVy41ZzY9cmHJTi4yYl5ihmJehlpagi4yXjo+ZkJGbkpKalJCVvIhXvYlBlnRLc2p2NUFhbUlKS1Z6Rz5UXUVYPj9eNjpSk2pMzI5ayotXyIlUxoZQ"],
+  ["Furious Sea Fortress", "q6KUgF9FmXxksGUsjGA+xr+yoV4rsmcts2gts2gusmgusmgvs2gvs2gus2kvs2gvs2gus2gvs2gus2gus2gusmcusmctsmYtsmYssWYssWUssWQrsGQrsGQqh1Ammlopl1orsmctnlwqhFApr2YutGkwtGkwtWoxgVU1d08ztWsytmsytmsytmsytmsytmsytWoxtWoytWoxtWowtGkwtGkvtGgus2gus2ctsmYtsmYssWUrsmcts2gts2gutGkvtGkvtWoxtmsxtmszt2wzqGUygnR2Y1xpnWAzuG01uG02uG02uG01t202tm01t200tmw0tmwztmsztmsytWowtGkwtGkvs2gus2gtsmcts2gutGkvtWowtmsytmsztmw0tm00tGw2hVs9kXNtvIqKqn2DaFNXf19MrWk2uHA4uG85uG84uG84uG84t243t243t201t201tmw0tmwztmsytWowtGkvs2gutWowtmsyt2wztm00tm02t243uG84q2g3eWxvwJJ3rHt7x5WUrn5qaltmmF80u3Q8u3M7u3M8unM7unI7uXI6uXE6uXA5uG85t244t202tmw0tmwztmsytWowtmwzt2w0t202uG84uG85uXE6unI7uXM9gFQ+hGdeopCSmHh4e0UtVCsjsnI9vnc/vXc/vXdAvXc/vHY+vHU9u3Q9u3M8unI7uXE6uXA5uG84t202tm00tmwzt201t243uW84uXE6unI7u3Q8vHY+vHc/elZBjX6BiHN1Zz45Wj8+MR4dVjYhvHpEvntEvnpEvHlDtXRAvXlCvXhAvXc/vHY+u3U9unI7uXE6uHA5t243tm02t284uXE6unI7u3Q9vXY+vXhAvnlCvnpDhF5DvrOqv6ihj2xispOCMR0bOB0WnGc9wH5JnGhBfltDZVdRuHhFvntFvnpDvXlBvnhAvXY/u3Q9unM7uXE5uG84uXE6u3Q8vHU9vXdAvnlCvnpEpWw/XUIxZEg4in1vyLSmrIZymGpFLxoaSCkgUjQkuHtJtZWMuKGla2p9hF1BwH9KwH5Iv3xGvntEvnlCvXhAvXY+u3Q9uXE6u3U9vXc+vnlBvnpEvnxGwH1Jhlo3YFRDeVtWq5CDfmpeon5Pw4cwXz0wYEk9aEguhGlYpY6QvH58p4KNhWNveXBvpnBGwn9KwH5Jv3xHvntEvXlBvXc/u3U9vXc/vnlCvntFwH1IwYBKw4FLk2E7f1lJmYiMemJiZ05AqIFG67pR6LlrwZtzh29cbWBdnm5Xo29nsI6WtXd7WUxWmGhCxINNw4JMwoBKwH1IvntFvnpCvXc/vnpCv3xGwH5JwoFLxINNxYRPqnJGkGZKsZB/fGJRlnJcpYd04bBl4LVs4K5svpR4jXFngGRgiXV2lYybPCg0MScxrndLxoZRxYRPxINNwoFLwX5Jv3xGvnpDvnxGwX9Jw4FMxIROxoVQx4hTyIlUuoFRlm1Eo3BYYD8pYVFMn4l11KRvsZN3loFyzZ1vjntzj3p5Uz1CPT1SKycytX1PyIpVx4hTxoVQxYNOw4JMwX9Jv3xGwH9Jw4JMxYROxoZRyIhTyopWy4xZzI5byIxbkWNBwIhZyI5dp3pUgXNssI952qds3ahwmnFbnIR1d3N9ipamICY5PSsil2hDyotWyIlUxodRxYROw4JMwX9Jw4JMxYRPxodSyIpVyotXzI5azY9czpFe0JNg0ZVi0ZZj0pdl0phlv4pfim9drZR8rH1oqn90j15MbWptmYRLJyQyOjlGX0xCzI5ayoxXyIlUxodRxYROw4JMxIROxodSyIpVy4xYzI5bzpFdz5Rg0ZVi0pdl0phm05ln05pn1Jto1JtpxI9hblVIkHBqdG97mWNUZ1tH3bRCVDc7aU9AZ007zpFezI5byoxYyYpVx4dSxYROxodSyIpVy41YzY9cz5Je0ZVi0Zdk05lm05po1Jxp1Zxr1p5s1p5t159tnnNRnW9ZuJuGb2FlhlhMUkI+u4pKuoFhgFRAk2hF0ZVhz5JezY9cy41YyIpVxodR"],
+  ["Glory Arena", "g2JIn459kmE7pF8rlIV10tDEtK6hlFots2gus2gutGkvs2kvs2kvs2kvtGkviFQta1A/k1grYUMvamt2bG14b3uOZ1BEpWAssmcssmYssWYssGUrsWUrsGQqpl8qol8rqmIss2gtpWEskVktm1wrtGkxtWoxtmsxtmsyr2gxcE43hFEttmwza048aGZyT0ZOW1VebE9Ig2Rce3N4Y22BYUQwsGcvs2gus2ctsmctsmYssWUssmcts2gutGkvtGkwtWoxtmsytmsztmwztmw0t201t201nF4weXduXUs6tm03dkosVDg0UEE+iXVqiV5HfV5SgGJacmZrYGd5U0E4rmcwtGkvtGkvs2gusmcttGkvtWowtWoxtmsyt2wztm00t202t243t243tm44pWU2mV0xV1JRQiwin2M2Yz4oXzcrZU9AbnxhpYxoknRoPzEwdFRGYGJuLCoyrWcytmsytWoxtGkws2gutWoxtmsytm00t201t243uG84uW85uXE5r2w4Z0UvS0VPakMoWz00LCYxOTVCVkhOYDovUUA2al9YdHdpboJ1OjA1akY0ZUdAUTUlt242t201tmwztmsytWoxtmw0t201t243uG84uXA5uXE6iFk3e1Eze1Q4UFFpSiQrNS02TTs/NCcsUj9DaE5OaElDYUtGb1pVdFpQj4FlPSgkRCgfb0c8XU9Qtm85uG84t243t200t2wzt243uG84uXA5unI6u3Q8t3I9cmVbX1dSXUQ1MzJVLSo7PzAxfVQ8WEdKc0pAj15QjXRzjHJuhWBUdlVIdlVMQikiSi0jZ0pGX2V3iVczunE6uXA5t284tm01uHA5uXE6u3Q8vHU+vXc/u3dBZFRLOzQ0UEA6ODVCWDs4i2FGkWdJXD81ZEpKgGRfkXBelmFQlmNQm2pTfVpSTjIrXz4wZEtKU1hmilo0vHU9unM7uXE6uG84unM8u3U9vXc/vnhBvnpDvXtGaEY2NSw3NzA6a0w7d1A9dlFAYUI3dF5elHJil3dtk2Zfn21Xw31OvG5KpWdQd1VKelhNclJKUjcxm2Q4vXhAvHY+u3Q8unI6vHY+vnhAvXpCvntGv31IvX1JbUc2TjItgl1Og15Gb0w7ZEdEdmNlnXdemnhqqGxdlG1osGpQvXNNuG1LtW1Nm2RQkXh1b2tuXj0xomo9vntEvXlBvXc/vHU9vXhBvnpDv3xHwH5JwoFLo2xBhFxSZE9QeWNnQC0sh19jdWZspXpgrX9elnpxuHJUsG5VnnJmrW9WrmhQn2hanmtXhGlgZ2BXT0tUjmA9wH1IvnxFvnlCvXc/vntFv31HwX9Kw4JMxIROjF06cU5Fa0tGgV1Xf2t3ZURPPy0ufl1LtoZiroVpm3VutnFXu29QrXRem21nh2xtc19jfV9ZPTpIOjdEelY7w4FLwX5Jv3xGvnpDwH5IwYBKxIJMxYRPxIVRflhEinVujGxijWdhdV1ePCstiGROtIZmuolhtodksYNoooBwl3dskW5ic2dvREJPX0hLb1ldNikuLS06dFQ7xYROw4FLwX9Jv3xGwYFKxINNxYRPxodSp3NJZlNQn5ugk4OAeG90Wl9wZ1NJrYFjs4dnt4pmrH5skHRxoIBtgHyBjXJoQj1KQDM8UklZKSErLyYuLy0zqXVIxodRxYROw4JMwX9JxINNxYZQx4hTyYpVyItZqXdOemJNe2ViUjs0jpudhIyYl390rIVqlHlyelhkRjA0Xk1Ib21fh25lZFdfLS1BKCEqJSAqKS8+c1Q8yoxXyYlVxodRxYROwoJMxYZQx4hTyYtWy41ZzY9cz5JexIxca1JAbGFcfZWWtMnNgI6aT0lXfVxWQzg7VkM9eWltVEJFZFhgKyYyJx8oJic1JCgyPzc1r3xRzI5byo1YyYpVxodSxIROx4lTyYtXzI5azpBcz5Nf0ZZi0phl0plniWpPcWllZoCDVFBTKBwheFJKUz5AdmBhglZKVTo2JyAoJSErJCYzMzE0nnRQypNh0JVgz5JdzY9by41YyIpUxodR"],
+];
+let SCAN_ISL_BLD_REFS = null;
+async function scanIslBldRefsLoad() {
+  if (SCAN_ISL_BLD_REFS) return;
+  try {
+    const b = await scanIslBuildings();
+    SCAN_ISL_BLD_REFS = SCAN_ISL_BLD_BUILTIN.map(([n, f]) => { const r = b.list.find((s) => s.name === n); return r ? { n: r.name, id: r.id, kind: "island", g: scanB64ToFeat(f) } : null; })
+      .filter((e) => e && e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3);
+  } catch (e) { SCAN_ISL_BLD_REFS = []; }
+}
+const scanIslRefs = () => SCAN_ISL_BUILTIN.map(([n, f]) => ({ n, g: scanB64ToFeat(f) })).filter((e) => e.g.length === SCAN_FEAT_W * SCAN_FEAT_H * 3)
+  .concat(SCAN_ISL_BLD_REFS || []).concat(SCAN_LEARNED.filter((e) => e.kind === "island"));
+// Key of a reference: a building lesson by its building ("isl:<id>"), else the item name.
+const scanIslKey = (e) => (e.id != null && e.n !== SCAN_SKIP ? `isl:${e.id}` : e.n);
+function scanIslMatch(feat) {
+  const n = feat.length, best = new Map();
+  scanIslRefs().forEach((e) => {
+    let sum = 0;
+    for (let i = 0; i < n; i++) sum += Math.abs(feat[i] - e.g[i]);
+    const d = sum / n, k = scanIslKey(e);
+    if (!best.has(k) || d < best.get(k).d) best.set(k, { d, e });
+  });
+  const [first, second] = [...best.values()].sort((a, b) => a.d - b.d);
+  return first ? { key: scanIslKey(first.e), e: first.e, dist: first.d, next: second ? second.d : Infinity } : { key: null, dist: Infinity, next: Infinity };
+}
+// The Storehouse's tiles: wide blocks (about 4 : 3) in a grid of 3 on the dark blue panel.
+function scanFindWideTiles(src) {
+  const s = Math.min(1, 480 / src.width), w = Math.round(src.width * s), h = Math.round(src.height * s);
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const r = d[i * 4], gr = d[i * 4 + 1], b = d[i * 4 + 2], lum = (r + gr + b) / 3;
+    mask[i] = (b - r > 50 && lum < 110) || lum < 45 ? 0 : 1;
+  }
+  const boxes = scanBlobs(mask, w, h).filter((b) => b.w >= w * 0.15 && b.w <= w * 0.4 && b.w / b.h > 1.25 && b.w / b.h < 1.6 && b.n > b.w * b.h * 0.85);
+  if (!boxes.length) return [];
+  const sizes = boxes.map((b) => b.w).sort((a, b) => a - b), mid = sizes[Math.floor(sizes.length / 2)];
+  const tiles = boxes.filter((b) => Math.abs(b.w - mid) < mid * 0.08 && Math.abs(b.h - mid / 1.37) < mid * 0.1)
+    .map((b) => ({ x: b.x / s, y: b.y / s, w: b.w / s, h: b.h / s }));
+  tiles.sort((a, b) => (Math.abs(a.y - b.y) < a.h / 2 ? a.x - b.x : a.y - b.y));
+  return tiles;
+}
+// A square of the tile (left / centre / right) as a 140 x 140 picture's pixels.
+function scanIslSquare(src, box, where) {
+  const c = scanCanvas(140, 140), g = c.getContext("2d", { willReadFrequently: true });
+  const sx = box.x + (where === "right" ? box.w - box.h : (box.w - box.h) / 2);
+  g.drawImage(src, sx, box.y, box.h, box.h, 0, 0, 140, 140);
+  return { c, td: g.getImageData(0, 0, 140, 140).data };
+}
+// The tile's colour (left edge, under the "Lv. 1"): orange = Mythic, green / grey = decorations.
+function scanIslColour(src, box) {
+  const c = scanCanvas(40, 40), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, box.x + box.w * 0.02, box.y + box.h * 0.45, box.w * 0.05, box.h * 0.2, 0, 0, 40, 40);
+  const d = g.getImageData(0, 0, 40, 40).data;
+  let r = 0, gr = 0, b = 0;
+  for (let i = 0; i < d.length; i += 4) { r += d[i]; gr += d[i + 1]; b += d[i + 2]; }
+  r /= 1600; gr /= 1600; b /= 1600;
+  return r > gr + 40 && gr > b + 25 ? "orange" : gr > r + 40 && gr > b + 40 ? "green" : "grey";
+}
+// The count at a Storehouse tile's bottom right sits on a dark box; everything around
+// that box (snow on the building's picture) is painted over, so the Backpack tiles'
+// number reader (scanTileAmount) can read it.
+function scanIslAmountTd(src, box) {
+  const { c, td } = scanIslSquare(src, box, "right");
+  const lum = (x, y) => { const i = (y * 140 + x) * 4; return (td[i] + td[i + 1] + td[i + 2]) / 3; };
+  const white = (x, y) => { const i = (y * 140 + x) * 4, r = td[i], g = td[i + 1], b = td[i + 2]; return (r + g + b) / 3 > 175 && Math.max(r, g, b) - Math.min(r, g, b) < 55; };
+  const on = (x, y) => lum(x, y) < 140 || white(x, y);
+  const colOn = (x) => { let n = 0; for (let y = 100; y <= 128; y++) if (on(x, y)) n++; return n >= 29 * 0.7; };
+  // The box = the widest run of such columns on the right (a thin dark line at the
+  // tile's edge is not it).
+  let left = 137, right = 137;
+  for (let x = 137, run = -1; x >= 20; x--) {
+    if (colOn(x)) { if (run < 0) run = x; if (run - x > right - left) { left = x; right = run; } }
+    else { if (run >= 0 && x < 70) break; run = -1; }
+  }
+  const rowOn = (y) => { let n = 0; for (let x = left; x <= right; x++) if (on(x, y)) n++; return n >= (right - left + 1) * 0.7; };
+  let top = 114, bot = 114;
+  while (top > 80 && rowOn(top - 1)) top--;
+  while (bot < 139 && rowOn(bot + 1)) bot++;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.fillStyle = "#2a1e14";
+  g.fillRect(0, 0, 140, top); g.fillRect(0, bot + 1, 140, 140 - bot - 1);
+  g.fillRect(0, top, left, bot - top + 1); g.fillRect(right + 1, top, 140 - right - 1, bot - top + 1);
+  return g.getImageData(0, 0, 140, 140).data;
+}
+// The "Lv. N" printed at a Storehouse tile's top left. A tile above Lv 1 is a placed
+// building the person took back into the Storehouse (to move it or to teach Scan), not
+// spare copies: it is not counted as "In Storehouse" (owner, 16 Nov 2026).
+async function scanIslTileLevel(worker, src, box) {
+  const W = 200, H = 60, c = scanCanvas(W, H), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, box.x + box.w * 0.03, box.y + box.h * 0.04, box.w * 0.42, box.h * 0.2, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, out = scanCanvas(W, H), og = out.getContext("2d");
+  og.fillStyle = "#fff"; og.fillRect(0, 0, W, H); og.fillStyle = "#000";
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+    if (Math.min(r, gr, b) > 185 && Math.max(r, gr, b) - Math.min(r, gr, b) < 60) og.fillRect(x, y, 1, 1);
+  }
+  const text = (await scanRead(worker, out, { tessedit_pageseg_mode: "7" })).text;
+  const m = /[Ll1I][vVy][.,:]?\s*(\d{1,2})/.exec(text.replace(/\s+/g, " "));
+  return m ? Number(m[1]) : null;
+}
+const scanIslTileFeature = (src, box) => scanTileFeature(scanIslSquare(src, box, "centre").td);
+// Island Storehouse (Decoration / Accessory / Ingredients tabs). Orange tiles: Mythic
+// buildings (copies kept in the Storehouse) and the Ingredients items; green and grey
+// ones (trees, roads, lamps, ponds) are left out without a word.
+async function scanIslStoreShot(worker, src) {
+  const tiles = scanFindWideTiles(src);
+  if (tiles.length) await scanIslBldRefsLoad();
+  // The title / tabs above the tiles say it is the Storehouse (no tiles: the Accessory
+  // tab's lighthouse cards, so the top fifth of the screen).
+  const y1 = Math.max(10, Math.round(tiles.length ? tiles[0].y : src.height * 0.2)), hc = scanCanvas(src.width, y1);
+  hc.getContext("2d").drawImage(src, 0, 0, src.width, y1, 0, 0, src.width, y1);
+  const head = (await scanRead(worker, hc, { tessedit_pageseg_mode: "6" })).text;
+  if (!/storehouse|decoration|ingredient|accessory/i.test(head)) return null;
+  // No tiles: the Accessory tab (its picture cards aren't plain tiles).
+  if (!tiles.length) {
+    const lights = await scanIslLightShot(worker, src, y1);
+    return lights.length ? { kind: "islacc", items: [], lights } : null;
+  }
+  const items = [], isl = [], unk = [];
+  let unknown = 0;
+  for (const box of tiles) {
+    if (scanIslColour(src, box) !== "orange") continue;
+    const feat = scanIslTileFeature(src, box), m = scanIslMatch(feat), td = scanIslAmountTd(src, box);
+    const lv = await scanIslTileLevel(worker, src, box), placed = lv != null && lv > 1 ? lv : null;
+    // Every tile is orange, so different buildings can be only ~20 apart: a closer
+    // match than the Backpack's (the same picture reads about 0–8 apart).
+    if (m.key === SCAN_SKIP && m.dist <= 14) { unknown++; continue; }
+    if (m.dist > 14) {
+      unknown++;
+      const sq = scanIslSquare(src, box, "centre").c, pic = scanCanvas(96, 96);
+      pic.getContext("2d").drawImage(sq, 0, 0, 96, 96);
+      unk.push({ td: new Uint8ClampedArray(td), feat, isl: true, placed, rarity: null, after: null, gap: null, img: pic.toDataURL("image/jpeg", 0.85) });
+      continue;
+    }
+    if (placed && /^isl:/.test(m.key)) { isl.push({ id: String(m.e.id), name: m.e.n, placed, value: null, sure: true }); continue; }
+    const amount = await scanTileAmount(worker, td);
+    const sure = m.dist <= 9 && m.next > m.dist * 1.4 && amount.sure;
+    if (/^isl:/.test(m.key)) isl.push({ id: String(m.e.id), name: m.e.n, value: amount.value, sure });
+    else items.push({ name: m.key, value: amount.value, sure });
+  }
+  return { kind: "islstore", items, isl, unknown, unk };
+}
+// Storehouse Accessory tab: the lighthouses as big picture cards, "Starry Lighthouse Lv. 7"
+// written in white along each card's bottom. Only the near-white letters are kept
+// (black on white) and read line by line; [{ name: text read, value: level }].
+async function scanIslLightShot(worker, src, top) {
+  const W = src.width, H = src.height - top, k = Math.min(1, 900 / W), w = Math.round(W * k), h = Math.round(H * k);
+  if (h < 20) return [];
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, top, W, H, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, out = scanCanvas(w, h), og = out.getContext("2d");
+  og.fillStyle = "#fff"; og.fillRect(0, 0, w, h); og.fillStyle = "#000";
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+    if (Math.min(r, gr, b) > 200 && Math.max(r, gr, b) - Math.min(r, gr, b) < 40) og.fillRect(x, y, 1, 1);
+  }
+  const text = (await scanRead(worker, out, { tessedit_pageseg_mode: "11" })).text.replace(/\n+/g, "\n");
+  // One card a line: "<name> Lv. 7" (the "L" sometimes reads lower-case).
+  return text.split("\n").map((ln) => /([A-Za-z][A-Za-z' ]{3,}?)\s*[Ll][vVy][.,:]?\s*(\d{1,2})\b/.exec(ln))
+    .filter(Boolean).map((m) => ({ name: m[1].trim(), value: Number(m[2]) }));
+}
+// A name read from the screen to a building of the list: the closest by letters
+// (Levenshtein over lower-case letters only), at most a third of the name off.
+function scanIslNameMatch(txt, list) {
+  const norm = (x) => String(x).toLowerCase().replace(/[^a-z]/g, "");
+  const a = norm(txt);
+  let best = null, bd = Infinity;
+  list.forEach((s) => {
+    const b = norm(s.name), m = a.length, n = b.length, row = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      let prev = row[0]; row[0] = i;
+      for (let j = 1; j <= n; j++) { const tmp = row[j]; row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = tmp; }
+    }
+    // The text before the name (bits of the picture) may add letters in front: compare the end too.
+    let dd = row[n];
+    if (m > n) { const tail = a.slice(m - n); let e = 0; for (let i = 0; i < n; i++) if (tail[i] !== b[i]) e++; dd = Math.min(dd, e); }
+    if (dd < bd) { bd = dd; best = s; }
+  });
+  return best && bd <= Math.max(2, Math.floor(norm(best.name).length / 3)) ? best : null;
+}
+// My Island: the Life Essence amount beside the green leaf at the top right
+// (the gold coins on the left are not read).
+async function scanIslLifeShot(worker, src) {
+  const W = src.width, H = src.height, k = Math.min(1, 400 / W), w = Math.round(W * k), h = Math.max(8, Math.round(H * 0.07 * k));
+  const c = scanCanvas(w, h), g = c.getContext("2d", { willReadFrequently: true });
+  g.drawImage(src, 0, 0, W, H * 0.07, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = Math.round(w * 0.55); x < w; x++) {
+    const i = (y * w + x) * 4, r = d[i], gr = d[i + 1], b = d[i + 2];
+    mask[y * w + x] = gr > 140 && gr > r + 80 && gr > b + 40 ? 1 : 0;
+  }
+  const blobs = scanBlobs(mask, w, h).filter((b) => b.n >= 6).sort((a, b) => a.x - b.x);
+  const leaf = blobs.filter((b) => b.h >= h * 0.25 && b.n >= 40).sort((a, b) => b.n - a.n)[0];
+  if (!leaf) return null;
+  const plus = blobs.find((b) => b.x > leaf.x + leaf.w + w * 0.05);
+  // The title (top left) says "My Island" (the "I" often reads as "l").
+  const tc = scanCanvas(Math.round(W * 0.55), Math.round(H * 0.05));
+  tc.getContext("2d").drawImage(src, 0, 0, tc.width, tc.height, 0, 0, tc.width, tc.height);
+  if (!/s\s?[il1|]and/i.test((await scanRead(worker, tc, { tessedit_pageseg_mode: "7" })).text)) return null; // "Island" (read as "lsland" too)
+  // The white number between the leaf and the green "+".
+  const x0 = Math.round((leaf.x + leaf.w) / k + W * 0.005), x1 = Math.round(plus ? plus.x / k - W * 0.005 : W * 0.97);
+  const y0 = Math.max(0, Math.round(leaf.y / k - H * 0.003)), y1 = Math.min(H, Math.round((leaf.y + leaf.h) / k + H * 0.003));
+  if (x1 - x0 < 10 || y1 - y0 < 6) return null;
+  const nc = scanCanvas(x1 - x0, y1 - y0), ng = nc.getContext("2d", { willReadFrequently: true });
+  ng.drawImage(src, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+  const nd = ng.getImageData(0, 0, nc.width, nc.height).data, pad = 16, out = scanCanvas(nc.width + pad * 2, nc.height + pad * 2), og = out.getContext("2d");
+  og.fillStyle = "#fff"; og.fillRect(0, 0, out.width, out.height); og.fillStyle = "#000";
+  for (let y = 0; y < nc.height; y++) for (let x = 0; x < nc.width; x++) {
+    const i = (y * nc.width + x) * 4, r = nd[i], gr = nd[i + 1], b = nd[i + 2];
+    if ((r + gr + b) / 3 > 185 && Math.max(r, gr, b) - Math.min(r, gr, b) < 45) og.fillRect(pad + x, pad + y, 1, 1);
+  }
+  const r = await scanRead(worker, out, { tessedit_pageseg_mode: "7", tessedit_char_whitelist: "0123456789,.KM" });
+  const txt = r.text.replace(/\s/g, ""), unit = /[KM]$/.exec(txt);
+  const num = Number(txt.replace(/[KM]$/, "").replace(/,/g, ""));
+  const value = Number.isFinite(num) && txt && /\d/.test(txt) ? Math.round(num * (unit ? (unit[0] === "K" ? 1e3 : 1e6) : 1)) : null;
+  return { kind: "island", items: [{ name: "Life Essence", value, sure: false }] };
+}
+// Mythic island buildings the Islands page plans (same list and request as that page),
+// by category in the Islands order.
+async function scanIslBuildings() {
+  const cats = await islandCatRows(), catList = cats.length ? cats.map((c) => c.category) : ["Island"];
+  const rows = await keptRows("skins",
+    `skins?user_id=eq.${USER_ID}&category=in.(${catList.map((c) => encodeURIComponent(c)).join(",")})&select=id,category,name,image_url,bonus_type,bonus_value,bonus_level1,bonus_type2,bonus_value2,bonus_level2,bonus_type3,bonus_value3,bonus_level3,bonus_type4,bonus_value4,bonus_level4,display_group,owned,current_level,max_level&order=sort_order.asc`
+  );
+  const list = rows.filter((s) => islCatTracked(s.category) && !ISL_SKIP_NAMES.includes(s.name) && islIsMythic(s));
+  return { cats: catList.filter((c) => list.some((s) => s.category === c)), list, lights: rows.filter((s) => s.category === "Lighthouse") };
+}
+// Storehouse copies read or typed on the check screen: { skinId: copies } replaces those
+// buildings' "In Storehouse" (calc_state island_shards.store, the Islands page's box).
+// light: { lighthouse skinId: level } from the Accessory tab → island_shards.light =
+// { skinId: { now, to } } (the target kept, else the level read).
+async function scanIslStoreSave(set, light) {
+  const saved = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
+  const st = { ...islDefault(), ...(saved && typeof saved === "object" ? saved : {}) };
+  const store = { ...(st.store && typeof st.store === "object" ? st.store : {}) };
+  Object.entries(set).forEach(([id, v]) => { if (Number(v) > 0) store[id] = Math.floor(Number(v)); else delete store[id]; });
+  st.store = store;
+  if (ISL_SHARDS) ISL_SHARDS.store = store;
+  if (light && Object.keys(light).length) {
+    const lt = { ...(st.light && typeof st.light === "object" ? st.light : {}) };
+    Object.entries(light).forEach(([id, v]) => { const had = lt[id] && typeof lt[id] === "object" ? lt[id] : {}; lt[id] = { ...had, now: Math.floor(Number(v)), to: had.to != null ? had.to : Math.floor(Number(v)) }; });
+    st.light = lt;
+    if (ISL_SHARDS) ISL_SHARDS.light = lt;
+  }
+  delete st.essence; delete st.shards;
+  saveCalcState("island_shards", st);
+}
+
+// mode "island" (the Islands page's Scan): only the island screens are read; the
+// Backpack's Scan finds an island screen but leaves it (kind "islelse").
+async function scanShot(worker, file, marks, refs, mode) {
   const src = await createImageBitmap(file);
+  if (mode === "island") return (await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src)) || { kind: "notisl", items: [] };
   const lab = await scanLabShot(worker, src);
   if (lab) return lab;
   const tiles = scanFindTiles(src);
@@ -669,6 +942,8 @@ async function scanShot(worker, file, marks, refs) {
     const items = await scanSpeedTiles(worker, src, tiles, marks);
     if (items.length) return { kind: "speedup", items };
   }
+  // Island screens: the Island Storehouse (tiles about 4 : 3, never square) and My Island.
+  if (visitorCan("islandscan") && ((await scanIslStoreShot(worker, src)) || (await scanIslLifeShot(worker, src)))) return { kind: "islelse", items: [] };
   // Text reads best on the light Summary panel alone, about 720 px wide.
   const p = scanLightPanel(src), s = 720 / p.w, c = scanCanvas(720, Math.round(p.h * s));
   c.getContext("2d").drawImage(src, p.x, p.y, p.w, p.h, 0, 0, c.width, c.height);
@@ -681,7 +956,9 @@ async function scanShot(worker, file, marks, refs) {
 
 // more.canAdd(name): a hero's shards or a Gen's widgets that aren't on the
 // person's list yet ({ label, icon } or null); more.added(names) puts them on it.
+// more.island: the Islands page's Scan (island screens only).
 function openBackpackScanMain(groups, bp, done, more) {
+  const islMode = !!(more && more.island);
   const known = new Map(groups.flatMap((g) => g.items).map((it) => [it.name, it]));
   const addable = new Map();
   let modal = document.getElementById("bpScanModal");
@@ -713,6 +990,19 @@ function openBackpackScanMain(groups, bp, done, more) {
   const gearSeqs = []; // the Gear screenshots read so far
   const shotSpans = []; // per item screenshot: { tab: { min, max } } in game order
   const shotSeqs = []; // per item screenshot: item names tile by tile (null = not read)
+  // Island screens: Storehouse building copies by building id ({ name, value, sure }),
+  // the Mythic buildings (for names, pictures and the teach picker) and the saved Storehouse.
+  const islRes = new Map();
+  const islPlaced = new Map(); // building id -> { name, img, lv }: a placed building taken back (tile above Lv 1), not spare copies
+  const isl = { life: false, store: false, acc: false, bld: null, now: {}, light: {}, elsewhere: false };
+  const islLight = new Map(); // lighthouse skin id -> { name, img, value } (Accessory tab)
+  const islLoad = async () => {
+    if (isl.bld) return;
+    try { isl.bld = await scanIslBuildings(); } catch (e) { isl.bld = { cats: [], list: [], lights: [] }; }
+    const st = ISL_SHARDS || (await loadCalcState("island_shards").catch(() => null)) || {};
+    isl.now = (st && st.store) || {};
+    isl.light = (st && st.light) || {};
+  };
   const picker = () => {
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -721,11 +1011,12 @@ function openBackpackScanMain(groups, bp, done, more) {
   };
   const showStart = () => {
     modal.innerHTML = `<div class="modal-box" style="max-width:480px;">
-      <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t("scan_title"))}</h2>
-      <p class="desc" style="margin:0 0 12px;">${esc(t("scan_intro"))}</p>
-      ${[["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"]].map(([ex, head, hint], i) => `
+      <h2 style="margin:0 0 4px; font-size:16px;">&#128247; ${esc(t(islMode ? "scan_isl_title" : "scan_title"))}</h2>
+      <p class="desc" style="margin:0 0 12px;">${esc(t(islMode ? "scan_isl_intro" : "scan_intro"))}</p>
+      ${(islMode ? [["", "scan_tab_isl", "scan_isl_life_hint"], ["", "scan_isl_ing", "scan_isl_ing_hint"], ["", "scan_isl_dec", "scan_isl_dec_hint"], ["", "scan_isl_acc", "scan_isl_acc_hint"]]
+    : [["summary", "scan_summary", "scan_summary_hint"], ["speedup", "scan_speedup", "scan_speedup_hint"], ["items", "scan_items", "scan_items_hint"], ["lab", "scan_lab", "scan_lab_hint"]]).map(([ex, head, hint], i) => `
       <div class="scan-step"><b>${i + 1}</b><div><div>${esc(t(head))}</div><div class="meta">${esc(t(hint))}</div></div>
-        <button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button></div>`).join("")}
+        ${ex ? `<button type="button" class="scan-ex" data-scanex="icons/scan-ex-${ex}.jpg" aria-label="${esc(t("scan_example"))}"><img src="icons/scan-ex-${ex}.jpg" alt="" loading="lazy" /><span>&#128269;</span></button>` : ""}</div>`).join("")}
       <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn" type="button" data-scanpick>${esc(t("scan_choose"))}</button>
@@ -768,7 +1059,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       if (!live()) return;
       progress(t("scan_reading").replace("{n}", i + 1).replace("{m}", files.length));
       let shot;
-      try { shot = await scanShot(worker, files[i], marks, refs); } catch (e) { shot = { kind: "unknown", items: [] }; }
+      try { shot = await scanShot(worker, files[i], marks, refs, islMode ? "island" : ""); } catch (e) { shot = { kind: "unknown", items: [] }; }
       if (!live()) return;
       if (shot.kind === "speedsummary") notes.add(t("scan_speed_summary"));
       else if (shot.kind === "other") notes.add(t("scan_other_items"));
@@ -791,6 +1082,34 @@ function openBackpackScanMain(groups, bp, done, more) {
         if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = shotTab; unknownList.push(u); });
       }
       if (shot.kind === "speedup") sawSpeed = true;
+      if (shot.kind === "island") isl.life = true;
+      if (shot.kind === "islelse") isl.elsewhere = true;
+      if (shot.kind === "notisl") notes.add(t("scan_not_isl"));
+      if (shot.kind === "islacc") {
+        isl.acc = true;
+        await islLoad();
+        if (!live()) return;
+        shot.lights.forEach((l) => {
+          const s = scanIslNameMatch(l.name, isl.bld.lights || []);
+          if (s) islLight.set(String(s.id), { name: s.name, img: s.image_url || "", value: l.value });
+        });
+        if (shot.lights.length > islLight.size) notes.add(t("scan_isl_acc_unread"));
+      }
+      if (shot.kind === "islstore") {
+        isl.store = true;
+        if (!isl.bld) {
+          await islLoad();
+          if (!live()) return;
+        }
+        (shot.isl || []).forEach((b) => {
+          const s = isl.bld.list.find((x) => String(x.id) === b.id) || isl.bld.list.find((x) => x.name === b.name);
+          if (!s) return; // a building no longer in the Islands list
+          const id = String(s.id), had = islRes.get(id);
+          if (b.placed) { islPlaced.set(id, { name: s.name, img: s.image_url || "", lv: b.placed }); return; }
+          if (!had || b.value !== null) islRes.set(id, { name: s.name, img: s.image_url || "", value: b.value, sure: b.sure && (!had || had.value === b.value) });
+        });
+        if (IS_OWNER) (shot.unk || []).forEach((u) => { u.tab = "island"; unknownList.push(u); });
+      }
       if (shot.kind === "lab") {
         lab.seen = true;
         if (shot.lab !== null) lab.count = shot.lab;
@@ -875,7 +1194,25 @@ function openBackpackScanMain(groups, bp, done, more) {
       const tab = scanItemTab(n), k = scanTabOrder(tab).indexOf(n);
       return (rng[tab] || []).some((r) => k > r.min && k < r.max);
     };
-    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab"].filter(Boolean).map((k) => t(k));
+    const tabsRead = [rng.res && "scan_tab_res", rng.other && "scan_tab_other", sawSpeed && "scan_tab_speed", mgParts.gear !== null && "scan_tab_gear", lab.seen && "scan_tab_lab", isl.life && "scan_tab_isl", isl.store && "scan_tab_islstore", isl.acc && "scan_isl_acc"].filter(Boolean).map((k) => t(k));
+    // Island Storehouse: spare copies of each Mythic building read (Islands "In Storehouse").
+    // Storehouse Accessory tab: each lighthouse's level (Islands page's Lighthouse plan).
+    const lightHtml = !islLight.size ? "" : `<div class="scan-lab-h">&#128680; ${esc(t("scan_isl_acc_h"))}</div>${[...islLight.entries()].map(([id, r]) => `<label class="scan-row unsure">
+        <input type="checkbox" data-scanlighttick="${esc(id)}" checked />
+        ${r.img ? `<img src="${esc(r.img)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(dataName(r.name))}</b><span class="meta">${esc(t("scan_isl_acc_now").replace("{n}", r.value))}${isl.light[id] && isl.light[id].now != null && Number(isl.light[id].now) !== r.value ? ` · ${esc(t("scan_isl_acc_was").replace("{n}", isl.light[id].now))}` : ""} · <em>${esc(t("scan_please_check"))}</em></span></span>
+        <input type="text" inputmode="numeric" data-scanlight="${esc(id)}" value="${r.value}" />
+      </label>`).join("")}`;
+    const placedHtml = [...islPlaced.entries()].filter(([id]) => !islRes.has(id)).map(([, r]) => `<div class="scan-row">
+        ${r.img ? `<img src="${esc(r.img)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(dataName(r.name))}</b><span class="meta">${esc(t("scan_isl_placed").replace("{n}", r.lv))}</span></span>
+      </div>`).join("");
+    const islHtml = !islRes.size && !placedHtml ? "" : `<div class="scan-lab-h">&#127965; ${esc(t("scan_isl_store_h"))}</div>${placedHtml}${[...islRes.entries()].map(([id, r]) => `<label class="scan-row${r.sure ? "" : " unsure"}">
+        <input type="checkbox" data-scanisltick="${esc(id)}" checked />
+        ${r.img ? `<img src="${esc(r.img)}" alt="" />` : `<span class="scan-img"></span>`}
+        <span class="scan-name"><b>${esc(dataName(r.name))}</b><span class="meta">${esc(t("scan_isl_store_now").replace("{n}", (Math.floor(Number(isl.now[id]) || 0)).toLocaleString()))}${r.sure ? "" : ` · <em>${esc(t("scan_please_check"))}</em>`}</span></span>
+        <input type="text" inputmode="numeric" data-scanisl="${esc(id)}" value="${r.value === null ? "" : r.value.toLocaleString("en-US")}" />
+      </label>`).join("")}`;
     // Research Lab: this week's count from the game, with the plan beside it.
     const labSt = () => { const s = lab.saved || {}; return RFC_LAB_STATE || { top: s.top, attempts: s.attempts, budget: Number(s.budget) || 0, mode: s.mode === "budget" ? "budget" : "schedule", labOpen: s.labOpen, game: s.game, weekPick: s.weekPick }; };
     let labWk = null;
@@ -905,20 +1242,25 @@ function openBackpackScanMain(groups, bp, done, more) {
     // a hero's shards / widgets); Scan remembers it for everyone.
     const heroList = (more && more.heroes) || [];
     const labelFor = (n) => {
+      if (/^isl:/.test(n)) { const b = ((isl.bld && isl.bld.list) || []).find((x) => `isl:${x.id}` === n); return b ? `${dataName(b.name)} — ${t("scan_tab_islstore")}` : n; }
       if (known.has(n)) return materialDisplayName(known.get(n).name);
       const m = / (Shards|Widgets)$/.exec(n), hero = n.replace(/ (Shards|Widgets)$/, "");
       return m ? `${dataName(hero)} — ${t(m[1] === "Shards" ? "backpack_hero_shards" : "scan_learn_widgets")}` : n;
     };
     const learnModes = ["shards", "widgets", "items"];
+    const islCells = (u) => u.mode === "islitems"
+      ? BP_ISLAND_ITEMS.filter((n) => known.has(n)).map((n) => [n, bpIcon(known.get(n)), materialDisplayName(itemShortName(n))])
+      : ((isl.bld && isl.bld.cats) || []).flatMap((c) => [[null, null, dataName(c)]].concat(isl.bld.list.filter((b) => b.category === c).map((b) => [`isl:${b.id}`, b.image_url || "", dataName(b.name)])));
     const learnPicker = (u, i) => {
       const r = u.mode === "widgets" ? "Legendary" : u.all ? null : u.rarity;
-      const cells = u.mode === "items"
+      const modes = u.isl ? ["buildings", "islitems"] : learnModes;
+      const cells = u.isl ? islCells(u) : u.mode === "items"
         ? [...known.values()].filter((it) => !/speedup/i.test(it.name) && scanItemTab(it.name) === u.tab && !SCAN_SUMMARY_ROWS.some(([, n]) => n === it.name)).map((it) => [it.name, bpIcon(it), materialDisplayName(itemShortName(it.name))])
         : heroList.filter((h) => !r || h.rarity === r).sort((a, b) => (Number(b.generation) || 0) - (Number(a.generation) || 0) || String(a.name).localeCompare(String(b.name)))
           .map((h) => [`${h.name} ${u.mode === "widgets" ? "Widgets" : "Shards"}`, h.image_url || "", dataName(h.name)]);
       return `<div class="scan-lpick">
-        ${learnModes.length > 1 ? `<div class="scan-lchips">${learnModes.map((m) => `<button type="button" class="scan-lchip${u.mode === m ? " on" : ""}" data-lmode="${i}|${m}">${esc(t("scan_learn_" + m))}</button>`).join("")}</div>` : ""}
-        <div class="scan-lgrid">${cells.map(([n, ic, lab]) => `<button type="button" class="scan-lg${u.pick === n ? " on" : ""}" data-lpick="${i}|${esc(n)}" title="${esc(lab)}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(lab).charAt(0))}</i>`}<span>${esc(lab)}</span></button>`).join("") || `<div class="meta">—</div>`}</div>
+        ${modes.length > 1 ? `<div class="scan-lchips">${modes.map((m) => `<button type="button" class="scan-lchip${u.mode === m ? " on" : ""}" data-lmode="${i}|${m}">${esc(t("scan_learn_" + m))}</button>`).join("")}</div>` : ""}
+        <div class="scan-lgrid">${cells.map(([n, ic, lab]) => n === null ? `<div class="scan-lgh">${esc(lab)}</div>` : `<button type="button" class="scan-lg${u.pick === n ? " on" : ""}" data-lpick="${i}|${esc(n)}" title="${esc(lab)}">${ic ? `<img src="${esc(ic)}" alt="" loading="lazy" />` : `<i>${esc(String(lab).charAt(0))}</i>`}<span>${esc(lab)}</span></button>`).join("") || `<div class="meta">—</div>`}</div>
         ${u.mode === "shards" && u.rarity && !u.all ? `<button type="button" class="linklike" data-lall="${i}" style="font-size:11.5px;">${esc(t("scan_learn_all"))}</button>` : ""}
       </div>`;
     };
@@ -945,11 +1287,14 @@ function openBackpackScanMain(groups, bp, done, more) {
     const info = [unsure ? t("scan_flagged").replace("{n}", unsure) : "", ...notes, unknownTiles > unknownList.length ? t("scan_unknown_tiles").replace("{n}", unknownTiles - unknownList.length) : "", skipped.size ? t("scan_skipped").replace("{list}", [...skipped].join(", ")) : ""].filter(Boolean);
     modal.innerHTML = `<div class="modal-box" style="max-width:520px; max-height:86vh; overflow-y:auto;">
       <h2 style="margin:0 0 4px; font-size:16px;">${esc(t("scan_check_title"))}</h2>
-      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
+      <p class="desc" style="margin:0 0 8px;">${esc(names.length || labHtml || islHtml || lightHtml ? t("scan_check_desc") : t("scan_nothing"))}</p>
       ${info.map((x) => `<div class="meta" style="font-size:12px; margin-bottom:4px;">&#9888; ${esc(x)}</div>`).join("")}
+      ${isl.elsewhere ? `<div class="meta scan-islgo" style="font-size:12px; margin-bottom:6px;">&#127965; ${esc(t("scan_isl_elsewhere"))} <button type="button" class="linklike" data-scangoisl>${esc(t("scan_isl_open"))}</button></div>` : ""}
       ${labHtml}
       ${labHtml && rows ? `<div class="scan-lab-h">${esc(t("scan_lab_items"))}</div>` : ""}
       <div style="margin-top:6px;">${rows}</div>
+      ${islHtml}
+      ${lightHtml}
       ${gearHtml}
       ${tabsRead.length ? `<div class="meta scan-tabs">${esc(t("scan_tabs_read").replace("{list}", tabsRead.join(" · ")))}</div>` : ""}
       ${zeroRows ? `<div class="scan-zero-head"><b>${esc(t("scan_zero_title"))}</b><div class="meta">${esc(t("scan_zero_hint"))}</div></div>${zeroRows}` : ""}
@@ -957,10 +1302,12 @@ function openBackpackScanMain(groups, bp, done, more) {
       <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:12px;">
         <button class="btn ghost" type="button" data-scanclose>${esc(t("cancel"))}</button>
         <button class="btn ghost" type="button" data-scanpick>${esc(t("scan_add_more"))}</button>
-        ${names.length || zeroRows || unknownList.length || gearLow || labHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
+        ${names.length || zeroRows || unknownList.length || gearLow || labHtml || islHtml || lightHtml ? `<button class="btn" type="button" data-scansave>${esc(t("save"))}</button>` : ""}
       </div></div>`;
     modal.querySelector("[data-scanclose]").onclick = close;
     modal.querySelector("[data-scanpick]").onclick = picker;
+    const goIsl = modal.querySelector("[data-scangoisl]");
+    if (goIsl) goIsl.onclick = () => { close(); goToTab("islandgallery"); };
     const learnBox = modal.querySelector("#scanLearn");
     const redrawLearn = () => { const d = learnBox.querySelector("details"); learnBox.innerHTML = learnHtml(!d || d.open); };
     learnBox.onclick = async (ev) => {
@@ -968,7 +1315,7 @@ function openBackpackScanMain(groups, bp, done, more) {
       const sk = ev.target.closest("[data-lskip]");
       if (sk) { const u = unknownList[Number(sk.dataset.lskip)]; u.skip = !u.skip; u.open = false; redrawLearn(); return; }
       if (ev.target.closest("[data-lskipall]")) { unknownList.forEach((u) => { if (!u.pick) { u.skip = true; u.open = false; } }); redrawLearn(); return; }
-      if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.rarity ? "shards" : "items"; redrawLearn(); return; }
+      if (o) { const u = unknownList[Number(o.dataset.lopen)]; u.open = !u.open; if (!u.mode) u.mode = u.isl ? "buildings" : u.rarity ? "shards" : "items"; redrawLearn(); return; }
       if (md) { const [i, m] = md.dataset.lmode.split("|"); unknownList[Number(i)].mode = m; redrawLearn(); return; }
       if (al) { unknownList[Number(al.dataset.lall)].all = true; redrawLearn(); return; }
       if (!pk) return;
@@ -987,6 +1334,10 @@ function openBackpackScanMain(groups, bp, done, more) {
     const labIn = modal.querySelector("[data-scanlab]");
     if (labIn) labIn.addEventListener("change", () => { const v = labIn.value.replace(/\D/g, ""); if (v) lab.count = Number(v); });
     // Keep typed fixes if more screenshots are added.
+    modal.querySelectorAll("[data-scanisl]").forEach((el) => el.addEventListener("change", () => {
+      const r = islRes.get(el.dataset.scanisl), v = el.value.replace(/\D/g, "");
+      r.value = v ? Number(v) : null; r.sure = true;
+    }));
     modal.querySelectorAll("[data-scanval]").forEach((el) => el.addEventListener("change", () => {
       const r = results.get(el.dataset.scanval), v = el.value.replace(/\D/g, "");
       r.value = v ? Number(v) : null; r.sure = true;
@@ -1010,11 +1361,30 @@ function openBackpackScanMain(groups, bp, done, more) {
       // Not seen in the screenshots and left ticked: opened or used, now 0.
       modal.querySelectorAll("[data-scanzero]").forEach((tick) => { if (tick.checked) delete bp[tick.dataset.scanzero]; });
       // Taught tiles: their amounts, and Scan remembers their pictures.
+      // Island Storehouse copies (ticked rows, then taught buildings) replace those buildings' "In Storehouse".
+      const islSet = {};
+      modal.querySelectorAll("[data-scanisltick]").forEach((tick) => {
+        if (!tick.checked) return;
+        const v = modal.querySelector(`[data-scanisl="${window.CSS.escape(tick.dataset.scanisltick)}"]`).value.replace(/\D/g, "");
+        if (v !== "") islSet[tick.dataset.scanisltick] = Number(v);
+      });
       const taught = unknownList.filter((u) => u.pick && !u.skip);
-      taught.forEach((u) => { if (Number(u.amount) > 0) { bp[u.pick] = Number(u.amount); if (!known.has(u.pick) && !added.includes(u.pick)) added.push(u.pick); } });
+      const bldOf = (u) => (/^isl:/.test(u.pick) ? ((isl.bld && isl.bld.list) || []).find((b) => `isl:${b.id}` === u.pick) : null);
+      taught.forEach((u) => {
+        const b = bldOf(u);
+        if (b) { if (u.amount != null && !u.placed) islSet[String(b.id)] = Number(u.amount); return; }
+        if (Number(u.amount) > 0) { bp[u.pick] = Number(u.amount); if (!known.has(u.pick) && !added.includes(u.pick)) added.push(u.pick); }
+      });
       const skippedTiles = unknownList.filter((u) => u.skip);
-      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map((u) => ({ n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }))
-        .concat(skippedTiles.map((u) => ({ n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
+      const lesson = (u) => { const b = bldOf(u); return b ? { n: b.name, kind: "island", id: b.id, f: scanFeatToB64(u.feat), tab: "island" } : u.isl ? { n: u.pick, kind: "island", f: scanFeatToB64(u.feat), tab: "island" } : { n: u.pick, f: scanFeatToB64(u.feat), tab: u.tab, after: u.after, gap: u.gap }; };
+      if (taught.length || skippedTiles.length) scanLearnedSave(taught.map(lesson)
+        .concat(skippedTiles.map((u) => (u.isl ? { n: SCAN_SKIP, kind: "island", f: scanFeatToB64(u.feat), tab: "island" } : { n: SCAN_SKIP, f: scanFeatToB64(u.feat), tab: u.tab })))).catch((err) => toast(err.message || "Couldn't save", true));
+      const lightSet = {};
+      modal.querySelectorAll("[data-scanlighttick]").forEach((tick) => {
+        const v = modal.querySelector(`[data-scanlight="${window.CSS.escape(tick.dataset.scanlighttick)}"]`).value.replace(/\D/g, "");
+        if (tick.checked && v !== "") lightSet[tick.dataset.scanlighttick] = Number(v);
+      });
+      if (Object.keys(islSet).length || Object.keys(lightSet).length) scanIslStoreSave(islSet, lightSet);
       saveCalcState("backpack", bp);
       // Research Lab: only the game's weekly count, for this week (same key as the Lab page).
       const labTick = modal.querySelector("[data-scanlabtick]"), labV = labIn ? labIn.value.replace(/\D/g, "") : "";
