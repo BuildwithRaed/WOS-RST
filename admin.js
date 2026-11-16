@@ -4,7 +4,7 @@
 // renderAdminPage() (the stub there calls renderAdminPageMain()).
 // Keep it that way: a function other pages call belongs in app.js.
 // Build id: checked by loadAdminCode() (written by tools/stamp.js, don't edit).
-window.ADMIN_BUILD = "621408021d";
+window.ADMIN_BUILD = "05035033f2";
 
 // ============================================================
 // ADMIN PAGE
@@ -1748,6 +1748,7 @@ async function renderAdminVisibility(body) {
       accessRow("spendbudget", "My budget (spending limit)", "the \"My budget\" box and plan on Budgets, and the weekly budget bar on My Purchases"),
       accessRow("quickpages", "Quick pages row", "the row of page shortcuts on the Dashboard; each visitor pins their own"),
       accessRow("cando", "Free now (Can do now)", "the Free now tile on Budgets and the small marks on the planner pages of what their own Backpack can upgrade now"),
+      accessRow("islandscan", "Scan Storehouse (Islands)", "the 📷 Scan Storehouse button on the Islands page (My Island, Storehouse tabs, lighthouse levels); you teach the buildings first"),
       accessRow("goals", "Order of goals", "Order of goals with its By dates, the goal flags, the \"By your dates\" plan and hero targets on Budgets, and the goal tags on My Purchases; saved per visitor"),
     ].join(""))}
     ${section(t("vis_pages"), t("vis_pages_desc"), pages.map((p) => row("page", p.tab, p.label, p.group)).join(""), pages.map((p) => ["page", p.tab]))}
