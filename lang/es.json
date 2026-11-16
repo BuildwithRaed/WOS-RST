@@ -2608,5 +2608,10 @@
 "t:isl_free_now":"ahora",
 "t:isl_free_never":"20+ años",
 "t:isl_free_title":"Sin gastar:",
-"t:isl_free_lv":"Nv {n} ~{d}"
+"t:isl_free_lv":"Nv {n} ~{d}",
+"t:pk_every_week":"Cada semana",
+"t:pk_every_weeks":"Cada {n} semanas",
+"t:pk_every_month_date":"Misma fecha cada mes",
+"t:pk_every_month_on":"Cada mes el día {d}",
+"t:pk_dates_then":"luego {date}"
 }

@@ -2607,5 +2607,10 @@
 "t:isl_free_now":"الآن",
 "t:isl_free_never":"+20 سنة",
 "t:isl_free_title":"بدون إنفاق:",
-"t:isl_free_lv":"المستوى {n} ~{d}"
+"t:isl_free_lv":"المستوى {n} ~{d}",
+"t:pk_every_week":"كل أسبوع",
+"t:pk_every_weeks":"كل {n} أسابيع",
+"t:pk_every_month_date":"نفس التاريخ كل شهر",
+"t:pk_every_month_on":"كل شهر في يوم {d}",
+"t:pk_dates_then":"ثم {date}"
 }

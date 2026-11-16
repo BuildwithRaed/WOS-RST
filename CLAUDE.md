@@ -510,6 +510,11 @@ Built on branch `claude/youthful-einstein-n9eoau`, now live. What it contains:
 
 **Scan Esc + island game words (16 Nov 2026, step 29):** Esc closes the Scan window (Backpack and Islands, `#bpScanModal`) like its Cancel / Close button: `modal._scanEsc` in scan.js clicks `[data-scanclose]` (one document listener, `SCAN_ESC_WIRED`); `#bpScanModal` stays in `A11Y_ESC_OWN`. Not while reading (no Cancel there), not when the check screen has changes (`a11yDirty`, or a tile taught / skipped): those stay open, like other pop-ups; an open example picture closes first. Korean island words from the official Korean help centre (centurygames.helpshift.com/hc/ko/64-whiteout-survival/section/1457-daybreak-island/): "General Accessory Construction Contract" = 공용 스킨 건설 계약 (was 일반 액세서리 건설 계약서, short 건설 계약 / 계약), Blueprint = 도면 (was 설계도); 등대 was already right. No reliable source found for Arabic (Lighthouse, Blueprint, Contract) or for the Storehouse tab names (My Island, Island Storehouse, Ingredients, Decoration, Accessory) in either language: left as they were. `LANG_FILES_VERSION` 95.
 
+**Menu pictures at once + pack dates wording (owner, 16 Nov 2026; step 34):**
+- The Menu's page pictures are put in at the very start of `boot()` (`applyMenuIcons()`, they are fixed files), so a Menu opened while the settings still load no longer shows the plain ◆ symbols; `applyMenuIcons` keeps a picture already there (no reload flicker) and uses `decoding="async"` instead of `loading="lazy"`.
+- Pack dates wording (`packEveryText(reset, resetDay)`): resets that are whole weeks read "Every week" / "Every N weeks" (owner: events cycle in weeks; was "Every 28 days"), a 30-day reset (calendar month) with a start day reads "Every month on the 1st" (English ordinals; other languages the plain number), without one "Same date every month"; other resets keep "Every N days". Used by the Pack dates window rows (`renderMyPackDates`), the Packs page rows (`pkbResetText`, `pkbWhen`) and the Pack calendar. The Pack dates rows also show the date after next: "· next Nov 20 · then Dec 18" (`pk_dates_then`).
+- T keys `pk_every_week`, `pk_every_weeks`, `pk_every_month_date`, `pk_every_month_on`, `pk_dates_then` in all 16 lang files (`LANG_FILES_VERSION` 97; step 31 uses 96, so after both merge keep the higher number or bump once more).
+
 ## Restore point before the big jump (owner, 7 Nov 2026)
 The owner is starting a big change. Everything up to PR #144 is the last known-good site: if the big change goes wrong, go back to the `main` commit that merged PR #144 (`git log origin/main --merges -1 --grep "#144"`) with a revert PR (never force-push `main`).
 - Code: index.html + app.css + app.js + admin.js, sw.js cache `wosrst-v2`, `LANG_FILES_VERSION` 73; run `node tools/stamp.js` after any app.js / app.css / admin.js edit (since Speed plan Step 5 it also writes the .min copies the site loads).
@@ -666,5 +671,6 @@ The owner is starting a big change. Everything up to PR #144 is the last known-g
 - PR #180: Budgets and My Purchases follow the dated plan ("By your dates"), Hide / Show for the dates list
 - PR #181 (step 19): clean-up, translations, notes
 - PR #182: Dashboard Today line (📅 packs on today + next event, opens the Pack calendar; `packCalModel` shared)
+- Menu pictures shown at once; pack dates say "Every 4 weeks" / "Every month on the 1st" and the date after next (step 34)
 - PR #183: Free now and the planner-page marks follow the Visibility switch "Free now (Can do now)" (on: users and visitors see them)
 - PR #187: Islands Scan (Storehouse, lighthouse levels, Lv check, owner teaching, visibility switch), Lighthouse plan with free Contracts first, Accessory Construction Contract pack

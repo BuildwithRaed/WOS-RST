@@ -2607,5 +2607,10 @@
 "t:isl_free_now":"지금",
 "t:isl_free_never":"20년+",
 "t:isl_free_title":"과금 없이:",
-"t:isl_free_lv":"Lv {n} ~{d}"
+"t:isl_free_lv":"Lv {n} ~{d}",
+"t:pk_every_week":"매주",
+"t:pk_every_weeks":"{n}주마다",
+"t:pk_every_month_date":"매월 같은 날짜",
+"t:pk_every_month_on":"매월 {d}일",
+"t:pk_dates_then":"그다음 {date}"
 }

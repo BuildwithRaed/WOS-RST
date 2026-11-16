@@ -2608,5 +2608,10 @@
 "t:isl_free_now":"сейчас",
 "t:isl_free_never":"20+ лет",
 "t:isl_free_title":"Без трат:",
-"t:isl_free_lv":"Ур. {n} ~{d}"
+"t:isl_free_lv":"Ур. {n} ~{d}",
+"t:pk_every_week":"Каждую неделю",
+"t:pk_every_weeks":"Раз в {n} нед.",
+"t:pk_every_month_date":"Каждый месяц в тот же день",
+"t:pk_every_month_on":"Каждый месяц {d}-го числа",
+"t:pk_dates_then":"затем {date}"
 }

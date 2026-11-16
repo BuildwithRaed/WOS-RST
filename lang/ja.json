@@ -2608,5 +2608,10 @@
 "t:isl_free_now":"今",
 "t:isl_free_never":"20年以上",
 "t:isl_free_title":"課金なし:",
-"t:isl_free_lv":"Lv {n} ~{d}"
+"t:isl_free_lv":"Lv {n} ~{d}",
+"t:pk_every_week":"毎週",
+"t:pk_every_weeks":"{n}週間ごと",
+"t:pk_every_month_date":"毎月同じ日",
+"t:pk_every_month_on":"毎月{d}日",
+"t:pk_dates_then":"その次 {date}"
 }

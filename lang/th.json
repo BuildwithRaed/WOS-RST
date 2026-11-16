@@ -2607,5 +2607,10 @@
 "t:isl_free_now":"ตอนนี้",
 "t:isl_free_never":"20+ ปี",
 "t:isl_free_title":"ไม่ต้องจ่าย:",
-"t:isl_free_lv":"Lv {n} ~{d}"
+"t:isl_free_lv":"Lv {n} ~{d}",
+"t:pk_every_week":"ทุกสัปดาห์",
+"t:pk_every_weeks":"ทุก {n} สัปดาห์",
+"t:pk_every_month_date":"วันที่เดิมทุกเดือน",
+"t:pk_every_month_on":"ทุกเดือนวันที่ {d}",
+"t:pk_dates_then":"แล้ว {date}"
 }

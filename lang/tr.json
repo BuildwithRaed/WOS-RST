@@ -2607,5 +2607,10 @@
 "t:isl_free_now":"şimdi",
 "t:isl_free_never":"20+ yıl",
 "t:isl_free_title":"Harcamadan:",
-"t:isl_free_lv":"Sv {n} ~{d}"
+"t:isl_free_lv":"Sv {n} ~{d}",
+"t:pk_every_week":"Her hafta",
+"t:pk_every_weeks":"{n} haftada bir",
+"t:pk_every_month_date":"Her ay aynı tarihte",
+"t:pk_every_month_on":"Her ayın {d}. günü",
+"t:pk_dates_then":"sonra {date}"
 }

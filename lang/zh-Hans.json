@@ -2608,5 +2608,10 @@
 "t:isl_free_now":"现在",
 "t:isl_free_never":"20年以上",
 "t:isl_free_title":"不花钱：",
-"t:isl_free_lv":"Lv {n} ~{d}"
+"t:isl_free_lv":"Lv {n} ~{d}",
+"t:pk_every_week":"每周",
+"t:pk_every_weeks":"每 {n} 周",
+"t:pk_every_month_date":"每月同一天",
+"t:pk_every_month_on":"每月 {d} 日",
+"t:pk_dates_then":"然后 {date}"
 }

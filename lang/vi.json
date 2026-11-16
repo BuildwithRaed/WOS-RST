@@ -2607,5 +2607,10 @@
 "t:isl_free_now":"bây giờ",
 "t:isl_free_never":"20+ năm",
 "t:isl_free_title":"Không chi tiền:",
-"t:isl_free_lv":"Cấp {n} ~{d}"
+"t:isl_free_lv":"Cấp {n} ~{d}",
+"t:pk_every_week":"Mỗi tuần",
+"t:pk_every_weeks":"Mỗi {n} tuần",
+"t:pk_every_month_date":"Cùng ngày mỗi tháng",
+"t:pk_every_month_on":"Mỗi tháng vào ngày {d}",
+"t:pk_dates_then":"rồi {date}"
 }

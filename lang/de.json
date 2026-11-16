@@ -2608,5 +2608,10 @@
 "t:isl_free_now":"jetzt",
 "t:isl_free_never":"20+ J.",
 "t:isl_free_title":"Ohne Ausgaben:",
-"t:isl_free_lv":"Lv {n} ~{d}"
+"t:isl_free_lv":"Lv {n} ~{d}",
+"t:pk_every_week":"Jede Woche",
+"t:pk_every_weeks":"Alle {n} Wochen",
+"t:pk_every_month_date":"Jeden Monat am selben Tag",
+"t:pk_every_month_on":"Jeden Monat am {d}.",
+"t:pk_dates_then":"dann {date}"
 }
